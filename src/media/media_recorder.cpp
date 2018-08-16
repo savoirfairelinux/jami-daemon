@@ -120,7 +120,7 @@ MediaRecorder::setPath(const std::string& path)
 }
 
 void
-MediaRecorder::incrementStreams(int n)
+MediaRecorder::incrementExpectedStreams(int n)
 {
     nbExpectedStreams_ += n;
 }
@@ -186,25 +186,26 @@ MediaRecorder::stopRecording()
 }
 
 int
-MediaRecorder::addStream(bool isVideo, bool fromPeer, MediaStream ms)
+MediaRecorder::addStream(const MediaStream& ms)
 {
-    if (audioOnly_ && isVideo) {
+    if (audioOnly_ && ms.isVideo) {
         RING_ERR() << "Trying to add video stream to audio only recording";
         return -1;
     }
 
-    // overwrite stream name for simplicity's sake
-    std::string streamName;
-    if (isVideo) {
-        ms.name = (fromPeer ? "v:main" : "v:overlay");
-        ++nbReceivedVideoStreams_;
+    if (streams_.insert(std::make_pair(ms.name, ms)).second) {
+        RING_DBG() << "Recorder input #" << (nbReceivedAudioStreams_ + nbReceivedVideoStreams_) << ": " << ms;
     } else {
-        ms.name = (fromPeer ? "a:1" : "a:2");
-        ++nbReceivedAudioStreams_;
+        RING_ERR() << "Could not add stream '" << ms.name << "' to record";
+        return -1;
     }
-    // print index instead of count
-    RING_DBG() << "Recorder input #" << (nbReceivedAudioStreams_ + nbReceivedVideoStreams_ - 1) << ": " << ms;
-    streams_[isVideo][fromPeer] = ms;
+
+    std::lock_guard<std::mutex> lk(mutex_);
+
+    if (ms.isVideo)
+        ++nbReceivedVideoStreams_;
+    else
+        ++nbReceivedAudioStreams_;
 
     // wait until all streams are ready before writing to the file
     if (nbExpectedStreams_ != nbReceivedAudioStreams_ + nbReceivedVideoStreams_)
@@ -214,21 +215,29 @@ MediaRecorder::addStream(bool isVideo, bool fromPeer, MediaStream ms)
 }
 
 int
-MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
+MediaRecorder::recordData(AVFrame* frame, const MediaStream& ms)
 {
     // recorder may be recording, but not ready for the first frames
-    // return if thread is not running
-    if (!isRecording_ || !isReady_ || !loop_.isRunning())
+    if (!isRecording_)
         return 0;
 
+    if (!isReady_ && streams_.find(ms.name) == streams_.end())
+        if (addStream(ms) < 0)
+            return -1;
+
+    if (!isReady_ || !loop_.isRunning()) // check again in case initRecord was called
+        return 0;
+
+    const auto& params = streams_.at(ms.name);
+
     // save a copy of the frame, will be filtered/encoded in another thread
-    MediaStream& ms = streams_[isVideo][fromPeer];
     AVFrame* input = av_frame_clone(frame);
-    input->pts = input->pts - ms.firstTimestamp; // stream has to start at 0
+    input->pts = input->pts - params.firstTimestamp; // stream has to start at 0
+    bool fromPeer = params.name.find("remote") != std::string::npos;
 
     {
         std::lock_guard<std::mutex> q(qLock_);
-        frames_.emplace_back(input, isVideo, fromPeer);
+        frames_.emplace_back(input, params.isVideo, fromPeer);
     }
     loop_.interrupt();
     return 0;
@@ -312,8 +321,6 @@ MediaRecorder::initRecord()
     isReady_ = audioIsReady && videoIsReady;
 
     if (isReady_) {
-        std::lock_guard<std::mutex> lk(mutex_); // lock as late as possible
-
         if (!loop_.isRunning())
             loop_.start();
 
@@ -336,9 +343,22 @@ MediaRecorder::initRecord()
 MediaStream
 MediaRecorder::setupVideoOutput()
 {
-    MediaStream encoderStream;
-    const MediaStream& peer = streams_[true][true];
-    const MediaStream& local = streams_[true][false];
+    MediaStream encoderStream, peer, local;
+    auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
+        return pair.second.isVideo && pair.second.name.find("remote") != std::string::npos;
+    });
+
+    if (it != streams_.end()) {
+        peer = it->second;
+    }
+
+    it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
+        return pair.second.isVideo && pair.second.name.find("local") != std::string::npos;
+    });
+
+    if (it != streams_.end()) {
+        local = it->second;
+    }
 
     // vp8 supports only yuv420p
     videoFilter_.reset(new MediaFilter);
@@ -353,8 +373,8 @@ MediaRecorder::setupVideoOutput()
         }
         break;
     case 2: // overlay local video over peer video
-        if (videoFilter_->initialize(buildVideoFilter(),
-                std::vector<MediaStream>{peer, local}) < 0) {
+        if (videoFilter_->initialize(buildVideoFilter(peer, local),
+                {peer, local}) < 0) {
             RING_ERR() << "Failed to initialize video filter";
             encoderStream.format = -1; // invalidate stream
         } else {
@@ -374,12 +394,9 @@ MediaRecorder::setupVideoOutput()
 }
 
 std::string
-MediaRecorder::buildVideoFilter()
+MediaRecorder::buildVideoFilter(const MediaStream& p, const MediaStream& l)
 {
     std::stringstream v;
-
-    const MediaStream& p = streams_[true][true];
-    const MediaStream& l = streams_[true][false];
 
     const constexpr int minHeight = 720;
     const auto newFps = std::max(p.frameRate, l.frameRate);
@@ -388,11 +405,11 @@ MediaRecorder::buildVideoFilter()
 
     // NOTE -2 means preserve aspect ratio and have the new number be even
     if (needScale)
-        v << "[v:main] fps=" << newFps << ", scale=-2:" << newHeight << " [v:m]; ";
+        v << "[" << p.name << "] fps=" << newFps << ", scale=-2:" << newHeight << " [v:m]; ";
     else
-        v << "[v:main] fps=" << newFps << " [v:m]; ";
+        v << "[" << p.name << "] fps=" << newFps << " [v:m]; ";
 
-    v << "[v:overlay] fps=" << newFps << ", scale=-2:" << newHeight / 5 << " [v:o]; ";
+    v << "[" << l.name << "] fps=" << newFps << ", scale=-2:" << newHeight / 5 << " [v:o]; ";
 
     v << "[v:m] [v:o] overlay=main_w-overlay_w-10:main_h-overlay_h-10"
         << ", format=pix_fmts=yuv420p";
@@ -403,9 +420,22 @@ MediaRecorder::buildVideoFilter()
 MediaStream
 MediaRecorder::setupAudioOutput()
 {
-    MediaStream encoderStream;
-    const MediaStream& peer = streams_[false][true];
-    const MediaStream& local = streams_[false][false];
+    MediaStream encoderStream, peer, local;
+    auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
+        return !pair.second.isVideo && pair.second.name.find("remote") != std::string::npos;
+    });
+
+    if (it != streams_.end()) {
+        peer = it->second;
+    }
+
+    it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
+        return !pair.second.isVideo && pair.second.name.find("local") != std::string::npos;
+    });
+
+    if (it != streams_.end()) {
+        local = it->second;
+    }
 
     // resample to common audio format, so any player can play the file
     audioFilter_.reset(new MediaFilter);
@@ -421,8 +451,8 @@ MediaRecorder::setupAudioOutput()
         }
         break;
     case 2: // mix both audio streams
-        if (audioFilter_->initialize("[a:1][a:2] amix,aresample=osr=48000:ocl=stereo:osf=s16",
-                std::vector<MediaStream>{peer, local}) < 0) {
+        if (audioFilter_->initialize(buildAudioFilter(peer, local),
+                {peer, local}) < 0) {
             RING_ERR() << "Failed to initialize audio filter";
             encoderStream.format = -1; // invalidate stream
         } else {
@@ -440,6 +470,14 @@ MediaRecorder::setupAudioOutput()
 
     RING_DBG() << "Recorder output: " << encoderStream;
     return encoderStream;
+}
+
+std::string
+MediaRecorder::buildAudioFilter(const MediaStream& p, const MediaStream& l)
+{
+    std::stringstream a;
+    a << "[" << p.name << "] [" << l.name << "] amix, aresample=osr=48000:ocl=stereo:osf=s16";
+    return a.str();
 }
 
 void
@@ -529,12 +567,23 @@ MediaRecorder::process()
         return;
     }
 
+    auto it = std::find_if(streams_.cbegin(), streams_.cend(), [recframe](const auto& pair){
+        return pair.second.isVideo == recframe.isVideo &&
+            recframe.fromPeer == (pair.second.name.find("remote") != std::string::npos);
+    });
+
+    if (it == streams_.cend()) {
+        RING_ERR() << "Specified stream could not be found: "
+            << (recframe.fromPeer ? "remote " : "local ")
+            << (recframe.isVideo ? "video" : "audio");
+        av_frame_unref(input);
+        return;
+    }
+
+    auto ms = it->second;
+
     // get filter input name if frame needs filtering
-    std::string inputName = "default";
-    if (recframe.isVideo && nbReceivedVideoStreams_ == 2)
-        inputName = (recframe.fromPeer ? "v:main" : "v:overlay");
-    if (!recframe.isVideo && nbReceivedAudioStreams_ == 2)
-        inputName = (recframe.fromPeer ? "a:1" : "a:2");
+    std::string inputName = ms.name;
 
     emptyFilterGraph();
     if (filter) {
