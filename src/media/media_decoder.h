@@ -100,7 +100,7 @@ class MediaDecoder {
         void enableAccel(bool enableAccel);
 #endif
 
-        MediaStream getStream() const;
+        MediaStream getStream(std::string name = "") const;
 
     private:
         NON_COPYABLE(MediaDecoder);
