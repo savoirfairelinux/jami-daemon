@@ -90,7 +90,6 @@ private:
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
 
     std::weak_ptr<MediaRecorder> recorder_;
-    bool recordingStarted_{false};
 
     ThreadLoop loop_;
 
