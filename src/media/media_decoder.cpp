@@ -505,9 +505,9 @@ MediaDecoder::correctPixFmt(int input_pix_fmt) {
 }
 
 MediaStream
-MediaDecoder::getStream() const
+MediaDecoder::getStream(std::string name) const
 {
-    auto ms = MediaStream("", decoderCtx_, lastTimestamp_);
+    auto ms = MediaStream(name, decoderCtx_, lastTimestamp_);
 #ifdef RING_ACCEL
     if (decoderCtx_->codec_type == AVMEDIA_TYPE_VIDEO && enableAccel_ && !accel_.name.empty())
         ms.format = AV_PIX_FMT_NV12; // TODO option me!

@@ -77,8 +77,7 @@ struct MediaStream {
 
     MediaStream(std::string name, AVCodecContext* c)
         : MediaStream(name, c, 0)
-    {
-    }
+    {}
 
     MediaStream(std::string name, AVCodecContext* c, int64_t firstTimestamp)
         : name(name)
