@@ -75,7 +75,7 @@ class AudioSender {
         std::unique_ptr<Resampler> resampler_;
 
         std::weak_ptr<MediaRecorder> recorder_;
-        bool recordingStarted_ = false;
+
         uint64_t sent_samples = 0;
 
         AudioBuffer micData_;
@@ -208,22 +208,15 @@ AudioSender::process()
         buffer.reset();
 
     AVFrame* frame = buffer.toAVFrame();
-    auto ms = MediaStream("audio", buffer.getFormat());
+    auto ms = MediaStream("a:local", buffer.getFormat());
     frame->pts = getNextTimestamp(sent_samples, ms.sampleRate, static_cast<rational<int64_t>>(ms.timeBase));
+    ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
 
     {
         auto rec = recorder_.lock();
-        if (rec && !recordingStarted_ && rec->addStream(false, false, ms) >= 0) {
-                recordingStarted_ = true;
-        }
-
-        if (rec && recordingStarted_) {
-            rec->recordData(frame, false, false);
-        } else {
-            recordingStarted_ = false;
-            recorder_ = std::weak_ptr<MediaRecorder>();
-        }
+        if (rec && rec->isRecording())
+            rec->recordData(frame, ms);
     }
 
     if (audioEncoder_->encodeAudio(frame) < 0)
@@ -245,11 +238,8 @@ AudioSender::getLastSeqValue()
 void
 AudioSender::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    recordingStarted_ = false;
     recorder_ = rec;
-    if (auto r = recorder_.lock()) {
-        r->incrementStreams(1);
-    }
+    rec->incrementStreams(1);
 }
 
 class AudioReceiveThread
@@ -277,7 +267,6 @@ class AudioReceiveThread
         bool decodeFrame();
 
         std::weak_ptr<MediaRecorder> recorder_;
-        bool recordingStarted_{false};
 
         /*-----------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. process()) only! */
@@ -369,16 +358,8 @@ AudioReceiveThread::process()
         case MediaDecoder::Status::FrameFinished:
             {
                 auto rec = recorder_.lock();
-                if (rec && !recordingStarted_ && rec->addStream(false, true, audioDecoder_->getStream()) >= 0) {
-                        recordingStarted_ = true;
-                }
-
-                if (rec && recordingStarted_) {
-                    rec->recordData(decodedFrame.pointer(), false, true);
-                } else {
-                    recordingStarted_ = false;
-                    recorder_ = std::weak_ptr<MediaRecorder>();
-                }
+                if (rec && rec->isRecording())
+                    rec->recordData(decodedFrame.pointer(), audioDecoder_->getStream("a:remote"));
             }
             audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
@@ -449,8 +430,8 @@ AudioReceiveThread::startLoop()
 void
 AudioReceiveThread::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    rec->incrementStreams(1);
     recorder_ = rec;
+    rec->incrementStreams(1);
 }
 
 AudioRtpSession::AudioRtpSession(const std::string& id)
