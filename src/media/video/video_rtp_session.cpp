@@ -568,15 +568,10 @@ void
 VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     // video recording needs to start with keyframes
-    const constexpr int keyframes = 3;
     if (receiveThread_)
         receiveThread_->initRecorder(rec);
     if (auto vidInput = std::static_pointer_cast<VideoInput>(videoLocal_))
         vidInput->initRecorder(rec);
-    for (int i = 0; i < keyframes; ++i)
-        if (receiveThread_)
-            receiveThread_->triggerKeyFrameRequest();
-    // TODO trigger keyframes for local video
 }
 
 }} // namespace ring::video
