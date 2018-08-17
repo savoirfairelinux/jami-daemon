@@ -41,6 +41,7 @@
 #include <memory>
 #include <atomic>
 #include <functional>
+#include <algorithm>
 
 namespace ring {
 
@@ -765,18 +766,17 @@ class Manager {
          */
         template <class T=Account>
         std::vector<std::shared_ptr<T>> getAllAccounts() const {
-            auto account_order = loadAccountOrder();
+            const auto& account_order = loadAccountOrder();
+            const auto& all_accounts = accountFactory.getAllAccounts<T>();
             std::vector<std::shared_ptr<T>> accountList;
-
-            // If no order has been set, load the default one ie according to the creation date.
-            if (account_order.empty()) {
-                for (const auto &account : accountFactory.getAllAccounts<T>())
+            accountList.reserve(all_accounts.size());
+            for (const auto& id : account_order) {
+                if (auto acc = accountFactory.getAccount<T>(id))
+                    accountList.push_back(acc);
+            }
+            for (const auto& account : all_accounts) {
+                if (std::find(accountList.begin(), accountList.end(), account) == accountList.end())
                     accountList.emplace_back(account);
-            } else {
-                for (const auto& id : account_order) {
-                    if (auto acc = accountFactory.getAccount<T>(id))
-                        accountList.push_back(acc);
-                }
             }
             return accountList;
         }
