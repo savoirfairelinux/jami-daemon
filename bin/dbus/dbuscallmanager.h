@@ -25,6 +25,7 @@
 #include <map>
 #include <string>
 
+#include "dring/def.h"
 #include "dbus_cpp.h"
 
 #if __GNUC__ >= 5 || (__GNUC__ >=4 && __GNUC_MINOR__ >= 6)
@@ -45,7 +46,7 @@
 
 #include <stdexcept>
 
-class DBusCallManager :
+DRING_PUBLIC class DBusCallManager :
     public cx::ring::Ring::CallManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor

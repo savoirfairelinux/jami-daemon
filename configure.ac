@@ -181,6 +181,9 @@ AC_COMPILE_IFELSE(
 
 AC_MSG_RESULT([$CLANG])
 
+CFLAGS="${CFLAGS} -fvisibility=hidden "
+CXXFLAGS="${CXXFLAGS} -fvisibility=hidden "
+
 dnl
 dnl  Check for the contrib directory
 dnl

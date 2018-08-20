@@ -23,6 +23,7 @@
 #include <map>
 #include <string>
 
+#include "dring/def.h"
 #include "dbus_cpp.h"
 
 #if __GNUC__ >= 5 || (__GNUC__ >=4 && __GNUC_MINOR__ >= 6)
@@ -41,7 +42,7 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-class DBusVideoManager :
+DRING_PUBLIC class DBusVideoManager :
     public cx::ring::Ring::VideoManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor

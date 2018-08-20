@@ -25,6 +25,7 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
+#include "dring/def.h"
 #include "dring.h"
 #include <memory>
 
@@ -43,7 +44,7 @@ namespace DBus {
     class DefaultTimeout;
 }
 
-class DBusClient {
+DRING_PUBLIC class DBusClient {
     public:
         DBusClient(int flags, bool persistent);
         ~DBusClient();

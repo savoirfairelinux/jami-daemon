@@ -21,6 +21,8 @@
 #ifndef DRING_ACCOUNT_H
 #define DRING_ACCOUNT_H
 
+#include "def.h"
+
 //Defined in windows.h
 #ifdef ERROR
 #undef ERROR
@@ -60,7 +62,7 @@ constexpr static const char INITIALIZING              [] = "INITIALIZING";
 
 } //namespace DRing::Account
 
-enum class MessageStates : int {
+DRING_PUBLIC enum class MessageStates : int {
     UNKNOWN = 0,
     SENDING,
     SENT,
@@ -68,7 +70,7 @@ enum class MessageStates : int {
     FAILURE
 }; //DRing::Account::MessageStates
 
-enum class testAccountICEInitializationStatus : int {
+DRING_PUBLIC enum class testAccountICEInitializationStatus : int {
     SUCCESS = 0,
     FAILURE = 1
 }; //DRING:Account::testAccountICEInitializationStatus
