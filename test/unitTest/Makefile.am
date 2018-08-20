@@ -14,6 +14,13 @@ check_PROGRAMS += ut_account_factory
 ut_account_factory_SOURCES = account_factory/testAccount_factory.cpp
 
 #
+# certstore
+#
+check_PROGRAMS += ut_certstore
+ut_certstore_SOURCES = certstore.cpp
+ut_certstore_LDADD = @OPENDHT_LIBS@
+
+#
 # base64
 #
 check_PROGRAMS += ut_base64
