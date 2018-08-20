@@ -21,6 +21,8 @@
 #ifndef DRING_VIDEOMANAGERI_H
 #define DRING_VIDEOMANAGERI_H
 
+#include "def.h"
+
 #include <memory>
 #include <vector>
 #include <map>
@@ -37,11 +39,11 @@
 
 namespace DRing {
 
-[[deprecated("Replaced by registerSignalHandlers")]]
+DRING_PUBLIC [[deprecated("Replaced by registerSignalHandlers")]]
 void registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 /* FrameBuffer is a generic video frame container */
-struct FrameBuffer {
+struct DRING_PUBLIC FrameBuffer {
     uint8_t* ptr {nullptr};     // data as a plain raw pointer
     std::size_t ptrSize {0};      // size in byte of ptr array
     int format {0};             // as listed by AVPixelFormat (avutils/pixfmt.h)
@@ -50,7 +52,7 @@ struct FrameBuffer {
     std::vector<uint8_t> storage;
 };
 
-struct SinkTarget {
+struct DRING_PUBLIC SinkTarget {
     using FrameBufferPtr = std::unique_ptr<FrameBuffer>;
     std::function<FrameBufferPtr(std::size_t bytes)> pull;
     std::function<void(FrameBufferPtr)> push;
@@ -58,70 +60,70 @@ struct SinkTarget {
 
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
 
-std::vector<std::string> getDeviceList();
-VideoCapabilities getCapabilities(const std::string& name);
-std::map<std::string, std::string> getSettings(const std::string& name);
-void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
-void setDefaultDevice(const std::string& name);
+DRING_PUBLIC std::vector<std::string> getDeviceList();
+DRING_PUBLIC VideoCapabilities getCapabilities(const std::string& name);
+DRING_PUBLIC std::map<std::string, std::string> getSettings(const std::string& name);
+DRING_PUBLIC void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
+DRING_PUBLIC void setDefaultDevice(const std::string& name);
 
-std::map<std::string, std::string> getDeviceParams(const std::string& name);
+DRING_PUBLIC std::map<std::string, std::string> getDeviceParams(const std::string& name);
 
-std::string getDefaultDevice();
-std::string getCurrentCodecName(const std::string& callID);
-void startCamera();
-void stopCamera();
-bool hasCameraStarted();
-bool switchInput(const std::string& resource);
-bool switchToCamera();
-void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
+DRING_PUBLIC std::string getDefaultDevice();
+DRING_PUBLIC std::string getCurrentCodecName(const std::string& callID);
+DRING_PUBLIC void startCamera();
+DRING_PUBLIC void stopCamera();
+DRING_PUBLIC bool hasCameraStarted();
+DRING_PUBLIC bool switchInput(const std::string& resource);
+DRING_PUBLIC bool switchToCamera();
+DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-void addVideoDevice(const std::string &node, const std::vector<std::map<std::string, std::string>>* devInfo=nullptr);
-void removeVideoDevice(const std::string &node);
-void* obtainFrame(int length);
-void releaseFrame(void* frame);
+DRING_PUBLIC void addVideoDevice(const std::string &node, const std::vector<std::map<std::string, std::string>>* devInfo=nullptr);
+DRING_PUBLIC void removeVideoDevice(const std::string &node);
+DRING_PUBLIC void* obtainFrame(int length);
+DRING_PUBLIC void releaseFrame(void* frame);
 #endif
 
-bool getDecodingAccelerated();
-void setDecodingAccelerated(bool state);
+DRING_PUBLIC bool getDecodingAccelerated();
+DRING_PUBLIC void setDecodingAccelerated(bool state);
 
 // Video signal type definitions
-struct VideoSignal {
-        struct DeviceEvent {
+struct DRING_PUBLIC VideoSignal {
+        struct DRING_PUBLIC DeviceEvent {
                 constexpr static const char* name = "DeviceEvent";
                 using cb_type = void(void);
         };
-        struct DecodingStarted {
+        struct DRING_PUBLIC DecodingStarted {
                 constexpr static const char* name = "DecodingStarted";
                 using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, int /*w*/, int /*h*/, bool /*is_mixer*/id);
         };
-        struct DecodingStopped {
+        struct DRING_PUBLIC DecodingStopped {
                 constexpr static const char* name = "DecodingStopped";
                 using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/);
         };
 #if __ANDROID__
-        struct SetParameters {
+        struct DRING_PUBLIC SetParameters {
             constexpr static const char* name = "SetParameters";
             using cb_type = void(const std::string& device, const int format, const int width, const int height, const int rate);
         };
-        struct GetCameraInfo {
+        struct DRING_PUBLIC GetCameraInfo {
             constexpr static const char* name = "GetCameraInfo";
             using cb_type = void(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates);
         };
 #endif
-        struct StartCapture {
+        struct DRING_PUBLIC StartCapture {
             constexpr static const char* name = "StartCapture";
             using cb_type = void(const std::string& /*device*/);
         };
-        struct StopCapture {
+        struct DRING_PUBLIC StopCapture {
             constexpr static const char* name = "StopCapture";
             using cb_type = void(void);
         };
-        struct DeviceAdded {
+        struct DRING_PUBLIC DeviceAdded {
             constexpr static const char* name = "DeviceAdded";
             using cb_type = void(const std::string& /*device*/);
         };
-        struct ParametersChanged {
+        struct DRING_PUBLIC ParametersChanged {
             constexpr static const char* name = "ParametersChanged";
             using cb_type = void(const std::string& /*device*/);
         };

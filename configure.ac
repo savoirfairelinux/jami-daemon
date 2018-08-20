@@ -2,7 +2,7 @@ dnl Ring - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([Ring Daemon],[5.2.0],[ring@gnu.org],[ring])
+AC_INIT([Ring Daemon],[6.0.0],[ring@gnu.org],[ring])
 
 AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2018]])
 AC_REVISION([$Revision$])
@@ -180,6 +180,18 @@ AC_COMPILE_IFELSE(
 [CLANG=yes], [CLANG=no])
 
 AC_MSG_RESULT([$CLANG])
+
+dnl define DRING_BUILD because we are building libring, not using it
+dnl if building shared library, define dring_EXPORTS
+AC_MSG_CHECKING([if compiling shared library])
+CPPFLAGS="${CPPFLAGS} -fvisibility=hidden -DDRING_BUILD "
+AS_IF([test "x$enable_shared" == "xyes"], [
+  RING_SHARED=yes
+  CPPFLAGS="${CPPFLAGS} -Ddring_EXPORTS "
+],[
+  RING_SHARED=no
+])
+AC_MSG_RESULT([$RING_SHARED])
 
 dnl
 dnl  Check for the contrib directory

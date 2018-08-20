@@ -20,6 +20,8 @@
 #ifndef DRING_CALL_H
 #define DRING_CALL_H
 
+#include "def.h"
+
 namespace DRing {
 
 namespace Call {

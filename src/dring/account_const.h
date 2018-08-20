@@ -21,6 +21,8 @@
 #ifndef DRING_ACCOUNT_H
 #define DRING_ACCOUNT_H
 
+#include "def.h"
+
 //Defined in windows.h
 #ifdef ERROR
 #undef ERROR
