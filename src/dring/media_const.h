@@ -20,6 +20,8 @@
 #ifndef DRING_MEDIA_H
 #define DRING_MEDIA_H
 
+#include "def.h"
+
 namespace DRing {
 
 namespace Media {

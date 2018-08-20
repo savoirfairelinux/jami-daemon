@@ -27,6 +27,8 @@
 #include <mutex>
 #include <cstdio>
 
+#include "dring/def.h"
+
 #ifndef _MSC_VER
 #define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
                                                    envvar_ ? envvar_ : "";})
@@ -65,7 +67,7 @@ namespace ring { namespace fileutils {
      * @param parents default mode for all created directories except the last
      */
     bool check_dir(const char *path, mode_t dir=0755, mode_t parents=0755);
-    void set_program_dir(char *program_path);
+    DRING_PUBLIC void set_program_dir(char *program_path); // public because bin/main.cpp uses it
     std::string expand_path(const std::string &path);
     bool isDirectoryWritable(const std::string &directory);
 
