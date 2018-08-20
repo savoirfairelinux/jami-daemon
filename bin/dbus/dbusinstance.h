@@ -21,6 +21,8 @@
 #ifndef __RING_DBUSINSTANCE_H__
 #define __RING_DBUSINSTANCE_H__
 
+#include "dring/def.h"
+
 #include <functional>
 
 #if __GNUC__ >= 5 || (__GNUC__ >=4 && __GNUC_MINOR__ >= 6)
@@ -37,7 +39,7 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-class DBusInstance :
+class DRING_PUBLIC DBusInstance :
     public cx::ring::Ring::Instance_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
