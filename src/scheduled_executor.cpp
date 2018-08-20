@@ -43,7 +43,7 @@ ScheduledExecutor::stop()
         running_ = false;
         jobs_.clear();
     }
-    cv_.notify_one();
+    cv_.notify_all();
 }
 
 void
@@ -54,7 +54,7 @@ ScheduledExecutor::run(Job&& job)
         auto now = clock::now();
         jobs_[now].emplace_back(std::move(job));
     }
-    cv_.notify_one();
+    cv_.notify_all();
 }
 
 std::shared_ptr<Task>
@@ -97,7 +97,7 @@ ScheduledExecutor::schedule(std::shared_ptr<Task> task, time_point t)
             task->run();
         });
     }
-    cv_.notify_one();
+    cv_.notify_all();
 }
 
 void
