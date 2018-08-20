@@ -29,6 +29,7 @@
 #include <map>
 #include <string>
 
+#include "dring/def.h"
 #include "dbus_cpp.h"
 
 #include "dring/datatransfer_interface.h"
@@ -51,7 +52,7 @@
 
 using RingDBusMessage = DBus::Struct<std::string, std::map<std::string, std::string>, uint64_t>;
 
-class DBusConfigurationManager :
+class DRING_PUBLIC DBusConfigurationManager :
     public cx::ring::Ring::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor

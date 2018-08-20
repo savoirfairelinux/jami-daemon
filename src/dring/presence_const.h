@@ -20,6 +20,8 @@
 #ifndef DRING_PRESENCE_CONST_H
 #define DRING_PRESENCE_CONST_H
 
+#include "def.h"
+
 namespace DRing {
 
 namespace Presence {
