@@ -1890,15 +1890,16 @@ RingAccount::doRegister()
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
-        auto shared = shared_from_this();
         RING_DBG("UPnP: waiting for IGD to register RING account");
         setRegistrationState(RegistrationState::TRYING);
-        std::thread{ [shared] {
-            auto this_ = std::static_pointer_cast<RingAccount>(shared).get();
-            if ( not this_->mapPortUPnP())
-                RING_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
-            this_->doRegister_();
-        }}.detach();
+        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+        ThreadPool::instance().run([w = std::weak_ptr<RingAccount>(shared)] {
+            if (auto this_ = w.lock()) {
+                if (not this_->mapPortUPnP())
+                    RING_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
+                this_->doRegister_();
+            }
+        });
     } else
         doRegister_();
 }
@@ -3230,18 +3231,20 @@ RingAccount::igdChanged()
         return;
     if (upnp_) {
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
-        std::thread{[shared] {
-            auto& this_ = *shared.get();
-            auto oldPort = static_cast<in_port_t>(this_.dhtPortUsed_);
-            if (not this_.mapPortUPnP())
-                RING_WARN("UPnP: Could not map DHT port");
-            auto newPort = static_cast<in_port_t>(this_.dhtPortUsed_);
-            if (oldPort != newPort) {
-                RING_WARN("DHT port changed: restarting network");
-                this_.doRegister_();
-            } else
-                this_.dht_.connectivityChanged();
-        }}.detach();
+        ThreadPool::instance().run([w = std::weak_ptr<RingAccount>(shared)] {
+            if (auto sthis = w.lock()) { 
+                auto& this_ = *sthis.get();
+                auto oldPort = static_cast<in_port_t>(this_.dhtPortUsed_);
+                if (not this_.mapPortUPnP())
+                    RING_WARN("UPnP: Could not map DHT port");
+                auto newPort = static_cast<in_port_t>(this_.dhtPortUsed_);
+                if (oldPort != newPort) {
+                    RING_WARN("DHT port changed: restarting network");
+                    this_.doRegister_();
+                } else
+                    this_.dht_.connectivityChanged();
+            }
+        });
     } else
         dht_.connectivityChanged();
 }
