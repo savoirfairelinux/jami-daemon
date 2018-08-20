@@ -21,6 +21,8 @@
 #ifndef DRING_H
 #define DRING_H
 
+#include "def.h"
+
 #include <vector>
 #include <functional>
 #include <string>
@@ -40,7 +42,7 @@ enum InitFlag {
 /**
  * Return the library version as string.
  */
-const char* version() noexcept;
+DRING_PUBLIC const char* version() noexcept;
 
 /**
  * Initialize globals, create underlaying daemon.
@@ -48,18 +50,18 @@ const char* version() noexcept;
  * @param flags  Flags to customize this initialization
  * @returns      true if initialization succeed else false.
  */
-bool init(enum InitFlag flags) noexcept;
+DRING_PUBLIC bool init(enum InitFlag flags) noexcept;
 
 /**
  * Start asynchronously daemon created by init().
  * @returns true if daemon started successfully
  */
-bool start(const std::string& config_file={}) noexcept;
+DRING_PUBLIC bool start(const std::string& config_file={}) noexcept;
 
 /**
  * Stop and freeing any resource allocated by daemon
  */
-void fini() noexcept;
+DRING_PUBLIC void fini() noexcept;
 
 /* External Callback Dynamic Utilities
  *
@@ -82,7 +84,7 @@ void fini() noexcept;
  * Used conjointly with std::shared_ptr to hide the concrete class.
  * See CallbackWrapper template for details.
  */
-class CallbackWrapperBase {};
+class DRING_PUBLIC CallbackWrapperBase {};
 
 /* Concrete class of CallbackWrapperBase.
  * This class wraps callbacks of a specific signature.
@@ -142,7 +144,7 @@ exportable_callback(std::function<typename Ts::cb_type>&& func) {
                           (std::forward<std::function<typename Ts::cb_type>>(func)));
 }
 
-void registerSignalHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+DRING_PUBLIC void registerSignalHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 } // namespace DRing
 
