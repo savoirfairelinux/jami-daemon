@@ -165,7 +165,8 @@ nobase_include_HEADERS= dring/dring.h \
 		dring/account_const.h \
 		dring/call_const.h \
 		dring/presence_const.h \
-		dring/media_const.h
+		dring/media_const.h \
+		dring/def.h
 
 if RING_VIDEO
 nobase_include_HEADERS+= \
