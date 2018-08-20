@@ -460,7 +460,7 @@ TrustStore::setCertificateStatus(std::shared_ptr<crypto::Certificate> cert,
                 if (allowed) // Certificate is re-added after ban, rebuld needed
                     dirty = true;
                 else
-                    allowed_.remove(*s->second.first);
+                    allowed_.remove(*s->second.first, false);
             }
         }
     }
@@ -540,7 +540,7 @@ TrustStore::setStoreCertStatus(const crypto::Certificate& crt, bool status)
     if (status)
         allowed_.add(crt);
     else
-        allowed_.remove(crt);
+        allowed_.remove(crt, false);
 }
 
 void
