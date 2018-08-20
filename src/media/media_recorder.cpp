@@ -416,6 +416,8 @@ MediaRecorder::setupAudioOutput()
                 encoderStream) < 0) {
             RING_ERR() << "Failed to initialize audio filter";
             encoderStream.format = -1; // invalidate stream
+        } else {
+            encoderStream = audioFilter_->getOutputParams();
         }
         break;
     case 2: // mix both audio streams
