@@ -20,6 +20,8 @@
 #ifndef DRING_SECURITY_H
 #define DRING_SECURITY_H
 
+#include "def.h"
+
 namespace DRing {
 
 namespace Certificate {
