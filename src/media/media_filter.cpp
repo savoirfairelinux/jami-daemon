@@ -50,15 +50,6 @@ MediaFilter::getFilterDesc() const
 }
 
 int
-MediaFilter::initialize(const std::string& filterDesc, MediaStream msp)
-{
-    std::vector<MediaStream> msps;
-    msps.push_back(msp);
-    desc_ = filterDesc;
-    return initialize(desc_, msps);
-}
-
-int
 MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> msps)
 {
     int ret = 0;
@@ -94,25 +85,17 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
         return fail("Size mismatch between number of inputs in filter graph and input parameter array",
                     AVERROR(EINVAL));
 
-    if (count > 1) {
-        /* Complex filter */
-        for (AVFilterInOut* current = inputs.get(); current; current = current->next) {
-            if (!current->name)
-                return fail("Complex filters' inputs require names", AVERROR(EINVAL));
-            std::string name = current->name;
-            const auto& it = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp)
-                    { return msp.name == name; });
-            if (it != msps.end()) {
-                if ((ret = initInputFilter(current, *it, false)) < 0) {
-                    std::string msg = "Failed to find matching parameters for: " + name;
-                    return fail(msg, ret);
-                }
+    for (AVFilterInOut* current = inputs.get(); current; current = current->next) {
+        if (!current->name)
+            return fail("input name required", AVERROR(EINVAL));
+        std::string name = current->name;
+        const auto& it = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp)
+                { return msp.name == name; });
+        if (it != msps.end()) {
+            if ((ret = initInputFilter(current, *it)) < 0) {
+                std::string msg = "Failed to find matching parameters for: " + name;
+                return fail(msg, ret);
             }
-        }
-    } else {
-        /* Simple filter */
-        if ((ret = initInputFilter(inputs.get(), msps[0], true)) < 0) {
-            return fail("Failed to create input for filter graph", ret);
         }
     }
 
@@ -122,12 +105,6 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
     RING_DBG() << "Filter graph initialized with: " << desc_;
     initialized_ = true;
     return 0;
-}
-
-MediaStream
-MediaFilter::getInputParams() const
-{
-    return getInputParams("default");
 }
 
 MediaStream
@@ -172,12 +149,6 @@ MediaFilter::getOutputParams() const
         break;
     }
     return output;
-}
-
-int
-MediaFilter::feedInput(AVFrame* frame)
-{
-    return feedInput(frame, "default");
 }
 
 int
@@ -228,19 +199,6 @@ MediaFilter::readOutput()
     return nullptr;
 }
 
-AVFrame*
-MediaFilter::apply(AVFrame* frame)
-{
-    if (inputs_.size() != 1) {
-        RING_ERR() << "Cannot use apply(AVFrame*) shortcut with a complex filter";
-        return nullptr;
-    }
-
-    if (feedInput(frame) < 0)
-        return nullptr;
-    return readOutput();
-}
-
 int
 MediaFilter::initOutputFilter(AVFilterInOut* out)
 {
@@ -270,7 +228,7 @@ MediaFilter::initOutputFilter(AVFilterInOut* out)
 }
 
 int
-MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp, bool simple)
+MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp)
 {
     int ret = 0;
     AVBufferSrcParameters* params = av_buffersrc_parameters_alloc();
@@ -296,10 +254,7 @@ MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp, bool simple)
     AVFilterContext* buffersrcCtx = nullptr;
     if (buffersrc) {
         char name[128];
-        if (simple)
-            snprintf(name, sizeof(name), "buffersrc");
-        else
-            snprintf(name, sizeof(name), "buffersrc_%s_%d", in->name, in->pad_idx);
+        snprintf(name, sizeof(name), "buffersrc_%s_%d", in->name, in->pad_idx);
         buffersrcCtx = avfilter_graph_alloc_filter(graph_, buffersrc, name);
     }
     if (!buffersrcCtx) {
@@ -318,10 +273,7 @@ MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp, bool simple)
         return fail("Failed to link buffer source to graph", ret);
 
     inputs_.push_back(buffersrcCtx);
-    if (simple)
-        msp.name = "default";
-    else
-        msp.name = in->name;
+    msp.name = in->name;
     inputParams_.push_back(msp);
     return ret;
 }

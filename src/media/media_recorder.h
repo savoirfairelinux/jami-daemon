@@ -79,7 +79,7 @@ class MediaRecorder {
 
         int initRecord();
         MediaStream setupVideoOutput();
-        std::string buildVideoFilter();
+        std::string buildMultiStreamVideoFilter(int nbStreams);
         MediaStream setupAudioOutput();
         void emptyFilterGraph();
         int sendToEncoder(AVFrame* frame, int streamIdx);
