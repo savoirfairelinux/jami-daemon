@@ -38,18 +38,14 @@ public:
     void tearDown();
 
 private:
-    void testSimpleVideoFilter();
-    void testSimpleAudioFilter();
-    void testComplexVideoFilter();
-    void testSimpleFilterParams();
-    void testComplexFilterParams();
+    void testAudioFilter();
+    void testVideoFilter();
+    void testFilterParams();
 
     CPPUNIT_TEST_SUITE(MediaFilterTest);
-    CPPUNIT_TEST(testSimpleVideoFilter);
-    CPPUNIT_TEST(testSimpleAudioFilter);
-    CPPUNIT_TEST(testComplexVideoFilter);
-    CPPUNIT_TEST(testSimpleFilterParams);
-    CPPUNIT_TEST(testComplexFilterParams);
+    CPPUNIT_TEST(testAudioFilter);
+    CPPUNIT_TEST(testVideoFilter);
+    CPPUNIT_TEST(testFilterParams);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaFilter> filter_;
@@ -113,50 +109,16 @@ fill_samples(uint16_t* samples, int sampleRate, int nbSamples, int nbChannels, f
 }
 
 void
-MediaFilterTest::testSimpleVideoFilter()
+MediaFilterTest::testAudioFilter()
 {
-    std::string filterSpec = "scale=200x100";
-
-    // constants
-    const constexpr int width = 320;
-    const constexpr int height = 240;
-    const constexpr AVPixelFormat format = AV_PIX_FMT_YUV420P;
-
-    // prepare video frame
-    frame_ = av_frame_alloc();
-    frame_->format = format;
-    frame_->width = width;
-    frame_->height = height;
-
-    // construct the filter parameters
-    rational<int> one = rational<int>(1);
-    auto params = MediaStream("vf", format, one, width, height, one, one);
-
-    // allocate and fill frame buffers
-    CPPUNIT_ASSERT(av_frame_get_buffer(frame_, 32) >= 0);
-    fill_yuv_image(frame_->data, frame_->linesize, frame_->width, frame_->height, 0);
-
-    // prepare filter
-    CPPUNIT_ASSERT(filter_->initialize(filterSpec, params) >= 0);
-
-    // apply filter
-    frame_ = filter_->apply(frame_);
-    CPPUNIT_ASSERT(frame_);
-
-    // check if the filter worked
-    CPPUNIT_ASSERT(frame_->width == 200 && frame_->height == 100);
-}
-
-void
-MediaFilterTest::testSimpleAudioFilter()
-{
-    std::string filterSpec = "aformat=sample_fmts=u8";
+    std::string filterSpec = "[in1] aformat=sample_fmts=u8";
 
     // constants
     const constexpr int nbSamples = 100;
     const constexpr int64_t channelLayout = AV_CH_LAYOUT_STEREO;
     const constexpr int sampleRate = 44100;
     const constexpr enum AVSampleFormat format = AV_SAMPLE_FMT_S16;
+
 
     // prepare audio frame
     frame_ = av_frame_alloc();
@@ -167,17 +129,21 @@ MediaFilterTest::testSimpleAudioFilter()
     frame_->channels = av_get_channel_layout_nb_channels(channelLayout);
 
     // construct the filter parameters
-    auto params = MediaStream("af", format, rational<int>(1, 1), sampleRate, frame_->channels);
+    auto params = MediaStream("in1", format, rational<int>(1, sampleRate), sampleRate, frame_->channels);
 
     // allocate and fill frame buffers
     CPPUNIT_ASSERT(av_frame_get_buffer(frame_, 0) >= 0);
     fill_samples(reinterpret_cast<uint16_t*>(frame_->data[0]), sampleRate, nbSamples, frame_->channels, 440.0);
 
     // prepare filter
-    CPPUNIT_ASSERT(filter_->initialize(filterSpec, params) >= 0);
+    std::vector<MediaStream> vec;
+    vec.push_back(params);
+    CPPUNIT_ASSERT(filter_->initialize(filterSpec, vec) >= 0);
 
     // apply filter
-    frame_ = filter_->apply(frame_);
+    CPPUNIT_ASSERT(filter_->feedInput(frame_, "in1") >= 0);
+    av_frame_free(&frame_);
+    frame_ = filter_->readOutput();
     CPPUNIT_ASSERT(frame_);
 
     // check if the filter worked
@@ -185,7 +151,7 @@ MediaFilterTest::testSimpleAudioFilter()
 }
 
 void
-MediaFilterTest::testComplexVideoFilter()
+MediaFilterTest::testVideoFilter()
 {
     std::string filterSpec = "[main] [top] overlay=main_w-overlay_w-10:main_h-overlay_h-10";
     std::string main = "main";
@@ -238,36 +204,7 @@ MediaFilterTest::testComplexVideoFilter()
 }
 
 void
-MediaFilterTest::testSimpleFilterParams()
-{
-    std::string filterSpec = "scale=200x100";
-
-    // constants
-    const constexpr int width = 320;
-    const constexpr int height = 240;
-    const constexpr AVPixelFormat format = AV_PIX_FMT_YUV420P;
-
-    // construct the filter parameters
-    rational<int> one = rational<int>(1);
-    auto params = MediaStream("vf", format, one, width, height, one, one);
-
-    // returned params should be invalid
-    CPPUNIT_ASSERT(filter_->getOutputParams().format < 0);
-
-    // prepare filter
-    CPPUNIT_ASSERT(filter_->initialize(filterSpec, params) >= 0);
-
-    // check input params
-    auto msin = filter_->getInputParams();
-    CPPUNIT_ASSERT(msin.format == format && msin.width == width && msin.height == height);
-
-    // output params should now be valid
-    auto msout = filter_->getOutputParams();
-    CPPUNIT_ASSERT(msout.format >= 0 && msout.width > 0 && msout.height > 0);
-}
-
-void
-MediaFilterTest::testComplexFilterParams()
+MediaFilterTest::testFilterParams()
 {
     std::string filterSpec = "[main] [top] overlay=main_w-overlay_w-10:main_h-overlay_h-10";
 
