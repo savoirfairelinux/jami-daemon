@@ -339,43 +339,43 @@ MediaRecorder::setupVideoOutput()
     MediaStream encoderStream;
     const MediaStream& peer = streams_[true][true];
     const MediaStream& local = streams_[true][false];
+    auto peerIsValid = peer.width > 0 && peer.height > 0;
+    int ret = -1;
 
     // vp8 supports only yuv420p
     videoFilter_.reset(new MediaFilter);
     switch (nbReceivedVideoStreams_) {
     case 1:
-        encoderStream = (peer.width > 0 && peer.height > 0 ? peer : local);
-        if (videoFilter_->initialize("format=pix_fmts=yuv420p", encoderStream) < 0) {
-            RING_ERR() << "Failed to initialize video filter";
-            encoderStream.format = -1; // invalidate stream
-        } else {
-            encoderStream = videoFilter_->getOutputParams();
-        }
+        ret = videoFilter_->initialize("[v:main] format=pix_fmts=yuv420p",
+            std::vector<MediaStream>{peerIsValid ? peer : local});
         break;
     case 2: // overlay local video over peer video
-        if (videoFilter_->initialize(buildVideoFilter(),
-                std::vector<MediaStream>{peer, local}) < 0) {
-            RING_ERR() << "Failed to initialize video filter";
-            encoderStream.format = -1; // invalidate stream
-        } else {
-            encoderStream = videoFilter_->getOutputParams();
-        }
+        ret = videoFilter_->initialize(buildVideoFilter(nbReceivedVideoStreams_),
+            std::vector<MediaStream>{peer, local});
         break;
     default:
         RING_ERR() << "Recording more than 2 video streams is not supported";
         break;
     }
 
-    if (encoderStream.format < 0)
-        return encoderStream;
+    if (ret >= 0) {
+        encoderStream = videoFilter_->getOutputParams();
+        RING_DBG() << "Recorder output: " << encoderStream;
+    } else {
+        RING_ERR() << "Failed to initialize video filter";
+    }
 
-    RING_DBG() << "Recorder output: " << encoderStream;
     return encoderStream;
 }
 
 std::string
-MediaRecorder::buildVideoFilter()
+MediaRecorder::buildMultiStreamVideoFilter(int nbStreams)
 {
+    if (nbStreams != 2) {
+        // Filters with more than 2 video streams are not supported (yet)
+        return "";
+    }
+
     std::stringstream v;
 
     const MediaStream& p = streams_[true][true];
@@ -406,39 +406,33 @@ MediaRecorder::setupAudioOutput()
     MediaStream encoderStream;
     const MediaStream& peer = streams_[false][true];
     const MediaStream& local = streams_[false][false];
+    auto peerIsValid = peer.sampleRate > 0 && peer.nbChannels > 0;
+    std::string filter = "aresample=osr=48000:ocl=stereo:osf=s16";
+    int ret = -1;
 
     // resample to common audio format, so any player can play the file
     audioFilter_.reset(new MediaFilter);
     switch (nbReceivedAudioStreams_) {
     case 1:
-        encoderStream = (peer.sampleRate > 0 && peer.nbChannels > 0 ? peer : local);
-        if (audioFilter_->initialize("aresample=osr=48000:ocl=stereo:osf=s16",
-                encoderStream) < 0) {
-            RING_ERR() << "Failed to initialize audio filter";
-            encoderStream.format = -1; // invalidate stream
-        } else {
-            encoderStream = audioFilter_->getOutputParams();
-        }
+        filter.insert(0, "[a:1] ");
+        ret = audioFilter_->initialize(filter, std::vector<MediaStream>{peerIsValid ? peer : local});
         break;
     case 2: // mix both audio streams
-        if (audioFilter_->initialize("[a:1][a:2] amix,aresample=osr=48000:ocl=stereo:osf=s16",
-                std::vector<MediaStream>{peer, local}) < 0) {
-            RING_ERR() << "Failed to initialize audio filter";
-            encoderStream.format = -1; // invalidate stream
-        } else {
-            encoderStream = audioFilter_->getOutputParams();
-        }
+        filter.insert(0, "[a:1][a:2] amix,");
+        ret = audioFilter_->initialize(filter, std::vector<MediaStream>{peer, local});
         break;
     default:
         RING_ERR() << "Recording more than 2 audio streams is not supported";
-        encoderStream.format = -1; // invalidate stream
         break;
     }
 
-    if (encoderStream.format < 0)
-        return encoderStream;
+    if (ret >= 0) {
+        encoderStream = audioFilter_->getOutputParams();
+        RING_DBG() << "Recorder output: " << encoderStream;
+    } else {
+        RING_ERR() << "Failed to initialize audio filter";
+    }
 
-    RING_DBG() << "Recorder output: " << encoderStream;
     return encoderStream;
 }
 
