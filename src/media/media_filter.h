@@ -37,21 +37,22 @@ namespace ring {
 /**
  * Provides access to libavfilter.
  *
- * Can be used for simple filters (1 input, 1 output), or complex filters (multiple inputs, 1 output).
+ * Can be used for filters with unlimited number of inputs.
  * Multiple outputs are not supported. They add complexity for little gain.
  *
  * For information on how to write a filter graph description, see:
  * https://ffmpeg.org/ffmpeg-filters.html
  * http://trac.ffmpeg.org/wiki/FilteringGuide
  *
- * For complex filters, it is required to name each filter graph input. These names are used to feed the correct input.
- * It is the same name that will be passed as second argument to feedInput(AVFrame*, std::string). This is not required
- * for simple filters, as there is only one input.
+ * It is required to name each filter graph input. These names are used to feed the correct input.
+ * It is the same name that will be passed as second argument to feedInput(AVFrame*, std::string).
  *
- * Simple filter: "scale=320:240"
- * Scales the input to 320x240. No need to specify input names.
+ * Examples:
  *
- * Complex filter: "[in1] scale=iw/4:ih/4 [mid]; [in2] [mid] overlay=main_w-overlay_w-10:main_h-overlay_h-10"
+ * - "[in1] scale=320:240"
+ * Scales the input to 320x240.
+ *
+ * - "[in1] scale=iw/4:ih/4 [mid]; [in2] [mid] overlay=main_w-overlay_w-10:main_h-overlay_h-10"
  * in1 will be scaled to 1/16th its size and placed over in2 in the bottom right corner. When feeding frames to
  * the filter, you need to specify whether the frame is destined for in1 or in2.
  */
@@ -66,24 +67,9 @@ class MediaFilter {
         std::string getFilterDesc() const;
 
         /**
-         * Initializes the filter graph with 1 input.
-         *
-         * NOTE This method will fail if @filterDesc has more than 1 input.
-         * NOTE Wraps @msp in a vector and calls initialize.
-         */
-        int initialize(const std::string& filterDesc, MediaStream msp);
-
-        /**
          * Initializes the filter graph with one or more inputs and one output. Returns a negative code on error.
          */
         int initialize(const std::string& filterDesc, std::vector<MediaStream> msps);
-
-        /**
-         * Returns a MediaStream object describing the input.
-         *
-         * NOTE This is a shortcut for simple filters and will fail when called on a complex filter.
-         */
-        MediaStream getInputParams() const;
 
         /**
          * Returns a MediaStream object describing the input specified by @inputName.
@@ -96,14 +82,6 @@ class MediaFilter {
          * When called in an invalid state, the returned format will be invalid (less than 0).
          */
         MediaStream getOutputParams() const;
-
-        /**
-         * Give the filter graph an input frame. Caller is responsible for freeing the frame.
-         *
-         * NOTE This is a wrapper for feedInput(AVFrame*, std::string)
-         * NOTE This is for filters with 1 input.
-         */
-        int feedInput(AVFrame* frame);
 
         /**
          * Give the specified source filter an input frame. Caller is responsible for freeing the frame.
@@ -121,16 +99,6 @@ class MediaFilter {
          */
         AVFrame* readOutput();
 
-        /**
-         * Passes a frame through a simple filter (1 input, 1 output).
-         *
-         * This is a shortcut for feedInput(AVFrame*)+readOutput().
-         *
-         * NOTE Returns nullptr if the filter graph has multiple inputs/outputs.
-         * NOTE Caller is responsible for freeing the input and output frames.
-         */
-        AVFrame* apply(AVFrame* frame);
-
     private:
         NON_COPYABLE(MediaFilter);
 
@@ -142,7 +110,7 @@ class MediaFilter {
         /**
          * Initializes an input of filter graph.
          */
-        int initInputFilter(AVFilterInOut* in, MediaStream msp, bool simple);
+        int initInputFilter(AVFilterInOut* in, MediaStream msp);
 
         /**
          * Convenience method that prints @msg and returns err.
