@@ -104,6 +104,18 @@ struct MediaStream {
             break;
         }
     }
+
+    MediaStream(const MediaStream& other) = default;
+
+    bool isValid() const
+    {
+        if (format < 0)
+            return false;
+        if (isVideo)
+            return width > 0 && height > 0;
+        else
+            return sampleRate > 0 && nbChannels > 0;
+    }
 };
 
 inline std::ostream& operator<<(std::ostream& os, const MediaStream& ms)
