@@ -306,7 +306,7 @@ AudioBuffer::toAVFrame() const
     frame->sample_rate = getSampleRate();
 
     if (av_frame_get_buffer(frame, 0) < 0) {
-        RING_ERR() << "Failed to audio frame";
+        RING_ERR() << "Failed to allocate audio frame";
         av_frame_free(&frame);
         return nullptr;
     }
