@@ -64,7 +64,7 @@ MediaDecoder::~MediaDecoder()
         av_buffer_unref(&decoderCtx_->hw_device_ctx);
 #endif
     if (decoderCtx_)
-        avcodec_close(decoderCtx_);
+        avcodec_free_context(&decoderCtx_);
     if (inputCtx_)
         avformat_close_input(&inputCtx_);
 

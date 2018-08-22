@@ -54,8 +54,7 @@ MediaEncoder::~MediaEncoder()
             av_write_trailer(outputCtx_);
 
         for (auto encoderCtx : encoders_)
-            if (encoderCtx)
-                avcodec_close(encoderCtx);
+            avcodec_free_context(&encoderCtx);
 
         avformat_free_context(outputCtx_);
     }
