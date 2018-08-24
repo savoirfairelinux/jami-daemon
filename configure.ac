@@ -478,7 +478,7 @@ AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware a
 AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
   dnl if new hwaccel api is found, activate Ring's hardware accel
   dnl prefix needs to be different from the one above
-  PKG_CHECK_MODULES(AVUTIL, libavutil >= 55.75.100, [
+  PKG_CHECK_MODULES(AVHWACCEL, libavutil >= 55.75.100 libavcodec >= 58.4.100, [
     ring_accel="yes"
     AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled in Ring])
     AS_IF([test "${SYS}" = "linux" && test -z "${HAVE_ANDROID_FALSE}"], [
