@@ -22,15 +22,20 @@
 
 #include "libav_deps.h"
 
+extern "C" {
+#include <libavutil/hwcontext.h>
+}
+
 #include <string>
 #include <vector>
 
 namespace ring { namespace video {
 
 struct HardwareAccel {
-        std::string name;
-        AVPixelFormat format;
-        std::vector<AVCodecID> supportedCodecs;
+    std::string name;
+    AVPixelFormat format;
+    AVHWDeviceType type;
+    std::string info;
 };
 
 const HardwareAccel setupHardwareDecoding(AVCodecContext* codecCtx);
