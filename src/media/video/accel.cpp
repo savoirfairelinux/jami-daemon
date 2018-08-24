@@ -46,7 +46,6 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
         }
     }
 
-    RING_WARN("'%s' acceleration not supported, falling back to software decoding", accel->name.c_str());
     accel->name = {}; // don't use accel
     return fallback;
 }
@@ -84,32 +83,31 @@ transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame&
 }
 
 static int
-initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
+initDevice(HardwareAccel* accel, AVCodecContext* codecCtx)
 {
     int ret = 0;
     AVBufferRef* hardwareDeviceCtx = nullptr;
-    auto hwType = av_hwdevice_find_type_by_name(accel.name.c_str());
 #ifdef HAVE_VAAPI_ACCEL_DRM
     // default DRM device may not work on multi GPU computers, so check all possible values
-    if (accel.name == "vaapi") {
+    if (accel->name == "vaapi") {
         const std::string path = "/dev/dri/";
         auto files = ring::fileutils::readDirectory(path);
-        // renderD* is preferred over card*
+        // renderD* is preferred over card* so sort in reverse alphabetical
         std::sort(files.rbegin(), files.rend());
         for (auto& entry : files) {
             std::string deviceName = path + entry;
-            if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, deviceName.c_str(), nullptr, 0)) >= 0) {
+            if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, accel->type, deviceName.c_str(), nullptr, 0)) >= 0) {
                 codecCtx->hw_device_ctx = hardwareDeviceCtx;
-                RING_DBG("Using '%s' hardware acceleration with device '%s'", accel.name.c_str(), deviceName.c_str());
+                accel->info = deviceName;
                 return ret;
             }
         }
     }
 #endif
     // default device (nullptr) works for most cases
-    if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, nullptr, nullptr, 0)) >= 0) {
+    if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, accel->type, nullptr, nullptr, 0)) >= 0) {
         codecCtx->hw_device_ctx = hardwareDeviceCtx;
-        RING_DBG("Using '%s' hardware acceleration", accel.name.c_str());
+        accel->info = "default device";
     }
 
     return ret;
@@ -118,33 +116,42 @@ initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
 const HardwareAccel
 setupHardwareDecoding(AVCodecContext* codecCtx)
 {
-    /**
-     * This array represents FFmpeg's hwaccels, along with their pixel format
-     * and their potentially supported codecs. Each item contains:
-     * - Name (must match the name used in FFmpeg)
-     * - Pixel format (tells FFmpeg which hwaccel to use)
-     * - Array of AVCodecID (potential codecs that can be accelerated by the hwaccel)
-     * Note: an empty name means the video isn't accelerated
-     */
-    const HardwareAccel accels[] = {
-        { "vaapi", AV_PIX_FMT_VAAPI, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
-        { "vdpau", AV_PIX_FMT_VDPAU, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
-        { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
-    };
+    bool success = false;
+    HardwareAccel accel;
+    for (int i = 0;; ++i) {
+        const AVCodecHWConfig *config = avcodec_get_hw_config(codecCtx->codec, i);
+        if (!config)
+            break; // no acceleration for this codec
 
-    for (auto accel : accels) {
-        if (std::find(accel.supportedCodecs.begin(), accel.supportedCodecs.end(),
-                static_cast<AVCodecID>(codecCtx->codec_id)) != accel.supportedCodecs.end()) {
-            if (initDevice(accel, codecCtx) >= 0) {
-                codecCtx->get_format = getFormatCb;
-                codecCtx->thread_safe_callbacks = 1;
-                return accel;
+        accel.name = av_hwdevice_get_type_name(config->device_type);
+        accel.format = config->pix_fmt;
+        accel.type = config->device_type;
+        accel.info = "";
+
+        if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_DEVICE_CTX) {
+            if (initDevice(&accel, codecCtx) >= 0) {
+                success = true;
+                break;
             }
+        } else if (config->methods & AV_CODEC_HW_CONFIG_METHOD_HW_FRAMES_CTX) {
+            // TODO
+        } else if (config->methods & AV_CODEC_HW_CONFIG_METHOD_INTERNAL) {
+            // nothing to do
+            success = true;
+            break;
         }
     }
 
-    RING_WARN("Not using hardware accelerated decoding");
-    return {};
+    if (success) {
+        RING_DBG() << "Using hardware decoding for " << codecCtx->codec->name
+            << " with " << accel.info;
+        codecCtx->get_format = getFormatCb;
+        codecCtx->thread_safe_callbacks = 1;
+        return accel;
+    } else {
+        RING_WARN() << "Not using hardware decoding for " << codecCtx->codec->name;
+        return {};
+    }
 }
 
 }} // namespace ring::video
