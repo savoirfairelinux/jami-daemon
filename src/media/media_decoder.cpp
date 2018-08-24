@@ -49,7 +49,7 @@ const unsigned jitterBufferMaxSize_ {1500};
 // maximum time a packet can be queued
 const constexpr auto jitterBufferMaxDelay_ = std::chrono::milliseconds(50);
 // maximum number of times accelerated decoding can fail in a row before falling back to software
-const constexpr unsigned MAX_ACCEL_FAILURES { 5 };
+const constexpr unsigned MAX_ACCEL_FAILURES { 2 };
 
 MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
