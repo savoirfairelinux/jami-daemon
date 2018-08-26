@@ -55,6 +55,7 @@ class Conference;
 class AudioLoop;
 class IceTransportFactory;
 class DataTransferFacade;
+class RingAccount;
 
 /** Manager (controller) of Ring daemon */
 class Manager {
@@ -305,6 +306,7 @@ class Manager {
          * Save config to file
          */
         void saveConfig();
+        void saveConfig(const std::shared_ptr<RingAccount>&);
 
         /**
          * Play a ringtone
