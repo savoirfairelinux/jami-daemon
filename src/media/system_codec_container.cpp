@@ -72,6 +72,14 @@ SystemCodecContainer::initCodecConfig()
                                                defaultBitrate,
                                                minVP8,
                                                maxVP8),
+
+       std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP9,
+                                              "VP9", "libvpx",
+                                              CODEC_ENCODER_DECODER,
+                                              defaultBitrate,
+                                              minVP8,
+                                              maxVP8),
+
 #endif
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,

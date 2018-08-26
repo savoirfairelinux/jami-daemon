@@ -138,6 +138,7 @@ MediaEncoder::openLiveOutput(const std::string& filename,
         throw MediaEncoderException("No output format");
     }
 
+    outputCtx_->strict_std_compliance = FF_COMPLIANCE_EXPERIMENTAL;
     outputCtx_->oformat = oformat;
 #if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(58, 7, 100)
     // c_str guarantees null termination
@@ -224,8 +225,9 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         // Using information given on this page:
         // http://www.webmproject.org/docs/encoder-parameters/
         av_opt_set(encoderCtx->priv_data, "quality", "realtime", 0);
+        av_opt_set_int(encoderCtx->priv_data, "speed", 5, 0);
         av_opt_set_int(encoderCtx->priv_data, "error-resilient", 1, 0);
-        av_opt_set_int(encoderCtx->priv_data, "cpu-used", 7, 0); // value obtained from testing
+        av_opt_set_int(encoderCtx->priv_data, "cpu-used", encoderCtx->thread_count, 0); // 7: value obtained from testing
         av_opt_set_int(encoderCtx->priv_data, "lag-in-frames", 0, 0);
         // allow encoder to drop frames if buffers are full and
         // to undershoot target bitrate to lessen strain on resources
@@ -235,7 +237,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         encoderCtx->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
         encoderCtx->qmin = 4;
         encoderCtx->qmax = 56;
-        encoderCtx->rc_buffer_size = maxBitrate;
+        encoderCtx->rc_buffer_size = maxBitrate*2;
         encoderCtx->bit_rate = maxBitrate;
         if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
             av_opt_set_int(encoderCtx->priv_data, "crf", crf, 0);
@@ -243,6 +245,18 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         } else {
             RING_DBG("Using Max bitrate %d", maxBitrate);
         }
+    } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_VP9) {
+        av_opt_set(encoderCtx->priv_data, "quality", "realtime", 0);
+        av_opt_set_int(encoderCtx->priv_data, "speed", 5, 0);
+        av_opt_set_int(encoderCtx->priv_data, "error-resilient", 1, 0);
+        av_opt_set_int(encoderCtx->priv_data, "tile-columns", 4, 0);
+        av_opt_set_int(encoderCtx->priv_data, "frame-parallel", 1, 0);
+        av_opt_set_int(encoderCtx->priv_data, "row-mt", 1, 0);
+        av_opt_set_int(encoderCtx->priv_data, "max-intra-rate", 300, 0);
+        av_opt_set_int(encoderCtx->priv_data, "lag-in-frames", 0, 0);
+        av_opt_set_int(encoderCtx->priv_data, "cpu-used", encoderCtx->thread_count, 0); // 7: value obtained from testing
+        encoderCtx->qmin = 4;
+        encoderCtx->qmax = 56;
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
         // For MPEG4 :
         // No CRF avaiable.
@@ -494,7 +508,7 @@ AVCodecContext* MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool i
     if (encoderName == nullptr)
         encoderName = "encoder?";
 
-    encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), is_video ? 16u : 4u);
+    encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), is_video ? 7u : 2u);
     RING_DBG("[%s] Using %d threads", encoderName, encoderCtx->thread_count);
 
     if (is_video) {

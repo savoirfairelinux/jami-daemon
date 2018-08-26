@@ -54,6 +54,7 @@ FFMPEGCONF += \
 	--enable-encoder=mpeg4 \
 	--enable-decoder=mpeg4 \
 	--enable-encoder=libvpx_vp8 \
+	--enable-encoder=libvpx_vp9 \
 	--enable-decoder=vp8 \
 	--enable-decoder=vp9 \
 	--enable-encoder=h263 \
