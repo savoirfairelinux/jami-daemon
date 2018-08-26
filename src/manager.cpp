@@ -1675,6 +1675,22 @@ void Manager::pollEvents()
 }
 
 //THREAD=Main
+
+void
+Manager::saveConfig(const std::shared_ptr<RingAccount>& account)
+{
+    try {
+        YAML::Emitter accountOut;
+        account->serialize(accountOut);
+        auto accountConfig = account->getPath() + DIR_SEPARATOR_STR + "config.yml";
+        std::ofstream fout(accountConfig);
+        fout << accountOut.c_str();
+        RING_DBG("Exported Ring account to %s", accountConfig.c_str());
+    } catch (const std::exception& e) {
+        RING_ERR("Error exporting Ring account: %s", e.what());
+    }
+}
+
 void
 Manager::saveConfig()
 {
@@ -1696,16 +1712,7 @@ Manager::saveConfig()
 
         for (const auto& account : accountFactory.getAllAccounts()) {
             if (auto ringAccount = std::dynamic_pointer_cast<RingAccount>(account)) {
-                try {
-                    YAML::Emitter accountOut;
-                    ringAccount->serialize(accountOut);
-                    auto accountConfig = ringAccount->getPath() + DIR_SEPARATOR_STR + "config.yml";
-                    std::ofstream fout(accountConfig);
-                    fout << accountOut.c_str();
-                    RING_DBG("Exported Ring account to %s", accountConfig.c_str());
-                } catch (const std::exception& e) {
-                    RING_ERR("Error exporting Ring account: %s", e.what());
-                }
+                saveConfig(ringAccount);
             } else {
                 account->serialize(out);
             }
@@ -2589,7 +2596,11 @@ Manager::setAccountDetails(const std::string& accountID,
     account->doUnregister([&](bool /* transport_free */) {
         account->setAccountDetails(details);
         // Serialize configuration to disk once it is done
-        saveConfig();
+        if (auto ringAccount = std::dynamic_pointer_cast<RingAccount>(account)) {
+            saveConfig(ringAccount);
+        } else {
+            saveConfig();
+        }
 
         if (account->isUsable())
             account->doRegister();
@@ -2905,7 +2916,7 @@ Manager::sendRegister(const std::string& accountID, bool enable)
     acc->setEnabled(enable);
     acc->loadConfig();
 
-    Manager::instance().saveConfig();
+    saveConfig();
 
     if (acc->isEnabled()) {
         acc->doRegister();
