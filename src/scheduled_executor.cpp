@@ -106,11 +106,13 @@ ScheduledExecutor::loop()
     std::vector<Job> jobs;
     {
         std::unique_lock<std::mutex> lock(jobLock_);
-        if (jobs_.empty())
-            cv_.wait(lock);
-        else
-            cv_.wait_until(lock, jobs_.begin()->first);
-        if (not running_ or jobs_.empty() or jobs_.begin()->first > clock::now())
+        while (running_ and (jobs_.empty() or jobs_.begin()->first > clock::now())) {
+            if (jobs_.empty())
+                cv_.wait(lock);
+            else
+                cv_.wait_until(lock, jobs_.begin()->first);
+        }
+        if (not running_)
             return;
         jobs = std::move(jobs_.begin()->second);
         jobs_.erase(jobs_.begin());
