@@ -41,12 +41,12 @@ namespace ring { namespace video {
 struct android_fmt {
     int             code;
     std::string     name;
-    enum VideoPixelFormat ring_format;
+    int ring_format;
 };
 
 static const std::array<android_fmt, 2> and_formats {
-    android_fmt { 17,           "NV21",     VIDEO_PIXFMT_NV21    },
-    android_fmt { 842094169,    "YUV420",   VIDEO_PIXFMT_YUV420P },
+    android_fmt { 17,           "NV21",     AV_PIX_FMT_NV21    },
+    android_fmt { 842094169,    "YUV420",   AV_PIX_FMT_YUV420P },
 };
 
 class VideoDeviceImpl {

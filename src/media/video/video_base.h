@@ -36,6 +36,10 @@
 #include <mutex>
 #include <ciso646> // fix windows compiler bug
 
+extern "C" {
+#include <libavutil/pixfmt.h>
+}
+
 struct AVPacket;
 struct AVDictionary;
 
@@ -48,14 +52,6 @@ class VideoFrame;
 }
 
 namespace ring { namespace video {
-
-enum VideoPixelFormat {
-    VIDEO_PIXFMT_BGRA = -1,
-    VIDEO_PIXFMT_YUV420P = -2,
-    VIDEO_PIXFMT_YUYV422 = -3,
-    VIDEO_PIXFMT_RGBA = -4,
-    VIDEO_PIXFMT_NV21 = -5,
-};
 
 template <typename T> class Observer;
 template <typename T> class Observable;
