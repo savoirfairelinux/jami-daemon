@@ -37,9 +37,9 @@ typedef struct
 
 static const std::array<ios_fmt, 4> ios_formats
 {
-    ios_fmt { "RGBA",       VIDEO_PIXFMT_RGBA       },
-    ios_fmt { "BGRA",       VIDEO_PIXFMT_BGRA       },
-    ios_fmt { "YUV420P",    VIDEO_PIXFMT_YUV420P    }
+    ios_fmt { "RGBA",       AV_PIX_FMT_RGBA       },
+    ios_fmt { "BGRA",       AV_PIX_FMT_BGRA       },
+    ios_fmt { "YUV420P",    AV_PIX_FMT_YUV420P    }
 };
 
 class VideoDeviceImpl

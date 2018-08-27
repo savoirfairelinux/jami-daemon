@@ -32,9 +32,6 @@ namespace ring { namespace libav_utils {
 
     void ring_avcodec_init();
 
-    int libav_pixel_format(int fmt);
-    int ring_pixel_format(int fmt);
-
     const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428029";
     const char *const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
 

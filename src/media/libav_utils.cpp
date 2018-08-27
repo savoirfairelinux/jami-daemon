@@ -165,27 +165,6 @@ void ring_avcodec_init()
     std::call_once(already_called, init_once);
 }
 
-
-int libav_pixel_format(int fmt)
-{
-    switch (fmt) {
-        case video::VIDEO_PIXFMT_BGRA: return AV_PIX_FMT_BGRA;
-        case video::VIDEO_PIXFMT_RGBA: return AV_PIX_FMT_RGBA;
-        case video::VIDEO_PIXFMT_YUYV422: return AV_PIX_FMT_YUYV422;
-        case video::VIDEO_PIXFMT_YUV420P: return AV_PIX_FMT_YUV420P;
-        case video::VIDEO_PIXFMT_NV21: return AV_PIX_FMT_NV21;
-    }
-    return fmt;
-}
-
-int ring_pixel_format(int fmt)
-{
-    switch (fmt) {
-        case AV_PIX_FMT_YUYV422: return video::VIDEO_PIXFMT_YUYV422;
-    }
-    return fmt;
-}
-
 void ring_url_split(const char *url,
                    char *hostname, size_t hostname_size, int *port,
                    char *path, size_t path_size)
