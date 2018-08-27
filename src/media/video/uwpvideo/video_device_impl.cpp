@@ -39,10 +39,10 @@ typedef struct
 // have all formats map to bgra
 static const std::array<uwp_fmt, 4> uwp_formats
 {
-    uwp_fmt { "MJPG",   VIDEO_PIXFMT_BGRA   },
-    uwp_fmt { "RGB24",  VIDEO_PIXFMT_BGRA   },
-    uwp_fmt { "NV12",   VIDEO_PIXFMT_BGRA   },
-    uwp_fmt { "YUY2",   VIDEO_PIXFMT_BGRA   }
+    uwp_fmt { "MJPG",   AV_PIX_FMT_BGRA   },
+    uwp_fmt { "RGB24",  AV_PIX_FMT_BGRA   },
+    uwp_fmt { "NV12",   AV_PIX_FMT_BGRA   },
+    uwp_fmt { "YUY2",   AV_PIX_FMT_BGRA   }
 };
 
 class VideoDeviceImpl

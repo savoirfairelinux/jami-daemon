@@ -224,7 +224,7 @@ ShmHolder::renderFrame(VideoFrame& src) noexcept
 {
     const auto width = src.width();
     const auto height = src.height();
-    const auto format = VIDEO_PIXFMT_BGRA;
+    const auto format = AV_PIX_FMT_BGRA;
     const auto frameSize = videoFrameSize(format, width, height);
 
     if (!resizeArea(frameSize)) {
@@ -344,16 +344,16 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
         const int width = f.width();
         const int height = f.height();
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
-        const int format = VIDEO_PIXFMT_RGBA;
+        const int format = AV_PIX_FMT_RGBA;
 #else
-        const int format = VIDEO_PIXFMT_BGRA;
+        const int format = AV_PIX_FMT_BGRA;
 #endif
 
         const auto bytes = videoFrameSize(format, width, height);
 
         if (bytes > 0) {
             if (auto buffer_ptr = target_.pull(bytes)) {
-                buffer_ptr->format = libav_utils::libav_pixel_format(format);
+                buffer_ptr->format = format;
                 buffer_ptr->width = width;
                 buffer_ptr->height = height;
                 dst.setFromMemory(buffer_ptr->ptr, format, width, height);
