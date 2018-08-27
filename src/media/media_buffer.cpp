@@ -70,7 +70,7 @@ VideoFrame::size() const noexcept
 int
 VideoFrame::format() const noexcept
 {
-    return libav_utils::ring_pixel_format(frame_->format);
+    return frame_->format;
 }
 
 int
@@ -88,7 +88,7 @@ VideoFrame::height() const noexcept
 void
 VideoFrame::setGeometry(int format, int width, int height) noexcept
 {
-    frame_->format = libav_utils::libav_pixel_format(format);
+    frame_->format = format;
     frame_->width = width;
     frame_->height = height;
 }
@@ -96,14 +96,13 @@ VideoFrame::setGeometry(int format, int width, int height) noexcept
 void
 VideoFrame::reserve(int format, int width, int height)
 {
-    auto libav_format = (AVPixelFormat)libav_utils::libav_pixel_format(format);
     auto libav_frame = frame_.get();
 
     if (allocated_) {
         // nothing to do if same properties
         if (width == libav_frame->width
             and height == libav_frame->height
-            and libav_format == libav_frame->format)
+            and format == libav_frame->format)
 #if USE_OLD_AVU
         avpicture_free((AVPicture *) libav_frame);
 #else
@@ -167,8 +166,7 @@ VideoFrame::operator =(const VideoFrame& src)
 std::size_t
 videoFrameSize(int format, int width, int height)
 {
-    return av_image_get_buffer_size((AVPixelFormat)libav_utils::libav_pixel_format(format),
-                                    width, height, 1);
+    return av_image_get_buffer_size((AVPixelFormat)format, width, height, 1);
 }
 
 #endif // RING_VIDEO

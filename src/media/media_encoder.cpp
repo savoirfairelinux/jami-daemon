@@ -278,7 +278,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         // allocate buffers for both scaled (pre-encoder) and encoded frames
         const int width = encoderCtx->width;
         const int height = encoderCtx->height;
-        const int format = libav_utils::ring_pixel_format((int)encoderCtx->pix_fmt);
+        const int format = encoderCtx->pix_fmt;
         scaledFrameBufferSize_ = videoFrameSize(format, width, height);
         if (scaledFrameBufferSize_ <= AV_INPUT_BUFFER_MIN_SIZE)
             throw MediaEncoderException("buffer too small");

@@ -444,7 +444,7 @@ MediaDecoder::getTimeBase() const
 }
 
 int MediaDecoder::getPixelFormat() const
-{ return libav_utils::ring_pixel_format(decoderCtx_->pix_fmt); }
+{ return decoderCtx_->pix_fmt; }
 
 void
 MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
