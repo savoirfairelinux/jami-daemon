@@ -937,6 +937,11 @@ Manager::answerCall(const std::string& call_id)
     // if it was waiting, it's waiting no more
     pimpl_->removeWaitingCall(call_id);
 
+    if (!result) {
+        // do not switch to this call if it was not properly started
+        return false;
+    }
+
     // if we dragged this call into a conference already
     if (isConferenceParticipant(call_id))
         pimpl_->switchCall(call->getConfId());
