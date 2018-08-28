@@ -426,6 +426,18 @@ DBusConfigurationManager::getHistoryLimit() -> decltype(DRing::getHistoryLimit()
 }
 
 void
+DBusConfigurationManager::setRingingTimeout(const int32_t& timeout)
+{
+    DRing::setRingingTimeout(timeout);
+}
+
+auto
+DBusConfigurationManager::getRingingTimeout() -> decltype(DRing::getRingingTimeout())
+{
+    return DRing::getRingingTimeout();
+}
+
+void
 DBusConfigurationManager::setAccountsOrder(const std::string& order)
 {
     DRing::setAccountsOrder(order);
