@@ -146,7 +146,6 @@ class Manager {
          */
         bool hangupCall(const std::string& id);
 
-
         /**
          * Functions which occur with a user's action
          * Hangup the conference (hangup every participants)
@@ -617,6 +616,20 @@ class Manager {
          * @return double The number of days
          */
         int getHistoryLimit() const;
+
+        /**
+         * Set ringing timeout (number of seconds after which a call will
+         * enter BUSY state if not answered).
+         * @param timeout in seconds
+         */
+        void setRingingTimeout(int timeout);
+
+        /**
+         * Get ringing timeout (number of seconds after which a call will
+         * enter BUSY state if not answered).
+         * @return timeout in seconds
+         */
+        int getRingingTimeout() const;
 
         /**
          * Get the audio manager
