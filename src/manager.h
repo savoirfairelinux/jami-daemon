@@ -146,6 +146,12 @@ class Manager {
          */
         bool hangupCall(const std::string& id);
 
+        /**
+         * Schedule a job which will set the call status to busy if it
+         * is still running after timeout.
+         * @param callId call identifier
+         */
+        void scheduleCallTimeout(std::string callId);
 
         /**
          * Functions which occur with a user's action

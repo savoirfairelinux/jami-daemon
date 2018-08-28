@@ -91,6 +91,10 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
         checkPendingIM();
         checkAudio();
 
+        // if call just started ringing, schedule call timeout
+        if (state == StateEvent::RINGING)
+            Manager::instance().scheduleCallTimeout(*this);
+
         // kill pending subcalls at disconnect
         if (call_state == CallState::OVER)
             hangupCalls(safePopSubcalls(), 0);

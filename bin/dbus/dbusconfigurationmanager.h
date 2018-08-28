@@ -124,6 +124,8 @@ class DBusConfigurationManager :
         void setIsAlwaysRecording(const bool& rec);
         void setHistoryLimit(const int32_t& days);
         int32_t getHistoryLimit();
+        void setRingingTimeout(const int32_t& timeout);
+        int32_t getRingingTimeout();
         void setAccountsOrder(const std::string& order);
         std::map<std::string, std::string> getHookSettings();
         void setHookSettings(const std::map<std::string, std::string>& settings);
