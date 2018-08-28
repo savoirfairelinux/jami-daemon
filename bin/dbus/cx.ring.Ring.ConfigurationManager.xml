@@ -881,6 +881,16 @@
            </arg>
        </method>
 
+       <method name="getRingingTimeout" tp:name-for-bindings="getRingingTimeout">
+           <arg type="i" name="timeout" direction="out">
+           </arg>
+       </method>
+
+       <method name="setRingingTimeout" tp:name-for-bindings="setRingingTimeout">
+           <arg type="i" name="timeout" direction="in">
+           </arg>
+       </method>
+
        <!-- Hook configuration -->
        <method name="getHookSettings" tp:name-for-bindings="getHookSettings">
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
