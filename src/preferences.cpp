@@ -82,6 +82,7 @@ const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
 static const char * const ORDER_KEY = "order";
 static const char * const AUDIO_API_KEY = "audioApi";
 static const char * const HISTORY_LIMIT_KEY = "historyLimit";
+static const char * const RINGING_TIMEOUT = "ringingTimeout";
 static const char * const HISTORY_MAX_CALLS_KEY = "historyMaxCalls";
 static const char * const ZONE_TONE_CHOICE_KEY = "zoneToneChoice";
 static const char * const PORT_NUM_KEY = "portNum";
@@ -145,6 +146,7 @@ static const char * const ALSA_DFT_CARD    = "0";          /** Default sound car
 Preferences::Preferences() :
     accountOrder_("")
     , historyLimit_(0)
+    , ringingTimeout_(30)
     , historyMaxCalls_(20)
     , zoneToneChoice_(DFT_ZONE) // DFT_ZONE
     , registrationExpire_(180)
@@ -202,6 +204,7 @@ void Preferences::serialize(YAML::Emitter &out)
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
 
     out << YAML::Key << HISTORY_LIMIT_KEY << YAML::Value << historyLimit_;
+    out << YAML::Key << RINGING_TIMEOUT << YAML::Value << ringingTimeout_;
     out << YAML::Key << HISTORY_MAX_CALLS_KEY << YAML::Value << historyMaxCalls_;
     out << YAML::Key << MD5_HASH_KEY << YAML::Value << md5Hash_;
     out << YAML::Key << ORDER_KEY << YAML::Value << accountOrder_;
@@ -218,6 +221,7 @@ void Preferences::unserialize(const YAML::Node &in)
 
     parseValue(node, ORDER_KEY, accountOrder_);
     parseValue(node, HISTORY_LIMIT_KEY, historyLimit_);
+    parseValue(node, RINGING_TIMEOUT, ringingTimeout_);
     parseValue(node, HISTORY_MAX_CALLS_KEY, historyMaxCalls_);
     parseValue(node, ZONE_TONE_CHOICE_KEY, zoneToneChoice_);
     parseValue(node, REGISTRATION_EXPIRE_KEY, registrationExpire_);
