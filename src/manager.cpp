@@ -993,6 +993,23 @@ Manager::hangupCall(const std::string& callId)
     return true;
 }
 
+void
+Manager::scheduleCallTimeout(std::string callId) {
+    auto timeout = preferences.getRingingTimeout();
+    RING_DBG("Scheduling call timeout in %d seconds", timeout);
+
+    std::weak_ptr<Call> callWkPtr = getCallFromCallID(callId);
+    pimpl_->scheduler_.scheduleIn([callWkPtr]{
+        if (auto callShPtr = callWkPtr.lock()) {
+            if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
+                 RING_DBG("Call %s is still ringing after timeout, setting state to BUSY",
+                     callShPtr->getCallId().c_str());
+                 callShPtr->setState(Call::CallState::BUSY);
+            }
+        }
+    }, std::chrono::seconds(timeout));
+}
+
 bool
 Manager::hangupConference(const std::string& id)
 {
@@ -2378,6 +2395,20 @@ int
 Manager::getHistoryLimit() const
 {
     return preferences.getHistoryLimit();
+}
+
+void
+Manager::setRingingTimeout(int timeout)
+{
+    RING_DBG("Set ringing timeout");
+    preferences.setRingingTimeout(timeout);
+    saveConfig();
+}
+
+int
+Manager::getRingingTimeout() const
+{
+    return preferences.getRingingTimeout();
 }
 
 bool

@@ -85,11 +85,15 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
 {
     updateDetails(details);
 
-    addStateListener([this](UNUSED Call::CallState call_state,
-                            UNUSED Call::ConnectionState cnx_state,
+    addStateListener([this](Call::CallState call_state,
+                            Call::ConnectionState cnx_state,
                             UNUSED int code) {
         checkPendingIM();
         checkAudio();
+
+        // if call just started ringing, schedule call timeout
+        if (cnx_state == ConnectionState::RINGING)
+            Manager::instance().scheduleCallTimeout(id_);
 
         // kill pending subcalls at disconnect
         if (call_state == CallState::OVER)
