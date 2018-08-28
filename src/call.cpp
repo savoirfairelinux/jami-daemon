@@ -85,11 +85,28 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
 {
     updateDetails(details);
 
-    addStateListener([this](UNUSED Call::CallState call_state,
-                            UNUSED Call::ConnectionState cnx_state,
+    addStateListener([this](Call::CallState call_state,
+                            Call::ConnectionState cnx_state,
                             UNUSED int code) {
         checkPendingIM();
         checkAudio();
+
+        // if call just started ringing, schedule call timeout
+        if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
+            auto timeout = Manager::instance().getRingingTimeout();
+            RING_DBG("Scheduling call timeout in %d seconds", timeout);
+
+           std::weak_ptr<Call> callWkPtr = shared_from_this();
+           Manager::instance().scheduler().scheduleIn([callWkPtr]{
+               if (auto callShPtr = callWkPtr.lock()) {
+                    if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
+                         RING_DBG("Call %s is still ringing after timeout, setting state to BUSY",
+                             callShPtr->getCallId().c_str());
+                         callShPtr->hangup(PJSIP_SC_BUSY_HERE);
+                    }
+                }
+           }, std::chrono::seconds(timeout));
+        }
 
         // kill pending subcalls at disconnect
         if (call_state == CallState::OVER)
@@ -441,17 +458,27 @@ Call::subcallStateChanged(Call& subcall,
 
     // Subcall is busy or failed
     if (new_state >= CallState::BUSY) {
-        RING_WARN("[call:%s] subcall %s failed", getCallId().c_str(), subcall.getCallId().c_str());
+        if (new_state == CallState::BUSY)
+            RING_WARN("[call:%s] subcall %s busy", getCallId().c_str(), subcall.getCallId().c_str());
+        else
+            RING_WARN("[call:%s] subcall %s failed", getCallId().c_str(), subcall.getCallId().c_str());
         std::lock_guard<std::recursive_mutex> lk {callMutex_};
         subcalls_.erase(getPtr(subcall));
 
-        // Parent call fails if all subcalls have failed
-        if (subcalls_.empty())
-            // XXX: first idea was to use std::errc::host_unreachable, but it's not available on some platforms
-            // like mingw.
-            setState(CallState::MERROR, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::io_error));
-        else
+        // Parent call fails if last subcall is busy or failed
+        if (subcalls_.empty()) {
+            if (new_state == CallState::BUSY) {
+                setState(CallState::BUSY, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::device_or_resource_busy));
+            } else {
+                // XXX: first idea was to use std::errc::host_unreachable, but it's not available on some platforms
+                // like mingw.
+                setState(CallState::MERROR, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::io_error));
+            }
+            removeCall();
+        } else {
             RING_DBG("[call:%s] remains %zu subcall(s)", getCallId().c_str(), subcalls_.size());
+        }
+
         return;
     }
 

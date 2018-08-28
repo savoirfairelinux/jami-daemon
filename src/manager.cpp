@@ -2380,6 +2380,20 @@ Manager::getHistoryLimit() const
     return preferences.getHistoryLimit();
 }
 
+void
+Manager::setRingingTimeout(int timeout)
+{
+    RING_DBG("Set ringing timeout");
+    preferences.setRingingTimeout(timeout);
+    saveConfig();
+}
+
+int
+Manager::getRingingTimeout() const
+{
+    return preferences.getRingingTimeout();
+}
+
 bool
 Manager::setAudioManager(const std::string &api)
 {
