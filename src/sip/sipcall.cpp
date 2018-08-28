@@ -714,6 +714,13 @@ SIPCall::onFailure(signed cause)
 }
 
 void
+SIPCall::onBusyHere()
+{
+    setState(CallState::BUSY, ConnectionState::DISCONNECTED);
+    removeCall();
+}
+
+void
 SIPCall::onClosed()
 {
     Manager::instance().peerHungupCall(*this);

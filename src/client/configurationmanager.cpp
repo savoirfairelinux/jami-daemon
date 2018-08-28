@@ -682,6 +682,18 @@ setHistoryLimit(int32_t days)
     ring::Manager::instance().setHistoryLimit(days);
 }
 
+int32_t
+getRingingTimeout()
+{
+    return ring::Manager::instance().getRingingTimeout();
+}
+
+void
+setRingingTimeout(int32_t timeout)
+{
+    ring::Manager::instance().setRingingTimeout(timeout);
+}
+
 bool
 setAudioManager(const std::string& api)
 {

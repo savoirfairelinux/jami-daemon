@@ -126,6 +126,9 @@ void setIsAlwaysRecording(bool rec);
 void setHistoryLimit(int32_t days);
 int32_t getHistoryLimit();
 
+void setRingingTimeout(int32_t timeout);
+int32_t getRingingTimeout();
+
 void setAccountsOrder(const std::string& order);
 
 std::map<std::string, std::string> getHookSettings();
