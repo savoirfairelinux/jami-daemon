@@ -85,11 +85,15 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
 {
     updateDetails(details);
 
-    addStateListener([this](UNUSED Call::CallState call_state,
-                            UNUSED Call::ConnectionState cnx_state,
+    addStateListener([this](Call::CallState call_state,
+                            Call::ConnectionState cnx_state,
                             UNUSED int code) {
         checkPendingIM();
         checkAudio();
+
+        // if call just started ringing, schedule call timeout
+        if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING)
+            Manager::instance().scheduleCallTimeout(id_);
 
         // kill pending subcalls at disconnect
         if (call_state == CallState::OVER)
@@ -439,13 +443,27 @@ Call::subcallStateChanged(Call& subcall,
         return;
     }
 
-    // Subcall is busy or failed
-    if (new_state >= CallState::BUSY) {
+    // Subcall is busy
+    if (new_state == CallState::BUSY) {
+        RING_WARN("[call:%s] subcall %s busy", getCallId().c_str(), subcall.getCallId().c_str());
+        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        subcalls_.erase(getPtr(subcall));
+
+        // Parent call is busy if last subcall replied busy
+        if (subcalls_.empty())
+            setState(CallState::BUSY, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::device_or_resource_busy));
+        else
+            RING_DBG("[call:%s] remains %zu subcall(s)", getCallId().c_str(), subcalls_.size());
+        return;
+    }
+
+    // Subcall failed
+    if (new_state >= CallState::MERROR) {
         RING_WARN("[call:%s] subcall %s failed", getCallId().c_str(), subcall.getCallId().c_str());
         std::lock_guard<std::recursive_mutex> lk {callMutex_};
         subcalls_.erase(getPtr(subcall));
 
-        // Parent call fails if all subcalls have failed
+        // Parent call fails if last subcall failed
         if (subcalls_.empty())
             // XXX: first idea was to use std::errc::host_unreachable, but it's not available on some platforms
             // like mingw.
