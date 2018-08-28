@@ -836,10 +836,13 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
 
         case PJSIP_INV_STATE_DISCONNECTED:
             switch (inv->cause) {
+                // When a peer's device replies busy
+                case PJSIP_SC_BUSY_HERE:
+                    call->onBusyHere();
+                    break;
                 // When the peer manually refuse the call
                 case PJSIP_SC_DECLINE:
                 case PJSIP_SC_BUSY_EVERYWHERE:
-                case PJSIP_SC_BUSY_HERE:
                     if (inv->role != PJSIP_ROLE_UAC)
                         break;
                     // close call

@@ -134,6 +134,12 @@ public: // SIP related
     void onFailure(signed cause=0);
 
     /**
+     * Peer answered busy
+     * @param
+     */
+    void onBusyHere();
+
+    /**
      * Peer close the connection
      * @param
      */
