@@ -69,6 +69,14 @@ class Preferences : public Serializable {
             historyLimit_ = lim;
         }
 
+        int getRingingTimeout() const {
+            return ringingTimeout_;
+        }
+
+        void setRingingTimeout(int timeout) {
+            ringingTimeout_ = timeout;
+        }
+
         int getHistoryMaxCalls() const {
             return historyMaxCalls_;
         }
@@ -120,6 +128,7 @@ class Preferences : public Serializable {
         std::string accountOrder_;
         int historyLimit_;
         int historyMaxCalls_;
+        int ringingTimeout_;
         std::string zoneToneChoice_;
         int registrationExpire_;
         int portNum_;
