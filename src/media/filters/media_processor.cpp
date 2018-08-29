@@ -25,6 +25,11 @@
 #include "tensorflow/core/public/session.h"
 #include "tensorflow/core/util/command_line_flags.h"
 
+#include "/usr/local/include/opencv2/objdetect.hpp"
+#include "/usr/local/include/opencv2/highgui.hpp"
+#include "/usr/local/include/opencv2/imgproc.hpp"
+
+
 #include "logger.h"
 
 #include <fstream>
@@ -38,6 +43,9 @@ using tensorflow::Status;
 using tensorflow::string;
 using tensorflow::int32;
 using tensorflow::uint8;
+
+using namespace cv;
+using namespace std;
 
 namespace ring {
 
@@ -98,113 +106,6 @@ static Status ReadEntireFile(tensorflow::Env* env, const std::string& filename,
     return Status::OK();
 }
 
-// Given an image file name, read in the data, try to decode it as an image,
-// resize it to the requested size, and then scale the values as desired.
-/*
-tensorflow::Status ReadTensorFromImageFile(const std::string& file_name, std::vector<Tensor>* out_tensors)
-{
-    auto root = tensorflow::Scope::NewRootScope();
-    using namespace ::tensorflow::ops;  // NOLINT(build/namespaces)
-
-    std::string input_name = "file_reader";
-    std::string output_name = "normalized";
-
-    // read file_name into a tensor named input
-    Tensor input(tensorflow::DT_STRING, tensorflow::TensorShape());
-    TF_RETURN_IF_ERROR(
-        ReadEntireFile(tensorflow::Env::Default(), file_name, &input));
-
-    // use a placeholder to read input data
-    auto file_reader =
-        Placeholder(root.WithOpName("input"), tensorflow::DataType::DT_STRING);
-
-    std::vector<std::pair<std::string, tensorflow::Tensor>> inputs = {
-        {"input", input},
-    };
-
-    // Now try to figure out what kind of file it is and decode it.
-    const int wanted_channels = 3;
-    tensorflow::Output image_reader;
-    if (tensorflow::str_util::EndsWith(file_name, ".png")) {
-        image_reader = DecodePng(root.WithOpName("png_reader"), file_reader,
-                             DecodePng::Channels(wanted_channels));
-    } else if (tensorflow::str_util::EndsWith(file_name, ".gif")) {
-    // gif decoder returns 4-D tensor, remove the first dim
-        image_reader =
-        Squeeze(root.WithOpName("squeeze_first_dim"),
-                DecodeGif(root.WithOpName("gif_reader"), file_reader));
-    } else {
-    // Assume if it's neither a PNG nor a GIF then it must be a JPEG.
-        image_reader = DecodeJpeg(root.WithOpName("jpeg_reader"), file_reader,
-                              DecodeJpeg::Channels(wanted_channels));
-    }
-    // Now cast the image data to float so we can do normal math on it.
-    // auto float_caster =
-    //     Cast(root.WithOpName("float_caster"), image_reader, tensorflow::DT_FLOAT);
-
-    auto uint8_caster =  Cast(root.WithOpName("uint8_caster"), image_reader, tensorflow::DT_UINT8);
-
-    // The convention for image ops in TensorFlow is that all images are expected
-    // to be in batches, so that they're four-dimensional arrays with indices of
-    // [batch, height, width, channel]. Because we only have a single image, we
-    // have to add a batch dimension of 1 to the start with ExpandDims().
-    auto dims_expander = ExpandDims(root.WithOpName("dim"), uint8_caster, 0);
-
-    // This runs the GraphDef network definition that we've just constructed, and
-    // returns the results in the output tensor.
-    tensorflow::GraphDef graph;
-    TF_RETURN_IF_ERROR(root.ToGraphDef(&graph));
-
-    std::unique_ptr<tensorflow::Session> session(
-        tensorflow::NewSession(tensorflow::SessionOptions()));
-    TF_RETURN_IF_ERROR(session->Create(graph));
-    TF_RETURN_IF_ERROR(session->Run({inputs}, {"dim"}, {}, out_tensors));
-    return Status::OK();
-}
-*/
-
-/*
-Status SaveImage(const Tensor& tensor, const string& file_path) {
-    LOG(INFO) << "Saving image to " << file_path;
-    CHECK(tensorflow::str_util::EndsWith(file_path, ".png"))
-    << "Only saving of png files is supported.";
-
-    RING_WARN("IMAGE SHOULD BE SAVED 1");
-
-    auto root = tensorflow::Scope::NewRootScope();
-    using namespace ::tensorflow::ops;  // NOLINT(build/namespaces)
-
-    string encoder_name = "encode";
-    string output_name = "file_writer";
-    
-
-    RING_WARN("IMAGE SHOULD BE SAVED 2");
-
-    
-
-    tensorflow::Output image_encoder = EncodePng(root.WithOpName(encoder_name), tensor);
-    RING_WARN("IMAGE SHOULD BE SAVED 3");
-    tensorflow::ops::WriteFile file_saver = tensorflow::ops::WriteFile(root.WithOpName(output_name), file_path, image_encoder);
-    RING_WARN("IMAGE SHOULD BE SAVED 4");
-
-    tensorflow::GraphDef graph;
-    TF_RETURN_IF_ERROR(root.ToGraphDef(&graph));
-    auto ret = root.ToGraphDef(&graph);
-    std::cout << "error: " << ret << std::endl;
-    RING_WARN("IMAGE SHOULD BE SAVED 5");
-
-    std::unique_ptr<tensorflow::Session> session(tensorflow::NewSession(tensorflow::SessionOptions()));
-    RING_WARN("IMAGE SHOULD BE SAVED 6");
-    TF_RETURN_IF_ERROR(session->Create(graph));
-    RING_WARN("IMAGE SHOULD BE SAVED 7");
-    std::vector<Tensor> outputs;
-    TF_RETURN_IF_ERROR(session->Run({}, {}, {output_name}, &outputs));
-
-    RING_WARN("IMAGE SHOULD BE SAVED 8");
-
-    return Status::OK();
-}
-*/
 
 // Reads a model graph definition from disk, and creates a session object you
 // can use to run it.
@@ -231,7 +132,7 @@ tensorflow::Status LoadGraph(const std::string& graph_file_name,
 
 
 
-float colors[6][3] = { {1,0,1}, {0,0,1},{0,1,1},{0,1,0},{1,1,0},{1,0,0} };
+float colors[6][3] = { {255,0,255}, {0,0,255},{0,255,255},{0,255,0},{255,255,0},{255,0,0} };
 
 float get_color(int c, int x, int max)
 {
@@ -244,49 +145,7 @@ float get_color(int c, int x, int max)
     return r;
 }
 
-void draw_box(AVFrame* a, int x1, int y1, int x2, int y2, int r, int g, int b)
-{
-    //normalize_image(a);
-    auto data = a->data[0];
-    auto linesize = a->linesize[0];
-    if(x1 < 0) x1 = 0;
-    if(x1 >= a->width) x1 = a->width-1;
-    if(x2 < 0) x2 = 0;
-    if(x2 >= a->width) x2 = a->width-1;
 
-    if(y1 < 0) y1 = 0;
-    if(y1 >= a->height) y1 = a->height-1;
-    if(y2 < 0) y2 = 0;
-    if(y2 >= a->height) y2 = a->height-1;
-
-    for(size_t i = x1; i <= x2; ++i){
-        data[i * 3 + y1 * linesize] = r;
-        data[i * 3 + y2 * linesize] = r;
-
-        data[i * 3 + y1 * linesize + 1] = g;
-        data[i * 3 + y2 * linesize + 1] = g;
-
-        data[i * 3 + y1 * linesize + 2] = b;
-        data[i * 3 + y2 * linesize + 2] = b;
-    }
-    for(size_t i = y1; i <= y2; ++i){
-        data[x1 * 3 + i * linesize] = r;
-        data[x2 * 3 + i * linesize] = r;
-
-        data[x1 * 3 + i * linesize + 1] = g;
-        data[x2 * 3 + i * linesize + 1] = g;
-
-        data[x1 * 3 + i * linesize + 2] = b;
-        data[x2 * 3 + i * linesize + 2] = b;
-    }
-}
-
-void draw_box_width(AVFrame* a, int x1, int y1, int x2, int y2, int w, int r, int g, int b)
-{
-    for(size_t i = 0; i < w; ++i){
-        draw_box(a, x1+i, y1+i, x2-i, y2-i, r, g, b);
-    }
-}
 
 MediaProcessor::MediaProcessor()
     : session_(nullptr)
@@ -362,10 +221,14 @@ MediaProcessor::addFrame(AVFrame* frame)
     output->width = frame->width;
     output->height = frame->height;
     scaler_->scale(frame, output); // converts from YUV to RGB
+
+
+
     Tensor input_tensor(tensorflow::DT_UINT8, tensorflow::TensorShape({1,output->height,output->width,3}));
     auto input_tensor_mapped = input_tensor.tensor<uint8, 4>();    
     auto data = output->data[0];
     auto linesize = output->linesize[0];
+
     for (int x = 0; x < output->width; ++x) {
         for (int y = 0; y < output->height; ++y) {
             for (int c = 0; c < 3; ++c) {
@@ -374,6 +237,10 @@ MediaProcessor::addFrame(AVFrame* frame)
             }
         }
     }
+
+    cv::Mat opencvframe(output->height,linesize, CV_8UC3, data, linesize);
+
+    
 
     {
         std::lock_guard<std::mutex> l(inputLock);
@@ -405,13 +272,27 @@ MediaProcessor::addFrame(AVFrame* frame)
                 LOG(ERROR) << i+1 << ",score:" << scores(i) << ",class:" << labels_.at(classes(i)-1) <<", " << classes(i) <<
                  ",box:" << "," << boxes(0,i,0) << "," << boxes(0,i,1) << "," << boxes(0,i,2)<< "," << boxes(0,i,3);
 
-                draw_box_width(output, boxes(0,i,1)*output->width, boxes(0,i,0)*output->height, boxes(0,i,3)*output->width, boxes(0,i,2)*output->height, linewidth, r, g, b);
+                cv::Scalar color = cv::Scalar(get_color(0,offset,int(classes(i))), get_color(1,offset,int(classes(i))), get_color(2,offset,int(classes(i))));
+
+                rectangle(opencvframe, cvPoint(boxes(0,i,1) * output->width, boxes(0,i,0) * output->height), cvPoint(boxes(0,i,3) * output->width, boxes(0,i,2) * output->height), color, linewidth);
+                if (boxes(0,i,2) * output->height + linewidth * 3 < output->height){
+                    putText(opencvframe, labels_.at(classes(i)-1), cvPoint(boxes(0,i,1) * output->width + linewidth, boxes(0,i,0) * output->height - linewidth * 3), FONT_HERSHEY_PLAIN, linewidth , color );
+                }else{
+                    putText(opencvframe, labels_.at(classes(i)-1), cvPoint(boxes(0,i,1) * output->width + linewidth, boxes(0,i,0) * output->height + linewidth * 12), FONT_HERSHEY_PLAIN, linewidth , color );
+                }
+
+                //draw_box_width(output, boxes(0,i,1)*output->width, boxes(0,i,0)*output->height, boxes(0,i,3)*output->width, boxes(0,i,2)*output->height, linewidth, r, g, b);
 
                 
             }
         }
         LOG(ERROR) << " ";
     }
+    
+
+    //cv::namedWindow( "Display window", WINDOW_AUTOSIZE );
+    //cv::imshow( "Display window", opencvframe); 
+    //cv::waitKey(0);
 
     av_frame_unref(frame);
     av_frame_move_ref(frame, output);
