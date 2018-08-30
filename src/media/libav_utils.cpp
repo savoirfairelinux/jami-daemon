@@ -169,6 +169,7 @@ void ring_avcodec_init()
 int libav_pixel_format(int fmt)
 {
     switch (fmt) {
+        case video::VIDEO_PIXFMT_RGB: return AV_PIX_FMT_RGB24;
         case video::VIDEO_PIXFMT_BGRA: return AV_PIX_FMT_BGRA;
         case video::VIDEO_PIXFMT_RGBA: return AV_PIX_FMT_RGBA;
         case video::VIDEO_PIXFMT_YUYV422: return AV_PIX_FMT_YUYV422;
