@@ -314,11 +314,22 @@ MediaDecoder::decode(VideoFrame& result)
                 std::this_thread::sleep_for(std::chrono::microseconds(target - now));
             }
         }
+        if (videoFilter_) {
+            videoFilter_(frame);
+        }
         return Status::FrameFinished;
     }
 
     return Status::Success;
 }
+
+void
+MediaDecoder::setVideoFilter(MediaFilter&& filter)
+{
+    JAMI_WARN("MediaDecoder::setVideoFilter %p", this);
+    videoFilter_ = std::move(filter);
+}
+
 #endif // ENABLE_VIDEO
 
 MediaDecoder::Status

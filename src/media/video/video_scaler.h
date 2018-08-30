@@ -24,7 +24,7 @@
 #include "video_base.h"
 #include "noncopyable.h"
 
-
+struct AVFrame;
 struct SwsContext;
 
 namespace jami { namespace video {
@@ -35,6 +35,7 @@ public:
     ~VideoScaler();
     void reset();
     void scale(const VideoFrame &input, VideoFrame &output);
+    void scale(const AVFrame* input_frame, AVFrame* output_frame);
     void scale_with_aspect(const VideoFrame &input, VideoFrame &output);
     void scale_and_pad(const VideoFrame &input, VideoFrame &output,
                        unsigned xoff, unsigned yoff,
