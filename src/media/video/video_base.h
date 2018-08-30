@@ -53,6 +53,7 @@ class VideoFrame;
 
 namespace ring { namespace video {
 
+
 template <typename T> class Observer;
 template <typename T> class Observable;
 
