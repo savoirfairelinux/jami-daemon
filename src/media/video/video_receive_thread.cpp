@@ -77,6 +77,9 @@ VideoReceiveThread::startLoop()
 bool VideoReceiveThread::setup()
 {
     videoDecoder_.reset(new MediaDecoder());
+    videoDecoder_->setVideoFilter([this](AVFrame* frame) {
+        mediaProcessor_.addFrame(frame);
+    });
 
     dstWidth_ = args_.width;
     dstHeight_ = args_.height;

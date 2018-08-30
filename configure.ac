@@ -621,6 +621,7 @@ AC_CONFIG_FILES([Makefile \
                  src/media/audio/coreaudio/Makefile \
                  src/media/audio/portaudio/Makefile \
                  src/media/audio/sound/Makefile \
+                 src/media/filters/Makefile \
                  src/config/Makefile \
                  src/client/Makefile \
                  src/hooks/Makefile \
