@@ -364,6 +364,9 @@ VideoInput::createDecoder()
     }
 
     auto decoder = std::unique_ptr<MediaDecoder>(new MediaDecoder());
+    decoder->setVideoFilter([this](AVFrame* frame) {
+        mediaProcessor_.addFrame(frame);
+    });
 
     if (emulateRate_)
         decoder->emulateRate();
