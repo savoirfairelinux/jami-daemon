@@ -1122,7 +1122,7 @@ SIPCall::getDetails() const
         details.emplace(DRing::Call::Details::REGISTERED_NAME, peerRegistredName_);
 #endif
 
-    if (transport_ and transport_->isSecure()) {
+    /*if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         const auto& cipher = pj_ssl_cipher_name(tlsInfos.cipher);
         details.emplace(DRing::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
@@ -1143,7 +1143,7 @@ SIPCall::getDetails() const
             details.emplace(DRing::TlsTransport::TLS_PEER_CERT, "");
             details.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM, "");
         }
-    }
+    }*/
     return details;
 }
 
