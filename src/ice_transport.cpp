@@ -265,6 +265,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     config_ = iceTransportFactory.getIceCfg(); // config copy
 
+    sip_utils::register_thread();
     pool_.reset(pj_pool_create(iceTransportFactory.getPoolFactory(),
                                "IceTransport.pool", 512, 512, NULL));
     if (not pool_)
@@ -609,6 +610,7 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr& base, cons
     // This implies we hope they'll not be modification of transport_id meaning in future
     // and no conflics with the borrowed STUN config.
     // HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK
+    sip_utils::register_thread();
 
     // borrowed from pjproject/pjnath/ice_strans.c, modified to be C++11'ized.
     static auto CREATE_TP_ID = [](pj_uint8_t type, pj_uint8_t idx) {
