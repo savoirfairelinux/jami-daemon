@@ -124,12 +124,6 @@
     <ClCompile Include="..\src\media\audio\audioloop.cpp">
       <Filter>Source Files\media\audio</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\media\audio\audiorecord.cpp">
-      <Filter>Source Files\media\audio</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\media\audio\audiorecorder.cpp">
-      <Filter>Source Files\media\audio</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\media\audio\dcblocker.cpp">
       <Filter>Source Files\media\audio</Filter>
     </ClCompile>
@@ -393,6 +387,9 @@
     </ClCompile>
     <ClCompile Include="..\src\media\video\winvideo\video_device_monitor_impl.cpp">
       <Filter>Source Files\media\video\winvideo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\scheduled_executor.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -660,12 +657,6 @@
     <ClInclude Include="..\src\media\audio\audioloop.h">
       <Filter>Source Files\media\audio</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\media\audio\audiorecord.h">
-      <Filter>Source Files\media\audio</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\media\audio\audiorecorder.h">
-      <Filter>Source Files\media\audio</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\media\audio\dcblocker.h">
       <Filter>Source Files\media\audio</Filter>
     </ClInclude>
@@ -809,6 +800,9 @@
     </ClInclude>
     <ClInclude Include="..\src\media\video\winvideo\capture_graph_interfaces.h">
       <Filter>Source Files\media\video\winvideo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\scheduled_executor.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

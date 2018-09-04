@@ -28,6 +28,7 @@
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <ciso646>
 
 #include "noncopyable.h"
 
