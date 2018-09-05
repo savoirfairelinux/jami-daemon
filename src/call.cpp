@@ -103,6 +103,7 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
                          RING_DBG("Call %s is still ringing after timeout, setting state to BUSY",
                              callShPtr->getCallId().c_str());
                          callShPtr->hangup(PJSIP_SC_BUSY_HERE);
+                         Manager::instance().callFailure(*callShPtr);
                     }
                 }
            }, std::chrono::seconds(timeout));
