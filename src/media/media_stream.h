@@ -20,10 +20,9 @@
 
 #pragma once
 
-#include "config.h"
-#include "audio/audiobuffer.h"
 #include "libav_deps.h"
 #include "rational.h"
+#include "audio/audiobuffer.h"
 
 #include <string>
 

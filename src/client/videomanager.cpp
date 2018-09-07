@@ -36,8 +36,158 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <new> // std::bad_alloc
+#include <cstdlib>
+#include <cstring> // std::memset
+#include <ciso646> // fix windows compiler bug
 
 namespace DRing {
+
+MediaFrame::MediaFrame()
+    : frame_ {av_frame_alloc(), [](AVFrame* frame){ av_frame_free(&frame); }}
+{
+    if (not frame_)
+        throw std::bad_alloc();
+}
+
+void
+MediaFrame::reset() noexcept
+{
+    av_frame_unref(frame_.get());
+    packet_.reset();
+}
+
+VideoFrame::~VideoFrame()
+{
+    if (releaseBufferCb_)
+        releaseBufferCb_(ptr_);
+}
+
+void
+VideoFrame::reset() noexcept
+{
+    MediaFrame::reset();
+    allocated_ = false;
+    releaseBufferCb_ = {};
+}
+
+size_t
+VideoFrame::size() const noexcept
+{
+    return av_image_get_buffer_size((AVPixelFormat)frame_->format, frame_->width, frame_->height, 1);
+}
+
+int
+VideoFrame::format() const noexcept
+{
+    return frame_->format;
+}
+
+int
+VideoFrame::width() const noexcept
+{
+    return frame_->width;
+}
+
+int
+VideoFrame::height() const noexcept
+{
+    return frame_->height;
+}
+
+void
+VideoFrame::setGeometry(int format, int width, int height) noexcept
+{
+    frame_->format = format;
+    frame_->width = width;
+    frame_->height = height;
+}
+
+void
+VideoFrame::reserve(int format, int width, int height)
+{
+    auto libav_frame = frame_.get();
+
+    if (allocated_) {
+        // nothing to do if same properties
+        if (width == libav_frame->width
+            and height == libav_frame->height
+            and format == libav_frame->format)
+        av_frame_unref(libav_frame);
+    }
+
+    setGeometry(format, width, height);
+    if (av_frame_get_buffer(libav_frame, 32))
+        throw std::bad_alloc();
+    allocated_ = true;
+    releaseBufferCb_ = {};
+}
+
+void
+VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height) noexcept
+{
+    reset();
+    setGeometry(format, width, height);
+    if (not ptr)
+        return;
+    av_image_fill_arrays(frame_->data, frame_->linesize, (uint8_t*)ptr,
+                         (AVPixelFormat)frame_->format, width, height, 1);
+}
+
+void
+VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height,
+                          std::function<void(uint8_t*)> cb) noexcept
+{
+    setFromMemory(ptr, format, width, height);
+    if (cb) {
+        releaseBufferCb_ = cb;
+        ptr_ = ptr;
+    }
+}
+
+void
+VideoFrame::setReleaseCb(std::function<void(uint8_t*)> cb) noexcept
+{
+    if (cb) {
+        releaseBufferCb_ = cb;
+    }
+}
+
+
+void
+VideoFrame::noise()
+{
+    auto f = frame_.get();
+    if (f->data[0] == nullptr)
+        return;
+    for (std::size_t i=0 ; i < size(); ++i) {
+        f->data[0][i] = std::rand() & 255;
+    }
+}
+
+VideoFrame&
+VideoFrame::operator =(const VideoFrame& src)
+{
+    reserve(src.format(), src.width(), src.height());
+    auto source = src.pointer();
+    av_image_copy(frame_->data, frame_->linesize, (const uint8_t **)source->data,
+                  source->linesize, (AVPixelFormat)frame_->format,
+                  frame_->width, frame_->height);
+    return *this;
+}
+
+VideoFrame* getNewFrame()
+{
+    if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
+        return &input->getNewFrame();
+    return nullptr;
+}
+
+void publishFrame()
+{
+    if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
+        return input->publishFrame();
+}
 
 void
 registerVideoHandlers(const std::map<std::string,

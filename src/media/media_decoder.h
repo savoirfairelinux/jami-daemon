@@ -51,9 +51,13 @@ struct AVFormatContext;
 struct AVCodec;
 enum AVMediaType;
 
+namespace DRing {
+struct AudioFrame;
+}
+
 namespace ring {
 
-struct AudioFrame;
+using AudioFrame = DRing::AudioFrame;
 struct AudioFormat;
 class RingBuffer;
 class Resampler;

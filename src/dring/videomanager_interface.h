@@ -21,6 +21,13 @@
 #ifndef DRING_VIDEOMANAGERI_H
 #define DRING_VIDEOMANAGERI_H
 
+#include "dring.h"
+
+extern "C" {
+#include <libavutil/frame.h>
+struct AVPacket;
+}
+
 #include <memory>
 #include <vector>
 #include <map>
@@ -29,7 +36,6 @@
 #include <cstdint>
 #include <cstdlib>
 
-#include "dring.h"
 
 #if __APPLE__
 #import "TargetConditionals.h"
@@ -56,6 +62,67 @@ struct SinkTarget {
     std::function<void(FrameBufferPtr)> push;
 };
 
+class MediaFrame {
+public:
+    // Construct an empty MediaFrame
+    MediaFrame();
+
+    virtual ~MediaFrame() = default;
+
+    // Return a pointer on underlaying buffer
+    AVFrame* pointer() const noexcept { return frame_.get(); }
+
+    // Reset internal buffers (return to an empty MediaFrame)
+    virtual void reset() noexcept;
+
+protected:
+    std::unique_ptr<AVFrame, void(*)(AVFrame*)> frame_;
+};
+
+struct AudioFrame: MediaFrame {};
+
+class VideoFrame: public MediaFrame {
+public:
+    // Construct an empty VideoFrame
+    VideoFrame() = default;
+    ~VideoFrame();
+
+    // Reset internal buffers (return to an empty VideoFrame)
+    void reset() noexcept override;
+
+    // Return frame size in bytes
+    std::size_t size() const noexcept;
+
+    // Return pixel format
+    int format() const noexcept;
+
+    // Return frame width in pixels
+    int width() const noexcept;
+
+    // Return frame height in pixels
+    int height() const noexcept;
+
+    // Allocate internal pixel buffers following given specifications
+    void reserve(int format, int width, int height);
+
+    // Set internal pixel buffers on given memory buffer
+    // This buffer must follow given specifications.
+    void setFromMemory(uint8_t* data, int format, int width, int height) noexcept;
+    void setFromMemory(uint8_t* data, int format, int width, int height, std::function<void(uint8_t*)> cb) noexcept;
+    void setReleaseCb(std::function<void(uint8_t*)> cb) noexcept;
+
+    void noise();
+
+    // Copy-Assignement
+    VideoFrame& operator =(const VideoFrame& src);
+
+private:
+    std::function<void(uint8_t*)> releaseBufferCb_ {};
+    uint8_t* ptr_ {nullptr};
+    bool allocated_ {false};
+    void setGeometry(int format, int width, int height) noexcept;
+};
+
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
 
 std::vector<std::string> getDeviceList();
@@ -80,6 +147,9 @@ void addVideoDevice(const std::string &node, const std::vector<std::map<std::str
 void removeVideoDevice(const std::string &node);
 void* obtainFrame(int length);
 void releaseFrame(void* frame);
+
+VideoFrame* getNewFrame();
+void publishFrame();
 #endif
 
 bool getDecodingAccelerated();
