@@ -727,7 +727,7 @@ class Manager {
          * Get the current call id
          * @return std::string  The call id or ""
          */
-        const std::string getCurrentCallId() const;
+        const std::string& getCurrentCallId() const;
 
         /**
          * Check if a call is the current one
