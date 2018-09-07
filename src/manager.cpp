@@ -817,7 +817,7 @@ Manager::getCurrentCall() const
     return getCallFromCallID(pimpl_->currentCall_);
 }
 
-const std::string
+const std::string&
 Manager::getCurrentCallId() const
 {
     return pimpl_->currentCall_;
@@ -851,7 +851,7 @@ Manager::outgoingCall(const std::string& account_id,
     RING_DBG() << "try outgoing call to '" << to << "'"
                << " with account '" << account_id << "'";
 
-    std::string current_call_id(getCurrentCallId());
+    const auto& current_call_id(getCurrentCallId());
     std::string to_cleaned = hookPreference.getNumberAddPrefix() + trim(to);
     std::shared_ptr<Call> call;
 
@@ -873,10 +873,11 @@ Manager::outgoingCall(const std::string& account_id,
     if (hasCurrentCall()) {
         RING_DBG("Has current call (%s) put it onhold", current_call_id.c_str());
 
+        bool isConf = isConference(current_call_id);
         // if this is not a conference and this and is not a conference participant
-        if (not isConference(current_call_id) and not isConferenceParticipant(current_call_id))
+        if (not isConf and not isConferenceParticipant(current_call_id))
             onHoldCall(current_call_id);
-        else if (isConference(current_call_id) and not isConferenceParticipant(call_id))
+        else if (isConf and not isConferenceParticipant(call_id))
             detachLocalParticipant();
     }
 
@@ -902,17 +903,18 @@ Manager::answerCall(const std::string& call_id)
     stopTone();
 
     // store the current call id
-    std::string current_call_id(getCurrentCallId());
+    const auto& current_call_id(getCurrentCallId());
 
     // in any cases we have to detach from current communication
-    if (hasCurrentCall()) {
+    if (hasCurrentCall() and call_id != current_call_id) {
 
         RING_DBG("Currently conversing with %s", current_call_id.c_str());
 
-        if (not isConference(current_call_id) and not isConferenceParticipant(current_call_id)) {
+        bool isConf = isConference(current_call_id);
+        if (not isConf and not isConferenceParticipant(current_call_id)) {
             RING_DBG("Answer call: Put the current call (%s) on hold", current_call_id.c_str());
             onHoldCall(current_call_id);
-        } else if (isConference(current_call_id) and not isConferenceParticipant(call_id)) {
+        } else if (isConf and not isConferenceParticipant(call_id)) {
             // if we are talking to a conference and we are answering an incoming call
             RING_DBG("Detach main participant from conference");
             detachLocalParticipant();
@@ -959,7 +961,7 @@ bool
 Manager::hangupCall(const std::string& callId)
 {
     // store the current call id
-    std::string currentCallId(getCurrentCallId());
+    const auto& currentCallId(getCurrentCallId());
 
     stopTone();
 
@@ -1065,14 +1067,14 @@ Manager::offHoldCall(const std::string& callId)
 
     stopTone();
 
-    const auto currentCallId = getCurrentCallId();
-
+    const auto& currentCallId = getCurrentCallId();
     // Place current call on hold if it isn't
     if (hasCurrentCall() and currentCallId != callId) {
-        if (not isConference(currentCallId) and not isConferenceParticipant(currentCallId)) {
+        bool isConf = isConference(currentCallId);
+        if (not isConf and not isConferenceParticipant(currentCallId)) {
             RING_DBG("Has current call (%s), put on hold", currentCallId.c_str());
             onHoldCall(currentCallId);
-        } else if (isConference(currentCallId) and not isConferenceParticipant(callId)) {
+        } else if (isConf and not isConferenceParticipant(callId)) {
             holdConference(currentCallId);
             detachLocalParticipant();
         }
