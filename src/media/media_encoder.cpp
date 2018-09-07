@@ -429,6 +429,24 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     return 0;
 }
 
+void
+MediaEncoder::send(AVPacket& pkt)
+{
+    auto streamIdx = currentStreamIdx_;
+    pkt.stream_index = streamIdx;
+    if (pkt.pts != AV_NOPTS_VALUE)
+        pkt.pts = av_rescale_q(pkt.pts, AVRational{1, 20},
+                               outputCtx_->streams[streamIdx]->time_base);
+    if (pkt.dts != AV_NOPTS_VALUE)
+        pkt.dts = av_rescale_q(pkt.dts, AVRational{1, 20},
+                               outputCtx_->streams[streamIdx]->time_base);
+    // write the compressed frame
+    auto ret = av_write_frame(outputCtx_, &pkt);
+    if (ret < 0) {
+        RING_ERR() << "av_write_frame failed: " << libav_utils::getError(ret);
+    }
+}
+
 int
 MediaEncoder::flush()
 {
