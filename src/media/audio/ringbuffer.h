@@ -125,14 +125,14 @@ class RingBuffer {
 
 
         /**
-         * Blocks until min_data_length samples of data is available, or until deadline is missed.
+         * Blocks until min_data_length samples of data is available, or until deadline was passed.
          *
          * @param call_id The read offset for which data should be available.
-         * @param min_data_length Minimum number of samples that should be vailable for the call to return
-         * @param deadline The call is garenteed to end after this time point. If no deadline is provided, the the call blocks indefinitely.
+         * @param min_data_length Minimum number of samples that should be available for the call to return
+         * @param deadline The call is guaranteed to end after this time point. If no deadline is provided, the the call blocks indefinitely.
          * @return available data for call_id after the call returned (same as calling getLength(call_id) ).
          */
-        size_t waitForDataAvailable(const std::string &call_id, const size_t min_data_length, const std::chrono::high_resolution_clock::time_point& deadline) const;
+        size_t waitForDataAvailable(const std::string &call_id, const size_t min_data_length, const std::chrono::high_resolution_clock::time_point& deadline = {}) const;
 
         /**
          * Debug function print mEnd, mStart, mBufferSize
