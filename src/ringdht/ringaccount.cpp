@@ -2871,23 +2871,22 @@ RingAccount::getToUri(const std::string& to) const
 pj_str_t
 RingAccount::getContactHeader(pjsip_transport* t)
 {
+    std::string quotedDisplayName = "\"" + displayName_ + "\" " + (displayName_.empty() ? "" : " ");
     if (t) {
         // FIXME: be sure that given transport is from SipIceTransport
         auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
         auto address = tlsTr->getLocalAddress().toString(true);
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                         "%s%s<sips:%s%s%s;transport=dtls>",
-                                         displayName_.c_str(),
-                                         (displayName_.empty() ? "" : " "),
+                                         "%s<sips:%s%s%s;transport=dtls>",
+                                         quotedDisplayName.c_str(),
                                          identity_.second->getId().toString().c_str(),
                                          (address.empty() ? "" : "@"),
                                          address.c_str());
     } else {
         RING_ERR("getContactHeader: no SIP transport provided");
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                         "%s%s<sips:%s@ring.dht>",
-                                         displayName_.c_str(),
-                                         (displayName_.empty() ? "" : " "),
+                                         "%s<sips:%s@ring.dht>",
+                                         quotedDisplayName.c_str(),
                                          identity_.second->getId().toString().c_str());
     }
     return contact_;
