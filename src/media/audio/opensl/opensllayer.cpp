@@ -48,7 +48,6 @@ namespace ring {
 // Constructor
 OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
     : AudioLayer(pref),
-     audioInputDescriptor_(),
      mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {}
 
@@ -408,25 +407,23 @@ OpenSLLayer::getCaptureDeviceList() const
     SLresult res;
 
     // Get the Audio IO DEVICE CAPABILITIES interface, implicit
-    RING_DBG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
-
-    res = (*engineObject_)->GetInterface(engineObject_, SL_IID_AUDIOIODEVICECAPABILITIES, (void*)&AudioIODeviceCapabilitiesItf);
+    SLAudioIODeviceCapabilitiesItf deviceCapabilities {nullptr};
+    res = (*engineObject_)->GetInterface(engineObject_, SL_IID_AUDIOIODEVICECAPABILITIES, (void*)&deviceCapabilities);
     if (res != SL_RESULT_SUCCESS)
         return captureDeviceList;
 
-    RING_DBG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
     numInputs = MAX_NUMBER_INPUT_DEVICES;
-
-    res = (*AudioIODeviceCapabilitiesItf)->GetAvailableAudioInputs(AudioIODeviceCapabilitiesItf, &numInputs, InputDeviceIDs);
+    res = (*deviceCapabilities)->GetAvailableAudioInputs(deviceCapabilities, &numInputs, InputDeviceIDs);
     if (res != SL_RESULT_SUCCESS)
         return captureDeviceList;
 
     // Search for either earpiece microphone or headset microphone input
     // device - with a preference for the latter
     for (int i = 0; i < numInputs; i++) {
-        res = (*AudioIODeviceCapabilitiesItf)->QueryAudioInputCapabilities(AudioIODeviceCapabilitiesItf,
+        SLAudioInputDescriptor audioInputDescriptor_;
+        res = (*deviceCapabilities)->QueryAudioInputCapabilities(deviceCapabilities,
                                                                            InputDeviceIDs[i],
-                                                                           (SLAudioInputDescriptor_ *)&audioInputDescriptor_);
+                                                                           &audioInputDescriptor_);
         if (res != SL_RESULT_SUCCESS)
             return captureDeviceList;
 

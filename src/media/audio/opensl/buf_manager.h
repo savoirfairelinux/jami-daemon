@@ -19,6 +19,7 @@
 
 #include "audio/audiobuffer.h"
 #include "logger.h"
+#include "noncopyable.h"
 
 #include <SLES/OpenSLES.h>
 #include <sys/types.h>
@@ -146,6 +147,7 @@ public:
     }
 
 private:
+    NON_COPYABLE(ProducerConsumerQueue);
     std::vector<T> buffer_;
 
     // forcing cache line alignment to eliminate false sharing of the
@@ -162,9 +164,16 @@ struct sample_buf {
     size_t   size_ {0};      // audio sample size (n buf) in byte
     sample_buf() {}
     sample_buf(size_t alloc, size_t size) : buf_(new uint8_t[alloc]), cap_(size) {}
+    sample_buf(sample_buf&& o) : buf_(o.buf_), cap_(o.cap_), size_(o.size_) {
+        o.buf_ = nullptr;
+        o.cap_ = 0;
+        o.size_ = 0;
+    }
+
     ~sample_buf() {
         if (buf_) delete[] buf_;
     }
+    NON_COPYABLE(sample_buf);
 };
 
 using AudioQueue = ProducerConsumerQueue<sample_buf*>;
