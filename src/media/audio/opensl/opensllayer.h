@@ -188,9 +188,6 @@ class OpenSLLayer : public AudioLayer {
 
         std::vector<sample_buf> bufs_;
 
-        SLAudioIODeviceCapabilitiesItf AudioIODeviceCapabilitiesItf {nullptr};
-        SLAudioInputDescriptor audioInputDescriptor_;
-
         AudioFormat hardwareFormat_ {AudioFormat::MONO()};
         size_t hardwareBuffSize_ {BUFFER_SIZE};
 
