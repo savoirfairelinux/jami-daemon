@@ -250,30 +250,29 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
 size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const size_t min_data_length, const std::chrono::high_resolution_clock::time_point& deadline) const
 {
     std::unique_lock<std::mutex> l(lock_);
+
     const size_t buffer_size = buffer_.frames();
     if (buffer_size < min_data_length) return 0;
     ReadOffset::const_iterator read_ptr = readoffsets_.find(call_id);
     if (read_ptr == readoffsets_.end()) return 0;
+
     size_t getl = 0;
+    auto check = [=, &getl] {
+        // Re-find read_ptr: it may be destroyed during the wait
+        const auto read_ptr = readoffsets_.find(call_id);
+        if (read_ptr == readoffsets_.end())
+            return true;
+        getl = (endPos_ + buffer_size - read_ptr->second) % buffer_size;
+        return getl >= min_data_length;
+    };
+
     if (deadline == std::chrono::high_resolution_clock::time_point()) {
-        not_empty_.wait(l, [=, &getl] {
-                // Re-find read_ptr: it may be destroyed during the wait
-                const auto read_ptr = readoffsets_.find(call_id);
-                if (read_ptr == readoffsets_.end())
-                    return true;
-                getl = (endPos_ + buffer_size - read_ptr->second) % buffer_size;
-                return getl >= min_data_length;
-        });
+        // no timeout provided, wait as long as necessary
+        not_empty_.wait(l, check);
     } else {
-        not_empty_.wait_until(l, deadline, [=, &getl]{
-                // Re-find read_ptr: it may be destroyed during the wait
-                const auto read_ptr = readoffsets_.find(call_id);
-                if (read_ptr == readoffsets_.end())
-                    return true;
-                getl = (endPos_ + buffer_size - read_ptr->second) % buffer_size;
-                return getl >= min_data_length;
-        });
+        not_empty_.wait_until(l, deadline, check);
     }
+
     return getl;
 }
 
