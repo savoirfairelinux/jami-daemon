@@ -1461,10 +1461,11 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         transport = ";transport=tls";
     }
 
+    std::string quotedDisplayName = "\"" + displayName_ + "\" ";
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                      "%s%s<%s:%s%s%s:%d%s>",
-                                     displayName_.c_str(),
-                                     (displayName_.empty() ? "" : " "),
+                                     quotedDisplayName.c_str(),
+                                     (quotedDisplayName.empty() ? "" : " "),
                                      scheme,
                                      username_.c_str(),
                                      (username_.empty() ? "" : "@"),
