@@ -88,7 +88,7 @@ class MediaFilter {
          *
          * NOTE Will fail if @inputName is not found in the graph.
          */
-        int feedInput(AVFrame* frame, std::string inputName);
+        int feedInput(AVFrame* frame, const std::string& inputName);
 
         /**
          * Pull a frame from the filter graph. Caller owns the frame reference.
@@ -111,6 +111,11 @@ class MediaFilter {
          * Initializes an input of filter graph.
          */
         int initInputFilter(AVFilterInOut* in, MediaStream msp);
+
+        /**
+         * Reinitializes the filter graph with @inputParams_, which should be updated beforehand.
+         */
+        int reinitialize();
 
         /**
          * Convenience method that prints @msg and returns err.
