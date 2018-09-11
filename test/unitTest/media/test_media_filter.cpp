@@ -41,11 +41,13 @@ private:
     void testAudioFilter();
     void testVideoFilter();
     void testFilterParams();
+    void testReinit();
 
     CPPUNIT_TEST_SUITE(MediaFilterTest);
     CPPUNIT_TEST(testAudioFilter);
     CPPUNIT_TEST(testVideoFilter);
     CPPUNIT_TEST(testFilterParams);
+    CPPUNIT_TEST(testReinit);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaFilter> filter_;
@@ -238,6 +240,36 @@ MediaFilterTest::testFilterParams()
     // output params should now be valid
     auto ms = filter_->getOutputParams();
     CPPUNIT_ASSERT(ms.format >= 0 && ms.width == width1 && ms.height == height1);
+}
+
+void
+MediaFilterTest::testReinit()
+{
+    std::string filterSpec = "[in1] aresample=48000";
+
+    // prepare audio frame
+    frame_ = av_frame_alloc();
+    frame_->format = AV_SAMPLE_FMT_S16;
+    frame_->channel_layout = AV_CH_LAYOUT_STEREO;
+    frame_->nb_samples = 100;
+    frame_->sample_rate = 44100;
+    frame_->channels = 2;
+
+    // construct the filter parameters with different sample rate
+    auto params = MediaStream("in1", frame_->format, rational<int>(1, 16000), 16000, frame_->channels);
+
+    // allocate and fill frame buffers
+    CPPUNIT_ASSERT(av_frame_get_buffer(frame_, 0) >= 0);
+    fill_samples(reinterpret_cast<uint16_t*>(frame_->data[0]), frame_->sample_rate, frame_->nb_samples, frame_->channels, 440.0);
+
+    // prepare filter
+    std::vector<MediaStream> vec;
+    vec.push_back(params);
+    CPPUNIT_ASSERT(filter_->initialize(filterSpec, vec) >= 0);
+
+    // filter should reinitialize on feedInput
+    CPPUNIT_ASSERT(filter_->feedInput(frame_, "in1") >= 0);
+    av_frame_free(&frame_);
 }
 
 }} // namespace ring::test
