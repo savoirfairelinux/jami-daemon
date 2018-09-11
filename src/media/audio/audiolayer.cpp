@@ -53,10 +53,19 @@ AudioLayer::~AudioLayer()
 
 void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
-    RING_DBG("Hardware audio format available : %s", playback.toString().c_str());
-    audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
-    urgentRingBuffer_.setFormat(audioFormat_);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        RING_DBG("Hardware audio format available : %s", playback.toString().c_str());
+        audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
+        urgentRingBuffer_.setFormat(audioFormat_);
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(hwFormatMutex_);
+        hwFormatAvailable_ = true;
+    }
+
+    hwFormatCv_.notify_all();
 }
 
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
