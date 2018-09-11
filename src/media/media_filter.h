@@ -113,6 +113,11 @@ class MediaFilter {
         int initInputFilter(AVFilterInOut* in, MediaStream msp);
 
         /**
+         * Reinitializes the filter graph with @inputParams_, which should be updated beforehand.
+         */
+        int reinitialize();
+
+        /**
          * Convenience method that prints @msg and returns err.
          *
          * NOTE @msg should not be null.

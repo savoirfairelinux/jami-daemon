@@ -163,8 +163,19 @@ MediaFilter::feedInput(AVFrame* frame, std::string inputName)
 
     for (size_t i = 0; i < inputs_.size(); ++i) {
         auto filterCtx = inputs_[i];
-        if (inputParams_[i].name != inputName)
+        auto& ms = inputParams_[i];
+        if (ms.name != inputName)
             continue;
+
+        if (ms.format != frame->format
+            || (ms.isVideo && (ms.width != frame->width || ms.height != frame->height))
+            || (!ms.isVideo && (ms.sampleRate != frame->sample_rate || ms.nbChannels != frame->channels))) {
+            RING_WARN() << "WOLOLO before update " << inputParams_[i];
+            ms.update(frame);
+            RING_WARN() << "WOLOLO after update " << inputParams_[i];
+            if ((ret = reinitialize()) < 0)
+                return fail("Failed to reinitialize filter with new input parameters", ret);
+        }
 
         int flags = AV_BUFFERSRC_FLAG_PUSH | AV_BUFFERSRC_FLAG_KEEP_REF;
         if ((ret = av_buffersrc_add_frame_flags(filterCtx, frame, flags)) < 0)
@@ -282,6 +293,19 @@ MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp)
 }
 
 int
+MediaFilter::reinitialize()
+{
+    std::vector<MediaStream> copy = inputParams_;
+    clean();
+    auto ret = initialize(desc_, copy);
+    if (ret >= 0)
+        RING_DBG() << "Filter graph reinitialized";
+    for (auto ms : inputParams_) RING_WARN() << "WOLOLO " << ms;
+    RING_WARN() << "WOLOLO ms:" << inputParams_.size() << " ctx:" << inputs_.size();
+    return ret;
+}
+
+int
 MediaFilter::fail(std::string msg, int err) const
 {
     if (!msg.empty())
@@ -292,8 +316,10 @@ MediaFilter::fail(std::string msg, int err) const
 void
 MediaFilter::clean()
 {
-    avfilter_graph_free(&graph_);
     initialized_ = false;
+    avfilter_graph_free(&graph_);
+    inputParams_.clear();
+    inputs_.clear();
 }
 
 } // namespace ring
