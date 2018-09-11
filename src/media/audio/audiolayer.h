@@ -117,6 +117,16 @@ class AudioLayer {
         }
 
         /**
+         * Wait until hardware format is available or deadline has passed.
+         */
+        template< class Rep, class Period >
+        bool waitForHardwareFormat(const std::chrono::duration<Rep, Period>& rel_time) const {
+            std::unique_lock<std::mutex> lk(mutex_);
+            hwFormatCv_.wait_for(lk, rel_time, [&]{return hwFormatReady_;});
+            return hwFormatReady_;
+        }
+
+        /**
          * Send a chunk of data to the hardware buffer to start the playback
          * Copy data in the urgent buffer.
          * @param buffer The buffer containing the data to be played ( ringtones )
@@ -270,6 +280,12 @@ class AudioLayer {
          */
         std::atomic<Status> status_ {Status::Idle};
         mutable std::condition_variable startedCv_;
+
+        /**
+         * Whether or not the hardware format is available
+         */
+        bool hwFormatReady_ {false};
+        mutable std::condition_variable hwFormatCv_;
 
         /**
          * Sample Rate Ring should send sound data to the sound card
