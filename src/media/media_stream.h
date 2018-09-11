@@ -80,9 +80,9 @@ struct MediaStream {
 
     MediaStream(std::string name, AVCodecContext* c, int64_t firstTimestamp)
         : name(name)
+        , firstTimestamp(firstTimestamp)
     {
         timeBase = c->time_base;
-        this->firstTimestamp = firstTimestamp;
         switch (c->codec_type) {
         case AVMEDIA_TYPE_VIDEO:
             format = c->pix_fmt;
@@ -113,6 +113,20 @@ struct MediaStream {
             return width > 0 && height > 0;
         else
             return sampleRate > 0 && nbChannels > 0;
+    }
+
+    void update(AVFrame* f)
+    {
+        // update all info possible (AVFrame has no fps data)
+        format = f->format;
+        if (isVideo) {
+            width = f->width;
+            height = f->height;
+            aspectRatio = f->sample_aspect_ratio;
+        } else {
+            sampleRate = f->sample_rate;
+            nbChannels = f->channels;
+        }
     }
 };
 
