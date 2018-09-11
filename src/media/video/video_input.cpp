@@ -429,6 +429,31 @@ VideoInput::initX11(std::string display)
 
     return true;
 }
+bool
+    VideoInput::initAVFoundation(std::string display)
+    {
+        size_t space = display.find(' ');
+
+        clearOptions();
+        decOpts_.format = "avfoundation";
+        decOpts_.input = "Capture screen 0";
+        decOpts_.framerate = 30;
+
+        if (space != std::string::npos) {
+            std::istringstream iss(display.substr(space + 1));
+            char sep;
+            unsigned w, h;
+            iss >> w >> sep >> h;
+            decOpts_.width = round2pow(w, 3);
+            decOpts_.height = round2pow(h, 3);
+        } else {
+            decOpts_.width = default_grab_width;
+            decOpts_.height = default_grab_height;
+        }
+
+        return true;
+    }
+
 
 bool
 VideoInput::initGdiGrab(std::string params)
@@ -535,10 +560,12 @@ VideoInput::switchInput(const std::string& resource)
         ready = initCamera(suffix);
     } else if (prefix == DRing::Media::VideoProtocolPrefix::DISPLAY) {
         /* X11 display name */
-#ifndef _WIN32
-        ready = initX11(suffix);
-#else
+#ifdef __APPLE__
+        ready = initAVFoundation(suffix);
+#elif defined(_WIN32)
         ready = initGdiGrab(suffix);
+#else
+        ready = initX11(suffix);
 #endif
     } else if (prefix == DRing::Media::VideoProtocolPrefix::FILE) {
         /* Pathname */
