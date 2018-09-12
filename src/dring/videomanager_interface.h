@@ -73,12 +73,16 @@ public:
 
     // Return a pointer on underlaying buffer
     AVFrame* pointer() const noexcept { return frame_.get(); }
+    AVPacket* packet() const noexcept { return packet_.get(); }
+
+    void setPacket(std::unique_ptr<AVPacket, void(*)(AVPacket*)>&& pkt);
 
     // Reset internal buffers (return to an empty MediaFrame)
     virtual void reset() noexcept;
 
 protected:
     std::unique_ptr<AVFrame, void(*)(AVFrame*)> frame_;
+    std::unique_ptr<AVPacket, void(*)(AVPacket*)> packet_;
 };
 
 struct AudioFrame: MediaFrame {};
