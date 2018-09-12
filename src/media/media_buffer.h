@@ -21,6 +21,7 @@
 #pragma once
 
 #include "config.h"
+#include "videomanager_interface.h"
 
 #include <memory>
 #include <functional>
@@ -33,67 +34,12 @@ struct FrameBuffer; //  from dring/videomanager_interface.h
 
 namespace ring {
 
-class MediaFrame {
-    public:
-        // Construct an empty MediaFrame
-        MediaFrame();
-
-        virtual ~MediaFrame() = default;
-
-        // Return a pointer on underlaying buffer
-        AVFrame* pointer() const noexcept { return frame_.get(); }
-
-        // Reset internal buffers (return to an empty MediaFrame)
-        virtual void reset() noexcept;
-
-    protected:
-        std::unique_ptr<AVFrame, void(*)(AVFrame*)> frame_;
-};
-
-struct AudioFrame: MediaFrame {};
+using MediaFrame = DRing::MediaFrame;
+using AudioFrame = DRing::AudioFrame;
 
 #ifdef RING_VIDEO
 
-class VideoFrame: public MediaFrame {
-    public:
-        // Construct an empty VideoFrame
-        VideoFrame() = default;
-        ~VideoFrame();
-
-        // Reset internal buffers (return to an empty VideoFrame)
-        void reset() noexcept override;
-
-        // Return frame size in bytes
-        std::size_t size() const noexcept;
-
-        // Return pixel format
-        int format() const noexcept;
-
-        // Return frame width in pixels
-        int width() const noexcept;
-
-        // Return frame height in pixels
-        int height() const noexcept;
-
-        // Allocate internal pixel buffers following given specifications
-        void reserve(int format, int width, int height);
-
-        // Set internal pixel buffers on given memory buffer
-        // This buffer must follow given specifications.
-        void setFromMemory(uint8_t* data, int format, int width, int height) noexcept;
-        void setFromMemory(uint8_t* data, int format, int width, int height, std::function<void(uint8_t*)> cb) noexcept;
-
-        void noise();
-
-        // Copy-Assignement
-        VideoFrame& operator =(const VideoFrame& src);
-
-    private:
-        std::function<void(uint8_t*)> releaseBufferCb_ {};
-        uint8_t* ptr_ {nullptr};
-        bool allocated_ {false};
-        void setGeometry(int format, int width, int height) noexcept;
-};
+using VideoFrame = DRing::VideoFrame;
 
 // Some helpers
 std::size_t videoFrameSize(int format, int width, int height);

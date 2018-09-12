@@ -47,8 +47,12 @@ struct AVDictionary;
 struct AVIOContext;
 #endif
 
-namespace ring {
+namespace DRing {
 class VideoFrame;
+}
+
+namespace ring {
+using VideoFrame = DRing::VideoFrame;
 }
 
 namespace ring { namespace video {
@@ -133,7 +137,7 @@ public:
 
     std::shared_ptr<VideoFrame> obtainLastFrame();
 
-protected:
+public:
     // getNewFrame and publishFrame must be called by the same thread only
     VideoFrame& getNewFrame();
     void publishFrame();
