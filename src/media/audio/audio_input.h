@@ -29,7 +29,7 @@ namespace ring {
 class MediaRecorder;
 }
 
-namespace ring { namespace audio {
+namespace ring {
 
 class AudioInput
 {
@@ -57,4 +57,4 @@ private:
     void cleanup();
 };
 
-}} // namespace ring::audio
+} // namespace ring

@@ -63,7 +63,7 @@ class LocalRecorder : public Recordable {
     private:
         bool videoInputSet_ = false;
         std::weak_ptr<ring::video::VideoInput> videoInput_;
-        std::unique_ptr<ring::audio::AudioInput> audioInput_ = nullptr;
+        std::unique_ptr<ring::AudioInput> audioInput_ = nullptr;
         std::string path_;
 };
 

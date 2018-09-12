@@ -74,7 +74,7 @@ LocalRecorder::startRecording()
     ring::Manager::instance().startAudioDriverStream();
     // TODO wait for AudioLayer::hardwareFormatAvailable callback, otherwise a race condition happens here
 
-    audioInput_.reset(new ring::audio::AudioInput(RingBufferPool::DEFAULT_ID));
+    audioInput_.reset(new ring::AudioInput(RingBufferPool::DEFAULT_ID));
     audioInput_->initRecorder(recorder_);
 
 #ifdef RING_VIDEO

@@ -27,7 +27,7 @@
 #include "manager.h"
 #include "smartools.h"
 
-namespace ring { namespace audio {
+namespace ring {
 
 AudioInput::AudioInput(const std::string& id) :
     id_(id),
@@ -121,4 +121,4 @@ AudioInput::initRecorder(const std::shared_ptr<MediaRecorder>& rec)
     recorder_ = rec;
 }
 
-}} // namespace ring::audio
+} // namespace ring
