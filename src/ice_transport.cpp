@@ -1136,6 +1136,7 @@ IceTransportFactory::IceTransportFactory()
     , pool_(nullptr, [](pj_pool_t* pool) { sip_utils::register_thread(); pj_pool_release(pool); })
     , ice_cfg_()
 {
+    sip_utils::register_thread();
     pj_caching_pool_init(&cp_, NULL, 0);
     pool_.reset(pj_pool_create(&cp_.factory, "IceTransportFactory.pool",
                                512, 512, NULL));
