@@ -1,6 +1,6 @@
 # PJPROJECT
-PJPROJECT_VERSION := 2.7.2
-PJPROJECT_URL := http://www.pjsip.org/release/$(PJPROJECT_VERSION)/pjproject-$(PJPROJECT_VERSION).tar.bz2
+PJPROJECT_VERSION := 2.8
+PJPROJECT_URL := https://github.com/pjsip/pjproject/archive/$(PJPROJECT_VERSION).tar.gz
 
 PJPROJECT_OPTIONS := --disable-oss          \
                      --disable-sound        \
@@ -22,20 +22,10 @@ PJPROJECT_OPTIONS := --disable-oss          \
                      --disable-openh264     \
                      --disable-resample     \
                      --disable-libwebrtc    \
-                     --enable-ssl=gnutls
-
-ifdef HAVE_ANDROID
-PJPROJECT_OPTIONS += --with-ssl=$(PREFIX)
-endif
-ifdef HAVE_WIN32
-PJPROJECT_OPTIONS += --with-ssl=$(PREFIX)
-endif
-ifdef HAVE_IOS
-PJPROJECT_OPTIONS += --with-ssl=$(PREFIX)
-endif
+                     --with-gnutls=$(PREFIX)
 
 PJPROJECT_EXTRA_CFLAGS = -g -DPJ_ENABLE_EXTRA_CHECK=1 -DPJ_ICE_MAX_CAND=256 -DPJ_ICE_MAX_CHECKS=1024 -DPJ_ICE_COMP_BITS=2 -DPJ_ICE_MAX_STUN=3 -DPJSIP_MAX_PKT_LEN=8000 -DPJ_ICE_ST_MAX_CAND=32
-PJPROJECT_EXTRA_CXXFLAGS = -g -DPJ_ENABLE_EXTRA_CHECK=1 -DPJ_ICE_MAX_CAND=256 -DPJ_ICE_MAX_CHECKS=1024 -DPJ_ICE_COMP_BITS=2 -DPJ_ICE_MAX_STUN=3 -DPJSIP_MAX_PKT_LEN=8000 -DPJ_ICE_ST_MAX_CAND=32 -std=gnu++11
+PJPROJECT_EXTRA_CXXFLAGS = -g -DPJ_ENABLE_EXTRA_CHECK=1 -DPJ_ICE_MAX_CAND=256 -DPJ_ICE_MAX_CHECKS=1024 -DPJ_ICE_COMP_BITS=2 -DPJ_ICE_MAX_STUN=3 -DPJSIP_MAX_PKT_LEN=8000 -DPJ_ICE_ST_MAX_CAND=32
 
 ifdef HAVE_WIN64
 PJPROJECT_EXTRA_CFLAGS += -DPJ_WIN64=1
@@ -54,18 +44,17 @@ DEPS_pjproject += uuid
 endif
 endif
 
-$(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.bz2:
+$(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.gz:
 	$(call download,$(PJPROJECT_URL))
 
-.sum-pjproject: pjproject-$(PJPROJECT_VERSION).tar.bz2
+.sum-pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz
 
-pjproject: pjproject-$(PJPROJECT_VERSION).tar.bz2 .sum-pjproject
+pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(UNPACK)
 ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/pjproject/pj_win.patch
 endif
-	$(APPLY) $(SRC)/pjproject/gnutls.patch
-	$(APPLY) $(SRC)/pjproject/notestsapps.patch
+	#$(APPLY) $(SRC)/pjproject/gnutls.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/android.patch
 endif
@@ -83,9 +72,9 @@ endif
 
 .pjproject: pjproject
 ifdef HAVE_IOS
-	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
+	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) EXCLUDE_APP=1 ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
 else
-	cd $< && $(HOSTVARS) ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
+	cd $< && $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 endif
-	cd $< && CFLAGS="$(PJPROJECT_EXTRA_CFLAGS)" CXXFLAGS="$(PJPROJECT_EXTRA_CXXFLAGS)" $(MAKE) && $(MAKE) install
+	cd $< && CFLAGS="$(PJPROJECT_EXTRA_CFLAGS)" CXXFLAGS="$(PJPROJECT_EXTRA_CXXFLAGS)" EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
 	touch $@
