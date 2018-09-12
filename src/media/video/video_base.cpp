@@ -35,10 +35,7 @@ VideoFrame&
 VideoGenerator::getNewFrame()
 {
     std::lock_guard<std::mutex> lk(mutex_);
-    if (writableFrame_)
-        writableFrame_->reset();
-    else
-        writableFrame_.reset(new VideoFrame());
+    writableFrame_.reset(new VideoFrame());
     return *writableFrame_.get();
 }
 

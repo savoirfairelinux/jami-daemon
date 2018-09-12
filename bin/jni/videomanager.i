@@ -24,12 +24,19 @@
 #include <functional>
 #include <list>
 #include <mutex>
+#include <utility>
 
 #include "dring/dring.h"
 #include "dring/videomanager_interface.h"
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
 #include <android/log.h>
+
+extern "C" {
+#include <libavutil/pixdesc.h>
+#include <libavutil/imgutils.h>
+#include <libavcodec/avcodec.h>
+}
 
 class VideoCallback {
 public:
@@ -53,18 +60,19 @@ std::map<ANativeWindow*, std::unique_ptr<DRing::FrameBuffer>> windows {};
 std::mutex windows_mutex;
 
 std::vector<uint8_t> workspace;
+extern JavaVM *gJavaVM;
 
-void rotateNV21(std::vector<uint8_t>& input, unsigned width, unsigned height, int rotation, uint8_t* output)
+void rotateNV21(uint8_t* yinput, uint8_t* uvinput, unsigned ystride, unsigned uvstride, unsigned width, unsigned height, int rotation, uint8_t* youtput, uint8_t* uvoutput)
 {
     if (rotation == 0) {
-        std::copy_n(input.begin(), input.size(), output);
+        std::copy_n(yinput, ystride * height, youtput);
+        std::copy_n(uvinput, uvstride * height, uvoutput);
         return;
     }
     if (rotation % 90 != 0 || rotation < 0 || rotation > 270) {
         __android_log_print(ANDROID_LOG_ERROR, "videomanager.i", "%u %u %d", width, height, rotation);
         return;
     }
-    unsigned frameSize = width * height;
     bool swap      = rotation % 180 != 0;
     bool xflip     = rotation % 270 != 0;
     bool yflip     = rotation >= 180;
@@ -73,19 +81,19 @@ void rotateNV21(std::vector<uint8_t>& input, unsigned width, unsigned height, in
 
     for (unsigned j = 0; j < height; j++) {
         for (unsigned i = 0; i < width; i++) {
-            unsigned yIn = j * width + i;
-            unsigned uIn = frameSize + (j >> 1) * width + (i & ~1);
+            unsigned yIn = j * ystride + i;
+            unsigned uIn = (j >> 1) * uvstride + (i & ~1);
             unsigned vIn = uIn + 1;
             unsigned iSwapped = swap ? j : i;
             unsigned jSwapped = swap ? i : j;
             unsigned iOut     = xflip ? wOut - iSwapped - 1 : iSwapped;
             unsigned jOut     = yflip ? hOut - jSwapped - 1 : jSwapped;
             unsigned yOut = jOut * wOut + iOut;
-            unsigned uOut = frameSize + (jOut >> 1) * wOut + (iOut & ~1);
+            unsigned uOut = (jOut >> 1) * wOut + (iOut & ~1);
             unsigned vOut = uOut + 1;
-            output[yOut] = input[yIn];
-            output[uOut] = input[uIn];
-            output[vOut] = input[vIn];
+            youtput[yOut] = yinput[yIn];
+            uvoutput[uOut] = uvinput[uIn];
+            uvoutput[vOut] = uvinput[vIn];
         }
     }
     return;
@@ -99,8 +107,120 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_setVideoFrame(JNIEnv *
     else {
         workspace.resize(frame_size);
         jenv->GetByteArrayRegion(frame, 0, frame_size, (jbyte*)workspace.data());
-        rotateNV21(workspace, w, h, rotation, f_target);
+        auto planeSize = w*h;
+        rotateNV21(workspace.data(), workspace.data() + planeSize, w, w, w, h, rotation, f_target, f_target + planeSize);
     }
+}
+
+int AndroidFormatToAVFormat(int androidformat) {
+    switch (androidformat) {
+    case 17: // ImageFormat.NV21
+        return AV_PIX_FMT_NV21;
+    case 35: // ImageFormat.YUV_420_888
+        return AV_PIX_FMT_YUV420P;
+    case 39: // ImageFormat.YUV_422_888
+        return AV_PIX_FMT_YUV422P;
+    case 41: // ImageFormat.FLEX_RGB_888
+        return AV_PIX_FMT_GBRP;
+    case 42: // ImageFormat.FLEX_RGBA_8888
+        return AV_PIX_FMT_GBRAP;
+    default:
+        return AV_PIX_FMT_NONE;
+    }
+}
+
+JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIEnv *jenv, jclass jcls, jobject image, jint rotation)
+{
+    jclass imageClass = jenv->GetObjectClass(image);
+    auto frame = DRing::getNewFrame();
+    if (not frame) {
+        jenv->CallVoidMethod(image, jenv->GetMethodID(imageClass, "close", "()V"));
+        return;
+    }
+    auto avframe = frame->pointer();
+
+    avframe->format = AndroidFormatToAVFormat(jenv->CallIntMethod(image, jenv->GetMethodID(imageClass, "getFormat", "()I")));
+    avframe->width = jenv->CallIntMethod(image, jenv->GetMethodID(imageClass, "getWidth", "()I"));
+    avframe->height = jenv->CallIntMethod(image, jenv->GetMethodID(imageClass, "getHeight", "()I"));
+    jobject crop = jenv->CallObjectMethod(image, jenv->GetMethodID(imageClass, "getCropRect", "()Landroid/graphics/Rect;"));
+    if (crop) {
+        jclass rectClass = jenv->GetObjectClass(crop);
+        avframe->crop_top = jenv->GetIntField(crop, jenv->GetFieldID(rectClass, "top", "I"));
+        avframe->crop_left = jenv->GetIntField(crop, jenv->GetFieldID(rectClass, "left", "I"));
+        avframe->crop_bottom = avframe->height - jenv->GetIntField(crop, jenv->GetFieldID(rectClass, "bottom", "I"));
+        avframe->crop_right = avframe->width - jenv->GetIntField(crop, jenv->GetFieldID(rectClass, "right", "I"));
+    }
+
+    bool directPointer = true;
+    jobjectArray planes = (jobjectArray)jenv->CallObjectMethod(image, jenv->GetMethodID(imageClass, "getPlanes", "()[Landroid/media/Image$Plane;"));
+    jsize planeCount = jenv->GetArrayLength(planes);
+    if (avframe->format == AV_PIX_FMT_YUV420P) {
+        jobject yplane = jenv->GetObjectArrayElement(planes, 0);
+        jobject uplane = jenv->GetObjectArrayElement(planes, 1);
+        jobject vplane = jenv->GetObjectArrayElement(planes, 2);
+        jclass planeClass = jenv->GetObjectClass(yplane);
+        jmethodID getBuffer = jenv->GetMethodID(planeClass, "getBuffer", "()Ljava/nio/ByteBuffer;");
+        jmethodID getRowStride = jenv->GetMethodID(planeClass, "getRowStride", "()I");
+        jobject ybuffer = jenv->CallObjectMethod(yplane, getBuffer);
+        jobject ubuffer = jenv->CallObjectMethod(uplane, getBuffer);
+        jobject vbuffer = jenv->CallObjectMethod(vplane, getBuffer);
+        auto ydata = (uint8_t*)jenv->GetDirectBufferAddress(ybuffer);
+        auto udata = (uint8_t*)jenv->GetDirectBufferAddress(ubuffer);
+        auto vdata = (uint8_t*)jenv->GetDirectBufferAddress(vbuffer);
+        auto uvdata = std::min(udata, vdata);
+        auto ystride = jenv->CallIntMethod(yplane, getRowStride);
+        auto uvstride = jenv->CallIntMethod(uplane, getRowStride);
+
+        avframe->format = uvdata == udata ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NV21;
+        if (rotation == 0) {
+            avframe->data[0] = ydata;
+            avframe->linesize[0] = ystride;
+            avframe->data[1] = uvdata;
+            avframe->linesize[1] = uvstride;
+        } else {
+            directPointer = false;
+            bool swap = rotation != 0 && rotation != 180;
+            auto ow = avframe->width;
+            auto oh = avframe->height;
+            avframe->width = swap ? oh : ow;
+            avframe->height = swap ? ow : oh;
+            av_frame_get_buffer(avframe, 1);
+            rotateNV21(ydata, uvdata, ystride, uvstride, ow, oh, rotation, avframe->data[0], avframe->data[1]);
+            jenv->CallVoidMethod(image, jenv->GetMethodID(imageClass, "close", "()V"));
+        }
+    } else {
+        for (int i=0; i<planeCount; i++) {
+            jobject plane = jenv->GetObjectArrayElement(planes, i);
+            jclass planeClass = jenv->GetObjectClass(plane);
+            jint stride = jenv->CallIntMethod(plane, jenv->GetMethodID(planeClass, "getRowStride", "()I"));
+            jint pxStride = jenv->CallIntMethod(plane, jenv->GetMethodID(planeClass, "getPixelStride", "()I"));
+            jobject buffer = jenv->CallObjectMethod(plane, jenv->GetMethodID(planeClass, "getBuffer", "()Ljava/nio/ByteBuffer;"));
+            avframe->data[i] = (uint8_t *)jenv->GetDirectBufferAddress(buffer);
+            avframe->linesize[i] = stride;
+        }
+    }
+
+    if (directPointer) {
+        image = jenv->NewGlobalRef(image);
+        imageClass = (jclass)jenv->NewGlobalRef(imageClass);
+        frame->setReleaseCb([jenv, image, imageClass](uint8_t *) mutable {
+            bool justAttached = false;
+            int envStat = gJavaVM->GetEnv((void**)&jenv, JNI_VERSION_1_6);
+            if (envStat == JNI_EDETACHED) {
+                justAttached = true;
+                if (gJavaVM->AttachCurrentThread(&jenv, nullptr) != 0)
+                    return;
+            } else if (envStat == JNI_EVERSION) {
+                return;
+            }
+            jenv->CallVoidMethod(image, jenv->GetMethodID(imageClass, "close", "()V"));
+            jenv->DeleteGlobalRef(image);
+            jenv->DeleteGlobalRef(imageClass);
+            if (justAttached)
+                gJavaVM->DetachCurrentThread();
+        });
+    }
+    DRing::publishFrame();
 }
 
 JNIEXPORT jlong JNICALL Java_cx_ring_daemon_RingserviceJNI_acquireNativeWindow(JNIEnv *jenv, jclass jcls, jobject javaSurface)
@@ -218,6 +338,7 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_unregisterVideoCallbac
 %native(registerVideoCallback) void registerVideoCallback(jstring, jlong);
 %native(unregisterVideoCallback) void unregisterVideoCallback(jstring, jlong);
 
+%native(captureVideoFrame) void captureVideoFrame(jobject, jint);
 
 namespace DRing {
 
