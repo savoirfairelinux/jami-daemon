@@ -22,6 +22,10 @@
 
 #include <array>
 
+extern "C" {
+#include <libavutil/pixfmt.h>
+}
+
 #include "logger.h"
 #include "../video_device.h"
 
@@ -32,7 +36,7 @@ namespace ring { namespace video {
 typedef struct
 {
     std::string             name;
-    enum VideoPixelFormat   ring_format;
+    enum AVPixelFormat      pixfmt;
 } ios_fmt;
 
 static const std::array<ios_fmt, 4> ios_formats
@@ -151,7 +155,7 @@ VideoDeviceImpl::getDeviceParams() const
     DeviceParams params;
     std::stringstream ss1, ss2;
 
-    ss1 << fmt_->ring_format;
+    ss1 << fmt_->pixfmt;
     ss1 >> params.format;
 
     params.name = name;
