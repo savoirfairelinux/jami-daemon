@@ -73,6 +73,8 @@ public:
     void startIO();
     void setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx);
 
+    bool send(AVPacket& packet);
+
 #ifdef RING_VIDEO
     int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
 #endif // RING_VIDEO

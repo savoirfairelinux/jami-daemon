@@ -49,7 +49,13 @@
 namespace DRing {
 
 MediaFrame::MediaFrame()
-    : frame_ {av_frame_alloc(), [](AVFrame* frame){ av_frame_free(&frame); }}
+    : frame_ {av_frame_alloc(), [](AVFrame* frame){ av_frame_free(&frame); }},
+      packet_(nullptr, [](AVPacket* p) {
+        if (p) {
+            av_packet_unref(p);
+            delete p;
+        }
+    })
 {
     if (not frame_)
         throw std::bad_alloc();
@@ -66,6 +72,13 @@ void
 MediaFrame::reset() noexcept
 {
     av_frame_unref(frame_.get());
+    packet_.reset();
+}
+
+void
+MediaFrame::setPacket(std::unique_ptr<AVPacket, void(*)(AVPacket*)>&& pkt)
+{
+    packet_ = std::move(pkt);
 }
 
 AudioFrame::AudioFrame(const ring::AudioFormat& format, size_t nb_samples)

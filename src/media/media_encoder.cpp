@@ -419,25 +419,32 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         }
 
         if (pkt.size) {
-            pkt.stream_index = streamIdx;
-            if (pkt.pts != AV_NOPTS_VALUE)
-                pkt.pts = av_rescale_q(pkt.pts, encoderCtx->time_base,
-                                       outputCtx_->streams[streamIdx]->time_base);
-            if (pkt.dts != AV_NOPTS_VALUE)
-                pkt.dts = av_rescale_q(pkt.dts, encoderCtx->time_base,
-                                       outputCtx_->streams[streamIdx]->time_base);
-
-            // write the compressed frame
-            ret = av_write_frame(outputCtx_, &pkt);
-            if (ret < 0) {
-                RING_ERR() << "av_write_frame failed: " << libav_utils::getError(ret);
-            } else
+            if (send(pkt))
                 break;
         }
     }
 
     av_packet_unref(&pkt);
     return 0;
+}
+
+bool
+MediaEncoder::send(AVPacket& pkt)
+{
+    auto streamIdx = currentStreamIdx_;
+    pkt.stream_index = streamIdx;
+    if (pkt.pts != AV_NOPTS_VALUE)
+        pkt.pts = av_rescale_q(pkt.pts, AVRational{1, 20},
+                               outputCtx_->streams[streamIdx]->time_base);
+    if (pkt.dts != AV_NOPTS_VALUE)
+        pkt.dts = av_rescale_q(pkt.dts, AVRational{1, 20},
+                               outputCtx_->streams[streamIdx]->time_base);
+    // write the compressed frame
+    auto ret = av_write_frame(outputCtx_, &pkt);
+    if (ret < 0) {
+        RING_ERR() << "av_write_frame failed: " << libav_utils::getError(ret);
+    }
+    return ret >= 0;
 }
 
 int

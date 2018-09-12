@@ -129,6 +129,28 @@ int AndroidFormatToAVFormat(int androidformat) {
     }
 }
 
+JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoPacket(JNIEnv *jenv, jclass jcls, jobject buffer, jint size, jint offset, jboolean keyframe, jlong timestamp)
+{
+    auto frame = DRing::getNewFrame();
+    if (not frame)
+        return;
+    auto packet = std::unique_ptr<AVPacket, void(*)(AVPacket*)>(new AVPacket, [](AVPacket* pkt){
+        if (pkt) {
+            av_packet_unref(pkt);
+            delete pkt;
+        }
+    });
+    av_init_packet(packet.get());
+    if (keyframe)
+        packet->flags = AV_PKT_FLAG_KEY;
+    auto data = (uint8_t*)jenv->GetDirectBufferAddress(buffer);
+    packet->data = data + offset;
+    packet->size = size;
+    packet->pts = timestamp;
+    frame->setPacket(std::move(packet));
+    DRing::publishFrame();
+}
+
 JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIEnv *jenv, jclass jcls, jobject image, jint rotation)
 {
     jclass imageClass = jenv->GetObjectClass(image);
@@ -348,6 +370,7 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_unregisterVideoCallbac
 %native(unregisterVideoCallback) void unregisterVideoCallback(jstring, jlong);
 
 %native(captureVideoFrame) void captureVideoFrame(jobject, jint);
+%native(captureVideoPacket) void captureVideoPacket(jobject, jint, jint, jboolean, jlong);
 
 namespace DRing {
 
