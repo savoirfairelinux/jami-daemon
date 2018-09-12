@@ -61,17 +61,21 @@ VideoSender::~VideoSender()
 void
 VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 {
-    bool is_keyframe = forceKeyFrame_ > 0
-        or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
+    if (auto packet = input_frame.packet()) {
+        videoEncoder_->send(*packet);
+    } else {
+        bool is_keyframe = forceKeyFrame_ > 0
+            or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
 
-    if (is_keyframe)
-        --forceKeyFrame_;
+        if (is_keyframe)
+            --forceKeyFrame_;
 
-    if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
-        RING_ERR("encoding failed");
+        if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
+            RING_ERR("encoding failed");
 
-    // Send local video codec in SmartInfo
-    Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getEncoderName());
+        // Send local video codec in SmartInfo
+        Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getEncoderName());
+    }
 }
 
 void
