@@ -240,7 +240,7 @@ class Sdp {
         /**
          * The pool to allocate memory
          */
-        std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> memPool_;
+        std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> memPool_;
 
         /** negotiator */
         pjmedia_sdp_neg *negotiator_ {nullptr};

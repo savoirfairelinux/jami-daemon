@@ -58,7 +58,7 @@ static constexpr int POOL_INITIAL_SIZE = 16384;
 static constexpr int POOL_INCREMENT_SIZE = POOL_INITIAL_SIZE;
 
 Sdp::Sdp(const std::string& id)
-    : memPool_(nullptr, pj_pool_release)
+    : memPool_(nullptr, [](pj_pool_t* pool) { sip_utils::register_thread(); pj_pool_release(pool); })
     , publishedIpAddr_()
     , publishedIpAddrType_()
     , sdesNego_ {CryptoSuites}
