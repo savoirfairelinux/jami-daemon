@@ -110,7 +110,7 @@ public:
     IpAddr getLocalAddress(unsigned comp_id) const;
     IpAddr getRemoteAddress(unsigned comp_id) const;
 
-    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
+    std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_;
     IceTransportCompleteCb on_initdone_cb_;
     IceTransportCompleteCb on_negodone_cb_;
     std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
@@ -251,7 +251,7 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 
 IceTransport::Impl::Impl(const char* name, int component_count, bool master,
                          const IceTransportOptions& options)
-    : pool_(nullptr, pj_pool_release)
+    : pool_(nullptr, [](pj_pool_t* pool) { sip_utils::register_thread(); pj_pool_release(pool); })
     , on_initdone_cb_(options.onInitDone)
     , on_negodone_cb_(options.onNegoDone)
     , component_count_(component_count)
@@ -1133,7 +1133,7 @@ IceTransport::waitForData(int comp_id, unsigned int timeout, std::error_code& ec
 
 IceTransportFactory::IceTransportFactory()
     : cp_()
-    , pool_(nullptr, pj_pool_release)
+    , pool_(nullptr, [](pj_pool_t* pool) { sip_utils::register_thread(); pj_pool_release(pool); })
     , ice_cfg_()
 {
     pj_caching_pool_init(&cp_, NULL, 0);
