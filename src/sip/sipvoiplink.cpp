@@ -747,10 +747,10 @@ SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
 void
 SIPVoIPLink::dequeKeyframeRequests()
 {
+    std::lock_guard<std::mutex> lock(keyframeRequestsMutex_);
     int max_requests = 20;
 
     while (not keyframeRequests_.empty() and max_requests--) {
-        std::lock_guard<std::mutex> lock(keyframeRequestsMutex_);
         const std::string &id(keyframeRequests_.front());
         requestKeyframe(id);
         keyframeRequests_.pop();
