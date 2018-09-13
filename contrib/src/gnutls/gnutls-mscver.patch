@@ -204,7 +204,7 @@
  	gnutls_kx_algorithm_t alg[MAX_ALGOS];
  	int alg_size = MAX_ALGOS;
 -#if defined(_MSC_VER) && (_MSC_VER <= 1913)
-+#if defined(_MSC_VER) && (_MSC_VER <= 1914)
++#if defined(_MSC_VER)
      uint8_t * new_list = (uint8_t *)_alloca(cipher_suites_size*sizeof(uint8_t));
  #else
      uint8_t new_list[cipher_suites_size]; /* it's safe to use that size because it's provided by _gnutls_supported_ciphersuites() */
@@ -215,7 +215,7 @@
  	int ret;
  	unsigned pseed_length, iterations;
 -#if defined(_MSC_VER) && (_MSC_VER <= 1913)
-+#if defined(_MSC_VER) && (_MSC_VER <= 1914)
++#if defined(_MSC_VER)
  	uint8_t * pseed = (uint8_t *)_alloca((seed_length + 2) * sizeof(uint8_t));
  #else
  	uint8_t pseed[seed_length + 2];
@@ -226,7 +226,7 @@
  {
  	int ret, i, j;
 -#if defined(_MSC_VER) && (_MSC_VER <= 1913)
-+#if defined(_MSC_VER) && (_MSC_VER <= 1914)
++#if defined(_MSC_VER)
      gnutls_x509_crt_t * new_list = (gnutls_x509_crt_t *)_alloca(ca_list_size*sizeof(gnutls_x509_crt_t));
  #else
      gnutls_x509_crt_t new_list[ca_list_size];
@@ -235,7 +235,7 @@
  {
  	int ret, i, j;
 -#if defined(_MSC_VER) && (_MSC_VER <= 1913)
-+#if defined(_MSC_VER) && (_MSC_VER <= 1914)
++#if defined(_MSC_VER)
      gnutls_x509_crl_t * new_crl = (gnutls_x509_crl_t *)_alloca(crl_list_size*sizeof(gnutls_x509_crl_t));
  #else
      gnutls_x509_crl_t new_crl[crl_list_size];
