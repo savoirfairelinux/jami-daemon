@@ -100,6 +100,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 
 SIPCall::~SIPCall()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     setTransport({});
     inv.reset(); // prevents callback usage
 }
@@ -191,6 +192,7 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
 int
 SIPCall::SIPSessionReinvite()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     // Do nothing if no invitation processed yet
     if (not inv or inv->invite_tsx)
         return PJ_SUCCESS;
@@ -236,10 +238,13 @@ SIPCall::SIPSessionReinvite()
 void
 SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (not inv or not inv->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
 
     pj_str_t methodName = CONST_PJ_STR("INFO");
+    const pj_str_t type = CONST_PJ_STR("application");
+
     pjsip_method method;
     pjsip_method_init_np(&method, &methodName);
 
@@ -254,11 +259,9 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     /* Create "application/<subtype>" message body. */
     pj_str_t content;
     pj_cstr(&content, body);
-    const pj_str_t type = CONST_PJ_STR("application");
     pj_str_t pj_subtype;
     pj_cstr(&pj_subtype, subtype);
     tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &pj_subtype, &content);
-
     if (tdata->msg->body == NULL)
         pjsip_tx_data_dec_ref(tdata);
     else
@@ -274,9 +277,9 @@ SIPCall::updateSDPFromSTUN()
 void
 SIPCall::terminateSipSession(int status)
 {
+    RING_DBG("[call:%s] Terminate SIP session", getCallId().c_str());
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (inv and inv->state != PJSIP_INV_STATE_DISCONNECTED) {
-        RING_DBG("[call:%s] Terminate SIP session", getCallId().c_str());
-
         pjsip_tx_data* tdata = nullptr;
         auto ret = pjsip_inv_end_session(inv.get(), status, nullptr, &tdata);
         if (ret == PJ_SUCCESS) {
@@ -299,6 +302,7 @@ SIPCall::terminateSipSession(int status)
 void
 SIPCall::answer()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     auto& account = getSIPAccount();
 
     if (not inv)
@@ -343,6 +347,7 @@ SIPCall::answer()
 void
 SIPCall::hangup(int reason)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (inv and inv->dlg) {
         pjsip_route_hdr *route = inv->dlg->route_set.next;
         while (route and route != &inv->dlg->route_set) {
@@ -698,6 +703,7 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
 void
 SIPCall::removeCall()
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     RING_WARN("[call:%s] removeCall()", getCallId().c_str());
     Call::removeCall();
     mediaTransport_.reset();
