@@ -3254,7 +3254,7 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
     auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
     auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
     dht_.get<dht::crypto::RevocationList>(to, [to](dht::crypto::RevocationList&& crl){
-        tls::CertificateStore().instance().pinRevocationList(to.toString(), std::move(crl));
+        tls::CertificateStore::instance().pinRevocationList(to.toString(), std::move(crl));
         return true;
     });
     dht_.get<DeviceAnnouncement>(to, [shared,to,treatedDevices,op](DeviceAnnouncement&& dev) {
