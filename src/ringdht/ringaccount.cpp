@@ -494,6 +494,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 }
             );
 
+            std::lock_guard<std::mutex> lock(sthis->callsMutex_);
             sthis->pendingCalls_.emplace_back(PendingCall{
                 std::chrono::steady_clock::now(),
                 ice, weak_dev_call,
@@ -503,6 +504,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 peer_account,
                 tls::CertificateStore::instance().getCertificate(toUri)
             });
+            sthis->checkPendingCallsTask();
             return false;
         });
     }, [wCall](const std::shared_ptr<RingAccount>&, bool ok){
@@ -1629,7 +1631,7 @@ RingAccount::registerName(const std::string& /*password*/, const std::string& na
 }
 #endif
 
-void
+bool
 RingAccount::handlePendingCallList()
 {
     // Process pending call into a local list to not block threads depending on this list,
@@ -1666,6 +1668,7 @@ RingAccount::handlePendingCallList()
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.splice(std::end(pendingCalls_), pending_calls);
+        return not pendingCalls_.empty();
     }
 }
 
@@ -2026,12 +2029,6 @@ RingAccount::doRegister_()
 
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
         std::weak_ptr<RingAccount> w {shared};
-
-        eventHandler = Manager::instance().scheduler().scheduleAtFixedRate([w]{
-            if (auto this_ = w.lock())
-                this_->handlePendingCallList();
-            return true;
-        }, std::chrono::milliseconds(50));
 
 #if HAVE_RINGNS
         // Look for registered name on the blockchain
@@ -2509,6 +2506,7 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                 /*.from = */peer_ice_msg.from,
                 /*.from_account = */from_id,
                 /*.from_cert = */from_cert });
+        checkPendingCallsTask();
     }
 }
 
@@ -2526,16 +2524,12 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.clear();
         pendingSipCalls_.clear();
+        checkPendingCallsTask();
     }
 
     if (upnp_) {
         upnp_->setIGDListener();
         upnp_->removeMappings();
-    }
-
-    if (eventHandler) {
-        eventHandler->cancel();
-        eventHandler.reset();
     }
 
     saveNodes(dht_.exportNodes());
@@ -3490,4 +3484,22 @@ RingAccount::getLastMessages(const uint64_t& base_timestamp)
 {
     return SIPAccountBase::getLastMessages(base_timestamp);
 }
+
+void
+RingAccount::checkPendingCallsTask()
+{
+    if (not pendingCalls_.empty() and not eventHandler) {
+        eventHandler = Manager::instance().scheduler().scheduleAtFixedRate([
+            w = std::weak_ptr<RingAccount>(std::static_pointer_cast<RingAccount>(shared_from_this()))
+        ] {
+            if (auto this_ = w.lock())
+                return this_->handlePendingCallList();
+            return false;
+        }, std::chrono::milliseconds(50));
+    } else if (pendingCalls_.empty() and eventHandler) {
+        eventHandler->cancel();
+        eventHandler.reset();
+    }
+}
+
 } // namespace ring
