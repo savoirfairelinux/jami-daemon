@@ -723,6 +723,7 @@
     <ClCompile Include="..\src\media\audio\audiobuffer.cpp" />
     <ClCompile Include="..\src\media\audio\audiolayer.cpp" />
     <ClCompile Include="..\src\media\audio\audioloop.cpp" />
+    <ClCompile Include="..\src\media\audio\audio_input.cpp" />
     <ClCompile Include="..\src\media\audio\audio_rtp_session.cpp" />
     <ClCompile Include="..\src\media\audio\dcblocker.cpp" />
     <ClCompile Include="..\src\media\audio\dsp.cpp">
@@ -750,6 +751,8 @@
     <ClCompile Include="..\src\media\audio\sound\tonelist.cpp" />
     <ClCompile Include="..\src\media\audio\tonecontrol.cpp" />
     <ClCompile Include="..\src\media\libav_utils.cpp" />
+    <ClCompile Include="..\src\media\localrecorder.cpp" />
+    <ClCompile Include="..\src\media\localrecordermanager.cpp" />
     <ClCompile Include="..\src\media\media_buffer.cpp" />
     <ClCompile Include="..\src\media\media_codec.cpp" />
     <ClCompile Include="..\src\media\media_decoder.cpp" />
@@ -877,6 +880,7 @@
     <ClInclude Include="..\src\media\audio\audiobuffer.h" />
     <ClInclude Include="..\src\media\audio\audiolayer.h" />
     <ClInclude Include="..\src\media\audio\audioloop.h" />
+    <ClInclude Include="..\src\media\audio\audio_input.h" />
     <ClInclude Include="..\src\media\audio\audio_rtp_session.h" />
     <ClInclude Include="..\src\media\audio\dcblocker.h" />
     <ClInclude Include="..\src\media\audio\dsp.h">
@@ -906,6 +910,8 @@
     <ClInclude Include="..\src\media\decoder_finder.h" />
     <ClInclude Include="..\src\media\libav_deps.h" />
     <ClInclude Include="..\src\media\libav_utils.h" />
+    <ClInclude Include="..\src\media\localrecorder.h" />
+    <ClInclude Include="..\src\media\localrecordermanager.h" />
     <ClInclude Include="..\src\media\media_buffer.h" />
     <ClInclude Include="..\src\media\media_codec.h" />
     <ClInclude Include="..\src\media\media_decoder.h" />
