@@ -391,6 +391,15 @@
     <ClCompile Include="..\src\scheduled_executor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\media\localrecorder.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\localrecordermanager.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\audio_input.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\account.h">
@@ -803,6 +812,15 @@
     </ClInclude>
     <ClInclude Include="..\src\scheduled_executor.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\localrecorder.h">
+      <Filter>Source Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\localrecordermanager.h">
+      <Filter>Source Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\audio_input.h">
+      <Filter>Source Files\media\audio</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
