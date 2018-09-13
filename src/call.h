@@ -339,6 +339,9 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         ///< MultiDevice: message waiting to be sent (need a valid subcall)
         MsgList pendingOutMessages_;
 
+        /** Protect every attribute that can be changed by two threads */
+        mutable std::recursive_mutex callMutex_ {};
+
     private:
         friend void hangupCallsIf(Call::SubcallSet, int, const std::function<bool(Call*)>&);
 
@@ -351,9 +354,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState);
 
         SubcallSet safePopSubcalls();
-
-        /** Protect every attribute that can be changed by two threads */
-        mutable std::recursive_mutex callMutex_ {};
 
         std::vector<std::function<void(CallState, ConnectionState, int)>> stateChangedListeners_ {};
 
