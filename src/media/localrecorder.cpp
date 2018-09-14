@@ -69,12 +69,13 @@ LocalRecorder::startRecording()
     }
 
     // audio recording
-    auto rb = ring::Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID);
-    rb->createReadOffset(RingBufferPool::DEFAULT_ID);
-    ring::Manager::instance().startAudioDriverStream();
+//    auto rb = ring::Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID);
+//    rb->createReadOffset(RingBufferPool::DEFAULT_ID);
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
+    Manager::instance().startAudioDriverStream();
     // TODO wait for AudioLayer::hardwareFormatAvailable callback, otherwise a race condition happens here
 
-    audioInput_.reset(new ring::AudioInput(RingBufferPool::DEFAULT_ID));
+    audioInput_.reset(new AudioInput(RingBufferPool::DEFAULT_ID, path_, AudioFormat::STEREO(), true));
     audioInput_->initRecorder(recorder_);
 
 #ifdef RING_VIDEO
@@ -97,8 +98,9 @@ void
 LocalRecorder::stopRecording()
 {
     if (audioInput_) {
-        auto rb = ring::Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID);
-        rb->removeReadOffset(RingBufferPool::DEFAULT_ID);
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
+//        auto rb = ring::Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID);
+//        rb->removeReadOffset(RingBufferPool::DEFAULT_ID);
         audioInput_.reset();
         audioInput_ = nullptr;
     } else {

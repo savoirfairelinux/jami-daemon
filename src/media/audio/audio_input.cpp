@@ -29,13 +29,17 @@
 
 namespace ring {
 
-AudioInput::AudioInput(const std::string& id) :
+AudioInput::AudioInput(const std::string& id, const std::string& proc, AudioFormat target, bool loop) :
     id_(id),
+    proc_(proc),
+    targetFormat_(target),
     loop_([] {return true;}, // setup()
           [this] {return process();},
           [this] {return cleanup();})
 {
-    loop_.start();
+    resampler_.reset(new Resampler);
+    if (loop)
+        loop_.start();
 }
 
 AudioInput::~AudioInput()
@@ -58,32 +62,47 @@ getNextTimestamp(int64_t seq, rational<int64_t> sampleFreq, rational<int64_t> cl
 void
 AudioInput::process()
 {
+    getNextFrame();
+}
+
+AVFrame*
+AudioInput::getNextFrame()
+{
     auto& mainBuffer = Manager::instance().getRingBufferPool();
-    auto ringBuffer = mainBuffer.getRingBuffer(id_);
-    auto bufferFormat = ringBuffer->getFormat();
+    auto bufferFormat = mainBuffer.getInternalAudioFormat();
 
     // compute number of bytes contained in a frame with duration msPerPacket_
-    auto bytesPerPacket = msPerPacket_ * bufferFormat.sample_rate;
-    const std::size_t bytesToGet = std::chrono::duration_cast<std::chrono::seconds>(bytesPerPacket).count();
+    const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(msPerPacket_ * bufferFormat.sample_rate).count();
 
-    if (ringBuffer->availableForGet(id_) < bytesToGet
-        && not ringBuffer->waitForDataAvailable(id_, bytesToGet)) {
-        return;
+    if (mainBuffer.availableForGet(proc_) < samplesToGet
+        && not mainBuffer.waitForDataAvailable(proc_, samplesToGet, msPerPacket_)) {
+        return nullptr;
     }
 
     // get data
     micData_.setFormat(bufferFormat);
-    micData_.resize(bytesToGet);
-    const auto samples = ringBuffer->get(micData_, id_);
-    if (samples != bytesToGet)
-        return;
+    micData_.resize(samplesToGet);
+    const auto samples = mainBuffer.getData(micData_, proc_);
+    if (samples != samplesToGet)
+        return nullptr;
+
+    AudioBuffer buffer;
+    if (bufferFormat.sample_rate != targetFormat_.sample_rate) {
+        if (!resampler_)
+            resampler_.reset(new Resampler);
+        buffer.setFormat(targetFormat_);
+        buffer.resize(samplesToGet);
+        resampler_->resample(micData_, buffer);
+    } else {
+        buffer = micData_;
+    }
 
     if (muteState_) // audio is muted, set samples to 0
-        micData_.reset();
+        buffer.reset();
 
     // record frame
-    AVFrame* frame = micData_.toAVFrame();
-    auto ms = MediaStream("a:local", micData_.getFormat());
+    AVFrame* frame = buffer.toAVFrame();
+    auto ms = MediaStream("a:local", buffer.getFormat());
     frame->pts = getNextTimestamp(sent_samples, ms.sampleRate, static_cast<rational<int64_t>>(ms.timeBase));
     sent_samples += frame->nb_samples;
 
@@ -93,6 +112,8 @@ AudioInput::process()
             rec->recordData(frame, ms);
         }
     }
+
+    return frame;
 }
 
 void
