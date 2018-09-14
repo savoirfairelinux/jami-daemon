@@ -495,7 +495,7 @@ class RingAccount : public SIPAccountBase {
 
         dht::InfoHash callKey_;
 
-        void handlePendingCallList();
+        bool handlePendingCallList();
         bool handlePendingCall(PendingCall& pc, bool incoming);
 
         /**
@@ -668,6 +668,7 @@ class RingAccount : public SIPAccountBase {
         std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
 
         std::shared_ptr<RepeatedTask> eventHandler {};
+        void checkPendingCallsTask();
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const RingAccount& acc)

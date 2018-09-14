@@ -78,7 +78,7 @@ public:
     }
     bool isCancelled() const {
         std::lock_guard<std::mutex> l(lock_);
-        return (bool)job_;
+        return !job_;
     }
 private:
     NON_COPYABLE(RepeatedTask);
