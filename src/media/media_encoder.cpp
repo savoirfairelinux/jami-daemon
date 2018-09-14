@@ -386,7 +386,6 @@ int MediaEncoder::encodeAudio(AVFrame* frame)
     frame->pts = getNextTimestamp(sent_samples, enc->sample_rate, enc->time_base);
     sent_samples += frame->nb_samples;
     encode(frame, currentStreamIdx_);
-    av_frame_free(&frame);
     return 0;
 }
 
