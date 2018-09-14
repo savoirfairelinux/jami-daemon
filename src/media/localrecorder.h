@@ -23,6 +23,7 @@
 #include "media/video/video_input.h"
 #include "media/audio/audio_input.h"
 #include "recordable.h"
+#include "threadloop.h"
 
 namespace ring {
 
@@ -47,6 +48,8 @@ class LocalRecorder : public Recordable {
          */
         LocalRecorder(std::shared_ptr<ring::video::VideoInput> input);
 
+        ~LocalRecorder();
+
         /**
          * Start local recording. Return true if recording was successfully
          * started, false otherwise.
@@ -65,6 +68,10 @@ class LocalRecorder : public Recordable {
         std::weak_ptr<ring::video::VideoInput> videoInput_;
         std::unique_ptr<ring::AudioInput> audioInput_ = nullptr;
         std::string path_;
+
+        std::mutex mutex_;
+        ThreadLoop loop_;
+        void process();
 };
 
 } // namespace ring
