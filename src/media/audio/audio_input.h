@@ -2,6 +2,7 @@
  *  Copyright (C) 2018 Savoir-faire Linux Inc.
  *
  *  Author: Hugo Lefeuvre <hugo.lefeuvre@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,21 +35,25 @@ namespace ring {
 class AudioInput
 {
 public:
-    AudioInput(const std::string& id);
+    AudioInput(const std::string& id, AudioFormat target, bool loop);
     ~AudioInput();
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
+
+    AVFrame* getNextFrame();
 
     void setMuted(bool isMuted);
     void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
     std::weak_ptr<MediaRecorder> recorder_;
+    std::unique_ptr<Resampler> resampler_;
     uint64_t sent_samples = 0;
 
     std::string id_;
     AudioBuffer micData_;
     bool muteState_ = false;
+    AudioFormat targetFormat_;
 
     const std::chrono::milliseconds msPerPacket_ {20};
 
