@@ -178,7 +178,6 @@ run()
         return -1;
 
     while (loop) {
-        DRing::pollEvents();
         Sleep(1000); // milliseconds
     }
 

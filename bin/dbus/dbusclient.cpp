@@ -72,12 +72,6 @@ DBusClient::DBusClient(int flags, bool persistent)
         DBus::_init_threading();
         DBus::default_dispatcher = dispatcher_.get();
 
-        // timeout and expired are deleted internally by dispatcher_'s
-        // destructor, so we must NOT delete them ourselves.
-        timeout_.reset(new DBus::DefaultTimeout {10 /* ms */, true, dispatcher_.get()});
-        // Poll for Deamon events
-        timeout_->expired = new EventCallback {DRing::pollEvents};
-
         DBus::Connection sessionConnection {DBus::Connection::SessionBus()};
         sessionConnection.request_name("cx.ring.Ring");
 
@@ -116,7 +110,6 @@ DBusClient::~DBusClient()
     presenceManager_.reset();
     configurationManager_.reset();
     callManager_.reset();
-    timeout_.reset();
 }
 
 int
@@ -264,7 +257,6 @@ DBusClient::exit() noexcept
 {
     try {
         dispatcher_->leave();
-        timeout_->expired = new EventCallback([] {});
         finiLibrary();
     } catch (const DBus::Error& err) {
         std::cerr << "quitting: " << err.name() << ": " << err.what() << std::endl;
