@@ -101,6 +101,12 @@ class RingAccount : public SIPAccountBase {
         std::shared_ptr<RingAccount const> shared() const {
             return std::static_pointer_cast<RingAccount const>(shared_from_this());
         }
+        std::weak_ptr<RingAccount> weak() {
+            return std::static_pointer_cast<RingAccount>(shared_from_this());
+        }
+        std::weak_ptr<RingAccount const> weak() const {
+            return std::static_pointer_cast<RingAccount const>(shared_from_this());
+        }
 
         const std::string& getPath() const {
             return idPath_;
