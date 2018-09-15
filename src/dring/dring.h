@@ -61,14 +61,6 @@ bool start(const std::string& config_file={}) noexcept;
  */
 void fini() noexcept;
 
-/**
- * Poll daemon events.
- * This function has to be called by user at a fixed frequency
- * to let daemon checks its internal ressources and io and
- * manages events reported by them.
- */
-void pollEvents() noexcept;
-
 /* External Callback Dynamic Utilities
  *
  * The library provides to users a way to be acknowledged
