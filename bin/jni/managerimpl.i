@@ -27,13 +27,8 @@
 namespace DRing {
 
 /**
- * Finalizes libsflphone, freeing any resource allocated by the library.
+ * Finalizes the daemon, freeing any resource allocated by the library.
  */
 void fini(void);
-
-/**
- * Poll for events
- */
-void pollEvents(void);
 
 }
