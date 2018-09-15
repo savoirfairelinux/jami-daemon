@@ -24,7 +24,7 @@
 #include "dring.h"
 
 extern "C" {
-#include <libavutil/frame.h>
+struct AVFrame;
 struct AVPacket;
 }
 
