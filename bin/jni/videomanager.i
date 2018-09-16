@@ -161,32 +161,41 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIE
         jclass planeClass = jenv->GetObjectClass(yplane);
         jmethodID getBuffer = jenv->GetMethodID(planeClass, "getBuffer", "()Ljava/nio/ByteBuffer;");
         jmethodID getRowStride = jenv->GetMethodID(planeClass, "getRowStride", "()I");
-        jobject ybuffer = jenv->CallObjectMethod(yplane, getBuffer);
-        jobject ubuffer = jenv->CallObjectMethod(uplane, getBuffer);
-        jobject vbuffer = jenv->CallObjectMethod(vplane, getBuffer);
-        auto ydata = (uint8_t*)jenv->GetDirectBufferAddress(ybuffer);
-        auto udata = (uint8_t*)jenv->GetDirectBufferAddress(ubuffer);
-        auto vdata = (uint8_t*)jenv->GetDirectBufferAddress(vbuffer);
-        auto uvdata = std::min(udata, vdata);
+        jmethodID getPixelStride = jenv->GetMethodID(planeClass, "getPixelStride", "()I");
+        auto ydata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(yplane, getBuffer));
+        auto udata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(uplane, getBuffer));
+        auto vdata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(vplane, getBuffer));
         auto ystride = jenv->CallIntMethod(yplane, getRowStride);
         auto uvstride = jenv->CallIntMethod(uplane, getRowStride);
+        auto uvpixstride = jenv->CallIntMethod(uplane, getPixelStride);
 
-        avframe->format = uvdata == udata ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NV21;
-        if (rotation == 0) {
+        if (uvpixstride == 1) {
             avframe->data[0] = ydata;
             avframe->linesize[0] = ystride;
-            avframe->data[1] = uvdata;
+            avframe->data[1] = udata;
             avframe->linesize[1] = uvstride;
-        } else {
-            directPointer = false;
-            bool swap = rotation != 0 && rotation != 180;
-            auto ow = avframe->width;
-            auto oh = avframe->height;
-            avframe->width = swap ? oh : ow;
-            avframe->height = swap ? ow : oh;
-            av_frame_get_buffer(avframe, 1);
-            rotateNV21(ydata, uvdata, ystride, uvstride, ow, oh, rotation, avframe->data[0], avframe->data[1]);
-            jenv->CallVoidMethod(image, jenv->GetMethodID(imageClass, "close", "()V"));
+            avframe->data[2] = vdata;
+            avframe->linesize[2] = uvstride;
+        } else if (uvpixstride == 2) {
+            // False YUV422, actually NV12 or NV21
+            auto uvdata = std::min(udata, vdata);
+            avframe->format = uvdata == udata ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NV21;
+            if (rotation == 0) {
+                avframe->data[0] = ydata;
+                avframe->linesize[0] = ystride;
+                avframe->data[1] = uvdata;
+                avframe->linesize[1] = uvstride;
+            } else {
+                directPointer = false;
+                bool swap = rotation != 0 && rotation != 180;
+                auto ow = avframe->width;
+                auto oh = avframe->height;
+                avframe->width = swap ? oh : ow;
+                avframe->height = swap ? ow : oh;
+                av_frame_get_buffer(avframe, 1);
+                rotateNV21(ydata, uvdata, ystride, uvstride, ow, oh, rotation, avframe->data[0], avframe->data[1]);
+                jenv->CallVoidMethod(image, jenv->GetMethodID(imageClass, "close", "()V"));
+            }
         }
     } else {
         for (int i=0; i<planeCount; i++) {
