@@ -23,6 +23,7 @@
 
 #include "audio_common.h"
 #include "buf_manager.h"
+#include "noncopyable.h"
 
 namespace ring {
 namespace opensl {
@@ -43,6 +44,8 @@ class AudioRecorder {
 public:
     explicit AudioRecorder(ring::AudioFormat, SLEngineItf engineEngine);
     ~AudioRecorder();
+    NON_COPYABLE(AudioRecorder);
+
     bool start();
     bool stop();
     void setBufQueues(AudioQueue *freeQ, AudioQueue *recQ);

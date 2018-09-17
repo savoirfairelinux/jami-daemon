@@ -175,18 +175,18 @@ class OpenSLLayer : public AudioLayer {
         AudioQueue     freeRingBufQueue_ {BUF_COUNT};
         AudioQueue     ringBufQueue_ {BUF_COUNT};
 
-        std::thread    playThread;
-        std::mutex     playMtx;
-        std::condition_variable playCv;
+        std::mutex     playMtx {};
+        std::condition_variable playCv {};
+        std::thread    playThread {};
 
         AudioQueue     freeRecBufQueue_ {BUF_COUNT};    //Owner of the queue
         AudioQueue     recBufQueue_ {BUF_COUNT};     //Owner of the queue
 
-        std::thread    recThread;
-        std::mutex     recMtx;
-        std::condition_variable recCv;
+        std::mutex     recMtx {};
+        std::condition_variable recCv {};
+        std::thread    recThread {};
 
-        std::vector<sample_buf> bufs_;
+        std::vector<sample_buf> bufs_ {};
 
         AudioFormat hardwareFormat_ {AudioFormat::MONO()};
         size_t hardwareBuffSize_ {BUFFER_SIZE};
