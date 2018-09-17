@@ -45,6 +45,10 @@ struct DeviceParams {
     std::string sdp_flags {};
     unsigned offset_x {};
     unsigned offset_y {};
+
+    // audio only
+    unsigned sample_rate;
+    unsigned nb_channels;
 };
 
 }
