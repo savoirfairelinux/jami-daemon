@@ -19,6 +19,7 @@
 
 #include "audio_common.h"
 #include "buf_manager.h"
+#include "noncopyable.h"
 
 #include <sys/types.h>
 #include <SLES/OpenSLES_Android.h>
@@ -45,6 +46,8 @@ class AudioPlayer {
 public:
     explicit AudioPlayer(ring::AudioFormat sampleFormat, SLEngineItf engine, SLint32 streamType);
     ~AudioPlayer();
+    NON_COPYABLE(AudioPlayer);
+
     bool start();
     void stop();
     bool started() const;

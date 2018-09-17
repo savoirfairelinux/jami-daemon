@@ -136,6 +136,19 @@ OpenSLLayer::stopStream()
     bufs_.clear();
 }
 
+std::vector<sample_buf>
+allocateSampleBufs(unsigned count, size_t sizeInByte)
+{
+    std::vector<sample_buf> bufs;
+    if (!count || !sizeInByte)
+        return bufs;
+    bufs.reserve(count);
+    size_t allocSize = (sizeInByte + 3) & ~3;   // padding to 4 bytes aligned
+    for(unsigned i =0; i < count; i++)
+        bufs.emplace_back(allocSize, sizeInByte);
+    return bufs;
+}
+
 void
 OpenSLLayer::initAudioEngine()
 {

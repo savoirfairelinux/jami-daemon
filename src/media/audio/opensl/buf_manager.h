@@ -149,13 +149,8 @@ public:
 private:
     NON_COPYABLE(ProducerConsumerQueue);
     std::vector<T> buffer_;
-
-    // forcing cache line alignment to eliminate false sharing of the
-    // frequently-updated read and write pointers. The object is to never
-    // let these get into the "shared" state where they'd cause a cache miss
-    // for every write.
-    alignas(CACHE_ALIGN) std::atomic<int> read_ { 0 };
-    alignas(CACHE_ALIGN) std::atomic<int> write_ { 0 };
+    std::atomic<int> read_ { 0 };
+    std::atomic<int> write_ { 0 };
 };
 
 struct sample_buf {
@@ -169,6 +164,15 @@ struct sample_buf {
         o.cap_ = 0;
         o.size_ = 0;
     }
+    sample_buf& operator=(sample_buf&& o) {
+        buf_ = o.buf_;
+        cap_ = o.cap_;
+        size_ = o.size_;
+        o.buf_ = nullptr;
+        o.cap_ = 0;
+        o.size_ = 0;
+        return *this;
+    }
 
     ~sample_buf() {
         if (buf_) delete[] buf_;
@@ -177,16 +181,3 @@ struct sample_buf {
 };
 
 using AudioQueue = ProducerConsumerQueue<sample_buf*>;
-
-__inline__ std::vector<sample_buf>
-allocateSampleBufs(unsigned count, size_t sizeInByte)
-{
-    std::vector<sample_buf> bufs;
-    if (!count || !sizeInByte)
-        return bufs;
-    bufs.reserve(count);
-    size_t allocSize = (sizeInByte + 3) & ~3;   // padding to 4 bytes aligned
-    for(unsigned i =0; i < count; i++)
-        bufs.emplace_back(allocSize, sizeInByte);
-    return bufs;
-}
