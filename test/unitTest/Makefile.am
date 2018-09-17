@@ -92,4 +92,10 @@ ut_media_filter_SOURCES = media/test_media_filter.cpp
 check_PROGRAMS += ut_resampler
 ut_resampler_SOURCES = media/audio/test_resampler.cpp
 
+#
+# audio_input
+#
+check_PROGRAMS += ut_audio_input
+ut_audio_input_SOURCES = media/audio/test_audio_input.cpp
+
 TESTS = $(check_PROGRAMS)
