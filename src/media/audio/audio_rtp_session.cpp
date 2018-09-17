@@ -43,9 +43,12 @@
 #include "audio/resampler.h"
 #include "manager.h"
 #include "smartools.h"
+#include "client/videomanager.h"
 #include <sstream>
 
 namespace ring {
+
+constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
 
 class AudioSender {
     public:
@@ -406,6 +409,22 @@ AudioRtpSession::startSender()
 
     if (sender_)
         RING_WARN("Restarting audio sender");
+
+    if (auto input = Manager::instance().getVideoManager().audioInput.lock()) {
+        auto newParams = input->switchInput(input_);
+        try {
+            // we don't need to use newParams, just wait until they're ready
+            if (newParams.valid() &&
+                newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+                localAudioParams_ = newParams.get();
+            } else {
+                RING_ERR() << "No valid new audio parameters";
+            }
+        } catch (const std::exception& e) {
+            RING_ERR() << "Exception while retrieving audio parameters: " << e.what();
+            return;
+        }
+    }
 
     // be sure to not send any packets before saving last RTP seq value
     socketPair_->stopSendOp();
