@@ -43,9 +43,12 @@
 #include "audio/resampler.h"
 #include "manager.h"
 #include "smartools.h"
+#include "client/videomanager.h"
 #include <sstream>
 
 namespace ring {
+
+constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
 
 class AudioSender {
     public:
@@ -74,8 +77,6 @@ class AudioSender {
         std::unique_ptr<MediaEncoder> audioEncoder_;
         std::unique_ptr<MediaIOHandle> muxContext_;
         std::unique_ptr<Resampler> resampler_;
-
-        std::unique_ptr<AudioInput> audioInput_;
 
         uint64_t sent_samples = 0;
 
@@ -122,8 +123,6 @@ AudioSender::setup(SocketPair& socketPair)
 {
     audioEncoder_.reset(new MediaEncoder);
     muxContext_.reset(socketPair.createIOContext(mtu_));
-    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
-    audioInput_.reset(new AudioInput(id_, codec->audioformat));
 
     try {
         /* Encoder setup */
@@ -157,7 +156,8 @@ AudioSender::cleanup()
 void
 AudioSender::process()
 {
-    auto frame = audioInput_->getNextFrame();
+    auto audioInput = ring::getAudioInput(id_);
+    auto frame = audioInput->getNextFrame();
     if (!frame)
         return;
 
@@ -178,13 +178,6 @@ uint16_t
 AudioSender::getLastSeqValue()
 {
     return audioEncoder_->getLastSeqValue();
-}
-
-void
-AudioSender::initRecorder(std::shared_ptr<MediaRecorder>& rec)
-{
-    if (audioInput_)
-        audioInput_->initRecorder(rec);
 }
 
 class AudioReceiveThread
@@ -407,6 +400,23 @@ AudioRtpSession::startSender()
     if (sender_)
         RING_WARN("Restarting audio sender");
 
+    audioInput_ = ring::getAudioInput(callID_);
+    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(send_.codec);
+    audioInput_->setTargetFormat(codec->audioformat);
+    auto newParams = audioInput_->switchInput(input_);
+    try {
+        if (newParams.valid() &&
+            newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+            localAudioParams_ = newParams.get();
+        } else {
+            RING_ERR() << "No valid new audio parameters";
+            return;
+        }
+    } catch (const std::exception& e) {
+        RING_ERR() << "Exception while retrieving audio parameters: " << e.what();
+        return;
+    }
+
     // be sure to not send any packets before saving last RTP seq value
     socketPair_->stopSendOp();
     if (sender_)
@@ -511,8 +521,8 @@ AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     if (receiveThread_)
         receiveThread_->initRecorder(rec);
-    if (sender_)
-        sender_->initRecorder(rec);
+    if (audioInput_)
+        audioInput_->initRecorder(rec);
 }
 
 } // namespace ring
