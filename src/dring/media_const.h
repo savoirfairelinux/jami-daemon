@@ -36,6 +36,13 @@ constexpr static const char* CAMERA     = "camera";
 constexpr static const char* SEPARATOR  = "://";
 }
 
+namespace AudioProtocolPrefix {
+constexpr static const char* NONE       = "";
+constexpr static const char* INPUT      = "input";
+constexpr static const char* FILE       = "file";
+constexpr static const char* SEPARATOR  = "://";
+}
+
 namespace Details {
 
 constexpr static char MEDIA_TYPE_AUDIO[] = "MEDIA_TYPE_AUDIO";

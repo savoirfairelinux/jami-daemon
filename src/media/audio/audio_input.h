@@ -23,12 +23,11 @@
 
 #include <future>
 #include "audio/audiobuffer.h"
-#include "media/media_recorder.h"
+#include "media_decoder.h"
+#include "media_recorder.h"
 #include "audio/resampler.h"
 
-namespace ring {
-class MediaRecorder;
-}
+struct AVFrame;
 
 namespace ring {
 
@@ -46,14 +45,31 @@ public:
     void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
+    AVFrame* getNextFromInput();
+    bool getNextFromFile(AudioFrame& frame);
+
+    bool initFile(const std::string& path);
+    bool initInput(const std::string& input);
+
+    std::unique_ptr<MediaDecoder> decoder_;
+    void createDecoder();
+
     std::weak_ptr<MediaRecorder> recorder_;
     std::unique_ptr<Resampler> resampler_;
-    uint64_t sent_samples = 0;
+    uint64_t sampleCount = 0;
 
     std::string id_;
     AudioBuffer micData_;
     bool muteState_ = false;
     AudioFormat targetFormat_;
+
+    std::string currentResource_;
+    std::atomic<bool> switchPending_ = {false};
+    DeviceParams devOpts_;
+    std::promise<DeviceParams> foundDevOpts_;
+    std::shared_future<DeviceParams> futureDevOpts_;
+    std::atomic_bool devOptsFound_ {false};
+    void foundDevOpts(const DeviceParams& params);
 
     const std::chrono::milliseconds msPerPacket_ {20};
 
