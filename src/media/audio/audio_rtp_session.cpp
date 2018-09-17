@@ -43,9 +43,12 @@
 #include "audio/resampler.h"
 #include "manager.h"
 #include "smartools.h"
+#include "client/videomanager.h"
 #include <sstream>
 
 namespace ring {
+
+constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
 
 class AudioSender {
     public:
@@ -75,7 +78,7 @@ class AudioSender {
         std::unique_ptr<MediaIOHandle> muxContext_;
         std::unique_ptr<Resampler> resampler_;
 
-        std::unique_ptr<AudioInput> audioInput_;
+        std::shared_ptr<AudioInput> audioInput_;
 
         uint64_t sent_samples = 0;
 
@@ -123,7 +126,8 @@ AudioSender::setup(SocketPair& socketPair)
     audioEncoder_.reset(new MediaEncoder);
     muxContext_.reset(socketPair.createIOContext(mtu_));
     auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
-    audioInput_.reset(new AudioInput(id_, codec->audioformat));
+    audioInput_ = ring::getAudioInput(id_);
+    audioInput_->setTargetFormat(codec->audioformat);
 
     try {
         /* Encoder setup */
@@ -406,6 +410,25 @@ AudioRtpSession::startSender()
 
     if (sender_)
         RING_WARN("Restarting audio sender");
+
+    if (auto input = ring::getAudioInput(callID_)) {
+        auto newParams = input->switchInput(input_);
+        try {
+            if (newParams.valid() &&
+                newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+                localAudioParams_ = newParams.get();
+            } else {
+                RING_ERR() << "No valid new audio parameters";
+                return;
+            }
+        } catch (const std::exception& e) {
+            RING_ERR() << "Exception while retrieving audio parameters: " << e.what();
+            return;
+        }
+    } else {
+        RING_WARN() << "Can't lock audio input";
+        return;
+    }
 
     // be sure to not send any packets before saving last RTP seq value
     socketPair_->stopSendOp();
