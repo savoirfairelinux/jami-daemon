@@ -33,6 +33,7 @@
 #include "system_codec_container.h"
 #include "video/sinkclient.h"
 #include "client/ring_signal.h"
+#include "audio/ringbufferpool.h"
 
 #include <functional>
 #include <memory>
@@ -423,6 +424,21 @@ video::VideoDeviceMonitor&
 getVideoDeviceMonitor()
 {
     return Manager::instance().getVideoManager().videoDeviceMonitor;
+}
+
+std::shared_ptr<AudioInput>
+getAudioInput()
+{
+    auto& vmgr = Manager::instance().getVideoManager();
+    if (auto input = vmgr.audioInput.lock())
+        return input;
+
+    std::string id = "default_audio_input";
+    Manager::instance().getRingBufferPool().bindCallID(RingBufferPool::DEFAULT_ID, id);
+    vmgr.audioStarted = false;
+    auto input = std::make_shared<AudioInput>(id, AudioFormat::STEREO());
+    vmgr.audioInput = input;
+    return input;
 }
 
 } // namespace ring
