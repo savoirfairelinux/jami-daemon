@@ -78,9 +78,9 @@ struct MediaStream {
         : MediaStream(streamName, c, 0)
     {}
 
-    MediaStream(const std::string& streamName, AVCodecContext* c, int64_t firstTimestamp)
+    MediaStream(const std::string& streamName, AVCodecContext* c, int64_t startTime)
         : name(streamName)
-        , firstTimestamp(firstTimestamp)
+        , firstTimestamp(startTime)
     {
         timeBase = c->time_base;
         switch (c->codec_type) {
@@ -143,7 +143,7 @@ inline std::ostream& operator<<(std::ostream& os, const MediaStream& ms)
             << ms.nbChannels << " channel(s), "
             << ms.sampleRate << " Hz (" << ms.timeBase << ")";
     }
-    if (ms.firstTimestamp > 0)
+    if (ms.firstTimestamp >= 0)
         os << ", start: " << ms.firstTimestamp;
     return os;
 }
