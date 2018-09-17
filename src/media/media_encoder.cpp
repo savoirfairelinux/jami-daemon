@@ -98,9 +98,13 @@ void MediaEncoder::setOptions(const MediaDescription& args)
             av_dict_set(&options_, "channels",
                         ring::to_string(accountAudioCodec->audioformat.nb_channels).c_str(), 0);
 
-        if (accountAudioCodec->audioformat.sample_rate && accountAudioCodec->audioformat.nb_channels)
-            av_dict_set(&options_, "frame_size",
+        if (accountAudioCodec->audioformat.sample_rate && accountAudioCodec->audioformat.nb_channels) {
+            if (args.frame_size)
+                av_dict_set(&options_, "frame_size", ring::to_string(args.frame_size).c_str(), 0);
+            else
+                av_dict_set(&options_, "frame_size",
                         ring::to_string(static_cast<unsigned>(0.02 * accountAudioCodec->audioformat.sample_rate)).c_str(), 0);
+        }
     }
 
     if (not args.parameters.empty())
@@ -632,6 +636,14 @@ bool
 MediaEncoder::useCodec(const ring::AccountCodecInfo* codec) const noexcept
 {
     return codec_.get() == codec;
+}
+
+int
+MediaEncoder::getFrameSize(int streamIdx)
+{
+    if (streamIdx < 0)
+        streamIdx = currentStreamIdx_;
+    return encoders_[streamIdx]->frame_size;
 }
 
 unsigned

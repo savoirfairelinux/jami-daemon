@@ -93,6 +93,7 @@ public:
     void setInitSeqVal(uint16_t seqVal);
     uint16_t getLastSeqValue();
     std::string getEncoderName() const;
+    int getFrameSize(int streamIdx = -1);
 
     bool useCodec(const AccountCodecInfo* codec) const noexcept;
 
