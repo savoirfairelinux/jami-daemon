@@ -28,6 +28,7 @@
 #include <map>
 #include <string>
 
+#include "audio/audio_input.h"
 #include "video/video_device_monitor.h"
 #include "video/video_base.h"
 #include "video/video_input.h"
@@ -49,10 +50,13 @@ struct VideoManager
         std::shared_ptr<video::VideoFrameActiveWriter> videoPreview;
         video::VideoDeviceMonitor videoDeviceMonitor;
         std::atomic_bool started;
+        std::weak_ptr<AudioInput> audioInput;
+        std::atomic_bool audioStarted;
 };
 
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
+std::shared_ptr<AudioInput> getAudioInput();
 
 } // namespace ring
 
