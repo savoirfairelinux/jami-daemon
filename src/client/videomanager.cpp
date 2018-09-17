@@ -33,6 +33,7 @@
 #include "system_codec_container.h"
 #include "video/sinkclient.h"
 #include "client/ring_signal.h"
+#include "audio/ringbufferpool.h"
 
 #include <functional>
 #include <memory>
@@ -328,9 +329,15 @@ switchInput(const std::string& resource)
         call->switchInput(resource);
         return true;
     } else {
+        bool ret = true;
         if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
-            return input->switchInput(resource).valid();
-        RING_WARN("Video input not initialized");
+            ret &= input->switchInput(resource).valid();
+        else
+            RING_WARN("Video input not initialized");
+
+        if (auto input = ring::getAudioInput(ring::RingBufferPool::DEFAULT_ID))
+            ret &= input->switchInput(resource).valid();
+        return ret;
     }
     return false;
 }
@@ -426,6 +433,23 @@ video::VideoDeviceMonitor&
 getVideoDeviceMonitor()
 {
     return Manager::instance().getVideoManager().videoDeviceMonitor;
+}
+
+std::shared_ptr<AudioInput>
+getAudioInput(const std::string& id)
+{
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto it = vmgr.audioInputs.find(id);
+    if (it != vmgr.audioInputs.end()) {
+        if (auto input = it->second.lock()) {
+            return input;
+        }
+    }
+
+    auto input = std::make_shared<AudioInput>(id);
+    vmgr.audioInputs[id] = input;
+    Manager::instance().getRingBufferPool().bindCallID(id, RingBufferPool::DEFAULT_ID);
+    return input;
 }
 
 } // namespace ring
