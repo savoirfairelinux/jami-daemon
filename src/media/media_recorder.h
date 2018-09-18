@@ -100,9 +100,8 @@ class MediaRecorder {
 
         std::string path_;
 
-        [[deprecated]]
+        // NOTE do not use dir_ or filename_, use path_ instead
         std::string dir_;
-        [[deprecated]]
         std::string filename_;
 
         unsigned nbExpectedStreams_ = 0;
