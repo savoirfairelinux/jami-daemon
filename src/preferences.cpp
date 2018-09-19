@@ -146,8 +146,8 @@ static const char * const ALSA_DFT_CARD    = "0";          /** Default sound car
 Preferences::Preferences() :
     accountOrder_("")
     , historyLimit_(0)
-    , ringingTimeout_(30)
     , historyMaxCalls_(20)
+    , ringingTimeout_(30)
     , zoneToneChoice_(DFT_ZONE) // DFT_ZONE
     , registrationExpire_(180)
     , portNum_(sip_utils::DEFAULT_SIP_PORT)
