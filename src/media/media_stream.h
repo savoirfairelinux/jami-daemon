@@ -44,9 +44,9 @@ struct MediaStream {
     MediaStream()
     {}
 
-    MediaStream(std::string name, int fmt, rational<int> tb, int w, int h,
+    MediaStream(const std::string& streamName, int fmt, rational<int> tb, int w, int h,
                           rational<int> sar, rational<int> fr)
-        : name(name)
+        : name(streamName)
         , format(fmt)
         , isVideo(true)
         , timeBase(tb)
@@ -56,8 +56,8 @@ struct MediaStream {
         , frameRate(fr)
     {}
 
-    MediaStream(std::string name, int fmt, rational<int> tb, int sr, int channels)
-        : name(name)
+    MediaStream(const std::string& streamName, int fmt, rational<int> tb, int sr, int channels)
+        : name(streamName)
         , format(fmt)
         , isVideo(false)
         , timeBase(tb)
@@ -65,8 +65,8 @@ struct MediaStream {
         , nbChannels(channels)
     {}
 
-    MediaStream(std::string name, AudioFormat fmt)
-        : name(name)
+    MediaStream(const std::string& streamName, AudioFormat fmt)
+        : name(streamName)
         , format(fmt.sampleFormat)
         , isVideo(false)
         , timeBase(1, fmt.sample_rate)
@@ -74,12 +74,12 @@ struct MediaStream {
         , nbChannels(fmt.nb_channels)
     {}
 
-    MediaStream(std::string name, AVCodecContext* c)
-        : MediaStream(name, c, 0)
+    MediaStream(const std::string& streamName, AVCodecContext* c)
+        : MediaStream(streamName, c, 0)
     {}
 
-    MediaStream(std::string name, AVCodecContext* c, int64_t firstTimestamp)
-        : name(name)
+    MediaStream(const std::string& streamName, AVCodecContext* c, int64_t firstTimestamp)
+        : name(streamName)
         , firstTimestamp(firstTimestamp)
     {
         timeBase = c->time_base;
