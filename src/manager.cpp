@@ -246,10 +246,14 @@ struct Manager::ManagerPimpl
     bool parseConfiguration();
 
     /*
-     * Play one tone
-     * @return false if the driver is uninitialize
+     * Play a tone for a given amount of time
      */
-    void playATone(Tone::TONEID toneId);
+    void playAToneFor(Tone::TONEID toneId, std::chrono::steady_clock::duration duration);
+    /*
+     * Play a tone (has to be manually stopped using stopTone())
+     * @return true if tone was successfuly played
+     */
+    bool playATone(Tone::TONEID toneId);
 
     int getCurrentDeviceIndex(DeviceType type);
 
@@ -426,17 +430,32 @@ Manager::ManagerPimpl::parseConfiguration()
  * Multi Thread
  */
 void
+Manager::ManagerPimpl::playAToneFor(Tone::TONEID toneId, std::chrono::steady_clock::duration duration)
+{
+    if (playATone(toneId)) {
+        scheduler_.scheduleIn([this]{
+            if (not base_.incomingCallsWaiting()) {
+                base_.stopTone();
+            }
+        }, duration);
+    }
+}
+
+/**
+ * Multi Thread
+ */
+bool
 Manager::ManagerPimpl::playATone(Tone::TONEID toneId)
 {
     if (not base_.voipPreferences.getPlayTones())
-        return;
+        return false;
 
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
         if (not audiodriver_) {
             RING_ERR("Audio layer not initialized");
-            return;
+            return false;
         }
 
         audiodriver_->flushUrgent();
@@ -444,6 +463,7 @@ Manager::ManagerPimpl::playATone(Tone::TONEID toneId)
     }
 
     toneCtrl_.play(toneId);
+    return true;
 }
 
 int
@@ -2004,11 +2024,10 @@ Manager::callBusy(Call& call)
     RING_DBG("[call:%s] Busy", call.getCallId().c_str());
 
     if (isCurrentCall(call)) {
-        pimpl_->playATone(Tone::TONE_BUSY);
+        pimpl_->playAToneFor(Tone::TONE_BUSY, std::chrono::seconds(2));
         pimpl_->unsetCurrentCall();
     }
 
-    checkAudio();
     pimpl_->removeWaitingCall(call.getCallId());
 }
 
@@ -2017,10 +2036,12 @@ void
 Manager::callFailure(Call& call)
 {
     const auto call_id = call.getCallId();
-    RING_DBG("[call:%s] Failed", call.getCallId().c_str());
+    RING_DBG("[call:%s] Failed", call_id.c_str());
+
+    stopTone();
 
     if (isCurrentCall(call)) {
-        pimpl_->playATone(Tone::TONE_BUSY);
+        pimpl_->playAToneFor(Tone::TONE_BUSY, std::chrono::seconds(2));
         pimpl_->unsetCurrentCall();
     }
 
@@ -2030,10 +2051,7 @@ Manager::callFailure(Call& call)
         removeParticipant(call_id);
     }
 
-    checkAudio();
     pimpl_->removeWaitingCall(call_id);
-    if (not incomingCallsWaiting())
-        stopTone();
     removeAudio(call);
 }
 
@@ -2055,6 +2073,7 @@ Manager::stopTone()
         return;
 
     pimpl_->toneCtrl_.stop();
+    checkAudio();
 }
 
 /**
@@ -2071,15 +2090,6 @@ Manager::playTone()
  */
 void
 Manager::playToneWithMessage()
-{
-    pimpl_->playATone(Tone::TONE_CONGESTION);
-}
-
-/**
- * Multi Thread
- */
-void
-Manager::congestion()
 {
     pimpl_->playATone(Tone::TONE_CONGESTION);
 }
