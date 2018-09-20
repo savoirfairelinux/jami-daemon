@@ -2004,7 +2004,6 @@ Manager::callBusy(Call& call)
     RING_DBG("[call:%s] Busy", call.getCallId().c_str());
 
     if (isCurrentCall(call)) {
-        pimpl_->playATone(Tone::TONE_BUSY);
         pimpl_->unsetCurrentCall();
     }
 
@@ -2020,7 +2019,6 @@ Manager::callFailure(Call& call)
     RING_DBG("[call:%s] Failed", call.getCallId().c_str());
 
     if (isCurrentCall(call)) {
-        pimpl_->playATone(Tone::TONE_BUSY);
         pimpl_->unsetCurrentCall();
     }
 
