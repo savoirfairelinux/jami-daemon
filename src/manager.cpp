@@ -1687,6 +1687,8 @@ Manager::saveConfig(const std::shared_ptr<RingAccount>& account)
         YAML::Emitter accountOut;
         account->serialize(accountOut);
         auto accountConfig = account->getPath() + DIR_SEPARATOR_STR + "config.yml";
+
+        std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
         std::ofstream fout(accountConfig);
         fout << accountOut.c_str();
         RING_DBG("Exported Ring account to %s", accountConfig.c_str());
@@ -1716,7 +1718,10 @@ Manager::saveConfig()
 
         for (const auto& account : accountFactory.getAllAccounts()) {
             if (auto ringAccount = std::dynamic_pointer_cast<RingAccount>(account)) {
-                saveConfig(ringAccount);
+                auto accountConfig = ringAccount->getPath() + DIR_SEPARATOR_STR + "config.yml";
+                if (not fileutils::isFile(accountConfig)) {
+                    saveConfig(ringAccount);
+                }
             } else {
                 account->serialize(out);
             }
@@ -1734,6 +1739,7 @@ Manager::saveConfig()
 #endif
         shortcutPreferences.serialize(out);
 
+        std::lock_guard<std::mutex> lock(fileutils::getFileLock(pimpl_->path_));
         std::ofstream fout(pimpl_->path_);
         fout << out.c_str();
     } catch (const YAML::Exception &e) {
