@@ -41,13 +41,17 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
     AVPixelFormat fallback = AV_PIX_FMT_NONE;
     for (int i = 0; formats[i] != AV_PIX_FMT_NONE; ++i) {
         fallback = formats[i];
-        if (formats[i] == accel->format) {
+        if (accel && formats[i] == accel->format) {
             return formats[i];
         }
     }
 
-    RING_WARN("'%s' acceleration not supported, falling back to software decoding", accel->name.c_str());
-    accel->name = {}; // don't use accel
+    if (accel) {
+        RING_WARN("'%s' acceleration not supported, falling back to software decoding", accel->name.c_str());
+        accel->name = {}; // don't use accel
+    } else {
+        RING_WARN() << "Not using hardware decoding";
+    }
     return fallback;
 }
 
