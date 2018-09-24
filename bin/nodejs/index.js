@@ -26,10 +26,6 @@ class RingDaemon{
             this.dring = require("./build/Release/dring.node");
             this.dring.init(callbackMap);
             var that = this;
-            this.pollIntervalId = setInterval(function () {
-                that.dring.pollEvents();
-                //console.log("Polling...");
-            }, 10);
         }
     }
 
@@ -113,7 +109,6 @@ class RingDaemon{
     }
 
     stop() {
-        clearInterval(this.pollIntervalId);
         this.dring.fini();
     }
 }
