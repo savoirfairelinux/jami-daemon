@@ -73,6 +73,7 @@ public:
 
     // Return a pointer on underlaying buffer
     AVFrame* pointer() const noexcept { return frame_.get(); }
+    AVFrame* operator->() { return frame_.get(); }
 
     // Reset internal buffers (return to an empty MediaFrame)
     virtual void reset() noexcept;
