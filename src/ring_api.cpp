@@ -79,10 +79,4 @@ fini() noexcept
     ring::Manager::instance().finish();
 }
 
-void
-pollEvents() noexcept
-{
-    ring::Manager::instance().pollEvents();
-}
-
 } // namespace DRing

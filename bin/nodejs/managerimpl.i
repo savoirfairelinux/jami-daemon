@@ -31,9 +31,4 @@ namespace DRing {
  */
 void fini(void);
 
-/**
- * Poll for events
- */
-void pollEvents(void);
-
 }
