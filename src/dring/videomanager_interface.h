@@ -64,15 +64,22 @@ struct DRING_PUBLIC SinkTarget {
     std::function<void(FrameBufferPtr)> push;
 };
 
-class MediaFrame {
+class DRING_PUBLIC MediaFrame {
 public:
     // Construct an empty MediaFrame
     MediaFrame();
+    MediaFrame(const MediaFrame&) = delete;
+    MediaFrame& operator =(const MediaFrame& o) = delete;
+    MediaFrame(MediaFrame&& o) = delete;
+    MediaFrame& operator =(MediaFrame&& o) = delete;
 
     virtual ~MediaFrame() = default;
 
     // Return a pointer on underlaying buffer
     AVFrame* pointer() const noexcept { return frame_.get(); }
+
+    // Fill this MediaFrame with data from o
+    void copyFrom(MediaFrame& o);
 
     // Reset internal buffers (return to an empty MediaFrame)
     virtual void reset() noexcept;
@@ -81,16 +88,19 @@ protected:
     std::unique_ptr<AVFrame, void(*)(AVFrame*)> frame_;
 };
 
-struct AudioFrame: MediaFrame {};
+class DRING_PUBLIC AudioFrame : public MediaFrame {};
 
-class VideoFrame: public MediaFrame {
+class DRING_PUBLIC VideoFrame : public MediaFrame {
 public:
     // Construct an empty VideoFrame
-    VideoFrame() = default;
+    VideoFrame() : MediaFrame() {}
     ~VideoFrame();
 
     // Reset internal buffers (return to an empty VideoFrame)
     void reset() noexcept override;
+
+    // Fill this VideoFrame with data from o
+    void copyFrom(VideoFrame& o);
 
     // Return frame size in bytes
     std::size_t size() const noexcept;
@@ -114,9 +124,6 @@ public:
     void setReleaseCb(std::function<void(uint8_t*)> cb) noexcept;
 
     void noise();
-
-    // Copy-Assignement
-    VideoFrame& operator =(const VideoFrame& src);
 
 private:
     std::function<void(uint8_t*)> releaseBufferCb_ {};
