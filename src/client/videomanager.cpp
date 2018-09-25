@@ -53,6 +53,13 @@ MediaFrame::MediaFrame()
 }
 
 void
+MediaFrame::copyFrom(MediaFrame& o)
+{
+    reset();
+    av_frame_ref(frame_.get(), o.frame_.get());
+}
+
+void
 MediaFrame::reset() noexcept
 {
     av_frame_unref(frame_.get());
@@ -70,6 +77,14 @@ VideoFrame::reset() noexcept
     MediaFrame::reset();
     allocated_ = false;
     releaseBufferCb_ = {};
+}
+
+void
+VideoFrame::copyFrom(VideoFrame& o)
+{
+    MediaFrame::copyFrom(o);
+    ptr_ = o.ptr_;
+    allocated_ = o.allocated_;
 }
 
 size_t
@@ -154,7 +169,6 @@ VideoFrame::setReleaseCb(std::function<void(uint8_t*)> cb) noexcept
     }
 }
 
-
 void
 VideoFrame::noise()
 {
@@ -164,17 +178,6 @@ VideoFrame::noise()
     for (std::size_t i=0 ; i < size(); ++i) {
         f->data[0][i] = std::rand() & 255;
     }
-}
-
-VideoFrame&
-VideoFrame::operator =(const VideoFrame& src)
-{
-    reserve(src.format(), src.width(), src.height());
-    auto source = src.pointer();
-    av_image_copy(frame_->data, frame_->linesize, (const uint8_t **)source->data,
-                  source->linesize, (AVPixelFormat)frame_->format,
-                  frame_->width, frame_->height);
-    return *this;
 }
 
 VideoFrame* getNewFrame()
