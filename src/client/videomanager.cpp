@@ -52,10 +52,33 @@ MediaFrame::MediaFrame()
         throw std::bad_alloc();
 }
 
+MediaFrame&
+MediaFrame::operator =(MediaFrame&& o)
+{
+    frame_ = std::move(o.frame_);
+    return *this;
+}
+
 void
 MediaFrame::reset() noexcept
 {
     av_frame_unref(frame_.get());
+}
+
+AudioFrame&
+AudioFrame::operator =(AudioFrame&& o)
+{
+    frame_ = std::move(o.frame_);
+    return *this;
+}
+
+VideoFrame&
+VideoFrame::operator =(VideoFrame&& o)
+{
+    frame_ = std::move(o.frame_);
+    releaseBufferCb_ = std::move(o.releaseBufferCb_);
+    ptr_ = std::move(o.ptr_);
+    return *this;
 }
 
 VideoFrame::~VideoFrame()
@@ -154,6 +177,14 @@ VideoFrame::setReleaseCb(std::function<void(uint8_t*)> cb) noexcept
     }
 }
 
+void
+VideoFrame::copyFrom(VideoFrame& o)
+{
+    reset();
+    if (!frame_)
+        frame_.reset(av_frame_alloc());
+    av_frame_ref(frame_.get(), o.frame_.get());
+}
 
 void
 VideoFrame::noise()
@@ -164,17 +195,6 @@ VideoFrame::noise()
     for (std::size_t i=0 ; i < size(); ++i) {
         f->data[0][i] = std::rand() & 255;
     }
-}
-
-VideoFrame&
-VideoFrame::operator =(const VideoFrame& src)
-{
-    reserve(src.format(), src.width(), src.height());
-    auto source = src.pointer();
-    av_image_copy(frame_->data, frame_->linesize, (const uint8_t **)source->data,
-                  source->linesize, (AVPixelFormat)frame_->format,
-                  frame_->width, frame_->height);
-    return *this;
 }
 
 VideoFrame* getNewFrame()
