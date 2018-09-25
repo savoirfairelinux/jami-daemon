@@ -160,7 +160,7 @@ MediaRecorder::startRecording()
         std::lock_guard<std::mutex> q(qLock_);
         while (!frames_.empty()) {
             auto f = frames_.front();
-            av_frame_unref(f.frame);
+            av_frame_free(&f.frame);
             frames_.pop_front();
         }
     }
@@ -522,10 +522,10 @@ MediaRecorder::sendToEncoder(AVFrame* frame, int streamIdx)
         encoder_->encode(frame, streamIdx);
     } catch (const MediaEncoderException& e) {
         RING_ERR() << "MediaEncoderException: " << e.what();
-        av_frame_unref(frame);
+        av_frame_free(&frame);
         return -1;
     }
-    av_frame_unref(frame);
+    av_frame_free(&frame);
     return 0;
 }
 
@@ -585,7 +585,7 @@ MediaRecorder::process()
         RING_ERR() << "Specified stream is invalid: "
             << (recframe.fromPeer ? "remote " : "local ")
             << (recframe.isVideo ? "video" : "audio");
-        av_frame_unref(input);
+        av_frame_free(&input);
         return;
     }
 
@@ -598,7 +598,7 @@ MediaRecorder::process()
         RING_ERR() << "Specified stream could not be found: "
             << (recframe.fromPeer ? "remote " : "local ")
             << (recframe.isVideo ? "video" : "audio");
-        av_frame_unref(input);
+        av_frame_free(&input);
         return;
     }
 
