@@ -111,7 +111,7 @@ VideoMixer::update(Observable<std::shared_ptr<VideoFrame>>* ob,
                 x->update_frame.reset(new VideoFrame);
             else
                 x->update_frame->reset();
-            *x->update_frame = *frame_p; // copy frame content, it will be destroyed after return
+            x->update_frame->copyFrom(*frame_p); // copy frame content, it will be destroyed after return
             x->atomic_swap_render(x->update_frame);
             return;
         }
