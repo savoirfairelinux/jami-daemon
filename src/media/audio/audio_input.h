@@ -22,15 +22,15 @@
 #pragma once
 
 #include <future>
+
 #include "audio/audiobuffer.h"
-#include "media/media_recorder.h"
-#include "audio/resampler.h"
+#include "media_device.h"
+#include "media_buffer.h"
+#include "threadloop.h"
 
 namespace ring {
+
 class MediaRecorder;
-}
-
-namespace ring {
 
 class AudioInput
 {
@@ -50,8 +50,6 @@ private:
     std::string id_;
     AudioBuffer micData_;
     bool muteState_ = false;
-
-    const std::chrono::milliseconds msPerPacket_ {20};
 
     ThreadLoop loop_;
     void process();

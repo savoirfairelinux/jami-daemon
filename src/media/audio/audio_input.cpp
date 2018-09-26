@@ -30,6 +30,8 @@
 
 namespace ring {
 
+static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
+
 AudioInput::AudioInput(const std::string& id) :
     id_(id),
     loop_([] { return true; },
@@ -62,12 +64,12 @@ AudioInput::process()
     auto& mainBuffer = Manager::instance().getRingBufferPool();
     auto bufferFormat = mainBuffer.getInternalAudioFormat();
 
-    // compute number of samples contained in a frame with duration msPerPacket_
-    const auto samplesPerPacket = msPerPacket_ * bufferFormat.sample_rate;
+    // compute number of samples contained in a frame with duration MS_PER_PACKET
+    const auto samplesPerPacket = MS_PER_PACKET * bufferFormat.sample_rate;
     const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(samplesPerPacket).count();
 
     if (mainBuffer.availableForGet(id_) < samplesToGet
-        && not mainBuffer.waitForDataAvailable(id_, samplesToGet, msPerPacket_)) {
+        && not mainBuffer.waitForDataAvailable(id_, samplesToGet, MS_PER_PACKET)) {
         return;
     }
 
