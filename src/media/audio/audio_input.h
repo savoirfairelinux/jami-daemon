@@ -22,10 +22,11 @@
 #pragma once
 
 #include <future>
+
 #include "audio/audiobuffer.h"
+#include "audio/resampler.h"
 #include "media_decoder.h"
 #include "media_recorder.h"
-#include "audio/resampler.h"
 
 struct AVFrame;
 
@@ -73,8 +74,6 @@ private:
     std::shared_future<DeviceParams> futureDevOpts_;
     std::atomic_bool devOptsFound_ {false};
     void foundDevOpts(const DeviceParams& params);
-
-    const std::chrono::milliseconds msPerPacket_ {20};
 };
 
 } // namespace ring
