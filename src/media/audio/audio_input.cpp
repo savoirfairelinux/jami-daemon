@@ -33,6 +33,8 @@
 
 namespace ring {
 
+static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
+
 AudioInput::AudioInput(const std::string& id) :
     id_(id),
     targetFormat_(AudioFormat::STEREO())
@@ -108,11 +110,11 @@ AudioInput::getNextFromInput()
     auto& mainBuffer = Manager::instance().getRingBufferPool();
     auto bufferFormat = mainBuffer.getInternalAudioFormat();
 
-    // compute number of bytes contained in a frame with duration msPerPacket_
-    const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(msPerPacket_ * bufferFormat.sample_rate).count();
+    // compute number of bytes contained in a frame with duration MS_PER_PACKET
+    const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(MS_PER_PACKET * bufferFormat.sample_rate).count();
 
     if (mainBuffer.availableForGet(id_) < samplesToGet
-        && not mainBuffer.waitForDataAvailable(id_, samplesToGet, msPerPacket_)) {
+        && not mainBuffer.waitForDataAvailable(id_, samplesToGet, MS_PER_PACKET)) {
         return nullptr;
     }
 
