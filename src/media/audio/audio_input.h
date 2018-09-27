@@ -25,6 +25,7 @@
 
 #include "audio/audiobuffer.h"
 #include "audio/resampler.h"
+#include "audio/ringbuffer.h"
 #include "media_decoder.h"
 #include "media_recorder.h"
 
@@ -74,6 +75,9 @@ private:
     std::shared_future<DeviceParams> futureDevOpts_;
     std::atomic_bool devOptsFound_ {false};
     void foundDevOpts(const DeviceParams& params);
+
+    std::shared_ptr<RingBuffer> fileBuffer_;
+    std::string fileId_;
 };
 
 } // namespace ring
