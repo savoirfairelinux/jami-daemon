@@ -568,7 +568,8 @@
                   <li>RINGING: Initial state of received outgoing call</li>
                   <li>CURRENT: The normal active state of an answered call</li>
                   <li>HUNGUP: Notify that the call has been hungup by peer</li>
-                  <li>BUSY</li>
+                  <li>BUSY: Notify that we terminated an incoming call after timeout</li>
+                  <li>PEER_BUSY: Notify that peer replied BUSY to this call</li>
                   <li>FAILURE: Error when processing a call</li>
                   <li>HOLD</li>
                   <li>UNHOLD</li>
