@@ -37,14 +37,16 @@ static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
 
 AudioInput::AudioInput(const std::string& id) :
     id_(id),
-    targetFormat_(AudioFormat::STEREO())
+    targetFormat_(AudioFormat::STEREO()),
+    fileId_(id + "_file")
 {
     resampler_.reset(new Resampler);
 }
 
 AudioInput::AudioInput(const std::string& id, AudioFormat target) :
     id_(id),
-    targetFormat_(target)
+    targetFormat_(target),
+    fileId_(id + "_file")
 {
     resampler_.reset(new Resampler);
 }
@@ -75,16 +77,20 @@ AudioInput::getNextFrame()
         // TODO emit stop and start signals
     }
 
-    AVFrame* frame = nullptr;
-    if (currentResource_.find(DRing::Media::VideoProtocolPrefix::FILE) != 0) {
-        frame = getNextFromInput();
-    } else {
-        AudioFrame aframe;
-        if (getNextFromFile(aframe)) {
-            // make sure decoded frame data is not freed when aframe is no longer in scope
-            frame = av_frame_clone(aframe.pointer());
-        }
-    }
+    AudioFrame fileFrame;
+    getNextFromFile(fileFrame);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    AVFrame* frame = getNextFromInput();
+//    if (currentResource_.find(DRing::Media::VideoProtocolPrefix::FILE) != 0) {
+//        frame = getNextFromInput();
+//    } else {
+//        AudioFrame aframe;
+//        if (getNextFromFile(aframe)) {
+//            // make sure decoded frame data is not freed when aframe is no longer in scope
+//            //frame = av_frame_clone(aframe.pointer());
+//            frame = getNextFromInput();
+//        }
+//    }
 
     if (!frame)
         return nullptr;
@@ -148,6 +154,7 @@ AudioInput::getNextFromInput()
 bool
 AudioInput::getNextFromFile(AudioFrame& frame)
 {
+    RING_WARN() << "WOLOLO " << decoder_.get();
     if (!decoder_)
         return false;
 
@@ -167,10 +174,15 @@ AudioInput::getNextFromFile(AudioFrame& frame)
                 if (!resampler_)
                     resampler_.reset(new Resampler);
                 AudioFrame out;
-                out.pointer()->format = AV_SAMPLE_FMT_S16;
-                out.pointer()->sample_rate = targetFormat_.sample_rate;
-                out.pointer()->channel_layout = av_get_default_channel_layout(targetFormat_.nb_channels);
-                resampler_->resample(frame.pointer(), out.pointer());
+                AVFrame* output = out.pointer();
+                output->format = AV_SAMPLE_FMT_S16;
+                output->sample_rate = targetFormat_.sample_rate;
+                output->channel_layout = av_get_default_channel_layout(targetFormat_.nb_channels);
+                output->channels = targetFormat_.nb_channels;
+                resampler_->resample(frame.pointer(), output);
+                AudioBuffer buf(0, targetFormat_);
+                buf.append(output);
+                fileBuffer_->put(buf);
                 frame = std::move(out);
             }
             return true;
@@ -203,6 +215,11 @@ AudioInput::initFile(const std::string& path)
     devOpts_.input = path;
     devOpts_.loop = "1";
     createDecoder();
+
+    // set up RingBuffer for decoded file audio
+    fileBuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    Manager::instance().getRingBufferPool().bindCallID(id_, fileId_);
+
     return false;
 }
 
@@ -285,7 +302,7 @@ AudioInput::createDecoder()
     // TODO decoder->setInterruptCallback ???
 
     // NOTE createDecoder is currently only used for files, which require rate emulation
-    decoder->emulateRate();
+    //decoder->emulateRate();
 
     if (decoder->openInput(devOpts_) < 0) {
         RING_ERR() << "Could not open input '" << devOpts_.input << "'";
