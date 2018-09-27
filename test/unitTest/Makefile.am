@@ -98,4 +98,10 @@ ut_resampler_SOURCES = media/audio/test_resampler.cpp
 check_PROGRAMS += ut_media_frame
 ut_media_frame_SOURCES = media/test_media_frame.cpp
 
+#
+# video_scaler
+#
+check_PROGRAMS += ut_video_scaler
+ut_video_scaler_SOURCES = media/test_video_scaler.cpp
+
 TESTS = $(check_PROGRAMS)
