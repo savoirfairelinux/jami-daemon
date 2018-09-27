@@ -40,6 +40,7 @@ public:
                        unsigned xoff, unsigned yoff,
                        unsigned dest_width, unsigned dest_height,
                        bool keep_aspect);
+    std::unique_ptr<VideoFrame> convertFormat(const VideoFrame& input, AVPixelFormat pix);
 
 private:
     NON_COPYABLE(VideoScaler);

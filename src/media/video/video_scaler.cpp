@@ -132,6 +132,15 @@ VideoScaler::scale_and_pad(const VideoFrame& input, VideoFrame& output,
               input_frame->height, tmp_data_, output_frame->linesize);
 }
 
+std::unique_ptr<VideoFrame>
+VideoScaler::convertFormat(const VideoFrame& input, AVPixelFormat pix)
+{
+    auto output = std::make_unique<VideoFrame>();
+    output->reserve(pix, input.width(), input.height());
+    scale(input, *output);
+    return output;
+}
+
 void VideoScaler::reset()
 {
     if (ctx_) {
