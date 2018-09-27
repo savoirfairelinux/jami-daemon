@@ -722,7 +722,10 @@ SIPCall::onFailure(signed cause)
 void
 SIPCall::onBusyHere()
 {
-    setState(CallState::BUSY, ConnectionState::DISCONNECTED);
+    if (getCallType() == CallType::OUTGOING)
+        setState(CallState::PEER_BUSY, ConnectionState::DISCONNECTED);
+    else
+        setState(CallState::BUSY, ConnectionState::DISCONNECTED);
     Manager::instance().callBusy(*this);
     removeCall();
 }
