@@ -34,6 +34,7 @@ namespace ring {
 class MediaDecoder;
 class MediaRecorder;
 class Resampler;
+class RingBuffer;
 
 class AudioInput
 {
@@ -77,6 +78,9 @@ private:
     std::shared_future<DeviceParams> futureDevOpts_;
     std::atomic_bool devOptsFound_ {false};
     void foundDevOpts(const DeviceParams& params);
+
+    std::shared_ptr<RingBuffer> fileBuffer_;
+    std::string fileId_;
 };
 
 } // namespace ring
