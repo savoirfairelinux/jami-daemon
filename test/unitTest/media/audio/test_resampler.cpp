@@ -23,6 +23,7 @@
 #include <cppunit/extensions/HelperMacros.h>
 
 #include "dring.h"
+#include "videomanager_interface.h"
 #include "libav_deps.h"
 #include "audio/resampler.h"
 
@@ -38,10 +39,12 @@ public:
     void tearDown();
 
 private:
-    void testResample();
+    void testAudioBuffer();
+    void testAudioFrame();
 
     CPPUNIT_TEST_SUITE(ResamplerTest);
-    CPPUNIT_TEST(testResample);
+    CPPUNIT_TEST(testAudioBuffer);
+    CPPUNIT_TEST(testAudioFrame);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<Resampler> resampler_;
@@ -53,7 +56,6 @@ void
 ResamplerTest::setUp()
 {
     DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    libav_utils::ring_avcodec_init();
 }
 
 void
@@ -63,9 +65,8 @@ ResamplerTest::tearDown()
 }
 
 void
-ResamplerTest::testResample()
+ResamplerTest::testAudioBuffer()
 {
-    const constexpr AudioFormat none(0, 0);
     const constexpr AudioFormat infmt(44100, 1);
     const constexpr AudioFormat outfmt(48000, 2);
 
@@ -77,6 +78,30 @@ ResamplerTest::testResample()
     resampler_->resample(inbuf, outbuf);
     CPPUNIT_ASSERT(outbuf.getFormat().sample_rate == 48000);
     CPPUNIT_ASSERT(outbuf.getFormat().nb_channels == 2);
+}
+
+void
+ResamplerTest::testAudioFrame()
+{
+    const constexpr AudioFormat infmt(44100, 1);
+
+    resampler_.reset(new Resampler);
+
+    AudioBuffer inbuf(1024, infmt);
+    auto input = inbuf.toAVFrame();
+    CPPUNIT_ASSERT(input->data && input->data[0]);
+    CPPUNIT_ASSERT(input->data[0][0] == 0);
+
+    DRing::AudioFrame out;
+    auto output = out.pointer();
+    output->format = AV_SAMPLE_FMT_FLT;
+    output->sample_rate = 48000;
+    output->channel_layout = AV_CH_LAYOUT_STEREO;
+
+    int ret = resampler_->resample(input, output);
+    CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
+    CPPUNIT_ASSERT(output->data && output->data[0]);
+    CPPUNIT_ASSERT(output->data[0][0] == 0);
 }
 
 }} // namespace ring::test
