@@ -37,14 +37,16 @@ static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
 
 AudioInput::AudioInput(const std::string& id) :
     id_(id),
-    targetFormat_(AudioFormat::STEREO())
+    targetFormat_(AudioFormat::STEREO()),
+    fileId_(id + "_file")
 {
     resampler_.reset(new Resampler);
 }
 
 AudioInput::AudioInput(const std::string& id, AudioFormat target) :
     id_(id),
-    targetFormat_(target)
+    targetFormat_(target),
+    fileId_(id + "_file")
 {
     resampler_.reset(new Resampler);
 }
@@ -75,16 +77,9 @@ AudioInput::getNextFrame()
         // TODO emit stop and start signals
     }
 
-    AVFrame* frame = nullptr;
-    if (currentResource_.find(DRing::Media::VideoProtocolPrefix::FILE) != 0) {
-        frame = getNextFromInput();
-    } else {
-        AudioFrame aframe;
-        if (getNextFromFile(aframe)) {
-            // make sure decoded frame data is not freed when aframe is no longer in scope
-            frame = av_frame_clone(aframe.pointer());
-        }
-    }
+    AudioFrame fileFrame;
+    getNextFromFile(fileFrame);
+    AVFrame* frame = getNextFromInput();
 
     if (!frame)
         return nullptr;
@@ -163,16 +158,7 @@ AudioInput::getNextFromFile(AudioFrame& frame)
             createDecoder();
             return static_cast<bool>(decoder_);
         case MediaDecoder::Status::FrameFinished:
-            if (frame.pointer()->format != AV_SAMPLE_FMT_S16) {
-                if (!resampler_)
-                    resampler_.reset(new Resampler);
-                AudioFrame out;
-                out.pointer()->format = AV_SAMPLE_FMT_S16;
-                out.pointer()->sample_rate = targetFormat_.sample_rate;
-                out.pointer()->channel_layout = av_get_default_channel_layout(targetFormat_.nb_channels);
-                resampler_->resample(frame.pointer(), out.pointer());
-                frame = std::move(out);
-            }
+            decoder_->writeToRingBuffer(frame, *fileBuffer_, targetFormat_);
             return true;
         case MediaDecoder::Status::Success:
         default:
@@ -202,8 +188,13 @@ AudioInput::initFile(const std::string& path)
     devOpts_ = {};
     devOpts_.input = path;
     devOpts_.loop = "1";
-    createDecoder(); // sets devOpts_'s sample rate and number of channels
-    return true; // all required info has been found
+    createDecoder();
+
+    // set up RingBuffer for decoded file audio
+    fileBuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
+
+    return true;
 }
 
 std::shared_future<DeviceParams>
@@ -213,6 +204,8 @@ AudioInput::switchInput(const std::string& resource)
         return futureDevOpts_;
 
     RING_DBG() << "Switching audio source to match '" << resource << "'";
+
+    decoder_.reset();
 
     if (switchPending_) {
         RING_ERR() << "Audio switch already requested";
@@ -273,7 +266,6 @@ AudioInput::foundDevOpts(const DeviceParams& params)
 void
 AudioInput::createDecoder()
 {
-    decoder_.reset();
     switchPending_ = false;
 
     if (devOpts_.input.empty()) {
