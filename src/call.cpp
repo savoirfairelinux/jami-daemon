@@ -169,6 +169,7 @@ Call::validStateTransition(CallState newState)
             switch (newState) {
                 case CallState::ACTIVE:
                 case CallState::BUSY:
+                case CallState::PEER_BUSY:
                 case CallState::MERROR:
                     return true;
                 default: // INACTIVE, HOLD
@@ -178,6 +179,7 @@ Call::validStateTransition(CallState newState)
         case CallState::ACTIVE:
             switch (newState) {
                 case CallState::BUSY:
+                case CallState::PEER_BUSY:
                 case CallState::HOLD:
                 case CallState::MERROR:
                     return true;
@@ -190,7 +192,7 @@ Call::validStateTransition(CallState newState)
                 case CallState::ACTIVE:
                 case CallState::MERROR:
                     return true;
-                default: // INACTIVE, HOLD, BUSY, MERROR
+                default: // INACTIVE, HOLD, BUSY, PEER_BUSY, MERROR
                     return false;
             }
 
@@ -198,7 +200,7 @@ Call::validStateTransition(CallState newState)
             switch (newState) {
                 case CallState::MERROR:
                     return true;
-                default: // INACTIVE, ACTIVE, HOLD, BUSY
+                default: // INACTIVE, ACTIVE, HOLD, BUSY, PEER_BUSY
                     return false;
             }
 
@@ -287,6 +289,9 @@ Call::getStateStr() const
 
         case CallState::BUSY:
             return StateEvent::BUSY;
+
+        case CallState::PEER_BUSY:
+            return StateEvent::PEER_BUSY;
 
         case CallState::INACTIVE:
             switch (getConnectionState()) {
@@ -460,7 +465,7 @@ Call::subcallStateChanged(Call& subcall,
 
     // Subcall is busy or failed
     if (new_state >= CallState::BUSY) {
-        if (new_state == CallState::BUSY)
+        if (new_state == CallState::BUSY || new_state == CallState::PEER_BUSY)
             RING_WARN("[call:%s] subcall %s busy", getCallId().c_str(), subcall.getCallId().c_str());
         else
             RING_WARN("[call:%s] subcall %s failed", getCallId().c_str(), subcall.getCallId().c_str());
@@ -471,6 +476,8 @@ Call::subcallStateChanged(Call& subcall,
         if (subcalls_.empty()) {
             if (new_state == CallState::BUSY) {
                 setState(CallState::BUSY, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::device_or_resource_busy));
+            } else if (new_state == CallState::PEER_BUSY) {
+                setState(CallState::PEER_BUSY, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::device_or_resource_busy));
             } else {
                 // XXX: first idea was to use std::errc::host_unreachable, but it's not available on some platforms
                 // like mingw.

@@ -34,6 +34,7 @@ constexpr static char RINGING                  [] = "RINGING"            ;
 constexpr static char CURRENT                  [] = "CURRENT"            ;
 constexpr static char HUNGUP                   [] = "HUNGUP"             ;
 constexpr static char BUSY                     [] = "BUSY"               ;
+constexpr static char PEER_BUSY                [] = "PEER_BUSY"          ;
 constexpr static char FAILURE                  [] = "FAILURE"            ;
 constexpr static char HOLD                     [] = "HOLD"               ;
 constexpr static char UNHOLD                   [] = "UNHOLD"             ;
