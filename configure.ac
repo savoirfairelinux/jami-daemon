@@ -652,6 +652,14 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
     AM_CONDITIONAL(ENABLE_DOXYGEN, test "x$DOXYGEN" != "x")
 ])
 
+PKG_CHECK_MODULES([OPENCV], [opencv], [
+  have_opencv=yes
+  AC_DEFINE([RING_OPENCV], [1], [Defined if opencv was found])
+], [
+  AC_MSG_WARN([Missing opencv])
+])
+AM_CONDITIONAL([RING_OPENCV], [test "x${have_opencv}" = "xyes"])
+
 # Actually perform the doxygen check
 BB_ENABLE_DOXYGEN
 
@@ -672,6 +680,7 @@ AC_CONFIG_FILES([Makefile \
                  src/media/audio/coreaudio/Makefile \
                  src/media/audio/portaudio/Makefile \
                  src/media/audio/sound/Makefile \
+                 src/media/filters/Makefile \
                  src/config/Makefile \
                  src/client/Makefile \
                  src/hooks/Makefile \
