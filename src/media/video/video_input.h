@@ -27,6 +27,7 @@
 #include "threadloop.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
+#include "media/filters/media_processor.h"
 
 #include <map>
 #include <atomic>
@@ -96,6 +97,7 @@ private:
 
     std::string currentResource_;
 
+    MediaProcessor mediaProcessor_;
     std::unique_ptr<MediaDecoder> decoder_;
     std::shared_ptr<SinkClient> sink_;
     std::atomic<bool> switchPending_ = {false};
