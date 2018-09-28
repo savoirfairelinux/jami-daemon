@@ -302,12 +302,24 @@ MediaDecoder::decode(VideoFrame& result)
                 std::this_thread::sleep_for(std::chrono::microseconds(target - now));
             }
         }
+        if (videoFilter_) {
+            videoFilter_(frame);
+        }
         return Status::FrameFinished;
     }
 
     return Status::Success;
 }
+
+void
+MediaDecoder::setVideoFilter(MediaFilter&& filter)
+{
+    RING_WARN("MediaDecoder::setVideoFilter %p", this);
+    videoFilter_ = std::move(filter);
+}
+
 #endif // RING_VIDEO
+
 
 MediaDecoder::Status
 MediaDecoder::decode(const AudioFrame& decodedFrame)

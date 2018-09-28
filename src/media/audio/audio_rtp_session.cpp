@@ -36,6 +36,7 @@
 #include "media_decoder.h"
 #include "media_io_handle.h"
 #include "media_device.h"
+#include "media/filters/media_processor.h"
 
 #include "audio/audiobuffer.h"
 #include "audio/ringbufferpool.h"
@@ -45,6 +46,8 @@
 #include <sstream>
 
 namespace ring {
+
+MediaFilter mediaFilter_ {};
 
 class AudioSender {
     public:
@@ -86,6 +89,8 @@ class AudioSender {
 
         const std::chrono::milliseconds msPerPacket_ {20};
 
+        MediaProcessor mediaProcessor_;
+
         ThreadLoop loop_;
         void process();
         void cleanup();
@@ -122,7 +127,7 @@ bool
 AudioSender::setup(SocketPair& socketPair)
 {
     audioEncoder_.reset(new MediaEncoder);
-    muxContext_.reset(socketPair.createIOContext(mtu_));
+    muxContext_.reset(socketPair.createIOContext(mtu_));    
 
     try {
         /* Encoder setup */
@@ -213,11 +218,16 @@ AudioSender::process()
     ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
 
+    
+    mediaProcessor_.addFrame(frame);
+    
+
     {
         auto rec = recorder_.lock();
         if (rec && rec->isRecording())
             rec->recordData(frame, ms);
     }
+
 
     if (audioEncoder_->encodeAudio(frame) < 0)
         RING_ERR("encoding failed");
