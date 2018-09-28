@@ -23,7 +23,7 @@ FFMPEGCONF += \
 	--enable-bsfs \
 	--disable-filters \
 	--disable-programs \
-	--disable-postproc
+	--disable-postproc --enable-debug --disable-stripping --disable-optimizations
 
 #enable muxers/demuxers
 FFMPEGCONF += \
@@ -126,7 +126,9 @@ FFMPEGCONF += \
 	--enable-filter=aresample \
 	--enable-filter=format \
 	--enable-filter=aformat \
-	--enable-filter=fps
+	--enable-filter=fps \
+	--enable-filter=vibrato \
+	--enable-filter=tremolo
 
 #platform specific options
 
