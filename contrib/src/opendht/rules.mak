@@ -31,9 +31,11 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 
 opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
+	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
 
 .opendht: opendht .sum-opendht
-	cd $< && $(HOSTVARS) $(CMAKE) -DOPENDHT_STATIC=On -DOPENDHT_SHARED=Off -DOPENDHT_TOOLS=Off -DOPENDHT_PROXY_CLIENT=On -DOPENDHT_PUSH_NOTIFICATIONS=On -DOPENDHT_DOCUMENTATION=Off .
+	mkdir -p $</m4 && $(RECONF)
+	cd $< && $(HOSTVARS) ./configure --enable-static --disable-shared --disable-tools --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --enable-push-notifications $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
