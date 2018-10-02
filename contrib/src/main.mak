@@ -342,7 +342,7 @@ download_git = \
 	(cd $(@:.tar.xz=) && $(GIT) checkout $(3:%= %)) && \
 	rm -Rf $(@:%.tar.xz=%)/.git && \
 	(cd $(dir $@) && \
-	tar cvJ $(notdir $(@:.tar.xz=))) > $@ && \
+	tar cJ $(notdir $(@:.tar.xz=))) > $@ && \
 	rm -Rf $(@:.tar.xz=)
 endif
 
