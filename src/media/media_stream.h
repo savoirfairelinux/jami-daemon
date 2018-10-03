@@ -126,6 +126,7 @@ struct MediaStream {
         } else {
             sampleRate = f->sample_rate;
             nbChannels = f->channels;
+            timeBase = rational<int>(1, f->sample_rate);
         }
     }
 };
