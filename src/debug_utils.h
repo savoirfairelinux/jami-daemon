@@ -99,14 +99,15 @@ public:
         AVSampleFormat fmt = (AVSampleFormat)frame->format;
         int channels = frame->channels;
         int depth = av_get_bytes_per_sample(fmt);
-        int linesize = frame->linesize[0];
         int planar = av_sample_fmt_is_planar(fmt);
         int step = (planar ? depth : depth * channels);
-        for (int i = 0; i < linesize; i += step) {
+        for (int i = 0; i < frame->nb_samples; ++i) {
+            int offset = i * step;
             for (int ch = 0; ch < channels; ++ch) {
-                int c = (planar ? ch : 0);
-                int offset = (planar ? i : i + depth * ch);
-                writeSample(&frame->extended_data[c][offset], fmt, depth);
+                if (planar)
+                    writeSample(&frame->extended_data[ch][offset], fmt, depth);
+                else
+                    writeSample(&frame->extended_data[0][offset + ch * depth], fmt, depth);
             }
         }
     }
