@@ -24,6 +24,7 @@
 
 #include "dring.h"
 #include "libav_deps.h"
+#include "media_buffer.h"
 #include "media_filter.h"
 
 #include "../../test_runner.h"
@@ -39,20 +40,20 @@ public:
 
 private:
     void testAudioFilter();
+    void testAudioMixing();
     void testVideoFilter();
     void testFilterParams();
     void testReinit();
 
     CPPUNIT_TEST_SUITE(MediaFilterTest);
     CPPUNIT_TEST(testAudioFilter);
+    CPPUNIT_TEST(testAudioMixing);
     CPPUNIT_TEST(testVideoFilter);
     CPPUNIT_TEST(testFilterParams);
     CPPUNIT_TEST(testReinit);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaFilter> filter_;
-    AVFrame* frame_ = nullptr;
-    AVFrame* extra_ = nullptr; // used for filters with multiple inputs
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaFilterTest, MediaFilterTest::name());
@@ -68,8 +69,6 @@ MediaFilterTest::setUp()
 void
 MediaFilterTest::tearDown()
 {
-    av_frame_free(&frame_);
-    av_frame_free(&extra_);
     DRing::fini();
 }
 
@@ -93,21 +92,37 @@ fill_yuv_image(uint8_t *data[4], int linesize[4], int width, int height, int fra
 }
 
 static void
+fill_samples(uint16_t* samples, int sampleRate, int nbSamples, int nbChannels, float tone, float& t)
+{
+    const constexpr double pi = 3.14159265358979323846264338327950288; // M_PI
+    const float tincr = 2 * pi * tone / sampleRate;
+
+    for (int j = 0; j < nbSamples; ++j) {
+        samples[2 * j] = (int)(sin(t) * 10000);
+        for (int k = 1; k < nbChannels; ++k)
+            samples[2 * j + k] = samples[2 * j];
+        t += tincr;
+    }
+}
+
+static void
 fill_samples(uint16_t* samples, int sampleRate, int nbSamples, int nbChannels, float tone)
 {
-    const constexpr float pi = 3.14159265358979323846264338327950288; // M_PI
-    const float tincr = 2 * pi * tone / sampleRate;
     float t = 0;
+    fill_samples(samples, sampleRate, nbSamples, nbChannels, tone, t);
+}
 
-    for (int i = 0; i < 200; ++i) {
-        for (int j = 0; j < nbSamples; ++j) {
-            samples[2 * j] = static_cast<int>(sin(t) * 10000);
-            for (int k = 1; k < nbChannels; ++k) {
-                samples[2 * j + k] = samples[2 * j];
-            }
-            t += tincr;
-        }
-    }
+static void
+fillAudioFrameProps(AVFrame* frame, const MediaStream& ms)
+{
+    frame->format = ms.format;
+    frame->channel_layout = av_get_default_channel_layout(ms.nbChannels);
+    frame->nb_samples = 960;
+    frame->sample_rate = ms.sampleRate;
+    frame->channels = ms.nbChannels;
+    CPPUNIT_ASSERT(frame->format > AV_SAMPLE_FMT_NONE);
+    CPPUNIT_ASSERT(frame->nb_samples > 0);
+    CPPUNIT_ASSERT(frame->channel_layout != 0);
 }
 
 void
@@ -121,21 +136,21 @@ MediaFilterTest::testAudioFilter()
     const constexpr int sampleRate = 44100;
     const constexpr enum AVSampleFormat format = AV_SAMPLE_FMT_S16;
 
-
     // prepare audio frame
-    frame_ = av_frame_alloc();
-    frame_->format = format;
-    frame_->channel_layout = channelLayout;
-    frame_->nb_samples = nbSamples;
-    frame_->sample_rate = sampleRate;
-    frame_->channels = av_get_channel_layout_nb_channels(channelLayout);
+    AudioFrame af;
+    auto frame = af.pointer();
+    frame->format = format;
+    frame->channel_layout = channelLayout;
+    frame->nb_samples = nbSamples;
+    frame->sample_rate = sampleRate;
+    frame->channels = av_get_channel_layout_nb_channels(channelLayout);
 
     // construct the filter parameters
-    auto params = MediaStream("in1", format, rational<int>(1, sampleRate), sampleRate, frame_->channels);
+    auto params = MediaStream("in1", format, rational<int>(1, sampleRate), sampleRate, frame->channels);
 
     // allocate and fill frame buffers
-    CPPUNIT_ASSERT(av_frame_get_buffer(frame_, 0) >= 0);
-    fill_samples(reinterpret_cast<uint16_t*>(frame_->data[0]), sampleRate, nbSamples, frame_->channels, 440.0);
+    CPPUNIT_ASSERT(av_frame_get_buffer(frame, 0) >= 0);
+    fill_samples(reinterpret_cast<uint16_t*>(frame->data[0]), sampleRate, nbSamples, frame->channels, 440.0);
 
     // prepare filter
     std::vector<MediaStream> vec;
@@ -143,13 +158,64 @@ MediaFilterTest::testAudioFilter()
     CPPUNIT_ASSERT(filter_->initialize(filterSpec, vec) >= 0);
 
     // apply filter
-    CPPUNIT_ASSERT(filter_->feedInput(frame_, "in1") >= 0);
-    av_frame_free(&frame_);
-    frame_ = filter_->readOutput();
-    CPPUNIT_ASSERT(frame_);
+    CPPUNIT_ASSERT(filter_->feedInput(frame, "in1") >= 0);
+    auto out = filter_->readOutput();
+    CPPUNIT_ASSERT(out);
 
     // check if the filter worked
-    CPPUNIT_ASSERT(frame_->format == AV_SAMPLE_FMT_U8);
+    CPPUNIT_ASSERT(out->format == AV_SAMPLE_FMT_U8);
+    av_frame_free(&out);
+}
+
+void
+MediaFilterTest::testAudioMixing()
+{
+    std::string filterSpec = "[a1] [a2] [a3] amix=inputs=3,aformat=sample_fmts=s16";
+
+    AudioFrame af1;
+    auto frame1 = af1.pointer();
+    AudioFrame af2;
+    auto frame2 = af2.pointer();
+    AudioFrame af3;
+    auto frame3 = af3.pointer();
+
+    std::vector<MediaStream> vec;
+    vec.emplace_back("a1", AV_SAMPLE_FMT_S16, rational<int>(1, 48000), 48000, 2);
+    vec.emplace_back("a2", AV_SAMPLE_FMT_S16, rational<int>(1, 48000), 48000, 2);
+    vec.emplace_back("a3", AV_SAMPLE_FMT_S16, rational<int>(1, 48000), 48000, 2);
+    CPPUNIT_ASSERT(filter_->initialize(filterSpec, vec) >= 0);
+
+    float t1 = 0, t2 = 0, t3 = 0;
+    for (int i = 0; i < 100; ++i) {
+        fillAudioFrameProps(frame1, vec[0]);
+        frame1->pts = i * frame1->nb_samples;
+        CPPUNIT_ASSERT(av_frame_get_buffer(frame1, 0) >= 0);
+        fill_samples(reinterpret_cast<uint16_t*>(frame1->data[0]), frame1->sample_rate, frame1->nb_samples, frame1->channels, 440.0, t1);
+
+        fillAudioFrameProps(frame2, vec[1]);
+        frame2->pts = i * frame2->nb_samples;
+        CPPUNIT_ASSERT(av_frame_get_buffer(frame2, 0) >= 0);
+        fill_samples(reinterpret_cast<uint16_t*>(frame2->data[0]), frame2->sample_rate, frame2->nb_samples, frame2->channels, 329.6276, t2);
+
+        fillAudioFrameProps(frame3, vec[2]);
+        frame3->pts = i * frame3->nb_samples;
+        CPPUNIT_ASSERT(av_frame_get_buffer(frame3, 0) >= 0);
+        fill_samples(reinterpret_cast<uint16_t*>(frame3->data[0]), frame3->sample_rate, frame3->nb_samples, frame3->channels, 349.2282, t3);
+
+        // apply filter
+        CPPUNIT_ASSERT(filter_->feedInput(frame1, "a1") >= 0);
+        CPPUNIT_ASSERT(filter_->feedInput(frame2, "a2") >= 0);
+        CPPUNIT_ASSERT(filter_->feedInput(frame3, "a3") >= 0);
+
+        // read output
+        auto out = filter_->readOutput();
+        CPPUNIT_ASSERT(out);
+        av_frame_free(&out);
+
+        av_frame_unref(frame1);
+        av_frame_unref(frame2);
+        av_frame_unref(frame3);
+    }
 }
 
 void
@@ -167,14 +233,16 @@ MediaFilterTest::testVideoFilter()
     const constexpr AVPixelFormat format = AV_PIX_FMT_YUV420P;
 
     // prepare video frame
-    frame_ = av_frame_alloc();
-    frame_->format = format;
-    frame_->width = width1;
-    frame_->height = height1;
-    extra_ = av_frame_alloc();
-    extra_->format = format;
-    extra_->width = width2;
-    extra_->height = height2;
+    VideoFrame vf1;
+    auto frame = vf1.pointer();
+    frame->format = format;
+    frame->width = width1;
+    frame->height = height1;
+    VideoFrame vf2;
+    auto extra = vf2.pointer();
+    extra->format = format;
+    extra->width = width2;
+    extra->height = height2;
 
     // construct the filter parameters
     rational<int> one = rational<int>(1);
@@ -182,10 +250,10 @@ MediaFilterTest::testVideoFilter()
     auto params2 = MediaStream("top", format, one, width2, height2, one, one);
 
     // allocate and fill frame buffers
-    CPPUNIT_ASSERT(av_frame_get_buffer(frame_, 32) >= 0);
-    fill_yuv_image(frame_->data, frame_->linesize, frame_->width, frame_->height, 0);
-    CPPUNIT_ASSERT(av_frame_get_buffer(extra_, 32) >= 0);
-    fill_yuv_image(extra_->data, extra_->linesize, extra_->width, extra_->height, 0);
+    CPPUNIT_ASSERT(av_frame_get_buffer(frame, 32) >= 0);
+    fill_yuv_image(frame->data, frame->linesize, frame->width, frame->height, 0);
+    CPPUNIT_ASSERT(av_frame_get_buffer(extra, 32) >= 0);
+    fill_yuv_image(extra->data, extra->linesize, extra->width, extra->height, 0);
 
     // prepare filter
     auto vec = std::vector<MediaStream>();
@@ -194,15 +262,14 @@ MediaFilterTest::testVideoFilter()
     CPPUNIT_ASSERT(filter_->initialize(filterSpec, vec) >= 0);
 
     // apply filter
-    CPPUNIT_ASSERT(filter_->feedInput(frame_, main) >= 0);
-    CPPUNIT_ASSERT(filter_->feedInput(extra_, top) >= 0);
-    av_frame_free(&frame_);
-    av_frame_free(&extra_);
-    frame_ = filter_->readOutput();
-    CPPUNIT_ASSERT(frame_);
+    CPPUNIT_ASSERT(filter_->feedInput(frame, main) >= 0);
+    CPPUNIT_ASSERT(filter_->feedInput(extra, top) >= 0);
+    auto out = filter_->readOutput();
+    CPPUNIT_ASSERT(out);
 
     // check if the filter worked
-    CPPUNIT_ASSERT(frame_->width == width1 && frame_->height == height1);
+    CPPUNIT_ASSERT(out->width == width1 && out->height == height1);
+    av_frame_free(&out);
 }
 
 void
@@ -248,19 +315,20 @@ MediaFilterTest::testReinit()
     std::string filterSpec = "[in1] aresample=48000";
 
     // prepare audio frame
-    frame_ = av_frame_alloc();
-    frame_->format = AV_SAMPLE_FMT_S16;
-    frame_->channel_layout = AV_CH_LAYOUT_STEREO;
-    frame_->nb_samples = 100;
-    frame_->sample_rate = 44100;
-    frame_->channels = 2;
+    AudioFrame af;
+    auto frame = af.pointer();
+    frame->format = AV_SAMPLE_FMT_S16;
+    frame->channel_layout = AV_CH_LAYOUT_STEREO;
+    frame->nb_samples = 100;
+    frame->sample_rate = 44100;
+    frame->channels = 2;
 
     // construct the filter parameters with different sample rate
-    auto params = MediaStream("in1", frame_->format, rational<int>(1, 16000), 16000, frame_->channels);
+    auto params = MediaStream("in1", frame->format, rational<int>(1, 16000), 16000, frame->channels);
 
     // allocate and fill frame buffers
-    CPPUNIT_ASSERT(av_frame_get_buffer(frame_, 0) >= 0);
-    fill_samples(reinterpret_cast<uint16_t*>(frame_->data[0]), frame_->sample_rate, frame_->nb_samples, frame_->channels, 440.0);
+    CPPUNIT_ASSERT(av_frame_get_buffer(frame, 0) >= 0);
+    fill_samples(reinterpret_cast<uint16_t*>(frame->data[0]), frame->sample_rate, frame->nb_samples, frame->channels, 440.0);
 
     // prepare filter
     std::vector<MediaStream> vec;
@@ -268,8 +336,7 @@ MediaFilterTest::testReinit()
     CPPUNIT_ASSERT(filter_->initialize(filterSpec, vec) >= 0);
 
     // filter should reinitialize on feedInput
-    CPPUNIT_ASSERT(filter_->feedInput(frame_, "in1") >= 0);
-    av_frame_free(&frame_);
+    CPPUNIT_ASSERT(filter_->feedInput(frame, "in1") >= 0);
 }
 
 }} // namespace ring::test
