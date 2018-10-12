@@ -56,54 +56,69 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
     desc_ = filterDesc;
     graph_ = avfilter_graph_alloc();
 
-    if (!graph_)
-        return fail("Failed to allocate filter graph", AVERROR(ENOMEM));
+    if (!graph_) {
+        RING_ERR() << "Failed to allocate filter graph";
+        return -1;
+    }
 
     graph_->nb_threads = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
 
     AVFilterInOut* in;
     AVFilterInOut* out;
-    if ((ret = avfilter_graph_parse2(graph_, desc_.c_str(), &in, &out)) < 0)
-        return fail("Failed to parse filter graph", ret);
+    if ((ret = avfilter_graph_parse2(graph_, desc_.c_str(), &in, &out)) < 0) {
+        RING_ERR() << "Failed to parse filter graph: " << libav_utils::getError(ret);
+        return ret;
+    }
 
     using AVFilterInOutPtr = std::unique_ptr<AVFilterInOut, std::function<void(AVFilterInOut*)>>;
     AVFilterInOutPtr outputs(out, [](AVFilterInOut* f){ avfilter_inout_free(&f); });
     AVFilterInOutPtr inputs(in, [](AVFilterInOut* f){ avfilter_inout_free(&f); });
 
-    if (outputs && outputs->next)
-        return fail("Filters with multiple outputs are not supported", AVERROR(ENOTSUP));
+    if (outputs && outputs->next) {
+        RING_ERR() << "Filters with multiple outputs are not supported";
+        return -1;
+    }
 
-    if ((ret = initOutputFilter(outputs.get())) < 0)
-        return fail("Failed to create output for filter graph", ret);
+    if ((ret = initOutputFilter(outputs.get())) < 0) {
+        RING_ERR() << "Failed to create output for filter graph: " << libav_utils::getError(ret);
+        return ret;
+    }
 
     // make sure inputs linked list is the same size as msps
     size_t count = 0;
     AVFilterInOut* dummyInput = inputs.get();
     while (dummyInput && ++count) // increment count before evaluating its value
         dummyInput = dummyInput->next;
-    if (count != msps.size())
-        return fail("Size mismatch between number of inputs in filter graph and input parameter array",
-                    AVERROR(EINVAL));
+    if (count != msps.size()) {
+        RING_ERR() << "Size mismatch between number of inputs in filter graph and input parameter array";
+        return -1;
+    }
 
     for (AVFilterInOut* current = inputs.get(); current; current = current->next) {
-        if (!current->name)
-            return fail("Filters require non empty names", AVERROR(EINVAL));
+        if (!current->name) {
+            RING_ERR() << "Filters require non empty names";
+            return -1;
+        }
         std::string name = current->name;
         const auto& it = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp)
                 { return msp.name == name; });
         if (it != msps.end()) {
             if ((ret = initInputFilter(current, *it)) < 0) {
-                std::string msg = "Failed to initialize input: " + name;
-                return fail(msg, ret);
+                RING_ERR() << "Failed to initialize input '" << name << "': "
+                    << libav_utils::getError(ret);
+                return ret;
             }
         } else {
-            std::string msg = "Failed to find matching parameters for: " + name;
-            return fail(msg, ret);
+            RING_ERR() << "Failed to find matching parameters for '" + name << "': "
+                << libav_utils::getError(ret);
+            return ret;
         }
     }
 
-    if ((ret = avfilter_graph_config(graph_, nullptr)) < 0)
-        return fail("Failed to configure filter graph", ret);
+    if ((ret = avfilter_graph_config(graph_, nullptr)) < 0) {
+        RING_ERR() << "Failed to configure filter graph: " << libav_utils::getError(ret);
+        return ret;
+    }
 
     RING_DBG() << "Filter graph initialized with: " << desc_;
     initialized_ = true;
@@ -124,7 +139,7 @@ MediaFilter::getOutputParams() const
 {
     MediaStream output;
     if (!output_ || !initialized_) {
-        fail("Filter not initialized", -1);
+        RING_ERR() << "Filter not initialized";
         return output;
     }
 
@@ -158,8 +173,11 @@ int
 MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
 {
     int ret = 0;
-    if (!initialized_)
-        return fail("Filter not initialized", -1);
+    if (!initialized_) {
+        av_frame_free(&frame);
+        RING_ERR() << "Filter not initialized";
+        return -1;
+    }
 
     for (size_t i = 0; i < inputs_.size(); ++i) {
         auto& ms = inputParams_[i];
@@ -170,27 +188,35 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
             || (ms.isVideo && (ms.width != frame->width || ms.height != frame->height))
             || (!ms.isVideo && (ms.sampleRate != frame->sample_rate || ms.nbChannels != frame->channels))) {
             ms.update(frame);
-            if ((ret = reinitialize()) < 0)
-                return fail("Failed to reinitialize filter with new input parameters", ret);
+            if ((ret = reinitialize()) < 0) {
+                av_frame_free(&frame);
+                RING_ERR() << "Failed to reinitialize filter with new input parameters: "
+                    << libav_utils::getError(ret);
+                return ret;
+            }
         }
 
         int flags = AV_BUFFERSRC_FLAG_PUSH | AV_BUFFERSRC_FLAG_KEEP_REF;
-        if ((ret = av_buffersrc_add_frame_flags(inputs_[i], frame, flags)) < 0)
-            return fail("Could not pass frame to filters", ret);
-        else
+        if ((ret = av_buffersrc_add_frame_flags(inputs_[i], frame, flags)) < 0) {
+            av_frame_free(&frame);
+            RING_ERR() << "Could not pass frame to filters: " << libav_utils::getError(ret);
+            return ret;
+        } else {
+            av_frame_free(&frame);
             return 0;
+        }
     }
 
-    std::stringstream ss;
-    ss << "Specified filter (" << inputName << ") not found";
-    return fail(ss.str(), AVERROR(EINVAL));
+    av_frame_free(&frame);
+    RING_ERR() << "Specified filter (" << inputName << ") not found";
+    return -1;
 }
 
 AVFrame*
 MediaFilter::readOutput()
 {
     if (!initialized_) {
-        fail("Not properly initialized", -1);
+        RING_ERR() << "Not properly initialized";
         return nullptr;
     }
 
@@ -204,7 +230,7 @@ MediaFilter::readOutput()
     } else if (ret == AVERROR_EOF) {
         RING_WARN() << "Filters have reached EOF, no more frames will be output";
     } else {
-        fail("Error occurred while pulling from filter graph", ret);
+        RING_ERR() << "Error occurred while pulling from filter graph: " << libav_utils::getError(ret);
     }
     av_frame_free(&frame);
     return nullptr;
@@ -226,12 +252,14 @@ MediaFilter::initOutputFilter(AVFilterInOut* out)
     if ((ret = avfilter_graph_create_filter(&buffersinkCtx, buffersink, "out",
                                             nullptr, nullptr, graph_)) < 0) {
         avfilter_free(buffersinkCtx);
-        return fail("Failed to create buffer sink", ret);
+        RING_ERR() << "Failed to create buffer sink" << libav_utils::getError(ret);
+        return ret;
     }
 
     if ((ret = avfilter_link(out->filter_ctx, out->pad_idx, buffersinkCtx, 0)) < 0) {
         avfilter_free(buffersinkCtx);
-        return fail("Could not link buffer sink to graph", ret);
+        RING_ERR() << "Could not link buffer sink to graph" << libav_utils::getError(ret);
+        return ret;
     }
 
     output_ = buffersinkCtx;
@@ -270,18 +298,25 @@ MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp)
     }
     if (!buffersrcCtx) {
         av_free(params);
-        return fail("Failed to allocate filter graph input", AVERROR(ENOMEM));
+        RING_ERR() << "Failed to allocate filter graph input";
+        return -1;
     }
     ret = av_buffersrc_parameters_set(buffersrcCtx, params);
     av_free(params);
-    if (ret < 0)
-        return fail("Failed to set filter graph input parameters", ret);
+    if (ret < 0) {
+        RING_ERR() << "Failed to set filter graph input parameters: " << libav_utils::getError(ret);
+        return ret;
+    }
 
-    if ((ret = avfilter_init_str(buffersrcCtx, nullptr)) < 0)
-        return fail("Failed to initialize buffer source", ret);
+    if ((ret = avfilter_init_str(buffersrcCtx, nullptr)) < 0) {
+        RING_ERR() << "Failed to initialize buffer source: " << libav_utils::getError(ret);
+        return ret;
+    }
 
-    if ((ret = avfilter_link(buffersrcCtx, 0, in->filter_ctx, in->pad_idx)) < 0)
-        return fail("Failed to link buffer source to graph", ret);
+    if ((ret = avfilter_link(buffersrcCtx, 0, in->filter_ctx, in->pad_idx)) < 0) {
+        RING_ERR() << "Failed to link buffer source to graph" << libav_utils::getError(ret);
+        return ret;
+    }
 
     inputs_.push_back(buffersrcCtx);
     msp.name = in->name;
@@ -300,14 +335,6 @@ MediaFilter::reinitialize()
     if (ret >= 0)
         RING_DBG() << "Filter graph reinitialized";
     return ret;
-}
-
-int
-MediaFilter::fail(std::string msg, int err) const
-{
-    if (!msg.empty())
-        RING_ERR() << msg << ": " << libav_utils::getError(err);
-    return err;
 }
 
 void

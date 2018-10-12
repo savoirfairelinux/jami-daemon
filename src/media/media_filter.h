@@ -84,9 +84,10 @@ class MediaFilter {
         MediaStream getOutputParams() const;
 
         /**
-         * Give the specified source filter an input frame. Caller is responsible for freeing the frame.
+         * Give the specified source filter an input frame and frees it.
          *
          * NOTE Will fail if @inputName is not found in the graph.
+         * NOTE Always frees @frame, even on error
          */
         int feedInput(AVFrame* frame, const std::string& inputName);
 
@@ -94,8 +95,6 @@ class MediaFilter {
          * Pull a frame from the filter graph. Caller owns the frame reference.
          *
          * Returns AVERROR(EAGAIN) if filter graph requires more input.
-         *
-         * NOTE Frame reference belongs to the caller
          */
         AVFrame* readOutput();
 
@@ -116,13 +115,6 @@ class MediaFilter {
          * Reinitializes the filter graph with @inputParams_, which should be updated beforehand.
          */
         int reinitialize();
-
-        /**
-         * Convenience method that prints @msg and returns err.
-         *
-         * NOTE @msg should not be null.
-         */
-        int fail(std::string msg, int err) const;
 
         /**
          * Frees resources used by MediaFilter.

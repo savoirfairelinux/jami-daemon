@@ -608,11 +608,8 @@ MediaRecorder::process()
     std::string inputName = ms.name;
 
     emptyFilterGraph();
-    if (filter) {
+    if (filter)
         filter->feedInput(input, inputName);
-    }
-
-    av_frame_free(&input);
 }
 
 } // namespace ring

@@ -144,7 +144,6 @@ MediaFilterTest::testAudioFilter()
 
     // apply filter
     CPPUNIT_ASSERT(filter_->feedInput(frame_, "in1") >= 0);
-    av_frame_free(&frame_);
     frame_ = filter_->readOutput();
     CPPUNIT_ASSERT(frame_);
 
@@ -196,8 +195,6 @@ MediaFilterTest::testVideoFilter()
     // apply filter
     CPPUNIT_ASSERT(filter_->feedInput(frame_, main) >= 0);
     CPPUNIT_ASSERT(filter_->feedInput(extra_, top) >= 0);
-    av_frame_free(&frame_);
-    av_frame_free(&extra_);
     frame_ = filter_->readOutput();
     CPPUNIT_ASSERT(frame_);
 
@@ -269,7 +266,6 @@ MediaFilterTest::testReinit()
 
     // filter should reinitialize on feedInput
     CPPUNIT_ASSERT(filter_->feedInput(frame_, "in1") >= 0);
-    av_frame_free(&frame_);
 }
 
 }} // namespace ring::test
