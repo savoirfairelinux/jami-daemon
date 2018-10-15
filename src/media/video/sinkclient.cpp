@@ -332,9 +332,10 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
     }
 #endif
 
-#if HAVE_SHM
     // Send the resolution in smartInfo
     Smartools::getInstance().setResolution(id_, f.width(), f.height());
+
+#if HAVE_SHM
     shm_->renderFrame(f);
 #endif
 
