@@ -2,6 +2,7 @@
  *  Copyright (C) 2018 Savoir-faire Linux Inc.
  *
  *  Author: Hugo Lefeuvre <hugo.lefeuvre@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,9 +32,9 @@ namespace ring {
 
 AudioInput::AudioInput(const std::string& id) :
     id_(id),
-    loop_([] {return true;}, // setup()
-          [this] {return process();},
-          [this] {return cleanup();})
+    loop_([] { return true; },
+          [this] { process(); },
+          [] {})
 {
     loop_.start();
 }
@@ -59,23 +60,22 @@ void
 AudioInput::process()
 {
     auto& mainBuffer = Manager::instance().getRingBufferPool();
-    auto ringBuffer = mainBuffer.getRingBuffer(id_);
-    auto bufferFormat = ringBuffer->getFormat();
+    auto bufferFormat = mainBuffer.getInternalAudioFormat();
 
-    // compute number of bytes contained in a frame with duration msPerPacket_
-    auto bytesPerPacket = msPerPacket_ * bufferFormat.sample_rate;
-    const std::size_t bytesToGet = std::chrono::duration_cast<std::chrono::seconds>(bytesPerPacket).count();
+    // compute number of samples contained in a frame with duration msPerPacket_
+    const auto samplesPerPacket = msPerPacket_ * bufferFormat.sample_rate;
+    const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(samplesPerPacket).count();
 
-    if (ringBuffer->availableForGet(id_) < bytesToGet
-        && not ringBuffer->waitForDataAvailable(id_, bytesToGet)) {
+    if (mainBuffer.availableForGet(id_) < samplesToGet
+        && not mainBuffer.waitForDataAvailable(id_, samplesToGet, msPerPacket_)) {
         return;
     }
 
     // get data
     micData_.setFormat(bufferFormat);
-    micData_.resize(bytesToGet);
-    const auto samples = ringBuffer->get(micData_, id_);
-    if (samples != bytesToGet)
+    micData_.resize(samplesToGet);
+    const auto samples = mainBuffer.getData(micData_, id_);
+    if (samples != samplesToGet)
         return;
 
     if (muteState_) // audio is muted, set samples to 0
@@ -93,12 +93,6 @@ AudioInput::process()
             rec->recordData(frame, ms);
         }
     }
-}
-
-void
-AudioInput::cleanup()
-{
-    micData_.clear();
 }
 
 void
