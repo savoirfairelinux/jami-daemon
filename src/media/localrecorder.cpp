@@ -2,6 +2,7 @@
  *  Copyright (C) 2018 Savoir-faire Linux Inc.
  *
  *  Author: Hugo Lefeuvre <hugo.lefeuvre@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,12 +70,11 @@ LocalRecorder::startRecording()
     }
 
     // audio recording
-    auto rb = ring::Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID);
-    rb->createReadOffset(RingBufferPool::DEFAULT_ID);
-    ring::Manager::instance().startAudioDriverStream();
-    // TODO wait for AudioLayer::hardwareFormatAvailable callback, otherwise a race condition happens here
+    // create read offset in RingBuffer
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
+    Manager::instance().startAudioDriverStream();
 
-    audioInput_.reset(new ring::AudioInput(RingBufferPool::DEFAULT_ID));
+    audioInput_.reset(new AudioInput(path_));
     audioInput_->initRecorder(recorder_);
 
 #ifdef RING_VIDEO
@@ -96,16 +96,13 @@ LocalRecorder::startRecording()
 void
 LocalRecorder::stopRecording()
 {
+    Recordable::stopRecording();
+
     if (audioInput_) {
-        auto rb = ring::Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID);
-        rb->removeReadOffset(RingBufferPool::DEFAULT_ID);
-        audioInput_.reset();
-        audioInput_ = nullptr;
+         Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
     } else {
         RING_ERR("could not stop audio layer (audio input is null)");
     }
-
-    Recordable::stopRecording();
 }
 
 } // namespace ring
