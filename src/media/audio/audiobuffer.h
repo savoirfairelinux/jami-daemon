@@ -35,6 +35,7 @@ extern "C" {
 }
 
 #include "ring_types.h"
+#include "media_buffer.h"
 
 #include <ciso646> // fix windows compiler bug
 
@@ -357,9 +358,9 @@ class AudioBuffer {
          */
         size_t copy(AudioSample* in, size_t sample_num, size_t pos_out = 0);
 
-        AVFrame* toAVFrame() const;
+        std::unique_ptr<AudioFrame> toAVFrame() const;
 
-        int append(AVFrame* frame);
+        int append(const AudioFrame& frame);
 
     private:
         int sampleRate_;

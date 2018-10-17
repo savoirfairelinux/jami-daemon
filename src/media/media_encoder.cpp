@@ -380,13 +380,12 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 }
 #endif // RING_VIDEO
 
-int MediaEncoder::encodeAudio(AVFrame* frame)
+int MediaEncoder::encodeAudio(AudioFrame& frame)
 {
     auto enc = encoders_[currentStreamIdx_];
-    frame->pts = getNextTimestamp(sent_samples, enc->sample_rate, enc->time_base);
-    sent_samples += frame->nb_samples;
-    encode(frame, currentStreamIdx_);
-    av_frame_free(&frame);
+    frame.pointer()->pts = getNextTimestamp(sent_samples, enc->sample_rate, enc->time_base);
+    sent_samples += frame.pointer()->nb_samples;
+    encode(frame.pointer(), currentStreamIdx_);
     return 0;
 }
 
