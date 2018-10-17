@@ -41,6 +41,8 @@
 #include "audio/audiobuffer.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
+#include "client/videomanager.h"
+#include "observer.h"
 #include "manager.h"
 #include "observer.h"
 #include "smartools.h"
@@ -78,7 +80,7 @@ class AudioSender : public Observer<std::shared_ptr<AudioFrame>> {
         std::unique_ptr<MediaEncoder> audioEncoder_;
         std::unique_ptr<MediaIOHandle> muxContext_;
         std::unique_ptr<Resampler> resampler_;
-        std::unique_ptr<AudioInput> audioInput_;
+        std::shared_ptr<AudioInput> audioInput_;
         std::weak_ptr<MediaRecorder> recorder_;
 
         uint64_t sent_samples = 0;
@@ -148,7 +150,7 @@ AudioSender::setup(SocketPair& socketPair)
 #endif
 
     // NOTE do after encoder is ready to encode
-    audioInput_.reset(new AudioInput(id_));
+    audioInput_ = ring::getAudioInput(id_);
     audioInput_->setFormat(codec->audioformat);
     audioInput_->attach(this);
 
