@@ -207,7 +207,8 @@ AudioSender::process()
     if (muteState_) // audio is muted, set samples to 0
         buffer.reset();
 
-    AVFrame* frame = buffer.toAVFrame();
+    auto audioFrame = buffer.toAVFrame();
+    auto frame = audioFrame->pointer();
     auto ms = MediaStream("a:local", buffer.getFormat());
     frame->pts = getNextTimestamp(sent_samples, ms.sampleRate, static_cast<rational<int64_t>>(ms.timeBase));
     ms.firstTimestamp = frame->pts;
@@ -219,7 +220,7 @@ AudioSender::process()
             rec->recordData(frame, ms);
     }
 
-    if (audioEncoder_->encodeAudio(frame) < 0)
+    if (audioEncoder_->encodeAudio(*audioFrame) < 0)
         RING_ERR("encoding failed");
 }
 

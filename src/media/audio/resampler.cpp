@@ -78,7 +78,8 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
 void
 Resampler::resample(const AudioBuffer& dataIn, AudioBuffer& dataOut)
 {
-    auto input = dataIn.toAVFrame();
+    auto inputFrame = dataIn.toAVFrame();
+    auto input = inputFrame->pointer();
     AudioFrame resampled;
     auto output = resampled.pointer();
     output->sample_rate = dataOut.getSampleRate();
@@ -93,7 +94,6 @@ Resampler::resample(const AudioBuffer& dataIn, AudioBuffer& dataOut)
     dataOut.resize(output->nb_samples);
     dataOut.deinterleave(reinterpret_cast<const AudioSample*>(output->extended_data[0]),
         output->nb_samples, output->channels);
-    av_frame_free(&input);
 }
 
 } // namespace ring
