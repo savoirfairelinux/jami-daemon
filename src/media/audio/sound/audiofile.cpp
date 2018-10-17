@@ -83,7 +83,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
             resampled->format = AV_SAMPLE_FMT_S16;
             if (resampler->resample(input.pointer(), resampled) < 0)
                 throw AudioFileException("Frame could not be resampled");
-            if (buf->append(resampled) < 0)
+            if (buf->append(output) < 0)
                 throw AudioFileException("Error while decoding: " + fileName);
             break;
         case MediaDecoder::Status::DecodeError:

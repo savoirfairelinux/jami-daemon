@@ -94,7 +94,8 @@ AudioInput::process()
         resampled = micData_;
     }
 
-    AVFrame* frame = resampled.toAVFrame();
+    auto audioFrame = resampled.toAVFrame();
+    auto frame = audioFrame->pointer();
     auto ms = MediaStream("a:local", format_.load());
     frame->pts = getNextTimestamp(sent_samples, ms.sampleRate, static_cast<rational<int64_t>>(ms.timeBase));
     sent_samples += frame->nb_samples;

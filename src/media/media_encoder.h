@@ -75,7 +75,7 @@ public:
     int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
 #endif // RING_VIDEO
 
-    int encodeAudio(AVFrame* frame);
+    int encodeAudio(AudioFrame& frame);
 
     // frame should be ready to be sent to the encoder at this point
     int encode(AVFrame* frame, int streamIdx);
