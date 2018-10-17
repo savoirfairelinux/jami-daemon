@@ -26,8 +26,10 @@
 #include <memory> // for weak/shared_ptr
 #include <vector>
 #include <map>
+#include <mutex>
 #include <string>
 
+#include "audio/audio_input.h"
 #include "video/video_device_monitor.h"
 #include "video/video_base.h"
 #include "video/video_input.h"
@@ -37,7 +39,8 @@ namespace ring {
 struct VideoManager
 {
     public:
-        /* VideoManager acts as a cache of the active VideoInput.
+        /**
+         * VideoManager acts as a cache of the active VideoInput.
          * When this input is needed, you must use getVideoCamera
          * to create the instance if not done yet and obtain a shared pointer
          * for your own usage.
@@ -49,10 +52,18 @@ struct VideoManager
         std::shared_ptr<video::VideoFrameActiveWriter> videoPreview;
         video::VideoDeviceMonitor videoDeviceMonitor;
         std::atomic_bool started;
+        /**
+         * VideoManager also acts as a cache of the active AudioInput(s).
+         * When one of these is needed, you must use getAudioInput, which will
+         * create an instance if need be and return a shared_ptr.
+         */
+        std::map<std::string, std::weak_ptr<AudioInput>> audioInputs;
+        std::mutex audioMutex;
 };
 
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
+std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
 
 } // namespace ring
 
