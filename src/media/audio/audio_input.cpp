@@ -41,6 +41,7 @@ AudioInput::AudioInput(const std::string& id) :
           [this] { process(); },
           [] {})
 {
+    RING_DBG() << "Creating audio input with id: " << id;
     loop_.start();
 }
 
