@@ -20,9 +20,10 @@
 
 #pragma once
 
-#include "media/video/video_input.h"
-#include "media/audio/audio_input.h"
+#include "audio/audio_input.h"
+#include "observer.h"
 #include "recordable.h"
+#include "video/video_input.h"
 
 namespace ring {
 
@@ -45,7 +46,7 @@ class LocalRecorder : public Recordable {
          * If input pointer in null, video recording will be disabled on this
          * recorder.
          */
-        LocalRecorder(std::shared_ptr<ring::video::VideoInput> input);
+        LocalRecorder(bool audioOnly);
 
         /**
          * Start local recording. Return true if recording was successfully
@@ -61,10 +62,11 @@ class LocalRecorder : public Recordable {
         void setPath(const std::string& path);
 
     private:
-        bool videoInputSet_ = false;
-        std::weak_ptr<ring::video::VideoInput> videoInput_;
-        std::unique_ptr<ring::AudioInput> audioInput_ = nullptr;
         std::string path_;
+
+        // media inputs
+        std::shared_ptr<ring::video::VideoInput> videoInput_;
+        std::shared_ptr<ring::AudioInput> audioInput_;
 };
 
 } // namespace ring
