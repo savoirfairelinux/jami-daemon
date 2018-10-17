@@ -66,7 +66,7 @@ class LocalRecorder : public Recordable {
 
         // media inputs
         std::shared_ptr<ring::video::VideoInput> videoInput_;
-        std::unique_ptr<ring::AudioInput> audioInput_;
+        std::shared_ptr<ring::AudioInput> audioInput_;
 };
 
 } // namespace ring
