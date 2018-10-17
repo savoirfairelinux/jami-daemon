@@ -25,6 +25,7 @@
 #include "media_stream.h"
 #include "manager.h"
 #include "logger.h"
+#include "client/videomanager.h"
 
 namespace ring {
 
@@ -74,7 +75,7 @@ LocalRecorder::startRecording()
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
     Manager::instance().startAudioDriverStream();
 
-    audioInput_.reset(new AudioInput(path_));
+    audioInput_ = ring::getAudioInput(path_);
     audioInput_->initRecorder(recorder_);
 
 #ifdef RING_VIDEO
@@ -97,12 +98,8 @@ void
 LocalRecorder::stopRecording()
 {
     Recordable::stopRecording();
-
-    if (audioInput_) {
-         Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
-    } else {
-        RING_ERR("could not stop audio layer (audio input is null)");
-    }
+    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
+    audioInput_.reset();
 }
 
 } // namespace ring
