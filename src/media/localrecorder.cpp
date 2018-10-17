@@ -26,10 +26,12 @@
 #include "media_stream.h"
 #include "manager.h"
 #include "logger.h"
+#include "client/videomanager.h"
 
 namespace ring {
 
-LocalRecorder::LocalRecorder(const bool& audioOnly) {
+LocalRecorder::LocalRecorder(const bool& audioOnly)
+{
     isAudioOnly_ = audioOnly;
     recorder_->audioOnly(audioOnly);
 }
@@ -69,7 +71,7 @@ LocalRecorder::startRecording()
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
     Manager::instance().startAudioDriverStream();
 
-    audioInput_.reset(new AudioInput(path_));
+    audioInput_ = ring::getAudioInput(path_);
     audioInput_->setFormat(AudioFormat::STEREO());
     audioInput_->initRecorder(recorder_);
 
