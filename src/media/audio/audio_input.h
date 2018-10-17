@@ -22,6 +22,7 @@
 #pragma once
 
 #include <future>
+#include <mutex>
 
 #include "audio/audiobuffer.h"
 #include "media_device.h"
@@ -31,6 +32,7 @@
 namespace ring {
 
 class MediaRecorder;
+class Resampler;
 
 class AudioInput
 {
@@ -40,16 +42,20 @@ public:
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 
+    void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
     void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
-    std::weak_ptr<MediaRecorder> recorder_;
-    uint64_t sent_samples = 0;
-
     std::string id_;
     AudioBuffer micData_;
     bool muteState_ = false;
+    uint64_t sent_samples = 0;
+    std::mutex fmtMutex_ {};
+    AudioFormat format_;
+
+    std::unique_ptr<Resampler> resampler_;
+    std::weak_ptr<MediaRecorder> recorder_;
 
     ThreadLoop loop_;
     void process();

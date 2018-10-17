@@ -25,6 +25,7 @@
 #include <chrono>
 #include "socket_pair.h"
 #include "audio/ringbufferpool.h"
+#include "audio/resampler.h"
 #include "manager.h"
 #include "smartools.h"
 
@@ -34,6 +35,8 @@ static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
 
 AudioInput::AudioInput(const std::string& id) :
     id_(id),
+    format_(Manager::instance().getRingBufferPool().getInternalAudioFormat()),
+    resampler_(new Resampler),
     loop_([] { return true; },
           [this] { process(); },
           [] {})
@@ -73,7 +76,7 @@ AudioInput::process()
         return;
     }
 
-    // get data
+    // getData resets the format to internal hardware format, will have to be resampled
     micData_.setFormat(bufferFormat);
     micData_.resize(samplesToGet);
     const auto samples = mainBuffer.getData(micData_, id_);
@@ -83,9 +86,17 @@ AudioInput::process()
     if (muteState_) // audio is muted, set samples to 0
         micData_.reset();
 
-    // record frame
-    AVFrame* frame = micData_.toAVFrame();
-    auto ms = MediaStream("a:local", micData_.getFormat());
+    std::lock_guard<std::mutex> lk(fmtMutex_);
+    AudioBuffer resampled;
+    resampled.setFormat(format_);
+    if (bufferFormat != format_) {
+        resampler_->resample(micData_, resampled);
+    } else {
+        resampled = micData_;
+    }
+
+    AVFrame* frame = resampled.toAVFrame();
+    auto ms = MediaStream("a:local", format_);
     frame->pts = getNextTimestamp(sent_samples, ms.sampleRate, static_cast<rational<int64_t>>(ms.timeBase));
     sent_samples += frame->nb_samples;
 
@@ -95,6 +106,13 @@ AudioInput::process()
             rec->recordData(frame, ms);
         }
     }
+}
+
+void
+AudioInput::setFormat(const AudioFormat& fmt)
+{
+    std::lock_guard<std::mutex> lk(fmtMutex_);
+    format_ = fmt;
 }
 
 void

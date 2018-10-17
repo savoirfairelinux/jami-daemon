@@ -75,6 +75,7 @@ LocalRecorder::startRecording()
     Manager::instance().startAudioDriverStream();
 
     audioInput_.reset(new AudioInput(path_));
+    audioInput_->setFormat(AudioFormat::STEREO());
     audioInput_->initRecorder(recorder_);
 
 #ifdef RING_VIDEO
