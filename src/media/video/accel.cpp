@@ -62,6 +62,7 @@ transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame&
         return -1;
 
     auto input = frame.pointer();
+    RING_WARN("frame format = %d , accel format = %d\n",input->format,accel.format);
     if (input->format != accel.format) {
         RING_ERR("Frame format mismatch: expected %s, got %s",
                  av_get_pix_fmt_name(static_cast<AVPixelFormat>(accel.format)),
@@ -119,6 +120,37 @@ initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
     return ret;
 }
 
+static int
+initHwFrameCtx(AVCodecContext *ctx){
+    AVBufferRef *hw_frames_ref;
+    AVHWFramesContext *frames_ctx = NULL;
+    int err = 0;
+
+    if (!(hw_frames_ref = av_hwframe_ctx_alloc(ctx->hw_device_ctx))) {
+        fprintf(stderr, "Failed to create VAAPI frame context.\n");
+        return -1;
+    }
+
+    frames_ctx = (AVHWFramesContext *)(hw_frames_ref->data);
+    frames_ctx->format    = AV_PIX_FMT_VAAPI;
+    frames_ctx->sw_format = AV_PIX_FMT_NV12;
+    frames_ctx->width     = ctx->width;
+    frames_ctx->height    = ctx->height;
+    frames_ctx->initial_pool_size = 20;
+    if ((err = av_hwframe_ctx_init(hw_frames_ref)) < 0) {
+        fprintf(stderr, "Failed to initialize VAAPI frame context."
+                "Error code: %s\n",libav_utils::getError(err).c_str());
+        av_buffer_unref(&hw_frames_ref);
+        return err;
+    }
+    ctx->hw_frames_ctx = av_buffer_ref(hw_frames_ref);
+    if (!ctx->hw_frames_ctx)
+        err = AVERROR(ENOMEM);
+
+    av_buffer_unref(&hw_frames_ref);
+    return err;
+}
+
 const HardwareAccel
 setupHardwareDecoding(AVCodecContext* codecCtx)
 {
@@ -148,6 +180,53 @@ setupHardwareDecoding(AVCodecContext* codecCtx)
     }
 
     RING_WARN("Not using hardware accelerated decoding");
+    return {};
+}
+
+const HardwareAccel
+setupHardwareEncoding(AVCodecContext* codecCtx, AVCodec** codec)
+{
+    //,"omx","qsv","vaapi","videotoolbox"
+    std::map<enum AVCodecID,std::vector<std::string>>map_hw_encoders;
+    map_hw_encoders[AV_CODEC_ID_H264] = {"h264_nvenc", "h264_qsv", "h264_vaapi", "h264_videotoolbox"};
+    map_hw_encoders[AV_CODEC_ID_HEVC] = {"hevc_nvenc","hevc_qsv","hevc_nvenc","hevc_vaapi","hevc_videotoolbox"};
+    map_hw_encoders[AV_CODEC_ID_MJPEG] = {"mjpeg_qsv","mjpeg_vaapi"};
+    map_hw_encoders[AV_CODEC_ID_MPEG2VIDEO] = {"mpeg2_qsv","mpeg2_vaapi"};
+    map_hw_encoders[AV_CODEC_ID_VP8] = {"vp8_vaapi"};
+    map_hw_encoders[AV_CODEC_ID_VP9] = {"vp9_vaapi"};
+
+    if (codecCtx->codec_id)
+    RING_WARN("input codec id = %s\n", avcodec_get_name(codecCtx->codec_id));
+    auto it = map_hw_encoders.find(codecCtx->codec_id);
+    if (it != map_hw_encoders.end()) {
+        for (unsigned int i=0 ; i < it->second.size() ; i++){
+            RING_WARN("codec in list = %s", it->second[i].c_str());
+            if ((*codec = avcodec_find_encoder_by_name((it->second[i]).c_str()))){
+                codecCtx->codec=*codec;
+                HardwareAccel accel;
+                accel.name = it->second[i].substr(it->second[i].find("_") + 1);
+                //suppose pixel format is always set to be vaapi
+                if (accel.name=="vaapi"){
+                    accel.format = AV_PIX_FMT_VAAPI;
+                    codecCtx->pix_fmt = AV_PIX_FMT_VAAPI;
+                }
+                else if (accel.name=="videotoolbox"){
+                    accel.format = AV_PIX_FMT_VIDEOTOOLBOX;
+                    codecCtx->pix_fmt = AV_PIX_FMT_VIDEOTOOLBOX;
+                }
+                //accel.supportedCodecs = ;
+                if (initDevice(accel, codecCtx) >= 0) {
+                    //add init hw_frame_ctx
+                    initHwFrameCtx(codecCtx);
+                    codecCtx->thread_safe_callbacks = 1;
+                    RING_WARN("Found a hw encoder for %s, %s\n",avcodec_get_name(codecCtx->codec_id), it->second[i].c_str());
+                    return accel;
+                }
+            }
+        }
+    }
+
+    RING_WARN("Not using hardware accelerated encoding");
     return {};
 }
 
