@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <cstring> // std::memset
 #include <ciso646> // fix windows compiler bug
+#include "logger.h"
 
 namespace ring {
 
@@ -37,7 +38,13 @@ namespace ring {
 std::size_t
 videoFrameSize(int format, int width, int height)
 {
-    return av_image_get_buffer_size((AVPixelFormat)format, width, height, 1);
+    int ret = av_image_get_buffer_size((AVPixelFormat)format, width, height, 1);
+    if (ret < 0){
+        RING_ERR() << "av_image_get_buffer_size failed: " << libav_utils::getError(ret);
+        return 0;
+    }
+    else
+        return ret;
 }
 
 #endif // RING_VIDEO
