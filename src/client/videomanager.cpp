@@ -278,15 +278,7 @@ startLocalRecorder(const bool& audioOnly, const std::string& filepath)
         return "";
     }
 
-    std::unique_ptr<ring::LocalRecorder> rec;
-    std::shared_ptr<ring::video::VideoInput> input = nullptr;
-    if (!audioOnly) {
-        input = std::static_pointer_cast<ring::video::VideoInput>(ring::getVideoCamera());
-    }
-
-    /* in case of audio-only recording, nullptr is passed and LocalRecorder will
-       assume isAudioOnly_ = true, so no need to call Recordable::isAudioOnly(). */
-    rec.reset(new ring::LocalRecorder(input));
+    auto rec = std::make_unique<ring::LocalRecorder>(audioOnly);
     rec->setPath(filepath);
 
     // retrieve final path (containing file extension)
