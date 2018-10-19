@@ -22,21 +22,16 @@
 #include "localrecorder.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
+#include "client/videomanager.h"
 #include "media_stream.h"
 #include "manager.h"
 #include "logger.h"
 
 namespace ring {
 
-LocalRecorder::LocalRecorder(std::shared_ptr<ring::video::VideoInput> input) {
-    if (input) {
-        videoInput_ = input;
-        videoInputSet_ = true;
-    } else {
-        isAudioOnly_ = true;
-    }
-
-    recorder_->audioOnly(isAudioOnly_);
+LocalRecorder::LocalRecorder(const bool& audioOnly) {
+    isAudioOnly_ = audioOnly;
+    recorder_->audioOnly(audioOnly);
 }
 
 void
@@ -81,11 +76,11 @@ LocalRecorder::startRecording()
 #ifdef RING_VIDEO
     // video recording
     if (!isAudioOnly_) {
-        if (videoInputSet_) {
-            auto videoInputShpnt = videoInput_.lock();
-            videoInputShpnt->initRecorder(recorder_);
+        videoInput_ = std::static_pointer_cast<video::VideoInput>(ring::getVideoCamera());
+        if (videoInput_) {
+            videoInput_->initRecorder(recorder_);
         } else {
-            RING_ERR("[BUG] can't record video (video input pointer is null)");
+            RING_ERR() << "Unable to record video (no video input)";
             return false;
         }
     }
@@ -98,12 +93,11 @@ void
 LocalRecorder::stopRecording()
 {
     Recordable::stopRecording();
-
-    if (audioInput_) {
-         Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
-    } else {
-        RING_ERR("could not stop audio layer (audio input is null)");
-    }
+    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
+    audioInput_.reset();
+    if (videoInput_)
+        videoInput_->initRecorder(nullptr); // workaround for deiniting recorder
+    videoInput_.reset();
 }
 
 } // namespace ring
