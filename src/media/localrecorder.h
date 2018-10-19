@@ -2,6 +2,7 @@
  *  Copyright (C) 2018 Savoir-faire Linux Inc.
  *
  *  Author: Hugo Lefeuvre <hugo.lefeuvre@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,9 +21,9 @@
 
 #pragma once
 
-#include "media/video/video_input.h"
-#include "media/audio/audio_input.h"
+#include "audio/audio_input.h"
 #include "recordable.h"
+#include "video/video_input.h"
 
 namespace ring {
 
@@ -45,7 +46,7 @@ class LocalRecorder : public Recordable {
          * If input pointer in null, video recording will be disabled on this
          * recorder.
          */
-        LocalRecorder(std::shared_ptr<ring::video::VideoInput> input);
+        LocalRecorder(const bool& audioOnly);
 
         /**
          * Start local recording. Return true if recording was successfully
@@ -61,10 +62,11 @@ class LocalRecorder : public Recordable {
         void setPath(const std::string& path);
 
     private:
-        bool videoInputSet_ = false;
-        std::weak_ptr<ring::video::VideoInput> videoInput_;
-        std::unique_ptr<ring::AudioInput> audioInput_ = nullptr;
         std::string path_;
+
+        // media inputs
+        std::shared_ptr<ring::video::VideoInput> videoInput_;
+        std::unique_ptr<ring::AudioInput> audioInput_;
 };
 
 } // namespace ring
