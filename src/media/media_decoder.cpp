@@ -313,11 +313,11 @@ MediaDecoder::Status
 MediaDecoder::decode(const AudioFrame& decodedFrame)
 {
     const auto frame = decodedFrame.pointer();
-
     AVPacket inpacket;
     av_init_packet(&inpacket);
 
-   int ret = av_read_frame(inputCtx_, &inpacket);
+    int ret = av_read_frame(inputCtx_, &inpacket);
+
     if (ret == AVERROR(EAGAIN)) {
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
