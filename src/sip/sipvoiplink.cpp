@@ -691,14 +691,10 @@ SIPVoIPLink::guessAccount(const std::string& userName,
 void
 SIPVoIPLink::handleEvents()
 {
-    const pj_time_val timeout = {10, 0};
+    const pj_time_val timeout = {1, 0};
     if (auto ret = pjsip_endpt_handle_events(endpt_, &timeout))
         RING_ERR("pjsip_endpt_handle_events failed with error %s",
                  sip_utils::sip_strerror(ret).c_str());
-
-#ifdef RING_VIDEO
-    dequeKeyframeRequests();
-#endif
 }
 
 void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
@@ -736,33 +732,17 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 void
 SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
 {
-    if (auto link = getSIPVoIPLink()) {
-        std::lock_guard<std::mutex> lock(link->keyframeRequestsMutex_);
-        link->keyframeRequests_.push(id);
-    } else
-        RING_ERR("no more VoIP link");
+    runOnMainThread([link = getSIPVoIPLink(), id] {
+        if (link)
+            link->requestKeyframe(id);
+    });
 }
 
-// Called from SIP event thread
-void
-SIPVoIPLink::dequeKeyframeRequests()
-{
-    std::lock_guard<std::mutex> lock(keyframeRequestsMutex_);
-    int max_requests = 20;
-
-    while (not keyframeRequests_.empty() and max_requests--) {
-        const std::string &id(keyframeRequests_.front());
-        requestKeyframe(id);
-        keyframeRequests_.pop();
-    }
-}
-
-// Called from SIP event thread
 void
 SIPVoIPLink::requestKeyframe(const std::string &callID)
 {
     auto call = Manager::instance().callFactory.getCall<SIPCall>(callID);
-    if (!call)
+    if (!call || call->getState() != Call::CallState::ACTIVE)
         return;
 
     const char * const BODY =
