@@ -715,24 +715,38 @@ void
 SIPCall::onFailure(signed cause)
 {
     setState(CallState::MERROR, ConnectionState::DISCONNECTED, cause);
-    Manager::instance().callFailure(*this);
-    removeCall();
+    runOnMainThread([w = std::weak_ptr<Call>(shared_from_this())] {
+        if (auto shared = w.lock()) {
+            auto& call = *shared;
+            Manager::instance().callFailure(call);
+            call.removeCall();
+        }
+    });
 }
 
 void
 SIPCall::onBusyHere()
 {
     setState(CallState::BUSY, ConnectionState::DISCONNECTED);
-    Manager::instance().callBusy(*this);
-    removeCall();
+    runOnMainThread([w = std::weak_ptr<Call>(shared_from_this())] {
+        if (auto shared = w.lock()) {
+            auto& call = *shared;
+            Manager::instance().callBusy(call);
+            call.removeCall();
+        }
+    });
 }
 
 void
 SIPCall::onClosed()
 {
-    Manager::instance().peerHungupCall(*this);
-    removeCall();
-    Manager::instance().checkAudio();
+    runOnMainThread([w = std::weak_ptr<Call>(shared_from_this())] {
+        if (auto shared = w.lock()) {
+            auto& call = *shared;
+            Manager::instance().peerHungupCall(call);
+            call.removeCall();
+        }
+    });
 }
 
 void
@@ -741,8 +755,13 @@ SIPCall::onAnswered()
     RING_WARN("[call:%s] onAnswered()", getCallId().c_str());
     if (getConnectionState() != ConnectionState::CONNECTED) {
         setState(CallState::ACTIVE, ConnectionState::CONNECTED);
-        if (not isSubcall())
-            Manager::instance().peerAnsweredCall(*this);
+        if (not isSubcall()) {
+            runOnMainThread([w = std::weak_ptr<Call>(shared_from_this())] {
+                if (auto shared = w.lock()) {
+                    Manager::instance().peerAnsweredCall(*shared);
+                }
+            });
+        }
     }
 }
 

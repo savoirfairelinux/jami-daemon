@@ -167,10 +167,7 @@ class SIPVoIPLink {
         std::thread sipThread_;
 
 #ifdef RING_VIDEO
-        void dequeKeyframeRequests();
         void requestKeyframe(const std::string &callID);
-        std::mutex keyframeRequestsMutex_ {};
-        std::queue<std::string> keyframeRequests_ {};
 #endif
 
         friend class SIPTest;
