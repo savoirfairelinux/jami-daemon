@@ -283,8 +283,7 @@ struct Manager::ManagerPimpl
      */
     void removeWaitingCall(const std::string& id);
 
-    void loadAccount(const YAML::Node &item, int &errorCount,
-                     const std::string &accountOrder);
+    void loadAccount(const YAML::Node &item, int &errorCount);
 
 
     void sendTextMessageToConference(const Conference& conf,
@@ -546,8 +545,7 @@ Manager::ManagerPimpl::removeWaitingCall(const std::string& id)
 }
 
 void
-Manager::ManagerPimpl::loadAccount(const YAML::Node &node, int &errorCount,
-                                   const std::string &accountOrder)
+Manager::ManagerPimpl::loadAccount(const YAML::Node &node, int &errorCount)
 {
     using yaml_utils::parseValue;
 
@@ -557,14 +555,8 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node &node, int &errorCount,
     std::string accountid;
     parseValue(node, "id", accountid);
 
-    const auto inAccountOrder = [&](const std::string & id) {
-        return accountOrder.find(id + "/") != std::string::npos;
-    };
-
     if (!accountid.empty()) {
-        if (not inAccountOrder(accountid)) {
-            RING_WARN("Dropping account %s, which is not in account order", accountid.c_str());
-        } else if (base_.accountFactory.isSupportedType(accountType.c_str())) {
+        if (base_.accountFactory.isSupportedType(accountType.c_str())) {
             if (auto a = base_.accountFactory.createAccount(accountType.c_str(), accountid)) {
                 a->unserialize(node);
             } else {
@@ -2785,32 +2777,46 @@ Manager::loadAccountMap(const YAML::Node& node)
     const auto &accountList = node["accounts"];
 
     for (auto &a : accountList) {
-        pimpl_->loadAccount(a, errorCount, accountOrder);
+        pimpl_->loadAccount(a, errorCount);
     }
 
     auto accountBaseDir = fileutils::get_data_dir();
     auto dirs = fileutils::readDirectory(accountBaseDir);
+
+    std::condition_variable cv;
+    std::mutex lock;
+    size_t remaining {0};
+    std::unique_lock<std::mutex> l(lock);
     for (const auto& dir : dirs) {
         if (accountFactory.hasAccount<RingAccount>(dir)) {
             continue;
         }
-        auto configFile = accountBaseDir + DIR_SEPARATOR_STR + dir + DIR_SEPARATOR_STR + "config.yml";
-        if (fileutils::isFile(configFile)) {
-            try {
-                if (auto a = accountFactory.createAccount(RingAccount::ACCOUNT_TYPE, dir)) {
-                    YAML::Node parsedConfig = YAML::LoadFile(configFile);
-                    a->unserialize(parsedConfig);
+        remaining++;
+        ThreadPool::instance().run([
+            this, dir,
+            &cv, &remaining, &lock,
+            configFile = accountBaseDir + DIR_SEPARATOR_STR + dir + DIR_SEPARATOR_STR + "config.yml"
+        ] {
+            if (fileutils::isFile(configFile)) {
+                try {
+                    if (auto a = accountFactory.createAccount(RingAccount::ACCOUNT_TYPE, dir)) {
+                        YAML::Node parsedConfig = YAML::LoadFile(configFile);
+                        a->unserialize(parsedConfig);
+                    }
+                } catch (const std::exception& e) {
+                    RING_ERR("Can't import Ring account %s: %s", dir.c_str(), e.what());
                 }
-            } catch (const std::exception& e) {
-                RING_ERR("Can't import Ring account %s: %s", dir.c_str(), e.what());
             }
-            continue;
-        }
-        auto exportFile = accountBaseDir + DIR_SEPARATOR_STR + dir + DIR_SEPARATOR_STR + "export.gz";
-        if (fileutils::isFile(exportFile)) {
-            RING_WARN("Found abandonned Ring account: %s", exportFile.c_str());
-        }
+            {
+                std::lock_guard<std::mutex> l(lock);
+                remaining--;
+            }
+            cv.notify_one();
+        });
     }
+    cv.wait(l, [&remaining] {
+        return remaining == 0;
+    });
 
     return errorCount;
 }
