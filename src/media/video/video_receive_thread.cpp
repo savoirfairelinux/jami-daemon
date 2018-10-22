@@ -138,6 +138,9 @@ bool VideoReceiveThread::setup()
     // Send remote video codec in SmartInfo
     Smartools::getInstance().setRemoteVideoCodec(videoDecoder_->getDecoderName(), id_);
 
+    // Send the resolution in smartInfo
+    Smartools::getInstance().setResolution(id_, dstWidth_, dstHeight_);
+
     return true;
 }
 

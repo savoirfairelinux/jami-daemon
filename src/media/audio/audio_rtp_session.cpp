@@ -137,6 +137,8 @@ AudioSender::setup(SocketPair& socketPair)
         return false;
     }
 
+    Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
+
 #ifdef DEBUG_SDP
     audioEncoder_->print_sdp();
 #endif
@@ -344,6 +346,8 @@ AudioReceiveThread::setup()
         return false;
     }
 
+    Smartools::getInstance().setRemoteAudioCodec(audioDecoder_->getDecoderName());
+
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
     return true;
 }
@@ -364,8 +368,6 @@ AudioReceiveThread::process()
             }
             audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
-            // Refresh the remote audio codec in the callback SmartInfo
-            Smartools::getInstance().setRemoteAudioCodec(audioDecoder_->getDecoderName());
             return;
 
         case MediaDecoder::Status::DecodeError:

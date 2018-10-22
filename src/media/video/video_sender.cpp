@@ -50,6 +50,12 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
     videoEncoder_->startIO();
 
     videoEncoder_->print_sdp();
+
+    // Send local video codec in SmartInfo
+    Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getEncoderName());
+
+    // Send the resolution in smartInfo
+    Smartools::getInstance().setResolution("local", dev.width, dev.height);
 }
 
 VideoSender::~VideoSender()
@@ -69,9 +75,6 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 
     if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
         RING_ERR("encoding failed");
-
-    // Send local video codec in SmartInfo
-    Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getEncoderName());
 }
 
 void
