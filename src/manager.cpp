@@ -557,13 +557,11 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node &node, int &errorCount,
     std::string accountid;
     parseValue(node, "id", accountid);
 
-    std::string accountAlias;
-    parseValue(node, "alias", accountAlias);
     const auto inAccountOrder = [&](const std::string & id) {
         return accountOrder.find(id + "/") != std::string::npos;
     };
 
-    if (!accountid.empty() and !accountAlias.empty()) {
+    if (!accountid.empty()) {
         if (not inAccountOrder(accountid)) {
             RING_WARN("Dropping account %s, which is not in account order", accountid.c_str());
         } else if (base_.accountFactory.isSupportedType(accountType.c_str())) {
