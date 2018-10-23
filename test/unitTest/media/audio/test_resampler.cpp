@@ -89,8 +89,8 @@ ResamplerTest::testAudioFrame()
 
     AudioBuffer inbuf(1024, infmt);
     auto input = inbuf.toAVFrame();
-    CPPUNIT_ASSERT(input->data && input->data[0]);
-    CPPUNIT_ASSERT(input->data[0][0] == 0);
+    CPPUNIT_ASSERT(input->pointer()->data && input->pointer()->data[0]);
+    CPPUNIT_ASSERT(input->pointer()->data[0][0] == 0);
 
     DRing::AudioFrame out;
     auto output = out.pointer();
@@ -98,7 +98,7 @@ ResamplerTest::testAudioFrame()
     output->sample_rate = 48000;
     output->channel_layout = AV_CH_LAYOUT_STEREO;
 
-    int ret = resampler_->resample(input, output);
+    int ret = resampler_->resample(input->pointer(), output);
     CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
     CPPUNIT_ASSERT(output->data && output->data[0]);
     CPPUNIT_ASSERT(output->data[0][0] == 0);
