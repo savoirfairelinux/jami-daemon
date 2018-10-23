@@ -107,6 +107,9 @@ AudioInput::process()
             rec->recordData(frame, ms);
         }
     }
+
+    std::shared_ptr<AudioFrame> sharedFrame = std::move(audioFrame);
+    notify(sharedFrame);
 }
 
 void

@@ -37,16 +37,18 @@
 #include "media_io_handle.h"
 #include "media_device.h"
 
+#include "audio/audio_input.h"
 #include "audio/audiobuffer.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
 #include "manager.h"
+#include "observer.h"
 #include "smartools.h"
 #include <sstream>
 
 namespace ring {
 
-class AudioSender {
+class AudioSender : public Observer<std::shared_ptr<AudioFrame>> {
     public:
         AudioSender(const std::string& id,
                     const std::string& dest,
@@ -59,6 +61,9 @@ class AudioSender {
 
         void setMuted(bool isMuted);
         uint16_t getLastSeqValue();
+
+        void update(Observable<std::shared_ptr<ring::AudioFrame>>*,
+                    const std::shared_ptr<ring::AudioFrame>&) override;
 
         void initRecorder(std::shared_ptr<MediaRecorder>& rec);
 
@@ -73,7 +78,7 @@ class AudioSender {
         std::unique_ptr<MediaEncoder> audioEncoder_;
         std::unique_ptr<MediaIOHandle> muxContext_;
         std::unique_ptr<Resampler> resampler_;
-
+        std::unique_ptr<AudioInput> audioInput_;
         std::weak_ptr<MediaRecorder> recorder_;
 
         uint64_t sent_samples = 0;
@@ -85,10 +90,6 @@ class AudioSender {
         uint16_t mtu_;
 
         const std::chrono::milliseconds msPerPacket_ {20};
-
-        ThreadLoop loop_;
-        void process();
-        void cleanup();
 };
 
 AudioSender::AudioSender(const std::string& id,
@@ -103,19 +104,21 @@ AudioSender::AudioSender(const std::string& id,
     args_(args),
     seqVal_(seqVal),
     muteState_(muteState),
-    mtu_(mtu),
-    loop_([&] { return setup(socketPair); },
-          std::bind(&AudioSender::process, this),
-          std::bind(&AudioSender::cleanup, this))
+    mtu_(mtu)
 {
-    loop_.start();
+    setup(socketPair);
 }
 
 AudioSender::~AudioSender()
 {
     if (auto rec = recorder_.lock())
         rec->stopRecording();
-    loop_.join();
+    audioInput_->detach(this);
+    audioInput_.reset();
+    audioEncoder_.reset();
+    muxContext_.reset();
+    micData_.clear();
+    resampledData_.clear();
 }
 
 bool
@@ -123,6 +126,10 @@ AudioSender::setup(SocketPair& socketPair)
 {
     audioEncoder_.reset(new MediaEncoder);
     muxContext_.reset(socketPair.createIOContext(mtu_));
+    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
+    audioInput_.reset(new AudioInput(id_));
+    audioInput_->setFormat(codec->audioformat);
+    audioInput_->attach(this);
 
     try {
         /* Encoder setup */
@@ -146,15 +153,6 @@ AudioSender::setup(SocketPair& socketPair)
     return true;
 }
 
-void
-AudioSender::cleanup()
-{
-    audioEncoder_.reset();
-    muxContext_.reset();
-    micData_.clear();
-    resampledData_.clear();
-}
-
 // seq: frame number for video, sent samples audio
 // sampleFreq: fps for video, sample rate for audio
 // clock: stream time base (packetization interval times)
@@ -166,52 +164,11 @@ getNextTimestamp(int64_t seq, rational<int64_t> sampleFreq, rational<int64_t> cl
 }
 
 void
-AudioSender::process()
+AudioSender::update(Observable<std::shared_ptr<ring::AudioFrame>>* /*obs*/, const std::shared_ptr<ring::AudioFrame>& framePtr)
 {
-    auto& mainBuffer = Manager::instance().getRingBufferPool();
-    auto mainBuffFormat = mainBuffer.getInternalAudioFormat();
-
-    // compute nb of byte to get corresponding to 1 audio frame
-    const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(msPerPacket_ * mainBuffFormat.sample_rate).count();
-
-    if (mainBuffer.availableForGet(id_) < samplesToGet
-        && not mainBuffer.waitForDataAvailable(id_, samplesToGet, msPerPacket_)) {
-            return;
-    }
-
-    // get data
-    micData_.setFormat(mainBuffFormat);
-    micData_.resize(samplesToGet);
-    const auto samples = mainBuffer.getData(micData_, id_);
-    if (samples != samplesToGet)
-        return;
-
-    // down/upmix as needed
-    auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
-    micData_.setChannelNum(accountAudioCodec->audioformat.nb_channels, true);
-
-    Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
-
-    AudioBuffer buffer;
-    if (mainBuffFormat.sample_rate != accountAudioCodec->audioformat.sample_rate) {
-        if (not resampler_) {
-            RING_DBG("Creating audio resampler");
-            resampler_.reset(new Resampler);
-        }
-        resampledData_.setFormat(accountAudioCodec->audioformat);
-        resampledData_.resize(samplesToGet);
-        resampler_->resample(micData_, resampledData_);
-        buffer = resampledData_;
-    } else {
-        buffer = micData_;
-    }
-
-    if (muteState_) // audio is muted, set samples to 0
-        buffer.reset();
-
-    auto audioFrame = buffer.toAVFrame();
-    auto frame = audioFrame->pointer();
-    auto ms = MediaStream("a:local", buffer.getFormat());
+    auto frame = framePtr->pointer();
+    auto ms = MediaStream("a:local", frame->format, rational<int>(1, frame->sample_rate),
+                          frame->sample_rate, frame->channels);
     frame->pts = getNextTimestamp(sent_samples, ms.sampleRate, static_cast<rational<int64_t>>(ms.timeBase));
     ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
@@ -222,7 +179,7 @@ AudioSender::process()
             rec->recordData(frame, ms);
     }
 
-    if (audioEncoder_->encodeAudio(*audioFrame) < 0)
+    if (audioEncoder_->encodeAudio(*framePtr) < 0)
         RING_ERR("encoding failed");
 }
 
