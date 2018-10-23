@@ -27,6 +27,7 @@
 #include "audio/audiobuffer.h"
 #include "media_device.h"
 #include "media_buffer.h"
+#include "observer.h"
 #include "threadloop.h"
 
 namespace ring {
@@ -34,7 +35,7 @@ namespace ring {
 class MediaRecorder;
 class Resampler;
 
-class AudioInput
+class AudioInput : public Observable<std::shared_ptr<AudioFrame>>
 {
 public:
     AudioInput(const std::string& id);
