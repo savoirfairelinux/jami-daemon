@@ -49,6 +49,8 @@
 
 namespace ring {
 
+constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
+
 class AudioSender : public Observer<std::shared_ptr<AudioFrame>> {
     public:
         AudioSender(const std::string& id,
@@ -416,11 +418,28 @@ AudioRtpSession::startSender()
     if (sender_)
         RING_WARN("Restarting audio sender");
 
+    // sender sets up input correctly, we just keep a reference in case startSender is called
+    audioInput_ = ring::getAudioInput(callID_);
+    auto newParams = audioInput_->switchInput(input_);
+    try {
+        if (newParams.valid() &&
+            newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+            localAudioParams_ = newParams.get();
+        } else {
+            RING_ERR() << "No valid new audio parameters";
+            return;
+        }
+    } catch (const std::exception& e) {
+        RING_ERR() << "Exception while retrieving audio parameters: " << e.what();
+        return;
+    }
+
     // be sure to not send any packets before saving last RTP seq value
     socketPair_->stopSendOp();
     if (sender_)
         initSeqVal_ = sender_->getLastSeqValue() + 1;
     try {
+        audioInput_->detach(sender_.get());
         sender_.reset();
         socketPair_->stopSendOp(false);
         sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
