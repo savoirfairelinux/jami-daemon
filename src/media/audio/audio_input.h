@@ -33,6 +33,9 @@
 
 namespace ring {
 
+class AudioFrameResizer;
+class MediaDecoder;
+class MediaRecorder;
 struct MediaStream;
 class Resampler;
 
@@ -50,8 +53,12 @@ public:
     MediaStream getInfo() const;
 
 private:
-    bool nextFromDevice(AudioFrame& frame);
+    void nextFromDevice();
+    void nextFromFile();
     bool initDevice(const std::string& device);
+    bool initFile(const std::string& path);
+    void createDecoder();
+    void frameResized(std::shared_ptr<AudioFrame>&& ptr);
 
     std::string id_;
     AudioBuffer micData_;
@@ -59,8 +66,12 @@ private:
     uint64_t sent_samples = 0;
     mutable std::mutex fmtMutex_ {};
     AudioFormat format_;
+    int frameSize_;
 
     std::unique_ptr<Resampler> resampler_;
+    std::unique_ptr<AudioFrameResizer> resizer_;
+    std::weak_ptr<MediaRecorder> recorder_;
+    std::unique_ptr<MediaDecoder> decoder_;
 
     std::string currentResource_;
     std::atomic_bool switchPending_ {false};
@@ -69,6 +80,7 @@ private:
     std::shared_future<DeviceParams> futureDevOpts_;
     std::atomic_bool devOptsFound_ {false};
     void foundDevOpts(const DeviceParams& params);
+    std::atomic_bool decodingFile_ {false};
 
     ThreadLoop loop_;
     void process();
