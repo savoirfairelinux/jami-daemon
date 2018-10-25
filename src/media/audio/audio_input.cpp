@@ -20,14 +20,16 @@
  */
 
 #include "audio_input.h"
-
-#include <future>
-#include <chrono>
-#include "socket_pair.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
 #include "manager.h"
 #include "smartools.h"
+#include "dring/media_const.h"
+#include "fileutils.h" // access
+#include "media_decoder.h"
+
+#include <future>
+#include <chrono>
 
 namespace ring {
 
@@ -55,6 +57,39 @@ AudioInput::~AudioInput()
 void
 AudioInput::process()
 {
+    foundDevOpts(devOpts_);
+    if (switchPending_.exchange(false)) {
+        if (devOpts_.input.empty())
+            RING_DBG() << "Switching to default audio input";
+        else
+            RING_DBG() << "Switching audio input to '" << devOpts_.input << "'";
+    }
+
+    auto frame = std::make_unique<AudioFrame>();
+    if (decodingFile_) {
+        nextFromFile(*frame);
+    } else {
+        nextFromDevice(*frame);
+    }
+
+    auto ms = MediaStream("a:local", format_);
+    frame->pointer()->pts = sent_samples;
+    sent_samples += frame->pointer()->nb_samples;
+
+    {
+        auto rec = recorder_.lock();
+        if (rec && rec->isRecording()) {
+            rec->recordData(frame->pointer(), ms);
+        }
+    }
+
+    std::shared_ptr<AudioFrame> sharedFrame = std::move(frame);
+    notify(sharedFrame);
+}
+
+bool
+AudioInput::nextFromDevice(AudioFrame& frame)
+{
     auto& mainBuffer = Manager::instance().getRingBufferPool();
     auto bufferFormat = mainBuffer.getInternalAudioFormat();
 
@@ -64,7 +99,7 @@ AudioInput::process()
 
     if (mainBuffer.availableForGet(id_) < samplesToGet
         && not mainBuffer.waitForDataAvailable(id_, samplesToGet, MS_PER_PACKET)) {
-        return;
+        return false;
     }
 
     // getData resets the format to internal hardware format, will have to be resampled
@@ -72,7 +107,7 @@ AudioInput::process()
     micData_.resize(samplesToGet);
     const auto samples = mainBuffer.getData(micData_, id_);
     if (samples != samplesToGet)
-        return;
+        return false;
 
     if (muteState_) // audio is muted, set samples to 0
         micData_.reset();
@@ -87,20 +122,168 @@ AudioInput::process()
     }
 
     auto audioFrame = resampled.toAVFrame();
-    auto frame = audioFrame->pointer();
-    auto ms = MediaStream("a:local", format_);
-    frame->pts = sent_samples;
-    sent_samples += frame->nb_samples;
+    frame.copyFrom(*audioFrame);
+    return true;
+}
 
-    {
-        auto rec = recorder_.lock();
-        if (rec && rec->isRecording()) {
-            rec->recordData(frame, ms);
+bool
+AudioInput::nextFromFile(AudioFrame& frame)
+{
+    if (!decoder_)
+        return false;
+
+    std::lock_guard<std::mutex> lk(fmtMutex_);
+    const auto ret = decoder_->decode(frame);
+    switch(ret) {
+    case MediaDecoder::Status::ReadError:
+    case MediaDecoder::Status::DecodeError:
+        RING_ERR() << "Failed to decode frame";
+        return false;
+    case MediaDecoder::Status::RestartRequired:
+    case MediaDecoder::Status::EOFError:
+        createDecoder();
+        return false;
+    case MediaDecoder::Status::FrameFinished:
+        if (frame.pointer()->format != AV_SAMPLE_FMT_S16
+            || (unsigned)frame.pointer()->sample_rate != format_.sample_rate
+            || (unsigned)frame.pointer()->channels != format_.nb_channels) {
+            AudioFrame out;
+            out.pointer()->format = AV_SAMPLE_FMT_S16;
+            out.pointer()->sample_rate = format_.sample_rate;
+            out.pointer()->channel_layout = av_get_default_channel_layout(format_.nb_channels);
+            resampler_->resample(frame.pointer(), out.pointer());
+            frame.copyFrom(out);
         }
+        return true;
+    case MediaDecoder::Status::Success:
+    default:
+        return false;
+    }
+}
+
+bool
+AudioInput::initDevice(const std::string& device)
+{
+    devOpts_ = {};
+    devOpts_.input = device;
+    devOpts_.channel = format_.nb_channels;
+    devOpts_.framerate = format_.sample_rate;
+    return true;
+}
+
+bool
+AudioInput::initFile(const std::string& path)
+{
+    if (access(path.c_str(), R_OK) != 0) {
+        RING_ERR() << "File '" << path << "' not available";
+        return false;
     }
 
-    std::shared_ptr<AudioFrame> sharedFrame = std::move(audioFrame);
-    notify(sharedFrame);
+    devOpts_ = {};
+    devOpts_.input = path;
+    devOpts_.loop = "1";
+    decodingFile_ = true;
+    createDecoder(); // sets devOpts_'s sample rate and number of channels
+    return true; // all required info found
+}
+
+std::shared_future<DeviceParams>
+AudioInput::switchInput(const std::string& resource)
+{
+    if (resource == currentResource_)
+        return futureDevOpts_;
+
+    if (switchPending_) {
+        RING_ERR() << "Audio switch already requested";
+        return {}; // XXX return futureDevOpts_ ?
+    }
+
+    RING_DBG() << "Switching audio source to match '" << resource << "'";
+
+    decoder_.reset();
+    decodingFile_ = false;
+
+    currentResource_ = resource;
+    devOptsFound_ = false;
+
+    std::promise<DeviceParams> p;
+    foundDevOpts_.swap(p);
+
+    if (resource.empty()) {
+        devOpts_ = {};
+        switchPending_ = true;
+        futureDevOpts_ = foundDevOpts_.get_future();
+        return futureDevOpts_;
+    }
+
+    static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
+
+    const auto pos = resource.find(sep);
+    if (pos == std::string::npos)
+        return {};
+
+    const auto prefix = resource.substr(0, pos);
+    if ((pos + sep.size()) >= resource.size())
+        return {};
+
+    const auto suffix = resource.substr(pos + sep.size());
+    bool ready = false;
+    if (prefix == DRing::Media::VideoProtocolPrefix::FILE)
+        ready = initFile(suffix);
+    else
+        ready = initDevice(suffix);
+
+    if (ready)
+        foundDevOpts(devOpts_);
+
+    switchPending_ = true;
+    futureDevOpts_ = foundDevOpts_.get_future().share();
+    return futureDevOpts_;
+}
+
+void
+AudioInput::foundDevOpts(const DeviceParams& params)
+{
+    if (!devOptsFound_) {
+        devOptsFound_ = true;
+        foundDevOpts_.set_value(params);
+    }
+}
+
+void
+AudioInput::createDecoder()
+{
+    decoder_.reset();
+    if (devOpts_.input.empty()) {
+        foundDevOpts(devOpts_);
+        return;
+    }
+
+    auto decoder = std::make_unique<MediaDecoder>();
+    // TODO decoder->setInterruptCallback ???
+
+    // NOTE createDecoder is currently only used for files, which require rate emulation
+    decoder->emulateRate();
+
+    if (decoder->openInput(devOpts_) < 0) {
+        RING_ERR() << "Could not open input '" << devOpts_.input << "'";
+        foundDevOpts(devOpts_);
+        return;
+    }
+
+    if (decoder->setupFromAudioData() < 0) {
+        RING_ERR() << "Could not setup decoder for '" << devOpts_.input << "'";
+        foundDevOpts(devOpts_);
+        return;
+    }
+
+    auto ms = decoder->getStream(devOpts_.input);
+    devOpts_.channel = ms.nbChannels;
+    devOpts_.framerate = ms.sampleRate;
+    RING_DBG() << "Created audio decoder: " << ms;
+
+    decoder_ = std::move(decoder);
+    foundDevOpts(devOpts_);
 }
 
 void
@@ -114,13 +297,6 @@ void
 AudioInput::setMuted(bool isMuted)
 {
     muteState_ = isMuted;
-}
-
-std::shared_future<DeviceParams>
-AudioInput::switchInput(const std::string& resource)
-{
-    // TODO not implemented yet
-    return {};
 }
 
 void
