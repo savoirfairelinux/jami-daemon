@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <future>
 #include <mutex>
 
@@ -32,6 +33,7 @@
 
 namespace ring {
 
+class MediaDecoder;
 class MediaRecorder;
 class Resampler;
 
@@ -49,6 +51,12 @@ public:
     void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
+    bool nextFromDevice(AudioFrame& frame);
+    bool nextFromFile(AudioFrame& frame);
+    bool initDevice(const std::string& device);
+    bool initFile(const std::string& path);
+    void createDecoder();
+
     std::string id_;
     AudioBuffer micData_;
     bool muteState_ = false;
@@ -58,6 +66,16 @@ private:
 
     std::unique_ptr<Resampler> resampler_;
     std::weak_ptr<MediaRecorder> recorder_;
+    std::unique_ptr<MediaDecoder> decoder_;
+
+    std::string currentResource_;
+    std::atomic_bool switchPending_ {false};
+    DeviceParams devOpts_;
+    std::promise<DeviceParams> foundDevOpts_;
+    std::shared_future<DeviceParams> futureDevOpts_;
+    std::atomic_bool devOptsFound_ {false};
+    void foundDevOpts(const DeviceParams& params);
+    std::atomic_bool decodingFile_ {false};
 
     ThreadLoop loop_;
     void process();
