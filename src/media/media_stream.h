@@ -40,6 +40,7 @@ struct MediaStream {
     rational<int> frameRate;
     int sampleRate {0};
     int nbChannels {0};
+    int frameSize {0};
 
     MediaStream()
     {}
@@ -56,13 +57,14 @@ struct MediaStream {
         , frameRate(fr)
     {}
 
-    MediaStream(const std::string& streamName, int fmt, rational<int> tb, int sr, int channels)
+    MediaStream(const std::string& streamName, int fmt, rational<int> tb, int sr, int channels, int size)
         : name(streamName)
         , format(fmt)
         , isVideo(false)
         , timeBase(tb)
         , sampleRate(sr)
         , nbChannels(channels)
+        , frameSize(size)
     {}
 
     MediaStream(const std::string& streamName, AudioFormat fmt)
@@ -72,6 +74,7 @@ struct MediaStream {
         , timeBase(1, fmt.sample_rate)
         , sampleRate(fmt.sample_rate)
         , nbChannels(fmt.nb_channels)
+        , frameSize(fmt.sample_rate / 50) // standard frame size for our encoder is 20 ms
     {}
 
     MediaStream(const std::string& streamName, AVCodecContext* c)
@@ -97,6 +100,7 @@ struct MediaStream {
             isVideo = false;
             sampleRate = c->sample_rate;
             nbChannels = c->channels;
+            frameSize = c->frame_size;
             break;
         default:
             break;
@@ -127,6 +131,8 @@ struct MediaStream {
             sampleRate = f->sample_rate;
             nbChannels = f->channels;
             timeBase = rational<int>(1, f->sample_rate);
+            if (!frameSize)
+                frameSize = f->nb_samples;
         }
     }
 };
@@ -142,7 +148,8 @@ inline std::ostream& operator<<(std::ostream& os, const MediaStream& ms)
         os << (ms.name.empty() ? "(null)" : ms.name) << ": "
             << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, "
             << ms.nbChannels << " channel(s), "
-            << ms.sampleRate << " Hz (" << ms.timeBase << ")";
+            << ms.sampleRate << " Hz (" << ms.timeBase << "), "
+            << ms.frameSize << " samples per frame";
     }
     if (ms.firstTimestamp > 0)
         os << ", start: " << ms.firstTimestamp;
