@@ -117,7 +117,7 @@ fillAudioFrameProps(AVFrame* frame, const MediaStream& ms)
 {
     frame->format = ms.format;
     frame->channel_layout = av_get_default_channel_layout(ms.nbChannels);
-    frame->nb_samples = 960;
+    frame->nb_samples = ms.frameSize;
     frame->sample_rate = ms.sampleRate;
     frame->channels = ms.nbChannels;
     CPPUNIT_ASSERT(frame->format > AV_SAMPLE_FMT_NONE);
@@ -146,7 +146,7 @@ MediaFilterTest::testAudioFilter()
     frame->channels = av_get_channel_layout_nb_channels(channelLayout);
 
     // construct the filter parameters
-    auto params = MediaStream("in1", format, rational<int>(1, sampleRate), sampleRate, frame->channels);
+    auto params = MediaStream("in1", format, rational<int>(1, sampleRate), sampleRate, frame->channels, nbSamples);
 
     // allocate and fill frame buffers
     CPPUNIT_ASSERT(av_frame_get_buffer(frame, 0) >= 0);
@@ -180,9 +180,9 @@ MediaFilterTest::testAudioMixing()
     auto frame3 = af3.pointer();
 
     std::vector<MediaStream> vec;
-    vec.emplace_back("a1", AV_SAMPLE_FMT_S16, rational<int>(1, 48000), 48000, 2);
-    vec.emplace_back("a2", AV_SAMPLE_FMT_S16, rational<int>(1, 48000), 48000, 2);
-    vec.emplace_back("a3", AV_SAMPLE_FMT_S16, rational<int>(1, 48000), 48000, 2);
+    vec.emplace_back("a1", AV_SAMPLE_FMT_S16, rational<int>(1, 48000), 48000, 2, 960);
+    vec.emplace_back("a2", AV_SAMPLE_FMT_S16, rational<int>(1, 48000), 48000, 2, 960);
+    vec.emplace_back("a3", AV_SAMPLE_FMT_S16, rational<int>(1, 48000), 48000, 2, 960);
     CPPUNIT_ASSERT(filter_->initialize(filterSpec, vec) >= 0);
 
     float t1 = 0, t2 = 0, t3 = 0;
@@ -324,7 +324,7 @@ MediaFilterTest::testReinit()
     frame->channels = 2;
 
     // construct the filter parameters with different sample rate
-    auto params = MediaStream("in1", frame->format, rational<int>(1, 16000), 16000, frame->channels);
+    auto params = MediaStream("in1", frame->format, rational<int>(1, 16000), 16000, frame->channels, frame->nb_samples);
 
     // allocate and fill frame buffers
     CPPUNIT_ASSERT(av_frame_get_buffer(frame, 0) >= 0);
