@@ -171,7 +171,7 @@ AudioSender::update(Observable<std::shared_ptr<ring::AudioFrame>>* /*obs*/, cons
 {
     auto frame = framePtr->pointer();
     auto ms = MediaStream("a:local", frame->format, rational<int>(1, frame->sample_rate),
-                          frame->sample_rate, frame->channels);
+                          frame->sample_rate, frame->channels, frame->nb_samples);
     frame->pts = getNextTimestamp(sent_samples, ms.sampleRate, static_cast<rational<int64_t>>(ms.timeBase));
     ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
