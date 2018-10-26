@@ -343,15 +343,6 @@ MediaEncoder::startIO()
 #endif
 }
 
-// seq: frame number for video, sent samples audio
-// sampleFreq: fps for video, sample rate for audio
-// clock: stream time base (packetization interval times)
-static int64_t
-getNextTimestamp(int64_t seq, rational<int64_t> sampleFreq, rational<int64_t> clock)
-{
-    return (seq / (sampleFreq * clock)).real<int64_t>();
-}
-
 #ifdef RING_VIDEO
 int
 MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
@@ -366,7 +357,11 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
     auto frame = scaledFrame_.pointer();
     AVCodecContext* enc = encoders_[currentStreamIdx_];
-    frame->pts = getNextTimestamp(frame_number, enc->framerate, enc->time_base);
+    // ideally, time base is the inverse of framerate, but this may not always be the case
+    if (enc->framerate.num == enc->time_base.den && enc->framerate.den == enc->time_base.num)
+        frame->pts = frame_number;
+    else
+        frame->pts = (frame_number / (rational<int64_t>(enc->framerate) * rational<int64_t>(enc->time_base))).real<int64_t>();
 
     if (is_keyframe) {
         frame->pict_type = AV_PICTURE_TYPE_I;
@@ -382,8 +377,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
 int MediaEncoder::encodeAudio(AudioFrame& frame)
 {
-    auto enc = encoders_[currentStreamIdx_];
-    frame.pointer()->pts = getNextTimestamp(sent_samples, enc->sample_rate, enc->time_base);
+    frame.pointer()->pts = sent_samples;
     sent_samples += frame.pointer()->nb_samples;
     encode(frame.pointer(), currentStreamIdx_);
     return 0;
