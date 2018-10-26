@@ -392,6 +392,8 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
 void SIPAccount::serialize(YAML::Emitter &out)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
+
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
 
@@ -462,6 +464,8 @@ validate(std::string &member, const std::string &param, const T& valid)
 
 void SIPAccount::unserialize(const YAML::Node &node)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
+
     SIPAccountBase::unserialize(node);
     parseValue(node, USERNAME_KEY, username_);
 
@@ -537,6 +541,8 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
+
     SIPAccountBase::setAccountDetails(details);
     parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
 
@@ -602,6 +608,8 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
 std::map<std::string, std::string>
 SIPAccount::getAccountDetails() const
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
+
     auto a = SIPAccountBase::getAccountDetails();
 
     std::string password {};
@@ -700,6 +708,8 @@ bool SIPAccount::mapPortUPnP()
 
 void SIPAccount::doRegister()
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
+
     if (not isUsable()) {
         RING_WARN("Account must be enabled and active to register, ignoring");
         return;
@@ -725,6 +735,8 @@ void SIPAccount::doRegister()
 
 void SIPAccount::doRegister1_()
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
+
     if (isIP2IP()) {
         doRegister2_();
         return;
@@ -736,6 +748,7 @@ void SIPAccount::doRegister1_()
         tlsEnable_ ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
         [weak_acc](std::vector<IpAddr> host_ips) {
             if (auto acc = weak_acc.lock()) {
+                std::lock_guard<std::mutex> lock(acc->configurationMutex_);
                 if (host_ips.empty()) {
                     RING_ERR("Can't resolve hostname for registration.");
                     acc->setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
@@ -838,6 +851,8 @@ void SIPAccount::doRegister2_()
 
 void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
 {
+    std::unique_lock<std::mutex> lock(configurationMutex_);
+
     tlsListener_.reset();
     if (transport_)
         setTransport();
@@ -850,6 +865,7 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
         }
     }
 
+    lock.unlock();
     if (released_cb)
         released_cb(not isIP2IP());
 
