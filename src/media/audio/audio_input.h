@@ -43,6 +43,7 @@ public:
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 
+    bool isCapturing() const { return loop_.isRunning(); }
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
     void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
