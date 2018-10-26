@@ -156,23 +156,13 @@ AudioSender::setup(SocketPair& socketPair)
     return true;
 }
 
-// seq: frame number for video, sent samples audio
-// sampleFreq: fps for video, sample rate for audio
-// clock: stream time base (packetization interval times)
-// FIXME duplicate code from media_encoder
-static int64_t
-getNextTimestamp(int64_t seq, rational<int64_t> sampleFreq, rational<int64_t> clock)
-{
-    return (seq / (sampleFreq * clock)).real<int64_t>();
-}
-
 void
 AudioSender::update(Observable<std::shared_ptr<ring::AudioFrame>>* /*obs*/, const std::shared_ptr<ring::AudioFrame>& framePtr)
 {
     auto frame = framePtr->pointer();
     auto ms = MediaStream("a:local", frame->format, rational<int>(1, frame->sample_rate),
                           frame->sample_rate, frame->channels, frame->nb_samples);
-    frame->pts = getNextTimestamp(sent_samples, ms.sampleRate, static_cast<rational<int64_t>>(ms.timeBase));
+    frame->pts = sent_samples;
     ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
 

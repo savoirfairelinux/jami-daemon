@@ -52,16 +52,6 @@ AudioInput::~AudioInput()
     loop_.join();
 }
 
-// seq: frame number for video, sent samples audio
-// sampleFreq: fps for video, sample rate for audio
-// clock: stream time base (packetization interval times)
-// FIXME duplicate code from media encoder
-int64_t
-getNextTimestamp(int64_t seq, rational<int64_t> sampleFreq, rational<int64_t> clock)
-{
-    return (seq / (sampleFreq * clock)).real<int64_t>();
-}
-
 void
 AudioInput::process()
 {
@@ -99,7 +89,7 @@ AudioInput::process()
     auto audioFrame = resampled.toAVFrame();
     auto frame = audioFrame->pointer();
     auto ms = MediaStream("a:local", format_);
-    frame->pts = getNextTimestamp(sent_samples, ms.sampleRate, static_cast<rational<int64_t>>(ms.timeBase));
+    frame->pts = sent_samples;
     sent_samples += frame->nb_samples;
 
     {
