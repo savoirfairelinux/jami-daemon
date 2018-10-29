@@ -18,7 +18,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-
+#include "config.h"
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_codec.h"
 #include "media_encoder.h"
@@ -32,6 +32,10 @@
 extern "C" {
 #include <libavutil/parseutils.h>
 }
+
+#ifdef RING_ACCEL
+#include "video/accel.h"
+#endif
 
 #include <iostream>
 #include <sstream>
@@ -49,19 +53,25 @@ MediaEncoder::MediaEncoder()
 
 MediaEncoder::~MediaEncoder()
 {
+
     if (outputCtx_) {
         if (outputCtx_->priv_data)
             av_write_trailer(outputCtx_);
 
-        for (auto encoderCtx : encoders_)
+        for (auto encoderCtx : encoders_){
             if (encoderCtx) {
+#ifdef RING_ACCEL
+                if (encoderCtx->hw_device_ctx)
+                    av_buffer_unref(&encoderCtx->hw_device_ctx);
+#endif
+
 #ifndef _MSC_VER
                 avcodec_free_context(&encoderCtx);
 #else
                 avcodec_close(encoderCtx);
 #endif
             }
-
+        }
         avformat_free_context(outputCtx_);
     }
 
@@ -162,6 +172,12 @@ MediaEncoder::openFileOutput(const std::string& filename, std::map<std::string, 
 {
     avformat_free_context(outputCtx_);
     avformat_alloc_output_context2(&outputCtx_, nullptr, nullptr, filename.c_str());
+
+#ifdef RING_ACCEL
+    // if there was a fallback to software decoding, do not enable accel
+    // it has been disabled already by the video_receive_thread/video_input
+    enableAccel_ &= Manager::instance().getDecodingAccelerated();
+#endif
 
     if (!options["title"].empty())
         av_dict_set(&outputCtx_->metadata, "title", options["title"].c_str(), 0);
@@ -269,6 +285,17 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 
     currentStreamIdx_ = stream->index;
 
+    #ifdef RING_ACCEL
+    if (enableAccel_) {
+        accel_ = video::setupHardwareEncoding(encoderCtx);
+        encoderCtx->opaque = &accel_;
+    } else if (Manager::instance().getDecodingAccelerated()) {
+        RING_WARN() << "Hardware accelerated decoding disabled because of previous failure";
+    } else {
+        RING_WARN() << "Hardware accelerated decoding disabled by user preference";
+    }
+#endif
+
     if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0)
         throw MediaEncoderException("Could not open encoder");
 
@@ -353,13 +380,15 @@ getNextTimestamp(int64_t seq, rational<int64_t> sampleFreq, rational<int64_t> cl
 }
 
 #ifdef RING_VIDEO
-int
+MediaDecoder::Status
 MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
                      int64_t frame_number)
 {
     /* Prepare a frame suitable to our encoder frame format,
      * keeping also the input aspect ratio.
      */
+    int ret = 0;
+    AVFrame *hw_frame = NULL;
     libav_utils::fillWithBlack(scaledFrame_.pointer());
 
     scaler_.scale_with_aspect(input, scaledFrame_);
@@ -375,8 +404,26 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
         frame->pict_type = AV_PICTURE_TYPE_NONE;
         frame->key_frame = 0;
     }
+    
+    //hw encoding
+    if ((enc->codec->capabilities & AV_CODEC_CAP_HARDWARE )|| 
+        (enc->codec->capabilities & AV_CODEC_CAP_HYBRID )){
+        if (frame && hw_frame){
+            if ((ret = av_hwframe_get_buffer(enc->hw_frames_ctx, hw_frame, 0)) < 0) {
+                fprintf(stderr, "Error code: %s. %d\n", libav_utils::getError(ret).c_str(), __LINE__);
+            }
+            if (!hw_frame->hw_frames_ctx) {
+                ret = AVERROR(ENOMEM);
+            }
 
-    return encode(frame, currentStreamIdx_);
+            if ((ret = av_hwframe_transfer_data(hw_frame, frame, 0)) < 0) {
+                fprintf(stderr, "Error while transferring frame data to surface."
+                        "Error code: %s.\n", libav_utils::getError(ret).c_str());
+            }
+            hw_frame->pts=frame->pts;
+        }
+    }
+    return encode(hw_frame, currentStreamIdx_);
 }
 #endif // RING_VIDEO
 
@@ -389,7 +436,7 @@ int MediaEncoder::encodeAudio(AudioFrame& frame)
     return 0;
 }
 
-int
+MediaDecoder::Status
 MediaEncoder::encode(AVFrame* frame, int streamIdx)
 {
     int ret = 0;
@@ -430,11 +477,42 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         }
     }
 
+#ifdef RING_ACCEL
+        if (!accel_.name.empty()) {
+            ret = video::transferFrameData(accel_, encoders_, result);
+            if (ret < 0) {
+                ++accelFailures_;
+                if (accelFailures_ >= MAX_ACCEL_FAILURES) {
+                    RING_ERR("Hardware decoding failure");
+                    accelFailures_ = 0; // reset error count for next time
+                    fallback_ = true;
+                    return Status::RestartRequired;
+                }
+            }
+        }
+#endif
+
     av_packet_unref(&pkt);
     return 0;
 }
 
-int
+#ifdef RING_VIDEO
+#ifdef RING_ACCEL
+void
+MediaDecoder::enableAccel(bool enableAccel)
+{
+    enableAccel_ = enableAccel;
+    if (!enableAccel) {
+        accel_ = {};
+        if (decoderCtx_->hw_device_ctx)
+            av_buffer_unref(&decoderCtx_->hw_device_ctx);
+        if (decoderCtx_)
+            decoderCtx_->opaque = nullptr;
+    }
+}
+#endif
+
+MediaDecoder::Status
 MediaEncoder::flush()
 {
     int ret = 0;
@@ -446,6 +524,7 @@ MediaEncoder::flush()
     }
     return -ret;
 }
+#endif // RING_VIDEO
 
 std::string
 MediaEncoder::print_sdp()

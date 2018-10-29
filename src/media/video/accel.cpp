@@ -151,4 +151,35 @@ setupHardwareDecoding(AVCodecContext* codecCtx)
     return {};
 }
 
+const HardwareAccel
+setupHardwareEncoding(AVCodecContext* codecCtx)
+{
+    //,"omx","qsv","vaapi","videotoolbox"
+    std::map<enum AVCodecID,std::vector<std::string>>map_hw_encoders;
+    map_hw_encoders[AV_CODEC_ID_H264] = {"h264_nvenc"};
+    map_hw_encoders[AV_CODEC_ID_HEVC] = {"hevc_nvenc","hevc_qsv","hevc_nvenc","hevc_vaapi","hevc_videotoolbox"};
+    map_hw_encoders[AV_CODEC_ID_MJPEG] = {"mjpeg_qsv","mjpeg_vaapi"};
+    map_hw_encoders[AV_CODEC_ID_MPEG2VIDEO] = {"mpeg2_qsv","mpeg2_vaapi"};
+    map_hw_encoders[AV_CODEC_ID_VP8] = {"vp8_vaapi"};
+    map_hw_encoders[AV_CODEC_ID_VP9] = {"vp9_vaapi"};
+
+    auto it = map_hw_encoders.find(codecCtx->codec_id);
+    if (it != map_hw_encoders.end()) {
+        for (int i=0 ; i < it->second.size() ; i++){
+            if (codecCtx->codec = avcodec_find_encoder_by_name((it->second[i]).c_str())){
+                HardwareAccel accel;
+                accel.name = it->second[i].substr(it->second[i].find("_") + 1);
+                if (initDevice(accel, codecCtx) >= 0) {
+                    codecCtx->get_format = getFormatCb;
+                    codecCtx->thread_safe_callbacks = 1;
+                    return accel;
+                }
+            }
+        }
+    }
+
+    RING_WARN("Not using hardware accelerated encoding");
+    return {};
+}
+
 }} // namespace ring::video
