@@ -26,6 +26,7 @@
 #include "manager.h"
 #include "media_decoder.h"
 #include "resampler.h"
+#include "ringbuffer.h"
 #include "ringbufferpool.h"
 #include "smartools.h"
 
@@ -41,6 +42,7 @@ AudioInput::AudioInput(const std::string& id) :
     format_(Manager::instance().getRingBufferPool().getInternalAudioFormat()),
     resampler_(new Resampler),
     queue_(new AudioQueue(format_)),
+    fileId_(id + "_file"),
     loop_([] { return true; },
           [this] { process(); },
           [] {})
@@ -144,6 +146,7 @@ AudioInput::nextFromFile()
     const auto inFmt = AudioFormat((unsigned)frame.pointer()->sample_rate, (unsigned)frame.pointer()->channels, (AVSampleFormat)frame.pointer()->format);
 
     std::lock_guard<std::mutex> lk(fmtMutex_);
+    const auto ret = decoder_->decode(frame);
     switch(ret) {
     case MediaDecoder::Status::ReadError:
     case MediaDecoder::Status::DecodeError:
@@ -194,7 +197,10 @@ AudioInput::initFile(const std::string& path)
     devOpts_.loop = "1";
     decodingFile_ = true;
     createDecoder(); // sets devOpts_'s sample rate and number of channels
-    return true; // all required info found
+    // set up new ring buffer for file and bind it to the call's ring buffer
+    fileBuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
+    return true;
 }
 
 std::shared_future<DeviceParams>
@@ -212,6 +218,7 @@ AudioInput::switchInput(const std::string& resource)
 
     decoder_.reset();
     decodingFile_ = false;
+    fileBuffer_.reset();
 
     currentResource_ = resource;
     devOptsFound_ = false;
