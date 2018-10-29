@@ -22,12 +22,14 @@
 
 #include "config.h"
 
+#include "audio/resampler.h"
 #include "libav_deps.h"
 
 #include <chrono>
 #include <fstream>
 #include <ios>
 #include <ratio>
+#include "logger.h"
 
 #warning Debug utilities included in build
 
@@ -96,6 +98,7 @@ public:
 
     void write(AVFrame* frame)
     {
+        resample(frame);
         AVSampleFormat fmt = (AVSampleFormat)frame->format;
         int channels = frame->channels;
         int depth = av_get_bytes_per_sample(fmt);
@@ -126,16 +129,10 @@ private:
             break;
         case AV_SAMPLE_FMT_S32:
         case AV_SAMPLE_FMT_S32P:
-        case AV_SAMPLE_FMT_FLT:
-        case AV_SAMPLE_FMT_FLTP:
-            // float samples are always 32 bits in FFmpeg
             write(*(int32_t*)p, size);
             break;
         case AV_SAMPLE_FMT_S64:
         case AV_SAMPLE_FMT_S64P:
-        case AV_SAMPLE_FMT_DBL:
-        case AV_SAMPLE_FMT_DBLP:
-            // dbl samples are always 64 bits in FFmpeg
             write(*(int64_t*)p, size);
             break;
         default:
@@ -143,9 +140,39 @@ private:
         }
     }
 
+    void resample(AVFrame* frame)
+    {
+        auto fmt = (AVSampleFormat)frame->format;
+        switch (fmt) {
+        case AV_SAMPLE_FMT_FLT:
+        case AV_SAMPLE_FMT_FLTP:
+        case AV_SAMPLE_FMT_DBL:
+        case AV_SAMPLE_FMT_DBLP:
+        {
+            if (!resampler_)
+                resampler_.reset(new Resampler);
+            auto input = av_frame_clone(frame);
+            auto output = av_frame_alloc();
+            // keep same number of bytes per sample
+            if (fmt == AV_SAMPLE_FMT_FLT || fmt == AV_SAMPLE_FMT_FLTP)
+                output->format = AV_SAMPLE_FMT_S32;
+            else
+                output->format = AV_SAMPLE_FMT_S64;
+            output->sample_rate = input->sample_rate;
+            output->channel_layout = input->channel_layout;
+            resampler_->resample(input, output);
+            av_frame_unref(input);
+            av_frame_move_ref(frame, output);
+        }
+        default:
+            return;
+        }
+    }
+
     std::ofstream f_;
     size_t dataChunk_;
     size_t length_;
+    std::unique_ptr<Resampler> resampler_; // convert from float to integer samples
 };
 
 }} // namespace ring::debug
