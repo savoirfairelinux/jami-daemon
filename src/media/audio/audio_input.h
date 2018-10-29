@@ -52,7 +52,7 @@ public:
     void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
-    void nextFromDevice();
+    std::unique_ptr<AudioFrame> nextFromDevice();
     void nextFromFile();
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
@@ -64,6 +64,7 @@ private:
     uint64_t sent_samples = 0;
     std::mutex fmtMutex_ {};
     AudioFormat format_;
+    int frameSize_;
 
     std::unique_ptr<Resampler> resampler_;
     std::unique_ptr<AudioQueue> queue_;
