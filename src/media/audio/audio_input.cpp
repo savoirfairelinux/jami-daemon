@@ -20,6 +20,7 @@
  */
 
 #include "audio_input.h"
+#include "audio/ringbuffer.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
 #include "manager.h"
@@ -39,6 +40,7 @@ AudioInput::AudioInput(const std::string& id) :
     id_(id),
     format_(Manager::instance().getRingBufferPool().getInternalAudioFormat()),
     resampler_(new Resampler),
+    fileId_(id + "_file"),
     loop_([] { return true; },
           [this] { process(); },
           [] {})
@@ -68,9 +70,9 @@ AudioInput::process()
     auto frame = std::make_unique<AudioFrame>();
     if (decodingFile_) {
         nextFromFile(*frame);
-    } else {
-        nextFromDevice(*frame);
+        frame.reset(new AudioFrame); // frame was written to fileBuffer_, we can reset and reuse
     }
+    nextFromDevice(*frame); // will be mixed with file audio if streaming
 
     auto ms = MediaStream("a:local", format_);
     frame->pointer()->pts = sent_samples;
@@ -144,16 +146,7 @@ AudioInput::nextFromFile(AudioFrame& frame)
         createDecoder();
         return false;
     case MediaDecoder::Status::FrameFinished:
-        if (frame.pointer()->format != AV_SAMPLE_FMT_S16
-            || (unsigned)frame.pointer()->sample_rate != format_.sample_rate
-            || (unsigned)frame.pointer()->channels != format_.nb_channels) {
-            AudioFrame out;
-            out.pointer()->format = AV_SAMPLE_FMT_S16;
-            out.pointer()->sample_rate = format_.sample_rate;
-            out.pointer()->channel_layout = av_get_default_channel_layout(format_.nb_channels);
-            resampler_->resample(frame.pointer(), out.pointer());
-            frame.copyFrom(out);
-        }
+        decoder_->writeToRingBuffer(frame, *fileBuffer_, format_);
         return true;
     case MediaDecoder::Status::Success:
     default:
@@ -184,7 +177,10 @@ AudioInput::initFile(const std::string& path)
     devOpts_.loop = "1";
     decodingFile_ = true;
     createDecoder(); // sets devOpts_'s sample rate and number of channels
-    return true; // all required info found
+    // set up new ring buffer for file and bind it to the call's ring buffer
+    fileBuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
+    return true;
 }
 
 std::shared_future<DeviceParams>
@@ -202,6 +198,7 @@ AudioInput::switchInput(const std::string& resource)
 
     decoder_.reset();
     decodingFile_ = false;
+    fileBuffer_.reset();
 
     currentResource_ = resource;
     devOptsFound_ = false;

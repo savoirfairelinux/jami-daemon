@@ -36,6 +36,7 @@ namespace ring {
 class MediaDecoder;
 class MediaRecorder;
 class Resampler;
+class RingBuffer;
 
 class AudioInput : public Observable<std::shared_ptr<AudioFrame>>
 {
@@ -67,6 +68,9 @@ private:
     std::unique_ptr<Resampler> resampler_;
     std::weak_ptr<MediaRecorder> recorder_;
     std::unique_ptr<MediaDecoder> decoder_;
+
+    std::shared_ptr<RingBuffer> fileBuffer_;
+    std::string fileId_;
 
     std::string currentResource_;
     std::atomic_bool switchPending_ {false};
