@@ -274,11 +274,15 @@ RingBufferPool::getData(AudioBuffer& buffer, const std::string& call_id)
     size_t size = 0;
     AudioBuffer mixBuffer(buffer);
 
+    // prevent clipping
+    double gain = 1 / (double)bindings->size();
     for (const auto& rbuf : *bindings) {
         // XXX: is it normal to only return the last positive size?
         size = rbuf->get(mixBuffer, call_id);
-        if (size > 0)
+        if (size > 0) {
+            mixBuffer.applyGain(gain);
             buffer.mix(mixBuffer);
+        }
     }
 
     return size;
@@ -339,9 +343,13 @@ RingBufferPool::getAvailableData(AudioBuffer& buffer, const std::string& call_id
 
     AudioBuffer mixBuffer(buffer);
 
+    // prevent clipping
+    double gain = 1 / (double)bindings->size();
     for (const auto &rbuf : *bindings) {
-        if (rbuf->get(mixBuffer, call_id) > 0)
+        if (rbuf->get(mixBuffer, call_id) > 0) {
+            mixBuffer.applyGain(gain);
             buffer.mix(mixBuffer);
+        }
     }
 
     return availableSamples;
