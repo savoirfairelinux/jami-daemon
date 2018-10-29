@@ -108,6 +108,7 @@ int MediaDecoder::openInput(const DeviceParams& params)
     if(!params.pixel_format.empty()){
         av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
     }
+
     RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
 
@@ -116,7 +117,6 @@ int MediaDecoder::openInput(const DeviceParams& params)
     // it has been disabled already by the video_receive_thread/video_input
     enableAccel_ &= Manager::instance().getDecodingAccelerated();
 #endif
-
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),

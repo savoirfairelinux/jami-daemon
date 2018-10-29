@@ -460,12 +460,21 @@ class VideoPreferences : public Serializable {
             return decodingAccelerated_;
         }
 
+        bool getEncodingAccelerated() const {
+            return encodingAccelerated_;
+        }
+
         void setDecodingAccelerated(bool decodingAccelerated) {
             decodingAccelerated_ = decodingAccelerated;
         }
 
+        void setEncodingAccelerated(bool encodingAccelerated) {
+            encodingAccelerated_ = encodingAccelerated;
+        }
+
     private:
         bool decodingAccelerated_;
+        bool encodingAccelerated_;
         constexpr static const char* const CONFIG_LABEL = "video";
 };
 #endif // RING_VIDEO

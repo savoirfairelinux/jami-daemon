@@ -880,8 +880,9 @@ class Manager {
         VideoManager& getVideoManager() const;
 
         bool getDecodingAccelerated() const;
-
+        bool getEncodingAccelerated() const;
         void setDecodingAccelerated(bool isAccelerated);
+        void setEncodingAccelerated(bool isAccelerated);
 #endif // RING_VIDEO
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable

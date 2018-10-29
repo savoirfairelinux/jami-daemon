@@ -18,12 +18,13 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-
+//#include "config.h"
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_codec.h"
 #include "media_encoder.h"
 #include "media_buffer.h"
 #include "media_io_handle.h"
+#include "manager.h"
 
 #include "audio/audiobuffer.h"
 #include "string_utils.h"
@@ -32,7 +33,11 @@
 extern "C" {
 #include <libavutil/parseutils.h>
 }
-
+/*
+#ifdef RING_ACCEL
+#include "video/accel.h"
+#endif
+*/
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -49,19 +54,26 @@ MediaEncoder::MediaEncoder()
 
 MediaEncoder::~MediaEncoder()
 {
+
     if (outputCtx_) {
         if (outputCtx_->priv_data)
             av_write_trailer(outputCtx_);
 
-        for (auto encoderCtx : encoders_)
+        for (auto encoderCtx : encoders_){
             if (encoderCtx) {
+/*
+#ifdef RING_ACCEL
+                if (encoderCtx->hw_device_ctx)
+                    av_buffer_unref(&encoderCtx->hw_device_ctx);
+#endif
+*/
 #ifndef _MSC_VER
                 avcodec_free_context(&encoderCtx);
 #else
                 avcodec_close(encoderCtx);
 #endif
             }
-
+        }
         avformat_free_context(outputCtx_);
     }
 
@@ -137,6 +149,7 @@ MediaEncoder::openLiveOutput(const std::string& filename,
                              const ring::MediaDescription& args)
 {
     setOptions(args);
+    RING_WARN("|||||entered into openliveoutput\n");
     AVOutputFormat *oformat = av_guess_format("rtp", filename.c_str(), nullptr);
 
     if (!oformat) {
@@ -162,7 +175,13 @@ MediaEncoder::openFileOutput(const std::string& filename, std::map<std::string, 
 {
     avformat_free_context(outputCtx_);
     avformat_alloc_output_context2(&outputCtx_, nullptr, nullptr, filename.c_str());
-
+/*
+#ifdef RING_ACCEL
+    // if there was a fallback to software decoding, do not enable accel
+    // it has been disabled already by the video_receive_thread/video_input
+    enableAccel_ &= Manager::instance().getEncodingAccelerated();
+#endif
+*/
     if (!options["title"].empty())
         av_dict_set(&outputCtx_->metadata, "title", options["title"].c_str(), 0);
     if (!options["description"].empty())
@@ -190,6 +209,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 {
     AVCodec* outputCodec = nullptr;
     AVCodecContext* encoderCtx = nullptr;
+    RING_WARN("|||||entered into addstream\n");
     /* find the video encoder */
     if (systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
         // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
@@ -203,12 +223,15 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         throw MediaEncoderException("No output encoder");
     }
 
+////setuphwencoding used to be here
+
     encoderCtx = prepareEncoderContext(outputCodec, systemCodecInfo.mediaType == MEDIA_VIDEO);
     encoders_.push_back(encoderCtx);
     auto maxBitrate = 1000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
     auto bufSize = 2 * maxBitrate; // as recommended (TODO: make it customizable)
     auto crf = std::atoi(libav_utils::getDictValue(options_, "crf"));
 
+    RING_WARN("|||||before comparing av codec, codec ID = %d\n",systemCodecInfo.avcodecId);
     /* let x264 preset override our encoder settings */
     if (systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         extractProfileLevelID(parameters, encoderCtx);
@@ -292,6 +315,22 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         scaledFrameBuffer_.reserve(scaledFrameBufferSize_);
         scaledFrame_.setFromMemory(scaledFrameBuffer_.data(), format, width, height);
     }
+///new setuphardwareencoding poistiion
+/*
+#ifdef RING_ACCEL
+    if (enableAccel_) {
+        accel_ = video::setupHardwareEncoding(encoderCtx, &outputCodec);
+        //printf("format = %d\n",accel_.format);
+        //printf("supportedCodecs = %d\n",accel_.supportedCodecs[0]);
+        RING_WARN("Return of setuphwencoding =  %s, format = %d\n",accel_.name.c_str(),accel_.format);
+        encoderCtx->opaque = &accel_;
+    } else if (Manager::instance().getEncodingAccelerated()) {
+        RING_WARN() << "Hardware accelerated decoding disabled because of previous failure";
+    } else {
+        RING_WARN() << "Hardware accelerated decoding disabled by user preference";
+    }
+#endif
+*/
 #endif // RING_VIDEO
 
     return stream->index;
@@ -360,11 +399,14 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     /* Prepare a frame suitable to our encoder frame format,
      * keeping also the input aspect ratio.
      */
+    int ret = 0;
+    //AVFrame *hw_frame = NULL;
     libav_utils::fillWithBlack(scaledFrame_.pointer());
 
     scaler_.scale_with_aspect(input, scaledFrame_);
 
     auto frame = scaledFrame_.pointer();
+
     AVCodecContext* enc = encoders_[currentStreamIdx_];
     frame->pts = getNextTimestamp(frame_number, enc->framerate, enc->time_base);
 
@@ -375,7 +417,42 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
         frame->pict_type = AV_PICTURE_TYPE_NONE;
         frame->key_frame = 0;
     }
+    //printf("RING_ACCEL = %d\n", RING_ACCEL);
+    //frame->format = (AVPixelFormat) correctPixFmt(frame->format);
+/*
+#ifdef RING_ACCEL //hw encoding
+    //auto hw_frame = av_frame_alloc();
 
+    VideoFrame v1;
+    v1.reserve(AV_PIX_FMT_NV12, frame->width, frame->height);
+    auto hw_frame = v1.pointer();
+
+    if (!accel_.name.empty()) {
+        printf("before hw_frame: width = %d, height = %d\n",hw_frame->width,hw_frame->height);
+        if (frame && hw_frame){
+            if ((ret = av_hwframe_get_buffer(enc->hw_frames_ctx, hw_frame, 0)) < 0) {
+                fprintf(stderr, "Error code: %s. %d\n", libav_utils::getError(ret).c_str(), __LINE__);
+            }
+            printf("after hw_frame: width = %d, height = %d\n",hw_frame->width,hw_frame->height);
+            if (!hw_frame->hw_frames_ctx) {
+                ret = AVERROR(ENOMEM);
+            }
+
+            if ((ret = av_hwframe_transfer_data(hw_frame, frame, 0)) < 0) {
+                fprintf(stderr, "Error while transferring frame data to surface."
+                        "Error code: %s.\n", libav_utils::getError(ret).c_str());
+            }
+            hw_frame->pts=frame->pts;
+        }
+    }
+    printf("frame: width = %d, height = %d\n",frame->width,frame->height);
+    printf("hw_frame: width = %d, height = %d\n",hw_frame->width,hw_frame->height);
+    printf("enc = %p\n",enc);
+    printf("frame = %p\n",frame);
+    printf("hw_frame = %p\n",hw_frame);
+#endif //hw encoding
+*/
+    //return encode(hw_frame, currentStreamIdx_);
     return encode(frame, currentStreamIdx_);
 }
 #endif // RING_VIDEO
@@ -399,7 +476,13 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     pkt.data = nullptr; // packet data will be allocated by the encoder
     pkt.size = 0;
 
+    RING_WARN("SEND FRAME STARTED\n");
+    printf("encoderCtx private data = %p\n",encoderCtx->priv_data);
+    printf("encoderCtx private opaque = %p\n",encoderCtx->opaque);
     ret = avcodec_send_frame(encoderCtx, frame);
+    RING_WARN("SEND FRAME FINISHED\n");
+
+    RING_ERR() << "avcodec_send_frame ret = " << libav_utils::getError(ret);
     if (ret < 0)
         return -1;
 
@@ -409,6 +492,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
             break;
         if (ret < 0 && ret != AVERROR_EOF) { // we still want to write our frame on EOF
             RING_ERR() << "Failed to encode frame: " << libav_utils::getError(ret);
+            RING_ERR() << "avcodec_receive_packet ret = " << libav_utils::getError(ret);
             return ret;
         }
 
@@ -420,7 +504,12 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
             if (pkt.dts != AV_NOPTS_VALUE)
                 pkt.dts = av_rescale_q(pkt.dts, encoderCtx->time_base,
                                        outputCtx_->streams[streamIdx]->time_base);
-
+            /*
+            printf("time stamp = %ld, enc = %d/%d st = %d/%d\n", pkt.pts,
+            encoderCtx->time_base.num,encoderCtx->time_base.den,
+            outputCtx_->streams[streamIdx]->time_base.num,
+            outputCtx_->streams[streamIdx]->time_base.den);
+            */
             // write the compressed frame
             ret = av_write_frame(outputCtx_, &pkt);
             if (ret < 0) {
@@ -434,6 +523,27 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     return 0;
 }
 
+#ifdef RING_VIDEO
+/*
+#ifdef RING_ACCEL
+void
+MediaEncoder::enableAccel(bool enableAccel)
+{
+    enableAccel_ = enableAccel;
+    if (!enableAccel) {
+        accel_ = {};
+        for (unsigned int i = 0 ; i < encoders_.size() ; i++){
+            if (encoders_[i]->hw_device_ctx)
+                av_buffer_unref(&encoders_[i]->hw_device_ctx);
+            if (encoders_[i]->hw_device_ctx)
+                av_buffer_unref(&encoders_[i]->hw_frames_ctx);
+            if (encoders_[i])
+                encoders_[i]->opaque = nullptr;
+        }
+    }
+}
+#endif
+*/
 int
 MediaEncoder::flush()
 {
@@ -446,6 +556,7 @@ MediaEncoder::flush()
     }
     return -ret;
 }
+#endif // RING_VIDEO
 
 std::string
 MediaEncoder::print_sdp()
@@ -515,11 +626,14 @@ AVCodecContext* MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool i
                       (1U << 16) - 1);
             encoderCtx->time_base = av_inv_q(encoderCtx->framerate);
         }
-
         // emit one intra frame every gop_size frames
         encoderCtx->max_b_frames = 0;
-        encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P; // TODO: option me !
-
+        encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P;
+/*      encoderCtx->max_b_frames = 0;
+        if (accel_.name.empty())
+            encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P; // TODO: option me !
+        else
+            encoderCtx->pix_fmt = AV_PIX_FMT_NV12;*/
         // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
         // pps and sps to be sent in-band for RTP
         // This is to place global headers in extradata instead of every
@@ -619,6 +733,31 @@ void MediaEncoder::extractProfileLevelID(const std::string &parameters,
             break;
     }
     RING_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
+}
+
+int
+MediaEncoder::correctPixFmt(int input_pix_fmt) {
+
+    //https://ffmpeg.org/pipermail/ffmpeg-user/2014-February/020152.html
+    int pix_fmt;
+    switch (input_pix_fmt) {
+    case AV_PIX_FMT_YUVJ420P :
+        pix_fmt = AV_PIX_FMT_YUV420P;
+        break;
+    case AV_PIX_FMT_YUVJ422P  :
+        pix_fmt = AV_PIX_FMT_YUV422P;
+        break;
+    case AV_PIX_FMT_YUVJ444P   :
+        pix_fmt = AV_PIX_FMT_YUV444P;
+        break;
+    case AV_PIX_FMT_YUVJ440P :
+        pix_fmt = AV_PIX_FMT_YUV440P;
+        break;
+    default:
+        pix_fmt = input_pix_fmt;
+        break;
+    }
+    return pix_fmt;
 }
 
 void
