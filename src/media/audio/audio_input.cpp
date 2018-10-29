@@ -26,6 +26,7 @@
 #include "manager.h"
 #include "media_decoder.h"
 #include "resampler.h"
+#include "ringbuffer.h"
 #include "ringbufferpool.h"
 #include "smartools.h"
 
@@ -56,6 +57,26 @@ AudioInput::~AudioInput()
     if (auto rec = recorder_.lock())
         rec->stopRecording();
     loop_.join();
+}
+
+void
+AudioInput::gotFrame(std::unique_ptr<AudioFrame>& frame)
+{
+    std::shared_ptr<AudioFrame> sharedFrame = std::move(frame);
+    auto f = sharedFrame->pointer();
+    auto ms = MediaStream("a:local", f->format, rational<int>(1, f->sample_rate),
+                          f->sample_rate, f->channels, f->nb_samples);
+    f->pts = sent_samples;
+    ms.firstTimestamp = f->pts;
+    sent_samples += f->nb_samples;
+
+    {
+        auto rec = recorder_.lock();
+        if (rec && rec->isRecording())
+            rec->recordData(f, ms);
+    }
+
+    notify(sharedFrame);
 }
 
 void
@@ -94,7 +115,7 @@ AudioInput::frameResized(std::unique_ptr<AudioFrame>&& ptr)
     notify(frame);
 }
 
-void
+std::unique_ptr<AudioFrame>
 AudioInput::nextFromDevice()
 {
     auto& mainBuffer = Manager::instance().getRingBufferPool();
@@ -106,7 +127,7 @@ AudioInput::nextFromDevice()
 
     if (mainBuffer.availableForGet(id_) < samplesToGet
         && not mainBuffer.waitForDataAvailable(id_, samplesToGet, MS_PER_PACKET)) {
-        return;
+        return nullptr;
     }
 
     // getData resets the format to internal hardware format, will have to be resampled
@@ -114,7 +135,7 @@ AudioInput::nextFromDevice()
     micData_.resize(samplesToGet);
     const auto samples = mainBuffer.getData(micData_, id_);
     if (samples != samplesToGet)
-        return;
+        return nullptr;
 
     if (muteState_) // audio is muted, set samples to 0
         micData_.reset();

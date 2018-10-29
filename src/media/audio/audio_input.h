@@ -52,8 +52,9 @@ public:
     void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
-    void nextFromDevice();
+    std::unique_ptr<AudioFrame> nextFromDevice();
     void nextFromFile();
+    void gotFrame(std::unique_ptr<AudioFrame>& frame);
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
     bool createDecoder();
