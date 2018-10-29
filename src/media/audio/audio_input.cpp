@@ -26,6 +26,7 @@
 #include "manager.h"
 #include "media_decoder.h"
 #include "resampler.h"
+#include "ringbuffer.h"
 #include "ringbufferpool.h"
 #include "smartools.h"
 
@@ -39,6 +40,7 @@ static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
 AudioInput::AudioInput(const std::string& id) :
     id_(id),
     format_(Manager::instance().getRingBufferPool().getInternalAudioFormat()),
+    frameSize_(format_.sample_rate * MS_PER_PACKET.count() / 1000),
     resampler_(new Resampler),
     queue_(new AudioQueue(format_)),
     loop_([] { return true; },
@@ -57,6 +59,26 @@ AudioInput::~AudioInput()
 }
 
 void
+AudioInput::gotFrame(std::unique_ptr<AudioFrame>& frame)
+{
+    std::shared_ptr<AudioFrame> sharedFrame = std::move(frame);
+    auto f = sharedFrame->pointer();
+    auto ms = MediaStream("a:local", f->format, rational<int>(1, f->sample_rate),
+                          f->sample_rate, f->channels, f->nb_samples);
+    f->pts = sent_samples;
+    ms.firstTimestamp = f->pts;
+    sent_samples += f->nb_samples;
+
+    {
+        auto rec = recorder_.lock();
+        if (rec && rec->isRecording())
+            rec->recordData(f, ms);
+    }
+
+    notify(sharedFrame);
+}
+
+void
 AudioInput::process()
 {
     foundDevOpts(devOpts_);
@@ -67,35 +89,31 @@ AudioInput::process()
             RING_DBG() << "Switching audio input to '" << devOpts_.input << "'";
     }
 
-    // enqueue next frame
-    if (decodingFile_)
-        nextFromFile();
-    else
-        nextFromDevice();
+    if (decodingFile_) {
+        while (queue_->getSize() < frameSize_)
+            nextFromFile();
 
-    std::unique_lock<std::mutex> lk(fmtMutex_);
-    int frameSize = format_.sample_rate / 50;
-    lk.unlock();
-
-    // empty queue
-    while (auto audioFrame = queue_->dequeue(frameSize)) {
-        std::shared_ptr<AudioFrame> frame = std::move(audioFrame);
-        auto ms = MediaStream("a:local", format_, sent_samples);
-        frame->pointer()->pts = sent_samples;
-        sent_samples += frame->pointer()->nb_samples;
-
-        {
-            auto rec = recorder_.lock();
-            if (rec && rec->isRecording()) {
-                rec->recordData(frame->pointer(), ms);
+        // TODO optimize this part
+        if (auto deviceFrame = nextFromDevice()) {
+            std::lock_guard<std::mutex> lk(fmtMutex_);
+            auto deviceBuf = AudioBuffer(0, format_);
+            deviceBuf.append(*deviceFrame);
+            if (auto fileFrame = queue_->dequeue(frameSize_)) {
+                auto fileBuf = AudioBuffer(0, format_);
+                fileBuf.append(*fileFrame);
+                deviceBuf.mix(fileBuf);
             }
+            auto frame = deviceBuf.toAVFrame();
+            gotFrame(frame);
         }
-
-        notify(frame);
+    } else {
+        if (auto frame = nextFromDevice()) {
+            gotFrame(frame);
+        }
     }
 }
 
-void
+std::unique_ptr<AudioFrame>
 AudioInput::nextFromDevice()
 {
     auto& mainBuffer = Manager::instance().getRingBufferPool();
@@ -107,7 +125,7 @@ AudioInput::nextFromDevice()
 
     if (mainBuffer.availableForGet(id_) < samplesToGet
         && not mainBuffer.waitForDataAvailable(id_, samplesToGet, MS_PER_PACKET)) {
-        return;
+        return nullptr;
     }
 
     // getData resets the format to internal hardware format, will have to be resampled
@@ -115,7 +133,7 @@ AudioInput::nextFromDevice()
     micData_.resize(samplesToGet);
     const auto samples = mainBuffer.getData(micData_, id_);
     if (samples != samplesToGet)
-        return;
+        return nullptr;
 
     if (muteState_) // audio is muted, set samples to 0
         micData_.reset();
@@ -129,8 +147,7 @@ AudioInput::nextFromDevice()
         resampled = micData_;
     }
 
-    auto audioFrame = resampled.toAVFrame();
-    queue_->enqueue(*audioFrame);
+    return resampled.toAVFrame();
 }
 
 void
@@ -194,7 +211,7 @@ AudioInput::initFile(const std::string& path)
     devOpts_.loop = "1";
     decodingFile_ = true;
     createDecoder(); // sets devOpts_'s sample rate and number of channels
-    return true; // all required info found
+    return true;
 }
 
 std::shared_future<DeviceParams>
@@ -302,6 +319,7 @@ AudioInput::setFormat(const AudioFormat& fmt)
 {
     std::lock_guard<std::mutex> lk(fmtMutex_);
     format_ = fmt;
+    frameSize_ = format_.sample_rate * MS_PER_PACKET.count() / 1000;
     // queue will not accept new format as input, so reset
     queue_.reset(new AudioQueue(format_));
 }
