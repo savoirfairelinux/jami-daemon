@@ -256,9 +256,9 @@ private:
      * Video Rtp Session factory
      */
     std::unique_ptr<video::VideoRtpSession> videortp_;
+#endif
 
     std::string videoInput_;
-#endif
 
     bool srtpEnabled_ {false};
 
