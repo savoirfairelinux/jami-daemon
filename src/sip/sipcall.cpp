@@ -631,8 +631,9 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 void
 SIPCall::switchInput(const std::string& resource)
 {
-#ifdef RING_VIDEO
     videoInput_ = resource;
+#ifdef RING_VIDEO
+    // sip reinvite only if video, audio is resampled to the negotiated format
     if (isWaitingForIceAndMedia_) {
         remainingRequest_ = Request::SwitchInput;
     } else {
@@ -900,12 +901,13 @@ SIPCall::startAllMedia()
         }
 
         auto new_mtu = transport_->getTlsMtu();
+        if (local.type & MEDIA_AUDIO)
+            avformatrtp_->switchInput(videoInput_);
         avformatrtp_->setMtu(new_mtu);
 
 #ifdef RING_VIDEO
-        if (local.type == MEDIA_VIDEO)
+        if (local.type & MEDIA_VIDEO)
             videortp_->switchInput(videoInput_);
-
         videortp_->setMtu(new_mtu);
 #endif
         rtp->updateMedia(remote, local);

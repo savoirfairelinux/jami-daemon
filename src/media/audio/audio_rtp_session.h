@@ -22,20 +22,22 @@
 #ifndef AUDIO_RTP_SESSION_H__
 #define AUDIO_RTP_SESSION_H__
 
+#include "audiobuffer.h"
+#include "media_device.h"
 #include "threadloop.h"
-#include "media/rtp_session.h"
-#include "media/audio/audiobuffer.h"
+#include "rtp_session.h"
 
 #include <string>
 #include <memory>
 
 namespace ring {
 
-class RingBuffer;
-class AudioSender;
+class AudioInput;
 class AudioReceiveThread;
+class AudioSender;
 class IceSocket;
 class MediaRecorder;
+class RingBuffer;
 
 class AudioRtpSession : public RtpSession {
     public:
@@ -48,6 +50,7 @@ class AudioRtpSession : public RtpSession {
         void stop() override;
         void setMuted(bool isMuted);
 
+        void switchInput(const std::string& resource) { input_ = resource; }
 
         void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
@@ -57,9 +60,12 @@ class AudioRtpSession : public RtpSession {
 
         std::unique_ptr<AudioSender> sender_;
         std::unique_ptr<AudioReceiveThread> receiveThread_;
+        std::shared_ptr<AudioInput> audioInput_;
         std::shared_ptr<RingBuffer> ringbuffer_;
         uint16_t initSeqVal_ = 0;
         bool muteState_ = false;
+        DeviceParams localAudioParams_;
+        std::string input_;
 };
 
 } // namespace ring

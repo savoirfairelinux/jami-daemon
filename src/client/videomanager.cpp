@@ -321,11 +321,20 @@ switchInput(const std::string& resource)
         call->switchInput(resource);
         return true;
     } else {
+        bool ret = true;
         if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
-            return input->switchInput(resource).valid();
-        RING_WARN("Video input not initialized");
+            ret &= input->switchInput(resource).valid();
+        else
+            RING_WARN("Video input not initialized");
+
+        // audio inputs are initialized with the call id, else with the default id
+        auto id = ring::Manager::instance().hasCurrentCall() ?
+            ring::Manager::instance().getCurrentCallId() :
+            ring::RingBufferPool::DEFAULT_ID;
+        if (auto input = ring::getAudioInput(id))
+            ret &= input->switchInput(resource).valid();
+        return ret;
     }
-    return false;
 }
 
 bool
