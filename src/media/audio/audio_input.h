@@ -2,7 +2,7 @@
  *  Copyright (C) 2018 Savoir-faire Linux Inc.
  *
  *  Author: Hugo Lefeuvre <hugo.lefeuvre@savoirfairelinux.com>
- * Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +21,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <future>
 #include <mutex>
 
@@ -49,6 +50,9 @@ public:
     void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
+    bool nextFromDevice(AudioFrame& frame);
+    bool initDevice(const std::string& device);
+
     std::string id_;
     AudioBuffer micData_;
     bool muteState_ = false;
@@ -58,6 +62,14 @@ private:
 
     std::unique_ptr<Resampler> resampler_;
     std::weak_ptr<MediaRecorder> recorder_;
+
+    std::string currentResource_;
+    std::atomic_bool switchPending_ {false};
+    DeviceParams devOpts_;
+    std::promise<DeviceParams> foundDevOpts_;
+    std::shared_future<DeviceParams> futureDevOpts_;
+    std::atomic_bool devOptsFound_ {false};
+    void foundDevOpts(const DeviceParams& params);
 
     ThreadLoop loop_;
     void process();
