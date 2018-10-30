@@ -88,7 +88,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 #ifdef RING_VIDEO
     // The ID is used to associate video streams to calls
     , videortp_(new video::VideoRtpSession(id, getVideoSettings()))
-    , videoInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
+    , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
     , sdp_(new Sdp(id))
 {
@@ -631,8 +631,9 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 void
 SIPCall::switchInput(const std::string& resource)
 {
+    mediaInput_ = resource;
 #ifdef RING_VIDEO
-    videoInput_ = resource;
+    // sip reinvite only if video, audio is resampled to the negotiated format
     if (isWaitingForIceAndMedia_) {
         remainingRequest_ = Request::SwitchInput;
     } else {
@@ -900,12 +901,13 @@ SIPCall::startAllMedia()
         }
 
         auto new_mtu = transport_->getTlsMtu();
+        if (local.type & MEDIA_AUDIO)
+            avformatrtp_->switchInput(mediaInput_);
         avformatrtp_->setMtu(new_mtu);
 
 #ifdef RING_VIDEO
-        if (local.type == MEDIA_VIDEO)
-            videortp_->switchInput(videoInput_);
-
+        if (local.type & MEDIA_VIDEO)
+            videortp_->switchInput(mediaInput_);
         videortp_->setMtu(new_mtu);
 #endif
         rtp->updateMedia(remote, local);
@@ -924,7 +926,7 @@ SIPCall::startAllMedia()
         switch (local.type) {
 #ifdef RING_VIDEO
             case MEDIA_VIDEO:
-                isVideoMuted_ = videoInput_.empty();
+                isVideoMuted_ = mediaInput_.empty();
                 break;
 #endif
             case MEDIA_AUDIO:
@@ -989,8 +991,8 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         if (mute == isVideoMuted_) return;
         RING_WARN("[call:%s] video muting %s", getCallId().c_str(), bool_to_str(mute));
         isVideoMuted_ = mute;
-        videoInput_ = isVideoMuted_ ? "" : Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
-        DRing::switchInput(getCallId(), videoInput_);
+        mediaInput_ = isVideoMuted_ ? "" : Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
+        DRing::switchInput(getCallId(), mediaInput_);
         if (not isSubcall())
             emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
 #endif
@@ -1151,7 +1153,7 @@ SIPCall::getDetails() const
 
 #ifdef RING_VIDEO
     // If Video is not enabled return an empty string
-    details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc.isVideoEnabled() ? videoInput_ : "");
+    details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc.isVideoEnabled() ? mediaInput_ : "");
 #endif
 
 #if HAVE_RINGNS
