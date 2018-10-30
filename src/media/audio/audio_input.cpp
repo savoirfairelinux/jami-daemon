@@ -19,15 +19,15 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "dring/media_const.h"
 #include "audio_input.h"
+#include "manager.h"
+#include "resampler.h"
+#include "ringbufferpool.h"
+#include "smartools.h"
 
 #include <future>
 #include <chrono>
-#include "socket_pair.h"
-#include "audio/ringbufferpool.h"
-#include "audio/resampler.h"
-#include "manager.h"
-#include "smartools.h"
 
 namespace ring {
 
@@ -55,6 +55,36 @@ AudioInput::~AudioInput()
 void
 AudioInput::process()
 {
+    foundDevOpts(devOpts_);
+    if (switchPending_.exchange(false)) {
+        if (devOpts_.input.empty())
+            RING_DBG() << "Switching to default audio input";
+        else
+            RING_DBG() << "Switching audio input to '" << devOpts_.input << "'";
+    }
+
+    auto frame = std::make_unique<AudioFrame>();
+    if (!nextFromDevice(*frame))
+        return; // no frame
+
+    auto ms = MediaStream("a:local", format_);
+    frame->pointer()->pts = sent_samples;
+    sent_samples += frame->pointer()->nb_samples;
+
+    {
+        auto rec = recorder_.lock();
+        if (rec && rec->isRecording()) {
+            rec->recordData(frame->pointer(), ms);
+        }
+    }
+
+    std::shared_ptr<AudioFrame> sharedFrame = std::move(frame);
+    notify(sharedFrame);
+}
+
+bool
+AudioInput::nextFromDevice(AudioFrame& frame)
+{
     auto& mainBuffer = Manager::instance().getRingBufferPool();
     auto bufferFormat = mainBuffer.getInternalAudioFormat();
 
@@ -64,7 +94,7 @@ AudioInput::process()
 
     if (mainBuffer.availableForGet(id_) < samplesToGet
         && not mainBuffer.waitForDataAvailable(id_, samplesToGet, MS_PER_PACKET)) {
-        return;
+        return false;
     }
 
     // getData resets the format to internal hardware format, will have to be resampled
@@ -72,7 +102,7 @@ AudioInput::process()
     micData_.resize(samplesToGet);
     const auto samples = mainBuffer.getData(micData_, id_);
     if (samples != samplesToGet)
-        return;
+        return false;
 
     if (muteState_) // audio is muted, set samples to 0
         micData_.reset();
@@ -87,20 +117,72 @@ AudioInput::process()
     }
 
     auto audioFrame = resampled.toAVFrame();
-    auto frame = audioFrame->pointer();
-    auto ms = MediaStream("a:local", format_);
-    frame->pts = sent_samples;
-    sent_samples += frame->nb_samples;
+    frame.copyFrom(*audioFrame);
+    return true;
+}
 
-    {
-        auto rec = recorder_.lock();
-        if (rec && rec->isRecording()) {
-            rec->recordData(frame, ms);
-        }
+bool
+AudioInput::initDevice(const std::string& device)
+{
+    devOpts_ = {};
+    devOpts_.input = device;
+    devOpts_.channel = format_.nb_channels;
+    devOpts_.framerate = format_.sample_rate;
+    return true;
+}
+
+std::shared_future<DeviceParams>
+AudioInput::switchInput(const std::string& resource)
+{
+    if (resource == currentResource_)
+        return futureDevOpts_;
+
+    if (switchPending_) {
+        RING_ERR() << "Audio switch already requested";
+        return {}; // XXX return futureDevOpts_ ?
     }
 
-    std::shared_ptr<AudioFrame> sharedFrame = std::move(audioFrame);
-    notify(sharedFrame);
+    RING_DBG() << "Switching audio source to match '" << resource << "'";
+
+    currentResource_ = resource;
+    devOptsFound_ = false;
+
+    std::promise<DeviceParams> p;
+    foundDevOpts_.swap(p);
+
+    if (resource.empty()) {
+        devOpts_ = {};
+        switchPending_ = true;
+        futureDevOpts_ = foundDevOpts_.get_future();
+        return futureDevOpts_;
+    }
+
+    static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
+
+    const auto pos = resource.find(sep);
+    if (pos == std::string::npos)
+        return {};
+
+    const auto prefix = resource.substr(0, pos);
+    if ((pos + sep.size()) >= resource.size())
+        return {};
+
+    const auto suffix = resource.substr(pos + sep.size());
+    if (initDevice(suffix))
+        foundDevOpts(devOpts_);
+
+    switchPending_ = true;
+    futureDevOpts_ = foundDevOpts_.get_future().share();
+    return futureDevOpts_;
+}
+
+void
+AudioInput::foundDevOpts(const DeviceParams& params)
+{
+    if (!devOptsFound_) {
+        devOptsFound_ = true;
+        foundDevOpts_.set_value(params);
+    }
 }
 
 void
@@ -114,13 +196,6 @@ void
 AudioInput::setMuted(bool isMuted)
 {
     muteState_ = isMuted;
-}
-
-std::shared_future<DeviceParams>
-AudioInput::switchInput(const std::string& resource)
-{
-    // TODO not implemented yet
-    return {};
 }
 
 void
