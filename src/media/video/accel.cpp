@@ -42,6 +42,8 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
     for (int i = 0; formats[i] != AV_PIX_FMT_NONE; ++i) {
         fallback = formats[i];
         if (accel && formats[i] == accel->format) {
+            // hardware tends to under-report supported levels
+            codecCtx->hwaccel_flags |= AV_HWACCEL_FLAG_IGNORE_LEVEL;
             return formats[i];
         }
     }
