@@ -51,6 +51,8 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
             JAMI_DBG() << "Found compatible hardware format for "
                 << avcodec_get_name(static_cast<AVCodecID>(accel->getCodecId()))
                 << " decoder with " << accel->getName();
+            // hardware tends to under-report supported levels
+            codecCtx->hwaccel_flags |= AV_HWACCEL_FLAG_IGNORE_LEVEL;
             return formats[i];
         }
     }
