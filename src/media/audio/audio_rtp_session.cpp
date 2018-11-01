@@ -38,6 +38,7 @@
 #include "media_device.h"
 
 #include "audio/audio_input.h"
+#include "audio/audio_queue.h"
 #include "audio/audiobuffer.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
@@ -83,6 +84,7 @@ class AudioSender : public Observer<std::shared_ptr<AudioFrame>> {
         std::unique_ptr<Resampler> resampler_;
         std::shared_ptr<AudioInput> audioInput_;
         std::weak_ptr<MediaRecorder> recorder_;
+        std::unique_ptr<AudioQueue> queue_;
 
         uint64_t sent_samples = 0;
 
@@ -151,6 +153,7 @@ AudioSender::setup(SocketPair& socketPair)
 
     // NOTE do after encoder is ready to encode
     auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
+    queue_.reset(new AudioQueue(codec->audioformat));
     audioInput_ = ring::getAudioInput(id_);
     audioInput_->setFormat(codec->audioformat);
     audioInput_->attach(this);
@@ -161,7 +164,27 @@ AudioSender::setup(SocketPair& socketPair)
 void
 AudioSender::update(Observable<std::shared_ptr<ring::AudioFrame>>* /*obs*/, const std::shared_ptr<ring::AudioFrame>& framePtr)
 {
-    auto frame = framePtr->pointer();
+    int ret = 0;
+    if ((ret = queue_->enqueue(*framePtr)) < 0)
+        return;
+
+    // don't reuse framePtr in case there are other observers
+    AudioFrame audioFrame;
+    auto frame = audioFrame.pointer();
+    auto params = audioEncoder_->getStream("audioEncoder");
+    auto fmt = queue_->format();
+    frame->format = (int)fmt.sampleFormat;
+    frame->channels = fmt.nb_channels;
+    frame->channel_layout = av_get_default_channel_layout(fmt.nb_channels);
+    frame->sample_rate = params.sampleRate;
+    frame->nb_samples = params.frameSize;
+    if ((ret = av_frame_get_buffer(frame, 0)) < 0) {
+        RING_ERR() << "Failed to allocate audio buffers: " << libav_utils::getError(ret);
+        return;
+    }
+    if ((ret = queue_->dequeue(audioFrame)) < 0)
+        return;
+
     auto ms = MediaStream("a:local", frame->format, rational<int>(1, frame->sample_rate),
                           frame->sample_rate, frame->channels, frame->nb_samples);
     frame->pts = sent_samples;
@@ -174,7 +197,7 @@ AudioSender::update(Observable<std::shared_ptr<ring::AudioFrame>>* /*obs*/, cons
             rec->recordData(frame, ms);
     }
 
-    if (audioEncoder_->encodeAudio(*framePtr) < 0)
+    if (audioEncoder_->encodeAudio(audioFrame) < 0)
         RING_ERR("encoding failed");
 }
 
