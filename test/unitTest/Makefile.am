@@ -104,4 +104,10 @@ ut_media_frame_SOURCES = media/test_media_frame.cpp
 check_PROGRAMS += ut_video_scaler
 ut_video_scaler_SOURCES = media/video/test_video_scaler.cpp
 
+#
+# audio_frame_resizer
+#
+check_PROGRAMS += ut_audio_frame_resizer
+ut_audio_frame_resizer_SOURCES = media/audio/test_audio_frame_resizer.cpp
+
 TESTS = $(check_PROGRAMS)
