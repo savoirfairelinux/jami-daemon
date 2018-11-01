@@ -40,6 +40,7 @@ endif
 libaudio_la_SOURCES = \
 		audiobuffer.cpp \
 		audio_input.cpp \
+		audio_frame_resizer.cpp \
 		audioloop.cpp \
 		ringbuffer.cpp \
 		ringbufferpool.cpp \
@@ -61,6 +62,7 @@ endif
 noinst_HEADERS = \
 		audiobuffer.h \
 		audio_input.h \
+		audio_frame_resizer.h \
 		audioloop.h \
 		ringbuffer.h \
 		ringbufferpool.h \
