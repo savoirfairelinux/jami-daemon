@@ -104,4 +104,10 @@ ut_media_frame_SOURCES = media/test_media_frame.cpp
 check_PROGRAMS += ut_video_scaler
 ut_video_scaler_SOURCES = media/video/test_video_scaler.cpp
 
+#
+# audio_queue
+#
+check_PROGRAMS += ut_audio_queue
+ut_audio_queue_SOURCES = media/audio/test_audio_queue.cpp
+
 TESTS = $(check_PROGRAMS)
