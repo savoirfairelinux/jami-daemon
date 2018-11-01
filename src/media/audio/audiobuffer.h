@@ -57,6 +57,12 @@ struct AudioFormat {
         , sampleFormat(AV_SAMPLE_FMT_S16)
     {}
 
+    constexpr AudioFormat(unsigned sr, unsigned c, AVSampleFormat f)
+        : sample_rate(sr)
+        , nb_channels(c)
+        , sampleFormat(f)
+    {}
+
     inline bool operator == (const AudioFormat &b) const {
         return ( (b.sample_rate == sample_rate) &&
                  (b.nb_channels == nb_channels) &&
