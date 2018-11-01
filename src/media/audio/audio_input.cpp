@@ -67,6 +67,7 @@ AudioInput::process()
     nextFromDevice(*frame);
 
     auto ms = MediaStream("a:local", format_);
+    ms.firstTimestamp = sent_samples;
     frame->pointer()->pts = sent_samples;
     sent_samples += frame->pointer()->nb_samples;
 
