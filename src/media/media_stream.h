@@ -68,6 +68,10 @@ struct MediaStream {
     {}
 
     MediaStream(const std::string& streamName, AudioFormat fmt)
+        : MediaStream(streamName, fmt, 0)
+    {}
+
+    MediaStream(const std::string& streamName, AudioFormat fmt, int64_t firstTimestamp)
         : name(streamName)
         , format(fmt.sampleFormat)
         , isVideo(false)
@@ -75,6 +79,7 @@ struct MediaStream {
         , sampleRate(fmt.sample_rate)
         , nbChannels(fmt.nb_channels)
         , frameSize(0.02 * fmt.sample_rate) // standard frame size for our encoder
+        , firstTimestamp(firstTimestamp)
     {}
 
     MediaStream(const std::string& streamName, AVCodecContext* c)
