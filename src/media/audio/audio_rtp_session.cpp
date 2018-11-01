@@ -38,6 +38,7 @@
 #include "media_device.h"
 
 #include "audio/audio_input.h"
+#include "audio/audio_queue.h"
 #include "audio/audiobuffer.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
@@ -83,6 +84,7 @@ class AudioSender : public Observer<std::shared_ptr<AudioFrame>> {
         std::unique_ptr<Resampler> resampler_;
         std::shared_ptr<AudioInput> audioInput_;
         std::weak_ptr<MediaRecorder> recorder_;
+        std::unique_ptr<AudioQueue> queue_;
 
         uint64_t sent_samples = 0;
 
@@ -151,6 +153,7 @@ AudioSender::setup(SocketPair& socketPair)
 
     // NOTE do after encoder is ready to encode
     auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
+    queue_.reset(new AudioQueue(codec->audioformat));
     audioInput_ = ring::getAudioInput(id_);
     audioInput_->setFormat(codec->audioformat);
     audioInput_->attach(this);
@@ -161,21 +164,34 @@ AudioSender::setup(SocketPair& socketPair)
 void
 AudioSender::update(Observable<std::shared_ptr<ring::AudioFrame>>* /*obs*/, const std::shared_ptr<ring::AudioFrame>& framePtr)
 {
-    auto frame = framePtr->pointer();
-    auto ms = MediaStream("a:local", frame->format, rational<int>(1, frame->sample_rate),
-                          frame->sample_rate, frame->channels, frame->nb_samples);
-    frame->pts = sent_samples;
-    ms.firstTimestamp = frame->pts;
-    sent_samples += frame->nb_samples;
+    int ret = 0;
+    if ((ret = queue_->enqueue(*framePtr)) < 0)
+        return;
 
-    {
-        auto rec = recorder_.lock();
-        if (rec && rec->isRecording())
-            rec->recordData(frame, ms);
+    // NOTE don't reuse framePtr in case there are other observers
+
+    auto params = audioEncoder_->getStream("audioEncoder");
+    while (queue_->getSize() >= params.frameSize) {
+        auto audioFrame = queue_->dequeue(params.frameSize);
+        if (!audioFrame)
+            return;
+
+        auto frame = audioFrame->pointer();
+        auto ms = MediaStream("a:local", frame->format, rational<int>(1, frame->sample_rate),
+                              frame->sample_rate, frame->channels, frame->nb_samples);
+        frame->pts = sent_samples;
+        ms.firstTimestamp = frame->pts;
+        sent_samples += frame->nb_samples;
+
+        {
+            auto rec = recorder_.lock();
+            if (rec && rec->isRecording())
+                rec->recordData(frame, ms);
+        }
+
+        if (audioEncoder_->encodeAudio(*audioFrame) < 0)
+            RING_ERR("encoding failed");
     }
-
-    if (audioEncoder_->encodeAudio(*framePtr) < 0)
-        RING_ERR("encoding failed");
 }
 
 void
