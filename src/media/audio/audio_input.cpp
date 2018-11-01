@@ -88,7 +88,7 @@ AudioInput::process()
 
     auto audioFrame = resampled.toAVFrame();
     auto frame = audioFrame->pointer();
-    auto ms = MediaStream("a:local", format_);
+    auto ms = MediaStream("a:local", format_, sent_samples);
     frame->pts = sent_samples;
     sent_samples += frame->nb_samples;
 
