@@ -636,4 +636,18 @@ MediaEncoder::getStreamCount() const
         return 0;
 }
 
+MediaStream
+MediaEncoder::getStream(const std::string& name, int streamIdx) const
+{
+    // if streamIdx is negative, use currentStreamIdx_
+    if (streamIdx < 0)
+        streamIdx = currentStreamIdx_;
+    // make sure streamIdx is valid
+    if (getStreamCount() <= 0 || streamIdx < 0 || encoders_.size() < (unsigned)(streamIdx + 1))
+        return {};
+    auto enc = encoders_[streamIdx];
+    // TODO set firstTimestamp
+    return MediaStream(name, enc);
+}
+
 } // namespace ring
