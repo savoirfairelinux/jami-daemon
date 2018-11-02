@@ -32,6 +32,7 @@
 #include "media_buffer.h"
 #include "media_codec.h"
 #include "media_device.h"
+#include "media_stream.h"
 
 #include <map>
 #include <memory>
@@ -97,6 +98,7 @@ public:
     bool useCodec(const AccountCodecInfo* codec) const noexcept;
 
     unsigned getStreamCount() const;
+    MediaStream getStream(const std::string& name, int streamIdx = -1) const;
 
 private:
     NON_COPYABLE(MediaEncoder);
