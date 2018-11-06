@@ -32,6 +32,7 @@ SUBDIRS = client media config hooks sip upnp security ringdht im $(RING_VIDEO_SU
 # libring
 
 lib_LTLIBRARIES = libring.la
+libring_la_LDFLAGS = -version-info 0:0:0
 
 libring_la_LIBADD = \
 	./sip/libsiplink.la \
@@ -45,7 +46,7 @@ libring_la_LIBADD = \
 	./im/libim.la \
 	$(RING_VIDEO_LIBS)
 
-libring_la_LDFLAGS = \
+libring_la_LDFLAGS += \
 		@PJPROJECT_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
