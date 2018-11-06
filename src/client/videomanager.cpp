@@ -348,6 +348,15 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
        RING_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
+std::string
+getShmPath(const std::string& callId)
+{
+   if (auto sink = ring::Manager::instance().getSinkClient(callId))
+       return sink->openedName();
+   else
+       return {};
+}
+
 bool
 getDecodingAccelerated()
 {
