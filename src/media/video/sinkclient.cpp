@@ -365,6 +365,8 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
 void
 SinkClient::setFrameSize(int width, int height)
 {
+    width_ = width;
+    height_ = height;
     if (width > 0 and height > 0) {
         RING_WARN("Start sink <%s / %s>, size=%dx%d, mixer=%u",
                  getId().c_str(), openedName().c_str(), width, height, mixer_);

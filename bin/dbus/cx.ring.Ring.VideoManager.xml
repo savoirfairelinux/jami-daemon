@@ -110,6 +110,17 @@
             </arg>
         </method>
 
+        <method name="getRenderer" tp:name-for-bindings="getRenderer">
+            <tp:docstring>Returns a map of information about a call's renderer.</tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="s" name="callId" direction="in">
+                <tp:docstring>Call ID to get info about.</tp:docstring>
+            </arg>
+            <arg type="a{ss}" name="map" direction="out">
+                <tp:docstring>Map containing renderer info, with empty strings and "0" if not found.</tp:docstring>
+            </arg>
+        </method>
+
         <signal name="deviceEvent" tp:name-for-bindings="deviceEvent">
            <tp:docstring>Signal triggered by changes in the detected v4l2 devices, e.g. a camera being unplugged.</tp:docstring>
         </signal>
