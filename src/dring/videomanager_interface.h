@@ -79,7 +79,7 @@ public:
     AVFrame* pointer() const noexcept { return frame_.get(); }
 
     // Fill this MediaFrame with data from o
-    void copyFrom(MediaFrame& o);
+    void copyFrom(const MediaFrame& o);
 
     // Reset internal buffers (return to an empty MediaFrame)
     virtual void reset() noexcept;
@@ -100,7 +100,7 @@ public:
     void reset() noexcept override;
 
     // Fill this VideoFrame with data from o
-    void copyFrom(VideoFrame& o);
+    void copyFrom(const VideoFrame& o);
 
     // Return frame size in bytes
     std::size_t size() const noexcept;

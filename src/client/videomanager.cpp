@@ -53,7 +53,7 @@ MediaFrame::MediaFrame()
 }
 
 void
-MediaFrame::copyFrom(MediaFrame& o)
+MediaFrame::copyFrom(const MediaFrame& o)
 {
     reset();
     av_frame_ref(frame_.get(), o.frame_.get());
@@ -80,7 +80,7 @@ VideoFrame::reset() noexcept
 }
 
 void
-VideoFrame::copyFrom(VideoFrame& o)
+VideoFrame::copyFrom(const VideoFrame& o)
 {
     MediaFrame::copyFrom(o);
     ptr_ = o.ptr_;
