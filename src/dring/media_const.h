@@ -40,6 +40,13 @@ namespace Details {
 
 constexpr static char MEDIA_TYPE_AUDIO[] = "MEDIA_TYPE_AUDIO";
 constexpr static char MEDIA_TYPE_VIDEO[] = "MEDIA_TYPE_VIDEO";
+
+// Renderer and Shm info
+constexpr static char CALL_ID [] = "CALL_ID";
+constexpr static char SHM_PATH[] = "SHM_PATH";
+constexpr static char WIDTH   [] = "WIDTH";
+constexpr static char HEIGHT  [] = "HEIGHT";
+
 }
 
 } //namespace DRing::Media

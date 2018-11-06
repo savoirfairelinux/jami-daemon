@@ -97,6 +97,12 @@ DBusVideoManager::setDecodingAccelerated(const bool& state)
     DRing::setDecodingAccelerated(state);
 }
 
+std::map<std::string, std::string>
+DBusVideoManager::getRenderer(const std::string& callId)
+{
+    return DRing::getRenderer(callId);
+}
+
 std::string
 DBusVideoManager::startLocalRecorder(const bool& audioOnly, const std::string& filepath)
 {
