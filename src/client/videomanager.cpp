@@ -34,6 +34,7 @@
 #include "video/sinkclient.h"
 #include "client/ring_signal.h"
 #include "audio/ringbufferpool.h"
+#include "dring/media_const.h"
 
 #include <functional>
 #include <memory>
@@ -347,6 +348,25 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
        sink->registerTarget(target);
    else
        RING_WARN("No sink found for id '%s'", sinkId.c_str());
+}
+
+std::map<std::string, std::string>
+getRenderer(const std::string& callId)
+{
+   if (auto sink = ring::Manager::instance().getSinkClient(callId))
+       return {
+           {DRing::Media::Details::CALL_ID,  callId},
+           {DRing::Media::Details::SHM_PATH, sink->openedName()},
+           {DRing::Media::Details::WIDTH,    ring::to_string(sink->getWidth())},
+           {DRing::Media::Details::HEIGHT,   ring::to_string(sink->getHeight())},
+       };
+   else
+       return {
+           {DRing::Media::Details::CALL_ID,  callId},
+           {DRing::Media::Details::SHM_PATH, ""},
+           {DRing::Media::Details::WIDTH,    "0"},
+           {DRing::Media::Details::HEIGHT,   "0"},
+       };
 }
 
 bool

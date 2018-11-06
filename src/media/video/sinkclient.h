@@ -54,6 +54,14 @@ class SinkClient : public VideoFramePassiveReader
 
         std::string openedName() const noexcept;
 
+        const int getWidth() const noexcept {
+            return width_;
+        }
+
+        const int getHeight() const noexcept {
+            return height_;
+        }
+
         // as VideoFramePassiveReader
         void update(Observable<std::shared_ptr<ring::VideoFrame>>*,
                     const std::shared_ptr<ring::VideoFrame>&) override;
@@ -70,6 +78,8 @@ class SinkClient : public VideoFramePassiveReader
     private:
         const std::string id_;
         const bool mixer_;
+        int width_ {0};
+        int height_ {0};
         bool started_ {false}; // used to arbitrate client's stop signal.
         DRing::SinkTarget target_;
         std::unique_ptr<VideoScaler> scaler_;
