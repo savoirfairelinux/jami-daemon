@@ -150,6 +150,7 @@ DRING_PUBLIC bool hasCameraStarted();
 DRING_PUBLIC bool switchInput(const std::string& resource);
 DRING_PUBLIC bool switchToCamera();
 DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
+DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
 DRING_PUBLIC std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
 DRING_PUBLIC void stopLocalRecorder(const std::string& filepath);
