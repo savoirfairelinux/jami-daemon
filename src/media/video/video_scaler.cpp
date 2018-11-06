@@ -65,9 +65,18 @@ VideoScaler::scale(const VideoFrame& input, VideoFrame& output)
 void
 VideoScaler::scale_with_aspect(const VideoFrame& input, VideoFrame& output)
 {
-    auto output_frame = output.pointer();
-    scale_and_pad(input, output, 0, 0, output_frame->width,
-                  output_frame->height, true);
+    if (input.width() == output.width() && input.height() == output.height()) {
+        if (input.format() != output.format()) {
+            auto outPtr = convertFormat(input, (AVPixelFormat)output.format());
+            output.copyFrom(*outPtr);
+        } else {
+            output.copyFrom(input);
+        }
+    } else {
+        auto output_frame = output.pointer();
+        scale_and_pad(input, output, 0, 0, output_frame->width,
+                      output_frame->height, true);
+    }
 }
 
 void
