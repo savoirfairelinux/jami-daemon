@@ -126,7 +126,7 @@ FFMPEGCONF += \
 	--enable-filter=aresample \
 	--enable-filter=format \
 	--enable-filter=aformat \
-	--enable-filter=fps
+	--enable-filter=fps 
 
 #platform specific options
 
