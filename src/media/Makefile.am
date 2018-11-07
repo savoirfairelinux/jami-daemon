@@ -4,6 +4,10 @@ noinst_LTLIBRARIES = libmedia.la
 
 SUBDIRS = audio
 
+if RING_OPENCV
+SUBDIRS += filters
+endif
+
 if RING_VIDEO
 SUBDIRS += video
 endif
@@ -47,6 +51,11 @@ noinst_HEADERS = \
 
 libmedia_la_LIBADD = \
 	./audio/libaudio.la
+
+if RING_OPENCV
+	libmedia_la_LIBADD = \
+		./filters/libfilters.la
+endif
 
 if RING_VIDEO
 libmedia_la_libADD = \
