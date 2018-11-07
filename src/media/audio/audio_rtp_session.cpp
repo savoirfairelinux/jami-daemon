@@ -36,6 +36,7 @@
 #include "media_decoder.h"
 #include "media_io_handle.h"
 #include "media_device.h"
+#include "media/filters/media_processor.h"
 
 #include "audio/audiobuffer.h"
 #include "audio/ringbufferpool.h"
@@ -45,6 +46,8 @@
 #include <sstream>
 
 namespace ring {
+
+MediaFilter mediaFilter_ {};
 
 class AudioSender {
     public:
@@ -86,6 +89,9 @@ class AudioSender {
 
         const std::chrono::milliseconds msPerPacket_ {20};
 
+        MediaProcessor mediaProcessor_;
+        MediaFilter Filter_;
+
         ThreadLoop loop_;
         void process();
         void cleanup();
@@ -122,7 +128,7 @@ bool
 AudioSender::setup(SocketPair& socketPair)
 {
     audioEncoder_.reset(new MediaEncoder);
-    muxContext_.reset(socketPair.createIOContext(mtu_));
+    muxContext_.reset(socketPair.createIOContext(mtu_));    
 
     try {
         /* Encoder setup */
@@ -216,13 +222,43 @@ AudioSender::process()
     ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
 
+    /*************************/
+
+
+
+
+    // AVFrame* output = av_frame_clone(frame);
+
+    // //auto ms2 = MediaStream("plop", frame->format, rational<int>(1, frame->sample_rate), frame->sample_rate, frame->channels);
+
+    // if (not Filter_)
+    // {
+    //     std::vector<MediaStream> vec;
+    //     Filter_.reset(new MediaFilter);
+    //     Filter_->initialize("[plop] vibrato=f=5:d=1.0",vec);
+    // }
+    // Filter_->feedInput(output, "plop");
+    
+    // output = Filter_->readOutput();
+    // av_frame_unref(frame);
+    // av_frame_move_ref(frame, output);
+
+    /************************/
+
+    
+    mediaProcessor_.addFrame(frame);
+    RING_WARN() << "WOLOLO frame ptr: " << frame;
+    
+
     {
         auto rec = recorder_.lock();
         if (rec && rec->isRecording())
             rec->recordData(frame, ms);
     }
 
+
     if (audioEncoder_->encodeAudio(*audioFrame) < 0)
+
         RING_ERR("encoding failed");
 }
 
