@@ -450,33 +450,32 @@ void
 MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
                                 RingBuffer& rb, const AudioFormat outFormat)
 {
-    const auto libav_frame = decodedFrame.pointer();
-    decBuff_.setFormat(AudioFormat{
-        (unsigned) libav_frame->sample_rate,
-        (unsigned) decoderCtx_->channels
-    });
-    decBuff_.resize(libav_frame->nb_samples);
+    const auto frame = decodedFrame.pointer();
+    const auto inFormat = AudioFormat((unsigned)frame->sample_rate,
+                                      (unsigned)frame->channels,
+                                      (AVSampleFormat)frame->format);
 
-    if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_FLTP ) {
-        decBuff_.convertFloatPlanarToSigned16(libav_frame->extended_data,
-                                         libav_frame->nb_samples,
-                                         decoderCtx_->channels);
-    } else if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_S16 ) {
-        decBuff_.deinterleave(reinterpret_cast<const AudioSample*>(libav_frame->data[0]),
-                         libav_frame->nb_samples, decoderCtx_->channels);
-    }
-    if ((unsigned)libav_frame->sample_rate != outFormat.sample_rate) {
+    AudioFrame output;
+    if (inFormat != outFormat) {
         if (!resampler_) {
             RING_DBG("Creating audio resampler");
             resampler_.reset(new Resampler);
         }
-        resamplingBuff_.setFormat({(unsigned) outFormat.sample_rate, (unsigned) decoderCtx_->channels});
-        resamplingBuff_.resize(libav_frame->nb_samples);
-        resampler_->resample(decBuff_, resamplingBuff_);
-        rb.put(resamplingBuff_);
+        auto out = output.pointer();
+        out->format = (int)outFormat.sampleFormat;
+        out->channel_layout = av_get_default_channel_layout((int)outFormat.nb_channels);
+        out->channels = (int)outFormat.nb_channels;
+        out->sample_rate = (int)outFormat.sample_rate;
+        if (resampler_->resample(frame, out) < 0) {
+            RING_ERR() << "Failed to resample audio";
+            return;
+        }
     } else {
-        rb.put(decBuff_);
+        output.copyFrom(decodedFrame);
     }
+    AudioBuffer buf { (unsigned)decodedFrame.pointer()->nb_samples, outFormat };
+    buf.append(output);
+    rb.put(buf);
 }
 
 int
