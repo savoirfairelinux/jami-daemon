@@ -59,10 +59,10 @@ class Resampler {
          * output buffers always have the same formats, will never be called, as the first
          * initialization is done in swr_convert_frame.
          */
-        void reinit(const AudioFormat& in, const int inSampleFmt,
-                    const AudioFormat& out, const int outSampleFmt);
+        void reinit(const AudioFormat& in, const AudioFormat& out);
 
         SwrContext* swrCtx_; // incomplete type, cannot be a unique_ptr
+        bool initialized_;
 };
 
 } // namespace ring
