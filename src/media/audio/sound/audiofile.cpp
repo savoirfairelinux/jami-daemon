@@ -80,6 +80,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
         case MediaDecoder::Status::FrameFinished:
             resampled->sample_rate = getFormat().sample_rate;
             resampled->channel_layout = av_get_default_channel_layout(getFormat().nb_channels);
+            resampled->channels = getFormat().nb_channels;
             resampled->format = AV_SAMPLE_FMT_S16;
             if (resampler->resample(input.pointer(), resampled) < 0)
                 throw AudioFileException("Frame could not be resampled");
