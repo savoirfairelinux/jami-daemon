@@ -160,6 +160,7 @@ private:
                 output->format = AV_SAMPLE_FMT_S64;
             output->sample_rate = input->sample_rate;
             output->channel_layout = input->channel_layout;
+            output->channels = input->channels;
             resampler_->resample(input, output);
             av_frame_unref(input);
             av_frame_move_ref(frame, output);
