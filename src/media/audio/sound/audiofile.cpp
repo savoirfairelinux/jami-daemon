@@ -70,7 +70,8 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
         throw AudioFileException("Decoder setup failed: " + fileName);
 
     auto resampler = std::make_unique<Resampler>();
-    auto buf = std::make_unique<AudioBuffer>(0, getFormat());
+    const auto& format = getFormat();
+    auto buf = std::make_unique<AudioBuffer>(0, format);
     bool done = false;
     while (!done) {
         AudioFrame input;
@@ -78,9 +79,10 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
         auto resampled = output.pointer();
         switch (decoder->decode(input)) {
         case MediaDecoder::Status::FrameFinished:
-            resampled->sample_rate = getFormat().sample_rate;
-            resampled->channel_layout = av_get_default_channel_layout(getFormat().nb_channels);
-            resampled->format = AV_SAMPLE_FMT_S16;
+            resampled->sample_rate = format.sample_rate;
+            resampled->channel_layout = av_get_default_channel_layout(format.nb_channels);
+            resampled->channels = format.nb_channels;
+            resampled->format = format.sampleFormat;
             if (resampler->resample(input.pointer(), resampled) < 0)
                 throw AudioFileException("Frame could not be resampled");
             if (buf->append(output) < 0)
