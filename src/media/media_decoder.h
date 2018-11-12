@@ -2,6 +2,7 @@
  *  Copyright (C) 2013-2018 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,6 +81,8 @@ class MediaDecoder {
         void emulateRate() { emulateRate_ = true; }
         void setInterruptCallback(int (*cb)(void*), void *opaque);
         int openInput(const DeviceParams&);
+
+        int seekToStart();
 
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
