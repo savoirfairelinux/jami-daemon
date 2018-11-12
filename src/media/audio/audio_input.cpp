@@ -145,7 +145,7 @@ AudioInput::nextFromFile(AudioFrame& frame)
         return false;
     case MediaDecoder::Status::RestartRequired:
     case MediaDecoder::Status::EOFError:
-        createDecoder();
+        decoder_->seekToStart();
         return false;
     case MediaDecoder::Status::FrameFinished:
         decoder_->writeToRingBuffer(frame, *fileBuffer_, format_);

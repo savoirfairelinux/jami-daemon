@@ -228,8 +228,7 @@ bool VideoInput::captureFrame()
 
         // End of streamed file
         case MediaDecoder::Status::EOFError:
-            createDecoder();
-            return static_cast<bool>(decoder_);
+            return (decoder_->seekToStart() >= 0);
 
         case MediaDecoder::Status::FrameFinished:
             {
