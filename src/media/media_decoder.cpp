@@ -2,6 +2,7 @@
  *  Copyright (C) 2013-2018 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -228,6 +229,20 @@ MediaDecoder::setupStream(AVMediaType mediaType)
     }
 
     return 0;
+}
+
+int
+MediaDecoder::seekToStart()
+{
+    int err = -1;
+    if (!(inputCtx_->iformat->flags & AVFMT_NOFILE)) {
+        err = avformat_seek_file(inputCtx_, streamIndex_, std::numeric_limits<int64_t>::min(), 0, std::numeric_limits<int64_t>::max(), 0);
+        if (err < 0)
+            RING_ERR() << "Cannot seek to start of stream: " << libav_utils::getError(err);
+    } else {
+        RING_ERR() << "Cannot seek to start of stream: input is not a file";
+    }
+    return err;
 }
 
 #ifdef RING_VIDEO
