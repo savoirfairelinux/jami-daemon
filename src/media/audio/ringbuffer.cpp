@@ -90,8 +90,6 @@ RingBuffer::debug()
 
 size_t RingBuffer::getReadOffset(const std::string &call_id) const
 {
-    if (hasNoReadOffsets())
-        return 0;
     ReadOffset::const_iterator iter = readoffsets_.find(call_id);
     return (iter != readoffsets_.end()) ? iter->second : 0;
 }
@@ -207,9 +205,6 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
 {
     std::lock_guard<std::mutex> l(lock_);
 
-    if (hasNoReadOffsets())
-        return 0;
-
     if (not hasThisReadOffset(call_id))
         return 0;
 
@@ -247,7 +242,7 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
 }
 
 
-size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const size_t min_data_length, const std::chrono::high_resolution_clock::time_point& deadline) const
+size_t RingBuffer::waitForDataAvailable(const std::string &call_id, size_t min_data_length, const time_point& deadline) const
 {
     std::unique_lock<std::mutex> l(lock_);
 
@@ -266,7 +261,7 @@ size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const size_t
         return getl >= min_data_length;
     };
 
-    if (deadline == std::chrono::high_resolution_clock::time_point()) {
+    if (deadline == time_point::max()) {
         // no timeout provided, wait as long as necessary
         not_empty_.wait(l, check);
     } else {

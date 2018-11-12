@@ -21,8 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __RING_BUFFER__
-#define __RING_BUFFER__
+#pragma once
 
 #include "audiobuffer.h"
 #include "noncopyable.h"
@@ -34,7 +33,6 @@
 #include <vector>
 #include <fstream>
 
-typedef std::map<std::string, size_t> ReadOffset;
 
 namespace ring {
 
@@ -43,6 +41,9 @@ namespace ring {
  */
 class RingBuffer {
     public:
+        using clock = std::chrono::high_resolution_clock;
+        using time_point = clock::time_point;
+
         /**
          * Constructor
          * @param size  Size of the buffer to create
@@ -76,8 +77,6 @@ class RingBuffer {
         void removeReadOffset(const std::string &call_id);
 
         size_t readOffsetCount() const { return readoffsets_.size(); }
-
-        bool hasNoReadOffsets() const;
 
         /**
          * Write data in the ring buffer
@@ -123,7 +122,6 @@ class RingBuffer {
             return putLength() == 0;
         }
 
-
         /**
          * Blocks until min_data_length samples of data is available, or until deadline has passed.
          *
@@ -132,7 +130,7 @@ class RingBuffer {
          * @param deadline The call is guaranteed to end after this time point. If no deadline is provided, the call blocks indefinitely.
          * @return available data for call_id after the call returned (same as calling getLength(call_id) ).
          */
-        size_t waitForDataAvailable(const std::string &call_id, const size_t min_data_length, const std::chrono::high_resolution_clock::time_point& deadline = {}) const;
+        size_t waitForDataAvailable(const std::string& call_id, size_t min_data_length, const time_point& deadline = time_point::max()) const;
 
         /**
          * Debug function print mEnd, mStart, mBufferSize
@@ -142,7 +140,10 @@ class RingBuffer {
         const std::string id;
 
     private:
+        using ReadOffset = std::map<std::string, size_t>;
         NON_COPYABLE(RingBuffer);
+
+        bool hasNoReadOffsets() const;
 
         /**
          * Return the smalest readoffset. Useful to evaluate if ringbuffer is full
@@ -182,5 +183,3 @@ class RingBuffer {
 };
 
 } // namespace ring
-
-#endif /*  __RING_BUFFER__ */
