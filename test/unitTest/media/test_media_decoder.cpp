@@ -43,9 +43,13 @@ public:
 
 private:
     void testAudioFile();
+    void testSeek();
+    void testLoop();
 
     CPPUNIT_TEST_SUITE(MediaDecoderTest);
     CPPUNIT_TEST(testAudioFile);
+    CPPUNIT_TEST(testSeek);
+    CPPUNIT_TEST(testLoop);
     CPPUNIT_TEST_SUITE_END();
 
     void writeWav(); // writes a minimal wav file to test decoding
@@ -107,6 +111,75 @@ MediaDecoderTest::testAudioFile()
         }
     }
     CPPUNIT_ASSERT(done);
+}
+
+void
+MediaDecoderTest::testSeek()
+{
+    if (!avcodec_find_decoder(AV_CODEC_ID_PCM_S16LE)
+        || !avcodec_find_decoder(AV_CODEC_ID_PCM_S16BE))
+        return; // no way to test the wav file, since it is in pcm signed 16
+
+    writeWav();
+
+    DeviceParams dev;
+    dev.input = filename_;
+    CPPUNIT_ASSERT(decoder_->openInput(dev) >= 0);
+    CPPUNIT_ASSERT(decoder_->setupFromAudioData() >= 0);
+
+    int64_t pts;
+    AudioFrame frame;
+    MediaDecoder::Status ret = MediaDecoder::Status::Success;
+    while (ret == MediaDecoder::Status::Success)
+        ret = decoder_->decode(frame);
+    CPPUNIT_ASSERT_MESSAGE("Decode error", ret == MediaDecoder::Status::FrameFinished);
+    pts = frame.pointer()->pts;
+    CPPUNIT_ASSERT(decoder_->seekToStart() >= 0);
+    ret = MediaDecoder::Status::Success;
+    while (ret == MediaDecoder::Status::Success)
+        ret = decoder_->decode(frame);
+    CPPUNIT_ASSERT_MESSAGE("Decode error", ret == MediaDecoder::Status::FrameFinished);
+
+    // check that we decoded the same frame as before (first frame)
+    CPPUNIT_ASSERT(pts == frame.pointer()->pts);
+}
+
+void
+MediaDecoderTest::testLoop()
+{
+    if (!avcodec_find_decoder(AV_CODEC_ID_PCM_S16LE)
+        || !avcodec_find_decoder(AV_CODEC_ID_PCM_S16BE))
+        return; // no way to test the wav file, since it is in pcm signed 16
+
+    writeWav();
+
+    DeviceParams dev;
+    dev.input = filename_;
+    CPPUNIT_ASSERT(decoder_->openInput(dev) >= 0);
+    CPPUNIT_ASSERT(decoder_->setupFromAudioData() >= 0);
+
+    int passes = 0;
+    while (passes < 2) {
+        AudioFrame frame;
+        switch (decoder_->decode(frame)) {
+        case MediaDecoder::Status::FrameFinished:
+            CPPUNIT_ASSERT(frame.pointer()->sample_rate == decoder_->getStream().sampleRate);
+            CPPUNIT_ASSERT(frame.pointer()->channels == decoder_->getStream().nbChannels);
+            break;
+        case MediaDecoder::Status::DecodeError:
+        case MediaDecoder::Status::ReadError:
+            CPPUNIT_ASSERT_MESSAGE("Decode error", false);
+            break;
+        case MediaDecoder::Status::EOFError:
+            ++passes;
+            decoder_->seekToStart();
+            break;
+        case MediaDecoder::Status::Success:
+        default:
+            break;
+        }
+    }
+    CPPUNIT_ASSERT(passes == 2);
 }
 
 // write bytes to file using native endianness
