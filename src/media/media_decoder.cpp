@@ -76,7 +76,7 @@ int MediaDecoder::openInput(const DeviceParams& params)
     inputParams_ = params;
     AVInputFormat *iformat = av_find_input_format(params.format.c_str());
 
-    if (!iformat)
+    if (!iformat && !params.format.empty())
         RING_WARN("Cannot find format \"%s\"", params.format.c_str());
 
     if (params.width and params.height) {
