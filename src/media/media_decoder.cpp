@@ -345,10 +345,6 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     if (ret >= 0)
         frameFinished = 1;
 
-    if (frame!=NULL && frame->width>0){
-            RING_WARN("corresponding packet size = %d",frame->pkt_size);
-    }
-
     if (frameFinished) {
         av_packet_unref(&inpacket);
 

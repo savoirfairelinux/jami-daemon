@@ -248,18 +248,16 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 #endif
     if (systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         extractProfileLevelID(parameters, encoderCtx);
-        if (0){
-            RING_WARN("went in the loop");
-            forcePresetX264(encoderCtx);
-            // For H264 :
-            // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
-            if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
-                crf = 30; // good value for H264-720p@30
-            RING_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
-            av_opt_set_int(encoderCtx->priv_data, "crf", crf, 0);
-            encoderCtx->rc_buffer_size = bufSize;
-            encoderCtx->rc_max_rate = maxBitrate;
-        }
+        RING_WARN("went in the loop");
+        forcePresetX264(encoderCtx);
+        // For H264 :
+        // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
+        if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
+            crf = 30; // good value for H264-720p@30
+        RING_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
+        av_opt_set_int(encoderCtx->priv_data, "crf", crf, 0);
+        encoderCtx->rc_buffer_size = bufSize;
+        encoderCtx->rc_max_rate = maxBitrate;
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         // For VP8 :
         // 1- if quality is set use it
@@ -326,6 +324,9 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)
             format = AV_PIX_FMT_NV12;
         scaledFrameBufferSize_ = videoFrameSize(format, width, height);
+        RING_WARN("scaledFrameBufferSize_ = %ui",scaledFrameBufferSize_);
+        if (scaledFrameBufferSize_ == 0)
+            throw MediaEncoderException("can't calculate the size of buffer");
         if (scaledFrameBufferSize_ <= AV_INPUT_BUFFER_MIN_SIZE)
             throw MediaEncoderException("buffer too small");
         scaledFrameBuffer_.reserve(scaledFrameBufferSize_);

@@ -3079,7 +3079,7 @@ Manager::getEncodingAccelerated() const
 }
 
 void
-Manager::setEncodingAccelerated(bool isAccelerated)
+Manager::setEncodingAccelerated(const bool isAccelerated)
 {
 #ifdef RING_ACCEL
     videoPreferences.setEncodingAccelerated(isAccelerated);
