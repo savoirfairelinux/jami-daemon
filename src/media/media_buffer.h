@@ -37,6 +37,11 @@ namespace ring {
 using MediaFrame = DRing::MediaFrame;
 using AudioFrame = DRing::AudioFrame;
 
+class MediaEncoderException : public std::runtime_error {
+    public:
+        MediaEncoderException(const char *msg) : std::runtime_error(msg) {}
+};
+
 #ifdef RING_VIDEO
 
 using VideoFrame = DRing::VideoFrame;

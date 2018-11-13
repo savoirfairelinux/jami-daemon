@@ -57,11 +57,6 @@ struct MediaDescription;
 struct AccountCodecInfo;
 class MediaRecorder;
 
-class MediaEncoderException : public std::runtime_error {
-    public:
-        MediaEncoderException(const char *msg) : std::runtime_error(msg) {}
-};
-
 class MediaEncoder {
 public:
     MediaEncoder();
