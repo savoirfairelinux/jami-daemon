@@ -251,36 +251,36 @@ int MediaDecoder::setupFromVideoData()
     return setupStream(AVMEDIA_TYPE_VIDEO);
 }
 
-MediaDecoder::Status
+DecoderStatus
 MediaDecoder::decode(VideoFrame& result)
 {
     AVPacket inpacket;
     av_init_packet(&inpacket);
     int ret = av_read_frame(inputCtx_, &inpacket);
     if (ret == AVERROR(EAGAIN)) {
-        return Status::Success;
+        return DecoderStatus::Success;
     } else if (ret == AVERROR_EOF) {
-        return Status::EOFError;
+        return DecoderStatus::EOFError;
     } else if (ret < 0) {
         RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
-        return Status::ReadError;
+        return DecoderStatus::ReadError;
     }
 
     // is this a packet from the video stream?
     if (inpacket.stream_index != streamIndex_) {
         av_packet_unref(&inpacket);
-        return Status::Success;
+        return DecoderStatus::Success;
     }
 
     auto frame = result.pointer();
     int frameFinished = 0;
     ret = avcodec_send_packet(decoderCtx_, &inpacket);
     if (ret < 0 && ret != AVERROR(EAGAIN)) {
-        return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
+        return ret == AVERROR_EOF ? DecoderStatus::Success : DecoderStatus::DecodeError;
     }
     ret = avcodec_receive_frame(decoderCtx_, frame);
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
-        return Status::DecodeError;
+        return DecoderStatus::DecodeError;
     }
     if (ret >= 0)
         frameFinished = 1;
@@ -298,7 +298,7 @@ MediaDecoder::decode(VideoFrame& result)
                     RING_ERR("Hardware decoding failure");
                     accelFailures_ = 0; // reset error count for next time
                     fallback_ = true;
-                    return Status::RestartRequired;
+                    return DecoderStatus::RestartRequired;
                 }
             }
         }
@@ -317,14 +317,14 @@ MediaDecoder::decode(VideoFrame& result)
                 std::this_thread::sleep_for(std::chrono::microseconds(target - now));
             }
         }
-        return Status::FrameFinished;
+        return DecoderStatus::FrameFinished;
     }
 
-    return Status::Success;
+    return DecoderStatus::Success;
 }
 #endif // RING_VIDEO
 
-MediaDecoder::Status
+DecoderStatus
 MediaDecoder::decode(const AudioFrame& decodedFrame)
 {
     const auto frame = decodedFrame.pointer();
@@ -334,28 +334,28 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
 
    int ret = av_read_frame(inputCtx_, &inpacket);
     if (ret == AVERROR(EAGAIN)) {
-        return Status::Success;
+        return DecoderStatus::Success;
     } else if (ret == AVERROR_EOF) {
-        return Status::EOFError;
+        return DecoderStatus::EOFError;
     } else if (ret < 0) {
         RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
-        return Status::ReadError;
+        return DecoderStatus::ReadError;
     }
 
     // is this a packet from the audio stream?
     if (inpacket.stream_index != streamIndex_) {
         av_packet_unref(&inpacket);
-        return Status::Success;
+        return DecoderStatus::Success;
     }
 
     int frameFinished = 0;
         ret = avcodec_send_packet(decoderCtx_, &inpacket);
         if (ret < 0 && ret != AVERROR(EAGAIN))
-            return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
+            return ret == AVERROR_EOF ? DecoderStatus::Success : DecoderStatus::DecodeError;
 
     ret = avcodec_receive_frame(decoderCtx_, frame);
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return Status::DecodeError;
+        return DecoderStatus::DecodeError;
     if (ret >= 0)
         frameFinished = 1;
 
@@ -380,10 +380,10 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
                 std::this_thread::sleep_for(std::chrono::microseconds(target - now));
             }
         }
-        return Status::FrameFinished;
+        return DecoderStatus::FrameFinished;
     }
 
-    return Status::Success;
+    return DecoderStatus::Success;
 }
 
 #ifdef RING_VIDEO
@@ -402,7 +402,7 @@ MediaDecoder::enableAccel(bool enableAccel)
 }
 #endif
 
-MediaDecoder::Status
+DecoderStatus
 MediaDecoder::flush(VideoFrame& result)
 {
     AVPacket inpacket;
@@ -412,11 +412,11 @@ MediaDecoder::flush(VideoFrame& result)
     int ret = 0;
     ret = avcodec_send_packet(decoderCtx_, &inpacket);
     if (ret < 0 && ret != AVERROR(EAGAIN))
-        return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
+        return ret == AVERROR_EOF ? DecoderStatus::Success : DecoderStatus::DecodeError;
 
     ret = avcodec_receive_frame(decoderCtx_, result.pointer());
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return Status::DecodeError;
+        return DecoderStatus::DecodeError;
     if (ret >= 0)
         frameFinished = 1;
 
@@ -428,10 +428,10 @@ MediaDecoder::flush(VideoFrame& result)
         if (!accel_.name.empty() && accelFailures_ < MAX_ACCEL_FAILURES)
             video::transferFrameData(accel_, decoderCtx_, result);
 #endif
-        return Status::FrameFinished;
+        return DecoderStatus::FrameFinished;
     }
 
-    return Status::Success;
+    return DecoderStatus::Success;
 }
 #endif // RING_VIDEO
 

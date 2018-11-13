@@ -64,17 +64,17 @@ class RingBuffer;
 class Resampler;
 class MediaIOHandle;
 
+enum class DecoderStatus {
+    Success,
+    FrameFinished,
+    EOFError,
+    ReadError,
+    DecodeError,
+    RestartRequired
+};
+
 class MediaDecoder {
     public:
-        enum class Status {
-            Success,
-            FrameFinished,
-            EOFError,
-            ReadError,
-            DecodeError,
-            RestartRequired
-        };
-
         MediaDecoder();
         ~MediaDecoder();
 
@@ -87,12 +87,12 @@ class MediaDecoder {
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
         int setupFromVideoData();
-        Status decode(VideoFrame&);
-        Status flush(VideoFrame&);
+        DecoderStatus decode(VideoFrame&);
+        DecoderStatus flush(VideoFrame&);
  #endif // RING_VIDEO
 
         int setupFromAudioData();
-        Status decode(const AudioFrame&);
+        DecoderStatus decode(const AudioFrame&);
         void writeToRingBuffer(const AudioFrame&, RingBuffer&, const AudioFormat);
 
         int getWidth() const;

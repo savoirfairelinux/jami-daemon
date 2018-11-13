@@ -211,14 +211,14 @@ bool VideoInput::captureFrame()
     auto& frame = getNewFrame();
     const auto ret = decoder_->decode(frame);
     switch (ret) {
-        case MediaDecoder::Status::ReadError:
+        case DecoderStatus::ReadError:
             return false;
 
         // try to keep decoding
-        case MediaDecoder::Status::DecodeError:
+        case DecoderStatus::DecodeError:
             return true;
 
-        case MediaDecoder::Status::RestartRequired:
+        case DecoderStatus::RestartRequired:
             createDecoder();
 #ifdef RING_ACCEL
             RING_WARN("Disabling hardware decoding due to previous failure");
@@ -227,10 +227,10 @@ bool VideoInput::captureFrame()
             return static_cast<bool>(decoder_);
 
         // End of streamed file
-        case MediaDecoder::Status::EOFError:
+        case DecoderStatus::EOFError:
             return (decoder_->seekToStart() >= 0);
 
-        case MediaDecoder::Status::FrameFinished:
+        case DecoderStatus::FrameFinished:
             {
                 auto rec = recorder_.lock();
                 if (rec && rec->isRecording())
@@ -239,7 +239,7 @@ bool VideoInput::captureFrame()
             publishFrame();
             return true;
         // continue decoding
-        case MediaDecoder::Status::Success:
+        case DecoderStatus::Success:
         default:
             return true;
     }
