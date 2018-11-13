@@ -339,7 +339,7 @@ AudioReceiveThread::process()
 
     switch (audioDecoder_->decode(decodedFrame)) {
 
-        case MediaDecoder::Status::FrameFinished:
+        case DecoderStatus::FrameFinished:
             {
                 auto rec = recorder_.lock();
                 if (rec && rec->isRecording())
@@ -349,7 +349,7 @@ AudioReceiveThread::process()
                                              mainBuffFormat);
             return;
 
-        case MediaDecoder::Status::DecodeError:
+        case DecoderStatus::DecodeError:
             RING_WARN("decoding failure, trying to reset decoder...");
             if (not setup()) {
                 RING_ERR("fatal error, rx thread re-setup failed");
@@ -360,13 +360,13 @@ AudioReceiveThread::process()
             }
             break;
 
-        case MediaDecoder::Status::ReadError:
+        case DecoderStatus::ReadError:
             RING_ERR("fatal error, read failed");
             loop_.stop();
             break;
 
-        case MediaDecoder::Status::Success:
-        case MediaDecoder::Status::EOFError:
+        case DecoderStatus::Success:
+        case DecoderStatus::EOFError:
         default:
             break;
     }

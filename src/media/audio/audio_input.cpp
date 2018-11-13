@@ -139,18 +139,18 @@ AudioInput::nextFromFile(AudioFrame& frame)
     std::lock_guard<std::mutex> lk(fmtMutex_);
     const auto ret = decoder_->decode(frame);
     switch(ret) {
-    case MediaDecoder::Status::ReadError:
-    case MediaDecoder::Status::DecodeError:
+    case DecoderStatus::ReadError:
+    case DecoderStatus::DecodeError:
         RING_ERR() << "Failed to decode frame";
         return false;
-    case MediaDecoder::Status::RestartRequired:
-    case MediaDecoder::Status::EOFError:
+    case DecoderStatus::RestartRequired:
+    case DecoderStatus::EOFError:
         decoder_->seekToStart();
         return false;
-    case MediaDecoder::Status::FrameFinished:
+    case DecoderStatus::FrameFinished:
         decoder_->writeToRingBuffer(frame, *fileBuffer_, format_);
         return true;
-    case MediaDecoder::Status::Success:
+    case DecoderStatus::Success:
     default:
         return false;
     }

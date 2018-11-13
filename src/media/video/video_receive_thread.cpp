@@ -186,7 +186,7 @@ bool VideoReceiveThread::decodeFrame()
     const auto ret = videoDecoder_->decode(frame);
 
     switch (ret) {
-        case MediaDecoder::Status::FrameFinished:
+        case DecoderStatus::FrameFinished:
             {
                 auto rec = recorder_.lock();
                 if (rec && rec->isRecording())
@@ -195,26 +195,26 @@ bool VideoReceiveThread::decodeFrame()
             publishFrame();
             return true;
 
-        case MediaDecoder::Status::DecodeError:
+        case DecoderStatus::DecodeError:
             RING_WARN("video decoding failure");
             if (requestKeyFrameCallback_)
                 requestKeyFrameCallback_(id_);
             break;
 
-        case MediaDecoder::Status::ReadError:
+        case DecoderStatus::ReadError:
             RING_ERR("fatal error, read failed");
             loop_.stop();
             break;
 
-        case MediaDecoder::Status::RestartRequired:
+        case DecoderStatus::RestartRequired:
             // disable accel, reset decoder's AVCodecContext
 #ifdef RING_ACCEL
             videoDecoder_->enableAccel(false);
 #endif
             videoDecoder_->setupFromVideoData();
             break;
-        case MediaDecoder::Status::Success:
-        case MediaDecoder::Status::EOFError:
+        case DecoderStatus::Success:
+        case DecoderStatus::EOFError:
             break;
     }
 
