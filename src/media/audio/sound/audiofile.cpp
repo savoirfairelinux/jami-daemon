@@ -77,7 +77,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
         AudioFrame output;
         auto resampled = output.pointer();
         switch (decoder->decode(input)) {
-        case MediaDecoder::Status::FrameFinished:
+        case DecoderStatus::FrameFinished:
             resampled->sample_rate = getFormat().sample_rate;
             resampled->channel_layout = av_get_default_channel_layout(getFormat().nb_channels);
             resampled->channels = getFormat().nb_channels;
@@ -87,13 +87,13 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
             if (buf->append(output) < 0)
                 throw AudioFileException("Error while decoding: " + fileName);
             break;
-        case MediaDecoder::Status::DecodeError:
-        case MediaDecoder::Status::ReadError:
+        case DecoderStatus::DecodeError:
+        case DecoderStatus::ReadError:
             throw AudioFileException("File cannot be decoded: " + fileName);
-        case MediaDecoder::Status::EOFError:
+        case DecoderStatus::EOFError:
             done = true;
             break;
-        case MediaDecoder::Status::Success:
+        case DecoderStatus::Success:
         default:
             break;
         }
