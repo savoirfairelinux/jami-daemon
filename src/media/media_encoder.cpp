@@ -248,18 +248,16 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 #endif
     if (systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         extractProfileLevelID(parameters, encoderCtx);
-        if (0){
-            RING_WARN("went in the loop");
-            forcePresetX264(encoderCtx);
-            // For H264 :
-            // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
-            if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
-                crf = 30; // good value for H264-720p@30
-            RING_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
-            av_opt_set_int(encoderCtx->priv_data, "crf", crf, 0);
-            encoderCtx->rc_buffer_size = bufSize;
-            encoderCtx->rc_max_rate = maxBitrate;
-        }
+        RING_WARN("went in the loop");
+        forcePresetX264(encoderCtx);
+        // For H264 :
+        // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
+        if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
+            crf = 30; // good value for H264-720p@30
+        RING_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
+        av_opt_set_int(encoderCtx->priv_data, "crf", crf, 0);
+        encoderCtx->rc_buffer_size = bufSize;
+        encoderCtx->rc_max_rate = maxBitrate;
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         // For VP8 :
         // 1- if quality is set use it
@@ -326,6 +324,9 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)
             format = AV_PIX_FMT_NV12;
         scaledFrameBufferSize_ = videoFrameSize(format, width, height);
+        RING_WARN("scaledFrameBufferSize_ = %ui",scaledFrameBufferSize_);
+        if (scaledFrameBufferSize_ == 0)
+            throw MediaEncoderException("can't calculate the size of buffer");
         if (scaledFrameBufferSize_ <= AV_INPUT_BUFFER_MIN_SIZE)
             throw MediaEncoderException("buffer too small");
         scaledFrameBuffer_.reserve(scaledFrameBufferSize_);
@@ -393,7 +394,6 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
      * keeping also the input aspect ratio.
      */
     int ret = 0;
-    //RING_WARN("before scaledframe = %u, width = %d, height = %d",scaledFrame_.data,frame.width,frame.height);//start from here
     libav_utils::fillWithBlack(scaledFrame_.pointer());
 
     scaler_.scale_with_aspect(input, scaledFrame_);
@@ -404,11 +404,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     if (enc->framerate.num == enc->time_base.den && enc->framerate.den == enc->time_base.num)
         frame->pts = frame_number;
     else
-        {
-            RING_WARN("framerate: %d/%d",enc->framerate.num,enc->framerate.den);
-            RING_WARN("time_base: %d/%d",enc->time_base.num,enc->time_base.den);
-            frame->pts = (frame_number / (rational<int64_t>(enc->framerate) * rational<int64_t>(enc->time_base))).real<int64_t>();
-        }
+        frame->pts = (frame_number / (rational<int64_t>(enc->framerate) * rational<int64_t>(enc->time_base))).real<int64_t>();
 
     if (is_keyframe) {
         frame->pict_type = AV_PICTURE_TYPE_I;
@@ -473,9 +469,6 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
 
     while (ret >= 0) {
         ret = avcodec_receive_packet(encoderCtx, &pkt);
-        if (frame!=NULL && frame->width>0){
-            RING_WARN("encoding avpacket size = %d",pkt.size);
-        }
         
         if (ret == AVERROR(EAGAIN))
             break;

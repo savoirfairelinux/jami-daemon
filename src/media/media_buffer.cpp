@@ -39,9 +39,12 @@ std::size_t
 videoFrameSize(int format, int width, int height)
 {
     int ret = av_image_get_buffer_size((AVPixelFormat)format, width, height, 1);
-    if (ret < 0)
+    if (ret < 0){
         RING_ERR() << "av_image_get_buffer_size failed: " << libav_utils::getError(ret);
-    return ret;
+        return 0;
+    }
+    else
+        return ret;
 }
 
 #endif // RING_VIDEO
