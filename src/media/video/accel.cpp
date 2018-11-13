@@ -187,10 +187,10 @@ setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
 {
     //,"omx","qsv","vaapi","videotoolbox"
     std::map<enum AVCodecID,std::vector<std::string>>map_hw_encoders;
-    map_hw_encoders[AV_CODEC_ID_H264] = {"h264_nvenc", "h264_qsv", "h264_vaapi", "h264_videotoolbox"};
-    map_hw_encoders[AV_CODEC_ID_HEVC] = {"hevc_nvenc","hevc_qsv","hevc_nvenc","hevc_vaapi","hevc_videotoolbox"};
-    map_hw_encoders[AV_CODEC_ID_MJPEG] = {"mjpeg_qsv","mjpeg_vaapi"};
-    map_hw_encoders[AV_CODEC_ID_MPEG2VIDEO] = {"mpeg2_qsv","mpeg2_vaapi"};
+    map_hw_encoders[AV_CODEC_ID_H264] = { "h264_vaapi", "h264_videotoolbox"};
+    map_hw_encoders[AV_CODEC_ID_HEVC] = {"hevc_vaapi","hevc_videotoolbox"};
+    map_hw_encoders[AV_CODEC_ID_MJPEG] = {"mjpeg_vaapi"};
+    map_hw_encoders[AV_CODEC_ID_MPEG2VIDEO] = {"mpeg2_vaapi"};
     map_hw_encoders[AV_CODEC_ID_VP8] = {"vp8_vaapi"};
     map_hw_encoders[AV_CODEC_ID_VP9] = {"vp9_vaapi"};
 
@@ -201,8 +201,7 @@ setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
         for (unsigned int i=0 ; i < it->second.size() ; i++){
             RING_WARN("codec in list = %s", it->second[i].c_str());
             if ((*codec = avcodec_find_encoder_by_name((it->second[i]).c_str()))){
-                //codecCtx->codec=*codec;
-                //codecCtx = prepareEncoderContext(*codec, 1);
+                //reprepare codeccontext for new codec
                 AVCodecContext* encoderCtx = avcodec_alloc_context3(*codec);
                 auto encoderName = encoderCtx->av_class->item_name ?
                     encoderCtx->av_class->item_name(encoderCtx) : nullptr;
@@ -218,7 +217,7 @@ setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
                 encoderCtx->max_b_frames = 0;
                 encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P;
                 *codecCtx = encoderCtx;
-                ///////////////////
+                /////////////////////////////////////////////////////
                 HardwareAccel accel;
                 accel.name = it->second[i].substr(it->second[i].find("_") + 1);
                 //suppose pixel format is always set to be vaapi

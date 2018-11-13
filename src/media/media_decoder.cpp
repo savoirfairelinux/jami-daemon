@@ -270,7 +270,6 @@ MediaDecoder::decode(VideoFrame& result)
     if (ret >= 0)
         frameFinished = 1;
 
-    RING_WARN("decoding packet size = %d",frame->pkt_size);
     av_packet_unref(&inpacket);
 
     if (frameFinished) {
@@ -344,10 +343,6 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
         return Status::DecodeError;
     if (ret >= 0)
         frameFinished = 1;
-
-    if (frame!=NULL && frame->width>0){
-            RING_WARN("corresponding packet size = %d",frame->pkt_size);
-    }
 
     if (frameFinished) {
         av_packet_unref(&inpacket);
