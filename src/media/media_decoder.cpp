@@ -313,11 +313,9 @@ MediaDecoder::Status
 MediaDecoder::decode(AudioFrame& decodedFrame)
 {
     const auto frame = decodedFrame.pointer();
-
     AVPacket inpacket;
     av_init_packet(&inpacket);
-
-   int ret = av_read_frame(inputCtx_, &inpacket);
+    int ret = av_read_frame(inputCtx_, &inpacket);
     if (ret == AVERROR(EAGAIN)) {
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
@@ -326,7 +324,6 @@ MediaDecoder::decode(AudioFrame& decodedFrame)
         RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
         return Status::ReadError;
     }
-
     // is this a packet from the audio stream?
     if (inpacket.stream_index != streamIndex_) {
         av_packet_unref(&inpacket);
@@ -337,13 +334,11 @@ MediaDecoder::decode(AudioFrame& decodedFrame)
         ret = avcodec_send_packet(decoderCtx_, &inpacket);
         if (ret < 0 && ret != AVERROR(EAGAIN))
             return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
-
     ret = avcodec_receive_frame(decoderCtx_, frame);
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
         return Status::DecodeError;
     if (ret >= 0)
         frameFinished = 1;
-
     if (frameFinished) {
         av_packet_unref(&inpacket);
 
@@ -367,7 +362,6 @@ MediaDecoder::decode(AudioFrame& decodedFrame)
         }
         return Status::FrameFinished;
     }
-
     return Status::Success;
 }
 
