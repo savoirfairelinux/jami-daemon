@@ -275,7 +275,7 @@ MediaDecoder::decode(VideoFrame& result)
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
 #ifdef RING_ACCEL
-        if (!accel_.name.empty()) {
+        if (!accel_.name.empty() && accel_.name != "omx") {
             ret = video::transferFrameData(accel_, decoderCtx_, result);
             if (ret < 0) {
                 ++accelFailures_;
@@ -313,11 +313,11 @@ MediaDecoder::Status
 MediaDecoder::decode(const AudioFrame& decodedFrame)
 {
     const auto frame = decodedFrame.pointer();
-
     AVPacket inpacket;
     av_init_packet(&inpacket);
 
-   int ret = av_read_frame(inputCtx_, &inpacket);
+    int ret = av_read_frame(inputCtx_, &inpacket);
+
     if (ret == AVERROR(EAGAIN)) {
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
@@ -410,7 +410,7 @@ MediaDecoder::flush(VideoFrame& result)
 #ifdef RING_ACCEL
         // flush is called when closing the stream
         // so don't restart the media decoder
-        if (!accel_.name.empty() && accelFailures_ < MAX_ACCEL_FAILURES)
+        if (!accel_.name.empty() && accelFailures_ < MAX_ACCEL_FAILURES && accel_.name != "omx")
             video::transferFrameData(accel_, decoderCtx_, result);
 #endif
         return Status::FrameFinished;
@@ -509,7 +509,7 @@ MediaDecoder::getStream(std::string name) const
 {
     auto ms = MediaStream(name, decoderCtx_, lastTimestamp_);
 #ifdef RING_ACCEL
-    if (decoderCtx_->codec_type == AVMEDIA_TYPE_VIDEO && enableAccel_ && !accel_.name.empty())
+    if (decoderCtx_->codec_type == AVMEDIA_TYPE_VIDEO && enableAccel_ && !accel_.name.empty() && accel_.name != "omx")
         ms.format = AV_PIX_FMT_NV12; // TODO option me!
 #endif
     return ms;
