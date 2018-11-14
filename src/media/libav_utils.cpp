@@ -218,7 +218,7 @@ fillWithBlack(AVFrame* frame)
     int ret = av_image_fill_black(frame->data, linesizes, format,
         frame->color_range, frame->width, frame->height);
     if (ret < 0) {
-        RING_ERR() << "Failed to blacken frame";
+        RING_ERR() << "Failed to blacken frame: " << libav_utils::getError(ret);
     }
 }
 
