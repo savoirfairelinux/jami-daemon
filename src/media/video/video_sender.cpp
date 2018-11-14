@@ -73,7 +73,9 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
     if (is_keyframe)
         --forceKeyFrame_;
 
-    if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
+    MediaEncoder::Status statusEncode = videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++);
+    if ( statusEncode != MediaEncoder::Status::Success &&
+        statusEncode != MediaEncoder::Status::FrameFinished)
         RING_ERR("encoding failed");
 }
 
