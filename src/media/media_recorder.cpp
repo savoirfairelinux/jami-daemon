@@ -443,11 +443,26 @@ MediaRecorder::filterAndEncode(MediaFilter* filter, int streamIdx)
 {
     if (filter && streamIdx >= 0) {
         while (auto frame = filter->readOutput()) {
-            try {
-                std::lock_guard<std::mutex> lk(mutex_);
-                encoder_->encode(frame, streamIdx);
-            } catch (const MediaEncoderException& e) {
-                RING_ERR() << "Failed to record frame: " << e.what();
+            std::lock_guard<std::mutex> lk(mutex_);
+            switch (encoder_->encode(frame, streamIdx)) {
+                case MediaEncoder::Status::ReadError:
+                    RING_ERR("fatal error, read failed");
+                    break;
+                case MediaEncoder::Status::EncodeError:
+                    RING_ERR("fatal error, encode failed");
+                    break;
+                case MediaEncoder::Status::RestartRequired: {
+                    // disable accel, reset encoder's AVCodecContext
+#ifdef RING_ACCEL
+                    encoder_->enableAccel(false);
+#endif
+                    auto videoCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(
+                        getSystemCodecContainer()->searchCodecByName("H264", ring::MEDIA_VIDEO));
+                    encoder_->addStream(*videoCodec.get(),NULL);
+                    break;
+                }
+                default:
+                    break;
             }
             av_frame_free(&frame);
         }

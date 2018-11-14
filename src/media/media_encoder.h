@@ -28,6 +28,10 @@
 #include "video/video_scaler.h"
 #endif
 
+#ifdef RING_ACCEL
+#include "video/accel.h"
+#endif
+
 #include "noncopyable.h"
 #include "media_buffer.h"
 #include "media_codec.h"
@@ -60,6 +64,15 @@ class MediaEncoderException : public std::runtime_error {
 
 class MediaEncoder {
 public:
+    enum class Status {
+        Success,
+        FrameFinished,
+        EndOfFile,
+        ReadError,
+        EncodeError,
+        RestartRequired
+    };
+
     MediaEncoder();
     ~MediaEncoder();
 
@@ -73,15 +86,16 @@ public:
     void setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx);
 
 #ifdef RING_VIDEO
-    int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
+    int setupFromVideoData();
+    Status encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
 #endif // RING_VIDEO
 
     int encodeAudio(AudioFrame& frame);
 
     // frame should be ready to be sent to the encoder at this point
-    int encode(AVFrame* frame, int streamIdx);
+    Status encode(AVFrame* frame, int streamIdx);
 
-    int flush();
+    Status flush();
     std::string print_sdp();
 
     /* getWidth and getHeight return size of the encoded frame.
@@ -97,6 +111,9 @@ public:
 
     bool useCodec(const AccountCodecInfo* codec) const noexcept;
 
+#ifdef RING_ACCEL
+    void enableAccel(bool enableAccel);
+#endif
     unsigned getStreamCount() const;
     MediaStream getStream(const std::string& name, int streamIdx = -1) const;
 
@@ -113,10 +130,18 @@ private:
     int currentStreamIdx_ = -1;
     unsigned sent_samples = 0;
 
+    bool fallback_ = false;
+
 #ifdef RING_VIDEO
     video::VideoScaler scaler_;
     VideoFrame scaledFrame_;
 #endif // RING_VIDEO
+
+#ifdef RING_ACCEL
+    bool enableAccel_ = true;
+    video::HardwareAccel accel_;
+    unsigned short accelFailures_ = 0;
+#endif
 
     std::vector<uint8_t> scaledFrameBuffer_;
     int scaledFrameBufferSize_ = 0;

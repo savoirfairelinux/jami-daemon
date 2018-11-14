@@ -3088,6 +3088,25 @@ Manager::setDecodingAccelerated(bool isAccelerated)
     saveConfig();
 #endif
 }
+
+bool
+Manager::getEncodingAccelerated() const
+{
+#ifdef RING_ACCEL
+    return videoPreferences.getEncodingAccelerated();
+#else
+    return false;
+#endif
+}
+
+void
+Manager::setEncodingAccelerated(const bool isAccelerated)
+{
+#ifdef RING_ACCEL
+    videoPreferences.setEncodingAccelerated(isAccelerated);
+    saveConfig();
+#endif
+}
 #endif // RING_VIDEO
 
 RingBufferPool&
