@@ -28,6 +28,10 @@
 #include "video/video_scaler.h"
 #endif
 
+#ifdef RING_ACCEL
+#include "video/accel.h"
+#endif
+
 #include "noncopyable.h"
 #include "media_buffer.h"
 #include "media_codec.h"
@@ -97,6 +101,9 @@ public:
 
     bool useCodec(const AccountCodecInfo* codec) const noexcept;
 
+#ifdef RING_ACCEL
+    void enableAccel(bool enableAccel);
+#endif
     unsigned getStreamCount() const;
     MediaStream getStream(const std::string& name, int streamIdx = -1) const;
 
@@ -117,6 +124,12 @@ private:
     video::VideoScaler scaler_;
     VideoFrame scaledFrame_;
 #endif // RING_VIDEO
+
+#ifdef RING_ACCEL
+    bool enableAccel_ = true;
+    video::HardwareAccel accel_;
+    unsigned short accelFailures_ = 0;
+#endif
 
     std::vector<uint8_t> scaledFrameBuffer_;
     int scaledFrameBufferSize_ = 0;
