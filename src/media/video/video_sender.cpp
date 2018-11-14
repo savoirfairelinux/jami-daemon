@@ -27,6 +27,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "smartools.h"
+#include "system_codec_container.h"
 
 #include <map>
 #include <unistd.h>
@@ -73,8 +74,26 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
     if (is_keyframe)
         --forceKeyFrame_;
 
-    if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
-        RING_ERR("encoding failed");
+    switch (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++)) {
+        case MediaEncoder::Status::ReadError:
+            RING_ERR("fatal error, read failed");
+            break;
+        case MediaEncoder::Status::EncodeError:
+            RING_ERR("fatal error, encode failed");
+            break;
+        case MediaEncoder::Status::RestartRequired: {
+            // disable accel, reset encoder's AVCodecContext
+#ifdef RING_ACCEL
+            videoEncoder_->enableAccel(false);
+#endif
+            auto videoCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(
+                getSystemCodecContainer()->searchCodecByName("H264", ring::MEDIA_VIDEO));
+            videoEncoder_->addStream(*videoCodec.get(),NULL);
+            break;
+        }
+        default:
+            break;
+    }
 }
 
 void

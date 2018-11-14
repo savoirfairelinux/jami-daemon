@@ -281,7 +281,7 @@ MediaDecoder::decode(VideoFrame& result)
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
 #ifdef RING_ACCEL
         if (!accel_.name.empty()) {
-            ret = video::transferFrameData(accel_, decoderCtx_, result);
+            ret = video::transferFrameDecode(accel_, decoderCtx_, result);
             if (ret < 0) {
                 ++accelFailures_;
                 if (accelFailures_ >= MAX_ACCEL_FAILURES) {
@@ -417,7 +417,7 @@ MediaDecoder::flush(VideoFrame& result)
         // flush is called when closing the stream
         // so don't restart the media decoder
         if (!accel_.name.empty() && accelFailures_ < MAX_ACCEL_FAILURES)
-            video::transferFrameData(accel_, decoderCtx_, result);
+            video::transferFrameDecode(accel_, decoderCtx_, result);
 #endif
         return Status::FrameFinished;
     }

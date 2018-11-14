@@ -138,6 +138,7 @@ static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
 // video preferences
 constexpr const char * const VideoPreferences::CONFIG_LABEL;
 static const char * const DECODING_ACCELERATED_KEY = "decodingAccelerated";
+static const char * const ENCODING_ACCELERATED_KEY = "encodingAccelerated";
 #endif
 
 static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF length */
@@ -562,6 +563,7 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
 #ifdef RING_VIDEO
 VideoPreferences::VideoPreferences()
     : decodingAccelerated_(true)
+    , encodingAccelerated_(false)
 {
 }
 
@@ -570,6 +572,7 @@ void VideoPreferences::serialize(YAML::Emitter &out)
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
 #ifdef RING_ACCEL
     out << YAML::Key << DECODING_ACCELERATED_KEY << YAML::Value << decodingAccelerated_;
+    out << YAML::Key << ENCODING_ACCELERATED_KEY << YAML::Value << encodingAccelerated_;
 #endif
     getVideoDeviceMonitor().serialize(out);
     out << YAML::EndMap;
@@ -582,7 +585,11 @@ void VideoPreferences::unserialize(const YAML::Node &in)
     // value may or may not be present
     try {
         parseValue(node, DECODING_ACCELERATED_KEY, decodingAccelerated_);
-    } catch (...) { decodingAccelerated_ = true; }
+        parseValue(node, ENCODING_ACCELERATED_KEY, encodingAccelerated_);
+    } catch (...) { 
+        decodingAccelerated_ = true;
+        encodingAccelerated_ = false;
+    }
 #endif
     getVideoDeviceMonitor().unserialize(in);
 }
