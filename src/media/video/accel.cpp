@@ -47,7 +47,7 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
     }
 
     if (accel) {
-        RING_WARN("'%s' acceleration not supported, falling back to software decoding", accel->name.c_str());
+        RING_WARN() << accel->name << " acceleration not supported, falling back to software decoding";
         accel->name = {}; // don't use accel
     } else {
         RING_WARN() << "Not using hardware decoding";
@@ -74,8 +74,7 @@ transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame&
     auto output = container->pointer();
 
     auto pts = input->pts;
-    // most hardware accelerations output NV12, so skip extra conversions
-    output->format = AV_PIX_FMT_NV12;
+    output->format = accel.swFormat;
     int ret = av_hwframe_transfer_data(output, input, 0);
     output->pts = pts;
 
@@ -115,8 +114,38 @@ initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
         codecCtx->hw_device_ctx = hardwareDeviceCtx;
         RING_DBG("Using '%s' hardware acceleration", accel.name.c_str());
     }
-
     return ret;
+}
+
+static int
+initHwFrameCtx(HardwareAccel& accel, AVCodecContext *ctx){
+    AVBufferRef *hw_frames_ref;
+    AVHWFramesContext *frames_ctx = NULL;
+    int err = 0;
+
+    if (!(hw_frames_ref = av_hwframe_ctx_alloc(ctx->hw_device_ctx))) {
+        fprintf(stderr, "Failed to create VAAPI frame context.");
+        return -1;
+    }
+
+    frames_ctx = (AVHWFramesContext *)(hw_frames_ref->data);
+    frames_ctx->format    = accel.format;
+    frames_ctx->sw_format = accel.swFormat;
+    frames_ctx->width     = ctx->width;
+    frames_ctx->height    = ctx->height;
+    frames_ctx->initial_pool_size = 20;//taken from ffmpeg example code
+    if ((err = av_hwframe_ctx_init(hw_frames_ref)) < 0) {
+        fprintf(stderr, "Failed to initialize VAAPI frame context."
+                "Error code: %s",libav_utils::getError(err).c_str());
+        av_buffer_unref(&hw_frames_ref);
+        return err;
+    }
+    ctx->hw_frames_ctx = av_buffer_ref(hw_frames_ref);
+    if (!ctx->hw_frames_ctx)
+        err = AVERROR(ENOMEM);
+
+    av_buffer_unref(&hw_frames_ref);
+    return err;
 }
 
 const HardwareAccel
@@ -131,23 +160,69 @@ setupHardwareDecoding(AVCodecContext* codecCtx)
      * Note: an empty name means the video isn't accelerated
      */
     const HardwareAccel accels[] = {
-        { "vaapi", AV_PIX_FMT_VAAPI, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
-        { "vdpau", AV_PIX_FMT_VDPAU, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
-        { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
+        { "vaapi", true, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
+        { "vdpau", true, AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
+        { "videotoolbox", true, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
     };
 
     for (auto accel : accels) {
         if (std::find(accel.supportedCodecs.begin(), accel.supportedCodecs.end(),
                 static_cast<AVCodecID>(codecCtx->codec_id)) != accel.supportedCodecs.end()) {
-            if (initDevice(accel, codecCtx) >= 0) {
+			RING_WARN() << "Found decoder with codec " << avcodec_get_name(codecCtx->codec_id) << " and API " << accel.name << "attempt to initialize the device.";
+			if (initDevice(accel, codecCtx) >= 0) {
                 codecCtx->get_format = getFormatCb;
                 codecCtx->thread_safe_callbacks = 1;
+                RING_WARN() << "Using decoder with codec " << avcodec_get_name(codecCtx->codec_id) << " and API" << accel.name;
                 return accel;
             }
         }
     }
+    RING_WARN() << "Not using hardware accelerated decoding, falling back to software decoding.";
+    return {};
+}
 
-    RING_WARN("Not using hardware accelerated decoding");
+const HardwareAccel
+setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
+{
+    const HardwareAccel accels[] = {
+        { "omx", false, AV_PIX_FMT_YUV420P, AV_PIX_FMT_YUV420P, { AV_CODEC_ID_H264 } },
+        { "vaapi", true, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8, AV_CODEC_ID_VP9 } },
+        { "videotoolbox", true, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263, AV_CODEC_ID_HEVC } },
+    };
+    for (auto accel : accels) {
+        if (std::find(accel.supportedCodecs.begin(), accel.supportedCodecs.end(),
+                static_cast<AVCodecID>((*codecCtx)->codec_id)) != accel.supportedCodecs.end()) {
+			RING_WARN() << "Found encoder with codec " << avcodec_get_name((*codecCtx)->codec_id) << " and API " << accel.name << ", attempt to initialize the device.";
+            for (unsigned int i = 0; i < accel.supportedCodecs.size(); i++ ){
+                std::string s1(avcodec_get_name(accel.supportedCodecs[i]));
+                if ((*codec = avcodec_find_encoder_by_name((s1 + "_" + accel.name).c_str()))){
+                    //reprepare codeccontext for new codec
+                    AVCodecContext* encoderCtx = avcodec_alloc_context3(*codec);
+                    encoderCtx->width = (*codecCtx)->width;
+                    encoderCtx->height = (*codecCtx)->height;
+                    // satisfy ffmpeg: denominator must be 16bit or less value
+                    // time base = 1/FPS
+                    encoderCtx->time_base = (*codecCtx)->time_base;
+                    encoderCtx->framerate = (*codecCtx)->framerate;
+                    // emit one intra frame every gop_size frames
+                    encoderCtx->max_b_frames = 0;
+                    encoderCtx->pix_fmt = accel.format;
+                    *codecCtx = encoderCtx;
+                    //No need to initialize device if using OpenMAX (Raspberry Pi)
+                    if (accel.requiresInitialization == false)
+                        return accel;
+                    if (initDevice(accel, *codecCtx) >= 0) {
+                        //add init hw_frame_ctx
+                        if (initHwFrameCtx(accel, *codecCtx) >= 0){
+                            (*codecCtx)->thread_safe_callbacks = 1;
+                            return accel;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    RING_WARN() << "Not using hardware accelerated encoding, falling back to software encoding.";
     return {};
 }
 
