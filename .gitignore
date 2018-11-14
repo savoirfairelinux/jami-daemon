@@ -82,6 +82,7 @@ GTAGS
 # IDE stuffs
 nbproject
 *.kdev*
+/.vscode/
 
 # JNI generated files
 *_wrap.cpp
