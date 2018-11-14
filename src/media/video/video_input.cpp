@@ -230,6 +230,7 @@ bool VideoInput::captureFrame()
             return static_cast<bool>(decoder_);
 
         case MediaDecoder::Status::FrameFinished:
+            RING_WARN("publishframe data = %dx%d",frame.width(),frame.height());
             publishFrame();
             return true;
         // continue decoding

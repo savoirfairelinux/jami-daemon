@@ -116,7 +116,6 @@ int MediaDecoder::openInput(const DeviceParams& params)
     // it has been disabled already by the video_receive_thread/video_input
     enableAccel_ &= Manager::instance().getDecodingAccelerated();
 #endif
-
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),
@@ -267,6 +266,8 @@ MediaDecoder::decode(VideoFrame& result)
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
         return Status::DecodeError;
     }
+    if (inputParams_.input == "/dev/video1" )
+        RING_WARN("decode videoframe data = %dx%d",result.width(),result.height());
     if (ret >= 0)
         frameFinished = 1;
 
@@ -317,7 +318,7 @@ MediaDecoder::decode(AudioFrame& decodedFrame)
     AVPacket inpacket;
     av_init_packet(&inpacket);
 
-   int ret = av_read_frame(inputCtx_, &inpacket);
+    int ret = av_read_frame(inputCtx_, &inpacket);
     if (ret == AVERROR(EAGAIN)) {
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
