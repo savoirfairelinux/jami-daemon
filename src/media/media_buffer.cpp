@@ -27,6 +27,7 @@
 #include <cstdlib>
 #include <cstring> // std::memset
 #include <ciso646> // fix windows compiler bug
+#include "logger.h"
 
 namespace ring {
 
