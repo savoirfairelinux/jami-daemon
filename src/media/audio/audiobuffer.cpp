@@ -244,8 +244,16 @@ size_t AudioBuffer::mix(const AudioBuffer& other, bool up /* = true */)
     for (unsigned i = 0; i < chan_num; i++) {
         unsigned src_chan = upmix ? std::min<unsigned>(i, other.samples_.size() - 1) : i;
 
-        for (unsigned j = 0; j < samp_num; j++)
-            samples_[i][j] += other.samples_[src_chan][j];
+        for (unsigned j = 0; j < samp_num; j++) {
+            // clamp result to min/max
+            // result must be larger than 16 bits to check for over/underflow
+            int32_t n = static_cast<int32_t>(samples_[i][j]) + static_cast<int32_t>(other.samples_[src_chan][j]);
+            if (n < std::numeric_limits<AudioSample>::min())
+                n = std::numeric_limits<AudioSample>::min();
+            else if (n > std::numeric_limits<AudioSample>::max())
+                n = std::numeric_limits<AudioSample>::max();
+            samples_[i][j] = n;
+        }
     }
 
     return samp_num;
