@@ -66,8 +66,6 @@ class AudioSender : public Observer<std::shared_ptr<AudioFrame>> {
         void update(Observable<std::shared_ptr<ring::AudioFrame>>*,
                     const std::shared_ptr<ring::AudioFrame>&) override;
 
-        void initRecorder(std::shared_ptr<MediaRecorder>& rec);
-
     private:
         NON_COPYABLE(AudioSender);
 
@@ -80,7 +78,6 @@ class AudioSender : public Observer<std::shared_ptr<AudioFrame>> {
         std::unique_ptr<MediaIOHandle> muxContext_;
         std::unique_ptr<Resampler> resampler_;
         std::shared_ptr<AudioInput> audioInput_;
-        std::weak_ptr<MediaRecorder> recorder_;
 
         uint64_t sent_samples = 0;
 
@@ -112,8 +109,6 @@ AudioSender::AudioSender(const std::string& id,
 
 AudioSender::~AudioSender()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
     audioInput_->detach(this);
     audioInput_.reset();
     audioEncoder_.reset();
@@ -166,12 +161,6 @@ AudioSender::update(Observable<std::shared_ptr<ring::AudioFrame>>* /*obs*/, cons
     ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
 
-    {
-        auto rec = recorder_.lock();
-        if (rec && rec->isRecording())
-            rec->recordData(frame, ms);
-    }
-
     if (audioEncoder_->encodeAudio(*framePtr) < 0)
         RING_ERR("encoding failed");
 }
@@ -187,13 +176,6 @@ uint16_t
 AudioSender::getLastSeqValue()
 {
     return audioEncoder_->getLastSeqValue();
-}
-
-void
-AudioSender::initRecorder(std::shared_ptr<MediaRecorder>& rec)
-{
-    recorder_ = rec;
-    rec->incrementExpectedStreams(1);
 }
 
 class AudioReceiveThread
@@ -520,8 +502,6 @@ AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     if (receiveThread_)
         receiveThread_->initRecorder(rec);
-    if (sender_)
-        sender_->initRecorder(rec);
 }
 
 } // namespace ring
