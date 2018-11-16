@@ -635,7 +635,7 @@ RingAccount::SIPStartCall(SIPCall& call, IpAddr target)
 
 void RingAccount::serialize(YAML::Emitter &out)
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
 
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
@@ -674,7 +674,7 @@ void RingAccount::serialize(YAML::Emitter &out)
 
 void RingAccount::unserialize(const YAML::Node &node)
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
 
     using yaml_utils::parseValue;
     using yaml_utils::parsePath;
@@ -1485,7 +1485,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
 void
 RingAccount::setAccountDetails(const std::map<std::string, std::string>& details)
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     SIPAccountBase::setAccountDetails(details);
 
     // TLS
@@ -1540,7 +1540,7 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string>& details
 std::map<std::string, std::string>
 RingAccount::getAccountDetails() const
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
     a.emplace(Conf::CONFIG_DHT_PORT, ring::to_string(dhtPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
@@ -2014,7 +2014,7 @@ RingAccount::onTrackedBuddyOffline(std::map<dht::InfoHash, BuddyInfo>::iterator&
 void
 RingAccount::doRegister_()
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
 
     try {
         if (not identity_.first or not identity_.second)
@@ -2503,10 +2503,11 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 void
 RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
-    std::unique_lock<std::mutex> lock(configurationMutex_);
+    std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
 
     if (registrationState_ == RegistrationState::INITIALIZING
      || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION) {
+        lock.unlock();
         if (released_cb) released_cb(false);
         return;
     }
@@ -2527,9 +2528,10 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
     saveNodes(dht_.exportNodes());
     saveValues(dht_.exportValues());
     dht_.join();
-    setRegistrationState(RegistrationState::UNREGISTERED);
 
     lock.unlock();
+    setRegistrationState(RegistrationState::UNREGISTERED);
+
     if (released_cb)
         released_cb(false);
 }
