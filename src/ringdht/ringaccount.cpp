@@ -2507,6 +2507,7 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
 
     if (registrationState_ == RegistrationState::INITIALIZING
      || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION) {
+        lock.unlock();
         if (released_cb) released_cb(false);
         return;
     }
@@ -2527,9 +2528,10 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
     saveNodes(dht_.exportNodes());
     saveValues(dht_.exportValues());
     dht_.join();
-    setRegistrationState(RegistrationState::UNREGISTERED);
 
     lock.unlock();
+    setRegistrationState(RegistrationState::UNREGISTERED);
+
     if (released_cb)
         released_cb(false);
 }

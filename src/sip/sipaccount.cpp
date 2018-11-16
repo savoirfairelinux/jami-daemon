@@ -735,11 +735,12 @@ void SIPAccount::doRegister()
 
 void SIPAccount::doRegister1_()
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
-
-    if (isIP2IP()) {
-        doRegister2_();
-        return;
+    {
+        std::lock_guard<std::mutex> lock(configurationMutex_);
+        if (isIP2IP()) {
+            doRegister2_();
+            return;
+        }
     }
 
     std::weak_ptr<SIPAccount> weak_acc = std::static_pointer_cast<SIPAccount>(shared_from_this());
