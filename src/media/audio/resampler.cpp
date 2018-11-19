@@ -44,33 +44,25 @@ Resampler::~Resampler()
 }
 
 void
-Resampler::reinit(const AudioFormat& in, const AudioFormat& out)
+Resampler::reinit(const AVFrame* input, const AVFrame* output)
 {
-    av_opt_set_int(swrCtx_, "ich", in.nb_channels, 0);
-    av_opt_set_int(swrCtx_, "icl", av_get_default_channel_layout(in.nb_channels), 0);
-    av_opt_set_int(swrCtx_, "isr", in.sample_rate, 0);
-    av_opt_set_sample_fmt(swrCtx_, "isf", in.sampleFormat, 0);
-
-    av_opt_set_int(swrCtx_, "och", out.nb_channels, 0);
-    av_opt_set_int(swrCtx_, "ocl", av_get_default_channel_layout(out.nb_channels), 0);
-    av_opt_set_int(swrCtx_, "osr", out.sample_rate, 0);
-    av_opt_set_sample_fmt(swrCtx_, "osf", out.sampleFormat, 0);
-
-    swr_init(swrCtx_);
-    initialized_ = true;
+    if (swr_config_frame(swrCtx_, output, input) < 0) {
+        RING_ERR() << "Failed to initialize resampler context";
+        initialized_ = false;
+    } else {
+        initialized_ = true;
+    }
 }
 
 int
 Resampler::resample(const AVFrame* input, AVFrame* output)
 {
-    const auto inFmt = AudioFormat((unsigned)input->sample_rate, (unsigned)input->channels, (AVSampleFormat)input->format);
-    const auto outFmt = AudioFormat((unsigned)output->sample_rate, (unsigned)output->channels, (AVSampleFormat)output->format);
     if (!initialized_)
-        reinit(inFmt, outFmt);
+        reinit(input, output);
 
     int ret = swr_convert_frame(swrCtx_, output, input);
     if (ret & AVERROR_INPUT_CHANGED || ret & AVERROR_OUTPUT_CHANGED) {
-        reinit(inFmt, outFmt);
+        reinit(input, output);
         return resample(input, output);
     } else if (ret < 0) {
         RING_ERR() << "Failed to resample frame";
