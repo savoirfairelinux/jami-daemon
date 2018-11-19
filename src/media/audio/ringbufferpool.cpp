@@ -145,12 +145,12 @@ void
 RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
                                   const std::string& call_id)
 {
-    if (call_id != DEFAULT_ID and rbuf->id == call_id)
+    if (call_id != DEFAULT_ID and rbuf->getId() == call_id)
         RING_WARN("RingBuffer has a readoffset on itself");
 
     rbuf->createReadOffset(call_id);
     readBindingsMap_[call_id].insert(rbuf); // bindings list created if not existing
-    RING_DBG("Bind rbuf '%s' to callid '%s'", rbuf->id.c_str(), call_id.c_str());
+    RING_DBG("Bind rbuf '%s' to callid '%s'", rbuf->getId().c_str(), call_id.c_str());
 }
 
 void
@@ -251,12 +251,12 @@ RingBufferPool::unBindAll(const std::string& call_id)
     const auto bindings_copy = *bindings; // temporary copy
     for (const auto& rbuf : bindings_copy) {
         removeReaderFromRingBuffer(rbuf, call_id);
-        removeReaderFromRingBuffer(rb_call, rbuf->id);
+        removeReaderFromRingBuffer(rb_call, rbuf->getId());
     }
 }
 
-size_t
-RingBufferPool::getData(AudioBuffer& buffer, const std::string& call_id)
+std::shared_ptr<AudioFrame>
+RingBufferPool::getData(const std::string& call_id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -266,27 +266,30 @@ RingBufferPool::getData(AudioBuffer& buffer, const std::string& call_id)
 
     // No mixing
     if (bindings->size() == 1)
-        return (*bindings->cbegin())->get(buffer, call_id);
+        return (*bindings->cbegin())->get(call_id);
 
-    buffer.reset();
-    buffer.setFormat(internalAudioFormat_);
+    //buffer.reset();
+    //buffer.setFormat(internalAudioFormat_);
 
     size_t size = 0;
-    AudioBuffer mixBuffer(buffer);
+    //AudioBuffer mixBuffer(buffer);
+    auto mixBuffer = std::make_unique<AudioFrame>(internalAudioFormat_);
 
     for (const auto& rbuf : *bindings) {
         // XXX: is it normal to only return the last positive size?
-        size = rbuf->get(mixBuffer, call_id);
+        /*size = rbuf->get(mixBuffer, call_id);
         if (size > 0)
-            buffer.mix(mixBuffer);
+            buffer.mix(mixBuffer);*/
+        if (auto b = rbuf->get(call_id)) {
+            mixBuffer->mix(*b);
+        }
     }
 
-    return size;
+    return mixBuffer;
 }
 
 bool
 RingBufferPool::waitForDataAvailable(const std::string& call_id,
-                                     size_t min_frames,
                                      const std::chrono::microseconds& max_wait) const
 {
     std::unique_lock<std::recursive_mutex> lk(stateLock_);
@@ -301,15 +304,15 @@ RingBufferPool::waitForDataAvailable(const std::string& call_id,
     const auto bindings_copy = *bindings; // temporary copy
     for (const auto& rbuf : bindings_copy) {
         lk.unlock();
-        if (rbuf->waitForDataAvailable(call_id, min_frames, deadline) < min_frames)
+        if (rbuf->waitForDataAvailable(call_id, deadline) == 0)
             return false;
         lk.lock();
     }
     return true;
 }
 
-size_t
-RingBufferPool::getAvailableData(AudioBuffer& buffer, const std::string& call_id)
+std::shared_ptr<AudioFrame>
+RingBufferPool::getAvailableData(const std::string& call_id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -319,32 +322,24 @@ RingBufferPool::getAvailableData(AudioBuffer& buffer, const std::string& call_id
 
     // No mixing
     if (bindings->size() == 1) {
-        return (*bindings->cbegin())->get(buffer, call_id);
+        return (*bindings->cbegin())->get(call_id);
     }
 
-    size_t availableSamples = std::numeric_limits<size_t>::max();
+    size_t availableFrames = 0;
 
     for (const auto& rbuf : *bindings)
-        availableSamples = std::min(availableSamples,
-                                    rbuf->availableForGet(call_id));
+        availableFrames = std::min(availableFrames, rbuf->availableForGet(call_id));
 
-    if (availableSamples == std::numeric_limits<size_t>::max())
-        return 0;
+    if (availableFrames == 0)
+        return {};
 
-    availableSamples = std::min(availableSamples, buffer.frames());
-
-    buffer.resize(availableSamples);
-    buffer.reset();
-    buffer.setFormat(internalAudioFormat_);
-
-    AudioBuffer mixBuffer(buffer);
-
+    auto buf = std::make_unique<AudioFrame>(internalAudioFormat_);
     for (const auto &rbuf : *bindings) {
-        if (rbuf->get(mixBuffer, call_id) > 0)
-            buffer.mix(mixBuffer);
+        if (auto b = rbuf->get(call_id))
+            buf->mix(*b);
     }
 
-    return availableSamples;
+    return buf;
 }
 
 size_t

@@ -35,13 +35,17 @@ struct AVPacket;
 #include <map>
 #include <string>
 #include <functional>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
-
 
 #if __APPLE__
 #import "TargetConditionals.h"
 #endif
+
+namespace ring {
+struct AudioFormat;
+}
 
 namespace DRing {
 
@@ -88,7 +92,20 @@ protected:
     std::unique_ptr<AVFrame, void(*)(AVFrame*)> frame_;
 };
 
-class DRING_PUBLIC AudioFrame : public MediaFrame {};
+class DRING_PUBLIC AudioFrame : public MediaFrame {
+public:
+    static constexpr std::chrono::milliseconds DEFAULT_DURATION {20};
+
+    AudioFrame() : MediaFrame() {}
+    AudioFrame(const ring::AudioFormat& format, size_t nb_samples = 0);
+    ~AudioFrame();
+
+    void reserve(const ring::AudioFormat& format, size_t nb_samples = 0);
+
+    void mix(const AudioFrame& o) {
+        // TODO
+    }
+};
 
 class DRING_PUBLIC VideoFrame : public MediaFrame {
 public:

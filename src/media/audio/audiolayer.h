@@ -228,9 +228,9 @@ class AudioLayer {
 
         void devicesChanged();
 
-        const AudioBuffer& getToPlay(AudioFormat format, size_t writableSamples);
+        std::shared_ptr<AudioFrame> getToPlay(AudioFormat format, size_t writableSamples);
 
-        const AudioBuffer& getToRing(AudioFormat format, size_t writableSamples);
+        std::shared_ptr<AudioFrame> getToRing(AudioFormat format, size_t writableSamples);
 
         /**
          * True if capture is not to be used

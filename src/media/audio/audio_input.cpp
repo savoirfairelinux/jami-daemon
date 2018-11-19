@@ -63,7 +63,7 @@ AudioInput::process()
     const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(samplesPerPacket).count();
 
     if (mainBuffer.availableForGet(id_) < samplesToGet
-        && not mainBuffer.waitForDataAvailable(id_, samplesToGet, MS_PER_PACKET)) {
+        && not mainBuffer.waitForDataAvailable(id_, MS_PER_PACKET)) {
         return;
     }
 
