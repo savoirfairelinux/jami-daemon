@@ -42,11 +42,13 @@ RingBuffer::RingBuffer(const std::string& rbuf_id, size_t size,
                        AudioFormat format /* = MONO */)
     : id(rbuf_id)
     , endPos_(0)
-    , buffer_(std::max(size, MIN_BUFFER_SIZE), format)
+    //, buffer_(std::max(size, MIN_BUFFER_SIZE), format)
     , lock_()
     , not_empty_()
     , readoffsets_()
-{}
+{
+    //buffer_.reserve(8);
+}
 
 void
 RingBuffer::flush(const std::string &call_id)
@@ -67,7 +69,7 @@ RingBuffer::flushAll()
 size_t
 RingBuffer::putLength() const
 {
-    const size_t buffer_size = buffer_.frames();
+    const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)
         return 0;
     const size_t startPos = (not readoffsets_.empty()) ? getSmallestReadOffset() : 0;
@@ -76,7 +78,7 @@ RingBuffer::putLength() const
 
 size_t RingBuffer::getLength(const std::string &call_id) const
 {
-    const size_t buffer_size = buffer_.frames();
+    const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)
         return 0;
     return (endPos_ + buffer_size - getReadOffset(call_id)) % buffer_size;
@@ -85,7 +87,7 @@ size_t RingBuffer::getLength(const std::string &call_id) const
 void
 RingBuffer::debug()
 {
-    RING_DBG("Start=%zu; End=%zu; BufferSize=%zu", getSmallestReadOffset(), endPos_, buffer_.frames());
+    RING_DBG("Start=%zu; End=%zu; BufferSize=%zu", getSmallestReadOffset(), endPos_, buffer_.size());
 }
 
 size_t RingBuffer::getReadOffset(const std::string &call_id) const
@@ -99,7 +101,7 @@ RingBuffer::getSmallestReadOffset() const
 {
     if (hasNoReadOffsets())
         return 0;
-    size_t smallest = buffer_.frames();
+    size_t smallest = buffer_.size();
     for(auto const& iter : readoffsets_)
         smallest = std::min(smallest, iter.second);
     return smallest;
@@ -154,27 +156,27 @@ bool RingBuffer::hasNoReadOffsets() const
 //
 
 // This one puts some data inside the ring buffer.
-void RingBuffer::put(AudioBuffer& buf)
+void RingBuffer::put(std::unique_ptr<AudioFrame>&& data)
 {
     std::lock_guard<std::mutex> l(lock_);
-    const size_t sample_num = buf.frames();
-    const size_t buffer_size = buffer_.frames();
+    //const size_t sample_num = data->samples();// ;buf.frames();
+    const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)
         return;
 
     size_t len = putLength();
-    if (buffer_size - len < sample_num)
-        discard(sample_num);
-    size_t toCopy = sample_num;
+    if (buffer_size - len == 0)
+        discard(1);
+    /*size_t toCopy = sample_num;
 
     // Add more channels if the input buffer holds more channels than the ring.
     if (buffer_.channels() < buf.channels())
-        buffer_.setChannelNum(buf.channels());
+        buffer_.setChannelNum(buf.channels());*/
 
     size_t in_pos = 0;
     size_t pos = endPos_;
 
-    while (toCopy) {
+    /*while (toCopy) {
         size_t block = toCopy;
 
         if (block > buffer_size - pos) // Wrap block around ring ?
@@ -184,7 +186,9 @@ void RingBuffer::put(AudioBuffer& buf)
         in_pos += block;
         pos = (pos + block) % buffer_size;
         toCopy -= block;
-    }
+    }*/
+    buffer_[pos] = std::move(data);
+    pos = (pos + 1) % buffer_size;
 
     endPos_ = pos;
     not_empty_.notify_all();
@@ -201,53 +205,34 @@ RingBuffer::availableForGet(const std::string &call_id) const
     return getLength(call_id);
 }
 
-size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
+std::shared_ptr<AudioFrame>
+RingBuffer::get(const std::string& call_id)
 {
     std::lock_guard<std::mutex> l(lock_);
 
     if (not hasThisReadOffset(call_id))
         return 0;
 
-    const size_t buffer_size = buffer_.frames();
+    const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)
-        return 0;
+        return {};
 
-    size_t len = getLength(call_id);
-    const size_t sample_num = buf.frames();
-    size_t toCopy = std::min(sample_num, len);
-    if (toCopy and toCopy != sample_num) {
-        RING_DBG("Partial get: %zu/%zu", toCopy, sample_num);
-    }
-
-    const size_t copied = toCopy;
-
-    size_t dest = 0;
     size_t startPos = getReadOffset(call_id);
+    size_t len = (endPos_ + buffer_size - startPos) % buffer_size;
 
-    while (toCopy > 0) {
-        size_t block = toCopy;
-
-        if (block > buffer_size - startPos)
-            block = buffer_size - startPos;
-
-        buf.copy(buffer_, block, startPos, dest);
-
-        dest += block;
-        startPos = (startPos + block) % buffer_size;
-        toCopy -= block;
-    }
+    auto ret = buffer_[startPos];
+    startPos = (startPos + 1) % buffer_size;
 
     storeReadOffset(startPos, call_id);
-    return copied;
+    return ret;
 }
 
-
-size_t RingBuffer::waitForDataAvailable(const std::string &call_id, size_t min_data_length, const time_point& deadline) const
+size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const time_point& deadline) const
 {
     std::unique_lock<std::mutex> l(lock_);
 
-    const size_t buffer_size = buffer_.frames();
-    if (buffer_size < min_data_length) return 0;
+    const size_t buffer_size = buffer_.size();
+    if (buffer_size == 0) return 0;
     ReadOffset::const_iterator read_ptr = readoffsets_.find(call_id);
     if (read_ptr == readoffsets_.end()) return 0;
 
@@ -258,7 +243,7 @@ size_t RingBuffer::waitForDataAvailable(const std::string &call_id, size_t min_d
         if (read_ptr == readoffsets_.end())
             return true;
         getl = (endPos_ + buffer_size - read_ptr->second) % buffer_size;
-        return getl >= min_data_length;
+        return getl > 0;
     };
 
     if (deadline == time_point::max()) {
@@ -276,7 +261,7 @@ RingBuffer::discard(size_t toDiscard, const std::string &call_id)
 {
     std::lock_guard<std::mutex> l(lock_);
 
-    const size_t buffer_size = buffer_.frames();
+    const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)
         return 0;
 
@@ -292,7 +277,7 @@ RingBuffer::discard(size_t toDiscard, const std::string &call_id)
 size_t
 RingBuffer::discard(size_t toDiscard)
 {
-    const size_t buffer_size = buffer_.frames();
+    const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)
         return 0;
 
