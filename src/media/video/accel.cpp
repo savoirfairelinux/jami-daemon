@@ -1,7 +1,7 @@
 /*
- *  Copyright (C) 2016-2018 Savoir-faire Linux Inc.
+ *  Copyright (C) 2013-2018 Savoir-faire Linux Inc.
  *
- *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,232 +18,501 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-extern "C" {
-#include <libavutil/hwcontext.h>
-}
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
+#include "media_decoder.h"
+#include "media_device.h"
+#include "media_buffer.h"
+#include "media_io_handle.h"
+#include "audio/audiobuffer.h"
+#include "audio/ringbuffer.h"
+#include "audio/resampler.h"
+#include "decoder_finder.h"
+#include "manager.h"
 
+#ifdef RING_ACCEL
+#include "video/accel.h"
+#endif
+
+#include "string_utils.h"
+#include "logger.h"
+
+#include <iostream>
+#include <unistd.h>
+#include <thread> // hardware_concurrency
+#include <chrono>
 #include <algorithm>
 
-#include "media_buffer.h"
-#include "string_utils.h"
-#include "fileutils.h"
-#include "logger.h"
-#include "accel.h"
-#include "config.h"
+namespace ring {
 
-namespace ring { namespace video {
+// maximum number of packets the jitter buffer can queue
+const unsigned jitterBufferMaxSize_ {1500};
+// maximum time a packet can be queued
+const constexpr auto jitterBufferMaxDelay_ = std::chrono::milliseconds(50);
+// maximum number of times accelerated decoding can fail in a row before falling back to software
+const constexpr unsigned MAX_ACCEL_FAILURES { 5 };
 
-static AVPixelFormat
-getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
+MediaDecoder::MediaDecoder() :
+    inputCtx_(avformat_alloc_context()),
+    startTime_(AV_NOPTS_VALUE)
 {
-    auto accel = static_cast<HardwareAccel*>(codecCtx->opaque);
-
-    AVPixelFormat fallback = AV_PIX_FMT_NONE;
-    for (int i = 0; formats[i] != AV_PIX_FMT_NONE; ++i) {
-        fallback = formats[i];
-        if (accel && formats[i] == accel->format) {
-            return formats[i];
-        }
-    }
-
-    if (accel) {
-        RING_WARN("'%s' acceleration not supported, falling back to software decoding", accel->name.c_str());
-        accel->name = {}; // don't use accel
-    } else {
-        RING_WARN() << "Not using hardware decoding";
-    }
-    return fallback;
 }
 
-int
-transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame& frame)
+MediaDecoder::~MediaDecoder()
 {
-    if (accel.name.empty())
-        return -1;
+#ifdef RING_ACCEL
+    if (decoderCtx_ && decoderCtx_->hw_device_ctx)
+        av_buffer_unref(&decoderCtx_->hw_device_ctx);
+#endif
+    if (decoderCtx_)
+        avcodec_free_context(&decoderCtx_);
+    if (inputCtx_)
+        avformat_close_input(&inputCtx_);
 
-    auto input = frame.pointer();
-    if (input->format != accel.format) {
-        RING_ERR("Frame format mismatch: expected %s, got %s",
-                 av_get_pix_fmt_name(static_cast<AVPixelFormat>(accel.format)),
-                 av_get_pix_fmt_name(static_cast<AVPixelFormat>(input->format)));
-        return -1;
+    av_dict_free(&options_);
+}
+
+int MediaDecoder::openInput(const DeviceParams& params)
+{
+    inputParams_ = params;
+    AVInputFormat *iformat = av_find_input_format(params.format.c_str());
+
+    if (!iformat)
+        RING_WARN("Cannot find format \"%s\"", params.format.c_str());
+
+    if (params.width and params.height) {
+        std::stringstream ss;
+        ss << params.width << "x" << params.height;
+        av_dict_set(&options_, "video_size", ss.str().c_str(), 0);
     }
+#ifndef _WIN32
+    // on windows, framerate setting can lead to a failure while opening device
+    // despite investigations, we didn't found a proper solution
+    // we let dshow choose the framerate, which is the highest according to our experimentations
+    if (params.framerate)
+        av_dict_set(&options_, "framerate", ring::to_string(params.framerate.real()).c_str(), 0);
+#endif
+    if (params.offset_x || params.offset_y) {
+        av_dict_set(&options_, "offset_x", ring::to_string(params.offset_x).c_str(), 0);
+        av_dict_set(&options_, "offset_y", ring::to_string(params.offset_y).c_str(), 0);
+    }
+    if (params.channel)
+        av_dict_set(&options_, "channel", ring::to_string(params.channel).c_str(), 0);
+    av_dict_set(&options_, "loop", params.loop.c_str(), 0);
+    av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
 
-    // FFmpeg requires a second frame in which to transfer the data from the GPU buffer to the main memory
-    auto container = std::unique_ptr<VideoFrame>(new VideoFrame());
-    auto output = container->pointer();
+    // Set jitter buffer options
+    av_dict_set(&options_, "reorder_queue_size",ring::to_string(jitterBufferMaxSize_).c_str(), 0);
+    auto us = std::chrono::duration_cast<std::chrono::microseconds>(jitterBufferMaxDelay_).count();
+    av_dict_set(&options_, "max_delay",ring::to_string(us).c_str(), 0);
 
-    auto pts = input->pts;
-    // most hardware accelerations output NV12, so skip extra conversions
-    output->format = AV_PIX_FMT_NV12;
-    int ret = av_hwframe_transfer_data(output, input, 0);
-    output->pts = pts;
+    if(!params.pixel_format.empty()){
+        av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
+    }
+    RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
+                                                        params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
 
-    // move output into input so the caller receives extracted image data
-    // but we have to delete input's data first
-    av_frame_unref(input);
-    av_frame_move_ref(input, output);
+#ifdef RING_ACCEL
+    // if there was a fallback to software decoding, do not enable accel
+    // it has been disabled already by the video_receive_thread/video_input
+    enableAccel_ &= Manager::instance().getDecodingAccelerated();
+#endif
+
+    int ret = avformat_open_input(
+        &inputCtx_,
+        params.input.c_str(),
+        iformat,
+        options_ ? &options_ : NULL);
+
+    if (ret) {
+        RING_ERR("avformat_open_input failed: %s", libav_utils::getError(ret).c_str());
+    } else {
+        RING_DBG("Using format %s", params.format.c_str());
+    }
 
     return ret;
 }
 
-static int
-initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
+void MediaDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
+{
+    if (cb) {
+        inputCtx_->interrupt_callback.callback = cb;
+        inputCtx_->interrupt_callback.opaque = opaque;
+    } else {
+        inputCtx_->interrupt_callback.callback = 0;
+    }
+}
+
+void MediaDecoder::setIOContext(MediaIOHandle *ioctx)
+{ inputCtx_->pb = ioctx->getContext(); }
+
+int MediaDecoder::setupFromAudioData()
+{
+    return setupStream(AVMEDIA_TYPE_AUDIO);
+}
+
+int
+MediaDecoder::setupStream(AVMediaType mediaType)
 {
     int ret = 0;
-    AVBufferRef* hardwareDeviceCtx = nullptr;
-    auto hwType = av_hwdevice_find_type_by_name(accel.name.c_str());
-#ifdef HAVE_VAAPI_ACCEL_DRM
-    // default DRM device may not work on multi GPU computers, so check all possible values
-    if (accel.name == "vaapi") {
-        const std::string path = "/dev/dri/";
-        auto files = ring::fileutils::readDirectory(path);
-        // renderD* is preferred over card*
-        std::sort(files.rbegin(), files.rend());
-        for (auto& entry : files) {
-            std::string deviceName = path + entry;
-            if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, deviceName.c_str(), nullptr, 0)) >= 0) {
-                codecCtx->hw_device_ctx = hardwareDeviceCtx;
-                RING_DBG("Using '%s' hardware acceleration with device '%s'", accel.name.c_str(), deviceName.c_str());
-                return ret;
-            }
+    std::string streamType = av_get_media_type_string(mediaType);
+
+    avcodec_free_context(&decoderCtx_);
+
+    // Increase analyze time to solve synchronization issues between callers.
+    static const unsigned MAX_ANALYZE_DURATION = 30;
+    inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
+
+    // If fallback from accel, don't check for stream info, it's already done
+    if (!fallback_) {
+        RING_DBG() << "Finding " << streamType << " stream info";
+        if ((ret = avformat_find_stream_info(inputCtx_, nullptr)) < 0) {
+            // Always fail here
+            RING_ERR() << "Could not find " << streamType << " stream info: " << libav_utils::getError(ret);
+            return -1;
         }
     }
-#endif
-    // default device (nullptr) works for most cases
-    if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, nullptr, nullptr, 0)) >= 0) {
-        codecCtx->hw_device_ctx = hardwareDeviceCtx;
-        RING_DBG("Using '%s' hardware acceleration", accel.name.c_str());
-    }
 
-    return ret;
-}
-
-int
-initHwFrameCtx(AVCodecContext *ctx){
-    AVBufferRef *hw_frames_ref;
-    AVHWFramesContext *frames_ctx = NULL;
-    int err = 0;
-
-    if (!(hw_frames_ref = av_hwframe_ctx_alloc(ctx->hw_device_ctx))) {
-        fprintf(stderr, "Failed to create VAAPI frame context.");
+    // find the first video stream from the input
+    streamIndex_ = av_find_best_stream(inputCtx_, mediaType, -1, -1, &inputDecoder_, 0);
+    if (streamIndex_ < 0) {
+        RING_ERR() << "No " << streamType << " stream found";
         return -1;
     }
 
-    frames_ctx = (AVHWFramesContext *)(hw_frames_ref->data);
-    frames_ctx->format    = AV_PIX_FMT_VAAPI;
-    frames_ctx->sw_format = AV_PIX_FMT_NV12;
-    frames_ctx->width     = ctx->width;
-    frames_ctx->height    = ctx->height;
-    frames_ctx->initial_pool_size = 20;
-    if ((err = av_hwframe_ctx_init(hw_frames_ref)) < 0) {
-        fprintf(stderr, "Failed to initialize VAAPI frame context."
-                "Error code: %s",libav_utils::getError(err).c_str());
-        av_buffer_unref(&hw_frames_ref);
-        return err;
+    avStream_ = inputCtx_->streams[streamIndex_];
+    inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
+    if (!inputDecoder_) {
+        RING_ERR() << "Unsupported codec";
+        return -1;
     }
-    ctx->hw_frames_ctx = av_buffer_ref(hw_frames_ref);
-    if (!ctx->hw_frames_ctx)
-        err = AVERROR(ENOMEM);
 
-    av_buffer_unref(&hw_frames_ref);
-    return err;
+    decoderCtx_ = avcodec_alloc_context3(inputDecoder_);
+    if (!decoderCtx_) {
+        RING_ERR() << "Failed to create decoder context";
+        return -1;
+    }
+    avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
+    decoderCtx_->framerate = avStream_->avg_frame_rate;
+    if (mediaType == AVMEDIA_TYPE_VIDEO) {
+        if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
+            decoderCtx_->framerate = inputParams_.framerate;
+        if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
+            decoderCtx_->framerate = av_inv_q(decoderCtx_->time_base);
+        if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
+            decoderCtx_->framerate = {30, 1};
+    }
+
+    decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
+
+    if (emulateRate_)
+        RING_DBG() << "Using framerate emulation";
+    startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
+
+#ifdef RING_ACCEL
+    if (enableAccel_) {
+        accel_ = video::setupHardwareDecoding(decoderCtx_);
+        decoderCtx_->opaque = &accel_;
+    } else if (Manager::instance().getDecodingAccelerated()) {
+        RING_WARN() << "Hardware accelerated decoding disabled because of previous failure";
+    } else {
+        RING_WARN() << "Hardware accelerated decoding disabled by user preference";
+    }
+#endif
+
+    RING_DBG() << "Decoding " << streamType << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
+
+    ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+    if (ret < 0) {
+        RING_ERR() << "Could not open codec: " << libav_utils::getError(ret);
+        return -1;
+    }
+
+    return 0;
 }
 
-const HardwareAccel
-setupHardwareDecoding(AVCodecContext* codecCtx)
+#ifdef RING_VIDEO
+int MediaDecoder::setupFromVideoData()
 {
-    /**
-     * This array represents FFmpeg's hwaccels, along with their pixel format
-     * and their potentially supported codecs. Each item contains:
-     * - Name (must match the name used in FFmpeg)
-     * - Pixel format (tells FFmpeg which hwaccel to use)
-     * - Array of AVCodecID (potential codecs that can be accelerated by the hwaccel)
-     * Note: an empty name means the video isn't accelerated
-     */
-    const HardwareAccel accels[] = {
-        { "vaapi", AV_PIX_FMT_VAAPI, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
-        { "vdpau", AV_PIX_FMT_VDPAU, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
-        { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
-    };
+    return setupStream(AVMEDIA_TYPE_VIDEO);
+}
 
-    for (auto accel : accels) {
-        if (std::find(accel.supportedCodecs.begin(), accel.supportedCodecs.end(),
-                static_cast<AVCodecID>(codecCtx->codec_id)) != accel.supportedCodecs.end()) {
-            if (initDevice(accel, codecCtx) >= 0) {
-                codecCtx->get_format = getFormatCb;
-                codecCtx->thread_safe_callbacks = 1;
-                return accel;
+MediaDecoder::Status
+MediaDecoder::decode(VideoFrame& result)
+{
+    AVPacket inpacket;
+    av_init_packet(&inpacket);
+    int ret = av_read_frame(inputCtx_, &inpacket);
+    if (ret == AVERROR(EAGAIN)) {
+        return Status::Success;
+    } else if (ret == AVERROR_EOF) {
+        return Status::EOFError;
+    } else if (ret < 0) {
+        RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
+        return Status::ReadError;
+    }
+
+    // is this a packet from the video stream?
+    if (inpacket.stream_index != streamIndex_) {
+        av_packet_unref(&inpacket);
+        return Status::Success;
+    }
+
+    auto frame = result.pointer();
+    int frameFinished = 0;
+    ret = avcodec_send_packet(decoderCtx_, &inpacket);
+    if (ret < 0 && ret != AVERROR(EAGAIN)) {
+        return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
+    }
+    ret = avcodec_receive_frame(decoderCtx_, frame);
+    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+        return Status::DecodeError;
+    }
+    if (ret >= 0)
+        frameFinished = 1;
+
+    av_packet_unref(&inpacket);
+
+    if (frameFinished) {
+        frame->format = (AVPixelFormat) correctPixFmt(frame->format);
+#ifdef RING_ACCEL
+        if (!accel_.name.empty() && accel_.name != "omx") {
+            ret = video::transferFrameData(accel_, decoderCtx_, result);
+            if (ret < 0) {
+                ++accelFailures_;
+                if (accelFailures_ >= MAX_ACCEL_FAILURES) {
+                    RING_ERR("Hardware decoding failure");
+                    accelFailures_ = 0; // reset error count for next time
+                    fallback_ = true;
+                    return Status::RestartRequired;
+                }
             }
         }
-    }
+#endif
+        auto packetTimestamp = frame->pts; // in stream time base
+        frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
+            {1, AV_TIME_BASE}, decoderCtx_->time_base,
+            static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+        lastTimestamp_ = frame->pts;
 
-    RING_WARN("Not using hardware accelerated decoding");
-    return {};
-}
-
-const HardwareAccel
-setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
-{
-    //,"omx","qsv","vaapi","videotoolbox"
-    std::map<enum AVCodecID,std::vector<std::string>>map_hw_encoders;
-    map_hw_encoders[AV_CODEC_ID_H264] = { "h264_vaapi", "h264_videotoolbox"};
-    map_hw_encoders[AV_CODEC_ID_HEVC] = {"hevc_vaapi","hevc_videotoolbox"};
-    map_hw_encoders[AV_CODEC_ID_MJPEG] = {"mjpeg_vaapi"};
-    map_hw_encoders[AV_CODEC_ID_MPEG2VIDEO] = {"mpeg2_vaapi"};
-    map_hw_encoders[AV_CODEC_ID_VP8] = {"vp8_vaapi"};
-    map_hw_encoders[AV_CODEC_ID_VP9] = {"vp9_vaapi"};
-
-    if ((*codecCtx)->codec_id)
-    RING_WARN("input codec id = %s", avcodec_get_name((*codecCtx)->codec_id));
-    auto it = map_hw_encoders.find((*codecCtx)->codec_id);
-    if (it != map_hw_encoders.end()) {
-        for (unsigned int i=0 ; i < it->second.size() ; i++){
-            RING_WARN("codec in list = %s", it->second[i].c_str());
-            if ((*codec = avcodec_find_encoder_by_name((it->second[i]).c_str()))){
-                //reprepare codeccontext for new codec
-                AVCodecContext* encoderCtx = avcodec_alloc_context3(*codec);
-                auto encoderName = encoderCtx->av_class->item_name ?
-                    encoderCtx->av_class->item_name(encoderCtx) : nullptr;
-                if (encoderName == nullptr)
-                    encoderName = "encoder?";
-                encoderCtx->width = (*codecCtx)->width;
-                encoderCtx->height = (*codecCtx)->height;
-                // satisfy ffmpeg: denominator must be 16bit or less value
-                // time base = 1/FPS
-                encoderCtx->time_base = (*codecCtx)->time_base;
-                encoderCtx->framerate = (*codecCtx)->framerate;
-                // emit one intra frame every gop_size frames
-                encoderCtx->max_b_frames = 0;
-                encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P;
-                *codecCtx = encoderCtx;
-                /////////////////////////////////////////////////////
-                HardwareAccel accel;
-                accel.name = it->second[i].substr(it->second[i].find("_") + 1);
-                //suppose pixel format is always set to be vaapi
-                if (accel.name=="vaapi"){
-                    accel.format = AV_PIX_FMT_VAAPI;
-                    (*codecCtx)->pix_fmt = AV_PIX_FMT_VAAPI;
-                }
-                else if (accel.name=="videotoolbox"){
-                    accel.format = AV_PIX_FMT_VIDEOTOOLBOX;
-                    (*codecCtx)->pix_fmt = AV_PIX_FMT_VIDEOTOOLBOX;
-                }
-                //accel.supportedCodecs = ;
-                if (initDevice(accel, *codecCtx) >= 0) {
-                    //add init hw_frame_ctx
-                    initHwFrameCtx(*codecCtx);
-                    RING_WARN("in setuphwencoding hw_frames_ctx = %p",(*codecCtx)->hw_frames_ctx);
-                    (*codecCtx)->thread_safe_callbacks = 1;
-                    RING_WARN("Found a hw encoder for %s, %s",avcodec_get_name((*codecCtx)->codec_id), it->second[i].c_str());
-                    return accel;
-                }
+        if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
+            auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
+            auto now = av_gettime();
+            if (target > now) {
+                std::this_thread::sleep_for(std::chrono::microseconds(target - now));
             }
         }
+        return Status::FrameFinished;
     }
 
-    RING_WARN("Not using hardware accelerated encoding");
-    return {};
+    return Status::Success;
+}
+#endif // RING_VIDEO
+
+MediaDecoder::Status
+MediaDecoder::decode(const AudioFrame& decodedFrame)
+{
+    const auto frame = decodedFrame.pointer();
+    AVPacket inpacket;
+    av_init_packet(&inpacket);
+
+    int ret = av_read_frame(inputCtx_, &inpacket);
+
+    if (ret == AVERROR(EAGAIN)) {
+        return Status::Success;
+    } else if (ret == AVERROR_EOF) {
+        return Status::EOFError;
+    } else if (ret < 0) {
+        RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
+        return Status::ReadError;
+    }
+
+    // is this a packet from the audio stream?
+    if (inpacket.stream_index != streamIndex_) {
+        av_packet_unref(&inpacket);
+        return Status::Success;
+    }
+
+    int frameFinished = 0;
+        ret = avcodec_send_packet(decoderCtx_, &inpacket);
+        if (ret < 0 && ret != AVERROR(EAGAIN))
+            return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
+
+    ret = avcodec_receive_frame(decoderCtx_, frame);
+    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
+        return Status::DecodeError;
+    if (ret >= 0)
+        frameFinished = 1;
+
+    if (frameFinished) {
+        av_packet_unref(&inpacket);
+
+        // channel layout is needed if frame will be resampled
+        if (!frame->channel_layout)
+            frame->channel_layout = av_get_default_channel_layout(frame->channels);
+
+        auto packetTimestamp = frame->pts;
+        // NOTE don't use clock to rescale audio pts, it may create artifacts
+        frame->pts = av_rescale_q_rnd(frame->pts, avStream_->time_base, decoderCtx_->time_base,
+            static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+        lastTimestamp_ = frame->pts;
+
+        if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
+            auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
+            auto now = av_gettime();
+            if (target > now) {
+                std::this_thread::sleep_for(std::chrono::microseconds(target - now));
+            }
+        }
+        return Status::FrameFinished;
+    }
+
+    return Status::Success;
 }
 
-}} // namespace ring::video
+#ifdef RING_VIDEO
+#ifdef RING_ACCEL
+void
+MediaDecoder::enableAccel(bool enableAccel)
+{
+    enableAccel_ = enableAccel;
+    if (!enableAccel) {
+        accel_ = {};
+        if (decoderCtx_->hw_device_ctx)
+            av_buffer_unref(&decoderCtx_->hw_device_ctx);
+        if (decoderCtx_)
+            decoderCtx_->opaque = nullptr;
+    }
+}
+#endif
+
+MediaDecoder::Status
+MediaDecoder::flush(VideoFrame& result)
+{
+    AVPacket inpacket;
+    av_init_packet(&inpacket);
+
+    int frameFinished = 0;
+    int ret = 0;
+    ret = avcodec_send_packet(decoderCtx_, &inpacket);
+    if (ret < 0 && ret != AVERROR(EAGAIN))
+        return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
+
+    ret = avcodec_receive_frame(decoderCtx_, result.pointer());
+    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
+        return Status::DecodeError;
+    if (ret >= 0)
+        frameFinished = 1;
+
+    if (frameFinished) {
+        av_packet_unref(&inpacket);
+#ifdef RING_ACCEL
+        // flush is called when closing the stream
+        // so don't restart the media decoder
+        if (!accel_.name.empty() && accelFailures_ < MAX_ACCEL_FAILURES && accel_.name != "omx")
+            video::transferFrameData(accel_, decoderCtx_, result);
+#endif
+        return Status::FrameFinished;
+    }
+
+    return Status::Success;
+}
+#endif // RING_VIDEO
+
+int MediaDecoder::getWidth() const
+{ return decoderCtx_->width; }
+
+int MediaDecoder::getHeight() const
+{ return decoderCtx_->height; }
+
+std::string MediaDecoder::getDecoderName() const
+{ return decoderCtx_->codec->name; }
+
+rational<double>
+MediaDecoder::getFps() const
+{
+    return {(double)avStream_->avg_frame_rate.num,
+            (double)avStream_->avg_frame_rate.den};
+}
+
+rational<unsigned>
+MediaDecoder::getTimeBase() const
+{
+    return {(unsigned)avStream_->time_base.num,
+            (unsigned)avStream_->time_base.den};
+}
+
+int MediaDecoder::getPixelFormat() const
+{ return decoderCtx_->pix_fmt; }
+
+void
+MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
+                                RingBuffer& rb, const AudioFormat outFormat)
+{
+    const auto libav_frame = decodedFrame.pointer();
+    decBuff_.setFormat(AudioFormat{
+        (unsigned) libav_frame->sample_rate,
+        (unsigned) decoderCtx_->channels
+    });
+    decBuff_.resize(libav_frame->nb_samples);
+
+    if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_FLTP ) {
+        decBuff_.convertFloatPlanarToSigned16(libav_frame->extended_data,
+                                         libav_frame->nb_samples,
+                                         decoderCtx_->channels);
+    } else if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_S16 ) {
+        decBuff_.deinterleave(reinterpret_cast<const AudioSample*>(libav_frame->data[0]),
+                         libav_frame->nb_samples, decoderCtx_->channels);
+    }
+    if ((unsigned)libav_frame->sample_rate != outFormat.sample_rate) {
+        if (!resampler_) {
+            RING_DBG("Creating audio resampler");
+            resampler_.reset(new Resampler);
+        }
+        resamplingBuff_.setFormat({(unsigned) outFormat.sample_rate, (unsigned) decoderCtx_->channels});
+        resamplingBuff_.resize(libav_frame->nb_samples);
+        resampler_->resample(decBuff_, resamplingBuff_);
+        rb.put(resamplingBuff_);
+    } else {
+        rb.put(decBuff_);
+    }
+}
+
+int
+MediaDecoder::correctPixFmt(int input_pix_fmt) {
+
+    //https://ffmpeg.org/pipermail/ffmpeg-user/2014-February/020152.html
+    int pix_fmt;
+    switch (input_pix_fmt) {
+    case AV_PIX_FMT_YUVJ420P :
+        pix_fmt = AV_PIX_FMT_YUV420P;
+        break;
+    case AV_PIX_FMT_YUVJ422P  :
+        pix_fmt = AV_PIX_FMT_YUV422P;
+        break;
+    case AV_PIX_FMT_YUVJ444P   :
+        pix_fmt = AV_PIX_FMT_YUV444P;
+        break;
+    case AV_PIX_FMT_YUVJ440P :
+        pix_fmt = AV_PIX_FMT_YUV440P;
+        break;
+    default:
+        pix_fmt = input_pix_fmt;
+        break;
+    }
+    return pix_fmt;
+}
+
+MediaStream
+MediaDecoder::getStream(std::string name) const
+{
+    auto ms = MediaStream(name, decoderCtx_, lastTimestamp_);
+#ifdef RING_ACCEL
+    if (decoderCtx_->codec_type == AVMEDIA_TYPE_VIDEO && enableAccel_ && !accel_.name.empty() && accel_.name != "omx")
+        ms.format = AV_PIX_FMT_NV12; // TODO option me!
+#endif
+    return ms;
+}
+
+} // namespace ring
