@@ -166,11 +166,13 @@ MediaEncoder::openLiveOutput(const std::string& filename,
 #endif
     int ret = addStream(args.codec->systemCodecInfo, args.parameters);
     if (ret < 0)
-        RING_ERR() << "addStream failed: " << libav_utils::getError(ret);
-    if (args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO)
-        RING_WARN("Video stream added");
-    else
-        RING_WARN("Audio stream added");
+        RING_ERR() << "Failed to add stream to encoder: " << libav_utils::getError(ret);
+    else{
+        if (args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO)
+            RING_WARN("Video stream added");
+        else
+            RING_WARN("Audio stream added");
+    }
 }
 
 void
@@ -231,10 +233,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
     /* let x264 preset override our encoder settings */
 #ifdef RING_ACCEL
     if (enableAccel_) {
-        RING_WARN("()()before setup, framerate: %d/%d",encoderCtx->framerate.num,encoderCtx->framerate.den);
-        RING_WARN("()()before setup, time_base: %d/%d",encoderCtx->time_base.num,encoderCtx->time_base.den);
         accel_ = video::setupHardwareEncoding(&encoderCtx, &outputCodec);
-        RING_WARN("()()after setup, framerate: %d/%d",encoderCtx->framerate.num,encoderCtx->framerate.den);
         //printf("supportedCodecs = %d",accel_.suvaapipportedCodecs[0]);
         if (!accel_.name.empty()){
             RING_WARN("Return of setuphwencoding =  %s, format = %d",accel_.name.c_str(),accel_.format);
@@ -324,8 +323,10 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
             format = AV_PIX_FMT_NV12;
         scaledFrameBufferSize_ = videoFrameSize(format, width, height);
         RING_WARN("scaledFrameBufferSize_ = %ui",scaledFrameBufferSize_);
-        if (scaledFrameBufferSize_ == 0)
-            throw MediaEncoderException("can't calculate the size of buffer");
+        if (scaledFrameBufferSize_ < 0){
+            RING_ERR("can't calculate the size of buffer");
+            throw MediaEncoderException(libav_utils::getError(scaledFrameBufferSize_).c_str());
+        }
         if (scaledFrameBufferSize_ <= AV_INPUT_BUFFER_MIN_SIZE)
             throw MediaEncoderException("buffer too small");
         scaledFrameBuffer_.reserve(scaledFrameBufferSize_);

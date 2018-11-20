@@ -35,16 +35,10 @@ namespace ring {
 
 //=== HELPERS ==================================================================
 
-std::size_t
+int
 videoFrameSize(int format, int width, int height)
 {
-    int ret = av_image_get_buffer_size((AVPixelFormat)format, width, height, 1);
-    if (ret < 0){
-        RING_ERR() << "av_image_get_buffer_size failed: " << libav_utils::getError(ret);
-        return 0;
-    }
-    else
-        return ret;
+    return av_image_get_buffer_size((AVPixelFormat)format, width, height, 1);
 }
 
 #endif // RING_VIDEO
