@@ -43,6 +43,7 @@ class RingBuffer {
     public:
         using clock = std::chrono::high_resolution_clock;
         using time_point = clock::time_point;
+        using FrameCallback = std::function<void(const std::shared_ptr<AudioFrame>&)>;
 
         /**
          * Constructor
@@ -51,6 +52,8 @@ class RingBuffer {
         RingBuffer(const std::string& id, size_t size,
                    AudioFormat format=AudioFormat::MONO());
 
+        const std::string& getId() const { return id; }
+
         /**
          * Reset the counters to 0 for this read offset
          */
@@ -58,18 +61,20 @@ class RingBuffer {
 
         void flushAll();
 
-        inline  AudioFormat getFormat() const {
-            return buffer_.getFormat();
+        constexpr inline AudioFormat getFormat() const {
+            return format_;
         }
 
-        inline void setFormat(AudioFormat format) {
-            buffer_.setFormat(format);
+        constexpr inline void setFormat(AudioFormat format) {
+            format_ = format;
         }
 
         /**
          * Add a new readoffset for this ringbuffer
          */
         void createReadOffset(const std::string &call_id);
+
+        void createReadOffset(const std::string &call_id, FrameCallback cb);
 
         /**
          * Remove a readoffset for this ringbuffer
@@ -83,7 +88,7 @@ class RingBuffer {
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
          */
-         void put(AudioBuffer& buf);
+         void put(std::unique_ptr<AudioFrame>&& data);
 
         /**
          * To get how much samples are available in the buffer to read in
@@ -97,7 +102,7 @@ class RingBuffer {
          * @param toCopy Number of bytes to copy
          * @return size_t Number of bytes copied
          */
-         size_t get(AudioBuffer& buf, const std::string &call_id);
+        std::shared_ptr<AudioFrame> get(const std::string &call_id);
 
         /**
          * Discard data from the buffer
@@ -115,7 +120,7 @@ class RingBuffer {
         size_t getLength(const std::string &call_id) const;
 
         inline bool isFull() const {
-            return putLength() == buffer_.frames();
+            return putLength() == buffer_.size();
         }
 
         inline bool isEmpty() const {
@@ -130,17 +135,19 @@ class RingBuffer {
          * @param deadline The call is guaranteed to end after this time point. If no deadline is provided, the call blocks indefinitely.
          * @return available data for call_id after the call returned (same as calling getLength(call_id) ).
          */
-        size_t waitForDataAvailable(const std::string& call_id, size_t min_data_length, const time_point& deadline = time_point::max()) const;
+        size_t waitForDataAvailable(const std::string& call_id, const time_point& deadline = time_point::max()) const;
 
         /**
          * Debug function print mEnd, mStart, mBufferSize
          */
         void debug();
 
-        const std::string id;
-
     private:
-        using ReadOffset = std::map<std::string, size_t>;
+        struct ReadOffset {
+            size_t offset;
+            FrameCallback callback;
+        };
+        using ReadOffsetMap = std::map<std::string, ReadOffset>;
         NON_COPYABLE(RingBuffer);
 
         bool hasNoReadOffsets() const;
@@ -170,16 +177,19 @@ class RingBuffer {
          */
         size_t discard(size_t toDiscard);
 
+        const std::string id;
+
         /** Offset on the last data */
         size_t endPos_;
 
         /** Data */
-        AudioBuffer buffer_;
+        AudioFormat format_ {AudioFormat::DEFAULT()};
+        std::vector<std::shared_ptr<AudioFrame>> buffer_ {8};
 
         mutable std::mutex lock_;
         mutable std::condition_variable not_empty_;
 
-        ReadOffset readoffsets_;
+        ReadOffsetMap readoffsets_;
 };
 
 } // namespace ring

@@ -38,6 +38,7 @@
 #include <unistd.h>
 #include <cstdlib>
 #include <fstream>
+#include <cstring>
 
 // Std-C++11 regex feature implemented only since GCC 4.9
 // Using pcre library as replacement
@@ -435,15 +436,15 @@ void PulseLayer::writeToSpeaker()
     if (writableBytes == 0)
         return;
 
-    auto& buff = getToPlay(playback_->format(), writableBytes / playback_->frameSize());
+    const auto& buff = getToPlay(playback_->format(), writableBytes / playback_->frameSize());
 
     AudioSample* data = nullptr;
     pa_stream_begin_write(playback_->stream(), (void**)&data, &writableBytes);
 
-    if (buff.frames() == 0)
+    if (!buff)
         memset(data, 0, writableBytes);
     else
-        buff.interleave(data);
+        std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * playback_->frameSize());
 
     pa_stream_write(playback_->stream(), data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
 }
@@ -458,37 +459,31 @@ void PulseLayer::readFromMic()
     if (pa_stream_peek(record_->stream() , (const void**) &data , &bytes) < 0 or !data)
         return;
 
+    if (bytes == 0)
+        return;
+
     size_t sample_size = record_->frameSize();
-    const AudioFormat format = record_->format();
-    assert(format.nb_channels);
-    assert(sample_size);
     const size_t samples = bytes / sample_size;
 
-    micBuffer_.setFormat(format);
-    micBuffer_.resize(samples);
-    micBuffer_.deinterleave((AudioSample*)data, samples, format.nb_channels);
-    micBuffer_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
-
-    auto mainBufferAudioFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    bool resample = format.sample_rate != mainBufferAudioFormat.sample_rate;
-
-    AudioBuffer* out;
-    if (resample) {
-        micResampleBuffer_.setSampleRate(mainBufferAudioFormat.sample_rate);
-        resampler_->resample(micBuffer_, micResampleBuffer_);
-        out = &micResampleBuffer_;
-    } else {
-        out = &micBuffer_;
-    }
-
-    dcblocker_.process(*out);
-    out->applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-    mainRingBuffer_->put(*out);
+    auto out = std::make_unique<AudioFrame>(record_->format(), samples);
+    std::memcpy(out->pointer()->data[0], data, bytes);
 
     if (pa_stream_drop(record_->stream()) < 0)
         RING_ERR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
-}
 
+    // micBuffer_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
+
+    auto mainBufferAudioFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
+    if (record_->format() != mainBufferAudioFormat) {
+        auto resampled = std::make_unique<AudioFrame>(mainBufferAudioFormat, samples);
+        resampler_->resample(out->pointer(), resampled->pointer());
+        out = std::move(resampled);
+    }
+
+    //dcblocker_.process(*out);
+    //out->applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+    mainRingBuffer_->put(std::move(out));
+}
 
 void PulseLayer::ringtoneToSpeaker()
 {
@@ -499,15 +494,15 @@ void PulseLayer::ringtoneToSpeaker()
     if (bytes == 0)
         return;
 
-    auto& buff = getToRing(ringtone_->format(), bytes / ringtone_->frameSize());
+    const auto& buff = getToRing(ringtone_->format(), bytes / ringtone_->frameSize());
 
     AudioSample* data;
     pa_stream_begin_write(ringtone_->stream(), (void**)&data, &bytes);
 
-    if (buff.frames() == 0)
+    if (!buff)
         memset(data, 0, bytes);
     else
-        buff.interleave(data);
+        std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * playback_->frameSize());
 
     pa_stream_write(ringtone_->stream(), data, bytes, nullptr, 0, PA_SEEK_RELATIVE);
 }
