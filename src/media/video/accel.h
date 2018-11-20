@@ -33,7 +33,7 @@ struct HardwareAccel {
         std::vector<AVCodecID> supportedCodecs;
 };
 int transferFrameData(HardwareAccel accel, AVCodecContext* codecCtx, VideoFrame& frame);
-int initHwFrameCtx(AVCodecContext *ctx);
+int initHwFrameCtx(HardwareAccel accel, AVCodecContext *ctx);
 const HardwareAccel setupHardwareDecoding(AVCodecContext* codecCtx);
 const HardwareAccel setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec);
 }} // namespace ring::video

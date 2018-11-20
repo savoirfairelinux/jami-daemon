@@ -122,15 +122,16 @@ private:
 #ifdef RING_VIDEO
     video::VideoScaler scaler_;
     VideoFrame scaledFrame_;
+#endif // RING_VIDEO
+
 #ifdef RING_ACCEL
     bool enableAccel_ = true;
     video::HardwareAccel accel_;
     unsigned short accelFailures_ = 0;
 #endif
-#endif // RING_VIDEO
 
     std::vector<uint8_t> scaledFrameBuffer_;
-    unsigned int scaledFrameBufferSize_ = 0;
+    int scaledFrameBufferSize_ = 0;
     bool is_muted = false;
 
 protected:

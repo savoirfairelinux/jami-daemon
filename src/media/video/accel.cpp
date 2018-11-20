@@ -120,7 +120,7 @@ initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
 }
 
 int
-initHwFrameCtx(AVCodecContext *ctx){
+initHwFrameCtx(HardwareAccel accel, AVCodecContext *ctx){
     AVBufferRef *hw_frames_ref;
     AVHWFramesContext *frames_ctx = NULL;
     int err = 0;
@@ -131,8 +131,9 @@ initHwFrameCtx(AVCodecContext *ctx){
     }
 
     frames_ctx = (AVHWFramesContext *)(hw_frames_ref->data);
-    frames_ctx->format    = AV_PIX_FMT_VAAPI;
-    frames_ctx->sw_format = AV_PIX_FMT_NV12;
+    frames_ctx->format    = accel.format;
+    if (frames_ctx->format == AV_PIX_FMT_VAAPI)
+        frames_ctx->sw_format = AV_PIX_FMT_NV12;
     frames_ctx->width     = ctx->width;
     frames_ctx->height    = ctx->height;
     frames_ctx->initial_pool_size = 20;
@@ -185,7 +186,7 @@ setupHardwareDecoding(AVCodecContext* codecCtx)
 const HardwareAccel
 setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
 {
-    //,"omx","qsv","vaapi","videotoolbox"
+    //select codec API based on the provided codec ID
     std::map<enum AVCodecID,std::vector<std::string>>map_hw_encoders;
     map_hw_encoders[AV_CODEC_ID_H264] = { "h264_vaapi", "h264_videotoolbox"};
     map_hw_encoders[AV_CODEC_ID_HEVC] = {"hevc_vaapi","hevc_videotoolbox"};
@@ -193,9 +194,14 @@ setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
     map_hw_encoders[AV_CODEC_ID_MPEG2VIDEO] = {"mpeg2_vaapi"};
     map_hw_encoders[AV_CODEC_ID_VP8] = {"vp8_vaapi"};
     map_hw_encoders[AV_CODEC_ID_VP9] = {"vp9_vaapi"};
+    //select pixel format based on the given API
+    std::map<std::string,enum AVPixelFormat>map_pix_fmt;
+    map_pix_fmt["vaapi"]={AV_PIX_FMT_VAAPI};
+    map_pix_fmt["videotoolbox"]={AV_PIX_FMT_VIDEOTOOLBOX};
+    map_pix_fmt["omx"]={AV_PIX_FMT_YUV420P};
 
     if ((*codecCtx)->codec_id)
-    RING_WARN("input codec id = %s", avcodec_get_name((*codecCtx)->codec_id));
+        RING_WARN("input codec id = %s", avcodec_get_name((*codecCtx)->codec_id));
     auto it = map_hw_encoders.find((*codecCtx)->codec_id);
     if (it != map_hw_encoders.end()) {
         for (unsigned int i=0 ; i < it->second.size() ; i++){
@@ -215,24 +221,16 @@ setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
                 encoderCtx->framerate = (*codecCtx)->framerate;
                 // emit one intra frame every gop_size frames
                 encoderCtx->max_b_frames = 0;
-                encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P;
                 *codecCtx = encoderCtx;
                 /////////////////////////////////////////////////////
                 HardwareAccel accel;
                 accel.name = it->second[i].substr(it->second[i].find("_") + 1);
-                //suppose pixel format is always set to be vaapi
-                if (accel.name=="vaapi"){
-                    accel.format = AV_PIX_FMT_VAAPI;
-                    (*codecCtx)->pix_fmt = AV_PIX_FMT_VAAPI;
-                }
-                else if (accel.name=="videotoolbox"){
-                    accel.format = AV_PIX_FMT_VIDEOTOOLBOX;
-                    (*codecCtx)->pix_fmt = AV_PIX_FMT_VIDEOTOOLBOX;
-                }
-                //accel.supportedCodecs = ;
+                auto it_pf = map_pix_fmt.find(accel.name);
+                accel.format = it_pf->second;
+                encoderCtx->pix_fmt = it_pf->second;
                 if (initDevice(accel, *codecCtx) >= 0) {
                     //add init hw_frame_ctx
-                    initHwFrameCtx(*codecCtx);
+                    initHwFrameCtx(accel, *codecCtx);
                     RING_WARN("in setuphwencoding hw_frames_ctx = %p",(*codecCtx)->hw_frames_ctx);
                     (*codecCtx)->thread_safe_callbacks = 1;
                     RING_WARN("Found a hw encoder for %s, %s",avcodec_get_name((*codecCtx)->codec_id), it->second[i].c_str());
