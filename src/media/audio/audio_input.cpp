@@ -172,8 +172,11 @@ AudioInput::initFile(const std::string& path)
 std::shared_future<DeviceParams>
 AudioInput::switchInput(const std::string& resource)
 {
+#ifdef RING_VIDEO
+    // need to succesfully call switchInput at least once when no video
     if (resource == currentResource_)
         return futureDevOpts_;
+#endif
 
     if (switchPending_) {
         RING_ERR() << "Audio switch already requested";
@@ -192,7 +195,9 @@ AudioInput::switchInput(const std::string& resource)
     foundDevOpts_.swap(p);
 
     if (resource.empty()) {
-        devOpts_ = {};
+        // go back to default audio device
+        if (initDevice(""))
+            foundDevOpts(devOpts_);
         switchPending_ = true;
         futureDevOpts_ = foundDevOpts_.get_future();
         return futureDevOpts_;
