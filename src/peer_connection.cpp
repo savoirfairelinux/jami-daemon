@@ -233,7 +233,11 @@ TcpSocketEndpoint::TcpSocketEndpoint(const IpAddr& addr)
 
 TcpSocketEndpoint::~TcpSocketEndpoint()
 {
+#ifndef _MSC_VER
     ::close(sock_);
+#else
+    ::closesocket(sock_);
+#endif
 }
 
 void
