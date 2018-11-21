@@ -63,31 +63,24 @@ AudioInput::process()
     const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(samplesPerPacket).count();
 
     if (mainBuffer.availableForGet(id_) < samplesToGet
-        && not mainBuffer.waitForDataAvailable(id_, samplesToGet, MS_PER_PACKET)) {
+        && not mainBuffer.waitForDataAvailable(id_, MS_PER_PACKET)) {
         return;
     }
 
-    // getData resets the format to internal hardware format, will have to be resampled
-    micData_.setFormat(bufferFormat);
-    micData_.resize(samplesToGet);
-    const auto samples = mainBuffer.getData(micData_, id_);
-    if (samples != samplesToGet)
+    auto samples = mainBuffer.getData(id_);
+    if (not samples)
         return;
 
-    if (muteState_) // audio is muted, set samples to 0
-        micData_.reset();
+    //if (muteState_) // audio is muted, set samples to 0
+    //    micData_.reset();
+    // TODO handle mute
 
     std::lock_guard<std::mutex> lk(fmtMutex_);
-    AudioBuffer resampled;
-    resampled.setFormat(format_);
     if (bufferFormat != format_) {
-        resampler_->resample(micData_, resampled);
-    } else {
-        resampled = micData_;
+        samples = resampler_->resample(*samples, format_);
     }
 
-    auto audioFrame = resampled.toAVFrame();
-    auto frame = audioFrame->pointer();
+    auto frame = samples->pointer();
     auto ms = MediaStream("a:local", format_, sent_samples);
     frame->pts = sent_samples;
     sent_samples += frame->nb_samples;
@@ -98,9 +91,7 @@ AudioInput::process()
             rec->recordData(frame, ms);
         }
     }
-
-    std::shared_ptr<AudioFrame> sharedFrame = std::move(audioFrame);
-    notify(sharedFrame);
+    notify(samples);
 }
 
 void
