@@ -247,8 +247,9 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 #endif
     if (systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         extractProfileLevelID(parameters, encoderCtx);
-        RING_WARN("went in the loop");
-        forcePresetX264(encoderCtx);
+        if (accel_.name.empty()){
+			forcePresetX264(encoderCtx);
+		}
         // For H264 :
         // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
         if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
@@ -301,7 +302,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
     if (!stream)
         throw MediaEncoderException("Could not allocate stream");
     currentStreamIdx_ = stream->index;
-
+	//printf("outputCodec->pix_fmt = %s\n",av_get_pix_fmt_name(outputCodec->pix_fmts));
     if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0)
         throw MediaEncoderException("Could not open encoder");
 #ifndef _WIN32
