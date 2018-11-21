@@ -57,7 +57,7 @@ private:
     void gotFrame(std::unique_ptr<AudioFrame>& frame);
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
-    void createDecoder();
+    bool createDecoder();
 
     std::string id_;
     AudioBuffer micData_;
