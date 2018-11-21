@@ -51,6 +51,12 @@ class Resampler {
          */
         void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
 
+        std::unique_ptr<AudioFrame> resample(const AudioFrame& in, const AudioFormat& out) {
+            auto output = std::make_unique<AudioFrame>(out);
+            resample(in.pointer(), output->pointer());
+            return output;
+        }
+
     private:
         NON_COPYABLE(Resampler);
 
