@@ -56,7 +56,7 @@ private:
     void nextFromFile();
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
-    void createDecoder();
+    bool createDecoder();
     void frameResized(std::unique_ptr<AudioFrame>&& ptr);
 
     std::string id_;

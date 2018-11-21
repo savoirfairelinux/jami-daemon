@@ -191,9 +191,13 @@ AudioInput::initFile(const std::string& path)
     devOpts_ = {};
     devOpts_.input = path;
     devOpts_.loop = "1";
+    // sets devOpts_'s sample rate and number of channels
+    if (!createDecoder()) {
+        RING_WARN() << "Cannot decode audio from file, switching back to default device";
+        return initDevice("");
+    }
     decodingFile_ = true;
-    createDecoder(); // sets devOpts_'s sample rate and number of channels
-    return true; // all required info found
+    return true;
 }
 
 std::shared_future<DeviceParams>
@@ -259,13 +263,13 @@ AudioInput::foundDevOpts(const DeviceParams& params)
     }
 }
 
-void
+bool
 AudioInput::createDecoder()
 {
     decoder_.reset();
     if (devOpts_.input.empty()) {
         foundDevOpts(devOpts_);
-        return;
+        return false;
     }
 
     // NOTE createDecoder is currently only used for files, which require rate emulation
@@ -278,13 +282,13 @@ AudioInput::createDecoder()
     if (decoder->openInput(devOpts_) < 0) {
         RING_ERR() << "Could not open input '" << devOpts_.input << "'";
         foundDevOpts(devOpts_);
-        return;
+        return false;
     }
 
     if (decoder->setupFromAudioData() < 0) {
         RING_ERR() << "Could not setup decoder for '" << devOpts_.input << "'";
         foundDevOpts(devOpts_);
-        return;
+        return false;
     }
 
     auto ms = decoder->getStream(devOpts_.input);
@@ -294,6 +298,7 @@ AudioInput::createDecoder()
 
     decoder_ = std::move(decoder);
     foundDevOpts(devOpts_);
+    return true;
 }
 
 void
