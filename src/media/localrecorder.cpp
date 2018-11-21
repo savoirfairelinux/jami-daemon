@@ -98,11 +98,13 @@ LocalRecorder::stopRecording()
     Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
     if (auto ob = recorder_->getStream(audioInput_->getInfo().name))
         audioInput_->detach(ob);
+    audioInput_.reset();
+#ifdef RING_VIDEO
     if (videoInput_)
         if (auto ob = recorder_->getStream(videoInput_->getInfo().name))
             videoInput_->detach(ob);
-    audioInput_.reset();
     videoInput_.reset();
+#endif
 }
 
 } // namespace ring
