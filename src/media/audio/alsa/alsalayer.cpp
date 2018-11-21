@@ -421,13 +421,9 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 // TODO first frame causes broken pipe (underrun) because not enough data is sent
 // we should wait until the handle is ready
 void
-AlsaLayer::write(AudioSample* buffer, int frames, snd_pcm_t * handle)
+AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t * handle)
 {
-    // Skip empty buffers
-    if (!frames)
-        return;
-
-    int err = snd_pcm_writei(handle, (const void*)buffer, frames);
+    int err = snd_pcm_writei(handle, (const void*)buffer.pointer()->data[0], buffer.pointer()->nb_samples);
 
     if (err < 0)
         snd_pcm_recover(handle, err, 0);
@@ -450,7 +446,7 @@ AlsaLayer::write(AudioSample* buffer, int frames, snd_pcm_t * handle)
                     startPlaybackStream();
                 }
 
-            ALSA_CALL(snd_pcm_writei(handle, (const void*)buffer, frames), "XRUN handling failed");
+            ALSA_CALL(snd_pcm_writei(handle, (const void*)buffer.pointer()->data[0], buffer.pointer()->linesize[0]), "XRUN handling failed");
             break;
         }
 
@@ -481,18 +477,21 @@ AlsaLayer::write(AudioSample* buffer, int frames, snd_pcm_t * handle)
     }
 }
 
-int
-AlsaLayer::read(AudioSample* buffer, int frames)
+std::unique_ptr<AudioFrame>
+AlsaLayer::read(unsigned frames)
 {
     if (snd_pcm_state(captureHandle_) == SND_PCM_STATE_XRUN) {
         prepareCaptureStream();
         startCaptureStream();
     }
 
-    int err = snd_pcm_readi(captureHandle_, (void*)buffer, frames);
+    auto ret = std::make_unique<AudioFrame>(audioInputFormat_, frames);
+    int err = snd_pcm_readi(captureHandle_, ret->pointer()->data[0], frames);
 
-    if (err >= 0)
-        return err;
+    if (err >= 0) {
+        ret->pointer()->nb_samples = err;
+        return ret;
+    }
 
     switch (err) {
         case -EPIPE:
@@ -537,7 +536,7 @@ AlsaLayer::buildDeviceTopo(const std::string &plugin, int card)
 }
 
 static bool
-safeUpdate(snd_pcm_t *handle, int &samples)
+safeUpdate(snd_pcm_t *handle, long &samples)
 {
     samples = snd_pcm_avail_update(handle);
 
@@ -679,7 +678,7 @@ AlsaLayer::getAudioDeviceName(int index, DeviceType type) const
         case DeviceType::CAPTURE:
             return getCaptureDeviceList().at(index);
         default:
-            // Should never happen
+            // Should never happencaptureBuff_.toAVFrame()
             RING_ERR("Unexpected type");
             return "";
     }
@@ -702,28 +701,30 @@ void AlsaLayer::capture()
 
     const int framesPerBufferAlsa = 2048;
     toGetFrames = std::min(framesPerBufferAlsa, toGetFrames);
-    captureIBuff_.resize(toGetFrames * audioFormat_.nb_channels);
+    //captureIBuff_.resize(toGetFrames * audioFormat_.nb_channels);
 
-    if (read(captureIBuff_.data(), toGetFrames) != toGetFrames) {
+    auto r = read(toGetFrames);
+    if (!r) {
         RING_ERR("ALSA MIC : Couldn't read!");
         return;
     }
 
-    captureBuff_.deinterleave(captureIBuff_, audioFormat_);
-    captureBuff_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
+    //captureBuff_.deinterleave(captureIBuff_, audioFormat_);
+    //captureBuff_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
-    if (audioFormat_.nb_channels != mainBufferFormat.nb_channels) {
+    /*if (audioFormat_.nb_channels != mainBufferFormat.nb_channels) {
         captureBuff_.setChannelNum(mainBufferFormat.nb_channels, true);
-    }
-    if (audioFormat_.sample_rate != mainBufferFormat.sample_rate) {
-        int outFrames = toGetFrames * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
-        AudioBuffer rsmpl_in(outFrames, mainBufferFormat);
-        resampler_->resample(captureBuff_, rsmpl_in);
-        dcblocker_.process(rsmpl_in);
-        mainRingBuffer_->put(rsmpl_in);
+    }*/
+    if (audioFormat_ != mainBufferFormat) {
+        size_t outFrames = (rational<size_t>(audioFormat_.sample_rate, mainBufferFormat.sample_rate) * toGetFrames).real<size_t>();
+        //AudioBuffer rsmpl_in(outFrames, mainBufferFormat);
+        auto resampled = std::make_unique<AudioFrame>(mainBufferFormat, outFrames);
+        resampler_->resample(r->pointer(), resampled->pointer());
+        //dcblocker_.process(rsmpl_in);
+        mainRingBuffer_->put(std::move(r));
     } else {
-        dcblocker_.process(captureBuff_);
-        mainRingBuffer_->put(captureBuff_);
+        //dcblocker_.process(captureBuff_);
+        mainRingBuffer_->put(std::move(r));
     }
 }
 
@@ -735,20 +736,19 @@ void AlsaLayer::playback()
 
     snd_pcm_wait(playbackHandle_, 20);
 
-    int maxFrames = 0;
+    long maxFrames = 0;
 
     if (not safeUpdate(playbackHandle_, maxFrames))
         return;
 
-    auto& ringBuff = getToRing(audioFormat_, maxFrames);
-    auto& playBuff = getToPlay(audioFormat_, maxFrames);
-    auto& toPlay = ringBuff.frames() > 0 ? ringBuff : playBuff;
-
-    if (!(toPlay.frames() > 0))
+    const auto& ringBuff = getToRing(audioFormat_, maxFrames);
+    const auto& playBuff = getToPlay(audioFormat_, maxFrames);
+    auto toPlay = ringBuff ? ringBuff : playBuff;
+    if (!toPlay)
         return;
 
-    toPlay.interleave(playbackIBuff_);
-    write(playbackIBuff_.data(), toPlay.frames(), playbackHandle_);
+    //toPlay.interleave(playbackIBuff_);
+    write(*toPlay, playbackHandle_);
 }
 
 void AlsaLayer::ringtone()
@@ -757,7 +757,7 @@ void AlsaLayer::ringtone()
         return;
 
     auto file_tone = Manager::instance().getTelephoneFile();
-    int ringtoneAvailFrames = 0;
+    long ringtoneAvailFrames = 0;
 
     if (not safeUpdate(ringtoneHandle_, ringtoneAvailFrames))
         return;
@@ -770,8 +770,8 @@ void AlsaLayer::ringtone()
         file_tone->getNext(playbackBuff_, playbackGain_);
     }
 
-    playbackBuff_.interleave(playbackIBuff_);
-    write(playbackIBuff_.data(), ringtoneAvailFrames, ringtoneHandle_);
+    //playbackBuff_.interleave(playbackIBuff_);
+    write(*playbackBuff_.toAVFrame(), ringtoneHandle_);
 }
 
 void AlsaLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
