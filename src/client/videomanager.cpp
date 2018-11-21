@@ -215,15 +215,19 @@ VideoFrame::noise()
 
 VideoFrame* getNewFrame()
 {
+#ifdef RING_VIDEO
     if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
         return &input->getNewFrame();
+#endif
     return nullptr;
 }
 
 void publishFrame()
 {
+#ifdef RING_VIDEO
     if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
         return input->publishFrame();
+#endif
 }
 
 void
@@ -236,32 +240,41 @@ registerVideoHandlers(const std::map<std::string,
 std::vector<std::string>
 getDeviceList()
 {
+#ifdef RING_VIDEO
     return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceList();
+#endif
 }
 
 VideoCapabilities
 getCapabilities(const std::string& name)
 {
+#ifdef RING_VIDEO
     return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getCapabilities(name);
+#endif
 }
 
 std::string
 getDefaultDevice()
 {
+#ifdef RING_VIDEO
     return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getDefaultDevice();
+#endif
 }
 
 void
 setDefaultDevice(const std::string& name)
 {
+#ifdef RING_VIDEO
     RING_DBG("Setting default device to %s", name.c_str());
     ring::Manager::instance().getVideoManager().videoDeviceMonitor.setDefaultDevice(name);
     ring::Manager::instance().saveConfig();
+#endif
 }
 
 std::map<std::string, std::string>
 getDeviceParams(const std::string& name)
 {
+#ifdef RING_VIDEO
     auto params = ring::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceParams(name);
     std::stringstream width, height, rate;
     width << params.width;
@@ -273,40 +286,57 @@ getDeviceParams(const std::string& name)
         {"height", height.str()},
         {"rate", rate.str()}
     };
+#else
+    return {};
+#endif
 }
 
 std::map<std::string, std::string>
 getSettings(const std::string& name)
 {
+#ifdef RING_VIDEO
     return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getSettings(name).to_map();
+#else
+    return {};
+#endif
 }
 
 void
 applySettings(const std::string& name,
               const std::map<std::string, std::string>& settings)
 {
+#ifdef RING_VIDEO
     ring::Manager::instance().getVideoManager().videoDeviceMonitor.applySettings(name, settings);
+#endif
 }
 
 void
 startCamera()
 {
+#ifdef RING_VIDEO
     ring::Manager::instance().getVideoManager().videoPreview = ring::getVideoCamera();
     ring::Manager::instance().getVideoManager().started = switchToCamera();
+#endif
 }
 
 void
 stopCamera()
 {
+#ifdef RING_VIDEO
     if (switchInput(""))
         ring::Manager::instance().getVideoManager().started = false;
     ring::Manager::instance().getVideoManager().videoPreview.reset();
+#endif
 }
 
 std::string
 startLocalRecorder(const bool& audioOnly, const std::string& filepath)
 {
-    if (!audioOnly && !ring::Manager::instance().getVideoManager().started) {
+    if (!audioOnly
+#ifdef RING_VIDEO
+     && !ring::Manager::instance().getVideoManager().started
+#endif
+    ) {
         RING_ERR("Couldn't start local video recorder (camera is not started)");
         return "";
     }
@@ -353,8 +383,10 @@ switchInput(const std::string& resource)
         call->switchInput(resource);
         return true;
     } else {
+#ifdef RING_VIDEO
         if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
             return input->switchInput(resource).valid();
+#endif
         RING_WARN("Video input not initialized");
     }
     return false;
@@ -363,27 +395,38 @@ switchInput(const std::string& resource)
 bool
 switchToCamera()
 {
+#ifdef RING_VIDEO
     return switchInput(ring::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
+#else
+    return false;
+#endif
 }
 
 bool
 hasCameraStarted()
 {
+#ifdef RING_VIDEO
     return ring::Manager::instance().getVideoManager().started;
+#else
+    return false;
+#endif
 }
 
 void
 registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
 {
+#ifdef RING_VIDEO
    if (auto sink = ring::Manager::instance().getSinkClient(sinkId))
        sink->registerTarget(target);
    else
+#endif
        RING_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
 std::map<std::string, std::string>
 getRenderer(const std::string& callId)
 {
+#ifdef RING_VIDEO
    if (auto sink = ring::Manager::instance().getSinkClient(callId))
        return {
            {DRing::Media::Details::CALL_ID,  callId},
@@ -392,6 +435,7 @@ getRenderer(const std::string& callId)
            {DRing::Media::Details::HEIGHT,   ring::to_string(sink->getHeight())},
        };
    else
+#endif
        return {
            {DRing::Media::Details::CALL_ID,  callId},
            {DRing::Media::Details::SHM_PATH, ""},
@@ -456,6 +500,7 @@ namespace ring {
 std::shared_ptr<video::VideoFrameActiveWriter>
 getVideoCamera()
 {
+#ifdef RING_VIDEO
     auto& vmgr = Manager::instance().getVideoManager();
     if (auto input = vmgr.videoInput.lock())
         return input;
@@ -464,17 +509,21 @@ getVideoCamera()
     auto input = std::make_shared<video::VideoInput>();
     vmgr.videoInput = input;
     return input;
+#endif
 }
 
 video::VideoDeviceMonitor&
 getVideoDeviceMonitor()
 {
+#ifdef RING_VIDEO
     return Manager::instance().getVideoManager().videoDeviceMonitor;
+#endif
 }
 
 std::shared_ptr<AudioInput>
 getAudioInput(const std::string& id)
 {
+#ifdef RING_VIDEO
     auto& vmgr = Manager::instance().getVideoManager();
     std::lock_guard<std::mutex> lk(vmgr.audioMutex);
 
@@ -492,9 +541,14 @@ getAudioInput(const std::string& id)
             return input;
         }
     }
+#endif
 
     auto input = std::make_shared<AudioInput>(id);
+
+#ifdef RING_VIDEO
     vmgr.audioInputs[id] = input;
+#endif
+
     Manager::instance().getRingBufferPool().bindCallID(id, RingBufferPool::DEFAULT_ID);
     return input;
 }
