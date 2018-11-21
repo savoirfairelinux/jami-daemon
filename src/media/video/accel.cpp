@@ -60,7 +60,7 @@ transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame&
 {
     if (accel.name.empty())
         return -1;
-
+        
     auto input = frame.pointer();
     if (input->format != accel.format) {
         RING_ERR("Frame format mismatch: expected %s, got %s",
@@ -110,12 +110,14 @@ initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
         }
     }
 #endif
-    // default device (nullptr) works for most cases
-    if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, nullptr, nullptr, 0)) >= 0) {
-        codecCtx->hw_device_ctx = hardwareDeviceCtx;
-        RING_DBG("Using '%s' hardware acceleration", accel.name.c_str());
-    }
-
+	// default device (nullptr) works for most cases
+	if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, nullptr, nullptr, 0)) >= 0) {
+		codecCtx->hw_device_ctx = hardwareDeviceCtx;
+		RING_DBG("Using '%s' hardware acceleration", accel.name.c_str());
+	}
+	else{
+		RING_ERR()<<"av_hwdevice_ctx_create error: "<<libav_utils::getError(ret);
+	}
     return ret;
 }
 
@@ -136,7 +138,7 @@ initHwFrameCtx(HardwareAccel accel, AVCodecContext *ctx){
         frames_ctx->sw_format = AV_PIX_FMT_NV12;
     frames_ctx->width     = ctx->width;
     frames_ctx->height    = ctx->height;
-    frames_ctx->initial_pool_size = 20;
+    frames_ctx->initial_pool_size = 32;
     if ((err = av_hwframe_ctx_init(hw_frames_ref)) < 0) {
         fprintf(stderr, "Failed to initialize VAAPI frame context."
                 "Error code: %s",libav_utils::getError(err).c_str());
@@ -168,18 +170,27 @@ setupHardwareDecoding(AVCodecContext* codecCtx)
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
     };
 
+    RING_WARN("input decoding codec id = %s", avcodec_get_name(codecCtx->codec_id));
+
     for (auto accel : accels) {
         if (std::find(accel.supportedCodecs.begin(), accel.supportedCodecs.end(),
                 static_cast<AVCodecID>(codecCtx->codec_id)) != accel.supportedCodecs.end()) {
-            if (initDevice(accel, codecCtx) >= 0) {
+			if (initDevice(accel, codecCtx) >= 0) {
                 codecCtx->get_format = getFormatCb;
                 codecCtx->thread_safe_callbacks = 1;
+                RING_WARN("Found a hw decoder for %s.", accel.name);
                 return accel;
             }
         }
     }
-
-    RING_WARN("Not using hardware accelerated decoding");
+	std::string av_type;
+	if (codecCtx->codec_type == AVMEDIA_TYPE_UNKNOWN)
+		av_type = " for unknown type";
+	else if (codecCtx->codec_type == AVMEDIA_TYPE_VIDEO)
+		av_type = " for video";
+	else if (codecCtx->codec_type == AVMEDIA_TYPE_AUDIO)
+		av_type = " for audio";
+    RING_WARN("Not using hardware accelerated decoding%s",av_type.c_str());
     return {};
 }
 
@@ -188,7 +199,7 @@ setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
 {
     //select codec API based on the provided codec ID
     std::map<enum AVCodecID,std::vector<std::string>>map_hw_encoders;
-    map_hw_encoders[AV_CODEC_ID_H264] = { "h264_vaapi", "h264_videotoolbox"};
+    map_hw_encoders[AV_CODEC_ID_H264] = { "h264_omx"/*, "h264_vaapi"*/, "h264_videotoolbox"};
     map_hw_encoders[AV_CODEC_ID_HEVC] = {"hevc_vaapi","hevc_videotoolbox"};
     map_hw_encoders[AV_CODEC_ID_MJPEG] = {"mjpeg_vaapi"};
     map_hw_encoders[AV_CODEC_ID_MPEG2VIDEO] = {"mpeg2_vaapi"};
@@ -199,13 +210,14 @@ setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
     map_pix_fmt["vaapi"]={AV_PIX_FMT_VAAPI};
     map_pix_fmt["videotoolbox"]={AV_PIX_FMT_VIDEOTOOLBOX};
     map_pix_fmt["omx"]={AV_PIX_FMT_YUV420P};
-
+	
     if ((*codecCtx)->codec_id)
-        RING_WARN("input codec id = %s", avcodec_get_name((*codecCtx)->codec_id));
+        RING_WARN("input encoding codec id = %s", avcodec_get_name((*codecCtx)->codec_id));
     auto it = map_hw_encoders.find((*codecCtx)->codec_id);
     if (it != map_hw_encoders.end()) {
         for (unsigned int i=0 ; i < it->second.size() ; i++){
             RING_WARN("codec in list = %s", it->second[i].c_str());
+            RING_WARN("avcodec_find_encoder_by_name = %p", avcodec_find_encoder_by_name((it->second[i]).c_str()));
             if ((*codec = avcodec_find_encoder_by_name((it->second[i]).c_str()))){
                 //reprepare codeccontext for new codec
                 AVCodecContext* encoderCtx = avcodec_alloc_context3(*codec);
@@ -228,6 +240,9 @@ setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
                 auto it_pf = map_pix_fmt.find(accel.name);
                 accel.format = it_pf->second;
                 encoderCtx->pix_fmt = it_pf->second;
+                //No need to initialize device if using OpenMAX (Raspberry Pi)
+                if (accel.name == "omx")
+					return {};
                 if (initDevice(accel, *codecCtx) >= 0) {
                     //add init hw_frame_ctx
                     initHwFrameCtx(accel, *codecCtx);
@@ -239,8 +254,14 @@ setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
             }
         }
     }
-
-    RING_WARN("Not using hardware accelerated encoding");
+	std::string av_type;
+	if ((*codecCtx)->codec_type == AVMEDIA_TYPE_UNKNOWN)
+		av_type = " for unknown type";
+	else if ((*codecCtx)->codec_type == AVMEDIA_TYPE_VIDEO)
+		av_type = " for video";
+	else if ((*codecCtx)->codec_type == AVMEDIA_TYPE_AUDIO)
+		av_type = " for audio";
+    RING_WARN("Not using hardware accelerated encoding%s",av_type.c_str());
     return {};
 }
 
