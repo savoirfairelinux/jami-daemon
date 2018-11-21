@@ -129,6 +129,7 @@ class MediaDecoder {
         void extract(const std::map<std::string, std::string>& map, const std::string& key);
         int correctPixFmt(int input_pix_fmt);
         int setupStream(AVMediaType mediaType);
+        int selectStream(AVMediaType type);
 
         bool fallback_ = false;
 
