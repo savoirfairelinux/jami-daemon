@@ -42,7 +42,7 @@ using AudioFrame = DRing::AudioFrame;
 using VideoFrame = DRing::VideoFrame;
 
 // Some helpers
-std::size_t videoFrameSize(int format, int width, int height);
+int videoFrameSize(int format, int width, int height);
 
 #endif // RING_VIDEO
 
