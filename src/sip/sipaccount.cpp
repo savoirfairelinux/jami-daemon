@@ -708,8 +708,6 @@ bool SIPAccount::mapPortUPnP()
 
 void SIPAccount::doRegister()
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
-
     if (not isUsable()) {
         RING_WARN("Account must be enabled and active to register, ignoring");
         return;
