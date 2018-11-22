@@ -697,10 +697,9 @@ bool SIPAccount::mapPortUPnP()
         }
     }
 
-    std::weak_ptr<SIPAccount> w = std::static_pointer_cast<SIPAccount>(shared_from_this());
-    upnp_->setIGDListener([w] {
-        if (auto shared = w.lock())
-            shared->doRegister();
+    upnp_->setIGDListener([w=weak()] {
+        if (auto acc = w.lock())
+            acc->doRegister();
     });
 
     return added;
@@ -708,8 +707,7 @@ bool SIPAccount::mapPortUPnP()
 
 void SIPAccount::doRegister()
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
-
+    std::unique_lock<std::mutex> lock(configurationMutex_);
     if (not isUsable()) {
         RING_WARN("Account must be enabled and active to register, ignoring");
         return;
@@ -720,17 +718,20 @@ void SIPAccount::doRegister()
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
         RING_DBG("UPnP: waiting for IGD to register SIP account");
+        lock.unlock();
         setRegistrationState(RegistrationState::TRYING);
-        auto shared = shared_from_this();
-        std::thread{ [shared] {
-            sip_utils::register_thread();
-            auto this_ = std::static_pointer_cast<SIPAccount>(shared).get();
-            if ( not this_->mapPortUPnP())
-                RING_WARN("UPnP: Could not successfully map SIP port with UPnP, continuing with account registration anyways.");
-            this_->doRegister1_();
+        std::thread{ [w=weak()] {
+            if (auto acc = w.lock()) {
+                sip_utils::register_thread();
+                if (not acc->mapPortUPnP())
+                    RING_WARN("UPnP: Could not successfully map SIP port with UPnP, continuing with account registration anyways.");
+                acc->doRegister1_();
+            }
         }}.detach();
-    } else
+    } else {
+        lock.unlock();
         doRegister1_();
+    }
 }
 
 void SIPAccount::doRegister1_()
@@ -743,12 +744,11 @@ void SIPAccount::doRegister1_()
         }
     }
 
-    std::weak_ptr<SIPAccount> weak_acc = std::static_pointer_cast<SIPAccount>(shared_from_this());
     link_->resolveSrvName(
         hostname_,
         tlsEnable_ ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
-        [weak_acc](std::vector<IpAddr> host_ips) {
-            if (auto acc = weak_acc.lock()) {
+        [w = weak()](std::vector<IpAddr> host_ips) {
+            if (auto acc = w.lock()) {
                 std::lock_guard<std::mutex> lock(acc->configurationMutex_);
                 if (host_ips.empty()) {
                     RING_ERR("Can't resolve hostname for registration.");
@@ -884,10 +884,9 @@ SIPAccount::connectivityChanged()
         return;
     }
 
-    auto shared = std::static_pointer_cast<SIPAccount>(shared_from_this());
-    doUnregister([shared](bool /* transport_free */) {
-        if (shared->isUsable())
-            shared->doRegister();
+    doUnregister([acc=shared()](bool /* transport_free */) {
+        if (acc->isUsable())
+            acc->doRegister();
     });
 }
 
@@ -2101,7 +2100,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
         uint64_t id;
     };
     ctx* t = new ctx;
-    t->acc = std::static_pointer_cast<SIPAccount>(shared_from_this());
+    t->acc = shared();
     t->id = id;
 
     status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t, [](void *token, pjsip_event *e) {
