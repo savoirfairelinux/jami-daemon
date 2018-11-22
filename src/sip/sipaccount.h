@@ -70,6 +70,19 @@ class SIPAccount : public SIPAccountBase {
     public:
         constexpr static const char * const ACCOUNT_TYPE = "SIP";
 
+        std::shared_ptr<SIPAccount> shared() {
+            return std::static_pointer_cast<SIPAccount>(shared_from_this());
+        }
+        std::shared_ptr<SIPAccount const> shared() const {
+            return std::static_pointer_cast<SIPAccount const>(shared_from_this());
+        }
+        std::weak_ptr<SIPAccount> weak() {
+            return std::static_pointer_cast<SIPAccount>(shared_from_this());
+        }
+        std::weak_ptr<SIPAccount const> weak() const {
+            return std::static_pointer_cast<SIPAccount const>(shared_from_this());
+        }
+
         /**
          * Constructor
          * @param accountID The account identifier

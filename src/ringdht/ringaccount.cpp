@@ -1875,6 +1875,7 @@ RingAccount::mapPortUPnP()
 void
 RingAccount::doRegister()
 {
+    std::unique_lock<std::mutex> lock(configurationMutex_);
     if (not isUsable()) {
         RING_WARN("Account must be enabled and active to register, ignoring");
         return;
@@ -1893,17 +1894,20 @@ RingAccount::doRegister()
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
-        auto shared = shared_from_this();
         RING_DBG("UPnP: waiting for IGD to register RING account");
+        lock.unlock();
         setRegistrationState(RegistrationState::TRYING);
-        std::thread{ [shared] {
-            auto this_ = std::static_pointer_cast<RingAccount>(shared).get();
-            if ( not this_->mapPortUPnP())
-                RING_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
-            this_->doRegister_();
+        std::thread{ [w=weak()] {
+            if (auto acc = w.lock()) {
+                if (not acc->mapPortUPnP())
+                    RING_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
+                acc->doRegister_();
+            }
         }}.detach();
-    } else
+    } else {
+        lock.unlock();
         doRegister_();
+    }
 }
 
 
