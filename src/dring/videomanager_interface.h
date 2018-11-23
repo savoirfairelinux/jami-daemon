@@ -35,13 +35,17 @@ struct AVPacket;
 #include <map>
 #include <string>
 #include <functional>
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
-
 
 #if __APPLE__
 #import "TargetConditionals.h"
 #endif
+
+namespace ring {
+struct AudioFormat;
+}
 
 namespace DRing {
 
@@ -77,6 +81,8 @@ public:
 
     // Return a pointer on underlaying buffer
     AVFrame* pointer() const noexcept { return frame_.get(); }
+    const AVFrame& get() const { return *frame_; }
+    AVFrame& get() { return *frame_; }
 
     // Fill this MediaFrame with data from o
     void copyFrom(const MediaFrame& o);
@@ -88,7 +94,17 @@ protected:
     std::unique_ptr<AVFrame, void(*)(AVFrame*)> frame_;
 };
 
-class DRING_PUBLIC AudioFrame : public MediaFrame {};
+class DRING_PUBLIC AudioFrame : public MediaFrame {
+public:
+    AudioFrame() : MediaFrame() {}
+    AudioFrame(const ring::AudioFormat& format, size_t nb_samples = 0);
+    ~AudioFrame() {};
+    void mix(const AudioFrame& o);
+
+private:
+    void setFormat(const ring::AudioFormat& format);
+    void reserve(size_t nb_samples = 0);
+};
 
 class DRING_PUBLIC VideoFrame : public MediaFrame {
 public:
