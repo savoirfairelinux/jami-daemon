@@ -28,15 +28,14 @@ extern "C" {
 
 namespace ring {
 
+// NOTE 160 samples should the minimum that will be provided (20 ms @ 8kHz),
+// barring files that for some obscure reason have smaller packets
 AudioFrameResizer::AudioFrameResizer(const AudioFormat& format, int frameSize, std::function<void(std::unique_ptr<AudioFrame>&&)> cb)
     : format_(format)
     , frameSize_(frameSize)
     , cb_(cb)
-{
-    // NOTE 160 samples should the minimum that will be provided (20 ms @ 8kHz),
-    // barring files that for some obscure reason have smaller packets
-    queue_ = av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, 160);
-}
+    , queue_(av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, 160))
+{}
 
 AudioFrameResizer::~AudioFrameResizer()
 {
@@ -94,24 +93,12 @@ AudioFrameResizer::dequeue()
     if (samples() < frameSize_)
         return {};
 
+    auto frame = std::make_unique<AudioFrame>(format_, frameSize_);
     int ret;
-    auto frame = std::make_unique<AudioFrame>();
-    auto f = frame->pointer();
-    f->format = (int)format_.sampleFormat;
-    f->channels = format_.nb_channels;
-    f->channel_layout = av_get_default_channel_layout(format_.nb_channels);
-    f->sample_rate = format_.sample_rate;
-    f->nb_samples = frameSize_;
-    if ((ret = av_frame_get_buffer(f, 0)) < 0) {
-        RING_ERR() << "Failed to allocate audio buffers: " << libav_utils::getError(ret);
-        return {};
-    }
-
-    if ((ret = av_audio_fifo_read(queue_, reinterpret_cast<void**>(f->data), frameSize_)) < 0) {
+    if ((ret = av_audio_fifo_read(queue_, reinterpret_cast<void**>(frame->pointer()->data), frameSize_)) < 0) {
         RING_ERR() << "Could not read samples from queue: " << libav_utils::getError(ret);
         return {};
     }
-
     return frame;
 }
 

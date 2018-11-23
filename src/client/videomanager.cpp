@@ -67,6 +67,37 @@ MediaFrame::reset() noexcept
     av_frame_unref(frame_.get());
 }
 
+AudioFrame::AudioFrame(const ring::AudioFormat& format, size_t nb_samples) : MediaFrame() {
+    setFormat(format);
+    if (nb_samples)
+        reserve(nb_samples);
+}
+
+void
+AudioFrame::setFormat(const ring::AudioFormat& format)
+{
+    auto d = pointer();
+    d->channels = format.nb_channels;
+    d->channel_layout = av_get_default_channel_layout(format.nb_channels);
+    d->sample_rate = format.sample_rate;
+    d->format = format.sampleFormat;
+}
+
+void
+AudioFrame::reserve(size_t nb_samples) {
+    if (nb_samples != 0) {
+        auto d = pointer();
+        d->nb_samples = nb_samples;
+        av_frame_get_buffer(d, 0);
+    }
+}
+
+void
+AudioFrame::mix(const AudioFrame& o)
+{
+    RING_ERR("AudioFrame::mix not implemented yet");
+}
+
 VideoFrame::~VideoFrame()
 {
     if (releaseBufferCb_)

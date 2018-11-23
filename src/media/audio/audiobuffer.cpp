@@ -301,22 +301,8 @@ size_t AudioBuffer::copy(AudioSample* in, size_t sample_num, size_t pos_out /* =
 std::unique_ptr<AudioFrame>
 AudioBuffer::toAVFrame() const
 {
-    auto audioFrame = std::make_unique<AudioFrame>();
-    auto frame = audioFrame->pointer();
-    frame->format = AV_SAMPLE_FMT_S16;
-    frame->nb_samples = frames();
-    frame->channel_layout = av_get_default_channel_layout(channels());
-    frame->channels = channels();
-    frame->sample_rate = getSampleRate();
-
-    if (av_frame_get_buffer(frame, 0) < 0) {
-        RING_ERR() << "Failed to allocate audio frame";
-        av_frame_free(&frame);
-        return nullptr;
-    }
-
-    interleave(reinterpret_cast<AudioSample*>(frame->data[0]));
-
+    auto audioFrame = std::make_unique<AudioFrame>(getFormat(), frames());
+    interleave(reinterpret_cast<AudioSample*>(audioFrame->pointer()->data[0]));
     return audioFrame;
 }
 
