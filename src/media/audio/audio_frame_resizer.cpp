@@ -95,7 +95,9 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
         throw std::runtime_error("Could not write samples to audio queue: input frame is not the right format");
     }
 
-    if (samples() == 0 && f->nb_samples == frameSize_) {
+    auto nb_samples = samples();
+    if (nb_samples == 0 && f->nb_samples == frameSize_) {
+        nextOutputPts_ = frame->pointer()->pts + frameSize_;
         cb_(std::move(frame));
         return; // return if frame was just passed through
     }
@@ -105,6 +107,9 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
         RING_ERR() << "Audio resizer error: " << libav_utils::getError(ret);
         throw std::runtime_error("Failed to add audio to frame resizer");
     }
+
+    if (nextOutputPts_ == 0)
+        nextOutputPts_ = frame->pointer()->pts - nb_samples;
 
     if (cb_)
         while (auto frame = dequeue())
@@ -123,6 +128,8 @@ AudioFrameResizer::dequeue()
         RING_ERR() << "Could not read samples from queue: " << libav_utils::getError(ret);
         return {};
     }
+    frame->pointer()->pts = nextOutputPts_;
+    nextOutputPts_ += frameSize_;
     return frame;
 }
 
