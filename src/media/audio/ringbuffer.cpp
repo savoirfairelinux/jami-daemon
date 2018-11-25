@@ -46,8 +46,10 @@ RingBuffer::RingBuffer(const std::string& rbuf_id, size_t size, AudioFormat form
     , not_empty_()
     , readoffsets_()
     , format_(format)
-{
-}
+    , resizer_(format_, format_.sample_rate / 50, [this](std::shared_ptr<AudioFrame>&& frame){
+        putToBuffer(std::move(frame));
+    })
+{}
 
 void
 RingBuffer::flush(const std::string &call_id)
@@ -148,8 +150,13 @@ bool RingBuffer::hasNoReadOffsets() const
 // For the writer only:
 //
 
+void RingBuffer::put(std::shared_ptr<AudioFrame>&& data)
+{
+    resizer_.enqueue(resampler_.resample(std::move(data), format_));
+}
+
 // This one puts some data inside the ring buffer.
-void RingBuffer::put(std::unique_ptr<AudioFrame>&& data)
+void RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
 {
     std::lock_guard<std::mutex> l(lock_);
     const size_t buffer_size = buffer_.size();

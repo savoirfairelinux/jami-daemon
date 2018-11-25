@@ -25,6 +25,8 @@
 
 #include "audiobuffer.h"
 #include "noncopyable.h"
+#include "audio_frame_resizer.h"
+#include "resampler.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -65,8 +67,9 @@ class RingBuffer {
             return format_;
         }
 
-        constexpr inline void setFormat(AudioFormat format) {
+        inline void setFormat(const AudioFormat& format) {
             format_ = format;
+            resizer_.setFormat(format, format.sample_rate / 50);
         }
 
         /**
@@ -88,7 +91,7 @@ class RingBuffer {
          * @param buffer Data to copied
          * @param toCopy Number of bytes to copy
          */
-         void put(std::unique_ptr<AudioFrame>&& data);
+         void put(std::shared_ptr<AudioFrame>&& data);
 
         /**
          * To get how much samples are available in the buffer to read in
@@ -150,6 +153,8 @@ class RingBuffer {
         using ReadOffsetMap = std::map<std::string, ReadOffset>;
         NON_COPYABLE(RingBuffer);
 
+        void putToBuffer(std::shared_ptr<AudioFrame>&& data);
+
         bool hasNoReadOffsets() const;
 
         /**
@@ -190,6 +195,9 @@ class RingBuffer {
         mutable std::condition_variable not_empty_;
 
         ReadOffsetMap readoffsets_;
+
+        Resampler resampler_;
+        AudioFrameResizer resizer_;
 };
 
 } // namespace ring
