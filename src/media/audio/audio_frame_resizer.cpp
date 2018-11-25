@@ -30,13 +30,11 @@ extern "C" {
 
 namespace ring {
 
-// NOTE 160 samples should the minimum that will be provided (20 ms @ 8kHz),
-// barring files that for some obscure reason have smaller packets
-AudioFrameResizer::AudioFrameResizer(const AudioFormat& format, int frameSize, std::function<void(std::unique_ptr<AudioFrame>&&)> cb)
+AudioFrameResizer::AudioFrameResizer(const AudioFormat& format, int size, std::function<void(std::shared_ptr<AudioFrame>&&)> cb)
     : format_(format)
-    , frameSize_(frameSize)
+    , frameSize_(size)
     , cb_(cb)
-    , queue_(av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, 160))
+    , queue_(av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, frameSize_))
 {}
 
 AudioFrameResizer::~AudioFrameResizer()
@@ -63,7 +61,32 @@ AudioFrameResizer::format() const
 }
 
 void
-AudioFrameResizer::enqueue(std::unique_ptr<AudioFrame>&& frame)
+AudioFrameResizer::setFormat(const AudioFormat& format, int size)
+{
+    if (format != format_) {
+        if (auto discaded = samples())
+            RING_WARN("Discarding %d samples", discaded);
+        av_audio_fifo_free(queue_);
+        format_ = format;
+        queue_ = av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, frameSize_);
+    }
+    if (size)
+        setFrameSize(size);
+}
+
+void
+AudioFrameResizer::setFrameSize(int frameSize)
+{
+    if (frameSize_ != frameSize) {
+        frameSize_ = frameSize;
+        if (cb_)
+            while (auto frame = dequeue())
+                cb_(std::move(frame));
+    }
+}
+
+void
+AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
 {
     int ret = 0;
     auto f = frame->pointer();
@@ -72,7 +95,8 @@ AudioFrameResizer::enqueue(std::unique_ptr<AudioFrame>&& frame)
         throw std::runtime_error("Could not write samples to audio queue: input frame is not the right format");
     }
 
-    if (samples() == 0 && f->nb_samples == frameSize_) {
+    auto samps = samples();
+    if (samps == 0 && f->nb_samples == frameSize_) {
         cb_(std::move(frame));
         return; // return if frame was just passed through
     }
@@ -83,11 +107,12 @@ AudioFrameResizer::enqueue(std::unique_ptr<AudioFrame>&& frame)
         throw std::runtime_error("Failed to add audio to frame resizer");
     }
 
-    while (auto frame = dequeue())
-        cb_(std::move(frame));
+    if (cb_)
+        while (auto frame = dequeue())
+            cb_(std::move(frame));
 }
 
-std::unique_ptr<AudioFrame>
+std::shared_ptr<AudioFrame>
 AudioFrameResizer::dequeue()
 {
     if (samples() < frameSize_)
