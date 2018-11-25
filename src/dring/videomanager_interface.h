@@ -80,7 +80,8 @@ public:
     virtual ~MediaFrame() = default;
 
     // Return a pointer on underlaying buffer
-    AVFrame* pointer() const noexcept { return frame_.get(); }
+    const AVFrame* pointer() const noexcept { return frame_.get(); }
+    AVFrame* pointer() noexcept { return frame_.get(); }
 
     // Fill this MediaFrame with data from o
     void copyFrom(const MediaFrame& o);
