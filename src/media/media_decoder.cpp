@@ -310,7 +310,7 @@ MediaDecoder::decode(VideoFrame& result)
 #endif // RING_VIDEO
 
 MediaDecoder::Status
-MediaDecoder::decode(const AudioFrame& decodedFrame)
+MediaDecoder::decode(AudioFrame& decodedFrame)
 {
     const auto frame = decodedFrame.pointer();
 
