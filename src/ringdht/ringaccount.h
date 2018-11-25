@@ -426,20 +426,17 @@ class RingAccount : public SIPAccountBase {
          */
         static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password, const std::string& pin, bool previous=false);
 
-        /**
-         * Update tracking info when buddy appears offline.
-         *
-         * @param buddy_info_it  An iterator over the map trackedBuddies_
-         */
-        void onTrackedBuddyOffline(std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it);
+        void trackPresence(const dht::InfoHash& h, BuddyInfo& buddy);
 
         /**
          * Update tracking info when buddy appears offline.
-         *
-         * @param buddy_info_it  An iterator over the map trackedBuddies_
-         * @param device_id       The device id
          */
-        void onTrackedBuddyOnline(std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it, const dht::InfoHash& device_id);
+        void onTrackedBuddyOffline(const dht::InfoHash&);
+
+        /**
+         * Update tracking info when buddy appears offline.
+         */
+        void onTrackedBuddyOnline(const dht::InfoHash&);
 
         void doRegister_();
         void incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from);
