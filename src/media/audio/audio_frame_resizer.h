@@ -39,7 +39,7 @@ namespace ring {
  */
 class AudioFrameResizer {
 public:
-    AudioFrameResizer(const AudioFormat& format, int frameSize, std::function<void(std::unique_ptr<AudioFrame>&&)> cb);
+    AudioFrameResizer(const AudioFormat& format, int frameSize, std::function<void(std::shared_ptr<AudioFrame>&&)> cb = {});
     ~AudioFrameResizer();
 
     /**
@@ -52,6 +52,9 @@ public:
      * will fail. Returned frames are in this format.
      */
     AudioFormat format() const;
+
+    void setFormat(const AudioFormat& format, int frameSize);
+    void setFrameSize(int frameSize);
 
     /**
      * Gets the number of samples per output frame.
@@ -66,15 +69,15 @@ public:
      *
      * NOTE @frame's format must match @format_, or this will fail.
      */
-    void enqueue(std::unique_ptr<AudioFrame>&& frame);
-
-private:
-    NON_COPYABLE(AudioFrameResizer);
+    void enqueue(std::shared_ptr<AudioFrame>&& frame);
 
     /**
      * Notifies owner of a new frame.
      */
-    std::unique_ptr<AudioFrame> dequeue();
+    std::shared_ptr<AudioFrame> dequeue();
+
+private:
+    NON_COPYABLE(AudioFrameResizer);
 
     /**
      * Format used for input and output audio frames.
@@ -89,7 +92,7 @@ private:
     /**
      * Function to call once @queue_ contains enough samples to produce a frame.
      */
-    std::function<void(std::unique_ptr<AudioFrame>&&)> cb_;
+    std::function<void(std::shared_ptr<AudioFrame>&&)> cb_;
 
     /**
      * Audio queue operating on the sample level instead of byte level.
