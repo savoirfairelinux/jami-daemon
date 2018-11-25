@@ -51,6 +51,9 @@ class Resampler {
          */
         void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
 
+        std::unique_ptr<AudioFrame> resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& out);
+        std::shared_ptr<AudioFrame> resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& out);
+
     private:
         NON_COPYABLE(Resampler);
 
