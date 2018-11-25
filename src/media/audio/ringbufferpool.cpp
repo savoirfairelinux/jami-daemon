@@ -70,6 +70,9 @@ RingBufferPool::setInternalAudioFormat(AudioFormat format)
     if (format != internalAudioFormat_) {
         flushAllBuffers();
         internalAudioFormat_ = format;
+        for (auto& wrb : ringBufferMap_)
+            if (auto rb = wrb.second.lock())
+                rb->setFormat(internalAudioFormat_);
     }
 }
 
