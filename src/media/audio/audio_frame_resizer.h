@@ -98,6 +98,7 @@ private:
      * Audio queue operating on the sample level instead of byte level.
      */
     AVAudioFifo* queue_;
+    int64_t nextOutputPts_ {0};
 };
 
 } // namespace ring
