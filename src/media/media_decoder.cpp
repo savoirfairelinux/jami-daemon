@@ -466,21 +466,6 @@ MediaDecoder::getTimeBase() const
 int MediaDecoder::getPixelFormat() const
 { return decoderCtx_->pix_fmt; }
 
-void
-MediaDecoder::writeToRingBuffer(std::unique_ptr<AudioFrame>&& decodedFrame,
-                                RingBuffer& rb, const AudioFormat outFormat)
-{
-    AudioFormat format (decoderCtx_->sample_rate, decoderCtx_->channels, decoderCtx_->sample_fmt);
-    if (format != outFormat) {
-        if (not resampler_) {
-            RING_DBG("Creating audio resampler");
-            resampler_.reset(new Resampler);
-        }
-        decodedFrame = resampler_->resample(*decodedFrame, outFormat);
-    }
-    rb.put(std::move(decodedFrame));
-}
-
 int
 MediaDecoder::correctPixFmt(int input_pix_fmt) {
 
