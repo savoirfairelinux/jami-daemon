@@ -90,7 +90,6 @@ class MediaDecoder {
 
         int setupFromAudioData();
         Status decode(AudioFrame&);
-        void writeToRingBuffer(std::unique_ptr<AudioFrame>&& decodedFrame, RingBuffer&, const AudioFormat);
 
         int getWidth() const;
         int getHeight() const;
