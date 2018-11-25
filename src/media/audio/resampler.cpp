@@ -100,4 +100,33 @@ Resampler::resample(const AudioBuffer& dataIn, AudioBuffer& dataOut)
         output->nb_samples, output->channels);
 }
 
+std::unique_ptr<AudioFrame>
+Resampler::resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& format)
+{
+    if (in->pointer()->sample_rate == format.sample_rate &&
+        in->pointer()->channels == format.nb_channels &&
+        (AVSampleFormat)in->pointer()->format == format.sampleFormat)
+    {
+        return std::move(in);
+    }
+    auto output = std::make_unique<AudioFrame>(format);
+    resample(in->pointer(), output->pointer());
+    return output;
+}
+
+std::shared_ptr<AudioFrame>
+Resampler::resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& format)
+{
+    if (in->pointer()->sample_rate == format.sample_rate &&
+        in->pointer()->channels == format.nb_channels &&
+        (AVSampleFormat)in->pointer()->format == format.sampleFormat)
+    {
+        return std::move(in);
+    }
+    auto output = std::make_shared<AudioFrame>(format);
+    resample(in->pointer(), output->pointer());
+    return output;
+}
+
+
 } // namespace ring
