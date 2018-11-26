@@ -19,8 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef RING_BUFFER_POOL_H_
-#define RING_BUFFER_POOL_H_
+#pragma once
 
 #include "audiobuffer.h"
 #include "noncopyable.h"
@@ -36,7 +35,6 @@ namespace ring {
 class RingBuffer;
 
 class RingBufferPool {
-
     public:
         static const char * const DEFAULT_ID;
 
@@ -86,12 +84,11 @@ class RingBufferPool {
         void unBindAll(const std::string& call_id);
 
         bool waitForDataAvailable(const std::string& call_id,
-                                  size_t min_data_length,
                                   const std::chrono::microseconds& max_wait) const;
 
-        size_t getData(AudioBuffer& buffer, const std::string& call_id);
+        std::shared_ptr<AudioFrame> getData(const std::string& call_id);
 
-        size_t getAvailableData(AudioBuffer& buffer, const std::string& call_id);
+        std::shared_ptr<AudioFrame> getAvailableData(const std::string& call_id);
 
         size_t availableForGet(const std::string& call_id) const;
 
@@ -155,5 +152,3 @@ class RingBufferPool {
 };
 
 } // namespace ring
-
-#endif  // RING_BUFFER_POOL_H_
