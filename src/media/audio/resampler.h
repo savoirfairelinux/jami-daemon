@@ -62,7 +62,7 @@ class Resampler {
          * output buffers always have the same formats, will never be called, as the first
          * initialization is done in swr_convert_frame.
          */
-        void reinit(const AudioFormat& in, const AudioFormat& out);
+        void reinit(const AVFrame* in, const AVFrame* out);
 
         SwrContext* swrCtx_; // incomplete type, cannot be a unique_ptr
         bool initialized_;
