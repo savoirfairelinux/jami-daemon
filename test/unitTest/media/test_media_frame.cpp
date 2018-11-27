@@ -27,6 +27,7 @@ extern "C" {
 #include <libavutil/pixfmt.h>
 }
 
+#include "audio/audiobuffer.h"
 #include "dring.h"
 #include "videomanager_interface.h"
 
@@ -43,9 +44,11 @@ public:
 
 private:
     void testCopy();
+    void testMix();
 
     CPPUNIT_TEST_SUITE(MediaFrameTest);
     CPPUNIT_TEST(testCopy);
+    CPPUNIT_TEST(testMix);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -82,6 +85,22 @@ MediaFrameTest::testCopy()
     CPPUNIT_ASSERT(v1.pointer() != v2.pointer());
     CPPUNIT_ASSERT(v1.pointer()->data[0][0] == 42);
     CPPUNIT_ASSERT(v2.pointer()->data[0][0] == 42);
+}
+
+void
+MediaFrameTest::testMix()
+{
+    const AudioFormat& format = AudioFormat::STEREO();
+    const int nbSamples = format.sample_rate / 50;
+    auto a1 = std::make_unique<DRing::AudioFrame>(format, nbSamples);
+    a1->pointer()->extended_data[0][0] = 1;
+    auto a2 = std::make_unique<DRing::AudioFrame>(format, nbSamples);
+    a2->pointer()->extended_data[0][0] = 3;
+    auto a3 = std::make_unique<DRing::AudioFrame>();
+    a3->copyFrom(*a2);
+    CPPUNIT_ASSERT(a3->pointer()->extended_data[0][0] == 3);
+    a3->mix(*a1);
+    CPPUNIT_ASSERT(a3->pointer()->extended_data[0][0] == 4);
 }
 
 }} // namespace ring::test
