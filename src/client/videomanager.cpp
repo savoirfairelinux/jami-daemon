@@ -99,9 +99,36 @@ AudioFrame::reserve(size_t nb_samples)
 }
 
 void
-AudioFrame::mix(const AudioFrame&)
+AudioFrame::mix(const AudioFrame& frame)
 {
-    RING_ERR("AudioFrame::mix not implemented yet");
+    auto& f = *pointer();
+    auto& fIn = *frame.pointer();
+    if (f.channels != fIn.channels || f.format != fIn.format || f.sample_rate != fIn.sample_rate) {
+        throw std::invalid_argument("Can't mix frames with different formats");
+    }
+    if (f.nb_samples == 0) {
+        reserve(fIn.nb_samples);
+    } else if (f.nb_samples != fIn.nb_samples) {
+        throw std::invalid_argument("Can't mix frames with different length");
+    }
+    AVSampleFormat fmt = (AVSampleFormat)f.format;
+    bool isPlanar = av_sample_fmt_is_planar(fmt);
+    unsigned samplesPerChannel = isPlanar ? f.nb_samples : f.nb_samples * f.channels;
+    unsigned channels = isPlanar ? f.channels : 1;
+    if (fmt == AV_SAMPLE_FMT_S16 || fmt == AV_SAMPLE_FMT_S16P) {
+        for (unsigned i=0; i < channels; i++) {
+            auto c = (int16_t*)f.data[i];
+            auto cIn = (int16_t*)fIn.data[i];
+            for (unsigned s=0; s<samplesPerChannel; s++) {
+                int32_t n = (int32_t)c[s] + (int32_t)cIn[s];
+                n = std::min<int32_t>(n, std::numeric_limits<int16_t>::max());
+                n = std::max<int32_t>(n, std::numeric_limits<int16_t>::min());
+                c[s] = n;
+            }
+        }
+    } else {
+        throw std::invalid_argument(std::string("Unsupported format for mixing: ") + av_get_sample_fmt_name(fmt));
+    }
 }
 
 VideoFrame::~VideoFrame()
