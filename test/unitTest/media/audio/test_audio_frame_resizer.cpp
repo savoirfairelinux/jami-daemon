@@ -44,8 +44,8 @@ private:
     void testBiggerOutput();
     void testDifferentFormat();
 
-    void gotFrame(std::unique_ptr<AudioFrame>&& framePtr);
-    std::unique_ptr<AudioFrame> getFrame(int n);
+    void gotFrame(std::shared_ptr<AudioFrame>&& framePtr);
+    std::shared_ptr<AudioFrame> getFrame(int n);
 
     CPPUNIT_TEST_SUITE(AudioFrameResizerTest);
     CPPUNIT_TEST(testSameSize);
@@ -54,7 +54,7 @@ private:
     CPPUNIT_TEST(testDifferentFormat);
     CPPUNIT_TEST_SUITE_END();
 
-    std::unique_ptr<AudioFrameResizer> q_;
+    std::shared_ptr<AudioFrameResizer> q_;
     AudioFormat format_ = AudioFormat::STEREO();
     int outputSize_ = 960;
 };
@@ -62,16 +62,16 @@ private:
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioFrameResizerTest, AudioFrameResizerTest::name());
 
 void
-AudioFrameResizerTest::gotFrame(std::unique_ptr<AudioFrame>&& framePtr)
+AudioFrameResizerTest::gotFrame(std::shared_ptr<AudioFrame>&& framePtr)
 {
     CPPUNIT_ASSERT(framePtr && framePtr->pointer());
     CPPUNIT_ASSERT(framePtr->pointer()->nb_samples == outputSize_);
 }
 
-std::unique_ptr<AudioFrame>
+std::shared_ptr<AudioFrame>
 AudioFrameResizerTest::getFrame(int n)
 {
-    auto frame = std::make_unique<AudioFrame>();
+    auto frame = std::make_shared<AudioFrame>();
     frame->pointer()->format = format_.sampleFormat;
     frame->pointer()->sample_rate = format_.sample_rate;
     frame->pointer()->channels = format_.nb_channels;
@@ -85,7 +85,7 @@ void
 AudioFrameResizerTest::testSameSize()
 {
     // input.nb_samples == output.nb_samples
-    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::unique_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
+    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
     auto in = getFrame(outputSize_);
     // gotFrame should be called after this
     CPPUNIT_ASSERT_NO_THROW(q_->enqueue(std::move(in)));
@@ -96,7 +96,7 @@ void
 AudioFrameResizerTest::testBiggerInput()
 {
     // input.nb_samples > output.nb_samples
-    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::unique_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
+    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
     auto in = getFrame(outputSize_ + 100);
     // gotFrame should be called after this
     CPPUNIT_ASSERT_NO_THROW(q_->enqueue(std::move(in)));
@@ -107,7 +107,7 @@ void
 AudioFrameResizerTest::testBiggerOutput()
 {
     // input.nb_samples < output.nb_samples
-    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::unique_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
+    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
     auto in = getFrame(outputSize_ - 100);
     CPPUNIT_ASSERT_NO_THROW(q_->enqueue(std::move(in)));
     CPPUNIT_ASSERT(q_->samples() == outputSize_ - 100);
@@ -121,7 +121,7 @@ void
 AudioFrameResizerTest::testDifferentFormat()
 {
     // frame format != q_->format_
-    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::unique_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
+    q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
     auto in = getFrame(960);
     // XXX this should never be done, but use this as a shortcut for this test case
     in->pointer()->channels = 1;
