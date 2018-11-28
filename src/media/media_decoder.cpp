@@ -467,36 +467,18 @@ int MediaDecoder::getPixelFormat() const
 { return decoderCtx_->pix_fmt; }
 
 void
-MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
+MediaDecoder::writeToRingBuffer(std::unique_ptr<AudioFrame>&& decodedFrame,
                                 RingBuffer& rb, const AudioFormat outFormat)
 {
-    const auto frame = decodedFrame.pointer();
-    const auto inFormat = AudioFormat((unsigned)frame->sample_rate,
-                                      (unsigned)frame->channels,
-                                      (AVSampleFormat)frame->format);
-
-    AudioFrame output;
-    if (inFormat != outFormat) {
-        if (!resampler_) {
+    AudioFormat format (decoderCtx_->sample_rate, decoderCtx_->channels, decoderCtx_->sample_fmt);
+    if (format != outFormat) {
+        if (not resampler_) {
             RING_DBG("Creating audio resampler");
             resampler_.reset(new Resampler);
         }
-        auto out = output.pointer();
-        out->format = (int)outFormat.sampleFormat;
-        out->channel_layout = av_get_default_channel_layout((int)outFormat.nb_channels);
-        out->channels = (int)outFormat.nb_channels;
-        out->sample_rate = (int)outFormat.sample_rate;
-        if (resampler_->resample(frame, out) < 0) {
-            RING_ERR() << "Failed to resample audio";
-            return;
-        }
-    } else {
-        output.copyFrom(decodedFrame);
+        decodedFrame = resampler_->resample(*decodedFrame, outFormat);
     }
-    // let buf resize itself
-    auto buf = AudioBuffer(0, outFormat);
-    buf.append(output);
-    rb.put(buf);
+    rb.put(std::move(decodedFrame));
 }
 
 int
