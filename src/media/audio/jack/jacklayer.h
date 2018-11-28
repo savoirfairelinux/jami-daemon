@@ -64,13 +64,12 @@ class JackLayer : public AudioLayer {
         // called from ringbuffer_worker()
         void playback();
         void capture();
-        void fillWithUrgent(AudioBuffer &buffer, size_t samplesToGet);
-        void fillWithVoice(AudioBuffer &buffer, size_t samplesAvail);
-        void fillWithToneOrRingtone(AudioBuffer &buffer);
+        std::shared_ptr<AudioFrame> getUrgent();
+        std::shared_ptr<AudioFrame> getVoice();
+        std::shared_ptr<AudioFrame> getToneOrRingtone();
 
-        void read(AudioBuffer &buffer);
-        void write(AudioBuffer &buffer, std::vector<float> &floatBuffer);
-
+        std::unique_ptr<AudioFrame> read();
+        void write(const AudioFrame& buffer, std::vector<float> &floatBuffer);
 
         std::vector<std::string> getCaptureDeviceList() const;
         std::vector<std::string> getPlaybackDeviceList() const;
