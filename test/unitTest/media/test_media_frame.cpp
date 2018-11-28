@@ -27,6 +27,7 @@ extern "C" {
 #include <libavutil/pixfmt.h>
 }
 
+#include "audio/audiobuffer.h"
 #include "dring.h"
 #include "videomanager_interface.h"
 
@@ -43,9 +44,11 @@ public:
 
 private:
     void testCopy();
+    void testMix();
 
     CPPUNIT_TEST_SUITE(MediaFrameTest);
     CPPUNIT_TEST(testCopy);
+    CPPUNIT_TEST(testMix);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -82,6 +85,39 @@ MediaFrameTest::testCopy()
     CPPUNIT_ASSERT(v1.pointer() != v2.pointer());
     CPPUNIT_ASSERT(v1.pointer()->data[0][0] == 42);
     CPPUNIT_ASSERT(v2.pointer()->data[0][0] == 42);
+}
+
+void
+MediaFrameTest::testMix()
+{
+    const AudioFormat& format = AudioFormat::STEREO();
+    const int nbSamples = format.sample_rate / 50;
+    auto a1 = std::make_unique<DRing::AudioFrame>(format, nbSamples);
+    auto d1 = reinterpret_cast<AudioSample*>(a1->pointer()->extended_data[0]);
+    d1[0] = 0;
+    d1[1] = 1;
+    d1[2] = 3;
+    d1[3] = -2;
+    d1[4] = 5;
+    d1[5] = std::numeric_limits<AudioSample>::min();
+    d1[6] = std::numeric_limits<AudioSample>::max();
+    auto a2 = std::make_unique<DRing::AudioFrame>(format, nbSamples);
+    auto d2 = reinterpret_cast<AudioSample*>(a2->pointer()->extended_data[0]);
+    d2[0] = 0;
+    d2[1] = 3;
+    d2[2] = -1;
+    d2[3] = 3;
+    d2[4] = -6;
+    d2[5] = -101;
+    d2[6] = 101;
+    a2->mix(*a1);
+    CPPUNIT_ASSERT(d2[0] == 0);
+    CPPUNIT_ASSERT(d2[1] == 4);
+    CPPUNIT_ASSERT(d2[2] == 2);
+    CPPUNIT_ASSERT(d2[3] == 1);
+    CPPUNIT_ASSERT(d2[4] == -1);
+    CPPUNIT_ASSERT(d2[5] == std::numeric_limits<AudioSample>::min());
+    CPPUNIT_ASSERT(d2[6] == std::numeric_limits<AudioSample>::max());
 }
 
 }} // namespace ring::test
