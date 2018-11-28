@@ -66,7 +66,6 @@ SipTransportDescr::toString() const
 void
 SipTransport::deleteTransport(pjsip_transport* t)
 {
-    pjsip_transport_shutdown(t);
     pjsip_transport_dec_ref(t);
 }
 
