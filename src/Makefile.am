@@ -172,9 +172,3 @@ if RING_VIDEO
 nobase_include_HEADERS+= \
 		dring/videomanager_interface.h
 endif
-
-# Force buildinfo to be remade at each build
-buildinfo.cpp: FORCE
-	@touch buildinfo.cpp
-
-FORCE:;
