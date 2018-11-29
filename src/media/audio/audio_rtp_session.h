@@ -53,6 +53,7 @@ class AudioRtpSession : public RtpSession {
         void switchInput(const std::string& resource) { input_ = resource; }
 
         void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
+        void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
     private:
         void startSender();

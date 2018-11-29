@@ -26,7 +26,6 @@
 #include "logger.h"
 #include "media_encoder.h"
 #include "media_io_handle.h"
-#include "media_recorder.h"
 #include "media_stream.h"
 #include "resampler.h"
 #include "smartools.h"
@@ -52,8 +51,6 @@ AudioSender::AudioSender(const std::string& id,
 
 AudioSender::~AudioSender()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
     audioInput_->detach(this);
     audioInput_.reset();
     audioEncoder_.reset();
@@ -106,12 +103,6 @@ AudioSender::update(Observable<std::shared_ptr<ring::AudioFrame>>* /*obs*/, cons
     ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
 
-    {
-        auto rec = recorder_.lock();
-        if (rec && rec->isRecording())
-            rec->recordData(frame, ms);
-    }
-
     if (audioEncoder_->encodeAudio(*framePtr) < 0)
         RING_ERR("encoding failed");
 }
@@ -127,13 +118,6 @@ uint16_t
 AudioSender::getLastSeqValue()
 {
     return audioEncoder_->getLastSeqValue();
-}
-
-void
-AudioSender::initRecorder(std::shared_ptr<MediaRecorder>& rec)
-{
-    recorder_ = rec;
-    rec->incrementExpectedStreams(1);
 }
 
 } // namespace ring

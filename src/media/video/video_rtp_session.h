@@ -81,6 +81,7 @@ public:
     bool useCodec(const AccountVideoCodecInfo* codec) const;
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
+    void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
 private:
     void setupConferenceVideoPipeline(Conference& conference);

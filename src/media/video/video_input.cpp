@@ -63,8 +63,6 @@ VideoInput::VideoInput()
 
 VideoInput::~VideoInput()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     /* we need to stop the loop and notify the condition variable
      * to unblock the process loop */
@@ -232,11 +230,6 @@ bool VideoInput::captureFrame()
             return static_cast<bool>(decoder_);
 
         case MediaDecoder::Status::FrameFinished:
-            {
-                auto rec = recorder_.lock();
-                if (rec && rec->isRecording())
-                    rec->recordData(frame.pointer(), decoder_->getStream("v:local"));
-            }
             publishFrame();
             return true;
         // continue decoding
@@ -613,23 +606,18 @@ int VideoInput::getPixelFormat() const
 DeviceParams VideoInput::getParams() const
 { return decOpts_; }
 
+MediaStream
+VideoInput::getStream() const
+{
+    return decoder_->getStream("v:local");
+}
+
 void
 VideoInput::foundDecOpts(const DeviceParams& params)
 {
     if (not decOptsFound_) {
         decOptsFound_ = true;
         foundDecOpts_.set_value(params);
-    }
-}
-
-void
-VideoInput::initRecorder(const std::shared_ptr<MediaRecorder>& rec)
-{
-    if (rec) {
-        recorder_ = rec;
-        rec->incrementExpectedStreams(1);
-    } else {
-        recorder_.reset();
     }
 }
 

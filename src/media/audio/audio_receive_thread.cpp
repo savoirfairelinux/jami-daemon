@@ -49,8 +49,6 @@ AudioReceiveThread::AudioReceiveThread(const std::string& id,
 
 AudioReceiveThread::~AudioReceiveThread()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
     loop_.join();
 }
 
@@ -96,11 +94,6 @@ AudioReceiveThread::process()
     auto decodedFrame = std::make_shared<AudioFrame>();
     switch (audioDecoder_->decode(*decodedFrame)) {
         case MediaDecoder::Status::FrameFinished:
-            {
-                auto rec = recorder_.lock();
-                if (rec && rec->isRecording())
-                    rec->recordData(decodedFrame->pointer(), audioDecoder_->getStream("a:remote"));
-            }
             audioDecoder_->writeToRingBuffer(*decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
             notify(decodedFrame);
@@ -161,13 +154,6 @@ void
 AudioReceiveThread::startLoop()
 {
     loop_.start();
-}
-
-void
-AudioReceiveThread::initRecorder(std::shared_ptr<MediaRecorder>& rec)
-{
-    recorder_ = rec;
-    rec->incrementExpectedStreams(1);
 }
 
 }; // namespace ring

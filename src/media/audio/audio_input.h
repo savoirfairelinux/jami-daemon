@@ -33,7 +33,6 @@
 
 namespace ring {
 
-class MediaRecorder;
 class Resampler;
 
 class AudioInput : public Observable<std::shared_ptr<AudioFrame>>
@@ -47,7 +46,6 @@ public:
     bool isCapturing() const { return loop_.isRunning(); }
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
-    void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
     bool nextFromDevice(AudioFrame& frame);
@@ -61,7 +59,6 @@ private:
     AudioFormat format_;
 
     std::unique_ptr<Resampler> resampler_;
-    std::weak_ptr<MediaRecorder> recorder_;
 
     std::string currentResource_;
     std::atomic_bool switchPending_ {false};
