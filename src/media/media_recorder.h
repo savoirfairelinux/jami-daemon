@@ -64,12 +64,7 @@ public:
     // default description: "Recorded with Jami https://jami.net"
     void setMetadata(const std::string& title, const std::string& desc);
 
-    [[deprecated("use setPath to set full recording path")]]
-    void setRecordingPath(const std::string& dir);
-
     bool isRecording() const;
-
-    bool toggleRecording();
 
     int startRecording();
 
