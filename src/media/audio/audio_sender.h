@@ -31,7 +31,6 @@ namespace ring {
 class AudioInput;
 class MediaEncoder;
 class MediaIOHandle;
-class MediaRecorder;
 class Resampler;
 
 class AudioSender : public Observer<std::shared_ptr<AudioFrame>> {
@@ -51,8 +50,6 @@ public:
     void update(Observable<std::shared_ptr<ring::AudioFrame>>*,
                 const std::shared_ptr<ring::AudioFrame>&) override;
 
-    void initRecorder(std::shared_ptr<MediaRecorder>& rec);
-
 private:
     NON_COPYABLE(AudioSender);
 
@@ -65,7 +62,6 @@ private:
     std::unique_ptr<MediaIOHandle> muxContext_;
     std::unique_ptr<Resampler> resampler_;
     std::shared_ptr<AudioInput> audioInput_;
-    std::weak_ptr<MediaRecorder> recorder_;
 
     uint64_t sent_samples = 0;
 

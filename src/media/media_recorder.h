@@ -21,11 +21,16 @@
 #pragma once
 
 #include "config.h"
+#include "media_buffer.h"
 #include "media_encoder.h"
 #include "media_filter.h"
 #include "media_stream.h"
 #include "noncopyable.h"
+#include "observer.h"
 #include "threadloop.h"
+#ifdef RING_VIDEO
+#include "video/video_base.h"
+#endif
 
 #include <map>
 #include <memory>
@@ -39,95 +44,102 @@ struct AVFrame;
 
 namespace ring {
 
-class MediaRecorder {
-    public:
-        MediaRecorder();
-        ~MediaRecorder();
+class MediaRecorder : public Observer<std::shared_ptr<AudioFrame>>
+#ifdef RING_VIDEO
+                    , public video::VideoFramePassiveReader
+#endif
+{
+public:
+    MediaRecorder();
+    ~MediaRecorder();
 
-        std::string getPath() const;
+    std::string getPath() const;
 
-        void setPath(const std::string& path);
+    void setPath(const std::string& path);
 
-        void audioOnly(bool audioOnly);
+    void audioOnly(bool audioOnly);
 
-        // replaces %TIMESTAMP with time at start of recording
-        // default title: "Conversation at %Y-%m-%d %H:%M:%S"
-        // default description: "Recorded with Ring https://ring.cx"
-        void setMetadata(const std::string& title, const std::string& desc);
+    // replaces %TIMESTAMP with time at start of recording
+    // default title: "Conversation at %Y-%m-%d %H:%M:%S"
+    // default description: "Recorded with Ring https://ring.cx"
+    void setMetadata(const std::string& title, const std::string& desc);
 
-        [[deprecated("use setPath to set full recording path")]]
-        void setRecordingPath(const std::string& dir);
+    [[deprecated("use setPath to set full recording path")]]
+    void setRecordingPath(const std::string& dir);
 
-        // adjust nb of streams before recording
-        // used to know when all streams are set up
-        void incrementExpectedStreams(int n);
+    bool isRecording() const;
 
-        bool isRecording() const;
+    bool toggleRecording();
 
-        bool toggleRecording();
+    int startRecording();
 
-        int startRecording();
+    void stopRecording();
 
-        void stopRecording();
+    /* Observer methods*/
+    void update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a) override;
+    void attached(Observable<std::shared_ptr<AudioFrame>>* ob) override;
 
-        int recordData(AVFrame* frame, const MediaStream& ms);
+    void update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v) override;
+    void attached(Observable<std::shared_ptr<VideoFrame>>* ob) override;
 
-    private:
-        NON_COPYABLE(MediaRecorder);
+private:
+    NON_COPYABLE(MediaRecorder);
 
-        int addStream(const MediaStream& ms);
-        int initRecord();
-        MediaStream setupVideoOutput();
-        std::string buildVideoFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
-        MediaStream setupAudioOutput();
-        std::string buildAudioFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
-        void emptyFilterGraph();
-        int sendToEncoder(AVFrame* frame, int streamIdx);
-        int flush();
-        void resetToDefaults(); // clear saved data for next recording
+    int recordData(AVFrame* frame, const MediaStream& ms);
 
-        std::unique_ptr<MediaEncoder> encoder_;
-        std::unique_ptr<MediaFilter> videoFilter_;
-        std::unique_ptr<MediaFilter> audioFilter_;
+    int addStream(const MediaStream& ms);
+    int initRecord();
+    MediaStream setupVideoOutput();
+    std::string buildVideoFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
+    MediaStream setupAudioOutput();
+    std::string buildAudioFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
+    void emptyFilterGraph();
+    int sendToEncoder(AVFrame* frame, int streamIdx);
+    int flush();
+    void resetToDefaults(); // clear saved data for next recording
 
-        std::mutex mutex_; // protect against concurrent file writes
+    std::unique_ptr<MediaEncoder> encoder_;
+    std::unique_ptr<MediaFilter> videoFilter_;
+    std::unique_ptr<MediaFilter> audioFilter_;
 
-        std::map<std::string, const MediaStream> streams_;
+    std::mutex mutex_; // protect against concurrent file writes
 
-        std::tm startTime_;
-        std::string title_;
-        std::string description_;
+    std::map<std::string, const MediaStream> streams_;
 
-        std::string path_;
+    std::tm startTime_;
+    std::string title_;
+    std::string description_;
 
-        // NOTE do not use dir_ or filename_, use path_ instead
-        std::string dir_;
-        std::string filename_;
+    std::string path_;
 
-        unsigned nbExpectedStreams_ = 0;
-        unsigned nbReceivedVideoStreams_ = 0;
-        unsigned nbReceivedAudioStreams_ = 0;
-        int videoIdx_ = -1;
-        int audioIdx_ = -1;
-        bool isRecording_ = false;
-        bool isReady_ = false;
-        bool audioOnly_ = false;
+    // NOTE do not use dir_ or filename_, use path_ instead
+    std::string dir_;
+    std::string filename_;
 
-        struct RecordFrame {
-            AVFrame* frame;
-            bool isVideo;
-            bool fromPeer;
-            RecordFrame() {}
-            RecordFrame(AVFrame* f, bool v, bool p)
-                : frame(f)
-                , isVideo(v)
-                , fromPeer(p)
-            {}
-        };
-        InterruptedThreadLoop loop_;
-        void process();
-        std::mutex qLock_;
-        std::deque<RecordFrame> frames_;
+    unsigned nbExpectedStreams_ = 0;
+    unsigned nbReceivedVideoStreams_ = 0;
+    unsigned nbReceivedAudioStreams_ = 0;
+    int videoIdx_ = -1;
+    int audioIdx_ = -1;
+    bool isRecording_ = false;
+    bool isReady_ = false;
+    bool audioOnly_ = false;
+
+    struct RecordFrame {
+        AVFrame* frame;
+        bool isVideo;
+        bool fromPeer;
+        RecordFrame() {}
+        RecordFrame(AVFrame* f, bool v, bool p)
+            : frame(f)
+            , isVideo(v)
+            , fromPeer(p)
+        {}
+    };
+    InterruptedThreadLoop loop_;
+    void process();
+    std::mutex qLock_;
+    std::deque<RecordFrame> frames_;
 };
 
 }; // namespace ring

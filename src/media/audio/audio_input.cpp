@@ -47,8 +47,6 @@ AudioInput::AudioInput(const std::string& id) :
 
 AudioInput::~AudioInput()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
     loop_.join();
 }
 
@@ -92,13 +90,6 @@ AudioInput::process()
     frame->pts = sent_samples;
     sent_samples += frame->nb_samples;
 
-    {
-        auto rec = recorder_.lock();
-        if (rec && rec->isRecording()) {
-            rec->recordData(frame, ms);
-        }
-    }
-
     std::shared_ptr<AudioFrame> sharedFrame = std::move(audioFrame);
     notify(sharedFrame);
 }
@@ -121,13 +112,6 @@ AudioInput::switchInput(const std::string& resource)
 {
     // TODO not implemented yet
     return {};
-}
-
-void
-AudioInput::initRecorder(const std::shared_ptr<MediaRecorder>& rec)
-{
-    rec->incrementExpectedStreams(1);
-    recorder_ = rec;
 }
 
 } // namespace ring

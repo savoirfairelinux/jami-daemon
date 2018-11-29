@@ -179,9 +179,18 @@ void
 AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     if (receiveThread_)
-        receiveThread_->initRecorder(rec);
-    if (sender_)
-        sender_->initRecorder(rec);
+        receiveThread_->attach(rec.get());
+    if (auto input = ring::getAudioInput(callID_))
+        input->attach(rec.get());
+}
+
+void
+AudioRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
+{
+    if (receiveThread_)
+        receiveThread_->detach(rec.get());
+    if (auto input = ring::getAudioInput(callID_))
+        input->detach(rec.get());
 }
 
 } // namespace ring
