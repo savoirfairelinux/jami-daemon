@@ -567,11 +567,10 @@ VideoRtpSession::processPacketLoss()
 void
 VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    // video recording needs to start with keyframes
     if (receiveThread_)
-        receiveThread_->initRecorder(rec);
+        receiveThread_->attach(rec.get());
     if (auto vidInput = std::static_pointer_cast<VideoInput>(videoLocal_))
-        vidInput->initRecorder(rec);
+        vidInput->attach(rec.get());
 }
 
 }} // namespace ring::video

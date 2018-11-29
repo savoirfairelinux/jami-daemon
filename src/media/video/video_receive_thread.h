@@ -38,7 +38,6 @@
 namespace ring {
 class SocketPair;
 class MediaDecoder;
-class MediaRecorder;
 } // namespace ring
 
 namespace ring { namespace video {
@@ -61,8 +60,6 @@ public:
     int getHeight() const;
     int getPixelFormat() const;
     void triggerKeyFrameRequest();
-
-    void initRecorder(std::shared_ptr<ring::MediaRecorder>& rec);
 
 private:
     NON_COPYABLE(VideoReceiveThread);
@@ -88,8 +85,6 @@ private:
     bool decodeFrame();
     static int interruptCb(void *ctx);
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
-
-    std::weak_ptr<MediaRecorder> recorder_;
 
     ThreadLoop loop_;
 

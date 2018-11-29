@@ -19,16 +19,17 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
+#include "audio/audio_input.h"
+#include "audio/audio_receive_thread.h"
+#include "audio/audio_sender.h"
 #include "client/ring_signal.h"
 #include "fileutils.h"
 #include "logger.h"
 #include "media_io_handle.h"
 #include "media_recorder.h"
 #include "system_codec_container.h"
-
-extern "C" {
-#include <libavutil/frame.h>
-}
+#include "video/video_input.h"
+#include "video/video_receive_thread.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -37,8 +38,6 @@ extern "C" {
 #include <ctime>
 
 namespace ring {
-
-static constexpr auto FRAME_DEQUEUE_INTERVAL = std::chrono::milliseconds(200);
 
 static std::string
 replaceAll(const std::string& str, const std::string& from, const std::string& to)
@@ -119,12 +118,6 @@ MediaRecorder::setPath(const std::string& path)
     RING_DBG() << "Recording will be saved as '" << getPath() << "'";
 }
 
-void
-MediaRecorder::incrementExpectedStreams(int n)
-{
-    nbExpectedStreams_ += n;
-}
-
 bool
 MediaRecorder::isRecording() const
 {
@@ -183,6 +176,43 @@ MediaRecorder::stopRecording()
         emitSignal<DRing::CallSignal::RecordPlaybackStopped>(getPath());
     }
     resetToDefaults();
+}
+
+void
+MediaRecorder::update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a)
+{
+    MediaStream ms;
+    if (dynamic_cast<AudioReceiveThread*>(ob))
+        ms.name = "a:remote";
+    else // if (dynamic_cast<AudioSender*>(ob) || dynamic_cast<AudioInput*>(ob))
+        ms.name = "a:local";
+    ms.isVideo = false;
+    ms.update(a->pointer());
+    recordData(a->pointer(), ms);
+}
+
+void MediaRecorder::attached(Observable<std::shared_ptr<AudioFrame>>* ob)
+{
+    ++nbExpectedStreams_;
+}
+
+void MediaRecorder::update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v)
+{
+    MediaStream ms;
+    if (dynamic_cast<video::VideoReceiveThread*>(ob))
+        ms.name = "v:remote";
+    else if (dynamic_cast<video::VideoInput*>(ob))
+        ms.name = "v:local";
+    ms.isVideo = true;
+    ms.frameRate = rational<int>(30); // is framerate even needed, all video is passed through fps filter
+    ms.timeBase = 1 / ms.frameRate;
+    ms.update(v->pointer());
+    recordData(v->pointer(), ms);
+}
+
+void MediaRecorder::attached(Observable<std::shared_ptr<VideoFrame>>* ob)
+{
+    ++nbExpectedStreams_;
 }
 
 int
@@ -402,7 +432,7 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers, const Med
 
     switch (peers.size()) {
     case 0:
-        v << "[" << local.name << "] format=pix_fmts=yuv420p";
+        v << "[" << local.name << "] fps=30, format=pix_fmts=yuv420p";
         break;
     case 1:
         {

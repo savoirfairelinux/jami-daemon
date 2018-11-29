@@ -42,7 +42,6 @@
 
 namespace ring {
 class MediaDecoder;
-class MediaRecorder;
 }
 
 namespace ring { namespace video {
@@ -88,8 +87,6 @@ public:
     void* obtainFrame(int length);
     void releaseFrame(void *frame);
 #endif
-
-    void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
     NON_COPYABLE(VideoInput);
@@ -144,8 +141,6 @@ private:
     void releaseBufferCb(uint8_t* ptr);
     std::array<struct VideoFrameBuffer, 8> buffers_;
 #endif
-
-    std::weak_ptr<MediaRecorder> recorder_;
 };
 
 }} // namespace ring::video
