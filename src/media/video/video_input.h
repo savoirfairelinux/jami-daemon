@@ -25,6 +25,7 @@
 
 #include "noncopyable.h"
 #include "threadloop.h"
+#include "media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
 
@@ -42,7 +43,6 @@
 
 namespace ring {
 class MediaDecoder;
-class MediaRecorder;
 }
 
 namespace ring { namespace video {
@@ -78,6 +78,7 @@ public:
     int getHeight() const;
     int getPixelFormat() const;
     DeviceParams getParams() const;
+    MediaStream getStream() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
@@ -88,8 +89,6 @@ public:
     void* obtainFrame(int length);
     void releaseFrame(void *frame);
 #endif
-
-    void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
     NON_COPYABLE(VideoInput);
@@ -144,8 +143,6 @@ private:
     void releaseBufferCb(uint8_t* ptr);
     std::array<struct VideoFrameBuffer, 8> buffers_;
 #endif
-
-    std::weak_ptr<MediaRecorder> recorder_;
 };
 
 }} // namespace ring::video

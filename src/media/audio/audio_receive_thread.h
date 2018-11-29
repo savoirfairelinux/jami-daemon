@@ -33,10 +33,9 @@ namespace ring {
 
 class MediaDecoder;
 class MediaIOHandle;
-class MediaRecorder;
 class RingBuffer;
 
-class AudioReceiveThread : Observable<std::shared_ptr<AudioFrame>>
+class AudioReceiveThread : public Observable<std::shared_ptr<AudioFrame>>
 {
 public:
     AudioReceiveThread(const std::string &id,
@@ -46,8 +45,6 @@ public:
     ~AudioReceiveThread();
     void addIOContext(SocketPair &socketPair);
     void startLoop();
-
-    void initRecorder(std::shared_ptr<MediaRecorder>& rec);
 
 private:
     NON_COPYABLE(AudioReceiveThread);
@@ -59,8 +56,6 @@ private:
 
     void openDecoder();
     bool decodeFrame();
-
-    std::weak_ptr<MediaRecorder> recorder_;
 
     /*-----------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. process()) only! */

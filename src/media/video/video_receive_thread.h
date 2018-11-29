@@ -26,6 +26,7 @@
 #include "media_codec.h"
 #include "media_io_handle.h"
 #include "media_device.h"
+#include "media_stream.h"
 #include "threadloop.h"
 #include "noncopyable.h"
 
@@ -38,7 +39,6 @@
 namespace ring {
 class SocketPair;
 class MediaDecoder;
-class MediaRecorder;
 } // namespace ring
 
 namespace ring { namespace video {
@@ -60,9 +60,8 @@ public:
     int getWidth() const;
     int getHeight() const;
     int getPixelFormat() const;
+    MediaStream getStream() const;
     void triggerKeyFrameRequest();
-
-    void initRecorder(std::shared_ptr<ring::MediaRecorder>& rec);
 
 private:
     NON_COPYABLE(VideoReceiveThread);
@@ -88,8 +87,6 @@ private:
     bool decodeFrame();
     static int interruptCb(void *ctx);
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
-
-    std::weak_ptr<MediaRecorder> recorder_;
 
     ThreadLoop loop_;
 
