@@ -19,10 +19,13 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "recordable.h"
 #include "audio/ringbufferpool.h"
-#include "manager.h"
+#include "fileutils.h"
 #include "logger.h"
+#include "manager.h"
+#include "recordable.h"
+
+#include <iomanip>
 
 namespace ring {
 
@@ -47,18 +50,26 @@ Recordable::getPath() const
 bool
 Recordable::toggleRecording()
 {
-    std::lock_guard<std::mutex> lk {apiMutex_};
     if (!recorder_) {
         RING_ERR("couldn't toggle recording, non existent recorder");
         return false;
     }
 
     if (!recording_) {
-        // FIXME uses old way of setting recording path in MediaRecorder
-        recorder_->audioOnly(isAudioOnly_);
-        recorder_->setRecordingPath(Manager::instance().audioPreference.getRecordPath());
+        std::time_t t = std::time(nullptr);
+        auto startTime = *std::localtime(&t);
+        std::stringstream ss;
+        auto dir = Manager::instance().audioPreference.getRecordPath();
+        if (dir.empty())
+            dir = fileutils::get_home_dir();
+        ss << dir;
+        if (dir.back() != DIR_SEPARATOR_CH)
+            ss << DIR_SEPARATOR_CH;
+        ss << std::put_time(&startTime, "%Y%m%d-%H%M%S");
+        startRecording(ss.str());
+    } else {
+        stopRecording();
     }
-    recording_ = recorder_->toggleRecording();
     return recording_;
 }
 
@@ -77,8 +88,8 @@ Recordable::startRecording(const std::string& path)
             return false;
         }
 
-        recorder_->setPath(path);
         recorder_->audioOnly(isAudioOnly_);
+        recorder_->setPath(path);
         recorder_->startRecording();
         recording_ = recorder_->isRecording();
     }

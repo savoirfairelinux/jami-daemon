@@ -70,18 +70,10 @@ MediaRecorder::~MediaRecorder()
 std::string
 MediaRecorder::getPath() const
 {
-    if (path_.empty()) {
-        // FIXME deprecated code, will be removed once all clients transitioned to startRecording(path).
-        if (audioOnly_)
-            return dir_ + filename_ + ".ogg";
-        else
-            return dir_ + filename_ + ".webm";
-    } else {
-        if (audioOnly_)
-            return path_ + ".ogg";
-        else
-            return path_ + ".webm";
-    }
+    if (audioOnly_)
+        return path_ + ".ogg";
+    else
+        return path_ + ".webm";
 }
 
 void
@@ -98,24 +90,10 @@ MediaRecorder::setMetadata(const std::string& title, const std::string& desc)
 }
 
 void
-MediaRecorder::setRecordingPath(const std::string& dir)
-{
-    if (!dir.empty() && fileutils::isDirectory(dir))
-        dir_ = dir;
-    else
-        dir_ = fileutils::get_home_dir();
-    if (dir_.back() != DIR_SEPARATOR_CH)
-        dir_ = dir_ + DIR_SEPARATOR_CH;
-    RING_DBG() << "Recording will be saved in '" << dir_ << "'";
-}
-
-void
 MediaRecorder::setPath(const std::string& path)
 {
-    if (!path.empty()) {
+    if (!path.empty())
         path_ = path;
-    }
-    RING_DBG() << "Recording will be saved as '" << getPath() << "'";
 }
 
 bool
@@ -124,29 +102,11 @@ MediaRecorder::isRecording() const
     return isRecording_;
 }
 
-bool
-MediaRecorder::toggleRecording()
-{
-    if (isRecording_) {
-        stopRecording();
-    } else {
-        startRecording();
-    }
-    return isRecording_;
-}
-
 int
 MediaRecorder::startRecording()
 {
     std::time_t t = std::time(nullptr);
     startTime_ = *std::localtime(&t);
-
-    if (path_.empty()) {
-        // FIXME deprecated code, will be removed once all clients transitioned to startRecording(path).
-        std::stringstream ss;
-        ss << std::put_time(&startTime_, "%Y%m%d-%H%M%S");
-        filename_ = ss.str();
-    }
 
     if (!frames_.empty()) {
         RING_WARN() << "Frame queue not empty at beginning of recording, frames will be lost";
@@ -184,7 +144,7 @@ MediaRecorder::update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::sh
     MediaStream ms;
     if (dynamic_cast<AudioReceiveThread*>(ob))
         ms.name = "a:remote";
-    else // if (dynamic_cast<AudioSender*>(ob) || dynamic_cast<AudioInput*>(ob))
+    else // ob is of type AudioInput*
         ms.name = "a:local";
     ms.isVideo = false;
     ms.update(a->pointer());
