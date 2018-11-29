@@ -47,8 +47,6 @@ AudioInput::AudioInput(const std::string& id) :
 
 AudioInput::~AudioInput()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
     loop_.join();
 }
 
@@ -70,13 +68,6 @@ AudioInput::process()
     auto ms = MediaStream("a:local", format_, sent_samples);
     frame->pointer()->pts = sent_samples;
     sent_samples += frame->pointer()->nb_samples;
-
-    {
-        auto rec = recorder_.lock();
-        if (rec && rec->isRecording()) {
-            rec->recordData(frame->pointer(), ms);
-        }
-    }
 
     notify(frame);
 }
@@ -195,13 +186,6 @@ void
 AudioInput::setMuted(bool isMuted)
 {
     muteState_ = isMuted;
-}
-
-void
-AudioInput::initRecorder(const std::shared_ptr<MediaRecorder>& rec)
-{
-    rec->incrementExpectedStreams(1);
-    recorder_ = rec;
 }
 
 } // namespace ring

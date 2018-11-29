@@ -1199,6 +1199,13 @@ SIPCall::toggleRecording()
         if (!isAudioOnly_ && videortp_)
             videortp_->initRecorder(recorder_);
 #endif
+    } else {
+        if (avformatrtp_)
+            avformatrtp_->deinitRecorder(recorder_);
+#ifdef RING_VIDEO
+        if (!isAudioOnly_ && videortp_)
+            videortp_->deinitRecorder(recorder_);
+#endif
     }
     return startRecording;
 }

@@ -56,8 +56,6 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
 
 VideoReceiveThread::~VideoReceiveThread()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
     loop_.join();
 }
 
@@ -187,11 +185,6 @@ bool VideoReceiveThread::decodeFrame()
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
-            {
-                auto rec = recorder_.lock();
-                if (rec && rec->isRecording())
-                    rec->recordData(frame.pointer(), videoDecoder_->getStream("v:remote"));
-            }
             publishFrame();
             return true;
 
@@ -253,18 +246,17 @@ int VideoReceiveThread::getHeight() const
 int VideoReceiveThread::getPixelFormat() const
 { return videoDecoder_->getPixelFormat(); }
 
+MediaStream
+VideoReceiveThread::getStream() const
+{
+    return videoDecoder_->getStream("v:remote");
+}
+
 void
 VideoReceiveThread::triggerKeyFrameRequest()
 {
     if (requestKeyFrameCallback_)
         requestKeyFrameCallback_(id_);
-}
-
-void
-VideoReceiveThread::initRecorder(std::shared_ptr<ring::MediaRecorder>& rec)
-{
-    recorder_ = rec;
-    rec->incrementExpectedStreams(1);
 }
 
 }} // namespace ring::video

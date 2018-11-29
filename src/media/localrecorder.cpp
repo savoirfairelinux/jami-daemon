@@ -73,14 +73,14 @@ LocalRecorder::startRecording()
 
     audioInput_ = ring::getAudioInput(path_);
     audioInput_->setFormat(AudioFormat::STEREO());
-    audioInput_->initRecorder(recorder_);
+    audioInput_->attach(recorder_.get());
 
 #ifdef RING_VIDEO
     // video recording
     if (!isAudioOnly_) {
         videoInput_ = std::static_pointer_cast<video::VideoInput>(ring::getVideoCamera());
         if (videoInput_) {
-            videoInput_->initRecorder(recorder_);
+            videoInput_->attach(recorder_.get());
         } else {
             RING_ERR() << "Unable to record video (no video input)";
             return false;
@@ -97,8 +97,6 @@ LocalRecorder::stopRecording()
     Recordable::stopRecording();
     Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
     audioInput_.reset();
-    if (videoInput_)
-        videoInput_->initRecorder(nullptr); // workaround for deiniting recorder
     videoInput_.reset();
 }
 
