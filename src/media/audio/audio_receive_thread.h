@@ -23,6 +23,7 @@
 #include "media_buffer.h"
 #include "media_device.h"
 #include "noncopyable.h"
+#include "observer.h"
 #include "socket_pair.h"
 #include "threadloop.h"
 
@@ -35,7 +36,7 @@ class MediaIOHandle;
 class MediaRecorder;
 class RingBuffer;
 
-class AudioReceiveThread
+class AudioReceiveThread : Observable<std::shared_ptr<AudioFrame>>
 {
 public:
     AudioReceiveThread(const std::string &id,

@@ -93,20 +93,18 @@ void
 AudioReceiveThread::process()
 {
     AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    AudioFrame decodedFrame;
-
-    switch (audioDecoder_->decode(decodedFrame)) {
-
+    auto decodedFrame = std::make_shared<AudioFrame>();
+    switch (audioDecoder_->decode(*decodedFrame)) {
         case MediaDecoder::Status::FrameFinished:
             {
                 auto rec = recorder_.lock();
                 if (rec && rec->isRecording())
-                    rec->recordData(decodedFrame.pointer(), audioDecoder_->getStream("a:remote"));
+                    rec->recordData(decodedFrame->pointer(), audioDecoder_->getStream("a:remote"));
             }
-            audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
+            audioDecoder_->writeToRingBuffer(*decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
+            notify(decodedFrame);
             return;
-
         case MediaDecoder::Status::DecodeError:
             RING_WARN("decoding failure, trying to reset decoder...");
             if (not setup()) {
@@ -117,12 +115,10 @@ AudioReceiveThread::process()
                 loop_.stop();
             }
             break;
-
         case MediaDecoder::Status::ReadError:
             RING_ERR("fatal error, read failed");
             loop_.stop();
             break;
-
         case MediaDecoder::Status::Success:
         case MediaDecoder::Status::EOFError:
         default:
