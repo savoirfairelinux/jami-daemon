@@ -48,6 +48,8 @@ libaudio_la_SOURCES = \
 		resampler.cpp \
 		$(RING_SPEEXDSP_SRC) \
 		dcblocker.cpp \
+		audio_sender.cpp \
+		audio_receive_thread.cpp \
 		audio_rtp_session.cpp \
 		tonecontrol.cpp
 
@@ -70,6 +72,8 @@ noinst_HEADERS = \
 		resampler.h \
 		$(RING_SPEEXDSP_HEAD) \
 		dcblocker.h \
+		audio_sender.h \
+		audio_receive_thread.h \
 		audio_rtp_session.h \
 		tonecontrol.h
 
