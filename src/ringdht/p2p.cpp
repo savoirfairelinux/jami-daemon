@@ -413,7 +413,7 @@ DhtPeerConnector::Impl::turnConnect()
     auto password = details[Conf::CONFIG_TURN_SERVER_PWD];
 
     auto turn_param_v4 = TurnTransportParams {};
-    turn_param_v4.server = IpAddr {server.empty() ? "turn.ring.cx" : server};
+    turn_param_v4.server = IpAddr {server.empty() ? "turn.jami.net" : server};
     turn_param_v4.realm = realm.empty() ? "ring" : realm;
     turn_param_v4.username = username.empty() ? "ring" : username;
     turn_param_v4.password = password.empty() ? "ring" : password;

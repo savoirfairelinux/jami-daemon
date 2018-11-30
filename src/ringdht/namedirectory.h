@@ -56,7 +56,7 @@ public:
 private:
     NON_COPYABLE(NameDirectory);
     NameDirectory(NameDirectory&&) = delete;
-    constexpr static const char* const DEFAULT_SERVER_HOST = "ns.ring.cx";
+    constexpr static const char* const DEFAULT_SERVER_HOST = "ns.jami.net";
 
     const std::string serverHost_ {DEFAULT_SERVER_HOST};
     const std::string cachePath_;

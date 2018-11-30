@@ -269,7 +269,7 @@ MediaRecorder::initRecord()
     encoderOptions["title"] = title_;
 
     if (description_.empty()) {
-        description_ = "Recorded with Ring https://ring.cx";
+        description_ = "Recorded with Jami https://jami.net";
     }
     description_ = replaceAll(description_, "%TIMESTAMP", timestampString.str());
     encoderOptions["description"] = description_;

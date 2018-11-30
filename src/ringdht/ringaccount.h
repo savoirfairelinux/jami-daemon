@@ -85,8 +85,8 @@ class RingAccount : public SIPAccountBase {
     public:
         constexpr static const char* const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
-        constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.ring.cx";
-        constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.ring.cx";
+        constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
+        constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net";
         constexpr static const char* const DHT_TYPE_NS = "cx.ring";
 
         /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;

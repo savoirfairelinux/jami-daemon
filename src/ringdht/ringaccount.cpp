@@ -211,7 +211,7 @@ static constexpr auto TLS_TIMEOUT = std::chrono::seconds(30);
 const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 
 static constexpr const char * const RING_URI_PREFIX = "ring:";
-static constexpr const char * DEFAULT_TURN_SERVER = "turn.ring.cx";
+static constexpr const char * DEFAULT_TURN_SERVER = "turn.jami.net";
 static constexpr const char * DEFAULT_TURN_USERNAME = "ring";
 static constexpr const char * DEFAULT_TURN_PWD = "ring";
 static constexpr const char * DEFAULT_TURN_REALM = "ring";

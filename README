@@ -34,7 +34,7 @@ the shell.
 GNU Ring is currently used by the support team of Savoir-faire Linux Inc.
 
 More information is available on the project homepage:
-  https://www.ring.cx/
+  https://www.jami.net/
 
 This source tree contains the daemon application only, DRing, that handles
 the business logic of GNU Ring. UIs are located in differents repositories. See
@@ -79,7 +79,7 @@ make install
 Done !
 
 More details available here:
-https://tuleap.ring.cx/plugins/mediawiki/wiki/ring/index.php/Build_Instructions
+https://git.jami.net/savoirfairelinux/ring-project/wikis/technical/Build-instructions
 
 
 How to compile on OSX
@@ -169,7 +169,7 @@ Contributing to GNU Ring
 Of course we love patches. And contributions. And spring rolls.
 
 Development website / Bug Tracker:
- - https://tuleap.ring.cx/projects/ring/
+ - https://git.jami.net/savoirfairelinux/ring-project
 
 Repositories are hosted on Gerrit, which we use for code review. It also
 contains the client subprojects:
