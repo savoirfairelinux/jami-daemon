@@ -37,6 +37,7 @@ class AudioFrameResizer;
 class MediaDecoder;
 class MediaRecorder;
 class Resampler;
+class RingBuffer;
 
 class AudioInput : public Observable<std::shared_ptr<AudioFrame>>
 {
@@ -47,13 +48,14 @@ public:
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 
     bool isCapturing() const { return loop_.isRunning(); }
+    const AudioFormat getFormat() const;
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
     void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
-    void nextFromDevice();
-    void nextFromFile();
+    void readFromDevice();
+    void readFromFile();
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
     bool createDecoder();
@@ -63,7 +65,7 @@ private:
     AudioBuffer micData_;
     bool muteState_ = false;
     uint64_t sent_samples = 0;
-    std::mutex fmtMutex_ {};
+    mutable std::mutex fmtMutex_ {};
     AudioFormat format_;
     int frameSize_;
 
@@ -71,6 +73,9 @@ private:
     std::unique_ptr<AudioFrameResizer> resizer_;
     std::weak_ptr<MediaRecorder> recorder_;
     std::unique_ptr<MediaDecoder> decoder_;
+
+    std::shared_ptr<RingBuffer> fileBuf_;
+    std::string fileId_;
 
     std::string currentResource_;
     std::atomic_bool switchPending_ {false};
