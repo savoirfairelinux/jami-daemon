@@ -52,7 +52,7 @@ class MediaRecorder {
 
         // replaces %TIMESTAMP with time at start of recording
         // default title: "Conversation at %Y-%m-%d %H:%M:%S"
-        // default description: "Recorded with Ring https://ring.cx"
+        // default description: "Recorded with Jami https://jami.net"
         void setMetadata(const std::string& title, const std::string& desc);
 
         [[deprecated("use setPath to set full recording path")]]

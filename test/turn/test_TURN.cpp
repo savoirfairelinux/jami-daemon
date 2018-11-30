@@ -88,7 +88,7 @@ void
 test_TURN::testSimpleConnection()
 {
     TurnTransportParams param;
-    param.server = IpAddr {"turn.ring.cx"};
+    param.server = IpAddr {"turn.jami.net"};
     param.realm = "ring";
     param.username = "ring";
     param.password = "ring";
