@@ -111,9 +111,8 @@ private:
     std::string dir_;
     std::string filename_;
 
-    unsigned nbExpectedStreams_ = 0;
-    unsigned nbReceivedVideoStreams_ = 0;
-    unsigned nbReceivedAudioStreams_ = 0;
+    bool hasAudio_ {false};
+    bool hasVideo_ {false};
     int videoIdx_ = -1;
     int audioIdx_ = -1;
     bool isRecording_ = false;
