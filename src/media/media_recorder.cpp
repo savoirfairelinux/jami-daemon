@@ -121,7 +121,8 @@ MediaRecorder::startRecording()
     encoder_.reset(new MediaEncoder);
 
     RING_DBG() << "Start recording '" << getPath() << "'";
-    isRecording_ = true;
+    if (initRecord() >= 0)
+        isRecording_ = true;
     return 0;
 }
 
@@ -141,37 +142,44 @@ MediaRecorder::stopRecording()
 void
 MediaRecorder::update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a)
 {
-    MediaStream ms;
+    std::string name;
     if (dynamic_cast<AudioReceiveThread*>(ob))
-        ms.name = "a:remote";
+        name = "a:remote";
     else // ob is of type AudioInput*
-        ms.name = "a:local";
-    ms.isVideo = false;
-    ms.update(a->pointer());
-    ms.firstTimestamp = a->pointer()->pts;
-    recordData(a->pointer(), ms);
+        name = "a:local";
+    recordData(a->pointer(), streams_[name]);
 }
 
-void MediaRecorder::attached(Observable<std::shared_ptr<AudioFrame>>* /*ob*/)
+void MediaRecorder::attached(Observable<std::shared_ptr<AudioFrame>>* ob)
 {
-    ++nbExpectedStreams_;
+    MediaStream ms;
+    if (auto receiver = dynamic_cast<AudioReceiveThread*>(ob))
+        ms = receiver->getStream();
+    else if (auto input = dynamic_cast<AudioInput*>(ob))
+        ms = input->getStream();
+    if (addStream(ms) >= 0)
+        hasAudio_ = true;
 }
 
 void MediaRecorder::update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v)
 {
-    MediaStream ms;
-    if (auto receiver = dynamic_cast<video::VideoReceiveThread*>(ob)) {
-        ms = receiver->getStream();
-    } else if (auto input = dynamic_cast<video::VideoInput*>(ob)) {
-        ms = input->getStream();
-    }
-    ms.firstTimestamp = v->pointer()->pts;
-    recordData(v->pointer(), ms);
+    std::string name;
+    if (dynamic_cast<video::VideoReceiveThread*>(ob))
+        name = "v:remote";
+    else // ob is of type VideoInput*
+        name = "v:local";
+    recordData(v->pointer(), streams_[name]);
 }
 
-void MediaRecorder::attached(Observable<std::shared_ptr<VideoFrame>>* /*ob*/)
+void MediaRecorder::attached(Observable<std::shared_ptr<VideoFrame>>* ob)
 {
-    ++nbExpectedStreams_;
+    MediaStream ms;
+    if (auto receiver = dynamic_cast<video::VideoReceiveThread*>(ob))
+        ms = receiver->getStream();
+    else if (auto input = dynamic_cast<video::VideoInput*>(ob))
+        ms = input->getStream();
+    if (addStream(ms) >= 0)
+        hasVideo_ = true;
 }
 
 int
@@ -183,24 +191,12 @@ MediaRecorder::addStream(const MediaStream& ms)
     }
 
     if (streams_.insert(std::make_pair(ms.name, ms)).second) {
-        RING_DBG() << "Recorder input #" << (nbReceivedAudioStreams_ + nbReceivedVideoStreams_) << ": " << ms;
+        RING_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
+        return 0;
     } else {
         RING_ERR() << "Could not add stream '" << ms.name << "' to record";
         return -1;
     }
-
-    std::lock_guard<std::mutex> lk(mutex_);
-
-    if (ms.isVideo)
-        ++nbReceivedVideoStreams_;
-    else
-        ++nbReceivedAudioStreams_;
-
-    // wait until all streams are ready before writing to the file
-    if (nbExpectedStreams_ != nbReceivedAudioStreams_ + nbReceivedVideoStreams_)
-        return 0;
-    else
-        return initRecord();
 }
 
 int
@@ -264,7 +260,7 @@ MediaRecorder::initRecord()
     encoderOptions["description"] = description_;
 
     videoFilter_.reset();
-    if (nbReceivedVideoStreams_ > 0) {
+    if (hasVideo_) {
         const MediaStream& videoStream = setupVideoOutput();
         if (videoStream.format < 0) {
             RING_ERR() << "Could not retrieve video recorder stream properties";
@@ -278,7 +274,7 @@ MediaRecorder::initRecord()
     }
 
     audioFilter_.reset();
-    if (nbReceivedAudioStreams_ > 0) {
+    if (hasAudio_) {
         const MediaStream& audioStream = setupAudioOutput();
         if (audioStream.format < 0) {
             RING_ERR() << "Could not retrieve audio recorder stream properties";
@@ -290,7 +286,7 @@ MediaRecorder::initRecord()
 
     encoder_->openFileOutput(getPath(), encoderOptions);
 
-    if (nbReceivedVideoStreams_ > 0) {
+    if (hasVideo_) {
         auto videoCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(
             getSystemCodecContainer()->searchCodecByName("VP8", ring::MEDIA_VIDEO));
         videoIdx_ = encoder_->addStream(*videoCodec.get());
@@ -300,7 +296,7 @@ MediaRecorder::initRecord()
         }
     }
 
-    if (nbReceivedAudioStreams_ > 0) {
+    if (hasAudio_) {
         auto audioCodec = std::static_pointer_cast<ring::SystemAudioCodecInfo>(
             getSystemCodecContainer()->searchCodecByName("opus", ring::MEDIA_AUDIO));
         audioIdx_ = encoder_->addStream(*audioCodec.get());
@@ -311,8 +307,8 @@ MediaRecorder::initRecord()
     }
 
     // ready to start recording if audio stream index and video stream index are valid
-    bool audioIsReady = nbReceivedAudioStreams_ == 0 || (nbReceivedAudioStreams_ > 0 && audioIdx_ >= 0);
-    bool videoIsReady = (audioOnly_ && nbReceivedVideoStreams_ == 0) || (nbReceivedVideoStreams_ > 0 && videoIdx_ >= 0);
+    bool audioIsReady = hasAudio_ && audioIdx_ >= 0;
+    bool videoIsReady = !audioOnly_ && hasVideo_ && videoIdx_ >= 0;
     isReady_ = audioIsReady && videoIsReady;
 
     if (isReady_) {
@@ -330,7 +326,7 @@ MediaRecorder::initRecord()
         RING_DBG() << "Recording initialized";
         return 0;
     } else {
-        RING_ERR() << "Something went wrong when initializing the recorder";
+        RING_ERR() << "Failed to initialize recorder";
         return -1;
     }
 }
@@ -358,8 +354,8 @@ MediaRecorder::setupVideoOutput()
     // vp8 supports only yuv420p
     videoFilter_.reset(new MediaFilter);
     int ret = -1;
-
-    switch (nbReceivedVideoStreams_) {
+    int streams = peer.isValid() + local.isValid();
+    switch (streams) {
     case 1:
     {
         auto inputStream = peer.isValid() ? peer : local;
@@ -444,8 +440,8 @@ MediaRecorder::setupAudioOutput()
     // resample to common audio format, so any player can play the file
     audioFilter_.reset(new MediaFilter);
     int ret = -1;
-
-    switch (nbReceivedAudioStreams_) {
+    int streams = peer.isValid() + local.isValid();
+    switch (streams) {
     case 1:
     {
         auto inputStream = peer.isValid() ? peer : local;
@@ -535,8 +531,6 @@ MediaRecorder::resetToDefaults()
 {
     streams_.clear();
     videoIdx_ = audioIdx_ = -1;
-    nbExpectedStreams_ = 0;
-    nbReceivedVideoStreams_ = nbReceivedAudioStreams_ = 0;
     isRecording_ = false;
     isReady_ = false;
     audioOnly_ = false;

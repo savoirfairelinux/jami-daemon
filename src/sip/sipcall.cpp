@@ -1188,8 +1188,8 @@ SIPCall::getDetails() const
 bool
 SIPCall::toggleRecording()
 {
-    const bool startRecording = Call::toggleRecording();
-    if (startRecording) {
+    // add streams to recorder before starting the record
+    if (not Call::isRecording()) {
         std::stringstream ss;
         ss << "Conversation at %TIMESTAMP between "
             << getSIPAccount().getUserUri() << " and " << peerUri_;
@@ -1208,7 +1208,7 @@ SIPCall::toggleRecording()
             videortp_->deinitRecorder(recorder_);
 #endif
     }
-    return startRecording;
+    return Call::toggleRecording();
 }
 
 void
