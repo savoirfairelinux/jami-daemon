@@ -90,7 +90,6 @@ class MediaDecoder {
 
         int setupFromAudioData();
         Status decode(AudioFrame&);
-        void writeToRingBuffer(std::unique_ptr<AudioFrame>&& decodedFrame, RingBuffer&, const AudioFormat);
 
         int getWidth() const;
         int getHeight() const;
@@ -115,7 +114,6 @@ class MediaDecoder {
         AVCodecContext *decoderCtx_ = nullptr;
         AVFormatContext *inputCtx_ = nullptr;
         AVStream *avStream_ = nullptr;
-        std::unique_ptr<Resampler> resampler_;
         int streamIndex_ = -1;
         bool emulateRate_ = false;
         int64_t startTime_;
@@ -123,10 +121,6 @@ class MediaDecoder {
 
         DeviceParams inputParams_;
 
-        AudioBuffer decBuff_;
-        AudioBuffer resamplingBuff_;
-
-        void extract(const std::map<std::string, std::string>& map, const std::string& key);
         int correctPixFmt(int input_pix_fmt);
         int setupStream(AVMediaType mediaType);
         int selectStream(AVMediaType type);
