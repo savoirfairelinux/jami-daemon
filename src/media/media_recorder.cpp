@@ -161,9 +161,9 @@ void MediaRecorder::update(Observable<std::shared_ptr<VideoFrame>>* ob, const st
 {
     MediaStream ms;
     if (auto receiver = dynamic_cast<video::VideoReceiveThread*>(ob)) {
-        ms = receiver->getStream();
+        ms = receiver->getInfo();
     } else if (auto input = dynamic_cast<video::VideoInput*>(ob)) {
-        ms = input->getStream();
+        ms = input->getInfo();
     }
     ms.firstTimestamp = v->pointer()->pts;
     recordData(v->pointer(), ms);

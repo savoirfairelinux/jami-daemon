@@ -78,7 +78,7 @@ public:
     int getHeight() const;
     int getPixelFormat() const;
     DeviceParams getParams() const;
-    MediaStream getStream() const;
+    MediaStream getInfo() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
