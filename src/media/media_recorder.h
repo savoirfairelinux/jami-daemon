@@ -53,69 +53,92 @@ public:
     MediaRecorder();
     ~MediaRecorder();
 
-    std::string getPath() const;
-
-    void setPath(const std::string& path);
-
-    void audioOnly(bool audioOnly);
-
-    // replaces %TIMESTAMP with time at start of recording
-    // default title: "Conversation at %Y-%m-%d %H:%M:%S"
-    // default description: "Recorded with Jami https://jami.net"
-    void setMetadata(const std::string& title, const std::string& desc);
-
+    /**
+     * Gets whether or not the recorder is active.
+     */
     bool isRecording() const;
 
-    int startRecording();
+    /**
+     * Get file path of file to be recorded. Same path as sent to @setPath, but with
+     * file extension appended.
+     *
+     * NOTE @audioOnly must be called to have the right extension.
+     */
+    std::string getPath() const;
 
-    void stopRecording();
+    /**
+     * Sets whether or not output file will have audio. Determines the extension of the
+     * output file (.ogg or .webm).
+     */
+    void audioOnly(bool audioOnly);
 
+    /**
+     * Sets output file path.
+     *
+     * NOTE An empty path will put the output file in the working directory.
+     */
+    void setPath(const std::string& path);
+
+    /**
+     * Sets title and description metadata for the file. Uses default if either is empty.
+     * Default title is "Conversation at %Y-%m-%d %H:%M:%S".
+     * Default description is "Recorded with Jami https://jami.net".
+     *
+     * NOTE replaces %TIMESTAMP with time at start of recording
+     */
+    void setMetadata(const std::string& title, const std::string& desc);
+
+    /**
+     */
     int addStream(const MediaStream& ms);
 
-    /* Observer methods*/
-    void update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a) override;
+    /**
+     * Starts the record. Streams must have been added using Observable::attach and
+     * @addStream.
+     */
+    int startRecording();
 
+    /**
+     * Stops the record. Streams must be removed using Observable::detach afterwards.
+     */
+    void stopRecording();
+
+    /**
+     * Updates the recorder with an audio or video frame.
+     */
+    void update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a) override;
     void update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v) override;
 
 private:
     NON_COPYABLE(MediaRecorder);
 
     int recordData(AVFrame* frame, const MediaStream& ms);
+    int flush();
 
     int initRecord();
     MediaStream setupVideoOutput();
     std::string buildVideoFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
     MediaStream setupAudioOutput();
     std::string buildAudioFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
-    void emptyFilterGraph();
-    int sendToEncoder(AVFrame* frame, int streamIdx);
-    int flush();
-    void resetToDefaults(); // clear saved data for next recording
-
-    std::unique_ptr<MediaEncoder> encoder_;
-    std::unique_ptr<MediaFilter> videoFilter_;
-    std::unique_ptr<MediaFilter> audioFilter_;
 
     std::mutex mutex_; // protect against concurrent file writes
 
     std::map<std::string, const MediaStream> streams_;
 
+    std::string path_;
     std::tm startTime_;
     std::string title_;
     std::string description_;
 
-    std::string path_;
-
-    // NOTE do not use dir_ or filename_, use path_ instead
-    std::string dir_;
-    std::string filename_;
+    std::unique_ptr<MediaEncoder> encoder_;
+    std::unique_ptr<MediaFilter> videoFilter_;
+    std::unique_ptr<MediaFilter> audioFilter_;
 
     bool hasAudio_ {false};
     bool hasVideo_ {false};
     int videoIdx_ = -1;
     int audioIdx_ = -1;
     bool isRecording_ = false;
-    bool isReady_ = false;
     bool audioOnly_ = false;
 
     struct RecordFrame {
@@ -131,6 +154,8 @@ private:
     };
     InterruptedThreadLoop loop_;
     void process();
+    void emptyFilterGraph();
+    int sendToEncoder(AVFrame* frame, int streamIdx);
     std::mutex qLock_;
     std::deque<RecordFrame> frames_;
 };
