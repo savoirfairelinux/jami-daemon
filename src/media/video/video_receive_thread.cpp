@@ -247,7 +247,7 @@ int VideoReceiveThread::getPixelFormat() const
 { return videoDecoder_->getPixelFormat(); }
 
 MediaStream
-VideoReceiveThread::getStream() const
+VideoReceiveThread::getInfo() const
 {
     return videoDecoder_->getStream("v:remote");
 }

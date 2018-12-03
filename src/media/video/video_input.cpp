@@ -607,7 +607,7 @@ DeviceParams VideoInput::getParams() const
 { return decOpts_; }
 
 MediaStream
-VideoInput::getStream() const
+VideoInput::getInfo() const
 {
     return decoder_->getStream("v:local");
 }

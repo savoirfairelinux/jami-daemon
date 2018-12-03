@@ -188,4 +188,12 @@ AudioInput::setMuted(bool isMuted)
     muteState_ = isMuted;
 }
 
+MediaStream
+AudioInput::getInfo() const
+{
+    std::lock_guard<std::mutex> lk(fmtMutex_);
+    auto ms = MediaStream("a:local", format_, sent_samples);
+    return ms;
+}
+
 } // namespace ring
