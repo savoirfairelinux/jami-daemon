@@ -33,6 +33,7 @@ namespace ring {
 
 class MediaDecoder;
 class MediaIOHandle;
+struct MediaStream;
 class RingBuffer;
 
 class AudioReceiveThread : public Observable<std::shared_ptr<AudioFrame>>
@@ -43,6 +44,9 @@ public:
                        const std::string& sdp,
                        const uint16_t mtu);
     ~AudioReceiveThread();
+
+    MediaStream getInfo() const;
+
     void addIOContext(SocketPair &socketPair);
     void startLoop();
 
