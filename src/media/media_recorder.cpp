@@ -39,6 +39,7 @@
 
 namespace ring {
 
+// Replaces every occurrence of @from with @to in @str
 static std::string
 replaceAll(const std::string& str, const std::string& from, const std::string& to)
 {
@@ -61,10 +62,16 @@ MediaRecorder::MediaRecorder()
 
 MediaRecorder::~MediaRecorder()
 {
-    if (isRecording_)
-        flush();
     if (loop_.isRunning())
         loop_.join();
+    if (isRecording_)
+        flush();
+}
+
+bool
+MediaRecorder::isRecording() const
+{
+    return isRecording_;
 }
 
 std::string
@@ -83,23 +90,16 @@ MediaRecorder::audioOnly(bool audioOnly)
 }
 
 void
+MediaRecorder::setPath(const std::string& path)
+{
+    path_ = path;
+}
+
+void
 MediaRecorder::setMetadata(const std::string& title, const std::string& desc)
 {
     title_ = title;
     description_ = desc;
-}
-
-void
-MediaRecorder::setPath(const std::string& path)
-{
-    if (!path.empty())
-        path_ = path;
-}
-
-bool
-MediaRecorder::isRecording() const
-{
-    return isRecording_;
 }
 
 int
@@ -136,7 +136,34 @@ MediaRecorder::stopRecording()
         flush();
         emitSignal<DRing::CallSignal::RecordPlaybackStopped>(getPath());
     }
-    resetToDefaults();
+    streams_.clear();
+    videoIdx_ = audioIdx_ = -1;
+    isRecording_ = false;
+    audioOnly_ = false;
+    videoFilter_.reset();
+    audioFilter_.reset();
+    encoder_.reset();
+}
+
+int
+MediaRecorder::addStream(const MediaStream& ms)
+{
+    if (audioOnly_ && ms.isVideo) {
+        RING_ERR() << "Trying to add video stream to audio only recording";
+        return -1;
+    }
+
+    if (streams_.insert(std::make_pair(ms.name, ms)).second) {
+        RING_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
+        if (ms.isVideo)
+            hasVideo_ = true;
+        else
+            hasAudio_ = true;
+        return 0;
+    } else {
+        RING_ERR() << "Could not add stream '" << ms.name << "' to record";
+        return -1;
+    }
 }
 
 void
@@ -161,38 +188,10 @@ void MediaRecorder::update(Observable<std::shared_ptr<VideoFrame>>* ob, const st
 }
 
 int
-MediaRecorder::addStream(const MediaStream& ms)
-{
-    if (audioOnly_ && ms.isVideo) {
-        RING_ERR() << "Trying to add video stream to audio only recording";
-        return -1;
-    }
-
-    if (streams_.insert(std::make_pair(ms.name, ms)).second) {
-        RING_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
-        if (ms.isVideo)
-            hasVideo_ = true;
-        else
-            hasAudio_ = true;
-        return 0;
-    } else {
-        RING_ERR() << "Could not add stream '" << ms.name << "' to record";
-        return -1;
-    }
-}
-
-int
 MediaRecorder::recordData(AVFrame* frame, const MediaStream& ms)
 {
     // recorder may be recording, but not ready for the first frames
-    if (!isRecording_)
-        return 0;
-
-    if (!isReady_ && streams_.find(ms.name) == streams_.end())
-        if (addStream(ms) < 0)
-            return -1;
-
-    if (!isReady_ || !loop_.isRunning()) // check again in case initRecord was called
+    if (!isRecording_ || !loop_.isRunning())
         return 0;
 
     const auto& params = streams_.at(ms.name);
@@ -288,29 +287,18 @@ MediaRecorder::initRecord()
         }
     }
 
-    // ready to start recording if audio stream index and video stream index are valid
-    bool audioIsReady = hasAudio_ && audioIdx_ >= 0;
-    bool videoIsReady = !audioOnly_ && hasVideo_ && videoIdx_ >= 0;
-    isReady_ = audioIsReady && videoIsReady;
-
-    if (isReady_) {
-        if (!loop_.isRunning())
-            loop_.start();
-
+    try {
         std::unique_ptr<MediaIOHandle> ioHandle;
-        try {
-            encoder_->setIOContext(ioHandle);
-            encoder_->startIO();
-        } catch (const MediaEncoderException& e) {
-            RING_ERR() << "Could not start recorder: " << e.what();
-            return -1;
-        }
-        RING_DBG() << "Recording initialized";
-        return 0;
-    } else {
-        RING_ERR() << "Failed to initialize recorder";
+        encoder_->setIOContext(ioHandle);
+        encoder_->startIO();
+    } catch (const MediaEncoderException& e) {
+        RING_ERR() << "Could not start recorder: " << e.what();
         return -1;
     }
+
+    RING_DBG() << "Recording initialized";
+    loop_.start();
+    return 0;
 }
 
 MediaStream
@@ -506,19 +494,6 @@ MediaRecorder::flush()
     encoder_->flush();
 
     return 0;
-}
-
-void
-MediaRecorder::resetToDefaults()
-{
-    streams_.clear();
-    videoIdx_ = audioIdx_ = -1;
-    isRecording_ = false;
-    isReady_ = false;
-    audioOnly_ = false;
-    videoFilter_.reset();
-    audioFilter_.reset();
-    encoder_.reset();
 }
 
 void
