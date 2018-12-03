@@ -53,29 +53,59 @@ public:
     MediaRecorder();
     ~MediaRecorder();
 
-    std::string getPath() const;
-
-    void setPath(const std::string& path);
-
-    void audioOnly(bool audioOnly);
-
-    // replaces %TIMESTAMP with time at start of recording
-    // default title: "Conversation at %Y-%m-%d %H:%M:%S"
-    // default description: "Recorded with Ring https://ring.cx"
-    void setMetadata(const std::string& title, const std::string& desc);
-
+    /**
+     * Gets whether or not the recorder is active.
+     */
     bool isRecording() const;
 
+    /**
+     * Get file path of file to be recorded. Same path as sent to @setPath, but with
+     * file extension appended.
+     */
+    std::string getPath() const;
+
+    /**
+     * Sets whether or not output file will have audio. Determines the extension of the
+     * output file (.ogg or .webm).
+     */
+    void audioOnly(bool audioOnly);
+
+    /**
+     * Sets output file path.
+     */
+    void setPath(const std::string& path);
+
+    /**
+     * Sets title and description metadata for the file. Uses default if either is empty.
+     * Default title is "Conversation at %Y-%m-%d %H:%M:%S".
+     * Default description is "Recorded with Ring https://ring.cx".
+     *
+     * NOTE replaces %TIMESTAMP with time at start of recording
+     */
+    void setMetadata(const std::string& title, const std::string& desc);
+
+    /**
+     * Starts the record. Streams must have already been added using Observable::attach
+     * with the recorder as parameter.
+     */
     int startRecording();
 
+    /**
+     * Stops the record. Streams must be removed using Observable::detach afterwards.
+     */
     void stopRecording();
 
-    /* Observer methods*/
-    void update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a) override;
+    /**
+     * Sets up the stream of the passed in observable.
+     */
     void attached(Observable<std::shared_ptr<AudioFrame>>* ob) override;
-
-    void update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v) override;
     void attached(Observable<std::shared_ptr<VideoFrame>>* ob) override;
+
+    /**
+     * Updates the recorder with an audio or video frame.
+     */
+    void update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a) override;
+    void update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v) override;
 
 private:
     NON_COPYABLE(MediaRecorder);
@@ -91,7 +121,6 @@ private:
     void emptyFilterGraph();
     int sendToEncoder(AVFrame* frame, int streamIdx);
     int flush();
-    void resetToDefaults(); // clear saved data for next recording
 
     std::unique_ptr<MediaEncoder> encoder_;
     std::unique_ptr<MediaFilter> videoFilter_;

@@ -67,6 +67,12 @@ MediaRecorder::~MediaRecorder()
         loop_.join();
 }
 
+bool
+MediaRecorder::isRecording() const
+{
+    return isRecording_;
+}
+
 std::string
 MediaRecorder::getPath() const
 {
@@ -83,23 +89,17 @@ MediaRecorder::audioOnly(bool audioOnly)
 }
 
 void
-MediaRecorder::setMetadata(const std::string& title, const std::string& desc)
-{
-    title_ = title;
-    description_ = desc;
-}
-
-void
 MediaRecorder::setPath(const std::string& path)
 {
     if (!path.empty())
         path_ = path;
 }
 
-bool
-MediaRecorder::isRecording() const
+void
+MediaRecorder::setMetadata(const std::string& title, const std::string& desc)
 {
-    return isRecording_;
+    title_ = title;
+    description_ = desc;
 }
 
 int
@@ -136,18 +136,14 @@ MediaRecorder::stopRecording()
         flush();
         emitSignal<DRing::CallSignal::RecordPlaybackStopped>(getPath());
     }
-    resetToDefaults();
-}
-
-void
-MediaRecorder::update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a)
-{
-    std::string name;
-    if (dynamic_cast<AudioReceiveThread*>(ob))
-        name = "a:remote";
-    else // ob is of type AudioInput*
-        name = "a:local";
-    recordData(a->pointer(), streams_[name]);
+    streams_.clear();
+    videoIdx_ = audioIdx_ = -1;
+    isRecording_ = false;
+    isReady_ = false;
+    audioOnly_ = false;
+    videoFilter_.reset();
+    audioFilter_.reset();
+    encoder_.reset();
 }
 
 void MediaRecorder::attached(Observable<std::shared_ptr<AudioFrame>>* ob)
@@ -159,16 +155,6 @@ void MediaRecorder::attached(Observable<std::shared_ptr<AudioFrame>>* ob)
         ms = input->getStream();
     if (addStream(ms) >= 0)
         hasAudio_ = true;
-}
-
-void MediaRecorder::update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v)
-{
-    std::string name;
-    if (dynamic_cast<video::VideoReceiveThread*>(ob))
-        name = "v:remote";
-    else // ob is of type VideoInput*
-        name = "v:local";
-    recordData(v->pointer(), streams_[name]);
 }
 
 void MediaRecorder::attached(Observable<std::shared_ptr<VideoFrame>>* ob)
@@ -199,18 +185,32 @@ MediaRecorder::addStream(const MediaStream& ms)
     }
 }
 
+void
+MediaRecorder::update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a)
+{
+    std::string name;
+    if (dynamic_cast<AudioReceiveThread*>(ob))
+        name = "a:remote";
+    else // ob is of type AudioInput*
+        name = "a:local";
+    recordData(a->pointer(), streams_[name]);
+}
+
+void MediaRecorder::update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v)
+{
+    std::string name;
+    if (dynamic_cast<video::VideoReceiveThread*>(ob))
+        name = "v:remote";
+    else // ob is of type VideoInput*
+        name = "v:local";
+    recordData(v->pointer(), streams_[name]);
+}
+
 int
 MediaRecorder::recordData(AVFrame* frame, const MediaStream& ms)
 {
     // recorder may be recording, but not ready for the first frames
-    if (!isRecording_)
-        return 0;
-
-    if (!isReady_ && streams_.find(ms.name) == streams_.end())
-        if (addStream(ms) < 0)
-            return -1;
-
-    if (!isReady_ || !loop_.isRunning()) // check again in case initRecord was called
+    if (!isRecording_ || !isReady_ || !loop.isRunning())
         return 0;
 
     const auto& params = streams_.at(ms.name);
@@ -524,19 +524,6 @@ MediaRecorder::flush()
     encoder_->flush();
 
     return 0;
-}
-
-void
-MediaRecorder::resetToDefaults()
-{
-    streams_.clear();
-    videoIdx_ = audioIdx_ = -1;
-    isRecording_ = false;
-    isReady_ = false;
-    audioOnly_ = false;
-    videoFilter_.reset();
-    audioFilter_.reset();
-    encoder_.reset();
 }
 
 void
