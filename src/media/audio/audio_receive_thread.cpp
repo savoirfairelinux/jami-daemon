@@ -93,18 +93,17 @@ void
 AudioReceiveThread::process()
 {
     AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    AudioFrame decodedFrame;
+    auto decodedFrame = std::make_unique<AudioFrame>();
 
-    switch (audioDecoder_->decode(decodedFrame)) {
+    switch (audioDecoder_->decode(*decodedFrame)) {
 
         case MediaDecoder::Status::FrameFinished:
             {
                 auto rec = recorder_.lock();
                 if (rec && rec->isRecording())
-                    rec->recordData(decodedFrame.pointer(), audioDecoder_->getStream("a:remote"));
+                    rec->recordData(decodedFrame->pointer(), audioDecoder_->getStream("a:remote"));
             }
-            audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
-                                             mainBuffFormat);
+            audioDecoder_->writeToRingBuffer(std::move(decodedFrame), *ringbuffer_, mainBuffFormat);
             return;
 
         case MediaDecoder::Status::DecodeError:

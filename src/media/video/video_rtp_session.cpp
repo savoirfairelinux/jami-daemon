@@ -46,8 +46,6 @@ namespace ring { namespace video {
 using std::map;
 using std::string;
 
-constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
-
 // how long (in seconds) to wait before rechecking for packet loss
 static constexpr auto RTCP_PACKET_LOSS_INTERVAL = std::chrono::milliseconds(1000);
 
