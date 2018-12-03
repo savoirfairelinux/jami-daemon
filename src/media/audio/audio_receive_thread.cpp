@@ -101,9 +101,8 @@ AudioReceiveThread::process()
                 if (rec && rec->isRecording())
                     rec->recordData(decodedFrame->pointer(), audioDecoder_->getStream("a:remote"));
             }
-            audioDecoder_->writeToRingBuffer(*decodedFrame, *ringbuffer_,
-                                             mainBuffFormat);
             notify(decodedFrame);
+            ringbuffer_->put(std::move(decodedFrame));
             return;
         case MediaDecoder::Status::DecodeError:
             RING_WARN("decoding failure, trying to reset decoder...");
