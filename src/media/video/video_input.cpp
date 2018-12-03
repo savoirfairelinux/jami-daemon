@@ -606,7 +606,7 @@ int VideoInput::getPixelFormat() const
 DeviceParams VideoInput::getParams() const
 { return decOpts_; }
 
-MediaStream
+const MediaStream
 VideoInput::getStream() const
 {
     return decoder_->getStream("v:local");

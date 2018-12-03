@@ -150,6 +150,12 @@ AudioReceiveThread::addIOContext(SocketPair& socketPair)
     demuxContext_.reset(socketPair.createIOContext(mtu_));
 }
 
+const MediaStream
+AudioReceiveThread::getStream() const
+{
+    return audioDecoder_->getStream("a:remote");
+}
+
 void
 AudioReceiveThread::startLoop()
 {

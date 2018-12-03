@@ -60,7 +60,7 @@ public:
     int getWidth() const;
     int getHeight() const;
     int getPixelFormat() const;
-    MediaStream getStream() const;
+    const MediaStream getStream() const;
     void triggerKeyFrameRequest();
 
 private:

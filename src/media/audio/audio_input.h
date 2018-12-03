@@ -32,6 +32,7 @@
 
 namespace ring {
 
+struct MediaStream;
 class Resampler;
 
 class AudioInput : public Observable<std::shared_ptr<AudioFrame>>
@@ -45,13 +46,14 @@ public:
     bool isCapturing() const { return loop_.isRunning(); }
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
+    const MediaStream getStream() const;
 
 private:
     std::string id_;
     AudioBuffer micData_;
     bool muteState_ = false;
     uint64_t sent_samples = 0;
-    std::mutex fmtMutex_ {};
+    mutable std::mutex fmtMutex_ {};
     AudioFormat format_;
 
     std::unique_ptr<Resampler> resampler_;

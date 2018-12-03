@@ -107,6 +107,14 @@ AudioInput::setMuted(bool isMuted)
     muteState_ = isMuted;
 }
 
+const MediaStream
+AudioInput::getStream() const
+{
+    std::lock_guard<std::mutex> lk(fmtMutex_);
+    auto ms = MediaStream("a:local", format_, sent_samples);
+    return ms;
+}
+
 std::shared_future<DeviceParams>
 AudioInput::switchInput(const std::string& resource)
 {
