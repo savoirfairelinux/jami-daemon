@@ -113,6 +113,8 @@ Recordable::stopRecording()
 
     recorder_->stopRecording();
     recording_ = false;
+    // new recorder since this one may still be recording
+    recorder_ = std::make_shared<MediaRecorder>();
 }
 
 bool
