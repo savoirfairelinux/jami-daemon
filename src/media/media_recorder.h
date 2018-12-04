@@ -40,8 +40,6 @@
 #include <string>
 #include <utility>
 
-struct AVFrame;
-
 namespace ring {
 
 class MediaRecorder : public Observer<std::shared_ptr<AudioFrame>>
@@ -112,8 +110,7 @@ public:
 private:
     NON_COPYABLE(MediaRecorder);
 
-    int recordData(AVFrame* frame, const MediaStream& ms);
-    int flush();
+    void flush();
 
     int initRecord();
     MediaStream setupVideoOutput();
@@ -141,23 +138,9 @@ private:
     bool isRecording_ = false;
     bool audioOnly_ = false;
 
-    struct RecordFrame {
-        AVFrame* frame;
-        bool isVideo;
-        bool fromPeer;
-        RecordFrame() {}
-        RecordFrame(AVFrame* f, bool v, bool p)
-            : frame(f)
-            , isVideo(v)
-            , fromPeer(p)
-        {}
-    };
     InterruptedThreadLoop loop_;
     void process();
-    void emptyFilterGraph();
-    int sendToEncoder(AVFrame* frame, int streamIdx);
-    std::mutex qLock_;
-    std::deque<RecordFrame> frames_;
+    void sendToEncoder(AVFrame* frame, int streamIdx);
 };
 
 }; // namespace ring
