@@ -195,7 +195,7 @@ class AlsaLayer : public AudioLayer {
          * @param buffer The non-interleaved data to be copied
          * @param frames Frames in the buffer
          */
-        void write(AudioSample* buffer, int frames, snd_pcm_t *handle);
+        void write(const AudioFrame& buffer, snd_pcm_t *handle);
 
         /**
          * Read data from the internal ring buffer
@@ -204,7 +204,7 @@ class AlsaLayer : public AudioLayer {
          * @param frames  The number of frames to get
          * @return int The number of frames actually read
          */
-        int read(AudioSample* buffer, int frames);
+        std::unique_ptr<AudioFrame> read(unsigned frames);
 
         virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
