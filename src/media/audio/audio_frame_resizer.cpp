@@ -64,8 +64,8 @@ void
 AudioFrameResizer::setFormat(const AudioFormat& format, int size)
 {
     if (format != format_) {
-        if (auto discaded = samples())
-            RING_WARN("Discarding %d samples", discaded);
+        if (auto discarded = samples())
+            RING_WARN("Discarding %d samples", discarded);
         av_audio_fifo_free(queue_);
         format_ = format;
         queue_ = av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, frameSize_);
