@@ -27,7 +27,6 @@
 #include "media_stream.h"
 #include "noncopyable.h"
 #include "observer.h"
-#include "threadloop.h"
 #ifdef RING_VIDEO
 #include "video/video_base.h"
 #endif
@@ -46,6 +45,7 @@ class MediaRecorder : public Observer<std::shared_ptr<AudioFrame>>
 #ifdef RING_VIDEO
                     , public video::VideoFramePassiveReader
 #endif
+                    , public std::enable_shared_from_this<MediaRecorder>
 {
 public:
     MediaRecorder();
@@ -111,6 +111,7 @@ private:
     NON_COPYABLE(MediaRecorder);
 
     void flush();
+    void reset();
 
     int initRecord();
     MediaStream setupVideoOutput();
@@ -138,9 +139,7 @@ private:
     bool isRecording_ = false;
     bool audioOnly_ = false;
 
-    InterruptedThreadLoop loop_;
-    void process();
-    void sendToEncoder(AVFrame* frame, int streamIdx);
+    void filterAndEncode(MediaFilter* filter, int streamIdx);
 };
 
 }; // namespace ring
