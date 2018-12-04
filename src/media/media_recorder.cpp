@@ -150,17 +150,6 @@ MediaRecorder::update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::sh
     recordData(a->pointer(), streams_[name]);
 }
 
-void MediaRecorder::attached(Observable<std::shared_ptr<AudioFrame>>* ob)
-{
-    MediaStream ms;
-    if (auto receiver = dynamic_cast<AudioReceiveThread*>(ob))
-        ms = receiver->getInfo();
-    else if (auto input = dynamic_cast<AudioInput*>(ob))
-        ms = input->getInfo();
-    if (addStream(ms) >= 0)
-        hasAudio_ = true;
-}
-
 void MediaRecorder::update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v)
 {
     std::string name;
@@ -169,17 +158,6 @@ void MediaRecorder::update(Observable<std::shared_ptr<VideoFrame>>* ob, const st
     else // ob is of type VideoInput*
         name = "v:local";
     recordData(v->pointer(), streams_[name]);
-}
-
-void MediaRecorder::attached(Observable<std::shared_ptr<VideoFrame>>* ob)
-{
-    MediaStream ms;
-    if (auto receiver = dynamic_cast<video::VideoReceiveThread*>(ob))
-        ms = receiver->getInfo();
-    else if (auto input = dynamic_cast<video::VideoInput*>(ob))
-        ms = input->getInfo();
-    if (addStream(ms) >= 0)
-        hasVideo_ = true;
 }
 
 int
@@ -192,6 +170,10 @@ MediaRecorder::addStream(const MediaStream& ms)
 
     if (streams_.insert(std::make_pair(ms.name, ms)).second) {
         RING_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
+        if (ms.isVideo)
+            hasVideo_ = true;
+        else
+            hasAudio_ = true;
         return 0;
     } else {
         RING_ERR() << "Could not add stream '" << ms.name << "' to record";

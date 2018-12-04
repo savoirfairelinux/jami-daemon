@@ -70,19 +70,18 @@ public:
 
     void stopRecording();
 
+    int addStream(const MediaStream& ms);
+
     /* Observer methods*/
     void update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a) override;
-    void attached(Observable<std::shared_ptr<AudioFrame>>* ob) override;
 
     void update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v) override;
-    void attached(Observable<std::shared_ptr<VideoFrame>>* ob) override;
 
 private:
     NON_COPYABLE(MediaRecorder);
 
     int recordData(AVFrame* frame, const MediaStream& ms);
 
-    int addStream(const MediaStream& ms);
     int initRecord();
     MediaStream setupVideoOutput();
     std::string buildVideoFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;

@@ -196,10 +196,14 @@ AudioRtpSession::setMuted(bool isMuted)
 void
 AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    if (receiveThread_)
+    if (receiveThread_) {
         receiveThread_->attach(rec.get());
-    if (auto input = ring::getAudioInput(callID_))
+        rec->addStream(receiveThread_->getInfo());
+    }
+    if (auto input = ring::getAudioInput(callID_)) {
         input->attach(rec.get());
+        rec->addStream(input->getInfo());
+    }
 }
 
 void
