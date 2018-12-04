@@ -567,10 +567,14 @@ VideoRtpSession::processPacketLoss()
 void
 VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    if (receiveThread_)
+    if (receiveThread_) {
         receiveThread_->attach(rec.get());
-    if (auto vidInput = std::static_pointer_cast<VideoInput>(videoLocal_))
+        rec->addStream(receiveThread_->getInfo());
+    }
+    if (auto vidInput = std::static_pointer_cast<VideoInput>(videoLocal_)) {
         vidInput->attach(rec.get());
+        rec->addStream(vidInput->getInfo());
+    }
 }
 
 void
