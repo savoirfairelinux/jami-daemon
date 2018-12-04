@@ -174,7 +174,7 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
                 return fail("Failed to reinitialize filter with new input parameters", ret);
         }
 
-        int flags = AV_BUFFERSRC_FLAG_PUSH | AV_BUFFERSRC_FLAG_KEEP_REF;
+        int flags = AV_BUFFERSRC_FLAG_KEEP_REF;
         if ((ret = av_buffersrc_add_frame_flags(inputs_[i], frame, flags)) < 0)
             return fail("Could not pass frame to filters", ret);
         else
