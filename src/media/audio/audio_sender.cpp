@@ -30,6 +30,8 @@
 #include "resampler.h"
 #include "smartools.h"
 
+#include <memory>
+
 namespace ring {
 
 AudioSender::AudioSender(const std::string& id,
@@ -94,7 +96,7 @@ AudioSender::setup(SocketPair& socketPair)
 }
 
 void
-AudioSender::update(Observable<std::shared_ptr<ring::AudioFrame>>* /*obs*/, const std::shared_ptr<ring::AudioFrame>& framePtr)
+AudioSender::update(Observable<std::shared_ptr<ring::MediaFrame>>* /*obs*/, const std::shared_ptr<ring::MediaFrame>& framePtr)
 {
     auto frame = framePtr->pointer();
     auto ms = MediaStream("a:local", frame->format, rational<int>(1, frame->sample_rate),
@@ -103,7 +105,7 @@ AudioSender::update(Observable<std::shared_ptr<ring::AudioFrame>>* /*obs*/, cons
     ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
 
-    if (audioEncoder_->encodeAudio(*framePtr) < 0)
+    if (audioEncoder_->encodeAudio(*std::static_pointer_cast<AudioFrame>(framePtr)) < 0)
         RING_ERR("encoding failed");
 }
 

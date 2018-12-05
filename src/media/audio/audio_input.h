@@ -36,7 +36,7 @@ namespace ring {
 struct MediaStream;
 class Resampler;
 
-class AudioInput : public Observable<std::shared_ptr<AudioFrame>>
+class AudioInput : public Observable<std::shared_ptr<MediaFrame>>
 {
 public:
     AudioInput(const std::string& id);

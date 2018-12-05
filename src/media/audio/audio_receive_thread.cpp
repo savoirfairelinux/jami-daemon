@@ -30,6 +30,8 @@
 #include "ringbufferpool.h"
 #include "smartools.h"
 
+#include <memory>
+
 namespace ring {
 
 AudioReceiveThread::AudioReceiveThread(const std::string& id,
@@ -96,7 +98,7 @@ AudioReceiveThread::process()
         case MediaDecoder::Status::FrameFinished:
             audioDecoder_->writeToRingBuffer(*decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
-            notify(decodedFrame);
+            notify(std::static_pointer_cast<MediaFrame>(decodedFrame));
             return;
         case MediaDecoder::Status::DecodeError:
             RING_WARN("decoding failure, trying to reset decoder...");

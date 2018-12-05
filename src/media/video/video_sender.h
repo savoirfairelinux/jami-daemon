@@ -54,8 +54,8 @@ public:
     void forceKeyFrame();
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame>>* obs,
-                const std::shared_ptr<VideoFrame>& frame_p) override;
+    void update(Observable<std::shared_ptr<MediaFrame>>* obs,
+                const std::shared_ptr<MediaFrame>& frame_p) override;
 
     void setMuted(bool isMuted);
     uint16_t getLastSeqValue();

@@ -313,10 +313,10 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 {}
 
 void
-SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
-                   const std::shared_ptr<VideoFrame>& frame_p)
+SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
+                   const std::shared_ptr<MediaFrame>& frame_p)
 {
-    auto& f = *frame_p;
+    auto& f = *std::static_pointer_cast<VideoFrame>(frame_p);
 
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();

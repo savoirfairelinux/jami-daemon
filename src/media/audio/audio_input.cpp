@@ -28,6 +28,7 @@
 
 #include <future>
 #include <chrono>
+#include <memory>
 
 namespace ring {
 
@@ -69,7 +70,7 @@ AudioInput::process()
     frame->pointer()->pts = sent_samples;
     sent_samples += frame->pointer()->nb_samples;
 
-    notify(frame);
+    notify(std::static_pointer_cast<MediaFrame>(frame));
 }
 
 bool

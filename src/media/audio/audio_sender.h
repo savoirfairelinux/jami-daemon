@@ -33,7 +33,7 @@ class MediaEncoder;
 class MediaIOHandle;
 class Resampler;
 
-class AudioSender : public Observer<std::shared_ptr<AudioFrame>> {
+class AudioSender : public Observer<std::shared_ptr<MediaFrame>> {
 public:
     AudioSender(const std::string& id,
                 const std::string& dest,
@@ -47,8 +47,8 @@ public:
     void setMuted(bool isMuted);
     uint16_t getLastSeqValue();
 
-    void update(Observable<std::shared_ptr<ring::AudioFrame>>*,
-                const std::shared_ptr<ring::AudioFrame>&) override;
+    void update(Observable<std::shared_ptr<ring::MediaFrame>>*,
+                const std::shared_ptr<ring::MediaFrame>&) override;
 
 private:
     NON_COPYABLE(AudioSender);
