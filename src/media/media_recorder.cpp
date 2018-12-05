@@ -156,9 +156,10 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
 
     // copy frame to not mess with the original frame's pts (does not actually copy frame data)
     MediaFrame clone;
+    const auto& ms = streams_[name];
     clone.copyFrom(*frame);
-    clone.pointer()->pts -= streams_[name].firstTimestamp;
-    if (clone.pointer()->width > 0 && clone.pointer()->height > 0)
+    clone.pointer()->pts -= ms.firstTimestamp;
+    if (ms.isVideo)
         videoFilter_->feedInput(clone.pointer(), name);
     else
         audioFilter_->feedInput(clone.pointer(), name);
@@ -417,8 +418,12 @@ void
 MediaRecorder::flush()
 {
     std::lock_guard<std::mutex> lk(mutex_);
+    if (videoFilter_)
+        videoFilter_->flush();
+    if (audioFilter_)
+        audioFilter_->flush();
     filterAndEncode(videoFilter_.get(), videoIdx_);
-    filterAndEncode(audioFilter_.get(), videoIdx_);
+    filterAndEncode(audioFilter_.get(), audioIdx_);
     encoder_->flush();
 }
 
