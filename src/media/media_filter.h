@@ -99,6 +99,11 @@ class MediaFilter {
          */
         AVFrame* readOutput();
 
+        /**
+         * Flush filter to indicate EOF.
+         */
+        void flush();
+
     private:
         NON_COPYABLE(MediaFilter);
 
