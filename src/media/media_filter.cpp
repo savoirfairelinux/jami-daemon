@@ -161,6 +161,9 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
     if (!initialized_)
         return fail("Filter not initialized", -1);
 
+    if (!frame)
+        return 0;
+
     for (size_t i = 0; i < inputs_.size(); ++i) {
         auto& ms = inputParams_[i];
         if (ms.name != inputName)
@@ -208,6 +211,13 @@ MediaFilter::readOutput()
     }
     av_frame_free(&frame);
     return nullptr;
+}
+
+void
+MediaFilter::flush()
+{
+    for (size_t i = 0; i < inputs_.size(); ++i)
+        av_buffersrc_add_frame_flags(inputs_[i], nullptr, 0);
 }
 
 int
