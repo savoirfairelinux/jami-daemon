@@ -724,7 +724,9 @@
     <ClCompile Include="..\src\media\audio\audiolayer.cpp" />
     <ClCompile Include="..\src\media\audio\audioloop.cpp" />
     <ClCompile Include="..\src\media\audio\audio_input.cpp" />
+    <ClCompile Include="..\src\media\audio\audio_receive_thread.cpp" />
     <ClCompile Include="..\src\media\audio\audio_rtp_session.cpp" />
+    <ClCompile Include="..\src\media\audio\audio_sender.cpp" />
     <ClCompile Include="..\src\media\audio\dcblocker.cpp" />
     <ClCompile Include="..\src\media\audio\dsp.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
@@ -881,7 +883,9 @@
     <ClInclude Include="..\src\media\audio\audiolayer.h" />
     <ClInclude Include="..\src\media\audio\audioloop.h" />
     <ClInclude Include="..\src\media\audio\audio_input.h" />
+    <ClInclude Include="..\src\media\audio\audio_receive_thread.h" />
     <ClInclude Include="..\src\media\audio\audio_rtp_session.h" />
+    <ClInclude Include="..\src\media\audio\audio_sender.h" />
     <ClInclude Include="..\src\media\audio\dcblocker.h" />
     <ClInclude Include="..\src\media\audio\dsp.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>

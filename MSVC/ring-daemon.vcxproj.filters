@@ -400,6 +400,12 @@
     <ClCompile Include="..\src\media\audio\audio_input.cpp">
       <Filter>Source Files\media\audio</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\media\audio\audio_receive_thread.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\audio_sender.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\account.h">
@@ -820,6 +826,12 @@
       <Filter>Source Files\media</Filter>
     </ClInclude>
     <ClInclude Include="..\src\media\audio\audio_input.h">
+      <Filter>Source Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\audio_receive_thread.h">
+      <Filter>Source Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\audio_sender.h">
       <Filter>Source Files\media\audio</Filter>
     </ClInclude>
   </ItemGroup>
