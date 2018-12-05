@@ -141,36 +141,27 @@ MediaRecorder::addStream(const MediaStream& ms)
 }
 
 void
-MediaRecorder::update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a)
+MediaRecorder::update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& m)
 {
     if (!isRecording_)
         return;
     std::string name;
     if (dynamic_cast<AudioReceiveThread*>(ob))
         name = "a:remote";
-    else // ob is of type AudioInput*
+    else if (dynamic_cast<AudioInput*>(ob))
         name = "a:local";
-    // copy frame to not mess with the original frame's pts
-    AudioFrame clone;
-    clone.copyFrom(*a);
-    clone.pointer()->pts -= streams_[name].firstTimestamp;
-    audioFilter_->feedInput(clone.pointer(), name);
-}
-
-void MediaRecorder::update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v)
-{
-    if (!isRecording_)
-        return;
-    std::string name;
-    if (dynamic_cast<video::VideoReceiveThread*>(ob))
+    else if (dynamic_cast<video::VideoReceiveThread*>(ob))
         name = "v:remote";
-    else // ob is of type VideoInput*
+    else if (dynamic_cast<video::VideoInput*>(ob))
         name = "v:local";
-    // copy frame to not mess with the original frame's pts
-    VideoFrame clone;
-    clone.copyFrom(*v);
+    // copy frame to not mess with the original frame's pts (does not actually copy frame data)
+    MediaFrame clone;
+    clone.copyFrom(*m);
     clone.pointer()->pts -= streams_[name].firstTimestamp;
-    videoFilter_->feedInput(clone.pointer(), name);
+    if (clone.pointer()->width > 0 && clone.pointer()->height > 0)
+        videoFilter_->feedInput(clone.pointer(), name);
+    else
+        audioFilter_->feedInput(clone.pointer(), name);
 }
 
 int

@@ -78,10 +78,10 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 }
 
 void
-VideoSender::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
-                    const std::shared_ptr<VideoFrame>& frame_p)
+VideoSender::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
+                    const std::shared_ptr<MediaFrame>& frame_p)
 {
-    encodeAndSendVideo(*frame_p);
+    encodeAndSendVideo(*std::static_pointer_cast<VideoFrame>(frame_p));
 }
 
 void

@@ -49,17 +49,19 @@ struct AVIOContext;
 #endif
 
 namespace DRing {
+class MediaFrame;
 class VideoFrame;
 }
 
 namespace ring {
+using MediaFrame = DRing::MediaFrame;
 using VideoFrame = DRing::VideoFrame;
 }
 
 namespace ring { namespace video {
 
-struct VideoFrameActiveWriter: Observable<std::shared_ptr<VideoFrame>> {};
-struct VideoFramePassiveReader: Observer<std::shared_ptr<VideoFrame>> {};
+struct VideoFrameActiveWriter: Observable<std::shared_ptr<MediaFrame>> {};
+struct VideoFramePassiveReader: Observer<std::shared_ptr<MediaFrame>> {};
 
 /*=== VideoGenerator =========================================================*/
 

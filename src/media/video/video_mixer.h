@@ -49,9 +49,9 @@ public:
     int getPixelFormat() const override;
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v) override;
-    void attached(Observable<std::shared_ptr<VideoFrame>>* ob) override;
-    void detached(Observable<std::shared_ptr<VideoFrame>>* ob) override;
+    void update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& v) override;
+    void attached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
+    void detached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
 
 private:
     NON_COPYABLE(VideoMixer);

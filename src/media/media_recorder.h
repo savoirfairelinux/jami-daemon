@@ -41,10 +41,7 @@
 
 namespace ring {
 
-class MediaRecorder : public Observer<std::shared_ptr<AudioFrame>>
-#ifdef RING_VIDEO
-                    , public video::VideoFramePassiveReader
-#endif
+class MediaRecorder : public Observer<std::shared_ptr<MediaFrame>>
                     , public std::enable_shared_from_this<MediaRecorder>
 {
 public:
@@ -104,8 +101,7 @@ public:
     /**
      * Updates the recorder with an audio or video frame.
      */
-    void update(Observable<std::shared_ptr<AudioFrame>>* ob, const std::shared_ptr<AudioFrame>& a) override;
-    void update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v) override;
+    void update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& a) override;
 
 private:
     NON_COPYABLE(MediaRecorder);

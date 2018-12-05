@@ -36,7 +36,7 @@ class MediaIOHandle;
 struct MediaStream;
 class RingBuffer;
 
-class AudioReceiveThread : public Observable<std::shared_ptr<AudioFrame>>
+class AudioReceiveThread : public Observable<std::shared_ptr<MediaFrame>>
 {
 public:
     AudioReceiveThread(const std::string &id,

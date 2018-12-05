@@ -63,8 +63,8 @@ class SinkClient : public VideoFramePassiveReader
         }
 
         // as VideoFramePassiveReader
-        void update(Observable<std::shared_ptr<ring::VideoFrame>>*,
-                    const std::shared_ptr<ring::VideoFrame>&) override;
+        void update(Observable<std::shared_ptr<ring::MediaFrame>>*,
+                    const std::shared_ptr<ring::MediaFrame>&) override;
 
         bool start() noexcept;
         bool stop() noexcept;

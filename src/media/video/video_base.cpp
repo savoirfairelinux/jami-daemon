@@ -44,7 +44,7 @@ VideoGenerator::publishFrame()
 {
     std::lock_guard<std::mutex> lk(mutex_);
     lastFrame_ = std::move(writableFrame_);
-    notify(lastFrame_);
+    notify(std::static_pointer_cast<MediaFrame>(lastFrame_));
 }
 
 void

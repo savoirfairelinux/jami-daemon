@@ -33,7 +33,7 @@
 namespace ring { namespace video {
 
 struct VideoMixer::VideoMixerSource {
-    Observable<std::shared_ptr<VideoFrame>>* source = nullptr;
+    Observable<std::shared_ptr<MediaFrame>>* source = nullptr;
     std::unique_ptr<VideoFrame> update_frame;
     std::unique_ptr<VideoFrame> render_frame;
     void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
@@ -77,7 +77,7 @@ VideoMixer::~VideoMixer()
 }
 
 void
-VideoMixer::attached(Observable<std::shared_ptr<VideoFrame>>* ob)
+VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     auto lock(rwMutex_.write());
 
@@ -87,7 +87,7 @@ VideoMixer::attached(Observable<std::shared_ptr<VideoFrame>>* ob)
 }
 
 void
-VideoMixer::detached(Observable<std::shared_ptr<VideoFrame>>* ob)
+VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     auto lock(rwMutex_.write());
 
@@ -100,8 +100,8 @@ VideoMixer::detached(Observable<std::shared_ptr<VideoFrame>>* ob)
 }
 
 void
-VideoMixer::update(Observable<std::shared_ptr<VideoFrame>>* ob,
-                   const std::shared_ptr<VideoFrame>& frame_p)
+VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
+                   const std::shared_ptr<MediaFrame>& frame_p)
 {
     auto lock(rwMutex_.read());
 
@@ -111,7 +111,7 @@ VideoMixer::update(Observable<std::shared_ptr<VideoFrame>>* ob,
                 x->update_frame.reset(new VideoFrame);
             else
                 x->update_frame->reset();
-            x->update_frame->copyFrom(*frame_p); // copy frame content, it will be destroyed after return
+            x->update_frame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p)); // copy frame content, it will be destroyed after return
             x->atomic_swap_render(x->update_frame);
             return;
         }
