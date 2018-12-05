@@ -568,22 +568,30 @@ void
 VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     if (receiveThread_) {
-        receiveThread_->attach(rec.get());
-        rec->addStream(receiveThread_->getInfo());
+        if (auto ob = rec->addStream(receiveThread_->getInfo())) {
+            receiveThread_->attach(ob);
+        }
     }
-    if (auto vidInput = std::static_pointer_cast<VideoInput>(videoLocal_)) {
-        vidInput->attach(rec.get());
-        rec->addStream(vidInput->getInfo());
+    if (auto input = std::static_pointer_cast<VideoInput>(videoLocal_)) {
+        if (auto ob = rec->addStream(input->getInfo())) {
+            input->attach(ob);
+        }
     }
 }
 
 void
 VideoRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    if (receiveThread_)
-        receiveThread_->detach(rec.get());
-    if (auto vidInput = std::static_pointer_cast<VideoInput>(videoLocal_))
-        vidInput->detach(rec.get());
+    if (receiveThread_) {
+        if (auto ob = rec->getStream(receiveThread_->getInfo().name)) {
+            receiveThread_->detach(ob);
+        }
+    }
+    if (auto input = std::static_pointer_cast<VideoInput>(videoLocal_)) {
+        if (auto ob = rec->getStream(input->getInfo().name)) {
+            input->detach(ob);
+        }
+    }
 }
 
 }} // namespace ring::video
