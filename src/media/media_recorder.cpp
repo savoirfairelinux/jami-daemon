@@ -19,9 +19,6 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "audio/audio_input.h"
-#include "audio/audio_receive_thread.h"
-#include "audio/audio_sender.h"
 #include "client/ring_signal.h"
 #include "fileutils.h"
 #include "logger.h"
@@ -29,8 +26,6 @@
 #include "media_recorder.h"
 #include "system_codec_container.h"
 #include "thread_pool.h"
-#include "video/video_input.h"
-#include "video/video_receive_thread.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -119,45 +114,50 @@ MediaRecorder::stopRecording()
     }
 }
 
-int
+Observer<std::shared_ptr<MediaFrame>>*
 MediaRecorder::addStream(const MediaStream& ms)
 {
     if (audioOnly_ && ms.isVideo) {
         RING_ERR() << "Trying to add video stream to audio only recording";
-        return -1;
+        return nullptr;
     }
 
-    if (streams_.insert(std::make_pair(ms.name, ms)).second) {
+    auto ptr = std::make_unique<StreamObserver>(ms, [this, ms](const std::shared_ptr<MediaFrame>& frame) {
+        onFrame(ms.name, frame);
+    });
+    auto p = streams_.insert(std::make_pair(ms.name, std::move(ptr)));
+    if (p.second) {
         RING_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
         if (ms.isVideo)
             hasVideo_ = true;
         else
             hasAudio_ = true;
-        return 0;
+        return p.first->second.get();
     } else {
-        RING_ERR() << "Could not add stream '" << ms.name << "' to record";
-        return -1;
+        RING_WARN() << "Recorder already has '" << ms.name << "' as input";
+        return p.first->second.get();
     }
 }
 
+Observer<std::shared_ptr<MediaFrame>>*
+MediaRecorder::getStream(const std::string& name) const
+{
+    const auto it = streams_.find(name);
+    if (it != streams_.cend())
+        return it->second.get();
+    return nullptr;
+}
+
 void
-MediaRecorder::update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& m)
+MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame>& frame)
 {
     if (!isRecording_)
         return;
-    std::string name;
-    if (dynamic_cast<AudioReceiveThread*>(ob))
-        name = "a:remote";
-    else if (dynamic_cast<AudioInput*>(ob))
-        name = "a:local";
-    else if (dynamic_cast<video::VideoReceiveThread*>(ob))
-        name = "v:remote";
-    else if (dynamic_cast<video::VideoInput*>(ob))
-        name = "v:local";
+
     // copy frame to not mess with the original frame's pts (does not actually copy frame data)
     MediaFrame clone;
-    clone.copyFrom(*m);
-    clone.pointer()->pts -= streams_[name].firstTimestamp;
+    clone.copyFrom(*frame);
+    clone.pointer()->pts -= streams_[name]->info.firstTimestamp;
     if (clone.pointer()->width > 0 && clone.pointer()->height > 0)
         videoFilter_->feedInput(clone.pointer(), name);
     else
@@ -262,19 +262,19 @@ MediaRecorder::setupVideoOutput()
 {
     MediaStream encoderStream, peer, local;
     auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
-        return pair.second.isVideo && pair.second.name.find("remote") != std::string::npos;
+        return pair.second->info.isVideo && pair.second->info.name.find("remote") != std::string::npos;
     });
 
     if (it != streams_.end()) {
-        peer = it->second;
+        peer = it->second->info;
     }
 
     it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
-        return pair.second.isVideo && pair.second.name.find("local") != std::string::npos;
+        return pair.second->info.isVideo && pair.second->info.name.find("local") != std::string::npos;
     });
 
     if (it != streams_.end()) {
-        local = it->second;
+        local = it->second->info;
     }
 
     // vp8 supports only yuv420p
@@ -348,19 +348,19 @@ MediaRecorder::setupAudioOutput()
 {
     MediaStream encoderStream, peer, local;
     auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
-        return !pair.second.isVideo && pair.second.name.find("remote") != std::string::npos;
+        return !pair.second->info.isVideo && pair.second->info.name.find("remote") != std::string::npos;
     });
 
     if (it != streams_.end()) {
-        peer = it->second;
+        peer = it->second->info;
     }
 
     it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
-        return !pair.second.isVideo && pair.second.name.find("local") != std::string::npos;
+        return !pair.second->info.isVideo && pair.second->info.name.find("local") != std::string::npos;
     });
 
     if (it != streams_.end()) {
-        local = it->second;
+        local = it->second->info;
     }
 
     // resample to common audio format, so any player can play the file

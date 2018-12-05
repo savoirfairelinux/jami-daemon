@@ -27,9 +27,6 @@
 #include "media_stream.h"
 #include "noncopyable.h"
 #include "observer.h"
-#ifdef RING_VIDEO
-#include "video/video_base.h"
-#endif
 
 #include <map>
 #include <memory>
@@ -41,8 +38,7 @@
 
 namespace ring {
 
-class MediaRecorder : public Observer<std::shared_ptr<MediaFrame>>
-                    , public std::enable_shared_from_this<MediaRecorder>
+class MediaRecorder : public std::enable_shared_from_this<MediaRecorder>
 {
 public:
     MediaRecorder();
@@ -84,8 +80,14 @@ public:
     void setMetadata(const std::string& title, const std::string& desc);
 
     /**
+     * Adds a stream to the recorder. Caller must then attach this to the media source.
      */
-    int addStream(const MediaStream& ms);
+    Observer<std::shared_ptr<MediaFrame>>* addStream(const MediaStream& ms);
+
+    /**
+     * Gets the stream observer so the caller can detach it from the media source.
+     */
+    Observer<std::shared_ptr<MediaFrame>>* getStream(const std::string& name) const;
 
     /**
      * Starts the record. Streams must have been added using Observable::attach and
@@ -98,13 +100,28 @@ public:
      */
     void stopRecording();
 
-    /**
-     * Updates the recorder with an audio or video frame.
-     */
-    void update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& a) override;
-
 private:
     NON_COPYABLE(MediaRecorder);
+
+    struct StreamObserver : public Observer<std::shared_ptr<MediaFrame>> {
+        const MediaStream info;
+
+        StreamObserver(const MediaStream& ms, std::function<void(const std::shared_ptr<MediaFrame>&)> func)
+            : info(ms), cb_(func)
+        {};
+
+        ~StreamObserver() {};
+
+        void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/, const std::shared_ptr<MediaFrame>& m) override
+        {
+            cb_(m);
+        }
+
+    private:
+        std::function<void(const std::shared_ptr<MediaFrame>&)> cb_;
+    };
+
+    void onFrame(const std::string& name, const std::shared_ptr<MediaFrame>& frame);
 
     void flush();
     void reset();
@@ -117,7 +134,7 @@ private:
 
     std::mutex mutex_; // protect against concurrent file writes
 
-    std::map<std::string, const MediaStream> streams_;
+    std::map<std::string, std::unique_ptr<StreamObserver>> streams_;
 
     std::string path_;
     std::tm startTime_;
