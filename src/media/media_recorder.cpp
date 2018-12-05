@@ -19,9 +19,6 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "audio/audio_input.h"
-#include "audio/audio_receive_thread.h"
-#include "audio/audio_sender.h"
 #include "client/ring_signal.h"
 #include "fileutils.h"
 #include "logger.h"
@@ -29,8 +26,6 @@
 #include "media_recorder.h"
 #include "system_codec_container.h"
 #include "thread_pool.h"
-#include "video/video_input.h"
-#include "video/video_receive_thread.h"
 
 #include <algorithm>
 #include <iomanip>
@@ -119,44 +114,49 @@ MediaRecorder::stopRecording()
     }
 }
 
-int
+Observer<std::shared_ptr<MediaFrame>>*
 MediaRecorder::addStream(const MediaStream& ms)
 {
     if (audioOnly_ && ms.isVideo) {
         RING_ERR() << "Trying to add video stream to audio only recording";
-        return -1;
+        return nullptr;
     }
 
     if (streams_.insert(std::make_pair(ms.name, ms)).second) {
-        RING_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
-        if (ms.isVideo)
-            hasVideo_ = true;
-        else
-            hasAudio_ = true;
-        return 0;
-    } else {
-        RING_ERR() << "Could not add stream '" << ms.name << "' to record";
-        return -1;
+        auto ptr = std::make_shared<StreamObserver>([this, name = ms.name](const std::shared_ptr<MediaFrame>& frame) {
+            onFrame(name, frame);
+        });
+        if (observers_.insert(std::make_pair(ms.name, ptr)).second) {
+            RING_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
+            if (ms.isVideo)
+                hasVideo_ = true;
+            else
+                hasAudio_ = true;
+            return ptr.get();
+        }
     }
+    RING_ERR() << "Could not add stream '" << ms.name << "' to record";
+    return nullptr;
+}
+
+Observer<std::shared_ptr<MediaFrame>>*
+MediaRecorder::getStream(const std::string& name) const
+{
+    const auto it = observers_.find(name);
+    if (it != observers_.cend())
+        return it->second.get();
+    return nullptr;
 }
 
 void
-MediaRecorder::update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& m)
+MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame>& frame)
 {
     if (!isRecording_)
         return;
-    std::string name;
-    if (dynamic_cast<AudioReceiveThread*>(ob))
-        name = "a:remote";
-    else if (dynamic_cast<AudioInput*>(ob))
-        name = "a:local";
-    else if (dynamic_cast<video::VideoReceiveThread*>(ob))
-        name = "v:remote";
-    else if (dynamic_cast<video::VideoInput*>(ob))
-        name = "v:local";
+
     // copy frame to not mess with the original frame's pts (does not actually copy frame data)
     MediaFrame clone;
-    clone.copyFrom(*m);
+    clone.copyFrom(*frame);
     clone.pointer()->pts -= streams_[name].firstTimestamp;
     if (clone.pointer()->width > 0 && clone.pointer()->height > 0)
         videoFilter_->feedInput(clone.pointer(), name);
