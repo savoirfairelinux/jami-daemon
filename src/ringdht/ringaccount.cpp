@@ -161,7 +161,7 @@ RingAccount::TrustRequest {
 };
 
 /**
- * Represents a known device attached to this Ring account
+ * Represents a known device attached to this account
  */
 struct RingAccount::KnownDevice
 {
@@ -407,7 +407,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     });
 #endif
 
-    // Find listening Ring devices for this account
+    // Find listening devices for this account
     dht::InfoHash peer_account(toUri);
     forEachDevice(peer_account, [wCall, toUri, peer_account](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
     {
@@ -771,14 +771,14 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
 
     receipt_ = makeReceipt(id);
     receiptSignature_ = id.first->sign({receipt_.begin(), receipt_.end()});
-    RING_WARN("[Account %s] created new Ring device: %s (%s)",
+    RING_WARN("[Account %s] created new device: %s (%s)",
               getAccountID().c_str(), ringDeviceId_.c_str(), ringDeviceName_.c_str());
 }
 
 void
 RingAccount::initRingDevice(const AccountArchive& a)
 {
-    RING_WARN("[Account %s] creating new Ring device from archive", getAccountID().c_str());
+    RING_WARN("[Account %s] creating new device from archive", getAccountID().c_str());
     SIPAccountBase::setAccountDetails(a.config);
     parseInt(a.config, Conf::CONFIG_DHT_PORT, dhtPort_);
     parseBool(a.config, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
@@ -1049,7 +1049,7 @@ RingAccount::addDevice(const std::string& password)
         std::string pin_str;
         AccountArchive a;
         try {
-            RING_DBG("[Account %s] exporting Ring account", this_->getAccountID().c_str());
+            RING_DBG("[Account %s] exporting account", this_->getAccountID().c_str());
 
             a = this_->readArchive(password);
 
@@ -1278,7 +1278,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
 void
 RingAccount::createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate)
 {
-    RING_WARN("[Account %s] creating new Ring account", getAccountID().c_str());
+    RING_WARN("[Account %s] creating new account", getAccountID().c_str());
     setRegistrationState(RegistrationState::INITIALIZING);
     auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
     ThreadPool::instance().run([sthis,archive_password,migrate]() mutable {
@@ -1323,7 +1323,7 @@ RingAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
                 Manager::instance().removeAccount(sthis->getAccountID());
             });
         }
-        RING_DBG("[Account %s] Ring account creation ended, saving configuration", this_.getAccountID().c_str());
+        RING_DBG("[Account %s] Account creation ended, saving configuration", this_.getAccountID().c_str());
         this_.setRegistrationState(RegistrationState::UNREGISTERED);
         Manager::instance().saveConfig();
         this_.doRegister();
@@ -1420,7 +1420,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
-    RING_DBG("[Account %s] loading Ring account", getAccountID().c_str());
+    RING_DBG("[Account %s] loading account", getAccountID().c_str());
     try {
         auto id = loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
         bool hasArchive = not archivePath_.empty()
@@ -1883,7 +1883,7 @@ RingAccount::doRegister()
 
     // invalid state transitions:
     // INITIALIZING: generating/loading certificates, can't register
-    // NEED_MIGRATION: old Ring account detected, user needs to migrate
+    // NEED_MIGRATION: old account detected, user needs to migrate
     if (registrationState_ == RegistrationState::INITIALIZING
      || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION)
         return;
@@ -3303,7 +3303,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     };
     auto confirm = std::make_shared<PendingConfirmation>();
 
-    // Find listening Ring devices for this account
+    // Find listening devices for this account
     forEachDevice(toH, [confirm,token,payloads,now](const std::shared_ptr<RingAccount>& this_, const dht::InfoHash& dev)
     {
         auto e = this_->sentMessages_.emplace(token, PendingMessage {});

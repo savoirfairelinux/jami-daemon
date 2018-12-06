@@ -996,7 +996,7 @@ TlsValidator::CheckResult TlsValidator::authorityMatch()
  */
 TlsValidator::CheckResult TlsValidator::knownAuthority()
 {
-    // TODO Ring need a new boolean account setting "require trusted authority" or something defaulting to true
+    // TODO need a new boolean account setting "require trusted authority" or something defaulting to true
     // using GNUTLS_CERT_SIGNER_NOT_FOUND is a temporary placeholder as it is close enough
     return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_SIGNER_NOT_FOUND
         ? CheckValues::FAILED : CheckValues::PASSED, "");
