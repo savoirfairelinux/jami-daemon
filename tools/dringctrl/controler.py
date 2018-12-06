@@ -351,7 +351,7 @@ class DRingCtrl(Thread):
     def addAccount(self, details=None):
         """Add a new account account
 
-        Add a new account to the Ring-daemon. Default parameters are \
+        Add a new account to the daemon. Default parameters are \
         used for missing account configuration field.
 
         Required parameters are type, alias, hostname, username and password
