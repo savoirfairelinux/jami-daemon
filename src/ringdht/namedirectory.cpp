@@ -39,7 +39,7 @@ constexpr const char* const QUERY_ADDR {"/addr/"};
 constexpr const char* const HTTPS_PROTO {"https://"};
 constexpr const char* const CACHE_DIRECTORY {"namecache"};
 
-/** Parser for Ring URIs.         ( protocol        )    ( username         ) ( hostname                            ) */
+/** Parser for URIs.         ( protocol        )    ( username         ) ( hostname                            ) */
 const std::regex URI_VALIDATOR {"^([a-zA-Z]+:(?://)?)?(?:([a-z0-9-_]{1,64})@)?([a-zA-Z0-9\\-._~%!$&'()*+,;=:\\[\\]]+)"};
 const std::regex NAME_VALIDATOR {"^[a-zA-Z0-9-_]{3,32}$"};
 

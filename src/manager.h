@@ -57,7 +57,7 @@ class IceTransportFactory;
 class DataTransferFacade;
 class RingAccount;
 
-/** Manager (controller) of Ring daemon */
+/** Manager (controller) of daemon */
 class Manager {
     public:
         static Manager& instance();
@@ -826,7 +826,7 @@ class Manager {
         void unregisterAccounts();
 
         /**
-         * Suspends Ring's audio processing if no calls remain, allowing
+         * Suspends audio processing if no calls remain, allowing
          * other applications to resume audio.
          * See:
          * https://projects.savoirfairelinux.com/issues/7037

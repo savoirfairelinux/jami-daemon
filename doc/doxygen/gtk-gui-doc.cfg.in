@@ -4,7 +4,7 @@
 # Project related configuration options
 #---------------------------------------------------------------------------
 DOXYFILE_ENCODING      = UTF-8
-PROJECT_NAME           = Ring GTK GUI
+PROJECT_NAME           = Jami GTK GUI
 PROJECT_NUMBER         =
 OUTPUT_DIRECTORY       =
 CREATE_SUBDIRS         = NO

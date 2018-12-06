@@ -42,7 +42,7 @@ static void
 print_title()
 {
     std::cout
-        << "Ring Daemon " << DRing::version()
+        << "Jami Daemon " << DRing::version()
         << ", by Savoir-faire Linux 2004-2018" << std::endl
         << "https://jami.net/" << std::endl
 #ifdef RING_VIDEO
