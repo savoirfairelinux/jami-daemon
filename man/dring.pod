@@ -1,6 +1,6 @@
 =head1 NAME
 
-dring - core daemon for Ring: secure and distributed voice, video and chat communication platform.
+dring - core daemon for Jami: secure and distributed voice, video and chat communication platform.
 
 =head1 SYNOPSIS
 
@@ -8,9 +8,9 @@ B<dring> [OPTION]...
 
 =head1 DESCRIPTION
 
-Ring is meant to be a robust enterprise-class desktop phone. It provides functions like call transfer, call hold, multiple lines, multiple accounts support.
-Ring audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
-B<dring> is the core of Ring; it communicates with the client side through DBus. You need to install a client to use the daemon, for instance GTK+ client, B<gnome-ring>.
+Jami is meant to be a robust enterprise-class desktop phone. It provides functions like call transfer, call hold, multiple lines, multiple accounts support.
+Jami audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
+B<dring> is the core of Jami; it communicates with the client side through DBus. You need to install a client to use the daemon, for instance GTK+ client, B<gnome-ring>.
 
 =head1 OPTIONS
 

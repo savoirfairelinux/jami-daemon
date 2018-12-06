@@ -1681,9 +1681,9 @@ Manager::saveConfig(const std::shared_ptr<RingAccount>& account)
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
         std::ofstream fout(accountConfig);
         fout << accountOut.c_str();
-        RING_DBG("Exported Ring account to %s", accountConfig.c_str());
+        RING_DBG("Exported account to %s", accountConfig.c_str());
     } catch (const std::exception& e) {
-        RING_ERR("Error exporting Ring account: %s", e.what());
+        RING_ERR("Error exporting account: %s", e.what());
     }
 }
 
@@ -2804,7 +2804,7 @@ Manager::loadAccountMap(const YAML::Node& node)
                         a->unserialize(parsedConfig);
                     }
                 } catch (const std::exception& e) {
-                    RING_ERR("Can't import Ring account %s: %s", dir.c_str(), e.what());
+                    RING_ERR("Can't import account %s: %s", dir.c_str(), e.what());
                 }
             }
             {

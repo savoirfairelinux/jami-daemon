@@ -2,7 +2,7 @@
 	xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0"
 	xmlns:xi="http://www.w3.org/2001/XInclude">
 
-<tp:title>Ring D-Bus Interface Specification</tp:title>
+<tp:title>Jami D-Bus Interface Specification</tp:title>
 <tp:version>2.3.0</tp:version>
 
 <tp:copyright>Copyright © 2005-2016 Savoir-faire Linux Inc</tp:copyright>

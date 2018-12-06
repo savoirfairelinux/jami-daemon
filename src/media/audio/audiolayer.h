@@ -272,7 +272,7 @@ class AudioLayer {
         mutable std::condition_variable startedCv_;
 
         /**
-         * Sample Rate Ring should send sound data to the sound card
+         * Sample Rate that should be sent to the sound card
          */
         AudioFormat audioFormat_;
 
