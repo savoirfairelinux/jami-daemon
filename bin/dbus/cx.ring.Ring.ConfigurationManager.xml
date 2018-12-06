@@ -976,7 +976,7 @@
            <tp:added version="2.0.0"/>
            <tp:docstring>
                 Returns a list of supported encryption ciphers used to encrypt SIP messages. The list depends on the TLS library being used.
-                Only registered SIP accounts currently support setting custom ciphers. This method returns an empty list if TLS support is disabled in either pjproject or Ring.
+                Only registered SIP accounts currently support setting custom ciphers. This method returns an empty list if TLS support is disabled in either pjproject or Jami.
            </tp:docstring>
            <arg type="s" name="accountID" direction="in">
                 <tp:docstring>

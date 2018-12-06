@@ -198,7 +198,7 @@ class RingAccount : public SIPAccountBase {
         std::string getToUri(const std::string& username) const override;
 
         /**
-         * In the current version of Ring, "srv" uri is obtained in the preformated
+         * In the current version, "srv" uri is obtained in the preformated
          * way: hostname:port. This method adds the correct scheme and append
          * the ;transport= parameter at the end of the uri, in accordance with RFC3261.
          *
@@ -368,7 +368,7 @@ class RingAccount : public SIPAccountBase {
 
         /**
          * Inform that a potential peer device have been found.
-         * Returns true only if the device certificate is a valid Ring device certificate.
+         * Returns true only if the device certificate is a valid device certificate.
          * In that case (true is returned) the account_id parameter is set to the peer account ID.
          */
         static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id);
@@ -545,7 +545,7 @@ class RingAccount : public SIPAccountBase {
         void updateContact(const dht::InfoHash&, const Contact&);
         void addContact(const dht::InfoHash&, bool confirmed = false);
 
-        // Trust store with Ring account main certificate as the only CA
+        // Trust store with account main certificate as the only CA
         dht::crypto::TrustList accountTrust_;
         // Trust store for to match peer certificates
         tls::TrustStore trust_;

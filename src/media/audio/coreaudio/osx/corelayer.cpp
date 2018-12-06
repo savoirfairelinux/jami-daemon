@@ -339,7 +339,7 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
             inNumberFrames,
             captureBuff_));
 
-    // Add them to Ring ringbuffer.
+    // Add them to ringbuffer.
     const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     bool resample = inSampleRate_ != mainBufferFormat.sample_rate;
 

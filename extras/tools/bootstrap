@@ -111,7 +111,7 @@ $CXX
 PREFIX=\$(abspath ./build)
 
 all: $NEEDED
-	@echo "You are ready to build Ring and its contribs"
+	@echo "You are ready to build Jami and its contribs"
 
 include tools.mak
 EOF

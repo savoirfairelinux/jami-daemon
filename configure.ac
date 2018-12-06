@@ -1,8 +1,8 @@
-dnl Ring - configure.ac for automake 1.9 and autoconf 2.59
+dnl Jami - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([Ring Daemon],[7.1.0],[ring@gnu.org],[ring])
+AC_INIT([Jami Daemon],[7.1.0],[ring@gnu.org],[ring])
 
 AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2018]])
 AC_REVISION([$Revision$])
@@ -406,15 +406,15 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AM_CONDITIONAL(RING_DBUS, true)],TESTS= $(check_PROGRAMS)
        AM_CONDITIONAL(RING_DBUS, false));
 
-dnl Ring name service is default-enabled
-AC_ARG_ENABLE([ringns], AS_HELP_STRING([--disable-ringns], [Enable Ring Name Service]))
-AM_CONDITIONAL([RINGNS], test "x$enable_ringns" != "xno", [Define if you use the Ring Name Service])
-AC_DEFINE_UNQUOTED([HAVE_RINGNS], `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`, [Define if you use the Ring Name Service])
+dnl name service is default-enabled
+AC_ARG_ENABLE([ringns], AS_HELP_STRING([--disable-ringns], [Enable Name Service]))
+AM_CONDITIONAL([RINGNS], test "x$enable_ringns" != "xno", [Define if you use the Name Service])
+AC_DEFINE_UNQUOTED([HAVE_RINGNS], `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`, [Define if you use the Name Service])
 
-dnl Ring nodejs module
-AC_ARG_WITH([nodejs], AS_HELP_STRING([--with-nodejs], [Enable Ring NodeJS module]))
-AM_CONDITIONAL([RING_NODEJS], test "x$enable_nodejs" != "xno", [Define if you use the Ring NodeJS module])
-AC_DEFINE_UNQUOTED([HAVE_NODEJS], `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`, [Define if you use the Ring NodeJS module])
+dnl nodejs module
+AC_ARG_WITH([nodejs], AS_HELP_STRING([--with-nodejs], [Enable NodeJS module]))
+AM_CONDITIONAL([RING_NODEJS], test "x$enable_nodejs" != "xno", [Define if you use the NodeJS module])
+AC_DEFINE_UNQUOTED([HAVE_NODEJS], `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`, [Define if you use the NodeJS module])
 AS_IF([test "x$with_nodejs" = "xyes"], [
     AC_PATH_PROG(SWIG, swig, "")
     AS_AC_EXPAND(SBINDIR, $sbindir)
@@ -488,11 +488,11 @@ AS_IF([test "x$enable_video" != "xno"],
 
 AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations (enabled by default)]))
 AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
-  dnl if new hwaccel api is found, activate Ring's hardware accel
+  dnl if new hwaccel api is found, activate hardware accel
   dnl prefix needs to be different from the one above
   PKG_CHECK_MODULES(AVUTIL, libavutil >= 55.75.100, [
     ring_accel="yes"
-    AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled in Ring])
+    AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled])
     AS_IF([test "${SYS}" = "linux" && test -z "${HAVE_ANDROID_FALSE}"], [
       dnl ffmpeg's vaapi and vdpau implementations depend on x11
       PKG_CHECK_MODULES([X11], [x11], [x11_available="yes"], [x11_available="no"])
@@ -506,13 +506,13 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
           ], [])
           AC_CHECK_HEADERS([libavcodec/vaapi.h], [
             ring_vaapi="yes"
-            AC_DEFINE([RING_VAAPI], [1], [Defined if vaapi is available in Ring])
+            AC_DEFINE([RING_VAAPI], [1], [Defined if vaapi is available])
           ])
         ], [])
         PKG_CHECK_MODULES([VDPAU], [vdpau], [
           AC_CHECK_HEADERS([libavcodec/vdpau.h], [
             ring_vdpau="yes"
-            AC_DEFINE([RING_VDPAU], [1], [Defined if vdpau is available in Ring])
+            AC_DEFINE([RING_VDPAU], [1], [Defined if vdpau is available])
           ])
         ], [])
       ])
@@ -521,7 +521,7 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
       AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
         AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
           ring_vt="yes"
-          AC_DEFINE([RING_VIDEOTOOLBOX], [1], [Defined if videotoolbox is available in Ring])
+          AC_DEFINE([RING_VIDEOTOOLBOX], [1], [Defined if videotoolbox is available])
         ])
       ])
     ])
