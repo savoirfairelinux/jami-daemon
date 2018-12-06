@@ -63,7 +63,6 @@ endif
 	$(APPLY) $(SRC)/pjproject/ice_config.patch
 	$(APPLY) $(SRC)/pjproject/multiple_listeners.patch
 	$(APPLY) $(SRC)/pjproject/pj_ice_sess.patch
-	$(APPLY) $(SRC)/pjproject/fix_turn_fallback.patch
 	$(APPLY) $(SRC)/pjproject/fix_ioqueue_ipv6_sendto.patch
 	$(APPLY) $(SRC)/pjproject/add_dtls_transport.patch
 	$(APPLY) $(SRC)/pjproject/rfc6062.patch
