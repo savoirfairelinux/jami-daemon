@@ -27,6 +27,7 @@
 #include "manager.h"
 #include "logger.h"
 #include "client/videomanager.h"
+#include "thread_pool.h"
 
 namespace ring {
 
@@ -88,6 +89,12 @@ LocalRecorder::startRecording()
     }
 #endif
 
+    // keep LocalRecorder until everything is done
+    ThreadPool::instance().run([this, localRec = shared_from_this()] {
+        std::unique_lock<std::mutex> lk(m_);
+        cv_.wait(lk, [localRec]{ return !localRec->isRecording() && !localRec->keepAlive_; });
+    });
+
     return Recordable::startRecording(path_);
 }
 
@@ -101,6 +108,11 @@ LocalRecorder::stopRecording()
     if (videoInput_)
         if (auto ob = recorder_->getStream(videoInput_->getInfo().name))
             videoInput_->detach(ob);
+    {
+    std::lock_guard<std::mutex> lk(m_);
+    keepAlive_ = false;
+    cv_.notify_one(); // only 1 thread waiting
+    }
     audioInput_.reset();
     videoInput_.reset();
 }

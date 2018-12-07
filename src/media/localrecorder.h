@@ -25,6 +25,9 @@
 #include "recordable.h"
 #include "video/video_input.h"
 
+#include <condition_variable>
+#include <memory>
+
 namespace ring {
 
 /*
@@ -37,7 +40,7 @@ namespace ring {
  * recording messages locally.
  */
 
-class LocalRecorder : public Recordable {
+class LocalRecorder : public std::enable_shared_from_this<LocalRecorder>, public Recordable {
     public:
 
         /**
@@ -67,6 +70,10 @@ class LocalRecorder : public Recordable {
         // media inputs
         std::shared_ptr<ring::video::VideoInput> videoInput_;
         std::shared_ptr<ring::AudioInput> audioInput_;
+
+        std::mutex m_;
+        std::condition_variable cv_;
+        bool keepAlive_ {true};
 };
 
 } // namespace ring
