@@ -103,7 +103,8 @@ AudioInput::nextFromDevice()
     //    micData_.reset();
     // TODO handle mute
 
-    resizer_->enqueue(resampler_->resample(std::move(samples), getFormat()));
+    auto frame = resampler_->resample(std::move(samples), getFormat());
+    notify(std::static_pointer_cast<MediaFrame>(frame));
 }
 
 void
