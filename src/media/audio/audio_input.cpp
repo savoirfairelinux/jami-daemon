@@ -79,7 +79,6 @@ void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
     std::shared_ptr<AudioFrame> frame = std::move(ptr);
-    auto ms = MediaStream("a:local", format_, sent_samples);
     frame->pointer()->pts = sent_samples;
     sent_samples += frame->pointer()->nb_samples;
 
@@ -104,10 +103,7 @@ AudioInput::nextFromDevice()
     //    micData_.reset();
     // TODO handle mute
 
-    {
-        std::lock_guard<std::mutex> lk(fmtMutex_);
-        resizer_->enqueue(resampler_->resample(std::move(samples), format_));
-    }
+    resizer_->enqueue(resampler_->resample(std::move(samples), getFormat()));
 }
 
 void
@@ -120,7 +116,6 @@ AudioInput::nextFromFile()
     const auto ret = decoder_->decode(*frame);
     const auto inFmt = AudioFormat((unsigned)frame->pointer()->sample_rate, (unsigned)frame->pointer()->channels, (AVSampleFormat)frame->pointer()->format);
 
-    std::lock_guard<std::mutex> lk(fmtMutex_);
     switch(ret) {
     case MediaDecoder::Status::ReadError:
     case MediaDecoder::Status::DecodeError:
@@ -131,7 +126,7 @@ AudioInput::nextFromFile()
         createDecoder();
         break;
     case MediaDecoder::Status::FrameFinished:
-        resizer_->enqueue(resampler_->resample(std::move(frame), format_));
+        resizer_->enqueue(resampler_->resample(std::move(frame), getFormat()));
         break;
     case MediaDecoder::Status::Success:
     default:
@@ -142,10 +137,11 @@ AudioInput::nextFromFile()
 bool
 AudioInput::initDevice(const std::string& device)
 {
+    const auto format = getFormat();
     devOpts_ = {};
     devOpts_.input = device;
-    devOpts_.channel = format_.nb_channels;
-    devOpts_.framerate = format_.sample_rate;
+    devOpts_.channel = format.nb_channels;
+    devOpts_.framerate = format.sample_rate;
     return true;
 }
 
@@ -275,6 +271,13 @@ AudioInput::createDecoder()
     return true;
 }
 
+AudioFormat
+AudioInput::getFormat() const
+{
+    std::lock_guard<std::mutex> lk(fmtMutex_);
+    return format_;
+}
+
 void
 AudioInput::setFormat(const AudioFormat& fmt)
 {
@@ -293,7 +296,7 @@ MediaStream
 AudioInput::getInfo() const
 {
     std::lock_guard<std::mutex> lk(fmtMutex_);
-    auto ms = MediaStream("a:local", format_, sent_samples);
+    auto ms = MediaStream("a:local", getFormat(), sent_samples);
     return ms;
 }
 

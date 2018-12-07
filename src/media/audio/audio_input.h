@@ -48,6 +48,7 @@ public:
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 
     bool isCapturing() const { return loop_.isRunning(); }
+    AudioFormat getFormat() const;
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
     MediaStream getInfo() const;
