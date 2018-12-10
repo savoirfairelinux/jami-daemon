@@ -202,11 +202,16 @@ VideoInput::isCapturing() const noexcept
 bool VideoInput::captureFrame()
 {
     // Return true if capture could continue, false if must be stop
-
     if (not decoder_)
         return false;
 
-    auto& frame = getNewFrame();
+    switch (decoder_->decode()) {
+    case MediaDemuxer::Status::ReadError:
+        return false;
+    default:
+        return true;
+    }
+    /*auto& frame = getNewFrame();
     const auto ret = decoder_->decode(frame);
     switch (ret) {
         case MediaDecoder::Status::ReadError:
@@ -236,7 +241,7 @@ bool VideoInput::captureFrame()
         case MediaDecoder::Status::Success:
         default:
             return true;
-    }
+    }*/
 }
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
@@ -337,7 +342,9 @@ VideoInput::createDecoder()
         return;
     }
 
-    auto decoder = std::unique_ptr<MediaDecoder>(new MediaDecoder());
+    auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
+        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
+    });
 
     if (emulateRate_)
         decoder->emulateRate();
@@ -345,6 +352,8 @@ VideoInput::createDecoder()
     decoder->setInterruptCallback(
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); },
         this);
+    /*auto observer = MediaObserver();
+    decoder->attach(&observer);*/
 
     if (decoder->openInput(decOpts_) < 0) {
         RING_ERR("Could not open input \"%s\"", decOpts_.input.c_str());
@@ -353,7 +362,7 @@ VideoInput::createDecoder()
     }
 
     /* Data available, finish the decoding */
-    if (decoder->setupFromVideoData() < 0) {
+    if (decoder->setupVideo() < 0) {
         RING_ERR("decoder IO startup failed");
         foundDecOpts(decOpts_);
         return;
