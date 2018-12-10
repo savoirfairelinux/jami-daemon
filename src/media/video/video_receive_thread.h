@@ -84,7 +84,7 @@ private:
 
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
-    bool decodeFrame();
+    void decodeFrame();
     static int interruptCb(void *ctx);
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
 
