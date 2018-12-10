@@ -22,6 +22,7 @@
 #include "config.h"
 
 #include "rational.h"
+#include "observer.h"
 
 #ifdef RING_VIDEO
 #include "video/video_base.h"
@@ -31,12 +32,12 @@
 #ifdef RING_ACCEL
 #include "video/accel.h"
 #endif
+#include "logger.h"
 
 #include "audio/audiobuffer.h"
 
 #include "media_device.h"
 #include "media_stream.h"
-#include "rational.h"
 #include "noncopyable.h"
 
 #include <map>
@@ -62,79 +63,129 @@ struct AudioFormat;
 class RingBuffer;
 class Resampler;
 class MediaIOHandle;
+class MediaDecoder;
 
-class MediaDecoder {
-    public:
-        enum class Status {
-            Success,
-            FrameFinished,
-            EOFError,
-            ReadError,
-            DecodeError,
-            RestartRequired
-        };
+class MediaDemuxer {
+public:
+    MediaDemuxer();
+    ~MediaDemuxer();
 
-        MediaDecoder();
-        ~MediaDecoder();
+    enum class Status {
+        Success,
+        EndOfFile,
+        ReadError
+    };
+    using StreamCallback = std::function<void(AVPacket&)>;
 
-        void emulateRate() { emulateRate_ = true; }
-        void setInterruptCallback(int (*cb)(void*), void *opaque);
-        int openInput(const DeviceParams&);
+    int openInput(const DeviceParams&);
 
-        void setIOContext(MediaIOHandle *ioctx);
-#ifdef RING_VIDEO
-        int setupFromVideoData();
-        Status decode(VideoFrame&);
-        Status flush(VideoFrame&);
- #endif // RING_VIDEO
+    void setInterruptCallback(int (*cb)(void*), void *opaque);
+    void setIOContext(MediaIOHandle *ioctx);
 
-        int setupFromAudioData();
-        Status decode(AudioFrame&);
+    void findStreamInfo();
+    int selectStream(AVMediaType type);
 
-        int getWidth() const;
-        int getHeight() const;
-        std::string getDecoderName() const;
+    void setStreamCallback(unsigned stream, StreamCallback cb = {}) {
+        RING_WARN("MediaDemuxer::setStreamCallback %d", stream);
+        if (streams_.size() <= stream)
+            streams_.resize(stream + 1);
+        streams_[stream] = cb;
+    }
 
-        rational<double> getFps() const;
-        int getPixelFormat() const;
+    AVStream* getStream(int stream) {
+        if (stream < 0 || stream >= inputCtx_->nb_streams)
+            throw std::invalid_argument("Invalid stream index");
+        return inputCtx_->streams[stream];
+    }
 
-        void setOptions(const std::map<std::string, std::string>& options);
+    Status decode();
+
+private:
+    bool streamInfoFound_ {false};
+    AVFormatContext *inputCtx_ = nullptr;
+    std::vector<StreamCallback> streams_;
+    int64_t startTime_;
+    DeviceParams inputParams_;
+    AVDictionary *options_ = nullptr;
+};
+
+class MediaDecoder
+{
+public:
+    enum class Status {
+        Success,
+        FrameFinished,
+        EndOfFile,
+        ReadError,
+        DecodeError,
+        RestartRequired
+    };
+
+    MediaDecoder();
+    MediaDecoder(MediaObserver observer);
+    MediaDecoder(std::shared_ptr<MediaDemuxer> demuxer, int index);
+    MediaDecoder(std::shared_ptr<MediaDemuxer> demuxer, AVMediaType type) : MediaDecoder(demuxer, demuxer->selectStream(type)) {}
+    ~MediaDecoder();
+
+    void emulateRate() { emulateRate_ = true; }
+
+    int openInput(const DeviceParams&);
+    void setInterruptCallback(int (*cb)(void*), void *opaque);
+    void setIOContext(MediaIOHandle *ioctx);
+
+    int setup(AVMediaType type);
+    int setupAudio() { return setup(AVMEDIA_TYPE_AUDIO); }
+    int setupVideo() { return setup(AVMEDIA_TYPE_VIDEO); }
+
+    MediaDemuxer::Status decode();
+    Status flush();
+
+    int getWidth() const;
+    int getHeight() const;
+    std::string getDecoderName() const;
+
+    rational<double> getFps() const;
+    int getPixelFormat() const;
+
+    void setOptions(const std::map<std::string, std::string>& options);
 #ifdef RING_ACCEL
-        void enableAccel(bool enableAccel);
+    void enableAccel(bool enableAccel);
 #endif
 
-        MediaStream getStream(std::string name = "") const;
+    MediaStream getStream(std::string name = "") const;
 
-    private:
-        NON_COPYABLE(MediaDecoder);
+private:
+    NON_COPYABLE(MediaDecoder);
 
-        rational<unsigned> getTimeBase() const;
+    Status decode(AVPacket&);
 
-        AVCodec *inputDecoder_ = nullptr;
-        AVCodecContext *decoderCtx_ = nullptr;
-        AVFormatContext *inputCtx_ = nullptr;
-        AVStream *avStream_ = nullptr;
-        int streamIndex_ = -1;
-        bool emulateRate_ = false;
-        int64_t startTime_;
-        int64_t lastTimestamp_;
+    rational<unsigned> getTimeBase() const;
 
-        DeviceParams inputParams_;
+    std::shared_ptr<MediaDemuxer> demuxer_;
 
-        int correctPixFmt(int input_pix_fmt);
-        int setupStream(AVMediaType mediaType);
-        int selectStream(AVMediaType type);
+    AVCodec *inputDecoder_ = nullptr;
+    AVCodecContext *decoderCtx_ = nullptr;
+    AVStream *avStream_ = nullptr;
+    bool emulateRate_ = false;
+    int64_t startTime_;
+    int64_t lastTimestamp_;
 
-        bool fallback_ = false;
+    DeviceParams inputParams_;
+
+    int correctPixFmt(int input_pix_fmt);
+    int setupStream();
+
+    bool fallback_ = false;
 
 #ifdef RING_ACCEL
-        bool enableAccel_ = true;
-        video::HardwareAccel accel_;
-        unsigned short accelFailures_ = 0;
+    bool enableAccel_ = false;
+    video::HardwareAccel accel_;
+    unsigned short accelFailures_ = 0;
 #endif
 
-    protected:
-        AVDictionary *options_ = nullptr;
+    AVDictionary *options_ = nullptr;
+
+    MediaObserver callback_;
 };
 
 } // namespace ring

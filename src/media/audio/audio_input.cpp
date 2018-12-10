@@ -115,7 +115,8 @@ AudioInput::nextFromFile()
 {
     if (!decoder_)
         return;
-
+    decoder_->decode();
+/*
     auto frame = std::make_unique<AudioFrame>();
     const auto ret = decoder_->decode(*frame);
     const auto inFmt = AudioFormat((unsigned)frame->pointer()->sample_rate, (unsigned)frame->pointer()->channels, (AVSampleFormat)frame->pointer()->format);
@@ -136,7 +137,7 @@ AudioInput::nextFromFile()
     case MediaDecoder::Status::Success:
     default:
         break;
-    }
+    }*/
 }
 
 bool
@@ -242,11 +243,15 @@ AudioInput::createDecoder()
     }
 
     // NOTE createDecoder is currently only used for files, which require rate emulation
-    auto decoder = std::make_unique<MediaDecoder>();
-    decoder->emulateRate();
+    auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
+        resizer_->enqueue(resampler_->resample(std::static_pointer_cast<AudioFrame>(frame), format_));
+    });
+    //decoder->emulateRate();
     decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); },
-        this);
+        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
+
+    /*auto observer = MediaObserver();
+    decoder->attach(&observer);*/
 
     if (decoder->openInput(devOpts_) < 0) {
         RING_ERR() << "Could not open input '" << devOpts_.input << "'";
@@ -254,7 +259,7 @@ AudioInput::createDecoder()
         return false;
     }
 
-    if (decoder->setupFromAudioData() < 0) {
+    if (decoder->setupAudio() < 0) {
         RING_ERR() << "Could not setup decoder for '" << devOpts_.input << "'";
         foundDevOpts(devOpts_);
         return false;

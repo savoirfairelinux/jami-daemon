@@ -53,6 +53,10 @@ class Resampler {
 
         std::unique_ptr<AudioFrame> resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& out);
         std::shared_ptr<AudioFrame> resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& out);
+        std::shared_ptr<AudioFrame> resample(const std::shared_ptr<AudioFrame>& in, const AudioFormat& out) {
+            auto p = in;
+            return resample(std::move(p), out);
+        }
 
     private:
         NON_COPYABLE(Resampler);

@@ -2,6 +2,7 @@
  *  Copyright (C) 2013-2018 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -51,27 +52,20 @@ const constexpr auto jitterBufferMaxDelay_ = std::chrono::milliseconds(50);
 // maximum number of times accelerated decoding can fail in a row before falling back to software
 const constexpr unsigned MAX_ACCEL_FAILURES { 5 };
 
-MediaDecoder::MediaDecoder() :
+MediaDemuxer::MediaDemuxer() :
     inputCtx_(avformat_alloc_context()),
     startTime_(AV_NOPTS_VALUE)
-{
-}
+{}
 
-MediaDecoder::~MediaDecoder()
+MediaDemuxer::~MediaDemuxer()
 {
-#ifdef RING_ACCEL
-    if (decoderCtx_ && decoderCtx_->hw_device_ctx)
-        av_buffer_unref(&decoderCtx_->hw_device_ctx);
-#endif
-    if (decoderCtx_)
-        avcodec_free_context(&decoderCtx_);
     if (inputCtx_)
         avformat_close_input(&inputCtx_);
-
     av_dict_free(&options_);
 }
 
-int MediaDecoder::openInput(const DeviceParams& params)
+int
+MediaDemuxer::openInput(const DeviceParams& params)
 {
     inputParams_ = params;
     AVInputFormat *iformat = av_find_input_format(params.format.c_str());
@@ -111,12 +105,6 @@ int MediaDecoder::openInput(const DeviceParams& params)
     RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
 
-#ifdef RING_ACCEL
-    // if there was a fallback to software decoding, do not enable accel
-    // it has been disabled already by the video_receive_thread/video_input
-    enableAccel_ &= Manager::instance().getDecodingAccelerated();
-#endif
-
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),
@@ -132,26 +120,22 @@ int MediaDecoder::openInput(const DeviceParams& params)
     return ret;
 }
 
-void MediaDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
+void
+MediaDemuxer::findStreamInfo()
 {
-    if (cb) {
-        inputCtx_->interrupt_callback.callback = cb;
-        inputCtx_->interrupt_callback.opaque = opaque;
-    } else {
-        inputCtx_->interrupt_callback.callback = 0;
+    if (not streamInfoFound_) {
+        RING_WARN("findStreamInfo()");
+        inputCtx_->max_analyze_duration = 30 * AV_TIME_BASE;
+        int err;
+        if ((err = avformat_find_stream_info(inputCtx_, nullptr)) < 0) {
+            RING_ERR() << "Could not find stream info: " << libav_utils::getError(err);
+        }
+        streamInfoFound_ = true;
     }
 }
 
-void MediaDecoder::setIOContext(MediaIOHandle *ioctx)
-{ inputCtx_->pb = ioctx->getContext(); }
-
-int MediaDecoder::setupFromAudioData()
-{
-    return setupStream(AVMEDIA_TYPE_AUDIO);
-}
-
 int
-MediaDecoder::selectStream(AVMediaType type)
+MediaDemuxer::selectStream(AVMediaType type)
 {
     int idx = -1;
     if (type == AVMEDIA_TYPE_AUDIO) {
@@ -162,44 +146,125 @@ MediaDecoder::selectStream(AVMediaType type)
             // NOTE libswresample does not support resampling from Dolby 5.1, so skip over it
             if (par->channel_layout == AV_CH_LAYOUT_5POINT1)
                 continue;
-            if ((inputDecoder_ = avcodec_find_decoder(par->codec_id)))
-                idx = i;
+            /* if ((inputDecoder_ = avcodec_find_decoder(par->codec_id)))
+                idx = i; */
+            idx = i;
         }
     } else {
         // grab the first video stream
-        idx = av_find_best_stream(inputCtx_, type, -1, -1, &inputDecoder_, 0);
+        idx = av_find_best_stream(inputCtx_, type, -1, -1, /*&inputDecoder_*/nullptr, 0);
     }
     return idx;
 }
 
-int
-MediaDecoder::setupStream(AVMediaType mediaType)
+void MediaDemuxer::setInterruptCallback(int (*cb)(void*), void *opaque)
 {
-    int ret = 0;
-    std::string streamType = av_get_media_type_string(mediaType);
+    if (cb) {
+        inputCtx_->interrupt_callback.callback = cb;
+        inputCtx_->interrupt_callback.opaque = opaque;
+    } else {
+        inputCtx_->interrupt_callback.callback = 0;
+    }
+}
 
+void MediaDemuxer::setIOContext(MediaIOHandle *ioctx)
+{ inputCtx_->pb = ioctx->getContext(); }
+
+
+MediaDemuxer::Status
+MediaDemuxer::decode()
+{
+    auto packet = std::make_unique<AVPacket>();
+    av_init_packet(packet.get());
+
+    int ret = av_read_frame(inputCtx_, packet.get());
+    RING_WARN("MediaDemuxer::decode() %d for stream %d", ret, packet->stream_index);
+    if (ret == AVERROR(EAGAIN)) {
+        return Status::Success;
+    } else if (ret == AVERROR_EOF) {
+        return Status::EndOfFile;
+    } else if (ret < 0) {
+        RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
+        return Status::ReadError;
+    }
+
+    auto streamIndex = packet->stream_index;
+    if (streamIndex >= streams_.size() || streamIndex < 0) {
+        RING_WARN("MediaDemuxer::decode() no callback");
+        return Status::Success;
+    }
+
+    auto& cb = streams_[streamIndex];
+    if (cb)
+        cb(*packet.get());
+    return Status::Success;
+}
+
+MediaDecoder::MediaDecoder(std::shared_ptr<MediaDemuxer> demuxer, int index)
+ : demuxer_(demuxer),
+   avStream_(demuxer->getStream(index))
+{
+    demuxer->setStreamCallback(index, [this](AVPacket& packet) {
+        decode(packet);
+    });
+    setupStream();
+}
+
+MediaDecoder::MediaDecoder()
+ : demuxer_(new MediaDemuxer)
+ {}
+
+MediaDecoder::MediaDecoder(MediaObserver o)
+ : demuxer_(new MediaDemuxer), callback_(o)
+ {}
+
+MediaDecoder::~MediaDecoder()
+{
+#ifdef RING_ACCEL
+    if (decoderCtx_ && decoderCtx_->hw_device_ctx)
+        av_buffer_unref(&decoderCtx_->hw_device_ctx);
+#endif
+    if (decoderCtx_)
+        avcodec_free_context(&decoderCtx_);
+}
+
+int
+MediaDecoder::openInput(const DeviceParams& p)
+{
+    return demuxer_->openInput(p);
+}
+
+void
+MediaDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
+{
+    demuxer_->setInterruptCallback(cb, opaque);
+}
+
+void
+MediaDecoder::setIOContext(MediaIOHandle *ioctx)
+{
+    demuxer_->setIOContext(ioctx);
+}
+
+int MediaDecoder::setup(AVMediaType type)
+{
+    demuxer_->findStreamInfo();
+    auto stream = demuxer_->selectStream(type);
+    avStream_ = demuxer_->getStream(stream);
+    demuxer_->setStreamCallback(stream, [this](AVPacket& packet) {
+        RING_WARN("stream callback()");
+        decode(packet);
+    });
+    return setupStream();
+}
+
+int
+MediaDecoder::setupStream()
+{
+    RING_WARN("setupStream()");
+    int ret = 0;
     avcodec_free_context(&decoderCtx_);
 
-    // Increase analyze time to solve synchronization issues between callers.
-    static const unsigned MAX_ANALYZE_DURATION = 30;
-    inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
-
-    // If fallback from accel, don't check for stream info, it's already done
-    if (!fallback_) {
-        RING_DBG() << "Finding " << streamType << " stream info";
-        if ((ret = avformat_find_stream_info(inputCtx_, nullptr)) < 0) {
-            // Always fail here
-            RING_ERR() << "Could not find " << streamType << " stream info: " << libav_utils::getError(ret);
-            return -1;
-        }
-    }
-
-    if ((streamIndex_ = selectStream(mediaType)) < 0) {
-        RING_ERR() << "No suitable " << streamType << " stream found";
-        return -1;
-    }
-
-    avStream_ = inputCtx_->streams[streamIndex_];
     inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
         RING_ERR() << "Unsupported codec";
@@ -213,7 +278,7 @@ MediaDecoder::setupStream(AVMediaType mediaType)
     }
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
     decoderCtx_->framerate = avStream_->avg_frame_rate;
-    if (mediaType == AVMEDIA_TYPE_VIDEO) {
+    if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = inputParams_.framerate;
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
@@ -239,7 +304,7 @@ MediaDecoder::setupStream(AVMediaType mediaType)
     }
 #endif
 
-    RING_DBG() << "Decoding " << streamType << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
+    RING_DBG() << "Decoding using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
 
     ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
     if (ret < 0) {
@@ -250,39 +315,17 @@ MediaDecoder::setupStream(AVMediaType mediaType)
     return 0;
 }
 
-#ifdef RING_VIDEO
-int MediaDecoder::setupFromVideoData()
-{
-    return setupStream(AVMEDIA_TYPE_VIDEO);
-}
-
 MediaDecoder::Status
-MediaDecoder::decode(VideoFrame& result)
+MediaDecoder::decode(AVPacket& packet)
 {
-    AVPacket inpacket;
-    av_init_packet(&inpacket);
-    int ret = av_read_frame(inputCtx_, &inpacket);
-    if (ret == AVERROR(EAGAIN)) {
-        return Status::Success;
-    } else if (ret == AVERROR_EOF) {
-        return Status::EOFError;
-    } else if (ret < 0) {
-        RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
-        return Status::ReadError;
-    }
-
-    // is this a packet from the video stream?
-    if (inpacket.stream_index != streamIndex_) {
-        av_packet_unref(&inpacket);
-        return Status::Success;
-    }
-
-    auto frame = result.pointer();
     int frameFinished = 0;
-    ret = avcodec_send_packet(decoderCtx_, &inpacket);
+    auto ret = avcodec_send_packet(decoderCtx_, &packet);
     if (ret < 0 && ret != AVERROR(EAGAIN)) {
         return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
     }
+
+    auto f = std::make_shared<MediaFrame>();
+    auto frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
         return Status::DecodeError;
@@ -290,13 +333,11 @@ MediaDecoder::decode(VideoFrame& result)
     if (ret >= 0)
         frameFinished = 1;
 
-    av_packet_unref(&inpacket);
-
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
 #ifdef RING_ACCEL
         if (!accel_.name.empty()) {
-            ret = video::transferFrameData(accel_, decoderCtx_, result);
+            ret = video::transferFrameData(accel_, decoderCtx_, *std::static_pointer_cast<VideoFrame>(f));
             if (ret < 0) {
                 ++accelFailures_;
                 if (accelFailures_ >= MAX_ACCEL_FAILURES) {
@@ -322,73 +363,19 @@ MediaDecoder::decode(VideoFrame& result)
                 std::this_thread::sleep_for(std::chrono::microseconds(target - now));
             }
         }
+        RING_WARN("decode: frameFinished");
+        if (callback_)
+            callback_(std::move(f));
         return Status::FrameFinished;
     }
 
     return Status::Success;
 }
-#endif // RING_VIDEO
 
-MediaDecoder::Status
-MediaDecoder::decode(AudioFrame& decodedFrame)
+MediaDemuxer::Status
+MediaDecoder::decode()
 {
-    const auto frame = decodedFrame.pointer();
-
-    AVPacket inpacket;
-    av_init_packet(&inpacket);
-
-   int ret = av_read_frame(inputCtx_, &inpacket);
-    if (ret == AVERROR(EAGAIN)) {
-        return Status::Success;
-    } else if (ret == AVERROR_EOF) {
-        return Status::EOFError;
-    } else if (ret < 0) {
-        RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
-        return Status::ReadError;
-    }
-
-    // is this a packet from the audio stream?
-    if (inpacket.stream_index != streamIndex_) {
-        av_packet_unref(&inpacket);
-        return Status::Success;
-    }
-
-    int frameFinished = 0;
-        ret = avcodec_send_packet(decoderCtx_, &inpacket);
-        if (ret < 0 && ret != AVERROR(EAGAIN))
-            return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
-
-    ret = avcodec_receive_frame(decoderCtx_, frame);
-    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return Status::DecodeError;
-    if (ret >= 0)
-        frameFinished = 1;
-
-    if (frameFinished) {
-        av_packet_unref(&inpacket);
-
-        // channel layout is needed if frame will be resampled
-        if (!frame->channel_layout)
-            frame->channel_layout = av_get_default_channel_layout(frame->channels);
-
-        auto packetTimestamp = frame->pts;
-        // NOTE don't use clock to rescale audio pts, it may create artifacts
-        frame->pts = av_rescale_q_rnd(frame->pts, avStream_->time_base, decoderCtx_->time_base,
-            static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-        lastTimestamp_ = frame->pts;
-
-        if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
-            auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
-            auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
-            auto now = av_gettime();
-            if (target > now) {
-                std::this_thread::sleep_for(std::chrono::microseconds(target - now));
-            }
-        }
-        return Status::FrameFinished;
-    }
-
-    return Status::Success;
+    return demuxer_->decode();
 }
 
 #ifdef RING_VIDEO
@@ -408,7 +395,7 @@ MediaDecoder::enableAccel(bool enableAccel)
 #endif
 
 MediaDecoder::Status
-MediaDecoder::flush(VideoFrame& result)
+MediaDecoder::flush()
 {
     AVPacket inpacket;
     av_init_packet(&inpacket);
@@ -419,7 +406,8 @@ MediaDecoder::flush(VideoFrame& result)
     if (ret < 0 && ret != AVERROR(EAGAIN))
         return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
 
-    ret = avcodec_receive_frame(decoderCtx_, result.pointer());
+    auto result = std::make_shared<MediaFrame>();
+    ret = avcodec_receive_frame(decoderCtx_, result->pointer());
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
         return Status::DecodeError;
     if (ret >= 0)
@@ -431,8 +419,10 @@ MediaDecoder::flush(VideoFrame& result)
         // flush is called when closing the stream
         // so don't restart the media decoder
         if (!accel_.name.empty() && accelFailures_ < MAX_ACCEL_FAILURES)
-            video::transferFrameData(accel_, decoderCtx_, result);
+            video::transferFrameData(accel_, decoderCtx_, *std::static_pointer_cast<VideoFrame>(result));
 #endif
+        if (callback_)
+            callback_(std::move(result));
         return Status::FrameFinished;
     }
 

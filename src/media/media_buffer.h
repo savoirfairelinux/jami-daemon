@@ -22,6 +22,7 @@
 
 #include "config.h"
 #include "videomanager_interface.h"
+#include "observer.h"
 
 #include <memory>
 #include <functional>
@@ -36,6 +37,8 @@ namespace ring {
 
 using MediaFrame = DRing::MediaFrame;
 using AudioFrame = DRing::AudioFrame;
+//using MediaObserver = FuncObserver<std::shared_ptr<MediaFrame>>;
+using MediaObserver = std::function<void(std::shared_ptr<MediaFrame>&&)>;
 
 #ifdef RING_VIDEO
 
