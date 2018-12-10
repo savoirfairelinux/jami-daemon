@@ -24,8 +24,11 @@
 #include "rational.h"
 
 #include <string>
+#include <chrono>
 
 namespace ring {
+
+constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
 
 /**
  * DeviceParams
