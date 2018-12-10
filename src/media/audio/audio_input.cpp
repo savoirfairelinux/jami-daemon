@@ -92,36 +92,22 @@ AudioInput::nextFromDevice()
     auto& mainBuffer = Manager::instance().getRingBufferPool();
     auto bufferFormat = mainBuffer.getInternalAudioFormat();
 
-    // compute number of samples contained in a frame with duration MS_PER_PACKET
-    const auto samplesPerPacket = MS_PER_PACKET * bufferFormat.sample_rate;
-    const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(samplesPerPacket).count();
-
-    if (mainBuffer.availableForGet(id_) < samplesToGet
-        && not mainBuffer.waitForDataAvailable(id_, samplesToGet, MS_PER_PACKET)) {
+    if (not mainBuffer.waitForDataAvailable(id_, MS_PER_PACKET)) {
         return;
     }
 
-    // getData resets the format to internal hardware format, will have to be resampled
-    micData_.setFormat(bufferFormat);
-    micData_.resize(samplesToGet);
-    const auto samples = mainBuffer.getData(micData_, id_);
-    if (samples != samplesToGet)
+    auto samples = mainBuffer.getData(id_);
+    if (not samples)
         return;
 
-    if (muteState_) // audio is muted, set samples to 0
-        micData_.reset();
+    //if (muteState_) // audio is muted, set samples to 0
+    //    micData_.reset();
+    // TODO handle mute
 
-    std::lock_guard<std::mutex> lk(fmtMutex_);
-    AudioBuffer resampled;
-    resampled.setFormat(format_);
-    if (bufferFormat != format_) {
-        resampler_->resample(micData_, resampled);
-    } else {
-        resampled = micData_;
+    {
+        std::lock_guard<std::mutex> lk(fmtMutex_);
+        resizer_->enqueue(resampler_->resample(std::move(samples), format_));
     }
-
-    auto audioFrame = resampled.toAVFrame();
-    resizer_->enqueue(std::move(audioFrame));
 }
 
 void
@@ -145,16 +131,7 @@ AudioInput::nextFromFile()
         createDecoder();
         break;
     case MediaDecoder::Status::FrameFinished:
-        if (inFmt != format_) {
-            AudioFrame out;
-            out.pointer()->format = format_.sampleFormat;
-            out.pointer()->sample_rate = format_.sample_rate;
-            out.pointer()->channel_layout = av_get_default_channel_layout(format_.nb_channels);
-            out.pointer()->channels = format_.nb_channels;
-            resampler_->resample(frame->pointer(), out.pointer());
-            frame->copyFrom(out);
-        }
-        resizer_->enqueue(std::move(frame));
+        resizer_->enqueue(resampler_->resample(std::move(frame), format_));
         break;
     case MediaDecoder::Status::Success:
     default:
@@ -298,9 +275,7 @@ AudioInput::setFormat(const AudioFormat& fmt)
 {
     std::lock_guard<std::mutex> lk(fmtMutex_);
     format_ = fmt;
-    frameSize_ = format_.sample_rate * MS_PER_PACKET.count() / 1000;
-    resizer_.reset(new AudioFrameResizer(format_, frameSize_,
-       [this](std::shared_ptr<AudioFrame>&& f){ frameResized(std::move(f)); }));
+    resizer_->setFormat(format_, format_.sample_rate * MS_PER_PACKET.count() / 1000);
 }
 
 void
