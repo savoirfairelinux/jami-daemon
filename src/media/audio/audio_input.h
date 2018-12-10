@@ -38,6 +38,7 @@ class MediaDecoder;
 class MediaRecorder;
 struct MediaStream;
 class Resampler;
+class RingBuffer;
 
 class AudioInput : public Observable<std::shared_ptr<MediaFrame>>
 {
@@ -53,8 +54,8 @@ public:
     MediaStream getInfo() const;
 
 private:
-    void nextFromDevice();
-    void nextFromFile();
+    void readFromDevice();
+    void readFromFile();
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
     bool createDecoder();
@@ -70,8 +71,10 @@ private:
 
     std::unique_ptr<Resampler> resampler_;
     std::unique_ptr<AudioFrameResizer> resizer_;
-    std::weak_ptr<MediaRecorder> recorder_;
     std::unique_ptr<MediaDecoder> decoder_;
+
+    std::string fileId_;
+    std::shared_ptr<RingBuffer> fileBuf_;
 
     std::string currentResource_;
     std::atomic_bool switchPending_ {false};
