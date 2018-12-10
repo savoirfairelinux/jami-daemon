@@ -40,13 +40,8 @@ namespace ring {
 class LocalRecorder : public Recordable {
     public:
 
-        /**
-         * Constructor of a LocalRecorder.
-         * Passed VideoInput pointer will be used for recording.
-         * If input pointer in null, video recording will be disabled on this
-         * recorder.
-         */
         LocalRecorder(const bool& audioOnly);
+        ~LocalRecorder();
 
         /**
          * Start local recording. Return true if recording was successfully
@@ -54,6 +49,9 @@ class LocalRecorder : public Recordable {
          */
         bool startRecording();
 
+        /**
+         * Stops recording.
+         */
         void stopRecording();
 
         /**

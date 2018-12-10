@@ -36,6 +36,12 @@ LocalRecorder::LocalRecorder(const bool& audioOnly)
     recorder_->audioOnly(audioOnly);
 }
 
+LocalRecorder::~LocalRecorder()
+{
+    if (isRecording())
+        stopRecording();
+}
+
 void
 LocalRecorder::setPath(const std::string& path)
 {
@@ -94,15 +100,14 @@ LocalRecorder::startRecording()
 void
 LocalRecorder::stopRecording()
 {
-    Recordable::stopRecording();
-    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
     if (auto ob = recorder_->getStream(audioInput_->getInfo().name))
         audioInput_->detach(ob);
     if (videoInput_)
         if (auto ob = recorder_->getStream(videoInput_->getInfo().name))
             videoInput_->detach(ob);
-    audioInput_.reset();
-    videoInput_.reset();
+    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
+    // NOTE stopRecording should be last call to avoid data races
+    Recordable::stopRecording();
 }
 
 } // namespace ring
