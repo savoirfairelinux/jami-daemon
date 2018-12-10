@@ -96,10 +96,9 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
     }
 
     auto nb_samples = samples();
-    if (nb_samples == 0 && f->nb_samples == frameSize_) {
+    if (cb_ && nb_samples == 0 && f->nb_samples == frameSize_) {
         nextOutputPts_ = frame->pointer()->pts + frameSize_;
-        if (cb_)
-            cb_(std::move(frame));
+        cb_(std::move(frame));
         return; // return if frame was just passed through
     }
 
