@@ -380,74 +380,19 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     (void) inTimeStamp;
     (void) inBusNumber;
 
-    auto& manager = Manager::instance();
-    auto& bufferPool = manager.getRingBufferPool();
+    AudioFormat currentOutFormat {  static_cast<unsigned>(outSampleRate_),
+                                    static_cast<unsigned>(outChannelsPerFrame_),
+                                    AV_SAMPLE_FMT_FLTP};
 
-    auto mainBufferFormat = bufferPool.getInternalAudioFormat();
-    const AudioFormat currentOutFormat = {  static_cast<unsigned int>(outSampleRate_),
-                                            static_cast<unsigned int>(outChannelsPerFrame_)};
+    const auto& ringBuff = getToRing(currentOutFormat, inNumberFrames);
+    const auto& playBuff = getToPlay(currentOutFormat, inNumberFrames);
+    auto toPlay = ringBuff ? ringBuff : playBuff;
+    if (!toPlay)
+        return;
 
-    auto resample = currentOutFormat.sample_rate != mainBufferFormat.sample_rate;
-
-    auto normalFramesToGet = bufferPool.availableForGet(RingBufferPool::DEFAULT_ID);
-    auto urgentFramesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
-
-    double resampleFactor;
-    decltype(normalFramesToGet) readableSamples;
-    decltype(urgentFramesToGet) readableUrgentSamples;
-
-    if (resample) {
-        resampleFactor = mainBufferFormat.sample_rate / static_cast<double>(currentOutFormat.sample_rate);
-        readableSamples = std::ceil(inNumberFrames * resampleFactor);
-    } else {
-        readableSamples = inNumberFrames;
-    }
-
-    // incoming call during call
-    if (urgentFramesToGet > 0) {
-        readableUrgentSamples = std::min(readableSamples, urgentFramesToGet);
-
-        playbackBuff_.setFormat(currentOutFormat);
-        playbackBuff_.resize(readableUrgentSamples);
-        urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
-        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-
-        for (unsigned i = 0; i < currentOutFormat.nb_channels; ++i) {
-            playbackBuff_.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
-        }
-        manager.getRingBufferPool().discard(readableUrgentSamples, RingBufferPool::DEFAULT_ID);
-    }
-
-    if (normalFramesToGet > 0) {
-        readableSamples = std::min(readableSamples, normalFramesToGet);
-    }
-
-    auto& ringBuff = getToRing(audioFormat_, readableSamples);
-    auto& playBuff = getToPlay(audioFormat_, readableSamples);
-
-    auto& toPlay = ringBuff.frames() > 0 ? ringBuff : playBuff;
-
-    if (toPlay.frames() == 0) {
-        // clear buffer
-        for (unsigned i = 0; i < currentOutFormat.nb_channels; ++i) {
-            std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData),
-                        ioData->mBuffers[i].mDataByteSize / sizeof(Float32), 0);
-        }
-    } else if (resample) {
-        // resample
-        playbackBuff_.setFormat(currentOutFormat);
-        playbackBuff_.resize(readableSamples);
-        resampler_->resample(toPlay, playbackBuff_);
-        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-        for (unsigned i = 0; i < audioFormat_.nb_channels; ++i) {
-            playbackBuff_.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
-        }
-    } else {
-        // normal play
-        const_cast<AudioBuffer&>(toPlay).applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-        for (unsigned i = 0; i < audioFormat_.nb_channels; ++i) {
-            toPlay.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
-        }
+    const auto& frame = *toPlay->pointer();
+    for (unsigned i = 0; i < frame.channels; ++i) {
+        std::copy_n((Float32*)frame.extended_data[i], inNumberFrames, (Float32*)ioData->mBuffers[i].mData);
     }
 }
 
@@ -485,31 +430,11 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
             inNumberFrames,
             captureBuff_));
 
-    // Add them to Ring ringbuffer.
-    const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    bool resample = inSampleRate_ != mainBufferFormat.sample_rate;
-
-    // FIXME: Performance! There *must* be a better way. This is testing only.
-    auto inBuff = AudioBuffer {inNumberFrames, audioInputFormat_};
-
-    for (unsigned i = 0; i < inChannelsPerFrame_; ++i) {
-        auto data = reinterpret_cast<Float32*>(captureBuff_->mBuffers[i].mData);
-        for (unsigned j = 0; j < inNumberFrames; ++j) {
-            (*inBuff.getChannel(i))[j] = static_cast<AudioSample>(data[j] * 32768);
-        }
-    }
-
-    if (resample) {
-        //FIXME: May be a multiplication, check alsa vs pulse implementation.
-        UInt32 outSamples = inNumberFrames * (mainBufferFormat.sample_rate / static_cast<double>(audioInputFormat_.sample_rate));
-        auto out = AudioBuffer {outSamples, mainBufferFormat};
-        inputResampler_->resample(inBuff, out);
-        dcblocker_.process(out);
-        mainRingBuffer_->put(out);
-    } else {
-        dcblocker_.process(inBuff);
-        mainRingBuffer_->put(inBuff);
-    }
+    auto inBuff = std::make_unique<AudioFrame>(audioInputFormat_, inNumberFrames);
+    auto& in = *inBuff->pointer();
+    for (unsigned i = 0; i < inChannelsPerFrame_; ++i)
+        std::copy_n((Float32*)captureBuff_->mBuffers[i].mData, inNumberFrames, (Float32*)in.extended_data[i]);
+    mainRingBuffer_->put(std::move(inBuff));
 }
 
 void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)

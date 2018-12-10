@@ -48,8 +48,6 @@
 
 namespace ring {
 
-constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
-
 AudioRtpSession::AudioRtpSession(const std::string& id)
     : RtpSession(id)
 {
