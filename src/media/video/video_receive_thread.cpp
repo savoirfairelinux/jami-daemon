@@ -50,7 +50,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , mtu_(mtu)
     , requestKeyFrameCallback_(0)
     , loop_(std::bind(&VideoReceiveThread::setup, this),
-            std::bind(&VideoReceiveThread::process, this),
+            std::bind(&VideoReceiveThread::decodeFrame, this),
             std::bind(&VideoReceiveThread::cleanup, this))
 {}
 
@@ -69,7 +69,9 @@ VideoReceiveThread::startLoop()
 // main thread to block while this executes, so it happens in the video thread.
 bool VideoReceiveThread::setup()
 {
-    videoDecoder_.reset(new MediaDecoder());
+    videoDecoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>& frame) mutable {
+        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
+    }));
 
     dstWidth_ = args_.width;
     dstHeight_ = args_.height;
@@ -113,7 +115,7 @@ bool VideoReceiveThread::setup()
     if (requestKeyFrameCallback_)
         requestKeyFrameCallback_(id_);
 
-    if (videoDecoder_->setupFromVideoData()) {
+    if (videoDecoder_->setupVideo()) {
         RING_ERR("decoder IO startup failed");
         return false;
     }
@@ -141,9 +143,6 @@ bool VideoReceiveThread::setup()
 
     return true;
 }
-
-void VideoReceiveThread::process()
-{ decodeFrame(); }
 
 void VideoReceiveThread::cleanup()
 {
@@ -178,42 +177,15 @@ void VideoReceiveThread::addIOContext(SocketPair& socketPair)
     demuxContext_.reset(socketPair.createIOContext(mtu_));
 }
 
-bool VideoReceiveThread::decodeFrame()
+void VideoReceiveThread::decodeFrame()
 {
-    auto& frame = getNewFrame();
-    const auto ret = videoDecoder_->decode(frame);
-
-    switch (ret) {
-        case MediaDecoder::Status::FrameFinished:
-            publishFrame();
-            return true;
-
-        case MediaDecoder::Status::DecodeError:
-            RING_WARN("video decoding failure");
-            if (requestKeyFrameCallback_)
-                requestKeyFrameCallback_(id_);
-            break;
-
-        case MediaDecoder::Status::ReadError:
-            RING_ERR("fatal error, read failed");
-            loop_.stop();
-            break;
-
-        case MediaDecoder::Status::RestartRequired:
-            // disable accel, reset decoder's AVCodecContext
-#ifdef RING_ACCEL
-            videoDecoder_->enableAccel(false);
-#endif
-            videoDecoder_->setupFromVideoData();
-            break;
-        case MediaDecoder::Status::Success:
-        case MediaDecoder::Status::EOFError:
-            break;
+    auto status = videoDecoder_->decode();
+    if (status == MediaDemuxer::Status::EndOfFile ||
+        status == MediaDemuxer::Status::ReadError)
+    {
+        loop_.stop();
     }
-
-    return false;
 }
-
 
 void VideoReceiveThread::enterConference()
 {
