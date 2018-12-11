@@ -222,4 +222,12 @@ fillWithBlack(AVFrame* frame)
     }
 }
 
+void
+fillWithSilence(AVFrame* frame)
+{
+    int ret = av_samples_set_silence(frame->extended_data, 0, frame->nb_samples, frame->channels, (AVSampleFormat)frame->format);
+    if (ret < 0)
+        RING_ERR() << "Failed to fill frame with silence";
+}
+
 }} // namespace ring::libav_utils
