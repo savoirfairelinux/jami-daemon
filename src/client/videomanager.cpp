@@ -35,6 +35,7 @@
 #include "client/ring_signal.h"
 #include "audio/ringbufferpool.h"
 #include "dring/media_const.h"
+#include "libav_utils.h"
 
 #include <functional>
 #include <memory>
@@ -108,6 +109,7 @@ AudioFrame::mix(const AudioFrame& frame)
     }
     if (f.nb_samples == 0) {
         reserve(fIn.nb_samples);
+        ring::libav_utils::fillWithSilence(f);
     } else if (f.nb_samples != fIn.nb_samples) {
         throw std::invalid_argument("Can't mix frames with different length");
     }
