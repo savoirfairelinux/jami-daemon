@@ -47,4 +47,6 @@ namespace ring { namespace libav_utils {
 
     void fillWithBlack(AVFrame* frame);
 
+    void fillWithSilence(AVFrame* frame);
+
 }} // namespace ring::libav_utils

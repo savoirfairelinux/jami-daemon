@@ -35,6 +35,7 @@
 #include "client/ring_signal.h"
 #include "audio/ringbufferpool.h"
 #include "dring/media_const.h"
+#include "libav_utils.h"
 
 #include <functional>
 #include <memory>
@@ -95,6 +96,7 @@ AudioFrame::reserve(size_t nb_samples)
         if ((err = av_frame_get_buffer(d, 0)) < 0) {
             throw std::bad_alloc();
         }
+        ring::libav_utils::fillWithSilence(d);
     }
 }
 
