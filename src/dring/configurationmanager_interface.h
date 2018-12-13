@@ -338,6 +338,14 @@ struct DRING_PUBLIC ConfigurationSignal {
             using cb_type = void(std::vector<std::string>* /* path_ret */);
         };
 #endif
+        struct DRING_PUBLIC HardwareDecodingChanged {
+            constexpr static const char* name = "HardwareDecodingChanged";
+            using cb_type = void(bool /* state */);
+        };
+        struct DRING_PUBLIC HardwareEncodingChanged {
+            constexpr static const char* name = "HardwareEncodingChanged";
+            using cb_type = void(bool /* state */);
+        };
 };
 
 // Can be used when a client's stdout is not available

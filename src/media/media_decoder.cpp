@@ -377,6 +377,7 @@ void
 MediaDecoder::enableAccel(bool enableAccel)
 {
     enableAccel_ = enableAccel;
+    emitSignal<DRing::CallSignal::HardwareDecodingChanged>(enableAccel_);
     if (!enableAccel) {
         accel_ = {};
         if (decoderCtx_->hw_device_ctx)
