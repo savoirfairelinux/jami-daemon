@@ -35,6 +35,7 @@
 
 #include "string_utils.h"
 #include "logger.h"
+#include "client/ring_signal.h"
 
 #include <iostream>
 #include <unistd.h>
@@ -381,6 +382,7 @@ void
 MediaDecoder::enableAccel(bool enableAccel)
 {
     enableAccel_ = enableAccel;
+    emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(enableAccel_);
     if (!enableAccel) {
         accel_ = {};
         if (decoderCtx_->hw_device_ctx)
