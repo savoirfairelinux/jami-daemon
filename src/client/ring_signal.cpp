@@ -81,6 +81,8 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
         exported_callback<DRing::ConfigurationSignal::GetDeviceName>(),
 #endif
+        exported_callback<DRing::ConfigurationSignal::HardwareDecodingChanged>(),
+        exported_callback<DRing::ConfigurationSignal::HardwareEncodingChanged>(),
 
         /* Debug */
         exported_callback<DRing::DebugSignal::MessageSend>(),
