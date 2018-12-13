@@ -462,6 +462,7 @@ class VideoPreferences : public Serializable {
 
         void setDecodingAccelerated(bool decodingAccelerated) {
             decodingAccelerated_ = decodingAccelerated;
+            emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(decodingAccelerated_);
         }
 
     private:

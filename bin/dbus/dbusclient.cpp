@@ -186,6 +186,8 @@ DBusClient::initLibrary(int flags)
         exportable_callback<ConfigurationSignal::CertificateStateChanged>(bind(&DBusConfigurationManager::certificateStateChanged, confM, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::MediaParametersChanged>(bind(&DBusConfigurationManager::mediaParametersChanged, confM, _1 )),
         exportable_callback<ConfigurationSignal::MigrationEnded>(bind(&DBusConfigurationManager::migrationEnded, confM, _1, _2 )),
+        exportable_callback<ConfigurationSignal::HardwareDecodingChanged>(bind(&DBusConfigurationManager::hardwareDecodingChanged, confM, _1 )),
+        exportable_callback<ConfigurationSignal::HardwareEncodingChanged>(bind(&DBusConfigurationManager::hardwareEncodingChanged, confM, _1 )),
     };
 
     // Presence event handlers
