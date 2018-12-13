@@ -119,7 +119,7 @@ class MediaDecoder {
         int streamIndex_ = -1;
         bool emulateRate_ = false;
         int64_t startTime_;
-        int64_t lastTimestamp_;
+        int64_t lastTimestamp_{0};
 
         DeviceParams inputParams_;
 
