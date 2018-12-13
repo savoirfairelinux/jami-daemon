@@ -779,6 +779,24 @@
            </arg>
        </method>
 
+        <!-- Hardware encoding/decoding signals -->
+        <signal name="hardwareDecodingChanged" tp:name-for-bindings="hardwareDecodingChanged">
+           <arg type="b" name="state">
+               <tp:docstring>
+                   If hardware decoding is enabled
+               </tp:docstring>
+           </arg>
+           <tp:docstring>Signal triggered when hardware decoding changes.</tp:docstring>
+        </signal>
+        <signal name="hardwareEncodingChanged" tp:name-for-bindings="hardwareEncodingChanged">
+           <arg type="b" name="state">
+               <tp:docstring>
+                   If hardware encoding is enabled
+               </tp:docstring>
+           </arg>
+           <tp:docstring>Signal triggered when hardware encoding changes.</tp:docstring>
+        </signal>
+
        <!-- Audio devices methods -->
 
        <method name="getAudioPluginList" tp:name-for-bindings="getAudioPluginList">

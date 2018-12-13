@@ -235,4 +235,8 @@ public:
 
     virtual void migrationEnded(const std::string& /*accountId*/, const std::string& /*state*/){}
     virtual void deviceRevocationEnded(const std::string& /*accountId*/, const std::string& /*device*/, int /*status*/){}
+
+    virtual void hardwareDecodingChanged(bool /*state*/){}
+    virtual void hardwareEncodingChanged(bool /*state*/){}
+
 };
