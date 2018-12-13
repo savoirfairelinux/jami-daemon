@@ -22,6 +22,7 @@
 #define __PREFERENCE_H__
 
 #include "config/serializable.h"
+#include "client/ring_signal.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -462,6 +463,7 @@ class VideoPreferences : public Serializable {
 
         void setDecodingAccelerated(bool decodingAccelerated) {
             decodingAccelerated_ = decodingAccelerated;
+            emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(decodingAccelerated_);
         }
 
     private:
