@@ -167,7 +167,10 @@ AudioInput::initFile(const std::string& path)
         return initDevice("");
     }
     fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    // have file audio mixed into the call buffer so it gets sent to the peer
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
+    // have file audio mixed into the local buffer so it gets played
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
     decodingFile_ = true;
     return true;
 }
