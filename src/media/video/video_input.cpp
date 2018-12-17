@@ -488,6 +488,16 @@ VideoInput::initFile(std::string path)
         return false;
     }
 
+    // check if file has video, fall back to default device if none
+    // FIXME the way this is done is hackish, but it can't be done in createDecoder because that
+    // would break the promise returned in switchInput
+    DeviceParams p;
+    p.input = path;
+    auto dec = std::make_unique<MediaDecoder>();
+    if (dec->openInput(p) < 0 || dec->setupFromVideoData() < 0) {
+        return initCamera(ring::getVideoDeviceMonitor().getDefaultDevice());
+    }
+
     clearOptions();
     emulateRate_ = true;
     decOpts_.input = path;
