@@ -154,7 +154,7 @@ class AlsaLayer : public AudioLayer {
          * will often hold on to a device temporarily after it has been opened
          * and closed.
          */
-        bool openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stream_t stream);
+        bool openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stream_t stream, AudioFormat& format);
 
         /**
          * Number of audio cards on which capture stream has been opened
@@ -187,7 +187,7 @@ class AlsaLayer : public AudioLayer {
         void startPlaybackStream();
         void preparePlaybackStream();
 
-        bool alsa_set_params(snd_pcm_t *pcm_handle);
+        bool alsa_set_params(snd_pcm_t *pcm_handle, AudioFormat& format);
 
         /**
          * Copy a data buffer in the internal ring buffer

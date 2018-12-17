@@ -91,24 +91,25 @@ void AlsaThread::initAudioLayer(void)
     }
 
     if (not alsa_->is_capture_open_) {
-        alsa_->is_capture_open_ = alsa_->openDevice(&alsa_->captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE);
+        alsa_->is_capture_open_ = alsa_->openDevice(&alsa_->captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE, alsa_->audioInputFormat_);
 
         if (not alsa_->is_capture_open_)
             emitSignal<DRing::ConfigurationSignal::Error>(ALSA_CAPTURE_DEVICE);
     }
 
     if (not alsa_->is_playback_open_) {
-        alsa_->is_playback_open_ = alsa_->openDevice(&alsa_->playbackHandle_, pcmp, SND_PCM_STREAM_PLAYBACK);
+        alsa_->is_playback_open_ = alsa_->openDevice(&alsa_->playbackHandle_, pcmp, SND_PCM_STREAM_PLAYBACK, alsa_->audioFormat_);
 
         if (not alsa_->is_playback_open_)
             emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
 
         if (alsa_->getIndexPlayback() != alsa_->getIndexRingtone())
-            if (!alsa_->openDevice(&alsa_->ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK))
+            if (!alsa_->openDevice(&alsa_->ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK, alsa_->audioFormat_))
                 emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
     }
 
     alsa_->hardwareFormatAvailable(alsa_->getFormat());
+    alsa_->hardwareInputFormatAvailable(alsa_->audioInputFormat_);
 
     alsa_->prepareCaptureStream();
     alsa_->preparePlaybackStream();
@@ -172,7 +173,7 @@ AlsaLayer::~AlsaLayer()
 }
 
 // Retry approach taken from pa_linux_alsa.c, part of PortAudio
-bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stream_t stream)
+bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stream_t stream, AudioFormat& format)
 {
     RING_DBG("Alsa: Opening %s",  dev.c_str());
 
@@ -199,7 +200,7 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
         return false;
     }
 
-    if (!alsa_set_params(*pcm)) {
+    if (!alsa_set_params(*pcm, format)) {
         snd_pcm_close(*pcm);
         return false;
     }
@@ -334,7 +335,7 @@ void AlsaLayer::preparePlaybackStream()
     is_playback_prepared_ = true;
 }
 
-bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
+bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle, AudioFormat& format)
 {
 #define TRY(call, error) do { \
     if (ALSA_CALL(call, error) < 0) \
@@ -364,11 +365,12 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
     TRY(snd_pcm_hw_params_set_format(HW, SND_PCM_FORMAT_S16_LE), "sample format");
 
     TRY(snd_pcm_hw_params_set_rate_resample(HW, 0), "hardware sample rate"); /* prevent software resampling */
-    TRY(snd_pcm_hw_params_set_rate_near(HW, &audioFormat_.sample_rate, nullptr), "sample rate");
+    TRY(snd_pcm_hw_params_set_rate_near(HW, &format.sample_rate, nullptr), "sample rate");
 
     // TODO: use snd_pcm_query_chmaps or similar to get hardware channel num
     audioFormat_.nb_channels = 2;
-    TRY(snd_pcm_hw_params_set_channels_near(HW, &audioFormat_.nb_channels), "channel count");
+    format.nb_channels = 2;
+    TRY(snd_pcm_hw_params_set_channels_near(HW, &format.nb_channels), "channel count");
 
     snd_pcm_hw_params_get_buffer_size_min(hwparams, &buffer_size_min);
     snd_pcm_hw_params_get_buffer_size_max(hwparams, &buffer_size_max);
@@ -388,8 +390,8 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 
     snd_pcm_hw_params_get_buffer_size(hwparams, &buffer_size);
     snd_pcm_hw_params_get_period_size(hwparams, &period_size, nullptr);
-    snd_pcm_hw_params_get_rate(hwparams, &audioFormat_.sample_rate, nullptr);
-    snd_pcm_hw_params_get_channels(hwparams, &audioFormat_.nb_channels);
+    snd_pcm_hw_params_get_rate(hwparams, &format.sample_rate, nullptr);
+    snd_pcm_hw_params_get_channels(hwparams, &format.nb_channels);
     RING_DBG("Was set period_size = %lu", period_size);
     RING_DBG("Was set buffer_size = %lu", buffer_size);
 
@@ -402,7 +404,7 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 
     RING_DBG("%s using format %s",
           (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
-          audioFormat_.toString().c_str() );
+          format.toString().c_str() );
 
     snd_pcm_sw_params_t *swparams = nullptr;
     snd_pcm_sw_params_alloca(&swparams);
