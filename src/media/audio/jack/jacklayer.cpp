@@ -189,10 +189,8 @@ convertFromFloat(std::vector<float> &src, std::vector<AudioSample> &dest)
 void
 JackLayer::write(const AudioFrame& buffer, std::vector<float> &floatBuffer)
 {
-    auto data = buffer.pointer()->data[0];
     auto samples = buffer.pointer()->nb_samples;
     for (unsigned i = 0; i < out_ringbuffers_.size(); ++i) {
-        const unsigned inChannel = std::min(i, (unsigned)buffer.pointer()->channels - 1);
         const size_t to_ringbuffer = jack_ringbuffer_write_space(out_ringbuffers_[i]);
         const size_t write_bytes = std::min(samples * sizeof(floatBuffer[0]), to_ringbuffer);
         // TODO write samples
