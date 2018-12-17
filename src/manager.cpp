@@ -670,6 +670,17 @@ Manager::init(const std::string &config_file)
     // FIXME: this is no good
     initialized = true;
 
+#ifndef WIN32
+    // Set the max number of open files.
+    struct rlimit nofiles;
+    if (getrlimit(RLIMIT_NOFILE, &nofiles) == 0) {
+        if (nofiles.rlim_cur < nofiles.rlim_max && nofiles.rlim_cur < 1024u) {
+            nofiles.rlim_cur = std::min<rlim_t>(nofiles.rlim_max, 8192u);
+            setrlimit(RLIMIT_NOFILE, &nofiles);
+        }
+    }
+#endif
+
 #define PJSIP_TRY(ret) do {                                  \
         if (ret != PJ_SUCCESS)                               \
             throw std::runtime_error(#ret " failed");        \
