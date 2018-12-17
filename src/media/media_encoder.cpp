@@ -71,6 +71,10 @@ MediaEncoder::~MediaEncoder()
 void MediaEncoder::setDeviceOptions(const DeviceParams& args)
 {
     device_ = args;
+    // Make sure width and height are even (required by x264)
+    // This is especially for image/gif streaming, as video files and cameras usually have even resolutions
+    device_.width -= device_.width % 2;
+    device_.height -= device_.height % 2;
     if (device_.width)
         av_dict_set(&options_, "width", ring::to_string(device_.width).c_str(), 0);
     if (device_.height)
