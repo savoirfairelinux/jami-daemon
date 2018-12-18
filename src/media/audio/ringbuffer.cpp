@@ -39,13 +39,13 @@ namespace ring {
 // corresponds to 160 ms (about 5 rtp packets)
 static const size_t MIN_BUFFER_SIZE = 1024;
 
-RingBuffer::RingBuffer(const std::string& rbuf_id, size_t size, AudioFormat format)
+RingBuffer::RingBuffer(const std::string& rbuf_id, size_t /*size*/, AudioFormat format)
     : id(rbuf_id)
     , endPos_(0)
+    , format_(format)
     , lock_()
     , not_empty_()
     , readoffsets_()
-    , format_(format)
     , resizer_(format_, format_.sample_rate / 50, [this](std::shared_ptr<AudioFrame>&& frame){
         putToBuffer(std::move(frame));
     })
@@ -121,7 +121,7 @@ RingBuffer::createReadOffset(const std::string &call_id)
 {
     std::lock_guard<std::mutex> l(lock_);
     if (!hasThisReadOffset(call_id))
-        readoffsets_.emplace(call_id, ReadOffset {endPos_});
+        readoffsets_.emplace(call_id, ReadOffset {endPos_, {}});
 }
 
 
