@@ -2190,6 +2190,8 @@ Manager::setAudioPlugin(const std::string& audioPlugin)
         pimpl_->audiodriver_->startStream();
     else
         RING_ERR("No audio layer created, possibly built without audio support");
+
+    saveConfig();
 }
 
 /**
@@ -2217,6 +2219,8 @@ Manager::setAudioDevice(int index, DeviceType type)
 
     if (pimpl_->audiodriver_ and wasStarted)
         pimpl_->audiodriver_->startStream();
+
+    saveConfig();
 }
 
 /**
