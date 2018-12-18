@@ -362,7 +362,7 @@ startLocalRecorder(const bool& audioOnly, const std::string& filepath)
 
     try {
         ring::LocalRecorderManager::instance().insertRecorder(path, std::move(rec));
-    } catch (std::invalid_argument) {
+    } catch (const std::invalid_argument&) {
         return "";
     }
 

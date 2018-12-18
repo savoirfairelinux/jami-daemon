@@ -120,8 +120,6 @@ AudioInput::readFromFile()
 
     auto frame = std::make_unique<AudioFrame>();
     const auto ret = decoder_->decode(*frame);
-    const auto inFmt = AudioFormat((unsigned)frame->pointer()->sample_rate, (unsigned)frame->pointer()->channels, (AVSampleFormat)frame->pointer()->format);
-
     switch(ret) {
     case MediaDecoder::Status::ReadError:
     case MediaDecoder::Status::DecodeError:
