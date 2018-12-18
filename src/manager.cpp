@@ -2208,6 +2208,8 @@ Manager::setAudioDevice(int index, DeviceType type)
 
     if (pimpl_->audiodriver_ and wasStarted)
         pimpl_->audiodriver_->startStream();
+
+    saveConfig();
 }
 
 /**
