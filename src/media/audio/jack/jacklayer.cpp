@@ -231,7 +231,7 @@ JackLayer::JackLayer(const AudioPreference &p) :
     const auto playRate = jack_get_sample_rate(playbackClient_);
     const auto captureRate = jack_get_sample_rate(captureClient_);
 
-    audioInputFormat_ = {captureRate, in_ringbuffers_.size()};
+    audioInputFormat_ = {captureRate, (unsigned)in_ringbuffers_.size()};
     hardwareFormatAvailable(AudioFormat(playRate, out_ringbuffers_.size()));
     hardwareInputFormatAvailable(audioInputFormat_);
     jack_on_shutdown(playbackClient_, onShutdown, this);
