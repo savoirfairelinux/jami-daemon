@@ -541,7 +541,6 @@ getAudioInput(const std::string& id)
 
     auto input = std::make_shared<AudioInput>(id);
     vmgr.audioInputs[id] = input;
-    Manager::instance().getRingBufferPool().bindCallID(id, RingBufferPool::DEFAULT_ID);
     return input;
 }
 
