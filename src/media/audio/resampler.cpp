@@ -3,6 +3,7 @@
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,11 +22,7 @@
 
 #include "libav_deps.h"
 #include "logger.h"
-#include "media_buffer.h"
-#include "media_filter.h"
-#include "media_stream.h"
 #include "resampler.h"
-#include "ring_types.h"
 
 extern "C" {
 #include <libswresample/swresample.h>
@@ -35,7 +32,7 @@ namespace ring {
 
 Resampler::Resampler()
     : swrCtx_(swr_alloc())
-    , initialized_(false)
+    , initCount_(0)
 {}
 
 Resampler::~Resampler()
@@ -57,17 +54,25 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
     av_opt_set_sample_fmt(swrCtx_, "osf", static_cast<AVSampleFormat>(out->format), 0);
 
     swr_init(swrCtx_);
-    initialized_ = true;
+    ++initCount_;
 }
 
 int
 Resampler::resample(const AVFrame* input, AVFrame* output)
 {
-    if (!initialized_)
+    if (!initCount_)
         reinit(input, output);
 
     int ret = swr_convert_frame(swrCtx_, output, input);
     if (ret & AVERROR_INPUT_CHANGED || ret & AVERROR_OUTPUT_CHANGED) {
+        // Under certain conditions, the resampler reinits itself in an infinite loop. This is
+        // indicative of an underlying problem in the code. This check is so the backtrace
+        // doesn't get mangled with a bunch of calls to Resampler::resample
+        if (initCount_ > 1) {
+            std::string msg = "Infinite loop detected in audio resampler, please open an issue on https://git.jami.net";
+            RING_ERR() << msg;
+            throw std::runtime_error(msg);
+        }
         reinit(input, output);
         return resample(input, output);
     } else if (ret < 0) {
@@ -75,6 +80,8 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
         return -1;
     }
 
+    // Resampling worked, reset count to 1 so reinit isn't called again
+    initCount_ = 1;
     return 0;
 }
 
@@ -125,6 +132,5 @@ Resampler::resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& format)
     resample(in->pointer(), output->pointer());
     return output;
 }
-
 
 } // namespace ring

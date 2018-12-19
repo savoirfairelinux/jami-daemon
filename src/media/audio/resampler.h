@@ -3,6 +3,7 @@
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,8 +23,8 @@
 #pragma once
 
 #include "audiobuffer.h"
+#include "media_buffer.h"
 #include "noncopyable.h"
-#include "ring_types.h"
 
 struct AVFrame;
 struct SwrContext;
@@ -34,38 +35,47 @@ namespace ring {
  * Wrapper class for libswresample
  */
 class Resampler {
-    public:
-        Resampler();
-        ~Resampler();
+public:
+    Resampler();
+    ~Resampler();
 
-        /**
-         * Resample from @input format to @output format.
-         * NOTE: sample_rate, channel_layout, and format should be set on @output
-         */
-        int resample(const AVFrame* input, AVFrame* output);
+    /**
+     * Resample from @input format to @output format.
+     * NOTE: sample_rate, channel_layout, and format should be set on @output
+     */
+    int resample(const AVFrame* input, AVFrame* output);
 
-        /**
-         * Resample from @dataIn format to @dataOut format.
-         *
-         * NOTE: This is a wrapper for resample(AVFrame*, AVFrame*)
-         */
-        void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
+    /**
+     * Wrappers around resample(AVFrame*, AVFrame*) for convenience.
+     */
+    void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
+    std::unique_ptr<AudioFrame> resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& out);
+    std::shared_ptr<AudioFrame> resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& out);
 
-        std::unique_ptr<AudioFrame> resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& out);
-        std::shared_ptr<AudioFrame> resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& out);
+private:
+    NON_COPYABLE(Resampler);
 
-    private:
-        NON_COPYABLE(Resampler);
+    /**
+     * Reinitializes the resampler when new settings are detected. As long as both input and
+     * output formats don't change, this will only be called once.
+     */
+    void reinit(const AVFrame* in, const AVFrame* out);
 
-        /**
-         * Reinitializes the resampler when new settings are detected. As long as both input and
-         * output buffers always have the same formats, will never be called, as the first
-         * initialization is done in swr_convert_frame.
-         */
-        void reinit(const AVFrame* in, const AVFrame* out);
+    /**
+     * Libswresample resampler context.
+     *
+     * NOTE SwrContext is an imcomplete type and cannot be stored in a smart pointer.
+     */
+    SwrContext* swrCtx_;
 
-        SwrContext* swrCtx_; // incomplete type, cannot be a unique_ptr
-        bool initialized_;
+    /**
+     * Number of times @swrCtx_ has been initialized with no successful audio resampling.
+     *
+     * 0: Uninitialized
+     * 1: Initialized
+     * >1: Invalid frames or formats, reinit is going to be called in an infinite loop
+     */
+    unsigned initCount_;
 };
 
 } // namespace ring
