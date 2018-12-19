@@ -1945,11 +1945,6 @@ RingAccount::loadBootstrap() const
 void
 RingAccount::trackBuddyPresence(const std::string& buddy_id)
 {
-    if (not dht_.isRunning()) {
-        RING_ERR("[Account %s] Account not running. Cannot track buddy %s",
-                 getAccountID().c_str(), buddy_id.c_str());
-        return;
-    }
     std::string buddyUri;
 
     try {
@@ -1969,6 +1964,9 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
 void
 RingAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
 {
+    if (not dht_.isRunning()) {
+        return;
+    }
     buddy.listenToken = dht_.listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired){
         bool wasConnected, isConnected;
         {
