@@ -44,14 +44,51 @@ void
 Resampler::reinit(const AVFrame* in, const AVFrame* out)
 {
     av_opt_set_int(swrCtx_, "ich", in->channels, 0);
-    av_opt_set_int(swrCtx_, "icl", av_get_default_channel_layout(in->channels), 0);
+    av_opt_set_int(swrCtx_, "icl", in->channel_layout, 0);
     av_opt_set_int(swrCtx_, "isr", in->sample_rate, 0);
     av_opt_set_sample_fmt(swrCtx_, "isf", static_cast<AVSampleFormat>(in->format), 0);
 
     av_opt_set_int(swrCtx_, "och", out->channels, 0);
-    av_opt_set_int(swrCtx_, "ocl", av_get_default_channel_layout(out->channels), 0);
+    av_opt_set_int(swrCtx_, "ocl", out->channel_layout, 0);
     av_opt_set_int(swrCtx_, "osr", out->sample_rate, 0);
     av_opt_set_sample_fmt(swrCtx_, "osf", static_cast<AVSampleFormat>(out->format), 0);
+
+    /**
+     * Downmixing from 5.1 requires extra setup, since libswresample can't do it automatically
+     * (not yet implemented).
+     *
+     * Source: https://www.atsc.org/wp-content/uploads/2015/03/A52-201212-17.pdf
+     * Section 7.8.2 for the algorithm
+     * Tables 5.9 and 5.10 for the coefficients clev and slev
+     */
+    if (in->channel_layout == AV_CH_LAYOUT_5POINT1 || in->channels == 6) {
+        double matrix[out->channels][in->channels];
+        if (out->channels == 2) {
+            // L = 1.0*FL + 0.707*FC + 0.707*BL
+            matrix[0][0] = 1;
+            matrix[0][1] = 0;
+            matrix[0][2] = 0.707;
+            matrix[0][3] = 0;
+            matrix[0][4] = 0.707;
+            matrix[0][5] = 0;
+            // R = 1.0*FR + 0.707*FC + 0.707*BR
+            matrix[1][0] = 0;
+            matrix[1][1] = 1;
+            matrix[1][2] = 0.707;
+            matrix[1][3] = 0;
+            matrix[1][4] = 0;
+            matrix[1][5] = 0.707;
+        } else {
+            // M = 1.0*FL + 1.414*FC + 1.0*FR + 0.707*BL + 0.707*BR
+            matrix[0][0] = 1;
+            matrix[0][1] = 1;
+            matrix[0][2] = 1.414;
+            matrix[0][3] = 0;
+            matrix[0][4] = 0.707;
+            matrix[0][5] = 0.707;
+        }
+        swr_set_matrix(swrCtx_, matrix[0], in->channels);
+    }
 
     swr_init(swrCtx_);
     ++initCount_;
