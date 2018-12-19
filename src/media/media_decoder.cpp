@@ -153,23 +153,7 @@ int MediaDecoder::setupFromAudioData()
 int
 MediaDecoder::selectStream(AVMediaType type)
 {
-    int idx = -1;
-    if (type == AVMEDIA_TYPE_AUDIO) {
-        for (unsigned i = 0; i < inputCtx_->nb_streams; ++ i) {
-            auto par = inputCtx_->streams[i]->codecpar;
-            if (par->codec_type != type)
-                continue;
-            // NOTE libswresample does not support resampling from Dolby 5.1, so skip over it
-            if (par->channel_layout == AV_CH_LAYOUT_5POINT1)
-                continue;
-            if ((inputDecoder_ = avcodec_find_decoder(par->codec_id)))
-                idx = i;
-        }
-    } else {
-        // grab the first video stream
-        idx = av_find_best_stream(inputCtx_, type, -1, -1, &inputDecoder_, 0);
-    }
-    return idx;
+    return av_find_best_stream(inputCtx_, type, -1, -1, &inputDecoder_, 0);
 }
 
 int
