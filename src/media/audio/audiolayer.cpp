@@ -56,7 +56,7 @@ void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
     std::lock_guard<std::mutex> lock(mutex_);
     RING_DBG("Hardware audio format available : %s", playback.toString().c_str());
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
-    urgentRingBuffer_.setFormat(audioFormat_);
+    urgentRingBuffer_.setFormat(playback);
 }
 
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
@@ -85,7 +85,7 @@ void AudioLayer::flushUrgent()
 void AudioLayer::putUrgent(AudioBuffer& buffer)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    urgentRingBuffer_.put(buffer);
+    urgentRingBuffer_.put(buffer.toAVFrame());
 }
 
 // Notify (with a beep) an incoming call when there is already a call in progress
@@ -107,7 +107,7 @@ void AudioLayer::notifyIncomingCall()
         return;
 
     Tone tone("440/160", getSampleRate());
-    unsigned int nbSample = tone.getSize();
+    size_t nbSample = tone.getSize();
     AudioBuffer buf(nbSample, AudioFormat::MONO());
     tone.getNext(buf, 1.0);
 
@@ -116,99 +116,56 @@ void AudioLayer::notifyIncomingCall()
     putUrgent(buf);
 }
 
-
-const AudioBuffer& AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
+std::shared_ptr<AudioFrame>
+AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
 {
     ringtoneBuffer_.resize(0);
-    auto fileToPlay = Manager::instance().getTelephoneFile();
-    if (fileToPlay) {
+    if (auto fileToPlay = Manager::instance().getTelephoneFile()) {
         auto fileformat = fileToPlay->getFormat();
-        bool resample = format.sample_rate != fileformat.sample_rate;
+        bool resample = format != fileformat;
 
         size_t readableSamples = resample
-                ? fileformat.sample_rate * (double) writableSamples / (double) audioFormat_.sample_rate
+                ? (rational<size_t>(writableSamples, audioFormat_.sample_rate) * (size_t)fileformat.sample_rate).real<size_t>()
                 : writableSamples;
 
         ringtoneBuffer_.setFormat(fileformat);
         ringtoneBuffer_.resize(readableSamples);
         fileToPlay->getNext(ringtoneBuffer_, isRingtoneMuted_ ? 0. : 1.);
-        ringtoneBuffer_.setChannelNum(format.nb_channels, true);
-        AudioBuffer* out;
-        if (resample) {
-            ringtoneResampleBuffer_.setSampleRate(format.sample_rate);
-            resampler_->resample(ringtoneBuffer_, ringtoneResampleBuffer_);
-            out = &ringtoneResampleBuffer_;
-        } else {
-            out = &ringtoneBuffer_;
-        }
-        return *out;
+        return resampler_->resample(ringtoneBuffer_.toAVFrame(), format);
     }
-    return ringtoneBuffer_;
+    return {};
 }
 
-const AudioBuffer& AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
+std::shared_ptr<AudioFrame>
+AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
 {
-    playbackBuffer_.resize(0);
-    playbackResampleBuffer_.resize(0);
-
     notifyIncomingCall();
+    auto& bufferPool = Manager::instance().getRingBufferPool();
 
-    size_t urgentSamples = std::min(urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID), writableSamples);
+    if (auto urgentSamples = urgentRingBuffer_.get(RingBufferPool::DEFAULT_ID)) {
+        bufferPool.discard(1, RingBufferPool::DEFAULT_ID);
+        return urgentSamples;
+    }
+    // flush remaining samples in _urgentRingBuffer
+    flushUrgent();
 
-    if (urgentSamples) {
-        playbackBuffer_.setFormat(format);
-        playbackBuffer_.resize(urgentSamples);
-        urgentRingBuffer_.get(playbackBuffer_, RingBufferPool::DEFAULT_ID); // retrive only the first sample_spec->channels channels
-        playbackBuffer_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-        // Consume the regular one as well (same amount of samples)
-        Manager::instance().getRingBufferPool().discard(urgentSamples, RingBufferPool::DEFAULT_ID);
-        return playbackBuffer_;
+    if (not playbackQueue_)
+        playbackQueue_.reset(new AudioFrameResizer(format, writableSamples));
+    else
+        playbackQueue_->setFrameSize(writableSamples);
+
+    std::shared_ptr<AudioFrame> playbackBuf {};
+    while (!(playbackBuf = playbackQueue_->dequeue())) {
+        if (auto toneToPlay = Manager::instance().getTelephoneTone()) {
+            playbackQueue_->enqueue(resampler_->resample(toneToPlay->getNext(), format));
+        } else if (auto buf = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
+            playbackQueue_->enqueue(resampler_->resample(std::move(buf), format));
+        } else {
+            break;
+        }
     }
 
-    if (auto toneToPlay = Manager::instance().getTelephoneTone()) {
-        playbackBuffer_.setFormat(format);
-        playbackBuffer_.resize(writableSamples);
-        toneToPlay->getNext(playbackBuffer_, playbackGain_); // retrive only n_channels
-        return playbackBuffer_;
-    }
-
-    flushUrgent(); // flush remaining samples in _urgentRingBuffer
-
-    size_t availSamples = Manager::instance().getRingBufferPool().availableForGet(RingBufferPool::DEFAULT_ID);
-    if (not availSamples)
-        return playbackBuffer_;
-
-    // how many samples we want to read from the buffer
-    size_t readableSamples = writableSamples;
-
-    AudioFormat mainBufferAudioFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-
-    bool resample = audioFormat_.sample_rate != mainBufferAudioFormat.sample_rate;
-    double resampleFactor = 1.;
-    if (resample) {
-        resampleFactor = (double) audioFormat_.sample_rate / mainBufferAudioFormat.sample_rate;
-        readableSamples = (double) readableSamples / resampleFactor;
-    }
-
-    readableSamples = std::min(readableSamples, availSamples);
-    size_t nResampled = (double) readableSamples * resampleFactor;
-
-    playbackBuffer_.setFormat(mainBufferAudioFormat);
-    playbackBuffer_.resize(readableSamples);
-    Manager::instance().getRingBufferPool().getData(playbackBuffer_, RingBufferPool::DEFAULT_ID);
-    playbackBuffer_.setChannelNum(format.nb_channels, true);
-
-    if (resample) {
-        playbackResampleBuffer_.setFormat(format);
-        playbackResampleBuffer_.resize(nResampled);
-        resampler_->resample(playbackBuffer_, playbackResampleBuffer_);
-        playbackResampleBuffer_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-        return playbackResampleBuffer_;
-    } else {
-        playbackBuffer_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-        return playbackBuffer_;
-    }
+    return playbackBuf;
 }
-
 
 } // namespace ring

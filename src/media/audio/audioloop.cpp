@@ -71,22 +71,28 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
 
     while (total_samples != 0) {
         size_t samples = std::min(total_samples, buf_samples - pos);
-
         output.copy(*buffer_, samples, pos, output_pos);
-
         output_pos += samples;
         pos = (pos + samples) % buf_samples;
-
         total_samples -= samples;
     }
 
     output.applyGain(gain);
-
     pos_ = pos;
-
     onBufferFinish();
 }
 
 void AudioLoop::onBufferFinish() {}
+
+std::unique_ptr<AudioFrame>
+AudioLoop::getNext(size_t samples)
+{
+    if (samples == 0) {
+        samples = buffer_->getSampleRate() / 50;
+    }
+    AudioBuffer buff(samples, buffer_->getFormat());
+    getNext(buff, 1);
+    return buff.toAVFrame();
+}
 
 } // namespace ring
