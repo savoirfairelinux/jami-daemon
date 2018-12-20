@@ -1118,9 +1118,12 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
         onRequestInfo(inv, rdata, msg, *call);
     else if (methodName == "NOTIFY")
         onRequestNotify(inv, rdata, msg, *call);
-    else if (methodName == "MESSAGE")
+    else if (methodName == "MESSAGE") {
         if (msg->body)
-            call->onTextMessage(im::parseSipMessage(msg));
+            runOnMainThread([call, m = im::parseSipMessage(msg)]() mutable {
+                call->onTextMessage(std::move(m));
+            });
+    }
 }
 
 int SIPVoIPLink::getModId()
