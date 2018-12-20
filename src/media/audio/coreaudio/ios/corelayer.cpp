@@ -160,9 +160,6 @@ CoreLayer::setupOutputBus() {
     audioFormat_ = {static_cast<unsigned int>(outputASBD.mSampleRate),
                     static_cast<unsigned int>(outputASBD.mChannelsPerFrame)};
 
-    outSampleRate_ = outputASBD.mSampleRate;
-    outChannelsPerFrame_ = outputASBD.mChannelsPerFrame;
-
     size = sizeof(outputASBD);
     checkErr(AudioUnitGetProperty(ioUnit_,
                                   kAudioUnitProperty_StreamFormat,
@@ -175,6 +172,9 @@ CoreLayer::setupOutputBus() {
     outputASBD.mSampleRate = audioFormat_.sample_rate;
     outputASBD.mFormatID = kAudioFormatLinearPCM;
     outputASBD.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
+
+    outSampleRate_ = outputASBD.mSampleRate;
+    outChannelsPerFrame_ = outputASBD.mChannelsPerFrame;
 
     // Set output steam format
     checkErr(AudioUnitSetProperty(ioUnit_,
