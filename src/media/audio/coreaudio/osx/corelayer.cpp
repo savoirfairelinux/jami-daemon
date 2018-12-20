@@ -91,7 +91,6 @@ CoreLayer::initAudioLayerIO()
 
     AudioUnitScope outputBus = 0;
     AudioUnitScope inputBus = 1;
-    UInt32 size = sizeof(UInt32);
     AudioComponentDescription desc = {0};
     desc.componentType = kAudioUnitType_Output;
     // kAudioOutputUnitProperty_EnableIO is ON and read-only
@@ -109,7 +108,7 @@ CoreLayer::initAudioLayerIO()
 
     // Set stream format
     AudioStreamBasicDescription info;
-    size = sizeof(info);
+    UInt32 size = sizeof(info);
     checkErr(AudioUnitGetProperty(ioUnit_,
             kAudioUnitProperty_StreamFormat,
             kAudioUnitScope_Output,
@@ -291,18 +290,15 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
-    auto& ringBuff = getToRing(audioFormat_, inNumberFrames);
-    auto& playBuff = getToPlay(audioFormat_, inNumberFrames);
-
-    auto& toPlay = ringBuff.frames() > 0 ? ringBuff : playBuff;
-
-    if (toPlay.frames() == 0) {
-        for (int i = 0; i < audioFormat_.nb_channels; ++i)
-            std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData),
-                        ioData->mBuffers[i].mDataByteSize/sizeof(Float32), 0);
+    auto format = audioFormat_;
+    format.sampleFormat = AV_SAMPLE_FMT_FLTP;
+    if (auto toPlay = getPlayback(format, inNumberFrames)) {
+        for (int i = 0; i < format.nb_channels; ++i) {
+            std::copy_n((Float32*)toPlay->pointer()->extended_data[i], inNumberFrames, (Float32*)ioData->mBuffers[i].mData);
+        }
     } else {
-        for (int i = 0; i < audioFormat_.nb_channels; ++i)
-            toPlay.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
+        for (int i = 0; i < format.nb_channels; ++i)
+            std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), inNumberFrames, 0);
     }
 }
 
@@ -339,34 +335,13 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
             inNumberFrames,
             captureBuff_));
 
-    // Add them to Ring ringbuffer.
-    const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    bool resample = inSampleRate_ != mainBufferFormat.sample_rate;
-
-    // FIXME: Performance! There *must* be a better way. This is testing only.
-    auto inBuff = AudioBuffer {inNumberFrames, audioInputFormat_};
-
-    for (int i = 0; i < inChannelsPerFrame_; ++i) {
-        auto data = reinterpret_cast<Float32*>(captureBuff_->mBuffers[i].mData);
-        for (int j = 0; j < inNumberFrames; ++j) {
-            (*inBuff.getChannel(i))[j] = static_cast<AudioSample>(data[j] / .000030517578125f);
-        }
-    }
-
-    if (resample) {
-        //RING_WARN("Resampling Input.");
-
-        //FIXME: May be a multiplication, check alsa vs pulse implementation.
-
-        UInt32 outSamples = inNumberFrames / (static_cast<double>(audioInputFormat_.sample_rate) / mainBufferFormat.sample_rate);
-        auto out = AudioBuffer {outSamples, mainBufferFormat};
-        inputResampler_->resample(inBuff, out);
-        dcblocker_.process(out);
-        mainRingBuffer_->put(out);
-    } else {
-        dcblocker_.process(inBuff);
-        mainRingBuffer_->put(inBuff);
-    }
+    auto format = audioInputFormat_;
+    audioInputFormat_.sampleFormat = AV_SAMPLE_FMT_FLTP;
+    auto inBuff = std::make_unique<AudioFrame>(audioInputFormat_, inNumberFrames);
+    auto& in = *inBuff->pointer();
+    for (unsigned i = 0; i < inChannelsPerFrame_; ++i)
+        std::copy_n((Float32*)captureBuff_->mBuffers[i].mData, inNumberFrames, (Float32*)in.extended_data[i]);
+    mainRingBuffer_->put(std::move(inBuff));
 }
 
 void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)

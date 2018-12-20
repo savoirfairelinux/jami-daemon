@@ -28,6 +28,7 @@
 #include "ringbuffer.h"
 #include "dcblocker.h"
 #include "noncopyable.h"
+#include "audio_frame_resizer.h"
 
 #include <chrono>
 #include <mutex>
@@ -228,9 +229,15 @@ class AudioLayer {
 
         void devicesChanged();
 
-        const AudioBuffer& getToPlay(AudioFormat format, size_t writableSamples);
+        std::shared_ptr<AudioFrame> getToPlay(AudioFormat format, size_t writableSamples);
 
-        const AudioBuffer& getToRing(AudioFormat format, size_t writableSamples);
+        std::shared_ptr<AudioFrame> getToRing(AudioFormat format, size_t writableSamples);
+
+        std::shared_ptr<AudioFrame> getPlayback(AudioFormat format, size_t samples) {
+            const auto& ringBuff = getToRing(format, samples);
+            const auto& playBuff = getToPlay(format, samples);
+            return ringBuff ? ringBuff : playBuff;
+        }
 
         /**
          * True if capture is not to be used
@@ -264,6 +271,7 @@ class AudioLayer {
         AudioBuffer playbackResampleBuffer_;
         AudioBuffer ringtoneBuffer_;
         AudioBuffer ringtoneResampleBuffer_;
+        std::unique_ptr<AudioFrameResizer> playbackQueue_;
 
         /**
          * Whether or not the audio layer stream is started
