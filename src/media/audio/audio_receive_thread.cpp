@@ -93,12 +93,13 @@ void
 AudioReceiveThread::process()
 {
     AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    auto decodedFrame = std::make_shared<AudioFrame>();
+    auto decodedFrame = std::make_unique<AudioFrame>();
+    auto sharedFrame = std::make_shared<AudioFrame>();
     switch (audioDecoder_->decode(*decodedFrame)) {
         case MediaDecoder::Status::FrameFinished:
-            audioDecoder_->writeToRingBuffer(*decodedFrame, *ringbuffer_,
-                                             mainBuffFormat);
-            notify(std::static_pointer_cast<MediaFrame>(decodedFrame));
+            sharedFrame->copyFrom(*decodedFrame);
+            audioDecoder_->writeToRingBuffer(std::move(decodedFrame), *ringbuffer_, mainBuffFormat);
+            notify(std::static_pointer_cast<MediaFrame>(sharedFrame));
             return;
         case MediaDecoder::Status::DecodeError:
             RING_WARN("decoding failure, trying to reset decoder...");

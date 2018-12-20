@@ -268,71 +268,13 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
     (void) timeInfo;
     (void) statusFlags;
 
-    auto& manager = Manager::instance();
-    auto& buffer_pool = manager.getRingBufferPool();
+    const auto& ringBuff = parent.getToRing(parent.audioFormat_, framesPerBuffer);
+    const auto& playBuff = parent.getToPlay(parent.audioFormat_, framesPerBuffer);
+    auto toPlay = ringBuff ? ringBuff : playBuff;
+    if (!toPlay)
+        return paContinue;
 
-    auto mainbuffer_format = buffer_pool.getInternalAudioFormat();
-    auto layer_format = parent.audioFormat_;
-    auto resample = layer_format.sample_rate != mainbuffer_format.sample_rate;
-
-    auto urgentFramesToGet = parent.urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
-    if (urgentFramesToGet > 0) {
-        RING_WARN("Getting urgent frames");
-        auto totSample = std::min(framesPerBuffer, (unsigned long)urgentFramesToGet);
-
-        playbackBuff_.setFormat(layer_format);
-        playbackBuff_.resize(totSample);
-        parent.urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
-
-        playbackBuff_.applyGain(parent.isPlaybackMuted_ ? 0.0 : parent.playbackGain_);
-        playbackBuff_.interleave(outputBuffer);
-
-        manager.getRingBufferPool().discard(totSample, RingBufferPool::DEFAULT_ID);
-    }
-
-    auto normalFramesToGet = buffer_pool.availableForGet(RingBufferPool::DEFAULT_ID);
-    if (normalFramesToGet > 0) {
-        double resampleFactor;
-        decltype(normalFramesToGet) readableSamples;
-
-        if (resample) {
-            resampleFactor = static_cast<double>(layer_format.sample_rate) / mainbuffer_format.sample_rate;
-            readableSamples = std::ceil(framesPerBuffer / resampleFactor);
-        } else {
-            resampleFactor = 1.0;
-            readableSamples = framesPerBuffer;
-        }
-        readableSamples = std::min(readableSamples, normalFramesToGet);
-
-        playbackBuff_.setFormat(parent.audioFormat_);
-        playbackBuff_.resize(readableSamples);
-        buffer_pool.getData(playbackBuff_, RingBufferPool::DEFAULT_ID);
-        playbackBuff_.applyGain(parent.isPlaybackMuted_ ? 0.0 : parent.playbackGain_);
-
-        if (resample) {
-            AudioBuffer resampledOutput(readableSamples, parent.audioFormat_);
-            parent.resampler_->resample(playbackBuff_, resampledOutput);
-
-            resampledOutput.interleave(outputBuffer);
-        } else {
-            playbackBuff_.interleave(outputBuffer);
-        }
-    } else {
-        auto tone = manager.getTelephoneTone();
-        auto file_tone = manager.getTelephoneFile();
-
-        playbackBuff_.setFormat(parent.audioFormat_);
-        playbackBuff_.resize(framesPerBuffer);
-
-        if (tone) {
-            tone->getNext(playbackBuff_, parent.playbackGain_);
-        } else if (file_tone) {
-            file_tone->getNext(playbackBuff_, parent.playbackGain_);
-        } else {
-            playbackBuff_.reset();
-        }
-        playbackBuff_.interleave(outputBuffer);
-    }
+    std::copy_n((AudioSample*)toPlay->pointer()->extended_data[0], toPlay->pointer()->nb_samples, outputBuffer);
 
     return paContinue;
 }
@@ -355,25 +297,10 @@ PortAudioLayer::PortAudioLayerImpl::paInputCallback(PortAudioLayer& parent,
         return paContinue;
     }
 
-    const auto mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    bool resample = parent.audioInputFormat_.sample_rate != mainBufferFormat.sample_rate;
-    AudioBuffer inBuff(framesPerBuffer, parent.audioInputFormat_);
-
-    inBuff.deinterleave(inputBuffer, framesPerBuffer, parent.audioInputFormat_.nb_channels);
-
-    inBuff.applyGain(parent.isCaptureMuted_ ? 0.0 : parent.captureGain_);
-
-    if (resample) {
-        auto sample_factor = static_cast<double>(parent.audioInputFormat_.sample_rate) / mainBufferFormat.sample_rate;
-        auto outSamples = framesPerBuffer / sample_factor;
-        AudioBuffer out(outSamples, mainBufferFormat);
-        parent.inputResampler_->resample(inBuff, out);
-        parent.dcblocker_.process(out);
-        mainRingBuffer_->put(out);
-    } else {
-        parent.dcblocker_.process(inBuff);
-        mainRingBuffer_->put(inBuff);
-    }
+    auto inBuff = std::make_unique<AudioFrame>(parent.audioInputFormat_, framesPerBuffer);
+    std::copy_n(inputBuffer, framesPerBuffer, (AudioSample*)inBuff->pointer()->extended_data[0]);
+    //inBuff.applyGain(parent.isCaptureMuted_ ? 0.0 : parent.captureGain_);
+    mainRingBuffer_->put(std::move(inBuff));
     return paContinue;
 }
 

@@ -215,9 +215,9 @@ OpenSLLayer::engineServicePlay(bool waiting) {
     }
     sample_buf* buf;
     while (player_ and freePlayBufQueue_.front(&buf)) {
-        const AudioBuffer& dat = getToPlay(hardwareFormat_, hardwareBuffSize_);
-        if (dat.frames() != 0) {
-            buf->size_ = dat.interleave((AudioSample*)buf->buf_) * sizeof(AudioSample);
+        if (auto dat = getToPlay(hardwareFormat_, hardwareBuffSize_)) {
+            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels * sizeof(AudioSample);
+            std::copy_n((const AudioSample*)dat->pointer()->data[0], dat->pointer()->nb_samples, (AudioSample*)buf->buf_);
             if (!playBufQueue_.push(buf)) {
                 RING_WARN("playThread player_ PLAY_KICKSTART_BUFFER_COUNT 1");
                 break;
@@ -237,9 +237,9 @@ OpenSLLayer::engineServiceRing(bool waiting) {
     sample_buf* buf;
     while (ringtone_ and freeRingBufQueue_.front(&buf)) {
         freeRingBufQueue_.pop();
-        const AudioBuffer& dat = getToRing(hardwareFormat_, hardwareBuffSize_);
-        if (dat.frames() != 0) {
-            buf->size_ = dat.interleave((AudioSample*)buf->buf_) * sizeof(AudioSample);
+        if (auto dat = getToRing(hardwareFormat_, hardwareBuffSize_)) {
+            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels * sizeof(AudioSample);
+            std::copy_n((const AudioSample*)dat->pointer()->data[0], dat->pointer()->nb_samples, (AudioSample*)buf->buf_);
             if (!ringBufQueue_.push(buf)) {
                 RING_WARN("playThread ringtone_ PLAY_KICKSTART_BUFFER_COUNT 1");
                 freeRingBufQueue_.push(buf);
@@ -348,8 +348,10 @@ OpenSLLayer::startAudioCapture()
                     break;
                 recBufQueue_.pop();
                 if (buf->size_ > 0) {
-                    AudioBuffer dat {(const AudioSample*)buf->buf_, buf->size_ / hardwareFormat_.getBytesPerFrame(), hardwareFormat_};
-                    audioCaptureFillBuffer(dat);
+                    auto nb_samples = buf->size_ / hardwareFormat_.getBytesPerFrame();
+                    auto out = std::make_unique<AudioFrame>(hardwareFormat_, nb_samples);
+                    std::copy_n((const AudioSample*)buf->buf_, nb_samples, (AudioSample*)out->pointer()->data[0]);
+                    audioCaptureFillBuffer(std::move(out));
                 }
                 buf->size_ = 0;
                 freeRecBufQueue_.push(buf);
@@ -474,24 +476,13 @@ void
 OpenSLLayer::updatePreference(AudioPreference& /*preference*/, int /*index*/, DeviceType /*type*/)
 {}
 
-void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
+void OpenSLLayer::audioCaptureFillBuffer(std::unique_ptr<AudioFrame>&& frame)
 {
     RingBufferPool &mbuffer = Manager::instance().getRingBufferPool();
-    const AudioFormat mainBufferFormat = mbuffer.getInternalAudioFormat();
-    const bool resample = mainBufferFormat.sample_rate != audioFormat_.sample_rate;
 
-    buffer.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
-
-    if (resample) {
-        int outSamples = buffer.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
-        AudioBuffer out(outSamples, mainBufferFormat);
-        resampler_->resample(buffer, out);
-        dcblocker_.process(out);
-        mainRingBuffer_->put(out);
-    } else {
-        dcblocker_.process(buffer);
-        mainRingBuffer_->put(buffer);
-    }
+    // buffer.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
+    // dcblocker_.process(buffer);
+    mainRingBuffer_->put(resampler_->resample(std::move(frame), mbuffer.getInternalAudioFormat()));
 }
 
 void dumpAvailableEngineInterfaces()
