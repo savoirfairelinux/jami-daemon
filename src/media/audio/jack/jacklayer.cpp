@@ -23,8 +23,7 @@
 #endif
 
 #include "jacklayer.h"
-#include <cassert>
-#include <climits>
+
 #include "logger.h"
 #include "audio/resampler.h"
 #include "audio/ringbufferpool.h"
@@ -34,6 +33,9 @@
 #include "array_size.h"
 
 #include <unistd.h>
+
+#include <cassert>
+#include <climits>
 
 /* TODO
  * implement shutdown callback
@@ -48,6 +50,8 @@ void connectPorts(jack_client_t *client, int portType, const std::vector<jack_po
 {
     const char **physical_ports = jack_get_ports(client, NULL, NULL, portType | JackPortIsPhysical);
     for (unsigned i = 0; physical_ports[i]; ++i) {
+        if (i >= ports.size())
+            break;
         const char *port = jack_port_name(ports[i]);
         if (portType & JackPortIsInput) {
             if (jack_connect(client, port, physical_ports[i])) {
@@ -61,7 +65,7 @@ void connectPorts(jack_client_t *client, int portType, const std::vector<jack_po
             }
         }
     }
-    free(physical_ports);
+    jack_free(physical_ports);
 }
 
 bool ringbuffer_ready_for_read(const jack_ringbuffer_t *rb)
@@ -71,167 +75,68 @@ bool ringbuffer_ready_for_read(const jack_ringbuffer_t *rb)
 }
 }
 
-void JackLayer::fillWithUrgent(AudioBuffer &buffer, size_t samplesToGet)
-{
-    // Urgent data (dtmf, incoming call signal) come first.
-    samplesToGet = std::min(samplesToGet, hardwareBufferSize_);
-    buffer.resize(samplesToGet);
-    urgentRingBuffer_.get(buffer, RingBufferPool::DEFAULT_ID);
-    buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-
-    // Consume the regular one as well (same amount of samples)
-    Manager::instance().getRingBufferPool().discard(samplesToGet, RingBufferPool::DEFAULT_ID);
-}
-
-void JackLayer::fillWithVoice(AudioBuffer &buffer, size_t samplesAvail)
-{
-    RingBufferPool &mainBuffer = Manager::instance().getRingBufferPool();
-
-    buffer.resize(samplesAvail);
-    mainBuffer.getData(buffer, RingBufferPool::DEFAULT_ID);
-    buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-
-    if (audioFormat_.sample_rate != (unsigned) mainBuffer.getInternalSamplingRate()) {
-        RING_DBG("fillWithVoice sample_rate != mainBuffer.getInternalSamplingRate() \n");
-        AudioBuffer out(buffer, false);
-        out.setSampleRate(audioFormat_.sample_rate);
-        resampler_->resample(buffer, out);
-        buffer = out;
-    }
-}
-
-void JackLayer::fillWithToneOrRingtone(AudioBuffer &buffer)
-{
-    buffer.resize(hardwareBufferSize_);
-    auto tone = Manager::instance().getTelephoneTone();
-    auto file_tone = Manager::instance().getTelephoneFile();
-
-    // In case of a dtmf, the pointers will be set to nullptr once the dtmf length is
-    // reached. For this reason we need to fill audio buffer with zeros if pointer is nullptr
-    if (tone) {
-        tone->getNext(buffer, playbackGain_);
-    } else if (file_tone) {
-        file_tone->getNext(buffer, playbackGain_);
-    } else {
-        buffer.reset();
-    }
-}
-
 void
 JackLayer::playback()
 {
     notifyIncomingCall();
-
-    const size_t samplesToGet = Manager::instance().getRingBufferPool().availableForGet(RingBufferPool::DEFAULT_ID);
-    const size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
-
-    if (urgentSamplesToGet > 0) {
-        fillWithUrgent(playbackBuffer_, urgentSamplesToGet);
-    } else {
-        if (samplesToGet > 0) {
-            fillWithVoice(playbackBuffer_, samplesToGet);
-        } else {
-            fillWithToneOrRingtone(playbackBuffer_);
-        }
+    auto format = audioFormat_;
+    format.sampleFormat = AV_SAMPLE_FMT_FLTP;
+    if (auto toPlay = getPlayback(format, writeSpace())) {
+        write(*toPlay);
     }
-
-    playbackFloatBuffer_.resize(playbackBuffer_.frames());
-    write(playbackBuffer_, playbackFloatBuffer_);
 }
 
 void
 JackLayer::capture()
 {
-    // get audio from jack ringbuffer
-    read(captureBuffer_);
-
-    const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    const bool resample = mainBufferFormat.sample_rate != audioFormat_.sample_rate;
-
-    captureBuffer_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
-
-    if (resample) {
-        int outSamples = captureBuffer_.frames() * (static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate);
-        AudioBuffer out(outSamples, mainBufferFormat);
-        resampler_->resample(captureBuffer_, out);
-        dcblocker_.process(out);
-        mainRingBuffer_->put(out);
-    } else {
-        dcblocker_.process(captureBuffer_);
-        mainRingBuffer_->put(captureBuffer_);
-    }
+    if (auto buf = read())
+        mainRingBuffer_->put(std::move(buf));
 }
 
-static void
-convertToFloat(const std::vector<AudioSample> &src, std::vector<float> &dest)
+size_t
+JackLayer::writeSpace()
 {
-    static const float INV_SHORT_MAX = 1 / (float) SHRT_MAX;
-    if (dest.size() != src.size()) {
-        RING_ERR("MISMATCH");
-        return;
-    }
-    for (size_t i = 0; i < dest.size(); ++i)
-        dest[i] = src[i] * INV_SHORT_MAX;
-}
-
-static void
-convertFromFloat(std::vector<float> &src, std::vector<AudioSample> &dest)
-{
-    if (dest.size() != src.size()) {
-        RING_ERR("MISMATCH");
-        return;
-    }
-    for (size_t i = 0; i < dest.size(); ++i)
-        dest[i] = src[i] * SHRT_MAX;
-}
-
-void
-JackLayer::write(AudioBuffer &buffer, std::vector<float> &floatBuffer)
-{
+    if (out_ringbuffers_.empty())
+        return 0;
+    size_t toWrite {std::numeric_limits<size_t>::max()};
     for (unsigned i = 0; i < out_ringbuffers_.size(); ++i) {
-        const unsigned inChannel = std::min(i, buffer.channels() - 1);
-        convertToFloat(*buffer.getChannel(inChannel), floatBuffer);
-
-        // write to output
-        const size_t to_ringbuffer = jack_ringbuffer_write_space(out_ringbuffers_[i]);
-        const size_t write_bytes = std::min(buffer.frames() * sizeof(floatBuffer[0]), to_ringbuffer);
-        // FIXME: while we have samples to write AND while we have space to write them
-        const size_t written_bytes = jack_ringbuffer_write(out_ringbuffers_[i],
-                (const char *) floatBuffer.data(), write_bytes);
-        if (written_bytes < write_bytes)
-            RING_WARN("Dropped %zu bytes for channel %u", write_bytes - written_bytes, i);
+        toWrite = std::min(toWrite, jack_ringbuffer_write_space(out_ringbuffers_[i]));
     }
+    return std::min<size_t>(toWrite / sizeof(float), audioFormat_.sample_rate / 25);
 }
 
 void
-JackLayer::read(AudioBuffer &buffer)
+JackLayer::write(const AudioFrame& buffer)
 {
-    for (unsigned i = 0; i < in_ringbuffers_.size(); ++i) {
-
-        const size_t incomingSamples = jack_ringbuffer_read_space(in_ringbuffers_[i]) / sizeof(captureFloatBuffer_[0]);
-        if (!incomingSamples)
-            continue;
-
-        captureFloatBuffer_.resize(incomingSamples);
-        buffer.resize(incomingSamples);
-
-        // write to output
-        const size_t from_ringbuffer = jack_ringbuffer_read_space(in_ringbuffers_[i]);
-        const size_t expected_bytes = std::min(incomingSamples * sizeof(captureFloatBuffer_[0]), from_ringbuffer);
-        // FIXME: while we have samples to write AND while we have space to write them
-        const size_t read_bytes = jack_ringbuffer_read(in_ringbuffers_[i],
-                (char *) captureFloatBuffer_.data(), expected_bytes);
-        if (read_bytes < expected_bytes) {
-            RING_WARN("Dropped %zu bytes", expected_bytes - read_bytes);
-            break;
-        }
-
-        /* Write the data one frame at a time.  This is
-         * inefficient, but makes things simpler. */
-        // FIXME: this is braindead, we should write blocks of samples at a time
-        // convert a vector of samples from 1 channel to a float vector
-        convertFromFloat(captureFloatBuffer_, *buffer.getChannel(i));
+    auto num_samples = buffer.pointer()->nb_samples;
+    auto num_bytes = num_samples * sizeof(float);
+    auto channels = std::min<size_t>(out_ringbuffers_.size(), buffer.pointer()->channels);
+    for (size_t i = 0; i < channels; ++i) {
+        jack_ringbuffer_write(out_ringbuffers_[i], (const char*)buffer.pointer()->extended_data[i], num_bytes);
     }
+}
+
+std::unique_ptr<AudioFrame>
+JackLayer::read()
+{
+    if (in_ringbuffers_.empty())
+        return {};
+
+    size_t toRead {std::numeric_limits<size_t>::max()};
+    for (unsigned i = 0; i < in_ringbuffers_.size(); ++i) {
+        toRead = std::min(toRead, jack_ringbuffer_read_space(in_ringbuffers_[i]));
+    }
+    if (not toRead)
+        return {};
+
+    auto format = audioInputFormat_;
+    format.sampleFormat = AV_SAMPLE_FMT_FLTP;
+    auto buffer = std::make_unique<AudioFrame>(format, toRead / sizeof(jack_default_audio_sample_t));
+
+    for (unsigned i = 0; i < in_ringbuffers_.size(); ++i) {
+        jack_ringbuffer_read(in_ringbuffers_[i], (char *) buffer->pointer()->extended_data[i], toRead);
+    }
+    return buffer;
 }
 
 /* This thread can lock, do whatever it wants, and read from/write to the jack
@@ -262,8 +167,6 @@ JackLayer::ringbuffer_worker()
         // is rather arbitrary. We should wait until ring has/needs data
         // and jack has/needs data.
         data_ready_.wait(lock, [&] {
-            // Note: lock is released while waiting, and held when woken
-            // up, so this predicate is called while holding the lock
             return status_ != Status::Started
             or ringbuffer_ready_for_read(in_ringbuffers_[0]);
         });
@@ -274,10 +177,11 @@ void
 createPorts(jack_client_t *client, std::vector<jack_port_t *> &ports,
             bool playback, std::vector<jack_ringbuffer_t *> &ringbuffers)
 {
-
     const char **physical_ports = jack_get_ports(client, NULL, NULL,
             playback ? JackPortIsInput : JackPortIsOutput | JackPortIsPhysical);
     for (unsigned i = 0; physical_ports[i]; ++i) {
+        if (i == 2)
+            break;
         char port_name[32] = {0};
         if (playback)
             snprintf(port_name, sizeof(port_name), "out_%d", i + 1);
@@ -298,7 +202,7 @@ createPorts(jack_client_t *client, std::vector<jack_port_t *> &ports,
             throw std::runtime_error("Could not lock JACK ringbuffer in memory");
         ringbuffers.push_back(rb);
     }
-    free(physical_ports);
+    jack_free(physical_ports);
 }
 
 
@@ -306,19 +210,6 @@ JackLayer::JackLayer(const AudioPreference &p) :
     AudioLayer(p),
     captureClient_(nullptr),
     playbackClient_(nullptr),
-    out_ports_(),
-    in_ports_(),
-    out_ringbuffers_(),
-    in_ringbuffers_(),
-    ringbuffer_thread_(),
-    //workerAlive_(false),
-    ringbuffer_thread_mutex_(),
-    data_ready_(),
-    playbackBuffer_(0, audioFormat_),
-    playbackFloatBuffer_(),
-    captureBuffer_(0, audioFormat_),
-    captureFloatBuffer_(),
-    hardwareBufferSize_(0),
     mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {
     playbackClient_ = jack_client_open(PACKAGE_NAME,
@@ -339,20 +230,10 @@ JackLayer::JackLayer(const AudioPreference &p) :
 
     const auto playRate = jack_get_sample_rate(playbackClient_);
     const auto captureRate = jack_get_sample_rate(captureClient_);
-    if (playRate != captureRate)
-        RING_ERR("Mismatch between capture rate %u and playback rate %u", playRate, captureRate);
 
-    hardwareBufferSize_ = jack_get_buffer_size(playbackClient_);
-
-    auto update_buffer = [] (AudioBuffer &buf, size_t size, unsigned rate, unsigned nbChannels) {
-        buf.setSampleRate(rate);
-        buf.resize(size);
-        buf.setChannelNum(nbChannels);
-    };
-
-    update_buffer(playbackBuffer_, hardwareBufferSize_, playRate, out_ports_.size());
-    update_buffer(captureBuffer_, hardwareBufferSize_, captureRate, in_ports_.size());
-
+    audioInputFormat_ = {captureRate, in_ringbuffers_.size()};
+    hardwareFormatAvailable(AudioFormat(playRate, out_ringbuffers_.size()));
+    hardwareInputFormatAvailable(audioInputFormat_);
     jack_on_shutdown(playbackClient_, onShutdown, this);
 }
 
@@ -476,15 +357,11 @@ JackLayer::startStream()
     }
 
     dcblocker_.reset();
-    const auto hardwareFormat = AudioFormat(playbackBuffer_.getSampleRate(), out_ports_.size());
-    hardwareFormatAvailable(hardwareFormat);
-
     if (jack_activate(playbackClient_) or jack_activate(captureClient_)) {
         RING_ERR("Could not activate JACK client");
         return;
     }
     ringbuffer_thread_ = std::thread(&JackLayer::ringbuffer_worker, this);
-
     connectPorts(playbackClient_, JackPortIsInput, out_ports_);
     connectPorts(captureClient_, JackPortIsOutput, in_ports_);
 }
