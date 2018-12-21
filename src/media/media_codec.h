@@ -59,7 +59,7 @@ enum MediaType : unsigned {
  */
 struct SystemCodecInfo
 {
-    static constexpr unsigned DEFAULT_CODEC_QUALITY {30};
+    static constexpr unsigned DEFAULT_CODEC_QUALITY {25};
 #ifdef RING_VIDEO
     static constexpr unsigned DEFAULT_H264_MIN_QUALITY {35};
     static constexpr unsigned DEFAULT_H264_MAX_QUALITY {20};
