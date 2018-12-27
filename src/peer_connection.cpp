@@ -241,11 +241,19 @@ TcpSocketEndpoint::~TcpSocketEndpoint()
 }
 
 void
-TcpSocketEndpoint::connect()
+TcpSocketEndpoint::connect(const std::chrono::steady_clock::duration& timeout)
 {
-    // Blocking method
-    if (::connect(sock_, addr_, addr_.getLength()) < 0)
+    int ms =  std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count();
+    setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, (const char *)&ms, sizeof(ms));
+    setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO, (const char *)&ms, sizeof(ms));
+
+    if ((::connect(sock_, addr_, addr_.getLength())) < 0)
         throw std::system_error(errno, std::generic_category());
+
+    // Reset timeout
+    ms = 0;
+    setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, (const char *)&ms, sizeof(ms));
+    setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO, (const char *)&ms, sizeof(ms));
 }
 
 int
