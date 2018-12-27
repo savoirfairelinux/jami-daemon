@@ -1,6 +1,6 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.6.2
+GNUTLS_VERSION := 3.6.5
 GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
@@ -16,6 +16,7 @@ $(TARBALLS)/gnutls-$(GNUTLS_VERSION).tar.xz:
 
 gnutls: gnutls-$(GNUTLS_VERSION).tar.xz .sum-gnutls
 	$(UNPACK)
+	$(APPLY) $(SRC)/gnutls/gtk-doc.patch
 ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/gnutls/gnutls-win32.patch
 else
@@ -77,7 +78,7 @@ ifdef HAVE_IOS
 	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no CFLAGS="$(CFLAGS)" ./configure $(GNUTLS_CONF)
 else
 ifdef HAVE_MACOSX
-	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no CFLAGS="$(CFLAGS)" ./configure $(GNUTLS_CONF)
+	cd $< && $(HOSTVARS) ac_cv_func_clock_gettime=no CFLAGS="$(CFLAGS)" LDFLAGS="-Wl" ./configure $(GNUTLS_CONF)
 else
 	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS)" ./configure $(GNUTLS_CONF)
 endif
