@@ -44,6 +44,7 @@ namespace ring {
 
 static constexpr auto DHT_MSG_TIMEOUT = std::chrono::seconds(20);
 static constexpr auto NET_CONNECTION_TIMEOUT = std::chrono::seconds(10);
+static constexpr auto SOCK_TIMEOUT = std::chrono::seconds(3);
 
 using Clock = std::chrono::system_clock;
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
@@ -361,7 +362,19 @@ private:
                                                           parent_.account.identity(),
                                                           parent_.account.dhParams(),
                                                           *peerCertificate_);
-        tls_ep->connect();
+        // block until TLS is negotiated (with 3 secs of timeout) (must throw in case of error)
+        try {
+            tls_ep->waitForReady(SOCK_TIMEOUT);
+        } catch (const std::logic_error& e) {
+            // In case of a timeout
+            RING_WARN() << "TLS connection timeout from peer " << peer_.toString() << ": " << e.what();
+            cancel();
+            return;
+        } catch (...) {
+            RING_WARN() << "TLS connection failure from peer " << peer_.toString();
+            cancel();
+            return;
+        }
 
         // Connected!
         connection_ = std::make_unique<PeerConnection>([this] { cancel(); }, parent_.account,
@@ -488,9 +501,13 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
         *turn_ep, account.identity(), account.dhParams(),
         [&, this] (const dht::crypto::Certificate& cert) { return validatePeerCertificate(cert, peer_h); });
 
-    // block until TLS is negotiated (must throw in case of error)
+    // block until TLS is negotiated (with 3 secs of timeout) (must throw in case of error)
     try {
-        tls_ep->connect();
+        tls_ep->waitForReady(SOCK_TIMEOUT);
+    } catch (const std::logic_error& e) {
+        // In case of a timeout
+        RING_WARN() << "TLS connection timeout from peer " << peer_addr.toString(true, true) << ": " << e.what();
+        return;
     } catch (...) {
         RING_WARN() << "[CNX] TLS connection failure from peer " << peer_addr.toString(true, true);
         return;

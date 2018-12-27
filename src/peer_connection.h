@@ -96,7 +96,7 @@ public:
     }
     int waitForData(unsigned, std::error_code&) const override;
 
-    void connect();
+    void waitForReady(const std::chrono::steady_clock::duration& timeout = {});
 
     const dht::crypto::Certificate& peerCertificate() const;
 
@@ -160,7 +160,7 @@ public:
     }
     int waitForData(unsigned, std::error_code&) const override;
 
-    void connect();
+    void waitForReady(const std::chrono::steady_clock::duration& timeout = {});
 
 private:
     class Impl;
