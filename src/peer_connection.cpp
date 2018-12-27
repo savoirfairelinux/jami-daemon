@@ -241,11 +241,31 @@ TcpSocketEndpoint::~TcpSocketEndpoint()
 }
 
 void
-TcpSocketEndpoint::connect()
+TcpSocketEndpoint::connect(const int& timeout_secs)
 {
-    // Blocking method
-    if (::connect(sock_, addr_, addr_.getLength()) < 0)
+#ifndef _WIN32
+    struct timeval tv = {timeout_secs, 0};
+    setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO,(struct timeval*)&tv, sizeof(struct timeval));
+    setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO,(struct timeval*)&tv, sizeof(struct timeval));
+#else
+    int t = timeout_secs * 1000;
+    setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO,(const char *)&t, sizeof(t));
+    setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO,(const char *)&t, sizeof(t));
+#endif
+
+    if ((::connect(sock_, addr_, addr_.getLength())) < 0)
         throw std::system_error(errno, std::generic_category());
+
+    // Reset timeout
+#ifndef _WIN32
+    tv = {0, 0};
+    setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO,(struct timeval *)&tv, sizeof(struct timeval));
+    setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO,(struct timeval *)&tv, sizeof(struct timeval));
+#else
+    t = 0;
+    setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO,(const char *)&t, sizeof(t));
+    setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO,(const char *)&t, sizeof(t));
+#endif
 }
 
 int
