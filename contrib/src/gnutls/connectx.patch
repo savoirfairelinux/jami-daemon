@@ -1,0 +1,41 @@
+ configure.ac          | 27 +++++++++++++++++++++++++++
+ lib/system/fastopen.c |  6 ++++--
+ 2 files changed, 31 insertions(+), 2 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index e81ff8970..ca5c1bbbe 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -127,6 +127,33 @@ case "$host" in
+     AC_MSG_CHECKING([whether the linker supports -Wl,-no_weak_imports])
+     AC_LINK_IFELSE([AC_LANG_PROGRAM([], [])],
+       [AC_MSG_RESULT(yes)], [AC_MSG_RESULT(no); LDFLAGS="$save_LDFLAGS"])
++
++    AC_CHECK_FUNCS([connectx])
+   ;;
+   *solaris*)
+     have_elf=yes
+diff --git a/lib/system/fastopen.c b/lib/system/fastopen.c
+index 0f673b7c4..0f730565b 100644
+--- a/lib/system/fastopen.c
++++ b/lib/system/fastopen.c
+@@ -36,7 +36,9 @@
+ #endif
+ 
+ /* TCP Fast Open on OSX behaves differently from Linux, so define these helpers */
+-#if defined __APPLE__ && defined __MACH__ && defined CONNECT_DATA_IDEMPOTENT && defined CONNECT_RESUME_ON_READ_WRITE
++#if defined __APPLE__ && defined __MACH__ &&                                   \
++    defined CONNECT_DATA_IDEMPOTENT && defined CONNECT_RESUME_ON_READ_WRITE && \
++    defined HAVE_CONNECTX
+ # define TCP_FASTOPEN_OSX
+ #elif defined TCP_FASTOPEN && defined MSG_FASTOPEN
+ # define TCP_FASTOPEN_LINUX
+@@ -127,7 +129,7 @@ tfo_writev(gnutls_transport_ptr_t ptr, const giovec_t * iovec, int iovec_cnt)
+ 			p->connect_only = 0;
+ 	}
+ # elif defined(TCP_FASTOPEN_OSX)
+-	{
++       {
+ 		sa_endpoints_t endpoints = { .sae_dstaddr = (struct sockaddr*)&p->connect_addr, .sae_dstaddrlen = p->connect_addrlen };
+ 
+ 		ret = connectx(fd, &endpoints, SAE_ASSOCID_ANY, CONNECT_RESUME_ON_READ_WRITE | CONNECT_DATA_IDEMPOTENT, NULL, 0, NULL, NULL);
