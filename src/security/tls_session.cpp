@@ -249,6 +249,9 @@ public:
     bool setup();
     void process();
     void cleanup();
+    // State protectors
+    std::mutex stateMutex_;
+    std::condition_variable stateCondition_;
 
     ScheduledExecutor scheduler_;
 
@@ -718,6 +721,7 @@ void
 TlsSession::TlsSessionImpl::cleanup()
 {
     state_ = TlsSessionState::SHUTDOWN; // be sure to block any user operations
+    stateCondition_.notify_all();
 
     if (session_) {
         if (transport_.isReliable())
@@ -1102,13 +1106,12 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
 {
     // Nothing to do in reliable mode, so just wait for state change
     if (transport_.isReliable()) {
-        while (true) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            state = state_.load();
-            if (state != TlsSessionState::ESTABLISHED)
-                return state;
-        }
-        return TlsSessionState::SHUTDOWN;
+        auto disconnected = [this]() ->  bool {
+            return state_.load() != TlsSessionState::ESTABLISHED;
+        };
+        std::unique_lock<std::mutex> lk(stateMutex_);
+        stateCondition_.wait(lk, disconnected);
+        return state;
     }
 
     // block until rx packet or state change
@@ -1185,6 +1188,11 @@ TlsSession::TlsSessionImpl::process()
     if (not std::atomic_compare_exchange_strong(&state_, &old_state, new_state))
         new_state = old_state;
 
+    RING_ERR("# process %i", (state_ == TlsSessionState::ESTABLISHED));
+
+    if (old_state != new_state)
+        stateCondition_.notify_all();
+
     if (old_state != new_state and callbacks_.onStateChange)
         callbacks_.onStateChange(new_state);
 }
@@ -1250,6 +1258,7 @@ void
 TlsSession::shutdown()
 {
     pimpl_->state_ = TlsSessionState::SHUTDOWN;
+    pimpl_->stateCondition_.notify_all();
     pimpl_->rxCv_.notify_one(); // unblock waiting FSM
     pimpl_->transport_.shutdown();
 }
@@ -1291,6 +1300,7 @@ TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
             RING_DBG("[TLS] re-handshake");
             pimpl_->state_ = TlsSessionState::HANDSHAKE;
             pimpl_->rxCv_.notify_one(); // unblock waiting FSM
+            pimpl_->stateCondition_.notify_all();
         } else if (gnutls_error_is_fatal(ret)) {
             RING_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
             shutdown();
@@ -1304,13 +1314,20 @@ TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
 }
 
 void
-TlsSession::connect()
+TlsSession::waitForReady(const uint32_t& timeout)
 {
-    TlsSessionState state;
-    do {
-        state = pimpl_->state_.load();
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    } while (state != TlsSessionState::ESTABLISHED and state != TlsSessionState::SHUTDOWN);
+    auto ready = [this]() ->  bool {
+        auto state = pimpl_->state_.load();
+        return state == TlsSessionState::ESTABLISHED or state == TlsSessionState::SHUTDOWN;
+    };
+    std::unique_lock<std::mutex> lk(pimpl_->stateMutex_);
+    if (timeout == 0)
+        pimpl_->stateCondition_.wait(lk, ready);
+    else
+        pimpl_->stateCondition_.wait_for(lk, std::chrono::milliseconds(timeout), ready);
+
+    if(!ready())
+        throw std::logic_error("Invalid state in TlsSession::waitForReady");
 }
 
 int
