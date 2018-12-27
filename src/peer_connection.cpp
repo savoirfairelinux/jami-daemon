@@ -183,9 +183,9 @@ TlsTurnEndpoint::isInitiator() const
 }
 
 void
-TlsTurnEndpoint::connect()
+TlsTurnEndpoint::waitForReady(const uint32_t& timeout)
 {
-    pimpl_->tls->connect();
+    pimpl_->tls->waitForReady(timeout);
 }
 
 int
@@ -411,9 +411,9 @@ TlsSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code&
 }
 
 void
-TlsSocketEndpoint::connect()
+TlsSocketEndpoint::waitForReady(const uint32_t& timeout)
 {
-    pimpl_->tls->connect();
+    pimpl_->tls->waitForReady(timeout);
 }
 
 int
