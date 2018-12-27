@@ -128,7 +128,7 @@ public:
 
     int maxPayload() const override;
 
-    void connect();
+    void waitForReady(const std::chrono::steady_clock::duration& timeout = {});
 
     /// Synchronous writing.
     /// Return a positive number for number of bytes write, or 0 and \a ec set in case of error.
