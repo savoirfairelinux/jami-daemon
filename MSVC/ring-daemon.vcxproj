@@ -723,6 +723,7 @@
     <ClCompile Include="..\src\media\audio\audiobuffer.cpp" />
     <ClCompile Include="..\src\media\audio\audiolayer.cpp" />
     <ClCompile Include="..\src\media\audio\audioloop.cpp" />
+    <ClCompile Include="..\src\media\audio\audio_frame_resizer.cpp" />
     <ClCompile Include="..\src\media\audio\audio_input.cpp" />
     <ClCompile Include="..\src\media\audio\audio_receive_thread.cpp" />
     <ClCompile Include="..\src\media\audio\audio_rtp_session.cpp" />
@@ -882,6 +883,7 @@
     <ClInclude Include="..\src\media\audio\audiobuffer.h" />
     <ClInclude Include="..\src\media\audio\audiolayer.h" />
     <ClInclude Include="..\src\media\audio\audioloop.h" />
+    <ClInclude Include="..\src\media\audio\audio_frame_resizer.h" />
     <ClInclude Include="..\src\media\audio\audio_input.h" />
     <ClInclude Include="..\src\media\audio\audio_receive_thread.h" />
     <ClInclude Include="..\src\media\audio\audio_rtp_session.h" />
