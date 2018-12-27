@@ -1,13 +1,13 @@
 # Nettle
 
-NETTLE_VERSION := 3.4
+NETTLE_VERSION := 3.4.1
 NETTLE_URL := $(GNU)/nettle/nettle-$(NETTLE_VERSION).tar.gz
 
 PKGS += nettle
 
-ifeq ($(call need_pkg,"nettle >= 3.3"),)
-PKGS_FOUND += nettle
-endif
+#ifeq ($(call need_pkg,"nettle >= 3.3"),)
+#PKGS_FOUND += nettle
+#endif
 
 $(TARBALLS)/nettle-$(NETTLE_VERSION).tar.gz:
 	$(call download,$(NETTLE_URL))
