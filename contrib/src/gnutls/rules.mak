@@ -1,11 +1,11 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.6.2
+GNUTLS_VERSION := 3.6.6
 GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
 
-ifeq ($(call need_pkg,"gnutls >= 3.5.17"),)
+ifeq ($(call need_pkg,"gnutls >= 3.6.5"),)
 PKGS_FOUND += gnutls
 endif
 
@@ -26,6 +26,7 @@ ifdef HAVE_ANDROID
 endif
 ifdef HAVE_MACOSX
 	$(APPLY) $(SRC)/gnutls/gnutls-disable-getentropy-osx.patch
+	$(APPLY) $(SRC)/gnutls/connectx.patch
 endif
 	$(APPLY) $(SRC)/gnutls/read-file-limits.h.patch
 ifndef HAVE_IOS
