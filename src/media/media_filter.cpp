@@ -216,8 +216,12 @@ MediaFilter::readOutput()
 void
 MediaFilter::flush()
 {
-    for (size_t i = 0; i < inputs_.size(); ++i)
-        av_buffersrc_add_frame_flags(inputs_[i], nullptr, 0);
+    for (size_t i = 0; i < inputs_.size(); ++i) {
+        int ret = av_buffersrc_add_frame_flags(inputs_[i], nullptr, 0);
+        if (ret < 0) {
+            RING_ERR() << "Failed to flush filter '" << inputParams_[i].name << "': " << libav_utils::getError(ret);
+        }
+    }
 }
 
 int
