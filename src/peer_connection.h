@@ -126,7 +126,7 @@ public:
         throw std::logic_error("TcpSocketEndpoint::setOnRecv not implemented");
     }
 
-    void connect();
+    void connect(const std::chrono::steady_clock::duration& timeout = {});
 
 private:
     const IpAddr addr_;

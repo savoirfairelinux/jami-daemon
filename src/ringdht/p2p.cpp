@@ -348,7 +348,18 @@ private:
                 RING_DBG() << parent_.account << "[CNX] connecting to TURN relay "
                            << relay_addr.toString(true, true);
                 peer_ep = std::make_unique<TcpSocketEndpoint>(relay_addr);
-                peer_ep->connect(); // IMPROVE_ME: socket timeout?
+                try {
+                    peer_ep->connect(SOCK_TIMEOUT);
+                } catch (const std::logic_error& e) {
+                    // In case of a timeout
+                    RING_WARN() << "TcpSocketEndpoint timeout for addr " << relay_addr.toString(true, true) << ": " << e.what();
+                    cancel();
+                    return;
+                } catch (...) {
+                    RING_WARN() << "TcpSocketEndpoint failure for addr " << relay_addr.toString(true, true);
+                    cancel();
+                    return;
+                }
                 break;
             } catch (std::system_error&) {
                 RING_DBG() << parent_.account << "[CNX] Failed to connect to TURN relay "
