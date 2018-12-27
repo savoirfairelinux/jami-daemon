@@ -45,6 +45,7 @@ AudioFrameResizer::~AudioFrameResizer()
 int
 AudioFrameResizer::samples() const
 {
+    std::lock_guard<std::mutex> lk(mutex_);
     return av_audio_fifo_size(queue_);
 }
 
@@ -64,6 +65,7 @@ void
 AudioFrameResizer::setFormat(const AudioFormat& format, int size)
 {
     if (format != format_) {
+        std::lock_guard<std::mutex> lk(mutex_);
         if (auto discarded = samples())
             RING_WARN("Discarding %d samples", discarded);
         av_audio_fifo_free(queue_);
