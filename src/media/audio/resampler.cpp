@@ -64,9 +64,10 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
      * LFE downmixing is optional, so any coefficient can be used, we use +6dB for mono and
      * +0dB in each channel for stereo.
      */
-    if (in->channel_layout == AV_CH_LAYOUT_5POINT1 || in->channels == 6) {
-        double matrix[out->channels][in->channels];
+    if (in->channel_layout == AV_CH_LAYOUT_5POINT1 || in->channel_layout == AV_CH_LAYOUT_5POINT1_BACK) {
+        // NOTE MSVC can't allocate dynamic size arrays on the stack
         if (out->channels == 2) {
+            double matrix[2][6];
             // L = 1.0*FL + 0.707*FC + 0.707*BL + 1.0*LFE
             matrix[0][0] = 1;
             matrix[0][1] = 0;
@@ -81,7 +82,9 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
             matrix[1][3] = 1;
             matrix[1][4] = 0;
             matrix[1][5] = 0.707;
+            swr_set_matrix(swrCtx_, matrix[0], 6);
         } else {
+            double matrix[1][6];
             // M = 1.0*FL + 1.414*FC + 1.0*FR + 0.707*BL + 0.707*BR + 2.0*LFE
             matrix[0][0] = 1;
             matrix[0][1] = 1;
@@ -89,8 +92,8 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
             matrix[0][3] = 2;
             matrix[0][4] = 0.707;
             matrix[0][5] = 0.707;
+            swr_set_matrix(swrCtx_, matrix[0], 6);
         }
-        swr_set_matrix(swrCtx_, matrix[0], in->channels);
     }
 
     swr_init(swrCtx_);
