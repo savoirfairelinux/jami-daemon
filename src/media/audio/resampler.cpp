@@ -65,7 +65,8 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
      * +0dB in each channel for stereo.
      */
     if (in->channel_layout == AV_CH_LAYOUT_5POINT1 || in->channels == 6) {
-        double matrix[out->channels][in->channels];
+        using dmatrix1d = std::vector<double>;
+        std::vector<dmatrix1d> matrix(out->channels, dmatrix1d(in->channels, 0));
         if (out->channels == 2) {
             // L = 1.0*FL + 0.707*FC + 0.707*BL + 1.0*LFE
             matrix[0][0] = 1;
@@ -90,7 +91,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
             matrix[0][4] = 0.707;
             matrix[0][5] = 0.707;
         }
-        swr_set_matrix(swrCtx_, matrix[0], in->channels);
+        swr_set_matrix(swrCtx_, matrix[0].data(), in->channels);
     }
 
     swr_init(swrCtx_);
