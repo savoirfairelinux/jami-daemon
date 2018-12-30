@@ -27,8 +27,8 @@
 #include "client/ring_signal.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
-#include "audio/resampler.h"
 #include "audio/audioloop.h"
+#include "libav_utils.h"
 
 #include <thread>
 #include <atomic>
@@ -697,7 +697,8 @@ void AlsaLayer::capture()
     const int framesPerBufferAlsa = 2048;
     toGetFrames = std::min(framesPerBufferAlsa, toGetFrames);
     if (auto r = read(toGetFrames)) {
-        //captureBuff_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
+        if (isCaptureMuted_)
+            libav_utils::fillWithSilence(frame->pointer());
         //dcblocker_.process(captureBuff_);
         mainRingBuffer_->put(std::move(r));
     } else
