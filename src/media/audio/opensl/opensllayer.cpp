@@ -22,10 +22,10 @@
 
 #include "client/ring_signal.h"
 
-#include "audio/resampler.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "audio/dcblocker.h"
+#include "libav_utils.h"
 #include "manager.h"
 #include "logger.h"
 #include "array_size.h"
@@ -350,8 +350,12 @@ OpenSLLayer::startAudioCapture()
                 if (buf->size_ > 0) {
                     auto nb_samples = buf->size_ / hardwareFormat_.getBytesPerFrame();
                     auto out = std::make_unique<AudioFrame>(hardwareFormat_, nb_samples);
-                    std::copy_n((const AudioSample*)buf->buf_, nb_samples, (AudioSample*)out->pointer()->data[0]);
-                    audioCaptureFillBuffer(std::move(out));
+                    if (isCaptureMuted_)
+                        libav_utils::fillWithSilence(out->pointer());
+                    else
+                        std::copy_n((const AudioSample*)buf->buf_, nb_samples, (AudioSample*)out->pointer()->data[0]);
+                    // dcblocker_.process(buffer);
+                    mainRingBuffer_->put(std::move(out));
                 }
                 buf->size_ = 0;
                 freeRecBufQueue_.push(buf);
@@ -475,15 +479,6 @@ OpenSLLayer::getPlaybackDeviceList() const
 void
 OpenSLLayer::updatePreference(AudioPreference& /*preference*/, int /*index*/, DeviceType /*type*/)
 {}
-
-void OpenSLLayer::audioCaptureFillBuffer(std::unique_ptr<AudioFrame>&& frame)
-{
-    RingBufferPool &mbuffer = Manager::instance().getRingBufferPool();
-
-    // buffer.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
-    // dcblocker_.process(buffer);
-    mainRingBuffer_->put(resampler_->resample(std::move(frame), mbuffer.getInternalAudioFormat()));
-}
 
 void dumpAvailableEngineInterfaces()
 {
