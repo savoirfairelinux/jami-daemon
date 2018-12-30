@@ -24,10 +24,10 @@
 #include "compiler_intrinsics.h"
 #include "audiostream.h"
 #include "pulselayer.h"
-#include "audio/resampler.h"
 #include "audio/dcblocker.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
+#include "libav_utils.h"
 #include "logger.h"
 #include "manager.h"
 
@@ -80,10 +80,6 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , preference_(pref)
     , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {
-    setCaptureGain(pref.getVolumemic());
-    setPlaybackGain(pref.getVolumespkr());
-    muteCapture(pref.getCaptureMuted());
-
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
 
@@ -465,7 +461,10 @@ void PulseLayer::readFromMic()
     const size_t samples = bytes / sample_size;
 
     auto out = std::make_unique<AudioFrame>(record_->format(), samples);
-    std::memcpy(out->pointer()->data[0], data, bytes);
+    if (isCaptureMuted_)
+        libav_utils::fillWithSilence(out->pointer());
+    else
+        std::memcpy(out->pointer()->data[0], data, bytes);
 
     if (pa_stream_drop(record_->stream()) < 0)
         RING_ERR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
