@@ -118,8 +118,6 @@ class OpenSLLayer : public AudioLayer {
         void engineServiceRec(bool waiting);
 
     private:
-        void audioCaptureFillBuffer(std::unique_ptr<AudioFrame>&& buffer);
-
         /**
          * Get the index of the audio card for capture
          * @return int The index of the card used for capture
