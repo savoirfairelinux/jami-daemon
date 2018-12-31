@@ -268,13 +268,15 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
     (void) timeInfo;
     (void) statusFlags;
 
-    const auto& ringBuff = parent.getToRing(parent.audioFormat_, framesPerBuffer);
-    const auto& playBuff = parent.getToPlay(parent.audioFormat_, framesPerBuffer);
-    auto toPlay = ringBuff ? ringBuff : playBuff;
-    if (!toPlay)
-        return paContinue;
 
-    std::copy_n((AudioSample*)toPlay->pointer()->extended_data[0], toPlay->pointer()->nb_samples, outputBuffer);
+    auto toPlay = parent.getPlayback(parent.audioFormat_, framesPerBuffer);
+    if (!toPlay) {
+        std::fill_n(outputBuffer, framesPerBuffer * parent.audioFormat_.nb_channels, 0);
+        return paContinue;
+    }
+
+    auto nFrames = toPlay->pointer()->nb_samples * toPlay->pointer()->channels;
+    std::copy_n((AudioSample*)toPlay->pointer()->extended_data[0], nFrames, outputBuffer);
 
     return paContinue;
 }
@@ -298,8 +300,11 @@ PortAudioLayer::PortAudioLayerImpl::paInputCallback(PortAudioLayer& parent,
     }
 
     auto inBuff = std::make_unique<AudioFrame>(parent.audioInputFormat_, framesPerBuffer);
-    std::copy_n(inputBuffer, framesPerBuffer, (AudioSample*)inBuff->pointer()->extended_data[0]);
-    //inBuff.applyGain(parent.isCaptureMuted_ ? 0.0 : parent.captureGain_);
+    auto nFrames = framesPerBuffer * parent.audioInputFormat_.nb_channels;
+    if (parent.isCaptureMuted_)
+        libav_utils::fillWithSilence(inBuff->pointer());
+    else
+        std::copy_n(inputBuffer, nFrames, (AudioSample*)inBuff->pointer()->extended_data[0]);
     mainRingBuffer_->put(std::move(inBuff));
     return paContinue;
 }
