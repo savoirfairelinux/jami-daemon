@@ -222,7 +222,7 @@ VideoDeviceMonitor::addDevice(const string& node, const std::vector<std::map<std
 
         devices_.emplace_back(std::move(dev));
 
-        l.unlock();
+        lock_.unlock();
         notify();
     } catch (const std::exception& e) {
         RING_ERR("Failed to add device %s: %s", node.c_str(), e.what());
