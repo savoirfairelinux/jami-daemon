@@ -141,7 +141,12 @@ static const char * const DECODING_ACCELERATED_KEY = "decodingAccelerated";
 #endif
 
 static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF length */
-static const char * const ALSA_DFT_CARD    = "0";          /** Default sound card index */
+#ifndef _MSC_VER
+static const char * const ALSA_DFT_CARD = "0";          /** Default sound card index */
+#else
+static const char * const ALSA_DFT_CARD = "-1";          /** Default sound card index (Portaudio) */
+#endif // _MSC_VER
+
 
 Preferences::Preferences() :
     accountOrder_("")
