@@ -230,7 +230,7 @@ CoreLayer::setupInputBus() {
                                   inputBus,
                                   &inputASBD,
                                   &size));
-
+    inputASBD.mSampleRate = inSampleRate;
     audioInputFormat_ = {static_cast<unsigned int>(inputASBD.mSampleRate),
                          static_cast<unsigned int>(inputASBD.mChannelsPerFrame)};
     hardwareInputFormatAvailable(audioInputFormat_);
@@ -262,7 +262,7 @@ CoreLayer::setupInputBus() {
     AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareIOBufferDuration,
                             &size,
                             &bufferDuration);
-    UInt32 bufferSizeFrames = inSampleRate_ * bufferDuration;
+    UInt32 bufferSizeFrames = std::round(inSampleRate_ * bufferDuration);
     UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
     size = offsetof(AudioBufferList, mBuffers[0]) + (sizeof(AudioBuffer) * inputASBD.mChannelsPerFrame);
     rawBuff_.reset(new Byte[size + bufferSizeBytes * inputASBD.mChannelsPerFrame]);
@@ -295,14 +295,15 @@ CoreLayer::bindCallbacks() {
                                   sizeof(AURenderCallbackStruct)));
 
     // Input callback setup
-    callback.inputProc = inputCallback;
-    callback.inputProcRefCon = this;
+    AURenderCallbackStruct inputCall;
+    inputCall.inputProc = inputCallback;
+    inputCall.inputProcRefCon = this;
 
     checkErr(AudioUnitSetProperty(ioUnit_,
                                   kAudioOutputUnitProperty_SetInputCallback,
                                   kAudioUnitScope_Global,
                                   inputBus,
-                                  &callback,
+                                  &inputCall,
                                   sizeof(AURenderCallbackStruct)));
 }
 
@@ -386,6 +387,9 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
         for (unsigned i = 0; i < frame.channels; ++i) {
             std::copy_n((Float32*)frame.extended_data[i], inNumberFrames, (Float32*)ioData->mBuffers[i].mData);
         }
+    } else {
+        for (int i = 0; i < currentOutFormat.nb_channels; ++i)
+            std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), inNumberFrames, 0);
     }
 }
 
@@ -425,7 +429,7 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
 
     auto format = audioInputFormat_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
-    auto inBuff = std::make_unique<AudioFrame>(audioInputFormat_, inNumberFrames);
+    auto inBuff = std::make_unique<AudioFrame>(format, inNumberFrames);
     if (isCaptureMuted_) {
         libav_utils::fillWithSilence(inBuff->pointer());
     } else {

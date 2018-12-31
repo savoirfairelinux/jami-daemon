@@ -123,12 +123,11 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
     if (auto fileToPlay = Manager::instance().getTelephoneFile()) {
         auto fileformat = fileToPlay->getFormat();
         bool resample = format != fileformat;
-
         size_t readableSamples = resample
-                ? (rational<size_t>(writableSamples, audioFormat_.sample_rate) * (size_t)fileformat.sample_rate).real<size_t>()
-                : writableSamples;
+        ? std::ceil(writableSamples * (audioFormat_.sample_rate / static_cast<double>(format.sample_rate)))
+        : writableSamples;
 
-        ringtoneBuffer_.setFormat(fileformat);
+        ringtoneBuffer_.setFormat(format);
         ringtoneBuffer_.resize(readableSamples);
         fileToPlay->getNext(ringtoneBuffer_, isRingtoneMuted_ ? 0. : 1.);
         return resampler_->resample(ringtoneBuffer_.toAVFrame(), format);
