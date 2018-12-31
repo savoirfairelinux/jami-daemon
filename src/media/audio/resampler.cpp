@@ -43,15 +43,22 @@ Resampler::~Resampler()
 void
 Resampler::reinit(const AVFrame* in, const AVFrame* out)
 {
-    av_opt_set_int(swrCtx_, "ich", in->channels, 0);
-    av_opt_set_int(swrCtx_, "icl", in->channel_layout, 0);
-    av_opt_set_int(swrCtx_, "isr", in->sample_rate, 0);
-    av_opt_set_sample_fmt(swrCtx_, "isf", static_cast<AVSampleFormat>(in->format), 0);
+    // NOTE swr_set_matrix should be called on an uninitialized context
+    auto swrCtx = swr_alloc();
+    if (!swrCtx) {
+        RING_ERR() << "Cannot allocate resampler context";
+        throw std::bad_alloc();
+    }
 
-    av_opt_set_int(swrCtx_, "och", out->channels, 0);
-    av_opt_set_int(swrCtx_, "ocl", out->channel_layout, 0);
-    av_opt_set_int(swrCtx_, "osr", out->sample_rate, 0);
-    av_opt_set_sample_fmt(swrCtx_, "osf", static_cast<AVSampleFormat>(out->format), 0);
+    av_opt_set_int(swrCtx, "ich", in->channels, 0);
+    av_opt_set_int(swrCtx, "icl", in->channel_layout, 0);
+    av_opt_set_int(swrCtx, "isr", in->sample_rate, 0);
+    av_opt_set_sample_fmt(swrCtx, "isf", static_cast<AVSampleFormat>(in->format), 0);
+
+    av_opt_set_int(swrCtx, "och", out->channels, 0);
+    av_opt_set_int(swrCtx, "ocl", out->channel_layout, 0);
+    av_opt_set_int(swrCtx, "osr", out->sample_rate, 0);
+    av_opt_set_sample_fmt(swrCtx, "osf", static_cast<AVSampleFormat>(out->format), 0);
 
     /**
      * Downmixing from 5.1 requires extra setup, since libswresample can't do it automatically
@@ -82,7 +89,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
             matrix[1][3] = 1;
             matrix[1][4] = 0;
             matrix[1][5] = 0.707;
-            swr_set_matrix(swrCtx_, matrix[0], 6);
+            swr_set_matrix(swrCtx, matrix[0], 6);
         } else {
             double matrix[1][6];
             // M = 1.0*FL + 1.414*FC + 1.0*FR + 0.707*BL + 0.707*BR + 2.0*LFE
@@ -92,12 +99,19 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
             matrix[0][3] = 2;
             matrix[0][4] = 0.707;
             matrix[0][5] = 0.707;
-            swr_set_matrix(swrCtx_, matrix[0], 6);
+            swr_set_matrix(swrCtx, matrix[0], 6);
         }
     }
 
-    swr_init(swrCtx_);
-    ++initCount_;
+    if (swr_init(swrCtx) >= 0) {
+        std::swap(swrCtx_, swrCtx);
+        swr_free(&swrCtx);
+        ++initCount_;
+    } else {
+        std::string msg = "Failed to initialize resampler context";
+        RING_ERR() << msg;
+        throw std::runtime_error(msg);
+    }
 }
 
 int

@@ -41,10 +41,12 @@ public:
 private:
     void testAudioBuffer();
     void testAudioFrame();
+    void testRematrix();
 
     CPPUNIT_TEST_SUITE(ResamplerTest);
     CPPUNIT_TEST(testAudioBuffer);
     CPPUNIT_TEST(testAudioFrame);
+    CPPUNIT_TEST(testRematrix);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<Resampler> resampler_;
@@ -103,6 +105,31 @@ ResamplerTest::testAudioFrame()
     CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
     CPPUNIT_ASSERT(output->data && output->data[0]);
     CPPUNIT_ASSERT(output->data[0][0] == 0);
+}
+
+void
+ResamplerTest::testRematrix()
+{
+    int ret = 0;
+    const constexpr AudioFormat inFormat = AudioFormat(44100, 6);
+    resampler_.reset(new Resampler);
+
+    auto input = std::make_unique<DRing::AudioFrame>(inFormat, 882);
+    CPPUNIT_ASSERT(input->pointer() && input->pointer()->data);
+
+    auto output1 = std::make_unique<DRing::AudioFrame>(AudioFormat::STEREO(), 960);
+    CPPUNIT_ASSERT(output1->pointer() && output1->pointer()->data);
+
+    ret = resampler_->resample(input->pointer(), output1->pointer());
+    CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
+    CPPUNIT_ASSERT(output1->pointer()->data && output1->pointer()->data[0]);
+
+    auto output2 = std::make_unique<DRing::AudioFrame>(AudioFormat::MONO(), 960);
+    CPPUNIT_ASSERT(output2->pointer() && output2->pointer()->data);
+
+    ret = resampler_->resample(input->pointer(), output2->pointer());
+    CPPUNIT_ASSERT_MESSAGE(libav_utils::getError(ret).c_str(), ret >= 0);
+    CPPUNIT_ASSERT(output2->pointer()->data && output2->pointer()->data[0]);
 }
 
 }} // namespace ring::test
