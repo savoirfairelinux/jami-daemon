@@ -42,25 +42,25 @@ constexpr const char * const VideoDeviceMonitor::CONFIG_LABEL;
 
 using std::map;
 using std::string;
-using std::stringstream;;
+using std::stringstream;
 using std::vector;
 
 vector<string>
 VideoDeviceMonitor::getDeviceList() const
 {
+    std::lock_guard<std::mutex> l(lock_);
     vector<string> names;
-
+    names.reserve(devices_.size());
     for (const auto& dev : devices_)
-       names.push_back(dev.name);
-
+       names.emplace_back(dev.name);
     return names;
 }
 
 DRing::VideoCapabilities
 VideoDeviceMonitor::getCapabilities(const string& name) const
 {
+    std::lock_guard<std::mutex> l(lock_);
     const auto iter = findDeviceByName(name);
-
     if (iter == devices_.end())
         return DRing::VideoCapabilities();
 
@@ -70,6 +70,7 @@ VideoDeviceMonitor::getCapabilities(const string& name) const
 VideoSettings
 VideoDeviceMonitor::getSettings(const string& name)
 {
+    std::lock_guard<std::mutex> l(lock_);
     const auto itd = findPreferencesByName(name);
 
     if (itd == preferences_.end())
@@ -81,6 +82,7 @@ VideoDeviceMonitor::getSettings(const string& name)
 void
 VideoDeviceMonitor::applySettings(const string& name, VideoSettings settings)
 {
+    std::lock_guard<std::mutex> l(lock_);
     const auto iter = findDeviceByName(name);
 
     if (iter == devices_.end())
@@ -93,12 +95,14 @@ VideoDeviceMonitor::applySettings(const string& name, VideoSettings settings)
 string
 VideoDeviceMonitor::getDefaultDevice() const
 {
+    std::lock_guard<std::mutex> l(lock_);
     return defaultDevice_;
 }
 
 std::string
 VideoDeviceMonitor::getMRLForDefaultDevice() const
 {
+    std::lock_guard<std::mutex> l(lock_);
     const auto it = findDeviceByName(defaultDevice_);
     if(it == std::end(devices_))
         return {};
@@ -109,6 +113,7 @@ VideoDeviceMonitor::getMRLForDefaultDevice() const
 void
 VideoDeviceMonitor::setDefaultDevice(const std::string& name)
 {
+    std::lock_guard<std::mutex> l(lock_);
     const auto itDev = findDeviceByName(name);
     if (itDev != devices_.end()) {
         defaultDevice_ = itDev->name;
@@ -128,6 +133,7 @@ VideoDeviceMonitor::setDefaultDevice(const std::string& name)
 DeviceParams
 VideoDeviceMonitor::getDeviceParams(const std::string& name) const
 {
+    std::lock_guard<std::mutex> l(lock_);
     const auto itd = findDeviceByName(name);
     if (itd == devices_.cend())
         return DeviceParams();
@@ -188,6 +194,7 @@ notify()
 void
 VideoDeviceMonitor::addDevice(const string& node, const std::vector<std::map<std::string, std::string>>* devInfo)
 {
+    std::unique_lock<std::mutex> l(lock_);
     if (findDeviceByNode(node) != devices_.end())
         return;
 
@@ -214,8 +221,9 @@ VideoDeviceMonitor::addDevice(const string& node, const std::vector<std::map<std
             defaultDevice_ = dev.name;
 
         devices_.emplace_back(std::move(dev));
-        notify();
 
+        lock_.unlock();
+        notify();
     } catch (const std::exception& e) {
         RING_ERR("Failed to add device %s: %s", node.c_str(), e.what());
         return;
@@ -225,64 +233,54 @@ VideoDeviceMonitor::addDevice(const string& node, const std::vector<std::map<std
 void
 VideoDeviceMonitor::removeDevice(const string& node)
 {
-    const auto it = findDeviceByNode(node);
+    {
+        std::lock_guard<std::mutex> l(lock_);
+        const auto it = findDeviceByNode(node);
+        if (it == devices_.end())
+            return;
 
-    if (it == devices_.end())
-        return;
+        if (defaultDevice_ == it->name)
+            defaultDevice_.clear();
 
-    if (defaultDevice_ == it->name)
-        defaultDevice_.clear();
-
-    devices_.erase(it);
+        devices_.erase(it);
+    }
     notify();
 }
 
 vector<VideoDevice>::iterator
 VideoDeviceMonitor::findDeviceByName(const string& name)
 {
-    vector<VideoDevice>::iterator it;
-
-    for (it = devices_.begin(); it != devices_.end(); ++it)
+    for (auto it = devices_.begin(); it != devices_.end(); ++it)
         if (it->name == name)
-            break;
-
-    return it;
+            return it;
+    return devices_.end();
 }
 
 vector<VideoDevice>::const_iterator
 VideoDeviceMonitor::findDeviceByName(const string& name) const
 {
-    vector<VideoDevice>::const_iterator it;
-
-    for (it = devices_.cbegin(); it != devices_.cend(); ++it)
+    for (auto it = devices_.cbegin(); it != devices_.cend(); ++it)
         if (it->name == name)
-            break;
-
-    return it;
+            return it;
+    return devices_.cend();
 }
 
 vector<VideoDevice>::iterator
 VideoDeviceMonitor::findDeviceByNode(const string& node)
 {
-    vector<VideoDevice>::iterator it;
-
-    for (it = devices_.begin(); it != devices_.end(); ++it)
+    for (auto it = devices_.begin(); it != devices_.end(); ++it)
         if (it->getNode() == node)
-            break;
-
-    return it;
+            return it;
+    return devices_.end();
 }
 
 vector<VideoDevice>::const_iterator
 VideoDeviceMonitor::findDeviceByNode(const string& node) const
 {
-    vector<VideoDevice>::const_iterator it;
-
-    for (it = devices_.cbegin(); it != devices_.cend(); ++it)
+    for (auto it = devices_.cbegin(); it != devices_.cend(); ++it)
         if (it->getNode() == node)
-            break;
-
-    return it;
+            return it;
+    return devices_.end();
 }
 
 vector<VideoSettings>::iterator
@@ -305,12 +303,14 @@ VideoDeviceMonitor::overwritePreferences(VideoSettings settings)
 void
 VideoDeviceMonitor::serialize(YAML::Emitter &out)
 {
+    std::lock_guard<std::mutex> l(lock_);
     out << YAML::Key << "devices" << YAML::Value << preferences_;
 }
 
 void
 VideoDeviceMonitor::unserialize(const YAML::Node &in)
 {
+    std::lock_guard<std::mutex> l(lock_);
     const auto &node = in[CONFIG_LABEL];
 
     /* load the device list from the "video" YAML section */

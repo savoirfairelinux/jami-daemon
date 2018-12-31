@@ -95,6 +95,7 @@ class VideoDeviceMonitor : public Serializable
         std::vector<VideoDevice>::const_iterator findDeviceByNode(const std::string& node) const;
 
         std::unique_ptr<VideoDeviceMonitorImpl> monitorImpl_;
+        mutable std::mutex lock_;
 
         constexpr static const char *CONFIG_LABEL = "video";
 };
