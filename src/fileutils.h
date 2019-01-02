@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2018 Savoir-faire Linux Inc.
+ *  Copyright (C) 2011-2019 Savoir-faire Linux Inc.
  *
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
  *

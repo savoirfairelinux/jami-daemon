@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2014-2018 Savoir-faire Linux Inc.
+ *  Copyright (C) 2014-2019 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
  *

@@ -1,4 +1,4 @@
-Copyright (c) 2014-2018 Savoir-faire Linux Inc.
+Copyright (C) 2014-2019 Savoir-faire Linux Inc.
 
 ssl_sock: add gnutls backend
 
@@ -378,7 +378,7 @@ index 0000000..37bcaba
 @@ -0,0 +1,2882 @@
 +/* $Id$ */
 +/*
-+ * Copyright (C) 2014-2018 Savoir-faire Linux. (https://www.savoirfairelinux.com)
++ *  Copyright (C) 2014-2019 Savoir-faire Linux Inc.. (https://www.savoirfairelinux.com)
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by

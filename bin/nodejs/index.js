@@ -1,5 +1,5 @@
 /*
- *  Copyright (c) 2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2017-2019 Savoir-faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Asad Salman <me@asad.co>

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2013-2018 Savoir-faire Linux Inc.
+ *  Copyright (C) 2013-2019 Savoir-faire Linux Inc.
  *
  *  Author: Patrick Keroulas <patrick.keroulas@savoirfairelinux.com>
  *
