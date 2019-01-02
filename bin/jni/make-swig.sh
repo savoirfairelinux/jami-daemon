@@ -1,6 +1,6 @@
 #!/bin/bash -
 #
-#  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
+#  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
 #
 #  Author: Emeric Vigier <emeric.vigier@savoirfairelinux.com>
 #          Alexandre Lision <alexandre.lision@savoirfairelinux.com>

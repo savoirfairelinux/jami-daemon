@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2018 Savoir-faire Linux Inc.
+ *  Copyright (C) 2018-2019 Savoir-faire Linux Inc.
  *
  *  Author: Hugo Lefeuvre <hugo.lefeuvre@savoirfairelinux.com>
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
