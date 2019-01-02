@@ -61,6 +61,41 @@ FFMPEGCONF+='
             --enable-decoder=mjpeg
             --enable-decoder=mjpegb'
 
+FFMPEGCONF+='
+            --enable-decoder=flac
+            --enable-decoder=vorbis
+            --enable-decoder=aac
+            --enable-decoder=ac3
+            --enable-decoder=eac3
+            --enable-decoder=mp3
+            --enable-decoder=pcm_u24be
+            --enable-decoder=pcm_u24le
+            --enable-decoder=pcm_u32be
+            --enable-decoder=pcm_u32le
+            --enable-decoder=pcm_u8
+            --enable-decoder=pcm_f16le
+            --enable-decoder=pcm_f24le
+            --enable-decoder=pcm_f32be
+            --enable-decoder=pcm_f32le
+            --enable-decoder=pcm_f64be
+            --enable-decoder=pcm_f64le
+            --enable-decoder=pcm_s16be
+            --enable-decoder=pcm_s16be_planar
+            --enable-decoder=pcm_s16le
+            --enable-decoder=pcm_s16le_planar
+            --enable-decoder=pcm_s24be
+            --enable-decoder=pcm_s24le
+            --enable-decoder=pcm_s24le_planar
+            --enable-decoder=pcm_s32be
+            --enable-decoder=pcm_s32le
+            --enable-decoder=pcm_s32le_planar
+            --enable-decoder=pcm_s64be
+            --enable-decoder=pcm_s64le
+            --enable-decoder=pcm_s8
+            --enable-decoder=pcm_s8_planar
+            --enable-decoder=pcm_u16be
+            --enable-decoder=pcm_u16le'
+
 if [ "$1" == "uwp" ]; then
     EXTRACFLAGS='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -I../../../../../msvc/include -I../../../../../msvc/include/opus'
     if [ "$2" == "x64" ]; then
