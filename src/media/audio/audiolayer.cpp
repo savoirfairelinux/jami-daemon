@@ -125,7 +125,7 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
         bool resample = format != fileformat;
 
         size_t readableSamples = resample
-                ? (rational<size_t>(writableSamples, audioFormat_.sample_rate) * (size_t)fileformat.sample_rate).real<size_t>()
+                ? (rational<size_t>(writableSamples, format.sample_rate) * (size_t)fileformat.sample_rate).real<size_t>()
                 : writableSamples;
 
         ringtoneBuffer_.setFormat(fileformat);
@@ -164,7 +164,7 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
             break;
         }
     }
-
+    
     return playbackBuf;
 }
 
