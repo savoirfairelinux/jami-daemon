@@ -90,9 +90,10 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
 {
     int ret = 0;
     auto f = frame->pointer();
-    if (f->format != (int)format_.sampleFormat || f->channels != (int)format_.nb_channels || f->sample_rate != (int)format_.sample_rate) {
+    AudioFormat format(f->sample_rate, f->channels, (AVSampleFormat)f->format);
+    if (format != format_) {
         RING_ERR() << "Expected " << format_ << ", but got " << AudioFormat(f->sample_rate, f->channels, (AVSampleFormat)f->format);
-        throw std::runtime_error("Could not write samples to audio queue: input frame is not the right format");
+        setFormat(format, frameSize_);
     }
 
     auto nb_samples = samples();
