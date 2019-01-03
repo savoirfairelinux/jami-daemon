@@ -125,7 +125,7 @@ AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
         bool resample = format != fileformat;
 
         size_t readableSamples = resample
-                ? (rational<size_t>(writableSamples, audioFormat_.sample_rate) * (size_t)fileformat.sample_rate).real<size_t>()
+                ? (rational<size_t>(writableSamples, format.sample_rate) * (size_t)fileformat.sample_rate).real<size_t>()
                 : writableSamples;
 
         ringtoneBuffer_.setFormat(fileformat);
@@ -160,11 +160,11 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
             playbackQueue_->enqueue(resampler_->resample(toneToPlay->getNext(), format));
         } else if (auto buf = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
             playbackQueue_->enqueue(resampler_->resample(std::move(buf), format));
+            RING_DBG("number of samples, %d",playbackQueue_->samples());
         } else {
             break;
         }
     }
-
     return playbackBuf;
 }
 
