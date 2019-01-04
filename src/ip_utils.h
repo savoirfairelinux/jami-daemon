@@ -33,7 +33,11 @@ extern "C" {
 #include <ciso646> // fix windows compiler bug
 
 #ifdef _WIN32
-    #define _WIN32_WINNT 0x0A00
+    #ifdef RING_UWP
+        #define _WIN32_WINNT 0x0A00
+    #else
+        #define _WIN32_WINNT 0x0601
+    #endif
     #include <ws2tcpip.h>
 
     //define in mingw
