@@ -284,10 +284,10 @@ exportOnRing(const std::string& accountID, const std::string& password)
 }
 
 bool
-exportToFile(const std::string& accountID, const std::string& destinationPath)
+exportToFile(const std::string& accountID, const std::string& destinationPath, const std::string& password)
 {
     if (const auto account = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
-        return account->exportArchive(destinationPath);
+        return account->exportArchive(destinationPath, password);
     }
     return false;
 }

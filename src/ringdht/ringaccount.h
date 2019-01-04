@@ -313,7 +313,13 @@ class RingAccount : public SIPAccountBase {
 
         /* Devices */
         void addDevice(const std::string& password);
-        bool exportArchive(const std::string& destinationPath);
+        /**
+         * Export the archive to a file
+         * @param destinationPath
+         * @param (optional) password, if not provided, will update the contacts only if the archive doesn't have a password
+         * @return if the archive was exported
+         */
+        bool exportArchive(const std::string& destinationPath, const std::string& password = {});
         bool revokeDevice(const std::string& password, const std::string& device);
         std::map<std::string, std::string> getKnownDevices() const;
 

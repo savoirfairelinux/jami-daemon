@@ -60,7 +60,7 @@ DRING_PUBLIC void setAccountActive(const std::string& accountID, bool active);
 DRING_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 DRING_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details);
 DRING_PUBLIC bool exportOnRing(const std::string& accountID, const std::string& password);
-DRING_PUBLIC bool exportToFile(const std::string& accountID, const std::string& destinationPath);
+DRING_PUBLIC bool exportToFile(const std::string& accountID, const std::string& destinationPath, const std::string& password = {});
 DRING_PUBLIC bool revokeDevice(const std::string& accountID, const std::string& password, const std::string& deviceID);
 DRING_PUBLIC std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
 DRING_PUBLIC bool changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new);

@@ -1086,9 +1086,18 @@ RingAccount::addDevice(const std::string& password)
 }
 
 bool
-RingAccount::exportArchive(const std::string& destinationPath)
+RingAccount::exportArchive(const std::string& destinationPath, const std::string& password)
 {
     try {
+        // Save contacts if possible before exporting
+        AccountArchive archive;
+        if (!archiveHasPassword_ || !password.empty()) {
+            RING_ERR("111 %s", password.c_str());
+            archive = readArchive(password);
+            updateArchive(archive);
+            archive.save(fileutils::getFullPath(idPath_, archivePath_), password);
+        }
+        // Export the file
         auto sourcePath = fileutils::getFullPath(idPath_, archivePath_);
         std::ifstream src(sourcePath, std::ios::in | std::ios::binary);
         if (!src) return false;
@@ -1096,6 +1105,9 @@ RingAccount::exportArchive(const std::string& destinationPath)
         dst << src.rdbuf();
     } catch (const std::runtime_error& ex) {
         RING_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
+        return false;
+    } catch (...) {
+        RING_ERR("[Account %s] Can't export archive: can't read archive", getAccountID().c_str());
         return false;
     }
     return true;

@@ -82,9 +82,9 @@ DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::
 }
 
 auto
-DBusConfigurationManager::exportToFile(const std::string& accountID, const std::string& destinationPath) -> decltype(DRing::exportToFile(accountID, destinationPath))
+DBusConfigurationManager::exportToFile(const std::string& accountID, const std::string& destinationPath, const std::string& password) -> decltype(DRing::exportToFile(accountID, destinationPath, password))
 {
-    return DRing::exportToFile(accountID, destinationPath);
+    return DRing::exportToFile(accountID, destinationPath, password);
 }
 
 auto
