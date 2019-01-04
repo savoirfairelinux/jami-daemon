@@ -436,7 +436,7 @@ void PulseLayer::writeToSpeaker()
     AudioSample* data = nullptr;
     pa_stream_begin_write(playback_->stream(), (void**)&data, &writableBytes);
 
-    if (!buff)
+    if (not buff or isPlaybackMuted_)
         memset(data, 0, writableBytes);
     else
         std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * playback_->frameSize());
@@ -470,7 +470,6 @@ void PulseLayer::readFromMic()
         RING_ERR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
 
     //dcblocker_.process(*out);
-    //out->applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
     mainRingBuffer_->put(std::move(out));
 }
 
@@ -488,7 +487,7 @@ void PulseLayer::ringtoneToSpeaker()
     AudioSample* data;
     pa_stream_begin_write(ringtone_->stream(), (void**)&data, &bytes);
 
-    if (!buff)
+    if (not buff or isRingtoneMuted_)
         memset(data, 0, bytes);
     else
         std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * playback_->frameSize());
