@@ -2,7 +2,7 @@ dnl Jami - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([Ring Daemon],[7.1.0],[ring@gnu.org],[ring])
+AC_INIT([Ring Daemon],[7.2.0],[ring@gnu.org],[ring])
 
 AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2018]])
 AC_REVISION([$Revision$])
