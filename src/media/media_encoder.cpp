@@ -327,8 +327,9 @@ void MediaEncoder::setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx)
 #endif
         if (!(outputCtx_->oformat->flags & AVFMT_NOFILE)) {
             if ((ret = avio_open(&outputCtx_->pb, filename, AVIO_FLAG_WRITE)) < 0) {
-                throw MediaEncoderException(
-                    std::string("Could not set IO context" + libav_utils::getError(ret)).c_str());
+                std::stringstream ss;
+                ss << "Could not set IO context for '" << filename << "': " << libav_utils::getError(ret);
+                throw MediaEncoderException(ss.str().c_str());
             }
         }
     }
