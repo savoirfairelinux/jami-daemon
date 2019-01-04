@@ -178,6 +178,8 @@
            </arg>
            <arg type="s" name="destinationPath" direction="in">
            </arg>
+           <arg type="s" name="password" direction="in">
+           </arg>
            <arg type="b" name="success" direction="out">
                <tp:docstring>
                    True if the operation was initialized successfully.
