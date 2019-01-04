@@ -63,10 +63,14 @@ class VideoDeviceMonitorImpl {
 VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
     monitor_(monitor)
 {
+}
+
+void VideoDeviceMonitorImpl::start()
+{
     /* Enumerate existing devices */
     auto myVideoDevices = [[AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]
-                                arrayByAddingObjectsFromArray:
-                                [AVCaptureDevice devicesWithMediaType:AVMediaTypeMuxed]];
+                           arrayByAddingObjectsFromArray:
+                           [AVCaptureDevice devicesWithMediaType:AVMediaTypeMuxed]];
     if ( [myVideoDevices count] == 0 )
     {
         RING_ERR("Can't find any suitable video device");
@@ -79,20 +83,16 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
     {
         AVCaptureDevice* avf_device = [myVideoDevices objectAtIndex:ivideo];
         printf("avcapture %d/%d %s %s\n", ivideo + 1,
-                                            deviceCount,
-                                            [[avf_device modelID] UTF8String],
-                                            [[avf_device uniqueID] UTF8String]);
+               deviceCount,
+               [[avf_device modelID] UTF8String],
+               [[avf_device uniqueID] UTF8String]);
         try {
             monitor_->addDevice([[avf_device uniqueID] UTF8String]);
         } catch (const std::runtime_error &e) {
             RING_ERR("%s", e.what());
         }
     }
-    return;
-}
-
-void VideoDeviceMonitorImpl::start()
-{
+    
     NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
     id deviceWasConnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasConnectedNotification
                                     object:nil
