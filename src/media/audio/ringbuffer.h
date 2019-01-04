@@ -188,7 +188,7 @@ private:
 
     /** Data */
     AudioFormat format_ {AudioFormat::DEFAULT()};
-    std::vector<std::shared_ptr<AudioFrame>> buffer_ {8};
+    std::vector<std::shared_ptr<AudioFrame>> buffer_ {16};
 
     mutable std::mutex lock_;
     mutable std::condition_variable not_empty_;
