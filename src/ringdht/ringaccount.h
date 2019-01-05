@@ -156,7 +156,7 @@ class RingAccount : public SIPAccountBase {
          *
          * @param buddy_id  The buddy id.
          */
-        void trackBuddyPresence(const std::string& buddy_id);
+        void trackBuddyPresence(const std::string& buddy_id, bool track);
 
         /**
          * Tells for each tracked account id if it has been seen online so far
@@ -553,7 +553,7 @@ class RingAccount : public SIPAccountBase {
         std::map<dht::InfoHash, KnownDevice> knownDevices_;
 
         /* tracked buddies presence */
-        std::recursive_mutex buddyInfoMtx;
+        std::mutex buddyInfoMtx;
         std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
 
         void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {}, const std::string& archive_path = {});
