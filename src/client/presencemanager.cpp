@@ -65,7 +65,7 @@ subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
             pres->subscribeClient(uri, flag);
         }
     } else if (auto ringaccount = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
-        ringaccount->trackBuddyPresence(uri);
+        ringaccount->trackBuddyPresence(uri, flag);
     } else
         RING_ERR("Could not find account %s", accountID.c_str());
 }

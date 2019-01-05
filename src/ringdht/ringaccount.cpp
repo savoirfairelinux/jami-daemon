@@ -1943,7 +1943,7 @@ RingAccount::loadBootstrap() const
 }
 
 void
-RingAccount::trackBuddyPresence(const std::string& buddy_id)
+RingAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
 {
     std::string buddyUri;
 
@@ -1955,9 +1955,19 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
         return;
     }
     auto h = dht::InfoHash(buddyUri);
-    auto buddy = trackedBuddies_.emplace(h, BuddyInfo {h});
-    if (buddy.second) {
-        trackPresence(buddy.first->first, buddy.first->second);
+    std::lock_guard<std::mutex> lock(buddyInfoMtx);
+    if (track) {
+        auto buddy = trackedBuddies_.emplace(h, BuddyInfo {h});
+        if (buddy.second) {
+            trackPresence(buddy.first->first, buddy.first->second);
+        }
+    } else {
+        auto buddy = trackedBuddies_.find(h);
+        if (buddy != trackedBuddies_.end()) {
+            if (dht_.isRunning())
+                dht_.cancelListen(h, std::move(buddy->second.listenToken));
+            trackedBuddies_.erase(buddy);
+        }
     }
 }
 
@@ -1970,7 +1980,7 @@ RingAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
     buddy.listenToken = dht_.listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired){
         bool wasConnected, isConnected;
         {
-            std::lock_guard<std::recursive_mutex> lock(buddyInfoMtx);
+            std::lock_guard<std::mutex> lock(buddyInfoMtx);
             auto buddy = trackedBuddies_.find(h);
             if (buddy == trackedBuddies_.end())
                 return true;
@@ -1995,7 +2005,7 @@ RingAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
 std::map<std::string, bool>
 RingAccount::getTrackedBuddyPresence()
 {
-    std::lock_guard<std::recursive_mutex> lock(buddyInfoMtx);
+    std::lock_guard<std::mutex> lock(buddyInfoMtx);
     std::map<std::string, bool> presence_info;
     for (const auto& buddy_info_p : trackedBuddies_)
         presence_info.emplace(buddy_info_p.first.toString(), not buddy_info_p.second.devices.empty());
