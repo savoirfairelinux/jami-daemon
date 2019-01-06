@@ -21,6 +21,7 @@
 #include "string_utils.h"
 #include "thread_pool.h"
 #include "fileutils.h"
+#include "config.h"
 
 #include <msgpack.hpp>
 #include <json/json.h>
@@ -93,10 +94,11 @@ NameDirectory& NameDirectory::instance(const std::string& server)
 size_t getContentLength(restbed::Response& reply)
 {
     size_t length = 0;
-#ifndef RESTBED_OLD_API
-    length =
-#endif
+#ifdef RESTBED_OLD_API
     reply.get_header("Content-Length", length);
+#else
+    length = reply.get_header("Content-Length", 0);
+#endif
     return length;
 }
 

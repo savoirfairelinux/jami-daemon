@@ -430,7 +430,7 @@ AC_ARG_WITH([restcpp],
     AS_HELP_STRING([--with-restcpp], [enable rest support with C++]))
 AC_ARG_ENABLE([restbed_old_api], AS_HELP_STRING([--enable-restbed-old-api], [Use the old restbed API]))
 AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
-  AC_DEFINE([RESTBED_OLD_API], [], [Defined if you use the old restbed API])
+  AC_DEFINE([RESTBED_OLD_API], [1], [Defined if you use the old restbed API])
 ])
 
 AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"], [
