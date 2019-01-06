@@ -134,6 +134,12 @@ AS_IF([test "$SYS" = linux],[
 ])
 AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
+AS_IF([test "$SYS" = linux && test "${HAVE_ANDROID}" != "1"],[
+    CFLAGS="${CFLAGS} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+    CXXFLAGS="${CXXFLAGS} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+],[
+])
+
 dnl override platform specific check for dependent libraries
 dnl otherwise libtool linking of shared libraries will
 dnl fail on anything other than pass_all.
