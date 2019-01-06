@@ -37,12 +37,6 @@
 
 namespace ring {
 
-#ifdef __APPLE__
-    static const size_t BUFFER_SIZE = 16;
-#else
-    static const size_t BUFFER_SIZE = 8;
-#endif
-
 /**
  * A ring buffer for mutichannel audio samples
  */
@@ -194,8 +188,7 @@ private:
 
     /** Data */
     AudioFormat format_ {AudioFormat::DEFAULT()};
-    
-    std::vector<std::shared_ptr<AudioFrame>> buffer_ {BUFFER_SIZE};
+    std::vector<std::shared_ptr<AudioFrame>> buffer_ {16};
 
     mutable std::mutex lock_;
     mutable std::condition_variable not_empty_;
