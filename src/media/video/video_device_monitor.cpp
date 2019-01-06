@@ -194,12 +194,12 @@ notify()
 void
 VideoDeviceMonitor::addDevice(const string& node, const std::vector<std::map<std::string, std::string>>* devInfo)
 {
-    std::unique_lock<std::mutex> l(lock_);
-    if (findDeviceByNode(node) != devices_.end())
-        return;
-
-    // instantiate a new unique device
     try {
+        std::lock_guard<std::mutex> l(lock_);
+        if (findDeviceByNode(node) != devices_.end())
+            return;
+
+        // instantiate a new unique device
         VideoDevice dev {node, *devInfo};
 
         if (dev.getChannelList().empty())
@@ -221,13 +221,11 @@ VideoDeviceMonitor::addDevice(const string& node, const std::vector<std::map<std
             defaultDevice_ = dev.name;
 
         devices_.emplace_back(std::move(dev));
-
-        l.unlock();
-        notify();
     } catch (const std::exception& e) {
         RING_ERR("Failed to add device %s: %s", node.c_str(), e.what());
         return;
     }
+    notify();
 }
 
 void

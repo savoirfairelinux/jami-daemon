@@ -74,6 +74,7 @@ class VideoDeviceMonitor : public Serializable
     private:
         NON_COPYABLE(VideoDeviceMonitor);
 
+        mutable std::mutex lock_;
         /*
          * User preferred settings for a device,
          * as loaded from (and stored to) the configuration file.
@@ -95,7 +96,6 @@ class VideoDeviceMonitor : public Serializable
         std::vector<VideoDevice>::const_iterator findDeviceByNode(const std::string& node) const;
 
         std::unique_ptr<VideoDeviceMonitorImpl> monitorImpl_;
-        mutable std::mutex lock_;
 
         constexpr static const char *CONFIG_LABEL = "video";
 };
