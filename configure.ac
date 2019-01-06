@@ -58,6 +58,8 @@ case "${host_os}" in
     LDFLAGS+=" -Wl,-Bsymbolic"
     # Needed for plugin system
     LDFLAGS+=" -ldl"
+    CFLAGS="${CFLAGS} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+    CXXFLAGS="${CXXFLAGS} -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
     ;;
   darwin*)
     SYS=darwin
