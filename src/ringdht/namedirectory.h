@@ -58,12 +58,24 @@ private:
     NameDirectory(NameDirectory&&) = delete;
     constexpr static const char* const DEFAULT_SERVER_HOST = "ns.jami.net";
 
+    std::mutex lock_ {};
+
     const std::string serverHost_ {DEFAULT_SERVER_HOST};
     const std::string cachePath_;
 
     std::map<std::string, std::string> nameCache_ {};
     std::map<std::string, std::string> addrCache_ {};
-    std::mutex lock_ {};
+
+    std::string nameCache(const std::string& addr) {
+        std::lock_guard<std::mutex> l(lock_);
+        auto cacheRes = nameCache_.find(addr);
+        return cacheRes != nameCache_.end() ? cacheRes->second : std::string{};
+    }
+    std::string addrCache(const std::string& name) {
+        std::lock_guard<std::mutex> l(lock_);
+        auto cacheRes = addrCache_.find(name);
+        return cacheRes != addrCache_.end() ? cacheRes->second : std::string{};
+    }
 
     bool validateName(const std::string& name) const;
 
