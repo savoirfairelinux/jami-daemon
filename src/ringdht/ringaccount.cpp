@@ -126,7 +126,7 @@ struct RingAccount::BuddyInfo
     dht::InfoHash id;
 
     /* the presence timestamps */
-    std::set<dht::InfoHash> devices;
+    std::vector<dht::InfoHash> devices;
 
     /* The disposable object to update buddy info */
     std::future<size_t> listenToken;
@@ -1997,9 +1997,14 @@ RingAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                 return true;
             wasConnected = not buddy->second.devices.empty();
             if (expired) {
-                buddy->second.devices.erase(dev.dev);
+                // A same device can be announced multiple times on the DHT
+                // So, use a vector of devices instead a set of devices to
+                // avoid to expire a current online device
+                auto device = std::find(buddy->second.devices.begin(), buddy->second.devices.end(), dev.dev);
+                if (device != buddy->second.devices.end())
+                    buddy->second.devices.erase(device);
             } else {
-                buddy->second.devices.emplace(dev.dev);
+                buddy->second.devices.emplace_back(dev.dev);
             }
             isConnected = not buddy->second.devices.empty();
         }
