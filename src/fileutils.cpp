@@ -242,6 +242,9 @@ bool isDirectory(const std::string& path)
 
 bool isDirectoryWritable(const std::string &directory)
 {
+#ifdef _WIN32
+    return access(decodeMultibyteString(directory).c_str(), W_OK) == 0;
+#endif
     return access(directory.c_str(), W_OK) == 0;
 }
 

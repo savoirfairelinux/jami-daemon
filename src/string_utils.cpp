@@ -35,16 +35,26 @@ namespace ring {
 
 #ifdef _WIN32
 
-std::wstring to_wstring(const std::string& s)
+std::wstring
+to_wstring(const std::string& s)
 {
     int slength = (int)s.length() + 1;
-    int len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, nullptr, 0);
+    int len = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), slength, nullptr, 0);
     if (not len)
         throw std::runtime_error("Can't convert string to wchar");
     std::wstring r((size_t)len, 0);
-    if (!MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, &(*r.begin()), len))
+    if (!MultiByteToWideChar(CP_UTF8, 0, s.c_str(), slength, &(*r.begin()), len))
         throw std::runtime_error("Can't convert string to wchar");
     return r;
+}
+
+std::string
+decodeMultibyteString(const std::string& s)
+{
+    if (not s.length())
+        return {};
+    auto wstr = to_wstring(s);
+    return std::string(wstr.begin(), wstr.end());
 }
 
 #endif
