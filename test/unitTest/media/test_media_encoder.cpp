@@ -50,7 +50,6 @@ private:
     std::unique_ptr<MediaEncoder> encoder_;
     std::unique_ptr<MediaIOHandle> ioHandle_;
     std::vector<std::string> files_;
-    std::string cacheDir_;
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaEncoderTest, MediaEncoderTest::name());
@@ -61,8 +60,7 @@ MediaEncoderTest::setUp()
     DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
     libav_utils::ring_avcodec_init();
     encoder_.reset(new MediaEncoder);
-    cacheDir_ = fileutils::get_cache_dir() + DIR_SEPARATOR_CH;
-    files_.push_back(cacheDir_ + "test.mkv");
+    files_.push_back("test.mkv");
 }
 
 void
@@ -70,7 +68,7 @@ MediaEncoderTest::tearDown()
 {
     // clean up behind ourselves
     for (const auto& file : files_)
-        fileutils::remove(cacheDir_ + file);
+        fileutils::remove(file);
     DRing::fini();
 }
 
@@ -164,8 +162,7 @@ MediaEncoderTest::testMultiStream()
     );
 
     try {
-        encoder_->openFileOutput(cacheDir_ + "test.mkv", options);
-        encoder_->setIOContext(ioHandle_);
+        encoder_->openFileOutput("test.mkv", options);
         int videoIdx = encoder_->addStream(*vp8Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
         CPPUNIT_ASSERT(encoder_->getStreamCount() == 1);
@@ -173,8 +170,8 @@ MediaEncoderTest::testMultiStream()
         CPPUNIT_ASSERT(audioIdx >= 0);
         CPPUNIT_ASSERT(videoIdx != audioIdx);
         CPPUNIT_ASSERT(encoder_->getStreamCount() == 2);
+        encoder_->setIOContext(ioHandle_);
         encoder_->startIO();
-
         int sentSamples = 0;
         AVFrame* audio = nullptr;
         AVFrame* video = nullptr;
