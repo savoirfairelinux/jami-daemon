@@ -9,6 +9,7 @@ if "%~1" == "" goto Usage
 set doFetch=N
 set doBuildContrib=N
 set doBuildDaemon=N
+set targetContrib=""
 
 set SCRIPTNAME=%~nx0
 
@@ -38,8 +39,14 @@ if /I "%1"=="x86" (
     set BUILD.uwp=Y
 ) else if /I "%1"=="win32" (
     set BUILD.win32=Y
+) else if /I "%1" neq "" (
+    if "%doBuildContrib%" neq "N" (
+        set targetContrib=%1
+    ) else if "%doFetch%" neq "N" (
+        set targetContrib=%1
+    )
 ) else (
-        goto Usage
+    goto Usage
 )
 shift
 goto ParseArgs
@@ -71,9 +78,9 @@ if "%BUILD.uwp%"=="Y" (
 if "%arch%" neq "N" (
     if "%platform%" neq "N" (
         if "%doFetch%" neq "N" (
-            call %CONTRIB_DIR%\src\fetch_all.bat %platform% %arch%
+            call %CONTRIB_DIR%\src\fetch_all.bat %platform% %arch% %targetContrib%
         ) else if "%doBuildContrib%" neq "N" (
-			call %CONTRIB_DIR%\build_all.bat %platform% %arch%
+			call %CONTRIB_DIR%\build_all.bat %platform% %arch% %targetContrib%
         ) else if "%doBuildDaemon%" neq "N" (
             goto buildDaemon
         )
