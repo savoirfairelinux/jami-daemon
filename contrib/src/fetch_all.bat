@@ -68,11 +68,34 @@ vpx, ^
 x264, ^
 yaml-cpp, ^
 )
-goto fetch
 
-:fetch
-for %%I in %DEPENDENCIES% do (
-    call %SRC%\%%I\fetch_and_patch.bat %1 %2
+if /I %3 equ "" (
+    goto fetch
+) else (
+    goto fetch_one
 )
 
+:fetch
+if exist %SRC% rd /S /Q %SRC%
+for %%I in %DEPENDENCIES% do (
+    echo fetching: %%I
+    call %SRC%\%%I\fetch_and_patch.bat %1 %2
+)
+goto cleanup
+
+:fetch_one
+set found="N"
+for %%I in %DEPENDENCIES% do (
+    if /I %3 equ %%I (
+        if exist %SRC%\%%I rd /S /Q %SRC%\%%I
+        echo fetching: %%I
+        set found="Y"
+        call %SRC%\%%I\fetch_and_patch.bat %1 %2
+    )
+)
+if %found%=="N" (
+    echo "%3" not in listed contrib
+)
+
+:cleanup
 @endlocal
