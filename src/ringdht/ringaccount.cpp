@@ -125,8 +125,8 @@ struct RingAccount::BuddyInfo
     /* the buddy id */
     dht::InfoHash id;
 
-    /* the presence timestamps */
-    std::set<dht::InfoHash> devices;
+    /* number of devices connected on the DHT */
+    uint32_t devices_cnt {};
 
     /* The disposable object to update buddy info */
     std::future<size_t> listenToken;
@@ -1988,20 +1988,19 @@ RingAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
     if (not dht_.isRunning()) {
         return;
     }
-    buddy.listenToken = dht_.listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired){
+    buddy.listenToken = dht_.listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&&, bool expired){
         bool wasConnected, isConnected;
         {
             std::lock_guard<std::mutex> lock(buddyInfoMtx);
             auto buddy = trackedBuddies_.find(h);
             if (buddy == trackedBuddies_.end())
                 return true;
-            wasConnected = not buddy->second.devices.empty();
-            if (expired) {
-                buddy->second.devices.erase(dev.dev);
-            } else {
-                buddy->second.devices.emplace(dev.dev);
-            }
-            isConnected = not buddy->second.devices.empty();
+            wasConnected = buddy->second.devices_cnt > 0;
+            if (expired)
+                --buddy->second.devices_cnt;
+            else
+                ++buddy->second.devices_cnt;
+            isConnected = buddy->second.devices_cnt > 0;
         }
         if (isConnected and not wasConnected) {
             onTrackedBuddyOnline(h);
@@ -2019,7 +2018,7 @@ RingAccount::getTrackedBuddyPresence()
     std::lock_guard<std::mutex> lock(buddyInfoMtx);
     std::map<std::string, bool> presence_info;
     for (const auto& buddy_info_p : trackedBuddies_)
-        presence_info.emplace(buddy_info_p.first.toString(), not buddy_info_p.second.devices.empty());
+        presence_info.emplace(buddy_info_p.first.toString(), buddy_info_p.second.devices_cnt > 0);
     return presence_info;
 }
 
@@ -2290,7 +2289,7 @@ RingAccount::doRegister_()
         dhtPeerConnector_->onDhtConnected(ringDeviceId_);
 
         for (auto& buddy : trackedBuddies_) {
-            buddy.second.devices.clear();
+            buddy.second.devices_cnt = 0;
             trackPresence(buddy.first, buddy.second);
         }
     }
