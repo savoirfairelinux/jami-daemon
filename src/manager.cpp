@@ -98,7 +98,6 @@ using random_device = dht::crypto::random_device;
 #include <list>
 #include <random>
 
-
 namespace ring {
 
 /** To store conference objects by conference ids */
@@ -290,12 +289,9 @@ struct Manager::ManagerPimpl
 
     void loadAccount(const YAML::Node &item, int &errorCount);
 
-
     void sendTextMessageToConference(const Conference& conf,
                                      const std::map<std::string, std::string>& messages,
                                      const std::string& from) const noexcept;
-
-
 
     void bindCallToConference(Call& call, Conference& conf);
 
@@ -1127,7 +1123,6 @@ Manager::muteMediaCall(const std::string& callId, const std::string& mediaType, 
         return false;
     }
 }
-
 
 //THREAD=Main
 bool
@@ -2124,12 +2119,16 @@ Manager::playRingtone(const std::string& accountID)
     }
 
     std::string ringchoice = account->getRingtonePath();
+#ifndef _WIN32
     if (ringchoice.find(DIR_SEPARATOR_STR) == std::string::npos) {
         // check inside global share directory
         static const char * const RINGDIR = "ringtones";
         ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR
                      + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
     }
+#else
+    ringchoice = decodeMultibyteString(ringchoice);
+#endif
 
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);

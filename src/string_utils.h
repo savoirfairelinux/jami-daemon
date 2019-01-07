@@ -39,9 +39,8 @@ bool_to_str(bool b) noexcept
 std::string to_string(double value);
 
 #ifdef _WIN32
-
 std::wstring to_wstring(const std::string& s);
-
+std::string decodeMultibyteString(const std::string& s);
 #endif
 
 template <typename T>

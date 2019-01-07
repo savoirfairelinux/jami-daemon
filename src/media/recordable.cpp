@@ -60,6 +60,9 @@ Recordable::toggleRecording()
         auto startTime = *std::localtime(&t);
         std::stringstream ss;
         auto dir = Manager::instance().audioPreference.getRecordPath();
+#ifdef _WIN32
+        dir = decodeMultibyteString(dir);
+#endif
         if (dir.empty())
             dir = fileutils::get_home_dir();
         ss << dir;
