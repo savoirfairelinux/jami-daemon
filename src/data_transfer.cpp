@@ -723,7 +723,11 @@ DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
     const auto& iter = pimpl_->map_.find(id);
     if (iter == std::end(pimpl_->map_))
         return DRing::DataTransferError::invalid_argument;
+#ifndef _WIN32
     iter->second->accept(file_path, offset);
+#else
+    iter->second->accept(decodeMultibyteString(file_path), offset);
+#endif
     return DRing::DataTransferError::success;
 }
 
