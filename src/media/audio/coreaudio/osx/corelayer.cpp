@@ -146,17 +146,17 @@ CoreLayer::initAudioLayerIO()
                 &info,
                 &size));
 
+    // Set format on output *SCOPE* in input *BUS*.
+    checkErr(AudioUnitGetProperty(ioUnit_,
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Output,
+                                  inputBus,
+                                  &info,
+                                  &size));
+    info.mSampleRate = audioFormat_.sample_rate;
     audioInputFormat_ = {static_cast<unsigned int>(info.mSampleRate),
                          static_cast<unsigned int>(info.mChannelsPerFrame)};
     hardwareInputFormatAvailable(audioInputFormat_);
-
-    // Set format on output *SCOPE* in input *BUS*.
-    checkErr(AudioUnitGetProperty(ioUnit_,
-                kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Output,
-                inputBus,
-                &info,
-                &size));
 
     // Keep everything else and change only sample rate (or else SPLOSION!!!)
     info.mSampleRate = audioInputFormat_.sample_rate;
@@ -336,8 +336,8 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
             captureBuff_));
 
     auto format = audioInputFormat_;
-    audioInputFormat_.sampleFormat = AV_SAMPLE_FMT_FLTP;
-    auto inBuff = std::make_unique<AudioFrame>(audioInputFormat_, inNumberFrames);
+    format.sampleFormat = AV_SAMPLE_FMT_FLTP;
+    auto inBuff = std::make_unique<AudioFrame>(format, inNumberFrames);
     auto& in = *inBuff->pointer();
     for (unsigned i = 0; i < inChannelsPerFrame_; ++i)
         std::copy_n((Float32*)captureBuff_->mBuffers[i].mData, inNumberFrames, (Float32*)in.extended_data[i]);
