@@ -274,7 +274,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 
     currentStreamIdx_ = stream->index;
 
-    if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0)
+    if (avcodec_open2(encoderCtx, outputCodec, options_) < 0)
         throw MediaEncoderException("Could not open encoder");
 
 #ifndef _WIN32
