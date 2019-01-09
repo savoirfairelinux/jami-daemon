@@ -124,6 +124,7 @@ private:
     bool is_muted = false;
 
 protected:
+    void readConfig(const std::string& section, AVDictionary** dict);
     AVDictionary *options_ = nullptr;
     DeviceParams device_;
     std::shared_ptr<const AccountCodecInfo> codec_;

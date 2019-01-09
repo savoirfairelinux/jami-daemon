@@ -27,6 +27,7 @@
 #include "media_io_handle.h"
 
 #include "audio/audiobuffer.h"
+#include "fileutils.h"
 #include "string_utils.h"
 #include "logger.h"
 
@@ -38,6 +39,7 @@ extern "C" {
 #include <sstream>
 #include <algorithm>
 #include <thread> // hardware_concurrency
+#include <yaml-cpp/yaml.h>
 
 // Define following line if you need to debug libav SDP
 //#define DEBUG_SDP 1
@@ -274,7 +276,8 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 
     currentStreamIdx_ = stream->index;
 
-    if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0)
+    readConfig(outputCodec->name, &options_);
+    if (avcodec_open2(encoderCtx, outputCodec, &options_) < 0)
         throw MediaEncoderException("Could not open encoder");
 
 #ifndef _WIN32
@@ -655,6 +658,37 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
     auto enc = encoders_[streamIdx];
     // TODO set firstTimestamp
     return MediaStream(name, enc);
+}
+
+void
+MediaEncoder::readConfig(const std::string& section, AVDictionary** dict)
+{
+    std::string path = fileutils::get_config_dir() + DIR_SEPARATOR_STR + "encoder.yml";
+    if (fileutils::isFile(path)) {
+        try {
+            const auto& root = YAML::LoadFile(path);
+            if (!root.IsMap()) {
+                RING_ERR() << "Encoder configuration file is invalid";
+                return;
+            }
+            const auto& config = root[section];
+            if (!config.IsDefined()) {
+                RING_WARN() << "Encoder '" << section << "' not found in configuration file";
+                return;
+            }
+            for (YAML::const_iterator it = config.begin(); it != config.end(); ++it) {
+                if (!it->first.IsScalar() || !it->second.IsScalar()) {
+                    RING_ERR() << "Configuration for '" << section << "' is invalid";
+                    return;
+                }
+                const auto& key = it->first.as<std::string>();
+                const auto& value = it->second.as<std::string>();
+                libav_utils::setDictValue(dict, key, value);
+            }
+        } catch (const YAML::Exception& e) {
+            RING_ERR() << "Failed to load encoder configuration file: " << e.what();
+        }
+    }
 }
 
 } // namespace ring
