@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,6 +45,8 @@ namespace ring { namespace libav_utils {
     std::string getError(int err);
 
     const char* getDictValue(const AVDictionary* d, const std::string& key, int flags=0);
+
+    void setDictValue(AVDictionary** d, const std::string& key, const std::string& value, int flags=0);
 
     void fillWithBlack(AVFrame* frame);
 
