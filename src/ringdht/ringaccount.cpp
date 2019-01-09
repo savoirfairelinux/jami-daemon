@@ -3322,7 +3322,6 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         auto h = dht::InfoHash::get("inbox:"+dev.toString());
         std::weak_ptr<RingAccount> w = this_;
         auto list_token = this_->dht_.listen<dht::ImMessage>(h, [w,token,confirm](dht::ImMessage&& msg) {
-            RING_ERR("####LISTEN VALUE");
             if (auto sthis = w.lock()) {
                 auto& this_ = *sthis;
                 // check expected message confirmation
