@@ -27,6 +27,7 @@
 #include "media_io_handle.h"
 
 #include "audio/audiobuffer.h"
+#include "fileutils.h"
 #include "string_utils.h"
 #include "logger.h"
 
@@ -34,9 +35,11 @@ extern "C" {
 #include <libavutil/parseutils.h>
 }
 
-#include <iostream>
-#include <sstream>
 #include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <json/json.h>
+#include <sstream>
 #include <thread> // hardware_concurrency
 
 // Define following line if you need to debug libav SDP
@@ -274,7 +277,8 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 
     currentStreamIdx_ = stream->index;
 
-    if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0)
+    readConfig(&options_, outputCodec->name);
+    if (avcodec_open2(encoderCtx, outputCodec, &options_) < 0)
         throw MediaEncoderException("Could not open encoder");
 
 #ifndef _WIN32
@@ -655,6 +659,45 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
     auto enc = encoders_[streamIdx];
     // TODO set firstTimestamp
     return MediaStream(name, enc);
+}
+
+void
+MediaEncoder::readConfig(AVDictionary** dict, const std::string& encoder)
+{
+    std::string path = fileutils::get_config_dir() + DIR_SEPARATOR_STR + "encoder.json";
+    if (fileutils::isFile(path)) {
+        try {
+            Json::Value root;
+            std::ifstream file(path);
+            file >> root;
+            if (!root.isObject()) {
+                RING_ERR() << "Invalid encoder configuration: root is not an object";
+                return;
+            }
+            const auto& config = root[encoder];
+            if (config.isNull()) {
+                RING_WARN() << "Encoder '" << encoder << "' not found in configuration file";
+                return;
+            }
+            if (!config.isObject()) {
+                RING_ERR() << "Invalid encoder configuration: '" << encoder << "' is not an object";
+                return;
+            }
+            for (Json::Value::const_iterator it = config.begin(); it != config.end(); ++it) {
+                Json::Value v = *it;
+                if (!it.key().isConvertibleTo(Json::ValueType::stringValue)
+                    || !v.isConvertibleTo(Json::ValueType::stringValue)) {
+                    RING_ERR() << "Invalid configuration for '" << encoder << "'";
+                    return;
+                }
+                const auto& key = it.key().asString();
+                const auto& value = v.asString();
+                libav_utils::setDictValue(dict, key, value);
+            }
+        } catch (const Json::Exception& e) {
+            RING_ERR() << "Failed to load encoder configuration file: " << e.what();
+        }
+    }
 }
 
 } // namespace ring
