@@ -4,6 +4,7 @@
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Luca Barbato <lu_zero@gentoo.org>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -203,6 +204,12 @@ getDictValue(const AVDictionary* d, const std::string& key, int flags)
         return kv->value;
     else
         return "";
+}
+
+void
+setDictValue(AVDictionary** d, const std::string& key, const std::string& value, int flags)
+{
+    av_dict_set(d, key.c_str(), value.c_str(), flags);
 }
 
 void
