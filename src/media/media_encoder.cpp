@@ -277,7 +277,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 
     currentStreamIdx_ = stream->index;
 
-    readConfig(&options_, outputCodec->name);
+    readConfig(&options_, encoderCtx);
     if (avcodec_open2(encoderCtx, outputCodec, &options_) < 0)
         throw MediaEncoderException("Could not open encoder");
 
@@ -662,9 +662,10 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
 }
 
 void
-MediaEncoder::readConfig(AVDictionary** dict, const std::string& encoder)
+MediaEncoder::readConfig(AVDictionary** dict, AVCodecContext* encoderCtx)
 {
     std::string path = fileutils::get_config_dir() + DIR_SEPARATOR_STR + "encoder.json";
+    std::string name = encoderCtx->codec->name;
     if (fileutils::isFile(path)) {
         try {
             Json::Value root;
@@ -674,13 +675,13 @@ MediaEncoder::readConfig(AVDictionary** dict, const std::string& encoder)
                 RING_ERR() << "Invalid encoder configuration: root is not an object";
                 return;
             }
-            const auto& config = root[encoder];
+            const auto& config = root[name];
             if (config.isNull()) {
-                RING_WARN() << "Encoder '" << encoder << "' not found in configuration file";
+                RING_WARN() << "Encoder '" << name << "' not found in configuration file";
                 return;
             }
             if (!config.isObject()) {
-                RING_ERR() << "Invalid encoder configuration: '" << encoder << "' is not an object";
+                RING_ERR() << "Invalid encoder configuration: '" << name << "' is not an object";
                 return;
             }
             // If users want to change these, they should use the settings page.
@@ -689,14 +690,30 @@ MediaEncoder::readConfig(AVDictionary** dict, const std::string& encoder)
                 Json::Value v = *it;
                 if (!it.key().isConvertibleTo(Json::ValueType::stringValue)
                     || !v.isConvertibleTo(Json::ValueType::stringValue)) {
-                    RING_ERR() << "Invalid configuration for '" << encoder << "'";
+                    RING_ERR() << "Invalid configuration for '" << name << "'";
                     return;
                 }
                 const auto& key = it.key().asString();
                 const auto& value = v.asString();
-                // TODO treat some keys specially, such as profile, level, bit_rate, rate control options, qmin, qmax, as these are AVCodecContext fields
+                // provides a way to override all AVCodecContext fields MediaEncoder sets
                 if (std::find(ignoredKeys.cbegin(), ignoredKeys.cend(), key) != ignoredKeys.cend())
                     continue;
+                else if (key == "profile")
+                    encoderCtx->profile = v.asInt();
+                else if (key == "level")
+                    encoderCtx->level = v.asInt();
+                else if (key == "bit_rate")
+                    encoderCtx->bit_rate = v.asInt();
+                else if (key == "rc_buffer_size")
+                    encoderCtx->rc_buffer_size = v.asInt();
+                else if (key == "rc_min_rate")
+                    encoderCtx->rc_min_rate = v.asInt();
+                else if (key == "rc_max_rate")
+                    encoderCtx->rc_max_rate = v.asInt();
+                else if (key == "qmin")
+                    encoderCtx->qmin = v.asInt();
+                else if (key == "qmax")
+                    encoderCtx->qmax = v.asInt();
                 else
                     libav_utils::setDictValue(dict, key, value);
             }
