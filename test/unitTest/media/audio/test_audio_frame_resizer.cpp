@@ -122,9 +122,9 @@ AudioFrameResizerTest::testDifferentFormat()
 {
     // frame format != q_->format_
     q_.reset(new AudioFrameResizer(format_, outputSize_, [this](std::shared_ptr<AudioFrame>&& f){ gotFrame(std::move(f)); }));
-    auto in = getFrame(960);
-    // XXX this should never be done, but use this as a shortcut for this test case
-    in->pointer()->channels = 1;
+    auto in = getFrame(outputSize_-27);
+    q_->enqueue(std::move(in));
+    CPPUNIT_ASSERT(q_->samples()==outputSize_-27);
     q_->setFormat(AudioFormat::MONO(), 960);
     CPPUNIT_ASSERT(q_->samples() == 0);
 }
