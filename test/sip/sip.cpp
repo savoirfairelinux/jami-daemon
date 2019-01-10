@@ -28,10 +28,10 @@
 void init_daemon()
 {
     DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    DRing::start("dring-sample.yml");
+    DRing::start("test/unitTest/dring-sample.yml");
 }
 
-int main(int argc, char* argv[])
+int main()
 {
     init_daemon();
 
