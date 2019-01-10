@@ -102,9 +102,8 @@ AudioInput::readFromDevice()
     if (not samples)
         return;
 
-    //if (muteState_) // audio is muted, set samples to 0
-    //    micData_.reset();
-    // TODO handle mute
+    if (muteState_)
+        libav_utils::fillWithSilence(samples->pointer());
 
     std::lock_guard<std::mutex> lk(fmtMutex_);
     if (bufferFormat != format_)

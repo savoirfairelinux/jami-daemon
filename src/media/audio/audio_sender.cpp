@@ -113,6 +113,7 @@ void
 AudioSender::setMuted(bool isMuted)
 {
     muteState_ = isMuted;
+    audioInput_->setMuted(isMuted);
     audioEncoder_->setMuted(isMuted);
 }
 
