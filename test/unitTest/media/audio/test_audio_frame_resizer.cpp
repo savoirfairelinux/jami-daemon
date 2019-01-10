@@ -125,7 +125,7 @@ AudioFrameResizerTest::testDifferentFormat()
     auto in = getFrame(960);
     // XXX this should never be done, but use this as a shortcut for this test case
     in->pointer()->channels = 1;
-    q_->setFormat(AudioFormat::MONO(), 960);
+    CPPUNIT_ASSERT_THROW(q_->enqueue(std::move(in)), std::runtime_error);
     CPPUNIT_ASSERT(q_->samples() == 0);
 }
 
