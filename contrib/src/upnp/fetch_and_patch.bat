@@ -19,5 +19,6 @@ cd %BUILD%\libupnp
 
 %APPLY_CMD% %SRC%\upnp\libupnp-windows.patch
 %APPLY_CMD% %SRC%\upnp\libupnp-vs2017.patch
+%APPLY_CMD% %SRC%\upnp\libupnp-windows7.patch
 
 cd %SRC%

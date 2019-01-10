@@ -1,0 +1,14 @@
+--- a/upnp/src/uuid/sysdep.c
++++ b/upnp/src/uuid/sysdep.c
+@@ -107,7 +107,7 @@ void get_random_info(unsigned char seed[16])
+ 	/* milliseconds since last boot */
+ 	r.tc = GetTickCount64();
+ 	r.l = MAX_COMPUTERNAME_LENGTH + 1;
+-#if (WINAPI_FAMILY_APP != WINAPI_FAMILY_PC_APP)
++#if (WINAPI_FAMILY != WINAPI_FAMILY_PC_APP)
+     GetComputerName(r.hostname, &r.l);
+ #else
+     GetHostNameW(r.hostname, &r.l);
+-- 
+2.19.0.windows.1
+
