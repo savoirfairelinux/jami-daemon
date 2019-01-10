@@ -666,7 +666,7 @@
  	memset(&r, 0, sizeof r);
  	/* memory usage stats */
 -	GlobalMemoryStatus( &r.m );
-+#if (WINAPI_FAMILY_APP != WINAPI_FAMILY_PC_APP)
++#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 +    GlobalMemoryStatus(&r.m);
 +#endif
  	/* random system stats */
@@ -680,7 +680,7 @@
 +	r.tc = GetTickCount64();
  	r.l = MAX_COMPUTERNAME_LENGTH + 1;
 -	GetComputerName( r.hostname, &r.l );
-+#if (WINAPI_FAMILY_APP != WINAPI_FAMILY_PC_APP)
++#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
 +    GetComputerName(r.hostname, &r.l);
 +#else
 +    GetHostNameW(r.hostname, &r.l);
