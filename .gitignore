@@ -100,11 +100,11 @@ nbproject
 /extras/tools/check_sed
 /extras/tools/libtool-*.tar.xz
 
-#UWP
+# UWP
 /contrib/build/
 /contrib/msvc/
 
-#iOS
+# iOS
 /build-ios*
 
 build-aux/
@@ -116,3 +116,9 @@ bin/ringcli
 doltcompile
 doltlibtool
 __pycache__
+
+# coverage files
+*.gcno
+*.gcda
+*info
+html-output/
