@@ -338,9 +338,13 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     auto format = audioInputFormat_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
     auto inBuff = std::make_unique<AudioFrame>(format, inNumberFrames);
-    auto& in = *inBuff->pointer();
-    for (unsigned i = 0; i < inChannelsPerFrame_; ++i)
-        std::copy_n((Float32*)captureBuff_->mBuffers[i].mData, inNumberFrames, (Float32*)in.extended_data[i]);
+    if (isCaptureMuted_) {
+        libav_utils::fillWithSilence(inBuff->pointer());
+    } else {
+        auto& in = *inBuff->pointer();
+        for (unsigned i = 0; i < inChannelsPerFrame_; ++i)
+            std::copy_n((Float32*)captureBuff_->mBuffers[i].mData, inNumberFrames, (Float32*)in.extended_data[i]);
+    }
     mainRingBuffer_->put(std::move(inBuff));
 }
 
