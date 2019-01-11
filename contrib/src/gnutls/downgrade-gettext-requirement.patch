@@ -1,5 +1,0 @@
---- gnutls-3.4.6/configure.ac	2015-10-07 04:21:22.000000000 -0400
-+++ gnutls-3.4.6/configure.ac	2015-11-04 16:17:24.705546543 -0500
-@@ -200 +200 @@
--AM_GNU_GETTEXT_VERSION([0.19])
-+AM_GNU_GETTEXT_VERSION([0.18.3])

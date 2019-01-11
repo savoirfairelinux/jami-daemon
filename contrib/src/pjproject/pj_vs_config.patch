@@ -1,9 +1,0 @@
---- /dev/null
-+++ b/pjlib/include/pj/config_site.h
-@@ -0,0 +1,3 @@
-+#define THIRD_PARTY_MEDIA			0
-+#include "config_site_sample.h"
-+
--- 
-2.10.2.windows.1
-
