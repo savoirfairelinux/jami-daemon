@@ -20,6 +20,9 @@ cd %BUILD%\portaudio
 
 if "%1"=="uwp" (
     %APPLY_CMD% %SRC%\portaudio\pa-uwp.patch
+) else (
+    %APPLY_CMD% %SRC%\portaudio\pa-dsound-aecns.patch
+    %APPLY_CMD% %SRC%\portaudio\pa-dsound.patch
 )
 
 cd %SRC%

@@ -1,0 +1,65 @@
+--- a/src/hostapi/dsound/pa_win_ds.c
++++ b/src/hostapi/dsound/pa_win_ds.c
+@@ -1520,12 +1520,33 @@ static HRESULT InitFullDuplexInputOutputBuffers( PaWinDsStream *stream,
+                 hostInputSampleFormat, PaWin_SampleFormatToLinearWaveFormatTag( hostInputSampleFormat ),
+                 nFrameRate, inputChannelMask );
+ 
++    // aec and noise suppression
++    DSCEFFECTDESC dscfx[2];
++    ZeroMemory(&dscfx[0], sizeof(DSCEFFECTDESC));
++    dscfx[0].dwSize = sizeof(DSCEFFECTDESC);
++    dscfx[0].dwFlags = DSCFX_LOCSOFTWARE;
++    dscfx[0].guidDSCFXClass = GUID_DSCFX_CLASS_AEC;
++    dscfx[0].guidDSCFXInstance = GUID_DSCFX_MS_AEC;
++    dscfx[0].dwReserved1 = 0;
++    dscfx[0].dwReserved2 = 0;
++
++    ZeroMemory(&dscfx[1], sizeof(DSCEFFECTDESC));
++    dscfx[1].dwSize = sizeof(DSCEFFECTDESC);
++    dscfx[1].dwFlags = DSCFX_LOCSOFTWARE;
++    dscfx[1].guidDSCFXClass = GUID_DSCFX_CLASS_NS;
++    dscfx[1].guidDSCFXInstance = GUID_DSCFX_MS_NS;
++    dscfx[1].dwReserved1 = 0;
++    dscfx[1].dwReserved2 = 0;
++
+     ZeroMemory(&captureDesc, sizeof(DSCBUFFERDESC));
+     captureDesc.dwSize = sizeof(DSCBUFFERDESC);
+-    captureDesc.dwFlags = 0;
+     captureDesc.dwBufferBytes = bytesPerInputBuffer;
+     captureDesc.lpwfxFormat = (WAVEFORMATEX*)&captureWaveFormat;
+ 
++    captureDesc.dwFlags = DSCBCAPS_CTRLFX;
++    captureDesc.dwFXCount = 2;
++    captureDesc.lpDSCFXDesc = dscfx;
++
+     // render buffer description
+ 
+     PaWin_InitializeWaveFormatExtensible( &renderWaveFormat, outputChannelCount, 
+@@ -1551,6 +1572,24 @@ static HRESULT InitFullDuplexInputOutputBuffers( PaWinDsStream *stream,
+             NULL /* pUnkOuter must be NULL */ 
+         );
+ 
++    if (hr != DS_OK) {
++        // try removing AEC/NS
++        PA_DEBUG(("DirectSoundFullDuplexCreate(w/AEC) failed. hr=%d\n", hr));
++        captureDesc.dwFlags = 0;
++        captureDesc.dwFXCount = 0;
++        captureDesc.lpDSCFXDesc = NULL;
++        hr = paWinDsDSoundEntryPoints.DirectSoundFullDuplexCreate8(
++            inputDevice->lpGUID, outputDevice->lpGUID,
++            &captureDesc, &secondaryRenderDesc,
++            GetDesktopWindow(), /* see InitOutputBuffer() for a discussion of whether this is a good idea */
++            DSSCL_EXCLUSIVE,
++            &stream->pDirectSoundFullDuplex8,
++            &pCaptureBuffer8,
++            &pRenderBuffer8,
++            NULL /* pUnkOuter must be NULL */
++        );
++    }
++
+     if( hr == DS_OK )
+     {
+         PA_DEBUG(("DirectSoundFullDuplexCreate succeeded!\n"));
+-- 
+2.19.0.windows.1
+
