@@ -333,11 +333,10 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 
         const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(encoderCtx->pix_fmt);
 
-        if (desc == NULL)
+        if (!desc)
             throw MediaEncoderException("Pixel format is not supported.");
 
-        // Most hardware encoders uses NV12 as software pixel format, while some 
-        // exceptions require a specific pixel format as input
+        // hardware encoders require a specific pixel format as input
 #ifdef RING_ACCEL
         if (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)
             format = accel_.swFormat;
@@ -420,10 +419,10 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
     // Need to transfer frame with a copy of frame. Otherwise if hardware encoding is used,
     // in the second loop of encoding, filling hardware frame with black will cause error.
-    VideoFrame v;
-    v.copyFrom(scaledFrame_);
+    VideoFrame copyFrame;
+    copyFrame.copyFrom(scaledFrame_);
 
-    auto frame = v.pointer();
+    auto frame = copyFrame.pointer();
     AVCodecContext* enc = encoders_[currentStreamIdx_];
     // ideally, time base is the inverse of framerate, but this may not always be the case
     if (enc->framerate.num == enc->time_base.den && enc->framerate.den == enc->time_base.num)
@@ -442,7 +441,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 #ifdef RING_ACCEL //hw encoding
     int ret;
     if (accel_.requiresInitialization)
-        ret = video::transferFrameEncode(accel_, enc, v);
+        ret = video::transferFrameEncode(accel_, enc, copyFrame);
     if (ret < 0) {
         ++accelFailures_;
         if (accelFailures_ >= MAX_ACCEL_FAILURES) {
@@ -485,7 +484,9 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     while (ret >= 0) {
         ret = avcodec_receive_packet(encoderCtx, &pkt);
         if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) { // we still want to write our frame on EOF
-            RING_ERR() << "Failed to encode frame.";
+            RING_ERR() << "Failed to encode frame : " << 
+		    	  (ret == AVERROR(EINVAL) ? "codec not opened, refcounted_frame not set, it is a decoder, or requires flush" : 
+			   			    "failed to add packet to internal queue, or similar other errors : legitimate decoding errors");
             return Status::EncodeError;
         }
         if (ret >= 0)
@@ -514,12 +515,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         }
     }
 
-    if (packetFinished) {
-        av_packet_unref(&pkt);
-        return Status::FrameFinished;
-    }
-
-    return Status::Success;
+    return (packetFinished ? Status::FrameFinished : Status::Success);
 }
 
 #ifdef RING_ACCEL
@@ -529,12 +525,12 @@ MediaEncoder::enableAccel(bool enableAccel)
     enableAccel_ = enableAccel;
     for (size_t i = 0; i < outputCtx_->nb_streams; ++i) {
         if (!enableAccel) {
-        accel_ = {};
-        if (encoders_[i]->hw_device_ctx)
-            av_buffer_unref(&encoders_[i]->hw_device_ctx);
-        if (encoders_[i])
-            encoders_[i]->opaque = nullptr;
-        }
+			accel_ = {};
+			if (encoders_[i]->hw_device_ctx)
+				av_buffer_unref(&encoders_[i]->hw_device_ctx);
+			if (encoders_[i])
+				encoders_[i]->opaque = nullptr;
+		}
     }
 }
 #endif
@@ -548,6 +544,7 @@ MediaEncoder::flush()
         if (statusEncode != Status::Success &&
             statusEncode != Status::FrameFinished) {
             RING_ERR() << "Could not flush stream #" << i;
+			return statusEncode;
         }
     }
     return statusEncode;
@@ -609,10 +606,10 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
             encoderCtx->time_base = av_inv_q(encoderCtx->framerate);
         } else {
             // get from options_, else default to 30 fps
-            auto v = av_dict_get(options_, "framerate", nullptr, 0);
+            auto copyFrame = av_dict_get(options_, "framerate", nullptr, 0);
             AVRational framerate = AVRational{30, 1};
-            if (v)
-                av_parse_ratio_quiet(&framerate, v->value, 120);
+            if (copyFrame)
+                av_parse_ratio_quiet(&framerate, copyFrame->value, 120);
             if (framerate.den == 0)
                 framerate.den = 1;
             av_reduce(&encoderCtx->framerate.num, &encoderCtx->framerate.den,
@@ -632,18 +629,18 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
         // encoderCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     } else {
         encoderCtx->sample_fmt = AV_SAMPLE_FMT_S16;
-        auto v = av_dict_get(options_, "sample_rate", nullptr, 0);
-        if (v) {
-            encoderCtx->sample_rate = atoi(v->value);
+        auto copyFrame = av_dict_get(options_, "sample_rate", nullptr, 0);
+        if (copyFrame) {
+            encoderCtx->sample_rate = atoi(copyFrame->value);
             encoderCtx->time_base = AVRational{1, encoderCtx->sample_rate};
         } else {
             RING_WARN() << "[" << encoderName <<"] No sample rate set";
             encoderCtx->sample_rate = 8000;
         }
 
-        v = av_dict_get(options_, "channels", nullptr, 0);
-        if (v) {
-            auto c = std::atoi(v->value);
+        copyFrame = av_dict_get(options_, "channels", nullptr, 0);
+        if (copyFrame) {
+            auto c = std::atoi(copyFrame->value);
             if (c > 2 or c < 1) {
                 RING_WARN() << "[" << encoderName << "] Clamping invalid channel value " << c;
                 c = 1;
@@ -656,9 +653,9 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 
         encoderCtx->channel_layout = encoderCtx->channels == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
 
-        v = av_dict_get(options_, "frame_size", nullptr, 0);
-        if (v) {
-            encoderCtx->frame_size = atoi(v->value);
+        copyFrame = av_dict_get(options_, "frame_size", nullptr, 0);
+        if (copyFrame) {
+            encoderCtx->frame_size = atoi(copyFrame->value);
             RING_DBG() << "[" << encoderName << "] Frame size " << encoderCtx->frame_size;
         } else {
             RING_WARN() << "[" << encoderName << "] Frame size not set";

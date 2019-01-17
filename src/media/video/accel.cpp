@@ -91,7 +91,7 @@ transferFrameEncode(HardwareAccel accel, AVCodecContext* enc, VideoFrame& frame)
 {
     int ret = 0;
     VideoFrame v1;
-    AVFrame *hwFrame = NULL;
+    AVFrame *hwFrame = nullptr;
 
     auto input = frame.pointer();
     hwFrame = v1.pointer();
@@ -236,9 +236,9 @@ setupHardwareEncoding(AVCodecContext** codecCtx, AVCodec** codec)
             RING_WARN() << "Found encoder with codec " << avcodec_get_name((*codecCtx)->codec_id) << " and API " << accel.name << ", attempt to initialize the device.";
 
             for (unsigned int i = 0; i < accel.supportedCodecs.size(); i++) {
-                std::string s1(avcodec_get_name(accel.supportedCodecs[i]));
+                std::string codecName(avcodec_get_name(accel.supportedCodecs[i]));
 
-                if ((*codec = avcodec_find_encoder_by_name((s1 + "_" + accel.name).c_str()))) {
+                if ((*codec = avcodec_find_encoder_by_name((codecName + "_" + accel.name).c_str()))) {
                     //reprepare codeccontext for new codec
                     AVCodecContext* encoderCtx = avcodec_alloc_context3(*codec);
                     encoderCtx->width = (*codecCtx)->width;

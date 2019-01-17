@@ -586,8 +586,10 @@ void VideoPreferences::unserialize(const YAML::Node &in)
     try {
         parseValue(node, DECODING_ACCELERATED_KEY, decodingAccelerated_);
         parseValue(node, ENCODING_ACCELERATED_KEY, encodingAccelerated_);
-    } catch (...) { decodingAccelerated_ = true;
-                    encodingAccelerated_ = false;}
+    } catch (...) { 
+		decodingAccelerated_ = true;
+        encodingAccelerated_ = false;
+	}
 #endif
     getVideoDeviceMonitor().unserialize(in);
 }
