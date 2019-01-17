@@ -485,8 +485,8 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         ret = avcodec_receive_packet(encoderCtx, &pkt);
         if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) { // we still want to write our frame on EOF
             RING_ERR() << "Failed to encode frame : " << 
-		    	  (ret == AVERROR(EINVAL) ? "codec not opened, refcounted_frame not set, it is a decoder, or requires flush" : 
-			   			    "failed to add packet to internal queue, or similar other errors : legitimate decoding errors");
+                (ret == AVERROR(EINVAL) ? "codec not opened, refcounted_frame not set, it is a decoder, or requires flush" : 
+                                          "failed to add packet to internal queue, or similar other errors : legitimate decoding errors");
             return Status::EncodeError;
         }
         if (ret >= 0)
@@ -525,12 +525,12 @@ MediaEncoder::enableAccel(bool enableAccel)
     enableAccel_ = enableAccel;
     for (size_t i = 0; i < outputCtx_->nb_streams; ++i) {
         if (!enableAccel) {
-			accel_ = {};
-			if (encoders_[i]->hw_device_ctx)
-				av_buffer_unref(&encoders_[i]->hw_device_ctx);
-			if (encoders_[i])
-				encoders_[i]->opaque = nullptr;
-		}
+            accel_ = {};
+            if (encoders_[i]->hw_device_ctx)
+                av_buffer_unref(&encoders_[i]->hw_device_ctx);
+            if (encoders_[i])
+                encoders_[i]->opaque = nullptr;
+        }
     }
 }
 #endif
@@ -544,7 +544,7 @@ MediaEncoder::flush()
         if (statusEncode != Status::Success &&
             statusEncode != Status::FrameFinished) {
             RING_ERR() << "Could not flush stream #" << i;
-			return statusEncode;
+            return statusEncode;
         }
     }
     return statusEncode;
