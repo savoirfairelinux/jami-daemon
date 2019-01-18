@@ -41,6 +41,7 @@
 #include "account_const.h"
 #include "client/ring_signal.h"
 #include "upnp/upnp_context.h"
+#include "audio/ringbufferpool.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -967,6 +968,18 @@ void pushNotificationReceived(const std::string& from, const std::map<std::strin
     } catch (const std::exception& e) {
         RING_ERR("Error processing push notification: %s", e.what());
     }
+}
+
+bool
+isAudioMeterActive(const std::string& id)
+{
+    return ring::Manager::instance().getRingBufferPool().isAudioMeterActive(id);
+}
+
+void
+setAudioMeterState(const std::string& id, bool state)
+{
+    ring::Manager::instance().getRingBufferPool().setAudioMeterState(id, state);
 }
 
 } // namespace DRing

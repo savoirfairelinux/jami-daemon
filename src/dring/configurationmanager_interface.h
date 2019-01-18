@@ -215,10 +215,29 @@ DRING_PUBLIC void setPushNotificationToken(const std::string& pushDeviceToken);
  */
 DRING_PUBLIC void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
+/**
+ * Returns whether or not the audio meter is enabled for ring buffer @id.
+ *
+ * NOTE If @id is empty, returns true if at least 1 audio meter is enabled.
+ */
+DRING_PUBLIC bool isAudioMeterActive(const std::string& id);
+
+/**
+ * Enables/disables an audio meter for the specified @id.
+ *
+ * NOTE If @id is empty, applies to all ids.
+ */
+DRING_PUBLIC void setAudioMeterState(const std::string& id, bool state);
+
 struct DRING_PUBLIC AudioSignal {
         struct DRING_PUBLIC DeviceEvent {
                 constexpr static const char* name = "audioDeviceEvent";
                 using cb_type = void(void);
+        };
+        // Linear audio level (between 0 and 1). To get level in dB: dB=20*log10(level)
+        struct DRING_PUBLIC AudioMeter {
+                constexpr static const char* name = "AudioMeter";
+                using cb_type = void(const std::string& id, float level);
         };
 };
 
