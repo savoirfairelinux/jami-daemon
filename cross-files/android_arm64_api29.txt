@@ -1,0 +1,29 @@
+[host_machine]
+system = 'linux'
+cpu_family = 'aarch64'
+cpu = 'aarch64'
+endian = 'little'
+
+# Compilers and tools reside in <NDK>/toolchains/llvm/prebuilt/<host-tag>/bin/
+# Please add this path to the PATH before compiling
+[binaries]
+c = 'aarch64-linux-android29-clang'
+cpp = 'aarch64-linux-android29-clang++'
+ar = 'aarch64-linux-android-ar'
+strip = 'aarch64-linux-android-strip'
+pkgconfig = 'pkg-config'
+
+#cmake = 'cmake'
+#c_ld = 'gold'
+#cpp_ld = 'gold'
+#exe_wrapper = ''
+
+[properties]
+sys_root = '<daemon>/contrib/aarch64-linux-android29'
+pkg_config_libdir = '<daemon>/contrib/aarch64-linux-android29/lib/pkgconfig'
+
+#c_args = ['']
+#c_link_args = ['']
+#cpp_args = ['']
+#cpp_link_args = ['']
+#needs_exe_wrapper = true
