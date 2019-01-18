@@ -86,7 +86,7 @@ class RingAccount : public SIPAccountBase {
         constexpr static const char* const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
         constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
-        constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net";
+        constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net:[80:100];";
         constexpr static const char* const DHT_TYPE_NS = "cx.ring";
 
         /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
@@ -635,7 +635,9 @@ class RingAccount : public SIPAccountBase {
          */
         bool proxyEnabled_;
         std::string proxyServer_;
+        std::string proxyServerCached_;
         std::string deviceKey_;
+        std::string getDhtProxyServer();
 
         /**
          * The TLS settings, used only if tls is chosen as a sip transport.
