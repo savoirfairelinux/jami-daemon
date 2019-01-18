@@ -72,6 +72,13 @@
         <method name="stopCamera" tp:name-for-bindings="stopCamera">
         </method>
 
+        <method name="startAudioDevice" tp:name-for-bindings="startAudioDevice">
+            <tp:docstring> Starts the audio layer stream, so the audio device can be read.</tp:docstring>
+        </method>
+
+        <method name="stopAudioDevice" tp:name-for-bindings="stopAudioDevice">
+        </method>
+
         <method name="switchInput" tp:name-for-bindings="switchInput">
             <arg type="s" name="resource" direction="in">
                 <tp:docstring>

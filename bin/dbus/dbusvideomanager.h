@@ -59,6 +59,8 @@ class DRING_PUBLIC DBusVideoManager :
         std::string getDefaultDevice();
         void startCamera();
         void stopCamera();
+        void startAudioDevice();
+        void stopAudioDevice();
         bool switchInput(const std::string& resource);
         bool hasCameraStarted();
         bool getDecodingAccelerated();
