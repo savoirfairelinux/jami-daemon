@@ -33,8 +33,6 @@
 #include <cmath>
 
 namespace jami {
-    
-struct AudioLayer::EchoState;
 
 enum Direction { Input = 0, Output = 1, IO = 2, End = 3 };
 
