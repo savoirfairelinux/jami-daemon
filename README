@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Introduction
 ------------
 
-GNU Ring is a Voice-over-IP software phone. We want it to be:
+GNU Jami is a Voice-over-IP software phone. We want it to be:
 - user friendly (fast, sleek, easy to learn interface)
 - professional grade (transfers, holds, optimal audio quality)
 - compatible with Asterisk (using SIP account)
@@ -27,17 +27,17 @@ GNU Ring is a Voice-over-IP software phone. We want it to be:
 - customizable
 
 As the SIP/audio daemon and the user interface are separate processes,
-it is easy to provide different user interfaces. GNU Ring comes with
+it is easy to provide different user interfaces. GNU Jami comes with
 various graphical user interfaces and even scripts to control the daemon from
 the shell.
 
-GNU Ring is currently used by the support team of Savoir-faire Linux Inc.
+GNU Jami is currently used by the support team of Savoir-faire Linux Inc.
 
 More information is available on the project homepage:
   https://www.jami.net/
 
-This source tree contains the daemon application only, DRing, that handles
-the business logic of GNU Ring. UIs are located in differents repositories. See
+This source tree contains the daemon application only that handles
+the business logic of GNU Jami. UIs are located in differents repositories. See
 the Contributing section for more information.
 
 
@@ -47,7 +47,6 @@ Short description of content of source tree
 - src/ is the core of DRing.
 - bin/ contains applications main code.
 - bin/dbus, the D-Bus XML interfaces, and C++ bindings
-- bin/restcpp, the C++ REST API implemented with Restinio
 
 About Savoir-faire Linux
 ------------------------
@@ -68,13 +67,15 @@ cd native
 ../bootstrap
 make
 
-2) Then the dring application
+2) Then the jamid application
 
 cd ../../
-./autogen.sh
-./configure
-make
-make install
+mkdir build
+export PATH=$PATH:`pwd`/contrib/`cc -dumpmachine`/bin
+meson -Dpkg_config_path=`pwd`/contrib/`cc -dumpmachine`/lib/pkgconfig -Ddefault_library=static -Dinterfaces=dbus build
+cd build
+ninja
+ninja install
 
 Done !
 
@@ -136,7 +137,7 @@ D-Bus is not available the client should implement all the methods in the
 How to compile with the REST API
 --------------------------------
 
-GNU Ring offers two REST API. One written in C++, and the other written in Cython.
+GNU Jami offers two REST API. One written in C++, and the other written in Cython.
 Up to this date, only the C++ API is available. The Cython API will soon follow.
 
 To compile Ring-daemon with the C++ REST API, follow these two steps :
@@ -162,7 +163,7 @@ clients (KDE and GNOME).
 By doing this, you will be able to call other accounts known to this server.
 
 
-Contributing to GNU Ring
+Contributing to GNU Jami
 ------------------------
 
 Of course we love patches. And contributions. And spring rolls.
@@ -175,10 +176,10 @@ contains the client subprojects:
  - https://gerrit-ring.savoirfairelinux.com/#/admin/projects/
 
 Do not hesitate to join us and post comments, suggestions, questions
-and general feedback on the GNU Ring mailing-list:
+and general feedback on the GNU Jami mailing-list:
 https://lists.gnu.org/mailman/listinfo/ring
 
 IRC (on #freenode):
  - #ring
 
-  -- The GNU Ring Team
+  -- The GNU Jami Team
