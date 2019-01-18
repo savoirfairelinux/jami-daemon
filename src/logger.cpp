@@ -186,6 +186,7 @@ strErr(void)
     char buf[1000];
     const char* errstr;
 
+#if (_POSIX_C_SOURCE >= 200112L || _XOPEN_SOURCE >= 600) && ! _GNU_SOURCE
     switch (strerror_r(errno, buf, sizeof(buf))) {
         case 0:
             errstr = buf;
@@ -199,6 +200,9 @@ strErr(void)
             errstr = "unknown (invalid error number)";
             break;
     }
+#else
+    errstr = strerror_r(errno, buf, sizeof(buf));
+#endif
 
     JAMI_ERR("%s", errstr);
 #endif
