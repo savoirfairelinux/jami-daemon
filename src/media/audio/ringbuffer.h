@@ -28,6 +28,7 @@
 #include "audio_frame_resizer.h"
 #include "resampler.h"
 
+#include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <chrono>
@@ -144,6 +145,9 @@ public:
      */
     void debug();
 
+    bool isAudioMeterActive() const { return rmsSignal_; }
+    void setAudioMeterState(bool state) { rmsSignal_ = state; }
+
 private:
     struct ReadOffset {
         size_t offset;
@@ -197,6 +201,10 @@ private:
 
     Resampler resampler_;
     AudioFrameResizer resizer_;
+
+    std::atomic_bool rmsSignal_ {false};
+    double rmsLevel_ {0};
+    int rmsFrameCount_ {0};
 };
 
 } // namespace ring

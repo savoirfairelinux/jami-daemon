@@ -867,6 +867,37 @@
            </arg>
        </method>
 
+        <!-- Audio meter -->
+        <method name="isAudioMeterActive" tp:name-for-bindings="isAudioMeterActive">
+            <tp:docstring>Gets whether or not an audio meter is active for id. If id is empty, returns whether or not there is an audio meter active.</tp:docstring>
+            <arg type="s" name="id" direction="in">
+                <tp:docstring>Ring buffer id.</tp:docstring>
+            </arg>
+            <arg type="b" name="isActive" direction="out" tp:type="Boolean">
+                <tp:docstring>If the audio meter is active for the passed in id.</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="setAudioMeterState" tp:name-for-bindings="setAudioMeterState">
+            <tp:docstring>Sets whether or not the audio meter should be active for id. If id is empty, applies to all ring buffers.</tp:docstring>
+            <arg type="s" name="id" direction="in">
+                <tp:docstring>Ring buffer id.</tp:docstring>
+            </arg>
+            <arg type="b" name="state" direction="in" tp:type="Boolean">
+                <tp:docstring>True to enabled the audio meter, false to disable.</tp:docstring>
+            </arg>
+        </method>
+
+        <signal name="audioMeter" tp:name-for-bindings="audioMeter">
+           <tp:docstring>Signal containing volume level.</tp:docstring>
+           <arg type="s" name="id">
+               <tp:docstring>Ring buffer id.</tp:docstring>
+           </arg>
+           <arg type="d" name="level">
+               <tp:docstring>RMS value for the volume.</tp:docstring>
+           </arg>
+        </signal>
+
        <!--    General Settings Panel         -->
 
        <method name="getNoiseSuppressState" tp:name-for-bindings="getNoiseSuppressState">

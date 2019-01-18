@@ -54,6 +54,8 @@ public:
     virtual void migrationEnded(const std::string& /*accountId*/, const std::string& /*state*/){}
     virtual void deviceRevocationEnded(const std::string& /*accountId*/, const std::string& /*device*/, int /*status*/){}
 };
+
+    virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
 %}
 
 %feature("director") ConfigurationCallback;
@@ -203,6 +205,9 @@ int exportAccounts(std::vector<std::string> accountIDs, std::string toDir, std::
 int importAccounts(std::string archivePath, std::string password);
 
 void connectivityChanged();
+
+bool isAudioMeterActive(const std::string& id);
+void setAudioMeterState(const std::string& id, bool state);
 }
 
 class ConfigurationCallback {
@@ -239,4 +244,5 @@ public:
     virtual void hardwareDecodingChanged(bool /*state*/){}
     virtual void hardwareEncodingChanged(bool /*state*/){}
 
+    virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
 };

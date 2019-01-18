@@ -168,6 +168,9 @@ class DRING_PUBLIC DBusConfigurationManager :
         void dataTransferBytesProgress(const uint64_t& id, uint32_t& error, int64_t& total, int64_t& progress);
         uint32_t acceptFileTransfer(const uint64_t& id, const std::string& file_path, const int64_t& offset);
         uint32_t cancelDataTransfer(const uint64_t& id);
+
+        bool isAudioMeterActive(const std::string& id);
+        void setAudioMeterState(const std::string& id, const bool& state);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
