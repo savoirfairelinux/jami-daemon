@@ -102,6 +102,7 @@ public:
     AudioFrame(const ring::AudioFormat& format, size_t nb_samples = 0);
     ~AudioFrame() {};
     void mix(const AudioFrame& o);
+    float calcRMS() const;
 
 private:
     void setFormat(const ring::AudioFormat& format);
@@ -165,6 +166,8 @@ DRING_PUBLIC std::string getCurrentCodecName(const std::string& callID);
 DRING_PUBLIC void startCamera();
 DRING_PUBLIC void stopCamera();
 DRING_PUBLIC bool hasCameraStarted();
+DRING_PUBLIC void startAudioDevice();
+DRING_PUBLIC void stopAudioDevice();
 DRING_PUBLIC bool switchInput(const std::string& resource);
 DRING_PUBLIC bool switchToCamera();
 DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);

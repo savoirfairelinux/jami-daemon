@@ -381,6 +381,8 @@ std::string getDefaultDevice();
 void startCamera();
 void stopCamera();
 bool hasCameraStarted();
+void startAudioDevice();
+void stopAudioDevice();
 bool switchInput(const std::string& resource);
 bool switchToCamera();
 std::map<std::string, std::string> getSettings(const std::string& name);
