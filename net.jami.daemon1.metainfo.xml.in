@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Copyright 2019 Savoir-faire Linux -->
+<!-- Copyright 2020 Savoir-faire Linux -->
 <component>
- <id>net.jami.daemon</id>
+ <id>net.jami.daemon1</id>
  <metadata_license>CC-BY-SA-3.0</metadata_license>
  <project_license>GPL-3.0+</project_license>
  <name>Jami daemon</name>
@@ -26,7 +26,7 @@
  <url type="bugtracker">https://git.jami.net/savoirfairelinux/ring-daemon/issues/</url>
 
  <provides>
-  <dbus type="user">cx.ring.Ring</dbus>
+@PROVIDES_CONTENT@
 ​ </provides>
 
  <categories>

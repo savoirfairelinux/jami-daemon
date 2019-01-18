@@ -54,6 +54,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0007-pj_ice_sess.patch
 	$(APPLY) $(SRC)/pjproject/0008-fix_ioqueue_ipv6_sendto.patch
 	$(APPLY) $(SRC)/pjproject/0009-add-config-site.patch
+	$(APPLY) $(SRC)/pjproject/0010-fix-pkgconfig.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
@@ -61,6 +62,7 @@ endif
 	$(MOVE)
 
 .pjproject: pjproject
+	cd $< && autoconf -o aconfigure aconfigure.ac # for 0010-fix-pkgconfig.patch
 ifdef HAVE_IOS
 	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) EXCLUDE_APP=1 ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
 else
