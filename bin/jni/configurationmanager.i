@@ -59,6 +59,8 @@ public:
 
     virtual void hardwareDecodingChanged(bool /*state*/){}
     virtual void hardwareEncodingChanged(bool /*state*/){}
+
+    virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
 };
 %}
 
@@ -215,6 +217,8 @@ void enableProxyClient(const std::string& accountID, bool enable);
 void setPushNotificationToken(const std::string& pushDeviceToken);
 void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
+bool isAudioMeterActive(const std::string& id);
+void setAudioMeterState(const std::string& id, bool state);
 }
 
 class ConfigurationCallback {
@@ -253,4 +257,6 @@ public:
 
     virtual void hardwareDecodingChanged(bool /*state*/){}
     virtual void hardwareEncodingChanged(bool /*state*/){}
+
+    virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
 };

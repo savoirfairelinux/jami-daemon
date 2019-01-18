@@ -141,6 +141,43 @@ AudioFrame::mix(const AudioFrame& frame)
     }
 }
 
+float
+AudioFrame::calcRMS() const
+{
+    double rms = 0.0;
+    auto fmt = static_cast<AVSampleFormat>(frame_->format);
+    int nbSamples = frame_->nb_samples * frame_->channels;
+    if (fmt == AV_SAMPLE_FMT_S16) {
+        auto buf = reinterpret_cast<int16_t*>(frame_->extended_data[0]);
+        for (int i = 0; i < nbSamples; ++i) {
+            float sample = buf[i] * 0.000030517578125f;
+            rms += sample * sample;
+        }
+    } else if (fmt == AV_SAMPLE_FMT_S16P) {
+        for (int c = 0; c < frame_->channels; ++c) {
+            auto buf = reinterpret_cast<int16_t*>(frame_->extended_data[c]);
+            for (int i = 0; i < frame_->nb_samples; ++i) {
+                float sample = buf[i] * 0.000030517578125f;
+                rms += sample * sample;
+            }
+        }
+    } else if (fmt == AV_SAMPLE_FMT_FLT) {
+        auto buf = reinterpret_cast<float*>(frame_->extended_data[0]);
+        for (int i = 0; i < nbSamples; ++i) {
+            rms += buf[i] * buf[i];
+        }
+    } else if (fmt == AV_SAMPLE_FMT_FLTP) {
+        for (int c = 0; c < frame_->channels; ++c) {
+            auto buf = reinterpret_cast<float*>(frame_->extended_data[c]);
+            for (int i = 0; i < frame_->nb_samples; ++i) {
+                rms += buf[i] * buf[i];
+            }
+        }
+    }
+    // divide by the number of multi-byte samples
+    return sqrt(rms / nbSamples);
+}
+
 VideoFrame::~VideoFrame()
 {
     if (releaseBufferCb_)
@@ -336,6 +373,10 @@ startCamera()
 {
     ring::Manager::instance().getVideoManager().videoPreview = ring::getVideoCamera();
     ring::Manager::instance().getVideoManager().started = switchToCamera();
+    ring::Manager::instance().startAudioDriverStream();
+    auto id = ring::RingBufferPool::DEFAULT_ID;
+    ring::Manager::instance().getVideoManager().audioPreview = ring::getAudioInput(id);
+    ring::Manager::instance().getRingBufferPool().bindCallID(id, id);
 }
 
 void
@@ -344,6 +385,9 @@ stopCamera()
     if (switchInput(""))
         ring::Manager::instance().getVideoManager().started = false;
     ring::Manager::instance().getVideoManager().videoPreview.reset();
+    auto id = ring::RingBufferPool::DEFAULT_ID;
+    ring::Manager::instance().getRingBufferPool().unBindCallID(id, id);
+    ring::Manager::instance().getVideoManager().audioPreview.reset();
 }
 
 std::string
