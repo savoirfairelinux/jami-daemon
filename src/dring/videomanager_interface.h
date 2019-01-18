@@ -99,6 +99,7 @@ public:
     AudioFrame(const ring::AudioFormat& format, size_t nb_samples = 0);
     ~AudioFrame() {};
     void mix(const AudioFrame& o);
+    float calcRMS() const;
 
 private:
     void setFormat(const ring::AudioFormat& format);

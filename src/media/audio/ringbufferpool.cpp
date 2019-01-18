@@ -404,4 +404,41 @@ RingBufferPool::flushAllBuffers()
     }
 }
 
+bool
+RingBufferPool::isAudioMeterActive(const std::string& id)
+{
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    if (!id.empty()) {
+        if (auto rb = getRingBuffer(id)) {
+            return rb->isAudioMeterActive();
+        }
+    } else {
+        for (auto item = ringBufferMap_.begin(); item != ringBufferMap_.end(); ++item) {
+            if (const auto rb = item->second.lock()) {
+                if (rb->isAudioMeterActive()) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+void
+RingBufferPool::setAudioMeterState(const std::string& id, bool state)
+{
+    std::lock_guard<std::recursive_mutex> lk(stateLock_);
+    if (!id.empty()) {
+        if (auto rb = getRingBuffer(id)) {
+            rb->setAudioMeterState(state);
+        }
+    } else {
+        for (auto item = ringBufferMap_.begin(); item != ringBufferMap_.end(); ++item) {
+            if (const auto rb = item->second.lock()) {
+                rb->setAudioMeterState(state);
+            }
+        }
+    }
+}
+
 } // namespace ring
