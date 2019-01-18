@@ -73,6 +73,18 @@ DBusVideoManager::stopCamera()
     DRing::stopCamera();
 }
 
+void
+DBusVideoManager::startAudioDevice()
+{
+    DRing::startAudioDevice();
+}
+
+void
+DBusVideoManager::stopAudioDevice()
+{
+    DRing::stopAudioDevice();
+}
+
 auto
 DBusVideoManager::switchInput(const std::string& resource) -> decltype(DRing::switchInput(resource))
 {
