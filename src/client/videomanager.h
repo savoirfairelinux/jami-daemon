@@ -59,6 +59,7 @@ struct VideoManager
          */
         std::map<std::string, std::weak_ptr<AudioInput>> audioInputs;
         std::mutex audioMutex;
+        std::shared_ptr<AudioInput> audioPreview;
 };
 
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();

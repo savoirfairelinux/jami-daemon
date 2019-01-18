@@ -25,7 +25,7 @@
 
 #include "ringbuffer.h"
 #include "logger.h"
-
+#include "client/ring_signal.h"
 #include "media_buffer.h"
 #include "libav_deps.h"
 
@@ -38,6 +38,8 @@ namespace ring {
 
 // corresponds to 160 ms (about 5 rtp packets)
 static const size_t MIN_BUFFER_SIZE = 1024;
+
+static constexpr const int RMS_SIGNAL_INTERVAL = 5;
 
 RingBuffer::RingBuffer(const std::string& rbuf_id, size_t /*size*/, AudioFormat format)
     : id(rbuf_id)
@@ -174,6 +176,16 @@ void RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
     pos = (pos + 1) % buffer_size;
 
     endPos_ = pos;
+
+    if (rmsSignal_) {
+        ++rmsFrameCount_;
+        rmsLevel_ += newBuf->calcRMS();
+        if (rmsFrameCount_ == RMS_SIGNAL_INTERVAL) {
+            emitSignal<DRing::AudioSignal::AudioMeter>(id, rmsLevel_ / RMS_SIGNAL_INTERVAL);
+            rmsLevel_ = 0;
+            rmsFrameCount_ = 0;
+        }
+    }
 
     for (auto& offset : readoffsets_) {
         if (offset.second.callback)

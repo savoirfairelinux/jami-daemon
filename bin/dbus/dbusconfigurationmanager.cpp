@@ -711,3 +711,15 @@ DBusConfigurationManager::cancelDataTransfer(const uint64_t& id)
 {
     return uint32_t(DRing::cancelDataTransfer(id));
 }
+
+bool
+DBusConfigurationManager::isAudioMeterActive(const std::string& id)
+{
+    return DRing::isAudioMeterActive(id);
+}
+
+void
+DBusConfigurationManager::setAudioMeterState(const std::string& id, const bool& state)
+{
+    return DRing::setAudioMeterState(id, state);
+}
