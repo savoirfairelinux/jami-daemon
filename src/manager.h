@@ -551,6 +551,9 @@ class Manager {
          */
         void setNoiseSuppressState(bool state);
 
+        bool isAudioMeterActive() const;
+        void toggleAudioMeter(bool state);
+
         bool isAGCEnabled() const;
         void setAGCState(bool enabled);
 

@@ -25,7 +25,8 @@
 
 #include "ringbuffer.h"
 #include "logger.h"
-
+#include "manager.h"
+#include "client/ring_signal.h"
 #include "media_buffer.h"
 #include "libav_deps.h"
 
@@ -174,6 +175,9 @@ void RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
     pos = (pos + 1) % buffer_size;
 
     endPos_ = pos;
+
+    if (Manager::instance().isAudioMeterActive())
+        emitSignal<DRing::AudioSignal::AudioMeter>(id, newBuf->calcRMS());
 
     for (auto& offset : readoffsets_) {
         if (offset.second.callback)

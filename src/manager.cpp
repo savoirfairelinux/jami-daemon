@@ -373,6 +373,8 @@ struct Manager::ManagerPimpl
 #ifdef RING_VIDEO
     std::unique_ptr<VideoManager> videoManager_;
 #endif
+
+    bool audioMeterEnabled_;
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -391,6 +393,7 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
 #ifdef RING_VIDEO
     , videoManager_(new VideoManager)
 #endif
+    , audioMeterEnabled_(false)
 {
     // initialize random generator
     // mt19937_64 should be seeded with 2 x 32 bits
@@ -2496,6 +2499,18 @@ void
 Manager::setNoiseSuppressState(bool state)
 {
     audioPreference.setNoiseReduce(state);
+}
+
+bool
+Manager::isAudioMeterActive() const
+{
+    return pimpl_->audioMeterEnabled_;
+}
+
+void
+Manager::toggleAudioMeter(bool state)
+{
+    pimpl_->audioMeterEnabled_ = state;
 }
 
 bool
