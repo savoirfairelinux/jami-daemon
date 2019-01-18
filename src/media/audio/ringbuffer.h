@@ -197,6 +197,9 @@ private:
 
     Resampler resampler_;
     AudioFrameResizer resizer_;
+
+    double rmsLevel_ {0};
+    int rmsFrameCount_ {0};
 };
 
 } // namespace ring

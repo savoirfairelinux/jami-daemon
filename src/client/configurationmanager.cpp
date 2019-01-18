@@ -969,4 +969,16 @@ void pushNotificationReceived(const std::string& from, const std::map<std::strin
     }
 }
 
+bool
+isAudioMeterActive()
+{
+    return ring::Manager::instance().isAudioMeterActive();
+}
+
+void
+toggleAudioMeter(bool state)
+{
+    ring::Manager::instance().toggleAudioMeter(state);
+}
+
 } // namespace DRing
