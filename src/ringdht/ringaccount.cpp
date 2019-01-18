@@ -77,14 +77,15 @@
 
 #include <algorithm>
 #include <array>
-#include <memory>
-#include <sstream>
 #include <cctype>
 #include <cinttypes>
 #include <cstdarg>
+#include <initializer_list>
+#include <memory>
+#include <regex>
+#include <sstream>
 #include <string>
 #include <system_error>
-#include <initializer_list>
 
 namespace ring {
 
@@ -291,6 +292,10 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     turnServerPwd_ = DEFAULT_TURN_PWD;
     turnServerRealm_ = DEFAULT_TURN_REALM;
     turnEnabled_ = true;
+
+    std::ifstream proxyCache(cachePath_ + DIR_SEPARATOR_STR "dhtproxy");
+    if (proxyCache)
+      std::getline(proxyCache, proxyServerCached_);
 }
 
 RingAccount::~RingAccount()
@@ -1526,10 +1531,21 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parseString(details, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
 
     parseBool(details, DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
+    auto oldProxyServer = proxyServer_;
     parseString(details, DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
     parseString(details, DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
-    if (proxyServer_.empty())
+    // Migrate from old versions
+    if (proxyServer_.empty()
+    || ((proxyServer_ == "dhtproxy.jami.net"
+    ||  proxyServer_ == "dhtproxy.ring.cx")
+    &&  proxyServerCached_.empty()))
         proxyServer_ = DHT_DEFAULT_PROXY;
+    if (proxyServer_ != oldProxyServer) {
+        RING_DBG("DHT Proxy configuration changed, resetting cache");
+        proxyServerCached_ = {};
+        auto proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
+        std::remove(proxyCachePath.c_str());
+    }
 
 #if HAVE_RINGNS
     parseString(details, DRing::Account::ConfProperties::RingNS::URI,     nameServer_);
@@ -2103,7 +2119,7 @@ RingAccount::doRegister_()
         config.dht_config.node_config.network = 0;
         config.dht_config.node_config.maintain_storage = false;
         config.dht_config.id = identity_;
-        config.proxy_server = proxyEnabled_ ? proxyServer_ : std::string();
+        config.proxy_server = getDhtProxyServer();
         config.push_node_id = getAccountID();
         config.threaded = true;
         if (not config.proxy_server.empty())
@@ -2849,6 +2865,66 @@ RingAccount::loadDhParams(const std::string path)
         RING_ERR("Can't generate DH params.");
         return {};
     }
+}
+
+std::string
+RingAccount::getDhtProxyServer()
+{
+    if (!proxyEnabled_) return {};
+    if (proxyServerCached_.empty()) {
+        // Split the list of servers
+        std::regex re(" *(;|,) *");
+        std::sregex_token_iterator first{proxyServer_.begin(), proxyServer_.end(), re, -1},
+            last;
+        std::vector<std::string> proxys_tmp = {first, last};
+        if (proxys_tmp.empty())
+          return {};
+        // Support port ranges like [100-120]
+        std::vector<std::string> proxys;
+        for (auto& p : proxys_tmp) {
+            auto port_range_start = p.find(":[");
+            if (port_range_start != std::string::npos) {
+                std::vector<std::string> proxy_addresses;
+                auto port_range_sep = p.find("-", port_range_start + 1);
+                if (port_range_sep == std::string::npos)
+                    continue;
+                auto port_range_end = p.find("]", port_range_sep);
+                if (port_range_end == std::string::npos)
+                    continue;
+                try {
+                    auto base = p.substr(0, port_range_start);
+                    auto lenSub = port_range_sep - 2 - port_range_start;
+                    auto start = std::stoi(p.substr(port_range_start + 2, lenSub));
+                    lenSub = port_range_end - port_range_sep - 1;
+                    auto end = std::stoi(p.substr(port_range_sep + 1, lenSub));
+                    for (auto i = start; i <= end; ++i)
+                        proxy_addresses.emplace_back(base + ":" + std::to_string(i));
+                } catch (...) {
+                    continue;
+                }
+                proxys.insert(proxys.end(), proxy_addresses.begin(),
+                              proxy_addresses.end());
+            } else {
+                proxys.emplace_back(p);
+            }
+        }
+        if (proxys.empty())
+          return {};
+        // Select one of the list as the current proxy.
+        std::random_shuffle(proxys.begin(), proxys.end());
+        proxyServerCached_ = proxys.front();
+        // Cache it!
+        fileutils::check_dir(cachePath_.c_str(), 0700);
+        std::string proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
+        std::ofstream file(proxyCachePath);
+        RING_DBG("Cache DHT proxy server: %s", proxyServerCached_.c_str());
+        if (file.is_open())
+            file << proxyServerCached_;
+        else
+            RING_WARN("Cannot write into %s", proxyCachePath.c_str());
+        return proxyServerCached_;
+    }
+    return proxyServerCached_;
 }
 
 void
