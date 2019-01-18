@@ -95,6 +95,7 @@ getSignalHandlers()
 
         /* Audio */
         exported_callback<DRing::AudioSignal::DeviceEvent>(),
+        exported_callback<DRing::AudioSignal::AudioMeter>(),
 
         /* DataTransfer */
         exported_callback<DRing::DataTransferSignal::DataTransferEvent>(),

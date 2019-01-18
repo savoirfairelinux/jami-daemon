@@ -141,6 +141,42 @@ AudioFrame::mix(const AudioFrame& frame)
     }
 }
 
+static float
+getSample(uint8_t* p, AVSampleFormat fmt)
+{
+    switch (fmt) {
+    case AV_SAMPLE_FMT_S16:
+    case AV_SAMPLE_FMT_S16P:
+        return *(int16_t*)p * 0.000030517578125f; // 1 / INT16_MAX
+    case AV_SAMPLE_FMT_FLT:
+    case AV_SAMPLE_FMT_FLTP:
+        return *(float*)p;
+    default:
+        RING_ERR() << "Getting RMS level for format " << av_get_sample_fmt_name(fmt) << " is not supported";
+        return 0.0;
+    }
+}
+
+float
+AudioFrame::calcRMS() const
+{
+    double rms = 0.0;
+    auto fmt = static_cast<AVSampleFormat>(frame_->format);
+    int depth = av_get_bytes_per_sample(fmt);
+    int planar = av_sample_fmt_is_planar(fmt);
+    int step = planar ? depth : depth * frame_->channels;
+    for (int ch = 0; ch < frame_->channels; ++ch) {
+        int offset = planar ? 0 : depth * ch;
+        for (int i = 0; i < frame_->nb_samples; i += step) {
+            auto sample = getSample(&frame_->extended_data[planar ? ch : 0][i + offset], fmt);
+            rms += sample * sample;
+        }
+    }
+    // divide by the number of multi-byte samples (total iterations through the second loop)
+    auto nbSamples = frame_->channels * (frame_->nb_samples / step);
+    return sqrt(rms / nbSamples);
+}
+
 VideoFrame::~VideoFrame()
 {
     if (releaseBufferCb_)
