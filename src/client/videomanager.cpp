@@ -141,6 +141,61 @@ AudioFrame::mix(const AudioFrame& frame)
     }
 }
 
+float
+AudioFrame::calcRMS() const
+{
+    // FIXME this code is horrible
+    double rms = 0.0;
+    auto fmt = static_cast<AVSampleFormat>(frame_->format);
+    switch (fmt) {
+    case AV_SAMPLE_FMT_S16: {
+        const int16_t *src = (const int16_t *)frame_->extended_data[0];
+
+        for (int i = 0; i < frame_->nb_samples; i++) {
+            for (int c = 0; c < frame_->channels; c++, src++) {
+                double nd = *src / (double)INT16_MAX;
+                rms += nd * nd;
+            }
+        }}
+        break;
+    case AV_SAMPLE_FMT_S16P:
+        for (int c = 0; c < frame_->channels; c++) {
+            const int16_t *src = (const int16_t *)frame_->extended_data[c];
+
+            for (int i = 0; i < frame_->nb_samples; i++, src++) {
+                double nd = *src / (double)INT16_MAX;
+                rms += nd * nd;
+            }
+        }
+        break;
+    case AV_SAMPLE_FMT_FLT: {
+        const float *src = (const float *)frame_->extended_data[0];
+
+        for (int i = 0; i < frame_->nb_samples; i++) {
+            for (int c = 0; c < frame_->channels; c++, src++) {
+                double nd = *src;
+                rms += nd * nd;
+            }
+        }}
+        break;
+    case AV_SAMPLE_FMT_FLTP:
+        for (int c = 0; c < frame_->channels; c++) {
+            const float *src = (const float *)frame_->extended_data[c];
+
+            for (int i = 0; i < frame_->nb_samples; i++, src++) {
+                double nd = *src;
+                rms += nd * nd;
+            }
+        }
+        break;
+    default:
+        RING_ERR() << "Getting RMS level for format " << av_get_sample_fmt_name(fmt) << " is not supported";
+        break;
+    }
+    rms = sqrt(rms / (frame_->nb_samples * frame_->channels));
+    return rms;
+}
+
 VideoFrame::~VideoFrame()
 {
     if (releaseBufferCb_)

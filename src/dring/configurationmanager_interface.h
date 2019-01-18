@@ -215,10 +215,18 @@ DRING_PUBLIC void setPushNotificationToken(const std::string& pushDeviceToken);
  */
 DRING_PUBLIC void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
+DRING_PUBLIC bool isAudioMeterActive();
+DRING_PUBLIC void setAudioMeterState(bool state);
+
 struct DRING_PUBLIC AudioSignal {
         struct DRING_PUBLIC DeviceEvent {
                 constexpr static const char* name = "audioDeviceEvent";
                 using cb_type = void(void);
+        };
+        // Linear audio level (between 0 and 1). To get level in dB: dB=20*log10(level)
+        struct DRING_PUBLIC AudioMeter {
+                constexpr static const char* name = "AudioMeter";
+                using cb_type = void(const std::string& id, float level);
         };
 };
 
