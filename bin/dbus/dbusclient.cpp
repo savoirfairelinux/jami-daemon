@@ -198,8 +198,10 @@ DBusClient::initLibrary(int flags)
         exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&DBusPresenceManager::subscriptionStateChanged, presM, _1, _2, _3)),
     };
 
+    // Audio event handlers
     const std::map<std::string, SharedCallback> audioEvHandlers = {
         exportable_callback<AudioSignal::DeviceEvent>(bind(&DBusConfigurationManager::audioDeviceEvent, confM)),
+        exportable_callback<AudioSignal::AudioMeter>(bind(&DBusConfigurationManager::audioMeter, confM, _1, _2)),
     };
 
     const std::map<std::string, SharedCallback> dataXferEvHandlers = {
