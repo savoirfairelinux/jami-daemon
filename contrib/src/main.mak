@@ -195,8 +195,6 @@ EXTRA_COMMON += -m32
 endif
 endif
 
-EXTRA_CXXFLAGS += -std=c++14
-
 ifdef ENABLE_DEBUG
 EXTRA_COMMON += -g -fno-omit-frame-pointer
 else
