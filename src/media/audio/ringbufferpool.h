@@ -117,6 +117,9 @@ public:
      */
     std::shared_ptr<RingBuffer> getRingBuffer(const std::string& id) const;
 
+    bool isAudioMeterActive(const std::string& id);
+    void setAudioMeterState(const std::string& id, bool state);
+
 private:
     NON_COPYABLE(RingBufferPool);
 
