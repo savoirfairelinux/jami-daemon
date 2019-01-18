@@ -177,6 +177,23 @@ getDebugMode(void)
     return debugMode;
 }
 
+static const char* check_error(int result, char* buffer) {
+    switch (result) {
+        case 0:
+            return buffer;
+
+        case ERANGE: /* should never happen */
+            return "unknown (too big to display)";
+
+        default:
+            return "unknown (invalid error number)";
+    }
+}
+
+static const char* check_error(char* result, char*) {
+    return result;
+}
+
 void
 strErr(void)
 {
@@ -184,23 +201,7 @@ strErr(void)
     JAMI_ERR("%m");
 #else
     char buf[1000];
-    const char* errstr;
-
-    switch (strerror_r(errno, buf, sizeof(buf))) {
-        case 0:
-            errstr = buf;
-            break;
-
-        case ERANGE: /* should never happen */
-            errstr = "unknown (too big to display)";
-            break;
-
-        default:
-            errstr = "unknown (invalid error number)";
-            break;
-    }
-
-    JAMI_ERR("%s", errstr);
+    JAMI_ERR("%s", check_error(strerror_r(errno, buf, sizeof(buf)), buf));
 #endif
 }
 

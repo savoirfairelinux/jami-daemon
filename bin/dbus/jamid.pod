@@ -1,0 +1,64 @@
+=head1 NAME
+
+jamid - core daemon for Jami: secure and distributed voice, video and chat communication platform.
+
+=head1 SYNOPSIS
+
+B<jamid> [OPTION]...
+
+=head1 DESCRIPTION
+
+Jami is meant to be a robust enterprise-class desktop phone. It provides functions like call transfer, call hold, multiple lines, multiple accounts support.
+Jami audio layer is build upon a native ALSA interface and a native PulseAudio interface.
+B<jamid> is the core of Jami; it provides the DBus service "cx.ring.Ring". You need to install a client to use the daemon, for instance GTK+ client, B<jami-gnome>.
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-c, --console>
+
+Output the log to the console instead of syslog.
+
+=item B<-d, --debug>
+
+Debug mode (more verbose output).
+
+=item B<-a, --auto-answer>
+
+Force automatic answer to incoming calls.
+
+=item B<-p, --persistent>
+
+Stay alive after all clients quit.
+
+=item B<-h, --help>
+
+Print short list of command-line options.
+
+=back
+
+=head1 BUGS
+
+Please report bugs at https://git.jami.net.
+
+=head1 AUTHORS
+
+B<jamid> is developed in Montreal by Savoir-faire Linux Inc.
+
+This manual page was written by Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>.
+
+=head1 SEE ALSO
+
+B<jami-gnome>(1)
+
+=head1 COPYRIGHT
+
+This program is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License version 3 as published by the
+Free Software Foundation.
+
+On Debian GNU/Linux systems, the complete text of the GNU General
+Public License can be found in `/usr/share/common-licenses/GPL'.
+
+=cut
