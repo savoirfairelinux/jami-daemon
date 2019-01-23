@@ -12,6 +12,7 @@ RING_REVISION ?= $(shell git log -1 --format="%h" --abbrev=10 2>/dev/null)
 # Preprocessor flags
 AM_CPPFLAGS = \
 	-I$(src)/src \
+    -I$(src)/src/sip \
 	-I$(src)/src/config \
 	-I$(src)/src/media \
 	-I$(src)/test \

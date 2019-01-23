@@ -119,7 +119,13 @@ CallFactory::getAllCalls<Call>() const
             v.push_back(item.second);
     }
 
+    std::cout << "There are " << v.size() << " remaining calls \n";
+
     v.shrink_to_fit();
+
+    if (v.empty())
+        RING_WARN(">>>> Vector empty !!! <<<< \n");
+
     return v;
 }
 
