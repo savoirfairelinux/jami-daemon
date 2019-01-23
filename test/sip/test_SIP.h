@@ -3,7 +3,8 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *  Author: Olivier Gregoire <olivier.gregoire@savoirfairelinux.com>
- *
+ *  Author: Mohamed Fenjiro <mohamed.fenjiro@savoirfairelinux.com>
+
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -29,13 +30,14 @@
 
 // Application import
 #include "manager.h"
+#include "call.h"
 
-#include "sip/sipvoiplink.h"
-#include "sip/sip_utils.h"
+#include "sipvoiplink.h"
+#include "sip_utils.h"
 
 #include <atomic>
-
 #include <thread>
+
 class RAIIThread
 {
 public:
@@ -95,10 +97,11 @@ private:
     // put in hold
     void testMultipleIncomingIpCall(void);
 
-    // Test the hold state
+    // Test the holding feature
     void testHoldIpCall(void);
 
     void testSIPURI(void);
+
 
 
     /**
@@ -106,13 +109,13 @@ private:
      */
     CPPUNIT_TEST_SUITE(test_SIP);
     CPPUNIT_TEST ( testSIPURI );
-    /*CPPUNIT_TEST ( testHoldIpCall );
+    CPPUNIT_TEST ( testHoldIpCall );
     CPPUNIT_TEST ( testSimpleOutgoingIpCall );
     CPPUNIT_TEST ( testMultipleOutgoingIpCall );
-    CPPUNIT_TEST ( testSimpleIncomingIpCall );*/
-    //CPPUNIT_TEST ( testMultipleIncomingIpCall );
+    CPPUNIT_TEST ( testSimpleIncomingIpCall );
+    CPPUNIT_TEST ( testMultipleIncomingIpCall );
     CPPUNIT_TEST_SUITE_END();
 
-    RAIIThread eventLoop_;
     std::atomic_bool running_;
+    std::string accountId_;
 };
