@@ -878,10 +878,6 @@ class Manager {
         std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
 
         VideoManager& getVideoManager() const;
-
-        bool getDecodingAccelerated() const;
-
-        void setDecodingAccelerated(bool isAccelerated);
 #endif // RING_VIDEO
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable

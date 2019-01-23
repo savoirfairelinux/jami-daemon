@@ -3069,25 +3069,6 @@ Manager::getSinkClient(const std::string& id)
             return sink;
     return nullptr;
 }
-
-bool
-Manager::getDecodingAccelerated() const
-{
-#ifdef RING_ACCEL
-    return videoPreferences.getDecodingAccelerated();
-#else
-    return false;
-#endif
-}
-
-void
-Manager::setDecodingAccelerated(bool isAccelerated)
-{
-#ifdef RING_ACCEL
-    videoPreferences.setDecodingAccelerated(isAccelerated);
-    saveConfig();
-#endif
-}
 #endif // RING_VIDEO
 
 RingBufferPool&

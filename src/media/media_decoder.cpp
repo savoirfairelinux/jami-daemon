@@ -115,7 +115,7 @@ int MediaDecoder::openInput(const DeviceParams& params)
 #ifdef RING_ACCEL
     // if there was a fallback to software decoding, do not enable accel
     // it has been disabled already by the video_receive_thread/video_input
-    enableAccel_ &= Manager::instance().getDecodingAccelerated();
+    enableAccel_ &= Manager::instance().videoPreferences.getDecodingAccelerated();
 #endif
 
     int ret = avformat_open_input(
@@ -217,7 +217,7 @@ MediaDecoder::setupStream(AVMediaType mediaType)
     if (enableAccel_) {
         accel_ = video::setupHardwareDecoding(decoderCtx_);
         decoderCtx_->opaque = &accel_;
-    } else if (Manager::instance().getDecodingAccelerated()) {
+    } else if (Manager::instance().videoPreferences.getDecodingAccelerated()) {
         RING_WARN() << "Hardware accelerated decoding disabled because of previous failure";
     } else {
         RING_WARN() << "Hardware accelerated decoding disabled by user preference";
