@@ -187,6 +187,7 @@ AudioInput::switchInput(const std::string& resource)
     decoder_.reset();
     decodingFile_ = false;
     Manager::instance().getRingBufferPool().unBindHalfDuplexOut(id_, fileId_);
+    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
     fileBuf_.reset();
 
     currentResource_ = resource;
