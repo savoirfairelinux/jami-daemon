@@ -1095,12 +1095,13 @@ Manager::offHoldCall(const std::string& callId)
 
     try {
         result = call->offhold();
+        call->setState(Call::CallState::ACTIVE, Call::ConnectionState::PROGRESSING);
     } catch (const VoipLinkException &e) {
         RING_ERR("%s", e.what());
         return false;
     }
 
-    if (result) {
+    if (result && call) {
         if (isConferenceParticipant(callId))
             pimpl_->switchCall(call->getConfId());
         else
@@ -3036,7 +3037,7 @@ Manager::newOutgoingCall(const std::string& toUrl,
                          const std::map<std::string, std::string>& volatileCallDetails)
 {
     auto account = getAccount(accountId);
-    if (account and !account->isUsable()) {
+    if (!account or !account->isUsable()) {
         RING_WARN("Account is not usable for calling");
         return nullptr;
     }
