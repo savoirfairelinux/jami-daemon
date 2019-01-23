@@ -24,6 +24,8 @@
 #include "account_factory.h"
 #include "../../test_runner.h"
 #include "dring.h"
+#include "account_const.h"
+
 
 namespace ring { namespace test {
 
@@ -44,10 +46,7 @@ private:
     CPPUNIT_TEST(testClear);
     CPPUNIT_TEST_SUITE_END();
 
-    const std::string SIP_type="SIP";
     const std::string SIP_ID="SIP_ID";
-
-    const std::string RING_type="RING";
     const std::string RING_ID="RING_ID";
     std::unique_ptr<AccountFactory> accountFactory;
 };
@@ -79,7 +78,7 @@ Account_factoryTest::testAddRemoveSIPAccount()
     CPPUNIT_ASSERT(accountFactory->empty());
     CPPUNIT_ASSERT(accountFactory->accountCount()==0);
 
-    accountFactory->createAccount(SIP_type.c_str(), SIP_ID);
+    accountFactory->createAccount(DRing::Account::ProtocolNames::SIP, SIP_ID);
 
     CPPUNIT_ASSERT(accountFactory->hasAccount(SIP_ID));
     CPPUNIT_ASSERT(!accountFactory->hasAccount(RING_ID));
@@ -99,7 +98,7 @@ Account_factoryTest::testAddRemoveRINGAccount()
     CPPUNIT_ASSERT(accountFactory->empty());
     CPPUNIT_ASSERT(accountFactory->accountCount()==0);
 
-    accountFactory->createAccount(RING_type.c_str(), RING_ID);
+    accountFactory->createAccount(DRing::Account::ProtocolNames::RING, RING_ID);
 
     CPPUNIT_ASSERT(accountFactory->hasAccount(RING_ID));
     CPPUNIT_ASSERT(!accountFactory->hasAccount(SIP_ID));
@@ -122,7 +121,7 @@ Account_factoryTest::testClear()
     const int nbrAccount = 5;
 
     for(int i = 0; i < nbrAccount ; ++i) {
-        accountFactory->createAccount(RING_type.c_str(), RING_ID+std::to_string(i));
+        accountFactory->createAccount(DRing::Account::ProtocolNames::RING, RING_ID+std::to_string(i));
     }
 
     CPPUNIT_ASSERT(accountFactory->accountCount()==nbrAccount);
