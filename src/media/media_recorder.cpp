@@ -248,8 +248,7 @@ MediaRecorder::initRecord()
     }
 
     try {
-        std::unique_ptr<MediaIOHandle> ioHandle;
-        encoder_->setIOContext(ioHandle);
+        encoder_->setIOContext(nullptr);
         encoder_->startIO();
     } catch (const MediaEncoderException& e) {
         RING_ERR() << "Could not start recorder: " << e.what();
