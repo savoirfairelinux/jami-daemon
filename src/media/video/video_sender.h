@@ -57,7 +57,6 @@ public:
     void update(Observable<std::shared_ptr<MediaFrame>>* obs,
                 const std::shared_ptr<MediaFrame>& frame_p) override;
 
-    void setMuted(bool isMuted);
     uint16_t getLastSeqValue();
 
     bool useCodec(const AccountVideoCodecInfo* codec) const;

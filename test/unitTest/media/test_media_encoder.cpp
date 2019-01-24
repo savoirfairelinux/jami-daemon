@@ -48,7 +48,6 @@ private:
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaEncoder> encoder_;
-    std::unique_ptr<MediaIOHandle> ioHandle_;
     std::vector<std::string> files_;
 };
 
@@ -170,7 +169,7 @@ MediaEncoderTest::testMultiStream()
         CPPUNIT_ASSERT(audioIdx >= 0);
         CPPUNIT_ASSERT(videoIdx != audioIdx);
         CPPUNIT_ASSERT(encoder_->getStreamCount() == 2);
-        encoder_->setIOContext(ioHandle_);
+        encoder_->setIOContext(nullptr);
         encoder_->startIO();
         int sentSamples = 0;
         AVFrame* audio = nullptr;
