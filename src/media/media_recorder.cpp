@@ -225,7 +225,8 @@ MediaRecorder::initRecord()
         encoderOptions["channels"] = std::to_string(audioStream.nbChannels);
     }
 
-    encoder_->openFileOutput(getPath(), encoderOptions);
+    encoder_->openOutput(getPath());
+    encoder_->setOptions(encoderOptions);
 
     if (hasVideo_) {
         auto videoCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(
@@ -248,8 +249,7 @@ MediaRecorder::initRecord()
     }
 
     try {
-        std::unique_ptr<MediaIOHandle> ioHandle;
-        encoder_->setIOContext(ioHandle);
+        encoder_->setIOContext(nullptr);
         encoder_->startIO();
     } catch (const MediaEncoderException& e) {
         RING_ERR() << "Could not start recorder: " << e.what();
