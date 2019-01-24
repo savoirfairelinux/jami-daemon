@@ -99,8 +99,18 @@ MediaRecorder::startRecording()
     encoder_.reset(new MediaEncoder);
 
     RING_DBG() << "Start recording '" << getPath() << "'";
-    if (initRecord() >= 0)
+    if (initRecord() >= 0) {
         isRecording_ = true;
+        // start thread after isRecording_ is set to true
+        ThreadPool::instance().run([rec = shared_from_this()] {
+            while (rec->isRecording()) {
+                rec->filterAndEncode(rec->videoFilter_.get(), rec->videoIdx_);
+                rec->filterAndEncode(rec->audioFilter_.get(), rec->audioIdx_);
+            }
+            rec->flush();
+            rec->reset(); // allows recorder to be reused in same call
+        });
+    }
     return 0;
 }
 
@@ -247,14 +257,6 @@ MediaRecorder::initRecord()
     }
 
     RING_DBG() << "Recording initialized";
-    ThreadPool::instance().run([rec = shared_from_this()] {
-        while (rec->isRecording()) {
-            rec->filterAndEncode(rec->videoFilter_.get(), rec->videoIdx_);
-            rec->filterAndEncode(rec->audioFilter_.get(), rec->audioIdx_);
-        }
-        rec->flush();
-        rec->reset(); // allows recorder to be reused in same call
-    });
     return 0;
 }
 
