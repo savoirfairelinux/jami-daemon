@@ -24,9 +24,7 @@
 #include "media_codec.h"
 #include "media_encoder.h"
 #include "media_buffer.h"
-#include "media_io_handle.h"
 
-#include "audio/audiobuffer.h"
 #include "fileutils.h"
 #include "string_utils.h"
 #include "logger.h"
@@ -54,10 +52,8 @@ MediaEncoder::MediaEncoder()
 MediaEncoder::~MediaEncoder()
 {
     if (outputCtx_) {
-        if (outputCtx_->priv_data)
-            av_write_trailer(outputCtx_);
-
-        for (auto encoderCtx : encoders_)
+        av_write_trailer(outputCtx_);
+        for (auto encoderCtx : encoders_) {
             if (encoderCtx) {
 #ifndef _MSC_VER
                 avcodec_free_context(&encoderCtx);
@@ -65,14 +61,14 @@ MediaEncoder::~MediaEncoder()
                 avcodec_close(encoderCtx);
 #endif
             }
-
+        }
         avformat_free_context(outputCtx_);
     }
-
     av_dict_free(&options_);
 }
 
-void MediaEncoder::setDeviceOptions(const DeviceParams& args)
+void
+MediaEncoder::setDeviceOptions(const DeviceParams& args)
 {
     device_ = args;
     // Make sure width and height are even (required by x264)
@@ -88,7 +84,8 @@ void MediaEncoder::setDeviceOptions(const DeviceParams& args)
     libav_utils::setDictValue(&options_, "framerate", ring::to_string(device_.framerate.real()));
 }
 
-void MediaEncoder::setOptions(const MediaDescription& args)
+void
+MediaEncoder::setOptions(const MediaDescription& args)
 {
     codec_ = args.codec;
 
@@ -116,65 +113,14 @@ void MediaEncoder::setOptions(const MediaDescription& args)
 }
 
 void
-MediaEncoder::setInitSeqVal(uint16_t seqVal)
+MediaEncoder::setOptions(std::map<std::string, std::string> options)
 {
-    //only set not default value (!=0)
-    if (seqVal != 0)
-        libav_utils::setDictValue(&options_, "seq", ring::to_string(seqVal));
-}
-
-uint16_t
-MediaEncoder::getLastSeqValue()
-{
-    int64_t  retVal;
-    auto ret = av_opt_get_int(outputCtx_->priv_data, "seq", AV_OPT_SEARCH_CHILDREN, &retVal);
-    if (ret == 0)
-        return (uint16_t) retVal;
-    else
-        return 0;
-}
-
-std::string
-MediaEncoder::getEncoderName() const
-{
-    return encoders_[currentStreamIdx_]->codec->name;
-}
-
-void
-MediaEncoder::openLiveOutput(const std::string& filename,
-                             const ring::MediaDescription& args)
-{
-    setOptions(args);
-    AVOutputFormat *oformat = av_guess_format("rtp", filename.c_str(), nullptr);
-
-    if (!oformat) {
-        RING_ERR("Unable to find a suitable output format for %s", filename.c_str());
-        throw MediaEncoderException("No output format");
-    }
-
-    outputCtx_->oformat = oformat;
-#if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(58, 7, 100)
-    // c_str guarantees null termination
-    outputCtx_->url = av_strdup(filename.c_str()); // must be compatible with av_free
-#else
-    strncpy(outputCtx_->filename, filename.c_str(), sizeof(outputCtx_->filename));
-    // in case our filename is longer than the space reserved for AVFormatContext.filename
-    outputCtx_->filename[sizeof(outputCtx_->filename) - 1] = '\0';
-#endif
-
-    addStream(args.codec->systemCodecInfo, args.parameters);
-}
-
-void
-MediaEncoder::openFileOutput(const std::string& filename, std::map<std::string, std::string> options)
-{
-    avformat_free_context(outputCtx_);
-    avformat_alloc_output_context2(&outputCtx_, nullptr, nullptr, filename.c_str());
-
-    if (!options["title"].empty())
-        libav_utils::setDictValue(&outputCtx_->metadata, "title", options["title"]);
-    if (!options["description"].empty())
-        libav_utils::setDictValue(&outputCtx_->metadata, "description", options["description"]);
+    const auto& titleIt = options.find("title");
+    if (titleIt != options.end() and not titleIt->second.empty())
+        libav_utils::setDictValue(&outputCtx_->metadata, titleIt->first, titleIt->second);
+    const auto& descIt = options.find("description");
+    if (descIt != options.end() and not descIt->second.empty())
+        libav_utils::setDictValue(&outputCtx_->metadata, descIt->first, descIt->second);
 
     auto bitrate = SystemCodecInfo::DEFAULT_MAX_BITRATE;
     auto quality = SystemCodecInfo::DEFAULT_CODEC_QUALITY;
@@ -190,11 +136,44 @@ MediaEncoder::openFileOutput(const std::string& filename, std::map<std::string, 
     options.insert({"framerate", "30.00"});
     for (const auto& it : options)
         libav_utils::setDictValue(&options_, it.first, it.second);
-    // for a file output, addStream is done by the caller, as there may be multiple streams
+}
+
+void
+MediaEncoder::setInitSeqVal(uint16_t seqVal)
+{
+    //only set not default value (!=0)
+    if (seqVal != 0)
+        av_opt_set_int(outputCtx_, "seq", seqVal, AV_OPT_SEARCH_CHILDREN);
+}
+
+uint16_t
+MediaEncoder::getLastSeqValue()
+{
+    int64_t retVal;
+    if (av_opt_get_int(outputCtx_, "seq", AV_OPT_SEARCH_CHILDREN, &retVal) >= 0)
+        return (uint16_t)retVal;
+    else
+        return 0;
+}
+
+std::string
+MediaEncoder::getEncoderName() const
+{
+    return encoders_[currentStreamIdx_]->codec->name;
+}
+
+void
+MediaEncoder::openOutput(const std::string& filename, const std::string& format)
+{
+    avformat_free_context(outputCtx_);
+    if (format.empty())
+        avformat_alloc_output_context2(&outputCtx_, nullptr, nullptr, filename.c_str());
+    else
+        avformat_alloc_output_context2(&outputCtx_, nullptr, format.c_str(), filename.c_str());
 }
 
 int
-MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string parameters)
+MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 {
     AVCodec* outputCodec = nullptr;
     AVCodecContext* encoderCtx = nullptr;
@@ -219,7 +198,8 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 
     /* let x264 preset override our encoder settings */
     if (systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
-        extractProfileLevelID(parameters, encoderCtx);
+        auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
+        extractProfileLevelID(profileLevelId, encoderCtx);
         forcePresetX264(encoderCtx);
         // For H264 :
         // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
@@ -227,7 +207,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
             crf = 30; // good value for H264-720p@30
         RING_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
 
-        av_opt_set_int(encoderCtx->priv_data, "crf", crf, 0);
+        av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         encoderCtx->rc_buffer_size = bufSize;
         encoderCtx->rc_max_rate = maxBitrate;
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
@@ -237,14 +217,14 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         // 2- otherwise set rc_max_rate and rc_buffer_size
         // Using information given on this page:
         // http://www.webmproject.org/docs/encoder-parameters/
-        av_opt_set(encoderCtx->priv_data, "quality", "realtime", 0);
-        av_opt_set_int(encoderCtx->priv_data, "error-resilient", 1, 0);
-        av_opt_set_int(encoderCtx->priv_data, "cpu-used", 7, 0); // value obtained from testing
-        av_opt_set_int(encoderCtx->priv_data, "lag-in-frames", 0, 0);
+        av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "error-resilient", 1, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "cpu-used", 7, AV_OPT_SEARCH_CHILDREN); // value obtained from testing
+        av_opt_set_int(encoderCtx, "lag-in-frames", 0, AV_OPT_SEARCH_CHILDREN);
         // allow encoder to drop frames if buffers are full and
         // to undershoot target bitrate to lessen strain on resources
-        av_opt_set_int(encoderCtx->priv_data, "drop-frame", 25, 0);
-        av_opt_set_int(encoderCtx->priv_data, "undershoot-pct", 95, 0);
+        av_opt_set_int(encoderCtx, "drop-frame", 25, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "undershoot-pct", 95, AV_OPT_SEARCH_CHILDREN);
         // don't set encoderCtx->gop_size: let libvpx decide when to insert a keyframe
         encoderCtx->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
         encoderCtx->qmin = 4;
@@ -252,7 +232,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         encoderCtx->rc_buffer_size = maxBitrate;
         encoderCtx->bit_rate = maxBitrate;
         if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
-            av_opt_set_int(encoderCtx->priv_data, "crf", crf, 0);
+            av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
             RING_DBG("Using quality factor %d", crf);
         } else {
             RING_DBG("Using Max bitrate %d", maxBitrate);
@@ -308,20 +288,11 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
     return stream->index;
 }
 
-void MediaEncoder::setInterruptCallback(int (*cb)(void*), void *opaque)
-{
-    if (cb) {
-        outputCtx_->interrupt_callback.callback = cb;
-        outputCtx_->interrupt_callback.opaque = opaque;
-    } else {
-        outputCtx_->interrupt_callback.callback = 0;
-    }
-}
-
-void MediaEncoder::setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx)
+void
+MediaEncoder::setIOContext(AVIOContext* ioctx)
 {
     if (ioctx) {
-        outputCtx_->pb = ioctx->getContext();
+        outputCtx_->pb = ioctx;
         outputCtx_->packet_size = outputCtx_->pb->buffer_size;
     } else {
         int ret = 0;
@@ -387,7 +358,8 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 }
 #endif // RING_VIDEO
 
-int MediaEncoder::encodeAudio(AudioFrame& frame)
+int
+MediaEncoder::encodeAudio(AudioFrame& frame)
 {
     frame.pointer()->pts = sent_samples;
     sent_samples += frame.pointer()->nb_samples;
@@ -487,7 +459,8 @@ MediaEncoder::print_sdp()
     return result;
 }
 
-AVCodecContext* MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
+AVCodecContext*
+MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 {
     AVCodecContext* encoderCtx = avcodec_alloc_context3(outputCodec);
 
@@ -577,17 +550,19 @@ AVCodecContext* MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool i
     return encoderCtx;
 }
 
-void MediaEncoder::forcePresetX264(AVCodecContext* encoderCtx)
+void
+MediaEncoder::forcePresetX264(AVCodecContext* encoderCtx)
 {
     const char *speedPreset = "ultrafast";
-    if (av_opt_set(encoderCtx->priv_data, "preset", speedPreset, 0))
+    if (av_opt_set(encoderCtx, "preset", speedPreset, AV_OPT_SEARCH_CHILDREN))
         RING_WARN("Failed to set x264 preset '%s'", speedPreset);
     const char *tune = "zerolatency";
-    if (av_opt_set(encoderCtx->priv_data, "tune", tune, 0))
+    if (av_opt_set(encoderCtx, "tune", tune, AV_OPT_SEARCH_CHILDREN))
         RING_WARN("Failed to set x264 tune '%s'", tune);
 }
 
-void MediaEncoder::extractProfileLevelID(const std::string &parameters,
+void
+MediaEncoder::extractProfileLevelID(const std::string &parameters,
                                          AVCodecContext *ctx)
 {
     // From RFC3984:
@@ -633,12 +608,6 @@ void MediaEncoder::extractProfileLevelID(const std::string &parameters,
             break;
     }
     RING_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
-}
-
-void
-MediaEncoder::setMuted(bool isMuted)
-{
-    is_muted = isMuted;
 }
 
 bool

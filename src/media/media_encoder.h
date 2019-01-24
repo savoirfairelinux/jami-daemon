@@ -41,18 +41,14 @@
 #include <vector>
 
 struct AVCodecContext;
-struct AVStream;
 struct AVFormatContext;
 struct AVDictionary;
 struct AVCodec;
 
 namespace ring {
 
-class AudioBuffer;
-class MediaIOHandle;
 struct MediaDescription;
 struct AccountCodecInfo;
-class MediaRecorder;
 
 class MediaEncoderException : public std::runtime_error {
     public:
@@ -64,14 +60,13 @@ public:
     MediaEncoder();
     ~MediaEncoder();
 
-    void setInterruptCallback(int (*cb)(void*), void *opaque);
-
+    void openOutput(const std::string& filename, const std::string& format="");
     void setDeviceOptions(const DeviceParams& args);
-    void openLiveOutput(const std::string& filename, const MediaDescription& args);
-    void openFileOutput(const std::string& filename, std::map<std::string, std::string> options);
-    int addStream(const SystemCodecInfo& codec, std::string parameters = "");
+    void setOptions(const MediaDescription& args);
+    void setOptions(std::map<std::string, std::string> options);
+    int addStream(const SystemCodecInfo& codec);
+    void setIOContext(AVIOContext* ioctx);
     void startIO();
-    void setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx);
 
     bool send(AVPacket& packet, int streamIdx = -1);
 
@@ -93,7 +88,6 @@ public:
     int getWidth() const { return device_.width; }
     int getHeight() const { return device_.height; }
 
-    void setMuted(bool isMuted);
     void setInitSeqVal(uint16_t seqVal);
     uint16_t getLastSeqValue();
     std::string getEncoderName() const;
@@ -105,8 +99,6 @@ public:
 
 private:
     NON_COPYABLE(MediaEncoder);
-    void setOptions(const MediaDescription& args);
-    void setScaleDest(void *data, int width, int height, int pix_fmt);
     AVCodecContext* prepareEncoderContext(AVCodec* outputCodec, bool is_video);
     void forcePresetX264(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
@@ -123,7 +115,6 @@ private:
 
     std::vector<uint8_t> scaledFrameBuffer_;
     int scaledFrameBufferSize_ = 0;
-    bool is_muted = false;
 
 protected:
     void readConfig(AVDictionary** dict, AVCodecContext* encoderCtx);
