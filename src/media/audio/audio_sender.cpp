@@ -70,10 +70,10 @@ AudioSender::setup(SocketPair& socketPair)
     try {
         /* Encoder setup */
         RING_DBG("audioEncoder_->openLiveOutput %s", dest_.c_str());
-        audioEncoder_->setMuted(muteState_);
         audioEncoder_->openLiveOutput(dest_, args_);
+        audioEncoder_->addStream(args_.codec->systemCodecInfo);
         audioEncoder_->setInitSeqVal(seqVal_);
-        audioEncoder_->setIOContext(muxContext_);
+        audioEncoder_->setIOContext(muxContext_->getContext());
         audioEncoder_->startIO();
     } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
@@ -114,7 +114,6 @@ AudioSender::setMuted(bool isMuted)
 {
     muteState_ = isMuted;
     audioInput_->setMuted(isMuted);
-    audioEncoder_->setMuted(isMuted);
 }
 
 uint16_t

@@ -45,8 +45,9 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
     videoEncoder_->setDeviceOptions(dev);
     keyFrameFreq_ = dev.framerate.numerator() * KEY_FRAME_PERIOD;
     videoEncoder_->openLiveOutput(dest, args);
+    videoEncoder_->addStream(args.codec->systemCodecInfo);
     videoEncoder_->setInitSeqVal(seqVal);
-    videoEncoder_->setIOContext(muxContext_);
+    videoEncoder_->setIOContext(muxContext_->getContext());
     videoEncoder_->startIO();
 
     videoEncoder_->print_sdp();
@@ -89,12 +90,6 @@ VideoSender::forceKeyFrame()
 {
     RING_DBG("Key frame requested");
     ++forceKeyFrame_;
-}
-
-void
-VideoSender::setMuted(bool isMuted)
-{
-    videoEncoder_->setMuted(isMuted);
 }
 
 uint16_t
