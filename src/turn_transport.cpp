@@ -247,7 +247,7 @@ TurnTransportPimpl::onPeerConnection(pj_uint32_t conn_id,
     if (status == PJ_SUCCESS) {
         RING_DBG() << "Received connection attempt from " << peer_addr.toString(true, true)
                    << ", id=" << std::hex << conn_id;
-        pj_turn_connect_peer(relay, conn_id, addr, addr_len);
+        pj_turn_connect_peer(relay, conn_id, addr, addr_len); 
 
         {
             MutexGuard lk {apiMutex_};

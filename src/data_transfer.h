@@ -29,6 +29,11 @@ namespace ring {
 
 class Stream;
 
+struct IncomingFileInfo {
+  DRing::DataTransferId id;
+  std::shared_ptr<Stream> stream;
+};
+
 /// Front-end to data transfer service
 class DataTransferFacade
 {
@@ -61,9 +66,9 @@ public:
 
     /// Create an IncomingFileTransfer object.
     /// \return a shared pointer on created Stream object, or nullptr in case of error
-    std::shared_ptr<Stream> onIncomingFileRequest(const DRing::DataTransferInfo& info);
+    IncomingFileInfo onIncomingFileRequest(const DRing::DataTransferInfo &info);
 
-private:
+  private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };

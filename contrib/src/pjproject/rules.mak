@@ -1,6 +1,8 @@
 # PJPROJECT
-PJPROJECT_VERSION := 2.8
-PJPROJECT_URL := https://github.com/pjsip/pjproject/archive/$(PJPROJECT_VERSION).tar.gz
+#PJPROJECT_VERSION := cc76a5f663267169a669a78b337f81fd0a4fe6bc
+PJPROJECT_VERSION := f28e2a10a4b1fa66a2b7ae9ec3cbc120bbf4bb7f
+#PJPROJECT_URL := https://github.com/pjsip/pjproject/archive/$(PJPROJECT_VERSION).tar.gz
+PJPROJECT_URL := https://github.com/AmarOk1412/pjproject/archive/$(PJPROJECT_VERSION).tar.gz
 
 PJPROJECT_OPTIONS := --disable-oss          \
                      --disable-sound        \
@@ -24,8 +26,8 @@ PJPROJECT_OPTIONS := --disable-oss          \
                      --disable-libwebrtc    \
                      --with-gnutls=$(PREFIX)
 
-PJPROJECT_EXTRA_CFLAGS = -g -DPJ_ENABLE_EXTRA_CHECK=1 -DPJ_ICE_MAX_CAND=256 -DPJ_ICE_MAX_CHECKS=1024 -DPJ_ICE_COMP_BITS=2 -DPJ_ICE_MAX_STUN=3 -DPJSIP_MAX_PKT_LEN=8000 -DPJ_ICE_ST_MAX_CAND=32
-PJPROJECT_EXTRA_CXXFLAGS = -g -DPJ_ENABLE_EXTRA_CHECK=1 -DPJ_ICE_MAX_CAND=256 -DPJ_ICE_MAX_CHECKS=1024 -DPJ_ICE_COMP_BITS=2 -DPJ_ICE_MAX_STUN=3 -DPJSIP_MAX_PKT_LEN=8000 -DPJ_ICE_ST_MAX_CAND=32
+PJPROJECT_EXTRA_CFLAGS = -g -DPJ_ENABLE_EXTRA_CHECK=1 -DPJ_ICE_MAX_CAND=256 -DPJ_ICE_MAX_CHECKS=1024 -DPJ_ICE_COMP_BITS=2 -DPJ_ICE_MAX_STUN=3 -DPJSIP_MAX_PKT_LEN=8000 -DPJ_ICE_ST_MAX_CAND=32 -DPJ_HAS_TCP=1
+PJPROJECT_EXTRA_CXXFLAGS = -g -DPJ_ENABLE_EXTRA_CHECK=1 -DPJ_ICE_MAX_CAND=256 -DPJ_ICE_MAX_CHECKS=1024 -DPJ_ICE_COMP_BITS=2 -DPJ_ICE_MAX_STUN=3 -DPJSIP_MAX_PKT_LEN=8000 -DPJ_ICE_ST_MAX_CAND=32 -DPJ_HAS_TCP=1
 
 ifdef HAVE_WIN64
 PJPROJECT_EXTRA_CFLAGS += -DPJ_WIN64=1
@@ -54,7 +56,6 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/pjproject/pj_win.patch
 endif
-	#$(APPLY) $(SRC)/pjproject/gnutls.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/android.patch
 endif
@@ -66,7 +67,9 @@ endif
 	$(APPLY) $(SRC)/pjproject/fix_turn_fallback.patch
 	$(APPLY) $(SRC)/pjproject/fix_ioqueue_ipv6_sendto.patch
 	$(APPLY) $(SRC)/pjproject/add_dtls_transport.patch
-	$(APPLY) $(SRC)/pjproject/rfc6062.patch
+	#$(APPLY) $(SRC)/pjproject/rfc6062.patch
+	#$(APPLY) $(SRC)/pjproject/rfc6544.patch
+	#$(APPLY) $(SRC)/pjproject/debug.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 

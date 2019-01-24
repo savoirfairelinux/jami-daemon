@@ -52,7 +52,7 @@ namespace ring {
 
 using lock = std::lock_guard<std::mutex>;
 
-static constexpr std::size_t IO_BUFFER_SIZE {3000}; ///< Size of char buffer used by IO operations
+static constexpr std::size_t IO_BUFFER_SIZE {100000}; ///< Size of char buffer used by IO operations
 
 //==============================================================================
 
@@ -77,7 +77,6 @@ public:
     ConnectedTurnTransport& turn;
     std::function<bool(const dht::crypto::Certificate&)> peerCertificateCheckFunc;
     dht::crypto::Certificate peerCertificate;
-    std::promise<bool> connected;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -124,11 +123,7 @@ TlsTurnEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 
 void
 TlsTurnEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
-{
-    if (state == tls::TlsSessionState::ESTABLISHED) {
-        connected.set_value(true);
-    }
-}
+{}
 
 void
 TlsTurnEndpoint::Impl::onTlsRxData(UNUSED std::vector<uint8_t>&& buf)
@@ -231,8 +226,16 @@ TcpSocketEndpoint::TcpSocketEndpoint(const IpAddr& addr)
         std::system_error(errno, std::generic_category());
 }
 
+TcpSocketEndpoint::TcpSocketEndpoint(std::shared_ptr<IceTransport> ice)
+    : ice_(std::move(ice))
+{}
+
 TcpSocketEndpoint::~TcpSocketEndpoint()
 {
+    if (ice_) {
+        ice_->stop();
+        return;
+    }
 #ifndef _MSC_VER
     ::close(sock_);
 #else
@@ -241,8 +244,16 @@ TcpSocketEndpoint::~TcpSocketEndpoint()
 }
 
 void
+TcpSocketEndpoint::shutdown() {
+    if (ice_) {
+        ice_->stop();
+    }
+}
+
+void
 TcpSocketEndpoint::connect(const std::chrono::steady_clock::duration& timeout)
 {
+    if (ice_) return;
     int ms =  std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count();
     setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, (const char *)&ms, sizeof(ms));
     setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO, (const char *)&ms, sizeof(ms));
@@ -254,6 +265,10 @@ TcpSocketEndpoint::connect(const std::chrono::steady_clock::duration& timeout)
 int
 TcpSocketEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
 {
+    if (ice_) {
+         if (!ice_->isRunning()) return -1;
+        return ice_->waitForData(0, ms_timeout, ec);
+    }
     for (;;) {
         struct timeval tv;
         tv.tv_sec = ms_timeout / 1000;
@@ -279,6 +294,21 @@ TcpSocketEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
 std::size_t
 TcpSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
 {
+    if (ice_) {
+        if (!ice_->isRunning()) return 0;
+        try {
+          auto res = ice_->waitForData(0, -1, ec);
+          res = ice_->recv(0, reinterpret_cast<unsigned char *>(buf), len);
+          if (res < 0)
+            ec.assign(errno, std::generic_category());
+          else
+            ec.clear();
+          return (res >= 0) ? res : 0;
+        } catch (const std::exception &e) {
+          RING_ERR("TcpSocketEndpoint::read exception: %s", e.what());
+        }
+        return 0;
+    }
     // NOTE: recv buf args is a void* on POSIX compliant system, but it's a char* on mingw
     auto res = ::recv(sock_, reinterpret_cast<char*>(buf), len, 0);
     if (res < 0)
@@ -291,6 +321,17 @@ TcpSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
 std::size_t
 TcpSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code& ec)
 {
+    if (ice_) {
+        if (!ice_->isRunning()) return 0;
+        auto res = 0;
+        res = ice_->send(0, reinterpret_cast<const unsigned char *>(buf), len);
+        if (res < 0) {
+            ec.assign(errno, std::generic_category());
+        } else {
+            ec.clear();
+        }
+        return res;
+    }
     // NOTE: recv buf args is a void* on POSIX compliant system, but it's a char* on mingw
     auto res = ::send(sock_, reinterpret_cast<const char*>(buf), len, 0);
     if (res < 0)
@@ -310,6 +351,10 @@ public:
     Impl(TcpSocketEndpoint& ep, const dht::crypto::Certificate& peer_cert)
         : tr {ep}, peerCertificate {peer_cert} {}
 
+    Impl(TcpSocketEndpoint &ep,
+         std::function<bool(const dht::crypto::Certificate &)> &&cert_check)
+        : tr{ep}, peerCertificateCheckFunc{std::make_unique<std::function<bool(const dht::crypto::Certificate &)>>(std::move(cert_check))}, peerCertificate {null_cert} {}
+
     // TLS callbacks
     int verifyCertificate(gnutls_session_t);
     void onTlsStateChange(tls::TlsSessionState);
@@ -319,6 +364,8 @@ public:
     std::unique_ptr<tls::TlsSession> tls;
     TcpSocketEndpoint& tr;
     const dht::crypto::Certificate& peerCertificate;
+    dht::crypto::Certificate null_cert;
+    std::unique_ptr<std::function<bool(const dht::crypto::Certificate &)>> peerCertificateCheckFunc;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -351,9 +398,18 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
     for (unsigned i=0; i<cert_list_size; i++)
         crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
     auto crt = dht::crypto::Certificate {crt_data};
-    if (crt.getPacked() != peerCertificate.getPacked()) {
-        RING_ERR() << "[TLS-SOCKET] Unexpected peer certificate";
-        return GNUTLS_E_CERTIFICATE_ERROR;
+    if (peerCertificateCheckFunc) {
+        if (!(*peerCertificateCheckFunc)(crt)) {
+          RING_ERR() << "[TLS-SOCKET] Unexpected peer certificate";
+          return GNUTLS_E_CERTIFICATE_ERROR;
+        }
+
+        null_cert = std::move(crt);
+    } else {
+        if (crt.getPacked() != peerCertificate.getPacked()) {
+            RING_ERR() << "[TLS-SOCKET] Unexpected peer certificate";
+            return GNUTLS_E_CERTIFICATE_ERROR;
+        }
     }
 
     return GNUTLS_E_SUCCESS;
@@ -399,7 +455,46 @@ TlsSocketEndpoint::TlsSocketEndpoint(TcpSocketEndpoint& tr,
     pimpl_->tls = std::make_unique<tls::TlsSession>(tr, tls_param, tls_cbs);
 }
 
+TlsSocketEndpoint::TlsSocketEndpoint(TcpSocketEndpoint& tr,
+                                    const Identity& local_identity,
+                                    const std::shared_future<tls::DhParams>& dh_params,
+                                    std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
+    : pimpl_ { std::make_unique<Impl>(tr, std::move(cert_check)) }
+{
+    // Add TLS over TURN
+    tls::TlsSession::TlsSessionCallbacks tls_cbs = {
+        /*.onStateChange = */[this](tls::TlsSessionState state){ pimpl_->onTlsStateChange(state); },
+        /*.onRxData = */[this](std::vector<uint8_t>&& buf){ pimpl_->onTlsRxData(std::move(buf)); },
+        /*.onCertificatesUpdate = */[this](const gnutls_datum_t* l, const gnutls_datum_t* r,
+                                           unsigned int n){ pimpl_->onTlsCertificatesUpdate(l, r, n); },
+        /*.verifyCertificate = */[this](gnutls_session_t session){ return pimpl_->verifyCertificate(session); }
+    };
+    tls::TlsParams tls_param = {
+        /*.ca_list = */     "",
+        /*.peer_ca = */     nullptr,
+        /*.cert = */        local_identity.second,
+        /*.cert_key = */    local_identity.first,
+        /*.dh_params = */   dh_params,
+        /*.timeout = */     Impl::TLS_TIMEOUT,
+        /*.cert_check = */  nullptr,
+    };
+    pimpl_->tls = std::make_unique<tls::TlsSession>(tr, tls_param, tls_cbs);
+}
+
+
 TlsSocketEndpoint::~TlsSocketEndpoint() = default;
+
+bool
+TlsSocketEndpoint::isInitiator() const
+{
+    return pimpl_->tls->isInitiator();
+}
+
+int
+TlsSocketEndpoint::maxPayload() const
+{
+  return pimpl_->tls->maxPayload();
+}
 
 std::size_t
 TlsSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
@@ -491,7 +586,6 @@ public:
     ~PeerConnectionImpl() {
         ctrlChannel << std::make_unique<StopCtrlMsg>();
         endpoint_->shutdown();
-
     }
 
     bool hasStreamWithId(const DRing::DataTransferId& id) {
@@ -499,9 +593,11 @@ public:
                                      [&id](const std::shared_ptr<Stream>& str) {
                                          return str && str->getId() == id; });
         if (isInInput) return true;
-        auto isInOutput = std::any_of(outputs_.begin(), outputs_.end(),
-                                     [&id](const std::shared_ptr<Stream>& str) {
-                                         return str && str->getId() == id; });
+        auto isInOutput =
+            std::any_of(outputs_.begin(), outputs_.end(),
+                        [&id](const std::shared_ptr<Stream> &str) {
+                          return str && str->getId() == id;
+                        });
         return isInOutput;
     }
 
@@ -588,7 +684,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 break;
 
                 case CtrlMsgType::STOP:
-                    return;
+                  return;
 
                 default: RING_ERR("BUG: got unhandled control msg!");  break;
             }
@@ -615,19 +711,17 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     // EOF on outgoing stream => finished
                     return false;
                 }
-
                 if (!bufferPool_.empty()) {
                     stream->write(bufferPool_);
                     bufferPool_.clear();
                 } else if (endpoint_->waitForData(0, ec) > 0) {
-                    buf.resize(IO_BUFFER_SIZE);
-                    endpoint_->read(buf, ec);
-                    if (ec)
-                        throw std::system_error(ec);
-                    return stream->write(buf);
+                  buf.resize(IO_BUFFER_SIZE);
+                  endpoint_->read(buf, ec);
+                  if (ec)
+                    throw std::system_error(ec);
+                  return stream->write(buf);
                 } else if (ec)
                     throw std::system_error(ec);
-
                 return true;
             });
 
@@ -657,7 +751,6 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     return stream->write(buf);
                 } else if (ec)
                     throw std::system_error(ec);
-
                 return true;
             });
 

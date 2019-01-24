@@ -598,7 +598,6 @@ void
 DataTransferFacade::Impl::cancel(DataTransfer& transfer)
 {
     transfer.close();
-    map_.erase(transfer.getId());
 }
 
 std::shared_ptr<DataTransfer>
@@ -773,15 +772,16 @@ DataTransferFacade::info(const DRing::DataTransferId& id,
     return DRing::DataTransferError::unknown;
 }
 
-std::shared_ptr<Stream>
-DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferInfo& info)
-{
-    auto transfer = pimpl_->createIncomingFileTransfer(info);
-    auto filename = transfer->requestFilename();
-    if (!filename.empty())
-        if (transfer->start())
-            return std::static_pointer_cast<Stream>(transfer);
-    return {};
+IncomingFileInfo
+DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferInfo &info) {
+  auto transfer = pimpl_->createIncomingFileTransfer(info);
+  if (!transfer)
+      return {};
+  auto filename = transfer->requestFilename();
+  if (!filename.empty())
+    if (transfer->start())
+      return {transfer->getId(), std::static_pointer_cast<Stream>(transfer)};
+  return {transfer->getId(), nullptr};
 }
 
 } // namespace ring

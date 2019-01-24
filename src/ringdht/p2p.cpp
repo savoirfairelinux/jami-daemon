@@ -21,12 +21,14 @@
 #include "p2p.h"
 
 #include "account_schema.h"
-#include "ringaccount.h"
-#include "peer_connection.h"
-#include "turn_transport.h"
-#include "ftp_server.h"
 #include "channel.h"
+#include "ice_transport.h"
+#include "ftp_server.h"
+#include "manager.h"
+#include "peer_connection.h"
+#include "ringaccount.h"
 #include "security/tls_session.h"
+#include "turn_transport.h"
 
 #include <opendht/default_types.h>
 #include <opendht/rng.h>
@@ -45,6 +47,7 @@ namespace ring {
 static constexpr auto DHT_MSG_TIMEOUT = std::chrono::seconds(20);
 static constexpr auto NET_CONNECTION_TIMEOUT = std::chrono::seconds(10);
 static constexpr auto SOCK_TIMEOUT = std::chrono::seconds(3);
+static constexpr int ICE_INIT_TIMEOUT{10};
 
 using Clock = std::chrono::system_clock;
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
@@ -213,6 +216,7 @@ public:
 
 private:
     std::map<IpAddr, std::unique_ptr<ConnectedTurnTransport>> turnEndpoints_;
+    std::map<std::string, std::unique_ptr<TcpSocketEndpoint>> p2pEndpoints_;
     std::unique_ptr<TurnTransport> turnAuthv4_;
     std::unique_ptr<TurnTransport> turnAuthv6_;
 
@@ -243,6 +247,8 @@ private:
     bool validatePeerCertificate(const dht::crypto::Certificate&, dht::InfoHash&);
 
     std::future<void> loopFut_; // keep it last member
+
+    std::shared_ptr<IceTransport> ice_;
 };
 
 //==============================================================================
@@ -310,10 +316,35 @@ public:
 
 private:
     void process() {
+        // Add ice msg into the addresses
+        // TODO remove publicAddresses in the future and only use the iceMsg
+        // For now it's here for compability with old version
+        auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
+        auto ice_config = parent_.account.getIceOptions();
+        ice_config.tcpEnable = true;
+        ice_config.aggressive = true;
+        parent_.ice_ = iceTransportFactory.createTransport(parent_.account.getAccountID().c_str(), 1, true, ice_config);
+
+        parent_.ice_->setSlaveSession();
+        if (parent_.ice_->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
+            RING_ERR("Cannot initialize ICE session.");
+            cancel();
+            return;
+        }
+
+        auto iceAttributes = parent_.ice_->getLocalAttributes();
+        std::stringstream icemsg;
+        icemsg << iceAttributes.ufrag << "\n";
+        icemsg << iceAttributes.pwd << "\n";
+        for (const auto &addr : parent_.ice_->getLocalCandidates(0)) {
+            icemsg << addr << "\n";
+        }
+
         // Prepare connection request as a DHT message
         PeerConnectionMsg request;
-        request.addresses = std::move(publicAddresses_);
         request.id = ValueIdDist()(parent_.account.rand); /* Random id for the message unicity */
+        request.addresses = {icemsg.str()};
+        request.addresses.insert(request.addresses.end(), publicAddresses_.begin(), publicAddresses_.end());
 
         // Send connection request through DHT
         RING_DBG() << parent_.account << "[CNX] request connection to " << peer_;
@@ -323,6 +354,7 @@ private:
         // Wait for call to onResponse() operated by DHT
         Timeout<Clock> dhtMsgTimeout {DHT_MSG_TIMEOUT};
         dhtMsgTimeout.start();
+        // TODO (sblin) wait_for() instead while loop!
         while (!responseReceived_) {
             if (dhtMsgTimeout) {
                 RING_ERR("no response from DHT to E2E request. Cancel transfer");
@@ -333,7 +365,7 @@ private:
         }
 
         // Check response validity
-        std::unique_ptr<TcpSocketEndpoint> peer_ep;
+        std::shared_ptr<TcpSocketEndpoint> peer_ep;
         if (response_.from != peer_ or
             response_.id != request.id or
             response_.addresses.empty())
@@ -341,60 +373,107 @@ private:
 
         IpAddr relay_addr;
         for (const auto& address: response_.addresses) {
-            if (!(relay_addr = address))
-                throw std::runtime_error("invalid connection reply");
-            try {
-                // Connect to TURN peer using a raw socket
-                RING_DBG() << parent_.account << "[CNX] connecting to TURN relay "
-                           << relay_addr.toString(true, true);
-                peer_ep = std::make_unique<TcpSocketEndpoint>(relay_addr);
-                try {
-                    peer_ep->connect(SOCK_TIMEOUT);
-                } catch (const std::logic_error& e) {
-                    // In case of a timeout
-                    RING_WARN() << "TcpSocketEndpoint timeout for addr " << relay_addr.toString(true, true) << ": " << e.what();
-                    cancel();
-                    return;
-                } catch (...) {
-                    RING_WARN() << "TcpSocketEndpoint failure for addr " << relay_addr.toString(true, true);
-                    cancel();
-                    return;
+            if (!(relay_addr = address)) {
+                // Should be ICE SDP
+                // P2P File transfer. We received an ice SDP message:
+                std::vector<IceCandidate> rem_candidates;
+                std::istringstream stream(address);
+                std::string line, rem_ufrag, rem_pwd;
+                // TODO (sblin) better SDP decoding!
+                while (std::getline(stream, line)) {
+                    if (rem_ufrag.empty()) {
+                        rem_ufrag = line;
+                    } else if (rem_pwd.empty()) {
+                        rem_pwd = line;
+                    } else {
+                        IceCandidate cand;
+                        if (parent_.ice_->getCandidateFromSDP(line, cand)) {
+                          RING_DBG("[Account:%s] add remote ICE candidate: %s",
+                                   parent_.account.getAccountID().c_str(),
+                                   line.c_str());
+                          rem_candidates.emplace_back(std::move(cand));
+                        }
+                    }
                 }
-                break;
-            } catch (std::system_error&) {
-                RING_DBG() << parent_.account << "[CNX] Failed to connect to TURN relay "
-                           << relay_addr.toString(true, true);
+
+                RING_ERR("NEGO ICE");
+
+                if (not parent_.ice_->start({rem_ufrag, rem_pwd},
+                                           rem_candidates)) {
+                  RING_WARN("[Account:%s] start ICE failed - fallback to TURN",
+                            parent_.account.getAccountID().c_str());
+                  break;
+                }
+
+                parent_.ice_->setInitiatorSession();
+                parent_.ice_->waitForNegotiation(10);
+                if (parent_.ice_->isRunning()) {
+                    peer_ep = std::make_shared<TcpSocketEndpoint>(parent_.ice_);
+                    RING_ERR("[Account:%s] ICE negotiation succeed. Starting "
+                             "file transfer",
+                             parent_.account.getAccountID().c_str());
+                    break;
+                } else {
+                  RING_ERR("[Account:%s] ICE negotation failed",
+                           parent_.account.getAccountID().c_str());
+                }
+            } else {
+                try {
+                    // Connect to TURN peer using a raw socket
+                    RING_DBG() << parent_.account << "[CNX] connecting to TURN relay "
+                            << relay_addr.toString(true, true);
+                    peer_ep = std::make_shared<TcpSocketEndpoint>(relay_addr);
+                    try {
+                        peer_ep->connect(SOCK_TIMEOUT);
+                    } catch (const std::logic_error& e) {
+                        // In case of a timeout
+                        RING_WARN() << "TcpSocketEndpoint timeout for addr " << relay_addr.toString(true, true) << ": " << e.what();
+                        cancel();
+                        return;
+                    } catch (...) {
+                        RING_WARN() << "TcpSocketEndpoint failure for addr " << relay_addr.toString(true, true);
+                        cancel();
+                        return;
+                    }
+                    break;
+                } catch (std::system_error&) {
+                    RING_DBG() << parent_.account << "[CNX] Failed to connect to TURN relay "
+                            << relay_addr.toString(true, true);
+                }
             }
         }
 
         // Negotiate a TLS session
         RING_DBG() << parent_.account << "[CNX] start TLS session";
-        auto tls_ep = std::make_unique<TlsSocketEndpoint>(*peer_ep,
-                                                          parent_.account.identity(),
-                                                          parent_.account.dhParams(),
-                                                          *peerCertificate_);
-        // block until TLS is negotiated (with 3 secs of timeout) (must throw in case of error)
+        auto tls_ep = std::make_unique<TlsSocketEndpoint>(
+            *peer_ep, parent_.account.identity(), parent_.account.dhParams(),
+            *peerCertificate_);
+        // block until TLS is negotiated (with 3 secs of
+        // timeout) (must throw in case of error)
         try {
-            tls_ep->waitForReady(SOCK_TIMEOUT);
-        } catch (const std::logic_error& e) {
-            // In case of a timeout
-            RING_WARN() << "TLS connection timeout from peer " << peer_.toString() << ": " << e.what();
-            cancel();
-            return;
+          tls_ep->waitForReady(SOCK_TIMEOUT);
+        } catch (const std::logic_error &e) {
+          // In case of a timeout
+          RING_WARN() << "TLS connection timeout from peer " << peer_.toString()
+                      << ": " << e.what();
+          cancel();
+          return;
         } catch (...) {
-            RING_WARN() << "TLS connection failure from peer " << peer_.toString();
-            cancel();
-            return;
+          RING_WARN() << "TLS connection failure from peer "
+                      << peer_.toString();
+          cancel();
+          return;
         }
 
         // Connected!
-        connection_ = std::make_unique<PeerConnection>([this] { cancel(); }, parent_.account,
-                                                       peer_.toString(), std::move(tls_ep));
+        connection_ = std::make_unique<PeerConnection>(
+            [this] { cancel(); }, parent_.account, peer_.toString(),
+            std::move(tls_ep));
         peer_ep_ = std::move(peer_ep);
 
         connected_ = true;
-        for (auto& cb: listeners_) {
-            cb(connection_.get());
+        for (auto &cb : listeners_) {
+          cb(connection_.get());
         }
     }
 
@@ -406,7 +485,7 @@ private:
     std::atomic_bool responseReceived_ {false};
     PeerConnectionMsg response_;
     std::shared_ptr<dht::crypto::Certificate> peerCertificate_;
-    std::unique_ptr<TcpSocketEndpoint> peer_ep_;
+    std::shared_ptr<TcpSocketEndpoint> peer_ep_;
     std::unique_ptr<PeerConnection> connection_;
 
     std::atomic_bool connected_ {false};
@@ -576,8 +655,12 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
     // Save peer certificate for later TLS session (MUST BE DONE BEFORE TURN PEER AUTHORIZATION)
     certMap_.emplace(cert->getId(), std::make_pair(cert, peer_h));
 
-    auto sendRelayV4 = false, sendRelayV6 = false;
+    // TODO (sblin) move to another thread to avoid blocking
 
+    auto sendRelayV4 = false, sendRelayV6 = false, sendIce = false;
+
+    std::shared_ptr<std::condition_variable> cv =
+        std::make_shared < std::condition_variable>();
     for (auto& ip: request.addresses) {
         try {
             if (IpAddr(ip).isIpv4()) {
@@ -589,14 +672,75 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
                 turnAuthv6_->permitPeer(ip);
                 RING_DBG() << account << "[CNX] authorized peer connection from " << ip;
             } else {
-                RING_DBG() << account << "Unknown family type: " << ip;
+                // P2P File transfer. We received an ice SDP message:
+                RING_DBG() << account << "[CNX] receiving ICE session request";
+                auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
+                auto ice_config = account.getIceOptions();
+                ice_config.tcpEnable = true;
+                ice_config.aggressive = true;
+                ice_config.onRecvReady = [this, cv]() {
+                    cv->notify_one();
+                };
+                ice_ = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, true, ice_config);
+
+                if (ice_->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
+                    RING_ERR("Cannot initialize ICE session.");
+                    break;
+                }
+
+                std::vector<IceCandidate> rem_candidates;
+                std::istringstream stream(ip);
+                std::string line, rem_ufrag, rem_pwd;
+                // TODO (sblin) better SDP decoding!
+                while (std::getline(stream, line)) {
+                    if (rem_ufrag.empty()) {
+                        rem_ufrag = line;
+                    } else if (rem_pwd.empty()) {
+                        rem_pwd = line;
+                    } else {
+                        IceCandidate cand;
+                        if (ice_->getCandidateFromSDP(line, cand)) {
+                            RING_DBG("[Account:%s] add remote ICE candidate: %s", account.getAccountID().c_str(), line.c_str());
+                            rem_candidates.emplace_back(std::move(cand));
+                        }
+                    }
+                }
+
+                RING_ERR("NEGO ICE");
+                ice_->setInitiatorSession();
+                if (not ice_->start({rem_ufrag, rem_pwd}, rem_candidates)) {
+                    RING_WARN("[Account:%s] start ICE failed - fallback to TURN", account.getAccountID().c_str());
+                    break;
+                }
+
+                ice_->waitForNegotiation(10);
+                if (ice_->isRunning()) {
+                    sendIce = true;
+                    RING_ERR("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
+                } else {
+                    RING_ERR("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
+                }
             }
         } catch (const std::exception& e) {
             RING_WARN() << account << "[CNX] ignored peer connection '" << ip << "', " << e.what();
         }
     }
 
+    // Prepare connection request as a DHT message
     std::vector<std::string> addresses;
+    
+    if (sendIce) {
+        // NOTE: This is a shortest version of a real SDP message to save some bits
+        auto iceAttributes = ice_->getLocalAttributes();
+        std::stringstream icemsg;
+        icemsg << iceAttributes.ufrag << "\n";
+        icemsg << iceAttributes.pwd << "\n";
+        for (const auto &addr : ice_->getLocalCandidates(0)) {
+          icemsg << addr << "\n";
+        }
+        addresses = {icemsg.str()};
+    }
+
     auto relayIpv4 = turnAuthv4_->peerRelayAddr();
     if (sendRelayV4 && relayIpv4)
         addresses.emplace_back(relayIpv4.toString(true, true));
@@ -612,7 +756,42 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
         dht::InfoHash::get(PeerConnectionMsg::key_prefix + request.from.toString()),
         request.from, request.respond(addresses));
 
-    // Now wait for a TURN connection from peer (see onTurnPeerConnection)
+    if (sendIce) {
+
+        std::mutex mtx;
+        std::unique_lock<std::mutex> lk{mtx};
+        ice_->setSlaveSession();
+        cv->wait_for(lk, std::chrono::seconds(10));
+        // TODO (fallback here if fafiled)
+        std::unique_ptr<TcpSocketEndpoint> peer_ep =
+            std::make_unique<TcpSocketEndpoint>(ice_);
+        RING_DBG() << account << "[CNX] start TLS session";
+        auto ph = peer_h;
+        auto tls_ep = std::make_unique<TlsSocketEndpoint>(
+            *peer_ep, account.identity(), account.dhParams(),
+            [&, this](const dht::crypto::Certificate &cert) {
+              return validatePeerCertificate(cert, ph);
+            });
+        // block until TLS is negotiated (with 3 secs of timeout)
+        // (must throw in case of error)
+        try {
+          tls_ep->waitForReady(SOCK_TIMEOUT);
+        } catch (const std::exception &e) {
+          // In case of a timeout
+          RING_WARN() << "TLS connection timeout " << e.what();
+          return;
+        }
+
+        auto connection = std::make_unique<PeerConnection>(
+            [] {}, account, peer_h.toString(), std::move(tls_ep));
+        connection->attachOutputStream(std::make_shared<FtpServer>(
+            account.getAccountID(), peer_h.toString()));
+        servers_.emplace(std::make_pair(peer_h, ice_->getRemoteAddress(0)),
+                         std::move(connection));
+        p2pEndpoints_.emplace(
+            std::make_pair(peer_h.toString(), std::move(peer_ep)));
+    }
+    // Now wait for a TURN connection from peer (see onTurnPeerConnection) if fallbacking
 }
 
 void
@@ -658,15 +837,17 @@ DhtPeerConnector::Impl::eventLoop()
         ctrl >> msg;
         switch (msg->type()) {
             case CtrlMsgType::STOP:
-                return;
+              return;
 
             case CtrlMsgType::TURN_PEER_CONNECT:
-                onTurnPeerConnection(ctrlMsgData<CtrlMsgType::TURN_PEER_CONNECT>(*msg));
-                break;
+              onTurnPeerConnection(
+                  ctrlMsgData<CtrlMsgType::TURN_PEER_CONNECT>(*msg));
+              break;
 
             case CtrlMsgType::TURN_PEER_DISCONNECT:
-                onTurnPeerDisconnection(ctrlMsgData<CtrlMsgType::TURN_PEER_DISCONNECT>(*msg));
-                break;
+              onTurnPeerDisconnection(
+                  ctrlMsgData<CtrlMsgType::TURN_PEER_DISCONNECT>(*msg));
+              break;
 
             case CtrlMsgType::CANCEL:
                 {
@@ -676,34 +857,39 @@ DhtPeerConnector::Impl::eventLoop()
                     std::lock_guard<std::mutex> lock(clientsMutex_);
                     clients_.erase(std::make_pair(dev_h, id));
                     // Cancel incoming files
-                    auto it = std::find_if(servers_.begin(), servers_.end(),
-                                [&dev_h, &id](const auto& element) {
-                                    return (element.first.first == dev_h
-                                            && element.second
-                                            && element.second->hasStreamWithId(id));});
-                    if (it == servers_.end()) break;
+                    auto it = std::find_if(
+                        servers_.begin(), servers_.end(),
+                        [&dev_h, &id](const auto &element) {
+                          return (element.first.first == dev_h &&
+                                  element.second &&
+                                  element.second->hasStreamWithId(id));
+                        });
+                    if (it == servers_.end())  {
+                      break;
+                    }
                     auto peer = it->first.second; // tmp copy to prevent use-after-free below
                     servers_.erase(it);
+                    p2pEndpoints_.erase(dev_h.toString());
                     connectedPeers_.erase(peer);
                     turnEndpoints_.erase(peer);
                 }
                 break;
 
             case CtrlMsgType::DHT_REQUEST:
-                onRequestMsg(ctrlMsgData<CtrlMsgType::DHT_REQUEST>(*msg));
-                break;
+              onRequestMsg(ctrlMsgData<CtrlMsgType::DHT_REQUEST>(*msg));
+              break;
 
             case CtrlMsgType::DHT_RESPONSE:
-                onResponseMsg(ctrlMsgData<CtrlMsgType::DHT_RESPONSE>(*msg));
-                break;
+              onResponseMsg(ctrlMsgData<CtrlMsgType::DHT_RESPONSE>(*msg));
+              break;
 
             case CtrlMsgType::ADD_DEVICE:
-                onAddDevice(ctrlMsgData<CtrlMsgType::ADD_DEVICE, 0>(*msg),
-                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 1>(*msg),
-                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 2>(*msg),
-                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 3>(*msg),
-                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 4>(*msg));
-                break;
+              onAddDevice(ctrlMsgData<CtrlMsgType::ADD_DEVICE, 0>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 1>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 2>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 3>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 4>(*msg));
+              break;
 
             default: RING_ERR("BUG: got unhandled control msg!"); break;
         }

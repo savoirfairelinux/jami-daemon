@@ -1,0 +1,120 @@
+ pjnath/src/pjnath/ice_session.c | 30 +++++++++++++++++++++++++++++-
+ pjnath/src/pjnath/ice_strans.c  |  1 +
+ 2 files changed, 30 insertions(+), 1 deletion(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index d6121259..05c7c3d5 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1883,6 +1883,7 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+             pj_stun_msg_add_empty_attr(check->tdata->pool, check->tdata->msg,
+                                        PJ_STUN_ATTR_USE_CANDIDATE);
+             check->nominated = PJ_TRUE;
++			printf("||||||||||||||NOMINATED 1 \n");
+         }
+ 
+         pj_stun_msg_add_uint64_attr(check->tdata->pool, check->tdata->msg,
+@@ -2276,6 +2277,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice, pj_status_t status)
+      // STUN session.
+ 
+     // Initiate STUN transaction to send the request
++	printf("==========pj_stun_session_send_msg BEGIN\n");
+     status_send_msg = pj_stun_session_send_msg(comp->stun_sess, msg_data, PJ_FALSE,
+                                       PJ_FALSE, &rcand->addr,
+                                       pj_sockaddr_get_len(&rcand->addr),
+@@ -2285,7 +2287,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice, pj_status_t status)
+         pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
+         pj_log_pop_indent();
+     }
+-	pj_ice_sess_change_role(ice, PJ_ICE_SESS_ROLE_CONTROLLING); // TODO (sblin) this is when we've got an allocation error, dig if necessary
++    printf("==========pj_stun_session_send_msg END\n");
+ }
+ 
+ 
+@@ -2298,6 +2300,7 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+ 				     const pj_sockaddr_t *src_addr,
+ 				     unsigned src_addr_len)
+ {
++	printf("==========on_stun_request_complete BEGIN WITH STATUS %i\n", status);
+     pj_ice_msg_data *msg_data = (pj_ice_msg_data*) token;
+     pj_ice_sess *ice;
+     pj_ice_sess_check *check, *new_check;
+@@ -2377,6 +2380,22 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+ 	    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_WAITING, 0);
+ 	    perform_check(ice, clist, msg_data->data.req.ckid, 
+ 			  check->nominated || ice->is_nominating);
++
++		printf("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\n");
++		if (status != PJ_SUCCESS) {
++			printf("STATUS HERE: %i\n", status);
++		}
++		/*
++	    if (status == PJ_EPENDING) {
++			check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_PENDING,
++							status);
++		} else if (status != PJ_SUCCESS) {
++			check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
++							status);
++			on_check_complete(ice, check);
++		}
++		*/
++
+ 	    pj_log_pop_indent();
+ 	    pj_grp_lock_release(ice->grp_lock);
+ 	    return;
+@@ -2390,6 +2409,11 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+ 	     (check->nominated ? " (nominated)" : " (not nominated)"),
+ 	     errmsg));
+ 	pj_log_push_indent();
++	if (ice->role == PJ_ICE_SESS_ROLE_CONTROLLED) {
++        printf("||||||||||||||||||||||||||||||||====\n");
++	} else {
++		printf("||||||||||||||||||||||||||||||||111\n");
++	}
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 	on_check_complete(ice, check);
+ 	pj_log_pop_indent();
+@@ -2556,6 +2580,7 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+ 	new_check->prio = CALC_CHECK_PRIO(ice, lcand, check->rcand);
+ 	new_check->state = PJ_ICE_SESS_CHECK_STATE_SUCCEEDED;
+ 	new_check->nominated = check->nominated;
++	printf("||||||||||||||NOMINATED 2 %i \n", new_check->nominated);
+ 	new_check->err_code = PJ_SUCCESS;
+     } else {
+ 	new_check = &ice->valid_list.checks[i];
+@@ -2957,6 +2982,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
+ 	 * Note: DO NOT overwrite nominated flag if one is already set.
+ 	 */
+ 	c->nominated = ((rcheck->use_candidate) || c->nominated);
++	printf("||||||||||||||NOMINATED 3 %i %i \n", (rcheck->use_candidate), (c->nominated));
+ 
+ 	if (c->state == PJ_ICE_SESS_CHECK_STATE_FROZEN ||
+ 	    c->state == PJ_ICE_SESS_CHECK_STATE_WAITING)
+@@ -2997,6 +3023,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
+ 		    {
+ 			/* Set nominated flag */
+ 			vc->nominated = PJ_TRUE;
++			printf("||||||||||||||NOMINATED 4 \n");
+ 
+ 			/* Update valid check and nominated check for the component */
+ 			update_comp_check(ice, vc->lcand->comp_id, vc);
+@@ -3035,6 +3062,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
+ 	c->prio = CALC_CHECK_PRIO(ice, lcand, rcand);
+ 	c->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
+ 	c->nominated = rcheck->use_candidate;
++	printf("||||||||||||||NOMINATED 5 %i \n", rcheck->use_candidate);
+ 	c->err_code = PJ_SUCCESS;
+ 
+ 	nominate = (c->nominated || ice->is_nominating);
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 177fc0e5..7a166c93 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -1843,6 +1843,7 @@ static pj_status_t ice_wait_tcp_connection(pj_ice_sess *ice,
+     pj_ice_strans_comp *comp = ice_st->comp[i];
+     if (comp->stun[0].sock != NULL) {
+ 		status = pj_stun_sock_connect_active(comp->stun[0].sock, &rcand->addr);
++		printf("SECOND TIME IS CONNECTED? %i\n", status);
+ 		pj_stun_session *sess = pj_stun_sock_get_session(comp->stun[0].sock);
+ 		if (!sess) {
+ 			PJ_PERROR(4, (comp->ice_st->obj_name, status,

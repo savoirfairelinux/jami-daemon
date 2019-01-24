@@ -401,11 +401,17 @@ TlsSession::TlsSessionImpl::initCredentials()
     // credentials for handshaking and transmission
     xcred_.reset(new TlsCertificateCredendials());
 
-    if (callbacks_.verifyCertificate)
-        gnutls_certificate_set_verify_function(*xcred_, [](gnutls_session_t session) -> int {
-                auto this_ = reinterpret_cast<TlsSessionImpl*>(gnutls_session_get_ptr(session));
-                return this_->callbacks_.verifyCertificate(session);
-            });
+    RING_ERR("<>>>>>>>>>>>>>>>>>>>><<<<>>>>");
+    if (callbacks_.verifyCertificate) {
+      RING_ERR("<>>>>>>>>>>>>>>>>>>>><22222<<<>>>>");
+
+      gnutls_certificate_set_verify_function(
+          *xcred_, [](gnutls_session_t session) -> int {
+            auto this_ = reinterpret_cast<TlsSessionImpl *>(
+                gnutls_session_get_ptr(session));
+            return this_->callbacks_.verifyCertificate(session);
+          });
+    }
 
     // Load user-given CA list
     if (not params_.ca_list.empty()) {
@@ -833,6 +839,10 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
 {
     int ret;
     size_t retry_count = 0;
+    if (maxPayload_.load() == -1) {
+      maxPayload_ = transport_.maxPayload();
+    }
+    RING_ERR("====> %i vs %i", transport_.maxPayload(), maxPayload_.load());
     do {
         RING_DBG("[TLS] handshake");
         ret = gnutls_handshake(session_);
@@ -1334,8 +1344,11 @@ TlsSession::waitForReady(const std::chrono::steady_clock::duration& timeout)
     else
         pimpl_->stateCondition_.wait_for(lk, timeout, ready);
 
-    if(!ready())
-        throw std::logic_error("Invalid state in TlsSession::waitForReady");
+    if(!ready()) {
+      RING_ERR("Invalid state in TlsSession::waitForReady %i",
+               pimpl_->state_.load());
+      throw std::logic_error("Invalid state in TlsSession::waitForReady");
+    }
 }
 
 int

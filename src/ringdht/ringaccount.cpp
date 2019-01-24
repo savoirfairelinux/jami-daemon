@@ -620,8 +620,9 @@ RingAccount::SIPStartCall(SIPCall& call, IpAddr target)
         return false;
     }
 
-    //const pjsip_tpselector tp_sel = getTransportSelector();
-    const pjsip_tpselector tp_sel = {PJSIP_TPSELECTOR_TRANSPORT, {call.getTransport()->get()}};
+    pjsip_tpselector tp_sel;
+    tp_sel.type = PJSIP_TPSELECTOR_TRANSPORT;
+    tp_sel.u.transport = call.getTransport()->get();
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         RING_ERR("Unable to associate transport for invite session dialog");
         return false;

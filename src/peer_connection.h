@@ -25,6 +25,7 @@
 #include "generic_io.h"
 #include "security/diffie-hellman.h"
 #include "opendht/crypto.h"
+#include "ice_transport.h"
 
 #include <string>
 #include <map>
@@ -113,11 +114,15 @@ class TcpSocketEndpoint : public GenericSocket<uint8_t>
 public:
     using SocketType = GenericSocket<uint8_t>;
     explicit TcpSocketEndpoint(const IpAddr& addr);
+    explicit TcpSocketEndpoint(std::shared_ptr<IceTransport> ice);
     ~TcpSocketEndpoint();
 
+    void shutdown() override;
     bool isReliable() const override { return true; }
-    bool isInitiator() const override { return true; }
-    int maxPayload() const override { return 1280; }
+    bool isInitiator() const override { return ice_ ? ice_->isInitiator() : true; }
+    int maxPayload() const override {
+      return ice_ ? 1280 : 1280;
+    }
     int waitForData(unsigned ms_timeout, std::error_code& ec) const override;
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
@@ -129,8 +134,11 @@ public:
     void connect(const std::chrono::steady_clock::duration& timeout = {});
 
 private:
+    std::shared_ptr<IceTransport> ice_ {nullptr};
+    // TODO separate in two classes
     const IpAddr addr_;
     int sock_ {-1};
+    std::atomic_bool iceStopped {false};
 };
 
 //==============================================================================
@@ -143,15 +151,19 @@ public:
     using Identity = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
                                std::shared_ptr<dht::crypto::Certificate>>;
 
-    TlsSocketEndpoint(TcpSocketEndpoint& parent,
+    TlsSocketEndpoint(TcpSocketEndpoint& tr,
                       const Identity& local_identity,
                       const std::shared_future<tls::DhParams>& dh_params,
                       const dht::crypto::Certificate& peer_cert);
+    TlsSocketEndpoint(TcpSocketEndpoint& tr,
+                    const Identity& local_identity,
+                    const std::shared_future<tls::DhParams>& dh_params,
+                    std::function<bool(const dht::crypto::Certificate&)>&& cert_check);
     ~TlsSocketEndpoint();
 
     bool isReliable() const override { return true; }
-    bool isInitiator() const override { return true; }
-    int maxPayload() const override { return 1280; }
+    bool isInitiator() const override;
+    int maxPayload() const override;
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 
