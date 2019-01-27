@@ -68,6 +68,12 @@ void
 VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 {
     if (auto packet = input_frame.packet()) {
+#if __ANDROID__
+        if (forceKeyFrame_) {
+            emitSignal<DRing::VideoSignal::RequestKeyFrame>();
+            forceKeyFrame_ = 0;
+        }
+#endif
         videoEncoder_->send(*packet);
     } else {
         bool is_keyframe = forceKeyFrame_ > 0
