@@ -180,7 +180,7 @@ getDebugMode(void)
 void
 strErr(void)
 {
-#ifdef __GLIBC__
+#if defined(__GLIBC__) || (defined(__ANDROID__) && __ANDROID_API__ >= 24)
     RING_ERR("%m");
 #else
     char buf[1000];
