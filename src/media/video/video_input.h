@@ -114,6 +114,10 @@ private:
     void createDecoder();
     void deleteDecoder();
 
+    int rotation_ = 0;
+    AVBufferRef* frameDataBuffer_;
+    void setRotation(int angle);
+
     // true if decOpts_ is ready to use, false if using promise/future
     bool initCamera(const std::string& device);
     bool initX11(std::string display);

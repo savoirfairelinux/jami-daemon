@@ -44,6 +44,9 @@
 #else
 #include <unistd.h>
 #endif
+extern "C" {
+#include <libavutil/display.h>
+}
 
 namespace ring { namespace video {
 
@@ -116,6 +119,12 @@ void VideoInput::process()
             auto& frame = getNewFrame();
             AVPixelFormat format = getPixelFormat();
 
+            if (decOpts_.orientation != rotation_) {
+                setRotation(decOpts_.orientation);
+                av_frame_new_side_data_from_buf(frame.pointer(), AV_FRAME_DATA_DISPLAYMATRIX, frameDataBuffer_);
+                rotation_ = decOpts_.orientation;
+            }
+
             buffer.status = BUFFER_PUBLISHED;
             frame.setFromMemory((uint8_t*)buffer.data, format, decOpts_.width, decOpts_.height,
                                 [wthis](uint8_t* ptr) {
@@ -130,6 +139,19 @@ void VideoInput::process()
             break;
         }
     }
+}
+
+void
+VideoInput::setRotation(int angle)
+{
+    auto localFrameDataBuffer = av_buffer_alloc(sizeof(int32_t) * 9);
+
+    if (localFrameDataBuffer)
+        av_display_rotation_set(reinterpret_cast<int32_t*>(localFrameDataBuffer->data), angle);
+
+    frameDataBuffer_ = localFrameDataBuffer;
+
+    av_buffer_unref(&localFrameDataBuffer);
 }
 
 void VideoInput::cleanup()
