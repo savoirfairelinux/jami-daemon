@@ -28,6 +28,7 @@
 
 #include "video_base.h"
 #include <videomanager_interface.h>
+#include "media_filter.h"
 
 #include <string>
 #include <vector>
@@ -69,6 +70,12 @@ class SinkClient : public VideoFramePassiveReader
         bool start() noexcept;
         bool stop() noexcept;
 
+        /**
+          * Set rotation to apply to the video
+          * @param rotation Angle to apply
+          */
+        void setRotation(int rotation);
+
         void setFrameSize(int width, int height);
 
         void registerTarget(const DRing::SinkTarget& target) noexcept {
@@ -81,8 +88,10 @@ class SinkClient : public VideoFramePassiveReader
         int width_ {0};
         int height_ {0};
         bool started_ {false}; // used to arbitrate client's stop signal.
+        int rotation_ {0};
         DRing::SinkTarget target_;
         std::unique_ptr<VideoScaler> scaler_;
+        std::unique_ptr<MediaFilter> filter_;
 
 #ifdef DEBUG_FPS
         unsigned frameCount_;

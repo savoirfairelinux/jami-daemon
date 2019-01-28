@@ -27,6 +27,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "smartools.h"
+#include "sip/sipcall.h"
 
 #include <map>
 #include <unistd.h>
@@ -72,6 +73,14 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 
     if (is_keyframe)
         --forceKeyFrame_;
+
+    if (frameNumber_%300 == 0) {
+        auto call = std::static_pointer_cast<SIPCall>(Manager::instance().getCurrentCall());
+        if (call) {
+            std::srand(time(NULL));
+            call->setVideoOrientation(int(std::rand()%4)*90);
+        }
+    }
 
     if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
         RING_ERR("encoding failed");
