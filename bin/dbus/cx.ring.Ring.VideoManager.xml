@@ -117,6 +117,15 @@
             </arg>
         </method>
 
+        <method name="setDeviceOrientation" tp:name-for-bindings="setDeviceOrientation">
+            <arg type="s" name="name" direction="in">
+                <tp:docstring>Device name</tp:docstring>
+            </arg>
+            <arg type="i" name="angle" direction="in">
+                <tp:docstring>Angle of device in degrees (counterclockwise)</tp:docstring>
+            </arg>
+        </method>
+
         <method name="getRenderer" tp:name-for-bindings="getRenderer">
             <tp:docstring>Returns a map of information about a call's renderer.</tp:docstring>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
