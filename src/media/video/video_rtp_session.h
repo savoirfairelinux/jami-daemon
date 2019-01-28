@@ -69,6 +69,14 @@ public:
     void restartSender() override;
     void stop() override;
 
+    /**
+      * Set video orientation
+      *
+      * Send to the receive thread rotation to apply to the video (clockwise)
+      *
+      * @param rotation Rotation in degrees (clockwise)
+      */
+    void setRotation(int rotation);
     void forceKeyFrame();
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();

@@ -63,6 +63,13 @@ public:
     MediaStream getInfo() const;
     void triggerKeyFrameRequest();
 
+    /**
+      * Set angle of rotation to apply to the video by the decoder
+      *
+      * @param angle Angle of rotation in degrees (clockwise)
+      */
+    void setRotation(int angle);
+
 private:
     NON_COPYABLE(VideoReceiveThread);
 
@@ -81,6 +88,8 @@ private:
     std::shared_ptr<SinkClient> sink_;
     bool isReset_;
     uint16_t mtu_;
+    int rotation_;
+    AVBufferRef* frameDataBuffer;
 
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();

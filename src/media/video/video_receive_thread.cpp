@@ -29,6 +29,10 @@
 #include "logger.h"
 #include "smartools.h"
 
+extern "C" {
+#include <libavutil/display.h>
+}
+
 #include <unistd.h>
 #include <map>
 
@@ -48,6 +52,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , mtu_(mtu)
+    , rotation_(0)
     , requestKeyFrameCallback_(0)
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::process, this),
@@ -57,6 +62,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
 VideoReceiveThread::~VideoReceiveThread()
 {
     loop_.join();
+    av_buffer_unref(&frameDataBuffer);
 }
 
 void
@@ -180,8 +186,16 @@ void VideoReceiveThread::addIOContext(SocketPair& socketPair)
 
 bool VideoReceiveThread::decodeFrame()
 {
-    auto& frame = getNewFrame();
+    auto& frame = getNewFrame();  // VideoFrame
     const auto ret = videoDecoder_->decode(frame);
+
+    int32_t matrix_rotation[9];
+    frameDataBuffer = av_buffer_alloc(sizeof(int32_t) * 9);
+    if (frameDataBuffer) {
+        av_display_rotation_set(matrix_rotation, rotation_);
+        memcpy(frameDataBuffer->data, matrix_rotation, sizeof(matrix_rotation));
+        av_frame_new_side_data_from_buf(frame.pointer(), AV_FRAME_DATA_DISPLAYMATRIX, frameDataBuffer);
+    }
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
@@ -257,6 +271,12 @@ VideoReceiveThread::triggerKeyFrameRequest()
 {
     if (requestKeyFrameCallback_)
         requestKeyFrameCallback_(id_);
+}
+
+void
+VideoReceiveThread::setRotation(int angle)
+{
+    rotation_ = angle;
 }
 
 }} // namespace ring::video
