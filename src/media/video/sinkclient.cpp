@@ -313,10 +313,62 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 {}
 
 void
+SinkClient::setRotation(int rotation)
+{
+    if (rotation_ == rotation || width_ == 0 || height_ == 0) 
+        return;
+
+    rotation_ = rotation;
+    RING_WARN("Rotation set to %d", rotation_);
+    std::string in_name = "in1";
+
+    std::stringstream ss;
+    ss << "[" << in_name << "] ";
+
+    switch (rotation_) {
+        case 90 :
+        case -270 :
+            ss << "transpose=1";
+            break;
+        case 180 :
+        case -180 :
+            ss << "transpose=2,transpose=2";
+            break;
+        case 270 :
+        case -90 :
+            ss << "transpose=2";
+            break;
+        default :
+            ss << " null";
+    }
+
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
+    const int format = AV_PIX_FMT_RGBA;
+#else
+    const int format = AV_PIX_FMT_BGRA;
+#endif
+
+    const auto one = rational<int>(1);
+    std::vector<MediaStream> media_stream_vector;
+    
+    media_stream_vector.emplace_back(in_name, format, one, width_, height_, one, one);
+    RING_WARN() << media_stream_vector[0] << " " << ss.str();
+
+    filter_.reset(new MediaFilter);
+    filter_->initialize(ss.str(), media_stream_vector);
+}
+
+void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
     auto& f = *std::static_pointer_cast<VideoFrame>(frame_p);
+
+    if (filter_) {
+        filter_->feedInput(f.pointer(), "in1");
+        auto filtered_frame = filter_->readOutput();
+        f.setFromMemory(filtered_frame->data[0], filtered_frame->format, filtered_frame->width, filtered_frame->height);
+    }
 
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
