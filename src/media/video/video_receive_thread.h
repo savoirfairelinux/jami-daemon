@@ -62,6 +62,7 @@ public:
     int getPixelFormat() const;
     MediaStream getInfo() const;
     void triggerKeyFrameRequest();
+    void setRotation(int angle);
 
 private:
     NON_COPYABLE(VideoReceiveThread);

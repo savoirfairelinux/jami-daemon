@@ -50,6 +50,11 @@
 #include <cerrno>
 #include <cstring>
 #include <stdexcept>
+#include <utility>
+
+#include <sys/types.h> // added for test
+
+#define FILTER_INPUT_NAME "in"
 
 namespace ring { namespace video {
 
@@ -78,7 +83,7 @@ class SemGuardLock {
 class ShmHolder
 {
     public:
-        ShmHolder(const std::string& name={});
+        ShmHolder(const std::string& name = {});
         ~ShmHolder();
 
         std::string name() const noexcept {
@@ -313,10 +318,79 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 {}
 
 void
+SinkClient::setRotation(int rotation)
+{
+    if (rotation_ == rotation || width_ == 0 || height_ == 0)
+        return;
+
+    rotation_ = rotation;
+    RING_WARN("Rotation set to %d", rotation_);
+    std::string in_name = FILTER_INPUT_NAME;
+
+    std::stringstream ss;
+    ss << "[" << in_name << "] ";
+    
+    ss << "format=rgb32,";
+
+    switch (rotation_) {
+        case 90 :
+        case -270 :
+            ss << "rotate=PI/2";
+            //ss << "transpose=1";
+            break;
+        case 180 :
+        case -180 :
+            ss << "rotate=PI";
+            break;
+        case 270 :
+        case -90 :
+            ss << "rotate=-PI/2";
+            //ss << "transpose=2";
+            break;
+        default :
+            ss << "null";
+    }
+    
+    const int format = AV_PIX_FMT_RGB32;
+    const auto one = rational<int>(1);
+    std::vector<MediaStream> media_stream_vector;
+
+    media_stream_vector.emplace_back(in_name, format, one, width_, height_, one, one);
+
+    std::lock_guard<std::mutex> lk(mutex_);
+    if (!rotation_)
+        filter_.reset();
+    else {
+        filter_.reset(new MediaFilter);
+        auto ret = filter_->initialize(ss.str(), media_stream_vector);
+        if (ret < 0) {
+            RING_ERR() << "filter init fail";
+            filter_ = nullptr;
+            rotation_ = 0;
+        }
+    }
+}
+
+void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
     auto& f = *std::static_pointer_cast<VideoFrame>(frame_p);
+    
+    std::lock_guard<std::mutex> lk(mutex_);
+    if (filter_) {
+        filter_->feedInput(f.pointer(), FILTER_INPUT_NAME);
+        AVFrame* filtered_frame = nullptr;
+        filtered_frame = filter_->readOutput();
+        if (!filtered_frame)
+            RING_ERR() << "FAIL READ OUTPUT FILTER";
+        else {
+            if ((width_ != filtered_frame->width) || (height_ != filtered_frame->height))
+                setFrameSize(filtered_frame->width, filtered_frame->height);
+            f.setFromMemory(filtered_frame->data[0], filtered_frame->format, 
+                            filtered_frame->width, filtered_frame->height);
+        }
+    }
 
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
@@ -341,6 +415,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         VideoScaler scaler;
         const int width = f.width();
         const int height = f.height();
+
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
         const int format = AV_PIX_FMT_RGBA;
 #else
