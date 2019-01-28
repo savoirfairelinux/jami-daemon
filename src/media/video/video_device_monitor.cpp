@@ -130,6 +130,15 @@ VideoDeviceMonitor::setDefaultDevice(const std::string& name)
     }
 }
 
+void
+VideoDeviceMonitor::setDeviceOrientation(const std::string& name, int angle)
+{
+    const auto itd = findDeviceByName(name);
+    if (itd != devices_.cend()) {
+        itd->setOrientation(angle);
+    }
+}
+
 DeviceParams
 VideoDeviceMonitor::getDeviceParams(const std::string& name) const
 {

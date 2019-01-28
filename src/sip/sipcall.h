@@ -97,6 +97,13 @@ public: // overridden
     void switchInput(const std::string& resource) override;
     void peerHungup() override;
     void carryingDTMFdigits(char code) override;
+
+    /**
+      * Send device orientation through SIP INFO
+      * @param rotation Device orientation (0/90/180/270) (counterclockwise)
+      */
+    void setVideoOrientation(int rotation);
+
     void sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from) override;
     void removeCall() override;
@@ -248,6 +255,13 @@ private:
     std::vector<IceCandidate> getAllRemoteCandidates();
 
     void merge(Call& call) override; // not public - only called by Call
+
+    inline std::shared_ptr<SIPCall> shared() {
+        return std::static_pointer_cast<SIPCall>(shared_from_this());
+    }
+    inline std::weak_ptr<SIPCall> weak() {
+        return std::weak_ptr<SIPCall>(shared());
+    }
 
     std::unique_ptr<AudioRtpSession> avformatrtp_;
 
