@@ -74,6 +74,9 @@ public:
     ~VideoInput();
 
     // as VideoGenerator
+    const std::string& getName() const {
+      return currentResource_;
+    }
     int getWidth() const;
     int getHeight() const;
     AVPixelFormat getPixelFormat() const;
@@ -113,6 +116,10 @@ private:
 
     void createDecoder();
     void deleteDecoder();
+
+    int rotation_ = 0;
+    std::atomic<AVBufferRef*> frameDataBuffer_;
+    void setRotation(int angle);
 
     // true if decOpts_ is ready to use, false if using promise/future
     bool initCamera(const std::string& device);

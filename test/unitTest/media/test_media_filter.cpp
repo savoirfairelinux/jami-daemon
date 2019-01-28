@@ -161,10 +161,10 @@ MediaFilterTest::testAudioFilter()
     CPPUNIT_ASSERT(filter_->feedInput(frame, "in1") >= 0);
     auto out = filter_->readOutput();
     CPPUNIT_ASSERT(out);
+    CPPUNIT_ASSERT(out->pointer());
 
     // check if the filter worked
-    CPPUNIT_ASSERT(out->format == AV_SAMPLE_FMT_U8);
-    av_frame_free(&out);
+    CPPUNIT_ASSERT(out->pointer()->format == AV_SAMPLE_FMT_U8);
 }
 
 void
@@ -210,7 +210,7 @@ MediaFilterTest::testAudioMixing()
         // read output
         auto out = filter_->readOutput();
         CPPUNIT_ASSERT(out);
-        av_frame_free(&out);
+        CPPUNIT_ASSERT(out->pointer());
 
         av_frame_unref(frame1);
         av_frame_unref(frame2);
@@ -266,10 +266,10 @@ MediaFilterTest::testVideoFilter()
     CPPUNIT_ASSERT(filter_->feedInput(extra, top) >= 0);
     auto out = filter_->readOutput();
     CPPUNIT_ASSERT(out);
+    CPPUNIT_ASSERT(out->pointer());
 
     // check if the filter worked
-    CPPUNIT_ASSERT(out->width == width1 && out->height == height1);
-    av_frame_free(&out);
+    CPPUNIT_ASSERT(out->pointer()->width == width1 && out->pointer()->height == height1);
 }
 
 void
