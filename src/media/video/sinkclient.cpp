@@ -55,6 +55,12 @@
 #include <cstring>
 #include <stdexcept>
 
+extern "C" {
+#include <libavutil/display.h>
+}
+
+#define FILTER_INPUT_NAME "in"
+
 namespace ring { namespace video {
 
 #if HAVE_SHM
@@ -82,7 +88,7 @@ class SemGuardLock {
 class ShmHolder
 {
     public:
-        ShmHolder(const std::string& name={});
+        ShmHolder(const std::string& name = {});
         ~ShmHolder();
 
         std::string name() const noexcept {
@@ -372,6 +378,12 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
     auto& f = *std::static_pointer_cast<VideoFrame>(frame_p);
+
+    AVFrameSideData* side_data = av_frame_get_side_data(f.pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+    if (side_data) {
+        int32_t* matrix_rotation = (int32_t*)side_data->data;
+        RING_WARN() << "rotation received : " << av_display_rotation_get(matrix_rotation);
+    }
 
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
