@@ -63,6 +63,15 @@ public:
     MediaStream getInfo() const;
     void triggerKeyFrameRequest();
 
+    /**
+      * Send rotation to the sink client
+      *
+      * Send angle to apply to the video flux by the sink client
+      *
+      * @param Angle of the rotation in degrees
+      */
+    void setRotation(int angle);
+
 private:
     NON_COPYABLE(VideoReceiveThread);
 
@@ -81,6 +90,8 @@ private:
     std::shared_ptr<SinkClient> sink_;
     bool isReset_;
     uint16_t mtu_;
+    int rotation_;
+    AVBufferRef* frameDataBuffer;
 
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
