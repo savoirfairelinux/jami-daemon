@@ -419,7 +419,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         }
 
         if (pkt.size) {
-            if (send(pkt))
+            if (send(pkt, streamIdx))
                 break;
         }
     }
@@ -429,15 +429,17 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
 }
 
 bool
-MediaEncoder::send(AVPacket& pkt)
+MediaEncoder::send(AVPacket& pkt, int streamIdx)
 {
-    auto streamIdx = currentStreamIdx_;
+    if (streamIdx < 0)
+        streamIdx = currentStreamIdx_;
+    auto encoderCtx = encoders_[streamIdx];
     pkt.stream_index = streamIdx;
     if (pkt.pts != AV_NOPTS_VALUE)
-        pkt.pts = av_rescale_q(pkt.pts, AVRational{1, 20},
+        pkt.pts = av_rescale_q(pkt.pts, encoderCtx->time_base,
                                outputCtx_->streams[streamIdx]->time_base);
     if (pkt.dts != AV_NOPTS_VALUE)
-        pkt.dts = av_rescale_q(pkt.dts, AVRational{1, 20},
+        pkt.dts = av_rescale_q(pkt.dts, encoderCtx->time_base,
                                outputCtx_->streams[streamIdx]->time_base);
     // write the compressed frame
     auto ret = av_write_frame(outputCtx_, &pkt);
