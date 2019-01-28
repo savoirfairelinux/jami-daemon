@@ -97,6 +97,13 @@ public: // overridden
     void switchInput(const std::string& resource) override;
     void peerHungup() override;
     void carryingDTMFdigits(char code) override;
+
+    /**
+      * Send device orientation throw SIP INFO
+      * @param rotation Device orientation (0/90/180/270) (counterclockwise)
+      */
+    void setVideoOrientation(int rotation);
+
     void sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from) override;
     void removeCall() override;
