@@ -461,11 +461,10 @@ MediaRecorder::filterAndEncode(MediaFilter* filter, int streamIdx)
         while (auto frame = filter->readOutput()) {
             try {
                 std::lock_guard<std::mutex> lk(mutex_);
-                encoder_->encode(frame, streamIdx);
+                encoder_->encode(frame->pointer(), streamIdx);
             } catch (const MediaEncoderException& e) {
                 RING_ERR() << "Failed to record frame: " << e.what();
             }
-            av_frame_free(&frame);
         }
     }
 }

@@ -347,6 +347,12 @@ setDefaultDevice(const std::string& name)
     ring::Manager::instance().saveConfig();
 }
 
+void
+setDeviceOrientation(const std::string& name, int angle)
+{
+    ring::Manager::instance().getVideoManager().setDeviceOrientation(name, angle);
+}
+
 std::map<std::string, std::string>
 getDeviceParams(const std::string& name)
 {
@@ -617,6 +623,12 @@ getAudioInput(const std::string& id)
     auto input = std::make_shared<AudioInput>(id);
     vmgr.audioInputs[id] = input;
     return input;
+}
+
+void
+VideoManager::setDeviceOrientation(const std::string& name, int angle)
+{
+    videoDeviceMonitor.setDeviceOrientation(name, angle);
 }
 
 } // namespace ring
