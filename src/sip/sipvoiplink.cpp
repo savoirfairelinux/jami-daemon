@@ -64,6 +64,7 @@
 
 #include <istream>
 #include <algorithm>
+#include <regex>
 
 namespace ring {
 
@@ -755,6 +756,10 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
     RING_DBG("Sending video keyframe request via SIP INFO");
     try {
         call->sendSIPInfo(BODY, "media_control+xml");
+        /* JUST ADDED FOR TEST - Begin */
+        std::srand(time(NULL));
+        call->setVideoOrientation(int(std::rand()%360));
+        /* JUST ADDED FOR TEST - End   */
     } catch (const std::exception& e) {
         RING_WARN("Error sending video keyframe request: %s", e.what());
     }
@@ -991,6 +996,7 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
         /* Apply and answer the INFO request */
         pj_strset(&control_st, (char *) body->data, body->len);
         const pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
+        const pj_str_t DEVICE_ORIENTATION = CONST_PJ_STR("device_orientation");
 
         if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
 #ifdef RING_VIDEO
@@ -998,6 +1004,27 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
             call.getVideoRtp().forceKeyFrame();
 #endif
             return true;
+        } else if (pj_strstr(&control_st, &DEVICE_ORIENTATION)) {
+            int rotation = 0;
+            std::string body_msg = control_st.ptr;
+            std::smatch matched_pattern;
+            std::regex str_pattern("device_orientation=([-+]?)[0-9]+");
+            std::regex int_pattern("([-+]?)[0-9]+");
+
+            std::regex_search(body_msg, matched_pattern, str_pattern);
+            if (matched_pattern.ready() && !matched_pattern.empty()) {
+                body_msg = matched_pattern[0];
+
+                std::regex_search(body_msg, matched_pattern, int_pattern);
+                if (matched_pattern.ready() && !matched_pattern.empty()) {
+                    rotation = std::stoi(matched_pattern[0]);
+
+                    RING_DBG("Rotate video %ddeg.", rotation);
+
+                    // TODO : apply rotation to the video decoder
+                    return true;
+                }
+            }
         }
     }
 
