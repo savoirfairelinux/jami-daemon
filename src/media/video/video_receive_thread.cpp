@@ -28,6 +28,7 @@
 #include "sinkclient.h"
 #include "logger.h"
 #include "smartools.h"
+#include <libavutil/display.h>
 
 #include <unistd.h>
 #include <map>
@@ -48,6 +49,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , mtu_(mtu)
+    , rotation_(0)
     , requestKeyFrameCallback_(0)
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::process, this),
@@ -57,6 +59,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
 VideoReceiveThread::~VideoReceiveThread()
 {
     loop_.join();
+    delete frameDataBuffer;
 }
 
 void
@@ -180,8 +183,13 @@ void VideoReceiveThread::addIOContext(SocketPair& socketPair)
 
 bool VideoReceiveThread::decodeFrame()
 {
-    auto& frame = getNewFrame();
+    auto& frame = getNewFrame();  // VideoFrame
     const auto ret = videoDecoder_->decode(frame);
+
+    int32_t matrix_rotation[9];
+
+    av_display_rotation_set(matrix_rotation, rotation_);
+    av_frame_new_side_data_from_buf(frame.pointer(), AV_FRAME_DATA_DISPLAYMATRIX, frameDataBuffer->get());
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
@@ -257,6 +265,14 @@ VideoReceiveThread::triggerKeyFrameRequest()
 {
     if (requestKeyFrameCallback_)
         requestKeyFrameCallback_(id_);
+}
+
+void
+VideoReceiveThread::setRotation(int angle)
+{
+    // TODO : remove setRotation() in sinkClient.h/cpp files
+    //sink_->setRotation(angle);
+    rotation_ = angle;
 }
 
 }} // namespace ring::video
