@@ -259,4 +259,10 @@ VideoReceiveThread::triggerKeyFrameRequest()
         requestKeyFrameCallback_(id_);
 }
 
+void
+VideoReceiveThread::setRotation(int angle)
+{
+    sink_->setRotation(angle);
+}
+
 }} // namespace ring::video

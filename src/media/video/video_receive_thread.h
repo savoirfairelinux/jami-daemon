@@ -63,6 +63,15 @@ public:
     MediaStream getInfo() const;
     void triggerKeyFrameRequest();
 
+    /**
+      * Send rotation to the sink client
+      *
+      * Send angle to apply to the video flux by the sink client
+      *
+      * @param Angle of the rotation in degrees
+      */
+    void setRotation(int angle);
+
 private:
     NON_COPYABLE(VideoReceiveThread);
 
