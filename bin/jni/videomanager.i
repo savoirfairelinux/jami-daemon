@@ -50,6 +50,7 @@ public:
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
     virtual std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath) {}
     virtual void stopLocalRecorder(const std::string& filepath) {}
+    virtual void setDeviceOrientation(const std::string&, int angle) {}
 };
 %}
 
@@ -390,6 +391,7 @@ void applySettings(const std::string& name, const std::map<std::string, std::str
 
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
+void setDeviceOrientation(const std::string& name, int angle);
 uint8_t* obtainFrame(int length);
 void releaseFrame(uint8_t* frame);
 void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);

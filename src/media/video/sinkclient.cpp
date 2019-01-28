@@ -38,6 +38,7 @@
 #include "libav_utils.h"
 #include "video_scaler.h"
 #include "smartools.h"
+#include "media_filter.h"
 
 #ifdef RING_ACCEL
 #include "accel.h"
@@ -54,8 +55,15 @@
 #include <cerrno>
 #include <cstring>
 #include <stdexcept>
+#include <cmath>
+
+extern "C" {
+#include <libavutil/display.h>
+}
 
 namespace ring { namespace video {
+
+const constexpr char FILTER_INPUT_NAME[] = "in";
 
 #if HAVE_SHM
 // RAII class helper on sem_wait/sem_post sempahore operations
@@ -82,7 +90,7 @@ class SemGuardLock {
 class ShmHolder
 {
     public:
-        ShmHolder(const std::string& name={});
+        ShmHolder(const std::string& name = {});
         ~ShmHolder();
 
         std::string name() const noexcept {
@@ -317,6 +325,67 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 {}
 
 void
+SinkClient::setRotation(int rotation)
+{
+    if (rotation_ == rotation || width_ == 0 || height_ == 0)
+        return;
+
+    rotation_ = rotation;
+    RING_WARN("Rotation set to %d", rotation_);
+    auto in_name = FILTER_INPUT_NAME;
+
+    std::stringstream ss;
+
+    ss << "[" << in_name << "] " << "format=rgb32,";  // avoid https://trac.ffmpeg.org/ticket/5356
+
+    switch (rotation_) {
+        case 90 :
+        case -270 :
+            //ss << "rotate=-PI/2";
+            ss << "transpose=2";
+            break;
+        case 180 :
+        case -180 :
+            ss << "rotate=PI";
+            break;
+        case 270 :
+        case -90 :
+            //ss << "rotate=PI/2";
+            ss << "transpose=1";
+            break;
+        default :
+            ss << "null";
+    }
+
+    const auto format = AV_PIX_FMT_RGB32;
+    const auto one = rational<int>(1);
+    std::vector<MediaStream> msv;
+    msv.emplace_back(in_name, format, one, width_, height_, one, one);
+
+    if (!rotation_) {
+        filter_.reset();
+    }
+    else {
+        filter_.reset(new MediaFilter);
+        auto ret = filter_->initialize(ss.str(), msv);
+        if (ret < 0) {
+            RING_ERR() << "filter init fail";
+            filter_ = nullptr;
+            rotation_ = 0;
+        }
+    }
+}
+
+template<typename Derived, typename Base>
+std::unique_ptr<Derived>
+static_unique_ptr_cast( std::unique_ptr<Base>&& p )
+{
+    auto d = static_cast<Derived *>(p.release());
+    return std::unique_ptr<Derived>(d);
+}
+
+
+void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
@@ -350,17 +419,40 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     if (doTransfer) {
 #ifdef RING_ACCEL
         auto framePtr = transferToMainMemory(f, AV_PIX_FMT_NV12);
-        const auto& swFrame = *framePtr;
+        //auto& swFrame = *framePtr;
 #else
-        const auto& swFrame = f;
+        //auto& swFrame = f;
+        auto& framePtr = f;
 #endif
+        AVFrameSideData* side_data = av_frame_get_side_data(framePtr->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+        if (side_data) {
+            auto matrix_rotation = reinterpret_cast<int32_t*>(side_data->data);
+            RING_WARN() << "rotation received : " << av_display_rotation_get(matrix_rotation);
+            auto angle = av_display_rotation_get(matrix_rotation);
+            if (!std::isnan(angle))
+                setRotation(angle);
+            if (filter_) {
+                filter_->feedInput(framePtr->pointer(), FILTER_INPUT_NAME);
+                framePtr = static_unique_ptr_cast<VideoFrame>(filter_->readOutput());
+                if (framePtr) {
+                    auto frame_ptr = framePtr->pointer();
+                    RING_ERR() << "filtered frame width " << frame_ptr->width << " height " << frame_ptr->height;
+                    /*framePtr->setFromMemory(frame_ptr->data[0], frame_ptr->format,
+                                    frame_ptr->width, frame_ptr->height);*/
+                }
+            }
+            if (framePtr->height() != height_ || framePtr->width() != width_) {
+                setFrameSize(0, 0);
+                setFrameSize(framePtr->width(), framePtr->height());
+            }
+        }
 #if HAVE_SHM
-        shm_->renderFrame(swFrame);
+        shm_->renderFrame(*framePtr);
 #endif
         if (target_.pull) {
             VideoFrame dst;
-            const int width = swFrame.width();
-            const int height = swFrame.height();
+            const int width = framePtr->width();
+            const int height = framePtr->height();
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
             const int format = AV_PIX_FMT_RGBA;
 #else
@@ -373,7 +465,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                     buffer_ptr->width = width;
                     buffer_ptr->height = height;
                     dst.setFromMemory(buffer_ptr->ptr, format, width, height);
-                    scaler_->scale(swFrame, dst);
+                    scaler_->scale(*framePtr, dst);
                     target_.push(std::move(buffer_ptr));
                 }
             }

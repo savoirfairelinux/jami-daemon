@@ -34,6 +34,9 @@
 
 #include <map>
 #include <unistd.h>
+extern "C" {
+#include <libavutil/display.h>
+}
 
 namespace ring { namespace video {
 
@@ -88,6 +91,26 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         if (is_keyframe)
             --forceKeyFrame_;
 
+        AVFrameSideData* side_data = av_frame_get_side_data(input_frame.pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+        if (side_data) {
+            auto matrix_rotation = reinterpret_cast<int32_t*>(side_data->data);
+            auto angle = av_display_rotation_get(matrix_rotation);
+            if (rotation_ != angle) {
+                rotation_ = angle;
+                if (changeOrientationCallback_)
+                    changeOrientationCallback_(rotation_);
+            }
+        }
+
+        if (frameNumber_%300 == 0) {
+            auto call = std::static_pointer_cast<SIPCall>(Manager::instance().getCurrentCall());
+            if (call) {
+                std::srand(time(NULL));
+                changeOrientationCallback_(int(std::rand()%4)*90);
+                //call->setVideoOrientation(int(std::rand()%4)*90);
+            }
+        }
+
 #ifdef RING_ACCEL
         auto framePtr = transferToMainMemory(input_frame, AV_PIX_FMT_NV12);
         auto& swFrame = *framePtr;
@@ -123,6 +146,12 @@ bool
 VideoSender::useCodec(const ring::AccountVideoCodecInfo* codec) const
 {
     return videoEncoder_->useCodec(codec);
+}
+
+void
+VideoSender::setChangeOrientationCallback(std::function<void(int)> cb)
+{
+    changeOrientationCallback_ = cb;
 }
 
 }} // namespace ring::video
