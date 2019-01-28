@@ -676,6 +676,20 @@ SIPCall::carryingDTMFdigits(char code)
 }
 
 void
+SIPCall::setVideoOrientation(int rotation)
+{
+    std::string sip_body =
+        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+        "<media_control><vc_primitive><to_encoder>"
+        "<device_orientation=" + std::to_string(rotation) + "/>"
+        "</to_encoder></vc_primitive></media_control>";
+
+    RING_DBG("Sending device orientation via SIP INFO");
+
+    sendSIPInfo(sip_body.c_str(), "media_control+xml");
+}
+
+void
 SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from)
 {
