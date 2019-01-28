@@ -51,6 +51,12 @@
 #include <cstring>
 #include <stdexcept>
 
+extern "C" {
+#include <libavutil/display.h>
+}
+
+#define FILTER_INPUT_NAME "in"
+
 namespace ring { namespace video {
 
 #if HAVE_SHM
@@ -78,7 +84,7 @@ class SemGuardLock {
 class ShmHolder
 {
     public:
-        ShmHolder(const std::string& name={});
+        ShmHolder(const std::string& name = {});
         ~ShmHolder();
 
         std::string name() const noexcept {
@@ -313,10 +319,68 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 {}
 
 void
+SinkClient::setRotation(int rotation)
+{
+    if (rotation_ == rotation || width_ == 0 || height_ == 0)
+        return;
+
+    rotation_ = rotation;
+    RING_WARN("Rotation set to %d", rotation_);
+    auto in_name = FILTER_INPUT_NAME;
+
+    std::stringstream ss;
+
+    ss << "[" << in_name << "] " << "format=rb32,";
+
+    switch (rotation_) {
+        case 90 :
+        case -270 :
+            ss << "rotate=-PI/2";
+            //ss << "transpose=2";
+            break;
+        case 180 :
+        case -180 :
+            ss << "rotate=PI";
+            break;
+        case 270 :
+        case -90 :
+            ss << "rotate=PI/2";
+            //ss << "transpose=1";
+            break;
+        default :
+            ss << "null";
+    }
+
+    const auto format = AV_PIX_FMT_RGB32;
+    const auto one = rational<int>(1);
+    std::vector<MediaStream> msv;
+    msv.emplace_back(in_name, format, one, width_, height_, one, one);
+
+    std::lock_guard<std::mutex> lk(mutex_);
+    if (!rotation_)
+        filter_.reset();
+    else {
+        filter_.reset(new MediaFilter);
+        auto ret = filter_->initialize(ss.str(), msv);
+        if (ret < 0) {
+            RING_ERR() << "filter init fail";
+            filter_ = nullptr;
+            rotation_ = 0;
+        }
+    }
+}
+
+void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
     auto& f = *std::static_pointer_cast<VideoFrame>(frame_p);
+
+    AVFrameSideData* side_data = av_frame_get_side_data(f.pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+    if (side_data) {
+        int32_t* matrix_rotation = (int32_t*)side_data->data;
+        RING_WARN() << "rotation received : " << av_display_rotation_get(matrix_rotation);
+    }
 
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
