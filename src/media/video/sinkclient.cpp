@@ -50,6 +50,11 @@
 #include <cerrno>
 #include <cstring>
 #include <stdexcept>
+#include <utility>
+
+#include <sys/types.h> // added for test
+
+#define FILTER_INPUT_NAME "in"
 
 namespace ring { namespace video {
 
@@ -78,7 +83,7 @@ class SemGuardLock {
 class ShmHolder
 {
     public:
-        ShmHolder(const std::string& name={});
+        ShmHolder(const std::string& name = {});
         ~ShmHolder();
 
         std::string name() const noexcept {
@@ -313,10 +318,115 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 {}
 
 void
+SinkClient::setRotation(int rotation)
+{
+    if (rotation_ == rotation || width_ == 0 || height_ == 0)
+        return;
+
+    rotation_ = rotation;
+    RING_WARN("Rotation set to %d", rotation_);
+    std::string in_name = FILTER_INPUT_NAME;
+
+    std::stringstream ss;
+    ss << "[" << in_name << "] ";
+
+    switch (rotation_) {
+        case 90 :
+        case -270 :
+            ss << "transpose=1";
+            //ss << "null";
+            break;
+        case 180 :
+        case -180 :
+            ss << "rotate=PI";
+            //ss << "null";
+            break;
+        case 270 :
+        case -90 :
+            ss << "transpose=2";
+            //ss << "null";
+            break;
+        default :
+            ss << "rotate=2PI";
+    }
+/*
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
+    const int format = AV_PIX_FMT_RGBA;
+#else
+    const int format = AV_PIX_FMT_BGRA;
+#endif
+*/
+    const int format = AV_PIX_FMT_NV12;
+
+    RING_WARN() << "PIX_FMT_NONE : " << AV_PIX_FMT_NONE;
+    RING_WARN() << "PIX_FMT_YUV420P : " << AV_PIX_FMT_YUV420P;
+    RING_WARN() << "PIX_FMT_NV12 : " << AV_PIX_FMT_NV12;
+
+    const auto one = rational<int>(1);
+    std::vector<MediaStream> media_stream_vector;
+
+    media_stream_vector.emplace_back(in_name, format, one, width_, height_, one, one);
+    RING_WARN() << media_stream_vector[0] << " " << ss.str();
+
+    filter_.reset(new MediaFilter);
+    auto ret = filter_->initialize(ss.str(), media_stream_vector);
+    if (ret < 0) {
+        RING_ERR() << "filter init fail";
+        filter_ = nullptr;
+        rotation_ = 0;
+    }
+
+    //vw_.reset(); /* Added for test */
+}
+
+void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
     auto& f = *std::static_pointer_cast<VideoFrame>(frame_p);
+
+    if (filter_) {
+        //filter_->feedInput(f.pointer(), FILTER_INPUT_NAME);
+        filter_->feedInput(frame_p->pointer(), FILTER_INPUT_NAME);
+        AVFrame* filtered_frame = nullptr;
+        try {
+            filtered_frame = filter_->readOutput();
+        } catch  (const std::string ex) {}
+        if (!filtered_frame)
+            RING_ERR() << "FAIL READ OUTPUT FILTER";
+        else {
+            if ((width_ != filtered_frame->width) || (height_ != filtered_frame->height))
+                setFrameSize(filtered_frame->width, filtered_frame->height);
+            f.setFromMemory(filtered_frame->data[0], filtered_frame->format, filtered_frame->width, filtered_frame->height);
+        }
+        RING_WARN() << this
+                    << " "
+                    << filtered_frame->width
+                    << "x"
+                    << filtered_frame->height
+                    <<" filtered frame format "
+                    << " : "
+                    << av_get_pix_fmt_name((AVPixelFormat)filtered_frame->format);
+        // if (filtered_frame->width != width_ || filtered_frame->height != height_)
+        //    setFrameSize(filtered_frame->width, filtered_frame->height);
+        // if (!vw_)
+        //    vw_.reset(new debug::RawVideoWriter("/tmp/test_" + std::to_string(rotation_) + ".raw", width_, height_));
+        // vw_->write(f);
+    }
+    else
+        RING_WARN() << this
+                    << " "
+                    << f.width()
+                    << "x"
+                    << f.height()
+                    << " frame format "
+                    << " : "
+                    << av_get_pix_fmt_name((AVPixelFormat)f.format());
+    /*
+    if (!vw_)
+        vw_.reset(new debug::RawVideoWriter("/tmp/test_" + std::to_string(rotation_) + ".raw", width_, height_));
+    vw_->write(f);
+    */
 
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
@@ -341,6 +451,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         VideoScaler scaler;
         const int width = f.width();
         const int height = f.height();
+
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
         const int format = AV_PIX_FMT_RGBA;
 #else
