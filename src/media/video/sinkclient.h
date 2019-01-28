@@ -35,6 +35,8 @@
 
 #define DEBUG_FPS
 
+namespace ring {class MediaFilter;}
+
 namespace ring { namespace video {
 
 #if HAVE_SHM
@@ -88,9 +90,13 @@ class SinkClient : public VideoFramePassiveReader
         int width_ {0};
         int height_ {0};
         bool started_ {false}; // used to arbitrate client's stop signal.
+        int rotation_ {0};
         DRing::SinkTarget target_;
         DRing::AVSinkTarget avTarget_;
         std::unique_ptr<VideoScaler> scaler_;
+        std::unique_ptr<MediaFilter> filter_;
+
+        void setRotation(int rotation);
 
 #ifdef DEBUG_FPS
         unsigned frameCount_;
