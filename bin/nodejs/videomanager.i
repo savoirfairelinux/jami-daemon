@@ -38,6 +38,7 @@ public:
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
     virtual std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath) {}
     virtual void stopLocalRecorder(const std::string& filepath) {}
+    virtual void setDeviceOrientation(const std::string& name, int angle) {}
 };
 %}
 
@@ -59,6 +60,7 @@ std::map<std::string, std::string> getSettings(const std::string& name);
 void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
 
 void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
+void setDeviceOrientation(const std::string& name, int angle);
 }
 
 class VideoCallback {
