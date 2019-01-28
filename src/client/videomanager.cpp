@@ -347,6 +347,12 @@ setDefaultDevice(const std::string& name)
     ring::Manager::instance().saveConfig();
 }
 
+void
+setDeviceOrientation(const std::string& name, int angle)
+{
+    ring::Manager::instance().setDeviceOrientation(name, angle);
+}
+
 std::map<std::string, std::string>
 getDeviceParams(const std::string& name)
 {

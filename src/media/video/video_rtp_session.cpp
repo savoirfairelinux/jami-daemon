@@ -94,9 +94,16 @@ void VideoRtpSession::startSender()
                 auto newParams = input->switchInput(input_);
                 try {
                     if (newParams.valid() &&
-                        newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready)
+                        newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
                         localVideoParams_ = newParams.get();
-                    else {
+
+                        runOnMainThread([cid = callID_,
+                                         orientation = localVideoParams_.orientation] {
+                            if (auto call = Manager::instance().callFactory.getCall<SIPCall>(cid))
+                                call->setVideoOrientation(orientation);
+                        });
+
+                    } else {
                         RING_ERR("No valid new video parameters.");
                         return;
                     }
@@ -241,6 +248,12 @@ void VideoRtpSession::forceKeyFrame()
 }
 
 void
+VideoRtpSession::setRotation(int rotation)
+{
+    receiveThread_->setRotation(rotation);
+}
+
+void
 VideoRtpSession::setupVideoPipeline()
 {
     if (conference_)
@@ -351,7 +364,7 @@ unsigned
 VideoRtpSession::getLowerQuality()
 {
     // if lower quality was stored we return it
-    unsigned quality = videoBitrateInfo_.videoQualityCurrent;
+    unsigned quality = 0;
     while ( not histoQuality_.empty()) {
         quality = histoQuality_.back();
         histoQuality_.pop_back();
@@ -368,7 +381,7 @@ unsigned
 VideoRtpSession::getLowerBitrate()
 {
     // if a lower bitrate was stored we return it
-    unsigned bitrate = videoBitrateInfo_.videoBitrateCurrent;
+    unsigned bitrate = 0;
     while ( not histoBitrate_.empty()) {
         bitrate = histoBitrate_.back();
         histoBitrate_.pop_back();

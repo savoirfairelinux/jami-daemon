@@ -533,6 +533,9 @@ class Manager {
         int getAudioInputDeviceIndex(const std::string &name);
         int getAudioOutputDeviceIndex(const std::string &name);
 
+        void setDeviceOrientation(const std::string& name, int angle);
+
+
         /**
          * Get current alsa plugin
          * @return std::string  The Alsa plugin

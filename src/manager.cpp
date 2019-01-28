@@ -2490,6 +2490,16 @@ Manager::getCurrentAudioOutputPlugin() const
     return audioPreference.getAlsaPlugin();
 }
 
+void
+Manager::setDeviceOrientation(const std::string& name, int angle)
+{
+    getVideoManager().videoDeviceMonitor.setDeviceOrientation(name, angle);
+
+    for (auto call : callFactory.getAllCalls<SIPCall>())
+        if (call->getVideoRtp().getInput() == name)
+            call->setVideoOrientation(angle);
+}
+
 bool
 Manager::getNoiseSuppressState() const
 {

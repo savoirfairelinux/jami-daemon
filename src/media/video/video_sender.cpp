@@ -88,6 +88,14 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         if (is_keyframe)
             --forceKeyFrame_;
 
+        if (frameNumber_%300 == 0) {
+            auto call = std::static_pointer_cast<SIPCall>(Manager::instance().getCurrentCall());
+            if (call) {
+                std::srand(time(NULL));
+                call->setVideoOrientation(int(std::rand()%4)*90);
+            }
+        }
+
 #ifdef RING_ACCEL
         auto framePtr = transferToMainMemory(input_frame, AV_PIX_FMT_NV12);
         auto& swFrame = *framePtr;
