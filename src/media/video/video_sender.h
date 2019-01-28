@@ -61,6 +61,8 @@ public:
 
     bool useCodec(const AccountVideoCodecInfo* codec) const;
 
+    void setChangeOrientationCallback(std::function<void(int)> cb);
+
 private:
     static constexpr int KEYFRAMES_AT_START {4}; // Number of keyframes to enforce at stream startup
     static constexpr unsigned KEY_FRAME_PERIOD {0}; // seconds before forcing a keyframe
@@ -77,6 +79,9 @@ private:
     std::atomic<int> forceKeyFrame_ {KEYFRAMES_AT_START};
     int keyFrameFreq_ {0}; // Set keyframe rate, 0 to disable auto-keyframe. Computed in constructor
     int64_t frameNumber_ = 0;
+
+    int rotation_ = 0;
+    std::function<void(int)> changeOrientationCallback_;
 };
 }} // namespace ring::video
 
