@@ -313,10 +313,50 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 {}
 
 void
+SinkClient::setRotation(int rotation)
+{
+    rotation_ = rotation;
+    RING_WARN("Rotation set to %d", rotation_);
+
+    std::stringstream ss;
+    ss << "[input] ";
+
+    switch (rotation_) {
+        case 90 :
+        case -270 :
+            ss << "transpose=1";
+            break;
+        case 180 :
+        case -180 :
+            ss << "rotate=PI";
+            break;
+        case 270 :
+        case -90 :
+            ss << "transpose=2";
+    }
+
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
+    const int format = AV_PIX_FMT_RGBA;
+#else
+    const int format = AV_PIX_FMT_BGRA;
+#endif
+
+    const auto one = rational<int>(1);
+    std::vector<MediaStream> media_stream_vector;
+    media_stream_vector.emplace_back("input", format, one, width_, height_, one, one);
+
+    filter_->initialize(ss.str(), media_stream_vector);
+}
+
+void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
     auto& f = *std::static_pointer_cast<VideoFrame>(frame_p);
+
+    filter_->feedInput(f.pointer(), "input");
+    auto filtered_frame = filter_->readOutput();
+    f.setFromMemory(filtered_frame->data[0], filtered_frame->format, filtered_frame->width, filtered_frame->height);
 
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
