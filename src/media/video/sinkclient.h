@@ -28,10 +28,12 @@
 
 #include "video_base.h"
 #include <videomanager_interface.h>
+#include "media_filter.h"
 
 #include <string>
 #include <vector>
 #include <memory>
+#include <mutex>
 
 #define DEBUG_FPS
 
@@ -83,6 +85,8 @@ class SinkClient : public VideoFramePassiveReader
         bool started_ {false}; // used to arbitrate client's stop signal.
         DRing::SinkTarget target_;
         std::unique_ptr<VideoScaler> scaler_;
+        std::unique_ptr<MediaFilter> filter_;
+        std::mutex mutex_;
 
 #ifdef DEBUG_FPS
         unsigned frameCount_;
