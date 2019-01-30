@@ -89,7 +89,7 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
             --forceKeyFrame_;
 
 #ifdef RING_ACCEL
-        auto swFrame = transferToMainMemory(input_frame, AV_PIX_FMT_NV12);
+        auto swFrame = HardwareAccel::transferToMainMemory(input_frame, AV_PIX_FMT_NV12);
 #else
         std::unique_ptr<VideoFrame> swFrame;
         swFrame->copyFrom(input_frame);

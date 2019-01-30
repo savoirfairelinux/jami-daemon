@@ -172,7 +172,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     const auto& ms = streams_[name]->info;
     if (ms.isVideo) {
 #ifdef RING_ACCEL
-        auto sw = video::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
+        auto sw = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
             static_cast<AVPixelFormat>(ms.format));
         clone.copyFrom(*sw);
 #else
