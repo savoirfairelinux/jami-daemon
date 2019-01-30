@@ -28,10 +28,6 @@
 #include "video/video_scaler.h"
 #endif // RING_VIDEO
 
-#ifdef RING_ACCEL
-#include "video/accel.h"
-#endif
-
 #include "audio/audiobuffer.h"
 
 #include "media_device.h"
@@ -63,6 +59,12 @@ class RingBuffer;
 class Resampler;
 class MediaIOHandle;
 
+#ifdef RING_ACCEL
+namespace video {
+class HardwareAccel;
+}
+#endif
+
 class MediaDecoder {
     public:
         enum class Status {
@@ -86,7 +88,7 @@ class MediaDecoder {
         int setupFromVideoData();
         Status decode(VideoFrame&);
         Status flush(VideoFrame&);
- #endif // RING_VIDEO
+#endif // RING_VIDEO
 
         int setupFromAudioData();
         Status decode(AudioFrame&);
@@ -129,7 +131,7 @@ class MediaDecoder {
 
 #ifdef RING_ACCEL
         bool enableAccel_ = true;
-        video::HardwareAccel accel_;
+        std::unique_ptr<video::HardwareAccel> accel_;
         unsigned short accelFailures_ = 0;
 #endif
 
