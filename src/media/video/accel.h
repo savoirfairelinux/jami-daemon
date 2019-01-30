@@ -22,19 +22,53 @@
 
 #include "libav_deps.h"
 
+#include <memory>
 #include <string>
 #include <vector>
 
 namespace ring { namespace video {
 
-struct HardwareAccel {
-        std::string name;
-        AVPixelFormat format;
-        std::vector<AVCodecID> supportedCodecs;
-};
+/**
+ * Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
+ */
+class HardwareAccel {
+public:
+    /**
+     * Static factory method for hardware decoding.
+     */
+    static std::unique_ptr<HardwareAccel> setupDecoder(AVCodecContext* codecCtx);
 
-const HardwareAccel setupHardwareDecoding(AVCodecContext* codecCtx);
-int transferFrameData(HardwareAccel accel, AVCodecContext* codecCtx, VideoFrame& frame);
-std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat);
+    /**
+     * Transfers a hardware decoded frame back to main memory. Should be called after
+     * the frame is decoded using avcodec_send_packet/avcodec_receive_frame.
+     *
+     * @frame: Refrerence to the decoded hardware frame.
+     * @returns: Software frame.
+     */
+    static std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat);
+
+    /**
+     * Made public so std::unique_ptr can access it. Should not be called.
+     */
+    HardwareAccel(AVCodecID id, const std::string& name, AVPixelFormat format);
+
+    AVCodecID getCodecId() const { return id_; };
+    std::string getName() const { return name_; };
+    AVPixelFormat getFormat() const { return format_; };
+
+    /**
+     * Transfers a hardware decoded frame back to main memory. Should be called after
+     * the frame is decoded using avcodec_send_packet/avcodec_receive_frame.
+     *
+     * @frame: Refrerence to the decoded hardware frame.
+     * @returns: Software frame.
+     */
+    std::unique_ptr<VideoFrame> transfer(const VideoFrame& frame);
+
+private:
+    AVCodecID id_;
+    std::string name_;
+    AVPixelFormat format_;
+};
 
 }} // namespace ring::video
