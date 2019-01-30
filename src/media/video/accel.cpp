@@ -33,6 +33,13 @@ extern "C" {
 
 namespace ring { namespace video {
 
+struct HardwareAPI
+{
+    std::string name;
+    AVPixelFormat format;
+    std::vector<AVCodecID> supportedCodecs;
+};
+
 static AVPixelFormat
 getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
 {
@@ -41,61 +48,59 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
     AVPixelFormat fallback = AV_PIX_FMT_NONE;
     for (int i = 0; formats[i] != AV_PIX_FMT_NONE; ++i) {
         fallback = formats[i];
-        if (accel && formats[i] == accel->format) {
+        if (accel && formats[i] == accel->getFormat()) {
+            // found hardware format for codec with api
+            RING_DBG() << "Found compatible hardware format for "
+                << avcodec_get_name(static_cast<AVCodecID>(accel->getCodecId()))
+                << " with " << accel->getName();
             return formats[i];
         }
     }
 
-    if (accel) {
-        RING_WARN("'%s' acceleration not supported, falling back to software decoding", accel->name.c_str());
-        accel->name = {}; // don't use accel
-    } else {
-        RING_WARN() << "Not using hardware decoding";
-    }
+    RING_WARN() << "Not using hardware decoding";
     return fallback;
 }
 
-int
-transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame& frame)
-{
-    if (accel.name.empty())
-        return -1;
+HardwareAccel::HardwareAccel(AVCodecID id, const std::string& name, AVPixelFormat format)
+    : id_(id)
+    , name_(name)
+    , format_(format)
+{}
 
+std::unique_ptr<VideoFrame>
+HardwareAccel::transfer(const VideoFrame& frame)
+{
     auto input = frame.pointer();
-    if (input->format != accel.format) {
+    if (input->format != format_) {
         RING_ERR("Frame format mismatch: expected %s, got %s",
-                 av_get_pix_fmt_name(static_cast<AVPixelFormat>(accel.format)),
+                 av_get_pix_fmt_name(static_cast<AVPixelFormat>(format_)),
                  av_get_pix_fmt_name(static_cast<AVPixelFormat>(input->format)));
-        return -1;
+        return nullptr;
     }
 
-    // FFmpeg requires a second frame in which to transfer the data from the GPU buffer to the main memory
-    auto container = std::unique_ptr<VideoFrame>(new VideoFrame());
-    auto output = container->pointer();
-
-    auto pts = input->pts;
+    auto framePtr = std::make_unique<VideoFrame>();
     // most hardware accelerations output NV12, so skip extra conversions
-    output->format = AV_PIX_FMT_NV12;
-    int ret = av_hwframe_transfer_data(output, input, 0);
-    output->pts = pts;
+    framePtr->pointer()->format = AV_PIX_FMT_NV12;
 
-    // move output into input so the caller receives extracted image data
-    // but we have to delete input's data first
-    av_frame_unref(input);
-    av_frame_move_ref(input, output);
+    int ret = av_hwframe_transfer_data(framePtr->pointer(), input, 0);
+    if (ret < 0) {
+        RING_ERR() << "Failed to retrieve frame from GPU: " << libav_utils::getError(ret);
+        return nullptr;
+    }
 
-    return ret;
+    framePtr->pointer()->pts = input->pts; // transfer does not copy timestamp
+    return framePtr;
 }
 
 static int
-initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
+initDevice(const HardwareAPI& api, AVCodecContext* codecCtx)
 {
     int ret = 0;
     AVBufferRef* hardwareDeviceCtx = nullptr;
-    auto hwType = av_hwdevice_find_type_by_name(accel.name.c_str());
+    auto hwType = av_hwdevice_find_type_by_name(api.name.c_str());
 #ifdef HAVE_VAAPI_ACCEL_DRM
     // default DRM device may not work on multi GPU computers, so check all possible values
-    if (accel.name == "vaapi") {
+    if (api.name == "vaapi") {
         const std::string path = "/dev/dri/";
         auto files = ring::fileutils::readDirectory(path);
         // renderD* is preferred over card*
@@ -104,7 +109,6 @@ initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
             std::string deviceName = path + entry;
             if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, deviceName.c_str(), nullptr, 0)) >= 0) {
                 codecCtx->hw_device_ctx = hardwareDeviceCtx;
-                RING_DBG("Using '%s' hardware acceleration with device '%s'", accel.name.c_str(), deviceName.c_str());
                 return ret;
             }
         }
@@ -113,42 +117,32 @@ initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
     // default device (nullptr) works for most cases
     if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, nullptr, nullptr, 0)) >= 0) {
         codecCtx->hw_device_ctx = hardwareDeviceCtx;
-        RING_DBG("Using '%s' hardware acceleration", accel.name.c_str());
     }
 
     return ret;
 }
 
-const HardwareAccel
-setupHardwareDecoding(AVCodecContext* codecCtx)
+std::unique_ptr<HardwareAccel>
+HardwareAccel::setupDecoder(AVCodecContext* codecCtx)
 {
-    /**
-     * This array represents FFmpeg's hwaccels, along with their pixel format
-     * and their potentially supported codecs. Each item contains:
-     * - Name (must match the name used in FFmpeg)
-     * - Pixel format (tells FFmpeg which hwaccel to use)
-     * - Array of AVCodecID (potential codecs that can be accelerated by the hwaccel)
-     * Note: an empty name means the video isn't accelerated
-     */
-    const HardwareAccel accels[] = {
-        { "vaapi", AV_PIX_FMT_VAAPI, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
-        { "vdpau", AV_PIX_FMT_VDPAU, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
-        { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
+    static const HardwareAPI apiList[] = {
+        { "vaapi", AV_PIX_FMT_VAAPI, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
+        { "vdpau", AV_PIX_FMT_VDPAU, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
+        { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
     };
 
-    for (auto accel : accels) {
-        if (std::find(accel.supportedCodecs.begin(), accel.supportedCodecs.end(),
-                static_cast<AVCodecID>(codecCtx->codec_id)) != accel.supportedCodecs.end()) {
-            if (initDevice(accel, codecCtx) >= 0) {
+    for (const auto& api : apiList) {
+        if (std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), codecCtx->codec_id) != api.supportedCodecs.end()) {
+            if (initDevice(api, codecCtx) >= 0) {
                 codecCtx->get_format = getFormatCb;
                 codecCtx->thread_safe_callbacks = 1;
-                return accel;
+                RING_DBG() << "Attempting to use hardware accelerated decoding with " << api.name;
+                return std::make_unique<HardwareAccel>(codecCtx->codec_id, api.name, api.format);
             }
         }
     }
 
-    RING_WARN("Not using hardware accelerated decoding");
-    return {};
+    return nullptr;
 }
 
 }} // namespace ring::video
