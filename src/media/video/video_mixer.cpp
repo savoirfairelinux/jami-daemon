@@ -173,7 +173,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input, int index)
         return;
 
 #ifdef RING_ACCEL
-    auto framePtr = transferToMainMemory(input, AV_PIX_FMT_NV12);
+    auto framePtr = HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12);
     const auto& swFrame = *framePtr;
 #else
     const auto& swFrame = input;
