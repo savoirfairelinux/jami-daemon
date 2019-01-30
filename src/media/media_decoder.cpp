@@ -2,6 +2,7 @@
  *  Copyright (C) 2013-2019 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -215,12 +216,12 @@ MediaDecoder::setupStream(AVMediaType mediaType)
 
 #ifdef RING_ACCEL
     if (enableAccel_) {
-        accel_ = video::setupHardwareDecoding(decoderCtx_);
-        decoderCtx_->opaque = &accel_;
+        accel_ = video::HardwareAccel::setupDecoder(decoderCtx_);
+        decoderCtx_->opaque = accel_.get();
     } else if (Manager::instance().videoPreferences.getDecodingAccelerated()) {
-        RING_WARN() << "Hardware accelerated decoding disabled because of previous failure";
+        RING_WARN() << "Hardware decoding disabled because of previous failure";
     } else {
-        RING_WARN() << "Hardware accelerated decoding disabled by user preference";
+        RING_WARN() << "Hardware decoding disabled by user preference";
     }
 #endif
 
@@ -280,9 +281,12 @@ MediaDecoder::decode(VideoFrame& result)
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
 #ifdef RING_ACCEL
-        if (!accel_.name.empty()) {
-            ret = video::transferFrameData(accel_, decoderCtx_, result);
-            if (ret < 0) {
+        if (accel_) {
+            auto f = accel_->transfer(result);
+            if (f) {
+                frame = f->pointer();
+                result.copyFrom(*f);
+            } else {
                 ++accelFailures_;
                 if (accelFailures_ >= MAX_ACCEL_FAILURES) {
                     RING_ERR("Hardware decoding failure");
@@ -384,7 +388,7 @@ MediaDecoder::enableAccel(bool enableAccel)
     enableAccel_ = enableAccel;
     emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(enableAccel_);
     if (!enableAccel) {
-        accel_ = {};
+        accel_.reset();
         if (decoderCtx_->hw_device_ctx)
             av_buffer_unref(&decoderCtx_->hw_device_ctx);
         if (decoderCtx_)
@@ -413,13 +417,7 @@ MediaDecoder::flush(VideoFrame& result)
 
     if (frameFinished) {
         av_packet_unref(&inpacket);
-#ifdef RING_ACCEL
-        // flush is called when closing the stream
-        // so don't restart the media decoder
-        if (!accel_.name.empty() && accelFailures_ < MAX_ACCEL_FAILURES)
-            video::transferFrameData(accel_, decoderCtx_, result);
-#endif
-        return Status::FrameFinished;
+        return Status::EOFError;
     }
 
     return Status::Success;
@@ -482,7 +480,8 @@ MediaDecoder::getStream(std::string name) const
 {
     auto ms = MediaStream(name, decoderCtx_, lastTimestamp_);
 #ifdef RING_ACCEL
-    if (decoderCtx_->codec_type == AVMEDIA_TYPE_VIDEO && enableAccel_ && !accel_.name.empty())
+    // accel_ is null if not using accelerated codecs
+    if (accel_)
         ms.format = AV_PIX_FMT_NV12; // TODO option me!
 #endif
     return ms;
