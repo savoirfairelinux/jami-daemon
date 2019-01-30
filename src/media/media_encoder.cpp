@@ -25,9 +25,14 @@
 #include "media_encoder.h"
 #include "media_buffer.h"
 
+#include "client/ring_signal.h"
 #include "fileutils.h"
-#include "string_utils.h"
 #include "logger.h"
+#include "string_utils.h"
+
+#ifdef RING_ACCEL
+#include "video/accel.h"
+#endif
 
 extern "C" {
 #include <libavutil/parseutils.h>
@@ -44,6 +49,9 @@ extern "C" {
 //#define DEBUG_SDP 1
 
 namespace ring {
+
+// maximum number of times accelerated encoding can fail in a row before falling back to software
+const constexpr unsigned MAX_ACCEL_FAILURES { 5 };
 
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
@@ -170,6 +178,12 @@ MediaEncoder::openOutput(const std::string& filename, const std::string& format)
         avformat_alloc_output_context2(&outputCtx_, nullptr, nullptr, filename.c_str());
     else
         avformat_alloc_output_context2(&outputCtx_, nullptr, format.c_str(), filename.c_str());
+
+#ifdef RING_ACCEL
+    // TODO implement fallback and video preference
+    //enableAccel_ &= Manager::instance().videoPreferences.getEncodingAccelerated();
+    enableAccel_ = true;
+#endif
 }
 
 int
@@ -177,21 +191,45 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 {
     AVCodec* outputCodec = nullptr;
     AVCodecContext* encoderCtx = nullptr;
-    /* find the video encoder */
-    if (systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
-        // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
-        // H263-1998 can manage all frame sizes while H263 don't
-        // AV_CODEC_ID_H263 decoder will be used for decoding
-        outputCodec = avcodec_find_encoder(AV_CODEC_ID_H263P);
-    else
-        outputCodec = avcodec_find_encoder(static_cast<AVCodecID>(systemCodecInfo.avcodecId));
+#ifdef RING_ACCEL
+    // TODO implement video preference
+    if (systemCodecInfo.mediaType == MEDIA_VIDEO && enableAccel_) {
+        if (accel_ = video::HardwareAccel::setupEncoder(
+            static_cast<AVCodecID>(systemCodecInfo.avcodecId), device_.width, device_.height)) {
+            outputCodec = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
+        }
+//    } else if (Manager::instance().videoPreferences.getEncodingAccelerated()) {
+//        RING_WARN() << "Hardware encoding disabled because of previous failure";
+    } else {
+        RING_WARN() << "Hardware encoding disabled";// by user preference";
+    }
+#endif
+
     if (!outputCodec) {
-        RING_ERR("Encoder \"%s\" not found!", systemCodecInfo.name.c_str());
-        throw MediaEncoderException("No output encoder");
+        /* find the video encoder */
+        if (systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
+            // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
+            // H263-1998 can manage all frame sizes while H263 don't
+            // AV_CODEC_ID_H263 decoder will be used for decoding
+            outputCodec = avcodec_find_encoder(AV_CODEC_ID_H263P);
+        else
+            outputCodec = avcodec_find_encoder(static_cast<AVCodecID>(systemCodecInfo.avcodecId));
+        if (!outputCodec) {
+            RING_ERR("Encoder \"%s\" not found!", systemCodecInfo.name.c_str());
+            throw MediaEncoderException("No output encoder");
+        }
     }
 
     encoderCtx = prepareEncoderContext(outputCodec, systemCodecInfo.mediaType == MEDIA_VIDEO);
     encoders_.push_back(encoderCtx);
+
+#ifdef RING_ACCEL
+    if (accel_) {
+        accel_->setDetails(encoderCtx, &options_);
+        encoderCtx->opaque = accel_.get();
+    }
+#endif
+
     auto maxBitrate = 1000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
     auto bufSize = 2 * maxBitrate; // as recommended (TODO: make it customizable)
     auto crf = std::atoi(libav_utils::getDictValue(options_, "crf"));
@@ -200,6 +238,9 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
     if (systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
         extractProfileLevelID(profileLevelId, encoderCtx);
+#ifdef RING_ACCEL
+        if (!accel_)
+#endif
         forcePresetX264(encoderCtx);
         // For H264 :
         // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
@@ -273,7 +314,15 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
         // allocate buffers for both scaled (pre-encoder) and encoded frames
         const int width = encoderCtx->width;
         const int height = encoderCtx->height;
-        const int format = encoderCtx->pix_fmt;
+        int format = encoderCtx->pix_fmt;
+#ifdef RING_ACCEL
+        if (accel_) {
+            // hardware encoders require a specific pixel format
+            auto desc = av_pix_fmt_desc_get(encoderCtx->pix_fmt);
+            if (desc && desc->flags & AV_PIX_FMT_FLAG_HWACCEL)
+                format = accel_->getSoftwareFormat();
+        }
+#endif
         scaledFrameBufferSize_ = videoFrameSize(format, width, height);
         if (scaledFrameBufferSize_ < 0)
             throw MediaEncoderException(("Could not compute buffer size: " + libav_utils::getError(scaledFrameBufferSize_)).c_str());
@@ -338,7 +387,11 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
     scaler_.scale_with_aspect(input, scaledFrame_);
 
-    auto frame = scaledFrame_.pointer();
+    // Copy frame so the VideoScaler can still use the software frame (input)
+    VideoFrame copy;
+    copy.copyFrom(scaledFrame_);
+
+    auto frame = copy.pointer();
     AVCodecContext* enc = encoders_[currentStreamIdx_];
     // ideally, time base is the inverse of framerate, but this may not always be the case
     if (enc->framerate.num == enc->time_base.den && enc->framerate.den == enc->time_base.num)
@@ -353,6 +406,24 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
         frame->pict_type = AV_PICTURE_TYPE_NONE;
         frame->key_frame = 0;
     }
+
+#ifdef RING_ACCEL
+    // NOTE needs to be at same scope as call to encode
+    std::unique_ptr<VideoFrame> framePtr;
+    if (accel_) {
+        framePtr = accel_->transfer(copy);
+        if (!framePtr) {
+            ++accelFailures_;
+            if (accelFailures_ >= MAX_ACCEL_FAILURES) {
+                RING_ERR() << "Hardware encoding failure";
+                accelFailures_ = 0;
+                fallback_ = true;
+                return -1;
+            }
+        }
+        frame = framePtr->pointer();
+    }
+#endif
 
     return encode(frame, currentStreamIdx_);
 }
@@ -464,10 +535,7 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 {
     AVCodecContext* encoderCtx = avcodec_alloc_context3(outputCodec);
 
-    auto encoderName = encoderCtx->av_class->item_name ?
-        encoderCtx->av_class->item_name(encoderCtx) : nullptr;
-    if (encoderName == nullptr)
-        encoderName = "encoder?";
+    auto encoderName = outputCodec->name; // guaranteed to be non null if AVCodec is not null
 
     encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), is_video ? 16u : 4u);
     RING_DBG("[%s] Using %d threads", encoderName, encoderCtx->thread_count);
@@ -505,7 +573,11 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 
         // emit one intra frame every gop_size frames
         encoderCtx->max_b_frames = 0;
-        encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P; // TODO: option me !
+        encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P;
+#ifdef RING_ACCEL
+        if (accel_)
+            encoderCtx->pix_fmt = accel_->getFormat();
+#endif
 
         // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
         // pps and sps to be sent in-band for RTP
@@ -616,6 +688,20 @@ MediaEncoder::useCodec(const ring::AccountCodecInfo* codec) const noexcept
     return codec_.get() == codec;
 }
 
+#ifdef RING_ACCEL
+void
+MediaEncoder::enableAccel(bool enableAccel)
+{
+    enableAccel_ = enableAccel;
+    emitSignal<DRing::ConfigurationSignal::HardwareEncodingChanged>(enableAccel_);
+    if (!enableAccel_) {
+        accel_.reset();
+        for (auto enc : encoders_)
+            enc->opaque = nullptr;
+    }
+}
+#endif
+
 unsigned
 MediaEncoder::getStreamCount() const
 {
@@ -636,7 +722,12 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
         return {};
     auto enc = encoders_[streamIdx];
     // TODO set firstTimestamp
-    return MediaStream(name, enc);
+    auto ms = MediaStream(name, enc);
+#ifdef RING_ACCEL
+    if (accel_)
+        ms.format = accel_->getSoftwareFormat();
+#endif
+    return ms;
 }
 
 void

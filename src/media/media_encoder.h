@@ -50,6 +50,12 @@ namespace ring {
 struct MediaDescription;
 struct AccountCodecInfo;
 
+#ifdef RING_ACCEL
+namespace video {
+class HardwareAccel;
+}
+#endif
+
 class MediaEncoderException : public std::runtime_error {
     public:
         MediaEncoderException(const char *msg) : std::runtime_error(msg) {}
@@ -94,6 +100,10 @@ public:
 
     bool useCodec(const AccountCodecInfo* codec) const noexcept;
 
+#ifdef RING_ACCEL
+    void enableAccel(bool enableAccel);
+#endif
+
     unsigned getStreamCount() const;
     MediaStream getStream(const std::string& name, int streamIdx = -1) const;
 
@@ -115,6 +125,14 @@ private:
 
     std::vector<uint8_t> scaledFrameBuffer_;
     int scaledFrameBufferSize_ = 0;
+
+    bool fallback_ = false;
+
+#ifdef RING_ACCEL
+    bool enableAccel_ = true;
+    std::unique_ptr<video::HardwareAccel> accel_;
+    unsigned short accelFailures_ = 0;
+#endif
 
 protected:
     void readConfig(AVDictionary** dict, AVCodecContext* encoderCtx);
