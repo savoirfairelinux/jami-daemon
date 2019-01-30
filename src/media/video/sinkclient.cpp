@@ -349,7 +349,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 
     if (doTransfer) {
 #ifdef RING_ACCEL
-        auto framePtr = transferToMainMemory(f, AV_PIX_FMT_NV12);
+        auto framePtr = HardwareAccel::transferToMainMemory(f, AV_PIX_FMT_NV12);
         const auto& swFrame = *framePtr;
 #else
         const auto& swFrame = f;
