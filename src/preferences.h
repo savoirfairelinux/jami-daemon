@@ -466,8 +466,18 @@ class VideoPreferences : public Serializable {
             emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(decodingAccelerated_);
         }
 
+        bool getEncodingAccelerated() const {
+            return encodingAccelerated_;
+        }
+
+        void setEncodingAccelerated(bool encodingAccelerated) {
+            encodingAccelerated_ = encodingAccelerated;
+            emitSignal<DRing::ConfigurationSignal::HardwareEncodingChanged>(encodingAccelerated_);
+        }
+
     private:
         bool decodingAccelerated_;
+        bool encodingAccelerated_;
         constexpr static const char* const CONFIG_LABEL = "video";
 };
 #endif // RING_VIDEO
