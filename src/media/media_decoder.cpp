@@ -61,10 +61,6 @@ MediaDecoder::MediaDecoder() :
 
 MediaDecoder::~MediaDecoder()
 {
-#ifdef RING_ACCEL
-    if (decoderCtx_ && decoderCtx_->hw_device_ctx)
-        av_buffer_unref(&decoderCtx_->hw_device_ctx);
-#endif
     if (decoderCtx_)
         avcodec_free_context(&decoderCtx_);
     if (inputCtx_)
@@ -231,8 +227,11 @@ MediaDecoder::setupStream(AVMediaType mediaType)
 #ifdef RING_ACCEL
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
         if (enableAccel_) {
-            accel_ = video::HardwareAccel::setupDecoder(decoderCtx_);
-            decoderCtx_->opaque = accel_.get();
+            accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id);
+            if (accel_) {
+                accel_->setDetails(decoderCtx_, &options_);
+                decoderCtx_->opaque = accel_.get();
+            }
         } else if (Manager::instance().videoPreferences.getDecodingAccelerated()) {
             RING_WARN() << "Hardware decoding disabled because of previous failure";
         } else {
@@ -479,7 +478,7 @@ MediaDecoder::getStream(std::string name) const
 #ifdef RING_ACCEL
     // accel_ is null if not using accelerated codecs
     if (accel_)
-        ms.format = AV_PIX_FMT_NV12; // TODO option me!
+        ms.format = accel_->getSoftwareFormat();
 #endif
     return ms;
 }
