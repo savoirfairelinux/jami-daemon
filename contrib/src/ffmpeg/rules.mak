@@ -177,7 +177,10 @@ FFMPEGCONF += \
 	--enable-hwaccel=mpeg4_vaapi \
 	--enable-hwaccel=h263_vaapi \
 	--enable-hwaccel=vp8_vaapi \
-	--enable-hwaccel=mjpeg_vaapi
+	--enable-hwaccel=mjpeg_vaapi \
+	--enable-encoder=h264_vaapi \
+	--enable-encoder=vp8_vaapi \
+	--enable-encoder=mjpeg_vaapi
 endif
 endif
 
@@ -194,6 +197,7 @@ FFMPEGCONF += \
 	--enable-hwaccel=h263_videotoolbox \
 	--enable-hwaccel=h264_videotoolbox \
 	--enable-hwaccel=mpeg4_videotoolbox \
+	--enable-encoder=h264_videotoolbox \
 	--disable-securetransport
 endif
 
