@@ -21,6 +21,7 @@
 #pragma once
 
 #include "libav_deps.h"
+#include "media_codec.h"
 
 #include <memory>
 #include <string>
@@ -36,30 +37,82 @@ public:
     /**
      * Static factory method for hardware decoding.
      */
-    static std::unique_ptr<HardwareAccel> setupDecoder(AVCodecContext* codecCtx);
+    static std::unique_ptr<HardwareAccel> setupDecoder(AVCodecID id);
+
+    /**
+     * Static factory method for hardware encoding.
+     */
+    static std::unique_ptr<HardwareAccel> setupEncoder(AVCodecID id, int width, int height);
 
     /**
      * Made public so std::unique_ptr can access it. Should not be called.
      */
-    HardwareAccel(AVCodecID id, const std::string& name, AVPixelFormat format);
+    HardwareAccel(AVCodecID id, const std::string& name, AVPixelFormat format, AVPixelFormat swFormat, CodecType type);
 
+    /**
+     * Dereferences hardware contexts.
+     */
+    ~HardwareAccel();
+
+    /**
+     * Codec that is being accelerated.
+     */
     AVCodecID getCodecId() const { return id_; };
+
+    /**
+     * Name of the hardware layer/API being used.
+     */
     std::string getName() const { return name_; };
+
+    /**
+     * Hardware format.
+     */
     AVPixelFormat getFormat() const { return format_; };
 
     /**
+     * Software format. For encoding it is the format expected by the hardware. For decoding
+     * it is the format output by the hardware.
+     */
+    AVPixelFormat getSoftwareFormat() const { return swFormat_; }
+
+    /**
+     * Gets the name of the codec.
+     * Decoding: equivalent to avcodec_get_name(id_)
+     * Encoding: avcodec_get_name(id_) + '_' + name_
+     */
+    std::string getCodecName() const;
+
+    /**
+     * Set some extra details in the codec context. Should be called after a successful
+     * setup (setupDecoder or setupEncoder).
+     * For decoding, sets the hw_device_ctx and get_format callback. For encoding, sets
+     * hw_device_ctx and hw_frames_ctx, and may set some hardware specific options in
+     * the dictionary.
+     */
+    void setDetails(AVCodecContext* codecCtx, AVDictionary** d);
+
+    /**
      * Transfers a hardware decoded frame back to main memory. Should be called after
-     * the frame is decoded using avcodec_send_packet/avcodec_receive_frame.
+     * the frame is decoded using avcodec_send_packet/avcodec_receive_frame or before
+     * the frame is encoded using avcodec_send_frame/avcodec_receive_packet.
      *
-     * @frame: Refrerence to the decoded hardware frame.
-     * @returns: Software frame.
+     * @frame: Hardware frame when decoding, software frame when encoding.
+     * @returns: Software frame when decoding, hardware frame when encoding.
      */
     std::unique_ptr<VideoFrame> transfer(const VideoFrame& frame);
 
 private:
-    AVCodecID id_;
+    bool initDevice();
+    bool initFrame(int width, int height);
+
+    AVCodecID id_ {AV_CODEC_ID_NONE};
     std::string name_;
-    AVPixelFormat format_;
+    AVPixelFormat format_ {AV_PIX_FMT_NONE};
+    AVPixelFormat swFormat_ {AV_PIX_FMT_NONE};
+    CodecType type_ {CODEC_NONE};
+
+    AVBufferRef* deviceCtx_ {nullptr};
+    AVBufferRef* framesCtx_ {nullptr};
 };
 
 }} // namespace ring::video

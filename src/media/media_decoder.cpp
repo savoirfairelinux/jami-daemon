@@ -61,10 +61,6 @@ MediaDecoder::MediaDecoder() :
 
 MediaDecoder::~MediaDecoder()
 {
-#ifdef RING_ACCEL
-    if (decoderCtx_ && decoderCtx_->hw_device_ctx)
-        av_buffer_unref(&decoderCtx_->hw_device_ctx);
-#endif
     if (decoderCtx_)
         avcodec_free_context(&decoderCtx_);
     if (inputCtx_)
@@ -215,9 +211,11 @@ MediaDecoder::setupStream(AVMediaType mediaType)
     startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
 
 #ifdef RING_ACCEL
-    if (enableAccel_) {
-        accel_ = video::HardwareAccel::setupDecoder(decoderCtx_);
-        decoderCtx_->opaque = accel_.get();
+    if (mediaType == AVMEDIA_TYPE_VIDEO && enableAccel_) {
+        if (accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id)) {
+            accel_->setDetails(decoderCtx_, &options_);
+            decoderCtx_->opaque = accel_.get();
+        }
     } else if (Manager::instance().videoPreferences.getDecodingAccelerated()) {
         RING_WARN() << "Hardware decoding disabled because of previous failure";
     } else {
@@ -284,8 +282,8 @@ MediaDecoder::decode(VideoFrame& result)
         if (accel_) {
             auto f = accel_->transfer(result);
             if (f) {
-                frame = f->pointer();
                 result.copyFrom(*f);
+                frame = result.pointer();
             } else {
                 ++accelFailures_;
                 if (accelFailures_ >= MAX_ACCEL_FAILURES) {
@@ -389,8 +387,6 @@ MediaDecoder::enableAccel(bool enableAccel)
     emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(enableAccel_);
     if (!enableAccel) {
         accel_.reset();
-        if (decoderCtx_->hw_device_ctx)
-            av_buffer_unref(&decoderCtx_->hw_device_ctx);
         if (decoderCtx_)
             decoderCtx_->opaque = nullptr;
     }
@@ -482,7 +478,7 @@ MediaDecoder::getStream(std::string name) const
 #ifdef RING_ACCEL
     // accel_ is null if not using accelerated codecs
     if (accel_)
-        ms.format = AV_PIX_FMT_NV12; // TODO option me!
+        ms.format = accel_->getSoftwareFormat();
 #endif
     return ms;
 }
