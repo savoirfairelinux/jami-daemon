@@ -24,6 +24,9 @@
 
 #include "audio/resampler.h"
 #include "libav_deps.h"
+#include "media_encoder.h"
+#include "media_io_handle.h"
+#include "system_codec_container.h"
 
 #include <chrono>
 #include <fstream>
@@ -174,6 +177,51 @@ private:
     size_t dataChunk_;
     size_t length_;
     std::unique_ptr<Resampler> resampler_; // convert from float to integer samples
+};
+
+/**
+ * Minimally invaisve video encoder for AVFrame.
+ */
+class VideoWriter {
+public:
+    VideoWriter(const std::string& filename, int width, int height)
+        : filename_(filename)
+    {
+        std::map<std::string, std::string> opts = {
+            { "width", std::to_string(width) },
+            { "height", std::to_string(height) }
+        };
+        auto codec = std::static_pointer_cast<SystemVideoCodecInfo>(
+            getSystemCodecContainer()->searchCodecByName("VP8", ring::MEDIA_VIDEO)
+        );
+        std::unique_ptr<MediaIOHandle> ioHandle = nullptr;
+        try {
+            encoder_->openFileOutput(filename_, opts);
+            idx_ = encoder_->addStream(*codec.get());
+            encoder_->setIOContext(ioHandle);
+            encoder_->startIO();
+        } catch (const MediaEncoderException& e) {
+            RING_ERR() << "Error while starting video file: " << e.what();
+        }
+    }
+
+    ~VideoWriter()
+    {
+        if (encoder_->flush() < 0)
+            RING_ERR() << "Error while flushing: " << filename_;
+    }
+
+    void write(AVFrame* frame)
+    {
+        int ret;
+        if ((ret = encoder_->encode(frame, idx_)) < 0)
+            RING_ERR() << "Error while encoding frame: " << libav_utils::getError(ret);
+    }
+
+private:
+    std::unique_ptr<MediaEncoder> encoder_;
+    std::string filename_;
+    int idx_;
 };
 
 }} // namespace ring::debug
