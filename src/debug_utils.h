@@ -24,8 +24,13 @@
 
 #include "audio/resampler.h"
 #include "libav_deps.h"
+#include "media_encoder.h"
+#include "media_io_handle.h"
+#include "system_codec_container.h"
+#include "video/video_scaler.h"
 
 #include <chrono>
+#include <cstdio>
 #include <fstream>
 #include <ios>
 #include <ratio>
@@ -174,6 +179,109 @@ private:
     size_t dataChunk_;
     size_t length_;
     std::unique_ptr<Resampler> resampler_; // convert from float to integer samples
+};
+
+/**
+ * Minimally invaisve video encoder for AVFrame.
+ */
+class VideoWriter {
+public:
+    VideoWriter(const std::string& filename, int width, int height)
+        : filename_(filename)
+    {
+        std::map<std::string, std::string> opts = {
+            { "width", std::to_string(width) },
+            { "height", std::to_string(height) }
+        };
+        auto codec = std::static_pointer_cast<SystemVideoCodecInfo>(
+            getSystemCodecContainer()->searchCodecByName("VP8", ring::MEDIA_VIDEO)
+        );
+        encoder_.reset(new MediaEncoder);
+        std::unique_ptr<MediaIOHandle> ioHandle = nullptr;
+        try {
+            encoder_->openFileOutput(filename_, opts);
+            idx_ = encoder_->addStream(*codec.get());
+            encoder_->setIOContext(ioHandle);
+            encoder_->startIO();
+        } catch (const MediaEncoderException& e) {
+            RING_ERR() << "Error while starting video file: " << e.what();
+        }
+    }
+
+    ~VideoWriter()
+    {
+        if (encoder_->flush() < 0)
+            RING_ERR() << "Error while flushing: " << filename_;
+    }
+
+    void write(AVFrame* frame)
+    {
+        int ret;
+        if ((ret = encoder_->encode(frame, idx_)) < 0)
+            RING_ERR() << "Error while encoding frame: " << libav_utils::getError(ret);
+    }
+
+private:
+    std::unique_ptr<MediaEncoder> encoder_;
+    std::string filename_;
+    int idx_;
+};
+
+/**
+ * Minimally invasive raw video writer.
+ */
+class RawVideoWriter {
+public:
+    RawVideoWriter(const std::string& filename, int width, int height)
+        : filename_(filename)
+        , width_(width)
+        , height_(height)
+    {
+        fopen(filename.c_str(), "wb");
+        f_ = std::ofstream(filename, std::ios::binary);
+        scaler_.reset(new video::VideoScaler);
+    }
+
+    ~RawVideoWriter()
+    {
+        fclose(f_);
+        RING_DBG("Play video file with: ffplay -f rawvideo -pixel_format yuv420p -video_size %dx%d %s",
+            width_, height_, filename_.c_str());
+    }
+
+    void write(VideoFrame& frame)
+    {
+        std::unique_ptr<VideoFrame> ptr;
+        if (frame.format() != AV_PIX_FMT_YUV420P)
+            ptr = scaler_->convertFormat(frame, AV_PIX_FMT_YUV420P);
+        else
+            ptr->copyFrom(frame);
+        AVFrame* f = ptr->pointer();
+        uint32_t pitchY = f->linesize[0];
+        uint32_t pitchU = f->linesize[1];
+        uint32_t pitchV = f->linesize[2];
+        uint8_t* y = f->data[0];
+        uint8_t* u = f->data[1];
+        uint8_t* v = f->data[2];
+        for (uint32_t i = 0; i < (uint32_t)frame->height; ++i) {
+            fwrite(y, width_, 1, f_);
+            y += pitchY;
+        }
+        for (uint32_t i = 0; i < (uint32_t)frame->height / 2; ++i) {
+            fwrite(u, width_ / 2, 1, file);
+            u += pitchU;
+        }
+        for (uint32_t i = 0; i < (uint32_t)frame->height / 2; ++i) {
+            fwrite(v, width_ / 2, 1, file);
+            v += pitchV;
+        }
+    }
+
+private:
+    FILE* f_;
+    std::string filename_;
+    int width_, height_;
+    std::unique_ptr<video::VideoScaler> scaler_;
 };
 
 }} // namespace ring::debug
