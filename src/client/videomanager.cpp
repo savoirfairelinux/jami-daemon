@@ -527,6 +527,25 @@ setDecodingAccelerated(bool state)
 #endif
 }
 
+bool
+getEncodingAccelerated()
+{
+#ifdef RING_ACCEL
+    return ring::Manager::instance().videoPreferences.getEncodingAccelerated();
+#else
+    return false;
+#endif
+}
+
+void
+setEncodingAccelerated(bool state)
+{
+#ifdef RING_ACCEL
+    RING_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
+    ring::Manager::instance().videoPreferences.setEncodingAccelerated(state);
+#endif
+}
+
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 void
 addVideoDevice(const std::string &node, std::vector<std::map<std::string, std::string>> const * devInfo)

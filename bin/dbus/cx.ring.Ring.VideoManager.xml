@@ -117,6 +117,20 @@
             </arg>
         </method>
 
+        <method name="getEncodingAccelerated" tp:name-for-bindings="getEncodingAccelerated">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Bool"/>
+            <arg type="b" name="state" direction="out">
+            <tp:docstring>Returns true if hardware encoding is enabled, false otherwise</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="setEncodingAccelerated" tp:name-for-bindings="setEncodingAccelerated">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="Bool"/>
+            <arg type="b" name="state" direction="in">
+            <tp:docstring>Toggle hardware encoding</tp:docstring>
+            </arg>
+        </method>
+
         <method name="getRenderer" tp:name-for-bindings="getRenderer">
             <tp:docstring>Returns a map of information about a call's renderer.</tp:docstring>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
