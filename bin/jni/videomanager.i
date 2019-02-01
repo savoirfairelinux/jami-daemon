@@ -51,6 +51,10 @@ public:
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
     virtual std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath) {}
     virtual void stopLocalRecorder(const std::string& filepath) {}
+    virtual bool getDecodingAccelerated() {}
+    virtual void setDecodingAccelerated(bool state) {}
+    virtual bool getEncodingAccelerated() {}
+    virtual void setEncodingAccelerated(bool state) {}
     virtual void setDeviceOrientation(const std::string&, int angle) {}
 };
 %}
@@ -407,6 +411,10 @@ void setDeviceOrientation(const std::string& name, int angle);
 uint8_t* obtainFrame(int length);
 void releaseFrame(uint8_t* frame);
 void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
+bool getDecodingAccelerated();
+void setDecodingAccelerated(bool state);
+bool getEncodingAccelerated();
+void setEncodingAccelerated(bool state);
 }
 
 class VideoCallback {
