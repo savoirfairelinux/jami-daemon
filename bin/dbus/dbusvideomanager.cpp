@@ -97,6 +97,18 @@ DBusVideoManager::setDecodingAccelerated(const bool& state)
     DRing::setDecodingAccelerated(state);
 }
 
+auto
+DBusVideoManager::getEncodingAccelerated() -> decltype(DRing::getEncodingAccelerated())
+{
+    return DRing::getEncodingAccelerated();
+}
+
+void
+DBusVideoManager::setEncodingAccelerated(const bool& state)
+{
+    DRing::setEncodingAccelerated(state);
+}
+
 std::map<std::string, std::string>
 DBusVideoManager::getRenderer(const std::string& callId)
 {
