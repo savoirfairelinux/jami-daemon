@@ -109,6 +109,18 @@ DBusVideoManager::setDecodingAccelerated(const bool& state)
     DRing::setDecodingAccelerated(state);
 }
 
+auto
+DBusVideoManager::getEncodingAccelerated() -> decltype(DRing::getEncodingAccelerated())
+{
+    return DRing::getEncodingAccelerated();
+}
+
+void
+DBusVideoManager::setEncodingAccelerated(const bool& state)
+{
+    DRing::setEncodingAccelerated(state);
+}
+
 void
 DBusVideoManager::setDeviceOrientation(const std::string& name, const int& angle)
 {
