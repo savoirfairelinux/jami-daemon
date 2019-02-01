@@ -24,8 +24,11 @@
 
 #include "audio/resampler.h"
 #include "libav_deps.h"
+#include "media_io_handle.h"
+#include "system_codec_container.h"
 
 #include <chrono>
+#include <cstdio>
 #include <fstream>
 #include <ios>
 #include <ratio>
@@ -174,6 +177,65 @@ private:
     size_t dataChunk_;
     size_t length_;
     std::unique_ptr<Resampler> resampler_; // convert from float to integer samples
+};
+
+/**
+ * Minimally invasive video writer. Writes raw frames. Helps debug what goes wrong with video.
+ */
+class VideoWriter {
+public:
+    VideoWriter(const std::string& filename, AVPixelFormat format, int width, int height)
+        : filename_(filename)
+        , format_(format)
+        , width_(width)
+        , height_(height)
+    {
+        f_ = fopen(filename.c_str(), "wb");
+    }
+
+    // so an int (VideoFrame.format()) can be passed without casting
+    VideoWriter(const std::string& filename, int format, int width, int height)
+        : VideoWriter(filename, static_cast<AVPixelFormat>(format), width, height)
+    {}
+
+    ~VideoWriter()
+    {
+        fclose(f_);
+        RING_DBG("Play video file with: ffplay -f rawvideo -pixel_format %s -video_size %dx%d %s",
+            av_get_pix_fmt_name(format_), width_, height_, filename_.c_str());
+    }
+
+    void write(VideoFrame& frame)
+    {
+        int ret = 0;
+        uint8_t* buffer = nullptr;
+        auto f = frame.pointer();
+
+        if (format_ != f->format || width_ != f->width || height_ != f->height)
+            return;
+
+        int size = av_image_get_buffer_size(format_, width_, height_, 1);
+        buffer = reinterpret_cast<uint8_t*>(av_malloc(size));
+        if (!buffer) {
+            return;
+        }
+        if ((ret = av_image_copy_to_buffer(buffer, size,
+            reinterpret_cast<const uint8_t* const*>(f->data),
+            reinterpret_cast<const int*>(f->linesize),
+            format_, width_, height_, 1)) < 0) {
+            av_freep(&buffer);
+            return;
+        }
+
+        fwrite(buffer, 1, size, f_);
+        av_freep(&buffer);
+    }
+
+private:
+    FILE* f_;
+    std::string filename_;
+    AVPixelFormat format_;
+    int width_, height_;
 };
 
 }} // namespace ring::debug
