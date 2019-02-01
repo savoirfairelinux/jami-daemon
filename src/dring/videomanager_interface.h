@@ -194,6 +194,8 @@ DRING_PUBLIC void publishFrame();
 
 DRING_PUBLIC bool getDecodingAccelerated();
 DRING_PUBLIC void setDecodingAccelerated(bool state);
+DRING_PUBLIC bool getEncodingAccelerated();
+DRING_PUBLIC void setEncodingAccelerated(bool state);
 
 // Video signal type definitions
 struct DRING_PUBLIC VideoSignal {
