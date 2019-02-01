@@ -442,6 +442,15 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
        RING_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
+void
+registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target)
+{
+   if (auto sink = ring::Manager::instance().getSinkClient(sinkId))
+       sink->registerAVTarget(target);
+   else
+       RING_WARN("No sink found for id '%s'", sinkId.c_str());
+}
+
 std::map<std::string, std::string>
 getRenderer(const std::string& callId)
 {

@@ -68,6 +68,8 @@ struct DRING_PUBLIC SinkTarget {
     std::function<void(FrameBufferPtr)> push;
 };
 
+using AVSinkTarget = std::function<void(std::unique_ptr<MediaFrame>)>;
+
 class DRING_PUBLIC MediaFrame {
 public:
     // Construct an empty MediaFrame
@@ -168,6 +170,7 @@ DRING_PUBLIC bool hasCameraStarted();
 DRING_PUBLIC bool switchInput(const std::string& resource);
 DRING_PUBLIC bool switchToCamera();
 DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
+DRING_PUBLIC void registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target);
 DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
 DRING_PUBLIC std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
