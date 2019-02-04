@@ -96,7 +96,7 @@ class MediaDecoder {
         std::string getDecoderName() const;
 
         rational<double> getFps() const;
-        int getPixelFormat() const;
+        AVPixelFormat getPixelFormat() const;
 
         void setOptions(const std::map<std::string, std::string>& options);
 #ifdef RING_ACCEL
