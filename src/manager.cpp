@@ -958,7 +958,11 @@ void
 Manager::checkAudio()
 {
     // FIXME dirty, the manager should not need to be aware of local recorders
-    if (getCallList().empty() && not ring::LocalRecorderManager::instance().hasRunningRecorders()) {
+    if (getCallList().empty()
+#ifdef RING_VIDEO
+        and not getVideoManager().audioPreview
+#endif
+        and not ring::LocalRecorderManager::instance().hasRunningRecorders()) {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         if (pimpl_->audiodriver_)
             pimpl_->audiodriver_->stopStream();

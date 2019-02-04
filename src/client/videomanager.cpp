@@ -394,8 +394,12 @@ stopCamera()
 void
 startAudioDevice()
 {
-    ring::Manager::instance().initAudioDriver();
-    ring::Manager::instance().startAudioDriverStream();
+    // Don't start audio layer if already done
+    auto audioLayer = ring::Manager::instance().getAudioDriver();
+    if (!audioLayer)
+        ring::Manager::instance().initAudioDriver();
+    if (!audioLayer->isStarted())
+        ring::Manager::instance().startAudioDriverStream();
     ring::Manager::instance().getVideoManager().audioPreview = ring::getAudioInput(ring::RingBufferPool::DEFAULT_ID);
 }
 
