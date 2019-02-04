@@ -114,7 +114,7 @@ void VideoInput::process()
     for (auto& buffer : buffers_) {
         if (buffer.status == BUFFER_FULL && buffer.index == publish_index_) {
             auto& frame = getNewFrame();
-            int format = getPixelFormat();
+            AVPixelFormat format = getPixelFormat();
 
             buffer.status = BUFFER_PUBLISHED;
             frame.setFromMemory((uint8_t*)buffer.data, format, decOpts_.width, decOpts_.height,
@@ -593,14 +593,14 @@ int VideoInput::getWidth() const
 int VideoInput::getHeight() const
 { return decOpts_.height; }
 
-int VideoInput::getPixelFormat() const
+AVPixelFormat VideoInput::getPixelFormat() const
 {
     int format;
     std::stringstream ss;
     ss << decOpts_.format;
     ss >> format;
 
-    return format;
+    return (AVPixelFormat)format;
 }
 #else
 int VideoInput::getWidth() const
@@ -609,7 +609,7 @@ int VideoInput::getWidth() const
 int VideoInput::getHeight() const
 { return decoder_->getHeight(); }
 
-int VideoInput::getPixelFormat() const
+AVPixelFormat VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
 #endif
 

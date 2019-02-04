@@ -72,7 +72,7 @@ public:
 
     virtual int getWidth() const = 0;
     virtual int getHeight() const = 0;
-    virtual int getPixelFormat() const = 0;
+    virtual AVPixelFormat getPixelFormat() const = 0;
 
     std::shared_ptr<VideoFrame> obtainLastFrame();
 
