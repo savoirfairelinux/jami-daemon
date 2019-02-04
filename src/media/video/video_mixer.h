@@ -46,7 +46,7 @@ public:
 
     int getWidth() const override;
     int getHeight() const override;
-    int getPixelFormat() const override;
+    AVPixelFormat getPixelFormat() const override;
 
     // as VideoFramePassiveReader
     void update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& v) override;
