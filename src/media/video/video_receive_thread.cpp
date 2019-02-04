@@ -243,7 +243,7 @@ int VideoReceiveThread::getWidth() const
 int VideoReceiveThread::getHeight() const
 { return dstHeight_; }
 
-int VideoReceiveThread::getPixelFormat() const
+AVPixelFormat VideoReceiveThread::getPixelFormat() const
 { return videoDecoder_->getPixelFormat(); }
 
 MediaStream
