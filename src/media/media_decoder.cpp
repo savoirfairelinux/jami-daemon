@@ -449,7 +449,7 @@ MediaDecoder::getTimeBase() const
             (unsigned)avStream_->time_base.den};
 }
 
-int MediaDecoder::getPixelFormat() const
+AVPixelFormat MediaDecoder::getPixelFormat() const
 { return decoderCtx_->pix_fmt; }
 
 int
