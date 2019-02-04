@@ -150,6 +150,11 @@ private:
     void setGeometry(int format, int width, int height) noexcept;
 };
 
+struct AVSinkTarget {
+    std::function<void(std::unique_ptr<VideoFrame>)> push;
+    AVPixelFormat preferredFormat {AV_PIX_FMT_NONE};
+}
+
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
 
 DRING_PUBLIC std::vector<std::string> getDeviceList();
@@ -168,6 +173,7 @@ DRING_PUBLIC bool hasCameraStarted();
 DRING_PUBLIC bool switchInput(const std::string& resource);
 DRING_PUBLIC bool switchToCamera();
 DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
+DRING_PUBLIC void registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target);
 DRING_PUBLIC std::map<std::string, std::string> getRenderer(const std::string& callId);
 
 DRING_PUBLIC std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
