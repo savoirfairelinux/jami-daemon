@@ -197,7 +197,8 @@ AudioInput::switchInput(const std::string& resource)
     foundDevOpts_.swap(p);
 
     if (resource.empty()) {
-        devOpts_ = {};
+        if (initDevice(""))
+            foundDevOpts(devOpts_);
         switchPending_ = true;
         futureDevOpts_ = foundDevOpts_.get_future();
         return futureDevOpts_;
