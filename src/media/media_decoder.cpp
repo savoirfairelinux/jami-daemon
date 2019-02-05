@@ -279,20 +279,7 @@ MediaDecoder::decode(VideoFrame& result)
 
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
-#ifdef RING_ACCEL
-        if (!accel_.name.empty()) {
-            ret = video::transferFrameData(accel_, decoderCtx_, result);
-            if (ret < 0) {
-                ++accelFailures_;
-                if (accelFailures_ >= MAX_ACCEL_FAILURES) {
-                    RING_ERR("Hardware decoding failure");
-                    accelFailures_ = 0; // reset error count for next time
-                    fallback_ = true;
-                    return Status::RestartRequired;
-                }
-            }
-        }
-#endif
+
         auto packetTimestamp = frame->pts; // in stream time base
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
             {1, AV_TIME_BASE}, decoderCtx_->time_base,
@@ -385,10 +372,11 @@ MediaDecoder::enableAccel(bool enableAccel)
     emitSignal<DRing::ConfigurationSignal::HardwareDecodingChanged>(enableAccel_);
     if (!enableAccel) {
         accel_ = {};
-        if (decoderCtx_->hw_device_ctx)
-            av_buffer_unref(&decoderCtx_->hw_device_ctx);
-        if (decoderCtx_)
+        if (decoderCtx_) {
+            if (decoderCtx_->hw_device_ctx)
+                av_buffer_unref(&decoderCtx_->hw_device_ctx);
             decoderCtx_->opaque = nullptr;
+        }
     }
 }
 #endif
@@ -413,12 +401,6 @@ MediaDecoder::flush(VideoFrame& result)
 
     if (frameFinished) {
         av_packet_unref(&inpacket);
-#ifdef RING_ACCEL
-        // flush is called when closing the stream
-        // so don't restart the media decoder
-        if (!accel_.name.empty() && accelFailures_ < MAX_ACCEL_FAILURES)
-            video::transferFrameData(accel_, decoderCtx_, result);
-#endif
         return Status::FrameFinished;
     }
 
