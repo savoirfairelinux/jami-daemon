@@ -26,6 +26,9 @@
 #include "manager.h"
 #include "sinkclient.h"
 #include "logger.h"
+#ifdef RING_ACCEL
+#include "accel.h"
+#endif
 
 #include <cmath>
 #include <unistd.h>
@@ -169,6 +172,13 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input, int index)
     if (!width_ or !height_ or !input.pointer())
         return;
 
+#ifdef RING_ACCEL
+    auto framePtr = transferToMainMemory(input, AV_PIX_FMT_NV12);
+    const auto& swFrame = *framePtr;
+#else
+    const auto& swFrame = input;
+#endif
+
     const int n = sources_.size();
     const int zoom = ceil(sqrt(n));
     int cell_width = width_ / zoom;
@@ -176,7 +186,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input, int index)
     int xoff = (index % zoom) * cell_width;
     int yoff = (index / zoom) * cell_height;
 
-    scaler_.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height, true);
+    scaler_.scale_and_pad(swFrame, output, xoff, yoff, cell_width, cell_height, true);
 }
 
 void

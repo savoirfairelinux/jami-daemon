@@ -27,6 +27,10 @@
 #include "logger.h"
 #include "manager.h"
 #include "smartools.h"
+#include "sip/sipcall.h"
+#ifdef RING_ACCEL
+#include "accel.h"
+#endif
 
 #include <map>
 #include <unistd.h>
@@ -84,7 +88,13 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         if (is_keyframe)
             --forceKeyFrame_;
 
-        if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
+#ifdef RING_ACCEL
+        auto framePtr = transferToMainMemory(input_frame, AV_PIX_FMT_NV12);
+        auto& swFrame = *framePtr;
+#else
+        auto& swFrame = input_frame;
+#endif
+        if (videoEncoder_->encode(swFrame, is_keyframe, frameNumber_++) < 0)
             RING_ERR("encoding failed");
     }
 }
