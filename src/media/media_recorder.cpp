@@ -26,6 +26,9 @@
 #include "media_recorder.h"
 #include "system_codec_container.h"
 #include "thread_pool.h"
+#ifdef RING_ACCEL
+#include "video/accel.h"
+#endif
 
 #include <algorithm>
 #include <iomanip>
@@ -167,7 +170,17 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     // copy frame to not mess with the original frame's pts (does not actually copy frame data)
     MediaFrame clone;
     const auto& ms = streams_[name]->info;
-    clone.copyFrom(*frame);
+    if (ms.isVideo) {
+#ifdef RING_ACCEL
+        auto sw = video::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
+            static_cast<AVPixelFormat>(ms.format));
+        clone.copyFrom(*sw);
+#else
+        clone.copyFrom(*frame);
+#endif
+    } else {
+        clone.copyFrom(*frame);
+    }
     clone.pointer()->pts -= ms.firstTimestamp;
     if (ms.isVideo)
         videoFilter_->feedInput(clone.pointer(), name);
