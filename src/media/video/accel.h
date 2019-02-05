@@ -35,5 +35,6 @@ struct HardwareAccel {
 
 const HardwareAccel setupHardwareDecoding(AVCodecContext* codecCtx);
 int transferFrameData(HardwareAccel accel, AVCodecContext* codecCtx, VideoFrame& frame);
+std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat);
 
 }} // namespace ring::video
