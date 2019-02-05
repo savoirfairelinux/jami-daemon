@@ -91,6 +91,9 @@ class SinkClient : public VideoFramePassiveReader
         DRing::SinkTarget target_;
         DRing::AVSinkTarget avTarget_;
         std::unique_ptr<VideoScaler> scaler_;
+        std::unique_ptr<MediaFilter> filter_;
+
+        void setRotation(int rotation);
 
 #ifdef DEBUG_FPS
         unsigned frameCount_;
