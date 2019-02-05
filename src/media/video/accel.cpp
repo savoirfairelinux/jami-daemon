@@ -69,22 +69,37 @@ transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame&
         return -1;
     }
 
-    // FFmpeg requires a second frame in which to transfer the data from the GPU buffer to the main memory
-    auto container = std::unique_ptr<VideoFrame>(new VideoFrame());
-    auto output = container->pointer();
+    auto output = transferToMainMemory(frame, AV_PIX_FMT_NV12);
+    if (!output)
+        return -1;
 
-    auto pts = input->pts;
-    // most hardware accelerations output NV12, so skip extra conversions
-    output->format = AV_PIX_FMT_NV12;
+    frame.copyFrom(*output); // copy to input so caller receives extracted image data
+    return 0;
+}
+
+std::unique_ptr<VideoFrame>
+transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat)
+{
+    auto input = frame.pointer();
+    auto out = std::make_unique<VideoFrame>();
+
+    auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input->format));
+    if (desc && not (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
+        out->copyFrom(frame);
+        return out;
+    }
+
+    auto output = out->pointer();
+    output->format = desiredFormat;
+
     int ret = av_hwframe_transfer_data(output, input, 0);
-    output->pts = pts;
+    if (ret < 0) {
+        out->copyFrom(frame);
+        return out;
+    }
 
-    // move output into input so the caller receives extracted image data
-    // but we have to delete input's data first
-    av_frame_unref(input);
-    av_frame_move_ref(input, output);
-
-    return ret;
+    output->pts = input->pts;
+    return out;
 }
 
 static int
