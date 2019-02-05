@@ -39,6 +39,10 @@
 #include "video_scaler.h"
 #include "smartools.h"
 
+#ifdef RING_ACCEL
+#include "accel.h"
+#endif
+
 #ifndef _WIN32
 #include <sys/mman.h>
 #endif
@@ -313,6 +317,57 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 {}
 
 void
+SinkClient::setRotation(int rotation)
+{
+    if (rotation_ == rotation || width_ == 0 || height_ == 0)
+        return;
+
+    rotation_ = rotation;
+    RING_WARN("Rotation set to %d", rotation_);
+    auto in_name = FILTER_INPUT_NAME;
+
+    std::stringstream ss;
+
+    ss << "[" << in_name << "] " << "format=rgb32,";
+
+    switch (rotation_) {
+        case 90 :
+        case -270 :
+            ss << "rotate=-PI/2";
+            //ss << "transpose=2";
+            break;
+        case 180 :
+        case -180 :
+            ss << "rotate=PI";
+            break;
+        case 270 :
+        case -90 :
+            ss << "rotate=PI/2";
+            //ss << "transpose=1";
+            break;
+        default :
+            ss << "null";
+    }
+
+    const auto format = AV_PIX_FMT_RGB32;
+    const auto one = rational<int>(1);
+    std::vector<MediaStream> msv;
+    msv.emplace_back(in_name, format, one, width_, height_, one, one);
+
+    if (!rotation_)
+        filter_.reset();
+    else {
+        filter_.reset(new MediaFilter);
+        auto ret = filter_->initialize(ss.str(), msv);
+        if (ret < 0) {
+            RING_ERR() << "filter init fail";
+            filter_ = nullptr;
+            rotation_ = 0;
+        }
+    }
+}
+
+void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
@@ -332,35 +387,67 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     }
 #endif
 
-#if HAVE_SHM
-    shm_->renderFrame(f);
-#endif
-
     if (avTarget_.push) {
         auto outFrame = std::make_unique<VideoFrame>();
         outFrame->copyFrom(f);
         avTarget_.push(std::move(outFrame));
     }
-    if (target_.pull) {
-        VideoFrame dst;
-        const int width = f.width();
-        const int height = f.height();
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
-        const int format = AV_PIX_FMT_RGBA;
-#else
-        const int format = AV_PIX_FMT_BGRA;
+
+    bool doTransfer = (target_.pull != nullptr);
+#if HAVE_SHM
+    doTransfer |= (shm_ != nullptr);
 #endif
 
-        const auto bytes = videoFrameSize(format, width, height);
+    if (doTransfer) {
 
-        if (bytes > 0) {
-            if (auto buffer_ptr = target_.pull(bytes)) {
-                buffer_ptr->format = format;
-                buffer_ptr->width = width;
-                buffer_ptr->height = height;
-                dst.setFromMemory(buffer_ptr->ptr, format, width, height);
-                scaler_->scale(f, dst);
-                target_.push(std::move(buffer_ptr));
+        AVFrameSideData* side_data = av_frame_get_side_data(f.pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+        if (side_data) {
+            int32_t* matrix_rotation = (int32_t*)side_data->data;
+            RING_WARN() << "rotation received : " << av_display_rotation_get(matrix_rotation);
+            setRotation(av_display_rotation_get(matrix_rotation));
+            if (filter_) {
+                filter_->feedInput(f.pointer(), FILTER_INPUT_NAME);
+                auto filtered_frame = filter_->readOutput();
+                if (filtered_frame) {
+                    f.setFromMemory(filtered_frame->data[0], filtered_frame->format,
+                                    filtered_frame->width, filtered_frame->height);
+                    if (filtered_frame->height != height_ || filtered_frame->width != width_) {
+                        setFrameSize(0, 0);
+                        setFrameSize(filtered_frame->width, filtered_frame->height);
+                    }
+                }
+            }
+
+        }
+
+#ifdef RING_ACCEL
+        auto swFrame = transferToMainMemory(f, AV_PIX_FMT_NV12);
+#else
+        std::unique_ptr<VideoFrame> swFrame;
+        swFrame->copyFrom(f);
+#endif
+#if HAVE_SHM
+        shm_->renderFrame(*swFrame);
+#endif
+        if (target_.pull) {
+            VideoFrame dst;
+            const int width = swFrame->width();
+            const int height = swFrame->height();
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
+            const int format = AV_PIX_FMT_RGBA;
+#else
+            const int format = AV_PIX_FMT_BGRA;
+#endif
+            const auto bytes = videoFrameSize(format, width, height);
+            if (bytes > 0) {
+                if (auto buffer_ptr = target_.pull(bytes)) {
+                    buffer_ptr->format = format;
+                    buffer_ptr->width = width;
+                    buffer_ptr->height = height;
+                    dst.setFromMemory(buffer_ptr->ptr, format, width, height);
+                    scaler_->scale(*swFrame, dst);
+                    target_.push(std::move(buffer_ptr));
+                }
             }
         }
     }
