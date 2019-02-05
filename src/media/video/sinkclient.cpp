@@ -39,6 +39,10 @@
 #include "video_scaler.h"
 #include "smartools.h"
 
+#ifdef RING_ACCEL
+#include "accel.h"
+#endif
+
 #ifndef _WIN32
 #include <sys/mman.h>
 #endif
@@ -332,35 +336,46 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     }
 #endif
 
-#if HAVE_SHM
-    shm_->renderFrame(f);
-#endif
-
     if (avTarget_.push) {
         auto outFrame = std::make_unique<VideoFrame>();
         outFrame->copyFrom(f);
         avTarget_.push(std::move(outFrame));
     }
-    if (target_.pull) {
-        VideoFrame dst;
-        const int width = f.width();
-        const int height = f.height();
-#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
-        const int format = AV_PIX_FMT_RGBA;
-#else
-        const int format = AV_PIX_FMT_BGRA;
+
+    bool doTransfer = (target_.pull != nullptr);
+#if HAVE_SHM
+    doTransfer |= (shm_ != nullptr);
 #endif
 
-        const auto bytes = videoFrameSize(format, width, height);
-
-        if (bytes > 0) {
-            if (auto buffer_ptr = target_.pull(bytes)) {
-                buffer_ptr->format = format;
-                buffer_ptr->width = width;
-                buffer_ptr->height = height;
-                dst.setFromMemory(buffer_ptr->ptr, format, width, height);
-                scaler_->scale(f, dst);
-                target_.push(std::move(buffer_ptr));
+    if (doTransfer) {
+#ifdef RING_ACCEL
+        auto swFrame = transferToMainMemory(f, AV_PIX_FMT_NV12);
+#else
+        std::unique_ptr<VideoFrame> swFrame;
+        swFrame->copyFrom(f);
+#endif
+#if HAVE_SHM
+        shm_->renderFrame(*swFrame);
+#endif
+        if (target_.pull) {
+            VideoFrame dst;
+            const int width = swFrame->width();
+            const int height = swFrame->height();
+#if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
+            const int format = AV_PIX_FMT_RGBA;
+#else
+            const int format = AV_PIX_FMT_BGRA;
+#endif
+            const auto bytes = videoFrameSize(format, width, height);
+            if (bytes > 0) {
+                if (auto buffer_ptr = target_.pull(bytes)) {
+                    buffer_ptr->format = format;
+                    buffer_ptr->width = width;
+                    buffer_ptr->height = height;
+                    dst.setFromMemory(buffer_ptr->ptr, format, width, height);
+                    scaler_->scale(*swFrame, dst);
+                    target_.push(std::move(buffer_ptr));
+                }
             }
         }
     }
