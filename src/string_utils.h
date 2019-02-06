@@ -24,6 +24,9 @@
 
 #include <string>
 #include <vector>
+#ifdef _WIN32
+#include <WTypes.h>
+#endif
 
 namespace ring {
 
@@ -41,6 +44,7 @@ std::string to_string(double value);
 #ifdef _WIN32
 std::wstring to_wstring(const std::string& s);
 std::string decodeMultibyteString(const std::string& s);
+std::string bstrToStdString(BSTR bstr);
 #endif
 
 template <typename T>
