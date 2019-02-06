@@ -2,6 +2,7 @@
  *  Copyright (C) 2015-2019 Savoir-faire Linux Inc.
  *
  *  Author: Edric Milaret <edric.ladent-milaret@savoirfairelinux.com>
+ *  Author: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,14 +20,8 @@
  */
 
 #include <algorithm>
-#include <cerrno>
-#include <cstdio>
-#include <mutex>
-#include <sstream>
-#include <stdexcept> // for std::runtime_error
 #include <string>
 #include <thread>
-#include <unistd.h>
 #include <vector>
 
 #include "../video_device_monitor.h"
@@ -34,20 +29,11 @@
 #include "noncopyable.h"
 
 #include <dshow.h>
-#include <dbt.h>
 
 namespace ring { namespace video {
 
 class VideoDeviceMonitorImpl {
     public:
-        /*
-        * This is the only restriction to the pImpl design:
-        * as the Linux implementation has a thread, it needs a way to notify
-        * devices addition and deletion.
-        *
-        * This class should maybe inherit from VideoDeviceMonitor instead of
-        * being its pImpl.
-        */
         VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
         ~VideoDeviceMonitorImpl();
 
@@ -59,6 +45,10 @@ class VideoDeviceMonitorImpl {
         VideoDeviceMonitor* monitor_;
 
         void run();
+
+        static const constexpr unsigned POLLING_INTERVAL_MILLISECONDS = 200;
+        HRESULT enumerateVideoInputDevices(IEnumMoniker **ppEnum);
+        std::vector<std::string> enumerateVideoInputDevices();
 
         mutable std::mutex mutex_;
         bool probing_;
@@ -88,61 +78,104 @@ VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 void
 VideoDeviceMonitorImpl::run()
 {
-    //FIX ME : That's one shot
-    std::list<std::string> deviceList;
     HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    ICreateDevEnum *pDevEnum;
-    hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
-        CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
+    if (FAILED(hr)) {
+        return;
+    }
 
-    IEnumMoniker *pEnum = nullptr;
-    if (SUCCEEDED(hr)) {
-        hr = pDevEnum->CreateClassEnumerator(
-            CLSID_VideoInputDeviceCategory,
-            &pEnum, 0);
-        pDevEnum->Release();
-        if (FAILED(hr) || pEnum == nullptr) {
-            RING_ERR("No webcam found.");
-            hr = VFW_E_NOT_FOUND;
+    while (probing_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(POLLING_INTERVAL_MILLISECONDS));
+        auto currentDeviceList = enumerateVideoInputDevices();
+        auto deviceList = monitor_->getDeviceList();
+        for (auto device : deviceList) {
+            auto it = std::find(currentDeviceList.begin(), currentDeviceList.end(), device);
+            if (it != currentDeviceList.end()) {
+                currentDeviceList.erase(it);
+            } else {
+                monitor_->removeDevice(device);
+            }
         }
-        if (hr != VFW_E_NOT_FOUND && pEnum != nullptr) {
-            IMoniker *pMoniker = NULL;
-            unsigned deviceID = 0;
-            while (pEnum->Next(1, &pMoniker, NULL) == S_OK)
-            {
-                IPropertyBag *pPropBag;
-                HRESULT hr = pMoniker->BindToStorage(
-                    0,
-                    0,
-                    IID_PPV_ARGS(&pPropBag));
-                if (FAILED(hr)) {
-                    pMoniker->Release();
-                    continue;
-                }
-
-                VARIANT var;
-                VariantInit(&var);
-                hr = pPropBag->Read(L"Description", &var, 0);
-                if (FAILED(hr)) {
-                    hr = pPropBag->Read(L"FriendlyName", &var, 0);
-                }
-                if (SUCCEEDED(hr)) {
-                    deviceList.push_back(std::to_string(deviceID));
-                    VariantClear(&var);
-                }
-
-                hr = pPropBag->Write(L"FriendlyName", &var);
-                pPropBag->Release();
-                pMoniker->Release();
-                deviceID++;
-            }
-            pEnum->Release();
-            for (auto device : deviceList) {
-                //FIXME: Custom id is a weak way to do that
-                monitor_->addDevice(device);
-            }
+        for (auto device : currentDeviceList) {
+            monitor_->addDevice(device);
         }
     }
+
+    CoUninitialize();
+}
+
+HRESULT
+VideoDeviceMonitorImpl::enumerateVideoInputDevices(IEnumMoniker **ppEnum)
+{
+    ICreateDevEnum *pDevEnum;
+    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
+        CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
+
+    if (SUCCEEDED(hr)) {
+        hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, ppEnum, 0);
+        if (hr == S_FALSE) {
+            hr = VFW_E_NOT_FOUND;
+        }
+        pDevEnum->Release();
+    }
+    return hr;
+}
+
+std::vector<std::string>
+VideoDeviceMonitorImpl::enumerateVideoInputDevices()
+{
+    std::vector<std::string> deviceList;
+
+    ICreateDevEnum *pDevEnum;
+    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
+        CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
+
+    if (FAILED(hr)) {
+        RING_ERR() << "Can't enumerate webcams";
+        return {};
+    }
+
+    IEnumMoniker *pEnum = nullptr;
+    hr = enumerateVideoInputDevices(&pEnum);
+    if (FAILED(hr) || pEnum == nullptr) {
+        RING_ERR() << "No webcam found";
+        return {};
+    }
+
+    IMoniker *pMoniker = NULL;
+    unsigned deviceID = 0;
+    while (pEnum->Next(1, &pMoniker, NULL) == S_OK) {
+        IPropertyBag *pPropBag;
+        HRESULT hr = pMoniker->BindToStorage(0, 0, IID_PPV_ARGS(&pPropBag));
+        if (FAILED(hr)) {
+            pMoniker->Release();
+            continue;
+        }
+
+        VARIANT var;
+        VariantInit(&var);
+        hr = pPropBag->Read(L"Description", &var, 0);
+        if (FAILED(hr)) {
+            hr = pPropBag->Read(L"FriendlyName", &var, 0);
+        }
+
+        if (SUCCEEDED(hr)) {
+            int wslen = ::SysStringLen(var.bstrVal);
+            if (wslen != 0) {
+                std::wstring ws(var.bstrVal, wslen);
+                deviceList.push_back(std::string(ws.begin(), ws.end()));
+            }
+            VariantClear(&var);
+        }
+
+        hr = pPropBag->Write(L"FriendlyName", &var);
+
+        pPropBag->Release();
+        pMoniker->Release();
+
+        deviceID++;
+    }
+    pEnum->Release();
+    return deviceList;
 }
 
 VideoDeviceMonitor::VideoDeviceMonitor()
