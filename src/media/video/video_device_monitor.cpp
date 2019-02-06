@@ -56,6 +56,17 @@ VideoDeviceMonitor::getDeviceList() const
     return names;
 }
 
+vector<string>
+VideoDeviceMonitor::getDeviceNodes() const
+{
+    std::lock_guard<std::mutex> l(lock_);
+    vector<string> nodes;
+    nodes.reserve(devices_.size());
+    for (const auto& dev : devices_)
+        nodes.emplace_back(dev.getNode());
+    return nodes;
+}
+
 DRing::VideoCapabilities
 VideoDeviceMonitor::getCapabilities(const string& name) const
 {

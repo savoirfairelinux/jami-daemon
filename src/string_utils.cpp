@@ -27,6 +27,7 @@
 #include <stdexcept>
 #ifdef _WIN32
 #include <windows.h>
+#include <oleauto.h>
 #endif
 
 #include <ciso646> // fix windows compiler bug
@@ -57,6 +58,16 @@ decodeMultibyteString(const std::string& s)
     return std::string(wstr.begin(), wstr.end());
 }
 
+std::string
+bstrToStdString(BSTR bstr)
+{
+    int wslen = ::SysStringLen(bstr);
+    if (wslen != 0) {
+        std::wstring wstr(bstr, wslen);
+        return std::string(wstr.begin(), wstr.end());
+    }
+    return {};
+}
 #endif
 
 std::string
