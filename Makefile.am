@@ -22,7 +22,7 @@ precoverage:
 coverage: precoverage check
 	$(AM_V_at)lcov --no-external --capture --directory $(top_builddir) --output-file dring-coverage-tests.info
 	$(AM_V_at)lcov --add-tracefile dring-coverage-base.info --add-tracefile dring-coverage-tests.info --output-file dring-coverage.info
-	$(AM_V_at)lcov --remove dring-coverage.info '/contrib/*' '/usr/include/*' '/bin/*' --output-file dring-coverage-filtered.info
+	$(AM_V_at)lcov --remove dring-coverage.info '/contrib/*' '/usr/include/*' '/bin/*' '/foo/*' --output-file dring-coverage-filtered.info
 	$(MKDIR_P) html-output
 	genhtml -o html-output dring-coverage-filtered.info
 
