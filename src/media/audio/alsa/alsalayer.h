@@ -142,8 +142,11 @@ class AlsaLayer : public AudioLayer {
             return indexRing_;
         }
 
+        void run();
+
     private:
-        friend class AlsaThread;
+
+        void initAudioLayer();
         /**
          * Returns a map of audio device hardware description and index
          */
@@ -232,13 +235,14 @@ class AlsaLayer : public AudioLayer {
         std::string audioPlugin_;
 
         /** Vector to manage all soundcard index - description association of the system */
-        // std::vector<HwIDPair> IDSoundCards_;
+        // std::vector<HwIDPair> IDSoundCards
 
         /** Non-interleaved audio buffers */
         AudioBuffer playbackBuff_;
         AudioBuffer captureBuff_;
 
         /** Interleaved buffer */
+
         std::vector<AudioSample> playbackIBuff_;
         std::vector<AudioSample> captureIBuff_;
 

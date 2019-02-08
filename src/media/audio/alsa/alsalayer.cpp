@@ -40,7 +40,6 @@ class AlsaThread {
 public:
     AlsaThread(AlsaLayer *alsa);
     ~AlsaThread();
-    void initAudioLayer();
     void start();
     bool isRunning() const;
 
@@ -74,70 +73,9 @@ void AlsaThread::start()
     thread_ = std::thread(&AlsaThread::run, this);
 }
 
-void AlsaThread::initAudioLayer(void)
-{
-    std::string pcmp;
-    std::string pcmr;
-    std::string pcmc;
-
-    if (alsa_->audioPlugin_ == PCM_DMIX_DSNOOP) {
-        pcmp = alsa_->buildDeviceTopo(PCM_DMIX, alsa_->indexOut_);
-        pcmr = alsa_->buildDeviceTopo(PCM_DMIX, alsa_->indexRing_);
-        pcmc = alsa_->buildDeviceTopo(PCM_DSNOOP, alsa_->indexIn_);
-    } else {
-        pcmp = alsa_->buildDeviceTopo(alsa_->audioPlugin_, alsa_->indexOut_);
-        pcmr = alsa_->buildDeviceTopo(alsa_->audioPlugin_, alsa_->indexRing_);
-        pcmc = alsa_->buildDeviceTopo(alsa_->audioPlugin_, alsa_->indexIn_);
-    }
-
-    if (not alsa_->is_capture_open_) {
-        alsa_->is_capture_open_ = alsa_->openDevice(&alsa_->captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE, alsa_->audioInputFormat_);
-
-        if (not alsa_->is_capture_open_)
-            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_CAPTURE_DEVICE);
-    }
-
-    if (not alsa_->is_playback_open_) {
-        alsa_->is_playback_open_ = alsa_->openDevice(&alsa_->playbackHandle_, pcmp, SND_PCM_STREAM_PLAYBACK, alsa_->audioFormat_);
-
-        if (not alsa_->is_playback_open_)
-            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
-
-        if (alsa_->getIndexPlayback() != alsa_->getIndexRingtone())
-            if (!alsa_->openDevice(&alsa_->ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK, alsa_->audioFormat_))
-                emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
-    }
-
-    alsa_->hardwareFormatAvailable(alsa_->getFormat());
-    alsa_->hardwareInputFormatAvailable(alsa_->audioInputFormat_);
-
-    alsa_->prepareCaptureStream();
-    alsa_->preparePlaybackStream();
-
-    alsa_->startCaptureStream();
-    alsa_->startPlaybackStream();
-
-    alsa_->flushMain();
-    alsa_->flushUrgent();
-}
-
-/**
- * Reimplementation of run()
- */
 void AlsaThread::run()
 {
-    initAudioLayer();
-    {
-        std::lock_guard<std::mutex> lock(alsa_->mutex_);
-        alsa_->status_ = AudioLayer::Status::Started;
-    }
-    alsa_->startedCv_.notify_all();
-
-    while (alsa_->status_ == AudioLayer::Status::Started and running_) {
-        alsa_->playback();
-        alsa_->ringtone();
-        alsa_->capture();
-    }
+    alsa_->run();
 }
 
 AlsaLayer::AlsaLayer(const AudioPreference &pref)
@@ -170,6 +108,72 @@ AlsaLayer::~AlsaLayer()
     /* Then close the audio devices */
     closeCaptureStream();
     closePlaybackStream();
+}
+
+void AlsaLayer::initAudioLayer()
+{
+    std::string pcmp;
+    std::string pcmr;
+    std::string pcmc;
+
+    if (audioPlugin_ == PCM_DMIX_DSNOOP) {
+        pcmp = buildDeviceTopo(PCM_DMIX, indexOut_);
+        pcmr = buildDeviceTopo(PCM_DMIX, indexRing_);
+        pcmc = buildDeviceTopo(PCM_DSNOOP, indexIn_);
+    } else {
+        pcmp = buildDeviceTopo(audioPlugin_, indexOut_);
+        pcmr = buildDeviceTopo(audioPlugin_, indexRing_);
+        pcmc = buildDeviceTopo(audioPlugin_, indexIn_);
+    }
+
+    if (not is_capture_open_) {
+        is_capture_open_ = openDevice(&captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE, audioInputFormat_);
+
+        if (not is_capture_open_)
+            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_CAPTURE_DEVICE);
+    }
+
+    if (not is_playback_open_) {
+        is_playback_open_ = openDevice(&playbackHandle_, pcmp, SND_PCM_STREAM_PLAYBACK, audioFormat_);
+
+        if (not is_playback_open_)
+            emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
+
+        if (getIndexPlayback() != getIndexRingtone())
+            if (!openDevice(&ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK, audioFormat_))
+                emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
+    }
+
+    hardwareFormatAvailable(getFormat());
+    hardwareInputFormatAvailable(audioInputFormat_);
+
+    prepareCaptureStream();
+    preparePlaybackStream();
+
+    startCaptureStream();
+    startPlaybackStream();
+
+    flushMain();
+    flushUrgent();
+}
+
+/**
+ * Reimplementation of run()
+ */
+void AlsaLayer::run()
+{
+    initAudioLayer();
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        status_ = AudioLayer::Status::Started;
+    }
+    startedCv_.notify_all();
+
+    while (status_ == AudioLayer::Status::Started and audioThread_->isRunning()) {
+        playback();
+        ringtone();
+        capture();
+    }
 }
 
 // Retry approach taken from pa_linux_alsa.c, part of PortAudio
