@@ -79,72 +79,72 @@ const char * const Preferences::DFT_ZONE = "North America";
 const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
 
 // general preferences
-static const char * const ORDER_KEY = "order";
-static const char * const AUDIO_API_KEY = "audioApi";
-static const char * const HISTORY_LIMIT_KEY = "historyLimit";
-static const char * const RINGING_TIMEOUT = "ringingTimeout";
-static const char * const HISTORY_MAX_CALLS_KEY = "historyMaxCalls";
-static const char * const ZONE_TONE_CHOICE_KEY = "zoneToneChoice";
-static const char * const PORT_NUM_KEY = "portNum";
-static const char * const SEARCH_BAR_DISPLAY_KEY = "searchBarDisplay";
-static const char * const MD5_HASH_KEY = "md5Hash";
+static constexpr char * const ORDER_KEY = "order";
+static constexpr char * const AUDIO_API_KEY = "audioApi";
+static constexpr char * const HISTORY_LIMIT_KEY = "historyLimit";
+static constexpr char * const RINGING_TIMEOUT = "ringingTimeout";
+static constexpr char * const HISTORY_MAX_CALLS_KEY = "historyMaxCalls";
+static constexpr char * const ZONE_TONE_CHOICE_KEY = "zoneToneChoice";
+static constexpr char * const PORT_NUM_KEY = "portNum";
+static constexpr char * const SEARCH_BAR_DISPLAY_KEY = "searchBarDisplay";
+static constexpr char * const MD5_HASH_KEY = "md5Hash";
 
 // voip preferences
 constexpr const char * const VoipPreference::CONFIG_LABEL;
-static const char * const PLAY_DTMF_KEY = "playDtmf";
-static const char * const PLAY_TONES_KEY = "playTones";
-static const char * const PULSE_LENGTH_KEY = "pulseLength";
-static const char * const SYMMETRIC_RTP_KEY = "symmetric";
-static const char * const ZID_FILE_KEY = "zidFile";
+static constexpr char * const PLAY_DTMF_KEY = "playDtmf";
+static constexpr char * const PLAY_TONES_KEY = "playTones";
+static constexpr char * const PULSE_LENGTH_KEY = "pulseLength";
+static constexpr char * const SYMMETRIC_RTP_KEY = "symmetric";
+static constexpr char * const ZID_FILE_KEY = "zidFile";
 
 // hooks preferences
 constexpr const char * const HookPreference::CONFIG_LABEL;
-static const char * const NUMBER_ADD_PREFIX_KEY = "numberAddPrefix";
-static const char * const NUMBER_ENABLED_KEY = "numberEnabled";
-static const char * const SIP_ENABLED_KEY = "sipEnabled";
-static const char * const URL_COMMAND_KEY = "urlCommand";
-static const char * const URL_SIP_FIELD_KEY = "urlSipField";
+static constexpr char * const NUMBER_ADD_PREFIX_KEY = "numberAddPrefix";
+static constexpr char * const NUMBER_ENABLED_KEY = "numberEnabled";
+static constexpr char * const SIP_ENABLED_KEY = "sipEnabled";
+static constexpr char * const URL_COMMAND_KEY = "urlCommand";
+static constexpr char * const URL_SIP_FIELD_KEY = "urlSipField";
 
 // audio preferences
 constexpr const char * const AudioPreference::CONFIG_LABEL;
-static const char * const ALSAMAP_KEY = "alsa";
-static const char * const PULSEMAP_KEY = "pulse";
-static const char * const CARDIN_KEY = "cardIn";
-static const char * const CARDOUT_KEY = "cardOut";
-static const char * const CARDRING_KEY = "cardRing";
-static const char * const PLUGIN_KEY = "plugin";
-static const char * const SMPLRATE_KEY = "smplRate";
-static const char * const DEVICE_PLAYBACK_KEY = "devicePlayback";
-static const char * const DEVICE_RECORD_KEY = "deviceRecord";
-static const char * const DEVICE_RINGTONE_KEY = "deviceRingtone";
-static const char * const RECORDPATH_KEY = "recordPath";
-static const char * const ALWAYS_RECORDING_KEY = "alwaysRecording";
-static const char * const VOLUMEMIC_KEY = "volumeMic";
-static const char * const VOLUMESPKR_KEY = "volumeSpkr";
-static const char * const NOISE_REDUCE_KEY = "noiseReduce";
-static const char * const AGC_KEY = "automaticGainControl";
-static const char * const CAPTURE_MUTED_KEY = "captureMuted";
-static const char * const PLAYBACK_MUTED_KEY = "playbackMuted";
+static constexpr char * const ALSAMAP_KEY = "alsa";
+static constexpr char * const PULSEMAP_KEY = "pulse";
+static constexpr char * const CARDIN_KEY = "cardIn";
+static constexpr char * const CARDOUT_KEY = "cardOut";
+static constexpr char * const CARDRING_KEY = "cardRing";
+static constexpr char * const PLUGIN_KEY = "plugin";
+static constexpr char * const SMPLRATE_KEY = "smplRate";
+static constexpr char * const DEVICE_PLAYBACK_KEY = "devicePlayback";
+static constexpr char * const DEVICE_RECORD_KEY = "deviceRecord";
+static constexpr char * const DEVICE_RINGTONE_KEY = "deviceRingtone";
+static constexpr char * const RECORDPATH_KEY = "recordPath";
+static constexpr char * const ALWAYS_RECORDING_KEY = "alwaysRecording";
+static constexpr char * const VOLUMEMIC_KEY = "volumeMic";
+static constexpr char * const VOLUMESPKR_KEY = "volumeSpkr";
+static constexpr char * const NOISE_REDUCE_KEY = "noiseReduce";
+static constexpr char * const AGC_KEY = "automaticGainControl";
+static constexpr char * const CAPTURE_MUTED_KEY = "captureMuted";
+static constexpr char * const PLAYBACK_MUTED_KEY = "playbackMuted";
 
 // shortcut preferences
 constexpr const char * const ShortcutPreferences::CONFIG_LABEL;
-static const char * const HANGUP_SHORT_KEY = "hangUp";
-static const char * const PICKUP_SHORT_KEY = "pickUp";
-static const char * const POPUP_SHORT_KEY = "popupWindow";
-static const char * const TOGGLE_HOLD_SHORT_KEY = "toggleHold";
-static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
+static constexpr char * const HANGUP_SHORT_KEY = "hangUp";
+static constexpr char * const PICKUP_SHORT_KEY = "pickUp";
+static constexpr char * const POPUP_SHORT_KEY = "popupWindow";
+static constexpr char * const TOGGLE_HOLD_SHORT_KEY = "toggleHold";
+static constexpr char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
 
 #ifdef RING_VIDEO
 // video preferences
 constexpr const char * const VideoPreferences::CONFIG_LABEL;
-static const char * const DECODING_ACCELERATED_KEY = "decodingAccelerated";
+static constexpr char * const DECODING_ACCELERATED_KEY = "decodingAccelerated";
 #endif
 
-static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF length */
+static constexpr char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF length */
 #ifndef _MSC_VER
-static const char * const ALSA_DFT_CARD = "0";          /** Default sound card index */
+static constexpr char * const ALSA_DFT_CARD = "0";          /** Default sound card index */
 #else
-static const char * const ALSA_DFT_CARD = "-1";         /** Default sound card index (Portaudio) */
+static constexpr char * const ALSA_DFT_CARD = "-1";         /** Default sound card index (Portaudio) */
 #endif // _MSC_VER
 
 
