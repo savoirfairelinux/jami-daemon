@@ -284,7 +284,7 @@ VideoV4l2Rate
 VideoV4l2Size::getRate(const FrameRate& rate) const
 {
     for (const auto& item : rates_) {
-        if (std::fabs((item.frame_rate - rate).real()) < 0.0001d)
+        if (std::fabs((item.frame_rate - rate).real()) < 0.0001)
             return item;
     }
     return rates_.back();
