@@ -45,7 +45,6 @@ class VideoDeviceImpl {
         VideoDeviceImpl(const std::string& path);
         std::string device;
         std::string name;
-        unsigned int id;
 
         std::vector<std::string> getChannelList() const;
         std::vector<VideoSize> getSizeList(const std::string& channel) const;
@@ -67,8 +66,8 @@ class VideoDeviceImpl {
         void fail(const std::string& error);
 };
 
-VideoDeviceImpl::VideoDeviceImpl(const std::string& id)
-    : id(atoi(id.c_str()))
+VideoDeviceImpl::VideoDeviceImpl(const std::string& path)
+    : name(path)
     , cInterface(new CaptureGraphInterfaces())
 {
     setup();
@@ -122,76 +121,59 @@ VideoDeviceImpl::setup()
 
         IMoniker *pMoniker = nullptr;
         ULONG cFetched;
-        unsigned int deviceCounter = 0;
-        while ((pEnumCatGuard->Next(1, &pMoniker, &cFetched) == S_OK))
-        {
-            if (deviceCounter == this->id) {
-                IPropertyBag *pPropBag;
-                hr = pMoniker->BindToStorage(
-                    0,
-                    0,
-                    IID_IPropertyBag,
-                    (void **)&pPropBag);
-                if (SUCCEEDED(hr)) {
-                    VARIANT varName;
-                    VariantInit(&varName);
-                    hr = pPropBag->Read(L"FriendlyName", &varName, 0);
-                    if (SUCCEEDED(hr)) {
-                        int l = WideCharToMultiByte(
-                            CP_UTF8,
-                            0,
-                            varName.bstrVal,
-                            -1,
-                            0, 0, 0, 0);
-                        auto tmp = new char[l];
-                        WideCharToMultiByte(
-                            CP_UTF8,
-                            0,
-                            varName.bstrVal,
-                            -1,
-                            tmp,
-                            l,
-                            0, 0);
-                        this->name = std::string(tmp);
-                        this->device = std::string("video=") + this->name;
-                        hr = pMoniker->BindToObject(
-                            nullptr, nullptr,
-                            IID_IBaseFilter,
-                            (void**)&cInterface->videoInputFilter_);
-                        if (SUCCEEDED(hr))
-                            hr = cInterface->graph_->AddFilter(
-                                cInterface->videoInputFilter_,
-                                varName.bstrVal);
-                        else {
-                            fail("Could not add filter to video device.");
-                        }
-                        hr = cInterface->captureGraph_->FindInterface(
-                            &PIN_CATEGORY_PREVIEW,
-                            &MEDIATYPE_Video,
-                            cInterface->videoInputFilter_,
-                            IID_IAMStreamConfig,
-                            (void **)&cInterface->streamConf_);
-                        if(FAILED(hr)) {
-                            hr = cInterface->captureGraph_->FindInterface(
-                                &PIN_CATEGORY_CAPTURE,
-                                &MEDIATYPE_Video,
-                                cInterface->videoInputFilter_,
-                                IID_IAMStreamConfig,
-                                (void **)&cInterface->streamConf_);
-                            if (FAILED(hr)) {
-                                fail("Couldn't config the stream!");
-                            }
-                        }
-                        break; // Device found
-                    }
-                    VariantClear(&varName);
-                    pPropBag->Release();
-                    pPropBag = nullptr;
-                    pMoniker->Release();
-                    pMoniker = nullptr;
-                }
+        while ((pEnumCatGuard->Next(1, &pMoniker, &cFetched) == S_OK)) {
+            IPropertyBag *pPropBag;
+            hr = pMoniker->BindToStorage(
+                0,
+                0,
+                IID_IPropertyBag,
+                (void **)&pPropBag);
+            if (FAILED(hr)) {
+                continue;
             }
-            deviceCounter++;
+            VARIANT var;
+            VariantInit(&var);
+            hr = pPropBag->Read(L"FriendlyName", &var, 0);
+            if (SUCCEEDED(hr)) {
+                if (this->name != bstrToStdString(var.bstrVal)) {
+                    continue;
+                }
+                this->device = std::string("video=") + this->name;
+                hr = pMoniker->BindToObject(
+                    nullptr, nullptr,
+                    IID_IBaseFilter,
+                    (void**)&cInterface->videoInputFilter_);
+                if (SUCCEEDED(hr))
+                    hr = cInterface->graph_->AddFilter(
+                        cInterface->videoInputFilter_,
+                        var.bstrVal);
+                else {
+                    fail("Could not add filter to video device.");
+                }
+                hr = cInterface->captureGraph_->FindInterface(
+                    &PIN_CATEGORY_PREVIEW,
+                    &MEDIATYPE_Video,
+                    cInterface->videoInputFilter_,
+                    IID_IAMStreamConfig,
+                    (void **)&cInterface->streamConf_);
+                if (FAILED(hr)) {
+                    hr = cInterface->captureGraph_->FindInterface(
+                        &PIN_CATEGORY_CAPTURE,
+                        &MEDIATYPE_Video,
+                        cInterface->videoInputFilter_,
+                        IID_IAMStreamConfig,
+                        (void **)&cInterface->streamConf_);
+                    if (FAILED(hr)) {
+                        fail("Couldn't config the stream!");
+                    }
+                }
+                break; // Device found
+            }
+            VariantClear(&var);
+            pPropBag->Release();
+            pPropBag = nullptr;
+            pMoniker->Release();
+            pMoniker = nullptr;
         }
         if (SUCCEEDED(hr)) {
             int piCount;
@@ -199,15 +181,38 @@ VideoDeviceImpl::setup()
             cInterface->streamConf_->GetNumberOfCapabilities(&piCount, &piSize);
             AM_MEDIA_TYPE *pmt;
             VIDEO_STREAM_CONFIG_CAPS pSCC;
+            std::map<std::pair<ring::video::VideoSize, ring::video::FrameRate>, LONG> bitrateList;
             for (int i = 0; i < piCount; i++) {
                 cInterface->streamConf_->GetStreamCaps(i, &pmt, (BYTE*)&pSCC);
-                if (pmt->formattype == FORMAT_VideoInfo) {
-                    auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
-                    sizeList_.emplace_back(videoInfo->bmiHeader.biWidth, videoInfo->bmiHeader.biHeight);
-                    rateList_[sizeList_.back()].emplace_back(1e7, pSCC.MinFrameInterval);
-                    rateList_[sizeList_.back()].emplace_back(1e7, pSCC.MaxFrameInterval);
-                    capMap_[sizeList_.back()] = pmt;
+                if (pmt->formattype != FORMAT_VideoInfo) {
+                    continue;
                 }
+                auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
+                auto size = ring::video::VideoSize(videoInfo->bmiHeader.biWidth, videoInfo->bmiHeader.biHeight);
+                auto rate = ring::video::FrameRate(1e7, videoInfo->AvgTimePerFrame);
+                auto bitrate = videoInfo->dwBitRate;
+                // only add configurations with positive bitrates
+                if (bitrate == 0)
+                    continue;
+                // avoid adding multiple rates with different bitrates
+                auto ratesIt = rateList_.find(size);
+                if (ratesIt != rateList_.end()) {
+                    auto it = std::find(ratesIt->second.begin(), ratesIt->second.end(), rate);
+                    if (it != ratesIt->second.end()) {
+                        // update bitrate and cap if the bitrate is greater
+                        auto key = std::make_pair(size, *it);
+                        if (bitrate <= bitrateList[key]) {
+                            bitrateList[key] = bitrate;
+                            capMap_[size] = pmt;
+                        }
+                        continue;
+                    }
+                }
+                // add new size, rate, bitrate, and cap
+                sizeList_.emplace_back(size);
+                rateList_[size].emplace_back(rate);
+                bitrateList[std::make_pair(size, rate)] = bitrate;
+                capMap_[size] = pmt;
             }
         }
     }
