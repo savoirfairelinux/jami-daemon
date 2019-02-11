@@ -237,10 +237,16 @@ VideoDeviceMonitor::removeDevice(const string& node)
         if (it == devices_.end())
             return;
 
-        if (defaultDevice_ == it->name)
-            defaultDevice_.clear();
-
+        auto removedDeviceName = it->name;
         devices_.erase(it);
+
+        if (defaultDevice_ == removedDeviceName) {
+            if (devices_.size() == 0) {
+                defaultDevice_.clear();
+            } else {
+                defaultDevice_ = devices_[0].name;
+            }
+        }
     }
     notify();
 }
