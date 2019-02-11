@@ -59,7 +59,7 @@ public:
     // as VideoGenerator
     int getWidth() const;
     int getHeight() const;
-    int getPixelFormat() const;
+    AVPixelFormat getPixelFormat() const;
     MediaStream getInfo() const;
     void triggerKeyFrameRequest();
 

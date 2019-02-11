@@ -229,7 +229,7 @@ int
 VideoMixer::getHeight() const
 { return height_; }
 
-int
+AVPixelFormat
 VideoMixer::getPixelFormat() const
 { return AV_PIX_FMT_YUYV422; }
 

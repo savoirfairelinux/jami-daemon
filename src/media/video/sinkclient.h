@@ -64,6 +64,10 @@ class SinkClient : public VideoFramePassiveReader
             return height_;
         }
 
+        AVPixelFormat getPreferredFormat() const noexcept {
+            return (AVPixelFormat)avTarget_.preferredFormat;
+        }
+
         // as VideoFramePassiveReader
         void update(Observable<std::shared_ptr<ring::MediaFrame>>*,
                     const std::shared_ptr<ring::MediaFrame>&) override;
@@ -82,6 +86,9 @@ class SinkClient : public VideoFramePassiveReader
         void registerTarget(const DRing::SinkTarget& target) noexcept {
             target_ = target;
         }
+        void registerAVTarget(const DRing::AVSinkTarget& target) noexcept {
+            avTarget_ = target;
+        }
 
     private:
         const std::string id_;
@@ -91,6 +98,7 @@ class SinkClient : public VideoFramePassiveReader
         bool started_ {false}; // used to arbitrate client's stop signal.
         int rotation_ {0};
         DRing::SinkTarget target_;
+        DRing::AVSinkTarget avTarget_;
         std::unique_ptr<VideoScaler> scaler_;
         std::unique_ptr<MediaFilter> filter_;
         std::mutex mutex_;

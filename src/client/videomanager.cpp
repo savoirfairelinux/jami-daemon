@@ -394,8 +394,12 @@ stopCamera()
 void
 startAudioDevice()
 {
-    ring::Manager::instance().initAudioDriver();
-    ring::Manager::instance().startAudioDriverStream();
+    // Don't start audio layer if already done
+    auto audioLayer = ring::Manager::instance().getAudioDriver();
+    if (!audioLayer)
+        ring::Manager::instance().initAudioDriver();
+    if (!audioLayer->isStarted())
+        ring::Manager::instance().startAudioDriverStream();
     ring::Manager::instance().getVideoManager().audioPreview = ring::getAudioInput(ring::RingBufferPool::DEFAULT_ID);
 }
 
@@ -485,6 +489,15 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
 {
    if (auto sink = ring::Manager::instance().getSinkClient(sinkId))
        sink->registerTarget(target);
+   else
+       RING_WARN("No sink found for id '%s'", sinkId.c_str());
+}
+
+void
+registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target)
+{
+   if (auto sink = ring::Manager::instance().getSinkClient(sinkId))
+       sink->registerAVTarget(target);
    else
        RING_WARN("No sink found for id '%s'", sinkId.c_str());
 }

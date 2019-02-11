@@ -76,7 +76,7 @@ public:
     // as VideoGenerator
     int getWidth() const;
     int getHeight() const;
-    int getPixelFormat() const;
+    AVPixelFormat getPixelFormat() const;
     DeviceParams getParams() const;
     MediaStream getInfo() const;
 

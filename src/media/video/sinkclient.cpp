@@ -400,9 +400,13 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     shm_->renderFrame(f);
 #endif
 
+    if (avTarget_.push) {
+        auto outFrame = std::make_unique<VideoFrame>();
+        outFrame->copyFrom(f);
+        avTarget_.push(std::move(outFrame));
+    }
     if (target_.pull) {
         VideoFrame dst;
-        VideoScaler scaler;
         const int width = f.width();
         const int height = f.height();
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)

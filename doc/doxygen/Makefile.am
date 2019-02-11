@@ -41,7 +41,7 @@ maintainer-clean-local: clean-local
 %.cfg : %.cfg.in
 	rm -f $@.tmp
 	sed < $< > $@.tmp \
-            -e 's:@-top_srcdir-@:${top_srcdir}:g'
+            -e 's:@-top_srcdir-@:${top_srcdir}/src:g'
 	sed < $@.tmp > $@.tmp2 \
             -e 's:@-html_dir-@:${html_parent_dir}/$*:g'
 	rm $@.tmp
@@ -51,6 +51,12 @@ maintainer-clean-local: clean-local
 	sed < $@.tmp3 > $@.tmp4 \
             -e 's:@-html_footer-@:${HTML_FOOTER}:g'
 	rm $@.tmp3
-	mv $@.tmp4 $@
+	sed < $@.tmp4 > $@.tmp5 \
+            -e 's:@PROJECT_NAME@:${PACKAGE_NAME}:g'
+	rm $@.tmp4
+	sed < $@.tmp5 > $@.tmp6 \
+            -e 's:@PACKAGE_VERSION@:${PACKAGE_VERSION}:g'
+	rm $@.tmp5
+	mv $@.tmp6 $@
 
 endif # ENABLE_DOXYGEN
