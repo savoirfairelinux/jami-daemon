@@ -85,13 +85,27 @@ int MediaDecoder::openInput(const DeviceParams& params)
         ss << params.width << "x" << params.height;
         av_dict_set(&options_, "video_size", ss.str().c_str(), 0);
     }
-#ifndef _WIN32
-    // on windows, framerate setting can lead to a failure while opening device
-    // despite investigations, we didn't found a proper solution
-    // we let dshow choose the framerate, which is the highest according to our experimentations
-    if (params.framerate)
+
+    if (params.framerate) {
+#ifdef _WIN32
+        // On windows, certain framerate settings don't reduce to avrational values
+        // that correspond to valid video device formats.
+        // e.g. A the rational<double>(10000000, 333333) or 30.000030000
+        //      will be reduced by av_reduce to 999991/33333 or 30.00003000003
+        //      which cause the device opening routine to fail.
+        // So we treat special cases in which the reduction is imprecise and adjust
+        // the value, or let dshow choose the framerate, which is, unfortunately,
+        // NOT the highest according to our experimentations.
+        auto framerate{ params.framerate.real() };
+        if (params.framerate.denominator() == 333333)
+            framerate = (int)(params.framerate.real());
+        if (params.framerate.denominator() != 4999998)
+            av_dict_set(&options_, "framerate", ring::to_string(framerate).c_str(), 0);
+#else
         av_dict_set(&options_, "framerate", ring::to_string(params.framerate.real()).c_str(), 0);
 #endif
+    }
+
     if (params.offset_x || params.offset_y) {
         av_dict_set(&options_, "offset_x", ring::to_string(params.offset_x).c_str(), 0);
         av_dict_set(&options_, "offset_y", ring::to_string(params.offset_y).c_str(), 0);
