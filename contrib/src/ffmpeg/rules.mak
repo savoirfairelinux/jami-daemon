@@ -68,7 +68,8 @@ FFMPEGCONF += \
 	--enable-encoder=libspeex \
 	--enable-decoder=libspeex \
 	--enable-encoder=libopus \
-	--enable-decoder=libopus
+	--enable-decoder=libopus \
+	--enable-nvenc
 
 # decoders for ringtones and audio streaming
 FFMPEGCONF += \
@@ -165,6 +166,7 @@ FFMPEGCONF += --disable-asm
 endif
 else
 # Desktop Linux
+DEPS_ffmpeg += ffnvcodec
 FFMPEGCONF += \
 	--target-os=linux \
 	--enable-indev=v4l2 \
@@ -177,7 +179,14 @@ FFMPEGCONF += \
 	--enable-hwaccel=mpeg4_vaapi \
 	--enable-hwaccel=h263_vaapi \
 	--enable-hwaccel=vp8_vaapi \
-	--enable-hwaccel=mjpeg_vaapi
+	--enable-hwaccel=mjpeg_vaapi \
+	--enable-hwaccel=h264_nvdec \
+	--enable-hwaccel=hevc_nvdec \
+	--enable-hwaccel=vp8_nvdec \
+	--enable-hwaccel=vp9_nvdec \
+	--enable-hwaccel=mjpeg_nvdec \
+	--enable-encoder=h264_nvenc \
+	--enable-encoder=hevc_nvenc
 endif
 endif
 
