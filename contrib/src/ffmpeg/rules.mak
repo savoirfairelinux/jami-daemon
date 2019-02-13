@@ -7,7 +7,7 @@ ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavform
 PKGS_FOUND += ffmpeg
 endif
 
-DEPS_ffmpeg = iconv zlib vpx opus speex
+DEPS_ffmpeg = iconv zlib vpx opus speex ffnvcodec
 
 FFMPEGCONF = \
 	--cc="$(CC)" \
@@ -68,7 +68,8 @@ FFMPEGCONF += \
 	--enable-encoder=libspeex \
 	--enable-decoder=libspeex \
 	--enable-encoder=libopus \
-	--enable-decoder=libopus
+	--enable-decoder=libopus \
+	--enable-nvenc
 
 # decoders for ringtones and audio streaming
 FFMPEGCONF += \
