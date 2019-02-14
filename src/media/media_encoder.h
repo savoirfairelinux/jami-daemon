@@ -128,7 +128,7 @@ private:
 
 #ifdef RING_ACCEL
     bool enableAccel_ = true;
-    std::unique_ptr<video::HardwareAccel> accel_;
+    std::shared_ptr<video::HardwareAccel> accel_;
 #endif
 
 protected:

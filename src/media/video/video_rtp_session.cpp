@@ -119,6 +119,11 @@ void VideoRtpSession::startSender()
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
+            if (auto input = std::static_pointer_cast<VideoInput>(videoLocal_))
+                while (!input->obtainLastFrame()) {
+                    // wait until video input is ready
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
             sender_.reset(new VideoSender(getRemoteRtpUri(), localVideoParams_,
                                           send_, *socketPair_, initSeqVal_, mtu_));
         } catch (const MediaEncoderException &e) {
