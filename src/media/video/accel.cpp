@@ -153,6 +153,20 @@ HardwareAccel::setDetails(AVCodecContext* codecCtx, AVDictionary** /*d*/)
     }
 }
 
+void
+HardwareAccel::setFramesCtx(AVBufferRef* framesCtx)
+{
+    if (framesCtx) {
+        if (framesCtx_)
+            av_buffer_unref(&framesCtx_);
+        framesCtx_ = av_buffer_ref(framesCtx);
+    }
+    if (framesCtx_)
+        linked_ = true;
+    else
+        linked_ = false;
+}
+
 bool
 HardwareAccel::initDevice()
 {
@@ -229,8 +243,22 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
     return out;
 }
 
-std::unique_ptr<HardwareAccel>
-HardwareAccel::setupDecoder(AVCodecID id)
+HardwareAccelManager::HardwareAccelManager()
+{}
+
+HardwareAccelManager::~HardwareAccelManager()
+{}
+
+HardwareAccelManager&
+HardwareAccelManager::instance()
+{
+    // Meyers-Singleton
+    static HardwareAccelManager instance_;
+    return instance_;
+}
+
+std::shared_ptr<HardwareAccel>
+HardwareAccelManager::setupDecoder(AVCodecID id)
 {
     static const HardwareAPI apiList[] = {
         { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
@@ -238,11 +266,14 @@ HardwareAccel::setupDecoder(AVCodecID id)
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
     };
 
+    if (id != AV_CODEC_ID_MJPEG)
+        return nullptr;
     for (const auto& api : apiList) {
         if (std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id) != api.supportedCodecs.end()) {
-            auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_DECODER);
+            auto accel = std::make_shared<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_DECODER);
             if (accel->initDevice()) {
                 RING_DBG() << "Attempting to use hardware decoder " << accel->getCodecName() << " with " << api.name;
+                decoders_.push_back(accel);
                 return accel;
             }
         }
@@ -251,8 +282,8 @@ HardwareAccel::setupDecoder(AVCodecID id)
     return nullptr;
 }
 
-std::unique_ptr<HardwareAccel>
-HardwareAccel::setupEncoder(AVCodecID id, int width, int height)
+std::shared_ptr<HardwareAccel>
+HardwareAccelManager::setupEncoder(AVCodecID id, int width, int height)
 {
     static const HardwareAPI apiList[] = {
         { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
@@ -262,11 +293,12 @@ HardwareAccel::setupEncoder(AVCodecID id, int width, int height)
     for (auto api : apiList) {
         const auto& it = std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id);
         if (it != api.supportedCodecs.end()) {
-            auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_ENCODER);
+            auto accel = std::make_shared<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_ENCODER);
             const auto& codecName = accel->getCodecName();
             if (avcodec_find_encoder_by_name(codecName.c_str())) {
                 if (accel->initDevice() && accel->initFrame(width, height)) {
                     RING_DBG() << "Attempting to use hardware encoder " << codecName;
+                    encoders_.push_back(accel);
                     return accel;
                 }
             }
@@ -275,6 +307,24 @@ HardwareAccel::setupEncoder(AVCodecID id, int width, int height)
 
     RING_WARN() << "Not using hardware encoding";
     return nullptr;
+}
+
+bool
+HardwareAccelManager::linkHardware(std::shared_ptr<HardwareAccel>& enc, AVCodecID id)
+{
+    const auto& it = std::find_if(decoders_.begin(), decoders_.end(),
+        [id](const auto& dec){ return dec->id_ == id; });
+    if (it != decoders_.end()) {
+        av_buffer_unref(&enc->framesCtx_);
+        enc->framesCtx_ = av_buffer_ref((*it)->framesCtx_);
+        enc->linked_ = true;
+        RING_DBG() << "Hardware '" << enc->getCodecName() << "' encoder linked to hardware '"
+            << (*it)->getCodecName() << "' decoder";
+        return true;
+    }
+    RING_WARN() << "Hardware '" << avcodec_get_name(id) << "' decoder not found";
+    enc->linked_ = false;
+    return false;
 }
 
 }} // namespace ring::video

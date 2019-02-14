@@ -213,7 +213,7 @@ MediaDecoder::setupStream(AVMediaType mediaType)
 #ifdef RING_ACCEL
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
         if (enableAccel_) {
-            accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id);
+            accel_ = video::HardwareAccelManager::instance().setupDecoder(decoderCtx_->codec_id);
             if (accel_) {
                 accel_->setDetails(decoderCtx_, &options_);
                 decoderCtx_->opaque = accel_.get();
@@ -280,6 +280,11 @@ MediaDecoder::decode(VideoFrame& result)
     av_packet_unref(&inpacket);
 
     if (frameFinished) {
+#ifdef RING_ACCEL
+        if (accel_ && !accel_->isLinked()) {
+            accel_->setFramesCtx(decoderCtx_->hw_frames_ctx);
+        }
+#endif
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         auto packetTimestamp = frame->pts; // in stream time base
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,

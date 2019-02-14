@@ -190,7 +190,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 #ifdef RING_ACCEL
     if (systemCodecInfo.mediaType == MEDIA_VIDEO) {
         if (enableAccel_) {
-            if (accel_ = video::HardwareAccel::setupEncoder(
+            if (accel_ = video::HardwareAccelManager::instance().setupEncoder(
                 static_cast<AVCodecID>(systemCodecInfo.avcodecId), device_.width, device_.height)) {
                 outputCodec = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
             }
@@ -381,13 +381,13 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     /* Prepare a frame suitable to our encoder frame format,
      * keeping also the input aspect ratio.
      */
-    libav_utils::fillWithBlack(scaledFrame_.pointer());
-
-    scaler_.scale_with_aspect(input, scaledFrame_);
+//    libav_utils::fillWithBlack(scaledFrame_.pointer());
+//
+//    scaler_.scale_with_aspect(input, scaledFrame_);
 
     // Copy frame so the VideoScaler can still use the software frame (input)
     VideoFrame copy;
-    copy.copyFrom(scaledFrame_);
+    copy.copyFrom(input);
 
     auto frame = copy.pointer();
     AVCodecContext* enc = encoders_[currentStreamIdx_];
@@ -409,12 +409,20 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     // NOTE needs to be at same scope as call to encode
     std::unique_ptr<VideoFrame> framePtr;
     if (accel_) {
-        framePtr = accel_->transfer(copy);
-        if (!framePtr) {
-            RING_ERR() << "Hardware encoding failure";
-            return -1;
+        if (!accel_->isLinked()) {
+            // TODO replace with VideoInput::getPixelFormat()
+            video::HardwareAccelManager::instance().linkHardware(accel_, AV_CODEC_ID_MJPEG);
         }
-        frame = framePtr->pointer();
+
+        // not a full GPU pipeline, need to transfer
+        if (!accel_->isLinked()) {
+            framePtr = accel_->transfer(copy);
+            if (!framePtr) {
+                RING_ERR() << "Hardware encoding failure";
+                return -1;
+            }
+            frame = framePtr->pointer();
+        }
     }
 #endif
 
