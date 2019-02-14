@@ -190,7 +190,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 #ifdef RING_ACCEL
     if (systemCodecInfo.mediaType == MEDIA_VIDEO) {
         if (enableAccel_) {
-            if (accel_ = video::HardwareAccel::setupEncoder(
+            if (accel_ = video::HardwareAccelManager::instance().setupEncoder(
                 static_cast<AVCodecID>(systemCodecInfo.avcodecId), device_.width, device_.height)) {
                 outputCodec = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
             }
@@ -221,6 +221,8 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 #ifdef RING_ACCEL
     if (accel_) {
         accel_->setDetails(encoderCtx, &options_);
+        // TODO replace with VideoInput::getPixelFormat()
+        video::HardwareAccelManager::instance().linkHardware(accel_, AV_CODEC_ID_MJPEG);
         encoderCtx->opaque = accel_.get();
     }
 #endif
@@ -381,13 +383,13 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     /* Prepare a frame suitable to our encoder frame format,
      * keeping also the input aspect ratio.
      */
-    libav_utils::fillWithBlack(scaledFrame_.pointer());
-
-    scaler_.scale_with_aspect(input, scaledFrame_);
+//    libav_utils::fillWithBlack(scaledFrame_.pointer());
+//
+//    scaler_.scale_with_aspect(input, scaledFrame_);
 
     // Copy frame so the VideoScaler can still use the software frame (input)
     VideoFrame copy;
-    copy.copyFrom(scaledFrame_);
+    copy.copyFrom(input);
 
     auto frame = copy.pointer();
     AVCodecContext* enc = encoders_[currentStreamIdx_];
@@ -406,9 +408,15 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     }
 
 #ifdef RING_ACCEL
-    // NOTE needs to be at same scope as call to encode
-    std::unique_ptr<VideoFrame> framePtr;
-    if (accel_) {
+    std::unique_ptr<VideoFrame> framePtr; // NOTE needs to be at same scope as call to encode
+    if (accel_ && !accel_->isLinked()) {
+        // Need to transfer to main memory if a fully accelerated pipeline was not set up
+        // and the frame was hardware decoded
+        auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(copy.format()));
+        if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
+            framePtr = video::HardwareAccel::transferToMainMemory(copy, accel_->getSoftwareFormat());
+            copy.copyFrom(*framePtr);
+        }
         framePtr = accel_->transfer(copy);
         if (!framePtr) {
             RING_ERR() << "Hardware encoding failure";
