@@ -35,16 +35,6 @@ namespace ring { namespace video {
 class HardwareAccel {
 public:
     /**
-     * Static factory method for hardware decoding.
-     */
-    static std::unique_ptr<HardwareAccel> setupDecoder(AVCodecID id);
-
-    /**
-     * Static factory method for hardware encoding.
-     */
-    static std::unique_ptr<HardwareAccel> setupEncoder(AVCodecID id, int width, int height);
-
-    /**
      * Transfers a hardware decoded frame back to main memory. Should be called after
      * the frame is decoded using avcodec_send_packet/avcodec_receive_frame.
      *
@@ -54,12 +44,13 @@ public:
     static std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat);
 
     /**
-     * Made public so std::unique_ptr can access it. Should not be called.
+     * Constructs a HardwareAccel object for either decoding or encoding. Should not
+     * be called directly. Use HardwareAccelManager.
      */
     HardwareAccel(AVCodecID id, const std::string& name, AVPixelFormat format, AVPixelFormat swFormat, CodecType type);
 
     /**
-     * Dereferences hardware contexts.
+     * Dereferences hardware device and hardware frames contexts.
      */
     ~HardwareAccel();
 
@@ -86,17 +77,24 @@ public:
 
     /**
      * Gets the name of the codec.
-     * Decoding: equivalent to avcodec_get_name(id_)
+     * Decoding: avcodec_get_name(id_)
      * Encoding: avcodec_get_name(id_) + '_' + name_
      */
     std::string getCodecName() const;
 
     /**
+     * Returns whether or not the decoder is linked to an encoder or vice-versa. Being linked
+     * means an encoder can directly use the decoder's hardware frame, without first
+     * transferring it to main memory.
+     */
+    bool isLinked() const { return linked_; }
+
+    /**
      * Set some extra details in the codec context. Should be called after a successful
      * setup (setupDecoder or setupEncoder).
-     * For decoding, sets the hw_device_ctx and get_format callback. For encoding, sets
-     * hw_device_ctx and hw_frames_ctx, and may set some hardware specific options in
-     * the dictionary.
+     * For decoding, sets the hw_device_ctx and get_format callback. If the hardware
+     * decoder has a frames context, mark as linked. For encoding, sets hw_frames_ctx,
+     * and may set some hardware specific options in the dictionary.
      */
     void setDetails(AVCodecContext* codecCtx, AVDictionary** d);
 
@@ -119,9 +117,47 @@ private:
     AVPixelFormat format_ {AV_PIX_FMT_NONE};
     AVPixelFormat swFormat_ {AV_PIX_FMT_NONE};
     CodecType type_ {CODEC_NONE};
+    bool linked_ {false};
 
     AVBufferRef* deviceCtx_ {nullptr};
     AVBufferRef* framesCtx_ {nullptr};
+
+    /**
+     * Manager needs to access initDevice and initFrame.
+     */
+    friend class HardwareAccelManager;
+};
+
+class HardwareAccelManager {
+public:
+    /**
+     * Single instance makes it easier to have one accel reference another, which is needed
+     * for decoding and encoding without having the main memory act as a middle man.
+     */
+    static HardwareAccelManager& instance();
+
+    /**
+     * Factory method for hardware decoding.
+     */
+    std::shared_ptr<HardwareAccel> setupDecoder(AVCodecID id, int width, int height);
+
+    /**
+     * Factory method for hardware encoding.
+     */
+    std::shared_ptr<HardwareAccel> setupEncoder(AVCodecID id, int width, int height);
+
+    /**
+     * Links @enc's hardware frame context to the hardware decoder with codec @decoderId.
+     * This serves to skip transferring a decoded frame back to main memory before encoding.
+     */
+    bool linkHardware(std::shared_ptr<HardwareAccel>& enc, AVCodecID id);
+
+private:
+    HardwareAccelManager();
+    ~HardwareAccelManager();
+
+    std::vector<std::weak_ptr<HardwareAccel>> decoders_;
+    std::vector<std::weak_ptr<HardwareAccel>> encoders_;
 };
 
 }} // namespace ring::video
