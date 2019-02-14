@@ -52,7 +52,7 @@ struct AVCodec;
 enum AVMediaType;
 
 namespace DRing {
-struct AudioFrame;
+class AudioFrame;
 }
 
 namespace ring {
