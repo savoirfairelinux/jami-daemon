@@ -111,7 +111,7 @@ bool VideoReceiveThread::setup()
     }
 
     if (requestKeyFrameCallback_)
-        requestKeyFrameCallback_(id_);
+        requestKeyFrameCallback_();
 
     if (videoDecoder_->setupFromVideoData()) {
         RING_ERR("decoder IO startup failed");
@@ -191,7 +191,7 @@ bool VideoReceiveThread::decodeFrame()
         case MediaDecoder::Status::DecodeError:
             RING_WARN("video decoding failure");
             if (requestKeyFrameCallback_)
-                requestKeyFrameCallback_(id_);
+                requestKeyFrameCallback_();
             break;
 
         case MediaDecoder::Status::ReadError:
@@ -233,8 +233,7 @@ void VideoReceiveThread::exitConference()
         sink_->setFrameSize(dstWidth_, dstHeight_);
 }
 
-void VideoReceiveThread::setRequestKeyFrameCallback(
-    void (*cb)(const std::string &))
+void VideoReceiveThread::setRequestKeyFrameCallback(std::function<void (void)> cb)
 { requestKeyFrameCallback_ = cb; }
 
 int VideoReceiveThread::getWidth() const
@@ -256,7 +255,7 @@ void
 VideoReceiveThread::triggerKeyFrameRequest()
 {
     if (requestKeyFrameCallback_)
-        requestKeyFrameCallback_(id_);
+        requestKeyFrameCallback_();
 }
 
 }} // namespace ring::video

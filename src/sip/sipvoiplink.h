@@ -107,10 +107,6 @@ class SIPVoIPLink {
          */
         std::unique_ptr<SipTransportBroker> sipTransportBroker;
 
-#ifdef RING_VIDEO
-        static void enqueueKeyframeRequest(const std::string &callID);
-#endif
-
         typedef std::function<void(std::vector<IpAddr>)> SrvResolveCallback;
         void resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb);
 
