@@ -159,6 +159,8 @@ public: // SIP related
 
     void sendSIPInfo(const char *const body, const char *const subtype);
 
+    void requestKeyframe();
+
     SIPAccountBase& getSIPAccount() const;
 
     void updateSDPFromSTUN();
@@ -248,6 +250,13 @@ private:
     std::vector<IceCandidate> getAllRemoteCandidates();
 
     void merge(Call& call) override; // not public - only called by Call
+
+    inline std::shared_ptr<SIPCall> shared() {
+        return std::static_pointer_cast<SIPCall>(shared_from_this());
+    }
+    inline std::weak_ptr<SIPCall> weak() {
+        return std::weak_ptr<SIPCall>(shared());
+    }
 
     std::unique_ptr<AudioRtpSession> avformatrtp_;
 
