@@ -62,6 +62,8 @@ public:
                     const DeviceParams& localVideoParams);
     ~VideoRtpSession();
 
+    void setRequestKeyFrameCallback(std::function<void(void)> cb);
+
     void updateMedia(const MediaDescription& send, const MediaDescription& receive) override;
 
     void start(std::unique_ptr<IceSocket> rtp_sock,
@@ -101,6 +103,8 @@ private:
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
     uint16_t initSeqVal_ = 0;
+
+    std::function<void (void)> requestKeyFrameCallback_;
 
     float checkPeerPacketLoss();
     unsigned getLowerQuality();

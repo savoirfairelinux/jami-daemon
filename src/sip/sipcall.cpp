@@ -269,6 +269,23 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 }
 
 void
+SIPCall::requestKeyframe()
+{
+    const char * const BODY =
+        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+        "<media_control><vc_primitive><to_encoder>"
+        "<picture_fast_update/>"
+        "</to_encoder></vc_primitive></media_control>";
+
+    RING_DBG("Sending video keyframe request via SIP INFO");
+    try {
+        sendSIPInfo(BODY, "media_control+xml");
+    } catch (const std::exception& e) {
+        RING_ERR("Error sending video keyframe request: %s", e.what());
+    }
+}
+
+void
 SIPCall::updateSDPFromSTUN()
 {
     RING_WARN("[call:%s] SIPCall::updateSDPFromSTUN() not implemented", getCallId().c_str());
@@ -856,6 +873,13 @@ SIPCall::startAllMedia()
     unsigned ice_comp_id = 0;
     bool peer_holding {true};
     int slotN = -1;
+    
+    videortp_->setRequestKeyFrameCallback([wthis = weak()] {
+        runOnMainThread([wthis] {
+            if (auto this_ = wthis.lock())
+                this_->requestKeyframe();
+        });
+    });
 
     for (const auto& slot : slots) {
         ++slotN;
