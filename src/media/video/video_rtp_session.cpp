@@ -77,6 +77,12 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
     setupVideoBitrateInfo();
 }
 
+void
+VideoRtpSession::setRequestKeyFrameCallback(void (*)(const std::string &) cb)
+{
+    requestKeyFrameCallback_ = cb;
+}
+
 void VideoRtpSession::startSender()
 {
     if (send_.enabled and not send_.holding) {
@@ -157,7 +163,7 @@ void VideoRtpSession::startReceiver()
         );
 
         // XXX keyframe requests can timeout if unanswered
-        receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
+        receiveThread_->setRequestKeyFrameCallback(requestKeyFrameCallback_);
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
         packetLossThread_.start();
@@ -558,7 +564,8 @@ VideoRtpSession::processPacketLoss()
 {
     if (packetLossThread_.wait_for(RTCP_PACKET_LOSS_INTERVAL,
                                    [this]{return socketPair_->rtcpPacketLossDetected();})) {
-        receiveThread_->triggerKeyFrameRequest();
+        if (requestKeyFrameCallback_)
+            requestKeyFrameCallback_();
     }
 }
 

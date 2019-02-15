@@ -249,6 +249,13 @@ private:
 
     void merge(Call& call) override; // not public - only called by Call
 
+    inline std::shared_ptr<SIPCall> shared() const {
+        return std::static_pointer_cast<SIPCall>(shared_from_this());
+    }
+    inline std::weak_ptr<SIPCall> weak() const {
+        return std::weak_ptr<SIPCall>(shared());
+    }
+
     std::unique_ptr<AudioRtpSession> avformatrtp_;
 
 #ifdef RING_VIDEO

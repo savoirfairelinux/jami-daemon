@@ -233,8 +233,7 @@ void VideoReceiveThread::exitConference()
         sink_->setFrameSize(dstWidth_, dstHeight_);
 }
 
-void VideoReceiveThread::setRequestKeyFrameCallback(
-    void (*cb)(const std::string &))
+void VideoReceiveThread::setRequestKeyFrameCallback(std::function<void (const std::string&)> cb)
 { requestKeyFrameCallback_ = cb; }
 
 int VideoReceiveThread::getWidth() const

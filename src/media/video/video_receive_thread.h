@@ -52,7 +52,7 @@ public:
     void startLoop();
 
     void addIOContext(SocketPair& socketPair);
-    void setRequestKeyFrameCallback(void (*)(const std::string &));
+    void setRequestKeyFrameCallback(std::function<void (const std::string&)>);
     void enterConference();
     void exitConference();
 
@@ -82,7 +82,7 @@ private:
     bool isReset_;
     uint16_t mtu_;
 
-    void (*requestKeyFrameCallback_)(const std::string &);
+    std::function<void(const std::string&)> requestKeyFrameCallback_;
     void openDecoder();
     bool decodeFrame();
     static int interruptCb(void *ctx);
