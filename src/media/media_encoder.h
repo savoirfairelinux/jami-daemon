@@ -32,7 +32,6 @@
 #include "noncopyable.h"
 #include "media_buffer.h"
 #include "media_codec.h"
-#include "media_device.h"
 #include "media_stream.h"
 
 #include <map>
@@ -67,12 +66,11 @@ public:
     ~MediaEncoder();
 
     void openOutput(const std::string& filename, const std::string& format="");
-    void setDeviceOptions(const DeviceParams& args);
+    void setMetadata(const std::string& title, const std::string& description);
+    void setOptions(const MediaStream& opts);
     void setOptions(const MediaDescription& args);
-    void setOptions(std::map<std::string, std::string> options);
     int addStream(const SystemCodecInfo& codec);
-    void setIOContext(AVIOContext* ioctx);
-    void startIO();
+    void setIOContext(AVIOContext* ioctx) { ioCtx_ = ioctx; }
 
     bool send(AVPacket& packet, int streamIdx = -1);
 
@@ -91,8 +89,8 @@ public:
     /* getWidth and getHeight return size of the encoded frame.
      * Values have meaning only after openLiveOutput call.
      */
-    int getWidth() const { return device_.width; }
-    int getHeight() const { return device_.height; }
+    int getWidth() const { return videoOpts_.width; };
+    int getHeight() const { return videoOpts_.height; };
 
     void setInitSeqVal(uint16_t seqVal);
     uint16_t getLastSeqValue();
@@ -112,11 +110,17 @@ private:
     AVCodecContext* prepareEncoderContext(AVCodec* outputCodec, bool is_video);
     void forcePresetX264(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
+    int initStream(const std::string& codecName);
+    int initStream(const SystemCodecInfo& systemCodecInfo);
+    void openIOContext();
+    void startIO();
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext *outputCtx_ = nullptr;
+    AVIOContext* ioCtx_ = nullptr;
     int currentStreamIdx_ = -1;
     unsigned sent_samples = 0;
+    bool initialized_ {false};
 
 #ifdef RING_VIDEO
     video::VideoScaler scaler_;
@@ -133,9 +137,11 @@ private:
 
 protected:
     void readConfig(AVDictionary** dict, AVCodecContext* encoderCtx);
-    AVDictionary *options_ = nullptr;
-    DeviceParams device_;
-    std::shared_ptr<const AccountCodecInfo> codec_;
+    AVDictionary* options_ = nullptr;
+    MediaStream videoOpts_;
+    MediaStream audioOpts_;
+    std::string videoCodec_;
+    std::string audioCodec_;
 };
 
 } // namespace ring
