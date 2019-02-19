@@ -243,8 +243,6 @@ MediaRecorder::initRecord()
     // need to get encoder parameters before calling openFileOutput
     // openFileOutput needs to be called before adding any streams
 
-    std::map<std::string, std::string> encoderOptions;
-
     std::stringstream timestampString;
     timestampString << std::put_time(&startTime_, "%Y-%m-%d %H:%M:%S");
 
@@ -254,13 +252,17 @@ MediaRecorder::initRecord()
         title_ = ss.str();
     }
     title_ = replaceAll(title_, "%TIMESTAMP", timestampString.str());
-    encoderOptions["title"] = title_;
 
     if (description_.empty()) {
         description_ = "Recorded with Jami https://jami.net";
     }
     description_ = replaceAll(description_, "%TIMESTAMP", timestampString.str());
-    encoderOptions["description"] = description_;
+
+    encoder_->setMetadata(title_, description_);
+    encoder_->openOutput(getPath());
+#ifdef RING_ACCEL
+    encoder_->enableAccel(false); // TODO recorder has problems with hardware encoding
+#endif
 
     videoFilter_.reset();
     if (hasVideo_) {
@@ -269,11 +271,7 @@ MediaRecorder::initRecord()
             RING_ERR() << "Could not retrieve video recorder stream properties";
             return -1;
         }
-        encoderOptions["width"] = std::to_string(videoStream.width);
-        encoderOptions["height"] = std::to_string(videoStream.height);
-        std::stringstream fps;
-        fps << videoStream.frameRate;
-        encoderOptions["framerate"] = fps.str();
+        encoder_->setOptions(videoStream);
     }
 
     audioFilter_.reset();
@@ -283,12 +281,8 @@ MediaRecorder::initRecord()
             RING_ERR() << "Could not retrieve audio recorder stream properties";
             return -1;
         }
-        encoderOptions["sample_rate"] = std::to_string(audioStream.sampleRate);
-        encoderOptions["channels"] = std::to_string(audioStream.nbChannels);
+        encoder_->setOptions(audioStream);
     }
-
-    encoder_->openOutput(getPath());
-    encoder_->setOptions(encoderOptions);
 
     if (hasVideo_) {
         auto videoCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(
@@ -310,13 +304,7 @@ MediaRecorder::initRecord()
         }
     }
 
-    try {
-        encoder_->setIOContext(nullptr);
-        encoder_->startIO();
-    } catch (const MediaEncoderException& e) {
-        RING_ERR() << "Could not start recorder: " << e.what();
-        return -1;
-    }
+    encoder_->setIOContext(nullptr);
 
     RING_DBG() << "Recording initialized";
     return 0;
