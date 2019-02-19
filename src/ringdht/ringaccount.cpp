@@ -2043,7 +2043,9 @@ void
 RingAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
 {
     RING_DBG("Buddy %s online", contactId.toString().c_str());
-    emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), contactId.toString(), 1,  "");
+    std::string id(contactId.toString());
+    emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), id, 1,  "");
+    messageEngine_.onPeerOnline(id);
 }
 
 void
@@ -3364,14 +3366,14 @@ void
 RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t token)
 {
     if (to.empty() or payloads.empty()) {
-        messageEngine_.onMessageSent(token, false);
+        messageEngine_.onMessageSent(to, token, false);
         return;
     }
     if (payloads.size() != 1) {
         // Multi-part message
         // TODO: not supported yet
         RING_ERR("Multi-part im is not supported yet by RingAccount");
-        messageEngine_.onMessageSent(token, false);
+        messageEngine_.onMessageSent(to, token, false);
         return;
     }
 
@@ -3382,7 +3384,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     }
     catch (...) {
         RING_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
-        messageEngine_.onMessageSent(token, false);
+        messageEngine_.onMessageSent(to, token, false);
         return;
     }
 
@@ -3396,7 +3398,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     auto confirm = std::make_shared<PendingConfirmation>();
 
     // Find listening devices for this account
-    forEachDevice(toH, [confirm,token,payloads,now](const std::shared_ptr<RingAccount>& this_, const dht::InfoHash& dev)
+    forEachDevice(toH, [confirm,to,token,payloads,now](const std::shared_ptr<RingAccount>& this_, const dht::InfoHash& dev)
     {
         {
             std::lock_guard<std::mutex> lock(this_->messageMutex_);
@@ -3435,14 +3437,14 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                     this_.dht_.cancelListen(t.first, t.second.get());
                 confirm->listenTokens.clear();
                 confirm->replied = true;
-                this_.messageEngine_.onMessageSent(token, true);
+                this_.messageEngine_.onMessageSent(msg.from.toString(), token, true);
             }
             return false;
         });
         confirm->listenTokens.emplace(h, std::move(list_token));
         this_->dht_.putEncrypted(h, dev,
             dht::ImMessage(token, std::string(payloads.begin()->first), std::string(payloads.begin()->second), now),
-            [w,token,confirm,h](bool ok) {
+            [w,to,token,confirm,h](bool ok) {
                 if (auto this_ = w.lock()) {
                     RING_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Put encrypted " << (ok ? "ok" : "failed");
                     if (not ok) {
@@ -3452,20 +3454,20 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                             confirm->listenTokens.erase(lt);
                         }
                         if (confirm->listenTokens.empty() and not confirm->replied)
-                            this_->messageEngine_.onMessageSent(token, false);
+                            this_->messageEngine_.onMessageSent(to, token, false);
                     }
                 }
             });
 
         RING_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Sending message for device " << dev.toString();
-    }, [token](const std::shared_ptr<RingAccount>& shared, bool ok) {
+    }, [to, token](const std::shared_ptr<RingAccount>& shared, bool ok) {
         if (not ok) {
-            shared->messageEngine_.onMessageSent(token, false);
+            shared->messageEngine_.onMessageSent(to, token, false);
         }
     });
 
     // Timeout cleanup
-    Manager::instance().scheduleTask([w=weak(), confirm, token]() {
+    Manager::instance().scheduleTask([w=weak(), confirm, to, token]() {
         if (not confirm->replied) {
             if (auto this_ = w.lock()) {
                 RING_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Timeout";
@@ -3473,7 +3475,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                     this_->dht_.cancelListen(t.first, t.second.get());
                 confirm->listenTokens.clear();
                 confirm->replied = true;
-                this_->messageEngine_.onMessageSent(token, false);
+                this_->messageEngine_.onMessageSent(to, token, false);
             }
         }
     }, std::chrono::steady_clock::now() + std::chrono::minutes(1));

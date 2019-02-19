@@ -2068,7 +2068,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
 {
     if (to.empty() or payloads.empty()) {
         RING_WARN("No sender or payload");
-        messageEngine_.onMessageSent(id, false);
+        messageEngine_.onMessageSent(to, id, false);
         return;
     }
 
@@ -2086,7 +2086,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
                                                     nullptr, &tdata);
     if (status != PJ_SUCCESS) {
         RING_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
-        messageEngine_.onMessageSent(id, false);
+        messageEngine_.onMessageSent(to, id, false);
         return;
     }
 
@@ -2097,17 +2097,19 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
 
     struct ctx {
         std::weak_ptr<SIPAccount> acc;
+        std::string to;
         uint64_t id;
     };
     ctx* t = new ctx;
     t->acc = shared();
+    t->to = to;
     t->id = id;
 
     status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t, [](void *token, pjsip_event *e) {
         auto c = (ctx*) token;
         try {
             if (auto acc = c->acc.lock()) {
-                acc->messageEngine_.onMessageSent(c->id, e
+                acc->messageEngine_.onMessageSent(c->to, c->id, e
                                                       && e->body.tsx_state.tsx
                                                       && e->body.tsx_state.tsx->status_code == PJSIP_SC_OK);
             }
