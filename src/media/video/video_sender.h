@@ -34,6 +34,7 @@
 // Forward declarations
 namespace ring {
 class SocketPair;
+struct DeviceParams;
 struct AccountVideoCodecInfo;
 }
 

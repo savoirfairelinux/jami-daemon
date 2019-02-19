@@ -72,10 +72,12 @@ AudioSender::setup(SocketPair& socketPair)
         RING_DBG("audioEncoder_->openOutput %s", dest_.c_str());
         audioEncoder_->openOutput(dest_, "rtp");
         audioEncoder_->setOptions(args_);
+        auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
+        auto ms = MediaStream("audio sender", codec->audioformat);
+        audioEncoder_->setOptions(ms);
         audioEncoder_->addStream(args_.codec->systemCodecInfo);
         audioEncoder_->setInitSeqVal(seqVal_);
         audioEncoder_->setIOContext(muxContext_->getContext());
-        audioEncoder_->startIO();
     } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
         return false;
