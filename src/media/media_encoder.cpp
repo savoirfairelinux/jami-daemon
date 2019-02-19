@@ -30,6 +30,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "string_utils.h"
+#include "system_codec_container.h"
 
 #ifdef RING_ACCEL
 #include "video/accel.h"
@@ -75,74 +76,44 @@ MediaEncoder::~MediaEncoder()
 }
 
 void
-MediaEncoder::setDeviceOptions(const DeviceParams& args)
+MediaEncoder::setOptions(const MediaStream& opts)
 {
-    device_ = args;
-    // Make sure width and height are even (required by x264)
-    // This is especially for image/gif streaming, as video files and cameras usually have even resolutions
-    device_.width -= device_.width % 2;
-    device_.height -= device_.height % 2;
-    if (device_.width)
-        libav_utils::setDictValue(&options_, "width", ring::to_string(device_.width));
-    if (device_.height)
-        libav_utils::setDictValue(&options_, "height", ring::to_string(device_.height));
-    if (not device_.framerate)
-        device_.framerate = 30;
-    libav_utils::setDictValue(&options_, "framerate", ring::to_string(device_.framerate.real()));
+    if (!opts.isValid()) {
+        RING_ERR() << "Invalid options";
+        return;
+    }
+
+    if (opts.isVideo) {
+        videoOpts_ = opts;
+        // Make sure width and height are even (required by x264)
+        // This is especially for image/gif streaming, as video files and cameras usually have even resolutions
+        videoOpts_.width -= videoOpts_.width % 2;
+        videoOpts_.height -= videoOpts_.height % 2;
+        if (not videoOpts_.frameRate)
+            videoOpts_.frameRate = 30;
+    } else {
+        audioOpts_ = opts;
+    }
 }
 
 void
 MediaEncoder::setOptions(const MediaDescription& args)
 {
-    codec_ = args.codec;
-
     libav_utils::setDictValue(&options_, "payload_type", ring::to_string(args.payload_type));
     libav_utils::setDictValue(&options_, "max_rate", ring::to_string(args.codec->bitrate));
     libav_utils::setDictValue(&options_, "crf", ring::to_string(args.codec->quality));
-
-    if (args.codec->systemCodecInfo.mediaType == MEDIA_AUDIO) {
-        auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args.codec);
-        if (accountAudioCodec->audioformat.sample_rate)
-            libav_utils::setDictValue(&options_, "sample_rate",
-                        ring::to_string(accountAudioCodec->audioformat.sample_rate));
-
-        if (accountAudioCodec->audioformat.nb_channels)
-            libav_utils::setDictValue(&options_, "channels",
-                        ring::to_string(accountAudioCodec->audioformat.nb_channels));
-
-        if (accountAudioCodec->audioformat.sample_rate && accountAudioCodec->audioformat.nb_channels)
-            libav_utils::setDictValue(&options_, "frame_size",
-                        ring::to_string(static_cast<unsigned>(0.02 * accountAudioCodec->audioformat.sample_rate)));
-    }
 
     if (not args.parameters.empty())
         libav_utils::setDictValue(&options_, "parameters", args.parameters);
 }
 
 void
-MediaEncoder::setOptions(std::map<std::string, std::string> options)
+MediaEncoder::setMetadata(const std::string& title, const std::string& description)
 {
-    const auto& titleIt = options.find("title");
-    if (titleIt != options.end() and not titleIt->second.empty())
-        libav_utils::setDictValue(&outputCtx_->metadata, titleIt->first, titleIt->second);
-    const auto& descIt = options.find("description");
-    if (descIt != options.end() and not descIt->second.empty())
-        libav_utils::setDictValue(&outputCtx_->metadata, descIt->first, descIt->second);
-
-    auto bitrate = SystemCodecInfo::DEFAULT_MAX_BITRATE;
-    auto quality = SystemCodecInfo::DEFAULT_CODEC_QUALITY;
-    // ensure all options retrieved later on are in options_ (insert does nothing if key exists)
-    options.insert({"max_rate", ring::to_string(bitrate)});
-    options.insert({"crf", ring::to_string(quality)});
-    options.insert({"sample_rate", "8000"});
-    options.insert({"channels", "2"});
-    int sampleRate = atoi(options["sample_rate"].c_str());
-    options.insert({"frame_size", ring::to_string(static_cast<unsigned>(0.02*sampleRate))});
-    options.insert({"width", "320"});
-    options.insert({"height", "240"});
-    options.insert({"framerate", "30.00"});
-    for (const auto& it : options)
-        libav_utils::setDictValue(&options_, it.first, it.second);
+    if (not title.empty())
+        libav_utils::setDictValue(&outputCtx_->metadata, "title", title);
+    if (not description.empty())
+        libav_utils::setDictValue(&outputCtx_->metadata, "description", description);
 }
 
 void
@@ -166,7 +137,10 @@ MediaEncoder::getLastSeqValue()
 std::string
 MediaEncoder::getEncoderName() const
 {
-    return encoders_[currentStreamIdx_]->codec->name;
+    if (videoOpts_.isValid())
+        return videoCodec_;
+    else
+        return audioCodec_;
 }
 
 void
@@ -186,13 +160,39 @@ MediaEncoder::openOutput(const std::string& filename, const std::string& format)
 int
 MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 {
+    if (systemCodecInfo.mediaType == MEDIA_AUDIO) {
+        audioCodec_ = systemCodecInfo.name;
+        return initStream(systemCodecInfo);
+    } else {
+        videoCodec_ = systemCodecInfo.name;
+        // TODO only support 1 audio stream and 1 video stream per encoder
+        if (audioOpts_.isValid())
+            return 1; // stream will be added to AVFormatContext after audio stream
+        else
+            return 0; // only a video stream
+    }
+}
+
+int
+MediaEncoder::initStream(const std::string& codecName)
+{
+    const auto codecInfo = getSystemCodecContainer()->searchCodecByName(codecName, MEDIA_ALL);
+    if (codecInfo)
+        return initStream(*codecInfo);
+    else
+        return -1;
+}
+
+int
+MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo)
+{
     AVCodec* outputCodec = nullptr;
     AVCodecContext* encoderCtx = nullptr;
 #ifdef RING_ACCEL
     if (systemCodecInfo.mediaType == MEDIA_VIDEO) {
         if (enableAccel_) {
             if (accel_ = video::HardwareAccel::setupEncoder(
-                static_cast<AVCodecID>(systemCodecInfo.avcodecId), device_.width, device_.height)) {
+                static_cast<AVCodecID>(systemCodecInfo.avcodecId), videoOpts_.width, videoOpts_.height)) {
                 outputCodec = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
             }
         } else {
@@ -337,10 +337,10 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 }
 
 void
-MediaEncoder::setIOContext(AVIOContext* ioctx)
+MediaEncoder::openIOContext()
 {
-    if (ioctx) {
-        outputCtx_->pb = ioctx;
+    if (ioCtx_) {
+        outputCtx_->pb = ioCtx_;
         outputCtx_->packet_size = outputCtx_->pb->buffer_size;
     } else {
         int ret = 0;
@@ -352,7 +352,7 @@ MediaEncoder::setIOContext(AVIOContext* ioctx)
         if (!(outputCtx_->oformat->flags & AVFMT_NOFILE)) {
             if ((ret = avio_open(&outputCtx_->pb, filename, AVIO_FLAG_WRITE)) < 0) {
                 std::stringstream ss;
-                ss << "Could not set IO context for '" << filename << "': " << libav_utils::getError(ret);
+                ss << "Could not open IO context for '" << filename << "': " << libav_utils::getError(ret);
                 throw MediaEncoderException(ss.str().c_str());
             }
         }
@@ -362,6 +362,8 @@ MediaEncoder::setIOContext(AVIOContext* ioctx)
 void
 MediaEncoder::startIO()
 {
+    if (!outputCtx_->pb)
+        openIOContext();
     if (avformat_write_header(outputCtx_, options_ ? &options_ : nullptr)) {
         RING_ERR("Could not write header for output file... check codec parameters");
         throw MediaEncoderException("Failed to write output file header");
@@ -372,6 +374,7 @@ MediaEncoder::startIO()
 #else
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
 #endif
+    initialized_ = true;
 }
 
 #ifdef RING_VIDEO
@@ -379,6 +382,11 @@ int
 MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
                      int64_t frame_number)
 {
+    if (!initialized_) {
+        initStream(videoCodec_);
+        startIO();
+    }
+
     /* Prepare a frame suitable to our encoder frame format,
      * keeping also the input aspect ratio.
      */
@@ -426,6 +434,13 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 int
 MediaEncoder::encodeAudio(AudioFrame& frame)
 {
+    if (!initialized_) {
+        // Initialize on first video frame, or first audio frame if no video stream
+        if (not videoOpts_.isValid())
+            startIO();
+        else
+            return 0;
+    }
     frame.pointer()->pts = sent_samples;
     sent_samples += frame.pointer()->nb_samples;
     encode(frame.pointer(), currentStreamIdx_);
@@ -435,6 +450,16 @@ MediaEncoder::encodeAudio(AudioFrame& frame)
 int
 MediaEncoder::encode(AVFrame* frame, int streamIdx)
 {
+    if (!initialized_) {
+        // Initialize on first video frame, or first audio frame if no video stream
+        bool isVideo = (frame->width > 0 && frame->height > 0);
+        if (isVideo or not videoOpts_.isValid()) {
+            initStream(videoCodec_);
+            startIO();
+        } else {
+            return 0;
+        }
+    }
     int ret = 0;
     AVCodecContext* encoderCtx = encoders_[streamIdx];
     AVPacket pkt;
@@ -536,34 +561,15 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 
     if (is_video) {
         // resolution must be a multiple of two
-        if (device_.width && device_.height) {
-            encoderCtx->width = device_.width;
-            encoderCtx->height = device_.height;
-        } else {
-            encoderCtx->width = std::atoi(libav_utils::getDictValue(options_, "width"));
-            encoderCtx->height = std::atoi(libav_utils::getDictValue(options_, "height"));
-        }
+        encoderCtx->width = videoOpts_.width;
+        encoderCtx->height = videoOpts_.height;
 
         // satisfy ffmpeg: denominator must be 16bit or less value
         // time base = 1/FPS
-        if (device_.framerate) {
-            av_reduce(&encoderCtx->framerate.num, &encoderCtx->framerate.den,
-                      device_.framerate.numerator(), device_.framerate.denominator(),
-                      (1U << 16) - 1);
-            encoderCtx->time_base = av_inv_q(encoderCtx->framerate);
-        } else {
-            // get from options_, else default to 30 fps
-            auto v = libav_utils::getDictValue(options_, "framerate");
-            AVRational framerate = AVRational{30, 1};
-            if (v)
-                av_parse_ratio_quiet(&framerate, v, 120);
-            if (framerate.den == 0)
-                framerate.den = 1;
-            av_reduce(&encoderCtx->framerate.num, &encoderCtx->framerate.den,
-                      framerate.num, framerate.den,
-                      (1U << 16) - 1);
-            encoderCtx->time_base = av_inv_q(encoderCtx->framerate);
-        }
+        av_reduce(&encoderCtx->framerate.num, &encoderCtx->framerate.den,
+                  videoOpts_.frameRate.numerator(), videoOpts_.frameRate.denominator(),
+                  (1U << 16) - 1);
+        encoderCtx->time_base = av_inv_q(encoderCtx->framerate);
 
         // emit one intra frame every gop_size frames
         encoderCtx->max_b_frames = 0;
@@ -580,36 +586,21 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
         // encoderCtx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     } else {
         encoderCtx->sample_fmt = AV_SAMPLE_FMT_S16;
-        auto v = libav_utils::getDictValue(options_, "sample_rate");
-        if (v) {
-            encoderCtx->sample_rate = atoi(v);
-            encoderCtx->time_base = AVRational{1, encoderCtx->sample_rate};
+        encoderCtx->sample_rate = std::max(8000, audioOpts_.sampleRate);
+        encoderCtx->time_base = AVRational{1, encoderCtx->sample_rate};
+        if (audioOpts_.nbChannels > 2 || audioOpts_.nbChannels < 1) {
+            encoderCtx->channels = std::max(std::min(audioOpts_.nbChannels, 1), 2);
+            RING_ERR() << "[" << encoderName << "] Clamping invalid channel count: "
+                << audioOpts_.nbChannels << " -> " << encoderCtx->channels;
         } else {
-            RING_WARN("[%s] No sample rate set", encoderName);
-            encoderCtx->sample_rate = 8000;
+            encoderCtx->channels = audioOpts_.nbChannels;
         }
-
-        v = libav_utils::getDictValue(options_, "channels");
-        if (v) {
-            auto c = std::atoi(v);
-            if (c > 2 or c < 1) {
-                RING_WARN("[%s] Clamping invalid channel value %d", encoderName, c);
-                c = 1;
-            }
-            encoderCtx->channels = c;
+        encoderCtx->channel_layout = av_get_default_channel_layout(encoderCtx->channels);
+        if (audioOpts_.frameSize) {
+            encoderCtx->frame_size = audioOpts_.frameSize;
+            RING_DBG() << "[" << encoderName << "] Frame size " << encoderCtx->frame_size;
         } else {
-            RING_WARN("[%s] Channels not set", encoderName);
-            encoderCtx->channels = 1;
-        }
-
-        encoderCtx->channel_layout = encoderCtx->channels == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
-
-        v = libav_utils::getDictValue(options_, "frame_size");
-        if (v) {
-            encoderCtx->frame_size = atoi(v);
-            RING_DBG("[%s] Frame size %d", encoderName, encoderCtx->frame_size);
-        } else {
-            RING_WARN("[%s] Frame size not set", encoderName);
+            RING_WARN() << "[" << encoderName << "] Frame size not set";
         }
     }
 
@@ -679,7 +670,10 @@ MediaEncoder::extractProfileLevelID(const std::string &parameters,
 bool
 MediaEncoder::useCodec(const ring::AccountCodecInfo* codec) const noexcept
 {
-    return codec_.get() == codec;
+    if (codec->systemCodecInfo.mediaType == MEDIA_VIDEO)
+        return videoCodec_ == codec->systemCodecInfo.name;
+    else
+        return audioCodec_ == codec->systemCodecInfo.name;
 }
 
 #ifdef RING_ACCEL
@@ -748,7 +742,6 @@ MediaEncoder::readConfig(AVDictionary** dict, AVCodecContext* encoderCtx)
                 return;
             }
             // If users want to change these, they should use the settings page.
-            std::vector<std::string> ignoredKeys = { "width", "height", "framerate", "sample_rate", "channels", "frame_size", "parameters" };
             for (Json::Value::const_iterator it = config.begin(); it != config.end(); ++it) {
                 Json::Value v = *it;
                 if (!it.key().isConvertibleTo(Json::ValueType::stringValue)
@@ -759,7 +752,7 @@ MediaEncoder::readConfig(AVDictionary** dict, AVCodecContext* encoderCtx)
                 const auto& key = it.key().asString();
                 const auto& value = v.asString();
                 // provides a way to override all AVCodecContext fields MediaEncoder sets
-                if (std::find(ignoredKeys.cbegin(), ignoredKeys.cend(), key) != ignoredKeys.cend())
+                if (key == "parameters") // Used by MediaEncoder for profile-level-id, ignore
                     continue;
                 else if (value.empty())
                     libav_utils::setDictValue(dict, key, nullptr);

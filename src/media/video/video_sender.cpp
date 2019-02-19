@@ -26,6 +26,7 @@
 #include "client/videomanager.h"
 #include "logger.h"
 #include "manager.h"
+#include "media_device.h"
 #include "smartools.h"
 #include "sip/sipcall.h"
 #ifdef RING_ACCEL
@@ -51,14 +52,12 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
 {
     keyFrameFreq_ = dev.framerate.numerator() * KEY_FRAME_PERIOD;
     videoEncoder_->openOutput(dest, "rtp");
-    videoEncoder_->setDeviceOptions(dev);
+    auto opts = MediaStream("video sender", AV_PIX_FMT_YUV420P, 1 / (rational<int>)dev.framerate, dev.width, dev.height, 1, (rational<int>)dev.framerate);
+    videoEncoder_->setOptions(opts);
     videoEncoder_->setOptions(args);
     videoEncoder_->addStream(args.codec->systemCodecInfo);
     videoEncoder_->setInitSeqVal(seqVal);
     videoEncoder_->setIOContext(muxContext_->getContext());
-    videoEncoder_->startIO();
-
-    videoEncoder_->print_sdp();
 
     // Send local video codec in SmartInfo
     Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getEncoderName());
@@ -71,7 +70,6 @@ VideoSender::~VideoSender()
 {
     videoEncoder_->flush();
 }
-
 
 void
 VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
@@ -109,6 +107,10 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         if (videoEncoder_->encode(swFrame, is_keyframe, frameNumber_++) < 0)
             RING_ERR("encoding failed");
     }
+#ifdef DEBUG_SDP
+    if (frameNumber_ == 1) // video stream is lazy initialized, wait for first frame
+        videoEncoder_->print_sdp();
+#endif
 }
 
 void
