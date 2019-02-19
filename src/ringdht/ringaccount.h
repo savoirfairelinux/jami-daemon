@@ -519,6 +519,7 @@ class RingAccount : public SIPAccountBase {
         std::set<dht::Value::Id> treatedCalls_ {};
         mutable std::mutex callsMutex_ {};
 
+        mutable std::mutex messageMutex_ {};
         std::map<dht::Value::Id, PendingMessage> sentMessages_;
         std::set<dht::Value::Id> treatedMessages_ {};
 
