@@ -127,7 +127,7 @@ CXX := $(CROSS_COMPILE)clang++
 endif
 
 ifdef HAVE_MACOSX
-MIN_OSX_VERSION=10.8
+MIN_OSX_VERSION=10.11
 CC=xcrun cc
 CXX=xcrun c++
 AR=xcrun ar
