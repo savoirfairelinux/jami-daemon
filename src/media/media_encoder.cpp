@@ -162,7 +162,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 {
     if (systemCodecInfo.mediaType == MEDIA_AUDIO) {
         audioCodec_ = systemCodecInfo.name;
-        return initStream(systemCodecInfo);
+        return initStream(systemCodecInfo, nullptr);
     } else {
         videoCodec_ = systemCodecInfo.name;
         // TODO only support 1 audio stream and 1 video stream per encoder
@@ -174,17 +174,17 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 }
 
 int
-MediaEncoder::initStream(const std::string& codecName)
+MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx)
 {
     const auto codecInfo = getSystemCodecContainer()->searchCodecByName(codecName, MEDIA_ALL);
     if (codecInfo)
-        return initStream(*codecInfo);
+        return initStream(*codecInfo, framesCtx);
     else
         return -1;
 }
 
 int
-MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo)
+MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx)
 {
     AVCodec* outputCodec = nullptr;
     AVCodecContext* encoderCtx = nullptr;
@@ -192,7 +192,8 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo)
     if (systemCodecInfo.mediaType == MEDIA_VIDEO) {
         if (enableAccel_) {
             if (accel_ = video::HardwareAccel::setupEncoder(
-                static_cast<AVCodecID>(systemCodecInfo.avcodecId), videoOpts_.width, videoOpts_.height)) {
+                static_cast<AVCodecID>(systemCodecInfo.avcodecId),
+                videoOpts_.width, videoOpts_.height, framesCtx)) {
                 outputCodec = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
             }
         } else {
@@ -221,7 +222,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo)
 
 #ifdef RING_ACCEL
     if (accel_) {
-        accel_->setDetails(encoderCtx, &options_);
+        accel_->setDetails(encoderCtx);
         encoderCtx->opaque = accel_.get();
     }
 #endif
@@ -383,28 +384,49 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
                      int64_t frame_number)
 {
     if (!initialized_) {
-        initStream(videoCodec_);
+        initStream(videoCodec_, input.pointer()->hw_frames_ctx);
         startIO();
     }
 
-    /* Prepare a frame suitable to our encoder frame format,
-     * keeping also the input aspect ratio.
-     */
-    libav_utils::fillWithBlack(scaledFrame_.pointer());
+    AVFrame* frame;
+#ifdef RING_ACCEL
+    auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(input.format()));
+    bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
+    std::unique_ptr<VideoFrame> framePtr;
+    if (accel_ && accel_->isLinked()) {
+        // Fully accelerated pipeline, skip main memory
+        frame = input.pointer();
+    } else if (isHardware) {
+        // Hardware decoded frame, transfer back to main memory
+        // Transfer to GPU if we have a hardware encoder
+        AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_YUV420P);
+        framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
+        if (accel_)
+            framePtr = accel_->transfer(*framePtr);
+        frame = framePtr->pointer();
+    } else if (accel_) {
+        // Software decoded frame with a hardware encoder, convert to accepted format first
+        auto pix = accel_->getSoftwareFormat();
+        if (input.format() != pix) {
+            framePtr = scaler_.convertFormat(input, pix);
+            framePtr = accel_->transfer(*framePtr);
+        } else {
+            framePtr = accel_->transfer(input);
+        }
+        frame = framePtr->pointer();
+    } else {
+#endif
+        libav_utils::fillWithBlack(scaledFrame_.pointer());
+        scaler_.scale_with_aspect(input, scaledFrame_);
+        frame = scaledFrame_.pointer();
+#ifdef RING_ACCEL
+    }
+#endif
 
-    scaler_.scale_with_aspect(input, scaledFrame_);
-
-    // Copy frame so the VideoScaler can still use the software frame (input)
-    VideoFrame copy;
-    copy.copyFrom(scaledFrame_);
-
-    auto frame = copy.pointer();
     AVCodecContext* enc = encoders_[currentStreamIdx_];
-    // ideally, time base is the inverse of framerate, but this may not always be the case
-    if (enc->framerate.num == enc->time_base.den && enc->framerate.den == enc->time_base.num)
-        frame->pts = frame_number;
-    else
-        frame->pts = (frame_number / (rational<int64_t>(enc->framerate) * rational<int64_t>(enc->time_base))).real<int64_t>();
+    frame->pts = frame_number;
+    if (enc->framerate.num != enc->time_base.den || enc->framerate.den != enc->time_base.num)
+        frame->pts /= (rational<int64_t>(enc->framerate) * rational<int64_t>(enc->time_base)).real<int64_t>();
 
     if (is_keyframe) {
         frame->pict_type = AV_PICTURE_TYPE_I;
@@ -413,19 +435,6 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
         frame->pict_type = AV_PICTURE_TYPE_NONE;
         frame->key_frame = 0;
     }
-
-#ifdef RING_ACCEL
-    // NOTE needs to be at same scope as call to encode
-    std::unique_ptr<VideoFrame> framePtr;
-    if (accel_) {
-        framePtr = accel_->transfer(copy);
-        if (!framePtr) {
-            RING_ERR() << "Hardware encoding failure";
-            return -1;
-        }
-        frame = framePtr->pointer();
-    }
-#endif
 
     return encode(frame, currentStreamIdx_);
 }
@@ -454,7 +463,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         // Initialize on first video frame, or first audio frame if no video stream
         bool isVideo = (frame->width > 0 && frame->height > 0);
         if (isVideo or not videoOpts_.isValid()) {
-            initStream(videoCodec_);
+            initStream(videoCodec_, frame->hw_frames_ctx);
             startIO();
         } else {
             return 0;

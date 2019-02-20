@@ -37,12 +37,13 @@ public:
     /**
      * Static factory method for hardware decoding.
      */
-    static std::unique_ptr<HardwareAccel> setupDecoder(AVCodecID id);
+    static std::unique_ptr<HardwareAccel> setupDecoder(AVCodecID id, int width, int height);
 
     /**
      * Static factory method for hardware encoding.
      */
-    static std::unique_ptr<HardwareAccel> setupEncoder(AVCodecID id, int width, int height);
+    static std::unique_ptr<HardwareAccel> setupEncoder(AVCodecID id, int width, int height,
+        AVBufferRef* framesCtx = nullptr);
 
     /**
      * Transfers a hardware decoded frame back to main memory. Should be called after
@@ -86,19 +87,27 @@ public:
 
     /**
      * Gets the name of the codec.
-     * Decoding: equivalent to avcodec_get_name(id_)
+     * Decoding: avcodec_get_name(id_)
      * Encoding: avcodec_get_name(id_) + '_' + name_
      */
     std::string getCodecName() const;
 
     /**
+     * Returns whether or not the decoder is linked to an encoder or vice-versa. Being linked
+     * means an encoder can directly use the decoder's hardware frame, without first
+     * transferring it to main memory.
+     */
+    bool isLinked() const { return linked_; }
+
+    /**
      * Set some extra details in the codec context. Should be called after a successful
      * setup (setupDecoder or setupEncoder).
-     * For decoding, sets the hw_device_ctx and get_format callback. For encoding, sets
-     * hw_device_ctx and hw_frames_ctx, and may set some hardware specific options in
-     * the dictionary.
+     * For decoding, sets the hw_device_ctx and get_format callback. If the decoder has
+     * a frames context, mark as linked.
+     * For encoding, sets hw_device_ctx and hw_frames_ctx, and may set some hardware
+     * codec options.
      */
-    void setDetails(AVCodecContext* codecCtx, AVDictionary** d);
+    void setDetails(AVCodecContext* codecCtx);
 
     /**
      * Transfers a hardware decoded frame back to main memory. Should be called after
@@ -110,6 +119,12 @@ public:
      */
     std::unique_ptr<VideoFrame> transfer(const VideoFrame& frame);
 
+    /**
+     * Links this HardwareAccel's frames context with the passed in context. This serves
+     * to skip transferring a decoded frame back to main memory before encoding.
+     */
+    bool linkHardware(AVBufferRef* framesCtx);
+
 private:
     bool initDevice();
     bool initFrame(int width, int height);
@@ -119,6 +134,7 @@ private:
     AVPixelFormat format_ {AV_PIX_FMT_NONE};
     AVPixelFormat swFormat_ {AV_PIX_FMT_NONE};
     CodecType type_ {CODEC_NONE};
+    bool linked_ {false};
 
     AVBufferRef* deviceCtx_ {nullptr};
     AVBufferRef* framesCtx_ {nullptr};
