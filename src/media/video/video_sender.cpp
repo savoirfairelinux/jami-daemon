@@ -106,13 +106,7 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
                 changeOrientationCallback_(rotation_);
         }
 
-#ifdef RING_ACCEL
-        auto framePtr = HardwareAccel::transferToMainMemory(input_frame, AV_PIX_FMT_NV12);
-        auto& swFrame = *framePtr;
-#else
-        auto& swFrame = input_frame;
-#endif
-        if (videoEncoder_->encode(swFrame, is_keyframe, frameNumber_++) < 0)
+        if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
             RING_ERR("encoding failed");
     }
 #ifdef DEBUG_SDP

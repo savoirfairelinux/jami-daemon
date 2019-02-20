@@ -227,9 +227,10 @@ MediaDecoder::setupStream(AVMediaType mediaType)
 #ifdef RING_ACCEL
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
         if (enableAccel_) {
-            accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id);
+            accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id,
+                decoderCtx_->width, decoderCtx_->height);
             if (accel_) {
-                accel_->setDetails(decoderCtx_, &options_);
+                accel_->setDetails(decoderCtx_);
                 decoderCtx_->opaque = accel_.get();
             }
         } else if (Manager::instance().videoPreferences.getDecodingAccelerated()) {

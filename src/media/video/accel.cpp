@@ -104,7 +104,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
             return nullptr;
         }
 
-        return transferToMainMemory(frame, AV_PIX_FMT_NV12);
+        return transferToMainMemory(frame, swFormat_);
     } else if (type_ == CODEC_ENCODER) {
         auto input = frame.pointer();
         if (input->format != swFormat_) {
@@ -141,14 +141,14 @@ HardwareAccel::transfer(const VideoFrame& frame)
 }
 
 void
-HardwareAccel::setDetails(AVCodecContext* codecCtx, AVDictionary** /*d*/)
+HardwareAccel::setDetails(AVCodecContext* codecCtx)
 {
     if (type_ == CODEC_DECODER) {
         codecCtx->hw_device_ctx = av_buffer_ref(deviceCtx_);
         codecCtx->get_format = getFormatCb;
         codecCtx->thread_safe_callbacks = 1;
     } else if (type_ == CODEC_ENCODER) {
-        codecCtx->hw_device_ctx = av_buffer_ref(deviceCtx_);
+        // encoder doesn't need a device context, only a frame context
         codecCtx->hw_frames_ctx = av_buffer_ref(framesCtx_);
     }
 }
@@ -204,6 +204,28 @@ HardwareAccel::initFrame(int width, int height)
     return ret >= 0;
 }
 
+bool
+HardwareAccel::linkHardware(AVBufferRef* framesCtx)
+{
+    if (framesCtx) {
+        // Force sw_format to match swFormat_. Frame is never transferred to main
+        // memory when hardware is linked, so the sw_format doesn't matter.
+        auto hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
+        hw->sw_format = swFormat_;
+
+        if (framesCtx_)
+            av_buffer_unref(&framesCtx_);
+        framesCtx_ = av_buffer_ref(framesCtx);
+        if ((linked_ = (framesCtx_ != nullptr))) {
+            RING_DBG() << "Hardware transcoding pipeline successfully set up for"
+                << " encoder '" << getCodecName() << "'";
+        }
+        return linked_;
+    } else {
+        return false;
+    }
+}
+
 std::unique_ptr<VideoFrame>
 HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat)
 {
@@ -232,7 +254,7 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
 }
 
 std::unique_ptr<HardwareAccel>
-HardwareAccel::setupDecoder(AVCodecID id)
+HardwareAccel::setupDecoder(AVCodecID id, int width, int height)
 {
     static const HardwareAPI apiList[] = {
         { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
@@ -243,7 +265,7 @@ HardwareAccel::setupDecoder(AVCodecID id)
     for (const auto& api : apiList) {
         if (std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id) != api.supportedCodecs.end()) {
             auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_DECODER);
-            if (accel->initDevice()) {
+            if (accel->initDevice() && accel->initFrame(width, height)) {
                 RING_DBG() << "Attempting to use hardware decoder " << accel->getCodecName() << " with " << api.name;
                 return accel;
             }
@@ -254,7 +276,7 @@ HardwareAccel::setupDecoder(AVCodecID id)
 }
 
 std::unique_ptr<HardwareAccel>
-HardwareAccel::setupEncoder(AVCodecID id, int width, int height)
+HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* framesCtx)
 {
     static const HardwareAPI apiList[] = {
         { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
@@ -267,7 +289,9 @@ HardwareAccel::setupEncoder(AVCodecID id, int width, int height)
             auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_ENCODER);
             const auto& codecName = accel->getCodecName();
             if (avcodec_find_encoder_by_name(codecName.c_str())) {
-                if (accel->initDevice() && accel->initFrame(width, height)) {
+                // Set up a fully accelerated pipeline, else fallback to using the main memory
+                if (accel->linkHardware(framesCtx)
+                    || (accel->initDevice() && accel->initFrame(width, height))) {
                     RING_DBG() << "Attempting to use hardware encoder " << codecName;
                     return accel;
                 }
