@@ -858,7 +858,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     // Following https://www.gnutls.org/manual/html_node/Safe-renegotiation.html
     // "Unlike TLS 1.2, the server is not allowed to change identities"
     // So, we don't have to check the status if we are the client
-#ifndef _WIN32 // For now, windows use GNUTLS < 3.6.5
+#if GNUTLS_VERSION_NUMBER >= 0x030605
     bool isTLS1_3 = gnutls_protocol_get_version(session_) == GNUTLS_TLS1_3;
     if (!isTLS1_3 || (isTLS1_3 && isServer_)) {
 #endif
@@ -866,7 +866,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
             RING_ERR("[TLS] server identity changed! MiM attack?");
             return TlsSessionState::SHUTDOWN;
         }
-#ifndef _WIN32
+#if GNUTLS_VERSION_NUMBER >= 0x030605
     }
 #endif
 
