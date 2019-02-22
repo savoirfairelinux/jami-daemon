@@ -59,6 +59,8 @@ class VideoDeviceImpl {
         AVCaptureDevice* avDevice_;
         std::vector<VideoSize> available_sizes_;
         VideoSize current_size_;
+        FrameRate rate_ {};
+        std::map<VideoSize, std::vector<FrameRate>> available_rates_;
 };
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
@@ -73,6 +75,20 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
     for (AVCaptureDeviceFormat* format in avDevice_.formats) {
         auto dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
         available_sizes_.emplace_back(dimensions.width, dimensions.height);
+        std::vector<FrameRate> v;
+        v.reserve(format.videoSupportedFrameRateRanges.count);
+        for (AVFrameRateRange* frameRateRange in format.videoSupportedFrameRateRanges) {
+            if(std::find(v.begin(), v.end(), frameRateRange.maxFrameRate) == v.end()) {
+                v.emplace_back(frameRateRange.maxFrameRate);
+            }
+        }
+        // if we have multiple formats with the same resolution use video supported framerates from last one
+        // because this format will be selected by ffmpeg
+        if (available_rates_.find( VideoSize(dimensions.width, dimensions.height) ) == available_rates_.end()) {
+            available_rates_.emplace(VideoSize(dimensions.width, dimensions.height), v);
+        } else {
+            available_rates_.at(VideoSize(dimensions.width, dimensions.height)) = v;
+        }
     }
 }
 
@@ -97,23 +113,17 @@ VideoDeviceImpl::getDeviceParams() const
     DeviceParams params;
     params.name = [[avDevice_ localizedName] UTF8String];
     params.input = params.name;
+    params.framerate = rate_;
     params.format = "avfoundation";
-
     params.width = current_size_.first;
     params.height = current_size_.second;
-
-    auto format = [avDevice_ activeFormat];
-    auto frameRate = (AVFrameRateRange*)
-                    [format.videoSupportedFrameRateRanges objectAtIndex:0];
-    params.framerate = frameRate.maxFrameRate;
     return params;
 }
 
 void
 VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
-//TODO: add framerate
-//    rate_ = size_.getRate(settings["rate"]);
+    rate_ = params.framerate;
     current_size_ = extractSize({params.width, params.height});
 }
 
@@ -126,12 +136,7 @@ VideoDeviceImpl::getSizeList() const
 std::vector<FrameRate>
 VideoDeviceImpl::getRateList(const std::string& channel, VideoSize size) const
 {
-    auto format = [avDevice_ activeFormat];
-    std::vector<FrameRate> v;
-    v.reserve(format.videoSupportedFrameRateRanges.count);
-    for (AVFrameRateRange* frameRateRange in format.videoSupportedFrameRateRanges)
-        v.emplace_back(frameRateRange.maxFrameRate);
-    return v;
+    return available_rates_.at(size);
 }
 
 std::vector<VideoSize>
