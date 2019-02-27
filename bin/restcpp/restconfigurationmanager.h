@@ -24,6 +24,7 @@
 #include <string>
 #include <regex>
 #include <restbed>
+#include <mutex>
 
 #if __GNUC__ >= 5 || (__GNUC__ >=4 && __GNUC_MINOR__ >= 6)
 /* This warning option only exists for gcc 4.6.0 and greater. */
@@ -54,19 +55,26 @@ class RestConfigurationManager
 
         std::vector<std::shared_ptr<restbed::Resource>> getResources();
 
+        std::set<std::shared_ptr<restbed::Session>> getPendingNameResolutions(const std::string& name);
+
+
     private:
         // Attributes
         std::vector<std::shared_ptr<restbed::Resource>> resources_;
-
+        std::multimap<std::string, std::shared_ptr<restbed::Session>> pendingNameResolutions;
+        std::mutex pendingNameResolutionMtx;
         // Methods
         std::map<std::string, std::string> parsePost(const std::string& post);
         void populateResources();
+        void addPendingNameResolutions(const std::string& name, const std::shared_ptr<restbed::Session> session);
         void defaultRoute(const std::shared_ptr<restbed::Session> session);
+
 
         void getAccountDetails(const std::shared_ptr<restbed::Session> session);
         void getVolatileAccountDetails(const std::shared_ptr<restbed::Session> session);
         void setAccountDetails(const std::shared_ptr<restbed::Session> session);
         void registerName(const std::shared_ptr<restbed::Session> session);
+        void lookupName(const std::shared_ptr<restbed::Session> session);
         void setAccountActive(const std::shared_ptr<restbed::Session> session);
         void getAccountTemplate(const std::shared_ptr<restbed::Session> session);
         void addAccount(const std::shared_ptr<restbed::Session> session);
