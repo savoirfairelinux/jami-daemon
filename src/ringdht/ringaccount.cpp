@@ -2026,7 +2026,7 @@ RingAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
         }
         return true;
     });
-    RING_DBG("[Account %s] tracking buddy %s", getAccountID().c_str(), h.to_c_str());
+    // RING_DBG("[Account %s] tracking buddy %s", getAccountID().c_str(), h.to_c_str());
 }
 
 std::map<std::string, bool>
