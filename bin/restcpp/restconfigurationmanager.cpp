@@ -107,6 +107,11 @@ RestConfigurationManager::populateResources()
         std::bind(&RestConfigurationManager::registerName, this, std::placeholders::_1));
 
     resources_.push_back(std::make_shared<restbed::Resource>());
+    resources_.back()->set_path("/lookupName/{name: [a-z0-9]*}");
+    resources_.back()->set_method_handler("GET",
+        std::bind(&RestConfigurationManager::lookupName, this, std::placeholders::_1));
+
+    resources_.push_back(std::make_shared<restbed::Resource>());
     resources_.back()->set_path("/setAccountActive/{accountID: [a-z0-9]*}/{status: (true|false)}");
     resources_.back()->set_method_handler("GET",
         std::bind(&RestConfigurationManager::setAccountActive, this, std::placeholders::_1));
@@ -410,7 +415,7 @@ RestConfigurationManager::defaultRoute(const std::shared_ptr<restbed::Session> s
     body += "GET /setAccountActive/{accountID: [a-z0-9]*}/{status: (true|false)}\r\n";
     body += "GET /accountTemplate/{type: [a-zA-Z]*}\r\n";
     body += "POST /addAccount\r\n";
-    body += "GET /removeAccount/{accountID: 3a-z0-9]*}\r\n";
+    body += "GET /removeAccount/{accountID: [a-z0-9]*}\r\n";
     body += "GET /accountList\r\n";
     body += "GET /sendRegister/{accountID: [a-z0-9]*}/{status: (true|false)}\r\n";
     body += "GET /registerAllAccounts\r\n";
@@ -598,6 +603,38 @@ RestConfigurationManager::registerName(const std::shared_ptr<restbed::Session> s
     else {
         session->close(400, "empty request");
     }
+}
+
+void
+RestConfigurationManager::addPendingNameResolutions(const std::string& name, const std::shared_ptr<restbed::Session> session){
+    std::lock_guard<std::mutex> lck(pendingNameResolutionMtx);
+    this->pendingNameResolutions.insert(std::make_pair(name, session));
+}
+
+std::set<std::shared_ptr<restbed::Session>>
+RestConfigurationManager::getPendingNameResolutions(const  std::string& name){
+    std::lock_guard<std::mutex> lck(pendingNameResolutionMtx);
+
+    auto result = this->pendingNameResolutions.equal_range(name);
+    std::set<std::shared_ptr<restbed::Session>> resultSet;
+    for (auto it = result.first; it != result.second; ++it){
+        resultSet.insert(it->second);
+    }
+    this->pendingNameResolutions.erase(result.first, result.second);
+
+    return resultSet;
+}
+
+void
+RestConfigurationManager::lookupName(const std::shared_ptr<restbed::Session> session)
+{
+    const auto request = session->get_request();
+    const std::string name = request->get_path_parameter("name");
+
+    RING_WARN("[%s] GET /lookupName/%s", session->get_origin().c_str(), name.c_str());
+
+    addPendingNameResolutions(name, session);
+    DRing::lookupName("", "", name);
 }
 
 void
