@@ -40,6 +40,7 @@ constexpr const char* const QUERY_NAME {"/name/"};
 constexpr const char* const QUERY_ADDR {"/addr/"};
 constexpr const char* const HTTPS_PROTO {"https://"};
 constexpr const char* const CACHE_DIRECTORY {"namecache"};
+const std::string  HEX_PREFIX = "0x";
 
 /** Parser for URIs.         ( protocol        )    ( username         ) ( hostname                            ) */
 const std::regex URI_VALIDATOR {"^([a-zA-Z]+:(?://)?)?(?:([a-z0-9-_]{1,64})@)?([a-zA-Z0-9\\-._~%!$&'()*+,;=:\\[\\]]+)"};
@@ -66,7 +67,7 @@ NameDirectory::lookupUri(const std::string& uri, const std::string& default_serv
         }
     }
     RING_ERR("Can't parse URI: %s", uri.c_str());
-    cb("", Response::invalidName);
+    cb("", Response::invalidResponse);
 }
 
 NameDirectory::NameDirectory(const std::string& s)
@@ -168,14 +169,18 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
     }
 }
 
-static const std::string HEX_PREFIX {"0x"};
+bool
+NameDirectory::verify(const std::string& name, const dht::crypto::PublicKey& pk, const std::string& signature)
+{
+    return pk.checkSignature(std::vector<uint8_t>(name.begin(), name.end()), base64::decode(signature));
+}
 
 void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
 {
     try {
         std::string name {n};
         if (not validateName(name)) {
-            cb(name, Response::invalidName);
+            cb(name, Response::invalidResponse);
             return;
         }
         toLower(name);
@@ -217,20 +222,37 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                     return;
                 }
                 auto addr = json["addr"].asString();
+                auto publickey = json["publickey"].asString();
+                auto signature = json["signature"].asString();
+
                 if (!addr.compare(0, HEX_PREFIX.size(), HEX_PREFIX))
                     addr = addr.substr(HEX_PREFIX.size());
-                if (not addr.empty()) {
-                    RING_DBG("Found address for %s: %s", name.c_str(), addr.c_str());
-                    {
-                        std::lock_guard<std::mutex> l(lock_);
-                        addrCache_.emplace(name, addr);
-                        nameCache_.emplace(addr, name);
-                    }
-                    cb(addr, Response::found);
-                    saveCache();
-                } else {
+                if (addr.empty()) {
                     cb("", Response::notFound);
+                    return;
                 }
+
+                if (not publickey.empty() and not signature.empty()) {
+                    try {
+                        auto pk = dht::crypto::PublicKey(base64::decode(publickey));
+                        if(pk.getId().toString() != addr or not verify(name, pk, signature)) {
+                            cb("", Response::invalidResponse);
+                            return;
+                        }
+                    } catch (const std::exception& e) {
+                        cb("", Response::invalidResponse);
+                        return;
+                    }
+                }
+
+                RING_DBG("Found address for %s: %s", name.c_str(), addr.c_str());
+                {
+                    std::lock_guard<std::mutex> l(lock_);
+                    addrCache_.emplace(name, addr);
+                    nameCache_.emplace(addr, name);
+                }
+                cb(addr, Response::found);
+                saveCache();
             } else if (code >= 400 && code < 500) {
                 cb("", Response::notFound);
             } else {
