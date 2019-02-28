@@ -84,9 +84,7 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
     } else {
         bool is_keyframe = forceKeyFrame_ > 0
             or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
-
-        if (is_keyframe)
-            --forceKeyFrame_;
+        forceKeyFrame_ = 0;
 
 #ifdef RING_ACCEL
         auto framePtr = transferToMainMemory(input_frame, AV_PIX_FMT_NV12);
