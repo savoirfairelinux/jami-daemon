@@ -87,9 +87,7 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
     } else {
         bool is_keyframe = forceKeyFrame_ > 0
             or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
-
-        if (is_keyframe)
-            --forceKeyFrame_;
+        forceKeyFrame_ = 0;
 
         AVFrameSideData* side_data = av_frame_get_side_data(input_frame.pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
         if (side_data) {
