@@ -64,7 +64,7 @@ public:
     void setChangeOrientationCallback(std::function<void(int)> cb);
 
 private:
-    static constexpr int KEYFRAMES_AT_START {4}; // Number of keyframes to enforce at stream startup
+    static constexpr int KEYFRAMES_AT_START {1}; // Number of keyframes to enforce at stream startup
     static constexpr unsigned KEY_FRAME_PERIOD {0}; // seconds before forcing a keyframe
 
     NON_COPYABLE(VideoSender);
