@@ -238,6 +238,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         virtual bool offhold() = 0;
 
+        virtual void sendKeyframe() = 0;
+
         /**
          * Peer has hung up a call
          */

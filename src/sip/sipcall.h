@@ -103,6 +103,7 @@ public: // overridden
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     void restartMediaSender() override;
     bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
+    void sendKeyframe() override;
     std::map<std::string, std::string> getDetails() const override;
 
     virtual bool toggleRecording() override; // SIPCall needs to spread recorder to rtp sessions, so override
@@ -158,6 +159,8 @@ public: // SIP related
     }
 
     void sendSIPInfo(const char *const body, const char *const subtype);
+
+    void requestKeyframe();
 
     SIPAccountBase& getSIPAccount() const;
 
@@ -248,6 +251,19 @@ private:
     std::vector<IceCandidate> getAllRemoteCandidates();
 
     void merge(Call& call) override; // not public - only called by Call
+
+    inline std::shared_ptr<const SIPCall> shared() const {
+        return std::static_pointer_cast<const SIPCall>(shared_from_this());
+    }
+    inline std::shared_ptr<SIPCall> shared() {
+        return std::static_pointer_cast<SIPCall>(shared_from_this());
+    }
+    inline std::weak_ptr<const SIPCall> weak() const {
+        return std::weak_ptr<const SIPCall>(shared());
+    }
+    inline std::weak_ptr<SIPCall> weak() {
+        return std::weak_ptr<SIPCall>(shared());
+    }
 
     std::unique_ptr<AudioRtpSession> avformatrtp_;
 
