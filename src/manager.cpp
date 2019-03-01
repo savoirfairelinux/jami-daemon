@@ -920,18 +920,6 @@ Manager::outgoingCall(const std::string& account_id,
 
     stopTone();
 
-    // in any cases we have to detach from current communication
-    if (hasCurrentCall()) {
-        JAMI_DBG("Has current call (%s) put it onhold", current_call_id.c_str());
-
-        bool isConf = isConference(current_call_id);
-        // if this is not a conference and this and is not a conference participant
-        if (not isConf and not isConferenceParticipant(current_call_id))
-            onHoldCall(current_call_id);
-        else if (isConf and not isConferenceParticipant(call_id))
-            detachLocalParticipant();
-    }
-
     pimpl_->switchCall(call);
     call->setConfId(conf_id);
 
@@ -955,22 +943,6 @@ Manager::answerCall(const std::string& call_id)
 
     // store the current call id
     const auto& current_call_id(getCurrentCallId());
-
-    // in any cases we have to detach from current communication
-    if (hasCurrentCall() and call_id != current_call_id) {
-
-        JAMI_DBG("Currently conversing with %s", current_call_id.c_str());
-
-        bool isConf = isConference(current_call_id);
-        if (not isConf and not isConferenceParticipant(current_call_id)) {
-            JAMI_DBG("Answer call: Put the current call (%s) on hold", current_call_id.c_str());
-            onHoldCall(current_call_id);
-        } else if (isConf and not isConferenceParticipant(call_id)) {
-            // if we are talking to a conference and we are answering an incoming call
-            JAMI_DBG("Detach main participant from conference");
-            detachLocalParticipant();
-        }
-    }
 
     try {
         call->answer();
@@ -1127,19 +1099,6 @@ Manager::offHoldCall(const std::string& callId)
     bool result = true;
 
     stopTone();
-
-    const auto& currentCallId = getCurrentCallId();
-    // Place current call on hold if it isn't
-    if (hasCurrentCall() and currentCallId != callId) {
-        bool isConf = isConference(currentCallId);
-        if (not isConf and not isConferenceParticipant(currentCallId)) {
-            JAMI_DBG("Has current call (%s), put on hold", currentCallId.c_str());
-            onHoldCall(currentCallId);
-        } else if (isConf and not isConferenceParticipant(callId)) {
-            holdConference(currentCallId);
-            detachLocalParticipant();
-        }
-    }
 
     std::shared_ptr<Call> call = getCallFromCallID(callId);
     if (!call)
@@ -1395,14 +1354,6 @@ Manager::addParticipant(const std::string& callId,
     // store the current call id (it will change in offHoldCall or in answerCall)
     auto current_call_id = getCurrentCallId();
 
-    // detach from prior communication and switch to this conference
-    if (current_call_id != callId) {
-        if (isConference(current_call_id))
-            detachLocalParticipant();
-        else
-            onHoldCall(current_call_id);
-    }
-
     pimpl_->bindCallToConference(*call, *iter->second);
 
     // TODO: remove this ugly hack => There should be different calls when double clicking
@@ -1420,14 +1371,6 @@ Manager::addParticipant(const std::string& callId,
 bool
 Manager::addMainParticipant(const std::string& conference_id)
 {
-    if (hasCurrentCall()) {
-        std::string current_call_id(getCurrentCallId());
-
-        if (isConference(current_call_id))
-            detachLocalParticipant();
-        else
-            onHoldCall(current_call_id);
-    }
 
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
@@ -1489,15 +1432,6 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
     if (!call2) {
         JAMI_ERR("Could not find call %s", callId2.c_str());
         return false;
-    }
-
-    // detach/hold current active call if it's not a participant
-    auto current_call_id = getCurrentCallId();
-    if ((current_call_id != callId1) and (current_call_id != callId2)) {
-        if (isConference(current_call_id))
-            detachLocalParticipant();
-        else
-            onHoldCall(current_call_id); // currently in a call
     }
 
     auto conf = std::make_shared<Conference>();
