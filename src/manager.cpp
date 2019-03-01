@@ -906,10 +906,10 @@ Manager::outgoingCall(const std::string& account_id,
 
         bool isConf = isConference(current_call_id);
         // if this is not a conference and this and is not a conference participant
-        if (not isConf and not isConferenceParticipant(current_call_id))
+        /*if (not isConf and not isConferenceParticipant(current_call_id))
             onHoldCall(current_call_id);
         else if (isConf and not isConferenceParticipant(call_id))
-            detachLocalParticipant();
+            detachLocalParticipant();*/
     }
 
     pimpl_->switchCall(call);
