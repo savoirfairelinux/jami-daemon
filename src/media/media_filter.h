@@ -97,7 +97,7 @@ class MediaFilter {
          *
          * NOTE Frame reference belongs to the caller
          */
-        AVFrame* readOutput();
+        std::unique_ptr<MediaFrame> readOutput();
 
         /**
          * Flush filter to indicate EOF.

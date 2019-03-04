@@ -578,7 +578,9 @@ VideoDevice::VideoDevice(const std::string& path, const std::vector<std::map<std
 DeviceParams
 VideoDevice::getDeviceParams() const
 {
-    return deviceImpl_->getDeviceParams();
+    auto params = deviceImpl_->getDeviceParams();
+    params.orientation = orientation_;
+    return params;
 }
 
 void

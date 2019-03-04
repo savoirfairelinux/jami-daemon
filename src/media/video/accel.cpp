@@ -226,6 +226,8 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
     }
 
     output->pts = input->pts;
+    if (AVFrameSideData* side_data = av_frame_get_side_data(input, AV_FRAME_DATA_DISPLAYMATRIX))
+        av_frame_new_side_data_from_buf(output, AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(side_data->buf));
     return out;
 }
 

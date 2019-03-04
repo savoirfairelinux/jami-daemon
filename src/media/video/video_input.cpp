@@ -44,6 +44,9 @@
 #else
 #include <unistd.h>
 #endif
+extern "C" {
+#include <libavutil/display.h>
+}
 
 namespace ring { namespace video {
 
@@ -70,6 +73,9 @@ VideoInput::~VideoInput()
     frame_cv_.notify_one();
 #endif
     loop_.join();
+
+    if (auto localFrameDataBuffer = frameDataBuffer_.exchange(nullptr))
+        av_buffer_unref(&localFrameDataBuffer);
 }
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
@@ -111,10 +117,18 @@ void VideoInput::process()
         return;
     }
 
+    if (decOpts_.orientation != rotation_) {
+        setRotation(decOpts_.orientation);
+        rotation_ = decOpts_.orientation;
+    }
+
     for (auto& buffer : buffers_) {
         if (buffer.status == BUFFER_FULL && buffer.index == publish_index_) {
             auto& frame = getNewFrame();
             AVPixelFormat format = getPixelFormat();
+
+            if (auto localFDB = frameDataBuffer_.load())
+                av_frame_new_side_data_from_buf(frame.pointer(), AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(localFDB));
 
             buffer.status = BUFFER_PUBLISHED;
             frame.setFromMemory((uint8_t*)buffer.data, format, decOpts_.width, decOpts_.height,
@@ -130,6 +144,18 @@ void VideoInput::process()
             break;
         }
     }
+}
+
+void
+VideoInput::setRotation(int angle)
+{
+    auto localFrameDataBuffer = (angle == 0) ? nullptr : av_buffer_alloc(sizeof(int32_t) * 9);
+    if (localFrameDataBuffer)
+        av_display_rotation_set(reinterpret_cast<int32_t*>(localFrameDataBuffer->data), angle);
+
+    localFrameDataBuffer = frameDataBuffer_.exchange(localFrameDataBuffer);
+
+    av_buffer_unref(&localFrameDataBuffer);
 }
 
 void VideoInput::cleanup()
@@ -148,6 +174,8 @@ void VideoInput::cleanup()
             RING_ERR("Failed to free buffer [%p]", buffer.data);
         }
     }
+
+    setRotation(0);
 }
 #else
 
