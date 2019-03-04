@@ -189,28 +189,36 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
     return fail(ss.str(), AVERROR(EINVAL));
 }
 
-AVFrame*
+std::unique_ptr<MediaFrame>
 MediaFilter::readOutput()
 {
     if (!initialized_) {
         fail("Not properly initialized", -1);
-        return nullptr;
+        return {};
     }
 
-    int ret = 0;
-    AVFrame* frame = av_frame_alloc();
-    ret = av_buffersink_get_frame_flags(output_, frame, 0);
-    if (ret >= 0) {
+    std::unique_ptr<MediaFrame> frame;
+    switch (av_buffersink_get_type(output_)) {
+    case AVMEDIA_TYPE_VIDEO:
+        frame = std::make_unique<VideoFrame>();
+        break;
+    case AVMEDIA_TYPE_AUDIO:
+        frame = std::make_unique<AudioFrame>();
+        break;
+    default:
+        return {};
+    }
+    auto err = av_buffersink_get_frame(output_, frame->pointer());
+    if (err >= 0) {
         return frame;
-    } else if (ret == AVERROR(EAGAIN)) {
+    } else if (err == AVERROR(EAGAIN)) {
         // no data available right now, try again
-    } else if (ret == AVERROR_EOF) {
+    } else if (err == AVERROR_EOF) {
         RING_WARN() << "Filters have reached EOF, no more frames will be output";
     } else {
-        fail("Error occurred while pulling from filter graph", ret);
+        fail("Error occurred while pulling from filter graph", err);
     }
-    av_frame_free(&frame);
-    return nullptr;
+    return {};
 }
 
 void

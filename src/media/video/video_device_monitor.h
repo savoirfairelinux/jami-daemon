@@ -56,6 +56,7 @@ class VideoDeviceMonitor : public Serializable
         std::string getDefaultDevice() const;
         std::string getMRLForDefaultDevice() const;
         void setDefaultDevice(const std::string& name);
+        void setDeviceOrientation(const std::string& name, int angle);
 
         void addDevice(const std::string &node, const std::vector<std::map<std::string, std::string>>* devInfo=nullptr);
         void removeDevice(const std::string &node);
