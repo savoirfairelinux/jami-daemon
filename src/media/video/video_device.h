@@ -163,6 +163,10 @@ public:
         setDeviceParams(params);
     }
 
+    void setOrientation(int orientation) {
+      orientation_ = orientation;
+    }
+
     /**
      * Returns the parameters needed for actual use of the device
      */
@@ -219,6 +223,8 @@ private:
      * The device node, e.g. "/dev/video0".
      */
     std::string node_ {};
+
+    int orientation_ {0};
 
     /*
      * Device specific implementation.

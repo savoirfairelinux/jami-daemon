@@ -35,6 +35,7 @@
 extern "C" {
 #include <libavutil/pixdesc.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/display.h>
 #include <libavcodec/avcodec.h>
 }
 
@@ -50,6 +51,7 @@ public:
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
     virtual std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath) {}
     virtual void stopLocalRecorder(const std::string& filepath) {}
+    virtual void setDeviceOrientation(const std::string&, int angle) {}
 };
 %}
 
@@ -61,7 +63,24 @@ std::map<ANativeWindow*, std::unique_ptr<DRing::FrameBuffer>> windows {};
 std::mutex windows_mutex;
 
 std::vector<uint8_t> workspace;
+int rotAngle = 0;
+AVBufferRef* rotMatrix = nullptr;
+
 extern JavaVM *gJavaVM;
+
+void setRotation(int angle)
+{
+    if (angle == rotAngle)
+        return;
+    AVBufferRef* localFrameDataBuffer = angle == 0 ? nullptr : av_buffer_alloc(sizeof(int32_t) * 9);
+    if (localFrameDataBuffer)
+        av_display_rotation_set(reinterpret_cast<int32_t*>(localFrameDataBuffer->data), angle);
+
+    std::swap(rotMatrix, localFrameDataBuffer);
+    rotAngle = angle;
+
+    av_buffer_unref(&localFrameDataBuffer);
+}
 
 void rotateNV21(uint8_t* yinput, uint8_t* uvinput, unsigned ystride, unsigned uvstride, unsigned width, unsigned height, int rotation, uint8_t* youtput, uint8_t* uvoutput)
 {
@@ -203,22 +222,10 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIE
             // False YUV422, actually NV12 or NV21
             auto uvdata = std::min(udata, vdata);
             avframe->format = uvdata == udata ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NV21;
-            if (rotation == 0) {
-                avframe->data[0] = ydata;
-                avframe->linesize[0] = ystride;
-                avframe->data[1] = uvdata;
-                avframe->linesize[1] = uvstride;
-            } else {
-                directPointer = false;
-                bool swap = rotation != 0 && rotation != 180;
-                auto ow = avframe->width;
-                auto oh = avframe->height;
-                avframe->width = swap ? oh : ow;
-                avframe->height = swap ? ow : oh;
-                av_frame_get_buffer(avframe, 1);
-                rotateNV21(ydata, uvdata, ystride, uvstride, ow, oh, rotation, avframe->data[0], avframe->data[1]);
-                jenv->CallVoidMethod(image, jenv->GetMethodID(imageClass, "close", "()V"));
-            }
+            avframe->data[0] = ydata;
+            avframe->linesize[0] = ystride;
+            avframe->data[1] = uvdata;
+            avframe->linesize[1] = uvstride;
         }
     } else {
         for (int i=0; i<planeCount; i++) {
@@ -231,6 +238,10 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIE
             avframe->linesize[i] = stride;
         }
     }
+
+    setRotation(rotation);
+    if (rotMatrix)
+        av_frame_new_side_data_from_buf(avframe, AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(rotMatrix));
 
     if (directPointer) {
         image = jenv->NewGlobalRef(image);
@@ -390,6 +401,7 @@ void applySettings(const std::string& name, const std::map<std::string, std::str
 
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
+void setDeviceOrientation(const std::string& name, int angle);
 uint8_t* obtainFrame(int length);
 void releaseFrame(uint8_t* frame);
 void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
