@@ -815,7 +815,6 @@
     <ClCompile Include="..\src\security\memory.cpp" />
     <ClCompile Include="..\src\security\tlsvalidator.cpp" />
     <ClCompile Include="..\src\security\tls_session.cpp" />
-    <ClCompile Include="..\src\sip\pattern.cpp" />
     <ClCompile Include="..\src\sip\pres_sub_client.cpp" />
     <ClCompile Include="..\src\sip\pres_sub_server.cpp" />
     <ClCompile Include="..\src\sip\sdes_negotiator.cpp" />
@@ -978,7 +977,6 @@
     <ClInclude Include="..\src\security\memory.h" />
     <ClInclude Include="..\src\security\tlsvalidator.h" />
     <ClInclude Include="..\src\security\tls_session.h" />
-    <ClInclude Include="..\src\sip\pattern.h" />
     <ClInclude Include="..\src\sip\pres_sub_client.h" />
     <ClInclude Include="..\src\sip\pres_sub_server.h" />
     <ClInclude Include="..\src\sip\sdes_negotiator.h" />
