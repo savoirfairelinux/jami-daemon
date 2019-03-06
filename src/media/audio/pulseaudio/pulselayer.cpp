@@ -39,27 +39,14 @@
 #include <fstream>
 #include <cstring>
 
-// Std-C++11 regex feature implemented only since GCC 4.9
-// Using pcre library as replacement
-//#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ < 9
-#define USE_PCRE_REGEX
-#include <pcre.h>
-//#else
-//#include <regex>
-//#endif
+#include <regex>
 
 // uncomment to log pulseaudio sink and sources
 //#define PA_LOG_SINK_SOURCES
 
 namespace ring {
 
-#ifdef USE_PCRE_REGEX
-static const char* ec_pcre_error;
-static int ec_pcre_erroffset;
-static const std::unique_ptr<pcre, decltype(pcre_free)> PA_EC_SUFFIX {pcre_compile("\\.echo-cancel(?:\\..+)?$", 0, &ec_pcre_error, &ec_pcre_erroffset, nullptr), pcre_free};
-#else
 static const std::regex PA_EC_SUFFIX {"\\.echo-cancel(?:\\..+)?$"};
-#endif
 
 PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop)
 {
@@ -497,22 +484,9 @@ void PulseLayer::ringtoneToSpeaker()
 
 
 std::string stripEchoSufix(std::string deviceName) {
-#ifdef USE_PCRE_REGEX
-    if (PA_EC_SUFFIX) {
-        static const constexpr int resSize = 3;
-        int resPos[resSize] {};
-        int rc = pcre_exec(PA_EC_SUFFIX.get(), nullptr, deviceName.c_str(), deviceName.size(), 0, 0, resPos, resSize);
-        if (rc > 0) {
-            int start = resPos[0];
-            int length = resPos[1];
-            deviceName.replace(start, length, "");
-        }
-    } else
-        RING_ERR("PCRE compilation failed at offset %d: %s\n", ec_pcre_erroffset, ec_pcre_error);
-    return deviceName;
-#else
+
     return std::regex_replace(deviceName, PA_EC_SUFFIX, "");
-#endif
+
 }
 
 void
