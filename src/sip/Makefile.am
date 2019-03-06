@@ -28,9 +28,7 @@ libsiplink_la_SOURCES+=sippresence.cpp \
 
 if BUILD_SDES
 libsiplink_la_SOURCES+= sdes_negotiator.cpp \
-            sdes_negotiator.h \
-            pattern.cpp \
-            pattern.h
+            sdes_negotiator.h
 
 libsiplink_la_CXXFLAGS += @PCRE_CFLAGS@
 endif

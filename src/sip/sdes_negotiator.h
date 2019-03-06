@@ -31,6 +31,17 @@
 namespace ring {
 
 /**
+ * Exception object that is thrown when
+ * an unmatch occurred while mathing a
+ * pattern to an expression.
+ */
+class MatchError : public std::invalid_argument {
+    public:
+        MatchError(const std::string& error) :
+            std::invalid_argument(error) {}
+};
+
+/**
  * General exception object that is thrown when
  * an error occurred with a regular expression
  * operation.
