@@ -4,6 +4,7 @@
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Mingrui Zhang <mingrui.zhang@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -12,65 +13,59 @@
  *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  *  GNU General Public License for more details.
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
- */
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+*/
 
 #include "sdes_negotiator.h"
-#include "pattern.h"
+#include "logger.h"
 
-#include <memory>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
+#include <regex>
 
 #include <cstdio>
 
 namespace ring {
 
-SdesNegotiator::SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites) :
-    localCapabilities_(localCapabilites)
+SdesNegotiator::SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites) : 
+localCapabilities_(localCapabilites)
 {}
 
 std::vector<CryptoAttribute>
 SdesNegotiator::parse(const std::vector<std::string>& attributes)
 {
+
     // The patterns below try to follow
     // the ABNF grammar rules described in
     // RFC4568 section 9.2 with the general
     // syntax :
     //a=crypto:tag 1*WSP crypto-suite 1*WSP key-params *(1*WSP session-param)
 
-    std::unique_ptr<Pattern> generalSyntaxPattern, tagPattern, cryptoSuitePattern,
-        keyParamsPattern;
+    // used to match white space (which are used as separator)
 
-    try {
-        // used to match white space (which are used as separator)
-        generalSyntaxPattern.reset(new Pattern("[\x20\x09]+", true));
+    static const std::regex generalSyntaxPattern { "[\x20\x09]+" };
 
-        tagPattern.reset(new Pattern("^(?P<tag>[0-9]{1,9})", false));
+    static const std::regex tagPattern { "^([0-9]{1,9})" };
 
-        cryptoSuitePattern.reset(new Pattern(
-            "(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
-            "AES_CM_128_HMAC_SHA1_32|" \
-            "F8_128_HMAC_SHA1_80|" \
-            "[A-Za-z0-9_]+)", false)); // srtp-crypto-suite-ext
+    static const std::regex cryptoSuitePattern {
+    "(AES_CM_128_HMAC_SHA1_80|" \
+    "AES_CM_128_HMAC_SHA1_32|" \
+    "F8_128_HMAC_SHA1_80|" \
+    "[A-Za-z0-9_]+)" }; // srtp-crypto-suite-ext
 
-        keyParamsPattern.reset(new Pattern(
-            "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
-            "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)"     \
-            "(\\|2\\^(?P<lifetime>[0-9]+)\\|"         \
-            "(?P<mkiValue>[0-9]+)\\:"             \
-            "(?P<mkiLength>[0-9]{1,3})\\;?)?", true));
-
-    } catch (const CompileError& exception) {
-        throw ParseError("A compile exception occurred on a pattern.");
-    }
+    static const std::regex keyParamsPattern { 
+    "(inline|[A-Za-z0-9_]+)\\:" \
+    "([A-Za-z0-9\x2B\x2F\x3D]+)" \
+    "((\\|2\\^)([0-9]+)\\|" \
+    "([0-9]+)\\:" \
+    "([0-9]{1,3})\\;?)?" };
 
     // Take each line from the vector
     // and parse its content
@@ -79,81 +74,96 @@ SdesNegotiator::parse(const std::vector<std::string>& attributes)
 
     for (const auto &item : attributes) {
 
-        // Split the line into its component
-        // that we will analyze further down.
+        // Split the line into its component that we will analyze further down. 
+        // Additional white space is added to better split the content
+        // Result is stored in the sdsLine
+
         std::vector<std::string> sdesLine;
+        std::smatch sm_generalSyntaxPattern;
+        bool is_matched { false };
 
-        generalSyntaxPattern->updateSubject(item);
+        std::sregex_token_iterator iter(item.begin(), item.end(), generalSyntaxPattern, -1), end;
+        for ( ; iter != end; ++iter)
+            sdesLine.push_back(*iter);
 
-        try {
-            sdesLine = generalSyntaxPattern->split();
-
-            if (sdesLine.size() < 3)
-                throw ParseError("Missing components in SDES line");
-        } catch (const MatchError& exception) {
-            throw ParseError("Error while analyzing the SDES line.");
-        }
+        if (sdesLine.size() < 3) { throw ParseError("Missing components in SDES line"); }
 
         // Check if the attribute starts with a=crypto
         // and get the tag for this line
-        tagPattern->updateSubject(sdesLine.at(0));
 
         std::string tag;
+        std::smatch sm_tagPattern;
 
-        if (tagPattern->matches()) {
-            try {
-                tag = tagPattern->group("tag");
-            } catch (const MatchError& exception) {
-                throw ParseError("Error while parsing the tag field");
-            }
-        } else
-            return cryptoAttributeVector;
+        if ( std::regex_search(sdesLine.at(0), sm_tagPattern, tagPattern) ) {
+
+            tag = sm_tagPattern[1];
+            is_matched = true;
+
+        }
+
+        if ( !is_matched ) { throw ParseError("No Matching Found in Tag Attribute"); }
+        is_matched = false;
+
 
         // Check if the crypto suite is valid and retrieve
         // its value.
-        cryptoSuitePattern->updateSubject(sdesLine.at(1));
 
         std::string cryptoSuite;
+        std::smatch sm_cryptoSuitePattern;
 
-        if (cryptoSuitePattern->matches()) {
-            try {
-                cryptoSuite = cryptoSuitePattern->group("cryptoSuite");
-            } catch (const MatchError& exception) {
-                throw ParseError("Error while parsing the crypto-suite field");
-            }
-        } else
-            return cryptoAttributeVector;
+        if ( std::regex_search(sdesLine.at(1), sm_cryptoSuitePattern, cryptoSuitePattern) ) {
+
+            cryptoSuite = sm_cryptoSuitePattern[1];
+            is_matched = true;
+
+        }
+
+        if ( !is_matched ) { throw ParseError("No Matching Found in CryptoSuite Attribute"); }
+        is_matched = false;
+
+
+        RING_WARN("CryptoSuite info: %s", cryptoSuite.c_str());
 
         // Parse one or more key-params field.
-        keyParamsPattern->updateSubject(sdesLine.at(2));
+        // Group number is used to locate different paras
 
         std::string srtpKeyInfo;
         std::string srtpKeyMethod;
         std::string lifetime;
         std::string mkiLength;
         std::string mkiValue;
+        std::smatch sm_keyParamsPattern;
 
-        try {
-            while (keyParamsPattern->matches()) {
-                srtpKeyMethod = keyParamsPattern->group("srtpKeyMethod");
-                srtpKeyInfo = keyParamsPattern->group("srtpKeyInfo");
-                lifetime = keyParamsPattern->group("lifetime");
-                mkiValue = keyParamsPattern->group("mkiValue");
-                mkiLength = keyParamsPattern->group("mkiLength");
-            }
-        } catch (const MatchError& exception) {
-            throw ParseError("Error while parsing the key-params field");
+        if( std::regex_search(sdesLine.at(2), sm_keyParamsPattern,keyParamsPattern) ) {
+
+            srtpKeyMethod = sm_keyParamsPattern[1];
+            srtpKeyInfo = sm_keyParamsPattern[2];
+            lifetime = sm_keyParamsPattern[5];
+            mkiValue = sm_keyParamsPattern[6];
+            mkiLength = sm_keyParamsPattern[7];
+            is_matched = true;
+
         }
+
+        if ( !is_matched ) { throw ParseError("No Matching Found in Key-params Attribute"); }
+        is_matched = false;
+
+        RING_WARN("KeyInfo: %s, method: %s, lifetime: %s, mkilength: %s, mkivalue: %s",
+            srtpKeyInfo.c_str(),
+            srtpKeyMethod.c_str(),
+            lifetime.c_str(),
+            mkiLength.c_str(),
+            mkiValue.c_str());
 
         // Add the new CryptoAttribute to the vector
         cryptoAttributeVector.emplace_back(
-            tag,
-            cryptoSuite,
-            srtpKeyMethod,
-            srtpKeyInfo,
-            lifetime,
-            mkiValue,
-            mkiLength
+            std::move(tag),
+            std::move(cryptoSuite),
+            std::move(srtpKeyMethod),
+            std::move(srtpKeyInfo),
+            std::move(lifetime),
+            std::move(mkiValue),
+            std::move(mkiLength)
         );
     }
     return cryptoAttributeVector;
@@ -167,13 +177,13 @@ SdesNegotiator::negotiate(const std::vector<std::string>& attributes) const
         for (const auto& iter_offer : cryptoAttributeVector) {
             for (const auto& iter_local : localCapabilities_) {
                 if (iter_offer.getCryptoSuite() == iter_local.name)
-                    return iter_offer;
+                return iter_offer;
             }
         }
     }
-    catch (const ParseError& exception) {}
-    catch (const MatchError& exception) {}
+    catch (const ParseError& exception) { RING_ERR("ParseError: %s", exception.what()); }
     return {};
 }
 
 } // namespace ring
+
