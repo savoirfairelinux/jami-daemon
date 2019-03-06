@@ -328,8 +328,8 @@ void Sdp::setLocalMediaAudioCapabilities(const std::vector<std::shared_ptr<Accou
 void
 Sdp::printSession(const pjmedia_sdp_session *session, const char* header)
 {
-    sip_utils::register_thread();
     static constexpr size_t BUF_SZ = 4095;
+    sip_utils::register_thread();
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> tmpPool_(
         pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory, "printSdp", BUF_SZ, BUF_SZ, nullptr),
         pj_pool_release
