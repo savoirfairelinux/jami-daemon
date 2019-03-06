@@ -39,6 +39,7 @@ Pattern::Pattern(const std::string& pattern, bool matchGlobally) :
 
     re_ = pcre_compile(pattern_.c_str(), 0, &error, &offset, NULL);
 
+    /* Compilation failed: print the error message and exit */
     if (re_ == NULL) {
         std::string offsetStr;
         std::stringstream ss;
@@ -106,6 +107,13 @@ size_t Pattern::end() const
 bool Pattern::matches()
 {
     // Try to find a match for this pattern
+
+    /*************************************************************************
+    * If the compilation succeeded, we call PCRE again, in order to do a     *
+    * pattern match against the subject string. This does just ONE match. If *
+    * further matching is needed, it will be done below.                     *
+    *************************************************************************/
+
     int rc = pcre_exec(re_, NULL, subject_.substr(offset_[1]).c_str(),
                        subject_.length() - offset_[1], 0, 0, &ovector_[0],
                        ovector_.size());

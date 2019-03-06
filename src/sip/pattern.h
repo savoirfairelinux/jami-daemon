@@ -20,11 +20,13 @@
 #ifndef __PATTERN_H__
 #define __PATTERN_H__
 
+#include "noncopyable.h"
+
+#include <pcre.h>
+
 #include <stdexcept>
 #include <string>
 #include <vector>
-#include <pcre.h>
-#include "noncopyable.h"
 
 namespace ring {
 
