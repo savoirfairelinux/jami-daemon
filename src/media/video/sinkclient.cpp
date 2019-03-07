@@ -39,6 +39,7 @@
 #include "video_scaler.h"
 #include "smartools.h"
 #include "media_filter.h"
+#include "filter_transpose.h"
 
 #ifdef RING_ACCEL
 #include "accel.h"
@@ -324,6 +325,7 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 #endif
 {}
 
+/*
 void
 SinkClient::setRotation(int rotation)
 {
@@ -373,7 +375,7 @@ SinkClient::setRotation(int rotation)
         }
     }
 }
-
+*/
 void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
@@ -414,7 +416,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             auto matrix_rotation = reinterpret_cast<int32_t*>(side_data->data);
             auto angle = av_display_rotation_get(matrix_rotation);
             if (!std::isnan(angle))
-                setRotation(angle);
+                filter_ = getTransposeFilter(angle, FILTER_INPUT_NAME, frame->width(), frame->height(), AV_PIX_FMT_RGB32, false);
             if (filter_) {
                 filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
                 frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(filter_->readOutput()));
