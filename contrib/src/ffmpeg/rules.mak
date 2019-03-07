@@ -131,7 +131,8 @@ FFMPEGCONF += \
 	--enable-filter=format \
 	--enable-filter=aformat \
 	--enable-filter=fps \
-	--enable-filter=transpose
+	--enable-filter=transpose \
+	--enable-filter=pad
 
 #platform specific options
 
