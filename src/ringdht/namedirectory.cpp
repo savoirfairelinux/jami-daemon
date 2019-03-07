@@ -118,8 +118,8 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 
         RING_DBG("Address lookup for %s: %s", addr.c_str(), uri.to_string().c_str());
 
-        auto ret = restbed::Http::async(req, [this,cb,addr](const std::shared_ptr<restbed::Request>&,
-                                                 const std::shared_ptr<restbed::Response>& reply) {
+        ThreadPool::instance().run([this,req,cb,addr](){
+            auto reply = restbed::Http::sync(req);
             auto code = reply->get_status_code();
             if (code == 200) {
                 size_t length = getContentLength(*reply);
@@ -157,10 +157,7 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
             } else {
                 cb("", Response::error);
             }
-        }).share();
-
-        // avoid blocking on future destruction
-        ThreadPool::instance().run([ret](){ ret.get(); });
+        });
     } catch (const std::exception& e) {
         RING_ERR("Error when performing address lookup: %s", e.what());
         cb("", Response::error);
@@ -192,8 +189,8 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
 
         RING_DBG("Name lookup for %s: %s", name.c_str(), uri.to_string().c_str());
 
-        auto ret = restbed::Http::async(request, [this,cb,name](const std::shared_ptr<restbed::Request>&,
-                                                     const std::shared_ptr<restbed::Response>& reply) {
+        ThreadPool::instance().run([this,request,cb,name](){
+            auto reply = restbed::Http::sync(request);
             auto code = reply->get_status_code();
             if (code != 200)
                 RING_DBG("Name lookup for %s: got reply code %d", name.c_str(), code);
@@ -235,10 +232,7 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
             } else {
                 cb("", Response::error);
             }
-        }).share();
-
-        // avoid blocking on future destruction
-        ThreadPool::instance().run([ret](){ ret.get(); });
+        });
     } catch (const std::exception& e) {
         RING_ERR("Error when performing name lookup: %s", e.what());
         cb("", Response::error);
