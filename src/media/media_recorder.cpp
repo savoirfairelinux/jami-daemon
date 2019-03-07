@@ -26,6 +26,7 @@
 #include "media_recorder.h"
 #include "system_codec_container.h"
 #include "thread_pool.h"
+#include "video/filter_transpose.h"
 #ifdef RING_ACCEL
 #include "video/accel.h"
 #endif
@@ -36,7 +37,13 @@
 #include <sys/types.h>
 #include <ctime>
 
+extern "C" {
+#include <libavutil/display.h>
+}
+
 namespace ring {
+
+const constexpr char ROTATION_FILTER_INPUT_NAME[] = "in";
 
 // Replaces every occurrence of @from with @to in @str
 static std::string
@@ -183,8 +190,22 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
         clone->copyFrom(*frame);
     }
     clone->pointer()->pts -= ms.firstTimestamp;
-    if (ms.isVideo)
+    if (ms.isVideo) {
+        auto framePtr = static_cast<VideoFrame*>(clone.get());
+        AVFrameSideData* sideData = av_frame_get_side_data(framePtr->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+        if (sideData) {
+            auto inputName = "in";
+            auto matrixRotation = reinterpret_cast<int32_t*>(sideData->data);
+            auto angle = av_display_rotation_get(matrixRotation);
+            if (!std::isnan(angle))
+                videoRotationFilter_ = ring::video::getTransposeFilter(angle, inputName, framePtr->width(), framePtr->height(), framePtr->format(), true);
+            if (videoRotationFilter_) {
+                videoRotationFilter_->feedInput(framePtr->pointer(), ROTATION_FILTER_INPUT_NAME);
+                clone = videoFilter_->readOutput();
+            }
+        }
         videoFilter_->feedInput(clone->pointer(), name);
+    }
     else
         audioFilter_->feedInput(clone->pointer(), name);
 }
