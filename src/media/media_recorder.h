@@ -144,6 +144,7 @@ private:
     std::unique_ptr<MediaEncoder> encoder_;
     std::unique_ptr<MediaFilter> videoFilter_;
     std::unique_ptr<MediaFilter> audioFilter_;
+    std::unique_ptr<MediaFilter> videoRotationFilter_;
 
     bool hasAudio_ {false};
     bool hasVideo_ {false};
@@ -151,6 +152,7 @@ private:
     int audioIdx_ = -1;
     bool isRecording_ = false;
     bool audioOnly_ = false;
+    int rotation_ = 0;
 
     void filterAndEncode(MediaFilter* filter, int streamIdx);
 };

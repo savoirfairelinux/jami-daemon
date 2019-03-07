@@ -39,6 +39,7 @@
 #include "video_scaler.h"
 #include "smartools.h"
 #include "media_filter.h"
+#include "filter_transpose.h"
 
 #ifdef RING_ACCEL
 #include "accel.h"
@@ -325,56 +326,6 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 {}
 
 void
-SinkClient::setRotation(int rotation)
-{
-    if (rotation_ == rotation || width_ == 0 || height_ == 0)
-        return;
-
-    rotation_ = rotation;
-    RING_WARN("Rotation set to %d", rotation_);
-    auto in_name = FILTER_INPUT_NAME;
-
-    std::stringstream ss;
-
-    ss << "[" << in_name << "] " << "format=rgb32,";  // avoid https://trac.ffmpeg.org/ticket/5356
-
-    switch (rotation_) {
-        case 90 :
-        case -270 :
-            ss << "transpose=2";
-            break;
-        case 180 :
-        case -180 :
-            ss << "rotate=PI";
-            break;
-        case 270 :
-        case -90 :
-            ss << "transpose=1";
-            break;
-        default :
-            ss << "null";
-    }
-
-    const auto format = AV_PIX_FMT_RGB32;
-    const auto one = rational<int>(1);
-    std::vector<MediaStream> msv;
-    msv.emplace_back(in_name, format, one, width_, height_, one, one);
-
-    if (!rotation_) {
-        filter_.reset();
-    }
-    else {
-        filter_.reset(new MediaFilter);
-        auto ret = filter_->initialize(ss.str(), msv);
-        if (ret < 0) {
-            RING_ERR() << "filter init fail";
-            filter_ = nullptr;
-            rotation_ = 0;
-        }
-    }
-}
-
-void
 SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
@@ -410,19 +361,22 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         std::shared_ptr<VideoFrame> frame {std::static_pointer_cast<VideoFrame>(frame_p)};
 #endif
         AVFrameSideData* side_data = av_frame_get_side_data(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+        int angle = 0;
         if (side_data) {
             auto matrix_rotation = reinterpret_cast<int32_t*>(side_data->data);
-            auto angle = av_display_rotation_get(matrix_rotation);
-            if (!std::isnan(angle))
-                setRotation(angle);
-            if (filter_) {
-                filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
-                frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(filter_->readOutput()));
-            }
-            if (frame->height() != height_ || frame->width() != width_) {
-                setFrameSize(0, 0);
-                setFrameSize(frame->width(), frame->height());
-            }
+            angle = av_display_rotation_get(matrix_rotation);
+        }
+        if (angle != rotation_) {
+            filter_ = getTransposeFilter(angle, FILTER_INPUT_NAME, frame->width(), frame->height(), AV_PIX_FMT_RGB32, false);
+            rotation_ = angle;
+        }
+        if (filter_) {
+            filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
+            frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(filter_->readOutput()));
+        }
+        if (frame->height() != height_ || frame->width() != width_) {
+            setFrameSize(0, 0);
+            setFrameSize(frame->width(), frame->height());
         }
 #if HAVE_SHM
         shm_->renderFrame(*frame);
