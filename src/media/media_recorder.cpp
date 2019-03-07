@@ -360,6 +360,41 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers, const Med
     return v.str();
 }
 
+void
+MediaRecorder::setVideoRotationFilter(int rotation, int width, int height)
+{
+    if (rotation_ == rotation)
+        return;
+
+    rotation_ = rotation;
+    if (!rotation_) {
+        videoRotationFilter_.reset();
+        return;
+    }
+    else {
+        std::stringstream filterString;
+
+        filterString << "[" << ROTATION_FILTER_INPUT_NAME << "] format=yuv420p,";
+        switch (rotation_) {
+            case 90 :
+            case -270 :
+                filterString << "transpose=2";
+                break;
+            case 180 :
+            case -180 :
+                filterString << "rotate=PI";
+                break;
+            case 270 :
+            case -90 :
+                filterString << "transpose=1";
+                break;
+            default :
+                filterString << "null";
+        }
+        return filterString.str();
+    }
+}
+
 MediaStream
 MediaRecorder::setupAudioOutput()
 {
