@@ -2954,14 +2954,12 @@ RingAccount::getFromUri() const
     const std::string uri = "<sip:" + ringAccountId_ + "@ring.dht>";
     if (not displayName_.empty())
         return "\"" + displayName_ + "\" " + uri;
-    RING_DBG("getFromUri %s", uri.c_str());
     return uri;
 }
 
 std::string
 RingAccount::getToUri(const std::string& to) const
 {
-    RING_DBG("getToUri %s", to.c_str());
     return "<sips:" + to + ";transport=dtls>";
 }
 
