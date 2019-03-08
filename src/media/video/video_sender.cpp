@@ -83,6 +83,15 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
             forceKeyFrame_ = 0;
         }
 #endif
+        int size {0};
+        uint8_t* side_data = av_packet_get_side_data(packet, AV_PKT_DATA_DISPLAYMATRIX, &size);
+        auto angle = (side_data == nullptr || size == 0) ? 0 : av_display_rotation_get(reinterpret_cast<int32_t*>(side_data));
+        if (rotation_ != angle) {
+            rotation_ = angle;
+            if (changeOrientationCallback_)
+                changeOrientationCallback_(rotation_);
+        }
+
         videoEncoder_->send(*packet);
     } else {
         bool is_keyframe = forceKeyFrame_ > 0
@@ -92,14 +101,11 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
             --forceKeyFrame_;
 
         AVFrameSideData* side_data = av_frame_get_side_data(input_frame.pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
-        if (side_data) {
-            auto matrix_rotation = reinterpret_cast<int32_t*>(side_data->data);
-            auto angle = av_display_rotation_get(matrix_rotation);
-            if (rotation_ != angle) {
-                rotation_ = angle;
-                if (changeOrientationCallback_)
-                    changeOrientationCallback_(rotation_);
-            }
+        auto angle = side_data == nullptr ? 0 : av_display_rotation_get(reinterpret_cast<int32_t*>(side_data->data));
+        if (rotation_ != angle) {
+            rotation_ = angle;
+            if (changeOrientationCallback_)
+                changeOrientationCallback_(rotation_);
         }
 
 #ifdef RING_ACCEL
