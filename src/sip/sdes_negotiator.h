@@ -19,8 +19,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef __SDES_NEGOTIATOR_H__
-#define __SDES_NEGOTIATOR_H__
+#pragma once
 
 #include "media/media_codec.h"
 
@@ -87,39 +86,36 @@ static std::vector<CryptoSuiteDefinition> CryptoSuites = {
 };
 
 class SdesNegotiator {
-        /**
-         * Constructor for an SDES crypto attributes
-         * negotiator.
-         *
-         * @param attribute
-         *       A vector of crypto attributes as defined in
-         *       RFC4568. This string will be parsed
-         *       and a crypto context will be created
-         *       from it.
-         */
-    public:
-        SdesNegotiator() {}
-        SdesNegotiator(const std::vector<CryptoSuiteDefinition>& capabilites);
+public:
+    SdesNegotiator() {}
 
-        ring::CryptoAttribute
-        negotiate(const std::vector<std::string>& attributes) const;
+    /**
+     * Constructor for an SDES crypto attributes
+     * negotiator.
+     *
+     * @param capabilites
+     *       A vector of crypto attributes as defined in
+     *       RFC4568. This string will be parsed
+     *       and a crypto context will be created
+     *       from it.
+     */
+    SdesNegotiator(const std::vector<CryptoSuiteDefinition>& capabilites);
 
-        inline explicit operator bool() const {
-            return not localCapabilities_.empty();
-        }
+    CryptoAttribute negotiate(const std::vector<std::string>& attributes) const;
 
-    private:
-        static std::vector<CryptoAttribute>
-        parse(const std::vector<std::string>& attributes);
+    inline explicit operator bool() const {
+        return not localCapabilities_.empty();
+    }
 
-        /**
-         * A vector list containing the remote attributes.
-         * Multiple crypto lines can be sent, and the
-         * preferred method is then chosen from that list.
-         */
-        std::vector<CryptoSuiteDefinition> localCapabilities_;
+private:
+    static std::vector<CryptoAttribute> parse(const std::vector<std::string>& attributes);
+
+    /**
+     * A vector list containing the remote attributes.
+     * Multiple crypto lines can be sent, and the
+     * preferred method is then chosen from that list.
+     */
+    std::vector<CryptoSuiteDefinition> localCapabilities_;
 };
 
 } // namespace ring
-
-#endif // __SDES_NEGOTIATOR_H__

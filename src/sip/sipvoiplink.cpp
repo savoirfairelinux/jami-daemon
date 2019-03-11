@@ -35,9 +35,6 @@
 #include "ringdht/ringaccount.h"
 
 #include "manager.h"
-#if HAVE_SDES
-#include "sdes_negotiator.h"
-#endif
 
 #include "im/instant_messaging.h"
 #include "system_codec_container.h"
