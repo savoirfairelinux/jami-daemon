@@ -130,7 +130,8 @@ FFMPEGCONF += \
 	--enable-filter=aresample \
 	--enable-filter=format \
 	--enable-filter=aformat \
-	--enable-filter=fps
+	--enable-filter=fps \
+	--enable-filter=transpose
 
 #platform specific options
 
