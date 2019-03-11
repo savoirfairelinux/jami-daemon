@@ -83,7 +83,6 @@ upnp=build\libupnp\build\vs2017\libupnp.vcxproj, ^
 secp256k1=build\secp256k1\MSVC\secp256k1.vcxproj, ^
 portaudio=build\portaudio\msvc\portaudio.vcxproj, ^
 yaml-cpp=build\yaml-cpp\msvc\yaml-cpp.vcxproj, ^
-pcre=build\pcre\msvc\pcre.vcxproj
 goto startBuild
 
 :win32Projs
@@ -119,8 +118,7 @@ threadutil=build\libupnp\build\vs2017\threadutil.vcxproj, ^
 upnp=build\libupnp\build\vs2017\libupnp.vcxproj, ^
 secp256k1=build\secp256k1\MSVC\secp256k1.vcxproj, ^
 portaudio=build\portaudio\msvc\portaudio.vcxproj, ^
-yaml-cpp=build\yaml-cpp\msvc\yaml-cpp.vcxproj, ^
-pcre=build\pcre\msvc\pcre.vcxproj
+yaml-cpp=build\yaml-cpp\msvc\yaml-cpp.vcxproj
 
 goto startBuild
 
@@ -240,7 +238,7 @@ if /I %1 equ ffmpeg (
 
 :build_restbed
 :: build openssl
-cd %CONTRIB_DIR%build\restbed\dependency\openssl 
+cd %CONTRIB_DIR%build\restbed\dependency\openssl
 if "%2"=="win32" (
     call perl Configure VC-WIN64A
     call ms\do_win64a

@@ -60,7 +60,6 @@ libring_la_LDFLAGS = \
 		@ZLIB_LIBS@ \
 		@LIBSSL_LIBS@ \
 		@LIBCRYPTO_LIBS@ \
-		$(PCRE_LIBS) \
 		@LIBS@
 
 if HAVE_WIN32

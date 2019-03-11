@@ -27,7 +27,6 @@
 #include "sipaccount.h" // for SIPAccount::ACCOUNT_TYPE
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
-#include "sdes_negotiator.h"
 #include "logger.h" // for _debug
 #include "sdp.h"
 #include "manager.h"

@@ -32,7 +32,6 @@ nettle, ^
 gnutls, ^
 opendht, ^
 opus, ^
-pcre, ^
 pjproject, ^
 portaudio, ^
 pthreads, ^
@@ -57,7 +56,6 @@ nettle, ^
 gnutls, ^
 opendht, ^
 opus, ^
-pcre, ^
 pjproject, ^
 portaudio, ^
 pthreads, ^

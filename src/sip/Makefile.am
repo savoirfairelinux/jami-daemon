@@ -26,9 +26,5 @@ libsiplink_la_SOURCES+=sippresence.cpp \
                        pres_sub_client.cpp\
                        pres_sub_client.h
 
-if BUILD_SDES
 libsiplink_la_SOURCES+= sdes_negotiator.cpp \
             sdes_negotiator.h
-
-libsiplink_la_CXXFLAGS += @PCRE_CFLAGS@
-endif
