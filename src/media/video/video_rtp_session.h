@@ -19,8 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __VIDEO_RTP_SESSION_H__
-#define __VIDEO_RTP_SESSION_H__
+#pragma once
 
 #include "media/rtp_session.h"
 #include "media/media_device.h"
@@ -93,7 +92,7 @@ public:
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
 
-    bool useCodec(const AccountVideoCodecInfo* codec) const;
+    std::string getCodec() const;
 
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
@@ -158,5 +157,3 @@ private:
 };
 
 }} // namespace jami::video
-
-#endif // __VIDEO_RTP_SESSION_H__

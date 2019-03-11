@@ -58,6 +58,8 @@ constexpr static char AUDIO_MUTED              [] = "AUDIO_MUTED"         ;
 constexpr static char VIDEO_MUTED              [] = "VIDEO_MUTED"         ;
 constexpr static char VIDEO_SOURCE             [] = "VIDEO_SOURCE"        ;
 constexpr static char AUDIO_ONLY               [] = "AUDIO_ONLY"          ;
+constexpr static char AUDIO_CODEC              [] = "AUDIO_CODEC"         ;
+constexpr static char VIDEO_CODEC              [] = "VIDEO_CODEC"         ;
 
 }
 

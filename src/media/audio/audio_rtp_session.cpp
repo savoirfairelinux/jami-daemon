@@ -215,4 +215,10 @@ AudioRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
     }
 }
 
+std::string
+AudioRtpSession::getCodec() const
+{
+    return sender_->getCodec();
+}
+
 } // namespace jami

@@ -298,8 +298,11 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         void onTextMessage(std::map<std::string, std::string>&& messages);
 
-        virtual bool useVideoCodec(const AccountVideoCodecInfo* /*codec*/) const {
-            return false;
+        virtual std::string getAudioCodec() const {
+            return {};
+        }
+        virtual std::string getVideoCodec() const {
+            return {};
         }
 
         virtual void restartMediaSender() = 0;

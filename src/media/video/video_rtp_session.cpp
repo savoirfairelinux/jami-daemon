@@ -336,10 +336,10 @@ void VideoRtpSession::exitConference()
     conference_ = nullptr;
 }
 
-bool
-VideoRtpSession::useCodec(const jami::AccountVideoCodecInfo* codec) const
+std::string
+VideoRtpSession::getCodec() const
 {
-    return sender_->useCodec(codec);
+    return sender_ ? sender_->getCodec() : std::string{};
 }
 
 

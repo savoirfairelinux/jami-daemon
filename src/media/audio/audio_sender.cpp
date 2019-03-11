@@ -83,7 +83,7 @@ AudioSender::setup(SocketPair& socketPair)
         return false;
     }
 
-    Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
+    Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getAudioCodec());
 
 #ifdef DEBUG_SDP
     audioEncoder_->print_sdp();
@@ -124,5 +124,11 @@ AudioSender::getLastSeqValue()
 {
     return audioEncoder_->getLastSeqValue();
 }
+
+std::string
+AudioSender::getCodec() const {
+    return audioEncoder_->getAudioCodec();
+}
+
 
 } // namespace jami

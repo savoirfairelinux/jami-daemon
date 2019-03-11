@@ -46,6 +46,7 @@ public:
 
     void setMuted(bool isMuted);
     uint16_t getLastSeqValue();
+    std::string getCodec() const;
 
     void update(Observable<std::shared_ptr<jami::MediaFrame>>*,
                 const std::shared_ptr<jami::MediaFrame>&) override;

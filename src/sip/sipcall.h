@@ -109,7 +109,8 @@ public: // overridden
     void removeCall() override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     void restartMediaSender() override;
-    bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
+    std::string getAudioCodec() const override;
+    std::string getVideoCodec() const override;
     void sendKeyframe() override;
     std::map<std::string, std::string> getDetails() const override;
 

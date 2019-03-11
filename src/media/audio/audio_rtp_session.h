@@ -19,8 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef AUDIO_RTP_SESSION_H__
-#define AUDIO_RTP_SESSION_H__
+#pragma once
 
 #include "audiobuffer.h"
 #include "media_device.h"
@@ -55,6 +54,8 @@ class AudioRtpSession : public RtpSession {
         void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
         void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
+        std::string getCodec() const;
+
     private:
         void startSender();
         void startReceiver();
@@ -70,5 +71,3 @@ class AudioRtpSession : public RtpSession {
 };
 
 } // namespace jami
-
-#endif // __AUDIO_RTP_SESSION_H__

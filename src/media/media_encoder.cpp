@@ -134,6 +134,7 @@ MediaEncoder::getLastSeqValue()
         return 0;
 }
 
+/*
 std::string
 MediaEncoder::getEncoderName() const
 {
@@ -142,7 +143,7 @@ MediaEncoder::getEncoderName() const
     else
         return audioCodec_;
 }
-
+*/
 void
 MediaEncoder::openOutput(const std::string& filename, const std::string& format)
 {
@@ -699,8 +700,8 @@ MediaEncoder::extractProfileLevelID(const std::string &parameters,
     }
     JAMI_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
 }
-
-bool
+/*
+std
 MediaEncoder::useCodec(const jami::AccountCodecInfo* codec) const noexcept
 {
     if (codec->systemCodecInfo.mediaType == MEDIA_VIDEO)
@@ -708,7 +709,7 @@ MediaEncoder::useCodec(const jami::AccountCodecInfo* codec) const noexcept
     else
         return audioCodec_ == codec->systemCodecInfo.name;
 }
-
+*/
 #ifdef RING_ACCEL
 void
 MediaEncoder::enableAccel(bool enableAccel)
