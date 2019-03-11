@@ -168,6 +168,7 @@ FFMPEGCONF += --disable-asm
 endif
 else
 # Desktop Linux
+DEPS_ffmpeg += ffnvcodec
 FFMPEGCONF += \
 	--target-os=linux \
 	--enable-indev=v4l2 \
@@ -183,7 +184,17 @@ FFMPEGCONF += \
 	--enable-hwaccel=mjpeg_vaapi \
 	--enable-encoder=h264_vaapi \
 	--enable-encoder=vp8_vaapi \
-	--enable-encoder=mjpeg_vaapi
+	--enable-encoder=mjpeg_vaapi \
+	--enable-cuvid \
+	--enable-ffnvcodec \
+	--enable-nvdec \
+	--enable-nvenc \
+	--enable-hwaccel=h264_nvdec \
+	--enable-hwaccel=hevc_nvdec \
+	--enable-hwaccel=vp8_nvdec \
+	--enable-hwaccel=mjpeg_nvdec \
+	--enable-encoder=h264_nvenc \
+	--enable-encoder=hevc_nvenc
 endif
 endif
 
