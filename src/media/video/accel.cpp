@@ -173,6 +173,10 @@ HardwareAccel::initDevice()
         }
     }
 #endif
+    if (hwType == AV_HWDEVICE_TYPE_NONE and (name_ == "nvenc" or name_ == "nvdec")) {
+        hwType = AV_HWDEVICE_TYPE_CUDA;
+    }
+    RING_WARN() << "initDevice() " << name_ << " " << hwType;
     // default device (nullptr) works for most cases
     ret = av_hwdevice_ctx_create(&deviceCtx_, hwType, nullptr, nullptr, 0);
     return ret >= 0;
@@ -235,12 +239,14 @@ std::unique_ptr<HardwareAccel>
 HardwareAccel::setupDecoder(AVCodecID id)
 {
     static const HardwareAPI apiList[] = {
-        { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
+        { "nvdec", AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
+      //  { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
         { "vdpau", AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
     };
 
     for (const auto& api : apiList) {
+        RING_DBG() << "Attempting to use hardware decoder " << api.name;
         if (std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id) != api.supportedCodecs.end()) {
             auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_DECODER);
             if (accel->initDevice()) {
@@ -257,11 +263,13 @@ std::unique_ptr<HardwareAccel>
 HardwareAccel::setupEncoder(AVCodecID id, int width, int height)
 {
     static const HardwareAPI apiList[] = {
-        { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
+        { "nvenc", AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 } },
+        //{ "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264 } },
     };
 
     for (auto api : apiList) {
+        RING_DBG() << "Attempting to use hardware encoder " << api.name;
         const auto& it = std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id);
         if (it != api.supportedCodecs.end()) {
             auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_ENCODER);
