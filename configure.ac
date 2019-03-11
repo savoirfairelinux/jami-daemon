@@ -268,7 +268,7 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
         export PKG_CONFIG_PATH_CUSTOM
   ])
   export PKG_CONFIG_PATH="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig:$PKG_CONFIG_PATH"
-  LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib"
+  LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib -lxcb"
 
   AS_IF([test "${SYS}" = "darwin"], [
     export LD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$LD_LIBRARY_PATH"
