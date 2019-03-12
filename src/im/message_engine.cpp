@@ -47,50 +47,47 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
     MessageToken token;
     {
         std::lock_guard<std::mutex> lock(messagesMutex_);
+        auto& peerMessages = messages_[to];
         do {
             token = udist(account_.rand);
-        } while (messages_.find(token) != messages_.end());
-        auto m = messages_.emplace(token, Message{});
+        } while (peerMessages.find(token) != peerMessages.end());
+        auto m = peerMessages.emplace(token, Message{});
         m.first->second.to = to;
         m.first->second.payloads = payloads;
         save_();
     }
-    runOnMainThread([this]() {
-        retrySend();
+    runOnMainThread([this, to]() {
+        retrySend(to);
     });
     return token;
 }
 
-void
-MessageEngine::reschedule()
-{
-    if (messages_.empty())
-        return;
-    std::weak_ptr<Account> w = std::static_pointer_cast<Account>(account_.shared_from_this());
-    auto next = nextEvent();
-    if (next != clock::time_point::max())
-        Manager::instance().scheduleTask([w,this](){
-            if (auto s = w.lock())
-                retrySend();
-        }, next);
-}
-
 MessageEngine::clock::time_point
-MessageEngine::nextEvent() const
+MessageEngine::nextEvent(const std::string& peer) const
 {
     auto next = clock::time_point::max();
-    for (const auto& m : messages_) {
-        if (m.second.status == MessageStatus::UNKNOWN || m.second.status == MessageStatus::IDLE) {
-            auto next_op = m.second.last_op + RETRY_PERIOD;
-            if (next_op < next)
-                next = next_op;
+    auto p = messages_.find(peer);
+    if (p != messages_.end()) {
+        auto& messages = p->second;
+        for (const auto& m : messages) {
+            if (m.second.status == MessageStatus::UNKNOWN || m.second.status == MessageStatus::IDLE) {
+                auto next_op = m.second.last_op + RETRY_PERIOD;
+                if (next_op < next)
+                    next = next_op;
+            }
         }
     }
     return next;
 }
 
 void
-MessageEngine::retrySend()
+MessageEngine::onPeerOnline(const std::string& peer)
+{
+    retrySend(peer);
+}
+
+void
+MessageEngine::retrySend(const std::string& peer)
 {
     struct PendingMsg {
         MessageToken token;
@@ -101,20 +98,21 @@ MessageEngine::retrySend()
     {
         std::lock_guard<std::mutex> lock(messagesMutex_);
         auto now = clock::now();
-        for (auto m = messages_.begin(); m != messages_.end(); ++m) {
+        auto p = messages_.find(peer);
+        if (p == messages_.end())
+            return;
+        auto& messages = p->second;
+        for (auto m = messages.begin(); m != messages.end(); ++m) {
             if (m->second.status == MessageStatus::UNKNOWN || m->second.status == MessageStatus::IDLE) {
-                auto next_op = m->second.last_op + RETRY_PERIOD;
-                if (next_op <= now) {
-                    m->second.status = MessageStatus::SENDING;
-                    m->second.retried++;
-                    m->second.last_op = clock::now();
-                    pending.emplace_back(PendingMsg {m->first, m->second.to, m->second.payloads});
-                }
+                m->second.status = MessageStatus::SENDING;
+                m->second.retried++;
+                m->second.last_op = clock::now();
+                pending.emplace_back(PendingMsg {m->first, m->second.to, m->second.payloads});
             }
         }
     }
     // avoid locking while calling callback
-    for (auto& p : pending) {
+    for (const auto& p : pending) {
         RING_DBG() << "[message " << p.token << "] Retry sending";
         emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
             account_.getAccountID(),
@@ -129,17 +127,26 @@ MessageStatus
 MessageEngine::getStatus(MessageToken t) const
 {
     std::lock_guard<std::mutex> lock(messagesMutex_);
-    const auto m = messages_.find(t);
-    return (m == messages_.end()) ? MessageStatus::UNKNOWN : m->second.status;
+    for (const auto& p : messages_) {
+        const auto m = p.second.find(t);
+        if (m != p.second.end())
+            return m->second.status;
+    }
+    return MessageStatus::UNKNOWN;
 }
 
 void
-MessageEngine::onMessageSent(MessageToken token, bool ok)
+MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool ok)
 {
     RING_DBG() << "[message " << token << "] Message sent: " << (ok ? "success" : "failure");
     std::lock_guard<std::mutex> lock(messagesMutex_);
-    auto f = messages_.find(token);
-    if (f != messages_.end()) {
+    auto p = messages_.find(peer);
+    if (p == messages_.end()) {
+        RING_DBG() << "[message " << token << "] Can't find peer";
+        return;
+    }
+    auto f = p->second.find(token);
+    if (f != p->second.end()) {
         if (f->second.status == MessageStatus::SENDING) {
             if (ok) {
                 f->second.status = MessageStatus::SENT;
@@ -160,7 +167,6 @@ MessageEngine::onMessageSent(MessageToken token, bool ok)
             } else {
                 f->second.status = MessageStatus::IDLE;
                 RING_DBG() << "[message " << token << "] Status changed to IDLE";
-                reschedule();
             }
         } else {
            RING_DBG() << "[message " << token << "] State is not SENDING";
@@ -185,27 +191,31 @@ MessageEngine::load()
         std::lock_guard<std::mutex> lock(messagesMutex_);
         long unsigned loaded {0};
         for (auto i = root.begin(); i != root.end(); ++i) {
-            const auto& jmsg = *i;
-            MessageToken token;
-            std::istringstream iss(i.key().asString());
-            iss >> std::hex >> token;
-            Message msg;
-            msg.status = (MessageStatus)jmsg["status"].asInt();
-            msg.to = jmsg["to"].asString();
-            auto wall_time = std::chrono::system_clock::from_time_t(jmsg["last_op"].asInt64());
-            msg.last_op = clock::now() + (wall_time - std::chrono::system_clock::now());
-            msg.retried = jmsg.get("retried", 0).asUInt();
-            const auto& pl = jmsg["payload"];
-            for (auto p = pl.begin(); p != pl.end(); ++p)
-                msg.payloads[p.key().asString()] = p->asString();
-           messages_.emplace(token, std::move(msg));
-           loaded++;
+            auto to = i.key().asString();
+            auto& pmessages = *i;
+            auto& p = messages_[to];
+            for (auto m = pmessages.begin(); m != pmessages.end(); ++m) {
+                const auto& jmsg = *m;
+                MessageToken token;
+                std::istringstream iss(i.key().asString());
+                iss >> std::hex >> token;
+                Message msg;
+                msg.status = (MessageStatus)jmsg["status"].asInt();
+                msg.to = jmsg["to"].asString();
+                auto wall_time = std::chrono::system_clock::from_time_t(jmsg["last_op"].asInt64());
+                msg.last_op = clock::now() + (wall_time - std::chrono::system_clock::now());
+                msg.retried = jmsg.get("retried", 0).asUInt();
+                const auto& pl = jmsg["payload"];
+                for (auto p = pl.begin(); p != pl.end(); ++p)
+                    msg.payloads[p.key().asString()] = p->asString();
+                p.emplace(token, std::move(msg));
+                loaded++;
+            }
         }
         RING_DBG("[Account %s] loaded %lu messages from %s", account_.getAccountID().c_str(), loaded, savePath_.c_str());
     } catch (const std::exception& e) {
         RING_ERR("[Account %s] couldn't load messages from %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
     }
-    reschedule();
 }
 
 void
@@ -221,21 +231,25 @@ MessageEngine::save_() const
     try {
         Json::Value root(Json::objectValue);
         for (auto& c : messages_) {
-            auto& v = c.second;
-            if (v.status == MessageStatus::FAILURE || v.status == MessageStatus::SENT)
-                continue;
-            Json::Value msg;
-            std::ostringstream msgsId;
-            msgsId << std::hex << c.first;
-            msg["status"] = (int)(v.status == MessageStatus::SENDING ? MessageStatus::IDLE : v.status);
-            msg["to"] = v.to;
-            auto wall_time = std::chrono::system_clock::now() + std::chrono::duration_cast<std::chrono::system_clock::duration>(v.last_op - clock::now());
-            msg["last_op"] = (Json::Value::Int64) std::chrono::system_clock::to_time_t(wall_time);
-            msg["retried"] = v.retried;
-            auto& payloads = msg["payload"];
-            for (const auto& p : v.payloads)
-                payloads[p.first] = p.second;
-            root[msgsId.str()] = std::move(msg);
+            Json::Value peerRoot(Json::objectValue);
+            for (auto& m : c.second) {
+                auto& v = m.second;
+                if (v.status == MessageStatus::FAILURE || v.status == MessageStatus::SENT)
+                    continue;
+                Json::Value msg;
+                std::ostringstream msgsId;
+                msgsId << std::hex << c.first;
+                msg["status"] = (int)(v.status == MessageStatus::SENDING ? MessageStatus::IDLE : v.status);
+                msg["to"] = v.to;
+                auto wall_time = std::chrono::system_clock::now() + std::chrono::duration_cast<std::chrono::system_clock::duration>(v.last_op - clock::now());
+                msg["last_op"] = (Json::Value::Int64) std::chrono::system_clock::to_time_t(wall_time);
+                msg["retried"] = v.retried;
+                auto& payloads = msg["payload"];
+                for (const auto& p : v.payloads)
+                    payloads[p.first] = p.second;
+                peerRoot[msgsId.str()] = std::move(msg);
+            }
+            root[c.first] = std::move(peerRoot);
         }
         // Save asynchronously
         ThreadPool::instance().run([path = savePath_,

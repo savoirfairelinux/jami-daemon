@@ -21,6 +21,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <chrono>
 #include <mutex>
 #include <cstdint>
@@ -56,7 +57,8 @@ public:
         return getStatus(t) == MessageStatus::SENT;
     }
 
-    void onMessageSent(MessageToken t, bool success);
+    void onMessageSent(const std::string& peer, MessageToken t, bool success);
+    void onPeerOnline(const std::string& peer);
 
     /**
      * Load persisted messages
@@ -70,13 +72,12 @@ public:
 
 private:
 
-    static const constexpr unsigned MAX_RETRIES = 1;
+    static const constexpr unsigned MAX_RETRIES = 20;
     static const std::chrono::minutes RETRY_PERIOD;
     using clock = std::chrono::steady_clock;
 
-    clock::time_point nextEvent() const;
-    void retrySend();
-    void reschedule();
+    clock::time_point nextEvent(const std::string& peer) const;
+    void retrySend(const std::string& peer);
     void save_() const;
 
     struct Message {
@@ -90,7 +91,11 @@ private:
     SIPAccountBase& account_;
     const std::string savePath_;
 
-    std::map<MessageToken, Message> messages_;
+    std::map<std::string, std::map<MessageToken, Message>> messages_;
+
+    //std::map<MessageToken, Message> messages_;
+    std::set<MessageToken> sentMessages_;
+
     mutable std::mutex messagesMutex_ {};
 };
 
