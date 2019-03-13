@@ -842,7 +842,14 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
                     if (not (serviceId.empty() and controlURL.empty() and eventSubURL.empty()) ) {
                         /* RING_DBG("UPnP: got service info from device:\n\tserviceType: %s\n\tserviceID: %s\n\tcontrolURL: %s\n\teventSubURL: %s",
                                  serviceType.c_str(), serviceId.c_str(), controlURL.c_str(), eventSubURL.c_str()); */
-                        new_igd.reset(new UPnPIGD(UDN, baseURL, friendlyName, serviceType, serviceId, controlURL, eventSubURL));
+                        new_igd.reset(new UPnPIGD(
+                            std::move(UDN),
+                            std::move(baseURL),
+                            std::move(friendlyName),
+                            std::move(serviceType),
+                            std::move(serviceId),
+                            std::move(controlURL),
+                            std::move(eventSubURL)));
                         if (isIGDConnected(*new_igd)) {
                             new_igd->publicIp = getExternalIP(*new_igd);
                             if (new_igd->publicIp) {

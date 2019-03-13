@@ -64,7 +64,7 @@ fetchHeaderValue(pjsip_msg *msg, const std::string &field)
 
     std::string value(hdr->hvalue.ptr, hdr->hvalue.slen);
 
-    size_t pos = value.find("\n");
+    size_t pos = value.find('\n');
 
     if (pos != std::string::npos)
         return value.substr(0, pos);
@@ -79,7 +79,7 @@ createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
 
     std::string host;
     int port = 0;
-    size_t found = route.find(":");
+    size_t found = route.find(':');
     if (found != std::string::npos) {
         host = route.substr(0, found);
         port = atoi(route.substr(found + 1, route.length() - found).c_str());
@@ -140,16 +140,16 @@ stripSipUriPrefix(std::string& sipUri)
         sipUri.erase(found, (sizeof SIP_PREFIX) - 1);
 
     // URI may or may not be between brackets
-    found = sipUri.find("<");
+    found = sipUri.find('<');
     if (found != std::string::npos)
         sipUri.erase(found, 1);
 
-    found = sipUri.find("@");
+    found = sipUri.find('@');
 
     if (found != std::string::npos)
         sipUri.erase(found);
 
-    found = sipUri.find(">");
+    found = sipUri.find('>');
     if (found != std::string::npos)
         sipUri.erase(found, 1);
 }
@@ -158,11 +158,11 @@ std::string
 getHostFromUri(const std::string& sipUri)
 {
     std::string hostname(sipUri);
-    size_t found = hostname.find("@");
+    size_t found = hostname.find('@');
     if (found != std::string::npos)
         hostname.erase(0, found+1);
 
-    found = hostname.find(">");
+    found = hostname.find('>');
     if (found != std::string::npos)
         hostname.erase(found, 1);
 

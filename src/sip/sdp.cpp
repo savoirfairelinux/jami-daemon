@@ -252,7 +252,7 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
 
     if (kx == sip_utils::KeyExchangeProtocol::SDES) {
         if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
-            SdpException("Could not add sdes attribute to media");
+            throw SdpException("Could not add sdes attribute to media");
     }
 
     return med;

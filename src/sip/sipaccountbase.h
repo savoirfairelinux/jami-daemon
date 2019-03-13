@@ -393,7 +393,7 @@ protected:
 
     struct UsedPort {
         UsedPort() {};
-        UsedPort(UsedPort&& o) : port_(o.port_) {
+        UsedPort(UsedPort&& o) noexcept : port_(o.port_) {
             o.port_ = 0;
         }
         UsedPort(in_port_t p) : port_(p) {
@@ -404,7 +404,7 @@ protected:
             if (port_)
                 releasePort(port_);
         };
-        UsedPort& operator=(UsedPort&& o) {
+        UsedPort& operator=(UsedPort&& o) noexcept {
             if (port_)
                 releasePort(port_);
             port_ = o.port_;

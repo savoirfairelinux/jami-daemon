@@ -1369,7 +1369,7 @@ std::string SIPAccount::getToUri(const std::string& username) const
         scheme = "";
 
     // Check if hostname is already specified
-    if (username.find("@") == std::string::npos)
+    if (username.find('@') == std::string::npos)
         hostname = hostname_;
 
 #if HAVE_IPV6

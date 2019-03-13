@@ -400,7 +400,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     SIPAccount * acc = pres->getAccount();
     std::string contactWithAngles =  acc->getFromUri();
     contactWithAngles.erase(contactWithAngles.find('>'));
-    int semicolon = contactWithAngles.find_first_of(":");
+    int semicolon = contactWithAngles.find_first_of(':');
     std::string contactWithoutAngles = contactWithAngles.substr(semicolon + 1);
 //    pj_str_t contact = pj_str(strdup(contactWithoutAngles.c_str()));
 //    pj_memcpy(&status_data.info[0].contact, &contt, sizeof(pj_str_t));;
@@ -421,7 +421,7 @@ SIPPresence::send_publish(SIPPresence * pres)
         char *epos = pj_strchr(&from, '>');
 
         if (epos - bpos < 2) {
-            pj_assert(!"Unexpected invalid URI");
+            RING_ERR("Unexpected invalid URI");
             status = PJSIP_EINVALIDURI;
             goto on_error;
         }
