@@ -28,7 +28,6 @@ RUN apt-get update && \
         libpulse-dev \
         libasound2-dev \
         libexpat1-dev \
-        libpcre3-dev \
         libyaml-cpp-dev \
         libboost-dev \
         libxext-dev \

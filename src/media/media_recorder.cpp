@@ -172,7 +172,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     const auto& ms = streams_[name]->info;
     if (ms.isVideo) {
 #ifdef RING_ACCEL
-        clone = video::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
+        clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
             static_cast<AVPixelFormat>(ms.format));
 #else
         clone = std::make_unique<MediaFrame>();
@@ -461,11 +461,10 @@ MediaRecorder::filterAndEncode(MediaFilter* filter, int streamIdx)
         while (auto frame = filter->readOutput()) {
             try {
                 std::lock_guard<std::mutex> lk(mutex_);
-                encoder_->encode(frame, streamIdx);
+                encoder_->encode(frame->pointer(), streamIdx);
             } catch (const MediaEncoderException& e) {
                 RING_ERR() << "Failed to record frame: " << e.what();
             }
-            av_frame_free(&frame);
         }
     }
 }

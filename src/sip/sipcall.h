@@ -97,12 +97,20 @@ public: // overridden
     void switchInput(const std::string& resource) override;
     void peerHungup() override;
     void carryingDTMFdigits(char code) override;
+
+    /**
+      * Send device orientation through SIP INFO
+      * @param rotation Device orientation (0/90/180/270) (counterclockwise)
+      */
+    void setVideoOrientation(int rotation);
+
     void sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from) override;
     void removeCall() override;
     void muteMedia(const std::string& mediaType, bool isMuted) override;
     void restartMediaSender() override;
     bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
+    void sendKeyframe() override;
     std::map<std::string, std::string> getDetails() const override;
 
     virtual bool toggleRecording() override; // SIPCall needs to spread recorder to rtp sessions, so override
@@ -158,6 +166,8 @@ public: // SIP related
     }
 
     void sendSIPInfo(const char *const body, const char *const subtype);
+
+    void requestKeyframe();
 
     SIPAccountBase& getSIPAccount() const;
 
@@ -248,6 +258,19 @@ private:
     std::vector<IceCandidate> getAllRemoteCandidates();
 
     void merge(Call& call) override; // not public - only called by Call
+
+    inline std::shared_ptr<const SIPCall> shared() const {
+        return std::static_pointer_cast<const SIPCall>(shared_from_this());
+    }
+    inline std::shared_ptr<SIPCall> shared() {
+        return std::static_pointer_cast<SIPCall>(shared_from_this());
+    }
+    inline std::weak_ptr<const SIPCall> weak() const {
+        return std::weak_ptr<const SIPCall>(shared());
+    }
+    inline std::weak_ptr<SIPCall> weak() {
+        return std::weak_ptr<SIPCall>(shared());
+    }
 
     std::unique_ptr<AudioRtpSession> avformatrtp_;
 

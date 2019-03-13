@@ -27,7 +27,6 @@
 #include "sipaccount.h" // for SIPAccount::ACCOUNT_TYPE
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
-#include "sdes_negotiator.h"
 #include "logger.h" // for _debug
 #include "sdp.h"
 #include "manager.h"
@@ -41,6 +40,7 @@
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
 #include "ice_transport.h"
+#include "thread_pool.h"
 
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
@@ -266,6 +266,23 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
         pjsip_tx_data_dec_ref(tdata);
     else
         pjsip_dlg_send_request(inv->dlg, tdata, getSIPVoIPLink()->getModId(), NULL);
+}
+
+void
+SIPCall::requestKeyframe()
+{
+    const char * const BODY =
+        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+        "<media_control><vc_primitive><to_encoder>"
+        "<picture_fast_update/>"
+        "</to_encoder></vc_primitive></media_control>";
+
+    RING_DBG("Sending video keyframe request via SIP INFO");
+    try {
+        sendSIPInfo(BODY, "media_control+xml");
+    } catch (const std::exception& e) {
+        RING_ERR("Error sending video keyframe request: %s", e.what());
+    }
 }
 
 void
@@ -676,6 +693,20 @@ SIPCall::carryingDTMFdigits(char code)
 }
 
 void
+SIPCall::setVideoOrientation(int rotation)
+{
+    std::string sip_body =
+        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+        "<media_control><vc_primitive><to_encoder>"
+        "<device_orientation=" + std::to_string(rotation) + "/>"
+        "</to_encoder></vc_primitive></media_control>";
+
+    RING_DBG("Sending device orientation via SIP INFO");
+
+    sendSIPInfo(sip_body.c_str(), "media_control+xml");
+}
+
+void
 SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from)
 {
@@ -769,6 +800,19 @@ SIPCall::onAnswered()
 }
 
 void
+SIPCall::sendKeyframe()
+{
+#ifdef RING_VIDEO
+    ThreadPool::instance().run([w = weak()] {
+        if (auto sthis = w.lock()) {
+            RING_DBG("handling picture fast update request");
+            sthis->getVideoRtp().forceKeyFrame();
+        }
+    });
+#endif
+}
+
+void
 SIPCall::onPeerRinging()
 {
     setState(ConnectionState::RINGING);
@@ -856,6 +900,21 @@ SIPCall::startAllMedia()
     unsigned ice_comp_id = 0;
     bool peer_holding {true};
     int slotN = -1;
+
+#ifdef RING_VIDEO
+    videortp_->setRequestKeyFrameCallback([wthis = weak()] {
+        runOnMainThread([wthis] {
+            if (auto this_ = wthis.lock())
+                this_->requestKeyframe();
+        });
+    });
+    videortp_->setChangeOrientationCallback([wthis = weak()] (int angle) {
+        runOnMainThread([wthis, angle] {
+            if (auto this_ = wthis.lock())
+                this_->setVideoOrientation(angle);
+        });
+    });
+#endif
 
     for (const auto& slot : slots) {
         ++slotN;

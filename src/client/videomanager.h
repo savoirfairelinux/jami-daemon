@@ -38,28 +38,31 @@ namespace ring {
 
 struct VideoManager
 {
-    public:
-        /**
-         * VideoManager acts as a cache of the active VideoInput.
-         * When this input is needed, you must use getVideoCamera
-         * to create the instance if not done yet and obtain a shared pointer
-         * for your own usage.
-         * VideoManager instance doesn't increment the reference count of
-         * this video input instance: this instance is destroyed when the last
-         * external user has released its shared pointer.
-         */
-        std::weak_ptr<video::VideoInput> videoInput;
-        std::shared_ptr<video::VideoFrameActiveWriter> videoPreview;
-        video::VideoDeviceMonitor videoDeviceMonitor;
-        std::atomic_bool started;
-        /**
-         * VideoManager also acts as a cache of the active AudioInput(s).
-         * When one of these is needed, you must use getAudioInput, which will
-         * create an instance if need be and return a shared_ptr.
-         */
-        std::map<std::string, std::weak_ptr<AudioInput>> audioInputs;
-        std::mutex audioMutex;
-        std::shared_ptr<AudioInput> audioPreview;
+public:
+
+    void setDeviceOrientation(const std::string& name, int angle);
+
+    /**
+     * VideoManager acts as a cache of the active VideoInput.
+     * When this input is needed, you must use getVideoCamera
+     * to create the instance if not done yet and obtain a shared pointer
+     * for your own usage.
+     * VideoManager instance doesn't increment the reference count of
+     * this video input instance: this instance is destroyed when the last
+     * external user has released its shared pointer.
+     */
+    std::weak_ptr<video::VideoInput> videoInput;
+    std::shared_ptr<video::VideoFrameActiveWriter> videoPreview;
+    video::VideoDeviceMonitor videoDeviceMonitor;
+    std::atomic_bool started;
+    /**
+     * VideoManager also acts as a cache of the active AudioInput(s).
+     * When one of these is needed, you must use getAudioInput, which will
+     * create an instance if need be and return a shared_ptr.
+     */
+    std::map<std::string, std::weak_ptr<AudioInput>> audioInputs;
+    std::mutex audioMutex;
+    std::shared_ptr<AudioInput> audioPreview;
 };
 
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();

@@ -105,9 +105,9 @@ size_t getContentLength(restbed::Response& reply)
 void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 {
     try {
-        auto cacheRes = nameCache_.find(addr);
-        if (cacheRes != nameCache_.end()) {
-            cb(cacheRes->second, Response::found);
+        std::string cacheResult = nameCache(addr);
+        if (not cacheResult.empty()) {
+            cb(cacheResult, Response::found);
             return;
         }
 
@@ -179,9 +179,9 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         }
         toLower(name);
 
-        auto cacheRes = addrCache_.find(name);
-        if (cacheRes != addrCache_.end()) {
-            cb(cacheRes->second, Response::found);
+        std::string cacheResult = addrCache(name);
+        if (not cacheResult.empty()) {
+            cb(cacheResult, Response::found);
             return;
         }
 
@@ -260,9 +260,9 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
         }
         toLower(name);
 
-        auto cacheRes = addrCache_.find(name);
-        if (cacheRes != addrCache_.end()) {
-            if (cacheRes->second == addr)
+        auto cacheResult = addrCache(name);
+        if (not cacheResult.empty()) {
+            if (cacheResult == addr)
                 cb(RegistrationResponse::success);
             else
                 cb(RegistrationResponse::alreadyTaken);

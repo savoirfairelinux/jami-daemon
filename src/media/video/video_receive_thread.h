@@ -52,7 +52,7 @@ public:
     void startLoop();
 
     void addIOContext(SocketPair& socketPair);
-    void setRequestKeyFrameCallback(void (*)(const std::string &));
+    void setRequestKeyFrameCallback(std::function<void (void)>);
     void enterConference();
     void exitConference();
 
@@ -62,6 +62,13 @@ public:
     AVPixelFormat getPixelFormat() const;
     MediaStream getInfo() const;
     void triggerKeyFrameRequest();
+
+    /**
+      * Set angle of rotation to apply to the video by the decoder
+      *
+      * @param angle Angle of rotation in degrees (counterclockwise)
+      */
+    void setRotation(int angle);
 
 private:
     NON_COPYABLE(VideoReceiveThread);
@@ -81,8 +88,10 @@ private:
     std::shared_ptr<SinkClient> sink_;
     bool isReset_;
     uint16_t mtu_;
+    int rotation_;
+    std::atomic<AVBufferRef*> frameDataBuffer {nullptr};
 
-    void (*requestKeyFrameCallback_)(const std::string &);
+    std::function<void(void)> requestKeyFrameCallback_;
     void openDecoder();
     bool decodeFrame();
     static int interruptCb(void *ctx);

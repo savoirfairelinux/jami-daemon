@@ -2,7 +2,7 @@ dnl Jami - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([Ring Daemon],[7.4.0],[ring@gnu.org],[ring])
+AC_INIT([Ring Daemon],[7.5.0],[ring@gnu.org],[ring])
 
 AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2018]])
 AC_REVISION([$Revision$])
@@ -544,20 +544,6 @@ PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0]
 # PTHREAD
 # required dependency(ies): libxpat
 AX_PTHREAD
-
-
-# SDES Key Exchange
-# required dependency(ies): libpcre
-AC_ARG_WITH([sdes],
-    [AS_HELP_STRING([--without-sdes], [disable support for sdes key exchange])],
-    [],
-    [with_sdes=yes])
-AS_IF([test "x$with_sdes" = "xyes"], [
-      PKG_CHECK_MODULES(PCRE, [libpcre],,AC_MSG_ERROR([libpcre not found]))]);
-
-AC_DEFINE_UNQUOTED([HAVE_SDES], `if test "x$with_sdes" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have sdes support])
-AM_CONDITIONAL(BUILD_SDES, test "x$with_sdes" = "xyes" )
-
 
 dnl Check for libcppunit-dev
 CPPUNIT_MIN_VERSION=1.12

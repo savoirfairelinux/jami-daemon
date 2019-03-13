@@ -211,9 +211,6 @@
     <ClCompile Include="..\src\sip\sipvoiplink.cpp">
       <Filter>Source Files\sip</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\sip\pattern.cpp">
-      <Filter>Source Files\sip</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\sip\pres_sub_client.cpp">
       <Filter>Source Files\sip</Filter>
     </ClCompile>
@@ -761,9 +758,6 @@
     </ClInclude>
     <ClInclude Include="..\src\security\tlsvalidator.h">
       <Filter>Source Files\security</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\sip\pattern.h">
-      <Filter>Source Files\sip</Filter>
     </ClInclude>
     <ClInclude Include="..\src\sip\pres_sub_client.h">
       <Filter>Source Files\sip</Filter>

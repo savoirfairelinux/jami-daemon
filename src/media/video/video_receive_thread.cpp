@@ -29,6 +29,10 @@
 #include "logger.h"
 #include "smartools.h"
 
+extern "C" {
+#include <libavutil/display.h>
+}
+
 #include <unistd.h>
 #include <map>
 
@@ -48,6 +52,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , mtu_(mtu)
+    , rotation_(0)
     , requestKeyFrameCallback_(0)
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::process, this),
@@ -57,6 +62,8 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
 VideoReceiveThread::~VideoReceiveThread()
 {
     loop_.join();
+    auto localFDB = frameDataBuffer.exchange(nullptr);
+    av_buffer_unref(&localFDB);
 }
 
 void
@@ -111,7 +118,7 @@ bool VideoReceiveThread::setup()
     }
 
     if (requestKeyFrameCallback_)
-        requestKeyFrameCallback_(id_);
+        requestKeyFrameCallback_();
 
     if (videoDecoder_->setupFromVideoData()) {
         RING_ERR("decoder IO startup failed");
@@ -183,6 +190,9 @@ bool VideoReceiveThread::decodeFrame()
     auto& frame = getNewFrame();
     const auto ret = videoDecoder_->decode(frame);
 
+    if (auto localFDB = frameDataBuffer.load())
+        av_frame_new_side_data_from_buf(frame.pointer(), AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(localFDB));
+
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
             publishFrame();
@@ -191,7 +201,7 @@ bool VideoReceiveThread::decodeFrame()
         case MediaDecoder::Status::DecodeError:
             RING_WARN("video decoding failure");
             if (requestKeyFrameCallback_)
-                requestKeyFrameCallback_(id_);
+                requestKeyFrameCallback_();
             break;
 
         case MediaDecoder::Status::ReadError:
@@ -233,8 +243,7 @@ void VideoReceiveThread::exitConference()
         sink_->setFrameSize(dstWidth_, dstHeight_);
 }
 
-void VideoReceiveThread::setRequestKeyFrameCallback(
-    void (*cb)(const std::string &))
+void VideoReceiveThread::setRequestKeyFrameCallback(std::function<void (void)> cb)
 { requestKeyFrameCallback_ = cb; }
 
 int VideoReceiveThread::getWidth() const
@@ -256,7 +265,20 @@ void
 VideoReceiveThread::triggerKeyFrameRequest()
 {
     if (requestKeyFrameCallback_)
-        requestKeyFrameCallback_(id_);
+        requestKeyFrameCallback_();
+}
+
+void
+VideoReceiveThread::setRotation(int angle)
+{
+    auto localFrameDataBuffer = av_buffer_alloc(sizeof(int32_t) * 9);  // matrix 3x3 of int32_t
+
+    if (localFrameDataBuffer)
+        av_display_rotation_set(reinterpret_cast<int32_t*>(localFrameDataBuffer->data), angle);
+
+    localFrameDataBuffer = frameDataBuffer.exchange(localFrameDataBuffer);
+
+    av_buffer_unref(&localFrameDataBuffer);
 }
 
 }} // namespace ring::video

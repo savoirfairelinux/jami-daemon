@@ -77,6 +77,12 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
     setupVideoBitrateInfo();
 }
 
+void
+VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
+{
+    requestKeyFrameCallback_ = cb;
+}
+
 void VideoRtpSession::startSender()
 {
     if (send_.enabled and not send_.holding) {
@@ -94,9 +100,9 @@ void VideoRtpSession::startSender()
                 auto newParams = input->switchInput(input_);
                 try {
                     if (newParams.valid() &&
-                        newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready)
+                        newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
                         localVideoParams_ = newParams.get();
-                    else {
+                    } else {
                         RING_ERR("No valid new video parameters.");
                         return;
                     }
@@ -121,6 +127,9 @@ void VideoRtpSession::startSender()
             socketPair_->stopSendOp(false);
             sender_.reset(new VideoSender(getRemoteRtpUri(), localVideoParams_,
                                           send_, *socketPair_, initSeqVal_, mtu_));
+            if (changeOrientationCallback_)
+                sender_->setChangeOrientationCallback(changeOrientationCallback_);
+
         } catch (const MediaEncoderException &e) {
             RING_ERR("%s", e.what());
             send_.enabled = false;
@@ -157,7 +166,7 @@ void VideoRtpSession::startReceiver()
         );
 
         // XXX keyframe requests can timeout if unanswered
-        receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
+        receiveThread_->setRequestKeyFrameCallback(requestKeyFrameCallback_);
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
         packetLossThread_.start();
@@ -238,6 +247,12 @@ void VideoRtpSession::forceKeyFrame()
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (sender_)
         sender_->forceKeyFrame();
+}
+
+void
+VideoRtpSession::setRotation(int rotation)
+{
+    receiveThread_->setRotation(rotation);
 }
 
 void
@@ -351,7 +366,7 @@ unsigned
 VideoRtpSession::getLowerQuality()
 {
     // if lower quality was stored we return it
-    unsigned quality = videoBitrateInfo_.videoQualityCurrent;
+    unsigned quality = 0;
     while ( not histoQuality_.empty()) {
         quality = histoQuality_.back();
         histoQuality_.pop_back();
@@ -368,7 +383,7 @@ unsigned
 VideoRtpSession::getLowerBitrate()
 {
     // if a lower bitrate was stored we return it
-    unsigned bitrate = videoBitrateInfo_.videoBitrateCurrent;
+    unsigned bitrate = 0;
     while ( not histoBitrate_.empty()) {
         bitrate = histoBitrate_.back();
         histoBitrate_.pop_back();
@@ -558,7 +573,8 @@ VideoRtpSession::processPacketLoss()
 {
     if (packetLossThread_.wait_for(RTCP_PACKET_LOSS_INTERVAL,
                                    [this]{return socketPair_->rtcpPacketLossDetected();})) {
-        receiveThread_->triggerKeyFrameRequest();
+        if (requestKeyFrameCallback_)
+            requestKeyFrameCallback_();
     }
 }
 
@@ -590,6 +606,12 @@ VideoRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
             input->detach(ob);
         }
     }
+}
+
+void
+VideoRtpSession::setChangeOrientationCallback(std::function<void(int)> cb)
+{
+    changeOrientationCallback_ = cb;
 }
 
 }} // namespace ring::video

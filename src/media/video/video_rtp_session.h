@@ -62,6 +62,8 @@ public:
                     const DeviceParams& localVideoParams);
     ~VideoRtpSession();
 
+    void setRequestKeyFrameCallback(std::function<void(void)> cb);
+
     void updateMedia(const MediaDescription& send, const MediaDescription& receive) override;
 
     void start(std::unique_ptr<IceSocket> rtp_sock,
@@ -69,6 +71,14 @@ public:
     void restartSender() override;
     void stop() override;
 
+    /**
+      * Set video orientation
+      *
+      * Send to the receive thread rotation to apply to the video (counterclockwise)
+      *
+      * @param rotation Rotation in degrees (counterclockwise)
+      */
+    void setRotation(int rotation);
     void forceKeyFrame();
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
@@ -77,6 +87,11 @@ public:
     void switchInput(const std::string& input) {
         input_ = input;
     }
+    const std::string& getInput() const {
+      return input_;
+    }
+
+    void setChangeOrientationCallback(std::function<void(int)> cb);
 
     bool useCodec(const AccountVideoCodecInfo* codec) const;
 
@@ -101,6 +116,8 @@ private:
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
     uint16_t initSeqVal_ = 0;
+
+    std::function<void (void)> requestKeyFrameCallback_;
 
     float checkPeerPacketLoss();
     unsigned getLowerQuality();
@@ -136,6 +153,8 @@ private:
 
     InterruptedThreadLoop packetLossThread_;
     void processPacketLoss();
+
+    std::function<void(int)> changeOrientationCallback_;
 };
 
 }} // namespace ring::video

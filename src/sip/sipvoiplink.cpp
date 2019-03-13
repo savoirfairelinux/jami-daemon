@@ -35,9 +35,6 @@
 #include "ringdht/ringaccount.h"
 
 #include "manager.h"
-#if HAVE_SDES
-#include "sdes_negotiator.h"
-#endif
 
 #include "im/instant_messaging.h"
 #include "system_codec_container.h"
@@ -64,6 +61,7 @@
 
 #include <istream>
 #include <algorithm>
+#include <regex>
 
 namespace ring {
 
@@ -728,39 +726,6 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
     pjsip_endpt_cancel_timer(endpt_, &timer);
 }
 
-#ifdef RING_VIDEO
-// Called from a video thread
-void
-SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
-{
-    runOnMainThread([link = getSIPVoIPLink(), id] {
-        if (link)
-            link->requestKeyframe(id);
-    });
-}
-
-void
-SIPVoIPLink::requestKeyframe(const std::string &callID)
-{
-    auto call = Manager::instance().callFactory.getCall<SIPCall>(callID);
-    if (!call || call->getState() != Call::CallState::ACTIVE)
-        return;
-
-    const char * const BODY =
-        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-        "<media_control><vc_primitive><to_encoder>"
-        "<picture_fast_update/>"
-        "</to_encoder></vc_primitive></media_control>";
-
-    RING_DBG("Sending video keyframe request via SIP INFO");
-    try {
-        call->sendSIPInfo(BODY, "media_control+xml");
-    } catch (const std::exception& e) {
-        RING_WARN("Error sending video keyframe request: %s", e.what());
-    }
-}
-#endif
-
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
@@ -991,13 +956,27 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
         /* Apply and answer the INFO request */
         pj_strset(&control_st, (char *) body->data, body->len);
         const pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
+        const pj_str_t DEVICE_ORIENTATION = CONST_PJ_STR("device_orientation");
 
         if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
-#ifdef RING_VIDEO
-            RING_DBG("handling picture fast update request");
-            call.getVideoRtp().forceKeyFrame();
-#endif
+            call.sendKeyframe();
             return true;
+        } else if (pj_strstr(&control_st, &DEVICE_ORIENTATION)) {
+            int rotation = 0;
+            std::string body_msg = control_st.ptr;
+            std::smatch matched_pattern;
+            std::regex str_pattern("device_orientation=([-+]?[0-9]+)");
+
+            std::regex_search(body_msg, matched_pattern, str_pattern);
+            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                rotation = std::stoi(matched_pattern[1]);
+
+                RING_WARN("Rotate video %d deg.", rotation);
+
+                call.getVideoRtp().setRotation(rotation);
+
+                return true;
+            }
         }
     }
 

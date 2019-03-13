@@ -20,8 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef SDP_H_
-#define SDP_H_
+#pragma once
 
 #include "noncopyable.h"
 #include "sdes_negotiator.h"
@@ -326,5 +325,3 @@ class Sdp {
 };
 
 } // namespace ring
-
-#endif
