@@ -188,8 +188,8 @@ DRING_PUBLIC std::vector<std::map<std::string, std::string>> getContacts(const s
 /*
  * Import/Export accounts
  */
-DRING_PUBLIC int exportAccounts(std::vector<std::string> accountIDs, std::string filepath, std::string password);
-DRING_PUBLIC int importAccounts(std::string archivePath, std::string password);
+DRING_PUBLIC int exportAccounts(const std::vector<std::string> accountIDs, const std::string& filepath, const std::string& password);
+DRING_PUBLIC int importAccounts(const std::string& archivePath, const std::string& password);
 
 /*
  * Network connectivity

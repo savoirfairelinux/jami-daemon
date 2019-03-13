@@ -23,7 +23,7 @@
 namespace ring { namespace upnp {
 
 /* move constructor and operator */
-Mapping::Mapping(Mapping&& other)
+Mapping::Mapping(Mapping&& other) noexcept
     : port_external_(other.port_external_)
     , port_internal_(other.port_internal_)
     , type_(other.type_)
@@ -33,7 +33,7 @@ Mapping::Mapping(Mapping&& other)
     other.port_internal_ = 0;
 }
 
-Mapping& Mapping::operator=(Mapping&& other)
+Mapping& Mapping::operator=(Mapping&& other) noexcept
 {
     if (this != &other) {
         port_external_ = other.port_external_;

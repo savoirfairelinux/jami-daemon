@@ -19,17 +19,16 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __MEDIA_CODEC_H__
-#define __MEDIA_CODEC_H__
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 #include "audio/audiobuffer.h" // for AudioFormat
-#include <cctype>
 #include "ip_utils.h"
 
+#include <cctype>
 #include <string>
 #include <vector>
 #include <map>
@@ -286,4 +285,3 @@ struct MediaDescription {
 };
 
 }//namespace ring
-#endif // __MEDIA_CODEC_H__

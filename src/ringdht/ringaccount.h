@@ -344,7 +344,7 @@ class RingAccount : public SIPAccountBase {
         /// /// \param[in] tid linked outgoing data transfer
         ///
         void requestPeerConnection(const std::string& peer, const DRing::DataTransferId& tid,
-                                   std::function<void(PeerConnection*)> connect_cb);
+                                   const std::function<void(PeerConnection*)>& connect_cb);
 
         ///
         /// Close a E2E connection between a given peer and a given transfer id.
@@ -368,10 +368,8 @@ class RingAccount : public SIPAccountBase {
         const std::shared_future<tls::DhParams> dhParams() const { return dhParams_; }
 
         void forEachDevice(const dht::InfoHash& to,
-                           std::function<void(const std::shared_ptr<RingAccount>&,
-                                              const dht::InfoHash&)> op,
-                           std::function<void(const std::shared_ptr<RingAccount>&,
-                                              bool)> end = {});
+                           std::function<void(const std::shared_ptr<RingAccount>&, const dht::InfoHash&)>&& op,
+                           std::function<void(const std::shared_ptr<RingAccount>&, bool)>&& end = {});
 
         /**
          * Inform that a potential peer device have been found.
@@ -450,7 +448,7 @@ class RingAccount : public SIPAccountBase {
 
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
-        void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string toUri);
+        void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri);
 
         void onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, IpAddr target);
 
@@ -489,7 +487,7 @@ class RingAccount : public SIPAccountBase {
          * peer certificate chain (down to the peer device certificate),
          * and the peer account id.
          */
-        void onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& account_id)>);
+        void onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& account_id)>&&);
 
         void onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received , bool confirm, std::vector<uint8_t>&& payload);
 

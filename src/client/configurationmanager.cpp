@@ -384,13 +384,13 @@ sendTrustRequest(const std::string& accountId, const std::string& to, const std:
  * Import/Export accounts
  */
 int
-exportAccounts(std::vector<std::string> accountIDs, std::string filepath, std::string password)
+exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password)
 {
     return ring::archiver::exportAccounts(accountIDs, filepath, password);
 }
 
 int
-importAccounts(std::string archivePath, std::string password)
+importAccounts(const std::string& archivePath, const std::string& password)
 {
     return ring::archiver::importAccounts(archivePath, password);
 }

@@ -22,8 +22,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef SIPVOIPLINK_H_
-#define SIPVOIPLINK_H_
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -108,7 +107,7 @@ class SIPVoIPLink {
         std::unique_ptr<SipTransportBroker> sipTransportBroker;
 
         typedef std::function<void(std::vector<IpAddr>)> SrvResolveCallback;
-        void resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb);
+        void resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback&& cb);
 
         /**
          * Guess the account related to an incoming SIP call.
@@ -170,5 +169,3 @@ class SIPVoIPLink {
 };
 
 } // namespace ring
-
-#endif // SIPVOIPLINK_H_

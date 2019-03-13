@@ -487,7 +487,7 @@ SIPVoIPLink::getCachingPool() noexcept
 SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
 {
 #define TRY(ret) do { \
-    if (ret != PJ_SUCCESS) \
+    if ((ret) != PJ_SUCCESS) \
     throw VoipLinkException(#ret " failed"); \
 } while (0)
 
@@ -1154,7 +1154,7 @@ resolver_callback(pj_status_t status, void *token, const struct pjsip_server_add
 }
 
 void
-SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb)
+SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback&& cb)
 {
     // PJSIP limits hostname to be longer than PJ_MAX_HOSTNAME.
     // But, resolver prefix the given name by a string like "_sip._udp."
@@ -1189,11 +1189,11 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
 
     const auto token = std::hash<std::string>()(name + to_string(type));
     getResolveCallbackMap().registerCallback(token,
-        [=](pj_status_t s, const pjsip_server_addresses* r) {
+        [=,cb=std::move(cb)](pj_status_t s, const pjsip_server_addresses* r) {
             try {
                 if (s != PJ_SUCCESS || !r) {
                     RING_WARN("Can't resolve \"%s\" using pjsip_endpt_resolve, trying getaddrinfo.", name.c_str());
-                    std::thread([=](){
+                    std::thread([=,cb=std::move(cb)](){
                         auto ips = ip_utils::getAddrList(name.c_str());
                         runOnMainThread(std::bind(cb, ips.empty() ? std::vector<IpAddr>{} : std::move(ips)));
                     }).detach();

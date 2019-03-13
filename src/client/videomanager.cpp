@@ -273,7 +273,7 @@ VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height) noexc
 
 void
 VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height,
-                          std::function<void(uint8_t*)> cb) noexcept
+                          const std::function<void(uint8_t*)>& cb) noexcept
 {
     setFromMemory(ptr, format, width, height);
     if (cb) {
@@ -283,7 +283,7 @@ VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height,
 }
 
 void
-VideoFrame::setReleaseCb(std::function<void(uint8_t*)> cb) noexcept
+VideoFrame::setReleaseCb(const std::function<void(uint8_t*)>& cb) noexcept
 {
     if (cb) {
         releaseBufferCb_ = cb;
