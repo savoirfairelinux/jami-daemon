@@ -306,6 +306,7 @@ class Manager {
          */
         void saveConfig();
         void saveConfig(const std::shared_ptr<RingAccount>&);
+        void saveConfig(const std::shared_ptr<Account>& acc);
 
         /**
          * Play a ringtone

@@ -1686,6 +1686,15 @@ void Manager::pollEvents()
 //THREAD=Main
 
 void
+Manager::saveConfig(const std::shared_ptr<Account>& acc)
+{
+    if (auto ringAcc = std::dynamic_pointer_cast<RingAccount>(acc))
+        saveConfig(ringAcc);
+    else
+        saveConfig();
+}
+
+void
 Manager::saveConfig(const std::shared_ptr<RingAccount>& account)
 {
     try {

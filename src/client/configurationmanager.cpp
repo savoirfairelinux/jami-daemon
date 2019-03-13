@@ -549,7 +549,7 @@ setActiveCodecList(const std::string& accountID
     if (auto acc = ring::Manager::instance().getAccount(accountID))
     {
         acc->setActiveCodecs(list);
-        ring::Manager::instance().saveConfig();
+        ring::Manager::instance().saveConfig(acc);
     } else {
         RING_ERR("Could not find account %s", accountID.c_str());
     }
