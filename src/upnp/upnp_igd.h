@@ -51,7 +51,7 @@ public:
         uint16_t port_external = 0,
         uint16_t port_internal = 0,
         PortType type = PortType::UDP,
-        std::string description = UPNP_DEFAULT_MAPPING_DESCRIPTION)
+        const std::string& description = UPNP_DEFAULT_MAPPING_DESCRIPTION)
     : port_external_(port_external)
     , port_internal_(port_internal)
     , type_(type)
@@ -59,8 +59,8 @@ public:
     {};
 
     /* move constructor and operator */
-    Mapping(Mapping&&);
-    Mapping& operator=(Mapping&&);
+    Mapping(Mapping&&) noexcept;
+    Mapping& operator=(Mapping&&) noexcept;
 
     ~Mapping() = default;
 
@@ -159,20 +159,20 @@ private:
 
 class UPnPIGD : public IGD {
 public:
-    UPnPIGD(std::string UDN,
-        std::string baseURL,
-        std::string friendlyName,
-        std::string serviceType,
-        std::string serviceId,
-        std::string controlURL,
-        std::string eventSubURL)
-        : UDN_(UDN)
-        , baseURL_(baseURL)
-        , friendlyName_(friendlyName)
-        , serviceType_(serviceType)
-        , serviceId_(serviceId)
-        , controlURL_(controlURL)
-        , eventSubURL_(eventSubURL)
+    UPnPIGD(std::string&& UDN,
+        std::string&& baseURL,
+        std::string&& friendlyName,
+        std::string&& serviceType,
+        std::string&& serviceId,
+        std::string&& controlURL,
+        std::string&& eventSubURL)
+        : UDN_(std::move(UDN))
+        , baseURL_(std::move(baseURL))
+        , friendlyName_(std::move(friendlyName))
+        , serviceType_(std::move(serviceType))
+        , serviceId_(std::move(serviceId))
+        , controlURL_(std::move(controlURL))
+        , eventSubURL_(std::move(eventSubURL))
         {}
 
     const std::string& getUDN() const { return UDN_; };

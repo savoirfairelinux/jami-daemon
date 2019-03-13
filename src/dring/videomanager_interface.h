@@ -139,8 +139,8 @@ public:
     // Set internal pixel buffers on given memory buffer
     // This buffer must follow given specifications.
     void setFromMemory(uint8_t* data, int format, int width, int height) noexcept;
-    void setFromMemory(uint8_t* data, int format, int width, int height, std::function<void(uint8_t*)> cb) noexcept;
-    void setReleaseCb(std::function<void(uint8_t*)> cb) noexcept;
+    void setFromMemory(uint8_t* data, int format, int width, int height, const std::function<void(uint8_t*)>& cb) noexcept;
+    void setReleaseCb(const std::function<void(uint8_t*)>& cb) noexcept;
 
     void noise();
 

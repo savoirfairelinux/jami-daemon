@@ -225,7 +225,7 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
         peerRegistredName_ = name;
     }
 
-    void setPeerUri(const std::string peerUri) { peerUri_ = peerUri; }
+    void setPeerUri(const std::string& peerUri) { peerUri_ = peerUri; }
 
     bool initIceMediaTransport(bool master, unsigned channel_num=4);
 

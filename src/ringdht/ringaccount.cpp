@@ -393,7 +393,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl,
 }
 
 void
-RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string toUri)
+RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
 {
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
@@ -2368,7 +2368,7 @@ RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
 }
 
 void
-RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)> cb)
+RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>&& cb)
 {
     // quick check in case we already explicilty banned this device
     auto trustStatus = trust_.getCertificateStatus(peer_device.toString());
@@ -2378,7 +2378,7 @@ RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(
     }
 
     findCertificate(peer_device,
-        [this, peer_device, cb](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+        [this, peer_device, cb=std::move(cb)](const std::shared_ptr<dht::crypto::Certificate>& cert) {
         dht::InfoHash peer_account_id;
         if (not foundPeerDevice(cert, peer_account_id)) {
             RING_WARN("[Account %s] Discarding message from invalid peer certificate %s.", getAccountID().c_str(), peer_device.toString().c_str());
@@ -3339,9 +3339,8 @@ RingAccount::igdChanged()
 
 void
 RingAccount::forEachDevice(const dht::InfoHash& to,
-                           std::function<void(const std::shared_ptr<RingAccount>&,
-                                              const dht::InfoHash&)> op,
-                           std::function<void(const std::shared_ptr<RingAccount>&, bool)> end)
+                           std::function<void(const std::shared_ptr<RingAccount>&, const dht::InfoHash&)>&& op,
+                           std::function<void(const std::shared_ptr<RingAccount>&, bool)>&& end)
 {
     auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
     auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
@@ -3349,13 +3348,13 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
         tls::CertificateStore::instance().pinRevocationList(to.toString(), std::move(crl));
         return true;
     });
-    dht_.get<DeviceAnnouncement>(to, [shared,to,treatedDevices,op](DeviceAnnouncement&& dev) {
+    dht_.get<DeviceAnnouncement>(to, [shared,to,treatedDevices,op=std::move(op)](DeviceAnnouncement&& dev) {
         if (dev.from != to)
             return true;
         if (treatedDevices->emplace(dev.dev).second)
             op(shared, dev.dev);
         return true;
-    }, [=](bool /*ok*/){
+    }, [=, end=std::move(end)](bool /*ok*/){
         RING_DBG("[Account %s] found %lu devices for %s",
                  getAccountID().c_str(), treatedDevices->size(), to.to_c_str());
         if (end) end(shared, not treatedDevices->empty());
@@ -3535,7 +3534,7 @@ RingAccount::publicAddresses()
 
 void
 RingAccount::requestPeerConnection(const std::string& peer_id, const DRing::DataTransferId& tid,
-                                   std::function<void(PeerConnection*)> connect_cb)
+                                   const std::function<void(PeerConnection*)>& connect_cb)
 {
     dhtPeerConnector_->requestConnection(peer_id, tid, connect_cb);
 }

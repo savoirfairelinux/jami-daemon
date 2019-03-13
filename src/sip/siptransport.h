@@ -55,7 +55,7 @@ struct SipTransportDescr
     SipTransportDescr() {}
     SipTransportDescr(pjsip_transport_type_e t)
      : type(t), listenerPort(pjsip_transport_get_default_port_for_type(t)) {}
-    SipTransportDescr(pjsip_transport_type_e t, pj_uint16_t port, std::string i)
+    SipTransportDescr(pjsip_transport_type_e t, pj_uint16_t port, const std::string& i)
      : type(t), listenerPort(port), interface(i) {}
 
     static inline pjsip_transport_type_e actualType(pjsip_transport_type_e t) {
