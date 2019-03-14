@@ -36,6 +36,20 @@
 #include <exception>
 #include <ciso646> // fix windows compiler bug
 
+extern "C" {
+#if LIBAVUTIL_VERSION_MAJOR < 56
+AVFrameSideData*
+av_frame_new_side_data_from_buf(AVFrame* frame, enum AVFrameSideDataType type, AVBufferRef* buf)
+{
+    auto side_data = av_frame_new_side_data(frame, type, 0);
+    av_buffer_unref(&side_data->buf);
+    side_data->buf = buf;
+    side_data->data = side_data->buf->data;
+    side_data->size = side_data->buf->size;
+}
+#endif
+}
+
 namespace ring { namespace libav_utils {
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
