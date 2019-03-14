@@ -39,7 +39,6 @@
 
 extern "C" {
 #include <libavutil/pixfmt.h>
-}
 
 struct AVPacket;
 struct AVDictionary;
@@ -47,6 +46,7 @@ struct AVDictionary;
 #ifndef AVFORMAT_AVIO_H
 struct AVIOContext;
 #endif
+}
 
 namespace DRing {
 class MediaFrame;

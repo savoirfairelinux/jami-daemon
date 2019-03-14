@@ -28,9 +28,11 @@
 #include <string>
 #include <vector>
 
+extern "C" {
 struct AVFilterContext;
 struct AVFilterGraph;
 struct AVFilterInOut;
+}
 
 namespace ring {
 
