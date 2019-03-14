@@ -345,7 +345,7 @@ SinkClient::setRotation(int rotation)
             break;
         case 180 :
         case -180 :
-            ss << "rotate=PI";
+            ss << "transpose=2,transpose=2";
             break;
         case 270 :
         case -90 :
