@@ -25,9 +25,18 @@
 #include <map>
 #include <string>
 
+extern "C" {
 struct AVDictionary;
 struct AVFrame;
 struct AVPixFmtDescriptor;
+struct AVBufferRef;
+struct AVFrameSideData;
+
+#if LIBAVUTIL_VERSION_MAJOR < 56
+AVFrameSideData*
+av_frame_new_side_data_from_buf(AVFrame* frame, enum AVFrameSideDataType type, AVBufferRef* buf);
+#endif
+}
 
 namespace ring { namespace libav_utils {
 
