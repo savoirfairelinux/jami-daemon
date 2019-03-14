@@ -39,6 +39,11 @@ extern "C" {
 #include <libavutil/intreadwrite.h>
 #include <libavutil/log.h>
 #include <libavutil/samplefmt.h>
+
+#if LIBAVUTIL_VERSION_MAJOR < 56
+AVFrameSideData*
+av_frame_new_side_data_from_buf(AVFrame* frame, enum AVFrameSideDataType type, AVBufferRef* buf);
+#endif
 }
 
 #include "libav_utils.h"
