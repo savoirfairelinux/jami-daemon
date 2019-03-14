@@ -39,10 +39,12 @@
 #include <string>
 #include <vector>
 
+extern "C" {
 struct AVCodecContext;
 struct AVFormatContext;
 struct AVDictionary;
 struct AVCodec;
+}
 
 namespace jami {
 

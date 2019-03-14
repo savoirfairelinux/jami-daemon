@@ -32,14 +32,13 @@
 
 extern "C" {
 #include <libavutil/samplefmt.h>
+struct AVFrame;
 }
 
 #include "ring_types.h"
 #include "media_buffer.h"
 
 #include <ciso646> // fix windows compiler bug
-
-struct AVFrame;
 
 namespace jami {
 

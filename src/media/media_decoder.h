@@ -40,12 +40,14 @@
 #include <memory>
 #include <chrono>
 
+extern "C" {
 struct AVCodecContext;
 struct AVStream;
 struct AVDictionary;
 struct AVFormatContext;
 struct AVCodec;
 enum AVMediaType;
+}
 
 namespace DRing {
 class AudioFrame;
