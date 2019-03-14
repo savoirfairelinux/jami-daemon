@@ -25,9 +25,11 @@
 #include <map>
 #include <string>
 
+extern "C" {
 struct AVDictionary;
 struct AVFrame;
 struct AVPixFmtDescriptor;
+}
 
 namespace ring { namespace libav_utils {
 
