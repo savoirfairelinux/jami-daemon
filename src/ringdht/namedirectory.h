@@ -24,6 +24,12 @@
 #include <string>
 #include <mutex>
 
+namespace dht {
+namespace crypto {
+struct PublicKey;
+}
+}
+
 namespace ring {
 
 class NameDirectory

@@ -24,6 +24,7 @@
 #include "fileutils.h"
 #include "base64.h"
 
+#include <opendht/crypto.h>
 #include <msgpack.hpp>
 #include <json/json.h>
 #include <restbed>
