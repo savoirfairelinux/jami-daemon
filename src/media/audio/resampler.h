@@ -26,8 +26,10 @@
 #include "media_buffer.h"
 #include "noncopyable.h"
 
+extern "C" {
 struct AVFrame;
 struct SwrContext;
+}
 
 namespace jami {
 

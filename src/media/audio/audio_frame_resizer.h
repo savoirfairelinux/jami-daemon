@@ -26,7 +26,9 @@
 
 #include <mutex>
 
+extern "C" {
 struct AVAudioFifo;
+}
 
 namespace jami {
 
