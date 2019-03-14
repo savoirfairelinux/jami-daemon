@@ -310,6 +310,7 @@ class RingAccount : public SIPAccountBase {
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
         void sendTrustRequestConfirm(const dht::InfoHash& to);
         virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;
+        virtual uint64_t sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads) override;
 
         /* Devices */
         void addDevice(const std::string& password);
