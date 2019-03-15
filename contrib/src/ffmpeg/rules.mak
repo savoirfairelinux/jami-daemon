@@ -1,4 +1,4 @@
-FFMPEG_HASH := 830695be366ff753a3f7b8dd97c10d3e6187d41c
+FFMPEG_HASH := 5ab44ff20cdc0e05adecbd0cd352d25fcb930094
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
