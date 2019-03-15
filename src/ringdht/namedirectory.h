@@ -18,11 +18,17 @@
 #pragma once
 
 #include "noncopyable.h"
-#include "opendht/crypto.h"
+
 #include <functional>
 #include <map>
 #include <string>
 #include <mutex>
+
+namespace dht {
+namespace crypto {
+struct PublicKey;
+}
+}
 
 namespace ring {
 
