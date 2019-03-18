@@ -163,8 +163,12 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * Return the status corresponding to the token.
          */
-        virtual im::MessageStatus getMessageStatus(uint64_t id UNUSED) const {
+        virtual im::MessageStatus getMessageStatus(uint64_t /*id*/) const {
             return im::MessageStatus::UNKNOWN;
+        }
+
+        virtual bool cancelMessage(uint64_t /*id*/) {
+            return false;
         }
 
         std::vector<std::shared_ptr<Call>> getCalls();
