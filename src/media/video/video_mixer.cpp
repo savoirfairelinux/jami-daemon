@@ -26,6 +26,7 @@
 #include "manager.h"
 #include "sinkclient.h"
 #include "logger.h"
+#include "filter_transpose.h"
 #ifdef RING_ACCEL
 #include "accel.h"
 #endif
@@ -33,7 +34,13 @@
 #include <cmath>
 #include <unistd.h>
 
+extern "C" {
+#include <libavutil/display.h>
+}
+
 namespace ring { namespace video {
+
+const constexpr char ROTATION_FILTER_INPUT_NAME[] = "mixin";
 
 struct VideoMixer::VideoMixerSource {
     Observable<std::shared_ptr<MediaFrame>>* source = nullptr;
@@ -173,10 +180,14 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input, int index)
         return;
 
 #ifdef RING_ACCEL
+    /*
     auto framePtr = HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12);
-    const auto& swFrame = *framePtr;
+    auto& swFrame = *framePtr;
+    */
+    std::shared_ptr<VideoFrame> frame {HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12)};
 #else
-    const auto& swFrame = input;
+    //auto& swFrame = input;
+    std::shared_ptr<VideoFrame> frame = input;
 #endif
 
     const int n = sources_.size();
@@ -186,7 +197,23 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input, int index)
     int xoff = (index % zoom) * cell_width;
     int yoff = (index / zoom) * cell_height;
 
-    scaler_.scale_and_pad(swFrame, output, xoff, yoff, cell_width, cell_height, true);
+    AVFrameSideData* sideData = av_frame_get_side_data(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+    int angle = 0;
+    if (sideData) {
+        auto matrixRotation = reinterpret_cast<int32_t*>(sideData->data);
+        angle = av_display_rotation_get(matrixRotation);
+    }
+    if (angle != rotation_) {
+        videoRotationFilter_ = ring::video::getTransposeFilter(angle, ROTATION_FILTER_INPUT_NAME, frame->width(), frame->height(), frame->format(), true);
+        rotation_ = angle;
+    }
+    if (videoRotationFilter_) {
+        videoRotationFilter_->feedInput(frame->pointer(), ROTATION_FILTER_INPUT_NAME);
+        frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(videoRotationFilter_->readOutput()));
+    }
+
+
+    scaler_.scale_and_pad(*frame, output, xoff, yoff, cell_width, cell_height, true);
 }
 
 void
