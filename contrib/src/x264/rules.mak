@@ -1,10 +1,10 @@
 # x264
 ifndef HAVE_IOS
-X264_HASH := 5493be84cdccecee613236c31b1e3227681ce428
+X264_HASH := 8c2974255b01728d4eda2434cc1997c4a3ca5eff
 else
 X264_HASH := fa3cac516cb71b8ece09cedbfd0ce631ca8a2a4c
 endif
-X264_GITURL := https://code.videolan.org/videolan/x264.git
+X264_GITURL := git://git.videolan.org/x264.git
 
 ifeq ($(call need_pkg,"x264 >= 0.86"),)
 PKGS_FOUND += x264
@@ -51,6 +51,14 @@ x264: x264-$(X264_HASH).tar.xz .sum-x264
 	(cd $@-$(X264_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/x264/remove-align.patch
+endif
+ifdef HAVE_ANDROID
+ifeq ($(ARCH),arm)
+	$(APPLY) $(SRC)/x264/0001-use-internal-log2f.patch
+endif
+ifeq ($(ARCH),i386)
+	$(APPLY) $(SRC)/x264/0001-use-internal-log2f.patch
+endif
 endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
