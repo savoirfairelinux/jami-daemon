@@ -25,6 +25,7 @@
 #include "video_scaler.h"
 #include "threadloop.h"
 #include "rw_mutex.h"
+#include "media_filter.h"
 
 #include <list>
 #include <chrono>
@@ -70,6 +71,9 @@ private:
     int height_ = 0;
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
     rw_mutex rwMutex_;
+    int rotation_ = 0;
+
+    std::unique_ptr<MediaFilter> videoRotationFilter_;
 
     std::shared_ptr<SinkClient> sink_;
 
