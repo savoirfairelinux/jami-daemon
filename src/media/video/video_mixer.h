@@ -30,6 +30,10 @@
 #include <chrono>
 #include <memory>
 
+namespace jami {
+class MediaFilter;
+}
+
 namespace jami { namespace video {
 
 class SinkClient;
@@ -70,6 +74,9 @@ private:
     int height_ = 0;
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
     rw_mutex rwMutex_;
+
+    std::vector<int> rotations_;
+    std::vector<std::unique_ptr<MediaFilter>> videoRotationFilters_;
 
     std::shared_ptr<SinkClient> sink_;
 
