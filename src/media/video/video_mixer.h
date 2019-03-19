@@ -2,6 +2,7 @@
  *  Copyright (C) 2013-2019 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -58,7 +59,8 @@ private:
 
     struct VideoMixerSource;
 
-    void render_frame(VideoFrame& output, const VideoFrame& input, int index);
+    void render_frame(VideoFrame& output, const VideoFrame& input,
+        const std::unique_ptr<VideoMixerSource>& source, int index);
 
     void start_sink();
     void stop_sink();

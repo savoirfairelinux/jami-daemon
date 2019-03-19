@@ -37,31 +37,29 @@ getTransposeFilter(int rotation, std::string inputName, int width, int height, i
     }
 
     std::stringstream ss;
-    ss << "[" << inputName << "]";
+    ss << "[" << inputName << "] ";
 
     switch (rotation) {
         case 90:
         case -270:
             ss << "transpose=2";
-            if (rescale) {
-              ss << ",scale=w=-1:h=" << height;
-              ss << ",pad=" << width << ":" << height << ":(ow-iw)/2";
-            }
+            if (rescale)
+                ss << ", scale=w=-1:h=" << height
+                    << ", pad=" << width << ":" << height << ":(ow-iw)/2";
             break;
         case 180 :
         case -180 :
-            ss << "transpose=1,transpose=1";
+            ss << "transpose=1, transpose=1";
             break;
         case 270 :
         case -90 :
             ss << "transpose=1";
-            if (rescale) {
-              ss << ",scale=w=-1:h=" << height;
-              ss << ",pad=" << width << ":" << height << ":(ow-iw)/2";
-            }
+            if (rescale)
+                ss << ", scale=w=-1:h=" << height
+                    << ", pad=" << width << ":" << height << ":(ow-iw)/2";
             break;
         default :
-            ss << "null";
+            return {};
     }
 
     const auto one = rational<int>(1);

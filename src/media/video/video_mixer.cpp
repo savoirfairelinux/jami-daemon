@@ -2,6 +2,7 @@
  *  Copyright (C) 2013-2019 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,8 +25,10 @@
 #include "media_buffer.h"
 #include "client/videomanager.h"
 #include "manager.h"
+#include "media_filter.h"
 #include "sinkclient.h"
 #include "logger.h"
+#include "filter_transpose.h"
 #ifdef RING_ACCEL
 #include "accel.h"
 #endif
@@ -33,10 +36,16 @@
 #include <cmath>
 #include <unistd.h>
 
+extern "C" {
+#include <libavutil/display.h>
+}
+
 namespace jami { namespace video {
 
 struct VideoMixer::VideoMixerSource {
-    Observable<std::shared_ptr<MediaFrame>>* source = nullptr;
+    Observable<std::shared_ptr<MediaFrame>>* source {nullptr};
+    int rotation {0};
+    std::unique_ptr<MediaFilter> rotationFilter {nullptr};
     std::unique_ptr<VideoFrame> update_frame;
     std::unique_ptr<VideoFrame> render_frame;
     void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
@@ -156,7 +165,7 @@ VideoMixer::process()
             x->atomic_swap_render(input);
 
             if (input)
-                render_frame(output, *input, i);
+                render_frame(output, *input, x, i);
 
             x->atomic_swap_render(input);
             ++i;
@@ -167,16 +176,16 @@ VideoMixer::process()
 }
 
 void
-VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input, int index)
+VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
+    const std::unique_ptr<VideoMixerSource>& source, int index)
 {
     if (!width_ or !height_ or !input.pointer())
         return;
 
 #ifdef RING_ACCEL
-    auto framePtr = HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12);
-    const auto& swFrame = *framePtr;
+    std::shared_ptr<VideoFrame> frame { HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12) };
 #else
-    const auto& swFrame = input;
+    std::shared_ptr<VideoFrame> frame = input;
 #endif
 
     const int n = sources_.size();
@@ -186,7 +195,25 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input, int index)
     int xoff = (index % zoom) * cell_width;
     int yoff = (index / zoom) * cell_height;
 
-    scaler_.scale_and_pad(swFrame, output, xoff, yoff, cell_width, cell_height, true);
+    AVFrameSideData* sideData = av_frame_get_side_data(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+    int angle = 0;
+    if (sideData) {
+        auto matrixRotation = reinterpret_cast<int32_t*>(sideData->data);
+        angle = av_display_rotation_get(matrixRotation);
+    }
+    const constexpr char filterIn[] = "mixin";
+    if (angle != source->rotation) {
+        source->rotationFilter = video::getTransposeFilter(angle, filterIn,
+            frame->width(), frame->height(), frame->format(), true);
+        source->rotation = angle;
+    }
+    if (source->rotationFilter) {
+        source->rotationFilter->feedInput(frame->pointer(), filterIn);
+        frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(
+            source->rotationFilter->readOutput()));
+    }
+
+    scaler_.scale_and_pad(*frame, output, xoff, yoff, cell_width, cell_height, true);
 }
 
 void
