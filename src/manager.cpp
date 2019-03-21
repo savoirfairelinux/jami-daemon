@@ -107,6 +107,7 @@ using ConferenceMap = std::map<std::string, std::shared_ptr<Conference>>;
 using CallIDSet = std::set<std::string>;
 
 static constexpr int ICE_INIT_TIMEOUT {10};
+static constexpr const char* PACKAGE_OLD = "ring";
 
 std::atomic_bool Manager::initialized = {false};
 
@@ -134,6 +135,15 @@ restore_backup(const std::string &path)
 {
     const std::string backup_path(path + ".bak");
     copy_over(backup_path, path);
+}
+
+void
+check_rename(const std::string& old_dir, const std::string& new_dir)
+{
+    if (old_dir != new_dir) {
+        RING_WARN() << "Migrating" << old_dir << " to " << new_dir;
+        std::rename(old_dir.c_str(), new_dir.c_str());
+    }
 }
 
 /**
@@ -687,7 +697,7 @@ Manager::init(const std::string &config_file)
             throw std::runtime_error(#ret " failed");        \
     } while (0)
 
-    srand(time(NULL)); // to get random number for RANDOM_PORT
+    srand(time(nullptr)); // to get random number for RANDOM_PORT
 
     // Initialize PJSIP (SIP and ICE implementation)
     PJSIP_TRY(pj_init());
@@ -703,6 +713,10 @@ Manager::init(const std::string &config_file)
     RING_DBG("GNU TLS version %s initialized", gnutls_check_version(nullptr));
 
     setDhtLogLevel();
+
+    check_rename(fileutils::get_cache_dir(PACKAGE_OLD), fileutils::get_cache_dir());
+    check_rename(fileutils::get_data_dir(PACKAGE_OLD), fileutils::get_data_dir());
+    check_rename(fileutils::get_config_dir(PACKAGE_OLD), fileutils::get_config_dir());
 
     pimpl_->ice_tf_.reset(new IceTransportFactory());
 
