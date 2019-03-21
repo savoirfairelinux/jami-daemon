@@ -500,7 +500,7 @@ void set_program_dir(char *program_path)
 #endif
 
 std::string
-get_cache_dir()
+get_cache_dir(const char* pkg)
 {
 #ifdef RING_UWP
     std::vector<std::string> paths;
@@ -530,14 +530,20 @@ get_cache_dir()
 #elif defined(__APPLE__)
         return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Caches"
-            + DIR_SEPARATOR_STR + PACKAGE;
+            + DIR_SEPARATOR_STR + pkg;
 #else
         return get_home_dir() + DIR_SEPARATOR_STR +
-            ".cache" + DIR_SEPARATOR_STR + PACKAGE;
+            ".cache" + DIR_SEPARATOR_STR + pkg;
 #endif
 #ifndef RING_UWP
     }
 #endif
+}
+
+std::string
+get_cache_dir()
+{
+    return get_cache_dir(PACKAGE);
 }
 
 std::string
@@ -585,7 +591,7 @@ get_home_dir()
 }
 
 std::string
-get_data_dir()
+get_data_dir(const char* pkg)
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
@@ -596,7 +602,7 @@ get_data_dir()
 #elif defined(__APPLE__)
     return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Application Support"
-            + DIR_SEPARATOR_STR + PACKAGE;
+            + DIR_SEPARATOR_STR + pkg;
 #elif defined (RING_UWP)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
@@ -612,16 +618,22 @@ get_data_dir()
 #else
     const std::string data_home(XDG_DATA_HOME);
     if (not data_home.empty())
-        return data_home + DIR_SEPARATOR_STR + PACKAGE;
+        return data_home + DIR_SEPARATOR_STR + pkg;
     // "If $XDG_DATA_HOME is either not set or empty, a default equal to
     // $HOME/.local/share should be used."
     return get_home_dir() + DIR_SEPARATOR_STR ".local" DIR_SEPARATOR_STR
-        "share" DIR_SEPARATOR_STR + PACKAGE;
+        "share" DIR_SEPARATOR_STR + pkg;
 #endif
 }
 
 std::string
-get_config_dir()
+get_data_dir()
+{
+    return get_data_dir(PACKAGE);
+}
+
+std::string
+get_config_dir(const char* pkg)
 {
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     std::vector<std::string> paths;
@@ -646,14 +658,14 @@ get_config_dir()
 #if defined(__APPLE__)
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR
         + "Library" + DIR_SEPARATOR_STR + "Application Support"
-        + DIR_SEPARATOR_STR + PACKAGE;
+        + DIR_SEPARATOR_STR + pkg;
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
-                            ".config" + DIR_SEPARATOR_STR + PACKAGE;
+                            ".config" + DIR_SEPARATOR_STR + pkg;
 #endif
     const std::string xdg_env(XDG_CONFIG_HOME);
     if (not xdg_env.empty())
-        configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
+        configdir = xdg_env + DIR_SEPARATOR_STR + pkg;
 
     if (fileutils::recursive_mkdir(configdir.data(), 0700) != true) {
         // If directory creation failed
@@ -662,6 +674,12 @@ get_config_dir()
     }
     return configdir;
 #endif
+}
+
+std::string
+get_config_dir()
+{
+    return get_config_dir(PACKAGE);
 }
 
 bool

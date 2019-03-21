@@ -47,7 +47,7 @@ print_title()
 {
     std::cout
         << "Jami Daemon " << DRing::version()
-        << ", by Savoir-faire Linux 2004-2018" << std::endl
+        << ", by Savoir-faire Linux 2004-2019" << std::endl
         << "https://jami.net/" << std::endl
 #ifdef RING_VIDEO
         << "[Video support enabled]" << std::endl
