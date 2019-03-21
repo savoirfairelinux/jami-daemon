@@ -56,6 +56,10 @@
 namespace ring { namespace fileutils {
 
     std::string get_home_dir();
+    std::string get_config_dir(const char* pkg);
+    std::string get_data_dir(const char* pkg);
+    std::string get_cache_dir(const char* pkg);
+
     std::string get_config_dir();
     std::string get_data_dir();
     std::string get_cache_dir();
