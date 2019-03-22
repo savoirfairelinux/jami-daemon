@@ -53,6 +53,8 @@ public:
 
     MessageStatus getStatus(MessageToken t) const;
 
+    bool cancel(MessageToken t);
+
     bool isSent(MessageToken t) const {
         return getStatus(t) == MessageStatus::SENT;
     }
