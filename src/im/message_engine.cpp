@@ -116,6 +116,20 @@ MessageEngine::getStatus(MessageToken t) const
     return MessageStatus::UNKNOWN;
 }
 
+bool
+MessageEngine::cancel(MessageToken t)
+{
+    std::lock_guard<std::mutex> lock(messagesMutex_);
+    for (auto& p : messages_) {
+        auto m = p.second.find(t);
+        if (m != p.second.end()) {
+            p.second.erase(m);
+            return true;
+        }
+    }
+    return false;
+}
+
 void
 MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool ok)
 {

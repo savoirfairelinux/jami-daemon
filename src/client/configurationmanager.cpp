@@ -265,13 +265,29 @@ sendAccountTextMessage(const std::string& accountID, const std::string& to, cons
 std::vector<Message>
 getLastMessages(const std::string& accountID, const uint64_t& base_timestamp)
 {
-    return ring::Manager::instance().getLastMessages(accountID, base_timestamp);
+    if (const auto acc = ring::Manager::instance().getAccount(accountID))
+        return acc->getLastMessages(base_timestamp);
+    return {};
 }
 
 int
-getMessageStatus(uint64_t id)
+getMessageStatus(uint64_t messageId)
 {
-    return ring::Manager::instance().getMessageStatus(id);
+    return ring::Manager::instance().getMessageStatus(messageId);
+}
+
+int
+getMessageStatus(const std::string& accountID, uint64_t messageId)
+{
+    return ring::Manager::instance().getMessageStatus(accountID, messageId);
+}
+
+bool
+cancelMessage(const std::string& accountID, uint64_t messageId)
+{
+    if (const auto acc = ring::Manager::instance().getAccount(accountID))
+        return acc->cancelMessage(messageId);
+    return {};
 }
 
 bool
