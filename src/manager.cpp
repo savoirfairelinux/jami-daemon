@@ -2999,27 +2999,39 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
 }
 
 int
-Manager::getMessageStatus(uint64_t id)
+statusFromImStatus(im::MessageStatus status) {
+    switch (status) {
+    case im::MessageStatus::IDLE:
+    case im::MessageStatus::SENDING:
+        return static_cast<int>(DRing::Account::MessageStates::SENDING);
+    case im::MessageStatus::SENT:
+        return static_cast<int>(DRing::Account::MessageStates::SENT);
+    case im::MessageStatus::READ:
+        return static_cast<int>(DRing::Account::MessageStates::READ);
+    case im::MessageStatus::FAILURE:
+        return static_cast<int>(DRing::Account::MessageStates::FAILURE);
+    default:
+        return static_cast<int>(DRing::Account::MessageStates::UNKNOWN);
+    }
+}
+
+int
+Manager::getMessageStatus(uint64_t id) const
 {
     const auto& allAccounts = accountFactory.getAllAccounts();
     for (auto acc : allAccounts) {
         auto status = acc->getMessageStatus(id);
-        if (status != im::MessageStatus::UNKNOWN) {
-            switch (status) {
-            case im::MessageStatus::IDLE:
-            case im::MessageStatus::SENDING:
-                return static_cast<int>(DRing::Account::MessageStates::SENDING);
-            case im::MessageStatus::SENT:
-                return static_cast<int>(DRing::Account::MessageStates::SENT);
-            case im::MessageStatus::READ:
-                return static_cast<int>(DRing::Account::MessageStates::READ);
-            case im::MessageStatus::FAILURE:
-                return static_cast<int>(DRing::Account::MessageStates::FAILURE);
-            default:
-                return static_cast<int>(DRing::Account::MessageStates::UNKNOWN);
-            }
-        }
+        if (status != im::MessageStatus::UNKNOWN)
+            return statusFromImStatus(status);
     }
+    return static_cast<int>(DRing::Account::MessageStates::UNKNOWN);
+}
+
+int
+Manager::getMessageStatus(const std::string& accountID, uint64_t id) const
+{
+    if (const auto acc = getAccount(accountID))
+        return statusFromImStatus(acc->getMessageStatus(id));
     return static_cast<int>(DRing::Account::MessageStates::UNKNOWN);
 }
 
