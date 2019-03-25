@@ -125,11 +125,21 @@ public:
     pj_ice_strans_cfg config_;
     std::string last_errmsg_;
 
-    struct Packet {
+    /*struct Packet {
       Packet(void *pkt, pj_size_t size)
           : data{reinterpret_cast<char *>(pkt), reinterpret_cast<char *>(pkt) + size} {
       }
         std::vector<char> data;
+    };*/
+
+    struct Packet {
+      Packet(void *pkt, pj_size_t size)
+          : data{std::make_unique<char[]>(size)}, datalen{size} {
+        std::copy_n(reinterpret_cast<char *>(pkt), size, data.get());
+      }
+
+      std::unique_ptr<char[]> data;
+      size_t datalen;
     };
 
     struct ComponentIO {
@@ -1122,24 +1132,43 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
 ssize_t
 IceTransport::recv(int comp_id, unsigned char* buf, size_t len)
 {
-    sip_utils::register_thread();
-    auto& io = pimpl_->compIO_[comp_id];
-    std::lock_guard<std::mutex> lk(io.mutex);
+  sip_utils::register_thread();
 
-    if (io.queue.empty()) {
-        return 0;
+  auto &io = pimpl_->compIO_[comp_id];
+  std::lock_guard<std::mutex> lk(io.mutex);
+
+  if (io.queue.empty())
+    return 0;
+
+  auto &packet = io.queue.front();
+  const auto count = std::min(len, packet.datalen);
+  std::copy_n(packet.data.get(), count, buf);
+  io.queue.pop_front();
+
+  return count;
+
+
+  /*sip_utils::register_thread();
+  auto &io = pimpl_->compIO_[comp_id];
+  std::lock_guard<std::mutex> lk(io.mutex);
+
+  if (io.queue.empty()) {
+    RING_ERR("YO");
+    return 0;
     }
 
     auto& packet = io.queue.front();
     const auto count = std::min(len, packet.data.size());
     std::copy_n(packet.data.begin(), count, buf);
     if (count == packet.data.size()) {
+      RING_ERR("YO1");
       io.queue.pop_front();
     } else {
-        packet.data.erase(packet.data.begin(), packet.data.begin() + count);
+      RING_ERR("YO2");
+      packet.data.erase(packet.data.begin(), packet.data.begin() + count);
     }
 
-    return count;
+    return count;*/
 }
 
 void
@@ -1152,7 +1181,8 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
     if (cb) {
         // Flush existing queue using the callback
         for (const auto& packet : io.queue)
-            io.cb((uint8_t*)packet.data.data(), packet.data.size());
+            //io.cb((uint8_t*)packet.data.data(), packet.data.size());
+            io.cb((uint8_t *)packet.data.get(), packet.datalen);
         io.queue.clear();
     }
 }
@@ -1223,7 +1253,7 @@ IceTransport::waitForData(int comp_id, long int timeout, std::error_code& ec)
       io.cv.wait(lk);
     else if (!isRunning())
       return -1; // acknowledged as an error
-    return io.queue.front().data.size();
+    return io.queue.front().datalen;
 }
 
 //==============================================================================

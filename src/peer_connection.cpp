@@ -52,7 +52,7 @@ namespace ring {
 
 using lock = std::lock_guard<std::mutex>;
 
-static constexpr std::size_t IO_BUFFER_SIZE {100000}; ///< Size of char buffer used by IO operations
+static constexpr std::size_t IO_BUFFER_SIZE {3000}; ///< Size of char buffer used by IO operations
 
 //==============================================================================
 
@@ -297,8 +297,12 @@ TcpSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
     if (ice_) {
         if (!ice_->isRunning()) return 0;
         try {
+          RING_ERR("waitForData");
           auto res = ice_->waitForData(0, -1, ec);
+            RING_ERR("READ 0. %i", res);
           res = ice_->recv(0, reinterpret_cast<unsigned char *>(buf), len);
+            RING_ERR("READ len %i", len);
+            RING_ERR("READ 2. %i", res);
           if (res < 0)
             ec.assign(errno, std::generic_category());
           else
@@ -330,7 +334,7 @@ TcpSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code&
         } else {
             ec.clear();
         }
-        return res;
+        return (res >= 0) ? res : 0;
     }
     // NOTE: recv buf args is a void* on POSIX compliant system, but it's a char* on mingw
     auto res = ::send(sock_, reinterpret_cast<const char*>(buf), len, 0);
