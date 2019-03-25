@@ -103,23 +103,7 @@ public:
 private:
     NON_COPYABLE(MediaRecorder);
 
-    struct StreamObserver : public Observer<std::shared_ptr<MediaFrame>> {
-        const MediaStream info;
-
-        StreamObserver(const MediaStream& ms, std::function<void(const std::shared_ptr<MediaFrame>&)> func)
-            : info(ms), cb_(func)
-        {};
-
-        ~StreamObserver() {};
-
-        void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/, const std::shared_ptr<MediaFrame>& m) override
-        {
-            cb_(m);
-        }
-
-    private:
-        std::function<void(const std::shared_ptr<MediaFrame>&)> cb_;
-    };
+    struct StreamObserver;
 
     void onFrame(const std::string& name, const std::shared_ptr<MediaFrame>& frame);
 
