@@ -546,7 +546,6 @@ class DRingCtrl(Thread):
 
         self.callmanager.transfert(callid, to)
 
-
     def Refuse(self, callid):
         """Refuse an incoming call identified by a CallID"""
 
