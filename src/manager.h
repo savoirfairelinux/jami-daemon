@@ -899,7 +899,7 @@ private:
 // Helper to install a callback to be called once by the main event loop
 template<typename Callback>
 static void runOnMainThread(Callback&& cb) {
-    Manager::instance().scheduler().run([cb = std::move(cb)]() mutable {
+    Manager::instance().scheduler().run([cb = std::forward<Callback>(cb)]() mutable {
         cb();
     });
 }
