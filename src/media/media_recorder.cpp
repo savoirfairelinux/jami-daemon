@@ -26,6 +26,7 @@
 #include "media_recorder.h"
 #include "system_codec_container.h"
 #include "thread_pool.h"
+#include "video/filter_transpose.h"
 #ifdef RING_ACCEL
 #include "video/accel.h"
 #endif
@@ -36,7 +37,13 @@
 #include <sys/types.h>
 #include <ctime>
 
+extern "C" {
+#include <libavutil/display.h>
+}
+
 namespace ring {
+
+const constexpr char ROTATION_FILTER_INPUT_NAME[] = "in";
 
 // Replaces every occurrence of @from with @to in @str
 static std::string
@@ -52,6 +59,47 @@ replaceAll(const std::string& str, const std::string& from, const std::string& t
     }
     return copy;
 }
+
+
+struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFrame>>
+{
+    const MediaStream info;
+
+    StreamObserver(const MediaStream& ms, std::function<void(const std::shared_ptr<MediaFrame>&)> func)
+        : info(ms), cb_(func)
+    {};
+
+    ~StreamObserver() {};
+
+    void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/, const std::shared_ptr<MediaFrame>& m) override
+    {
+        if (info.isVideo) {
+            auto framePtr = static_cast<VideoFrame*>(m.get());
+            AVFrameSideData* sideData = av_frame_get_side_data(framePtr->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+            int angle = sideData ?  av_display_rotation_get(reinterpret_cast<int32_t*>(sideData->data)) : 0;
+            if (angle != rotation_) {
+                videoRotationFilter_ = ring::video::getTransposeFilter(angle, ROTATION_FILTER_INPUT_NAME, framePtr->width(), framePtr->height(), framePtr->format(), true);
+                rotation_ = angle;
+            }
+            if (videoRotationFilter_) {
+                videoRotationFilter_->feedInput(framePtr->pointer(), ROTATION_FILTER_INPUT_NAME);
+                auto rotated = videoRotationFilter_->readOutput();
+                av_frame_remove_side_data(rotated->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+                cb_(std::move(rotated));
+            } else {
+                cb_(m);
+            }
+        } else {
+            cb_(m);
+        }
+    }
+
+private:
+    std::function<void(const std::shared_ptr<MediaFrame>&)> cb_;
+    std::unique_ptr<MediaFilter> videoRotationFilter_ {};
+    int rotation_ = 0;
+};
+
 
 MediaRecorder::MediaRecorder()
 {}

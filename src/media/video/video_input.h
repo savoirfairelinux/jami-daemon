@@ -118,7 +118,7 @@ private:
     void deleteDecoder();
 
     int rotation_ {0};
-    std::atomic<AVBufferRef*> frameDataBuffer_ {nullptr};
+    std::shared_ptr<AVBufferRef> displayMatrix_;
     void setRotation(int angle);
 
     // true if decOpts_ is ready to use, false if using promise/future

@@ -89,7 +89,7 @@ private:
     bool isReset_;
     uint16_t mtu_;
     int rotation_;
-    std::atomic<AVBufferRef*> frameDataBuffer {nullptr};
+    std::shared_ptr<AVBufferRef> displayMatrix_;
 
     std::function<void(void)> requestKeyFrameCallback_;
     void openDecoder();
