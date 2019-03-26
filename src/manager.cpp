@@ -693,7 +693,7 @@ Manager::init(const std::string &config_file)
 #endif
 
 #define PJSIP_TRY(ret) do {                                  \
-        if (ret != PJ_SUCCESS)                               \
+        if ((ret) != PJ_SUCCESS)                               \
             throw std::runtime_error(#ret " failed");        \
     } while (0)
 
