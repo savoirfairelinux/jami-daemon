@@ -193,11 +193,11 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         }
 
         restbed::Uri uri(HTTPS_PROTO + serverHost_ + QUERY_NAME + name);
+        RING_DBG("Name lookup for %s: %s", name.c_str(), uri.to_string().c_str());
+
         auto request = std::make_shared<restbed::Request>(std::move(uri));
         request->set_header("Accept", "*/*");
         request->set_header("Host", serverHost_);
-
-        RING_DBG("Name lookup for %s: %s", name.c_str(), uri.to_string().c_str());
 
         auto ret = restbed::Http::async(request, [this,cb,name](const std::shared_ptr<restbed::Request>&,
                                                      const std::shared_ptr<restbed::Response>& reply) {

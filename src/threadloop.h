@@ -117,7 +117,7 @@ public:
             throw std::runtime_error("Can not call wait outside thread context");
 
         std::unique_lock<std::mutex> lk(mutex_);
-        cv_.wait(lk, [this, p = std::move(pred)]{ return isStopping() || p(); });
+        cv_.wait(lk, [this, p = std::forward<Pred>(pred)]{ return isStopping() || p(); });
     }
 
 private:
