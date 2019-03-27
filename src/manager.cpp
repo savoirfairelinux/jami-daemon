@@ -140,9 +140,23 @@ restore_backup(const std::string &path)
 void
 check_rename(const std::string& old_dir, const std::string& new_dir)
 {
-    if (old_dir != new_dir and fileutils::isDirectory(old_dir) and not fileutils::isDirectory(new_dir)) {
-        RING_WARN() << "Migrating" << old_dir << " to " << new_dir;
+    if (old_dir == new_dir or not fileutils::isDirectory(old_dir))
+        return;
+
+    RING_WARN() << "Migrating" << old_dir << " to " << new_dir;
+    if (not fileutils::isDirectory(new_dir)) {
         std::rename(old_dir.c_str(), new_dir.c_str());
+    } else {
+        for (const auto &file : fileutils::readDirectory(old_dir)) {
+            auto old_dest = fileutils::getFullPath(old_dir, file);
+            auto new_dest = fileutils::getFullPath(new_dir, file);
+            if (fileutils::isDirectory(old_dest) and fileutils::isDirectory(new_dest)) {
+                check_rename(old_dest, new_dest);
+            } else {
+                std::rename(old_dest.c_str(), new_dest.c_str());
+            }
+        }
+        fileutils::removeAll(old_dir);
     }
 }
 
