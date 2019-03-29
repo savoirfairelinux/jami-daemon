@@ -116,6 +116,25 @@ MessageEngine::getStatus(MessageToken t) const
     return MessageStatus::UNKNOWN;
 }
 
+bool
+MessageEngine::cancel(MessageToken t)
+{
+    std::lock_guard<std::mutex> lock(messagesMutex_);
+    for (auto& p : messages_) {
+        auto m = p.second.find(t);
+        if (m != p.second.end()) {
+            m->second.status = MessageStatus::CANCELLED;
+            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
+                                                                            t,
+                                                                            m->second.to,
+                                                                            static_cast<int>(DRing::Account::MessageStates::CANCELLED));
+            save_();
+            return true;
+        }
+    }
+    return false;
+}
+
 void
 MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool ok)
 {
