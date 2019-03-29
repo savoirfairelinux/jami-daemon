@@ -67,7 +67,8 @@ enum class MessageStates : int {
     SENDING,
     SENT,
     READ,
-    FAILURE
+    FAILURE,
+    CANCELLED
 }; //DRing::Account::MessageStates
 
 enum class testAccountICEInitializationStatus : int {

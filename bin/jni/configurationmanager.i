@@ -89,6 +89,8 @@ void registerAllAccounts(void);
 uint64_t sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& message);
 std::vector<DRing::Message> getLastMessages(const std::string& accountID, uint64_t base_timestamp);
 int getMessageStatus(uint64_t id);
+int getMessageStatus(const std::string& accountID, uint64_t id);
+bool cancelMessage(const std::string& accountID, uint64_t id);
 
 bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
 bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);
