@@ -40,7 +40,8 @@ enum class MessageStatus {
     SENDING,
     SENT,
     READ,
-    FAILURE
+    FAILURE,
+    CANCELLED
 };
 
 class MessageEngine
@@ -52,6 +53,8 @@ public:
     MessageToken sendMessage(const std::string& to, const std::map<std::string, std::string>& payloads);
 
     MessageStatus getStatus(MessageToken t) const;
+
+    bool cancel(MessageToken t);
 
     bool isSent(MessageToken t) const {
         return getStatus(t) == MessageStatus::SENT;
