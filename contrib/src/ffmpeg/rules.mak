@@ -201,6 +201,12 @@ endif
 
 ifdef HAVE_IOS
 FFMPEGCONF += \
+--enable-hwaccel=h263_videotoolbox \
+--enable-hwaccel=h264_videotoolbox \
+--enable-hwaccel=mpeg4_videotoolbox \
+--enable-encoder=h264_videotoolbox \
+  --enable-videotoolbox \
+  --enable-encoder=h264_videotoolbox \
 	--target-os=darwin \
 	--enable-cross-compile \
 	--arch=$(ARCH) \
