@@ -115,11 +115,11 @@ CallFactory::getAllCalls<Call>() const
 
     for (const auto& itemmap : callMaps_) {
         const auto& map = itemmap.second;
-        for (const auto item : map)
+        v.reserve(v.size() + map.size());
+        for (const auto& item : map)
             v.push_back(item.second);
     }
 
-    v.shrink_to_fit();
     return v;
 }
 
