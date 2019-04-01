@@ -53,7 +53,6 @@ static constexpr unsigned STUN_MAX_PACKET_SIZE {8192};
 static constexpr uint16_t IPV6_HEADER_SIZE = 40; ///< Size in bytes of IPV6 packet header
 static constexpr uint16_t IPV4_HEADER_SIZE = 20; ///< Size in bytes of IPV4 packet header
 static constexpr int MAX_CANDIDATES {32};
-static constexpr char NEW_LINE = '\n'; ///< New line character used for (de)serialisation
 
 //==============================================================================
 
