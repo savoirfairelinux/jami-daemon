@@ -31,11 +31,12 @@ namespace ring {
 AudioStream::AudioStream(pa_context *c,
                          pa_threaded_mainloop *m,
                          const char *desc,
-                         int type,
+                         StreamType type,
                          unsigned samplrate,
                          const PaDeviceInfos* infos,
-                         bool ec)
-    : audiostream_(0), mainloop_(m)
+                         bool ec,
+                         OnReady onReady)
+    : audiostream_(0), mainloop_(m), onReady_(std::move(onReady))
 {
     const pa_channel_map channel_map = infos->channel_map;
 
@@ -66,17 +67,24 @@ AudioStream::AudioStream(pa_context *c,
     attributes.fragsize = pa_usec_to_bytes(80 * PA_USEC_PER_MSEC, &sample_spec);
     attributes.minreq = (uint32_t) -1;
 
+    pa_stream_set_state_callback(audiostream_, [](pa_stream* s, void* user_data){
+        static_cast<AudioStream*>(user_data)->stateChanged(s);
+    }, this);
+    pa_stream_set_moved_callback(audiostream_, [](pa_stream* s, void* user_data){
+        static_cast<AudioStream*>(user_data)->moved(s);
+    }, this);
+
     {
         PulseMainLoopLock lock(mainloop_);
-        const pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE);
+        const pa_stream_flags_t flags = static_cast<pa_stream_flags_t>(PA_STREAM_ADJUST_LATENCY | PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_START_CORKED);
 
-        if (type == PLAYBACK_STREAM || type == RINGTONE_STREAM) {
+        if (type == StreamType::Playback || type == StreamType::Ringtone) {
             pa_stream_connect_playback(audiostream_,
                     infos->name.empty() ? nullptr : infos->name.c_str(),
                     &attributes,
                     flags,
                     nullptr, nullptr);
-        } else if (type == CAPTURE_STREAM) {
+        } else if (type == StreamType::Capture) {
             pa_stream_connect_record(audiostream_,
                     infos->name.empty() ? nullptr : infos->name.c_str(),
                     &attributes,
@@ -84,12 +92,6 @@ AudioStream::AudioStream(pa_context *c,
         }
     }
 
-    pa_stream_set_state_callback(audiostream_, [](pa_stream* s, void* user_data){
-        static_cast<AudioStream*>(user_data)->stateChanged(s);
-    }, this);
-    pa_stream_set_moved_callback(audiostream_, [](pa_stream* s, void* user_data){
-        static_cast<AudioStream*>(user_data)->moved(s);
-    }, this);
 }
 
 AudioStream::~AudioStream()
@@ -99,14 +101,21 @@ AudioStream::~AudioStream()
     pa_stream_disconnect(audiostream_);
 
     // make sure we don't get any further callback
-    pa_stream_set_state_callback(audiostream_, NULL, NULL);
-    pa_stream_set_write_callback(audiostream_, NULL, NULL);
-    pa_stream_set_read_callback(audiostream_, NULL, NULL);
-    pa_stream_set_moved_callback(audiostream_, NULL, NULL);
-    pa_stream_set_underflow_callback(audiostream_, NULL, NULL);
-    pa_stream_set_overflow_callback(audiostream_, NULL, NULL);
+    pa_stream_set_state_callback(audiostream_, nullptr, nullptr);
+    pa_stream_set_write_callback(audiostream_, nullptr, nullptr);
+    pa_stream_set_read_callback(audiostream_, nullptr, nullptr);
+    pa_stream_set_moved_callback(audiostream_, nullptr, nullptr);
+    pa_stream_set_underflow_callback(audiostream_, nullptr, nullptr);
+    pa_stream_set_overflow_callback(audiostream_, nullptr, nullptr);
+    pa_stream_set_suspended_callback(audiostream_, nullptr, nullptr);
+    pa_stream_set_started_callback(audiostream_, nullptr, nullptr);
 
     pa_stream_unref(audiostream_);
+}
+
+void
+AudioStream::start() {
+    pa_stream_cork(audiostream_, 0, nullptr, nullptr);
 }
 
 void AudioStream::moved(pa_stream* s)
@@ -137,6 +146,7 @@ AudioStream::stateChanged(pa_stream* s)
             //RING_DBG("minreq %u", pa_stream_get_buffer_attr(s)->minreq);
             //RING_DBG("fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
             //RING_DBG("samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
+            onReady_();
             break;
 
         case PA_STREAM_UNCONNECTED:

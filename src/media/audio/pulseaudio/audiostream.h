@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef _AUDIO_STREAM_H
-#define _AUDIO_STREAM_H
+#pragma once
 
 #include "noncopyable.h"
 #include "pulselayer.h"
@@ -32,85 +31,86 @@ namespace ring {
 /**
  * This data structure contains the different king of audio streams available
  */
-enum STREAM_TYPE {
-    PLAYBACK_STREAM, CAPTURE_STREAM, RINGTONE_STREAM
-};
+enum class StreamType { Playback, Capture, Ringtone };
 
 class AudioStream {
-    public:
+public:
+    using OnReady = std::function<void()>;
 
-        /**
-         * Constructor
-         *
-         * @param context pulseaudio's application context.
-         * @param mainloop pulseaudio's main loop
-         * @param description
-         * @param types
-         * @param audio sampling rate
-         * @param pointer to pa_source_info or pa_sink_info (depending on type).
-         * @param true if echo cancelling should be used with this stream
-         */
-        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const PaDeviceInfos*, bool);
+    /**
+     * Constructor
+     *
+     * @param context pulseaudio's application context.
+     * @param mainloop pulseaudio's main loop
+     * @param description
+     * @param types
+     * @param audio sampling rate
+     * @param pointer to pa_source_info or pa_sink_info (depending on type).
+     * @param true if echo cancelling should be used with this stream
+     */
+    AudioStream(pa_context *, pa_threaded_mainloop *, const char *, StreamType, unsigned, const PaDeviceInfos*, bool, OnReady onReady);
 
-        ~AudioStream();
+    ~AudioStream();
 
-        /**
-         * Accessor: Get the pulseaudio stream object
-         * @return pa_stream* The stream
-         */
-        pa_stream* stream() {
-            return audiostream_;
-        }
+    void start();
 
-        const pa_sample_spec * sampleSpec() const {
-            return pa_stream_get_sample_spec(audiostream_);
-        }
+    /**
+     * Accessor: Get the pulseaudio stream object
+     * @return pa_stream* The stream
+     */
+    pa_stream* stream() {
+        return audiostream_;
+    }
 
-        inline size_t sampleSize() const {
-            return pa_sample_size(sampleSpec());
-        }
-        inline size_t frameSize() const {
-            return pa_frame_size(sampleSpec());
-        }
+    const pa_sample_spec * sampleSpec() const {
+        return pa_stream_get_sample_spec(audiostream_);
+    }
 
-        inline uint8_t channels() const {
-            return sampleSpec()->channels;
-        }
+    inline size_t sampleSize() const {
+        return pa_sample_size(sampleSpec());
+    }
+    inline size_t frameSize() const {
+        return pa_frame_size(sampleSpec());
+    }
 
-        inline AudioFormat format() const {
-            auto s = sampleSpec();
-            return AudioFormat(s->rate, s->channels);
-        }
+    inline uint8_t channels() const {
+        return sampleSpec()->channels;
+    }
 
-        inline std::string getDeviceName() const {
-            auto res = pa_stream_get_device_name(audiostream_);
-            if (res == reinterpret_cast<decltype(res)>(-PA_ERR_NOTSUPPORTED) or !res)
-                return {};
-            return res;
-        }
+    inline AudioFormat format() const {
+        auto s = sampleSpec();
+        return AudioFormat(s->rate, s->channels);
+    }
 
-        bool isReady();
+    inline std::string getDeviceName() const {
+        auto res = pa_stream_get_device_name(audiostream_);
+        if (res == reinterpret_cast<decltype(res)>(-PA_ERR_NOTSUPPORTED) or !res)
+            return {};
+        return res;
+    }
 
-    private:
-        NON_COPYABLE(AudioStream);
+    bool isReady();
 
-        /**
-         * Mandatory asynchronous callback on the audio stream state
-         */
-        void stateChanged(pa_stream* s);
-        void moved(pa_stream* s);
+private:
+    NON_COPYABLE(AudioStream);
 
-        /**
-         * The pulse audio object
-         */
-        pa_stream* audiostream_;
+    OnReady onReady_;
 
-        /**
-         * A pointer to the opaque threaded main loop object
-         */
-        pa_threaded_mainloop * mainloop_;
+    /**
+     * Mandatory asynchronous callback on the audio stream state
+     */
+    void stateChanged(pa_stream* s);
+    void moved(pa_stream* s);
+
+    /**
+     * The pulse audio object
+     */
+    pa_stream* audiostream_;
+
+    /**
+     * A pointer to the opaque threaded main loop object
+     */
+    pa_threaded_mainloop * mainloop_;
 };
 
 }
-
-#endif // _AUDIO_STREAM_H
