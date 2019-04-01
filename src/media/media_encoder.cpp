@@ -504,14 +504,16 @@ MediaEncoder::send(AVPacket& pkt, int streamIdx)
 {
     if (streamIdx < 0)
         streamIdx = currentStreamIdx_;
-    auto encoderCtx = encoders_[streamIdx];
-    pkt.stream_index = streamIdx;
-    if (pkt.pts != AV_NOPTS_VALUE)
-        pkt.pts = av_rescale_q(pkt.pts, encoderCtx->time_base,
-                               outputCtx_->streams[streamIdx]->time_base);
-    if (pkt.dts != AV_NOPTS_VALUE)
-        pkt.dts = av_rescale_q(pkt.dts, encoderCtx->time_base,
-                               outputCtx_->streams[streamIdx]->time_base);
+    if (streamIdx >= 0 and streamIdx < encoders_.size()) {
+        auto encoderCtx = encoders_[streamIdx];
+        pkt.stream_index = streamIdx;
+        if (pkt.pts != AV_NOPTS_VALUE)
+            pkt.pts = av_rescale_q(pkt.pts, encoderCtx->time_base,
+                                outputCtx_->streams[streamIdx]->time_base);
+        if (pkt.dts != AV_NOPTS_VALUE)
+            pkt.dts = av_rescale_q(pkt.dts, encoderCtx->time_base,
+                                outputCtx_->streams[streamIdx]->time_base);
+    }
     // write the compressed frame
     auto ret = av_write_frame(outputCtx_, &pkt);
     if (ret < 0) {
