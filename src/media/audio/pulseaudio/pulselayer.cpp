@@ -323,9 +323,21 @@ void PulseLayer::createStreams(pa_context* c)
 {
     hardwareFormatAvailable(defaultAudioFormat_);
 
+    auto onReady = [this] {
+        bool playbackReady = not playback_ or playback_->isReady();
+        bool ringtoneReady = not ringtone_ or ringtone_->isReady();
+        bool recordReady = not record_ or record_->isReady();
+        if (playbackReady and recordReady and ringtoneReady) {
+            RING_DBG("All streams ready, starting !");
+            if (playback_) playback_->start();
+            if (ringtone_) ringtone_->start();
+            if (record_) record_->start();
+        }
+    };
+
     // Create playback stream
     if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice())) {
-        playback_.reset(new AudioStream(c, mainloop_.get(), "Playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos, true));
+        playback_.reset(new AudioStream(c, mainloop_.get(), "Playback", StreamType::Playback, audioFormat_.sample_rate, dev_infos, true, onReady));
         pa_stream_set_write_callback(playback_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->writeToSpeaker();
         }, this);
@@ -334,7 +346,7 @@ void PulseLayer::createStreams(pa_context* c)
     // Create ringtone stream
     // Echo canceling is not enabled for ringtone, because PA can only cancel a single output source with an input source
     if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredRingtoneDevice())) {
-        ringtone_.reset(new AudioStream(c, mainloop_.get(), "Ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos, false));
+        ringtone_.reset(new AudioStream(c, mainloop_.get(), "Ringtone", StreamType::Ringtone, audioFormat_.sample_rate, dev_infos, false, onReady));
         pa_stream_set_write_callback(ringtone_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->ringtoneToSpeaker();
         }, this);
@@ -342,7 +354,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     // Create capture stream
     if (auto dev_infos = getDeviceInfos(sourceList_, getPreferredCaptureDevice())) {
-        record_.reset(new AudioStream(c, mainloop_.get(), "Capture", CAPTURE_STREAM, audioFormat_.sample_rate, dev_infos, true));
+        record_.reset(new AudioStream(c, mainloop_.get(), "Capture", StreamType::Capture, audioFormat_.sample_rate, dev_infos, true, onReady));
         pa_stream_set_read_callback(record_->stream() , [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->readFromMic();
         }, this);
@@ -483,10 +495,8 @@ void PulseLayer::ringtoneToSpeaker()
 }
 
 
-std::string stripEchoSufix(std::string deviceName) {
-
+std::string stripEchoSufix(const std::string& deviceName) {
     return std::regex_replace(deviceName, PA_EC_SUFFIX, "");
-
 }
 
 void
@@ -560,8 +570,15 @@ void PulseLayer::waitForDeviceList()
             return;
 
         // If a current device changed, restart streams
-        if (!playback_ || stripEchoSufix(playback_->getDeviceName()) != getDeviceInfos(sinkList_, getPreferredPlaybackDevice())->name
-         || !record_   || stripEchoSufix(record_->getDeviceName())   != getDeviceInfos(sourceList_, getPreferredCaptureDevice())->name) {
+        auto playbackInfo = getDeviceInfos(sinkList_, getPreferredPlaybackDevice());
+        bool playbackDeviceChanged = !playback_ or (!playbackInfo->name.empty() and
+                                                     playbackInfo->name != stripEchoSufix(playback_->getDeviceName()));
+
+        auto recordInfo = getDeviceInfos(sourceList_, getPreferredCaptureDevice());
+        bool recordDeviceChanged = !record_ or (!recordInfo->name.empty() and
+                                                 recordInfo->name != stripEchoSufix(record_->getDeviceName()));
+
+        if (playbackDeviceChanged or recordDeviceChanged) {
             RING_WARN("Audio devices changed, restarting streams.");
             stopStream();
             startStream();
