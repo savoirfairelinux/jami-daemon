@@ -412,10 +412,10 @@ readDirectory(const std::string& dir)
 #else
     while ((entry = readdir(dp)) != nullptr) {
 #endif
-        const std::string fname {entry->d_name};
+        std::string fname {entry->d_name};
         if (fname == "." || fname == "..")
             continue;
-        files.push_back(std::move(fname));
+        files.emplace_back(std::move(fname));
     }
     closedir(dp);
     return files;
@@ -691,7 +691,7 @@ recursive_mkdir(const std::string& path, mode_t mode)
     if (mkdir(path.data()) != 0) {
 #endif
         if (errno == ENOENT) {
-            recursive_mkdir(path.substr(0, path.find_last_of(DIR_SEPARATOR_STR)), mode);
+            recursive_mkdir(path.substr(0, path.find_last_of(DIR_SEPARATOR_CH)), mode);
 #ifndef _WIN32
             if (mkdir(path.data(), mode) != 0) {
 #else
