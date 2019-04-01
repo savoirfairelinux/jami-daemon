@@ -463,7 +463,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         // Initialize on first video frame, or first audio frame if no video stream
         bool isVideo = (frame->width > 0 && frame->height > 0);
         if (isVideo or not videoOpts_.isValid()) {
-            initStream(videoCodec_, frame->hw_frames_ctx);
+            streamIdx = initStream(videoCodec_, frame->hw_frames_ctx);
             startIO();
         } else {
             return 0;
@@ -502,16 +502,22 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
 bool
 MediaEncoder::send(AVPacket& pkt, int streamIdx)
 {
+    if (!initialized_) {
+        streamIdx = initStream(videoCodec_, nullptr);
+        startIO();
+    }
     if (streamIdx < 0)
         streamIdx = currentStreamIdx_;
-    auto encoderCtx = encoders_[streamIdx];
-    pkt.stream_index = streamIdx;
-    if (pkt.pts != AV_NOPTS_VALUE)
-        pkt.pts = av_rescale_q(pkt.pts, encoderCtx->time_base,
-                               outputCtx_->streams[streamIdx]->time_base);
-    if (pkt.dts != AV_NOPTS_VALUE)
-        pkt.dts = av_rescale_q(pkt.dts, encoderCtx->time_base,
-                               outputCtx_->streams[streamIdx]->time_base);
+    if (streamIdx >= 0 and streamIdx < encoders_.size()) {
+        auto encoderCtx = encoders_[streamIdx];
+        pkt.stream_index = streamIdx;
+        if (pkt.pts != AV_NOPTS_VALUE)
+            pkt.pts = av_rescale_q(pkt.pts, encoderCtx->time_base,
+                                outputCtx_->streams[streamIdx]->time_base);
+        if (pkt.dts != AV_NOPTS_VALUE)
+            pkt.dts = av_rescale_q(pkt.dts, encoderCtx->time_base,
+                                outputCtx_->streams[streamIdx]->time_base);
+    }
     // write the compressed frame
     auto ret = av_write_frame(outputCtx_, &pkt);
     if (ret < 0) {
