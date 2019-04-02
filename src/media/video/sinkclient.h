@@ -35,9 +35,9 @@
 
 #define DEBUG_FPS
 
-namespace ring {class MediaFilter;}
+namespace jami {class MediaFilter;}
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 #if HAVE_SHM
 class ShmHolder;
@@ -69,8 +69,8 @@ class SinkClient : public VideoFramePassiveReader
         }
 
         // as VideoFramePassiveReader
-        void update(Observable<std::shared_ptr<ring::MediaFrame>>*,
-                    const std::shared_ptr<ring::MediaFrame>&) override;
+        void update(Observable<std::shared_ptr<jami::MediaFrame>>*,
+                    const std::shared_ptr<jami::MediaFrame>&) override;
 
         bool start() noexcept;
         bool stop() noexcept;
@@ -109,4 +109,4 @@ class SinkClient : public VideoFramePassiveReader
 #endif // HAVE_SHM
 };
 
-}} // namespace ring::video
+}} // namespace jami::video

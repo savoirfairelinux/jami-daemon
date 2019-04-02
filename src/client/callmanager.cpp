@@ -49,10 +49,10 @@ placeCall(const std::string& accountID, const std::string& to)
 {
     // Check if a destination number is available
     if (to.empty()) {
-        RING_DBG("No number entered - Call stopped");
+        JAMI_DBG("No number entered - Call stopped");
         return {};
     } else {
-        return ring::Manager::instance().outgoingCall(accountID, to);
+        return jami::Manager::instance().outgoingCall(accountID, to);
     }
 }
 
@@ -61,192 +61,192 @@ placeCall(const std::string& accountID, const std::string& to, const std::map<st
 {
     // Check if a destination number is available
     if (to.empty()) {
-        RING_DBG("No number entered - Call stopped");
+        JAMI_DBG("No number entered - Call stopped");
         return {};
     } else {
-        return ring::Manager::instance().outgoingCall(accountID, to, "", volatileCallDetails);
+        return jami::Manager::instance().outgoingCall(accountID, to, "", volatileCallDetails);
     }
 }
 
 bool
 refuse(const std::string& callID)
 {
-    return ring::Manager::instance().refuseCall(callID);
+    return jami::Manager::instance().refuseCall(callID);
 }
 
 bool
 accept(const std::string& callID)
 {
-    return ring::Manager::instance().answerCall(callID);
+    return jami::Manager::instance().answerCall(callID);
 }
 
 bool
 hangUp(const std::string& callID)
 {
-    return ring::Manager::instance().hangupCall(callID);
+    return jami::Manager::instance().hangupCall(callID);
 }
 
 bool
 hangUpConference(const std::string& confID)
 {
-    return ring::Manager::instance().hangupConference(confID);
+    return jami::Manager::instance().hangupConference(confID);
 }
 
 bool
 hold(const std::string& callID)
 {
-    return ring::Manager::instance().onHoldCall(callID);
+    return jami::Manager::instance().onHoldCall(callID);
 }
 
 bool
 unhold(const std::string& callID)
 {
-    return ring::Manager::instance().offHoldCall(callID);
+    return jami::Manager::instance().offHoldCall(callID);
 }
 
 bool
 muteLocalMedia(const std::string& callid, const std::string& mediaType, bool mute)
 {
-    return ring::Manager::instance().muteMediaCall(callid, mediaType, mute);
+    return jami::Manager::instance().muteMediaCall(callid, mediaType, mute);
 }
 
 bool
 transfer(const std::string& callID, const std::string& to)
 {
-    return ring::Manager::instance().transferCall(callID, to);
+    return jami::Manager::instance().transferCall(callID, to);
 }
 
 bool
 attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
-    return ring::Manager::instance().attendedTransfer(transferID, targetID);
+    return jami::Manager::instance().attendedTransfer(transferID, targetID);
 }
 
 bool
 joinParticipant(const std::string& sel_callID,
                              const std::string& drag_callID)
 {
-    return ring::Manager::instance().joinParticipant(sel_callID, drag_callID);
+    return jami::Manager::instance().joinParticipant(sel_callID, drag_callID);
 }
 
 void
 createConfFromParticipantList(const std::vector<std::string>& participants)
 {
-   ring::Manager::instance().createConfFromParticipantList(participants);
+   jami::Manager::instance().createConfFromParticipantList(participants);
 }
 
 bool
 isConferenceParticipant(const std::string& callID)
 {
-    return ring::Manager::instance().isConferenceParticipant(callID);
+    return jami::Manager::instance().isConferenceParticipant(callID);
 }
 
 void
 removeConference(const std::string& conference_id)
 {
-   ring::Manager::instance().removeConference(conference_id);
+   jami::Manager::instance().removeConference(conference_id);
 }
 
 void
 startSmartInfo(uint32_t refreshTimeMs)
 {
-    ring::Smartools::getInstance().start(std::chrono::milliseconds(refreshTimeMs));
+    jami::Smartools::getInstance().start(std::chrono::milliseconds(refreshTimeMs));
 }
 
 void
 stopSmartInfo()
 {
-    ring::Smartools::getInstance().stop();
+    jami::Smartools::getInstance().stop();
 }
 
 bool
 addParticipant(const std::string& callID, const std::string& confID)
 {
-    return ring::Manager::instance().addParticipant(callID, confID);
+    return jami::Manager::instance().addParticipant(callID, confID);
 }
 
 bool
 addMainParticipant(const std::string& confID)
 {
-    return ring::Manager::instance().addMainParticipant(confID);
+    return jami::Manager::instance().addMainParticipant(confID);
 }
 
 bool
 detachLocalParticipant()
 {
-    return ring::Manager::instance().detachLocalParticipant();
+    return jami::Manager::instance().detachLocalParticipant();
 }
 
 bool
 detachParticipant(const std::string& callID)
 {
-    return ring::Manager::instance().detachParticipant(callID);
+    return jami::Manager::instance().detachParticipant(callID);
 }
 
 bool
 joinConference(const std::string& sel_confID, const std::string& drag_confID)
 {
-    return ring::Manager::instance().joinConference(sel_confID, drag_confID);
+    return jami::Manager::instance().joinConference(sel_confID, drag_confID);
 }
 
 bool
 holdConference(const std::string& confID)
 {
-    return ring::Manager::instance().holdConference(confID);
+    return jami::Manager::instance().holdConference(confID);
 }
 
 bool
 unholdConference(const std::string& confID)
 {
-    return ring::Manager::instance().unHoldConference(confID);
+    return jami::Manager::instance().unHoldConference(confID);
 }
 
 std::map<std::string, std::string>
 getConferenceDetails(const std::string& callID)
 {
-    return ring::Manager::instance().getConferenceDetails(callID);
+    return jami::Manager::instance().getConferenceDetails(callID);
 }
 
 std::vector<std::string>
 getConferenceList()
 {
-    return ring::Manager::instance().getConferenceList();
+    return jami::Manager::instance().getConferenceList();
 }
 
 std::vector<std::string>
 getParticipantList(const std::string& confID)
 {
-    return ring::Manager::instance().getParticipantList(confID);
+    return jami::Manager::instance().getParticipantList(confID);
 }
 
 std::vector<std::string>
 getDisplayNames(const std::string& confID)
 {
-    return ring::Manager::instance().getDisplayNames(confID);
+    return jami::Manager::instance().getDisplayNames(confID);
 }
 
 std::string
 getConferenceId(const std::string& callID)
 {
-    return ring::Manager::instance().getConferenceId(callID);
+    return jami::Manager::instance().getConferenceId(callID);
 }
 
 bool
 startRecordedFilePlayback(const std::string& filepath)
 {
-    return ring::Manager::instance().startRecordedFilePlayback(filepath);
+    return jami::Manager::instance().startRecordedFilePlayback(filepath);
 }
 
 void
 stopRecordedFilePlayback()
 {
-   ring::Manager::instance().stopRecordedFilePlayback();
+   jami::Manager::instance().stopRecordedFilePlayback();
 }
 
 bool
 toggleRecording(const std::string& callID)
 {
-    return ring::Manager::instance().toggleRecordingCall(callID);
+    return jami::Manager::instance().toggleRecordingCall(callID);
 }
 
 void
@@ -258,41 +258,41 @@ setRecording(const std::string& callID)
 void
 recordPlaybackSeek(double value)
 {
-   ring::Manager::instance().recordingPlaybackSeek(value);
+   jami::Manager::instance().recordingPlaybackSeek(value);
 }
 
 bool
 getIsRecording(const std::string& callID)
 {
-    return ring::Manager::instance().isRecording(callID);
+    return jami::Manager::instance().isRecording(callID);
 }
 
 std::string
 getCurrentAudioCodecName(const std::string&)
 {
-    RING_WARN("Deprecated");
+    JAMI_WARN("Deprecated");
     return "";
 }
 
 std::map<std::string, std::string>
 getCallDetails(const std::string& callID)
 {
-    return ring::Manager::instance().getCallDetails(callID);
+    return jami::Manager::instance().getCallDetails(callID);
 }
 
 std::vector<std::string>
 getCallList()
 {
-    return ring::Manager::instance().getCallList();
+    return jami::Manager::instance().getCallList();
 }
 
 void
 playDTMF(const std::string& key)
 {
     auto code = key.data()[0];
-    ring::Manager::instance().playDtmf(code);
+    jami::Manager::instance().playDtmf(code);
 
-    if (auto current_call = ring::Manager::instance().getCurrentCall())
+    if (auto current_call = jami::Manager::instance().getCurrentCall())
         current_call->carryingDTMFdigits(code);
 }
 
@@ -301,23 +301,23 @@ startTone(int32_t start, int32_t type)
 {
     if (start) {
         if (type == 0)
-           ring::Manager::instance().playTone();
+           jami::Manager::instance().playTone();
         else
-           ring::Manager::instance().playToneWithMessage();
+           jami::Manager::instance().playToneWithMessage();
     } else
-       ring::Manager::instance().stopTone();
+       jami::Manager::instance().stopTone();
 }
 
 bool
 switchInput(const std::string& callID, const std::string& resource)
 {
-    return ring::Manager::instance().switchInput(callID, resource);
+    return jami::Manager::instance().switchInput(callID, resource);
 }
 
 void
 sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed)
 {
-   ring::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);
+   jami::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);
 }
 
 } // namespace DRing

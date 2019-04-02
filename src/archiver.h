@@ -26,7 +26,7 @@
 #include <vector>
 #include <map>
 
-namespace ring {
+namespace jami {
 
 /**
  * Archiver is used to generate/read encrypted archives
@@ -76,4 +76,4 @@ std::vector<uint8_t> decompressGzip(const std::string& path);
 
 }
 
-} // namespace ring
+} // namespace jami

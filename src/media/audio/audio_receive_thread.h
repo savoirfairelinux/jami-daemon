@@ -29,7 +29,7 @@
 
 #include <sstream>
 
-namespace ring {
+namespace jami {
 
 class MediaDecoder;
 class MediaIOHandle;
@@ -84,4 +84,4 @@ private:
     void cleanup();
 };
 
-} // namespace ring
+} // namespace jami

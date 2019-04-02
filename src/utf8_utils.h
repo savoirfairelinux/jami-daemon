@@ -26,7 +26,7 @@
 #include <cstdlib>
 #include <string>
 
-namespace ring {
+namespace jami {
 
 /**
  * utf8_validate:
@@ -57,6 +57,6 @@ utf8_validate(const std::string & str);
 std::string
 utf8_make_valid(const std::string & name);
 
-} // namespace ring
+} // namespace jami
 
 #endif // H_UTF8_UTILS

@@ -27,7 +27,7 @@
 
 #include <cassert>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 /*=== VideoGenerator =========================================================*/
 
@@ -91,12 +91,12 @@ VideoSettings::to_map() const
     };
 }
 
-}} // namespace ring::video
+}} // namespace jami::video
 
 namespace YAML {
 
 Node
-convert<ring::video::VideoSettings>::encode(const ring::video::VideoSettings& rhs) {
+convert<jami::video::VideoSettings>::encode(const jami::video::VideoSettings& rhs) {
     Node node;
     node["name"] = rhs.name;
     node["video_size"] = rhs.video_size;
@@ -106,9 +106,9 @@ convert<ring::video::VideoSettings>::encode(const ring::video::VideoSettings& rh
 }
 
 bool
-convert<ring::video::VideoSettings>::decode(const Node& node, ring::video::VideoSettings& rhs) {
+convert<jami::video::VideoSettings>::decode(const Node& node, jami::video::VideoSettings& rhs) {
     if (not node.IsMap()) {
-        RING_WARN("Can't decode VideoSettings YAML node");
+        JAMI_WARN("Can't decode VideoSettings YAML node");
         return false;
     }
     rhs.name = node["name"].as<std::string>();
@@ -118,8 +118,8 @@ convert<ring::video::VideoSettings>::decode(const Node& node, ring::video::Video
     return true;
 }
 
-Emitter& operator << (Emitter& out, const ring::video::VideoSettings& v) {
-    out << convert<ring::video::VideoSettings>::encode(v);
+Emitter& operator << (Emitter& out, const jami::video::VideoSettings& v) {
+    out << convert<jami::video::VideoSettings>::encode(v);
     return out;
 }
 

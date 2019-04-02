@@ -28,7 +28,7 @@
 #include "logger.h"
 #include "client/videomanager.h"
 
-namespace ring {
+namespace jami {
 
 LocalRecorder::LocalRecorder(const bool& audioOnly)
 {
@@ -46,7 +46,7 @@ void
 LocalRecorder::setPath(const std::string& path)
 {
     if (isRecording()) {
-        RING_ERR("can't set path while recording");
+        JAMI_ERR("can't set path while recording");
         return;
     }
 
@@ -58,17 +58,17 @@ bool
 LocalRecorder::startRecording()
 {
     if (isRecording()) {
-        RING_ERR("recording already started!");
+        JAMI_ERR("recording already started!");
         return false;
     }
 
     if (path_.empty()) {
-        RING_ERR("could not start recording (path not set)");
+        JAMI_ERR("could not start recording (path not set)");
         return false;
     }
 
     if (!recorder_) {
-        RING_ERR("could not start recording (no recorder)");
+        JAMI_ERR("could not start recording (no recorder)");
         return false;
     }
 
@@ -77,18 +77,18 @@ LocalRecorder::startRecording()
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
     Manager::instance().startAudioDriverStream();
 
-    audioInput_ = ring::getAudioInput(path_);
+    audioInput_ = jami::getAudioInput(path_);
     audioInput_->setFormat(AudioFormat::STEREO());
     audioInput_->attach(recorder_->addStream(audioInput_->getInfo()));
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     // video recording
     if (!isAudioOnly_) {
-        videoInput_ = std::static_pointer_cast<video::VideoInput>(ring::getVideoCamera());
+        videoInput_ = std::static_pointer_cast<video::VideoInput>(jami::getVideoCamera());
         if (videoInput_) {
             videoInput_->attach(recorder_->addStream(videoInput_->getInfo()));
         } else {
-            RING_ERR() << "Unable to record video (no video input)";
+            JAMI_ERR() << "Unable to record video (no video input)";
             return false;
         }
     }
@@ -110,4 +110,4 @@ LocalRecorder::stopRecording()
     Recordable::stopRecording();
 }
 
-} // namespace ring
+} // namespace jami

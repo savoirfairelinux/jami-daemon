@@ -32,7 +32,7 @@
 using ssize_t = SSIZE_T;
 #endif
 
-namespace ring {
+namespace jami {
 
 template <typename T>
 class GenericSocket
@@ -121,4 +121,4 @@ protected:
     GenericSocket() = default;
 };
 
-} // namespace ring
+} // namespace jami

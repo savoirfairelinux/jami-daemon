@@ -32,7 +32,7 @@
 
 #include <memory>
 
-namespace ring {
+namespace jami {
 
 AudioReceiveThread::AudioReceiveThread(const std::string& id,
                                        const AudioFormat& format,
@@ -66,20 +66,20 @@ AudioReceiveThread::setup()
     args_.sdp_flags = "custom_io";
 
     if (stream_.str().empty()) {
-        RING_ERR("No SDP loaded");
+        JAMI_ERR("No SDP loaded");
         return false;
     }
 
     audioDecoder_->setIOContext(sdpContext_.get());
     if (audioDecoder_->openInput(args_)) {
-        RING_ERR("Could not open input \"%s\"", SDP_FILENAME);
+        JAMI_ERR("Could not open input \"%s\"", SDP_FILENAME);
         return false;
     }
 
     // Now replace our custom AVIOContext with one that will read packets
     audioDecoder_->setIOContext(demuxContext_.get());
     if (audioDecoder_->setupFromAudioData()) {
-        RING_ERR("decoder IO startup failed");
+        JAMI_ERR("decoder IO startup failed");
         return false;
     }
 
@@ -99,17 +99,17 @@ AudioReceiveThread::process()
             ringbuffer_->put(std::move(decodedFrame));
             return;
         case MediaDecoder::Status::DecodeError:
-            RING_WARN("decoding failure, trying to reset decoder...");
+            JAMI_WARN("decoding failure, trying to reset decoder...");
             if (not setup()) {
-                RING_ERR("fatal error, rx thread re-setup failed");
+                JAMI_ERR("fatal error, rx thread re-setup failed");
                 loop_.stop();
             } else if (not audioDecoder_->setupFromAudioData()) {
-                RING_ERR("fatal error, a-decoder setup failed");
+                JAMI_ERR("fatal error, a-decoder setup failed");
                 loop_.stop();
             }
             break;
         case MediaDecoder::Status::ReadError:
-            RING_ERR("fatal error, read failed");
+            JAMI_ERR("fatal error, read failed");
             loop_.stop();
             break;
         case MediaDecoder::Status::Success:
@@ -162,4 +162,4 @@ AudioReceiveThread::startLoop()
     loop_.start();
 }
 
-}; // namespace ring
+}; // namespace jami

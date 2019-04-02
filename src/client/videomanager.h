@@ -34,7 +34,7 @@
 #include "video/video_base.h"
 #include "video/video_input.h"
 
-namespace ring {
+namespace jami {
 
 struct VideoManager
 {
@@ -69,6 +69,6 @@ std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
 
-} // namespace ring
+} // namespace jami
 
 #endif // VIDEOMANAGER_H_

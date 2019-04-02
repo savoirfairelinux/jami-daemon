@@ -35,7 +35,7 @@ typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
 typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
 typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
 
-namespace ring {
+namespace jami {
 
 class MediaIOHandle {
 public:
@@ -54,6 +54,6 @@ private:
     AVIOContext *ctx_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // __MEDIA_DECODER_H__

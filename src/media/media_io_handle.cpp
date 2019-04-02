@@ -21,7 +21,7 @@
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_io_handle.h"
 
-namespace ring {
+namespace jami {
 
 MediaIOHandle::MediaIOHandle(std::size_t buffer_size,
                              bool writeable,
@@ -47,4 +47,4 @@ MediaIOHandle::~MediaIOHandle()
     av_free(ctx_);
 }
 
-} // namespace ring
+} // namespace jami

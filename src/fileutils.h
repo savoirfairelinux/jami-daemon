@@ -53,7 +53,7 @@
 #define DIR_SEPARATOR_CH  '\\'  // Directory separator string
 #endif
 
-namespace ring { namespace fileutils {
+namespace jami { namespace fileutils {
 
     std::string get_home_dir();
     std::string get_config_dir(const char* pkg);
@@ -134,6 +134,6 @@ namespace ring { namespace fileutils {
      */
     int removeAll(const std::string& path);
 
-}} // namespace ring::fileutils
+}} // namespace jami::fileutils
 
 #endif // FILEUTILS_H_

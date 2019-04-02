@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <tuple>
 
-namespace ring { namespace map_utils {
+namespace jami { namespace map_utils {
 
 ///< Return the N-th type of a tuple type used as the Container compliant value type
 template <typename C, std::size_t N>
@@ -55,4 +55,4 @@ inline auto
 extractValues(const M& map) -> decltype(extractElements<1>(map))
 { return extractElements<1>(map); }
 
-}} // namespace ring::map_utils
+}} // namespace jami::map_utils

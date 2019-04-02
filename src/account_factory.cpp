@@ -29,7 +29,7 @@
 
 #include <stdexcept>
 
-namespace ring {
+namespace jami {
 
 const char* const AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYPE;
 
@@ -37,10 +37,10 @@ AccountFactory::AccountFactory()
 {
     auto sipfunc = [](const std::string& id){ return std::make_shared<SIPAccount>(id, true); };
     generators_.insert(std::make_pair(SIPAccount::ACCOUNT_TYPE, sipfunc));
-    RING_DBG("registered %s account", SIPAccount::ACCOUNT_TYPE);
+    JAMI_DBG("registered %s account", SIPAccount::ACCOUNT_TYPE);
     auto dhtfunc = [](const std::string& id){ return std::make_shared<RingAccount>(id, false); };
     generators_.insert(std::make_pair(RingAccount::ACCOUNT_TYPE, dhtfunc));
-    RING_DBG("registered %s account", RingAccount::ACCOUNT_TYPE);
+    JAMI_DBG("registered %s account", RingAccount::ACCOUNT_TYPE);
 }
 
 std::shared_ptr<Account>
@@ -48,7 +48,7 @@ AccountFactory::createAccount(const char* const accountType,
                               const std::string& id)
 {
      if (hasAccount(id)) {
-         RING_ERR("Existing account %s", id.c_str());
+         JAMI_ERR("Existing account %s", id.c_str());
          return nullptr;
      }
 
@@ -80,10 +80,10 @@ AccountFactory::removeAccount(Account& account)
 
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     const auto& id = account.getAccountID();
-    RING_DBG("Removing account %s", id.c_str());
+    JAMI_DBG("Removing account %s", id.c_str());
     auto& map = accountMaps_.at(account_type);
     map.erase(id);
-    RING_DBG("Remaining %zu %s account(s)", map.size(), account_type);
+    JAMI_DBG("Remaining %zu %s account(s)", map.size(), account_type);
 }
 
 void
@@ -94,7 +94,7 @@ AccountFactory::removeAccount(const std::string& id)
     if (auto account = getAccount(id)) {
         removeAccount(*account);
     } else
-        RING_ERR("No account with ID %s", id.c_str());
+        JAMI_ERR("No account with ID %s", id.c_str());
 }
 
 template <> bool
@@ -179,4 +179,4 @@ AccountFactory::accountCount() const
     return count;
 }
 
-} // namespace ring
+} // namespace jami

@@ -29,7 +29,7 @@
 #include <string>
 #include <sstream>
 
-namespace ring {
+namespace jami {
 
 /**
  * rw_mutex is a shared mutex meant to protect
@@ -110,6 +110,6 @@ class rw_mutex {
 		bool writing;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif

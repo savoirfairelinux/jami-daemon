@@ -34,7 +34,7 @@
 #include <cstring>
 #include <algorithm>
 
-namespace ring {
+namespace jami {
 
 // corresponds to 160 ms (about 5 rtp packets)
 static const size_t MIN_BUFFER_SIZE = 1024;
@@ -87,7 +87,7 @@ size_t RingBuffer::getLength(const std::string &call_id) const
 void
 RingBuffer::debug()
 {
-    RING_DBG("Start=%zu; End=%zu; BufferSize=%zu", getSmallestReadOffset(), endPos_, buffer_.size());
+    JAMI_DBG("Start=%zu; End=%zu; BufferSize=%zu", getSmallestReadOffset(), endPos_, buffer_.size());
 }
 
 size_t RingBuffer::getReadOffset(const std::string &call_id) const
@@ -115,7 +115,7 @@ RingBuffer::storeReadOffset(size_t offset, const std::string &call_id)
     if (iter != readoffsets_.end())
         iter->second.offset = offset;
     else
-        RING_ERR("RingBuffer::storeReadOffset() failed: unknown call '%s'", call_id.c_str());
+        JAMI_ERR("RingBuffer::storeReadOffset() failed: unknown call '%s'", call_id.c_str());
 }
 
 void
@@ -292,4 +292,4 @@ RingBuffer::discard(size_t toDiscard)
     return toDiscard;
 }
 
-} // namespace ring
+} // namespace jami

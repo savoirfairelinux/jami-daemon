@@ -29,7 +29,7 @@
 #include <thread>
 #include <sstream>
 
-namespace ring { namespace tls {
+namespace jami { namespace tls {
 
 CertificateStore&
 CertificateStore::instance()
@@ -72,7 +72,7 @@ CertificateStore::loadLocalCertificates()
             remove((certPath_+DIR_SEPARATOR_CH+f).c_str());
         }
     }
-    RING_DBG("CertificateStore: loaded %u local certificates.", n);
+    JAMI_DBG("CertificateStore: loaded %u local certificates.", n);
     return n;
 }
 
@@ -85,7 +85,7 @@ CertificateStore::loadRevocations(crypto::Certificate& crt)
         try {
             crt.addRevocationList(std::make_shared<crypto::RevocationList>(fileutils::loadFile(dir+DIR_SEPARATOR_CH+crl)));
         } catch (const std::exception& e) {
-            RING_WARN("Can't load revocation list: %s", e.what());
+            JAMI_WARN("Can't load revocation list: %s", e.what());
         }
     }
 }
@@ -162,7 +162,7 @@ CertificateStore::findIssuer(const std::shared_ptr<crypto::Certificate>& crt) co
     unsigned verify_out = 0;
     int err = gnutls_x509_crt_verify(crt->cert, &ret->cert, 1, 0, &verify_out);
     if (err != GNUTLS_E_SUCCESS) {
-        RING_WARN("gnutls_x509_crt_verify failed: %s", gnutls_strerror(err));
+        JAMI_WARN("gnutls_x509_crt_verify failed: %s", gnutls_strerror(err));
         return {};
     }
     if (verify_out & GNUTLS_CERT_INVALID)
@@ -216,7 +216,7 @@ CertificateStore::pinCertificatePath(const std::string& path, std::function<void
             }
             paths_.emplace(path, std::move(scerts));
         }
-        RING_DBG("CertificateStore: loaded %zu certificates from %s.",
+        JAMI_DBG("CertificateStore: loaded %zu certificates from %s.",
                  certs.size(), path.c_str());
         if (cb)
             cb(ids);
@@ -341,7 +341,7 @@ CertificateStore::pinRevocationList(const std::string& id, const std::shared_ptr
             c->addRevocationList(crl);
         pinRevocationList(id, *crl);
     } catch (...) {
-        RING_WARN("Can't add revocation list");
+        JAMI_WARN("Can't add revocation list");
     }
 }
 
@@ -513,7 +513,7 @@ TrustStore::isAllowed(const crypto::Certificate& crt, bool allowPublic)
     auto ret = allowed_.verify(crt);
     // Unknown issuer (only that) are accepted if allowPublic is true
     if (not ret and !(allowPublic and ret.result == (GNUTLS_CERT_INVALID|GNUTLS_CERT_SIGNER_NOT_FOUND))) {
-        RING_WARN("%s", ret.toString().c_str());
+        JAMI_WARN("%s", ret.toString().c_str());
         return false;
     }
 
@@ -551,4 +551,4 @@ TrustStore::rebuildTrust()
         setStoreCertStatus(*c.second.first, c.second.second.allowed);
 }
 
-}} // namespace ring::tls
+}} // namespace jami::tls

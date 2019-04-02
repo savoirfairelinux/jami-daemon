@@ -37,7 +37,7 @@ class Emitter;
 class Node;
 }
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class VideoDeviceMonitorImpl;
 
@@ -101,6 +101,6 @@ class VideoDeviceMonitor : public Serializable
         constexpr static const char *CONFIG_LABEL = "video";
 };
 
-}} // namespace ring::video
+}} // namespace jami::video
 
 #endif /* VIDEO_DEVICE_MONITOR_H__ */

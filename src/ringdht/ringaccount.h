@@ -70,7 +70,7 @@ namespace dev
     using Address = h160;
 }
 
-namespace ring {
+namespace jami {
 
 class IceTransport;
 struct Contact;
@@ -688,4 +688,4 @@ static inline std::ostream& operator<< (std::ostream& os, const RingAccount& acc
     return os;
 }
 
-} // namespace ring
+} // namespace jami

@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 /**
  * Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
@@ -140,4 +140,4 @@ private:
     AVBufferRef* framesCtx_ {nullptr};
 };
 
-}} // namespace ring::video
+}} // namespace jami::video

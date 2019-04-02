@@ -36,37 +36,37 @@ registerDataXferHandlers(const std::map<std::string,
 std::vector<DataTransferId>
 dataTransferList() noexcept
 {
-    return ring::Manager::instance().dataTransfers->list();
+    return jami::Manager::instance().dataTransfers->list();
 }
 
 DataTransferError
 sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept
 {
-    return ring::Manager::instance().dataTransfers->sendFile(info, id);
+    return jami::Manager::instance().dataTransfers->sendFile(info, id);
 }
 
 DataTransferError
 acceptFileTransfer(const DataTransferId& id, const std::string& file_path, int64_t offset) noexcept
 {
-    return ring::Manager::instance().dataTransfers->acceptAsFile(id, file_path, offset);
+    return jami::Manager::instance().dataTransfers->acceptAsFile(id, file_path, offset);
 }
 
 DataTransferError
 cancelDataTransfer(const DataTransferId& id) noexcept
 {
-    return ring::Manager::instance().dataTransfers->cancel(id);
+    return jami::Manager::instance().dataTransfers->cancel(id);
 }
 
 DataTransferError
 dataTransferBytesProgress(const DataTransferId& id, int64_t& total, int64_t& progress) noexcept
 {
-    return ring::Manager::instance().dataTransfers->bytesProgress(id, total, progress);
+    return jami::Manager::instance().dataTransfers->bytesProgress(id, total, progress);
 }
 
 DataTransferError
 dataTransferInfo(const DataTransferId& id, DataTransferInfo& info) noexcept
 {
-    return ring::Manager::instance().dataTransfers->info(id, info);
+    return jami::Manager::instance().dataTransfers->info(id, info);
 }
 
 } // namespace DRing

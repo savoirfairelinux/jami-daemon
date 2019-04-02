@@ -17,7 +17,7 @@
  */
 #pragma once
 
-namespace ring {
+namespace jami {
 
 namespace Conf {
 constexpr const char* const DHT_PORT_KEY = "dhtPort";

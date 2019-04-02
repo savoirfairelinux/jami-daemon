@@ -27,7 +27,7 @@
 #include <pulse/pulseaudio.h>
 #include <string>
 
-namespace ring {
+namespace jami {
 
 /**
  * This data structure contains the different king of audio streams available

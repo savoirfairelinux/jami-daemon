@@ -41,7 +41,7 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace ring {
+namespace jami {
 
 const constexpr char ROTATION_FILTER_INPUT_NAME[] = "in";
 
@@ -78,7 +78,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
             AVFrameSideData* sideData = av_frame_get_side_data(framePtr->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
             int angle = sideData ?  av_display_rotation_get(reinterpret_cast<int32_t*>(sideData->data)) : 0;
             if (angle != rotation_) {
-                videoRotationFilter_ = ring::video::getTransposeFilter(angle, ROTATION_FILTER_INPUT_NAME, framePtr->width(), framePtr->height(), framePtr->format(), true);
+                videoRotationFilter_ = jami::video::getTransposeFilter(angle, ROTATION_FILTER_INPUT_NAME, framePtr->width(), framePtr->height(), framePtr->format(), true);
                 rotation_ = angle;
             }
             if (videoRotationFilter_) {
@@ -149,7 +149,7 @@ MediaRecorder::startRecording()
 
     encoder_.reset(new MediaEncoder);
 
-    RING_DBG() << "Start recording '" << getPath() << "'";
+    JAMI_DBG() << "Start recording '" << getPath() << "'";
     if (initRecord() >= 0) {
         isRecording_ = true;
         // start thread after isRecording_ is set to true
@@ -169,7 +169,7 @@ void
 MediaRecorder::stopRecording()
 {
     if (isRecording_) {
-        RING_DBG() << "Stop recording '" << getPath() << "'";
+        JAMI_DBG() << "Stop recording '" << getPath() << "'";
         isRecording_ = false;
         emitSignal<DRing::CallSignal::RecordPlaybackStopped>(getPath());
     }
@@ -179,7 +179,7 @@ Observer<std::shared_ptr<MediaFrame>>*
 MediaRecorder::addStream(const MediaStream& ms)
 {
     if (audioOnly_ && ms.isVideo) {
-        RING_ERR() << "Trying to add video stream to audio only recording";
+        JAMI_ERR() << "Trying to add video stream to audio only recording";
         return nullptr;
     }
 
@@ -188,14 +188,14 @@ MediaRecorder::addStream(const MediaStream& ms)
     });
     auto p = streams_.insert(std::make_pair(ms.name, std::move(ptr)));
     if (p.second) {
-        RING_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
+        JAMI_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
         if (ms.isVideo)
             hasVideo_ = true;
         else
             hasAudio_ = true;
         return p.first->second.get();
     } else {
-        RING_WARN() << "Recorder already has '" << ms.name << "' as input";
+        JAMI_WARN() << "Recorder already has '" << ms.name << "' as input";
         return p.first->second.get();
     }
 }
@@ -268,7 +268,7 @@ MediaRecorder::initRecord()
     if (hasVideo_) {
         const MediaStream& videoStream = setupVideoOutput();
         if (videoStream.format < 0) {
-            RING_ERR() << "Could not retrieve video recorder stream properties";
+            JAMI_ERR() << "Could not retrieve video recorder stream properties";
             return -1;
         }
         encoder_->setOptions(videoStream);
@@ -278,35 +278,35 @@ MediaRecorder::initRecord()
     if (hasAudio_) {
         const MediaStream& audioStream = setupAudioOutput();
         if (audioStream.format < 0) {
-            RING_ERR() << "Could not retrieve audio recorder stream properties";
+            JAMI_ERR() << "Could not retrieve audio recorder stream properties";
             return -1;
         }
         encoder_->setOptions(audioStream);
     }
 
     if (hasVideo_) {
-        auto videoCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(
-            getSystemCodecContainer()->searchCodecByName("VP8", ring::MEDIA_VIDEO));
+        auto videoCodec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
+            getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO));
         videoIdx_ = encoder_->addStream(*videoCodec.get());
         if (videoIdx_ < 0) {
-            RING_ERR() << "Failed to add video stream to encoder";
+            JAMI_ERR() << "Failed to add video stream to encoder";
             return -1;
         }
     }
 
     if (hasAudio_) {
-        auto audioCodec = std::static_pointer_cast<ring::SystemAudioCodecInfo>(
-            getSystemCodecContainer()->searchCodecByName("opus", ring::MEDIA_AUDIO));
+        auto audioCodec = std::static_pointer_cast<jami::SystemAudioCodecInfo>(
+            getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO));
         audioIdx_ = encoder_->addStream(*audioCodec.get());
         if (audioIdx_ < 0) {
-            RING_ERR() << "Failed to add audio stream to encoder";
+            JAMI_ERR() << "Failed to add audio stream to encoder";
             return -1;
         }
     }
 
     encoder_->setIOContext(nullptr);
 
-    RING_DBG() << "Recording initialized";
+    JAMI_DBG() << "Recording initialized";
     return 0;
 }
 
@@ -345,15 +345,15 @@ MediaRecorder::setupVideoOutput()
         ret = videoFilter_->initialize(buildVideoFilter({peer}, local), {peer, local});
         break;
     default:
-        RING_ERR() << "Recording more than 2 video streams is not supported";
+        JAMI_ERR() << "Recording more than 2 video streams is not supported";
         break;
     }
 
     if (ret >= 0) {
         encoderStream = videoFilter_->getOutputParams();
-        RING_DBG() << "Recorder output: " << encoderStream;
+        JAMI_DBG() << "Recorder output: " << encoderStream;
     } else {
-        RING_ERR() << "Failed to initialize video filter";
+        JAMI_ERR() << "Failed to initialize video filter";
     }
 
     return encoderStream;
@@ -389,7 +389,7 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers, const Med
         }
         break;
     default:
-        RING_ERR() << "Video recordings with more than 2 video streams are not supported";
+        JAMI_ERR() << "Video recordings with more than 2 video streams are not supported";
         break;
     }
 
@@ -431,15 +431,15 @@ MediaRecorder::setupAudioOutput()
         ret = audioFilter_->initialize(buildAudioFilter({peer}, local), {peer, local});
         break;
     default:
-        RING_ERR() << "Recording more than 2 audio streams is not supported";
+        JAMI_ERR() << "Recording more than 2 audio streams is not supported";
         break;
     }
 
     if (ret >= 0) {
         encoderStream = audioFilter_->getOutputParams();
-        RING_DBG() << "Recorder output: " << encoderStream;
+        JAMI_DBG() << "Recorder output: " << encoderStream;
     } else {
-        RING_ERR() << "Failed to initialize audio filter";
+        JAMI_ERR() << "Failed to initialize audio filter";
     }
 
     return encoderStream;
@@ -499,10 +499,10 @@ MediaRecorder::filterAndEncode(MediaFilter* filter, int streamIdx)
                 std::lock_guard<std::mutex> lk(mutex_);
                 encoder_->encode(frame->pointer(), streamIdx);
             } catch (const MediaEncoderException& e) {
-                RING_ERR() << "Failed to record frame: " << e.what();
+                JAMI_ERR() << "Failed to record frame: " << e.what();
             }
         }
     }
 }
 
-} // namespace ring
+} // namespace jami

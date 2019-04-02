@@ -32,7 +32,7 @@
 
 #include <stdexcept>
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class AudioFrameResizerTest : public CppUnit::TestFixture {
 public:
@@ -129,6 +129,6 @@ AudioFrameResizerTest::testDifferentFormat()
     CPPUNIT_ASSERT(q_->samples() == 0);
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::AudioFrameResizerTest::name());
+RING_TEST_RUNNER(jami::test::AudioFrameResizerTest::name());

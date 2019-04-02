@@ -32,7 +32,7 @@
 
 #include <memory>
 
-namespace ring {
+namespace jami {
 
 AudioSender::AudioSender(const std::string& id,
                          const std::string& dest,
@@ -69,7 +69,7 @@ AudioSender::setup(SocketPair& socketPair)
 
     try {
         /* Encoder setup */
-        RING_DBG("audioEncoder_->openOutput %s", dest_.c_str());
+        JAMI_DBG("audioEncoder_->openOutput %s", dest_.c_str());
         audioEncoder_->openOutput(dest_, "rtp");
         audioEncoder_->setOptions(args_);
         auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
@@ -79,7 +79,7 @@ AudioSender::setup(SocketPair& socketPair)
         audioEncoder_->setInitSeqVal(seqVal_);
         audioEncoder_->setIOContext(muxContext_->getContext());
     } catch (const MediaEncoderException &e) {
-        RING_ERR("%s", e.what());
+        JAMI_ERR("%s", e.what());
         return false;
     }
 
@@ -91,7 +91,7 @@ AudioSender::setup(SocketPair& socketPair)
 
     // NOTE do after encoder is ready to encode
     auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
-    audioInput_ = ring::getAudioInput(id_);
+    audioInput_ = jami::getAudioInput(id_);
     audioInput_->setFormat(codec->audioformat);
     audioInput_->attach(this);
 
@@ -99,7 +99,7 @@ AudioSender::setup(SocketPair& socketPair)
 }
 
 void
-AudioSender::update(Observable<std::shared_ptr<ring::MediaFrame>>* /*obs*/, const std::shared_ptr<ring::MediaFrame>& framePtr)
+AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/, const std::shared_ptr<jami::MediaFrame>& framePtr)
 {
     auto frame = framePtr->pointer();
     auto ms = MediaStream("a:local", frame->format, rational<int>(1, frame->sample_rate),
@@ -109,7 +109,7 @@ AudioSender::update(Observable<std::shared_ptr<ring::MediaFrame>>* /*obs*/, cons
     sent_samples += frame->nb_samples;
 
     if (audioEncoder_->encodeAudio(*std::static_pointer_cast<AudioFrame>(framePtr)) < 0)
-        RING_ERR("encoding failed");
+        JAMI_ERR("encoding failed");
 }
 
 void
@@ -125,4 +125,4 @@ AudioSender::getLastSeqValue()
     return audioEncoder_->getLastSeqValue();
 }
 
-} // namespace ring
+} // namespace jami

@@ -62,7 +62,7 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 const constexpr char FILTER_INPUT_NAME[] = "in";
 
@@ -106,7 +106,7 @@ class ShmHolder
 
         void unMapShmArea() noexcept {
             if (area_ != MAP_FAILED and ::munmap(area_, areaSize_) < 0) {
-                RING_ERR("ShmHolder[%s]: munmap(%zu) failed with errno %d",
+                JAMI_ERR("ShmHolder[%s]: munmap(%zu) failed with errno %d",
                          openedName_.c_str(), areaSize_, errno);
             }
         }
@@ -158,7 +158,7 @@ ShmHolder::ShmHolder(const std::string& name)
     if (::sem_init(&area_->frameGenMutex, 1, 0) < 0)
         shmFailedWithErrno("sem_init(frameGenMutex)");
 
-    RING_DBG("ShmHolder: new holder '%s'", openedName_.c_str());
+    JAMI_DBG("ShmHolder: new holder '%s'", openedName_.c_str());
 }
 
 ShmHolder::~ShmHolder()
@@ -191,13 +191,13 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 
     // full area size: +15 to take care of maximum padding size
     const auto areaSize = sizeof(SHMHeader) + 2 * frameSize + 15;
-    RING_DBG("ShmHolder[%s]: new sizes: f=%zu, a=%zu", openedName_.c_str(),
+    JAMI_DBG("ShmHolder[%s]: new sizes: f=%zu, a=%zu", openedName_.c_str(),
              frameSize, areaSize);
 
     unMapShmArea();
 
     if (::ftruncate(fd_, areaSize) < 0) {
-        RING_ERR("ShmHolder[%s]: ftruncate(%zu) failed with errno %d",
+        JAMI_ERR("ShmHolder[%s]: ftruncate(%zu) failed with errno %d",
                  openedName_.c_str(), areaSize, errno);
         return false;
     }
@@ -208,7 +208,7 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 
     if (area_ == MAP_FAILED) {
         areaSize_ = 0;
-        RING_ERR("ShmHolder[%s]: mmap(%zu) failed with errno %d",
+        JAMI_ERR("ShmHolder[%s]: mmap(%zu) failed with errno %d",
                  openedName_.c_str(), areaSize, errno);
         return false;
     }
@@ -241,7 +241,7 @@ ShmHolder::renderFrame(const VideoFrame& src) noexcept
     const auto frameSize = videoFrameSize(format, width, height);
 
     if (!resizeArea(frameSize)) {
-        RING_ERR("ShmHolder[%s]: could not resize area",
+        JAMI_ERR("ShmHolder[%s]: could not resize area",
                  openedName_.c_str());
         return;
     }
@@ -278,7 +278,7 @@ SinkClient::start() noexcept
         try {
             shm_ = std::make_shared<ShmHolder>();
         } catch (const std::runtime_error& e) {
-            RING_ERR("SHMHolder ctor failure: %s", e.what());
+            JAMI_ERR("SHMHolder ctor failure: %s", e.what());
         }
     }
     return static_cast<bool>(shm_);
@@ -411,16 +411,16 @@ SinkClient::setFrameSize(int width, int height)
     width_ = width;
     height_ = height;
     if (width > 0 and height > 0) {
-        RING_WARN("Start sink <%s / %s>, size=%dx%d, mixer=%u",
+        JAMI_WARN("Start sink <%s / %s>, size=%dx%d, mixer=%u",
                  getId().c_str(), openedName().c_str(), width, height, mixer_);
         emitSignal<DRing::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
         started_ = true;
     } else if (started_) {
-        RING_ERR("Stop sink <%s / %s>, mixer=%u",
+        JAMI_ERR("Stop sink <%s / %s>, mixer=%u",
                  getId().c_str(), openedName().c_str(), mixer_);
         emitSignal<DRing::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
         started_ = false;
     }
 }
 
-}} // namespace ring::video
+}} // namespace jami::video

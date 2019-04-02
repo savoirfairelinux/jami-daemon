@@ -26,7 +26,7 @@
 #include "audio/audiolayer.h"
 #include "audio/ringbufferpool.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "sip/sipcall.h"
 #include "client/videomanager.h"
 #include "video/video_input.h"
@@ -37,13 +37,13 @@
 
 #include "logger.h"
 
-namespace ring {
+namespace jami {
 
 Conference::Conference()
     : id_(Manager::instance().getNewCallID())
     , confState_(ACTIVE_ATTACHED)
     , participants_()
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     , videoMixer_(nullptr)
 #endif
 {
@@ -51,12 +51,12 @@ Conference::Conference()
 
 Conference::~Conference()
 {
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     for (const auto &participant_id : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
             call->getVideoRtp().exitConference();
     }
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 }
 
 Conference::ConferenceState Conference::getState() const
@@ -72,22 +72,22 @@ void Conference::setState(ConferenceState state)
 void Conference::add(const std::string &participant_id)
 {
     if (participants_.insert(participant_id).second) {
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
             call->getVideoRtp().enterConference(this);
         else
-            RING_ERR("no call associate to participant %s", participant_id.c_str());
-#endif // RING_VIDEO
+            JAMI_ERR("no call associate to participant %s", participant_id.c_str());
+#endif // ENABLE_VIDEO
     }
 }
 
 void Conference::remove(const std::string &participant_id)
 {
     if (participants_.erase(participant_id)) {
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
             call->getVideoRtp().exitConference();
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
     }
 }
 
@@ -153,7 +153,7 @@ std::string Conference::getConfID() const {
     return id_;
 }
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 std::shared_ptr<video::VideoMixer> Conference::getVideoMixer()
 {
     if (!videoMixer_)
@@ -162,4 +162,4 @@ std::shared_ptr<video::VideoMixer> Conference::getVideoMixer()
 }
 #endif
 
-} // namespace ring
+} // namespace jami

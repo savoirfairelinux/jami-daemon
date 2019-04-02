@@ -46,7 +46,7 @@
 
 #define PRES_TIMER 300 // 5min
 
-namespace ring {
+namespace jami {
 
 using sip_utils::CONST_PJ_STR;
 
@@ -56,7 +56,7 @@ void
 PresSubClient::pres_client_timer_cb(pj_timer_heap_t * /*th*/, pj_timer_entry *entry)
 {
     PresSubClient *c = (PresSubClient *) entry->user_data;
-    RING_DBG("timeout for %s", c->getURI().c_str());
+    JAMI_DBG("timeout for %s", c->getURI().c_str());
 }
 
 /* Callback called when *client* subscription state has changed. */
@@ -69,11 +69,11 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
     /* No need to pres->lock() here since the client has a locked dialog*/
 
     if (!pres_client) {
-        RING_WARN("pres_client not found");
+        JAMI_WARN("pres_client not found");
         return;
     }
 
-    RING_DBG("Subscription for pres_client '%s' is '%s'", pres_client->getURI().c_str(),
+    JAMI_DBG("Subscription for pres_client '%s' is '%s'", pres_client->getURI().c_str(),
             pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 
     pjsip_evsub_state state = pjsip_evsub_get_state(sub);
@@ -248,7 +248,7 @@ PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transactio
     /* No need to pres->lock() here since the client has a locked dialog*/
 
     if (!pres_client) {
-        RING_WARN("Couldn't find pres_client.");
+        JAMI_WARN("Couldn't find pres_client.");
         return;
     }
 
@@ -291,7 +291,7 @@ PresSubClient::pres_client_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *r
     PresSubClient *pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId_);
 
     if (!pres_client) {
-        RING_WARN("Couldn't find pres_client from ev_sub.");
+        JAMI_WARN("Couldn't find pres_client from ev_sub.");
         return;
     }
     /* No need to pres->lock() here since the client has a locked dialog*/
@@ -336,7 +336,7 @@ PresSubClient::PresSubClient(const std::string& uri, SIPPresence *pres) :
 
 PresSubClient::~PresSubClient()
 {
-    RING_DBG("Destroying pres_client object with uri %.*s", (int)uri_.slen, uri_.ptr);
+    JAMI_DBG("Destroying pres_client object with uri %.*s", (int)uri_.slen, uri_.ptr);
     rescheduleTimer(PJ_FALSE, 0);
     unsubscribe();
     pj_pool_release(pool_);
@@ -384,7 +384,7 @@ void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
     if (reschedule) {
         pj_time_val delay;
 
-        RING_WARN("pres_client  %.*s will resubscribe in %u ms (reason: %.*s)",
+        JAMI_WARN("pres_client  %.*s will resubscribe in %u ms (reason: %.*s)",
                   (int)uri_.slen, uri_.ptr, msec, (int)term_reason_.slen, term_reason_.ptr);
         pj_timer_entry_init(&timer_, 0, this, &pres_client_timer_cb);
         delay.sec = 0;
@@ -399,7 +399,7 @@ void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
 
 void PresSubClient::enable(bool flag)
 {
-    RING_DBG("pres_client %s is %s monitored.",getURI().c_str(), flag? "":"NOT");
+    JAMI_DBG("pres_client %s is %s monitored.",getURI().c_str(), flag? "":"NOT");
     if (flag and not monitored_)
         pres_->addPresSubClient(this);
     monitored_ = flag;
@@ -443,7 +443,7 @@ bool PresSubClient::lock()
 
     if (lock_flag_ == 0)
     {
-        RING_DBG("pres_client failed to lock : timeout");
+        JAMI_DBG("pres_client failed to lock : timeout");
         return false;
     }
     return true;
@@ -469,20 +469,20 @@ bool PresSubClient::unsubscribe()
     pj_status_t retStatus;
 
     if (sub_ == NULL or dlg_ == NULL) {
-        RING_WARN("PresSubClient already unsubscribed.");
+        JAMI_WARN("PresSubClient already unsubscribed.");
         unlock();
         return false;
     }
 
     if (pjsip_evsub_get_state(sub_) == PJSIP_EVSUB_STATE_TERMINATED) {
-        RING_WARN("pres_client already unsubscribed sub=TERMINATED.");
+        JAMI_WARN("pres_client already unsubscribed sub=TERMINATED.");
         sub_ = NULL;
         unlock();
         return false;
     }
 
     /* Unsubscribe means send a subscribe with timeout=0s*/
-    RING_WARN("pres_client %.*s: unsubscribing..", (int)uri_.slen, uri_.ptr);
+    JAMI_WARN("pres_client %.*s: unsubscribing..", (int)uri_.slen, uri_.ptr);
     retStatus = pjsip_pres_initiate(sub_, 0, &tdata);
 
     if (retStatus == PJ_SUCCESS) {
@@ -493,7 +493,7 @@ bool PresSubClient::unsubscribe()
     if (retStatus != PJ_SUCCESS and sub_) {
         pjsip_pres_terminate(sub_, PJ_FALSE);
         sub_ = NULL;
-        RING_WARN("Unable to unsubscribe presence (%d)", retStatus);
+        JAMI_WARN("Unable to unsubscribe presence (%d)", retStatus);
         unlock();
         return false;
     }
@@ -510,7 +510,7 @@ bool PresSubClient::subscribe()
 
     if (sub_ and dlg_) { //do not bother if already subscribed
         pjsip_evsub_terminate(sub_, PJ_FALSE);
-        RING_DBG("PreseSubClient %.*s: already subscribed. Refresh it.", (int)uri_.slen, uri_.ptr);
+        JAMI_DBG("PreseSubClient %.*s: already subscribed. Refresh it.", (int)uri_.slen, uri_.ptr);
     }
 
     //subscribe
@@ -525,7 +525,7 @@ bool PresSubClient::subscribe()
     pres_callback.on_rx_notify = &pres_client_evsub_on_rx_notify;
 
     SIPAccount * acc = pres_->getAccount();
-    RING_DBG("PresSubClient %.*s: subscribing ", (int)uri_.slen, uri_.ptr);
+    JAMI_DBG("PresSubClient %.*s: subscribing ", (int)uri_.slen, uri_.ptr);
 
 
     /* Create UAC dialog */
@@ -533,13 +533,13 @@ bool PresSubClient::subscribe()
     status = pjsip_dlg_create_uac(pjsip_ua_instance(), &from, &contact_, &uri_, NULL, &dlg_);
 
     if (status != PJ_SUCCESS) {
-        RING_ERR("Unable to create dialog \n");
+        JAMI_ERR("Unable to create dialog \n");
         return false;
     }
 
     /* Add credential for auth. */
     if (acc->hasCredentials() and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
-        RING_ERR("Could not initialize credentials for subscribe session authentication");
+        JAMI_ERR("Could not initialize credentials for subscribe session authentication");
     }
 
     /* Increment the dialog's lock otherwise when presence session creation
@@ -551,7 +551,7 @@ bool PresSubClient::subscribe()
 
     if (status != PJ_SUCCESS) {
         sub_ = NULL;
-        RING_WARN("Unable to create presence client (%d)", status);
+        JAMI_WARN("Unable to create presence client (%d)", status);
 
         /* This should destroy the dialog since there's no session
          * referencing it
@@ -565,7 +565,7 @@ bool PresSubClient::subscribe()
 
     /* Add credential for authentication */
     if (acc->hasCredentials() and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
-        RING_ERR("Could not initialize credentials for invite session authentication");
+        JAMI_ERR("Could not initialize credentials for invite session authentication");
         return false;
     }
 
@@ -584,7 +584,7 @@ bool PresSubClient::subscribe()
         if (sub_)
             pjsip_pres_terminate(sub_, PJ_FALSE);
         sub_ = NULL;
-        RING_WARN("Unable to create initial SUBSCRIBE (%d)", status);
+        JAMI_WARN("Unable to create initial SUBSCRIBE (%d)", status);
         return false;
     }
 
@@ -598,7 +598,7 @@ bool PresSubClient::subscribe()
         if (sub_)
             pjsip_pres_terminate(sub_, PJ_FALSE);
         sub_ = NULL;
-        RING_WARN("Unable to send initial SUBSCRIBE (%d)", status);
+        JAMI_WARN("Unable to send initial SUBSCRIBE (%d)", status);
         return false;
     }
 
@@ -611,4 +611,4 @@ bool PresSubClient::match(PresSubClient *b)
     return (b->getURI() == getURI());
 }
 
-} // namespace ring
+} // namespace jami

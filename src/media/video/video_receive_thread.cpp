@@ -36,7 +36,7 @@ extern "C" {
 #include <unistd.h>
 #include <map>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 using std::string;
 
@@ -98,7 +98,7 @@ bool VideoReceiveThread::setup()
         args_.sdp_flags = "custom_io";
 
         if (stream_.str().empty()) {
-            RING_ERR("No SDP loaded");
+            JAMI_ERR("No SDP loaded");
             return false;
         }
 
@@ -106,7 +106,7 @@ bool VideoReceiveThread::setup()
     }
 
     if (videoDecoder_->openInput(args_)) {
-        RING_ERR("Could not open input \"%s\"", args_.input.c_str());
+        JAMI_ERR("Could not open input \"%s\"", args_.input.c_str());
         return false;
     }
 
@@ -119,7 +119,7 @@ bool VideoReceiveThread::setup()
         requestKeyFrameCallback_();
 
     if (videoDecoder_->setupFromVideoData()) {
-        RING_ERR("decoder IO startup failed");
+        JAMI_ERR("decoder IO startup failed");
         return false;
     }
 
@@ -130,7 +130,7 @@ bool VideoReceiveThread::setup()
     }
 
     if (not sink_->start()) {
-        RING_ERR("RX: sink startup failed");
+        JAMI_ERR("RX: sink startup failed");
         return false;
     }
 
@@ -197,13 +197,13 @@ bool VideoReceiveThread::decodeFrame()
             return true;
 
         case MediaDecoder::Status::DecodeError:
-            RING_WARN("video decoding failure");
+            JAMI_WARN("video decoding failure");
             if (requestKeyFrameCallback_)
                 requestKeyFrameCallback_();
             break;
 
         case MediaDecoder::Status::ReadError:
-            RING_ERR("fatal error, read failed");
+            JAMI_ERR("fatal error, read failed");
             loop_.stop();
             break;
 
@@ -279,4 +279,4 @@ VideoReceiveThread::setRotation(int angle)
     }
 }
 
-}} // namespace ring::video
+}} // namespace jami::video

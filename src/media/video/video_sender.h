@@ -32,13 +32,13 @@
 #include <atomic>
 
 // Forward declarations
-namespace ring {
+namespace jami {
 class SocketPair;
 struct DeviceParams;
 struct AccountVideoCodecInfo;
 }
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class VideoSender : public VideoFramePassiveReader
 {
@@ -84,6 +84,6 @@ private:
     int rotation_ = 0;
     std::function<void(int)> changeOrientationCallback_;
 };
-}} // namespace ring::video
+}} // namespace jami::video
 
 #endif // __VIDEO_SENDER_H__

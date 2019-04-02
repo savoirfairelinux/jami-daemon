@@ -31,7 +31,7 @@ extern "C" {
 #include <libavutil/rational.h> // specify conversions for AVRational
 }
 
-namespace ring {
+namespace jami {
 
 /**
  * Naive implementation of the boost::rational interface, described here:

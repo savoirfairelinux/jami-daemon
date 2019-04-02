@@ -22,7 +22,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-namespace ring { namespace yaml_utils {
+namespace jami { namespace yaml_utils {
 
 // set T to the value stored at key, or leaves T unchanged
 // if no value is stored.
@@ -37,4 +37,4 @@ void parsePath(const YAML::Node &node, const char *key, std::string& path, const
 std::vector<std::map<std::string, std::string>>
 parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys);
 
-}} // namespace ring::yaml_utils
+}} // namespace jami::yaml_utils

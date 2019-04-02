@@ -63,7 +63,7 @@ using random_device = dht::crypto::random_device;
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
 #include "video/video_scaler.h"
 #endif
@@ -98,7 +98,7 @@ using random_device = dht::crypto::random_device;
 #include <list>
 #include <random>
 
-namespace ring {
+namespace jami {
 
 /** To store conference objects by conference ids */
 using ConferenceMap = std::map<std::string, std::shared_ptr<Conference>>;
@@ -143,7 +143,7 @@ check_rename(const std::string& old_dir, const std::string& new_dir)
     if (old_dir == new_dir or not fileutils::isDirectory(old_dir))
         return;
 
-    RING_WARN() << "Migrating" << old_dir << " to " << new_dir;
+    JAMI_WARN() << "Migrating" << old_dir << " to " << new_dir;
     if (not fileutils::isDirectory(new_dir)) {
         std::rename(old_dir.c_str(), new_dir.c_str());
     } else {
@@ -184,7 +184,7 @@ setDhtLogLevel()
 
         // From 0 (min) to 3 (max)
         level = std::max(0, std::min(level, 3));
-        RING_DBG("DHTLOGLEVEL=%u", level);
+        JAMI_DBG("DHTLOGLEVEL=%u", level);
     }
     Manager::instance().dhtLogLevel = level;
 #else
@@ -222,9 +222,9 @@ setSipLogLevel()
 
     pj_log_set_level(level);
     pj_log_set_log_func([](int level, const char *data, int /*len*/) {
-        if      (level < 2) RING_ERR() << data;
-        else if (level < 4) RING_WARN() << data;
-        else                RING_DBG() << data;
+        if      (level < 2) JAMI_ERR() << data;
+        else if (level < 4) JAMI_WARN() << data;
+        else                JAMI_DBG() << data;
     });
 }
 
@@ -239,7 +239,7 @@ static constexpr int RING_TLS_LOGLEVEL = 0;
 static void
 tls_print_logs(int level, const char* msg)
 {
-    RING_XDBG("[%d]GnuTLS: %s", level, msg);
+    JAMI_XDBG("[%d]GnuTLS: %s", level, msg);
 }
 
 static void
@@ -394,7 +394,7 @@ struct Manager::ManagerPimpl
     /* Sink ID mapping */
     std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     std::unique_ptr<VideoManager> videoManager_;
 #endif
 };
@@ -412,7 +412,7 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , ringbufferpool_(new RingBufferPool)
     , conferenceMap_()
     , ice_tf_()
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     , videoManager_(new VideoManager)
 #endif
 {
@@ -423,7 +423,7 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     std::seed_seq seed {rdev(), rdev()};
     rand_.seed(seed);
 
-    ring::libav_utils::ring_avcodec_init();
+    jami::libav_utils::ring_avcodec_init();
 }
 
 bool
@@ -436,11 +436,11 @@ Manager::ManagerPimpl::parseConfiguration()
         const int error_count = base_.loadAccountMap(parsedFile);
 
         if (error_count > 0) {
-            RING_WARN("Errors while parsing %s", path_.c_str());
+            JAMI_WARN("Errors while parsing %s", path_.c_str());
             result = false;
         }
     } catch (const YAML::BadFile &e) {
-        RING_WARN("Could not open configuration file");
+        JAMI_WARN("Could not open configuration file");
     }
 
     return result;
@@ -459,7 +459,7 @@ Manager::ManagerPimpl::playATone(Tone::TONEID toneId)
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
         if (not audiodriver_) {
-            RING_ERR("Audio layer not initialized");
+            JAMI_ERR("Audio layer not initialized");
             return;
         }
 
@@ -493,7 +493,7 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference &conf)
     const std::string current_call_id(base_.getCurrentCallId());
     ParticipantSet participants(conf.getParticipantList());
     const size_t n = participants.size();
-    RING_DBG("Process remaining %zu participant(s) from conference %s",
+    JAMI_DBG("Process remaining %zu participant(s) from conference %s",
           n, conf.getConfID().c_str());
 
     if (n > 1) {
@@ -516,10 +516,10 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference &conf)
                 switchCall(call);
         }
 
-        RING_DBG("No remaining participants, remove conference");
+        JAMI_DBG("No remaining participants, remove conference");
         base_.removeConference(conf.getConfID());
     } else {
-        RING_DBG("No remaining participants, remove conference");
+        JAMI_DBG("No remaining participants, remove conference");
         base_.removeConference(conf.getConfID());
         unsetCurrentCall();
     }
@@ -545,7 +545,7 @@ void
 Manager::ManagerPimpl::switchCall(const std::string& id)
 {
     std::lock_guard<std::mutex> m(currentCallMutex_);
-    RING_DBG("----- Switch current call id to '%s' -----", not id.empty() ? id.c_str() : "none");
+    JAMI_DBG("----- Switch current call id to '%s' -----", not id.empty() ? id.c_str() : "none");
     currentCall_ = id;
 }
 
@@ -585,11 +585,11 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node &node, int &errorCount)
             if (auto a = base_.accountFactory.createAccount(accountType.c_str(), accountid)) {
                 a->unserialize(node);
             } else {
-                RING_ERR("Failed to create account type \"%s\"", accountType.c_str());
+                JAMI_ERR("Failed to create account type \"%s\"", accountType.c_str());
                 ++errorCount;
             }
         } else {
-            RING_WARN("Ignoring unknown account type \"%s\"", accountType.c_str());
+            JAMI_WARN("Ignoring unknown account type \"%s\"", accountType.c_str());
         }
     }
 }
@@ -608,7 +608,7 @@ Manager::ManagerPimpl::sendTextMessageToConference(const Conference& conf,
                 throw std::runtime_error("no associated call");
             call->sendTextMessage(messages, from);
         } catch (const std::exception& e) {
-            RING_ERR("Failed to send message to conference participant %s: %s",
+            JAMI_ERR("Failed to send message to conference participant %s: %s",
                      call_id.c_str(), e.what());
         }
     }
@@ -625,7 +625,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
     if (base_.isConferenceParticipant(call_id))
         base_.detachParticipant(call_id);
 
-    RING_DBG("[call:%s] bind to conference %s (callState=%s)",
+    JAMI_DBG("[call:%s] bind to conference %s (callState=%s)",
              call_id.c_str(), conf_id.c_str(), state.c_str());
 
     base_.getRingBufferPool().unBindAll(call_id);
@@ -645,7 +645,7 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
         conf.bindParticipant(call_id);
         base_.answerCall(call_id);
     } else
-        RING_WARN("[call:%s] call state %s not recognized for conference",
+        JAMI_WARN("[call:%s] call state %s not recognized for conference",
                   call_id.c_str(), state.c_str());
 }
 
@@ -660,7 +660,7 @@ Manager::instance()
     // This will give a warning that can be ignored the first time instance()
     // is called...subsequent warnings are more serious
     if (not Manager::initialized)
-        RING_WARN("Not initialized");
+        JAMI_WARN("Not initialized");
 
     return instance;
 }
@@ -671,7 +671,7 @@ Manager::Manager()
     , hookPreference()
     , audioPreference()
     , shortcutPreferences()
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     , videoPreferences()
 #endif
     , callFactory()
@@ -720,11 +720,11 @@ Manager::init(const std::string &config_file)
     PJSIP_TRY(pjnath_init());
 #undef PJSIP_TRY
 
-    RING_DBG("pjsip version %s for %s initialized",
+    JAMI_DBG("pjsip version %s for %s initialized",
              pj_get_version(), PJ_OS_NAME);
 
     setGnuTlsLogLevel();
-    RING_DBG("GNU TLS version %s initialized", gnutls_check_version(nullptr));
+    JAMI_DBG("GNU TLS version %s initialized", gnutls_check_version(nullptr));
 
     setDhtLogLevel();
 
@@ -735,7 +735,7 @@ Manager::init(const std::string &config_file)
     pimpl_->ice_tf_.reset(new IceTransportFactory());
 
     pimpl_->path_ = config_file.empty() ? pimpl_->retrieveConfigPath() : config_file;
-    RING_DBG("Configuration file path: %s", pimpl_->path_.c_str());
+    JAMI_DBG("Configuration file path: %s", pimpl_->path_.c_str());
 
     bool no_errors = true;
 
@@ -745,7 +745,7 @@ Manager::init(const std::string &config_file)
     try {
         no_errors = pimpl_->parseConfiguration();
     } catch (const YAML::Exception &e) {
-        RING_ERR("%s", e.what());
+        JAMI_ERR("%s", e.what());
         no_errors = false;
     }
 
@@ -754,7 +754,7 @@ Manager::init(const std::string &config_file)
         make_backup(pimpl_->path_);
     } else {
         // restore previous configuration
-        RING_WARN("Restoring last working configuration");
+        JAMI_WARN("Restoring last working configuration");
 
         // keep a reference to sipvoiplink while destroying the accounts
         const auto sipvoiplink = getSIPVoIPLink();
@@ -765,8 +765,8 @@ Manager::init(const std::string &config_file)
             restore_backup(pimpl_->path_);
             pimpl_->parseConfiguration();
         } catch (const YAML::Exception &e) {
-            RING_ERR("%s", e.what());
-            RING_WARN("Restoring backup failed");
+            JAMI_ERR("%s", e.what());
+            JAMI_WARN("Restoring backup failed");
         }
     }
 
@@ -796,7 +796,7 @@ Manager::finish() noexcept
         callFactory.forbid();
 
         // Hangup all remaining active calls
-        RING_DBG("Hangup %zu remaining call(s)", callFactory.callCount());
+        JAMI_DBG("Hangup %zu remaining call(s)", callFactory.callCount());
         for (const auto call : callFactory.getAllCalls())
             hangupCall(call->getCallId());
         callFactory.clear();
@@ -826,7 +826,7 @@ Manager::finish() noexcept
         pj_shutdown();
         ThreadPool::instance().join();
     } catch (const VoipLinkException &err) {
-        RING_ERR("%s", err.what());
+        JAMI_ERR("%s", err.what());
     }
 }
 
@@ -875,11 +875,11 @@ Manager::outgoingCall(const std::string& account_id,
                           const std::map<std::string, std::string>& volatileCallDetails)
 {
     if (not conf_id.empty() and not isConference(conf_id)) {
-        RING_ERR("outgoingCall() failed, invalid conference id");
+        JAMI_ERR("outgoingCall() failed, invalid conference id");
         return {};
     }
 
-    RING_DBG() << "try outgoing call to '" << to << "'"
+    JAMI_DBG() << "try outgoing call to '" << to << "'"
                << " with account '" << account_id << "'";
 
     const auto& current_call_id(getCurrentCallId());
@@ -889,7 +889,7 @@ Manager::outgoingCall(const std::string& account_id,
     try {
         call = newOutgoingCall(to_cleaned, account_id, volatileCallDetails);
     } catch (const std::exception &e) {
-        RING_ERR("%s", e.what());
+        JAMI_ERR("%s", e.what());
         return {};
     }
 
@@ -902,7 +902,7 @@ Manager::outgoingCall(const std::string& account_id,
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
-        RING_DBG("Has current call (%s) put it onhold", current_call_id.c_str());
+        JAMI_DBG("Has current call (%s) put it onhold", current_call_id.c_str());
 
         bool isConf = isConference(current_call_id);
         // if this is not a conference and this and is not a conference participant
@@ -926,7 +926,7 @@ Manager::answerCall(const std::string& call_id)
 
     auto call = getCallFromCallID(call_id);
     if (!call) {
-        RING_ERR("Call %s is NULL", call_id.c_str());
+        JAMI_ERR("Call %s is NULL", call_id.c_str());
         return false;
     }
 
@@ -939,15 +939,15 @@ Manager::answerCall(const std::string& call_id)
     // in any cases we have to detach from current communication
     if (hasCurrentCall() and call_id != current_call_id) {
 
-        RING_DBG("Currently conversing with %s", current_call_id.c_str());
+        JAMI_DBG("Currently conversing with %s", current_call_id.c_str());
 
         bool isConf = isConference(current_call_id);
         if (not isConf and not isConferenceParticipant(current_call_id)) {
-            RING_DBG("Answer call: Put the current call (%s) on hold", current_call_id.c_str());
+            JAMI_DBG("Answer call: Put the current call (%s) on hold", current_call_id.c_str());
             onHoldCall(current_call_id);
         } else if (isConf and not isConferenceParticipant(call_id)) {
             // if we are talking to a conference and we are answering an incoming call
-            RING_DBG("Detach main participant from conference");
+            JAMI_DBG("Detach main participant from conference");
             detachLocalParticipant();
         }
     }
@@ -955,7 +955,7 @@ Manager::answerCall(const std::string& call_id)
     try {
         call->answer();
     } catch (const std::runtime_error &e) {
-        RING_ERR("%s", e.what());
+        JAMI_ERR("%s", e.what());
         result = false;
     }
 
@@ -987,10 +987,10 @@ Manager::checkAudio()
 {
     // FIXME dirty, the manager should not need to be aware of local recorders
     if (getCallList().empty()
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         and not getVideoManager().audioPreview
 #endif
-        and not ring::LocalRecorderManager::instance().hasRunningRecorders()) {
+        and not jami::LocalRecorderManager::instance().hasRunningRecorders()) {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         if (pimpl_->audiodriver_)
             pimpl_->audiodriver_->stopStream();
@@ -1009,7 +1009,7 @@ Manager::hangupCall(const std::string& callId)
     /* We often get here when the call was hungup before being created */
     auto call = getCallFromCallID(callId);
     if (not call) {
-        RING_WARN("Could not hang up non-existant call %s", callId.c_str());
+        JAMI_WARN("Could not hang up non-existant call %s", callId.c_str());
         checkAudio();
         return false;
     }
@@ -1029,7 +1029,7 @@ Manager::hangupCall(const std::string& callId)
         call->hangup(0);
         checkAudio();
     } catch (const VoipLinkException &e) {
-        RING_ERR("%s", e.what());
+        JAMI_ERR("%s", e.what());
         return false;
     }
 
@@ -1039,7 +1039,7 @@ Manager::hangupCall(const std::string& callId)
 bool
 Manager::hangupConference(const std::string& id)
 {
-    RING_DBG("Hangup conference %s", id.c_str());
+    JAMI_DBG("Hangup conference %s", id.c_str());
 
     ConferenceMap::iterator iter_conf = pimpl_->conferenceMap_.find(id);
 
@@ -1052,7 +1052,7 @@ Manager::hangupConference(const std::string& id)
             for (const auto &item : participants)
                 hangupCall(item);
         } else {
-            RING_ERR("No such conference %s", id.c_str());
+            JAMI_ERR("No such conference %s", id.c_str());
             return false;
         }
     }
@@ -1078,12 +1078,12 @@ Manager::onHoldCall(const std::string& callId)
             if (result)
                 removeAudio(*call); // Unbind calls in main buffer
         } catch (const VoipLinkException &e) {
-            RING_ERR("%s", e.what());
+            JAMI_ERR("%s", e.what());
             result = false;
         }
 
     } else {
-        RING_DBG("CallID %s doesn't exist in call onHold", callId.c_str());
+        JAMI_DBG("CallID %s doesn't exist in call onHold", callId.c_str());
         return false;
     }
 
@@ -1113,7 +1113,7 @@ Manager::offHoldCall(const std::string& callId)
     if (hasCurrentCall() and currentCallId != callId) {
         bool isConf = isConference(currentCallId);
         if (not isConf and not isConferenceParticipant(currentCallId)) {
-            RING_DBG("Has current call (%s), put on hold", currentCallId.c_str());
+            JAMI_DBG("Has current call (%s), put on hold", currentCallId.c_str());
             onHoldCall(currentCallId);
         } else if (isConf and not isConferenceParticipant(callId)) {
             holdConference(currentCallId);
@@ -1128,7 +1128,7 @@ Manager::offHoldCall(const std::string& callId)
     try {
         result = call->offhold();
     } catch (const VoipLinkException &e) {
-        RING_ERR("%s", e.what());
+        JAMI_ERR("%s", e.what());
         return false;
     }
 
@@ -1151,7 +1151,7 @@ Manager::muteMediaCall(const std::string& callId, const std::string& mediaType, 
         call->muteMedia(mediaType, is_muted);
         return true;
     } else {
-        RING_DBG("CallID %s doesn't exist in call muting", callId.c_str());
+        JAMI_DBG("CallID %s doesn't exist in call muting", callId.c_str());
         return false;
     }
 }
@@ -1223,8 +1223,8 @@ Manager::refuseCall(const std::string& id)
 void
 Manager::removeConference(const std::string& conference_id)
 {
-    RING_DBG("Remove conference %s", conference_id.c_str());
-    RING_DBG("number of participants: %zu", pimpl_->conferenceMap_.size());
+    JAMI_DBG("Remove conference %s", conference_id.c_str());
+    JAMI_DBG("number of participants: %zu", pimpl_->conferenceMap_.size());
     ConferenceMap::iterator iter = pimpl_->conferenceMap_.find(conference_id);
 
     std::shared_ptr<Conference> conf;
@@ -1233,7 +1233,7 @@ Manager::removeConference(const std::string& conference_id)
         conf = iter->second;
 
     if (not conf) {
-        RING_ERR("Conference not found");
+        JAMI_ERR("Conference not found");
         return;
     }
 
@@ -1254,9 +1254,9 @@ Manager::removeConference(const std::string& conference_id)
 
     // Then remove the conference from the conference map
     if (pimpl_->conferenceMap_.erase(conference_id))
-        RING_DBG("Conference %s removed successfully", conference_id.c_str());
+        JAMI_DBG("Conference %s removed successfully", conference_id.c_str());
     else
-        RING_ERR("Cannot remove conference: %s", conference_id.c_str());
+        JAMI_ERR("Cannot remove conference: %s", conference_id.c_str());
 }
 
 std::shared_ptr<Conference>
@@ -1354,23 +1354,23 @@ Manager::addParticipant(const std::string& callId,
 {
     auto iter = pimpl_->conferenceMap_.find(conferenceId);
     if (iter == pimpl_->conferenceMap_.end() or iter->second == nullptr) {
-        RING_ERR("Conference id is not valid");
+        JAMI_ERR("Conference id is not valid");
         return false;
     }
 
     auto call = getCallFromCallID(callId);
     if (!call) {
-        RING_ERR("Call id %s is not valid", callId.c_str());
+        JAMI_ERR("Call id %s is not valid", callId.c_str());
         return false;
     }
 
     // No-op if the call is already a conference participant
     if (call->getConfId() == conferenceId) {
-        RING_WARN("Call %s already participant of conf %s", callId.c_str(), conferenceId.c_str());
+        JAMI_WARN("Call %s already participant of conf %s", callId.c_str(), conferenceId.c_str());
         return true;
     }
 
-    RING_DBG("Add participant %s to %s", callId.c_str(), conferenceId.c_str());
+    JAMI_DBG("Add participant %s to %s", callId.c_str(), conferenceId.c_str());
 
     // store the current call id (it will change in offHoldCall or in answerCall)
     auto current_call_id = getCurrentCallId();
@@ -1434,7 +1434,7 @@ Manager::addMainParticipant(const std::string& conference_id)
         else if (conf->getState() == Conference::ACTIVE_DETACHED_REC)
             conf->setState(Conference::ACTIVE_ATTACHED_REC);
         else
-            RING_WARN("Invalid conference state while adding main participant");
+            JAMI_WARN("Invalid conference state while adding main participant");
 
         emitSignal<DRing::CallSignal::ConferenceChanged>(conference_id, conf->getStateStr());
     }
@@ -1453,21 +1453,21 @@ bool
 Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
 {
     if (callId1 == callId2) {
-        RING_ERR("Cannot join participant %s to itself", callId1.c_str());
+        JAMI_ERR("Cannot join participant %s to itself", callId1.c_str());
         return false;
     }
 
     // Set corresponding conference ids for call 1
     auto call1 = getCallFromCallID(callId1);
     if (!call1) {
-        RING_ERR("Could not find call %s", callId1.c_str());
+        JAMI_ERR("Could not find call %s", callId1.c_str());
         return false;
     }
 
     // Set corresponding conderence details
     auto call2 = getCallFromCallID(callId2);
     if (!call2) {
-        RING_ERR("Could not find call %s", callId2.c_str());
+        JAMI_ERR("Could not find call %s", callId2.c_str());
         return false;
     }
 
@@ -1500,7 +1500,7 @@ Manager::createConfFromParticipantList(const std::vector< std::string > &partici
 {
     // we must at least have 2 participant for a conference
     if (participantList.size() <= 1) {
-        RING_ERR("Participant number must be higher or equal to 2");
+        JAMI_ERR("Participant number must be higher or equal to 2");
         return;
     }
 
@@ -1537,17 +1537,17 @@ Manager::createConfFromParticipantList(const std::vector< std::string > &partici
 bool
 Manager::detachLocalParticipant()
 {
-    RING_DBG("Unbind local participant from conference");
+    JAMI_DBG("Unbind local participant from conference");
     const auto& current_call_id = getCurrentCallId();
 
     if (not isConference(current_call_id)) {
-        RING_ERR("Current call id (%s) is not a conference", current_call_id.c_str());
+        JAMI_ERR("Current call id (%s) is not a conference", current_call_id.c_str());
         return false;
     }
 
     auto iter = pimpl_->conferenceMap_.find(current_call_id);
     if (iter == pimpl_->conferenceMap_.end() or iter->second == nullptr) {
-        RING_ERR("Conference is NULL");
+        JAMI_ERR("Conference is NULL");
         return false;
     }
 
@@ -1562,7 +1562,7 @@ Manager::detachLocalParticipant()
             conf->setState(Conference::ACTIVE_DETACHED_REC);
             break;
         default:
-            RING_WARN("Undefined behavior, invalid conference state in detach participant");
+            JAMI_WARN("Undefined behavior, invalid conference state in detach participant");
     }
 
     emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
@@ -1574,17 +1574,17 @@ Manager::detachLocalParticipant()
 bool
 Manager::detachParticipant(const std::string& call_id)
 {
-    RING_DBG("Detach participant %s", call_id.c_str());
+    JAMI_DBG("Detach participant %s", call_id.c_str());
 
     auto call = getCallFromCallID(call_id);
     if (!call) {
-        RING_ERR("Could not find call %s", call_id.c_str());
+        JAMI_ERR("Could not find call %s", call_id.c_str());
         return false;
     }
 
     auto conf = getConferenceFromCallID(call_id);
     if (!conf) {
-        RING_ERR("Call is not conferencing, cannot detach");
+        JAMI_ERR("Call is not conferencing, cannot detach");
         return false;
     }
 
@@ -1599,12 +1599,12 @@ Manager::detachParticipant(const std::string& call_id)
 void
 Manager::removeParticipant(const std::string& call_id)
 {
-    RING_DBG("Remove participant %s", call_id.c_str());
+    JAMI_DBG("Remove participant %s", call_id.c_str());
 
     // this call is no longer a conference participant
     auto call = getCallFromCallID(call_id);
     if (!call) {
-        RING_ERR("Call not found");
+        JAMI_ERR("Call not found");
         return;
     }
 
@@ -1612,7 +1612,7 @@ Manager::removeParticipant(const std::string& call_id)
 
     auto conf = iter->second;
     if (iter == pimpl_->conferenceMap_.end() or conf == 0) {
-        RING_ERR("No conference with id %s, cannot remove participant", call->getConfId().c_str());
+        JAMI_ERR("No conference with id %s, cannot remove participant", call->getConfId().c_str());
         return;
     }
 
@@ -1631,12 +1631,12 @@ Manager::joinConference(const std::string& conf_id1,
                             const std::string& conf_id2)
 {
     if (pimpl_->conferenceMap_.find(conf_id1) == pimpl_->conferenceMap_.end()) {
-        RING_ERR("Not a valid conference ID: %s", conf_id1.c_str());
+        JAMI_ERR("Not a valid conference ID: %s", conf_id1.c_str());
         return false;
     }
 
     if (pimpl_->conferenceMap_.find(conf_id2) == pimpl_->conferenceMap_.end()) {
-        RING_ERR("Not a valid conference ID: %s", conf_id2.c_str());
+        JAMI_ERR("Not a valid conference ID: %s", conf_id2.c_str());
         return false;
     }
 
@@ -1655,7 +1655,7 @@ Manager::addAudio(Call& call)
     const auto call_id = call.getCallId();
 
     if (isConferenceParticipant(call_id)) {
-        RING_DBG("[conf:%s] Attach local audio", call_id.c_str());
+        JAMI_DBG("[conf:%s] Attach local audio", call_id.c_str());
 
         // bind to conference participant
         ConferenceMap::iterator iter = pimpl_->conferenceMap_.find(call_id);
@@ -1664,14 +1664,14 @@ Manager::addAudio(Call& call)
             conf->bindParticipant(call_id);
         }
     } else {
-        RING_DBG("[call:%s] Attach audio", call_id.c_str());
+        JAMI_DBG("[call:%s] Attach audio", call_id.c_str());
 
         // bind to main
         getRingBufferPool().bindCallID(call_id, RingBufferPool::DEFAULT_ID);
 
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         if (!pimpl_->audiodriver_) {
-            RING_ERR("Audio driver not initialized");
+            JAMI_ERR("Audio driver not initialized");
             return;
         }
         pimpl_->audiodriver_->flushUrgent();
@@ -1684,7 +1684,7 @@ void
 Manager::removeAudio(Call& call)
 {
     const auto call_id = call.getCallId();
-    RING_DBG("[call:%s] Remove local audio", call_id.c_str());
+    JAMI_DBG("[call:%s] Remove local audio", call_id.c_str());
     getRingBufferPool().unBindAll(call_id);
 }
 
@@ -1733,16 +1733,16 @@ Manager::saveConfig(const std::shared_ptr<RingAccount>& account)
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
         std::ofstream fout(accountConfig);
         fout << accountOut.c_str();
-        RING_DBG("Exported account to %s", accountConfig.c_str());
+        JAMI_DBG("Exported account to %s", accountConfig.c_str());
     } catch (const std::exception& e) {
-        RING_ERR("Error exporting account: %s", e.what());
+        JAMI_ERR("Error exporting account: %s", e.what());
     }
 }
 
 void
 Manager::saveConfig()
 {
-    RING_DBG("Saving Configuration to XDG directory %s", pimpl_->path_.c_str());
+    JAMI_DBG("Saving Configuration to XDG directory %s", pimpl_->path_.c_str());
 
     if (pimpl_->audiodriver_) {
         audioPreference.setVolumemic(pimpl_->audiodriver_->getCaptureGain());
@@ -1776,7 +1776,7 @@ Manager::saveConfig()
         voipPreferences.serialize(out);
         hookPreference.serialize(out);
         audioPreference.serialize(out);
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         videoPreferences.serialize(out);
 #endif
         shortcutPreferences.serialize(out);
@@ -1785,9 +1785,9 @@ Manager::saveConfig()
         std::ofstream fout(pimpl_->path_);
         fout << out.c_str();
     } catch (const YAML::Exception &e) {
-        RING_ERR("%s", e.what());
+        JAMI_ERR("%s", e.what());
     } catch (const std::runtime_error &e) {
-        RING_ERR("%s", e.what());
+        JAMI_ERR("%s", e.what());
     }
 }
 
@@ -1798,7 +1798,7 @@ Manager::playDtmf(char code)
     stopTone();
 
     if (not voipPreferences.getPlayDtmf()) {
-        RING_DBG("Do not have to play a tone...");
+        JAMI_DBG("Do not have to play a tone...");
         return;
     }
 
@@ -1806,7 +1806,7 @@ Manager::playDtmf(char code)
     int pulselen = voipPreferences.getPulseLength();
 
     if (pulselen == 0) {
-        RING_DBG("Pulse length is not set...");
+        JAMI_DBG("Pulse length is not set...");
         return;
     }
 
@@ -1814,13 +1814,13 @@ Manager::playDtmf(char code)
 
     // fast return, no sound, so no dtmf
     if (not pimpl_->audiodriver_ or not pimpl_->dtmfKey_) {
-        RING_DBG("No audio layer...");
+        JAMI_DBG("No audio layer...");
         return;
     }
 
     pimpl_->audiodriver_->startStream();
     if (not pimpl_->audiodriver_->waitForStart(std::chrono::seconds(1))) {
-        RING_ERR("Failed to start audio layer...");
+        JAMI_ERR("Failed to start audio layer...");
         return;
     }
 
@@ -1934,11 +1934,11 @@ Manager::incomingMessage(const std::string& callID,
     if (isConferenceParticipant(callID)) {
         auto conf = getConferenceFromCallID(callID);
         if (not conf) {
-            RING_ERR("no conference associated to ID %s", callID.c_str());
+            JAMI_ERR("no conference associated to ID %s", callID.c_str());
             return;
         }
 
-        RING_DBG("Is a conference, send incoming message to everyone");
+        JAMI_DBG("Is a conference, send incoming message to everyone");
         pimpl_->sendTextMessageToConference(*conf, messages, from);
 
         // in case of a conference we must notify client using conference id
@@ -1956,34 +1956,34 @@ Manager::sendCallTextMessage(const std::string& callID,
     if (isConference(callID)) {
         const auto& it = pimpl_->conferenceMap_.find(callID);
         if (it == pimpl_->conferenceMap_.cend() or not it->second) {
-            RING_ERR("no conference associated to ID %s", callID.c_str());
+            JAMI_ERR("no conference associated to ID %s", callID.c_str());
             return;
         }
 
-        RING_DBG("Is a conference, send instant message to everyone");
+        JAMI_DBG("Is a conference, send instant message to everyone");
         pimpl_->sendTextMessageToConference(*it->second, messages, from);
 
     } else if (isConferenceParticipant(callID)) {
         auto conf = getConferenceFromCallID(callID);
         if (not conf) {
-            RING_ERR("no conference associated to call ID %s", callID.c_str());
+            JAMI_ERR("no conference associated to call ID %s", callID.c_str());
             return;
         }
 
-        RING_DBG("Call is participant in a conference, send instant message to everyone");
+        JAMI_DBG("Call is participant in a conference, send instant message to everyone");
         pimpl_->sendTextMessageToConference(*conf, messages, from);
 
     } else {
         auto call = getCallFromCallID(callID);
         if (not call) {
-            RING_ERR("Failed to send message to %s: inexistant call ID", callID.c_str());
+            JAMI_ERR("Failed to send message to %s: inexistant call ID", callID.c_str());
             return;
         }
 
         try {
             call->sendTextMessage(messages, from);
         } catch (const im::InstantMessageException& e) {
-            RING_ERR("Failed to send message to call %s: %s", call->getCallId().c_str(), e.what());
+            JAMI_ERR("Failed to send message to call %s: %s", call->getCallId().c_str(), e.what());
         }
     }
 }
@@ -1993,7 +1993,7 @@ void
 Manager::peerAnsweredCall(Call& call)
 {
     const auto call_id = call.getCallId();
-    RING_DBG("[call:%s] Peer answered", call_id.c_str());
+    JAMI_DBG("[call:%s] Peer answered", call_id.c_str());
 
     // The if statement is useful only if we sent two calls at the same time.
     if (isCurrentCall(call))
@@ -2015,7 +2015,7 @@ Manager::peerAnsweredCall(Call& call)
 void
 Manager::peerRingingCall(Call& call)
 {
-    RING_DBG("[call:%s] Peer ringing", call.getCallId().c_str());
+    JAMI_DBG("[call:%s] Peer ringing", call.getCallId().c_str());
 
     if (isCurrentCall(call))
         ringback();
@@ -2026,7 +2026,7 @@ void
 Manager::peerHungupCall(Call& call)
 {
     const auto call_id = call.getCallId();
-    RING_DBG("[call:%s] Peer hungup", call_id.c_str());
+    JAMI_DBG("[call:%s] Peer hungup", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
         removeParticipant(call_id);
@@ -2049,7 +2049,7 @@ Manager::peerHungupCall(Call& call)
 void
 Manager::callBusy(Call& call)
 {
-    RING_DBG("[call:%s] Busy", call.getCallId().c_str());
+    JAMI_DBG("[call:%s] Busy", call.getCallId().c_str());
 
     if (isCurrentCall(call)) {
         pimpl_->unsetCurrentCall();
@@ -2066,14 +2066,14 @@ void
 Manager::callFailure(Call& call)
 {
     const auto call_id = call.getCallId();
-    RING_DBG("[call:%s] Failed", call.getCallId().c_str());
+    JAMI_DBG("[call:%s] Failed", call.getCallId().c_str());
 
     if (isCurrentCall(call)) {
         pimpl_->unsetCurrentCall();
     }
 
     if (isConferenceParticipant(call_id)) {
-        RING_DBG("Call %s participating in a conference failed", call_id.c_str());
+        JAMI_DBG("Call %s participating in a conference failed", call_id.c_str());
         // remove this participant
         removeParticipant(call_id);
     }
@@ -2150,7 +2150,7 @@ Manager::playRingtone(const std::string& accountID)
     const auto account = getAccount(accountID);
 
     if (!account) {
-        RING_WARN("Invalid account in ringtone");
+        JAMI_WARN("Invalid account in ringtone");
         return;
     }
 
@@ -2175,7 +2175,7 @@ Manager::playRingtone(const std::string& accountID)
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
         if (not pimpl_->audiodriver_) {
-            RING_ERR("no audio layer in ringtone");
+            JAMI_ERR("no audio layer in ringtone");
             return;
         }
         // start audio if not started AND flush all buffers (main and urgent)
@@ -2217,7 +2217,7 @@ Manager::setAudioPlugin(const std::string& audioPlugin)
     if (pimpl_->audiodriver_ and wasStarted)
         pimpl_->audiodriver_->startStream();
     else
-        RING_ERR("No audio layer created, possibly built without audio support");
+        JAMI_ERR("No audio layer created, possibly built without audio support");
 
     saveConfig();
 }
@@ -2231,11 +2231,11 @@ Manager::setAudioDevice(int index, DeviceType type)
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        RING_ERR("Audio driver not initialized");
+        JAMI_ERR("Audio driver not initialized");
         return ;
     }
     if (pimpl_->getCurrentDeviceIndex(type) == index) {
-        RING_WARN("Audio device already selected ; doing nothing.");
+        JAMI_WARN("Audio device already selected ; doing nothing.");
         return;
     }
 
@@ -2260,7 +2260,7 @@ Manager::getAudioOutputDeviceList()
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        RING_ERR("Audio layer not initialized");
+        JAMI_ERR("Audio layer not initialized");
         return {};
     }
 
@@ -2276,7 +2276,7 @@ Manager::getAudioInputDeviceList()
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        RING_ERR("Audio layer not initialized");
+        JAMI_ERR("Audio layer not initialized");
         return {};
     }
 
@@ -2292,7 +2292,7 @@ Manager::getCurrentAudioDevicesIndex()
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        RING_ERR("Audio layer not initialized");
+        JAMI_ERR("Audio layer not initialized");
         return {};
     }
 
@@ -2314,7 +2314,7 @@ Manager::switchInput(const std::string& call_id, const std::string& res)
 {
     auto call = getCallFromCallID(call_id);
     if (!call) {
-        RING_ERR("Call %s is NULL", call_id.c_str());
+        JAMI_ERR("Call %s is NULL", call_id.c_str());
         return false;
     }
     call->switchInput(res);
@@ -2327,7 +2327,7 @@ Manager::isRingtoneEnabled(const std::string& id)
     const auto account = getAccount(id);
 
     if (!account) {
-        RING_WARN("Invalid account in ringtone enabled");
+        JAMI_WARN("Invalid account in ringtone enabled");
         return 0;
     }
 
@@ -2340,7 +2340,7 @@ Manager::ringtoneEnabled(const std::string& id)
     const auto account = getAccount(id);
 
     if (!account) {
-        RING_WARN("Invalid account in ringtone enabled");
+        JAMI_WARN("Invalid account in ringtone enabled");
         return;
     }
 
@@ -2366,10 +2366,10 @@ Manager::toggleRecordingCall(const std::string& id)
 
     ConferenceMap::const_iterator it(pimpl_->conferenceMap_.find(id));
     if (it == pimpl_->conferenceMap_.end()) {
-        RING_DBG("toggle recording for call %s", id.c_str());
+        JAMI_DBG("toggle recording for call %s", id.c_str());
         rec = getCallFromCallID(id);
     } else {
-        RING_DBG("toggle recording for conference %s", id.c_str());
+        JAMI_DBG("toggle recording for conference %s", id.c_str());
         auto conf = it->second;
         if (conf) {
             rec = conf;
@@ -2381,7 +2381,7 @@ Manager::toggleRecordingCall(const std::string& id)
     }
 
     if (!rec) {
-        RING_ERR("Could not find recordable instance %s", id.c_str());
+        JAMI_ERR("Could not find recordable instance %s", id.c_str());
         return false;
     }
 
@@ -2401,13 +2401,13 @@ Manager::isRecording(const std::string& id)
 bool
 Manager::startRecordedFilePlayback(const std::string& filepath)
 {
-    RING_DBG("Start recorded file playback %s", filepath.c_str());
+    JAMI_DBG("Start recorded file playback %s", filepath.c_str());
 
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
         if (not pimpl_->audiodriver_) {
-            RING_ERR("No audio layer in start recorded file playback");
+            JAMI_ERR("No audio layer in start recorded file playback");
             return false;
         }
 
@@ -2427,7 +2427,7 @@ Manager::recordingPlaybackSeek(const double value)
 void
 Manager::stopRecordedFilePlayback()
 {
-    RING_DBG("Stop recorded file playback");
+    JAMI_DBG("Stop recorded file playback");
 
     checkAudio();
     pimpl_->toneCtrl_.stopAudioFile();
@@ -2436,7 +2436,7 @@ Manager::stopRecordedFilePlayback()
 void
 Manager::setHistoryLimit(int days)
 {
-    RING_DBG("Set history limit");
+    JAMI_DBG("Set history limit");
     preferences.setHistoryLimit(days);
     saveConfig();
 }
@@ -2450,7 +2450,7 @@ Manager::getHistoryLimit() const
 void
 Manager::setRingingTimeout(int timeout)
 {
-    RING_DBG("Set ringing timeout");
+    JAMI_DBG("Set ringing timeout");
     preferences.setRingingTimeout(timeout);
     saveConfig();
 }
@@ -2471,7 +2471,7 @@ Manager::setAudioManager(const std::string &api)
             return false;
 
         if (api == audioPreference.getAudioApi()) {
-            RING_DBG("Audio manager chosen already in use. No changes made. ");
+            JAMI_DBG("Audio manager chosen already in use. No changes made. ");
             return true;
         }
     }
@@ -2505,7 +2505,7 @@ Manager::getAudioInputDeviceIndex(const std::string &name)
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        RING_ERR("Audio layer not initialized");
+        JAMI_ERR("Audio layer not initialized");
         return 0;
     }
 
@@ -2518,7 +2518,7 @@ Manager::getAudioOutputDeviceIndex(const std::string &name)
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
-        RING_ERR("Audio layer not initialized");
+        JAMI_ERR("Audio layer not initialized");
         return 0;
     }
 
@@ -2581,7 +2581,7 @@ Manager::audioFormatUsed(AudioFormat format)
     if (currentFormat == format)
         return format;
 
-    RING_DBG("Audio format changed: %s -> %s", currentFormat.toString().c_str(),
+    JAMI_DBG("Audio format changed: %s -> %s", currentFormat.toString().c_str(),
              format.toString().c_str());
 
     pimpl_->ringbufferpool_->setInternalAudioFormat(format);
@@ -2594,7 +2594,7 @@ Manager::audioFormatUsed(AudioFormat format)
 void
 Manager::setAccountsOrder(const std::string& order)
 {
-    RING_DBG("Set accounts order : %s", order.c_str());
+    JAMI_DBG("Set accounts order : %s", order.c_str());
     // Set the new config
 
     preferences.setAccountOrder(order);
@@ -2625,7 +2625,7 @@ Manager::getAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getAccountDetails();
     } else {
-        RING_ERR("Could not get account details on a non-existing accountID %s", accountID.c_str());
+        JAMI_ERR("Could not get account details on a non-existing accountID %s", accountID.c_str());
         // return an empty map since we can't throw an exception to D-Bus
         return std::map<std::string, std::string>();
     }
@@ -2639,7 +2639,7 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getVolatileAccountDetails();
     } else {
-        RING_ERR("Could not get volatile account details on a non-existing accountID %s", accountID.c_str());
+        JAMI_ERR("Could not get volatile account details on a non-existing accountID %s", accountID.c_str());
         return {};
     }
 }
@@ -2651,12 +2651,12 @@ void
 Manager::setAccountDetails(const std::string& accountID,
                                const std::map<std::string, std::string>& details)
 {
-    RING_DBG("Set account details for %s", accountID.c_str());
+    JAMI_DBG("Set account details for %s", accountID.c_str());
 
     const auto account = getAccount(accountID);
 
     if (account == nullptr) {
-        RING_ERR("Could not find account %s", accountID.c_str());
+        JAMI_ERR("Could not find account %s", accountID.c_str());
         return;
     }
 
@@ -2701,12 +2701,12 @@ Manager::testAccountICEInitialization(const std::string& accountID)
 
     if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
     {
-        result["STATUS"] = ring::to_string((int) DRing::Account::testAccountICEInitializationStatus::FAILURE);
+        result["STATUS"] = jami::to_string((int) DRing::Account::testAccountICEInitializationStatus::FAILURE);
         result["MESSAGE"] = ice->getLastErrMsg();
     }
     else
     {
-        result["STATUS"] = ring::to_string((int) DRing::Account::testAccountICEInitializationStatus::SUCCESS);
+        result["STATUS"] = jami::to_string((int) DRing::Account::testAccountICEInitializationStatus::SUCCESS);
         result["MESSAGE"] = "";
     }
 
@@ -2744,11 +2744,11 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     else
         accountType = AccountFactory::DEFAULT_ACCOUNT_TYPE;
 
-    RING_DBG("Adding account %s", newAccountID.c_str());
+    JAMI_DBG("Adding account %s", newAccountID.c_str());
 
     auto newAccount = accountFactory.createAccount(accountType, newAccountID);
     if (!newAccount) {
-        RING_ERR("Unknown %s param when calling addAccount(): %s",
+        JAMI_ERR("Unknown %s param when calling addAccount(): %s",
               Conf::CONFIG_ACCOUNT_TYPE, accountType);
         return "";
     }
@@ -2823,11 +2823,11 @@ Manager::loadAccountMap(const YAML::Node& node)
 
     int errorCount = 0;
     try {
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         videoPreferences.unserialize(node);
 #endif
     } catch (const YAML::Exception &e) {
-        RING_ERR("%s: No video node in config file", e.what());
+        JAMI_ERR("%s: No video node in config file", e.what());
         ++errorCount;
     }
 
@@ -2864,7 +2864,7 @@ Manager::loadAccountMap(const YAML::Node& node)
                         a->unserialize(parsedConfig);
                     }
                 } catch (const std::exception& e) {
-                    RING_ERR("Can't import account %s: %s", dir.c_str(), e.what());
+                    JAMI_ERR("Can't import account %s: %s", dir.c_str(), e.what());
                 }
             }
             {
@@ -2887,7 +2887,7 @@ Manager::getCallDetails(const std::string &callID)
     if (auto call = getCallFromCallID(callID)) {
         return call->getDetails();
     } else {
-        RING_ERR("Call is NULL");
+        JAMI_ERR("Call is NULL");
         // FIXME: is this even useful?
         return Call::getNullDetails();
     }
@@ -2934,7 +2934,7 @@ Manager::getDisplayNames(const std::string& confID) const
     if (iter_conf != pimpl_->conferenceMap_.end()) {
         return iter_conf->second->getDisplayNames();
     } else {
-        RING_WARN("Did not find conference %s", confID.c_str());
+        JAMI_WARN("Did not find conference %s", confID.c_str());
     }
 
     return v;
@@ -2950,7 +2950,7 @@ Manager::getParticipantList(const std::string& confID) const
         const ParticipantSet participants(iter_conf->second->getParticipantList());
         std::copy(participants.begin(), participants.end(), std::back_inserter(v));;
     } else
-        RING_WARN("Did not find conference %s", confID.c_str());
+        JAMI_WARN("Did not find conference %s", confID.c_str());
 
     return v;
 }
@@ -2961,7 +2961,7 @@ Manager::getConferenceId(const std::string& callID)
     if (auto call = getCallFromCallID(callID))
         return call->getConfId();
 
-    RING_ERR("Call is NULL");
+    JAMI_ERR("Call is NULL");
     return "";
 }
 
@@ -2970,7 +2970,7 @@ Manager::startAudioDriverStream()
 {
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
     if (!pimpl_->audiodriver_) {
-        RING_ERR("Audio driver not initialized");
+        JAMI_ERR("Audio driver not initialized");
         return;
     }
     pimpl_->audiodriver_->startStream();
@@ -3020,7 +3020,7 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
         try {
             return acc->sendTextMessage(to, payloads);
         } catch (const std::exception& e) {
-            RING_ERR("Exception during text message sending: %s", e.what());
+            JAMI_ERR("Exception during text message sending: %s", e.what());
         }
     }
     return 0;
@@ -3094,14 +3094,14 @@ Manager::newOutgoingCall(const std::string& toUrl,
 {
     auto account = getAccount(accountId);
     if (account and !account->isUsable()) {
-        RING_WARN("Account is not usable for calling");
+        JAMI_WARN("Account is not usable for calling");
         return nullptr;
     }
 
     return account->newOutgoingCall(toUrl, volatileCallDetails);
 }
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 std::shared_ptr<video::SinkClient>
 Manager::createSinkClient(const std::string& id, bool mixer)
 {
@@ -3126,7 +3126,7 @@ Manager::getSinkClient(const std::string& id)
             return sink;
     return nullptr;
 }
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
 RingBufferPool&
 Manager::getRingBufferPool()
@@ -3146,7 +3146,7 @@ Manager::getIceTransportFactory()
     return *pimpl_->ice_tf_;
 }
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 VideoManager&
 Manager::getVideoManager() const
 {
@@ -3162,4 +3162,4 @@ Manager::getLastMessages(const std::string& accountID, const uint64_t& base_time
     return {};
 }
 
-} // namespace ring
+} // namespace jami

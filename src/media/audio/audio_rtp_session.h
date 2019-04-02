@@ -30,7 +30,7 @@
 #include <string>
 #include <memory>
 
-namespace ring {
+namespace jami {
 
 class AudioInput;
 class AudioReceiveThread;
@@ -69,6 +69,6 @@ class AudioRtpSession : public RtpSession {
         std::string input_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // __AUDIO_RTP_SESSION_H__

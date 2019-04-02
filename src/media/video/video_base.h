@@ -53,12 +53,12 @@ class MediaFrame;
 class VideoFrame;
 }
 
-namespace ring {
+namespace jami {
 using MediaFrame = DRing::MediaFrame;
 using VideoFrame = DRing::VideoFrame;
 }
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 struct VideoFrameActiveWriter: Observable<std::shared_ptr<MediaFrame>> {};
 struct VideoFramePassiveReader: Observer<std::shared_ptr<MediaFrame>> {};
@@ -101,15 +101,15 @@ struct VideoSettings
     std::string framerate {};
 };
 
-}} // namespace ring::video
+}} // namespace jami::video
 
 namespace YAML {
 template<>
-struct convert<ring::video::VideoSettings> {
-    static Node encode(const ring::video::VideoSettings& rhs);
-    static bool decode(const Node& node, ring::video::VideoSettings& rhs);
+struct convert<jami::video::VideoSettings> {
+    static Node encode(const jami::video::VideoSettings& rhs);
+    static bool decode(const Node& node, jami::video::VideoSettings& rhs);
 };
 
-Emitter& operator << (Emitter& out, const ring::video::VideoSettings& v);
+Emitter& operator << (Emitter& out, const jami::video::VideoSettings& v);
 
 } // namespace YAML

@@ -31,7 +31,7 @@
 #include <ctime>
 #include <algorithm>
 
-namespace ring {
+namespace jami {
 
 AudioLayer::AudioLayer(const AudioPreference &pref)
     : isCaptureMuted_(pref.getCaptureMuted())
@@ -54,14 +54,14 @@ AudioLayer::~AudioLayer()
 void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    RING_DBG("Hardware audio format available : %s", playback.toString().c_str());
+    JAMI_DBG("Hardware audio format available : %s", playback.toString().c_str());
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
     urgentRingBuffer_.setFormat(playback);
 }
 
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
 {
-    RING_DBG("Hardware input audio format available : %s", capture.toString().c_str());
+    JAMI_DBG("Hardware input audio format available : %s", capture.toString().c_str());
 }
 
 void AudioLayer::devicesChanged()
@@ -168,4 +168,4 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
     return playbackBuf;
 }
 
-} // namespace ring
+} // namespace jami

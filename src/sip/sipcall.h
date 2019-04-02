@@ -30,7 +30,7 @@
 #include "call.h"
 #include "sip_utils.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "media/video/video_rtp_session.h"
 #endif
 
@@ -45,7 +45,7 @@ struct pjsip_inv_session;
 struct pjmedia_sdp_session;
 struct pj_ice_sess_cand;
 
-namespace ring {
+namespace jami {
 
 class Sdp;
 class SIPAccountBase;
@@ -200,7 +200,7 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
         return *avformatrtp_;
     }
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     /**
      * Returns a pointer to the VideoRtp object
      */
@@ -274,7 +274,7 @@ private:
 
     std::unique_ptr<AudioRtpSession> avformatrtp_;
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     /**
      * Video Rtp Session factory
      */
@@ -312,7 +312,7 @@ private:
     char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
     pj_str_t contactHeader_ {contactBuffer_, 0};
 
-    std::unique_ptr<ring::upnp::Controller> upnp_;
+    std::unique_ptr<jami::upnp::Controller> upnp_;
 
     /** Local audio port, as seen by me. */
     unsigned int localAudioPort_ {0};
@@ -339,4 +339,4 @@ inline std::shared_ptr<SIPCall> getPtr(SIPCall& call)
     return std::static_pointer_cast<SIPCall>(call.shared_from_this());
 }
 
-} // namespace ring
+} // namespace jami

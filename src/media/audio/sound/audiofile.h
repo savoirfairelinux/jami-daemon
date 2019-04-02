@@ -27,7 +27,7 @@
 #include <stdexcept>
 #include "audio/audioloop.h"
 
-namespace ring {
+namespace jami {
 
 class AudioFileException : public std::runtime_error {
     public:
@@ -56,6 +56,6 @@ class AudioFile : public AudioLoop {
         unsigned updatePlaybackScale_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // __AUDIOFILE_H__

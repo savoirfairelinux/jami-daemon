@@ -27,7 +27,7 @@
 
 struct SwsContext;
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class VideoScaler {
 public:
@@ -49,6 +49,6 @@ private:
     uint8_t *tmp_data_[4]; // used by scale_and_pad
 };
 
-}} // namespace ring::video
+}} // namespace jami::video
 
 #endif // __VIDEO_SCALER_H__

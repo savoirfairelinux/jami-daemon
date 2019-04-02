@@ -42,7 +42,7 @@
 
 #include <opendht/rng.h>
 
-namespace ring {
+namespace jami {
 
 static DRing::DataTransferId
 generateUID()
@@ -347,7 +347,7 @@ SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
 
     // File end reached?
     if (input_.eof()) {
-        RING_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
+        JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
         emit(DRing::DataTransferEventCode::finished);
         return false;
     }
@@ -367,7 +367,7 @@ SubOutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
             emit(DRing::DataTransferEventCode::ongoing);
         } else {
             // consider any other response as a cancel msg
-            RING_WARN() << "FTP#" << getId() << ": refused by peer";
+            JAMI_WARN() << "FTP#" << getId() << ": refused by peer";
             emit(DRing::DataTransferEventCode::closed_by_peer);
             return false;
         }
@@ -393,7 +393,7 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
                 if (stopTimeout_.load())
                     return;  // not waiting anymore
             }
-            RING_WARN() << "FTP#" << this->getId() << ": timeout. Cancel";
+            JAMI_WARN() << "FTP#" << this->getId() << ": timeout. Cancel";
             this->closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
         }));
     } else if (timeoutThread_) {
@@ -488,7 +488,7 @@ IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId tid,
                                            const DRing::DataTransferInfo& info)
     : DataTransfer(tid)
 {
-    RING_WARN() << "[FTP] incoming transfert of " << info.totalSize << " byte(s): " << info.displayName;
+    JAMI_WARN() << "[FTP] incoming transfert of " << info.totalSize << " byte(s): " << info.displayName;
 
     info_ = info;
     info_.flags |= (uint32_t)1 << int(DRing::DataTransferFlags::direction); // incoming
@@ -520,7 +520,7 @@ IncomingFileTransfer::start()
 
     fout_.open(&info_.path[0], std::ios::binary);
     if (!fout_) {
-        RING_ERR() << "[FTP] Can't open file " << info_.path;
+        JAMI_ERR() << "[FTP] Can't open file " << info_.path;
         return false;
     }
 
@@ -543,7 +543,7 @@ IncomingFileTransfer::close() noexcept
     auto account = Manager::instance().getAccount<RingAccount>(info_.accountId);
     account->closePeerConnection(info_.peer, id);
 
-    RING_DBG() << "[FTP] file closed, rx " << info_.bytesProgress
+    JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress
                << " on " << info_.totalSize;
     if (info_.bytesProgress >= info_.totalSize)
         emit(DRing::DataTransferEventCode::finished);
@@ -561,7 +561,7 @@ IncomingFileTransfer::accept(const std::string& filename, std::size_t offset)
     try {
         filenamePromise_.set_value();
     } catch (const std::future_error& e) {
-        RING_WARN() << "transfer already accepted";
+        JAMI_WARN() << "transfer already accepted";
     }
 }
 
@@ -660,12 +660,12 @@ DataTransferFacade::Impl::onConnectionRequestReply(const DRing::DataTransferId& 
 
 DataTransferFacade::DataTransferFacade() : pimpl_ {std::make_unique<Impl>()}
 {
-    RING_WARN("[XFER] facade created, pimpl @%p", pimpl_.get());
+    JAMI_WARN("[XFER] facade created, pimpl @%p", pimpl_.get());
 }
 
 DataTransferFacade::~DataTransferFacade()
 {
-    RING_WARN("[XFER] facade destroy, pimpl @%p", pimpl_.get());
+    JAMI_WARN("[XFER] facade destroy, pimpl @%p", pimpl_.get());
 };
 
 std::vector<DRing::DataTransferId>
@@ -681,19 +681,19 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
 {
     auto account = Manager::instance().getAccount<RingAccount>(info.accountId);
     if (!account) {
-        RING_ERR() << "[XFER] unknown id " << tid;
+        JAMI_ERR() << "[XFER] unknown id " << tid;
         return DRing::DataTransferError::invalid_argument;
     }
 
     if (!fileutils::isFile(info.path)) {
-        RING_ERR() << "[XFER] invalid filename '" << info.path << "'";
+        JAMI_ERR() << "[XFER] invalid filename '" << info.path << "'";
         return DRing::DataTransferError::invalid_argument;
     }
 
     try {
         pimpl_->createOutgoingFileTransfer(info, tid);
     } catch (const std::exception& ex) {
-        RING_ERR() << "[XFER] exception during createFileTransfer(): " << ex.what();
+        JAMI_ERR() << "[XFER] exception during createFileTransfer(): " << ex.what();
         return DRing::DataTransferError::io;
     }
 
@@ -709,7 +709,7 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
             });
         return DRing::DataTransferError::success;
     } catch (const std::exception& ex) {
-        RING_ERR() << "[XFER] exception during sendFile(): " << ex.what();
+        JAMI_ERR() << "[XFER] exception during sendFile(): " << ex.what();
         return DRing::DataTransferError::unknown;
     }
 }
@@ -752,7 +752,7 @@ DataTransferFacade::bytesProgress(const DRing::DataTransferId& id,
         }
         return DRing::DataTransferError::invalid_argument;
     } catch (const std::exception& ex) {
-        RING_ERR() << "[XFER] exception during bytesProgress(): " << ex.what();
+        JAMI_ERR() << "[XFER] exception during bytesProgress(): " << ex.what();
     }
     return DRing::DataTransferError::unknown;
 }
@@ -768,7 +768,7 @@ DataTransferFacade::info(const DRing::DataTransferId& id,
         }
         return DRing::DataTransferError::invalid_argument;
     } catch (const std::exception& ex) {
-        RING_ERR() << "[XFER] exception during info(): " << ex.what();
+        JAMI_ERR() << "[XFER] exception during info(): " << ex.what();
     }
     return DRing::DataTransferError::unknown;
 }
@@ -784,4 +784,4 @@ DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferInfo& info)
     return {};
 }
 
-} // namespace ring
+} // namespace jami

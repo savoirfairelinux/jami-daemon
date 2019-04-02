@@ -27,7 +27,7 @@
 
 #include "dtmfgenerator.h"
 
-namespace ring {
+namespace jami {
 
 /*
  * Tone frequencies
@@ -135,4 +135,4 @@ AudioSample* DTMFGenerator::fillToneBuffer(int index)
     return ptr;
 }
 
-} // namespace ring
+} // namespace jami

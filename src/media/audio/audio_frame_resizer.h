@@ -28,7 +28,7 @@
 
 struct AVAudioFifo;
 
-namespace ring {
+namespace jami {
 
 /**
  * Buffers extra samples. This is in case an input's frame size (number of samples in
@@ -101,4 +101,4 @@ private:
     int64_t nextOutputPts_ {0};
 };
 
-} // namespace ring
+} // namespace jami

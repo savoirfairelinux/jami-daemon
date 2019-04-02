@@ -35,7 +35,7 @@
 #include "dring/callmanager_interface.h"
 #include "dring/configurationmanager_interface.h"
 #include "dring/presencemanager_interface.h"
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "dring/videomanager_interface.h"
 #endif
 #include "logger.h"

@@ -59,7 +59,7 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
-namespace ring {
+namespace jami {
 
 static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
 static constexpr int RTP_MAX_PACKET_LENGTH = 2048;
@@ -137,22 +137,22 @@ udp_socket_create(int family, int port)
 #endif
 
     if (udp_fd < 0) {
-        RING_ERR("socket() failed");
+        JAMI_ERR("socket() failed");
         strErr();
         return -1;
     }
 
     auto bind_addr = ip_utils::getAnyHostAddr(family);
     if (not bind_addr.isIpv4() and not bind_addr.isIpv6()) {
-        RING_ERR("No IPv4/IPv6 host found for family %u", family);
+        JAMI_ERR("No IPv4/IPv6 host found for family %u", family);
         close(udp_fd);
         return -1;
     }
 
     bind_addr.setPort(port);
-    RING_DBG("use local address: %s", bind_addr.toString(true, true).c_str());
+    JAMI_DBG("use local address: %s", bind_addr.toString(true, true).c_str());
     if (::bind(udp_fd, bind_addr, bind_addr.getLength()) < 0) {
-        RING_ERR("bind() failed");
+        JAMI_ERR("bind() failed");
         strErr();
         close(udp_fd);
         udp_fd = -1;
@@ -280,7 +280,7 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
         throw std::runtime_error("Sockets creation failed");
     }
 
-    RING_WARN("SocketPair: local{%d,%d} / %s{%d,%d}",
+    JAMI_WARN("SocketPair: local{%d,%d} / %s{%d,%d}",
               local_rtp_port, local_rtcp_port, hostname, dst_rtp_port, dst_rtcp_port);
 }
 
@@ -426,7 +426,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
         if (err < 0)
-            RING_WARN("decrypt error %d", err);
+            JAMI_WARN("decrypt error %d", err);
     }
 
     if (len != 0)
@@ -485,7 +485,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
                                    buf_size, srtpContext_->encryptbuf,
                                    sizeof(srtpContext_->encryptbuf));
         if (buf_size < 0) {
-            RING_WARN("encrypt error %d", buf_size);
+            JAMI_WARN("encrypt error %d", buf_size);
             return buf_size;
         }
 
@@ -516,4 +516,4 @@ SocketPair::rtcpPacketLossDetected() const
     return rtcpPacketLoss_.compare_exchange_strong(b, false);
 }
 
-} // namespace ring
+} // namespace jami

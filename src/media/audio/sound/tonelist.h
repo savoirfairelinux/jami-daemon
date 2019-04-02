@@ -29,7 +29,7 @@
 #include <array>
 #include <memory>
 
-namespace ring {
+namespace jami {
 
 class TelephoneTone {
     public:
@@ -63,4 +63,4 @@ class TelephoneTone {
         Tone::TONEID currentTone_;
 };
 
-} // namespace ring
+} // namespace jami

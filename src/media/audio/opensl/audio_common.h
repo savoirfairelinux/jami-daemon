@@ -22,7 +22,7 @@
 
 #include "buf_manager.h"
 
-namespace ring {
+namespace jami {
 namespace opensl {
 
 /*
@@ -33,7 +33,7 @@ namespace opensl {
 #define DEVICE_SHADOW_BUFFER_QUEUE_LEN      4
 #define BUF_COUNT                           16
 
-inline SLDataFormat_PCM convertToSLSampleFormat(const ring::AudioFormat& infos)
+inline SLDataFormat_PCM convertToSLSampleFormat(const jami::AudioFormat& infos)
 {
     return SLDataFormat_PCM {
         .formatType     = SL_DATAFORMAT_PCM,

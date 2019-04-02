@@ -30,7 +30,7 @@
 #include <functional>
 #include <ciso646>
 
-namespace ring {
+namespace jami {
 
 class Account;
 class AccountGeneratorBase;
@@ -158,6 +158,6 @@ template <>
 std::size_t
 AccountFactory::accountCount() const;
 
-} // namespace ring
+} // namespace jami
 
 #endif // ACCOUNT_FACTORY_H

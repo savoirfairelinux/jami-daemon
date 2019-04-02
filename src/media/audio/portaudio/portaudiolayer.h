@@ -27,7 +27,7 @@
 #include <memory>
 #include <array>
 
-namespace ring {
+namespace jami {
 
 class PortAudioLayer : public AudioLayer {
 
@@ -64,4 +64,4 @@ private:
     std::unique_ptr<PortAudioLayerImpl> pimpl_;
 };
 
-} // namespace ring
+} // namespace jami

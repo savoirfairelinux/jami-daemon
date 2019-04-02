@@ -31,7 +31,7 @@
 #include "observer.h"
 #include "threadloop.h"
 
-namespace ring {
+namespace jami {
 
 class AudioFrameResizer;
 class MediaDecoder;
@@ -89,4 +89,4 @@ private:
     void process();
 };
 
-} // namespace ring
+} // namespace jami

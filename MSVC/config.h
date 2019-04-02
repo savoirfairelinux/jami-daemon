@@ -169,7 +169,7 @@ your system. */
 /* #undef PTHREAD_CREATE_JOINABLE */
 
 /* Video support enabled */
-#define RING_VIDEO /**/
+#define ENABLE_VIDEO /**/
 
 /* Name directory service support enabled */
 #define HAVE_RINGNS 1

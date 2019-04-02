@@ -22,7 +22,7 @@
 #include "dsp.h"
 #include "audiobuffer.h"
 
-namespace ring {
+namespace jami {
 
 void
 DSP::speexStateDeleter(SpeexPreprocessState *state)
@@ -78,7 +78,7 @@ void DSP::disableDenoise()
 void DSP::process(AudioBuffer& buff, int samples)
 {
     if (samples != smplPerFrame_) {
-        RING_WARN("Unexpected amount of samples");
+        JAMI_WARN("Unexpected amount of samples");
         return;
     }
 
@@ -91,4 +91,4 @@ void DSP::process(AudioBuffer& buff, int samples)
     }
 }
 
-} // namespace ring
+} // namespace jami

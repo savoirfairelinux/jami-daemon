@@ -32,7 +32,7 @@
 /// This is a C++11-ish class that mimic Python "queue" module and/or Go "Channel" type.
 ///
 
-namespace ring
+namespace jami
 {
 
 class ChannelEmpty : public std::exception{
@@ -207,4 +207,4 @@ public:
     }
 };
 
-} // namespace ring
+} // namespace jami

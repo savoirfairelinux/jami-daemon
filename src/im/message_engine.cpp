@@ -30,7 +30,7 @@
 
 #include <fstream>
 
-namespace ring {
+namespace jami {
 namespace im {
 
 static std::uniform_int_distribution<MessageToken> udist {1};
@@ -94,7 +94,7 @@ MessageEngine::retrySend(const std::string& peer)
     }
     // avoid locking while calling callback
     for (const auto& p : pending) {
-        RING_DBG() << "[message " << p.token << "] Retry sending";
+        JAMI_DBG() << "[message " << p.token << "] Retry sending";
         emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
             account_.getAccountID(),
             p.token,
@@ -138,11 +138,11 @@ MessageEngine::cancel(MessageToken t)
 void
 MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool ok)
 {
-    RING_DBG() << "[message " << token << "] Message sent: " << (ok ? "success" : "failure");
+    JAMI_DBG() << "[message " << token << "] Message sent: " << (ok ? "success" : "failure");
     std::lock_guard<std::mutex> lock(messagesMutex_);
     auto p = messages_.find(peer);
     if (p == messages_.end()) {
-        RING_DBG() << "[message " << token << "] Can't find peer";
+        JAMI_DBG() << "[message " << token << "] Can't find peer";
         return;
     }
     auto f = p->second.find(token);
@@ -150,7 +150,7 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
         if (f->second.status == MessageStatus::SENDING) {
             if (ok) {
                 f->second.status = MessageStatus::SENT;
-                RING_DBG() << "[message " << token << "] Status changed to SENT";
+                JAMI_DBG() << "[message " << token << "] Status changed to SENT";
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
                                                                              token,
                                                                              f->second.to,
@@ -158,7 +158,7 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                 save_();
             } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
-                RING_DBG() << "[message " << token << "] Status changed to FAILURE";
+                JAMI_DBG() << "[message " << token << "] Status changed to FAILURE";
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
                                                                              token,
                                                                              f->second.to,
@@ -166,13 +166,13 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                 save_();
             } else {
                 f->second.status = MessageStatus::IDLE;
-                RING_DBG() << "[message " << token << "] Status changed to IDLE";
+                JAMI_DBG() << "[message " << token << "] Status changed to IDLE";
             }
         } else {
-           RING_DBG() << "[message " << token << "] State is not SENDING";
+           JAMI_DBG() << "[message " << token << "] State is not SENDING";
         }
     } else {
-        RING_DBG() << "[message " << token << "] Can't find message";
+        JAMI_DBG() << "[message " << token << "] Can't find message";
     }
 }
 
@@ -212,9 +212,9 @@ MessageEngine::load()
                 loaded++;
             }
         }
-        RING_DBG("[Account %s] loaded %lu messages from %s", account_.getAccountID().c_str(), loaded, savePath_.c_str());
+        JAMI_DBG("[Account %s] loaded %lu messages from %s", account_.getAccountID().c_str(), loaded, savePath_.c_str());
     } catch (const std::exception& e) {
-        RING_ERR("[Account %s] couldn't load messages from %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
+        JAMI_ERR("[Account %s] couldn't load messages from %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
     }
 }
 
@@ -268,12 +268,12 @@ MessageEngine::save_() const
                 file.open(path, std::ios::trunc);
                 writer->write(root, &file);
             } catch (const std::exception& e) {
-                RING_ERR("[Account %s] Couldn't save messages to %s: %s", accountID.c_str(), path.c_str(), e.what());
+                JAMI_ERR("[Account %s] Couldn't save messages to %s: %s", accountID.c_str(), path.c_str(), e.what());
             }
-            RING_DBG("[Account %s] saved %zu messages to %s", accountID.c_str(), messageNum, path.c_str());
+            JAMI_DBG("[Account %s] saved %zu messages to %s", accountID.c_str(), messageNum, path.c_str());
         });
     } catch (const std::exception& e) {
-        RING_ERR("[Account %s] couldn't save messages to %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
+        JAMI_ERR("[Account %s] couldn't save messages to %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
     }
 }
 
