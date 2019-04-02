@@ -25,7 +25,7 @@
 #include "smartools.h"
 #include "../../test_runner.h"
 
-namespace ring {
+namespace jami {
 class SmartoolsTest : public CppUnit::TestFixture {
 public:
     static std::string name() { return "smartools"; }
@@ -95,6 +95,6 @@ SmartoolsTest::testSetRemoteInformation()
     CPPUNIT_ASSERT(Smartools::getInstance().information_.empty());
 }
 
-} // namespace ring
+} // namespace jami
 
-RING_TEST_RUNNER(ring::SmartoolsTest::name())
+RING_TEST_RUNNER(jami::SmartoolsTest::name())

@@ -33,7 +33,7 @@
 #include <cmath>
 #include <unistd.h>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 struct VideoMixer::VideoMixerSource {
     Observable<std::shared_ptr<MediaFrame>>* source = nullptr;
@@ -135,7 +135,7 @@ VideoMixer::process()
     try {
         output.reserve(AV_PIX_FMT_YUYV422, width_, height_);
     } catch (const std::bad_alloc& e) {
-        RING_ERR("VideoFrame::allocBuffer() failed");
+        JAMI_ERR("VideoFrame::allocBuffer() failed");
         return;
     }
 
@@ -211,12 +211,12 @@ VideoMixer::start_sink()
     stop_sink();
 
     if (width_ == 0 or height_ == 0) {
-        RING_WARN("MX: unable to start with zero-sized output");
+        JAMI_WARN("MX: unable to start with zero-sized output");
         return;
     }
 
     if (not sink_->start()) {
-        RING_ERR("MX: sink startup failed");
+        JAMI_ERR("MX: sink startup failed");
         return;
     }
 
@@ -243,4 +243,4 @@ AVPixelFormat
 VideoMixer::getPixelFormat() const
 { return AV_PIX_FMT_YUYV422; }
 
-}} // namespace ring::video
+}} // namespace jami::video

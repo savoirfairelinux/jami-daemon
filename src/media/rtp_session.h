@@ -29,7 +29,7 @@
 #include <memory>
 #include <mutex>
 
-namespace ring {
+namespace jami {
 
 class IceSocket;
 class MediaRecorder;
@@ -73,4 +73,4 @@ protected:
     }
 };
 
-} // namespace ring
+} // namespace jami

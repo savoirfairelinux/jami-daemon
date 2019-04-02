@@ -26,7 +26,7 @@
 #include <mutex>
 #include <cstdint>
 
-namespace ring {
+namespace jami {
 
 class SIPAccountBase;
 
@@ -99,4 +99,4 @@ private:
     mutable std::mutex messagesMutex_ {};
 };
 
-}} // namespace ring::im
+}} // namespace jami::im

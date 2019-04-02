@@ -34,7 +34,7 @@
 #include <thread>
 #include <vector>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 using std::vector;
 using std::string;
@@ -81,4 +81,4 @@ VideoDeviceMonitor::VideoDeviceMonitor() :
 VideoDeviceMonitor::~VideoDeviceMonitor()
 {}
 
-}} // namespace ring::video
+}} // namespace jami::video

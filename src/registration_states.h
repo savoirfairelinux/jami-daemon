@@ -26,7 +26,7 @@
 #undef REGISTERED
 #endif
 
-namespace ring {
+namespace jami {
 
 /** Contains all the Registration states for an account can be in */
 enum class RegistrationState {
@@ -44,6 +44,6 @@ enum class RegistrationState {
     INITIALIZING
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // REGISTRATION_STATES_H_

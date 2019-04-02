@@ -45,7 +45,7 @@ namespace YAML {
     class Emitter;
 }
 
-namespace ring {
+namespace jami {
 
 namespace Conf {
     const char *const KEEP_ALIVE_ENABLED = "keepAlive";
@@ -775,6 +775,6 @@ class SIPAccount : public SIPAccountBase {
         pj_uint16_t publishedPortUsed_ {sip_utils::DEFAULT_SIP_PORT};
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif

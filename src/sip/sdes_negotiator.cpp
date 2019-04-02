@@ -31,7 +31,7 @@
 
 #include <cstdio>
 
-namespace ring {
+namespace jami {
 
 SdesNegotiator::SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites) : 
 localCapabilities_(localCapabilites)
@@ -164,5 +164,5 @@ SdesNegotiator::negotiate(const std::vector<std::string>& attributes) const
     return {};
 }
 
-} // namespace ring
+} // namespace jami
 

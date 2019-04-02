@@ -42,7 +42,7 @@
 #include <vector>
 #include <algorithm>
 
-namespace ring { namespace sip_utils {
+namespace jami { namespace sip_utils {
 
 std::string
 PjsipErrorCategory::message( int condition ) const
@@ -93,7 +93,7 @@ createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     pj_strdup2(hdr_pool, &url->host, host.c_str());
     url->port = port;
 
-    RING_DBG("Adding route %s", host.c_str());
+    JAMI_DBG("Adding route %s", host.c_str());
     pj_list_push_back(route_set, pjsip_hdr_clone(hdr_pool, routing));
 
     return route_set;
@@ -200,8 +200,8 @@ register_thread()
         static __thread pj_thread_t *this_thread;
 #endif
         pj_thread_register(NULL, desc, &this_thread);
-        RING_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
+        JAMI_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
     }
 }
 
-}} // namespace ring::sip_utils
+}} // namespace jami::sip_utils

@@ -31,7 +31,7 @@
 #include <TargetConditionals.h>
 #endif
 
-namespace ring {
+namespace jami {
 
 decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer = getGlobalInstance<SystemCodecContainer>;
 
@@ -48,7 +48,7 @@ SystemCodecContainer::~SystemCodecContainer()
 void
 SystemCodecContainer::initCodecConfig()
 {
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     auto minH264 = SystemCodecInfo::DEFAULT_H264_MIN_QUALITY;
     auto maxH264 = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
     auto minVP8 = SystemCodecInfo::DEFAULT_VP8_MIN_QUALITY;
@@ -56,7 +56,7 @@ SystemCodecContainer::initCodecConfig()
     auto defaultBitrate = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
 #endif
     availableCodecList_ = {
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         /* Define supported video codec*/
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H264,
                                                "H264", "libx264",
@@ -154,8 +154,8 @@ SystemCodecContainer::checkInstalledCodecs()
                 codecIt->codecType = (CodecType)((unsigned)codecType & ~CODEC_DECODER);
         }
     }
-    RING_INFO("Encoders found: %s", enc_ss.str().c_str());
-    RING_INFO("Decoders found: %s", dec_ss.str().c_str());
+    JAMI_INFO("Encoders found: %s", enc_ss.str().c_str());
+    JAMI_INFO("Decoders found: %s", dec_ss.str().c_str());
 }
 
 std::vector<std::shared_ptr<SystemCodecInfo>>
@@ -216,4 +216,4 @@ SystemCodecContainer::searchCodecByPayload(unsigned payload, MediaType mediaType
     return {};
 }
 
-} // namespace ring
+} // namespace jami

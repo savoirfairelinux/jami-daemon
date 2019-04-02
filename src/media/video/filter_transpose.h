@@ -22,7 +22,7 @@
 
 #include "../media_filter.h"
 
-namespace ring {
+namespace jami {
 namespace video {
 
 std::unique_ptr<MediaFilter>

@@ -29,7 +29,7 @@
 
 #include "../../test_runner.h"
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class MediaFilterTest : public CppUnit::TestFixture {
 public:
@@ -339,6 +339,6 @@ MediaFilterTest::testReinit()
     CPPUNIT_ASSERT(filter_->feedInput(frame, "in1") >= 0);
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::MediaFilterTest::name());
+RING_TEST_RUNNER(jami::test::MediaFilterTest::name());

@@ -32,7 +32,7 @@ extern "C" {
 
 //#include <ciso646>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 typedef struct
 {
@@ -94,16 +94,16 @@ VideoDeviceImpl::selectFormat()
             }
         }
         if (f == uwp_formats.end())
-            RING_WARN("Video: No format matching %s", fmt.c_str());
+            JAMI_WARN("Video: No format matching %s", fmt.c_str());
     }
 
     if (best != UINT_MAX) {
         fmt_ = &uwp_formats[best];
-        RING_DBG("Video: picked format %s", fmt_->name.c_str());
+        JAMI_DBG("Video: picked format %s", fmt_->name.c_str());
     }
     else {
         fmt_ = &uwp_formats[0];
-        RING_ERR("Video: Could not find a known format to use");
+        JAMI_ERR("Video: Could not find a known format to use");
     }
 }
 
@@ -219,4 +219,4 @@ VideoDevice::getRateList(const std::string& channel, VideoSize size) const
 VideoDevice::~VideoDevice()
 {}
 
-}} // namespace ring::video
+}} // namespace jami::video

@@ -40,7 +40,7 @@
 #include <algorithm>
 #include <type_traits>
 
-namespace ring {
+namespace jami {
 
 static constexpr auto DHT_MSG_TIMEOUT = std::chrono::seconds(20);
 static constexpr auto NET_CONNECTION_TIMEOUT = std::chrono::seconds(10);
@@ -273,7 +273,7 @@ public:
                 [this] {
                     try { process(); }
                     catch (const std::exception& e) {
-                        RING_ERR() << "[CNX] exception during client processing: " << e.what();
+                        JAMI_ERR() << "[CNX] exception during client processing: " << e.what();
                         cancel();
                     }
                 });
@@ -316,7 +316,7 @@ private:
         request.id = ValueIdDist()(parent_.account.rand); /* Random id for the message unicity */
 
         // Send connection request through DHT
-        RING_DBG() << parent_.account << "[CNX] request connection to " << peer_;
+        JAMI_DBG() << parent_.account << "[CNX] request connection to " << peer_;
         parent_.account.dht().putEncrypted(
             dht::InfoHash::get(PeerConnectionMsg::key_prefix + peer_.toString()), peer_, request);
 
@@ -325,7 +325,7 @@ private:
         dhtMsgTimeout.start();
         while (!responseReceived_) {
             if (dhtMsgTimeout) {
-                RING_ERR("no response from DHT to E2E request. Cancel transfer");
+                JAMI_ERR("no response from DHT to E2E request. Cancel transfer");
                 cancel();
                 return;
             }
@@ -345,30 +345,30 @@ private:
                 throw std::runtime_error("invalid connection reply");
             try {
                 // Connect to TURN peer using a raw socket
-                RING_DBG() << parent_.account << "[CNX] connecting to TURN relay "
+                JAMI_DBG() << parent_.account << "[CNX] connecting to TURN relay "
                            << relay_addr.toString(true, true);
                 peer_ep = std::make_unique<TcpSocketEndpoint>(relay_addr);
                 try {
                     peer_ep->connect(SOCK_TIMEOUT);
                 } catch (const std::logic_error& e) {
                     // In case of a timeout
-                    RING_WARN() << "TcpSocketEndpoint timeout for addr " << relay_addr.toString(true, true) << ": " << e.what();
+                    JAMI_WARN() << "TcpSocketEndpoint timeout for addr " << relay_addr.toString(true, true) << ": " << e.what();
                     cancel();
                     return;
                 } catch (...) {
-                    RING_WARN() << "TcpSocketEndpoint failure for addr " << relay_addr.toString(true, true);
+                    JAMI_WARN() << "TcpSocketEndpoint failure for addr " << relay_addr.toString(true, true);
                     cancel();
                     return;
                 }
                 break;
             } catch (std::system_error&) {
-                RING_DBG() << parent_.account << "[CNX] Failed to connect to TURN relay "
+                JAMI_DBG() << parent_.account << "[CNX] Failed to connect to TURN relay "
                            << relay_addr.toString(true, true);
             }
         }
 
         // Negotiate a TLS session
-        RING_DBG() << parent_.account << "[CNX] start TLS session";
+        JAMI_DBG() << parent_.account << "[CNX] start TLS session";
         auto tls_ep = std::make_unique<TlsSocketEndpoint>(*peer_ep,
                                                           parent_.account.identity(),
                                                           parent_.account.dhParams(),
@@ -378,11 +378,11 @@ private:
             tls_ep->waitForReady(SOCK_TIMEOUT);
         } catch (const std::logic_error& e) {
             // In case of a timeout
-            RING_WARN() << "TLS connection timeout from peer " << peer_.toString() << ": " << e.what();
+            JAMI_WARN() << "TLS connection timeout from peer " << peer_.toString() << ": " << e.what();
             cancel();
             return;
         } catch (...) {
-            RING_WARN() << "TLS connection failure from peer " << peer_.toString();
+            JAMI_WARN() << "TLS connection failure from peer " << peer_.toString();
             cancel();
             return;
         }
@@ -497,7 +497,7 @@ DhtPeerConnector::Impl::validatePeerCertificate(const dht::crypto::Certificate& 
 void
 DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
 {
-    RING_DBG() << account << "[CNX] TURN connection attempt from "
+    JAMI_DBG() << account << "[CNX] TURN connection attempt from "
                << peer_addr.toString(true, true);
 
     auto turn_ep = std::unique_ptr<ConnectedTurnTransport>(nullptr);
@@ -506,7 +506,7 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
     else
         turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv6_, peer_addr);
 
-    RING_DBG() << account << "[CNX] start TLS session over TURN socket";
+    JAMI_DBG() << account << "[CNX] start TLS session over TURN socket";
     dht::InfoHash peer_h;
     auto tls_ep = std::make_unique<TlsTurnEndpoint>(
         *turn_ep, account.identity(), account.dhParams(),
@@ -517,14 +517,14 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
         tls_ep->waitForReady(SOCK_TIMEOUT);
     } catch (const std::logic_error& e) {
         // In case of a timeout
-        RING_WARN() << "TLS connection timeout from peer " << peer_addr.toString(true, true) << ": " << e.what();
+        JAMI_WARN() << "TLS connection timeout from peer " << peer_addr.toString(true, true) << ": " << e.what();
         return;
     } catch (...) {
-        RING_WARN() << "[CNX] TLS connection failure from peer " << peer_addr.toString(true, true);
+        JAMI_WARN() << "[CNX] TLS connection failure from peer " << peer_addr.toString(true, true);
         return;
     }
 
-    RING_DBG() << account << "[CNX] Accepted TLS-TURN connection from RingID " << peer_h;
+    JAMI_DBG() << account << "[CNX] Accepted TLS-TURN connection from RingID " << peer_h;
     connectedPeers_.emplace(peer_addr, tls_ep->peerCertificate().getId());
     auto connection = std::make_unique<PeerConnection>([] {}, account, peer_addr.toString(),
                                                        std::move(tls_ep));
@@ -542,7 +542,7 @@ DhtPeerConnector::Impl::onTurnPeerDisconnection(const IpAddr& peer_addr)
                 [&peer_addr](const auto& element) {
                     return element.first.second == peer_addr;});
     if (it == servers_.end()) return;
-    RING_WARN() << account << "[CNX] disconnection from peer " << peer_addr.toString(true, true);
+    JAMI_WARN() << account << "[CNX] disconnection from peer " << peer_addr.toString(true, true);
     servers_.erase(it);
     connectedPeers_.erase(peer_addr);
     turnEndpoints_.erase(peer_addr);
@@ -551,7 +551,7 @@ DhtPeerConnector::Impl::onTurnPeerDisconnection(const IpAddr& peer_addr)
 void
 DhtPeerConnector::Impl::onRequestMsg(PeerConnectionMsg&& request)
 {
-    RING_DBG() << account << "[CNX] rx DHT request from " << request.from;
+    JAMI_DBG() << account << "[CNX] rx DHT request from " << request.from;
 
     // Asynch certificate checking -> trig onTrustedRequestMsg when trusted certificate is found
     account.findCertificate(
@@ -561,7 +561,7 @@ DhtPeerConnector::Impl::onRequestMsg(PeerConnectionMsg&& request)
             if (account.foundPeerDevice(cert, peer_h))
                 onTrustedRequestMsg(std::move(request), cert, peer_h);
             else
-                RING_WARN() << account << "[CNX] rejected untrusted connection request from "
+                JAMI_WARN() << account << "[CNX] rejected untrusted connection request from "
                             << request.from;
     });
 }
@@ -583,16 +583,16 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
             if (IpAddr(ip).isIpv4()) {
                 sendRelayV4 = true;
                 turnAuthv4_->permitPeer(ip);
-                RING_DBG() << account << "[CNX] authorized peer connection from " << ip;
+                JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
             } else if (IpAddr(ip).isIpv6()) {
                 sendRelayV6 = true;
                 turnAuthv6_->permitPeer(ip);
-                RING_DBG() << account << "[CNX] authorized peer connection from " << ip;
+                JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
             } else {
-                RING_DBG() << account << "Unknown family type: " << ip;
+                JAMI_DBG() << account << "Unknown family type: " << ip;
             }
         } catch (const std::exception& e) {
-            RING_WARN() << account << "[CNX] ignored peer connection '" << ip << "', " << e.what();
+            JAMI_WARN() << account << "[CNX] ignored peer connection '" << ip << "', " << e.what();
         }
     }
 
@@ -604,10 +604,10 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
     if (sendRelayV6 && relayIpv6)
         addresses.emplace_back(relayIpv6.toString(true, true));
     if (addresses.empty()) {
-        RING_DBG() << account << "[CNX] connection aborted, no family address found";
+        JAMI_DBG() << account << "[CNX] connection aborted, no family address found";
         return;
     }
-    RING_DBG() << account << "[CNX] connection accepted, DHT reply to " << request.from;
+    JAMI_DBG() << account << "[CNX] connection accepted, DHT reply to " << request.from;
     account.dht().putEncrypted(
         dht::InfoHash::get(PeerConnectionMsg::key_prefix + request.from.toString()),
         request.from, request.respond(addresses));
@@ -618,7 +618,7 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
 void
 DhtPeerConnector::Impl::onResponseMsg(PeerConnectionMsg&& response)
 {
-    RING_DBG() << account << "[CNX] rx DHT reply from " << response.from;
+    JAMI_DBG() << account << "[CNX] rx DHT reply from " << response.from;
     std::lock_guard<std::mutex> lock(clientsMutex_);
     for (auto& client: clients_) {
         // NOTE We can receives multiple files from one peer. So fill unanswered clients.
@@ -705,7 +705,7 @@ DhtPeerConnector::Impl::eventLoop()
                             ctrlMsgData<CtrlMsgType::ADD_DEVICE, 4>(*msg));
                 break;
 
-            default: RING_ERR("BUG: got unhandled control msg!"); break;
+            default: JAMI_ERR("BUG: got unhandled control msg!"); break;
         }
     }
 }
@@ -768,7 +768,7 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
         [this, addresses, connect_cb, tid](const std::shared_ptr<RingAccount>& account,
                                       const dht::InfoHash& dev_h) {
             if (dev_h == account->dht().getId()) {
-                RING_ERR() << account << "[CNX] no connection to yourself, bad person!";
+                JAMI_ERR() << account << "[CNX] no connection to yourself, bad person!";
                 return;
             }
 
@@ -781,7 +781,7 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
 
         [peer_h, connect_cb](const std::shared_ptr<RingAccount>& account, bool found) {
             if (!found) {
-                RING_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
+                JAMI_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
                 connect_cb(nullptr);
             }
         });
@@ -805,7 +805,7 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
         [this, tid](const std::shared_ptr<RingAccount>& account,
                           const dht::InfoHash& dev_h) {
             if (dev_h == account->dht().getId()) {
-                RING_ERR() << account << "[CNX] no connection to yourself, bad person!";
+                JAMI_ERR() << account << "[CNX] no connection to yourself, bad person!";
                 return;
             }
             pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(dev_h, tid);
@@ -813,9 +813,9 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
 
         [peer_h](const std::shared_ptr<RingAccount>& account, bool found) {
             if (!found) {
-                RING_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
+                JAMI_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
             }
         });
 }
 
-} // namespace ring
+} // namespace jami

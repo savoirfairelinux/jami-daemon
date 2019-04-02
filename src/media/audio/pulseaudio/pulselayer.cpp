@@ -44,7 +44,7 @@
 // uncomment to log pulseaudio sink and sources
 //#define PA_LOG_SINK_SOURCES
 
-namespace ring {
+namespace jami {
 
 static const std::regex PA_EC_SUFFIX {"\\.echo-cancel(?:\\..+)?$"};
 
@@ -133,11 +133,11 @@ void PulseLayer::contextStateChanged(pa_context* c)
         case PA_CONTEXT_CONNECTING:
         case PA_CONTEXT_AUTHORIZING:
         case PA_CONTEXT_SETTING_NAME:
-            RING_DBG("Waiting....");
+            JAMI_DBG("Waiting....");
             break;
 
         case PA_CONTEXT_READY:
-            RING_DBG("Connection to PulseAudio server established");
+            JAMI_DBG("Connection to PulseAudio server established");
             pa_threaded_mainloop_signal(mainloop_.get(), 0);
             subscribeOp_ = pa_context_subscribe(c, mask, nullptr, this);
             pa_context_set_subscribe_callback(c, context_changed_callback, this);
@@ -156,7 +156,7 @@ void PulseLayer::contextStateChanged(pa_context* c)
 
         case PA_CONTEXT_FAILED:
         default:
-            RING_ERR("%s" , pa_strerror(pa_context_errno(c)));
+            JAMI_ERR("%s" , pa_strerror(pa_context_errno(c)));
             pa_threaded_mainloop_signal(mainloop_.get(), 0);
             break;
     }
@@ -166,7 +166,7 @@ void PulseLayer::updateSinkList()
 {
     std::unique_lock<std::mutex> lk(readyMtx_);
     if (not enumeratingSinks_) {
-        RING_DBG("Updating PulseAudio sink list");
+        JAMI_DBG("Updating PulseAudio sink list");
         enumeratingSinks_ = true;
         sinkList_.clear();
         sinkList_.emplace_back();
@@ -182,7 +182,7 @@ void PulseLayer::updateSourceList()
 {
     std::unique_lock<std::mutex> lk(readyMtx_);
     if (not enumeratingSources_) {
-        RING_DBG("Updating PulseAudio source list");
+        JAMI_DBG("Updating PulseAudio source list");
         enumeratingSources_ = true;
         sourceList_.clear();
         sourceList_.emplace_back();
@@ -198,7 +198,7 @@ void PulseLayer::updateServerInfo()
 {
     std::unique_lock<std::mutex> lk(readyMtx_);
     if (not gettingServerInfo_) {
-        RING_DBG("Updating PulseAudio server infos");
+        JAMI_DBG("Updating PulseAudio server infos");
         gettingServerInfo_ = true;
         if (auto op = pa_context_get_server_info(context_, server_info_callback, this))
             pa_operation_unref(op);
@@ -244,7 +244,7 @@ int PulseLayer::getAudioDeviceIndex(const std::string& descr, DeviceType type) c
     case DeviceType::CAPTURE:
         return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
     default:
-        RING_ERR("Unexpected device type");
+        JAMI_ERR("Unexpected device type");
         return 0;
     }
 }
@@ -260,7 +260,7 @@ int PulseLayer::getAudioDeviceIndexByName(const std::string& name, DeviceType ty
     case DeviceType::CAPTURE:
         return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(name)));
     default:
-        RING_ERR("Unexpected device type");
+        JAMI_ERR("Unexpected device type");
         return 0;
     }
 }
@@ -287,7 +287,7 @@ const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>
 {
     auto dev_info = std::find_if(list.begin(), list.end(), PaDeviceInfos::NameComparator(name));
     if (dev_info == list.end()) {
-        RING_WARN("Preferred device %s not found in device list, selecting default %s instead.",
+        JAMI_WARN("Preferred device %s not found in device list, selecting default %s instead.",
                         name.c_str(), list.front().name.c_str());
         return &list.front();
     }
@@ -300,21 +300,21 @@ std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
         case DeviceType::PLAYBACK:
         case DeviceType::RINGTONE:
             if (index < 0 or static_cast<size_t>(index) >= sinkList_.size()) {
-                RING_ERR("Index %d out of range", index);
+                JAMI_ERR("Index %d out of range", index);
                 return "";
             }
             return sinkList_[index].name;
 
         case DeviceType::CAPTURE:
             if (index < 0 or static_cast<size_t>(index) >= sourceList_.size()) {
-                RING_ERR("Index %d out of range", index);
+                JAMI_ERR("Index %d out of range", index);
                 return "";
             }
             return sourceList_[index].name;
 
         default:
             // Should never happen
-            RING_ERR("Unexpected type");
+            JAMI_ERR("Unexpected type");
             return "";
     }
 }
@@ -466,7 +466,7 @@ void PulseLayer::readFromMic()
         std::memcpy(out->pointer()->data[0], data, bytes);
 
     if (pa_stream_drop(record_->stream()) < 0)
-        RING_ERR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
+        JAMI_ERR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
 
     //dcblocker_.process(*out);
     mainRingBuffer_->put(std::move(out));
@@ -539,7 +539,7 @@ PulseLayer::contextChanged(pa_context* c UNUSED, pa_subscription_event_type_t ty
             break;
 
         default:
-            RING_DBG("Unhandled event type 0x%x", type);
+            JAMI_DBG("Unhandled event type 0x%x", type);
             break;
     }
 
@@ -579,11 +579,11 @@ void PulseLayer::waitForDeviceList()
                                                  recordInfo->name != stripEchoSufix(record_->getDeviceName()));
 
         if (playbackDeviceChanged or recordDeviceChanged) {
-            RING_WARN("Audio devices changed, restarting streams.");
+            JAMI_WARN("Audio devices changed, restarting streams.");
             stopStream();
             startStream();
         } else {
-            RING_WARN("Staying on \n %s \n %s", playback_->getDeviceName().c_str(), record_->getDeviceName().c_str());
+            JAMI_WARN("Staying on \n %s \n %s", playback_->getDeviceName().c_str(), record_->getDeviceName().c_str());
             status_ = Status::Started;
             startedCv_.notify_all();
         }
@@ -594,7 +594,7 @@ void PulseLayer::server_info_callback(pa_context*, const pa_server_info *i, void
 {
     if (!i) return;
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
-    RING_DBG("PulseAudio server info:\n"
+    JAMI_DBG("PulseAudio server info:\n"
           "    Server name: %s\n"
           "    Server version: %s\n"
           "    Default Sink %s\n"
@@ -637,7 +637,7 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
     }
 #ifdef PA_LOG_SINK_SOURCES
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
-    RING_DBG("Source %u\n"
+    JAMI_DBG("Source %u\n"
           "    Name: %s\n"
           "    Driver: %s\n"
           "    Description: %s\n"
@@ -681,7 +681,7 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
     }
 #ifdef PA_LOG_SINK_SOURCES
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
-    RING_DBG("Sink %u\n"
+    JAMI_DBG("Sink %u\n"
           "    Name: %s\n"
           "    Driver: %s\n"
           "    Description: %s\n"
@@ -717,17 +717,17 @@ void PulseLayer::updatePreference(AudioPreference &preference, int index, Device
 
     switch (type) {
         case DeviceType::PLAYBACK:
-            RING_DBG("setting %s for playback", devName.c_str());
+            JAMI_DBG("setting %s for playback", devName.c_str());
             preference.setPulseDevicePlayback(devName);
             break;
 
         case DeviceType::CAPTURE:
-            RING_DBG("setting %s for capture", devName.c_str());
+            JAMI_DBG("setting %s for capture", devName.c_str());
             preference.setPulseDeviceRecord(devName);
             break;
 
         case DeviceType::RINGTONE:
-            RING_DBG("setting %s for ringer", devName.c_str());
+            JAMI_DBG("setting %s for ringer", devName.c_str());
             preference.setPulseDeviceRingtone(devName);
             break;
     }
@@ -773,4 +773,4 @@ PulseLayer::getPreferredCaptureDevice() const {
 }
 
 
-} // namespace ring
+} // namespace jami

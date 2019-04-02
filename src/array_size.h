@@ -22,11 +22,11 @@
 
 #include <cstdlib>
 
-namespace ring {
+namespace jami {
 
 // Returns the number of elements in given-by-reference array of type T.
 // Borrowed from Scott Meyers in "Effective Modern C++".
 template<typename T, std::size_t N>
 constexpr std::size_t arraySize(T (&)[N]) noexcept { return N; }
 
-} // namespace ring
+} // namespace jami

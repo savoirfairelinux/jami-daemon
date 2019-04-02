@@ -52,7 +52,7 @@
 #define PCM_DSNOOP  "plug:dsnoop"     // Alsa plugin for microphone sharing
 #define PCM_DMIX_DSNOOP "dmix/dsnoop" // Audio profile using Alsa dmix/dsnoop
 
-namespace ring {
+namespace jami {
 
 class AudioPreference;
 class Resampler;
@@ -322,6 +322,6 @@ class AudioLayer {
         std::chrono::system_clock::time_point lastNotificationTime_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // _AUDIO_LAYER_H_

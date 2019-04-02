@@ -43,7 +43,7 @@
 #define SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION ((SLuint32) 0x00000004)
 #endif
 
-namespace ring {
+namespace jami {
 
 // Constructor
 OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
@@ -80,7 +80,7 @@ OpenSLLayer::startStream()
         status_ = Status::Starting;
     }
 
-    RING_DBG("Start OpenSL audio layer");
+    JAMI_DBG("Start OpenSL audio layer");
 
     std::vector<int32_t> hw_infos;
     hw_infos.reserve(4);
@@ -93,7 +93,7 @@ OpenSLLayer::startStream()
         init();
         startAudioPlayback();
         startAudioCapture();
-        RING_WARN("OpenSL audio layer started");
+        JAMI_WARN("OpenSL audio layer started");
         {
             std::lock_guard<std::mutex> lock(mutex_);
             status_ = Status::Started;
@@ -113,7 +113,7 @@ OpenSLLayer::stopStream()
         status_ = Status::Idle;
     }
 
-    RING_WARN("Stop OpenSL audio layer");
+    JAMI_WARN("Stop OpenSL audio layer");
 
     stopAudioPlayback();
     stopAudioCapture();
@@ -177,7 +177,7 @@ void
 OpenSLLayer::shutdownAudioEngine()
 {
     // destroy engine object, and invalidate all associated interfaces
-    RING_DBG("Shutdown audio engine");
+    JAMI_DBG("Shutdown audio engine");
     stopStream();
 }
 
@@ -191,17 +191,17 @@ OpenSLLayer::dbgEngineGetBufCount() {
     count_ringtone += freeRingBufQueue_.size();
     count_ringtone += ringBufQueue_.size();
 
-    RING_ERR("Buf Disrtibutions: PlayerDev=%d, PlayQ=%d, FreePlayQ=%d",
+    JAMI_ERR("Buf Disrtibutions: PlayerDev=%d, PlayQ=%d, FreePlayQ=%d",
          player_->dbgGetDevBufCount(),
          playBufQueue_.size(),
          freePlayBufQueue_.size());
-    RING_ERR("Buf Disrtibutions: RingDev=%d, RingQ=%d, FreeRingQ=%d",
+    JAMI_ERR("Buf Disrtibutions: RingDev=%d, RingQ=%d, FreeRingQ=%d",
          ringtone_->dbgGetDevBufCount(),
          ringBufQueue_.size(),
          freeRingBufQueue_.size());
 
     if(count_player != BUF_COUNT) {
-        RING_ERR("====Lost Bufs among the queue(supposed = %d, found = %d)",
+        JAMI_ERR("====Lost Bufs among the queue(supposed = %d, found = %d)",
              BUF_COUNT, count_player);
     }
     return count_player;
@@ -219,7 +219,7 @@ OpenSLLayer::engineServicePlay(bool waiting) {
             buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels * sizeof(AudioSample);
             std::copy_n((const AudioSample*)dat->pointer()->data[0], dat->pointer()->nb_samples, (AudioSample*)buf->buf_);
             if (!playBufQueue_.push(buf)) {
-                RING_WARN("playThread player_ PLAY_KICKSTART_BUFFER_COUNT 1");
+                JAMI_WARN("playThread player_ PLAY_KICKSTART_BUFFER_COUNT 1");
                 break;
             } else
                 freePlayBufQueue_.pop();
@@ -241,7 +241,7 @@ OpenSLLayer::engineServiceRing(bool waiting) {
             buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels * sizeof(AudioSample);
             std::copy_n((const AudioSample*)dat->pointer()->data[0], dat->pointer()->nb_samples, (AudioSample*)buf->buf_);
             if (!ringBufQueue_.push(buf)) {
-                RING_WARN("playThread ringtone_ PLAY_KICKSTART_BUFFER_COUNT 1");
+                JAMI_WARN("playThread ringtone_ PLAY_KICKSTART_BUFFER_COUNT 1");
                 freeRingBufQueue_.push(buf);
                 break;
             }
@@ -269,7 +269,7 @@ OpenSLLayer::initAudioPlayback()
         player_->setBufQueue(&playBufQueue_, &freePlayBufQueue_);
         player_->registerCallback(std::bind(&OpenSLLayer::engineServicePlay, this, _1));
     } catch (const std::exception& e) {
-        RING_ERR("Error initializing audio playback: %s", e.what());
+        JAMI_ERR("Error initializing audio playback: %s", e.what());
         return;
     }
 
@@ -278,7 +278,7 @@ OpenSLLayer::initAudioPlayback()
         ringtone_->setBufQueue(&ringBufQueue_, &freeRingBufQueue_);
         ringtone_->registerCallback(std::bind(&OpenSLLayer::engineServiceRing, this, _1));
     } catch (const std::exception& e) {
-        RING_ERR("Error initializing ringtone playback: %s", e.what());
+        JAMI_ERR("Error initializing ringtone playback: %s", e.what());
     }
 }
 
@@ -292,7 +292,7 @@ OpenSLLayer::initAudioCapture()
         recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
         recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this, _1));
     } catch (const std::exception& e) {
-        RING_ERR("Error initializing audio capture: %s", e.what());
+        JAMI_ERR("Error initializing audio capture: %s", e.what());
     }
 }
 
@@ -301,7 +301,7 @@ OpenSLLayer::startAudioPlayback()
 {
     if (not player_ and not ringtone_)
         return;
-    RING_WARN("Start audio playback");
+    JAMI_WARN("Start audio playback");
 
     if (player_)
         player_->start();
@@ -327,7 +327,7 @@ OpenSLLayer::startAudioPlayback()
             }
         }
     });
-    RING_WARN("Audio playback started");
+    JAMI_WARN("Audio playback started");
 }
 
 void
@@ -335,7 +335,7 @@ OpenSLLayer::startAudioCapture()
 {
     if (not recorder_)
         return;
-    RING_DBG("Start audio capture");
+    JAMI_DBG("Start audio capture");
 
     recorder_->start();
     recThread = std::thread([&]() {
@@ -363,13 +363,13 @@ OpenSLLayer::startAudioCapture()
         }
     });
 
-    RING_DBG("Audio capture started");
+    JAMI_DBG("Audio capture started");
 }
 
 void
 OpenSLLayer::stopAudioPlayback()
 {
-    RING_DBG("Stop audio playback");
+    JAMI_DBG("Stop audio playback");
 
     {
         std::lock_guard<std::mutex> lck(playMtx);
@@ -387,13 +387,13 @@ OpenSLLayer::stopAudioPlayback()
         playThread.join();
     }
 
-    RING_DBG("Audio playback stopped");
+    JAMI_DBG("Audio playback stopped");
 }
 
 void
 OpenSLLayer::stopAudioCapture()
 {
-    RING_DBG("Stop audio capture");
+    JAMI_DBG("Stop audio capture");
 
     {
         std::lock_guard<std::mutex> lck(recMtx);
@@ -405,7 +405,7 @@ OpenSLLayer::stopAudioCapture()
         recThread.join();
     }
 
-    RING_DBG("Audio capture stopped");
+    JAMI_DBG("Audio capture stopped");
 }
 
 std::vector<std::string>
@@ -449,14 +449,14 @@ OpenSLLayer::getCaptureDeviceList() const
         if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED and
             audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER and
             audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HEADSET) {
-            RING_DBG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", InputDeviceIDs[i] );
+            JAMI_DBG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", InputDeviceIDs[i] );
             mic_deviceID = InputDeviceIDs[i];
             mic_available = SL_BOOLEAN_TRUE;
             break;
         } else if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_INTEGRATED and
                    audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER and
                    audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HANDSET) {
-            RING_DBG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", InputDeviceIDs[i] );
+            JAMI_DBG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", InputDeviceIDs[i] );
             mic_deviceID = InputDeviceIDs[i];
             mic_available = SL_BOOLEAN_TRUE;
             break;
@@ -464,7 +464,7 @@ OpenSLLayer::getCaptureDeviceList() const
     }
 
     if (!mic_available)
-        RING_ERR("No mic available");
+        JAMI_ERR("No mic available");
 
     return captureDeviceList;
 }
@@ -483,14 +483,14 @@ OpenSLLayer::updatePreference(AudioPreference& /*preference*/, int /*index*/, De
 void dumpAvailableEngineInterfaces()
 {
     SLresult result;
-    RING_DBG("Engine Interfaces");
+    JAMI_DBG("Engine Interfaces");
     SLuint32 numSupportedInterfaces;
     result = slQueryNumSupportedEngineInterfaces(&numSupportedInterfaces);
     assert(SL_RESULT_SUCCESS == result);
     result = slQueryNumSupportedEngineInterfaces(NULL);
     assert(SL_RESULT_PARAMETER_INVALID == result);
 
-    RING_DBG("Engine number of supported interfaces %u", numSupportedInterfaces);
+    JAMI_DBG("Engine number of supported interfaces %u", numSupportedInterfaces);
     for(SLuint32 i=0; i< numSupportedInterfaces; i++){
         SLInterfaceID  pInterfaceId;
         slQuerySupportedEngineInterfaces(i, &pInterfaceId);
@@ -546,8 +546,8 @@ void dumpAvailableEngineInterfaces()
         else if (pInterfaceId==SL_IID_ANDROIDCONFIGURATION) nm="androidconfiguration";
         else if (pInterfaceId==SL_IID_ANDROIDSIMPLEBUFFERQUEUE) nm="simplebuferqueue";
         //else if (pInterfaceId==//SL_IID_ANDROIDBUFFERQUEUESOURCE) nm="bufferqueuesource";
-        RING_DBG("%s,",nm);
+        JAMI_DBG("%s,",nm);
     }
 }
 
-} // namespace ring
+} // namespace jami

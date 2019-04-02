@@ -43,7 +43,7 @@ extern "C" {
 #include <sys/types.h>
 }
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 using std::vector;
 using std::string;
@@ -129,7 +129,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
                 try {
                     monitor_->addDevice(string(devpath));
                 } catch (const std::runtime_error &e) {
-                    RING_ERR("%s", e.what());
+                    JAMI_ERR("%s", e.what());
                 }
             }
         }
@@ -141,7 +141,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
 
 udev_failed:
 
-    RING_ERR("udev enumeration failed");
+    JAMI_ERR("udev enumeration failed");
 
     if (udev_mon_)
         udev_monitor_unref(udev_mon_);
@@ -157,7 +157,7 @@ udev_failed:
         try {
             monitor_->addDevice(ss.str());
         } catch (const std::runtime_error &e) {
-            RING_ERR("%s", e.what());
+            JAMI_ERR("%s", e.what());
             return;
         }
     }
@@ -209,14 +209,14 @@ void VideoDeviceMonitorImpl::run()
                     const char *node = udev_device_get_devnode(dev);
                     const char *action = udev_device_get_action(dev);
                     if (!strcmp(action, "add")) {
-                        RING_DBG("udev: adding %s", node);
+                        JAMI_DBG("udev: adding %s", node);
                         try {
                             monitor_->addDevice(node);
                         } catch (const std::runtime_error &e) {
-                            RING_ERR("%s", e.what());
+                            JAMI_ERR("%s", e.what());
                         }
                     } else if (!strcmp(action, "remove")) {
-                        RING_DBG("udev: removing %s", node);
+                        JAMI_DBG("udev: removing %s", node);
                         monitor_->removeDevice(string(node));
                     }
                     udev_device_unref(dev);
@@ -226,12 +226,12 @@ void VideoDeviceMonitorImpl::run()
             case -1:
                 if (errno == EAGAIN)
                     continue;
-                RING_ERR("udev monitoring thread: select failed (%m)");
+                JAMI_ERR("udev monitoring thread: select failed (%m)");
                 probing_ = false;
                 return;
 
             default:
-                RING_ERR("select() returned %d (%m)", ret);
+                JAMI_ERR("select() returned %d (%m)", ret);
                 probing_ = false;
                 return;
         }
@@ -248,4 +248,4 @@ VideoDeviceMonitor::VideoDeviceMonitor() :
 VideoDeviceMonitor::~VideoDeviceMonitor()
 {}
 
-}} // namespace ring::video
+}} // namespace jami::video

@@ -28,7 +28,7 @@
 #include <memory>
 #include <mutex>
 
-namespace ring {
+namespace jami {
 
 class Recordable {
 public:
@@ -74,4 +74,4 @@ protected:
     bool isAudioOnly_{false};
 };
 
-} // namespace ring
+} // namespace jami

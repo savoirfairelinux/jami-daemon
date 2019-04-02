@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-namespace ring {
+namespace jami {
 
 /**
  * General exception object that is thrown when
@@ -118,4 +118,4 @@ private:
     std::vector<CryptoSuiteDefinition> localCapabilities_;
 };
 
-} // namespace ring
+} // namespace jami

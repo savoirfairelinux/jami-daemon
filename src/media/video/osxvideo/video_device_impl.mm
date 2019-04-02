@@ -33,7 +33,7 @@
 
 #import <AVFoundation/AVFoundation.h>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class VideoDeviceImpl {
     public:
@@ -191,4 +191,4 @@ VideoDevice::getRateList(const std::string& channel, VideoSize size) const
 VideoDevice::~VideoDevice()
 {}
 
-}} // namespace ring::video
+}} // namespace jami::video

@@ -27,7 +27,7 @@
 #include <sstream>
 #include <memory>
 
-namespace ring {
+namespace jami {
 
 class FtpServer final : public Stream
 {
@@ -64,4 +64,4 @@ private:
     FtpState state_ {FtpState::PARSE_HEADERS};
 };
 
-} // namespace ring
+} // namespace jami

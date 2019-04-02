@@ -36,7 +36,7 @@
 #include <memory>
 #include <thread>
 
-namespace ring {
+namespace jami {
 
 class AudioPreference;
 class AudioStream;
@@ -241,6 +241,6 @@ class PulseLayer : public AudioLayer {
         friend class AudioLayerTest;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // PULSE_LAYER_H_

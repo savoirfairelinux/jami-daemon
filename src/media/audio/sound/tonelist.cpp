@@ -24,7 +24,7 @@
 
 #include <ciso646> // fix windows compiler bug
 
-namespace ring {
+namespace jami {
 
 static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
     {
@@ -132,4 +132,4 @@ TelephoneTone::buildTones(unsigned int sampleRate)
     tones_[Tone::TONE_CONGESTION] = std::make_shared<Tone>(toneZone[countryId_][Tone::TONE_CONGESTION], sampleRate);
 }
 
-} // namespace ring
+} // namespace jami

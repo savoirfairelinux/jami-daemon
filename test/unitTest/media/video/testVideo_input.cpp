@@ -32,7 +32,7 @@
 #include <map>
 #include <string>
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class VideoInputTest : public CppUnit::TestFixture {
 public:
@@ -66,6 +66,6 @@ VideoInputTest::testInput()
     video.switchInput(resource);
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::VideoInputTest::name());
+RING_TEST_RUNNER(jami::test::VideoInputTest::name());

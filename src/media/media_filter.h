@@ -32,7 +32,7 @@ struct AVFilterContext;
 struct AVFilterGraph;
 struct AVFilterInOut;
 
-namespace ring {
+namespace jami {
 
 /**
  * Provides access to libavfilter.
@@ -165,4 +165,4 @@ class MediaFilter {
         bool initialized_ {false};
 };
 
-}; // namespace ring
+}; // namespace jami

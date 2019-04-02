@@ -35,7 +35,7 @@
 
 #include "logger.h"
 
-namespace ring {
+namespace jami {
 
 void
 AudioFile::onBufferFinish()
@@ -44,7 +44,7 @@ AudioFile::onBufferFinish()
     const int divisor = buffer_->getSampleRate() / 1000;
 
     if (divisor == 0) {
-        RING_ERR("Error cannot update playback slider, sampling rate is 0");
+        JAMI_ERR("Error cannot update playback slider, sampling rate is 0");
         return;
     }
 
@@ -104,4 +104,4 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     buffer_ = buf.release();
 }
 
-} // namespace ring
+} // namespace jami

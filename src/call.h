@@ -42,7 +42,7 @@
 #include <list>
 #include <functional>
 
-namespace ring {
+namespace jami {
 
 class VoIPLink;
 class Account;
@@ -402,4 +402,4 @@ inline std::shared_ptr<Call> getPtr(Call& call)
     return call.shared_from_this();
 }
 
-} // namespace ring
+} // namespace jami

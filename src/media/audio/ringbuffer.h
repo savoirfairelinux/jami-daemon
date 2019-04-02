@@ -36,7 +36,7 @@
 #include <vector>
 #include <fstream>
 
-namespace ring {
+namespace jami {
 
 /**
  * A ring buffer for mutichannel audio samples
@@ -207,4 +207,4 @@ private:
     int rmsFrameCount_ {0};
 };
 
-} // namespace ring
+} // namespace jami

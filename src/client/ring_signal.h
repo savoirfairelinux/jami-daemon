@@ -29,7 +29,7 @@
 #include "presencemanager_interface.h"
 #include "datatransfer_interface.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "videomanager_interface.h"
 #endif
 
@@ -46,7 +46,7 @@
 #include <utility>
 #include <string>
 
-namespace ring {
+namespace jami {
 
 using SignalHandlerMap = std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>;
 extern SignalHandlerMap& getSignalHandlers();
@@ -62,7 +62,7 @@ static void emitSignal(Args...args) {
         try {
             cb(args...);
         } catch (std::exception& e) {
-            RING_ERR("Exception during emit signal %s:\n%s", Ts::name, e.what());
+            JAMI_ERR("Exception during emit signal %s:\n%s", Ts::name, e.what());
         }
     }
 }
@@ -73,4 +73,4 @@ exported_callback() {
     return std::make_pair((const std::string&)Ts::name, std::make_shared<DRing::CallbackWrapper<typename Ts::cb_type>>());
 }
 
-} // namespace ring
+} // namespace jami

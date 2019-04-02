@@ -28,7 +28,7 @@
 
 #include "../../../test_runner.h"
 
-namespace ring { namespace video { namespace test {
+namespace jami { namespace video { namespace test {
 
 class VideoScalerTest : public CppUnit::TestFixture {
 public:
@@ -105,6 +105,6 @@ VideoScalerTest::testScaleWithAspect()
     CPPUNIT_ASSERT(output.height() == 360);
 }
 
-}}} // namespace ring::test
+}}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::video::test::VideoScalerTest::name());
+RING_TEST_RUNNER(jami::video::test::VideoScalerTest::name());

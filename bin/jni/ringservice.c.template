@@ -27,11 +27,11 @@ JavaVM *gJavaVM;
 const char *kringservicePath = "cx/ring/daemon/RingserviceJNI";
 
 void deinitClassHelper(JNIEnv *env, jobject obj) {
-	RING_INFO("deinitClassHelper");
+	JAMI_INFO("deinitClassHelper");
 
 	/* delete cached object instances */
     env->DeleteGlobalRef(obj);
-	RING_INFO("deinitClassHelper: object %p deleted", obj);
+	JAMI_INFO("deinitClassHelper: object %p deleted", obj);
 }
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
@@ -39,26 +39,26 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 	jclass clazz;
 	jint r;
 
-    RING_INFO("JNI_OnLoad");
+    JAMI_INFO("JNI_OnLoad");
 
 	if (av_jni_set_java_vm(vm, reserved)) {
-        RING_ERR("JNI_OnLoad: av_jni_set_java_vm failed");
+        JAMI_ERR("JNI_OnLoad: av_jni_set_java_vm failed");
 	}
 
 	//Assume it is c++
 	r = vm->GetEnv ((void **) &env, JNI_VERSION_1_6);
     if (r != JNI_OK) {
-		RING_ERR("JNI_OnLoad: failed to get the environment using GetEnv()");
+		JAMI_ERR("JNI_OnLoad: failed to get the environment using GetEnv()");
         return -1;
     }
-	RING_INFO("JNI_Onload: GetEnv %p", env);
+	JAMI_INFO("JNI_Onload: GetEnv %p", env);
 
 	clazz = env->FindClass (kringservicePath);
 	if (!clazz) {
-        RING_ERR("JNI_Onload: whoops, %s class not found!", kringservicePath);
+        JAMI_ERR("JNI_Onload: whoops, %s class not found!", kringservicePath);
 	}
 	gJavaVM = vm;
-	RING_INFO("JNI_Onload: JavaVM %p", gJavaVM);
+	JAMI_INFO("JNI_Onload: JavaVM %p", gJavaVM);
 
 	/* put instances of class object we need into cache */
     //initClassHelper(env, kManagerPath, &gManagerObject);
@@ -77,24 +77,24 @@ void JNI_OnUnLoad(JavaVM* vm, void* reserved) {
     JNIEnv* env;
 	jclass clazz;
 
-	RING_INFO("JNI_OnUnLoad");
+	JAMI_INFO("JNI_OnUnLoad");
 
 	/* get env */
     if (vm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_6) != JNI_OK) {
-		RING_ERR("JNI_OnUnLoad: failed to get the environment using GetEnv()");
+		JAMI_ERR("JNI_OnUnLoad: failed to get the environment using GetEnv()");
         return;
     }
-	RING_INFO("JNI_OnUnLoad: GetEnv %p", env);
+	JAMI_INFO("JNI_OnUnLoad: GetEnv %p", env);
 
     /* Get jclass with env->FindClass */
 	clazz = env->FindClass(kringservicePath);
 	if (!clazz) {
-        RING_ERR("JNI_OnUnLoad: whoops, %s class not found!", kringservicePath);
+        JAMI_ERR("JNI_OnUnLoad: whoops, %s class not found!", kringservicePath);
 	}
 
 	/* remove instances of class object we need into cache */
     //deinitClassHelper(env, gManagerObject);
 
 	env->UnregisterNatives(clazz);
-	RING_INFO("JNI_OnUnLoad: Native functions unregistered");
+	JAMI_INFO("JNI_OnUnLoad: Native functions unregistered");
 }

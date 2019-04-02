@@ -39,7 +39,7 @@ struct Certificate;
 struct PrivateKey;
 }} // namespace dht::crypto
 
-namespace ring { namespace tls {
+namespace jami { namespace tls {
 
 class DhParams;
 
@@ -145,4 +145,4 @@ private:
     std::unique_ptr<TlsSessionImpl> pimpl_;
 };
 
-}} // namespace ring::tls
+}} // namespace jami::tls

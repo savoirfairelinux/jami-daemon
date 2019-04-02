@@ -29,7 +29,7 @@
 #include <cmath>
 #include <vector>
 
-namespace ring {
+namespace jami {
 
 // AudioLayer implementation.
 CoreLayer::CoreLayer(const AudioPreference &pref)
@@ -87,7 +87,7 @@ CoreLayer::initAudioLayerIO()
     // 3) Set the audio unit callback.
     // 4) Initialize everything.
     // 5) Profit...
-    RING_DBG("INIT AUDIO IO");
+    JAMI_DBG("INIT AUDIO IO");
 
     AudioUnitScope outputBus = 0;
     AudioUnitScope inputBus = 1;
@@ -100,7 +100,7 @@ CoreLayer::initAudioLayerIO()
 
     auto comp = AudioComponentFindNext(nullptr, &desc);
     if (comp == nullptr) {
-        RING_ERR("Can't find default output audio component.");
+        JAMI_ERR("Can't find default output audio component.");
         return;
     }
 
@@ -224,7 +224,7 @@ CoreLayer::initAudioLayerIO()
 void
 CoreLayer::startStream()
 {
-    RING_DBG("START STREAM");
+    JAMI_DBG("START STREAM");
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -253,7 +253,7 @@ CoreLayer::destroyAudioLayer()
 void
 CoreLayer::stopStream()
 {
-    RING_DBG("STOP STREAM");
+    JAMI_DBG("STOP STREAM");
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -323,7 +323,7 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     AudioBufferList* ioData)
 {
     if (inNumberFrames <= 0) {
-        RING_WARN("No frames for input.");
+        JAMI_WARN("No frames for input.");
         return;
     }
 
@@ -405,4 +405,4 @@ CoreLayer::getDeviceList(bool getCapture) const
     return ret;
 }
 
-} // namespace ring
+} // namespace jami

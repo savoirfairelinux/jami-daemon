@@ -50,7 +50,7 @@ struct pjsip_dialog;
 struct pjsip_inv_session;
 struct pjmedia_sdp_session;
 
-namespace ring {
+namespace jami {
 
 namespace Conf {
     // SIP specific configuration keys
@@ -237,7 +237,7 @@ public:
      * releasePort().
      */
     uint16_t generateAudioPort() const;
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     uint16_t generateVideoPort() const;
 #endif
     static void releasePort(uint16_t port) noexcept;
@@ -449,4 +449,4 @@ private:
 
 };
 
-} // namespace ring
+} // namespace jami

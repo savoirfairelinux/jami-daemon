@@ -28,7 +28,7 @@
 #include <WTypes.h>
 #endif
 
-namespace ring {
+namespace jami {
 
 constexpr static const char* TRUE_STR = "true";
 constexpr static const char* FALSE_STR = "false";
@@ -74,6 +74,6 @@ split_string(const std::string& s, char sep);
 std::vector<unsigned>
 split_string_to_unsigned(const std::string& s, char sep);
 
-} // namespace ring
+} // namespace jami
 
 #endif

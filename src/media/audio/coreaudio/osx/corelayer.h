@@ -42,7 +42,7 @@
  * @brief Main OSX sound class. Manages the data transfers between the application and the hardware.
  */
 
-namespace ring {
+namespace jami {
 
 class RingBuffer;
 class AudioDevice;
@@ -177,6 +177,6 @@ class CoreLayer : public AudioLayer {
         std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // CORE_LAYER_H_

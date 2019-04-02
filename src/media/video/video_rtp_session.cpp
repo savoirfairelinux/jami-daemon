@@ -41,7 +41,7 @@
 #include <thread>
 #include <chrono>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 using std::map;
 using std::string;
@@ -91,7 +91,7 @@ void VideoRtpSession::startSender()
                 videoLocal_->detach(sender_.get());
             if (videoMixer_)
                 videoMixer_->detach(sender_.get());
-            RING_WARN("Restarting video sender");
+            JAMI_WARN("Restarting video sender");
         }
 
         if (not conference_) {
@@ -103,16 +103,16 @@ void VideoRtpSession::startSender()
                         newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
                         localVideoParams_ = newParams.get();
                     } else {
-                        RING_ERR("No valid new video parameters.");
+                        JAMI_ERR("No valid new video parameters.");
                         return;
                     }
                 } catch (const std::exception& e) {
-                    RING_ERR("Exception during retrieving video parameters: %s",
+                    JAMI_ERR("Exception during retrieving video parameters: %s",
                              e.what());
                     return;
                 }
             } else {
-                RING_WARN("Can't lock video input");
+                JAMI_WARN("Can't lock video input");
                 return;
             }
         }
@@ -131,10 +131,10 @@ void VideoRtpSession::startSender()
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
 
         } catch (const MediaEncoderException &e) {
-            RING_ERR("%s", e.what());
+            JAMI_ERR("%s", e.what());
             send_.enabled = false;
         }
-        auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
+        auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
         auto autoQuality = codecVideo->isAutoQualityEnabled;
         if (autoQuality and not rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.start();
@@ -160,7 +160,7 @@ void VideoRtpSession::startReceiver()
 {
     if (receive_.enabled and not receive_.holding) {
         if (receiveThread_)
-            RING_WARN("Restarting video receiver");
+            JAMI_WARN("Restarting video receiver");
         receiveThread_.reset(
             new VideoReceiveThread(callID_, receive_.receiving_sdp, mtu_)
         );
@@ -171,7 +171,7 @@ void VideoRtpSession::startReceiver()
         receiveThread_->startLoop();
         packetLossThread_.start();
     } else {
-        RING_DBG("Video receiving disabled");
+        JAMI_DBG("Video receiving disabled");
         if (receiveThread_)
             receiveThread_->detach(videoMixer_.get());
         receiveThread_.reset();
@@ -202,7 +202,7 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
                                     send_.crypto.getSrtpKeyInfo().c_str());
         }
     } catch (const std::runtime_error& e) {
-        RING_ERR("Socket creation failed: %s", e.what());
+        JAMI_ERR("Socket creation failed: %s", e.what());
         return;
     }
 
@@ -271,7 +271,7 @@ VideoRtpSession::setupVideoPipeline()
 void
 VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
 {
-    RING_DBG("[call:%s] Setup video pipeline on conference %s", callID_.c_str(),
+    JAMI_DBG("[call:%s] Setup video pipeline on conference %s", callID_.c_str(),
              conference.getConfID().c_str());
     videoMixer_ = conference.getVideoMixer();
 
@@ -281,13 +281,13 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
             videoLocal_->detach(sender_.get());
         videoMixer_->attach(sender_.get());
     } else
-        RING_WARN("[call:%s] no sender", callID_.c_str());
+        JAMI_WARN("[call:%s] no sender", callID_.c_str());
 
     if (receiveThread_) {
         receiveThread_->enterConference();
         receiveThread_->attach(videoMixer_.get());
     } else
-        RING_WARN("[call:%s] no receiver", callID_.c_str());
+        JAMI_WARN("[call:%s] no receiver", callID_.c_str());
 }
 
 void
@@ -298,7 +298,7 @@ VideoRtpSession::enterConference(Conference* conference)
     exitConference();
 
     conference_ = conference;
-    RING_DBG("[call:%s] enterConference (conf: %s)", callID_.c_str(),
+    JAMI_DBG("[call:%s] enterConference (conf: %s)", callID_.c_str(),
              conference->getConfID().c_str());
 
     if (send_.enabled or receiveThread_) {
@@ -315,7 +315,7 @@ void VideoRtpSession::exitConference()
     if (!conference_)
         return;
 
-    RING_DBG("[call:%s] exitConference (conf: %s)", callID_.c_str(),
+    JAMI_DBG("[call:%s] exitConference (conf: %s)", callID_.c_str(),
              conference_->getConfID().c_str());
 
     if (videoMixer_) {
@@ -337,7 +337,7 @@ void VideoRtpSession::exitConference()
 }
 
 bool
-VideoRtpSession::useCodec(const ring::AccountVideoCodecInfo* codec) const
+VideoRtpSession::useCodec(const jami::AccountVideoCodecInfo* codec) const
 {
     return sender_->useCodec(codec);
 }
@@ -499,7 +499,7 @@ VideoRtpSession::adaptQualityAndBitrate()
         storeVideoBitrateInfo();
         const auto& cid = callID_;
 
-        RING_WARN("[%u/%u] packetLostRate=%f -> change quality to %d bitrate to %d",
+        JAMI_WARN("[%u/%u] packetLostRate=%f -> change quality to %d bitrate to %d",
                 videoBitrateInfo_.cptBitrateChecking,
                 videoBitrateInfo_.maxBitrateChecking,
                 packetLostRate,
@@ -515,15 +515,15 @@ VideoRtpSession::adaptQualityAndBitrate()
 
 void
 VideoRtpSession::setupVideoBitrateInfo() {
-    auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
+    auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
     if (codecVideo) {
         videoBitrateInfo_ = {
-            (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::BITRATE])),
-            (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE])),
-            (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE])),
-            (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::QUALITY])),
-            (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY])),
-            (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY])),
+            (unsigned)(jami::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::BITRATE])),
+            (unsigned)(jami::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE])),
+            (unsigned)(jami::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE])),
+            (unsigned)(jami::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::QUALITY])),
+            (unsigned)(jami::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY])),
+            (unsigned)(jami::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY])),
             videoBitrateInfo_.cptBitrateChecking,
             videoBitrateInfo_.maxBitrateChecking,
             videoBitrateInfo_.packetLostThreshold,
@@ -537,16 +537,16 @@ VideoRtpSession::setupVideoBitrateInfo() {
 
 void
 VideoRtpSession::storeVideoBitrateInfo() {
-    auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
+    auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
 
     if (codecVideo) {
         codecVideo->setCodecSpecifications({
-            {DRing::Account::ConfProperties::CodecInfo::BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateCurrent)},
-            {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateMin)},
-            {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateMax)},
-            {DRing::Account::ConfProperties::CodecInfo::QUALITY, ring::to_string(videoBitrateInfo_.videoQualityCurrent)},
-            {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, ring::to_string(videoBitrateInfo_.videoQualityMin)},
-            {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, ring::to_string(videoBitrateInfo_.videoQualityMax)}
+            {DRing::Account::ConfProperties::CodecInfo::BITRATE, jami::to_string(videoBitrateInfo_.videoBitrateCurrent)},
+            {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, jami::to_string(videoBitrateInfo_.videoBitrateMin)},
+            {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, jami::to_string(videoBitrateInfo_.videoBitrateMax)},
+            {DRing::Account::ConfProperties::CodecInfo::QUALITY, jami::to_string(videoBitrateInfo_.videoQualityCurrent)},
+            {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, jami::to_string(videoBitrateInfo_.videoQualityMin)},
+            {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, jami::to_string(videoBitrateInfo_.videoQualityMax)}
         });
 
         if (histoQuality_.size() > MAX_SIZE_HISTO_QUALITY_)
@@ -614,4 +614,4 @@ VideoRtpSession::setChangeOrientationCallback(std::function<void(int)> cb)
     changeOrientationCallback_ = cb;
 }
 
-}} // namespace ring::video
+}} // namespace jami::video

@@ -29,7 +29,7 @@
 
 #include "channel.h"
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 // During a receive operation we should not wait more than this timeout,
 // otherwise it would indicate a thread starvation.
@@ -72,8 +72,8 @@ ChannelTest::emptyStateTest()
     CPPUNIT_ASSERT(unlimited_channel.empty());
     CPPUNIT_ASSERT(unlimited_channel.size() == 0);
 
-    CPPUNIT_ASSERT_THROW(limited_channel.receive(timeout), ring::ChannelEmpty);
-    CPPUNIT_ASSERT_THROW(unlimited_channel.receive(timeout), ring::ChannelEmpty);
+    CPPUNIT_ASSERT_THROW(limited_channel.receive(timeout), jami::ChannelEmpty);
+    CPPUNIT_ASSERT_THROW(unlimited_channel.receive(timeout), jami::ChannelEmpty);
 }
 
 void
@@ -221,6 +221,6 @@ ChannelTest::dinningPhilosophersTest()
                                      [&table, i]{ philosopher_job<N>(table, i); });
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::ChannelTest::name());
+RING_TEST_RUNNER(jami::test::ChannelTest::name());

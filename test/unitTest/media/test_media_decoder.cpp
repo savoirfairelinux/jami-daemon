@@ -32,7 +32,7 @@
 
 #include "../../test_runner.h"
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class MediaDecoderTest : public CppUnit::TestFixture {
 public:
@@ -157,6 +157,6 @@ MediaDecoderTest::writeWav()
     write(f, length - 8, 4);
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::MediaDecoderTest::name());
+RING_TEST_RUNNER(jami::test::MediaDecoderTest::name());

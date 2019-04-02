@@ -39,7 +39,7 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 using std::string;
 
@@ -107,7 +107,7 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         }
 
         if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
-            RING_ERR("encoding failed");
+            JAMI_ERR("encoding failed");
     }
 #ifdef DEBUG_SDP
     if (frameNumber_ == 1) // video stream is lazy initialized, wait for first frame
@@ -125,7 +125,7 @@ VideoSender::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 void
 VideoSender::forceKeyFrame()
 {
-    RING_DBG("Key frame requested");
+    JAMI_DBG("Key frame requested");
     ++forceKeyFrame_;
 }
 
@@ -136,7 +136,7 @@ VideoSender::getLastSeqValue()
 }
 
 bool
-VideoSender::useCodec(const ring::AccountVideoCodecInfo* codec) const
+VideoSender::useCodec(const jami::AccountVideoCodecInfo* codec) const
 {
     return videoEncoder_->useCodec(codec);
 }
@@ -147,4 +147,4 @@ VideoSender::setChangeOrientationCallback(std::function<void(int)> cb)
     changeOrientationCallback_ = cb;
 }
 
-}} // namespace ring::video
+}} // namespace jami::video

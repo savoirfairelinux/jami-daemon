@@ -30,7 +30,7 @@
 
 #include <string>
 
-namespace ring {
+namespace jami {
 
 class AudioDevice {
 #if !TARGET_OS_IPHONE

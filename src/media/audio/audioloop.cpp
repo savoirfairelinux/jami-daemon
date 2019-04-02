@@ -31,7 +31,7 @@
 
 #include <algorithm> // std::min
 
-namespace ring {
+namespace jami {
 
 AudioLoop::AudioLoop(unsigned int sampleRate) :
     buffer_(new AudioBuffer(0, AudioFormat(sampleRate, 1))), pos_(0)
@@ -52,7 +52,7 @@ void
 AudioLoop::getNext(AudioBuffer& output, double gain)
 {
     if (!buffer_) {
-        RING_ERR("buffer is NULL");
+        JAMI_ERR("buffer is NULL");
         return;
     }
 
@@ -62,10 +62,10 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
     size_t output_pos = 0;
 
     if (buf_samples == 0) {
-        RING_ERR("Audio loop size is 0");
+        JAMI_ERR("Audio loop size is 0");
         return;
     } else if (pos >= buf_samples) {
-        RING_ERR("Invalid loop position %zu", pos);
+        JAMI_ERR("Invalid loop position %zu", pos);
         return;
     }
 
@@ -95,4 +95,4 @@ AudioLoop::getNext(size_t samples)
     return buff.toAVFrame();
 }
 
-} // namespace ring
+} // namespace jami

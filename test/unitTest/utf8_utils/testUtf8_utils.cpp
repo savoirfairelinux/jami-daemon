@@ -27,7 +27,7 @@
 #include "../../test_runner.h"
 
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class Utf8UtilsTest : public CppUnit::TestFixture {
 public:
@@ -66,6 +66,6 @@ Utf8UtilsTest::utf8_make_valid_test()
     CPPUNIT_ASSERT(utf8_validate(str));
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::Utf8UtilsTest::name());
+RING_TEST_RUNNER(jami::test::Utf8UtilsTest::name());

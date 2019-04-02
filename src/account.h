@@ -49,16 +49,16 @@
 #include <mutex>
 #include <chrono>
 
-namespace ring { namespace upnp {
+namespace jami { namespace upnp {
 class Controller;
-}} // namespace ring::upnp
+}} // namespace jami::upnp
 
 namespace YAML {
 class Emitter;
 class Node;
 } // namespace YAML
 
-namespace ring {
+namespace jami {
 
 class Call;
 class SystemCodecContainer;
@@ -344,7 +344,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         parseInt(const std::map<std::string, std::string>& details, const char* key, T& i) {
             const auto& iter = details.find(key);
             if (iter == details.end()) {
-                RING_ERR("Couldn't find key \"%s\"", key);
+                JAMI_ERR("Couldn't find key \"%s\"", key);
                 return;
             }
             i = atoi(iter->second.c_str());
@@ -480,7 +480,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * UPnP IGD controller and the mutex to access it
          */
-        std::unique_ptr<ring::upnp::Controller> upnp_;
+        std::unique_ptr<jami::upnp::Controller> upnp_;
         mutable std::mutex upnp_mtx {};
 
         /**
@@ -498,6 +498,6 @@ operator<< (std::ostream& os, const Account& acc)
     return os;
 }
 
-} // namespace ring
+} // namespace jami
 
 #endif

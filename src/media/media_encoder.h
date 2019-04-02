@@ -24,7 +24,7 @@
 
 #include "config.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "video/video_base.h"
 #include "video/video_scaler.h"
 #endif
@@ -44,7 +44,7 @@ struct AVFormatContext;
 struct AVDictionary;
 struct AVCodec;
 
-namespace ring {
+namespace jami {
 
 struct MediaDescription;
 struct AccountCodecInfo;
@@ -74,9 +74,9 @@ public:
 
     bool send(AVPacket& packet, int streamIdx = -1);
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
     int encodeAudio(AudioFrame& frame);
 
@@ -122,10 +122,10 @@ private:
     unsigned sent_samples = 0;
     bool initialized_ {false};
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
     VideoFrame scaledFrame_;
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
     std::vector<uint8_t> scaledFrameBuffer_;
     int scaledFrameBufferSize_ = 0;
@@ -144,6 +144,6 @@ protected:
     std::string audioCodec_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // __MEDIA_ENCODER_H__

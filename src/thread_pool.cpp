@@ -25,7 +25,7 @@
 
 #include <ciso646> // fix windows compiler bug
 
-namespace ring {
+namespace jami {
 
 struct ThreadPool::ThreadState
 {
@@ -76,7 +76,7 @@ ThreadPool::run(std::function<void()>&& cb)
                     if (task)
                         task();
                 } catch (const std::exception& e) {
-                    RING_ERR("Exception running task: %s", e.what());
+                    JAMI_ERR("Exception running task: %s", e.what());
                 }
             }
         });

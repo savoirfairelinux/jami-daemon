@@ -31,7 +31,7 @@
 #include <iterator>
 #include <cstdlib> // strtoull
 
-namespace ring {
+namespace jami {
 
 //==============================================================================
 
@@ -55,7 +55,7 @@ void
 FtpServer::close() noexcept
 {
     closeCurrentFile();
-    RING_WARN() << "[FTP] server closed";
+    JAMI_WARN() << "[FTP] server closed";
 }
 
 bool
@@ -71,7 +71,7 @@ FtpServer::startNewFile()
     rx_ = 0;
     out_ = Manager::instance().dataTransfers->onIncomingFileRequest(info); // we block here until answer from client
     if (!out_) {
-        RING_DBG() << "[FTP] transfer aborted by client";
+        JAMI_DBG() << "[FTP] transfer aborted by client";
         closed_ = true; // send NOK msg at next read()
     } else {
         go_ = true;
@@ -98,7 +98,7 @@ FtpServer::read(std::vector<uint8_t>& buffer) const
             if (rx_ < fileSize_) {
                 buffer.resize(4);
                 buffer[0] = 'N'; buffer[1] = 'G'; buffer[2] = 'O'; buffer[3] = '\n';
-                RING_DBG() << "[FTP] sending NGO (cancel) order";
+                JAMI_DBG() << "[FTP] sending NGO (cancel) order";
                 return true;
             }
         }
@@ -107,7 +107,7 @@ FtpServer::read(std::vector<uint8_t>& buffer) const
         go_ = false;
         buffer.resize(3);
         buffer[0] = 'G'; buffer[1] = 'O'; buffer[2] = '\n';
-        RING_DBG() << "[FTP] sending GO order";
+        JAMI_DBG() << "[FTP] sending GO order";
     } else {
         // Nothing to send. Avoid to have an useless buffer filled with 0.
         buffer.resize(0);
@@ -207,7 +207,7 @@ FtpServer::parseLine(const std::string& line)
 void
 FtpServer::handleHeader(const std::string& key, const std::string& value)
 {
-    RING_DBG() << "[FTP] header: '" << key << "' = '"<< value << "'";
+    JAMI_DBG() << "[FTP] header: '" << key << "' = '"<< value << "'";
 
     if (key == "Content-Length") {
         fileSize_ = std::strtoull(&value[0], nullptr, 10);
@@ -216,4 +216,4 @@ FtpServer::handleHeader(const std::string& key, const std::string& value)
     }
 }
 
-} // namespace ring
+} // namespace jami

@@ -92,7 +92,7 @@ RestVideoManager::populateResources()
 void
 RestVideoManager::defaultRoute(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /videoManager", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /videoManager", session->get_origin().c_str());
 
     std::string body = "Available routes are : \r\n";
 
@@ -107,7 +107,7 @@ RestVideoManager::defaultRoute(const std::shared_ptr<restbed::Session> session)
 
 void RestVideoManager::getDeviceList(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /deviceList", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /deviceList", session->get_origin().c_str());
     std::vector<std::string> list = DRing::getDeviceList();
 
     std::string body = "";

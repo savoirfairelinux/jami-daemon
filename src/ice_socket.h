@@ -29,7 +29,7 @@
 using ssize_t = SSIZE_T;
 #endif
 
-namespace ring {
+namespace jami {
 
 class IceTransport;
 using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;

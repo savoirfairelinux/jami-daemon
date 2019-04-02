@@ -32,7 +32,7 @@
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-namespace ring {
+namespace jami {
 
 // AudioLayer implementation.
 CoreLayer::CoreLayer(const AudioPreference &pref)
@@ -89,7 +89,7 @@ CoreLayer::getAudioDeviceName(int index, DeviceType type) const
 void
 CoreLayer::initAudioLayerIO()
 {
-    RING_DBG("iOS CoreLayer - initializing audio session");
+    JAMI_DBG("iOS CoreLayer - initializing audio session");
 
     AudioComponentDescription outputUnitDescription;
     outputUnitDescription.componentType             = kAudioUnitType_Output;
@@ -100,7 +100,7 @@ CoreLayer::initAudioLayerIO()
 
     auto comp = AudioComponentFindNext(nullptr, &outputUnitDescription);
     if (comp == nullptr) {
-        RING_ERR("Can't find default output audio component.");
+        JAMI_ERR("Can't find default output audio component.");
         return;
     }
 
@@ -112,7 +112,7 @@ CoreLayer::initAudioLayerIO()
                             &audioCategory);
 
     auto playBackDeviceList = getPlaybackDeviceList();
-    RING_DBG("Setting playback device: %s", playBackDeviceList[indexOut_].c_str());
+    JAMI_DBG("Setting playback device: %s", playBackDeviceList[indexOut_].c_str());
     switch(indexOut_) {
         case 0:
             UInt32 setSpeaker;
@@ -142,7 +142,7 @@ CoreLayer::initAudioLayerIO()
 
 void
 CoreLayer::setupOutputBus() {
-    RING_DBG("iOS CoreLayer - initializing output bus");
+    JAMI_DBG("iOS CoreLayer - initializing output bus");
 
     AudioUnitScope outputBus = 0;
     UInt32 size;
@@ -188,7 +188,7 @@ CoreLayer::setupOutputBus() {
 
 void
 CoreLayer::setupInputBus() {
-    RING_DBG("Initializing input bus");
+    JAMI_DBG("Initializing input bus");
 
     AudioUnitScope inputBus = 1;
     UInt32 size;
@@ -310,7 +310,7 @@ CoreLayer::bindCallbacks() {
 void
 CoreLayer::startStream()
 {
-    RING_DBG("iOS CoreLayer - Start Stream");
+    JAMI_DBG("iOS CoreLayer - Start Stream");
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -339,7 +339,7 @@ CoreLayer::destroyAudioLayer()
 void
 CoreLayer::stopStream()
 {
-    RING_DBG("iOS CoreLayer - Stop Stream");
+    JAMI_DBG("iOS CoreLayer - Stop Stream");
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -415,7 +415,7 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     (void) ioData;
 
     if (inNumberFrames <= 0) {
-        RING_WARN("No frames for input.");
+        JAMI_WARN("No frames for input.");
         return;
     }
 
@@ -460,6 +460,6 @@ void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceT
     }
 }
 
-} // namespace ring
+} // namespace jami
 
 #pragma GCC diagnostic pop

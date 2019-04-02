@@ -24,7 +24,7 @@
 #include <pjlib.h>
 #include <pjlib-util/base64.h>
 
-namespace ring {
+namespace jami {
 namespace base64 {
 
 std::string
@@ -68,4 +68,4 @@ decode(const std::string& str)
     return out;
 }
 
-}} // namespace ring::base64
+}} // namespace jami::base64

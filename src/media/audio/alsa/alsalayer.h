@@ -41,7 +41,7 @@
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
  */
 
-namespace ring {
+namespace jami {
 
 class AlsaThread;
 class RingBuffer;
@@ -253,6 +253,6 @@ class AlsaLayer : public AudioLayer {
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // ALSA_LAYER_H_
