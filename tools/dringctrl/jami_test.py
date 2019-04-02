@@ -42,7 +42,7 @@ except ImportError as e:
 #Initialisation
 
 class JamiTest(Controller):
-    
+
     toolbar_width = 40
 
     DBUS_DAEMON_OBJECT = 'cx.ring.Ring'
@@ -55,7 +55,7 @@ class JamiTest(Controller):
         self.done = False
         #create one
         self.account = account
-        self.array = [] 
+        self.array = arr.array('i', [])
 
     def registerAccount(self, account):
         if not account:
@@ -65,7 +65,7 @@ class JamiTest(Controller):
     def test(self, nbIteration, delay, account):
         print("**[BEGIN] Call Test")
         i =0
-        
+
         while count < nbIteration:
             print("[%s/%s]" % (self.count, nbIteration))
 
@@ -73,22 +73,21 @@ class JamiTest(Controller):
 
             if self.onCallStateChanged(self.TestAccount) != "RINGING"
                 failureCounted += 1
-                self.array = 
+                self.array[i] = failureCounted 
 
             sfl.HangUp(callId)
             count += 1
             time.sleep(delay)
-            
 
         if failureCounted < failure
             print("**[SUCCESS] Call Test")
-    
+
         print("**[END] DHT Call Test")
 
 #Main
 
 if __name__ == "__main__":
-    
+
     # setup toolbar
     sys.stdout.write("[%s]" % (" " * toolbar_width))
     sys.stdout.flush()
