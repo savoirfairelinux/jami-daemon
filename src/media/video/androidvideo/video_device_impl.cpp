@@ -32,7 +32,7 @@
 #include <vector>
 #include <array>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 /*
  * Array to match Android formats. List formats in ascending
@@ -96,16 +96,16 @@ VideoDeviceImpl::selectFormat()
             }
         }
         if (f == and_formats.end())
-            RING_WARN("AndroidVideo: No format matching %d", fmt);
+            JAMI_WARN("AndroidVideo: No format matching %d", fmt);
     }
 
     if (best != UINT_MAX) {
         fmt_ = &and_formats[best];
-        RING_DBG("AndroidVideo: picked format %s", fmt_->name.c_str());
+        JAMI_DBG("AndroidVideo: picked format %s", fmt_->name.c_str());
     }
     else {
         fmt_ = &and_formats[0];
-        RING_ERR("AndroidVideo: Could not find a known format to use");
+        JAMI_ERR("AndroidVideo: Could not find a known format to use");
     }
 }
 
@@ -225,4 +225,4 @@ VideoDevice::getRateList(const std::string& /* channel */, VideoSize /* size */)
 VideoDevice::~VideoDevice()
 {}
 
-}} // namespace ring::video
+}} // namespace jami::video

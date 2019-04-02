@@ -48,7 +48,7 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
@@ -92,7 +92,7 @@ void VideoInput::process()
     foundDecOpts(decOpts_);
 
     if (switchPending_.exchange(false)) {
-        RING_DBG("Switching input to '%s'", decOpts_.input.c_str());
+        JAMI_DBG("Switching input to '%s'", decOpts_.input.c_str());
         if (decOpts_.input.empty()) {
             loop_.stop();
             return;
@@ -169,7 +169,7 @@ void VideoInput::cleanup()
             buffer.status == BUFFER_FULL) {
             freeOneBuffer(buffer);
         } else if (buffer.status != BUFFER_NOT_ALLOCATED) {
-            RING_ERR("Failed to free buffer [%p]", buffer.data);
+            JAMI_ERR("Failed to free buffer [%p]", buffer.data);
         }
     }
 
@@ -195,21 +195,21 @@ VideoInput::cleanup()
     deleteDecoder(); // do it first to let a chance to last frame to be displayed
     detach(sink_.get());
     sink_->stop();
-    RING_DBG("VideoInput closed");
+    JAMI_DBG("VideoInput closed");
 }
 
 #endif
 bool VideoInput::setup()
 {
     if (not attach(sink_.get())) {
-        RING_ERR("attach sink failed");
+        JAMI_ERR("attach sink failed");
         return false;
     }
 
     if (!sink_->start())
-        RING_ERR("start sink failed");
+        JAMI_ERR("start sink failed");
 
-    RING_DBG("VideoInput ready to capture");
+    JAMI_DBG("VideoInput ready to capture");
     return true;
 }
 
@@ -245,7 +245,7 @@ bool VideoInput::captureFrame()
         case MediaDecoder::Status::RestartRequired:
             createDecoder();
 #ifdef RING_ACCEL
-            RING_WARN("Disabling hardware decoding due to previous failure");
+            JAMI_WARN("Disabling hardware decoding due to previous failure");
             decoder_->enableAccel(false);
 #endif
             return static_cast<bool>(decoder_);
@@ -272,17 +272,17 @@ int VideoInput::allocateOneBuffer(struct VideoFrameBuffer& b, int length)
     if (b.data) {
         b.status = BUFFER_AVAILABLE;
         b.length = length;
-        RING_DBG("Allocated buffer [%p]", b.data);
+        JAMI_DBG("Allocated buffer [%p]", b.data);
         return 0;
     }
 
-    RING_DBG("Failed to allocate memory for one buffer");
+    JAMI_DBG("Failed to allocate memory for one buffer");
     return -ENOMEM;
 }
 
 void VideoInput::freeOneBuffer(struct VideoFrameBuffer& b)
 {
-    RING_DBG("Free buffer [%p]", b.data);
+    JAMI_DBG("Free buffer [%p]", b.data);
     std::free(b.data);
     b.data = nullptr;
     b.length = 0;
@@ -325,7 +325,7 @@ VideoInput::obtainFrame(int length)
         }
     }
 
-    RING_WARN("No buffer found");
+    JAMI_WARN("No buffer found");
     return nullptr;
 }
 
@@ -336,7 +336,7 @@ VideoInput::releaseFrame(void *ptr)
     for(auto& buffer : buffers_) {
         if (buffer.data  == ptr) {
             if (buffer.status != BUFFER_CAPTURING)
-                RING_ERR("Released a buffer with status %d, expected %d",
+                JAMI_ERR("Released a buffer with status %d, expected %d",
                          buffer.status, BUFFER_CAPTURING);
             if (isCapturing()) {
                 buffer.status = BUFFER_FULL;
@@ -373,14 +373,14 @@ VideoInput::createDecoder()
         this);
 
     if (decoder->openInput(decOpts_) < 0) {
-        RING_ERR("Could not open input \"%s\"", decOpts_.input.c_str());
+        JAMI_ERR("Could not open input \"%s\"", decOpts_.input.c_str());
         foundDecOpts(decOpts_);
         return;
     }
 
     /* Data available, finish the decoding */
     if (decoder->setupFromVideoData() < 0) {
-        RING_ERR("decoder IO startup failed");
+        JAMI_ERR("decoder IO startup failed");
         foundDecOpts(decOpts_);
         return;
     }
@@ -389,7 +389,7 @@ VideoInput::createDecoder()
     decOpts_.height = decoder->getHeight();
     decOpts_.framerate = decoder->getFps();
 
-    RING_DBG("created decoder with video params : size=%dX%d, fps=%lf",
+    JAMI_DBG("created decoder with video params : size=%dX%d, fps=%lf",
              decOpts_.width, decOpts_.height, decOpts_.framerate.real());
 
     decoder_ = std::move(decoder);
@@ -411,7 +411,7 @@ VideoInput::deleteDecoder()
 bool
 VideoInput::initCamera(const std::string& device)
 {
-    decOpts_ = ring::getVideoDeviceMonitor().getDeviceParams(device);
+    decOpts_ = jami::getVideoDeviceMonitor().getDeviceParams(device);
     return true;
 }
 
@@ -510,7 +510,7 @@ VideoInput::initFile(std::string path)
 
     /* File exists? */
     if (access(path.c_str(), R_OK) != 0) {
-        RING_ERR("file '%s' unavailable\n", path.c_str());
+        JAMI_ERR("file '%s' unavailable\n", path.c_str());
         return false;
     }
 
@@ -521,7 +521,7 @@ VideoInput::initFile(std::string path)
     p.input = path;
     auto dec = std::make_unique<MediaDecoder>();
     if (dec->openInput(p) < 0 || dec->setupFromVideoData() < 0) {
-        return initCamera(ring::getVideoDeviceMonitor().getDefaultDevice());
+        return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
     }
 
     clearOptions();
@@ -534,7 +534,7 @@ VideoInput::initFile(std::string path)
         decOpts_.format = "image2";
         decOpts_.framerate = 1;
     } else {
-        RING_WARN("Guessing file type for %s", path.c_str());
+        JAMI_WARN("Guessing file type for %s", path.c_str());
     }
 
     return false;
@@ -546,10 +546,10 @@ VideoInput::switchInput(const std::string& resource)
     if (resource == currentResource_)
         return futureDecOpts_;
 
-    RING_DBG("MRL: '%s'", resource.c_str());
+    JAMI_DBG("MRL: '%s'", resource.c_str());
 
     if (switchPending_) {
-        RING_ERR("Video switch already requested");
+        JAMI_ERR("Video switch already requested");
         return {};
     }
 
@@ -657,4 +657,4 @@ VideoInput::foundDecOpts(const DeviceParams& params)
     }
 }
 
-}} // namespace ring::video
+}} // namespace jami::video

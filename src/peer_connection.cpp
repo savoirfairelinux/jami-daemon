@@ -48,7 +48,7 @@
 #include <sys/time.h>
 #endif
 
-namespace ring {
+namespace jami {
 
 using lock = std::lock_guard<std::mutex>;
 
@@ -133,7 +133,7 @@ TlsTurnEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
 void
 TlsTurnEndpoint::Impl::onTlsRxData(UNUSED std::vector<uint8_t>&& buf)
 {
-    RING_ERR() << "[TLS-TURN] rx " << buf.size() << " (but not implemented)";
+    JAMI_ERR() << "[TLS-TURN] rx " << buf.size() << " (but not implemented)";
 }
 
 void
@@ -352,7 +352,7 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
         crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
     auto crt = dht::crypto::Certificate {crt_data};
     if (crt.getPacked() != peerCertificate.getPacked()) {
-        RING_ERR() << "[TLS-SOCKET] Unexpected peer certificate";
+        JAMI_ERR() << "[TLS-SOCKET] Unexpected peer certificate";
         return GNUTLS_E_CERTIFICATE_ERROR;
     }
 
@@ -483,7 +483,7 @@ public:
                 try {
                     eventLoop();
                 } catch (const std::exception& e) {
-                    RING_ERR() << "[CNX] peer connection event loop failure: " << e.what();
+                    JAMI_ERR() << "[CNX] peer connection event loop failure: " << e.what();
                     done();
                 }
             })} {}
@@ -527,12 +527,12 @@ private:
         try {
             if (callable(stream))
                 return;
-            RING_DBG() << "EOF on stream #" << stream->getId();
+            JAMI_DBG() << "EOF on stream #" << stream->getId();
         } catch (const std::system_error& e) {
-            RING_WARN() << "Stream #" << stream->getId()
+            JAMI_WARN() << "Stream #" << stream->getId()
                         << " IO failed with code = " << e.code();
         } catch (const std::exception& e) {
-            RING_ERR() << "Unexpected exception during IO with stream #"
+            JAMI_ERR() << "Unexpected exception during IO with stream #"
                        << stream->getId()
                        << ": " << e.what();
         }
@@ -544,7 +544,7 @@ private:
 void
 PeerConnection::PeerConnectionImpl::eventLoop()
 {
-    RING_DBG() << "[CNX] Peer connection to " << peer_uri << " ready";
+    JAMI_DBG() << "[CNX] Peer connection to " << peer_uri << " ready";
     while (true) {
         // Process ctrl orders first
         while (true) {
@@ -556,7 +556,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     std::error_code ec;
                     if (endpoint_->waitForData(100, ec) > 0) {
                         std::vector<uint8_t> buf(IO_BUFFER_SIZE);
-                        RING_DBG("A good buffer arrived before any input or output attachment");
+                        JAMI_DBG("A good buffer arrived before any input or output attachment");
                         auto size = endpoint_->read(buf, ec);
                         if (ec)
                             throw std::system_error(ec);
@@ -590,7 +590,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 case CtrlMsgType::STOP:
                     return;
 
-                default: RING_ERR("BUG: got unhandled control msg!");  break;
+                default: JAMI_ERR("BUG: got unhandled control msg!");  break;
             }
         }
 
@@ -701,4 +701,4 @@ PeerConnection::getPeerUri() const
     return pimpl_->peer_uri;
 }
 
-} // namespace ring
+} // namespace jami

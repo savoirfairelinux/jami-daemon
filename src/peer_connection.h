@@ -39,7 +39,7 @@ struct PrivateKey;
 struct Certificate;
 }}
 
-namespace ring {
+namespace jami {
 
 class Account;
 class TurnTransport;
@@ -198,4 +198,4 @@ private:
     std::unique_ptr<PeerConnectionImpl> pimpl_;
 };
 
-} // namespace ring
+} // namespace jami

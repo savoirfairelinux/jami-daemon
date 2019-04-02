@@ -24,7 +24,7 @@
 
 #include "dtmf.h"
 
-namespace ring {
+namespace jami {
 
 DTMF::DTMF(unsigned int sampleRate)
     : currentTone_(0), newTone_(0), dtmfgenerator_(sampleRate)
@@ -72,4 +72,4 @@ bool DTMF::generateDTMF(vector<AudioSample> &buffer)
     }
 }
 
-} // namespace ring
+} // namespace jami

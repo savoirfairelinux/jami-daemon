@@ -28,7 +28,7 @@
 #include <condition_variable>
 #include <mutex>
 
-namespace ring {
+namespace jami {
 
 struct ThreadLoopException : public std::runtime_error {
     ThreadLoopException() : std::runtime_error("ThreadLoopException") {}
@@ -125,4 +125,4 @@ private:
     std::condition_variable cv_;
 };
 
-} // namespace ring
+} // namespace jami

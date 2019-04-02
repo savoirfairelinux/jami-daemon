@@ -27,7 +27,7 @@
  * @brief Account specific keys/constants that must be shared in daemon and clients.
  */
 
-namespace ring { namespace Conf {
+namespace jami { namespace Conf {
 
 // Common account parameters
 static const char *const CONFIG_ACCOUNT_TYPE                    = "Account.type";
@@ -106,6 +106,6 @@ static const char *const CONFIG_ACCOUNT_REGISTRATION_STATE_DESC = "Account.regis
 static const char *const CONFIG_TRANSPORT_STATE_CODE            = "Transport.statusCode";
 static const char *const CONFIG_TRANSPORT_STATE_DESC            = "Transport.statusDescription";
 
-}} // namespace ring::Conf
+}} // namespace jami::Conf
 
 #endif // ACCOUNT_SCHEMA_H_

@@ -23,7 +23,7 @@
 
 #include <ciso646> // fix windows compiler bug
 
-namespace ring {
+namespace jami {
 
 void
 ThreadLoop::mainloop(std::thread::id& tid,
@@ -38,12 +38,12 @@ ThreadLoop::mainloop(std::thread::id& tid,
                 process();
             cleanup();
         } else {
-            RING_ERR("setup failed");
+            JAMI_ERR("setup failed");
         }
     } catch (const ThreadLoopException& e) {
-        RING_ERR("[threadloop:%p] ThreadLoopException: %s", this, e.what());
+        JAMI_ERR("[threadloop:%p] ThreadLoopException: %s", this, e.what());
     } catch (const std::exception& e) {
-        RING_ERR("[threadloop:%p] Unwaited exception: %s", this, e.what());
+        JAMI_ERR("[threadloop:%p] Unwaited exception: %s", this, e.what());
     }
     stop();
 }
@@ -70,7 +70,7 @@ ThreadLoop::ThreadLoop(ThreadLoop&& other)
 ThreadLoop::~ThreadLoop()
 {
     if (isRunning()) {
-        RING_ERR("join() should be explicitly called in owner's destructor");
+        JAMI_ERR("join() should be explicitly called in owner's destructor");
         join();
     }
 }
@@ -81,13 +81,13 @@ ThreadLoop::start()
     const auto s = state_.load();
 
     if (s == RUNNING) {
-        RING_ERR("already started");
+        JAMI_ERR("already started");
         return;
     }
 
     // stop pending but not processed by thread yet?
     if (s == STOPPING and thread_.joinable()) {
-        RING_DBG("stop pending");
+        JAMI_DBG("stop pending");
         thread_.join();
     }
 
@@ -153,4 +153,4 @@ InterruptedThreadLoop::stop()
     ThreadLoop::stop();
     cv_.notify_one();
 }
-} // namespace ring
+} // namespace jami

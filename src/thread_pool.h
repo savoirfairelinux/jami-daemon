@@ -25,7 +25,7 @@
 #include <future>
 #include <functional>
 
-namespace ring {
+namespace jami {
 
 class ThreadPool {
 public:

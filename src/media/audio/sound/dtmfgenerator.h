@@ -37,7 +37,7 @@
  * @brief DMTF Generator Exception
  */
 
-namespace ring {
+namespace jami {
 
 class DTMFException : public std::runtime_error {
     public:
@@ -114,6 +114,6 @@ class DTMFGenerator {
         AudioSample* fillToneBuffer(int index);
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // DTMFGENERATOR_H

@@ -41,11 +41,11 @@
 #import "TargetConditionals.h"
 #endif
 
-namespace ring {
+namespace jami {
 class MediaDecoder;
 }
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class SinkClient;
 
@@ -152,6 +152,6 @@ private:
 #endif
 };
 
-}} // namespace ring::video
+}} // namespace jami::video
 
 #endif // __VIDEO_INPUT_H__

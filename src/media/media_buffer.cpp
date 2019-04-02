@@ -28,9 +28,9 @@
 #include <cstring> // std::memset
 #include <ciso646> // fix windows compiler bug
 
-namespace ring {
+namespace jami {
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 
 //=== HELPERS ==================================================================
 
@@ -40,6 +40,6 @@ videoFrameSize(int format, int width, int height)
     return av_image_get_buffer_size((AVPixelFormat)format, width, height, 1);
 }
 
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
-} // namespace ring
+} // namespace jami

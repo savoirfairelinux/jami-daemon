@@ -25,7 +25,7 @@
 #include <memory>
 #include <string>
 
-namespace ring {
+namespace jami {
 
 class Stream;
 
@@ -68,4 +68,4 @@ private:
     std::unique_ptr<Impl> pimpl_;
 };
 
-} // namespace ring
+} // namespace jami

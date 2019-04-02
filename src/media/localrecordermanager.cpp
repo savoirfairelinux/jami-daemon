@@ -20,7 +20,7 @@
 
 #include "localrecordermanager.h"
 
-namespace ring {
+namespace jami {
 
 LocalRecorderManager&
 LocalRecorderManager::instance()
@@ -69,4 +69,4 @@ LocalRecorderManager::hasRunningRecorders()
     return false;
 }
 
-} // namespace ring
+} // namespace jami

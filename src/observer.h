@@ -30,7 +30,7 @@
 #include <mutex>
 #include <ciso646> // fix windows compiler bug
 
-namespace ring {
+namespace jami {
 
 template <typename T> class Observer;
 template <typename T> class Observable;
@@ -96,4 +96,4 @@ public:
     virtual void detached(Observable<T>*) {};
 };
 
-}; // namespace ring
+}; // namespace jami

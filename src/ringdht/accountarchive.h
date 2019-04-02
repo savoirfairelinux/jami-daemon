@@ -26,7 +26,7 @@
 #include <map>
 #include <string>
 
-namespace ring {
+namespace jami {
 
 /**
  * Crypto material contained in the archive,

@@ -28,7 +28,7 @@
 #include <vector>
 #include <memory>
 
-namespace ring {
+namespace jami {
 
 class SystemCodecContainer;
 
@@ -63,6 +63,6 @@ class SystemCodecContainer
         void checkInstalledCodecs();
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif //SYSTEM_CODEC_CONTAINER

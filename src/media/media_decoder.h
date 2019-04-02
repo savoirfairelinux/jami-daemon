@@ -23,10 +23,10 @@
 
 #include "rational.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "video/video_base.h"
 #include "video/video_scaler.h"
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
 #include "audio/audiobuffer.h"
 
@@ -51,7 +51,7 @@ namespace DRing {
 class AudioFrame;
 }
 
-namespace ring {
+namespace jami {
 
 using AudioFrame = DRing::AudioFrame;
 struct AudioFormat;
@@ -84,11 +84,11 @@ class MediaDecoder {
         int openInput(const DeviceParams&);
 
         void setIOContext(MediaIOHandle *ioctx);
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         int setupFromVideoData();
         Status decode(VideoFrame&);
         Status flush(VideoFrame&);
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
         int setupFromAudioData();
         Status decode(AudioFrame&);
@@ -139,4 +139,4 @@ class MediaDecoder {
         AVDictionary *options_ = nullptr;
 };
 
-} // namespace ring
+} // namespace jami

@@ -29,7 +29,7 @@
 #include <iterator>
 #include <mutex>
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "libav_utils.h"
 #endif
 
@@ -58,7 +58,7 @@ using random_device = dht::crypto::random_device;
 #include "compiler_intrinsics.h"
 #include "dring/account_const.h"
 
-namespace ring {
+namespace jami {
 
 const char * const Account::ALL_CODECS_KEY                = "allCodecs";
 const char * const Account::VIDEO_CODEC_ENABLED           = "enabled";
@@ -306,7 +306,7 @@ Account::getAccountDetails() const
         {Conf::CONFIG_ACCOUNT_USERAGENT,    hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
         {Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
         {Conf::CONFIG_ACCOUNT_AUTOANSWER,   autoAnswerEnabled_ ? TRUE_STR : FALSE_STR},
-        {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT,   ring::to_string(activeCallLimit_)},
+        {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT,   jami::to_string(activeCallLimit_)},
         {Conf::CONFIG_RINGTONE_ENABLED,     ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
         {Conf::CONFIG_RINGTONE_PATH,        ringtonePath_},
         {Conf::CONFIG_UPNP_ENABLED,         upnp_ ? TRUE_STR : FALSE_STR}
@@ -357,11 +357,11 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
               });
 
     if (!hasActiveCodec(MEDIA_AUDIO)) {
-        RING_WARN("All audio codecs disabled, enabling all");
+        JAMI_WARN("All audio codecs disabled, enabling all");
         setAllCodecsActive(MEDIA_AUDIO, true);
     }
     if (!hasActiveCodec(MEDIA_VIDEO)) {
-        RING_WARN("All video codecs disabled, enabling all");
+        JAMI_WARN("All video codecs disabled, enabling all");
         setAllCodecsActive(MEDIA_VIDEO, true);
     }
 }
@@ -401,14 +401,14 @@ Account::getDefaultCodecsId()
 std::map<std::string, std::string>
 Account::getDefaultCodecDetails(const unsigned& codecId)
 {
-    auto codec = ring::getSystemCodecContainer()->searchCodecById(codecId, ring::MEDIA_ALL);
+    auto codec = jami::getSystemCodecContainer()->searchCodecById(codecId, jami::MEDIA_ALL);
     if (codec) {
-        if (codec->mediaType & ring::MEDIA_AUDIO) {
-            auto audioCodec = std::static_pointer_cast<ring::SystemAudioCodecInfo>(codec);
+        if (codec->mediaType & jami::MEDIA_AUDIO) {
+            auto audioCodec = std::static_pointer_cast<jami::SystemAudioCodecInfo>(codec);
             return audioCodec->getCodecSpecifications();
         }
-        if (codec->mediaType & ring::MEDIA_VIDEO) {
-            auto videoCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(codec);
+        if (codec->mediaType & jami::MEDIA_VIDEO) {
+            auto videoCodec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(codec);
             return videoCodec->getCodecSpecifications();
         }
     }
@@ -418,7 +418,7 @@ Account::getDefaultCodecDetails(const unsigned& codecId)
 #define find_iter()                                    \
     const auto& iter = details.find(key);               \
     if (iter == details.end()) {                       \
-        RING_ERR("Couldn't find key \"%s\"", key);     \
+        JAMI_ERR("Couldn't find key \"%s\"", key);     \
         return;                                        \
     }
 
@@ -582,4 +582,4 @@ Account::getIceOptions() const noexcept
     return opts;
 }
 
-} // namespace ring
+} // namespace jami

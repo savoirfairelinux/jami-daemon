@@ -31,7 +31,7 @@
 #include <cstdlib>
 #include <unistd.h>
 
-namespace ring { namespace fileutils { namespace test {
+namespace jami { namespace fileutils { namespace test {
 
 class FileutilsTest : public CppUnit::TestFixture {
 public:
@@ -178,6 +178,6 @@ FileutilsTest::testFullPath()
     CPPUNIT_ASSERT(getFullPath(NON_EXISTANT_PATH_BASE, "test").compare(NON_EXISTANT_PATH) == 0);
 }
 
-}}} // namespace ring::test::fileutils
+}}} // namespace jami::test::fileutils
 
-RING_TEST_RUNNER(ring::fileutils::test::FileutilsTest::name());
+RING_TEST_RUNNER(jami::fileutils::test::FileutilsTest::name());

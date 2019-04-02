@@ -31,7 +31,7 @@
 #include "callmanager_interface.h"
 #include "configurationmanager_interface.h"
 #include "presencemanager_interface.h"
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "videomanager_interface.h"
 #endif
 #include "fileutils.h"
@@ -45,7 +45,7 @@ print_title()
         << "Jami Daemon " << DRing::version()
         << ", by Savoir-faire Linux 2004-2019" << std::endl
         << "https://jami.net/" << std::endl
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         << "[Video support enabled]" << std::endl
 #endif
         << std::endl;
@@ -197,7 +197,7 @@ main(int argc, char *argv [])
     std::vector<char> writable(programName.size() + 1);
     std::copy(programName.begin(), programName.end(), writable.begin());
 
-    ring::fileutils::set_program_dir(writable.data());
+    jami::fileutils::set_program_dir(writable.data());
 
 #ifdef TOP_BUILDDIR
     if (!getenv("CODECS_PATH"))

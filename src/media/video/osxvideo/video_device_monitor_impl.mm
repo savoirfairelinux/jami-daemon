@@ -35,7 +35,7 @@
 
 #import <AVFoundation/AVFoundation.h>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class VideoDeviceMonitorImpl {
     public:
@@ -73,7 +73,7 @@ void VideoDeviceMonitorImpl::start()
                            [AVCaptureDevice devicesWithMediaType:AVMediaTypeMuxed]];
     if ( [myVideoDevices count] == 0 )
     {
-        RING_ERR("Can't find any suitable video device");
+        JAMI_ERR("Can't find any suitable video device");
         return;
     }
 
@@ -89,7 +89,7 @@ void VideoDeviceMonitorImpl::start()
         try {
             monitor_->addDevice([[avf_device uniqueID] UTF8String]);
         } catch (const std::runtime_error &e) {
-            RING_ERR("%s", e.what());
+            JAMI_ERR("%s", e.what());
         }
     }
     
@@ -132,4 +132,4 @@ VideoDeviceMonitor::VideoDeviceMonitor() :
 VideoDeviceMonitor::~VideoDeviceMonitor()
 {}
 
-}} // namespace ring::video
+}} // namespace jami::video

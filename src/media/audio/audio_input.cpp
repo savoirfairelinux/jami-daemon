@@ -34,7 +34,7 @@
 #include <chrono>
 #include <memory>
 
-namespace ring {
+namespace jami {
 
 static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
 
@@ -50,7 +50,7 @@ AudioInput::AudioInput(const std::string& id) :
           [this] { process(); },
           [] {})
 {
-    RING_DBG() << "Creating audio input with id: " << id;
+    JAMI_DBG() << "Creating audio input with id: " << id;
     loop_.start();
 }
 
@@ -67,9 +67,9 @@ AudioInput::process()
     //foundDevOpts(devOpts_);
     if (switchPending_.exchange(false)) {
         if (devOpts_.input.empty())
-            RING_DBG() << "Switching to default audio input";
+            JAMI_DBG() << "Switching to default audio input";
         else
-            RING_DBG() << "Switching audio input to '" << devOpts_.input << "'";
+            JAMI_DBG() << "Switching audio input to '" << devOpts_.input << "'";
     }
 
     readFromDevice();
@@ -122,7 +122,7 @@ AudioInput::readFromFile()
     switch(ret) {
     case MediaDecoder::Status::ReadError:
     case MediaDecoder::Status::DecodeError:
-        RING_ERR() << "Failed to decode frame";
+        JAMI_ERR() << "Failed to decode frame";
         break;
     case MediaDecoder::Status::RestartRequired:
     case MediaDecoder::Status::EOFError:
@@ -151,7 +151,7 @@ bool
 AudioInput::initFile(const std::string& path)
 {
     if (access(path.c_str(), R_OK) != 0) {
-        RING_ERR() << "File '" << path << "' not available";
+        JAMI_ERR() << "File '" << path << "' not available";
         return false;
     }
 
@@ -160,7 +160,7 @@ AudioInput::initFile(const std::string& path)
     devOpts_.loop = "1";
     // sets devOpts_'s sample rate and number of channels
     if (!createDecoder()) {
-        RING_WARN() << "Cannot decode audio from file, switching back to default device";
+        JAMI_WARN() << "Cannot decode audio from file, switching back to default device";
         return initDevice("");
     }
     fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
@@ -178,11 +178,11 @@ AudioInput::switchInput(const std::string& resource)
     // Always switch inputs, even if it's the same resource, so audio will be in sync with video
 
     if (switchPending_) {
-        RING_ERR() << "Audio switch already requested";
+        JAMI_ERR() << "Audio switch already requested";
         return {};
     }
 
-    RING_DBG() << "Switching audio source to match '" << resource << "'";
+    JAMI_DBG() << "Switching audio source to match '" << resource << "'";
 
     decoder_.reset();
     decodingFile_ = false;
@@ -254,13 +254,13 @@ AudioInput::createDecoder()
         this);
 
     if (decoder->openInput(devOpts_) < 0) {
-        RING_ERR() << "Could not open input '" << devOpts_.input << "'";
+        JAMI_ERR() << "Could not open input '" << devOpts_.input << "'";
         foundDevOpts(devOpts_);
         return false;
     }
 
     if (decoder->setupFromAudioData() < 0) {
-        RING_ERR() << "Could not setup decoder for '" << devOpts_.input << "'";
+        JAMI_ERR() << "Could not setup decoder for '" << devOpts_.input << "'";
         foundDevOpts(devOpts_);
         return false;
     }
@@ -268,7 +268,7 @@ AudioInput::createDecoder()
     auto ms = decoder->getStream(devOpts_.input);
     devOpts_.channel = ms.nbChannels;
     devOpts_.framerate = ms.sampleRate;
-    RING_DBG() << "Created audio decoder: " << ms;
+    JAMI_DBG() << "Created audio decoder: " << ms;
 
     decoder_ = std::move(decoder);
     foundDevOpts(devOpts_);
@@ -297,4 +297,4 @@ AudioInput::getInfo() const
     return ms;
 }
 
-} // namespace ring
+} // namespace jami

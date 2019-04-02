@@ -31,9 +31,9 @@
 
 #include "recordable.h"
 
-namespace ring {
+namespace jami {
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 namespace video {
 class VideoMixer;
 }
@@ -106,7 +106,7 @@ class Conference : public Recordable {
          */
         virtual bool toggleRecording();
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         std::shared_ptr<video::VideoMixer> getVideoMixer();
 #endif
 
@@ -115,11 +115,11 @@ class Conference : public Recordable {
         ConferenceState confState_;
         ParticipantSet participants_;
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         std::shared_ptr<video::VideoMixer> videoMixer_;
 #endif
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif

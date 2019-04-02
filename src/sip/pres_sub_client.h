@@ -32,7 +32,7 @@
 #include <pjsip/sip_transport.h>
 #include "noncopyable.h"
 
-namespace ring {
+namespace jami {
 
 class SIPPresence;
 
@@ -174,6 +174,6 @@ class PresSubClient {
         static int modId_; // used to extract data structure from event_subscription
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif    /*  PRES_SUB_CLIENT_H */

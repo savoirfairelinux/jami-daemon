@@ -29,7 +29,7 @@
 
 #include "../../test_runner.h"
 
-namespace ring { namespace map_utils { namespace test {
+namespace jami { namespace map_utils { namespace test {
 
 class MapUtilsTest : public CppUnit::TestFixture {
 public:
@@ -89,6 +89,6 @@ MapUtilsTest::test_extractValues()
     }
 }
 
-}}} // namespace ring::map_utils::test
+}}} // namespace jami::map_utils::test
 
-RING_TEST_RUNNER(ring::map_utils::test::MapUtilsTest::name());
+RING_TEST_RUNNER(jami::map_utils::test::MapUtilsTest::name());

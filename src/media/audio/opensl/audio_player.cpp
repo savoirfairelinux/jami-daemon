@@ -22,7 +22,7 @@
 
 #include <cstdlib>
 
-namespace ring {
+namespace jami {
 namespace opensl {
 
 /*
@@ -46,7 +46,7 @@ void AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
     // so recorder could re-use it
     sample_buf *buf;
     if(!devShadowQueue_.front(&buf)) {
-        RING_ERR("AudioPlayer buffer lost");
+        JAMI_ERR("AudioPlayer buffer lost");
         /*
          * This should not happen: we got a callback,
          * but we have no buffer in deviceShadowedQueue
@@ -58,7 +58,7 @@ void AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
     devShadowQueue_.pop();
     buf->size_ = 0;
     if (!freeQueue_->push(buf)) {
-        RING_ERR("buffer lost");
+        JAMI_ERR("buffer lost");
     }
 
     callback_(false);
@@ -66,19 +66,19 @@ void AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
     while(playQueue_->front(&buf) && devShadowQueue_.push(buf)) {
         if ((*bq)->Enqueue(bq, buf->buf_, buf->size_) != SL_RESULT_SUCCESS) {
             devShadowQueue_.pop();
-            RING_ERR("enqueue failed %zu %zu %zu %zu", buf->size_, freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
+            JAMI_ERR("enqueue failed %zu %zu %zu %zu", buf->size_, freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
             break;
         } else
             playQueue_->pop();
     }
     if (devShadowQueue_.size() == 0) {
-        RING_ERR("AudioPlayer: nothing to play %zu %zu %zu", freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
+        JAMI_ERR("AudioPlayer: nothing to play %zu %zu %zu", freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
         waiting_ = true;
         callback_(true);
     }
 }
 
-AudioPlayer::AudioPlayer(ring::AudioFormat sampleFormat, SLEngineItf slEngine, SLint32 streamType) :
+AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat, SLEngineItf slEngine, SLint32 streamType) :
     sampleInfo_(sampleFormat)
 {
     SLresult result;
@@ -175,7 +175,7 @@ bool AudioPlayer::start() {
         if(SL_RESULT_SUCCESS !=
            (*playBufferQueueItf_)->Enqueue(playBufferQueueItf_, buf, buf->size_))
         {
-            RING_ERR("====failed to enqueue (%d) in %s", i, __FUNCTION__);
+            JAMI_ERR("====failed to enqueue (%d) in %s", i, __FUNCTION__);
             return false;
         } else {
             playQueue_->pop();
@@ -227,7 +227,7 @@ void AudioPlayer::playAudioBuffers(unsigned count) {
     while (count--) {
         sample_buf *buf = nullptr;
         if(!playQueue_->front(&buf)) {
-            RING_ERR("====Run out of buffers in %s @(count = %d)", __FUNCTION__, count);
+            JAMI_ERR("====Run out of buffers in %s @(count = %d)", __FUNCTION__, count);
             break;
         }
         if(!devShadowQueue_.push(buf)) {
@@ -237,7 +237,7 @@ void AudioPlayer::playAudioBuffers(unsigned count) {
         SLresult result = (*playBufferQueueItf_)->Enqueue(playBufferQueueItf_,
                                                   buf->buf_, buf->size_);
         if(result != SL_RESULT_SUCCESS) {
-            RING_ERR("%s Error @( %p, %d ), result = %d", __FUNCTION__, (void*)buf->buf_, buf->size_, result);
+            JAMI_ERR("%s Error @( %p, %d ), result = %d", __FUNCTION__, (void*)buf->buf_, buf->size_, result);
             /*
              * when this happens, a buffer is lost. Need to remove the buffer
              * from top of the devShadowQueue. Since I do not have it now,

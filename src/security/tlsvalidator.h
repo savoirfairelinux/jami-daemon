@@ -35,7 +35,7 @@ namespace dht { namespace crypto {
 struct Certificate;
 }} // namespace dht::crypto
 
-namespace ring { namespace tls {
+namespace jami { namespace tls {
 
 #if !defined (S_IRWXG)
 #define S_IRWXG 00070
@@ -313,6 +313,6 @@ public:
 
 }; // TlsValidator
 
-}} // namespace ring::tls
+}} // namespace jami::tls
 
 #endif

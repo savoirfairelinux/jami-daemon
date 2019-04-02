@@ -25,7 +25,7 @@
 #include <functional>
 #include "dring/datatransfer_interface.h"
 
-namespace ring {
+namespace jami {
 
 class RingAccount;
 class PeerConnection;

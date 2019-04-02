@@ -26,7 +26,7 @@
 #include <string>
 #include <chrono>
 
-namespace ring {
+namespace jami {
 
 constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
 

@@ -33,7 +33,7 @@ extern "C" {
 
 #include "../../test_runner.h"
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class MediaFrameTest : public CppUnit::TestFixture {
 public:
@@ -120,6 +120,6 @@ MediaFrameTest::testMix()
     CPPUNIT_ASSERT(d2[6] == std::numeric_limits<AudioSample>::max());
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::MediaFrameTest::name());
+RING_TEST_RUNNER(jami::test::MediaFrameTest::name());

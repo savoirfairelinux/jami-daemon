@@ -23,7 +23,7 @@
 #include <memory>
 #include <localrecorder.h>
 
-namespace ring {
+namespace jami {
 
 class LocalRecorderManager {
     public:
@@ -55,4 +55,4 @@ class LocalRecorderManager {
         std::mutex recorderMapMutex_;
 };
 
-} // namespace ring
+} // namespace jami

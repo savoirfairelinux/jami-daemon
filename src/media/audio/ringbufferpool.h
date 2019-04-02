@@ -30,7 +30,7 @@
 #include <mutex>
 #include <memory>
 
-namespace ring {
+namespace jami {
 
 class RingBuffer;
 
@@ -150,4 +150,4 @@ private:
     std::shared_ptr<RingBuffer> defaultRingBuffer_;
 };
 
-} // namespace ring
+} // namespace jami

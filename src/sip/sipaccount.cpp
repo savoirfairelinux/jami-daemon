@@ -50,7 +50,7 @@
 #include "client/ring_signal.h"
 #include "dring/account_const.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "libav_utils.h"
 #endif
 
@@ -79,7 +79,7 @@
 #include <pwd.h>
 #endif
 
-namespace ring {
+namespace jami {
 
 using yaml_utils::parseValue;
 using yaml_utils::parseVectorMap;
@@ -97,13 +97,13 @@ static void
 registration_cb(pjsip_regc_cbparam *param)
 {
     if (!param) {
-        RING_ERR("registration callback parameter is null");
+        JAMI_ERR("registration callback parameter is null");
         return;
     }
 
     auto account = static_cast<SIPAccount *>(param->token);
     if (!account) {
-        RING_ERR("account doesn't exist in registration callback");
+        JAMI_ERR("account doesn't exist in registration callback");
         return;
     }
 
@@ -176,7 +176,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
     std::string to;
     int family;
 
-    RING_DBG() << *this << "Calling SIP peer " << toUrl;
+    JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
 
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(),
@@ -199,7 +199,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
         setTransport(t);
         call->setTransport(t);
 
-        RING_DBG("New %s IP to IP call to %s", ipv6?"IPv6":"IPv4", to.c_str());
+        JAMI_DBG("New %s IP to IP call to %s", ipv6?"IPv6":"IPv4", to.c_str());
     }
     else {
         to = toUrl;
@@ -207,7 +207,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
         // FIXME : for now, use the same address family as the SIP transport
         family = pjsip_transport_type_get_af(getTransportType());
 
-        RING_DBG("UserAgent: New registered account call to %s", toUrl.c_str());
+        JAMI_DBG("UserAgent: New registered account call to %s", toUrl.c_str());
     }
 
     auto toUri = getToUri(to);
@@ -250,7 +250,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
         manager.scheduler().run([this, weak_call] {
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
-                    RING_ERR("Could not send outgoing INVITE request for new call");
+                    JAMI_ERR("Could not send outgoing INVITE request for new call");
                     call->onFailure();
                 }
             }
@@ -267,12 +267,12 @@ void
 SIPAccount::onTransportStateChanged(pjsip_transport_state state, const pjsip_transport_state_info *info)
 {
     pj_status_t currentStatus = transportStatus_;
-    RING_DBG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
+    JAMI_DBG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
     if (!SipTransport::isAlive(transport_, state)) {
         if (info) {
             transportStatus_ = info->status;
             transportError_  = sip_utils::sip_strerror(info->status);
-            RING_ERR("Transport disconnected: %s", transportError_.c_str());
+            JAMI_ERR("Transport disconnected: %s", transportError_.c_str());
         }
         else {
             // This is already the generic error used by pjsip.
@@ -299,7 +299,7 @@ SIPAccount::setTransport(const std::shared_ptr<SipTransport>& t)
     if (t == transport_)
         return;
     if (transport_) {
-        RING_DBG("Removing transport from account");
+        JAMI_DBG("Removing transport from account");
         if (regc_)
             pjsip_regc_release_transport(regc_);
         transport_->removeStateListener(reinterpret_cast<uintptr_t>(this));
@@ -340,12 +340,12 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     auto transport = call->getTransport();
     if (!transport) {
-        RING_ERR("Unable to start call without transport");
+        JAMI_ERR("Unable to start call without transport");
         return false;
     }
 
     pj_str_t pjContact = getContactHeader(transport->get());
-    RING_DBG("contact header: %.*s / %s -> %s",
+    JAMI_DBG("contact header: %.*s / %s -> %s",
              (int)pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str());
 
     auto local_sdp = call->getSDP().getLocalSdpSession();
@@ -363,25 +363,25 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(getServiceRoute(), call->inv->pool));
 
     if (hasCredentials() and pjsip_auth_clt_set_credentials(&dialog->auth_sess, getCredentialCount(), getCredInfo()) != PJ_SUCCESS) {
-        RING_ERR("Could not initialize credentials for invite session authentication");
+        JAMI_ERR("Could not initialize credentials for invite session authentication");
         return false;
     }
 
     pjsip_tx_data *tdata;
 
     if (pjsip_inv_invite(call->inv.get(), &tdata) != PJ_SUCCESS) {
-        RING_ERR("Could not initialize invite messager for this call");
+        JAMI_ERR("Could not initialize invite messager for this call");
         return false;
     }
 
     const pjsip_tpselector tp_sel = link_->getTransportSelector(transport->get());
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        RING_ERR("Unable to associate transport for invite session dialog");
+        JAMI_ERR("Unable to associate transport for invite session dialog");
         return false;
     }
 
     if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-        RING_ERR("Unable to send invite message for this call");
+        JAMI_ERR("Unable to send invite message for this call");
         return false;
     }
 
@@ -459,7 +459,7 @@ validate(std::string &member, const std::string &param, const T& valid)
     if (find(begin, end, param) != end)
         member = param;
     else
-        RING_ERR("Invalid parameter \"%s\"", param.c_str());
+        JAMI_ERR("Invalid parameter \"%s\"", param.c_str());
 }
 
 void SIPAccount::unserialize(const YAML::Node &node)
@@ -594,7 +594,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
         srtpKeyExchange_ = sip_utils::getKeyExchangeProtocol(iter->second.c_str());
 
     if (credentials_.empty()) { // credentials not set, construct 1 entry
-        RING_WARN("No credentials set, inferring them...");
+        JAMI_WARN("No credentials set, inferring them...");
         std::vector<std::map<std::string, std::string> > v;
         std::map<std::string, std::string> map;
         map[Conf::CONFIG_ACCOUNT_USERNAME] = username_;
@@ -622,9 +622,9 @@ SIPAccount::getAccountDetails() const
     }
     a.emplace(Conf::CONFIG_ACCOUNT_PASSWORD,                std::move(password));
 
-    a.emplace(Conf::CONFIG_LOCAL_PORT,                      ring::to_string(localPort_));
+    a.emplace(Conf::CONFIG_LOCAL_PORT,                      jami::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET,                serviceRoute_);
-    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     ring::to_string(registrationExpire_));
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     jami::to_string(registrationExpire_));
     a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED,              keepAliveEnabled_ ? TRUE_STR : FALSE_STR);
 
     a.emplace(Conf::CONFIG_PRESENCE_ENABLED,                presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR);
@@ -645,7 +645,7 @@ std::map<std::string, std::string>
 SIPAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
-    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE, ring::to_string(registrationStateDetailed_.first));
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE, jami::to_string(registrationStateDetailed_.first));
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC, registrationStateDetailed_.second);
     a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
 
@@ -658,7 +658,7 @@ SIPAccount::getVolatileAccountDetails() const
         const auto& tlsInfos = transport_->getTlsInfos();
         auto cipher = pj_ssl_cipher_name(tlsInfos.cipher);
         if (tlsInfos.cipher and not cipher)
-            RING_WARN("Unknown cipher: %d", tlsInfos.cipher);
+            JAMI_WARN("Unknown cipher: %d", tlsInfos.cipher);
         a.emplace(DRing::TlsTransport::TLS_CIPHER,         cipher ? cipher : "");
         a.emplace(DRing::TlsTransport::TLS_PEER_CERT,      tlsInfos.peerCert->toString());
         auto ca = tlsInfos.peerCert->issuer;
@@ -669,7 +669,7 @@ SIPAccount::getVolatileAccountDetails() const
             a.emplace(name_str.str(),                      ca->toString());
             ca = ca->issuer;
         }
-        a.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM,    ring::to_string(n));
+        a.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM,    jami::to_string(n));
     }
 
     return a;
@@ -689,10 +689,10 @@ bool SIPAccount::mapPortUPnP()
          * a different port, if succesfull, then we have to use that port for SIP
          */
         uint16_t port_used;
-        bool added = upnp_->addAnyMapping(publishedPort_, localPort_, ring::upnp::PortType::UDP, false, false, &port_used);
+        bool added = upnp_->addAnyMapping(publishedPort_, localPort_, jami::upnp::PortType::UDP, false, false, &port_used);
         if (added) {
             if (port_used != publishedPort_)
-                RING_DBG("UPnP could not map published port %u for SIP, using %u instead", publishedPort_, port_used);
+                JAMI_DBG("UPnP could not map published port %u for SIP, using %u instead", publishedPort_, port_used);
             publishedPortUsed_ = port_used;
         }
     }
@@ -709,22 +709,22 @@ void SIPAccount::doRegister()
 {
     std::unique_lock<std::mutex> lock(configurationMutex_);
     if (not isUsable()) {
-        RING_WARN("Account must be enabled and active to register, ignoring");
+        JAMI_WARN("Account must be enabled and active to register, ignoring");
         return;
     }
 
-    RING_DBG("doRegister %s", hostname_.c_str());
+    JAMI_DBG("doRegister %s", hostname_.c_str());
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
-        RING_DBG("UPnP: waiting for IGD to register SIP account");
+        JAMI_DBG("UPnP: waiting for IGD to register SIP account");
         lock.unlock();
         setRegistrationState(RegistrationState::TRYING);
         std::thread{ [w=weak()] {
             if (auto acc = w.lock()) {
                 sip_utils::register_thread();
                 if (not acc->mapPortUPnP())
-                    RING_WARN("UPnP: Could not successfully map SIP port with UPnP, continuing with account registration anyways.");
+                    JAMI_WARN("UPnP: Could not successfully map SIP port with UPnP, continuing with account registration anyways.");
                 acc->doRegister1_();
             }
         }}.detach();
@@ -751,7 +751,7 @@ void SIPAccount::doRegister1_()
             if (auto acc = w.lock()) {
                 std::lock_guard<std::mutex> lock(acc->configurationMutex_);
                 if (host_ips.empty()) {
-                    RING_ERR("Can't resolve hostname for registration.");
+                    JAMI_ERR("Can't resolve hostname for registration.");
                     acc->setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
                     return;
                 }
@@ -766,13 +766,13 @@ void SIPAccount::doRegister2_()
 {
     bool ipv6 = false;
     if (isIP2IP()) {
-        RING_DBG("doRegister isIP2IP.");
+        JAMI_DBG("doRegister isIP2IP.");
 #if HAVE_IPV6
         ipv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
 #endif
     } else if (!hostIp_) {
         setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
-        RING_ERR("Hostname not resolved.");
+        JAMI_ERR("Hostname not resolved.");
         return;
     }
 #if HAVE_IPV6
@@ -782,7 +782,7 @@ void SIPAccount::doRegister2_()
 
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_) {
-        RING_DBG("TLS is enabled for account %s", accountID_.c_str());
+        JAMI_DBG("TLS is enabled for account %s", accountID_.c_str());
 
         // Dropping current calls already using the transport is currently required
         // with TLS.
@@ -797,7 +797,7 @@ void SIPAccount::doRegister2_()
                 getTlsSetting());
             if (!tlsListener_) {
                 setRegistrationState(RegistrationState::ERROR_GENERIC);
-                RING_ERR("Error creating TLS listener.");
+                JAMI_ERR("Error creating TLS listener.");
                 return;
             }
         }
@@ -825,7 +825,7 @@ void SIPAccount::doRegister2_()
     }
 
     try {
-        RING_WARN("Creating transport");
+        JAMI_WARN("Creating transport");
         transport_.reset();
         if (isTlsEnabled()) {
             setTransport(link_->sipTransportBroker->getTlsTransport(tlsListener_, hostIp_, tlsServerName_.empty() ? hostname_ : tlsServerName_));
@@ -839,7 +839,7 @@ void SIPAccount::doRegister2_()
 
         sendRegister();
     } catch (const VoipLinkException &e) {
-        RING_ERR("%s", e.what());
+        JAMI_ERR("%s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
         return;
     }
@@ -862,7 +862,7 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
         try {
             sendUnregister();
         } catch (const VoipLinkException& e) {
-            RING_ERR("doUnregister %s", e.what());
+            JAMI_ERR("doUnregister %s", e.what());
         }
     }
 
@@ -901,7 +901,7 @@ void SIPAccount::startKeepAliveTimer()
     if (keepAliveTimerActive_)
         return;
 
-    RING_DBG("Start keep alive timer for account %s", getAccountID().c_str());
+    JAMI_DBG("Start keep alive timer for account %s", getAccountID().c_str());
 
     // make sure here we have an entirely new timer
     memset(&keepAliveTimer_, 0, sizeof(pj_timer_entry));
@@ -913,10 +913,10 @@ void SIPAccount::startKeepAliveTimer()
 
     // expiration may be undetermined during the first registration request
     if (registrationExpire_ == 0) {
-        RING_DBG("Registration Expire: 0, taking 60 instead");
+        JAMI_DBG("Registration Expire: 0, taking 60 instead");
         keepAliveDelay_.sec = 3600;
     } else {
-        RING_DBG("Registration Expire: %d", registrationExpire_);
+        JAMI_DBG("Registration Expire: %d", registrationExpire_);
         keepAliveDelay_.sec = registrationExpire_ + MIN_REGISTRATION_TIME;
     }
 
@@ -930,7 +930,7 @@ void SIPAccount::startKeepAliveTimer()
 void SIPAccount::stopKeepAliveTimer()
 {
     if (keepAliveTimerActive_) {
-        RING_DBG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
+        JAMI_DBG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
         keepAliveTimerActive_ = false;
         link_->cancelKeepAliveTimer(keepAliveTimer_);
     }
@@ -940,7 +940,7 @@ void
 SIPAccount::sendRegister()
 {
     if (not isUsable()) {
-        RING_WARN("Account must be enabled and active to register, ignoring");
+        JAMI_WARN("Account must be enabled and active to register, ignoring");
         return;
     }
 
@@ -967,7 +967,7 @@ SIPAccount::sendRegister()
     if (transport_) {
         if (getUPnPActive() or not getPublishedSameasLocal() or (not received.empty() and received != getPublishedAddress())) {
             pjsip_host_port *via = getViaAddr();
-            RING_DBG("Setting VIA sent-by to %.*s:%d", (int)via->host.slen, via->host.ptr, via->port);
+            JAMI_DBG("Setting VIA sent-by to %.*s:%d", (int)via->host.slen, via->host.ptr, via->port);
 
             if (pjsip_regc_set_via_sent_by(regc, via, transport_->get()) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
@@ -979,9 +979,9 @@ SIPAccount::sendRegister()
 
     pj_status_t status;
 
-    //RING_DBG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(), std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
+    //JAMI_DBG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(), std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
     if ((status = pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, getRegistrationExpire())) != PJ_SUCCESS) {
-        RING_ERR("pjsip_regc_init failed with error %d: %s", status,
+        JAMI_ERR("pjsip_regc_init failed with error %d: %s", status,
                  sip_utils::sip_strerror(status).c_str());
         throw VoipLinkException("Unable to initialize account registration structure");
     }
@@ -1021,7 +1021,7 @@ SIPAccount::sendRegister()
 
     // pjsip_regc_send increment the transport ref count by one,
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        RING_ERR("pjsip_regc_init failed with error %d: %s", status,
+        JAMI_ERR("pjsip_regc_init failed with error %d: %s", status,
                  sip_utils::sip_strerror(status).c_str());
         throw VoipLinkException("Unable to send account registration request");
     }
@@ -1036,12 +1036,12 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
         return;
 
     if (param->status != PJ_SUCCESS) {
-        RING_ERR("SIP registration error %d", param->status);
+        JAMI_ERR("SIP registration error %d", param->status);
         destroyRegistrationInfo();
         stopKeepAliveTimer();
         setRegistrationState(RegistrationState::ERROR_GENERIC, param->code);
     } else if (param->code < 0 || param->code >= 300) {
-        RING_ERR("SIP registration failed, status=%d (%.*s)",
+        JAMI_ERR("SIP registration failed, status=%d (%.*s)",
               param->code, (int)param->reason.slen, param->reason.ptr);
         destroyRegistrationInfo();
         stopKeepAliveTimer();
@@ -1070,7 +1070,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
             destroyRegistrationInfo();
             /* Stop keep-alive timer if any. */
             stopKeepAliveTimer();
-            RING_DBG("Unregistration success");
+            JAMI_DBG("Unregistration success");
             setRegistrationState(RegistrationState::UNREGISTERED, param->code);
         } else {
             /* TODO Check and update SIP outbound status first, since the result
@@ -1079,7 +1079,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
             // update_rfc5626_status(acc, param->rdata);
 
             if (checkNATAddress(param, link_->getPool()))
-                RING_WARN("Contact overwritten");
+                JAMI_WARN("Contact overwritten");
 
             /* TODO Check and update Service-Route header */
             if (hasServiceRoute())
@@ -1138,7 +1138,7 @@ SIPAccount::sendUnregister()
 
     pj_status_t status;
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        RING_ERR("pjsip_regc_send failed with error %d: %s", status,
+        JAMI_ERR("pjsip_regc_send failed with error %d: %s", status,
                  sip_utils::sip_strerror(status).c_str());
         throw VoipLinkException("Unable to send request to unregister sip account");
     }
@@ -1184,7 +1184,7 @@ void SIPAccount::initTlsConfiguration()
     CipherArray avail_ciphers(256);
     unsigned cipherNum = avail_ciphers.size();
     if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
-        RING_ERR("Could not determine cipher list on this system");
+        JAMI_ERR("Could not determine cipher list on this system");
     avail_ciphers.resize(cipherNum);
 
     ciphers_.clear();
@@ -1196,11 +1196,11 @@ void SIPAccount::initTlsConfiguration()
             if (item.empty()) continue;
             auto item_cid = pj_ssl_cipher_id(item.c_str());
             if (item_cid != PJ_TLS_UNKNOWN_CIPHER) {
-                RING_WARN("Valid cipher: %s", item.c_str());
+                JAMI_WARN("Valid cipher: %s", item.c_str());
                 ciphers_.push_back(item_cid);
             }
             else
-                RING_ERR("Invalid cipher: %s", item.c_str());
+                JAMI_ERR("Invalid cipher: %s", item.c_str());
         }
     }
 #endif
@@ -1215,7 +1215,7 @@ void SIPAccount::initTlsConfiguration()
     pj_cstr(&tlsSetting_.privkey_file, tlsPrivateKeyFile_.c_str());
     pj_cstr(&tlsSetting_.password, tlsPassword_.c_str());
 
-    RING_DBG("Using %zu ciphers", ciphers_.size());
+    JAMI_DBG("Using %zu ciphers", ciphers_.size());
     tlsSetting_.ciphers_num = ciphers_.size();
     tlsSetting_.ciphers = &ciphers_.front();
 
@@ -1414,7 +1414,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     if (!t && transport_)
         t = transport_->get();
     if (!t) {
-        RING_ERR("Transport not created yet");
+        JAMI_ERR("Transport not created yet");
         return {nullptr, 0};
     }
 
@@ -1438,11 +1438,11 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         address = getUPnPIpAddress().toString();
         port = publishedPortUsed_;
         useUPnPAddressPortInVIA();
-        RING_DBG("Using UPnP address %s and port %d", address.c_str(), port);
+        JAMI_DBG("Using UPnP address %s and port %d", address.c_str(), port);
     } else if (not publishedSameasLocal_) {
         address = publishedIpAddress_;
         port = publishedPort_;
-        RING_DBG("Using published address %s and port %d", address.c_str(), port);
+        JAMI_DBG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
         auto success = link_->findLocalAddressFromSTUN(t, &stunServerName_,
                                                        stunPort_, address, port);
@@ -1454,12 +1454,12 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     } else {
         if (!receivedParameter_.empty()) {
             address = receivedParameter_;
-            RING_DBG("Using received address %s", address.c_str());
+            JAMI_DBG("Using received address %s", address.c_str());
         }
 
         if (rPort_ != -1 and rPort_ != 0) {
             port = rPort_;
-            RING_DBG("Using received port %d", port);
+            JAMI_DBG("Using received port %d", port);
         }
     }
 
@@ -1520,7 +1520,7 @@ SIPAccount::getSupportedTlsCiphers()
         unsigned cipherNum = 256;
         CipherArray avail_ciphers(cipherNum);
         if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
-            RING_ERR("Could not determine cipher list on this system");
+            JAMI_ERR("Could not determine cipher list on this system");
         avail_ciphers.resize(cipherNum);
         availCiphers.reserve(cipherNum);
         for (const auto &item : avail_ciphers) {
@@ -1543,11 +1543,11 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
     SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 
     if (sipAccount == nullptr) {
-        RING_ERR("SIP account is nullptr while registering a new keep alive timer");
+        JAMI_ERR("SIP account is nullptr while registering a new keep alive timer");
         return;
     }
 
-    RING_ERR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
+    JAMI_ERR("Keep alive registration callback for account %s", sipAccount->getAccountID().c_str());
 
     // IP2IP default does not require keep-alive
     if (sipAccount->isIP2IP())
@@ -1593,7 +1593,7 @@ SIPAccount::Credentials::computePasswordHash()
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
 {
     if (creds.empty()) {
-        RING_ERR("Cannot authenticate with empty credentials list");
+        JAMI_ERR("Cannot authenticate with empty credentials list");
         return;
     }
     credentials_.clear();
@@ -1668,7 +1668,7 @@ SIPAccount::getTlsSettings() const
 {
     return {
         {Conf::CONFIG_TLS_ENABLE,           tlsEnable_ ? TRUE_STR : FALSE_STR},
-        {Conf::CONFIG_TLS_LISTENER_PORT,    ring::to_string(tlsListenerPort_)},
+        {Conf::CONFIG_TLS_LISTENER_PORT,    jami::to_string(tlsListenerPort_)},
         {Conf::CONFIG_TLS_CA_LIST_FILE,     tlsCaListFile_},
         {Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_},
         {Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_},
@@ -1700,11 +1700,11 @@ void
 SIPAccount::enablePresence(const bool& enabled)
 {
     if (!presence_) {
-        RING_ERR("Presence not initialized");
+        JAMI_ERR("Presence not initialized");
         return;
     }
 
-    RING_DBG("Presence enabled for %s : %s.",
+    JAMI_DBG("Presence enabled for %s : %s.",
           accountID_.c_str(),
           enabled? TRUE_STR : FALSE_STR);
 
@@ -1719,14 +1719,14 @@ void
 SIPAccount::supportPresence(int function, bool enabled)
 {
     if (!presence_) {
-        RING_ERR("Presence not initialized");
+        JAMI_ERR("Presence not initialized");
         return;
     }
 
     if (presence_->isSupported(function) == enabled)
         return;
 
-    RING_DBG("Presence support for %s (%s: %s).", accountID_.c_str(),
+    JAMI_DBG("Presence support for %s (%s: %s).", accountID_.c_str(),
           function == PRESENCE_FUNCTION_PUBLISH ? "publish" : "subscribe",
           enabled ? TRUE_STR : FALSE_STR);
     presence_->support(function, enabled);
@@ -1745,16 +1745,16 @@ MatchRank
 SIPAccount::matches(const std::string &userName, const std::string &server) const
 {
     if (fullMatch(userName, server)) {
-        RING_DBG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
+        JAMI_DBG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
         return MatchRank::FULL;
     } else if (hostnameMatch(server)) {
-        RING_DBG("Matching account id in request with hostname %s", server.c_str());
+        JAMI_DBG("Matching account id in request with hostname %s", server.c_str());
         return MatchRank::PARTIAL;
     } else if (userMatch(userName)) {
-        RING_DBG("Matching account id in request with username %s", userName.c_str());
+        JAMI_DBG("Matching account id in request with username %s", userName.c_str());
         return MatchRank::PARTIAL;
     } else if (proxyMatch(server)) {
-        RING_DBG("Matching account id in request with proxy %s", server.c_str());
+        JAMI_DBG("Matching account id in request with proxy %s", server.c_str());
         return MatchRank::PARTIAL;
     } else {
         return MatchRank::NONE;
@@ -1893,7 +1893,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
         via_addrstr = IpAddr(via_addrstr).toString(false, true);
 #endif
 
-    RING_WARN("IP address change detected for account %s "
+    JAMI_WARN("IP address change detected for account %s "
          "(%.*s:%d --> %s:%d). Updating registration "
          "(using method %d)",
          accountID_.c_str(),
@@ -1936,7 +1936,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
                 rport,
                 transport_param);
         if (len < 1) {
-            RING_ERR("URI too long");
+            JAMI_ERR("URI too long");
             return false;
         }
 
@@ -1952,7 +1952,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
             tmp_tp = transport_;
             sendUnregister();
         } catch (const VoipLinkException &e) {
-            RING_ERR("%s", e.what());
+            JAMI_ERR("%s", e.what());
         }
 
         // sendUnregister may failed and cause regc_ to be reset to nullptr
@@ -1965,7 +1965,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
         try {
             sendRegister();
         } catch (const VoipLinkException &e) {
-            RING_ERR("%s", e.what());
+            JAMI_ERR("%s", e.what());
         }
     }
 
@@ -1988,7 +1988,7 @@ SIPAccount::autoReregTimerCb()
     try {
         sendRegister();
     } catch (const VoipLinkException& e) {
-        RING_ERR("Exception during SIP registration: %s", e.what());
+        JAMI_ERR("Exception during SIP registration: %s", e.what());
         scheduleReregistration();
     }
 }
@@ -2033,7 +2033,7 @@ SIPAccount::scheduleReregistration()
 
     pj_time_val_normalize(&delay);
 
-    RING_WARN("Scheduling re-registration retry in %ld seconds..", delay.sec);
+    JAMI_WARN("Scheduling re-registration retry in %ld seconds..", delay.sec);
     auto_rereg_.timer.id = PJ_TRUE;
     if (pjsip_endpt_schedule_timer(link_->getEndpoint(), &auto_rereg_.timer, &delay) != PJ_SUCCESS)
         auto_rereg_.timer.id = PJ_FALSE;
@@ -2067,7 +2067,7 @@ void
 SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id)
 {
     if (to.empty() or payloads.empty()) {
-        RING_WARN("No sender or payload");
+        JAMI_WARN("No sender or payload");
         messageEngine_.onMessageSent(to, id, false);
         return;
     }
@@ -2085,7 +2085,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
                                                     &pjTo, &pjFrom, &pjTo, nullptr, nullptr, -1,
                                                     nullptr, &tdata);
     if (status != PJ_SUCCESS) {
-        RING_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
         messageEngine_.onMessageSent(to, id, false);
         return;
     }
@@ -2114,13 +2114,13 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
                                                       && e->body.tsx_state.tsx->status_code == PJSIP_SC_OK);
             }
         } catch (const std::exception& e) {
-            RING_ERR("Error calling message callback: %s", e.what());
+            JAMI_ERR("Error calling message callback: %s", e.what());
         }
         delete c;
     });
 
     if (status != PJ_SUCCESS) {
-        RING_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
         return;
     }
 }
@@ -2131,4 +2131,4 @@ SIPAccount::getUserUri() const
     return getFromUri();
 }
 
-} // namespace ring
+} // namespace jami

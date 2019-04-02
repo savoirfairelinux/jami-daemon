@@ -36,7 +36,7 @@ class AudioPreference;
 
 #include <memory>
 
-namespace ring {
+namespace jami {
 
 class RingBuffer;
 

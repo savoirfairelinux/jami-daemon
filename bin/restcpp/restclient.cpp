@@ -35,7 +35,7 @@ RestClient::RestClient(int port, int flags, bool persistent) :
     settings_ = std::make_shared<restbed::Settings>();
     settings_->set_port(port);
     settings_->set_default_header( "Connection", "close" );
-    RING_INFO("Restclient running on port [%d]", port);
+    JAMI_INFO("Restclient running on port [%d]", port);
 
     // Make it run in a thread, because this is a blocking function
     restbed = std::thread([this](){
@@ -45,7 +45,7 @@ RestClient::RestClient(int port, int flags, bool persistent) :
 
 RestClient::~RestClient()
 {
-    RING_INFO("destroying RestClient");
+    JAMI_INFO("destroying RestClient");
     exit();
 }
 
@@ -53,7 +53,7 @@ int
 RestClient::event_loop() noexcept
 {
     // While the client is running, the events are polled every 10 milliseconds
-    RING_INFO("Restclient starting to poll events");
+    JAMI_INFO("Restclient starting to poll events");
     while(!pollNoMore_)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -96,7 +96,7 @@ RestClient::initLib(int flags)
 
     auto confM = configurationManager_.get();
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     using DRing::VideoSignal;
 #endif
 
@@ -125,11 +125,11 @@ RestClient::initLib(int flags)
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>([]
             (const std::string& accountID, const std::string& from, const std::map<std::string, std::string>& payloads){
-                RING_INFO("accountID : %s", accountID.c_str());
-                RING_INFO("from : %s", from.c_str());
-                RING_INFO("payloads");
+                JAMI_INFO("accountID : %s", accountID.c_str());
+                JAMI_INFO("from : %s", from.c_str());
+                JAMI_INFO("payloads");
                 for(auto& it : payloads)
-                    RING_INFO("%s : %s", it.first.c_str(), it.second.c_str());
+                    JAMI_INFO("%s : %s", it.first.c_str(), it.second.c_str());
 
             }),
             registeredNameFoundCb,
@@ -143,7 +143,7 @@ RestClient::initLib(int flags)
     // Dummy callbacks are registered for the other managers
     registerSignalHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
     registerSignalHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     registerSignalHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
 #endif
 
@@ -170,7 +170,7 @@ RestClient::initResources()
     default_res->set_path("/");
     default_res->set_method_handler("GET", [](const std::shared_ptr<restbed::Session> session){
 
-        RING_INFO("[%s] GET /", session->get_origin().c_str());
+        JAMI_INFO("[%s] GET /", session->get_origin().c_str());
 
         std::string body = "Available routes are : \r\n/configurationManager\r\n/videoManager\r\n";
 

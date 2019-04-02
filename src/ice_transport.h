@@ -31,7 +31,7 @@
 #include <memory>
 #include <vector>
 
-namespace ring {
+namespace jami {
 
 namespace upnp {
 class Controller;

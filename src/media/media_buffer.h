@@ -32,18 +32,18 @@ namespace DRing {
 struct FrameBuffer; //  from dring/videomanager_interface.h
 }
 
-namespace ring {
+namespace jami {
 
 using MediaFrame = DRing::MediaFrame;
 using AudioFrame = DRing::AudioFrame;
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 
 using VideoFrame = DRing::VideoFrame;
 
 // Some helpers
 int videoFrameSize(int format, int width, int height);
 
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
-} // namespace ring
+} // namespace jami

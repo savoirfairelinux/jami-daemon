@@ -31,7 +31,7 @@
 #include "test_SIP.h"
 #include "call_const.h"
 
-using namespace ring;
+using namespace jami;
 
 static pthread_mutex_t count_mutex;
 static pthread_cond_t count_nb_thread;

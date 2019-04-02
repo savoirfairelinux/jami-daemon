@@ -36,12 +36,12 @@
 #include <sstream>
 #include <memory>
 
-namespace ring {
+namespace jami {
 class SocketPair;
 class MediaDecoder;
-} // namespace ring
+} // namespace jami
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class SinkClient;
 
@@ -105,6 +105,6 @@ private:
     void cleanup();
 };
 
-}} // namespace ring::video
+}} // namespace jami::video
 
 #endif // _VIDEO_RECEIVE_THREAD_H_

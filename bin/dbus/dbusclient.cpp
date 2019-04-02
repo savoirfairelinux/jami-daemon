@@ -44,7 +44,7 @@
 
 #include "datatransfer_interface.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "dbusvideomanager.h"
 #include "videomanager_interface.h"
 #endif
@@ -85,7 +85,7 @@ DBusClient::DBusClient(int flags, bool persistent)
 
         instanceManager_.reset(new DBusInstance {sessionConnection, onNoMoreClientFunc});
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         videoManager_.reset(new DBusVideoManager {sessionConnection});
 #endif
     } catch (const DBus::Error &err) {
@@ -103,7 +103,7 @@ DBusClient::~DBusClient()
     // instances destruction order is important
     // so we enforce it here
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     videoManager_.reset();
 #endif
     instanceManager_.reset();
@@ -131,7 +131,7 @@ DBusClient::initLibrary(int flags)
     auto confM = configurationManager_.get();
     auto presM = presenceManager_.get();
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     using DRing::VideoSignal;
     auto videoM = videoManager_.get();
 #endif
@@ -208,7 +208,7 @@ DBusClient::initLibrary(int flags)
         exportable_callback<DataTransferSignal::DataTransferEvent>(bind(&DBusConfigurationManager::dataTransferEvent, confM, _1, _2)),
     };
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     // Video event handlers
     const std::map<std::string, SharedCallback> videoEvHandlers = {
         exportable_callback<VideoSignal::DeviceEvent>(bind(&DBusVideoManager::deviceEvent, videoM)),
@@ -225,7 +225,7 @@ DBusClient::initLibrary(int flags)
     registerSignalHandlers(presEvHandlers);
     registerSignalHandlers(audioEvHandlers);
     registerSignalHandlers(dataXferEvHandlers);
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     registerSignalHandlers(videoEvHandlers);
 #endif
 

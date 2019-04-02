@@ -47,7 +47,7 @@ using random_device = dht::crypto::random_device;
 #include <algorithm>
 #include <cassert>
 
-namespace ring {
+namespace jami {
 
 using std::string;
 using std::map;
@@ -75,7 +75,7 @@ Sdp::Sdp(const std::string& id)
 Sdp::~Sdp()
 {
     SIPAccount::releasePort(localAudioDataPort_);
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     SIPAccount::releasePort(localVideoDataPort_);
 #endif
 }
@@ -139,7 +139,7 @@ void
 Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 {
     if (!sdp) {
-        RING_ERR("Remote sdp is NULL");
+        JAMI_ERR("Remote sdp is NULL");
         return;
     }
 
@@ -151,14 +151,14 @@ Sdp::generateSdesAttribute()
 {
     static constexpr const unsigned cryptoSuite = 0;
     std::vector<uint8_t> keyAndSalt;
-    keyAndSalt.resize(ring::CryptoSuites[cryptoSuite].masterKeyLength / 8
-                    + ring::CryptoSuites[cryptoSuite].masterSaltLength/ 8);
+    keyAndSalt.resize(jami::CryptoSuites[cryptoSuite].masterKeyLength / 8
+                    + jami::CryptoSuites[cryptoSuite].masterSaltLength/ 8);
     // generate keys
     randomFill(keyAndSalt);
 
     std::string tag = "1";
     std::string crypto_attr = tag + " "
-                            + ring::CryptoSuites[cryptoSuite].name
+                            + jami::CryptoSuites[cryptoSuite].name
                             + " inline:" + base64::encode(keyAndSalt);
     pj_str_t val { (char*) crypto_attr.c_str(),
                     static_cast<pj_ssize_t>(crypto_attr.size()) };
@@ -196,7 +196,7 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
             enc_name = accountAudioCodec->systemCodecInfo.name;
 
             if (accountAudioCodec->audioformat.nb_channels > 1) {
-                channels = ring::to_string(accountAudioCodec->audioformat.nb_channels);
+                channels = jami::to_string(accountAudioCodec->audioformat.nb_channels);
                 rtpmap.param.ptr = (char *) channels.c_str();
                 rtpmap.param.slen = strlen(channels.c_str()); // don't include NULL terminator
             }
@@ -228,7 +228,7 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
         pjmedia_sdp_rtpmap_to_attr(memPool_.get(), &rtpmap, &attr);
         med->attr[med->attr_count++] = attr;
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         if (enc_name == "H264") {
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
@@ -281,7 +281,7 @@ Sdp::setPublishedIP(const std::string &addr, pj_uint16_t addr_type)
         localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
         localSession_->conn->addr = localSession_->origin.addr;
         if (pjmedia_sdp_validate(localSession_) != PJ_SUCCESS)
-            RING_ERR("Could not validate SDP");
+            JAMI_ERR("Could not validate SDP");
     }
 }
 
@@ -313,7 +313,7 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 
 void Sdp::setLocalMediaVideoCapabilities(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedCodecs)
 {
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     video_codec_list_ = selectedCodecs;
 #else
     (void) selectedCodecs;
@@ -337,7 +337,7 @@ Sdp::printSession(const pjmedia_sdp_session *session, const char* header)
 
     auto cloned_session = pjmedia_sdp_session_clone(tmpPool_.get(), session);
     if (!cloned_session) {
-        RING_ERR("Could not clone SDP for printing");
+        JAMI_ERR("Could not clone SDP for printing");
         return;
     }
 
@@ -349,11 +349,11 @@ Sdp::printSession(const pjmedia_sdp_session *session, const char* header)
     std::array<char, BUF_SZ+1> buffer;
     auto size = pjmedia_sdp_print(cloned_session, buffer.data(), BUF_SZ);
     if (size < 0) {
-        RING_ERR("%sSDP too big for dump", header);
+        JAMI_ERR("%sSDP too big for dump", header);
         return;
     }
     buffer[size] = '\0';
-    RING_DBG("%s%s", header, &buffer[0]);
+    JAMI_DBG("%s%s", header, &buffer[0]);
 }
 
 int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
@@ -413,12 +413,12 @@ Sdp::createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedA
                  bool holding)
 {
     if (createLocalSession(selectedAudioCodecs, selectedVideoCodecs, security, holding) != PJ_SUCCESS) {
-        RING_ERR("Failed to create initial offer");
+        JAMI_ERR("Failed to create initial offer");
         return false;
     }
 
     if (pjmedia_sdp_neg_create_w_local_offer(memPool_.get(), localSession_, &negotiator_) != PJ_SUCCESS) {
-        RING_ERR("Failed to create an initial SDP negotiator");
+        JAMI_ERR("Failed to create an initial SDP negotiator");
         return false;
     }
 
@@ -432,7 +432,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
                        bool holding)
 {
     if (!remote) {
-        RING_ERR("Remote session is NULL");
+        JAMI_ERR("Remote session is NULL");
         return;
     }
 
@@ -440,7 +440,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
 
     if (not localSession_ and createLocalSession(selectedAudioCodecs,
                                                  selectedVideoCodecs, kx, holding) != PJ_SUCCESS) {
-        RING_ERR("Failed to create initial offer");
+        JAMI_ERR("Failed to create initial offer");
         return;
     }
 
@@ -448,13 +448,13 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
 
     if (pjmedia_sdp_neg_create_w_remote_offer(memPool_.get(), localSession_,
             remoteSession_, &negotiator_) != PJ_SUCCESS)
-        RING_ERR("Failed to initialize negotiator");
+        JAMI_ERR("Failed to initialize negotiator");
 }
 
 void Sdp::startNegotiation()
 {
     if (negotiator_ == NULL) {
-        RING_ERR("Can't start negotiation with invalid negotiator");
+        JAMI_ERR("Can't start negotiation with invalid negotiator");
         return;
     }
 
@@ -462,7 +462,7 @@ void Sdp::startNegotiation()
     const pjmedia_sdp_session *active_remote;
 
     if (pjmedia_sdp_neg_get_state(negotiator_) != PJMEDIA_SDP_NEG_STATE_WAIT_NEGO) {
-        RING_WARN("Negotiator not in right state for negotiation");
+        JAMI_WARN("Negotiator not in right state for negotiation");
         return;
     }
 
@@ -470,12 +470,12 @@ void Sdp::startNegotiation()
         return;
 
     if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
-        RING_ERR("Could not retrieve local active session");
+        JAMI_ERR("Could not retrieve local active session");
     else
         setActiveLocalSdpSession(active_local);
 
     if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS)
-        RING_ERR("Could not retrieve remote active session");
+        JAMI_ERR("Could not retrieve remote active session");
     else
         setActiveRemoteSdpSession(active_remote);
 }
@@ -493,7 +493,7 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
     );
     auto cloned = pjmedia_sdp_session_clone(tmpPool_.get(), session);
     if (!cloned) {
-        RING_ERR("Could not clone SDP");
+        JAMI_ERR("Could not clone SDP");
         return "";
     }
 
@@ -502,13 +502,13 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
     for (unsigned i = 0; i < cloned->media_count; i++)
         if (i != media_keep) {
             if (pjmedia_sdp_media_deactivate(tmpPool_.get(), cloned->media[i]) != PJ_SUCCESS)
-                RING_ERR("Could not deactivate media");
+                JAMI_ERR("Could not deactivate media");
         } else {
             hasKeep = true;
         }
 
     if (not hasKeep) {
-        RING_DBG("No media to keep present in SDP");
+        JAMI_DBG("No media to keep present in SDP");
         return "";
     }
 
@@ -584,7 +584,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
         // get connection info
         pjmedia_sdp_conn* conn = media->conn ? media->conn : session->conn;
         if (not conn) {
-            RING_ERR("Could not find connection information for media");
+            JAMI_ERR("Could not find connection information for media");
             continue;
         }
         descr.addr = std::string(conn->addr.ptr, conn->addr.slen);
@@ -597,7 +597,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
         for (unsigned j = 0; j<media->desc.fmt_count; j++) {
             const auto rtpMapAttribute = pjmedia_sdp_media_find_attr(media, &STR_RTPMAP, &media->desc.fmt[j]);
             if (!rtpMapAttribute) {
-                RING_ERR("Could not find rtpmap attribute");
+                JAMI_ERR("Could not find rtpmap attribute");
                 descr.enabled = false;
                 continue;
             }
@@ -605,7 +605,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             if (pjmedia_sdp_attr_get_rtpmap(rtpMapAttribute, &rtpmap) != PJ_SUCCESS ||
                 rtpmap.enc_name.slen == 0)
             {
-                RING_ERR("Could not find payload type %.*s in SDP",
+                JAMI_ERR("Could not find payload type %.*s in SDP",
                         (int)media->desc.fmt[j].slen, media->desc.fmt[j].ptr);
                 descr.enabled = false;
                 continue;
@@ -614,7 +614,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             descr.rtp_clockrate = rtpmap.clock_rate;
             descr.codec = findCodecBySpec(codec_raw, rtpmap.clock_rate);
             if (not descr.codec) {
-                RING_ERR("Could not find codec %s", codec_raw.c_str());
+                JAMI_ERR("Could not find codec %s", codec_raw.c_str());
                 descr.enabled = false;
                 continue;
             }
@@ -664,7 +664,7 @@ void
 Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cands)
 {
     if (media_index >= localSession_->media_count) {
-        RING_ERR("addIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
+        JAMI_ERR("addIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
         return;
     }
 
@@ -685,17 +685,17 @@ Sdp::getIceCandidates(unsigned media_index) const
     auto session = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_;
     auto localSession = activeLocalSession_ ? activeLocalSession_ : localSession_;
     if (not session) {
-        RING_ERR("getIceCandidates failed: no remote session");
+        JAMI_ERR("getIceCandidates failed: no remote session");
         return {};
     }
     if (media_index >= session->media_count || media_index >= localSession->media_count) {
-        RING_ERR("getIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
+        JAMI_ERR("getIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
         return {};
     }
     auto media = session->media[media_index];
     auto localMedia = localSession->media[media_index];
     if (media->desc.port == 0 || localMedia->desc.port == 0) {
-        RING_ERR("getIceCandidates failed: media#%u is disabled", media_index);
+        JAMI_ERR("getIceCandidates failed: media#%u is disabled", media_index);
         return {};
     }
 
@@ -773,4 +773,4 @@ Sdp::clearIce(pjmedia_sdp_session* session)
     }
 }
 
-} // namespace ring
+} // namespace jami

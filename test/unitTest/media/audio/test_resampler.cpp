@@ -29,7 +29,7 @@
 
 #include "../test_runner.h"
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class ResamplerTest : public CppUnit::TestFixture {
 public:
@@ -132,6 +132,6 @@ ResamplerTest::testRematrix()
     CPPUNIT_ASSERT(output2->pointer()->data && output2->pointer()->data[0]);
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::ResamplerTest::name());
+RING_TEST_RUNNER(jami::test::ResamplerTest::name());

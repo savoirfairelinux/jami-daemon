@@ -32,7 +32,7 @@
 
 #include "noncopyable.h"
 
-namespace ring {
+namespace jami {
 
 /**
  * A runnable function

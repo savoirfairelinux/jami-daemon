@@ -31,7 +31,7 @@ extern "C" {
 #include "accel.h"
 #include "config.h"
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 struct HardwareAPI
 {
@@ -51,14 +51,14 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
         fallback = formats[i];
         if (accel && formats[i] == accel->getFormat()) {
             // found hardware format for codec with api
-            RING_DBG() << "Found compatible hardware format for "
+            JAMI_DBG() << "Found compatible hardware format for "
                 << avcodec_get_name(static_cast<AVCodecID>(accel->getCodecId()))
                 << " decoder with " << accel->getName();
             return formats[i];
         }
     }
 
-    RING_WARN() << "Not using hardware decoding";
+    JAMI_WARN() << "Not using hardware decoding";
     return fallback;
 }
 
@@ -98,7 +98,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
     if (type_ == CODEC_DECODER) {
         auto input = frame.pointer();
         if (input->format != format_) {
-            RING_ERR() << "Frame format mismatch: expected "
+            JAMI_ERR() << "Frame format mismatch: expected "
                 << av_get_pix_fmt_name(format_) << ", got "
                 << av_get_pix_fmt_name(static_cast<AVPixelFormat>(input->format));
             return nullptr;
@@ -108,7 +108,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
     } else if (type_ == CODEC_ENCODER) {
         auto input = frame.pointer();
         if (input->format != swFormat_) {
-            RING_ERR() << "Frame format mismatch: expected "
+            JAMI_ERR() << "Frame format mismatch: expected "
                 << av_get_pix_fmt_name(swFormat_) << ", got "
                 << av_get_pix_fmt_name(static_cast<AVPixelFormat>(input->format));
             return nullptr;
@@ -118,24 +118,24 @@ HardwareAccel::transfer(const VideoFrame& frame)
         auto hwFrame = framePtr->pointer();
 
         if ((ret = av_hwframe_get_buffer(framesCtx_, hwFrame, 0)) < 0) {
-            RING_ERR() << "Failed to allocate hardware buffer: " << libav_utils::getError(ret);
+            JAMI_ERR() << "Failed to allocate hardware buffer: " << libav_utils::getError(ret);
             return nullptr;
         }
 
         if (!hwFrame->hw_frames_ctx) {
-            RING_ERR() << "Failed to allocate hardware buffer: Cannot allocate memory";
+            JAMI_ERR() << "Failed to allocate hardware buffer: Cannot allocate memory";
             return nullptr;
         }
 
         if ((ret = av_hwframe_transfer_data(hwFrame, input, 0)) < 0) {
-            RING_ERR() << "Failed to push frame to GPU: " << libav_utils::getError(ret);
+            JAMI_ERR() << "Failed to push frame to GPU: " << libav_utils::getError(ret);
             return nullptr;
         }
 
         hwFrame->pts = input->pts; // transfer does not copy timestamp
         return framePtr;
     } else {
-        RING_ERR() << "Invalid hardware accelerator";
+        JAMI_ERR() << "Invalid hardware accelerator";
         return nullptr;
     }
 }
@@ -162,7 +162,7 @@ HardwareAccel::initDevice()
     // default DRM device may not work on multi GPU computers, so check all possible values
     if (name_ == "vaapi") {
         const std::string path = "/dev/dri/";
-        auto files = ring::fileutils::readDirectory(path);
+        auto files = jami::fileutils::readDirectory(path);
         // renderD* is preferred over card*
         std::sort(files.rbegin(), files.rend());
         for (auto& entry : files) {
@@ -183,7 +183,7 @@ HardwareAccel::initFrame(int width, int height)
 {
     int ret = 0;
     if (!deviceCtx_) {
-        RING_ERR() << "Cannot initialize hardware frames without a valid hardware device";
+        JAMI_ERR() << "Cannot initialize hardware frames without a valid hardware device";
         return false;
     }
 
@@ -217,7 +217,7 @@ HardwareAccel::linkHardware(AVBufferRef* framesCtx)
             av_buffer_unref(&framesCtx_);
         framesCtx_ = av_buffer_ref(framesCtx);
         if ((linked_ = (framesCtx_ != nullptr))) {
-            RING_DBG() << "Hardware transcoding pipeline successfully set up for"
+            JAMI_DBG() << "Hardware transcoding pipeline successfully set up for"
                 << " encoder '" << getCodecName() << "'";
         }
         return linked_;
@@ -266,7 +266,7 @@ HardwareAccel::setupDecoder(AVCodecID id, int width, int height)
         if (std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id) != api.supportedCodecs.end()) {
             auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_DECODER);
             if (accel->initDevice() && accel->initFrame(width, height)) {
-                RING_DBG() << "Attempting to use hardware decoder " << accel->getCodecName() << " with " << api.name;
+                JAMI_DBG() << "Attempting to use hardware decoder " << accel->getCodecName() << " with " << api.name;
                 return accel;
             }
         }
@@ -292,15 +292,15 @@ HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* fr
                 // Set up a fully accelerated pipeline, else fallback to using the main memory
                 if (accel->linkHardware(framesCtx)
                     || (accel->initDevice() && accel->initFrame(width, height))) {
-                    RING_DBG() << "Attempting to use hardware encoder " << codecName;
+                    JAMI_DBG() << "Attempting to use hardware encoder " << codecName;
                     return accel;
                 }
             }
         }
     }
 
-    RING_WARN() << "Not using hardware encoding";
+    JAMI_WARN() << "Not using hardware encoding";
     return nullptr;
 }
 
-}} // namespace ring::video
+}} // namespace jami::video

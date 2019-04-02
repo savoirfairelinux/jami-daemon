@@ -33,7 +33,7 @@
 #include <condition_variable>
 #include <memory>
 
-namespace ring {
+namespace jami {
 
 class RingBuffer;
 

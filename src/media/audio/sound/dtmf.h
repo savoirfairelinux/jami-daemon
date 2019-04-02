@@ -32,7 +32,7 @@
  * @brief DMTF library to generate a dtmf sample
  */
 
-namespace ring {
+namespace jami {
 
 class DTMF {
     public:
@@ -61,6 +61,6 @@ class DTMF {
         DTMFGenerator dtmfgenerator_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // __KEY_DTMF_H_
