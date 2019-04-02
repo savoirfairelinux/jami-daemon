@@ -175,6 +175,18 @@ DBusConfigurationManager::getMessageStatus(const uint64_t& id) -> decltype(DRing
 }
 
 auto
+DBusConfigurationManager::getMessageStatus(const std::string& accountID, const uint64_t& id) -> decltype(DRing::getMessageStatus(accountID, id))
+{
+    return DRing::getMessageStatus(accountID, id);
+}
+
+bool
+DBusConfigurationManager::cancelMessage(const std::string& accountID, const uint64_t& id)
+{
+    return DRing::cancelMessage(accountID, id);
+}
+
+auto
 DBusConfigurationManager::getTlsDefaultSettings() -> decltype(DRing::getTlsDefaultSettings())
 {
     return DRing::getTlsDefaultSettings();
