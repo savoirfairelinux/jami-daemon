@@ -268,6 +268,10 @@ public:
         return messageEngine_.getStatus(id);
     }
 
+    virtual bool cancelMessage(uint64_t id) override {
+        return messageEngine_.cancel(id);
+    }
+
     void onTextMessage(const std::string& from, const std::map<std::string, std::string>& payloads);
 
     /* Returns true if the username and/or hostname match this account */

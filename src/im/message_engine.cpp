@@ -116,6 +116,25 @@ MessageEngine::getStatus(MessageToken t) const
     return MessageStatus::UNKNOWN;
 }
 
+bool
+MessageEngine::cancel(MessageToken t)
+{
+    std::lock_guard<std::mutex> lock(messagesMutex_);
+    for (auto& p : messages_) {
+        auto m = p.second.find(t);
+        if (m != p.second.end()) {
+            m->second.status = MessageStatus::CANCELLED;
+            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
+                                                                            t,
+                                                                            m->second.to,
+                                                                            static_cast<int>(DRing::Account::MessageStates::CANCELLED));
+            save_();
+            return true;
+        }
+    }
+    return false;
+}
+
 void
 MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool ok)
 {
@@ -215,7 +234,7 @@ MessageEngine::save_() const
             Json::Value peerRoot(Json::objectValue);
             for (auto& m : c.second) {
                 auto& v = m.second;
-                if (v.status == MessageStatus::FAILURE || v.status == MessageStatus::SENT)
+                if (v.status == MessageStatus::FAILURE || v.status == MessageStatus::SENT || v.status == MessageStatus::CANCELLED)
                     continue;
                 Json::Value msg;
                 std::ostringstream msgsId;
