@@ -85,6 +85,8 @@ class DRING_PUBLIC DBusConfigurationManager :
         uint64_t sendTextMessage(const std::string& accoundID, const std::string& to, const std::map<std::string, std::string>& payloads);
         std::vector<RingDBusMessage> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
         int getMessageStatus(const uint64_t& id);
+        int getMessageStatus(const std::string& accountID, const uint64_t& id);
+        bool cancelMessage(const std::string& accountID, const uint64_t& messageId)
         std::map<std::string, std::string> getTlsDefaultSettings();
         std::vector<std::string> getSupportedCiphers(const std::string& accountID);
         std::vector<unsigned> getCodecList();
