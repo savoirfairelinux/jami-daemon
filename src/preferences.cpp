@@ -52,7 +52,7 @@
 #endif
 #endif /* HAVE_OPENSL */
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
 #endif
 
@@ -70,7 +70,7 @@
 #include "fileutils.h"
 #include "string_utils.h"
 
-namespace ring {
+namespace jami {
 
 using yaml_utils::parseValue;
 
@@ -134,7 +134,7 @@ static constexpr const char* POPUP_SHORT_KEY {"popupWindow"};
 static constexpr const char* TOGGLE_HOLD_SHORT_KEY {"toggleHold"};
 static constexpr const char* TOGGLE_PICKUP_HANGUP_SHORT_KEY {"togglePickupHangup"};
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 // video preferences
 constexpr const char * const VideoPreferences::CONFIG_LABEL;
 static constexpr const char* DECODING_ACCELERATED_KEY {"decodingAccelerated"};
@@ -174,7 +174,7 @@ void Preferences::verifyAccountOrder(const std::vector<std::string> &accountIDs)
             if (find(accountIDs.begin(), accountIDs.end(), token) != accountIDs.end())
                 tokens.push_back(token);
             else {
-                RING_DBG("Dropping nonexistent account %s", token.c_str());
+                JAMI_DBG("Dropping nonexistent account %s", token.c_str());
                 drop = true;
             }
             token.clear();
@@ -348,7 +348,7 @@ static void
 checkSoundCard(int &card, DeviceType type)
 {
     if (not AlsaLayer::soundCardIndexExists(card, type)) {
-        RING_WARN(" Card with index %d doesn't exist or is unusable.", card);
+        JAMI_WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
 }
@@ -368,7 +368,7 @@ AudioPreference::createAudioLayer()
                 throw std::runtime_error("Error running jack_lsp: " + to_string(ret));
             return new JackLayer(*this);
         } catch (const std::runtime_error& e) {
-            RING_ERR("%s", e.what());
+            JAMI_ERR("%s", e.what());
 #if HAVE_PULSE
             audioApi_ = PULSEAUDIO_API_STR;
 #elif HAVE_ALSA
@@ -390,7 +390,7 @@ AudioPreference::createAudioLayer()
         try {
             return new PulseLayer(*this);
         } catch (const std::runtime_error &e) {
-            RING_WARN("Could not create pulseaudio layer, falling back to ALSA");
+            JAMI_WARN("Could not create pulseaudio layer, falling back to ALSA");
         }
     }
 
@@ -411,7 +411,7 @@ AudioPreference::createAudioLayer()
     try {
         return new CoreLayer(*this);
     } catch (const std::runtime_error &e) {
-        RING_WARN("Could not create coreaudio layer. There will be no sound.");
+        JAMI_WARN("Could not create coreaudio layer. There will be no sound.");
     }
     return NULL;
 #endif
@@ -421,13 +421,13 @@ AudioPreference::createAudioLayer()
     try {
         return new PortAudioLayer(*this);
     } catch (const std::runtime_error &e) {
-        RING_WARN("Could not create PortAudio layer. There will be no sound.");
+        JAMI_WARN("Could not create PortAudio layer. There will be no sound.");
     }
     return nullptr;
 #endif
 #endif // __ANDROID__
 
-    RING_WARN("No audio layer provided");
+    JAMI_WARN("No audio layer provided");
     return nullptr;
 }
 
@@ -474,7 +474,7 @@ AudioPreference::setRecordPath(const std::string &r)
         recordpath_ = path;
         return true;
     } else {
-        RING_ERR("%s is not writable, cannot be the recording path", path.c_str());
+        JAMI_ERR("%s is not writable, cannot be the recording path", path.c_str());
         return false;
     }
 }
@@ -560,7 +560,7 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
     parseValue(node, TOGGLE_PICKUP_HANGUP_SHORT_KEY, togglePickupHangup_);
 }
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 VideoPreferences::VideoPreferences()
     : decodingAccelerated_(true)
     , encodingAccelerated_(false)
@@ -593,6 +593,6 @@ void VideoPreferences::unserialize(const YAML::Node &in)
 #endif
     getVideoDeviceMonitor().unserialize(in);
 }
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
-} // namespace ring
+} // namespace jami

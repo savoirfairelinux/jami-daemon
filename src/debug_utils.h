@@ -38,7 +38,7 @@
 
 using Clock = std::chrono::steady_clock;
 
-namespace ring { namespace debug {
+namespace jami { namespace debug {
 
 /**
  * Ex:
@@ -238,4 +238,4 @@ private:
     int width_, height_;
 };
 
-}} // namespace ring::debug
+}} // namespace jami::debug

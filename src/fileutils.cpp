@@ -84,7 +84,7 @@
 #include <cstddef>
 #include <ciso646>
 
-namespace ring { namespace fileutils {
+namespace jami { namespace fileutils {
 
 // returns true if directory exists
 bool check_dir(const char *path,
@@ -100,7 +100,7 @@ bool check_dir(const char *path,
         }
 #ifndef _WIN32
         if (chmod(path, dirmode) < 0) {
-            RING_ERR("fileutils::check_dir(): chmod() failed on '%s', %s", path, strerror(errno));
+            JAMI_ERR("fileutils::check_dir(): chmod() failed on '%s', %s", path, strerror(errno));
             return false;
         }
 #endif
@@ -138,23 +138,23 @@ create_pidfile()
     char buf[100];
     f.fd = open(f.name.c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
     if (f.fd == -1) {
-        RING_ERR("Could not open PID file %s", f.name.c_str());
+        JAMI_ERR("Could not open PID file %s", f.name.c_str());
         return f;
     }
 
     if (lockRegion(f.fd, F_WRLCK, SEEK_SET, 0, 0) == -1) {
         if (errno  == EAGAIN or errno == EACCES)
-            RING_ERR("PID file '%s' is locked; probably "
+            JAMI_ERR("PID file '%s' is locked; probably "
                     "'%s' is already running", f.name.c_str(), PACKAGE_NAME);
         else
-            RING_ERR("Unable to lock PID file '%s'", f.name.c_str());
+            JAMI_ERR("Unable to lock PID file '%s'", f.name.c_str());
         close(f.fd);
         f.fd = -1;
         return f;
     }
 
     if (ftruncate(f.fd, 0) == -1) {
-        RING_ERR("Could not truncate PID file '%s'", f.name.c_str());
+        JAMI_ERR("Could not truncate PID file '%s'", f.name.c_str());
         close(f.fd);
         f.fd = -1;
         return f;
@@ -164,7 +164,7 @@ create_pidfile()
 
     const int buf_strlen = strlen(buf);
     if (write(f.fd, buf, buf_strlen) != buf_strlen) {
-        RING_ERR("Problem writing to PID file '%s'", f.name.c_str());
+        JAMI_ERR("Problem writing to PID file '%s'", f.name.c_str());
         close(f.fd);
         f.fd = -1;
         return f;
@@ -178,7 +178,7 @@ std::string
 expand_path(const std::string &path)
 {
 #if defined __ANDROID__ || defined _MSC_VER || defined WIN32 || defined __APPLE__
-    RING_ERR("Path expansion not implemented, returning original");
+    JAMI_ERR("Path expansion not implemented, returning original");
     return path;
 #else
 
@@ -189,20 +189,20 @@ expand_path(const std::string &path)
 
     switch (ret) {
         case WRDE_BADCHAR:
-            RING_ERR("Illegal occurrence of newline or one of |, &, ;, <, >, "
+            JAMI_ERR("Illegal occurrence of newline or one of |, &, ;, <, >, "
                   "(, ), {, }.");
             return result;
         case WRDE_BADVAL:
-            RING_ERR("An undefined shell variable was referenced");
+            JAMI_ERR("An undefined shell variable was referenced");
             return result;
         case WRDE_CMDSUB:
-            RING_ERR("Command substitution occurred");
+            JAMI_ERR("Command substitution occurred");
             return result;
         case WRDE_SYNTAX:
-            RING_ERR("Shell syntax error");
+            JAMI_ERR("Shell syntax error");
             return result;
         case WRDE_NOSPACE:
-            RING_ERR("Out of memory.");
+            JAMI_ERR("Out of memory.");
             // This is the only error where we must call wordfree
             break;
         default:
@@ -255,7 +255,7 @@ bool isSymLink(const std::string& path)
     if (lstat(path.c_str(), &s) == 0)
         return S_ISLNK(s.st_mode);
 #elif !defined(_MSC_VER)
-    DWORD attr = GetFileAttributes(ring::to_wstring(path).c_str());
+    DWORD attr = GetFileAttributes(jami::to_wstring(path).c_str());
     if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
         return true;
 #endif
@@ -280,11 +280,11 @@ writeTime(const std::string& path)
     ext_params.dwSecurityQosFlags = SECURITY_ANONYMOUS;
     ext_params.lpSecurityAttributes = nullptr;
     ext_params.hTemplateFile = nullptr;
-    HANDLE h = CreateFile2(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &ext_params);
+    HANDLE h = CreateFile2(jami::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &ext_params);
 #elif _MSC_VER
     HANDLE h = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 #else
-    HANDLE h = CreateFile(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    HANDLE h = CreateFile(jami::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 #endif
     if (h == INVALID_HANDLE_VALUE)
         throw std::runtime_error("Can't open: " + path);
@@ -360,13 +360,13 @@ saveFile(const std::string& path,
 {
     std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        RING_ERR("Could not write data to %s", path.c_str());
+        JAMI_ERR("Could not write data to %s", path.c_str());
         return;
     }
     file.write((char*)data.data(), data.size());
 #ifndef _WIN32
     if (chmod(path.c_str(), mode) < 0)
-        RING_WARN("fileutils::saveFile(): chmod() failed on '%s', %s", path.c_str(), strerror(errno));
+        JAMI_WARN("fileutils::saveFile(): chmod() failed on '%s', %s", path.c_str(), strerror(errno));
 #endif
 }
 
@@ -424,7 +424,7 @@ readDirectory(const std::string& dir)
 std::vector<uint8_t>
 readArchive(const std::string& path, const std::string& pwd)
 {
-    RING_DBG("Reading archive from %s", path.c_str());
+    JAMI_DBG("Reading archive from %s", path.c_str());
 
     std::vector<uint8_t> data;
     if (pwd.empty()) {
@@ -434,14 +434,14 @@ readArchive(const std::string& path, const std::string& pwd)
         try {
             data = loadFile(path);
         } catch (const std::exception& e) {
-            RING_ERR("Error loading archive: %s", e.what());
+            JAMI_ERR("Error loading archive: %s", e.what());
             throw;
         }
         // Decrypt
         try {
             data = archiver::decompress(dht::crypto::aesDecrypt(data, pwd));
         } catch (const std::exception& e) {
-            RING_ERR("Error decrypting archive: %s", e.what());
+            JAMI_ERR("Error decrypting archive: %s", e.what());
             throw;
         }
     }
@@ -451,7 +451,7 @@ readArchive(const std::string& path, const std::string& pwd)
 void
 writeArchive(const std::string& archive_str, const std::string& path, const std::string& password)
 {
-    RING_DBG("Writing archive to %s", path.c_str());
+    JAMI_DBG("Writing archive to %s", path.c_str());
 
     if (not password.empty()) {
         // Encrypt using provided password
@@ -460,11 +460,11 @@ writeArchive(const std::string& archive_str, const std::string& path, const std:
         try {
             saveFile(path, data);
         } catch (const std::runtime_error& ex) {
-            RING_ERR("Export failed: %s", ex.what());
+            JAMI_ERR("Export failed: %s", ex.what());
             return;
         }
     } else {
-        RING_WARN("Unsecured archiving (no password)");
+        JAMI_WARN("Unsecured archiving (no password)");
         archiver::compressGzip(archive_str, path);
     }
 }
@@ -479,7 +479,7 @@ FileHandle::~FileHandle()
     if (fd != -1) {
         close(fd);
         if (unlink(name.c_str()) == -1)
-            RING_ERR("%s", strerror(errno));
+            JAMI_ERR("%s", strerror(errno));
     }
 }
 
@@ -511,7 +511,7 @@ get_cache_dir(const char* pkg)
     if (fileutils::recursive_mkdir(cache_path.data(), 0700) != true) {
         // If directory creation failed
         if (errno != EEXIST)
-            RING_DBG("Cannot create directory: %s!", cache_path.c_str());
+            JAMI_DBG("Cannot create directory: %s!", cache_path.c_str());
     }
     return cache_path;
 #else
@@ -612,7 +612,7 @@ get_data_dir(const char* pkg)
     if (fileutils::recursive_mkdir(files_path.data(), 0700) != true) {
         // If directory creation failed
         if (errno != EEXIST)
-            RING_DBG("Cannot create directory: %s!", files_path.c_str());
+            JAMI_DBG("Cannot create directory: %s!", files_path.c_str());
     }
     return files_path;
 #else
@@ -651,7 +651,7 @@ get_config_dir(const char* pkg)
     if (fileutils::recursive_mkdir(config_path.data(), 0700) != true) {
         // If directory creation failed
         if (errno != EEXIST)
-            RING_DBG("Cannot create directory: %s!", config_path.c_str());
+            JAMI_DBG("Cannot create directory: %s!", config_path.c_str());
     }
     return config_path;
 #else
@@ -670,7 +670,7 @@ get_config_dir(const char* pkg)
     if (fileutils::recursive_mkdir(configdir.data(), 0700) != true) {
         // If directory creation failed
         if (errno != EEXIST)
-            RING_DBG("Cannot create directory: %s!", configdir.c_str());
+            JAMI_DBG("Cannot create directory: %s!", configdir.c_str());
     }
     return configdir;
 #endif
@@ -697,7 +697,7 @@ recursive_mkdir(const std::string& path, mode_t mode)
 #else
             if (mkdir(path.data()) != 0) {
 #endif
-                RING_ERR("Could not create directory.");
+                JAMI_ERR("Could not create directory.");
                 return false;
             }
         }
@@ -720,4 +720,4 @@ removeAll(const std::string& path)
     return remove(path);
 }
 
-}} // namespace ring::fileutils
+}} // namespace jami::fileutils

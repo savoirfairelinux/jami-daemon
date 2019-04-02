@@ -26,7 +26,7 @@
 #include "logger.h"
 #include "noncopyable.h"
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class VideoDeviceMonitorImpl
 {
@@ -92,5 +92,5 @@ VideoDeviceMonitor::VideoDeviceMonitor()
 VideoDeviceMonitor::~VideoDeviceMonitor()
 {}
 
-}} // namespace ring::video
+}} // namespace jami::video
 

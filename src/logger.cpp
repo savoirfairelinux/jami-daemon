@@ -181,7 +181,7 @@ void
 strErr(void)
 {
 #ifdef __GLIBC__
-    RING_ERR("%m");
+    JAMI_ERR("%m");
 #else
     char buf[1000];
     const char* errstr;
@@ -200,11 +200,11 @@ strErr(void)
             break;
     }
 
-    RING_ERR("%s", errstr);
+    JAMI_ERR("%s", errstr);
 #endif
 }
 
-namespace ring {
+namespace jami {
 
 void
 Logger::log(int level, const char* file, int line, bool linefeed, const char* const format, ...)
@@ -268,7 +268,7 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
 #ifdef _MSC_VER
         std::array<char, 4096> tmp;
         vsnprintf(tmp.data(), tmp.size(), format, ap);
-        ring::emitSignal<DRing::DebugSignal::MessageSend>(contextHeader(file, line) + tmp.data());
+        jami::emitSignal<DRing::DebugSignal::MessageSend>(contextHeader(file, line) + tmp.data());
 #endif
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
@@ -292,4 +292,4 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
     }
 }
 
-} // namespace ring;
+} // namespace jami;

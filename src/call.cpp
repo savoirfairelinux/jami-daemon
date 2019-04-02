@@ -42,7 +42,7 @@
 #include <functional>
 #include <utility>
 
-namespace ring {
+namespace jami {
 
 /// Hangup many calls with same error code, filtered by a predicate
 ///
@@ -59,7 +59,7 @@ hangupCallsIf(Call::SubcallSet callptr_list, int errcode, const std::function<bo
                           try {
                               call_ptr->hangup(errcode);
                           } catch (const std::exception& e) {
-                              RING_ERR("[call:%s] hangup failed: %s",
+                              JAMI_ERR("[call:%s] hangup failed: %s",
                                        call_ptr->getCallId().c_str(), e.what());
                           }
                       }
@@ -94,13 +94,13 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
         // if call just started ringing, schedule call timeout
         if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
             auto timeout = Manager::instance().getRingingTimeout();
-            RING_DBG("Scheduling call timeout in %d seconds", timeout);
+            JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
 
            std::weak_ptr<Call> callWkPtr = shared_from_this();
            Manager::instance().scheduler().scheduleIn([callWkPtr]{
                if (auto callShPtr = callWkPtr.lock()) {
                     if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
-                         RING_DBG("Call %s is still ringing after timeout, setting state to BUSY",
+                         JAMI_DBG("Call %s is still ringing after timeout, setting state to BUSY",
                              callShPtr->getCallId().c_str());
                          callShPtr->hangup(PJSIP_SC_BUSY_HERE);
                          Manager::instance().callFailure(*callShPtr);
@@ -213,13 +213,13 @@ bool
 Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
     std::lock_guard<std::recursive_mutex> lock(callMutex_);
-    RING_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d", id_.c_str(),
+    JAMI_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d", id_.c_str(),
              (unsigned)callState_, (unsigned)call_state, (unsigned)connectionState_,
              (unsigned)cnx_state, code);
 
     if (callState_ != call_state) {
         if (not validStateTransition(call_state)) {
-            RING_ERR("[call:%s] invalid call state transition from %u to %u",
+            JAMI_ERR("[call:%s] invalid call state transition from %u to %u",
                      id_.c_str(), (unsigned)callState_, (unsigned)call_state);
             return false;
         }
@@ -237,7 +237,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 
     if (old_client_state != new_client_state) {
         if (not parent_) {
-            RING_DBG("[call:%s] emit client call state change %s, code %d",
+            JAMI_DBG("[call:%s] emit client call state change %s, code %d",
                      id_.c_str(), new_client_state.c_str(), code);
             emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
         }
@@ -336,12 +336,12 @@ std::map<std::string, std::string>
 Call::getDetails() const
 {
     return {
-        {DRing::Call::Details::CALL_TYPE,        ring::to_string((unsigned)type_)},
+        {DRing::Call::Details::CALL_TYPE,        jami::to_string((unsigned)type_)},
         {DRing::Call::Details::PEER_NUMBER,      peerNumber_},
         {DRing::Call::Details::DISPLAY_NAME,     peerDisplayName_},
         {DRing::Call::Details::CALL_STATE,       getStateStr()},
         {DRing::Call::Details::CONF_ID,          confID_},
-        {DRing::Call::Details::TIMESTAMP_START,  ring::to_string(timestamp_start_)},
+        {DRing::Call::Details::TIMESTAMP_START,  jami::to_string(timestamp_start_)},
         {DRing::Call::Details::ACCOUNTID,        getAccountId()},
         {DRing::Call::Details::AUDIO_MUTED,      std::string(bool_to_str(isAudioMuted_))},
         {DRing::Call::Details::VIDEO_MUTED,      std::string(bool_to_str(isVideoMuted_))},
@@ -401,11 +401,11 @@ Call::addSubCall(Call& subcall)
     }
 
     if (not subcalls_.emplace(getPtr(subcall)).second) {
-        RING_ERR("[call:%s] add twice subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
+        JAMI_ERR("[call:%s] add twice subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
         return;
     }
 
-    RING_DBG("[call:%s] add subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
+    JAMI_DBG("[call:%s] add subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
     subcall.parent_ = getPtr(*this);
 
     for (const auto& msg : pendingOutMessages_)
@@ -442,7 +442,7 @@ Call::subcallStateChanged(Call& subcall,
 
     // We found a responding device: hangup all other subcalls and merge
     if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::CONNECTED) {
-        RING_DBG("[call:%s] subcall %s answered by peer", getCallId().c_str(),
+        JAMI_DBG("[call:%s] subcall %s answered by peer", getCallId().c_str(),
                  subcall.getCallId().c_str());
 
         hangupCallsIf(safePopSubcalls(), 0, [&](const Call* call){ return call != &subcall; });
@@ -454,7 +454,7 @@ Call::subcallStateChanged(Call& subcall,
     // Hangup the call if any device hangup
     // XXX: not sure it's what we really want
     if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::DISCONNECTED) {
-        RING_WARN("[call:%s] subcall %s hangup by peer", getCallId().c_str(),
+        JAMI_WARN("[call:%s] subcall %s hangup by peer", getCallId().c_str(),
                   subcall.getCallId().c_str());
 
         hangupCalls(safePopSubcalls(), 0);
@@ -466,9 +466,9 @@ Call::subcallStateChanged(Call& subcall,
     // Subcall is busy or failed
     if (new_state >= CallState::BUSY) {
         if (new_state == CallState::BUSY || new_state == CallState::PEER_BUSY)
-            RING_WARN("[call:%s] subcall %s busy", getCallId().c_str(), subcall.getCallId().c_str());
+            JAMI_WARN("[call:%s] subcall %s busy", getCallId().c_str(), subcall.getCallId().c_str());
         else
-            RING_WARN("[call:%s] subcall %s failed", getCallId().c_str(), subcall.getCallId().c_str());
+            JAMI_WARN("[call:%s] subcall %s failed", getCallId().c_str(), subcall.getCallId().c_str());
         std::lock_guard<std::recursive_mutex> lk {callMutex_};
         subcalls_.erase(getPtr(subcall));
 
@@ -485,7 +485,7 @@ Call::subcallStateChanged(Call& subcall,
             }
             removeCall();
         } else {
-            RING_DBG("[call:%s] remains %zu subcall(s)", getCallId().c_str(), subcalls_.size());
+            JAMI_DBG("[call:%s] remains %zu subcall(s)", getCallId().c_str(), subcalls_.size());
         }
 
         return;
@@ -506,7 +506,7 @@ Call::subcallStateChanged(Call& subcall,
 void
 Call::merge(Call& subcall)
 {
-    RING_DBG("[call:%s] merge subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
+    JAMI_DBG("[call:%s] merge subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
 
     // Merge data
     {
@@ -572,4 +572,4 @@ Call::safePopSubcalls()
     return old_value;
 }
 
-} // namespace ring
+} // namespace jami

@@ -32,7 +32,7 @@
 
 #include <ciso646> // fix windows compiler bug
 
-namespace ring {
+namespace jami {
 
 #ifdef _WIN32
 
@@ -109,8 +109,8 @@ split_string_to_unsigned(const std::string &s, char delim)
 
     while (std::getline(ss, token, delim))
         if (not token.empty())
-            result.emplace_back(ring::stoi(token));
+            result.emplace_back(jami::stoi(token));
     return result;
 }
 
-} // namespace ring
+} // namespace jami

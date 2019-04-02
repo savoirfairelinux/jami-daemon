@@ -33,7 +33,7 @@
 #include <dbt.h>
 #include <SetupAPI.h>
 
-namespace ring {
+namespace jami {
 namespace video {
 
 constexpr GUID guidCamera = { 0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44 };
@@ -191,7 +191,7 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
 
         if (!registerDeviceInterfaceToHwnd(hWnd, &hDeviceNotify)) {
-            RING_ERR() << "Cannot register for device change notifications";
+            JAMI_ERR() << "Cannot register for device change notifications";
             SendMessage(hWnd, WM_DESTROY, 0, 0);
         }
     }
@@ -206,7 +206,7 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
             PDEV_BROADCAST_DEVICEINTERFACE p = (PDEV_BROADCAST_DEVICEINTERFACE)lParam;
             auto friendlyName = getDeviceFriendlyName(p);
             if (!friendlyName.empty()) {
-                RING_DBG() << friendlyName << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
+                JAMI_DBG() << friendlyName << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
                 if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
                     if (wParam == DBT_DEVICEARRIVAL) {
                         pThis->monitor_->addDevice(friendlyName);
@@ -307,14 +307,14 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
         CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
 
     if (FAILED(hr)) {
-        RING_ERR() << "Can't enumerate webcams";
+        JAMI_ERR() << "Can't enumerate webcams";
         return {};
     }
 
     IEnumMoniker *pEnum = nullptr;
     hr = enumerateVideoInputDevices(&pEnum);
     if (FAILED(hr) || pEnum == nullptr) {
-        RING_ERR() << "No webcam found";
+        JAMI_ERR() << "No webcam found";
         return {};
     }
 
@@ -368,4 +368,4 @@ VideoDeviceMonitor::~VideoDeviceMonitor()
 {}
 
 }
-} // namespace ring::video
+} // namespace jami::video

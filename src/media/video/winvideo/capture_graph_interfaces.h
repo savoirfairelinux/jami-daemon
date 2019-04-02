@@ -23,7 +23,7 @@
 
 #include <dshow.h>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class CaptureGraphInterfaces {
 public:
@@ -40,6 +40,6 @@ public:
     IAMStreamConfig* streamConf_;
 };
 
-}} // namespace ring::video
+}} // namespace jami::video
 
 #endif

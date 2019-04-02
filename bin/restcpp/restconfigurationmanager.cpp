@@ -405,7 +405,7 @@ RestConfigurationManager::populateResources()
 void
 RestConfigurationManager::defaultRoute(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /configurationManager", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /configurationManager", session->get_origin().c_str());
 
     std::string body = "Available routes are : \r\n";
     body += "GET /accountDetails/{accountID: [a-z0-9]*}\r\n";
@@ -487,7 +487,7 @@ RestConfigurationManager::getAccountDetails(const std::shared_ptr<restbed::Sessi
     const auto request = session->get_request();
     const std::string accountID = request->get_path_parameter("accountID");
 
-    RING_INFO("[%s] GET /accountDetails/%s", session->get_origin().c_str(), accountID.c_str());
+    JAMI_INFO("[%s] GET /accountDetails/%s", session->get_origin().c_str(), accountID.c_str());
 
     std::map<std::string, std::string> accountDetails = DRing::getAccountDetails(accountID);
 
@@ -518,7 +518,7 @@ RestConfigurationManager::getVolatileAccountDetails(const std::shared_ptr<restbe
     const auto request = session->get_request();
     const std::string accountID = request->get_path_parameter("accountID");
 
-    RING_INFO("[%s] GET /volatileAccountDetails/%s", session->get_origin().c_str(), accountID.c_str());
+    JAMI_INFO("[%s] GET /volatileAccountDetails/%s", session->get_origin().c_str(), accountID.c_str());
 
     std::map<std::string, std::string> volatileAccountDetails = DRing::getAccountDetails(accountID);
 
@@ -551,16 +551,16 @@ RestConfigurationManager::setAccountDetails(const std::shared_ptr<restbed::Sessi
     size_t content_length = 0;
     request->get_header("Content-Length", content_length);
 
-    RING_INFO("[%s] POST /setAccountDetails/%s", session->get_origin().c_str(), accountID.c_str());
+    JAMI_INFO("[%s] POST /setAccountDetails/%s", session->get_origin().c_str(), accountID.c_str());
 
     session->fetch(content_length, [this, request, accountID](const std::shared_ptr<restbed::Session> session, const restbed::Bytes & body)
     {
         std::string data(std::begin(body), std::end(body));
 
         std::map<std::string, std::string> details = parsePost(data);
-        RING_DBG("Details received");
+        JAMI_DBG("Details received");
         for(auto& it : details)
-            RING_DBG("%s : %s", it.first.c_str(), it.second.c_str());
+            JAMI_DBG("%s : %s", it.first.c_str(), it.second.c_str());
 
         DRing::setAccountDetails(accountID, details);
 
@@ -575,16 +575,16 @@ RestConfigurationManager::registerName(const std::shared_ptr<restbed::Session> s
     const std::string accountID = request->get_path_parameter("accountID");
     size_t content_length = request->get_header("Content-Length", 0);
 
-    RING_INFO("[%s] POST /registerName/%s", session->get_origin().c_str(), accountID.c_str());
+    JAMI_INFO("[%s] POST /registerName/%s", session->get_origin().c_str(), accountID.c_str());
     if(content_length > 0){
         session->fetch(content_length, [this, request, accountID](const std::shared_ptr<restbed::Session> session, const restbed::Bytes & body)
         {
             std::string data(std::begin(body), std::end(body));
 
             std::map<std::string, std::string> details = parsePost(data);
-            RING_DBG("Details received");
+            JAMI_DBG("Details received");
             for(auto& it : details)
-                RING_DBG("%s : %s", it.first.c_str(), it.second.c_str());
+                JAMI_DBG("%s : %s", it.first.c_str(), it.second.c_str());
 
             if (details.find("password") == details.end() ){
                 session->close(400, "password parameter required");
@@ -631,7 +631,7 @@ RestConfigurationManager::lookupName(const std::shared_ptr<restbed::Session> ses
     const auto request = session->get_request();
     const std::string name = request->get_path_parameter("name");
 
-    RING_WARN("[%s] GET /lookupName/%s", session->get_origin().c_str(), name.c_str());
+    JAMI_WARN("[%s] GET /lookupName/%s", session->get_origin().c_str(), name.c_str());
 
     addPendingNameResolutions(name, session);
     DRing::lookupName("", "", name);
@@ -646,7 +646,7 @@ RestConfigurationManager::setAccountActive(const std::shared_ptr<restbed::Sessio
     const std::string accountID = request->get_path_parameter("accountID");
     const bool active = (request->get_path_parameter("status") == "true" ? true : false);
 
-    RING_INFO("[%s] GET /setAccountActive/%s/%s", session->get_origin().c_str(), accountID.c_str(), (active ? "true" : "false"));
+    JAMI_INFO("[%s] GET /setAccountActive/%s/%s", session->get_origin().c_str(), accountID.c_str(), (active ? "true" : "false"));
 
     DRing::setAccountActive(accountID, active);
 
@@ -659,7 +659,7 @@ RestConfigurationManager::getAccountTemplate(const std::shared_ptr<restbed::Sess
     const auto request = session->get_request();
     const std::string accountType = request->get_path_parameter("type");
 
-    RING_INFO("[%s] GET /accountTemplate/%s", session->get_origin().c_str(), accountType.c_str());
+    JAMI_INFO("[%s] GET /accountTemplate/%s", session->get_origin().c_str(), accountType.c_str());
 
     std::map<std::string, std::string> accountTemplate = DRing::getAccountTemplate(accountType);;
 
@@ -684,16 +684,16 @@ RestConfigurationManager::addAccount(const std::shared_ptr<restbed::Session> ses
     size_t content_length = 0;
     request->get_header("Content-Length", content_length);
 
-    RING_INFO("[%s] POST /addAccount", session->get_origin().c_str());
+    JAMI_INFO("[%s] POST /addAccount", session->get_origin().c_str());
 
     session->fetch(content_length, [this, request](const std::shared_ptr<restbed::Session> session, const restbed::Bytes & body)
     {
         std::string data(std::begin(body), std::end(body));
 
         std::map<std::string, std::string> details = parsePost(data);
-        RING_DBG("Details received");
+        JAMI_DBG("Details received");
         for(auto& it : details)
-            RING_DBG("%s : %s", it.first.c_str(), it.second.c_str());
+            JAMI_DBG("%s : %s", it.first.c_str(), it.second.c_str());
 
         DRing::addAccount(details);
 
@@ -707,7 +707,7 @@ RestConfigurationManager::removeAccount(const std::shared_ptr<restbed::Session> 
     const auto request = session->get_request();
     const std::string accountID = request->get_path_parameter("accountID");
 
-    RING_INFO("[%s] GET /removeAccount/%s", session->get_origin().c_str(), accountID.c_str());
+    JAMI_INFO("[%s] GET /removeAccount/%s", session->get_origin().c_str(), accountID.c_str());
 
     DRing::removeAccount(accountID);
 
@@ -719,7 +719,7 @@ RestConfigurationManager::removeAccount(const std::shared_ptr<restbed::Session> 
 void
 RestConfigurationManager::getAccountList(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /accountList", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /accountList", session->get_origin().c_str());
 
     std::vector<std::string> accountList = DRing::getAccountList();
 
@@ -750,7 +750,7 @@ RestConfigurationManager::sendRegister(const std::shared_ptr<restbed::Session> s
     const std::string accountID = request->get_path_parameter("accountID");
     const bool enable = (request->get_path_parameter("status") == "true" ? true : false);
 
-    RING_INFO("[%s] GET /sendRegister/%s/%s", session->get_origin().c_str(), accountID.c_str(), (enable ? "true" : "false"));
+    JAMI_INFO("[%s] GET /sendRegister/%s/%s", session->get_origin().c_str(), accountID.c_str(), (enable ? "true" : "false"));
 
     DRing::sendRegister(accountID, enable);
 
@@ -760,7 +760,7 @@ RestConfigurationManager::sendRegister(const std::shared_ptr<restbed::Session> s
 void
 RestConfigurationManager::registerAllAccounts(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /registerAllAccounts", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /registerAllAccounts", session->get_origin().c_str());
 
     DRing::registerAllAccounts();
 
@@ -777,15 +777,15 @@ RestConfigurationManager::sendTextMessage(const std::shared_ptr<restbed::Session
     size_t content_length = 0;
     request->get_header("Content-Length", content_length);
 
-    RING_INFO("[%s] POST /sendTextMessage/%s/%s", session->get_origin().c_str(), accountID.c_str(), to.c_str());
+    JAMI_INFO("[%s] POST /sendTextMessage/%s/%s", session->get_origin().c_str(), accountID.c_str(), to.c_str());
 
     session->fetch(content_length, [this, request, accountID, to](const std::shared_ptr<restbed::Session> session, const restbed::Bytes & body)
     {
         std::string data(std::begin(body), std::end(body));
         std::map<std::string, std::string> payloads = parsePost(data);
-        RING_DBG("Payloads received");
+        JAMI_DBG("Payloads received");
         for(auto& it : payloads)
-            RING_DBG("%s : %s", it.first.c_str(), it.second.c_str());
+            JAMI_DBG("%s : %s", it.first.c_str(), it.second.c_str());
 
         DRing::sendAccountTextMessage(accountID, to, payloads);
 
@@ -799,25 +799,25 @@ RestConfigurationManager::getMessageStatus(const std::shared_ptr<restbed::Sessio
     const auto request = session->get_request();
     const std::string id = request->get_path_parameter("id");
 
-    RING_INFO("[%s] GET /messageStatus/%s", session->get_origin().c_str(), id.c_str());
+    JAMI_INFO("[%s] GET /messageStatus/%s", session->get_origin().c_str(), id.c_str());
 
     const std::uint64_t status = DRing::getMessageStatus(std::stoull(id));
 
     std::string body = "";
 
-    if (status != static_cast<int>(ring::im::MessageStatus::UNKNOWN)) {
+    if (status != static_cast<int>(jami::im::MessageStatus::UNKNOWN)) {
         switch (status) {
-            case static_cast<int>(ring::im::MessageStatus::IDLE):
-            case static_cast<int>(ring::im::MessageStatus::SENDING):
+            case static_cast<int>(jami::im::MessageStatus::IDLE):
+            case static_cast<int>(jami::im::MessageStatus::SENDING):
                 body = "SENDING";
                 break;
-            case static_cast<int>(ring::im::MessageStatus::SENT):
+            case static_cast<int>(jami::im::MessageStatus::SENT):
                 body = "SENT";
                 break;
-            case static_cast<int>(ring::im::MessageStatus::READ):
+            case static_cast<int>(jami::im::MessageStatus::READ):
                 body = "READ";
                 break;
-            case static_cast<int>(ring::im::MessageStatus::FAILURE):
+            case static_cast<int>(jami::im::MessageStatus::FAILURE):
                 body = "FAILURE";
                 break;
             default:
@@ -843,7 +843,7 @@ RestConfigurationManager::getMessageStatus(const std::shared_ptr<restbed::Sessio
 void
 RestConfigurationManager::getTlsDefaultSettings(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /tlsDefaultSettings", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /tlsDefaultSettings", session->get_origin().c_str());
 
     std::map<std::string, std::string> tlsDefault = DRing::getTlsDefaultSettings();
 
@@ -864,7 +864,7 @@ RestConfigurationManager::getTlsDefaultSettings(const std::shared_ptr<restbed::S
 void
 RestConfigurationManager::getCodecList(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /codecList", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /codecList", session->get_origin().c_str());
 
     std::vector<unsigned> codec = DRing::getCodecList();
 
@@ -885,7 +885,7 @@ RestConfigurationManager::getCodecList(const std::shared_ptr<restbed::Session> s
 void
 RestConfigurationManager::getSupportedTlsMethod(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /supportedTlsMethod", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /supportedTlsMethod", session->get_origin().c_str());
 
     std::vector<std::string> supported = DRing::getSupportedTlsMethod();
 
@@ -909,7 +909,7 @@ RestConfigurationManager::getSupportedCiphers(const std::shared_ptr<restbed::Ses
     const auto request = session->get_request();
     const std::string accountID = request->get_path_parameter("accountID");
 
-    RING_INFO("[%s] GET /supportedCiphers/%s", session->get_origin().c_str(), accountID.c_str());
+    JAMI_INFO("[%s] GET /supportedCiphers/%s", session->get_origin().c_str(), accountID.c_str());
 
     std::vector<std::string> supported = DRing::getSupportedCiphers(accountID);
 
@@ -934,7 +934,7 @@ RestConfigurationManager::getCodecDetails(const std::shared_ptr<restbed::Session
     const std::string accountID = request->get_path_parameter("accountID");
     const std::string codecID = request->get_path_parameter("codecID");
 
-    RING_INFO("[%s] GET /codecDetails/%s/%s", session->get_origin().c_str(), accountID.c_str(), codecID.c_str());
+    JAMI_INFO("[%s] GET /codecDetails/%s/%s", session->get_origin().c_str(), accountID.c_str(), codecID.c_str());
 
     std::map<std::string, std::string> details = DRing::getCodecDetails(accountID, std::stoi(codecID));
 
@@ -962,16 +962,16 @@ RestConfigurationManager::setCodecDetails(const std::shared_ptr<restbed::Session
     size_t content_length = 0;
     request->get_header("Content-Length", content_length);
 
-    RING_INFO("[%s] POST /setCodecDetails/%s/%s", session->get_origin().c_str(), accountID.c_str(), codecID.c_str());
+    JAMI_INFO("[%s] POST /setCodecDetails/%s/%s", session->get_origin().c_str(), accountID.c_str(), codecID.c_str());
 
     session->fetch(content_length, [this, request, accountID, codecID](const std::shared_ptr<restbed::Session> session, const restbed::Bytes & body)
     {
         std::string data(std::begin(body), std::end(body));
         std::map<std::string, std::string> details = parsePost(data);
 
-        RING_DBG("Details received");
+        JAMI_DBG("Details received");
         for(auto& it : details)
-            RING_DBG("%s : %s", it.first.c_str(), it.second.c_str());
+            JAMI_DBG("%s : %s", it.first.c_str(), it.second.c_str());
 
         DRing::setCodecDetails(accountID, std::stoi(codecID), details);
 
@@ -985,7 +985,7 @@ RestConfigurationManager::getActiveCodecList(const std::shared_ptr<restbed::Sess
     const auto request = session->get_request();
     const std::string accountID = request->get_path_parameter("accountID");
 
-    RING_INFO("[%s] GET /activeCodecList/%s", session->get_origin().c_str(), accountID.c_str());
+    JAMI_INFO("[%s] GET /activeCodecList/%s", session->get_origin().c_str(), accountID.c_str());
 
     std::vector<unsigned> codecs = DRing::getActiveCodecList(accountID);
 
@@ -1014,7 +1014,7 @@ RestConfigurationManager::setActiveCodecList(const std::string& accountID, const
 void
 RestConfigurationManager::getAudioPluginList(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /audioPluginList", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /audioPluginList", session->get_origin().c_str());
 
     std::vector<std::string> list = DRing::getAudioPluginList();
 
@@ -1038,7 +1038,7 @@ RestConfigurationManager::setAudioPlugin(const std::shared_ptr<restbed::Session>
     const auto request = session->get_request();
     const std::string plugin = request->get_path_parameter("plugin");
 
-    RING_INFO("[%s] GET /setAudioPlugin/%s", session->get_origin().c_str(), plugin.c_str());
+    JAMI_INFO("[%s] GET /setAudioPlugin/%s", session->get_origin().c_str(), plugin.c_str());
 
     DRing::setAudioPlugin(plugin);
 
@@ -1048,7 +1048,7 @@ RestConfigurationManager::setAudioPlugin(const std::shared_ptr<restbed::Session>
 void
 RestConfigurationManager::getAudioOutputDeviceList(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /audioOutputDeviceList", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /audioOutputDeviceList", session->get_origin().c_str());
 
     std::vector<std::string> list = DRing::getAudioOutputDeviceList();
 
@@ -1072,7 +1072,7 @@ RestConfigurationManager::setAudioOutputDevice(const std::shared_ptr<restbed::Se
     const auto request = session->get_request();
     const std::string index = request->get_path_parameter("index");
 
-    RING_INFO("[%s] GET /setAudioOutputDevice/%s", session->get_origin().c_str(), index.c_str());
+    JAMI_INFO("[%s] GET /setAudioOutputDevice/%s", session->get_origin().c_str(), index.c_str());
 
     DRing::setAudioOutputDevice(std::stoi(index));
 
@@ -1085,7 +1085,7 @@ RestConfigurationManager::setAudioInputDevice(const std::shared_ptr<restbed::Ses
     const auto request = session->get_request();
     const std::string index = request->get_path_parameter("index");
 
-    RING_INFO("[%s] GET /setAudioInputDevice/%s", session->get_origin().c_str(), index.c_str());
+    JAMI_INFO("[%s] GET /setAudioInputDevice/%s", session->get_origin().c_str(), index.c_str());
 
     DRing::setAudioInputDevice(std::stoi(index));
 
@@ -1098,7 +1098,7 @@ RestConfigurationManager::setAudioRingtoneDevice(const std::shared_ptr<restbed::
     const auto request = session->get_request();
     const std::string index = request->get_path_parameter("index");
 
-    RING_INFO("[%s] GET /setAudioRingtoneDevice/%s", session->get_origin().c_str(), index.c_str());
+    JAMI_INFO("[%s] GET /setAudioRingtoneDevice/%s", session->get_origin().c_str(), index.c_str());
 
     DRing::setAudioRingtoneDevice(std::stoi(index));
 
@@ -1108,7 +1108,7 @@ RestConfigurationManager::setAudioRingtoneDevice(const std::shared_ptr<restbed::
 void
 RestConfigurationManager::getAudioInputDeviceList(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /audioInputDeviceList", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /audioInputDeviceList", session->get_origin().c_str());
 
     std::vector<std::string> list = DRing::getAudioInputDeviceList();
 
@@ -1129,7 +1129,7 @@ RestConfigurationManager::getAudioInputDeviceList(const std::shared_ptr<restbed:
 void
 RestConfigurationManager::getCurrentAudioDevicesIndex(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /currentAudioDevicesIndex", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /currentAudioDevicesIndex", session->get_origin().c_str());
 
     std::vector<std::string> list = DRing::getCurrentAudioDevicesIndex();
 
@@ -1153,7 +1153,7 @@ RestConfigurationManager::getAudioInputDeviceIndex(const std::shared_ptr<restbed
     const auto request = session->get_request();
     const std::string name = request->get_path_parameter("name");
 
-    RING_INFO("[%s] GET /audioInputDeviceIndex/%s", session->get_origin().c_str(), name.c_str());
+    JAMI_INFO("[%s] GET /audioInputDeviceIndex/%s", session->get_origin().c_str(), name.c_str());
 
     std::int32_t index = DRing::getAudioInputDeviceIndex(name);
 
@@ -1174,7 +1174,7 @@ RestConfigurationManager::getAudioOutputDeviceIndex(const std::shared_ptr<restbe
     const auto request = session->get_request();
     const std::string name = request->get_path_parameter("name");
 
-    RING_INFO("[%s] GET /audioOutputDeviceIndex/%s", session->get_origin().c_str(), name.c_str());
+    JAMI_INFO("[%s] GET /audioOutputDeviceIndex/%s", session->get_origin().c_str(), name.c_str());
 
     std::int32_t index = DRing::getAudioOutputDeviceIndex(name);
 
@@ -1192,7 +1192,7 @@ RestConfigurationManager::getAudioOutputDeviceIndex(const std::shared_ptr<restbe
 void
 RestConfigurationManager::getCurrentAudioOutputPlugin(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /currentAudioOutputPlugin", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /currentAudioOutputPlugin", session->get_origin().c_str());
 
     std::string body = DRing::getCurrentAudioOutputPlugin();
 
@@ -1208,7 +1208,7 @@ RestConfigurationManager::getCurrentAudioOutputPlugin(const std::shared_ptr<rest
 void
 RestConfigurationManager::getNoiseSuppressState(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /noiseSuppressState", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /noiseSuppressState", session->get_origin().c_str());
 
     std::string body = (DRing::getNoiseSuppressState() ? "true" : "false");
 
@@ -1227,7 +1227,7 @@ RestConfigurationManager::setNoiseSuppressState(const std::shared_ptr<restbed::S
     const auto request = session->get_request();
     const std::string state = request->get_path_parameter("state");
 
-    RING_INFO("[%s] GET /setNoiseSuppressState/%s", session->get_origin().c_str(), state.c_str());
+    JAMI_INFO("[%s] GET /setNoiseSuppressState/%s", session->get_origin().c_str(), state.c_str());
 
     DRing::setNoiseSuppressState((state == "true" ? true : false));
 
@@ -1237,7 +1237,7 @@ RestConfigurationManager::setNoiseSuppressState(const std::shared_ptr<restbed::S
 void
 RestConfigurationManager::isAgcEnabled(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /isAgcEnable", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /isAgcEnable", session->get_origin().c_str());
 
     bool status = DRing::isAgcEnabled();
     std::string body = (status ? "true" : "false");
@@ -1257,7 +1257,7 @@ RestConfigurationManager::setAgcState(const std::shared_ptr<restbed::Session> se
     const auto request = session->get_request();
     const std::string state = request->get_path_parameter("state");
 
-    RING_INFO("[%s] GET /setAgcState/%s", session->get_origin().c_str(), state.c_str());
+    JAMI_INFO("[%s] GET /setAgcState/%s", session->get_origin().c_str(), state.c_str());
 
     DRing::setAgcState((state == "true" ? true : false));
 
@@ -1270,7 +1270,7 @@ RestConfigurationManager::muteDtmf(const std::shared_ptr<restbed::Session> sessi
     const auto request = session->get_request();
     const std::string state = request->get_path_parameter("state");
 
-    RING_INFO("[%s] GET /muteDtmf/%s", session->get_origin().c_str(), state.c_str());
+    JAMI_INFO("[%s] GET /muteDtmf/%s", session->get_origin().c_str(), state.c_str());
 
     DRing::muteDtmf((state == "true" ? true : false));
 
@@ -1280,7 +1280,7 @@ RestConfigurationManager::muteDtmf(const std::shared_ptr<restbed::Session> sessi
 void
 RestConfigurationManager::isDtmfMuted(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /isDtmfMuted", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /isDtmfMuted", session->get_origin().c_str());
 
     bool status = DRing::isDtmfMuted();
     std::string body = (status ? "true" : "false");
@@ -1297,7 +1297,7 @@ RestConfigurationManager::isDtmfMuted(const std::shared_ptr<restbed::Session> se
 void
 RestConfigurationManager::isCaptureMuted(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /isCaptureMuted", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /isCaptureMuted", session->get_origin().c_str());
 
     bool status = DRing::isCaptureMuted();
     std::string body = (status ? "true" : "false");
@@ -1317,7 +1317,7 @@ RestConfigurationManager::muteCapture(const std::shared_ptr<restbed::Session> se
     const auto request = session->get_request();
     const std::string state = request->get_path_parameter("state");
 
-    RING_INFO("[%s] GET /muteCapture/%s", session->get_origin().c_str(), state.c_str());
+    JAMI_INFO("[%s] GET /muteCapture/%s", session->get_origin().c_str(), state.c_str());
 
     DRing::muteCapture((state == "true" ? true : false));
 
@@ -1327,7 +1327,7 @@ RestConfigurationManager::muteCapture(const std::shared_ptr<restbed::Session> se
 void
 RestConfigurationManager::isPlaybackMuted(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /isPlaybackMuted", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /isPlaybackMuted", session->get_origin().c_str());
 
     bool status = DRing::isPlaybackMuted();
     std::string body = (status ? "true" : "false");
@@ -1347,7 +1347,7 @@ RestConfigurationManager::mutePlayback(const std::shared_ptr<restbed::Session> s
     const auto request = session->get_request();
     const std::string state = request->get_path_parameter("state");
 
-    RING_INFO("[%s] GET /mutePlayback/%s", session->get_origin().c_str(), state.c_str());
+    JAMI_INFO("[%s] GET /mutePlayback/%s", session->get_origin().c_str(), state.c_str());
 
     DRing::mutePlayback((state == "true" ? true : false));
 
@@ -1357,7 +1357,7 @@ RestConfigurationManager::mutePlayback(const std::shared_ptr<restbed::Session> s
 void
 RestConfigurationManager::isRingtoneMuted(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /isRingtoneMuted", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /isRingtoneMuted", session->get_origin().c_str());
 
     bool status = DRing::isRingtoneMuted();
     std::string body = (status ? "true" : "false");
@@ -1377,7 +1377,7 @@ RestConfigurationManager::muteRingtone(const std::shared_ptr<restbed::Session> s
     const auto request = session->get_request();
     const std::string state = request->get_path_parameter("state");
 
-    RING_INFO("[%s] GET /muteRingtone/%s", session->get_origin().c_str(), state.c_str());
+    JAMI_INFO("[%s] GET /muteRingtone/%s", session->get_origin().c_str(), state.c_str());
 
     DRing::muteRingtone((state == "true" ? true : false));
 
@@ -1387,7 +1387,7 @@ RestConfigurationManager::muteRingtone(const std::shared_ptr<restbed::Session> s
 void
 RestConfigurationManager::getAudioManager(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /audioManager", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /audioManager", session->get_origin().c_str());
 
     std::string body = DRing::getAudioManager();
 
@@ -1406,7 +1406,7 @@ RestConfigurationManager::setAudioManager(const std::shared_ptr<restbed::Session
     const auto request = session->get_request();
     const std::string api = request->get_path_parameter("api");
 
-    RING_INFO("[%s] GET /setAudioManager/%s", session->get_origin().c_str(), api.c_str());
+    JAMI_INFO("[%s] GET /setAudioManager/%s", session->get_origin().c_str(), api.c_str());
 
     bool status = DRing::setAudioManager(api);
     std::string body = (status ? "true" : "false");
@@ -1425,7 +1425,7 @@ RestConfigurationManager::getSupportedAudioManagers(const std::shared_ptr<restbe
 {
     const auto request = session->get_request();
 
-    RING_INFO("[%s] GET /supportedAudioManager", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /supportedAudioManager", session->get_origin().c_str());
 
     std::string body = "";
 #if HAVE_ALSA
@@ -1450,7 +1450,7 @@ RestConfigurationManager::getSupportedAudioManagers(const std::shared_ptr<restbe
 void
 RestConfigurationManager::getRecordPath(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /recordPath", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /recordPath", session->get_origin().c_str());
 
     std::string body = DRing::getRecordPath();
 
@@ -1469,7 +1469,7 @@ RestConfigurationManager::setRecordPath(const std::shared_ptr<restbed::Session> 
     const auto request = session->get_request();
     const std::string path = request->get_path_parameter("path");
 
-    RING_INFO("[%s] GET /setRecordPath/%s", session->get_origin().c_str(), path.c_str());
+    JAMI_INFO("[%s] GET /setRecordPath/%s", session->get_origin().c_str(), path.c_str());
 
     DRing::setRecordPath(path);
 
@@ -1479,7 +1479,7 @@ RestConfigurationManager::setRecordPath(const std::shared_ptr<restbed::Session> 
 void
 RestConfigurationManager::getIsAlwaysRecording(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /isAlwaysRecording", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /isAlwaysRecording", session->get_origin().c_str());
 
     bool status = DRing::getIsAlwaysRecording();
     std::string body = (status ? "true" : "false");
@@ -1499,7 +1499,7 @@ RestConfigurationManager::setIsAlwaysRecording(const std::shared_ptr<restbed::Se
     const auto request = session->get_request();
     const std::string state = request->get_path_parameter("state");
 
-    RING_INFO("[%s] GET /setIsAlwaysRecording/%s", session->get_origin().c_str(), state.c_str());
+    JAMI_INFO("[%s] GET /setIsAlwaysRecording/%s", session->get_origin().c_str(), state.c_str());
 
     DRing::setIsAlwaysRecording((state == "true" ? true : false));
 
@@ -1512,7 +1512,7 @@ RestConfigurationManager::setHistoryLimit(const std::shared_ptr<restbed::Session
     const auto request = session->get_request();
     const std::string days = request->get_path_parameter("limit");
 
-    RING_INFO("[%s] GET /setHistoryLimit/%s", session->get_origin().c_str(), days.c_str());
+    JAMI_INFO("[%s] GET /setHistoryLimit/%s", session->get_origin().c_str(), days.c_str());
 
     DRing::setHistoryLimit(std::stoi(days));
 
@@ -1522,7 +1522,7 @@ RestConfigurationManager::setHistoryLimit(const std::shared_ptr<restbed::Session
 void
 RestConfigurationManager::getHistoryLimit(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /getHistoryLimit", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /getHistoryLimit", session->get_origin().c_str());
 
     std::string body = std::to_string(DRing::getHistoryLimit());
 
@@ -1545,16 +1545,16 @@ RestConfigurationManager::setAccountsOrder(const std::shared_ptr<restbed::Sessio
     size_t content_length = 0;
     request->get_header("Content-Length", content_length);
 
-    RING_INFO("[%s] POST /setAccountsOrder", session->get_origin().c_str());
+    JAMI_INFO("[%s] POST /setAccountsOrder", session->get_origin().c_str());
 
     session->fetch(content_length, [this](const std::shared_ptr<restbed::Session> session, const restbed::Bytes & body)
     {
         std::string data(std::begin(body), std::end(body));
 
         std::map<std::string, std::string> details = parsePost(data);
-        RING_DBG("Order received");
+        JAMI_DBG("Order received");
         for(auto& it : details)
-            RING_DBG("%s : %s", it.first.c_str(), it.second.c_str());
+            JAMI_DBG("%s : %s", it.first.c_str(), it.second.c_str());
 
         std::regex order("[a-z0-9]{16}\\/");
 
@@ -1569,7 +1569,7 @@ RestConfigurationManager::setAccountsOrder(const std::shared_ptr<restbed::Sessio
 void
 RestConfigurationManager::getHookSettings(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /hookSettings", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /hookSettings", session->get_origin().c_str());
 
     std::map<std::string, std::string> hooks = DRing::getHookSettings();
 
@@ -1595,16 +1595,16 @@ RestConfigurationManager::setHookSettings(const std::shared_ptr<restbed::Session
     size_t content_length = 0;
     request->get_header("Content-Length", content_length);
 
-    RING_INFO("[%s] POST /setHookSettings", session->get_origin().c_str());
+    JAMI_INFO("[%s] POST /setHookSettings", session->get_origin().c_str());
 
     session->fetch(content_length, [this](const std::shared_ptr<restbed::Session> session, const restbed::Bytes & body)
     {
         std::string data(std::begin(body), std::end(body));
 
         std::map<std::string, std::string> settings = parsePost(data);
-        RING_DBG("Settings received");
+        JAMI_DBG("Settings received");
         for(auto& it : settings)
-            RING_DBG("%s : %s", it.first.c_str(), it.second.c_str());
+            JAMI_DBG("%s : %s", it.first.c_str(), it.second.c_str());
 
         DRing::setHookSettings(settings);
 
@@ -1618,7 +1618,7 @@ RestConfigurationManager::getCredentials(const std::shared_ptr<restbed::Session>
     const auto request = session->get_request();
     const std::string accountID = request->get_path_parameter("accountID");
 
-    RING_INFO("[%s] GET /credentials/%s", session->get_origin().c_str(), accountID.c_str());
+    JAMI_INFO("[%s] GET /credentials/%s", session->get_origin().c_str(), accountID.c_str());
 
     std::vector<std::map<std::string, std::string>> credentials = DRing::getCredentials(accountID);
 
@@ -1643,7 +1643,7 @@ RestConfigurationManager::setCredentials(const std::shared_ptr<restbed::Session>
     const auto request = session->get_request();
     const std::string accountID = request->get_path_parameter("accountID");
 
-    RING_INFO("[%s] POST /setCredentials/%s", session->get_origin().c_str(), accountID.c_str());
+    JAMI_INFO("[%s] POST /setCredentials/%s", session->get_origin().c_str(), accountID.c_str());
 
     size_t content_length = 0;
     request->get_header("Content-Length", content_length);
@@ -1653,9 +1653,9 @@ RestConfigurationManager::setCredentials(const std::shared_ptr<restbed::Session>
         std::string data(std::begin(body), std::end(body));
 
         std::map<std::string, std::string> details = parsePost(data);
-        RING_DBG("Details received");
+        JAMI_DBG("Details received");
         for(auto& it : details)
-            RING_DBG("%s : %s", it.first.c_str(), it.second.c_str());
+            JAMI_DBG("%s : %s", it.first.c_str(), it.second.c_str());
 
         DRing::setCredentials(accountID, std::vector<std::map<std::string, std::string>>{details});
 
@@ -1669,7 +1669,7 @@ RestConfigurationManager::getAddrFromInterfaceName(const std::shared_ptr<restbed
     const auto request = session->get_request();
     const std::string interface = request->get_path_parameter("interface");
 
-    RING_INFO("[%s] GET /addrFromInterfaceName/%s", session->get_origin().c_str(), interface.c_str());
+    JAMI_INFO("[%s] GET /addrFromInterfaceName/%s", session->get_origin().c_str(), interface.c_str());
 
     std::string body = DRing::getAddrFromInterfaceName(interface);
 
@@ -1685,7 +1685,7 @@ RestConfigurationManager::getAddrFromInterfaceName(const std::shared_ptr<restbed
 void
 RestConfigurationManager::getAllIpInterface(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /allIpInterface", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /allIpInterface", session->get_origin().c_str());
 
     std::vector<std::string> interfaces = DRing::getAllIpInterface();
 
@@ -1706,7 +1706,7 @@ RestConfigurationManager::getAllIpInterface(const std::shared_ptr<restbed::Sessi
 void
 RestConfigurationManager::getAllIpInterfaceByName(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /allIpInterfaceByName", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /allIpInterfaceByName", session->get_origin().c_str());
 
     std::vector<std::string> interfaces = DRing::getAllIpInterfaceByName();
 
@@ -1727,7 +1727,7 @@ RestConfigurationManager::getAllIpInterfaceByName(const std::shared_ptr<restbed:
 void
 RestConfigurationManager::getShortcuts(const std::shared_ptr<restbed::Session> session)
 {
-    RING_INFO("[%s] GET /shortcuts", session->get_origin().c_str());
+    JAMI_INFO("[%s] GET /shortcuts", session->get_origin().c_str());
 
     std::map<std::string, std::string> shortcuts = DRing::getShortcuts();
 
@@ -1750,7 +1750,7 @@ RestConfigurationManager::setShortcuts(const std::shared_ptr<restbed::Session> s
 {
     const auto request = session->get_request();
 
-    RING_INFO("[%s] POST /setShortcuts", session->get_origin().c_str());
+    JAMI_INFO("[%s] POST /setShortcuts", session->get_origin().c_str());
 
     size_t content_length = 0;
     request->get_header("Content-Length", content_length);
@@ -1760,9 +1760,9 @@ RestConfigurationManager::setShortcuts(const std::shared_ptr<restbed::Session> s
         std::string data(std::begin(body), std::end(body));
 
         std::map<std::string, std::string> shortcutsMap = parsePost(data);
-        RING_DBG("shortcutsMap received");
+        JAMI_DBG("shortcutsMap received");
         for(auto& it : shortcutsMap)
-            RING_DBG("%s : %s", it.first.c_str(), it.second.c_str());
+            JAMI_DBG("%s : %s", it.first.c_str(), it.second.c_str());
 
         DRing::setShortcuts(shortcutsMap);
 

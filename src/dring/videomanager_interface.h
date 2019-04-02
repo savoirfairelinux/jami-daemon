@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef DRING_VIDEOMANAGERI_H
-#define DRING_VIDEOMANAGERI_H
+#ifndef DENABLE_VIDEOMANAGERI_H
+#define DENABLE_VIDEOMANAGERI_H
 
 #include "dring.h"
 
@@ -43,7 +43,7 @@ struct AVPacket;
 #import "TargetConditionals.h"
 #endif
 
-namespace ring {
+namespace jami {
 struct AudioFormat;
 }
 
@@ -99,13 +99,13 @@ protected:
 class DRING_PUBLIC AudioFrame : public MediaFrame {
 public:
     AudioFrame() : MediaFrame() {}
-    AudioFrame(const ring::AudioFormat& format, size_t nb_samples = 0);
+    AudioFrame(const jami::AudioFormat& format, size_t nb_samples = 0);
     ~AudioFrame() {};
     void mix(const AudioFrame& o);
     float calcRMS() const;
 
 private:
-    void setFormat(const ring::AudioFormat& format);
+    void setFormat(const jami::AudioFormat& format);
     void reserve(size_t nb_samples = 0);
 };
 
@@ -246,4 +246,4 @@ struct DRING_PUBLIC VideoSignal {
 
 } // namespace DRing
 
-#endif // DRING_VIDEOMANAGERI_H
+#endif // DENABLE_VIDEOMANAGERI_H

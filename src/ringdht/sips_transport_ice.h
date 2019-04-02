@@ -42,12 +42,12 @@
 #include <utility>
 #include <vector>
 
-namespace ring {
+namespace jami {
 class IceTransport;
 class IceSocketTransport;
-} // namespace ring
+} // namespace jami
 
-namespace ring { namespace tls {
+namespace jami { namespace tls {
 
 /**
  * SipsIceTransport
@@ -140,4 +140,4 @@ private:
     int verifyCertificate(gnutls_session_t);
 };
 
-}} // namespace ring::tls
+}} // namespace jami::tls

@@ -25,7 +25,7 @@
 #include "recordable.h"
 #include "video/video_input.h"
 
-namespace ring {
+namespace jami {
 
 /*
  * @file localrecorder.h
@@ -63,8 +63,8 @@ class LocalRecorder : public Recordable {
         std::string path_;
 
         // media inputs
-        std::shared_ptr<ring::video::VideoInput> videoInput_;
-        std::shared_ptr<ring::AudioInput> audioInput_;
+        std::shared_ptr<jami::video::VideoInput> videoInput_;
+        std::shared_ptr<jami::AudioInput> audioInput_;
 };
 
-} // namespace ring
+} // namespace jami

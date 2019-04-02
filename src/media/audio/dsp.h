@@ -27,7 +27,7 @@
 #include <memory>
 #include "noncopyable.h"
 
-namespace ring {
+namespace jami {
 
 class AudioBuffer;
 
@@ -50,6 +50,6 @@ class DSP {
         std::vector<SpeexStatePtr> dspStates_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // DSP_H_

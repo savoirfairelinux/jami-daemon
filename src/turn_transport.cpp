@@ -40,7 +40,7 @@
 #include <map>
 #include <condition_variable>
 
-namespace ring {
+namespace jami {
 
 using MutexGuard = std::lock_guard<std::mutex>;
 using MutexLock = std::unique_lock<std::mutex>;
@@ -190,7 +190,7 @@ TurnTransportPimpl::~TurnTransportPimpl()
         try {
             pj_turn_sock_destroy(relay);
         } catch (...) {
-            RING_ERR() << "exception during pj_turn_sock_destroy() call (ignored)";
+            JAMI_ERR() << "exception during pj_turn_sock_destroy() call (ignored)";
         }
     }
     ioJobQuit = true;
@@ -208,10 +208,10 @@ TurnTransportPimpl::onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_s
         pj_turn_sock_get_info(relay, &info);
         peerRelayAddr = IpAddr {info.relay_addr};
         mappedAddr = IpAddr {info.mapped_addr};
-        RING_DBG("TURN server ready, peer relay address: %s", peerRelayAddr.toString(true, true).c_str());
+        JAMI_DBG("TURN server ready, peer relay address: %s", peerRelayAddr.toString(true, true).c_str());
         state = RelayState::READY;
     } else if (old_state <= PJ_TURN_STATE_READY and new_state > PJ_TURN_STATE_READY) {
-        RING_WARN("TURN server disconnected (%s)", pj_turn_state_name(new_state));
+        JAMI_WARN("TURN server disconnected (%s)", pj_turn_state_name(new_state));
         state = RelayState::DOWN;
         MutexGuard lk {apiMutex_};
         peerChannels_.clear();
@@ -245,7 +245,7 @@ TurnTransportPimpl::onPeerConnection(pj_uint32_t conn_id,
 {
     IpAddr peer_addr (*static_cast<const pj_sockaddr*>(addr), addr_len);
     if (status == PJ_SUCCESS) {
-        RING_DBG() << "Received connection attempt from " << peer_addr.toString(true, true)
+        JAMI_DBG() << "Received connection attempt from " << peer_addr.toString(true, true)
                    << ", id=" << std::hex << conn_id;
         pj_turn_connect_peer(relay, conn_id, addr, addr_len);
 
@@ -354,7 +354,7 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     pimpl_->relayAddr = pj_strdup3(pimpl_->pool, server.toString().c_str());
 
     // TURN connection/allocation
-    RING_DBG() << "Connecting to TURN " << server.toString(true, true);
+    JAMI_DBG() << "Connecting to TURN " << server.toString(true, true);
     PjsipCall(pj_turn_sock_alloc,
               pimpl_->relay, &pimpl_->relayAddr, server.getPort(),
               nullptr, &cred, &turn_alloc_param);
@@ -528,4 +528,4 @@ ConnectedTurnTransport::read(ValueType* buf, std::size_t size, std::error_code& 
     return size;
 }
 
-} // namespace ring
+} // namespace jami

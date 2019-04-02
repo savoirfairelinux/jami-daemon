@@ -31,11 +31,11 @@
 #include "noncopyable.h"
 #include "upnp_igd.h"
 
-namespace ring {
+namespace jami {
 class IpAddr;
 }
 
-namespace ring { namespace upnp {
+namespace jami { namespace upnp {
 
 class UPnPContext;
 
@@ -125,6 +125,6 @@ private:
     void removeMappings(PortType type);
 };
 
-}} // namespace ring::upnp
+}} // namespace jami::upnp
 
 #endif /* UPNP_H_ */

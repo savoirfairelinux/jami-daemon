@@ -31,7 +31,7 @@
  * @brief Tone sample (dial, busy, ring, congestion)
  */
 
-namespace ring {
+namespace jami {
 
 class Tone : public AudioLoop {
     public:
@@ -71,4 +71,4 @@ class Tone : public AudioLoop {
         void genBuffer(const std::string& definition);
 };
 
-} // namespace ring
+} // namespace jami

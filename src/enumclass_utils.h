@@ -26,7 +26,7 @@
 #include <vector>
 #include <cassert>
 
-namespace ring {
+namespace jami {
 
 /**
  * This function adds a safe way to get an enum class size
@@ -186,7 +186,7 @@ template<class Row, typename Value, typename Accessor>
 Value Matrix1D<Row,Value,Accessor>::operator[](Row v) {
     //ASSERT(size_t(v) >= size_t(Row::COUNT__),"State Machine Out of Bounds\n");
     if (size_t(v) >= enum_class_size<Row>() || static_cast<int>(v) < 0) {
-        RING_ERR("State Machine Out of Bounds %d\n", size_t(v));
+        JAMI_ERR("State Machine Out of Bounds %d\n", size_t(v));
         assert(false);
         throw v;
     }
@@ -197,7 +197,7 @@ template<class Row, typename Value, typename Accessor>
 const Value Matrix1D<Row,Value,Accessor>::operator[](Row v) const {
     assert(size_t(v) <= enum_class_size<Row>()+1 && size_t(v)>=0); //COUNT__ is also valid
     if (size_t(v) >= enum_class_size<Row>()) {
-        RING_ERR("State Machine Out of Bounds %zu\n", size_t(v));
+        JAMI_ERR("State Machine Out of Bounds %zu\n", size_t(v));
         assert(false);
         throw v;
     }
@@ -290,6 +290,6 @@ typename Matrix1D<Row,Value,Accessor>::EnumClassIter Matrix1D<Row,Value,Accessor
     return Matrix1D<Row,Value,Accessor>::EnumClassIter( this, enum_class_size<Row>() );
 }
 
-} // namespace ring
+} // namespace jami
 
 #endif //ENUM_CLASS_UTILS_H

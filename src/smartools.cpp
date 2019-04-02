@@ -25,7 +25,7 @@
 #include "client/ring_signal.h"
 #include "string_utils.h"
 
-namespace ring {
+namespace jami {
 
 Smartools& Smartools::getInstance()
 {
@@ -63,7 +63,7 @@ Smartools::process()
 void
 Smartools::start(std::chrono::milliseconds refreshTimeMs)
 {
-    RING_DBG("Start SmartInfo");
+    JAMI_DBG("Start SmartInfo");
     refreshTimeMs_ = refreshTimeMs;
     loop_.stop();
     loop_.start();
@@ -73,7 +73,7 @@ void
 Smartools::stop()
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    RING_DBG("Stop SmartInfo");
+    JAMI_DBG("Stop SmartInfo");
     loop_.stop();
     information_.clear();
 }
@@ -145,4 +145,4 @@ Smartools::setRemoteVideoCodec(const std::string& remoteVideoCodec, const std::s
     }
  }
 
- } // end namespace ring
+ } // end namespace jami

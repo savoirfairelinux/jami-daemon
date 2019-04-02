@@ -22,7 +22,7 @@
 
 #include <ciso646> // fix windows compiler bug
 
-namespace ring {
+namespace jami {
 
 DcBlocker::DcBlocker(unsigned channels /* = 1 */)
     : states(channels, StreamState{0, 0, 0, 0})
@@ -67,4 +67,4 @@ void DcBlocker::process(AudioBuffer& buf)
     }
 }
 
-} // namespace ring
+} // namespace jami

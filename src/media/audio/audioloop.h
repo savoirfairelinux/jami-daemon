@@ -32,7 +32,7 @@
  * @brief Loop on a sound file
  */
 
-namespace ring {
+namespace jami {
 
 class AudioLoop {
     public:
@@ -89,5 +89,5 @@ class AudioLoop {
         virtual void onBufferFinish();
 };
 
-} // namespace ring
+} // namespace jami
 

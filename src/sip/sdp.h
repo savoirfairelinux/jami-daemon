@@ -44,7 +44,7 @@
 #include <string>
 #include <stdexcept>
 
-namespace ring {
+namespace jami {
 
 namespace test {
 class SDPTest;
@@ -324,4 +324,4 @@ class Sdp {
         std::shared_ptr<AccountCodecInfo> findCodecBySpec(const std::string &codecName, const unsigned clockrate=0) const;
 };
 
-} // namespace ring
+} // namespace jami

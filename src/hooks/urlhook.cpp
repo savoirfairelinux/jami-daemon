@@ -21,7 +21,7 @@
 #include "urlhook.h"
 #include <cstdlib>
 
-namespace ring {
+namespace jami {
 
 int UrlHook::runAction(const std::string &command, const std::string &args)
 {
@@ -41,4 +41,4 @@ int UrlHook::runAction(const std::string &command, const std::string &args)
 #endif
 }
 
-} // namespace ring
+} // namespace jami

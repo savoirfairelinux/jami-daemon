@@ -44,7 +44,7 @@
 #include <chrono>
 #include <algorithm>
 
-namespace ring {
+namespace jami {
 
 // maximum number of packets the jitter buffer can queue
 const unsigned jitterBufferMaxSize_ {1500};
@@ -75,7 +75,7 @@ int MediaDecoder::openInput(const DeviceParams& params)
     AVInputFormat *iformat = av_find_input_format(params.format.c_str());
 
     if (!iformat && !params.format.empty())
-        RING_WARN("Cannot find format \"%s\"", params.format.c_str());
+        JAMI_WARN("Cannot find format \"%s\"", params.format.c_str());
 
     if (params.width and params.height) {
         std::stringstream ss;
@@ -97,30 +97,30 @@ int MediaDecoder::openInput(const DeviceParams& params)
         if (params.framerate.denominator() == 333333)
             framerate = (int)(params.framerate.real());
         if (params.framerate.denominator() != 4999998)
-            av_dict_set(&options_, "framerate", ring::to_string(framerate).c_str(), 0);
+            av_dict_set(&options_, "framerate", std::to_string(framerate).c_str(), 0);
 #else
-        av_dict_set(&options_, "framerate", ring::to_string(params.framerate.real()).c_str(), 0);
+        av_dict_set(&options_, "framerate", std::to_string(params.framerate.real()).c_str(), 0);
 #endif
     }
 
     if (params.offset_x || params.offset_y) {
-        av_dict_set(&options_, "offset_x", ring::to_string(params.offset_x).c_str(), 0);
-        av_dict_set(&options_, "offset_y", ring::to_string(params.offset_y).c_str(), 0);
+        av_dict_set(&options_, "offset_x", std::to_string(params.offset_x).c_str(), 0);
+        av_dict_set(&options_, "offset_y", std::to_string(params.offset_y).c_str(), 0);
     }
     if (params.channel)
-        av_dict_set(&options_, "channel", ring::to_string(params.channel).c_str(), 0);
+        av_dict_set(&options_, "channel", std::to_string(params.channel).c_str(), 0);
     av_dict_set(&options_, "loop", params.loop.c_str(), 0);
     av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
 
     // Set jitter buffer options
-    av_dict_set(&options_, "reorder_queue_size",ring::to_string(jitterBufferMaxSize_).c_str(), 0);
+    av_dict_set(&options_, "reorder_queue_size", std::to_string(jitterBufferMaxSize_).c_str(), 0);
     auto us = std::chrono::duration_cast<std::chrono::microseconds>(jitterBufferMaxDelay_).count();
-    av_dict_set(&options_, "max_delay",ring::to_string(us).c_str(), 0);
+    av_dict_set(&options_, "max_delay", std::to_string(us).c_str(), 0);
 
     if(!params.pixel_format.empty()){
         av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
     }
-    RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
+    JAMI_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
 
 #ifdef RING_ACCEL
@@ -136,9 +136,9 @@ int MediaDecoder::openInput(const DeviceParams& params)
         options_ ? &options_ : NULL);
 
     if (ret) {
-        RING_ERR("avformat_open_input failed: %s", libav_utils::getError(ret).c_str());
+        JAMI_ERR("avformat_open_input failed: %s", libav_utils::getError(ret).c_str());
     } else {
-        RING_DBG("Using format %s", params.format.c_str());
+        JAMI_DBG("Using format %s", params.format.c_str());
     }
 
     return ret;
@@ -182,29 +182,29 @@ MediaDecoder::setupStream(AVMediaType mediaType)
 
     // If fallback from accel, don't check for stream info, it's already done
     if (!fallback_) {
-        RING_DBG() << "Finding " << streamType << " stream info";
+        JAMI_DBG() << "Finding " << streamType << " stream info";
         if ((ret = avformat_find_stream_info(inputCtx_, nullptr)) < 0) {
             // Always fail here
-            RING_ERR() << "Could not find " << streamType << " stream info: " << libav_utils::getError(ret);
+            JAMI_ERR() << "Could not find " << streamType << " stream info: " << libav_utils::getError(ret);
             return -1;
         }
     }
 
     if ((streamIndex_ = selectStream(mediaType)) < 0) {
-        RING_ERR() << "No suitable " << streamType << " stream found";
+        JAMI_ERR() << "No suitable " << streamType << " stream found";
         return -1;
     }
 
     avStream_ = inputCtx_->streams[streamIndex_];
     inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
-        RING_ERR() << "Unsupported codec";
+        JAMI_ERR() << "Unsupported codec";
         return -1;
     }
 
     decoderCtx_ = avcodec_alloc_context3(inputDecoder_);
     if (!decoderCtx_) {
-        RING_ERR() << "Failed to create decoder context";
+        JAMI_ERR() << "Failed to create decoder context";
         return -1;
     }
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
@@ -221,7 +221,7 @@ MediaDecoder::setupStream(AVMediaType mediaType)
     decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
 
     if (emulateRate_)
-        RING_DBG() << "Using framerate emulation";
+        JAMI_DBG() << "Using framerate emulation";
     startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
 
 #ifdef RING_ACCEL
@@ -234,25 +234,25 @@ MediaDecoder::setupStream(AVMediaType mediaType)
                 decoderCtx_->opaque = accel_.get();
             }
         } else if (Manager::instance().videoPreferences.getDecodingAccelerated()) {
-            RING_WARN() << "Hardware decoding disabled because of previous failure";
+            JAMI_WARN() << "Hardware decoding disabled because of previous failure";
         } else {
-            RING_WARN() << "Hardware decoding disabled by user preference";
+            JAMI_WARN() << "Hardware decoding disabled by user preference";
         }
     }
 #endif
 
-    RING_DBG() << "Decoding " << streamType << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
+    JAMI_DBG() << "Decoding " << streamType << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
 
     ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
     if (ret < 0) {
-        RING_ERR() << "Could not open codec: " << libav_utils::getError(ret);
+        JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
         return -1;
     }
 
     return 0;
 }
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 int MediaDecoder::setupFromVideoData()
 {
     return setupStream(AVMEDIA_TYPE_VIDEO);
@@ -269,7 +269,7 @@ MediaDecoder::decode(VideoFrame& result)
     } else if (ret == AVERROR_EOF) {
         return Status::EOFError;
     } else if (ret < 0) {
-        RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
+        JAMI_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
         return Status::ReadError;
     }
 
@@ -315,7 +315,7 @@ MediaDecoder::decode(VideoFrame& result)
 
     return Status::Success;
 }
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
 MediaDecoder::Status
 MediaDecoder::decode(AudioFrame& decodedFrame)
@@ -331,7 +331,7 @@ MediaDecoder::decode(AudioFrame& decodedFrame)
     } else if (ret == AVERROR_EOF) {
         return Status::EOFError;
     } else if (ret < 0) {
-        RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
+        JAMI_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
         return Status::ReadError;
     }
 
@@ -379,7 +379,7 @@ MediaDecoder::decode(AudioFrame& decodedFrame)
     return Status::Success;
 }
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #ifdef RING_ACCEL
 void
 MediaDecoder::enableAccel(bool enableAccel)
@@ -419,7 +419,7 @@ MediaDecoder::flush(VideoFrame& result)
 
     return Status::Success;
 }
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
 int MediaDecoder::getWidth() const
 { return decoderCtx_->width; }
@@ -484,4 +484,4 @@ MediaDecoder::getStream(std::string name) const
     return ms;
 }
 
-} // namespace ring
+} // namespace jami

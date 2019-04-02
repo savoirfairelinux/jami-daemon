@@ -41,7 +41,7 @@ extern "C" {
 
 struct AVFrame;
 
-namespace ring {
+namespace jami {
 
 /**
  * Structure to hold sample rate and channel number associated with audio data.
@@ -375,6 +375,6 @@ class AudioBuffer {
         std::vector<std::vector<AudioSample> > samples_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // _AUDIO_BUFFER_H

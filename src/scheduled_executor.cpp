@@ -20,7 +20,7 @@
 #include "scheduled_executor.h"
 #include "logger.h"
 
-namespace ring {
+namespace jami {
 
 ScheduledExecutor::ScheduledExecutor() : thread_([this]{
         while (running_.load())
@@ -121,7 +121,7 @@ ScheduledExecutor::loop()
         try {
             job();
         } catch (const std::exception& e) {
-            RING_ERR("Exception running job: %s", e.what());
+            JAMI_ERR("Exception running job: %s", e.what());
         }
     }
 }

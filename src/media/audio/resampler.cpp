@@ -28,7 +28,7 @@ extern "C" {
 #include <libswresample/swresample.h>
 }
 
-namespace ring {
+namespace jami {
 
 Resampler::Resampler()
     : swrCtx_(swr_alloc())
@@ -46,7 +46,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
     // NOTE swr_set_matrix should be called on an uninitialized context
     auto swrCtx = swr_alloc();
     if (!swrCtx) {
-        RING_ERR() << "Cannot allocate resampler context";
+        JAMI_ERR() << "Cannot allocate resampler context";
         throw std::bad_alloc();
     }
 
@@ -109,7 +109,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
         ++initCount_;
     } else {
         std::string msg = "Failed to initialize resampler context";
-        RING_ERR() << msg;
+        JAMI_ERR() << msg;
         throw std::runtime_error(msg);
     }
 }
@@ -127,13 +127,13 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
         // doesn't get mangled with a bunch of calls to Resampler::resample
         if (initCount_ > 1) {
             std::string msg = "Infinite loop detected in audio resampler, please open an issue on https://git.jami.net";
-            RING_ERR() << msg;
+            JAMI_ERR() << msg;
             throw std::runtime_error(msg);
         }
         reinit(input, output);
         return resample(input, output);
     } else if (ret < 0) {
-        RING_ERR() << "Failed to resample frame";
+        JAMI_ERR() << "Failed to resample frame";
         return -1;
     }
 
@@ -190,4 +190,4 @@ Resampler::resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& format)
     return output;
 }
 
-} // namespace ring
+} // namespace jami

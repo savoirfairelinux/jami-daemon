@@ -26,7 +26,7 @@
 
 #include "base64.h"
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class Base64Test : public CppUnit::TestFixture {
 public:
@@ -53,14 +53,14 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Base64Test, Base64Test::name());
 void
 Base64Test::encodingTest()
 {
-    const std::string output = ring::base64::encode(test_bytes);
+    const std::string output = jami::base64::encode(test_bytes);
     CPPUNIT_ASSERT(test_base64.compare(output) == 0);
 }
 
 void
 Base64Test::decodingTestSuccess()
 {
-    const std::vector<uint8_t> output = ring::base64::decode(test_base64);
+    const std::vector<uint8_t> output = jami::base64::decode(test_base64);
     CPPUNIT_ASSERT(std::equal(test_bytes.begin(), test_bytes.end(), output.begin()));
 }
 
@@ -70,10 +70,10 @@ Base64Test::decodingTestFail()
     // Currently, the input is not validated, i.e. the function most not throw an
     // exception if decoding fails to make sure calling code not expecting any
     // is no broken. (Some validation should be implemented sometimes later, though.
-    ring::base64::decode(test_invalid_base64);
+    jami::base64::decode(test_invalid_base64);
     CPPUNIT_ASSERT(true);
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::Base64Test::name());
+RING_TEST_RUNNER(jami::test::Base64Test::name());

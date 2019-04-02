@@ -25,7 +25,7 @@
 #include "buf_manager.h"
 #include "noncopyable.h"
 
-namespace ring {
+namespace jami {
 namespace opensl {
 
 class AudioRecorder {
@@ -33,7 +33,7 @@ class AudioRecorder {
     SLRecordItf recItf_;
     SLAndroidSimpleBufferQueueItf recBufQueueItf_;
 
-    ring::AudioFormat  sampleInfo_;
+    jami::AudioFormat  sampleInfo_;
     AudioQueue *freeQueue_ {nullptr};         // user
     AudioQueue *recQueue_ {nullptr};          // user
     AudioQueue  devShadowQueue_ {DEVICE_SHADOW_BUFFER_QUEUE_LEN};    // owner
@@ -42,7 +42,7 @@ class AudioRecorder {
     EngineCallback callback_ {};
 
 public:
-    explicit AudioRecorder(ring::AudioFormat, SLEngineItf engineEngine);
+    explicit AudioRecorder(jami::AudioFormat, SLEngineItf engineEngine);
     ~AudioRecorder();
     NON_COPYABLE(AudioRecorder);
 

@@ -26,7 +26,7 @@
 
 #include <stdexcept>
 
-namespace ring {
+namespace jami {
 
 AudioStream::AudioStream(pa_context *c,
                          pa_threaded_mainloop *m,
@@ -45,7 +45,7 @@ AudioStream::AudioStream(pa_context *c,
         channel_map.channels
     };
 
-    RING_DBG("%s: trying to create stream with device %s (%dHz, %d channels)", desc, infos->name.c_str(), samplrate, channel_map.channels);
+    JAMI_DBG("%s: trying to create stream with device %s (%dHz, %d channels)", desc, infos->name.c_str(), samplrate, channel_map.channels);
 
     assert(pa_sample_spec_valid(&sample_spec));
     assert(pa_channel_map_valid(&channel_map));
@@ -55,7 +55,7 @@ AudioStream::AudioStream(pa_context *c,
 
     audiostream_ = pa_stream_new_with_proplist(c, desc, &sample_spec, &channel_map, ec ? pl.get() : nullptr);
     if (!audiostream_) {
-        RING_ERR("%s: pa_stream_new() failed : %s" , desc, pa_strerror(pa_context_errno(c)));
+        JAMI_ERR("%s: pa_stream_new() failed : %s" , desc, pa_strerror(pa_context_errno(c)));
         throw std::runtime_error("Could not create stream\n");
     }
 
@@ -112,7 +112,7 @@ AudioStream::~AudioStream()
 void AudioStream::moved(pa_stream* s)
 {
     audiostream_ = s;
-    RING_DBG("Stream %d to %s", pa_stream_get_index(s), pa_stream_get_device_name(s));
+    JAMI_DBG("Stream %d to %s", pa_stream_get_index(s), pa_stream_get_device_name(s));
 }
 
 void
@@ -122,30 +122,30 @@ AudioStream::stateChanged(pa_stream* s)
 
     switch (pa_stream_get_state(s)) {
         case PA_STREAM_CREATING:
-            RING_DBG("Stream is creating...");
+            JAMI_DBG("Stream is creating...");
             break;
 
         case PA_STREAM_TERMINATED:
-            RING_DBG("Stream is terminating...");
+            JAMI_DBG("Stream is terminating...");
             break;
 
         case PA_STREAM_READY:
-            RING_DBG("Stream successfully created, connected to %s", pa_stream_get_device_name(s));
-            //RING_DBG("maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
-            //RING_DBG("tlength %u", pa_stream_get_buffer_attr(s)->tlength);
-            //RING_DBG("prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
-            //RING_DBG("minreq %u", pa_stream_get_buffer_attr(s)->minreq);
-            //RING_DBG("fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
-            //RING_DBG("samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
+            JAMI_DBG("Stream successfully created, connected to %s", pa_stream_get_device_name(s));
+            //JAMI_DBG("maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
+            //JAMI_DBG("tlength %u", pa_stream_get_buffer_attr(s)->tlength);
+            //JAMI_DBG("prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
+            //JAMI_DBG("minreq %u", pa_stream_get_buffer_attr(s)->minreq);
+            //JAMI_DBG("fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
+            //JAMI_DBG("samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
             break;
 
         case PA_STREAM_UNCONNECTED:
-            RING_DBG("Stream unconnected");
+            JAMI_DBG("Stream unconnected");
             break;
 
         case PA_STREAM_FAILED:
         default:
-            RING_ERR("Stream failure: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+            JAMI_ERR("Stream failure: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
             break;
     }
 }
@@ -158,4 +158,4 @@ bool AudioStream::isReady()
     return pa_stream_get_state(audiostream_) == PA_STREAM_READY;
 }
 
-} // namespace ring
+} // namespace jami

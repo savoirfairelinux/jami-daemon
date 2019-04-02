@@ -22,7 +22,7 @@
 
 #include <stdexcept>
 
-namespace ring {
+namespace jami {
 
 void
 CallFactory::forbid()
@@ -36,11 +36,11 @@ CallFactory::removeCall(Call& call)
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
     const auto& id = call.getCallId();
-    RING_DBG("Removing call %s", id.c_str());
+    JAMI_DBG("Removing call %s", id.c_str());
     const auto& linkType = call.getLinkType();
     auto& map = callMaps_.at(linkType);
     map.erase(id);
-    RING_DBG("Remaining %zu %s call(s)", map.size(), linkType);
+    JAMI_DBG("Remaining %zu %s call(s)", map.size(), linkType);
 }
 
 void
@@ -51,7 +51,7 @@ CallFactory::removeCall(const std::string& id)
     if (auto call = getCall(id)) {
         removeCall(*call);
     } else
-        RING_ERR("No call with ID %s", id.c_str());
+        JAMI_ERR("No call with ID %s", id.c_str());
 }
 
 //==============================================================================
@@ -149,4 +149,4 @@ CallFactory::callCount<Call>()
     return count;
 }
 
-} // namespace ring
+} // namespace jami

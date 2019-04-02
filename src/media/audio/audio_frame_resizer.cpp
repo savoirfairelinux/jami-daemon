@@ -28,7 +28,7 @@ extern "C" {
 
 #include <stdexcept>
 
-namespace ring {
+namespace jami {
 
 AudioFrameResizer::AudioFrameResizer(const AudioFormat& format, int size, std::function<void(std::shared_ptr<AudioFrame>&&)> cb)
     : format_(format)
@@ -67,7 +67,7 @@ AudioFrameResizer::setFormat(const AudioFormat& format, int size)
         setFrameSize(size);
     if (format != format_) {
         if (auto discarded = samples())
-            RING_WARN("Discarding %d samples", discarded);
+            JAMI_WARN("Discarding %d samples", discarded);
         av_audio_fifo_free(queue_);
         format_ = format;
         queue_ = av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, frameSize_);
@@ -92,7 +92,7 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
     auto f = frame->pointer();
     AudioFormat format(f->sample_rate, f->channels, (AVSampleFormat)f->format);
     if (format != format_) {
-        RING_ERR() << "Expected " << format_ << ", but got " << AudioFormat(f->sample_rate, f->channels, (AVSampleFormat)f->format);
+        JAMI_ERR() << "Expected " << format_ << ", but got " << AudioFormat(f->sample_rate, f->channels, (AVSampleFormat)f->format);
         setFormat(format, frameSize_);
     }
 
@@ -105,7 +105,7 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
 
     // queue reallocates itself if need be
     if ((ret = av_audio_fifo_write(queue_, reinterpret_cast<void**>(f->data), f->nb_samples)) < 0) {
-        RING_ERR() << "Audio resizer error: " << libav_utils::getError(ret);
+        JAMI_ERR() << "Audio resizer error: " << libav_utils::getError(ret);
         throw std::runtime_error("Failed to add audio to frame resizer");
     }
 
@@ -126,7 +126,7 @@ AudioFrameResizer::dequeue()
     auto frame = std::make_unique<AudioFrame>(format_, frameSize_);
     int ret;
     if ((ret = av_audio_fifo_read(queue_, reinterpret_cast<void**>(frame->pointer()->data), frameSize_)) < 0) {
-        RING_ERR() << "Could not read samples from queue: " << libav_utils::getError(ret);
+        JAMI_ERR() << "Could not read samples from queue: " << libav_utils::getError(ret);
         return {};
     }
     frame->pointer()->pts = nextOutputPts_;
@@ -134,4 +134,4 @@ AudioFrameResizer::dequeue()
     return frame;
 }
 
-} // namespace ring
+} // namespace jami

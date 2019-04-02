@@ -27,7 +27,7 @@
 #include "client/ring_signal.h"
 #include "dring/callmanager_interface.h" // for CallSignal
 
-namespace ring {
+namespace jami {
 
 static constexpr unsigned DEFAULT_SAMPLE_RATE = 8000;
 
@@ -80,7 +80,7 @@ ToneControl::setAudioFile(const std::string& file)
     try {
         audioFile_.reset(new AudioFile(file, sampleRate_));
     } catch (const AudioFileException& e) {
-        RING_WARN("Audio file error: %s", e.what());
+        JAMI_WARN("Audio file error: %s", e.what());
     }
 
     return static_cast<bool>(audioFile_);
@@ -129,4 +129,4 @@ ToneControl::seek(double value)
         audioFile_->seek(value);
 }
 
-} // namespace ring
+} // namespace jami

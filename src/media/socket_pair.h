@@ -47,7 +47,7 @@ using socklen_t = int;
 #include <condition_variable>
 
 
-namespace ring {
+namespace jami {
 
 class IceSocket;
 class SRTPProtoContext;
@@ -147,4 +147,4 @@ class SocketPair {
 
 
 
-} // namespace ring
+} // namespace jami

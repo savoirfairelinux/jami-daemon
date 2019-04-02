@@ -39,7 +39,7 @@
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include <queue>
 #endif
 #include <map>
@@ -49,7 +49,7 @@
 #include <thread>
 #include <atomic>
 
-namespace ring {
+namespace jami {
 
 class SIPCall;
 class SIPAccountBase;
@@ -161,11 +161,11 @@ class SIPVoIPLink {
         std::atomic_bool running_ {true};
         std::thread sipThread_;
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         void requestKeyframe(const std::string &callID);
 #endif
 
         friend class SIPTest;
 };
 
-} // namespace ring
+} // namespace jami

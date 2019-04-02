@@ -56,7 +56,7 @@
 #include "manager.h"
 #include "utf8_utils.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "libav_utils.h"
 #endif
 #include "fileutils.h"
@@ -86,7 +86,7 @@
 #include <string>
 #include <system_error>
 
-namespace ring {
+namespace jami {
 
 using sip_utils::CONST_PJ_STR;
 
@@ -118,7 +118,7 @@ setState (const std::string& accountID,
         mapStateNumberToString(migrationState));
 }
 
-} // namespace ring::Migration
+} // namespace jami::Migration
 
 struct RingAccount::BuddyInfo
 {
@@ -326,12 +326,12 @@ RingAccount::newIncomingCall(const std::string& from, const std::map<std::string
     while (call_it != pendingSipCalls_.end()) {
         auto call = call_it->call.lock();
         if (not call) {
-            RING_WARN("newIncomingCall: discarding deleted call");
+            JAMI_WARN("newIncomingCall: discarding deleted call");
             call_it = pendingSipCalls_.erase(call_it);
         } else if (call->getPeerNumber() == from || (call_it->from_cert and
                                                      call_it->from_cert->issuer and
                                                      call_it->from_cert->issuer->getId().toString() == from)) {
-            RING_DBG("newIncomingCall: found matching call for %s", from.c_str());
+            JAMI_DBG("newIncomingCall: found matching call for %s", from.c_str());
             pendingSipCalls_.erase(call_it);
             call->updateDetails(details);
             return call;
@@ -339,7 +339,7 @@ RingAccount::newIncomingCall(const std::string& from, const std::map<std::string
             ++call_it;
         }
     }
-    RING_ERR("newIncomingCall: can't find matching call for %s", from.c_str());
+    JAMI_ERR("newIncomingCall: can't find matching call for %s", from.c_str());
     return nullptr;
 }
 
@@ -349,7 +349,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl,
                              const std::map<std::string, std::string>& volatileCallDetails)
 {
     auto suffix = stripPrefix(toUrl);
-    RING_DBG() << *this << "Calling DHT peer " << suffix;
+    JAMI_DBG() << *this << "Calling DHT peer " << suffix;
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING,
@@ -418,7 +418,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     {
         auto call = wCall.lock();
         if (not call) return;
-        RING_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
+        JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
 
         auto& manager = Manager::instance();
         auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*sthis, manager.getNewCallID(),
@@ -430,7 +430,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         auto ice = sthis->createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
                                              ICE_COMPONENTS, true, sthis->getIceOptions());
         if (not ice) {
-            RING_WARN("Can't create ICE");
+            JAMI_WARN("Can't create ICE");
             dev_call->removeCall();
             return;
         }
@@ -445,7 +445,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 return false;
 
             if (ice->isFailed()) {
-                RING_ERR("[call:%s] ice init failed", call->getCallId().c_str());
+                JAMI_ERR("[call:%s] ice init failed", call->getCallId().c_str());
                 call->onFailure(EIO);
                 return false;
             }
@@ -468,11 +468,11 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 std::move(val),
                 [=](bool ok) { // Put complete callback
                     if (!ok) {
-                        RING_WARN("Can't put ICE descriptor on DHT");
+                        JAMI_WARN("Can't put ICE descriptor on DHT");
                         if (auto call = weak_dev_call.lock())
                             call->onFailure();
                     } else
-                        RING_DBG("Successfully put ICE descriptor on DHT");
+                        JAMI_DBG("Successfully put ICE descriptor on DHT");
                 }
             );
 
@@ -486,7 +486,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                     iceData.erase(std::remove_if(iceData.begin(), iceData.end(),
                                                  [](unsigned char c){ return !std::isprint(c) && !std::isspace(c); }
                                                 ), iceData.end());
-                    RING_WARN("ICE request replied from DHT peer %s\nData: %s", dev.toString().c_str(), iceData.c_str());
+                    JAMI_WARN("ICE request replied from DHT peer %s\nData: %s", dev.toString().c_str(), iceData.c_str());
                     if (auto call = weak_dev_call.lock()) {
                         call->setState(Call::ConnectionState::PROGRESSING);
                         if (!ice->start(msg.ice_data)) {
@@ -514,7 +514,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     }, [wCall](const std::shared_ptr<RingAccount>&, bool ok){
         if (not ok) {
             if (auto call = wCall.lock()) {
-                RING_WARN("[call:%s] no devices found", call->getCallId().c_str());
+                JAMI_WARN("[call:%s] no devices found", call->getCallId().c_str());
                 call->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
             }
         }
@@ -524,7 +524,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 void
 RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, IpAddr target)
 {
-    RING_DBG("[call:%s] outgoing call connected to %s", call.getCallId().c_str(), to_id.c_str());
+    JAMI_DBG("[call:%s] outgoing call connected to %s", call.getCallId().c_str(), to_id.c_str());
 
     call.initIceMediaTransport(true);
     call.setIPToIP(true);
@@ -548,7 +548,7 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    if (!getSystemCodecContainer()->searchCodecByName("PCMA", ring::MEDIA_AUDIO))
+    if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
         throw VoipLinkException("Could not instantiate codec for early media");
 
     // Building the local SDP offer
@@ -593,7 +593,7 @@ RingAccount::SIPStartCall(SIPCall& call, IpAddr target)
         pjContact = getContactHeader(transport ? transport->get() : nullptr);
     }
 
-    RING_DBG("contact header: %.*s / %s -> %s / %.*s",
+    JAMI_DBG("contact header: %.*s / %s -> %s / %.*s",
              (int)pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str(),
              (int)pjTarget.slen, pjTarget.ptr);
 
@@ -616,20 +616,20 @@ RingAccount::SIPStartCall(SIPCall& call, IpAddr target)
     pjsip_tx_data *tdata;
 
     if (pjsip_inv_invite(call.inv.get(), &tdata) != PJ_SUCCESS) {
-        RING_ERR("Could not initialize invite messager for this call");
+        JAMI_ERR("Could not initialize invite messager for this call");
         return false;
     }
 
     //const pjsip_tpselector tp_sel = getTransportSelector();
     const pjsip_tpselector tp_sel = {PJSIP_TPSELECTOR_TRANSPORT, {call.getTransport()->get()}};
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
-        RING_ERR("Unable to associate transport for invite session dialog");
+        JAMI_ERR("Unable to associate transport for invite session dialog");
         return false;
     }
 
-    RING_DBG("[call:%s] Sending SIP invite", call.getCallId().c_str());
+    JAMI_DBG("[call:%s] Sending SIP invite", call.getCallId().c_str());
     if (pjsip_inv_send_msg(call.inv.get(), tdata) != PJ_SUCCESS) {
-        RING_ERR("Unable to send invite message for this call");
+        JAMI_ERR("Unable to send invite message for this call");
         return false;
     }
 
@@ -704,13 +704,13 @@ void RingAccount::unserialize(const YAML::Node &node)
     try {
         parseValue(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     } catch (const std::exception& e) {
-        RING_WARN("can't read device name: %s", e.what());
+        JAMI_WARN("can't read device name: %s", e.what());
     }
     if (registeredName_.empty()) {
         try {
             parseValue(node, DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
         } catch (const std::exception& e) {
-            RING_WARN("can't read registered name: %s", e.what());
+            JAMI_WARN("can't read registered name: %s", e.what());
         }
     }
 
@@ -718,7 +718,7 @@ void RingAccount::unserialize(const YAML::Node &node)
         parsePath(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_, idPath_);
         parseValue(node, DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword_);
     } catch (const std::exception& e) {
-        RING_WARN("can't read archive path: %s", e.what());
+        JAMI_WARN("can't read archive path: %s", e.what());
         archiveHasPassword_ = true;
     }
 
@@ -727,7 +727,7 @@ void RingAccount::unserialize(const YAML::Node &node)
         auto receipt_sig = node[Conf::RING_ACCOUNT_RECEIPT_SIG].as<YAML::Binary>();
         receiptSignature_ = {receipt_sig.data(), receipt_sig.data()+receipt_sig.size()};
     } catch (const std::exception& e) {
-        RING_WARN("can't read receipt: %s", e.what());
+        JAMI_WARN("can't read receipt: %s", e.what());
     }
 
     if (not dhtPort_)
@@ -738,7 +738,7 @@ void RingAccount::unserialize(const YAML::Node &node)
     try {
         parseValue(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
     } catch (const std::exception& e) {
-        RING_WARN("can't read name server: %s", e.what());
+        JAMI_WARN("can't read name server: %s", e.what());
     }
     nameDir_ = NameDirectory::instance(nameServer_);
 #endif
@@ -752,7 +752,7 @@ void
 RingAccount::createRingDevice(const dht::crypto::Identity& id)
 {
     if (not id.second->isCA()) {
-        RING_ERR("[Account %s] trying to sign a certificate with a non-CA.", getAccountID().c_str());
+        JAMI_ERR("[Account %s] trying to sign a certificate with a non-CA.", getAccountID().c_str());
     }
     auto dev_id = dht::crypto::generateIdentity("Ring device", id);
     if (!dev_id.first || !dev_id.second) {
@@ -776,14 +776,14 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
 
     receipt_ = makeReceipt(id);
     receiptSignature_ = id.first->sign({receipt_.begin(), receipt_.end()});
-    RING_WARN("[Account %s] created new device: %s (%s)",
+    JAMI_WARN("[Account %s] created new device: %s (%s)",
               getAccountID().c_str(), ringDeviceId_.c_str(), ringDeviceName_.c_str());
 }
 
 void
 RingAccount::initRingDevice(const AccountArchive& a)
 {
-    RING_WARN("[Account %s] creating new device from archive", getAccountID().c_str());
+    JAMI_WARN("[Account %s] creating new device from archive", getAccountID().c_str());
     SIPAccountBase::setAccountDetails(a.config);
     parseInt(a.config, Conf::CONFIG_DHT_PORT, dhtPort_);
     parseBool(a.config, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
@@ -801,7 +801,7 @@ RingAccount::initRingDevice(const AccountArchive& a)
 std::string
 RingAccount::makeReceipt(const dht::crypto::Identity& id)
 {
-    RING_DBG("[Account %s] signing device receipt", getAccountID().c_str());
+    JAMI_DBG("[Account %s] signing device receipt", getAccountID().c_str());
     DeviceAnnouncement announcement;
     announcement.dev = identity_.second->getId();
     dht::Value ann_val {announcement};
@@ -824,13 +824,13 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
         return false;
 
     if (not identity.first or not identity.second) {
-        RING_ERR("[Account %s] no identity provided", getAccountID().c_str());
+        JAMI_ERR("[Account %s] no identity provided", getAccountID().c_str());
         return false;
     }
 
     auto accountCertificate = identity.second->issuer;
     if (not accountCertificate) {
-        RING_ERR("[Account %s] device certificate must be issued by the account certificate", getAccountID().c_str());
+        JAMI_ERR("[Account %s] device certificate must be issued by the account certificate", getAccountID().c_str());
         return false;
     }
 
@@ -838,14 +838,14 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
     dht::crypto::TrustList account_trust;
     account_trust.add(*accountCertificate);
     if (not account_trust.verify(*identity.second)) {
-        RING_ERR("[Account %s] can't use identity: device certificate chain can't be verified", getAccountID().c_str());
+        JAMI_ERR("[Account %s] can't use identity: device certificate chain can't be verified", getAccountID().c_str());
         return false;
     }
 
     auto pk = accountCertificate->getPublicKey();
-    RING_DBG("[Account %s] checking device receipt for %s", getAccountID().c_str(), pk.getId().toString().c_str());
+    JAMI_DBG("[Account %s] checking device receipt for %s", getAccountID().c_str(), pk.getId().toString().c_str());
     if (!pk.checkSignature({receipt_.begin(), receipt_.end()}, receiptSignature_)) {
-        RING_ERR("[Account %s] device receipt signature check failed", getAccountID().c_str());
+        JAMI_ERR("[Account %s] device receipt signature check failed", getAccountID().c_str());
         return false;
     }
 
@@ -853,18 +853,18 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
     Json::CharReaderBuilder rbuilder;
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
     if (!reader->parse(&receipt_[0], &receipt_[receipt_.size()], &root, nullptr)) {
-        RING_ERR() << this << " device receipt parsing error";
+        JAMI_ERR() << this << " device receipt parsing error";
         return false;
     }
 
     auto dev_id = root["dev"].asString();
     if (dev_id != identity.second->getId().toString()) {
-        RING_ERR("[Account %s] device ID mismatch between receipt and certificate", getAccountID().c_str());
+        JAMI_ERR("[Account %s] device ID mismatch between receipt and certificate", getAccountID().c_str());
         return false;
     }
     auto id = root["id"].asString();
     if (id != pk.getId().toString()) {
-        RING_ERR("[Account %s] account ID mismatch between receipt and certificate", getAccountID().c_str());
+        JAMI_ERR("[Account %s] account ID mismatch between receipt and certificate", getAccountID().c_str());
         return false;
     }
 
@@ -875,17 +875,17 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
         //dht::Value announce_val (announce_msg.get());
         announce_val.msgpack_unpack(announce_msg.get());
         if (not announce_val.checkSignature()) {
-            RING_ERR("[Account %s] announce signature check failed", getAccountID().c_str());
+            JAMI_ERR("[Account %s] announce signature check failed", getAccountID().c_str());
             return false;
         }
         DeviceAnnouncement da;
         da.unpackValue(announce_val);
         if (da.from.toString() != id or da.dev.toString() != dev_id) {
-            RING_ERR("[Account %s] device ID mismatch in announce", getAccountID().c_str());
+            JAMI_ERR("[Account %s] device ID mismatch in announce", getAccountID().c_str());
             return false;
         }
     } catch (const std::exception& e) {
-        RING_ERR("[Account %s] can't read announce: %s", getAccountID().c_str(), e.what());
+        JAMI_ERR("[Account %s] can't read announce: %s", getAccountID().c_str(), e.what());
         return false;
     }
 
@@ -898,14 +898,14 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
     announce_ = std::make_shared<dht::Value>(std::move(announce_val));
     ethAccount_ = root["eth"].asString();
 
-    RING_DBG("[Account %s] ring:%s device %s receipt checked successfully", getAccountID().c_str(), id.c_str(), ringDeviceId_.c_str());
+    JAMI_DBG("[Account %s] ring:%s device %s receipt checked successfully", getAccountID().c_str(), id.c_str(), ringDeviceId_.c_str());
     return true;
 }
 
 dht::crypto::Identity
 RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const
 {
-    RING_DBG("[Account %s] loading identity: %s %s", getAccountID().c_str(), crt_path.c_str(), key_path.c_str());
+    JAMI_DBG("[Account %s] loading identity: %s %s", getAccountID().c_str(), crt_path.c_str(), key_path.c_str());
     dht::crypto::Identity id;
     try {
         dht::crypto::Certificate dht_cert(fileutils::loadFile(crt_path, idPath_));
@@ -915,7 +915,7 @@ RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_pa
             return {};
 
         if (not dht_cert.issuer) {
-            RING_ERR("[Account %s] device certificate %s has no issuer", getAccountID().c_str(), dht_cert.getId().toString().c_str());
+            JAMI_ERR("[Account %s] device certificate %s has no issuer", getAccountID().c_str(), dht_cert.getId().toString().c_str());
             return {};
         }
         // load revocation lists for device authority (account certificate).
@@ -927,7 +927,7 @@ RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_pa
         };
     }
     catch (const std::exception& e) {
-        RING_ERR("Error loading identity: %s", e.what());
+        JAMI_ERR("Error loading identity: %s", e.what());
     }
 
     return id;
@@ -936,7 +936,7 @@ RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_pa
 AccountArchive
 RingAccount::readArchive(const std::string& pwd) const
 {
-    RING_DBG("[Account %s] reading account archive", getAccountID().c_str());
+    JAMI_DBG("[Account %s] reading account archive", getAccountID().c_str());
     return AccountArchive(fileutils::getFullPath(idPath_, archivePath_), pwd);
 }
 
@@ -958,7 +958,7 @@ RingAccount::updateArchive(AccountArchive& archive) const
                                        TLS::CERTIFICATE_FILE,
                                        TLS::PRIVATE_KEY_FILE };
 
-    RING_DBG("[Account %s] building account archive", getAccountID().c_str());
+    JAMI_DBG("[Account %s] building account archive", getAccountID().c_str());
     for (const auto& it : getAccountDetails()) {
         // filter-out?
         if (std::any_of(std::begin(filtered_keys), std::end(filtered_keys),
@@ -987,7 +987,7 @@ RingAccount::saveArchive(AccountArchive& archive, const std::string& pwd)
         archive.save(fileutils::getFullPath(idPath_, archivePath_), pwd);
         archiveHasPassword_ = not pwd.empty();
     } catch (const std::runtime_error& ex) {
-        RING_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
+        JAMI_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
         return;
     }
 }
@@ -1000,7 +1000,7 @@ RingAccount::changeArchivePassword(const std::string& password_old, const std::s
         AccountArchive(path, password_old).save(path, password_new);
         archiveHasPassword_ = not password_new.empty();
     } catch (const std::exception& ex) {
-        RING_ERR("[Account %s] Can't change archive password: %s", getAccountID().c_str(), ex.what());
+        JAMI_ERR("[Account %s] Can't change archive password: %s", getAccountID().c_str(), ex.what());
         return false;
     }
     return true;
@@ -1054,7 +1054,7 @@ RingAccount::addDevice(const std::string& password)
         std::string pin_str;
         AccountArchive a;
         try {
-            RING_DBG("[Account %s] exporting account", this_->getAccountID().c_str());
+            JAMI_DBG("[Account %s] exporting account", this_->getAccountID().c_str());
 
             a = this_->readArchive(password);
 
@@ -1063,7 +1063,7 @@ RingAccount::addDevice(const std::string& password)
 
             std::tie(key, loc) = computeKeys(password, pin_str);
         } catch (const std::exception& e) {
-            RING_ERR("[Account %s] can't export account: %s", this_->getAccountID().c_str(), e.what());
+            JAMI_ERR("[Account %s] can't export account: %s", this_->getAccountID().c_str(), e.what());
             emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 1, "");
             return;
         }
@@ -1075,15 +1075,15 @@ RingAccount::addDevice(const std::string& password)
             if (not this_->dht_.isRunning())
                 throw std::runtime_error("DHT is not running..");
             this_->dht_.put(loc, encrypted, [this_,pin_str](bool ok) {
-                RING_DBG("[Account %s] account archive published: %s", this_->getAccountID().c_str(), ok ? "success" : "failure");
+                JAMI_DBG("[Account %s] account archive published: %s", this_->getAccountID().c_str(), ok ? "success" : "failure");
                 if (ok)
                     emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 0, pin_str);
                 else
                     emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 2, "");
             });
-            RING_WARN("[Account %s] exporting account with PIN: %s at %s (size %zu)", this_->getAccountID().c_str(), pin_str.c_str(), loc.toString().c_str(), encrypted.size());
+            JAMI_WARN("[Account %s] exporting account with PIN: %s at %s (size %zu)", this_->getAccountID().c_str(), pin_str.c_str(), loc.toString().c_str(), encrypted.size());
         } catch (const std::exception& e) {
-            RING_ERR("[Account %s] can't export account: %s", this_->getAccountID().c_str(), e.what());
+            JAMI_ERR("[Account %s] can't export account: %s", this_->getAccountID().c_str(), e.what());
             emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 2, "");
             return;
         }
@@ -1108,10 +1108,10 @@ RingAccount::exportArchive(const std::string& destinationPath, const std::string
         std::ofstream dst(destinationPath, std::ios::out | std::ios::binary);
         dst << src.rdbuf();
     } catch (const std::runtime_error& ex) {
-        RING_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
+        JAMI_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
         return false;
     } catch (...) {
-        RING_ERR("[Account %s] Can't export archive: can't read archive", getAccountID().c_str());
+        JAMI_ERR("[Account %s] Can't export archive: can't read archive", getAccountID().c_str());
         return false;
     }
     return true;
@@ -1187,7 +1187,7 @@ RingAccount::loadAccountFromFile(const std::string& archive_path, const std::str
         try {
             archive = AccountArchive(archive_path, archive_password);
         } catch (const std::exception& ex) {
-            RING_WARN("[Account %s] can't read file: %s", accountId.c_str(), ex.what());
+            JAMI_WARN("[Account %s] can't read file: %s", accountId.c_str(), ex.what());
             runOnMainThread([w, accountId]() {
                 if (auto this_ = w.lock())
                     this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
@@ -1209,11 +1209,11 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
 
     // launch dedicated dht instance
     if (dht_.isRunning()) {
-        RING_ERR("DHT already running (stopping it first).");
+        JAMI_ERR("DHT already running (stopping it first).");
         dht_.join();
     }
     dht_.setOnStatusChanged([](dht::NodeStatus s4, dht::NodeStatus s6) {
-        RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
+        JAMI_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
     });
     dht_.run((in_port_t)dhtPortUsed_, {}, true);
     dht_.bootstrap(loadNodes());
@@ -1232,7 +1232,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
         if (state_old->first && state_new->first) {
             bool network_error = !state_old->second && !state_new->second;
             if (auto this_ = w.lock()) {
-                RING_WARN("[Account %s] failure looking for archive on DHT: %s", this_->getAccountID().c_str(), network_error ? "network error" : "not found");
+                JAMI_WARN("[Account %s] failure looking for archive on DHT: %s", this_->getAccountID().c_str(), network_error ? "network error" : "not found");
                 this_->setRegistrationState(network_error ? RegistrationState::ERROR_NETWORK : RegistrationState::ERROR_GENERIC);
                 runOnMainThread([=]() {
                     Manager::instance().removeAccount(this_->getAccountID());
@@ -1249,7 +1249,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
         try {
             std::tie(key, loc) = computeKeys(archive_password, archive_pin, previous);
             if (auto this_ = w.lock()) {
-                RING_DBG("[Account %s] trying to load account from DHT with %s at %s", this_->getAccountID().c_str(), archive_pin.c_str(), loc.toString().c_str());
+                JAMI_DBG("[Account %s] trying to load account from DHT with %s at %s", this_->getAccountID().c_str(), archive_pin.c_str(), loc.toString().c_str());
                 this_->dht_.get(loc, [w,key,found,archive_password](const std::shared_ptr<dht::Value>& val) {
                     std::vector<uint8_t> decrypted;
                     try {
@@ -1257,14 +1257,14 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
                     } catch (const std::exception& ex) {
                         return true;
                     }
-                    RING_DBG("Found archive on the DHT");
+                    JAMI_DBG("Found archive on the DHT");
                     runOnMainThread([=]() {
                         if (auto this_ = w.lock()) {
                             try {
                                 *found =  true;
                                 this_->loadAccountFromArchive(AccountArchive(decrypted), archive_password);
                             } catch (const std::exception& e) {
-                                RING_WARN("[Account %s] error reading archive: %s", this_->getAccountID().c_str(), e.what());
+                                JAMI_WARN("[Account %s] error reading archive: %s", this_->getAccountID().c_str(), e.what());
                                 this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
                                 Manager::instance().removeAccount(this_->getAccountID());
                             }
@@ -1272,14 +1272,14 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
                     });
                     return not *found;
                 }, [=](bool ok) {
-                    RING_DBG("[Account %s] DHT archive search ended at %s", this_->getAccountID().c_str(), loc.toString().c_str());
+                    JAMI_DBG("[Account %s] DHT archive search ended at %s", this_->getAccountID().c_str(), loc.toString().c_str());
                     state->first = true;
                     state->second = ok;
                     searchEnded();
                 });
             }
         } catch (const std::exception& e) {
-            RING_ERR("Error computing keys: %s", e.what());
+            JAMI_ERR("Error computing keys: %s", e.what());
             state->first = true;
             state->second = true;
             searchEnded();
@@ -1294,7 +1294,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
 void
 RingAccount::createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate)
 {
-    RING_WARN("[Account %s] creating new account", getAccountID().c_str());
+    JAMI_WARN("[Account %s] creating new account", getAccountID().c_str());
     setRegistrationState(RegistrationState::INITIALIZING);
     auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
     ThreadPool::instance().run([sthis,archive_password,migrate]() mutable {
@@ -1304,7 +1304,7 @@ RingAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
         auto future_keypair = ThreadPool::instance().get<dev::KeyPair>(std::bind(&dev::KeyPair::create));
         try {
             if (migrate.first and migrate.second) {
-                RING_WARN("[Account %s] converting certificate from old ring account %s",
+                JAMI_WARN("[Account %s] converting certificate from old ring account %s",
                           this_.getAccountID().c_str(), migrate.first->getPublicKey().getId().toString().c_str());
                 a.id = std::move(migrate);
                 try {
@@ -1320,7 +1320,7 @@ RingAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
                 if (!a.id.first || !a.id.second) {
                     throw VoipLinkException("Can't generate identity for this account.");
                 }
-                RING_WARN("[Account %s] new account: CA: %s, RingID: %s",
+                JAMI_WARN("[Account %s] new account: CA: %s, RingID: %s",
                           this_.getAccountID().c_str(), ca.second->getId().toString().c_str(),
                           a.id.second->getId().toString().c_str());
                 a.ca_key = ca.first;
@@ -1339,7 +1339,7 @@ RingAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
                 Manager::instance().removeAccount(sthis->getAccountID());
             });
         }
-        RING_DBG("[Account %s] Account creation ended, saving configuration", this_.getAccountID().c_str());
+        JAMI_DBG("[Account %s] Account creation ended, saving configuration", this_.getAccountID().c_str());
         this_.setRegistrationState(RegistrationState::UNREGISTERED);
         Manager::instance().saveConfig();
         this_.doRegister();
@@ -1354,11 +1354,11 @@ RingAccount::needsMigration(const dht::crypto::Identity& id)
     auto cert = id.second->issuer;
     while (cert) {
         if (not cert->isCA()){
-            RING_WARN("certificate %s is not a CA, needs update.", cert->getId().toString().c_str());
+            JAMI_WARN("certificate %s is not a CA, needs update.", cert->getId().toString().c_str());
             return true;
         }
         if (cert->getExpiration() < clock::now()) {
-            RING_WARN("certificate %s is expired, needs update.", cert->getId().toString().c_str());
+            JAMI_WARN("certificate %s is expired, needs update.", cert->getId().toString().c_str());
             return true;
         }
         cert = cert->issuer;
@@ -1369,7 +1369,7 @@ RingAccount::needsMigration(const dht::crypto::Identity& id)
 bool
 RingAccount::updateCertificates(AccountArchive& archive, dht::crypto::Identity& device)
 {
-    RING_WARN("Updating certificates");
+    JAMI_WARN("Updating certificates");
     using Certificate = dht::crypto::Certificate;
 
     // We need the CA key to resign certificates
@@ -1389,20 +1389,20 @@ RingAccount::updateCertificates(AccountArchive& archive, dht::crypto::Identity& 
     if (not ca or (not ca->issuer and (not ca->isCA() or ca->getExpiration() < clock::now()))) {
         ca = std::make_shared<Certificate>(Certificate::generate(*archive.ca_key, "Ring CA", {}, true));
         updated = true;
-        RING_DBG("CA CRT re-generated");
+        JAMI_DBG("CA CRT re-generated");
     }
 
     // Update certificate
     if (updated or not cert->isCA() or cert->getExpiration() < clock::now()) {
         cert = std::make_shared<Certificate>(Certificate::generate(*archive.id.first, "Ring", dht::crypto::Identity{archive.ca_key, ca}, true));
         updated = true;
-        RING_DBG("ring CRT re-generated");
+        JAMI_DBG("ring CRT re-generated");
     }
 
     if (updated and device.first and *device.first) {
         // update device certificate
         device.second = std::make_shared<Certificate>(Certificate::generate(*device.first, "Ring device", archive.id));
-        RING_DBG("device CRT re-generated");
+        JAMI_DBG("device CRT re-generated");
     }
 
     return updated;
@@ -1415,7 +1415,7 @@ RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& devic
     try {
         archive = readArchive(pwd);
     } catch (...) {
-        RING_DBG("[Account %s] Can't load archive", getAccountID().c_str());
+        JAMI_DBG("[Account %s] Can't load archive", getAccountID().c_str());
         Migration::setState(accountID_, Migration::State::INVALID);
         setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
         return;
@@ -1436,7 +1436,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
-    RING_DBG("[Account %s] loading account", getAccountID().c_str());
+    JAMI_DBG("[Account %s] loading account", getAccountID().c_str());
     try {
         auto id = loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
         bool hasArchive = not archivePath_.empty()
@@ -1447,7 +1447,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
             loadContacts();
             loadTrustRequests();
             if (not hasArchive)
-                RING_WARN("[Account %s] account archive not found, won't be able to add new devices", getAccountID().c_str());
+                JAMI_WARN("[Account %s] account archive not found, won't be able to add new devices", getAccountID().c_str());
             if (not isEnabled()) {
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
@@ -1455,11 +1455,11 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
         else if (isEnabled()) {
             if (hasArchive) {
                 if (needsMigration(id)) {
-                    RING_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
+                    JAMI_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
                     migrateAccount(archive_password, id);
                 }
                 else {
-                    RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
+                    JAMI_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
                     try {
                         initRingDevice(readArchive(archive_password));
                     }
@@ -1492,7 +1492,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
         }
     }
     catch (const std::exception& e) {
-        RING_WARN("[Account %s] error loading account: %s", getAccountID().c_str(), e.what());
+        JAMI_WARN("[Account %s] error loading account: %s", getAccountID().c_str(), e.what());
         identity_ = dht::crypto::Identity{};
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
@@ -1541,7 +1541,7 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string>& details
     &&  proxyServerCached_.empty()))
         proxyServer_ = DHT_DEFAULT_PROXY;
     if (proxyServer_ != oldProxyServer) {
-        RING_DBG("DHT Proxy configuration changed, resetting cache");
+        JAMI_DBG("DHT Proxy configuration changed, resetting cache");
         proxyServerCached_ = {};
         auto proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
         std::remove(proxyCachePath.c_str());
@@ -1569,7 +1569,7 @@ RingAccount::getAccountDetails() const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
-    a.emplace(Conf::CONFIG_DHT_PORT, ring::to_string(dhtPort_));
+    a.emplace(Conf::CONFIG_DHT_PORT, jami::to_string(dhtPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_ID, ringDeviceId_);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
@@ -1684,7 +1684,7 @@ RingAccount::handlePendingCallList()
         try {
             handled = handlePendingCall(*pc_iter, incoming);
         } catch (const std::exception& e) {
-            RING_ERR("[DHT] exception during pending call handling: %s", e.what());
+            JAMI_ERR("[DHT] exception during pending call handling: %s", e.what());
             handled = true; // drop from pending list
         }
 
@@ -1714,11 +1714,11 @@ RingAccount::checkPeerTlsCertificate(dht::InfoHash from,
                         std::shared_ptr<dht::crypto::Certificate>& cert_out)
 {
     if (cert_num == 0) {
-        RING_ERR("[peer:%s] No certificate", from.toString().c_str());
+        JAMI_ERR("[peer:%s] No certificate", from.toString().c_str());
         return PJ_SSL_CERT_EUNKNOWN;
     }
     if (status & GNUTLS_CERT_EXPIRED or status & GNUTLS_CERT_NOT_ACTIVATED) {
-        RING_ERR("[peer:%s] Expired certificate", from.toString().c_str());
+        JAMI_ERR("[peer:%s] Expired certificate", from.toString().c_str());
         return PJ_SSL_CERT_EVALIDITY_PERIOD;
     }
 
@@ -1732,26 +1732,26 @@ RingAccount::checkPeerTlsCertificate(dht::InfoHash from,
     // Check expected peer identity
     dht::InfoHash tls_account_id;
     if (not foundPeerDevice(crt, tls_account_id)) {
-        RING_ERR("[peer:%s] Discarding message from invalid peer certificate.", from.toString().c_str());
+        JAMI_ERR("[peer:%s] Discarding message from invalid peer certificate.", from.toString().c_str());
         return PJ_SSL_CERT_EUNKNOWN;
     }
     if (from_account != tls_account_id) {
-        RING_ERR("[peer:%s] Discarding message from wrong peer account %s.", from.toString().c_str(), tls_account_id.toString().c_str());
+        JAMI_ERR("[peer:%s] Discarding message from wrong peer account %s.", from.toString().c_str(), tls_account_id.toString().c_str());
         return PJ_SSL_CERT_EUNTRUSTED;
     }
 
     const auto tls_id = crt->getId();
     if (crt->getUID() != tls_id.toString()) {
-        RING_ERR("[peer:%s] Certificate UID must be the public key ID", from.toString().c_str());
+        JAMI_ERR("[peer:%s] Certificate UID must be the public key ID", from.toString().c_str());
         return PJ_SSL_CERT_EUNTRUSTED;
     }
     if (tls_id != from) {
-        RING_ERR("[peer:%s] Certificate public key ID doesn't match (%s)",
+        JAMI_ERR("[peer:%s] Certificate public key ID doesn't match (%s)",
                  from.toString().c_str(), tls_id.toString().c_str());
         return PJ_SSL_CERT_EUNTRUSTED;
     }
 
-    RING_DBG("[peer:%s] Certificate verified", from.toString().c_str());
+    JAMI_DBG("[peer:%s] Certificate verified", from.toString().c_str());
     cert_out = std::move(crt);
     return PJ_SUCCESS;
 }
@@ -1765,7 +1765,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 
     auto ice = pc.ice_sp.get();
     if (not ice or ice->isFailed()) {
-        RING_ERR("[call:%s] Null or failed ICE transport", call->getCallId().c_str());
+        JAMI_ERR("[call:%s] Null or failed ICE transport", call->getCallId().c_str());
         call->onFailure();
         return true;
     }
@@ -1773,7 +1773,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
     // Return to pending list if not negotiated yet and not in timeout
     if (not ice->isRunning()) {
         if ((std::chrono::steady_clock::now() - pc.start) >= ICE_NEGOTIATION_TIMEOUT) {
-            RING_WARN("[call:%s] Timeout on ICE negotiation", call->getCallId().c_str());
+            JAMI_WARN("[call:%s] Timeout on ICE negotiation", call->getCallId().c_str());
             call->onFailure();
             return true;
         }
@@ -1810,7 +1810,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
                             for (auto& pscall : this_.pendingSipCalls_) {
                                 if (auto pcall = pscall.call.lock()) {
                                     if (pcall == call and not pscall.from_cert) {
-                                        RING_DBG("[call:%s] got peer certificate from TLS negotiation", call->getCallId().c_str());
+                                        JAMI_DBG("[call:%s] got peer certificate from TLS negotiation", call->getCallId().c_str());
                                         tls::CertificateStore::instance().pinCertificate(peer_cert);
                                         pscall.from_cert = peer_cert;
                                         break;
@@ -1823,7 +1823,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
                 }
                 return PJ_SSL_CERT_EUNTRUSTED;
             } catch (const std::exception& e) {
-                RING_ERR("[peer:%s] TLS certificate check exception: %s",
+                JAMI_ERR("[peer:%s] TLS certificate check exception: %s",
                          remote_device.toString().c_str(), e.what());
                 return PJ_SSL_CERT_EUNKNOWN;
             }
@@ -1889,10 +1889,10 @@ RingAccount::mapPortUPnP()
         uint16_t port_used;
         std::lock_guard<std::mutex> lock(upnp_mtx);
         upnp_->removeMappings();
-        added = upnp_->addAnyMapping(dhtPort_, ring::upnp::PortType::UDP, false, &port_used);
+        added = upnp_->addAnyMapping(dhtPort_, jami::upnp::PortType::UDP, false, &port_used);
         if (added) {
             if (port_used != dhtPort_)
-                RING_DBG("UPnP could not map port %u for DHT, using %u instead", dhtPort_, port_used);
+                JAMI_DBG("UPnP could not map port %u for DHT, using %u instead", dhtPort_, port_used);
             dhtPortUsed_ = port_used;
         }
     }
@@ -1909,7 +1909,7 @@ RingAccount::doRegister()
 {
     std::unique_lock<std::mutex> lock(configurationMutex_);
     if (not isUsable()) {
-        RING_WARN("Account must be enabled and active to register, ignoring");
+        JAMI_WARN("Account must be enabled and active to register, ignoring");
         return;
     }
 
@@ -1926,13 +1926,13 @@ RingAccount::doRegister()
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
-        RING_DBG("UPnP: waiting for IGD to register RING account");
+        JAMI_DBG("UPnP: waiting for IGD to register RING account");
         lock.unlock();
         setRegistrationState(RegistrationState::TRYING);
         std::thread{ [w=weak()] {
             if (auto acc = w.lock()) {
                 if (not acc->mapPortUPnP())
-                    RING_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
+                    JAMI_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
                 acc->doRegister_();
             }
         }}.detach();
@@ -1969,7 +1969,7 @@ RingAccount::loadBootstrap() const
             }
         }
         for (const auto& ip : bootstrap)
-            RING_DBG("Bootstrap node: %s", ip.toString().c_str());
+            JAMI_DBG("Bootstrap node: %s", ip.toString().c_str());
     }
     return bootstrap;
 }
@@ -1983,7 +1983,7 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
         buddyUri = parseRingUri(buddy_id);
     }
     catch (...) {
-        RING_ERR("[Account %s] Failed to track a buddy due to an invalid URI %s", getAccountID().c_str(), buddy_id.c_str());
+        JAMI_ERR("[Account %s] Failed to track a buddy due to an invalid URI %s", getAccountID().c_str(), buddy_id.c_str());
         return;
     }
     auto h = dht::InfoHash(buddyUri);
@@ -2030,7 +2030,7 @@ RingAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
         }
         return true;
     });
-    // RING_DBG("[Account %s] tracking buddy %s", getAccountID().c_str(), h.to_c_str());
+    // JAMI_DBG("[Account %s] tracking buddy %s", getAccountID().c_str(), h.to_c_str());
 }
 
 std::map<std::string, bool>
@@ -2046,7 +2046,7 @@ RingAccount::getTrackedBuddyPresence()
 void
 RingAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
 {
-    RING_DBG("Buddy %s online", contactId.toString().c_str());
+    JAMI_DBG("Buddy %s online", contactId.toString().c_str());
     std::string id(contactId.toString());
     emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), id, 1,  "");
     messageEngine_.onPeerOnline(id);
@@ -2055,7 +2055,7 @@ RingAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
 void
 RingAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
 {
-    RING_DBG("Buddy %s offline", contactId.toString().c_str());
+    JAMI_DBG("Buddy %s offline", contactId.toString().c_str());
     emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), contactId.toString(), 0,  "");
 }
 
@@ -2071,7 +2071,7 @@ RingAccount::doRegister_()
         loadTreatedCalls();
         loadTreatedMessages();
         if (dht_.isRunning()) {
-            RING_ERR("[Account %s] DHT already running (stopping it first).", getAccountID().c_str());
+            JAMI_ERR("[Account %s] DHT already running (stopping it first).", getAccountID().c_str());
             dht_.join();
         }
 
@@ -2096,22 +2096,22 @@ RingAccount::doRegister_()
 
         auto currentDhtStatus = std::make_shared<dht::NodeStatus>(dht::NodeStatus::Disconnected);
         dht_.setOnStatusChanged([this, currentDhtStatus](dht::NodeStatus s4, dht::NodeStatus s6) {
-            RING_DBG("[Account %s] Dht status : IPv4 %s; IPv6 %s", getAccountID().c_str(), dhtStatusStr(s4), dhtStatusStr(s6));
+            JAMI_DBG("[Account %s] Dht status : IPv4 %s; IPv6 %s", getAccountID().c_str(), dhtStatusStr(s4), dhtStatusStr(s6));
             RegistrationState state;
             auto newStatus = std::max(s4, s6);
             if (newStatus == *currentDhtStatus)
                 return;
             switch (newStatus) {
                 case dht::NodeStatus::Connecting:
-                    RING_WARN("[Account %s] connecting to the DHT network...", getAccountID().c_str());
+                    JAMI_WARN("[Account %s] connecting to the DHT network...", getAccountID().c_str());
                     state = RegistrationState::TRYING;
                     break;
                 case dht::NodeStatus::Connected:
-                    RING_WARN("[Account %s] connected to the DHT network", getAccountID().c_str());
+                    JAMI_WARN("[Account %s] connected to the DHT network", getAccountID().c_str());
                     state = RegistrationState::REGISTERED;
                     break;
                 case dht::NodeStatus::Disconnected:
-                    RING_WARN("[Account %s] disconnected from the DHT network", getAccountID().c_str());
+                    JAMI_WARN("[Account %s] disconnected from the DHT network", getAccountID().c_str());
                     state = RegistrationState::UNREGISTERED;
                     break;
                 default:
@@ -2130,10 +2130,10 @@ RingAccount::doRegister_()
         config.push_node_id = getAccountID();
         config.threaded = true;
         if (not config.proxy_server.empty())
-            RING_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
+            JAMI_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
 
         if (not deviceKey_.empty()) {
-            RING_WARN("[Account %s] using push notifications", getAccountID().c_str());
+            JAMI_WARN("[Account %s] using push notifications", getAccountID().c_str());
             dht_.setPushNotificationToken(deviceKey_);
         }
 
@@ -2143,7 +2143,7 @@ RingAccount::doRegister_()
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
             if (auto cert = tls::CertificateStore::instance().getCertificate(pk_id.toString()))
                 ret.emplace_back(std::move(cert));
-            RING_DBG("Query for local certificate store: %s: %zu found.", pk_id.toString().c_str(), ret.size());
+            JAMI_DBG("Query for local certificate store: %s: %zu found.", pk_id.toString().c_str(), ret.size());
             return ret;
         });
 
@@ -2163,7 +2163,7 @@ RingAccount::doRegister_()
                 char tmp[2048];
                 vsprintf(tmp, m, args);
                 auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-                ring::emitSignal<DRing::DebugSignal::MessageSend>(std::to_string(now) + " " + std::string(tmp));
+                jami::emitSignal<DRing::DebugSignal::MessageSend>(std::to_string(now) + " " + std::string(tmp));
             };
             dht_.setLoggers(log_all, log_all, silent);
 #else
@@ -2189,7 +2189,7 @@ RingAccount::doRegister_()
         // Put device annoucement
         if (announce_) {
             auto h = dht::InfoHash(ringAccountId_);
-            RING_DBG("[Account %s] announcing device at %s", getAccountID().c_str(), h.toString().c_str());
+            JAMI_DBG("[Account %s] announcing device at %s", getAccountID().c_str(), h.toString().c_str());
             dht_.put(h, announce_, dht::DoneCallback{}, {}, true);
             for (const auto& crl : identity_.second->issuer->getRevocationLists())
                 dht_.put(h, crl, dht::DoneCallback{}, {}, true);
@@ -2201,7 +2201,7 @@ RingAccount::doRegister_()
             });
             dht_.listen<dht::crypto::RevocationList>(h, [this](dht::crypto::RevocationList&& crl) {
                 if (crl.isSignedBy(*identity_.second->issuer)) {
-                    RING_DBG("[Account %s] found CRL for account.", getAccountID().c_str());
+                    JAMI_DBG("[Account %s] found CRL for account.", getAccountID().c_str());
                     tls::CertificateStore::instance().pinRevocationList(
                         ringAccountId_,
                         std::make_shared<dht::crypto::RevocationList>(std::move(crl)));
@@ -2210,12 +2210,12 @@ RingAccount::doRegister_()
             });
             syncDevices();
         } else {
-            RING_WARN("[Account %s] can't announce device: no annoucement...", getAccountID().c_str());
+            JAMI_WARN("[Account %s] can't announce device: no annoucement...", getAccountID().c_str());
         }
 
         // Listen for incoming calls
         callKey_ = dht::InfoHash::get("callto:"+ringDeviceId_);
-        RING_DBG("[Account %s] Listening on callto:%s : %s", getAccountID().c_str(), ringDeviceId_.c_str(), callKey_.toString().c_str());
+        JAMI_DBG("[Account %s] Listening on callto:%s : %s", getAccountID().c_str(), ringDeviceId_.c_str(), callKey_.toString().c_str());
         dht_.listen<dht::IceCandidates>(
             callKey_,
             [this] (dht::IceCandidates&& msg) {
@@ -2229,7 +2229,7 @@ RingAccount::doRegister_()
                 if (!res.second)
                     return true;
 
-                RING_WARN("[Account %s] ICE candidate from %s.", getAccountID().c_str(), from.toString().c_str());
+                JAMI_WARN("[Account %s] ICE candidate from %s.", getAccountID().c_str(), from.toString().c_str());
 
                 onPeerMessage(from, [this, msg=std::move(msg)](const std::shared_ptr<dht::crypto::Certificate>& cert,
                                                                const dht::InfoHash& account) mutable
@@ -2254,7 +2254,7 @@ RingAccount::doRegister_()
                         return;
                     }
 
-                    RING_WARN("Got trust request from: %s / %s", peer_account.toString().c_str(), v.from.toString().c_str());
+                    JAMI_WARN("Got trust request from: %s / %s", peer_account.toString().c_str(), v.from.toString().c_str());
                     onTrustRequest(peer_account, v.from, time(nullptr), v.confirm, std::move(v.payload));
                 });
                 return true;
@@ -2269,7 +2269,7 @@ RingAccount::doRegister_()
                 // check device certificate
                 findCertificate(sync.from, [this,sync](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
                     if (!cert or cert->getId() != sync.from) {
-                        RING_WARN("Can't find certificate for device %s", sync.from.toString().c_str());
+                        JAMI_WARN("Can't find certificate for device %s", sync.from.toString().c_str());
                         return;
                     }
                     if (not foundAccountDevice(cert))
@@ -2303,7 +2303,7 @@ RingAccount::doRegister_()
                     std::map<std::string, std::string> payloads = {{datatype,
                                                                    utf8_make_valid(v.msg)}};
                     onTextMessage(peer_account.toString(), payloads);
-                    RING_DBG() << "Sending message confirmation " << v.id;
+                    JAMI_DBG() << "Sending message confirmation " << v.id;
                     dht_.putEncrypted(inboxDeviceKey,
                               v.from,
                               dht::ImMessage(v.id, std::string(), now));
@@ -2320,7 +2320,7 @@ RingAccount::doRegister_()
         }
     }
     catch (const std::exception& e) {
-        RING_ERR("Error registering DHT account: %s", e.what());
+        JAMI_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 }
@@ -2358,7 +2358,7 @@ RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
                 req->second.received = received;
                 req->second.payload = std::move(payload);
             } else {
-                RING_DBG("[Account %s] Ignoring outdated trust request from %s", getAccountID().c_str(), peer_account.toString().c_str());
+                JAMI_DBG("[Account %s] Ignoring outdated trust request from %s", getAccountID().c_str(), peer_account.toString().c_str());
             }
         }
         saveTrustRequests();
@@ -2377,7 +2377,7 @@ RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(
     // quick check in case we already explicilty banned this device
     auto trustStatus = trust_.getCertificateStatus(peer_device.toString());
     if (trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
-        RING_WARN("[Account %s] Discarding message from banned device %s", getAccountID().c_str(), peer_device.toString().c_str());
+        JAMI_WARN("[Account %s] Discarding message from banned device %s", getAccountID().c_str(), peer_device.toString().c_str());
         return;
     }
 
@@ -2385,12 +2385,12 @@ RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(
         [this, peer_device, cb=std::move(cb)](const std::shared_ptr<dht::crypto::Certificate>& cert) {
         dht::InfoHash peer_account_id;
         if (not foundPeerDevice(cert, peer_account_id)) {
-            RING_WARN("[Account %s] Discarding message from invalid peer certificate %s.", getAccountID().c_str(), peer_device.toString().c_str());
+            JAMI_WARN("[Account %s] Discarding message from invalid peer certificate %s.", getAccountID().c_str(), peer_device.toString().c_str());
             return;
         }
 
         if (not trust_.isAllowed(*cert, dhtPublicInCalls_)) {
-            RING_WARN("[Account %s] Discarding message from unauthorized peer %s.", getAccountID().c_str(), peer_device.toString().c_str());
+            JAMI_WARN("[Account %s] Discarding message from unauthorized peer %s.", getAccountID().c_str(), peer_device.toString().c_str());
             return;
         }
 
@@ -2413,7 +2413,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
             return false;
 
         if (ice->isFailed()) {
-            RING_ERR("[call:%s] ice init failed", call->getCallId().c_str());
+            JAMI_ERR("[call:%s] ice init failed", call->getCallId().c_str());
             call->onFailure(EIO);
             return false;
         }
@@ -2437,14 +2437,14 @@ RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
 
     // match certificate chain
     if (not accountTrust_.verify(*crt)) {
-        RING_WARN("[Account %s] Found invalid account device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
+        JAMI_WARN("[Account %s] Found invalid account device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
         return false;
     }
 
     // insert device
     auto it = knownDevices_.emplace(crt->getId(), KnownDevice{crt, name, updated});
     if (it.second) {
-        RING_DBG("[Account %s] Found account device: %s %s", getAccountID().c_str(),
+        JAMI_DBG("[Account %s] Found account device: %s %s", getAccountID().c_str(),
                                                               name.c_str(),
                                                               crt->getId().toString().c_str());
         tls::CertificateStore::instance().pinCertificate(crt);
@@ -2453,7 +2453,7 @@ RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
-            RING_DBG("[Account %s] updating device name: %s %s", getAccountID().c_str(),
+            JAMI_DBG("[Account %s] updating device name: %s %s", getAccountID().c_str(),
                                                                   name.c_str(),
                                                                   crt->getId().toString().c_str());
             it.first->second.name = name;
@@ -2476,7 +2476,7 @@ RingAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& cr
 
     // Device certificate can't be self-signed
     if (top_issuer == crt) {
-        RING_WARN("Found invalid peer device: %s", crt->getId().toString().c_str());
+        JAMI_WARN("Found invalid peer device: %s", crt->getId().toString().c_str());
         return false;
     }
 
@@ -2485,12 +2485,12 @@ RingAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& cr
     dht::crypto::TrustList peer_trust;
     peer_trust.add(*top_issuer);
     if (not peer_trust.verify(*crt)) {
-        RING_WARN("Found invalid peer device: %s", crt->getId().toString().c_str());
+        JAMI_WARN("Found invalid peer device: %s", crt->getId().toString().c_str());
         return false;
     }
 
     account_id = crt->issuer->getId();
-    RING_WARN("Found peer device: %s account:%s CA:%s", crt->getId().toString().c_str(), account_id.toString().c_str(), top_issuer->getId().toString().c_str());
+    JAMI_WARN("Found peer device: %s account:%s CA:%s", crt->getId().toString().c_str(), account_id.toString().c_str(), top_issuer->getId().toString().c_str());
     return true;
 }
 
@@ -2523,11 +2523,11 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
         dht::Value {dht::IceCandidates(peer_ice_msg.id, ice->packIceMsg())},
         [wcall](bool ok) {
             if (!ok) {
-                RING_WARN("Can't put ICE descriptor reply on DHT");
+                JAMI_WARN("Can't put ICE descriptor reply on DHT");
                 if (auto call = wcall.lock())
                     call->onFailure();
             } else
-                RING_DBG("Successfully put ICE descriptor reply on DHT");
+                JAMI_DBG("Successfully put ICE descriptor reply on DHT");
         });
 
     auto started_time = std::chrono::steady_clock::now();
@@ -2568,7 +2568,7 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
         return;
     }
 
-    RING_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
+    JAMI_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.clear();
@@ -2595,7 +2595,7 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
 void
 RingAccount::connectivityChanged()
 {
-    RING_WARN("connectivityChanged");
+    JAMI_WARN("connectivityChanged");
     if (not isUsable()) {
         // nothing to do
         return;
@@ -2633,7 +2633,7 @@ bool
 RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status)
 {
     if (contacts_.find(dht::InfoHash(cert_id)) != contacts_.end()) {
-        RING_DBG("Can't set certificate status for existing contacts %s", cert_id.c_str());
+        JAMI_DBG("Can't set certificate status for existing contacts %s", cert_id.c_str());
         return false;
     }
     findCertificate(cert_id);
@@ -2656,7 +2656,7 @@ loadIdList(const std::string& path)
     std::set<ID> ids;
     std::ifstream file(path);
     if (!file.is_open()) {
-        RING_DBG("Could not load %s", path.c_str());
+        JAMI_DBG("Could not load %s", path.c_str());
         return ids;
     }
     std::string line;
@@ -2675,7 +2675,7 @@ saveIdList(const std::string& path, const std::set<ID>& ids)
 {
     std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
-        RING_ERR("Could not save to %s", path.c_str());
+        JAMI_ERR("Could not save to %s", path.c_str());
         return;
     }
     for (auto& c : ids)
@@ -2738,20 +2738,20 @@ RingAccount::loadKnownDevices()
         msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
         oh.get().convert(knownDevices);
     } catch (const std::exception& e) {
-        RING_WARN("[Account %s] error loading devices: %s", getAccountID().c_str(), e.what());
+        JAMI_WARN("[Account %s] error loading devices: %s", getAccountID().c_str(), e.what());
         return;
     }
 
     for (const auto& d : knownDevices) {
-        RING_DBG("[Account %s] loading known account device %s %s", getAccountID().c_str(),
+        JAMI_DBG("[Account %s] loading known account device %s %s", getAccountID().c_str(),
                                                                     d.second.first.c_str(),
                                                                     d.first.toString().c_str());
         if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString())) {
             if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
-                RING_WARN("[Account %s] can't add device %s", getAccountID().c_str(), d.first.toString().c_str());
+                JAMI_WARN("[Account %s] can't add device %s", getAccountID().c_str(), d.first.toString().c_str());
         }
         else {
-            RING_WARN("[Account %s] can't find certificate for device %s", getAccountID().c_str(), d.first.toString().c_str());
+            JAMI_WARN("[Account %s] can't find certificate for device %s", getAccountID().c_str(), d.first.toString().c_str());
         }
     }
 }
@@ -2791,7 +2791,7 @@ RingAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(nodesPath));
         std::ofstream file(nodesPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
-            RING_ERR("Could not save nodes to %s", nodesPath.c_str());
+            JAMI_ERR("Could not save nodes to %s", nodesPath.c_str());
             return;
         }
         for (auto& n : nodes)
@@ -2820,7 +2820,7 @@ RingAccount::loadNodes() const
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(nodesPath));
         std::ifstream file(nodesPath);
         if (!file.is_open()) {
-            RING_DBG("Could not load nodes from %s", nodesPath.c_str());
+            JAMI_DBG("Could not load nodes from %s", nodesPath.c_str());
             return nodes;
         }
         std::string line;
@@ -2850,11 +2850,11 @@ RingAccount::loadValues() const
             std::istreambuf_iterator<char> begin(ifs), end;
             values.emplace_back(dht::ValuesExport{dht::InfoHash(fname), std::vector<uint8_t>{begin, end}});
         } catch (const std::exception& e) {
-            RING_ERR("[Account %s] error reading value from cache : %s", getAccountID().c_str(), e.what());
+            JAMI_ERR("[Account %s] error reading value from cache : %s", getAccountID().c_str(), e.what());
         }
         fileutils::remove(file);
     }
-    RING_DBG("[Account %s] loaded %zu values", getAccountID().c_str(), values.size());
+    JAMI_DBG("[Account %s] loaded %zu values", getAccountID().c_str(), values.size());
     return values;
 }
 
@@ -2867,20 +2867,20 @@ RingAccount::loadDhParams(const std::string path)
         if (duration >= std::chrono::hours(24 * 3)) // file is valid only 3 days
             throw std::runtime_error("file too old");
 
-        RING_DBG("Loading DhParams from file '%s'", path.c_str());
+        JAMI_DBG("Loading DhParams from file '%s'", path.c_str());
         return {fileutils::loadFile(path)};
     } catch (const std::exception& e) {
-        RING_DBG("Failed to load DhParams file '%s': %s", path.c_str(), e.what());
+        JAMI_DBG("Failed to load DhParams file '%s': %s", path.c_str(), e.what());
         if (auto params = tls::DhParams::generate()) {
             try {
                 fileutils::saveFile(path, params.serialize(), 0600);
-                RING_DBG("Saved DhParams to file '%s'", path.c_str());
+                JAMI_DBG("Saved DhParams to file '%s'", path.c_str());
             } catch (const std::exception& ex) {
-                RING_WARN("Failed to save DhParams in file '%s': %s", path.c_str(), ex.what());
+                JAMI_WARN("Failed to save DhParams in file '%s': %s", path.c_str(), ex.what());
             }
             return params;
         }
-        RING_ERR("Can't generate DH params.");
+        JAMI_ERR("Can't generate DH params.");
         return {};
     }
 }
@@ -2902,7 +2902,7 @@ RingAccount::getDhtProxyServer()
                       proxys.emplace_back(match[1].str() + match[2].str() + ":" +
                                           std::to_string(p));
                 } catch (...) {
-                    RING_WARN("Malformed proxy, ignore it");
+                    JAMI_WARN("Malformed proxy, ignore it");
                     continue;
                 }
             } else {
@@ -2919,11 +2919,11 @@ RingAccount::getDhtProxyServer()
         fileutils::check_dir(cachePath_.c_str(), 0700);
         std::string proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
         std::ofstream file(proxyCachePath);
-        RING_DBG("Cache DHT proxy server: %s", proxyServerCached_.c_str());
+        JAMI_DBG("Cache DHT proxy server: %s", proxyServerCached_.c_str());
         if (file.is_open())
             file << proxyServerCached_;
         else
-            RING_WARN("Cannot write into %s", proxyCachePath.c_str());
+            JAMI_WARN("Cannot write into %s", proxyCachePath.c_str());
         return proxyServerCached_;
     }
     return proxyServerCached_;
@@ -2941,7 +2941,7 @@ MatchRank
 RingAccount::matches(const std::string &userName, const std::string &server) const
 {
     if (userName == ringAccountId_ || server == ringAccountId_ || userName == ringDeviceId_) {
-        RING_DBG("Matching account id in request with username %s", userName.c_str());
+        JAMI_DBG("Matching account id in request with username %s", userName.c_str());
         return MatchRank::FULL;
     } else {
         return MatchRank::NONE;
@@ -2978,7 +2978,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
                                          (address.empty() ? "" : "@"),
                                          address.c_str());
     } else {
-        RING_ERR("getContactHeader: no SIP transport provided");
+        JAMI_ERR("getContactHeader: no SIP transport provided");
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                          "%s<sips:%s@ring.dht>",
                                          quotedDisplayName.c_str(),
@@ -2994,7 +2994,7 @@ RingAccount::addContact(const std::string& uri, bool confirmed)
 {
     dht::InfoHash h (uri);
     if (not h) {
-        RING_ERR("[Account %s] addContact: invalid contact URI", getAccountID().c_str());
+        JAMI_ERR("[Account %s] addContact: invalid contact URI", getAccountID().c_str());
         return;
     }
     addContact(h, confirmed);
@@ -3003,7 +3003,7 @@ RingAccount::addContact(const std::string& uri, bool confirmed)
 void
 RingAccount::addContact(const dht::InfoHash& h, bool confirmed)
 {
-    RING_WARN("[Account %s] addContact: %s", getAccountID().c_str(), h.to_c_str());
+    JAMI_WARN("[Account %s] addContact: %s", getAccountID().c_str(), h.to_c_str());
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         c = contacts_.emplace(h, Contact{}).first;
@@ -3021,7 +3021,7 @@ RingAccount::addContact(const dht::InfoHash& h, bool confirmed)
 void
 RingAccount::removeContact(const std::string& uri, bool ban)
 {
-    RING_WARN("[Account %s] removeContact: %s", getAccountID().c_str(), uri.c_str());
+    JAMI_WARN("[Account %s] removeContact: %s", getAccountID().c_str(), uri.c_str());
     dht::InfoHash h (uri);
     auto c = contacts_.find(h);
     if (c == contacts_.end())
@@ -3046,7 +3046,7 @@ RingAccount::getContactDetails(const std::string& uri) const
 
     const auto c = contacts_.find(h);
     if (c == std::end(contacts_)) {
-        RING_WARN("[dht] contact '%s' not found", uri.c_str());
+        JAMI_WARN("[dht] contact '%s' not found", uri.c_str());
         return {};
     }
 
@@ -3077,17 +3077,17 @@ void
 RingAccount::updateContact(const dht::InfoHash& id, const Contact& contact)
 {
     if (not id) {
-        RING_ERR("[Account %s] updateContact: invalid contact ID", getAccountID().c_str());
+        JAMI_ERR("[Account %s] updateContact: invalid contact ID", getAccountID().c_str());
         return;
     }
     bool stateChanged {false};
     auto c = contacts_.find(id);
     if (c == contacts_.end()) {
-        RING_DBG("[Account %s] new contact: %s", getAccountID().c_str(), id.toString().c_str());
+        JAMI_DBG("[Account %s] new contact: %s", getAccountID().c_str(), id.toString().c_str());
         c = contacts_.emplace(id, contact).first;
         stateChanged = c->second.isActive() or c->second.isBanned();
     } else {
-        RING_DBG("[Account %s] updated contact: %s", getAccountID().c_str(), id.toString().c_str());
+        JAMI_DBG("[Account %s] updated contact: %s", getAccountID().c_str(), id.toString().c_str());
         stateChanged = c->second.update(contact);
     }
     if (stateChanged) {
@@ -3113,7 +3113,7 @@ RingAccount::loadContacts()
         msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
         oh.get().convert(contacts);
     } catch (const std::exception& e) {
-        RING_WARN("[Account %s] error loading contacts: %s", getAccountID().c_str(), e.what());
+        JAMI_WARN("[Account %s] error loading contacts: %s", getAccountID().c_str(), e.what());
         return;
     }
 
@@ -3186,13 +3186,13 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
 {
     auto toH = dht::InfoHash(to);
     if (not toH) {
-        RING_ERR("[Account %s] can't send trust request to invalid hash: %s", getAccountID().c_str(), to.c_str());
+        JAMI_ERR("[Account %s] can't send trust request to invalid hash: %s", getAccountID().c_str(), to.c_str());
         return;
     }
     addContact(toH);
     forEachDevice(toH, [toH,payload](const std::shared_ptr<RingAccount>& shared, const dht::InfoHash& dev)
     {
-        RING_WARN("[Account %s] sending trust request to: %s / %s", shared->getAccountID().c_str(), toH.toString().c_str(), dev.toString().c_str());
+        JAMI_WARN("[Account %s] sending trust request to: %s / %s", shared->getAccountID().c_str(), toH.toString().c_str(), dev.toString().c_str());
         shared->dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()),
                           dev,
                           dht::TrustRequest(DHT_TYPE_NS, payload));
@@ -3206,7 +3206,7 @@ RingAccount::sendTrustRequestConfirm(const dht::InfoHash& to)
     answer.confirm = true;
     forEachDevice(to, [to,answer](const std::shared_ptr<RingAccount>& shared, const dht::InfoHash& dev)
     {
-        RING_WARN("[Account %s] sending trust request reply: %s / %s", shared->getAccountID().c_str(), to.toString().c_str(), dev.toString().c_str());
+        JAMI_WARN("[Account %s] sending trust request reply: %s / %s", shared->getAccountID().c_str(), to.toString().c_str(), dev.toString().c_str());
         shared->dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()), dev, answer);
     });
 }
@@ -3229,7 +3229,7 @@ RingAccount::loadTrustRequests()
         msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
         oh.get().convert(requests);
     } catch (const std::exception& e) {
-        RING_WARN("[Account %s] error loading trust requests: %s", getAccountID().c_str(), e.what());
+        JAMI_WARN("[Account %s] error loading trust requests: %s", getAccountID().c_str(), e.what());
         return;
     }
 
@@ -3242,7 +3242,7 @@ RingAccount::loadTrustRequests()
 void
 RingAccount::syncDevices()
 {
-    RING_DBG("[Account %s] building device sync from %s %s", getAccountID().c_str(), ringDeviceName_.c_str(), ringDeviceId_.c_str());
+    JAMI_DBG("[Account %s] building device sync from %s %s", getAccountID().c_str(), ringDeviceName_.c_str(), ringDeviceId_.c_str());
     DeviceSync sync_data;
     sync_data.date = clock::now().time_since_epoch().count();
     sync_data.device_name = ringDeviceName_;
@@ -3273,7 +3273,7 @@ RingAccount::syncDevices()
         // don't send sync data to ourself
         if (dev.first.toString() == ringDeviceId_)
             continue;
-        RING_DBG("[Account %s] sending device sync to %s %s", getAccountID().c_str(), dev.second.name.c_str(), dev.first.toString().c_str());
+        JAMI_DBG("[Account %s] sending device sync to %s %s", getAccountID().c_str(), dev.second.name.c_str(), dev.first.toString().c_str());
         auto syncDeviceKey = dht::InfoHash::get("inbox:"+dev.first.toString());
         dht_.putEncrypted(syncDeviceKey, dev.first, sync_data);
     }
@@ -3284,17 +3284,17 @@ RingAccount::onReceiveDeviceSync(DeviceSync&& sync)
 {
     auto it = knownDevices_.find(sync.from);
     if (it == knownDevices_.end()) {
-        RING_WARN("[Account %s] dropping sync data from unknown device", getAccountID().c_str());
+        JAMI_WARN("[Account %s] dropping sync data from unknown device", getAccountID().c_str());
         return;
     }
     auto sync_date = clock::time_point(clock::duration(sync.date));
     if (it->second.last_sync >= sync_date) {
-        RING_DBG("[Account %s] dropping outdated sync data", getAccountID().c_str());
+        JAMI_DBG("[Account %s] dropping outdated sync data", getAccountID().c_str());
         return;
     }
 
     // Sync known devices
-    RING_DBG("[Account %s] received device sync data (%lu devices, %lu contacts)", getAccountID().c_str(), sync.devices_known.size(), sync.peers.size());
+    JAMI_DBG("[Account %s] received device sync data (%lu devices, %lu contacts)", getAccountID().c_str(), sync.devices_known.size(), sync.peers.size());
     for (const auto& d : sync.devices_known) {
         findCertificate(d.first, [this,d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
             if (not crt)
@@ -3327,10 +3327,10 @@ RingAccount::igdChanged()
             auto& this_ = *shared.get();
             auto oldPort = static_cast<in_port_t>(this_.dhtPortUsed_);
             if (not this_.mapPortUPnP())
-                RING_WARN("UPnP: Could not map DHT port");
+                JAMI_WARN("UPnP: Could not map DHT port");
             auto newPort = static_cast<in_port_t>(this_.dhtPortUsed_);
             if (oldPort != newPort) {
-                RING_WARN("DHT port changed: restarting network");
+                JAMI_WARN("DHT port changed: restarting network");
                 this_.doRegister_();
             } else
                 this_.dht_.connectivityChanged();
@@ -3357,7 +3357,7 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
             op(shared, dev.dev);
         return true;
     }, [=, end=std::move(end)](bool /*ok*/){
-        RING_DBG("[Account %s] found %lu devices for %s",
+        JAMI_DBG("[Account %s] found %lu devices for %s",
                  getAccountID().c_str(), treatedDevices->size(), to.to_c_str());
         if (end) end(shared, not treatedDevices->empty());
     });
@@ -3370,11 +3370,11 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     try {
         toUri = parseRingUri(to);
     } catch (...) {
-        RING_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
+        JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
         return 0;
     }
     if (payloads.size() != 1) {
-        RING_ERR("Multi-part im is not supported yet by RingAccount");
+        JAMI_ERR("Multi-part im is not supported yet by RingAccount");
         return 0;
     }
     return SIPAccountBase::sendTextMessage(toUri, payloads);
@@ -3387,14 +3387,14 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     try {
         toUri = parseRingUri(to);
     } catch (...) {
-        RING_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
+        JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
         messageEngine_.onMessageSent(to, token, false);
         return;
     }
     if (payloads.size() != 1) {
         // Multi-part message
         // TODO: not supported yet
-        RING_ERR("Multi-part im is not supported yet by RingAccount");
+        JAMI_ERR("Multi-part im is not supported yet by RingAccount");
         messageEngine_.onMessageSent(toUri, token, false);
         return;
     }
@@ -3430,11 +3430,11 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                     std::lock_guard<std::mutex> lock(this_.messageMutex_);
                     auto e = this_.sentMessages_.find(msg.id);
                     if (e == this_.sentMessages_.end() or e->second.to != msg.from) {
-                        RING_DBG() << "[Account " << this_.getAccountID() << "] [message " << token << "] Message not found";
+                        JAMI_DBG() << "[Account " << this_.getAccountID() << "] [message " << token << "] Message not found";
                         return true;
                     }
                     this_.sentMessages_.erase(e);
-                    RING_DBG() << "[Account " << this_.getAccountID() << "] [message " << token << "] Received text message reply";
+                    JAMI_DBG() << "[Account " << this_.getAccountID() << "] [message " << token << "] Received text message reply";
 
                     // add treated message
                     auto res = this_.treatedMessages_.insert(msg.id);
@@ -3457,7 +3457,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             dht::ImMessage(token, std::string(payloads.begin()->first), std::string(payloads.begin()->second), now),
             [w,to,token,confirm,h](bool ok) {
                 if (auto this_ = w.lock()) {
-                    RING_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Put encrypted " << (ok ? "ok" : "failed");
+                    JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Put encrypted " << (ok ? "ok" : "failed");
                     if (not ok) {
                         auto lt = confirm->listenTokens.find(h);
                         if (lt != confirm->listenTokens.end()) {
@@ -3470,7 +3470,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                 }
             });
 
-        RING_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Sending message for device " << dev.toString();
+        JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Sending message for device " << dev.toString();
     }, [to, token](const std::shared_ptr<RingAccount>& shared, bool ok) {
         if (not ok) {
             shared->messageEngine_.onMessageSent(to, token, false);
@@ -3481,7 +3481,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     Manager::instance().scheduleTask([w=weak(), confirm, to, token]() {
         if (not confirm->replied) {
             if (auto this_ = w.lock()) {
-                RING_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Timeout";
+                JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Timeout";
                 for (auto& t : confirm->listenTokens)
                     this_->dht_.cancelListen(t.first, t.second.get());
                 confirm->listenTokens.clear();
@@ -3496,7 +3496,7 @@ void
 RingAccount::registerDhtAddress(IceTransport& ice)
 {
     const auto reg_addr = [&](IceTransport& ice, const IpAddr& ip) {
-            RING_DBG("[Account %s] using public IP: %s", getAccountID().c_str(), ip.toString().c_str());
+            JAMI_DBG("[Account %s] using public IP: %s", getAccountID().c_str(), ip.toString().c_str());
             for (unsigned compId = 1; compId <= ice.getComponentCount(); ++compId)
                 ice.registerPublicIP(compId, ip);
             return ip;
@@ -3550,13 +3550,13 @@ RingAccount::closePeerConnection(const std::string& peer, const DRing::DataTrans
 void
 RingAccount::enableProxyClient(bool enable)
 {
-    RING_WARN("[Account %s] DHT proxy client: %s", getAccountID().c_str(), enable ? "enable" : "disable");
+    JAMI_WARN("[Account %s] DHT proxy client: %s", getAccountID().c_str(), enable ? "enable" : "disable");
     dht_.enableProxy(enable);
 }
 
 void RingAccount::setPushNotificationToken(const std::string& token)
 {
-    RING_WARN("[Account %s] setPushNotificationToken: %s", getAccountID().c_str(), token.c_str());
+    JAMI_WARN("[Account %s] setPushNotificationToken: %s", getAccountID().c_str(), token.c_str());
     deviceKey_ = token;
     dht_.setPushNotificationToken(deviceKey_);
 }
@@ -3566,7 +3566,7 @@ void RingAccount::setPushNotificationToken(const std::string& token)
  */
 void RingAccount::pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
 {
-    RING_WARN("[Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
+    JAMI_WARN("[Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
     dht_.pushNotificationReceived(data);
 }
 
@@ -3604,4 +3604,4 @@ RingAccount::checkPendingCallsTask()
     }
 }
 
-} // namespace ring
+} // namespace jami

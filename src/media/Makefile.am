@@ -4,7 +4,7 @@ noinst_LTLIBRARIES = libmedia.la
 
 SUBDIRS = audio
 
-if RING_VIDEO
+if ENABLE_VIDEO
 SUBDIRS += video
 endif
 
@@ -48,7 +48,7 @@ noinst_HEADERS = \
 libmedia_la_LIBADD = \
 	./audio/libaudio.la
 
-if RING_VIDEO
+if ENABLE_VIDEO
 libmedia_la_libADD = \
 	./video/libvideo.la
 endif

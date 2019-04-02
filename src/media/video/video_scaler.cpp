@@ -26,7 +26,7 @@
 
 #include <cassert>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 VideoScaler::VideoScaler()
     : ctx_(0), mode_(SWS_FAST_BILINEAR), tmp_data_()
@@ -53,7 +53,7 @@ VideoScaler::scale(const VideoFrame& input, VideoFrame& output)
                                 mode_,
                                 NULL, NULL, NULL);
     if (!ctx_) {
-        RING_ERR("Unable to create a scaler context");
+        JAMI_ERR("Unable to create a scaler context");
         return;
     }
 
@@ -120,7 +120,7 @@ VideoScaler::scale_and_pad(const VideoFrame& input, VideoFrame& output,
                                 mode_,
                                 NULL, NULL, NULL);
     if (!ctx_) {
-        RING_ERR("Unable to create a scaler context");
+        JAMI_ERR("Unable to create a scaler context");
         return;
     }
 
@@ -158,4 +158,4 @@ void VideoScaler::reset()
     }
 }
 
-}} // namespace ring::video
+}} // namespace jami::video

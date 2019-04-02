@@ -481,15 +481,15 @@ AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
 
 AS_IF([test "x$enable_video" != "xno"],
       [
-        AC_DEFINE(RING_VIDEO, [], [Video support enabled])
-        AM_CONDITIONAL(RING_VIDEO, true)
+        AC_DEFINE(ENABLE_VIDEO, [], [Video support enabled])
+        AM_CONDITIONAL(ENABLE_VIDEO, true)
         AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
             PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
         ],[
         ])
     ],
     [
-     AM_CONDITIONAL(RING_VIDEO, false)
+     AM_CONDITIONAL(ENABLE_VIDEO, false)
      ]);
 
 AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations (enabled by default)]))
@@ -527,7 +527,7 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
       AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
         AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
           ring_vt="yes"
-          AC_DEFINE([RING_VIDEOTOOLBOX], [1], [Defined if videotoolbox is available])
+          AC_DEFINE([ENABLE_VIDEOTOOLBOX], [1], [Defined if videotoolbox is available])
         ])
       ])
     ])
@@ -536,7 +536,7 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
 AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
 AM_CONDITIONAL([RING_VAAPI], [test "x${ring_vaapi}" = "xyes"])
 AM_CONDITIONAL([RING_VDPAU], [test "x${ring_vdpau}" = "xyes"])
-AM_CONDITIONAL([RING_VIDEOTOOLBOX], [test "x${ring_vt}" = "xyes"])
+AM_CONDITIONAL([ENABLE_VIDEOTOOLBOX], [test "x${ring_vt}" = "xyes"])
 
 dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])

@@ -26,7 +26,7 @@
 
 #include <mutex>
 
-namespace ring {
+namespace jami {
 namespace opensl {
 
 class AudioPlayer {
@@ -36,7 +36,7 @@ class AudioPlayer {
     SLPlayItf   playItf_;
     SLAndroidSimpleBufferQueueItf playBufferQueueItf_;
 
-    ring::AudioFormat sampleInfo_;
+    jami::AudioFormat sampleInfo_;
     AudioQueue *freeQueue_ {nullptr};       // user
     AudioQueue *playQueue_ {nullptr};       // user
     AudioQueue devShadowQueue_ {DEVICE_SHADOW_BUFFER_QUEUE_LEN};  // owner
@@ -44,7 +44,7 @@ class AudioPlayer {
     EngineCallback callback_ {};
 
 public:
-    explicit AudioPlayer(ring::AudioFormat sampleFormat, SLEngineItf engine, SLint32 streamType);
+    explicit AudioPlayer(jami::AudioFormat sampleFormat, SLEngineItf engine, SLint32 streamType);
     ~AudioPlayer();
     NON_COPYABLE(AudioPlayer);
 

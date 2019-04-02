@@ -31,12 +31,12 @@
 #include <string>
 #include <memory>
 
-namespace ring {
+namespace jami {
 class Conference;
 class MediaRecorder;
-} // namespace ring
+} // namespace jami
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class VideoMixer;
 class VideoSender;
@@ -157,6 +157,6 @@ private:
     std::function<void(int)> changeOrientationCallback_;
 };
 
-}} // namespace ring::video
+}} // namespace jami::video
 
 #endif // __VIDEO_RTP_SESSION_H__

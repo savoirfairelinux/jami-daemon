@@ -31,14 +31,14 @@
 #include "upnp_context.h"
 #include "upnp_igd.h"
 
-namespace ring { namespace upnp {
+namespace jami { namespace upnp {
 
 Controller::Controller()
 {
     try {
         upnpContext_ = getUPnPContext();
     } catch (std::runtime_error& e) {
-        RING_ERR("UPnP context error: %s", e.what());
+        JAMI_ERR("UPnP context error: %s", e.what());
     }
 }
 
@@ -138,4 +138,4 @@ Controller::getExternalIP() const
     return {}; //  empty address
 }
 
-}} // namespace ring::upnp
+}} // namespace jami::upnp

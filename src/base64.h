@@ -25,7 +25,7 @@
 #include <vector>
 #include <exception>
 
-namespace ring {
+namespace jami {
 namespace base64 {
 
 class base64_exception : public std::exception { };
@@ -34,4 +34,4 @@ std::string encode(const std::vector<uint8_t>::const_iterator begin, const std::
 std::string encode(const std::vector<uint8_t>& dat);
 std::vector<uint8_t> decode(const std::string& str);
 
-}} // namespace ring::base64
+}} // namespace jami::base64

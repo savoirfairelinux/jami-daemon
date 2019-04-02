@@ -35,7 +35,7 @@ class DBusNetworkManager;
 class DBusInstance;
 class DBusPresenceManager;
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 class DBusVideoManager;
 #endif
 
@@ -64,7 +64,7 @@ class DRING_PUBLIC DBusClient {
         std::unique_ptr<DBusPresenceManager>      presenceManager_;
         std::unique_ptr<DBusInstance>             instanceManager_;
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         std::unique_ptr<DBusVideoManager>         videoManager_;
 #endif
 };

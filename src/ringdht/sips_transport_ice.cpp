@@ -43,7 +43,7 @@
 #include <system_error>
 #include <cstring> // std::memset
 
-namespace ring { namespace tls {
+namespace jami { namespace tls {
 
 static constexpr int POOL_TP_INIT {512};
 static constexpr int POOL_TP_INC {512};
@@ -138,7 +138,7 @@ tls_status_from_err(int err)
 SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                                    int tp_type,
                                    const TlsParams& param,
-                                   const std::shared_ptr<ring::IceTransport>& ice,
+                                   const std::shared_ptr<jami::IceTransport>& ice,
                                    int comp_id)
     : ice_ (ice)
     , comp_id_ (comp_id)
@@ -147,7 +147,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     , pool_  {nullptr, pj_pool_release}
     , rxPool_ (nullptr, pj_pool_release)
 {
-    RING_DBG("SipIceTransport@%p {tr=%p}", this, &trData_.base);
+    JAMI_DBG("SipIceTransport@%p {tr=%p}", this, &trData_.base);
 
     if (not ice or not ice->isRunning())
         throw std::logic_error("ICE transport must exist and negotiation completed");
@@ -203,7 +203,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     };
     base.do_shutdown = [](pjsip_transport *transport) -> pj_status_t {
         auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
-        RING_DBG("SipsIceTransport@%p {tr=%p {rc=%ld}}: shutdown", this_,
+        JAMI_DBG("SipsIceTransport@%p {tr=%p {rc=%ld}}: shutdown", this_,
                  transport, pj_atomic_get(transport->ref_cnt));
         // Nothing to do here, tls session is not shutdown as some messages could be pending
         // and application can continue to do IO (if they already own the transport)
@@ -211,7 +211,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     };
     base.destroy = [](pjsip_transport *transport) -> pj_status_t {
         auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
-        RING_DBG("SipsIceTransport@%p: destroying", this_);
+        JAMI_DBG("SipsIceTransport@%p: destroying", this_);
         delete this_;
         return PJ_SUCCESS;
     };
@@ -253,7 +253,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 
 SipsIceTransport::~SipsIceTransport()
 {
-    RING_DBG("~SipIceTransport@%p {tr=%p}", this, &trData_.base);
+    JAMI_DBG("~SipIceTransport@%p {tr=%p}", this, &trData_.base);
 
     // Flush send queue with ENOTCONN error
     for (auto tdata : txQueue_) {
@@ -274,7 +274,7 @@ SipsIceTransport::~SipsIceTransport()
 
     pj_lock_destroy(base->lock);
     pj_atomic_destroy(base->ref_cnt);
-    RING_DBG("~SipIceTransport@%p {tr=%p} bye", this, &trData_.base);
+    JAMI_DBG("~SipIceTransport@%p {tr=%p} bye", this, &trData_.base);
 }
 
 void
@@ -302,7 +302,7 @@ SipsIceTransport::handleEvents()
             if (evdata.state != PJSIP_TP_STATE_DISCONNECTED) {
                 (*state_cb)(&trData_.base, evdata.state, &evdata.state_info);
             } else {
-                RING_WARN("[SIPS] got disconnected event!");
+                JAMI_WARN("[SIPS] got disconnected event!");
                 disconnectedEvent = std::move(evdata);
                 disconnected = true;
                 break;
@@ -330,7 +330,7 @@ SipsIceTransport::handleEvents()
             if (ec) {
                 status = tls_status_from_err(ec.value());
                 if (gnutls_error_is_fatal(ec.value())) {
-                    RING_ERR("[TLS] fatal error during sending: %s", gnutls_strerror(ec.value()));
+                    JAMI_ERR("[TLS] fatal error during sending: %s", gnutls_strerror(ec.value()));
                     tls_->shutdown();
                     fatal = true;
                 }
@@ -382,7 +382,7 @@ SipsIceTransport::handleEvents()
 
     // Time to deliver disconnected event if exists
     if (disconnected and state_cb) {
-        RING_WARN("[SIPS] process disconnect event");
+        JAMI_WARN("[SIPS] process disconnect event");
         (*state_cb)(&trData_.base, disconnectedEvent.state, &disconnectedEvent.state_info);
     }
 }
@@ -509,9 +509,9 @@ SipsIceTransport::getInfo(pj_ssl_sock_info* info, bool established)
         std::array<uint8_t, 2> cs_id;
         if (auto cipher_name = tls_->currentCipherSuiteId(cs_id)) {
             info->cipher = static_cast<pj_ssl_cipher>((cs_id[0] << 8) | cs_id[1]);
-            RING_DBG("[TLS] using cipher %s (0x%02X%02X)", cipher_name, cs_id[0], cs_id[1]);
+            JAMI_DBG("[TLS] using cipher %s (0x%02X%02X)", cipher_name, cs_id[0], cs_id[1]);
         } else
-            RING_ERR("[TLS] Can't find info on used cipher");
+            JAMI_ERR("[TLS] Can't find info on used cipher");
 
         info->local_cert_info = &localCertInfo_;
         info->remote_cert_info = &remoteCertInfo_;
@@ -685,7 +685,7 @@ SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
 
         // Shutdown on fatal error, else ignore it
         if (ec and gnutls_error_is_fatal(ec.value())) {
-            RING_ERR("[TLS] fatal error during sending: %s", gnutls_strerror(ec.value()));
+            JAMI_ERR("[TLS] fatal error during sending: %s", gnutls_strerror(ec.value()));
             tls_->shutdown();
             return tls_status_from_err(ec.value());
         }
@@ -708,4 +708,4 @@ SipsIceTransport::getTlsSessionMtu()
     return tls_->maxPayload();
 }
 
-}} // namespace ring::tls
+}} // namespace jami::tls

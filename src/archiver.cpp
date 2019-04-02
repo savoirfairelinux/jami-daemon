@@ -35,7 +35,7 @@
 #include <sys/stat.h>
 #include <fstream>
 
-namespace ring {
+namespace jami {
 namespace archiver {
 
 std::map<std::string, std::string>
@@ -94,7 +94,7 @@ exportAccounts(std::vector<std::string> accountIDs,
                         std::string password)
 {
     if (filepath.empty() || !accountIDs.size()) {
-        RING_ERR("Missing arguments");
+        JAMI_ERR("Missing arguments");
         return EINVAL;
     }
 
@@ -103,7 +103,7 @@ exportAccounts(std::vector<std::string> accountIDs,
     auto filename = filepath.substr(found+1);
 
     if (!fileutils::isDirectory(toDir)) {
-        RING_ERR("%s is not a directory", toDir.c_str());
+        JAMI_ERR("%s is not a directory", toDir.c_str());
         return ENOTDIR;
     }
 
@@ -114,7 +114,7 @@ exportAccounts(std::vector<std::string> accountIDs,
     for (size_t i = 0; i < accountIDs.size(); ++i) {
         auto detailsMap = Manager::instance().getAccountDetails(accountIDs[i]);
         if (detailsMap.empty()) {
-            RING_WARN("Can't export account %s", accountIDs[i].c_str());
+            JAMI_WARN("Can't export account %s", accountIDs[i].c_str());
             continue;
         }
 
@@ -132,7 +132,7 @@ exportAccounts(std::vector<std::string> accountIDs,
     try {
         compressed = compress(output);
     } catch (const std::runtime_error& ex) {
-        RING_ERR("Export failed: %s", ex.what());
+        JAMI_ERR("Export failed: %s", ex.what());
         return 1;
     }
 
@@ -143,7 +143,7 @@ exportAccounts(std::vector<std::string> accountIDs,
     try {
         fileutils::saveFile(toDir + DIR_SEPARATOR_STR + filename, encrypted);
     } catch (const std::runtime_error& ex) {
-        RING_ERR("Export failed: %s", ex.what());
+        JAMI_ERR("Export failed: %s", ex.what());
         return EIO;
     }
     return 0;
@@ -153,7 +153,7 @@ int
 importAccounts(std::string archivePath, std::string password)
 {
     if (archivePath.empty()) {
-        RING_ERR("Missing arguments");
+        JAMI_ERR("Missing arguments");
         return EINVAL;
     }
 
@@ -162,7 +162,7 @@ importAccounts(std::string archivePath, std::string password)
     try {
         file = fileutils::loadFile(archivePath);
     } catch (const std::exception& ex) {
-        RING_ERR("Read failed: %s", ex.what());
+        JAMI_ERR("Read failed: %s", ex.what());
         return ENOENT;
     }
 
@@ -170,7 +170,7 @@ importAccounts(std::string archivePath, std::string password)
     try {
         file = dht::crypto::aesDecrypt(file, password);
     } catch (const std::exception& ex) {
-        RING_ERR("Decryption failed: %s", ex.what());
+        JAMI_ERR("Decryption failed: %s", ex.what());
         return EPERM;
     }
 
@@ -178,7 +178,7 @@ importAccounts(std::string archivePath, std::string password)
     try {
         file = decompress(file);
     } catch (const std::exception& ex) {
-        RING_ERR("Decompression failed: %s", ex.what());
+        JAMI_ERR("Decompression failed: %s", ex.what());
         return ERANGE;
     }
 
@@ -192,19 +192,19 @@ importAccounts(std::string archivePath, std::string password)
         Json::CharReaderBuilder rbuilder;
         auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
         if (!reader->parse(char_file_begin, char_file_end, &root, &err)) {
-            RING_ERR() << "Failed to parse " << err;
+            JAMI_ERR() << "Failed to parse " << err;
             return ERANGE;
         }
 
         auto& accounts = root["accounts"];
         for (int i = 0, n = accounts.size(); i < n; ++i) {
             // Generate a new account id
-            auto accountId = ring::Manager::instance().getNewAccountId();
+            auto accountId = jami::Manager::instance().getNewAccountId();
             auto details = jsonValueToAccount(accounts[i], accountId);
-            ring::Manager::instance().addAccount(details, accountId);
+            jami::Manager::instance().addAccount(details, accountId);
         }
     } catch (const std::exception& ex) {
-        RING_ERR("Import failed: %s", ex.what());
+        JAMI_ERR("Import failed: %s", ex.what());
         return ERANGE;
     }
     return 0;
@@ -297,4 +297,4 @@ decompress(const std::vector<uint8_t>& str)
     return out;
 }
 
-}} // namespace ring::archiver
+}} // namespace jami::archiver

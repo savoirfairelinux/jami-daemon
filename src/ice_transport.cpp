@@ -47,7 +47,7 @@
             throw std::runtime_error(#ret " failed");        \
     } while (0)
 
-namespace ring {
+namespace jami {
 
 static constexpr unsigned STUN_MAX_PACKET_SIZE {8192};
 static constexpr uint16_t IPV6_HEADER_SIZE = 40; ///< Size in bytes of IPV6 packet header
@@ -185,7 +185,7 @@ add_stun_server(pj_ice_strans_cfg& cfg, int af)
     stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
     stun.af = af;
 
-    RING_DBG("[ice] added host stun server");
+    JAMI_DBG("[ice] added host stun server");
 }
 
 static void
@@ -199,7 +199,7 @@ add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& i
     // Given URI cannot be DNS resolved or not IPv4 or IPv6?
     // This prevents a crash into PJSIP when ip.toString() is called.
     if (ip.getFamily() == AF_UNSPEC) {
-        RING_WARN("[ice] STUN server '%s' not used, unresolvable address", info.uri.c_str());
+        JAMI_WARN("[ice] STUN server '%s' not used, unresolvable address", info.uri.c_str());
         return;
     }
 
@@ -210,7 +210,7 @@ add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& i
     stun.port = PJ_STUN_PORT;
     stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
 
-    RING_DBG("[ice] added stun server '%s', port %d", pj_strbuf(&stun.server), stun.port);
+    JAMI_DBG("[ice] added stun server '%s', port %d", pj_strbuf(&stun.server), stun.port);
 }
 
 static void
@@ -223,7 +223,7 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 
     // Same comment as add_stun_server()
     if (ip.getFamily() == AF_UNSPEC) {
-        RING_WARN("[ice] TURN server '%s' not used, unresolvable address", info.uri.c_str());
+        JAMI_WARN("[ice] TURN server '%s' not used, unresolvable address", info.uri.c_str());
         return;
     }
 
@@ -243,7 +243,7 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
         pj_cstr(&turn.auth_cred.data.static_cred.data, info.password.c_str());
     }
 
-    RING_DBG("[ice] added turn server '%s', port %d", pj_strbuf(&turn.server), turn.port);
+    JAMI_DBG("[ice] added turn server '%s', port %d", pj_strbuf(&turn.server), turn.port);
 }
 
 //==============================================================================
@@ -279,7 +279,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st)))
             tr->onReceiveData(comp_id, pkt, size);
         else
-            RING_WARN("null IceTransport");
+            JAMI_WARN("null IceTransport");
     };
 
     icecb.on_ice_complete = \
@@ -287,7 +287,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st)))
             tr->onComplete(ice_st, op, status);
         else
-            RING_WARN("null IceTransport");
+            JAMI_WARN("null IceTransport");
     };
 
     // Add STUN servers
@@ -407,7 +407,7 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
             const auto err = pj_get_os_error();
             // Kept as debug as some errors are "normal" in regular context
             last_errmsg_ = sip_utils::sip_strerror(err);
-            RING_DBG("[ice:%p] ioqueue error %d: %s", this, err, last_errmsg_.c_str());
+            JAMI_DBG("[ice:%p] ioqueue error %d: %s", this, err, last_errmsg_.c_str());
             std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
             return;
         }
@@ -426,11 +426,11 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
-        RING_DBG("[ice:%p] %s success", this, opname);
+        JAMI_DBG("[ice:%p] %s success", this, opname);
     }
     else {
         last_errmsg_ = sip_utils::sip_strerror(status);
-        RING_ERR("[ice:%p] %s failed: %s", this, opname, last_errmsg_.c_str());
+        JAMI_ERR("[ice:%p] %s failed: %s", this, opname, last_errmsg_.c_str());
     }
 
     {
@@ -466,7 +466,7 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
                     out << " [" << i << "] disabled\n";
                 }
             }
-            RING_DBG("[ice:%p] connection pairs (local <-> remote):\n%s", this, out.str().c_str());
+            JAMI_DBG("[ice:%p] connection pairs (local <-> remote):\n%s", this, out.str().c_str());
         }
         if (on_negodone_cb_)
             on_negodone_cb_(done);
@@ -479,13 +479,13 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
 bool
 IceTransport::Impl::setInitiatorSession()
 {
-    RING_DBG("ICE as master");
+    JAMI_DBG("ICE as master");
     initiatorSession_ = true;
     if (_isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
             last_errmsg_ = sip_utils::sip_strerror(status);
-            RING_ERR("[ice:%p] role change failed: %s", this, last_errmsg_.c_str());
+            JAMI_ERR("[ice:%p] role change failed: %s", this, last_errmsg_.c_str());
             return false;
         }
         return true;
@@ -496,13 +496,13 @@ IceTransport::Impl::setInitiatorSession()
 bool
 IceTransport::Impl::setSlaveSession()
 {
-    RING_DBG("ICE as slave");
+    JAMI_DBG("ICE as slave");
     initiatorSession_ = false;
     if (_isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
             last_errmsg_ = sip_utils::sip_strerror(status);
-            RING_ERR("[ice:%p] role change failed: %s", this, last_errmsg_.c_str());
+            JAMI_ERR("[ice:%p] role change failed: %s", this, last_errmsg_.c_str());
             return false;
         }
         return true;
@@ -520,13 +520,13 @@ IceTransport::Impl::getLocalAddress(unsigned comp_id) const
         else
             return {}; // disabled component
     } else
-        RING_WARN("[ice:%p] bad call: non-negotiated transport", this);
+        JAMI_WARN("[ice:%p] bad call: non-negotiated transport", this);
 
     // Return the default IP (could be not nominated and valid after negotiation)
     if (_isInitialized())
         return cand_[comp_id].addr;
 
-    RING_ERR("[ice:%p] bad call: non-initialized transport", this);
+    JAMI_ERR("[ice:%p] bad call: non-initialized transport", this);
     return {};
 }
 
@@ -540,9 +540,9 @@ IceTransport::Impl::getRemoteAddress(unsigned comp_id) const
         else
             return {}; // disabled component
     } else
-        RING_WARN("[ice:%p] bad call: non-negotiated transport", this);
+        JAMI_WARN("[ice:%p] bad call: non-negotiated transport", this);
 
-    RING_ERR("[ice:%p] bad call: non-negotiated transport", this);
+    JAMI_ERR("[ice:%p] bad call: non-negotiated transport", this);
     return {};
 }
 
@@ -566,14 +566,14 @@ bool
 IceTransport::Impl::createIceSession(pj_ice_sess_role role)
 {
     if (pj_ice_strans_init_ice(icest_.get(), role, nullptr, nullptr) != PJ_SUCCESS) {
-        RING_ERR("[ice:%p] pj_ice_strans_init_ice() failed", this);
+        JAMI_ERR("[ice:%p] pj_ice_strans_init_ice() failed", this);
         return false;
     }
 
     // Fetch some information on local configuration
     getUFragPwd();
     getDefaultCanditates();
-    RING_DBG("[ice:%p] (local) ufrag=%s, pwd=%s", this, local_ufrag_.c_str(), local_pwd_.c_str());
+    JAMI_DBG("[ice:%p] (local) ufrag=%s, pwd=%s", this, local_ufrag_.c_str(), local_pwd_.c_str());
     return true;
 }
 
@@ -585,7 +585,7 @@ IceTransport::Impl::getLocalCandidatesAddr(unsigned comp_id) const
     unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
 
     if (pj_ice_strans_enum_cands(icest_.get(), comp_id, &cand_cnt, cand) != PJ_SUCCESS) {
-        RING_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
+        JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
         return cand_addrs;
     }
 
@@ -623,7 +623,7 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr& base, cons
     int idx = -1;
     auto af = addr.getFamily();
     if (af == AF_UNSPEC) {
-        RING_ERR("[ice:%p] Unable to add reflective IP %s: unknown addess familly", this,
+        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: unknown addess familly", this,
                  addr.toString().c_str());
         return;
     }
@@ -635,7 +635,7 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr& base, cons
         }
     }
     if (idx < 0) {
-        RING_ERR("[ice:%p] Unable to add reflective IP %s: no suitable local STUN host found", this,
+        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: no suitable local STUN host found", this,
                  addr.toString().c_str());
         return;
     }
@@ -669,12 +669,12 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr& base, cons
 
     if (ret != PJ_SUCCESS) {
         last_errmsg_ = sip_utils::sip_strerror(ret);
-        RING_ERR("[ice:%p] pj_ice_sess_add_cand failed with error %d: %s", this, ret,
+        JAMI_ERR("[ice:%p] pj_ice_sess_add_cand failed with error %d: %s", this, ret,
                  last_errmsg_.c_str());
-        RING_ERR("[ice:%p] failed to add candidate for comp_id=%d : %s : %s", this, comp_id,
+        JAMI_ERR("[ice:%p] failed to add candidate for comp_id=%d : %s : %s", this, comp_id,
                  base.toString().c_str(), addr.toString().c_str());
     } else {
-        RING_DBG("[ice:%p] succeed to add candidate for comp_id=%d : %s : %s", this, comp_id,
+        JAMI_DBG("[ice:%p] succeed to add candidate for comp_id=%d : %s : %s", this, comp_id,
                  base.toString().c_str(), addr.toString().c_str());
     }
 }
@@ -691,7 +691,7 @@ IceTransport::Impl::selectUPnPIceCandidates()
         if (auto publicIP = upnp_->getExternalIP()) {
             /* comp_id start at 1 */
             for (unsigned comp_id = 1; comp_id <= component_count_; ++comp_id) {
-                RING_DBG("[ice:%p] UPnP: Opening port(s) for ICE comp %d and adding candidate with public IP",
+                JAMI_DBG("[ice:%p] UPnP: Opening port(s) for ICE comp %d and adding candidate with public IP",
                          this, comp_id);
                 auto candidates = getLocalCandidatesAddr(comp_id);
                 for (IpAddr addr : candidates) {
@@ -705,11 +705,11 @@ IceTransport::Impl::selectUPnPIceCandidates()
                         publicIP.setPort(port_used);
                         addReflectiveCandidate(comp_id, addr, publicIP);
                     } else
-                        RING_WARN("[ice:%p] UPnP: Could not create a port mapping for the ICE candide", this);
+                        JAMI_WARN("[ice:%p] UPnP: Could not create a port mapping for the ICE candide", this);
                 }
             }
         } else {
-            RING_WARN("[ice:%p] UPnP: Could not determine public IP for ICE candidates", this);
+            JAMI_WARN("[ice:%p] UPnP: Could not determine public IP for ICE candidates", this);
         }
     }
 }
@@ -718,7 +718,7 @@ void
 IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
 {
     if (!comp_id or comp_id > component_count_) {
-        RING_ERR("rx: invalid comp_id (%u)", comp_id);
+        JAMI_ERR("rx: invalid comp_id (%u)", comp_id);
         return;
     }
     if (!size)
@@ -792,18 +792,18 @@ bool
 IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>& rem_candidates)
 {
     if (not isInitialized()) {
-        RING_ERR("[ice:%p] not initialized transport", this);
+        JAMI_ERR("[ice:%p] not initialized transport", this);
         return false;
     }
 
     // pj_ice_strans_start_ice crashes if remote candidates array is empty
     if (rem_candidates.empty()) {
-        RING_ERR("[ice:%p] start failed: no remote candidates", this);
+        JAMI_ERR("[ice:%p] start failed: no remote candidates", this);
         return false;
     }
 
     pj_str_t ufrag, pwd;
-    RING_DBG("[ice:%p] negotiation starting (%zu remote candidates)", this, rem_candidates.size());
+    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", this, rem_candidates.size());
     auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
                                           pj_cstr(&ufrag, rem_attrs.ufrag.c_str()),
                                           pj_cstr(&pwd, rem_attrs.pwd.c_str()),
@@ -811,7 +811,7 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
                                           rem_candidates.data());
     if (status != PJ_SUCCESS) {
         pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-        RING_ERR("[ice:%p] start failed: %s", this, pimpl_->last_errmsg_.c_str());
+        JAMI_ERR("[ice:%p] start failed: %s", this, pimpl_->last_errmsg_.c_str());
         return false;
     }
     return true;
@@ -831,7 +831,7 @@ IceTransport::start(const std::vector<uint8_t>& rem_data)
         std::size_t offset = 0;
         auto result = msgpack::unpack(data, size, offset);
         auto version = result.get().as<uint8_t>();
-        RING_DBG("[ice:%p] rx msg v%u", this, version);
+        JAMI_DBG("[ice:%p] rx msg v%u", this, version);
         if (version == 1) {
             result = msgpack::unpack(data, size, offset);
             std::tie(rem_ufrag, rem_pwd) = result.get().as<std::pair<std::string, std::string>>();
@@ -846,21 +846,21 @@ IceTransport::start(const std::vector<uint8_t>& rem_data)
                 }
             }
         } else {
-            RING_ERR("[ice:%p] invalid msg version", this);
+            JAMI_ERR("[ice:%p] invalid msg version", this);
             return false;
         }
     } catch (const msgpack::unpack_error& e) {
-        RING_ERR("[ice:%p] remote msg unpack error: %s", this, e.what());
+        JAMI_ERR("[ice:%p] remote msg unpack error: %s", this, e.what());
         return false;
     }
 
     if (rem_ufrag.empty() or rem_pwd.empty() or rem_candidates.empty()) {
-        RING_ERR("[ice:%p] invalid remote attributes", this);
+        JAMI_ERR("[ice:%p] invalid remote attributes", this);
         return false;
     }
 
     if (pimpl_->onlyIPv4Private_)
-        RING_WARN("[ice:%p] no public IPv4 found, your connection may fail!", this);
+        JAMI_WARN("[ice:%p] no public IPv4 found, your connection may fail!", this);
 
     return start({rem_ufrag, rem_pwd}, rem_candidates);
 }
@@ -872,7 +872,7 @@ IceTransport::stop()
         auto status = pj_ice_strans_stop_ice(pimpl_->icest_.get());
         if (status != PJ_SUCCESS) {
             pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-            RING_ERR("ICE stop failed: %s", pimpl_->last_errmsg_.c_str());
+            JAMI_ERR("ICE stop failed: %s", pimpl_->last_errmsg_.c_str());
             return false;
         }
     }
@@ -905,7 +905,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
     unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
 
     if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id+1, &cand_cnt, cand) != PJ_SUCCESS) {
-        RING_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
+        JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
         return res;
     }
 
@@ -929,7 +929,7 @@ bool
 IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
 {
     if (not isInitialized()) {
-        RING_ERR("[ice:%p] registerPublicIP() called on non initialized transport", this);
+        JAMI_ERR("[ice:%p] registerPublicIP() called on non initialized transport", this);
         return false;
     }
 
@@ -988,7 +988,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
                      type);
 
     if (cnt != 7) {
-        RING_WARN("[ice:%p] invalid remote candidate line", this);
+        JAMI_WARN("[ice:%p] invalid remote candidate line", this);
         return false;
     }
 
@@ -1003,7 +1003,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
     else if (strcmp(type, "relay")==0)
         cand.type = PJ_ICE_CAND_TYPE_RELAYED;
     else {
-        RING_WARN("[ice:%p] invalid remote candidate type '%s'", this, type);
+        JAMI_WARN("[ice:%p] invalid remote candidate type '%s'", this, type);
         return false;
     }
 
@@ -1021,7 +1021,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
     pj_sockaddr_init(af, &cand.addr, NULL, 0);
     auto status = pj_sockaddr_set_str_addr(af, &cand.addr, &tmpaddr);
     if (status != PJ_SUCCESS) {
-        RING_ERR("[ice:%p] invalid remote IP address '%s'", this, ipaddr);
+        JAMI_ERR("[ice:%p] invalid remote IP address '%s'", this, ipaddr);
         return false;
     }
 
@@ -1070,7 +1070,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
     sip_utils::register_thread();
     auto remote = getRemoteAddress(comp_id);
     if (!remote) {
-        RING_ERR("[ice:%p] can't find remote address for component %d", this, comp_id);
+        JAMI_ERR("[ice:%p] can't find remote address for component %d", this, comp_id);
         errno = EINVAL;
         return -1;
     }
@@ -1080,7 +1080,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
             errno = EAGAIN;
         } else {
             pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-            RING_ERR("[ice:%p] ice send failed: %s", this, pimpl_->last_errmsg_.c_str());
+            JAMI_ERR("[ice:%p] ice send failed: %s", this, pimpl_->last_errmsg_.c_str());
             errno = EIO;
         }
         return -1;
@@ -1095,7 +1095,7 @@ IceTransport::waitForInitialization(unsigned timeout)
     std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
     if (!pimpl_->iceCV_.wait_for(lk, std::chrono::seconds(timeout),
                                  [this]{ return pimpl_->_isInitialized() or pimpl_->_isFailed(); })) {
-        RING_WARN("[ice:%p] waitForInitialization: timeout", this);
+        JAMI_WARN("[ice:%p] waitForInitialization: timeout", this);
         return -1;
     }
     return not pimpl_->_isFailed();
@@ -1107,7 +1107,7 @@ IceTransport::waitForNegotiation(unsigned timeout)
     std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
     if (!pimpl_->iceCV_.wait_for(lk, std::chrono::seconds(timeout),
                          [this]{ return pimpl_->_isRunning() or pimpl_->_isFailed(); })) {
-        RING_WARN("[ice:%p] waitForIceNegotiation: timeout", this);
+        JAMI_WARN("[ice:%p] waitForIceNegotiation: timeout", this);
         return -1;
     }
     return not pimpl_->_isFailed();
@@ -1172,7 +1172,7 @@ IceTransportFactory::createTransport(const char* name, int component_count,
     try {
         return std::make_shared<IceTransport>(name, component_count, master, options);
     } catch(const std::exception& e) {
-        RING_ERR("%s",e.what());
+        JAMI_ERR("%s",e.what());
         return nullptr;
     }
 }
@@ -1288,4 +1288,4 @@ IceSocket::getTransportOverhead(){
     return (ice_transport_->getRemoteAddress(compId_).getFamily() == AF_INET) ? IPV4_HEADER_SIZE : IPV6_HEADER_SIZE;
 }
 
-} // namespace ring
+} // namespace jami

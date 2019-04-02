@@ -26,7 +26,7 @@
 #include <memory>
 #include <cstdint>
 
-namespace ring { namespace tls {
+namespace jami { namespace tls {
 
 class DhParams {
 public:
@@ -68,4 +68,4 @@ private:
     std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)*> params_ {nullptr, gnutls_dh_params_deinit};
 };
 
-}} // namespace ring::tls
+}} // namespace jami::tls

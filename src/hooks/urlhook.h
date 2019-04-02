@@ -23,10 +23,10 @@
 
 #include <string>
 
-namespace ring { namespace UrlHook {
+namespace jami { namespace UrlHook {
 
 int runAction(const std::string &command, const std::string &arg);
 
-}} // namespace ring::UrlHook
+}} // namespace jami::UrlHook
 
 #endif // URL_HOOK_H
