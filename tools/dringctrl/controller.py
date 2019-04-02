@@ -265,6 +265,7 @@ class DRingCtrl(Thread):
             self.onCallFailure(callid, state)
         else:
             print("unknown state:" + str(state))
+        return state
 
     def onConferenceCreated_cb(self):
         pass
