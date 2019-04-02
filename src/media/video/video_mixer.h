@@ -30,7 +30,7 @@
 #include <chrono>
 #include <memory>
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 class SinkClient;
 
@@ -80,4 +80,4 @@ private:
     ThreadLoop loop_; // as to be last member
 };
 
-}} // namespace ring::video
+}} // namespace jami::video

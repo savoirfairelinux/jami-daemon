@@ -27,7 +27,7 @@
 #include <ctime>
 #include <ciso646>
 
-namespace ring {
+namespace jami {
 
 struct Contact
 {

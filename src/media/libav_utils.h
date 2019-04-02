@@ -29,7 +29,7 @@ struct AVDictionary;
 struct AVFrame;
 struct AVPixFmtDescriptor;
 
-namespace ring { namespace libav_utils {
+namespace jami { namespace libav_utils {
 
     void ring_avcodec_init();
 
@@ -52,4 +52,4 @@ namespace ring { namespace libav_utils {
 
     void fillWithSilence(AVFrame* frame);
 
-}} // namespace ring::libav_utils
+}} // namespace jami::libav_utils

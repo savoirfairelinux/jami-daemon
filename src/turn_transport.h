@@ -29,7 +29,7 @@
 #include <map>
 #include <stdexcept>
 
-namespace ring {
+namespace jami {
 
 class TurnTransportPimpl;
 
@@ -171,4 +171,4 @@ private:
     RecvCb onRxDataCb_;
 };
 
-} // namespace ring
+} // namespace jami

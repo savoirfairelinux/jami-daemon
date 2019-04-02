@@ -31,7 +31,7 @@
 #include "sip_utils.h"
 #include "compiler_intrinsics.h"
 
-namespace ring {
+namespace jami {
 
 using sip_utils::CONST_PJ_STR;
 
@@ -39,28 +39,28 @@ using sip_utils::CONST_PJ_STR;
 void
 PresSubServer::pres_evsub_on_srv_state(UNUSED pjsip_evsub *sub, UNUSED pjsip_event *event)
 {
-    RING_ERR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
+    JAMI_ERR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
     return;
 
 #if 0 // DISABLED: removed IP2IP support, tuleap: #448
     pjsip_rx_data *rdata = event->body.rx_msg.rdata;
 
     if (!rdata) {
-        RING_DBG("Presence_subscription_server estate has changed but no rdata.");
+        JAMI_DBG("Presence_subscription_server estate has changed but no rdata.");
         return;
     }
 
     auto account = Manager::instance().getIP2IPAccount();
     auto sipaccount = static_cast<SIPAccount *>(account.get());
     if (!sipaccount) {
-        RING_ERR("Could not find account IP2IP");
+        JAMI_ERR("Could not find account IP2IP");
         return;
     }
 
     auto pres = sipaccount->getPresence();
 
     if (!pres) {
-        RING_ERR("Presence not initialized");
+        JAMI_ERR("Presence not initialized");
         return;
     }
 
@@ -68,7 +68,7 @@ PresSubServer::pres_evsub_on_srv_state(UNUSED pjsip_evsub *sub, UNUSED pjsip_eve
     PresSubServer *presSubServer = static_cast<PresSubServer *>(pjsip_evsub_get_mod_data(sub, pres->getModId()));
 
     if (presSubServer) {
-        RING_DBG("Presence_subscription_server to %s is %s",
+        JAMI_DBG("Presence_subscription_server to %s is %s",
               presSubServer->remote_, pjsip_evsub_get_state_name(sub));
         pjsip_evsub_state state;
 
@@ -111,14 +111,14 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method, pjsip_get_subscribe_method()) != 0)
         return PJ_FALSE;
 
-    RING_ERR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
+    JAMI_ERR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
     return PJ_FALSE;
 
 #if 0 // DISABLED: removed IP2IP support, tuleap: #448
     /* debug msg */
     std::string name(rdata->msg_info.to->name.ptr, rdata->msg_info.to->name.slen);
     std::string server(rdata->msg_info.from->name.ptr, rdata->msg_info.from->name.slen);
-    RING_DBG("Incoming pres_on_rx_subscribe_request for %s, name:%s, server:%s."
+    JAMI_DBG("Incoming pres_on_rx_subscribe_request for %s, name:%s, server:%s."
           , request.c_str()
           , name.c_str()
           , server.c_str());
@@ -127,7 +127,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     auto account = Manager::instance().getIP2IPAccount();
     auto sipaccount = static_cast<SIPAccount *>(account.get());
     if (!sipaccount) {
-        RING_ERR("Could not find account IP2IP");
+        JAMI_ERR("Could not find account IP2IP");
         return PJ_FALSE;
     }
 
@@ -142,7 +142,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     if (status != PJ_SUCCESS) {
         char errmsg[PJ_ERR_MSG_SIZE];
         pj_strerror(status, errmsg, sizeof(errmsg));
-        RING_WARN("Unable to create UAS dialog for subscription: %s [status=%d]", errmsg, status);
+        JAMI_WARN("Unable to create UAS dialog for subscription: %s [status=%d]", errmsg, status);
         pres->unlock();
         pjsip_endpt_respond_stateless(endpt, rdata, 400, NULL, NULL, NULL);
         return PJ_TRUE;
@@ -159,7 +159,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
         int code = PJSIP_ERRNO_TO_SIP_STATUS(status);
         pjsip_tx_data *tdata;
 
-        RING_WARN("Unable to create server subscription %d", status);
+        JAMI_WARN("Unable to create server subscription %d", status);
 
         if (code == 599 || code > 699 || code < 300) {
             code = 400;
@@ -212,7 +212,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     status = pjsip_pres_accept(sub, rdata, st_code, &msg_data.hdr_list);
 
     if (status != PJ_SUCCESS) {
-        RING_WARN("Unable to accept presence subscription %d", status);
+        JAMI_WARN("Unable to accept presence subscription %d", status);
         pjsip_pres_terminate(sub, PJ_FALSE);
         pres->unlock();
         return PJ_FALSE;
@@ -257,7 +257,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     }
 
     if (status != PJ_SUCCESS) {
-        RING_WARN("Unable to create/send NOTIFY %d", status);
+        JAMI_WARN("Unable to create/send NOTIFY %d", status);
         pjsip_pres_terminate(sub, PJ_FALSE);
         pres->unlock();
         return status;
@@ -320,7 +320,7 @@ bool PresSubServer::matches(const char *s) const
 void PresSubServer::approve(bool flag)
 {
     approved_ = flag;
-    RING_DBG("Approve Presence_subscription_server for %s: %s.", remote_, flag ? "true" : "false");
+    JAMI_DBG("Approve Presence_subscription_server for %s: %s.", remote_, flag ? "true" : "false");
     // attach the real status data
     pjsip_pres_set_status(sub_, pres_->getStatus());
 }
@@ -335,7 +335,7 @@ void PresSubServer::notify()
     * the user accepted the request.
     */
     if ((pjsip_evsub_get_state(sub_) == PJSIP_EVSUB_STATE_ACTIVE) && (approved_)) {
-        RING_DBG("Notifying %s.", remote_);
+        JAMI_DBG("Notifying %s.", remote_);
 
         pjsip_tx_data *tdata;
         pjsip_pres_set_status(sub_, pres_->getStatus());
@@ -345,10 +345,10 @@ void PresSubServer::notify()
             pres_->fillDoc(tdata, NULL);
             pjsip_pres_send_request(sub_, tdata);
         } else {
-            RING_WARN("Unable to create/send NOTIFY");
+            JAMI_WARN("Unable to create/send NOTIFY");
             pjsip_pres_terminate(sub_, PJ_FALSE);
         }
     }
 }
 
-} // namespace ring
+} // namespace jami

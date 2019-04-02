@@ -34,7 +34,7 @@ namespace YAML {
 
 struct pjsip_msg;
 
-namespace ring {
+namespace jami {
 
 class AudioLayer;
 
@@ -449,7 +449,7 @@ class ShortcutPreferences : public Serializable {
         constexpr static const char * const CONFIG_LABEL = "shortcuts";
 };
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 class VideoPreferences : public Serializable {
     public:
         VideoPreferences();
@@ -480,8 +480,8 @@ class VideoPreferences : public Serializable {
         bool encodingAccelerated_;
         constexpr static const char* const CONFIG_LABEL = "video";
 };
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
-} // namespace ring
+} // namespace jami
 
 #endif

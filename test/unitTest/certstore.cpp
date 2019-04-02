@@ -26,7 +26,7 @@
 
 #include "security/certstore.h"
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class CertStoreTest : public CppUnit::TestFixture {
 public:
@@ -45,59 +45,59 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(CertStoreTest, CertStoreTest::name());
 void
 CertStoreTest::trustStoreTest()
 {
-    ring::tls::TrustStore trustStore;
+    jami::tls::TrustStore trustStore;
 
     auto ca = dht::crypto::generateIdentity("test CA");
     auto account = dht::crypto::generateIdentity("test account", ca, 4096, true);
     auto device = dht::crypto::generateIdentity("test device", account);
     auto device2 = dht::crypto::generateIdentity("test device 2", account);
 
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == ring::tls::TrustStore::PermissionStatus::UNDEFINED);
-    trustStore.setCertificateStatus(ca.second, ring::tls::TrustStore::PermissionStatus::ALLOWED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == ring::tls::TrustStore::PermissionStatus::ALLOWED);
-    trustStore.setCertificateStatus(ca.second, ring::tls::TrustStore::PermissionStatus::UNDEFINED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == ring::tls::TrustStore::PermissionStatus::UNDEFINED);
-    trustStore.setCertificateStatus(ca.second, ring::tls::TrustStore::PermissionStatus::ALLOWED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == ring::tls::TrustStore::PermissionStatus::ALLOWED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::UNDEFINED);
+    trustStore.setCertificateStatus(ca.second, jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    trustStore.setCertificateStatus(ca.second, jami::tls::TrustStore::PermissionStatus::UNDEFINED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::UNDEFINED);
+    trustStore.setCertificateStatus(ca.second, jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::ALLOWED);
 
     CPPUNIT_ASSERT(trustStore.isAllowed(*ca.second));
     CPPUNIT_ASSERT(trustStore.isAllowed(*account.second));
     CPPUNIT_ASSERT(trustStore.isAllowed(*device.second));
 
     // Ban device
-    trustStore.setCertificateStatus(device.second, ring::tls::TrustStore::PermissionStatus::BANNED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(device.second->getId().toString()) == ring::tls::TrustStore::PermissionStatus::BANNED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == ring::tls::TrustStore::PermissionStatus::ALLOWED);
+    trustStore.setCertificateStatus(device.second, jami::tls::TrustStore::PermissionStatus::BANNED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(device.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::BANNED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::ALLOWED);
 
     CPPUNIT_ASSERT(trustStore.isAllowed(*ca.second));
     CPPUNIT_ASSERT(trustStore.isAllowed(*account.second));
     CPPUNIT_ASSERT(not trustStore.isAllowed(*device.second));
 
     // Ban account
-    trustStore.setCertificateStatus(account.second, ring::tls::TrustStore::PermissionStatus::BANNED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(account.second->getId().toString()) == ring::tls::TrustStore::PermissionStatus::BANNED);
+    trustStore.setCertificateStatus(account.second, jami::tls::TrustStore::PermissionStatus::BANNED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(account.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::BANNED);
     CPPUNIT_ASSERT(trustStore.isAllowed(*ca.second));
     CPPUNIT_ASSERT(not trustStore.isAllowed(*account.second));
     CPPUNIT_ASSERT(not trustStore.isAllowed(*device2.second));
 
     // Unban account
-    trustStore.setCertificateStatus(account.second, ring::tls::TrustStore::PermissionStatus::ALLOWED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(account.second->getId().toString()) == ring::tls::TrustStore::PermissionStatus::ALLOWED);
+    trustStore.setCertificateStatus(account.second, jami::tls::TrustStore::PermissionStatus::ALLOWED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(account.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::ALLOWED);
     CPPUNIT_ASSERT(trustStore.isAllowed(*ca.second));
     CPPUNIT_ASSERT(trustStore.isAllowed(*account.second));
     CPPUNIT_ASSERT(trustStore.isAllowed(*device2.second));
 
     // Ban CA
-    trustStore.setCertificateStatus(ca.second, ring::tls::TrustStore::PermissionStatus::BANNED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == ring::tls::TrustStore::PermissionStatus::BANNED);
+    trustStore.setCertificateStatus(ca.second, jami::tls::TrustStore::PermissionStatus::BANNED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::BANNED);
     CPPUNIT_ASSERT(not trustStore.isAllowed(*ca.second));
     CPPUNIT_ASSERT(not trustStore.isAllowed(*account.second));
     CPPUNIT_ASSERT(not trustStore.isAllowed(*device2.second));
 
-    trustStore.setCertificateStatus(ca.second, ring::tls::TrustStore::PermissionStatus::BANNED);
-    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == ring::tls::TrustStore::PermissionStatus::BANNED);
+    trustStore.setCertificateStatus(ca.second, jami::tls::TrustStore::PermissionStatus::BANNED);
+    CPPUNIT_ASSERT(trustStore.getCertificateStatus(ca.second->getId().toString()) == jami::tls::TrustStore::PermissionStatus::BANNED);
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::CertStoreTest::name());
+RING_TEST_RUNNER(jami::test::CertStoreTest::name());

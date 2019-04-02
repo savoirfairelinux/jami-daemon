@@ -50,7 +50,7 @@ extern "C" {
 // Define following line if you need to debug libav SDP
 //#define DEBUG_SDP 1
 
-namespace ring {
+namespace jami {
 
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
@@ -79,7 +79,7 @@ void
 MediaEncoder::setOptions(const MediaStream& opts)
 {
     if (!opts.isValid()) {
-        RING_ERR() << "Invalid options";
+        JAMI_ERR() << "Invalid options";
         return;
     }
 
@@ -99,9 +99,9 @@ MediaEncoder::setOptions(const MediaStream& opts)
 void
 MediaEncoder::setOptions(const MediaDescription& args)
 {
-    libav_utils::setDictValue(&options_, "payload_type", ring::to_string(args.payload_type));
-    libav_utils::setDictValue(&options_, "max_rate", ring::to_string(args.codec->bitrate));
-    libav_utils::setDictValue(&options_, "crf", ring::to_string(args.codec->quality));
+    libav_utils::setDictValue(&options_, "payload_type", jami::to_string(args.payload_type));
+    libav_utils::setDictValue(&options_, "max_rate", jami::to_string(args.codec->bitrate));
+    libav_utils::setDictValue(&options_, "crf", jami::to_string(args.codec->quality));
 
     if (not args.parameters.empty())
         libav_utils::setDictValue(&options_, "parameters", args.parameters);
@@ -197,7 +197,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
                 outputCodec = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
             }
         } else {
-            RING_WARN() << "Hardware encoding disabled";
+            JAMI_WARN() << "Hardware encoding disabled";
         }
     }
 #endif
@@ -212,7 +212,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         else
             outputCodec = avcodec_find_encoder(static_cast<AVCodecID>(systemCodecInfo.avcodecId));
         if (!outputCodec) {
-            RING_ERR("Encoder \"%s\" not found!", systemCodecInfo.name.c_str());
+            JAMI_ERR("Encoder \"%s\" not found!", systemCodecInfo.name.c_str());
             throw MediaEncoderException("No output encoder");
         }
     }
@@ -246,7 +246,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
         if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
             crf = 30; // good value for H264-720p@30
-        RING_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
+        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
 
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         encoderCtx->rc_buffer_size = bufSize;
@@ -274,9 +274,9 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         encoderCtx->bit_rate = maxBitrate;
         if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
             av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
-            RING_DBG("Using quality factor %d", crf);
+            JAMI_DBG("Using quality factor %d", crf);
         } else {
-            RING_DBG("Using Max bitrate %d", maxBitrate);
+            JAMI_DBG("Using Max bitrate %d", maxBitrate);
         }
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
         // For MPEG4 :
@@ -284,11 +284,11 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         // Use CBR (set bitrate)
         encoderCtx->rc_buffer_size = maxBitrate;
         encoderCtx->bit_rate = encoderCtx->rc_min_rate = encoderCtx->rc_max_rate =  maxBitrate;
-        RING_DBG("Using Max bitrate %d", maxBitrate);
+        JAMI_DBG("Using Max bitrate %d", maxBitrate);
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_H263) {
         encoderCtx->bit_rate = encoderCtx->rc_max_rate =  maxBitrate;
         encoderCtx->rc_buffer_size = maxBitrate;
-        RING_DBG("Using Max bitrate %d", maxBitrate);
+        JAMI_DBG("Using Max bitrate %d", maxBitrate);
     }
 
     // add video stream to outputformat context
@@ -309,7 +309,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
 #endif
     // framerate is not copied from encoderCtx to stream
     stream->avg_frame_rate = encoderCtx->framerate;
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     if (systemCodecInfo.mediaType == MEDIA_VIDEO) {
         // allocate buffers for both scaled (pre-encoder) and encoded frames
         const int width = encoderCtx->width;
@@ -332,7 +332,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         scaledFrameBuffer_.reserve(scaledFrameBufferSize_);
         scaledFrame_.setFromMemory(scaledFrameBuffer_.data(), format, width, height);
     }
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
     return stream->index;
 }
@@ -366,7 +366,7 @@ MediaEncoder::startIO()
     if (!outputCtx_->pb)
         openIOContext();
     if (avformat_write_header(outputCtx_, options_ ? &options_ : nullptr)) {
-        RING_ERR("Could not write header for output file... check codec parameters");
+        JAMI_ERR("Could not write header for output file... check codec parameters");
         throw MediaEncoderException("Failed to write output file header");
     }
 
@@ -378,10 +378,9 @@ MediaEncoder::startIO()
     initialized_ = true;
 }
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 int
-MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
-                     int64_t frame_number)
+MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
 {
     if (!initialized_) {
         initStream(videoCodec_, input.pointer()->hw_frames_ctx);
@@ -438,7 +437,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
     return encode(frame, currentStreamIdx_);
 }
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
 int
 MediaEncoder::encodeAudio(AudioFrame& frame)
@@ -485,7 +484,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         if (ret == AVERROR(EAGAIN))
             break;
         if (ret < 0 && ret != AVERROR_EOF) { // we still want to write our frame on EOF
-            RING_ERR() << "Failed to encode frame: " << libav_utils::getError(ret);
+            JAMI_ERR() << "Failed to encode frame: " << libav_utils::getError(ret);
             return ret;
         }
 
@@ -521,7 +520,7 @@ MediaEncoder::send(AVPacket& pkt, int streamIdx)
     // write the compressed frame
     auto ret = av_write_frame(outputCtx_, &pkt);
     if (ret < 0) {
-        RING_ERR() << "av_write_frame failed: " << libav_utils::getError(ret);
+        JAMI_ERR() << "av_write_frame failed: " << libav_utils::getError(ret);
     }
     return ret >= 0;
 }
@@ -532,7 +531,7 @@ MediaEncoder::flush()
     int ret = 0;
     for (size_t i = 0; i < outputCtx_->nb_streams; ++i) {
         if (encode(nullptr, i) < 0) {
-            RING_ERR() << "Could not flush stream #" << i;
+            JAMI_ERR() << "Could not flush stream #" << i;
             ret |= 1u << i; // provide a way for caller to know which streams failed
         }
     }
@@ -559,7 +558,7 @@ MediaEncoder::print_sdp()
         result += line + "\n";
     }
 #ifdef DEBUG_SDP
-    RING_DBG("Sending SDP:\n%s", result.c_str());
+    JAMI_DBG("Sending SDP:\n%s", result.c_str());
 #endif
     return result;
 }
@@ -572,7 +571,7 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
     auto encoderName = outputCodec->name; // guaranteed to be non null if AVCodec is not null
 
     encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), is_video ? 16u : 4u);
-    RING_DBG("[%s] Using %d threads", encoderName, encoderCtx->thread_count);
+    JAMI_DBG("[%s] Using %d threads", encoderName, encoderCtx->thread_count);
 
     if (is_video) {
         // resolution must be a multiple of two
@@ -605,7 +604,7 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
         encoderCtx->time_base = AVRational{1, encoderCtx->sample_rate};
         if (audioOpts_.nbChannels > 2 || audioOpts_.nbChannels < 1) {
             encoderCtx->channels = std::max(std::min(audioOpts_.nbChannels, 1), 2);
-            RING_ERR() << "[" << encoderName << "] Clamping invalid channel count: "
+            JAMI_ERR() << "[" << encoderName << "] Clamping invalid channel count: "
                 << audioOpts_.nbChannels << " -> " << encoderCtx->channels;
         } else {
             encoderCtx->channels = audioOpts_.nbChannels;
@@ -613,9 +612,9 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
         encoderCtx->channel_layout = av_get_default_channel_layout(encoderCtx->channels);
         if (audioOpts_.frameSize) {
             encoderCtx->frame_size = audioOpts_.frameSize;
-            RING_DBG() << "[" << encoderName << "] Frame size " << encoderCtx->frame_size;
+            JAMI_DBG() << "[" << encoderName << "] Frame size " << encoderCtx->frame_size;
         } else {
-            RING_WARN() << "[" << encoderName << "] Frame size not set";
+            JAMI_WARN() << "[" << encoderName << "] Frame size not set";
         }
     }
 
@@ -627,10 +626,10 @@ MediaEncoder::forcePresetX264(AVCodecContext* encoderCtx)
 {
     const char *speedPreset = "ultrafast";
     if (av_opt_set(encoderCtx, "preset", speedPreset, AV_OPT_SEARCH_CHILDREN))
-        RING_WARN("Failed to set x264 preset '%s'", speedPreset);
+        JAMI_WARN("Failed to set x264 preset '%s'", speedPreset);
     const char *tune = "zerolatency";
     if (av_opt_set(encoderCtx, "tune", tune, AV_OPT_SEARCH_CHILDREN))
-        RING_WARN("Failed to set x264 tune '%s'", tune);
+        JAMI_WARN("Failed to set x264 tune '%s'", tune);
 }
 
 void
@@ -679,11 +678,11 @@ MediaEncoder::extractProfileLevelID(const std::string &parameters,
                 ctx->profile |= FF_PROFILE_H264_INTRA;
             break;
     }
-    RING_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
+    JAMI_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
 }
 
 bool
-MediaEncoder::useCodec(const ring::AccountCodecInfo* codec) const noexcept
+MediaEncoder::useCodec(const jami::AccountCodecInfo* codec) const noexcept
 {
     if (codec->systemCodecInfo.mediaType == MEDIA_VIDEO)
         return videoCodec_ == codec->systemCodecInfo.name;
@@ -744,16 +743,16 @@ MediaEncoder::readConfig(AVDictionary** dict, AVCodecContext* encoderCtx)
             std::ifstream file(path);
             file >> root;
             if (!root.isObject()) {
-                RING_ERR() << "Invalid encoder configuration: root is not an object";
+                JAMI_ERR() << "Invalid encoder configuration: root is not an object";
                 return;
             }
             const auto& config = root[name];
             if (config.isNull()) {
-                RING_WARN() << "Encoder '" << name << "' not found in configuration file";
+                JAMI_WARN() << "Encoder '" << name << "' not found in configuration file";
                 return;
             }
             if (!config.isObject()) {
-                RING_ERR() << "Invalid encoder configuration: '" << name << "' is not an object";
+                JAMI_ERR() << "Invalid encoder configuration: '" << name << "' is not an object";
                 return;
             }
             // If users want to change these, they should use the settings page.
@@ -761,7 +760,7 @@ MediaEncoder::readConfig(AVDictionary** dict, AVCodecContext* encoderCtx)
                 Json::Value v = *it;
                 if (!it.key().isConvertibleTo(Json::ValueType::stringValue)
                     || !v.isConvertibleTo(Json::ValueType::stringValue)) {
-                    RING_ERR() << "Invalid configuration for '" << name << "'";
+                    JAMI_ERR() << "Invalid configuration for '" << name << "'";
                     return;
                 }
                 const auto& key = it.key().asString();
@@ -791,9 +790,9 @@ MediaEncoder::readConfig(AVDictionary** dict, AVCodecContext* encoderCtx)
                     libav_utils::setDictValue(dict, key, value);
             }
         } catch (const Json::Exception& e) {
-            RING_ERR() << "Failed to load encoder configuration file: " << e.what();
+            JAMI_ERR() << "Failed to load encoder configuration file: " << e.what();
         }
     }
 }
 
-} // namespace ring
+} // namespace jami

@@ -46,9 +46,9 @@
 #include <sstream>
 #include <algorithm>
 
-#define RETURN_IF_FAIL(A, VAL, ...) if (!(A)) { RING_ERR(__VA_ARGS__); return (VAL); }
+#define RETURN_IF_FAIL(A, VAL, ...) if (!(A)) { JAMI_ERR(__VA_ARGS__); return (VAL); }
 
-namespace ring {
+namespace jami {
 
 constexpr const char* TRANSPORT_STATE_STR[] = {
     "CONNECTED", "DISCONNECTED", "SHUTDOWN", "DESTROY", "UNKNOWN STATE"
@@ -78,7 +78,7 @@ SipTransport::SipTransport(pjsip_transport* t)
     // Set pointer here, right after the successful pjsip_transport_add_ref
     transport_.reset(t);
 
-    RING_DBG("SipTransport@%p {tr=%p {rc=%ld}}",
+    JAMI_DBG("SipTransport@%p {tr=%p {rc=%ld}}",
              this, transport_.get(), pj_atomic_get(transport_->ref_cnt));
 }
 
@@ -91,7 +91,7 @@ SipTransport::SipTransport(pjsip_transport* t,
 
 SipTransport::~SipTransport()
 {
-    RING_DBG("~SipTransport@%p {tr=%p {rc=%ld}}",
+    JAMI_DBG("~SipTransport@%p {tr=%p {rc=%ld}}",
              this, transport_.get(), pj_atomic_get(transport_->ref_cnt));
 }
 
@@ -198,19 +198,19 @@ cp_(cp), pool_(pool), endpt_(endpt)
                                   pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP),
                                   &ice_pj_transport_type_);
 */
-    RING_DBG("SipTransportBroker@%p", this);
+    JAMI_DBG("SipTransportBroker@%p", this);
 }
 
 SipTransportBroker::~SipTransportBroker()
 {
-    RING_DBG("~SipTransportBroker@%p", this);
+    JAMI_DBG("~SipTransportBroker@%p", this);
 
     shutdown();
 
     udpTransports_.clear();
     transports_.clear();
 
-    RING_DBG("destroying SipTransportBroker@%p", this);
+    JAMI_DBG("destroying SipTransportBroker@%p", this);
 }
 
 void
@@ -218,7 +218,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
                                           pjsip_transport_state state,
                                           const pjsip_transport_state_info* info)
 {
-    RING_DBG("pjsip transport@%p %s -> %s",
+    JAMI_DBG("pjsip transport@%p %s -> %s",
              tp, tp->info, SipTransport::stateToStr(state));
 
     // First make sure that this transport is handled by us
@@ -230,7 +230,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
         std::lock_guard<std::mutex> lock(transportMapMutex_);
         auto key = transports_.find(tp);
         if (key == transports_.end()) {
-            RING_WARN("spurious pjsip transport state change");
+            JAMI_WARN("spurious pjsip transport state change");
             return;
         }
 
@@ -244,7 +244,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
 
         // maps cleanup
         if (destroyed) {
-            RING_DBG("unmap pjsip transport@%p {SipTransport@%p}",
+            JAMI_DBG("unmap pjsip transport@%p {SipTransport@%p}",
                      tp, sipTransport.get());
             transports_.erase(key);
 
@@ -311,18 +311,18 @@ SipTransportBroker::getUdpTransport(const SipTransportDescr& descr)
         auto it = transports_.find(itp->second);
         if (it != transports_.end()) {
             if (auto spt = it->second.lock()) {
-                RING_DBG("Reusing transport %s", descr.toString().c_str());
+                JAMI_DBG("Reusing transport %s", descr.toString().c_str());
                 return spt;
             }
             else {
                 // Transport still exists but have not been destroyed yet.
-                RING_WARN("Recycling transport %s", descr.toString().c_str());
+                JAMI_WARN("Recycling transport %s", descr.toString().c_str());
                 auto ret = std::make_shared<SipTransport>(itp->second);
                 it->second = ret;
                 return ret;
             }
         } else {
-            RING_WARN("Cleaning up UDP transport %s", descr.toString().c_str());
+            JAMI_WARN("Cleaning up UDP transport %s", descr.toString().c_str());
             udpTransports_.erase(itp);
         }
     }
@@ -351,15 +351,15 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
     pj_cfg.bind_addr = listeningAddress;
     pjsip_transport *transport = nullptr;
     if (pj_status_t status = pjsip_udp_transport_start2(endpt_, &pj_cfg, &transport)) {
-        RING_ERR("pjsip_udp_transport_start2 failed with error %d: %s", status,
+        JAMI_ERR("pjsip_udp_transport_start2 failed with error %d: %s", status,
                  sip_utils::sip_strerror(status).c_str());
-        RING_ERR("UDP IPv%s Transport did not start on %s",
+        JAMI_ERR("UDP IPv%s Transport did not start on %s",
             listeningAddress.isIpv4() ? "4" : "6",
             listeningAddress.toString(true).c_str());
         return nullptr;
     }
 
-    RING_DBG("Created UDP transport on %s : %s", d.interface.c_str(), listeningAddress.toString(true).c_str());
+    JAMI_DBG("Created UDP transport on %s : %s", d.interface.c_str(), listeningAddress.toString(true).c_str());
     return std::make_shared<SipTransport>(transport);
 }
 
@@ -375,19 +375,19 @@ SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_s
     listeningAddress.setPort(d.listenerPort);
 
     RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
-    RING_DBG("Creating TLS listener %s on %s...", d.toString().c_str(), listeningAddress.toString(true).c_str());
+    JAMI_DBG("Creating TLS listener %s on %s...", d.toString().c_str(), listeningAddress.toString(true).c_str());
 #if 0
-    RING_DBG(" ca_list_file : %s", settings->ca_list_file.ptr);
-    RING_DBG(" cert_file    : %s", settings->cert_file.ptr);
-    RING_DBG(" ciphers_num    : %d", settings->ciphers_num);
-    RING_DBG(" verify server %d client %d client_cert %d", settings->verify_server, settings->verify_client, settings->require_client_cert);
-    RING_DBG(" reuse_addr    : %d", settings->reuse_addr);
+    JAMI_DBG(" ca_list_file : %s", settings->ca_list_file.ptr);
+    JAMI_DBG(" cert_file    : %s", settings->cert_file.ptr);
+    JAMI_DBG(" ciphers_num    : %d", settings->ciphers_num);
+    JAMI_DBG(" verify server %d client %d client_cert %d", settings->verify_server, settings->verify_client, settings->require_client_cert);
+    JAMI_DBG(" reuse_addr    : %d", settings->reuse_addr);
 #endif
 
     pjsip_tpfactory *listener = nullptr;
     const pj_status_t status = pjsip_tls_transport_start2(endpt_, settings, listeningAddress.pjPtr(), nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
-        RING_ERR("TLS listener did not start: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERR("TLS listener did not start: %s", sip_utils::sip_strerror(status).c_str());
         return nullptr;
     }
     return std::make_shared<TlsListener>(listener);
@@ -402,7 +402,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
     if (remoteAddr.getPort() == 0)
         remoteAddr.setPort(pjsip_transport_get_default_port_for_type(l->get()->type));
 
-    RING_DBG("Get new TLS transport to %s", remoteAddr.toString(true).c_str());
+    JAMI_DBG("Get new TLS transport to %s", remoteAddr.toString(true).c_str());
     pjsip_tpselector sel;
     sel.type = PJSIP_TPSELECTOR_LISTENER;
     sel.u.listener = l->get();
@@ -421,7 +421,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
             &transport);
 
     if (!transport || status != PJ_SUCCESS) {
-        RING_ERR("Could not get new TLS transport: %s", sip_utils::sip_strerror(status).c_str());
+        JAMI_ERR("Could not get new TLS transport: %s", sip_utils::sip_strerror(status).c_str());
         return nullptr;
     }
     auto ret = std::make_shared<SipTransport>(transport, l);
@@ -434,7 +434,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport>& ice,
+SipTransportBroker::getTlsIceTransport(const std::shared_ptr<jami::IceTransport>& ice,
                                        unsigned comp_id,
                                        const tls::TlsParams& params)
 {
@@ -456,4 +456,4 @@ SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport>
     return sip_tr;
 }
 
-} // namespace ring
+} // namespace jami

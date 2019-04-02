@@ -29,7 +29,7 @@
 struct AVFrame;
 struct SwrContext;
 
-namespace ring {
+namespace jami {
 
 /**
  * Wrapper class for libswresample
@@ -78,4 +78,4 @@ private:
     unsigned initCount_;
 };
 
-} // namespace ring
+} // namespace jami

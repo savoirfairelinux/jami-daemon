@@ -28,7 +28,7 @@
 #include <thread>
 #include <vector>
 
-using namespace ring;
+using namespace jami;
 
 CPPUNIT_TEST_SUITE_REGISTRATION( test_TURN );
 

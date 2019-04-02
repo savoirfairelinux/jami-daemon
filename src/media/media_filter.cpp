@@ -33,7 +33,7 @@ extern "C" {
 #include <sstream>
 #include <thread>
 
-namespace ring {
+namespace jami {
 
 MediaFilter::MediaFilter()
 {}
@@ -105,7 +105,7 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
     if ((ret = avfilter_graph_config(graph_, nullptr)) < 0)
         return fail("Failed to configure filter graph", ret);
 
-    RING_DBG() << "Filter graph initialized with: " << desc_;
+    JAMI_DBG() << "Filter graph initialized with: " << desc_;
     initialized_ = true;
     return 0;
 }
@@ -214,7 +214,7 @@ MediaFilter::readOutput()
     } else if (err == AVERROR(EAGAIN)) {
         // no data available right now, try again
     } else if (err == AVERROR_EOF) {
-        RING_WARN() << "Filters have reached EOF, no more frames will be output";
+        JAMI_WARN() << "Filters have reached EOF, no more frames will be output";
     } else {
         fail("Error occurred while pulling from filter graph", err);
     }
@@ -227,7 +227,7 @@ MediaFilter::flush()
     for (size_t i = 0; i < inputs_.size(); ++i) {
         int ret = av_buffersrc_add_frame_flags(inputs_[i], nullptr, 0);
         if (ret < 0) {
-            RING_ERR() << "Failed to flush filter '" << inputParams_[i].name << "': " << libav_utils::getError(ret);
+            JAMI_ERR() << "Failed to flush filter '" << inputParams_[i].name << "': " << libav_utils::getError(ret);
         }
     }
 }
@@ -320,7 +320,7 @@ MediaFilter::reinitialize()
     clean();
     auto ret = initialize(desc, params);
     if (ret >= 0)
-        RING_DBG() << "Filter graph reinitialized";
+        JAMI_DBG() << "Filter graph reinitialized";
     return ret;
 }
 
@@ -328,7 +328,7 @@ int
 MediaFilter::fail(std::string msg, int err) const
 {
     if (!msg.empty())
-        RING_ERR() << msg << ": " << libav_utils::getError(err);
+        JAMI_ERR() << msg << ": " << libav_utils::getError(err);
     return err;
 }
 
@@ -343,4 +343,4 @@ MediaFilter::clean()
     inputParams_.clear();
 }
 
-} // namespace ring
+} // namespace jami

@@ -35,7 +35,7 @@
 #include <regex>
 #include <fstream>
 
-namespace ring {
+namespace jami {
 
 constexpr const char* const QUERY_NAME {"/name/"};
 constexpr const char* const QUERY_ADDR {"/addr/"};
@@ -67,7 +67,7 @@ NameDirectory::lookupUri(const std::string& uri, const std::string& default_serv
             return;
         }
     }
-    RING_ERR("Can't parse URI: %s", uri.c_str());
+    JAMI_ERR("Can't parse URI: %s", uri.c_str());
     cb("", Response::invalidResponse);
 }
 
@@ -119,7 +119,7 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         req->set_header("Accept", "*/*");
         req->set_header("Host", serverHost_);
 
-        RING_DBG("Address lookup for %s: %s", addr.c_str(), uri.to_string().c_str());
+        JAMI_DBG("Address lookup for %s: %s", addr.c_str(), uri.to_string().c_str());
 
         auto ret = restbed::Http::async(req, [this,cb,addr](const std::shared_ptr<restbed::Request>&,
                                                  const std::shared_ptr<restbed::Response>& reply) {
@@ -138,13 +138,13 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                 Json::CharReaderBuilder rbuilder;
                 auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
                 if (!reader->parse(&body[0], &body[body.size()], &json, nullptr)) {
-                    RING_ERR("Address lookup for %s: can't parse server response: %s", addr.c_str(), body.c_str());
+                    JAMI_ERR("Address lookup for %s: can't parse server response: %s", addr.c_str(), body.c_str());
                     cb("", Response::error);
                     return;
                 }
                 auto name = json["name"].asString();
                 if (not name.empty()) {
-                    RING_DBG("Found name for %s: %s", addr.c_str(), name.c_str());
+                    JAMI_DBG("Found name for %s: %s", addr.c_str(), name.c_str());
                     {
                         std::lock_guard<std::mutex> l(lock_);
                         addrCache_.emplace(name, addr);
@@ -165,7 +165,7 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         // avoid blocking on future destruction
         ThreadPool::instance().run([ret](){ ret.get(); });
     } catch (const std::exception& e) {
-        RING_ERR("Error when performing address lookup: %s", e.what());
+        JAMI_ERR("Error when performing address lookup: %s", e.what());
         cb("", Response::error);
     }
 }
@@ -193,7 +193,7 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         }
 
         restbed::Uri uri(HTTPS_PROTO + serverHost_ + QUERY_NAME + name);
-        RING_DBG("Name lookup for %s: %s", name.c_str(), uri.to_string().c_str());
+        JAMI_DBG("Name lookup for %s: %s", name.c_str(), uri.to_string().c_str());
 
         auto request = std::make_shared<restbed::Request>(std::move(uri));
         request->set_header("Accept", "*/*");
@@ -203,7 +203,7 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                                                      const std::shared_ptr<restbed::Response>& reply) {
             auto code = reply->get_status_code();
             if (code != 200)
-                RING_DBG("Name lookup for %s: got reply code %d", name.c_str(), code);
+                JAMI_DBG("Name lookup for %s: got reply code %d", name.c_str(), code);
             if (code >= 200 && code < 300) {
                 size_t length = getContentLength(*reply);
                 if (length > MAX_RESPONSE_SIZE) {
@@ -218,7 +218,7 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                 Json::CharReaderBuilder rbuilder;
                 auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
                 if (!reader->parse(&body[0], &body[body.size()], &json, nullptr)) {
-                    RING_ERR("Name lookup for %s: can't parse server response: %s", name.c_str(), body.c_str());
+                    JAMI_ERR("Name lookup for %s: can't parse server response: %s", name.c_str(), body.c_str());
                     cb("", Response::error);
                     return;
                 }
@@ -246,7 +246,7 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                     }
                 }
 
-                RING_DBG("Found address for %s: %s", name.c_str(), addr.c_str());
+                JAMI_DBG("Found address for %s: %s", name.c_str(), addr.c_str());
                 {
                     std::lock_guard<std::mutex> l(lock_);
                     addrCache_.emplace(name, addr);
@@ -264,7 +264,7 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         // avoid blocking on future destruction
         ThreadPool::instance().run([ret](){ ret.get(); });
     } catch (const std::exception& e) {
-        RING_ERR("Error when performing name lookup: %s", e.what());
+        JAMI_ERR("Error when performing name lookup: %s", e.what());
         cb("", Response::error);
     }
 }
@@ -301,23 +301,23 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
         {
             std::stringstream ss;
             ss << "{\"addr\":\"" << addr << "\",\"owner\":\"" << owner <<
-                "\",\"signature\":\"" << signedname << "\",\"publickey\":\"" << base64::encode(ring::Blob(publickey.begin(), publickey.end()))  << "\"}";
+                "\",\"signature\":\"" << signedname << "\",\"publickey\":\"" << base64::encode(jami::Blob(publickey.begin(), publickey.end()))  << "\"}";
 
             body = ss.str();
         }
         request->set_body(body);
-        request->set_header("Content-Length", ring::to_string(body.size()));
+        request->set_header("Content-Length", jami::to_string(body.size()));
 
         auto params = std::make_shared<restbed::Settings>();
         params->set_connection_timeout(std::chrono::seconds(120));
 
-        RING_WARN("registerName: sending request %s %s", addr.c_str(), name.c_str());
+        JAMI_WARN("registerName: sending request %s %s", addr.c_str(), name.c_str());
         auto ret = restbed::Http::async(request,
          [this,cb,addr,name](const std::shared_ptr<restbed::Request>&,
              const std::shared_ptr<restbed::Response>& reply)
          {
             auto code = reply->get_status_code();
-            RING_DBG("Got reply for registration of %s -> %s: code %d", name.c_str(), addr.c_str(), code);
+            JAMI_DBG("Got reply for registration of %s -> %s: code %d", name.c_str(), addr.c_str(), code);
             if (code >= 200 && code < 300) {
                 size_t length = getContentLength(*reply);
                 if (length > MAX_RESPONSE_SIZE) {
@@ -336,7 +336,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
                     return;
                 }
                 auto success = json["success"].asBool();
-                RING_DBG("Got reply for registration of %s -> %s: %s", name.c_str(), addr.c_str(), success ? "success" : "failure");
+                JAMI_DBG("Got reply for registration of %s -> %s: %s", name.c_str(), addr.c_str(), success ? "success" : "failure");
                 if (success) {
                     std::lock_guard<std::mutex> l(lock_);
                     addrCache_.emplace(name, addr);
@@ -345,29 +345,29 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
                 cb(success ? RegistrationResponse::success : RegistrationResponse::error);
             } else if(code == 400){
                 cb(RegistrationResponse::incompleteRequest);
-                RING_ERR("RegistrationResponse::incompleteRequest");
+                JAMI_ERR("RegistrationResponse::incompleteRequest");
             } else if(code == 401){
                 cb(RegistrationResponse::signatureVerificationFailed);
-                RING_ERR("RegistrationResponse::signatureVerificationFailed");
+                JAMI_ERR("RegistrationResponse::signatureVerificationFailed");
             } else if (code == 403) {
                 cb(RegistrationResponse::alreadyTaken);
-                RING_ERR("RegistrationResponse::alreadyTaken");
+                JAMI_ERR("RegistrationResponse::alreadyTaken");
             } else if (code == 409) {
                 cb(RegistrationResponse::alreadyTaken);
-                RING_ERR("RegistrationResponse::alreadyTaken");
+                JAMI_ERR("RegistrationResponse::alreadyTaken");
             } else if (code > 400 && code < 500) {
                 cb(RegistrationResponse::alreadyTaken);
-                RING_ERR("RegistrationResponse::alreadyTaken");
+                JAMI_ERR("RegistrationResponse::alreadyTaken");
             } else {
                 cb(RegistrationResponse::error);
-                RING_ERR("RegistrationResponse::error");
+                JAMI_ERR("RegistrationResponse::error");
             }
         }, params).share();
 
     // avoid blocking on future destruction
         ThreadPool::instance().run([ret](){ ret.get(); });
     } catch (const std::exception& e) {
-        RING_ERR("Error when performing name registration: %s", e.what());
+        JAMI_ERR("Error when performing name registration: %s", e.what());
         cb(RegistrationResponse::error);
     }
 }
@@ -382,7 +382,7 @@ NameDirectory::saveCache()
         std::lock_guard<std::mutex> l(lock_);
         msgpack::pack(file, nameCache_);
     }
-    RING_DBG("Saved %lu name-address mappings", (long unsigned)nameCache_.size());
+    JAMI_DBG("Saved %lu name-address mappings", (long unsigned)nameCache_.size());
 }
 
 void
@@ -395,7 +395,7 @@ NameDirectory::loadCache()
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(cachePath_));
         std::ifstream file(cachePath_);
         if (!file.is_open()) {
-            RING_DBG("Could not load %s", cachePath_.c_str());
+            JAMI_DBG("Could not load %s", cachePath_.c_str());
             return;
         }
         std::string line;
@@ -413,7 +413,7 @@ NameDirectory::loadCache()
         oh.get().convert(nameCache_);
     for (const auto& m : nameCache_)
         addrCache_.emplace(m.second, m.first);
-    RING_DBG("Loaded %lu name-address mappings", (long unsigned)nameCache_.size());
+    JAMI_DBG("Loaded %lu name-address mappings", (long unsigned)nameCache_.size());
 }
 
 }

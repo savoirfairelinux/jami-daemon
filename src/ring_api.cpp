@@ -35,9 +35,9 @@
 #include "presencemanager_interface.h"
 #include "client/ring_signal.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
 namespace DRing {
 
@@ -50,11 +50,11 @@ init(enum InitFlag flags) noexcept
     // Following function create a local static variable inside
     // This var must have the same live as Manager.
     // So we call it now to create this var.
-    ring::getSignalHandlers();
+    jami::getSignalHandlers();
 
     try {
         // current implementation use static variable
-        auto& manager = ring::Manager::instance();
+        auto& manager = jami::Manager::instance();
         manager.setAutoAnswer(flags & DRING_FLAG_AUTOANSWER);
         return true;
     } catch (...) {
@@ -66,7 +66,7 @@ bool
 start(const std::string& config_file) noexcept
 {
     try {
-        ring::Manager::instance().init(config_file);
+        jami::Manager::instance().init(config_file);
     } catch (...) {
         return false;
     }
@@ -76,7 +76,7 @@ start(const std::string& config_file) noexcept
 void
 fini() noexcept
 {
-    ring::Manager::instance().finish();
+    jami::Manager::instance().finish();
 }
 
 } // namespace DRing

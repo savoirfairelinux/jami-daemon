@@ -37,7 +37,7 @@
 #include "string_utils.h"
 #include "logger.h"
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 using VideoSize = std::pair<unsigned, unsigned>;
 using FrameRate = rational<double>;
@@ -83,7 +83,7 @@ public:
                 auto rates = getRateList(chan, size);
                 std::vector<std::string> rates_str {rates.size()};
                 std::transform(rates.begin(), rates.end(), rates_str.begin(),
-                               [](FrameRate r) { return ring::to_string(r.real()); });
+                               [](FrameRate r) { return jami::to_string(r.real()); });
                 cap[chan][sz.str()] = std::move(rates_str);
             }
 
@@ -124,8 +124,8 @@ public:
             std::stringstream video_size;
             video_size << max_size.first << "x" << max_size.second;
             settings.video_size = video_size.str();
-            settings.framerate = ring::to_string(max_size_rate.real());
-            RING_WARN("Default video settings: %s, %s FPS", settings.video_size.c_str(),
+            settings.framerate = jami::to_string(max_size_rate.real());
+            JAMI_WARN("Default video settings: %s, %s FPS", settings.video_size.c_str(),
                       settings.framerate.c_str());
         }
 
@@ -141,7 +141,7 @@ public:
         settings.name = params.name;
         settings.channel = params.channel_name;
         settings.video_size = sizeToString(params.width, params.height);
-        settings.framerate = ring::to_string(params.framerate.real());
+        settings.framerate = jami::to_string(params.framerate.real());
         return settings;
     }
 
@@ -198,9 +198,9 @@ private:
         FrameRate closest {0};
         double rate_val = 0;
         try {
-            rate_val = rate.empty() ? 0 : ring::stod(rate);
+            rate_val = rate.empty() ? 0 : jami::stod(rate);
         } catch (...) {
-            RING_WARN("Can't read framerate \"%s\"", rate.c_str());
+            JAMI_WARN("Can't read framerate \"%s\"", rate.c_str());
         }
         // fallback to framerate closest to 30 FPS
         if (rate_val == 0)
@@ -236,4 +236,4 @@ private:
     std::shared_ptr<VideoDeviceImpl> deviceImpl_;
 };
 
-}} // namespace ring::video
+}} // namespace jami::video

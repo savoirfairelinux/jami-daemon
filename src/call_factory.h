@@ -31,7 +31,7 @@
 #include <string>
 #include <utility>
 
-namespace ring {
+namespace jami {
 
 class CallFactory {
     public:
@@ -74,7 +74,7 @@ class CallFactory {
         std::shared_ptr<T> newCall(A& account, const std::string& id, Call::CallType type,
                                    const std::map<std::string, std::string>& details={}) {
             if (!allowNewCall_) {
-                RING_WARN("newCall aborted : CallFactory in forbid state");
+                JAMI_WARN("newCall aborted : CallFactory in forbid state");
                 return nullptr;
             }
 
@@ -88,7 +88,7 @@ class CallFactory {
             };
 
             if (hasCall(id)) {
-                RING_ERR("Call %s is already created", id.c_str());
+                JAMI_ERR("Call %s is already created", id.c_str());
                 return nullptr;
             }
 
@@ -232,6 +232,6 @@ CallFactory::getCallIDs<Call>() const;
 template <> std::size_t
 CallFactory::callCount<Call>();
 
-} // namespace ring
+} // namespace jami
 
 #endif // CALL_FACTORY_H

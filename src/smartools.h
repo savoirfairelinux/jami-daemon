@@ -23,7 +23,7 @@
 #include "manager.h"
 #include <string>
 
-namespace ring {
+namespace jami {
 class Smartools
 {
     // Use for the unit tests

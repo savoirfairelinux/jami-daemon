@@ -1,33 +1,33 @@
 include ../globals.mk
 
-RING_VIDEO_LIBS=
+ENABLE_VIDEO_LIBS=
 
-if RING_VIDEO
-RING_VIDEO_LIBS+=./media/video/libvideo.la
+if ENABLE_VIDEO
+ENABLE_VIDEO_LIBS+=./media/video/libvideo.la
 if HAVE_LINUX
 if HAVE_ANDROID
-RING_VIDEO_LIBS+= \
+ENABLE_VIDEO_LIBS+= \
                 ./media/video/androidvideo/libandroidvideo.la
 else
-RING_VIDEO_LIBS+= \
+ENABLE_VIDEO_LIBS+= \
                 ./media/video/v4l2/libv4l2.la
 endif
 endif
 if HAVE_OSX
-RING_VIDEO_LIBS+= \
+ENABLE_VIDEO_LIBS+= \
                 ./media/video/osxvideo/libosxvideo.la
 endif
 if HAVE_IOS
-RING_VIDEO_LIBS+= \
+ENABLE_VIDEO_LIBS+= \
                 ./media/video/iosvideo/libiosvideo.la
 endif
 if HAVE_WIN32
-RING_VIDEO_LIBS+= \
+ENABLE_VIDEO_LIBS+= \
                 ./media/video/winvideo/libwinvideo.la
 endif
 endif
 
-SUBDIRS = client media config hooks sip upnp security ringdht im $(RING_VIDEO_SUBDIR)
+SUBDIRS = client media config hooks sip upnp security ringdht im $(ENABLE_VIDEO_SUBDIR)
 
 # libring
 
@@ -43,7 +43,7 @@ libring_la_LIBADD = \
 	./upnp/libupnpcontrol.la \
 	./ringdht/libringacc.la \
 	./im/libim.la \
-	$(RING_VIDEO_LIBS)
+	$(ENABLE_VIDEO_LIBS)
 
 libring_la_LDFLAGS = \
 		@PJPROJECT_LIBS@ \
@@ -167,7 +167,7 @@ nobase_include_HEADERS= dring/dring.h \
 		dring/media_const.h \
 		dring/def.h
 
-if RING_VIDEO
+if ENABLE_VIDEO
 nobase_include_HEADERS+= \
 		dring/videomanager_interface.h
 endif

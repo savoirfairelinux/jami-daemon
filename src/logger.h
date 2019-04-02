@@ -87,7 +87,7 @@ void strErr();
 #define PRINTF_ATTRIBUTE(a, b)
 #endif
 
-namespace ring {
+namespace jami {
 
 ///
 /// Level-driven logging class that support printf and C++ stream logging fashions.
@@ -118,7 +118,7 @@ public:
     ///
     /// Printf fashion logging.
     ///
-    /// Example: RING_DBG("%s", "Hello, World!")
+    /// Example: JAMI_DBG("%s", "Hello, World!")
     ///
     static void log(int level, const char* file, int line, bool linefeed,
                     const char* const fmt, ...) PRINTF_ATTRIBUTE(5, 6);
@@ -132,7 +132,7 @@ public:
     ///
     /// Stream fashion logging.
     ///
-    /// Example: RING_DBG() << "Hello, World!"
+    /// Example: JAMI_DBG() << "Hello, World!"
     ///
     static Logger log(int level, const char* file, int line, bool linefeed) {
         return {level, file, line, linefeed};
@@ -147,14 +147,14 @@ private:
 };
 
 // We need to use macros for contextual information
-#define RING_INFO(...) ::ring::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ## __VA_ARGS__)
-#define RING_DBG(...) ::ring::Logger::log(LOG_DEBUG, __FILE__, __LINE__, true, ## __VA_ARGS__)
-#define RING_WARN(...) ::ring::Logger::log(LOG_WARNING, __FILE__, __LINE__, true, ## __VA_ARGS__)
-#define RING_ERR(...) ::ring::Logger::log(LOG_ERR, __FILE__, __LINE__, true, ## __VA_ARGS__)
+#define JAMI_INFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ## __VA_ARGS__)
+#define JAMI_DBG(...) ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, true, ## __VA_ARGS__)
+#define JAMI_WARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, true, ## __VA_ARGS__)
+#define JAMI_ERR(...) ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, true, ## __VA_ARGS__)
 
-#define RING_XINFO(...) ::ring::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ## __VA_ARGS__)
-#define RING_XDBG(...) ::ring::Logger::log(LOG_DEBUG, __FILE__, __LINE__, false, ## __VA_ARGS__)
-#define RING_XWARN(...) ::ring::Logger::log(LOG_WARNING, __FILE__, __LINE__, false, ## __VA_ARGS__)
-#define RING_XERR(...) ::ring::Logger::log(LOG_ERR, __FILE__, __LINE__, false, ## __VA_ARGS__)
+#define JAMI_XINFO(...) ::jami::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ## __VA_ARGS__)
+#define JAMI_XDBG(...) ::jami::Logger::log(LOG_DEBUG, __FILE__, __LINE__, false, ## __VA_ARGS__)
+#define JAMI_XWARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, false, ## __VA_ARGS__)
+#define JAMI_XERR(...) ::jami::Logger::log(LOG_ERR, __FILE__, __LINE__, false, ## __VA_ARGS__)
 
-} // namespace ring
+} // namespace jami

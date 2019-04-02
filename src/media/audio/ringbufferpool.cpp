@@ -29,7 +29,7 @@
 #include <cstring>
 #include <algorithm>
 
-namespace ring {
+namespace jami {
 
 const char * const RingBufferPool::DEFAULT_ID = "audiolayer_id";
 
@@ -47,7 +47,7 @@ RingBufferPool::~RingBufferPool()
     for (const auto& item : ringBufferMap_) {
         const auto& weak = item.second;
         if (not weak.expired())
-            RING_WARN("Leaking RingBuffer '%s'", item.first.c_str());
+            JAMI_WARN("Leaking RingBuffer '%s'", item.first.c_str());
     }
 }
 
@@ -110,12 +110,12 @@ RingBufferPool::createRingBuffer(const std::string& id)
 
     auto rbuf = getRingBuffer(id);
     if (rbuf) {
-        RING_DBG("Ringbuffer already exists for id '%s'", id.c_str());
+        JAMI_DBG("Ringbuffer already exists for id '%s'", id.c_str());
         return rbuf;
     }
 
     rbuf.reset(new RingBuffer(id, SIZEBUF, internalAudioFormat_));
-    RING_DBG("Ringbuffer created with id '%s'", id.c_str());
+    JAMI_DBG("Ringbuffer created with id '%s'", id.c_str());
     ringBufferMap_.insert(std::make_pair(id, std::weak_ptr<RingBuffer>(rbuf)));
     return rbuf;
 }
@@ -138,7 +138,7 @@ void
 RingBufferPool::removeReadBindings(const std::string& call_id)
 {
     if (not readBindingsMap_.erase(call_id))
-        RING_ERR("CallID set %s does not exist!", call_id.c_str());
+        JAMI_ERR("CallID set %s does not exist!", call_id.c_str());
 }
 
 /**
@@ -149,11 +149,11 @@ RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
                                   const std::string& call_id)
 {
     if (call_id != DEFAULT_ID and rbuf->getId() == call_id)
-        RING_WARN("RingBuffer has a readoffset on itself");
+        JAMI_WARN("RingBuffer has a readoffset on itself");
 
     rbuf->createReadOffset(call_id);
     readBindingsMap_[call_id].insert(rbuf); // bindings list created if not existing
-    RING_DBG("Bind rbuf '%s' to callid '%s'", rbuf->getId().c_str(), call_id.c_str());
+    JAMI_DBG("Bind rbuf '%s' to callid '%s'", rbuf->getId().c_str(), call_id.c_str());
 }
 
 void
@@ -175,13 +175,13 @@ RingBufferPool::bindCallID(const std::string& call_id1,
 {
     const auto& rb_call1 = getRingBuffer(call_id1);
     if (not rb_call1) {
-        RING_ERR("No ringbuffer associated to call '%s'", call_id1.c_str());
+        JAMI_ERR("No ringbuffer associated to call '%s'", call_id1.c_str());
         return;
     }
 
     const auto& rb_call2 = getRingBuffer(call_id2);
     if (not rb_call2) {
-        RING_ERR("No ringbuffer associated to call '%s'", call_id2.c_str());
+        JAMI_ERR("No ringbuffer associated to call '%s'", call_id2.c_str());
         return;
     }
 
@@ -210,13 +210,13 @@ RingBufferPool::unBindCallID(const std::string& call_id1,
 {
     const auto& rb_call1 = getRingBuffer(call_id1);
     if (not rb_call1) {
-        RING_ERR("No ringbuffer associated to call '%s'", call_id1.c_str());
+        JAMI_ERR("No ringbuffer associated to call '%s'", call_id1.c_str());
         return;
     }
 
     const auto& rb_call2 = getRingBuffer(call_id2);
     if (not rb_call2) {
-        RING_ERR("No ringbuffer associated to call '%s'", call_id2.c_str());
+        JAMI_ERR("No ringbuffer associated to call '%s'", call_id2.c_str());
         return;
     }
 
@@ -241,7 +241,7 @@ RingBufferPool::unBindAll(const std::string& call_id)
 {
     const auto& rb_call = getRingBuffer(call_id);
     if (not rb_call) {
-        RING_ERR("No ringbuffer associated to call '%s'", call_id.c_str());
+        JAMI_ERR("No ringbuffer associated to call '%s'", call_id.c_str());
         return;
     }
 
@@ -441,4 +441,4 @@ RingBufferPool::setAudioMeterState(const std::string& id, bool state)
     }
 }
 
-} // namespace ring
+} // namespace jami

@@ -29,7 +29,7 @@
 
 #include <ciso646> // fix windows compiler bug
 
-namespace ring {
+namespace jami {
 
 typedef int16_t AudioSample;
 
@@ -76,6 +76,6 @@ getGlobalInstance()
     return wlink.lock();
 }
 
-} // namespace ring
+} // namespace jami
 
 #endif // RING_TYPES_H_

@@ -25,7 +25,7 @@
 #include <cstring> // memset
 #include <algorithm>
 
-namespace ring {
+namespace jami {
 
 std::ostream& operator <<(std::ostream& stream, const AudioFormat& f) {
     stream << f.toString();
@@ -106,7 +106,7 @@ void AudioBuffer::setChannelNum(unsigned n, bool mix /* = false */)
         return;
     }
 
-    RING_WARN("Unsupported channel mixing: %dch->%dch", c, n);
+    JAMI_WARN("Unsupported channel mixing: %dch->%dch", c, n);
     samples_.resize(n, samples_[0]);
 }
 
@@ -131,7 +131,7 @@ std::vector<AudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)
     if (chan < samples_.size())
         return &samples_[chan];
 
-    RING_ERR("Audio channel %u out of range", chan);
+    JAMI_ERR("Audio channel %u out of range", chan);
     return nullptr;
 }
 
@@ -141,7 +141,7 @@ void AudioBuffer::applyGain(double gain)
 
     const double g = std::max(std::min(1.0, gain), -1.0);
     if (g != gain)
-        RING_DBG("Normalizing %f to [-1.0, 1.0]", gain);
+        JAMI_DBG("Normalizing %f to [-1.0, 1.0]", gain);
 
     for (auto &channel : samples_)
         for (auto &sample : channel)
@@ -329,4 +329,4 @@ AudioBuffer::append(const AudioFrame& audioFrame)
     return 0;
 }
 
-} // namespace ring
+} // namespace jami

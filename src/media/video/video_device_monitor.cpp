@@ -36,7 +36,7 @@
 #include "logger.h"
 #include "video_device_monitor.h"
 
-namespace ring { namespace video {
+namespace jami { namespace video {
 
 constexpr const char * const VideoDeviceMonitor::CONFIG_LABEL;
 
@@ -194,7 +194,7 @@ static void
 notify()
 {
     if (!Manager::initialized) {
-        RING_WARN("Manager not initialized yet");
+        JAMI_WARN("Manager not initialized yet");
         return;
     }
     emitSignal<DRing::VideoSignal::DeviceEvent>();
@@ -231,7 +231,7 @@ VideoDeviceMonitor::addDevice(const string& node, const std::vector<std::map<std
 
         devices_.emplace_back(std::move(dev));
     } catch (const std::exception& e) {
-        RING_ERR("Failed to add device %s: %s", node.c_str(), e.what());
+        JAMI_ERR("Failed to add device %s: %s", node.c_str(), e.what());
         return;
     }
     notify();
@@ -347,4 +347,4 @@ VideoDeviceMonitor::unserialize(const YAML::Node &in)
         defaultDevice_ = first;
 }
 
-}} // namespace ring::video
+}} // namespace jami::video

@@ -30,7 +30,7 @@ struct PublicKey;
 }
 }
 
-namespace ring {
+namespace jami {
 
 class NameDirectory
 {

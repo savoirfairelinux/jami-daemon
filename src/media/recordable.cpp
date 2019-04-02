@@ -27,7 +27,7 @@
 
 #include <iomanip>
 
-namespace ring {
+namespace jami {
 
 Recordable::Recordable()
 {
@@ -51,7 +51,7 @@ bool
 Recordable::toggleRecording()
 {
     if (!recorder_) {
-        RING_ERR("couldn't toggle recording, non existent recorder");
+        JAMI_ERR("couldn't toggle recording, non existent recorder");
         return false;
     }
 
@@ -81,13 +81,13 @@ Recordable::startRecording(const std::string& path)
 {
     std::lock_guard<std::mutex> lk {apiMutex_};
     if (!recorder_) {
-        RING_ERR("couldn't start recording, non existent recorder");
+        JAMI_ERR("couldn't start recording, non existent recorder");
         return false;
     }
 
     if (!recording_) {
         if (path.empty()) {
-            RING_ERR("couldn't start recording, path is empty");
+            JAMI_ERR("couldn't start recording, path is empty");
             return false;
         }
 
@@ -105,12 +105,12 @@ Recordable::stopRecording()
 {
     std::lock_guard<std::mutex> lk {apiMutex_};
     if (!recorder_) {
-        RING_WARN("couldn't stop recording, non existent recorder");
+        JAMI_WARN("couldn't stop recording, non existent recorder");
         return;
     }
 
     if (not recording_) {
-        RING_WARN("couldn't stop non-running recording");
+        JAMI_WARN("couldn't stop non-running recording");
         return;
     }
 
@@ -126,4 +126,4 @@ Recordable::isAudioOnly() const
     return isAudioOnly_;
 }
 
-} // namespace ring
+} // namespace jami

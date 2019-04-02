@@ -29,7 +29,7 @@
 
 #define checkErr( err) \
     if(err) { \
-        RING_ERR("CoreAudio Error: %ld", static_cast<long>(err)); \
+        JAMI_ERR("CoreAudio Error: %ld", static_cast<long>(err)); \
     }
 
 /**
@@ -37,7 +37,7 @@
  * @brief Main iOS sound class. Manages the data transfers between the application and the hardware.
  */
 
-namespace ring {
+namespace jami {
 
 class RingBuffer;
 
@@ -170,6 +170,6 @@ class CoreLayer : public AudioLayer {
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // CORE_LAYER_H_

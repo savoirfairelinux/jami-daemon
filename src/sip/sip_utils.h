@@ -40,7 +40,7 @@
 struct pjsip_msg;
 struct pjsip_dialog;
 
-namespace ring { namespace sip_utils {
+namespace jami { namespace sip_utils {
 
 static constexpr int DEFAULT_SIP_PORT {5060};
 static constexpr int DEFAULT_SIP_TLS_PORT {5061};
@@ -141,6 +141,6 @@ smart_alloc_pool(pjsip_endpoint* endpt, const char* const name, pj_size_t initia
     return std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&>(pool, pj_pool_release);
 }
 
-}} // namespace ring::sip_utils
+}} // namespace jami::sip_utils
 
 #endif // SIP_UTILS_H_

@@ -22,7 +22,7 @@
 
 #if !TARGET_OS_IPHONE
 
-namespace ring {
+namespace jami {
 
 AudioDevice::AudioDevice(AudioDeviceID devid, bool isInput)
 {
@@ -169,6 +169,6 @@ std::string AudioDevice::getName() const
     return buf;
 }
 
-} // namespace ring
+} // namespace jami
 
 #endif // TARGET_OS_IPHONE

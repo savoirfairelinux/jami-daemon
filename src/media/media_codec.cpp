@@ -28,7 +28,7 @@
 #include <string>
 #include <sstream>
 
-namespace ring {
+namespace jami {
 
 static unsigned
 generateId()
@@ -183,9 +183,9 @@ AccountAudioCodecInfo::getCodecSpecifications()
 void
 AccountAudioCodecInfo::setCodecSpecifications(const std::map<std::string, std::string>& details)
 {
-    decltype(bitrate) tmp_bitrate = ring::stoi(details.at(DRing::Account::ConfProperties::CodecInfo::BITRATE));
+    decltype(bitrate) tmp_bitrate = jami::stoi(details.at(DRing::Account::ConfProperties::CodecInfo::BITRATE));
     decltype(audioformat) tmp_audioformat = audioformat;
-    tmp_audioformat.sample_rate = ring::stoi(details.at(DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE));
+    tmp_audioformat.sample_rate = jami::stoi(details.at(DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE));
 
     // copy back if no exception was raised
     bitrate = tmp_bitrate;
@@ -228,15 +228,15 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
 
     auto it = details.find(DRing::Account::ConfProperties::CodecInfo::BITRATE);
     if (it != details.end())
-        copy.bitrate = ring::stoi(it->second);
+        copy.bitrate = jami::stoi(it->second);
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::FRAME_RATE);
     if (it != details.end())
-        copy.frameRate = ring::stoi(it->second);
+        copy.frameRate = jami::stoi(it->second);
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::QUALITY);
     if (it != details.end())
-        copy.quality = ring::stoi(it->second);
+        copy.quality = jami::stoi(it->second);
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED);
     if (it != details.end())
@@ -246,4 +246,4 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
     *this = std::move(copy);
 }
 
-} // namespace ring
+} // namespace jami

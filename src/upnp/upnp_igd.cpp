@@ -20,7 +20,7 @@
 
 #include "upnp_igd.h"
 
-namespace ring { namespace upnp {
+namespace jami { namespace upnp {
 
 /* move constructor and operator */
 Mapping::Mapping(Mapping&& other) noexcept
@@ -62,4 +62,4 @@ bool operator!= (const Mapping& cMap1, const Mapping& cMap2)
     return !(cMap1 == cMap2);
 }
 
-}} // namespace ring::upnp
+}} // namespace jami::upnp

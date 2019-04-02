@@ -64,7 +64,7 @@ extern "C" {
 #define IN_IS_ADDR_UNSPECIFIED(a) (((long int) (a)->s_addr) == 0x00000000)
 #endif /* IN_IS_ADDR_UNSPECIFIED */
 
-namespace ring {
+namespace jami {
 
 /**
  * Binary representation of an IP address.
@@ -322,4 +322,4 @@ bool haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>& b);
 std::vector<IpAddr> getLocalNameservers();
 
 } // namespace ip_utils
-} // namespace ring
+} // namespace jami

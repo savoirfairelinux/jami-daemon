@@ -19,7 +19,7 @@
 #include <cstdlib>
 #include "audio_recorder.h"
 
-namespace ring {
+namespace jami {
 namespace opensl {
 
 /*
@@ -52,11 +52,11 @@ void AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
         }
         callback_(false);
     } catch (const std::exception& e) {
-        RING_ERR("processSLCallback exception: %s", e.what());
+        JAMI_ERR("processSLCallback exception: %s", e.what());
     }
 }
 
-AudioRecorder::AudioRecorder(ring::AudioFormat sampleFormat, SLEngineItf slEngine) :
+AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngine) :
         sampleInfo_(sampleFormat)
 {
     // configure audio source
@@ -107,7 +107,7 @@ bool
 AudioRecorder::start()
 {
     if(!freeQueue_ || !recQueue_) {
-        RING_ERR("====NULL pointer to Start(%p, %p)", freeQueue_, recQueue_);
+        JAMI_ERR("====NULL pointer to Start(%p, %p)", freeQueue_, recQueue_);
         return false;
     }
     audioBufCount = 0;
@@ -122,7 +122,7 @@ AudioRecorder::start()
     for(int i =0; i < RECORD_DEVICE_KICKSTART_BUF_COUNT; i++ ) {
         sample_buf *buf = NULL;
         if(!freeQueue_->front(&buf)) {
-            RING_ERR("=====OutOfFreeBuffers @ startingRecording @ (%d)", i);
+            JAMI_ERR("=====OutOfFreeBuffers @ startingRecording @ (%d)", i);
             break;
         }
         freeQueue_->pop();

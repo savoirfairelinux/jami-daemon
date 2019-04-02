@@ -26,7 +26,7 @@
 
 #include <string>
 
-namespace ring {
+namespace jami {
 
 struct MediaStream {
     std::string name {};
@@ -161,4 +161,4 @@ inline std::ostream& operator<<(std::ostream& os, const MediaStream& ms)
     return os;
 }
 
-}; // namespace ring
+}; // namespace jami

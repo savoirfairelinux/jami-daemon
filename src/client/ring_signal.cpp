@@ -20,7 +20,7 @@
 
 #include "ring_signal.h"
 
-namespace ring {
+namespace jami {
 
 SignalHandlerMap&
 getSignalHandlers()
@@ -100,7 +100,7 @@ getSignalHandlers()
         /* DataTransfer */
         exported_callback<DRing::DataTransferSignal::DataTransferEvent>(),
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         /* Video */
         exported_callback<DRing::VideoSignal::DeviceEvent>(),
         exported_callback<DRing::VideoSignal::DecodingStarted>(),
@@ -120,7 +120,7 @@ getSignalHandlers()
     return handlers;
 }
 
-}; // namespace ring
+}; // namespace jami
 
 namespace DRing {
 
@@ -128,11 +128,11 @@ void
 registerSignalHandlers(const std::map<std::string,
                        std::shared_ptr<CallbackWrapperBase>>&handlers)
 {
-    auto& handlers_ = ring::getSignalHandlers();
+    auto& handlers_ = jami::getSignalHandlers();
     for (auto& item : handlers) {
         auto iter = handlers_.find(item.first);
         if (iter == handlers_.end()) {
-            RING_ERR("Signal %s not supported", item.first.c_str());
+            JAMI_ERR("Signal %s not supported", item.first.c_str());
             continue;
         }
         iter->second = std::move(item.second);

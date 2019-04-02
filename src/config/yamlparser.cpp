@@ -21,7 +21,7 @@
 #include "yamlparser.h"
 #include "fileutils.h"
 
-namespace ring { namespace yaml_utils {
+namespace jami { namespace yaml_utils {
 
 void
 parsePath(const YAML::Node &node, const char *key, std::string& path, const std::string& base)
@@ -47,4 +47,4 @@ parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> 
     return result;
 }
 
-}} // namespace ring::yaml_utils
+}} // namespace jami::yaml_utils

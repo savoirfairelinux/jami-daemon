@@ -7,7 +7,7 @@ noinst_HEADERS = \
 
 PRESENCE_SRC = presencemanager.cpp
 
-if RING_VIDEO
+if ENABLE_VIDEO
 VIDEO_SRC = videomanager.cpp
 noinst_HEADERS += videomanager.h
 endif

@@ -26,7 +26,7 @@
 
 #include <mutex>
 
-namespace ring {
+namespace jami {
 
 /**
  * ToneControl is a class to handle application wide business logic
@@ -61,4 +61,4 @@ class ToneControl {
         std::shared_ptr<AudioFile> audioFile_;
 };
 
-} // namespace ring
+} // namespace jami

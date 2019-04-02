@@ -25,7 +25,7 @@
 #include "ring_types.h"
 #include "audiobuffer.h"
 
-namespace ring {
+namespace jami {
 
 class DcBlocker {
     public:
@@ -49,6 +49,6 @@ class DcBlocker {
         std::vector<StreamState> states;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif

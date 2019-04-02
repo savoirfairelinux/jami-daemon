@@ -44,7 +44,7 @@
  */
 struct pj_caching_pool;
 
-namespace ring {
+namespace jami {
 
 struct pres_msg_data {
     /**
@@ -242,6 +242,6 @@ class SIPPresence {
         pj_pool_t       *pool_;
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif

@@ -31,7 +31,7 @@
 
 #include "../../test_runner.h"
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class MediaEncoderTest : public CppUnit::TestFixture {
 public:
@@ -153,11 +153,11 @@ MediaEncoderTest::testMultiStream()
     options["channels"] = std::to_string(nbChannels);
     options["width"] = std::to_string(width);
     options["height"] = std::to_string(height);
-    auto vp8Codec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(
-        getSystemCodecContainer()->searchCodecByName("VP8", ring::MEDIA_VIDEO)
+    auto vp8Codec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
+        getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO)
     );
     auto opusCodec = std::static_pointer_cast<SystemAudioCodecInfo>(
-        getSystemCodecContainer()->searchCodecByName("opus", ring::MEDIA_AUDIO)
+        getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO)
     );
 
     try {
@@ -196,6 +196,6 @@ MediaEncoderTest::testMultiStream()
     }
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::MediaEncoderTest::name());
+RING_TEST_RUNNER(jami::test::MediaEncoderTest::name());

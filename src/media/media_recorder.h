@@ -36,7 +36,7 @@
 #include <string>
 #include <utility>
 
-namespace ring {
+namespace jami {
 
 class MediaRecorder : public std::enable_shared_from_this<MediaRecorder>
 {
@@ -139,4 +139,4 @@ private:
     void filterAndEncode(MediaFilter* filter, int streamIdx);
 };
 
-}; // namespace ring
+}; // namespace jami

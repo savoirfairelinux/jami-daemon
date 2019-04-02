@@ -26,7 +26,7 @@
 
 #include "../../test_runner.h"
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class StringUtilsTest : public CppUnit::TestFixture {
 public:
@@ -81,10 +81,10 @@ void
 StringUtilsTest::to_number_test()
 {
     //test with int
-    CPPUNIT_ASSERT(ring::stoi(PI_42) == INT);
+    CPPUNIT_ASSERT(jami::stoi(PI_42) == INT);
 
     //test with double
-    CPPUNIT_ASSERT(ring::stod(PI_DOUBLE) == DOUBLE);
+    CPPUNIT_ASSERT(jami::stod(PI_DOUBLE) == DOUBLE);
 }
 
 void
@@ -101,6 +101,6 @@ StringUtilsTest::split_string_test()
                    && split_string_to_unsigned_result.at(1) == 45454);
 }
 
-}} // namespace ring_test
+}} // namespace jami_test
 
-RING_TEST_RUNNER(ring::test::StringUtilsTest::name());
+RING_TEST_RUNNER(jami::test::StringUtilsTest::name());

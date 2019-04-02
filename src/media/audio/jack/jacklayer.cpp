@@ -42,7 +42,7 @@
  * auto connect optional
  */
 
-namespace ring {
+namespace jami {
 
 namespace
 {
@@ -55,12 +55,12 @@ void connectPorts(jack_client_t *client, int portType, const std::vector<jack_po
         const char *port = jack_port_name(ports[i]);
         if (portType & JackPortIsInput) {
             if (jack_connect(client, port, physical_ports[i])) {
-                RING_ERR("Can't connect %s to %s", port, physical_ports[i]);
+                JAMI_ERR("Can't connect %s to %s", port, physical_ports[i]);
                 break;
             }
         } else {
             if (jack_connect(client, physical_ports[i], port)) {
-                RING_ERR("Can't connect port %s to %s", physical_ports[i], port);
+                JAMI_ERR("Can't connect port %s to %s", physical_ports[i], port);
                 break;
             }
         }
@@ -247,9 +247,9 @@ JackLayer::~JackLayer()
         jack_port_unregister(captureClient_, p);
 
     if (jack_client_close(playbackClient_))
-        RING_ERR("JACK client could not close");
+        JAMI_ERR("JACK client could not close");
     if (jack_client_close(captureClient_))
-        RING_ERR("JACK client could not close");
+        JAMI_ERR("JACK client could not close");
 
     for (auto r : out_ringbuffers_)
         jack_ringbuffer_free(r);
@@ -304,7 +304,7 @@ JackLayer::process_capture(jack_nframes_t frames, void *arg)
         // fill the rest with silence
         if (bytes_to_rb < bytes_to_read) {
             // TODO: set some flag for underrun?
-            RING_WARN("Dropped %lu bytes", bytes_to_read - bytes_to_rb);
+            JAMI_WARN("Dropped %lu bytes", bytes_to_read - bytes_to_rb);
         }
     }
 
@@ -358,7 +358,7 @@ JackLayer::startStream()
 
     dcblocker_.reset();
     if (jack_activate(playbackClient_) or jack_activate(captureClient_)) {
-        RING_ERR("Could not activate JACK client");
+        JAMI_ERR("Could not activate JACK client");
         return;
     }
     ringbuffer_thread_ = std::thread(&JackLayer::ringbuffer_worker, this);
@@ -369,7 +369,7 @@ JackLayer::startStream()
 void
 JackLayer::onShutdown(void * /* data */)
 {
-    RING_WARN("JACK server shutdown");
+    JAMI_WARN("JACK server shutdown");
     // FIXME: handle this safely
 }
 
@@ -388,7 +388,7 @@ JackLayer::stopStream()
     data_ready_.notify_one();
 
     if (jack_deactivate(playbackClient_) or jack_deactivate(captureClient_)) {
-        RING_ERR("JACK client could not deactivate");
+        JAMI_ERR("JACK client could not deactivate");
     }
 
     if (ringbuffer_thread_.joinable())
@@ -398,4 +398,4 @@ JackLayer::stopStream()
     flushUrgent();
 }
 
-} // namespace ring
+} // namespace jami

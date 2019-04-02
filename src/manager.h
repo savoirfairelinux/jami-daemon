@@ -44,7 +44,7 @@
 #include <functional>
 #include <algorithm>
 
-namespace ring {
+namespace jami {
 
 namespace video {
 class SinkClient;
@@ -89,7 +89,7 @@ class Manager {
          */
         ShortcutPreferences shortcutPreferences;
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         /**
          * Video preferences
          */
@@ -860,7 +860,7 @@ class Manager {
         void addTask(std::function<bool()>&& task);
         std::shared_ptr<Task> scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::time_point when);
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
         /**
          * Create a new SinkClient instance, store it in an internal cache as a weak_ptr
          * and return it as a shared_ptr. If a SinkClient is already stored for the given id,
@@ -880,7 +880,7 @@ class Manager {
         std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
 
         VideoManager& getVideoManager() const;
-#endif // RING_VIDEO
+#endif // ENABLE_VIDEO
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable
         AccountFactory accountFactory;
@@ -905,4 +905,4 @@ static void runOnMainThread(Callback&& cb) {
     });
 }
 
-} // namespace ring
+} // namespace jami

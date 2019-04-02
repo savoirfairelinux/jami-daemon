@@ -46,7 +46,7 @@
 #include "smartools.h"
 #include <sstream>
 
-namespace ring {
+namespace jami {
 
 AudioRtpSession::AudioRtpSession(const std::string& id)
     : RtpSession(id)
@@ -64,7 +64,7 @@ void
 AudioRtpSession::startSender()
 {
     if (not send_.enabled or send_.holding) {
-        RING_WARN("Audio sending disabled");
+        JAMI_WARN("Audio sending disabled");
         if (sender_) {
             if (socketPair_)
                 socketPair_->interrupt();
@@ -74,21 +74,21 @@ AudioRtpSession::startSender()
     }
 
     if (sender_)
-        RING_WARN("Restarting audio sender");
+        JAMI_WARN("Restarting audio sender");
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
-    audioInput_ = ring::getAudioInput(callID_);
+    audioInput_ = jami::getAudioInput(callID_);
     auto newParams = audioInput_->switchInput(input_);
     try {
         if (newParams.valid() &&
             newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
             localAudioParams_ = newParams.get();
         } else {
-            RING_ERR() << "No valid new audio parameters";
+            JAMI_ERR() << "No valid new audio parameters";
             return;
         }
     } catch (const std::exception& e) {
-        RING_ERR() << "Exception while retrieving audio parameters: " << e.what();
+        JAMI_ERR() << "Exception while retrieving audio parameters: " << e.what();
         return;
     }
 
@@ -102,7 +102,7 @@ AudioRtpSession::startSender()
         sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
                                       *socketPair_, initSeqVal_, muteState_, mtu_));
     } catch (const MediaEncoderException &e) {
-        RING_ERR("%s", e.what());
+        JAMI_ERR("%s", e.what());
         send_.enabled = false;
     }
 }
@@ -122,13 +122,13 @@ void
 AudioRtpSession::startReceiver()
 {
     if (not receive_.enabled or receive_.holding) {
-        RING_WARN("Audio receiving disabled");
+        JAMI_WARN("Audio receiving disabled");
         receiveThread_.reset();
         return;
     }
 
     if (receiveThread_)
-        RING_WARN("Restarting audio receiver");
+        JAMI_WARN("Restarting audio receiver");
 
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(receive_.codec);
     receiveThread_.reset(new AudioReceiveThread(callID_, accountAudioCodec->audioformat,
@@ -161,7 +161,7 @@ AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
                                     send_.crypto.getSrtpKeyInfo().c_str());
         }
     } catch (const std::runtime_error& e) {
-        RING_ERR("Socket creation failed: %s", e.what());
+        JAMI_ERR("Socket creation failed: %s", e.what());
         return;
     }
 
@@ -196,7 +196,7 @@ AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     if (receiveThread_)
         receiveThread_->attach(rec->addStream(receiveThread_->getInfo()));
-    if (auto input = ring::getAudioInput(callID_))
+    if (auto input = jami::getAudioInput(callID_))
         input->attach(rec->addStream(input->getInfo()));
 }
 
@@ -208,11 +208,11 @@ AudioRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
             receiveThread_->detach(ob);
         }
     }
-    if (auto input = ring::getAudioInput(callID_)) {
+    if (auto input = jami::getAudioInput(callID_)) {
         if (auto ob = rec->getStream(input->getInfo().name)) {
             input->detach(ob);
         }
     }
 }
 
-} // namespace ring
+} // namespace jami

@@ -64,7 +64,7 @@ using ssize_t = SSIZE_T;
   val <<= 6;                                        \
   val |= (*(unsigned char *)p) & 0x3f;
 
-namespace ring {
+namespace jami {
 
 bool
 utf8_validate_c_str(const char *str, ssize_t max_len, const char **end);
@@ -302,4 +302,4 @@ utf8_make_valid(const std::string & name)
     return answer;
 }
 
-} // namespace ring
+} // namespace jami

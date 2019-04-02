@@ -48,7 +48,7 @@ namespace dht { namespace crypto {
 struct Certificate;
 }} // namespace dht::crypto
 
-namespace ring {
+namespace jami {
 
 struct SipTransportDescr
 {
@@ -86,7 +86,7 @@ struct TlsListener
     TlsListener() {}
     TlsListener(pjsip_tpfactory* f) : listener(f) {}
     virtual ~TlsListener() {
-        RING_DBG("Destroying listener");
+        JAMI_DBG("Destroying listener");
         listener->destroy(listener);
     }
     pjsip_tpfactory* get() {
@@ -230,6 +230,6 @@ private:
 
 };
 
-} // namespace ring
+} // namespace jami
 
 #endif // SIPTRANSPORT_H_

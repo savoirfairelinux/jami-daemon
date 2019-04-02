@@ -23,12 +23,12 @@
 #include "base64.h"
 #include "logger.h"
 
-namespace ring {
+namespace jami {
 
 void
 AccountArchive::deserialize(const std::vector<uint8_t>& dat)
 {
-    RING_DBG("Loading account archive (%lu bytes)", dat.size());
+    JAMI_DBG("Loading account archive (%lu bytes)", dat.size());
 
     // Decode string
     auto* char_data = reinterpret_cast<const char*>(&dat[0]);
@@ -37,7 +37,7 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
     Json::CharReaderBuilder rbuilder;
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
     if (!reader->parse(char_data, char_data + dat.size(), &value, &err)) {
-        RING_ERR() << "Archive JSON parsing error: " << err;
+        JAMI_ERR() << "Archive JSON parsing error: " << err;
         throw std::runtime_error("failed to parse JSON");
     }
 
@@ -71,11 +71,11 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
                 } else
                     config[key] = itr->asString();
             } catch (const std::exception& ex) {
-                RING_ERR("Can't parse JSON entry with value of type %d: %s", (unsigned)itr->type(), ex.what());
+                JAMI_ERR("Can't parse JSON entry with value of type %d: %s", (unsigned)itr->type(), ex.what());
             }
         }
     } catch (const std::exception& ex) {
-        RING_ERR("Can't parse JSON: %s", ex.what());
+        JAMI_ERR("Can't parse JSON: %s", ex.what());
     }
 }
 

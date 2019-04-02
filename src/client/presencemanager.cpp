@@ -42,7 +42,7 @@
 
 namespace DRing {
 
-using ring::SIPAccount;
+using jami::SIPAccount;
 
 void
 registerPresHandlers(const std::map<std::string,
@@ -57,17 +57,17 @@ registerPresHandlers(const std::map<std::string,
 void
 subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
 {
-    if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
+    if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         auto pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)) {
-            RING_DBG("%subscribePresence (acc:%s, buddy:%s)",
+            JAMI_DBG("%subscribePresence (acc:%s, buddy:%s)",
                      flag ? "S" : "Uns", accountID.c_str(), uri.c_str());
             pres->subscribeClient(uri, flag);
         }
-    } else if (auto ringaccount = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
+    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::RingAccount>(accountID)) {
         ringaccount->trackBuddyPresence(uri, flag);
     } else
-        RING_ERR("Could not find account %s", accountID.c_str());
+        JAMI_ERR("Could not find account %s", accountID.c_str());
 }
 
 /**
@@ -77,15 +77,15 @@ subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
 void
 publish(const std::string& accountID, bool status, const std::string& note)
 {
-    if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
+    if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         auto pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_PUBLISH)) {
-            RING_DBG("Send Presence (acc:%s, status %s).", accountID.c_str(),
+            JAMI_DBG("Send Presence (acc:%s, status %s).", accountID.c_str(),
                      status ? "online" : "offline");
             pres->sendPresence(status, note);
         }
     } else
-        RING_ERR("Could not find account %s.", accountID.c_str());
+        JAMI_ERR("Could not find account %s.", accountID.c_str());
 }
 
 /**
@@ -95,19 +95,19 @@ void
 answerServerRequest(UNUSED const std::string& uri, UNUSED bool flag)
 {
 #if 0 // DISABLED: removed IP2IP support, tuleap: #448
-    auto account = ring::Manager::instance().getIP2IPAccount();
+    auto account = jami::Manager::instance().getIP2IPAccount();
     if (auto sipaccount = static_cast<SIPAccount *>(account.get())) {
-        RING_DBG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(),
+        JAMI_DBG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(),
                  flag ? "true" : "false");
 
         if (auto pres = sipaccount->getPresence())
             pres->approvePresSubServer(uri, flag);
         else
-            RING_ERR("Presence not initialized");
+            JAMI_ERR("Presence not initialized");
     } else
-        RING_ERR("Could not find account IP2IP");
+        JAMI_ERR("Could not find account IP2IP");
 #else
-    RING_ERR("answerServerRequest() is deprecated and does nothing");
+    JAMI_ERR("answerServerRequest() is deprecated and does nothing");
 #endif
 }
 
@@ -119,7 +119,7 @@ getSubscriptions(const std::string& accountID)
 {
     std::vector<std::map<std::string, std::string>> ret;
 
-    if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
+    if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         if (auto pres = sipaccount->getPresence()) {
             for (const auto& s : pres->getClientSubscriptions()) {
                 ret.push_back({
@@ -129,8 +129,8 @@ getSubscriptions(const std::string& accountID)
                 });
             }
         } else
-            RING_ERR("Presence not initialized");
-    } else if (auto ringaccount = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
+            JAMI_ERR("Presence not initialized");
+    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::RingAccount>(accountID)) {
         for (const auto& tracked_id : ringaccount->getTrackedBuddyPresence()) {
             ret.push_back({
                     {DRing::Presence::BUDDY_KEY, tracked_id.first},
@@ -138,7 +138,7 @@ getSubscriptions(const std::string& accountID)
                 });
         }
     } else
-        RING_ERR("Could not find account %s.", accountID.c_str());
+        JAMI_ERR("Could not find account %s.", accountID.c_str());
 
     return ret;
 }
@@ -149,14 +149,14 @@ getSubscriptions(const std::string& accountID)
 void
 setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
-    if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
+    if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         if (auto pres = sipaccount->getPresence()) {
             for (const auto &u : uris)
                 pres->subscribeClient(u, true);
         } else
-            RING_ERR("Presence not initialized");
+            JAMI_ERR("Presence not initialized");
     } else
-        RING_ERR("Could not find account %s.", accountID.c_str());
+        JAMI_ERR("Could not find account %s.", accountID.c_str());
 }
 
 } // namespace DRing

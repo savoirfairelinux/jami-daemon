@@ -27,7 +27,7 @@
 
 #include <algorithm>
 
-namespace ring { namespace secure {
+namespace jami { namespace secure {
 
 void
 memzero(void* ptr, std::size_t length)
@@ -45,5 +45,5 @@ memzero(void* ptr, std::size_t length)
 extern "C" void
 ring_secure_memzero(void* ptr, size_t length)
 {
-    ring::secure::memzero(ptr, length);
+    jami::secure::memzero(ptr, length);
 }

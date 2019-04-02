@@ -51,7 +51,7 @@
 #include <cstdlib>
 #include <unistd.h>
 
-namespace ring { namespace tls {
+namespace jami { namespace tls {
 
 static constexpr const char* DTLS_CERT_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr const char* DTLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
@@ -100,7 +100,7 @@ public:
     TlsCertificateCredendials() {
         int ret = gnutls_certificate_allocate_credentials(&creds_);
         if (ret < 0) {
-            RING_ERR("gnutls_certificate_allocate_credentials() failed with ret=%d", ret);
+            JAMI_ERR("gnutls_certificate_allocate_credentials() failed with ret=%d", ret);
             throw std::bad_alloc();
         }
     }
@@ -123,7 +123,7 @@ public:
     TlsAnonymousClientCredendials() {
         int ret = gnutls_anon_allocate_client_credentials(&creds_);
         if (ret < 0) {
-            RING_ERR("gnutls_anon_allocate_client_credentials() failed with ret=%d", ret);
+            JAMI_ERR("gnutls_anon_allocate_client_credentials() failed with ret=%d", ret);
             throw std::bad_alloc();
         }
     }
@@ -146,7 +146,7 @@ public:
     TlsAnonymousServerCredendials() {
         int ret = gnutls_anon_allocate_server_credentials(&creds_);
         if (ret < 0) {
-            RING_ERR("gnutls_anon_allocate_server_credentials() failed with ret=%d", ret);
+            JAMI_ERR("gnutls_anon_allocate_server_credentials() failed with ret=%d", ret);
             throw std::bad_alloc();
         }
     }
@@ -314,7 +314,7 @@ TlsSession::TlsSessionImpl::typeName() const
 void
 TlsSession::TlsSessionImpl::dump_io_stats() const
 {
-    RING_DBG("[TLS] RxRawPkt=%zu (%zu bytes) - TxRawPkt=%zu (%zu bytes)",
+    JAMI_DBG("[TLS] RxRawPkt=%zu (%zu bytes) - TxRawPkt=%zu (%zu bytes)",
              stRxRawPacketCnt_.load(), stRxRawBytesCnt_.load(),
              stTxRawPacketCnt_.load(), stTxRawBytesCnt_.load());
 }
@@ -327,14 +327,14 @@ TlsSession::TlsSessionImpl::setupClient()
     if (not transport_.isReliable()) {
         ret = gnutls_init(&session_, GNUTLS_CLIENT | GNUTLS_DATAGRAM);
         // uncoment to reactivate PMTUD
-        // RING_DBG("[TLS] set heartbeat reception for retrocompatibility check on server");
+        // JAMI_DBG("[TLS] set heartbeat reception for retrocompatibility check on server");
         // gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
     } else {
         ret = gnutls_init(&session_, GNUTLS_CLIENT);
     }
 
     if (ret != GNUTLS_E_SUCCESS) {
-        RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
+        JAMI_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
         return TlsSessionState::SHUTDOWN;
     }
 
@@ -354,7 +354,7 @@ TlsSession::TlsSessionImpl::setupServer()
         ret = gnutls_init(&session_, GNUTLS_SERVER | GNUTLS_DATAGRAM);
 
         // uncoment to reactivate PMTUD
-        // RING_DBG("[TLS] set heartbeat reception");
+        // JAMI_DBG("[TLS] set heartbeat reception");
         // gnutls_heartbeat_enable(session_, GNUTLS_HB_PEER_ALLOWED_TO_SEND);
 
         gnutls_dtls_prestate_set(session_, &prestate_);
@@ -363,7 +363,7 @@ TlsSession::TlsSessionImpl::setupServer()
     }
 
     if (ret != GNUTLS_E_SUCCESS) {
-        RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
+        JAMI_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
         return TlsSessionState::SHUTDOWN;
     }
 
@@ -389,7 +389,7 @@ TlsSession::TlsSessionImpl::initAnonymous()
         if (const auto& dh_params = params_.dh_params.get().get())
             gnutls_anon_set_server_dh_params(*sacred_, dh_params);
         else
-            RING_WARN("[TLS] DH params unavailable"); // YOMGUI: need to stop?
+            JAMI_WARN("[TLS] DH params unavailable"); // YOMGUI: need to stop?
     }
 }
 
@@ -421,14 +421,14 @@ TlsSession::TlsSessionImpl::initCredentials()
             throw std::runtime_error("can't load CA " + params_.ca_list + ": "
                                      + std::string(gnutls_strerror(ret)));
 
-        RING_DBG("[TLS] CA list %s loadev", params_.ca_list.c_str());
+        JAMI_DBG("[TLS] CA list %s loadev", params_.ca_list.c_str());
     }
     if (params_.peer_ca) {
         auto chain = params_.peer_ca->getChainWithRevocations();
         auto ret = gnutls_certificate_set_x509_trust(*xcred_, chain.first.data(), chain.first.size());
         if (not chain.second.empty())
             gnutls_certificate_set_x509_crl(*xcred_, chain.second.data(), chain.second.size());
-        RING_DBG("[TLS] Peer CA list %lu (%lu CRLs): %d", chain.first.size(), chain.second.size(), ret);
+        JAMI_DBG("[TLS] Peer CA list %lu (%lu CRLs): %d", chain.first.size(), chain.second.size(), ret);
     }
 
     // Load user-given identity (key and passwd)
@@ -446,7 +446,7 @@ TlsSession::TlsSessionImpl::initCredentials()
             throw std::runtime_error("can't load certificate: "
                                      + std::string(gnutls_strerror(ret)));
 
-        RING_DBG("[TLS] User identity loaded");
+        JAMI_DBG("[TLS] User identity loaded");
     }
 
     // Setup DH-params (server only, may block on dh_params.get())
@@ -454,7 +454,7 @@ TlsSession::TlsSessionImpl::initCredentials()
         if (const auto& dh_params = params_.dh_params.get().get())
             gnutls_certificate_set_dh_params(*xcred_, dh_params);
         else
-            RING_WARN("[TLS] DH params unavailable"); // YOMGUI: need to stop?
+            JAMI_WARN("[TLS] DH params unavailable"); // YOMGUI: need to stop?
     }
 }
 
@@ -469,7 +469,7 @@ TlsSession::TlsSessionImpl::commonSessionInit()
                                          transport_.isReliable() ? TLS_FULL_PRIORITY_STRING : DTLS_FULL_PRIORITY_STRING,
                                          nullptr);
         if (ret != GNUTLS_E_SUCCESS) {
-            RING_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
+            JAMI_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
             return false;
         }
 
@@ -480,7 +480,7 @@ TlsSession::TlsSessionImpl::commonSessionInit()
             ret = gnutls_credentials_set(session_, GNUTLS_CRD_ANON, *cacred_);
 
         if (ret != GNUTLS_E_SUCCESS) {
-            RING_ERR("[TLS] anonymous credential set failed: %s", gnutls_strerror(ret));
+            JAMI_ERR("[TLS] anonymous credential set failed: %s", gnutls_strerror(ret));
             return false;
         }
     } else {
@@ -489,7 +489,7 @@ TlsSession::TlsSessionImpl::commonSessionInit()
                                          transport_.isReliable() ? TLS_CERT_PRIORITY_STRING : DTLS_CERT_PRIORITY_STRING,
                                          nullptr);
         if (ret != GNUTLS_E_SUCCESS) {
-            RING_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
+            JAMI_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
             return false;
         }
     }
@@ -497,7 +497,7 @@ TlsSession::TlsSessionImpl::commonSessionInit()
     // Add certificate credentials
     ret = gnutls_credentials_set(session_, GNUTLS_CRD_CERTIFICATE, *xcred_);
     if (ret != GNUTLS_E_SUCCESS) {
-        RING_ERR("[TLS] certificate credential set failed: %s", gnutls_strerror(ret));
+        JAMI_ERR("[TLS] certificate credential set failed: %s", gnutls_strerror(ret));
         return false;
     }
     gnutls_certificate_send_x509_rdn_sequence(session_, 0);
@@ -564,7 +564,7 @@ TlsSession::TlsSessionImpl::send(const ValueType* tx_data, std::size_t tx_size, 
              * state has not changed, so we have to ask for more data first.
              * We will just try again later, although this should never happen.
              */
-            RING_ERR() << "[TLS] send failed (only " << total_written << " bytes sent): "
+            JAMI_ERR() << "[TLS] send failed (only " << total_written << " bytes sent): "
                        << gnutls_strerror(nwritten);
             ec = std::error_code(nwritten, std::system_category());
             return 0;
@@ -594,10 +594,10 @@ TlsSession::TlsSessionImpl::sendRaw(const void* buf, size_t size)
         }
 
         if (ec.value() == EAGAIN) {
-            RING_WARN() << "[TLS] EAGAIN from transport, retry#" << ++retry_count;
+            JAMI_WARN() << "[TLS] EAGAIN from transport, retry#" << ++retry_count;
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             if (retry_count == 100) {
-                RING_ERR() << "[TLS] excessive retry detected, aborting";
+                JAMI_ERR() << "[TLS] excessive retry detected, aborting";
                 ec.assign(EIO, std::system_category());
             }
         }
@@ -605,7 +605,7 @@ TlsSession::TlsSessionImpl::sendRaw(const void* buf, size_t size)
 
     // Must be called to pass errno value to GnuTLS on Windows (cf. GnuTLS doc)
     gnutls_transport_set_errno(session_, ec.value());
-    RING_ERR() << "[TLS] transport failure on tx: errno = " << ec.value();
+    JAMI_ERR() << "[TLS] transport failure on tx: errno = " << ec.value();
     return -1;
 }
 
@@ -681,7 +681,7 @@ TlsSession::TlsSessionImpl::waitForRawData(unsigned timeout)
         return -1;
     }
     if (rxQueue_.empty()) {
-        RING_ERR("[TLS] waitForRawData: timeout after %u ms", timeout);
+        JAMI_ERR("[TLS] waitForRawData: timeout after %u ms", timeout);
         return 0;
     }
     return 1;
@@ -692,14 +692,14 @@ TlsSession::TlsSessionImpl::initFromRecordState(int offset)
 {
     std::array<uint8_t, 8> seq;
     if (gnutls_record_get_state(session_, 1, nullptr, nullptr, nullptr, &seq[0]) != GNUTLS_E_SUCCESS) {
-        RING_ERR("[TLS] Fatal-error Unable to read initial state");
+        JAMI_ERR("[TLS] Fatal-error Unable to read initial state");
         return false;
     }
 
     baseSeq_ = array2uint(seq) + offset;
     gapOffset_ = baseSeq_;
     lastRxSeq_ = baseSeq_ - 1;
-    RING_DBG("[TLS] Initial sequence number: %lx", baseSeq_);
+    JAMI_DBG("[TLS] Initial sequence number: %lx", baseSeq_);
     return true;
 }
 
@@ -739,14 +739,14 @@ TlsSession::TlsSessionImpl::cleanup()
 TlsSessionState
 TlsSession::TlsSessionImpl::handleStateSetup(UNUSED TlsSessionState state)
 {
-    RING_DBG("[TLS] Start %s session", typeName());
+    JAMI_DBG("[TLS] Start %s session", typeName());
 
     try {
         if (anonymous_)
             initAnonymous();
         initCredentials();
     } catch (const std::exception& e) {
-        RING_ERR("[TLS] authentifications init failed: %s", e.what());
+        JAMI_ERR("[TLS] authentifications init failed: %s", e.what());
         return TlsSessionState::SHUTDOWN;
     }
 
@@ -764,7 +764,7 @@ TlsSession::TlsSessionImpl::handleStateSetup(UNUSED TlsSessionState state)
 TlsSessionState
 TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
 {
-    RING_DBG("[TLS] SYN cookie");
+    JAMI_DBG("[TLS] SYN cookie");
 
     std::size_t count;
     {
@@ -773,7 +773,7 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
         if (!rxCv_.wait_for(lk, COOKIE_TIMEOUT,
                             [this]{ return !rxQueue_.empty()
                                     or state_ == TlsSessionState::SHUTDOWN; })) {
-            RING_ERR("[TLS] SYN cookie failed: timeout");
+            JAMI_ERR("[TLS] SYN cookie failed: timeout");
             return TlsSessionState::SHUTDOWN;
         }
         // Shutdown state?
@@ -815,7 +815,7 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
         // So we retry until we get a valid cookie.
         // To protect against a flood attack we delay each retry after FLOOD_THRESHOLD rx bytes.
         if (cookie_count_ >= FLOOD_THRESHOLD) {
-            RING_WARN("[TLS] flood threshold reach (retry in %zds)",
+            JAMI_WARN("[TLS] flood threshold reach (retry in %zds)",
                       std::chrono::duration_cast<std::chrono::seconds>(FLOOD_PAUSE).count());
             dump_io_stats();
             std::this_thread::sleep_for(FLOOD_PAUSE); // flood attack protection
@@ -823,7 +823,7 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
         return state;
     }
 
-    RING_DBG("[TLS] cookie ok");
+    JAMI_DBG("[TLS] cookie ok");
 
     return setupServer();
 }
@@ -834,7 +834,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     int ret;
     size_t retry_count = 0;
     do {
-        RING_DBG("[TLS] handshake");
+        JAMI_DBG("[TLS] handshake");
         ret = gnutls_handshake(session_);
     } while ((ret == GNUTLS_E_INTERRUPTED   or
               ret == GNUTLS_E_AGAIN       ) and
@@ -842,7 +842,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
 
     // Stop on fatal error
     if (gnutls_error_is_fatal(ret)) {
-        RING_ERR("[TLS] handshake failed: %s", gnutls_strerror(ret));
+        JAMI_ERR("[TLS] handshake failed: %s", gnutls_strerror(ret));
         return TlsSessionState::SHUTDOWN;
     }
 
@@ -850,7 +850,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     if (ret != GNUTLS_E_SUCCESS) {
         // TODO: handle GNUTLS_E_LARGE_PACKET (MTU must be lowered)
         if (ret != GNUTLS_E_AGAIN)
-            RING_DBG("[TLS] non-fatal handshake error: %s", gnutls_strerror(ret));
+            JAMI_DBG("[TLS] non-fatal handshake error: %s", gnutls_strerror(ret));
         return state;
     }
 
@@ -863,7 +863,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     if (!isTLS1_3 || (isTLS1_3 && isServer_)) {
 #endif
         if (!gnutls_safe_renegotiation_status(session_)) {
-            RING_ERR("[TLS] server identity changed! MiM attack?");
+            JAMI_ERR("[TLS] server identity changed! MiM attack?");
             return TlsSessionState::SHUTDOWN;
         }
 #if GNUTLS_VERSION_NUMBER >= 0x030605
@@ -871,20 +871,20 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
 #endif
 
     auto desc = gnutls_session_get_desc(session_);
-    RING_DBG("[TLS] session established: %s", desc);
+    JAMI_DBG("[TLS] session established: %s", desc);
     gnutls_free(desc);
 
     // Anonymous connection? rehandshake immediately with certificate authentification forced
     auto cred = gnutls_auth_get_type(session_);
     if (cred == GNUTLS_CRD_ANON) {
-        RING_DBG("[TLS] renogotiate with certificate authentification");
+        JAMI_DBG("[TLS] renogotiate with certificate authentification");
 
         // Re-setup TLS algorithms priority list with only certificate based cipher suites
         ret = gnutls_priority_set_direct(session_,
                                          transport_.isReliable() ? TLS_CERT_PRIORITY_STRING : DTLS_CERT_PRIORITY_STRING,
                                          nullptr);
         if (ret != GNUTLS_E_SUCCESS) {
-            RING_ERR("[TLS] session TLS cert-only priority set failed: %s", gnutls_strerror(ret));
+            JAMI_ERR("[TLS] session TLS cert-only priority set failed: %s", gnutls_strerror(ret));
             return TlsSessionState::SHUTDOWN;
         }
 
@@ -892,14 +892,14 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
         gnutls_credentials_clear(session_);
         ret = gnutls_credentials_set(session_, GNUTLS_CRD_CERTIFICATE, *xcred_);
         if (ret != GNUTLS_E_SUCCESS) {
-            RING_ERR("[TLS] session credential set failed: %s", gnutls_strerror(ret));
+            JAMI_ERR("[TLS] session credential set failed: %s", gnutls_strerror(ret));
             return TlsSessionState::SHUTDOWN;
         }
 
         return state; // handshake
 
     } else if (cred != GNUTLS_CRD_CERTIFICATE) {
-        RING_ERR("[TLS] spurious session credential (%u)", cred);
+        JAMI_ERR("[TLS] spurious session credential (%u)", cred);
         return TlsSessionState::SHUTDOWN;
     }
 
@@ -926,13 +926,13 @@ TlsSession::TlsSessionImpl::handleStateMtuDiscovery(UNUSED TlsSessionState state
         if (!isServer_) {
             pathMtuHeartbeat();
             if (state_ == TlsSessionState::SHUTDOWN) {
-                RING_ERR("[TLS] session destroyed while performing PMTUD, shuting down");
+                JAMI_ERR("[TLS] session destroyed while performing PMTUD, shuting down");
                 return TlsSessionState::SHUTDOWN;
             }
             pmtudOver_ = true;
         }
     } else {
-        RING_ERR() << "[TLS] PEER HEARTBEAT DISABLED: using transport MTU value " << mtuProbe_;
+        JAMI_ERR() << "[TLS] PEER HEARTBEAT DISABLED: using transport MTU value " << mtuProbe_;
         pmtudOver_ = true;
     }
 
@@ -940,7 +940,7 @@ TlsSession::TlsSessionImpl::handleStateMtuDiscovery(UNUSED TlsSessionState state
     maxPayload_ = gnutls_dtls_get_data_mtu(session_);
 
     if (pmtudOver_) {
-        RING_DBG() << "[TLS] maxPayload: " << maxPayload_.load();
+        JAMI_DBG() << "[TLS] maxPayload: " << maxPayload_.load();
         if (!initFromRecordState())
             return TlsSessionState::SHUTDOWN;
     }
@@ -960,7 +960,7 @@ TlsSession::TlsSessionImpl::handleStateMtuDiscovery(UNUSED TlsSessionState state
 void
 TlsSession::TlsSessionImpl::pathMtuHeartbeat()
 {
-    RING_DBG() << "[TLS] PMTUD: starting probing with " << HEARTBEAT_RETRANS_TIMEOUT.count()
+    JAMI_DBG() << "[TLS] PMTUD: starting probing with " << HEARTBEAT_RETRANS_TIMEOUT.count()
                << "ms of retransmission timeout";
 
     gnutls_heartbeat_set_timeouts(session_,
@@ -975,7 +975,7 @@ TlsSession::TlsSessionImpl::pathMtuHeartbeat()
     // Hence we have to signal to the TLS session to reduce the MTU on client size accordingly.
     if (transport_.localAddr().isIpv4() and transport_.remoteAddr().isIpv6()) {
         mtuOffset = ASYMETRIC_TRANSPORT_MTU_OFFSET;
-        RING_WARN() << "[TLS] local/remote IP protocol version not alike, use an MTU offset of "
+        JAMI_WARN() << "[TLS] local/remote IP protocol version not alike, use an MTU offset of "
                     << ASYMETRIC_TRANSPORT_MTU_OFFSET << " bytes to compensate";
     }
 
@@ -984,7 +984,7 @@ TlsSession::TlsSessionImpl::pathMtuHeartbeat()
     for (auto mtu: MTUS_) {
         gnutls_dtls_set_mtu(session_, mtu);
         auto data_mtu = gnutls_dtls_get_data_mtu(session_);
-        RING_DBG() << "[TLS] PMTUD: mtu " << mtu
+        JAMI_DBG() << "[TLS] PMTUD: mtu " << mtu
                    << ", payload " << data_mtu;
         auto bytesToSend = data_mtu - mtuOffset - 3; // want to know why -3? ask gnutls!
 
@@ -993,27 +993,27 @@ TlsSession::TlsSessionImpl::pathMtuHeartbeat()
         } while (errno_send == GNUTLS_E_AGAIN || (errno_send == GNUTLS_E_INTERRUPTED && state_ != TlsSessionState::SHUTDOWN));
 
         if (errno_send != GNUTLS_E_SUCCESS) {
-            RING_DBG() << "[TLS] PMTUD: mtu " << mtu << " [FAILED]";
+            JAMI_DBG() << "[TLS] PMTUD: mtu " << mtu << " [FAILED]";
             break;
         }
 
         mtuProbe_ = mtu;
-        RING_DBG() << "[TLS] PMTUD: mtu " << mtu << " [OK]";
+        JAMI_DBG() << "[TLS] PMTUD: mtu " << mtu << " [OK]";
     }
 
     if (errno_send == GNUTLS_E_TIMEDOUT) { // timeout is considered as a packet loss, then the good mtu is the precedent
         if (mtuProbe_ == MTUS_[0]) {
-            RING_WARN() << "[TLS] PMTUD: no response on first ping, using minimal MTU value "
+            JAMI_WARN() << "[TLS] PMTUD: no response on first ping, using minimal MTU value "
                         << mtuProbe_;
         } else {
-            RING_WARN() << "[TLS] PMTUD: timed out, using last working mtu "
+            JAMI_WARN() << "[TLS] PMTUD: timed out, using last working mtu "
                         << mtuProbe_;
         }
     } else if (errno_send != GNUTLS_E_SUCCESS) {
-        RING_ERR() << "[TLS] PMTUD: failed with gnutls error '"
+        JAMI_ERR() << "[TLS] PMTUD: failed with gnutls error '"
                    << gnutls_strerror(errno_send) << '\'';
     } else {
-        RING_DBG() << "[TLS] PMTUD: reached maximal value";
+        JAMI_DBG() << "[TLS] PMTUD: reached maximal value";
     }
 }
 
@@ -1027,14 +1027,14 @@ TlsSession::TlsSessionImpl::handleDataPacket(std::vector<ValueType>&& buf, uint6
     } else {
         // too old?
         if (seq_delta <= -MISS_ORDERING_LIMIT) {
-            RING_WARN("[TLS] drop old pkt: 0x%lx", pkt_seq);
+            JAMI_WARN("[TLS] drop old pkt: 0x%lx", pkt_seq);
             return;
         }
 
         // No duplicate check as DTLS prevents that for us (replay protection)
 
         // accept Out-Of-Order pkt - will be reordered by queue flush operation
-        RING_WARN("[TLS] OOO pkt: 0x%lx", pkt_seq);
+        JAMI_WARN("[TLS] OOO pkt: 0x%lx", pkt_seq);
     }
 
     {
@@ -1085,9 +1085,9 @@ TlsSession::TlsSessionImpl::flushRxQueue()
     if ((now - lastReadTime_) >= RX_OOO_TIMEOUT) {
         // OOO packet timeout - consider waited packets as lost
         if (auto lost = next_offset - gapOffset_)
-            RING_WARN("[TLS] %lu lost since 0x%lx", lost, gapOffset_);
+            JAMI_WARN("[TLS] %lu lost since 0x%lx", lost, gapOffset_);
         else
-            RING_WARN("[TLS] slow flush");
+            JAMI_WARN("[TLS] slow flush");
     } else if (next_offset != gapOffset_)
         return;
 
@@ -1144,7 +1144,7 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
             gnutls_dtls_set_mtu(session_, mtuProbe_);
             maxPayload_ = gnutls_dtls_get_data_mtu(session_);
             pmtudOver_ = true;
-            RING_DBG() << "[TLS] maxPayload: " << maxPayload_.load();
+            JAMI_DBG() << "[TLS] maxPayload: " << maxPayload_.load();
 
             if (!initFromRecordState(-1))
                 return TlsSessionState::SHUTDOWN;
@@ -1154,24 +1154,24 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
         handleDataPacket(std::move(rawPktBuf_), array2uint(seq));
         // no state change
     } else if (ret == GNUTLS_E_HEARTBEAT_PING_RECEIVED) {
-        RING_DBG("[TLS] PMTUD: ping received sending pong");
+        JAMI_DBG("[TLS] PMTUD: ping received sending pong");
         auto errno_send = gnutls_heartbeat_pong(session_, 0);
 
         if (errno_send != GNUTLS_E_SUCCESS){
-            RING_ERR("[TLS] PMTUD: failed on pong with error %d: %s", errno_send,
+            JAMI_ERR("[TLS] PMTUD: failed on pong with error %d: %s", errno_send,
                       gnutls_strerror(errno_send));
         } else {
             ++hbPingRecved_;
         }
         // no state change
     } else if (ret == 0) {
-        RING_DBG("[TLS] eof");
+        JAMI_DBG("[TLS] eof");
         state = TlsSessionState::SHUTDOWN;
     } else if (ret == GNUTLS_E_REHANDSHAKE) {
-        RING_DBG("[TLS] re-handshake");
+        JAMI_DBG("[TLS] re-handshake");
         state = TlsSessionState::HANDSHAKE;
     } else if (gnutls_error_is_fatal(ret)) {
-        RING_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
+        JAMI_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
         state = TlsSessionState::SHUTDOWN;
     } // else non-fatal error... let's continue
 
@@ -1181,7 +1181,7 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
 TlsSessionState
 TlsSession::TlsSessionImpl::handleStateShutdown(TlsSessionState state)
 {
-    RING_DBG("[TLS] shutdown");
+    JAMI_DBG("[TLS] shutdown");
 
     // Stop ourself
     thread_.stop();
@@ -1257,7 +1257,7 @@ TlsSession::currentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
     }
 
     auto name = gnutls_cipher_get_name(s_cipher);
-    RING_WARN("[TLS] No Cipher Suite Id found for cipher %s", name ? name : "<null>");
+    JAMI_WARN("[TLS] No Cipher Suite Id found for cipher %s", name ? name : "<null>");
     return {};
 }
 
@@ -1300,17 +1300,17 @@ TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
         }
 
         if (ret == 0) {
-            RING_DBG("[TLS] eof");
+            JAMI_DBG("[TLS] eof");
             shutdown();
             error = std::errc::broken_pipe;
             break;
         } else if (ret == GNUTLS_E_REHANDSHAKE) {
-            RING_DBG("[TLS] re-handshake");
+            JAMI_DBG("[TLS] re-handshake");
             pimpl_->state_ = TlsSessionState::HANDSHAKE;
             pimpl_->rxCv_.notify_one(); // unblock waiting FSM
             pimpl_->stateCondition_.notify_all();
         } else if (gnutls_error_is_fatal(ret)) {
-            RING_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
+            JAMI_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
             shutdown();
             error = std::errc::io_error;
             break;
@@ -1346,4 +1346,4 @@ TlsSession::waitForData(unsigned ms_timeout, std::error_code& ec) const
     return 1;
 }
 
-}} // namespace ring::tls
+}} // namespace jami::tls

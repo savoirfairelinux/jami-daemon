@@ -22,7 +22,7 @@
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 #include "libav_utils.h"
 #endif
 
@@ -45,7 +45,7 @@
 #include <ctime>
 #include <type_traits>
 
-namespace ring {
+namespace jami {
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID),
@@ -65,7 +65,7 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
                                             pjsip_inv_session** inv)
 {
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), from, contact, to, target, dlg) != PJ_SUCCESS) {
-        RING_ERR("Unable to create SIP dialogs for user agent client when calling %s", to->ptr);
+        JAMI_ERR("Unable to create SIP dialogs for user agent client when calling %s", to->ptr);
         return false;
     }
 
@@ -84,7 +84,7 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
         pj_list_push_back(&dialog->inv_hdr, subj_hdr);
 
         if (pjsip_inv_create_uac(dialog, local_sdp, 0, inv) != PJ_SUCCESS) {
-            RING_ERR("Unable to create invite session for user agent client");
+            JAMI_ERR("Unable to create invite session for user agent client");
             return false;
         }
     }
@@ -110,7 +110,7 @@ validate(std::string &member, const std::string &param, const T& valid)
     if (find(begin, end, param) != end)
         member = param;
     else
-        RING_ERR("Invalid parameter \"%s\"", param.c_str());
+        JAMI_ERR("Invalid parameter \"%s\"", param.c_str());
 }
 
 static void
@@ -137,8 +137,8 @@ addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey,
                   const char *maxKey,
                   const std::pair<uint16_t, uint16_t> &range)
 {
-    a.emplace(minKey, ring::to_string(range.first));
-    a.emplace(maxKey, ring::to_string(range.second));
+    a.emplace(minKey, jami::to_string(range.first));
+    a.emplace(maxKey, jami::to_string(range.second));
 }
 
 void SIPAccountBase::serialize(YAML::Emitter &out)
@@ -231,7 +231,7 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
     int tmpMax = -1;
     parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, audioPortRange_);
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     tmpMin = -1;
     parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
     tmpMax = -1;
@@ -258,13 +258,13 @@ SIPAccountBase::getAccountDetails() const
     a.emplace(Conf::CONFIG_VIDEO_ENABLED, videoEnabled_ ? TRUE_STR : FALSE_STR);
 
     addRangeToDetails(a, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
     addRangeToDetails(a, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
 #endif
 
     a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE,       dtmfType_);
     a.emplace(Conf::CONFIG_LOCAL_INTERFACE,         interface_);
-    a.emplace(Conf::CONFIG_PUBLISHED_PORT,          ring::to_string(publishedPort_));
+    a.emplace(Conf::CONFIG_PUBLISHED_PORT,          jami::to_string(publishedPort_));
     a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL,  publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
 
@@ -288,7 +288,7 @@ SIPAccountBase::getVolatileAccountDetails() const
     if (isIP2IP())
         a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = "READY";
 
-    a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE,    ring::to_string(transportStatus_));
+    a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE,    jami::to_string(transportStatus_));
     a.emplace(Conf::CONFIG_TRANSPORT_STATE_DESC,    transportError_);
     return a;
 }
@@ -356,7 +356,7 @@ SIPAccountBase::generateAudioPort() const
     return acquireRandomEvenPort(audioPortRange_);
 }
 
-#ifdef RING_VIDEO
+#ifdef ENABLE_VIDEO
 uint16_t
 SIPAccountBase::generateVideoPort() const
 {
@@ -385,7 +385,7 @@ void
 SIPAccountBase::onTextMessage(const std::string& from,
                               const std::map<std::string, std::string>& payloads)
 {
-    RING_DBG("Text message received from %s, %zu part(s)",  from.c_str(), payloads.size());
+    JAMI_DBG("Text message received from %s, %zu part(s)",  from.c_str(), payloads.size());
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
     DRing::Message message;
     message.from = from;
@@ -403,8 +403,8 @@ SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
 {
     publishedIp_ = ip_addr;
     publishedIpAddress_ = ip_addr.toString();
-    RING_DBG("[Account %s] Using public address %s", getAccountID().c_str(),
+    JAMI_DBG("[Account %s] Using public address %s", getAccountID().c_str(),
              publishedIpAddress_.c_str());
 }
 
-} // namespace ring
+} // namespace jami

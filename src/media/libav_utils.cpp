@@ -52,7 +52,7 @@ av_frame_new_side_data_from_buf(AVFrame* frame, enum AVFrameSideDataType type, A
 #endif
 }
 
-namespace ring { namespace libav_utils {
+namespace jami { namespace libav_utils {
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
 // protect libav/ffmpeg access
@@ -241,7 +241,7 @@ fillWithBlack(AVFrame* frame)
     int ret = av_image_fill_black(frame->data, linesizes, format,
         frame->color_range, frame->width, frame->height);
     if (ret < 0) {
-        RING_ERR() << "Failed to blacken frame";
+        JAMI_ERR() << "Failed to blacken frame";
     }
 }
 
@@ -250,7 +250,7 @@ fillWithSilence(AVFrame* frame)
 {
     int ret = av_samples_set_silence(frame->extended_data, 0, frame->nb_samples, frame->channels, (AVSampleFormat)frame->format);
     if (ret < 0)
-        RING_ERR() << "Failed to fill frame with silence";
+        JAMI_ERR() << "Failed to fill frame with silence";
 }
 
-}} // namespace ring::libav_utils
+}} // namespace jami::libav_utils

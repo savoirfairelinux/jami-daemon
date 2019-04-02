@@ -27,7 +27,7 @@
 #include "account_const.h"
 
 
-namespace ring { namespace test {
+namespace jami { namespace test {
 
 class Account_factoryTest : public CppUnit::TestFixture {
 public:
@@ -133,6 +133,6 @@ Account_factoryTest::testClear()
     CPPUNIT_ASSERT(accountFactory->accountCount()==0);
 }
 
-}} // namespace ring::test
+}} // namespace jami::test
 
-RING_TEST_RUNNER(ring::test::Account_factoryTest::name())
+RING_TEST_RUNNER(jami::test::Account_factoryTest::name())

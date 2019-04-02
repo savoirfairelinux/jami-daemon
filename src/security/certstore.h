@@ -34,7 +34,7 @@
 
 namespace crypto = ::dht::crypto;
 
-namespace ring { namespace tls {
+namespace jami { namespace tls {
 
 enum class TrustStatus {
     UNTRUSTED = 0,
@@ -163,4 +163,4 @@ private:
     dht::crypto::TrustList allowed_;
 };
 
-}} // namespace ring::tls
+}} // namespace jami::tls

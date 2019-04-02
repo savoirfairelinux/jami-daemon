@@ -50,11 +50,11 @@
 #include <atomic>
 #include <thread>
 
-namespace ring {
+namespace jami {
 class IpAddr;
 }
 
-namespace ring { namespace upnp {
+namespace jami { namespace upnp {
 
 class UPnPContext {
 public:
@@ -262,4 +262,4 @@ private:
  */
 std::shared_ptr<UPnPContext> getUPnPContext();
 
-}} // namespace ring::upnp
+}} // namespace jami::upnp

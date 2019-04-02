@@ -38,13 +38,13 @@
 
 using Clock = std::chrono::steady_clock;
 
-namespace ring { namespace debug {
+namespace jami { namespace debug {
 
 /**
  * Ex:
  * Timer t;
  * std::this_thread::sleep_for(std::chrono::milliseconds(10));
- * RING_DBG() << "Task took " << t.getDuration<std::chrono::nanoseconds>() << " ns";
+ * JAMI_DBG() << "Task took " << t.getDuration<std::chrono::nanoseconds>() << " ns";
  */
 class Timer
 {
@@ -201,7 +201,7 @@ public:
     ~VideoWriter()
     {
         fclose(f_);
-        RING_DBG("Play video file with: ffplay -f rawvideo -pixel_format %s -video_size %dx%d %s",
+        JAMI_DBG("Play video file with: ffplay -f rawvideo -pixel_format %s -video_size %dx%d %s",
             av_get_pix_fmt_name(format_), width_, height_, filename_.c_str());
     }
 
@@ -238,4 +238,4 @@ private:
     int width_, height_;
 };
 
-}} // namespace ring::debug
+}} // namespace jami::debug

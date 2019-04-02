@@ -45,7 +45,7 @@ using random_device = dht::crypto::random_device;
 
 #include "upnp_context.h"
 
-namespace ring { namespace upnp {
+namespace jami { namespace upnp {
 
 /**
  * This should be used to get a UPnPContext.
@@ -110,11 +110,11 @@ UPnPContext::UPnPContext()
 
         while (pmpRun_) {
             if (initnatpmp(&natpmp, 0, 0) < 0) {
-                RING_ERR("NAT-PMP: can't initialize libnatpmp");
+                JAMI_ERR("NAT-PMP: can't initialize libnatpmp");
                 std::unique_lock<std::mutex> lk(pmpMutex_);
                 pmpCv_.wait_for(lk, std::chrono::minutes(1));
             } else {
-                RING_DBG("NAT-PMP: initialized");
+                JAMI_DBG("NAT-PMP: initialized");
                 break;
             }
         }
@@ -152,7 +152,7 @@ UPnPContext::UPnPContext()
             }
         }
         closenatpmp(&natpmp);
-        RING_DBG("NAT-PMP: ended");
+        JAMI_DBG("NAT-PMP: ended");
     })
 #endif
 {
@@ -166,7 +166,7 @@ UPnPContext::UPnPContext()
      */
 
  #ifdef UPNP_ENABLE_IPV6
-     RING_DBG("UPnP: IPv6 support enabled, but we will use IPv4");
+     JAMI_DBG("UPnP: IPv6 support enabled, but we will use IPv4");
      /* IPv6 version seems to fail on some systems with:
       * UPNP_E_SOCKET_BIND: An error occurred binding a socket. */
      /* TODO: figure out why ipv6 version doesn't work  */
@@ -174,14 +174,14 @@ UPnPContext::UPnPContext()
  #endif
     upnp_err = UpnpInit(0, 0);
     if ( upnp_err != UPNP_E_SUCCESS ) {
-        RING_ERR("UPnP: can't initialize libupnp: %s", UpnpGetErrorMessage(upnp_err));
+        JAMI_ERR("UPnP: can't initialize libupnp: %s", UpnpGetErrorMessage(upnp_err));
         UpnpFinish();
     } else {
-        RING_DBG("UPnP: using IPv4");
+        JAMI_DBG("UPnP: using IPv4");
         ip_address = UpnpGetServerIpAddress(); // do not free, it is freed by UpnpFinish()
         port = UpnpGetServerPort();
 
-        RING_DBG("UPnP: initialiazed on %s:%u", ip_address, port);
+        JAMI_DBG("UPnP: initialiazed on %s:%u", ip_address, port);
 
         // relax the parser to allow malformed XML text
         ixmlRelaxParser( 1 );
@@ -189,7 +189,7 @@ UPnPContext::UPnPContext()
         // Register a control point to start looking for devices right away
         upnp_err = UpnpRegisterClient( cp_callback, this, &ctrlptHandle_ );
         if ( upnp_err != UPNP_E_SUCCESS ) {
-            RING_ERR("UPnP: can't register client: %s", UpnpGetErrorMessage(upnp_err));
+            JAMI_ERR("UPnP: can't register client: %s", UpnpGetErrorMessage(upnp_err));
             UpnpFinish();
         } else {
             clientRegistered_ = true;
@@ -278,14 +278,14 @@ bool
 UPnPContext::hasValidIGD(std::chrono::seconds timeout)
 {
     if (not clientRegistered_ and not pmpRun_) {
-        RING_WARN("UPnP: Control Point not registered");
+        JAMI_WARN("UPnP: Control Point not registered");
         return false;
     }
 
     std::unique_lock<std::mutex> lock(validIGDMutex_);
     if (!validIGDCondVar_.wait_for(lock, timeout,
                                    [this]{return hasValidIGD_unlocked();})) {
-        RING_WARN("UPnP: check for valid IGD timeout");
+        JAMI_WARN("UPnP: check for valid IGD timeout");
         return false;
     }
 
@@ -365,12 +365,12 @@ UPnPContext::addMapping(IGD* igd,
             /* the same mapping, so nothing needs to be done */
             *upnp_error = UPNP_E_SUCCESS;
             ++(mapping_ptr->users);
-            RING_DBG("UPnp : mapping already exists, incrementing number of users: %d",
+            JAMI_DBG("UPnp : mapping already exists, incrementing number of users: %d",
                      iter->second.users);
             return mapping;
         } else {
             /* this port is already used by a different mapping */
-            RING_WARN("UPnP: cannot add a mapping with an external port which is already used by another:\n\tcurrent: %s\n\ttrying to add: %s",
+            JAMI_WARN("UPnP: cannot add a mapping with an external port which is already used by another:\n\tcurrent: %s\n\ttrying to add: %s",
                       mapping_ptr->toString().c_str(), mapping.toString().c_str());
             *upnp_error = CONFLICT_IN_MAPPING;
             return {};
@@ -378,7 +378,7 @@ UPnPContext::addMapping(IGD* igd,
     }
 
     /* mapping doesn't exist, so try to add it */
-    RING_DBG("adding port mapping : %s", mapping.toString().c_str());
+    JAMI_DBG("adding port mapping : %s", mapping.toString().c_str());
 
 #if HAVE_LIBUPNP
     auto upnp = dynamic_cast<const UPnPIGD*>(igd);
@@ -427,7 +427,7 @@ UPnPContext::chooseRandomPort(const IGD& igd, PortType type)
         port = generateRandomPort();
     }
 
-    RING_DBG("UPnP: chose random port %u", port);
+    JAMI_DBG("UPnP: chose random port %u", port);
 
     return port;
 }
@@ -456,7 +456,7 @@ UPnPContext::addAnyMapping(uint16_t port_desired,
     std::lock_guard<std::mutex> lock(validIGDMutex_);
     IGD* igd = chooseIGD_unlocked();
     if (not igd) {
-        RING_WARN("UPnP: no valid IGD available");
+        JAMI_WARN("UPnP: no valid IGD available");
         return {};
     }
 
@@ -489,7 +489,7 @@ UPnPContext::addAnyMapping(uint16_t port_desired,
          * 718 : conflictin mapping
          * 402 : invalid args (due to router implementation)
          */
-        RING_DBG("UPnP: mapping failed (conflicting entry? err = %d), trying with a different port.",
+        JAMI_DBG("UPnP: mapping failed (conflicting entry? err = %d), trying with a different port.",
                  upnp_error);
         /* TODO: make sure we don't try sellecting the same random port twice if it fails ? */
         port_desired = chooseRandomPort(*igd, type);
@@ -500,7 +500,7 @@ UPnPContext::addAnyMapping(uint16_t port_desired,
     }
 
     if (not mapping and numberRetries == MAX_RETRIES)
-        RING_DBG("UPnP: could not add mapping after %u retries, giving up", MAX_RETRIES);
+        JAMI_DBG("UPnP: could not add mapping after %u retries, giving up", MAX_RETRIES);
 
     return mapping;
 }
@@ -516,7 +516,7 @@ UPnPContext::removeMapping(const Mapping& mapping)
     std::lock_guard<std::mutex> lock(validIGDMutex_);
     IGD* igd = chooseIGD_unlocked();
     if (not igd) {
-        RING_WARN("UPnP: no valid IGD available");
+        JAMI_WARN("UPnP: no valid IGD available");
         return;
     }
 
@@ -533,13 +533,13 @@ UPnPContext::removeMapping(const Mapping& mapping)
             if (global_mapping.users > 1) {
                 /* more than one user, simply decrement the number */
                 --(global_mapping.users);
-                RING_DBG("UPnP: decrementing users of mapping: %s, %d users remaining",
+                JAMI_DBG("UPnP: decrementing users of mapping: %s, %d users remaining",
                          mapping.toString().c_str(), global_mapping.users);
             } else {
                 /* no other users, can delete */
 #if HAVE_LIBUPNP
                 if (auto upnp = dynamic_cast<UPnPIGD*>(igd)) {
-                    RING_DBG("UPnP: removing port mapping : %s",
+                    JAMI_DBG("UPnP: removing port mapping : %s",
                              mapping.toString().c_str());
                     deletePortMapping(*upnp,
                                       mapping.getPortExternalStr(),
@@ -558,10 +558,10 @@ UPnPContext::removeMapping(const Mapping& mapping)
                 globalMappings->erase(iter);
             }
         } else {
-            RING_WARN("UPnP: cannot remove mapping which doesn't match the existing one in the IGD list");
+            JAMI_WARN("UPnP: cannot remove mapping which doesn't match the existing one in the IGD list");
         }
     } else {
-        RING_WARN("UPnP: cannot remove mapping which is not in the list of existing mappings of the IGD");
+        JAMI_WARN("UPnP: cannot remove mapping which is not in the list of existing mappings of the IGD");
     }
 }
 
@@ -576,7 +576,7 @@ UPnPContext::getLocalIP() const
     if (auto igd = chooseIGD_unlocked())
         return igd->localIp;
 
-    RING_WARN("UPnP: no valid IGD available");
+    JAMI_WARN("UPnP: no valid IGD available");
     return {};
 }
 
@@ -591,7 +591,7 @@ UPnPContext::getExternalIP() const
     if (auto igd = chooseIGD_unlocked())
         return igd->publicIp;
 
-    RING_WARN("UPnP: no valid IGD available");
+    JAMI_WARN("UPnP: no valid IGD available");
     return {};
 }
 
@@ -601,7 +601,7 @@ void
 UPnPContext::PMPsearchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& natpmp)
 {
     if (sendpublicaddressrequest(&natpmp) < 0) {
-        RING_ERR("NAT-PMP: can't send request");
+        JAMI_ERR("NAT-PMP: can't send request");
         pmp_igd->renewal_ = clock::now() + std::chrono::minutes(1);
         return;
     }
@@ -618,8 +618,8 @@ UPnPContext::PMPsearchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& n
             pmp_igd->localIp = ip_utils::getLocalAddr(AF_INET);
             pmp_igd->publicIp = IpAddr(response.pnu.publicaddress.addr);
             if (not pmpIGD_) {
-                RING_DBG("NAT-PMP: found new device");
-                RING_DBG("NAT-PMP: got external IP: %s", pmp_igd->publicIp.toString().c_str());
+                JAMI_DBG("NAT-PMP: found new device");
+                JAMI_DBG("NAT-PMP: got external IP: %s", pmp_igd->publicIp.toString().c_str());
                 {
                     std::lock_guard<std::mutex> lock(validIGDMutex_);
                     pmpIGD_ = pmp_igd;
@@ -641,17 +641,17 @@ UPnPContext::PMPaddPortMapping(const PMPIGD& /*pmp_igd*/, natpmp_t& natpmp, Glob
                                   mapping.getType() == PortType::UDP ? NATPMP_PROTOCOL_UDP : NATPMP_PROTOCOL_TCP,
                                   mapping.getPortInternal(),
                                   mapping.getPortExternal(), remove ? 0 : 3600) < 0) {
-        RING_ERR("NAT-PMP: can't send port mapping request");
+        JAMI_ERR("NAT-PMP: can't send port mapping request");
         mapping.renewal_ = clock::now() + std::chrono::minutes(1);
         return;
     }
-    RING_DBG("NAT-PMP: sent port mapping %srequest", remove ? "removal " : "");
+    JAMI_DBG("NAT-PMP: sent port mapping %srequest", remove ? "removal " : "");
     while (pmpRun_) {
         natpmpresp_t response;
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
         auto r = readnatpmpresponseorretry(&natpmp, &response);
         if (r < 0 && r != NATPMP_TRYAGAIN) {
-            RING_ERR("NAT-PMP: can't %sregister port mapping", remove ? "un" : "");
+            JAMI_ERR("NAT-PMP: can't %sregister port mapping", remove ? "un" : "");
             break;
         }
         else if (r != NATPMP_TRYAGAIN) {
@@ -666,16 +666,16 @@ void
 UPnPContext::PMPdeleteAllPortMapping(const PMPIGD& /*pmp_igd*/, natpmp_t& natpmp, int proto) const
 {
     if (sendnewportmappingrequest(&natpmp, proto, 0, 0, 0) < 0) {
-        RING_ERR("NAT-PMP: can't send all port mapping removal request");
+        JAMI_ERR("NAT-PMP: can't send all port mapping removal request");
         return;
     }
-    RING_DBG("NAT-PMP: sent all port mapping removal request");
+    JAMI_DBG("NAT-PMP: sent all port mapping removal request");
     while (pmpRun_) {
         natpmpresp_t response;
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
         auto r = readnatpmpresponseorretry(&natpmp, &response);
         if (r < 0 && r != NATPMP_TRYAGAIN) {
-            RING_ERR("NAT-PMP: can't remove all port mappings");
+            JAMI_ERR("NAT-PMP: can't remove all port mappings");
             break;
         }
         else if (r != NATPMP_TRYAGAIN) {
@@ -693,7 +693,7 @@ void
 UPnPContext::searchForIGD()
 {
     if (not clientRegistered_) {
-        RING_WARN("UPnP: Control Point not registered");
+        JAMI_WARN("UPnP: Control Point not registered");
         return;
     }
 
@@ -717,7 +717,7 @@ UPnPContext::parseDevice(IXML_Document* doc, const UpnpDiscovery* d_event)
     /* check to see the device type */
     std::string deviceType = get_first_doc_item(doc, "deviceType");
     if (deviceType.empty()) {
-        /* RING_DBG("UPnP: could not find deviceType in the description document of the device"); */
+        /* JAMI_DBG("UPnP: could not find deviceType in the description document of the device"); */
         return;
     }
 
@@ -739,7 +739,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
      */
     std::string UDN = get_first_doc_item(doc, "UDN");
     if (UDN.empty()) {
-        RING_DBG("UPnP: could not find UDN in description document of device");
+        JAMI_DBG("UPnP: could not find UDN in description document of device");
         return;
     }
 
@@ -759,7 +759,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
 
     std::string friendlyName = get_first_doc_item(doc, "friendlyName");
     if (not friendlyName.empty() )
-        RING_DBG("UPnP: checking new device of type IGD: '%s'",
+        JAMI_DBG("UPnP: checking new device of type IGD: '%s'",
                  friendlyName.c_str());
 
     /* determine baseURL */
@@ -817,7 +817,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
                         if (upnp_err == UPNP_E_SUCCESS)
                             controlURL = absolute_url;
                         else
-                            RING_WARN("UPnP: error resolving absolute controlURL: %s",
+                            JAMI_WARN("UPnP: error resolving absolute controlURL: %s",
                                       UpnpGetErrorMessage(upnp_err));
                         std::free(absolute_url);
                     }
@@ -832,7 +832,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
                         if (upnp_err == UPNP_E_SUCCESS)
                             eventSubURL = absolute_url;
                         else
-                            RING_WARN("UPnP: error resolving absolute eventSubURL: %s",
+                            JAMI_WARN("UPnP: error resolving absolute eventSubURL: %s",
                                       UpnpGetErrorMessage(upnp_err));
                         std::free(absolute_url);
                     }
@@ -840,7 +840,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
                     /* make sure all of the services are defined
                      * and check if the IGD is connected to an external network */
                     if (not (serviceId.empty() and controlURL.empty() and eventSubURL.empty()) ) {
-                        /* RING_DBG("UPnP: got service info from device:\n\tserviceType: %s\n\tserviceID: %s\n\tcontrolURL: %s\n\teventSubURL: %s",
+                        /* JAMI_DBG("UPnP: got service info from device:\n\tserviceType: %s\n\tserviceID: %s\n\tcontrolURL: %s\n\teventSubURL: %s",
                                  serviceType.c_str(), serviceId.c_str(), controlURL.c_str(), eventSubURL.c_str()); */
                         new_igd.reset(new UPnPIGD(
                             std::move(UDN),
@@ -853,7 +853,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
                         if (isIGDConnected(*new_igd)) {
                             new_igd->publicIp = getExternalIP(*new_igd);
                             if (new_igd->publicIp) {
-                                RING_DBG("UPnP: got external IP: %s", new_igd->publicIp.toString().c_str());
+                                JAMI_DBG("UPnP: got external IP: %s", new_igd->publicIp.toString().c_str());
                                 new_igd->localIp = ip_utils::getLocalAddr(pj_AF_INET());
                                 if (new_igd->localIp)
                                     found_connected_IGD = true;
@@ -863,9 +863,9 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
                     }
                     /* TODO: subscribe to the service to get events, eg: when IP changes */
                 } else
-                     RING_WARN("UPnP: IGD \"serviceType\" parent node is not called \"service\"!");
+                     JAMI_WARN("UPnP: IGD \"serviceType\" parent node is not called \"service\"!");
             } else
-                RING_WARN("UPnP: IGD \"serviceType\" has no parent node!");
+                JAMI_WARN("UPnP: IGD \"serviceType\" has no parent node!");
         }
     }
 
@@ -874,7 +874,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
      * updates about state changes, eg: new external IP
      */
     if (found_connected_IGD) {
-        RING_DBG("UPnP: found a valid IGD: %s", new_igd->getBaseURL().c_str());
+        JAMI_DBG("UPnP: found a valid IGD: %s", new_igd->getBaseURL().c_str());
 
         {
             std::lock_guard<std::mutex> lock(validIGDMutex_);
@@ -937,7 +937,7 @@ UPnPContext::cp_callback(Upnp_EventType event_type, const void* event, void* use
     if (auto upnpContext = static_cast<UPnPContext*>(user_data))
         return upnpContext->handleUPnPEvents(event_type, event);
 
-    RING_WARN("UPnP callback without UPnPContext");
+    JAMI_WARN("UPnP callback without UPnPContext");
     return 0;
 }
 
@@ -947,7 +947,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
     switch( event_type )
     {
     case UPNP_DISCOVERY_ADVERTISEMENT_ALIVE:
-        /* RING_DBG("UPnP: CP received a discovery advertisement"); */
+        /* JAMI_DBG("UPnP: CP received a discovery advertisement"); */
     case UPNP_DISCOVERY_SEARCH_RESULT:
     {
         const UpnpDiscovery* d_event = ( const UpnpDiscovery* )event;
@@ -955,7 +955,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
         int upnp_err;
 
         /* if (event_type != UPNP_DISCOVERY_ADVERTISEMENT_ALIVE)
-             RING_DBG("UPnP: CP received a discovery search result"); */
+             JAMI_DBG("UPnP: CP received a discovery search result"); */
 
         /* check if we are already in the process of checking this device */
         std::unique_lock<std::mutex> lock(cpDeviceMutex_);
@@ -966,10 +966,10 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
             lock.unlock();
 
             if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS)
-                RING_WARN("UPnP: Error in discovery event received by the CP: %s",
+                JAMI_WARN("UPnP: Error in discovery event received by the CP: %s",
                           UpnpGetErrorMessage(UpnpDiscovery_get_ErrCode(d_event)));
 
-            /* RING_DBG("UPnP: Control Point received discovery event from device:\n\tid: %s\n\ttype: %s\n\tservice: %s\n\tversion: %s\n\tlocation: %s\n\tOS: %s",
+            /* JAMI_DBG("UPnP: Control Point received discovery event from device:\n\tid: %s\n\ttype: %s\n\tservice: %s\n\tversion: %s\n\tlocation: %s\n\tOS: %s",
                      d_event->DeviceId, d_event->DeviceType, d_event->ServiceType, d_event->ServiceVer, UpnpDiscovery_get_Location_cstr(d_event), d_event->Os);
             */
 
@@ -985,7 +985,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
                  * because the router has UPnP disabled, but is still sending
                  * UPnP discovery packets
                  *
-                 * RING_WARN("UPnP: Error downloading device description: %s",
+                 * JAMI_WARN("UPnP: Error downloading device description: %s",
                  *         UpnpGetErrorMessage(upnp_err));
                  */
             } else {
@@ -1001,7 +1001,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
             lock.unlock();
         } else {
             lock.unlock();
-            /* RING_DBG("UPnP: Control Point is already checking this device"); */
+            /* JAMI_DBG("UPnP: Control Point is already checking this device"); */
         }
     }
     break;
@@ -1010,11 +1010,11 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
     {
         const UpnpDiscovery *d_event = (const UpnpDiscovery *)event;
 
-        RING_DBG("UPnP: Control Point received ByeBye for device: %s",
+        JAMI_DBG("UPnP: Control Point received ByeBye for device: %s",
 		 UpnpDiscovery_get_DeviceID_cstr(d_event));
 
         if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS)
-            RING_WARN("UPnP: Error in ByeBye received by the CP: %s",
+            JAMI_WARN("UPnP: Error in ByeBye received by the CP: %s",
                       UpnpGetErrorMessage(UpnpDiscovery_get_ErrCode(d_event)));
 
         /* TODO: check if its a device we care about and remove it from the relevant lists */
@@ -1025,7 +1025,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
     {
         /* struct Upnp_Event *e_event UNUSED = (struct Upnp_Event *)event; */
 
-        /* RING_DBG("UPnP: Control Point event received"); */
+        /* JAMI_DBG("UPnP: Control Point event received"); */
 
         /* TODO: handle event by updating any changed state variables */
 
@@ -1034,18 +1034,18 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
 
     case UPNP_EVENT_AUTORENEWAL_FAILED:
     {
-        RING_WARN("UPnP: Control Point subscription auto-renewal failed");
+        JAMI_WARN("UPnP: Control Point subscription auto-renewal failed");
     }
     break;
 
     case UPNP_EVENT_SUBSCRIPTION_EXPIRED:
     {
-        RING_DBG("UPnP: Control Point subscription expired");
+        JAMI_DBG("UPnP: Control Point subscription expired");
     }
     break;
 
     case UPNP_EVENT_SUBSCRIBE_COMPLETE:
-        /* RING_DBG("UPnP: Control Point async subscription complete"); */
+        /* JAMI_DBG("UPnP: Control Point async subscription complete"); */
 
         /* TODO: check if successful */
 
@@ -1055,7 +1055,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
         /* this event will occur whether or not a valid IGD has been found;
          * it just indicates the search timeout has been reached
          *
-         * RING_DBG("UPnP: Control Point search timeout");
+         * JAMI_DBG("UPnP: Control Point search timeout");
          */
         break;
 
@@ -1063,10 +1063,10 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
     {
         const UpnpActionComplete *a_event = (const UpnpActionComplete *)event;
 
-        /* RING_DBG("UPnP: Control Point async action complete"); */
+        /* JAMI_DBG("UPnP: Control Point async action complete"); */
 
         if (UpnpActionComplete_get_ErrCode(a_event) != UPNP_E_SUCCESS)
-            RING_WARN("UPnP: Error in action complete event: %s",
+            JAMI_WARN("UPnP: Error in action complete event: %s",
                       UpnpGetErrorMessage(UpnpActionComplete_get_ErrCode(a_event)));
 
         /* TODO: no need for any processing here, just print out results.
@@ -1078,10 +1078,10 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
     {
         const UpnpStateVarComplete *sv_event = (const UpnpStateVarComplete *)event;
 
-        /* RING_DBG("UPnP: Control Point async get variable complete"); */
+        /* JAMI_DBG("UPnP: Control Point async get variable complete"); */
 
         if (UpnpStateVarComplete_get_ErrCode(sv_event) != UPNP_E_SUCCESS)
-            RING_WARN("UPnP: Error in get variable complete event: %s",
+            JAMI_WARN("UPnP: Error in get variable complete event: %s",
                       UpnpGetErrorMessage(UpnpStateVarComplete_get_ErrCode(sv_event)));
 
         /* TODO: update state variables */
@@ -1089,7 +1089,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
     break;
 
     default:
-        RING_WARN("UPnP: unhandled Control Point event");
+        JAMI_WARN("UPnP: unhandled Control Point event");
         break;
     }
 
@@ -1105,7 +1105,7 @@ checkResponseError(IXML_Document* doc)
     std::string errorCode = get_first_doc_item(doc, "errorCode");
     if (not errorCode.empty()) {
         std::string errorDescription = get_first_doc_item(doc, "errorDescription");
-        RING_WARN("UPnP: response contains error: %s : %s",
+        JAMI_WARN("UPnP: response contains error: %s : %s",
                   errorCode.c_str(), errorDescription.c_str());
     }
 }
@@ -1125,7 +1125,7 @@ UPnPContext::isIGDConnected(const UPnPIGD& igd)
     checkResponseError(response.get());
     if( upnp_err != UPNP_E_SUCCESS) {
         /* TODO: if failed, should we chck if the igd is disconnected? */
-        RING_WARN("UPnP: Failed to get GetStatusInfo from: %s, %d: %s",
+        JAMI_WARN("UPnP: Failed to get GetStatusInfo from: %s, %d: %s",
                   igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
 
         return false;
@@ -1157,7 +1157,7 @@ UPnPContext::getExternalIP(const UPnPIGD& igd)
     checkResponseError(response.get());
     if( upnp_err != UPNP_E_SUCCESS) {
         /* TODO: if failed, should we chck if the igd is disconnected? */
-        RING_WARN("UPnP: Failed to get GetExternalIPAddress from: %s, %d: %s",
+        JAMI_WARN("UPnP: Failed to get GetExternalIPAddress from: %s, %d: %s",
                   igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
         return {};
     }
@@ -1170,11 +1170,11 @@ void
 UPnPContext::removeMappingsByLocalIPAndDescription(const UPnPIGD& igd, const std::string& description)
 {
     if (!igd.localIp) {
-        RING_DBG("UPnP: cannot determine local IP in function removeMappingsByLocalIPAndDescription()");
+        JAMI_DBG("UPnP: cannot determine local IP in function removeMappingsByLocalIPAndDescription()");
         return;
     }
 
-    RING_DBG("UPnP: removing all port mappings with description: \"%s\" and local ip: %s",
+    JAMI_DBG("UPnP: removing all port mappings with description: \"%s\" and local ip: %s",
              description.c_str(), igd.localIp.toString().c_str());
 
     int entry_idx = 0;
@@ -1184,7 +1184,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const UPnPIGD& igd, const std
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
         IXML_Document* action_ptr = nullptr;
         UpnpAddToAction(&action_ptr, "GetGenericPortMappingEntry", igd.getServiceType().c_str(),
-                        "NewPortMappingIndex", ring::to_string(entry_idx).c_str());
+                        "NewPortMappingIndex", jami::to_string(entry_idx).c_str());
         action.reset(action_ptr);
 
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);
@@ -1194,7 +1194,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const UPnPIGD& igd, const std
         response.reset(response_ptr);
         if( not response and upnp_err != UPNP_E_SUCCESS) {
             /* TODO: if failed, should we chck if the igd is disconnected? */
-            RING_WARN("UPnP: Failed to get GetGenericPortMappingEntry from: %s, %d: %s",
+            JAMI_WARN("UPnP: Failed to get GetGenericPortMappingEntry from: %s, %d: %s",
                       igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
             return;
         }
@@ -1214,7 +1214,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const UPnPIGD& igd, const std
                 std::string port_external = get_first_doc_item(response.get(), "NewExternalPort");
                 std::string protocol = get_first_doc_item(response.get(), "NewProtocol");
 
-                RING_DBG("UPnP: deleting entry with matching desciption and ip:\n\t%s %5s->%s:%-5s '%s'",
+                JAMI_DBG("UPnP: deleting entry with matching desciption and ip:\n\t%s %5s->%s:%-5s '%s'",
                          protocol.c_str(), port_external.c_str(), client_ip.c_str(), port_internal.c_str(), desc_actual.c_str());
 
                 /* delete entry */
@@ -1233,7 +1233,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const UPnPIGD& igd, const std
             done = true;
         } else {
             std::string errorDescription = get_first_doc_item(response.get(), "errorDescription");
-            RING_WARN("UPnP: GetGenericPortMappingEntry returned with error: %s: %s",
+            JAMI_WARN("UPnP: GetGenericPortMappingEntry returned with error: %s: %s",
                       errorCode.c_str(), errorDescription.c_str());
             done = true;
         }
@@ -1261,7 +1261,7 @@ UPnPContext::deletePortMapping(const UPnPIGD& igd, const std::string& port_exter
     response.reset(response_ptr);
     if( upnp_err != UPNP_E_SUCCESS) {
         /* TODO: if failed, should we check if the igd is disconnected? */
-        RING_WARN("UPnP: Failed to get %s from: %s, %d: %s", action_name.c_str(),
+        JAMI_WARN("UPnP: Failed to get %s from: %s, %d: %s", action_name.c_str(),
                   igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
         return false;
     }
@@ -1269,7 +1269,7 @@ UPnPContext::deletePortMapping(const UPnPIGD& igd, const std::string& port_exter
     std::string errorCode = get_first_doc_item(response.get(), "errorCode");
     if (not errorCode.empty()) {
         std::string errorDescription = get_first_doc_item(response.get(), "errorDescription");
-        RING_WARN("UPnP: %s returned with error: %s: %s",
+        JAMI_WARN("UPnP: %s returned with error: %s: %s",
                   action_name.c_str(), errorCode.c_str(), errorDescription.c_str());
         return false;
     }
@@ -1310,7 +1310,7 @@ UPnPContext::addPortMapping(const UPnPIGD& igd, const Mapping& mapping, int* err
     response.reset(response_ptr);
     if( not response and upnp_err != UPNP_E_SUCCESS) {
         /* TODO: if failed, should we chck if the igd is disconnected? */
-        RING_WARN("UPnP: Failed to %s from: %s, %d: %s", action_name.c_str(),
+        JAMI_WARN("UPnP: Failed to %s from: %s, %d: %s", action_name.c_str(),
                   igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
         *error_code = -1; /* make sure to -1 since we didn't get a response */
         return false;
@@ -1320,9 +1320,9 @@ UPnPContext::addPortMapping(const UPnPIGD& igd, const Mapping& mapping, int* err
     std::string errorCode = get_first_doc_item(response.get(), "errorCode");
     if (not errorCode.empty()) {
         std::string errorDescription = get_first_doc_item(response.get(), "errorDescription");
-        RING_WARN("UPnP: %s returned with error: %s: %s",
+        JAMI_WARN("UPnP: %s returned with error: %s: %s",
                   action_name.c_str(), errorCode.c_str(), errorDescription.c_str());
-        *error_code = ring::stoi(errorCode);
+        *error_code = jami::stoi(errorCode);
         return false;
     }
     return true;
@@ -1330,4 +1330,4 @@ UPnPContext::addPortMapping(const UPnPIGD& igd, const Mapping& mapping, int* err
 
 #endif /* HAVE_LIBUPNP */
 
-}} // namespace ring::upnp
+}} // namespace jami::upnp
