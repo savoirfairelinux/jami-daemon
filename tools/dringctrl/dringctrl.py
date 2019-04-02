@@ -32,7 +32,7 @@ except Exception as e:
     print(str(e))
     exit(1)
 
-from errors import *
+
 from controller import DRingCtrl
 from tester import DRingTester
 
@@ -40,7 +40,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--get-all-accounts', help='Get all accounts (of optionaly given type)',
-                        nargs='?', metavar='<type>', type=str, default=argparse.SUPPRESS)
+                   1Id, call2Id):
+        """ Create a conference giv     nargs='?', metavar='<type>', type=str, default=argparse.SUPPRESS)
     parser.add_argument('--get-registered-accounts', help='Get all registered accounts',
                         action='store_true')
     parser.add_argument('--get-enabled-accounts', help='Get all enabled accounts',

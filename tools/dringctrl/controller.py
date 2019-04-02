@@ -167,7 +167,7 @@ class DRingCtrl(Thread):
     def onCallHangup_cb(self, callId):
         pass
 
-    def onCallRinging_cb(self):
+    def onCallRinging_cb(self, callId):
         pass
 
     def onCallHold_cb(self):
@@ -508,7 +508,7 @@ class DRingCtrl(Thread):
         """
 
         if dest is None or dest == "":
-            raise SflPhoneError("Invalid call destination")
+            raise DRingCtrlError("Invalid call destination")
 
         # Set the account to be used for this call
         if not self.account:
@@ -637,6 +637,9 @@ class DRingCtrl(Thread):
 
     def sendFile(self, *args, **kwds):
         return self.configurationmanager.sendFile(*args, **kwds)
+    
+    def sendTextMessage(self, account, to, message):
+        return self.configurationmanager.sendTextMessage(account, to, { 'text/plain': message })
 
     def run(self):
         """Processing method for this thread"""
