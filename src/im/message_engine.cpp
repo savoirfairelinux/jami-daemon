@@ -178,7 +178,7 @@ MessageEngine::load()
             for (auto m = pmessages.begin(); m != pmessages.end(); ++m) {
                 const auto& jmsg = *m;
                 MessageToken token;
-                std::istringstream iss(i.key().asString());
+                std::istringstream iss(m.key().asString());
                 iss >> std::hex >> token;
                 Message msg;
                 msg.status = (MessageStatus)jmsg["status"].asInt();
@@ -219,7 +219,7 @@ MessageEngine::save_() const
                     continue;
                 Json::Value msg;
                 std::ostringstream msgsId;
-                msgsId << std::hex << c.first;
+                msgsId << std::hex << m.first;
                 msg["status"] = (int)(v.status == MessageStatus::SENDING ? MessageStatus::IDLE : v.status);
                 msg["to"] = v.to;
                 auto wall_time = std::chrono::system_clock::now() + std::chrono::duration_cast<std::chrono::system_clock::duration>(v.last_op - clock::now());
