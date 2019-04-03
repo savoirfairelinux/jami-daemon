@@ -1,0 +1,4693 @@
+Copyright (C) 2018-2019 Savoir-faire Linux Inc.
+
+ice: rfc6544 support
+
+This patch is an implementation proposal of the RFC 6544 into PJNATH.
+This allow PJNATH to support TCP ICE candidates and open a direct TCP
+connection between peers.
+
++ BUG (semi-fixed with this patch): If an active_sock is busy due to
+a pending packet and receives a new packet to send, the final sent
+packet will be a mix between the pending packet and the new one.
+To avoid this, pj_ice_strans_sendto2 is now introduced.
+
+Written by
+Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+on behalf of Savoir-faire Linux.
+
+---
+ pjnath/include/pjnath/config.h          |   13 +-
+ pjnath/include/pjnath/ice_session.h     |  118 ++-
+ pjnath/include/pjnath/ice_strans.h      |   61 +-
+ pjnath/include/pjnath/stun_session.h    |   66 +-
+ pjnath/include/pjnath/stun_sock.h       |   91 +-
+ pjnath/src/pjnath-test/concur_test.c    |    8 +-
+ pjnath/src/pjnath-test/sess_auth.c      |   12 +-
+ pjnath/src/pjnath-test/stun_sock_test.c |    7 +-
+ pjnath/src/pjnath/ice_session.c         |  388 +++++--
+ pjnath/src/pjnath/ice_strans.c          |  713 ++++++++-----
+ pjnath/src/pjnath/nat_detect.c          |   12 +-
+ pjnath/src/pjnath/stun_session.c        |   14 +-
+ pjnath/src/pjnath/stun_sock.c           | 1242 ++++++++++++++++-------
+ pjnath/src/pjnath/turn_session.c        |    3 +-
+ pjnath/src/pjnath/turn_sock.c           |   12 +-
+ pjnath/src/pjturn-client/client_main.c  |   11 +-
+ pjnath/src/pjturn-srv/allocation.c      |    2 +-
+ pjnath/src/pjturn-srv/server.c          |    2 +-
+ pjsip-apps/src/samples/icedemo.c        |  671 ++++++------
+ pjsip/src/pjsua-lib/pjsua_core.c        |    8 +-
+ 20 files changed, 2369 insertions(+), 1085 deletions(-)
+
+diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
+index e157d39ee..2e09cb816 100644
+--- a/pjnath/include/pjnath/config.h
++++ b/pjnath/include/pjnath/config.h
+@@ -1,5 +1,5 @@
+ /* $Id$ */
+-/* 
++/*
+  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+  *
+@@ -249,7 +249,7 @@
+  * Default: 8
+  */
+ #ifndef PJ_ICE_ST_MAX_CAND
+-#   define PJ_ICE_ST_MAX_CAND			    8
++#   define PJ_ICE_ST_MAX_CAND			    32
+ #endif
+ 
+ 
+@@ -257,21 +257,20 @@
+  * Maximum number of STUN transports for each ICE stream transport component.
+  * Valid values are 1 - 64.
+  *
+- * Default: 2
++ * Default: 4 (one active and one passive for IPv4 and IPv6)
+  */
+ #ifndef PJ_ICE_MAX_STUN
+-#   define PJ_ICE_MAX_STUN			    2
++#   define PJ_ICE_MAX_STUN			    4
+ #endif
+ 
+-
+ /**
+  * Maximum number of TURN transports for each ICE stream transport component.
+  * Valid values are 1 - 64.
+  *
+- * Default: 2
++ * Default: 4 (one active and one passive for IPv4 and IPv6)
+  */
+ #ifndef PJ_ICE_MAX_TURN
+-#   define PJ_ICE_MAX_TURN			    3
++#   define PJ_ICE_MAX_TURN			    4
+ #endif
+ 
+ 
+diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
+index fa13a3b7c..2e686ea1f 100644
+--- a/pjnath/include/pjnath/ice_session.h
++++ b/pjnath/include/pjnath/ice_session.h
+@@ -163,6 +163,51 @@ typedef enum pj_ice_cand_type
+ 
+ } pj_ice_cand_type;
+ 
++/**
++ * ICE candidates types like described by RFC 6544.
++ */
++typedef enum pj_ice_cand_transport {
++  /**
++   * Candidates UDP compatible
++   */
++  PJ_CAND_UDP,
++  /**
++   * Candidates sending outgoing TCP connections
++   */
++  PJ_CAND_TCP_ACTIVE,
++  /**
++   * Candidates accepting incoming TCP connections
++   */
++  PJ_CAND_TCP_PASSIVE,
++  /**
++   * Candidates capable of receiving incoming connections and sending
++   * connections
++   */
++  PJ_CAND_TCP_SO
++} pj_ice_cand_transport;
++
++/**
++ * ICE transport types, which will be used both to specify the connection
++ * type for reaching candidates and other client
++ */
++typedef enum pj_ice_tp_type {
++  /**
++   * UDP transport, which value corresponds to IANA protocol number.
++   */
++  PJ_ICE_TP_UDP = 17,
++
++  /**
++   * TCP transport, which value corresponds to IANA protocol number.
++   */
++  PJ_ICE_TP_TCP = 6,
++
++  /**
++   * TLS transport. The TLS transport will only be used as the connection
++   * type to reach the server and never as the allocation transport type.
++   */
++  PJ_ICE_TP_TLS = 255
++
++} pj_ice_tp_type;
+ 
+ /** Forward declaration for pj_ice_sess */
+ typedef struct pj_ice_sess pj_ice_sess;
+@@ -309,6 +354,11 @@ typedef struct pj_ice_sess_cand
+      */
+     pj_sockaddr		 rel_addr;
+ 
++    /**
++     * Transport used (TCP or UDP)
++     */
++    pj_ice_cand_transport transport;
++
+ } pj_ice_sess_cand;
+ 
+ 
+@@ -331,6 +381,13 @@ typedef enum pj_ice_sess_check_state
+      */
+     PJ_ICE_SESS_CHECK_STATE_WAITING,
+ 
++
++    /**
++     * A check has not been performed for this pair, but TCP socket
++     * is currently connecting to the pair. Wait to finish the connection.
++     */
++    PJ_ICE_SESS_CHECK_STATE_PENDING,
++
+     /**
+      * A check has not been performed for this pair, and can be
+      * performed as soon as it is the highest priority Waiting pair on
+@@ -512,6 +569,29 @@ typedef struct pj_ice_sess_cb
+ 			      void *pkt, pj_size_t size,
+ 			      const pj_sockaddr_t *src_addr,
+ 			      unsigned src_addr_len);
++
++    /**
++     * Wait for TCP and send connectivity check
++     *
++     * @param ice			The ICE session.
++     * @param clist			The ICE connection list
++     * @param check_id		The wanted check.
++     */
++    pj_status_t (*wait_tcp_connection)(pj_ice_sess *ice,
++                                       pj_ice_sess_checklist *clist,
++                                       unsigned check_id);
++
++    /**
++     * Close TCP socket
++     *
++     * @param ice			The ICE session.
++     * @param clist			The ICE connection list
++     * @param check_id		The wanted check.
++     */
++    pj_status_t (*close_tcp_connection)(pj_ice_sess *ice,
++                                       pj_ice_sess_checklist *clist,
++                                       unsigned check_id);
++
+ } pj_ice_sess_cb;
+ 
+ 
+@@ -627,6 +707,7 @@ struct pj_ice_sess
+     pj_bool_t		 is_destroying;		    /**< Destroy is called  */
+     pj_status_t		 ice_status;		    /**< Error status.	    */
+     pj_timer_entry	 timer;			    /**< ICE timer.	    */
++    pj_timer_entry	 timer_connect;			    /**< ICE timer tcp timeout.	    */
+     pj_ice_sess_cb	 cb;			    /**< Callback.	    */
+ 
+     pj_stun_config	 stun_cfg;		    /**< STUN settings.	    */
+@@ -669,6 +750,7 @@ struct pj_ice_sess
+     	char txt[128];
+ 	char errmsg[PJ_ERR_MSG_SIZE];
+     } tmp;
++
+ };
+ 
+ 
+@@ -826,8 +908,6 @@ PJ_DECL(pj_status_t) pj_ice_sess_change_role(pj_ice_sess *ice,
+ PJ_DECL(pj_status_t) pj_ice_sess_set_prefs(pj_ice_sess *ice,
+ 					   const pj_uint8_t prefs[4]);
+ 
+-
+-
+ /**
+  * Add a candidate to this ICE session. Application must add candidates for
+  * each components ID before it can start pairing the candidates and 
+@@ -846,20 +926,17 @@ PJ_DECL(pj_status_t) pj_ice_sess_set_prefs(pj_ice_sess *ice,
+  * @param rel_addr	Optional related address.
+  * @param addr_len	Length of addresses.
+  * @param p_cand_id	Optional pointer to receive the candidate ID.
++ * @param transport	Candidate's type
+  *
+  * @return		PJ_SUCCESS if candidate is successfully added.
+  */
+-PJ_DECL(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+-					  unsigned comp_id,
+-					  unsigned transport_id,
+-					  pj_ice_cand_type type,
+-					  pj_uint16_t local_pref,
+-					  const pj_str_t *foundation,
+-					  const pj_sockaddr_t *addr,
+-					  const pj_sockaddr_t *base_addr,
+-					  const pj_sockaddr_t *rel_addr,
+-					  int addr_len,
+-					  unsigned *p_cand_id);
++PJ_DECL(pj_status_t)
++pj_ice_sess_add_cand(pj_ice_sess *ice, unsigned comp_id, unsigned transport_id,
++                     pj_ice_cand_type type, pj_uint16_t local_pref,
++                     const pj_str_t *foundation, const pj_sockaddr_t *addr,
++                     const pj_sockaddr_t *base_addr,
++                     const pj_sockaddr_t *rel_addr, int addr_len,
++                     unsigned *p_cand_id, pj_ice_cand_transport transport);
+ 
+ /**
+  * Find default candidate for the specified component ID, using this
+@@ -968,8 +1045,19 @@ PJ_DECL(pj_status_t) pj_ice_sess_on_rx_pkt(pj_ice_sess *ice,
+ 					   const pj_sockaddr_t *src_addr,
+ 					   int src_addr_len);
+ 
+-
+-
++/**
++ * Notification when ICE session get a new incoming connection
++ *
++ * @param ice          The ICE session.
++ * @param transport_id Related transport
++ * @param status       PJ_SUCCESS when connection is made, or any errors
++ *                     if the connection has failed (or if the peer has
++ *                     disconnected after an established connection).
++ * @param remote_addr  Connected remove address
++ */
++PJ_DECL(void)
++ice_sess_on_peer_connection(pj_ice_sess *ice,
++                            pj_uint8_t transport_id, pj_status_t status, pj_sockaddr_t* remote_addr);
+ /**
+  * @}
+  */
+diff --git a/pjnath/include/pjnath/ice_strans.h b/pjnath/include/pjnath/ice_strans.h
+index b4a83067f..2b491e0d0 100644
+--- a/pjnath/include/pjnath/ice_strans.h
++++ b/pjnath/include/pjnath/ice_strans.h
+@@ -1,5 +1,5 @@
+ /* $Id$ */
+-/* 
++/*
+  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+  *
+@@ -171,6 +171,17 @@ typedef struct pj_ice_strans_cb
+ 			       pj_ice_strans_op op,
+ 			       pj_status_t status);
+ 
++    /**
++     * This callback will be called when the ICE transport has
++     * sent data asynchronously.
++     *
++     * @param ice_st	    The ICE stream transport.
++     * @param comp_id	    The component ID.
++     * @param size	        Size of the packet.
++     */
++    void (*on_data_sent)(pj_ice_strans *ice_st, unsigned comp_id,
++                         pj_ssize_t size);
++
+ } pj_ice_strans_cb;
+ 
+ 
+@@ -253,6 +264,13 @@ typedef struct pj_ice_strans_stun_cfg
+      */
+     pj_bool_t		 ignore_stun_error;
+ 
++    /**
++     * Type of connection to the STUN server.
++     *
++     * Default is PJ_STUN_TP_UDP.
++     */
++    pj_stun_tp_type conn_type;
++
+ } pj_ice_strans_stun_cfg;
+ 
+ 
+@@ -268,6 +286,13 @@ typedef struct pj_ice_strans_turn_cfg
+      */
+     int			 af;
+ 
++    /**
++     * If we want to use UDP or TCP as described by RFC 6544.
++     * This will discover candidates via TCP sockets. Then it will
++     * transfer messages on the transport via TCP.
++     */
++    pj_ice_tp_type protocol;
++
+     /**
+      * Optional TURN socket settings. The default values will be
+      * initialized by #pj_turn_sock_cfg_default(). This contains
+@@ -347,6 +372,13 @@ typedef struct pj_ice_strans_cfg
+      */
+     int			 af;
+ 
++    /**
++     * If we want to use UDP or TCP as described by RFC 6544.
++     * This will discover candidates via TCP sockets. Then it will
++     * transfer messages on the transport via TCP.
++     */
++    pj_ice_tp_type protocol;
++
+     /**
+      * STUN configuration which contains the timer heap and
+      * ioqueue instance to be used, and STUN retransmission
+@@ -932,6 +964,33 @@ PJ_DECL(pj_status_t) pj_ice_strans_sendto(pj_ice_strans *ice_st,
+ 					  const pj_sockaddr_t *dst_addr,
+ 					  int dst_addr_len);
+ 
++/**
++ * Send outgoing packet using this transport.
++ * Application can send data (normally RTP or RTCP packets) at any time
++ * by calling this function. This function takes a destination
++ * address as one of the arguments, and this destination address should
++ * be taken from the default transport address of the component (that is
++ * the address in SDP c= and m= lines, or in a=rtcp attribute).
++ * If ICE negotiation is in progress, this function will send the data
++ * to the destination address. Otherwise if ICE negotiation has completed
++ * successfully, this function will send the data to the nominated remote
++ * address, as negotiated by ICE.
++ *
++ * @param ice_st	The ICE stream transport.
++ * @param comp_id	Component ID.
++ * @param data		The data or packet to be sent.
++ * @param data_len	Size of data or packet, in bytes.
++ * @param dst_addr	The destination address.
++ * @param dst_addr_len	Length of destination address.
++ * @param size	        Length of sent packet.
++ *
++ * @return		PJ_SUCCESS if data is sent successfully. PJ_EPENDING if
++ * sending
++ */
++PJ_DECL(pj_status_t)
++pj_ice_strans_sendto2(pj_ice_strans *ice_st, unsigned comp_id, const void *data,
++                     pj_size_t data_len, const pj_sockaddr_t *dst_addr,
++                     int dst_addr_len, pj_ssize_t *size);
+ 
+ /**
+  * @}
+diff --git a/pjnath/include/pjnath/stun_session.h b/pjnath/include/pjnath/stun_session.h
+index 28c5985e8..de52379cf 100644
+--- a/pjnath/include/pjnath/stun_session.h
++++ b/pjnath/include/pjnath/stun_session.h
+@@ -1,5 +1,5 @@
+ /* $Id$ */
+-/* 
++/*
+  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+  *
+@@ -174,6 +174,29 @@ typedef struct pj_stun_rx_data pj_stun_rx_data;
+ /** Forward declaration for pj_stun_session */
+ typedef struct pj_stun_session pj_stun_session;
+ 
++/**
++ * STUN transport types, which will be used both to specify the connection
++ * type for reaching STUN server and the type of allocation transport to be
++ * requested to server (the REQUESTED-TRANSPORT attribute).
++ */
++typedef enum pj_stun_tp_type {
++  /**
++   * UDP transport, which value corresponds to IANA protocol number.
++   */
++  PJ_STUN_TP_UDP = 17,
++
++  /**
++   * TCP transport, which value corresponds to IANA protocol number.
++   */
++  PJ_STUN_TP_TCP = 6,
++
++  /**
++   * TLS transport. The TLS transport will only be used as the connection
++   * type to reach the server and never as the allocation transport type.
++   */
++  PJ_STUN_TP_TLS = 255
++
++} pj_stun_tp_type;
+ 
+ /**
+  * This is the callback to be registered to pj_stun_session, to send
+@@ -307,6 +330,17 @@ typedef struct pj_stun_session_cb
+ 				    const pj_sockaddr_t *src_addr,
+ 				    unsigned src_addr_len);
+ 
++    /**
++     * Notification when STUN session get a ConnectionAttempt indication.
++     *
++     * @param stun_session  The STUN session.
++     * @param status        PJ_SUCCESS when connection is made, or any errors
++     *                      if the connection has failed (or if the peer has
++     *                      disconnected after an established connection).
++     * @param remote_addr   The remote connected
++     */
++    void (*on_peer_connection)(pj_stun_session *sess, pj_status_t status, pj_sockaddr_t* remote_addr);
++
+ } pj_stun_session_cb;
+ 
+ 
+@@ -388,15 +422,15 @@ typedef enum pj_stun_sess_msg_log_flag
+  * @param grp_lock	Optional group lock to be used by this session.
+  * 			If NULL, the session will create one itself.
+  * @param p_sess	Pointer to receive STUN session instance.
++ * @param conn_type if the session use UDP or TCP
+  *
+  * @return	    PJ_SUCCESS on success, or the appropriate error code.
+  */
+-PJ_DECL(pj_status_t) pj_stun_session_create(pj_stun_config *cfg,
+-					    const char *name,
+-					    const pj_stun_session_cb *cb,
+-					    pj_bool_t fingerprint,
+-					    pj_grp_lock_t *grp_lock,
+-					    pj_stun_session **p_sess);
++PJ_DECL(pj_status_t)
++pj_stun_session_create(pj_stun_config *cfg, const char *name,
++                       const pj_stun_session_cb *cb, pj_bool_t fingerprint,
++                       pj_grp_lock_t *grp_lock,
++                       pj_stun_session **p_sess, pj_stun_tp_type conn_type);
+ 
+ /**
+  * Destroy the STUN session and all objects created in the context of
+@@ -758,6 +792,24 @@ PJ_DEF(void)
+ pj_stun_session_set_server_cred(pj_stun_session *sess, const pj_str_t *nonce,
+                                 pj_str_t *realm);
+ 
++/**
++ *
++ * @param sess     The STUN session.
++ *
++ * @return         The callback linked to the STUN session
++ */
++PJ_DECL(pj_stun_session_cb *)
++pj_stun_session_callback(pj_stun_session *sess);
++
++/**
++ *
++ * @param sess     The STUN session.
++ *
++ * @return         The connection type linked to the STUN session
++ */
++PJ_DECL(pj_stun_tp_type)
++pj_stun_session_tp_type(pj_stun_session *sess);
++
+ /**
+  * @}
+  */
+diff --git a/pjnath/include/pjnath/stun_sock.h b/pjnath/include/pjnath/stun_sock.h
+index fff4df885..d225cc3a0 100644
+--- a/pjnath/include/pjnath/stun_sock.h
++++ b/pjnath/include/pjnath/stun_sock.h
+@@ -1,5 +1,5 @@
+ /* $Id$ */
+-/* 
++/*
+  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+  *
+@@ -24,17 +24,19 @@
+  * @file stun_sock.h
+  * @brief STUN aware socket transport
+  */
+-#include <pjnath/stun_config.h>
+-#include <pjlib-util/resolver.h>
++#include <pj/activesock.h>
+ #include <pj/ioqueue.h>
+ #include <pj/lock.h>
++#include <pj/pool.h>
+ #include <pj/sock.h>
+ #include <pj/sock_qos.h>
+-
++#include <pjlib-util/resolver.h>
++#include <pjlib-util/srv_resolver.h>
++#include <pjnath/stun_config.h>
++#include <pjnath/stun_session.h>
+ 
+ PJ_BEGIN_DECL
+ 
+-
+ /**
+  * @addtogroup PJNATH_STUN_SOCK
+  * @{
+@@ -87,9 +89,17 @@ typedef enum pj_stun_sock_op
+     /**
+      * IP address change notification from the keep-alive operation.
+      */
+-    PJ_STUN_SOCK_MAPPED_ADDR_CHANGE
++    PJ_STUN_SOCK_MAPPED_ADDR_CHANGE,
+ 
++    /**
++     * STUN session was destroyed.
++     */
++    PJ_STUN_SESS_DESTROYED,
+ 
++    /**
++     * TCP fails to connect
++     */
++    PJ_STUN_TCP_CONNECT_ERROR
+ } pj_stun_sock_op;
+ 
+ 
+@@ -195,7 +205,12 @@ typedef struct pj_stun_sock_info
+      * mapped address has not been resolved. Application may query whether
+      * this field contains valid address with pj_sockaddr_has_addr().
+      */
+-    pj_sockaddr	    mapped_addr;
++    pj_sockaddr mapped_addr;
++
++    /**
++     * If connected, the remote address will be stored here.
++     */
++    pj_sockaddr outgoing_addr;
+ 
+     /**
+      * Number of interface address aliases. The interface address aliases
+@@ -208,6 +223,11 @@ typedef struct pj_stun_sock_info
+      */
+     pj_sockaddr	    aliases[PJ_ICE_ST_MAX_CAND];
+ 
++    /**
++     * The tranport type of the socket
++     */
++    pj_stun_tp_type conn_type;
++
+ } pj_stun_sock_info;
+ 
+ 
+@@ -332,7 +352,6 @@ PJ_DECL(const char*) pj_stun_sock_op_name(pj_stun_sock_op op);
+  */
+ PJ_DECL(void) pj_stun_sock_cfg_default(pj_stun_sock_cfg *cfg);
+ 
+-
+ /**
+  * Create the STUN transport using the specified configuration. Once
+  * the STUN transport has been create, application should call
+@@ -342,7 +361,9 @@ PJ_DECL(void) pj_stun_sock_cfg_default(pj_stun_sock_cfg *cfg);
+  *			things the ioqueue and timer heap instance for
+  *			the operation of this transport.
+  * @param af		Address family of socket. Currently pj_AF_INET()
+- *			and pj_AF_INET6() are supported. 
++ *			and pj_AF_INET6() are supported.
++ * @param conn_type    Connection type to the STUN server. Both TCP and
++ *                     UDP are supported.
+  * @param name		Optional name to be given to this transport to
+  *			assist debugging.
+  * @param cb		Callback to receive events/data from the transport.
+@@ -354,14 +375,11 @@ PJ_DECL(void) pj_stun_sock_cfg_default(pj_stun_sock_cfg *cfg);
+  * @return		PJ_SUCCESS if the operation has been successful,
+  *			or the appropriate error code on failure.
+  */
+-PJ_DECL(pj_status_t) pj_stun_sock_create(pj_stun_config *stun_cfg,
+-					 const char *name,
+-					 int af,
+-					 const pj_stun_sock_cb *cb,
+-					 const pj_stun_sock_cfg *cfg,
+-					 void *user_data,
+-					 pj_stun_sock **p_sock);
+-
++PJ_DECL(pj_status_t)
++pj_stun_sock_create(pj_stun_config *stun_cfg, const char *name, int af,
++                    pj_stun_tp_type conn_type, const pj_stun_sock_cb *cb,
++                    const pj_stun_sock_cfg *cfg, void *user_data,
++                    pj_stun_sock **p_sock);
+ 
+ /**
+  * Start the STUN transport. This will start the DNS SRV resolution for
+@@ -470,6 +488,7 @@ PJ_DECL(pj_status_t) pj_stun_sock_get_info(pj_stun_sock *stun_sock,
+  * @param flag		pj_ioqueue_sendto() flag.
+  * @param dst_addr	The remote address.
+  * @param addr_len	Length of the address.
++ * @param size      size sent
+  *
+  * @return		PJ_SUCCESS if data has been sent immediately, or
+  *			PJ_EPENDING if data cannot be sent immediately. In
+@@ -483,7 +502,43 @@ PJ_DECL(pj_status_t) pj_stun_sock_sendto(pj_stun_sock *stun_sock,
+ 					 unsigned pkt_len,
+ 					 unsigned flag,
+ 					 const pj_sockaddr_t *dst_addr,
+-					 unsigned addr_len);
++					 unsigned addr_len,
++                     pj_ssize_t *size);
++
++#if PJ_HAS_TCP
++
++/**
++ * Connect active socket to remote address
++ * @param stun_sock
++ * @param remote_addr the destination
++ */
++PJ_DECL(pj_status_t)
++pj_stun_sock_connect_active(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr);
++
++/**
++ * Close active socket
++ * @param stun_sock
++ * @param remote_addr    The remote address linked
++ */
++PJ_DECL(pj_status_t)
++pj_stun_sock_close(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr);
++
++/**
++ * Select outgoing socket
++ * @param stun_sock
++ * @param remote_addr    The remote address linked
++ */
++PJ_DECL(pj_status_t)
++pj_stun_sock_select_outgoing(pj_stun_sock *stun_sock, pj_sockaddr_t *remote_addr);
++
++#endif
++
++/**
++ * Retrieve the linked session
++ * @param stun_sock
++ */
++PJ_DECL(pj_stun_session *)
++pj_stun_sock_get_session(pj_stun_sock *stun_sock);
+ 
+ /**
+  * @}
+diff --git a/pjnath/src/pjnath-test/concur_test.c b/pjnath/src/pjnath-test/concur_test.c
+index c3013d2ab..ebe173922 100644
+--- a/pjnath/src/pjnath-test/concur_test.c
++++ b/pjnath/src/pjnath-test/concur_test.c
+@@ -183,10 +183,10 @@ static int stun_destroy_test_session(struct stun_test_session *test_sess)
+     for (i=0; i<MAX_SOCK_CLIENTS; ++i) {
+ 	char name[10];
+ 	sprintf(name, "stun%02d", i);
+-	status = pj_stun_sock_create(&test_sess->stun_cfg, name, pj_AF_INET(),
+-	                             &stun_cb, NULL, test_sess,
+-	                             &stun_sock[i]);
+-	if (status != PJ_SUCCESS) {
++        status = pj_stun_sock_create(&test_sess->stun_cfg, name, pj_AF_INET(),
++                                     PJ_STUN_TP_UDP, &stun_cb, NULL, test_sess,
++                                     &stun_sock[i]);
++        if (status != PJ_SUCCESS) {
+ 	    PJ_PERROR(1,(THIS_FILE, status, "Error creating stun socket"));
+ 	    return -10;
+ 	}
+diff --git a/pjnath/src/pjnath-test/sess_auth.c b/pjnath/src/pjnath-test/sess_auth.c
+index 055eaad61..d1ad137a3 100644
+--- a/pjnath/src/pjnath-test/sess_auth.c
++++ b/pjnath/src/pjnath-test/sess_auth.c
+@@ -248,7 +248,8 @@ static int create_std_server(pj_stun_auth_type auth_type,
+     pj_bzero(&sess_cb, sizeof(sess_cb));
+     sess_cb.on_rx_request = &server_on_rx_request;
+     sess_cb.on_send_msg = &server_send_msg;
+-    status = pj_stun_session_create(&stun_cfg, "server", &sess_cb, PJ_FALSE, NULL, &server->sess);
++    status = pj_stun_session_create(&stun_cfg, "server", &sess_cb, PJ_FALSE,
++                                    NULL, &server->sess, PJ_STUN_TP_UDP);
+     if (status != PJ_SUCCESS) {
+ 	destroy_server();
+ 	return -10;
+@@ -489,7 +490,8 @@ static int run_client_test(const char *title,
+     pj_bzero(&sess_cb, sizeof(sess_cb));
+     sess_cb.on_request_complete = &client_on_request_complete;
+     sess_cb.on_send_msg = &client_send_msg;
+-    status = pj_stun_session_create(&stun_cfg, "client", &sess_cb, PJ_FALSE, NULL, &client->sess);
++    status = pj_stun_session_create(&stun_cfg, "client", &sess_cb, PJ_FALSE,
++                                    NULL, &client->sess, PJ_STUN_TP_UDP);
+     if (status != PJ_SUCCESS) {
+ 	destroy_client_server();
+ 	return -200;
+@@ -575,8 +577,10 @@ static int run_client_test(const char *title,
+     }
+ 
+     /* Send the request */
+-    status = pj_stun_session_send_msg(client->sess, NULL, PJ_FALSE, PJ_TRUE, &server->addr,
+-				      pj_sockaddr_get_len(&server->addr), tdata);
++    status = pj_stun_session_send_msg(
++        client->sess, NULL, PJ_FALSE,
++        (pj_stun_session_tp_type(client->sess) == PJ_STUN_TP_UDP),
++        &server->addr, pj_sockaddr_get_len(&server->addr), tdata);
+     if (status != PJ_SUCCESS) {
+ 	destroy_client_server();
+ 	return -270;
+diff --git a/pjnath/src/pjnath-test/stun_sock_test.c b/pjnath/src/pjnath-test/stun_sock_test.c
+index fff4fad26..a54df74dc 100644
+--- a/pjnath/src/pjnath-test/stun_sock_test.c
++++ b/pjnath/src/pjnath-test/stun_sock_test.c
+@@ -255,8 +255,8 @@ static pj_status_t create_client(pj_stun_config *cfg,
+     pj_bzero(&cb, sizeof(cb));
+     cb.on_status = &stun_sock_on_status;
+     cb.on_rx_data = &stun_sock_on_rx_data;
+-    status = pj_stun_sock_create(cfg, NULL, GET_AF(use_ipv6), &cb, &sock_cfg, 
+-				 client, &client->sock);
++    status = pj_stun_sock_create(cfg, NULL, GET_AF(use_ipv6), PJ_STUN_TP_UDP,
++                                 &cb, &sock_cfg, client, &client->sock);
+     if (status != PJ_SUCCESS) {
+ 	app_perror("   pj_stun_sock_create()", status);
+ 	pj_pool_release(pool);
+@@ -584,9 +584,10 @@ static int keep_alive_test(pj_stun_config *cfg, pj_bool_t use_ipv6)
+ 	char txt[100];
+ 	PJ_LOG(3,(THIS_FILE, "     sending to %s", pj_sockaddr_print(&info.srv_addr, txt, sizeof(txt), 3)));
+     }
++    pj_ssize_t size;
+     status = pj_stun_sock_sendto(client->sock, NULL, &ret, sizeof(ret),
+ 				 0, &info.srv_addr, 
+-				 pj_sockaddr_get_len(&info.srv_addr));
++				 pj_sockaddr_get_len(&info.srv_addr), &size);
+     if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+ 	app_perror("    error: server sending data", status);
+ 	ret = -390;
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index c51dba771..4ddf848e7 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1,5 +1,5 @@
+ /* $Id$ */
+-/* 
++/*
+  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+  *
+@@ -45,6 +45,7 @@ static const char *check_state_name[] =
+ {
+     "Frozen",
+     "Waiting",
++    "Pending",
+     "In Progress",
+     "Succeeded",
+     "Failed"
+@@ -75,8 +76,8 @@ enum timer_type
+ 				     valid check for every components.	*/
+     TIMER_START_NOMINATED_CHECK,/**< Controlling agent start connectivity
+ 				     checks with USE-CANDIDATE flag.	*/
+-    TIMER_KEEP_ALIVE		/**< ICE keep-alive timer.		*/
+-
++    TIMER_KEEP_ALIVE,		/**< ICE keep-alive timer.		*/
++    TIMER_CONNECTION_TIMEOUT
+ };
+ 
+ /* Candidate type preference */
+@@ -133,6 +134,7 @@ typedef struct timer_data
+ 
+ /* Forward declarations */
+ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te);
++static void on_tcp_connect_timeout(pj_ice_sess *ice);
+ static void on_ice_complete(pj_ice_sess *ice, pj_status_t status);
+ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now);
+ static void ice_on_destroy(void *obj);
+@@ -288,10 +290,9 @@ static pj_status_t init_comp(pj_ice_sess *ice,
+     sess_cb.on_send_msg = &on_stun_send_msg;
+ 
+     /* Create STUN session for this candidate */
+-    status = pj_stun_session_create(&ice->stun_cfg, NULL, 
+-			            &sess_cb, PJ_TRUE,
+-			            ice->grp_lock,
+-				    &comp->stun_sess);
++    status = pj_stun_session_create(&ice->stun_cfg, NULL, &sess_cb, PJ_TRUE,
++                                      ice->grp_lock, &comp->stun_sess,
++                                      PJ_STUN_TP_UDP);
+     if (status != PJ_SUCCESS)
+ 	return status;
+ 
+@@ -715,7 +716,8 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+ 					 const pj_sockaddr_t *base_addr,
+ 					 const pj_sockaddr_t *rel_addr,
+ 					 int addr_len,
+-					 unsigned *p_cand_id)
++					 unsigned *p_cand_id,
++					 pj_ice_cand_transport transport)
+ {
+     pj_ice_sess_cand *lcand;
+     pj_status_t status = PJ_SUCCESS;
+@@ -738,6 +740,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+     lcand->comp_id = (pj_uint8_t)comp_id;
+     lcand->transport_id = (pj_uint8_t)transport_id;
+     lcand->type = type;
++    lcand->transport = transport;
+     pj_strdup(ice->pool, &lcand->foundation, foundation);
+     lcand->prio = CALC_CAND_PRIO(ice, type, local_pref, lcand->comp_id);
+     pj_sockaddr_cp(&lcand->addr, addr);
+@@ -959,6 +962,7 @@ static void check_set_state(pj_ice_sess *ice, pj_ice_sess_check *check,
+ 			    pj_ice_sess_check_state st, 
+ 			    pj_status_t err_code)
+ {
++	if (check->state == st) return; // nothing to do
+     pj_assert(check->state < PJ_ICE_SESS_CHECK_STATE_SUCCEEDED);
+ 
+     LOG5((ice->obj_name, "Check %s: state changed from %s to %s",
+@@ -1079,6 +1083,17 @@ static pj_status_t prune_checklist(pj_ice_sess *ice,
+ 		return PJNATH_EICENOHOSTCAND;
+ 	    }
+ 	}
++
++	/* Section 6.2, RFC 6544 (https://tools.ietf.org/html/rfc6544)
++	 * When the agent prunes the check list, it MUST also remove any pair
++	 * for which the local candidate is a passive TCP candidate
++	 */
++	if (clist->checks[i].lcand->transport == PJ_CAND_TCP_PASSIVE) {
++		pj_array_erase(clist->checks, sizeof(clist->checks[0]),
++					   clist->count, i);
++		--clist->count;
++		--i;
++	}
+     }
+ 
+     /* Next remove a pair if its local and remote candidates are identical
+@@ -1181,6 +1196,8 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
+     case TIMER_KEEP_ALIVE:
+ 	ice_keep_alive(ice, PJ_TRUE);
+ 	break;
++    case TIMER_CONNECTION_TIMEOUT:
++    on_tcp_connect_timeout(ice);
+     case TIMER_NONE:
+ 	/* Nothing to do, just to get rid of gcc warning */
+ 	break;
+@@ -1189,6 +1206,21 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
+     pj_grp_lock_release(ice->grp_lock);
+ }
+ 
++static void on_tcp_connect_timeout(pj_ice_sess* ice) {
++    pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap, &ice->timer, TIMER_NONE);
++
++    for (int i = 0; i < ice->clist.count; ++i) {
++      pj_ice_sess_check *check = &ice->clist.checks[i];
++      if (check->state == PJ_ICE_SESS_CHECK_STATE_PENDING) {
++        if (*ice->cb.wait_tcp_connection) {
++          (*ice->cb.close_tcp_connection)(ice, &ice->clist, i);
++        }
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
++        break;
++      }
++    }
++}
++
+ /* Send keep-alive */
+ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+ {
+@@ -1202,9 +1234,9 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+ 	pj_bool_t saved;
+ 	pj_status_t status;
+ 
+-	/* Must have nominated check by now */
+-	pj_assert(comp->nominated_check != NULL);
+-	the_check = comp->nominated_check;
++    /* Must have nominated check by now */
++    pj_assert(comp->nominated_check != NULL);
++    the_check = comp->nominated_check;
+ 
+ 	/* Create the Binding Indication */
+ 	status = pj_stun_session_create_ind(comp->stun_sess, 
+@@ -1695,6 +1727,25 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+ 		continue;
+ 	    }
+ 
++        /* Section 6.2, RFC 6544 (https://tools.ietf.org/html/rfc6544)
++         * As with UDP, check lists are formed only by full ICE implementations.
++         * When forming candidate pairs, the following types of TCP candidates
++         * can be paired with each other:
++         *
++         * Local           Remote
++         * Candidate       Candidate
++         * ---------------------------
++         * tcp-so          tcp-so
++         * tcp-active      tcp-passive
++         * tcp-passive     tcp-active
++         */
++        if ((lcand->transport == PJ_CAND_UDP && rcand->transport != PJ_CAND_UDP)
++            || (lcand->transport == PJ_CAND_TCP_PASSIVE && rcand->transport != PJ_CAND_TCP_ACTIVE)
++            || (lcand->transport == PJ_CAND_TCP_ACTIVE && rcand->transport != PJ_CAND_TCP_PASSIVE)
++            || (lcand->transport == PJ_CAND_TCP_SO && rcand->transport != PJ_CAND_TCP_SO))
++        {
++            continue;
++        }
+ 
+ 	    chk->lcand = lcand;
+ 	    chk->rcand = rcand;
+@@ -1751,40 +1802,71 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+     return PJ_SUCCESS;
+ }
+ 
+-/* Perform check on the specified candidate pair. */
+-static pj_status_t perform_check(pj_ice_sess *ice, 
+-				 pj_ice_sess_checklist *clist,
+-				 unsigned check_id,
+-				 pj_bool_t nominate)
++static pj_status_t send_connectivity_check(pj_ice_sess *ice,
++											pj_ice_sess_checklist *clist,
++											unsigned check_id,
++											pj_bool_t nominate,
++											pj_ice_msg_data *msg_data)
+ {
+-    pj_ice_sess_comp *comp;
+-    pj_ice_msg_data *msg_data;
+     pj_ice_sess_check *check;
++    check = &clist->checks[check_id];
+     const pj_ice_sess_cand *lcand;
++    lcand = check->lcand;
+     const pj_ice_sess_cand *rcand;
+-    pj_uint32_t prio;
++    rcand = check->rcand;
++    pj_ice_sess_comp *comp;
++    comp = find_comp(ice, lcand->comp_id);
+     pj_status_t status;
++    /* Note that USERNAME and MESSAGE-INTEGRITY will be added by the
++     * STUN session.
++     */
++
++    /* Initiate STUN transaction to send the request */
++    status = pj_stun_session_send_msg(
++        comp->stun_sess, msg_data, PJ_FALSE,
++        pj_stun_session_tp_type(comp->stun_sess) == PJ_STUN_TP_UDP,
++        &rcand->addr, pj_sockaddr_get_len(&rcand->addr), check->tdata);
++    if (status != PJ_SUCCESS) {
++        check->tdata = NULL;
++        pjnath_perror(ice->obj_name, "Error sending STUN request", status);
++        pj_log_pop_indent();
++        return status;
++    }
++
+ 
++    return PJ_SUCCESS;
++}
++
++/* Perform check on the specified candidate pair. */
++static pj_status_t perform_check(pj_ice_sess *ice,
++                                 pj_ice_sess_checklist *clist,
++                                 unsigned check_id,
++                                 pj_bool_t nominate)
++{
++    pj_ice_sess_check *check;
+     check = &clist->checks[check_id];
++    const pj_ice_sess_cand *lcand;
+     lcand = check->lcand;
+-    rcand = check->rcand;
++    pj_ice_sess_comp *comp;
+     comp = find_comp(ice, lcand->comp_id);
++    pj_status_t status;
+ 
+-    LOG5((ice->obj_name, 
+-	 "Sending connectivity check for check %s", 
+-	 dump_check(ice->tmp.txt, sizeof(ice->tmp.txt), clist, check)));
+     pj_log_push_indent();
++    LOG5((ice->obj_name,
++         "Sending connectivity check for check %s",
++         dump_check(ice->tmp.txt, sizeof(ice->tmp.txt), clist, check)));
+ 
+     /* Create request */
+-    status = pj_stun_session_create_req(comp->stun_sess, 
+-					PJ_STUN_BINDING_REQUEST, PJ_STUN_MAGIC,
+-					NULL, &check->tdata);
++    status = pj_stun_session_create_req(comp->stun_sess,
++                                       PJ_STUN_BINDING_REQUEST, PJ_STUN_MAGIC,
++                                       NULL, &check->tdata);
+     if (status != PJ_SUCCESS) {
+-	pjnath_perror(ice->obj_name, "Error creating STUN request", status);
+-	pj_log_pop_indent();
+-	return status;
++        pjnath_perror(ice->obj_name, "Error creating STUN request", status);
++        pj_log_pop_indent();
++        return status;
+     }
+ 
++    pj_ice_msg_data *msg_data;
+     /* Attach data to be retrieved later when STUN request transaction
+      * completes and on_stun_request_complete() callback is called.
+      */
+@@ -1796,57 +1878,72 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     msg_data->data.req.ckid = check_id;
+ 
+     /* Add PRIORITY */
++    pj_uint32_t prio;
+ #if PJNATH_ICE_PRIO_STD
+-    prio = CALC_CAND_PRIO(ice, PJ_ICE_CAND_TYPE_PRFLX, 65535, 
+-			  lcand->comp_id);
++    prio = CALC_CAND_PRIO(ice, PJ_ICE_CAND_TYPE_PRFLX, 65535,
++                          lcand->comp_id);
+ #else
+-    prio = CALC_CAND_PRIO(ice, PJ_ICE_CAND_TYPE_PRFLX, 0, 
+-			  lcand->comp_id);
++    prio = CALC_CAND_PRIO(ice, PJ_ICE_CAND_TYPE_PRFLX, 0,
++                          lcand->comp_id);
+ #endif
+-    pj_stun_msg_add_uint_attr(check->tdata->pool, check->tdata->msg, 
+-			      PJ_STUN_ATTR_PRIORITY, prio);
++
++
++    pj_stun_msg_add_uint_attr(check->tdata->pool, check->tdata->msg,
++                              PJ_STUN_ATTR_PRIORITY, prio);
+ 
+     /* Add USE-CANDIDATE and set this check to nominated.
+      * Also add ICE-CONTROLLING or ICE-CONTROLLED
+      */
+     if (ice->role == PJ_ICE_SESS_ROLE_CONTROLLING) {
+-	if (nominate) {
+-	    pj_stun_msg_add_empty_attr(check->tdata->pool, check->tdata->msg,
+-				       PJ_STUN_ATTR_USE_CANDIDATE);
+-	    check->nominated = PJ_TRUE;
+-	}
++        if (nominate) {
++            pj_stun_msg_add_empty_attr(check->tdata->pool, check->tdata->msg,
++                                       PJ_STUN_ATTR_USE_CANDIDATE);
++            check->nominated = PJ_TRUE;
++        }
+ 
+-	pj_stun_msg_add_uint64_attr(check->tdata->pool, check->tdata->msg, 
+-				    PJ_STUN_ATTR_ICE_CONTROLLING,
+-				    &ice->tie_breaker);
++        pj_stun_msg_add_uint64_attr(check->tdata->pool, check->tdata->msg,
++                                    PJ_STUN_ATTR_ICE_CONTROLLING,
++                                    &ice->tie_breaker);
+ 
+     } else {
+-	pj_stun_msg_add_uint64_attr(check->tdata->pool, check->tdata->msg, 
+-				    PJ_STUN_ATTR_ICE_CONTROLLED,
+-				    &ice->tie_breaker);
++        pj_stun_msg_add_uint64_attr(check->tdata->pool, check->tdata->msg,
++                                    PJ_STUN_ATTR_ICE_CONTROLLED,
++                                    &ice->tie_breaker);
++    }
++
++#if PJ_HAS_TCP
++    if (lcand->transport == PJ_CAND_UDP) {
++        status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
++    } else if (lcand->transport == PJ_CAND_TCP_ACTIVE) {
++        pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap, &ice->timer, TIMER_NONE);
++        status = (*ice->cb.wait_tcp_connection)(ice, clist, check_id);
++        if (ice->timer.id == TIMER_NONE) {
++          pj_time_val delay = {0, 0};
++          delay.msec = 4000;
++          pj_time_val_normalize(&delay);
++          pj_timer_heap_schedule_w_grp_lock(
++              ice->stun_cfg.timer_heap, &ice->timer, &delay,
++              TIMER_CONNECTION_TIMEOUT, ice->grp_lock);
++        } else {
++          pj_assert(!"Not expected any timer active");
++        }
+     }
++#else
++    status = send_connectivity_check(&ice, &clist, check_id, nominate, msg_data);
++#endif
+ 
+ 
+-    /* Note that USERNAME and MESSAGE-INTEGRITY will be added by the 
+-     * STUN session.
+-     */
+-
+-    /* Initiate STUN transaction to send the request */
+-    status = pj_stun_session_send_msg(comp->stun_sess, msg_data, PJ_FALSE, 
+-				      PJ_TRUE, &rcand->addr, 
+-				      pj_sockaddr_get_len(&rcand->addr),
+-				      check->tdata);
+-    if (status != PJ_SUCCESS) {
+-	check->tdata = NULL;
+-	pjnath_perror(ice->obj_name, "Error sending STUN request", status);
+-	pj_log_pop_indent();
+-	return status;
++    if (status == PJ_EPENDING) {
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_PENDING,
++                        status);
++    } else {
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
++                        PJ_SUCCESS);
+     }
+ 
+-    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, 
+-	            PJ_SUCCESS);
+     pj_log_pop_indent();
+-    return PJ_SUCCESS;
++
++    return status;
+ }
+ 
+ 
+@@ -1859,7 +1956,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+     timer_data *td;
+     pj_ice_sess *ice;
+     pj_ice_sess_checklist *clist;
+-    unsigned i, start_count=0;
++    unsigned i, start_count=0, pending_count=0;
+     pj_status_t status;
+ 
+     td = (struct timer_data*) te->user_data;
+@@ -1885,41 +1982,41 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+     /* Send STUN Binding request for check with highest priority on
+      * Waiting state.
+      */
+-    for (i=0; i<clist->count; ++i) {
++
++    if (start_count == 0) {
++      for (i = 0; i < clist->count; ++i) {
+ 	pj_ice_sess_check *check = &clist->checks[i];
+ 
+ 	if (check->state == PJ_ICE_SESS_CHECK_STATE_WAITING) {
+ 	    status = perform_check(ice, clist, i, ice->is_nominating);
+-	    if (status != PJ_SUCCESS) {
+-		check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
+-				status);
+-		on_check_complete(ice, check);
+-	    }
+-
+-	    ++start_count;
++	    if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++            check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
++                            status);
++            on_check_complete(ice, check);
++        }
++        ++start_count;
+ 	    break;
+ 	}
++      }
+     }
+ 
+     /* If we don't have anything in Waiting state, perform check to
+      * highest priority pair that is in Frozen state.
+      */
+-    if (start_count==0) {
+-	for (i=0; i<clist->count; ++i) {
+-	    pj_ice_sess_check *check = &clist->checks[i];
+-
+-	    if (check->state == PJ_ICE_SESS_CHECK_STATE_FROZEN) {
+-		status = perform_check(ice, clist, i, ice->is_nominating);
+-		if (status != PJ_SUCCESS) {
+-		    check_set_state(ice, check,
+-		    		    PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+-		    on_check_complete(ice, check);
+-		}
+-
+-		++start_count;
+-		break;
+-	    }
+-	}
++    if (start_count == 0 && pending_count == 0) {
++      for (i = 0; i < clist->count; ++i) {
++        pj_ice_sess_check *check = &clist->checks[i];
++
++        if (check->state == PJ_ICE_SESS_CHECK_STATE_FROZEN) {
++          status = perform_check(ice, clist, i, ice->is_nominating);
++          if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++            check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++            on_check_complete(ice, check);
++          }
++          ++start_count;
++          break;
++        }
++      }
+     }
+ 
+     /* Cannot start check because there's no suitable candidate pair.
+@@ -1936,8 +2033,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+     pj_grp_lock_release(ice->grp_lock);
+     pj_log_pop_indent();
+     return PJ_SUCCESS;
+-}
+-
++    }
+ 
+ /* Start sending connectivity check with USE-CANDIDATE */
+ static void start_nominated_check(pj_ice_sess *ice)
+@@ -2107,15 +2203,17 @@ PJ_DEF(pj_status_t) pj_ice_sess_start_check(pj_ice_sess *ice)
+     }
+ 
+     /* First, perform all pending triggered checks, simultaneously. */
++    // TODO (sblin) Take care of Peer Reflexive Candidates for TCP
+     rcheck = ice->early_check.next;
+-    while (rcheck != &ice->early_check) {
+-	LOG4((ice->obj_name, 
+-	      "Performing delayed triggerred check for component %d",
+-	      rcheck->comp_id));
+-	pj_log_push_indent();
+-	handle_incoming_check(ice, rcheck);
+-	rcheck = rcheck->next;
+-	pj_log_pop_indent();
++    while (rcheck != &ice->early_check &&
++           clist->checks[0].lcand->transport == PJ_CAND_UDP) {
++      LOG4((ice->obj_name,
++            "Performing delayed triggerred check for component %d",
++            rcheck->comp_id));
++      pj_log_push_indent();
++      handle_incoming_check(ice, rcheck);
++      rcheck = rcheck->next;
++      pj_log_pop_indent();
+     }
+     pj_list_init(&ice->early_check);
+ 
+@@ -2161,7 +2259,7 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+ 	/* Stray retransmit timer that could happen while
+ 	 * we're being destroyed */
+ 	pj_grp_lock_release(ice->grp_lock);
+-	return PJ_EINVALIDOP;
++        return PJ_EINVALIDOP;
+     }
+ 
+     status = (*ice->cb.on_tx_pkt)(ice, sd->comp_id, msg_data->transport_id,
+@@ -2171,6 +2269,73 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+     return status;
+ }
+ 
++void ice_sess_on_peer_connection(pj_ice_sess *ice, pj_uint8_t transport_id,
++                                 pj_status_t status,
++                                 pj_sockaddr_t* remote_addr) {
++  // The TCP link is now ready. We can now send the first STUN message (send
++  // connectivity check) This should trigger on_stun_request_complete when
++  // finished
++  if (!remote_addr) return;
++
++  // First, check if the TCP is really connected. If not, abort
++  pj_ice_sess_check *check = NULL;
++  int current_check = -1;
++  for (int i = 0; i < ice->clist.count; ++i) {
++    // Find related check
++    pj_ice_sess_check *c = &ice->clist.checks[i];
++    if (pj_sockaddr_cmp(remote_addr, &c->rcand->addr) == 0) {
++      /* Match */
++      check = c;
++      current_check = i;
++      break;
++    }
++  }
++
++  if (!check || check->state != PJ_ICE_SESS_CHECK_STATE_PENDING) {
++    // The check is not found OR the check is already failed/in progress
++    // This is typically the case when multiple checks has the same remote
++    return;
++  }
++
++  if (status != PJ_SUCCESS) {
++    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++    on_check_complete(ice, check);
++    return;
++  }
++
++  // TCP is correctly connected. Craft the message to send
++  const pj_ice_sess_cand *lcand = check->lcand;
++  const pj_ice_sess_cand *rcand = check->rcand;
++  if (check->tdata == NULL) {
++    pjnath_perror(ice->obj_name, "Error sending STUN request, empty data",
++                  status);
++    return;
++  }
++  pj_ice_msg_data *msg_data =
++      PJ_POOL_ZALLOC_T(check->tdata->pool, pj_ice_msg_data);
++
++  msg_data->transport_id = transport_id;
++  msg_data->has_req_data = PJ_TRUE;
++  msg_data->data.req.ice = ice;
++  msg_data->data.req.clist = &ice->clist;
++  msg_data->data.req.ckid = current_check;
++
++  pj_ice_sess_comp *comp = find_comp(ice, lcand->comp_id);
++  pj_status_t status_send_msg;
++  // Note that USERNAME and MESSAGE-INTEGRITY will be added by the
++  // STUN session.
++
++  // Initiate STUN transaction to send the request
++  status_send_msg = pj_stun_session_send_msg(
++      comp->stun_sess, msg_data, PJ_FALSE, PJ_FALSE, &rcand->addr,
++      pj_sockaddr_get_len(&rcand->addr), check->tdata);
++  if (status_send_msg != PJ_SUCCESS) {
++    check->tdata = NULL;
++    pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
++    pj_log_pop_indent();
++  }
++  check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
++}
+ 
+ /* This callback is called when outgoing STUN request completed */
+ static void on_stun_request_complete(pj_stun_session *stun_sess,
+@@ -2401,7 +2566,8 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+ 				      &check->lcand->base_addr, 
+ 				      &check->lcand->base_addr,
+ 				      pj_sockaddr_get_len(&xaddr->sockaddr),
+-				      &cand_id);
++				      &cand_id,
++					  pj_stun_session_tp_type(stun_sess) == PJ_STUN_TP_UDP ? PJ_CAND_UDP : PJ_CAND_TCP_PASSIVE);
+ 	if (status != PJ_SUCCESS) {
+ 	    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, 
+ 			    status);
+@@ -2516,8 +2682,8 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+     pj_grp_lock_acquire(ice->grp_lock);
+ 
+     if (ice->is_destroying) {
+-	pj_grp_lock_release(ice->grp_lock);
+-	return PJ_EINVALIDOP;
++      pj_grp_lock_release(ice->grp_lock);
++      return PJ_EINVALIDOP;
+     }
+ 
+     /*
+@@ -2532,9 +2698,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+     prio_attr = (pj_stun_priority_attr*)
+ 	        pj_stun_msg_find_attr(msg, PJ_STUN_ATTR_PRIORITY, 0);
+     if (prio_attr == NULL) {
+-	LOG5((ice->obj_name, "Received Binding request with no PRIORITY"));
+-	pj_grp_lock_release(ice->grp_lock);
+-	return PJ_SUCCESS;
++      LOG5((ice->obj_name, "Received Binding request with no PRIORITY"));
++      pj_grp_lock_release(ice->grp_lock);
++      return PJ_SUCCESS;
+     }
+ 
+     /* Get USE-CANDIDATE attribute */
+@@ -2579,7 +2745,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+ 				    NULL, token, PJ_TRUE, 
+ 				    src_addr, src_addr_len);
+ 	    pj_grp_lock_release(ice->grp_lock);
+-	    return PJ_SUCCESS;
++            return PJ_SUCCESS;
+ 	}
+ 
+     } else if (ice->role == PJ_ICE_SESS_ROLE_CONTROLLED &&
+@@ -2591,7 +2757,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+ 				    NULL, token, PJ_TRUE, 
+ 				    src_addr, src_addr_len);
+ 	    pj_grp_lock_release(ice->grp_lock);
+-	    return PJ_SUCCESS;
++            return PJ_SUCCESS;
+ 	} else {
+ 	    /* Switch role to controlled */
+ 	    LOG4((ice->obj_name, 
+@@ -2606,7 +2772,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+     status = pj_stun_session_create_res(sess, rdata, 0, NULL, &tdata);
+     if (status != PJ_SUCCESS) {
+ 	pj_grp_lock_release(ice->grp_lock);
+-	return status;
++        return status;
+     }
+ 
+     if (((pj_sockaddr *)src_addr)->addr.sa_family == pj_AF_INET6()) {
+@@ -2663,9 +2829,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+     msg_data->has_req_data = PJ_FALSE;
+ 
+     /* Send the response */
+-    status = pj_stun_session_send_msg(sess, msg_data, PJ_TRUE, PJ_TRUE,
+-				      src_addr, src_addr_len, tdata);
+-
++    status = pj_stun_session_send_msg(sess, msg_data, PJ_TRUE,
++                                      pj_stun_session_tp_type(sess) == PJ_STUN_TP_UDP,
++                                      src_addr, src_addr_len, tdata);
+ 
+     /* 
+      * Handling early check.
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 54ef8ba69..df4242f35 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -102,8 +102,15 @@ static void	   ice_rx_data(pj_ice_sess *ice,
+ 			       void *pkt, pj_size_t size,
+ 			       const pj_sockaddr_t *src_addr,
+ 			       unsigned src_addr_len);
+-
+-
++#if PJ_HAS_TCP
++static pj_status_t ice_wait_tcp_connection(pj_ice_sess *ice,
++                                           pj_ice_sess_checklist *clist,
++                                           unsigned check_id);
++
++static pj_status_t ice_close_tcp_connection(pj_ice_sess *ice,
++											pj_ice_sess_checklist *clist,
++											unsigned check_id);
++#endif
+ /* STUN socket callbacks */
+ /* Notification when incoming packet has been received. */
+ static pj_bool_t stun_on_rx_data(pj_stun_sock *stun_sock,
+@@ -201,6 +208,8 @@ struct pj_ice_strans
+ 
+     pj_bool_t		     destroy_req;/**< Destroy has been called?	*/
+     pj_bool_t		     cb_called;	/**< Init error callback called?*/
++
++	pj_bool_t			 is_pending;
+ };
+ 
+ 
+@@ -237,6 +246,7 @@ PJ_DEF(void) pj_ice_strans_cfg_default(pj_ice_strans_cfg *cfg)
+     pj_bzero(cfg, sizeof(*cfg));
+ 
+     cfg->af = pj_AF_INET();
++    cfg->protocol = PJ_ICE_TP_UDP;
+     pj_stun_config_init(&cfg->stun_cfg, NULL, 0, NULL, NULL);
+     pj_ice_strans_stun_cfg_default(&cfg->stun);
+     pj_ice_strans_turn_cfg_default(&cfg->turn);
+@@ -252,6 +262,7 @@ PJ_DEF(void) pj_ice_strans_stun_cfg_default(pj_ice_strans_stun_cfg *cfg)
+     pj_bzero(cfg, sizeof(*cfg));
+ 
+     cfg->af = pj_AF_INET();
++    cfg->conn_type = PJ_TURN_TP_UDP;
+     cfg->port = PJ_STUN_PORT;
+     cfg->max_host_cands = 64;
+     cfg->ignore_stun_error = PJ_FALSE;
+@@ -389,6 +400,7 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+ 	cand->local_pref = RELAY_PREF;
+ 	cand->transport_id = tp_id;
+ 	cand->comp_id = (pj_uint8_t) comp->comp_id;
++	cand->transport = turn_cfg->conn_type == PJ_TURN_TP_UDP ? PJ_CAND_UDP : PJ_CAND_TCP_PASSIVE;
+     }
+ 
+     /* Allocate and initialize TURN socket data */
+@@ -447,6 +459,7 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
+         || lcand->transport_id != rcand->transport_id
+         || lcand->local_pref != rcand->local_pref
+         || lcand->prio != rcand->prio
++		|| lcand->transport != rcand->transport
+         || pj_sockaddr_cmp(&lcand->addr, &rcand->addr) != 0
+         || pj_sockaddr_cmp(&lcand->base_addr, &rcand->base_addr) != 0)
+     {
+@@ -456,6 +469,115 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
+     return PJ_TRUE;
+ }
+ 
++static pj_bool_t
++add_local_candidate(pj_ice_sess_cand *cand, unsigned idx,
++                    pj_stun_sock_info stun_sock_info, pj_ice_strans *ice_st,
++                    pj_ice_strans_comp *comp, pj_ice_cand_transport transport)
++{
++  pj_ice_strans_stun_cfg *stun_cfg = &ice_st->cfg.stun_tp[idx];
++  unsigned j;
++  pj_bool_t cand_duplicate = PJ_FALSE;
++  char addrinfo[PJ_INET6_ADDRSTRLEN+10];
++  const pj_sockaddr *addr = &stun_sock_info.aliases[idx];
++
++  /* Leave one candidate for relay */
++  if (comp->cand_cnt >= PJ_ICE_ST_MAX_CAND-1) {
++      PJ_LOG(4,(ice_st->obj_name, "Too many host candidates"));
++      return PJ_FALSE;
++  }
++
++  /* Ignore loopback addresses if cfg->stun.loop_addr is unset */
++  if (stun_cfg->loop_addr==PJ_FALSE) {
++      if (stun_cfg->af == pj_AF_INET() &&
++          (pj_ntohl(addr->ipv4.sin_addr.s_addr)>>24)==127)
++      {
++          return PJ_TRUE;
++      }
++      else if (stun_cfg->af == pj_AF_INET6()) {
++          pj_in6_addr in6addr = {{0}};
++          in6addr.s6_addr[15] = 1;
++          if (pj_memcmp(&in6addr, &addr->ipv6.sin6_addr,
++                        sizeof(in6addr))==0)
++          {
++              return PJ_TRUE;
++          }
++      }
++  }
++  pj_sockaddr_print(addr, addrinfo, sizeof(addrinfo), 3);
++
++  /* Ignore IPv6 link-local address */
++  if (stun_cfg->af == pj_AF_INET6()) {
++      const pj_in6_addr *a = &addr->ipv6.sin6_addr;
++      if (a->s6_addr[0] == 0xFE && (a->s6_addr[1] & 0xC0) == 0x80)
++          return PJ_TRUE;
++  }
++
++  cand = &comp->cand_list[comp->cand_cnt];
++
++  cand->type = PJ_ICE_CAND_TYPE_HOST;
++  cand->status = PJ_SUCCESS;
++  cand->local_pref = HOST_PREF;
++  cand->transport_id = CREATE_TP_ID(TP_STUN, idx);
++  cand->comp_id = (pj_uint8_t) comp->comp_id;
++  cand->transport = transport;
++
++  char addstr[PJ_INET6_ADDRSTRLEN+10];
++  pj_sockaddr_print(addr, addstr,
++                            sizeof(addstr), 3);
++  pj_sockaddr_cp(&cand->addr, addr);
++  pj_sockaddr_cp(&cand->base_addr, addr);
++  pj_bzero(&cand->rel_addr, sizeof(cand->rel_addr));
++
++  /* Check if not already in list */
++  for (j=0; j<comp->cand_cnt; j++) {
++      if (ice_cand_equals(cand, &comp->cand_list[j])) {
++          cand_duplicate = PJ_TRUE;
++          return PJ_FALSE;
++      }
++  }
++
++  if (cand_duplicate) {
++      PJ_LOG(4, (ice_st->obj_name,
++             "Comp %d: host candidate %s (tpid=%d) is a duplicate",
++             comp->comp_id, pj_sockaddr_print(&cand->addr, addrinfo,
++             sizeof(addrinfo), 3), cand->transport_id));
++
++      pj_bzero(&cand->addr, sizeof(cand->addr));
++      pj_bzero(&cand->base_addr, sizeof(cand->base_addr));
++      return PJ_TRUE;
++  } else {
++      comp->cand_cnt+=1;
++  }
++
++  pj_ice_calc_foundation(ice_st->pool, &cand->foundation,
++                         cand->type, &cand->base_addr);
++
++  /* Set default candidate with the preferred default
++   * address family
++   */
++  if (comp->ice_st->cfg.af != pj_AF_UNSPEC() &&
++      addr->addr.sa_family == comp->ice_st->cfg.af &&
++      comp->cand_list[comp->default_cand].base_addr.addr.sa_family !=
++      ice_st->cfg.af)
++  {
++      comp->default_cand = (unsigned)(cand - comp->cand_list);
++  }
++
++  if (transport == PJ_CAND_TCP_ACTIVE) {
++      // Use the port 9 (DISCARD Protocol) for TCP active candidates.
++      pj_sockaddr_set_port(&cand->addr, 9);
++  }
++
++  PJ_LOG(4,(ice_st->obj_name,
++            "Comp %d/%d: host candidate %s (tpid=%d) added",
++            comp->comp_id, comp->cand_cnt-1,
++            pj_sockaddr_print(&cand->addr, addrinfo,
++                              sizeof(addrinfo), 3),
++                              cand->transport_id));
++  return PJ_TRUE;
++}
++
++
+ 
+ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
+ 				     pj_ice_strans_comp *comp,
+@@ -504,6 +626,7 @@ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
+     cand->local_pref = SRFLX_PREF;
+     cand->transport_id = CREATE_TP_ID(TP_STUN, idx);
+     cand->comp_id = (pj_uint8_t) comp->comp_id;
++	cand->transport = stun_cfg->conn_type == PJ_STUN_TP_UDP ? PJ_CAND_UDP : PJ_CAND_TCP_PASSIVE;
+ 
+     /* Allocate and initialize STUN socket data */
+     data = PJ_POOL_ZALLOC_T(ice_st->pool, sock_user_data);
+@@ -511,11 +634,12 @@ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
+     data->transport_id = cand->transport_id;
+ 
+     /* Create the STUN transport */
+-    status = pj_stun_sock_create(&ice_st->cfg.stun_cfg, NULL,
+-				 stun_cfg->af, &stun_sock_cb,
+-				 sock_cfg, data, &comp->stun[idx].sock);
+-    if (status != PJ_SUCCESS)
+-	return status;
++    status = pj_stun_sock_create(&ice_st->cfg.stun_cfg, NULL, stun_cfg->af,
++                                 stun_cfg->conn_type, &stun_sock_cb, sock_cfg,
++                                 data, &comp->stun[idx].sock);
++    if (status != PJ_SUCCESS) {
++      return status;
++	}
+ 
+     /* Start STUN Binding resolution and add srflx candidate only if server
+      * is set. When any error occur during STUN Binding resolution, let's
+@@ -581,116 +705,44 @@ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
+ 	break;
+     }
+ 
++
+     /* Add local addresses to host candidates, unless max_host_cands
+      * is set to zero.
+      */
+     if (stun_cfg->max_host_cands) {
+-	pj_stun_sock_info stun_sock_info;
+-	unsigned i, cand_cnt = 0;
+-
+-	/* Enumerate addresses */
+-	status = pj_stun_sock_get_info(comp->stun[idx].sock, &stun_sock_info);
+-	if (status != PJ_SUCCESS) {
+-	    PJ_PERROR(4,(ice_st->obj_name, status,
+-			 "Failed in querying STUN socket info"));
+-	    return status;
+-	}
+-
+-	for (i = 0; i < stun_sock_info.alias_cnt &&
+-		    cand_cnt < stun_cfg->max_host_cands; ++i)
+-	{
+-	    unsigned j;
+-	    pj_bool_t cand_duplicate = PJ_FALSE;
+-	    char addrinfo[PJ_INET6_ADDRSTRLEN+10];
+-	    const pj_sockaddr *addr = &stun_sock_info.aliases[i];
+-
+-	    /* Leave one candidate for relay */
+-	    if (comp->cand_cnt >= PJ_ICE_ST_MAX_CAND-1) {
+-		PJ_LOG(4,(ice_st->obj_name, "Too many host candidates"));
+-		break;
+-	    }
+-
+-	    /* Ignore loopback addresses if cfg->stun.loop_addr is unset */
+-	    if (stun_cfg->loop_addr==PJ_FALSE) {
+-		if (stun_cfg->af == pj_AF_INET() && 
+-		    (pj_ntohl(addr->ipv4.sin_addr.s_addr)>>24)==127)
+-		{
+-		    continue;
+-		}
+-		else if (stun_cfg->af == pj_AF_INET6()) {
+-		    pj_in6_addr in6addr = {{0}};
+-		    in6addr.s6_addr[15] = 1;
+-		    if (pj_memcmp(&in6addr, &addr->ipv6.sin6_addr,
+-				  sizeof(in6addr))==0)
+-		    {
+-			continue;
+-		    }
+-		}
+-	    }
+-
+-	    /* Ignore IPv6 link-local address, unless it is the default
+-	     * address (first alias).
+-	     */
+-	    if (stun_cfg->af == pj_AF_INET6() && i != 0) {
+-		const pj_in6_addr *a = &addr->ipv6.sin6_addr;
+-		if (a->s6_addr[0] == 0xFE && (a->s6_addr[1] & 0xC0) == 0x80)
+-		    continue;
+-	    }
+-
+-	    cand = &comp->cand_list[comp->cand_cnt];
+-
+-	    cand->type = PJ_ICE_CAND_TYPE_HOST;
+-	    cand->status = PJ_SUCCESS;
+-	    cand->local_pref = HOST_PREF;
+-	    cand->transport_id = CREATE_TP_ID(TP_STUN, idx);
+-	    cand->comp_id = (pj_uint8_t) comp->comp_id;
+-	    pj_sockaddr_cp(&cand->addr, addr);
+-	    pj_sockaddr_cp(&cand->base_addr, addr);
+-	    pj_bzero(&cand->rel_addr, sizeof(cand->rel_addr));
+-            
+-	    /* Check if not already in list */
+-	    for (j=0; j<comp->cand_cnt; j++) {
+-		if (ice_cand_equals(cand, &comp->cand_list[j])) {
+-		    cand_duplicate = PJ_TRUE;
+-		    break;
+-		}
+-	    }
+-
+-	    if (cand_duplicate) {
+-		PJ_LOG(4, (ice_st->obj_name,
+-		       "Comp %d: host candidate %s (tpid=%d) is a duplicate",
+-		       comp->comp_id, pj_sockaddr_print(&cand->addr, addrinfo,
+-		       sizeof(addrinfo), 3), cand->transport_id));
+-
+-		pj_bzero(&cand->addr, sizeof(cand->addr));
+-		pj_bzero(&cand->base_addr, sizeof(cand->base_addr));
+-		continue;
+-	    } else {
+-		comp->cand_cnt+=1;
+-		cand_cnt++;
+-	    }
+-            
+-	    pj_ice_calc_foundation(ice_st->pool, &cand->foundation,
+-				   cand->type, &cand->base_addr);
+-
+-	    /* Set default candidate with the preferred default
+-	     * address family
+-	     */
+-	    if (comp->ice_st->cfg.af != pj_AF_UNSPEC() &&
+-	        addr->addr.sa_family == comp->ice_st->cfg.af &&
+-	        comp->cand_list[comp->default_cand].base_addr.addr.sa_family !=
+-	        ice_st->cfg.af)
+-	    {
+-	        comp->default_cand = (unsigned)(cand - comp->cand_list);
+-	    }
+-
+-	    PJ_LOG(4,(ice_st->obj_name,
+-		      "Comp %d/%d: host candidate %s (tpid=%d) added",
+-		      comp->comp_id, comp->cand_cnt-1, 
+-		      pj_sockaddr_print(&cand->addr, addrinfo,
+-					sizeof(addrinfo), 3),
+-					cand->transport_id));
+-	}
++        pj_stun_sock_info stun_sock_info;
++        unsigned i = 0;
++        pj_bool_t add_tcp_active_cand;
++
++        /* Enumerate addresses */
++        status = pj_stun_sock_get_info(comp->stun[idx].sock, &stun_sock_info);
++        if (status != PJ_SUCCESS) {
++            PJ_PERROR(4,(ice_st->obj_name, status,
++                "Failed in querying STUN socket info"));
++            return status;
++        }
++
++        add_tcp_active_cand = stun_sock_info.conn_type != PJ_STUN_TP_UDP;
++        for (i = 0; i < stun_sock_info.alias_cnt && i < stun_cfg->max_host_cands; ++i) {
++            if (!add_tcp_active_cand) {
++            	add_local_candidate(cand, i, stun_sock_info, ice_st, comp,
++                              	  PJ_CAND_UDP);
++            } else {
++                add_local_candidate(cand, i, stun_sock_info, ice_st, comp,
++                                    PJ_CAND_TCP_PASSIVE);
++                /** RFC 6544, Section 4.1:
++				 * First, agents SHOULD obtain host candidates as described in
++				 * Section 5.1.  Then, each agent SHOULD "obtain" (allocate a
++				 * placeholder for) an active host candidate for each component of
++				 * each TCP-capable media stream on each interface that the host
++				 * has.  The agent does not yet have to actually allocate a port for
++				 * these candidates, but they are used for the creation of the check
++				 * lists.
++				 */
++                add_local_candidate(cand, i, stun_sock_info, ice_st, comp,
++                                    PJ_CAND_TCP_ACTIVE);
++            }
++        }
+     }
+ 
+     return status;
+@@ -803,6 +855,13 @@ PJ_DEF(pj_status_t) pj_ice_strans_create( const char *name,
+ 	return status;
+     }
+ 
++    ice_st->is_pending = PJ_FALSE;
++    if (status != PJ_SUCCESS) {
++      pj_pool_release(pool);
++      pj_log_pop_indent();
++      return status;
++    }
++
+     pj_grp_lock_add_ref(ice_st->grp_lock);
+     pj_grp_lock_add_handler(ice_st->grp_lock, pool, ice_st,
+ 			    &ice_st_on_destroy);
+@@ -1099,6 +1158,10 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
+     ice_cb.on_ice_complete = &on_ice_complete;
+     ice_cb.on_rx_data = &ice_rx_data;
+     ice_cb.on_tx_pkt = &ice_tx_pkt;
++#if PJ_HAS_TCP
++    ice_cb.wait_tcp_connection = &ice_wait_tcp_connection;
++    ice_cb.close_tcp_connection = &ice_close_tcp_connection;
++#endif
+ 
+     /* Create! */
+     status = pj_ice_sess_create(&ice_st->cfg.stun_cfg, ice_st->obj_name, role,
+@@ -1174,7 +1237,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
+ 					  &cand->foundation, &cand->addr,
+ 					  &cand->base_addr,  &cand->rel_addr,
+ 					  pj_sockaddr_get_len(&cand->addr),
+-					  (unsigned*)&ice_cand_id);
++					  (unsigned*)&ice_cand_id, cand->transport);
+ 	    if (status != PJ_SUCCESS)
+ 		goto on_error;
+ 	}
+@@ -1462,110 +1525,163 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto( pj_ice_strans *ice_st,
+ 					  const pj_sockaddr_t *dst_addr,
+ 					  int dst_addr_len)
+ {
+-    pj_ice_strans_comp *comp;
+-    pj_ice_sess_cand *def_cand;
+-    pj_status_t status;
+-
+-    PJ_ASSERT_RETURN(ice_st && comp_id && comp_id <= ice_st->comp_cnt &&
+-		     dst_addr && dst_addr_len, PJ_EINVAL);
+-
+-    comp = ice_st->comp[comp_id-1];
+-
+-    /* Check that default candidate for the component exists */
+-    if (comp->default_cand >= comp->cand_cnt)
+-	return PJ_EINVALIDOP;
++	pj_ssize_t size;
++	pj_status_t res = pj_ice_strans_sendto2(ice_st, comp_id, data, data_len, dst_addr, dst_addr_len, &size);
++	return (res==PJ_SUCCESS||res==PJ_EPENDING) ?
++		PJ_SUCCESS : res;
++}
+ 
+-    /* Protect with group lock, since this may cause race condition with
+-     * pj_ice_strans_stop_ice().
+-     * See ticket #1877.
+-     */
+-    pj_grp_lock_acquire(ice_st->grp_lock);
++/*
++ * Application wants to send outgoing packet.
++ */
++PJ_DEF(pj_status_t)
++pj_ice_strans_sendto2(pj_ice_strans *ice_st, unsigned comp_id, const void *data,
++                     pj_size_t data_len, const pj_sockaddr_t *dst_addr,
++                     int dst_addr_len, pj_ssize_t* size) {
++  pj_ice_strans_comp *comp;
++  pj_ice_sess_cand *def_cand;
++  pj_status_t status;
++
++  PJ_ASSERT_RETURN(ice_st && comp_id && comp_id <= ice_st->comp_cnt &&
++                       dst_addr && dst_addr_len,
++                   PJ_EINVAL);
++
++  if (ice_st->is_pending) {
++    return PJ_EBUSY;
++  }
++
++  comp = ice_st->comp[comp_id - 1];
++
++  /* Check that default candidate for the component exists */
++  if (comp->default_cand >= comp->cand_cnt)
++    return PJ_EINVALIDOP;
++
++  /* Protect with group lock, since this may cause race condition with
++   * pj_ice_strans_stop_ice().
++   * See ticket #1877.
++   */
++  pj_grp_lock_acquire(ice_st->grp_lock);
++
++  /* If ICE is available, send data with ICE, otherwise send with the
++   * default candidate selected during initialization.
++   *
++   * https://trac.pjsip.org/repos/ticket/1416:
++   * Once ICE has failed, also send data with the default candidate.
++   */
++  if (ice_st->ice && ice_st->state == PJ_ICE_STRANS_STATE_RUNNING) {
++    status = pj_ice_sess_send_data(ice_st->ice, comp_id, data, data_len);
+ 
+-    /* If ICE is available, send data with ICE, otherwise send with the
+-     * default candidate selected during initialization.
+-     *
+-     * https://trac.pjsip.org/repos/ticket/1416:
+-     * Once ICE has failed, also send data with the default candidate.
+-     */
+-    if (ice_st->ice && ice_st->state == PJ_ICE_STRANS_STATE_RUNNING) {
+-	status = pj_ice_sess_send_data(ice_st->ice, comp_id, data, data_len);
+-	
+-	pj_grp_lock_release(ice_st->grp_lock);
+-	
+-	return status;
+-    } 
+-    
+     pj_grp_lock_release(ice_st->grp_lock);
+ 
+-    def_cand = &comp->cand_list[comp->default_cand];
+-    
+-    if (def_cand->status == PJ_SUCCESS) {
+-	unsigned tp_idx = GET_TP_IDX(def_cand->transport_id);
+-
+-	if (def_cand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+-
+-	    enum {
+-		msg_disable_ind = 0xFFFF &
+-				  ~(PJ_STUN_SESS_LOG_TX_IND|
+-				    PJ_STUN_SESS_LOG_RX_IND)
+-	    };
+-
+-	    /* https://trac.pjsip.org/repos/ticket/1316 */
+-	    if (comp->turn[tp_idx].sock == NULL) {
+-		/* TURN socket error */
+-		return PJ_EINVALIDOP;
+-	    }
++    if (ice_st->is_pending) {
++      return PJ_EPENDING;
++    }
+ 
+-	    if (!comp->turn[tp_idx].log_off) {
+-		/* Disable logging for Send/Data indications */
+-		PJ_LOG(5,(ice_st->obj_name,
+-			  "Disabling STUN Indication logging for "
+-			  "component %d", comp->comp_id));
+-		pj_turn_sock_set_log(comp->turn[tp_idx].sock,
+-				     msg_disable_ind);
+-		comp->turn[tp_idx].log_off = PJ_TRUE;
+-	    }
++    return status;
++  }
++
++  pj_grp_lock_release(ice_st->grp_lock);
++
++  def_cand = &comp->cand_list[comp->default_cand];
++
++  if (def_cand->status == PJ_SUCCESS) {
++    unsigned tp_idx = GET_TP_IDX(def_cand->transport_id);
++
++    if (def_cand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++
++      enum {
++        msg_disable_ind =
++            0xFFFF & ~(PJ_STUN_SESS_LOG_TX_IND | PJ_STUN_SESS_LOG_RX_IND)
++      };
++
++      /* https://trac.pjsip.org/repos/ticket/1316 */
++      if (comp->turn[tp_idx].sock == NULL) {
++        /* TURN socket error */
++        return PJ_EINVALIDOP;
++      }
++
++      if (!comp->turn[tp_idx].log_off) {
++        /* Disable logging for Send/Data indications */
++        PJ_LOG(5, (ice_st->obj_name,
++                   "Disabling STUN Indication logging for "
++                   "component %d",
++                   comp->comp_id));
++        pj_turn_sock_set_log(comp->turn[tp_idx].sock, msg_disable_ind);
++        comp->turn[tp_idx].log_off = PJ_TRUE;
++      }
++
++      status =
++          pj_turn_sock_sendto(comp->turn[tp_idx].sock, (const pj_uint8_t *)data,
++                              (unsigned)data_len, dst_addr, dst_addr_len);
++      return (status == PJ_SUCCESS || status == PJ_EPENDING) ? PJ_SUCCESS
++                                                             : status;
++    } else {
++		const pj_sockaddr_t *dest_addr;
++		unsigned dest_addr_len;
++
++		if (comp->ipv4_mapped) {
++			if (comp->synth_addr_len == 0 ||
++				pj_sockaddr_cmp(&comp->dst_addr, dst_addr) != 0) {
++				status = pj_sockaddr_synthesize(pj_AF_INET6(), &comp->synth_addr,
++												dst_addr);
++				if (status != PJ_SUCCESS)
++					return status;
++
++				pj_sockaddr_cp(&comp->dst_addr, dst_addr);
++				comp->synth_addr_len = pj_sockaddr_get_len(&comp->synth_addr);
++			}
++			dest_addr = &comp->synth_addr;
++			dest_addr_len = comp->synth_addr_len;
++		} else {
++			dest_addr = dst_addr;
++			dest_addr_len = dst_addr_len;
++		}
+ 
+-	    status = pj_turn_sock_sendto(comp->turn[tp_idx].sock,
+-					 (const pj_uint8_t*)data,
+-					 (unsigned)data_len,
+-					 dst_addr, dst_addr_len);
+-	    return (status==PJ_SUCCESS||status==PJ_EPENDING) ?
+-		    PJ_SUCCESS : status;
+-	} else {
+-    	    const pj_sockaddr_t *dest_addr;
+-    	    unsigned dest_addr_len;
+-
+-    	    if (comp->ipv4_mapped) {
+-    	    	if (comp->synth_addr_len == 0 ||
+-    	    	    pj_sockaddr_cmp(&comp->dst_addr, dst_addr) != 0)
+-    	    	{
+-    	    	    status = pj_sockaddr_synthesize(pj_AF_INET6(),
+-    	    					    &comp->synth_addr,
+-    	    					    dst_addr);
+-    	    	    if (status != PJ_SUCCESS)
+-    	            	return status;
+-
+-    	    	    pj_sockaddr_cp(&comp->dst_addr, dst_addr);
+-    	    	    comp->synth_addr_len = pj_sockaddr_get_len(
+-    	    	    			       &comp->synth_addr);
+-    	    	}
+-	    	dest_addr = &comp->synth_addr;
+-    	    	dest_addr_len = comp->synth_addr_len;
+-    	    } else {
+-    		dest_addr = dst_addr;
+-    		dest_addr_len = dst_addr_len;
+-    	    }
++		pj_stun_sock_info stun_sock_info;
++		pj_stun_sock_get_info(comp->stun[tp_idx].sock, &stun_sock_info);
++		pj_bool_t add_header = stun_sock_info.conn_type != PJ_STUN_TP_UDP;
++		if (add_header) {
++			//TCP
++			/*
++			 * RFC6544 ICE requires an agent to demultiplex STUN and
++			 * application-layer traffic, since they appear on the same port.  This
++			 * demultiplexing is described in [RFC5245] and is done using the magic
++			 * cookie and other fields of the message.  Stream-oriented transports
++			 * introduce another wrinkle, since they require a way to frame the
++			 * connection so that the application and STUN packets can be extracted
++			 * in order to differentiate STUN packets from application-layer
++			 * traffic.  For this reason, TCP media streams utilizing ICE use the
++			 * basic framing provided in RFC 4571 [RFC4571], even if the application
++			 * layer protocol is not RTP.
++			 */
++			pj_uint8_t header_1 = data_len % 256;
++			pj_uint8_t header_0 = data_len >> 8;
++			pj_size_t final_size = 2 + data_len;
++			char packet[final_size];
++			memcpy(packet, &(header_0), sizeof(pj_uint8_t));
++			memcpy(packet + 1, &(header_1), sizeof(pj_uint8_t));
++			memcpy(packet + 2, (unsigned char *)data, data_len);
++			status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, packet,
++								(unsigned)final_size, 0, dest_addr, dest_addr_len, size);
++			if (*size != final_size && ice_st) {
++				ice_st->is_pending = PJ_TRUE;
++			}
++			*size -= sizeof(pj_uint16_t);
++		} else {
++			// UDP
++			status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, data,
++								(unsigned)data_len, 0, dest_addr,
++								dest_addr_len, size);
++			if (*size != data_len && ice_st) {
++				ice_st->is_pending = PJ_TRUE;
++			}
++		}
+ 
+-	    status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, data,
+-					 (unsigned)data_len, 0, dest_addr,
+-					 dest_addr_len);
+-	    return (status==PJ_SUCCESS||status==PJ_EPENDING) ?
+-		    PJ_SUCCESS : status;
+-	}
++	    return status;
++    }
+ 
+-    } else
+-	return PJ_EINVALIDOP;
++  } else
++    return PJ_EINVALIDOP;
+ }
+ 
+ /*
+@@ -1619,7 +1735,11 @@ static void on_ice_complete(pj_ice_sess *ice, pj_status_t status)
+ 				      sizeof(lip), 3);
+ 		    pj_sockaddr_print(&check->rcand->addr, rip,
+ 				      sizeof(rip), 3);
+-
++#if PJ_HAS_TCP
++			if (comp->stun[0].sock) {
++				pj_stun_sock_select_outgoing(comp->stun[0].sock, &check->rcand->addr);
++			}
++#endif
+ 		    if (tp_typ == TP_TURN) {
+ 			/* Activate channel binding for the remote address
+ 			 * for more efficient data transfer using TURN.
+@@ -1687,12 +1807,16 @@ static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
+ 
+     PJ_ASSERT_RETURN(comp_id && comp_id <= ice_st->comp_cnt, PJ_EINVAL);
+ 
++	if (ice_st->is_pending) {
++		return PJ_EBUSY;
++	}
++
+     comp = ice_st->comp[comp_id-1];
+ 
+     TRACE_PKT((comp->ice_st->obj_name,
+ 	       "Component %d TX packet to %s:%d with transport %d",
+ 	       comp_id,
+-	       pj_sockaddr_print(dst_addr, daddr, sizeof(addr), 2),
++	       pj_sockaddr_print(dst_addr, daddr, sizeof(daddr), 2),
+ 	       pj_sockaddr_get_port(dst_addr),
+ 	       tp_typ));
+ 
+@@ -1728,12 +1852,53 @@ static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
+     	    dest_addr_len = dst_addr_len;
+     	}
+ 
+-	status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL,
+-				     pkt, (unsigned)size, 0,
+-				     dest_addr, dest_addr_len);
++        if (comp->stun[tp_idx].sock) {
++			pj_ssize_t sent_size;
++
++			pj_stun_sock_info stun_sock_info;
++			pj_stun_sock_get_info(comp->stun[tp_idx].sock, &stun_sock_info);
++			pj_bool_t add_header = stun_sock_info.conn_type != PJ_STUN_TP_UDP;
++			if (add_header) {
++				//TCP
++				/*
++				 * RFC6544 ICE requires an agent to demultiplex STUN and
++				 * application-layer traffic, since they appear on the same port.  This
++				 * demultiplexing is described in [RFC5245] and is done using the magic
++				 * cookie and other fields of the message.  Stream-oriented transports
++				 * introduce another wrinkle, since they require a way to frame the
++				 * connection so that the application and STUN packets can be extracted
++				 * in order to differentiate STUN packets from application-layer
++				 * traffic.  For this reason, TCP media streams utilizing ICE use the
++				 * basic framing provided in RFC 4571 [RFC4571], even if the application
++				 * layer protocol is not RTP.
++				 */
++				pj_uint8_t header_1 = size % 256;
++				pj_uint8_t header_0 = size >> 8;
++				pj_size_t final_size = 2 + size;
++				char packet[final_size];
++				memcpy(packet, &(header_0), sizeof(pj_uint8_t));
++				memcpy(packet + 1, &(header_1), sizeof(pj_uint8_t));
++				memcpy(packet + 2, (unsigned char *)pkt, size);
++				status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, packet,
++									(unsigned)final_size, 0, dest_addr, dest_addr_len, &sent_size);
++				if (sent_size != final_size) {
++					ice_st->is_pending = PJ_TRUE;
++				}
++			} else {
++				// UDP
++				status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, pkt,
++									(unsigned)size, 0, dest_addr, dest_addr_len, &sent_size);
++				if (sent_size != size) {
++					ice_st->is_pending = PJ_TRUE;
++				}
++			}
++
++		} else {
++          status = PJ_EINVALIDOP;
++        }
+     } else {
+ 	pj_assert(!"Invalid transport ID");
+-	status = PJ_EINVALIDOP;
++        status = PJ_EINVALIDOP;
+     }
+ 
+     return (status==PJ_SUCCESS||status==PJ_EPENDING) ? PJ_SUCCESS : status;
+@@ -1759,22 +1924,91 @@ static void ice_rx_data(pj_ice_sess *ice,
+     }
+ }
+ 
++static void on_peer_connection(pj_stun_session* sess, pj_status_t status, pj_sockaddr_t* remote_addr) {
++
++  sock_user_data *data;
++  pj_ice_strans_comp *comp;
++  pj_ice_strans *ice_st;
++  pj_stun_sock* stun_sock = (pj_stun_sock *)pj_stun_session_get_user_data(sess);
++  if (!stun_sock) {
++    /* We have disassociated ourselves from the STUN session */
++    return;
++  }
++  data = (sock_user_data *)pj_stun_sock_get_user_data(stun_sock);
++  if (data == NULL) {
++    /* We have disassociated ourselves from the STUN socket */
++    return;
++  }
++
++  comp = data->comp;
++  ice_st = comp->ice_st;
++  if (ice_st == NULL) {
++	  // Incorrect ICE
++	  return;
++  }
++
++  ice_sess_on_peer_connection(ice_st->ice, data->transport_id, status, remote_addr);
++}
++
++static pj_status_t ice_wait_tcp_connection(pj_ice_sess *ice,
++											pj_ice_sess_checklist *clist,
++											unsigned check_id) {
++	pj_ice_sess_check *check;
++	check = &clist->checks[check_id];
++	const pj_ice_sess_cand *lcand;
++	lcand = check->lcand;
++	const pj_ice_sess_cand *rcand;
++	rcand = check->rcand;
++
++	pj_ice_strans *ice_st = (pj_ice_strans *)ice->user_data;
++	pj_ice_strans_comp *st_comp = ice_st->comp[lcand->comp_id - 1];
++	if (st_comp->stun[0].sock) {
++        pj_stun_session *sess = pj_stun_sock_get_session(st_comp->stun[0].sock);
++        if (!sess) {
++          PJ_LOG(4, (ice_st->obj_name, "Comp %d: No STUN session.",
++                     st_comp->comp_id));
++          return PJ_EINVAL;
++        }
++        pj_stun_session_callback(sess)->on_peer_connection = &on_peer_connection;
++		return pj_stun_sock_connect_active(st_comp->stun[0].sock, &rcand->addr);
++	}
++
++	return PJ_EINVAL;
++}
++
++#if PJ_HAS_TCP
++static pj_status_t ice_close_tcp_connection(pj_ice_sess *ice,
++											pj_ice_sess_checklist *clist,
++											unsigned check_id) {
++	pj_ice_sess_check *check;
++	check = &clist->checks[check_id];
++	const pj_ice_sess_cand *lcand;
++	lcand = check->lcand;
++
++	pj_ice_strans *ice_st = (pj_ice_strans *)ice->user_data;
++	pj_ice_strans_comp *st_comp = ice_st->comp[lcand->comp_id - 1];
++	if (st_comp->stun[0].sock) {
++          const pj_ice_sess_cand *rcand = check->rcand;
++          return pj_stun_sock_close(st_comp->stun[0].sock, &rcand->addr);
++	}
++
++	return PJ_EINVAL;
++}
++#endif
++
+ /* Notification when incoming packet has been received from
+  * the STUN socket.
+  */
+-static pj_bool_t stun_on_rx_data(pj_stun_sock *stun_sock,
+-				 void *pkt,
+-				 unsigned pkt_len,
+-				 const pj_sockaddr_t *src_addr,
+-				 unsigned addr_len)
+-{
+-    sock_user_data *data;
+-    pj_ice_strans_comp *comp;
+-    pj_ice_strans *ice_st;
+-    pj_status_t status;
+-
+-    data = (sock_user_data*) pj_stun_sock_get_user_data(stun_sock);
+-    if (data == NULL) {
++    static pj_bool_t stun_on_rx_data(
++        pj_stun_sock * stun_sock, void *pkt, unsigned pkt_len,
++        const pj_sockaddr_t *src_addr, unsigned addr_len) {
++      sock_user_data *data;
++      pj_ice_strans_comp *comp;
++      pj_ice_strans *ice_st;
++      pj_status_t status;
++
++      data = (sock_user_data *)pj_stun_sock_get_user_data(stun_sock);
++      if (data == NULL) {
+ 	/* We have disassociated ourselves from the STUN socket */
+ 	return PJ_FALSE;
+     }
+@@ -1818,9 +2052,17 @@ static pj_bool_t stun_on_data_sent(pj_stun_sock *stun_sock,
+ 				   pj_ioqueue_op_key_t *send_key,
+ 				   pj_ssize_t sent)
+ {
+-    PJ_UNUSED_ARG(stun_sock);
+-    PJ_UNUSED_ARG(send_key);
+-    PJ_UNUSED_ARG(sent);
++    sock_user_data *data;
++    pj_ice_strans_comp *comp;
++    pj_ice_strans *ice_st;
++
++    data = (sock_user_data*) pj_stun_sock_get_user_data(stun_sock);
++    comp = data->comp;
++    ice_st = comp->ice_st;
++    ice_st->is_pending = PJ_FALSE;
++    if (ice_st->cb.on_data_sent) {
++      (*ice_st->cb.on_data_sent)(ice_st, comp->comp_id, sent);
++    }
+     return PJ_TRUE;
+ }
+ 
+@@ -2025,6 +2267,10 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+ 	    }
+ 	}
+ 	break;
++	case PJ_STUN_SESS_DESTROYED:
++	case PJ_STUN_TCP_CONNECT_ERROR:
++	default:
++	break;
+     }
+ 
+     return pj_grp_lock_dec_ref(ice_st->grp_lock)? PJ_FALSE : PJ_TRUE;
+@@ -2256,5 +2502,4 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
+     pj_grp_lock_dec_ref(comp->ice_st->grp_lock);
+ 
+     pj_log_pop_indent();
+-}
+-
++}
+\ No newline at end of file
+diff --git a/pjnath/src/pjnath/nat_detect.c b/pjnath/src/pjnath/nat_detect.c
+index 31b06c30c..bb081ad37 100644
+--- a/pjnath/src/pjnath/nat_detect.c
++++ b/pjnath/src/pjnath/nat_detect.c
+@@ -329,7 +329,8 @@ PJ_DEF(pj_status_t) pj_stun_detect_nat_type2(const pj_sockaddr *server,
+     sess_cb.on_request_complete = &on_request_complete;
+     sess_cb.on_send_msg = &on_send_msg;
+     status = pj_stun_session_create(stun_cfg, pool->obj_name, &sess_cb,
+-				    PJ_FALSE, sess->grp_lock, &sess->stun_sess);
++                                    PJ_FALSE, sess->grp_lock, &sess->stun_sess,
++                                    PJ_STUN_TP_UDP);
+     if (status != PJ_SUCCESS)
+ 	goto on_error;
+ 
+@@ -874,10 +875,11 @@ static pj_status_t send_test(nat_detect_session *sess,
+ 	      pj_sockaddr_get_port(sess->cur_server)));
+ 
+     /* Send the request */
+-    status = pj_stun_session_send_msg(sess->stun_sess, NULL, PJ_TRUE,
+-				      PJ_TRUE, sess->cur_server, 
+-				      pj_sockaddr_get_len(sess->cur_server),
+-				      sess->result[test_id].tdata);
++    status = pj_stun_session_send_msg(
++        sess->stun_sess, NULL, PJ_TRUE,
++        (pj_stun_session_tp_type(sess->stun_sess) == PJ_STUN_TP_UDP),
++        sess->cur_server, pj_sockaddr_get_len(sess->cur_server),
++        sess->result[test_id].tdata);
+     if (status != PJ_SUCCESS)
+ 	goto on_error;
+ 
+diff --git a/pjnath/src/pjnath/stun_session.c b/pjnath/src/pjnath/stun_session.c
+index 5e2efc35a..6ad07e284 100644
+--- a/pjnath/src/pjnath/stun_session.c
++++ b/pjnath/src/pjnath/stun_session.c
+@@ -49,6 +49,8 @@ struct pj_stun_session
+ 
+     pj_stun_tx_data	 pending_request_list;
+     pj_stun_tx_data	 cached_response_list;
++
++    pj_stun_tp_type conn_type;
+ };
+ 
+ #define SNAME(s_)		    ((s_)->pool->obj_name)
+@@ -505,7 +507,8 @@ PJ_DEF(pj_status_t) pj_stun_session_create( pj_stun_config *cfg,
+ 					    const pj_stun_session_cb *cb,
+ 					    pj_bool_t fingerprint,
+ 					    pj_grp_lock_t *grp_lock,
+-					    pj_stun_session **p_sess)
++					    pj_stun_session **p_sess,
++						pj_stun_tp_type conn_type)
+ {
+     pj_pool_t	*pool;
+     pj_stun_session *sess;
+@@ -526,6 +529,7 @@ PJ_DEF(pj_status_t) pj_stun_session_create( pj_stun_config *cfg,
+     pj_memcpy(&sess->cb, cb, sizeof(*cb));
+     sess->use_fingerprint = fingerprint;
+     sess->log_flag = 0xFFFF;
++    sess->conn_type = conn_type;
+ 
+     if (grp_lock) {
+ 	sess->grp_lock = grp_lock;
+@@ -1524,3 +1528,11 @@ pj_stun_session_set_server_cred(pj_stun_session *sess, const pj_str_t *nonce,
+   pj_strdup(sess->pool, &sess->next_nonce, nonce);
+   pj_strdup(sess->pool, &sess->server_realm, realm);
+ }
++
++PJ_DECL(pj_stun_session_cb *) pj_stun_session_callback(pj_stun_session *sess) {
++  return sess ? &sess->cb : NULL;
++}
++
++PJ_DECL(pj_stun_tp_type) pj_stun_session_tp_type(pj_stun_session *sess) {
++  return sess ? sess->conn_type : PJ_STUN_TP_UDP;
++}
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index 4031bb354..38e0a1bb7 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -1,5 +1,5 @@
+ /* $Id$ */
+-/* 
++/*
+  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+  *
+@@ -20,7 +20,6 @@
+ #include <pjnath/stun_sock.h>
+ #include <pjnath/errno.h>
+ #include <pjnath/stun_transaction.h>
+-#include <pjnath/stun_session.h>
+ #include <pjlib-util/srv_resolver.h>
+ #include <pj/activesock.h>
+ #include <pj/addr_resolv.h>
+@@ -40,52 +39,88 @@
+ 
+ enum { MAX_BIND_RETRY = 100 };
+ 
+-struct pj_stun_sock
+-{
+-    char		*obj_name;	/* Log identification	    */
+-    pj_pool_t		*pool;		/* Pool			    */
+-    void		*user_data;	/* Application user data    */
+-    pj_bool_t		 is_destroying; /* Destroy already called   */
+-    int			 af;		/* Address family	    */
+-    pj_stun_config	 stun_cfg;	/* STUN config (ioqueue etc)*/
+-    pj_stun_sock_cb	 cb;		/* Application callbacks    */
+-
+-    int			 ka_interval;	/* Keep alive interval	    */
+-    pj_timer_entry	 ka_timer;	/* Keep alive timer.	    */
+-
+-    pj_sockaddr		 srv_addr;	/* Resolved server addr	    */
+-    pj_sockaddr		 mapped_addr;	/* Our public address	    */
+-
+-    pj_dns_srv_async_query *q;		/* Pending DNS query	    */
+-    pj_sock_t		 sock_fd;	/* Socket descriptor	    */
+-    pj_activesock_t	*active_sock;	/* Active socket object	    */
+-    pj_ioqueue_op_key_t	 send_key;	/* Default send key for app */
+-    pj_ioqueue_op_key_t	 int_send_key;	/* Send key for internal    */
+-
+-    pj_uint16_t		 tsx_id[6];	/* .. to match STUN msg	    */
+-    pj_stun_session	*stun_sess;	/* STUN session		    */
+-    pj_grp_lock_t	*grp_lock;	/* Session group lock	    */
+-};
++#if PJ_HAS_TCP
++// The head of a RTP packet is stored in a 16 bits header, so the max size of a
++// packet is 65536
++#define MAX_RTP_SIZE 65536
++#endif
++
++typedef struct outgoing_sock {
++  pj_sock_t           fd;
++  pj_activesock_t    *sock;
++  pj_sockaddr_t      *addr;
++  int                 linked_check;
++} outgoing_sock;
++
++typedef struct pj_stun_sock {
++  char *obj_name;          /* Log identification         */
++  pj_pool_t *pool;         /* Pool                       */
++  void *user_data;         /* Application user data      */
++  pj_bool_t is_destroying; /* Destroy already called     */
++  int af;                  /* Address family             */
++  pj_stun_tp_type conn_type;
++  pj_stun_sock_cfg setting;
++  pj_stun_config cfg; /* STUN config (ioqueue etc)  */
++  pj_stun_sock_cb cb; /* Application callbacks      */
++
++  int ka_interval;         /* Keep alive interval        */
++  pj_timer_entry ka_timer; /* Keep alive timer.          */
++
++  pj_sockaddr srv_addr;    /* Resolved server addr       */
++  pj_sockaddr mapped_addr; /* Our public address         */
++
++  pj_dns_srv_async_query *q;  /* Pending DNS query          */
++  pj_sock_t main_sock_fd;     /* Socket descriptor          */
++  pj_activesock_t *main_sock; /* Active socket object       */
++#if PJ_HAS_TCP
++  int              outgoing_nb;
++  outgoing_sock    outgoing_socks[PJ_ICE_MAX_CHECKS];
++  pj_activesock_t *incoming_sock; /* Active socket object       */
++  pj_sock_t        incoming_sock_fd;     /* Socket descriptor          */
++  pj_sockaddr_t   *incoming_addr;
++  int incoming_addr_len;
++  pj_uint8_t       rx_buffer[MAX_RTP_SIZE];
++  pj_uint16_t      rx_buffer_size;
++  pj_uint16_t      rx_wanted_size;
++#endif
++  pj_ioqueue_op_key_t send_key;     /* Default send key for app   */
++  pj_ioqueue_op_key_t int_send_key; /* Send key for internal      */
++
++  pj_uint16_t tsx_id[6];      /* .. to match STUN msg       */
++  pj_stun_session *stun_sess; /* STUN session               */
++  pj_grp_lock_t *grp_lock;    /* Session group lock         */
++} pj_stun_sock;
+ 
+ /* 
+  * Prototypes for static functions 
+  */
+ 
++static pj_bool_t on_stun_sock_ready(pj_activesock_t *asock, pj_status_t status);
++
++static pj_bool_t on_stun_sock_accept(pj_activesock_t *asock, pj_sock_t newsock,
++                                     const pj_sockaddr_t *src_addr,
++                                     int src_addr_len);
++
++pj_bool_t on_connect_complete(pj_activesock_t *asock, pj_status_t status);
++
+ /* Destructor for group lock */
+ static void stun_sock_destructor(void *obj);
+ 
+ /* This callback is called by the STUN session to send packet */
+-static pj_status_t sess_on_send_msg(pj_stun_session *sess,
++pj_status_t sess_on_send_msg(pj_stun_session *sess,
+ 				    void *token,
+ 				    const void *pkt,
+ 				    pj_size_t pkt_size,
+ 				    const pj_sockaddr_t *dst_addr,
+ 				    unsigned addr_len);
+ 
++static pj_bool_t sess_fail(pj_stun_sock *stun_sock, pj_stun_sock_op op,
++                           pj_status_t status);
++
+ /* This callback is called by the STUN session when outgoing transaction 
+  * is complete
+  */
+-static void sess_on_request_complete(pj_stun_session *sess,
++void sess_on_request_complete(pj_stun_session *sess,
+ 				     pj_status_t status,
+ 				     void *token,
+ 				     pj_stun_tx_data *tdata,
+@@ -101,7 +136,7 @@ static void dns_srv_resolver_cb(void *user_data,
+ static pj_status_t get_mapped_addr(pj_stun_sock *stun_sock);
+ 
+ /* Callback from active socket when incoming packet is received */
+-static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
++pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+ 				  void *data,
+ 				  pj_size_t size,
+ 				  const pj_sockaddr_t *src_addr,
+@@ -109,15 +144,15 @@ static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+ 				  pj_status_t status);
+ 
+ /* Callback from active socket about send status */
+-static pj_bool_t on_data_sent(pj_activesock_t *asock,
++pj_bool_t on_data_sent(pj_activesock_t *asock,
+ 			      pj_ioqueue_op_key_t *send_key,
+ 			      pj_ssize_t sent);
+ 
+ /* Schedule keep-alive timer */
+-static void start_ka_timer(pj_stun_sock *stun_sock);
++void start_ka_timer(pj_stun_sock *stun_sock);
+ 
+ /* Keep-alive timer callback */
+-static void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te);
++void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te);
+ 
+ #define INTERNAL_MSG_TOKEN  (void*)(pj_ssize_t)1
+ 
+@@ -160,206 +195,315 @@ static pj_bool_t pj_stun_sock_cfg_is_valid(const pj_stun_sock_cfg *cfg)
+ }
+ 
+ /*
+- * Create the STUN transport using the specified configuration.
++ * Initialize.
+  */
+-PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *stun_cfg,
+-					 const char *name,
+-					 int af,
+-					 const pj_stun_sock_cb *cb,
+-					 const pj_stun_sock_cfg *cfg,
+-					 void *user_data,
+-					 pj_stun_sock **p_stun_sock)
+-{
+-    pj_pool_t *pool;
+-    pj_stun_sock *stun_sock;
+-    pj_stun_sock_cfg default_cfg;
+-    pj_sockaddr bound_addr;
+-    unsigned i;
+-    pj_uint16_t max_bind_retry;
+-    pj_status_t status;
++PJ_DEF(pj_status_t) pj_stun_sock_alloc(pj_stun_sock *stun_sock) {
++  pj_status_t status;
++  pj_sockaddr bound_addr;
++  pj_uint16_t max_bind_retry;
++  int sock_type;
++
++  pj_grp_lock_acquire(stun_sock->grp_lock);
++
++  if (stun_sock->conn_type == PJ_STUN_TP_UDP)
++    sock_type = pj_SOCK_DGRAM();
++  else
++    sock_type = pj_SOCK_STREAM();
++
++  stun_sock->ka_interval = stun_sock->setting.ka_interval;
++  if (stun_sock->ka_interval == 0)
++    stun_sock->ka_interval = PJ_STUN_KEEP_ALIVE_SEC;
++  /* Create socket and bind socket */
++  status =
++      pj_sock_socket(stun_sock->af, sock_type, 0, &stun_sock->main_sock_fd);
++  if (status != PJ_SUCCESS) {
++    pj_stun_sock_destroy(stun_sock);
++    pj_grp_lock_release(stun_sock->grp_lock);
++    return status;
++  }
+ 
+-    PJ_ASSERT_RETURN(stun_cfg && cb && p_stun_sock, PJ_EINVAL);
+-    PJ_ASSERT_RETURN(af==pj_AF_INET()||af==pj_AF_INET6(), PJ_EAFNOTSUP);
+-    PJ_ASSERT_RETURN(!cfg || pj_stun_sock_cfg_is_valid(cfg), PJ_EINVAL);
+-    PJ_ASSERT_RETURN(cb->on_status, PJ_EINVAL);
++  /* Apply QoS, if specified */
++  status = pj_sock_apply_qos2(
++      stun_sock->main_sock_fd, stun_sock->setting.qos_type,
++      &stun_sock->setting.qos_params, 2, stun_sock->obj_name, NULL);
++  if (status != PJ_SUCCESS && !stun_sock->setting.qos_ignore_error) {
++    pj_stun_sock_destroy(stun_sock);
++    pj_grp_lock_release(stun_sock->grp_lock);
++    return status;
++  }
+ 
+-    status = pj_stun_config_check_valid(stun_cfg);
+-    if (status != PJ_SUCCESS)
+-	return status;
++  /* Apply socket buffer size */
++  if (stun_sock->setting.so_rcvbuf_size > 0) {
++    unsigned sobuf_size = stun_sock->setting.so_rcvbuf_size;
++    status = pj_sock_setsockopt_sobuf(stun_sock->main_sock_fd, pj_SO_RCVBUF(),
++                                      PJ_TRUE, &sobuf_size);
++    if (status != PJ_SUCCESS) {
++      pj_perror(3, stun_sock->obj_name, status, "Failed setting SO_RCVBUF");
++    } else {
++      if (sobuf_size < stun_sock->setting.so_rcvbuf_size) {
++        PJ_LOG(4, (stun_sock->obj_name,
++                   "Warning! Cannot set SO_RCVBUF as configured, "
++                   "now=%d, configured=%d",
++                   sobuf_size, stun_sock->setting.so_rcvbuf_size));
++      } else {
++        PJ_LOG(5, (stun_sock->obj_name, "SO_RCVBUF set to %d", sobuf_size));
++      }
++    }
++  }
++  if (stun_sock->setting.so_sndbuf_size > 0) {
++    unsigned sobuf_size = stun_sock->setting.so_sndbuf_size;
++    status = pj_sock_setsockopt_sobuf(stun_sock->main_sock_fd, pj_SO_SNDBUF(),
++                                      PJ_TRUE, &sobuf_size);
++    if (status != PJ_SUCCESS) {
++      pj_perror(3, stun_sock->obj_name, status, "Failed setting SO_SNDBUF");
++    } else {
++      if (sobuf_size < stun_sock->setting.so_sndbuf_size) {
++        PJ_LOG(4, (stun_sock->obj_name,
++                   "Warning! Cannot set SO_SNDBUF as configured, "
++                   "now=%d, configured=%d",
++                   sobuf_size, stun_sock->setting.so_sndbuf_size));
++      } else {
++        PJ_LOG(5, (stun_sock->obj_name, "SO_SNDBUF set to %d", sobuf_size));
++      }
++    }
++  }
++
++  /* Bind socket */
++  max_bind_retry = MAX_BIND_RETRY;
++  if (stun_sock->setting.port_range &&
++      stun_sock->setting.port_range < max_bind_retry)
++    max_bind_retry = stun_sock->setting.port_range;
++  pj_sockaddr_init(stun_sock->af, &bound_addr, NULL, 0);
++  if (stun_sock->setting.bound_addr.addr.sa_family == pj_AF_INET() ||
++      stun_sock->setting.bound_addr.addr.sa_family == pj_AF_INET6()) {
++    pj_sockaddr_cp(&bound_addr, &stun_sock->setting.bound_addr);
++  }
++  status = pj_sock_bind_random(stun_sock->main_sock_fd, &bound_addr,
++                               stun_sock->setting.port_range, max_bind_retry);
++  if (status != PJ_SUCCESS) {
++    pj_stun_sock_destroy(stun_sock);
++    pj_grp_lock_release(stun_sock->grp_lock);
++    return status;
++  }
++
++  /* Init active socket configuration */
++  {
++    pj_activesock_cfg activesock_cfg;
++    pj_activesock_cb activesock_cb;
++
++    pj_activesock_cfg_default(&activesock_cfg);
++    activesock_cfg.grp_lock = stun_sock->grp_lock;
++    activesock_cfg.async_cnt = stun_sock->setting.async_cnt;
++    activesock_cfg.concurrency = 0;
++
++    /* Create the active socket */
++    pj_bzero(&activesock_cb, sizeof(activesock_cb));
++    activesock_cb.on_data_sent = &on_data_sent;
++    activesock_cb.on_data_recvfrom = &on_data_recvfrom;
++
++#if PJ_HAS_TCP
++    if (stun_sock->conn_type != PJ_STUN_TP_UDP) {
++      activesock_cb.on_accept_complete = &on_stun_sock_accept;
++      // Will be ready to accept incoming connections from the external world
++      status = pj_sock_listen(stun_sock->main_sock_fd, PJ_SOMAXCONN);
++      if (status != PJ_SUCCESS) {
++        pj_stun_sock_destroy(stun_sock);
++        pj_grp_lock_release(stun_sock->grp_lock);
++        return status;
++      }
++    } else {
++      activesock_cb.on_connect_complete = &on_stun_sock_ready;
++    }
++#else
++    activesock_cb.on_connect_complete = &on_stun_sock_ready;
++#endif
+ 
+-    if (name == NULL)
+-	name = "stuntp%p";
++    status =
++        pj_activesock_create(stun_sock->pool, stun_sock->main_sock_fd,
++                             sock_type, &activesock_cfg, stun_sock->cfg.ioqueue,
++                             &activesock_cb, stun_sock, &stun_sock->main_sock);
+ 
+-    if (cfg == NULL) {
+-	pj_stun_sock_cfg_default(&default_cfg);
+-	cfg = &default_cfg;
++    if (status != PJ_SUCCESS) {
++      pj_stun_sock_destroy(stun_sock);
++      pj_grp_lock_release(stun_sock->grp_lock);
++      return status;
+     }
+ 
++#if PJ_HAS_TCP
++    if (stun_sock->conn_type != PJ_STUN_TP_UDP) {
++      status =
++          pj_activesock_start_accept(stun_sock->main_sock, stun_sock->pool);
++    } else {
++      status = PJ_SUCCESS;
++    }
++    if (status == PJ_SUCCESS) {
++      on_stun_sock_ready(stun_sock->main_sock, PJ_SUCCESS);
++    } else if (status != PJ_EPENDING) {
++      char addrinfo[PJ_INET6_ADDRSTRLEN + 10];
++      pj_perror(3, stun_sock->pool->obj_name, status, "Failed to connect to %s",
++                pj_sockaddr_print(&bound_addr, addrinfo, sizeof(addrinfo), 3));
++      pj_stun_sock_destroy(stun_sock);
++      pj_grp_lock_release(stun_sock->grp_lock);
++      return status;
++    }
++#else
++    on_stun_sock_ready(stun_sock->main_sock, PJ_SUCCESS);
++#endif
++  }
+ 
+-    /* Create structure */
+-    pool = pj_pool_create(stun_cfg->pf, name, 256, 512, NULL);
+-    stun_sock = PJ_POOL_ZALLOC_T(pool, pj_stun_sock);
+-    stun_sock->pool = pool;
+-    stun_sock->obj_name = pool->obj_name;
+-    stun_sock->user_data = user_data;
+-    stun_sock->af = af;
+-    stun_sock->sock_fd = PJ_INVALID_SOCKET;
+-    pj_memcpy(&stun_sock->stun_cfg, stun_cfg, sizeof(*stun_cfg));
+-    pj_memcpy(&stun_sock->cb, cb, sizeof(*cb));
++  pj_grp_lock_release(stun_sock->grp_lock);
++  return status;
++}
+ 
+-    stun_sock->ka_interval = cfg->ka_interval;
+-    if (stun_sock->ka_interval == 0)
+-	stun_sock->ka_interval = PJ_STUN_KEEP_ALIVE_SEC;
++/*
++ * Create the STUN transport using the specified configuration.
++ */
++PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *cfg,
++                                         const char *name,
++                                         int af,
++                                         pj_stun_tp_type conn_type,
++                                         const pj_stun_sock_cb *cb,
++                                         const pj_stun_sock_cfg *setting,
++                                         void *user_data,
++pj_stun_sock **p_stun_sock)
++{
++  pj_stun_sock *stun_sock;
++  pj_stun_sock_cfg default_cfg;
++  pj_pool_t *pool;
++  pj_status_t status;
++
++  PJ_ASSERT_RETURN(cfg && cb && p_stun_sock, PJ_EINVAL);
++  PJ_ASSERT_RETURN(af == pj_AF_INET() || af == pj_AF_INET6(), PJ_EAFNOTSUP);
++  PJ_ASSERT_RETURN(!setting || pj_stun_sock_cfg_is_valid(setting), PJ_EINVAL);
++  PJ_ASSERT_RETURN(cb->on_status, PJ_EINVAL);
++  PJ_ASSERT_RETURN(conn_type != PJ_STUN_TP_TCP || PJ_HAS_TCP, PJ_EINVAL);
++
++  status = pj_stun_config_check_valid(cfg);
++  if (status != PJ_SUCCESS)
++    return status;
+ 
+-    if (cfg->grp_lock) {
+-	stun_sock->grp_lock = cfg->grp_lock;
+-    } else {
+-	status = pj_grp_lock_create(pool, NULL, &stun_sock->grp_lock);
+-	if (status != PJ_SUCCESS) {
+-	    pj_pool_release(pool);
+-	    return status;
+-	}
++  if (!setting) {
++    pj_stun_sock_cfg_default(&default_cfg);
++    setting = &default_cfg;
++  }
++
++  if (!name) {
++    switch (conn_type) {
++    case PJ_STUN_TP_UDP:
++      name = "udpstun%p";
++      break;
++    case PJ_STUN_TP_TCP:
++      name = "tcpstun%p";
++      break;
++    default:
++      PJ_ASSERT_RETURN(!"Invalid STUN conn_type", PJ_EINVAL);
++      name = "tcpstun%p";
++      break;
+     }
++  }
++
++  /* Create and init basic data structure */
++  const int PJNATH_POOL_LEN_STUN_SOCK = 256;
++  const int PJNATH_POOL_INC_STUN_SOCK = 512;
++  pool = pj_pool_create(cfg->pf, name, PJNATH_POOL_LEN_STUN_SOCK,
++                        PJNATH_POOL_INC_STUN_SOCK, NULL);
++  stun_sock = PJ_POOL_ZALLOC_T(pool, pj_stun_sock);
++  stun_sock->pool = pool;
++  stun_sock->obj_name = pool->obj_name;
++  stun_sock->user_data = user_data;
++  stun_sock->af = af;
++  stun_sock->conn_type = conn_type;
++  stun_sock->main_sock_fd = PJ_INVALID_SOCKET;
++#if PJ_HAS_TCP
++  stun_sock->outgoing_nb = -1;
++#endif
+ 
+-    pj_grp_lock_add_ref(stun_sock->grp_lock);
+-    pj_grp_lock_add_handler(stun_sock->grp_lock, pool, stun_sock,
+-			    &stun_sock_destructor);
++  /* Copy STUN config (this contains ioqueue, timer heap, etc.) */
++  pj_memcpy(&stun_sock->cfg, cfg, sizeof(*cfg));
+ 
+-    /* Create socket and bind socket */
+-    status = pj_sock_socket(af, pj_SOCK_DGRAM(), 0, &stun_sock->sock_fd);
+-    if (status != PJ_SUCCESS)
+-	goto on_error;
++  /* Copy setting (QoS parameters etc */
++  pj_memcpy(&stun_sock->setting, setting, sizeof(*setting));
+ 
+-    /* Apply QoS, if specified */
+-    status = pj_sock_apply_qos2(stun_sock->sock_fd, cfg->qos_type,
+-				&cfg->qos_params, 2, stun_sock->obj_name,
+-				NULL);
+-    if (status != PJ_SUCCESS && !cfg->qos_ignore_error)
+-	goto on_error;
++  /* Set callback */
++  pj_memcpy(&stun_sock->cb, cb, sizeof(*cb));
+ 
+-    /* Apply socket buffer size */
+-    if (cfg->so_rcvbuf_size > 0) {
+-	unsigned sobuf_size = cfg->so_rcvbuf_size;
+-	status = pj_sock_setsockopt_sobuf(stun_sock->sock_fd, pj_SO_RCVBUF(),
+-					  PJ_TRUE, &sobuf_size);
+-	if (status != PJ_SUCCESS) {
+-	    pj_perror(3, stun_sock->obj_name, status,
+-		      "Failed setting SO_RCVBUF");
+-	} else {
+-	    if (sobuf_size < cfg->so_rcvbuf_size) {
+-		PJ_LOG(4, (stun_sock->obj_name, 
+-			   "Warning! Cannot set SO_RCVBUF as configured, "
+-			   "now=%d, configured=%d",
+-			   sobuf_size, cfg->so_rcvbuf_size));
+-	    } else {
+-		PJ_LOG(5, (stun_sock->obj_name, "SO_RCVBUF set to %d",
+-			   sobuf_size));
+-	    }
+-	}
++  if (setting->grp_lock) {
++    stun_sock->grp_lock = setting->grp_lock;
++  } else {
++    status = pj_grp_lock_create(pool, NULL, &stun_sock->grp_lock);
++    if (status != PJ_SUCCESS) {
++      pj_pool_release(pool);
++      return status;
+     }
+-    if (cfg->so_sndbuf_size > 0) {
+-	unsigned sobuf_size = cfg->so_sndbuf_size;
+-	status = pj_sock_setsockopt_sobuf(stun_sock->sock_fd, pj_SO_SNDBUF(),
+-					  PJ_TRUE, &sobuf_size);
+-	if (status != PJ_SUCCESS) {
+-	    pj_perror(3, stun_sock->obj_name, status,
+-		      "Failed setting SO_SNDBUF");
+-	} else {
+-	    if (sobuf_size < cfg->so_sndbuf_size) {
+-		PJ_LOG(4, (stun_sock->obj_name, 
+-			   "Warning! Cannot set SO_SNDBUF as configured, "
+-			   "now=%d, configured=%d",
+-			   sobuf_size, cfg->so_sndbuf_size));
+-	    } else {
+-		PJ_LOG(5, (stun_sock->obj_name, "SO_SNDBUF set to %d",
+-			   sobuf_size));
+-	    }
+-	}
++  }
++
++  pj_grp_lock_add_ref(stun_sock->grp_lock);
++  pj_grp_lock_add_handler(stun_sock->grp_lock, pool, stun_sock,
++                          &stun_sock_destructor);
++
++  /* Create STUN session */
++  {
++    pj_stun_session_cb sess_cb;
++
++    pj_bzero(&sess_cb, sizeof(sess_cb));
++    sess_cb.on_request_complete = &sess_on_request_complete;
++    sess_cb.on_send_msg = &sess_on_send_msg;
++    status = pj_stun_session_create(&stun_sock->cfg, stun_sock->obj_name,
++                                    &sess_cb, PJ_FALSE, stun_sock->grp_lock,
++                                    &stun_sock->stun_sess, conn_type);
++    if (status != PJ_SUCCESS) {
++      pj_stun_sock_destroy(stun_sock);
++      return status;
+     }
++  }
+ 
+-    /* Bind socket */
+-    max_bind_retry = MAX_BIND_RETRY;
+-    if (cfg->port_range && cfg->port_range < max_bind_retry)
+-	max_bind_retry = cfg->port_range;
+-    pj_sockaddr_init(af, &bound_addr, NULL, 0);
+-    if (cfg->bound_addr.addr.sa_family == pj_AF_INET() || 
+-	cfg->bound_addr.addr.sa_family == pj_AF_INET6())
+-    {
+-	pj_sockaddr_cp(&bound_addr, &cfg->bound_addr);
+-    }
+-    status = pj_sock_bind_random(stun_sock->sock_fd, &bound_addr,
+-				 cfg->port_range, max_bind_retry);
+-    if (status != PJ_SUCCESS)
+-	goto on_error;
++  pj_stun_sock_alloc(stun_sock);
+ 
+-    /* Create more useful information string about this transport */
+-#if 0
+-    {
+-	pj_sockaddr bound_addr;
+-	int addr_len = sizeof(bound_addr);
++  /* Done */
++  *p_stun_sock = stun_sock;
++  return PJ_SUCCESS;
++}
+ 
+-	status = pj_sock_getsockname(stun_sock->sock_fd, &bound_addr, 
+-				     &addr_len);
+-	if (status != PJ_SUCCESS)
+-	    goto on_error;
+ 
+-	stun_sock->info = pj_pool_alloc(pool, PJ_INET6_ADDRSTRLEN+10);
+-	pj_sockaddr_print(&bound_addr, stun_sock->info, 
+-			  PJ_INET6_ADDRSTRLEN, 3);
++/*
++ * Notification when outgoing TCP socket has been connected.
++ */
++static pj_bool_t
++on_stun_sock_ready(pj_activesock_t *asock, pj_status_t status)
++{
++  pj_stun_sock *stun_sock;
++  stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock);
++  if (!stun_sock)
++    return PJ_FALSE;
++
++  pj_grp_lock_acquire(stun_sock->grp_lock);
++
++  /* TURN session may have already been destroyed here.
++   * See ticket #1557 (http://trac.pjsip.org/repos/ticket/1557).
++   */
++  if (!stun_sock->stun_sess) {
++    sess_fail(stun_sock, PJ_STUN_SESS_DESTROYED, status);
++    pj_grp_lock_release(stun_sock->grp_lock);
++    return PJ_FALSE;
+     }
+-#endif
+ 
+-    /* Init active socket configuration */
+-    {
+-	pj_activesock_cfg activesock_cfg;
+-	pj_activesock_cb activesock_cb;
+-
+-	pj_activesock_cfg_default(&activesock_cfg);
+-	activesock_cfg.grp_lock = stun_sock->grp_lock;
+-	activesock_cfg.async_cnt = cfg->async_cnt;
+-	activesock_cfg.concurrency = 0;
+-
+-	/* Create the active socket */
+-	pj_bzero(&activesock_cb, sizeof(activesock_cb));
+-	activesock_cb.on_data_recvfrom = &on_data_recvfrom;
+-	activesock_cb.on_data_sent = &on_data_sent;
+-	status = pj_activesock_create(pool, stun_sock->sock_fd, 
+-				      pj_SOCK_DGRAM(), 
+-				      &activesock_cfg, stun_cfg->ioqueue,
+-				      &activesock_cb, stun_sock,
+-				      &stun_sock->active_sock);
+-	if (status != PJ_SUCCESS)
+-	    goto on_error;
+-
+-	/* Start asynchronous read operations */
+-	status = pj_activesock_start_recvfrom(stun_sock->active_sock, pool,
+-					      cfg->max_pkt_size, 0);
+-	if (status != PJ_SUCCESS)
+-	    goto on_error;
+-
+-	/* Init send keys */
+-	pj_ioqueue_op_key_init(&stun_sock->send_key, 
+-			       sizeof(stun_sock->send_key));
+-	pj_ioqueue_op_key_init(&stun_sock->int_send_key,
+-			       sizeof(stun_sock->int_send_key));
++    if (status != PJ_SUCCESS) {
++      sess_fail(stun_sock, PJ_STUN_TCP_CONNECT_ERROR, status);
++      pj_grp_lock_release(stun_sock->grp_lock);
++      return PJ_FALSE;
+     }
+ 
+-    /* Create STUN session */
+-    {
+-	pj_stun_session_cb sess_cb;
+-
+-	pj_bzero(&sess_cb, sizeof(sess_cb));
+-	sess_cb.on_request_complete = &sess_on_request_complete;
+-	sess_cb.on_send_msg = &sess_on_send_msg;
+-	status = pj_stun_session_create(&stun_sock->stun_cfg, 
+-					stun_sock->obj_name,
+-					&sess_cb, PJ_FALSE, 
+-					stun_sock->grp_lock,
+-					&stun_sock->stun_sess);
+-	if (status != PJ_SUCCESS)
+-	    goto on_error;
++    if (stun_sock->conn_type != PJ_STUN_TP_UDP) {
++        PJ_LOG(5,(stun_sock->obj_name, "TCP connected"));
+     }
+ 
++    /* Start asynchronous read operations */
++    pj_status_t result = pj_activesock_start_recvfrom(
++        asock, stun_sock->pool, stun_sock->setting.max_pkt_size, 0);
++    if (result != PJ_SUCCESS) {
++        return PJ_FALSE;
++    };
++
+     /* Associate us with the STUN session */
+     pj_stun_session_set_user_data(stun_sock->stun_sess, stun_sock);
+ 
+@@ -368,8 +512,9 @@ PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *stun_cfg,
+      * STUN messages we sent with STUN messages that the application sends.
+      * The last 16bit value in the array is a counter.
+      */
++    unsigned i;
+     for (i=0; i<PJ_ARRAY_SIZE(stun_sock->tsx_id); ++i) {
+-	stun_sock->tsx_id[i] = (pj_uint16_t) pj_rand();
++        stun_sock->tsx_id[i] = (pj_uint16_t) pj_rand();
+     }
+     stun_sock->tsx_id[5] = 0;
+ 
+@@ -378,15 +523,235 @@ PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *stun_cfg,
+     stun_sock->ka_timer.cb = &ka_timer_cb;
+     stun_sock->ka_timer.user_data = stun_sock;
+ 
+-    /* Done */
+-    *p_stun_sock = stun_sock;
+-    return PJ_SUCCESS;
++    if (status != PJ_SUCCESS) {
++        pj_stun_sock_destroy(stun_sock);
++        pj_grp_lock_release(stun_sock->grp_lock);
++        return status;
++    }
+ 
+-on_error:
+-    pj_stun_sock_destroy(stun_sock);
+-    return status;
++    /* Init send keys */
++    pj_ioqueue_op_key_init(&stun_sock->send_key,
++                           sizeof(stun_sock->send_key));
++    pj_ioqueue_op_key_init(&stun_sock->int_send_key,
++                           sizeof(stun_sock->int_send_key));
++
++    pj_grp_lock_release(stun_sock->grp_lock);
++    return PJ_TRUE;
++}
++
++pj_bool_t
++parse_rx_packet(pj_stun_sock *stun_sock, void *data, pj_size_t size,
++                const pj_sockaddr_t *rx_addr, unsigned sock_addr_len) {
++    pj_size_t parsed = 0;
++    pj_status_t result = PJ_TRUE;
++    pj_status_t status;
++
++    do {
++        pj_uint16_t pkt_len = size - parsed;
++        pj_uint8_t *current_packet = data + parsed;
++        pj_grp_lock_acquire(stun_sock->grp_lock);
++
++#if PJ_HAS_TCP
++        if (stun_sock->conn_type != PJ_STUN_TP_UDP) {
++            /* RFC6544, the packet is wrapped into a packet following the RFC4571 */
++            pj_bool_t store_remaining = PJ_TRUE;
++            if (stun_sock->rx_buffer_size != 0 || stun_sock->rx_wanted_size != 0) {
++                // We currently have a packet to complete
++                if (stun_sock->rx_buffer_size == 1) {
++                    // We do not know the current size, parse it.
++                    pkt_len = (((pj_uint8_t *)stun_sock->rx_buffer)[0] << 8) +
++                              ((pj_uint8_t *)current_packet)[0];
++                    stun_sock->rx_buffer_size = 0; // We have eaten the temp packet.
++                    current_packet = current_packet + 1;
++                    parsed += 1;
++                    if (pkt_len + parsed <= size) {
++                      store_remaining = PJ_FALSE;
++                      parsed += pkt_len;
++                    } else {
++                      stun_sock->rx_wanted_size = pkt_len;
++                    }
++                } else if (pkt_len + stun_sock->rx_buffer_size >= stun_sock->rx_wanted_size) {
++                    // We have enough data Build new packet to parse
++                    store_remaining = PJ_FALSE;
++                    pj_uint16_t eaten_bytes = stun_sock->rx_wanted_size - stun_sock->rx_buffer_size;
++                    memcpy(stun_sock->rx_buffer + stun_sock->rx_buffer_size,
++                           current_packet, eaten_bytes);
++                    pkt_len = stun_sock->rx_wanted_size;
++                    current_packet = stun_sock->rx_buffer;
++                    parsed += eaten_bytes;
++                    stun_sock->rx_buffer_size = 0;
++                    stun_sock->rx_wanted_size = 0;
++                }
++            } else if (pkt_len > 1) {
++                pkt_len = (((pj_uint8_t *)current_packet)[0] << 8) + ((pj_uint8_t *)current_packet)[1];
++                current_packet = current_packet + 2;
++                parsed += 2;
++                if (pkt_len + parsed <= size) {
++                    store_remaining = PJ_FALSE;
++                    parsed += pkt_len;
++                } else {
++                    stun_sock->rx_wanted_size = pkt_len;
++                }
++            }
++            if (store_remaining) {
++                pj_uint16_t stored_size = size - parsed;
++                memcpy(stun_sock->rx_buffer + stun_sock->rx_buffer_size,
++                        current_packet, stored_size);
++                stun_sock->rx_buffer_size += stored_size;
++                status = pj_grp_lock_release(stun_sock->grp_lock);
++                result &= status != PJ_EGONE ? PJ_TRUE : PJ_FALSE;
++                break;
++            }
++        } else {
++#endif
++          parsed = size;
++#if PJ_HAS_TCP
++        }
++#endif
++
++        /* Check that this is STUN message */
++        status = pj_stun_msg_check((const pj_uint8_t *)current_packet, pkt_len,
++                                   PJ_STUN_IS_DATAGRAM | PJ_STUN_CHECK_PACKET);
++        if (status != PJ_SUCCESS) {
++          /* Not STUN -- give it to application */
++          goto process_app_data;
++        }
++
++        /* Treat packet as STUN header and copy the STUN message type.
++         * We don't want to access the type directly from the header
++         * since it may not be properly aligned.
++         */
++        pj_stun_msg_hdr *hdr = (pj_stun_msg_hdr *)current_packet;
++        pj_uint16_t type;
++        pj_memcpy(&type, &hdr->type, 2);
++        type = pj_ntohs(type);
++
++        /* If the packet is a STUN Binding response and part of the
++         * transaction ID matches our internal ID, then this is
++         * our internal STUN message (Binding request or keep alive).
++         * Give it to our STUN session.
++         */
++        if (!PJ_STUN_IS_RESPONSE(type) ||
++            PJ_STUN_GET_METHOD(type) != PJ_STUN_BINDING_METHOD ||
++            pj_memcmp(hdr->tsx_id, stun_sock->tsx_id, 10) != 0) {
++          /* Not STUN Binding response, or STUN transaction ID mismatch.
++           * This is not our message too -- give it to application.
++           */
++          goto process_app_data;
++        }
++
++        /* This is our STUN Binding response. Give it to the STUN session */
++        status = pj_stun_session_on_rx_pkt(stun_sock->stun_sess, current_packet,
++                                           pkt_len, PJ_STUN_IS_DATAGRAM, NULL,
++                                           NULL, rx_addr, sock_addr_len);
++
++        status = pj_grp_lock_release(stun_sock->grp_lock);
++        result &= status != PJ_EGONE ? PJ_TRUE : PJ_FALSE;
++        continue;
++
++    process_app_data:
++        if (stun_sock->cb.on_rx_data) {
++            (*stun_sock->cb.on_rx_data)(stun_sock, current_packet,
++                                        (unsigned)pkt_len, rx_addr, sock_addr_len);
++            status = pj_grp_lock_release(stun_sock->grp_lock);
++            result &= status != PJ_EGONE ? PJ_TRUE : PJ_FALSE;
++            continue;
++        }
++
++        status = pj_grp_lock_release(stun_sock->grp_lock);
++        result &= status != PJ_EGONE ? PJ_TRUE : PJ_FALSE;
++    } while (parsed < size && result);
++    return result;
++}
++
++pj_bool_t on_data_read(pj_activesock_t *asock, void *data, pj_size_t size,
++                       pj_status_t status, pj_size_t *remainder) {
++
++    pj_stun_sock *stun_sock;
++
++    stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock);
++    if (!stun_sock)
++      return PJ_FALSE;
++
++    /* Log socket error or disconnection */
++    if (status != PJ_SUCCESS) {
++        if (stun_sock->conn_type == PJ_STUN_TP_UDP || status != PJ_EEOF) {
++            PJ_PERROR(2, (stun_sock->obj_name, status, "read() error"));
++        }
++        return PJ_FALSE;
++    }
++#if PJ_HAS_TCP
++    pj_sockaddr_t *rx_addr = NULL;
++    unsigned sock_addr_len = 0;
++    for (int i = 0; i <= stun_sock->outgoing_nb; ++i) {
++        if (stun_sock->outgoing_socks[i].sock == asock) {
++            rx_addr = stun_sock->outgoing_socks[i].addr;
++            sock_addr_len = pj_sockaddr_get_len(rx_addr);
++        }
++    }
++    if (rx_addr == NULL) {
++        // It's an incoming message
++        rx_addr = stun_sock->incoming_addr;
++        sock_addr_len = stun_sock->incoming_addr_len;
++    }
++    return parse_rx_packet(stun_sock, data, size, rx_addr, sock_addr_len);
++#else
++    return PJ_FALSE;
++#endif
+ }
+ 
++#if PJ_HAS_TCP
++/*
++ * Notification when incoming TCP socket has been connected.
++ * NOTE: cf https://www.pjsip.org/docs/latest/pjlib/docs/html//structpj__activesock__cb.htm if status needed
++ */
++static pj_bool_t on_stun_sock_accept(pj_activesock_t *asock, pj_sock_t sock,
++                                     const pj_sockaddr_t *src_addr,
++                                     int src_addr_len) {
++    pj_status_t status;
++    pj_stun_sock *stun_sock;
++    int sock_type = pj_SOCK_STREAM();
++    stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock);
++    stun_sock->incoming_addr = src_addr;
++    stun_sock->incoming_addr_len = src_addr_len;
++    stun_sock->incoming_sock_fd = sock;
++
++    pj_activesock_cfg activesock_cfg;
++    pj_activesock_cb activesock_cb;
++
++    pj_activesock_cfg_default(&activesock_cfg);
++    activesock_cfg.grp_lock = stun_sock->grp_lock;
++    activesock_cfg.async_cnt = stun_sock->setting.async_cnt;
++    activesock_cfg.concurrency = 0;
++
++    /* Create the active socket */
++    pj_bzero(&activesock_cb, sizeof(activesock_cb));
++    activesock_cb.on_data_read = &on_data_read;
++    activesock_cb.on_data_sent = &on_data_sent;
++
++    status = pj_activesock_create(stun_sock->pool, stun_sock->incoming_sock_fd,
++                                  sock_type, &activesock_cfg,
++                                  stun_sock->cfg.ioqueue, &activesock_cb,
++                                  stun_sock, &stun_sock->incoming_sock);
++
++    if (status != PJ_SUCCESS) {
++      pj_stun_sock_destroy(stun_sock);
++      pj_grp_lock_release(stun_sock->grp_lock);
++      return status;
++    }
++
++    /* Start asynchronous read operations */
++    pj_status_t result =
++        pj_activesock_start_read(stun_sock->incoming_sock, stun_sock->pool,
++                                 stun_sock->setting.max_pkt_size, 0);
++    if (result != PJ_SUCCESS) {
++      return PJ_FALSE;
++    };
++
++    return PJ_TRUE;
++}
++#endif
++
+ /* Start socket. */
+ PJ_DEF(pj_status_t) pj_stun_sock_start( pj_stun_sock *stun_sock,
+ 				        const pj_str_t *domain,
+@@ -504,15 +869,15 @@ PJ_DEF(pj_status_t) pj_stun_sock_destroy(pj_stun_sock *stun_sock)
+     }
+ 
+     stun_sock->is_destroying = PJ_TRUE;
+-    pj_timer_heap_cancel_if_active(stun_sock->stun_cfg.timer_heap,
++    pj_timer_heap_cancel_if_active(stun_sock->cfg.timer_heap,
+                                    &stun_sock->ka_timer, 0);
+ 
+-    if (stun_sock->active_sock != NULL) {
+-	stun_sock->sock_fd = PJ_INVALID_SOCKET;
+-	pj_activesock_close(stun_sock->active_sock);
+-    } else if (stun_sock->sock_fd != PJ_INVALID_SOCKET) {
+-	pj_sock_close(stun_sock->sock_fd);
+-	stun_sock->sock_fd = PJ_INVALID_SOCKET;
++    if (stun_sock->main_sock != NULL) {
++        stun_sock->main_sock_fd = PJ_INVALID_SOCKET;
++        pj_activesock_close(stun_sock->main_sock);
++    } else if (stun_sock->main_sock_fd != PJ_INVALID_SOCKET) {
++        pj_sock_close(stun_sock->main_sock_fd);
++        stun_sock->main_sock_fd = PJ_INVALID_SOCKET;
+     }
+ 
+     if (stun_sock->stun_sess) {
+@@ -619,12 +984,12 @@ static pj_status_t get_mapped_addr(pj_stun_sock *stun_sock)
+ 					&tdata);
+     if (status != PJ_SUCCESS)
+ 	goto on_error;
+-    
++
+     /* Send request */
+-    status=pj_stun_session_send_msg(stun_sock->stun_sess, INTERNAL_MSG_TOKEN,
+-				    PJ_FALSE, PJ_TRUE, &stun_sock->srv_addr,
+-				    pj_sockaddr_get_len(&stun_sock->srv_addr),
+-				    tdata);
++    status = pj_stun_session_send_msg(
++        stun_sock->stun_sess, INTERNAL_MSG_TOKEN, PJ_FALSE,
++        (stun_sock->conn_type == PJ_STUN_TP_UDP), &stun_sock->srv_addr,
++        pj_sockaddr_get_len(&stun_sock->srv_addr), tdata);
+     if (status != PJ_SUCCESS && status != PJ_EPENDING)
+ 	goto on_error;
+ 
+@@ -637,7 +1002,7 @@ static pj_status_t get_mapped_addr(pj_stun_sock *stun_sock)
+ 
+ /* Get info */
+ PJ_DEF(pj_status_t) pj_stun_sock_get_info( pj_stun_sock *stun_sock,
+-					   pj_stun_sock_info *info)
++                                           pj_stun_sock_info *info)
+ {
+     int addr_len;
+     pj_status_t status;
+@@ -646,73 +1011,73 @@ PJ_DEF(pj_status_t) pj_stun_sock_get_info( pj_stun_sock *stun_sock,
+ 
+     pj_grp_lock_acquire(stun_sock->grp_lock);
+ 
++    info->conn_type = stun_sock->conn_type;
++
+     /* Copy STUN server address and mapped address */
+     pj_memcpy(&info->srv_addr, &stun_sock->srv_addr,
+-	      sizeof(pj_sockaddr));
+-    pj_memcpy(&info->mapped_addr, &stun_sock->mapped_addr, 
+-	      sizeof(pj_sockaddr));
++              sizeof(pj_sockaddr));
++    pj_memcpy(&info->mapped_addr, &stun_sock->mapped_addr,
++              sizeof(pj_sockaddr));
+ 
+     /* Retrieve bound address */
+     addr_len = sizeof(info->bound_addr);
+-    status = pj_sock_getsockname(stun_sock->sock_fd, &info->bound_addr,
+-				 &addr_len);
++    status = pj_sock_getsockname(stun_sock->main_sock_fd, &info->bound_addr,
++                                 &addr_len);
+     if (status != PJ_SUCCESS) {
+-	pj_grp_lock_release(stun_sock->grp_lock);
+-	return status;
++        pj_grp_lock_release(stun_sock->grp_lock);
++        return status;
+     }
+ 
+-    /* If socket is bound to a specific interface, then only put that
+-     * interface in the alias list. Otherwise query all the interfaces 
+-     * in the host.
++    /* Query all the interfaces in the host, because STUN is compatible with TCP
+      */
+     if (pj_sockaddr_has_addr(&info->bound_addr)) {
+-	info->alias_cnt = 1;
+-	pj_sockaddr_cp(&info->aliases[0], &info->bound_addr);
++        info->alias_cnt = 1;
++        pj_sockaddr_cp(&info->aliases[0], &info->bound_addr);
+     } else {
+-	pj_sockaddr def_addr;
+-	pj_uint16_t port = pj_sockaddr_get_port(&info->bound_addr); 
+-	unsigned i;
+-
+-	/* Get the default address */
+-	status = pj_gethostip(stun_sock->af, &def_addr);
+-	if (status != PJ_SUCCESS) {
+-	    PJ_PERROR(4,(stun_sock->obj_name, status,
+-			 "Failed in getting default address for STUN info"));
+-	    pj_grp_lock_release(stun_sock->grp_lock);
+-	    return status;
+-	}
+-	
+-	pj_sockaddr_set_port(&def_addr, port);
+-	
+-	/* Enum all IP interfaces in the host */
+-	info->alias_cnt = PJ_ARRAY_SIZE(info->aliases);
+-	status = pj_enum_ip_interface(stun_sock->af, &info->alias_cnt, 
+-				      info->aliases);
+-	if (status != PJ_SUCCESS) {
+-	    /* If enumeration fails, just return the default address */
+-	    PJ_PERROR(4,(stun_sock->obj_name, status,
+-			 "Failed in enumerating interfaces for STUN info, "
+-			 "returning default address only"));
+-	    info->alias_cnt = 1;
+-	    pj_sockaddr_cp(&info->aliases[0], &def_addr);
+-	}
+-
+-	/* Set the port number for each address.
+-	 */
+-	for (i=0; i<info->alias_cnt; ++i) {
+-	    pj_sockaddr_set_port(&info->aliases[i], port);
+-	}
+-
+-	/* Put the default IP in the first slot */
+-	for (i=0; i<info->alias_cnt; ++i) {
+-	    if (pj_sockaddr_cmp(&info->aliases[i], &def_addr)==0) {
+-		if (i!=0) {
+-		    pj_sockaddr_cp(&info->aliases[i], &info->aliases[0]);
+-		    pj_sockaddr_cp(&info->aliases[0], &def_addr);
+-		}
+-		break;
+-	    }
+-	}
++        pj_sockaddr def_addr;
++        pj_uint16_t port = pj_sockaddr_get_port(&info->bound_addr); 
++        unsigned i;
++
++        /* Get the default address */
++        status = pj_gethostip(stun_sock->af, &def_addr);
++        if (status != PJ_SUCCESS) {
++            PJ_PERROR(4,(stun_sock->obj_name, status,
++                "Failed in getting default address for STUN info"));
++            pj_grp_lock_release(stun_sock->grp_lock);
++            return status;
++        }
++        
++        pj_sockaddr_set_port(&def_addr, port);
++        
++        /* Enum all IP interfaces in the host */
++        info->alias_cnt = PJ_ARRAY_SIZE(info->aliases);
++        status = pj_enum_ip_interface(stun_sock->af, &info->alias_cnt, 
++                        info->aliases);
++        if (status != PJ_SUCCESS) {
++            /* If enumeration fails, just return the default address */
++            PJ_PERROR(4,(stun_sock->obj_name, status,
++                "Failed in enumerating interfaces for STUN info, "
++                "returning default address only"));
++            info->alias_cnt = 1;
++            pj_sockaddr_cp(&info->aliases[0], &def_addr);
++        }
++
++        /* Set the port number for each address.
++        */
++        for (i=0; i<info->alias_cnt; ++i) {
++            pj_sockaddr_set_port(&info->aliases[i], port);
++        }
++
++        /* Put the default IP in the first slot */
++        for (i=0; i<info->alias_cnt; ++i) {
++            if (pj_sockaddr_cmp(&info->aliases[i], &def_addr)==0) {
++                if (i!=0) {
++                    pj_sockaddr_cp(&info->aliases[i], &info->aliases[0]);
++                    pj_sockaddr_cp(&info->aliases[0], &def_addr);
++                }
++                break;
++            }
++        }
+     }
+ 
+     pj_grp_lock_release(stun_sock->grp_lock);
+@@ -726,36 +1091,226 @@ PJ_DEF(pj_status_t) pj_stun_sock_sendto( pj_stun_sock *stun_sock,
+ 					 unsigned pkt_len,
+ 					 unsigned flag,
+ 					 const pj_sockaddr_t *dst_addr,
+-					 unsigned addr_len)
++					 unsigned addr_len,
++                     pj_ssize_t* size)
+ {
+-    pj_ssize_t size;
+     pj_status_t status;
+ 
+     PJ_ASSERT_RETURN(stun_sock && pkt && dst_addr && addr_len, PJ_EINVAL);
+-    
++
+     pj_grp_lock_acquire(stun_sock->grp_lock);
+ 
+-    if (!stun_sock->active_sock) {
+-	/* We have been shutdown, but this callback may still get called
+-	 * by retransmit timer.
+-	 */
+-	pj_grp_lock_release(stun_sock->grp_lock);
+-	return PJ_EINVALIDOP;
++    if (!stun_sock->main_sock) {
++        /* We have been shutdown, but this callback may still get called
++         * by retransmit timer.
++         */
++        pj_grp_lock_release(stun_sock->grp_lock);
++        return PJ_EINVALIDOP;
+     }
+ 
+     if (send_key==NULL)
+-	send_key = &stun_sock->send_key;
++        send_key = &stun_sock->send_key;
+ 
+-    size = pkt_len;
+-    status = pj_activesock_sendto(stun_sock->active_sock, send_key,
+-                                  pkt, &size, flag, dst_addr, addr_len);
++    *size = pkt_len;
++    if (stun_sock->conn_type == PJ_STUN_TP_UDP) {
++        status = pj_activesock_sendto(stun_sock->main_sock, send_key,
++                                      pkt, size, flag, dst_addr, addr_len);
++    } else {
++#if PJ_HAS_TCP
++        pj_bool_t is_outgoing = PJ_FALSE;
++        for (int i = 0; i <= stun_sock->outgoing_nb; ++i) {
++            if (pj_sockaddr_cmp(stun_sock->outgoing_socks[i].addr, dst_addr) == 0) {
++                is_outgoing = PJ_TRUE;
++                status = pj_activesock_send(stun_sock->outgoing_socks[i].sock,
++                                            send_key, pkt, size, flag);
++                break;
++            }
++        }
++        if (!is_outgoing) {
++            if (stun_sock->incoming_sock_fd) {
++                status = pj_activesock_send(stun_sock->incoming_sock, send_key, pkt,
++                                            size, flag);
++            } else {
++                status = pj_activesock_send(stun_sock->main_sock, send_key, pkt,
++                                            size, flag);
++            }
++        }
++#endif
++    }
+ 
++    pj_grp_lock_release(stun_sock->grp_lock);
++	return status;
++}
++
++#if PJ_HAS_TCP
++
++PJ_DECL(pj_status_t)
++pj_stun_sock_connect_active(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr) {
++  pj_status_t status;
++
++  pj_grp_lock_acquire(stun_sock->grp_lock);
++  int sock_type = pj_SOCK_STREAM();
++
++  /* Create socket and bind socket */
++  stun_sock->outgoing_nb += 1;
++  int nb_check = stun_sock->outgoing_nb;
++  pj_sock_t *fd = &stun_sock->outgoing_socks[nb_check].fd;
++  pj_activesock_t **asock = &stun_sock->outgoing_socks[nb_check].sock;
++  pj_sockaddr_t **addr = &stun_sock->outgoing_socks[nb_check].addr;
++  status = pj_sock_socket(stun_sock->af, sock_type, 0, fd);
++  if (status != PJ_SUCCESS) {
++    pj_stun_sock_destroy(stun_sock);
+     pj_grp_lock_release(stun_sock->grp_lock);
+     return status;
++  }
++
++  /* Apply QoS, if specified */
++  status = pj_sock_apply_qos2(*fd, stun_sock->setting.qos_type,
++                            &stun_sock->setting.qos_params, 2, stun_sock->obj_name, NULL);
++  if (status != PJ_SUCCESS && !stun_sock->setting.qos_ignore_error) {
++    pj_stun_sock_destroy(stun_sock);
++    pj_grp_lock_release(stun_sock->grp_lock);
++    return status;
++  }
++
++  /* Apply socket buffer size */
++  if (stun_sock->setting.so_rcvbuf_size > 0) {
++    unsigned sobuf_size = stun_sock->setting.so_rcvbuf_size;
++    status = pj_sock_setsockopt_sobuf(*fd, pj_SO_RCVBUF(), PJ_TRUE, &sobuf_size);
++    if (status != PJ_SUCCESS) {
++      pj_perror(3, stun_sock->obj_name, status, "Failed setting SO_RCVBUF");
++    } else {
++      if (sobuf_size < stun_sock->setting.so_rcvbuf_size) {
++        PJ_LOG(4, (stun_sock->obj_name,
++                   "Warning! Cannot set SO_RCVBUF as configured, "
++                   "now=%d, configured=%d",
++                   sobuf_size, stun_sock->setting.so_rcvbuf_size));
++      } else {
++        PJ_LOG(5, (stun_sock->obj_name, "SO_RCVBUF set to %d", sobuf_size));
++      }
++    }
++  }
++
++  if (stun_sock->setting.so_sndbuf_size > 0) {
++    unsigned sobuf_size = stun_sock->setting.so_sndbuf_size;
++    status = pj_sock_setsockopt_sobuf(*fd, pj_SO_SNDBUF(), PJ_TRUE, &sobuf_size);
++    if (status != PJ_SUCCESS) {
++      pj_perror(3, stun_sock->obj_name, status, "Failed setting SO_SNDBUF");
++    } else {
++      if (sobuf_size < stun_sock->setting.so_sndbuf_size) {
++        PJ_LOG(4, (stun_sock->obj_name,
++                   "Warning! Cannot set SO_SNDBUF as configured, "
++                   "now=%d, configured=%d",
++                   sobuf_size, stun_sock->setting.so_sndbuf_size));
++      } else {
++        PJ_LOG(5, (stun_sock->obj_name, "SO_SNDBUF set to %d", sobuf_size));
++      }
++    }
++  }
++
++  /* Init active socket configuration */
++  {
++    pj_activesock_cfg activesock_cfg;
++    pj_activesock_cb activesock_cb;
++
++    pj_activesock_cfg_default(&activesock_cfg);
++    activesock_cfg.grp_lock = stun_sock->grp_lock;
++    activesock_cfg.async_cnt = stun_sock->setting.async_cnt;
++    activesock_cfg.concurrency = 0;
++
++    /* Create the active socket */
++    pj_bzero(&activesock_cb, sizeof(activesock_cb));
++    activesock_cb.on_data_read = &on_data_read;
++    activesock_cb.on_data_sent = &on_data_sent;
++    activesock_cb.on_connect_complete = &on_connect_complete;
++
++    status = pj_activesock_create(stun_sock->pool, *fd,
++                                  sock_type, &activesock_cfg,
++                                  stun_sock->cfg.ioqueue, &activesock_cb,
++                                  stun_sock, asock);
++
++    if (status != PJ_SUCCESS) {
++      pj_stun_sock_destroy(stun_sock);
++      pj_grp_lock_release(stun_sock->grp_lock);
++      return status;
++    }
++
++    *addr = remote_addr;
++
++    status = pj_activesock_start_connect(
++            *asock, stun_sock->pool, *addr,
++            pj_sockaddr_get_len(*addr));
++    if (status == PJ_SUCCESS) {
++      on_connect_complete(*asock, status);
++    } else if (status != PJ_EPENDING) {
++      char addrinfo[PJ_INET6_ADDRSTRLEN+8];
++      pj_perror(3, stun_sock->pool->obj_name, status, "Failed to connect to %s",
++                pj_sockaddr_print(*addr, addrinfo, sizeof(addrinfo), 3));
++      pj_stun_sock_destroy(stun_sock);
++      pj_grp_lock_release(stun_sock->grp_lock);
++      return status;
++    }
++  }
++
++  pj_grp_lock_release(stun_sock->grp_lock);
++  return status;
++}
++
++PJ_DECL(pj_status_t)
++pj_stun_sock_close(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr) {
++    for (int i = 0; i <= stun_sock->outgoing_nb; ++i) {
++        if (pj_sockaddr_cmp(stun_sock->outgoing_socks[i].addr, remote_addr) == 0) {
++            return pj_activesock_close(stun_sock->outgoing_socks[i].sock);
++        }
++    }
++    return PJ_EINVAL;
++}
++
++PJ_DECL(pj_status_t)
++pj_stun_sock_select_outgoing(pj_stun_sock *stun_sock, pj_sockaddr_t *remote_addr) {
++    pj_bool_t already_found = PJ_FALSE;
++    for (int i = 0; i <= stun_sock->outgoing_nb; ++i) {
++      if (already_found
++        || pj_sockaddr_cmp(stun_sock->outgoing_socks[i].addr, remote_addr) != 0) {
++        pj_activesock_close(stun_sock->outgoing_socks[i].sock);
++      } else {
++        already_found = PJ_TRUE;
++      }
++    }
++    return PJ_SUCCESS;
++}
++
++pj_bool_t on_connect_complete(pj_activesock_t *asock, pj_status_t status) {
++  pj_stun_sock *stun_sock;
++  stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock);
++
++  pj_status_t result = pj_activesock_start_read(
++      asock, stun_sock->pool, stun_sock->setting.max_pkt_size, 0);
++  if (result != PJ_SUCCESS) {
++    return PJ_FALSE;
++  };
++
++  pj_stun_session_cb *cb = pj_stun_session_callback(stun_sock->stun_sess);
++  if (!cb->on_peer_connection) {
++    return PJ_FALSE;
++  }
++
++  // Get remote connected address
++  pj_sockaddr_t* remote_addr = NULL;
++  for (int i = 0 ; i <= stun_sock->outgoing_nb ; ++i) {
++      if (stun_sock->outgoing_socks[i].sock == asock) {
++          remote_addr = stun_sock->outgoing_socks[i].addr;
++      }
++  }
++  if (!remote_addr) return PJ_FALSE;
++  (cb->on_peer_connection)(stun_sock->stun_sess, status, remote_addr);
++  return PJ_TRUE;
+ }
+ 
++#endif
++
+ /* This callback is called by the STUN session to send packet */
+-static pj_status_t sess_on_send_msg(pj_stun_session *sess,
++pj_status_t sess_on_send_msg(pj_stun_session *sess,
+ 				    void *token,
+ 				    const void *pkt,
+ 				    pj_size_t pkt_size,
+@@ -766,7 +1321,7 @@ static pj_status_t sess_on_send_msg(pj_stun_session *sess,
+     pj_ssize_t size;
+ 
+     stun_sock = (pj_stun_sock *) pj_stun_session_get_user_data(sess);
+-    if (!stun_sock || !stun_sock->active_sock) {
++    if (!stun_sock || !stun_sock->main_sock) {
+ 	/* We have been shutdown, but this callback may still get called
+ 	 * by retransmit timer.
+ 	 */
+@@ -777,15 +1332,27 @@ static pj_status_t sess_on_send_msg(pj_stun_session *sess,
+     PJ_UNUSED_ARG(token);
+ 
+     size = pkt_size;
+-    return pj_activesock_sendto(stun_sock->active_sock,
+-				&stun_sock->int_send_key,
+-				pkt, &size, 0, dst_addr, addr_len);
++    if (stun_sock->conn_type == PJ_STUN_TP_UDP) {
++        return pj_activesock_sendto(stun_sock->main_sock,
++                                    &stun_sock->int_send_key,
++                                    pkt, &size, 0, dst_addr, addr_len);
++    }
++#if PJ_HAS_TCP
++    else if (stun_sock->incoming_sock_fd) {
++      return pj_activesock_send(stun_sock->incoming_sock,
++                                &stun_sock->int_send_key, pkt, &size, 0);
++    }
++    return pj_activesock_send(stun_sock->main_sock, &stun_sock->int_send_key,
++                            pkt, &size, 0);
++#else
++    return PJ_EINVAL;
++#endif
+ }
+ 
+ /* This callback is called by the STUN session when outgoing transaction 
+  * is complete
+  */
+-static void sess_on_request_complete(pj_stun_session *sess,
++void sess_on_request_complete(pj_stun_session *sess,
+ 				     pj_status_t status,
+ 				     void *token,
+ 				     pj_stun_tx_data *tdata,
+@@ -869,9 +1436,9 @@ static void sess_on_request_complete(pj_stun_session *sess,
+ }
+ 
+ /* Schedule keep-alive timer */
+-static void start_ka_timer(pj_stun_sock *stun_sock)
++void start_ka_timer(pj_stun_sock *stun_sock)
+ {
+-    pj_timer_heap_cancel_if_active(stun_sock->stun_cfg.timer_heap,
++    pj_timer_heap_cancel_if_active(stun_sock->cfg.timer_heap,
+                                    &stun_sock->ka_timer, 0);
+ 
+     pj_assert(stun_sock->ka_interval != 0);
+@@ -881,7 +1448,7 @@ static void start_ka_timer(pj_stun_sock *stun_sock)
+ 	delay.sec = stun_sock->ka_interval;
+ 	delay.msec = 0;
+ 
+-	pj_timer_heap_schedule_w_grp_lock(stun_sock->stun_cfg.timer_heap,
++	pj_timer_heap_schedule_w_grp_lock(stun_sock->cfg.timer_heap,
+ 	                                  &stun_sock->ka_timer,
+ 	                                  &delay, PJ_TRUE,
+ 	                                  stun_sock->grp_lock);
+@@ -889,7 +1456,7 @@ static void start_ka_timer(pj_stun_sock *stun_sock)
+ }
+ 
+ /* Keep-alive timer callback */
+-static void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te)
++void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te)
+ {
+     pj_stun_sock *stun_sock;
+ 
+@@ -911,7 +1478,7 @@ static void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te)
+ }
+ 
+ /* Callback from active socket when incoming packet is received */
+-static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
++pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+ 				  void *data,
+ 				  pj_size_t size,
+ 				  const pj_sockaddr_t *src_addr,
+@@ -919,8 +1486,6 @@ static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+ 				  pj_status_t status)
+ {
+     pj_stun_sock *stun_sock;
+-    pj_stun_msg_hdr *hdr;
+-    pj_uint16_t type;
+ 
+     stun_sock = (pj_stun_sock*) pj_activesock_get_user_data(asock);
+     if (!stun_sock)
+@@ -932,62 +1497,11 @@ static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+ 	return PJ_TRUE;
+     }
+ 
+-    pj_grp_lock_acquire(stun_sock->grp_lock);
+-
+-    /* Check that this is STUN message */
+-    status = pj_stun_msg_check((const pj_uint8_t*)data, size, 
+-    			       PJ_STUN_IS_DATAGRAM | PJ_STUN_CHECK_PACKET);
+-    if (status != PJ_SUCCESS) {
+-	/* Not STUN -- give it to application */
+-	goto process_app_data;
+-    }
+-
+-    /* Treat packet as STUN header and copy the STUN message type.
+-     * We don't want to access the type directly from the header
+-     * since it may not be properly aligned.
+-     */
+-    hdr = (pj_stun_msg_hdr*) data;
+-    pj_memcpy(&type, &hdr->type, 2);
+-    type = pj_ntohs(type);
+-
+-    /* If the packet is a STUN Binding response and part of the
+-     * transaction ID matches our internal ID, then this is
+-     * our internal STUN message (Binding request or keep alive).
+-     * Give it to our STUN session.
+-     */
+-    if (!PJ_STUN_IS_RESPONSE(type) ||
+-	PJ_STUN_GET_METHOD(type) != PJ_STUN_BINDING_METHOD ||
+-	pj_memcmp(hdr->tsx_id, stun_sock->tsx_id, 10) != 0) 
+-    {
+-	/* Not STUN Binding response, or STUN transaction ID mismatch.
+-	 * This is not our message too -- give it to application.
+-	 */
+-	goto process_app_data;
+-    }
+-
+-    /* This is our STUN Binding response. Give it to the STUN session */
+-    status = pj_stun_session_on_rx_pkt(stun_sock->stun_sess, data, size,
+-				       PJ_STUN_IS_DATAGRAM, NULL, NULL,
+-				       src_addr, addr_len);
+-
+-    status = pj_grp_lock_release(stun_sock->grp_lock);
+-
+-    return status!=PJ_EGONE ? PJ_TRUE : PJ_FALSE;
+-
+-process_app_data:
+-    if (stun_sock->cb.on_rx_data) {
+-	(*stun_sock->cb.on_rx_data)(stun_sock, data, (unsigned)size,
+-				    src_addr, addr_len);
+-	status = pj_grp_lock_release(stun_sock->grp_lock);
+-	return status!=PJ_EGONE ? PJ_TRUE : PJ_FALSE;
+-    }
+-
+-    status = pj_grp_lock_release(stun_sock->grp_lock);
+-    return status!=PJ_EGONE ? PJ_TRUE : PJ_FALSE;
++    return parse_rx_packet(stun_sock, data, size, src_addr, addr_len);
+ }
+ 
+ /* Callback from active socket about send status */
+-static pj_bool_t on_data_sent(pj_activesock_t *asock,
++pj_bool_t on_data_sent(pj_activesock_t *asock,
+ 			      pj_ioqueue_op_key_t *send_key,
+ 			      pj_ssize_t sent)
+ {
+@@ -1024,3 +1538,7 @@ static pj_bool_t on_data_sent(pj_activesock_t *asock,
+     return PJ_TRUE;
+ }
+ 
++pj_stun_session* pj_stun_sock_get_session(pj_stun_sock *stun_sock)
++{
++  return stun_sock ? stun_sock->stun_sess : NULL;
++}
+diff --git a/pjnath/src/pjnath/turn_session.c b/pjnath/src/pjnath/turn_session.c
+index 4fd643be1..1e0cda437 100644
+--- a/pjnath/src/pjnath/turn_session.c
++++ b/pjnath/src/pjnath/turn_session.c
+@@ -306,7 +306,8 @@ PJ_DEF(pj_status_t) pj_turn_session_create( const pj_stun_config *cfg,
+     stun_cb.on_request_complete = &stun_on_request_complete;
+     stun_cb.on_rx_indication = &stun_on_rx_indication;
+     status = pj_stun_session_create(&sess->stun_cfg, sess->obj_name, &stun_cb,
+-				    PJ_FALSE, sess->grp_lock, &sess->stun);
++                                    PJ_FALSE, sess->grp_lock, &sess->stun,
++                                    conn_type);
+     if (status != PJ_SUCCESS) {
+ 	do_destroy(sess);
+ 	return status;
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index c267871e2..0fe2d8037 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -1210,7 +1210,7 @@ PJ_DECL(pj_status_t) pj_turn_connect_peer(pj_turn_sock *turn_sock,
+ 			  "Connecting to %s",
+ 			  pj_sockaddr_print(&info.server, addrtxt,
+ 								sizeof(addrtxt), 3)));
+-
++#if PJ_HAS_TCP
+ 	status = pj_activesock_start_connect(new_tcp_cnx->active_tcp_sock,
+ 										 turn_sock->pool,
+ 										 &info.server,
+@@ -1225,7 +1225,7 @@ PJ_DECL(pj_status_t) pj_turn_connect_peer(pj_turn_sock *turn_sock,
+ 	    pj_turn_sock_destroy(turn_sock);
+ 	    return status;
+ 	}
+-
++#endif
+ 	return PJ_SUCCESS;
+ }
+ 
+@@ -1329,10 +1329,10 @@ static pj_bool_t on_peer_connect_complete(pj_activesock_t *asock,
+ 	pj_bzero(&stun_cb, sizeof(stun_cb));
+ 	stun_cb.on_send_msg = &on_tcp_stun_send_msg;
+ 	stun_cb.on_request_complete = &on_tcp_stun_request_complete;
+-	status = pj_stun_session_create(&turn_sock->cfg, NULL,
+-									&stun_cb, PJ_FALSE, NULL,
+-									&tcp_cnx->stun_sess);
+-	if (status != PJ_SUCCESS) {
++        status =
++            pj_stun_session_create(&turn_sock->cfg, NULL, &stun_cb, PJ_FALSE,
++                                   NULL, &tcp_cnx->stun_sess, PJ_STUN_TP_TCP);
++        if (status != PJ_SUCCESS) {
+ 		pj_grp_lock_release(turn_sock->grp_lock);
+         return PJ_FALSE;
+ 	}
+diff --git a/pjnath/src/pjturn-client/client_main.c b/pjnath/src/pjturn-client/client_main.c
+index 1a8667220..5f013631a 100644
+--- a/pjnath/src/pjturn-client/client_main.c
++++ b/pjnath/src/pjturn-client/client_main.c
+@@ -154,10 +154,10 @@ static int init()
+ #endif
+ 
+ 	name[strlen(name)-1] = '0'+i;
+-	status = pj_stun_sock_create(&g.stun_config, name, pj_AF_INET(), 
+-				     &stun_sock_cb, &ss_cfg,
+-				     &g.peer[i], &g.peer[i].stun_sock);
+-	if (status != PJ_SUCCESS) {
++        status = pj_stun_sock_create(&g.stun_config, name, pj_AF_INET(),
++                                     PJ_STUN_TP_UDP, &stun_sock_cb, &ss_cfg,
++                                     &g.peer[i], &g.peer[i].stun_sock);
++        if (status != PJ_SUCCESS) {
+ 	    my_perror("pj_stun_sock_create()", status);
+ 	    return status;
+ 	}
+@@ -525,8 +525,9 @@ static void console_main(void)
+ 	    }
+ 	    peer = &g.peer[input[0]-'0'];
+ 	    sprintf(input, "Hello from peer%d", input[0]-'0');
++		pj_ssize_t size;
+ 	    pj_stun_sock_sendto(peer->stun_sock, NULL, input, strlen(input)+1, 0,
+-				&g.relay_addr, pj_sockaddr_get_len(&g.relay_addr));
++				&g.relay_addr, pj_sockaddr_get_len(&g.relay_addr), &size);
+ 	    break;
+ 	case 'q':
+ 	    g.quit = PJ_TRUE;
+diff --git a/pjnath/src/pjturn-srv/allocation.c b/pjnath/src/pjturn-srv/allocation.c
+index 6c9c9ce11..eea91f01b 100644
+--- a/pjnath/src/pjturn-srv/allocation.c
++++ b/pjnath/src/pjturn-srv/allocation.c
+@@ -338,7 +338,7 @@ PJ_DEF(pj_status_t) pj_turn_allocation_create(pj_turn_transport *transport,
+     sess_cb.on_rx_request = &stun_on_rx_request;
+     sess_cb.on_rx_indication = &stun_on_rx_indication;
+     status = pj_stun_session_create(&srv->core.stun_cfg, alloc->obj_name,
+-				    &sess_cb, PJ_FALSE, NULL, &alloc->sess);
++				    &sess_cb, PJ_FALSE, NULL, &alloc->sess, PJ_STUN_TP_UDP);
+     if (status != PJ_SUCCESS) {
+ 	goto on_error;
+     }
+diff --git a/pjnath/src/pjturn-srv/server.c b/pjnath/src/pjturn-srv/server.c
+index 94dda29a3..95ad1793d 100644
+--- a/pjnath/src/pjturn-srv/server.c
++++ b/pjnath/src/pjturn-srv/server.c
+@@ -156,7 +156,7 @@ PJ_DEF(pj_status_t) pj_turn_srv_create(pj_pool_factory *pf,
+ 
+     status = pj_stun_session_create(&srv->core.stun_cfg, srv->obj_name,
+ 				    &sess_cb, PJ_FALSE, NULL,
+-				    &srv->core.stun_sess);
++				    &srv->core.stun_sess, PJ_STUN_TP_UDP);
+     if (status != PJ_SUCCESS) {
+ 	goto on_error;
+     }
+diff --git a/pjsip-apps/src/samples/icedemo.c b/pjsip-apps/src/samples/icedemo.c
+index 9d811374a..92826fd8d 100644
+--- a/pjsip-apps/src/samples/icedemo.c
++++ b/pjsip-apps/src/samples/icedemo.c
+@@ -43,7 +43,7 @@ static struct app_t
+ 	pj_bool_t   regular;
+ 	pj_str_t    stun_srv;
+ 	pj_str_t    turn_srv;
+-	pj_bool_t   turn_tcp;
++    pj_bool_t   ice_tcp;
+ 	pj_str_t    turn_username;
+ 	pj_str_t    turn_password;
+ 	pj_bool_t   turn_fingerprint;
+@@ -341,25 +341,31 @@ static pj_status_t icedemo_init(void)
+     else
+ 	icedemo.ice_cfg.opt.aggressive = PJ_TRUE;
+ 
+-    /* Configure STUN/srflx candidate resolution */
+-    if (icedemo.opt.stun_srv.slen) {
+-	char *pos;
+-
+-	/* Command line option may contain port number */
+-	if ((pos=pj_strchr(&icedemo.opt.stun_srv, ':')) != NULL) {
+-	    icedemo.ice_cfg.stun.server.ptr = icedemo.opt.stun_srv.ptr;
+-	    icedemo.ice_cfg.stun.server.slen = (pos - icedemo.opt.stun_srv.ptr);
+-
+-	    icedemo.ice_cfg.stun.port = (pj_uint16_t)atoi(pos+1);
+-	} else {
+-	    icedemo.ice_cfg.stun.server = icedemo.opt.stun_srv;
+-	    icedemo.ice_cfg.stun.port = PJ_STUN_PORT;
+-	}
+-
+-	/* For this demo app, configure longer STUN keep-alive time
+-	 * so that it does't clutter the screen output.
+-	 */
+-	icedemo.ice_cfg.stun.cfg.ka_interval = KA_INTERVAL;
++    /* Connection type to STUN server */
++    if (icedemo.opt.ice_tcp)
++      	icedemo.ice_cfg.stun.conn_type = PJ_STUN_TP_TCP;
++    else
++        icedemo.ice_cfg.stun.conn_type = PJ_STUN_TP_UDP;
++
++	/* Configure STUN/srflx candidate resolution */
++	if (icedemo.opt.stun_srv.slen) {
++      char *pos;
++
++      /* Command line option may contain port number */
++      if ((pos = pj_strchr(&icedemo.opt.stun_srv, ':')) != NULL) {
++        icedemo.ice_cfg.stun.server.ptr = icedemo.opt.stun_srv.ptr;
++        icedemo.ice_cfg.stun.server.slen = (pos - icedemo.opt.stun_srv.ptr);
++
++        icedemo.ice_cfg.stun.port = (pj_uint16_t)atoi(pos + 1);
++      } else {
++        icedemo.ice_cfg.stun.server = icedemo.opt.stun_srv;
++        icedemo.ice_cfg.stun.port = PJ_STUN_PORT;
++      }
++
++      /* For this demo app, configure longer STUN keep-alive time
++       * so that it does't clutter the screen output.
++       */
++      icedemo.ice_cfg.stun.cfg.ka_interval = KA_INTERVAL;
+     }
+ 
+     /* Configure TURN candidate */
+@@ -384,7 +390,7 @@ static pj_status_t icedemo_init(void)
+ 	icedemo.ice_cfg.turn.auth_cred.data.static_cred.data = icedemo.opt.turn_password;
+ 
+ 	/* Connection type to TURN server */
+-	if (icedemo.opt.turn_tcp)
++	if (icedemo.opt.ice_tcp)
+ 	    icedemo.ice_cfg.turn.conn_type = PJ_TURN_TP_TCP;
+ 	else
+ 	    icedemo.ice_cfg.turn.conn_type = PJ_TURN_TP_UDP;
+@@ -395,8 +401,12 @@ static pj_status_t icedemo_init(void)
+ 	icedemo.ice_cfg.turn.alloc_param.ka_interval = KA_INTERVAL;
+     }
+ 
+-    /* -= That's it for now, initialization is complete =- */
+-    return PJ_SUCCESS;
++	if (icedemo.opt.ice_tcp) {
++		icedemo.ice_cfg.protocol = PJ_ICE_TP_TCP;
++	}
++
++	/* -= That's it for now, initialization is complete =- */
++	return PJ_SUCCESS;
+ }
+ 
+ 
+@@ -524,26 +534,60 @@ static void icedemo_stop_session(void)
+ 
+ /* Utility to create a=candidate SDP attribute */
+ static int print_cand(char buffer[], unsigned maxlen,
+-		      const pj_ice_sess_cand *cand)
++                      const pj_ice_sess_cand *cand)
+ {
+     char ipaddr[PJ_INET6_ADDRSTRLEN];
+     char *p = buffer;
+     int printed;
+ 
+-    PRINT("a=candidate:%.*s %u UDP %u %s %u typ ",
+-	  (int)cand->foundation.slen,
+-	  cand->foundation.ptr,
+-	  (unsigned)cand->comp_id,
+-	  cand->prio,
+-	  pj_sockaddr_print(&cand->addr, ipaddr, 
+-			    sizeof(ipaddr), 0),
+-	  (unsigned)pj_sockaddr_get_port(&cand->addr));
+-
+-    PRINT("%s\n",
+-	  pj_ice_get_cand_type_name(cand->type));
++    /**   Section 4.5, RFC 6544 (https://tools.ietf.org/html/rfc6544)
++     *    candidate-attribute   = "candidate" ":" foundation SP component-id SP
++     *                             "TCP" SP
++     *                             priority SP
++     *                             connection-address SP
++     *                             port SP
++     *                             cand-type
++     *                             [SP rel-addr]
++     *                             [SP rel-port]
++     *                             SP tcp-type-ext
++     *                             *(SP extension-att-name SP
++     *                                  extension-att-value)
++     *
++     *     tcp-type-ext          = "tcptype" SP tcp-type
++     *     tcp-type              = "active" / "passive" / "so"
++     */
++    PRINT("a=candidate:%.*s %u %s %u %s %u typ ",
++          (int)cand->foundation.slen,
++          cand->foundation.ptr,
++          (unsigned)cand->comp_id,
++          cand->transport == PJ_CAND_UDP? "UDP" : "TCP",
++          cand->prio,
++          pj_sockaddr_print(&cand->addr, ipaddr,
++                            sizeof(ipaddr), 0),
++          (unsigned)pj_sockaddr_get_port(&cand->addr));
++
++    PRINT("%s",
++          pj_ice_get_cand_type_name(cand->type));
++
++    if (cand->transport != PJ_CAND_UDP) {
++        PRINT(" tcptype");
++        switch (cand->transport) {
++            case PJ_CAND_TCP_ACTIVE:
++            PRINT(" active");
++            break;
++            case PJ_CAND_TCP_PASSIVE:
++            PRINT(" passive");
++            break;
++            case PJ_CAND_TCP_SO:
++            default:
++            PRINT(" so");
++            break;
++        }
++    }
++    PRINT("\n");
+ 
+     if (p == buffer+maxlen)
+-	return -PJ_ETOOSMALL;
++        return -PJ_ETOOSMALL;
+ 
+     *p = '\0';
+ 
+@@ -608,6 +652,26 @@ static int encode_session(char buffer[], unsigned maxlen)
+ 				    sizeof(ipaddr), 0));
+ 	}
+ 
++    if (cand[0].transport != PJ_CAND_UDP) {
++        /** RFC 6544, Section 4.5:
++         * If the default candidate is TCP-based, the agent MUST include the
++         * a=setup and a=connection attributes from RFC 4145 [RFC4145],
++         * following the procedures defined there as if ICE were not in use.
++         */
++        PRINT("a=setup:");
++        switch (cand[0].transport) {
++          case PJ_CAND_TCP_ACTIVE:
++              PRINT("active\n");
++              break;
++          case PJ_CAND_TCP_PASSIVE:
++              PRINT("passive\n");
++              break;
++          default:
++              return PJ_EINVALIDOP;
++        }
++        PRINT("a=connection:new\n");
++    }
++
+ 	/* Enumerate all candidates for this component */
+ 	cand_cnt = PJ_ARRAY_SIZE(cand);
+ 	status = pj_ice_strans_enum_cands(icedemo.icest, comp+1,
+@@ -702,231 +766,247 @@ static void icedemo_show_ice(void)
+     }
+ }
+ 
+-
+ /*
+- * Input and parse SDP from the remote (containing remote's ICE information) 
++ * Input and parse SDP from the remote (containing remote's ICE information)
+  * and save it to global variables.
+  */
+-static void icedemo_input_remote(void)
+-{
+-    char linebuf[80];
+-    unsigned media_cnt = 0;
+-    unsigned comp0_port = 0;
+-    char     comp0_addr[80];
+-    pj_bool_t done = PJ_FALSE;
+-
+-    puts("Paste SDP from remote host, end with empty line");
+-
+-    reset_rem_info();
+-
+-    comp0_addr[0] = '\0';
+-
+-    while (!done) {
+-	pj_size_t len;
+-	char *line;
+-
+-	printf(">");
+-	if (stdout) fflush(stdout);
+-
+-	if (fgets(linebuf, sizeof(linebuf), stdin)==NULL)
+-	    break;
+-
+-	len = strlen(linebuf);
+-	while (len && (linebuf[len-1] == '\r' || linebuf[len-1] == '\n'))
+-	    linebuf[--len] = '\0';
+-
+-	line = linebuf;
+-	while (len && pj_isspace(*line))
+-	    ++line, --len;
+-
+-	if (len==0)
+-	    break;
+-
+-	/* Ignore subsequent media descriptors */
+-	if (media_cnt > 1)
+-	    continue;
+-
+-	switch (line[0]) {
+-	case 'm':
+-	    {
+-		int cnt;
+-		char media[32], portstr[32];
+-
+-		++media_cnt;
+-		if (media_cnt > 1) {
+-		    puts("Media line ignored");
+-		    break;
+-		}
+-
+-		cnt = sscanf(line+2, "%s %s RTP/", media, portstr);
+-		if (cnt != 2) {
+-		    PJ_LOG(1,(THIS_FILE, "Error parsing media line"));
+-		    goto on_error;
+-		}
+-
+-		comp0_port = atoi(portstr);
+-		
+-	    }
+-	    break;
+-	case 'c':
+-	    {
+-		int cnt;
+-		char c[32], net[32], ip[80];
+-		
+-		cnt = sscanf(line+2, "%s %s %s", c, net, ip);
+-		if (cnt != 3) {
+-		    PJ_LOG(1,(THIS_FILE, "Error parsing connection line"));
+-		    goto on_error;
+-		}
+-
+-		strcpy(comp0_addr, ip);
+-	    }
+-	    break;
+-	case 'a':
+-	    {
+-		char *attr = strtok(line+2, ": \t\r\n");
+-		if (strcmp(attr, "ice-ufrag")==0) {
+-		    strcpy(icedemo.rem.ufrag, attr+strlen(attr)+1);
+-		} else if (strcmp(attr, "ice-pwd")==0) {
+-		    strcpy(icedemo.rem.pwd, attr+strlen(attr)+1);
+-		} else if (strcmp(attr, "rtcp")==0) {
+-		    char *val = attr+strlen(attr)+1;
+-		    int af, cnt;
+-		    int port;
+-		    char net[32], ip[64];
+-		    pj_str_t tmp_addr;
+-		    pj_status_t status;
+-
+-		    cnt = sscanf(val, "%d IN %s %s", &port, net, ip);
+-		    if (cnt != 3) {
+-			PJ_LOG(1,(THIS_FILE, "Error parsing rtcp attribute"));
+-			goto on_error;
+-		    }
+-
+-		    if (strchr(ip, ':'))
+-			af = pj_AF_INET6();
+-		    else
+-			af = pj_AF_INET();
+-
+-		    pj_sockaddr_init(af, &icedemo.rem.def_addr[1], NULL, 0);
+-		    tmp_addr = pj_str(ip);
+-		    status = pj_sockaddr_set_str_addr(af, &icedemo.rem.def_addr[1],
+-						      &tmp_addr);
+-		    if (status != PJ_SUCCESS) {
+-			PJ_LOG(1,(THIS_FILE, "Invalid IP address"));
+-			goto on_error;
+-		    }
+-		    pj_sockaddr_set_port(&icedemo.rem.def_addr[1], (pj_uint16_t)port);
+-
+-		} else if (strcmp(attr, "candidate")==0) {
+-		    char *sdpcand = attr+strlen(attr)+1;
+-		    int af, cnt;
+-		    char foundation[32], transport[12], ipaddr[80], type[32];
+-		    pj_str_t tmpaddr;
+-		    int comp_id, prio, port;
+-		    pj_ice_sess_cand *cand;
+-		    pj_status_t status;
+-
+-		    cnt = sscanf(sdpcand, "%s %d %s %d %s %d typ %s",
+-				 foundation,
+-				 &comp_id,
+-				 transport,
+-				 &prio,
+-				 ipaddr,
+-				 &port,
+-				 type);
+-		    if (cnt != 7) {
+-			PJ_LOG(1, (THIS_FILE, "error: Invalid ICE candidate line"));
+-			goto on_error;
+-		    }
+-
+-		    cand = &icedemo.rem.cand[icedemo.rem.cand_cnt];
+-		    pj_bzero(cand, sizeof(*cand));
+-		    
+-		    if (strcmp(type, "host")==0)
+-			cand->type = PJ_ICE_CAND_TYPE_HOST;
+-		    else if (strcmp(type, "srflx")==0)
+-			cand->type = PJ_ICE_CAND_TYPE_SRFLX;
+-		    else if (strcmp(type, "relay")==0)
+-			cand->type = PJ_ICE_CAND_TYPE_RELAYED;
+-		    else {
+-			PJ_LOG(1, (THIS_FILE, "Error: invalid candidate type '%s'", 
+-				   type));
+-			goto on_error;
+-		    }
+-
+-		    cand->comp_id = (pj_uint8_t)comp_id;
+-		    pj_strdup2(icedemo.pool, &cand->foundation, foundation);
+-		    cand->prio = prio;
+-		    
+-		    if (strchr(ipaddr, ':'))
+-			af = pj_AF_INET6();
+-		    else
+-			af = pj_AF_INET();
+-
+-		    tmpaddr = pj_str(ipaddr);
+-		    pj_sockaddr_init(af, &cand->addr, NULL, 0);
+-		    status = pj_sockaddr_set_str_addr(af, &cand->addr, &tmpaddr);
+-		    if (status != PJ_SUCCESS) {
+-			PJ_LOG(1,(THIS_FILE, "Error: invalid IP address '%s'",
+-				  ipaddr));
+-			goto on_error;
+-		    }
+-
+-		    pj_sockaddr_set_port(&cand->addr, (pj_uint16_t)port);
+-
+-		    ++icedemo.rem.cand_cnt;
+-
+-		    if (cand->comp_id > icedemo.rem.comp_cnt)
+-			icedemo.rem.comp_cnt = cand->comp_id;
+-		}
+-	    }
+-	    break;
+-	}
+-    }
+-
+-    if (icedemo.rem.cand_cnt==0 ||
+-	icedemo.rem.ufrag[0]==0 ||
+-	icedemo.rem.pwd[0]==0 ||
+-	icedemo.rem.comp_cnt == 0)
+-    {
+-	PJ_LOG(1, (THIS_FILE, "Error: not enough info"));
+-	goto on_error;
++static void icedemo_input_remote(void) {
++  char linebuf[120];
++  unsigned media_cnt = 0;
++  unsigned comp0_port = 0;
++  char comp0_addr[80];
++  pj_bool_t done = PJ_FALSE;
++
++  puts("Paste SDP from remote host, end with empty line");
++
++  reset_rem_info();
++
++  comp0_addr[0] = '\0';
++
++  while (!done) {
++    pj_size_t len;
++    char *line;
++
++    printf(">");
++    if (stdout)
++      fflush(stdout);
++
++    if (fgets(linebuf, sizeof(linebuf), stdin) == NULL)
++      break;
++
++    len = strlen(linebuf);
++    while (len && (linebuf[len - 1] == '\r' || linebuf[len - 1] == '\n'))
++      linebuf[--len] = '\0';
++
++    line = linebuf;
++    while (len && pj_isspace(*line))
++      ++line, --len;
++
++    if (len == 0)
++      break;
++
++    /* Ignore subsequent media descriptors */
++    if (media_cnt > 1)
++      continue;
++
++    switch (line[0]) {
++    case 'm': {
++      int cnt;
++      char media[32], portstr[32];
++
++      ++media_cnt;
++      if (media_cnt > 1) {
++        puts("Media line ignored");
++        break;
++      }
++
++      cnt = sscanf(line + 2, "%s %s RTP/", media, portstr);
++      if (cnt != 2) {
++        PJ_LOG(1, (THIS_FILE, "Error parsing media line"));
++        goto on_error;
++      }
++
++      comp0_port = atoi(portstr);
++
++    } break;
++    case 'c': {
++      int cnt;
++      char c[32], net[32], ip[80];
++
++      cnt = sscanf(line + 2, "%s %s %s", c, net, ip);
++      if (cnt != 3) {
++        PJ_LOG(1, (THIS_FILE, "Error parsing connection line"));
++        goto on_error;
++      }
++
++      strcpy(comp0_addr, ip);
++    } break;
++    case 'a': {
++      char *attr = strtok(line + 2, ": \t\r\n");
++      if (strcmp(attr, "ice-ufrag") == 0) {
++        strcpy(icedemo.rem.ufrag, attr + strlen(attr) + 1);
++      } else if (strcmp(attr, "ice-pwd") == 0) {
++        strcpy(icedemo.rem.pwd, attr + strlen(attr) + 1);
++      } else if (strcmp(attr, "rtcp") == 0) {
++        char *val = attr + strlen(attr) + 1;
++        int af, cnt;
++        int port;
++        char net[32], ip[64];
++        pj_str_t tmp_addr;
++        pj_status_t status;
++
++        cnt = sscanf(val, "%d IN %s %s", &port, net, ip);
++        if (cnt != 3) {
++          PJ_LOG(1, (THIS_FILE, "Error parsing rtcp attribute"));
++          goto on_error;
++        }
++
++        if (strchr(ip, ':'))
++          af = pj_AF_INET6();
++        else
++          af = pj_AF_INET();
++
++        pj_sockaddr_init(af, &icedemo.rem.def_addr[1], NULL, 0);
++        tmp_addr = pj_str(ip);
++        status =
++            pj_sockaddr_set_str_addr(af, &icedemo.rem.def_addr[1], &tmp_addr);
++        if (status != PJ_SUCCESS) {
++          PJ_LOG(1, (THIS_FILE, "Invalid IP address"));
++          goto on_error;
++        }
++        pj_sockaddr_set_port(&icedemo.rem.def_addr[1], (pj_uint16_t)port);
++
++      } else if (strcmp(attr, "candidate") == 0) {
++        /**   Section 4.5, RFC 6544 (https://tools.ietf.org/html/rfc6544)
++         *    candidate-attribute   = "candidate" ":" foundation SP component-id
++         * SP "TCP" SP priority SP connection-address SP port SP cand-type [SP
++         * rel-addr] [SP rel-port] SP tcp-type-ext
++         *                             *(SP extension-att-name SP
++         *                                  extension-att-value)
++         *
++         *     tcp-type-ext          = "tcptype" SP tcp-type
++         *     tcp-type              = "active" / "passive" / "so"
++         */
++        char *sdpcand = attr + strlen(attr) + 1;
++        int af, cnt;
++        char foundation[32], transport[12], ipaddr[80], type[32], tcp_type[32];
++        pj_str_t tmpaddr;
++        int comp_id, prio, port;
++        pj_ice_sess_cand *cand;
++        pj_status_t status;
++        pj_bool_t is_tcp = PJ_FALSE;
++
++        cnt =
++            sscanf(sdpcand, "%s %d %s %d %s %d typ %s tcptype %s\n", foundation,
++                   &comp_id, transport, &prio, ipaddr, &port, type, tcp_type);
++        if (cnt != 7 && cnt != 8) {
++          PJ_LOG(1, (THIS_FILE, "error: Invalid ICE candidate line", cnt));
++          goto on_error;
++        }
++
++        if (strcmp(transport, "TCP") == 0) {
++          is_tcp = PJ_TRUE;
++        }
++
++        cand = &icedemo.rem.cand[icedemo.rem.cand_cnt];
++        pj_bzero(cand, sizeof(*cand));
++
++        if (strcmp(type, "host") == 0)
++          cand->type = PJ_ICE_CAND_TYPE_HOST;
++        else if (strcmp(type, "srflx") == 0)
++          cand->type = PJ_ICE_CAND_TYPE_SRFLX;
++        else if (strcmp(type, "relay") == 0)
++          cand->type = PJ_ICE_CAND_TYPE_RELAYED;
++        else {
++          PJ_LOG(1, (THIS_FILE, "Error: invalid candidate type '%s'", type));
++          goto on_error;
++        }
++
++        if (is_tcp) {
++          if (strcmp(tcp_type, "active") == 0)
++            cand->transport = PJ_CAND_TCP_ACTIVE;
++          else if (strcmp(tcp_type, "passive") == 0)
++            cand->transport = PJ_CAND_TCP_PASSIVE;
++          else if (strcmp(tcp_type, "so") == 0)
++            cand->transport = PJ_CAND_TCP_SO;
++          else {
++            PJ_LOG(1,
++                   (THIS_FILE, "Error: invalid transport type '%s'", tcp_type));
++            goto on_error;
++          }
++        } else {
++          cand->transport = PJ_CAND_UDP;
++        }
++
++        cand->comp_id = (pj_uint8_t)comp_id;
++        pj_strdup2(icedemo.pool, &cand->foundation, foundation);
++        cand->prio = prio;
++
++        if (strchr(ipaddr, ':'))
++          af = pj_AF_INET6();
++        else
++          af = pj_AF_INET();
++
++        tmpaddr = pj_str(ipaddr);
++        pj_sockaddr_init(af, &cand->addr, NULL, 0);
++        status = pj_sockaddr_set_str_addr(af, &cand->addr, &tmpaddr);
++        if (status != PJ_SUCCESS) {
++          PJ_LOG(1, (THIS_FILE, "Error: invalid IP address '%s'", ipaddr));
++          goto on_error;
++        }
++
++        pj_sockaddr_set_port(&cand->addr, (pj_uint16_t)port);
++
++        ++icedemo.rem.cand_cnt;
++
++        if (cand->comp_id > icedemo.rem.comp_cnt)
++          icedemo.rem.comp_cnt = cand->comp_id;
++      } else if (strcmp(attr, "setup") == 0) {
++        // TODO
++      } else if (strcmp(attr, "connection") == 0) {
++        // TODO
++      }
++    } break;
+     }
++  }
++
++  if (icedemo.rem.cand_cnt == 0 || icedemo.rem.ufrag[0] == 0 ||
++      icedemo.rem.pwd[0] == 0 || icedemo.rem.comp_cnt == 0) {
++    PJ_LOG(1, (THIS_FILE, "Error: not enough info"));
++    goto on_error;
++  }
++
++  if (comp0_port == 0 || comp0_addr[0] == '\0') {
++    PJ_LOG(1, (THIS_FILE, "Error: default address for component 0 not found"));
++    goto on_error;
++  } else {
++    int af;
++    pj_str_t tmp_addr;
++    pj_status_t status;
+ 
+-    if (comp0_port==0 || comp0_addr[0]=='\0') {
+-	PJ_LOG(1, (THIS_FILE, "Error: default address for component 0 not found"));
+-	goto on_error;
+-    } else {
+-	int af;
+-	pj_str_t tmp_addr;
+-	pj_status_t status;
++    if (strchr(comp0_addr, ':'))
++      af = pj_AF_INET6();
++    else
++      af = pj_AF_INET();
+ 
+-	if (strchr(comp0_addr, ':'))
+-	    af = pj_AF_INET6();
+-	else
+-	    af = pj_AF_INET();
+-
+-	pj_sockaddr_init(af, &icedemo.rem.def_addr[0], NULL, 0);
+-	tmp_addr = pj_str(comp0_addr);
+-	status = pj_sockaddr_set_str_addr(af, &icedemo.rem.def_addr[0],
+-					  &tmp_addr);
+-	if (status != PJ_SUCCESS) {
+-	    PJ_LOG(1,(THIS_FILE, "Invalid IP address in c= line"));
+-	    goto on_error;
+-	}
+-	pj_sockaddr_set_port(&icedemo.rem.def_addr[0], (pj_uint16_t)comp0_port);
++    pj_sockaddr_init(af, &icedemo.rem.def_addr[0], NULL, 0);
++    tmp_addr = pj_str(comp0_addr);
++    status = pj_sockaddr_set_str_addr(af, &icedemo.rem.def_addr[0], &tmp_addr);
++    if (status != PJ_SUCCESS) {
++      PJ_LOG(1, (THIS_FILE, "Invalid IP address in c= line"));
++      goto on_error;
+     }
++    pj_sockaddr_set_port(&icedemo.rem.def_addr[0], (pj_uint16_t)comp0_port);
++  }
+ 
+-    PJ_LOG(3, (THIS_FILE, "Done, %d remote candidate(s) added", 
+-	       icedemo.rem.cand_cnt));
+-    return;
++  PJ_LOG(3, (THIS_FILE, "Done, %d remote candidate(s) added",
++             icedemo.rem.cand_cnt));
++  return;
+ 
+ on_error:
+-    reset_rem_info();
++  reset_rem_info();
+ }
+ 
+-
+ /*
+  * Start ICE negotiation! This function is invoked from the menu.
+  */
+@@ -1213,52 +1293,53 @@ int main(int argc, char *argv[])
+     icedemo.opt.max_host = -1;
+ 
+     while((c=pj_getopt_long(argc,argv, "c:n:s:t:u:p:H:L:hTFR", long_options, &opt_id))!=-1) {
+-	switch (c) {
+-	case 'c':
+-	    icedemo.opt.comp_cnt = atoi(pj_optarg);
+-	    if (icedemo.opt.comp_cnt < 1 || icedemo.opt.comp_cnt >= PJ_ICE_MAX_COMP) {
+-		puts("Invalid component count value");
+-		return 1;
+-	    }
+-	    break;
+-	case 'n':
+-	    icedemo.opt.ns = pj_str(pj_optarg);
+-	    break;
+-	case 'H':
+-	    icedemo.opt.max_host = atoi(pj_optarg);
+-	    break;
+-	case 'h':
+-	    icedemo_usage();
+-	    return 0;
+-	case 's':
+-	    icedemo.opt.stun_srv = pj_str(pj_optarg);
+-	    break;
+-	case 't':
+-	    icedemo.opt.turn_srv = pj_str(pj_optarg);
+-	    break;
+-	case 'T':
+-	    icedemo.opt.turn_tcp = PJ_TRUE;
+-	    break;
+-	case 'u':
+-	    icedemo.opt.turn_username = pj_str(pj_optarg);
+-	    break;
+-	case 'p':
+-	    icedemo.opt.turn_password = pj_str(pj_optarg);
+-	    break;
+-	case 'F':
+-	    icedemo.opt.turn_fingerprint = PJ_TRUE;
+-	    break;
+-	case 'R':
+-	    icedemo.opt.regular = PJ_TRUE;
+-	    break;
+-	case 'L':
+-	    icedemo.opt.log_file = pj_optarg;
+-	    break;
+-	default:
+-	    printf("Argument \"%s\" is not valid. Use -h to see help",
+-		   argv[pj_optind]);
+-	    return 1;
+-	}
++      switch (c) {
++      case 'c':
++        icedemo.opt.comp_cnt = atoi(pj_optarg);
++        if (icedemo.opt.comp_cnt < 1 ||
++            icedemo.opt.comp_cnt >= PJ_ICE_MAX_COMP) {
++          puts("Invalid component count value");
++          return 1;
++        }
++        break;
++      case 'n':
++        icedemo.opt.ns = pj_str(pj_optarg);
++        break;
++      case 'H':
++        icedemo.opt.max_host = atoi(pj_optarg);
++        break;
++      case 'h':
++        icedemo_usage();
++        return 0;
++      case 's':
++        icedemo.opt.stun_srv = pj_str(pj_optarg);
++        break;
++      case 't':
++        icedemo.opt.turn_srv = pj_str(pj_optarg);
++        break;
++      case 'T':
++        icedemo.opt.ice_tcp = PJ_TRUE;
++        break;
++      case 'u':
++        icedemo.opt.turn_username = pj_str(pj_optarg);
++        break;
++      case 'p':
++        icedemo.opt.turn_password = pj_str(pj_optarg);
++        break;
++      case 'F':
++        icedemo.opt.turn_fingerprint = PJ_TRUE;
++        break;
++      case 'R':
++        icedemo.opt.regular = PJ_TRUE;
++        break;
++      case 'L':
++        icedemo.opt.log_file = pj_optarg;
++        break;
++      default:
++        printf("Argument \"%s\" is not valid. Use -h to see help",
++               argv[pj_optind]);
++        return 1;
++      }
+     }
+ 
+     status = icedemo_init();
+diff --git a/pjsip/src/pjsua-lib/pjsua_core.c b/pjsip/src/pjsua-lib/pjsua_core.c
+index ea1e72b85..39d05d1ed 100644
+--- a/pjsip/src/pjsua-lib/pjsua_core.c
++++ b/pjsip/src/pjsua-lib/pjsua_core.c
+@@ -1529,10 +1529,10 @@ static void resolve_stun_entry(pjsua_stun_resolve *sess)
+ 	pj_bzero(&stun_sock_cb, sizeof(stun_sock_cb));
+ 	stun_sock_cb.on_status = &test_stun_on_status;
+ 	sess->async_wait = PJ_FALSE;
+-	status = pj_stun_sock_create(&pjsua_var.stun_cfg, "stunresolve",
+-				     sess->af, &stun_sock_cb,
+-				     NULL, sess, &sess->stun_sock);
+-	if (status != PJ_SUCCESS) {
++        status = pj_stun_sock_create(&pjsua_var.stun_cfg, "stunresolve",
++                                     sess->af, PJ_STUN_TP_UDP, &stun_sock_cb,
++                                     NULL, sess, &sess->stun_sock);
++        if (status != PJ_SUCCESS) {
+ 	    char errmsg[PJ_ERR_MSG_SIZE];
+ 	    pj_strerror(status, errmsg, sizeof(errmsg));
+ 	    PJ_LOG(4,(THIS_FILE, 
