@@ -129,7 +129,7 @@ index 63a0d1c9..6cae6b2e 100644
 +                        // Any 256 obsolete ips (should not happen), resize the array.
 +                        if (idx > 0 && idx % 256 == 0) {
 +                          char* newDeprecated = realloc(deprecatedAddrs, (idx + 256)*sizeof(char)*PJ_INET6_ADDRSTRLEN);
-+                          if (!newDeprecated) {
++                          if (newDeprecated == NULL) {
 +                            perror("realloc error: abort");
 +                            return;
 +                          }

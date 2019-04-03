@@ -149,7 +149,9 @@ class SIPVoIPLink {
          * @return          	A transport selector structure
          */
         static inline pjsip_tpselector getTransportSelector(pjsip_transport *transport) {
-            pjsip_tpselector tp = {PJSIP_TPSELECTOR_TRANSPORT, {transport}};
+            pjsip_tpselector tp;
+            tp.type = PJSIP_TPSELECTOR_TRANSPORT;
+            tp.u.transport = transport;
             return tp;
         }
 
