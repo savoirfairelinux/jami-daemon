@@ -486,7 +486,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * private account codec searching functions
          */
-        std::shared_ptr<AccountCodecInfo> searchCodecByName(std::string name, MediaType mediaType);
+        std::shared_ptr<AccountCodecInfo> searchCodecByName(const std::string& name, MediaType mediaType);
         std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
         void setAllCodecsActive(MediaType mediaType, bool active);
 };

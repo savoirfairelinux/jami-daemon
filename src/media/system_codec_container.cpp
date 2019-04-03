@@ -196,11 +196,11 @@ SystemCodecContainer::searchCodecById(unsigned codecId, MediaType mediaType)
     return {};
 }
 std::shared_ptr<SystemCodecInfo>
-SystemCodecContainer::searchCodecByName(std::string name, MediaType mediaType)
+SystemCodecContainer::searchCodecByName(const std::string& name, MediaType mediaType)
 {
     for (const auto& codecIt: availableCodecList_) {
-        if ((codecIt->name.compare(name) == 0) &&
-            (codecIt->mediaType & mediaType ))
+        if (codecIt->name == name &&
+            (codecIt->mediaType & mediaType))
             return codecIt;
     }
     return {};

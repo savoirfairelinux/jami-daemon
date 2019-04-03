@@ -80,7 +80,7 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
 void
 VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 {
-    requestKeyFrameCallback_ = cb;
+    requestKeyFrameCallback_ = std::move(cb);
 }
 
 void VideoRtpSession::startSender()
@@ -611,7 +611,7 @@ VideoRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
 void
 VideoRtpSession::setChangeOrientationCallback(std::function<void(int)> cb)
 {
-    changeOrientationCallback_ = cb;
+    changeOrientationCallback_ = std::move(cb);
 }
 
 }} // namespace jami::video

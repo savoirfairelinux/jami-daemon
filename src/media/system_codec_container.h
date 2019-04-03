@@ -50,7 +50,7 @@ class SystemCodecContainer
         searchCodecById(unsigned codecId, MediaType type = MEDIA_ALL);
 
         std::shared_ptr<SystemCodecInfo>
-        searchCodecByName(std::string name, MediaType type = MEDIA_ALL);
+        searchCodecByName(const std::string& name, MediaType type = MEDIA_ALL);
 
         std::shared_ptr<SystemCodecInfo>
         searchCodecByPayload(unsigned payload, MediaType type = MEDIA_ALL);

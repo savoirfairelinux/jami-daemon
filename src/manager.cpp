@@ -1508,10 +1508,9 @@ Manager::createConfFromParticipantList(const std::vector< std::string > &partici
 
     int successCounter = 0;
 
-    for (const auto &p : participantList) {
-        std::string numberaccount(p);
-        std::string tostr(numberaccount.substr(0, numberaccount.find(",")));
-        std::string account(numberaccount.substr(numberaccount.find(",") + 1, numberaccount.size()));
+    for (const auto& numberaccount : participantList) {
+        std::string tostr(numberaccount.substr(0, numberaccount.find(',')));
+        std::string account(numberaccount.substr(numberaccount.find(',') + 1, numberaccount.size()));
 
         pimpl_->unsetCurrentCall();
 
@@ -1652,7 +1651,7 @@ Manager::joinConference(const std::string& conf_id1,
 void
 Manager::addAudio(Call& call)
 {
-    const auto call_id = call.getCallId();
+    const auto& call_id = call.getCallId();
 
     if (isConferenceParticipant(call_id)) {
         JAMI_DBG("[conf:%s] Attach local audio", call_id.c_str());
@@ -1683,7 +1682,7 @@ Manager::addAudio(Call& call)
 void
 Manager::removeAudio(Call& call)
 {
-    const auto call_id = call.getCallId();
+    const auto& call_id = call.getCallId();
     JAMI_DBG("[call:%s] Remove local audio", call_id.c_str());
     getRingBufferPool().unBindAll(call_id);
 }
@@ -1992,7 +1991,7 @@ Manager::sendCallTextMessage(const std::string& callID,
 void
 Manager::peerAnsweredCall(Call& call)
 {
-    const auto call_id = call.getCallId();
+    const auto& call_id = call.getCallId();
     JAMI_DBG("[call:%s] Peer answered", call_id.c_str());
 
     // The if statement is useful only if we sent two calls at the same time.
@@ -2025,7 +2024,7 @@ Manager::peerRingingCall(Call& call)
 void
 Manager::peerHungupCall(Call& call)
 {
-    const auto call_id = call.getCallId();
+    const auto& call_id = call.getCallId();
     JAMI_DBG("[call:%s] Peer hungup", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
@@ -2065,7 +2064,7 @@ Manager::callBusy(Call& call)
 void
 Manager::callFailure(Call& call)
 {
-    const auto call_id = call.getCallId();
+    const auto& call_id = call.getCallId();
     JAMI_DBG("[call:%s] Failed", call.getCallId().c_str());
 
     if (isCurrentCall(call)) {
@@ -2161,7 +2160,7 @@ Manager::playRingtone(const std::string& accountID)
 
     std::string ringchoice = account->getRingtonePath();
 #ifndef _WIN32
-    if (ringchoice.find(DIR_SEPARATOR_STR) == std::string::npos) {
+    if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
         // check inside global share directory
         static const char * const RINGDIR = "ringtones";
         ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR
@@ -2897,7 +2896,7 @@ std::vector<std::string>
 Manager::getCallList() const
 {
     std::vector<std::string> results;
-    for (auto call: callFactory.getAllCalls()) {
+    for (const auto& call: callFactory.getAllCalls()) {
         if (!call->isSubcall())
             results.push_back(call->getCallId());
     }
@@ -3047,7 +3046,7 @@ int
 Manager::getMessageStatus(uint64_t id) const
 {
     const auto& allAccounts = accountFactory.getAllAccounts();
-    for (auto acc : allAccounts) {
+    for (const auto& acc : allAccounts) {
         auto status = acc->getMessageStatus(id);
         if (status != im::MessageStatus::UNKNOWN)
             return statusFromImStatus(status);

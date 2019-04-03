@@ -144,7 +144,7 @@ VideoSender::useCodec(const jami::AccountVideoCodecInfo* codec) const
 void
 VideoSender::setChangeOrientationCallback(std::function<void(int)> cb)
 {
-    changeOrientationCallback_ = cb;
+    changeOrientationCallback_ = std::move(cb);
 }
 
 }} // namespace jami::video

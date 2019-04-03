@@ -492,11 +492,11 @@ Account::searchCodecById(unsigned codecId, MediaType mediaType)
 }
 
 std::shared_ptr<AccountCodecInfo>
-Account::searchCodecByName(std::string name, MediaType mediaType)
+Account::searchCodecByName(const std::string& name, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt: accountCodecInfoList_) {
-            if ((codecIt->systemCodecInfo.name.compare(name) == 0) &&
+            if (codecIt->systemCodecInfo.name == name &&
                 (codecIt->systemCodecInfo.mediaType & mediaType ))
                 return codecIt;
         }

@@ -50,7 +50,6 @@ using random_device = dht::crypto::random_device;
 namespace jami {
 
 using std::string;
-using std::map;
 using std::vector;
 using std::stringstream;
 

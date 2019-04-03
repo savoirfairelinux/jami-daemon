@@ -603,7 +603,7 @@ class RingAccount : public SIPAccountBase {
                                    const std::shared_ptr<dht::crypto::Certificate>& from_cert,
                                    const dht::InfoHash& from);
 
-        static tls::DhParams loadDhParams(const std::string path);
+        static tls::DhParams loadDhParams(std::string path);
 
         /**
          * If privkeyPath_ is a valid private key file (PEM or DER),

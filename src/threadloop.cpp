@@ -57,16 +57,6 @@ ThreadLoop::ThreadLoop(const std::function<bool()>& setup,
     , thread_()
 {}
 
-ThreadLoop::ThreadLoop(ThreadLoop&& other)
-    : setup_(std::move(other.setup_))
-    , process_(std::move(other.process_))
-    , cleanup_(std::move(other.cleanup_))
-    , state_(other.state_.load())
-    , thread_(std::move(other.thread_))
-{
-    other.state_ = READY;
-}
-
 ThreadLoop::~ThreadLoop()
 {
     if (isRunning()) {

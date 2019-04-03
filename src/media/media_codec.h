@@ -73,8 +73,8 @@ struct SystemCodecInfo
     static constexpr unsigned DEFAULT_MIN_BITRATE {250};
     static constexpr unsigned DEFAULT_MAX_BITRATE {3000};
 
-    SystemCodecInfo(unsigned avcodecId, const std::string name,
-                    std::string libName, MediaType mediaType,
+    SystemCodecInfo(unsigned avcodecId, const std::string& name,
+                    const std::string& libName, MediaType mediaType,
                     CodecType codecType = CODEC_NONE, unsigned bitrate = 0,
                     unsigned payloadType = 0,
                     unsigned m_minQuality = DEFAULT_NO_QUALITY,
@@ -106,8 +106,8 @@ struct SystemCodecInfo
  */
 struct SystemAudioCodecInfo : SystemCodecInfo
 {
-    SystemAudioCodecInfo(unsigned avcodecId, const std::string name,
-                         std::string libName, CodecType type,
+    SystemAudioCodecInfo(unsigned avcodecId, const std::string& name,
+                         const std::string& libName, CodecType type,
                          unsigned bitrate = 0,
                          unsigned sampleRate = 0, unsigned nbChannels = 0,
                          unsigned payloadType = 0);
@@ -126,8 +126,8 @@ struct SystemAudioCodecInfo : SystemCodecInfo
  */
 struct SystemVideoCodecInfo : SystemCodecInfo
 {
-    SystemVideoCodecInfo(unsigned avcodecId, const std::string name,
-                         std::string libName, CodecType type = CODEC_NONE,
+    SystemVideoCodecInfo(unsigned avcodecId, const std::string& name,
+                         const std::string& libName, CodecType type = CODEC_NONE,
                          unsigned bitrate = 0,
                          unsigned m_minQuality = 0,
                          unsigned m_maxQuality = 0,
@@ -153,9 +153,9 @@ struct AccountCodecInfo
 {
     AccountCodecInfo(const SystemCodecInfo& sysCodecInfo) noexcept;
     AccountCodecInfo(const AccountCodecInfo&) noexcept = default;
-    AccountCodecInfo(AccountCodecInfo&&) noexcept = default;
+    AccountCodecInfo(AccountCodecInfo&&) noexcept = delete;
     AccountCodecInfo& operator=(const AccountCodecInfo&);
-    AccountCodecInfo& operator=(AccountCodecInfo&&);
+    AccountCodecInfo& operator=(AccountCodecInfo&&) noexcept = delete;
 
     const SystemCodecInfo& systemCodecInfo;
     unsigned order {0}; /*used to define preferred codec list order in UI*/
@@ -165,7 +165,6 @@ struct AccountCodecInfo
     unsigned bitrate;
     unsigned quality;
     std::map<std::string, std::string>  getCodecSpecifications();
-
 };
 
 struct AccountAudioCodecInfo : AccountCodecInfo
