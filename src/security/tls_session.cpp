@@ -3,6 +3,7 @@
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -734,6 +735,8 @@ TlsSession::TlsSessionImpl::cleanup()
 
     if (cookie_key_.data)
         gnutls_free(cookie_key_.data);
+
+    transport_.shutdown();
 }
 
 TlsSessionState
@@ -1268,7 +1271,6 @@ TlsSession::shutdown()
     pimpl_->state_ = TlsSessionState::SHUTDOWN;
     pimpl_->stateCondition_.notify_all();
     pimpl_->rxCv_.notify_one(); // unblock waiting FSM
-    pimpl_->transport_.shutdown();
 }
 
 std::size_t
