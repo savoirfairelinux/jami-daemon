@@ -12,8 +12,20 @@ Written by
 Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
 on behalf of Savoir-faire Linux.
 
-----
+---
+ pjnath/include/pjnath/config.h       |   8 +
+ pjnath/include/pjnath/stun_msg.h     |  26 ++
+ pjnath/include/pjnath/stun_session.h |   7 +
+ pjnath/include/pjnath/turn_session.h |  38 +++
+ pjnath/include/pjnath/turn_sock.h    |  24 ++
+ pjnath/src/pjnath/stun_msg.c         |  13 +-
+ pjnath/src/pjnath/stun_session.c     |  13 +
+ pjnath/src/pjnath/turn_session.c     |  59 +++-
+ pjnath/src/pjnath/turn_sock.c        | 474 ++++++++++++++++++++++++++-
+ 9 files changed, 655 insertions(+), 7 deletions(-)
 
+diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
+index 540e32ad1..e157d39ee 100644
 --- a/pjnath/include/pjnath/config.h
 +++ b/pjnath/include/pjnath/config.h
 @@ -220,6 +220,14 @@
@@ -31,9 +43,11 @@ on behalf of Savoir-faire Linux.
  
  /* **************************************************************************
   * ICE CONFIGURATION
+diff --git a/pjnath/include/pjnath/stun_msg.h b/pjnath/include/pjnath/stun_msg.h
+index 7efdf57a2..4d04016ff 100644
 --- a/pjnath/include/pjnath/stun_msg.h
 +++ b/pjnath/include/pjnath/stun_msg.h
-@@ -92,6 +92,21 @@
+@@ -92,6 +92,21 @@ enum pj_stun_method_e
       */
      PJ_STUN_CHANNEL_BIND_METHOD		    = 9,
  
@@ -55,7 +69,7 @@ on behalf of Savoir-faire Linux.
      /**
       * All known methods.
       */
-@@ -261,6 +276,16 @@
+@@ -261,6 +276,16 @@ typedef enum pj_stun_msg_type
       */
      PJ_STUN_DATA_INDICATION		    = 0x0017,
  
@@ -72,7 +86,7 @@ on behalf of Savoir-faire Linux.
  
      /**
       * TURN CreatePermission request
-@@ -333,6 +358,7 @@
+@@ -333,6 +358,7 @@ typedef enum pj_stun_attr_type
      PJ_STUN_ATTR_XOR_REFLECTED_FROM = 0x0023,/**< XOR-REFLECTED-FROM	    */
      PJ_STUN_ATTR_PRIORITY	    = 0x0024,/**< PRIORITY		    */
      PJ_STUN_ATTR_USE_CANDIDATE	    = 0x0025,/**< USE-CANDIDATE		    */
@@ -80,38 +94,42 @@ on behalf of Savoir-faire Linux.
      PJ_STUN_ATTR_ICMP		    = 0x0030,/**< ICMP (TURN)		    */
  
      PJ_STUN_ATTR_END_MANDATORY_ATTR,
+diff --git a/pjnath/include/pjnath/stun_session.h b/pjnath/include/pjnath/stun_session.h
+index f8ea4d1dc..28c5985e8 100644
 --- a/pjnath/include/pjnath/stun_session.h
 +++ b/pjnath/include/pjnath/stun_session.h
-@@ -751,6 +751,13 @@
+@@ -750,6 +750,13 @@ PJ_DECL(pj_status_t) pj_stun_session_on_rx_pkt(pj_stun_session *sess,
+ PJ_DECL(void) pj_stun_msg_destroy_tdata(pj_stun_session *sess,
  					pj_stun_tx_data *tdata);
  
++PJ_DEF(void)
++pj_stun_session_get_server_cred(pj_stun_session *sess, pj_pool_t *pool,
++                                pj_str_t *nonce, pj_str_t *realm);
++
++PJ_DEF(void)
++pj_stun_session_set_server_cred(pj_stun_session *sess, const pj_str_t *nonce,
++                                pj_str_t *realm);
  
-+PJ_DEF(void) pj_stun_session_get_server_cred(
-+	pj_stun_session *sess,
-+	pj_pool_t *pool, pj_str_t *nonce, pj_str_t *realm);
-+
-+PJ_DEF(void) pj_stun_session_set_server_cred(
-+	pj_stun_session *sess, const pj_str_t *nonce, pj_str_t *realm);
-+
  /**
   * @}
-  */
+diff --git a/pjnath/include/pjnath/turn_session.h b/pjnath/include/pjnath/turn_session.h
+index cc3d5d8d5..3bb073beb 100644
 --- a/pjnath/include/pjnath/turn_session.h
 +++ b/pjnath/include/pjnath/turn_session.h
-@@ -184,6 +184,12 @@
+@@ -183,6 +183,12 @@ typedef enum pj_turn_state_t
+      */
      PJ_TURN_STATE_ALLOCATING,
  
-     /**
++    /**
 +     * TURN session has issued CONNECTION-BIND request and is waiting for response
 +     * from the TURN server.
 +     */
 +    PJ_TURN_STATE_CONNECTION_BINDING,
 +
-+    /**
+     /**
       * TURN session has successfully allocated relay resoruce and now is
       * ready to be used.
-      */
-@@ -298,6 +304,21 @@
+@@ -298,6 +304,21 @@ typedef struct pj_turn_session_cb
  		     pj_turn_state_t old_state,
  		     pj_turn_state_t new_state);
  
@@ -133,7 +151,7 @@ on behalf of Savoir-faire Linux.
  } pj_turn_session_cb;
  
  
-@@ -339,6 +360,14 @@
+@@ -339,6 +360,14 @@ typedef struct pj_turn_alloc_param
       */
      int	    af;
  
@@ -148,7 +166,7 @@ on behalf of Savoir-faire Linux.
  
  } pj_turn_alloc_param;
  
-@@ -741,6 +770,15 @@
+@@ -741,6 +770,15 @@ PJ_DECL(pj_status_t) pj_turn_session_on_rx_pkt(pj_turn_session *sess,
  					       pj_size_t pkt_len,
  					       pj_size_t *parsed_len);
  
@@ -164,9 +182,11 @@ on behalf of Savoir-faire Linux.
  
  /**
   * @}
+diff --git a/pjnath/include/pjnath/turn_sock.h b/pjnath/include/pjnath/turn_sock.h
+index bbff6bf7b..6a4d915c2 100644
 --- a/pjnath/include/pjnath/turn_sock.h
 +++ b/pjnath/include/pjnath/turn_sock.h
-@@ -98,6 +98,23 @@
+@@ -98,6 +98,23 @@ typedef struct pj_turn_sock_cb
  		     pj_turn_state_t old_state,
  		     pj_turn_state_t new_state);
  
@@ -190,7 +210,7 @@ on behalf of Savoir-faire Linux.
  } pj_turn_sock_cb;
  
  
-@@ -446,6 +463,13 @@
+@@ -446,6 +463,13 @@ PJ_DECL(pj_status_t) pj_turn_sock_bind_channel(pj_turn_sock *turn_sock,
  					       const pj_sockaddr_t *peer,
  					       unsigned addr_len);
  
@@ -204,9 +224,11 @@ on behalf of Savoir-faire Linux.
  
  /**
   * @}
+diff --git a/pjnath/src/pjnath/stun_msg.c b/pjnath/src/pjnath/stun_msg.c
+index 896848b7a..acaf3b70f 100644
 --- a/pjnath/src/pjnath/stun_msg.c
 +++ b/pjnath/src/pjnath/stun_msg.c
-@@ -45,6 +45,9 @@
+@@ -45,6 +45,9 @@ static const char *stun_method_names[PJ_STUN_METHOD_MAX] =
      "Data",			/* 7 */
      "CreatePermission",		/* 8 */
      "ChannelBind",		/* 9 */
@@ -216,7 +238,7 @@ on behalf of Savoir-faire Linux.
  };
  
  static struct
-@@ -476,11 +479,11 @@
+@@ -476,11 +479,11 @@ static struct attr_desc mandatory_attr_desc[] =
  	NULL
      },
      {
@@ -233,26 +255,32 @@ on behalf of Savoir-faire Linux.
      },
      {
  	/* ID 0x002b is not assigned */
+diff --git a/pjnath/src/pjnath/stun_session.c b/pjnath/src/pjnath/stun_session.c
+index d7eb2dbb5..5e2efc35a 100644
 --- a/pjnath/src/pjnath/stun_session.c
 +++ b/pjnath/src/pjnath/stun_session.c
-@@ -1511,3 +1511,14 @@
+@@ -1511,3 +1511,16 @@ PJ_DEF(pj_status_t) pj_stun_session_on_rx_pkt(pj_stun_session *sess,
      return status;
  }
  
-+PJ_DEF(void) pj_stun_session_get_server_cred(pj_stun_session *sess, pj_pool_t *pool, pj_str_t *nonce, pj_str_t *realm)
-+{
-+	pj_strdup(pool, nonce,  &sess->next_nonce);
-+	pj_strdup(pool, realm,  &sess->server_realm);
++PJ_DEF(void)
++pj_stun_session_get_server_cred(pj_stun_session *sess, pj_pool_t *pool,
++                                pj_str_t *nonce, pj_str_t *realm) {
++  pj_strdup(pool, nonce, &sess->next_nonce);
++  pj_strdup(pool, realm, &sess->server_realm);
 +}
 +
-+PJ_DEF(void) pj_stun_session_set_server_cred(pj_stun_session *sess, const pj_str_t *nonce, pj_str_t *realm)
-+{
-+	pj_strdup(sess->pool, &sess->next_nonce, nonce);
-+	pj_strdup(sess->pool, &sess->server_realm, realm);
++PJ_DEF(void)
++pj_stun_session_set_server_cred(pj_stun_session *sess, const pj_str_t *nonce,
++                                pj_str_t *realm) {
++  pj_strdup(sess->pool, &sess->next_nonce, nonce);
++  pj_strdup(sess->pool, &sess->server_realm, realm);
 +}
+diff --git a/pjnath/src/pjnath/turn_session.c b/pjnath/src/pjnath/turn_session.c
+index bbea027f3..4fd643be1 100644
 --- a/pjnath/src/pjnath/turn_session.c
 +++ b/pjnath/src/pjnath/turn_session.c
-@@ -42,6 +42,7 @@
+@@ -42,6 +42,7 @@ static const char *state_names[] =
      "Resolving",
      "Resolved",
      "Allocating",
@@ -260,7 +288,7 @@ on behalf of Savoir-faire Linux.
      "Ready",
      "Deallocating",
      "Deallocated",
-@@ -208,6 +209,7 @@
+@@ -208,6 +209,7 @@ static void on_timer_event(pj_timer_heap_t *th, pj_timer_entry *e);
  PJ_DEF(void) pj_turn_alloc_param_default(pj_turn_alloc_param *prm)
  {
      pj_bzero(prm, sizeof(*prm));
@@ -268,7 +296,7 @@ on behalf of Savoir-faire Linux.
  }
  
  /*
-@@ -403,6 +405,11 @@
+@@ -403,6 +405,11 @@ static void sess_shutdown(pj_turn_session *sess,
  	sess->pending_destroy = PJ_TRUE;
  	can_destroy = PJ_FALSE;
  	break;
@@ -280,7 +308,7 @@ on behalf of Savoir-faire Linux.
      case PJ_TURN_STATE_READY:
  	/* Send REFRESH with LIFETIME=0 */
  	can_destroy = PJ_FALSE;
-@@ -719,6 +726,9 @@
+@@ -723,6 +730,9 @@ PJ_DEF(pj_status_t) pj_turn_session_alloc(pj_turn_session *sess,
      PJ_ASSERT_RETURN(sess->state>PJ_TURN_STATE_NULL && 
  		     sess->state<=PJ_TURN_STATE_RESOLVED, 
  		     PJ_EINVALIDOP);
@@ -290,7 +318,7 @@ on behalf of Savoir-faire Linux.
  
      /* Verify address family in allocation param */
      if (param && param->af) {
-@@ -756,7 +766,7 @@
+@@ -760,7 +770,7 @@ PJ_DEF(pj_status_t) pj_turn_session_alloc(pj_turn_session *sess,
      /* MUST include REQUESTED-TRANSPORT attribute */
      pj_stun_msg_add_uint_attr(tdata->pool, tdata->msg,
  			      PJ_STUN_ATTR_REQ_TRANSPORT, 
@@ -299,7 +327,7 @@ on behalf of Savoir-faire Linux.
  
      /* Include BANDWIDTH if requested */
      if (sess->alloc_param.bandwidth > 0) {
-@@ -994,6 +1004,13 @@
+@@ -998,6 +1008,13 @@ PJ_DEF(pj_status_t) pj_turn_session_sendto( pj_turn_session *sess,
  	}
      }
  
@@ -313,7 +341,7 @@ on behalf of Savoir-faire Linux.
      /* See if the peer is bound to a channel number */
      ch = lookup_ch_by_addr(sess, addr, pj_sockaddr_get_len(addr), 
  			   PJ_FALSE, PJ_FALSE);
-@@ -1670,6 +1687,33 @@
+@@ -1674,6 +1691,33 @@ static pj_status_t stun_on_rx_indication(pj_stun_session *stun,
  
      sess = (pj_turn_session*)pj_stun_session_get_user_data(stun);
  
@@ -347,7 +375,7 @@ on behalf of Savoir-faire Linux.
      /* Expecting Data Indication only */
      if (msg->hdr.type != PJ_STUN_DATA_INDICATION) {
  	PJ_LOG(4,(sess->obj_name, "Unexpected STUN %s indication",
-@@ -2089,3 +2133,16 @@
+@@ -2096,3 +2140,16 @@ static void on_timer_event(pj_timer_heap_t *th, pj_timer_entry *e)
      pj_grp_lock_release(sess->grp_lock);
  }
  
@@ -364,9 +392,11 @@ on behalf of Savoir-faire Linux.
 +{
 +	pj_stun_session_set_server_cred(sess->stun, nonce, realm);
 +}
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index a30ab5153..c267871e2 100644
 --- a/pjnath/src/pjnath/turn_sock.c
 +++ b/pjnath/src/pjnath/turn_sock.c
-@@ -35,9 +35,29 @@
+@@ -35,9 +35,29 @@ enum
  
  enum { MAX_BIND_RETRY = 100 };
  
@@ -396,7 +426,7 @@ on behalf of Savoir-faire Linux.
  struct pj_turn_sock
  {
      pj_pool_t		*pool;
-@@ -59,6 +79,11 @@
+@@ -59,6 +79,11 @@ struct pj_turn_sock
      pj_turn_tp_type	 conn_type;
      pj_activesock_t	*active_sock;
      pj_ioqueue_op_key_t	 send_key;
@@ -408,7 +438,7 @@ on behalf of Savoir-faire Linux.
  };
  
  
-@@ -82,6 +107,12 @@
+@@ -82,6 +107,12 @@ static void turn_on_rx_data(pj_turn_session *sess,
  static void turn_on_state(pj_turn_session *sess, 
  			  pj_turn_state_t old_state,
  			  pj_turn_state_t new_state);
@@ -421,7 +451,7 @@ on behalf of Savoir-faire Linux.
  
  static pj_bool_t on_data_read(pj_activesock_t *asock,
  			      void *data,
-@@ -97,6 +127,26 @@
+@@ -97,6 +128,26 @@ static void turn_sock_on_destroy(void *comp);
  static void destroy(pj_turn_sock *turn_sock);
  static void timer_cb(pj_timer_heap_t *th, pj_timer_entry *e);
  
@@ -448,7 +478,7 @@ on behalf of Savoir-faire Linux.
  
  /* Init config */
  PJ_DEF(void) pj_turn_sock_cfg_default(pj_turn_sock_cfg *cfg)
-@@ -193,6 +243,7 @@
+@@ -193,6 +244,7 @@ PJ_DEF(pj_status_t) pj_turn_sock_create(pj_stun_config *cfg,
      sess_cb.on_channel_bound = &turn_on_channel_bound;
      sess_cb.on_rx_data = &turn_on_rx_data;
      sess_cb.on_state = &turn_on_state;
@@ -456,7 +486,7 @@ on behalf of Savoir-faire Linux.
      status = pj_turn_session_create(cfg, pool->obj_name, af, conn_type,
                                      turn_sock->grp_lock, &sess_cb, 0,
                                      turn_sock, &turn_sock->sess);
-@@ -238,6 +289,9 @@
+@@ -238,6 +290,9 @@ static void destroy(pj_turn_sock *turn_sock)
  	pj_turn_session_shutdown(turn_sock->sess);
      if (turn_sock->active_sock)
  	pj_activesock_close(turn_sock->active_sock);
@@ -466,7 +496,7 @@ on behalf of Savoir-faire Linux.
      pj_grp_lock_dec_ref(turn_sock->grp_lock);
      pj_grp_lock_release(turn_sock->grp_lock);
  }
-@@ -302,6 +356,34 @@
+@@ -302,6 +357,34 @@ static void sess_fail(pj_turn_sock *turn_sock, const char *title,
      }
  }
  
@@ -501,7 +531,7 @@ on behalf of Savoir-faire Linux.
  /*
   * Set user data.
   */
-@@ -411,6 +489,9 @@
+@@ -411,6 +494,9 @@ PJ_DEF(pj_status_t) pj_turn_sock_alloc(pj_turn_sock *turn_sock,
  
      /* Set credental */
      if (cred) {
@@ -511,7 +541,11 @@ on behalf of Savoir-faire Linux.
  	status = pj_turn_session_set_credential(turn_sock->sess, cred);
  	if (status != PJ_SUCCESS) {
  	    sess_fail(turn_sock, "Error setting credential", status);
-@@ -684,2 +770,27 @@
+@@ -681,7 +767,32 @@ static pj_status_t turn_on_send_pkt(pj_turn_session *sess,
+ 				      &turn_sock->send_key, pkt, &len, 0,
+ 				      dst_addr, dst_addr_len);
+     } else {
+-	status = pj_activesock_send(turn_sock->active_sock,
 +	/* With TCP peer connection filter by address
 +	 * if packet is for the server or the peer
 +	 */
@@ -537,10 +571,11 @@ on behalf of Savoir-faire Linux.
 +	} else {
 +		asock = turn_sock->active_sock;
 +	}
--	status = pj_activesock_send(turn_sock->active_sock,
 +	status = pj_activesock_send(asock,
  				    &turn_sock->send_key, pkt, &len, 0);
-@@ -927,4 +1032,365 @@
+     }
+     if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+@@ -935,4 +1046,365 @@ static void turn_on_state(pj_turn_session *sess,
      }
  }
  
@@ -760,7 +795,7 @@ on behalf of Savoir-faire Linux.
 +			*remainder = 0;
 +			return PJ_TRUE;
 +		}
- 
++
 +		/* STUN session waiting for ConnectBind response */
 +		pj_size_t parsed_len;
 +		unsigned options = PJ_STUN_CHECK_PACKET | PJ_STUN_NO_FINGERPRINT_CHECK;
@@ -884,7 +919,7 @@ on behalf of Savoir-faire Linux.
 +	pj_grp_lock_acquire(tcp_cnx->turn_sock->grp_lock);
 +	status = pj_activesock_send(tcp_cnx->active_tcp_sock, &tcp_cnx->send_key, pkt, &pkt_size, 0);
 +	pj_grp_lock_release(tcp_cnx->turn_sock->grp_lock);
-+
+ 
 +	return status;
 +}
 +
@@ -906,4 +941,3 @@ on behalf of Savoir-faire Linux.
 +	PJ_LOG(3, ("rfc6062", "peer data connection bind %s", status == PJ_SUCCESS ? "succeed" : "failed"));
 +	pj_grp_lock_release(tcp_cnx->turn_sock->grp_lock);
 +}
-
