@@ -56,6 +56,9 @@ static constexpr int MAX_CANDIDATES {32};
 
 //==============================================================================
 
+using MutexGuard = std::lock_guard<std::mutex>;
+using MutexLock = std::unique_lock<std::mutex>;
+
 namespace
 {
 
@@ -65,6 +68,92 @@ struct IceSTransDeleter
         pj_ice_strans_stop_ice(ptr);
         pj_ice_strans_destroy(ptr);
     }
+};
+
+class PeerChannel {
+public:
+  PeerChannel() {}
+  ~PeerChannel() { stop(); }
+
+  PeerChannel(PeerChannel &&o) {
+    MutexGuard lk{o.mutex_};
+    stream_ = std::move(o.stream_);
+  }
+
+  PeerChannel &operator=(PeerChannel &&o) {
+    std::lock(mutex_, o.mutex_);
+    MutexGuard lk1{mutex_, std::adopt_lock};
+    MutexGuard lk2{o.mutex_, std::adopt_lock};
+    stream_ = std::move(o.stream_);
+    return *this;
+  }
+
+  void operator<<(const std::string &data) {
+    MutexGuard lk{mutex_};
+    stream_.clear();
+    stream_ << data;
+
+    notified_ = true;
+    cv_.notify_one();
+  }
+
+  ssize_t isDataAvailable() {
+    MutexGuard lk{mutex_};
+    auto pos = stream_.tellg();
+    stream_.seekg(0, std::ios_base::end);
+    auto available = (stream_.tellg() - pos);
+    stream_.seekg(pos);
+    return available;
+  }
+
+  template <typename Duration> bool wait(Duration timeout) {
+    std::lock(apiMutex_, mutex_);
+    MutexGuard lk_api{apiMutex_, std::adopt_lock};
+    MutexLock lk{mutex_, std::adopt_lock};
+    auto a = cv_.wait_for(lk, timeout,
+                        [this] { return stop_ or /*(data.size() != 0)*/ !stream_.eof(); });
+    return a;
+  }
+
+  std::size_t read(char *output, std::size_t size) {
+    std::lock(apiMutex_, mutex_);
+    MutexGuard lk_api{apiMutex_, std::adopt_lock};
+    MutexLock lk{mutex_, std::adopt_lock};
+    cv_.wait(lk, [&, this] {
+      if (stop_)
+        return true;
+      stream_.read(&output[0], size);
+      return stream_.gcount() > 0;
+    });
+    return stop_ ? 0 : stream_.gcount();
+  }
+
+  void stop() noexcept {
+    {
+      MutexGuard lk{mutex_};
+      if (stop_)
+        return;
+      stop_ = true;
+    }
+    cv_.notify_all();
+
+    // Make sure that no thread is blocked into read() or wait() methods
+    MutexGuard lk_api{apiMutex_};
+  }
+
+private:
+  PeerChannel(const PeerChannel &o) = delete;
+  PeerChannel &operator=(const PeerChannel &o) = delete;
+  std::mutex apiMutex_{};
+  std::mutex mutex_{};
+  std::condition_variable cv_{};
+  std::stringstream stream_{};
+  bool stop_{false};
+  bool notified_{false};
+
+  std::vector<char> data;
+
+  friend void operator<<(std::vector<char> &, PeerChannel &);
 };
 
 } // namespace <anonymous>
@@ -112,6 +201,7 @@ public:
     std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_;
     IceTransportCompleteCb on_initdone_cb_;
     IceTransportCompleteCb on_negodone_cb_;
+    IceRecvInfo on_recv_cb_;
     std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
     unsigned component_count_;
     pj_ice_sess_cand cand_[MAX_CANDIDATES] {};
@@ -124,13 +214,13 @@ public:
     std::string last_errmsg_;
 
     struct Packet {
-        Packet(void *pkt, pj_size_t size)
-            : data {std::make_unique<char[]>(size)}, datalen {size} {
-            std::copy_n(reinterpret_cast<char*>(pkt), size, data.get());
-        }
-        std::unique_ptr<char[]> data;
-        size_t datalen;
+      Packet(void *pkt, pj_size_t size)
+          : data{reinterpret_cast<char *>(pkt), reinterpret_cast<char *>(pkt) + size} { }
+        std::vector<char> data;
     };
+
+    std::vector<PeerChannel> peerChannels_;
+    std::mutex apiMutex_;
 
     struct ComponentIO {
         std::mutex mutex;
@@ -167,6 +257,10 @@ public:
     std::thread thread_;
     std::atomic_bool threadTerminateFlags_ {false};
     void handleEvents(unsigned max_msec);
+
+    // Wait data on components
+    std::vector<pj_ssize_t> lastReadLen_;
+    std::condition_variable waitDataCv_ = {};
 };
 
 //==============================================================================
@@ -184,6 +278,7 @@ add_stun_server(pj_ice_strans_cfg& cfg, int af)
     pj_ice_strans_stun_cfg_default(&stun);
     stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
     stun.af = af;
+    stun.conn_type = cfg.stun.conn_type;
 
     JAMI_DBG("[ice] added host stun server");
 }
@@ -209,6 +304,7 @@ add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& i
     stun.af = ip.getFamily();
     stun.port = PJ_STUN_PORT;
     stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
+    stun.conn_type = cfg.stun.conn_type;
 
     JAMI_DBG("[ice] added stun server '%s', port %d", pj_strbuf(&stun.server), stun.port);
 }
@@ -233,6 +329,7 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
     turn.af = ip.getFamily();
     turn.port = PJ_STUN_PORT;
     turn.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
+    turn.conn_type = cfg.turn.conn_type;
 
     // Authorization (only static plain password supported yet)
     if (not info.password.empty()) {
@@ -253,6 +350,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     : pool_(nullptr, [](pj_pool_t* pool) { sip_utils::register_thread(); pj_pool_release(pool); })
     , on_initdone_cb_(options.onInitDone)
     , on_negodone_cb_(options.onNegoDone)
+    , on_recv_cb_(options.onRecvReady)
     , component_count_(component_count)
     , compIO_(component_count)
     , initiatorSession_(master)
@@ -261,8 +359,30 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     if (options.upnpEnable)
         upnp_.reset(new upnp::Controller());
 
-    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+    auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
     config_ = iceTransportFactory.getIceCfg(); // config copy
+    if (options.tcpEnable) {
+      config_.protocol = PJ_ICE_TP_TCP;
+      config_.stun.conn_type = PJ_STUN_TP_TCP;
+      config_.turn.conn_type = PJ_TURN_TP_TCP;
+    } else {
+      config_.protocol = PJ_ICE_TP_UDP;
+      config_.stun.conn_type = PJ_STUN_TP_UDP;
+      config_.turn.conn_type = PJ_TURN_TP_UDP;
+    }
+
+    if (options.aggressive) {
+        config_.opt.aggressive = PJ_TRUE;
+    } else {
+        config_.opt.aggressive = PJ_FALSE;
+    }
+
+    peerChannels_.resize(component_count_ + 1);
+    lastReadLen_.resize(component_count_);
+
+    // Add local hosts (IPv4, IPv6) as stun candidates
+    add_stun_server(config_, pj_AF_INET6());
+    add_stun_server(config_, pj_AF_INET());
 
     sip_utils::register_thread();
     pool_.reset(pj_pool_create(iceTransportFactory.getPoolFactory(),
@@ -287,6 +407,17 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st)))
             tr->onComplete(ice_st, op, status);
         else
+            JAMI_WARN("null IceTransport");
+    };
+
+    icecb.on_data_sent = [](pj_ice_strans* ice_st, unsigned comp_id,
+                                pj_ssize_t size) {
+        if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
+          if (comp_id > 0 && comp_id - 1 < tr->lastReadLen_.size()) {
+            tr->lastReadLen_[comp_id - 1] = size;
+            tr->waitDataCv_.notify_all();
+          }
+        } else
             JAMI_WARN("null IceTransport");
     };
 
@@ -655,17 +786,11 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr& base, cons
     pj_sockaddr_cp(&cand.rel_addr, &cand.base_addr);
     pj_ice_calc_foundation(pool_.get(), &cand.foundation, cand.type, &cand.base_addr);
 
-    auto ret = pj_ice_sess_add_cand(pj_ice_strans_get_ice_sess(icest_.get()),
-        cand.comp_id,
-        cand.transport_id,
-        cand.type,
-        cand.local_pref,
-        &cand.foundation,
-        &cand.addr,
-        &cand.base_addr,
-        &cand.rel_addr,
-        pj_sockaddr_get_len(&cand.addr),
-        NULL);
+    auto ret = pj_ice_sess_add_cand(
+        pj_ice_strans_get_ice_sess(icest_.get()), cand.comp_id,
+        cand.transport_id, cand.type, cand.local_pref, &cand.foundation,
+        &cand.addr, &cand.base_addr, &cand.rel_addr,
+        pj_sockaddr_get_len(&cand.addr), NULL, PJ_CAND_UDP);
 
     if (ret != PJ_SUCCESS) {
         last_errmsg_ = sip_utils::sip_strerror(ret);
@@ -724,12 +849,17 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
     if (!size)
         return;
     auto& io = compIO_[comp_id-1];
-    std::lock_guard<std::mutex> lk(io.mutex);
+    std::unique_lock<std::mutex> lk(io.mutex);
+    if (on_recv_cb_) {
+      on_recv_cb_();
+    }
     if (io.cb) {
         io.cb((uint8_t*)pkt, size);
     } else {
-        io.queue.emplace_back(pkt, size);
-        io.cv.notify_one();
+        MutexLock lk{apiMutex_};
+        auto &channel = peerChannels_.at(comp_id);
+        lk.unlock();
+        channel << std::string(reinterpret_cast<const char *>(pkt), size);
     }
 }
 
@@ -774,17 +904,28 @@ IceTransport::getComponentCount() const
     return pimpl_->component_count_;
 }
 
-std::string
-IceTransport::getLastErrMsg() const
+bool
+IceTransport::setSlaveSession()
 {
-    return pimpl_->last_errmsg_;
+    return pimpl_->setSlaveSession();
+}
+bool
+IceTransport::setInitiatorSession()
+{
+    return pimpl_->setInitiatorSession();
+}
+
+std::string IceTransport::getLastErrMsg() const {
+  return pimpl_->last_errmsg_;
 }
 
 bool
 IceTransport::isInitiator() const
 {
-    if (isInitialized())
-        return pj_ice_strans_get_role(pimpl_->icest_.get()) == PJ_ICE_SESS_ROLE_CONTROLLING;
+    if (isInitialized()) {
+      return pj_ice_strans_get_role(pimpl_->icest_.get()) ==
+             PJ_ICE_SESS_ROLE_CONTROLLING;
+    }
     return pimpl_->initiatorSession_;
 }
 
@@ -913,11 +1054,39 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
         std::ostringstream val;
         char ipaddr[PJ_INET6_ADDRSTRLEN];
 
+        /**   Section 4.5, RFC 6544 (https://tools.ietf.org/html/rfc6544)
+         *    candidate-attribute   = "candidate" ":" foundation SP component-id
+         * SP "TCP" SP priority SP connection-address SP port SP cand-type [SP
+         * rel-addr] [SP rel-port] SP tcp-type-ext
+         *                             *(SP extension-att-name SP
+         *                                  extension-att-value)
+         *
+         *     tcp-type-ext          = "tcptype" SP tcp-type
+         *     tcp-type              = "active" / "passive" / "so"
+         */
         val << std::string(cand[i].foundation.ptr, cand[i].foundation.slen);
-        val << " " << (unsigned)cand[i].comp_id << " UDP " << cand[i].prio;
+        val << " " << (unsigned)cand[i].comp_id;
+        val << (cand[i].transport == PJ_CAND_UDP ? " UDP " : " TCP ");
+        val << cand[i].prio;
         val << " " << pj_sockaddr_print(&cand[i].addr, ipaddr, sizeof(ipaddr), 0);
         val << " " << (unsigned)pj_sockaddr_get_port(&cand[i].addr);
         val << " typ " << pj_ice_get_cand_type_name(cand[i].type);
+
+        if (cand[i].transport != PJ_CAND_UDP) {
+            val << " tcptype";
+            switch (cand[i].transport) {
+            case PJ_CAND_TCP_ACTIVE:
+                val << " active";
+                break;
+            case PJ_CAND_TCP_PASSIVE:
+                val << " passive";
+                break;
+            case PJ_CAND_TCP_SO:
+            default:
+                val << " so";
+                break;
+            }
+        }
 
         res.push_back(val.str());
     }
@@ -975,54 +1144,83 @@ IceTransport::packIceMsg() const
 bool
 IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
 {
-    char foundation[33], transport[13], ipaddr[81], type[33];
+    /**   Section 4.5, RFC 6544 (https://tools.ietf.org/html/rfc6544)
+     *    candidate-attribute   = "candidate" ":" foundation SP component-id SP
+     *                             "TCP" SP
+     *                             priority SP
+     *                             connection-address SP
+     *                             port SP
+     *                             cand-type
+     *                             [SP rel-addr]
+     *                             [SP rel-port]
+     *                             SP tcp-type-ext
+     *                             *(SP extension-att-name SP
+     *                                  extension-att-value)
+     *
+     *     tcp-type-ext          = "tcptype" SP tcp-type
+     *     tcp-type              = "active" / "passive" / "so"
+     */
+    int af, cnt;
+    char foundation[32], transport[12], ipaddr[80], type[32], tcp_type[32];
     pj_str_t tmpaddr;
-    int af, comp_id, prio, port;
-    int cnt = sscanf(line.c_str(), "%32s %d %12s %d %80s %d typ %32s",
-                     foundation,
-                     &comp_id,
-                     transport,
-                     &prio,
-                     ipaddr,
-                     &port,
-                     type);
+    int comp_id, prio, port;
+    pj_status_t status;
+    pj_bool_t is_tcp = PJ_FALSE;
 
-    if (cnt != 7) {
-        JAMI_WARN("[ice:%p] invalid remote candidate line", this);
-        return false;
+    cnt = sscanf(line.c_str(), "%s %d %s %d %s %d typ %s tcptype %s\n",
+                 foundation, &comp_id, transport, &prio, ipaddr, &port, type,
+                 tcp_type);
+    if (cnt != 7 && cnt != 8) {
+      JAMI_ERR("[ice:%p] Invalid ICE candidate line", this);
+      return false;
+    }
+
+    if (strcmp(transport, "TCP") == 0) {
+      is_tcp = PJ_TRUE;
     }
 
     pj_bzero(&cand, sizeof(IceCandidate));
 
-    if (strcmp(type, "host")==0)
-        cand.type = PJ_ICE_CAND_TYPE_HOST;
-    else if (strcmp(type, "srflx")==0)
-        cand.type = PJ_ICE_CAND_TYPE_SRFLX;
-    else if (strcmp(type, "prflx")==0)
-        cand.type = PJ_ICE_CAND_TYPE_PRFLX;
-    else if (strcmp(type, "relay")==0)
-        cand.type = PJ_ICE_CAND_TYPE_RELAYED;
+    if (strcmp(type, "host") == 0)
+      cand.type = PJ_ICE_CAND_TYPE_HOST;
+    else if (strcmp(type, "srflx") == 0)
+      cand.type = PJ_ICE_CAND_TYPE_SRFLX;
+    else if (strcmp(type, "relay") == 0)
+      cand.type = PJ_ICE_CAND_TYPE_RELAYED;
     else {
-        JAMI_WARN("[ice:%p] invalid remote candidate type '%s'", this, type);
+      JAMI_WARN("[ice:%p] invalid remote candidate type '%s'", this, type);
+      return false;
+    }
+
+    if (is_tcp) {
+      if (strcmp(tcp_type, "active") == 0)
+        cand.transport = PJ_CAND_TCP_ACTIVE;
+      else if (strcmp(tcp_type, "passive") == 0)
+        cand.transport = PJ_CAND_TCP_PASSIVE;
+      else if (strcmp(tcp_type, "so") == 0)
+        cand.transport = PJ_CAND_TCP_SO;
+      else {
+        JAMI_WARN("[ice:%p] invalid transport type type '%s'", this, tcp_type);
         return false;
+      }
+    } else {
+      cand.transport = PJ_CAND_UDP;
     }
 
     cand.comp_id = (pj_uint8_t)comp_id;
     cand.prio = prio;
 
     if (strchr(ipaddr, ':'))
-        af = pj_AF_INET6();
-    else {
-        af = pj_AF_INET();
-        pimpl_->onlyIPv4Private_ &= IpAddr(ipaddr).isPrivate();
-    }
+      af = pj_AF_INET6();
+    else
+      af = pj_AF_INET();
 
     tmpaddr = pj_str(ipaddr);
     pj_sockaddr_init(af, &cand.addr, NULL, 0);
-    auto status = pj_sockaddr_set_str_addr(af, &cand.addr, &tmpaddr);
+    status = pj_sockaddr_set_str_addr(af, &cand.addr, &tmpaddr);
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("[ice:%p] invalid remote IP address '%s'", this, ipaddr);
-        return false;
+      JAMI_WARN("[ice:%p] invalid IP address '%s'", this, ipaddr);
+      return false;
     }
 
     pj_sockaddr_set_port(&cand.addr, (pj_uint16_t)port);
@@ -1035,18 +1233,31 @@ ssize_t
 IceTransport::recv(int comp_id, unsigned char* buf, size_t len)
 {
     sip_utils::register_thread();
-    auto& io = pimpl_->compIO_[comp_id];
+    auto &io = pimpl_->compIO_[comp_id];
     std::lock_guard<std::mutex> lk(io.mutex);
 
-    if (io.queue.empty())
+    if (io.queue.empty()) {
         return 0;
+    }
 
     auto& packet = io.queue.front();
-    const auto count = std::min(len, packet.datalen);
-    std::copy_n(packet.data.get(), count, buf);
-    io.queue.pop_front();
+    const auto count = std::min(len, packet.data.size());
+    std::copy_n(packet.data.begin(), count, buf);
+    if (count == packet.data.size()) {
+      io.queue.pop_front();
+    } else {
+      packet.data.erase(packet.data.begin(), packet.data.begin() + count);
+    }
 
     return count;
+}
+
+ssize_t
+IceTransport::recvfrom(int comp_id, char *buf, size_t len) {
+  MutexLock lk{pimpl_->apiMutex_};
+  auto &channel = pimpl_->peerChannels_.at(comp_id);
+  lk.unlock();
+  return channel.read(buf, len);
 }
 
 void
@@ -1059,7 +1270,7 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
     if (cb) {
         // Flush existing queue using the callback
         for (const auto& packet : io.queue)
-            io.cb((uint8_t*)packet.data.get(), packet.datalen);
+            io.cb((uint8_t*)packet.data.data(), packet.data.size());
         io.queue.clear();
     }
 }
@@ -1074,8 +1285,16 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         errno = EINVAL;
         return -1;
     }
-    auto status = pj_ice_strans_sendto(pimpl_->icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength());
-    if (status != PJ_SUCCESS) {
+    pj_ssize_t sent_size = 0;
+    auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength(), &sent_size);
+    if (status == PJ_EPENDING) {
+        auto current_size = sent_size;
+        while (comp_id < pimpl_->lastReadLen_.size() && current_size != len) {
+            std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
+            pimpl_->waitDataCv_.wait(lk);
+            current_size = pimpl_->lastReadLen_[comp_id];
+        }
+    } else if (status != PJ_SUCCESS) {
         if (status == PJ_EBUSY) {
             errno = EAGAIN;
         } else {
@@ -1114,18 +1333,21 @@ IceTransport::waitForNegotiation(unsigned timeout)
 }
 
 ssize_t
+IceTransport::isDataAvailable(int comp_id)
+{
+    MutexLock lk{pimpl_->apiMutex_};
+    auto &channel = pimpl_->peerChannels_.at(comp_id);
+    lk.unlock();
+    return channel.isDataAvailable();
+}
+
+ssize_t
 IceTransport::waitForData(int comp_id, unsigned int timeout, std::error_code& ec)
 {
-    (void)ec; ///< \todo handle errors
-    auto& io = pimpl_->compIO_[comp_id];
-    std::unique_lock<std::mutex> lk(io.mutex);
-    if (!io.cv.wait_for(lk, std::chrono::milliseconds(timeout),
-                        [this, &io]{ return !io.queue.empty() or !isRunning(); })) {
-        return 0;
-    }
-    if (!isRunning())
-        return -1; // acknowledged as an error
-    return io.queue.front().datalen;
+    MutexLock lk{pimpl_->apiMutex_};
+    auto &channel = pimpl_->peerChannels_.at(comp_id);
+    lk.unlock();
+    return channel.wait(std::chrono::milliseconds(timeout));
 }
 
 //==============================================================================
@@ -1151,11 +1373,7 @@ IceTransportFactory::IceTransportFactory()
     // Using 500ms with default PJ_STUN_MAX_TRANSMIT_COUNT (7) gives around 33s before timeout.
     ice_cfg_.stun_cfg.rto_msec = 500;
 
-    // Add local hosts (IPv4, IPv6) as stun candidates
-    add_stun_server(ice_cfg_, pj_AF_INET6());
-    add_stun_server(ice_cfg_, pj_AF_INET());
-
-    ice_cfg_.opt.aggressive = PJ_FALSE;
+    ice_cfg_.opt.aggressive = PJ_TRUE;
 }
 
 IceTransportFactory::~IceTransportFactory()
