@@ -108,13 +108,11 @@ class AccountFactory {
             std::lock_guard<std::recursive_mutex> lock(mutex_);
             std::vector<std::shared_ptr<T> > v;
 
-            const auto map = getMap_<T>();
-            if (map) {
+            if (const auto map = getMap_<T>()) {
+                v.reserve(map->size());
                 for (const auto& it : *map)
                     v.push_back(std::static_pointer_cast<T>(it.second));
             }
-
-            v.shrink_to_fit();
             return v;
         }
 

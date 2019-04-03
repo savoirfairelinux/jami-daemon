@@ -51,7 +51,7 @@ namespace jami {
 /// code \a errcode when the predicate return true.
 /// The predicate should have <code>bool(Call*) signature</code>.
 inline void
-hangupCallsIf(Call::SubcallSet callptr_list, int errcode, const std::function<bool(Call*)>& pred)
+hangupCallsIf(const Call::SubcallSet& callptr_list, int errcode, const std::function<bool(Call*)>& pred)
 {
     std::for_each(std::begin(callptr_list), std::end(callptr_list),
                   [&](const std::shared_ptr<Call>& call_ptr) {
@@ -70,7 +70,7 @@ hangupCallsIf(Call::SubcallSet callptr_list, int errcode, const std::function<bo
 ///
 /// Works as hangupCallsIf() with a predicate that always return true.
 inline void
-hangupCalls(Call::SubcallSet callptr_list, int errcode)
+hangupCalls(const Call::SubcallSet& callptr_list, int errcode)
 {
     hangupCallsIf(callptr_list, errcode, [](Call*){ return true; });
 }
