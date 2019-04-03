@@ -40,7 +40,8 @@ class Controller;
 class IceTransport;
 
 using IceTransportCompleteCb = std::function<void(bool)>;
-using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
+using IceRecvInfo = std::function<void(void)>;
+using IceRecvCb = std::function<ssize_t(unsigned char *buf, size_t len)>;
 using IceCandidate = pj_ice_sess_cand;
 
 struct StunServerInfo {
@@ -64,9 +65,12 @@ struct TurnServerInfo {
 struct IceTransportOptions {
     bool upnpEnable {false};
     IceTransportCompleteCb onInitDone {};
-    IceTransportCompleteCb onNegoDone {};
+    IceTransportCompleteCb onNegoDone{};
+    IceRecvInfo onRecvReady{}; // Detect that we have data to read but without destroying the buffer
     std::vector<StunServerInfo> stunServers;
     std::vector<TurnServerInfo> turnServers;
+    bool tcpEnable {false}; // If we want to use TCP
+    bool aggressive {false}; // If we use the aggressive nomination strategy
 };
 
 class IceTransport {
@@ -161,6 +165,7 @@ public:
     void setOnRecv(unsigned comp_id, IceRecvCb cb);
 
     ssize_t recv(int comp_id, unsigned char* buf, size_t len);
+    ssize_t recvfrom(int comp_id, char *buf, size_t len);
 
     ssize_t send(int comp_id, const unsigned char* buf, size_t len);
 
@@ -170,9 +175,20 @@ public:
 
     ssize_t waitForData(int comp_id, unsigned int timeout, std::error_code& ec);
 
+    /**
+     * Return without waiting how many bytes are ready to read
+     * @param comp_id   Ice component
+     * @return the number of bytes ready to read
+     */
+    ssize_t isDataAvailable(int comp_id);
+
     unsigned getComponentCount() const;
 
-private:
+    // Set session state
+    bool setSlaveSession();
+    bool setInitiatorSession();
+
+  private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
