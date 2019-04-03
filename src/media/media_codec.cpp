@@ -40,8 +40,8 @@ generateId()
 /*
  * SystemCodecInfo
  */
-SystemCodecInfo::SystemCodecInfo(unsigned avcodecId, const std::string name,
-                                 std::string libName,
+SystemCodecInfo::SystemCodecInfo(unsigned avcodecId, const std::string& name,
+                                 const std::string& libName,
                                  MediaType mediaType, CodecType codecType,
                                  unsigned bitrate,
                                  unsigned payloadType,
@@ -66,8 +66,8 @@ SystemCodecInfo::~SystemCodecInfo()
  * SystemAudioCodecInfo
  */
 SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned m_avcodecId,
-                                           const std::string m_name,
-                                           std::string m_libName,
+                                           const std::string& m_name,
+                                           const std::string& m_libName,
                                            CodecType m_type, unsigned m_bitrate,
                                            unsigned m_sampleRate,
                                            unsigned m_nbChannels,
@@ -96,8 +96,8 @@ SystemAudioCodecInfo::getCodecSpecifications()
  * SystemVideoCodecInfo
  */
 SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned m_avcodecId,
-                                           const std::string m_name,
-                                           std::string m_libName,
+                                           const std::string& m_name,
+                                           const std::string& m_libName,
                                            CodecType m_type,
                                            unsigned m_bitrate,
                                            unsigned m_minQuality,
@@ -135,19 +135,6 @@ AccountCodecInfo::AccountCodecInfo(const SystemCodecInfo& sysCodecInfo) noexcept
         quality = SystemCodecInfo::DEFAULT_CODEC_QUALITY;
     else
         quality = SystemCodecInfo::DEFAULT_NO_QUALITY;
-}
-
-AccountCodecInfo&
-AccountCodecInfo::operator=(AccountCodecInfo&& o)
-{
-    if (&systemCodecInfo != &o.systemCodecInfo)
-        throw std::runtime_error("cannot assign codec info object pointing to another codec.");
-    order = o.order;
-    isActive = o.isActive;
-    payloadType = o.payloadType;
-    bitrate = o.bitrate;
-    quality = o.quality;
-    return *this;
 }
 
 AccountCodecInfo&

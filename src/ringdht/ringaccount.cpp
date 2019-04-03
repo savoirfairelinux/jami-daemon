@@ -88,8 +88,6 @@
 
 namespace jami {
 
-using sip_utils::CONST_PJ_STR;
-
 namespace Migration {
 
 enum class State { // Contains all the Migration states
@@ -2859,7 +2857,7 @@ RingAccount::loadValues() const
 }
 
 tls::DhParams
-RingAccount::loadDhParams(const std::string path)
+RingAccount::loadDhParams(std::string path)
 {
     try {
         // writeTime throw exception if file doesn't exist

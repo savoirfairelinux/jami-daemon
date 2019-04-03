@@ -1566,18 +1566,15 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
 void
 SIPAccount::Credentials::computePasswordHash()
 {
-#define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
-
     pj_md5_context pms;
 
     /* Compute md5 hash = MD5(username ":" realm ":" password) */
     pj_md5_init(&pms);
-    MD5_APPEND(&pms, username.data(), username.length());
-    MD5_APPEND(&pms, ":", 1);
-    MD5_APPEND(&pms, realm.data(), realm.length());
-    MD5_APPEND(&pms, ":", 1);
-    MD5_APPEND(&pms, password.data(), password.length());
-#undef MD5_APPEND
+    pj_md5_update(&pms, (const uint8_t*)username.data(), username.length());
+    pj_md5_update(&pms, (const uint8_t*)":", 1);
+    pj_md5_update(&pms, (const uint8_t*)realm.data(), realm.length());
+    pj_md5_update(&pms, (const uint8_t*)":", 1);
+    pj_md5_update(&pms, (const uint8_t*)password.data(), password.length());
 
     unsigned char digest[16];
     pj_md5_final(&pms, digest);

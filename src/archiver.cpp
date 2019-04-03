@@ -66,32 +66,29 @@ jsonValueToAccount(Json::Value& value, const std::string& accountId) {
 }
 
 Json::Value
-accountToJsonValue(std::map<std::string, std::string> details) {
+accountToJsonValue(const std::map<std::string, std::string>& details) {
     Json::Value root;
-    std::map<std::string, std::string>::iterator iter;
-    for (iter = details.begin(); iter != details.end(); ++iter) {
-
-        if (iter->first.compare(DRing::Account::ConfProperties::Ringtone::PATH) == 0) {
+    for (const auto& i : details) {
+        if (i.first == DRing::Account::ConfProperties::Ringtone::PATH) {
             // Ringtone path is not exportable
-        } else if (iter->first.compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0 ||
-                iter->first.compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0 ||
-                iter->first.compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
+        } else if (i.first == DRing::Account::ConfProperties::TLS::CA_LIST_FILE ||
+                   i.first == DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE ||
+                   i.first == DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) {
             // replace paths by the files content
-            std::ifstream ifs(iter->second);
+            std::ifstream ifs(i.second);
             std::string fileContent((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-            root[iter->first] = fileContent;
-
+            root[i.first] = fileContent;
         } else
-            root[iter->first] = iter->second;
+            root[i.first] = i.second;
     }
 
     return root;
 }
 
 int
-exportAccounts(std::vector<std::string> accountIDs,
-                        std::string filepath,
-                        std::string password)
+exportAccounts(const std::vector<std::string>& accountIDs,
+                        const std::string& filepath,
+                        const std::string& password)
 {
     if (filepath.empty() || !accountIDs.size()) {
         JAMI_ERR("Missing arguments");

@@ -41,9 +41,6 @@ public:
     ThreadLoop(const std::function<bool()>& setup,
                const std::function<void()>& process,
                const std::function<void()>& cleanup);
-
-    ThreadLoop(ThreadLoop&&);
-
     virtual ~ThreadLoop();
 
     void start();
@@ -57,6 +54,11 @@ public:
     std::thread::id get_id() const noexcept;
 
 private:
+    ThreadLoop(const ThreadLoop&) = delete;
+    ThreadLoop(ThreadLoop&&) noexcept = delete;
+    ThreadLoop& operator=(const ThreadLoop&) = delete;
+    ThreadLoop& operator=(ThreadLoop&&) noexcept = delete;
+
     // These must be provided by users of ThreadLoop
     std::function<bool()> setup_;
     std::function<void()> process_;
