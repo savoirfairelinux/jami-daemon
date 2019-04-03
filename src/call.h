@@ -345,8 +345,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         mutable std::recursive_mutex callMutex_ {};
 
     private:
-        friend void hangupCallsIf(Call::SubcallSet, int, const std::function<bool(Call*)>&);
-
         bool validStateTransition(CallState newState);
 
         void checkPendingIM();
