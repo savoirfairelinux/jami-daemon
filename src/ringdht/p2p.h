@@ -2,6 +2,7 @@
  *  Copyright (C) 2017-2019 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
