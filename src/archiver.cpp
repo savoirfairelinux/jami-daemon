@@ -77,7 +77,7 @@ accountToJsonValue(const std::map<std::string, std::string>& details) {
             // replace paths by the files content
             std::ifstream ifs(i.second);
             std::string fileContent((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-            root[i.first] = fileContent;
+            root[i.first] = std::move(fileContent);
         } else
             root[i.first] = i.second;
     }
@@ -95,7 +95,7 @@ exportAccounts(const std::vector<std::string>& accountIDs,
         return EINVAL;
     }
 
-    std::size_t found = filepath.find_last_of(DIR_SEPARATOR_STR);
+    std::size_t found = filepath.find_last_of(DIR_SEPARATOR_CH);
     auto toDir = filepath.substr(0,found);
     auto filename = filepath.substr(found+1);
 
