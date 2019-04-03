@@ -22,7 +22,6 @@
 
 #include "logger.h"
 #include "string_utils.h"
-#include "data_transfer.h"
 #include "manager.h"
 
 #include <algorithm>
@@ -46,9 +45,8 @@ DRing::DataTransferId
 FtpServer::getId() const
 {
     // Because FtpServer is just the protocol on the top of a stream so the id
-    // of the stream is the id of out_. Because the output stream can be
-    // uninitialized, a FtpServer without a stream can have an id equal to 0.
-    return out_? out_->getId() : 0;
+    // of the stream is the id of out_.
+    return out_.id;
 }
 
 void
@@ -70,21 +68,21 @@ FtpServer::startNewFile()
     info.bytesProgress = 0;
     rx_ = 0;
     out_ = Manager::instance().dataTransfers->onIncomingFileRequest(info); // we block here until answer from client
-    if (!out_) {
+    if (!out_.stream) {
         JAMI_DBG() << "[FTP] transfer aborted by client";
         closed_ = true; // send NOK msg at next read()
     } else {
         go_ = true;
     }
-    return bool(out_);
+    return bool(out_.stream);
 }
 
 void
 FtpServer::closeCurrentFile()
 {
-    if (out_) {
-        out_->close();
-        out_.reset();
+    if (out_.stream) {
+        out_.stream->close();
+        out_.stream.reset();
         closed_ = true;
     }
 }
@@ -92,7 +90,7 @@ FtpServer::closeCurrentFile()
 bool
 FtpServer::read(std::vector<uint8_t>& buffer) const
 {
-    if (!out_) {
+    if (!out_.stream) {
         if (closed_) {
             closed_ = false;
             if (rx_ < fileSize_) {
@@ -134,8 +132,8 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
                         break;
                     auto size_needed = fileSize_ - rx_;
                     count = std::min(count, size_needed);
-                    if (out_)
-                        out_->write(reinterpret_cast<const uint8_t*>(&line_[0]), count);
+                    if (out_.stream)
+                        out_.stream->write(reinterpret_cast<const uint8_t*>(&line_[0]), count);
                     rx_ += count;
                     if (rx_ == fileSize_) {
                         closeCurrentFile();
@@ -150,8 +148,8 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
 
         case FtpState::READ_DATA:
         {
-            if (out_)
-                out_->write(&buffer[0], buffer.size());
+            if (out_.stream)
+                out_.stream->write(&buffer[0], buffer.size());
             auto size_needed = fileSize_ - rx_;
             auto read_size = std::min(buffer.size(), size_needed);
             rx_ += read_size;
