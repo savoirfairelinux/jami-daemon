@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "data_transfer.h"
 #include "peer_connection.h"
 
 #include <vector>
@@ -53,7 +54,7 @@ private:
 
     const std::string accountId_;
     const std::string peerUri_;
-    std::shared_ptr<Stream> out_;
+    IncomingFileInfo out_ {0, nullptr};
     std::size_t fileSize_ {0};
     std::size_t rx_ {0};
     std::stringstream headerStream_;
