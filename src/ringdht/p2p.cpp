@@ -2,6 +2,7 @@
  *  Copyright (C) 2017-2019 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,12 +22,14 @@
 #include "p2p.h"
 
 #include "account_schema.h"
-#include "ringaccount.h"
-#include "peer_connection.h"
-#include "turn_transport.h"
-#include "ftp_server.h"
 #include "channel.h"
+#include "ice_transport.h"
+#include "ftp_server.h"
+#include "manager.h"
+#include "peer_connection.h"
+#include "ringaccount.h"
 #include "security/tls_session.h"
+#include "turn_transport.h"
 
 #include <opendht/default_types.h>
 #include <opendht/rng.h>
@@ -42,9 +45,11 @@
 
 namespace jami {
 
-static constexpr auto DHT_MSG_TIMEOUT = std::chrono::seconds(20);
+static constexpr auto DHT_MSG_TIMEOUT = std::chrono::seconds(30);
 static constexpr auto NET_CONNECTION_TIMEOUT = std::chrono::seconds(10);
 static constexpr auto SOCK_TIMEOUT = std::chrono::seconds(3);
+static constexpr auto ICE_READY_TIMEOUT = std::chrono::seconds(10);
+static constexpr int ICE_INIT_TIMEOUT{10};
 
 using Clock = std::chrono::system_clock;
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
@@ -191,8 +196,13 @@ auto ctrlMsgData(const T& msg)
 
 //==============================================================================
 
-class DhtPeerConnector::Impl
-{
+struct ICESDP {
+  std::vector<IceCandidate> rem_candidates;
+  std::string rem_ufrag;
+  std::string rem_pwd;
+};
+
+class DhtPeerConnector::Impl {
 public:
     class ClientConnector;
 
@@ -201,18 +211,45 @@ public:
         , loopFut_ {std::async(std::launch::async, [this]{ eventLoop(); })} {}
 
     ~Impl() {
-        servers_.clear();
-        clients_.clear();
-        turnAuthv4_.reset();
-        turnAuthv6_.reset();
-        ctrl << makeMsg<CtrlMsgType::STOP>();
+      for (auto &thread : answer_threads_)
+        thread.join();
+      servers_.clear();
+      clients_.clear();
+      turnAuthv4_.reset();
+      turnAuthv6_.reset();
+      ctrl << makeMsg<CtrlMsgType::STOP>();
     }
 
     RingAccount& account;
     Channel<std::unique_ptr<CtrlMsgBase>> ctrl;
 
+    ICESDP parse_SDP(const std::string& sdp_msg) {
+        ICESDP res;
+        std::istringstream stream(sdp_msg);
+        std::string line;
+        int nr = 0;
+        while (std::getline(stream, line)) {
+            if (nr == 0) {
+                res.rem_ufrag = line;
+            } else if (nr == 1) {
+                res.rem_pwd = line;
+            } else {
+                IceCandidate cand;
+                if (ice_->getCandidateFromSDP(line, cand)) {
+                    JAMI_DBG("[Account:%s] add remote ICE candidate: %s",
+                            account.getAccountID().c_str(),
+                            line.c_str());
+                    res.rem_candidates.emplace_back(std::move(cand));
+                }
+            }
+            nr++;
+        }
+        return res;
+    }
+
 private:
     std::map<IpAddr, std::unique_ptr<ConnectedTurnTransport>> turnEndpoints_;
+    std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<AbstractSocketEndpoint>> p2pEndpoints_;
     std::unique_ptr<TurnTransport> turnAuthv4_;
     std::unique_ptr<TurnTransport> turnAuthv6_;
 
@@ -232,17 +269,23 @@ private:
     void onRequestMsg(PeerConnectionMsg&&);
     void onTrustedRequestMsg(PeerConnectionMsg&&, const std::shared_ptr<dht::crypto::Certificate>&,
                              const dht::InfoHash&);
+    void answerToRequest(PeerConnectionMsg&&, const std::shared_ptr<dht::crypto::Certificate>&,
+                             const dht::InfoHash&);
     void onResponseMsg(PeerConnectionMsg&&);
     void onAddDevice(const dht::InfoHash&,
                      const DRing::DataTransferId&,
                      const std::shared_ptr<dht::crypto::Certificate>&,
                      const std::vector<std::string>&,
                      const std::function<void(PeerConnection*)>&);
-    void turnConnect();
+    bool turnConnect();
     void eventLoop();
     bool validatePeerCertificate(const dht::crypto::Certificate&, dht::InfoHash&);
 
     std::future<void> loopFut_; // keep it last member
+
+    std::shared_ptr<IceTransport> ice_;
+
+    std::vector<std::thread> answer_threads_;
 };
 
 //==============================================================================
@@ -306,14 +349,40 @@ public:
         if (responseReceived_) return;
         response_ = std::move(response);
         responseReceived_ = true;
+        responseCV_.notify_all();
     }
 
 private:
     void process() {
+        // Add ice msg into the addresses
+        // TODO remove publicAddresses in the future and only use the iceMsg
+        // For now it's here for compability with old version
+        auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
+        auto ice_config = parent_.account.getIceOptions();
+        ice_config.tcpEnable = true;
+        ice_config.aggressive = true; // This will directly select the first candidate.
+        parent_.ice_ = iceTransportFactory.createTransport(parent_.account.getAccountID().c_str(), 1, true, ice_config);
+
+        parent_.ice_->setSlaveSession();
+        if (parent_.ice_->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
+            JAMI_ERR("Cannot initialize ICE session.");
+            cancel();
+            return;
+        }
+
+        auto iceAttributes = parent_.ice_->getLocalAttributes();
+        std::stringstream icemsg;
+        icemsg << iceAttributes.ufrag << "\n";
+        icemsg << iceAttributes.pwd << "\n";
+        for (const auto &addr : parent_.ice_->getLocalCandidates(0)) {
+            icemsg << addr << "\n";
+        }
+
         // Prepare connection request as a DHT message
         PeerConnectionMsg request;
-        request.addresses = std::move(publicAddresses_);
         request.id = ValueIdDist()(parent_.account.rand); /* Random id for the message unicity */
+        request.addresses = {icemsg.str()};
+        request.addresses.insert(request.addresses.end(), publicAddresses_.begin(), publicAddresses_.end());
 
         // Send connection request through DHT
         JAMI_DBG() << parent_.account << "[CNX] request connection to " << peer_;
@@ -321,19 +390,17 @@ private:
             dht::InfoHash::get(PeerConnectionMsg::key_prefix + peer_.toString()), peer_, request);
 
         // Wait for call to onResponse() operated by DHT
-        Timeout<Clock> dhtMsgTimeout {DHT_MSG_TIMEOUT};
-        dhtMsgTimeout.start();
-        while (!responseReceived_) {
-            if (dhtMsgTimeout) {
-                JAMI_ERR("no response from DHT to E2E request. Cancel transfer");
-                cancel();
-                return;
-            }
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::mutex mtx;
+        std::unique_lock<std::mutex> lk{mtx};
+        responseCV_.wait_for(lk, DHT_MSG_TIMEOUT);
+        if (!responseReceived_) {
+            JAMI_ERR("no response from DHT to E2E request. Cancel transfer");
+            cancel();
+            return;
         }
 
         // Check response validity
-        std::unique_ptr<TcpSocketEndpoint> peer_ep;
+        std::shared_ptr<AbstractSocketEndpoint> peer_ep;
         if (response_.from != peer_ or
             response_.id != request.id or
             response_.addresses.empty())
@@ -341,60 +408,86 @@ private:
 
         IpAddr relay_addr;
         for (const auto& address: response_.addresses) {
-            if (!(relay_addr = address))
-                throw std::runtime_error("invalid connection reply");
-            try {
-                // Connect to TURN peer using a raw socket
-                JAMI_DBG() << parent_.account << "[CNX] connecting to TURN relay "
-                           << relay_addr.toString(true, true);
-                peer_ep = std::make_unique<TcpSocketEndpoint>(relay_addr);
-                try {
-                    peer_ep->connect(SOCK_TIMEOUT);
-                } catch (const std::logic_error& e) {
-                    // In case of a timeout
-                    JAMI_WARN() << "TcpSocketEndpoint timeout for addr " << relay_addr.toString(true, true) << ": " << e.what();
-                    cancel();
-                    return;
-                } catch (...) {
-                    JAMI_WARN() << "TcpSocketEndpoint failure for addr " << relay_addr.toString(true, true);
-                    cancel();
-                    return;
+            if (!(relay_addr = address)) {
+                // Should be ICE SDP
+                // P2P File transfer. We received an ice SDP message:
+                auto sdp = parent_.parse_SDP(address);
+
+                if (not parent_.ice_->start({sdp.rem_ufrag, sdp.rem_pwd},
+                                            sdp.rem_candidates)) {
+                  JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
+                            parent_.account.getAccountID().c_str());
+                  break;
                 }
-                break;
-            } catch (std::system_error&) {
-                JAMI_DBG() << parent_.account << "[CNX] Failed to connect to TURN relay "
-                           << relay_addr.toString(true, true);
+
+                parent_.ice_->setInitiatorSession();
+                parent_.ice_->waitForNegotiation(10);
+                if (parent_.ice_->isRunning()) {
+                    peer_ep = std::make_shared<IceSocketEndpoint>(parent_.ice_, true);
+                    JAMI_DBG("[Account:%s] ICE negotiation succeed. Starting file transfer",
+                             parent_.account.getAccountID().c_str());
+                    break;
+                } else {
+                  JAMI_ERR("[Account:%s] ICE negotation failed",
+                           parent_.account.getAccountID().c_str());
+                }
+            } else {
+                try {
+                    // Connect to TURN peer using a raw socket
+                    JAMI_DBG() << parent_.account << "[CNX] connecting to TURN relay "
+                            << relay_addr.toString(true, true);
+                    peer_ep = std::make_shared<TcpSocketEndpoint>(relay_addr);
+                    try {
+                        peer_ep->connect(SOCK_TIMEOUT);
+                    } catch (const std::logic_error& e) {
+                        // In case of a timeout
+                        JAMI_WARN() << "TcpSocketEndpoint timeout for addr " << relay_addr.toString(true, true) << ": " << e.what();
+                        cancel();
+                        return;
+                    } catch (...) {
+                        JAMI_WARN() << "TcpSocketEndpoint failure for addr " << relay_addr.toString(true, true);
+                        cancel();
+                        return;
+                    }
+                    break;
+                } catch (std::system_error&) {
+                    JAMI_DBG() << parent_.account << "[CNX] Failed to connect to TURN relay "
+                            << relay_addr.toString(true, true);
+                }
             }
         }
 
         // Negotiate a TLS session
         JAMI_DBG() << parent_.account << "[CNX] start TLS session";
-        auto tls_ep = std::make_unique<TlsSocketEndpoint>(*peer_ep,
-                                                          parent_.account.identity(),
-                                                          parent_.account.dhParams(),
-                                                          *peerCertificate_);
-        // block until TLS is negotiated (with 3 secs of timeout) (must throw in case of error)
+        auto tls_ep = std::make_unique<TlsSocketEndpoint>(
+            *peer_ep, parent_.account.identity(), parent_.account.dhParams(),
+            *peerCertificate_);
+        // block until TLS is negotiated (with 3 secs of
+        // timeout) (must throw in case of error)
         try {
-            tls_ep->waitForReady(SOCK_TIMEOUT);
-        } catch (const std::logic_error& e) {
-            // In case of a timeout
-            JAMI_WARN() << "TLS connection timeout from peer " << peer_.toString() << ": " << e.what();
-            cancel();
-            return;
+          tls_ep->waitForReady(SOCK_TIMEOUT);
+        } catch (const std::logic_error &e) {
+          // In case of a timeout
+          JAMI_WARN() << "TLS connection timeout from peer " << peer_.toString()
+                      << ": " << e.what();
+          cancel();
+          return;
         } catch (...) {
-            JAMI_WARN() << "TLS connection failure from peer " << peer_.toString();
-            cancel();
-            return;
+          JAMI_WARN() << "TLS connection failure from peer "
+                      << peer_.toString();
+          cancel();
+          return;
         }
 
         // Connected!
-        connection_ = std::make_unique<PeerConnection>([this] { cancel(); }, parent_.account,
-                                                       peer_.toString(), std::move(tls_ep));
+        connection_ = std::make_unique<PeerConnection>(
+            [this] { cancel(); }, peer_.toString(),
+            std::move(tls_ep));
         peer_ep_ = std::move(peer_ep);
 
         connected_ = true;
-        for (auto& cb: listeners_) {
-            cb(connection_.get());
+        for (auto &cb : listeners_) {
+          cb(connection_.get());
         }
     }
 
@@ -404,9 +497,10 @@ private:
 
     std::vector<std::string> publicAddresses_;
     std::atomic_bool responseReceived_ {false};
+    std::condition_variable responseCV_{};
     PeerConnectionMsg response_;
     std::shared_ptr<dht::crypto::Certificate> peerCertificate_;
-    std::unique_ptr<TcpSocketEndpoint> peer_ep_;
+    std::shared_ptr<AbstractSocketEndpoint> peer_ep_;
     std::unique_ptr<PeerConnection> connection_;
 
     std::atomic_bool connected_ {false};
@@ -421,14 +515,15 @@ private:
 
 /// Synchronous TCP connect to a TURN server
 /// \note TCP peer connection mode is enabled for reliable data transfer.
-void
+/// \return if connected to the turn
+bool
 DhtPeerConnector::Impl::turnConnect()
 {
     std::lock_guard<std::mutex> lock(clientsMutex_);
     // Don't retry to reconnect to the TURN server if already connected
     if (turnAuthv4_ && turnAuthv4_->isReady()
         && turnAuthv6_ && turnAuthv6_->isReady())
-        return;
+        return true;
 
     auto details = account.getAccountDetails();
     auto server = details[Conf::CONFIG_TURN_SERVER];
@@ -471,10 +566,13 @@ DhtPeerConnector::Impl::turnConnect()
     Timeout<Clock> timeout {NET_CONNECTION_TIMEOUT};
     timeout.start();
     while (!turnAuthv4_->isReady() && !turnAuthv6_->isReady()) {
-        if (timeout)
-            throw std::runtime_error("no response from TURN");
+        if (timeout) {
+            JAMI_WARN("Turn: connection timeout, will only try p2p file transfer.");
+            return false;
+        }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+    return true;
 }
 
 /// Find who is connected by using connection certificate
@@ -526,8 +624,8 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
 
     JAMI_DBG() << account << "[CNX] Accepted TLS-TURN connection from RingID " << peer_h;
     connectedPeers_.emplace(peer_addr, tls_ep->peerCertificate().getId());
-    auto connection = std::make_unique<PeerConnection>([] {}, account, peer_addr.toString(),
-                                                       std::move(tls_ep));
+    auto connection = std::make_unique<PeerConnection>(
+        [] {}, peer_addr.toString(), std::move(tls_ep));
     connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h.toString()));
     servers_.emplace(std::make_pair(peer_h, peer_addr), std::move(connection));
 
@@ -571,48 +669,149 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
                                             const std::shared_ptr<dht::crypto::Certificate>& cert,
                                             const dht::InfoHash& peer_h)
 {
-    turnConnect(); // start a TURN client connection on first pass, next ones just add new peer cnx handlers
+    answer_threads_.emplace_back(&DhtPeerConnector::Impl::answerToRequest, this, request, cert, peer_h);
+}
+
+void
+DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
+                                            const std::shared_ptr<dht::crypto::Certificate>& cert,
+                                            const dht::InfoHash& peer_h)
+{
+    // start a TURN client connection on first pass, next ones just add new peer cnx handlers
+    bool sendTurn = turnConnect();
 
     // Save peer certificate for later TLS session (MUST BE DONE BEFORE TURN PEER AUTHORIZATION)
     certMap_.emplace(cert->getId(), std::make_pair(cert, peer_h));
 
-    auto sendRelayV4 = false, sendRelayV6 = false;
+    auto sendRelayV4 = false, sendRelayV6 = false, sendIce = false, iceReady = false;
 
+    std::shared_ptr<std::condition_variable> cv =
+        std::make_shared < std::condition_variable>();
     for (auto& ip: request.addresses) {
         try {
             if (IpAddr(ip).isIpv4()) {
+                if (!sendTurn) continue;
                 sendRelayV4 = true;
                 turnAuthv4_->permitPeer(ip);
                 JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
             } else if (IpAddr(ip).isIpv6()) {
+                if (!sendTurn) continue;
                 sendRelayV6 = true;
                 turnAuthv6_->permitPeer(ip);
                 JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
             } else {
-                JAMI_DBG() << account << "Unknown family type: " << ip;
+                // P2P File transfer. We received an ice SDP message:
+                JAMI_DBG() << account << "[CNX] receiving ICE session request";
+                auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
+                auto ice_config = account.getIceOptions();
+                ice_config.tcpEnable = true;
+                ice_config.aggressive = true;
+                ice_config.onRecvReady = [this, cv, &iceReady]() {
+                    iceReady = true;
+                    cv->notify_one();
+                };
+                ice_ = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, true, ice_config);
+
+                if (ice_->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
+                    JAMI_ERR("Cannot initialize ICE session.");
+                    continue;
+                }
+
+                auto sdp = parse_SDP(ip);
+                ice_->setInitiatorSession();
+                if (not ice_->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
+                  JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
+                            account.getAccountID().c_str());
+                  continue;
+                }
+
+                ice_->waitForNegotiation(10);
+                if (ice_->isRunning()) {
+                    sendIce = true;
+                    JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
+                } else {
+                    JAMI_WARN("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
+                }
             }
         } catch (const std::exception& e) {
             JAMI_WARN() << account << "[CNX] ignored peer connection '" << ip << "', " << e.what();
         }
     }
 
+    // Prepare connection request as a DHT message
     std::vector<std::string> addresses;
-    auto relayIpv4 = turnAuthv4_->peerRelayAddr();
-    if (sendRelayV4 && relayIpv4)
-        addresses.emplace_back(relayIpv4.toString(true, true));
-    auto relayIpv6 = turnAuthv6_->peerRelayAddr();
-    if (sendRelayV6 && relayIpv6)
-        addresses.emplace_back(relayIpv6.toString(true, true));
+
+    if (sendIce) {
+        // NOTE: This is a shortest version of a real SDP message to save some bits
+        auto iceAttributes = ice_->getLocalAttributes();
+        std::stringstream icemsg;
+        icemsg << iceAttributes.ufrag << "\n";
+        icemsg << iceAttributes.pwd << "\n";
+        for (const auto &addr : ice_->getLocalCandidates(0)) {
+          icemsg << addr << "\n";
+        }
+        addresses = {icemsg.str()};
+    }
+
+    if (sendTurn) {
+        auto relayIpv4 = turnAuthv4_->peerRelayAddr();
+        if (sendRelayV4 && relayIpv4)
+            addresses.emplace_back(relayIpv4.toString(true, true));
+        auto relayIpv6 = turnAuthv6_->peerRelayAddr();
+        if (sendRelayV6 && relayIpv6)
+            addresses.emplace_back(relayIpv6.toString(true, true));
+    }
+
     if (addresses.empty()) {
         JAMI_DBG() << account << "[CNX] connection aborted, no family address found";
         return;
     }
+
     JAMI_DBG() << account << "[CNX] connection accepted, DHT reply to " << request.from;
     account.dht().putEncrypted(
         dht::InfoHash::get(PeerConnectionMsg::key_prefix + request.from.toString()),
         request.from, request.respond(addresses));
 
-    // Now wait for a TURN connection from peer (see onTurnPeerConnection)
+    if (sendIce) {
+
+        std::mutex mtx;
+        std::unique_lock<std::mutex> lk{mtx};
+        ice_->setSlaveSession();
+        cv->wait_for(lk, ICE_READY_TIMEOUT);
+        if (!iceReady) {
+            // This will fallback on TURN if ICE is not ready
+            return;
+        }
+        std::unique_ptr<AbstractSocketEndpoint> peer_ep =
+            std::make_unique<IceSocketEndpoint>(ice_, false);
+        JAMI_DBG() << account << "[CNX] start TLS session";
+        auto ph = peer_h;
+        auto tls_ep = std::make_unique<TlsSocketEndpoint>(
+            *peer_ep, account.identity(), account.dhParams(),
+            [&, this](const dht::crypto::Certificate &cert) {
+              return validatePeerCertificate(cert, ph);
+            });
+        // block until TLS is negotiated (with 3 secs of timeout)
+        // (must throw in case of error)
+        try {
+          tls_ep->waitForReady(SOCK_TIMEOUT);
+        } catch (const std::exception &e) {
+          // In case of a timeout
+          JAMI_WARN() << "TLS connection timeout " << e.what();
+          return;
+        }
+
+        auto connection = std::make_unique<PeerConnection>(
+            [] {}, peer_h.toString(),
+            std::move(tls_ep));
+        connection->attachOutputStream(std::make_shared<FtpServer>(
+            account.getAccountID(), peer_h.toString()));
+        servers_.emplace(std::make_pair(peer_h, ice_->getRemoteAddress(0)),
+                        std::move(connection));
+        p2pEndpoints_.emplace(std::make_pair(peer_h, ice_->getRemoteAddress(0)),
+                        std::move(peer_ep));
+    }
+    // Now wait for a TURN connection from peer (see onTurnPeerConnection) if fallbacking
 }
 
 void
@@ -658,15 +857,17 @@ DhtPeerConnector::Impl::eventLoop()
         ctrl >> msg;
         switch (msg->type()) {
             case CtrlMsgType::STOP:
-                return;
+              return;
 
             case CtrlMsgType::TURN_PEER_CONNECT:
-                onTurnPeerConnection(ctrlMsgData<CtrlMsgType::TURN_PEER_CONNECT>(*msg));
-                break;
+              onTurnPeerConnection(
+                  ctrlMsgData<CtrlMsgType::TURN_PEER_CONNECT>(*msg));
+              break;
 
             case CtrlMsgType::TURN_PEER_DISCONNECT:
-                onTurnPeerDisconnection(ctrlMsgData<CtrlMsgType::TURN_PEER_DISCONNECT>(*msg));
-                break;
+              onTurnPeerDisconnection(
+                  ctrlMsgData<CtrlMsgType::TURN_PEER_DISCONNECT>(*msg));
+              break;
 
             case CtrlMsgType::CANCEL:
                 {
@@ -676,34 +877,47 @@ DhtPeerConnector::Impl::eventLoop()
                     std::lock_guard<std::mutex> lock(clientsMutex_);
                     clients_.erase(std::make_pair(dev_h, id));
                     // Cancel incoming files
-                    auto it = std::find_if(servers_.begin(), servers_.end(),
-                                [&dev_h, &id](const auto& element) {
-                                    return (element.first.first == dev_h
-                                            && element.second
-                                            && element.second->hasStreamWithId(id));});
-                    if (it == servers_.end()) break;
+                    auto it = std::find_if(
+                        servers_.begin(), servers_.end(),
+                        [&dev_h, &id](const auto &element) {
+                          return (element.first.first == dev_h &&
+                                  element.second &&
+                                  element.second->hasStreamWithId(id));
+                        });
+                    if (it == servers_.end())  {
+                      break;
+                    }
                     auto peer = it->first.second; // tmp copy to prevent use-after-free below
                     servers_.erase(it);
+                    // Remove the file transfer if p2p
+                    auto p2p_it = std::find_if(p2pEndpoints_.begin(), p2pEndpoints_.end(),
+                                    [&dev_h, &peer](const auto &element) {
+                                        return (element.first.first == dev_h &&
+                                                element.first.second == peer);
+                                    });
+                    if (p2p_it != p2pEndpoints_.end())
+                        p2pEndpoints_.erase(p2p_it);
                     connectedPeers_.erase(peer);
+                    // Else it's via TURN!
                     turnEndpoints_.erase(peer);
                 }
                 break;
 
             case CtrlMsgType::DHT_REQUEST:
-                onRequestMsg(ctrlMsgData<CtrlMsgType::DHT_REQUEST>(*msg));
-                break;
+              onRequestMsg(ctrlMsgData<CtrlMsgType::DHT_REQUEST>(*msg));
+              break;
 
             case CtrlMsgType::DHT_RESPONSE:
-                onResponseMsg(ctrlMsgData<CtrlMsgType::DHT_RESPONSE>(*msg));
-                break;
+              onResponseMsg(ctrlMsgData<CtrlMsgType::DHT_RESPONSE>(*msg));
+              break;
 
             case CtrlMsgType::ADD_DEVICE:
-                onAddDevice(ctrlMsgData<CtrlMsgType::ADD_DEVICE, 0>(*msg),
-                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 1>(*msg),
-                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 2>(*msg),
-                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 3>(*msg),
-                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 4>(*msg));
-                break;
+              onAddDevice(ctrlMsgData<CtrlMsgType::ADD_DEVICE, 0>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 1>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 2>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 3>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 4>(*msg));
+              break;
 
             default: JAMI_ERR("BUG: got unhandled control msg!"); break;
         }

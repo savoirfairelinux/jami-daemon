@@ -34,11 +34,11 @@ index 5c2f04bd..d8b546c8 100644
  
  
 @@ -253,7 +253,7 @@
-  * Default: 2
+  * Default: 4 (one active and one passive for IPv4 and IPv6)
   */
  #ifndef PJ_ICE_MAX_STUN
--#   define PJ_ICE_MAX_STUN			    2
-+#   define PJ_ICE_MAX_STUN			    3
+-#   define PJ_ICE_MAX_STUN			    4
++#   define PJ_ICE_MAX_STUN			    6
  #endif
  
  
