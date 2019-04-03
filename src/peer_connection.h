@@ -2,6 +2,7 @@
  *  Copyright (C) 2017-2019 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,14 +26,16 @@
 #include "generic_io.h"
 #include "security/diffie-hellman.h"
 #include "opendht/crypto.h"
+#include "ice_transport.h"
 
-#include <string>
-#include <map>
-#include <vector>
-#include <memory>
 #include <functional>
 #include <future>
+#include <limits>
+#include <map>
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace dht { namespace crypto {
 struct PrivateKey;
@@ -41,7 +44,6 @@ struct Certificate;
 
 namespace jami {
 
-class Account;
 class TurnTransport;
 class ConnectedTurnTransport;
 
@@ -107,8 +109,18 @@ private:
 
 //==============================================================================
 
+class AbstractSocketEndpoint : public GenericSocket<uint8_t>
+{
+public:
+    virtual void connect(const std::chrono::steady_clock::duration &timeout = {}) {};
+
+    void setOnRecv(RecvCb &&) override {
+      throw std::logic_error("AbstractSocketEndpoint::setOnRecv not implemented");
+    }
+};
+
 /// Implement system socket IO
-class TcpSocketEndpoint : public GenericSocket<uint8_t>
+class TcpSocketEndpoint : public AbstractSocketEndpoint
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
@@ -121,16 +133,38 @@ public:
     int waitForData(unsigned ms_timeout, std::error_code& ec) const override;
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
-
-    void setOnRecv(RecvCb&&) override {
-        throw std::logic_error("TcpSocketEndpoint::setOnRecv not implemented");
-    }
-
-    void connect(const std::chrono::steady_clock::duration& timeout = {});
+    void connect(const std::chrono::steady_clock::duration& timeout = {}) override;
 
 private:
     const IpAddr addr_;
     int sock_ {-1};
+};
+
+class IceSocketEndpoint : public AbstractSocketEndpoint
+{
+public:
+    using SocketType = GenericSocket<uint8_t>;
+    explicit IceSocketEndpoint(std::shared_ptr<IceTransport> ice, bool isSender);
+    ~IceSocketEndpoint();
+
+    void shutdown() override;
+    bool isReliable() const override { return ice_ ? ice_->isRunning() : false; }
+    bool isInitiator() const override { return ice_ ? ice_->isInitiator() : true; }
+    int maxPayload() const override { return 65536 /* The max for a RTP packet used to wrap data here */; }
+    int waitForData(unsigned ms_timeout, std::error_code& ec) const override;
+    std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
+    std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
+
+    void setOnRecv(RecvCb&& cb) override {
+        if (ice_) {
+            ice_->setOnRecv(0, cb);
+        }
+    }
+
+private:
+    std::shared_ptr<IceTransport> ice_ {nullptr};
+    std::atomic_bool iceStopped{false};
+    std::atomic_bool iceIsSender{false};
 };
 
 //==============================================================================
@@ -143,15 +177,19 @@ public:
     using Identity = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
                                std::shared_ptr<dht::crypto::Certificate>>;
 
-    TlsSocketEndpoint(TcpSocketEndpoint& parent,
+    TlsSocketEndpoint(AbstractSocketEndpoint& tr,
                       const Identity& local_identity,
                       const std::shared_future<tls::DhParams>& dh_params,
                       const dht::crypto::Certificate& peer_cert);
+    TlsSocketEndpoint(AbstractSocketEndpoint& tr,
+                    const Identity& local_identity,
+                    const std::shared_future<tls::DhParams>& dh_params,
+                    std::function<bool(const dht::crypto::Certificate&)>&& cert_check);
     ~TlsSocketEndpoint();
 
     bool isReliable() const override { return true; }
-    bool isInitiator() const override { return true; }
-    int maxPayload() const override { return 1280; }
+    bool isInitiator() const override;
+    int maxPayload() const override;
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 
@@ -173,8 +211,7 @@ class PeerConnection
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
-
-    PeerConnection(std::function<void()>&& done, Account& account, const std::string& peer_uri,
+    PeerConnection(std::function<void()>&& done, const std::string& peer_uri,
                    std::unique_ptr<SocketType> endpoint);
 
     ~PeerConnection();
