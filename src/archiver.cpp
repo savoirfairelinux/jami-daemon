@@ -147,7 +147,7 @@ exportAccounts(const std::vector<std::string>& accountIDs,
 }
 
 int
-importAccounts(const std::string& archivePath, std::string password)
+importAccounts(const std::string& archivePath, const std::string& password)
 {
     if (archivePath.empty()) {
         JAMI_ERR("Missing arguments");
