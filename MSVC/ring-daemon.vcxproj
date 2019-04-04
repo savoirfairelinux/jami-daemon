@@ -771,6 +771,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib_win32|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\src\media\video\filter_transpose.cpp" />
     <ClCompile Include="..\src\media\video\sinkclient.cpp" />
     <ClCompile Include="..\src\media\video\uwpvideo\video_device_impl.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib_win32|x64'">true</ExcludedFromBuild>
@@ -935,6 +936,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib_win32|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="..\src\media\video\filter_transpose.h" />
     <ClInclude Include="..\src\media\video\shm_header.h" />
     <ClInclude Include="..\src\media\video\sinkclient.h" />
     <ClInclude Include="..\src\media\video\video_base.h" />

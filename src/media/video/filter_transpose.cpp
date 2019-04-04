@@ -28,7 +28,11 @@ std::unique_ptr<MediaFilter>
 getTransposeFilter(int rotation, std::string inputName, int width, int height, int format, bool rescale)
 {
     JAMI_WARN("Rotation set to %d", rotation);
+#ifdef _MSC_VER
+    if (_isnan(rotation) || !rotation) {
+#else
     if (std::isnan(rotation) || !rotation) {
+#endif
         return {};
     }
 
