@@ -406,6 +406,9 @@
     <ClCompile Include="..\src\media\audio\audio_frame_resizer.cpp">
       <Filter>Source Files\media\audio</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\media\video\filter_transpose.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\account.h">
@@ -833,6 +836,9 @@
     </ClInclude>
     <ClInclude Include="..\src\media\audio\audio_frame_resizer.h">
       <Filter>Source Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\filter_transpose.h">
+      <Filter>Source Files\media\video</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
