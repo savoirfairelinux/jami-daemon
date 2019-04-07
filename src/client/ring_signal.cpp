@@ -139,4 +139,14 @@ registerSignalHandlers(const std::map<std::string,
     }
 }
 
+void
+unregisterSignalHandlers()
+{
+    auto& handlers_ = jami::getSignalHandlers();
+    for (auto& item : handlers_) {
+        item.second = {};
+    }
+}
+
+
 }

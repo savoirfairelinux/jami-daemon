@@ -23,13 +23,9 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
-#include <cstdlib>
-#include <iostream>
-#include <cstring>
-#include <stdexcept>
-
 #include "dbusclient.h"
 #include "dbus_cpp.h"
+#include "dring.h"
 
 #include "dbusinstance.h"
 
@@ -48,6 +44,11 @@
 #include "dbusvideomanager.h"
 #include "videomanager_interface.h"
 #endif
+
+#include <iostream>
+#include <stdexcept>
+#include <cstdlib>
+#include <cstring>
 
 class EventCallback :
     public DBus::Callback_Base<void, DBus::DefaultTimeout&>
@@ -102,7 +103,7 @@ DBusClient::~DBusClient()
 {
     // instances destruction order is important
     // so we enforce it here
-
+    DRing::unregisterSignalHandlers();
 #ifdef ENABLE_VIDEO
     videoManager_.reset();
 #endif
@@ -220,13 +221,13 @@ DBusClient::initLibrary(int flags)
     if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
         return -1;
 
-    registerSignalHandlers(callEvHandlers);
-    registerSignalHandlers(configEvHandlers);
-    registerSignalHandlers(presEvHandlers);
-    registerSignalHandlers(audioEvHandlers);
-    registerSignalHandlers(dataXferEvHandlers);
+    DRing::registerSignalHandlers(callEvHandlers);
+    DRing::registerSignalHandlers(configEvHandlers);
+    DRing::registerSignalHandlers(presEvHandlers);
+    DRing::registerSignalHandlers(audioEvHandlers);
+    DRing::registerSignalHandlers(dataXferEvHandlers);
 #ifdef ENABLE_VIDEO
-    registerSignalHandlers(videoEvHandlers);
+    DRing::registerSignalHandlers(videoEvHandlers);
 #endif
 
     if (!DRing::start())

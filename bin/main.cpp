@@ -21,13 +21,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include <iostream>
-#include <thread>
-#include <cstring>
-#include <signal.h>
-#include <getopt.h>
-#include <cstdlib>
-
 #include "dring/dring.h"
 
 #include "logger.h"
@@ -40,13 +33,22 @@
 
 #include "fileutils.h"
 
+#include <signal.h>
+#include <getopt.h>
+
+#include <iostream>
+#include <thread>
+#include <memory>
+#include <cstring>
+#include <cstdlib>
+
 static int ringFlags = 0;
 static int port = 8080;
 
 #if REST_API
-    static std::unique_ptr<RestClient> restClient;
+static std::weak_ptr<RestClient> weakClient;
 #else
-    static std::unique_ptr<DBusClient> dbusClient;
+static std::weak_ptr<DBusClient> weakClient;
 #endif
 
 static void
@@ -88,14 +90,14 @@ parse_args(int argc, char *argv[], bool& persistent)
 
     const struct option long_options[] = {
         /* These options set a flag. */
-        {"debug", no_argument, NULL, 'd'},
-        {"console", no_argument, NULL, 'c'},
-        {"persistent", no_argument, NULL, 'p'},
-        {"help", no_argument, NULL, 'h'},
-        {"version", no_argument, NULL, 'v'},
-        {"auto-answer", no_argument, &autoAnswer, true},
-        {"port", optional_argument, NULL, 'x'},
-        {0, 0, 0, 0} /* Sentinel */
+        {"debug",       no_argument,        nullptr,    'd'},
+        {"console",     no_argument,        nullptr,    'c'},
+        {"persistent",  no_argument,        nullptr,    'p'},
+        {"help",        no_argument,        nullptr,    'h'},
+        {"version",     no_argument,        nullptr,    'v'},
+        {"auto-answer", no_argument,        &autoAnswer, true},
+        {"port",        optional_argument,  nullptr,    'x'},
+        {nullptr,       0,                  nullptr,     0} /* Sentinel */
     };
 
     while (true) {
@@ -173,13 +175,8 @@ signal_handler(int code)
     signal(SIGTERM, SIG_DFL);
 
     // Interrupt the process
-#if REST_API
-    if (restClient)
-        restClient->exit();
-#else
-    if (dbusClient)
-        dbusClient->exit();
-#endif
+    if (auto client = weakClient.lock())
+        client->exit();
 }
 
 int
@@ -211,31 +208,18 @@ main(int argc, char *argv [])
     signal(SIGTERM, signal_handler);
     signal(SIGPIPE, SIG_IGN);
 
+    try {
 #if REST_API
-    try {
-        restClient.reset(new RestClient {port, ringFlags, persistent});
-    } catch (const std::exception& ex) {
-        std::cerr << "One does not simply initialize the rest client: " << ex.what() << std::endl;
-        return 1;
-    }
-
-    if (restClient)
-        return restClient->event_loop();
-    else
-        return 1;
+        if (auto client = std::make_shared<RestClient>(port, ringFlags, persistent))
 #else
-    // initialize client/library
-    try {
-        dbusClient.reset(new DBusClient {ringFlags, persistent});
-    } catch (const std::exception& ex) {
-        std::cerr << "One does not simply initialize the DBus client: " << ex.what() << std::endl;
-        return 1;
-    }
-
-    if (dbusClient)
-        return dbusClient->event_loop();
-    else
-        return 1;
+        if (auto client = std::make_shared<DBusClient>(ringFlags, persistent))
 #endif
-
+        {
+            weakClient = client;
+            return client->event_loop();
+        }
+    } catch (const std::exception& ex) {
+        std::cerr << "One does not simply initialize the client: " << ex.what() << std::endl;
+    }
+    return 1;
 }
