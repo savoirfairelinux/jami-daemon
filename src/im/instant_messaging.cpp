@@ -162,7 +162,7 @@ im::sendSipMessage(pjsip_inv_session* session,
         return;
     }
 
-    const pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
+    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
 
     {
         auto dialog = session->dlg;

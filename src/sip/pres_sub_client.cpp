@@ -194,7 +194,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                      * into pending state.
                      */
                     const pjsip_sub_state_hdr *sub_hdr;
-                    pj_str_t sub_state = CONST_PJ_STR("Subscription-State");
+                    constexpr pj_str_t sub_state = CONST_PJ_STR("Subscription-State");
                     const pjsip_msg *msg;
 
                     msg = event->body.tsx_state.src.rdata->msg_info.msg;

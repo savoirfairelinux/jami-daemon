@@ -995,7 +995,7 @@ SIPAccount::sendRegister()
     pj_list_init(&hdr_list);
     std::string useragent(getUserAgentName());
     pj_str_t pJuseragent {(char*) useragent.data(), (pj_ssize_t) useragent.size()};
-    const pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
+    constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
 
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(link_->getPool(), &STR_USER_AGENT, &pJuseragent);
     pj_list_push_back(&hdr_list, (pjsip_hdr*) h);
@@ -1210,10 +1210,10 @@ void SIPAccount::initTlsConfiguration()
 
     trimCiphers();
 
-    pj_cstr(&tlsSetting_.ca_list_file, tlsCaListFile_.c_str());
-    pj_cstr(&tlsSetting_.cert_file, tlsCertificateFile_.c_str());
-    pj_cstr(&tlsSetting_.privkey_file, tlsPrivateKeyFile_.c_str());
-    pj_cstr(&tlsSetting_.password, tlsPassword_.c_str());
+    pj_strset(&tlsSetting_.ca_list_file, (char*)tlsCaListFile_.c_str(), tlsCaListFile_.size());
+    pj_strset(&tlsSetting_.cert_file, (char*)tlsCertificateFile_.c_str(), tlsCertificateFile_.size());
+    pj_strset(&tlsSetting_.privkey_file, (char*)tlsPrivateKeyFile_.c_str(), tlsPrivateKeyFile_.size());
+    pj_strset(&tlsSetting_.password, (char*)tlsPassword_.c_str(), tlsPassword_.size());
 
     JAMI_DBG("Using %zu ciphers", ciphers_.size());
     tlsSetting_.ciphers_num = ciphers_.size();
@@ -2071,7 +2071,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
 
     auto toUri = getToUri(to);
 
-    const pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
+    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
     std::string from(getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
