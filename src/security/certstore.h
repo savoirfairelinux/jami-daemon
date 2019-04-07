@@ -77,7 +77,7 @@ public:
         pinRevocationList(id, std::make_shared<dht::crypto::RevocationList>(std::forward<dht::crypto::RevocationList>(crl)));
     }
 
-    void loadRevocations(crypto::Certificate& crt);
+    void loadRevocations(crypto::Certificate& crt) const;
 
 private:
     NON_COPYABLE(CertificateStore);
