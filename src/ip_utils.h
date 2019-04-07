@@ -122,8 +122,7 @@ public:
             addr.addr.sa_family = AF_UNSPEC;
             return;
         }
-        pj_str_t pjstring;
-        pj_cstr(&pjstring, str.c_str());
+        const pj_str_t pjstring {(char*)str.c_str(), (pj_ssize_t)str.size()};
         auto status = pj_sockaddr_parse(family, 0, &pjstring, &addr);
         if (status != PJ_SUCCESS)
             addr.addr.sa_family = AF_UNSPEC;

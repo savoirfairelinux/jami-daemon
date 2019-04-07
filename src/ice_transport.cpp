@@ -238,9 +238,9 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
     if (not info.password.empty()) {
         turn.auth_cred.type = PJ_STUN_AUTH_CRED_STATIC;
         turn.auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
-        pj_cstr(&turn.auth_cred.data.static_cred.realm, info.realm.c_str());
-        pj_cstr(&turn.auth_cred.data.static_cred.username, info.username.c_str());
-        pj_cstr(&turn.auth_cred.data.static_cred.data, info.password.c_str());
+        pj_strset(&turn.auth_cred.data.static_cred.realm, (char*)info.realm.c_str(), info.realm.size());
+        pj_strset(&turn.auth_cred.data.static_cred.username, (char*)info.username.c_str(), info.username.size());
+        pj_strset(&turn.auth_cred.data.static_cred.data, (char*)info.password.c_str(), info.password.size());
     }
 
     JAMI_DBG("[ice] added turn server '%s', port %d", pj_strbuf(&turn.server), turn.port);
@@ -805,8 +805,8 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
     pj_str_t ufrag, pwd;
     JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", this, rem_candidates.size());
     auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
-                                          pj_cstr(&ufrag, rem_attrs.ufrag.c_str()),
-                                          pj_cstr(&pwd, rem_attrs.pwd.c_str()),
+                                          pj_strset(&ufrag, (char*)rem_attrs.ufrag.c_str(), rem_attrs.ufrag.size()),
+                                          pj_strset(&pwd, (char*)rem_attrs.pwd.c_str(), rem_attrs.pwd.size()),
                                           rem_candidates.size(),
                                           rem_candidates.data());
     if (status != PJ_SUCCESS) {

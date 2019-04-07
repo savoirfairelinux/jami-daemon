@@ -83,14 +83,13 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
         return ipList;
     }
 
-    static const unsigned MAX_ADDR_NUM = 128;
+    static constexpr unsigned MAX_ADDR_NUM = 128;
     pj_addrinfo res[MAX_ADDR_NUM];
     unsigned addr_num = MAX_ADDR_NUM;
-    pj_str_t pjname;
-    pj_cstr(&pjname, name.c_str());
+    const pj_str_t pjname(sip_utils::CONST_PJ_STR(name));
     auto status = pj_getaddrinfo(family, &pjname, &addr_num, res);
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Error resolving %s : %s", name.c_str(),
+        JAMI_ERR("Error resolving %.*s : %s", (int)name.size(), name.c_str(),
                  sip_utils::sip_strerror(status).c_str());
         return ipList;
     }
@@ -299,8 +298,7 @@ ip_utils::getLocalNameservers()
 bool
 IpAddr::isValid(const std::string &address, pj_uint16_t family)
 {
-    pj_str_t pjstring;
-    pj_cstr(&pjstring, address.c_str());
+    const pj_str_t pjstring(sip_utils::CONST_PJ_STR(address));
     pj_str_t ret_str;
     pj_uint16_t ret_port;
     int ret_family;
