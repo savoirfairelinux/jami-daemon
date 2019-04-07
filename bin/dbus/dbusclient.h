@@ -26,7 +26,6 @@
 #endif // HAVE_CONFIG_H
 
 #include "dring/def.h"
-#include "dring.h"
 #include <memory>
 
 class DBusConfigurationManager;

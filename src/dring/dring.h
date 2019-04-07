@@ -145,6 +145,7 @@ exportable_callback(std::function<typename Ts::cb_type>&& func) {
 }
 
 DRING_PUBLIC void registerSignalHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+DRING_PUBLIC void unregisterSignalHandlers();
 
 } // namespace DRing
 
