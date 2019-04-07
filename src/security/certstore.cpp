@@ -35,6 +35,9 @@ CertificateStore&
 CertificateStore::instance()
 {
     // Meyers singleton
+    static std::mutex instanceMtx_;
+
+    std::lock_guard<std::mutex> lock(instanceMtx_);
     static CertificateStore instance_;
     return instance_;
 }
@@ -77,7 +80,7 @@ CertificateStore::loadLocalCertificates()
 }
 
 void
-CertificateStore::loadRevocations(crypto::Certificate& crt)
+CertificateStore::loadRevocations(crypto::Certificate& crt) const
 {
     auto dir = crlPath_+DIR_SEPARATOR_CH+crt.getId().toString();
     auto crl_dir_content = fileutils::readDirectory(dir);

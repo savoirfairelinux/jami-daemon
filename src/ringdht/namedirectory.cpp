@@ -85,6 +85,9 @@ NameDirectory::load()
 NameDirectory& NameDirectory::instance(const std::string& server)
 {
     const std::string& s = server.empty() ? DEFAULT_SERVER_HOST : server;
+    static std::mutex instanceMtx {};
+
+    std::lock_guard<std::mutex> lock(instanceMtx);
     static std::map<std::string, NameDirectory> instances {};
     auto r = instances.emplace(std::piecewise_construct,
                       std::forward_as_tuple(s),
