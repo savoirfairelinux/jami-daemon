@@ -249,7 +249,7 @@ private:
     /**
      * Transfer method used for both type of transfer
      */
-    bool transferCommon(pj_str_t *dst);
+    bool transferCommon(const pj_str_t *dst);
 
     bool internalOffHold(const std::function<void()> &SDPUpdateFunc);
 

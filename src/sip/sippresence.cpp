@@ -132,7 +132,7 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
         PJRPID_ELEMENT_TYPE_PERSON,
         CONST_PJ_STR("0"),
         PJRPID_ACTIVITY_UNKNOWN,
-        pj_str((char *) note.c_str())
+        CONST_PJ_STR(note)
     };
 
     /* fill activity if user not available. */
@@ -299,7 +299,7 @@ void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
 {
 
     if (tdata->msg->type == PJSIP_REQUEST_MSG) {
-        const pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
+        constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
         std::string useragent(acc_->getUserAgentName());
         pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
         pjsip_hdr *h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent);
@@ -322,8 +322,8 @@ void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
 
     if (msg_data->content_type.slen && msg_data->msg_body.slen) {
         pjsip_msg_body *body;
-        const pj_str_t type = CONST_PJ_STR("application");
-        const pj_str_t subtype = CONST_PJ_STR("pidf+xml");
+        constexpr pj_str_t type = CONST_PJ_STR("application");
+        constexpr pj_str_t subtype = CONST_PJ_STR("pidf+xml");
         body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &msg_data->msg_body);
         tdata->msg->body = body;
     }
@@ -479,7 +479,7 @@ pj_status_t
 SIPPresence::publish(SIPPresence *pres)
 {
     pj_status_t status;
-    const pj_str_t STR_PRESENCE = CONST_PJ_STR("presence");
+    constexpr pj_str_t STR_PRESENCE = CONST_PJ_STR("presence");
     SIPAccount * acc = pres->getAccount();
     pjsip_endpoint *endpt = getSIPVoIPLink()->getEndpoint();
 

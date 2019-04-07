@@ -346,10 +346,10 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     pj_stun_auth_cred cred;
     pj_bzero(&cred, sizeof(cred));
     cred.type = PJ_STUN_AUTH_CRED_STATIC;
-    pj_cstr(&cred.data.static_cred.realm, pimpl_->settings.realm.c_str());
-    pj_cstr(&cred.data.static_cred.username, pimpl_->settings.username.c_str());
+    pj_strset(&cred.data.static_cred.realm, (char*)pimpl_->settings.realm.c_str(), pimpl_->settings.realm.size());
+    pj_strset(&cred.data.static_cred.username, (char*)pimpl_->settings.username.c_str(), pimpl_->settings.username.size());
     cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
-    pj_cstr(&cred.data.static_cred.data, pimpl_->settings.password.c_str());
+    pj_strset(&cred.data.static_cred.data, (char*)pimpl_->settings.password.c_str(), pimpl_->settings.password.size());
 
     pimpl_->relayAddr = pj_strdup3(pimpl_->pool, server.toString().c_str());
 

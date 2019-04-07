@@ -243,7 +243,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
         throw VoipLinkException("Couldn't get invite dialog");
 
     pj_str_t methodName = CONST_PJ_STR("INFO");
-    const pj_str_t type = CONST_PJ_STR("application");
+    constexpr pj_str_t type = CONST_PJ_STR("application");
 
     pjsip_method method;
     pjsip_method_init_np(&method, &methodName);
@@ -271,7 +271,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 void
 SIPCall::requestKeyframe()
 {
-    const char * const BODY =
+    constexpr const char * const BODY =
         "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
         "<media_control><vc_primitive><to_encoder>"
         "<picture_fast_update/>"
@@ -485,7 +485,7 @@ transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 }
 
 bool
-SIPCall::transferCommon(pj_str_t *dst)
+SIPCall::transferCommon(const pj_str_t *dst)
 {
     if (not inv or not inv->dlg)
         return false;
@@ -529,11 +529,8 @@ SIPCall::transfer(const std::string& to)
     if (Recordable::isRecording())
         stopRecording();
 
-    std::string toUri;
-    pj_str_t dst = { 0, 0 };
-
-    toUri = account.getToUri(to);
-    pj_cstr(&dst, toUri.c_str());
+    std::string toUri = account.getToUri(to);
+    const pj_str_t dst(CONST_PJ_STR(toUri));
     JAMI_DBG("[call:%s] Transferring to %.*s", getCallId().c_str(), (int)dst.slen, dst.ptr);
 
     if (!transferCommon(&dst))

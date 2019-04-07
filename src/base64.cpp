@@ -17,6 +17,7 @@
  */
 
 #include "base64.h"
+#include "sip/sip_utils.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -54,8 +55,7 @@ std::vector<uint8_t>
 decode(const std::string& str)
 {
     int output_length = PJ_BASE64_TO_BASE256_LEN(str.length());
-    pj_str_t input;
-    pj_strset(&input, (char*) &(*str.begin()), str.length());
+    const pj_str_t input(sip_utils::CONST_PJ_STR(str));
 
     std::vector<uint8_t> out;
     out.resize(output_length);

@@ -575,7 +575,7 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
     };
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
-    static const pj_str_t allowed[] = {
+    static constexpr pj_str_t allowed[] = {
         CONST_PJ_STR("INFO"),
         CONST_PJ_STR("OPTIONS"),
         CONST_PJ_STR("MESSAGE"),
@@ -584,13 +584,13 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
 
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, nullptr, PJ_ARRAY_SIZE(allowed), allowed);
 
-    static const pj_str_t text_plain = CONST_PJ_STR("text/plain");
+    static constexpr pj_str_t text_plain = CONST_PJ_STR("text/plain");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &text_plain);
 
-    static const pj_str_t accepted = CONST_PJ_STR("application/sdp");
+    static constexpr pj_str_t accepted = CONST_PJ_STR("application/sdp");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &accepted);
 
-    static const pj_str_t iscomposing = CONST_PJ_STR("application/im-iscomposing+xml");
+    static constexpr pj_str_t iscomposing = CONST_PJ_STR("application/im-iscomposing+xml");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &iscomposing);
 
     TRY(pjsip_replaces_init_module(endpt_));
@@ -946,8 +946,8 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
     /*
      * Incoming INFO request for media control.
      */
-    const pj_str_t STR_APPLICATION = CONST_PJ_STR("application");
-    const pj_str_t STR_MEDIA_CONTROL_XML = CONST_PJ_STR("media_control+xml");
+    constexpr pj_str_t STR_APPLICATION = CONST_PJ_STR("application");
+    constexpr pj_str_t STR_MEDIA_CONTROL_XML = CONST_PJ_STR("media_control+xml");
 
     if (body->len and pj_stricmp(&body->content_type.type, &STR_APPLICATION) == 0 and
         pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
@@ -955,8 +955,8 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
 
         /* Apply and answer the INFO request */
         pj_strset(&control_st, (char *) body->data, body->len);
-        const pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
-        const pj_str_t DEVICE_ORIENTATION = CONST_PJ_STR("device_orientation");
+        constexpr pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
+        constexpr pj_str_t DEVICE_ORIENTATION = CONST_PJ_STR("device_orientation");
 
         if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
             call.sendKeyframe();
@@ -1012,7 +1012,7 @@ replyToRequest(pjsip_inv_session* inv, pjsip_rx_data* rdata, int status_code)
 static void
 onRequestRefer(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg, SIPCall& call)
 {
-    static const pj_str_t str_refer_to = CONST_PJ_STR("Refer-To");
+    static constexpr pj_str_t str_refer_to = CONST_PJ_STR("Refer-To");
 
     if (auto refer_to = static_cast<pjsip_generic_string_hdr*>(pjsip_msg_find_hdr_by_name(msg, &str_refer_to, nullptr))) {
         // RFC 3515, 2.4.2: reply bad request if no or too many refer-to header.
@@ -1244,8 +1244,7 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
                    "Transport manager is NULL in findLocalAddress, using local address %s :%d",
                    addr.c_str(), port);
 
-    pj_str_t pjstring;
-    pj_cstr(&pjstring, host.c_str());
+    const pj_str_t pjstring(CONST_PJ_STR(host));
 
     auto tp_sel = getTransportSelector(transport);
     pjsip_tpmgr_fla2_param param = { transportType, &tp_sel, pjstring, PJ_FALSE,
