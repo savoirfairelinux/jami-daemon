@@ -148,8 +148,9 @@ HardwareAccel::setDetails(AVCodecContext* codecCtx)
         codecCtx->get_format = getFormatCb;
         codecCtx->thread_safe_callbacks = 1;
     } else if (type_ == CODEC_ENCODER) {
-        // encoder doesn't need a device context, only a frame context
-        codecCtx->hw_frames_ctx = av_buffer_ref(framesCtx_);
+        if (getFormat() != AV_PIX_FMT_VIDEOTOOLBOX)
+            // encoder doesn't need a device context, only a frame context
+            codecCtx->hw_frames_ctx = av_buffer_ref(framesCtx_);
     }
 }
 
@@ -265,9 +266,15 @@ HardwareAccel::setupDecoder(AVCodecID id, int width, int height)
     for (const auto& api : apiList) {
         if (std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id) != api.supportedCodecs.end()) {
             auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_DECODER);
-            if (accel->initDevice() && accel->initFrame(width, height)) {
-                JAMI_DBG() << "Attempting to use hardware decoder " << accel->getCodecName() << " with " << api.name;
-                return accel;
+            if (accel->initDevice()) {
+                 // we don't need frame context for videotoolbox
+                if (api.format == AV_PIX_FMT_VIDEOTOOLBOX)  {
+                    JAMI_DBG() << "Attempting to use hardware dencoder " << accel->getCodecName() << " with " << api.name;
+                    return accel;
+                } else if (accel->initFrame(width, height)) {
+                    JAMI_DBG() << "Attempting to use hardware dencoder " << accel->getCodecName() << " with " << api.name;
+                    return accel;
+                }
             }
         }
     }
@@ -289,11 +296,16 @@ HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* fr
             auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_ENCODER);
             const auto& codecName = accel->getCodecName();
             if (avcodec_find_encoder_by_name(codecName.c_str())) {
-                // Set up a fully accelerated pipeline, else fallback to using the main memory
-                if (accel->linkHardware(framesCtx)
-                    || (accel->initDevice() && accel->initFrame(width, height))) {
-                    JAMI_DBG() << "Attempting to use hardware encoder " << codecName;
-                    return accel;
+                if (accel->initDevice()) {
+                    // we don't need frame context for videotoolbox
+                    if (api.format == AV_PIX_FMT_VIDEOTOOLBOX) {
+                        JAMI_DBG() << "Attempting to use hardware encoder " << codecName;
+                        return accel;
+                    } else if (accel->linkHardware(framesCtx)
+                               ||  accel->initFrame(width, height)) {
+                        JAMI_DBG() << "Attempting to use hardware encoder " << codecName;
+                        return accel;
+                    }
                 }
             }
         }
