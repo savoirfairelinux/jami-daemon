@@ -1,9 +1,8 @@
 set BUILD=%SRC%..\build
-
-set RESTBED_VERSION=df867a858dddc4cf6ca8642da02720bd65ba239a
-set RESTBED_URL=https://github.com/Corvusoft/restbed/archive/%RESTBED_VERSION%.tar.gz
-
 mkdir %BUILD%
+
+set RESTBED_VERSION=bf61912c80572475b83a2fcf0da519f492a4d99e
+set RESTBED_URL=https://github.com/Corvusoft/restbed/archive/%RESTBED_VERSION%.tar.gz
 
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\%RESTBED_VERSION%.tar.gz %cd%
@@ -18,10 +17,12 @@ del %RESTBED_VERSION%.tar && del %RESTBED_VERSION%.tar.gz && del %BUILD%\pax_glo
 rename %BUILD%\restbed-%RESTBED_VERSION% restbed
 
 cd %BUILD%\restbed
-%APPLY_CMD% %SRC%\restbed\async_read_until-uwp.patch
-%APPLY_CMD% %SRC%\restbed\cmake-uwp.patch
+
+%APPLY_CMD% %SRC%\restbed\win32_cmake-find-openssl-shared.patch
 
 cd ..
+
+:: submodules
 
 rmdir /s /q %BUILD%\restbed\dependency
 mkdir %BUILD%\restbed\dependency
@@ -85,22 +86,5 @@ cd openssl
 if "%1"=="uwp" (
     %APPLY_CMD% %SRC%\restbed\openssl-uwp.patch
 )
-
-cd ..
-
-rem ------------ kashmir ------------
-
-set KASHMIR_VERSION=2f3913f49c4ac7f9bff9224db5178f6f8f0ff3ee
-set KASHMIR_URL=https://github.com/corvusoft/kashmir-dependency/archive/%KASHMIR_VERSION%.tar.gz
-
-if %USE_CACHE%==1 (
-    copy %CACHE_DIR%\%KASHMIR_VERSION%.tar.gz %cd%
-) else (
-    %WGET_CMD% %KASHMIR_URL%
-)
-
-7z -y x %KASHMIR_VERSION%.tar.gz && 7z -y x %KASHMIR_VERSION%.tar
-del %KASHMIR_VERSION%.tar && del %KASHMIR_VERSION%.tar.gz && del pax_global_header
-rename kashmir-dependency-%KASHMIR_VERSION% kashmir
 
 cd %SRC%
