@@ -256,10 +256,11 @@ mkdir build
 cd build
 setlocal
 set PATH=C:\\Program Files\\CMake\\bin\\;%PATH%
+set CMAKE_FLAGS=-DBUILD_SSL=ON -DBUILD_TESTS=OFF
 if "%3"=="x86" (
-    cmake -DBUILD_SSL=ON -G "Visual Studio 15 2017 Win32" ..
+    cmake %CMAKE_FLAGS% -G "Visual Studio 15 2017 Win32" ..
 ) else if "%3"=="x64" (
-    cmake -DBUILD_SSL=ON -G "Visual Studio 15 2017 Win64" ..
+    cmake %CMAKE_FLAGS% -G "Visual Studio 15 2017 Win64" ..
 )
 cmake --build . --target ALL_BUILD --config Release
 cd ..\..
