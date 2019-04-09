@@ -66,16 +66,7 @@ hogweed=build\nettle\SMP\libhogweed.vcxproj, ^
 gnutls=build\gnutls\SMP\libgnutls.vcxproj, ^
 msgpack=build\msgpack-c\vs2017\msgpackc-static.vcxproj, ^
 opendht=build\opendht\MSVC\opendht_vs2017.vcxproj, ^
-pjlib_util=build\pjproject\pjlib-util\build\pjlib_util.vcxproj, ^
-pjmedia=build\pjproject\pjmedia\build\pjmedia.vcxproj, ^
-pjmedia_codec=build\pjproject\pjmedia\build\pjmedia_codec.vcxproj, ^
-pjlib=build\pjproject\pjlib\build\pjlib.vcxproj, ^
-pjsip_core=build\pjproject\pjsip\build\pjsip_core.vcxproj, ^
-pjsip_simple=build\pjproject\pjsip\build\pjsip_simple.vcxproj, ^
-pjsua_lib=build\pjproject\pjsip\build\pjsua_lib.vcxproj, ^
-pjsua2_lib=build\pjproject\pjsip\build\pjsua2_lib.vcxproj, ^
-pjsip_ua=build\pjproject\pjsip\build\pjsip_ua.vcxproj, ^
-pjnath=build\pjproject\pjnath\build\pjnath.vcxproj, ^
+pjproject=pjproject, ^
 pthreads=build\pthreads\MSVC\pthreads.vcxproj, ^
 xml=build\libupnp\build\vs2017\ixml.vcxproj, ^
 threadutil=build\libupnp\build\vs2017\threadutil.vcxproj, ^
@@ -102,16 +93,7 @@ hogweed=build\nettle\SMP\libhogweed.vcxproj, ^
 gnutls=build\gnutls\SMP\libgnutls.vcxproj, ^
 msgpack=build\msgpack-c\vs2017\msgpackc-static.vcxproj, ^
 opendht=build\opendht\MSVC\opendht_vs2017.vcxproj, ^
-pjlib_util=build\pjproject\pjlib-util\build\pjlib_util.vcxproj, ^
-pjmedia=build\pjproject\pjmedia\build\pjmedia.vcxproj, ^
-pjmedia_codec=build\pjproject\pjmedia\build\pjmedia_codec.vcxproj, ^
-pjlib=build\pjproject\pjlib\build\pjlib.vcxproj, ^
-pjsip_core=build\pjproject\pjsip\build\pjsip_core.vcxproj, ^
-pjsip_simple=build\pjproject\pjsip\build\pjsip_simple.vcxproj, ^
-pjsua_lib=build\pjproject\pjsip\build\pjsua_lib.vcxproj, ^
-pjsua2_lib=build\pjproject\pjsip\build\pjsua2_lib.vcxproj, ^
-pjsip_ua=build\pjproject\pjsip\build\pjsip_ua.vcxproj, ^
-pjnath=build\pjproject\pjnath\build\pjnath.vcxproj, ^
+pjproject=pjproject, ^
 pthreads=build\pthreads\MSVC\pthreads.vcxproj, ^
 xml=build\libupnp\build\vs2017\ixml.vcxproj, ^
 threadutil=build\libupnp\build\vs2017\threadutil.vcxproj, ^
@@ -123,6 +105,19 @@ yaml-cpp=build\yaml-cpp\msvc\yaml-cpp.vcxproj
 goto startBuild
 
 :startBuild
+
+set PJTOBUILD= ^
+pjlib_util=build\pjproject\pjlib-util\build\pjlib_util.vcxproj, ^
+pjmedia=build\pjproject\pjmedia\build\pjmedia.vcxproj, ^
+pjmedia_codec=build\pjproject\pjmedia\build\pjmedia_codec.vcxproj, ^
+pjlib=build\pjproject\pjlib\build\pjlib.vcxproj, ^
+pjsip_core=build\pjproject\pjsip\build\pjsip_core.vcxproj, ^
+pjsip_simple=build\pjproject\pjsip\build\pjsip_simple.vcxproj, ^
+pjsua_lib=build\pjproject\pjsip\build\pjsua_lib.vcxproj, ^
+pjsua2_lib=build\pjproject\pjsip\build\pjsua2_lib.vcxproj, ^
+pjsip_ua=build\pjproject\pjsip\build\pjsip_ua.vcxproj, ^
+pjnath=build\pjproject\pjnath\build\pjnath.vcxproj
+
 @setlocal
 
 set VSInstallerFolder="%ProgramFiles(x86)%\\Microsoft Visual Studio\\Installer"
@@ -225,15 +220,26 @@ goto cleanup
 :cleanup
 endlocal
 @endlocal
-exit /B %ERRORLEVEL%
+if %ERRORLEVEL% geq 1 (
+    echo [91mbuild_all failed[0m
+    exit %ERRORLEVEL%
+) else (
+    echo [92mbuild_all succeeded[0m
+    exit /B %ERRORLEVEL%
+)
 
 :build
 if /I %1 equ ffmpeg (
     %MSYS2_BIN% --login -x %CONTRIB_DIR%src/ffmpeg/windows-configure-make.sh %2 %3
 ) else if /I %1 equ restbed (
     goto build_restbed %2 %3
+) else if /I %1 equ pjproject (
+    goto build_pjproject %2 %3
 ) else (
     msbuild %CONTRIB_DIR%%1 %MSBUILD_ARGS%
+)
+if %ERRORLEVEL% geq 1 (
+    goto cleanup
 )
 goto :eof
 
@@ -250,8 +256,7 @@ if "%2"=="win32" (
 )
 call nmake -f ms\ntdll.mak
 set PATH=restbed\dependency\openssl\out32dll;%PATH%
-
-:: build restbed w/asio
+:: build restbed w/asio+catch
 cd ..\..
 mkdir build
 cd build
@@ -265,3 +270,19 @@ if "%3"=="x86" (
 )
 cmake --build . --target ALL_BUILD --config Release
 cd ..\..
+goto :eof
+
+:build_pjproject
+setlocal
+set "keyname="
+for %%I in (%PJTOBUILD%) do (
+    if not defined keyname (
+        set keyname=%%I
+    ) else (
+        echo building: !keyname!
+        call :build %%I %1 %2
+        set %%keyname%%=%%I
+        set "keyname="
+    )
+)
+endlocal
