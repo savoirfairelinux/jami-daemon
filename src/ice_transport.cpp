@@ -241,13 +241,19 @@ public:
     /**
      * Returns the IP of each candidate for a given component in the ICE session
      */
-    std::vector<IpAddr> getLocalCandidatesAddr(unsigned comp_id) const;
+    struct LocalCandidate {
+        IpAddr addr;
+        pj_ice_cand_transport transport;
+    };
+    std::vector<LocalCandidate> getLocalICECandidates(unsigned comp_id) const;
 
     /**
      * Adds a reflective candidate to ICE session
      * Must be called before negotiation
      */
-    void addReflectiveCandidate(int comp_id, const IpAddr& base, const IpAddr& addr);
+    void addReflectiveCandidate(int comp_id, const IpAddr &base,
+                                const IpAddr &addr,
+                                const pj_ice_cand_transport& transport);
 
     /**
      * Creates UPnP port mappings and adds ICE candidates based on those mappings
@@ -713,10 +719,10 @@ IceTransport::Impl::createIceSession(pj_ice_sess_role role)
     return true;
 }
 
-std::vector<IpAddr>
-IceTransport::Impl::getLocalCandidatesAddr(unsigned comp_id) const
+std::vector<IceTransport::Impl::LocalCandidate>
+IceTransport::Impl::getLocalICECandidates(unsigned comp_id) const
 {
-    std::vector<IpAddr> cand_addrs;
+    std::vector<LocalCandidate> cand_addrs;
     pj_ice_sess_cand cand[PJ_ARRAY_SIZE(cand_)];
     unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
 
@@ -725,25 +731,27 @@ IceTransport::Impl::getLocalCandidatesAddr(unsigned comp_id) const
         return cand_addrs;
     }
 
-    for (unsigned i=0; i<cand_cnt; ++i)
-        cand_addrs.push_back(cand[i].addr);
+    for (unsigned i=0; i<cand_cnt; ++i) {
+      cand_addrs.push_back({cand[i].addr, cand[i].transport});
+    }
 
     return cand_addrs;
 }
 
-void
-IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr& base, const IpAddr& addr)
-{
+void IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr &base,
+                                                const IpAddr &addr,
+                                                const pj_ice_cand_transport& transport) {
     // HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK
     // WARNING: following implementation is a HACK of PJNATH !!
-    // ice_strans doesn't have any API that permit to inject ICE any kind of candidates.
-    // So, the hack consists in accessing hidden ICE session using a patched PJPNATH
-    // library with a new API exposing this session (pj_ice_strans_get_ice_sess).
-    // Then call pj_ice_sess_add_cand() with a carfully forged candidate:
-    // the transport_id field uses an index in ICE transport STUN servers array
-    // corresponding to a STUN server with the same address familly.
-    // This implies we hope they'll not be modification of transport_id meaning in future
-    // and no conflics with the borrowed STUN config.
+    // ice_strans doesn't have any API that permit to inject ICE any kind of
+    // candidates. So, the hack consists in accessing hidden ICE session using a
+    // patched PJPNATH library with a new API exposing this session
+    // (pj_ice_strans_get_ice_sess). Then call pj_ice_sess_add_cand() with a
+    // carfully forged candidate: the transport_id field uses an index in ICE
+    // transport STUN servers array corresponding to a STUN server with the same
+    // address familly. This implies we hope they'll not be modification of
+    // transport_id meaning in future and no conflics with the borrowed STUN
+    // config.
     // HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK
     sip_utils::register_thread();
 
@@ -754,25 +762,27 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr& base, cons
     static constexpr int SRFLX_PREF = 65535;
     static constexpr int TP_STUN = 1;
 
-    // find a compatible STUN host with same address familly, normally all system enabled
-    // host addresses are represented, so we expect to always found this host
+    // find a compatible STUN host with same address familly, normally all system
+    // enabled host addresses are represented, so we expect to always found this
+    // host
     int idx = -1;
     auto af = addr.getFamily();
     if (af == AF_UNSPEC) {
-        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: unknown addess familly", this,
-                 addr.toString().c_str());
+        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: unknown addess familly",
+                this, addr.toString().c_str());
         return;
     }
 
-    for (unsigned i=0; i < config_.stun_tp_cnt; ++i) {
+    for (unsigned i = 0; i < config_.stun_tp_cnt; ++i) {
         if (config_.stun_tp[i].af == af) {
-            idx = i;
-            break;
+        idx = i;
+        break;
         }
     }
     if (idx < 0) {
-        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: no suitable local STUN host found", this,
-                 addr.toString().c_str());
+        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: no suitable local STUN "
+                "host found",
+                this, addr.toString().c_str());
         return;
     }
 
@@ -782,30 +792,31 @@ IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr& base, cons
     cand.status = PJ_EPENDING; // not used
     cand.comp_id = comp_id;
     cand.transport_id = CREATE_TP_ID(TP_STUN, idx); // HACK!!
-    cand.local_pref = SRFLX_PREF; // reflective
+    cand.local_pref = SRFLX_PREF;                   // reflective
+    cand.transport = transport;
     /* cand.foundation = ? */
     /* cand.prio = calculated by ice session */
     /* make base and addr the same since we're not going through a server */
     pj_sockaddr_cp(&cand.base_addr, base.pjPtr());
     pj_sockaddr_cp(&cand.addr, addr.pjPtr());
     pj_sockaddr_cp(&cand.rel_addr, &cand.base_addr);
-    pj_ice_calc_foundation(pool_.get(), &cand.foundation, cand.type, &cand.base_addr);
+    pj_ice_calc_foundation(pool_.get(), &cand.foundation, cand.type,
+                            &cand.base_addr);
 
     auto ret = pj_ice_sess_add_cand(
-        pj_ice_strans_get_ice_sess(icest_.get()), cand.comp_id,
-        cand.transport_id, cand.type, cand.local_pref, &cand.foundation,
-        &cand.addr, &cand.base_addr, &cand.rel_addr,
-        pj_sockaddr_get_len(&cand.addr), NULL, PJ_CAND_UDP);
+        pj_ice_strans_get_ice_sess(icest_.get()), cand.comp_id, cand.transport_id,
+        cand.type, cand.local_pref, &cand.foundation, &cand.addr, &cand.base_addr,
+        &cand.rel_addr, pj_sockaddr_get_len(&cand.addr), NULL, cand.transport);
 
     if (ret != PJ_SUCCESS) {
         last_errmsg_ = sip_utils::sip_strerror(ret);
-        JAMI_ERR("[ice:%p] pj_ice_sess_add_cand failed with error %d: %s", this, ret,
-                 last_errmsg_.c_str());
-        JAMI_ERR("[ice:%p] failed to add candidate for comp_id=%d : %s : %s", this, comp_id,
-                 base.toString().c_str(), addr.toString().c_str());
+        JAMI_ERR("[ice:%p] pj_ice_sess_add_cand failed with error %d: %s", this,
+                ret, last_errmsg_.c_str());
+        JAMI_ERR("[ice:%p] failed to add candidate for comp_id=%d : %s : %s", this,
+                comp_id, base.toString().c_str(), addr.toString().c_str());
     } else {
-        JAMI_DBG("[ice:%p] succeed to add candidate for comp_id=%d : %s : %s", this, comp_id,
-                 base.toString().c_str(), addr.toString().c_str());
+        JAMI_DBG("[ice:%p] succeed to add candidate for comp_id=%d : %s : %s", this,
+                comp_id, base.toString().c_str(), addr.toString().c_str());
     }
 }
 
@@ -823,17 +834,22 @@ IceTransport::Impl::selectUPnPIceCandidates()
             for (unsigned comp_id = 1; comp_id <= component_count_; ++comp_id) {
                 JAMI_DBG("[ice:%p] UPnP: Opening port(s) for ICE comp %d and adding candidate with public IP",
                          this, comp_id);
-                auto candidates = getLocalCandidatesAddr(comp_id);
-                for (IpAddr addr : candidates) {
+                auto candidates = getLocalICECandidates(comp_id);
+                for (const auto& candidate : candidates) {
+                    if (candidate.transport == PJ_CAND_TCP_ACTIVE)
+                        continue; // We don't need to map port 9.
                     auto localIP = upnp_->getLocalIP();
-                    localIP.setPort(addr.getPort());
-                    if (addr != localIP)
+                    localIP.setPort(candidate.addr.getPort());
+                    if (candidate.addr != localIP)
                         continue;
-                    uint16_t port = addr.getPort();
+                    uint16_t port = candidate.addr.getPort();
                     uint16_t port_used;
-                    if (upnp_->addAnyMapping(port, upnp::PortType::UDP, true, &port_used)) {
+                    auto portType = candidate.transport == PJ_CAND_UDP
+                                        ? upnp::PortType::UDP
+                                        : upnp::PortType::TCP;
+                    if (upnp_->addAnyMapping(port, portType, true, &port_used)) {
                         publicIP.setPort(port_used);
-                        addReflectiveCandidate(comp_id, addr, publicIP);
+                        addReflectiveCandidate(comp_id, candidate.addr, publicIP, candidate.transport);
                     } else
                         JAMI_WARN("[ice:%p] UPnP: Could not create a port mapping for the ICE candide", this);
                 }
@@ -1115,13 +1131,13 @@ IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
     // negotiation, only to exchanged candidates between peers.
     auto localIP = ip_utils::getLocalAddr(publicIP.getFamily());
     auto pubIP = publicIP;
-    for (const auto& addr : pimpl_->getLocalCandidatesAddr(compId)) {
-        auto port = addr.getPort();
+    for (const auto& cand : pimpl_->getLocalICECandidates(compId)) {
+        auto port = cand.addr.getPort();
         localIP.setPort(port);
-        if (addr != localIP)
+        if (cand.addr != localIP)
             continue;
         pubIP.setPort(port);
-        pimpl_->addReflectiveCandidate(compId, addr, pubIP);
+        pimpl_->addReflectiveCandidate(compId, cand.addr, pubIP, cand.transport);
         return true;
     }
     return false;
