@@ -82,7 +82,7 @@ GTAGS
 # IDE stuffs
 nbproject
 *.kdev*
-/.vscode/
+tools/.vscode/
 
 # JNI generated files
 *_wrap.cpp
@@ -122,3 +122,10 @@ __pycache__
 *.gcda
 *info
 html-output/
+
+#sonarqube generated files
+.scannerwork/
+clang-tidy-report.txt
+sonar-project.properties.save
+compile_commands.json
+
