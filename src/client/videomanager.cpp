@@ -350,7 +350,11 @@ setDefaultDevice(const std::string& name)
 void
 setDeviceOrientation(const std::string& name, int angle)
 {
-    jami::Manager::instance().getVideoManager().setDeviceOrientation(name, angle);
+    auto& videoManager = jami::Manager::instance().getVideoManager();
+    videoManager.setDeviceOrientation(name, angle);
+    if (auto input = videoManager.videoInput.lock())
+        if (input->getName() == name)
+            input->setOrientation(angle);
 }
 
 std::map<std::string, std::string>

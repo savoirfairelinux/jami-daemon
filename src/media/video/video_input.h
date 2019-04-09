@@ -92,6 +92,7 @@ public:
     void* obtainFrame(int length);
     void releaseFrame(void *frame);
 #endif
+    void setRotation(int angle);
 
 private:
     NON_COPYABLE(VideoInput);
@@ -119,7 +120,6 @@ private:
 
     int rotation_ {0};
     std::shared_ptr<AVBufferRef> displayMatrix_;
-    void setRotation(int angle);
 
     // true if decOpts_ is ready to use, false if using promise/future
     bool initCamera(const std::string& device);
