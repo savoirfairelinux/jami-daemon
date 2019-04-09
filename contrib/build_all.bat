@@ -235,6 +235,7 @@ if /I %1 equ ffmpeg (
 ) else (
     msbuild %CONTRIB_DIR%%1 %MSBUILD_ARGS%
 )
+goto :eof
 
 :build_restbed
 :: build openssl
