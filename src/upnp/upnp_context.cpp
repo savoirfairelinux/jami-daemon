@@ -348,7 +348,7 @@ UPnPContext::addMapping(IGD* igd,
 {
     *upnp_error = -1;
 
-    Mapping mapping{port_external, port_internal};
+    Mapping mapping{port_external, port_internal, type};
 
     /* check if this mapping already exists
      * if the mapping is the same, then we just need to increment the number of users globally

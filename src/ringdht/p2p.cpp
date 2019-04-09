@@ -382,6 +382,7 @@ private:
         PeerConnectionMsg request;
         request.id = ValueIdDist()(parent_.account.rand); /* Random id for the message unicity */
         request.addresses = {icemsg.str()};
+        JAMI_ERR("%s", icemsg.str().c_str());
         request.addresses.insert(request.addresses.end(), publicAddresses_.begin(), publicAddresses_.end());
 
         // Send connection request through DHT
