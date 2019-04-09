@@ -12,7 +12,7 @@ if %USE_CACHE%==1 (
 )
 
 7z -y x %PJPROJECT_VERSION%.tar.gz && 7z -y x %PJPROJECT_VERSION%.tar -o%BUILD%
-del %PJPROJECT_VERSION%.tar && del %PJPROJECT_VERSION%.tar.gz
+del %PJPROJECT_VERSION%.tar && del %PJPROJECT_VERSION%.tar.gz && del %BUILD%\pax_global_header
 rename %BUILD%\pjproject-%PJPROJECT_VERSION% pjproject
 
 cd %BUILD%\pjproject
@@ -36,12 +36,12 @@ bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_ioqueue_ipv6_sendto.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/add_dtls_transport.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/rfc6062.patch"
 
-%APPLY_CMD% %SRC%\pjproject\pj_vs_gnutls.patch
-%APPLY_CMD% %SRC%\pjproject\pj_vs_config.patch
-%APPLY_CMD% %SRC%\pjproject\pj_vs2017_props.patch
+%APPLY_CMD% %SRC%\pjproject\win32_vs_gnutls.patch
+%APPLY_CMD% %SRC%\pjproject\win_config.patch
+%APPLY_CMD% %SRC%\pjproject\win_vs2017_props.patch
 
 if "%1"=="uwp" (
-    %APPLY_CMD% %SRC%\pjproject\pj_uwp.patch
+    %APPLY_CMD% %SRC%\pjproject\uwp_vs.patch
 )
 
 cd %SRC%

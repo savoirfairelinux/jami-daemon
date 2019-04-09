@@ -1,0 +1,105 @@
+--- a/pjlib/build/pjlib.vcxproj
++++ b/pjlib/build/pjlib.vcxproj
+@@ -309,14 +309,17 @@
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+     <ClCompile>
+-      <AdditionalIncludeDirectories>../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\msvc\include;../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <PrecompiledHeaderOutputFile />
+     </ClCompile>
++    <Lib>
++      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\msvc\lib\x86;</AdditionalLibraryDirectories>
++    </Lib>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+     <ClCompile>
+-      <AdditionalIncludeDirectories>../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\msvc\include;../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <PrecompiledHeaderOutputFile>
+       </PrecompiledHeaderOutputFile>
+@@ -327,10 +330,13 @@
+       <TargetEnvironment>X64</TargetEnvironment>
+     </Midl>
+     <ClCompile>
+-      <AdditionalIncludeDirectories>../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\msvc\include;../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <PrecompiledHeaderOutputFile />
+     </ClCompile>
++    <Lib>
++      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\msvc\lib\x64;</AdditionalLibraryDirectories>
++    </Lib>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Static|Win32'">
+     <ClCompile>
+--- a/pjlib/include/pj/config.h
++++ b/pjlib/include/pj/config.h
+@@ -570,6 +570,7 @@
+  * that this will increase the footprint of the libraries since it
+  * tracks the filename and line number of each functions.
+  */
++#define PJ_OS_HAS_CHECK_STACK		0
+ #ifndef PJ_OS_HAS_CHECK_STACK
+ #	define PJ_OS_HAS_CHECK_STACK		0
+ #endif
+@@ -919,7 +920,7 @@
+  * Default: 0 (for now)
+  */
+ #ifndef PJ_HAS_SSL_SOCK
+-#  define PJ_HAS_SSL_SOCK	    0
++#  define PJ_HAS_SSL_SOCK	    1
+ #endif
+ 
+ 
+@@ -945,7 +946,7 @@
+ #   if PJ_HAS_SSL_SOCK==0
+ #	define PJ_SSL_SOCK_IMP		    PJ_SSL_SOCK_IMP_NONE
+ #   else
+-#	define PJ_SSL_SOCK_IMP		    PJ_SSL_SOCK_IMP_OPENSSL
++#	define PJ_SSL_SOCK_IMP		    PJ_SSL_SOCK_IMP_GNUTLS
+ #   endif
+ #endif
+ 
+--- a/pjmedia/build/pjmedia.vcxproj
++++ b/pjmedia/build/pjmedia.vcxproj
+@@ -307,14 +307,17 @@
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+     <ClCompile>
+-      <AdditionalIncludeDirectories>../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\msvc\include;../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <PrecompiledHeaderOutputFile />
+     </ClCompile>
++    <Lib>
++      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\msvc\lib\x86;</AdditionalLibraryDirectories>
++    </Lib>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
+     <ClCompile>
+-      <AdditionalIncludeDirectories>../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\msvc\include;../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_LIB;__ARMEL__;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <PrecompiledHeaderOutputFile>
+       </PrecompiledHeaderOutputFile>
+@@ -325,10 +328,13 @@
+       <TargetEnvironment>X64</TargetEnvironment>
+     </Midl>
+     <ClCompile>
+-      <AdditionalIncludeDirectories>../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\..\msvc\include;../include;../../pjlib/include;../../pjlib-util/include;../../pjnath/include;../../third_party/portaudio/include;../../third_party/speex/include;../../third_party/build/srtp;../../third_party/srtp/include;../../third_party/srtp/crypto/include;../../third_party/yuv/include;../../third_party/webrtc/src;../..;$(DXSDK_DIR)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <PrecompiledHeaderOutputFile />
+     </ClCompile>
++    <Lib>
++      <AdditionalLibraryDirectories>$(ProjectDir)..\..\..\..\msvc\lib\x64;</AdditionalLibraryDirectories>
++    </Lib>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+     <ClCompile>
+-- 
+2.19.0.windows.1
+
