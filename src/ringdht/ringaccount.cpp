@@ -2128,6 +2128,8 @@ RingAccount::doRegister_()
         config.proxy_server = getDhtProxyServer();
         config.push_node_id = getAccountID();
         config.threaded = true;
+        config.peer_discovery = false;
+        config.peer_publish = false;
         if (not config.proxy_server.empty())
             JAMI_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
 

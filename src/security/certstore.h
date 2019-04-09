@@ -57,7 +57,7 @@ public:
     std::vector<std::string> getPinnedCertificates() const;
     std::shared_ptr<crypto::Certificate> getCertificate(const std::string& cert_id) const;
 
-    std::shared_ptr<crypto::Certificate> findCertificateByName(const std::string& name, crypto::Certificate::NameType type = crypto::Certificate::NameType::UNKNOWN) const;
+    std::shared_ptr<crypto::Certificate> findCertificateByName(const std::string& name, crypto::NameType type = crypto::NameType::UNKNOWN) const;
     std::shared_ptr<crypto::Certificate> findCertificateByUID(const std::string& uid) const;
     std::shared_ptr<crypto::Certificate> findIssuer(const std::shared_ptr<crypto::Certificate>& crt) const;
 
