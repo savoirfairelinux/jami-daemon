@@ -54,7 +54,10 @@ public:
                                           int64_t offset) noexcept;
 
     /// \see DRing::cancelDataTransfer
-    DRing::DataTransferError cancel(const DRing::DataTransferId& id) noexcept;
+    DRing::DataTransferError cancel(const DRing::DataTransferId &id) noexcept;
+
+    /// Used by p2p.cpp
+    void close(const DRing::DataTransferId &id) noexcept;
 
     /// \see DRing::dataTransferInfo
     DRing::DataTransferError info(const DRing::DataTransferId& id,
