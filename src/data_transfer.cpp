@@ -740,6 +740,12 @@ DataTransferFacade::cancel(const DRing::DataTransferId& id) noexcept
     return DRing::DataTransferError::invalid_argument;
 }
 
+void
+DataTransferFacade::close(const DRing::DataTransferId &id) noexcept
+{
+    pimpl_->map_.erase(id);
+}
+
 DRing::DataTransferError
 DataTransferFacade::bytesProgress(const DRing::DataTransferId& id,
                                   int64_t& total, int64_t& progress) const noexcept
