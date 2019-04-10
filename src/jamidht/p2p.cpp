@@ -884,6 +884,7 @@ DhtPeerConnector::Impl::eventLoop()
                                   element.second->hasStreamWithId(id));
                         });
                     if (it == servers_.end())  {
+                      Manager::instance().dataTransfers->close(id);
                       break;
                     }
                     auto peer = it->first.second; // tmp copy to prevent use-after-free below
@@ -899,6 +900,7 @@ DhtPeerConnector::Impl::eventLoop()
                     connectedPeers_.erase(peer);
                     // Else it's via TURN!
                     turnEndpoints_.erase(peer);
+                    Manager::instance().dataTransfers->close(id);
                 }
                 break;
 
