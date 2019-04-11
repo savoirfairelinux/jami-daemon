@@ -10,7 +10,6 @@ import gtk
 from threading import Thread
 from threading import Event
 
-print "Import SFLphone"
 from sflphonectrlsimple import SflPhoneCtrlSimple
 
 # Define remote IP address constant
@@ -49,7 +48,7 @@ def refuseOnIncomingCall(sflphone):
 class SflPhoneTests():
 
     def __init__(self, sfl):
-        print "Create test instance"
+        print("Create test instance")
         self.sflphone = sfl
 
     def test_get_allaccounts_methods(self):
@@ -67,10 +66,10 @@ class SflPhoneTests():
         """Create a new sip account"""
 
         CONFIG_ACCOUNT_TYPE = "Account.type"
-	CONFIG_ACCOUNT_ALIAS = "Account.alias"
-	HOSTNAME = "hostname"
-	USERNAME = "username"
-	PASSWORD = "password"
+	    CONFIG_ACCOUNT_ALIAS = "Account.alias"
+	    HOSTNAME = "hostname"
+	    USERNAME = "username"
+	    PASSWORD = "password"
 
         accDetails = {CONFIG_ACCOUNT_TYPE:"SIP", CONFIG_ACCOUNT_ALIAS:"testsuiteaccount",
                       HOSTNAME:"192.168.50.79", USERNAME:"31416",
@@ -302,7 +301,7 @@ sflphone = SflPhoneCtrlSimple(True)
 testsuite = SflPhoneTests(sflphone)
 
 # Register the first account available, should be the test account
-sflphone.setFirstRegisteredAccount();
+sflphone.setFirstRegisteredAccount()
 
 
 # ============================ Test Suite ============================
