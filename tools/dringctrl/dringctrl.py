@@ -32,7 +32,7 @@ except Exception as e:
     print(str(e))
     exit(1)
 
-from errors import *
+
 from controller import DRingCtrl
 from tester import DRingTester
 

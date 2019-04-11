@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 #
 #  Copyright (C) 2015-2019 Savoir-faire Linux Inc. Inc
 #
@@ -28,22 +29,14 @@ import hashlib
 
 from threading import Thread
 from functools import partial
-
-try:
-    from gi.repository import GObject
-except ImportError as e:
-    import gobject as GObject
-except Exception as e:
-    print(str(e))
-    exit(1)
-
-from errors import *
+from errorsDring import DRingCtrlAccountError, DRingCtrlError, DRingCtrlDBusError, DRingCtrlDeamonError
+from gi.repository import GLib
 
 try:
     import dbus
     from dbus.mainloop.glib import DBusGMainLoop
 except ImportError as e:
-    raise DRingCtrlError("No python-dbus module found")
+    raise DRingCtrlError(str(e))
 
 
 DBUS_DEAMON_OBJECT = 'cx.ring.Ring'
@@ -69,9 +62,7 @@ class DRingCtrl(Thread):
         self.isStop = False
 
         # Glib MainLoop for processing callbacks
-        self.loop = GObject.MainLoop()
-
-        GObject.threads_init()
+        self.loop = GLib.MainLoop()
 
         # client registered to sflphoned ?
         self.registered = False
@@ -94,7 +85,7 @@ class DRingCtrl(Thread):
             bus = dbus.SessionBus()
 
         except dbus.DBusException as e:
-            raise DRingCtrlDBusError("Unable to connect DBUS session bus")
+            raise DRingCtrlDBusError(str(e))
 
         if not bus.name_has_owner(DBUS_DEAMON_OBJECT) :
             raise DRingCtrlDBusError(("Unable to find %s in DBUS." % DBUS_DEAMON_OBJECT)
@@ -167,10 +158,16 @@ class DRingCtrl(Thread):
     def onCallHangup_cb(self, callId):
         pass
 
-    def onCallRinging_cb(self):
+    def onCallConnecting_cb(self, callId):
+        pass
+
+    def onCallRinging_cb(self, callId):
         pass
 
     def onCallHold_cb(self):
+        pass
+
+    def onCallInactive_cb(self):
         pass
 
     def onCallCurrent_cb(self):
@@ -180,6 +177,9 @@ class DRingCtrl(Thread):
         pass
 
     def onCallFailure_cb(self):
+        pass
+
+    def onCallOver_cb(self):
         pass
 
     def onIncomingCall(self, account, callid, to):
@@ -192,13 +192,18 @@ class DRingCtrl(Thread):
         self.onIncomingCall_cb(callid)
 
 
-    def onCallHangUp(self, callid):
+    def onCallHangUp(self, callid, state):
         """ Remove callid from call list """
 
+        self.activeCalls[callid]['State'] = state
         self.onCallHangup_cb(callid)
         self.currentCallId = ""
-        del self.activeCalls[callid]
 
+    def onCallConnecting(self, callid, state):
+        """ Update state for this call to Ringing """
+
+        self.activeCalls[callid]['State'] = state
+        self.onCallConnecting_cb(callid)
 
     def onCallRinging(self, callid, state):
         """ Update state for this call to Ringing """
@@ -220,6 +225,11 @@ class DRingCtrl(Thread):
         self.activeCalls[callid]['State'] = state
         self.onCallCurrent_cb()
 
+    def onCallInactive(self, callid, state):
+        """ Update state for this call to current """
+
+        self.activeCalls[callid]['State'] = state
+        self.onCallInactive_cb()
 
     def onCallBusy(self, callid, state):
         """ Update state for this call to busy """
@@ -231,9 +241,14 @@ class DRingCtrl(Thread):
     def onCallFailure(self, callid, state):
         """ Handle call failure """
 
+        self.activeCalls[callid]['State'] = state
         self.onCallFailure_cb()
-        del self.activeCalls[callid]
 
+    def onCallOver(self, callid):
+        """ Handle call failure """
+
+        self.onCallOver_cb()
+        del self.activeCalls[callid]
 
     def onCallStateChanged(self, callid, state, code):
         """ On call state changed event, set the values for new calls,
@@ -252,7 +267,9 @@ class DRingCtrl(Thread):
         self.currentCallId = callid
 
         if state == "HUNGUP":
-            self.onCallHangUp(callid)
+            self.onCallHangUp(callid, state)
+        elif state == "CONNECTING":
+            self.onCallConnecting(callid, state)
         elif state == "RINGING":
             self.onCallRinging(callid, state)
         elif state == "CURRENT":
@@ -263,6 +280,10 @@ class DRingCtrl(Thread):
             self.onCallBusy(callid, state)
         elif state == "FAILURE":
             self.onCallFailure(callid, state)
+        elif state == "OVER":
+            self.onCallOver(callid)
+        elif state == "INACTIVE":
+            self.onCallInactive(callid,state)
         else:
             print("unknown state:" + str(state))
 
@@ -498,7 +519,7 @@ class DRingCtrl(Thread):
         for call in self.activeCalls:
             print("\t" + call)
 
-    def Call(self, dest):
+    def Call(self, dest, account=None):
         """Start a call and return a CallID
 
         Use the current account previously set using setAccount().
@@ -508,7 +529,7 @@ class DRingCtrl(Thread):
         """
 
         if dest is None or dest == "":
-            raise SflPhoneError("Invalid call destination")
+            raise DRingCtrlError("Invalid call destination")
 
         # Set the account to be used for this call
         if not self.account:
@@ -637,6 +658,9 @@ class DRingCtrl(Thread):
 
     def sendFile(self, *args, **kwds):
         return self.configurationmanager.sendFile(*args, **kwds)
+
+    def sendTextMessage(self, account, to, message):
+        return self.configurationmanager.sendTextMessage(account, to, { 'text/plain': message })
 
     def run(self):
         """Processing method for this thread"""
