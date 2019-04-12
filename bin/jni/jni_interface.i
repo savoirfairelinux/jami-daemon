@@ -246,6 +246,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConfigurationSignal::VolumeChanged>(bind(&ConfigurationCallback::volumeChanged, confM, _1, _2)),
         exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&ConfigurationCallback::accountsChanged, confM)),
         exportable_callback<ConfigurationSignal::StunStatusFailed>(bind(&ConfigurationCallback::stunStatusFailure, confM, _1)),
+        exportable_callback<ConfigurationSignal::AccountDetailsChanged>(bind(&ConfigurationCallback::accountDetailsChanged, confM, _1, _2)),
         exportable_callback<ConfigurationSignal::RegistrationStateChanged>(bind(&ConfigurationCallback::registrationStateChanged, confM, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::VolatileDetailsChanged>(bind(&ConfigurationCallback::volatileAccountDetailsChanged, confM, _1, _2)),
         exportable_callback<ConfigurationSignal::KnownDevicesChanged>(bind(&ConfigurationCallback::knownDevicesChanged, confM, _1, _2)),

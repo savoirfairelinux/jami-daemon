@@ -30,6 +30,7 @@ public:
     virtual void accountsChanged(void){}
     virtual void historyChanged(void){}
     virtual void stunStatusFailure(const std::string& account_id){}
+    virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payload*/){}
@@ -231,6 +232,7 @@ public:
     virtual void accountsChanged(void){}
     virtual void historyChanged(void){}
     virtual void stunStatusFailure(const std::string& account_id){}
+    virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payload*/){}
