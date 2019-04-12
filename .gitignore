@@ -83,6 +83,7 @@ GTAGS
 nbproject
 *.kdev*
 tools/.vscode/
+.vscode/
 
 # JNI generated files
 *_wrap.cpp
