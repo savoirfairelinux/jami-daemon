@@ -1002,6 +1002,8 @@ RingAccount::changeArchivePassword(const std::string& password_old, const std::s
         JAMI_ERR("[Account %s] Can't change archive password: %s", getAccountID().c_str(), ex.what());
         return false;
     }
+    if (password_old != password_new)
+        emitSignal<DRing::ConfigurationSignal::AccountDetailsChanged>(getAccountID(), getAccountDetails());
     return true;
 }
 

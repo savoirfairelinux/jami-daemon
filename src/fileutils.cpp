@@ -435,14 +435,14 @@ readArchive(const std::string& path, const std::string& pwd)
             data = loadFile(path);
         } catch (const std::exception& e) {
             JAMI_ERR("Error loading archive: %s", e.what());
-            throw;
+            throw e;
         }
         // Decrypt
         try {
             data = archiver::decompress(dht::crypto::aesDecrypt(data, pwd));
         } catch (const std::exception& e) {
             JAMI_ERR("Error decrypting archive: %s", e.what());
-            throw;
+            throw e;
         }
     }
     return data;
