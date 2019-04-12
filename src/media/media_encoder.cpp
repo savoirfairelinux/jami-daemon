@@ -236,6 +236,13 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
         extractProfileLevelID(profileLevelId, encoderCtx);
 #ifdef RING_ACCEL
+#ifdef ENABLE_VIDEOTOOLBOX
+        if (accel_) {
+            maxBitrate = 2000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
+            bufSize = 2 * maxBitrate;
+            crf = 20;
+        }
+#endif
         if (accel_)
             // limit the bitrate else it will easily go up to a few MiB/s
             encoderCtx->bit_rate = maxBitrate;
