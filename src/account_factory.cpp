@@ -25,7 +25,7 @@
 #include "account_factory.h"
 
 #include "sip/sipaccount.h"
-#include "ringdht/ringaccount.h"
+#include "ringdht/jamiaccount.h"
 
 #include <stdexcept>
 
@@ -37,10 +37,8 @@ AccountFactory::AccountFactory()
 {
     auto sipfunc = [](const std::string& id){ return std::make_shared<SIPAccount>(id, true); };
     generators_.insert(std::make_pair(SIPAccount::ACCOUNT_TYPE, sipfunc));
-    JAMI_DBG("registered %s account", SIPAccount::ACCOUNT_TYPE);
-    auto dhtfunc = [](const std::string& id){ return std::make_shared<RingAccount>(id, false); };
-    generators_.insert(std::make_pair(RingAccount::ACCOUNT_TYPE, dhtfunc));
-    JAMI_DBG("registered %s account", RingAccount::ACCOUNT_TYPE);
+    auto dhtfunc = [](const std::string& id){ return std::make_shared<JamiAccount>(id, false); };
+    generators_.insert(std::make_pair(JamiAccount::ACCOUNT_TYPE, dhtfunc));
 }
 
 std::shared_ptr<Account>

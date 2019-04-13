@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef ACCOUNT_FACTORY_H
-#define ACCOUNT_FACTORY_H
+#pragma once
 
 #include <string>
 #include <map>
@@ -157,5 +156,3 @@ std::size_t
 AccountFactory::accountCount() const;
 
 } // namespace jami
-
-#endif // ACCOUNT_FACTORY_H
