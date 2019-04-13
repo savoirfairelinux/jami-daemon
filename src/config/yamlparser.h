@@ -20,6 +20,7 @@
 
 #pragma once
 
+#include "logger.h"
 #include <yaml-cpp/yaml.h>
 
 namespace jami { namespace yaml_utils {
@@ -31,6 +32,19 @@ void parseValue(const YAML::Node &node, const char *key, T &value)
 {
     value = node[key].as<T>(value);
 }
+
+template <typename T>
+bool parseValueOptional(const YAML::Node &node, const char *key, T &value)
+{
+    try {
+        parseValue(node, key, value);
+        return true;
+    } catch (const std::exception& e) {
+        JAMI_DBG("Can't read yaml field: %s", key);
+    }
+    return false;
+}
+
 
 void parsePath(const YAML::Node &node, const char *key, std::string& path, const std::string& base);
 
