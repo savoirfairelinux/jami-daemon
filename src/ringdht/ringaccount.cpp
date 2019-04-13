@@ -681,6 +681,7 @@ void RingAccount::unserialize(const YAML::Node &node)
     std::lock_guard<std::mutex> lock(configurationMutex_);
 
     using yaml_utils::parseValue;
+    using yaml_utils::parseValueOptional;
     using yaml_utils::parsePath;
 
     SIPAccountBase::unserialize(node);
@@ -700,17 +701,9 @@ void RingAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::PROXY_SERVER_KEY, proxyServer_);
     parseValue(node, Conf::PROXY_PUSH_TOKEN_KEY, deviceKey_);
 
-    try {
-        parseValue(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
-    } catch (const std::exception& e) {
-        JAMI_WARN("can't read device name: %s", e.what());
-    }
+    parseValueOptional(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     if (registeredName_.empty()) {
-        try {
-            parseValue(node, DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
-        } catch (const std::exception& e) {
-            JAMI_WARN("can't read registered name: %s", e.what());
-        }
+        parseValueOptional(node, DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
     }
 
     try {
@@ -734,11 +727,7 @@ void RingAccount::unserialize(const YAML::Node &node)
     dhtPortUsed_ = dhtPort_;
 
 #if HAVE_RINGNS
-    try {
-        parseValue(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
-    } catch (const std::exception& e) {
-        JAMI_WARN("can't read name server: %s", e.what());
-    }
+    parseValueOptional(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
     nameDir_ = NameDirectory::instance(nameServer_);
 #endif
 
