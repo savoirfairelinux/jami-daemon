@@ -419,16 +419,16 @@ AC_DEFINE_UNQUOTED([HAVE_RINGNS], `if test "x$enable_ringns" != "xno"; then echo
 
 dnl nodejs module
 AC_ARG_WITH([nodejs], AS_HELP_STRING([--with-nodejs], [Enable NodeJS module]))
-AM_CONDITIONAL([RING_NODEJS], test "x$enable_nodejs" != "xno", [Define if you use the NodeJS module])
+AM_CONDITIONAL([ENABLE_NODEJS], test "x$enable_nodejs" != "xno", [Define if you use the NodeJS module])
 AC_DEFINE_UNQUOTED([HAVE_NODEJS], `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`, [Define if you use the NodeJS module])
 AS_IF([test "x$with_nodejs" = "xyes"], [
     AC_PATH_PROG(SWIG, swig, "")
     AS_AC_EXPAND(SBINDIR, $sbindir)
     AC_SUBST(SBINDIR)
     AC_CONFIG_FILES([bin/nodejs/Makefile])
-    AM_CONDITIONAL(RING_NODEJS, true)
+    AM_CONDITIONAL(ENABLE_NODEJS, true)
   ],
-  AM_CONDITIONAL(RING_NODEJS, false)
+  AM_CONDITIONAL(ENABLE_NODEJS, false)
 );
 
 # Rest C++ with restbed
@@ -455,9 +455,9 @@ AS_IF([test "x$with_restcpp" = "xyes"], [
     AS_AC_EXPAND(SBINDIR, $sbindir)
     AC_SUBST(SBINDIR)
     AC_CONFIG_FILES([bin/restcpp/Makefile])
-    AM_CONDITIONAL(RING_RESTCPP, true)
+    AM_CONDITIONAL(WITH_RESTCPP, true)
   ],
-  AM_CONDITIONAL(RING_RESTCPP, false)
+  AM_CONDITIONAL(WITH_RESTCPP, false)
 );
 
 dnl Check for libav
