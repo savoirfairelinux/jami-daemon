@@ -21,7 +21,7 @@
 #include "data_transfer.h"
 
 #include "manager.h"
-#include "ringdht/ringaccount.h"
+#include "ringdht/jamiaccount.h"
 #include "peer_connection.h"
 #include "fileutils.h"
 #include "string_utils.h"
@@ -302,7 +302,7 @@ SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const n
     input_.close();
 
     // We don't need the connection anymore. Can close it.
-    auto account = Manager::instance().getAccount<RingAccount>(info_.accountId);
+    auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId);
     account->closePeerConnection(peerUri_, id);
 
     if (info_.lastEvent < DRing::DataTransferEventCode::finished)
@@ -540,7 +540,7 @@ IncomingFileTransfer::close() noexcept
     fout_.close();
 
     // We don't need the connection anymore. Can close it.
-    auto account = Manager::instance().getAccount<RingAccount>(info_.accountId);
+    auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId);
     account->closePeerConnection(info_.peer, id);
 
     JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress
@@ -678,7 +678,7 @@ DRing::DataTransferError
 DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
                              DRing::DataTransferId& tid) noexcept
 {
-    auto account = Manager::instance().getAccount<RingAccount>(info.accountId);
+    auto account = Manager::instance().getAccount<JamiAccount>(info.accountId);
     if (!account) {
         JAMI_ERR() << "[XFER] unknown id " << tid;
         return DRing::DataTransferError::invalid_argument;
