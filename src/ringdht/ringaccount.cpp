@@ -651,6 +651,7 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_HISTORY << YAML::Value << allowPeersFromHistory_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
+    out << YAML::Key << DRing::Account::ConfProperties::DHT_PEER_DISCOVERY << YAML::Value << dhtPeerDiscovery_;
 
     out << YAML::Key << Conf::PROXY_ENABLED_KEY << YAML::Value << proxyEnabled_;
     out << YAML::Key << Conf::PROXY_SERVER_KEY << YAML::Value << proxyServer_;
@@ -725,6 +726,8 @@ void RingAccount::unserialize(const YAML::Node &node)
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
+
+    parseValueOptional(node, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
 
 #if HAVE_RINGNS
     parseValueOptional(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);

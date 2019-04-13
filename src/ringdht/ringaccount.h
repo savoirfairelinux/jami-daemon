@@ -622,6 +622,8 @@ class RingAccount : public SIPAccountBase {
          */
         in_port_t dhtPort_ {};
 
+        bool dhtPeerDiscovery_ {false};
+
         /**
          * DHT port actually used,
          * this holds the actual port used for DHT, which may not be the port

@@ -141,6 +141,7 @@ constexpr static const char RING_DEVICE_NAME        [] = "Account.deviceName";
 constexpr static const char PROXY_ENABLED           [] = "Account.proxyEnabled";
 constexpr static const char PROXY_SERVER            [] = "Account.proxyServer";
 constexpr static const char PROXY_PUSH_TOKEN        [] = "Account.proxyPushToken";
+constexpr static const char DHT_PEER_DISCOVERY      [] = "Account.peerDiscovery";
 
 namespace Audio {
 
