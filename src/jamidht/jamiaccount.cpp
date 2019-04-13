@@ -723,6 +723,7 @@ void JamiAccount::unserialize(const YAML::Node &node)
         JAMI_WARN("can't read receipt: %s", e.what());
     }
 
+    parseValueOptional(node, Conf::DHT_PORT_KEY, dhtPort_);
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
