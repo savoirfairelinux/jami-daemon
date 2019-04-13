@@ -40,7 +40,7 @@
 #include "map_utils.h"
 #include "account.h"
 #include "string_utils.h"
-#include "ringdht/ringaccount.h"
+#include "ringdht/jamiaccount.h"
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
 
@@ -801,7 +801,7 @@ Manager::finish() noexcept
             hangupCall(call->getCallId());
         callFactory.clear();
 
-        for (const auto &account : getAllAccounts<RingAccount>()) {
+        for (const auto &account : getAllAccounts<JamiAccount>()) {
             if (account->getRegistrationState() == RegistrationState::INITIALIZING)
                 removeAccount(account->getAccountID());
         }
@@ -1715,14 +1715,14 @@ void Manager::pollEvents()
 void
 Manager::saveConfig(const std::shared_ptr<Account>& acc)
 {
-    if (auto ringAcc = std::dynamic_pointer_cast<RingAccount>(acc))
+    if (auto ringAcc = std::dynamic_pointer_cast<JamiAccount>(acc))
         saveConfig(ringAcc);
     else
         saveConfig();
 }
 
 void
-Manager::saveConfig(const std::shared_ptr<RingAccount>& account)
+Manager::saveConfig(const std::shared_ptr<JamiAccount>& account)
 {
     try {
         YAML::Emitter accountOut;
@@ -1758,7 +1758,7 @@ Manager::saveConfig()
         out << YAML::Value << YAML::BeginSeq;
 
         for (const auto& account : accountFactory.getAllAccounts()) {
-            if (auto ringAccount = std::dynamic_pointer_cast<RingAccount>(account)) {
+            if (auto ringAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
                 auto accountConfig = ringAccount->getPath() + DIR_SEPARATOR_STR + "config.yml";
                 if (not fileutils::isFile(accountConfig)) {
                     saveConfig(ringAccount);
@@ -2669,7 +2669,7 @@ Manager::setAccountDetails(const std::string& accountID,
     account->doUnregister([&](bool /* transport_free */) {
         account->setAccountDetails(details);
         // Serialize configuration to disk once it is done
-        if (auto ringAccount = std::dynamic_pointer_cast<RingAccount>(account)) {
+        if (auto ringAccount = std::dynamic_pointer_cast<JamiAccount>(account)) {
             saveConfig(ringAccount);
         } else {
             saveConfig();
@@ -2847,7 +2847,7 @@ Manager::loadAccountMap(const YAML::Node& node)
     size_t remaining {0};
     std::unique_lock<std::mutex> l(lock);
     for (const auto& dir : dirs) {
-        if (accountFactory.hasAccount<RingAccount>(dir)) {
+        if (accountFactory.hasAccount<JamiAccount>(dir)) {
             continue;
         }
         remaining++;
@@ -2858,7 +2858,7 @@ Manager::loadAccountMap(const YAML::Node& node)
         ] {
             if (fileutils::isFile(configFile)) {
                 try {
-                    if (auto a = accountFactory.createAccount(RingAccount::ACCOUNT_TYPE, dir)) {
+                    if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
                         YAML::Node parsedConfig = YAML::LoadFile(configFile);
                         a->unserialize(parsedConfig);
                     }

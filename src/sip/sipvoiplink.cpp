@@ -32,7 +32,7 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 
-#include "ringdht/ringaccount.h"
+#include "ringdht/jamiaccount.h"
 
 #include "manager.h"
 
@@ -651,7 +651,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     MatchRank best = MatchRank::NONE;
 
     // DHT accounts
-    for (const auto& account : Manager::instance().getAllAccounts<RingAccount>()) {
+    for (const auto& account : Manager::instance().getAllAccounts<JamiAccount>()) {
         if (!account)
             continue;
         const MatchRank match(account->matches(userName, server));

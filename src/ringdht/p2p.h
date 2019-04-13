@@ -20,19 +20,20 @@
 
 #pragma once
 
+#include "dring/datatransfer_interface.h"
+
 #include <string>
 #include <memory>
 #include <functional>
-#include "dring/datatransfer_interface.h"
 
 namespace jami {
 
-class RingAccount;
+class JamiAccount;
 class PeerConnection;
 
 class DhtPeerConnector {
 public:
-    DhtPeerConnector(RingAccount& account);
+    DhtPeerConnector(JamiAccount& account);
     ~DhtPeerConnector();
 
     void onDhtConnected(const std::string& device_id);
