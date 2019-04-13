@@ -25,7 +25,7 @@
 #include "config.h"
 #endif
 
-#include "ringaccount.h"
+#include "jamiaccount.h"
 
 #include "logger.h"
 
@@ -118,7 +118,7 @@ setState (const std::string& accountID,
 
 } // namespace jami::Migration
 
-struct RingAccount::BuddyInfo
+struct JamiAccount::BuddyInfo
 {
     /* the buddy id */
     dht::InfoHash id;
@@ -132,7 +132,7 @@ struct RingAccount::BuddyInfo
     BuddyInfo(dht::InfoHash id) : id(id) {}
 };
 
-struct RingAccount::PendingCall
+struct JamiAccount::PendingCall
 {
     std::chrono::steady_clock::time_point start;
     std::shared_ptr<IceTransport> ice_sp;
@@ -144,14 +144,14 @@ struct RingAccount::PendingCall
     std::shared_ptr<dht::crypto::Certificate> from_cert;
 };
 
-struct RingAccount::PendingMessage
+struct JamiAccount::PendingMessage
 {
     dht::InfoHash to;
     std::chrono::steady_clock::time_point received;
 };
 
 struct
-RingAccount::TrustRequest {
+JamiAccount::TrustRequest {
     dht::InfoHash device;
     time_t received;
     std::vector<uint8_t> payload;
@@ -161,7 +161,7 @@ RingAccount::TrustRequest {
 /**
  * Represents a known device attached to this account
  */
-struct RingAccount::KnownDevice
+struct JamiAccount::KnownDevice
 {
     /** Device certificate */
     std::shared_ptr<dht::crypto::Certificate> certificate;
@@ -181,7 +181,7 @@ struct RingAccount::KnownDevice
 /**
  * Device announcement stored on DHT.
  */
-struct RingAccount::DeviceAnnouncement : public dht::SignedValue<DeviceAnnouncement>
+struct JamiAccount::DeviceAnnouncement : public dht::SignedValue<DeviceAnnouncement>
 {
 private:
     using BaseClass = dht::SignedValue<DeviceAnnouncement>;
@@ -191,7 +191,7 @@ public:
     MSGPACK_DEFINE_MAP(dev);
 };
 
-struct RingAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
+struct JamiAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
 {
     static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
     uint64_t date;
@@ -215,8 +215,8 @@ static constexpr const char * DEFAULT_TURN_PWD = "ring";
 static constexpr const char * DEFAULT_TURN_REALM = "ring";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
 
-constexpr const char* const RingAccount::ACCOUNT_TYPE;
-/* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
+constexpr const char* const JamiAccount::ACCOUNT_TYPE;
+/* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
 
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 
@@ -258,11 +258,11 @@ dhtStatusStr(dht::NodeStatus status) {
 /**
  * Local ICE Transport factory helper
  *
- * RingAccount must use this helper than direct IceTranportFactory API
+ * JamiAccount must use this helper than direct IceTranportFactory API
  */
 template <class... Args>
 std::shared_ptr<IceTransport>
-RingAccount::createIceTransport(const Args&... args)
+JamiAccount::createIceTransport(const Args&... args)
 {
     auto ice = Manager::instance().getIceTransportFactory().createTransport(args...);
     if (!ice)
@@ -271,7 +271,7 @@ RingAccount::createIceTransport(const Args&... args)
     return ice;
 }
 
-RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
+JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID)
 #if HAVE_RINGNS
     , nameDir_(NameDirectory::instance())
@@ -296,7 +296,7 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
       std::getline(proxyCache, proxyServerCached_);
 }
 
-RingAccount::~RingAccount()
+JamiAccount::~JamiAccount()
 {
     if (eventHandler) {
         eventHandler->cancel();
@@ -306,7 +306,7 @@ RingAccount::~RingAccount()
 }
 
 void
-RingAccount::flush()
+JamiAccount::flush()
 {
     // Class base method
     SIPAccountBase::flush();
@@ -317,7 +317,7 @@ RingAccount::flush()
 }
 
 std::shared_ptr<SIPCall>
-RingAccount::newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details)
+JamiAccount::newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details)
 {
     std::lock_guard<std::mutex> lock(callsMutex_);
     auto call_it = pendingSipCalls_.begin();
@@ -343,13 +343,13 @@ RingAccount::newIncomingCall(const std::string& from, const std::map<std::string
 
 template <>
 std::shared_ptr<SIPCall>
-RingAccount::newOutgoingCall(const std::string& toUrl,
+JamiAccount::newOutgoingCall(const std::string& toUrl,
                              const std::map<std::string, std::string>& volatileCallDetails)
 {
     auto suffix = stripPrefix(toUrl);
     JAMI_DBG() << *this << "Calling DHT peer " << suffix;
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
+    auto call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING,
                                                                   volatileCallDetails);
 
@@ -390,7 +390,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl,
 }
 
 void
-RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
+JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
 {
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
@@ -412,14 +412,14 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
     // Find listening devices for this account
     dht::InfoHash peer_account(toUri);
-    forEachDevice(peer_account, [wCall, toUri, peer_account](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
+    forEachDevice(peer_account, [wCall, toUri, peer_account](const std::shared_ptr<JamiAccount>& sthis, const dht::InfoHash& dev)
     {
         auto call = wCall.lock();
         if (not call) return;
         JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
 
         auto& manager = Manager::instance();
-        auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*sthis, manager.getNewCallID(),
+        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*sthis, manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING,
                                                                           call->getDetails());
         std::weak_ptr<SIPCall> weak_dev_call = dev_call;
@@ -509,7 +509,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             sthis->checkPendingCallsTask();
             return false;
         });
-    }, [wCall](const std::shared_ptr<RingAccount>&, bool ok){
+    }, [wCall](const std::shared_ptr<JamiAccount>&, bool ok){
         if (not ok) {
             if (auto call = wCall.lock()) {
                 JAMI_WARN("[call:%s] no devices found", call->getCallId().c_str());
@@ -520,7 +520,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 }
 
 void
-RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, IpAddr target)
+JamiAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, IpAddr target)
 {
     JAMI_DBG("[call:%s] outgoing call connected to %s", call.getCallId().c_str(), to_id.c_str());
 
@@ -565,13 +565,13 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
 }
 
 std::shared_ptr<Call>
-RingAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
+JamiAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
     return newOutgoingCall<SIPCall>(toUrl, volatileCallDetails);
 }
 
 bool
-RingAccount::SIPStartCall(SIPCall& call, IpAddr target)
+JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 {
     call.setupLocalSDPFromIce();
     std::string toUri(call.getPeerNumber()); // expecting a fully well formed sip uri
@@ -637,7 +637,7 @@ RingAccount::SIPStartCall(SIPCall& call, IpAddr target)
     return true;
 }
 
-void RingAccount::serialize(YAML::Emitter &out)
+void JamiAccount::serialize(YAML::Emitter &out)
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
 
@@ -677,7 +677,7 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::EndMap;
 }
 
-void RingAccount::unserialize(const YAML::Node &node)
+void JamiAccount::unserialize(const YAML::Node &node)
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
 
@@ -741,7 +741,7 @@ void RingAccount::unserialize(const YAML::Node &node)
 }
 
 void
-RingAccount::createRingDevice(const dht::crypto::Identity& id)
+JamiAccount::createRingDevice(const dht::crypto::Identity& id)
 {
     if (not id.second->isCA()) {
         JAMI_ERR("[Account %s] trying to sign a certificate with a non-CA.", getAccountID().c_str());
@@ -773,7 +773,7 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
 }
 
 void
-RingAccount::initRingDevice(const AccountArchive& a)
+JamiAccount::initRingDevice(const AccountArchive& a)
 {
     JAMI_WARN("[Account %s] creating new device from archive", getAccountID().c_str());
     SIPAccountBase::setAccountDetails(a.config);
@@ -791,7 +791,7 @@ RingAccount::initRingDevice(const AccountArchive& a)
 }
 
 std::string
-RingAccount::makeReceipt(const dht::crypto::Identity& id)
+JamiAccount::makeReceipt(const dht::crypto::Identity& id)
 {
     JAMI_DBG("[Account %s] signing device receipt", getAccountID().c_str());
     DeviceAnnouncement announcement;
@@ -810,7 +810,7 @@ RingAccount::makeReceipt(const dht::crypto::Identity& id)
 }
 
 bool
-RingAccount::useIdentity(const dht::crypto::Identity& identity)
+JamiAccount::useIdentity(const dht::crypto::Identity& identity)
 {
     if (receipt_.empty() or receiptSignature_.empty())
         return false;
@@ -895,7 +895,7 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
 }
 
 dht::crypto::Identity
-RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const
+JamiAccount::loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const
 {
     JAMI_DBG("[Account %s] loading identity: %s %s", getAccountID().c_str(), crt_path.c_str(), key_path.c_str());
     dht::crypto::Identity id;
@@ -926,7 +926,7 @@ RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_pa
 }
 
 AccountArchive
-RingAccount::readArchive(const std::string& pwd) const
+JamiAccount::readArchive(const std::string& pwd) const
 {
     JAMI_DBG("[Account %s] reading account archive", getAccountID().c_str());
     return AccountArchive(fileutils::getFullPath(idPath_, archivePath_), pwd);
@@ -934,7 +934,7 @@ RingAccount::readArchive(const std::string& pwd) const
 
 
 void
-RingAccount::updateArchive(AccountArchive& archive) const
+JamiAccount::updateArchive(AccountArchive& archive) const
 {
     using namespace DRing::Account::ConfProperties;
 
@@ -970,7 +970,7 @@ RingAccount::updateArchive(AccountArchive& archive) const
 }
 
 void
-RingAccount::saveArchive(AccountArchive& archive, const std::string& pwd)
+JamiAccount::saveArchive(AccountArchive& archive, const std::string& pwd)
 {
     try {
         updateArchive(archive);
@@ -985,7 +985,7 @@ RingAccount::saveArchive(AccountArchive& archive, const std::string& pwd)
 }
 
 bool
-RingAccount::changeArchivePassword(const std::string& password_old, const std::string& password_new)
+JamiAccount::changeArchivePassword(const std::string& password_old, const std::string& password_new)
 {
     auto path = fileutils::getFullPath(idPath_, archivePath_);
     try {
@@ -1005,7 +1005,7 @@ RingAccount::changeArchivePassword(const std::string& password_old, const std::s
 }
 
 std::pair<std::vector<uint8_t>, dht::InfoHash>
-RingAccount::computeKeys(const std::string& password, const std::string& pin, bool previous)
+JamiAccount::computeKeys(const std::string& password, const std::string& pin, bool previous)
 {
     // Compute time seed
     auto now = std::chrono::duration_cast<std::chrono::seconds>(clock::now().time_since_epoch());
@@ -1043,9 +1043,9 @@ generatePIN(size_t length = 8)
 }
 
 void
-RingAccount::addDevice(const std::string& password)
+JamiAccount::addDevice(const std::string& password)
 {
-    auto this_ = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto this_ = std::static_pointer_cast<JamiAccount>(shared_from_this());
     ThreadPool::instance().run([this_,password]() {
         std::vector<uint8_t> key;
         dht::InfoHash loc;
@@ -1089,7 +1089,7 @@ RingAccount::addDevice(const std::string& password)
 }
 
 bool
-RingAccount::exportArchive(const std::string& destinationPath, const std::string& password)
+JamiAccount::exportArchive(const std::string& destinationPath, const std::string& password)
 {
     try {
         // Save contacts if possible before exporting
@@ -1116,7 +1116,7 @@ RingAccount::exportArchive(const std::string& destinationPath, const std::string
 }
 
 bool
-RingAccount::revokeDevice(const std::string& password, const std::string& device)
+JamiAccount::revokeDevice(const std::string& password, const std::string& device)
 {
     // shared_ptr of future
     auto fa = ThreadPool::instance().getShared<AccountArchive>(
@@ -1155,7 +1155,7 @@ RingAccount::revokeDevice(const std::string& password, const std::string& device
 }
 
 std::pair<std::string, std::string>
-RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name)
+JamiAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name)
 {
     auto names = std::make_pair(name + ".key", name + ".crt");
     if (id.first)
@@ -1166,7 +1166,7 @@ RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& pat
 }
 
 void
-RingAccount::loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password)
+JamiAccount::loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password)
 {
     initRingDevice(archive);
     saveArchive(archive, archive_password);
@@ -1176,7 +1176,7 @@ RingAccount::loadAccountFromArchive(AccountArchive&& archive, const std::string&
 }
 
 void
-RingAccount::loadAccountFromFile(const std::string& archive_path, const std::string& archive_password)
+JamiAccount::loadAccountFromFile(const std::string& archive_path, const std::string& archive_password)
 {
     setRegistrationState(RegistrationState::INITIALIZING);
     auto accountId = getAccountID();
@@ -1201,7 +1201,7 @@ RingAccount::loadAccountFromFile(const std::string& archive_path, const std::str
 }
 
 void
-RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin)
+JamiAccount::loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin)
 {
     setRegistrationState(RegistrationState::INITIALIZING);
 
@@ -1290,11 +1290,11 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
 }
 
 void
-RingAccount::createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate)
+JamiAccount::createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate)
 {
     JAMI_WARN("[Account %s] creating new account", getAccountID().c_str());
     setRegistrationState(RegistrationState::INITIALIZING);
-    auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto sthis = std::static_pointer_cast<JamiAccount>(shared_from_this());
     ThreadPool::instance().run([sthis,archive_password,migrate]() mutable {
         AccountArchive a;
         auto& this_ = *sthis;
@@ -1345,7 +1345,7 @@ RingAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
 }
 
 bool
-RingAccount::needsMigration(const dht::crypto::Identity& id)
+JamiAccount::needsMigration(const dht::crypto::Identity& id)
 {
     if (not id.second)
         return false;
@@ -1365,7 +1365,7 @@ RingAccount::needsMigration(const dht::crypto::Identity& id)
 }
 
 bool
-RingAccount::updateCertificates(AccountArchive& archive, dht::crypto::Identity& device)
+JamiAccount::updateCertificates(AccountArchive& archive, dht::crypto::Identity& device)
 {
     JAMI_WARN("Updating certificates");
     using Certificate = dht::crypto::Certificate;
@@ -1407,7 +1407,7 @@ RingAccount::updateCertificates(AccountArchive& archive, dht::crypto::Identity& 
 }
 
 void
-RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& device)
+JamiAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& device)
 {
     AccountArchive archive;
     try {
@@ -1429,7 +1429,7 @@ RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& devic
 }
 
 void
-RingAccount::loadAccount(const std::string& archive_password, const std::string& archive_pin, const std::string& archive_path)
+JamiAccount::loadAccount(const std::string& archive_password, const std::string& archive_pin, const std::string& archive_path)
 {
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
@@ -1497,7 +1497,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
 }
 
 void
-RingAccount::setAccountDetails(const std::map<std::string, std::string>& details)
+JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details)
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
     SIPAccountBase::setAccountDetails(details);
@@ -1563,7 +1563,7 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string>& details
 }
 
 std::map<std::string, std::string>
-RingAccount::getAccountDetails() const
+JamiAccount::getAccountDetails() const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
@@ -1610,7 +1610,7 @@ RingAccount::getAccountDetails() const
 }
 
 std::map<std::string, std::string>
-RingAccount::getVolatileAccountDetails() const
+JamiAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
     a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
@@ -1623,7 +1623,7 @@ RingAccount::getVolatileAccountDetails() const
 
 #if HAVE_RINGNS
 void
-RingAccount::lookupName(const std::string& name)
+JamiAccount::lookupName(const std::string& name)
 {
     auto acc = getAccountID();
     NameDirectory::lookupUri(name, nameServer_, [acc,name](const std::string& result, NameDirectory::Response response) {
@@ -1632,7 +1632,7 @@ RingAccount::lookupName(const std::string& name)
 }
 
 void
-RingAccount::lookupAddress(const std::string& addr)
+JamiAccount::lookupAddress(const std::string& addr)
 {
     auto acc = getAccountID();
     nameDir_.get().lookupAddress(addr, [acc,addr](const std::string& result, NameDirectory::Response response) {
@@ -1641,7 +1641,7 @@ RingAccount::lookupAddress(const std::string& addr)
 }
 using Blob = std::vector<uint8_t>;
 void
-RingAccount::registerName(const std::string& password, const std::string& name)
+JamiAccount::registerName(const std::string& password, const std::string& name)
 {
     auto privateKey = readArchive(password).id.first;
 
@@ -1663,7 +1663,7 @@ RingAccount::registerName(const std::string& password, const std::string& name)
 #endif
 
 bool
-RingAccount::handlePendingCallList()
+JamiAccount::handlePendingCallList()
 {
     // Process pending call into a local list to not block threads depending on this list,
     // as incoming call handlers.
@@ -1704,7 +1704,7 @@ RingAccount::handlePendingCallList()
 }
 
 pj_status_t
-RingAccount::checkPeerTlsCertificate(dht::InfoHash from,
+JamiAccount::checkPeerTlsCertificate(dht::InfoHash from,
                         dht::InfoHash from_account,
                         unsigned status,
                         const gnutls_datum_t* cert_list,
@@ -1755,7 +1755,7 @@ RingAccount::checkPeerTlsCertificate(dht::InfoHash from,
 }
 
 bool
-RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
+JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
 {
     auto call = pc.call.lock();
     if (not call)
@@ -1785,7 +1785,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
     if (not identity_.first or not identity_.second)
         throw std::runtime_error("No identity configured for this account.");
 
-    std::weak_ptr<RingAccount> waccount = weak();
+    std::weak_ptr<JamiAccount> waccount = weak();
     std::weak_ptr<SIPCall> wcall = call;
     tls::TlsParams tlsParams {
         /*.ca_list = */"",
@@ -1871,7 +1871,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 }
 
 bool
-RingAccount::mapPortUPnP()
+JamiAccount::mapPortUPnP()
 {
     // return true if not using UPnP
     bool added = true;
@@ -1903,7 +1903,7 @@ RingAccount::mapPortUPnP()
 }
 
 void
-RingAccount::doRegister()
+JamiAccount::doRegister()
 {
     std::unique_lock<std::mutex> lock(configurationMutex_);
     if (not isUsable()) {
@@ -1942,7 +1942,7 @@ RingAccount::doRegister()
 
 
 std::vector<dht::SockAddr>
-RingAccount::loadBootstrap() const
+JamiAccount::loadBootstrap() const
 {
     std::vector<dht::SockAddr> bootstrap;
     if (!hostname_.empty()) {
@@ -1973,7 +1973,7 @@ RingAccount::loadBootstrap() const
 }
 
 void
-RingAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
+JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
 {
     std::string buddyUri;
 
@@ -2002,7 +2002,7 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
 }
 
 void
-RingAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
+JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
 {
     if (not dht_.isRunning()) {
         return;
@@ -2032,7 +2032,7 @@ RingAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
 }
 
 std::map<std::string, bool>
-RingAccount::getTrackedBuddyPresence()
+JamiAccount::getTrackedBuddyPresence()
 {
     std::lock_guard<std::mutex> lock(buddyInfoMtx);
     std::map<std::string, bool> presence_info;
@@ -2042,7 +2042,7 @@ RingAccount::getTrackedBuddyPresence()
 }
 
 void
-RingAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
+JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
 {
     JAMI_DBG("Buddy %s online", contactId.toString().c_str());
     std::string id(contactId.toString());
@@ -2051,14 +2051,14 @@ RingAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
 }
 
 void
-RingAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
+JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
 {
     JAMI_DBG("Buddy %s offline", contactId.toString().c_str());
     emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), contactId.toString(), 0,  "");
 }
 
 void
-RingAccount::doRegister_()
+JamiAccount::doRegister_()
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
 
@@ -2324,7 +2324,7 @@ RingAccount::doRegister_()
 }
 
 void
-RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received, bool confirm, std::vector<uint8_t>&& payload)
+JamiAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received, bool confirm, std::vector<uint8_t>&& payload)
 {
      // Check existing contact
     auto contact = contacts_.find(peer_account);
@@ -2370,7 +2370,7 @@ RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
 }
 
 void
-RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>&& cb)
+JamiAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>&& cb)
 {
     // quick check in case we already explicilty banned this device
     auto trustStatus = trust_.getCertificateStatus(peer_device.toString());
@@ -2397,9 +2397,9 @@ RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(
 }
 
 void
-RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from)
+JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from)
 {
-    auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
+    auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
 
     std::weak_ptr<SIPCall> wcall = call;
@@ -2428,7 +2428,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
 }
 
 bool
-RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name, const time_point& updated)
+JamiAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name, const time_point& updated)
 {
     if (not crt)
         return false;
@@ -2463,7 +2463,7 @@ RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
 }
 
 bool
-RingAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id)
+JamiAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id)
 {
     if (not crt)
         return false;
@@ -2493,7 +2493,7 @@ RingAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& cr
 }
 
 void
-RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
+JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                    const std::shared_ptr<IceTransport>& ice,
                                    const dht::IceCandidates& peer_ice_msg,
                                    const std::shared_ptr<dht::crypto::Certificate>& from_cert,
@@ -2514,7 +2514,7 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 
     registerDhtAddress(*ice);
     // Asynchronous DHT put of our local ICE data
-    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto shared_this = std::static_pointer_cast<JamiAccount>(shared_from_this());
     dht_.putEncrypted(
         callKey_,
         peer_ice_msg.from,
@@ -2555,7 +2555,7 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 }
 
 void
-RingAccount::doUnregister(std::function<void(bool)> released_cb)
+JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 {
     std::unique_lock<std::mutex> lock(configurationMutex_);
 
@@ -2591,7 +2591,7 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
 }
 
 void
-RingAccount::connectivityChanged()
+JamiAccount::connectivityChanged()
 {
     JAMI_WARN("connectivityChanged");
     if (not isUsable()) {
@@ -2599,12 +2599,12 @@ RingAccount::connectivityChanged()
         return;
     }
 
-    auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto shared = std::static_pointer_cast<JamiAccount>(shared_from_this());
     dht_.connectivityChanged();
 }
 
 bool
-RingAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
+JamiAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
     if (auto cert = tls::CertificateStore::instance().getCertificate(h.toString())) {
         if (cb)
@@ -2621,14 +2621,14 @@ RingAccount::findCertificate(const dht::InfoHash& h, std::function<void(const st
 }
 
 bool
-RingAccount::findCertificate(const std::string& crt_id)
+JamiAccount::findCertificate(const std::string& crt_id)
 {
     findCertificate(dht::InfoHash(crt_id));
     return true;
 }
 
 bool
-RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status)
+JamiAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status)
 {
     if (contacts_.find(dht::InfoHash(cert_id)) != contacts_.end()) {
         JAMI_DBG("Can't set certificate status for existing contacts %s", cert_id.c_str());
@@ -2642,7 +2642,7 @@ RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::P
 }
 
 std::vector<std::string>
-RingAccount::getCertificatesByStatus(tls::TrustStore::PermissionStatus status)
+JamiAccount::getCertificatesByStatus(tls::TrustStore::PermissionStatus status)
 {
     return trust_.getCertificatesByStatus(status);
 }
@@ -2681,27 +2681,27 @@ saveIdList(const std::string& path, const std::set<ID>& ids)
 }
 
 void
-RingAccount::loadTreatedCalls()
+JamiAccount::loadTreatedCalls()
 {
     treatedCalls_ = loadIdList(cachePath_+DIR_SEPARATOR_STR "treatedCalls");
 }
 
 void
-RingAccount::saveTreatedCalls() const
+JamiAccount::saveTreatedCalls() const
 {
     fileutils::check_dir(cachePath_.c_str());
     saveIdList(cachePath_+DIR_SEPARATOR_STR "treatedCalls", treatedCalls_);
 }
 
 void
-RingAccount::loadTreatedMessages()
+JamiAccount::loadTreatedMessages()
 {
     std::lock_guard<std::mutex> lock(messageMutex_);
     treatedMessages_ = loadIdList(cachePath_+DIR_SEPARATOR_STR "treatedMessages");
 }
 
 void
-RingAccount::saveTreatedMessages() const
+JamiAccount::saveTreatedMessages() const
 {
     ThreadPool::instance().run([w = weak()](){
         if (auto sthis = w.lock()) {
@@ -2714,7 +2714,7 @@ RingAccount::saveTreatedMessages() const
 }
 
 bool
-RingAccount::isMessageTreated(unsigned int id)
+JamiAccount::isMessageTreated(unsigned int id)
 {
     std::lock_guard<std::mutex> lock(messageMutex_);
     auto res = treatedMessages_.insert(id);
@@ -2726,7 +2726,7 @@ RingAccount::isMessageTreated(unsigned int id)
 }
 
 void
-RingAccount::loadKnownDevices()
+JamiAccount::loadKnownDevices()
 {
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> knownDevices;
     try {
@@ -2755,7 +2755,7 @@ RingAccount::loadKnownDevices()
 }
 
 void
-RingAccount::saveKnownDevices() const
+JamiAccount::saveKnownDevices() const
 {
     std::ofstream file(idPath_+DIR_SEPARATOR_STR "knownDevicesNames", std::ios::trunc | std::ios::binary);
 
@@ -2767,7 +2767,7 @@ RingAccount::saveKnownDevices() const
 }
 
 std::map<std::string, std::string>
-RingAccount::getKnownDevices() const
+JamiAccount::getKnownDevices() const
 {
     std::map<std::string, std::string> ids;
     for (auto& d : knownDevices_) {
@@ -2779,7 +2779,7 @@ RingAccount::getKnownDevices() const
 }
 
 void
-RingAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
+JamiAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
 {
     if (nodes.empty())
         return;
@@ -2798,7 +2798,7 @@ RingAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
 }
 
 void
-RingAccount::saveValues(const std::vector<dht::ValuesExport>& values) const
+JamiAccount::saveValues(const std::vector<dht::ValuesExport>& values) const
 {
     std::lock_guard<std::mutex> lock(dhtValuesMtx_);
     fileutils::check_dir(dataPath_.c_str());
@@ -2810,7 +2810,7 @@ RingAccount::saveValues(const std::vector<dht::ValuesExport>& values) const
 }
 
 std::vector<dht::NodeExport>
-RingAccount::loadNodes() const
+JamiAccount::loadNodes() const
 {
     std::vector<dht::NodeExport> nodes;
     std::string nodesPath = cachePath_+DIR_SEPARATOR_STR "nodes";
@@ -2836,7 +2836,7 @@ RingAccount::loadNodes() const
 }
 
 std::vector<dht::ValuesExport>
-RingAccount::loadValues() const
+JamiAccount::loadValues() const
 {
     std::lock_guard<std::mutex> lock(dhtValuesMtx_);
     std::vector<dht::ValuesExport> values;
@@ -2857,7 +2857,7 @@ RingAccount::loadValues() const
 }
 
 tls::DhParams
-RingAccount::loadDhParams(std::string path)
+JamiAccount::loadDhParams(std::string path)
 {
     try {
         // writeTime throw exception if file doesn't exist
@@ -2884,7 +2884,7 @@ RingAccount::loadDhParams(std::string path)
 }
 
 std::string
-RingAccount::getDhtProxyServer()
+JamiAccount::getDhtProxyServer()
 {
     if (!proxyEnabled_) return {};
     if (proxyServerCached_.empty()) {
@@ -2928,7 +2928,7 @@ RingAccount::getDhtProxyServer()
 }
 
 void
-RingAccount::generateDhParams()
+JamiAccount::generateDhParams()
 {
     //make sure cachePath_ is writable
     fileutils::check_dir(cachePath_.c_str(), 0700);
@@ -2936,7 +2936,7 @@ RingAccount::generateDhParams()
 }
 
 MatchRank
-RingAccount::matches(const std::string &userName, const std::string &server) const
+JamiAccount::matches(const std::string &userName, const std::string &server) const
 {
     if (userName == ringAccountId_ || server == ringAccountId_ || userName == ringDeviceId_) {
         JAMI_DBG("Matching account id in request with username %s", userName.c_str());
@@ -2947,7 +2947,7 @@ RingAccount::matches(const std::string &userName, const std::string &server) con
 }
 
 std::string
-RingAccount::getFromUri() const
+JamiAccount::getFromUri() const
 {
     const std::string uri = "<sip:" + ringAccountId_ + "@ring.dht>";
     if (not displayName_.empty())
@@ -2956,13 +2956,13 @@ RingAccount::getFromUri() const
 }
 
 std::string
-RingAccount::getToUri(const std::string& to) const
+JamiAccount::getToUri(const std::string& to) const
 {
     return "<sips:" + to + ";transport=dtls>";
 }
 
 pj_str_t
-RingAccount::getContactHeader(pjsip_transport* t)
+JamiAccount::getContactHeader(pjsip_transport* t)
 {
     std::string quotedDisplayName = "\"" + displayName_ + "\" " + (displayName_.empty() ? "" : " ");
     if (t) {
@@ -2988,7 +2988,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
 /* contacts */
 
 void
-RingAccount::addContact(const std::string& uri, bool confirmed)
+JamiAccount::addContact(const std::string& uri, bool confirmed)
 {
     dht::InfoHash h (uri);
     if (not h) {
@@ -2999,7 +2999,7 @@ RingAccount::addContact(const std::string& uri, bool confirmed)
 }
 
 void
-RingAccount::addContact(const dht::InfoHash& h, bool confirmed)
+JamiAccount::addContact(const dht::InfoHash& h, bool confirmed)
 {
     JAMI_WARN("[Account %s] addContact: %s", getAccountID().c_str(), h.to_c_str());
     auto c = contacts_.find(h);
@@ -3017,7 +3017,7 @@ RingAccount::addContact(const dht::InfoHash& h, bool confirmed)
 }
 
 void
-RingAccount::removeContact(const std::string& uri, bool ban)
+JamiAccount::removeContact(const std::string& uri, bool ban)
 {
     JAMI_WARN("[Account %s] removeContact: %s", getAccountID().c_str(), uri.c_str());
     dht::InfoHash h (uri);
@@ -3038,7 +3038,7 @@ RingAccount::removeContact(const std::string& uri, bool ban)
 }
 
 std::map<std::string, std::string>
-RingAccount::getContactDetails(const std::string& uri) const
+JamiAccount::getContactDetails(const std::string& uri) const
 {
     dht::InfoHash h (uri);
 
@@ -3056,7 +3056,7 @@ RingAccount::getContactDetails(const std::string& uri) const
 }
 
 std::vector<std::map<std::string, std::string>>
-RingAccount::getContacts() const
+JamiAccount::getContacts() const
 {
     std::vector<std::map<std::string, std::string>> ret;
     ret.reserve(contacts_.size());
@@ -3072,7 +3072,7 @@ RingAccount::getContacts() const
 }
 
 void
-RingAccount::updateContact(const dht::InfoHash& id, const Contact& contact)
+JamiAccount::updateContact(const dht::InfoHash& id, const Contact& contact)
 {
     if (not id) {
         JAMI_ERR("[Account %s] updateContact: invalid contact ID", getAccountID().c_str());
@@ -3101,7 +3101,7 @@ RingAccount::updateContact(const dht::InfoHash& id, const Contact& contact)
 }
 
 void
-RingAccount::loadContacts()
+JamiAccount::loadContacts()
 {
     decltype(contacts_) contacts;
     try {
@@ -3120,7 +3120,7 @@ RingAccount::loadContacts()
 }
 
 void
-RingAccount::saveContacts() const
+JamiAccount::saveContacts() const
 {
     std::ofstream file(idPath_+DIR_SEPARATOR_STR "contacts", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, contacts_);
@@ -3129,7 +3129,7 @@ RingAccount::saveContacts() const
 /* trust requests */
 
 std::vector<std::map<std::string, std::string>>
-RingAccount::getTrustRequests() const
+JamiAccount::getTrustRequests() const
 {
     using Map = std::map<std::string, std::string>;
     std::vector<Map> ret;
@@ -3145,7 +3145,7 @@ RingAccount::getTrustRequests() const
 }
 
 bool
-RingAccount::acceptTrustRequest(const std::string& from)
+JamiAccount::acceptTrustRequest(const std::string& from)
 {
     dht::InfoHash f(from);
     if (not f)
@@ -3169,7 +3169,7 @@ RingAccount::acceptTrustRequest(const std::string& from)
 }
 
 bool
-RingAccount::discardTrustRequest(const std::string& from)
+JamiAccount::discardTrustRequest(const std::string& from)
 {
     dht::InfoHash f(from);
     if (trustRequests_.erase(f) > 0) {
@@ -3180,7 +3180,7 @@ RingAccount::discardTrustRequest(const std::string& from)
 }
 
 void
-RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
+JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
     auto toH = dht::InfoHash(to);
     if (not toH) {
@@ -3188,7 +3188,7 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         return;
     }
     addContact(toH);
-    forEachDevice(toH, [toH,payload](const std::shared_ptr<RingAccount>& shared, const dht::InfoHash& dev)
+    forEachDevice(toH, [toH,payload](const std::shared_ptr<JamiAccount>& shared, const dht::InfoHash& dev)
     {
         JAMI_WARN("[Account %s] sending trust request to: %s / %s", shared->getAccountID().c_str(), toH.toString().c_str(), dev.toString().c_str());
         shared->dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()),
@@ -3198,11 +3198,11 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
 }
 
 void
-RingAccount::sendTrustRequestConfirm(const dht::InfoHash& to)
+JamiAccount::sendTrustRequestConfirm(const dht::InfoHash& to)
 {
     dht::TrustRequest answer {DHT_TYPE_NS};
     answer.confirm = true;
-    forEachDevice(to, [to,answer](const std::shared_ptr<RingAccount>& shared, const dht::InfoHash& dev)
+    forEachDevice(to, [to,answer](const std::shared_ptr<JamiAccount>& shared, const dht::InfoHash& dev)
     {
         JAMI_WARN("[Account %s] sending trust request reply: %s / %s", shared->getAccountID().c_str(), to.toString().c_str(), dev.toString().c_str());
         shared->dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()), dev, answer);
@@ -3210,14 +3210,14 @@ RingAccount::sendTrustRequestConfirm(const dht::InfoHash& to)
 }
 
 void
-RingAccount::saveTrustRequests() const
+JamiAccount::saveTrustRequests() const
 {
     std::ofstream file(idPath_+DIR_SEPARATOR_STR "incomingTrustRequests", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, trustRequests_);
 }
 
 void
-RingAccount::loadTrustRequests()
+JamiAccount::loadTrustRequests()
 {
     std::map<dht::InfoHash, TrustRequest> requests;
     try {
@@ -3238,7 +3238,7 @@ RingAccount::loadTrustRequests()
 /* sync */
 
 void
-RingAccount::syncDevices()
+JamiAccount::syncDevices()
 {
     JAMI_DBG("[Account %s] building device sync from %s %s", getAccountID().c_str(), ringDeviceName_.c_str(), ringDeviceId_.c_str());
     DeviceSync sync_data;
@@ -3278,7 +3278,7 @@ RingAccount::syncDevices()
 }
 
 void
-RingAccount::onReceiveDeviceSync(DeviceSync&& sync)
+JamiAccount::onReceiveDeviceSync(DeviceSync&& sync)
 {
     auto it = knownDevices_.find(sync.from);
     if (it == knownDevices_.end()) {
@@ -3315,12 +3315,12 @@ RingAccount::onReceiveDeviceSync(DeviceSync&& sync)
 }
 
 void
-RingAccount::igdChanged()
+JamiAccount::igdChanged()
 {
     if (not dht_.isRunning())
         return;
     if (upnp_) {
-        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+        auto shared = std::static_pointer_cast<JamiAccount>(shared_from_this());
         std::thread{[shared] {
             auto& this_ = *shared.get();
             auto oldPort = static_cast<in_port_t>(this_.dhtPortUsed_);
@@ -3338,11 +3338,11 @@ RingAccount::igdChanged()
 }
 
 void
-RingAccount::forEachDevice(const dht::InfoHash& to,
-                           std::function<void(const std::shared_ptr<RingAccount>&, const dht::InfoHash&)>&& op,
-                           std::function<void(const std::shared_ptr<RingAccount>&, bool)>&& end)
+JamiAccount::forEachDevice(const dht::InfoHash& to,
+                           std::function<void(const std::shared_ptr<JamiAccount>&, const dht::InfoHash&)>&& op,
+                           std::function<void(const std::shared_ptr<JamiAccount>&, bool)>&& end)
 {
-    auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto shared = std::static_pointer_cast<JamiAccount>(shared_from_this());
     auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
     dht_.get<dht::crypto::RevocationList>(to, [to](dht::crypto::RevocationList&& crl){
         tls::CertificateStore::instance().pinRevocationList(to.toString(), std::move(crl));
@@ -3362,7 +3362,7 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
 }
 
 uint64_t
-RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads)
+JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads)
 {
     std::string toUri;
     try {
@@ -3372,14 +3372,14 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         return 0;
     }
     if (payloads.size() != 1) {
-        JAMI_ERR("Multi-part im is not supported yet by RingAccount");
+        JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
         return 0;
     }
     return SIPAccountBase::sendTextMessage(toUri, payloads);
 }
 
 void
-RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t token)
+JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t token)
 {
     std::string toUri;
     try {
@@ -3392,7 +3392,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     if (payloads.size() != 1) {
         // Multi-part message
         // TODO: not supported yet
-        JAMI_ERR("Multi-part im is not supported yet by RingAccount");
+        JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
         messageEngine_.onMessageSent(toUri, token, false);
         return;
     }
@@ -3407,7 +3407,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     auto confirm = std::make_shared<PendingConfirmation>();
 
     // Find listening devices for this account
-    forEachDevice(toH, [confirm,to,token,payloads,now](const std::shared_ptr<RingAccount>& this_, const dht::InfoHash& dev)
+    forEachDevice(toH, [confirm,to,token,payloads,now](const std::shared_ptr<JamiAccount>& this_, const dht::InfoHash& dev)
     {
         {
             std::lock_guard<std::mutex> lock(this_->messageMutex_);
@@ -3416,7 +3416,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         }
 
         auto h = dht::InfoHash::get("inbox:"+dev.toString());
-        std::weak_ptr<RingAccount> w = this_;
+        std::weak_ptr<JamiAccount> w = this_;
         auto list_token = this_->dht_.listen<dht::ImMessage>(h, [to, w, token, confirm](dht::ImMessage&& msg) {
             if (auto sthis = w.lock()) {
                 auto& this_ = *sthis;
@@ -3469,7 +3469,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             });
 
         JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Sending message for device " << dev.toString();
-    }, [to, token](const std::shared_ptr<RingAccount>& shared, bool ok) {
+    }, [to, token](const std::shared_ptr<JamiAccount>& shared, bool ok) {
         if (not ok) {
             shared->messageEngine_.onMessageSent(to, token, false);
         }
@@ -3491,7 +3491,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 }
 
 void
-RingAccount::registerDhtAddress(IceTransport& ice)
+JamiAccount::registerDhtAddress(IceTransport& ice)
 {
     const auto reg_addr = [&](IceTransport& ice, const IpAddr& ip) {
             JAMI_DBG("[Account %s] using public IP: %s", getAccountID().c_str(), ip.toString().c_str());
@@ -3520,7 +3520,7 @@ RingAccount::registerDhtAddress(IceTransport& ice)
 }
 
 std::vector<std::string>
-RingAccount::publicAddresses()
+JamiAccount::publicAddresses()
 {
     std::vector<std::string> addresses;
     for (auto& addr : dht_.getPublicAddress(AF_INET)) {
@@ -3533,26 +3533,26 @@ RingAccount::publicAddresses()
 }
 
 void
-RingAccount::requestPeerConnection(const std::string& peer_id, const DRing::DataTransferId& tid,
+JamiAccount::requestPeerConnection(const std::string& peer_id, const DRing::DataTransferId& tid,
                                    const std::function<void(PeerConnection*)>& connect_cb)
 {
     dhtPeerConnector_->requestConnection(peer_id, tid, connect_cb);
 }
 
 void
-RingAccount::closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid)
+JamiAccount::closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid)
 {
     dhtPeerConnector_->closeConnection(peer, tid);
 }
 
 void
-RingAccount::enableProxyClient(bool enable)
+JamiAccount::enableProxyClient(bool enable)
 {
     JAMI_WARN("[Account %s] DHT proxy client: %s", getAccountID().c_str(), enable ? "enable" : "disable");
     dht_.enableProxy(enable);
 }
 
-void RingAccount::setPushNotificationToken(const std::string& token)
+void JamiAccount::setPushNotificationToken(const std::string& token)
 {
     JAMI_WARN("[Account %s] setPushNotificationToken: %s", getAccountID().c_str(), token.c_str());
     deviceKey_ = token;
@@ -3562,7 +3562,7 @@ void RingAccount::setPushNotificationToken(const std::string& token)
 /**
  * To be called by clients with relevant data when a push notification is received.
  */
-void RingAccount::pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
+void JamiAccount::pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
 {
     JAMI_WARN("[Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
     dht_.pushNotificationReceived(data);
@@ -3570,7 +3570,7 @@ void RingAccount::pushNotificationReceived(const std::string& from, const std::m
 
 
 std::string
-RingAccount::getUserUri() const
+JamiAccount::getUserUri() const
 {
 #ifdef HAVE_RINGNS
     if (not registeredName_.empty())
@@ -3581,13 +3581,13 @@ RingAccount::getUserUri() const
 
 
 std::vector<DRing::Message>
-RingAccount::getLastMessages(const uint64_t& base_timestamp)
+JamiAccount::getLastMessages(const uint64_t& base_timestamp)
 {
     return SIPAccountBase::getLastMessages(base_timestamp);
 }
 
 void
-RingAccount::checkPendingCallsTask()
+JamiAccount::checkPendingCallsTask()
 {
     bool hasHandler = eventHandler and not eventHandler->isCancelled();
     if (not pendingCalls_.empty() and not hasHandler) {

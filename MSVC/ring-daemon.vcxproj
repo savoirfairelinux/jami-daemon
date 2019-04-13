@@ -807,7 +807,7 @@
     <ClCompile Include="..\src\ringdht\eth\libdevcrypto\Common.cpp" />
     <ClCompile Include="..\src\ringdht\namedirectory.cpp" />
     <ClCompile Include="..\src\ringdht\p2p.cpp" />
-    <ClCompile Include="..\src\ringdht\ringaccount.cpp" />
+    <ClCompile Include="..\src\ringdht\jamiaccount.cpp" />
     <ClCompile Include="..\src\ringdht\sips_transport_ice.cpp" />
     <ClCompile Include="..\src\ring_api.cpp" />
     <ClCompile Include="..\src\scheduled_executor.cpp" />
@@ -968,7 +968,7 @@
     <ClInclude Include="..\src\ringdht\eth\libdevcrypto\Common.h" />
     <ClInclude Include="..\src\ringdht\namedirectory.h" />
     <ClInclude Include="..\src\ringdht\p2p.h" />
-    <ClInclude Include="..\src\ringdht\ringaccount.h" />
+    <ClInclude Include="..\src\ringdht\jamiaccount.h" />
     <ClInclude Include="..\src\ringdht\ringcontact.h" />
     <ClInclude Include="..\src\ringdht\sips_transport_ice.h" />
     <ClInclude Include="..\src\ring_types.h" />

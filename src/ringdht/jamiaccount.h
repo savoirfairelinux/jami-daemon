@@ -52,16 +52,10 @@
 #include "namedirectory.h"
 #endif
 
-/**
- * @file ringaccount.h
- * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
- */
-
 namespace YAML {
 class Node;
 class Emitter;
 }
-
 
 namespace dev
 {
@@ -78,7 +72,10 @@ struct AccountArchive;
 class DhtPeerConnector;
 class PeerConnection;
 
-class RingAccount : public SIPAccountBase {
+/**
+ * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
+ */
+class JamiAccount : public SIPAccountBase {
     private:
         struct PeerConnectionMsg;
 
@@ -95,17 +92,17 @@ class RingAccount : public SIPAccountBase {
             return ACCOUNT_TYPE;
         }
 
-        std::shared_ptr<RingAccount> shared() {
-            return std::static_pointer_cast<RingAccount>(shared_from_this());
+        std::shared_ptr<JamiAccount> shared() {
+            return std::static_pointer_cast<JamiAccount>(shared_from_this());
         }
-        std::shared_ptr<RingAccount const> shared() const {
-            return std::static_pointer_cast<RingAccount const>(shared_from_this());
+        std::shared_ptr<JamiAccount const> shared() const {
+            return std::static_pointer_cast<JamiAccount const>(shared_from_this());
         }
-        std::weak_ptr<RingAccount> weak() {
-            return std::static_pointer_cast<RingAccount>(shared_from_this());
+        std::weak_ptr<JamiAccount> weak() {
+            return std::static_pointer_cast<JamiAccount>(shared_from_this());
         }
-        std::weak_ptr<RingAccount const> weak() const {
-            return std::static_pointer_cast<RingAccount const>(shared_from_this());
+        std::weak_ptr<JamiAccount const> weak() const {
+            return std::static_pointer_cast<JamiAccount const>(shared_from_this());
         }
 
         const std::string& getPath() const {
@@ -116,9 +113,9 @@ class RingAccount : public SIPAccountBase {
          * Constructor
          * @param accountID The account identifier
          */
-        RingAccount(const std::string& accountID, bool presenceEnabled);
+        JamiAccount(const std::string& accountID, bool presenceEnabled);
 
-        ~RingAccount();
+        ~JamiAccount();
 
         /**
          * Serialize internal state of this account for configuration
@@ -368,8 +365,8 @@ class RingAccount : public SIPAccountBase {
         const std::shared_future<tls::DhParams> dhParams() const { return dhParams_; }
 
         void forEachDevice(const dht::InfoHash& to,
-                           std::function<void(const std::shared_ptr<RingAccount>&, const dht::InfoHash&)>&& op,
-                           std::function<void(const std::shared_ptr<RingAccount>&, bool)>&& end = {});
+                           std::function<void(const std::shared_ptr<JamiAccount>&, const dht::InfoHash&)>&& op,
+                           std::function<void(const std::shared_ptr<JamiAccount>&, bool)>&& end = {});
 
         /**
          * Inform that a potential peer device have been found.
@@ -401,7 +398,7 @@ class RingAccount : public SIPAccountBase {
         std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) override;
 
     private:
-        NON_COPYABLE(RingAccount);
+        NON_COPYABLE(JamiAccount);
 
         using clock = std::chrono::system_clock;
         using time_point = clock::time_point;
@@ -684,7 +681,7 @@ class RingAccount : public SIPAccountBase {
         void checkPendingCallsTask();
 };
 
-static inline std::ostream& operator<< (std::ostream& os, const RingAccount& acc)
+static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)
 {
     os << "[Account " << acc.getAccountID() << "] ";
     return os;
