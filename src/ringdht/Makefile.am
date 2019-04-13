@@ -12,8 +12,8 @@ libringacc_la_LIBADD = $(DHT_LIBS) \
     ./eth/libdevcrypto/libdevcrypto.la
 
 libringacc_la_SOURCES = \
-        ringaccount.cpp \
-        ringaccount.h \
+        jamiaccount.cpp \
+        jamiaccount.h \
         sips_transport_ice.cpp \
         sips_transport_ice.h \
         accountarchive.cpp \
