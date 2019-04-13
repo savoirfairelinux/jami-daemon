@@ -21,7 +21,7 @@
 #include "p2p.h"
 
 #include "account_schema.h"
-#include "ringaccount.h"
+#include "jamiaccount.h"
 #include "peer_connection.h"
 #include "turn_transport.h"
 #include "ftp_server.h"
@@ -196,7 +196,7 @@ class DhtPeerConnector::Impl
 public:
     class ClientConnector;
 
-    explicit Impl(RingAccount& account)
+    explicit Impl(JamiAccount& account)
         : account {account}
         , loopFut_ {std::async(std::launch::async, [this]{ eventLoop(); })} {}
 
@@ -208,7 +208,7 @@ public:
         ctrl << makeMsg<CtrlMsgType::STOP>();
     }
 
-    RingAccount& account;
+    JamiAccount& account;
     Channel<std::unique_ptr<CtrlMsgBase>> ctrl;
 
 private:
@@ -712,13 +712,13 @@ DhtPeerConnector::Impl::eventLoop()
 
 //==============================================================================
 
-DhtPeerConnector::DhtPeerConnector(RingAccount& account)
+DhtPeerConnector::DhtPeerConnector(JamiAccount& account)
     : pimpl_ {new Impl {account}}
 {}
 
 DhtPeerConnector::~DhtPeerConnector() = default;
 
-/// Called by a RingAccount when it's DHT is connected
+/// Called by a JamiAccount when it's DHT is connected
 /// Install a DHT LISTEN operation on given device to receive data connection requests and replies
 /// The DHT key is Hash(PeerConnectionMsg::key_prefix + device_id), where '+' is the string concatenation.
 void
@@ -765,7 +765,7 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
 
     pimpl_->account.forEachDevice(
         peer_h,
-        [this, addresses, connect_cb, tid](const std::shared_ptr<RingAccount>& account,
+        [this, addresses, connect_cb, tid](const std::shared_ptr<JamiAccount>& account,
                                       const dht::InfoHash& dev_h) {
             if (dev_h == account->dht().getId()) {
                 JAMI_ERR() << account << "[CNX] no connection to yourself, bad person!";
@@ -779,7 +779,7 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
                 });
         },
 
-        [peer_h, connect_cb](const std::shared_ptr<RingAccount>& account, bool found) {
+        [peer_h, connect_cb](const std::shared_ptr<JamiAccount>& account, bool found) {
             if (!found) {
                 JAMI_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
                 connect_cb(nullptr);
@@ -802,7 +802,7 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
     pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_h, tid);
     pimpl_->account.forEachDevice(
         peer_h,
-        [this, tid](const std::shared_ptr<RingAccount>& account,
+        [this, tid](const std::shared_ptr<JamiAccount>& account,
                           const dht::InfoHash& dev_h) {
             if (dev_h == account->dht().getId()) {
                 JAMI_ERR() << account << "[CNX] no connection to yourself, bad person!";
@@ -811,7 +811,7 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
             pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(dev_h, tid);
         },
 
-        [peer_h](const std::shared_ptr<RingAccount>& account, bool found) {
+        [peer_h](const std::shared_ptr<JamiAccount>& account, bool found) {
             if (!found) {
                 JAMI_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
             }

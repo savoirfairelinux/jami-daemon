@@ -38,7 +38,7 @@
 #include "client/ring_signal.h"
 #include "compiler_intrinsics.h"
 
-#include "ringdht/ringaccount.h"
+#include "ringdht/jamiaccount.h"
 
 namespace DRing {
 
@@ -64,7 +64,7 @@ subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
                      flag ? "S" : "Uns", accountID.c_str(), uri.c_str());
             pres->subscribeClient(uri, flag);
         }
-    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::RingAccount>(accountID)) {
+    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID)) {
         ringaccount->trackBuddyPresence(uri, flag);
     } else
         JAMI_ERR("Could not find account %s", accountID.c_str());
@@ -130,7 +130,7 @@ getSubscriptions(const std::string& accountID)
             }
         } else
             JAMI_ERR("Presence not initialized");
-    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::RingAccount>(accountID)) {
+    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID)) {
         for (const auto& tracked_id : ringaccount->getTrackedBuddyPresence()) {
             ret.push_back({
                     {DRing::Presence::BUDDY_KEY, tracked_id.first},

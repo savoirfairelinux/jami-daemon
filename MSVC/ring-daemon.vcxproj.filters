@@ -169,7 +169,7 @@
     <ClCompile Include="..\src\media\video\video_sender.cpp">
       <Filter>Source Files\media\video</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\ringaccount.cpp">
+    <ClCompile Include="..\src\ringdht\jamiaccount.cpp">
       <Filter>Source Files\ringdht</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ringdht\sips_transport_ice.cpp">
@@ -606,7 +606,7 @@
     <ClInclude Include="..\src\ringdht\p2p.h">
       <Filter>Source Files\ringdht</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\ringaccount.h">
+    <ClInclude Include="..\src\ringdht\jamiaccount.h">
       <Filter>Source Files\ringdht</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ringdht\ringcontact.h">

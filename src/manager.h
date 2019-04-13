@@ -55,7 +55,7 @@ class Conference;
 class AudioLoop;
 class IceTransportFactory;
 class DataTransferFacade;
-class RingAccount;
+class JamiAccount;
 
 /** Manager (controller) of daemon */
 class Manager {
@@ -305,7 +305,7 @@ class Manager {
          * Save config to file
          */
         void saveConfig();
-        void saveConfig(const std::shared_ptr<RingAccount>&);
+        void saveConfig(const std::shared_ptr<JamiAccount>&);
         void saveConfig(const std::shared_ptr<Account>& acc);
 
         /**
