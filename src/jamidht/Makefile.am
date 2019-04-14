@@ -2,7 +2,7 @@ include $(top_srcdir)/globals.mk
 
 SUBDIRS = eth/libdevcore eth/libdevcrypto
 
-AM_CPPFLAGS += -I$(top_srcdir)/src/ringdht/eth
+AM_CPPFLAGS += -I$(top_srcdir)/src/jamidht/eth
 noinst_LTLIBRARIES = libringacc.la
 
 libringacc_la_CXXFLAGS = @CXXFLAGS@ @JSONCPP_CFLAGS@
