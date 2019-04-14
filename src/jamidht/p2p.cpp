@@ -765,23 +765,22 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
 
     pimpl_->account.forEachDevice(
         peer_h,
-        [this, addresses, connect_cb, tid](const std::shared_ptr<JamiAccount>& account,
-                                      const dht::InfoHash& dev_h) {
-            if (dev_h == account->dht().getId()) {
-                JAMI_ERR() << account << "[CNX] no connection to yourself, bad person!";
+        [this, addresses, connect_cb, tid](const dht::InfoHash& dev_h) {
+            if (dev_h == pimpl_->account.dht().getId()) {
+                JAMI_ERR() << pimpl_->account.getAccountID() << "[CNX] no connection to yourself, bad person!";
                 return;
             }
 
-            account->findCertificate(
+            pimpl_->account.findCertificate(
                 dev_h,
                 [this, dev_h, addresses, connect_cb, tid] (const std::shared_ptr<dht::crypto::Certificate>& cert) {
                     pimpl_->ctrl << makeMsg<CtrlMsgType::ADD_DEVICE>(dev_h, tid, cert, addresses, connect_cb);
                 });
         },
 
-        [peer_h, connect_cb](const std::shared_ptr<JamiAccount>& account, bool found) {
+        [this, peer_h, connect_cb](bool found) {
             if (!found) {
-                JAMI_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
+                JAMI_WARN() << pimpl_->account.getAccountID() << "[CNX] aborted, no devices for " << peer_h;
                 connect_cb(nullptr);
             }
         });
@@ -802,18 +801,16 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
     pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_h, tid);
     pimpl_->account.forEachDevice(
         peer_h,
-        [this, tid](const std::shared_ptr<JamiAccount>& account,
-                          const dht::InfoHash& dev_h) {
-            if (dev_h == account->dht().getId()) {
-                JAMI_ERR() << account << "[CNX] no connection to yourself, bad person!";
+        [this, tid](const dht::InfoHash& dev_h) {
+            if (dev_h == pimpl_->account.dht().getId()) {
+                JAMI_ERR() << pimpl_->account.getAccountID() << "[CNX] no connection to yourself, bad person!";
                 return;
             }
             pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(dev_h, tid);
         },
-
-        [peer_h](const std::shared_ptr<JamiAccount>& account, bool found) {
+        [this, peer_h](bool found) {
             if (!found) {
-                JAMI_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
+                JAMI_WARN() << pimpl_->account.getAccountID() << "[CNX] aborted, no devices for " << peer_h;
             }
         });
 }
