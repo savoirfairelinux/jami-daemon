@@ -214,6 +214,7 @@ static constexpr const char * DEFAULT_TURN_USERNAME = "ring";
 static constexpr const char * DEFAULT_TURN_PWD = "ring";
 static constexpr const char * DEFAULT_TURN_REALM = "ring";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
+static const auto URI_REGEX = std::regex("^(?:(ring|jami|sips):)?([\\da-fA-F]{40})\\s*$");
 
 constexpr const char* const JamiAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
@@ -221,31 +222,11 @@ constexpr const char* const JamiAccount::ACCOUNT_TYPE;
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 
 static const std::string
-stripPrefix(const std::string& toUrl)
-{
-    auto dhtf = toUrl.find(RING_URI_PREFIX);
-    if (dhtf != std::string::npos) {
-        dhtf = dhtf+5;
-    } else {
-        dhtf = toUrl.find("sips:");
-        dhtf = (dhtf == std::string::npos) ? 0 : dhtf+5;
-    }
-    while (dhtf < toUrl.length() && toUrl[dhtf] == '/')
-        dhtf++;
-    return toUrl.substr(dhtf);
-}
-
-static const std::string
-parseRingUri(const std::string& toUrl)
-{
-    auto sufix = stripPrefix(toUrl);
-    if (sufix.length() < 40)
-        throw std::invalid_argument("id must be a ring infohash");
-
-    const std::string toUri = sufix.substr(0, 40);
-    if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
-        throw std::invalid_argument("id must be a ring infohash");
-    return toUri;
+parseUri(const std::string& toUrl) {
+    std::smatch match;
+    if (std::regex_search(toUrl, match, URI_REGEX))
+        return match[2];
+    throw std::invalid_argument("id must be a ring infohash");
 }
 
 static constexpr const char*
@@ -346,8 +327,7 @@ std::shared_ptr<SIPCall>
 JamiAccount::newOutgoingCall(const std::string& toUrl,
                              const std::map<std::string, std::string>& volatileCallDetails)
 {
-    auto suffix = stripPrefix(toUrl);
-    JAMI_DBG() << *this << "Calling DHT peer " << suffix;
+    JAMI_DBG() << *this << "Calling DHT peer " << toUrl;
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING,
@@ -357,11 +337,10 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
     call->setSecure(isTlsEnabled());
 
     try {
-        const std::string toUri = parseRingUri(suffix);
-        startOutgoingCall(call, toUri);
+        startOutgoingCall(call, parseUri(toUrl));
     } catch (...) {
 #if HAVE_RINGNS
-        NameDirectory::lookupUri(suffix, nameServer_, [wthis_=weak(),call](const std::string& result,
+        NameDirectory::lookupUri(toUrl, nameServer_, [wthis_=weak(),call](const std::string& result,
                                                                    NameDirectory::Response response) {
             // we may run inside an unknown thread, but following code must be called in main thread
             runOnMainThread([=, &result]() {
@@ -371,8 +350,7 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
                 }
                 if (auto sthis = wthis_.lock()) {
                     try {
-                        const std::string toUri = parseRingUri(result);
-                        sthis->startOutgoingCall(call, toUri);
+                        sthis->startOutgoingCall(call, parseUri(result));
                     } catch (...) {
                         call->onFailure(ENOENT);
                     }
@@ -543,15 +521,8 @@ JamiAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
     /* fallback on local address */
     if (not addrSdp) addrSdp = localAddress;
 
-    // Initialize the session using ULAW as default codec in case of early media
-    // The session should be ready to receive media once the first INVITE is sent, before
-    // the session initialization is completed
-    if (!getSystemCodecContainer()->searchCodecByName("PCMA", jami::MEDIA_AUDIO))
-        throw VoipLinkException("Could not instantiate codec for early media");
-
     // Building the local SDP offer
     auto& sdp = call.getSDP();
-
     sdp.setPublishedIP(addrSdp);
     const bool created = sdp.createOffer(
                             getActiveAccountCodecInfoList(MEDIA_AUDIO),
@@ -1508,6 +1479,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
+    parseBool(details, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted_);
@@ -1565,6 +1537,7 @@ JamiAccount::getAccountDetails() const
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
     a.emplace(Conf::CONFIG_DHT_PORT, jami::to_string(dhtPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
+    a.emplace(DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_ID, ringDeviceId_);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     a.emplace(DRing::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
@@ -1974,7 +1947,7 @@ JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
     std::string buddyUri;
 
     try {
-        buddyUri = parseRingUri(buddy_id);
+        buddyUri = parseUri(buddy_id);
     }
     catch (...) {
         JAMI_ERR("[Account %s] Failed to track a buddy due to an invalid URI %s", getAccountID().c_str(), buddy_id.c_str());
@@ -2123,6 +2096,8 @@ JamiAccount::doRegister_()
         config.proxy_server = getDhtProxyServer();
         config.push_node_id = getAccountID();
         config.threaded = true;
+        config.peer_discovery = dhtPeerDiscovery_;
+        config.peer_publish = dhtPeerDiscovery_;
         if (not config.proxy_server.empty())
             JAMI_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
 
@@ -3362,7 +3337,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 {
     std::string toUri;
     try {
-        toUri = parseRingUri(to);
+        toUri = parseUri(to);
     } catch (...) {
         JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
         return 0;
@@ -3379,7 +3354,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 {
     std::string toUri;
     try {
-        toUri = parseRingUri(to);
+        toUri = parseUri(to);
     } catch (...) {
         JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
         messageEngine_.onMessageSent(to, token, false);

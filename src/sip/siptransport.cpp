@@ -25,7 +25,7 @@
 #include "ice_transport.h"
 #include "security/tls_session.h"
 
-#include "ringdht/sips_transport_ice.h"
+#include "jamidht/sips_transport_ice.h"
 
 #include "array_size.h"
 #include "compiler_intrinsics.h"
