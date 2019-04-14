@@ -365,8 +365,8 @@ class JamiAccount : public SIPAccountBase {
         const std::shared_future<tls::DhParams> dhParams() const { return dhParams_; }
 
         void forEachDevice(const dht::InfoHash& to,
-                           std::function<void(const std::shared_ptr<JamiAccount>&, const dht::InfoHash&)>&& op,
-                           std::function<void(const std::shared_ptr<JamiAccount>&, bool)>&& end = {});
+                           std::function<void(const dht::InfoHash&)>&& op,
+                           std::function<void(bool)>&& end = {});
 
         /**
          * Inform that a potential peer device have been found.
