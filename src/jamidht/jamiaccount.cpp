@@ -390,21 +390,21 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
     // Find listening devices for this account
     dht::InfoHash peer_account(toUri);
-    forEachDevice(peer_account, [wCall, toUri, peer_account](const std::shared_ptr<JamiAccount>& sthis, const dht::InfoHash& dev)
+    forEachDevice(peer_account, [this, wCall, toUri, peer_account](const dht::InfoHash& dev)
     {
         auto call = wCall.lock();
         if (not call) return;
         JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
 
         auto& manager = Manager::instance();
-        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*sthis, manager.getNewCallID(),
+        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING,
                                                                           call->getDetails());
         std::weak_ptr<SIPCall> weak_dev_call = dev_call;
         dev_call->setIPToIP(true);
-        dev_call->setSecure(sthis->isTlsEnabled());
-        auto ice = sthis->createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
-                                             ICE_COMPONENTS, true, sthis->getIceOptions());
+        dev_call->setSecure(isTlsEnabled());
+        auto ice = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
+                                             ICE_COMPONENTS, true, getIceOptions());
         if (not ice) {
             JAMI_WARN("Can't create ICE");
             dev_call->removeCall();
@@ -413,7 +413,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         call->addSubCall(*dev_call);
 
-        manager.addTask([sthis, weak_dev_call, ice, dev, toUri, peer_account] {
+        manager.addTask([sthis=shared(), weak_dev_call, ice, dev, toUri, peer_account] {
             auto call = weak_dev_call.lock();
 
             // call aborted?
@@ -487,7 +487,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             sthis->checkPendingCallsTask();
             return false;
         });
-    }, [wCall](const std::shared_ptr<JamiAccount>&, bool ok){
+    }, [wCall](bool ok){
         if (not ok) {
             if (auto call = wCall.lock()) {
                 JAMI_WARN("[call:%s] no devices found", call->getCallId().c_str());
@@ -1016,8 +1016,7 @@ generatePIN(size_t length = 8)
 void
 JamiAccount::addDevice(const std::string& password)
 {
-    auto this_ = std::static_pointer_cast<JamiAccount>(shared_from_this());
-    ThreadPool::instance().run([this_,password]() {
+    ThreadPool::instance().run([this_=shared(), password]() {
         std::vector<uint8_t> key;
         dht::InfoHash loc;
         std::string pin_str;
@@ -1265,8 +1264,7 @@ JamiAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
 {
     JAMI_WARN("[Account %s] creating new account", getAccountID().c_str());
     setRegistrationState(RegistrationState::INITIALIZING);
-    auto sthis = std::static_pointer_cast<JamiAccount>(shared_from_this());
-    ThreadPool::instance().run([sthis,archive_password,migrate]() mutable {
+    ThreadPool::instance().run([sthis=shared(), archive_password, migrate]() mutable {
         AccountArchive a;
         auto& this_ = *sthis;
 
@@ -2489,7 +2487,6 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 
     registerDhtAddress(*ice);
     // Asynchronous DHT put of our local ICE data
-    auto shared_this = std::static_pointer_cast<JamiAccount>(shared_from_this());
     dht_.putEncrypted(
         callKey_,
         peer_ice_msg.from,
@@ -2574,7 +2571,6 @@ JamiAccount::connectivityChanged()
         return;
     }
 
-    auto shared = std::static_pointer_cast<JamiAccount>(shared_from_this());
     dht_.connectivityChanged();
 }
 
@@ -3163,10 +3159,10 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         return;
     }
     addContact(toH);
-    forEachDevice(toH, [toH,payload](const std::shared_ptr<JamiAccount>& shared, const dht::InfoHash& dev)
+    forEachDevice(toH, [this,toH,payload](const dht::InfoHash& dev)
     {
-        JAMI_WARN("[Account %s] sending trust request to: %s / %s", shared->getAccountID().c_str(), toH.toString().c_str(), dev.toString().c_str());
-        shared->dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()),
+        JAMI_WARN("[Account %s] sending trust request to: %s / %s", getAccountID().c_str(), toH.toString().c_str(), dev.toString().c_str());
+        dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()),
                           dev,
                           dht::TrustRequest(DHT_TYPE_NS, payload));
     });
@@ -3177,10 +3173,10 @@ JamiAccount::sendTrustRequestConfirm(const dht::InfoHash& to)
 {
     dht::TrustRequest answer {DHT_TYPE_NS};
     answer.confirm = true;
-    forEachDevice(to, [to,answer](const std::shared_ptr<JamiAccount>& shared, const dht::InfoHash& dev)
+    forEachDevice(to, [this,to,answer](const dht::InfoHash& dev)
     {
-        JAMI_WARN("[Account %s] sending trust request reply: %s / %s", shared->getAccountID().c_str(), to.toString().c_str(), dev.toString().c_str());
-        shared->dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()), dev, answer);
+        JAMI_WARN("[Account %s] sending trust request reply: %s / %s", getAccountID().c_str(), to.toString().c_str(), dev.toString().c_str());
+        dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()), dev, answer);
     });
 }
 
@@ -3295,10 +3291,8 @@ JamiAccount::igdChanged()
     if (not dht_.isRunning())
         return;
     if (upnp_) {
-        auto shared = std::static_pointer_cast<JamiAccount>(shared_from_this());
-        std::thread{[shared] {
-            auto& this_ = *shared.get();
-            auto oldPort = static_cast<in_port_t>(this_.dhtPortUsed_);
+        std::thread{[s = shared(), oldPort = static_cast<in_port_t>(dhtPortUsed_)] {
+            auto& this_ = *s;
             if (not this_.mapPortUPnP())
                 JAMI_WARN("UPnP: Could not map DHT port");
             auto newPort = static_cast<in_port_t>(this_.dhtPortUsed_);
@@ -3314,25 +3308,26 @@ JamiAccount::igdChanged()
 
 void
 JamiAccount::forEachDevice(const dht::InfoHash& to,
-                           std::function<void(const std::shared_ptr<JamiAccount>&, const dht::InfoHash&)>&& op,
-                           std::function<void(const std::shared_ptr<JamiAccount>&, bool)>&& end)
+                           std::function<void(const dht::InfoHash&)>&& op,
+                           std::function<void(bool)>&& end)
 {
-    auto shared = std::static_pointer_cast<JamiAccount>(shared_from_this());
     auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
     dht_.get<dht::crypto::RevocationList>(to, [to](dht::crypto::RevocationList&& crl){
         tls::CertificateStore::instance().pinRevocationList(to.toString(), std::move(crl));
         return true;
     });
-    dht_.get<DeviceAnnouncement>(to, [shared,to,treatedDevices,op=std::move(op)](DeviceAnnouncement&& dev) {
+    dht_.get<DeviceAnnouncement>(to, [this,to,treatedDevices,op=std::move(op)](DeviceAnnouncement&& dev) {
         if (dev.from != to)
             return true;
-        if (treatedDevices->emplace(dev.dev).second)
-            op(shared, dev.dev);
+        if (treatedDevices->emplace(dev.dev).second) {
+            op(dev.dev);
+        }
         return true;
     }, [=, end=std::move(end)](bool /*ok*/){
         JAMI_DBG("[Account %s] found %lu devices for %s",
                  getAccountID().c_str(), treatedDevices->size(), to.to_c_str());
-        if (end) end(shared, not treatedDevices->empty());
+        if (end)
+            end(not treatedDevices->empty());
     });
 }
 
@@ -3382,71 +3377,65 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     auto confirm = std::make_shared<PendingConfirmation>();
 
     // Find listening devices for this account
-    forEachDevice(toH, [confirm,to,token,payloads,now](const std::shared_ptr<JamiAccount>& this_, const dht::InfoHash& dev)
+    forEachDevice(toH, [this,confirm,to,token,payloads,now](const dht::InfoHash& dev)
     {
         {
-            std::lock_guard<std::mutex> lock(this_->messageMutex_);
-            auto e = this_->sentMessages_.emplace(token, PendingMessage {});
+            std::lock_guard<std::mutex> lock(messageMutex_);
+            auto e = sentMessages_.emplace(token, PendingMessage {});
             e.first->second.to = dev;
         }
 
         auto h = dht::InfoHash::get("inbox:"+dev.toString());
-        std::weak_ptr<JamiAccount> w = this_;
-        auto list_token = this_->dht_.listen<dht::ImMessage>(h, [to, w, token, confirm](dht::ImMessage&& msg) {
-            if (auto sthis = w.lock()) {
-                auto& this_ = *sthis;
-                // check expected message confirmation
-                if (msg.id != token)
+        auto list_token = dht_.listen<dht::ImMessage>(h, [this, to, token, confirm](dht::ImMessage&& msg) {
+            // check expected message confirmation
+            if (msg.id != token)
+                return true;
+
+            {
+                std::lock_guard<std::mutex> lock(messageMutex_);
+                auto e = sentMessages_.find(msg.id);
+                if (e == sentMessages_.end() or e->second.to != msg.from) {
+                    JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token << "] Message not found";
                     return true;
-
-                {
-                    std::lock_guard<std::mutex> lock(this_.messageMutex_);
-                    auto e = this_.sentMessages_.find(msg.id);
-                    if (e == this_.sentMessages_.end() or e->second.to != msg.from) {
-                        JAMI_DBG() << "[Account " << this_.getAccountID() << "] [message " << token << "] Message not found";
-                        return true;
-                    }
-                    this_.sentMessages_.erase(e);
-                    JAMI_DBG() << "[Account " << this_.getAccountID() << "] [message " << token << "] Received text message reply";
-
-                    // add treated message
-                    auto res = this_.treatedMessages_.insert(msg.id);
-                    if (!res.second)
-                        return true;
                 }
-                this_.saveTreatedMessages();
+                sentMessages_.erase(e);
+                JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token << "] Received text message reply";
 
-                // report message as confirmed received
-                for (auto& t : confirm->listenTokens)
-                    this_.dht_.cancelListen(t.first, t.second.get());
-                confirm->listenTokens.clear();
-                confirm->replied = true;
-                this_.messageEngine_.onMessageSent(to, token, true);
+                // add treated message
+                auto res = treatedMessages_.insert(msg.id);
+                if (!res.second)
+                    return true;
             }
+            saveTreatedMessages();
+
+            // report message as confirmed received
+            for (auto& t : confirm->listenTokens)
+                dht_.cancelListen(t.first, t.second.get());
+            confirm->listenTokens.clear();
+            confirm->replied = true;
+            messageEngine_.onMessageSent(to, token, true);
             return false;
         });
         confirm->listenTokens.emplace(h, std::move(list_token));
-        this_->dht_.putEncrypted(h, dev,
+        dht_.putEncrypted(h, dev,
             dht::ImMessage(token, std::string(payloads.begin()->first), std::string(payloads.begin()->second), now),
-            [w,to,token,confirm,h](bool ok) {
-                if (auto this_ = w.lock()) {
-                    JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Put encrypted " << (ok ? "ok" : "failed");
-                    if (not ok) {
-                        auto lt = confirm->listenTokens.find(h);
-                        if (lt != confirm->listenTokens.end()) {
-                            this_->dht_.cancelListen(h, lt->second.get());
-                            confirm->listenTokens.erase(lt);
-                        }
-                        if (confirm->listenTokens.empty() and not confirm->replied)
-                            this_->messageEngine_.onMessageSent(to, token, false);
+            [this,to,token,confirm,h](bool ok) {
+                JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token << "] Put encrypted " << (ok ? "ok" : "failed");
+                if (not ok) {
+                    auto lt = confirm->listenTokens.find(h);
+                    if (lt != confirm->listenTokens.end()) {
+                        dht_.cancelListen(h, lt->second.get());
+                        confirm->listenTokens.erase(lt);
                     }
+                    if (confirm->listenTokens.empty() and not confirm->replied)
+                        messageEngine_.onMessageSent(to, token, false);
                 }
             });
 
-        JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Sending message for device " << dev.toString();
-    }, [to, token](const std::shared_ptr<JamiAccount>& shared, bool ok) {
+        JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token << "] Sending message for device " << dev.toString();
+    }, [this, to, token](bool ok) {
         if (not ok) {
-            shared->messageEngine_.onMessageSent(to, token, false);
+            messageEngine_.onMessageSent(to, token, false);
         }
     });
 
