@@ -27,7 +27,7 @@ ENABLE_VIDEO_LIBS+= \
 endif
 endif
 
-SUBDIRS = client media config hooks sip upnp security ringdht im $(ENABLE_VIDEO_SUBDIR)
+SUBDIRS = client media config hooks sip upnp security jamidht im $(ENABLE_VIDEO_SUBDIR)
 
 # libring
 
@@ -41,7 +41,7 @@ libring_la_LIBADD = \
 	./hooks/libhooks.la \
 	./security/libsecurity.la \
 	./upnp/libupnpcontrol.la \
-	./ringdht/libringacc.la \
+	./jamidht/libringacc.la \
 	./im/libim.la \
 	$(ENABLE_VIDEO_LIBS)
 

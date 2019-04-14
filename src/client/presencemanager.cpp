@@ -38,7 +38,7 @@
 #include "client/ring_signal.h"
 #include "compiler_intrinsics.h"
 
-#include "ringdht/jamiaccount.h"
+#include "jamidht/jamiaccount.h"
 
 namespace DRing {
 

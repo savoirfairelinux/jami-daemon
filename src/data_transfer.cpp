@@ -21,7 +21,7 @@
 #include "data_transfer.h"
 
 #include "manager.h"
-#include "ringdht/jamiaccount.h"
+#include "jamidht/jamiaccount.h"
 #include "peer_connection.h"
 #include "fileutils.h"
 #include "string_utils.h"

@@ -25,7 +25,7 @@
 #include "account_factory.h"
 
 #include "sip/sipaccount.h"
-#include "ringdht/jamiaccount.h"
+#include "jamidht/jamiaccount.h"
 
 #include <stdexcept>
 
