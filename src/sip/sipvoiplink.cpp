@@ -32,7 +32,7 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 
-#include "ringdht/jamiaccount.h"
+#include "jamidht/jamiaccount.h"
 
 #include "manager.h"
 
