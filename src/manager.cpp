@@ -720,11 +720,11 @@ Manager::init(const std::string &config_file)
     PJSIP_TRY(pjnath_init());
 #undef PJSIP_TRY
 
-    JAMI_DBG("pjsip version %s for %s initialized",
-             pj_get_version(), PJ_OS_NAME);
-
     setGnuTlsLogLevel();
-    JAMI_DBG("GNU TLS version %s initialized", gnutls_check_version(nullptr));
+
+    JAMI_DBG("Using PJSIP version %s for %s", pj_get_version(), PJ_OS_NAME);
+    JAMI_DBG("Using GnuTLS version %s", gnutls_check_version(nullptr));
+    JAMI_DBG("Using OpenDHT version %s", dht::version());
 
     setDhtLogLevel();
 
