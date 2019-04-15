@@ -143,8 +143,8 @@ check_rename(const std::string& old_dir, const std::string& new_dir)
     if (old_dir == new_dir or not fileutils::isDirectory(old_dir))
         return;
 
-    JAMI_WARN() << "Migrating" << old_dir << " to " << new_dir;
     if (not fileutils::isDirectory(new_dir)) {
+        JAMI_WARN() << "Migrating " << old_dir << " to " << new_dir;
         std::rename(old_dir.c_str(), new_dir.c_str());
     } else {
         for (const auto &file : fileutils::readDirectory(old_dir)) {
@@ -153,6 +153,7 @@ check_rename(const std::string& old_dir, const std::string& new_dir)
             if (fileutils::isDirectory(old_dest) and fileutils::isDirectory(new_dest)) {
                 check_rename(old_dest, new_dest);
             } else {
+                JAMI_WARN() << "Migrating " << old_dest << " to " << new_dest;
                 std::rename(old_dest.c_str(), new_dest.c_str());
             }
         }
@@ -660,7 +661,7 @@ Manager::instance()
     // This will give a warning that can be ignored the first time instance()
     // is called...subsequent warnings are more serious
     if (not Manager::initialized)
-        JAMI_WARN("Not initialized");
+        JAMI_DBG("Not initialized");
 
     return instance;
 }

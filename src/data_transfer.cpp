@@ -659,13 +659,13 @@ DataTransferFacade::Impl::onConnectionRequestReply(const DRing::DataTransferId& 
 
 DataTransferFacade::DataTransferFacade() : pimpl_ {std::make_unique<Impl>()}
 {
-    JAMI_WARN("[XFER] facade created, pimpl @%p", pimpl_.get());
+    // JAMI_DBG("[XFER] facade created, pimpl @%p", pimpl_.get());
 }
 
 DataTransferFacade::~DataTransferFacade()
 {
-    JAMI_WARN("[XFER] facade destroy, pimpl @%p", pimpl_.get());
-};
+    // JAMI_DBG("[XFER] facade destroy, pimpl @%p", pimpl_.get());
+}
 
 std::vector<DRing::DataTransferId>
 DataTransferFacade::list() const noexcept
