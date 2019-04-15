@@ -1,4 +1,3 @@
-#pragma comment(lib, "secp256k1.lib")
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
 systems. This function is required for `alloca.c' support on those systems.
 */
@@ -43,9 +42,6 @@ systems. This function is required for `alloca.c' support on those systems.
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
-
-/* Define if you have IPv6 */
-#define HAVE_IPV6 0
 
 /* Define if you have jack */
 #define HAVE_JACK 0
@@ -96,10 +92,10 @@ systems. This function is required for `alloca.c' support on those systems.
 #define HAVE_SHM 0
 
 /* Define if you have libspeex */
-#define HAVE_SPEEX 1
+#define HAVE_SPEEX 0
 
 /* Define if you have libspeexdsp */
-#define HAVE_SPEEXDSP 1
+#define HAVE_SPEEXDSP 0
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #define HAVE_STDBOOL_H 1
@@ -144,19 +140,19 @@ systems. This function is required for `alloca.c' support on those systems.
 #define LT_OBJDIR ".libs/"
 
 /* Name of package */
-#define PACKAGE "ring"
+#define PACKAGE "jami"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "ring@lists.savoirfairelinux.net"
+#define PACKAGE_BUGREPORT "jami@lists.savoirfairelinux.net"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "Ring"
+#define PACKAGE_NAME "Jami"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Ring 2.3.0"
+#define PACKAGE_STRING "Jami"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "ring"
+#define PACKAGE_TARNAME "jami"
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
