@@ -41,6 +41,7 @@
 #include "string_utils.h"
 #include "fileutils.h"
 #include "sip_utils.h"
+#include "utf8_utils.h"
 
 #include <ctime>
 #include <type_traits>
@@ -385,7 +386,15 @@ void
 SIPAccountBase::onTextMessage(const std::string& from,
                               const std::map<std::string, std::string>& payloads)
 {
-    JAMI_DBG("Text message received from %s, %zu part(s)",  from.c_str(), payloads.size());
+    JAMI_DBG("Text message received from %s, %zu part(s)", from.c_str(), payloads.size());
+    for (const auto& m : payloads) {
+        if (!utf8_validate(m.first))
+            return;
+        if (!utf8_validate(m.second)) {
+            JAMI_WARN("Dropping invalid message with MIME type %s", m.first.c_str());
+            return;
+        }
+    }
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
     DRing::Message message;
     message.from = from;
