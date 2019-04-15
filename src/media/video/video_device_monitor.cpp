@@ -193,11 +193,9 @@ start:
 static void
 notify()
 {
-    if (!Manager::initialized) {
-        JAMI_WARN("Manager not initialized yet");
-        return;
+    if (Manager::initialized) {
+        emitSignal<DRing::VideoSignal::DeviceEvent>();
     }
-    emitSignal<DRing::VideoSignal::DeviceEvent>();
 }
 
 void
