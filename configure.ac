@@ -652,9 +652,9 @@ AC_CONFIG_FILES([Makefile \
                  src/Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
-                 src/ringdht/Makefile \
-                 src/ringdht/eth/libdevcore/Makefile \
-                 src/ringdht/eth/libdevcrypto/Makefile \
+                 src/jamidht/Makefile \
+                 src/jamidht/eth/libdevcore/Makefile \
+                 src/jamidht/eth/libdevcrypto/Makefile \
                  src/media/Makefile \
                  src/media/audio/Makefile \
                  src/media/audio/pulseaudio/Makefile \

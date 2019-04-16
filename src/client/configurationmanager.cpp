@@ -35,7 +35,7 @@
 #include "archiver.h"
 #include "ip_utils.h"
 #include "sip/sipaccount.h"
-#include "ringdht/jamiaccount.h"
+#include "jamidht/jamiaccount.h"
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
 #include "account_const.h"

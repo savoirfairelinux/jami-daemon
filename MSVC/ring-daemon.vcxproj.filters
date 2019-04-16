@@ -32,7 +32,7 @@
     <Filter Include="Source Files\media\video">
       <UniqueIdentifier>{79038082-1478-4202-923a-0af34dc8d704}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\ringdht">
+    <Filter Include="Source Files\jamidht">
       <UniqueIdentifier>{44a8a1a1-b597-480e-92d9-77c76445a0bd}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\security">
@@ -47,13 +47,13 @@
     <Filter Include="Source Files\media\video\uwpvideo">
       <UniqueIdentifier>{13ad5c25-d522-4562-8bab-f322fdd2a243}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\ringdht\eth">
+    <Filter Include="Source Files\jamidht\eth">
       <UniqueIdentifier>{a351b980-057f-4e56-9b7f-4cbf27b49a7e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\ringdht\eth\libdevcore">
+    <Filter Include="Source Files\jamidht\eth\libdevcore">
       <UniqueIdentifier>{a39b6b13-7f71-4508-bbc8-20f69720f6af}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\ringdht\eth\libdevcrypto">
+    <Filter Include="Source Files\jamidht\eth\libdevcrypto">
       <UniqueIdentifier>{c9a4b0a8-0da9-41d6-bb80-3fc1d31a2986}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\dring">
@@ -169,11 +169,11 @@
     <ClCompile Include="..\src\media\video\video_sender.cpp">
       <Filter>Source Files\media\video</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\jamiaccount.cpp">
-      <Filter>Source Files\ringdht</Filter>
+    <ClCompile Include="..\src\jamidht\jamiaccount.cpp">
+      <Filter>Source Files\jamidht</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\sips_transport_ice.cpp">
-      <Filter>Source Files\ringdht</Filter>
+    <ClCompile Include="..\src\jamidht\sips_transport_ice.cpp">
+      <Filter>Source Files\jamidht</Filter>
     </ClCompile>
     <ClCompile Include="..\src\upnp\upnp_context.cpp">
       <Filter>Source Files\upnp</Filter>
@@ -241,29 +241,29 @@
     <ClCompile Include="..\src\media\video\uwpvideo\video_device_monitor_impl.cpp">
       <Filter>Source Files\media\video\uwpvideo</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\eth\libdevcore\Common.cpp">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <ClCompile Include="..\src\jamidht\eth\libdevcore\Common.cpp">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\eth\libdevcore\CommonData.cpp">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <ClCompile Include="..\src\jamidht\eth\libdevcore\CommonData.cpp">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\eth\libdevcore\FixedHash.cpp">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <ClCompile Include="..\src\jamidht\eth\libdevcore\FixedHash.cpp">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\eth\libdevcrypto\Common.cpp">
-      <Filter>Source Files\ringdht\eth\libdevcrypto</Filter>
+    <ClCompile Include="..\src\jamidht\eth\libdevcrypto\Common.cpp">
+      <Filter>Source Files\jamidht\eth\libdevcrypto</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\namedirectory.cpp">
-      <Filter>Source Files\ringdht</Filter>
+    <ClCompile Include="..\src\jamidht\namedirectory.cpp">
+      <Filter>Source Files\jamidht</Filter>
     </ClCompile>
     <ClCompile Include="..\src\security\memory.cpp">
       <Filter>Source Files\security</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\accountarchive.cpp">
-      <Filter>Source Files\ringdht</Filter>
+    <ClCompile Include="..\src\jamidht\accountarchive.cpp">
+      <Filter>Source Files\jamidht</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\eth\libdevcore\SHA3.cpp">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <ClCompile Include="..\src\jamidht\eth\libdevcore\SHA3.cpp">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </ClCompile>
     <ClCompile Include="..\src\account.cpp">
       <Filter>Source Files</Filter>
@@ -364,8 +364,8 @@
     <ClCompile Include="..\src\config\yamlparser.cpp">
       <Filter>Source Files\config</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ringdht\p2p.cpp">
-      <Filter>Source Files\ringdht</Filter>
+    <ClCompile Include="..\src\jamidht\p2p.cpp">
+      <Filter>Source Files\jamidht</Filter>
     </ClCompile>
     <ClCompile Include="..\src\media\video\accel.cpp">
       <Filter>Source Files\media\video</Filter>
@@ -573,47 +573,47 @@
     <ClInclude Include="..\src\dring\videomanager_interface.h">
       <Filter>Source Files\dring</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\Address.h">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <ClInclude Include="..\src\jamidht\eth\libdevcore\Address.h">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\Common.h">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <ClInclude Include="..\src\jamidht\eth\libdevcore\Common.h">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\CommonData.h">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <ClInclude Include="..\src\jamidht\eth\libdevcore\CommonData.h">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\FixedHash.h">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <ClInclude Include="..\src\jamidht\eth\libdevcore\FixedHash.h">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\SHA3.h">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <ClInclude Include="..\src\jamidht\eth\libdevcore\SHA3.h">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\vector_ref.h">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <ClInclude Include="..\src\jamidht\eth\libdevcore\vector_ref.h">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\eth\libdevcrypto\Common.h">
-      <Filter>Source Files\ringdht\eth\libdevcrypto</Filter>
+    <ClInclude Include="..\src\jamidht\eth\libdevcrypto\Common.h">
+      <Filter>Source Files\jamidht\eth\libdevcrypto</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\accountarchive.h">
-      <Filter>Source Files\ringdht</Filter>
+    <ClInclude Include="..\src\jamidht\accountarchive.h">
+      <Filter>Source Files\jamidht</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\configkeys.h">
-      <Filter>Source Files\ringdht</Filter>
+    <ClInclude Include="..\src\jamidht\configkeys.h">
+      <Filter>Source Files\jamidht</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\namedirectory.h">
-      <Filter>Source Files\ringdht</Filter>
+    <ClInclude Include="..\src\jamidht\namedirectory.h">
+      <Filter>Source Files\jamidht</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\p2p.h">
-      <Filter>Source Files\ringdht</Filter>
+    <ClInclude Include="..\src\jamidht\p2p.h">
+      <Filter>Source Files\jamidht</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\jamiaccount.h">
-      <Filter>Source Files\ringdht</Filter>
+    <ClInclude Include="..\src\jamidht\jamiaccount.h">
+      <Filter>Source Files\jamidht</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\ringcontact.h">
-      <Filter>Source Files\ringdht</Filter>
+    <ClInclude Include="..\src\jamidht\ringcontact.h">
+      <Filter>Source Files\jamidht</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\sips_transport_ice.h">
-      <Filter>Source Files\ringdht</Filter>
+    <ClInclude Include="..\src\jamidht\sips_transport_ice.h">
+      <Filter>Source Files\jamidht</Filter>
     </ClInclude>
     <ClInclude Include="..\src\im\instant_messaging.h">
       <Filter>Source Files\im</Filter>
@@ -842,8 +842,8 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\src\ringdht\eth\libdevcore\Makefile.am">
-      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    <None Include="..\src\jamidht\eth\libdevcore\Makefile.am">
+      <Filter>Source Files\jamidht\eth\libdevcore</Filter>
     </None>
   </ItemGroup>
 </Project>
