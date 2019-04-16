@@ -40,7 +40,7 @@
 #include "map_utils.h"
 #include "account.h"
 #include "string_utils.h"
-#include "ringdht/jamiaccount.h"
+#include "jamidht/jamiaccount.h"
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
 
