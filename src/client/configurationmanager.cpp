@@ -330,7 +330,10 @@ bool
 changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID))
-        return acc->changeArchivePassword(password_old, password_new);
+        if (acc->changeArchivePassword(password_old, password_new)) {
+            jami::Manager::instance().saveConfig(acc);
+            return true;
+        }
     return false;
 }
 
