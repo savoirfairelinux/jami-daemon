@@ -705,8 +705,70 @@ recursive_mkdir(const std::string& path, mode_t mode)
     return true;
 }
 
+bool
+eraseFile(const std::string& path)
+{
+    std::ofstream file(path, std::ios::out|std::ios::binary);
+    if (!file.good()) {
+        JAMI_WARN("Can not open file %s for erasing.", path.c_str());
+        return false;
+    }
+
+    file.seekp(0, std::ios::end);
+    auto size = file.tellp();
+    if (size == 0)
+        return false;
+
+    uintmax_t size_blocks = size / ERASE_BLOCK;
+    if (size % ERASE_BLOCK)
+        size_blocks++;
+
+    try {
+        char* buffer = new char[ERASE_BLOCK];
+    }
+    catch (std::bad_alloc& ba) {
+        JAMI_WARN("Can not allocate buffer for erasing %s.", path.c_str());
+        return false;
+    }
+    memset(buffer, 0, ERASE_BLOCK);
+
+    for (uintmax_t i = 0; i < size_blocks; i++) {
+        file.seekp(i * ERASE_BLOCK);
+        file.write(buffer,ERASE_BLOCK);
+    }
+
+    delete buffer;
+    file.close();
+
+    return true;
+}
+
+void
+dosync(const std::string& path)
+{
+    int fd = open(path.c_str(), O_WRONLY);
+    if (fd == -1) {
+        JAMI_WARN("Can not open file %s for syncing.", path.c_str());
+        return;
+    }
+
+    fsync(fd);
+    close(fd);
+}
+
 int
-removeAll(const std::string& path)
+remove(const std::string& path, bool erase)
+{
+    if (erase && !isSymlink(path)) {
+        if (eraseFile(path))
+            dosync(path);
+    }
+
+    return std::remove(path.c_str());
+}
+
+int
+removeAll(const std::string& path, bool erase)
 {
     if (path.empty())
         return -1;
@@ -715,9 +777,9 @@ removeAll(const std::string& path)
         if (dir.back() != DIR_SEPARATOR_CH)
             dir += DIR_SEPARATOR_CH;
         for (auto& entry : fileutils::readDirectory(dir))
-            removeAll(dir + entry);
+            removeAll(dir + entry, erase);
     }
-    return remove(path);
+    return remove(path, erase);
 }
 
 }} // namespace jami::fileutils
