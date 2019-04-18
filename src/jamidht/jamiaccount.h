@@ -121,7 +121,7 @@ class JamiAccount : public SIPAccountBase {
          * Serialize internal state of this account for configuration
          * @param YamlEmitter the configuration engine which generate the configuration file
          */
-        virtual void serialize(YAML::Emitter &out) override;
+        virtual void serialize(YAML::Emitter &out) const override;
 
         /**
          * Populate the internal state for this account based on info stored in the configuration file
@@ -396,6 +396,8 @@ class JamiAccount : public SIPAccountBase {
          * @param base_timestamp
          */
         std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) override;
+
+        void saveConfig() const;
 
     private:
         NON_COPYABLE(JamiAccount);

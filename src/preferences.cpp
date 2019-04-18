@@ -205,7 +205,7 @@ void Preferences::removeAccount(const std::string &oldAccountID)
         accountOrder_.erase(start, oldAccountID.length() + 1);
 }
 
-void Preferences::serialize(YAML::Emitter &out)
+void Preferences::serialize(YAML::Emitter &out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
 
@@ -243,7 +243,7 @@ VoipPreference::VoipPreference() :
     , symmetricRtp_(true)
 {}
 
-void VoipPreference::serialize(YAML::Emitter &out)
+void VoipPreference::serialize(YAML::Emitter &out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << PLAY_DTMF_KEY << YAML::Value << playDtmf_;
@@ -292,7 +292,7 @@ std::map<std::string, std::string> HookPreference::toMap() const
     return settings;
 }
 
-void HookPreference::serialize(YAML::Emitter &out)
+void HookPreference::serialize(YAML::Emitter &out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << NUMBER_ADD_PREFIX_KEY << YAML::Value << numberAddPrefix_;
@@ -431,7 +431,7 @@ AudioPreference::createAudioLayer()
     return nullptr;
 }
 
-void AudioPreference::serialize(YAML::Emitter &out)
+void AudioPreference::serialize(YAML::Emitter &out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     // alsa submap
@@ -538,7 +538,7 @@ void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
 }
 
 
-void ShortcutPreferences::serialize(YAML::Emitter &out)
+void ShortcutPreferences::serialize(YAML::Emitter &out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << HANGUP_SHORT_KEY << YAML::Value << hangup_;
@@ -567,7 +567,7 @@ VideoPreferences::VideoPreferences()
 {
 }
 
-void VideoPreferences::serialize(YAML::Emitter &out)
+void VideoPreferences::serialize(YAML::Emitter &out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
 #ifdef RING_ACCEL

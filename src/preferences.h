@@ -45,8 +45,8 @@ class Preferences : public Serializable {
 
         Preferences();
 
-        void serialize(YAML::Emitter &out);
-        void unserialize(const YAML::Node &in);
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
 
         std::string getAccountOrder() const {
             return accountOrder_;
@@ -142,8 +142,8 @@ class VoipPreference : public Serializable {
     public:
         VoipPreference();
 
-        void serialize(YAML::Emitter &out);
-        void unserialize(const YAML::Node &in);
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
 
         bool getPlayDtmf() const {
             return playDtmf_;
@@ -197,8 +197,8 @@ class HookPreference : public Serializable {
         HookPreference();
         HookPreference(const std::map<std::string, std::string> &settings);
 
-        void serialize(YAML::Emitter &out);
-        void unserialize(const YAML::Node &in);
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
 
         std::string getNumberAddPrefix() const {
             if (numberEnabled_)
@@ -235,8 +235,8 @@ class AudioPreference : public Serializable {
             audioApi_ = api;
         }
 
-        void serialize(YAML::Emitter &out);
-        void unserialize(const YAML::Node &in);
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
 
         // alsa preference
         int getAlsaCardin() const {
@@ -394,8 +394,8 @@ class AudioPreference : public Serializable {
 class ShortcutPreferences : public Serializable {
     public:
         ShortcutPreferences();
-        void serialize(YAML::Emitter &out);
-        void unserialize(const YAML::Node &in);
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
 
         void setShortcuts(std::map<std::string, std::string> shortcuts);
         std::map<std::string, std::string> getShortcuts() const;
@@ -454,8 +454,8 @@ class VideoPreferences : public Serializable {
     public:
         VideoPreferences();
 
-        void serialize(YAML::Emitter &out);
-        void unserialize(const YAML::Node &in);
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
 
         bool getDecodingAccelerated() const {
             return decodingAccelerated_;
