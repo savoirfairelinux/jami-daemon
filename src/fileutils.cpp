@@ -42,7 +42,9 @@
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 #include "client/ring_signal.h"
 #endif
+
 #ifdef _WIN32
+#include <windows.h>
 #include "string_utils.h"
 #endif
 
@@ -705,8 +707,80 @@ recursive_mkdir(const std::string& path, mode_t mode)
     return true;
 }
 
+bool
+eraseFile(const std::string& path)
+{
+    std::ofstream file(path, std::ios::out|std::ios::binary);
+    if (!file.good()) {
+        JAMI_WARN("Can not open file %s for erasing.", path.c_str());
+        return false;
+    }
+
+    file.seekp(0, std::ios::end);
+    auto size = file.tellp();
+    if (size == 0)
+        return false;
+
+    uintmax_t size_blocks = size / ERASE_BLOCK;
+    if (size % ERASE_BLOCK)
+        size_blocks++;
+
+    char* buffer;
+    try {
+        buffer = new char[ERASE_BLOCK];
+    }
+    catch (std::bad_alloc& ba) {
+        JAMI_WARN("Can not allocate buffer for erasing %s.", path.c_str());
+        return false;
+    }
+    memset(buffer, 0, ERASE_BLOCK);
+
+    for (uintmax_t i = 0; i < size_blocks; i++) {
+        file.seekp(i * ERASE_BLOCK);
+        file.write(buffer,ERASE_BLOCK);
+    }
+
+    delete[] buffer;
+    file.close();
+
+    return true;
+}
+
+void
+dosync(const std::string& path)
+{
+#ifdef _WIN32
+    HANDLE h = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if (h == INVALID_HANDLE_VALUE) {
+        JAMI_WARN("Can not open file %s for syncing.", path.c_str());
+        return;
+    }
+    FlushFileBuffers(h);
+    CloseHandle(h);
+#else
+    int fd = open(path.c_str(), O_WRONLY);
+    if (fd == -1) {
+        JAMI_WARN("Can not open file %s for syncing.", path.c_str());
+        return;
+    }
+    fsync(fd);
+    close(fd);
+#endif
+}
+
 int
-removeAll(const std::string& path)
+remove(const std::string& path, bool erase)
+{
+    if (erase and !isSymLink(path)) {
+        if (eraseFile(path))
+            dosync(path);
+    }
+
+    return std::remove(path.c_str());
+}
+
+int
+removeAll(const std::string& path, bool erase)
 {
     if (path.empty())
         return -1;
@@ -715,9 +789,9 @@ removeAll(const std::string& path)
         if (dir.back() != DIR_SEPARATOR_CH)
             dir += DIR_SEPARATOR_CH;
         for (auto& entry : fileutils::readDirectory(dir))
-            removeAll(dir + entry);
+            removeAll(dir + entry, erase);
     }
-    return remove(path);
+    return remove(path, erase);
 }
 
 }} // namespace jami::fileutils

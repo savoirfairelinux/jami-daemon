@@ -311,7 +311,7 @@ JamiAccount::flush()
     // Class base method
     SIPAccountBase::flush();
 
-    fileutils::removeAll(dataPath_);
+    fileutils::removeAll(dataPath_, true);
     fileutils::removeAll(cachePath_);
     fileutils::removeAll(idPath_);
 }
