@@ -41,7 +41,7 @@
 #define XDG_CACHE_HOME          (PROTECTED_GETENV("XDG_CACHE_HOME"))
 
 #define PIDFILE ".ring.pid"
-
+#define ERASE_BLOCK 4096
 
 #ifndef _WIN32
 #include <sys/stat.h>           // mode_t
@@ -89,9 +89,8 @@ namespace jami { namespace fileutils {
      */
     std::string getFullPath(const std::string& base, const std::string& path);
 
-    bool isFile(const std::string& path);
+    bool isFile(const std::string& path, bool resolveSymlink = true);
     bool isDirectory(const std::string& path);
-
     bool isSymLink(const std::string& path);
 
     std::chrono::system_clock::time_point writeTime(const std::string& path);
@@ -124,15 +123,16 @@ namespace jami { namespace fileutils {
     FileHandle create_pidfile();
 
     /**
-     * Direct binding on std::remove, with std::string as argument
+     * Remove a file with optional erasing of content.
+     * Return the same value as std::remove().
      */
-    static inline int remove(const std::string& path) { return std::remove(path.c_str()); }
+    int remove(const std::string& path, bool erase = false);
 
     /**
      * Prune given directory's content and remove it, symlinks are not followed.
      * Return 0 if succeed, -1 if directory is not removed (content can be removed partially).
      */
-    int removeAll(const std::string& path);
+    int removeAll(const std::string& path, bool erase = false);
 
 }} // namespace jami::fileutils
 
