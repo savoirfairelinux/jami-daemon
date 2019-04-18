@@ -313,7 +313,7 @@ JamiAccount::flush()
 
     fileutils::removeAll(dataPath_);
     fileutils::removeAll(cachePath_);
-    fileutils::removeAll(idPath_);
+    fileutils::removeAll(idPath_, true);
 }
 
 std::shared_ptr<SIPCall>
