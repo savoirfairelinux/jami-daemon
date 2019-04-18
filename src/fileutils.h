@@ -41,7 +41,7 @@
 #define XDG_CACHE_HOME          (PROTECTED_GETENV("XDG_CACHE_HOME"))
 
 #define PIDFILE ".ring.pid"
-
+#define CLUSTER_SIZE 4096
 
 #ifndef _WIN32
 #include <sys/stat.h>           // mode_t
@@ -124,15 +124,15 @@ namespace jami { namespace fileutils {
     FileHandle create_pidfile();
 
     /**
-     * Direct binding on std::remove, with std::string as argument
+     * Call std::remove with optional erasing of content.
      */
-    static inline int remove(const std::string& path) { return std::remove(path.c_str()); }
+    int remove(const std::string& path, bool erase = false);
 
     /**
      * Prune given directory's content and remove it, symlinks are not followed.
      * Return 0 if succeed, -1 if directory is not removed (content can be removed partially).
      */
-    int removeAll(const std::string& path);
+    int removeAll(const std::string& path, bool erase = false);
 
 }} // namespace jami::fileutils
 

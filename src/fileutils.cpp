@@ -705,8 +705,43 @@ recursive_mkdir(const std::string& path, mode_t mode)
     return true;
 }
 
+void eraseFile(const std::string& path)
+{
+    std::ofstream file(path, std::ios::out|std::ios::binary);
+    if (!file.good()) {
+        JAMI_WARN("Can not open file %s for erasing.", path.c_str());
+        return;
+    }
+
+    file.seekp(0, std::ios::end);
+    auto size = file.tellp();
+
+    uintmax_t size_clusters = size / CLUSTER_SIZE;
+    if (size % CLUSTER_SIZE)
+        size_clusters++;
+
+    char* buffer = new char[CLUSTER_SIZE];
+    memset(buffer, 0, CLUSTER_SIZE);
+
+    file.seekp(0, std::ios::beg);
+    for (uintmax_t i = 0; i < size_clusters; i++) {
+        file.write(buffer,CLUSTER_SIZE);
+    }
+
+    delete buffer;
+    file.close();
+}
+
+int remove(const std::string& path, bool erase)
+{
+    if (erase)
+        eraseFile(path);
+
+    return std::remove(path.c_str());
+}
+
 int
-removeAll(const std::string& path)
+removeAll(const std::string& path, bool erase)
 {
     if (path.empty())
         return -1;
@@ -715,9 +750,9 @@ removeAll(const std::string& path)
         if (dir.back() != DIR_SEPARATOR_CH)
             dir += DIR_SEPARATOR_CH;
         for (auto& entry : fileutils::readDirectory(dir))
-            removeAll(dir + entry);
+            removeAll(dir + entry, erase);
     }
-    return remove(path);
+    return remove(path, erase);
 }
 
 }} // namespace jami::fileutils
