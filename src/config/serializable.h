@@ -32,7 +32,7 @@ class Serializable {
 
     public:
         virtual ~Serializable() {};
-        virtual void serialize(YAML::Emitter &out) = 0;
+        virtual void serialize(YAML::Emitter &out) const = 0;
         virtual void unserialize(const YAML::Node &node) = 0;
 };
 

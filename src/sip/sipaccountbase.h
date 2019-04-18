@@ -298,8 +298,8 @@ public: // overloaded methods
     virtual void flush() override;
 
 protected:
-    virtual void serialize(YAML::Emitter &out) override;
-    virtual void serializeTls(YAML::Emitter &out);
+    virtual void serialize(YAML::Emitter &out) const override;
+    virtual void serializeTls(YAML::Emitter &out) const;
     virtual void unserialize(const YAML::Node &node) override;
 
     virtual void setAccountDetails(const std::map<std::string, std::string> &details) override;
