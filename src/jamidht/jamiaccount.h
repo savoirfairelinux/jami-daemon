@@ -503,6 +503,8 @@ class JamiAccount : public SIPAccountBase {
         bool handlePendingCallList();
         bool handlePendingCall(PendingCall& pc, bool incoming);
 
+        mutable std::mutex callsMutex_ {};
+
         /**
          * DHT calls waiting for ICE negotiation
          */
@@ -513,7 +515,6 @@ class JamiAccount : public SIPAccountBase {
          */
         std::list<PendingCall> pendingSipCalls_;
         std::set<dht::Value::Id> treatedCalls_ {};
-        mutable std::mutex callsMutex_ {};
 
         mutable std::mutex messageMutex_ {};
         std::map<dht::Value::Id, PendingMessage> sentMessages_;
@@ -553,10 +554,11 @@ class JamiAccount : public SIPAccountBase {
         std::shared_ptr<dht::Value> announce_;
 
         /* this ring account associated devices */
+        mutable std::mutex deviceListMutex_ {};
         std::map<dht::InfoHash, KnownDevice> knownDevices_;
 
         /* tracked buddies presence */
-        std::mutex buddyInfoMtx;
+        mutable std::mutex buddyInfoMtx;
         std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
 
         void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {}, const std::string& archive_path = {});
