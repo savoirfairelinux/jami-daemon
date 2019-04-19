@@ -763,7 +763,11 @@ JamiAccount::createRingDevice(const dht::crypto::Identity& id)
     ringDeviceName_ = ip_utils::getDeviceName();
     if (ringDeviceName_.empty())
         ringDeviceName_ = ringDeviceId_.substr(8);
-    knownDevices_.emplace(deviceId, KnownDevice{dev_id.second, ringDeviceName_, clock::now()});
+
+    {
+        std::lock_guard<std::mutex> devicelock(deviceListMutex_);
+        knownDevices_.emplace(deviceId, KnownDevice{dev_id.second, ringDeviceName_, clock::now()});
+    }
 
     receipt_ = makeReceipt(id);
     receiptSignature_ = id.first->sign({receipt_.begin(), receipt_.end()});
@@ -1126,6 +1130,7 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
             emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(), device, 2);
             return;
         }
+        std::lock_guard<std::mutex> lock(deviceListMutex_);
         foundAccountDevice(crt);
         AccountArchive a;
         try {
@@ -1551,6 +1556,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     loadAccount(archive_password, archive_pin, archive_path);
 
     // update device name if necessary
+    std::lock_guard<std::mutex> devicelock(deviceListMutex_);
     auto dev = knownDevices_.find(dht::InfoHash(ringDeviceId_));
     if (dev != knownDevices_.end()) {
         if (dev->second.name != ringDeviceName_) {
@@ -2200,6 +2206,7 @@ JamiAccount::doRegister_()
                 dht_.put(h, crl, dht::DoneCallback{}, {}, true);
             dht_.listen<DeviceAnnouncement>(h, [this](DeviceAnnouncement&& dev) {
                 findCertificate(dev.dev, [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+                    std::lock_guard<std::mutex> lock(deviceListMutex_);
                     foundAccountDevice(crt);
                 });
                 return true;
@@ -2277,6 +2284,7 @@ JamiAccount::doRegister_()
                         JAMI_WARN("Can't find certificate for device %s", sync.from.toString().c_str());
                         return;
                     }
+                    std::lock_guard<std::mutex> lock(deviceListMutex_);
                     if (not foundAccountDevice(cert))
                         return;
                     onReceiveDeviceSync(std::move(sync));
@@ -2319,6 +2327,7 @@ JamiAccount::doRegister_()
 
         dhtPeerConnector_->onDhtConnected(ringDeviceId_);
 
+        std::lock_guard<std::mutex> lock(buddyInfoMtx);
         for (auto& buddy : trackedBuddies_) {
             buddy.second.devices_cnt = 0;
             trackPresence(buddy.first, buddy.second);
@@ -2745,6 +2754,7 @@ JamiAccount::loadKnownDevices()
         return;
     }
 
+    std::lock_guard<std::mutex> lock(deviceListMutex_);
     for (const auto& d : knownDevices) {
         JAMI_DBG("[Account %s] loading known account device %s %s", getAccountID().c_str(),
                                                                     d.second.first.c_str(),
@@ -3266,6 +3276,7 @@ JamiAccount::syncDevices()
         }
     }
 
+    std::lock_guard<std::mutex> lock(deviceListMutex_);
     for (const auto& dev : knownDevices_) {
         if (dev.first.toString() == ringDeviceId_)
             sync_data.devices_known.emplace(dev.first, ringDeviceName_);
@@ -3302,6 +3313,7 @@ JamiAccount::onReceiveDeviceSync(DeviceSync&& sync)
         findCertificate(d.first, [this,d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
             if (not crt)
                 return;
+            std::lock_guard<std::mutex> lock(deviceListMutex_);
             foundAccountDevice(crt, d.second);
         });
     }
