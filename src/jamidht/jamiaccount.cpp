@@ -675,6 +675,8 @@ void JamiAccount::serialize(YAML::Emitter &out) const
 
 #if HAVE_RINGNS
     out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value <<  nameServer_;
+    if (not registeredName_.empty())
+        out << YAML::Key << DRing::Account::VolatileProperties::REGISTERED_NAME << YAML::Value << registeredName_;
 #endif
 
     out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
@@ -682,8 +684,6 @@ void JamiAccount::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
     out << YAML::Key << DRing::Account::ConfProperties::RING_DEVICE_NAME << YAML::Value << ringDeviceName_;
-    if (not registeredName_.empty())
-        out << YAML::Key << DRing::Account::VolatileProperties::REGISTERED_NAME << YAML::Value << registeredName_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -719,9 +719,6 @@ void JamiAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::PROXY_PUSH_TOKEN_KEY, deviceKey_);
 
     parseValueOptional(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
-    if (registeredName_.empty()) {
-        parseValueOptional(node, DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
-    }
 
     try {
         parsePath(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_, idPath_);
@@ -748,6 +745,9 @@ void JamiAccount::unserialize(const YAML::Node &node)
 #if HAVE_RINGNS
     parseValueOptional(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
     nameDir_ = NameDirectory::instance(nameServer_);
+    if (registeredName_.empty()) {
+        parseValueOptional(node, DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
+    }
 #endif
 
     parseValue(node, Conf::DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
