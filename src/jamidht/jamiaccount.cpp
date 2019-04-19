@@ -637,6 +637,22 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     return true;
 }
 
+void JamiAccount::saveConfig() const
+{
+    try {
+        YAML::Emitter accountOut;
+        serialize(accountOut);
+        auto accountConfig = getPath() + DIR_SEPARATOR_STR + "config.yml";
+
+        std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
+        std::ofstream fout(accountConfig);
+        fout << accountOut.c_str();
+        JAMI_DBG("Exported account to %s", accountConfig.c_str());
+    } catch (const std::exception& e) {
+        JAMI_ERR("Error exporting account: %s", e.what());
+    }
+}
+
 void JamiAccount::serialize(YAML::Emitter &out) const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
@@ -1174,7 +1190,7 @@ JamiAccount::loadAccountFromArchive(AccountArchive&& archive, const std::string&
     initRingDevice(archive);
     saveArchive(archive, archive_password);
     registrationState_ = RegistrationState::UNREGISTERED;
-    Manager::instance().saveConfig();
+    saveConfig();
     doRegister();
 }
 
@@ -1341,7 +1357,7 @@ JamiAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
         }
         JAMI_DBG("[Account %s] Account creation ended, saving configuration", this_.getAccountID().c_str());
         this_.setRegistrationState(RegistrationState::UNREGISTERED);
-        Manager::instance().saveConfig();
+        this_.saveConfig();
         this_.doRegister();
     });
 }
@@ -1471,7 +1487,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                     Migration::setState(accountID_, Migration::State::SUCCESS);
                     setRegistrationState(RegistrationState::UNREGISTERED);
                 }
-                Manager::instance().saveConfig();
+                saveConfig();
                 loadAccount(archive_password);
             }
             else {
