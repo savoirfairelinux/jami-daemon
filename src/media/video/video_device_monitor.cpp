@@ -312,7 +312,7 @@ VideoDeviceMonitor::overwritePreferences(VideoSettings settings)
 }
 
 void
-VideoDeviceMonitor::serialize(YAML::Emitter &out)
+VideoDeviceMonitor::serialize(YAML::Emitter &out) const
 {
     std::lock_guard<std::mutex> l(lock_);
     out << YAML::Key << "devices" << YAML::Value << preferences_;
