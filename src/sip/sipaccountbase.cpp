@@ -142,7 +142,7 @@ addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey,
     a.emplace(maxKey, jami::to_string(range.second));
 }
 
-void SIPAccountBase::serialize(YAML::Emitter &out)
+void SIPAccountBase::serialize(YAML::Emitter &out) const
 {
     Account::serialize(out);
 
@@ -167,7 +167,7 @@ void SIPAccountBase::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::TURN_SERVER_REALM_KEY << YAML::Value << turnServerRealm_;
 }
 
-void SIPAccountBase::serializeTls(YAML::Emitter &out)
+void SIPAccountBase::serializeTls(YAML::Emitter &out) const
 {
     out << YAML::Key << Conf::CALIST_KEY << YAML::Value << tlsCaListFile_;
     out << YAML::Key << Conf::CERTIFICATE_KEY << YAML::Value << tlsCertificateFile_;

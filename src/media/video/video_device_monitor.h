@@ -69,8 +69,8 @@ class VideoDeviceMonitor : public Serializable
         /*
          * Interface to load from/store to the (YAML) configuration file.
          */
-        void serialize(YAML::Emitter &out);
-        virtual void unserialize(const YAML::Node &in);
+        void serialize(YAML::Emitter &out) const override;
+        virtual void unserialize(const YAML::Node &in) override;
 
     private:
         NON_COPYABLE(VideoDeviceMonitor);
