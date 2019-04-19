@@ -390,7 +390,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     return true;
 }
 
-void SIPAccount::serialize(YAML::Emitter &out)
+void SIPAccount::serialize(YAML::Emitter &out) const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
 

@@ -211,7 +211,7 @@ join_string(const std::vector<unsigned> &v)
 }
 
 void
-Account::serialize(YAML::Emitter& out)
+Account::serialize(YAML::Emitter& out) const
 {
     const auto& activeCodecs = join_string(getActiveCodecs(MEDIA_ALL));
 

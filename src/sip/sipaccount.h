@@ -116,7 +116,7 @@ class SIPAccount : public SIPAccountBase {
          * Serialize internal state of this account for configuration
          * @param out Emitter to which state will be saved
          */
-        virtual void serialize(YAML::Emitter &out) override;
+        virtual void serialize(YAML::Emitter &out) const override;
 
         /**
          * Populate the internal state for this account based on info stored in the configuration file

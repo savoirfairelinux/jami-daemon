@@ -105,7 +105,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         virtual void loadConfig() = 0;
 
-        virtual void serialize(YAML::Emitter &out);
+        virtual void serialize(YAML::Emitter &out) const;
         virtual void unserialize(const YAML::Node &node);
 
         /**
