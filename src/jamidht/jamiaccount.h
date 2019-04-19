@@ -397,6 +397,8 @@ class JamiAccount : public SIPAccountBase {
          */
         std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) override;
 
+        void saveConfig() const;
+
     private:
         NON_COPYABLE(JamiAccount);
 

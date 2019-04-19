@@ -305,7 +305,6 @@ class Manager {
          * Save config to file
          */
         void saveConfig();
-        void saveConfig(const std::shared_ptr<JamiAccount>&);
         void saveConfig(const std::shared_ptr<Account>& acc);
 
         /**

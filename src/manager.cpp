@@ -1717,26 +1717,9 @@ void
 Manager::saveConfig(const std::shared_ptr<Account>& acc)
 {
     if (auto ringAcc = std::dynamic_pointer_cast<JamiAccount>(acc))
-        saveConfig(ringAcc);
+        ringAcc->saveConfig();
     else
         saveConfig();
-}
-
-void
-Manager::saveConfig(const std::shared_ptr<JamiAccount>& account)
-{
-    try {
-        YAML::Emitter accountOut;
-        account->serialize(accountOut);
-        auto accountConfig = account->getPath() + DIR_SEPARATOR_STR + "config.yml";
-
-        std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
-        std::ofstream fout(accountConfig);
-        fout << accountOut.c_str();
-        JAMI_DBG("Exported account to %s", accountConfig.c_str());
-    } catch (const std::exception& e) {
-        JAMI_ERR("Error exporting account: %s", e.what());
-    }
 }
 
 void
