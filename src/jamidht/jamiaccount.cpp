@@ -1185,6 +1185,7 @@ JamiAccount::saveIdentity(const dht::crypto::Identity id, const std::string& pat
     return names;
 }
 
+// must be called while configurationMutex_ is locked
 void
 JamiAccount::loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password)
 {
@@ -1195,6 +1196,7 @@ JamiAccount::loadAccountFromArchive(AccountArchive&& archive, const std::string&
     doRegister();
 }
 
+// must be called while configurationMutex_ is locked
 void
 JamiAccount::loadAccountFromFile(const std::string& archive_path, const std::string& archive_password)
 {
@@ -1207,19 +1209,24 @@ JamiAccount::loadAccountFromFile(const std::string& archive_path, const std::str
         } catch (const std::exception& ex) {
             JAMI_WARN("[Account %s] can't read file: %s", accountId.c_str(), ex.what());
             runOnMainThread([w, accountId]() {
-                if (auto this_ = w.lock())
+                if (auto this_ = w.lock()) {
+                    std::lock_guard<std::mutex> lock(this_->configurationMutex_);
                     this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
+                }
                 Manager::instance().removeAccount(accountId);
             });
             return;
         }
         runOnMainThread([w, archive, archive_password]() mutable {
-            if (auto this_ = w.lock())
+            if (auto this_ = w.lock()) {
+                std::unique_lock<std::mutex> lock(this_->configurationMutex_);
                 this_->loadAccountFromArchive(std::move(archive), archive_password);
+            }
         });
     });
 }
 
+// must be called while configurationMutex_ is locked
 void
 JamiAccount::loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin)
 {
@@ -1251,6 +1258,7 @@ JamiAccount::loadAccountFromDHT(const std::string& archive_password, const std::
             bool network_error = !state_old->second && !state_new->second;
             if (auto this_ = w.lock()) {
                 JAMI_WARN("[Account %s] failure looking for archive on DHT: %s", this_->getAccountID().c_str(), network_error ? "network error" : "not found");
+                std::lock_guard<std::mutex> lock(this_->configurationMutex_);
                 this_->setRegistrationState(network_error ? RegistrationState::ERROR_NETWORK : RegistrationState::ERROR_GENERIC);
                 runOnMainThread([=]() {
                     Manager::instance().removeAccount(this_->getAccountID());
@@ -1278,6 +1286,7 @@ JamiAccount::loadAccountFromDHT(const std::string& archive_password, const std::
                     JAMI_DBG("Found archive on the DHT");
                     runOnMainThread([=]() {
                         if (auto this_ = w.lock()) {
+                            std::unique_lock<std::mutex> lock(this_->configurationMutex_);
                             try {
                                 *found =  true;
                                 this_->loadAccountFromArchive(AccountArchive(decrypted), archive_password);
@@ -1309,6 +1318,7 @@ JamiAccount::loadAccountFromDHT(const std::string& archive_password, const std::
     dht::ThreadPool::computation().run(std::bind(search, false, state_new));
 }
 
+// must be called while configurationMutex_ is locked
 void
 JamiAccount::createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate)
 {
@@ -1342,6 +1352,7 @@ JamiAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
                           a.id.second->getId().toString().c_str());
                 a.ca_key = ca.first;
             }
+            std::lock_guard<std::mutex> lock(this_.configurationMutex_);
             this_.ringAccountId_ = a.id.second->getId().toString();
             this_.username_ = RING_URI_PREFIX+this_.ringAccountId_;
             auto keypair = future_keypair.get();
@@ -1425,6 +1436,7 @@ JamiAccount::updateCertificates(AccountArchive& archive, dht::crypto::Identity& 
     return updated;
 }
 
+// must be called while configurationMutex_ is locked
 void
 JamiAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& device)
 {
@@ -1447,6 +1459,8 @@ JamiAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& devic
         Migration::setState(accountID_, Migration::State::INVALID);
 }
 
+
+// must be called while configurationMutex_ is locked
 void
 JamiAccount::loadAccount(const std::string& archive_password, const std::string& archive_pin, const std::string& archive_path)
 {
@@ -1684,8 +1698,10 @@ JamiAccount::registerName(const std::string& password, const std::string& name)
                   (response == NameDirectory::RegistrationResponse::invalidName)  ? 2 : (
                   (response == NameDirectory::RegistrationResponse::alreadyTaken) ? 3 : 4));
         if (response == NameDirectory::RegistrationResponse::success) {
-            if (auto this_ = w.lock())
+            if (auto this_ = w.lock()) {
+                std::unique_lock<std::mutex> lock(this_->configurationMutex_);
                 this_->registeredName_ = name;
+            }
         }
         emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
     }, signedName, publickey);
@@ -1955,17 +1971,16 @@ JamiAccount::doRegister()
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
         JAMI_DBG("UPnP: waiting for IGD to register RING account");
-        lock.unlock();
         setRegistrationState(RegistrationState::TRYING);
         std::thread{ [w=weak()] {
             if (auto acc = w.lock()) {
                 if (not acc->mapPortUPnP())
                     JAMI_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
+                std::unique_lock<std::mutex> lock(acc->configurationMutex_);
                 acc->doRegister_();
             }
         }}.detach();
     } else {
-        lock.unlock();
         doRegister_();
     }
 }
@@ -2087,11 +2102,10 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
     emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), contactId.toString(), 0,  "");
 }
 
+// must be called while configurationMutex_ is locked
 void
 JamiAccount::doRegister_()
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
-
     try {
         if (not identity_.first or not identity_.second)
             throw std::runtime_error("No identity configured for this account.");
@@ -2104,22 +2118,37 @@ JamiAccount::doRegister_()
         }
 
 #if HAVE_RINGNS
+        auto sig = std::make_shared<std::atomic_bool>(true);
         // Look for registered name on the blockchain
-        nameDir_.get().lookupAddress(ringAccountId_, [w=weak()](const std::string& result, const NameDirectory::Response& response) {
+        nameDir_.get().lookupAddress(ringAccountId_, [w=weak(), sig](const std::string& result, const NameDirectory::Response& response) {
             if (auto this_ = w.lock()) {
-                if (response == NameDirectory::Response::found) {
-                    if (this_->registeredName_ != result) {
-                        this_->registeredName_ = result;
-                        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(this_->accountID_, this_->getVolatileAccountDetails());
+                if (sig->load()) {
+                    if (response == NameDirectory::Response::found) {
+                        if (this_->registeredName_ != result)
+                            this_->registeredName_ = result;
+                    } else if (response == NameDirectory::Response::notFound) {
+                        if (not this_->registeredName_.empty())
+                            this_->registeredName_.clear();
                     }
-                } else if (response == NameDirectory::Response::notFound) {
-                    if (not this_->registeredName_.empty()) {
-                        this_->registeredName_.clear();
-                        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(this_->accountID_, this_->getVolatileAccountDetails());
+                } else {
+                    if (response == NameDirectory::Response::found) {
+                        std::unique_lock<std::mutex> lock(this_->configurationMutex_);
+                        if (this_->registeredName_ != result) {
+                            this_->registeredName_ = result;
+                            emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(this_->accountID_, this_->getVolatileAccountDetails());
+                        }
+                    } else if (response == NameDirectory::Response::notFound) {
+                        std::unique_lock<std::mutex> lock(this_->configurationMutex_);
+                        if (not this_->registeredName_.empty()) {
+                            this_->registeredName_.clear();
+                            emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(this_->accountID_, this_->getVolatileAccountDetails());
+                        }
                     }
                 }
             }
         });
+        sig->store(false);
+        sig.reset();
 #endif
 
         auto currentDhtStatus = std::make_shared<dht::NodeStatus>(dht::NodeStatus::Disconnected);
@@ -2147,6 +2176,7 @@ JamiAccount::doRegister_()
                     break;
             }
             *currentDhtStatus = newStatus;
+            std::unique_lock<std::mutex> lock(configurationMutex_);
             setRegistrationState(state);
         });
 
@@ -3361,12 +3391,14 @@ JamiAccount::igdChanged()
                 auto& this_ = *s;
                 if (not this_.mapPortUPnP())
                     JAMI_WARN("UPnP: Could not map DHT port");
+                std::unique_lock<std::mutex> lock(this_.configurationMutex_);
                 auto newPort = static_cast<in_port_t>(this_.dhtPortUsed_);
                 if (oldPort != newPort) {
                     JAMI_WARN("DHT port changed: restarting network");
                     this_.doRegister_();
-                } else
+                } else {
                     this_.dht_.connectivityChanged();
+                }
             }
         });
     } else
