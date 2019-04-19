@@ -17,6 +17,4 @@ rename %BUILD%\opendht-%OPENDHT_VERSION% opendht
 
 cd %BUILD%\opendht
 
-%APPLY_CMD% %SRC%\opendht\opendht-vs2017.patch
-
 cd %SRC%
