@@ -2124,8 +2124,64 @@ JamiAccount::doRegister_()
         });
 #endif
 
+        dht::DhtRunner::Config config {};
+        config.dht_config.node_config.network = 0;
+        config.dht_config.node_config.maintain_storage = false;
+        config.dht_config.node_config.persist_path = cachePath_+DIR_SEPARATOR_STR "dhtstate";
+        config.dht_config.id = identity_;
+        config.proxy_server = getDhtProxyServer();
+        config.push_node_id = getAccountID();
+        config.threaded = true;
+        config.peer_discovery = dhtPeerDiscovery_;
+        config.peer_publish = dhtPeerDiscovery_;
+        if (not config.proxy_server.empty())
+            JAMI_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
+
+        if (not deviceKey_.empty()) {
+            JAMI_WARN("[Account %s] using push notifications", getAccountID().c_str());
+            dht_.setPushNotificationToken(deviceKey_);
+        }
+
+        dht::DhtRunner::Context context {};
+        auto dht_log_level = Manager::instance().dhtLogLevel.load();
+        if (dht_log_level > 0) {
+            static auto silent = [](char const* /*m*/, va_list /*args*/) {};
+            static auto log_error = [](char const* m, va_list args) { Logger::vlog(LOG_ERR, nullptr, 0, true, m, args); };
+            static auto log_warn = [](char const* m, va_list args) { Logger::vlog(LOG_WARNING, nullptr, 0, true, m, args); };
+            static auto log_debug = [](char const* m, va_list args) { Logger::vlog(LOG_DEBUG, nullptr, 0, true, m, args); };
+#ifndef _MSC_VER
+            context.logger = std::make_unique<dht::Logger>(
+                log_error,
+                (dht_log_level > 1) ? log_warn : silent,
+                (dht_log_level > 2) ? log_debug : silent);
+#elif RING_UWP
+            static auto log_all = [](char const* m, va_list args) {
+                char tmp[2048];
+                vsprintf(tmp, m, args);
+                auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+                jami::emitSignal<DRing::DebugSignal::MessageSend>(std::to_string(now) + " " + std::string(tmp));
+            };
+            context.logger = std::make_unique<dht::Logger>(log_all, log_all, silent);
+#else
+            if (dht_log_level > 2) {
+                context.logger = std::make_unique<dht::Logger>(log_error, log_warn, log_debug);
+            } else if (dht_log_level > 1) {
+                context.logger = std::make_unique<dht::Logger>(log_error, log_warn, silent);
+            } else {
+                context.logger = std::make_unique<dht::Logger>(log_error, silent, silent);
+            }
+#endif
+        }
+        context.certificateStore = [](const dht::InfoHash& pk_id) {
+            std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
+            if (auto cert = tls::CertificateStore::instance().getCertificate(pk_id.toString()))
+                ret.emplace_back(std::move(cert));
+            JAMI_DBG("Query for local certificate store: %s: %zu found.", pk_id.toString().c_str(), ret.size());
+            return ret;
+        };
+
         auto currentDhtStatus = std::make_shared<dht::NodeStatus>(dht::NodeStatus::Disconnected);
-        dht_.setOnStatusChanged([this, currentDhtStatus](dht::NodeStatus s4, dht::NodeStatus s6) {
+        context.statusChangedCallback = [this, currentDhtStatus](dht::NodeStatus s4, dht::NodeStatus s6) {
             JAMI_DBG("[Account %s] Dht status : IPv4 %s; IPv6 %s", getAccountID().c_str(), dhtStatusStr(s4), dhtStatusStr(s6));
             RegistrationState state;
             auto newStatus = std::max(s4, s6);
@@ -2150,70 +2206,11 @@ JamiAccount::doRegister_()
             }
             *currentDhtStatus = newStatus;
             setRegistrationState(state);
-        });
-
-        dht::DhtRunner::Config config {};
-        config.dht_config.node_config.network = 0;
-        config.dht_config.node_config.maintain_storage = false;
-        config.dht_config.id = identity_;
-        config.proxy_server = getDhtProxyServer();
-        config.push_node_id = getAccountID();
-        config.threaded = true;
-        config.peer_discovery = dhtPeerDiscovery_;
-        config.peer_publish = dhtPeerDiscovery_;
-        if (not config.proxy_server.empty())
-            JAMI_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
-
-        if (not deviceKey_.empty()) {
-            JAMI_WARN("[Account %s] using push notifications", getAccountID().c_str());
-            dht_.setPushNotificationToken(deviceKey_);
-        }
-
-        dht_.run((in_port_t)dhtPortUsed_, config);
-
-        dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
-            std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
-            if (auto cert = tls::CertificateStore::instance().getCertificate(pk_id.toString()))
-                ret.emplace_back(std::move(cert));
-            JAMI_DBG("Query for local certificate store: %s: %zu found.", pk_id.toString().c_str(), ret.size());
-            return ret;
-        });
-
-        auto dht_log_level = Manager::instance().dhtLogLevel.load();
-        if (dht_log_level > 0) {
-            static auto silent = [](char const* /*m*/, va_list /*args*/) {};
-            static auto log_error = [](char const* m, va_list args) { Logger::vlog(LOG_ERR, nullptr, 0, true, m, args); };
-            static auto log_warn = [](char const* m, va_list args) { Logger::vlog(LOG_WARNING, nullptr, 0, true, m, args); };
-            static auto log_debug = [](char const* m, va_list args) { Logger::vlog(LOG_DEBUG, nullptr, 0, true, m, args); };
-#ifndef _MSC_VER
-            dht_.setLoggers(
-                log_error,
-                (dht_log_level > 1) ? log_warn : silent,
-                (dht_log_level > 2) ? log_debug : silent);
-#elif RING_UWP
-            static auto log_all = [](char const* m, va_list args) {
-                char tmp[2048];
-                vsprintf(tmp, m, args);
-                auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-                jami::emitSignal<DRing::DebugSignal::MessageSend>(std::to_string(now) + " " + std::string(tmp));
-            };
-            dht_.setLoggers(log_all, log_all, silent);
-#else
-            if (dht_log_level > 2) {
-                dht_.setLoggers(log_error, log_warn, log_debug);
-            } else if (dht_log_level > 1) {
-                dht_.setLoggers(log_error, log_warn, silent);
-            } else {
-                dht_.setLoggers(log_error, silent, silent);
-            }
-#endif
-        }
-
-        dht_.importValues(loadValues());
+        };
 
         setRegistrationState(RegistrationState::TRYING);
+        dht_.run((in_port_t)dhtPortUsed_, config, std::move(context));
 
-        dht_.bootstrap(loadNodes());
         auto bootstrap = loadBootstrap();
         if (not bootstrap.empty())
             dht_.bootstrap(bootstrap);
@@ -2603,6 +2600,10 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     JAMI_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
+    dht_.shutdown([this](){
+        JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str());
+    });
+
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.clear();
@@ -2615,8 +2616,6 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         upnp_->removeMappings();
     }
 
-    saveNodes(dht_.exportNodes());
-    saveValues(dht_.exportValues());
     dht_.join();
 
     lock.unlock();
