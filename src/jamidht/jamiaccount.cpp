@@ -2155,6 +2155,7 @@ JamiAccount::doRegister_()
         dht::DhtRunner::Config config {};
         config.dht_config.node_config.network = 0;
         config.dht_config.node_config.maintain_storage = false;
+        config.dht_config.node_config.persist_path = cachePath_+DIR_SEPARATOR_STR "dhtstate";
         config.dht_config.id = identity_;
         config.proxy_server = getDhtProxyServer();
         config.push_node_id = getAccountID();
@@ -2169,6 +2170,7 @@ JamiAccount::doRegister_()
             dht_.setPushNotificationToken(deviceKey_);
         }
 
+        setRegistrationState(RegistrationState::TRYING);
         dht_.run((in_port_t)dhtPortUsed_, config);
 
         dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
@@ -2209,11 +2211,6 @@ JamiAccount::doRegister_()
 #endif
         }
 
-        dht_.importValues(loadValues());
-
-        setRegistrationState(RegistrationState::TRYING);
-
-        dht_.bootstrap(loadNodes());
         auto bootstrap = loadBootstrap();
         if (not bootstrap.empty())
             dht_.bootstrap(bootstrap);
@@ -2603,6 +2600,10 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     JAMI_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
+    dht_.shutdown([this](){
+        JAMI_WARN("[Account %s] dht shutdown complete", getAccountID().c_str());
+    });
+
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.clear();
@@ -2615,8 +2616,6 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         upnp_->removeMappings();
     }
 
-    saveNodes(dht_.exportNodes());
-    saveValues(dht_.exportValues());
     dht_.join();
 
     lock.unlock();
