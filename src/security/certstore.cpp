@@ -22,9 +22,10 @@
 
 #include "client/ring_signal.h"
 
-#include "thread_pool.h"
 #include "fileutils.h"
 #include "logger.h"
+
+#include <opendht/thread_pool.h>
 
 #include <thread>
 #include <sstream>
@@ -202,7 +203,7 @@ readCertificates(const std::string& path, const std::string& crl_path)
 void
 CertificateStore::pinCertificatePath(const std::string& path, std::function<void(const std::vector<std::string>&)> cb)
 {
-    ThreadPool::instance().run([&, path, cb]() {
+    dht::ThreadPool::computation().run([&, path, cb]() {
         auto certs = readCertificates(path, crlPath_);
         std::vector<std::string> ids;
         std::vector<std::weak_ptr<crypto::Certificate>> scerts;

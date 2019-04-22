@@ -25,11 +25,12 @@
 #include "media_io_handle.h"
 #include "media_recorder.h"
 #include "system_codec_container.h"
-#include "thread_pool.h"
 #include "video/filter_transpose.h"
 #ifdef RING_ACCEL
 #include "video/accel.h"
 #endif
+
+#include <opendht/thread_pool.h>
 
 #include <algorithm>
 #include <iomanip>
@@ -153,7 +154,7 @@ MediaRecorder::startRecording()
     if (initRecord() >= 0) {
         isRecording_ = true;
         // start thread after isRecording_ is set to true
-        ThreadPool::instance().run([rec = shared_from_this()] {
+        dht::ThreadPool::computation().run([rec = shared_from_this()] {
             while (rec->isRecording()) {
                 rec->filterAndEncode(rec->videoFilter_.get(), rec->videoIdx_);
                 rec->filterAndEncode(rec->audioFilter_.get(), rec->audioIdx_);
