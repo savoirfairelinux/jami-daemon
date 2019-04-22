@@ -1716,7 +1716,7 @@ JamiAccount::handlePendingCallList()
         if (handled) {
             // Cancel pending listen (outgoing call)
             if (not incoming)
-                dht_.cancelListen(pc_iter->call_key, pc_iter->listen_key.share());
+                dht_.cancelListen(pc_iter->call_key, std::move(pc_iter->listen_key));
             pc_iter = pending_calls.erase(pc_iter);
         } else
             ++pc_iter;
@@ -3435,6 +3435,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     auto now = clock::to_time_t(clock::now());
 
     struct PendingConfirmation {
+        std::mutex lock;
         bool replied {false};
         std::map<dht::InfoHash, std::future<size_t>> listenTokens {};
     };
@@ -3450,6 +3451,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         }
 
         auto h = dht::InfoHash::get("inbox:"+dev.toString());
+        std::lock_guard<std::mutex> l(confirm->lock);
         auto list_token = dht_.listen<dht::ImMessage>(h, [this, to, token, confirm](dht::ImMessage&& msg) {
             // check expected message confirmation
             if (msg.id != token)
@@ -3473,10 +3475,13 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             saveTreatedMessages();
 
             // report message as confirmed received
-            for (auto& t : confirm->listenTokens)
-                dht_.cancelListen(t.first, t.second.get());
-            confirm->listenTokens.clear();
-            confirm->replied = true;
+            {
+                std::lock_guard<std::mutex> l(confirm->lock);
+                for (auto& t : confirm->listenTokens)
+                    dht_.cancelListen(t.first, std::move(t.second));
+                confirm->listenTokens.clear();
+                confirm->replied = true;
+            }
             messageEngine_.onMessageSent(to, token, true);
             return false;
         });
@@ -3486,13 +3491,16 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             [this,to,token,confirm,h](bool ok) {
                 JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token << "] Put encrypted " << (ok ? "ok" : "failed");
                 if (not ok) {
+                    std::unique_lock<std::mutex> l(confirm->lock);
                     auto lt = confirm->listenTokens.find(h);
                     if (lt != confirm->listenTokens.end()) {
-                        dht_.cancelListen(h, lt->second.get());
+                        dht_.cancelListen(h, std::move(lt->second));
                         confirm->listenTokens.erase(lt);
                     }
-                    if (confirm->listenTokens.empty() and not confirm->replied)
+                    if (confirm->listenTokens.empty() and not confirm->replied) {
+                        l.unlock();
                         messageEngine_.onMessageSent(to, token, false);
+                    }
                 }
             });
 
@@ -3505,13 +3513,15 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
     // Timeout cleanup
     Manager::instance().scheduleTask([w=weak(), confirm, to, token]() {
+        std::unique_lock<std::mutex> l(confirm->lock);
         if (not confirm->replied) {
             if (auto this_ = w.lock()) {
                 JAMI_DBG() << "[Account " << this_->getAccountID() << "] [message " << token << "] Timeout";
                 for (auto& t : confirm->listenTokens)
-                    this_->dht_.cancelListen(t.first, t.second.get());
+                    this_->dht_.cancelListen(t.first, std::move(t.second));
                 confirm->listenTokens.clear();
                 confirm->replied = true;
+                l.unlock();
                 this_->messageEngine_.onMessageSent(to, token, false);
             }
         }
