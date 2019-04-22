@@ -158,15 +158,21 @@ Account::setRegistrationState(RegistrationState state, unsigned detail_code, con
     if (state != registrationState_) {
         registrationState_ = state;
         // Notify the client
-        emitSignal<DRing::ConfigurationSignal::RegistrationStateChanged>(
-            accountID_,
-            mapStateNumberToString(registrationState_),
-            detail_code,
-            detail_str);
+        runOnMainThread([
+                accountId = accountID_,
+                state = mapStateNumberToString(registrationState_),
+                detail_code,
+                detail_str,
+                details = getVolatileAccountDetails()
+        ]{
+            emitSignal<DRing::ConfigurationSignal::RegistrationStateChanged>(
+                accountId,
+                state,
+                detail_code,
+                detail_str);
 
-        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-            accountID_,
-            getVolatileAccountDetails());
+            emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountId, details);
+        });
     }
 }
 
