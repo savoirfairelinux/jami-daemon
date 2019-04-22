@@ -40,7 +40,6 @@
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
 #include "ice_transport.h"
-#include "thread_pool.h"
 
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
@@ -52,6 +51,7 @@
 #include "errno.h"
 
 #include <opendht/crypto.h>
+#include <opendht/thread_pool.h>
 
 namespace jami {
 
@@ -800,7 +800,7 @@ void
 SIPCall::sendKeyframe()
 {
 #ifdef ENABLE_VIDEO
-    ThreadPool::instance().run([w = weak()] {
+    dht::ThreadPool::computation().run([w = weak()] {
         if (auto sthis = w.lock()) {
             JAMI_DBG("handling picture fast update request");
             sthis->getVideoRtp().forceKeyFrame();

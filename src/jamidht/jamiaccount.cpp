@@ -32,7 +32,6 @@
 #include "accountarchive.h"
 #include "ringcontact.h"
 #include "configkeys.h"
-#include "thread_pool.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -69,6 +68,7 @@
 #include "libdevcrypto/Common.h"
 #include "base64.h"
 
+#include <opendht/thread_pool.h>
 #include <yaml-cpp/yaml.h>
 #include <json/json.h>
 
@@ -1064,7 +1064,7 @@ generatePIN(size_t length = 8)
 void
 JamiAccount::addDevice(const std::string& password)
 {
-    ThreadPool::instance().run([this_=shared(), password]() {
+    dht::ThreadPool::computation().run([this_=shared(), password]() {
         std::vector<uint8_t> key;
         dht::InfoHash loc;
         std::string pin_str;
@@ -1137,7 +1137,7 @@ bool
 JamiAccount::revokeDevice(const std::string& password, const std::string& device)
 {
     // shared_ptr of future
-    auto fa = ThreadPool::instance().getShared<AccountArchive>(
+    auto fa = dht::ThreadPool::computation().getShared<AccountArchive>(
         [this, password] { return readArchive(password); });
     findCertificate(dht::InfoHash(device),
                     [this,fa=std::move(fa),password,device](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable
@@ -1199,7 +1199,7 @@ JamiAccount::loadAccountFromFile(const std::string& archive_path, const std::str
 {
     setRegistrationState(RegistrationState::INITIALIZING);
     auto accountId = getAccountID();
-    ThreadPool::instance().run([w=weak(), archive_password, archive_path, accountId]{
+    dht::ThreadPool::computation().run([w=weak(), archive_password, archive_path, accountId]{
         AccountArchive archive;
         try {
             archive = AccountArchive(archive_path, archive_password);
@@ -1304,8 +1304,8 @@ JamiAccount::loadAccountFromDHT(const std::string& archive_password, const std::
         }
     };
 
-    ThreadPool::instance().run(std::bind(search, true, state_old));
-    ThreadPool::instance().run(std::bind(search, false, state_new));
+    dht::ThreadPool::computation().run(std::bind(search, true, state_old));
+    dht::ThreadPool::computation().run(std::bind(search, false, state_new));
 }
 
 void
@@ -1313,11 +1313,11 @@ JamiAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
 {
     JAMI_WARN("[Account %s] creating new account", getAccountID().c_str());
     setRegistrationState(RegistrationState::INITIALIZING);
-    ThreadPool::instance().run([sthis=shared(), archive_password, migrate]() mutable {
+    dht::ThreadPool::computation().run([sthis=shared(), archive_password, migrate]() mutable {
         AccountArchive a;
         auto& this_ = *sthis;
 
-        auto future_keypair = ThreadPool::instance().get<dev::KeyPair>(std::bind(&dev::KeyPair::create));
+        auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(std::bind(&dev::KeyPair::create));
         try {
             if (migrate.first and migrate.second) {
                 JAMI_WARN("[Account %s] converting certificate from old ring account %s",
@@ -2733,7 +2733,7 @@ JamiAccount::loadTreatedMessages()
 void
 JamiAccount::saveTreatedMessages() const
 {
-    ThreadPool::instance().run([w = weak()](){
+    dht::ThreadPool::io().run([w = weak()](){
         if (auto sthis = w.lock()) {
             auto& this_ = *sthis;
             std::lock_guard<std::mutex> lock(this_.messageMutex_);
@@ -2963,7 +2963,7 @@ JamiAccount::generateDhParams()
 {
     //make sure cachePath_ is writable
     fileutils::check_dir(cachePath_.c_str(), 0700);
-    dhParams_ = ThreadPool::instance().get<tls::DhParams>(std::bind(loadDhParams, cachePath_ + DIR_SEPARATOR_STR "dhParams"));
+    dhParams_ = dht::ThreadPool::computation().get<tls::DhParams>(std::bind(loadDhParams, cachePath_ + DIR_SEPARATOR_STR "dhParams"));
 }
 
 MatchRank
@@ -3353,17 +3353,19 @@ JamiAccount::igdChanged()
     if (not dht_.isRunning())
         return;
     if (upnp_) {
-        std::thread{[s = shared(), oldPort = static_cast<in_port_t>(dhtPortUsed_)] {
-            auto& this_ = *s;
-            if (not this_.mapPortUPnP())
-                JAMI_WARN("UPnP: Could not map DHT port");
-            auto newPort = static_cast<in_port_t>(this_.dhtPortUsed_);
-            if (oldPort != newPort) {
-                JAMI_WARN("DHT port changed: restarting network");
-                this_.doRegister_();
-            } else
-                this_.dht_.connectivityChanged();
-        }}.detach();
+        dht::ThreadPool::io().run([w = weak(), oldPort = static_cast<in_port_t>(dhtPortUsed_)] {
+            if (auto s = w.lock()) {
+                auto& this_ = *s;
+                if (not this_.mapPortUPnP())
+                    JAMI_WARN("UPnP: Could not map DHT port");
+                auto newPort = static_cast<in_port_t>(this_.dhtPortUsed_);
+                if (oldPort != newPort) {
+                    JAMI_WARN("DHT port changed: restarting network");
+                    this_.doRegister_();
+                } else
+                    this_.dht_.connectivityChanged();
+            }
+        });
     } else
         dht_.connectivityChanged();
 }
