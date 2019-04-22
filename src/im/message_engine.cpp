@@ -20,12 +20,12 @@
 #include "message_engine.h"
 #include "sip/sipaccountbase.h"
 #include "manager.h"
-#include "thread_pool.h"
 #include "fileutils.h"
 
 #include "client/ring_signal.h"
 #include "dring/account_const.h"
 
+#include <opendht/thread_pool.h>
 #include <json/json.h>
 
 #include <fstream>
@@ -252,7 +252,7 @@ MessageEngine::save_() const
             root[c.first] = std::move(peerRoot);
         }
         // Save asynchronously
-        ThreadPool::instance().run([path = savePath_,
+        dht::ThreadPool::computation().run([path = savePath_,
                                     root = std::move(root),
                                     accountID = account_.getAccountID(),
                                     messageNum = messages_.size()]

@@ -101,14 +101,12 @@ libring_la_SOURCES = \
 		fileutils.cpp \
 		archiver.cpp \
 		threadloop.cpp \
-		thread_pool.cpp \
 		ip_utils.h \
 		ip_utils.cpp \
 		utf8_utils.cpp \
 		ice_transport.cpp \
 		ice_transport.h \
 		threadloop.h \
-		thread_pool.h \
 		conference.h \
 		account_factory.h \
 		call_factory.h \
