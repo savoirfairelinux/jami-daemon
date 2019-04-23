@@ -5,17 +5,17 @@ Subject: [PATCH 1/1] RFC 2466: ignore deprecated candidates for new ICE
  candidates
 
 ---
- pjnath/src/pjnath/ice_session.c | 162 ++++++++++++++++++++++++++++++++
+ pjnath/src/pjnath/ice_session.c | 162 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
  1 file changed, 162 insertions(+)
 
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 63a0d1c9..6cae6b2e 100644
+index c51dba77..a5c7a5b0 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -29,6 +29,21 @@
  #include <pj/rand.h>
  #include <pj/string.h>
-
+ 
 +#if defined(_WIN32) || defined(__APPLE__)
 +/* TODO(sblin): find an alternative for these paltforms */
 +#else
@@ -37,7 +37,7 @@ index 63a0d1c9..6cae6b2e 100644
 @@ -701,6 +716,128 @@ static pj_uint32_t CALC_CAND_PRIO(pj_ice_sess *ice,
  #endif
  }
-
+ 
 +/* retrieve invalid addresses and store it in a string */
 +static PJ_DEF(void) get_invalid_addresses(char** addresses, size_t* size)
 +{
@@ -149,18 +149,18 @@ index 63a0d1c9..6cae6b2e 100644
 +
 +    close(fd);
 +    *size = idx;
-+    char *final = realloc(deprecatedAddrs, idx*sizeof(char)*PJ_INET6_ADDRSTRLEN);
-+    if (!final) {
-+      perror("realloc error: abort");
-+      return;
-+    } else {
-+      *addresses = final;
++    if (idx > 0) {
++        char *final = realloc(deprecatedAddrs, idx*sizeof(char)*PJ_INET6_ADDRSTRLEN);
++        if (final) {
++            *addresses = final;
++        } else {
++            perror("realloc error: abort");
++        }
 +    }
 +#endif
 +}
 +
-+
-
+ 
  /*
   * Add ICE candidate
 @@ -717,6 +854,31 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
@@ -195,5 +195,3 @@ index 63a0d1c9..6cae6b2e 100644
      pj_ice_sess_cand *lcand;
      pj_status_t status = PJ_SUCCESS;
      char address[PJ_INET6_ADDRSTRLEN];
---
-2.17.1
