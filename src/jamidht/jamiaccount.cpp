@@ -1028,7 +1028,7 @@ JamiAccount::computeKeys(const std::string& password, const std::string& pin, bo
 {
     // Compute time seed
     auto now = std::chrono::duration_cast<std::chrono::seconds>(clock::now().time_since_epoch());
-    auto tseed = now.count() / std::chrono::duration_cast<std::chrono::seconds>(EXPORT_KEY_RENEWAL_TIME).count();
+    auto tseed = now.count() / std::chrono::seconds(EXPORT_KEY_RENEWAL_TIME).count();
     if (previous)
         tseed--;
     std::stringstream ss;
