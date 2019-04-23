@@ -2059,7 +2059,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
 }
 
 std::map<std::string, bool>
-JamiAccount::getTrackedBuddyPresence()
+JamiAccount::getTrackedBuddyPresence() const
 {
     std::lock_guard<std::mutex> lock(buddyInfoMtx);
     std::map<std::string, bool> presence_info;
