@@ -161,7 +161,7 @@ class JamiAccount : public SIPAccountBase {
          *
          * @return map of buddy_uri to bool (online or not)
          */
-        std::map<std::string, bool> getTrackedBuddyPresence();
+        std::map<std::string, bool> getTrackedBuddyPresence() const;
 
         /**
          * Connect to the DHT.
