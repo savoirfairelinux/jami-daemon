@@ -200,7 +200,7 @@ class SIPPresence {
 
         bool isSupported(int function);
 
-        std::list< PresSubClient *> getClientSubscriptions() {
+        const std::list< PresSubClient *>& getClientSubscriptions() const {
             return sub_client_list_;
         }
 
