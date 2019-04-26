@@ -19,10 +19,14 @@ libringacc_la_SOURCES = \
         accountarchive.cpp \
         accountarchive.h \
         p2p.cpp \
-        p2p.h
+        p2p.h \
+        contact_list.h \
+        contact_list.cpp
 
 if RINGNS
 libringacc_la_SOURCES += \
         namedirectory.cpp \
         namedirectory.h
 endif
+
+nobase_include_HEADERS= jami_contact.h
