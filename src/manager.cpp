@@ -34,7 +34,6 @@
 
 #include "logger.h"
 #include "account_schema.h"
-#include "thread_pool.h"
 
 #include "fileutils.h"
 #include "map_utils.h"
@@ -80,6 +79,8 @@ using random_device = dht::crypto::random_device;
 #include "audio/tonecontrol.h"
 
 #include "data_transfer.h"
+
+#include <opendht/thread_pool.h>
 
 #ifndef WIN32
 #include <sys/time.h>
@@ -823,9 +824,10 @@ Manager::finish() noexcept
 
         // Flush remaining tasks (free lambda' with capture)
         pimpl_->scheduler_.stop();
+        dht::ThreadPool::io().join();
+        dht::ThreadPool::computation().join();
 
         pj_shutdown();
-        ThreadPool::instance().join();
     } catch (const VoipLinkException &err) {
         JAMI_ERR("%s", err.what());
     }
@@ -2835,7 +2837,7 @@ Manager::loadAccountMap(const YAML::Node& node)
             continue;
         }
         remaining++;
-        ThreadPool::instance().run([
+        dht::ThreadPool::computation().run([
             this, dir,
             &cv, &remaining, &lock,
             configFile = accountBaseDir + DIR_SEPARATOR_STR + dir + DIR_SEPARATOR_STR + "config.yml"
