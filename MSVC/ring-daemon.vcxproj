@@ -830,7 +830,6 @@
     <ClCompile Include="..\src\smartools.cpp" />
     <ClCompile Include="..\src\string_utils.cpp" />
     <ClCompile Include="..\src\threadloop.cpp" />
-    <ClCompile Include="..\src\thread_pool.cpp" />
     <ClCompile Include="..\src\turn_transport.cpp" />
     <ClCompile Include="..\src\upnp\upnp_context.cpp" />
     <ClCompile Include="..\src\upnp\upnp_control.cpp" />
@@ -993,7 +992,6 @@
     <ClInclude Include="..\src\smartools.h" />
     <ClInclude Include="..\src\string_utils.h" />
     <ClInclude Include="..\src\threadloop.h" />
-    <ClInclude Include="..\src\thread_pool.h" />
     <ClInclude Include="..\src\turn_transport.h" />
     <ClInclude Include="..\src\upnp\upnp_context.h" />
     <ClInclude Include="..\src\upnp\upnp_control.h" />

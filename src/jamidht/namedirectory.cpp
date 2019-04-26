@@ -20,10 +20,10 @@
 
 #include "logger.h"
 #include "string_utils.h"
-#include "thread_pool.h"
 #include "fileutils.h"
 #include "base64.h"
 
+#include <opendht/thread_pool.h>
 #include <opendht/crypto.h>
 #include <msgpack.hpp>
 #include <json/json.h>
@@ -166,7 +166,7 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         }).share();
 
         // avoid blocking on future destruction
-        ThreadPool::instance().run([ret](){ ret.get(); });
+        dht::ThreadPool::io().run([ret](){ ret.get(); });
     } catch (const std::exception& e) {
         JAMI_ERR("Error when performing address lookup: %s", e.what());
         cb("", Response::error);
@@ -265,7 +265,7 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         }).share();
 
         // avoid blocking on future destruction
-        ThreadPool::instance().run([ret](){ ret.get(); });
+        dht::ThreadPool::io().run([ret](){ ret.get(); });
     } catch (const std::exception& e) {
         JAMI_ERR("Error when performing name lookup: %s", e.what());
         cb("", Response::error);
@@ -367,8 +367,8 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
             }
         }, params).share();
 
-    // avoid blocking on future destruction
-        ThreadPool::instance().run([ret](){ ret.get(); });
+        // avoid blocking on future destruction
+        dht::ThreadPool::io().run([ret](){ ret.get(); });
     } catch (const std::exception& e) {
         JAMI_ERR("Error when performing name registration: %s", e.what());
         cb(RegistrationResponse::error);
