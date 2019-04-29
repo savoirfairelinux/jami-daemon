@@ -135,7 +135,7 @@ registerSignalHandlers(const std::map<std::string,
             JAMI_ERR("Signal %s not supported", item.first.c_str());
             continue;
         }
-        iter->second = std::move(item.second);
+        iter->second = item.second;
     }
 }
 

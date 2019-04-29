@@ -125,7 +125,7 @@ AccountFactory::getAllAccounts() const
 
     for (const auto& itemmap : accountMaps_) {
         const auto& map = itemmap.second;
-        for (const auto item : map)
+        for (const auto& item : map)
             v.push_back(item.second);
     }
 
