@@ -146,23 +146,19 @@ MediaEncoderTest::testMultiStream()
     const constexpr int nbChannels = 2;
     const constexpr int width = 320;
     const constexpr int height = 240;
-    std::map<std::string, std::string> options;
-    options["title"] = "Encoder Unit Test";
-    options["description"] = "Description goes here";
-    options["sample_rate"] = std::to_string(sampleRate);
-    options["channels"] = std::to_string(nbChannels);
-    options["width"] = std::to_string(width);
-    options["height"] = std::to_string(height);
     auto vp8Codec = std::static_pointer_cast<jami::SystemVideoCodecInfo>(
         getSystemCodecContainer()->searchCodecByName("VP8", jami::MEDIA_VIDEO)
     );
     auto opusCodec = std::static_pointer_cast<SystemAudioCodecInfo>(
         getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO)
     );
+    auto v = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 1, 30);
+    auto a = MediaStream("a", AV_SAMPLE_FMT_S16, rational<int>(1, sampleRate), sampleRate, nbChannels, 960);
 
     try {
         encoder_->openOutput("test.mkv");
-        encoder_->setOptions(options);
+        encoder_->setOptions(v);
+        encoder_->setOptions(a);
         int videoIdx = encoder_->addStream(*vp8Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
         CPPUNIT_ASSERT(encoder_->getStreamCount() == 1);
@@ -171,7 +167,6 @@ MediaEncoderTest::testMultiStream()
         CPPUNIT_ASSERT(videoIdx != audioIdx);
         CPPUNIT_ASSERT(encoder_->getStreamCount() == 2);
         encoder_->setIOContext(nullptr);
-        encoder_->startIO();
         int sentSamples = 0;
         AVFrame* audio = nullptr;
         AVFrame* video = nullptr;
