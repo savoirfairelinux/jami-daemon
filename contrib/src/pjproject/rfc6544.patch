@@ -1376,7 +1376,7 @@ index c51dba771..b96390613 100644
  	    c->state == PJ_ICE_SESS_CHECK_STATE_WAITING)
  	{
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 54ef8ba69..21be04bfe 100644
+index 54ef8ba69..f2d0aa5ed 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
 @@ -69,6 +69,7 @@ enum tp_type
@@ -2140,14 +2140,14 @@ index 54ef8ba69..21be04bfe 100644
 +    return;
 +  }
 +  data = (sock_user_data *)pj_stun_sock_get_user_data(stun_sock);
-+  if (data == NULL) {
++  if (!data) {
 +    /* We have disassociated ourselves from the STUN socket */
 +    return;
 +  }
 +
 +  comp = data->comp;
 +  ice_st = comp->ice_st;
-+  if (ice_st == NULL) {
++  if (!ice_st || !ice_st->ice) {
 +	  // Incorrect ICE
 +	  return;
 +  }
