@@ -159,19 +159,20 @@ MediaEncoderTest::testMultiStream()
     auto opusCodec = std::static_pointer_cast<SystemAudioCodecInfo>(
         getSystemCodecContainer()->searchCodecByName("opus", jami::MEDIA_AUDIO)
     );
+    auto v = MediaStream("v", AV_PIX_FMT_YUV420P, rational<int>(1, 30), width, height, 1, 30);
+    auto a = MediaStream("a", AV_SAMPLE_FMT_S16, rational<int>(1, sampleRate), sampleRate, nbChannels, 960);
 
     try {
         encoder_->openOutput("test.mkv");
-        encoder_->setOptions(options);
+        encoder_->setOptions(v);
+        encoder_->setOptions(a);
         int videoIdx = encoder_->addStream(*vp8Codec.get());
         CPPUNIT_ASSERT(videoIdx >= 0);
-        CPPUNIT_ASSERT(encoder_->getStreamCount() == 1);
         int audioIdx = encoder_->addStream(*opusCodec.get());
         CPPUNIT_ASSERT(audioIdx >= 0);
         CPPUNIT_ASSERT(videoIdx != audioIdx);
         CPPUNIT_ASSERT(encoder_->getStreamCount() == 2);
         encoder_->setIOContext(nullptr);
-        encoder_->startIO();
         int sentSamples = 0;
         AVFrame* audio = nullptr;
         AVFrame* video = nullptr;
