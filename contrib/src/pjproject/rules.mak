@@ -67,6 +67,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/rfc6062.patch
 	$(APPLY) $(SRC)/pjproject/rfc6544.patch
 	$(APPLY) $(SRC)/pjproject/ice_config.patch
+	$(APPLY) $(SRC)/pjproject/debug.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 

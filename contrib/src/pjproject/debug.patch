@@ -1,0 +1,24 @@
+ pjnath/src/pjnath/ice_strans.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 21be04bf..f2d0aa5e 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -1939,14 +1939,14 @@ static void on_peer_connection(pj_stun_session* sess, pj_status_t status, pj_soc
+     return;
+   }
+   data = (sock_user_data *)pj_stun_sock_get_user_data(stun_sock);
+-  if (data == NULL) {
++  if (!data) {
+     /* We have disassociated ourselves from the STUN socket */
+     return;
+   }
+ 
+   comp = data->comp;
+   ice_st = comp->ice_st;
+-  if (ice_st == NULL) {
++  if (!ice_st || !ice_st->ice) {
+ 	  // Incorrect ICE
+ 	  return;
+   }
