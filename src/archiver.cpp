@@ -77,7 +77,7 @@ accountToJsonValue(const std::map<std::string, std::string>& details) {
             // replace paths by the files content
             std::ifstream ifs(i.second);
             std::string fileContent((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-            root[i.first] = std::move(fileContent);
+            root[i.first] = fileContent;
         } else
             root[i.first] = i.second;
     }

@@ -475,7 +475,7 @@ VideoInput::initAVFoundation(const std::string& display)
 
 
 bool
-VideoInput::initGdiGrab(std::string params)
+VideoInput::initGdiGrab(const std::string& params)
 {
     size_t space = params.find(' ');
     clearOptions();

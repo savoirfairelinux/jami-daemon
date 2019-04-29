@@ -999,7 +999,7 @@ IceTransport::start(const std::vector<uint8_t>& rem_data)
                 IceCandidate cand;
                 for (const auto& line : result.get().as<std::vector<std::string>>()) {
                     if (getCandidateFromSDP(line, cand))
-                        rem_candidates.emplace_back(std::move(cand));
+                        rem_candidates.emplace_back(cand);
                 }
             }
         } else {
