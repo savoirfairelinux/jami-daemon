@@ -726,7 +726,7 @@ MediaEncoder::enableAccel(bool enableAccel)
 unsigned
 MediaEncoder::getStreamCount() const
 {
-    if (outputCtx_)
+    if (audioOpts_.isValid() && videoOpts_.isValid())
         return outputCtx_->nb_streams;
     else
         return 0;
