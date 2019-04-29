@@ -73,6 +73,7 @@ struct AccountArchive;
 class DhtPeerConnector;
 class PeerConnection;
 class ContactList;
+class AccountManager;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -498,6 +499,7 @@ private:
 
     dht::DhtRunner dht_ {};
     dht::crypto::Identity identity_ {};
+    std::unique_ptr<AccountManager> accountManager_;
 
     dht::InfoHash callKey_;
 
@@ -526,7 +528,6 @@ private:
     std::string idPath_ {};
     std::string cachePath_ {};
     std::string dataPath_ {};
-    std::string ethPath_ {};
     std::string ethAccount_ {};
 
     std::string archivePath_ {};
