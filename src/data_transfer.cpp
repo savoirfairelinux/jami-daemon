@@ -272,7 +272,7 @@ private:
 SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
                                            const std::string& peerUri,
                                            std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo)
-    : DataTransfer(tid), metaInfo_(metaInfo), peerUri_(peerUri)
+    : DataTransfer(tid), metaInfo_(std::move(metaInfo)), peerUri_(peerUri)
 {
 
     info_ = metaInfo_->info();

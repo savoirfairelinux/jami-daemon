@@ -239,7 +239,7 @@ public:
                     JAMI_DBG("[Account:%s] add remote ICE candidate: %s",
                             account.getAccountID().c_str(),
                             line.c_str());
-                    res.rem_candidates.emplace_back(std::move(cand));
+                    res.rem_candidates.emplace_back(cand);
                 }
             }
             nr++;
@@ -546,9 +546,9 @@ DhtPeerConnector::Impl::turnConnect()
 
     // If a previous turn server exists, but is not ready, we should try to reconnect
     if (turnAuthv4_ && !turnAuthv4_->isReady())
-        turnAuthv4_.release();
+        turnAuthv4_.reset();
     if (turnAuthv6_ && !turnAuthv6_->isReady())
-        turnAuthv6_.release();
+        turnAuthv6_.reset();
 
     if (!turnAuthv4_ || !turnAuthv4_->isReady()) {
         turn_param_v4.authorized_family = PJ_AF_INET;

@@ -43,7 +43,6 @@
 
 namespace jami { namespace video {
 
-using std::map;
 using std::string;
 
 // how long (in seconds) to wait before rechecking for packet loss

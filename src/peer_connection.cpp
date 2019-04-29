@@ -52,6 +52,38 @@
 
 namespace jami {
 
+int
+init_crt(gnutls_session_t session, dht::crypto::Certificate& crt)
+{
+    // Support only x509 format
+    if (gnutls_certificate_type_get(session) != GNUTLS_CRT_X509) {
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    // Store verification status
+    unsigned int status = 0;
+    auto ret = gnutls_certificate_verify_peers2(session, &status);
+    if (ret < 0 or (status & GNUTLS_CERT_SIGNATURE_FAILURE) != 0) {
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    unsigned int cert_list_size = 0;
+    auto cert_list = gnutls_certificate_get_peers(session, &cert_list_size);
+    if (cert_list == nullptr) {
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    // Check if received peer certificate is awaited
+    std::vector<std::pair<uint8_t *, uint8_t *>> crt_data;
+    crt_data.reserve(cert_list_size);
+    for (unsigned i = 0; i < cert_list_size; i++)
+        crt_data.emplace_back(cert_list[i].data,
+                            cert_list[i].data + cert_list[i].size);
+    crt = dht::crypto::Certificate{crt_data};
+
+    return GNUTLS_E_SUCCESS;
+}
+
 using lock = std::lock_guard<std::mutex>;
 
 static constexpr std::size_t IO_BUFFER_SIZE {3000}; ///< Size of char buffer used by IO operations
@@ -90,30 +122,9 @@ TlsTurnEndpoint::Impl::~Impl()
 int
 TlsTurnEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 {
-    // Support only x509 format
-    if (gnutls_certificate_type_get(session) != GNUTLS_CRT_X509) {
-        return GNUTLS_E_CERTIFICATE_ERROR;
-    }
-
-    // Store verification status
-    unsigned int status = 0;
-    auto ret = gnutls_certificate_verify_peers2(session, &status);
-    if (ret < 0 or (status & GNUTLS_CERT_SIGNATURE_FAILURE) != 0) {
-        return GNUTLS_E_CERTIFICATE_ERROR;
-    }
-
-    unsigned int cert_list_size = 0;
-    auto cert_list = gnutls_certificate_get_peers(session, &cert_list_size);
-    if (cert_list == nullptr) {
-        return GNUTLS_E_CERTIFICATE_ERROR;
-    }
-
-    // Check if received peer certificate is awaited
-    std::vector<std::pair<uint8_t*, uint8_t*>> crt_data;
-    crt_data.reserve(cert_list_size);
-    for (unsigned i=0; i<cert_list_size; i++)
-        crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
-    auto crt = dht::crypto::Certificate {crt_data};
+    dht::crypto::Certificate crt;
+    auto verified = init_crt(session, crt);
+    if (verified != GNUTLS_E_SUCCESS) return verified;
 
     if (!peerCertificateCheckFunc(crt))
         return GNUTLS_E_CERTIFICATE_ERROR;
@@ -398,30 +409,9 @@ constexpr std::chrono::seconds TlsSocketEndpoint::Impl::TLS_TIMEOUT;
 int
 TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 {
-    // Support only x509 format
-    if (gnutls_certificate_type_get(session) != GNUTLS_CRT_X509) {
-        return GNUTLS_E_CERTIFICATE_ERROR;
-    }
-
-    // Store verification status
-    unsigned int status = 0;
-    auto ret = gnutls_certificate_verify_peers2(session, &status);
-    if (ret < 0 or (status & GNUTLS_CERT_SIGNATURE_FAILURE) != 0) {
-        return GNUTLS_E_CERTIFICATE_ERROR;
-    }
-
-    unsigned int cert_list_size = 0;
-    auto cert_list = gnutls_certificate_get_peers(session, &cert_list_size);
-    if (cert_list == nullptr) {
-        return GNUTLS_E_CERTIFICATE_ERROR;
-    }
-
-    // Check if peer certificate is equal to the expected one
-    std::vector<std::pair<uint8_t*, uint8_t*>> crt_data;
-    crt_data.reserve(cert_list_size);
-    for (unsigned i=0; i<cert_list_size; i++)
-        crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
-    auto crt = dht::crypto::Certificate {crt_data};
+    dht::crypto::Certificate crt;
+    auto verified = init_crt(session, crt);
+    if (verified != GNUTLS_E_SUCCESS) return verified;
     if (peerCertificateCheckFunc) {
         if (!(*peerCertificateCheckFunc)(crt)) {
           JAMI_ERR() << "[TLS-SOCKET] Unexpected peer certificate";

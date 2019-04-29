@@ -42,7 +42,7 @@ class IceSocket
 
     public:
         IceSocket(std::shared_ptr<IceTransport> iceTransport, int compId)
-            : ice_transport_(iceTransport), compId_(compId) {}
+            : ice_transport_(std::move(iceTransport)), compId_(compId) {}
 
         void close();
         ssize_t recv(unsigned char* buf, size_t len);
