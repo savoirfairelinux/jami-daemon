@@ -7,6 +7,7 @@ FFMPEGCONF='
             --toolchain=msvc
             --target-os=win32'
 
+#disable everything
 FFMPEGCONF+='
             --disable-everything
             --disable-programs
@@ -23,10 +24,12 @@ FFMPEGCONF+='
             --enable-protocols
             --enable-bsfs'
 
+#enable muxers/demuxers
 FFMPEGCONF+='
             --enable-demuxers
             --enable-muxers'
 
+#enable parsers
 FFMPEGCONF+='
             --enable-parser=h263
             --enable-parser=h264
@@ -35,6 +38,7 @@ FFMPEGCONF+='
             --enable-parser=vp9
             --enable-parser=opus'
 
+#encoders/decoders
 FFMPEGCONF+='
             --enable-libopus
             --enable-encoder=libopus
@@ -44,9 +48,7 @@ FFMPEGCONF+='
             --enable-encoder=pcm_alaw
             --enable-decoder=pcm_alaw
             --enable-encoder=pcm_mulaw
-            --enable-decoder=pcm_mulaw'
-
-FFMPEGCONF+='
+            --enable-decoder=pcm_mulaw
             --enable-libx264
             --enable-encoder=libx264
             --enable-decoder=h264
@@ -61,6 +63,7 @@ FFMPEGCONF+='
             --enable-decoder=mjpeg
             --enable-decoder=mjpegb'
 
+# decoders for ringtones and audio streaming
 FFMPEGCONF+='
             --enable-decoder=flac
             --enable-decoder=vorbis
@@ -95,6 +98,33 @@ FFMPEGCONF+='
             --enable-decoder=pcm_s8_planar
             --enable-decoder=pcm_u16be
             --enable-decoder=pcm_u16le'
+            
+#encoders/decoders for images
+FFMPEGCONF+='
+            --enable-encoder=gif
+            --enable-decoder=gif
+            --enable-encoder=jpegls
+            --enable-decoder=jpegls
+            --enable-encoder=ljpeg
+            --enable-decoder=jpeg2000
+            --enable-encoder=png
+            --enable-decoder=png
+            --enable-encoder=bmp
+            --enable-decoder=bmp
+            --enable-encoder=tiff
+            --enable-decoder=tiff'
+
+#filters
+FFMPEGCONF+='
+            --enable-filter=scale
+            --enable-filter=overlay
+            --enable-filter=amix
+            --enable-filter=amerge
+            --enable-filter=aresample
+            --enable-filter=format
+            --enable-filter=aformat
+            --enable-filter=fps
+            --enable-filter=transpose'
 
 if [ "$1" == "uwp" ]; then
     EXTRACFLAGS='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -I../../../../../msvc/include -I../../../../../msvc/include/opus'
