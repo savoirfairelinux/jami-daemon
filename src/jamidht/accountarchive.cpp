@@ -89,6 +89,7 @@ AccountArchive::serialize() const
 
     if (ca_key and *ca_key)
         root[Conf::RING_CA_KEY] = base64::encode(ca_key->serialize());
+
     root[Conf::RING_ACCOUNT_KEY] = base64::encode(id.first->serialize());
     root[Conf::RING_ACCOUNT_CERT] = base64::encode(id.second->getPacked());
     root[Conf::ETH_KEY] = base64::encode(eth_key);
@@ -96,11 +97,15 @@ AccountArchive::serialize() const
     if (revoked)
         root[Conf::RING_ACCOUNT_CRL] = base64::encode(revoked->getPacked());
 
+    std::cout << "AccountArchive::serialize() 2" << std::endl;
+
     if (not contacts.empty()) {
         Json::Value& jsonContacts = root[Conf::RING_ACCOUNT_CONTACTS];
         for (const auto& c : contacts)
             jsonContacts[c.first.toString()] = c.second.toJson();
     }
+
+    std::cout << "AccountArchive::serialize() 3" << std::endl;
 
     Json::StreamWriterBuilder wbuilder;
     wbuilder["commentStyle"] = "None";
