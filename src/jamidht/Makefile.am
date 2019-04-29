@@ -21,7 +21,9 @@ libringacc_la_SOURCES = \
         p2p.cpp \
         p2p.h \
         contact_list.h \
-        contact_list.cpp
+        contact_list.cpp \
+        account_manager.h \
+        account_manager.cpp
 
 if RINGNS
 libringacc_la_SOURCES += \
