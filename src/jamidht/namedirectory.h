@@ -23,8 +23,10 @@
 #include <map>
 #include <string>
 #include <mutex>
+#include <memory>
 
 namespace dht {
+class Executor;
 namespace crypto {
 struct PublicKey;
 }
@@ -77,6 +79,8 @@ private:
 
     std::map<std::string, std::string> nameCache_ {};
     std::map<std::string, std::string> addrCache_ {};
+
+    std::shared_ptr<dht::Executor> executor_;
 
     std::string nameCache(const std::string& addr) {
         std::lock_guard<std::mutex> l(lock_);
