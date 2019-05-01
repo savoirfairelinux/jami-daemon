@@ -1146,7 +1146,7 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
             emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(), device, 2);
             return;
         }
-        std::lock_guard<std::mutex> lock(deviceListMutex_);
+        std::unique_lock<std::mutex> lock(deviceListMutex_);
         foundAccountDevice(crt);
         AccountArchive a;
         try {
@@ -1168,6 +1168,7 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
         saveKnownDevices();
         emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(), device, 0);
         emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
+        lock.unlock();
         syncDevices();
     });
     return true;
