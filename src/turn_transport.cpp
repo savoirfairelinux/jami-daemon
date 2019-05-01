@@ -186,7 +186,7 @@ public:
 
 TurnTransportPimpl::~TurnTransportPimpl()
 {
-    if (relay) {
+    if (relay && state.load() != RelayState::DOWN) {
         try {
             pj_turn_sock_destroy(relay);
         } catch (...) {
