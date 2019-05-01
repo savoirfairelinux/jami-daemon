@@ -34,6 +34,8 @@ struct PublicKey;
 
 namespace jami {
 
+class Task;
+
 class NameDirectory
 {
 public:
@@ -80,6 +82,7 @@ private:
     std::map<std::string, std::string> nameCache_ {};
     std::map<std::string, std::string> addrCache_ {};
 
+    std::weak_ptr<Task> saveTask_;
     std::shared_ptr<dht::Executor> executor_;
 
     std::string nameCache(const std::string& addr) {
@@ -96,6 +99,7 @@ private:
     bool validateName(const std::string& name) const;
     static bool verify(const std::string& name, const dht::crypto::PublicKey& publickey, const std::string& signature);
 
+    void scheduleSave();
     void saveCache();
     void loadCache();
 };

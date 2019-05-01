@@ -22,6 +22,8 @@
 #include "string_utils.h"
 #include "fileutils.h"
 #include "base64.h"
+#include "scheduled_executor.h"
+#include "manager.h"
 
 #include <opendht/thread_pool.h>
 #include <opendht/crypto.h>
@@ -42,6 +44,7 @@ constexpr const char* const QUERY_ADDR {"/addr/"};
 constexpr const char* const HTTPS_PROTO {"https://"};
 constexpr const char* const CACHE_DIRECTORY {"namecache"};
 const std::string  HEX_PREFIX = "0x";
+constexpr std::chrono::seconds SAVE_INTERVAL {5};
 
 /** Parser for URIs.         ( protocol        )    ( username         ) ( hostname                            ) */
 const std::regex URI_VALIDATOR {"^([a-zA-Z]+:(?://)?)?(?:([a-z0-9-_]{1,64})@)?([a-zA-Z0-9\\-._~%!$&'()*+,;=:\\[\\]]+)"};
@@ -158,7 +161,7 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                             nameCache_.emplace(addr, name);
                         }
                         cb(name, Response::found);
-                        saveCache();
+                        scheduleSave();
                     } else {
                         cb("", Response::notFound);
                     }
@@ -379,6 +382,19 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
 }
 
 void
+NameDirectory::scheduleSave()
+{
+    std::weak_ptr<Task> task = Manager::instance().scheduler().scheduleIn([this]{
+        dht::ThreadPool::io().run([this] {
+            saveCache();
+        });
+    }, SAVE_INTERVAL);
+    std::swap(saveTask_, task);
+    if (auto old = task.lock())
+        old->cancel();
+}
+
+void
 NameDirectory::saveCache()
 {
     fileutils::recursive_mkdir(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+CACHE_DIRECTORY);
@@ -388,7 +404,7 @@ NameDirectory::saveCache()
         std::lock_guard<std::mutex> l(lock_);
         msgpack::pack(file, nameCache_);
     }
-    JAMI_DBG("Saved %lu name-address mappings", (long unsigned)nameCache_.size());
+    JAMI_DBG("Saved %lu name-address mappings to %s", (long unsigned)nameCache_.size(), cachePath_.c_str());
 }
 
 void
