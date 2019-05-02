@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set OPENDHT_VERSION=76e2efb19b969329d7da156eeb27cb8a250a24e1
+set OPENDHT_VERSION=1.9.4
 set OPENDHT_URL=https://github.com/savoirfairelinux/opendht/archive/%OPENDHT_VERSION%.tar.gz
 
 mkdir %BUILD%
