@@ -34,7 +34,7 @@
 #include "string_utils.h"
 
 #include "igd.h"
-#include "global_mapping.h"
+#include "../mapping/global_mapping.h"
 
 namespace jami { namespace upnp {
 

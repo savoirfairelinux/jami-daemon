@@ -2,6 +2,9 @@ include $(top_srcdir)/globals.mk
 
 noinst_LTLIBRARIES = libupnpcontrol.la
 
+SUBDIRS = mapping
+SUBDIRS += igd
+
 libupnpcontrol_la_CXXFLAGS = \
 				@CXXFLAGS@
 
@@ -9,15 +12,8 @@ libupnpcontrol_la_SOURCES = \
         upnp_control.cpp \
         upnp_control.h \
         upnp_context.cpp \
-        upnp_context.h \
-        mapping.h \
-        mapping.cpp \
-        global_mapping.h \
-        global_mapping.cpp \
-        igd.h \
-        igd.cpp \
-        upnp_igd.h \
-        upnp_igd.cpp \
-        pmp_igd.h \
-        pmp_igd.cpp 
+        upnp_context.h 
         
+libupnpcontrol_la_LIBADD = \
+	./mapping/libupnpmapping.la \
+        ./igd/libupnpigd.la

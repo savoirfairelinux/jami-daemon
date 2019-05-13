@@ -28,8 +28,8 @@
 
 #include "logger.h"
 #include "ip_utils.h"
-#include "upnp_igd.h"
-#include "global_mapping.h"
+#include "igd/upnp_igd.h"
+#include "mapping/global_mapping.h"
 #include "compiler_intrinsics.h"
 
 #include <opendht/rng.h>

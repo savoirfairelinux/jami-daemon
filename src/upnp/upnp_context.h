@@ -39,10 +39,10 @@
 #endif
 
 #include "noncopyable.h"
-#include "igd.h"
-#include "upnp_igd.h"
-#include "pmp_igd.h"
-#include "global_mapping.h"
+#include "igd/igd.h"
+#include "igd/upnp_igd.h"
+#include "igd/pmp_igd.h"
+#include "mapping/global_mapping.h"
 
 #include <set>
 #include <map>

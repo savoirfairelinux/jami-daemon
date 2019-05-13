@@ -33,37 +33,33 @@
 #include "ip_utils.h"
 #include "string_utils.h"
 
-#include "global_mapping.h"
+#include "igd.h"
+#include "../mapping/mapping.h"
+#include "../mapping/global_mapping.h"
 
 namespace jami { namespace upnp {
 
-/* subclasses to make it easier to differentiate and cast maps of port mappings */
-class PortMapLocal : public std::map<uint16_t, Mapping> {};
-class PortMapGlobal : public std::map<uint16_t, GlobalMapping> {};
+#if HAVE_LIBNATPMP
 
-using IGDFoundCallback = std::function<void()>;
+using clock = std::chrono::system_clock;
+using time_point = clock::time_point;
 
-/* defines a UPnP capable Internet Gateway Device (a router) */
-class IGD 
+class PMPIGD : public IGD 
 {
 public:
-    IGD();                               
-    IGD(IGD&&) = default;               /* Move constructor */
-    virtual ~IGD() = default;
+    void clear();
+    void clearMappings();
 
-    IGD& operator=(IGD&&) = default;    /* Operator. */
+    GlobalMapping* getNextMappingToRenew() const;
+    
+    time_point getRenewalTime() const;
 
 public:
-    IpAddr localIp;                     /* Device address seen by IGD */
-    IpAddr publicIp;                    /* External IP of IGD; can change */
-
-    /* Port mappings associated with this IGD. */
-    PortMapGlobal udpMappings;
-    PortMapGlobal tcpMappings;
-
-private:
-    NON_COPYABLE(IGD);
+    time_point renewal_ {time_point::min()};
+    std::vector<GlobalMapping> toRemove_ {};
+    bool clearAll_ {false};
 };
 
+#endif
 
 }} // namespace jami::upnp
