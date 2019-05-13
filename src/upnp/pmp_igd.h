@@ -34,42 +34,30 @@
 #include "string_utils.h"
 
 #include "igd.h"
+#include "mapping.h"
 #include "global_mapping.h"
 
 namespace jami { namespace upnp {
 
-#if HAVE_LIBUPNP
+#if HAVE_LIBNATPMP
 
-class UPnPIGD : public IGD 
+using clock = std::chrono::system_clock;
+using time_point = clock::time_point;
+
+class PMPIGD : public IGD 
 {
 public:
-    UPnPIGD(std::string&& UDN,
-            std::string&& baseURL,
-            std::string&& friendlyName,
-            std::string&& serviceType,
-            std::string&& serviceId,
-            std::string&& controlURL,
-            std::string&& eventSubURL);
+    void clear();
+    void clearMappings();
 
-    const std::string& getUDN() const          { return UDN_;          };
-    const std::string& getBaseURL() const      { return baseURL_;      };
-    const std::string& getFriendlyName() const { return friendlyName_; };
-    const std::string& getServiceType() const  { return serviceType_;  };
-    const std::string& getServiceId() const    { return serviceId_;    };
-    const std::string& getControlURL() const   { return controlURL_;   };
-    const std::string& getEventSubURL() const  { return eventSubURL_;  };
+    GlobalMapping* getNextMappingToRenew() const;
+    
+    time_point getRenewalTime() const;
 
-private:
-    /* root device info */
-    std::string UDN_ {}; /* used to uniquely identify this UPnP device */
-    std::string baseURL_ {};
-    std::string friendlyName_ {};
-
-    /* port forwarding service info */
-    std::string serviceType_ {};
-    std::string serviceId_ {};
-    std::string controlURL_ {};
-    std::string eventSubURL_ {};
+public:
+    time_point renewal_ {time_point::min()};
+    std::vector<GlobalMapping> toRemove_ {};
+    bool clearAll_ {false};
 };
 
 #endif

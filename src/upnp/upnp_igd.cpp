@@ -19,3 +19,23 @@
  */
 
 #include "upnp_igd.h"
+
+namespace jami { namespace upnp {
+
+#if HAVE_LIBUPNP
+
+UPnPIGD::UPnPIGD(std::string&& UDN,std::string&& baseURL,std::string&& friendlyName,std::string&& serviceType,std::string&& serviceId,std::string&& controlURL,std::string&& eventSubURL): 
+    UDN_(std::move(UDN)), 
+    baseURL_(std::move(baseURL)), 
+    friendlyName_(std::move(friendlyName)), 
+    serviceType_(std::move(serviceType)), 
+    serviceId_(std::move(serviceId)), 
+    controlURL_(std::move(controlURL)), 
+    eventSubURL_(std::move(eventSubURL))
+{
+
+}
+
+#endif
+
+}} // namespace jami::upnp

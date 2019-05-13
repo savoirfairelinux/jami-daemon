@@ -14,5 +14,10 @@ libupnpcontrol_la_SOURCES = \
         mapping.cpp \
         global_mapping.h \
         global_mapping.cpp \
+        igd.h \
+        igd.cpp \
+        upnp_igd.h \
         upnp_igd.cpp \
-        upnp_igd.h
+        pmp_igd.h \
+        pmp_igd.cpp 
+        

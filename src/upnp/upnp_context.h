@@ -39,7 +39,9 @@
 #endif
 
 #include "noncopyable.h"
+#include "igd.h"
 #include "upnp_igd.h"
+#include "pmp_igd.h"
 #include "global_mapping.h"
 
 #include <set>

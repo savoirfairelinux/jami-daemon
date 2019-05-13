@@ -33,45 +33,37 @@
 #include "ip_utils.h"
 #include "string_utils.h"
 
-#include "igd.h"
 #include "global_mapping.h"
 
 namespace jami { namespace upnp {
 
-#if HAVE_LIBUPNP
+/* subclasses to make it easier to differentiate and cast maps of port mappings */
+class PortMapLocal : public std::map<uint16_t, Mapping> {};
+class PortMapGlobal : public std::map<uint16_t, GlobalMapping> {};
 
-class UPnPIGD : public IGD 
+using IGDFoundCallback = std::function<void()>;
+
+/* defines a UPnP capable Internet Gateway Device (a router) */
+class IGD 
 {
 public:
-    UPnPIGD(std::string&& UDN,
-            std::string&& baseURL,
-            std::string&& friendlyName,
-            std::string&& serviceType,
-            std::string&& serviceId,
-            std::string&& controlURL,
-            std::string&& eventSubURL);
+    IGD();                               
+    IGD(IGD&&) = default;               /* Move constructor */
+    virtual ~IGD() = default;
 
-    const std::string& getUDN() const          { return UDN_;          };
-    const std::string& getBaseURL() const      { return baseURL_;      };
-    const std::string& getFriendlyName() const { return friendlyName_; };
-    const std::string& getServiceType() const  { return serviceType_;  };
-    const std::string& getServiceId() const    { return serviceId_;    };
-    const std::string& getControlURL() const   { return controlURL_;   };
-    const std::string& getEventSubURL() const  { return eventSubURL_;  };
+    IGD& operator=(IGD&&) = default;    /* Operator. */
+
+public:
+    IpAddr localIp;                     /* Device address seen by IGD */
+    IpAddr publicIp;                    /* External IP of IGD; can change */
+
+    /* Port mappings associated with this IGD. */
+    PortMapGlobal udpMappings;
+    PortMapGlobal tcpMappings;
 
 private:
-    /* root device info */
-    std::string UDN_ {}; /* used to uniquely identify this UPnP device */
-    std::string baseURL_ {};
-    std::string friendlyName_ {};
-
-    /* port forwarding service info */
-    std::string serviceType_ {};
-    std::string serviceId_ {};
-    std::string controlURL_ {};
-    std::string eventSubURL_ {};
+    NON_COPYABLE(IGD);
 };
 
-#endif
 
 }} // namespace jami::upnp
