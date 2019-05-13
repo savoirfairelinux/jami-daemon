@@ -40,6 +40,7 @@
 
 #include "noncopyable.h"
 #include "upnp_igd.h"
+#include "global_mapping.h"
 
 #include <set>
 #include <map>

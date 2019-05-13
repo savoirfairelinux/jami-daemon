@@ -18,4 +18,18 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "upnp_igd.h"
+
+#include "global_mapping.h"
+
+namespace jami { namespace upnp {
+
+GlobalMapping::GlobalMapping(const Mapping& mapping, unsigned users): 
+        Mapping(mapping.getPortExternal(), 
+        mapping.getPortInternal(), 
+        mapping.getType(), 
+        mapping.getDescription()), 
+        users(users)
+{
+}
+
+}} // namespace jami::upnp

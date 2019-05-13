@@ -30,6 +30,7 @@
 #include "ip_utils.h"
 #include "upnp_context.h"
 #include "upnp_igd.h"
+#include "global_mapping.h"
 
 namespace jami { namespace upnp {
 

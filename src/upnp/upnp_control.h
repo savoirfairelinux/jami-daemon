@@ -29,6 +29,7 @@
 #include <chrono>
 
 #include "noncopyable.h"
+#include "global_mapping.h"
 #include "upnp_igd.h"
 
 namespace jami {

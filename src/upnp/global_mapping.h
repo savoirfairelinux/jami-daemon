@@ -18,4 +18,38 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "upnp_igd.h"
+#pragma once
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include <string>
+#include <map>
+#include <functional>
+#include <chrono>
+
+#include "noncopyable.h"
+
+#include "mapping.h"
+
+namespace jami { namespace upnp {
+
+/**
+ * GlobalMapping is like a mapping, but it tracks the number of global users,
+ * ie: the number of upnp:Controller which are using this mapping
+ * this is usually only relevant for accounts (not calls) as multiple SIP accounts
+ * can use the same SIP port and we don't want to delete a mapping from the router
+ * if other accounts are using it
+ */
+class GlobalMapping : public Mapping 
+{
+public:
+    /* number of users of this mapping;
+     * this is only relevant when multiple accounts are using the same SIP port */
+    unsigned users;
+
+    GlobalMapping(const Mapping& mapping, unsigned users = 1);
+};
+
+}} // namespace jami::upnp
