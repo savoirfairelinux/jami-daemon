@@ -29,7 +29,8 @@
 #include "logger.h"
 #include "ip_utils.h"
 #include "upnp_context.h"
-#include "upnp_igd.h"
+#include "igd/upnp_igd.h"
+#include "mapping/global_mapping.h"
 
 namespace jami { namespace upnp {
 

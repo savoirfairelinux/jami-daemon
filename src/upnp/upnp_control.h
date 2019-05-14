@@ -29,7 +29,8 @@
 #include <chrono>
 
 #include "noncopyable.h"
-#include "upnp_igd.h"
+#include "mapping/global_mapping.h"
+#include "igd/upnp_igd.h"
 
 namespace jami {
 class IpAddr;
