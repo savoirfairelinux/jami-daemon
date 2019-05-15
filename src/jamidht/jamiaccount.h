@@ -415,6 +415,7 @@ class JamiAccount : public SIPAccountBase {
         struct DeviceAnnouncement;
         struct DeviceSync;
         struct BuddyInfo;
+        struct DiscoveredPeer;
 
         void syncDevices();
         void onReceiveDeviceSync(DeviceSync&& sync);
@@ -489,6 +490,16 @@ class JamiAccount : public SIPAccountBase {
         void onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& account_id)>&&);
 
         void onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received , bool confirm, std::vector<uint8_t>&& payload);
+
+        /**
+         * Start Publish the Jami Account onto the Network
+         */
+        void startAccountPublish();
+
+        /**
+         * Start Discovery the Jami Account from the Network
+         */
+        void startAccountDiscovery();
 
         /**
          * Maps require port via UPnP
@@ -680,6 +691,11 @@ class JamiAccount : public SIPAccountBase {
         void registerDhtAddress(IceTransport&);
 
         std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
+
+        std::mutex discoveryMapMtx_;
+        std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
+        std::map<dht::InfoHash, DiscoveredPeer> discoveredPeers_;
+        bool accountPeerDiscovery_ {true};
 
         std::shared_ptr<RepeatedTask> eventHandler {};
         void checkPendingCallsTask();
