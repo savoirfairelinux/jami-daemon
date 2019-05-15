@@ -89,6 +89,7 @@ getSignalHandlers()
 
         /* Presence */
         exported_callback<DRing::PresenceSignal::NewServerSubscriptionRequest>(),
+        exported_callback<DRing::PresenceSignal::NewPeerNearNotification>(),
         exported_callback<DRing::PresenceSignal::ServerError>(),
         exported_callback<DRing::PresenceSignal::NewBuddyNotification>(),
         exported_callback<DRing::PresenceSignal::SubscriptionStateChanged>(),
