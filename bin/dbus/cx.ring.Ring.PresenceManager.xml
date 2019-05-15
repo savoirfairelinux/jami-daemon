@@ -130,6 +130,33 @@
             </arg>
         </signal>
 
+        <signal name="nearbyPeerNotification" tp:name-for-bindings="nearbyPeerNotification">
+            <tp:added version="1.3.0"/>
+            <tp:docstring>
+                Notify when a new local peer is discovered
+            </tp:docstring>
+            <arg type="s" name="accountID">
+                <tp:docstring>
+                    The associated account
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="buddyUri">
+                <tp:docstring>
+                    The registered URI
+                </tp:docstring>
+            </arg>
+            <arg type="i" name="status">
+                <tp:docstring>
+                    Is delete or addition
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="displayname">
+                <tp:docstring>
+                    A string containing informations from the user (human readable)
+                </tp:docstring>
+            </arg>
+        </signal>
+
         <signal name="subscriptionStateChanged" tp:name-for-bindings="subscriptionStateChanged">
             <tp:added version="1.3.0"/>
             <tp:docstring>

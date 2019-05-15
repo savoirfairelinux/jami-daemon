@@ -57,6 +57,10 @@ struct DRING_PUBLIC PresenceSignal {
                 constexpr static const char* name = "NewBuddyNotification";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*status*/, const std::string& /*line_status*/);
         };
+        struct DRING_PUBLIC NearbyPeerNotification {
+                constexpr static const char* name = "NearbyPeerNotification";
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/, const std::string& /*displayname*/);
+        };
         struct DRING_PUBLIC SubscriptionStateChanged {
                 constexpr static const char* name = "SubscriptionStateChanged";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/);
