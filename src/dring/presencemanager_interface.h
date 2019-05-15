@@ -23,6 +23,8 @@
 
 #include "def.h"
 
+#include <opendht/infohash.h>
+
 #include <vector>
 #include <map>
 #include <string>
@@ -56,6 +58,10 @@ struct DRING_PUBLIC PresenceSignal {
         struct DRING_PUBLIC NewBuddyNotification {
                 constexpr static const char* name = "NewBuddyNotification";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*status*/, const std::string& /*line_status*/);
+        };
+        struct DRING_PUBLIC NewPeerNearNotification {
+                constexpr static const char* name = "NewPeerNearNotification";
+                using cb_type = void(const std::pair<dht::InfoHash, std::string>& /*discovered_peers*/, int /*state*/);
         };
         struct DRING_PUBLIC SubscriptionStateChanged {
                 constexpr static const char* name = "SubscriptionStateChanged";
