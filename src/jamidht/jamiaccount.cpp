@@ -5,6 +5,7 @@
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *  Author: Simon Désaulniers <simon.desaulniers@savoirfairelinux.com>
  *  Author: Nicolas Jäger <nicolas.jager@savoirfairelinux.com>
+ *  Author: Mingrui Zhang <mingrui.zhang@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,6 +70,7 @@
 #include "base64.h"
 
 #include <opendht/thread_pool.h>
+#include <opendht/peer_discovery.h>
 #include <yaml-cpp/yaml.h>
 #include <json/json.h>
 
@@ -202,6 +204,13 @@ struct JamiAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
     MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers, trust_requests)
 };
 
+struct JamiAccount::JamiAccountPeerInfo
+{
+    dht::InfoHash accountId;
+    std::string displayName;
+    MSGPACK_DEFINE(accountId, displayName)
+};
+
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
@@ -214,6 +223,10 @@ static constexpr const char * DEFAULT_TURN_USERNAME = "ring";
 static constexpr const char * DEFAULT_TURN_PWD = "ring";
 static constexpr const char * DEFAULT_TURN_REALM = "ring";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
+static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
+static const in_port_t PEER_DISCOVERY_PORT = 8888;
+static const short PEER_DISCOVERY_FREQUENT_LIMIT = 50;
+
 
 constexpr const char* const JamiAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
@@ -302,6 +315,11 @@ JamiAccount::~JamiAccount()
         eventHandler->cancel();
         eventHandler.reset();
     }
+    if(dhtJamiDiscovery_){
+        dhtJamiDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
+        dhtJamiDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
+    }
+    stopRefreshList();
     dht_.join();
 }
 
@@ -668,6 +686,7 @@ void JamiAccount::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
     out << YAML::Key << DRing::Account::ConfProperties::DHT_PEER_DISCOVERY << YAML::Value << dhtPeerDiscovery_;
+    out << YAML::Key << DRing::Account::ConfProperties::JAMI_PEER_DISCOVERY << YAML::Value << jamiPeerDiscovery_;
 
     out << YAML::Key << Conf::PROXY_ENABLED_KEY << YAML::Value << proxyEnabled_;
     out << YAML::Key << Conf::PROXY_SERVER_KEY << YAML::Value << proxyServer_;
@@ -744,6 +763,7 @@ void JamiAccount::unserialize(const YAML::Node &node)
     dhtPortUsed_ = dhtPort_;
 
     parseValueOptional(node, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
+    parseValueOptional(node, DRing::Account::ConfProperties::JAMI_PEER_DISCOVERY, jamiPeerDiscovery_);
 
 #if HAVE_RINGNS
     parseValueOptional(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
@@ -1532,6 +1552,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
     parseBool(details, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
+    parseBool(details, DRing::Account::ConfProperties::JAMI_PEER_DISCOVERY, jamiPeerDiscovery_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted_);
@@ -1591,6 +1612,7 @@ JamiAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_DHT_PORT, jami::to_string(dhtPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_ ? TRUE_STR : FALSE_STR);
+    a.emplace(DRing::Account::ConfProperties::JAMI_PEER_DISCOVERY, jamiPeerDiscovery_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_ID, ringDeviceId_);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     a.emplace(DRing::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
@@ -2348,6 +2370,18 @@ JamiAccount::doRegister_()
         for (auto& buddy : trackedBuddies_) {
             buddy.second.devices_cnt = 0;
             trackPresence(buddy.first, buddy.second);
+        }
+
+        //check if dht peer service is enabled
+        if(!config.peer_discovery && !config.peer_publish){
+            dhtJamiDiscovery_.reset(new dht::PeerDiscovery(PEER_DISCOVERY_PORT));
+        } else {
+            dhtJamiDiscovery_ = dht_.getPeerDiscovery();
+        }
+        if(jamiPeerDiscovery_){
+            JAMI_INFO("Start Jami Account Discovering.....");
+            startJamiAccountDiscovery();
+            startJamiAccountPublish();
         }
     }
     catch (const std::exception& e) {
@@ -3638,6 +3672,68 @@ JamiAccount::checkPendingCallsTask()
     } else if (pendingCalls_.empty() and hasHandler) {
         eventHandler->cancel();
         eventHandler.reset();
+    }
+}
+
+void
+JamiAccount::startJamiAccountPublish()
+{
+    JamiAccountPeerInfo info_pub;
+    info_pub.accountId = dht::InfoHash(ringAccountId_);
+    info_pub.displayName = displayName_;
+    dhtJamiDiscovery_->startPublish<JamiAccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE, info_pub);
+}
+
+void
+JamiAccount::startJamiAccountDiscovery()
+{
+    refresh_ = std::thread(&JamiAccount::refreshList, this);
+    dhtJamiDiscovery_->startDiscovery<JamiAccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE,[this](JamiAccountPeerInfo&& v, dht::SockAddr&& add){
+        std::unique_lock<std::mutex> lc(dismtx_);
+        //Make sure that Account itself will not be recorded
+        if(v.accountId != dht::InfoHash(ringAccountId_)){
+            if(discoveriedPeers_.find(v.accountId) == discoveriedPeers_.end()){
+                JAMI_WARN("Discovered Peers: %s",v.displayName.c_str());
+                //Keep the most frequent peers discovered
+                if(discoveriedPeers_.size() <= PEER_DISCOVERY_FREQUENT_LIMIT){
+                    discoveriedPeers_.emplace(v.accountId,v.displayName);
+                    peerFrequency_.push(v.accountId);
+                } else {
+                    discoveriedPeers_.erase(peerFrequency_.front());
+                    discoveriedPeers_.emplace(v.accountId,v.displayName);
+                    peerFrequency_.push(v.accountId);
+                    peerFrequency_.pop();
+                }
+            }
+        }
+    });
+}
+
+void
+JamiAccount::refreshList()
+{
+    while(refreshRunning_){
+        {
+            std::unique_lock<std::mutex> lck(refmtx_);
+            peercv_.wait_for(lck,std::chrono::seconds(10),[&]{ return !refreshRunning_; });
+        }
+        JAMI_WARN("Clear Peer Discovery List");
+        std::unique_lock<std::mutex> lc(dismtx_);
+        std::queue<dht::InfoHash>().swap(peerFrequency_);
+        discoveriedPeers_.clear();
+    }
+}
+
+void
+JamiAccount::stopRefreshList()
+{
+    {
+        std::unique_lock<std::mutex> lck(refmtx_);
+        refreshRunning_ = false;
+    }
+    peercv_.notify_all();
+    if(refresh_.joinable()){
+        refresh_.join();
     }
 }
 
