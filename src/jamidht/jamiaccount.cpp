@@ -5,6 +5,7 @@
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *  Author: Simon Désaulniers <simon.desaulniers@savoirfairelinux.com>
  *  Author: Nicolas Jäger <nicolas.jager@savoirfairelinux.com>
+ *  Author: Mingrui Zhang <mingrui.zhang@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,6 +70,7 @@
 #include "base64.h"
 
 #include <opendht/thread_pool.h>
+#include <opendht/peer_discovery.h>
 #include <yaml-cpp/yaml.h>
 #include <json/json.h>
 
@@ -202,6 +204,13 @@ struct JamiAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
     MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers, trust_requests)
 };
 
+struct JamiAccount::JamiAccountPeerInfo
+{
+    std::string ringAccountId_;
+    std::string username_;
+    MSGPACK_DEFINE(ringAccountId_, username_)
+};
+
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
@@ -214,6 +223,8 @@ static constexpr const char * DEFAULT_TURN_USERNAME = "ring";
 static constexpr const char * DEFAULT_TURN_PWD = "ring";
 static constexpr const char * DEFAULT_TURN_REALM = "ring";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
+static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
+
 
 constexpr const char* const JamiAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
@@ -294,6 +305,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     std::ifstream proxyCache(cachePath_ + DIR_SEPARATOR_STR "dhtproxy");
     if (proxyCache)
       std::getline(proxyCache, proxyServerCached_);
+    dhtJamiDiscovery_.reset(new dht::PeerDiscovery(6868));
 }
 
 JamiAccount::~JamiAccount()
@@ -2349,6 +2361,8 @@ JamiAccount::doRegister_()
             buddy.second.devices_cnt = 0;
             trackPresence(buddy.first, buddy.second);
         }
+        enableDiscovery(true);
+        enablePublish(true);
     }
     catch (const std::exception& e) {
         JAMI_ERR("Error registering DHT account: %s", e.what());
@@ -3640,5 +3654,83 @@ JamiAccount::checkPendingCallsTask()
         eventHandler.reset();
     }
 }
+
+#if HAVE_RINGNS
+void
+JamiAccount::enableDiscovery(bool enable_d)
+{
+    if(enable_d){
+        startJamiAccountDiscovery();
+    } else {
+        dhtJamiDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
+    }
+}
+
+void
+JamiAccount::enablePublish(bool enable_p)
+{
+    if(enable_p){
+        startJamiAccountPublish(registeredName_);
+    } else {
+        dhtJamiDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
+    }
+}
+
+void
+JamiAccount::startJamiAccountPublish(const std::string& display_name)
+{
+    JamiAccountPeerInfo info_pub;
+    info_pub.ringAccountId_ = ringAccountId_;
+    if(nameServer_ != "ns.jami.net"){
+        std::string search_name {display_name + "@" + nameServer_};
+        info_pub.username_ = search_name;
+    } else {
+        info_pub.username_ = display_name;
+    }
+    dhtJamiDiscovery_->startPublish<JamiAccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE, info_pub);
+}
+
+void
+JamiAccount::startJamiAccountDiscovery()
+{
+    dhtJamiDiscovery_->startDiscovery<JamiAccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE,[this](JamiAccountPeerInfo&& v, dht::SockAddr&& add){
+        std::unique_lock<std::mutex> lc(dismtx_);
+        JAMI_WARN("%s",v.ringAccountId_.c_str());
+        JAMI_WARN("%s",v.username_.c_str());
+        //Make sure that Account itself will not be recorded
+        if(discoveriedPeers_.find(v.ringAccountId_) == discoveriedPeers_.end() && v.ringAccountId_ != ringAccountId_){
+            std::size_t apos = v.username_.find("@");
+            if(apos != std::string::npos){
+                std::string nameserver = v.username_.substr(apos + 1);
+                // Look for registered name on the blockchain
+                nameDir_.get().lookupUri(v.username_, nameserver, [this, w=weak(), v, apos](const std::string& result, const NameDirectory::Response& response) {
+                    if (auto this_ = w.lock()) {
+                        if (response == NameDirectory::Response::found && v.ringAccountId_ == result) {
+                            discoveriedPeers_.emplace(v.ringAccountId_,v.username_.substr(0,apos));
+                            for(const auto& items: discoveriedPeers_){
+                                JAMI_WARN("%s",items.first.c_str());
+                                JAMI_WARN("%s",items.second.c_str());
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Look for registered name on the blockchain
+                nameDir_.get().lookupAddress(v.ringAccountId_, [this, w=weak(), v](const std::string& result, const NameDirectory::Response& response) {
+                    if (auto this_ = w.lock()) {
+                        if (response == NameDirectory::Response::found && v.username_ == result) {
+                            discoveriedPeers_.emplace(v.ringAccountId_,v.username_);
+                            for(const auto& items: discoveriedPeers_){
+                                JAMI_WARN("%s",items.first.c_str());
+                                JAMI_WARN("%s",items.second.c_str());
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    });
+}
+#endif
 
 } // namespace jami
