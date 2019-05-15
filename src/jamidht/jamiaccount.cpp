@@ -5,6 +5,7 @@
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *  Author: Simon Désaulniers <simon.desaulniers@savoirfairelinux.com>
  *  Author: Nicolas Jäger <nicolas.jager@savoirfairelinux.com>
+ *  Author: Mingrui Zhang <mingrui.zhang@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -69,6 +70,7 @@
 #include "base64.h"
 
 #include <opendht/thread_pool.h>
+#include <opendht/peer_discovery.h>
 #include <yaml-cpp/yaml.h>
 #include <json/json.h>
 
@@ -202,6 +204,13 @@ struct JamiAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
     MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers, trust_requests)
 };
 
+struct JamiAccount::JamiAccountPeerInfo
+{
+    dht::InfoHash accountId;
+    std::string displayName;
+    MSGPACK_DEFINE(accountId, displayName)
+};
+
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
@@ -214,6 +223,9 @@ static constexpr const char * DEFAULT_TURN_USERNAME = "ring";
 static constexpr const char * DEFAULT_TURN_PWD = "ring";
 static constexpr const char * DEFAULT_TURN_REALM = "ring";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
+static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
+static constexpr in_port_t PEER_DISCOVERY_PORT = 8888;
+
 
 constexpr const char* const JamiAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
@@ -301,6 +313,10 @@ JamiAccount::~JamiAccount()
     if (eventHandler) {
         eventHandler->cancel();
         eventHandler.reset();
+    }
+    if(dhtJamiDiscovery_){
+        dhtJamiDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
+        dhtJamiDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
     }
     dht_.join();
 }
@@ -2349,6 +2365,15 @@ JamiAccount::doRegister_()
             buddy.second.devices_cnt = 0;
             trackPresence(buddy.first, buddy.second);
         }
+
+        //check if dht peer service is enabled
+        if(!config.peer_discovery && !config.peer_publish){
+            dhtJamiDiscovery_.reset(new dht::PeerDiscovery(PEER_DISCOVERY_PORT));
+        } else {
+            dhtJamiDiscovery_ = dht_.getPeerDiscovery();
+        }
+        startJamiAccountDiscovery();
+        startJamiAccountPublish();
     }
     catch (const std::exception& e) {
         JAMI_ERR("Error registering DHT account: %s", e.what());
@@ -3639,6 +3664,27 @@ JamiAccount::checkPendingCallsTask()
         eventHandler->cancel();
         eventHandler.reset();
     }
+}
+
+void
+JamiAccount::startJamiAccountPublish()
+{
+    JamiAccountPeerInfo info_pub;
+    info_pub.accountId = dht::InfoHash(ringAccountId_);
+    info_pub.displayName = displayName_;
+    dhtJamiDiscovery_->startPublish<JamiAccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE, info_pub);
+}
+
+void
+JamiAccount::startJamiAccountDiscovery()
+{
+    dhtJamiDiscovery_->startDiscovery<JamiAccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE,[this](JamiAccountPeerInfo&& v, dht::SockAddr&& add){
+        std::unique_lock<std::mutex> lc(dismtx_);
+        //Make sure that Account itself will not be recorded
+        if(discoveriedPeers_.find(v.accountId) == discoveriedPeers_.end() && v.accountId != dht::InfoHash(ringAccountId_)){
+            discoveriedPeers_.emplace(v.accountId,v.displayName);
+        }
+    });
 }
 
 } // namespace jami
