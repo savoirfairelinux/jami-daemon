@@ -91,8 +91,10 @@ SipTransport::SipTransport(pjsip_transport* t,
 
 SipTransport::~SipTransport()
 {
-    JAMI_DBG("~SipTransport@%p {tr=%p {rc=%ld}}",
-             this, transport_.get(), pj_atomic_get(transport_->ref_cnt));
+    if (transport_)
+        pjsip_transport_shutdown(transport_.get());
+    JAMI_DBG("~SipTransport@%p {tr=%p {rc=%ld}}", this, transport_.get(),
+            pj_atomic_get(transport_->ref_cnt));
 }
 
 bool
