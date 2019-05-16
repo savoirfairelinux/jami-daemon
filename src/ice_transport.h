@@ -29,6 +29,7 @@
 
 #include <functional>
 #include <memory>
+#include <msgpack.hpp>
 #include <vector>
 
 namespace jami {
@@ -73,6 +74,14 @@ struct IceTransportOptions {
     bool aggressive {false}; // If we use the aggressive nomination strategy
 };
 
+struct SDP {
+    std::string ufrag;
+    std::string pwd;
+
+    std::vector<std::string> candidates;
+    MSGPACK_DEFINE(ufrag, pwd, candidates)
+};
+
 class IceTransport {
 public:
     using Attribute = struct {
@@ -85,7 +94,6 @@ public:
      */
     IceTransport(const char* name, int component_count, bool master,
                  const IceTransportOptions& options = {});
-
     /**
      * Get current state
      */
@@ -100,12 +108,17 @@ public:
      */
     bool start(const Attribute& rem_attrs,
                const std::vector<IceCandidate>& rem_candidates);
-    bool start(const std::vector<uint8_t>& attrs_candidates);
+    bool start(const SDP& sdp);
 
     /**
      * Stop a started or completed transport.
      */
     bool stop();
+
+    /**
+     * Cancel operations
+     */
+    void cancelOperations();
 
     /**
      * Returns true if ICE transport has been initialized
@@ -124,6 +137,12 @@ public:
      * [mutex protected]
      */
     bool isRunning() const;
+
+    /**
+     * Return true if a start operations fails or if stop() has been called
+     * [mutex protected]
+     */
+    bool isStopped() const;
 
     /**
      * Returns true if ICE transport is in failure state
@@ -156,7 +175,7 @@ public:
     /**
      * Returns serialized ICE attributes and candidates.
      */
-    std::vector<uint8_t> packIceMsg() const;
+    std::vector<uint8_t> packIceMsg(uint8_t version = 1) const;
 
     bool getCandidateFromSDP(const std::string& line, IceCandidate& cand);
 
@@ -187,6 +206,15 @@ public:
     // Set session state
     bool setSlaveSession();
     bool setInitiatorSession();
+
+    /**
+     * Get SDP messages list
+     * @param msg     The payload to parse
+     * @return the list of SDP messages
+     */
+    static std::vector<SDP> parseSDPList(const std::vector<uint8_t>& msg);
+
+    bool isTCPEnabled();
 
   private:
     class Impl;
