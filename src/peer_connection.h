@@ -157,7 +157,7 @@ public:
 
     void setOnRecv(RecvCb&& cb) override {
         if (ice_) {
-            ice_->setOnRecv(0, cb);
+            ice_->setOnRecv(compId_, cb);
         }
     }
 
@@ -165,6 +165,7 @@ private:
     std::shared_ptr<IceTransport> ice_ {nullptr};
     std::atomic_bool iceStopped{false};
     std::atomic_bool iceIsSender{false};
+    uint8_t compId_ {0};
 };
 
 //==============================================================================
