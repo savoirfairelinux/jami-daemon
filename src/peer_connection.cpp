@@ -334,7 +334,7 @@ IceSocketEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
 {
     if (ice_) {
         if (!ice_->isRunning()) return -1;
-        return iceIsSender ? ice_->isDataAvailable(1) : ice_->waitForData(1, ms_timeout, ec);
+        return iceIsSender ? ice_->isDataAvailable(compId_) : ice_->waitForData(compId_, ms_timeout, ec);
     }
     return -1;
 }
@@ -345,7 +345,7 @@ IceSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
     if (ice_) {
         if (!ice_->isRunning()) return 0;
         try {
-          auto res = ice_->recvfrom(1, reinterpret_cast<char *>(buf), len);
+          auto res = ice_->recvfrom(compId_, reinterpret_cast<char *>(buf), len);
           if (res < 0)
             ec.assign(errno, std::generic_category());
           else
@@ -365,7 +365,7 @@ IceSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code&
     if (ice_) {
         if (!ice_->isRunning()) return 0;
         auto res = 0;
-        res = ice_->send(0, reinterpret_cast<const unsigned char *>(buf), len);
+        res = ice_->send(compId_, reinterpret_cast<const unsigned char *>(buf), len);
         if (res < 0) {
             ec.assign(errno, std::generic_category());
         } else {
