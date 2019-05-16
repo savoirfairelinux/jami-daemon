@@ -236,7 +236,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     std::memset(&localCertInfo_, 0, sizeof(pj_ssl_cert_info));
     std::memset(&remoteCertInfo_, 0, sizeof(pj_ssl_cert_info));
 
-    iceSocket_ = std::make_unique<IceSocketTransport>(ice_, comp_id);
+    iceSocket_ = std::make_unique<IceSocketTransport>(ice_, comp_id, PJSIP_TRANSPORT_IS_RELIABLE(&trData_.base));
 
     TlsSession::TlsSessionCallbacks cbs = {
         /*.onStateChange = */[this](TlsSessionState state){ onTlsStateChange(state); },
@@ -249,11 +249,22 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
+
+    if (PJSIP_TRANSPORT_IS_RELIABLE(&trData_.base)) {
+        eventLoopFut_ = {std::async(std::launch::async, [this] {
+            try {
+                eventLoop();
+            } catch (const std::exception& e) {
+                JAMI_ERR() << "SipIceTransport: eventLoop() failure: " << e.what();
+            }
+        })};
+    }
 }
 
 SipsIceTransport::~SipsIceTransport()
 {
     JAMI_DBG("~SipIceTransport@%p {tr=%p}", this, &trData_.base);
+    stopLoop_ = true;
 
     // Flush send queue with ENOTCONN error
     for (auto tdata : txQueue_) {
@@ -266,6 +277,8 @@ SipsIceTransport::~SipsIceTransport()
     auto base = getTransportBase();
 
     // Stop low-level transport first
+    tls_->shutdown();
+    eventLoopFut_.get();
     tls_.reset();
 
     // If delete not trigged by pjsip_transport_destroy (happen if objet not given to pjsip)
@@ -500,7 +513,10 @@ SipsIceTransport::getInfo(pj_ssl_sock_info* info, bool established)
     std::memset(info, 0, sizeof(*info));
 
     info->established = established;
-    info->proto = PJ_SSL_SOCK_PROTO_DTLS1;
+    if (PJSIP_TRANSPORT_IS_RELIABLE(&trData_.base))
+        info->proto = PJSIP_SSL_DEFAULT_PROTO;
+    else
+        info->proto = PJ_SSL_SOCK_PROTO_DTLS1;
 
     pj_sockaddr_cp(&info->local_addr, local_.pjPtr());
 
@@ -706,6 +722,25 @@ uint16_t
 SipsIceTransport::getTlsSessionMtu()
 {
     return tls_->maxPayload();
+}
+
+void
+SipsIceTransport::eventLoop()
+{
+    while(!stopLoop_) {
+        std::error_code err;
+        if (tls_ && tls_->waitForData(100, err)) {
+            std::vector<uint8_t> pkt;
+            pkt.resize(PJSIP_MAX_PKT_LEN);
+            auto read = tls_->read(pkt.data(), PJSIP_MAX_PKT_LEN, err);
+            if (read > 0) {
+                pkt.resize(read);
+                std::lock_guard<std::mutex> l(rxMtx_);
+                rxPending_.emplace_back(std::move(pkt));
+                scheduler_.run([this]{ handleEvents(); });
+            }
+        }
+    }
 }
 
 }} // namespace jami::tls
