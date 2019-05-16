@@ -26,7 +26,6 @@
 #include "upnp/upnp_control.h"
 
 #include <pjlib.h>
-#include <msgpack.hpp>
 
 #include <map>
 #include <atomic>
@@ -212,6 +211,8 @@ public:
     mutable std::mutex iceMutex_ {};
     pj_ice_strans_cfg config_;
     std::string last_errmsg_;
+
+    std::atomic_bool is_stopped_ {false};
 
     struct Packet {
       Packet(void *pkt, pj_size_t size)
@@ -908,6 +909,13 @@ IceTransport::isRunning() const
 }
 
 bool
+IceTransport::isStopped() const
+{
+    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
+    return pimpl_->is_stopped_;
+}
+
+bool
 IceTransport::isFailed() const
 {
     std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
@@ -950,12 +958,14 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
 {
     if (not isInitialized()) {
         JAMI_ERR("[ice:%p] not initialized transport", this);
+        pimpl_->is_stopped_ = true;
         return false;
     }
 
     // pj_ice_strans_start_ice crashes if remote candidates array is empty
     if (rem_candidates.empty()) {
         JAMI_ERR("[ice:%p] start failed: no remote candidates", this);
+        pimpl_->is_stopped_ = true;
         return false;
     }
 
@@ -969,62 +979,49 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
     if (status != PJ_SUCCESS) {
         pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
         JAMI_ERR("[ice:%p] start failed: %s", this, pimpl_->last_errmsg_.c_str());
+        pimpl_->is_stopped_ = true;
         return false;
     }
     return true;
 }
 
 bool
-IceTransport::start(const std::vector<uint8_t>& rem_data)
+IceTransport::start(const SDP& sdp)
 {
-    std::string rem_ufrag;
-    std::string rem_pwd;
+    if (not isInitialized()) {
+        JAMI_ERR("[ice:%p] not initialized transport", this);
+        pimpl_->is_stopped_ = true;
+        return false;
+    }
+
+    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", this, sdp.candidates.size());
+    pj_str_t ufrag, pwd;
+
     std::vector<IceCandidate> rem_candidates;
-
-    auto data = reinterpret_cast<const char*>(rem_data.data());
-    auto size = rem_data.size();
-
-    try {
-        std::size_t offset = 0;
-        auto result = msgpack::unpack(data, size, offset);
-        auto version = result.get().as<uint8_t>();
-        JAMI_DBG("[ice:%p] rx msg v%u", this, version);
-        if (version == 1) {
-            result = msgpack::unpack(data, size, offset);
-            std::tie(rem_ufrag, rem_pwd) = result.get().as<std::pair<std::string, std::string>>();
-            result = msgpack::unpack(data, size, offset);
-            auto comp_cnt = result.get().as<uint8_t>();
-            while (comp_cnt-- > 0) {
-                result = msgpack::unpack(data, size, offset);
-                IceCandidate cand;
-                for (const auto& line : result.get().as<std::vector<std::string>>()) {
-                    if (getCandidateFromSDP(line, cand))
-                        rem_candidates.emplace_back(cand);
-                }
-            }
-        } else {
-            JAMI_ERR("[ice:%p] invalid msg version", this);
-            return false;
-        }
-    } catch (const msgpack::unpack_error& e) {
-        JAMI_ERR("[ice:%p] remote msg unpack error: %s", this, e.what());
+    rem_candidates.reserve(sdp.candidates.size());
+    IceCandidate cand;
+    for (const auto &line : sdp.candidates) {
+        if (getCandidateFromSDP(line, cand))
+            rem_candidates.emplace_back(cand);
+    }
+    auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
+                                          pj_strset(&ufrag, (char*)sdp.ufrag.c_str(), sdp.ufrag.size()),
+                                          pj_strset(&pwd, (char*)sdp.pwd.c_str(), sdp.pwd.size()),
+                                          rem_candidates.size(),
+                                          rem_candidates.data());
+    if (status != PJ_SUCCESS) {
+        pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
+        JAMI_ERR("[ice:%p] start failed: %s", this, pimpl_->last_errmsg_.c_str());
+        pimpl_->is_stopped_ = true;
         return false;
     }
-
-    if (rem_ufrag.empty() or rem_pwd.empty() or rem_candidates.empty()) {
-        JAMI_ERR("[ice:%p] invalid remote attributes", this);
-        return false;
-    }
-
-    if (pimpl_->onlyIPv4Private_)
-        JAMI_WARN("[ice:%p] no public IPv4 found, your connection may fail!", this);
-
-    return start({rem_ufrag, rem_pwd}, rem_candidates);
+    return true;
 }
 
 bool
 IceTransport::stop()
 {
+    pimpl_->is_stopped_ = true;
     if (isStarted()) {
         auto status = pj_ice_strans_stop_ice(pimpl_->icest_.get());
         if (status != PJ_SUCCESS) {
@@ -1139,20 +1136,29 @@ IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
 }
 
 std::vector<uint8_t>
-IceTransport::packIceMsg() const
+IceTransport::packIceMsg(uint8_t version) const
 {
-    static constexpr uint8_t ICE_MSG_VERSION = 1;
-
     if (not isInitialized())
         return {};
 
     std::stringstream ss;
-    msgpack::pack(ss, ICE_MSG_VERSION);
-    msgpack::pack(ss, std::make_pair(pimpl_->local_ufrag_, pimpl_->local_pwd_));
-    msgpack::pack(ss, static_cast<uint8_t>(pimpl_->component_count_));
-    for (unsigned i=0; i<pimpl_->component_count_; i++)
-        msgpack::pack(ss, getLocalCandidates(i));
-
+    if (version == 1) {
+        msgpack::pack(ss, version);
+        msgpack::pack(ss, std::make_pair(pimpl_->local_ufrag_, pimpl_->local_pwd_));
+        msgpack::pack(ss, static_cast<uint8_t>(pimpl_->component_count_));
+        for (unsigned i=0; i<pimpl_->component_count_; i++)
+            msgpack::pack(ss, getLocalCandidates(i));
+    } else {
+        SDP sdp;
+        sdp.ufrag = pimpl_->local_ufrag_;
+        sdp.pwd = pimpl_->local_pwd_;
+        for (unsigned i = 0; i < pimpl_->component_count_; i++) {
+            auto candidates = getLocalCandidates(i);
+            sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
+            sdp.candidates.insert(sdp.candidates.end(), candidates.begin(), candidates.end());
+        }
+        msgpack::pack(ss, sdp);
+    }
     auto str(ss.str());
     return std::vector<uint8_t>(str.begin(), str.end());
 }
@@ -1370,6 +1376,49 @@ IceTransport::waitForData(int comp_id, unsigned int timeout, std::error_code& ec
     auto &channel = pimpl_->peerChannels_.at(comp_id);
     lk.unlock();
     return channel.wait(std::chrono::milliseconds(timeout));
+}
+
+std::vector<SDP>
+IceTransport::parseSDPList(const std::vector<uint8_t>& msg)
+{
+    auto data = reinterpret_cast<const char*>(msg.data());
+    auto size = msg.size();
+    std::vector<SDP> sdp_list;
+
+    msgpack::unpacker pac;
+    pac.reserve_buffer(msg.size());
+    memcpy(pac.buffer(), msg.data(), msg.size());
+    pac.buffer_consumed(msg.size());
+    msgpack::object_handle oh;
+
+    while (auto result = pac.next(oh)) {
+        try {
+            SDP sdp;
+            if (oh.get().type == msgpack::type::POSITIVE_INTEGER) {
+                // Version 1
+                result = pac.next(oh);
+                if (!result) break;
+                std::tie(sdp.ufrag, sdp.pwd) = oh.get().as<std::pair<std::string, std::string>>();
+                result = pac.next(oh);
+                if (!result) break;
+                auto comp_cnt = oh.get().as<uint8_t>();
+                while (comp_cnt-- > 0) {
+                    result = pac.next(oh);
+                    if (!result) break;
+                    auto candidates = oh.get().as<std::vector<std::string>>();
+                    sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
+                    sdp.candidates.insert(sdp.candidates.end(), candidates.begin(), candidates.end());
+                }
+            } else {
+                oh.get().convert(sdp);
+            }
+            sdp_list.emplace_back(sdp);
+        } catch (const msgpack::unpack_error &e) {
+            break;
+        }
+    }
+
+    return sdp_list;
 }
 
 //==============================================================================
