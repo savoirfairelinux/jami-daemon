@@ -1237,8 +1237,8 @@ int
 TlsSession::maxPayload() const
 {
     if (pimpl_->state_ == TlsSessionState::SHUTDOWN)
-        throw std::runtime_error("Getting MTU from non-valid TLS session");
-    return gnutls_dtls_get_data_mtu(pimpl_->session_);
+        throw std::runtime_error("Getting maxPayload from non-valid TLS session");
+    return pimpl_->transport_.maxPayload();
 }
 
 const char*
