@@ -17,28 +17,31 @@ on behalf of Savoir-faire Linux.
 
 ---
  pjnath/include/pjnath/config.h          |   13 +-
- pjnath/include/pjnath/ice_session.h     |  118 ++++++++++++++---
- pjnath/include/pjnath/ice_strans.h      |   61 ++++++++-
- pjnath/include/pjnath/stun_session.h    |   66 ++++++++-
- pjnath/include/pjnath/stun_sock.h       |   84 +++++++++---
+ pjnath/include/pjnath/ice_session.h     |  187 +++-
+ pjnath/include/pjnath/ice_strans.h      |   61 +-
+ pjnath/include/pjnath/stun_session.h    |   82 +-
+ pjnath/include/pjnath/stun_sock.h       |   93 +-
+ pjnath/include/pjnath/turn_sock.h       |   11 +
  pjnath/src/pjnath-test/concur_test.c    |    8 +-
  pjnath/src/pjnath-test/sess_auth.c      |   12 +-
  pjnath/src/pjnath-test/stun_sock_test.c |    7 +-
- pjnath/src/pjnath/ice_session.c         |  388 +++++++++++++++++++++++++++++++++++++----------------
- pjnath/src/pjnath/ice_strans.c          |  741 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--------------------------------
+ pjnath/src/pjnath/ice_session.c         |  582 +++++++---
+ pjnath/src/pjnath/ice_strans.c          |  986 ++++++++++++-----
  pjnath/src/pjnath/nat_detect.c          |   12 +-
  pjnath/src/pjnath/stun_session.c        |   12 +-
- pjnath/src/pjnath/stun_sock.c           | 1285 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++--------------------------------------------------
+ pjnath/src/pjnath/stun_sock.c           | 1313 ++++++++++++++++-------
+ pjnath/src/pjnath/stun_transaction.c    |    1 +
  pjnath/src/pjnath/turn_session.c        |    3 +-
+ pjnath/src/pjnath/turn_sock.c           |   16 +
  pjnath/src/pjturn-client/client_main.c  |   11 +-
  pjnath/src/pjturn-srv/allocation.c      |    2 +-
  pjnath/src/pjturn-srv/server.c          |    2 +-
- pjsip-apps/src/samples/icedemo.c        |  671 +++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------
+ pjsip-apps/src/samples/icedemo.c        |  671 +++++++-----
  pjsip/src/pjsua-lib/pjsua_core.c        |    8 +-
- 19 files changed, 2424 insertions(+), 1080 deletions(-)
+ 22 files changed, 2989 insertions(+), 1104 deletions(-)
 
 diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
-index fc1e2755..6f17a663 100644
+index fc1e27550..6f17a663b 100644
 --- a/pjnath/include/pjnath/config.h
 +++ b/pjnath/include/pjnath/config.h
 @@ -1,5 +1,5 @@
@@ -84,7 +87,7 @@ index fc1e2755..6f17a663 100644
  
  
 diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
-index fa13a3b7..2e686ea1 100644
+index fa13a3b7c..77e1278dc 100644
 --- a/pjnath/include/pjnath/ice_session.h
 +++ b/pjnath/include/pjnath/ice_session.h
 @@ -163,6 +163,51 @@ typedef enum pj_ice_cand_type
@@ -151,7 +154,30 @@ index fa13a3b7..2e686ea1 100644
  } pj_ice_sess_cand;
  
  
-@@ -331,6 +381,13 @@ typedef enum pj_ice_sess_check_state
+@@ -324,6 +374,22 @@ typedef enum pj_ice_sess_check_state
+      */
+     PJ_ICE_SESS_CHECK_STATE_FROZEN,
+ 
++    /**
++     * The following status is used when a packet sent via TURN got a
++     * "Connection reset by peer". This mean that the peer didn't allow
++     * us to connect yet. The socket will be reconnected during the next
++     * loop.
++     */
++    PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY,
++
++    /**
++     * TODO (sblin): REMOVE THIS! - https://github.com/coturn/coturn/issues/408
++     * For now, this status is only used because sometimes, the first packet
++     * doesn't receive any response. So, we retry to send the packet every
++     * 50 loops.
++     */
++    PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
++
+     /**
+      * A check has not been performed for this pair, and can be
+      * performed as soon as it is the highest priority Waiting pair on
+@@ -331,6 +397,13 @@ typedef enum pj_ice_sess_check_state
       */
      PJ_ICE_SESS_CHECK_STATE_WAITING,
  
@@ -165,7 +191,7 @@ index fa13a3b7..2e686ea1 100644
      /**
       * A check has not been performed for this pair, and can be
       * performed as soon as it is the highest priority Waiting pair on
-@@ -512,6 +569,29 @@ typedef struct pj_ice_sess_cb
+@@ -512,6 +585,52 @@ typedef struct pj_ice_sess_cb
  			      void *pkt, pj_size_t size,
  			      const pj_sockaddr_t *src_addr,
  			      unsigned src_addr_len);
@@ -182,6 +208,29 @@ index fa13a3b7..2e686ea1 100644
 +                                       unsigned check_id);
 +
 +    /**
++     * Select incoming TURN dataconn
++     *
++     * @param ice			The ICE session.
++     * @param clist			The ICE connection list
++     * @param check_id		The wanted check.
++     */
++    pj_status_t (*select_turn_dataconn)(pj_ice_sess *ice,
++                                        pj_ice_sess_checklist *clist,
++                                        unsigned check_id);
++
++    /**
++     * Reconnect a resetted TCP connection and send connectivity check
++     * cf. PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY
++     *
++     * @param ice			The ICE session.
++     * @param clist			The ICE connection list
++     * @param check_id		The wanted check.
++     */
++    pj_status_t (*reconnect_tcp_connection)(pj_ice_sess *ice,
++                                            pj_ice_sess_checklist *clist,
++                                            unsigned check_id);
++
++    /**
 +     * Close TCP socket
 +     *
 +     * @param ice			The ICE session.
@@ -195,7 +244,7 @@ index fa13a3b7..2e686ea1 100644
  } pj_ice_sess_cb;
  
  
-@@ -627,6 +707,7 @@ struct pj_ice_sess
+@@ -627,6 +746,7 @@ struct pj_ice_sess
      pj_bool_t		 is_destroying;		    /**< Destroy is called  */
      pj_status_t		 ice_status;		    /**< Error status.	    */
      pj_timer_entry	 timer;			    /**< ICE timer.	    */
@@ -203,7 +252,7 @@ index fa13a3b7..2e686ea1 100644
      pj_ice_sess_cb	 cb;			    /**< Callback.	    */
  
      pj_stun_config	 stun_cfg;		    /**< STUN settings.	    */
-@@ -669,6 +750,7 @@ struct pj_ice_sess
+@@ -669,6 +789,7 @@ struct pj_ice_sess
      	char txt[128];
  	char errmsg[PJ_ERR_MSG_SIZE];
      } tmp;
@@ -211,7 +260,7 @@ index fa13a3b7..2e686ea1 100644
  };
  
  
-@@ -826,8 +908,6 @@ PJ_DECL(pj_status_t) pj_ice_sess_change_role(pj_ice_sess *ice,
+@@ -826,8 +947,6 @@ PJ_DECL(pj_status_t) pj_ice_sess_change_role(pj_ice_sess *ice,
  PJ_DECL(pj_status_t) pj_ice_sess_set_prefs(pj_ice_sess *ice,
  					   const pj_uint8_t prefs[4]);
  
@@ -220,7 +269,7 @@ index fa13a3b7..2e686ea1 100644
  /**
   * Add a candidate to this ICE session. Application must add candidates for
   * each components ID before it can start pairing the candidates and 
-@@ -846,20 +926,17 @@ PJ_DECL(pj_status_t) pj_ice_sess_set_prefs(pj_ice_sess *ice,
+@@ -846,20 +965,17 @@ PJ_DECL(pj_status_t) pj_ice_sess_set_prefs(pj_ice_sess *ice,
   * @param rel_addr	Optional related address.
   * @param addr_len	Length of addresses.
   * @param p_cand_id	Optional pointer to receive the candidate ID.
@@ -249,12 +298,10 @@ index fa13a3b7..2e686ea1 100644
  
  /**
   * Find default candidate for the specified component ID, using this
-@@ -968,8 +1045,19 @@ PJ_DECL(pj_status_t) pj_ice_sess_on_rx_pkt(pj_ice_sess *ice,
+@@ -968,7 +1084,52 @@ PJ_DECL(pj_status_t) pj_ice_sess_on_rx_pkt(pj_ice_sess *ice,
  					   const pj_sockaddr_t *src_addr,
  					   int src_addr_len);
  
--
--
 +/**
 + * Notification when ICE session get a new incoming connection
 + *
@@ -268,11 +315,44 @@ index fa13a3b7..2e686ea1 100644
 +PJ_DECL(void)
 +ice_sess_on_peer_connection(pj_ice_sess *ice,
 +                            pj_uint8_t transport_id, pj_status_t status, pj_sockaddr_t* remote_addr);
+ 
++/**
++ * Notification when ICE session get a new resetted connection
++ * cf PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY
++ *
++ * @param ice          The ICE session.
++ * @param transport_id Related transport
++ * @param remote_addr  Connected remove address
++ */
++PJ_DECL(void)
++ice_sess_on_peer_reset_connection(pj_ice_sess *ice,
++                                  pj_uint8_t transport_id, pj_sockaddr_t* remote_addr);
++
++/**
++ * Notification when ICE session get a new packet
++ * Used to remove the PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET status
++ *
++ * @param ice          The ICE session.
++ * @param transport_id Related transport
++ * @param remote_addr  Connected remove address
++ */
++PJ_DECL(void)
++ice_sess_on_peer_packet(pj_ice_sess *ice, pj_uint8_t transport_id, pj_sockaddr_t* remote_addr);
++
++/**
++ * Select dataconn from TURN
++ *
++ * @param ice          The ICE session.
++ * @param clist        The ice check list
++ * @param check_id     The wanted check
++ */
++PJ_DECL(void)
++ice_select_incoming_turn(pj_ice_sess *ice, pj_ice_sess_checklist *clist, unsigned check_id);
+ 
  /**
   * @}
-  */
 diff --git a/pjnath/include/pjnath/ice_strans.h b/pjnath/include/pjnath/ice_strans.h
-index b4a83067..2b491e0d 100644
+index b4a83067f..2b491e0d0 100644
 --- a/pjnath/include/pjnath/ice_strans.h
 +++ b/pjnath/include/pjnath/ice_strans.h
 @@ -1,5 +1,5 @@
@@ -377,7 +457,7 @@ index b4a83067..2b491e0d 100644
  /**
   * @}
 diff --git a/pjnath/include/pjnath/stun_session.h b/pjnath/include/pjnath/stun_session.h
-index f8ea4d1d..1e95a297 100644
+index f8ea4d1dc..3d42af5a2 100644
 --- a/pjnath/include/pjnath/stun_session.h
 +++ b/pjnath/include/pjnath/stun_session.h
 @@ -1,5 +1,5 @@
@@ -417,7 +497,7 @@ index f8ea4d1d..1e95a297 100644
  
  /**
   * This is the callback to be registered to pj_stun_session, to send
-@@ -307,6 +330,17 @@ typedef struct pj_stun_session_cb
+@@ -307,6 +330,33 @@ typedef struct pj_stun_session_cb
  				    const pj_sockaddr_t *src_addr,
  				    unsigned src_addr_len);
  
@@ -432,10 +512,26 @@ index f8ea4d1d..1e95a297 100644
 +     */
 +    void (*on_peer_connection)(pj_stun_session *sess, pj_status_t status, pj_sockaddr_t* remote_addr);
 +
++    /**
++     * Notification when STUN connection is resetted (TCP only).
++     *
++     * @param stun_session  The STUN session.
++     * @param remote_addr   The remote resetted
++     */
++    void (*on_peer_reset_connection)(pj_stun_session *sess, pj_sockaddr_t* remote_addr);
++
++    /**
++     * Notification when STUN connection is resetted (TCP only).
++     *
++     * @param stun_session  The STUN session.
++     * @param remote_addr   The remote resetted
++     */
++    void (*on_peer_packet)(pj_stun_session *sess, pj_sockaddr_t* remote_addr);
++
  } pj_stun_session_cb;
  
  
-@@ -388,15 +422,15 @@ typedef enum pj_stun_sess_msg_log_flag
+@@ -388,15 +438,15 @@ typedef enum pj_stun_sess_msg_log_flag
   * @param grp_lock	Optional group lock to be used by this session.
   * 			If NULL, the session will create one itself.
   * @param p_sess	Pointer to receive STUN session instance.
@@ -457,7 +553,7 @@ index f8ea4d1d..1e95a297 100644
  
  /**
   * Destroy the STUN session and all objects created in the context of
-@@ -751,6 +785,24 @@ PJ_DECL(void) pj_stun_msg_destroy_tdata(pj_stun_session *sess,
+@@ -751,6 +801,24 @@ PJ_DECL(void) pj_stun_msg_destroy_tdata(pj_stun_session *sess,
  					pj_stun_tx_data *tdata);
  
  
@@ -483,7 +579,7 @@ index f8ea4d1d..1e95a297 100644
   * @}
   */
 diff --git a/pjnath/include/pjnath/stun_sock.h b/pjnath/include/pjnath/stun_sock.h
-index fff4df88..d70300bb 100644
+index fff4df885..05a61bb11 100644
 --- a/pjnath/include/pjnath/stun_sock.h
 +++ b/pjnath/include/pjnath/stun_sock.h
 @@ -1,5 +1,5 @@
@@ -609,7 +705,7 @@ index fff4df88..d70300bb 100644
   *
   * @return		PJ_SUCCESS if data has been sent immediately, or
   *			PJ_EPENDING if data cannot be sent immediately. In
-@@ -483,7 +502,36 @@ PJ_DECL(pj_status_t) pj_stun_sock_sendto(pj_stun_sock *stun_sock,
+@@ -483,7 +502,45 @@ PJ_DECL(pj_status_t) pj_stun_sock_sendto(pj_stun_sock *stun_sock,
  					 unsigned pkt_len,
  					 unsigned flag,
  					 const pj_sockaddr_t *dst_addr,
@@ -627,6 +723,15 @@ index fff4df88..d70300bb 100644
 + */
 +PJ_DECL(pj_status_t)
 +pj_stun_sock_connect_active(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr, int af);
++
++/**
++ * Connect active socket to remote address
++ * @param stun_sock
++ * @param remote_addr the destination
++ * @param af          address family
++ */
++PJ_DECL(pj_status_t)
++pj_stun_sock_reconnect_active(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr, int af);
 +
 +/**
 + * Close active socket
@@ -647,8 +752,30 @@ index fff4df88..d70300bb 100644
  
  /**
   * @}
+diff --git a/pjnath/include/pjnath/turn_sock.h b/pjnath/include/pjnath/turn_sock.h
+index 8650cfc59..99570ac25 100644
+--- a/pjnath/include/pjnath/turn_sock.h
++++ b/pjnath/include/pjnath/turn_sock.h
+@@ -490,6 +490,17 @@ PJ_DECL(pj_status_t) pj_turn_sock_bind_channel(pj_turn_sock *turn_sock,
+ 					       unsigned addr_len);
+ 
+ 
++/**
++ *  Check if peer is a dataconn
++ *
++ * @param turn_sock    The turn sock
++ * @param peer         The peer addr to check
++ *
++ * @return true if dataconn else false
++ */
++PJ_DECL(pj_bool_t)
++pj_turn_sock_has_dataconn(pj_turn_sock *turn_sock, const pj_sockaddr_t *peer);
++
+ /**
+  * @}
+  */
 diff --git a/pjnath/src/pjnath-test/concur_test.c b/pjnath/src/pjnath-test/concur_test.c
-index c3013d2a..ebe17392 100644
+index c3013d2ab..ebe173922 100644
 --- a/pjnath/src/pjnath-test/concur_test.c
 +++ b/pjnath/src/pjnath-test/concur_test.c
 @@ -183,10 +183,10 @@ static int stun_destroy_test_session(struct stun_test_session *test_sess)
@@ -667,7 +794,7 @@ index c3013d2a..ebe17392 100644
  	    return -10;
  	}
 diff --git a/pjnath/src/pjnath-test/sess_auth.c b/pjnath/src/pjnath-test/sess_auth.c
-index 055eaad6..d1ad137a 100644
+index 055eaad61..d1ad137a3 100644
 --- a/pjnath/src/pjnath-test/sess_auth.c
 +++ b/pjnath/src/pjnath-test/sess_auth.c
 @@ -248,7 +248,8 @@ static int create_std_server(pj_stun_auth_type auth_type,
@@ -704,7 +831,7 @@ index 055eaad6..d1ad137a 100644
  	destroy_client_server();
  	return -270;
 diff --git a/pjnath/src/pjnath-test/stun_sock_test.c b/pjnath/src/pjnath-test/stun_sock_test.c
-index fff4fad2..a54df74d 100644
+index fff4fad26..a54df74dc 100644
 --- a/pjnath/src/pjnath-test/stun_sock_test.c
 +++ b/pjnath/src/pjnath-test/stun_sock_test.c
 @@ -255,8 +255,8 @@ static pj_status_t create_client(pj_stun_config *cfg,
@@ -731,7 +858,7 @@ index fff4fad2..a54df74d 100644
  	app_perror("    error: server sending data", status);
  	ret = -390;
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index c51dba77..b9639061 100644
+index c51dba771..0301c5c7b 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -1,5 +1,5 @@
@@ -741,15 +868,18 @@ index c51dba77..b9639061 100644
   * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
   * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
   *
-@@ -45,6 +45,7 @@ static const char *check_state_name[] =
+@@ -44,7 +44,10 @@ static const char *cand_type_names[] =
+ static const char *check_state_name[] = 
  {
      "Frozen",
++    "Needs Retry",
++    "Needs First Packet",
      "Waiting",
 +    "Pending",
      "In Progress",
      "Succeeded",
      "Failed"
-@@ -75,8 +76,8 @@ enum timer_type
+@@ -75,8 +78,8 @@ enum timer_type
  				     valid check for every components.	*/
      TIMER_START_NOMINATED_CHECK,/**< Controlling agent start connectivity
  				     checks with USE-CANDIDATE flag.	*/
@@ -760,7 +890,15 @@ index c51dba77..b9639061 100644
  };
  
  /* Candidate type preference */
-@@ -133,6 +134,7 @@ typedef struct timer_data
+@@ -123,6 +126,7 @@ typedef struct timer_data
+ {
+     pj_ice_sess		    *ice;
+     pj_ice_sess_checklist   *clist;
++    unsigned                first_packet_counter; // TODO (remove), for now, needed for the NEEDS_FIRST_PACKET state
+ } timer_data;
+ 
+ 
+@@ -133,6 +137,7 @@ typedef struct timer_data
  
  /* Forward declarations */
  static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te);
@@ -768,7 +906,7 @@ index c51dba77..b9639061 100644
  static void on_ice_complete(pj_ice_sess *ice, pj_status_t status);
  static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now);
  static void ice_on_destroy(void *obj);
-@@ -288,10 +290,9 @@ static pj_status_t init_comp(pj_ice_sess *ice,
+@@ -288,10 +293,9 @@ static pj_status_t init_comp(pj_ice_sess *ice,
      sess_cb.on_send_msg = &on_stun_send_msg;
  
      /* Create STUN session for this candidate */
@@ -782,7 +920,7 @@ index c51dba77..b9639061 100644
      if (status != PJ_SUCCESS)
  	return status;
  
-@@ -715,7 +716,8 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+@@ -715,7 +719,8 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
  					 const pj_sockaddr_t *base_addr,
  					 const pj_sockaddr_t *rel_addr,
  					 int addr_len,
@@ -792,7 +930,7 @@ index c51dba77..b9639061 100644
  {
      pj_ice_sess_cand *lcand;
      pj_status_t status = PJ_SUCCESS;
-@@ -738,6 +740,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+@@ -738,6 +743,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
      lcand->comp_id = (pj_uint8_t)comp_id;
      lcand->transport_id = (pj_uint8_t)transport_id;
      lcand->type = type;
@@ -800,15 +938,16 @@ index c51dba77..b9639061 100644
      pj_strdup(ice->pool, &lcand->foundation, foundation);
      lcand->prio = CALC_CAND_PRIO(ice, type, local_pref, lcand->comp_id);
      pj_sockaddr_cp(&lcand->addr, addr);
-@@ -959,6 +962,7 @@ static void check_set_state(pj_ice_sess *ice, pj_ice_sess_check *check,
+@@ -959,6 +965,8 @@ static void check_set_state(pj_ice_sess *ice, pj_ice_sess_check *check,
  			    pj_ice_sess_check_state st, 
  			    pj_status_t err_code)
  {
 +	if (check->state == st) return; // nothing to do
++    if (st == PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET && check->state == PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS) return;
      pj_assert(check->state < PJ_ICE_SESS_CHECK_STATE_SUCCEEDED);
  
      LOG5((ice->obj_name, "Check %s: state changed from %s to %s",
-@@ -1079,6 +1083,17 @@ static pj_status_t prune_checklist(pj_ice_sess *ice,
+@@ -1079,6 +1087,17 @@ static pj_status_t prune_checklist(pj_ice_sess *ice,
  		return PJNATH_EICENOHOSTCAND;
  	    }
  	}
@@ -826,7 +965,7 @@ index c51dba77..b9639061 100644
      }
  
      /* Next remove a pair if its local and remote candidates are identical
-@@ -1181,6 +1196,8 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
+@@ -1181,6 +1200,8 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
      case TIMER_KEEP_ALIVE:
  	ice_keep_alive(ice, PJ_TRUE);
  	break;
@@ -835,29 +974,7 @@ index c51dba77..b9639061 100644
      case TIMER_NONE:
  	/* Nothing to do, just to get rid of gcc warning */
  	break;
-@@ -1189,6 +1206,21 @@ static void on_timer(pj_timer_heap_t *th, pj_timer_entry *te)
-     pj_grp_lock_release(ice->grp_lock);
- }
- 
-+static void on_tcp_connect_timeout(pj_ice_sess* ice) {
-+    pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap, &ice->timer, TIMER_NONE);
-+
-+    for (int i = 0; i < ice->clist.count; ++i) {
-+      pj_ice_sess_check *check = &ice->clist.checks[i];
-+      if (check->state == PJ_ICE_SESS_CHECK_STATE_PENDING) {
-+        if (*ice->cb.wait_tcp_connection) {
-+          (*ice->cb.close_tcp_connection)(ice, &ice->clist, i);
-+        }
-+        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
-+        break;
-+      }
-+    }
-+}
-+
- /* Send keep-alive */
- static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
- {
-@@ -1202,9 +1234,9 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+@@ -1202,9 +1223,9 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
  	pj_bool_t saved;
  	pj_status_t status;
  
@@ -870,7 +987,7 @@ index c51dba77..b9639061 100644
  
  	/* Create the Binding Indication */
  	status = pj_stun_session_create_ind(comp->stun_sess, 
-@@ -1343,7 +1375,6 @@ static pj_bool_t on_check_complete(pj_ice_sess *ice,
+@@ -1343,7 +1364,6 @@ static pj_bool_t on_check_complete(pj_ice_sess *ice,
  		check_set_state(ice, c, PJ_ICE_SESS_CHECK_STATE_WAITING, 0);
  	    }
  	}
@@ -878,7 +995,43 @@ index c51dba77..b9639061 100644
  	LOG5((ice->obj_name, "Check %d is successful%s",
  	     GET_CHECK_ID(&ice->clist, check),
  	     (check->nominated ? "  and nominated" : "")));
-@@ -1695,6 +1726,25 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+@@ -1609,6 +1629,35 @@ static pj_bool_t on_check_complete(pj_ice_sess *ice,
+     return PJ_FALSE;
+ }
+ 
++static void on_tcp_connect_timeout(pj_ice_sess* ice) {
++    pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap, &ice->timer, TIMER_NONE);
++
++    pj_bool_t first_found = PJ_FALSE, set_timer = PJ_FALSE;
++
++    for (int i = 0; i < ice->clist.count; ++i) {
++        pj_ice_sess_check *check = &ice->clist.checks[i];
++        if (check->state == PJ_ICE_SESS_CHECK_STATE_PENDING && !first_found) {
++            if (*ice->cb.close_tcp_connection) (*ice->cb.close_tcp_connection)(ice, &ice->clist, i);
++            check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
++            on_check_complete(ice, check);
++            first_found = PJ_TRUE;
++        } else if(check->state == PJ_ICE_SESS_CHECK_STATE_PENDING) {
++            set_timer = PJ_TRUE;
++            break;
++        }
++    }
++
++    if (set_timer && ice->timer.id == TIMER_NONE) {
++        // Reschedule
++        pj_time_val delay = {0, 0};
++        delay.msec = 1500;
++        pj_time_val_normalize(&delay);
++        pj_timer_heap_schedule_w_grp_lock(
++            ice->stun_cfg.timer_heap, &ice->timer, &delay,
++            TIMER_CONNECTION_TIMEOUT, ice->grp_lock);
++    }
++}
++
+ 
+ /* Create checklist by pairing local candidates with remote candidates */
+ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+@@ -1695,6 +1744,25 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
  		continue;
  	    }
  
@@ -904,7 +1057,15 @@ index c51dba77..b9639061 100644
  
  	    chk->lcand = lcand;
  	    chk->rcand = rcand;
-@@ -1751,40 +1801,71 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+@@ -1739,6 +1807,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+     td = PJ_POOL_ZALLOC_T(ice->pool, timer_data);
+     td->ice = ice;
+     td->clist = clist;
++    td->first_packet_counter = 1;
+     clist->timer.user_data = (void*)td;
+     clist->timer.cb = &periodic_timer;
+ 
+@@ -1751,40 +1820,73 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
      return PJ_SUCCESS;
  }
  
@@ -942,6 +1103,8 @@ index c51dba77..b9639061 100644
 +        &rcand->addr, pj_sockaddr_get_len(&rcand->addr), check->tdata);
 +    if (status != PJ_SUCCESS) {
 +        check->tdata = NULL;
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++        on_check_complete(ice, check);
 +        pjnath_perror(ice->obj_name, "Error sending STUN request", status);
 +        pj_log_pop_indent();
 +        return status;
@@ -994,7 +1157,7 @@ index c51dba77..b9639061 100644
      /* Attach data to be retrieved later when STUN request transaction
       * completes and on_stun_request_complete() callback is called.
       */
-@@ -1796,57 +1877,72 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+@@ -1796,57 +1898,98 @@ static pj_status_t perform_check(pj_ice_sess *ice,
      msg_data->data.req.ckid = check_id;
  
      /* Add PRIORITY */
@@ -1043,6 +1206,9 @@ index c51dba77..b9639061 100644
 -	pj_stun_msg_add_uint64_attr(check->tdata->pool, check->tdata->msg, 
 -				    PJ_STUN_ATTR_ICE_CONTROLLED,
 -				    &ice->tie_breaker);
++        if (nominate) {
++            check->nominated = PJ_TRUE;
++        }
 +        pj_stun_msg_add_uint64_attr(check->tdata->pool, check->tdata->msg,
 +                                    PJ_STUN_ATTR_ICE_CONTROLLED,
 +                                    &ice->tie_breaker);
@@ -1052,17 +1218,35 @@ index c51dba77..b9639061 100644
 +    if (lcand->transport == PJ_CAND_UDP) {
 +        status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
 +    } else if (lcand->transport == PJ_CAND_TCP_ACTIVE) {
-+        pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap, &ice->timer, TIMER_NONE);
-+        status = (*ice->cb.wait_tcp_connection)(ice, clist, check_id);
-+        if (ice->timer.id == TIMER_NONE) {
-+          pj_time_val delay = {0, 0};
-+          delay.msec = 1500;
-+          pj_time_val_normalize(&delay);
-+          pj_timer_heap_schedule_w_grp_lock(
-+              ice->stun_cfg.timer_heap, &ice->timer, &delay,
-+              TIMER_CONNECTION_TIMEOUT, ice->grp_lock);
++
++        if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY) {
++            status = (*ice->cb.reconnect_tcp_connection)(ice, clist, check_id);
++        } else if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET) {
++            status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
 +        } else {
-+          pj_assert(!"Not expected any timer active");
++            pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap, &ice->timer, TIMER_NONE);
++            status = (*ice->cb.wait_tcp_connection)(ice, clist, check_id);
++            if (ice->timer.id == TIMER_NONE) {
++                pj_time_val delay = {0, 0};
++                delay.msec = 1500;
++                pj_time_val_normalize(&delay);
++                pj_timer_heap_schedule_w_grp_lock(
++                    ice->stun_cfg.timer_heap, &ice->timer, &delay,
++                    TIMER_CONNECTION_TIMEOUT, ice->grp_lock);
++            } else if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY) {
++                pj_assert(!"Not expected any timer active");
++            }
++        }
++    } else if (lcand->transport == PJ_CAND_TCP_PASSIVE && lcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++        pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap, &ice->timer, TIMER_NONE);
++        status = (*ice->cb.select_turn_dataconn)(ice, clist, check_id);
++        if (ice->timer.id == TIMER_NONE) {
++            pj_time_val delay = {0, 0};
++            delay.msec = 1500;
++            pj_time_val_normalize(&delay);
++            pj_timer_heap_schedule_w_grp_lock(
++                ice->stun_cfg.timer_heap, &ice->timer, &delay,
++                TIMER_CONNECTION_TIMEOUT, ice->grp_lock);
 +        }
      }
 +#else
@@ -1088,8 +1272,13 @@ index c51dba77..b9639061 100644
 +        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_PENDING,
 +                        status);
 +    } else {
-+        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
-+                        PJ_SUCCESS);
++        if (check->rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++            // TODO (sblin) remove this - https://github.com/coturn/coturn/issues/408
++            check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
++        } else {
++            check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
++                            PJ_SUCCESS);
++        }
      }
  
 -    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, 
@@ -1101,16 +1290,55 @@ index c51dba77..b9639061 100644
  }
  
  
-@@ -1859,7 +1955,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
-     timer_data *td;
-     pj_ice_sess *ice;
-     pj_ice_sess_checklist *clist;
--    unsigned i, start_count=0;
-+    unsigned i, start_count=0, pending_count=0;
-     pj_status_t status;
+@@ -1882,44 +2025,101 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+     LOG5((ice->obj_name, "Starting checklist periodic check"));
+     pj_log_push_indent();
  
-     td = (struct timer_data*) te->user_data;
-@@ -1885,41 +1981,41 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
++    /* Send STUN Binding request for check with highest priority on
++     * retry state.
++     */
++
++    if (start_count == 0) {
++        for (i = 0; i < clist->count; ++i) {
++            pj_ice_sess_check *check = &clist->checks[i];
++            // Reconnect closed TURN sockets
++            if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY) {
++                status = perform_check(ice, clist, i, ice->is_nominating);
++                if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++                    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
++                                    status);
++                    on_check_complete(ice, check);
++                }
++                ++start_count;
++                break;
++            }
++        }
++    }
++
++    if (start_count == 0) {
++        // TODO (sblin) remove - https://github.com/coturn/coturn/issues/408
++        pj_bool_t inc_counter = PJ_TRUE;
++        for (i = 0; i < clist->count; ++i) {
++            pj_ice_sess_check *check = &clist->checks[i];
++            if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET) {
++                if (inc_counter) {
++                    td->first_packet_counter += 1;
++                    inc_counter = PJ_FALSE;
++                }
++                if (td->first_packet_counter % 50 == 0) {
++                    status = perform_check(ice, clist, i, ice->is_nominating);
++                    if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++                        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED,
++                                        status);
++                        on_check_complete(ice, check);
++                    }
++                }
++                ++start_count;
++                break;
++            }
++        }
++    }
++
      /* Send STUN Binding request for check with highest priority on
       * Waiting state.
       */
@@ -1154,12 +1382,7 @@ index c51dba77..b9639061 100644
 -		    		    PJ_ICE_SESS_CHECK_STATE_FAILED, status);
 -		    on_check_complete(ice, check);
 -		}
--
--		++start_count;
--		break;
--	    }
--	}
-+    if (start_count == 0 && pending_count == 0) {
++    if (start_count == 0) {
 +      for (i = 0; i < clist->count; ++i) {
 +        pj_ice_sess_check *check = &clist->checks[i];
 +
@@ -1173,10 +1396,26 @@ index c51dba77..b9639061 100644
 +          break;
 +        }
 +      }
++    }
+ 
+-		++start_count;
+-		break;
+-	    }
+-	}
++    if (start_count == 0) {
++        // If all sockets are pending, do nothing
++        pj_bool_t inc_counter = PJ_TRUE;
++        for (i = 0; i < clist->count; ++i) {
++            pj_ice_sess_check *check = &clist->checks[i];
++            if (check->state == PJ_ICE_SESS_CHECK_STATE_PENDING) {
++                ++start_count;
++                break;
++            }
++        }
      }
  
      /* Cannot start check because there's no suitable candidate pair.
-@@ -1936,8 +2032,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -1936,8 +2136,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
      pj_grp_lock_release(ice->grp_lock);
      pj_log_pop_indent();
      return PJ_SUCCESS;
@@ -1186,7 +1425,7 @@ index c51dba77..b9639061 100644
  
  /* Start sending connectivity check with USE-CANDIDATE */
  static void start_nominated_check(pj_ice_sess *ice)
-@@ -2109,13 +2204,13 @@ PJ_DEF(pj_status_t) pj_ice_sess_start_check(pj_ice_sess *ice)
+@@ -2109,13 +2308,13 @@ PJ_DEF(pj_status_t) pj_ice_sess_start_check(pj_ice_sess *ice)
      /* First, perform all pending triggered checks, simultaneously. */
      rcheck = ice->early_check.next;
      while (rcheck != &ice->early_check) {
@@ -1207,7 +1446,7 @@ index c51dba77..b9639061 100644
      }
      pj_list_init(&ice->early_check);
  
-@@ -2161,7 +2256,7 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+@@ -2161,7 +2360,7 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
  	/* Stray retransmit timer that could happen while
  	 * we're being destroyed */
  	pj_grp_lock_release(ice->grp_lock);
@@ -1216,10 +1455,33 @@ index c51dba77..b9639061 100644
      }
  
      status = (*ice->cb.on_tx_pkt)(ice, sd->comp_id, msg_data->transport_id,
-@@ -2171,6 +2266,75 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+@@ -2171,6 +2370,145 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
      return status;
  }
  
++static pj_ice_sess_check* get_current_check_at_state(pj_ice_sess *ice,
++    pj_sockaddr_t* remote_addr, pj_ice_sess_check_state state, int* current_check)
++{
++    if (!ice || !remote_addr) return NULL;
++    // NOTE: Multiple checks can have the same remote, we only take care of the first
++    // First, check if the TCP is really connected. If not, abort
++    pj_ice_sess_check *check = NULL;
++    for (int i = 0; i < ice->clist.count; ++i) {
++        // Find related check
++        pj_ice_sess_check *c = &ice->clist.checks[i];
++        /* Host candidate not found this this srflx! */
++        if (pj_sockaddr_cmp(remote_addr, &c->rcand->addr) == 0) {
++            if (c->tdata == NULL || c->state != state)
++                continue;
++            /* Match */
++            check = c;
++            if (current_check) *current_check = i;
++            break;
++        }
++    }
++    return check;
++}
++
 +void ice_sess_on_peer_connection(pj_ice_sess *ice, pj_uint8_t transport_id,
 +                                 pj_status_t status,
 +                                 pj_sockaddr_t* remote_addr) {
@@ -1228,27 +1490,15 @@ index c51dba77..b9639061 100644
 +  // finished
 +  if (!remote_addr) return;
 +
-+  // First, check if the TCP is really connected. If not, abort
-+  pj_ice_sess_check *check = NULL;
 +  int current_check = -1;
-+  for (int i = 0; i < ice->clist.count; ++i) {
-+    // Find related check
-+    pj_ice_sess_check *c = &ice->clist.checks[i];
-+    /* Host candidate not found this this srflx! */
-+    if (pj_sockaddr_cmp(remote_addr, &c->rcand->addr) == 0) {
-+        if (c->tdata == NULL) {
-+            continue;
-+        }
-+        /* Match */
-+        check = c;
-+        current_check = i;
-+        break;
-+    }
-+  }
-+
-+  // NOTE: Multiple checks can have the same remote, we only take care of the first
++  pj_ice_sess_check *check = get_current_check_at_state(ice, remote_addr,
++    PJ_ICE_SESS_CHECK_STATE_PENDING, &current_check);
 +  if (!check) {
-+    return;
++        // Handle peer reflexive candidates (incoming are still waiting here)
++        check = get_current_check_at_state(ice, remote_addr, PJ_ICE_SESS_CHECK_STATE_WAITING, &current_check);
++        if (!check) {
++            return;
++        }
 +  }
 +
 +  if (status != PJ_SUCCESS) {
@@ -1278,21 +1528,80 @@ index c51dba77..b9639061 100644
 +  // Note that USERNAME and MESSAGE-INTEGRITY will be added by the
 +  // STUN session.
 +
-+  // Initiate STUN transaction to send the request
-+  status_send_msg = pj_stun_session_send_msg(
-+      comp->stun_sess, msg_data, PJ_FALSE, PJ_FALSE, &rcand->addr,
-+      pj_sockaddr_get_len(&rcand->addr), check->tdata);
-+  if (status_send_msg != PJ_SUCCESS) {
-+    check->tdata = NULL;
-+    pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
-+    pj_log_pop_indent();
-+  }
-+  check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
++    // Initiate STUN transaction to send the request
++    status_send_msg = pj_stun_session_send_msg(
++        comp->stun_sess, msg_data, PJ_FALSE, PJ_FALSE, &rcand->addr,
++        pj_sockaddr_get_len(&rcand->addr), check->tdata);
++    if (status_send_msg == 120104 /* CONNECTION RESET BY PEER */
++        && rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++        /**
++         * This part of the code is triggered when using ICE over TCP via TURN
++         * In fact, the other peer has to authorize this peer to connect to
++         * the relayed candidate. This is done by set_perm from the other case.
++         * But from this side, we can't know if the peer has authorized us. If it's
++         * not the case, the connection will got a CONNECTION RESET BY PEER status.
++         * In this case, we can try to reconnect a bit after and this until the check
++         * reached its timeout.
++         */
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY, status);
++    } else if (status_send_msg != PJ_SUCCESS) {
++        check->tdata = NULL;
++        pjnath_perror(ice->obj_name, "Error sending STUN request", status_send_msg);
++        pj_log_pop_indent();
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++        on_check_complete(ice, check);
++    } else if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
++    } else {
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
++    }
++}
++
++void ice_sess_on_peer_reset_connection(pj_ice_sess *ice, pj_uint8_t transport_id,
++                                        pj_sockaddr_t* remote_addr) {
++    // The TCP link is reseted
++    if (!remote_addr) return;
++    pj_ice_sess_check *check = get_current_check_at_state(ice, remote_addr,
++        PJ_ICE_SESS_CHECK_STATE_PENDING, NULL);
++    if (!check) {
++        // Just check if it's not the first packet failing
++        check = get_current_check_at_state(ice, remote_addr,
++            PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, NULL);
++        if (!check) return;
++    }
++
++    const pj_ice_sess_cand *rcand = check->rcand;
++    if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY, 120104);
++    }
++}
++
++void ice_sess_on_peer_packet(pj_ice_sess *ice, pj_uint8_t transport_id,
++                            pj_sockaddr_t* remote_addr) {
++    // The TCP link received its bind  request response
++    if (!ice || !remote_addr) return;
++    pj_ice_sess_check *check = get_current_check_at_state(ice, remote_addr,
++        PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, NULL);
++    if (!check) return;
++
++    const pj_ice_sess_cand *rcand = check->rcand;
++    if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, PJ_SUCCESS);
++    }
++}
++
++
++void
++ice_select_incoming_turn(pj_ice_sess *ice, pj_ice_sess_checklist *clist, unsigned check_id)
++{
++    check_set_state(ice, &clist->checks[check_id], PJ_ICE_SESS_CHECK_STATE_SUCCEEDED, PJ_SUCCESS);
++    update_comp_check(ice, clist->checks[check_id].lcand->comp_id, &clist->checks[check_id]);
++    on_check_complete(ice, &clist->checks[check_id]);
 +}
  
  /* This callback is called when outgoing STUN request completed */
  static void on_stun_request_complete(pj_stun_session *stun_sess,
-@@ -2401,7 +2565,8 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+@@ -2401,7 +2739,8 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
  				      &check->lcand->base_addr, 
  				      &check->lcand->base_addr,
  				      pj_sockaddr_get_len(&xaddr->sockaddr),
@@ -1302,7 +1611,7 @@ index c51dba77..b9639061 100644
  	if (status != PJ_SUCCESS) {
  	    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, 
  			    status);
-@@ -2516,8 +2681,8 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2516,8 +2855,8 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      pj_grp_lock_acquire(ice->grp_lock);
  
      if (ice->is_destroying) {
@@ -1313,7 +1622,7 @@ index c51dba77..b9639061 100644
      }
  
      /*
-@@ -2532,9 +2697,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2532,9 +2871,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      prio_attr = (pj_stun_priority_attr*)
  	        pj_stun_msg_find_attr(msg, PJ_STUN_ATTR_PRIORITY, 0);
      if (prio_attr == NULL) {
@@ -1326,7 +1635,7 @@ index c51dba77..b9639061 100644
      }
  
      /* Get USE-CANDIDATE attribute */
-@@ -2579,7 +2744,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2579,7 +2918,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
  				    NULL, token, PJ_TRUE, 
  				    src_addr, src_addr_len);
  	    pj_grp_lock_release(ice->grp_lock);
@@ -1335,7 +1644,7 @@ index c51dba77..b9639061 100644
  	}
  
      } else if (ice->role == PJ_ICE_SESS_ROLE_CONTROLLED &&
-@@ -2591,7 +2756,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2591,7 +2930,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
  				    NULL, token, PJ_TRUE, 
  				    src_addr, src_addr_len);
  	    pj_grp_lock_release(ice->grp_lock);
@@ -1344,7 +1653,7 @@ index c51dba77..b9639061 100644
  	} else {
  	    /* Switch role to controlled */
  	    LOG4((ice->obj_name, 
-@@ -2606,7 +2771,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2606,7 +2945,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      status = pj_stun_session_create_res(sess, rdata, 0, NULL, &tdata);
      if (status != PJ_SUCCESS) {
  	pj_grp_lock_release(ice->grp_lock);
@@ -1353,7 +1662,7 @@ index c51dba77..b9639061 100644
      }
  
      if (((pj_sockaddr *)src_addr)->addr.sa_family == pj_AF_INET6()) {
-@@ -2663,9 +2828,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2663,9 +3002,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      msg_data->has_req_data = PJ_FALSE;
  
      /* Send the response */
@@ -1366,7 +1675,45 @@ index c51dba77..b9639061 100644
  
      /* 
       * Handling early check.
-@@ -2839,7 +3004,6 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -2784,14 +3123,16 @@ static void handle_incoming_check(pj_ice_sess *ice,
+     /* Just get candidate with the highest priority and same transport ID
+      * for the specified  component ID in the checklist.
+      */
+-    for (i=0; i<ice->clist.count; ++i) {
+-	pj_ice_sess_check *c = &ice->clist.checks[i];
+-	if (c->lcand->comp_id == rcheck->comp_id &&
+-	    c->lcand->transport_id == rcheck->transport_id) 
+-	{
+-	    lcand = c->lcand;
+-	    break;
+-	}
++    for (i=0; i < ice->lcand_cnt; ++i) {
++
++	    pj_ice_sess_cand* lcand_tmp = &ice->lcand[i];
++
++        if (lcand_tmp->comp_id == rcheck->comp_id &&
++            lcand_tmp->transport_id == rcheck->transport_id)
++        {
++            lcand = lcand_tmp;
++            break;
++        }
+     }
+     if (lcand == NULL) {
+ 	/* Should not happen, but just in case remote is sending a
+@@ -2814,9 +3155,9 @@ static void handle_incoming_check(pj_ice_sess *ice,
+      * have this pair in our checklist.
+      */
+     for (i=0; i<ice->clist.count; ++i) {
+-	pj_ice_sess_check *c = &ice->clist.checks[i];
+-	if (c->lcand == lcand && c->rcand == rcand)
+-	    break;
++        pj_ice_sess_check *c = &ice->clist.checks[i];
++        if (c->lcand == lcand && c->rcand == rcand)
++            break;
+     }
+ 
+     /* If the pair is already on the check list:
+@@ -2839,7 +3180,6 @@ static void handle_incoming_check(pj_ice_sess *ice,
  	 * Note: DO NOT overwrite nominated flag if one is already set.
  	 */
  	c->nominated = ((rcheck->use_candidate) || c->nominated);
@@ -1375,7 +1722,7 @@ index c51dba77..b9639061 100644
  	    c->state == PJ_ICE_SESS_CHECK_STATE_WAITING)
  	{
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index ca15a74e..d5877e31 100644
+index ca15a74e8..d048adfd6 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
 @@ -69,6 +69,7 @@ enum tp_type
@@ -1386,7 +1733,7 @@ index ca15a74e..d5877e31 100644
  
  /* The candidate type preference when STUN candidate is used */
  static pj_uint8_t srflx_pref_table[PJ_ICE_CAND_TYPE_MAX] =
-@@ -102,8 +103,15 @@ static void	   ice_rx_data(pj_ice_sess *ice,
+@@ -102,8 +103,23 @@ static void	   ice_rx_data(pj_ice_sess *ice,
  			       void *pkt, pj_size_t size,
  			       const pj_sockaddr_t *src_addr,
  			       unsigned src_addr_len);
@@ -1397,6 +1744,14 @@ index ca15a74e..d5877e31 100644
 +                                           pj_ice_sess_checklist *clist,
 +                                           unsigned check_id);
 +
++static pj_status_t ice_select_turn_dataconn(pj_ice_sess *ice,
++                                            pj_ice_sess_checklist *clist,
++                                            unsigned check_id);
++
++static pj_status_t ice_reconnect_tcp_connection(pj_ice_sess *ice,
++                                                pj_ice_sess_checklist *clist,
++                                                unsigned check_id);
++
 +static pj_status_t ice_close_tcp_connection(pj_ice_sess *ice,
 +											pj_ice_sess_checklist *clist,
 +											unsigned check_id);
@@ -1404,7 +1759,24 @@ index ca15a74e..d5877e31 100644
  /* STUN socket callbacks */
  /* Notification when incoming packet has been received. */
  static pj_bool_t stun_on_rx_data(pj_stun_sock *stun_sock,
-@@ -201,6 +209,10 @@ struct pj_ice_strans
+@@ -115,6 +131,7 @@ static pj_bool_t stun_on_rx_data(pj_stun_sock *stun_sock,
+ static pj_bool_t stun_on_data_sent(pj_stun_sock *stun_sock,
+ 				   pj_ioqueue_op_key_t *send_key,
+ 				   pj_ssize_t sent);
++static pj_bool_t turn_on_data_sent(pj_turn_sock *turn_sock, pj_ssize_t sent);
+ /* Notification when the status of the STUN transport has changed. */
+ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+ 				pj_stun_sock_op op,
+@@ -130,8 +147,6 @@ static void turn_on_rx_data(pj_turn_sock *turn_sock,
+ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
+ 			  pj_turn_state_t new_state);
+ 
+-
+-
+ /* Forward decls */
+ static void ice_st_on_destroy(void *obj);
+ static void destroy_ice_st(pj_ice_strans *ice_st);
+@@ -201,6 +216,14 @@ struct pj_ice_strans
  
      pj_bool_t		     destroy_req;/**< Destroy has been called?	*/
      pj_bool_t		     cb_called;	/**< Init error callback called?*/
@@ -1412,10 +1784,14 @@ index ca15a74e..d5877e31 100644
 +	pj_bool_t			 is_pending;
 +
 +	pj_uint8_t			 rtp_pkt[MAX_RTP_SIZE];
++
++	pj_uint8_t       rx_buffer[MAX_RTP_SIZE];
++	pj_uint16_t      rx_buffer_size;
++	pj_uint16_t      rx_wanted_size;
  };
  
  
-@@ -237,6 +249,7 @@ PJ_DEF(void) pj_ice_strans_cfg_default(pj_ice_strans_cfg *cfg)
+@@ -237,6 +260,7 @@ PJ_DEF(void) pj_ice_strans_cfg_default(pj_ice_strans_cfg *cfg)
      pj_bzero(cfg, sizeof(*cfg));
  
      cfg->af = pj_AF_INET();
@@ -1423,7 +1799,7 @@ index ca15a74e..d5877e31 100644
      pj_stun_config_init(&cfg->stun_cfg, NULL, 0, NULL, NULL);
      pj_ice_strans_stun_cfg_default(&cfg->stun);
      pj_ice_strans_turn_cfg_default(&cfg->turn);
-@@ -252,6 +265,7 @@ PJ_DEF(void) pj_ice_strans_stun_cfg_default(pj_ice_strans_stun_cfg *cfg)
+@@ -252,6 +276,7 @@ PJ_DEF(void) pj_ice_strans_stun_cfg_default(pj_ice_strans_stun_cfg *cfg)
      pj_bzero(cfg, sizeof(*cfg));
  
      cfg->af = pj_AF_INET();
@@ -1431,7 +1807,7 @@ index ca15a74e..d5877e31 100644
      cfg->port = PJ_STUN_PORT;
      cfg->max_host_cands = 64;
      cfg->ignore_stun_error = PJ_FALSE;
-@@ -389,6 +403,7 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+@@ -389,6 +414,7 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
  	cand->local_pref = RELAY_PREF;
  	cand->transport_id = tp_id;
  	cand->comp_id = (pj_uint8_t) comp->comp_id;
@@ -1439,7 +1815,18 @@ index ca15a74e..d5877e31 100644
      }
  
      /* Allocate and initialize TURN socket data */
-@@ -447,6 +462,7 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
+@@ -396,6 +422,10 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+     data->comp = comp;
+     data->transport_id = cand->transport_id;
+ 
++    if (turn_cfg->conn_type == PJ_TURN_TP_TCP) {
++        turn_cfg->alloc_param.peer_conn_type = PJ_TURN_TP_TCP;
++    }
++
+     /* Create the TURN transport */
+     status = pj_turn_sock_create(&ice_st->cfg.stun_cfg, turn_cfg->af,
+ 				 turn_cfg->conn_type,
+@@ -447,6 +477,7 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
          || lcand->transport_id != rcand->transport_id
          || lcand->local_pref != rcand->local_pref
          || lcand->prio != rcand->prio
@@ -1447,7 +1834,7 @@ index ca15a74e..d5877e31 100644
          || pj_sockaddr_cmp(&lcand->addr, &rcand->addr) != 0
          || pj_sockaddr_cmp(&lcand->base_addr, &rcand->base_addr) != 0)
      {
-@@ -456,6 +472,115 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
+@@ -456,6 +487,115 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
      return PJ_TRUE;
  }
  
@@ -1563,7 +1950,7 @@ index ca15a74e..d5877e31 100644
  
  static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
  				     pj_ice_strans_comp *comp,
-@@ -504,6 +629,7 @@ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
+@@ -504,6 +644,7 @@ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
      cand->local_pref = SRFLX_PREF;
      cand->transport_id = CREATE_TP_ID(TP_STUN, idx);
      cand->comp_id = (pj_uint8_t) comp->comp_id;
@@ -1571,7 +1958,7 @@ index ca15a74e..d5877e31 100644
  
      /* Allocate and initialize STUN socket data */
      data = PJ_POOL_ZALLOC_T(ice_st->pool, sock_user_data);
-@@ -511,11 +637,12 @@ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
+@@ -511,11 +652,12 @@ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
      data->transport_id = cand->transport_id;
  
      /* Create the STUN transport */
@@ -1589,7 +1976,7 @@ index ca15a74e..d5877e31 100644
  
      /* Start STUN Binding resolution and add srflx candidate only if server
       * is set. When any error occur during STUN Binding resolution, let's
-@@ -581,116 +708,43 @@ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
+@@ -581,116 +723,43 @@ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
  	break;
      }
  
@@ -1739,7 +2126,7 @@ index ca15a74e..d5877e31 100644
      }
  
      return status;
-@@ -803,6 +857,13 @@ PJ_DEF(pj_status_t) pj_ice_strans_create( const char *name,
+@@ -803,6 +872,13 @@ PJ_DEF(pj_status_t) pj_ice_strans_create( const char *name,
  	return status;
      }
  
@@ -1753,18 +2140,20 @@ index ca15a74e..d5877e31 100644
      pj_grp_lock_add_ref(ice_st->grp_lock);
      pj_grp_lock_add_handler(ice_st->grp_lock, pool, ice_st,
  			    &ice_st_on_destroy);
-@@ -1097,6 +1158,10 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
+@@ -1097,6 +1173,12 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
      ice_cb.on_ice_complete = &on_ice_complete;
      ice_cb.on_rx_data = &ice_rx_data;
      ice_cb.on_tx_pkt = &ice_tx_pkt;
 +#if PJ_HAS_TCP
 +    ice_cb.wait_tcp_connection = &ice_wait_tcp_connection;
++    ice_cb.select_turn_dataconn = &ice_select_turn_dataconn;
++    ice_cb.reconnect_tcp_connection = &ice_reconnect_tcp_connection;
 +    ice_cb.close_tcp_connection = &ice_close_tcp_connection;
 +#endif
  
      /* Create! */
      status = pj_ice_sess_create(&ice_st->cfg.stun_cfg, ice_st->obj_name, role,
-@@ -1172,7 +1237,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
+@@ -1172,7 +1254,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
  					  &cand->foundation, &cand->addr,
  					  &cand->base_addr,  &cand->rel_addr,
  					  pj_sockaddr_get_len(&cand->addr),
@@ -1773,7 +2162,7 @@ index ca15a74e..d5877e31 100644
  	    if (status != PJ_SUCCESS)
  		goto on_error;
  	}
-@@ -1460,110 +1525,162 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto( pj_ice_strans *ice_st,
+@@ -1460,110 +1542,154 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto( pj_ice_strans *ice_st,
  					  const pj_sockaddr_t *dst_addr,
  					  int dst_addr_len)
  {
@@ -1860,23 +2249,27 @@ index ca15a74e..d5877e31 100644
 -    
 -    if (def_cand->status == PJ_SUCCESS) {
 -	unsigned tp_idx = GET_TP_IDX(def_cand->transport_id);
--
++    if (ice_st->is_pending) {
++      return PJ_EPENDING;
++    }
+ 
 -	if (def_cand->type == PJ_ICE_CAND_TYPE_RELAYED) {
--
++    return status;
++  }
+ 
 -	    enum {
 -		msg_disable_ind = 0xFFFF &
 -				  ~(PJ_STUN_SESS_LOG_TX_IND|
 -				    PJ_STUN_SESS_LOG_RX_IND)
 -	    };
--
++  pj_grp_lock_release(ice_st->grp_lock);
+ 
 -	    /* https://trac.pjsip.org/repos/ticket/1316 */
 -	    if (comp->turn[tp_idx].sock == NULL) {
 -		/* TURN socket error */
 -		return PJ_EINVALIDOP;
 -	    }
-+    if (ice_st->is_pending) {
-+      return PJ_EPENDING;
-+    }
++  def_cand = &comp->cand_list[comp->default_cand];
  
 -	    if (!comp->turn[tp_idx].log_off) {
 -		/* Disable logging for Send/Data indications */
@@ -1887,65 +2280,32 @@ index ca15a74e..d5877e31 100644
 -				     msg_disable_ind);
 -		comp->turn[tp_idx].log_off = PJ_TRUE;
 -	    }
-+    return status;
-+  }
-+
-+  pj_grp_lock_release(ice_st->grp_lock);
-+
-+  def_cand = &comp->cand_list[comp->default_cand];
-+
-+  if (def_cand->status == PJ_SUCCESS) {
-+    unsigned tp_idx = GET_TP_IDX(def_cand->transport_id);
-+
-+    if (def_cand->type == PJ_ICE_CAND_TYPE_RELAYED) {
-+
-+      enum {
-+        msg_disable_ind =
-+            0xFFFF & ~(PJ_STUN_SESS_LOG_TX_IND | PJ_STUN_SESS_LOG_RX_IND)
-+      };
-+
-+      /* https://trac.pjsip.org/repos/ticket/1316 */
-+      if (comp->turn[tp_idx].sock == NULL) {
-+        /* TURN socket error */
-+        return PJ_EINVALIDOP;
-+      }
-+
-+      if (!comp->turn[tp_idx].log_off) {
-+        /* Disable logging for Send/Data indications */
-+        PJ_LOG(5, (ice_st->obj_name,
-+                   "Disabling STUN Indication logging for "
-+                   "component %d",
-+                   comp->comp_id));
-+        pj_turn_sock_set_log(comp->turn[tp_idx].sock, msg_disable_ind);
-+        comp->turn[tp_idx].log_off = PJ_TRUE;
-+      }
-+
-+      status =
-+          pj_turn_sock_sendto(comp->turn[tp_idx].sock, (const pj_uint8_t *)data,
-+                              (unsigned)data_len, dst_addr, dst_addr_len);
-+      return (status == PJ_SUCCESS || status == PJ_EPENDING) ? PJ_SUCCESS
-+                                                             : status;
-+    } else {
-+		const pj_sockaddr_t *dest_addr;
-+		unsigned dest_addr_len;
-+
-+		if (comp->ipv4_mapped) {
-+			if (comp->synth_addr_len == 0 ||
-+				pj_sockaddr_cmp(&comp->dst_addr, dst_addr) != 0) {
-+				status = pj_sockaddr_synthesize(pj_AF_INET6(), &comp->synth_addr,
-+												dst_addr);
-+				if (status != PJ_SUCCESS)
-+					return status;
-+
-+				pj_sockaddr_cp(&comp->dst_addr, dst_addr);
-+				comp->synth_addr_len = pj_sockaddr_get_len(&comp->synth_addr);
-+			}
-+			dest_addr = &comp->synth_addr;
-+			dest_addr_len = comp->synth_addr_len;
-+		} else {
-+			dest_addr = dst_addr;
-+			dest_addr_len = dst_addr_len;
-+		}
++    pj_bool_t add_header = def_cand->transport != PJ_CAND_UDP;
++	pj_uint8_t* final_pkt = data;
++	unsigned final_len = data_len;
++	
++	if (add_header) {
++		// TCP
++		/*
++		 * RFC6544 ICE requires an agent to demultiplex STUN and
++		 * application-layer traffic, since they appear on the same port.  This
++		 * demultiplexing is described in [RFC5245] and is done using the magic
++		 * cookie and other fields of the message.  Stream-oriented transports
++		 * introduce another wrinkle, since they require a way to frame the
++		 * connection so that the application and STUN packets can be extracted
++		 * in order to differentiate STUN packets from application-layer
++		 * traffic.  For this reason, TCP media streams utilizing ICE use the
++		 * basic framing provided in RFC 4571 [RFC4571], even if the application
++		 * layer protocol is not RTP.
++		 */
++		pj_uint8_t header_1 = data_len % 256;
++		pj_uint8_t header_0 = data_len >> 8;
++		final_len = 2 + data_len;
++		memcpy(&ice_st->rtp_pkt, &(header_0), sizeof(pj_uint8_t));
++		memcpy(&ice_st->rtp_pkt[1], &(header_1), sizeof(pj_uint8_t));
++		memcpy(&ice_st->rtp_pkt[2], (unsigned char *)data, data_len);
++		final_pkt = &ice_st->rtp_pkt;
++	}
  
 -	    status = pj_turn_sock_sendto(comp->turn[tp_idx].sock,
 -					 (const pj_uint8_t*)data,
@@ -1977,43 +2337,55 @@ index ca15a74e..d5877e31 100644
 -    		dest_addr = dst_addr;
 -    		dest_addr_len = dst_addr_len;
 -    	    }
-+		pj_stun_sock_info stun_sock_info;
-+		pj_stun_sock_get_info(comp->stun[tp_idx].sock, &stun_sock_info);
-+		pj_bool_t add_header = stun_sock_info.conn_type != PJ_STUN_TP_UDP;
-+		if (add_header) {
-+			//TCP
-+			/*
-+			 * RFC6544 ICE requires an agent to demultiplex STUN and
-+			 * application-layer traffic, since they appear on the same port.  This
-+			 * demultiplexing is described in [RFC5245] and is done using the magic
-+			 * cookie and other fields of the message.  Stream-oriented transports
-+			 * introduce another wrinkle, since they require a way to frame the
-+			 * connection so that the application and STUN packets can be extracted
-+			 * in order to differentiate STUN packets from application-layer
-+			 * traffic.  For this reason, TCP media streams utilizing ICE use the
-+			 * basic framing provided in RFC 4571 [RFC4571], even if the application
-+			 * layer protocol is not RTP.
-+			 */
-+			pj_uint8_t header_1 = data_len % 256;
-+			pj_uint8_t header_0 = data_len >> 8;
-+			pj_size_t final_size = 2 + data_len;
-+			memcpy(&ice_st->rtp_pkt, &(header_0), sizeof(pj_uint8_t));
-+			memcpy(&ice_st->rtp_pkt[1], &(header_1), sizeof(pj_uint8_t));
-+			memcpy(&ice_st->rtp_pkt[2], (unsigned char *)data, data_len);
-+			status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, &ice_st->rtp_pkt,
-+								(unsigned)final_size, 0, dest_addr, dest_addr_len, size);
-+			if ((status == PJ_EPENDING || *size != final_size) && ice_st) {
-+				ice_st->is_pending = PJ_TRUE;
++  if (def_cand->status == PJ_SUCCESS) {
++    unsigned tp_idx = GET_TP_IDX(def_cand->transport_id);
++
++    if (def_cand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++
++      enum {
++        msg_disable_ind =
++            0xFFFF & ~(PJ_STUN_SESS_LOG_TX_IND | PJ_STUN_SESS_LOG_RX_IND)
++      };
++
++      /* https://trac.pjsip.org/repos/ticket/1316 */
++      if (comp->turn[tp_idx].sock == NULL) {
++        /* TURN socket error */
++        return PJ_EINVALIDOP;
++      }
++
++      if (!comp->turn[tp_idx].log_off) {
++        /* Disable logging for Send/Data indications */
++        PJ_LOG(5, (ice_st->obj_name,
++                   "Disabling STUN Indication logging for "
++                   "component %d",
++                   comp->comp_id));
++        pj_turn_sock_set_log(comp->turn[tp_idx].sock, msg_disable_ind);
++        comp->turn[tp_idx].log_off = PJ_TRUE;
++      }
++
++      status = pj_turn_sock_sendto(comp->turn[tp_idx].sock, final_pkt,
++                              final_len, dst_addr, dst_addr_len);
++	  ice_st->is_pending = ((status == PJ_EPENDING) && ice_st);
++    } else {
++		const pj_sockaddr_t *dest_addr;
++		unsigned dest_addr_len;
++
++		if (comp->ipv4_mapped) {
++			if (comp->synth_addr_len == 0 ||
++				pj_sockaddr_cmp(&comp->dst_addr, dst_addr) != 0) {
++				status = pj_sockaddr_synthesize(pj_AF_INET6(), &comp->synth_addr,
++												dst_addr);
++				if (status != PJ_SUCCESS)
++					return status;
++
++				pj_sockaddr_cp(&comp->dst_addr, dst_addr);
++				comp->synth_addr_len = pj_sockaddr_get_len(&comp->synth_addr);
 +			}
-+			*size -= sizeof(pj_uint16_t);
++			dest_addr = &comp->synth_addr;
++			dest_addr_len = comp->synth_addr_len;
 +		} else {
-+			// UDP
-+			status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, data,
-+								(unsigned)data_len, 0, dest_addr,
-+								dest_addr_len, size);
-+			if ((status == PJ_EPENDING || *size != data_len) && ice_st) {
-+				ice_st->is_pending = PJ_TRUE;
-+			}
++			dest_addr = dst_addr;
++			dest_addr_len = dst_addr_len;
 +		}
  
 -	    status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, data,
@@ -2022,17 +2394,23 @@ index ca15a74e..d5877e31 100644
 -	    return (status==PJ_SUCCESS||status==PJ_EPENDING) ?
 -		    PJ_SUCCESS : status;
 -	}
-+	    return status;
++		status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, final_pkt,
++								final_len, 0, dest_addr, dest_addr_len, size);
++		
++		if (add_header) *size -= sizeof(pj_uint16_t); // Do not count the header
++		ice_st->is_pending = ((status == PJ_EPENDING || *size != data_len) && ice_st);
 +    }
  
 -    } else
 -	return PJ_EINVALIDOP;
++	return status;
++
 +  } else
 +    return PJ_EINVALIDOP;
  }
  
  /*
-@@ -1615,7 +1732,15 @@ static void on_ice_complete(pj_ice_sess *ice, pj_status_t status)
+@@ -1615,7 +1741,15 @@ static void on_ice_complete(pj_ice_sess *ice, pj_status_t status)
  				      sizeof(lip), 3);
  		    pj_sockaddr_print(&check->rcand->addr, rip,
  				      sizeof(rip), 3);
@@ -2049,7 +2427,7 @@ index ca15a74e..d5877e31 100644
  		    if (tp_typ == TP_TURN) {
  			/* Activate channel binding for the remote address
  			 * for more efficient data transfer using TURN.
-@@ -1683,12 +1808,16 @@ static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
+@@ -1683,24 +1817,55 @@ static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
  
      PJ_ASSERT_RETURN(comp_id && comp_id <= ice_st->comp_cnt, PJ_EINVAL);
  
@@ -2067,7 +2445,54 @@ index ca15a74e..d5877e31 100644
  	       pj_sockaddr_get_port(dst_addr),
  	       tp_typ));
  
-@@ -1724,12 +1853,52 @@ static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
+-    if (tp_typ == TP_TURN) {
+-	if (comp->turn[tp_idx].sock) {
+-	    status = pj_turn_sock_sendto(comp->turn[tp_idx].sock,
+-					 (const pj_uint8_t*)pkt,
+-					 (unsigned)size,
+-					 dst_addr, dst_addr_len);
+-	} else {
+-	    status = PJ_EINVALIDOP;
++	pj_bool_t add_header = comp->ice_st->cfg.stun_tp->conn_type == PJ_STUN_TP_TCP;
++	pj_uint8_t* final_pkt = pkt;
++	unsigned final_len = size;
++	pj_ssize_t sent_size;
++	
++	if (add_header) {
++		// TCP
++		/*
++		 * RFC6544 ICE requires an agent to demultiplex STUN and
++		 * application-layer traffic, since they appear on the same port.  This
++		 * demultiplexing is described in [RFC5245] and is done using the magic
++		 * cookie and other fields of the message.  Stream-oriented transports
++		 * introduce another wrinkle, since they require a way to frame the
++		 * connection so that the application and STUN packets can be extracted
++		 * in order to differentiate STUN packets from application-layer
++		 * traffic.  For this reason, TCP media streams utilizing ICE use the
++		 * basic framing provided in RFC 4571 [RFC4571], even if the application
++		 * layer protocol is not RTP.
++		 */
++		pj_uint8_t header_1 = size % 256;
++		pj_uint8_t header_0 = size >> 8;
++		final_len = 2 + size;
++		memcpy(&ice_st->rtp_pkt, &(header_0), sizeof(pj_uint8_t));
++		memcpy(&ice_st->rtp_pkt[1], &(header_1), sizeof(pj_uint8_t));
++		memcpy(&ice_st->rtp_pkt[2], (unsigned char *)pkt, size);
++		final_pkt = &ice_st->rtp_pkt;
+ 	}
++
++	if (tp_typ == TP_TURN) {
++		if (comp->turn[tp_idx].sock) {
++			status = pj_turn_sock_sendto(comp->turn[tp_idx].sock,
++						final_pkt, final_len, dst_addr, dst_addr_len);
++			ice_st->is_pending = status == PJ_EPENDING;
++		} else {
++			status = PJ_EINVALIDOP;
++		}
+     } else if (tp_typ == TP_STUN) {
+     	const pj_sockaddr_t *dest_addr;
+     	unsigned dest_addr_len;
+@@ -1724,12 +1889,16 @@ static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
      	    dest_addr_len = dst_addr_len;
      	}
  
@@ -2075,45 +2500,9 @@ index ca15a74e..d5877e31 100644
 -				     pkt, (unsigned)size, 0,
 -				     dest_addr, dest_addr_len);
 +        if (comp->stun[tp_idx].sock) {
-+			pj_ssize_t sent_size;
-+
-+			pj_stun_sock_info stun_sock_info;
-+			pj_stun_sock_get_info(comp->stun[tp_idx].sock, &stun_sock_info);
-+			pj_bool_t add_header = stun_sock_info.conn_type != PJ_STUN_TP_UDP;
-+			if (add_header) {
-+				//TCP
-+				/*
-+				 * RFC6544 ICE requires an agent to demultiplex STUN and
-+				 * application-layer traffic, since they appear on the same port.  This
-+				 * demultiplexing is described in [RFC5245] and is done using the magic
-+				 * cookie and other fields of the message.  Stream-oriented transports
-+				 * introduce another wrinkle, since they require a way to frame the
-+				 * connection so that the application and STUN packets can be extracted
-+				 * in order to differentiate STUN packets from application-layer
-+				 * traffic.  For this reason, TCP media streams utilizing ICE use the
-+				 * basic framing provided in RFC 4571 [RFC4571], even if the application
-+				 * layer protocol is not RTP.
-+				 */
-+				pj_uint8_t header_1 = size % 256;
-+				pj_uint8_t header_0 = size >> 8;
-+				const pj_size_t final_size = 2 + size;
-+				memcpy(&ice_st->rtp_pkt, &(header_0), sizeof(pj_uint8_t));
-+				memcpy(&ice_st->rtp_pkt[1], &(header_1), sizeof(pj_uint8_t));
-+				memcpy(&ice_st->rtp_pkt[2], (unsigned char *)pkt, size);
-+				status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, &ice_st->rtp_pkt,
-+									(unsigned)final_size, 0, dest_addr, dest_addr_len, &sent_size);
-+				if (status == PJ_EPENDING || sent_size != final_size) {
-+					ice_st->is_pending = PJ_TRUE;
-+				}
-+			} else {
-+				// UDP
-+				status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, pkt,
-+									(unsigned)size, 0, dest_addr, dest_addr_len, &sent_size);
-+				if (status == PJ_EPENDING || sent_size != size) {
-+					ice_st->is_pending = PJ_TRUE;
-+				}
-+			}
-+
++			status = pj_stun_sock_sendto(comp->stun[tp_idx].sock, NULL, final_pkt,
++								final_len, 0, dest_addr, dest_addr_len, &sent_size);
++			ice_st->is_pending = (status == PJ_EPENDING || sent_size != final_len);
 +		} else {
 +          status = PJ_EINVALIDOP;
 +        }
@@ -2124,7 +2513,7 @@ index ca15a74e..d5877e31 100644
      }
  
      return (status==PJ_SUCCESS||status==PJ_EPENDING) ? PJ_SUCCESS : status;
-@@ -1755,22 +1924,115 @@ static void ice_rx_data(pj_ice_sess *ice,
+@@ -1755,22 +1924,239 @@ static void ice_rx_data(pj_ice_sess *ice,
      }
  }
  
@@ -2154,6 +2543,61 @@ index ca15a74e..d5877e31 100644
 +  ice_sess_on_peer_connection(ice_st->ice, data->transport_id, status, remote_addr);
 +}
 +
++static void on_peer_reset_connection(pj_stun_session* sess, pj_sockaddr_t* remote_addr) {
++
++  sock_user_data *data;
++  pj_ice_strans_comp *comp;
++  pj_ice_strans *ice_st;
++  pj_stun_sock* stun_sock = (pj_stun_sock *)pj_stun_session_get_user_data(sess);
++  if (!stun_sock) {
++    /* We have disassociated ourselves from the STUN session */
++    return;
++  }
++  data = (sock_user_data *)pj_stun_sock_get_user_data(stun_sock);
++  if (!data) {
++    /* We have disassociated ourselves from the STUN socket */
++    return;
++  }
++
++  comp = data->comp;
++  ice_st = comp->ice_st;
++  if (!ice_st || !ice_st->ice) {
++	  // Incorrect ICE
++	  return;
++  }
++
++  ice_sess_on_peer_reset_connection(ice_st->ice, data->transport_id, remote_addr);
++}
++
++static void on_peer_packet(pj_stun_session* sess, pj_sockaddr_t* remote_addr) {
++
++  if (!sess || !remote_addr) return;
++  sock_user_data *data;
++  pj_ice_strans_comp *comp;
++  pj_ice_strans *ice_st;
++  pj_stun_sock* stun_sock = (pj_stun_sock *)pj_stun_session_get_user_data(sess);
++  if (!stun_sock) {
++    /* We have disassociated ourselves from the STUN session */
++    return;
++  }
++  data = (sock_user_data *)pj_stun_sock_get_user_data(stun_sock);
++  if (!data) {
++    /* We have disassociated ourselves from the STUN socket */
++    return;
++  }
++
++  comp = data->comp;
++  if (!comp) return;
++  ice_st = comp->ice_st;
++  if (!ice_st || !ice_st->ice) {
++	  // Incorrect ICE
++	  return;
++  }
++
++  ice_sess_on_peer_packet(ice_st->ice, data->transport_id, remote_addr);
++}
++
++#if PJ_HAS_TCP
 +static pj_status_t ice_wait_tcp_connection(pj_ice_sess *ice,
 +											pj_ice_sess_checklist *clist,
 +											unsigned check_id) {
@@ -2187,6 +2631,8 @@ index ca15a74e..d5877e31 100644
 +          return PJ_EINVAL;
 +        }
 +        pj_stun_session_callback(sess)->on_peer_connection = &on_peer_connection;
++        pj_stun_session_callback(sess)->on_peer_reset_connection = &on_peer_reset_connection;
++        pj_stun_session_callback(sess)->on_peer_packet = &on_peer_packet;
 +        return pj_stun_sock_connect_active(st_comp->stun[idx].sock, &rcand->addr,
 +                                           rcand->addr.addr.sa_family);
 +    }
@@ -2194,7 +2640,74 @@ index ca15a74e..d5877e31 100644
 +	return PJ_EINVAL;
 +}
 +
-+#if PJ_HAS_TCP
++static pj_status_t ice_select_turn_dataconn(pj_ice_sess *ice,
++											pj_ice_sess_checklist *clist,
++											unsigned check_id) {
++	pj_ice_sess_check *check;
++	check = &clist->checks[check_id];
++	const pj_ice_sess_cand *lcand;
++	lcand = check->lcand;
++	const pj_ice_sess_cand *rcand;
++	rcand = check->rcand;
++
++	pj_ice_strans *ice_st = (pj_ice_strans *)ice->user_data;
++	pj_ice_strans_comp *st_comp = ice_st->comp[lcand->comp_id - 1];
++
++    for (int i=0; i<ice_st->cfg.turn_tp_cnt; ++i) {
++		pj_turn_session_info info;
++		pj_turn_sock_get_info(st_comp->turn[i].sock, &info);
++		if (st_comp->turn[i].sock
++			&& pj_turn_sock_has_dataconn(st_comp->turn[i].sock, &rcand->addr)) {
++			ice_select_incoming_turn(ice, clist, check_id);
++			return PJ_SUCCESS; // Already connected via TURN
++		}
++    }
++
++	return PJ_EINVAL;
++}
++
++static pj_status_t ice_reconnect_tcp_connection(pj_ice_sess *ice,
++											pj_ice_sess_checklist *clist,
++											unsigned check_id) {
++	pj_ice_sess_check *check;
++	check = &clist->checks[check_id];
++	const pj_ice_sess_cand *lcand;
++	lcand = check->lcand;
++	const pj_ice_sess_cand *rcand;
++	rcand = check->rcand;
++
++	pj_ice_strans *ice_st = (pj_ice_strans *)ice->user_data;
++	pj_ice_strans_comp *st_comp = ice_st->comp[lcand->comp_id - 1];
++
++	int idx = -1;
++	for (int i=0; i<ice_st->cfg.stun_tp_cnt; ++i) {
++        if (ice_st->cfg.stun_tp[i].af == rcand->addr.addr.sa_family) {
++            idx = i;
++            break;
++        }
++	}
++	if (idx == -1) {
++		PJ_LOG(4, (ice_st->obj_name, "Comp %d: No STUN sock found.",
++					st_comp->comp_id));
++		return PJ_EINVAL;
++	}
++	if (st_comp->stun[idx].sock) {
++		pj_stun_session *sess = pj_stun_sock_get_session(st_comp->stun[idx].sock);
++		if (!sess) {
++			PJ_LOG(4, (ice_st->obj_name, "Comp %d: No STUN session.",
++						st_comp->comp_id));
++			return PJ_EINVAL;
++		}
++		pj_stun_session_callback(sess)->on_peer_connection = &on_peer_connection;
++		pj_stun_session_callback(sess)->on_peer_reset_connection = &on_peer_reset_connection;
++		pj_stun_session_callback(sess)->on_peer_packet = &on_peer_packet;
++		return pj_stun_sock_reconnect_active(st_comp->stun[idx].sock, &rcand->addr,
++												rcand->addr.addr.sa_family);
++	}
++
++	return PJ_EINVAL;
++}
++
 +static pj_status_t ice_close_tcp_connection(pj_ice_sess *ice,
 +											pj_ice_sess_checklist *clist,
 +											unsigned check_id) {
@@ -2253,7 +2766,7 @@ index ca15a74e..d5877e31 100644
  	/* We have disassociated ourselves from the STUN socket */
  	return PJ_FALSE;
      }
-@@ -1814,9 +2076,17 @@ static pj_bool_t stun_on_data_sent(pj_stun_sock *stun_sock,
+@@ -1814,9 +2200,34 @@ static pj_bool_t stun_on_data_sent(pj_stun_sock *stun_sock,
  				   pj_ioqueue_op_key_t *send_key,
  				   pj_ssize_t sent)
  {
@@ -2271,10 +2784,27 @@ index ca15a74e..d5877e31 100644
 +    if (ice_st->cb.on_data_sent) {
 +      (*ice_st->cb.on_data_sent)(ice_st, comp->comp_id, sent);
 +    }
++    return PJ_TRUE;
++}
++
++static pj_bool_t turn_on_data_sent(pj_turn_sock *turn_sock, pj_ssize_t sent)
++{
++    sock_user_data *data;
++    pj_ice_strans_comp *comp;
++    pj_ice_strans *ice_st;
++
++    data = (sock_user_data*) pj_turn_sock_get_user_data(turn_sock);
++    comp = data->comp;
++    ice_st = comp->ice_st;
++    ice_st->is_pending = PJ_FALSE;
++
++    if (ice_st->cb.on_data_sent) {
++      (*ice_st->cb.on_data_sent)(ice_st, comp->comp_id, sent);
++    }
      return PJ_TRUE;
  }
  
-@@ -2021,6 +2291,10 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+@@ -2021,6 +2432,10 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
  	    }
  	}
  	break;
@@ -2285,7 +2815,116 @@ index ca15a74e..d5877e31 100644
      }
  
      return pj_grp_lock_dec_ref(ice_st->grp_lock)? PJ_FALSE : PJ_TRUE;
-@@ -2252,5 +2526,4 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
+@@ -2029,7 +2444,7 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+ /* Callback when TURN socket has received a packet */
+ static void turn_on_rx_data(pj_turn_sock *turn_sock,
+ 			    void *pkt,
+-			    unsigned pkt_len,
++			    unsigned size,
+ 			    const pj_sockaddr_t *peer_addr,
+ 			    unsigned addr_len)
+ {
+@@ -2055,20 +2470,90 @@ static void turn_on_rx_data(pj_turn_sock *turn_sock,
+ 	 */
+ 	if (comp->ice_st->cb.on_rx_data) {
+ 	    (*comp->ice_st->cb.on_rx_data)(comp->ice_st, comp->comp_id, pkt,
+-					   pkt_len, peer_addr, addr_len);
++					   size, peer_addr, addr_len);
+ 	}
+ 
+     } else {
+ 
+ 	/* Hand over the packet to ICE */
+-	status = pj_ice_sess_on_rx_pkt(comp->ice_st->ice, comp->comp_id,
+-				       data->transport_id, pkt, pkt_len,
+-				       peer_addr, addr_len);
+-
+-	if (status != PJ_SUCCESS) {
+-	    ice_st_perror(comp->ice_st,
+-			  "Error processing packet from TURN relay",
+-			  status);
++	if (comp->ice_st->cfg.turn_tp->conn_type == PJ_TURN_TP_TCP && size > 0) {
++		pj_uint16_t parsed = 0;
++		pj_status_t status;
++
++		do {
++			pj_uint16_t pkt_len = size - parsed;
++			pj_uint8_t *current_packet = ((pj_uint8_t *)(pkt)) + parsed;
++
++			/* RFC6544, the packet is wrapped into a packet following the RFC4571 */
++			// cf stun_sock.c:parse_rx_packet
++			pj_bool_t store_remaining = PJ_TRUE;
++			if (comp->ice_st->rx_buffer_size != 0 || comp->ice_st->rx_wanted_size != 0) {
++				// We currently have a packet to complete
++				if (comp->ice_st->rx_buffer_size == 1) {
++					// We do not know the current size, parse it.
++					pkt_len = (((pj_uint8_t *)comp->ice_st->rx_buffer)[0] << 8) +
++							((pj_uint8_t *)current_packet)[0];
++					comp->ice_st->rx_buffer_size = 0; // We have eaten the temp packet.
++					current_packet = current_packet + 1;
++					parsed += 1;
++					if (pkt_len + parsed <= size) {
++						store_remaining = PJ_FALSE;
++						parsed += pkt_len;
++					} else {
++						comp->ice_st->rx_wanted_size = pkt_len;
++					}
++				} else if (pkt_len + comp->ice_st->rx_buffer_size >= comp->ice_st->rx_wanted_size) {
++					// We have enough pkt Build new packet to parse
++					store_remaining = PJ_FALSE;
++					pj_uint16_t eaten_bytes = comp->ice_st->rx_wanted_size - comp->ice_st->rx_buffer_size;
++					memcpy(comp->ice_st->rx_buffer + comp->ice_st->rx_buffer_size,
++						current_packet, eaten_bytes);
++					pkt_len = comp->ice_st->rx_wanted_size;
++					current_packet = comp->ice_st->rx_buffer;
++					parsed += eaten_bytes;
++					comp->ice_st->rx_buffer_size = 0;
++					comp->ice_st->rx_wanted_size = 0;
++				}
++			} else if (pkt_len > 1) {
++				pkt_len = (((pj_uint8_t *)current_packet)[0] << 8) + ((pj_uint8_t *)current_packet)[1];
++				current_packet = current_packet + 2;
++				parsed += 2;
++				if (pkt_len + parsed <= size) {
++					store_remaining = PJ_FALSE;
++					parsed += pkt_len;
++				} else {
++					comp->ice_st->rx_wanted_size = pkt_len;
++					
++				}
++			}
++			if (store_remaining) {
++				pj_uint16_t stored_size = size - parsed;
++				memcpy(comp->ice_st->rx_buffer + comp->ice_st->rx_buffer_size,
++						current_packet, stored_size);
++				comp->ice_st->rx_buffer_size += stored_size;
++				status = PJ_SUCCESS;
++				break;
++			}
++
++			status = pj_ice_sess_on_rx_pkt(comp->ice_st->ice, comp->comp_id,
++						data->transport_id, current_packet, pkt_len,
++						peer_addr, addr_len);
++			
++			if (status != PJ_SUCCESS) {
++				ice_st_perror(comp->ice_st,
++					"Error processing packet from TURN relay",
++					status);
++			}
++		} while (parsed < size);
++	} else {
++		status = pj_ice_sess_on_rx_pkt(comp->ice_st->ice, comp->comp_id,
++					data->transport_id, pkt, size,
++					peer_addr, addr_len);
++		if (status != PJ_SUCCESS) {
++			ice_st_perror(comp->ice_st,
++				"Error processing packet from TURN relay",
++				status);
++		}
+ 	}
+     }
+ 
+@@ -2252,5 +2737,4 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
      pj_grp_lock_dec_ref(comp->ice_st->grp_lock);
  
      pj_log_pop_indent();
@@ -2294,7 +2933,7 @@ index ca15a74e..d5877e31 100644
 +}
 \ No newline at end of file
 diff --git a/pjnath/src/pjnath/nat_detect.c b/pjnath/src/pjnath/nat_detect.c
-index db0de10b..3013eeed 100644
+index db0de10bc..3013eeed2 100644
 --- a/pjnath/src/pjnath/nat_detect.c
 +++ b/pjnath/src/pjnath/nat_detect.c
 @@ -329,7 +329,8 @@ PJ_DEF(pj_status_t) pj_stun_detect_nat_type2(const pj_sockaddr *server,
@@ -2324,7 +2963,7 @@ index db0de10b..3013eeed 100644
  	goto on_error;
  
 diff --git a/pjnath/src/pjnath/stun_session.c b/pjnath/src/pjnath/stun_session.c
-index 7b53aba7..2b006d91 100644
+index 7b53aba74..2b006d918 100644
 --- a/pjnath/src/pjnath/stun_session.c
 +++ b/pjnath/src/pjnath/stun_session.c
 @@ -49,6 +49,8 @@ struct pj_stun_session
@@ -2354,7 +2993,7 @@ index 7b53aba7..2b006d91 100644
  
      if (grp_lock) {
  	sess->grp_lock = grp_lock;
-@@ -1511,3 +1515,9 @@ on_return:
+@@ -1511,3 +1515,9 @@ PJ_DEF(pj_status_t) pj_stun_session_on_rx_pkt(pj_stun_session *sess,
      return status;
  }
  
@@ -2365,7 +3004,7 @@ index 7b53aba7..2b006d91 100644
 +  return sess ? sess->conn_type : PJ_STUN_TP_UDP;
 +}
 diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
-index 7692e6c1..7624cf25 100644
+index 7692e6c14..3b8d509ab 100644
 --- a/pjnath/src/pjnath/stun_sock.c
 +++ b/pjnath/src/pjnath/stun_sock.c
 @@ -1,5 +1,5 @@
@@ -3035,7 +3674,7 @@ index 7692e6c1..7624cf25 100644
      }
      stun_sock->tsx_id[5] = 0;
  
-@@ -378,15 +530,238 @@ PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *stun_cfg,
+@@ -378,15 +530,248 @@ PJ_DEF(pj_status_t) pj_stun_sock_create( pj_stun_config *stun_cfg,
      stun_sock->ka_timer.cb = &ka_timer_cb;
      stun_sock->ka_timer.user_data = stun_sock;
  
@@ -3130,7 +3769,6 @@ index 7692e6c1..7624cf25 100644
 +#if PJ_HAS_TCP
 +        }
 +#endif
-+
 +        /* Check that this is STUN message */
 +        status = pj_stun_msg_check((const pj_uint8_t *)current_packet, pkt_len,
 +                                   PJ_STUN_IS_DATAGRAM | PJ_STUN_CHECK_PACKET);
@@ -3184,21 +3822,29 @@ index 7692e6c1..7624cf25 100644
 +        result &= status != PJ_EGONE ? PJ_TRUE : PJ_FALSE;
 +    } while (parsed < size && result);
 +    return result;
-+}
-+
+ }
+ 
 +pj_bool_t on_data_read(pj_activesock_t *asock, void *data, pj_size_t size,
 +                       pj_status_t status, pj_size_t *remainder) {
 +
 +    pj_stun_sock *stun_sock;
 +
 +    stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock);
-+    if (!stun_sock)
-+      return PJ_FALSE;
++    if (!stun_sock) return PJ_FALSE;
 +
++    pj_stun_session_cb *cb = pj_stun_session_callback(stun_sock->stun_sess);
 +    /* Log socket error or disconnection */
 +    if (status != PJ_SUCCESS) {
-+        if (stun_sock->conn_type == PJ_STUN_TP_UDP || status != PJ_EEOF) {
++        if (stun_sock->conn_type == PJ_STUN_TP_UDP || (status != PJ_EEOF && status != 120104)) {
 +            PJ_PERROR(2, (stun_sock->obj_name, status, "read() error"));
++        } else if (status == 120104 /* RESET BY PEER */) {
++            for (int i = 0; i <= stun_sock->outgoing_nb; ++i) {
++                if (stun_sock->outgoing_socks[i].sock == asock) {
++                    if (cb && (cb->on_peer_reset_connection)) {
++                        (cb->on_peer_reset_connection)(stun_sock->stun_sess, stun_sock->outgoing_socks[i].addr);
++                    }
++                }
++            }
 +        }
 +        return PJ_FALSE;
 +    }
@@ -3209,6 +3855,8 @@ index 7692e6c1..7624cf25 100644
 +        if (stun_sock->outgoing_socks[i].sock == asock) {
 +            rx_addr = stun_sock->outgoing_socks[i].addr;
 +            sock_addr_len = pj_sockaddr_get_len(rx_addr);
++            if (cb && (cb->on_peer_packet))
++              (cb->on_peer_packet)(stun_sock->stun_sess, stun_sock->outgoing_socks[i].addr);
 +        }
 +    }
 +    if (rx_addr == NULL && stun_sock->incoming_nb != -1) {
@@ -3218,10 +3866,11 @@ index 7692e6c1..7624cf25 100644
 +    }
 +    return parse_rx_packet(stun_sock, data, size, rx_addr, sock_addr_len);
 +#else
++    pj_grp_lock_release(stun_sock->grp_lock);
 +    return PJ_FALSE;
 +#endif
- }
- 
++}
++
 +#if PJ_HAS_TCP
 +/*
 + * Notification when incoming TCP socket has been connected.
@@ -3280,7 +3929,7 @@ index 7692e6c1..7624cf25 100644
  /* Start socket. */
  PJ_DEF(pj_status_t) pj_stun_sock_start( pj_stun_sock *stun_sock,
  				        const pj_str_t *domain,
-@@ -504,15 +879,35 @@ PJ_DEF(pj_status_t) pj_stun_sock_destroy(pj_stun_sock *stun_sock)
+@@ -504,15 +889,35 @@ PJ_DEF(pj_status_t) pj_stun_sock_destroy(pj_stun_sock *stun_sock)
      }
  
      stun_sock->is_destroying = PJ_TRUE;
@@ -3323,7 +3972,7 @@ index 7692e6c1..7624cf25 100644
      }
  
      if (stun_sock->stun_sess) {
-@@ -619,12 +1014,12 @@ static pj_status_t get_mapped_addr(pj_stun_sock *stun_sock)
+@@ -619,12 +1024,12 @@ static pj_status_t get_mapped_addr(pj_stun_sock *stun_sock)
  					&tdata);
      if (status != PJ_SUCCESS)
  	goto on_error;
@@ -3341,7 +3990,7 @@ index 7692e6c1..7624cf25 100644
      if (status != PJ_SUCCESS && status != PJ_EPENDING)
  	goto on_error;
  
-@@ -637,7 +1032,7 @@ on_error:
+@@ -637,7 +1042,7 @@ static pj_status_t get_mapped_addr(pj_stun_sock *stun_sock)
  
  /* Get info */
  PJ_DEF(pj_status_t) pj_stun_sock_get_info( pj_stun_sock *stun_sock,
@@ -3350,7 +3999,7 @@ index 7692e6c1..7624cf25 100644
  {
      int addr_len;
      pj_status_t status;
-@@ -646,73 +1041,73 @@ PJ_DEF(pj_status_t) pj_stun_sock_get_info( pj_stun_sock *stun_sock,
+@@ -646,73 +1051,73 @@ PJ_DEF(pj_status_t) pj_stun_sock_get_info( pj_stun_sock *stun_sock,
  
      pj_grp_lock_acquire(stun_sock->grp_lock);
  
@@ -3480,7 +4129,7 @@ index 7692e6c1..7624cf25 100644
      }
  
      pj_grp_lock_release(stun_sock->grp_lock);
-@@ -726,36 +1121,235 @@ PJ_DEF(pj_status_t) pj_stun_sock_sendto( pj_stun_sock *stun_sock,
+@@ -726,36 +1131,253 @@ PJ_DEF(pj_status_t) pj_stun_sock_sendto( pj_stun_sock *stun_sock,
  					 unsigned pkt_len,
  					 unsigned flag,
  					 const pj_sockaddr_t *dst_addr,
@@ -3513,7 +4162,10 @@ index 7692e6c1..7624cf25 100644
      if (send_key==NULL)
 -	send_key = &stun_sock->send_key;
 +        send_key = &stun_sock->send_key;
-+
+ 
+-    size = pkt_len;
+-    status = pj_activesock_sendto(stun_sock->active_sock, send_key,
+-                                  pkt, &size, flag, dst_addr, addr_len);
 +    *size = pkt_len;
 +    if (stun_sock->conn_type == PJ_STUN_TP_UDP) {
 +        status = pj_activesock_sendto(stun_sock->main_sock, send_key,
@@ -3548,7 +4200,7 @@ index 7692e6c1..7624cf25 100644
 +
 +#endif
 +    }
-+
+ 
 +    pj_grp_lock_release(stun_sock->grp_lock);
 +	return status;
 +}
@@ -3556,39 +4208,22 @@ index 7692e6c1..7624cf25 100644
 +#if PJ_HAS_TCP
 +
 +PJ_DECL(pj_status_t)
-+pj_stun_sock_connect_active(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr, int af) {
- 
--    size = pkt_len;
--    status = pj_activesock_sendto(stun_sock->active_sock, send_key,
--                                  pkt, &size, flag, dst_addr, addr_len);
-+  if (stun_sock->incoming_nb != -1) {
-+    // Check if not incoming, if so, already connected (mainly for PRFLX candidates)
-+    for (int i = 0 ; i <= stun_sock->incoming_nb; ++i) {
-+        if (pj_sockaddr_cmp(&stun_sock->incoming_socks[i].addr, remote_addr) == 0) {
-+            pj_stun_session_cb *cb = pj_stun_session_callback(stun_sock->stun_sess);
-+            (cb->on_peer_connection)(stun_sock->stun_sess, PJ_SUCCESS, remote_addr);
-+            return PJ_SUCCESS;
-+        }
-+    }
-+  }
-+  pj_status_t status;
++pj_stun_sock_connect(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr, int af, int nb_check) {
 +
 +  pj_grp_lock_acquire(stun_sock->grp_lock);
 +  int sock_type = pj_SOCK_STREAM();
 +
-+  /* Create socket and bind socket */
-+  stun_sock->outgoing_nb += 1;
-+  int nb_check = stun_sock->outgoing_nb;
 +  pj_sock_t *fd = &stun_sock->outgoing_socks[nb_check].fd;
 +  pj_activesock_t **asock = &stun_sock->outgoing_socks[nb_check].sock;
 +  pj_sockaddr_t **addr = &stun_sock->outgoing_socks[nb_check].addr;
-+  status = pj_sock_socket(af, sock_type, 0, fd);
++
++  pj_status_t status = pj_sock_socket(af, sock_type, 0, fd);
 +  if (status != PJ_SUCCESS) {
 +    pj_stun_sock_destroy(stun_sock);
 +    pj_grp_lock_release(stun_sock->grp_lock);
 +    return status;
 +  }
- 
++
 +  /* Apply QoS, if specified */
 +  status = pj_sock_apply_qos2(*fd, stun_sock->setting.qos_type,
 +                            &stun_sock->setting.qos_params, 2, stun_sock->obj_name, NULL);
@@ -3677,8 +4312,40 @@ index 7692e6c1..7624cf25 100644
 +
 +  pj_grp_lock_release(stun_sock->grp_lock);
 +  return status;
- }
- 
++}
++
++PJ_DECL(pj_status_t)
++pj_stun_sock_connect_active(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr, int af) {
++
++  if (stun_sock->incoming_nb != -1) {
++      // Check if not incoming, if so, already connected (mainly for PRFLX candidates)
++      for (int i = 0 ; i <= stun_sock->incoming_nb; ++i) {
++          if (pj_sockaddr_cmp(&stun_sock->incoming_socks[i].addr, remote_addr) == 0) {
++              pj_stun_session_cb *cb = pj_stun_session_callback(stun_sock->stun_sess);
++              (cb->on_peer_connection)(stun_sock->stun_sess, PJ_SUCCESS, remote_addr);
++              return PJ_SUCCESS;
++          }
++      }
++  }
++
++  /* Create socket and bind socket */
++  stun_sock->outgoing_nb += 1;
++  int nb_check = stun_sock->outgoing_nb;
++  return pj_stun_sock_connect(stun_sock, remote_addr, af, nb_check);
++
++}
++
++PJ_DECL(pj_status_t)
++pj_stun_sock_reconnect_active(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr, int af) {
++    for (int i = 0; i <= stun_sock->outgoing_nb; ++i) {
++        if (pj_sockaddr_cmp(stun_sock->outgoing_socks[i].addr, remote_addr) == 0) {
++            pj_activesock_close(stun_sock->outgoing_socks[i].sock);
++            return pj_stun_sock_connect(stun_sock, remote_addr, af, i);
++        }
++    }
++    return PJ_EINVAL;
++}
++
 +PJ_DECL(pj_status_t)
 +pj_stun_sock_close(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr) {
 +    for (int i = 0; i <= stun_sock->outgoing_nb; ++i) {
@@ -3720,8 +4387,8 @@ index 7692e6c1..7624cf25 100644
 +  if (!remote_addr) return PJ_FALSE;
 +  (cb->on_peer_connection)(stun_sock->stun_sess, status, remote_addr);
 +  return PJ_TRUE;
-+}
-+
+ }
+ 
 +#endif
 +
  /* This callback is called by the STUN session to send packet */
@@ -3730,7 +4397,7 @@ index 7692e6c1..7624cf25 100644
  				    void *token,
  				    const void *pkt,
  				    pj_size_t pkt_size,
-@@ -766,7 +1360,7 @@ static pj_status_t sess_on_send_msg(pj_stun_session *sess,
+@@ -766,7 +1388,7 @@ static pj_status_t sess_on_send_msg(pj_stun_session *sess,
      pj_ssize_t size;
  
      stun_sock = (pj_stun_sock *) pj_stun_session_get_user_data(sess);
@@ -3739,7 +4406,7 @@ index 7692e6c1..7624cf25 100644
  	/* We have been shutdown, but this callback may still get called
  	 * by retransmit timer.
  	 */
-@@ -777,15 +1371,31 @@ static pj_status_t sess_on_send_msg(pj_stun_session *sess,
+@@ -777,15 +1399,31 @@ static pj_status_t sess_on_send_msg(pj_stun_session *sess,
      PJ_UNUSED_ARG(token);
  
      size = pkt_size;
@@ -3775,7 +4442,7 @@ index 7692e6c1..7624cf25 100644
  				     pj_status_t status,
  				     void *token,
  				     pj_stun_tx_data *tdata,
-@@ -869,9 +1479,9 @@ on_return:
+@@ -869,9 +1507,9 @@ static void sess_on_request_complete(pj_stun_session *sess,
  }
  
  /* Schedule keep-alive timer */
@@ -3787,7 +4454,7 @@ index 7692e6c1..7624cf25 100644
                                     &stun_sock->ka_timer, 0);
  
      pj_assert(stun_sock->ka_interval != 0);
-@@ -881,7 +1491,7 @@ static void start_ka_timer(pj_stun_sock *stun_sock)
+@@ -881,7 +1519,7 @@ static void start_ka_timer(pj_stun_sock *stun_sock)
  	delay.sec = stun_sock->ka_interval;
  	delay.msec = 0;
  
@@ -3796,7 +4463,7 @@ index 7692e6c1..7624cf25 100644
  	                                  &stun_sock->ka_timer,
  	                                  &delay, PJ_TRUE,
  	                                  stun_sock->grp_lock);
-@@ -889,7 +1499,7 @@ static void start_ka_timer(pj_stun_sock *stun_sock)
+@@ -889,7 +1527,7 @@ static void start_ka_timer(pj_stun_sock *stun_sock)
  }
  
  /* Keep-alive timer callback */
@@ -3805,7 +4472,7 @@ index 7692e6c1..7624cf25 100644
  {
      pj_stun_sock *stun_sock;
  
-@@ -911,7 +1521,7 @@ static void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te)
+@@ -911,7 +1549,7 @@ static void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te)
  }
  
  /* Callback from active socket when incoming packet is received */
@@ -3814,7 +4481,7 @@ index 7692e6c1..7624cf25 100644
  				  void *data,
  				  pj_size_t size,
  				  const pj_sockaddr_t *src_addr,
-@@ -919,8 +1529,6 @@ static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+@@ -919,8 +1557,6 @@ static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
  				  pj_status_t status)
  {
      pj_stun_sock *stun_sock;
@@ -3823,7 +4490,7 @@ index 7692e6c1..7624cf25 100644
  
      stun_sock = (pj_stun_sock*) pj_activesock_get_user_data(asock);
      if (!stun_sock)
-@@ -932,62 +1540,11 @@ static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+@@ -932,62 +1568,11 @@ static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
  	return PJ_TRUE;
      }
  
@@ -3888,7 +4555,7 @@ index 7692e6c1..7624cf25 100644
  			      pj_ioqueue_op_key_t *send_key,
  			      pj_ssize_t sent)
  {
-@@ -1024,3 +1581,7 @@ static pj_bool_t on_data_sent(pj_activesock_t *asock,
+@@ -1024,3 +1609,7 @@ static pj_bool_t on_data_sent(pj_activesock_t *asock,
      return PJ_TRUE;
  }
  
@@ -3896,8 +4563,20 @@ index 7692e6c1..7624cf25 100644
 +{
 +  return stun_sock ? stun_sock->stun_sess : NULL;
 +}
+diff --git a/pjnath/src/pjnath/stun_transaction.c b/pjnath/src/pjnath/stun_transaction.c
+index 28f623005..0c15763c2 100644
+--- a/pjnath/src/pjnath/stun_transaction.c
++++ b/pjnath/src/pjnath/stun_transaction.c
+@@ -394,6 +394,7 @@ static void retransmit_timer_callback(pj_timer_heap_t *timer_heap,
+ PJ_DEF(pj_status_t) pj_stun_client_tsx_retransmit(pj_stun_client_tsx *tsx,
+                                                   pj_bool_t mod_count)
+ {
++    if (!tsx) return PJ_EINVAL;
+     if (tsx->destroy_timer.id != 0) {
+ 	return PJ_SUCCESS;
+     }
 diff --git a/pjnath/src/pjnath/turn_session.c b/pjnath/src/pjnath/turn_session.c
-index fcbe703e..1c0430bc 100644
+index fcbe703e8..1c0430bc7 100644
 --- a/pjnath/src/pjnath/turn_session.c
 +++ b/pjnath/src/pjnath/turn_session.c
 @@ -311,7 +311,8 @@ PJ_DEF(pj_status_t) pj_turn_session_create( const pj_stun_config *cfg,
@@ -3910,8 +4589,33 @@ index fcbe703e..1c0430bc 100644
      if (status != PJ_SUCCESS) {
  	do_destroy(sess);
  	return status;
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index a8d9ed009..7033fd939 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -1357,3 +1357,19 @@ static void turn_on_connection_bind_status(pj_turn_session *sess,
+ 					      peer_addr, addr_len);
+     }
+ }
++
++pj_bool_t
++pj_turn_sock_has_dataconn(pj_turn_sock *turn_sock, const pj_sockaddr_t *peer)
++{
++	if (!turn_sock) return PJ_FALSE;
++
++	for (int i = 0; i < turn_sock->data_conn_cnt; ++i) {
++		tcp_data_conn_t* dataconn = &turn_sock->data_conn[i];
++		if (dataconn) {
++			pj_sockaddr_t* conn_peer = &dataconn->peer_addr;
++			if (pj_sockaddr_cmp(conn_peer, peer) == 0) return PJ_TRUE;
++		}
++	}
++
++	return PJ_FALSE;
++}
+\ No newline at end of file
 diff --git a/pjnath/src/pjturn-client/client_main.c b/pjnath/src/pjturn-client/client_main.c
-index 1a866722..5f013631 100644
+index 1a8667220..5f013631a 100644
 --- a/pjnath/src/pjturn-client/client_main.c
 +++ b/pjnath/src/pjturn-client/client_main.c
 @@ -154,10 +154,10 @@ static int init()
@@ -3941,7 +4645,7 @@ index 1a866722..5f013631 100644
  	case 'q':
  	    g.quit = PJ_TRUE;
 diff --git a/pjnath/src/pjturn-srv/allocation.c b/pjnath/src/pjturn-srv/allocation.c
-index 6c9c9ce1..eea91f01 100644
+index 6c9c9ce11..eea91f01b 100644
 --- a/pjnath/src/pjturn-srv/allocation.c
 +++ b/pjnath/src/pjturn-srv/allocation.c
 @@ -338,7 +338,7 @@ PJ_DEF(pj_status_t) pj_turn_allocation_create(pj_turn_transport *transport,
@@ -3954,7 +4658,7 @@ index 6c9c9ce1..eea91f01 100644
  	goto on_error;
      }
 diff --git a/pjnath/src/pjturn-srv/server.c b/pjnath/src/pjturn-srv/server.c
-index 94dda29a..95ad1793 100644
+index 94dda29a3..95ad1793d 100644
 --- a/pjnath/src/pjturn-srv/server.c
 +++ b/pjnath/src/pjturn-srv/server.c
 @@ -156,7 +156,7 @@ PJ_DEF(pj_status_t) pj_turn_srv_create(pj_pool_factory *pf,
@@ -3967,7 +4671,7 @@ index 94dda29a..95ad1793 100644
  	goto on_error;
      }
 diff --git a/pjsip-apps/src/samples/icedemo.c b/pjsip-apps/src/samples/icedemo.c
-index 9d811374..92826fd8 100644
+index 9d811374a..92826fd8d 100644
 --- a/pjsip-apps/src/samples/icedemo.c
 +++ b/pjsip-apps/src/samples/icedemo.c
 @@ -43,7 +43,7 @@ static struct app_t
@@ -4717,7 +5421,7 @@ index 9d811374..92826fd8 100644
  
      status = icedemo_init();
 diff --git a/pjsip/src/pjsua-lib/pjsua_core.c b/pjsip/src/pjsua-lib/pjsua_core.c
-index ea1e72b8..39d05d1e 100644
+index ea1e72b85..39d05d1ed 100644
 --- a/pjsip/src/pjsua-lib/pjsua_core.c
 +++ b/pjsip/src/pjsua-lib/pjsua_core.c
 @@ -1529,10 +1529,10 @@ static void resolve_stun_entry(pjsua_stun_resolve *sess)
