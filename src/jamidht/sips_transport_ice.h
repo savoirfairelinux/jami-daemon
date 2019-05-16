@@ -138,6 +138,10 @@ private:
     void onRxData(std::vector<uint8_t>&&);
     void onCertificatesUpdate(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int);
     int verifyCertificate(gnutls_session_t);
+
+    std::future<void> eventLoopFut_;
+    void eventLoop();
+    std::atomic_bool stopLoop_ {false};
 };
 
 }} // namespace jami::tls
