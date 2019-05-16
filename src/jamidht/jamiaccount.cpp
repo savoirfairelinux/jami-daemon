@@ -138,6 +138,7 @@ struct JamiAccount::PendingCall
 {
     std::chrono::steady_clock::time_point start;
     std::shared_ptr<IceTransport> ice_sp;
+    std::shared_ptr<IceTransport> ice_tcp_sp;
     std::weak_ptr<SIPCall> call;
     std::future<size_t> listen_key;
     dht::InfoHash call_key;
@@ -231,7 +232,6 @@ static constexpr const char * DEFAULT_TURN_REALM = "ring";
 static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.]+)(:(\\d+)|:\\[(.+)-(.+)\\])?");
 static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
 const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
-
 
 constexpr const char* const JamiAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
@@ -412,6 +412,30 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
 }
 
 void
+initICE(const std::vector<uint8_t> &msg, const std::shared_ptr<IceTransport> &ice,
+        const std::shared_ptr<IceTransport> &ice_tcp, bool &udp_failed, bool &tcp_failed)
+{
+    auto sdp_list = IceTransport::parseSDPList(msg);
+    for (const auto &sdp : sdp_list) {
+        if (sdp.candidates.size() > 0) {
+            if (sdp.candidates[0].find("TCP") != std::string::npos) {
+                // It is a SDP for the TCP component
+                tcp_failed = (ice_tcp && !ice_tcp->start(sdp));
+            } else {
+                // For UDP
+                udp_failed = (ice && !ice->start(sdp));
+            }
+        }
+    }
+
+    // During the ICE reply we can start the ICE negotiation
+    if (tcp_failed && ice_tcp) {
+        ice_tcp->stop();
+        JAMI_WARN("ICE over TCP not started, will only use UDP");
+    }
+}
+
+void
 JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
 {
     // TODO: for now, we automatically trust all explicitly called peers
@@ -455,9 +479,21 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             return;
         }
 
+        auto ice_config = getIceOptions();
+        ice_config.tcpEnable = true;
+        ice_config.aggressive = true; // This will directly select the first candidate.
+        auto ice_tcp =
+#ifdef _WIN32
+        std::shared_ptr<IceTransport>(nullptr);
+#else
+        createIceTransport(("sip:" + dev_call->getCallId()).c_str(), ICE_COMPONENTS, true, ice_config);
+#endif
+        if (not ice_tcp) {
+            JAMI_WARN("Can't create ICE over TCP, will only use UDP");
+        }
         call->addSubCall(*dev_call);
 
-        manager.addTask([sthis=shared(), weak_dev_call, ice, dev, toUri, peer_account] {
+        manager.addTask([sthis=shared(), weak_dev_call, ice, ice_tcp, dev, toUri, peer_account] {
             auto call = weak_dev_call.lock();
 
             // call aborted?
@@ -470,18 +506,27 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 return false;
             }
 
+            if (ice_tcp && ice_tcp->isFailed()) {
+                JAMI_WARN("[call:%s] ice tcp init failed, will only use UDP", call->getCallId().c_str());
+            }
+
             // Loop until ICE transport is initialized.
             // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
             // and we let upper layers decide when the call shall be aborded (our first check upper).
-            if (not ice->isInitialized())
+            if ((not ice->isInitialized()) || (ice_tcp && !ice_tcp->isInitialized()))
                 return true;
 
             sthis->registerDhtAddress(*ice);
-
+            if (ice_tcp) sthis->registerDhtAddress(*ice_tcp);
             // Next step: sent the ICE data to peer through DHT
             const dht::Value::Id callvid  = ValueIdDist()(sthis->rand);
             const auto callkey = dht::InfoHash::get("callto:" + dev.toString());
-            dht::Value val { dht::IceCandidates(callvid, ice->packIceMsg()) };
+            auto blob = ice->packIceMsg();
+            if (ice_tcp)  {
+                auto ice_tcp_msg = ice_tcp->packIceMsg(2);
+                blob.insert(blob.end(), ice_tcp_msg.begin(), ice_tcp_msg.end());
+            }
+            dht::Value val { dht::IceCandidates(callvid,  blob) };
 
             sthis->dht_.putEncrypted(
                 callkey, dev,
@@ -498,7 +543,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
             auto listenKey = sthis->dht_.listen<dht::IceCandidates>(
                 callkey,
-                [weak_dev_call, ice, callvid, dev] (dht::IceCandidates&& msg) {
+                [weak_dev_call, ice, ice_tcp, callvid, dev] (dht::IceCandidates&& msg) {
                     if (msg.id != callvid or msg.from != dev)
                         return true;
                     // remove unprintable characters
@@ -509,7 +554,10 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                     JAMI_WARN("ICE request replied from DHT peer %s\nData: %s", dev.toString().c_str(), iceData.c_str());
                     if (auto call = weak_dev_call.lock()) {
                         call->setState(Call::ConnectionState::PROGRESSING);
-                        if (!ice->start(msg.ice_data)) {
+
+                        auto udp_failed = true, tcp_failed = true;
+                        initICE(msg.ice_data, ice, ice_tcp, udp_failed, tcp_failed);
+                        if (udp_failed && tcp_failed) {
                             call->onFailure();
                             return true;
                         }
@@ -521,7 +569,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             std::lock_guard<std::mutex> lock(sthis->callsMutex_);
             sthis->pendingCalls_.emplace_back(PendingCall{
                 std::chrono::steady_clock::now(),
-                ice, weak_dev_call,
+                ice, ice_tcp, weak_dev_call,
                 std::move(listenKey),
                 callkey,
                 dev,
@@ -616,7 +664,6 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     JAMI_DBG("contact header: %.*s / %s -> %s / %.*s",
              (int)pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str(),
              (int)pjTarget.slen, pjTarget.ptr);
-
 
     auto local_sdp = call.getSDP().getLocalSdpSession();
     pjsip_dialog* dialog {nullptr};
@@ -976,7 +1023,6 @@ JamiAccount::readArchive(const std::string& pwd) const
     JAMI_DBG("[Account %s] reading account archive", getAccountID().c_str());
     return AccountArchive(fileutils::getFullPath(idPath_, archivePath_), pwd);
 }
-
 
 void
 JamiAccount::updateArchive(AccountArchive& archive) const
@@ -1823,25 +1869,47 @@ bool
 JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
 {
     auto call = pc.call.lock();
-    if (not call)
+    // Cleanup pending call if call is over (cancelled by user or any other reason)
+    if (not call || call->getState() == Call::CallState::OVER)
         return true;
 
-    auto ice = pc.ice_sp.get();
-    if (not ice or ice->isFailed()) {
-        JAMI_ERR("[call:%s] Null or failed ICE transport", call->getCallId().c_str());
+    if ((std::chrono::steady_clock::now() - pc.start) >= ICE_NEGOTIATION_TIMEOUT) {
+        JAMI_WARN("[call:%s] Timeout on ICE negotiation", call->getCallId().c_str());
         call->onFailure();
         return true;
     }
 
-    // Return to pending list if not negotiated yet and not in timeout
-    if (not ice->isRunning()) {
-        if ((std::chrono::steady_clock::now() - pc.start) >= ICE_NEGOTIATION_TIMEOUT) {
-            JAMI_WARN("[call:%s] Timeout on ICE negotiation", call->getCallId().c_str());
-            call->onFailure();
-            return true;
+    auto ice_tcp = pc.ice_tcp_sp.get();
+    auto ice = pc.ice_sp.get();
+
+    bool tcp_finished = ice_tcp == nullptr || ice_tcp->isStopped();
+    bool udp_finished = ice == nullptr || ice->isStopped();
+
+    if (not udp_finished and ice->isFailed()) {
+        udp_finished = true;
+    }
+
+    if (not tcp_finished and ice_tcp->isFailed()) {
+        tcp_finished = true;
+    }
+
+    // At least wait for TCP
+    if (not tcp_finished and not ice_tcp->isRunning()) {
+        return false;
+    } else if (tcp_finished and (not ice_tcp or not ice_tcp->isRunning())) {
+        // If TCP is finished but not running, wait for UDP
+        if (not udp_finished and ice and not ice->isRunning()) {
+            return false;
         }
-        // Cleanup pending call if call is over (cancelled by user or any other reason)
-        return call->getState() == Call::CallState::OVER;
+    }
+
+    udp_finished = ice && ice->isRunning();
+    tcp_finished = ice_tcp && ice_tcp->isRunning();
+    // If both transport are not running, the negotiation failed
+    if (not udp_finished and not tcp_finished) {
+        JAMI_ERR("[call:%s] Both ICE negotations failed", call->getCallId().c_str());
+        call->onFailure();
+        return true;
     }
 
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
@@ -1893,9 +1961,15 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
         }
     };
 
+    auto best_transport = pc.ice_tcp_sp;
+    if (!tcp_finished) {
+        JAMI_DBG("TCP not running, will use SIP over UDP");
+        best_transport = pc.ice_sp;
+    }
+
     // Following can create a transport that need to be negotiated (TLS).
     // This is a asynchronous task. So we're going to process the SIP after this negotiation.
-    auto transport = link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp,
+    auto transport = link_->sipTransportBroker->getTlsIceTransport(best_transport,
                                                                    ICE_COMP_SIP_TRANSPORT,
                                                                    tlsParams);
     if (!transport)
@@ -1910,7 +1984,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
         // Be acknowledged on transport connection/disconnection
         auto lid = reinterpret_cast<uintptr_t>(this);
         auto remote_id = remote_device.toString();
-        auto remote_addr = ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
+        auto remote_addr = best_transport->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
         auto& tr_self = *transport;
         transport->addStateListener(lid,
             [&tr_self, lid, wcall, waccount, remote_id, remote_addr](pjsip_transport_state state,
@@ -1933,7 +2007,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     call->setState(Call::ConnectionState::PROGRESSING);
 
     return true;
-}
+    }
 
 bool
 JamiAccount::mapPortUPnP()
@@ -2004,7 +2078,6 @@ JamiAccount::doRegister()
         doRegister_();
     }
 }
-
 
 std::vector<dht::SockAddr>
 JamiAccount::loadBootstrap() const
@@ -2481,9 +2554,18 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
 {
     auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
+    auto ice_config = getIceOptions();
+    ice_config.tcpEnable = true;
+    ice_config.aggressive = true; // This will directly select the first candidate.
+    auto ice_tcp =
+#ifdef _WIN32
+        std::shared_ptr<IceTransport>(nullptr);
+#else
+        createIceTransport(("sip:" + call->getCallId()).c_str(), ICE_COMPONENTS, true, ice_config);
+#endif
 
     std::weak_ptr<SIPCall> wcall = call;
-    Manager::instance().addTask([account=shared(), wcall, ice, msg, from_cert, from] {
+    Manager::instance().addTask([account=shared(), wcall, ice, ice_tcp, msg, from_cert, from] {
         auto call = wcall.lock();
 
         // call aborted?
@@ -2499,10 +2581,10 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
         // Loop until ICE transport is initialized.
         // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
         // and we let upper layers decide when the call shall be aborted (our first check upper).
-        if (not ice->isInitialized())
+        if ((not ice->isInitialized()) || (ice_tcp && !ice_tcp->isInitialized()))
             return true;
 
-        account->replyToIncomingIceMsg(call, ice, msg, from_cert, from);
+        account->replyToIncomingIceMsg(call, ice, ice_tcp, msg, from_cert, from);
         return false;
     });
 }
@@ -2575,6 +2657,7 @@ JamiAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& cr
 void
 JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                    const std::shared_ptr<IceTransport>& ice,
+                                   const std::shared_ptr<IceTransport>& ice_tcp,
                                    const dht::IceCandidates& peer_ice_msg,
                                    const std::shared_ptr<dht::crypto::Certificate>& from_cert,
                                    const dht::InfoHash& from_id)
@@ -2591,13 +2674,20 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
             }
     });
 #endif
-
     registerDhtAddress(*ice);
+    if (ice_tcp) registerDhtAddress(*ice_tcp);
+
+    auto blob = ice->packIceMsg();
+    if (ice_tcp) {
+        auto ice_tcp_msg = ice_tcp->packIceMsg(2);
+        blob.insert(blob.end(), ice_tcp_msg.begin(), ice_tcp_msg.end());
+    }
+
     // Asynchronous DHT put of our local ICE data
     dht_.putEncrypted(
         callKey_,
         peer_ice_msg.from,
-        dht::Value {dht::IceCandidates(peer_ice_msg.id, ice->packIceMsg())},
+        dht::Value {dht::IceCandidates(peer_ice_msg.id, blob)},
         [wcall](bool ok) {
             if (!ok) {
                 JAMI_WARN("Can't put ICE descriptor reply on DHT");
@@ -2609,8 +2699,11 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 
     auto started_time = std::chrono::steady_clock::now();
 
-    // During the ICE reply we can start the ICE negotiation
-    if (!ice->start(peer_ice_msg.ice_data)) {
+    auto sdp_list = IceTransport::parseSDPList(peer_ice_msg.ice_data);
+    auto udp_failed = true, tcp_failed = true;
+    initICE(peer_ice_msg.ice_data, ice, ice_tcp, udp_failed, tcp_failed);
+
+    if (udp_failed && tcp_failed) {
         call->onFailure(EIO);
         return;
     }
@@ -2620,15 +2713,16 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
     // Let the call handled by the PendingCall handler loop
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.emplace_back(PendingCall {
-                /*.start = */started_time,
-                /*.ice_sp = */ice,
-                /*.call = */wcall,
-                /*.listen_key = */{},
-                /*.call_key = */{},
-                /*.from = */peer_ice_msg.from,
-                /*.from_account = */from_id,
-                /*.from_cert = */from_cert });
+        pendingCalls_.emplace_back(
+            PendingCall{/*.start = */ started_time,
+                        /*.ice_sp = */ udp_failed ? nullptr : ice,
+                        /*.ice_tcp_sp = */ tcp_failed ? nullptr : ice_tcp,
+                        /*.call = */ wcall,
+                        /*.listen_key = */ {},
+                        /*.call_key = */ {},
+                        /*.from = */ peer_ice_msg.from,
+                        /*.from_account = */ from_id,
+                        /*.from_cert = */ from_cert});
         checkPendingCallsTask();
     }
 }
@@ -3662,7 +3756,6 @@ void JamiAccount::pushNotificationReceived(const std::string& from, const std::m
     dht_.pushNotificationReceived(data);
 }
 
-
 std::string
 JamiAccount::getUserUri() const
 {
@@ -3672,7 +3765,6 @@ JamiAccount::getUserUri() const
 #endif
     return username_;
 }
-
 
 std::vector<DRing::Message>
 JamiAccount::getLastMessages(const uint64_t& base_timestamp)
