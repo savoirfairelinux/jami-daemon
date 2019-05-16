@@ -38,6 +38,8 @@ using random_device = dht::crypto::random_device;
 #include <string>
 #include <set>
 #include <mutex>
+#include <thread>
+#include <chrono>
 #include <memory>
 #include <condition_variable>
 #include <random>
@@ -88,14 +90,6 @@ constexpr static const char * UPNP_WANPPP_SERVICE = "urn:schemas-upnp-org:servic
 constexpr static const char * INVALID_ARGS_STR = "402";
 constexpr static const char * ARRAY_IDX_INVALID_STR = "713";
 constexpr static const char * CONFLICT_IN_MAPPING_STR = "718";
-
-/*
- * Local prototypes
- */
-static std::string get_element_text(IXML_Node*);
-static std::string get_first_doc_item(IXML_Document*, const char*);
-static std::string get_first_element_item(IXML_Element*, const char*);
-static void checkResponseError(IXML_Document*);
 
 #else
 
@@ -160,42 +154,62 @@ UPnPContext::UPnPContext()
 #if HAVE_LIBUPNP
     int upnp_err;
     char* ip_address = nullptr;
+    char* ip_address6 = nullptr;
     unsigned short port = 0;
+    unsigned short port6 = 0;
 
     /* TODO: allow user to specify interface to be used
      *       by selecting the IP
      */
 
- #ifdef UPNP_ENABLE_IPV6
-     JAMI_DBG("UPnP: IPv6 support enabled, but we will use IPv4");
-     /* IPv6 version seems to fail on some systems with:
-      * UPNP_E_SOCKET_BIND: An error occurred binding a socket. */
-     /* TODO: figure out why ipv6 version doesn't work  */
-     // upnp_err = UpnpInit2(0, 0);
- #endif
-    upnp_err = UpnpInit(0, 0);
-    if ( upnp_err != UPNP_E_SUCCESS ) {
-        JAMI_ERR("UPnP: can't initialize libupnp: %s", UpnpGetErrorMessage(upnp_err));
+#ifdef UPNP_ENABLE_IPV6
+    /* IPv6 version seems to fail on some systems with message
+     * UPNP_E_SOCKET_BIND: An error occurred binding a socket. 
+     * TODO: figure out why ipv6 version doesn't work.  
+     */
+    JAMI_DBG("Upnp: Initializing with UpnpInit2.");
+    upnp_err = UpnpInit2(0, 0);
+    if (upnp_err != UPNP_E_SUCCESS) {
+        JAMI_WARN("Upnp: UpnpInit2 Failed to initialize.");
+        JAMI_DBG("Upnp: Initializing with UpnpInit (deprecated).");
+        upnp_err = UpnpInit(0, 0);      // Deprecated function but fall back on it if UpnpInit2 fails. 
+    } 
+#else
+    JAMI_DBG("Upnp: Initializing with UpnpInit (deprecated).");
+    upnp_err = UpnpInit(0, 0);           // Deprecated function but fall back on it if IPv6 not enabled.
+#endif
+
+    if (upnp_err != UPNP_E_SUCCESS) {
+        JAMI_ERR("Upnp: Can't initialize libupnp: %s", UpnpGetErrorMessage(upnp_err));
         UpnpFinish();
     } else {
-        JAMI_DBG("UPnP: using IPv4");
-        ip_address = UpnpGetServerIpAddress(); // do not free, it is freed by UpnpFinish()
+        JAMI_DBG("Upnp: Initialization successful.");
+        ip_address = UpnpGetServerIpAddress();      
         port = UpnpGetServerPort();
+        ip_address6 = UpnpGetServerIp6Address();    
+        port6 = UpnpGetServerPort6();
+        JAMI_DBG("UPnP: Initialiazed on %s:%u | %s:%u", ip_address, port, ip_address6, port6);
 
-        JAMI_DBG("UPnP: initialiazed on %s:%u", ip_address, port);
+        // Relax the parser to allow malformed XML text.
+        ixmlRelaxParser(1);
 
-        // relax the parser to allow malformed XML text
-        ixmlRelaxParser( 1 );
-
-        // Register a control point to start looking for devices right away
-        upnp_err = UpnpRegisterClient( cp_callback, this, &ctrlptHandle_ );
-        if ( upnp_err != UPNP_E_SUCCESS ) {
-            JAMI_ERR("UPnP: can't register client: %s", UpnpGetErrorMessage(upnp_err));
+        // Register Upnp control point.
+        upnp_err = UpnpRegisterClient(ctrlPtCallback, this, &ctrlptHandle_);
+        if (upnp_err != UPNP_E_SUCCESS) {
+            JAMI_ERR("UPnP: Can't register client: %s", UpnpGetErrorMessage(upnp_err));
             UpnpFinish();
         } else {
+            JAMI_DBG("UPnP: Control point registration successful.");
             clientRegistered_ = true;
-            // start gathering a list of available devices
-            searchForIGD();
+            // searchForIGD();                 // Start gathering a list of available devices.
+        }
+
+        if (clientRegistered_){
+            searchForIGD();                 // Start gathering a list of available devices.
+        }
+
+        if (deviceRegistered_){
+            UpnpSendAdvertisement(deviceHandle_, 100);
         }
     }
 #endif
@@ -698,7 +712,7 @@ UPnPContext::searchForIGD()
         return;
     }
 
-    /* send out search for both types, as some routers may possibly only reply to one */
+    /* Send out search for multiple types of devices, as some routers may possibly only reply to one. */
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, this);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, this);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
@@ -723,6 +737,7 @@ UPnPContext::parseDevice(IXML_Document* doc, const UpnpDiscovery* d_event)
     }
 
     if (deviceType.compare(UPNP_IGD_DEVICE) == 0) {
+        JAMI_DBG("UPnP: PARSING IGD");
         parseIGD(doc, d_event);
     }
 
@@ -889,121 +904,74 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
     }
 }
 
-static std::string
-get_element_text(IXML_Node* node)
-{
-    std::string ret;
-    if (node) {
-        IXML_Node *textNode = ixmlNode_getFirstChild(node);
-        if (textNode) {
-            const char* value = ixmlNode_getNodeValue(textNode);
-            if (value)
-                ret = std::string(value);
-        }
-    }
-    return ret;
-}
-
-static std::string
-get_first_doc_item(IXML_Document* doc, const char* item)
-{
-    std::string ret;
-
-    std::unique_ptr<IXML_NodeList, decltype(ixmlNodeList_free)&>
-        nodeList(ixmlDocument_getElementsByTagName(doc, item), ixmlNodeList_free);
-    if (nodeList) {
-        /* if there are several nodes which match the tag, we only want the first one */
-        ret = get_element_text( ixmlNodeList_item(nodeList.get(), 0) );
-    }
-    return ret;
-}
-
-static std::string
-get_first_element_item(IXML_Element* element, const char* item)
-{
-    std::string ret;
-
-    std::unique_ptr<IXML_NodeList, decltype(ixmlNodeList_free)&>
-        nodeList(ixmlElement_getElementsByTagName(element, item), ixmlNodeList_free);
-    if (nodeList) {
-        /* if there are several nodes which match the tag, we only want the first one */
-        ret = get_element_text( ixmlNodeList_item(nodeList.get(), 0) );
-    }
-    return ret;
-}
-
 int
-UPnPContext::cp_callback(Upnp_EventType event_type, const void* event, void* user_data)
+UPnPContext::ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data)
 {
     if (auto upnpContext = static_cast<UPnPContext*>(user_data))
-        return upnpContext->handleUPnPEvents(event_type, event);
+        return upnpContext->handleCtrlPtUPnPEvents(event_type, event);
 
-    JAMI_WARN("UPnP callback without UPnPContext");
+    JAMI_WARN("UPnP control point callback without UPnPContext");
     return 0;
 }
 
 int
-UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
+UPnPContext::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
 {
-    switch( event_type )
+    switch(event_type)
     {
-    case UPNP_DISCOVERY_ADVERTISEMENT_ALIVE:
-        /* JAMI_DBG("UPnP: CP received a discovery advertisement"); */
+    case UPNP_DISCOVERY_ADVERTISEMENT_ALIVE: 
+    {
+        JAMI_DBG("UPnP: UPNP_DISCOVERY_ADVERTISEMENT_ALIVE.");
+        break;
+    }
     case UPNP_DISCOVERY_SEARCH_RESULT:
     {
-        const UpnpDiscovery* d_event = ( const UpnpDiscovery* )event;
-        std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> desc_doc(nullptr, ixmlDocument_free);
+        // Lock mutex to prevent handling other discovery search results simultaneously.
+        cpDeviceMutex_.lock();
+
+        JAMI_DBG("UPnP: UPNP_DISCOVERY_SEARCH_RESULT."); 
+
         int upnp_err;
+        const UpnpDiscovery* d_event = (const UpnpDiscovery*)event;
 
-        /* if (event_type != UPNP_DISCOVERY_ADVERTISEMENT_ALIVE)
-             JAMI_DBG("UPnP: CP received a discovery search result"); */
-
-        /* check if we are already in the process of checking this device */
-        std::unique_lock<std::mutex> lock(cpDeviceMutex_);
-        auto it = cpDevices_.find(std::string(UpnpDiscovery_get_Location_cstr(d_event)));
-
-        if (it == cpDevices_.end()) {
-            cpDevices_.emplace(std::string(UpnpDiscovery_get_Location_cstr(d_event)));
-            lock.unlock();
-
-            if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS)
-                JAMI_WARN("UPnP: Error in discovery event received by the CP: %s",
-                          UpnpGetErrorMessage(UpnpDiscovery_get_ErrCode(d_event)));
-
-            /* JAMI_DBG("UPnP: Control Point received discovery event from device:\n\tid: %s\n\ttype: %s\n\tservice: %s\n\tversion: %s\n\tlocation: %s\n\tOS: %s",
-                     d_event->DeviceId, d_event->DeviceType, d_event->ServiceType, d_event->ServiceVer, UpnpDiscovery_get_Location_cstr(d_event), d_event->Os);
-            */
-
-            /* note: this thing will block until success for the system socket timeout
-             *       unless libupnp is compile with '-disable-blocking-tcp-connections'
-             *       in which case it will block for the libupnp specified timeout
-             */
-            IXML_Document* desc_doc_ptr = nullptr;
-            upnp_err = UpnpDownloadXmlDoc( UpnpDiscovery_get_Location_cstr(d_event), &desc_doc_ptr);
-            desc_doc.reset(desc_doc_ptr);
-            if ( upnp_err != UPNP_E_SUCCESS ) {
-                /* the download of the xml doc has failed; this probably happened
-                 * because the router has UPnP disabled, but is still sending
-                 * UPnP discovery packets
-                 *
-                 * JAMI_WARN("UPnP: Error downloading device description: %s",
-                 *         UpnpGetErrorMessage(upnp_err));
-                 */
-            } else {
-                parseDevice(desc_doc.get(), d_event);
-            }
-
-            /* finished parsing device; remove it from know devices list,
-             * since next time it could be a new device with same URL
-             * eg: if we switch routers or if a new device with the same IP appears
-             */
-            lock.lock();
-            cpDevices_.erase(UpnpDiscovery_get_Location_cstr(d_event));
-            lock.unlock();
-        } else {
-            lock.unlock();
-            /* JAMI_DBG("UPnP: Control Point is already checking this device"); */
+        // First check the error code. 
+        if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS) {
+            JAMI_WARN("UPnP: Error in discovery event received by the CP -> %s", UpnpGetErrorMessage(UpnpDiscovery_get_ErrCode(d_event)));
+            cpDeviceMutex_.unlock();
+            break; 
         }
+
+        /*
+         * Check if this device ID is already in the list. If we reach the past-the-end
+         * iterator of the list, it means we haven't discovered it. So we add it.
+         */
+        auto it = cpDeviceId_.find(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event)));
+        if (it == cpDeviceId_.end()) {
+            JAMI_DBG("Upnp: New device ID found -> %s", UpnpDiscovery_get_DeviceID_cstr(d_event));
+            cpDeviceId_.emplace(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event)));
+        } else {
+            cpDeviceMutex_.unlock();
+            break;
+        }
+
+        /*
+         * NOTE: This thing will block until success for the system socket timeout
+         * unless libupnp is compile with '-disable-blocking-tcp-connections', in
+         * which case it will block for the libupnp specified timeout.
+         */
+        IXML_Document* doc_container_ptr = nullptr;
+        std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> doc_desc_ptr(nullptr, ixmlDocument_free);
+        upnp_err = UpnpDownloadXmlDoc(UpnpDiscovery_get_Location_cstr(d_event), &doc_container_ptr);
+        doc_desc_ptr.reset(doc_container_ptr);
+        if (upnp_err != UPNP_E_SUCCESS ) {
+            JAMI_WARN("UPnP: Error downloading device XML document -> %s", UpnpGetErrorMessage(upnp_err));
+            cpDeviceMutex_.unlock();
+            break;
+        } else {
+            parseDevice(doc_desc_ptr.get(), d_event);
+        }
+
+        cpDeviceMutex_.unlock();
     }
     break;
 
@@ -1095,20 +1063,6 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
     }
 
     return UPNP_E_SUCCESS; /* return value currently ignored by SDK */
-}
-
-static void
-checkResponseError(IXML_Document* doc)
-{
-    if (not doc)
-        return;
-
-    std::string errorCode = get_first_doc_item(doc, "errorCode");
-    if (not errorCode.empty()) {
-        std::string errorDescription = get_first_doc_item(doc, "errorDescription");
-        JAMI_WARN("UPnP: response contains error: %s : %s",
-                  errorCode.c_str(), errorDescription.c_str());
-    }
 }
 
 bool

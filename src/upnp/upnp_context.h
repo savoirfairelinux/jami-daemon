@@ -194,7 +194,7 @@ private:
      * The mutex is to access the set in a thread safe manner
      */
 
-    std::set<std::string> cpDevices_;
+    std::set<std::string> cpDeviceId_;
     std::mutex cpDeviceMutex_;
 
     /**
@@ -209,11 +209,10 @@ private:
      */
     bool deviceRegistered_ {false};
 
-    static int cp_callback(Upnp_EventType event_type, const void* event, void* user_data);
-
+    static int ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data);
 #if UPNP_VERSION < 10800
-    static inline int cp_callback(Upnp_EventType event_type, void* event, void* user_data) {
-	    return cp_callback(event_type, (const void*)event, user_data);
+    static inline int ctrlPtCallback(Upnp_EventType event_type, void* event, void* user_data) {
+	    return cp_ctrlPtCallback(event_type, (const void*)event, user_data);
     };
 #endif
 
@@ -221,8 +220,7 @@ private:
      * callback function for the UPnP client (control point)
      * all UPnP events received by the client are processed here
      */
-    int handleUPnPEvents(Upnp_EventType event_type, const void* event);
-
+    int handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event);
 
     /* sends out async search for IGD */
     void searchForIGD();
@@ -264,5 +262,58 @@ private:
  * supported.
  */
 std::shared_ptr<UPnPContext> getUPnPContext();
+
+/* Helper functions for xml parsing. */
+static std::string
+get_element_text(IXML_Node* node)
+{
+    std::string ret;
+    if (node) {
+        IXML_Node *textNode = ixmlNode_getFirstChild(node);
+        if (textNode) {
+            const char* value = ixmlNode_getNodeValue(textNode);
+            if (value)
+                ret = std::string(value);
+        }
+    }
+    return ret;
+}
+
+static std::string
+get_first_doc_item(IXML_Document* doc, const char* item)
+{
+    std::string ret;
+    std::unique_ptr<IXML_NodeList, decltype(ixmlNodeList_free)&> nodeList(ixmlDocument_getElementsByTagName(doc, item), ixmlNodeList_free);
+    if (nodeList) {
+        /* If there are several nodes which match the tag, we only want the first one */
+        ret = get_element_text(ixmlNodeList_item(nodeList.get(), 0));
+    }
+    return ret;
+}
+
+static std::string
+get_first_element_item(IXML_Element* element, const char* item)
+{
+    std::string ret;
+    std::unique_ptr<IXML_NodeList, decltype(ixmlNodeList_free)&> nodeList(ixmlElement_getElementsByTagName(element, item), ixmlNodeList_free);
+    if (nodeList) {
+        /* If there are several nodes which match the tag, we only want the first one. */
+        ret = get_element_text(ixmlNodeList_item(nodeList.get(), 0));
+    }
+    return ret;
+}
+
+static void
+checkResponseError(IXML_Document* doc)
+{
+    if (not doc)
+        return;
+
+    std::string errorCode = get_first_doc_item(doc, "errorCode");
+    if (not errorCode.empty()) {
+        std::string errorDescription = get_first_doc_item(doc, "errorDescription");
+        JAMI_WARN("UPnP: response contains error: %s : %s", errorCode.c_str(), errorDescription.c_str());
+    }
+}
 
 }} // namespace jami::upnp
