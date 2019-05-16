@@ -131,6 +131,7 @@ ip_utils::getAnyHostAddr(pj_uint16_t family)
 IpAddr
 ip_utils::getLocalAddr(pj_uint16_t family)
 {
+    sip_utils::register_thread();
     if (family == pj_AF_UNSPEC()) {
         family = pj_AF_INET6();
     }
