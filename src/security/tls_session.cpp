@@ -725,10 +725,7 @@ TlsSession::TlsSessionImpl::cleanup()
     stateCondition_.notify_all();
 
     if (session_) {
-        if (transport_.isReliable())
-            gnutls_bye(session_, GNUTLS_SHUT_RDWR);
-        else
-            gnutls_bye(session_, GNUTLS_SHUT_WR); // not wait for a peer answer
+        gnutls_bye(session_, GNUTLS_SHUT_WR); // not wait for a peer answer
         gnutls_deinit(session_);
         session_ = nullptr;
     }
@@ -1218,7 +1215,7 @@ TlsSession::TlsSession(SocketType& transport, const TlsParams& params,
 
 TlsSession::~TlsSession()
 {
-    shutdown();
+    if (pimpl_) shutdown();
 }
 
 bool
@@ -1237,8 +1234,8 @@ int
 TlsSession::maxPayload() const
 {
     if (pimpl_->state_ == TlsSessionState::SHUTDOWN)
-        throw std::runtime_error("Getting MTU from non-valid TLS session");
-    return gnutls_dtls_get_data_mtu(pimpl_->session_);
+        throw std::runtime_error("Getting maxPayload from non-valid TLS session");
+    return pimpl_->transport_.maxPayload();
 }
 
 const char*
@@ -1302,8 +1299,10 @@ TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
         }
 
         if (ret == 0) {
-            JAMI_DBG("[TLS] eof");
-            shutdown();
+            if (pimpl_) {
+                JAMI_ERR("[TLS] eof");
+                shutdown();
+            }
             error = std::errc::broken_pipe;
             break;
         } else if (ret == GNUTLS_E_REHANDSHAKE) {
@@ -1312,8 +1311,10 @@ TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
             pimpl_->rxCv_.notify_one(); // unblock waiting FSM
             pimpl_->stateCondition_.notify_all();
         } else if (gnutls_error_is_fatal(ret)) {
-            JAMI_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
-            shutdown();
+            if (pimpl_) {
+                JAMI_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
+                shutdown();
+            }
             error = std::errc::io_error;
             break;
         }
