@@ -66,191 +66,106 @@ public:
     UPnPContext();
     ~UPnPContext();
 
-    /**
-     * Returns 'true' if there is at least one valid (connected) IGD.
-     * @param timeout Time to wait until a valid IGD is found.
-     * If timeout is not given or 0, the function pool (non-blocking).
-     */
+    // Check if there is a valid IGD available. 
     bool hasValidIGD(std::chrono::seconds timeout = {});
 
+    // Add IGD listener.
     size_t addIGDListener(IGDFoundCallback&& cb);
+    
+    // Remove IGD listener.
     void removeIGDListener(size_t token);
 
-    /**
-     * tries to add mapping from and to the port_desired
-     * if unique == true, makes sure the client is not using this port already
-     * if the mapping fails, tries other available ports until success
-     *
-     * tries to use a random port between 1024 < > 65535 if desired port fails
-     *
-     * maps port_desired to port_local; if use_same_port == true, makes sure
-     * that the external and internal ports are the same
-     *
-     * returns a valid mapping on success and an invalid mapping on failure
-     */
-    Mapping addAnyMapping(uint16_t port_desired,
-                          uint16_t port_local,
-                          PortType type,
-                          bool use_same_port,
-                          bool unique);
+    // Tries to add a valid mapping. Will return it if successful. 
+    Mapping addAnyMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool use_same_port, bool unique);
 
-    /**
-     * tries to remove the given mapping
-     */
+    // Removes a mapping.
     void removeMapping(const Mapping& mapping);
 
-    /**
-     * tries to get the external ip of the router
-     */
+    // Get external Ip of a chosen IGD.
     IpAddr getExternalIP() const;
 
-
-    /**
-     * get our local ip
-     */
+    // Get our local Ip.
     IpAddr getLocalIP() const;
 
-    /**
-     * Inform the UPnP context that the network status has changed. This clears the list of known
-     * IGDs
-     */
+    // Inform the UPnP context that the network status has changed. This clears the list of known
     void connectivityChanged();
+
+private:
+    // Returns first not null IGD in list. Assumes mutex is already locked.
+    IGD* chooseIGD_unlocked() const;
+
+    // Checks if you have a valid IGD in the list. Assumes mutex is already locked.
+    bool hasValidIGD_unlocked() const;
+
+    // Tries to add mapping. Assumes mutex is already locked.
+    Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, int *upnp_error);
+
+    // Returns a random port that is not yet used by the daemon for UPnP.
+    uint16_t chooseRandomPort(const IGD& igd, PortType type);
+
+    // Private functions used by libnatpmp
+#if HAVE_LIBNATPMP
+    void PMPsearchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& natpmp);
+    void PMPaddPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool remove=false) const;
+    void PMPdeleteAllPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, int proto) const;
+#endif /* HAVE_LIBNATPMP */
+
+    // Private functions used by libupnp.
+#if HAVE_LIBUPNP
+    static int ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data);
+#if UPNP_VERSION < 10800
+    static inline int ctrlPtCallback(Upnp_EventType event_type, void* event, void* user_data) {
+	    return ctrlPtCallback(event_type, (const void*)event, user_data);
+    };
+#endif
+
+    // Callback event handler function for the UPnP client (control point).
+    int handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event);
+
+    // Sends out async search for IGD.
+    void searchForIGD();
+
+    // Parses the IGD candidate.
+    void parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event);
+
+    // These functions directly create UPnP actions and make synchronous UPnP control point calls. Assumes mutex is already locked.
+    bool   actionIsIgdConnected(const UPnPIGD& igd);
+    IpAddr actionGetExternalIP(const UPnPIGD& igd);
+    void   actionRemoveMappingsByLocalIPAndDescription(const UPnPIGD& igd, const std::string& description);
+    bool   actionDeletePortMapping(const UPnPIGD& igd, const std::string& port_external, const std::string& protocol);
+    bool   actionAddPortMapping(const UPnPIGD& igd, const Mapping& mapping, int* error_code);
+#endif /* HAVE_LIBUPNP */
 
 private:
     NON_COPYABLE(UPnPContext);
 
-    std::atomic_bool clientRegistered_ {false};
+    std::map<std::string, std::unique_ptr<IGD>> validIGDs_; // Map of valid IGDs with their UDN.
+    mutable std::mutex validIGDMutex_;                      // Mutex used to access these lists and IGDs in a thread-safe manner.
+    std::condition_variable validIGDCondVar_;               
 
-    /**
-     * map of valid IGDs - IGDs which have the correct services and are connected
-     * to some external network (have an external IP)
-     *
-     * the UDN string is used to uniquely identify the IGD
-     *
-     * the mutex is used to access these lists and IGDs in a thread-safe manner
-     */
-    std::map<std::string, std::unique_ptr<IGD>> validIGDs_;
-    mutable std::mutex validIGDMutex_;
-    std::condition_variable validIGDCondVar_;
+    std::map<size_t, IGDFoundCallback> igdListeners_;   // Map of valid IGD listeners with their tokens.
 
-    /**
-     * Map of valid IGD listeners.
-     */
-    std::map<size_t, IGDFoundCallback> igdListeners_;
+    size_t listenerToken_ {0};          // Last provided token for valid IGD listeners (0 is the invalid token).
 
-    /**
-     * Last provided token for valid IGD listeners.
-     * 0 is the invalid token.
-     */
-    size_t listenerToken_ {0};
-
-    /**
-     * chooses the IGD to use (currently selects the first one in the map)
-     * assumes you already have a lock on igd_mutex_
-     */
-    IGD* chooseIGD_unlocked() const;
-    bool hasValidIGD_unlocked() const;
-
-    /* tries to add mapping, assumes you already have lock on igd_mutex_ */
-    Mapping addMapping(IGD* igd,
-                       uint16_t port_external,
-                       uint16_t port_internal,
-                       PortType type,
-                       int *upnp_error);
-
-    uint16_t chooseRandomPort(const IGD& igd, PortType type);
-
+    // Private variables used by libnatpmp.
 #if HAVE_LIBNATPMP
     std::mutex pmpMutex_ {};
     std::condition_variable pmpCv_ {};
     std::shared_ptr<PMPIGD> pmpIGD_ {};
     std::atomic_bool pmpRun_ {true};
     std::thread pmpThread_ {};
+#endif  /* HAVE_LIBNATPMP */
 
-    void PMPsearchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& natpmp);
-    void PMPaddPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool remove=false) const;
-    void PMPdeleteAllPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, int proto) const;
-#else
-    static constexpr bool pmpRun_ {false};
-#endif
-
+    // Private variables used by libupnp.
 #if HAVE_LIBUPNP
-
-    /**
-     * UPnP devices typically send out several discovery
-     * packets at the same time. libupnp creates a separate event
-     * for each discovery packet which is processed in the threadpool,
-     * even if the multiple discovery packets are received from the
-     * same IP at the same time. In order to prevent trying
-     * to download and parse the device description from the
-     * same location in multiple threads at the same time, we
-     * keep track from which URL(s) we are in the process of downloading
-     * and parsing the device description in this set.
-     *
-     * The main purspose of this is to prevent blocking multiple
-     * threads when trying to download the description from an
-     * unresponsive device (the timeout can be several seconds)
-     *
-     * The mutex is to access the set in a thread safe manner
-     */
-
-    std::set<std::string> cpDeviceId_;
-    std::mutex cpDeviceMutex_;
-
-    /**
-     * control and device handles;
-     * set by the SDK once each is registered
-     */
-    UpnpClient_Handle ctrlptHandle_ {-1};
-    UpnpDevice_Handle deviceHandle_ {-1};
-
-    /**
-     * keep track if we've successfully registered a device
-     */
-    bool deviceRegistered_ {false};
-
-    static int ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data);
-#if UPNP_VERSION < 10800
-    static inline int ctrlPtCallback(Upnp_EventType event_type, void* event, void* user_data) {
-	    return cp_ctrlPtCallback(event_type, (const void*)event, user_data);
-    };
+    std::set<std::string> cpDeviceId_;                  // Control point vector.
+    std::mutex            cpDeviceMutex_;               // Control point mutex.
+    UpnpClient_Handle     ctrlptHandle_ {-1};           // Control point handle.
+    std::atomic_bool      clientRegistered_ {false};    // Indicates of the client is registered.
+#if HAVE_LIBNATPMP == 0
+    static constexpr bool pmpRun_ {false};              // Set pmpRun_ to false in case we only use libupnp.
 #endif
 
-    /**
-     * callback function for the UPnP client (control point)
-     * all UPnP events received by the client are processed here
-     */
-    int handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event);
-
-    /* sends out async search for IGD */
-    void searchForIGD();
-
-    /**
-     * Parses the device description and adds desired devices to
-     * relevant lists
-     */
-    void parseDevice(IXML_Document* doc, const UpnpDiscovery* d_event);
-
-    void parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event);
-
-
-    /* these functions directly create UPnP actions
-     * and make synchronous UPnP control point calls
-     * they assume you have a lock on the igd_mutex_ */
-    bool isIGDConnected(const UPnPIGD& igd);
-
-    IpAddr getExternalIP(const UPnPIGD& igd);
-
-    void removeMappingsByLocalIPAndDescription(const UPnPIGD& igd,
-                                               const std::string& description);
-
-    bool deletePortMapping(const UPnPIGD& igd,
-                           const std::string& port_external,
-                           const std::string& protocol);
-
-    bool addPortMapping(const UPnPIGD& igd,
-                        const Mapping& mapping,
-                        int* error_code);
 #endif /* HAVE_LIBUPNP */
 
 };
@@ -303,17 +218,19 @@ get_first_element_item(IXML_Element* element, const char* item)
     return ret;
 }
 
-static void
-checkResponseError(IXML_Document* doc)
+static bool
+error_on_response(IXML_Document* doc)
 {
     if (not doc)
-        return;
+        return true;
 
     std::string errorCode = get_first_doc_item(doc, "errorCode");
     if (not errorCode.empty()) {
         std::string errorDescription = get_first_doc_item(doc, "errorDescription");
         JAMI_WARN("UPnP: response contains error: %s : %s", errorCode.c_str(), errorDescription.c_str());
+        return true;
     }
+    return false;
 }
 
 }} // namespace jami::upnp
