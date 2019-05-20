@@ -33,7 +33,7 @@
 namespace jami {
 namespace im {
 
-static std::uniform_int_distribution<MessageToken> udist {1};
+constexpr std::chrono::seconds SAVE_INTERVAL {5};
 
 MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path) : account_(acc), savePath_(path)
 {}
@@ -48,12 +48,12 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
         std::lock_guard<std::mutex> lock(messagesMutex_);
         auto& peerMessages = messages_[to];
         do {
-            token = udist(account_.rand);
+            token = std::uniform_int_distribution<MessageToken>(1)(account_.rand);
         } while (peerMessages.find(token) != peerMessages.end());
         auto m = peerMessages.emplace(token, Message{});
         m.first->second.to = to;
         m.first->second.payloads = payloads;
-        save_();
+        save();
     }
     runOnMainThread([this, to]() {
         retrySend(to);
@@ -128,7 +128,7 @@ MessageEngine::cancel(MessageToken t)
                                                                             t,
                                                                             m->second.to,
                                                                             static_cast<int>(DRing::Account::MessageStates::CANCELLED));
-            save_();
+            save();
             return true;
         }
     }
@@ -155,7 +155,7 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::SENT));
-                save_();
+                save();
             } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
                 JAMI_DBG() << "[message " << token << "] Status changed to FAILURE";
@@ -163,7 +163,7 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::FAILURE));
-                save_();
+                save();
             } else {
                 f->second.status = MessageStatus::IDLE;
                 JAMI_DBG() << "[message " << token << "] Status changed to IDLE";
@@ -219,10 +219,17 @@ MessageEngine::load()
 }
 
 void
-MessageEngine::save() const
+MessageEngine::save()
 {
-    std::lock_guard<std::mutex> lock(messagesMutex_);
-    save_();
+    std::weak_ptr<Task> task = Manager::instance().scheduler().scheduleIn([this]{
+        dht::ThreadPool::computation().run([this] {
+            std::lock_guard<std::mutex> lock(messagesMutex_);
+            save_();
+        });
+    }, SAVE_INTERVAL);
+    std::swap(saveTask_, task);
+    if (auto old = task.lock())
+        old->cancel();
 }
 
 void
@@ -252,10 +259,9 @@ MessageEngine::save_() const
             root[c.first] = std::move(peerRoot);
         }
         // Save asynchronously
-        dht::ThreadPool::computation().run([path = savePath_,
+        dht::ThreadPool::io().run([path = savePath_,
                                     root = std::move(root),
-                                    accountID = account_.getAccountID(),
-                                    messageNum = messages_.size()]
+                                    accountID = account_.getAccountID()]
         {
             std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
             try {
@@ -270,7 +276,7 @@ MessageEngine::save_() const
             } catch (const std::exception& e) {
                 JAMI_ERR("[Account %s] Couldn't save messages to %s: %s", accountID.c_str(), path.c_str(), e.what());
             }
-            JAMI_DBG("[Account %s] saved %zu messages to %s", accountID.c_str(), messageNum, path.c_str());
+            JAMI_DBG("[Account %s] saved %u messages to %s", accountID.c_str(), root.size(), path.c_str());
         });
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] couldn't save messages to %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
