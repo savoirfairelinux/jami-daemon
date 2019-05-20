@@ -264,7 +264,7 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                         nameCache_.emplace(addr, name);
                     }
                     cb(addr, Response::found);
-                    saveCache();
+                    scheduleSave();
                 } else if (code >= 400 && code < 500) {
                     cb("", Response::notFound);
                 } else {
