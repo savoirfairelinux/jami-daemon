@@ -1184,7 +1184,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const UPnPIGD& igd, const std
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
         IXML_Document* action_ptr = nullptr;
         UpnpAddToAction(&action_ptr, "GetGenericPortMappingEntry", igd.getServiceType().c_str(),
-                        "NewPortMappingIndex", jami::to_string(entry_idx).c_str());
+                        "NewPortMappingIndex", std::to_string(entry_idx).c_str());
         action.reset(action_ptr);
 
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);

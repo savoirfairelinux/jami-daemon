@@ -1187,7 +1187,7 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
         /*.addr = */{{(char*)name.c_str(), name_size}, port},
     };
 
-    const auto token = std::hash<std::string>()(name + to_string(type));
+    const auto token = std::hash<std::string>()(name + std::to_string(type));
     getResolveCallbackMap().registerCallback(token,
         [=,cb=std::move(cb)](pj_status_t s, const pjsip_server_addresses* r) {
             try {

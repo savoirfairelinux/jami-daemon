@@ -97,11 +97,11 @@ Smartools::setResolution(const std::string& id, int width, int height)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
     if(id == "local"){
-        information_["local width"] = to_string(width);
-        information_["local height"] = to_string(height);
+        information_["local width"] = std::to_string(width);
+        information_["local height"] = std::to_string(height);
     } else {
-        information_["remote width"] = to_string(width);
-        information_["remote height"] = to_string(height);
+        information_["remote width"] = std::to_string(width);
+        information_["remote height"] = std::to_string(height);
     }
 }
 

@@ -314,7 +314,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
         body = ss.str();
     }
     request->set_body(body);
-    request->set_header("Content-Length", jami::to_string(body.size()));
+    request->set_header("Content-Length", std::to_string(body.size()));
 
     auto params = std::make_shared<restbed::Settings>();
     params->set_connection_timeout(std::chrono::seconds(120));
