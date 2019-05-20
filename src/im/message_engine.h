@@ -28,6 +28,7 @@
 
 namespace jami {
 
+class Task;
 class SIPAccountBase;
 
 namespace im {
@@ -71,7 +72,7 @@ public:
     /**
      * Persist messages
      */
-    void save() const;
+    void save();
 
 private:
 
@@ -95,6 +96,7 @@ private:
 
     std::map<std::string, std::map<MessageToken, Message>> messages_;
     std::set<MessageToken> sentMessages_;
+    std::weak_ptr<Task> saveTask_;
 
     mutable std::mutex messagesMutex_ {};
 };
