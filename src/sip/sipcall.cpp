@@ -1231,7 +1231,7 @@ SIPCall::getDetails() const
                 ca = ca->issuer;
             }
             details.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM,
-                            jami::to_string(n));
+                            std::to_string(n));
         } else {
             details.emplace(DRing::TlsTransport::TLS_PEER_CERT, "");
             details.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM, "");

@@ -86,9 +86,9 @@ SystemAudioCodecInfo::getCodecSpecifications()
     return {
         {DRing::Account::ConfProperties::CodecInfo::NAME, name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-        {DRing::Account::ConfProperties::CodecInfo::BITRATE, to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, to_string(audioformat.sample_rate)},
-        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, to_string(audioformat.nb_channels)}
+        {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, std::to_string(audioformat.sample_rate)},
+        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, std::to_string(audioformat.nb_channels)}
         };
 }
 
@@ -119,10 +119,10 @@ SystemVideoCodecInfo::getCodecSpecifications()
     return {
         {DRing::Account::ConfProperties::CodecInfo::NAME, name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-        {DRing::Account::ConfProperties::CodecInfo::BITRATE, to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, to_string(frameRate)},
-        {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, to_string(minBitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, to_string(maxBitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)},
+        {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, std::to_string(minBitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, std::to_string(maxBitrate)},
     };
 }
 
@@ -161,9 +161,9 @@ AccountAudioCodecInfo::getCodecSpecifications()
     return {
         {DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-        {DRing::Account::ConfProperties::CodecInfo::BITRATE, to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, to_string(audioformat.sample_rate)},
-        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, to_string(audioformat.nb_channels)}
+        {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, std::to_string(audioformat.sample_rate)},
+        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, std::to_string(audioformat.nb_channels)}
     };
 }
 
@@ -197,13 +197,13 @@ AccountVideoCodecInfo::getCodecSpecifications()
     return {
         {DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-        {DRing::Account::ConfProperties::CodecInfo::BITRATE, to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, to_string(systemCodecInfo.maxBitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, to_string(systemCodecInfo.minBitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::QUALITY, to_string(quality)},
-        {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, to_string(systemCodecInfo.maxQuality)},
-        {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, to_string(systemCodecInfo.minQuality)},
-        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, to_string(frameRate)},
+        {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, std::to_string(systemCodecInfo.maxBitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, std::to_string(systemCodecInfo.minBitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::QUALITY, std::to_string(quality)},
+        {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, std::to_string(systemCodecInfo.maxQuality)},
+        {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, std::to_string(systemCodecInfo.minQuality)},
+        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)},
         {DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED, bool_to_str(isAutoQualityEnabled)}
     };
 }
