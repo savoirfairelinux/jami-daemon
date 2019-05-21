@@ -63,6 +63,8 @@ class UPnPContext {
 public:
     constexpr static unsigned SEARCH_TIMEOUT {30};
 
+    int SUBSCRIBE_TIMEOUT {10};
+
     UPnPContext();
     ~UPnPContext();
 
@@ -119,14 +121,24 @@ private:
     };
 #endif
 
+    static int subEventCallback(Upnp_EventType event_type, const void* event, void* user_data);
+#if UPNP_VERSION < 10800
+    static inline int subEventCallback(Upnp_EventType event_type, void* event, void* user_data) {
+	    return subEventCallback(event_type, (const void*)event, user_data);
+    };
+#endif
+
     // Callback event handler function for the UPnP client (control point).
     int handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event);
+
+    // Callback function for handing subscription request.
+    int handleSubscriptionUPnPEvent(Upnp_EventType event_type, const void* event, std::string udn);
 
     // Sends out async search for IGD.
     void searchForIGD();
 
     // Parses the IGD candidate.
-    void parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event);
+    std::unique_ptr<UPnPIGD> parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event);
 
     // These functions directly create UPnP actions and make synchronous UPnP control point calls. Assumes mutex is already locked.
     bool   actionIsIgdConnected(const UPnPIGD& igd);

@@ -241,8 +241,8 @@ UPnPContext::~UPnPContext()
 #endif
 
 #if HAVE_LIBUPNP
-    if (clientRegistered_)
-        UpnpUnRegisterClient(ctrlptHandle_);
+    // if (clientRegistered_)
+    //     UpnpUnRegisterClient(ctrlptHandle_);
 
 // FIXME : on windows thread have already been destroyed at this point resulting in a deadlock
 #ifndef _WIN32
@@ -705,18 +705,18 @@ UPnPContext::searchForIGD()
         return;
     }
 
-    /* Send out search for multiple types of devices, as some routers may possibly only reply to one. */
+    // Send out search for multiple types of devices, as some routers may possibly only reply to one.
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, this);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, this);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, this);
 }
 
-void
+std::unique_ptr<UPnPIGD>
 UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
 {
     if (not doc or not d_event)
-        return;
+        return nullptr;
 
     /*
      * Check the UDN to see if its already in our device list. If it
@@ -725,19 +725,18 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
     std::string UDN = get_first_doc_item(doc, "UDN");
     if (UDN.empty()) {
         JAMI_DBG("UPnP: could not find UDN in description document of device");
-        return;
+        return nullptr;
     } else {
         std::lock_guard<std::mutex> lock(validIGDMutex_);
         auto it = validIGDs_.find(UDN);
         if (it != validIGDs_.end()) {
             /* we already have this device in our list */
             /* TODO: update expiration */
-            return;
+            return nullptr;
         }
     }
 
     std::unique_ptr<UPnPIGD> new_igd;
-    bool found_connected_IGD = false;
     int upnp_err;
 
     // Get friendly name.
@@ -758,7 +757,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
      * Go through the 'serviceType' nodes until we find the first service of type
      * WANIPConnection or WANPPPConnection which is connected to an external network. 
      */
-    for (unsigned long node_idx = 0; node_idx < list_length and not found_connected_IGD; node_idx++) {
+    for (unsigned long node_idx = 0; node_idx < list_length; node_idx++) {
         
         IXML_Node* serviceType_node = ixmlNodeList_item(serviceList.get(), node_idx);
         std::string serviceType = get_element_text(serviceType_node);
@@ -823,8 +822,6 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
         }
         std::free(absolute_event_sub_url);
 
-        JAMI_DBG("UPnP: Adding IGD.\n\tUDN: %s\n\tBase URL: %s\n\tName: %s\n\tserviceType: %s\n\tserviceID: %s\n\tcontrolURL: %s\n\teventSubURL: %s",
-                    UDN.c_str(), baseURL.c_str(), friendlyName.c_str(), serviceType.c_str(), serviceId.c_str(), controlURL.c_str(), eventSubURL.c_str()); 
         new_igd.reset(new UPnPIGD(std::move(UDN),
                                   std::move(baseURL),
                                   std::move(friendlyName),
@@ -832,65 +829,50 @@ UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
                                   std::move(serviceId),
                                   std::move(controlURL),
                                   std::move(eventSubURL)));
-        
-        if (actionIsIgdConnected(*new_igd)) {
-            new_igd->publicIp = actionGetExternalIP(*new_igd);
-            if (new_igd->publicIp) {
-                JAMI_DBG("UPnP: IGD external IP -> %s", new_igd->publicIp.toString().c_str());
-                new_igd->localIp = ip_utils::getLocalAddr(pj_AF_INET());
-                if (new_igd->localIp) {
-                    JAMI_DBG("UPnP: IGD local IP -> %s", new_igd->localIp.toString().c_str());
-                    found_connected_IGD = true;
-                }
-            }
-        }
+
+        return new_igd;
     }
 
-    // Add IGD to validIGDs list.
-    if (not found_connected_IGD) {
-        return;
-    }
-
-    // Add IGD to validIGDs list.
-    {
-        std::lock_guard<std::mutex> lock(validIGDMutex_);
-        validIGDs_.emplace(UDN, std::move(new_igd));
-        validIGDCondVar_.notify_all();
-        for (const auto& l : igdListeners_) {
-            l.second();
-        }
-    }
-
-
+    return nullptr;
 }
 
 int
 UPnPContext::ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data)
 {
-    if (auto upnpContext = static_cast<UPnPContext*>(user_data))
+    if (auto upnpContext = static_cast<UPnPContext*>(user_data)) {
         return upnpContext->handleCtrlPtUPnPEvents(event_type, event);
-
+    }
     JAMI_WARN("UPnP control point callback without UPnPContext");
+    return 0;
+}
+
+int 
+UPnPContext::subEventCallback(Upnp_EventType event_type, const void* event, void* user_data)
+{
+    if (std::string* udnPtr = static_cast<std::string*>(user_data)) {
+        std::string udn = *udnPtr;
+        return getUPnPContext()->handleSubscriptionUPnPEvent(event_type, event, udn);   
+    }
+    JAMI_WARN("UPnP subscription callback without service Id string.");
     return 0;
 }
 
 int
 UPnPContext::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
 {
+    // Lock mutex to prevent handling other discovery search results (or advertisements) simultaneously.
+    std::lock_guard<std::mutex> cp_device_lock(cpDeviceMutex_);
+
     switch(event_type)
     {
     case UPNP_DISCOVERY_ADVERTISEMENT_ALIVE: 
     {   
-        cpDeviceMutex_.lock();
         const UpnpDiscovery *d_event = (const UpnpDiscovery *)event;
         JAMI_DBG("UPnP: UPNP_DISCOVERY_ADVERTISEMENT_ALIVE from %s", UpnpDiscovery_get_DeviceID_cstr(d_event));
-        cpDeviceMutex_.unlock();
         // Fall through. Treat advertisements like discovery search results.   
     }
     case UPNP_DISCOVERY_SEARCH_RESULT:
     {
-        // Lock mutex to prevent handling other discovery search results (or advertisements) simultaneously.
-        cpDeviceMutex_.lock();
         const UpnpDiscovery* d_event = (const UpnpDiscovery*)event;
         JAMI_DBG("UPnP: UPNP_DISCOVERY_SEARCH_RESULT from %s", UpnpDiscovery_get_DeviceID_cstr(d_event));
 
@@ -899,7 +881,6 @@ UPnPContext::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event
         // First check the error code. 
         if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS) {
             JAMI_WARN("UPnP: Error in discovery event received by the CP -> %s", UpnpGetErrorMessage(UpnpDiscovery_get_ErrCode(d_event)));
-            cpDeviceMutex_.unlock();
             break; 
         }
 
@@ -913,7 +894,6 @@ UPnPContext::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event
             cpDeviceId_.emplace(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event)));
         } else {
             JAMI_DBG("Upnp: Device %s already processed.", UpnpDiscovery_get_DeviceID_cstr(d_event));
-            cpDeviceMutex_.unlock();
             break;
         }
 
@@ -925,43 +905,109 @@ UPnPContext::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event
         IXML_Document* doc_container_ptr = nullptr;
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> doc_desc_ptr(nullptr, ixmlDocument_free);
         upnp_err = UpnpDownloadXmlDoc(UpnpDiscovery_get_Location_cstr(d_event), &doc_container_ptr);
-        doc_desc_ptr.reset(doc_container_ptr);
+        if (doc_container_ptr) {
+            doc_desc_ptr.reset(doc_container_ptr);
+        }
+        
         if (upnp_err != UPNP_E_SUCCESS or not doc_desc_ptr) {
             JAMI_WARN("UPnP: Error downloading device XML document -> %s", UpnpGetErrorMessage(upnp_err));
-            cpDeviceMutex_.unlock();
             break;
         } 
+
+        std::unique_ptr<UPnPIGD> igd_candidate;
 
         // Check device type.
         std::string deviceType = get_first_doc_item(doc_desc_ptr.get(), "deviceType");
         if (not deviceType.empty() and deviceType.compare(UPNP_IGD_DEVICE) == 0) {
             JAMI_DBG("UPnP: PARSING IGD");
-            parseIGD(doc_desc_ptr.get(), d_event);
+            igd_candidate = parseIGD(doc_desc_ptr.get(), d_event);
         }
 
-        cpDeviceMutex_.unlock();
+        if (not igd_candidate) {
+            break;
+        } 
+
+        JAMI_DBG("UPnP: Validating IGD candidate.\n\tUDN: %s\n\tBase URL: %s\n\tName: %s\n\tserviceType: %s\n\tserviceID: %s\n\tcontrolURL: %s\n\teventSubURL: %s",
+                    igd_candidate->getUDN().c_str(), 
+                    igd_candidate->getBaseURL().c_str(), 
+                    igd_candidate->getFriendlyName().c_str(), 
+                    igd_candidate->getServiceType().c_str(), 
+                    igd_candidate->getServiceId().c_str(), 
+                    igd_candidate->getControlURL().c_str(), 
+                    igd_candidate->getEventSubURL().c_str()); 
+
+        // Check if IGD is connected.
+        if (not actionIsIgdConnected(*igd_candidate)) {
+            JAMI_WARN("Upnp: IGD candidate %s is not connected.", igd_candidate->getUDN().c_str());
+            break;
+        }
+
+        // Validate external Ip.
+        igd_candidate->publicIp = actionGetExternalIP(*igd_candidate);
+        if (igd_candidate->publicIp.toString().empty()) {
+            JAMI_WARN("Upnp: IGD candidate %s has no valid external Ip.", igd_candidate->getUDN().c_str());
+            break;
+        }
+        JAMI_DBG("UPnP: IGD external IP -> %s", igd_candidate->publicIp.toString().c_str());
+        
+        // Validate internal Ip.
+        igd_candidate->localIp = ip_utils::getLocalAddr(pj_AF_INET());
+        if (igd_candidate->localIp.toString().empty()) {
+            JAMI_WARN("Upnp: No valid internal Ip.");
+            break;
+        }
+        JAMI_DBG("UPnP: IGD local IP -> %s", igd_candidate->localIp.toString().c_str());
+
+        // Store info for subscription.
+        std::string eventSub = igd_candidate->getEventSubURL();
+        std::string udn = igd_candidate->getUDN();
+
+        // Add IGD to list.
+        JAMI_WARN("Adding IGD %s to list.", igd_candidate->getUDN().c_str());
+        std::lock_guard<std::mutex> valid_igd_lock(validIGDMutex_);
+        validIGDs_.emplace(std::move(igd_candidate->getUDN()), std::move(igd_candidate));
+        validIGDCondVar_.notify_all();
+        for (const auto& l : igdListeners_) {
+            l.second();
+        }
+
+        // Subscribe to IGD events.
+        void *vp_to_udn = static_cast<void*>(new std::string(udn));
+        upnp_err = UpnpSubscribeAsync(ctrlptHandle_, eventSub.c_str(), SUBSCRIBE_TIMEOUT, subEventCallback, vp_to_udn);
+        if (upnp_err == UPNP_E_SUCCESS) {
+            JAMI_WARN("Subscription request to IGD %s successfull.", eventSub.c_str());
+        } else {
+            JAMI_WARN("UPnP: Error when trying to request subscription for %s -> %s", udn.c_str(), UpnpGetErrorMessage(upnp_err));
+        }
+
         break;
     }
     case UPNP_DISCOVERY_ADVERTISEMENT_BYEBYE:
     {
-        cpDeviceMutex_.lock();
         const UpnpDiscovery *d_event = (const UpnpDiscovery *)event;
         JAMI_DBG("UPnP: UPNP_DISCOVERY_ADVERTISEMENT_BYEBYE from %s", UpnpDiscovery_get_DeviceID_cstr(d_event));
-        cpDeviceMutex_.unlock();
 
-        // TODO: Check if its a device we care about and remove it from the relevant lists.
+        /*
+         * Check if this device ID is in the list. If we don't reach the past-the-end
+         * iterator of the list, it means we need to remove it.
+         */
+        auto it = cpDeviceId_.find(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event)));
+        if (it == cpDeviceId_.end()) {
+            JAMI_DBG("Upnp: Device %s not in our list.", UpnpDiscovery_get_DeviceID_cstr(d_event));
+        } else {
+            JAMI_DBG("Upnp: Removing %s from list.", UpnpDiscovery_get_DeviceID_cstr(d_event));
+            cpDeviceId_.erase(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event)));
+        }
+
         break;
     }
     case UPNP_DISCOVERY_SEARCH_TIMEOUT:
     {
-        cpDeviceMutex_.lock();
-        JAMI_DBG("UPnP: UPNP_DISCOVERY_SEARCH_TIMEOUT.");
-        cpDeviceMutex_.unlock();
+        // Nothing to do here.
         break;
     }
     case UPNP_EVENT_RECEIVED:
     {
-        cpDeviceMutex_.lock();
         const UpnpEvent *e_event = (const UpnpEvent *)event;
         JAMI_DBG("UPnP: UPNP_EVENT_RECEIVED");
         
@@ -974,42 +1020,49 @@ UPnPContext::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event
             xmlbuff);
         
 		ixmlFreeDOMString(xmlbuff);
-        cpDeviceMutex_.unlock();
 
         // TODO: Handle event by updating any changed state variables */
         break;
     }
     case UPNP_EVENT_AUTORENEWAL_FAILED:
     {
-        cpDeviceMutex_.lock();
         const UpnpEventSubscribe *es_event = (const UpnpEventSubscribe *)event;
         JAMI_DBG("UPnP: UPNP_EVENT_AUTORENEWAL_FAILED");
-
-		JAMI_DBG("\tSID: %s\n\tErrCode: %d\n\tPublisherURL: %s\n\tTimeOut %d",
-			UpnpString_get_String(UpnpEventSubscribe_get_SID(es_event)),
-			UpnpEventSubscribe_get_ErrCode(es_event),
-			UpnpString_get_String(UpnpEventSubscribe_get_PublisherUrl(es_event)),
-			UpnpEventSubscribe_get_TimeOut(es_event));
-		cpDeviceMutex_.unlock();
-        break;
+        // Fall through. Treat failed autorenewal like an expired subscription.
     }
-    case UPNP_EVENT_SUBSCRIPTION_EXPIRED:
+    case UPNP_EVENT_SUBSCRIPTION_EXPIRED:   // This event will occur only if autorenewal is disabled. 
     {
-        cpDeviceMutex_.lock();
+        int upnp_err;
         const UpnpEventSubscribe *es_event = (const UpnpEventSubscribe *)event;
         JAMI_DBG("UPnP: UPNP_EVENT_SUBSCRIPTION_EXPIRED");
+        
+        // Iterate over list and see if the IGD that triggered the event is part of it.
+        std::lock_guard<std::mutex> valid_igd_lock(validIGDMutex_);
+        for (auto const& x : validIGDs_)
+        {
+            // If the IGD that triggered the event is part of the list, then renew subscription.
+            if (strcmp(UpnpString_get_String(UpnpEventSubscribe_get_PublisherUrl(es_event)),
+                      ((UPnPIGD*)x.second.get())->getEventSubURL().c_str()) == 0) {
 
-		JAMI_DBG("\tSID: %s\n\tErrCode: %d\n\tPublisherURL: %s\n\tTimeOut %d",
-			UpnpString_get_String(UpnpEventSubscribe_get_SID(es_event)),
-			UpnpEventSubscribe_get_ErrCode(es_event),
-			UpnpString_get_String(UpnpEventSubscribe_get_PublisherUrl(es_event)),
-			UpnpEventSubscribe_get_TimeOut(es_event));
-		cpDeviceMutex_.unlock();
+                // Store info for subscription.
+                std::string eventSub = ((UPnPIGD*)x.second.get())->getEventSubURL();
+                std::string udn = ((UPnPIGD*)x.second.get())->getUDN();
+
+                // Renew subscriptons to IGD events.
+                void *vp_to_udn = static_cast<void*>(new std::string(udn));
+                upnp_err = UpnpSubscribeAsync(ctrlptHandle_, eventSub.c_str(), SUBSCRIBE_TIMEOUT, subEventCallback, vp_to_udn);
+                if (upnp_err == UPNP_E_SUCCESS) {
+                    JAMI_DBG("Subscription request to IGD %s successfull.", eventSub.c_str());
+                } else {
+                    JAMI_WARN("UPnP: Error when trying to request subscription for %s -> %s", udn.c_str(), UpnpGetErrorMessage(upnp_err));
+                }
+                break;
+            }
+        }
         break;
     }
     case UPNP_EVENT_SUBSCRIBE_COMPLETE:
     {
-        cpDeviceMutex_.lock();
         const UpnpEventSubscribe *es_event = (const UpnpEventSubscribe *)event;
         JAMI_DBG("UPnP: UPNP_EVENT_SUBSCRIBE_COMPLETE");
 		
@@ -1018,12 +1071,10 @@ UPnPContext::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event
 			UpnpEventSubscribe_get_ErrCode(es_event),
 			UpnpString_get_String(UpnpEventSubscribe_get_PublisherUrl(es_event)),
 			UpnpEventSubscribe_get_TimeOut(es_event));
-		cpDeviceMutex_.unlock();
         break;
     }
 	case UPNP_EVENT_UNSUBSCRIBE_COMPLETE: 
     {
-        cpDeviceMutex_.lock();
         const UpnpEventSubscribe *es_event = (const UpnpEventSubscribe *)event;
         JAMI_DBG("UPnP: UPNP_EVENT_UNSUBSCRIBE_COMPLETE");
 		
@@ -1032,12 +1083,10 @@ UPnPContext::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event
 			UpnpEventSubscribe_get_ErrCode(es_event),
 			UpnpString_get_String(UpnpEventSubscribe_get_PublisherUrl(es_event)),
 			UpnpEventSubscribe_get_TimeOut(es_event));
-		cpDeviceMutex_.unlock();
         break;
 	}
     case UPNP_CONTROL_ACTION_COMPLETE:
     {
-        cpDeviceMutex_.lock();
         const UpnpActionComplete *a_event = (const UpnpActionComplete *)event;
         JAMI_DBG("UPnP: UPNP_CONTROL_ACTION_COMPLETE.");
 
@@ -1069,17 +1118,50 @@ UPnPContext::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event
 		} else {
 			JAMI_DBG("\tActResult: (null)");
 		}
-        cpDeviceMutex_.unlock();
         /* TODO: no need for any processing here, just print out results.
          * Service state table updates are handled by events. */
         break;
     }
     default:
+    {
         JAMI_WARN("UPnP: unhandled Control Point event");
         break;
     }
+    }
 
     return UPNP_E_SUCCESS; /* return value currently ignored by SDK */
+}
+
+int 
+UPnPContext::handleSubscriptionUPnPEvent(Upnp_EventType event_type, const void* event, std::string udn)
+{
+    std::lock_guard<std::mutex> cp_device_lock(cpDeviceMutex_);
+    
+    int upnp_err;
+    const UpnpEventSubscribe *es_event = (const UpnpEventSubscribe *)event;
+    JAMI_DBG("Handle subscription event for %s.\n\tSID: %s\n\tErrCode: %d\n\tPublisherURL: %s\n\tTimeOut %d",
+			udn.c_str(),
+            UpnpString_get_String(UpnpEventSubscribe_get_SID(es_event)),
+			UpnpEventSubscribe_get_ErrCode(es_event),
+			UpnpString_get_String(UpnpEventSubscribe_get_PublisherUrl(es_event)),
+			UpnpEventSubscribe_get_TimeOut(es_event));
+    
+    upnp_err = UpnpEventSubscribe_get_ErrCode(es_event);
+    if (upnp_err != UPNP_E_SUCCESS) {
+        JAMI_WARN("UPnP: Error when trying to handle subscription callback for %s -> %s", udn.c_str(), UpnpGetErrorMessage(upnp_err));
+        return upnp_err;
+    }
+
+    std::lock_guard<std::mutex> lock(validIGDMutex_);
+    auto it = validIGDs_.find(udn);
+    if (it != validIGDs_.end()) {
+        // We already have this device in our list.
+        return UPNP_E_SUCCESS;
+    } else {
+        // TODO: What should we do if we receive a subscription complete event from an IGD that isn't in our list?
+    }
+
+    return UPNP_E_SUCCESS;
 }
 
 bool
