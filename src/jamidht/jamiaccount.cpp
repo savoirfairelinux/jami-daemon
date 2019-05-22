@@ -1666,10 +1666,12 @@ void
 JamiAccount::registerName(const std::string& password, const std::string& name)
 {
     std::string signedName;
+    auto nameLowercase {name};
+    std::transform(nameLowercase.begin(), nameLowercase.end(), nameLowercase.begin(), ::tolower);
     std::string publickey;
     try {
         auto privateKey = readArchive(password).id.first;
-        signedName = base64::encode(privateKey->sign(Blob(name.begin(), name.end())));
+        signedName = base64::encode(privateKey->sign(Blob(nameLowercase.begin(), nameLowercase.end())));
         publickey = privateKey->getPublicKey().toString();
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] can't export account: %s", getAccountID().c_str(), e.what());
@@ -1677,7 +1679,7 @@ JamiAccount::registerName(const std::string& password, const std::string& name)
         return;
     }
 
-    nameDir_.get().registerName(ringAccountId_, name, ethAccount_, [acc=getAccountID(), name, w=weak()](NameDirectory::RegistrationResponse response){
+    nameDir_.get().registerName(ringAccountId_, nameLowercase, ethAccount_, [acc=getAccountID(), name, w=weak()](NameDirectory::RegistrationResponse response){
         int res = (response == NameDirectory::RegistrationResponse::success)      ? 0 : (
                   (response == NameDirectory::RegistrationResponse::invalidName)  ? 2 : (
                   (response == NameDirectory::RegistrationResponse::alreadyTaken) ? 3 : 4));
