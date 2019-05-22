@@ -397,8 +397,10 @@ OpenSLLayer::stopAudioCapture()
 
     {
         std::lock_guard<std::mutex> lck(recMtx);
-        recorder_->stop();
-        recorder_.reset();
+        if (recorder_) {
+            recorder_->stop();
+            recorder_.reset();
+        }
     }
     if (recThread.joinable()) {
         recCv.notify_all();
