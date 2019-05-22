@@ -1588,7 +1588,7 @@ JamiAccount::getAccountDetails() const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
-    a.emplace(Conf::CONFIG_DHT_PORT, jami::to_string(dhtPort_));
+    a.emplace(Conf::CONFIG_DHT_PORT, std::to_string(dhtPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_ID, ringDeviceId_);
@@ -2075,7 +2075,7 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
     JAMI_DBG("Buddy %s online", contactId.toString().c_str());
     std::string id(contactId.toString());
     emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), id, 1,  "");
-    messageEngine_.onPeerOnline(id);
+    if (messageEngine_) messageEngine_->onPeerOnline(id);
 }
 
 void
@@ -3421,14 +3421,14 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         toUri = parseRingUri(to);
     } catch (...) {
         JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
-        messageEngine_.onMessageSent(to, token, false);
+        if (messageEngine_) messageEngine_->onMessageSent(to, token, false);
         return;
     }
     if (payloads.size() != 1) {
         // Multi-part message
         // TODO: not supported yet
         JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
-        messageEngine_.onMessageSent(toUri, token, false);
+        if (messageEngine_) messageEngine_->onMessageSent(toUri, token, false);
         return;
     }
 
@@ -3447,8 +3447,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     {
         {
             std::lock_guard<std::mutex> lock(messageMutex_);
-            auto e = sentMessages_.emplace(token, PendingMessage {});
-            e.first->second.to = dev;
+            sentMessages_[token].to = dev;
         }
 
         auto h = dht::InfoHash::get("inbox:"+dev.toString());
@@ -3483,7 +3482,8 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                 confirm->listenTokens.clear();
                 confirm->replied = true;
             }
-            messageEngine_.onMessageSent(to, token, true);
+            if (messageEngine_)
+                messageEngine_->onMessageSent(to, token, true);
             return false;
         });
         confirm->listenTokens.emplace(h, std::move(list_token));
@@ -3500,7 +3500,8 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                     }
                     if (confirm->listenTokens.empty() and not confirm->replied) {
                         l.unlock();
-                        messageEngine_.onMessageSent(to, token, false);
+                        if (messageEngine_)
+                            messageEngine_->onMessageSent(to, token, false);
                     }
                 }
             });
@@ -3508,7 +3509,8 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token << "] Sending message for device " << dev.toString();
     }, [this, to, token](bool ok) {
         if (not ok) {
-            messageEngine_.onMessageSent(to, token, false);
+            if (messageEngine_)
+                messageEngine_->onMessageSent(to, token, false);
         }
     });
 
@@ -3523,7 +3525,8 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                 confirm->listenTokens.clear();
                 confirm->replied = true;
                 l.unlock();
-                this_->messageEngine_.onMessageSent(to, token, false);
+                if (this_->messageEngine_)
+                    this_->messageEngine_->onMessageSent(to, token, false);
             }
         }
     }, std::chrono::steady_clock::now() + std::chrono::minutes(1));
