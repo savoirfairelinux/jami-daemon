@@ -50,7 +50,6 @@ namespace jami {
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID),
-    messageEngine_(*this, fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()+DIR_SEPARATOR_STR "messages"),
     link_(getSIPVoIPLink())
 {}
 
@@ -138,8 +137,8 @@ addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey,
                   const char *maxKey,
                   const std::pair<uint16_t, uint16_t> &range)
 {
-    a.emplace(minKey, jami::to_string(range.first));
-    a.emplace(maxKey, jami::to_string(range.second));
+    a.emplace(minKey, std::to_string(range.first));
+    a.emplace(maxKey, std::to_string(range.second));
 }
 
 void SIPAccountBase::serialize(YAML::Emitter &out) const
@@ -250,6 +249,22 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
     parseString(details, Conf::CONFIG_TURN_SERVER_UNAME, turnServerUserName_);
     parseString(details, Conf::CONFIG_TURN_SERVER_PWD, turnServerPwd_);
     parseString(details, Conf::CONFIG_TURN_SERVER_REALM, turnServerRealm_);
+
+    if (not messageEngine_) {
+        std::weak_ptr<SIPAccountBase> w = std::static_pointer_cast<SIPAccountBase>(shared_from_this());
+
+        messageEngine_.reset(new im::MessageEngine(getAccountID(),
+            [this](const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) {
+                sendTextMessage(to, payloads, id);
+            }, [this](){
+                return std::uniform_int_distribution<im::MessageToken>(1)(rand);
+            }, [w](im::MessageEngine::EngineUser&& cb){
+                if (auto this_ = w.lock())
+                    cb(this_->messageEngine_.get());
+                else
+                    cb(nullptr);
+            }, fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()+DIR_SEPARATOR_STR "messages"));
+    }
 }
 
 std::map<std::string, std::string>
@@ -265,7 +280,7 @@ SIPAccountBase::getAccountDetails() const
 
     a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE,       dtmfType_);
     a.emplace(Conf::CONFIG_LOCAL_INTERFACE,         interface_);
-    a.emplace(Conf::CONFIG_PUBLISHED_PORT,          jami::to_string(publishedPort_));
+    a.emplace(Conf::CONFIG_PUBLISHED_PORT,          std::to_string(publishedPort_));
     a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL,  publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
 
@@ -289,7 +304,7 @@ SIPAccountBase::getVolatileAccountDetails() const
     if (isIP2IP())
         a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = "READY";
 
-    a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE,    jami::to_string(transportStatus_));
+    a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE,    std::to_string(transportStatus_));
     a.emplace(Conf::CONFIG_TRANSPORT_STATE_DESC,    transportError_);
     return a;
 }
@@ -298,10 +313,12 @@ SIPAccountBase::getVolatileAccountDetails() const
 void
 SIPAccountBase::setRegistrationState(RegistrationState state, unsigned details_code, const std::string& details_str)
 {
-    if (state == RegistrationState::REGISTERED && registrationState_ != RegistrationState::REGISTERED)
-        messageEngine_.load();
-    else if (state != RegistrationState::REGISTERED && registrationState_ == RegistrationState::REGISTERED)
-        messageEngine_.save();
+    if (messageEngine_) {
+        if (state == RegistrationState::REGISTERED && registrationState_ != RegistrationState::REGISTERED)
+            messageEngine_->load();
+        else if (state != RegistrationState::REGISTERED && registrationState_ == RegistrationState::REGISTERED)
+            messageEngine_->save();
+    }
     Account::setRegistrationState(state, details_code, details_str);
 }
 
