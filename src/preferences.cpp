@@ -141,7 +141,7 @@ static constexpr const char* DECODING_ACCELERATED_KEY {"decodingAccelerated"};
 static constexpr const char* ENCODING_ACCELERATED_KEY {"encodingAccelerated"};
 #endif
 
-static constexpr const char* DFT_PULSE_LENGTH_STR {"250"}; /** Default DTMF length */
+static constexpr int PULSE_LENGTH_DEFAULT {250}; /** Default DTMF length */
 #ifndef _MSC_VER
 static constexpr const char* ALSA_DFT_CARD {"0"};          /** Default sound card index */
 #else
@@ -239,7 +239,7 @@ void Preferences::unserialize(const YAML::Node &in)
 VoipPreference::VoipPreference() :
     playDtmf_(true)
     , playTones_(true)
-    , pulseLength_(atoi(DFT_PULSE_LENGTH_STR))
+    , pulseLength_(PULSE_LENGTH_DEFAULT)
     , symmetricRtp_(true)
 {}
 
