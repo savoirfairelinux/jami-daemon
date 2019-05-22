@@ -1666,10 +1666,12 @@ void
 JamiAccount::registerName(const std::string& password, const std::string& name)
 {
     std::string signedName;
+    auto nameLowercase {name};
+    std::transform(nameLowercase.begin(), nameLowercase.end(), nameLowercase.begin(), ::tolower);
     std::string publickey;
     try {
         auto privateKey = readArchive(password).id.first;
-        signedName = base64::encode(privateKey->sign(Blob(name.begin(), name.end())));
+        signedName = base64::encode(privateKey->sign(Blob(nameLowercase.begin(), nameLowercase.end())));
         publickey = privateKey->getPublicKey().toString();
     } catch (const std::exception& e) {
         JAMI_ERR("[Account %s] can't export account: %s", getAccountID().c_str(), e.what());
