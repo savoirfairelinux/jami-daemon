@@ -24,11 +24,14 @@
 #include <set>
 #include <chrono>
 #include <mutex>
+#include <memory>
+#include <functional>
+
 #include <cstdint>
 
 namespace jami {
 
-class SIPAccountBase;
+class Task;
 
 namespace im {
 
@@ -47,8 +50,12 @@ enum class MessageStatus {
 class MessageEngine
 {
 public:
+    using OnSendMessage = std::function<void(const std::string& to, const std::map<std::string, std::string>& payloads, MessageToken id)>;
+    using TokenGenerator = std::function<MessageToken()>;
+    using EngineUser = std::function<void(MessageEngine*)>;
+    using OnAsync = std::function<void(EngineUser&&)>;
 
-    MessageEngine(SIPAccountBase&, const std::string& path);
+    MessageEngine(const std::string& id, OnSendMessage, TokenGenerator, OnAsync, const std::string& path);
 
     MessageToken sendMessage(const std::string& to, const std::map<std::string, std::string>& payloads);
 
@@ -71,7 +78,7 @@ public:
     /**
      * Persist messages
      */
-    void save() const;
+    void save();
 
 private:
 
@@ -90,11 +97,15 @@ private:
         clock::time_point last_op;
     };
 
-    SIPAccountBase& account_;
+    const std::string id_;
+    OnSendMessage onSendMessage_;
+    TokenGenerator tokenGenerator_;
+    OnAsync onAsync_;
     const std::string savePath_;
 
     std::map<std::string, std::map<MessageToken, Message>> messages_;
     std::set<MessageToken> sentMessages_;
+    std::weak_ptr<Task> saveTask_;
 
     mutable std::mutex messagesMutex_ {};
 };
