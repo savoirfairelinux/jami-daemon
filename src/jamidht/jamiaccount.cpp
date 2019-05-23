@@ -1588,7 +1588,7 @@ JamiAccount::getAccountDetails() const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
-    a.emplace(Conf::CONFIG_DHT_PORT, jami::to_string(dhtPort_));
+    a.emplace(Conf::CONFIG_DHT_PORT, std::to_string(dhtPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_ID, ringDeviceId_);

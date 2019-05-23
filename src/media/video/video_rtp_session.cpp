@@ -540,12 +540,12 @@ VideoRtpSession::storeVideoBitrateInfo() {
 
     if (codecVideo) {
         codecVideo->setCodecSpecifications({
-            {DRing::Account::ConfProperties::CodecInfo::BITRATE, jami::to_string(videoBitrateInfo_.videoBitrateCurrent)},
-            {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, jami::to_string(videoBitrateInfo_.videoBitrateMin)},
-            {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, jami::to_string(videoBitrateInfo_.videoBitrateMax)},
-            {DRing::Account::ConfProperties::CodecInfo::QUALITY, jami::to_string(videoBitrateInfo_.videoQualityCurrent)},
-            {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, jami::to_string(videoBitrateInfo_.videoQualityMin)},
-            {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, jami::to_string(videoBitrateInfo_.videoQualityMax)}
+            {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(videoBitrateInfo_.videoBitrateCurrent)},
+            {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, std::to_string(videoBitrateInfo_.videoBitrateMin)},
+            {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, std::to_string(videoBitrateInfo_.videoBitrateMax)},
+            {DRing::Account::ConfProperties::CodecInfo::QUALITY, std::to_string(videoBitrateInfo_.videoQualityCurrent)},
+            {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, std::to_string(videoBitrateInfo_.videoQualityMin)},
+            {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, std::to_string(videoBitrateInfo_.videoQualityMax)}
         });
 
         if (histoQuality_.size() > MAX_SIZE_HISTO_QUALITY_)

@@ -99,9 +99,9 @@ MediaEncoder::setOptions(const MediaStream& opts)
 void
 MediaEncoder::setOptions(const MediaDescription& args)
 {
-    libav_utils::setDictValue(&options_, "payload_type", jami::to_string(args.payload_type));
-    libav_utils::setDictValue(&options_, "max_rate", jami::to_string(args.codec->bitrate));
-    libav_utils::setDictValue(&options_, "crf", jami::to_string(args.codec->quality));
+    libav_utils::setDictValue(&options_, "payload_type", std::to_string(args.payload_type));
+    libav_utils::setDictValue(&options_, "max_rate", std::to_string(args.codec->bitrate));
+    libav_utils::setDictValue(&options_, "crf", std::to_string(args.codec->quality));
 
     if (not args.parameters.empty())
         libav_utils::setDictValue(&options_, "parameters", args.parameters);
