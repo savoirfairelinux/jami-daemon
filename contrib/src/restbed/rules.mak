@@ -19,7 +19,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-RESTBED_VERSION := c3e28adaf8b15b34162da6c1ed5514606288f91b
+RESTBED_VERSION := 58eaf0a1df49917145357f86c87b3f1acadaa66a
 RESTBED_URL := https://github.com/aberaud/restbed/archive/$(RESTBED_VERSION).tar.gz
 
 # Pure dependency of OpenDHT: do not add to PKGS.
