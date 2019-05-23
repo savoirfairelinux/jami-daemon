@@ -18,7 +18,6 @@
  */
 
 #include "message_engine.h"
-#include "sip/sipaccountbase.h"
 #include "manager.h"
 #include "fileutils.h"
 
@@ -33,9 +32,10 @@
 namespace jami {
 namespace im {
 
-static std::uniform_int_distribution<MessageToken> udist {1};
+constexpr std::chrono::seconds SAVE_INTERVAL {5};
 
-MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path) : account_(acc), savePath_(path)
+MessageEngine::MessageEngine(const std::string& id, OnSendMessage acc, TokenGenerator t, OnAsync io, const std::string& path)
+ : id_(id), onSendMessage_(std::move(acc)), tokenGenerator_(std::move(t)), onAsync_(std::move(io)), savePath_(path)
 {}
 
 MessageToken
@@ -48,12 +48,12 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
         std::lock_guard<std::mutex> lock(messagesMutex_);
         auto& peerMessages = messages_[to];
         do {
-            token = udist(account_.rand);
+            token = tokenGenerator_();
         } while (peerMessages.find(token) != peerMessages.end());
         auto m = peerMessages.emplace(token, Message{});
         m.first->second.to = to;
         m.first->second.payloads = payloads;
-        save_();
+        save();
     }
     runOnMainThread([this, to]() {
         retrySend(to);
@@ -96,11 +96,11 @@ MessageEngine::retrySend(const std::string& peer)
     for (const auto& p : pending) {
         JAMI_DBG() << "[message " << p.token << "] Retry sending";
         emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
-            account_.getAccountID(),
+            id_,
             p.token,
             p.to,
             (int)DRing::Account::MessageStates::SENDING);
-        account_.sendTextMessage(p.to, p.payloads, p.token);
+        onSendMessage_(p.to, p.payloads, p.token);
     }
 }
 
@@ -124,11 +124,11 @@ MessageEngine::cancel(MessageToken t)
         auto m = p.second.find(t);
         if (m != p.second.end()) {
             m->second.status = MessageStatus::CANCELLED;
-            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
+            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(id_,
                                                                             t,
                                                                             m->second.to,
                                                                             static_cast<int>(DRing::Account::MessageStates::CANCELLED));
-            save_();
+            save();
             return true;
         }
     }
@@ -151,19 +151,19 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
             if (ok) {
                 f->second.status = MessageStatus::SENT;
                 JAMI_DBG() << "[message " << token << "] Status changed to SENT";
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
+                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(id_,
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::SENT));
-                save_();
+                save();
             } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
                 JAMI_DBG() << "[message " << token << "] Status changed to FAILURE";
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
+                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(id_,
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::FAILURE));
-                save_();
+                save();
             } else {
                 f->second.status = MessageStatus::IDLE;
                 JAMI_DBG() << "[message " << token << "] Status changed to IDLE";
@@ -212,17 +212,28 @@ MessageEngine::load()
                 loaded++;
             }
         }
-        JAMI_DBG("[Account %s] loaded %lu messages from %s", account_.getAccountID().c_str(), loaded, savePath_.c_str());
+        JAMI_DBG("[Account %s] loaded %lu messages from %s", id_.c_str(), loaded, savePath_.c_str());
     } catch (const std::exception& e) {
-        JAMI_ERR("[Account %s] couldn't load messages from %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
+        JAMI_ERR("[Account %s] couldn't load messages from %s: %s", id_.c_str(), savePath_.c_str(), e.what());
     }
 }
 
 void
-MessageEngine::save() const
+MessageEngine::save()
 {
-    std::lock_guard<std::mutex> lock(messagesMutex_);
-    save_();
+    std::weak_ptr<Task> task = Manager::instance().scheduler().scheduleIn([onAsync = onAsync_]{
+        dht::ThreadPool::computation().run([onAsync = std::move(onAsync)] {
+            onAsync([](MessageEngine* this_) {
+                if (this_) {
+                    std::lock_guard<std::mutex> lock(this_->messagesMutex_);
+                    this_->save_();
+                }
+            });
+        });
+    }, SAVE_INTERVAL);
+    std::swap(saveTask_, task);
+    if (auto old = task.lock())
+        old->cancel();
 }
 
 void
@@ -252,10 +263,9 @@ MessageEngine::save_() const
             root[c.first] = std::move(peerRoot);
         }
         // Save asynchronously
-        dht::ThreadPool::computation().run([path = savePath_,
+        dht::ThreadPool::io().run([path = savePath_,
                                     root = std::move(root),
-                                    accountID = account_.getAccountID(),
-                                    messageNum = messages_.size()]
+                                    accountID = id_]
         {
             std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
             try {
@@ -270,10 +280,10 @@ MessageEngine::save_() const
             } catch (const std::exception& e) {
                 JAMI_ERR("[Account %s] Couldn't save messages to %s: %s", accountID.c_str(), path.c_str(), e.what());
             }
-            JAMI_DBG("[Account %s] saved %zu messages to %s", accountID.c_str(), messageNum, path.c_str());
+            JAMI_DBG("[Account %s] saved %zu messages to %s", accountID.c_str(), root.size(), path.c_str());
         });
     } catch (const std::exception& e) {
-        JAMI_ERR("[Account %s] couldn't save messages to %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
+        JAMI_ERR("[Account %s] couldn't save messages to %s: %s", id_.c_str(), savePath_.c_str(), e.what());
     }
 }
 
