@@ -261,15 +261,15 @@ public:
 
     virtual uint64_t sendTextMessage(const std::string& to,
                                      const std::map<std::string, std::string>& payloads) override {
-        return messageEngine_.sendMessage(to, payloads);
+        return messageEngine_ ? messageEngine_->sendMessage(to, payloads) : 0;
     }
 
     virtual im::MessageStatus getMessageStatus(uint64_t id) const override {
-        return messageEngine_.getStatus(id);
+        return messageEngine_ ? messageEngine_->getStatus(id) : im::MessageStatus::UNKNOWN;
     }
 
     virtual bool cancelMessage(uint64_t id) override {
-        return messageEngine_.cancel(id);
+        return messageEngine_ ? messageEngine_->cancel(id) : false;
     }
 
     void onTextMessage(const std::string& from, const std::map<std::string, std::string>& payloads);
@@ -314,7 +314,7 @@ protected:
 
     virtual void setRegistrationState(RegistrationState state, unsigned code=0, const std::string& detail_str={}) override;
 
-    im::MessageEngine messageEngine_;
+    std::unique_ptr<im::MessageEngine> messageEngine_;
 
     /**
      * Voice over IP Link contains a listener thread and calls
