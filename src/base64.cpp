@@ -33,6 +33,9 @@ encode(const std::vector<uint8_t>::const_iterator begin,
        const std::vector<uint8_t>::const_iterator end)
 {
     int input_length = std::distance(begin, end);
+    if (input_length == 0)
+        return {};
+
     int output_length = PJ_BASE256_TO_BASE64_LEN(input_length);
     std::string out;
     out.resize(output_length);
@@ -54,6 +57,9 @@ encode(const std::vector<uint8_t>& dat)
 std::vector<uint8_t>
 decode(const std::string& str)
 {
+    if (str.empty())
+        return {};
+
     int output_length = PJ_BASE64_TO_BASE256_LEN(str.length());
     const pj_str_t input(sip_utils::CONST_PJ_STR(str));
 
