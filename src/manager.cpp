@@ -2686,12 +2686,12 @@ Manager::testAccountICEInitialization(const std::string& accountID)
 
     if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
     {
-        result["STATUS"] = jami::to_string((int) DRing::Account::testAccountICEInitializationStatus::FAILURE);
+        result["STATUS"] = std::to_string((int) DRing::Account::testAccountICEInitializationStatus::FAILURE);
         result["MESSAGE"] = ice->getLastErrMsg();
     }
     else
     {
-        result["STATUS"] = jami::to_string((int) DRing::Account::testAccountICEInitializationStatus::SUCCESS);
+        result["STATUS"] = std::to_string((int) DRing::Account::testAccountICEInitializationStatus::SUCCESS);
         result["MESSAGE"] = "";
     }
 

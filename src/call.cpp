@@ -336,12 +336,12 @@ std::map<std::string, std::string>
 Call::getDetails() const
 {
     return {
-        {DRing::Call::Details::CALL_TYPE,        jami::to_string((unsigned)type_)},
+        {DRing::Call::Details::CALL_TYPE,        std::to_string((unsigned)type_)},
         {DRing::Call::Details::PEER_NUMBER,      peerNumber_},
         {DRing::Call::Details::DISPLAY_NAME,     peerDisplayName_},
         {DRing::Call::Details::CALL_STATE,       getStateStr()},
         {DRing::Call::Details::CONF_ID,          confID_},
-        {DRing::Call::Details::TIMESTAMP_START,  jami::to_string(timestamp_start_)},
+        {DRing::Call::Details::TIMESTAMP_START,  std::to_string(timestamp_start_)},
         {DRing::Call::Details::ACCOUNTID,        getAccountId()},
         {DRing::Call::Details::AUDIO_MUTED,      std::string(bool_to_str(isAudioMuted_))},
         {DRing::Call::Details::VIDEO_MUTED,      std::string(bool_to_str(isVideoMuted_))},

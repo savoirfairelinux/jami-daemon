@@ -312,7 +312,7 @@ Account::getAccountDetails() const
         {Conf::CONFIG_ACCOUNT_USERAGENT,    hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
         {Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
         {Conf::CONFIG_ACCOUNT_AUTOANSWER,   autoAnswerEnabled_ ? TRUE_STR : FALSE_STR},
-        {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT,   jami::to_string(activeCallLimit_)},
+        {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT,   std::to_string(activeCallLimit_)},
         {Conf::CONFIG_RINGTONE_ENABLED,     ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
         {Conf::CONFIG_RINGTONE_PATH,        ringtonePath_},
         {Conf::CONFIG_UPNP_ENABLED,         upnp_ ? TRUE_STR : FALSE_STR}
