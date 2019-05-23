@@ -515,8 +515,8 @@ getRenderer(const std::string& callId)
        return {
            {DRing::Media::Details::CALL_ID,  callId},
            {DRing::Media::Details::SHM_PATH, sink->openedName()},
-           {DRing::Media::Details::WIDTH,    jami::to_string(sink->getWidth())},
-           {DRing::Media::Details::HEIGHT,   jami::to_string(sink->getHeight())},
+           {DRing::Media::Details::WIDTH,    std::to_string(sink->getWidth())},
+           {DRing::Media::Details::HEIGHT,   std::to_string(sink->getHeight())},
        };
    else
        return {

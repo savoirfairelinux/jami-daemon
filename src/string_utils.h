@@ -39,20 +39,11 @@ bool_to_str(bool b) noexcept
     return b ? TRUE_STR : FALSE_STR;
 }
 
-std::string to_string(double value);
-
 #ifdef _WIN32
 std::wstring to_wstring(const std::string& s);
 std::string decodeMultibyteString(const std::string& s);
 std::string bstrToStdString(BSTR bstr);
 #endif
-
-template <typename T>
-inline std::string
-to_string(T &&value)
-{
-    return std::to_string(std::forward<T>(value));
-}
 
 static inline int
 stoi(const std::string& str)

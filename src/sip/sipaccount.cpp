@@ -622,9 +622,9 @@ SIPAccount::getAccountDetails() const
     }
     a.emplace(Conf::CONFIG_ACCOUNT_PASSWORD,                std::move(password));
 
-    a.emplace(Conf::CONFIG_LOCAL_PORT,                      jami::to_string(localPort_));
+    a.emplace(Conf::CONFIG_LOCAL_PORT,                      std::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET,                serviceRoute_);
-    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     jami::to_string(registrationExpire_));
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     std::to_string(registrationExpire_));
     a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED,              keepAliveEnabled_ ? TRUE_STR : FALSE_STR);
 
     a.emplace(Conf::CONFIG_PRESENCE_ENABLED,                presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR);
@@ -645,7 +645,7 @@ std::map<std::string, std::string>
 SIPAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
-    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE, jami::to_string(registrationStateDetailed_.first));
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE, std::to_string(registrationStateDetailed_.first));
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC, registrationStateDetailed_.second);
     a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
 
@@ -669,7 +669,7 @@ SIPAccount::getVolatileAccountDetails() const
             a.emplace(name_str.str(),                      ca->toString());
             ca = ca->issuer;
         }
-        a.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM,    jami::to_string(n));
+        a.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM,    std::to_string(n));
     }
 
     return a;
@@ -1665,7 +1665,7 @@ SIPAccount::getTlsSettings() const
 {
     return {
         {Conf::CONFIG_TLS_ENABLE,           tlsEnable_ ? TRUE_STR : FALSE_STR},
-        {Conf::CONFIG_TLS_LISTENER_PORT,    jami::to_string(tlsListenerPort_)},
+        {Conf::CONFIG_TLS_LISTENER_PORT,    std::to_string(tlsListenerPort_)},
         {Conf::CONFIG_TLS_CA_LIST_FILE,     tlsCaListFile_},
         {Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_},
         {Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_},

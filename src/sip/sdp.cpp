@@ -195,7 +195,7 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
             enc_name = accountAudioCodec->systemCodecInfo.name;
 
             if (accountAudioCodec->audioformat.nb_channels > 1) {
-                channels = jami::to_string(accountAudioCodec->audioformat.nb_channels);
+                channels = std::to_string(accountAudioCodec->audioformat.nb_channels);
                 rtpmap.param.ptr = (char *) channels.c_str();
                 rtpmap.param.slen = strlen(channels.c_str()); // don't include NULL terminator
             }

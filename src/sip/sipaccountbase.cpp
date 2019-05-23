@@ -138,8 +138,8 @@ addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey,
                   const char *maxKey,
                   const std::pair<uint16_t, uint16_t> &range)
 {
-    a.emplace(minKey, jami::to_string(range.first));
-    a.emplace(maxKey, jami::to_string(range.second));
+    a.emplace(minKey, std::to_string(range.first));
+    a.emplace(maxKey, std::to_string(range.second));
 }
 
 void SIPAccountBase::serialize(YAML::Emitter &out) const
@@ -265,7 +265,7 @@ SIPAccountBase::getAccountDetails() const
 
     a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE,       dtmfType_);
     a.emplace(Conf::CONFIG_LOCAL_INTERFACE,         interface_);
-    a.emplace(Conf::CONFIG_PUBLISHED_PORT,          jami::to_string(publishedPort_));
+    a.emplace(Conf::CONFIG_PUBLISHED_PORT,          std::to_string(publishedPort_));
     a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL,  publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
 
@@ -289,7 +289,7 @@ SIPAccountBase::getVolatileAccountDetails() const
     if (isIP2IP())
         a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = "READY";
 
-    a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE,    jami::to_string(transportStatus_));
+    a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE,    std::to_string(transportStatus_));
     a.emplace(Conf::CONFIG_TRANSPORT_STATE_DESC,    transportError_);
     return a;
 }
