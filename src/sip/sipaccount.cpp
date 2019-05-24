@@ -2069,6 +2069,8 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
         return;
     }
 
+    sip_utils::register_thread();
+
     auto toUri = getToUri(to);
 
     constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
