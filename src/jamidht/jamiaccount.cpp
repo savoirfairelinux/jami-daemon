@@ -1199,18 +1199,18 @@ void
 JamiAccount::loadAccountFromFile(const std::string& archive_path, const std::string& archive_password)
 {
     setRegistrationState(RegistrationState::INITIALIZING);
-    auto accountId = getAccountID();
-    dht::ThreadPool::computation().run([w=weak(), archive_password, archive_path, accountId]{
+    dht::ThreadPool::computation().run([w=weak(), archive_password, archive_path, accountId = getAccountID()]{
         AccountArchive archive;
         try {
             archive = AccountArchive(archive_path, archive_password);
         } catch (const std::exception& ex) {
             JAMI_WARN("[Account %s] can't read file: %s", accountId.c_str(), ex.what());
-            runOnMainThread([w, accountId]() {
-                if (auto this_ = w.lock())
-                    this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
-                Manager::instance().removeAccount(accountId);
-            });
+            if (auto this_ = w.lock()) {
+                this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
+                runOnMainThread([accountId]() {
+                    Manager::instance().removeAccount(accountId);
+                });
+            }
             return;
         }
         runOnMainThread([w, archive, archive_password]() mutable {
@@ -1276,7 +1276,7 @@ JamiAccount::loadAccountFromDHT(const std::string& archive_password, const std::
                         return true;
                     }
                     JAMI_DBG("Found archive on the DHT");
-                    runOnMainThread([=]() {
+                    dht::ThreadPool::computation().run([=]() {
                         if (auto this_ = w.lock()) {
                             try {
                                 *found =  true;
@@ -1284,7 +1284,9 @@ JamiAccount::loadAccountFromDHT(const std::string& archive_password, const std::
                             } catch (const std::exception& e) {
                                 JAMI_WARN("[Account %s] error reading archive: %s", this_->getAccountID().c_str(), e.what());
                                 this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
-                                Manager::instance().removeAccount(this_->getAccountID());
+                                runOnMainThread([=]() {
+                                    Manager::instance().removeAccount(this_->getAccountID());
+                                });
                             }
                         }
                     });
