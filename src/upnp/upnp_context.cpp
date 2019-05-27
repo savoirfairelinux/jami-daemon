@@ -958,12 +958,17 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
              JAMI_DBG("UPnP: CP received a discovery search result"); */
 
         /* check if we are already in the process of checking this device */
-        std::unique_lock<std::mutex> lock(cpDeviceMutex_);
-        auto it = cpDevices_.find(std::string(UpnpDiscovery_get_Location_cstr(d_event)));
+        std::lock_guard<std::mutex> lock(cpDeviceMutex_);
 
+        /*
+         * Check if this device ID is already in the list. If we reach the past-the-end
+         * iterator of the list, it means we haven't discovered it. So we add it.
+         */
+        auto it = cpDevices_.find(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event)));
         if (it == cpDevices_.end()) {
-            cpDevices_.emplace(std::string(UpnpDiscovery_get_Location_cstr(d_event)));
-            lock.unlock();
+            
+            JAMI_DBG("PUPnP: New device ID found -> %s.", UpnpDiscovery_get_DeviceID_cstr(d_event));
+            cpDevices_.emplace(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event)));
 
             if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS)
                 JAMI_WARN("UPnP: Error in discovery event received by the CP: %s",
@@ -991,18 +996,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
             } else {
                 parseDevice(desc_doc.get(), d_event);
             }
-
-            /* finished parsing device; remove it from know devices list,
-             * since next time it could be a new device with same URL
-             * eg: if we switch routers or if a new device with the same IP appears
-             */
-            lock.lock();
-            cpDevices_.erase(UpnpDiscovery_get_Location_cstr(d_event));
-            lock.unlock();
-        } else {
-            lock.unlock();
-            /* JAMI_DBG("UPnP: Control Point is already checking this device"); */
-        }
+        } 
     }
     break;
 
@@ -1018,6 +1012,20 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
                       UpnpGetErrorMessage(UpnpDiscovery_get_ErrCode(d_event)));
 
         /* TODO: check if its a device we care about and remove it from the relevant lists */
+        std::lock_guard<std::mutex> lock(cpDeviceMutex_);
+        auto it = cpDevices_.find(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event)));
+        if (it != cpDevices_.end()) {
+            cpDevices_.erase(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event)));
+        }
+
+        std::lock_guard<std::mutex> igd_list_lock(validIGDMutex_);
+        for (auto const& item : validIGDs_) {
+            if (strcmp(((UPnPIGD*)item.second.get())->getUDN().c_str(), UpnpDiscovery_get_DeviceID_cstr(d_event)) == 0) {
+                validIGDs_.erase(item.first);
+                break;
+            }
+        }
+
     }
     break;
 
@@ -1174,7 +1182,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const UPnPIGD& igd, const std
         return;
     }
 
-    JAMI_DBG("UPnP: removing all port mappings with description: \"%s\" and local ip: %s",
+    JAMI_WARN("UPnP: removing all port mappings with description: \"%s\" and local ip: %s",
              description.c_str(), igd.localIp.toString().c_str());
 
     int entry_idx = 0;
