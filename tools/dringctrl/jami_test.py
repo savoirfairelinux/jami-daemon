@@ -39,22 +39,30 @@ class JamiTest(DRingCtrl):
         self.failureRate = 0
         self.callsCompleted = 0
         ringAccounts = self.getAllAccounts('RING')
+
+        if len (ringAccounts) < 1:
+            callerDetails = {'Account.type':'RING', 'Account.alias':'testringaccount3'}
+            self.addAccount(callerDetails)
+
         self.setAccount(ringAccounts[0])
+        volatileCallerDetails = self.getVolatileAccountDetails(self.account)
 
-        if not args.peer:
-            peer = ringAccounts[1]
-            details = self.getAccountDetails(peer)
-            self.peer = details['Account.username']
-        else:
-            self.peer = args.peer
+        if volatileCallerDetails['Account.registrationStatus'] != 'REGISTERED':
+            raise DRingCtrlError("Caller Account not registered")
 
-        print("Using local test account: ", self.account)
-        print("Using test peer: ", self.peer)
+        self.peer = args.peer
+        volatilePeerDetails = self.getVolatileAccountDetails()
+
+        if volatilePeerDetails['Account.registrationStatus'] != 'REGISTERED':
+            raise DRingCtrlError("Peer Account not registered")
+
+        print("Using local test account: ", self.account, volatileCallerDetails['Account.registrationStatus'])
+        print("Using test peer: ", self.peer, volatilePeerDetails['Account.registrationStatus'])
         if self.testCall():
             GLib.timeout_add_seconds(args.interval, self.testCall)
 
     def keepGoing(self):
-        return self.args.calls == 0 or self.iterator < self.args.calls
+        return not self.args.calls
 
     def testCall(self):
         print("**[BEGIN] Call Test")
@@ -94,7 +102,7 @@ class JamiTest(DRingCtrl):
 
     def testSucceeded(self, callId):
         self.testEnded(callId)
-    
+
     def run(self):
         super().run()
         if self.failureCount == 0:
@@ -107,12 +115,14 @@ class JamiTest(DRingCtrl):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Monitor Jami reliabilty by mesuring failure rate for making Calls/Messages and receiving them.')
-    parser.add_argument('--messages', help='Number of messages sent', type=int)
-    parser.add_argument('--calls', help='Number of calls made', default=0, type=int)
-    parser.add_argument('--duration', help='Specify the duration of the test (seconds)', default=10, type=int)
-    parser.add_argument('--interval', help='Specify the test interval (seconds)', default=0, type=int)
-    parser.add_argument('--peer', help='Specify the peer account id')
-
+    optional = parser._action_groups.pop()
+    required = parser.add_argument_group('required arguments')
+    optional.add_argument('--messages', help = 'Number of messages to send', type = int)
+    optional.add_argument('--duration', help = 'Specify the duration of the test (seconds)', default = 600, type = int)
+    optional.add_argument('--interval', help = 'Specify the test interval (seconds)', default = 10, type = int)
+    required.add_argument('--peer', help = 'Specify the peer account ID', required = True)
+    required.add_argument('--calls', help = 'Number of calls to make', type = int, required = True)
+    parser._action_groups.append(optional)
     args = parser.parse_args()
 
     test = JamiTest("test", args)
