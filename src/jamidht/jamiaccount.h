@@ -74,6 +74,7 @@ class DhtPeerConnector;
 class PeerConnection;
 class ContactList;
 class AccountManager;
+struct AcccountInfo;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -360,7 +361,7 @@ public:
 
     dht::DhtRunner& dht() { return dht_; }
 
-    const dht::crypto::Identity& identity() const { return identity_; }
+    const dht::crypto::Identity& identity() const;
 
     const std::shared_future<tls::DhParams> dhParams() const { return dhParams_; }
 
@@ -498,7 +499,6 @@ private:
     void igdChanged();
 
     dht::DhtRunner dht_ {};
-    dht::crypto::Identity identity_ {};
     std::unique_ptr<AccountManager> accountManager_;
 
     dht::InfoHash callKey_;
@@ -522,24 +522,19 @@ private:
     std::map<dht::Value::Id, PendingMessage> sentMessages_;
     std::set<dht::Value::Id> treatedMessages_ {};
 
-    std::string ringAccountId_ {};
-    std::string ringDeviceId_ {};
     std::string ringDeviceName_ {};
     std::string idPath_ {};
     std::string cachePath_ {};
     std::string dataPath_ {};
-    std::string ethAccount_ {};
 
     std::string archivePath_ {};
     bool archiveHasPassword_ {true};
 
     std::string receipt_ {};
     std::vector<uint8_t> receiptSignature_ {};
-    dht::Value announceVal_;
 
-    std::shared_ptr<dht::Value> announce_;
-
-    std::unique_ptr<ContactList> contactList_;
+    // non-persisted account info
+    std::unique_ptr<AcccountInfo> accountInfo_;
 
     void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {}, const std::string& archive_path = {});
     void loadAccountFromFile(const std::string& archive_path, const std::string& archive_password);
@@ -548,8 +543,8 @@ private:
 
     bool hasCertificate() const;
     bool hasPrivateKey() const;
-    bool useIdentity(const dht::crypto::Identity& id);
-    static bool needsMigration(const dht::crypto::Identity& id);
+    //bool useIdentity(const dht::crypto::Identity& id);
+    //static bool needsMigration(const dht::crypto::Identity& id);
 
     std::string makeReceipt(const dht::crypto::Identity& id);
     void createRingDevice(const dht::crypto::Identity& id);
@@ -586,7 +581,7 @@ private:
      * and certPath_ a valid certificate file, load and returns them.
      * Otherwise, generate a new identity and returns it.
      */
-    dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const;
+    //dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const;
     std::vector<dht::NodeExport> loadNodes() const;
     std::vector<dht::ValuesExport> loadValues() const;
     mutable std::mutex dhtValuesMtx_;

@@ -31,6 +31,15 @@ namespace jami {
 class JamiAccount;
 class AccountArchive;
 
+struct AcccountInfo {
+    dht::crypto::Identity identity;
+    std::unique_ptr<ContactList> contacts;
+    std::string accountId;
+    std::string deviceId;
+    std::shared_ptr<dht::Value> announce;
+    std::string ethAccount;
+};
+
 class AccountManager {
 public:
     using AsyncUser = std::function<void(AccountManager&)>;
@@ -50,7 +59,7 @@ public:
     using AuthSuccessCallback = std::function<void(
         const std::shared_ptr<dht::crypto::Certificate>& device,
         const std::map<std::string, std::string>& config,
-        std::unique_ptr<ContactList>&& contacts,
+        std::unique_ptr<AcccountInfo>&& info,
         std::string&& receipt,
         std::vector<uint8_t>&& receipt_signature)>;
 
@@ -77,14 +86,29 @@ public:
     virtual void syncDevice(std::unique_ptr<DeviceSync>&&) = 0;
 
     dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const;
+    std::unique_ptr<AcccountInfo> useIdentity(const dht::crypto::Identity& id, const std::string& receipt, const std::vector<uint8_t> receiptSignature);
+
+    // Device management
+    virtual void addDevice(const std::string& /*password*/) {};
+    virtual bool revokeDevice(const std::string& /*password*/, const std::string& /*device*/) { return false; };
+
+    // Name resolver
+    /*
+#if HAVE_RINGNS
+    virtual void lookupName(const std::string& name);
+    virtual void lookupAddress(const std::string& address);
+    virtual void registerName(const std::string& password, const std::string& name) = 0;
+#endif
+*/
+
+private:
+    std::reference_wrapper<JamiAccount> account_;
+    //std::reference_wrapper<NameDirectory> nameDir_;
 
 protected:
     JamiAccount& getAccount() { return account_.get(); }
     const JamiAccount& getAccount() const { return account_.get(); }
     OnAsync onAsync_;
-
-private:
-    std::reference_wrapper<JamiAccount> account_;
 };
 
 
@@ -97,6 +121,7 @@ public:
         std::string archivePath;
         in_port_t dhtPort;
         std::vector<dht::SockAddr> dhtBootstrap;
+        dht::crypto::Identity updateIdentity;
     };
 
     void initAuthentication(
@@ -122,11 +147,14 @@ private:
         AuthFailureCallback onFailure;
     };
 
-    std::string makeReceipt(const dht::crypto::Identity& id, const dht::crypto::Certificate& device, const std::string& ethAccount);
+    void createAccount(const std::shared_ptr<AuthContext>& ctx);
+    std::pair<std::string, std::shared_ptr<dht::Value>> makeReceipt(const dht::crypto::Identity& id, const dht::crypto::Certificate& device, const std::string& ethAccount);
     void updateArchive(AccountArchive& content/*, const ContactList& syncData*/) const;
     void saveArchive(AccountArchive& content, const std::string& pwd);
     AccountArchive readArchive(const std::string& pwd) const;
     static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password, const std::string& pin, bool previous=false);
+    bool updateCertificates(AccountArchive& archive, dht::crypto::Identity& device);
+    static bool needsMigration(const dht::crypto::Identity& id);
 
     void loadFromFile(const std::shared_ptr<AuthContext>& ctx);
     void loadFromDHT(const std::shared_ptr<AuthContext>& ctx);

@@ -78,7 +78,23 @@ ArchiveAccountManager::initAuthentication(
                     this_.loadFromFile(ctx);
                     return;
                 } else {
-                    AccountArchive a;
+                    if (ctx->credentials->updateIdentity.first and ctx->credentials->updateIdentity.second) {
+                        auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(&dev::KeyPair::create);
+                        AccountArchive a;
+                        JAMI_WARN("[Auth] converting certificate from old account %s", ctx->credentials->updateIdentity.first->getPublicKey().getId().toString().c_str());
+                        a.id = std::move(ctx->credentials->updateIdentity);
+                        try {
+                            a.ca_key = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile("ca.key", this_.getAccount().getPath()));
+                        } catch (...) {}
+                        this_.updateCertificates(a, ctx->credentials->updateIdentity);
+                        auto keypair = future_keypair.get();
+                        a.eth_key = keypair.secret().makeInsecure().asBytes();
+                        auto contactList = std::make_unique<ContactList>(this_.getAccount(), a.id.second);
+                        this_.onArchiveLoaded(*ctx, std::move(a), std::move(contactList));
+                    } else {
+                        this_.createAccount(ctx);
+                    }
+                    /*AccountArchive a;
                     auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(&dev::KeyPair::create);
                     auto ca = dht::crypto::generateIdentity("Jami CA");
                     if (!ca.first || !ca.second) {
@@ -95,13 +111,78 @@ ArchiveAccountManager::initAuthentication(
                     auto keypair = future_keypair.get();
                     a.eth_key = keypair.secret().makeInsecure().asBytes();
                     auto contactList = std::make_unique<ContactList>(this_.getAccount(), a.id.second);
-                    this_.onArchiveLoaded(*ctx, std::move(a), std::move(contactList));
+                    this_.onArchiveLoaded(*ctx, std::move(a), std::move(contactList));*/
                 }
             } catch (const std::exception& e) {
                 ctx->onFailure(AuthError::UNKNOWN, e.what());
             }
         });
     });
+}
+
+bool
+ArchiveAccountManager::updateCertificates(AccountArchive& archive, dht::crypto::Identity& device)
+{
+    JAMI_WARN("Updating certificates");
+    using Certificate = dht::crypto::Certificate;
+
+    // We need the CA key to resign certificates
+    if (not archive.id.first or
+        not *archive.id.first or
+        not archive.id.second or
+        not archive.ca_key or
+        not *archive.ca_key)
+        return false;
+
+    // Currently set the CA flag and update expiration dates
+    bool updated = false;
+
+    auto& cert = archive.id.second;
+    auto ca = cert->issuer;
+    // Update CA if possible and relevant
+    if (not ca or (not ca->issuer and (not ca->isCA() or ca->getExpiration() < clock::now()))) {
+        ca = std::make_shared<Certificate>(Certificate::generate(*archive.ca_key, "Jami CA", {}, true));
+        updated = true;
+        JAMI_DBG("CA CRT re-generated");
+    }
+
+    // Update certificate
+    if (updated or not cert->isCA() or cert->getExpiration() < clock::now()) {
+        cert = std::make_shared<Certificate>(Certificate::generate(*archive.id.first, "Jami", dht::crypto::Identity{archive.ca_key, ca}, true));
+        updated = true;
+        JAMI_DBG("Jami CRT re-generated");
+    }
+
+    if (updated and device.first and *device.first) {
+        // update device certificate
+        device.second = std::make_shared<Certificate>(Certificate::generate(*device.first, "Jami device", archive.id));
+        JAMI_DBG("device CRT re-generated");
+    }
+
+    return updated;
+}
+
+void
+ArchiveAccountManager::createAccount(const std::shared_ptr<AuthContext>& ctx)
+{
+    AccountArchive a;
+    auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(&dev::KeyPair::create);
+    auto ca = dht::crypto::generateIdentity("Jami CA");
+    if (!ca.first || !ca.second) {
+        throw std::runtime_error("Can't generate CA for this account.");
+    }
+    a.id = dht::crypto::generateIdentity("Jami", ca, 4096, true);
+    if (!a.id.first || !a.id.second) {
+        throw std::runtime_error("Can't generate identity for this account.");
+    }
+    JAMI_WARN("[Account %s] new account: CA: %s, RingID: %s",
+                getAccount().getAccountID().c_str(), ca.second->getId().toString().c_str(),
+                a.id.second->getId().toString().c_str());
+    a.ca_key = ca.first;
+    auto keypair = future_keypair.get();
+    a.eth_key = keypair.secret().makeInsecure().asBytes();
+    auto contactList = std::make_unique<ContactList>(getAccount(), a.id.second);
+    onArchiveLoaded(*ctx, std::move(a), std::move(contactList));
 }
 
 void
@@ -231,11 +312,19 @@ ArchiveAccountManager::onArchiveLoaded(
 
     auto deviceId = deviceCertificate->getPublicKey().getId();
     auto receipt = makeReceipt(a.id, *deviceCertificate, ethAccount);
-    auto receiptSignature = a.id.first->sign({receipt.begin(), receipt.end()});
+    auto receiptSignature = a.id.first->sign({receipt.first.begin(), receipt.first.end()});
     JAMI_WARN("[Account %s] created new device: %s",
             getAccount().getAccountID().c_str(), deviceId.toString().c_str());
 
-    ctx.onSuccess(deviceCertificate, {}, std::move(contactList), std::move(receipt), std::move(receiptSignature));
+    auto info = std::make_unique<AcccountInfo>();
+    info->identity = a.id;
+    info->contacts = std::move(contactList);
+    info->accountId = a.id.second->getId().toString();
+    info->deviceId = deviceId.toString();
+    info->ethAccount = ethAccount;
+    info->announce = std::move(receipt.second);
+
+    ctx.onSuccess(deviceCertificate, {}, std::move(info), std::move(receipt.first), std::move(receiptSignature));
 }
 
 std::pair<std::vector<uint8_t>, dht::InfoHash>
@@ -263,7 +352,7 @@ ArchiveAccountManager::computeKeys(const std::string& password, const std::strin
     return {key, loc};
 }
 
-std::string
+std::pair<std::string, std::shared_ptr<dht::Value>>
 ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id, const dht::crypto::Certificate& device, const std::string& ethAccount)
 {
     JAMI_DBG("[Account %s] signing device receipt", getAccount().getAccountID().c_str());
@@ -279,8 +368,28 @@ ArchiveAccountManager::makeReceipt(const dht::crypto::Identity& id, const dht::c
     << "\",\"eth\":\"" << ethAccount
     << "\",\"announce\":\"" << base64::encode(ann_val.getPacked()) << "\"}";
 
-    //auto announce_ = std::make_shared<dht::Value>(std::move(ann_val));
-    return is.str();
+    //auto announce_ = ;
+    return {is.str(), std::make_shared<dht::Value>(std::move(ann_val))};
+}
+
+bool
+ArchiveAccountManager::needsMigration(const dht::crypto::Identity& id)
+{
+    if (not id.second)
+        return false;
+    auto cert = id.second->issuer;
+    while (cert) {
+        if (not cert->isCA()){
+            JAMI_WARN("certificate %s is not a CA, needs update.", cert->getId().toString().c_str());
+            return true;
+        }
+        if (cert->getExpiration() < clock::now()) {
+            JAMI_WARN("certificate %s is expired, needs update.", cert->getId().toString().c_str());
+            return true;
+        }
+        cert = cert->issuer;
+    }
+    return false;
 }
 
 dht::crypto::Identity
@@ -313,6 +422,96 @@ AccountManager::loadIdentity(const std::string& crt_path, const std::string& key
     return {};
 }
 
+std::unique_ptr<AcccountInfo>
+AccountManager::useIdentity(const dht::crypto::Identity& identity, const std::string& receipt, const std::vector<uint8_t> receiptSignature)
+{
+    if (receipt.empty() or receiptSignature.empty())
+        return nullptr;
+
+    if (not identity.first or not identity.second) {
+        JAMI_ERR("[Auth] no identity provided");
+        return nullptr;
+    }
+
+    auto accountCertificate = identity.second->issuer;
+    if (not accountCertificate) {
+        JAMI_ERR("[Auth] device certificate must be issued by the account certificate");
+        return nullptr;
+    }
+
+    // match certificate chain
+    auto contactList = std::make_unique<ContactList>(getAccount(), accountCertificate);
+    if (not contactList->isValidAccountDevice(*identity.second)) {
+        JAMI_ERR("[Auth] can't use identity: device certificate chain can't be verified");
+        return nullptr;
+    }
+
+    auto pk = accountCertificate->getPublicKey();
+    JAMI_DBG("[Auth] checking device receipt for %s", pk.getId().toString().c_str());
+    if (!pk.checkSignature({receipt.begin(), receipt.end()}, receiptSignature)) {
+        JAMI_ERR("[Auth] device receipt signature check failed");
+        return nullptr;
+    }
+
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (!reader->parse(&receipt[0], &receipt[receipt.size()], &root, nullptr)) {
+        JAMI_ERR() << this << " device receipt parsing error";
+        return nullptr;
+    }
+
+    auto dev_id = root["dev"].asString();
+    if (dev_id != identity.second->getId().toString()) {
+        JAMI_ERR("[Auth] device ID mismatch between receipt and certificate");
+        return nullptr;
+    }
+    auto id = root["id"].asString();
+    if (id != pk.getId().toString()) {
+        JAMI_ERR("[Auth] account ID mismatch between receipt and certificate");
+        return nullptr;
+    }
+
+    dht::Value announce_val;
+    try {
+        auto announce = base64::decode(root["announce"].asString());
+        msgpack::object_handle announce_msg = msgpack::unpack((const char*)announce.data(), announce.size());
+        announce_val.msgpack_unpack(announce_msg.get());
+        if (not announce_val.checkSignature()) {
+            JAMI_ERR("[Auth] announce signature check failed");
+            return nullptr;
+        }
+        DeviceAnnouncement da;
+        da.unpackValue(announce_val);
+        if (da.from.toString() != id or da.dev.toString() != dev_id) {
+            JAMI_ERR("[Auth] device ID mismatch in announce");
+            return nullptr;
+        }
+    } catch (const std::exception& e) {
+        JAMI_ERR("[Auth] can't read announce: %s", e.what());
+        return nullptr;
+    }
+
+    auto info = std::make_unique<AcccountInfo>();
+    info->identity = identity;
+    info->contacts = std::move(contactList);
+    info->accountId = id;
+    info->deviceId = identity.first->getPublicKey().getId().toString();
+    info->announce = std::make_shared<dht::Value>(std::move(announce_val));
+    info->ethAccount = root["eth"].asString();
+
+    // success, make use of this identity (certificate chain and private key)
+    /*identity_ = identity;
+    contactList_ = std::move(contactList);
+    ringAccountId_ = id;
+    ringDeviceId_ = identity.first->getPublicKey().getId().toString();
+    username_ = RING_URI_PREFIX + id;
+    announce_ = std::make_shared<dht::Value>(std::move(announce_val));
+    ethAccount_ = root["eth"].asString();*/
+
+    JAMI_DBG("[Auth] Account %s device %s receipt checked successfully", id.c_str(), info->deviceId.c_str());
+    return info;
+}
 
 AccountArchive
 ArchiveAccountManager::readArchive(const std::string& pwd) const
@@ -383,5 +582,54 @@ ArchiveAccountManager::changePassword(const std::string& password_old, const std
         return false;
     }
 }
+
+/*
+#if HAVE_RINGNS
+void
+AccountManager::lookupName(const std::string& name, LookupCallback cb)
+{
+    auto acc = getAccountID();
+    NameDirectory::lookupUri(name, nameServer_, cb);
+}
+
+void
+AccountManager::lookupAddress(const std::string& addr, LookupCallback cb)
+{
+    auto acc = getAccountID();
+    nameDir_.get().lookupAddress(addr, cb);
+}
+
+void
+ArchiveAccountManager::registerName(const std::string& password, const std::string& name)
+{
+    std::string signedName;
+    auto nameLowercase {name};
+    std::transform(nameLowercase.begin(), nameLowercase.end(), nameLowercase.begin(), ::tolower);
+    std::string publickey;
+    try {
+        auto privateKey = readArchive(password).id.first;
+        signedName = base64::encode(privateKey->sign(std::vector<uint8_t>(nameLowercase.begin(), nameLowercase.end())));
+        publickey = privateKey->getPublicKey().toString();
+    } catch (const std::exception& e) {
+        JAMI_ERR("[Account %s] can't export account: %s", getAccountID().c_str(), e.what());
+        emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(getAccountID(), 1, name);
+        return;
+    }
+
+    nameDir_.get().registerName(accountInfo_->accountId, nameLowercase, accountInfo_->ethAccount, [acc=getAccountID(), name, w=weak()](NameDirectory::RegistrationResponse response){
+        int res = (response == NameDirectory::RegistrationResponse::success)      ? 0 : (
+                  (response == NameDirectory::RegistrationResponse::invalidName)  ? 2 : (
+                  (response == NameDirectory::RegistrationResponse::alreadyTaken) ? 3 : 4));
+        if (response == NameDirectory::RegistrationResponse::success) {
+            if (auto this_ = w.lock()) {
+                std::unique_lock<std::mutex> lock(this_->configurationMutex_);
+                this_->registeredName_ = name;
+            }
+        }
+        emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
+    }, signedName, publickey);
+}
+#endif
+*/
 
 }
