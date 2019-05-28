@@ -24,9 +24,6 @@ PJPROJECT_OPTIONS := --disable-oss          \
                      --disable-libwebrtc    \
                      --with-gnutls=$(PREFIX)
 
-PJPROJECT_EXTRA_CFLAGS = -g -DPJ_ENABLE_EXTRA_CHECK=1 -DPJ_ICE_MAX_CAND=256 -DPJ_ICE_MAX_CHECKS=1024 -DPJ_ICE_COMP_BITS=2 -DPJ_ICE_MAX_STUN=3 -DPJSIP_MAX_PKT_LEN=8000 -DPJ_ICE_ST_MAX_CAND=32 -DPJ_HAS_TCP=1
-PJPROJECT_EXTRA_CXXFLAGS = -g -DPJ_ENABLE_EXTRA_CHECK=1 -DPJ_ICE_MAX_CAND=256 -DPJ_ICE_MAX_CHECKS=1024 -DPJ_ICE_COMP_BITS=2 -DPJ_ICE_MAX_STUN=3 -DPJSIP_MAX_PKT_LEN=8000 -DPJ_ICE_ST_MAX_CAND=32 -DPJ_HAS_TCP=1
-
 ifdef HAVE_WIN64
 PJPROJECT_EXTRA_CFLAGS += -DPJ_WIN64=1
 endif
@@ -67,6 +64,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/rfc6062.patch
 	$(APPLY) $(SRC)/pjproject/rfc6544.patch
 	$(APPLY) $(SRC)/pjproject/ice_config.patch
+	$(APPLY) $(SRC)/pjproject/sip_config.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
@@ -76,5 +74,5 @@ ifdef HAVE_IOS
 else
 	cd $< && $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 endif
-	cd $< && CFLAGS="$(PJPROJECT_EXTRA_CFLAGS)" CXXFLAGS="$(PJPROJECT_EXTRA_CXXFLAGS)" EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
+	cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
 	touch $@
