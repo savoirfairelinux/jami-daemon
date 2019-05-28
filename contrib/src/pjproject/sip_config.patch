@@ -1,0 +1,14 @@
+ pjsip/include/pjsip/sip_config.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pjsip/include/pjsip/sip_config.h b/pjsip/include/pjsip/sip_config.h
+index 904df24e..987ff41d 100644
+--- a/pjsip/include/pjsip/sip_config.h
++++ b/pjsip/include/pjsip/sip_config.h
+@@ -359,7 +359,7 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
+  * containing presence information can be quite large (>1500).
+  */
+ #ifndef PJSIP_MAX_PKT_LEN
+-#   define PJSIP_MAX_PKT_LEN		4000
++#   define PJSIP_MAX_PKT_LEN		8000
+ #endif
