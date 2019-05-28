@@ -427,7 +427,7 @@ VideoInput::initX11(std::string display)
     size_t space = display.find(' ');
 
     clearOptions();
-    decOpts_.format = "x11grab";
+    decOpts_.format = "xcbgrab";
     decOpts_.framerate = 25;
 
     if (space != std::string::npos) {
