@@ -196,6 +196,7 @@ DBusClient::initLibrary(int flags)
         exportable_callback<PresenceSignal::NewServerSubscriptionRequest>(bind(&DBusPresenceManager::newServerSubscriptionRequest, presM, _1)),
         exportable_callback<PresenceSignal::ServerError>(bind(&DBusPresenceManager::serverError, presM, _1, _2, _3)),
         exportable_callback<PresenceSignal::NewBuddyNotification>(bind(&DBusPresenceManager::newBuddyNotification, presM, _1, _2, _3, _4)),
+        exportable_callback<PresenceSignal::NearbyPeerNotification>(bind(&DBusPresenceManager::nearbyPeerNotification, presM, _1, _2, _3, _4)),
         exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&DBusPresenceManager::subscriptionStateChanged, presM, _1, _2, _3)),
     };
 
