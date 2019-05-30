@@ -1,5 +1,5 @@
 # PJPROJECT
-PJPROJECT_VERSION := 6b9212dcb4b3f781c1e922ae544b063880bc46ac
+PJPROJECT_VERSION := 5dfa75be7d69047387f9b0436dd9492bbbf03fe4
 PJPROJECT_URL := https://github.com/pjsip/pjproject/archive/$(PJPROJECT_VERSION).tar.gz
 
 PJPROJECT_OPTIONS := --disable-oss          \
@@ -61,7 +61,6 @@ endif
 	$(APPLY) $(SRC)/pjproject/fix_turn_fallback.patch
 	$(APPLY) $(SRC)/pjproject/fix_ioqueue_ipv6_sendto.patch
 	$(APPLY) $(SRC)/pjproject/add_dtls_transport.patch
-	$(APPLY) $(SRC)/pjproject/rfc6062.patch
 	$(APPLY) $(SRC)/pjproject/rfc6544.patch
 	$(APPLY) $(SRC)/pjproject/ice_config.patch
 	$(APPLY) $(SRC)/pjproject/sip_config.patch
