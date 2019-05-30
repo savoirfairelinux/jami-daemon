@@ -251,7 +251,8 @@ void VideoRtpSession::forceKeyFrame()
 void
 VideoRtpSession::setRotation(int rotation)
 {
-    receiveThread_->setRotation(rotation);
+    if (receiveThread_)
+        receiveThread_->setRotation(rotation);
 }
 
 void
