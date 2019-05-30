@@ -1082,8 +1082,11 @@ SIPCall::onMediaUpdate()
 
     // Main call (no subcalls) must wait for ICE now, the rest of code needs to access
     // to a negotiated transport.
-    if (not isSubcall())
-        waitForIceAndStartMedia();
+    runOnMainThread([w = weak()] {
+        if (auto this_ = w.lock())
+            if (not this_->isSubcall())
+                this_->waitForIceAndStartMedia();
+    });
 }
 
 void
