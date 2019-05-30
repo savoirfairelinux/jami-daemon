@@ -78,7 +78,6 @@ MessageEngine::retrySend(const std::string& peer)
     std::vector<PendingMsg> pending {};
     {
         std::lock_guard<std::mutex> lock(messagesMutex_);
-        auto now = clock::now();
         auto p = messages_.find(peer);
         if (p == messages_.end())
             return;
