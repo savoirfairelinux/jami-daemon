@@ -77,6 +77,7 @@ DRING_PUBLIC void registerAllAccounts(void);
 DRING_PUBLIC uint64_t sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads);
 DRING_PUBLIC bool cancelMessage(const std::string& accountID, uint64_t message);
 DRING_PUBLIC std::vector<Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
+DRING_PUBLIC std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 DRING_PUBLIC int getMessageStatus(uint64_t id);
 DRING_PUBLIC int getMessageStatus(const std::string& accountID, uint64_t id);
 
