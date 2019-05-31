@@ -160,6 +160,10 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
             return {};
         }
 
+        virtual std::map<std::string, std::string> getNearbyPeers(const std::string& accountID) {
+            return {};
+        }
+
         /**
          * Return the status corresponding to the token.
          */
