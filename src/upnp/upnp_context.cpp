@@ -958,7 +958,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
              JAMI_DBG("UPnP: CP received a discovery search result"); */
 
         /* check if we are already in the process of checking this device */
-        std::lock_guard<std::mutex> lock(cpDeviceMutex_);
+        std::unique_lock<std::mutex> lock(cpDeviceMutex_);
 
         /*
          * Check if this device ID is already in the list. If we reach the past-the-end
@@ -969,6 +969,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
         if (it == cpDevices_.end()) {
             JAMI_DBG("PUPnP: New device ID found -> %s.", deviceId.c_str());
             cpDevices_.emplace(deviceId);
+            lock.unlock();
 
             if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS)
                 JAMI_WARN("UPnP: Error in discovery event received by the CP: %s",
@@ -996,7 +997,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
             } else {
                 parseDevice(desc_doc.get(), d_event);
             }
-        } 
+        }
     }
     break;
 
@@ -1011,7 +1012,6 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
             JAMI_WARN("UPnP: Error in ByeBye received by the CP: %s",
                       UpnpGetErrorMessage(UpnpDiscovery_get_ErrCode(d_event)));
 
-        /* TODO: check if its a device we care about and remove it from the relevant lists */
         std::lock_guard<std::mutex> lock(cpDeviceMutex_);
         std::string deviceId(UpnpDiscovery_get_DeviceID_cstr(d_event));
         cpDevices_.erase(deviceId);
