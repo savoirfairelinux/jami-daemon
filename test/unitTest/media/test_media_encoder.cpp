@@ -157,15 +157,15 @@ MediaEncoderTest::testMultiStream()
 
     try {
         encoder_->openOutput("test.mkv");
-        encoder_->setOptions(v);
         encoder_->setOptions(a);
-        int videoIdx = encoder_->addStream(*vp8Codec.get());
-        CPPUNIT_ASSERT(videoIdx >= 0);
         CPPUNIT_ASSERT(encoder_->getStreamCount() == 1);
         int audioIdx = encoder_->addStream(*opusCodec.get());
         CPPUNIT_ASSERT(audioIdx >= 0);
-        CPPUNIT_ASSERT(videoIdx != audioIdx);
+        encoder_->setOptions(v);
         CPPUNIT_ASSERT(encoder_->getStreamCount() == 2);
+        int videoIdx = encoder_->addStream(*vp8Codec.get());
+        CPPUNIT_ASSERT(videoIdx >= 0);
+        CPPUNIT_ASSERT(videoIdx != audioIdx);
         encoder_->setIOContext(nullptr);
         int sentSamples = 0;
         AVFrame* audio = nullptr;
