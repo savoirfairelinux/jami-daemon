@@ -740,14 +740,15 @@ SIPCall::removeCall()
 void
 SIPCall::onFailure(signed cause)
 {
-    setState(CallState::MERROR, ConnectionState::DISCONNECTED, cause);
-    runOnMainThread([w = std::weak_ptr<Call>(shared_from_this())] {
-        if (auto shared = w.lock()) {
-            auto& call = *shared;
-            Manager::instance().callFailure(call);
-            call.removeCall();
-        }
-    });
+    if (setState(CallState::MERROR, ConnectionState::DISCONNECTED, cause)) {
+        runOnMainThread([w = weak()] {
+            if (auto shared = w.lock()) {
+                auto& call = *shared;
+                Manager::instance().callFailure(call);
+                call.removeCall();
+            }
+        });
+    }
 }
 
 void
@@ -758,7 +759,7 @@ SIPCall::onBusyHere()
     else
         setState(CallState::BUSY, ConnectionState::DISCONNECTED);
 
-    runOnMainThread([w = std::weak_ptr<Call>(shared_from_this())] {
+    runOnMainThread([w = weak()] {
         if (auto shared = w.lock()) {
             auto& call = *shared;
             Manager::instance().callBusy(call);
@@ -770,7 +771,7 @@ SIPCall::onBusyHere()
 void
 SIPCall::onClosed()
 {
-    runOnMainThread([w = std::weak_ptr<Call>(shared_from_this())] {
+    runOnMainThread([w = weak()] {
         if (auto shared = w.lock()) {
             auto& call = *shared;
             Manager::instance().peerHungupCall(call);
@@ -787,7 +788,7 @@ SIPCall::onAnswered()
     if (getConnectionState() != ConnectionState::CONNECTED) {
         setState(CallState::ACTIVE, ConnectionState::CONNECTED);
         if (not isSubcall()) {
-            runOnMainThread([w = std::weak_ptr<Call>(shared_from_this())] {
+            runOnMainThread([w = weak()] {
                 if (auto shared = w.lock()) {
                     Manager::instance().peerAnsweredCall(*shared);
                 }
@@ -1093,13 +1094,12 @@ void
 SIPCall::waitForIceAndStartMedia()
 {
     // Initialization waiting task
-    auto weak_call = std::weak_ptr<SIPCall>(std::static_pointer_cast<SIPCall>(shared_from_this()));
-    Manager::instance().addTask([weak_call] {
+    Manager::instance().addTask([weak_call = weak()] {
         // TODO: polling algo, to it by event
         if (auto call = weak_call.lock()) {
             auto ice = call->getIceMediaTransport();
 
-            if (ice->isFailed()) {
+            if (not ice or ice->isFailed()) {
                 JAMI_ERR("[call:%s] Media ICE init failed", call->getCallId().c_str());
                 call->onFailure(EIO);
                 return false;
@@ -1126,7 +1126,7 @@ SIPCall::waitForIceAndStartMedia()
                 if (auto call = weak_call.lock()) {
                     auto ice = call->getIceMediaTransport();
 
-                    if (ice->isFailed()) {
+                    if (not ice or ice->isFailed()) {
                         JAMI_ERR("[call:%s] Media ICE negotiation failed", call->getCallId().c_str());
                         call->onFailure(EIO);
                         return false;
