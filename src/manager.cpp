@@ -3159,4 +3159,12 @@ Manager::getLastMessages(const std::string& accountID, const uint64_t& base_time
     return {};
 }
 
+std::map<std::string, std::string>
+Manager::getNearbyPeers(const std::string& accountID)
+{
+    if (const auto acc = getAccount<JamiAccount>(accountID))
+        return acc->getNearbyPeers();
+    return {};
+}
+
 } // namespace jami

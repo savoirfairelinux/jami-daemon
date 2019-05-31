@@ -168,6 +168,12 @@ DBusConfigurationManager::getLastMessages(const std::string& accountID, const ui
     return result;
 }
 
+std::map<std::string, std::string>
+DBusConfigurationManager::getNearbyPeers(const std::string& accountID)
+{
+    return DRing::getNearbyPeers(accountID);
+}
+
 auto
 DBusConfigurationManager::getMessageStatus(const uint64_t& id) -> decltype(DRing::getMessageStatus(id))
 {
