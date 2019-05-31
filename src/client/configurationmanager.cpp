@@ -270,6 +270,13 @@ getLastMessages(const std::string& accountID, const uint64_t& base_timestamp)
     return {};
 }
 
+std::map<std::string, std::string>
+getNearbyPeers(const std::string& accountID)
+{
+    return jami::Manager::instance().getNearbyPeers(accountID);
+}
+
+
 int
 getMessageStatus(uint64_t messageId)
 {
