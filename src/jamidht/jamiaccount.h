@@ -398,6 +398,11 @@ class JamiAccount : public SIPAccountBase {
         std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) override;
 
         void saveConfig() const;
+        
+        /**
+         * Get current discovered peers account id and display name
+         */
+        std::map<std::string, std::string> getNearbyPeers();
 
     private:
         NON_COPYABLE(JamiAccount);
@@ -696,6 +701,7 @@ class JamiAccount : public SIPAccountBase {
         std::mutex dismtx_;
         std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
         std::map<dht::InfoHash, DiscoveredPeer> discoveredPeers_;
+        std::map<std::string, std::string> discoveredPeerMap_;
         bool accountPeerDiscovery_ {true};
 
         std::shared_ptr<RepeatedTask> eventHandler {};
