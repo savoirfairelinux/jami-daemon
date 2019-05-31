@@ -859,6 +859,8 @@ class Manager {
         void addTask(std::function<bool()>&& task);
         std::shared_ptr<Task> scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::time_point when);
 
+        std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
+
 #ifdef ENABLE_VIDEO
         /**
          * Create a new SinkClient instance, store it in an internal cache as a weak_ptr
