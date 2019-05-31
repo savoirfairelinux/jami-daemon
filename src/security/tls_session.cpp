@@ -120,15 +120,6 @@ duration2ms(std::chrono::duration<Rep, Period> d)
     return std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
 }
 
-static inline uint64_t
-array2uint(const std::array<uint8_t, 8>& a)
-{
-    uint64_t res = 0;
-    for (int i = 0; i < 8; ++i)
-        res = (res << 8) + a[i];
-    return res;
-}
-
 //==============================================================================
 
 namespace {
@@ -238,13 +229,11 @@ public:
     // State machine
     TlsSessionState handleStateSetup(TlsSessionState state);
     TlsSessionState handleStateHandshake(TlsSessionState state);
-    TlsSessionState handleStateMtuDiscovery(TlsSessionState state);
     TlsSessionState handleStateEstablished(TlsSessionState state);
     TlsSessionState handleStateShutdown(TlsSessionState state);
     std::map<TlsSessionState, StateHandler> fsmHandlers_ {};
     std::atomic<TlsSessionState> state_ {TlsSessionState::SETUP};
     std::atomic<TlsSessionState> newState_ {TlsSessionState::NONE};
-    std::atomic<int> maxPayload_ {-1};
 
     // IO GnuTLS <-> ICE
     std::mutex rxMutex_ {};
@@ -266,7 +255,6 @@ public:
     ssize_t recvRaw(void*, size_t);
     int waitForRawData(std::chrono::milliseconds);
 
-    bool initFromRecordState(int offset = 0);
     void handleDataPacket(std::vector<ValueType>&&, uint64_t);
     void flushRxQueue();
 
@@ -320,13 +308,6 @@ public:
     void cleanup();
 
     ScheduledExecutor scheduler_;
-
-    // Path mtu discovery
-    std::array<int, 3> MTUS_;
-    int mtuProbe_;
-    int hbPingRecved_ {0};
-    bool pmtudOver_ {false};
-    void pathMtuHeartbeat();
 
     std::mutex requestsMtx_;
     std::set<std::shared_ptr<dht::http::Request>> requests_;
@@ -892,23 +873,6 @@ TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
 }
 
 bool
-TlsSession::TlsSessionImpl::initFromRecordState(int offset)
-{
-    std::array<uint8_t, 8> seq;
-    if (gnutls_record_get_state(session_, 1, nullptr, nullptr, nullptr, &seq[0])
-        != GNUTLS_E_SUCCESS) {
-        JAMI_ERR("[TLS] Fatal-error Unable to read initial state");
-        return false;
-    }
-
-    baseSeq_ = array2uint(seq) + offset;
-    gapOffset_ = baseSeq_;
-    lastRxSeq_ = baseSeq_ - 1;
-    JAMI_DBG("[TLS] Initial sequence number: %lx", baseSeq_);
-    return true;
-}
-
-bool
 TlsSession::TlsSessionImpl::setup()
 {
     // Setup FSM
@@ -917,9 +881,6 @@ TlsSession::TlsSessionImpl::setup()
     };
     fsmHandlers_[TlsSessionState::HANDSHAKE] = [this](TlsSessionState s) {
         return handleStateHandshake(s);
-    };
-    fsmHandlers_[TlsSessionState::MTU_DISCOVERY] = [this](TlsSessionState s) {
-        return handleStateMtuDiscovery(s);
     };
     fsmHandlers_[TlsSessionState::ESTABLISHED] = [this](TlsSessionState s) {
         return handleStateEstablished(s);
@@ -1057,117 +1018,6 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     return TlsSessionState::ESTABLISHED;
 }
 
-TlsSessionState
-TlsSession::TlsSessionImpl::handleStateMtuDiscovery(UNUSED TlsSessionState state)
-{
-    if (!transport_) {
-        JAMI_WARN("No transport available when discovering the MTU");
-        return TlsSessionState::SHUTDOWN;
-    }
-    mtuProbe_ = transport_->maxPayload();
-    assert(mtuProbe_ >= MIN_MTU);
-    MTUS_ = {MIN_MTU, std::max((mtuProbe_ + MIN_MTU) / 2, MIN_MTU), mtuProbe_};
-
-    // retrocompatibility check
-    if (gnutls_heartbeat_allowed(session_, GNUTLS_HB_LOCAL_ALLOWED_TO_SEND) == 1) {
-        if (!isServer_) {
-            pathMtuHeartbeat();
-            if (state_ == TlsSessionState::SHUTDOWN) {
-                JAMI_ERR("[TLS] session destroyed while performing PMTUD, shuting down");
-                return TlsSessionState::SHUTDOWN;
-            }
-            pmtudOver_ = true;
-        }
-    } else {
-        JAMI_ERR() << "[TLS] PEER HEARTBEAT DISABLED: using transport MTU value " << mtuProbe_;
-        pmtudOver_ = true;
-    }
-
-    gnutls_dtls_set_mtu(session_, mtuProbe_);
-    maxPayload_ = gnutls_dtls_get_data_mtu(session_);
-
-    if (pmtudOver_) {
-        JAMI_DBG() << "[TLS] maxPayload: " << maxPayload_.load();
-        if (!initFromRecordState())
-            return TlsSessionState::SHUTDOWN;
-    }
-
-    return TlsSessionState::ESTABLISHED;
-}
-
-/*
- * Path MTU discovery heuristic
- * heuristic description:
- * The two members of the current tls connection will exchange dtls heartbeat messages
- * of increasing size until the heartbeat times out which will be considered as a packet
- * drop from the network due to the size of the packet. (one retry to test for a buffer issue)
- * when timeout happens or all the values have been tested, the mtu will be returned.
- * In case of unexpected error the first (and minimal) value of the mtu array
- */
-void
-TlsSession::TlsSessionImpl::pathMtuHeartbeat()
-{
-    JAMI_DBG() << "[TLS] PMTUD: starting probing with " << HEARTBEAT_RETRANS_TIMEOUT.count()
-               << "ms of retransmission timeout";
-
-    gnutls_heartbeat_set_timeouts(session_,
-                                  HEARTBEAT_RETRANS_TIMEOUT.count(),
-                                  HEARTBEAT_TOTAL_TIMEOUT.count());
-
-    int errno_send = GNUTLS_E_SUCCESS;
-    int mtuOffset = 0;
-
-    // when the remote (server) has a IPV6 interface selected by ICE, and local (client) has a IPV4
-    // selected, the path MTU discovery triggers errors for packets too big on server side because
-    // of different IP headers overhead. Hence we have to signal to the TLS session to reduce the
-    // MTU on client size accordingly.
-    if (transport_ and transport_->localAddr().isIpv4() and transport_->remoteAddr().isIpv6()) {
-        mtuOffset = ASYMETRIC_TRANSPORT_MTU_OFFSET;
-        JAMI_WARN() << "[TLS] local/remote IP protocol version not alike, use an MTU offset of "
-                    << ASYMETRIC_TRANSPORT_MTU_OFFSET << " bytes to compensate";
-    }
-
-    mtuProbe_ = MTUS_[0];
-
-    for (auto mtu : MTUS_) {
-        gnutls_dtls_set_mtu(session_, mtu);
-        auto data_mtu = gnutls_dtls_get_data_mtu(session_);
-        JAMI_DBG() << "[TLS] PMTUD: mtu " << mtu << ", payload " << data_mtu;
-        auto bytesToSend = data_mtu - mtuOffset - 3; // want to know why -3? ask gnutls!
-
-        do {
-            errno_send = gnutls_heartbeat_ping(session_,
-                                               bytesToSend,
-                                               HEARTBEAT_TRIES,
-                                               GNUTLS_HEARTBEAT_WAIT);
-        } while (errno_send == GNUTLS_E_AGAIN
-                 || (errno_send == GNUTLS_E_INTERRUPTED && state_ != TlsSessionState::SHUTDOWN));
-
-        if (errno_send != GNUTLS_E_SUCCESS) {
-            JAMI_DBG() << "[TLS] PMTUD: mtu " << mtu << " [FAILED]";
-            break;
-        }
-
-        mtuProbe_ = mtu;
-        JAMI_DBG() << "[TLS] PMTUD: mtu " << mtu << " [OK]";
-    }
-
-    if (errno_send == GNUTLS_E_TIMEDOUT) { // timeout is considered as a packet loss, then the good
-                                           // mtu is the precedent
-        if (mtuProbe_ == MTUS_[0]) {
-            JAMI_WARN() << "[TLS] PMTUD: no response on first ping, using minimal MTU value "
-                        << mtuProbe_;
-        } else {
-            JAMI_WARN() << "[TLS] PMTUD: timed out, using last working mtu " << mtuProbe_;
-        }
-    } else if (errno_send != GNUTLS_E_SUCCESS) {
-        JAMI_ERR() << "[TLS] PMTUD: failed with gnutls error '" << gnutls_strerror(errno_send)
-                   << '\'';
-    } else {
-        JAMI_DBG() << "[TLS] PMTUD: reached maximal value";
-    }
-}
-
 void
 TlsSession::TlsSessionImpl::handleDataPacket(std::vector<ValueType>&& buf, uint64_t pkt_seq)
 {
@@ -1268,8 +1118,7 @@ TlsSession::TlsSessionImpl::flushRxQueue()
     lastReadTime_ = now;
 }
 
-TlsSessionState
-TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
+TlsSessionState TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState)
 {
     auto disconnected = [this]() -> bool {
         return state_.load() != TlsSessionState::ESTABLISHED
