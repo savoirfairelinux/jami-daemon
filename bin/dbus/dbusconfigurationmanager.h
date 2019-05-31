@@ -84,6 +84,7 @@ class DRING_PUBLIC DBusConfigurationManager :
         void registerAllAccounts(void);
         uint64_t sendTextMessage(const std::string& accoundID, const std::string& to, const std::map<std::string, std::string>& payloads);
         std::vector<RingDBusMessage> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
+        std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
         int getMessageStatus(const uint64_t& id);
         int getMessageStatus(const std::string& accountID, const uint64_t& id);
         bool cancelMessage(const std::string& accountID, const uint64_t& messageId);
