@@ -559,6 +559,16 @@
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="messages"/>
         </method>
 
+
+       <method name="getNearbyPeers" tp:name-for-bindings="getNearbyPeers">
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="a{ss}" name="result" direction="out" tp:type="String_String_Map"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+             <tp:docstring>
+               Get Discovered Peer Map
+             </tp:docstring>
+        </method>
+
        <method name="getMessageStatus" tp:name-for-bindings="getMessageStatus">
           <arg type="t" name="id" direction="in"/>
           <arg type="i" name="status" direction="out">
