@@ -3709,6 +3709,7 @@ JamiAccount::startAccountDiscovery()
             //Create or Find the old one
             auto& dp = discoveredPeers_[v.accountId];
             dp.displayName = v.displayName;
+            discoveredPeerMap_[v.accountId.toString()] = v.displayName;
             if (dp.cleanupTask) {
                 dp.cleanupTask->cancel();
             } else {
@@ -3722,6 +3723,7 @@ JamiAccount::startAccountDiscovery()
                     {
                         std::lock_guard<std::mutex> lc(this_->discoveryMapMtx_);
                         this_->discoveredPeers_.erase(p);
+                        this_->discoveredPeerMap_.erase(p.toString());
                     }
                     //Send Deleted Peer
                     emitSignal<DRing::PresenceSignal::NearbyPeerNotification>(this_->getAccountID(), p.toString(), 1, a);
@@ -3730,6 +3732,12 @@ JamiAccount::startAccountDiscovery()
             }, PEER_DISCOVERY_EXPIRATION);
         }
     });
+}
+
+std::map<std::string, std::string>
+JamiAccount::getNearbyPeers()
+{
+    return discoveredPeerMap_;
 }
 
 } // namespace jami
