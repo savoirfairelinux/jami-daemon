@@ -33,38 +33,37 @@
 #include "ip_utils.h"
 #include "string_utils.h"
 
-#include "igd.h"
+#include "../igd/igd.h"
 #include "../mapping/mapping.h"
-#include "../mapping/global_mapping.h"
 
 namespace jami { namespace upnp {
 
-#if HAVE_LIBNATPMP
-
-using clock = std::chrono::system_clock;
-using time_point = clock::time_point;
-
-class PMPIGD : public IGD 
+class UPnPProtocol 
 {
 public:
-    PMPIGD(IpAddr&& localIp = {}, IpAddr&& publicIp = {}):
-        IGD(std::move(localIp), std::move(publicIp)){}
+    UPnPProtocol();
+    virtual ~UPnPProtocol();
+
+    // Signals a change in the network.
+    virtual void connectivityChanged() = 0;
+
+    // Search for IGD.
+    virtual void searchForIGD() = 0;
+
+    // Tries to add mapping. Assumes mutex is already locked.
+    virtual Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, int *upnp_error) = 0;
+
+    // Removes a mapping.
+    virtual void removeMapping(const Mapping& mapping) = 0;  
+
+    // Removes all local mappings of IGD that we're added by the application.
+    virtual void removeAllLocalMappings(IGD* igd) = 0;
+
+    // Add IGD listener.
+    virtual size_t addIGDListener(IGDFoundCallback&& cb) = 0;
     
-    bool operator==(PMPIGD& other) const;
-
-    void clear();
-    void clearMappings();
-
-    GlobalMapping* getNextMappingToRenew() const;
-    
-    time_point getRenewalTime() const;
-
-public:
-    time_point renewal_ {time_point::min()};
-    std::vector<GlobalMapping> toRemove_ {};
-    bool clearAll_ {false};
+    // Remove IGD listener.
+    virtual void removeIGDListener(size_t token) = 0;
 };
-
-#endif
 
 }} // namespace jami::upnp

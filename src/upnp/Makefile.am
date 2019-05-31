@@ -4,6 +4,7 @@ noinst_LTLIBRARIES = libupnpcontrol.la
 
 SUBDIRS = mapping
 SUBDIRS += igd
+SUBDIRS += protocol
 
 libupnpcontrol_la_CXXFLAGS = \
 				@CXXFLAGS@
@@ -16,4 +17,5 @@ libupnpcontrol_la_SOURCES = \
         
 libupnpcontrol_la_LIBADD = \
 	./mapping/libupnpmapping.la \
-        ./igd/libupnpigd.la
+        ./igd/libupnpigd.la \
+        ./protocol/libupnpprotocol.la 

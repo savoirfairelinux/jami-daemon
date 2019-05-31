@@ -691,8 +691,9 @@ bool SIPAccount::mapPortUPnP()
         uint16_t port_used;
         bool added = upnp_->addAnyMapping(publishedPort_, localPort_, jami::upnp::PortType::UDP, false, false, &port_used);
         if (added) {
+            JAMI_WARN("[sipaccount:%p] UPnPContoller: Opened port %u:%u.", this, publishedPort_, localPort_);
             if (port_used != publishedPort_)
-                JAMI_DBG("UPnP could not map published port %u for SIP, using %u instead", publishedPort_, port_used);
+                JAMI_WARN("[sipaccount:%p] Could not map published port %u for SIP, using %u instead.", publishedPort_, port_used);
             publishedPortUsed_ = port_used;
         }
     }

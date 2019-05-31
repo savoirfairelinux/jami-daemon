@@ -18,53 +18,18 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#pragma once
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <string>
-#include <map>
-#include <functional>
-#include <chrono>
-
-#include "noncopyable.h"
-#include "ip_utils.h"
-#include "string_utils.h"
-
-#include "igd.h"
-#include "../mapping/mapping.h"
-#include "../mapping/global_mapping.h"
+#include "upnp_protocol.h"
 
 namespace jami { namespace upnp {
 
-#if HAVE_LIBNATPMP
-
-using clock = std::chrono::system_clock;
-using time_point = clock::time_point;
-
-class PMPIGD : public IGD 
+UPnPProtocol::UPnPProtocol()
 {
-public:
-    PMPIGD(IpAddr&& localIp = {}, IpAddr&& publicIp = {}):
-        IGD(std::move(localIp), std::move(publicIp)){}
-    
-    bool operator==(PMPIGD& other) const;
 
-    void clear();
-    void clearMappings();
+}
 
-    GlobalMapping* getNextMappingToRenew() const;
-    
-    time_point getRenewalTime() const;
+UPnPProtocol::~UPnPProtocol()
+{
 
-public:
-    time_point renewal_ {time_point::min()};
-    std::vector<GlobalMapping> toRemove_ {};
-    bool clearAll_ {false};
-};
-
-#endif
+}
 
 }} // namespace jami::upnp
