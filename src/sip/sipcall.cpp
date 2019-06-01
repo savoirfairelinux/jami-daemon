@@ -167,11 +167,10 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
 
     if (transport_) {
         setSecure(transport_->isSecure());
-        std::weak_ptr<SIPCall> wthis_ = std::static_pointer_cast<SIPCall>(shared_from_this());
 
         // listen for transport destruction
         transport_->addStateListener(list_id,
-            [wthis_] (pjsip_transport_state state, const pjsip_transport_state_info*) {
+            [wthis_ = weak()] (pjsip_transport_state state, const pjsip_transport_state_info*) {
                 if (auto this_ = wthis_.lock()) {
                     // end the call if the SIP transport is shut down
                     if (not SipTransport::isAlive(this_->transport_, state) and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
