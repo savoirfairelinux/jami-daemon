@@ -19,6 +19,10 @@
 
 #include "string_utils.h"
 
+#include <opendht/infohash.h>
+#include <opendht/value.h>
+#include <opendht/default_types.h>
+
 #include <msgpack.hpp>
 #include <json/json.h>
 
@@ -106,6 +110,53 @@ struct Contact
     }
 
     MSGPACK_DEFINE_MAP(added, removed, confirmed, banned)
+};
+
+struct TrustRequest {
+    dht::InfoHash device;
+    time_t received;
+    std::vector<uint8_t> payload;
+    MSGPACK_DEFINE_MAP(device, received, payload)
+};
+
+struct DeviceAnnouncement : public dht::SignedValue<DeviceAnnouncement>
+{
+private:
+    using BaseClass = dht::SignedValue<DeviceAnnouncement>;
+public:
+    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+    dht::InfoHash dev;
+    MSGPACK_DEFINE_MAP(dev);
+};
+
+struct DeviceSync : public dht::EncryptedValue<DeviceSync>
+{
+    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+    uint64_t date;
+    std::string device_name;
+    std::map<dht::InfoHash, std::string> devices_known;
+    std::map<dht::InfoHash, Contact> peers;
+    std::map<dht::InfoHash, TrustRequest> trust_requests;
+    MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers, trust_requests)
+};
+
+struct KnownDevice {
+    using clock = std::chrono::system_clock;
+    using time_point = clock::time_point;
+
+    /** Device certificate */
+    std::shared_ptr<dht::crypto::Certificate> certificate;
+
+    /** Device name */
+    std::string name {};
+
+    /** Time of last received device sync */
+    time_point last_sync {time_point::min()};
+
+    KnownDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                const std::string& n = {},
+                time_point sync = time_point::min())
+        : certificate(cert), name(n), last_sync(sync) {}
 };
 
 }
