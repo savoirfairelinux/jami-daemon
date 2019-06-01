@@ -58,6 +58,8 @@ public:
     virtual void initRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
     virtual void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
 
+    std::shared_ptr<AccountCodecInfo> getCodec() const { return send_.codec; }
+
 protected:
     std::recursive_mutex mutex_;
     std::unique_ptr<SocketPair> socketPair_;

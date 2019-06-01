@@ -134,15 +134,6 @@ MediaEncoder::getLastSeqValue()
         return 0;
 }
 
-std::string
-MediaEncoder::getEncoderName() const
-{
-    if (videoOpts_.isValid())
-        return videoCodec_;
-    else
-        return audioCodec_;
-}
-
 void
 MediaEncoder::openOutput(const std::string& filename, const std::string& format)
 {
@@ -698,15 +689,6 @@ MediaEncoder::extractProfileLevelID(const std::string &parameters,
             break;
     }
     JAMI_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
-}
-
-bool
-MediaEncoder::useCodec(const jami::AccountCodecInfo* codec) const noexcept
-{
-    if (codec->systemCodecInfo.mediaType == MEDIA_VIDEO)
-        return videoCodec_ == codec->systemCodecInfo.name;
-    else
-        return audioCodec_ == codec->systemCodecInfo.name;
 }
 
 #ifdef RING_ACCEL

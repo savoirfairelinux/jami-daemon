@@ -96,9 +96,9 @@ public:
 
     void setInitSeqVal(uint16_t seqVal);
     uint16_t getLastSeqValue();
-    std::string getEncoderName() const;
 
-    bool useCodec(const AccountCodecInfo* codec) const noexcept;
+    const std::string& getAudioCodec() const { return audioCodec_; }
+    const std::string& getVideoCodec() const { return videoCodec_; }
 
 #ifdef RING_ACCEL
     void enableAccel(bool enableAccel);

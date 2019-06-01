@@ -19,8 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __VIDEO_SENDER_H__
-#define __VIDEO_SENDER_H__
+#pragma once
 
 #include "noncopyable.h"
 #include "media_encoder.h"
@@ -60,8 +59,6 @@ public:
 
     uint16_t getLastSeqValue();
 
-    bool useCodec(const AccountVideoCodecInfo* codec) const;
-
     void setChangeOrientationCallback(std::function<void(int)> cb);
 
 private:
@@ -85,5 +82,3 @@ private:
     std::function<void(int)> changeOrientationCallback_;
 };
 }} // namespace jami::video
-
-#endif // __VIDEO_SENDER_H__

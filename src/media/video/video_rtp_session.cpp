@@ -336,13 +336,6 @@ void VideoRtpSession::exitConference()
     conference_ = nullptr;
 }
 
-bool
-VideoRtpSession::useCodec(const jami::AccountVideoCodecInfo* codec) const
-{
-    return sender_->useCodec(codec);
-}
-
-
 float
 VideoRtpSession::checkPeerPacketLoss()
 {

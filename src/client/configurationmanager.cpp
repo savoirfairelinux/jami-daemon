@@ -505,7 +505,7 @@ setCodecDetails(const std::string& accountID,
                 JAMI_WARN("parameters for %s changed ",
                           foundCodec->systemCodecInfo.name.c_str());
                 if (auto call = jami::Manager::instance().getCurrentCall()) {
-                    if (call->useVideoCodec(foundCodec.get())) {
+                    if (call->getVideoCodec() == foundCodec) {
                         JAMI_WARN("%s running. Need to restart encoding",
                                   foundCodec->systemCodecInfo.name.c_str());
                         call->restartMediaSender();

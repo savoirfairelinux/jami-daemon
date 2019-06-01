@@ -60,7 +60,7 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
     videoEncoder_->setIOContext(muxContext_->getContext());
 
     // Send local video codec in SmartInfo
-    Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getEncoderName());
+    Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getVideoCodec());
 
     // Send the resolution in smartInfo
     Smartools::getInstance().setResolution("local", dev.width, dev.height);
@@ -133,12 +133,6 @@ uint16_t
 VideoSender::getLastSeqValue()
 {
     return videoEncoder_->getLastSeqValue();
-}
-
-bool
-VideoSender::useCodec(const jami::AccountVideoCodecInfo* codec) const
-{
-    return videoEncoder_->useCodec(codec);
 }
 
 void

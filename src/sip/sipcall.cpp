@@ -873,14 +873,19 @@ SIPCall::getAllRemoteCandidates()
     return rem_candidates;
 }
 
-bool
-SIPCall::useVideoCodec(const AccountVideoCodecInfo* codec) const
+std::shared_ptr<AccountCodecInfo>
+SIPCall::getVideoCodec() const
 {
 #ifdef ENABLE_VIDEO
-    if (videortp_->isSending())
-        return videortp_->useCodec(codec);
+    return videortp_->getCodec();
 #endif
-    return false;
+    return {};
+}
+
+std::shared_ptr<AccountCodecInfo>
+SIPCall::getAudioCodec() const
+{
+    return avformatrtp_->getCodec();
 }
 
 void
@@ -1210,6 +1215,8 @@ SIPCall::getDetails() const
 #ifdef ENABLE_VIDEO
     // If Video is not enabled return an empty string
     details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc.isVideoEnabled() ? mediaInput_ : "");
+    if (auto codec = videortp_->getCodec())
+        details.emplace(DRing::Call::Details::VIDEO_CODEC, codec->systemCodecInfo.name);
 #endif
 
 #if HAVE_RINGNS
