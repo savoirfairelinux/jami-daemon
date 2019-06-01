@@ -1217,10 +1217,15 @@ SIPCall::getDetails() const
         details.emplace(DRing::Call::Details::REGISTERED_NAME, peerRegistredName_);
 #endif
 
+#ifdef ENABLE_CLIENT_CERT
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
-        const auto& cipher = pj_ssl_cipher_name(tlsInfos.cipher);
-        details.emplace(DRing::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
+        if (tlsInfos.cipher != PJ_TLS_UNKNOWN_CIPHER) {
+            const auto& cipher = pj_ssl_cipher_name(tlsInfos.cipher);
+            details.emplace(DRing::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
+        } else {
+            details.emplace(DRing::TlsTransport::TLS_CIPHER, "");
+        }
         if (tlsInfos.peerCert) {
             details.emplace(DRing::TlsTransport::TLS_PEER_CERT,
                             tlsInfos.peerCert->toString());
@@ -1239,6 +1244,7 @@ SIPCall::getDetails() const
             details.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM, "");
         }
     }
+#endif
     return details;
 }
 
