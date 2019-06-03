@@ -472,11 +472,11 @@ Account::getUPnPIpAddress() const
  * ie: if it is able to make port mappings
  */
 bool
-Account::getUPnPActive(std::chrono::seconds timeout) const
+Account::getUPnPActive() const
 {
     std::lock_guard<std::mutex> lk(upnp_mtx);
     if (upnp_)
-        return upnp_->hasValidIGD(timeout);
+        return upnp_->hasValidIGD();
     return false;
 }
 
