@@ -62,6 +62,12 @@
     <Filter Include="Source Files\media\video\winvideo">
       <UniqueIdentifier>{96b01e7f-7e05-480c-85a3-fa35ef5f8b87}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\upnp\protocol">
+      <UniqueIdentifier>{13d62143-0c05-410a-bc32-8748a87deaa9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\upnp\protocol\pupnp">
+      <UniqueIdentifier>{a75d6869-9eb3-4cdd-8006-08b5ee5e6050}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\hooks\urlhook.cpp">
@@ -174,15 +180,6 @@
     </ClCompile>
     <ClCompile Include="..\src\jamidht\sips_transport_ice.cpp">
       <Filter>Source Files\jamidht</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\upnp\upnp_context.cpp">
-      <Filter>Source Files\upnp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\upnp\upnp_control.cpp">
-      <Filter>Source Files\upnp</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\upnp\upnp_igd.cpp">
-      <Filter>Source Files\upnp</Filter>
     </ClCompile>
     <ClCompile Include="..\src\sip\sdes_negotiator.cpp">
       <Filter>Source Files\sip</Filter>
@@ -328,9 +325,6 @@
     <ClCompile Include="..\src\string_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\thread_pool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\threadloop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -408,6 +402,27 @@
     </ClCompile>
     <ClCompile Include="..\src\media\video\filter_transpose.cpp">
       <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\upnp_context.cpp">
+      <Filter>Source Files\upnp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\upnp_control.cpp">
+      <Filter>Source Files\upnp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\protocol\igd.cpp">
+      <Filter>Source Files\upnp\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\protocol\mapping.cpp">
+      <Filter>Source Files\upnp\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\protocol\upnp_protocol.cpp">
+      <Filter>Source Files\upnp\protocol</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\protocol\pupnp\pupnp.cpp">
+      <Filter>Source Files\upnp\protocol\pupnp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\protocol\pupnp\upnp_igd.cpp">
+      <Filter>Source Files\upnp\protocol\pupnp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -507,9 +522,6 @@
     <ClInclude Include="..\src\string_utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\thread_pool.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\threadloop.h">
       <Filter>Source Files</Filter>
     </ClInclude>
@@ -604,9 +616,6 @@
       <Filter>Source Files\jamidht</Filter>
     </ClInclude>
     <ClInclude Include="..\src\jamidht\p2p.h">
-      <Filter>Source Files\jamidht</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\jamidht\jamiaccount.h">
       <Filter>Source Files\jamidht</Filter>
     </ClInclude>
     <ClInclude Include="..\src\jamidht\ringcontact.h">
@@ -795,15 +804,6 @@
     <ClInclude Include="..\src\sip\sipvoiplink.h">
       <Filter>Source Files\sip</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\upnp\upnp_context.h">
-      <Filter>Source Files\upnp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\upnp\upnp_control.h">
-      <Filter>Source Files\upnp</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\upnp\upnp_igd.h">
-      <Filter>Source Files\upnp</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\media\media_filter.h">
       <Filter>Source Files\media</Filter>
     </ClInclude>
@@ -839,6 +839,33 @@
     </ClInclude>
     <ClInclude Include="..\src\media\video\filter_transpose.h">
       <Filter>Source Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\upnp_context.h">
+      <Filter>Source Files\upnp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\upnp_control.h">
+      <Filter>Source Files\upnp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\jamidht\jamiaccount.h">
+      <Filter>Source Files\jamidht</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\protocol\global_mapping.h">
+      <Filter>Source Files\upnp\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\protocol\igd.h">
+      <Filter>Source Files\upnp\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\protocol\mapping.h">
+      <Filter>Source Files\upnp\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\protocol\upnp_protocol.h">
+      <Filter>Source Files\upnp\protocol</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\protocol\pupnp\pupnp.h">
+      <Filter>Source Files\upnp\protocol\pupnp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\protocol\pupnp\upnp_igd.h">
+      <Filter>Source Files\upnp\protocol\pupnp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
