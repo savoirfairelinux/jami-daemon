@@ -466,9 +466,7 @@ MediaEncoder::encodeAudio(AudioFrame& frame)
 int
 MediaEncoder::encode(AVFrame* frame, int streamIdx)
 {
-    if (not frame)
-        return -1;
-    if (!initialized_) {
+    if (!initialized_ && frame) {
         // Initialize on first video frame, or first audio frame if no video stream
         bool isVideo = (frame->width > 0 && frame->height > 0);
         if (isVideo or not videoOpts_.isValid()) {
