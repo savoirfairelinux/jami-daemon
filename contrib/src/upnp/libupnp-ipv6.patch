@@ -15,7 +15,7 @@ index af310ca..1ae422f 100644
 @@ -68,6 +68,13 @@
  /*! . */
  #define APPLICATION_LISTENING_PORT 49152
- 
+
 +/* IPV6_V6ONLY is missing from MinGW, hack taken from
 + * http://svn.apache.org/repos/asf/apr/apr/trunk/network_io/win32/sockopt.c
 + */
@@ -33,7 +33,7 @@ index 231c2c5..6a9c27f 100644
 @@ -69,6 +69,13 @@
  	#endif /* UPNP_ENABLE_IPV6 */
  #endif /* INCLUDE_CLIENT_APIS */
- 
+
 +/* IPV6_V6ONLY is missing from MinGW, hack taken from
 + * http://svn.apache.org/repos/asf/apr/apr/trunk/network_io/win32/sockopt.c
 + */
@@ -42,8 +42,8 @@ index 231c2c5..6a9c27f 100644
 +#endif
 +
  void RequestHandler();
- 
+
  enum Listener {
--- 
+--
 1.7.9.7
 
