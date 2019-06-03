@@ -291,7 +291,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * returns whether or not UPnP is enabled and active
          * ie: if it is able to make port mappings
          */
-        bool getUPnPActive(std::chrono::seconds timeout = {}) const;
+        bool getUPnPActive() const;
 
         /**
          * Get the UPnP IP (external router) address.
