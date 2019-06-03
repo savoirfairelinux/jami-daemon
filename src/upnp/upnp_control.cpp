@@ -29,7 +29,8 @@
 #include "logger.h"
 #include "ip_utils.h"
 #include "upnp_context.h"
-#include "upnp_igd.h"
+#include "igd/upnp_igd.h"
+#include "mapping/global_mapping.h"
 
 namespace jami { namespace upnp {
 
@@ -51,34 +52,32 @@ Controller::~Controller()
 }
 
 bool
-Controller::hasValidIGD(std::chrono::seconds timeout)
+Controller::hasValidIGD()
 {
-    return upnpContext_ and upnpContext_->hasValidIGD(timeout);
+    return upnpContext_ and upnpContext_->hasValidIGD();
 }
 
 void
 Controller::setIGDListener(IGDFoundCallback&& cb)
 {
-    if (not upnpContext_)
+    if (not upnpContext_) {
         return;
-    if (listToken_)
+    }
+
+    if (listToken_) {
         upnpContext_->removeIGDListener(listToken_);
+    }
     listToken_ = cb ? upnpContext_->addIGDListener(std::move(cb)) : 0;
 }
 
 bool
-Controller::addAnyMapping(uint16_t port_desired,
-                          uint16_t port_local,
-                          PortType type,
-                          bool use_same_port,
-                          bool unique,
-                          uint16_t *port_used)
+Controller::addAnyMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool use_same_port, bool unique, uint16_t *port_used)
 {
-    if (not upnpContext_)
+    if (not upnpContext_) {
         return false;
+    }
 
-    Mapping mapping = upnpContext_->addAnyMapping(port_desired, port_local, type,
-                                                  use_same_port, unique);
+    Mapping mapping = upnpContext_->addAnyMapping(port_desired, port_local, type, use_same_port, unique);
     if (mapping) {
         auto usedPort = mapping.getPortExternal();
         if (port_used)
@@ -93,22 +92,20 @@ Controller::addAnyMapping(uint16_t port_desired,
 }
 
 bool
-Controller::addAnyMapping(uint16_t port_desired,
-                          PortType type,
-                          bool unique,
-                          uint16_t *port_used)
+Controller::addAnyMapping(uint16_t port_desired, PortType type, bool unique, uint16_t *port_used)
 {
-    return addAnyMapping(port_desired, port_desired, type, true, unique,
-                         port_used);
+    return addAnyMapping(port_desired, port_desired, type, true, unique, port_used);
 }
 
 void
 Controller::removeMappings(PortType type) {
-    if (not upnpContext_)
+    
+    if (not upnpContext_) {
         return;
+    }
 
     auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-    for (auto iter = instanceMappings.begin(); iter != instanceMappings.end(); ){
+    for (auto iter = instanceMappings.begin(); iter != instanceMappings.end();) {
         auto& mapping = iter->second;
         upnpContext_->removeMapping(mapping);
         iter = instanceMappings.erase(iter);
@@ -125,17 +122,19 @@ Controller::removeMappings()
 IpAddr
 Controller::getLocalIP() const
 {
-    if (upnpContext_)
+    if (upnpContext_) {
         return upnpContext_->getLocalIP();
-    return {}; //  empty address
+    }
+    return {}; 
 }
 
 IpAddr
 Controller::getExternalIP() const
 {
-    if (upnpContext_)
+    if (upnpContext_) {
         return upnpContext_->getExternalIP();
-    return {}; //  empty address
+    }
+    return {}; 
 }
 
 }} // namespace jami::upnp
