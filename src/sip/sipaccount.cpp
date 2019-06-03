@@ -696,10 +696,10 @@ bool SIPAccount::mapPortUPnP()
          * a different port, if succesfull, then we have to use that port for SIP
          */
         uint16_t port_used;
-        bool added = upnp_->addAnyMapping(publishedPort_, localPort_, jami::upnp::PortType::UDP, false, false, &port_used);
+        bool added = upnp_->addMapping(publishedPort_, jami::upnp::PortType::UDP, false, &port_used, localPort_);
         if (added) {
             if (port_used != publishedPort_)
-                JAMI_DBG("UPnP could not map published port %u for SIP, using %u instead", publishedPort_, port_used);
+                JAMI_WARN("[Account %s] Could not map published port %u for SIP, using %u instead.", getAccountID().c_str(), publishedPort_, port_used);
             publishedPortUsed_ = port_used;
         }
     }
@@ -731,7 +731,7 @@ void SIPAccount::doRegister()
             if (auto acc = w.lock()) {
                 sip_utils::register_thread();
                 if (not acc->mapPortUPnP())
-                    JAMI_WARN("UPnP: Could not successfully map SIP port with UPnP, continuing with account registration anyways.");
+                    JAMI_WARN("UPnP: Could not successfully map SIP port with UPnP, continuing with account registration anyways");
                 acc->doRegister1_();
             }
         }}.detach();
