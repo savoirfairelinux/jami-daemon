@@ -846,11 +846,11 @@ IceTransport::Impl::selectUPnPIceCandidates()
                         publicIP.setPort(port_used);
                         addReflectiveCandidate(comp_id, candidate.addr, publicIP, candidate.transport);
                     } else
-                        JAMI_WARN("[ice:%p] UPnP: Could not create a port mapping for the ICE candide", this);
+                        JAMI_WARN("[ice:%p] Could not create a port mapping for the ICE candide.", this);
                 }
             }
         } else {
-            JAMI_WARN("[ice:%p] UPnP: Could not determine public IP for ICE candidates", this);
+            JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates.", this);
         }
     }
 }
