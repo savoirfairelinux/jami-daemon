@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
+ *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,8 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef UPNP_H_
-#define UPNP_H_
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -29,7 +29,8 @@
 #include <chrono>
 
 #include "noncopyable.h"
-#include "upnp_igd.h"
+#include "mapping/global_mapping.h"
+#include "igd/upnp_igd.h"
 
 namespace jami {
 class IpAddr;
@@ -39,19 +40,14 @@ namespace jami { namespace upnp {
 
 class UPnPContext;
 
-class Controller {
+class Controller
+{
 public:
-    /* constructor */
     Controller();
-    /* destructor */
     ~Controller();
 
-    /**
-     * Return whether or not this controller has a valid IGD.
-     * @param timeout Time to wait until a valid IGD is found.
-     * If timeout is not given or 0, the function pool (non-blocking).
-     */
-    bool hasValidIGD(std::chrono::seconds timeout = {});
+    // Checks if a valid IGD is available.
+    bool hasValidIGD();
 
     /**
      * Set or clear a listener for valid IGDs.
@@ -69,20 +65,12 @@ public:
      * maps port_desired to port_local; if use_same_port == true, makes sure that
      * that the extranl and internal ports are the same
      */
-    bool addAnyMapping(uint16_t port_desired,
-                       uint16_t port_local,
-                       PortType type,
-                       bool use_same_port,
-                       bool unique,
-                       uint16_t *port_used);
+    bool addAnyMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool use_same_port, bool unique, uint16_t *port_used);
 
     /**
      * addAnyMapping with the local port being the same as the external port
      */
-    bool addAnyMapping(uint16_t port_desired,
-                       PortType type,
-                       bool unique,
-                       uint16_t *port_used);
+    bool addAnyMapping(uint16_t port_desired, PortType type, bool unique, uint16_t *port_used);
 
     /**
      * removes all mappings added by this instance
@@ -126,5 +114,3 @@ private:
 };
 
 }} // namespace jami::upnp
-
-#endif /* UPNP_H_ */
