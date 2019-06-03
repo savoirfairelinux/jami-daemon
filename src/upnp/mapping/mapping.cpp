@@ -18,16 +18,15 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "upnp_igd.h"
+#include "mapping.h"
 
 namespace jami { namespace upnp {
 
-/* move constructor and operator */
-Mapping::Mapping(Mapping&& other) noexcept
-    : port_external_(other.port_external_)
-    , port_internal_(other.port_internal_)
-    , type_(other.type_)
-    , description_(std::move(other.description_))
+Mapping::Mapping(Mapping&& other) noexcept: 
+    port_external_(other.port_external_), 
+    port_internal_(other.port_internal_), 
+    type_(other.type_), 
+    description_(std::move(other.description_))
 {
     other.port_external_ = 0;
     other.port_internal_ = 0;
@@ -35,7 +34,8 @@ Mapping::Mapping(Mapping&& other) noexcept
 
 Mapping& Mapping::operator=(Mapping&& other) noexcept
 {
-    if (this != &other) {
+    if (this != &other) 
+    {
         port_external_ = other.port_external_;
         other.port_external_ = 0;
         port_internal_ = other.port_internal_;
@@ -61,5 +61,15 @@ bool operator!= (const Mapping& cMap1, const Mapping& cMap2)
 {
     return !(cMap1 == cMap2);
 }
+
+std::string Mapping::toString() const 
+{
+    return getPortExternalStr() + ":" + getPortInternalStr() + ", " + getTypeStr();
+}
+
+bool Mapping::isValid() const 
+{
+    return port_external_ == 0 or port_internal_ == 0 ? false : true;
+};
 
 }} // namespace jami::upnp
