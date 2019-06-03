@@ -1955,7 +1955,7 @@ JamiAccount::mapPortUPnP()
         added = upnp_->addAnyMapping(dhtPort_, jami::upnp::PortType::UDP, false, &port_used);
         if (added) {
             if (port_used != dhtPort_)
-                JAMI_DBG("UPnP could not map port %u for DHT, using %u instead", dhtPort_, port_used);
+                JAMI_WARN("[jamiaccount:%p] Could not map port %u for DHT, using %u instead.", this, dhtPort_, port_used);
             dhtPortUsed_ = port_used;
         }
     }
