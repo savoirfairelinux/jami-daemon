@@ -1,6 +1,17 @@
---- upnp/upnp/src/api/upnpapi.c.orig	2013-04-08 00:23:46.000000000 +0200
-+++ upnp/upnp/src/api/upnpapi.c	2013-04-08 00:25:49.000000000 +0200
-@@ -358,13 +358,13 @@
+From 39f8e5f5379607166cf6e54d270590e1fd13c12f Mon Sep 17 00:00:00 2001
+From: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+Date: Mon, 3 Jun 2019 15:55:40 -0400
+Subject: [PATCH] web server patch
+
+---
+ upnp/src/api/upnpapi.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/upnp/src/api/upnpapi.c b/upnp/src/api/upnpapi.c
+index 9ddc7fb..d286092 100644
+--- a/upnp/src/api/upnpapi.c
++++ b/upnp/src/api/upnpapi.c
+@@ -383,13 +383,13 @@ static int UpnpInitPreamble(void)
  		return retVal;
  	}
  
@@ -15,3 +26,6 @@
  #if EXCLUDE_GENA == 0
  	SetGenaCallback(genaCallback);
  #endif
+-- 
+2.17.1
+
