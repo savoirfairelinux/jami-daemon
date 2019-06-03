@@ -675,6 +675,8 @@ AC_CONFIG_FILES([Makefile \
                  src/media/video/winvideo/Makefile \
                  src/security/Makefile \
                  src/upnp/Makefile \
+                 src/upnp/protocol/Makefile \
+                 src/upnp/igd/Makefile \
                  ringtones/Makefile \
                  test/Makefile\
                  test/sip/Makefile
