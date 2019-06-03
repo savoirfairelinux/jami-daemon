@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set UPNP_VERSION=1.6.25
+set UPNP_VERSION=1.8.4
 set UPNP_URL=https://github.com/mrjimenez/pupnp/archive/release-%UPNP_VERSION%.tar.gz
 
 mkdir %BUILD%
