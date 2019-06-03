@@ -1186,17 +1186,17 @@ SIPCall::openPortsUPnP()
          */
         JAMI_DBG("[call:%s] opening ports via UPNP for SDP session", getCallId().c_str());
         uint16_t audio_port_used;
-        if (upnp_->addAnyMapping(sdp_->getLocalAudioPort(), upnp::PortType::UDP, true, &audio_port_used)) {
+        if (upnp_->addMapping(sdp_->getLocalAudioPort(), upnp::PortType::UDP, true, &audio_port_used)) {
             uint16_t control_port_used;
-            if (upnp_->addAnyMapping(sdp_->getLocalAudioControlPort(), upnp::PortType::UDP, true, &control_port_used)) {
+            if (upnp_->addMapping(sdp_->getLocalAudioControlPort(), upnp::PortType::UDP, true, &control_port_used)) {
                 sdp_->setLocalPublishedAudioPorts(audio_port_used, control_port_used);
             }
         }
 #ifdef ENABLE_VIDEO
         uint16_t video_port_used;
-        if (upnp_->addAnyMapping(sdp_->getLocalVideoPort(), upnp::PortType::UDP, true, &video_port_used)) {
+        if (upnp_->addMapping(sdp_->getLocalVideoPort(), upnp::PortType::UDP, true, &video_port_used)) {
             uint16_t control_port_used;
-            if (upnp_->addAnyMapping(sdp_->getLocalVideoControlPort(), upnp::PortType::UDP, true, &control_port_used)) {
+            if (upnp_->addMapping(sdp_->getLocalVideoControlPort(), upnp::PortType::UDP, true, &control_port_used)) {
                 sdp_->setLocalPublishedVideoPorts(video_port_used, control_port_used);
             }
         }
