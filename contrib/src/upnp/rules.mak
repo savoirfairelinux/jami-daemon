@@ -24,7 +24,6 @@ ifdef HAVE_WIN64
 endif
 	$(APPLY) $(SRC)/upnp/libupnp-ipv6.patch
 	$(APPLY) $(SRC)/upnp/miniserver.patch
-	$(APPLY) $(SRC)/upnp/uuid_upnp.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub
 	$(MOVE)
 
