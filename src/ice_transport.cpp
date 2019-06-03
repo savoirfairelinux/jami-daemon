@@ -825,15 +825,15 @@ IceTransport::Impl::selectUPnPIceCandidates()
                     auto portType = candidate.transport == PJ_CAND_UDP
                                         ? upnp::PortType::UDP
                                         : upnp::PortType::TCP;
-                    if (upnp_->addAnyMapping(port, portType, true, &port_used)) {
+                    if (upnp_->addMapping(port, portType, true, &port_used)) {
                         publicIP.setPort(port_used);
                         addReflectiveCandidate(comp_id, candidate.addr, publicIP, candidate.transport);
                     } else
-                        JAMI_WARN("[ice:%p] UPnP: Could not create a port mapping for the ICE candide", this);
+                        JAMI_WARN("[ice:%p] Could not create a port mapping for the ICE candide.", this);
                 }
             }
         } else {
-            JAMI_WARN("[ice:%p] UPnP: Could not determine public IP for ICE candidates", this);
+            JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates.", this);
         }
     }
 }
