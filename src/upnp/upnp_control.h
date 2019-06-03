@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
+ *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,18 +19,22 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef UPNP_H_
-#define UPNP_H_
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include <memory>
-#include <chrono>
+#include "upnp_context.h"
+#include "igd/upnp_igd.h"
+#include "mapping/global_mapping.h"
 
 #include "noncopyable.h"
-#include "upnp_igd.h"
+#include "logger.h"
+#include "ip_utils.h"
+
+#include <memory>
+#include <chrono>
 
 namespace jami {
 class IpAddr;
@@ -39,92 +44,47 @@ namespace jami { namespace upnp {
 
 class UPnPContext;
 
-class Controller {
+class Controller
+{
 public:
-    /* constructor */
     Controller();
-    /* destructor */
     ~Controller();
 
-    /**
-     * Return whether or not this controller has a valid IGD.
-     * @param timeout Time to wait until a valid IGD is found.
-     * If timeout is not given or 0, the function pool (non-blocking).
-     */
-    bool hasValidIGD(std::chrono::seconds timeout = {});
+    // Checks if a valid IGD is available.
+    bool hasValidIGD();
 
-    /**
-     * Set or clear a listener for valid IGDs.
-     * For simplicity there is one listener per controller.
-     */
-    void setIGDListener(IGDFoundCallback&& cb = {});
+    // Sets or clears a listener for valid IGDs. There is one listener per controller.
+    void setIGDListener(IgdFoundCallback&& cb = {});
 
-    /**
-     * tries to add mapping from and to the port_desired
-     * if unique == true, makes sure the client is not using this port already
-     * if the mapping fails, tries other available ports until success
-     *
-     * tries to use a random port between 1024 < > 65535 if desired port fails
-     *
-     * maps port_desired to port_local; if use_same_port == true, makes sure that
-     * that the extranl and internal ports are the same
-     */
-    bool addAnyMapping(uint16_t port_desired,
-                       uint16_t port_local,
-                       PortType type,
-                       bool use_same_port,
-                       bool unique,
-                       uint16_t *port_used);
+	// Adds a mapping with the local port being the same as the external port. Gives option
+	// of using a port that isn't already in use. Gives the option to try and use the same external
+	// and internal port.
+    bool addAnyMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool use_same_port, bool unique, uint16_t* port_used);
 
-    /**
-     * addAnyMapping with the local port being the same as the external port
-     */
-    bool addAnyMapping(uint16_t port_desired,
-                       PortType type,
-                       bool unique,
-                       uint16_t *port_used);
+    // Adds a mapping with the local port being the same as the external port. Gives option
+	// of using a port that isn't already in use.
+    bool addAnyMapping(uint16_t port_desired, PortType type, bool unique, uint16_t* port_used);
 
-    /**
-     * removes all mappings added by this instance
-     */
+    // Removes all mappings added by this instance.
     void removeMappings();
 
-    /**
-     * tries to get the external ip of the IGD (router)
-     */
+    // Gets the external ip of the first valid IGD in the list.
     IpAddr getExternalIP() const;
 
-    /**
-     * tries to get the local ip of the IGD (router)
-     */
+    // Gets the local ip that interface with the first valid IGD in the list.
     IpAddr getLocalIP() const;
 
 private:
+	// Removes all mappings of the given type.
+	void removeMappings(PortType type);
 
-    /**
-     * All UPnP commands require an initialized upnpContext
-     */
-    std::shared_ptr<UPnPContext> upnpContext_;
+private:
+    std::shared_ptr<UPnPContext> upnpContext_;		// Context from which the controller executes the wanted commands.
 
-    /**
-     * list of mappings created by this instance
-     * the key is the external port number, as there can only be one mapping
-     * at a time for each external port
-     */
-    PortMapLocal udpMappings_;
-    PortMapLocal tcpMappings_;
+    PortMapLocal udpMappings_;						// List of UDP mappings created by this instance.
+    PortMapLocal tcpMappings_;						// List of TCP mappings created by this instance.
 
-    /**
-     * IGD listener token
-     */
-    size_t listToken_ {0};
-
-    /**
-     * Try to remove all mappings of the given type
-     */
-    void removeMappings(PortType type);
+    size_t listToken_ {0};							// IGD listener token.
 };
 
 }} // namespace jami::upnp
-
-#endif /* UPNP_H_ */
