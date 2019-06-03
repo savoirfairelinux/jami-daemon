@@ -609,6 +609,7 @@ AS_IF([test "x$with_upnp" = "xyes"],
         [AC_MSG_WARN([Missing libupnp development files])
          AC_DEFINE([HAVE_LIBUPNP], 0, [Define if you have libupnp])])
       ])
+AM_CONDITIONAL([BUILD_PUPNP], test "x$with_upnp" = "xyes")
 
 # LIBNATPMP
 dnl check for libnatpmp
@@ -623,6 +624,7 @@ AS_IF([test "x$with_natpmp" != xno],
         ],[])
 
 AC_DEFINE_UNQUOTED([HAVE_LIBNATPMP], `if test "x$with_natpmp" != xno; then echo 1; else echo 0; fi`, [Define if you have libnatpmp])
+AM_CONDITIONAL([BUILD_NATPMP], test "x$with_natpmp" = "xyes")
 
 AC_DEFINE_UNQUOTED([HAVE_SHM], `if test -z "${HAVE_LINUX_TRUE}" && test -z "${HAVE_ANDROID_FALSE}" ; then echo 1; else echo 0; fi`,
     [Define if you have shared memory support])
@@ -675,6 +677,9 @@ AC_CONFIG_FILES([Makefile \
                  src/media/video/winvideo/Makefile \
                  src/security/Makefile \
                  src/upnp/Makefile \
+                 src/upnp/protocol/Makefile \
+                 src/upnp/protocol/natpmp/Makefile \
+                 src/upnp/protocol/pupnp/Makefile \
                  ringtones/Makefile \
                  test/Makefile\
                  test/sip/Makefile
