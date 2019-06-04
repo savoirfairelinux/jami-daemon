@@ -142,7 +142,8 @@ constexpr static const char PROXY_ENABLED           [] = "Account.proxyEnabled";
 constexpr static const char PROXY_SERVER            [] = "Account.proxyServer";
 constexpr static const char PROXY_PUSH_TOKEN        [] = "Account.proxyPushToken";
 constexpr static const char DHT_PEER_DISCOVERY      [] = "Account.peerDiscovery";
-constexpr static const char ACCOUNT_PEER_DISCOVERY      [] = "Account.accountDiscovery";
+constexpr static const char ACCOUNT_PEER_DISCOVERY  [] = "Account.accountDiscovery";
+constexpr static const char ACCOUNT_PUBLISH         [] = "Account.accountPublish";
 
 namespace Audio {
 
