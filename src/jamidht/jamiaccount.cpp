@@ -691,6 +691,7 @@ void JamiAccount::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
     out << YAML::Key << DRing::Account::ConfProperties::DHT_PEER_DISCOVERY << YAML::Value << dhtPeerDiscovery_;
     out << YAML::Key << DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY << YAML::Value << accountPeerDiscovery_;
+    out << YAML::Key << DRing::Account::ConfProperties::ACCOUNT_PUBLISH << YAML::Value << accountPublish_;
 
     out << YAML::Key << Conf::PROXY_ENABLED_KEY << YAML::Value << proxyEnabled_;
     out << YAML::Key << Conf::PROXY_SERVER_KEY << YAML::Value << proxyServer_;
@@ -765,6 +766,7 @@ void JamiAccount::unserialize(const YAML::Node &node)
 
     parseValueOptional(node, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
     parseValueOptional(node, DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY, accountPeerDiscovery_);
+    parseValueOptional(node, DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
 
 #if HAVE_RINGNS
     parseValueOptional(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
@@ -1562,6 +1564,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
     parseBool(details, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
     parseBool(details, DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY, accountPeerDiscovery_);
+    parseBool(details, DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted_);
@@ -1622,6 +1625,7 @@ JamiAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY, accountPeerDiscovery_ ? TRUE_STR : FALSE_STR);
+    a.emplace(DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_ID, ringDeviceId_);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     a.emplace(DRing::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
@@ -2172,11 +2176,13 @@ JamiAccount::doRegister_()
         }
 
         //check if dht peer service is enabled
-        if(accountPeerDiscovery_){
+        if(accountPeerDiscovery_ || accountPublish_){
             peerDiscovery_ = std::make_shared<dht::PeerDiscovery>();
             JAMI_INFO("Start Jami Account Discovering.....");
-            startAccountDiscovery();
-            startAccountPublish();
+            if(accountPeerDiscovery_)
+                startAccountDiscovery();
+            if(accountPublish_)
+                startAccountPublish();
         }
         dht::DhtRunner::Context context {};
         context.peerDiscovery = peerDiscovery_;
@@ -3740,7 +3746,7 @@ JamiAccount::startAccountDiscovery()
 std::map<std::string, std::string>
 JamiAccount::getNearbyPeers()
 {
-    std::lock_guard<std::mutex> lc(dismtx_);
+    std::lock_guard<std::mutex> lc(discoveredPeerMap_);
     return discoveredPeerMap_;
 }
 
