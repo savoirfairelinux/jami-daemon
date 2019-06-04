@@ -1,68 +1,49 @@
-From 1e14f51854a54e0aea7186b7408f2f74621ab4df Mon Sep 17 00:00:00 2001
-From: fner <fner@yetanotherthinkpad>
-Date: Thu, 24 May 2018 11:20:33 -0400
-Subject: [PATCH] b
+From 49063c1cc31f168f07e174aef63e7b39bc17af46 Mon Sep 17 00:00:00 2001
+From: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+Date: Mon, 3 Jun 2019 18:14:40 -0400
+Subject: [PATCH] win32 patch
 
 ---
- configure.ac            | 1 +
- libupnp.pc.in           | 2 +-
- upnp/inc/UpnpInet.h     | 5 -----
- upnp/src/inc/upnputil.h | 2 +-
- 4 files changed, 3 insertions(+), 7 deletions(-)
+ configure.ac            |  2 ++
+ libupnp.pc.in           |  2 +-
+ upnp/src/inc/upnputil.h | 10 +++++-----
+ 3 files changed, 8 insertions(+), 6 deletions(-)
 
 diff --git a/configure.ac b/configure.ac
-index bcf2395..335a516 100644
+index 190b30c..3c25758 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -559,6 +559,7 @@ fi
+@@ -552,6 +552,8 @@ fi
+ 
  RT_BOOL_ARG_ENABLE([samples], [yes], [compilation of upnp/sample/ code])
  
- 
 +AC_DEFINE([_WIN32_WINNT], 0x0501, [Define to '0x0500' for Windows 2000 APIs.])
++
  #
- # doc installation
- # autoconf >= 2.60 already defines ${docdir}, but we will not use its 
-diff --git a/libupnp.pc.in b/libupnp.pc.in
-index c649c24..f46f774 100644
---- a/libupnp.pc.in
-+++ b/libupnp.pc.in
-@@ -6,6 +6,6 @@ includedir=@includedir@
- Name: libupnp
- Description: Linux SDK for UPnP Devices
- Version: @VERSION@
--Libs: @PTHREAD_CFLAGS@ @PTHREAD_LIBS@ -L${libdir} -lupnp -lthreadutil -lixml 
-+Libs: @PTHREAD_CFLAGS@ -L${libdir} -lupnp -lthreadutil -lixml -liphlpapi @PTHREAD_LIBS@ 
- Cflags: -I${includedir}/upnp
+ # Checks for programs
+ #
  
-diff --git a/upnp/inc/UpnpInet.h b/upnp/inc/UpnpInet.h
-index ad00a7d..14f87f7 100644
---- a/upnp/inc/UpnpInet.h
-+++ b/upnp/inc/UpnpInet.h
-@@ -15,11 +15,6 @@
- 
- #ifdef WIN32
- 	#include <stdarg.h>
--	#ifndef UPNP_USE_MSVCPP
--		/* Removed: not required (and cause compilation issues) */
--		#include <winbase.h>
--		#include <windef.h>
--	#endif
- 	#include <winsock2.h>
- 	#include <iphlpapi.h>
- 	#include <ws2tcpip.h>
 diff --git a/upnp/src/inc/upnputil.h b/upnp/src/inc/upnputil.h
-index 76292f8..ed922e1 100644
+index 010b1a7..ad52836 100644
 --- a/upnp/src/inc/upnputil.h
 +++ b/upnp/src/inc/upnputil.h
-@@ -130,7 +130,7 @@ void linecopylen(
- 		#define strncasecmp		strnicmp
- 		#define sleep(a)		Sleep((a)*1000)
- 		#define usleep(a)		Sleep((a)/1000)
+@@ -126,11 +126,11 @@ void linecopylen(
+ 		#ifndef EADDRINUSE		/* VS2010 has this defined */
+ 			#define EADDRINUSE		WSAEADDRINUSE
+ 		#endif
+-		#define strcasecmp		stricmp
+-		#define strncasecmp		strnicmp
+-		#define sleep(a)		Sleep((a)*1000)
+-		#define usleep(a)		Sleep((a)/1000)
 -		#define strerror_r(a,b,c)	(strerror_s((b),(c),(a)))
-+		#define strerror_r(a,b,c)       strncpy( b, strerror(a), c)
++		#define strcasecmp		  stricmp
++		#define strncasecmp		  strnicmp
++		#define sleep(a)		  Sleep((a)*1000)
++		#define usleep(a)		  Sleep((a)/1000)
++		#define strerror_r(a,b,c) strncpy(b, strerror(a), c)
  	#else
  		#define max(a, b)   (((a)>(b))? (a):(b))
  		#define min(a, b)   (((a)<(b))? (a):(b))
 -- 
-2.14.3
+2.17.1
 
