@@ -519,7 +519,8 @@ MediaEncoder::send(AVPacket& pkt, int streamIdx)
     }
     if (streamIdx < 0)
         streamIdx = currentStreamIdx_;
-    if (streamIdx >= 0 and streamIdx < encoders_.size()) {
+    // NOTE Don't cast streamIdx to unsigned, as it may be -1
+    if (streamIdx >= 0 and streamIdx < static_cast<int>(encoders_.size())) {
         auto encoderCtx = encoders_[streamIdx];
         pkt.stream_index = streamIdx;
         if (pkt.pts != AV_NOPTS_VALUE)
