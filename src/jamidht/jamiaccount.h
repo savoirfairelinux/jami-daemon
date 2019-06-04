@@ -703,6 +703,7 @@ class JamiAccount : public SIPAccountBase {
         std::map<dht::InfoHash, DiscoveredPeer> discoveredPeers_;
         std::map<std::string, std::string> discoveredPeerMap_;
         bool accountPeerDiscovery_ {true};
+        bool accountPublish_ {true};
 
         std::shared_ptr<RepeatedTask> eventHandler {};
         void checkPendingCallsTask();
