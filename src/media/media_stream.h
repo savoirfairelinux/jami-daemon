@@ -90,25 +90,29 @@ struct MediaStream {
         : name(streamName)
         , firstTimestamp(startTimestamp)
     {
-        timeBase = c->time_base;
-        switch (c->codec_type) {
-        case AVMEDIA_TYPE_VIDEO:
-            format = c->pix_fmt;
-            isVideo = true;
-            width = c->width;
-            height = c->height;
-            aspectRatio = c->sample_aspect_ratio;
-            frameRate = c->framerate;
-            break;
-        case AVMEDIA_TYPE_AUDIO:
-            format = c->sample_fmt;
-            isVideo = false;
-            sampleRate = c->sample_rate;
-            nbChannels = c->channels;
-            frameSize = c->frame_size;
-            break;
-        default:
-            break;
+        if (c) {
+            timeBase = c->time_base;
+            switch (c->codec_type) {
+            case AVMEDIA_TYPE_VIDEO:
+                format = c->pix_fmt;
+                isVideo = true;
+                width = c->width;
+                height = c->height;
+                aspectRatio = c->sample_aspect_ratio;
+                frameRate = c->framerate;
+                break;
+            case AVMEDIA_TYPE_AUDIO:
+                format = c->sample_fmt;
+                isVideo = false;
+                sampleRate = c->sample_rate;
+                nbChannels = c->channels;
+                frameSize = c->frame_size;
+                break;
+            default:
+                break;
+            }
+        } else {
+            JAMI_WARN() << "Trying to get stream info from null codec context";
         }
     }
 
