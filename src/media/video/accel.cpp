@@ -265,6 +265,8 @@ HardwareAccel::setupDecoder(AVCodecID id, int width, int height)
         { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
         { "vdpau", AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
+        { "d3d11va", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_HEVC, AV_CODEC_ID_H264 } },
+        { "dxva2", AV_PIX_FMT_DXVA2_VLD, AV_PIX_FMT_NV12, { AV_CODEC_ID_HEVC, AV_CODEC_ID_H264 } },
     };
 
     for (const auto& api : apiList) {
