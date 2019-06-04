@@ -469,8 +469,12 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     if (!initialized_ && frame) {
         // Initialize on first video frame, or first audio frame if no video stream
         bool isVideo = (frame->width > 0 && frame->height > 0);
-        if (isVideo or not videoOpts_.isValid()) {
+        if (isVideo and videoOpts_.isValid()) {
+            // Has video stream, so init with video frame
             streamIdx = initStream(videoCodec_, frame->hw_frames_ctx);
+            startIO();
+        } else if (!isVideo and !videoOpts_.isValid()) {
+            // Only audio, for MediaRecorder, which doesn't use encodeAudio
             startIO();
         } else {
             return 0;
