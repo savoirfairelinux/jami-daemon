@@ -1490,7 +1490,10 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                     Migration::setState(accountID_, Migration::State::SUCCESS);
                     setRegistrationState(RegistrationState::UNREGISTERED);
                 }
-                saveConfig();
+                dht::ThreadPool::io().run([w = weak()]{
+                    if (auto this_ = w.lock())
+                        this_->saveConfig();
+                });
                 loadAccount(archive_password);
             }
             else {
