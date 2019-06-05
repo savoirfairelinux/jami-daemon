@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set MSGPACK_VERSION=cpp-2.1.5
+set MSGPACK_VERSION=cpp-3.2.0
 set MSGPACK_URL=https://github.com/msgpack/msgpack-c/archive/%MSGPACK_VERSION%.tar.gz
 
 mkdir %BUILD%
