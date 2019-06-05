@@ -72,8 +72,6 @@ SystemCodecContainer::initCodecConfig()
                                                defaultBitrate,
                                                minVP8,
                                                maxVP8),
-#endif
-
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,
                                                "MP4V-ES", "mpeg4",
                                                CODEC_ENCODER_DECODER,
@@ -83,6 +81,8 @@ SystemCodecContainer::initCodecConfig()
                                                "H263-1998", "h263",
                                                CODEC_ENCODER_DECODER,
                                                defaultBitrate),
+#endif
+
 #endif
         /* Define supported audio codec*/
 
