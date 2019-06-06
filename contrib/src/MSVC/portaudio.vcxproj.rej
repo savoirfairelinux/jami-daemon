@@ -1,0 +1,19 @@
+diff a/contrib/src/MSVC/portaudio.vcxproj b/contrib/src/MSVC/portaudio.vcxproj	(rejected hunks)
+@@ -109,7 +109,7 @@
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+       <AdditionalIncludeDirectories>..\src\common;..\include;.\;..\src\os\win;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+-      <PreprocessorDefinitions>PA_WDMKS_NO_KSGUID_LIB;WIN32;NDEBUG;_USRDLL;PA_ENABLE_DEBUG_OUTPUT;_CRT_SECURE_NO_DEPRECATE;PAWIN_USE_WDMKS_DEVICE_INFO;PA_USE_ASIO=0;PA_USE_DS=0;PA_USE_WMME=1;PA_USE_WASAPI=1;PA_USE_WDMKS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>PA_ENABLE_DEBUG_OUTPUT;PAWIN_USE_DIRECTSOUNDFULLDUPLEXCREATE;PA_WDMKS_NO_KSGUID_LIB;WIN32;NDEBUG;_USRDLL;_CRT_SECURE_NO_DEPRECATE;PAWIN_USE_WDMKS_DEVICE_INFO;PA_USE_ASIO=0;PA_USE_DS=1;PA_USE_WMME=0;PA_USE_WASAPI=0;PA_USE_WDMKS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <StringPooling>true</StringPooling>
+       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+       <FunctionLevelLinking>true</FunctionLevelLinking>
+@@ -161,7 +161,7 @@ xcopy /S /Y $(ProjectDir)..\include\*.h "$(OutDir)"include</Command>
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+       <AdditionalIncludeDirectories>..\src\common;..\include;.\;..\src\os\win;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+-      <PreprocessorDefinitions>PA_WDMKS_NO_KSGUID_LIB;_WIN64;NDEBUG;_USRDLL;_CRT_SECURE_NO_DEPRECATE;PAWIN_USE_WDMKS_DEVICE_INFO;PA_USE_ASIO=0;PA_USE_DS=0;PA_USE_WMME=1;PA_USE_WASAPI=1;PA_USE_WDMKS=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>PA_ENABLE_DEBUG_OUTPUT;PAWIN_USE_DIRECTSOUNDFULLDUPLEXCREATE;PA_WDMKS_NO_KSGUID_LIB;_WIN64;NDEBUG;_USRDLL;_CRT_SECURE_NO_DEPRECATE;PAWIN_USE_WDMKS_DEVICE_INFO;PA_USE_ASIO=0;PA_USE_DS=1;PA_USE_WMME=0;PA_USE_WASAPI=0;PA_USE_WDMKS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <StringPooling>true</StringPooling>
+       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+       <FunctionLevelLinking>true</FunctionLevelLinking>
