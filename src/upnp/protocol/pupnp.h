@@ -37,7 +37,6 @@
 #if HAVE_LIBUPNP
 
 #ifdef _WIN32
-#define UPNP_STATIC_LIB
 #include <windows.h>
 #include <wincrypt.h>
 #endif

@@ -24,9 +24,6 @@
 
 #include "logger.h"
 #include "ip_utils.h"
-#include "igd/upnp_igd.h"
-#include "mapping/global_mapping.h"
-#include "compiler_intrinsics.h"
 
 #include <string>
 #include <set>
@@ -39,7 +36,7 @@
 #include <chrono>
 #include <cstdlib>
 
-#include "protocol/upnp_protocol.h"
+//#include "protocol/upnp_protocol.h"
 #include "upnp_context.h"
 
 namespace jami { namespace upnp {

@@ -65,7 +65,7 @@ PUPnP::PUPnP()
      *       by selecting the IP
      */
 
-#ifdef UPNP_ENABLE_IPV6
+#if UPNP_ENABLE_IPV6
     /* IPv6 version seems to fail on some systems with message
      * UPNP_E_SOCKET_BIND: An error occurred binding a socket. 
      * TODO: figure out why ipv6 version doesn't work.  

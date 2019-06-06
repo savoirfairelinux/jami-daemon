@@ -37,10 +37,17 @@
 #include "config.h"
 #endif
 
+#define UPNP_USE_MSVCPP
+#define UPNP_STATIC_LIB
+
 #include "noncopyable.h"
 #include "protocol/upnp_protocol.h"
+#if HAVE_LIBNATPMP
 #include "protocol/nat_pmp.h"
+#endif
+#if HAVE_LIBUPNP
 #include "protocol/pupnp.h"
+#endif
 #include "igd/igd.h"
 #include "mapping/global_mapping.h"
 

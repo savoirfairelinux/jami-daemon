@@ -13,11 +13,10 @@ if %USE_CACHE%==1 (
 
 7z -y x release-%UPNP_VERSION%.tar.gz && 7z -y x release-%UPNP_VERSION%.tar -o%BUILD%
 del release-%UPNP_VERSION%.tar && del release-%UPNP_VERSION%.tar.gz && del %BUILD%\pax_global_header
-rename %BUILD%\pupnp-release-%UPNP_VERSION% libupnp
+rename %BUILD%\pupnp-release-%UPNP_VERSION% pupnp
 
-cd %BUILD%\libupnp
+cd %BUILD%\pupnp
 
 %APPLY_CMD% %SRC%\upnp\libupnp-windows.patch
-%APPLY_CMD% %SRC%\upnp\libupnp-vs2017.patch
 
 cd %SRC%

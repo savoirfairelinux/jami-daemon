@@ -18,8 +18,9 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef UPNP_H_
-#define UPNP_H_
+#pragma once
+//#ifndef UPNP_H_
+//#define UPNP_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -115,4 +116,4 @@ private:
 
 }} // namespace jami::upnp
 
-#endif /* UPNP_H_ */
+//#endif /* UPNP_H_ */
