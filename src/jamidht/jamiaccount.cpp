@@ -2308,9 +2308,10 @@ JamiAccount::doRegister_()
                         JAMI_WARN("Can't find certificate for device %s", sync.from.toString().c_str());
                         return;
                     }
-                    std::lock_guard<std::mutex> lock(deviceListMutex_);
+                    std::unique_lock<std::mutex> lock(deviceListMutex_);
                     if (not foundAccountDevice(cert))
                         return;
+                    lock.unlock();
                     onReceiveDeviceSync(std::move(sync));
                 });
 
@@ -3320,15 +3321,19 @@ JamiAccount::syncDevices()
 void
 JamiAccount::onReceiveDeviceSync(DeviceSync&& sync)
 {
-    auto it = knownDevices_.find(sync.from);
-    if (it == knownDevices_.end()) {
-        JAMI_WARN("[Account %s] dropping sync data from unknown device", getAccountID().c_str());
-        return;
-    }
     auto sync_date = clock::time_point(clock::duration(sync.date));
-    if (it->second.last_sync >= sync_date) {
-        JAMI_DBG("[Account %s] dropping outdated sync data", getAccountID().c_str());
-        return;
+    {
+        std::lock_guard<std::mutex> lock(deviceListMutex_);
+        auto it = knownDevices_.find(sync.from);
+        if (it == knownDevices_.end()) {
+            JAMI_WARN("[Account %s] dropping sync data from unknown device", getAccountID().c_str());
+            return;
+        }
+        if (it->second.last_sync >= sync_date) {
+            JAMI_DBG("[Account %s] dropping outdated sync data", getAccountID().c_str());
+            return;
+        }
+        it->second.last_sync = sync_date;
     }
 
     // Sync known devices
@@ -3341,7 +3346,10 @@ JamiAccount::onReceiveDeviceSync(DeviceSync&& sync)
             foundAccountDevice(crt, d.second);
         });
     }
-    saveKnownDevices();
+    {
+        std::lock_guard<std::mutex> lock(deviceListMutex_);
+        saveKnownDevices();
+    }
 
     // Sync contacts
     for (const auto& peer : sync.peers)
@@ -3352,7 +3360,6 @@ JamiAccount::onReceiveDeviceSync(DeviceSync&& sync)
     for (const auto& tr : sync.trust_requests)
         onTrustRequest(tr.first, tr.second.device, tr.second.received, false, {});
 
-    it->second.last_sync = sync_date;
 }
 
 void
