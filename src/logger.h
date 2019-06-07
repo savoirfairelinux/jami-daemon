@@ -102,7 +102,7 @@ public:
         , linefeed_ {linefeed} {}
 
     Logger() = delete;
-    Logger(const Logger&) = default;
+    Logger(const Logger&) = delete;
     Logger(Logger&&) = default;
 
     ~Logger() {
