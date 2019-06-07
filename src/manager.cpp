@@ -87,6 +87,10 @@ using random_device = dht::crypto::random_device;
 #include <sys/resource.h>
 #endif
 
+#ifdef TARGET_OS_IOS
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
 #include <cerrno>
 #include <ctime>
 #include <cstdlib>
@@ -2145,15 +2149,23 @@ Manager::playRingtone(const std::string& accountID)
     }
 
     std::string ringchoice = account->getRingtonePath();
-#ifndef _WIN32
+#ifdef TARGET_OS_IOS
+    //for ios file located in main buindle
+    CFBundleRef bundle = CFBundleGetMainBundle();
+    CFURLRef bundleURL = CFBundleCopyBundleURL(bundle);
+    CFStringRef stringPath = CFURLCopyFileSystemPath(bundleURL, kCFURLPOSIXPathStyle);
+    CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
+    const char *buindlePath = CFStringGetCStringPtr(stringPath, encodingMethod);
+    ringchoice = std::string(buindlePath) + DIR_SEPARATOR_STR + ringchoice;
+#elif _WIN32
+    ringchoice = decodeMultibyteString(ringchoice);
+#else
     if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
         // check inside global share directory
         static const char * const RINGDIR = "ringtones";
         ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR
-                     + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
+        + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
     }
-#else
-    ringchoice = decodeMultibyteString(ringchoice);
 #endif
 
     {
