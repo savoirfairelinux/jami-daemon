@@ -3741,7 +3741,7 @@ JamiAccount::startAccountDiscovery()
 }
 
 std::map<std::string, std::string>
-JamiAccount::getNearbyPeers()
+JamiAccount::getNearbyPeers() const
 {
     return discoveredPeerMap_;
 }

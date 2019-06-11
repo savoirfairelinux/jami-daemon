@@ -402,7 +402,7 @@ class JamiAccount : public SIPAccountBase {
         /**
          * Get current discovered peers account id and display name
          */
-        std::map<std::string, std::string> getNearbyPeers();
+        std::map<std::string, std::string> getNearbyPeers() const override;
 
     private:
         NON_COPYABLE(JamiAccount);
