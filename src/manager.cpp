@@ -3090,7 +3090,7 @@ Manager::newOutgoingCall(const std::string& toUrl,
                          const std::map<std::string, std::string>& volatileCallDetails)
 {
     auto account = getAccount(accountId);
-    if (account and !account->isUsable()) {
+    if (!account or !account->isUsable()) {
         JAMI_WARN("Account is not usable for calling");
         return nullptr;
     }
