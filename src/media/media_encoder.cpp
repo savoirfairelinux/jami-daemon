@@ -651,7 +651,7 @@ MediaEncoder::extractProfileLevelID(const std::string &parameters,
     // From RFC3984:
     // If no profile-level-id is present, the Baseline Profile without
     // additional constraints at Level 1 MUST be implied.
-    ctx->profile = FF_PROFILE_H264_BASELINE;
+    ctx->profile = FF_PROFILE_H264_CONSTRAINED_BASELINE;
     ctx->level = 0x0d;
     // ctx->level = 0x0d; // => 13 aka 1.3
     if (parameters.empty())
@@ -690,7 +690,7 @@ MediaEncoder::extractProfileLevelID(const std::string &parameters,
                 ctx->profile |= FF_PROFILE_H264_INTRA;
             break;
     }
-    JAMI_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
+    JAMI_DBG("Using profile %s (%x) and level %d", avcodec_profile_name(AV_CODEC_ID_H264, ctx->profile), ctx->profile, ctx->level);
 }
 
 #ifdef RING_ACCEL
