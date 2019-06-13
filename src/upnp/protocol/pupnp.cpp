@@ -88,12 +88,16 @@ PUPnP::PUPnP()
         UpnpFinish();
     } else {
         JAMI_DBG("PUPnP: Initialization successful.");
+
         ip_address = UpnpGetServerIpAddress();      
         port = UpnpGetServerPort();
+#ifndef _WIN32
         ip_address6 = UpnpGetServerIp6Address();    
         port6 = UpnpGetServerPort6();
-        JAMI_DBG("PUPnP: Initialiazed on %s:%u | %s:%u", ip_address, port, ip_address6, port6);
-
+		JAMI_DBG("PUPnP: Initialiazed on %s:%u | %s:%u", ip_address, port, ip_address6, port6);
+#else
+		JAMI_DBG("PUPnP: Initialiazed on %s:%u, ip_address, port");
+#endif
         // Relax the parser to allow malformed XML text.
         ixmlRelaxParser(1);
 
@@ -541,7 +545,7 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
     {
         const UpnpActionComplete *a_event = (const UpnpActionComplete *)event;
         JAMI_DBG("PUPnP: UPNP_CONTROL_ACTION_COMPLETE.");
-
+#ifndef _WIN32
 		char *xmlbuff = nullptr;
 		int errCode = UpnpActionComplete_get_ErrCode(a_event);
 		const char *ctrlURL = UpnpString_get_String(UpnpActionComplete_get_CtrlUrl(a_event));
@@ -572,6 +576,7 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
 		}
         /* TODO: no need for any processing here, just print out results.
          * Service state table updates are handled by events. */
+#endif
         break;
     }
     default:

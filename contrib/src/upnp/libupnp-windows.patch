@@ -1,2561 +1,8 @@
-From 338e06a609d4a44458e671f5c93e392fb194688b Mon Sep 17 00:00:00 2001
-From: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
-Date: Wed, 12 Jun 2019 16:19:25 -0400
-Subject: [PATCH] Windows patch.
-
----
- .gitignore                               |   6 +-
- build/vs2017/.gitignore                  |   4 +
- build/vs2017/ixml.vcxproj                | 233 +++++++++++++
- build/vs2017/ixml.vcxproj.filters        |  65 ++++
- build/vs2017/libupnp.sln                 |  60 ++++
- build/vs2017/libupnp.vcxproj             | 503 +++++++++++++++++++++++++++++
- build/vs2017/libupnp.vcxproj.filters     | 407 +++++++++++++++++++++++
- upnp/inc/FreeList.h                      | 131 ++++++++
- upnp/inc/LinkedList.h                    | 289 +++++++++++++++++
- upnp/inc/ThreadPool.h                    | 538 +++++++++++++++++++++++++++++++
- upnp/inc/TimerThread.h                   | 161 +++++++++
- upnp/inc/UpnpGlobal.h                    |   3 +
- upnp/inc/upnp.h                          |  13 +
- upnp/inc/upnpconfig.h                    | 132 ++++++++
- upnp/src/api/upnpapi.c                   |   2 +-
- upnp/src/api/upnptools.c                 |   4 +-
- upnp/src/genlib/miniserver/miniserver.c  |   5 +
- upnp/src/genlib/net/http/httpreadwrite.c |   4 +-
- upnp/src/genlib/net/http/webserver.c     |   4 +-
- upnp/src/genlib/net/uri/uri.c            |   4 +-
- upnp/src/inc/autoconfig.h                | 229 +++++++++++++
- upnp/src/inc/inet_pton.h                 |  50 ---
- upnp/src/inc/upnputil.h                  |   2 +-
- upnp/src/inet_pton.c                     | 323 -------------------
- upnp/src/soap/soap_device.c              |   4 +-
- upnp/src/ssdp/ssdp_ctrlpt.c              |   4 +-
- upnp/src/ssdp/ssdp_device.c              |   4 +-
- upnp/src/ssdp/ssdp_server.c              |   9 +-
- upnp/src/urlconfig/urlconfig.c           |   4 +-
- upnp/src/uuid/sysdep.c                   |  13 +-
- 30 files changed, 2818 insertions(+), 392 deletions(-)
- create mode 100644 build/vs2017/.gitignore
- create mode 100644 build/vs2017/ixml.vcxproj
- create mode 100644 build/vs2017/ixml.vcxproj.filters
- create mode 100644 build/vs2017/libupnp.sln
- create mode 100644 build/vs2017/libupnp.vcxproj
- create mode 100644 build/vs2017/libupnp.vcxproj.filters
- create mode 100644 upnp/inc/FreeList.h
- create mode 100644 upnp/inc/LinkedList.h
- create mode 100644 upnp/inc/ThreadPool.h
- create mode 100644 upnp/inc/TimerThread.h
- create mode 100644 upnp/inc/upnpconfig.h
- create mode 100644 upnp/src/inc/autoconfig.h
- delete mode 100644 upnp/src/inc/inet_pton.h
- delete mode 100644 upnp/src/inet_pton.c
-
---- a/.gitignore
-+++ b/.gitignore
-@@ -55,8 +55,6 @@ modules.builtin
- include/config
- include/linux/version.h
- include/generated
--build/inc/autoconfig.h
--build/inc/upnpconfig.h
- 
- # stgit generated dirs
- patches-*
-@@ -91,7 +89,6 @@ pupnp.includes
- Makefile
- Makefile.in
- aclocal.m4
--autoconfig.h
- autoconfig.h.in
- autom4te.cache/
- build-aux/
-@@ -107,7 +104,7 @@ m4/ltversion.m4
- m4/lt~obsolete.m4
- stamp-h1
- upnp/inc/stamp-h2
--upnp/inc/upnpconfig.h
-+
- upnp/sample/tv_combo
- upnp/sample/tv_combo-1.8
- upnp/sample/tv_ctrlpt
-@@ -135,7 +132,6 @@ upnp/test_url.trs
- /build/vc10/out.vc9.Win32/Debug
- /build/vc10/out.vc10.Win32
- /build/vc10/out.vc10.x64
--/pthreads
- /build/vc10/ipch
- /build/vc10/IUpnpErrFile.txt
- /build/vc10/IUpnpInfoFile.txt
 --- /dev/null
-+++ b/build/vs2017/.gitignore
-@@ -0,0 +1,4 @@
-+
-+*.suo
-+*.user
-+*.sdf
-\ No newline at end of file
---- /dev/null
-+++ b/build/vs2017/ixml.vcxproj
-@@ -0,0 +1,233 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-+  <ItemGroup Label="ProjectConfigurations">
-+    <ProjectConfiguration Include="Debug|Win32">
-+      <Configuration>Debug</Configuration>
-+      <Platform>Win32</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="Debug|x64">
-+      <Configuration>Debug</Configuration>
-+      <Platform>x64</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="Release|Win32">
-+      <Configuration>Release</Configuration>
-+      <Platform>Win32</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="Release|x64">
-+      <Configuration>Release</Configuration>
-+      <Platform>x64</Platform>
-+    </ProjectConfiguration>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClInclude Include="..\..\ixml\inc\ixml.h" />
-+    <ClInclude Include="..\..\ixml\inc\ixmldebug.h" />
-+    <ClInclude Include="..\..\ixml\src\inc\ixmlmembuf.h" />
-+    <ClInclude Include="..\..\ixml\src\inc\ixmlparser.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\autoconfig.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\config.h" />
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClCompile Include="..\..\ixml\src\attr.c" />
-+    <ClCompile Include="..\..\ixml\src\document.c" />
-+    <ClCompile Include="..\..\ixml\src\element.c" />
-+    <ClCompile Include="..\..\ixml\src\ixml.c" />
-+    <ClCompile Include="..\..\ixml\src\ixmldebug.c" />
-+    <ClCompile Include="..\..\ixml\src\ixmlmembuf.c" />
-+    <ClCompile Include="..\..\ixml\src\ixmlparser.c" />
-+    <ClCompile Include="..\..\ixml\src\namedNodeMap.c" />
-+    <ClCompile Include="..\..\ixml\src\node.c" />
-+    <ClCompile Include="..\..\ixml\src\nodeList.c" />
-+  </ItemGroup>
-+  <PropertyGroup Label="Globals">
-+    <ProjectGuid>{9C2C266D-35A3-465F-A297-0E21D54E5C89}</ProjectGuid>
-+    <RootNamespace>ixml</RootNamespace>
-+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
-+  </PropertyGroup>
-+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-+    <CharacterSet>NotSet</CharacterSet>
-+    <WholeProgramOptimization>true</WholeProgramOptimization>
-+    <PlatformToolset>v141</PlatformToolset>
-+  </PropertyGroup>
-+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-+    <CharacterSet>NotSet</CharacterSet>
-+    <PlatformToolset>v141</PlatformToolset>
-+  </PropertyGroup>
-+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-+    <CharacterSet>NotSet</CharacterSet>
-+    <WholeProgramOptimization>true</WholeProgramOptimization>
-+    <PlatformToolset>v141</PlatformToolset>
-+  </PropertyGroup>
-+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-+    <CharacterSet>NotSet</CharacterSet>
-+    <PlatformToolset>v141</PlatformToolset>
-+  </PropertyGroup>
-+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-+  <ImportGroup Label="ExtensionSettings">
-+  </ImportGroup>
-+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-+  </ImportGroup>
-+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-+  </ImportGroup>
-+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-+  </ImportGroup>
-+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-+  </ImportGroup>
-+  <PropertyGroup Label="UserMacros" />
-+  <PropertyGroup>
-+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\</OutDir>
-+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)Build\$(Platform)\$(Configuration)\tmp\</IntDir>
-+    <EnableManagedIncrementalBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</EnableManagedIncrementalBuild>
-+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\</OutDir>
-+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)Build\$(Platform)\$(Configuration)\tmp\</IntDir>
-+    <EnableManagedIncrementalBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</EnableManagedIncrementalBuild>
-+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\</OutDir>
-+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)Build\$(Platform)\$(Configuration)\tmp\</IntDir>
-+    <EnableManagedIncrementalBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</EnableManagedIncrementalBuild>
-+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\</OutDir>
-+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)Build\$(Platform)\$(Configuration)\tmp\</IntDir>
-+    <EnableManagedIncrementalBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</EnableManagedIncrementalBuild>
-+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
-+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
-+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
-+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
-+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
-+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
-+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
-+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
-+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
-+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
-+  </PropertyGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-+    <ClCompile>
-+      <Optimization>Disabled</Optimization>
-+      <AdditionalIncludeDirectories>..\..\ixml\inc;..\..\ixml\src\inc;..\inc;..\..\upnp\inc;..\..\.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>DEBUG;WIN32;_USRDLL;LIBUPNP_EXPORTS;UPNP_USE_MSVCPP;IXML_HAVE_SCRIPTSUPPORT;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <MinimalRebuild>true</MinimalRebuild>
-+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-+      <PrecompiledHeaderOutputFile>
-+      </PrecompiledHeaderOutputFile>
-+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
-+      <WarningLevel>Level3</WarningLevel>
-+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-+      <CompileAs>CompileAsC</CompileAs>
-+    </ClCompile>
-+    <Lib>
-+      <AdditionalLibraryDirectories>$(OutDir)..\lib;$(OutDir)..\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+    </Lib>
-+    <BuildLog>
-+      <Path>$(IntDir)$(MSBuildProjectName).log</Path>
-+    </BuildLog>
-+    <PostBuildEvent>
-+      <Command>mkdir $(SolutionDir)..\..\..\..\msvc\include
-+mkdir $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\ixml\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp 
-+xcopy /S /Y $(ProjectDir)..\..\ixml\src\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp</Command>
-+    </PostBuildEvent>
-+  </ItemDefinitionGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-+    <Midl>
-+      <TargetEnvironment>X64</TargetEnvironment>
-+    </Midl>
-+    <ClCompile>
-+      <Optimization>Disabled</Optimization>
-+      <AdditionalIncludeDirectories>..\..\ixml\inc;..\..\ixml\src\inc;..\inc;..\..\upnp\inc;..\..\.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>DEBUG;WIN32;_USRDLL;LIBUPNP_EXPORTS;UPNP_USE_MSVCPP;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <MinimalRebuild>true</MinimalRebuild>
-+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-+      <PrecompiledHeaderOutputFile>
-+      </PrecompiledHeaderOutputFile>
-+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
-+      <WarningLevel>Level3</WarningLevel>
-+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-+      <CompileAs>CompileAsC</CompileAs>
-+    </ClCompile>
-+    <Lib>
-+      <AdditionalLibraryDirectories>$(OutDir)..\lib;$(OutDir)..\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+    </Lib>
-+    <PostBuildEvent>
-+      <Command>mkdir $(SolutionDir)..\..\..\..\msvc\include
-+mkdir $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\ixml\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp 
-+xcopy /S /Y $(ProjectDir)..\..\ixml\src\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp</Command>
-+    </PostBuildEvent>
-+  </ItemDefinitionGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-+    <ClCompile>
-+      <Optimization>MaxSpeed</Optimization>
-+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-+      <IntrinsicFunctions>true</IntrinsicFunctions>
-+      <AdditionalIncludeDirectories>..\..\ixml\inc;..\..\ixml\src\inc;..\inc;..\..\upnp\inc;..\..\.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>WIN32;RELEASE;NDEBUG;_WINDOWS;_USRDLL;LIBUPNP_EXPORTS;UPNP_USE_MSVCPP;IXML_HAVE_SCRIPTSUPPORT;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <StringPooling>true</StringPooling>
-+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-+      <FunctionLevelLinking>true</FunctionLevelLinking>
-+      <PrecompiledHeaderOutputFile>
-+      </PrecompiledHeaderOutputFile>
-+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
-+      <WarningLevel>Level3</WarningLevel>
-+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-+      <CompileAs>CompileAsC</CompileAs>
-+    </ClCompile>
-+    <Lib>
-+      <AdditionalLibraryDirectories>$(OutDir)..\lib;$(OutDir)..\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+    </Lib>
-+    <PostBuildEvent>
-+      <Command>mkdir $(SolutionDir)..\..\..\..\msvc\include
-+mkdir $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\ixml\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp 
-+xcopy /S /Y $(ProjectDir)..\..\ixml\src\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp</Command>
-+    </PostBuildEvent>
-+  </ItemDefinitionGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-+    <Midl>
-+      <TargetEnvironment>X64</TargetEnvironment>
-+    </Midl>
-+    <ClCompile>
-+      <Optimization>MaxSpeed</Optimization>
-+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-+      <IntrinsicFunctions>true</IntrinsicFunctions>
-+      <AdditionalIncludeDirectories>..\..\ixml\inc;..\..\ixml\src\inc;..\inc;..\..\upnp\inc;..\..\upnp\src\inc;..\..\.;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LIBUPNP_EXPORTS;UPNP_USE_MSVCPP;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <StringPooling>true</StringPooling>
-+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-+      <FunctionLevelLinking>true</FunctionLevelLinking>
-+      <PrecompiledHeaderOutputFile>
-+      </PrecompiledHeaderOutputFile>
-+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
-+      <WarningLevel>Level3</WarningLevel>
-+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-+      <CompileAs>CompileAsC</CompileAs>
-+      <WholeProgramOptimization>false</WholeProgramOptimization>
-+    </ClCompile>
-+    <Lib>
-+      <AdditionalLibraryDirectories>$(OutDir)..\lib;$(OutDir)..\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+    </Lib>
-+    <PostBuildEvent>
-+      <Command>mkdir $(SolutionDir)..\..\..\..\msvc\include
-+mkdir $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\ixml\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp 
-+xcopy /S /Y $(ProjectDir)..\..\ixml\src\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp</Command>
-+    </PostBuildEvent>
-+  </ItemDefinitionGroup>
-+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-+  <ImportGroup Label="ExtensionTargets">
-+  </ImportGroup>
-+</Project>
-\ No newline at end of file
---- /dev/null
-+++ b/build/vs2017/ixml.vcxproj.filters
-@@ -0,0 +1,65 @@
-+﻿<?xml version="1.0" encoding="utf-8"?>
-+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-+  <ItemGroup>
-+    <Filter Include="headers">
-+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
-+    </Filter>
-+    <Filter Include="sources">
-+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-+    </Filter>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClInclude Include="..\..\ixml\inc\ixml.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\ixml\inc\ixmldebug.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\ixml\src\inc\ixmlmembuf.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\ixml\src\inc\ixmlparser.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\autoconfig.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\config.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClCompile Include="..\..\ixml\src\attr.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\ixml\src\document.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\ixml\src\element.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\ixml\src\ixml.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\ixml\src\ixmldebug.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\ixml\src\ixmlmembuf.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\ixml\src\ixmlparser.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\ixml\src\namedNodeMap.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\ixml\src\node.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\ixml\src\nodeList.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+  </ItemGroup>
-+</Project>
-\ No newline at end of file
---- /dev/null
-+++ b/build/vs2017/libupnp.sln
-@@ -0,0 +1,60 @@
-+﻿
-+Microsoft Visual Studio Solution File, Format Version 12.00
-+# Visual Studio 15
-+VisualStudioVersion = 15.0.28307.645
-+MinimumVisualStudioVersion = 10.0.40219.1
-+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libupnp", "libupnp.vcxproj", "{6227F51A-1498-4C4A-B213-F6FDED605125}"
-+EndProject
-+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ixml", "ixml.vcxproj", "{9C2C266D-35A3-465F-A297-0E21D54E5C89}"
-+EndProject
-+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{55AF07A8-18AA-45B8-A231-5082F1C6FC08}"
-+	ProjectSection(SolutionItems) = preProject
-+		..\..\AUTHORS = ..\..\AUTHORS
-+		..\..\bootstrap = ..\..\bootstrap
-+		..\..\ChangeLog = ..\..\ChangeLog
-+		..\..\configure.ac = ..\..\configure.ac
-+		..\..\COPYING = ..\..\COPYING
-+		..\..\Doxyfile = ..\..\Doxyfile
-+		..\..\INSTALL = ..\..\INSTALL
-+		..\..\libupnp.pc.in = ..\..\libupnp.pc.in
-+		..\..\libupnp.spec = ..\..\libupnp.spec
-+		..\..\LICENSE = ..\..\LICENSE
-+		..\..\Makefile.am = ..\..\Makefile.am
-+		..\..\NEWS = ..\..\NEWS
-+		..\..\README = ..\..\README
-+		..\..\THANKS = ..\..\THANKS
-+		..\..\TODO = ..\..\TODO
-+	EndProjectSection
-+EndProject
-+Global
-+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-+		Debug|Win32 = Debug|Win32
-+		Debug|x64 = Debug|x64
-+		Release|Win32 = Release|Win32
-+		Release|x64 = Release|x64
-+	EndGlobalSection
-+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-+		{6227F51A-1498-4C4A-B213-F6FDED605125}.Debug|Win32.ActiveCfg = Debug|Win32
-+		{6227F51A-1498-4C4A-B213-F6FDED605125}.Debug|Win32.Build.0 = Debug|Win32
-+		{6227F51A-1498-4C4A-B213-F6FDED605125}.Debug|x64.ActiveCfg = Debug|x64
-+		{6227F51A-1498-4C4A-B213-F6FDED605125}.Debug|x64.Build.0 = Debug|x64
-+		{6227F51A-1498-4C4A-B213-F6FDED605125}.Release|Win32.ActiveCfg = Release|Win32
-+		{6227F51A-1498-4C4A-B213-F6FDED605125}.Release|Win32.Build.0 = Release|Win32
-+		{6227F51A-1498-4C4A-B213-F6FDED605125}.Release|x64.ActiveCfg = Release|x64
-+		{6227F51A-1498-4C4A-B213-F6FDED605125}.Release|x64.Build.0 = Release|x64
-+		{9C2C266D-35A3-465F-A297-0E21D54E5C89}.Debug|Win32.ActiveCfg = Debug|Win32
-+		{9C2C266D-35A3-465F-A297-0E21D54E5C89}.Debug|Win32.Build.0 = Debug|Win32
-+		{9C2C266D-35A3-465F-A297-0E21D54E5C89}.Debug|x64.ActiveCfg = Debug|x64
-+		{9C2C266D-35A3-465F-A297-0E21D54E5C89}.Debug|x64.Build.0 = Debug|x64
-+		{9C2C266D-35A3-465F-A297-0E21D54E5C89}.Release|Win32.ActiveCfg = Release|Win32
-+		{9C2C266D-35A3-465F-A297-0E21D54E5C89}.Release|Win32.Build.0 = Release|Win32
-+		{9C2C266D-35A3-465F-A297-0E21D54E5C89}.Release|x64.ActiveCfg = Release|x64
-+		{9C2C266D-35A3-465F-A297-0E21D54E5C89}.Release|x64.Build.0 = Release|x64
-+	EndGlobalSection
-+	GlobalSection(SolutionProperties) = preSolution
-+		HideSolutionNode = FALSE
-+	EndGlobalSection
-+	GlobalSection(ExtensibilityGlobals) = postSolution
-+		SolutionGuid = {EC77EE93-6BCC-4784-9370-EFEC22AE22CD}
-+	EndGlobalSection
-+EndGlobal
---- /dev/null
-+++ b/build/vs2017/libupnp.vcxproj
-@@ -0,0 +1,503 @@
-+<?xml version="1.0" encoding="utf-8"?>
-+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-+  <ItemGroup Label="ProjectConfigurations">
-+    <ProjectConfiguration Include="Debug|Win32">
-+      <Configuration>Debug</Configuration>
-+      <Platform>Win32</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="Debug|x64">
-+      <Configuration>Debug</Configuration>
-+      <Platform>x64</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="Release|Win32">
-+      <Configuration>Release</Configuration>
-+      <Platform>Win32</Platform>
-+    </ProjectConfiguration>
-+    <ProjectConfiguration Include="Release|x64">
-+      <Configuration>Release</Configuration>
-+      <Platform>x64</Platform>
-+    </ProjectConfiguration>
-+  </ItemGroup>
-+  <PropertyGroup Label="Globals">
-+    <ProjectGuid>{6227F51A-1498-4C4A-B213-F6FDED605125}</ProjectGuid>
-+    <RootNamespace>libupnp</RootNamespace>
-+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
-+  </PropertyGroup>
-+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-+    <UseOfMfc>false</UseOfMfc>
-+    <CharacterSet>NotSet</CharacterSet>
-+    <PlatformToolset>v141</PlatformToolset>
-+  </PropertyGroup>
-+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-+    <UseOfMfc>false</UseOfMfc>
-+    <CharacterSet>NotSet</CharacterSet>
-+    <WholeProgramOptimization>true</WholeProgramOptimization>
-+    <PlatformToolset>v141</PlatformToolset>
-+  </PropertyGroup>
-+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-+    <UseOfMfc>false</UseOfMfc>
-+    <CharacterSet>NotSet</CharacterSet>
-+    <PlatformToolset>v141</PlatformToolset>
-+  </PropertyGroup>
-+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-+    <ConfigurationType>StaticLibrary</ConfigurationType>
-+    <UseOfMfc>Static</UseOfMfc>
-+    <CharacterSet>NotSet</CharacterSet>
-+    <WholeProgramOptimization>true</WholeProgramOptimization>
-+    <PlatformToolset>v141</PlatformToolset>
-+  </PropertyGroup>
-+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-+  <ImportGroup Label="ExtensionSettings">
-+  </ImportGroup>
-+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
-+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-+  </ImportGroup>
-+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
-+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-+  </ImportGroup>
-+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
-+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-+  </ImportGroup>
-+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
-+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
-+  </ImportGroup>
-+  <PropertyGroup Label="UserMacros" />
-+  <PropertyGroup>
-+    <_ProjectFileVersion>10.0.40219.1</_ProjectFileVersion>
-+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\</OutDir>
-+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)Build\$(Platform)\$(Configuration)\tmp\</IntDir>
-+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
-+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\</OutDir>
-+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)Build\$(Platform)\$(Configuration)\tmp\</IntDir>
-+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
-+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\</OutDir>
-+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)Build\$(Platform)\$(Configuration)\tmp\</IntDir>
-+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkIncremental>
-+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\</OutDir>
-+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)Build\$(Platform)\$(Configuration)\tmp\</IntDir>
-+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkIncremental>
-+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
-+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
-+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
-+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
-+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
-+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
-+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
-+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
-+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
-+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
-+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
-+  </PropertyGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-+    <Midl>
-+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <MkTypLibCompatible>true</MkTypLibCompatible>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <TargetEnvironment>Win32</TargetEnvironment>
-+      <TypeLibraryName>.\Release/libupnp.tlb</TypeLibraryName>
-+      <HeaderFileName>
-+      </HeaderFileName>
-+    </Midl>
-+    <ClCompile>
-+      <Optimization>MaxSpeed</Optimization>
-+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-+      <IntrinsicFunctions>true</IntrinsicFunctions>
-+      <WholeProgramOptimization>true</WholeProgramOptimization>
-+      <AdditionalIncludeDirectories>..\..\upnp\inc;..\..\upnp\src\inc;..\..\..\..\msvc\include;..\..\..\..\msvc\include\upnp;..\..\upnp\src\threadutil;..\..\ixml\inc;..\..\ixml\src\inc;..\..\..\..\msvc\include;..\..\..\..\msvc\lib\win32</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>IXML_HAVE_SCRIPTSUPPORT;WIN32;NDEBUG;RELEASE;_WINDOWS;_USRDLL;LIBUPNP_EXPORTS;UPNP_USE_MSVCPP;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions);_WINSOCK_DEPRECATED_NO_WARNINGS;UPNP_STATIC_LIB</PreprocessorDefinitions>
-+      <StringPooling>true</StringPooling>
-+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-+      <FunctionLevelLinking>true</FunctionLevelLinking>
-+      <PrecompiledHeaderOutputFile>
-+      </PrecompiledHeaderOutputFile>
-+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-+      <ObjectFileName>$(IntDir)</ObjectFileName>
-+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
-+      <BrowseInformation>
-+      </BrowseInformation>
-+      <WarningLevel>Level3</WarningLevel>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-+      <CompileAs>CompileAsC</CompileAs>
-+    </ClCompile>
-+    <ResourceCompile>
-+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <Culture>0x0407</Culture>
-+    </ResourceCompile>
-+    <Link>
-+      <AdditionalDependencies>pthreadvc2.lib;ws2_32.lib;iphlpapi.lib;ixml.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+      <OutputFile>$(OutDir)$(ProjectName).dll</OutputFile>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <AdditionalLibraryDirectories>..\..\pthreads\;..\..\pthreads\lib;$(OutDir)..\lib\ixml;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+      <GenerateDebugInformation>true</GenerateDebugInformation>
-+      <ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
-+      <SubSystem>Windows</SubSystem>
-+      <OptimizeReferences>true</OptimizeReferences>
-+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-+      <DataExecutionPrevention>
-+      </DataExecutionPrevention>
-+      <ImportLibrary>$(TargetDir)$(TargetName).lib</ImportLibrary>
-+      <TargetMachine>MachineX86</TargetMachine>
-+    </Link>
-+    <Bscmake>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <OutputFile>.\Release/libupnp.bsc</OutputFile>
-+    </Bscmake>
-+    <PostBuildEvent>
-+      <Command>mkdir $(SolutionDir)..\..\..\..\msvc\include
-+mkdir $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\upnp\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\upnp\src\inc\membuffer.h $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\upnp\src\inc\miniserver.h $(SolutionDir)..\..\..\..\msvc\include\upnp</Command>
-+      <Message>Add pthreadVC2.dll to output</Message>
-+    </PostBuildEvent>
-+    <Lib>
-+      <AdditionalDependencies>ixml.lib;pthreads.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+    </Lib>
-+    <Lib>
-+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+    </Lib>
-+  </ItemDefinitionGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-+    <Midl>
-+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <MkTypLibCompatible>true</MkTypLibCompatible>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <TargetEnvironment>X64</TargetEnvironment>
-+      <TypeLibraryName>.\Release/libupnp.tlb</TypeLibraryName>
-+      <HeaderFileName>
-+      </HeaderFileName>
-+    </Midl>
-+    <ClCompile>
-+      <Optimization>MaxSpeed</Optimization>
-+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
-+      <IntrinsicFunctions>true</IntrinsicFunctions>
-+      <WholeProgramOptimization>false</WholeProgramOptimization>
-+      <AdditionalIncludeDirectories>..\..\upnp\inc;..\..\upnp\src\inc;..\..\ixml\inc;..\..\ixml\src\inc;$(SolutionDir)..\..\..\..\msvc\include\;</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;PTW32_STATIC_LIB;RELEASE;UPNP_USE_MSVCPP;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions);_WINSOCK_DEPRECATED_NO_WARNINGS;UPNP_STATIC_LIB</PreprocessorDefinitions>
-+      <StringPooling>true</StringPooling>
-+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-+      <FunctionLevelLinking>true</FunctionLevelLinking>
-+      <PrecompiledHeaderOutputFile>
-+      </PrecompiledHeaderOutputFile>
-+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-+      <ObjectFileName>$(IntDir)</ObjectFileName>
-+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
-+      <BrowseInformation>
-+      </BrowseInformation>
-+      <WarningLevel>Level3</WarningLevel>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-+      <CompileAs>CompileAsC</CompileAs>
-+      <IgnoreStandardIncludePath>false</IgnoreStandardIncludePath>
-+    </ClCompile>
-+    <ResourceCompile>
-+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <Culture>0x0407</Culture>
-+    </ResourceCompile>
-+    <Link>
-+      <AdditionalDependencies>pthreadvc2.lib;ws2_32.lib;iphlpapi.lib;ixml.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+      <OutputFile>$(OutDir)$(ProjectName).dll</OutputFile>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <AdditionalLibraryDirectories>..\..\pthreads\;..\..\pthreads\lib;$(OutDir)..\lib\ixml;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+      <GenerateDebugInformation>true</GenerateDebugInformation>
-+      <ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
-+      <SubSystem>Windows</SubSystem>
-+      <OptimizeReferences>true</OptimizeReferences>
-+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
-+      <LinkTimeCodeGeneration>UseLinkTimeCodeGeneration</LinkTimeCodeGeneration>
-+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-+      <DataExecutionPrevention>
-+      </DataExecutionPrevention>
-+      <ImportLibrary>$(TargetDir)$(TargetName).lib</ImportLibrary>
-+      <TargetMachine>MachineX64</TargetMachine>
-+    </Link>
-+    <Bscmake>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <OutputFile>.\Release/libupnp.bsc</OutputFile>
-+    </Bscmake>
-+    <Lib>
-+      <AdditionalDependencies>ws2_32.lib;ixml.lib;pthreads.lib;iphlpapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+    </Lib>
-+    <Lib>
-+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+    </Lib>
-+    <PostBuildEvent>
-+      <Command>mkdir $(SolutionDir)..\..\..\..\msvc\include
-+mkdir $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\upnp\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp</Command>
-+    </PostBuildEvent>
-+    <ProjectReference>
-+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
-+    </ProjectReference>
-+  </ItemDefinitionGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-+    <Midl>
-+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <MkTypLibCompatible>true</MkTypLibCompatible>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <TargetEnvironment>Win32</TargetEnvironment>
-+      <TypeLibraryName>.\Debug/libupnp.tlb</TypeLibraryName>
-+      <HeaderFileName>
-+      </HeaderFileName>
-+    </Midl>
-+    <ClCompile>
-+      <Optimization>Disabled</Optimization>
-+      <AdditionalIncludeDirectories>..\..\upnp\inc;..\..\upnp\src\inc;..\..\..\..\msvc\include;..\..\..\..\msvc\include\upnp;..\..\upnp\src\threadutil;..\..\ixml\inc;..\..\ixml\src\inc;..\..\..\..\msvc\include;..\..\..\..\msvc\lib\win32</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>IXML_HAVE_SCRIPTSUPPORT;DEBUG;WIN32;_WINDOWS;_USRDLL;LIBUPNP_EXPORTS;UPNP_USE_MSVCPP;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions);_WINSOCK_DEPRECATED_NO_WARNINGS;UPNP_STATIC_LIB</PreprocessorDefinitions>
-+      <MinimalRebuild>true</MinimalRebuild>
-+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-+      <PrecompiledHeaderOutputFile>
-+      </PrecompiledHeaderOutputFile>
-+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-+      <ObjectFileName>$(IntDir)</ObjectFileName>
-+      <BrowseInformation>
-+      </BrowseInformation>
-+      <WarningLevel>Level3</WarningLevel>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-+      <CompileAs>CompileAsC</CompileAs>
-+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
-+    </ClCompile>
-+    <ResourceCompile>
-+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <Culture>0x0407</Culture>
-+    </ResourceCompile>
-+    <Link>
-+      <AdditionalDependencies>pthreadvc2.lib;ws2_32.lib;iphlpapi.lib;ixml.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+      <OutputFile>$(OutDir)$(ProjectName).dll</OutputFile>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <AdditionalLibraryDirectories>..\..\pthreads\include;..\..\pthreads\lib\x86;$(SolutionDir)Build\$(Platform)\$(Configuration)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+      <GenerateDebugInformation>true</GenerateDebugInformation>
-+      <SubSystem>Windows</SubSystem>
-+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-+      <DataExecutionPrevention>
-+      </DataExecutionPrevention>
-+      <ImportLibrary>$(TargetDir)$(TargetName).lib</ImportLibrary>
-+      <TargetMachine>MachineX86</TargetMachine>
-+    </Link>
-+    <Bscmake>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <OutputFile>$(OutDir)libupnp.bsc</OutputFile>
-+    </Bscmake>
-+    <BuildLog>
-+      <Path>$(IntDir)$(MSBuildProjectName).log</Path>
-+    </BuildLog>
-+    <PostBuildEvent />
-+    <PostBuildEvent>
-+      <Message>
-+      </Message>
-+      <Command>mkdir $(SolutionDir)..\..\..\..\msvc\include
-+mkdir $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\upnp\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\upnp\src\inc\membuffer.h $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\upnp\src\inc\miniserver.h $(SolutionDir)..\..\..\..\msvc\include\upnp</Command>
-+    </PostBuildEvent>
-+    <Lib>
-+      <AdditionalDependencies>ixml.lib;pthreads.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+    </Lib>
-+    <Lib>
-+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+    </Lib>
-+  </ItemDefinitionGroup>
-+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-+    <Midl>
-+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <MkTypLibCompatible>true</MkTypLibCompatible>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <TargetEnvironment>X64</TargetEnvironment>
-+      <TypeLibraryName>.\Debug/libupnp.tlb</TypeLibraryName>
-+      <HeaderFileName>
-+      </HeaderFileName>
-+    </Midl>
-+    <ClCompile>
-+      <Optimization>Disabled</Optimization>
-+      <AdditionalIncludeDirectories>..\..\upnp\inc;..\..\upnp\src\inc;..\..\..\..\msvc\include;..\..\..\..\msvc\include\upnp;..\..\upnp\src\threadutil;..\..\ixml\inc;..\..\ixml\src\inc;..\..\..\..\msvc\include;..\..\..\..\msvc\lib\x64</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>DEBUG;WIN32;_USRDLL;LIBUPNP_EXPORTS;UPNP_USE_MSVCPP;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions);_WINSOCK_DEPRECATED_NO_WARNINGS;UPNP_STATIC_LIB</PreprocessorDefinitions>
-+      <MinimalRebuild>true</MinimalRebuild>
-+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
-+      <PrecompiledHeaderOutputFile>
-+      </PrecompiledHeaderOutputFile>
-+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
-+      <ObjectFileName>$(IntDir)</ObjectFileName>
-+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
-+      <BrowseInformation>
-+      </BrowseInformation>
-+      <WarningLevel>Level3</WarningLevel>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
-+      <CompileAs>CompileAsC</CompileAs>
-+    </ClCompile>
-+    <ResourceCompile>
-+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-+      <Culture>0x0407</Culture>
-+    </ResourceCompile>
-+    <Link>
-+      <AdditionalDependencies>pthreadvc2.lib;ws2_32.lib;iphlpapi.lib;ixml.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+      <OutputFile>$(OutDir)$(ProjectName).dll</OutputFile>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <AdditionalLibraryDirectories>..\..\pthreads\;..\..\pthreads\lib;$(OutDir)..\lib\ixml;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+      <GenerateDebugInformation>true</GenerateDebugInformation>
-+      <ProgramDatabaseFile>$(OutDir)$(ProjectName).pdb</ProgramDatabaseFile>
-+      <SubSystem>Windows</SubSystem>
-+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
-+      <DataExecutionPrevention>
-+      </DataExecutionPrevention>
-+      <ImportLibrary>$(TargetDir)$(TargetName).lib</ImportLibrary>
-+      <TargetMachine>MachineX64</TargetMachine>
-+    </Link>
-+    <Bscmake>
-+      <SuppressStartupBanner>true</SuppressStartupBanner>
-+      <OutputFile>$(OutDir)libupnp.bsc</OutputFile>
-+    </Bscmake>
-+    <Lib>
-+      <AdditionalDependencies>ixml.lib;pthreads.lib;%(AdditionalDependencies)</AdditionalDependencies>
-+    </Lib>
-+    <Lib>
-+      <AdditionalLibraryDirectories>$(SolutionDir)..\..\..\..\msvc\lib\$(Platform)\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-+    </Lib>
-+    <PostBuildEvent>
-+      <Command>mkdir $(SolutionDir)..\..\..\..\msvc\include
-+mkdir $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\upnp\inc\*.h $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\upnp\src\inc\membuffer.h $(SolutionDir)..\..\..\..\msvc\include\upnp
-+xcopy /S /Y $(ProjectDir)..\..\upnp\src\inc\miniserver.h $(SolutionDir)..\..\..\..\msvc\include\upnp</Command>
-+    </PostBuildEvent>
-+  </ItemDefinitionGroup>
-+  <ItemGroup>
-+    <ProjectReference Include="ixml.vcxproj">
-+      <Project>{9c2c266d-35a3-465f-a297-0e21d54e5c89}</Project>
-+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-+    </ProjectReference>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClInclude Include="..\..\upnp\inc\ActionComplete.h" />
-+    <ClInclude Include="..\..\upnp\inc\ActionRequest.h" />
-+    <ClInclude Include="..\..\upnp\inc\Callback.h" />
-+    <ClInclude Include="..\..\upnp\inc\Discovery.h" />
-+    <ClInclude Include="..\..\upnp\inc\Event.h" />
-+    <ClInclude Include="..\..\upnp\inc\EventSubscribe.h" />
-+    <ClInclude Include="..\..\upnp\inc\FileInfo.h" />
-+    <ClInclude Include="..\..\upnp\inc\FreeList.h" />
-+    <ClInclude Include="..\..\upnp\inc\ithread.h" />
-+    <ClInclude Include="..\..\upnp\inc\LinkedList.h" />
-+    <ClInclude Include="..\..\upnp\inc\list.h" />
-+    <ClInclude Include="..\..\upnp\inc\poison.h" />
-+    <ClInclude Include="..\..\upnp\inc\StateVarComplete.h" />
-+    <ClInclude Include="..\..\upnp\inc\StateVarRequest.h" />
-+    <ClInclude Include="..\..\upnp\inc\SubscriptionRequest.h" />
-+    <ClInclude Include="..\..\upnp\inc\TemplateInclude.h" />
-+    <ClInclude Include="..\..\upnp\inc\TemplateSource.h" />
-+    <ClInclude Include="..\..\upnp\inc\TemplateUndef.h" />
-+    <ClInclude Include="..\..\upnp\inc\ThreadPool.h" />
-+    <ClInclude Include="..\..\upnp\inc\TimerThread.h" />
-+    <ClInclude Include="..\..\upnp\inc\upnp.h" />
-+    <ClInclude Include="..\..\upnp\inc\upnpconfig.h" />
-+    <ClInclude Include="..\..\upnp\inc\upnpdebug.h" />
-+    <ClInclude Include="..\..\upnp\inc\UpnpGlobal.h" />
-+    <ClInclude Include="..\..\upnp\inc\UpnpInet.h" />
-+    <ClInclude Include="..\..\upnp\inc\UpnpIntTypes.h" />
-+    <ClInclude Include="..\..\upnp\inc\UpnpStdInt.h" />
-+    <ClInclude Include="..\..\upnp\inc\UpnpString.h" />
-+    <ClInclude Include="..\..\upnp\inc\upnptools.h" />
-+    <ClInclude Include="..\..\upnp\inc\UpnpUniStd.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\autoconfig.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\ClientSubscription.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\client_table.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\config.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\gena.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\gena_ctrlpt.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\gena_device.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\global.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\gmtdate.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\httpparser.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\httpreadwrite.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\inttypes.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\md5.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\membuffer.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\miniserver.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\netall.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\parsetools.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\server.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\service_table.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\soaplib.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\sock.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\ssdplib.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\statcodes.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\statuscodes.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\stdint.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\strintmap.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\sysdep.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\unixutil.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\upnpapi.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\upnputil.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\upnp_timeout.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\uri.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\urlconfig.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\uuid.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\VirtualDir.h" />
-+    <ClInclude Include="..\..\upnp\src\inc\webserver.h" />
-+    <ClInclude Include="..\..\upnp\src\ssdp\ssdp_ResultData.h" />
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClCompile Include="..\..\upnp\src\api\ActionComplete.c" />
-+    <ClCompile Include="..\..\upnp\src\api\ActionRequest.c" />
-+    <ClCompile Include="..\..\upnp\src\api\Discovery.c" />
-+    <ClCompile Include="..\..\upnp\src\api\Event.c" />
-+    <ClCompile Include="..\..\upnp\src\api\EventSubscribe.c" />
-+    <ClCompile Include="..\..\upnp\src\api\FileInfo.c" />
-+    <ClCompile Include="..\..\upnp\src\api\StateVarComplete.c" />
-+    <ClCompile Include="..\..\upnp\src\api\StateVarRequest.c" />
-+    <ClCompile Include="..\..\upnp\src\api\SubscriptionRequest.c" />
-+    <ClCompile Include="..\..\upnp\src\api\upnpapi.c" />
-+    <ClCompile Include="..\..\upnp\src\api\upnpdebug.c" />
-+    <ClCompile Include="..\..\upnp\src\api\UpnpString.c" />
-+    <ClCompile Include="..\..\upnp\src\api\upnptools.c" />
-+    <ClCompile Include="..\..\upnp\src\gena\gena_callback2.c" />
-+    <ClCompile Include="..\..\upnp\src\gena\gena_ctrlpt.c" />
-+    <ClCompile Include="..\..\upnp\src\gena\gena_device.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\client_table\ClientSubscription.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\client_table\client_table.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\miniserver\miniserver.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\net\http\httpparser.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\net\http\httpreadwrite.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\net\http\parsetools.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\net\http\statcodes.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\net\http\webserver.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\net\sock.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\net\uri\uri.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\service_table\service_table.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\util\membuffer.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\util\strintmap.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\util\upnp_timeout.c" />
-+    <ClCompile Include="..\..\upnp\src\genlib\util\util.c" />
-+    <ClCompile Include="..\..\upnp\src\soap\soap_common.c" />
-+    <ClCompile Include="..\..\upnp\src\soap\soap_ctrlpt.c" />
-+    <ClCompile Include="..\..\upnp\src\soap\soap_device.c" />
-+    <ClCompile Include="..\..\upnp\src\ssdp\ssdp_ctrlpt.c" />
-+    <ClCompile Include="..\..\upnp\src\ssdp\ssdp_device.c" />
-+    <ClCompile Include="..\..\upnp\src\ssdp\ssdp_ResultData.c" />
-+    <ClCompile Include="..\..\upnp\src\ssdp\ssdp_server.c" />
-+    <ClCompile Include="..\..\upnp\src\threadutil\FreeList.c" />
-+    <ClCompile Include="..\..\upnp\src\threadutil\LinkedList.c" />
-+    <ClCompile Include="..\..\upnp\src\threadutil\ThreadPool.c" />
-+    <ClCompile Include="..\..\upnp\src\threadutil\TimerThread.c" />
-+    <ClCompile Include="..\..\upnp\src\urlconfig\urlconfig.c" />
-+    <ClCompile Include="..\..\upnp\src\uuid\md5.c" />
-+    <ClCompile Include="..\..\upnp\src\uuid\sysdep.c" />
-+    <ClCompile Include="..\..\upnp\src\uuid\uuid.c" />
-+    <ClCompile Include="..\..\upnp\src\win_dll.c" />
-+  </ItemGroup>
-+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-+  <ImportGroup Label="ExtensionTargets">
-+  </ImportGroup>
-+</Project>
-\ No newline at end of file
---- /dev/null
-+++ b/build/vs2017/libupnp.vcxproj.filters
-@@ -0,0 +1,407 @@
-+﻿<?xml version="1.0" encoding="utf-8"?>
-+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-+  <ItemGroup>
-+    <Filter Include="sources">
-+      <UniqueIdentifier>{47d40159-145c-4ff3-98f5-9b2c96c80092}</UniqueIdentifier>
-+      <Extensions>cpp;c;cxx;rc;def;r;odl;idl;hpj;bat</Extensions>
-+    </Filter>
-+    <Filter Include="headers">
-+      <UniqueIdentifier>{2a8d348a-a429-4b41-9934-050df3866f50}</UniqueIdentifier>
-+      <Extensions>h;hpp;hxx;hm;inl</Extensions>
-+    </Filter>
-+    <Filter Include="sources\api">
-+      <UniqueIdentifier>{d7e1f6fa-d5eb-46a7-be21-a1de81e1c83b}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\genlib">
-+      <UniqueIdentifier>{046adcbc-ea36-4b2c-947d-bc49c65dd159}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\genlib\client_table">
-+      <UniqueIdentifier>{63eeed5a-fb55-4c74-87cc-f01b3e65396c}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\genlib\miniserver">
-+      <UniqueIdentifier>{ac2412f9-1484-40e5-94e2-601cf585f0ca}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\genlib\net">
-+      <UniqueIdentifier>{6918bb2d-ec22-4237-9d43-07f3a469b921}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\genlib\net\http">
-+      <UniqueIdentifier>{13db6453-fe8d-4869-b839-7fceeca36c68}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\genlib\net\uri">
-+      <UniqueIdentifier>{ff538420-d04b-4693-b7e5-1231dc3578c3}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\soap">
-+      <UniqueIdentifier>{a518a094-dc55-4904-b6f6-54432f881279}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\ssdp">
-+      <UniqueIdentifier>{ae11371f-7271-415f-b938-bded10b1d69b}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\threadutil">
-+      <UniqueIdentifier>{4268e9a2-9786-4559-ab8e-a116194e2431}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\urlconfig">
-+      <UniqueIdentifier>{a1f7e40e-0309-468e-b7d5-b06cdb2db669}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\uuid">
-+      <UniqueIdentifier>{9db59f74-7e5a-4d8a-bea6-dd7ebc6a1bf3}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\gena">
-+      <UniqueIdentifier>{da4ae3ad-7d2f-4e3e-962f-5543000541f2}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="inc">
-+      <UniqueIdentifier>{62a4fe61-d4d7-4205-99a2-f4a9f5b00914}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\genlib\service_table">
-+      <UniqueIdentifier>{eb789bde-b652-42d1-a691-2ee7b5f39f05}</UniqueIdentifier>
-+    </Filter>
-+    <Filter Include="sources\genlib\util">
-+      <UniqueIdentifier>{43451589-0f69-481c-a63c-0f89f30e61c0}</UniqueIdentifier>
-+    </Filter>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClInclude Include="..\..\upnp\src\ssdp\ssdp_ResultData.h">
-+      <Filter>sources\ssdp</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\list.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\poison.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\StateVarComplete.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\StateVarRequest.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\SubscriptionRequest.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\TemplateInclude.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\TemplateSource.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\TemplateUndef.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\ThreadPool.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\TimerThread.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\upnp.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\upnpdebug.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\UpnpGlobal.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\UpnpInet.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\UpnpIntTypes.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\UpnpStdInt.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\UpnpString.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\upnptools.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\UpnpUniStd.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\ActionComplete.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\ActionRequest.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\Callback.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\Discovery.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\Event.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\EventSubscribe.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\FileInfo.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\FreeList.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\ithread.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\LinkedList.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\statuscodes.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\strintmap.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\sysdep.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\unixutil.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\upnp_timeout.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\upnpapi.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\upnputil.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\uri.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\urlconfig.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\uuid.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\VirtualDir.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\webserver.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\client_table.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\ClientSubscription.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\config.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\gena.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\gena_ctrlpt.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\gena_device.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\global.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\gmtdate.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\httpparser.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\httpreadwrite.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\md5.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\membuffer.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\miniserver.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\netall.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\parsetools.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\server.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\service_table.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\soaplib.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\sock.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\ssdplib.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\statcodes.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\autoconfig.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\inc\upnpconfig.h">
-+      <Filter>inc</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\inttypes.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+    <ClInclude Include="..\..\upnp\src\inc\stdint.h">
-+      <Filter>headers</Filter>
-+    </ClInclude>
-+  </ItemGroup>
-+  <ItemGroup>
-+    <ClCompile Include="..\..\upnp\src\win_dll.c">
-+      <Filter>sources</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\ActionComplete.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\ActionRequest.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\Discovery.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\Event.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\EventSubscribe.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\FileInfo.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\StateVarComplete.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\StateVarRequest.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\SubscriptionRequest.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\upnpapi.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\upnpdebug.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\UpnpString.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\api\upnptools.c">
-+      <Filter>sources\api</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\gena\gena_callback2.c">
-+      <Filter>sources\gena</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\gena\gena_ctrlpt.c">
-+      <Filter>sources\gena</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\gena\gena_device.c">
-+      <Filter>sources\gena</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\client_table\client_table.c">
-+      <Filter>sources\genlib\client_table</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\client_table\ClientSubscription.c">
-+      <Filter>sources\genlib\client_table</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\miniserver\miniserver.c">
-+      <Filter>sources\genlib\miniserver</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\net\sock.c">
-+      <Filter>sources\genlib\net</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\net\http\httpparser.c">
-+      <Filter>sources\genlib\net\http</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\net\http\httpreadwrite.c">
-+      <Filter>sources\genlib\net\http</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\net\http\parsetools.c">
-+      <Filter>sources\genlib\net\http</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\net\http\statcodes.c">
-+      <Filter>sources\genlib\net\http</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\net\http\webserver.c">
-+      <Filter>sources\genlib\net\http</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\net\uri\uri.c">
-+      <Filter>sources\genlib\net\uri</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\soap\soap_common.c">
-+      <Filter>sources\soap</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\soap\soap_ctrlpt.c">
-+      <Filter>sources\soap</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\soap\soap_device.c">
-+      <Filter>sources\soap</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\ssdp\ssdp_ctrlpt.c">
-+      <Filter>sources\ssdp</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\ssdp\ssdp_device.c">
-+      <Filter>sources\ssdp</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\ssdp\ssdp_ResultData.c">
-+      <Filter>sources\ssdp</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\ssdp\ssdp_server.c">
-+      <Filter>sources\ssdp</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\threadutil\FreeList.c">
-+      <Filter>sources\threadutil</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\threadutil\LinkedList.c">
-+      <Filter>sources\threadutil</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\threadutil\ThreadPool.c">
-+      <Filter>sources\threadutil</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\threadutil\TimerThread.c">
-+      <Filter>sources\threadutil</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\urlconfig\urlconfig.c">
-+      <Filter>sources\urlconfig</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\uuid\md5.c">
-+      <Filter>sources\uuid</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\uuid\sysdep.c">
-+      <Filter>sources\uuid</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\uuid\uuid.c">
-+      <Filter>sources\uuid</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\service_table\service_table.c">
-+      <Filter>sources\genlib\service_table</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\util\membuffer.c">
-+      <Filter>sources\genlib\util</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\util\strintmap.c">
-+      <Filter>sources\genlib\util</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\util\upnp_timeout.c">
-+      <Filter>sources\genlib\util</Filter>
-+    </ClCompile>
-+    <ClCompile Include="..\..\upnp\src\genlib\util\util.c">
-+      <Filter>sources\genlib\util</Filter>
-+    </ClCompile>
-+  </ItemGroup>
-+</Project>
-\ No newline at end of file
---- /dev/null
-+++ b/upnp/inc/FreeList.h
-@@ -0,0 +1,131 @@
-+/*******************************************************************************
-+ *
-+ * Copyright (c) 2000-2003 Intel Corporation 
-+ * All rights reserved. 
-+ *
-+ * Redistribution and use in source and binary forms, with or without 
-+ * modification, are permitted provided that the following conditions are met: 
-+ *
-+ * * Redistributions of source code must retain the above copyright notice, 
-+ * this list of conditions and the following disclaimer. 
-+ * * Redistributions in binary form must reproduce the above copyright notice, 
-+ * this list of conditions and the following disclaimer in the documentation 
-+ * and/or other materials provided with the distribution. 
-+ * * Neither name of Intel Corporation nor the names of its contributors 
-+ * may be used to endorse or promote products derived from this software 
-+ * without specific prior written permission.
-+ * 
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL OR 
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
-+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ *
-+ ******************************************************************************/
-+
-+#ifndef FREE_LIST_H
-+#define FREE_LIST_H
-+
-+/*!
-+ * \file
-+ */
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+#include "ithread.h"
-+
-+#include <errno.h>
-+
-+/*!
-+ * Free list node. points to next free item.
-+ * Memory for node is borrowed from allocated items.
-+ * \internal
-+ */
-+typedef struct FREELISTNODE
-+{
-+	struct FREELISTNODE *next;
-+} FreeListNode;
-+
-+/*!
-+ * Stores head and size of free list, as well as mutex for protection.
-+ * \internal
-+ */
-+typedef struct FREELIST
-+{
-+	FreeListNode *head;
-+	size_t element_size;
-+ 	int maxFreeListLength;
-+	int freeListLength;
-+} FreeList;
-+
-+/*!
-+ * \brief Initializes Free List.
-+ *
-+ * Must be called first and only once for FreeList.
-+ *
-+ * \return:
-+ *	\li \c 0 on success.
-+ *	\li \c EINVAL on failure.
-+ */
-+int FreeListInit(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	FreeList *free_list,
-+	/*! Size of elements to store in free list. */
-+	size_t elementSize,
-+	/*! Max size that the free list can grow to before returning
-+	 * memory to O.S. */
-+	int maxFreeListLength);
-+
-+/*!
-+ * \brief Allocates chunk of set size.
-+ *
-+ * If a free item is available in the list, returnes the stored item,
-+ * otherwise calls the O.S. to allocate memory.
-+ *
-+ * \return Non NULL on success. NULL on failure.
-+ */
-+void *FreeListAlloc(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	FreeList *free_list);
-+
-+/*!
-+ * \brief Returns an item to the Free List.
-+ *
-+ * If the free list is smaller than the max size then adds the item to the
-+ * free list, otherwise returns the item to the O.S.
-+ *
-+ * \return:
-+ *	\li \c 0 on success.
-+ *	\li \c EINVAL on failure.
-+ */
-+int FreeListFree(
-+	/*! Must be valid, non null, pointer to a free list. */
-+	FreeList *free_list,
-+	/*! Must be a pointer allocated by FreeListAlloc. */
-+	void *element);
-+
-+/*!
-+ * \brief Releases the resources stored with the free list.
-+ *
-+ * \return:
-+ *	\li \c 0 on success.
-+ *	\li \c EINVAL on failure.
-+ */
-+int FreeListDestroy(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	FreeList *free_list);
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif /* FREE_LIST_H */
-+
---- /dev/null
-+++ b/upnp/inc/LinkedList.h
-@@ -0,0 +1,289 @@
-+/*******************************************************************************
-+ *
-+ * Copyright (c) 2000-2003 Intel Corporation 
-+ * All rights reserved. 
-+ *
-+ * Redistribution and use in source and binary forms, with or without 
-+ * modification, are permitted provided that the following conditions are met: 
-+ *
-+ * * Redistributions of source code must retain the above copyright notice, 
-+ * this list of conditions and the following disclaimer. 
-+ * * Redistributions in binary form must reproduce the above copyright notice, 
-+ * this list of conditions and the following disclaimer in the documentation 
-+ * and/or other materials provided with the distribution. 
-+ * * Neither name of Intel Corporation nor the names of its contributors 
-+ * may be used to endorse or promote products derived from this software 
-+ * without specific prior written permission.
-+ * 
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL OR 
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
-+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ *
-+ ******************************************************************************/
-+
-+#ifndef LINKED_LIST_H
-+#define LINKED_LIST_H
-+
-+/*!
-+ * \file
-+ */
-+
-+#include "FreeList.h"
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+#define EOUTOFMEM (-7 & 1<<29)
-+
-+#define FREELISTSIZE 100
-+#define LIST_SUCCESS 1
-+#define LIST_FAIL 0
-+
-+/*! Function for freeing list items. */
-+typedef void (*free_function)(void *arg);
-+
-+/*! Function for comparing list items. Returns 1 if itemA==itemB */
-+typedef int (*cmp_routine)(void *itemA,void *itemB);
-+
-+/*! Linked list node. Stores generic item and pointers to next and prev.
-+ * \internal
-+ */
-+typedef struct LISTNODE
-+{
-+	struct LISTNODE *prev;
-+	struct LISTNODE *next;
-+	void *item;
-+} ListNode;
-+
-+/*!
-+ * Linked list (no protection).
-+ *
-+ * Because this is for internal use, parameters are NOT checked for validity.
-+ * The first item of the list is stored at node: head->next
-+ * The last item of the list is stored at node: tail->prev
-+ * If head->next=tail, then list is empty.
-+ * To iterate through the list:
-+ *
-+ *	LinkedList g;
-+ *	ListNode *temp = NULL;
-+ *	for (temp = ListHead(g);temp!=NULL;temp = ListNext(g,temp)) {
-+ *	}
-+ *
-+ * \internal
-+ */
-+typedef struct LINKEDLIST
-+{
-+	/*! head, first item is stored at: head->next */
-+	ListNode head;
-+	/*! tail, last item is stored at: tail->prev  */
-+	ListNode tail;
-+	/*! size of list */
-+	long size;
-+	/*! free list to use */
-+	FreeList freeNodeList;
-+	/*! free function to use */
-+	free_function free_func;
-+	/*! compare function to use */
-+	cmp_routine cmp_func;
-+} LinkedList;
-+
-+/*!
-+ * \brief Initializes LinkedList. Must be called first and only once for List.
-+ * 
-+ *  \return
-+ *	\li \c 0 on success.
-+ *	\li \c EOUTOFMEM on failure.
-+ */
-+int ListInit(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list,
-+	/*! Function used to compare items. (May be NULL). */
-+	cmp_routine cmp_func,
-+	/*! Function used to free items. (May be NULL). */
-+	free_function free_func);
-+
-+/*!
-+ * \brief Adds a node to the head of the list. Node gets immediately after
-+ * list head.
-+ *
-+ *  Precondition:
-+ *      The list has been initialized.
-+ *
-+ * \return The pointer to the ListNode on success, NULL on failure.
-+ */
-+ListNode *ListAddHead(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list,
-+	/*! Item to be added. */
-+	void *item);
-+
-+/*!
-+ * \brief Adds a node to the tail of the list. Node gets added immediately
-+ * before list.tail.
-+ *
-+ * Precondition: The list has been initialized.
-+ *
-+ * \return The pointer to the ListNode on success, NULL on failure.
-+ */
-+ListNode *ListAddTail(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list,
-+	/*! Item to be added. */
-+	void *item);
-+
-+/*!
-+ * \brief Adds a node after the specified node. Node gets added immediately
-+ * after bnode.
-+ *
-+ *  Precondition: The list has been initialized.
-+ *
-+ * \return The pointer to the ListNode on success, NULL on failure.
-+ */
-+ListNode *ListAddAfter(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list,
-+	/*! Item to be added. */
-+	void *item,
-+	/*! Node to add after. */
-+	ListNode *bnode);
-+
-+/*!
-+ * \brief Adds a node before the specified node. Node gets added immediately
-+ * before anode.
-+ *
-+ * Precondition: The list has been initialized.
-+ *
-+ * \return The pointer to the ListNode on success, NULL on failure.
-+ */
-+ListNode *ListAddBefore(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list,
-+	/*! Item to be added. */
-+	void *item,
-+	/*! Node to add in front of. */
-+	ListNode *anode);
-+
-+/*!
-+ * \brief Removes a node from the list. The memory for the node is freed.
-+ *
-+ * Precondition: The list has been initialized.
-+ *
-+ * \return The pointer to the item stored in the node or NULL if the item
-+ * is freed.
-+ */
-+void *ListDelNode(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list,
-+	/*! Node to delete. */
-+	ListNode *dnode,
-+	/*! if !0 then item is freed using free function. If 0 (or free
-+	 * function is NULL) then item is not freed. */
-+	int freeItem);
-+
-+/*!
-+ * \brief Removes all memory associated with list nodes. Does not free
-+ * LinkedList *list.
-+ *
-+ * Precondition: The list has been initialized.
-+ *
-+ * \return 0 on success, EINVAL on failure.
-+ */
-+int ListDestroy(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list,
-+	/*! if !0 then item is freed using free function. If 0 (or free
-+	 * function is NULL) then item is not freed. */
-+	int freeItem);
-+
-+/*!
-+ * \brief Returns the head of the list.
-+ *    
-+ * Precondition: The list has been initialized.
-+ *
-+ * \return The head of the list. NULL if list is empty.
-+ */
-+ListNode *ListHead(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list);
-+
-+/*!
-+ * \brief Returns the tail of the list.
-+ *    
-+ * Precondition: The list has been initialized.
-+ *
-+ * \return The tail of the list. NULL if list is empty.
-+ */
-+ListNode *ListTail(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list);
-+
-+/*!
-+ * \brief Returns the next item in the list.
-+ *    
-+ * Precondition: The list has been initialized.
-+ *
-+ * \return The next item in the list. NULL if there are no more items in list.
-+ */
-+ListNode *ListNext(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list,
-+	/*! Node from the list. */
-+	ListNode *node);
-+
-+/*!
-+ * \brief Returns the previous item in the list.
-+ *    
-+ * Precondition: The list has been initialized.
-+ *
-+ * \return The previous item in the list. NULL if there are no more items in list.
-+ */
-+ListNode *ListPrev(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list,
-+	/*! Node from the list. */
-+	ListNode *node);
-+
-+/*!
-+ * \brief Finds the specified item in the list.
-+ *
-+ * Uses the compare function specified in ListInit. If compare function
-+ * is NULL then compares items as pointers.
-+ *
-+ * Precondition: The list has been initialized.
-+ *
-+ * \return The node containing the item. NULL if no node contains the item.
-+ */
-+ListNode* ListFind(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList *list,
-+	/*! The node to start from, NULL if to start from beginning. */
-+	ListNode *start,
-+	/*! The item to search for. */
-+	void *item);
-+
-+/*!
-+ * \brief Returns the size of the list.
-+ *
-+ * Precondition: The list has been initialized.
-+ *
-+ * \return The number of items in the list.
-+ */
-+long ListSize(
-+	/*! Must be valid, non null, pointer to a linked list. */
-+	LinkedList* list);
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif /* LINKED_LIST_H */
-+
---- /dev/null
-+++ b/upnp/inc/ThreadPool.h
-@@ -0,0 +1,538 @@
-+/*******************************************************************************
-+ *
-+ * Copyright (c) 2000-2003 Intel Corporation 
-+ * All rights reserved. 
-+ * Copyright (c) 2012 France Telecom All rights reserved. 
-+ *
-+ * Redistribution and use in source and binary forms, with or without 
-+ * modification, are permitted provided that the following conditions are met: 
-+ *
-+ * * Redistributions of source code must retain the above copyright notice, 
-+ * this list of conditions and the following disclaimer. 
-+ * * Redistributions in binary form must reproduce the above copyright notice, 
-+ * this list of conditions and the following disclaimer in the documentation 
-+ * and/or other materials provided with the distribution. 
-+ * * Neither name of Intel Corporation nor the names of its contributors 
-+ * may be used to endorse or promote products derived from this software 
-+ * without specific prior written permission.
-+ * 
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL OR 
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
-+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ *
-+ ******************************************************************************/
-+
-+#ifndef THREADPOOL_H
-+#define THREADPOOL_H
-+
-+/*!
-+ * \file
-+ */
-+
-+#include "FreeList.h"
-+#include "ithread.h"
-+#include "LinkedList.h"
-+#include "UpnpInet.h"
-+#include "UpnpGlobal.h" /* for UPNP_INLINE, EXPORT_SPEC */
-+
-+#include <errno.h>
-+
-+#ifdef _WIN32
-+#ifndef _TIMEZONE_DEFINED
-+	#include <time.h>
-+	struct timezone
-+	{
-+		int  tz_minuteswest; /* minutes W of Greenwich */
-+		int  tz_dsttime;     /* type of dst correction */
-+	};
-+	int gettimeofday(struct timeval *tv, struct timezone *tz);
-+#endif
-+#else /* _WIN32 */
-+	#include <sys/param.h>
-+	#include <sys/time.h> /* for gettimeofday() */
-+	#if defined(__OSX__) || defined(__APPLE__) || defined(__NetBSD__)
-+		#include <sys/resource.h>	/* for setpriority() */
-+	#endif
-+#endif
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+/*! Size of job free list */
-+#define JOBFREELISTSIZE 100
-+
-+#define INFINITE_THREADS -1
-+
-+#define EMAXTHREADS (-8 & 1<<29)
-+
-+/*! Invalid Policy */
-+#define INVALID_POLICY (-9 & 1<<29)
-+
-+/*! Invalid JOB Id */
-+#define INVALID_JOB_ID (-2 & 1<<29)
-+
-+typedef enum duration {
-+	SHORT_TERM,
-+	PERSISTENT
-+} Duration;
-+
-+typedef enum priority {
-+	LOW_PRIORITY,
-+	MED_PRIORITY,
-+	HIGH_PRIORITY
-+} ThreadPriority;
-+
-+/*! default priority used by TPJobInit */
-+#define DEFAULT_PRIORITY MED_PRIORITY
-+
-+/*! default minimum used by TPAttrInit */
-+#define DEFAULT_MIN_THREADS 1
-+
-+/*! default max used by TPAttrInit */
-+#define DEFAULT_MAX_THREADS 10
-+
-+/*! default stack size used by TPAttrInit */
-+#define DEFAULT_STACK_SIZE 0u
-+
-+/*! default jobs per thread used by TPAttrInit */
-+#define DEFAULT_JOBS_PER_THREAD 10
-+
-+/*! default starvation time used by TPAttrInit */
-+#define DEFAULT_STARVATION_TIME	500
-+
-+/*! default idle time used by TPAttrInit */
-+#define DEFAULT_IDLE_TIME 10 * 1000
-+
-+/*! default free routine used TPJobInit */
-+#define DEFAULT_FREE_ROUTINE NULL
-+
-+/*! default max jobs used TPAttrInit */
-+#define DEFAULT_MAX_JOBS_TOTAL 100
-+
-+/*!
-+ * \brief Statistics.
-+ *
-+ * Always include stats because code change is minimal.
-+ */
-+#define STATS 1
-+
-+#ifdef _DEBUG
-+	#define DEBUG 1
-+#endif
-+
-+typedef int PolicyType;
-+
-+#define DEFAULT_POLICY SCHED_OTHER
-+
-+/*! Function for freeing a thread argument. */
-+typedef void (*free_routine)(void *arg);
-+
-+
-+/*! Attributes for thread pool. Used to set and change parameters of thread
-+ * pool. */
-+typedef struct THREADPOOLATTR
-+{
-+	/*! ThreadPool will always maintain at least this many threads. */
-+	int minThreads;
-+	/*! ThreadPool will never have more than this number of threads. */
-+	int maxThreads;
-+	/*! This is the minimum stack size allocated for each thread. */
-+	size_t stackSize;
-+	/*! This is the maximum time a thread will
-+	 * remain idle before dying (in milliseconds). */
-+	int maxIdleTime;
-+	/*! Jobs per thread to maintain. */
-+	int jobsPerThread;
-+	/*! Maximum number of jobs that can be queued totally. */
-+	int maxJobsTotal;
-+	/*! the time a low priority or med priority job waits before getting
-+	 * bumped up a priority (in milliseconds). */
-+	int starvationTime;
-+	/*! scheduling policy to use. */
-+	PolicyType schedPolicy;
-+} ThreadPoolAttr;
-+
-+/*! Internal ThreadPool Job. */
-+typedef struct THREADPOOLJOB
-+{
-+	start_routine func;
-+	void *arg;
-+	free_routine free_func;
-+	struct timeval requestTime;
-+	ThreadPriority priority;
-+	int jobId;
-+} ThreadPoolJob;
-+
-+/*! Structure to hold statistics. */
-+typedef struct TPOOLSTATS
-+{
-+	double totalTimeHQ;
-+	int totalJobsHQ;
-+	double avgWaitHQ;
-+	double totalTimeMQ;
-+	int totalJobsMQ;
-+	double avgWaitMQ;
-+	double totalTimeLQ;
-+	int totalJobsLQ;
-+	double avgWaitLQ;
-+	double totalWorkTime;
-+	double totalIdleTime;
-+	int workerThreads;
-+	int idleThreads;
-+	int persistentThreads;
-+	int totalThreads;
-+	int maxThreads;
-+	int currentJobsHQ;
-+	int currentJobsLQ;
-+	int currentJobsMQ;
-+} ThreadPoolStats;
-+
-+/*!
-+ * \brief A thread pool similar to the thread pool in the UPnP SDK.
-+ *
-+ * Allows jobs to be scheduled for running by threads in a 
-+ * thread pool. The thread pool is initialized with a 
-+ * minimum and maximum thread number as well as a max idle time
-+ * and a jobs per thread ratio. If a worker thread waits the whole
-+ * max idle time without receiving a job and the thread pool
-+ * currently has more threads running than the minimum
-+ * then the worker thread will exit. If when 
-+ * scheduling a job the current job to thread ratio
-+ * becomes greater than the set ratio and the thread pool currently has
-+ * less than the maximum threads then a new thread will
-+ * be created.
-+ */
-+typedef struct THREADPOOL
-+{
-+	/*! Mutex to protect job qs. */
-+	ithread_mutex_t mutex;
-+	/*! Condition variable to signal Q. */
-+	ithread_cond_t condition;
-+	/*! Condition variable for start and stop. */
-+	ithread_cond_t start_and_shutdown;
-+	/*! ids for jobs */
-+	int lastJobId;
-+	/*! whether or not we are shutting down */
-+	int shutdown;
-+	/*! total number of threads */
-+	int totalThreads;
-+	/*! flag that's set when waiting for a new worker thread to start */
-+	int pendingWorkerThreadStart;
-+	/*! number of threads that are currently executing jobs */
-+	int busyThreads;
-+	/*! number of persistent threads */
-+	int persistentThreads;
-+	/*! free list of jobs */
-+	FreeList jobFreeList;
-+	/*! low priority job Q */
-+	LinkedList lowJobQ;
-+	/*! med priority job Q */
-+	LinkedList medJobQ;
-+	/*! high priority job Q */
-+	LinkedList highJobQ;
-+	/*! persistent job */
-+	ThreadPoolJob *persistentJob;
-+	/*! thread pool attributes */
-+	ThreadPoolAttr attr;
-+	/*! statistics */
-+	ThreadPoolStats stats;
-+} ThreadPool;
-+
-+/*!
-+ * \brief Initializes and starts ThreadPool. Must be called first and
-+ * only once for ThreadPool.
-+ *
-+ * \return
-+ * \li \c 0 on success.
-+ * \li \c EAGAIN if not enough system resources to create minimum threads.
-+ * \li \c INVALID_POLICY if schedPolicy can't be set.
-+ * \li \c EMAXTHREADS if minimum threads is greater than maximum threads.
-+ */
-+int ThreadPoolInit(
-+	/*! Must be valid, non null, pointer to ThreadPool. */
-+	ThreadPool *tp,
-+	/*! Can be null. if not null then attr contains the following fields:
-+	 * \li \c minWorkerThreads - minimum number of worker threads thread
-+	 * pool will never have less than this number of threads.
-+	 * \li \c maxWorkerThreads - maximum number of worker threads thread
-+	 * pool will never have more than this number of threads.
-+	 * \li \c maxIdleTime - maximum time that a worker thread will spend
-+	 * idle. If a worker is idle longer than this time and there are more
-+	 * than the min number of workers running, then the worker thread
-+	 * exits.
-+	 * \li \c jobsPerThread - ratio of jobs to thread to try and maintain
-+	 * if a job is scheduled and the number of jobs per thread is greater
-+	 * than this number,and if less than the maximum number of workers are
-+	 * running then a new thread is started to help out with efficiency.
-+	 * \li \c schedPolicy - scheduling policy to try and set (OS dependent).
-+	 */
-+	ThreadPoolAttr *attr);
-+
-+/*!
-+ * \brief Adds a persistent job to the thread pool.
-+ *
-+ * Job will be run as soon as possible. Call will block until job is scheduled.
-+ * 
-+ * \return
-+ *	\li \c 0 on success.
-+ *	\li \c EOUTOFMEM not enough memory to add job.
-+ *	\li \c EMAXTHREADS not enough threads to add persistent job.
-+ */
-+int ThreadPoolAddPersistent(
-+	/*! Valid thread pool pointer. */
-+	ThreadPool*tp,
-+	/*! Valid thread pool job. */
-+	ThreadPoolJob *job,
-+	/*! . */
-+	int *jobId);
-+
-+/*!
-+ * \brief Gets the current set of attributes associated with the thread pool.
-+ *
-+ * \return
-+ * 	\li \c 0 on success, nonzero on failure.
-+ */
-+int ThreadPoolGetAttr(
-+	/*! valid thread pool pointer. */
-+	ThreadPool *tp,
-+	/*! non null pointer to store attributes. */
-+	ThreadPoolAttr *out);
-+
-+/*!
-+ * \brief Sets the attributes for the thread pool.
-+ * Only affects future calculations.
-+ *
-+ * \return
-+ * 	\li \c 0 on success, nonzero on failure.
-+ * 	\li \c INVALID_POLICY if policy can not be set.
-+ */
-+int ThreadPoolSetAttr(
-+	/*! valid thread pool pointer. */
-+	ThreadPool *tp,
-+	/*! pointer to attributes, null sets attributes to default. */
-+	ThreadPoolAttr *attr);
-+
-+/*!
-+ * \brief Adds a job to the thread pool. Job will be run as soon as possible.
-+ *
-+ * \return
-+ * 	\li \c 0 on success, nonzero on failure.
-+ * 	\li \c EOUTOFMEM if not enough memory to add job.
-+ */
-+int ThreadPoolAdd(
-+	/*! valid thread pool pointer. */
-+	ThreadPool*tp,
-+	/*! . */
-+	ThreadPoolJob *job,
-+	/*! id of job. */
-+	int *jobId);
-+
-+/*!
-+ * \brief Removes a job from the thread pool. Can only remove jobs which
-+ * are not currently running.
-+ *
-+ * \return
-+ * 	\li \c 0 on success, nonzero on failure.
-+ * 	\li \c INVALID_JOB_ID if job not found. 
-+ */
-+int ThreadPoolRemove(
-+	/*! valid thread pool pointer. */
-+	ThreadPool *tp,
-+	/*! id of job. */
-+	int jobId,
-+	/*! space for removed job. */
-+	ThreadPoolJob *out);
-+
-+/*!
-+ * \brief Shuts the thread pool down. Waits for all threads to finish.
-+ * May block indefinitely if jobs do not exit.
-+ *
-+ * \return 0 on success, nonzero on failure
-+ */
-+int ThreadPoolShutdown(
-+	/*! must be valid tp. */
-+	ThreadPool *tp);
-+
-+/*!
-+ * \brief Initializes thread pool job. Sets the priority to default defined
-+ * in ThreadPool.h. Sets the free_routine to default defined in ThreadPool.h.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPJobInit(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolJob *job,
-+	/*! function to run, must be valid. */
-+	start_routine func,
-+	/*! argument to pass to function. */
-+	void *arg);
-+
-+/*!
-+ * \brief Sets the max threads for the thread pool attributes.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPJobSetPriority(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolJob *job,
-+	/*! value to set. */
-+	ThreadPriority priority);
-+
-+/*!
-+ * \brief Sets the max threads for the thread pool attributes.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPJobSetFreeFunction(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolJob *job,
-+	/*! value to set. */
-+	free_routine func);
-+
-+/*!
-+ * \brief Initializes thread pool attributes. Sets values to defaults defined
-+ * in ThreadPool.h.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPAttrInit(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolAttr *attr);
-+
-+/*!
-+ * \brief Sets the max threads for the thread pool attributes.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPAttrSetMaxThreads(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolAttr *attr,
-+	/*! value to set. */
-+	int maxThreads);
-+
-+/*!
-+ * \brief Sets the min threads for the thread pool attributes.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPAttrSetMinThreads(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolAttr *attr,
-+	/*! value to set. */
-+	int minThreads);
-+
-+/*!
-+ * \brief Sets the stack size for the thread pool attributes.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPAttrSetStackSize(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolAttr *attr,
-+	/*! value to set. */
-+	size_t stackSize);
-+
-+/*!
-+ * \brief Sets the idle time for the thread pool attributes.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPAttrSetIdleTime(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolAttr *attr,
-+	/*! . */
-+	int idleTime);
-+
-+/*!
-+ * \brief Sets the jobs per thread ratio
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPAttrSetJobsPerThread(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolAttr *attr,
-+	/*! number of jobs per thread to maintain. */
-+	int jobsPerThread);
-+
-+/*!
-+ * \brief Sets the starvation time for the thread pool attributes.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPAttrSetStarvationTime(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolAttr *attr,
-+	/*! milliseconds. */
-+	int starvationTime);
-+
-+/*!
-+ * \brief Sets the scheduling policy for the thread pool attributes.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPAttrSetSchedPolicy(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolAttr *attr,
-+	/*! must be a valid policy type. */
-+	PolicyType schedPolicy);
-+
-+/*!
-+ * \brief Sets the maximum number jobs that can be qeued totally.
-+ *
-+ * \return Always returns 0.
-+ */
-+int TPAttrSetMaxJobsTotal(
-+	/*! must be valid thread pool attributes. */
-+	ThreadPoolAttr *attr,
-+	/*! maximum number of jobs. */
-+	int maxJobsTotal);
-+
-+/*!
-+ * \brief Returns various statistics about the thread pool.
-+ *
-+ * Only valid if STATS has been defined.
-+ *
-+ * \return Always returns 0.
-+ */
-+#ifdef STATS
-+	EXPORT_SPEC int ThreadPoolGetStats(
-+		/*! Valid initialized threadpool. */
-+		ThreadPool *tp,
-+		/*! Valid stats, out parameter. */
-+		ThreadPoolStats *stats);
-+#else
-+	static UPNP_INLINE int ThreadPoolGetStats(
-+		/*! Valid initialized threadpool. */
-+		ThreadPool *tp,
-+		/*! Valid stats, out parameter. */
-+		ThreadPoolStats *stats) {}
-+#endif
-+
-+/*!
-+ * \brief
-+ */
-+#ifdef STATS
-+	EXPORT_SPEC void ThreadPoolPrintStats(
-+		/*! . */
-+		ThreadPoolStats *stats);
-+#else
-+	static UPNP_INLINE void ThreadPoolPrintStats(
-+		/*! . */
-+		ThreadPoolStats *stats) {}
-+#endif
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif /* THREADPOOL_H */
-+
---- /dev/null
-+++ b/upnp/inc/TimerThread.h
-@@ -0,0 +1,161 @@
-+/*******************************************************************************
-+ *
-+ * Copyright (c) 2000-2003 Intel Corporation 
-+ * All rights reserved. 
-+ *
-+ * Redistribution and use in source and binary forms, with or without 
-+ * modification, are permitted provided that the following conditions are met: 
-+ *
-+ * * Redistributions of source code must retain the above copyright notice, 
-+ * this list of conditions and the following disclaimer. 
-+ * * Redistributions in binary form must reproduce the above copyright notice, 
-+ * this list of conditions and the following disclaimer in the documentation 
-+ * and/or other materials provided with the distribution. 
-+ * * Neither name of Intel Corporation nor the names of its contributors 
-+ * may be used to endorse or promote products derived from this software 
-+ * without specific prior written permission.
-+ * 
-+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
-+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
-+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
-+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL OR 
-+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
-+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
-+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR 
-+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY 
-+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS 
-+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-+ *
-+ ******************************************************************************/
-+
-+#ifndef TIMERTHREAD_H
-+#define TIMERTHREAD_H
-+
-+/*!
-+ * \file
-+ */
-+
-+#include "FreeList.h"
-+#include "ithread.h"
-+#include "LinkedList.h"
-+#include "ThreadPool.h"
-+
-+#ifdef __cplusplus
-+extern "C" {
-+#endif
-+
-+#define INVALID_EVENT_ID (-10 & 1<<29)
-+
-+/*! Timeout Types. */
-+typedef enum timeoutType {
-+	/*! seconds from Jan 1, 1970. */
-+	ABS_SEC,
-+	/*! seconds from current time. */
-+	REL_SEC
-+} TimeoutType;
-+
-+/*!
-+ * A timer thread similar to the one in the Upnp SDK that allows
-+ * the scheduling of a job to run at a specified time in the future.
-+ *
-+ * Because the timer thread uses the thread pool there is no 
-+ * gurantee of timing, only approximate timing.
-+ *
-+ * Uses ThreadPool, Mutex, Condition, Thread.
-+ */
-+typedef struct TIMERTHREAD
-+{
-+	ithread_mutex_t mutex;
-+	ithread_cond_t condition;
-+	int lastEventId;
-+	LinkedList eventQ;
-+	int shutdown;
-+	FreeList freeEvents;
-+	ThreadPool *tp;
-+} TimerThread;
-+
-+/*!
-+ * Struct to contain information for a timer event.
-+ *
-+ * Internal to the TimerThread.
-+ */
-+typedef struct TIMEREVENT
-+{
-+	ThreadPoolJob job;
-+	/*! [in] Absolute time for event in seconds since Jan 1, 1970. */
-+	time_t eventTime;
-+	/*! [in] Long term or short term job. */
-+	Duration persistent;
-+	int id;
-+} TimerEvent;
-+
-+/*!
-+ * \brief Initializes and starts timer thread.
-+ *
-+ * \return 0 on success, nonzero on failure. Returns error from
-+ * 	ThreadPoolAddPersistent on failure.
-+ */
-+int TimerThreadInit(
-+	/*! [in] Valid timer thread pointer. */
-+	TimerThread *timer,
-+	/*! [in] Valid thread pool to use. Must be started. Must be valid for
-+	 * lifetime of timer. Timer must be shutdown BEFORE thread pool. */
-+	ThreadPool *tp);
-+
-+/*!
-+ * \brief Schedules an event to run at a specified time.
-+ *
-+ * \return 0 on success, nonzero on failure, EOUTOFMEM if not enough memory
-+ * 	to schedule job.
-+ */
-+int TimerThreadSchedule(
-+	/*! [in] Valid timer thread pointer. */
-+	TimerThread* timer,
-+	/*! [in] time of event. Either in absolute seconds, or relative
-+	 * seconds in the future. */
-+	time_t time, 
-+	/*! [in] either ABS_SEC, or REL_SEC. If REL_SEC, then the event
-+	 * will be scheduled at the current time + REL_SEC. */
-+	TimeoutType type,
-+	/*! [in] Valid Thread pool job with following fields. */
-+	ThreadPoolJob *job,
-+	/*! [in] . */
-+	Duration duration,
-+	/*! [in] Id of timer event. (out, can be null). */
-+	int *id);
-+
-+/*!
-+ * \brief Removes an event from the timer Q.
-+ *
-+ * Events can only be removed before they have been placed in the thread pool.
-+ *
-+ * \return 0 on success, INVALID_EVENT_ID on failure.
-+ */
-+int TimerThreadRemove(
-+	/*! [in] Valid timer thread pointer. */
-+	TimerThread *timer,
-+	/*! [in] Id of event to remove. */
-+	int id,
-+	/*! [in] Space for thread pool job. */
-+	ThreadPoolJob *out);
-+
-+/*!
-+ * \brief Shutdown the timer thread.
-+ *
-+ * Events scheduled in the future will NOT be run.
-+ *
-+ * Timer thread should be shutdown BEFORE it's associated thread pool.
-+ *
-+ * \return 0 if succesfull, nonzero otherwise. Always returns 0.
-+ */
-+int TimerThreadShutdown(
-+	/*! [in] Valid timer thread pointer. */
-+	TimerThread *timer);
-+
-+#ifdef __cplusplus
-+}
-+#endif
-+
-+#endif /* TIMER_THREAD_H */
-+
---- a/upnp/inc/UpnpGlobal.h
-+++ b/upnp/inc/UpnpGlobal.h
-@@ -1,5 +1,6 @@
- #ifndef UPNPGLOBAL_H
- #define UPNPGLOBAL_H
-+#include <inttypes.h>
- 
- /*!
-  * \file
-@@ -42,7 +43,9 @@
- 		/* define some things the M$ VC++ doesn't know */
- 		#define UPNP_INLINE _inline
- 		typedef __int64 int64_t;
-+#if !defined(PRId64)
- 		#define PRId64 "I64d"
-+#endif		
- 		#define PRIzd "ld"
- 		#define PRIzu "lu"
- 		#define PRIzx "lx"
---- a/upnp/inc/upnp.h
-+++ b/upnp/inc/upnp.h
-@@ -61,6 +61,19 @@
- 	/* Other systems ??? */
- #endif
- 
-+#   if defined(__MINGW32__)
-+#       if !defined(_OFF_T_)
-+typedef long long _off_t;
-+typedef _off_t off_t;
-+#           define _OFF_T_
-+#       else
-+#           ifdef off_t
-+#               undef off_t
-+#           endif
-+#           define off_t long long
-+#       endif
-+#   endif
-+
- #ifdef UPNP_ENABLE_OPEN_SSL
- #include <openssl/ssl.h>
- #endif
---- /dev/null
-+++ b/upnp/inc/upnpconfig.h
-@@ -0,0 +1,132 @@
++++ b/build/inc/upnpconfig.h
+@@ -0,0 +1,136 @@
++/* upnp/inc/upnpconfig.h.  Generated from upnpconfig.h.in by configure.  */
++/* -*- C -*- */
 +/*******************************************************************************
 + *
 + * Copyright (c) 2006 Rémi Turboult <r3mi@users.sourceforge.net>
@@ -2596,26 +43,35 @@ Subject: [PATCH] Windows patch.
 + ***************************************************************************/ 
 +
 +/** The library version (string) e.g. "1.3.0" */
-+#define UPNP_VERSION_STRING "1.8.5"
++#define UPNP_VERSION_STRING "1.6.19"
 +
 +/** Major version of the library */
 +#define UPNP_VERSION_MAJOR 1
 +
 +/** Minor version of the library */
-+#define UPNP_VERSION_MINOR 8
++#define UPNP_VERSION_MINOR 6
 +
 +/** Patch version of the library */
-+#define UPNP_VERSION_PATCH 5
++#define UPNP_VERSION_PATCH 19
 +
 +/** The library version (numeric) e.g. 10300 means version 1.3.0 */
 +#define UPNP_VERSION	\
 +  ((UPNP_VERSION_MAJOR * 100 + UPNP_VERSION_MINOR) * 100 + UPNP_VERSION_PATCH)
 +
++
++
 +/***************************************************************************
 + * Large file support
 + ***************************************************************************/
 +
-+/* #undef UPNP_LARGEFILE_SENSITIVE */
++/** File Offset size */
++#define _FILE_OFFSET_BITS 64
++
++/** Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
++/* #undef _LARGEFILE_SOURCE */
++
++/** Large files support */
++#define _LARGE_FILE_SOURCE /**/
 +
 +/***************************************************************************
 + * Library optional features
@@ -2631,33 +87,41 @@ Subject: [PATCH] Windows patch.
 + *  (i.e. configure --enable-debug) : <upnp/upnpdebug.h> file is available */
 +/* #undef UPNP_HAVE_DEBUG */
 +
++
 +/** Defined to 1 if the library has been compiled with client API enabled 
 + *  (i.e. configure --enable-client) */
 +#define UPNP_HAVE_CLIENT 1
++
 +
 +/** Defined to 1 if the library has been compiled with device API enabled 
 + *  (i.e. configure --enable-device) */
 +#define UPNP_HAVE_DEVICE 1
 +
++
 +/** Defined to 1 if the library has been compiled with integrated web server
 + *  (i.e. configure --enable-webserver --enable-device) */
 +#define UPNP_HAVE_WEBSERVER 1
++
 +
 +/** Defined to 1 if the library has been compiled with the SSDP part enabled
 + *  (i.e. configure --enable-ssdp) */
 +#define UPNP_HAVE_SSDP 1
 +
++
 +/** Defined to 1 if the library has been compiled with optional SSDP headers
 + *  support (i.e. configure --enable-optssdp) */
 +#define UPNP_HAVE_OPTSSDP 1
++
 +
 +/** Defined to 1 if the library has been compiled with the SOAP part enabled
 + *  (i.e. configure --enable-soap) */
 +#define UPNP_HAVE_SOAP 1
 +
++
 +/** Defined to 1 if the library has been compiled with the GENA part enabled
 + *  (i.e. configure --enable-gena) */
 +#define UPNP_HAVE_GENA 1
++
 +
 +/** Defined to 1 if the library has been compiled with helper API
 + *  (i.e. configure --enable-tools) : <upnp/upnptools.h> file is available */
@@ -2665,120 +129,19 @@ Subject: [PATCH] Windows patch.
 +
 +/** Defined to 1 if the library has been compiled with ipv6 support
 + *  (i.e. configure --enable-ipv6) */
-+#define UPNP_ENABLE_IPV6 1
++/* #undef UPNP_ENABLE_IPV6 */
 +
 +/** Defined to 1 if the library has been compiled with unspecified SERVER
 + * header (i.e. configure --enable-unspecified_server) */
 +/* #undef UPNP_ENABLE_UNSPECIFIED_SERVER */
 +
-+/** Defined to 1 if the library has been compiled with OpenSSL support
-+ *  (i.e. configure --enable-open_ssl) */
-+/* #undef UPNP_ENABLE_OPEN_SSL */
-+
-+/** Defined to 1 if the library has been compiled to use blocking TCP socket calls
-+ *  (i.e. configure --enable_blocking_tcp_connections) */
-+#define UPNP_ENABLE_BLOCKING_TCP_CONNECTIONS 0
-+
-+/** Defined to 1 if the library has been compiled to support filesystem writes on POST
-+ *  (i.e. configure --enable-postwrite) */
-+/* #undef UPNP_ENABLE_POST_WRITE */
-+
-+/** Defined to 1 if the library has been compiled bind the miniserver socket with SO_REUSEADDR
-+ *  (i.e. configure --enable_reuseaddr) */
-+/* #undef UPNP_MINISERVER_REUSEADDR */
-+
 +#endif /* UPNP_CONFIG_H */
---- a/upnp/src/api/upnpapi.c
-+++ b/upnp/src/api/upnpapi.c
-@@ -383,13 +383,13 @@ static int UpnpInitPreamble(void)
- 		return retVal;
- 	}
- 
-+#ifdef INTERNAL_WEB_SERVER
- #ifdef INCLUDE_DEVICE_APIS
- #if EXCLUDE_SOAP == 0
- 	SetSoapCallback(soap_device_callback);
- #endif
- #endif /* INCLUDE_DEVICE_APIS */
- 
--#ifdef INTERNAL_WEB_SERVER
- #if EXCLUDE_GENA == 0
- 	SetGenaCallback(genaCallback);
- #endif
---- a/upnp/src/api/upnptools.c
-+++ b/upnp/src/api/upnptools.c
-@@ -57,7 +57,9 @@
- #define HEADER_LENGTH 2000
- 
- #ifdef _WIN32
--	#define snprintf _snprintf
-+	#if _MSC_VER < 1900 
-+		#define snprintf _snprintf
-+	#endif
- #endif
- 
- /*!
---- a/upnp/src/genlib/miniserver/miniserver.c
-+++ b/upnp/src/genlib/miniserver/miniserver.c
-@@ -68,6 +68,11 @@
- /*! . */
- #define APPLICATION_LISTENING_PORT 49152
- 
-+#ifndef IPV6_V6ONLY
-+#define IPV6_V6ONLY 27
-+#endif
 +
-+
- struct mserv_request_t {
- 	/*! Connection handle. */
- 	SOCKET connfd;
---- a/upnp/src/genlib/net/http/httpreadwrite.c
-+++ b/upnp/src/genlib/net/http/httpreadwrite.c
-@@ -59,7 +59,9 @@
- #ifdef _WIN32
- 	#include <malloc.h>
- 	#define fseeko fseek
--	#define snprintf _snprintf
-+	#if _MSC_VER < 1900 
-+		#define snprintf _snprintf
-+	#endif
- #else
- 	#include <arpa/inet.h>
- 	#include <sys/types.h>
---- a/upnp/src/genlib/net/http/webserver.c
-+++ b/upnp/src/genlib/net/http/webserver.c
-@@ -65,7 +65,9 @@
- #include <sys/stat.h>
- 
- #ifdef _WIN32
--	 #define snprintf _snprintf
-+	#if _MSC_VER < 1900 
-+		#define snprintf _snprintf
-+	#endif
- #endif
- 
- /*!
---- a/upnp/src/genlib/net/uri/uri.c
-+++ b/upnp/src/genlib/net/uri/uri.c
-@@ -45,7 +45,9 @@
- 	#endif
- #endif
- #ifdef _WIN32
--	#define snprintf _snprintf
-+	#if _MSC_VER < 1900 
-+		#define snprintf _snprintf
-+	#endif
- #endif
- #include <assert.h>
- 
 --- /dev/null
-+++ b/upnp/src/inc/autoconfig.h
-@@ -0,0 +1,229 @@
++++ b/build/inc/autoconfig.h
+@@ -0,0 +1,202 @@
 +/* autoconfig.h.  Generated from autoconfig.h.in by configure.  */
 +/* autoconfig.h.in.  Generated from configure.ac by autoheader.  */
-+
-+/* Define if building universal (internal helper macro) */
-+/* #undef AC_APPLE_UNIVERSAL_BUILD */
 +
 +/* Define to 1 to compile debug code */
 +/* #undef DEBUG */
@@ -2861,18 +224,18 @@ Subject: [PATCH] Windows patch.
 +/* Define to 1 if you have the <ws2tcpip.h> header file. */
 +/* #undef HAVE_WS2TCPIP_H */
 +
-+/* see upnpconfig.h */
-+#define IXML_HAVE_SCRIPTSUPPORT 1
-+
-+/* whether the system defaults to 32bit off_t but can do 64bit when requested
++/* Define to the sub-directory in which libtool stores uninstalled libraries.
 +   */
-+/* #undef LARGEFILE_SENSITIVE */
-+
-+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 +#define LT_OBJDIR ".libs/"
 +
 +/* Define to 1 to prevent compilation of assert() */
 +#define NDEBUG 1
++
++/* Define to 1 to prevent some debug code */
++#define NO_DEBUG 1
++
++/* Define to 1 if your C compiler doesn't accept -c and -o together. */
++/* #undef NO_MINUS_C_MINUS_O */
 +
 +/* Name of package */
 +#define PACKAGE "libupnp"
@@ -2884,7 +247,7 @@ Subject: [PATCH] Windows patch.
 +#define PACKAGE_NAME "libupnp"
 +
 +/* Define to the full name and version of this package. */
-+#define PACKAGE_STRING "libupnp 1.8.5"
++#define PACKAGE_STRING "libupnp 1.6.19"
 +
 +/* Define to the one symbol short name of this package. */
 +#define PACKAGE_TARNAME "libupnp"
@@ -2893,7 +256,7 @@ Subject: [PATCH] Windows patch.
 +#define PACKAGE_URL ""
 +
 +/* Define to the version of this package. */
-+#define PACKAGE_VERSION "1.8.5"
++#define PACKAGE_VERSION "1.6.19"
 +
 +/* Define to necessary symbol if this constant uses a non-standard name on
 +   your system. */
@@ -2903,16 +266,13 @@ Subject: [PATCH] Windows patch.
 +#define STDC_HEADERS 1
 +
 +/* see upnpconfig.h */
-+#define UPNP_ENABLE_BLOCKING_TCP_CONNECTIONS 0
++#define UPNP_ENABLE_BLOCKING_TCP_CONNECTIONS 1
 +
 +/* see upnpconfig.h */
-+#define UPNP_ENABLE_IPV6 1
++/* #undef UPNP_ENABLE_IPV6 */
 +
 +/* see upnpconfig.h */
-+/* #undef UPNP_ENABLE_OPEN_SSL */
-+
-+/* see upnpconfig.h */
-+/* #undef UPNP_ENABLE_POST_WRITE */
++#define UPNP_ENABLE_NOTIFICATION_REORDERING 1
 +
 +/* see upnpconfig.h */
 +/* #undef UPNP_ENABLE_UNSPECIFIED_SERVER */
@@ -2944,13 +304,6 @@ Subject: [PATCH] Windows patch.
 +/* see upnpconfig.h */
 +#define UPNP_HAVE_WEBSERVER 1
 +
-+/* whether the system defaults to 32bit off_t but can do 64bit when requested
-+   */
-+/* #undef UPNP_LARGEFILE_SENSITIVE */
-+
-+/* see upnpconfig.h */
-+/* #undef UPNP_MINISERVER_REUSEADDR */
-+
 +/* Do not use pthread_rwlock_t */
 +#define UPNP_USE_RWLOCK 1
 +
@@ -2958,104 +311,218 @@ Subject: [PATCH] Windows patch.
 +#define UPNP_VERSION_MAJOR 1
 +
 +/* see upnpconfig.h */
-+#define UPNP_VERSION_MINOR 8
++#define UPNP_VERSION_MINOR 6
 +
 +/* see upnpconfig.h */
-+#define UPNP_VERSION_PATCH 5
++#define UPNP_VERSION_PATCH 19
 +
 +/* see upnpconfig.h */
-+#define UPNP_VERSION_STRING "1.8.5"
++#define UPNP_VERSION_STRING "1.6.19"
 +
 +/* Version number of package */
-+#define VERSION "1.8.5"
++#define VERSION "1.6.19"
 +
-+/* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
-+   significant byte first (like Motorola and SPARC, unlike Intel). */
-+#if defined AC_APPLE_UNIVERSAL_BUILD
-+# if defined __BIG_ENDIAN__
-+#  define WORDS_BIGENDIAN 1
-+# endif
-+#else
-+# ifndef WORDS_BIGENDIAN
-+/* #  undef WORDS_BIGENDIAN */
-+# endif
-+#endif
-+
-+/* Enable large inode numbers on Mac OS X 10.5.  */
-+#ifndef _DARWIN_USE_64_BIT_INODE
-+# define _DARWIN_USE_64_BIT_INODE 1
-+#endif
-+
-+/* Number of bits in a file offset, on hosts where this is settable. */
-+/* #undef _FILE_OFFSET_BITS */
++/* File Offset size */
++#define _FILE_OFFSET_BITS 64
 +
 +/* Define to 1 to make fseeko visible on some hosts (e.g. glibc 2.2). */
-+/* #undef _LARGEFILE_SOURCE */
++#define _LARGEFILE_SOURCE 1
 +
-+/* Define for large files, on AIX-style hosts. */
-+/* #undef _LARGE_FILES */
++/* Large files support */
++#define _LARGE_FILE_SOURCE /**/
 +
 +/* Define to empty if `const' does not conform to ANSI C. */
 +/* #undef const */
++
++/* Define to `long int' if <sys/types.h> does not define. */
++/* #undef off_t */
 +
 +/* Define to `unsigned int' if <sys/types.h> does not define. */
 +/* #undef size_t */
 +
 +/* Type for storing the length of struct sockaddr */
 +/* #undef socklen_t */
---- a/upnp/src/inc/inet_pton.h
-+++ /dev/null
-@@ -1,50 +0,0 @@
--#ifndef INET_PTON
--#define INET_PTON
--
--#ifdef _WIN32
--
--#ifdef IPV6_
--#define INET_IPV6
--#endif
--
--#include "unixutil.h"
--
--#include <errno.h>
--#include <stdio.h>
--#include <string.h>
--
--/*!
-- * \file
-- *
-- * \author: Paul Vixie, 1996.
-- *
-- * \brief Network support routines missing in WIN32.
-- *
-- * \warning Don't even consider trying to compile this on a system where
-- * sizeof(int) < 4.  sizeof(int) 4 is fine; all the world's not a VAX.
-- *
-- */
--
--/*!
-- * \brief convert a network format address to presentation format.
-- *
-- * \return
-- *	pointer to presentation format address (`dst'), or NULL (see errno).
-- */
--extern const char *inet_ntop(int af, const void *src, char *dst,
--			     socklen_t size);
--
--/*!
-- * \brief convert from presentation format (which usually means ASCII printable)
-- * to network format (which is usually some kind of binary format).
-- *
-- * \return
-- *	\li 1 if the address was valid for the specified address family
-- *	\li 0 if the address wasn't valid (`dst' is untouched in this case)
-- *	\li -1 if some other error occurred (`dst' is untouched in this case, too)
-- */
--extern int inet_pton(int af, const char *src, void *dst);
--
--#endif /* _WIN32 */
--
--#endif /* INET_PTON */
+--- a/threadutil/inc/ThreadPool.h
++++ b/threadutil/inc/ThreadPool.h
+@@ -46,6 +46,7 @@
+ #include <errno.h>
+ 
+ #ifdef WIN32
++#ifndef _TIMEZONE_DEFINED
+ 	#include <time.h>
+ 	struct timezone
+ 	{
+@@ -53,6 +54,7 @@
+ 		int  tz_dsttime;     /* type of dst correction */
+ 	};
+ 	int gettimeofday(struct timeval *tv, struct timezone *tz);
++#endif
+ #else /* WIN32 */
+ 	#include <sys/param.h>
+ 	#include <sys/time.h> /* for gettimeofday() */
+--- a/upnp/src/api/upnpapi.c
++++ b/upnp/src/api/upnpapi.c
+@@ -357,8 +357,8 @@ static int UpnpInitPreamble(void)
+ 
+ #ifdef UPNP_HAVE_OPTSSDP
+ 	/* Create the NLS uuid. */
+-	uuid_create(&nls_uuid);
+-	uuid_unpack(&nls_uuid, gUpnpSdkNLSuuid);
++    uuid_upnp_create(&nls_uuid);
++    uuid_upnp_unpack(&nls_uuid, gUpnpSdkNLSuuid);
+ #endif /* UPNP_HAVE_OPTSSDP */
+ 
+ 	/* Initializes the handle list. */
+@@ -374,13 +374,13 @@ static int UpnpInitPreamble(void)
+ 		return retVal;
+ 	}
+ 
++#ifdef INTERNAL_WEB_SERVER
+ #ifdef INCLUDE_DEVICE_APIS
+ #if EXCLUDE_SOAP == 0
+ 	SetSoapCallback(soap_device_callback);
+ #endif
+ #endif /* INCLUDE_DEVICE_APIS */
+ 
+-#ifdef INTERNAL_WEB_SERVER
+ #if EXCLUDE_GENA == 0
+ 	SetGenaCallback(genaCallback);
+ #endif
+--- a/upnp/src/api/upnptools.c
++++ b/upnp/src/api/upnptools.c
+@@ -57,7 +57,9 @@
+ #define HEADER_LENGTH 2000
+ 
+ #ifdef WIN32
+-	#define snprintf _snprintf
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
+ #endif
+ 
+ /*!
+--- a/upnp/src/gena/gena_ctrlpt.c
++++ b/upnp/src/gena/gena_ctrlpt.c
+@@ -53,7 +53,9 @@
+ #include "upnpapi.h"
+ 
+ #ifdef WIN32
+-	#define snprintf _snprintf
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
+ #endif
+ 
+ extern ithread_mutex_t GlobalClientSubscribeMutex;
+@@ -561,8 +563,8 @@ int genaSubscribe(
+ 	}
+ 
+ 	/* generate client SID */
+-	uuid_create(&uid );
+-	uuid_unpack(&uid, temp_sid);
++    uuid_upnp_create(&uid );
++    uuid_upnp_unpack(&uid, temp_sid);
+ 	rc = snprintf(temp_sid2, sizeof(temp_sid2), "uuid:%s", temp_sid);
+ 	if (rc < 0 || (unsigned int) rc >= sizeof(temp_sid2)) {
+ 		return_code = UPNP_E_OUTOF_MEMORY;
+--- a/upnp/src/gena/gena_device.c
++++ b/upnp/src/gena/gena_device.c
+@@ -53,7 +53,9 @@
+ #include "uuid.h"
+ 
+ #ifdef WIN32
+-	#define snprintf _snprintf
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
+ #endif
+ 
+ #define STALE_JOBID (INVALID_JOB_ID -1)
+@@ -1271,8 +1273,8 @@ void gena_process_subscription_request(
+ 	}
+ 
+ 	/* generate SID */
+-	uuid_create(&uid);
+-	uuid_unpack(&uid, temp_sid);
++    uuid_upnp_create(&uid);
++    uuid_upnp_unpack(&uid, temp_sid);
+ 	rc = snprintf(sub->sid, sizeof(sub->sid), "uuid:%s", temp_sid);
+ 
+ 	/* respond OK */
+--- a/upnp/src/genlib/miniserver/miniserver.c
++++ b/upnp/src/genlib/miniserver/miniserver.c
+@@ -68,6 +68,13 @@
+ /*! . */
+ #define APPLICATION_LISTENING_PORT 49152
+ 
++/* IPV6_V6ONLY is missing from MinGW, hack taken from
++ * http://svn.apache.org/repos/asf/apr/apr/trunk/network_io/win32/sockopt.c
++ */
++#ifndef IPV6_V6ONLY
++#define IPV6_V6ONLY 27
++#endif
++
+ struct mserv_request_t {
+ 	/*! Connection handle. */
+ 	SOCKET connfd;
+--- a/upnp/src/genlib/net/http/httpreadwrite.c
++++ b/upnp/src/genlib/net/http/httpreadwrite.c
+@@ -59,7 +59,9 @@
+ #ifdef WIN32
+ 	#include <malloc.h>
+ 	#define fseeko fseek
+-	#define snprintf _snprintf
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
+ #else
+ 	#include <arpa/inet.h>
+ 	#include <sys/types.h>
+@@ -2165,6 +2167,7 @@ void get_sdk_info(OUT char *info, IN size_t infoSize)
+ 	OSVERSIONINFO versioninfo;
+ 	versioninfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+ 
++#if (WINAPI_FAMILY_APP != WINAPI_FAMILY_PC_APP)
+ 	if (GetVersionEx(&versioninfo) != 0)
+ 		snprintf(info, infoSize,
+ 			"%d.%d.%d %d/%s, UPnP/1.0, Portable SDK for UPnP devices/"
+@@ -2174,6 +2177,10 @@ void get_sdk_info(OUT char *info, IN size_t infoSize)
+ 	else
+ 		*info = '\0';
+ #else
++        snprintf(info, infoSize, "%d.%d.%d %d/%s, UPnP/1.0, Portable SDK for UPnP devices/" PACKAGE_VERSION "\r\n",
++            0, 0, 0, 0, 0);
++    #endif
++    #else
+ 	int ret_code;
+ 	struct utsname sys_info;
+ 
+--- a/upnp/src/genlib/net/http/webserver.c
++++ b/upnp/src/genlib/net/http/webserver.c
+@@ -63,7 +63,9 @@
+ #include <sys/stat.h>
+ 
+ #ifdef WIN32
+-	 #define snprintf _snprintf
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
+ #endif
+ 
+ /*!
+--- a/upnp/src/genlib/net/uri/uri.c
++++ b/upnp/src/genlib/net/uri/uri.c
+@@ -45,7 +45,9 @@
+ 	#endif
+ #endif
+ #ifdef WIN32
+-	#define snprintf _snprintf
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
+ #endif
+ #include <assert.h>
+ 
 --- a/upnp/src/inc/upnputil.h
 +++ b/upnp/src/inc/upnputil.h
 @@ -130,7 +130,7 @@ void linecopylen(
@@ -3063,360 +530,71 @@ Subject: [PATCH] Windows patch.
  		#define sleep(a)		Sleep((a)*1000)
  		#define usleep(a)		Sleep((a)/1000)
 -		#define strerror_r(a,b,c)	(strerror_s((b),(c),(a)))
-+		#define strerror_r(a,b,c)       strncpy( b, strerror(a), c)
++        #define strerror_r(a,b,c) strncpy( b, strerror(a), c)
  	#else
  		#define max(a, b)   (((a)>(b))? (a):(b))
  		#define min(a, b)   (((a)<(b))? (a):(b))
---- a/upnp/src/inet_pton.c
-+++ /dev/null
-@@ -1,323 +0,0 @@
--/*
-- * Copyright (c) 1996-1999 by Internet Software Consortium.
-- *
-- * Permission to use, copy, modify, and distribute this software for any
-- * purpose with or without fee is hereby granted, provided that the above
-- * copyright notice and this permission notice appear in all copies.
-- *
-- * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
-- * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
-- * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
-- * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
-- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
-- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
-- * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
-- * SOFTWARE.
-- */
--
--/*!
-- * \file
-- */
--
--/* This file is _WIN32 only */
--#ifdef _WIN32
--
--#include "inet_pton.h"
--
--/*!
-- * \brief format an IPv4 address
-- *
-- * \return `dst' (as a const)
-- *
-- * \note
-- *	\li (1) uses no statics
-- *	\li (2) takes a u_char* not an in_addr as input
-- */
--static const char *inet_ntop4(const u_char *src, char *dst, socklen_t size)
--{
--	char tmp[sizeof ("255.255.255.255") + 1] = "\0";
--	int octet;
--	int i;
--
--	i = 0;
--	for (octet = 0; octet <= 3; octet++) {
--
--		if (src[octet]>255) {
--			//__set_errno (ENOSPC);
--			return (NULL);
--		}
--		tmp[i++] = '0' + src[octet] / 100;
--		if (tmp[i - 1] == '0') {
--			tmp[i - 1] = '0' + (src[octet] / 10 % 10);
--			if (tmp[i - 1] == '0') i--;
--		} else {
--			tmp[i++] = '0' + (src[octet] / 10 % 10);
--		}
--		tmp[i++] = '0' + src[octet] % 10;
--		tmp[i++] = '.';
--	}
--	tmp[i - 1] = '\0';
--
--	if ((socklen_t)strlen(tmp)>size) {
--		//__set_errno (ENOSPC);
--		return (NULL);
--	}
--
--	return strcpy(dst, tmp);
--}
--
--#ifdef INET_IPV6
--/*!
-- * \brief convert IPv6 binary address into presentation (printable) format
-- */
--static const char *inet_ntop6(const u_char *src, char *dst, socklen_t size)
--{
--	/*
--	 * Note that int32_t and int16_t need only be "at least" large enough
--	 * to contain a value of the specified size.  On some systems, like
--	 * Crays, there is no such thing as an integer variable with 16 bits.
--	 * Keep this in mind if you think this function should have been coded
--	 * to use pointer overlays.  All the world's not a VAX.
--	 */
--	char tmp[sizeof ("ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255")], *tp;
--	struct { int base, len; } best, cur;
--	u_int words[8];
--	int i;
--
--	/*
--	 * Preprocess:
--	 *	Copy the input (bytewise) array into a wordwise array.
--	 *	Find the longest run of 0x00's in src[] for :: shorthanding.
--	 */
--	memset(words, '\0', sizeof words);
--	for (i = 0; i < 16; i += 2)
--		words[i / 2] = (src[i] << 8) | src[i + 1];
--	best.base = -1;
--	cur.base = -1;
--	for (i = 0; i < 8; i++) {
--		if (words[i] == 0) {
--			if (cur.base == -1)
--				cur.base = i, cur.len = 1;
--			else
--				cur.len++;
--		} else {
--			if (cur.base != -1) {
--				if (best.base == -1 || cur.len best.len)
--					best = cur;
--				cur.base = -1;
--			}
--		}
--	}
--	if (cur.base != -1) {
--		if (best.base == -1 || cur.len best.len)
--			best = cur;
--	}
--	if (best.base != -1 && best.len < 2)
--		best.base = -1;
--
--	/*
--	 * Format the result.
--	 */
--	tp = tmp;
--	for (i = 0; i < 8; i++) {
--		/* Are we inside the best run of 0x00's? */
--		if (best.base != -1 && i >= best.base &&
--		    i < (best.base + best.len)) {
--			if (i == best.base)
--				*tp++ = ':';
--			continue;
--		}
--		/* Are we following an initial run of 0x00s or any real hex? */
--		if (i != 0)
--			*tp++ = ':';
--		/* Is this address an encapsulated IPv4? */
--		if (i == 6 && best.base == 0 &&
--		    (best.len == 6 || (best.len == 5 && words[5] == 0xffff))) {
--			if (!inet_ntop4(src+12, tp, sizeof tmp - (tp - tmp)))
--				return (NULL);
--			tp += strlen(tp);
--			break;
--		}
--		tp += SPRINTF((tp, "%x", words[i]));
--	}
--	/* Was it a trailing run of 0x00's? */
--	if (best.base != -1 && (best.base + best.len) == 8)
--		*tp++ = ':';
--	*tp++ = '\0';
--
--	/* Check for overflow, copy, and we're done. */
--	if ((socklen_t)(tp - tmp) size) {
--		//__set_errno (ENOSPC);
--		return (NULL);
--	}
--	return strcpy(dst, tmp);
--}
--#endif /* INET_IPV6 */
--
--/*!
-- * \brief like inet_aton() but without all the hexadecimal and shorthand.
-- *
-- * \return 1 if `src' is a valid dotted quad, else 0.
-- *
-- * \note does not touch `dst' unless it's returning 1.
-- */
--static int inet_pton4(const char *src,u_char *dst)
--{
--	int saw_digit, octets, ch;
--	u_char tmp[4], *tp;
--
--	saw_digit = 0;
--	octets = 0;
--	*(tp = tmp) = 0;
--	while ((ch = *src++) != '\0') {
--		if (ch >= '0' && ch <= '9') {
--			u_int new = *tp * 10 + (ch - '0');
--			if (new>255)
--				return (0);
--			*tp = new;
--			if (! saw_digit) {
--				if (++octets>4)
--					return (0);
--				saw_digit = 1;
--			}
--		} else if (ch == '.' && saw_digit) {
--			if (octets == 4)
--				return (0);
--			*++tp = 0;
--			saw_digit = 0;
--		} else
--			return (0);
--	}
--	if (octets < 4)
--		return (0);
--	memcpy(dst, tmp, 4);
--	return 1;
--}
--
--#ifdef INET_IPV6
--/*!
-- * \brief convert presentation level address to network order binary form.
-- *
-- * \return 1 if `src' is a valid [RFC1884 2.2] address, else 0.
-- *
-- * \note
-- *	\li (1) does not touch `dst' unless it's returning 1.
-- *	\li (2) :: in a full address is silently ignored.
-- */
--static int inet_pton6(const char *src, u_char *dst)
--{
--	static const char xdigits[] = "0123456789abcdef";
--	u_char tmp[16], *tp, *endp, *colonp;
--	const char *curtok;
--	int ch, saw_xdigit;
--	u_int val;
--
--	tp = memset(tmp, '\0', 16);
--	endp = tp + 16;
--	colonp = NULL;
--	/* Leading :: requires some special handling. */
--	if (*src == ':')
--		if (*++src != ':')
--			return (0);
--	curtok = src;
--	saw_xdigit = 0;
--	val = 0;
--	while ((ch = tolower (*src++)) != '\0') {
--		const char *pch;
--
--		pch = strchr(xdigits, ch);
--		if (pch != NULL) {
--			val <<= 4;
--			val |= (pch - xdigits);
--			if (val 0xffff)
--				return (0);
--			saw_xdigit = 1;
--			continue;
--		}
--		if (ch == ':') {
--			curtok = src;
--			if (!saw_xdigit) {
--				if (colonp)
--					return (0);
--				colonp = tp;
--				continue;
--			} else if (*src == '\0') {
--				return (0);
--			}
--			if (tp + 2 endp)
--				return (0);
--			*tp++ = (u_char) (val >8) & 0xff;
--			*tp++ = (u_char) val & 0xff;
--			saw_xdigit = 0;
--			val = 0;
--			continue;
--		}
--		if (ch == '.' && ((tp + 4) <= endp) &&
--		    inet_pton4(curtok, tp) 0) {
--			tp += 4;
--			saw_xdigit = 0;
--			break;	/* '\0' was seen by inet_pton4(). */
--		}
--		return (0);
--	}
--	if (saw_xdigit) {
--		if (tp + 2 endp)
--			return (0);
--		*tp++ = (u_char) (val >8) & 0xff;
--		*tp++ = (u_char) val & 0xff;
--	}
--	if (colonp != NULL) {
--		/* Since some memmove()'s erroneously fail to handle
--		 * overlapping regions, we'll do the shift by hand. */
--		const int n = tp - colonp;
--		int i;
--
--		if (tp == endp)
--			return (0);
--		for (i = 1; i <= n; i++) {
--			endp[- i] = colonp[n - i];
--			colonp[n - i] = 0;
--		}
--		tp = endp;
--	}
--	if (tp != endp)
--		return (0);
--	memcpy(dst, tmp, 16);
--	return (1);
--}
--#endif /* INET_IPV6 */
--
--
--const char *inet_ntop(int af, const void *src, char *dst,socklen_t size)
--{
--	switch (af) {
--	case AF_INET:
--		return inet_ntop4(src, dst, size);
--#ifdef INET_IPV6
--	case AF_INET6:
--		return inet_ntop6(src, dst, size);
--#endif
--	default:
--		/*__set_errno(EAFNOSUPPORT);*/
--		return NULL;
--	}
--	/* NOTREACHED */
--}
--
--int inet_pton(int af, const char *src, void *dst)
--{
--	switch (af) {
--	case AF_INET:
--		return inet_pton4(src, dst);
--#ifdef INET_IPV6
--	case AF_INET6:
--		return inet_pton6(src, dst);
--#endif
--	default:
--		/*__set_errno(EAFNOSUPPORT);*/
--		return -1;
--	}
--	/* NOTREACHED */
--}
--
--#endif /* _WIN32 */
+--- a/upnp/src/inc/uuid.h
++++ b/upnp/src/inc/uuid.h
+@@ -41,14 +41,14 @@ typedef struct _uuid_upnp {
+ /*!
+  * \brief Generate a UUID.
+  */
+-int uuid_create(
++int uuid_upnp_create(
+ 	/*! . */
+ 	uuid_upnp * id);
+ 
+ /*!
+  * \brief Out will be xxxx-xx-xx-xx-xxxxxx format.
+  */
+-void uuid_unpack(
++void uuid_upnp_unpack(
+ 	/*! . */
+ 	uuid_upnp * u,
+ 	/*! . */
+@@ -57,7 +57,7 @@ void uuid_unpack(
+ /*!
+  * \brief Create a UUID using a "name" from a "name space"
+  */
+-void uuid_create_from_name(
++void uuid_upnp_create_from_name(
+ 	/*! Resulting UUID. */
+ 	uuid_upnp * uid,
+ 	/*! UUID to serve as context, so identical names from different name
+@@ -78,7 +78,7 @@ void uuid_create_from_name(
+  *
+  * \note Lexical ordering is not temporal ordering!
+  */
+-int uuid_compare(
++int uuid_upnp_compare(
+ 	/*! . */
+ 	uuid_upnp * u1,
+ 	/*! . */
 --- a/upnp/src/soap/soap_device.c
 +++ b/upnp/src/soap/soap_device.c
-@@ -53,7 +53,9 @@
+@@ -52,7 +52,9 @@
  #include <string.h>
  
- #ifdef _WIN32
+ #ifdef WIN32
 -	#define snprintf _snprintf
-+	#if _MSC_VER < 1900 
-+		#define snprintf _snprintf
-+	#endif
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
  #endif
  
  /*! timeout duration in secs for transmission/reception */
 --- a/upnp/src/ssdp/ssdp_ctrlpt.c
 +++ b/upnp/src/ssdp/ssdp_ctrlpt.c
-@@ -58,7 +58,9 @@
+@@ -59,7 +59,9 @@
  
- #ifdef _WIN32
+ #ifdef WIN32
  #include <string.h>
 -#define snprintf _snprintf
-+	#if _MSC_VER < 1900 
-+		#define snprintf _snprintf
-+	#endif
- #endif /* _WIN32 */
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
+ #endif /* WIN32 */
  
  /*!
 --- a/upnp/src/ssdp/ssdp_device.c
@@ -3424,35 +602,37 @@ Subject: [PATCH] Windows patch.
 @@ -57,7 +57,9 @@
  #include <string.h>
  
- #ifdef _WIN32
+ #ifdef WIN32
 -	#define snprintf _snprintf
-+	#if _MSC_VER < 1900 
-+		#define snprintf _snprintf
-+	#endif
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
  #endif
  
  #define MSGTYPE_SHUTDOWN	0
 --- a/upnp/src/ssdp/ssdp_server.c
 +++ b/upnp/src/ssdp/ssdp_server.c
 @@ -41,7 +41,9 @@
- #ifndef _WIN32
+ #ifndef WIN32
  	#include <sys/param.h>
  #else
 -	#define snprintf _snprintf
-+	#if _MSC_VER < 1900 
-+		#define snprintf _snprintf
-+	#endif
- #endif /* _WIN32 */
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
+ #endif /* WIN32 */
  
  #include "config.h"
-@@ -69,6 +71,11 @@
+@@ -69,6 +71,13 @@
  	#endif /* UPNP_ENABLE_IPV6 */
  #endif /* INCLUDE_CLIENT_APIS */
  
++/* IPV6_V6ONLY is missing from MinGW, hack taken from
++ * http://svn.apache.org/repos/asf/apr/apr/trunk/network_io/win32/sockopt.c
++ */
 +#ifndef IPV6_V6ONLY
 +#define IPV6_V6ONLY 27
 +#endif
-+
 +
  void RequestHandler();
  
@@ -3462,36 +642,37 @@ Subject: [PATCH] Windows patch.
 @@ -50,7 +50,9 @@
  #include <stdio.h>
  
- #ifdef _WIN32
+ #ifdef WIN32
 -	#define snprintf _snprintf
-+	#if _MSC_VER < 1900 
-+		#define snprintf _snprintf
-+	#endif
++    #if _MSC_VER < 1900
++        #define snprintf _snprintf
++    #endif
  #else
  	#include <sys/types.h>
  #endif
 --- a/upnp/src/uuid/sysdep.c
 +++ b/upnp/src/uuid/sysdep.c
-@@ -29,6 +29,7 @@
- 
+@@ -30,6 +30,8 @@
  #include <string.h>
  #include <stdio.h>
-+#include <WinSock2.h>
  
++#include <Winsock2.h>
++
  /*!
   * \brief System dependent call to get IEEE node ID.
-@@ -93,7 +94,9 @@ void get_random_info(unsigned char seed[16])
+  *
+@@ -93,7 +95,9 @@ void get_random_info(unsigned char seed[16])
  	/* Initialize memory area so that valgrind does not complain */
  	memset(&r, 0, sizeof r);
  	/* memory usage stats */
 -	GlobalMemoryStatus( &r.m );
 +#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
-+	GlobalMemoryStatus(&r.m);
++    GlobalMemoryStatus(&r.m);
 +#endif
  	/* random system stats */
  	GetSystemInfo( &r.s );
  	/* 100ns resolution (nominally) time of day */
-@@ -101,9 +104,13 @@ void get_random_info(unsigned char seed[16])
+@@ -101,9 +105,13 @@ void get_random_info(unsigned char seed[16])
  	/* high resolution performance counter */
  	QueryPerformanceCounter( &r.pc );
  	/* milliseconds since last boot */
@@ -3500,13 +681,51 @@ Subject: [PATCH] Windows patch.
  	r.l = MAX_COMPUTERNAME_LENGTH + 1;
 -	GetComputerName( r.hostname, &r.l );
 +#if !defined(WINAPI_FAMILY) || (WINAPI_FAMILY == WINAPI_FAMILY_DESKTOP_APP)
-+	GetComputerName(r.hostname, &r.l);
++    GetComputerName(r.hostname, &r.l);
 +#else
-+	GetHostNameW(r.hostname, &r.l);
++    GetHostNameW(r.hostname, &r.l);
 +#endif
  	/* MD5 it */
  	MD5Init(&c);
  	MD5Update(&c, (unsigned char *)(&r), sizeof r);
+--- a/upnp/src/uuid/uuid.c
++++ b/upnp/src/uuid/uuid.c
+@@ -50,7 +50,7 @@ static uint16_t true_random(void);
+ /*!
+  * \brief Generator of a UUID.
+  */
+-int uuid_create(uuid_upnp * uid)
++int uuid_upnp_create(uuid_upnp * uid)
+ {
+ 	uuid_time_t timestamp;
+ 	uuid_time_t last_time;
+@@ -82,7 +82,7 @@ int uuid_create(uuid_upnp * uid)
+ 	return 1;
+ };
+ 
+-void uuid_unpack(uuid_upnp * u, char *out)
++void uuid_upnp_unpack(uuid_upnp * u, char *out)
+ {
+ 	sprintf(out,
+ 		"%8.8x-%4.4x-%4.4x-%2.2x%2.2x-%2.2x%2.2x%2.2x%2.2x%2.2x%2.2x",
+@@ -221,7 +221,7 @@ static uint16_t true_random(void)
+ /*!
+  * \brief Create a UUID using a "name" from a "name space".
+  */
+-void uuid_create_from_name(
++void uuid_upnp_create_from_name(
+ 	/*! resulting UUID. */
+ 	uuid_upnp *uid,
+ 	/*! UUID to serve as context, so identical names from different name
+@@ -280,7 +280,7 @@ void format_uuid_v3(uuid_upnp *uid, unsigned char hash[16])
+  *
+  * Note: Lexical ordering is not temporal ordering!
+  */
+-int uuid_compare(uuid_upnp *u1, uuid_upnp *u2)
++int uuid_upnp_compare(uuid_upnp *u1, uuid_upnp *u2)
+ {
+ 	int i;
+ 
 -- 
 2.10.2.windows.1
 
