@@ -253,7 +253,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     if (PJSIP_TRANSPORT_IS_RELIABLE(&trData_.base)) {
         eventLoopFut_ = {std::async(std::launch::async, [this] {
             try {
-                if (!stopLoop_) eventLoop();
+                eventLoop();
             } catch (const std::exception& e) {
                 JAMI_ERR() << "SipIceTransport: eventLoop() failure: " << e.what();
             }
