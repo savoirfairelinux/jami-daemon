@@ -541,7 +541,7 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
     {
         const UpnpActionComplete *a_event = (const UpnpActionComplete *)event;
         JAMI_DBG("PUPnP: UPNP_CONTROL_ACTION_COMPLETE.");
-
+#ifndef _WIN32
 		char *xmlbuff = nullptr;
 		int errCode = UpnpActionComplete_get_ErrCode(a_event);
 		const char *ctrlURL = UpnpString_get_String(UpnpActionComplete_get_CtrlUrl(a_event));
@@ -572,6 +572,7 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
 		}
         /* TODO: no need for any processing here, just print out results.
          * Service state table updates are handled by events. */
+#endif
         break;
     }
     default:
