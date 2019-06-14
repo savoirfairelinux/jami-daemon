@@ -701,7 +701,7 @@ class JamiAccount : public SIPAccountBase {
         std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
         std::map<dht::InfoHash, DiscoveredPeer> discoveredPeers_;
         std::map<std::string, std::string> discoveredPeerMap_;
-        bool accountPeerDiscovery_ {true};
+        bool accountPeerDiscovery_ {false};
         bool accountPublish_ {false};
 
         std::shared_ptr<RepeatedTask> eventHandler {};

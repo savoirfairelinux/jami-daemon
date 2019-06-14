@@ -2168,19 +2168,20 @@ JamiAccount::doRegister_()
         config.peer_discovery = dhtPeerDiscovery_;
         config.peer_publish = dhtPeerDiscovery_;
         if (not config.proxy_server.empty())
-            JAMI_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
+            JAMI_INFO("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
 
         if (not deviceKey_.empty()) {
-            JAMI_WARN("[Account %s] using push notifications", getAccountID().c_str());
+            JAMI_INFO("[Account %s] using push notifications", getAccountID().c_str());
             dht_.setPushNotificationToken(deviceKey_);
         }
 
         //check if dht peer service is enabled
-        if(accountPeerDiscovery_ || accountPublish_){
+        if (accountPeerDiscovery_ or accountPublish_) {
             peerDiscovery_ = std::make_shared<dht::PeerDiscovery>();
-            JAMI_INFO("Start Jami account discovering.....");
-            if(accountPeerDiscovery_)
+            if(accountPeerDiscovery_) {
+                JAMI_INFO("[Account %s] starting Jami account discovery...", getAccountID().c_str());
                 startAccountDiscovery();
+            }
             if(accountPublish_)
                 startAccountPublish();
         }
