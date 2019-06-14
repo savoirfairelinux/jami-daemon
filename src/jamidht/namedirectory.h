@@ -42,6 +42,7 @@ public:
     enum class Response : int { found = 0, invalidResponse, notFound, error };
     enum class RegistrationResponse : int { success = 0,
                                             invalidName,
+                                            invalidCredentials,
                                             alreadyTaken,
                                             error,
                                             incompleteRequest,
