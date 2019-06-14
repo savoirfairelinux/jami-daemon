@@ -14,9 +14,11 @@ Makefile
 *.so
 *.raw
 *.pod
-.libs
-.deps
+*.libs
+*.deps
 *.spec
+*.yml
+*.yml.bak
 
 aclocal.m4
 autom4te.cache
