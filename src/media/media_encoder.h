@@ -124,6 +124,9 @@ private:
     unsigned sent_samples = 0;
     bool initialized_ {false};
 
+    const float LOGREG_PARAM_A {114.40432};
+    const float LOGREG_PARAM_B {-6.049181};
+
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
     VideoFrame scaledFrame_;

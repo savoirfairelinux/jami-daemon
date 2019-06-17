@@ -41,6 +41,13 @@ class VideoMixer;
 class VideoSender;
 class VideoReceiveThread;
 
+struct RTCPInfo {
+  float packetLoss;
+  unsigned int jitter;
+  unsigned int nb_sample;
+  float latency;
+};
+
 struct VideoBitrateInfo {
     unsigned videoBitrateCurrent;
     unsigned videoBitrateMin;
@@ -94,6 +101,8 @@ public:
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
+    
+
 private:
     void setupConferenceVideoPipeline(Conference& conference);
     void setupVideoPipeline();
@@ -115,7 +124,7 @@ private:
 
     std::function<void (void)> requestKeyFrameCallback_;
 
-    float checkPeerPacketLoss();
+    float checkMediumRCTPInfo(RTCPInfo*);
     unsigned getLowerQuality();
     unsigned getLowerBitrate();
     void adaptQualityAndBitrate();
@@ -123,12 +132,10 @@ private:
     void setupVideoBitrateInfo();
     void checkReceiver();
 
-    // interval in seconds between RTCP checkings
-    const unsigned RTCP_CHECKING_INTERVAL {4};
     // long interval in seconds between RTCP checkings
     const unsigned RTCP_LONG_CHECKING_INTERVAL {30};
     // no packet loss can be calculated as no data in input
-    static constexpr float NO_PACKET_LOSS_CALCULATED {-1.0};
+    static constexpr float NO_INFO_CALCULATED {-1.0};
     // bitrate and quality info struct
     VideoBitrateInfo videoBitrateInfo_;
     // previous quality and bitrate used if quality or bitrate need to be decreased
@@ -147,10 +154,15 @@ private:
     InterruptedThreadLoop rtcpCheckerThread_;
     void processRtcpChecker();
 
-    InterruptedThreadLoop packetLossThread_;
-    void processPacketLoss();
-
     std::function<void(int)> changeOrientationCallback_;
+    unsigned int mediaJustRestarted_ {0};
+
+    // interval in seconds between RTCP checkings
+    unsigned rtcp_checking_interval {4};
+
+    unsigned int nbCheckWithoutDrop {0};
+
+
 };
 
 }} // namespace jami::video

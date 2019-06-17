@@ -103,6 +103,9 @@ private:
     bool setup();
     void process();
     void cleanup();
+
+    static constexpr unsigned MS_BETWEEN_2_KEYFRAME_REQUEST {500};
+    std::chrono::time_point<std::chrono::system_clock> lastKeyFrameTime_;
 };
 
 }} // namespace jami::video

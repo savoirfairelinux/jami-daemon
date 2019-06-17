@@ -199,7 +199,15 @@ bool VideoReceiveThread::decodeFrame()
         case MediaDecoder::Status::DecodeError:
             JAMI_WARN("video decoding failure");
             if (requestKeyFrameCallback_)
-                requestKeyFrameCallback_();
+            {
+                auto keyFrameCheckTimer = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now() - lastKeyFrameTime_);
+ 
+                if (keyFrameCheckTimer.count() >= MS_BETWEEN_2_KEYFRAME_REQUEST) 
+                {
+                    lastKeyFrameTime_ = std::chrono::system_clock::now();
+                    requestKeyFrameCallback_();
+                }
+            }
             break;
 
         case MediaDecoder::Status::ReadError:
