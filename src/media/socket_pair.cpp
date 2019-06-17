@@ -33,6 +33,7 @@
 #include <string>
 #include <algorithm>
 #include <iterator>
+#include <math.h>
 
 extern "C" {
 #include "srtp.h"
@@ -195,9 +196,18 @@ SocketPair::~SocketPair()
     closeSockets();
 }
 
+bool
+SocketPair::waitForRTCP(std::chrono::seconds interval)
+{
+    std::unique_lock<std::mutex> lock(rtcpInfo_mutex_);
+    return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this]{
+        return interrupted_ or not listRtcpHeader_.empty();
+    });
+}
+
 void
 SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
-{
+{    
     if (len < sizeof(rtcpRRHeader))
         return;
 
@@ -212,11 +222,12 @@ SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
     }
 
     listRtcpHeader_.push_back(*header);
+    //JAMI_WARN("RECEIVE NEW SR PACKET !!");
 }
 
 std::vector<rtcpRRHeader>
 SocketPair::getRtcpInfo()
-{
+{    
     decltype(listRtcpHeader_) l;
     {
         std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
@@ -406,6 +417,14 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     int len = 0;
     bool fromRTCP = false;
 
+    auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+    if(header->pt == 201) //201 = RR PT
+    {
+        lastDLSR_ = Swap4Bytes(header->dlsr);
+        //JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
+        lastRR_time = std::chrono::steady_clock::now(); 
+    }
+
     // Priority to RTCP as its less invasive in bandwidth
     if (datatype & static_cast<int>(DataType::RTCP)) {
         len = readRtcpData(buf, buf_size);
@@ -478,6 +497,8 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
 {
     int ret;
     bool isRTCP = RTP_PT_IS_RTCP(buf[1]);
+    unsigned int ts_LSB, ts_MSB;
+    double currentSRTS, currentLatency;
 
     // Encrypt?
     if (not isRTCP and srtpContext_ and srtpContext_->srtp_out.aes) {
@@ -495,6 +516,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     // check if we're sending an RR, if so, detect packet loss
     // buf_size gives length of buffer, not just header
     if (isRTCP && static_cast<unsigned>(buf_size) >= sizeof(rtcpRRHeader)) {
+
         auto header = reinterpret_cast<rtcpRRHeader*>(buf);
         rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
     }
@@ -505,15 +527,45 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
         ret = writeData(buf, buf_size);
     } while (ret < 0 and errno == EAGAIN);
 
+    if(buf[1] == 200) //Sender Report
+    {
+        auto header = reinterpret_cast<rtcpSRHeader*>(buf);
+        ts_LSB = Swap4Bytes(header->timestampLSB);
+        ts_MSB = Swap4Bytes(header->timestampMSB);
+
+        
+        currentSRTS = ts_MSB + (ts_LSB / pow(2,32));
+       
+        if(lastSRTS_ != 0 && lastDLSR_ != 0)   
+        {
+            if (histoLatency_.size() >= MAX_LIST_SIZE)
+                histoLatency_.pop_front();
+
+            currentLatency = (currentSRTS - lastSRTS_) / 2;
+            //JAMI_WARN("Current Latency : %f from sender %X", currentLatency, header->ssrc);
+            histoLatency_.push_back(currentLatency);
+
+        } 
+
+        lastSRTS_ = currentSRTS;
+
+        // JAMI_WARN("SENDING NEW RTCP SR !! ");
+
+    }
+    else if(buf[1] == 201) //Receiver Report
+    {
+        //auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+        //JAMI_WARN("SENDING NEW RTCP RR !! ");
+
+    }
+
     return ret < 0 ? -errno : ret;
 }
 
-bool
-SocketPair::rtcpPacketLossDetected() const
+double 
+SocketPair::getLastLatency()
 {
-    // set to false on checking packet loss to avoid burst of keyframe requests
-    bool b = true;
-    return rtcpPacketLoss_.compare_exchange_strong(b, false);
+    return histoLatency_.back();
 }
 
 } // namespace jami
