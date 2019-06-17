@@ -123,6 +123,13 @@ private:
     int currentStreamIdx_ = -1;
     unsigned sent_samples = 0;
     bool initialized_ {false};
+    uint64_t avg_ = 0;
+    uint64_t num_ = 0;
+    std::chrono::time_point<std::chrono::system_clock> lastOneSecCheck_;
+    std::map<uint8_t, uint64_t> paramSet_;
+
+    const float LOGREG_PARAM_A {114.40432};
+    const float LOGREG_PARAM_B {-6.049181};
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
