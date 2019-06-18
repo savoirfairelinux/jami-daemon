@@ -104,21 +104,21 @@ int
 PortAudioLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 {
 
-    int numDevices = 0;
-    (void) type;
+    auto deviceList = pimpl_->getDeviceByType(type);
 
-    numDevices = Pa_GetDeviceCount();
+    int numDevices = 0;
+    numDevices = deviceList.size();
     if (numDevices < 0) {
         JAMI_ERR("PortAudioLayer error : %s", Pa_GetErrorText(numDevices));
     } else {
-        const PaDeviceInfo* deviceInfo;
-        for (int i = 0; i < numDevices; i++) {
-            deviceInfo = Pa_GetDeviceInfo(i);
-            if (deviceInfo->name == name)
+        int i = 0;
+        for (auto d = deviceList.cbegin(); d != deviceList.cend(); ++d, ++i) {
+            if (*d == name) {
                 return i;
+            }
         }
     }
-    return -1;
+    return paNoDevice;
 }
 
 std::string
