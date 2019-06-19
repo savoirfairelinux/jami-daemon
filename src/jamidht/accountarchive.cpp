@@ -89,6 +89,7 @@ AccountArchive::serialize() const
 
     if (ca_key and *ca_key)
         root[Conf::RING_CA_KEY] = base64::encode(ca_key->serialize());
+
     root[Conf::RING_ACCOUNT_KEY] = base64::encode(id.first->serialize());
     root[Conf::RING_ACCOUNT_CERT] = base64::encode(id.second->getPacked());
     root[Conf::ETH_KEY] = base64::encode(eth_key);
