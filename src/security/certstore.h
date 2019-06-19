@@ -126,7 +126,7 @@ public:
 
     PermissionStatus getCertificateStatus(const std::string& cert_id) const;
 
-    std::vector<std::string> getCertificatesByStatus(PermissionStatus status);
+    std::vector<std::string> getCertificatesByStatus(PermissionStatus status) const;
 
     /**
      * Check that the certificate is allowed (valid and permited) for contact.
