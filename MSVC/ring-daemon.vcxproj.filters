@@ -421,6 +421,12 @@
     <ClCompile Include="dlfcn.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\jamidht\account_manager.cpp">
+      <Filter>Source Files\jamidht</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\jamidht\contact_list.cpp">
+      <Filter>Source Files\jamidht</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\account.h">
@@ -866,6 +872,15 @@
     </ClInclude>
     <ClInclude Include="dlfcn.h">
       <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\jamidht\account_manager.h">
+      <Filter>Source Files\jamidht</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\jamidht\contact_list.h">
+      <Filter>Source Files\jamidht</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\jamidht\jami_contact.h">
+      <Filter>Source Files\jamidht</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
