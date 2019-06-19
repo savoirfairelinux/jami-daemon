@@ -30,6 +30,7 @@
 #include "peer_connection.h"
 #include "security/tls_session.h"
 #include "turn_transport.h"
+#include "account_manager.h"
 
 #include <opendht/default_types.h>
 #include <opendht/rng.h>
@@ -400,7 +401,7 @@ private:
 
         // Send connection request through DHT
         JAMI_DBG() << parent_.account << "[CNX] request connection to " << peer_;
-        parent_.account.dht().putEncrypted(
+        parent_.account.dht()->putEncrypted(
             dht::InfoHash::get(PeerConnectionMsg::key_prefix + peer_.toString()), peer_, request);
 
         // Wait for call to onResponse() operated by DHT
@@ -674,7 +675,7 @@ DhtPeerConnector::Impl::onRequestMsg(PeerConnectionMsg&& request)
         request.from,
         [this, request=std::move(request)] (const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
             dht::InfoHash peer_h;
-            if (account.foundPeerDevice(cert, peer_h))
+            if (AccountManager::foundPeerDevice(cert, peer_h))
                 onTrustedRequestMsg(std::move(request), cert, peer_h);
             else
                 JAMI_WARN() << account << "[CNX] rejected untrusted connection request from "
@@ -798,7 +799,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
     }
 
     JAMI_DBG() << account << "[CNX] connection accepted, DHT reply to " << request.from;
-    account.dht().putEncrypted(
+    account.dht()->putEncrypted(
         dht::InfoHash::get(PeerConnectionMsg::key_prefix + request.from.toString()),
         request.from, request.respond(addresses));
 
@@ -982,10 +983,10 @@ DhtPeerConnector::~DhtPeerConnector() = default;
 void
 DhtPeerConnector::onDhtConnected(const std::string& device_id)
 {
-    pimpl_->account.dht().listen<PeerConnectionMsg>(
+    pimpl_->account.dht()->listen<PeerConnectionMsg>(
         dht::InfoHash::get(PeerConnectionMsg::key_prefix + device_id),
         [this](PeerConnectionMsg&& msg) {
-            if (msg.from == pimpl_->account.dht().getId())
+            if (msg.from == pimpl_->account.dht()->getId())
                 return true;
             if (!pimpl_->account.isMessageTreated(msg.id)) {
                 if (msg.isRequest()) {
@@ -1024,7 +1025,7 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
     pimpl_->account.forEachDevice(
         peer_h,
         [this, addresses, connect_cb, tid](const dht::InfoHash& dev_h) {
-            if (dev_h == pimpl_->account.dht().getId()) {
+            if (dev_h == pimpl_->account.dht()->getId()) {
                 JAMI_ERR() << pimpl_->account.getAccountID() << "[CNX] no connection to yourself, bad person!";
                 return;
             }
@@ -1060,7 +1061,7 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
     pimpl_->account.forEachDevice(
         peer_h,
         [this, tid](const dht::InfoHash& dev_h) {
-            if (dev_h == pimpl_->account.dht().getId()) {
+            if (dev_h == pimpl_->account.dht()->getId()) {
                 JAMI_ERR() << pimpl_->account.getAccountID() << "[CNX] no connection to yourself, bad person!";
                 return;
             }
