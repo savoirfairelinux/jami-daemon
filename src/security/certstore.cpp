@@ -487,7 +487,7 @@ TrustStore::getCertificateStatus(const std::string& cert_id) const
 }
 
 std::vector<std::string>
-TrustStore::getCertificatesByStatus(TrustStore::PermissionStatus status)
+TrustStore::getCertificatesByStatus(TrustStore::PermissionStatus status) const
 {
     std::vector<std::string> ret;
     for (const auto& i : certStatus_)
