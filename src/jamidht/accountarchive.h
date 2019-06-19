@@ -17,7 +17,7 @@
  */
 #pragma once
 
-#include "ringcontact.h"
+#include "jami_contact.h"
 #include "fileutils.h"
 
 #include <opendht/crypto.h>
