@@ -41,6 +41,13 @@ class VideoMixer;
 class VideoSender;
 class VideoReceiveThread;
 
+struct RTCPInfo {
+    float packetLoss;
+    unsigned int jitter;
+    unsigned int nb_sample;
+    float latency;
+};
+
 struct VideoBitrateInfo {
     unsigned videoBitrateCurrent;
     unsigned videoBitrateMin;
@@ -99,12 +106,11 @@ private:
     void setupVideoPipeline();
     void startSender();
     void startReceiver();
+    using clock = std::chrono::steady_clock;
+    using time_point = clock::time_point;
 
     std::string input_;
     DeviceParams localVideoParams_;
-
-    std::chrono::time_point<std::chrono::system_clock>  lastRTCPCheck_;
-    std::chrono::time_point<std::chrono::system_clock>  lastLongRTCPCheck_;
 
     std::unique_ptr<VideoSender> sender_;
     std::unique_ptr<VideoReceiveThread> receiveThread_;
@@ -115,20 +121,17 @@ private:
 
     std::function<void (void)> requestKeyFrameCallback_;
 
-    float checkPeerPacketLoss();
+    bool checkMediumRCTPInfo(RTCPInfo&);
     unsigned getLowerQuality();
     unsigned getLowerBitrate();
     void adaptQualityAndBitrate();
     void storeVideoBitrateInfo();
     void setupVideoBitrateInfo();
     void checkReceiver();
+    float getPonderateLoss(float lastLoss);
 
-    // interval in seconds between RTCP checkings
-    const unsigned RTCP_CHECKING_INTERVAL {4};
-    // long interval in seconds between RTCP checkings
-    const unsigned RTCP_LONG_CHECKING_INTERVAL {30};
     // no packet loss can be calculated as no data in input
-    static constexpr float NO_PACKET_LOSS_CALCULATED {-1.0};
+    static constexpr float NO_INFO_CALCULATED {-1.0};
     // bitrate and quality info struct
     VideoBitrateInfo videoBitrateInfo_;
     // previous quality and bitrate used if quality or bitrate need to be decreased
@@ -147,10 +150,14 @@ private:
     InterruptedThreadLoop rtcpCheckerThread_;
     void processRtcpChecker();
 
-    InterruptedThreadLoop packetLossThread_;
-    void processPacketLoss();
-
     std::function<void(int)> changeOrientationCallback_;
+
+    // interval in seconds between RTCP checkings
+    std::chrono::seconds rtcp_checking_interval {4};
+
+    time_point lastMediaRestart_ {time_point::min()};
+
+    std::list< std::pair<time_point, float> > histoLoss_;
 };
 
 }} // namespace jami::video

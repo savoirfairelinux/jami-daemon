@@ -52,6 +52,9 @@ extern "C" {
 
 namespace jami {
 
+constexpr double LOGREG_PARAM_A {114.40432};
+constexpr double LOGREG_PARAM_B {-6.049181};
+
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
 {}
@@ -218,9 +221,9 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     }
 #endif
 
-    auto maxBitrate = 1000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
-    auto bufSize = 2 * maxBitrate; // as recommended (TODO: make it customizable)
-    auto crf = std::atoi(libav_utils::getDictValue(options_, "crf"));
+    uint64_t maxBitrate = 1000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
+    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
+    uint64_t bufSize = 2 * maxBitrate;
 
     /* let x264 preset override our encoder settings */
     if (systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
@@ -245,7 +248,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
             crf = 30; // good value for H264-720p@30
         JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
-
+        libav_utils::setDictValue(&options_, "crf", std::to_string(crf));
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         encoderCtx->rc_buffer_size = bufSize;
         encoderCtx->rc_max_rate = maxBitrate;
@@ -651,7 +654,7 @@ MediaEncoder::extractProfileLevelID(const std::string &parameters,
     // From RFC3984:
     // If no profile-level-id is present, the Baseline Profile without
     // additional constraints at Level 1 MUST be implied.
-    ctx->profile = FF_PROFILE_H264_BASELINE;
+    ctx->profile = FF_PROFILE_H264_CONSTRAINED_BASELINE;
     ctx->level = 0x0d;
     // ctx->level = 0x0d; // => 13 aka 1.3
     if (parameters.empty())

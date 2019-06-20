@@ -45,20 +45,15 @@ namespace jami { namespace video {
 
 using std::string;
 
-// how long (in seconds) to wait before rechecking for packet loss
-static constexpr auto RTCP_PACKET_LOSS_INTERVAL = std::chrono::milliseconds(1000);
+constexpr auto DELAY_AFTER_RESTART = std::chrono::seconds(2);
+constexpr auto EXPIRY_TIME_RTCP = std::chrono::milliseconds(2000);
 
 VideoRtpSession::VideoRtpSession(const string &callID,
                                  const DeviceParams& localVideoParams) :
     RtpSession(callID), localVideoParams_(localVideoParams)
-    , lastRTCPCheck_(std::chrono::system_clock::now())
-    , lastLongRTCPCheck_(std::chrono::system_clock::now())
     , videoBitrateInfo_ {}
     , rtcpCheckerThread_([] { return true; },
             [this]{ processRtcpChecker(); },
-            []{})
-    , packetLossThread_([] { return true; },
-            [this]{ processPacketLoss(); },
             []{})
 {
     setupVideoBitrateInfo(); // reset bitrate
@@ -133,6 +128,7 @@ void VideoRtpSession::startSender()
             JAMI_ERR("%s", e.what());
             send_.enabled = false;
         }
+        lastMediaRestart_ = clock::now();
         auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
         auto autoQuality = codecVideo->isAutoQualityEnabled;
         if (autoQuality and not rtcpCheckerThread_.isRunning())
@@ -168,13 +164,11 @@ void VideoRtpSession::startReceiver()
         receiveThread_->setRequestKeyFrameCallback(requestKeyFrameCallback_);
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
-        packetLossThread_.start();
     } else {
         JAMI_DBG("Video receiving disabled");
         if (receiveThread_)
             receiveThread_->detach(videoMixer_.get());
         receiveThread_.reset();
-        packetLossThread_.join();
     }
 }
 
@@ -214,8 +208,6 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
 void VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    rtcpCheckerThread_.join();
-    packetLossThread_.join();
     if (videoLocal_)
         videoLocal_->detach(sender_.get());
 
@@ -227,6 +219,8 @@ void VideoRtpSession::stop()
 
     if (socketPair_)
         socketPair_->interrupt();
+
+    rtcpCheckerThread_.join();
 
     // reset default video quality if exist
     if (videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY)
@@ -336,23 +330,29 @@ void VideoRtpSession::exitConference()
     conference_ = nullptr;
 }
 
-float
-VideoRtpSession::checkPeerPacketLoss()
+bool
+VideoRtpSession::checkMediumRCTPInfo(RTCPInfo& rtcpi)
 {
     auto rtcpInfoVect = socketPair_->getRtcpInfo();
     unsigned totalLost = 0;
-    unsigned fract = 0;
+    unsigned totalJitter = 0;
+    unsigned nbDropNotNull = 0;
     auto vectSize = rtcpInfoVect.size();
 
-    for (const auto& it : rtcpInfoVect) {
-        fract = (ntohl(it.fraction_lost) & 0xff000000)  >> 24;
-        totalLost += fract;
+    if (vectSize != 0) {
+        for (const auto& it : rtcpInfoVect) {
+            if(it.fraction_lost != 0)               // Exclude null drop
+                nbDropNotNull++;
+            totalLost += it.fraction_lost;
+            totalJitter += ntohl(it.jitter);
+        }
+        rtcpi.packetLoss = nbDropNotNull ? (float)( 100 * totalLost) / (256.0 * nbDropNotNull) : 0;
+        rtcpi.jitter = totalJitter / vectSize / 16;  // millisecond
+        rtcpi.nb_sample = vectSize;
+        rtcpi.latency = socketPair_->getLastLatency();
+        return true;
     }
-
-    if (vectSize != 0)
-        return (float)( 100 * totalLost) / (256.0 * vectSize);
-    else
-        return NO_PACKET_LOSS_CALCULATED;
+    return false;
 }
 
 unsigned
@@ -392,117 +392,54 @@ VideoRtpSession::getLowerBitrate()
 void
 VideoRtpSession::adaptQualityAndBitrate()
 {
-    bool needToCheckQuality = false;
-    bool mediaRestartNeeded = false;
-    float packetLostRate = 0.0;
+    setupVideoBitrateInfo();
 
-    auto rtcpCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastRTCPCheck_);
-    auto rtcpLongCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastLongRTCPCheck_);
-
-    if (rtcpCheckTimer.count() >= RTCP_CHECKING_INTERVAL) {
-        needToCheckQuality = true;
-        lastRTCPCheck_ = std::chrono::system_clock::now();
+    RTCPInfo rtcpi {};
+    if (not checkMediumRCTPInfo(rtcpi)) {
+        JAMI_DBG("[AutoAdapt] Sample not ready");
+        return;
     }
 
-    if (rtcpLongCheckTimer.count() >= RTCP_LONG_CHECKING_INTERVAL) {
-        needToCheckQuality = true;
-        hasReachMaxQuality_ = false;
-        lastLongRTCPCheck_ = std::chrono::system_clock::now();
-        // we force iterative bitrate adaptation
-        videoBitrateInfo_.cptBitrateChecking = 0;
+    auto now = clock::now();
+    auto restartTimer = now - lastMediaRestart_;
+    //Sleep 3 seconds while the media restart
+    if (restartTimer < DELAY_AFTER_RESTART) {
+        //JAMI_DBG("[AutoAdapt] Waiting for delay %ld ms", std::chrono::duration_cast<std::chrono::milliseconds>(restartTimer));
+        return;
     }
 
-
-    if (needToCheckQuality) {
-
-        videoBitrateInfo_.cptBitrateChecking++;
-
-        // packetLostRate is not already available. Do nothing
-        if ((packetLostRate = checkPeerPacketLoss()) == NO_PACKET_LOSS_CALCULATED) {
-            // we force iterative bitrate adaptation
-            videoBitrateInfo_.cptBitrateChecking = 0;
-
-        // too much packet lost : decrease quality and bitrate
-        } else if (packetLostRate >= videoBitrateInfo_.packetLostThreshold) {
-
-            // calculate new quality by dichotomie
-            videoBitrateInfo_.videoQualityCurrent = getLowerQuality();
-
-            // calculate new bitrate by dichotomie
-            videoBitrateInfo_.videoBitrateCurrent =  getLowerBitrate();
-
-            // boundaries low
-            if (videoBitrateInfo_.videoQualityCurrent > videoBitrateInfo_.videoQualityMin)
-                videoBitrateInfo_.videoQualityCurrent = videoBitrateInfo_.videoQualityMin;
-
-            if (videoBitrateInfo_.videoBitrateCurrent < videoBitrateInfo_.videoBitrateMin)
-                videoBitrateInfo_.videoBitrateCurrent = videoBitrateInfo_.videoBitrateMin;
-
-
-            // we force iterative bitrate and quality adaptation
-            videoBitrateInfo_.cptBitrateChecking = 0;
-
-            // asynchronous A/V media restart
-            // we give priority to quality
-            if (((videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY) &&
-                    (videoBitrateInfo_.videoQualityCurrent !=  (histoQuality_.empty() ? 0 : histoQuality_.back()))) ||
-                ((videoBitrateInfo_.videoQualityCurrent == SystemCodecInfo::DEFAULT_NO_QUALITY) &&
-                    (videoBitrateInfo_.videoBitrateCurrent !=  (histoBitrate_.empty() ? 0 : histoBitrate_.back())))) {
-                mediaRestartNeeded = true;
-                hasReachMaxQuality_ = true;
-            }
-
-
-        // no packet lost: increase quality and bitrate
-        } else if ((videoBitrateInfo_.cptBitrateChecking <= videoBitrateInfo_.maxBitrateChecking)
-                   and not hasReachMaxQuality_) {
-
-            // calculate new quality by dichotomie
-            videoBitrateInfo_.videoQualityCurrent =
-                (videoBitrateInfo_.videoQualityCurrent + videoBitrateInfo_.videoQualityMax) / 2;
-
-            // calculate new bitrate by dichotomie
-            videoBitrateInfo_.videoBitrateCurrent =
-                ( videoBitrateInfo_.videoBitrateCurrent + videoBitrateInfo_.videoBitrateMax) / 2;
-
-            // boundaries high
-            if (videoBitrateInfo_.videoQualityCurrent < videoBitrateInfo_.videoQualityMax)
-                videoBitrateInfo_.videoQualityCurrent = videoBitrateInfo_.videoQualityMax;
-
-            if (videoBitrateInfo_.videoBitrateCurrent > videoBitrateInfo_.videoBitrateMax)
-                videoBitrateInfo_.videoBitrateCurrent = videoBitrateInfo_.videoBitrateMax;
-
-            // asynchronous A/V media restart
-            // we give priority to quality
-            if (((videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY) &&
-                    (videoBitrateInfo_.videoQualityCurrent !=  (histoQuality_.empty() ? 0 : histoQuality_.back()))) ||
-                ((videoBitrateInfo_.videoQualityCurrent == SystemCodecInfo::DEFAULT_NO_QUALITY) &&
-                    (videoBitrateInfo_.videoBitrateCurrent !=  (histoBitrate_.empty() ? 0 : histoBitrate_.back()))))
-                mediaRestartNeeded = true;
-
-            if (videoBitrateInfo_.cptBitrateChecking == videoBitrateInfo_.maxBitrateChecking)
-                lastLongRTCPCheck_ = std::chrono::system_clock::now();
-
-        } else {
-            // nothing we reach maximal tries
-        }
+    if (rtcpi.jitter > 5000) {
+        JAMI_DBG("[AutoAdapt] Jitter too high");
+        return;
     }
 
-    if (mediaRestartNeeded) {
+    auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
+
+    //Take action only when two successive drop superior to 1% are catched...
+    //and when jitter is less than 5 seconds
+    auto pondLoss = getPonderateLoss(rtcpi.packetLoss);
+    //JAMI_DBG("[AutoAdapt] Ponderate packet loss rate: %f%, Last packet loss rate: %f%, Medium Jitter: %dms" , pondLoss, rtcpi.packetLoss, rtcpi.jitter);
+    if(pondLoss >= 2.0f)
+    {
+        videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent / ((rtcpi.packetLoss / 20)+1);
+        JAMI_WARN("[AutoAdapt] packet loss rate: %f%%, decrease bitrate from %d Kbps to %d Kbps", rtcpi.packetLoss, oldBitrate, videoBitrateInfo_.videoBitrateCurrent);
+    }
+
+    videoBitrateInfo_.videoBitrateCurrent = std::max(videoBitrateInfo_.videoBitrateCurrent, videoBitrateInfo_.videoBitrateMin);
+    videoBitrateInfo_.videoBitrateCurrent = std::min(videoBitrateInfo_.videoBitrateCurrent, videoBitrateInfo_.videoBitrateMax);
+
+    if(oldBitrate != videoBitrateInfo_.videoBitrateCurrent) {
         storeVideoBitrateInfo();
-        const auto& cid = callID_;
+        JAMI_DBG("[AutoAdapt] Restart media sender");
 
-        JAMI_WARN("[%u/%u] packetLostRate=%f -> change quality to %d bitrate to %d",
-                videoBitrateInfo_.cptBitrateChecking,
-                videoBitrateInfo_.maxBitrateChecking,
-                packetLostRate,
-                videoBitrateInfo_.videoQualityCurrent,
-                videoBitrateInfo_.videoBitrateCurrent);
+        const auto& cid = callID_;
 
         runOnMainThread([cid]{
             if (auto call = Manager::instance().callFactory.getCall(cid))
                 call->restartMediaSender();
             });
+
+        lastMediaRestart_ = now;
     }
 }
 
@@ -550,7 +487,6 @@ VideoRtpSession::storeVideoBitrateInfo() {
 
         histoQuality_.push_back(videoBitrateInfo_.videoQualityCurrent);
         histoBitrate_.push_back(videoBitrateInfo_.videoBitrateCurrent);
-
     }
 }
 
@@ -558,17 +494,7 @@ void
 VideoRtpSession::processRtcpChecker()
 {
     adaptQualityAndBitrate();
-    rtcpCheckerThread_.wait_for(std::chrono::seconds(RTCP_CHECKING_INTERVAL));
-}
-
-void
-VideoRtpSession::processPacketLoss()
-{
-    if (packetLossThread_.wait_for(RTCP_PACKET_LOSS_INTERVAL,
-                                   [this]{return socketPair_->rtcpPacketLossDetected();})) {
-        if (requestKeyFrameCallback_)
-            requestKeyFrameCallback_();
-    }
+    socketPair_->waitForRTCP(std::chrono::seconds(rtcp_checking_interval));
 }
 
 void
@@ -607,4 +533,39 @@ VideoRtpSession::setChangeOrientationCallback(std::function<void(int)> cb)
     changeOrientationCallback_ = std::move(cb);
 }
 
+float
+VideoRtpSession::getPonderateLoss(float lastLoss)
+{
+    float pond  = 0.0f, pondLoss  = 0.0f, totalPond = 0.0f;
+    constexpr float coefficient_a = -1/2000.0f;
+    constexpr float coefficient_b = 1.0f;
+
+    auto now = clock::now();
+
+    histoLoss_.emplace_back(now, lastLoss);
+
+    //for(auto& it : histoLoss_)
+    for (auto it = histoLoss_.begin(); it != histoLoss_.end();) {
+        auto delay = now - it->first;
+
+        //JAMI_WARN("now - it.first: %ld", std::chrono::duration_cast<std::chrono::milliseconds>(delay));
+
+        // 1ms      -> 100%
+        // 2000ms   -> 1
+        if(delay <= EXPIRY_TIME_RTCP)
+        {
+            pond = std::min(delay.count() * coefficient_a + coefficient_b, 1.0f);
+            totalPond += pond;
+            pondLoss += it->second * pond;
+            ++it;
+        }
+        else
+            it = histoLoss_.erase(it);
+    }
+    return pondLoss / totalPond;
+}
+
+
 }} // namespace jami::video
+
+
