@@ -33,7 +33,6 @@
 #include <string>
 #include <algorithm>
 #include <iterator>
-#include <math.h>
 
 extern "C" {
 #include "srtp.h"
@@ -59,6 +58,24 @@ extern "C" {
 #ifdef __APPLE__
 #include <fcntl.h>
 #endif
+
+
+// Swap 2 byte, 16 bit values:
+#define Swap2Bytes(val) \
+	 ( (((val) >> 8) & 0x00FF) | (((val) << 8) & 0xFF00) )
+
+// Swap 4 byte, 32 bit values:
+#define Swap4Bytes(val) \
+    ( (((val) >> 24) & 0x000000FF) | (((val) >>  8) & 0x0000FF00) | \
+    (((val) <<  8) & 0x00FF0000) | (((val) << 24) & 0xFF000000) )
+
+// Swap 8 byte, 64 bit values:
+#define Swap8Bytes(val) \
+    ( (((val) >> 56) & 0x00000000000000FF) | (((val) >> 40) & 0x000000000000FF00) | \
+    (((val) >> 24) & 0x0000000000FF0000) | (((val) >>  8) & 0x00000000FF000000) | \
+    (((val) <<  8) & 0x000000FF00000000) | (((val) << 24) & 0x0000FF0000000000) | \
+    (((val) << 40) & 0x00FF000000000000) | (((val) << 56) & 0xFF00000000000000) )
+
 
 namespace jami {
 
@@ -207,13 +224,16 @@ SocketPair::waitForRTCP(std::chrono::seconds interval)
 
 void
 SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
-{    
+{
     if (len < sizeof(rtcpRRHeader))
         return;
 
     auto header = reinterpret_cast<rtcpRRHeader*>(buf);
     if(header->pt != 201) //201 = RR PT
         return;
+
+    
+    cvRtcpPacketReadyToRead_.notify_one();
 
     std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
 
@@ -222,12 +242,11 @@ SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
     }
 
     listRtcpHeader_.push_back(*header);
-    //JAMI_WARN("RECEIVE NEW SR PACKET !!");
 }
 
 std::vector<rtcpRRHeader>
 SocketPair::getRtcpInfo()
-{    
+{
     decltype(listRtcpHeader_) l;
     {
         std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
@@ -422,7 +441,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     {
         lastDLSR_ = Swap4Bytes(header->dlsr);
         //JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
-        lastRR_time = std::chrono::steady_clock::now(); 
+        lastRR_time = std::chrono::steady_clock::now();
     }
 
     // Priority to RTCP as its less invasive in bandwidth
@@ -516,7 +535,6 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     // check if we're sending an RR, if so, detect packet loss
     // buf_size gives length of buffer, not just header
     if (isRTCP && static_cast<unsigned>(buf_size) >= sizeof(rtcpRRHeader)) {
-
         auto header = reinterpret_cast<rtcpRRHeader*>(buf);
         rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
     }
@@ -533,10 +551,9 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
         ts_LSB = Swap4Bytes(header->timestampLSB);
         ts_MSB = Swap4Bytes(header->timestampMSB);
 
-        
         currentSRTS = ts_MSB + (ts_LSB / pow(2,32));
-       
-        if(lastSRTS_ != 0 && lastDLSR_ != 0)   
+
+        if(lastSRTS_ != 0 && lastDLSR_ != 0)
         {
             if (histoLatency_.size() >= MAX_LIST_SIZE)
                 histoLatency_.pop_front();
@@ -544,8 +561,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
             currentLatency = (currentSRTS - lastSRTS_) / 2;
             //JAMI_WARN("Current Latency : %f from sender %X", currentLatency, header->ssrc);
             histoLatency_.push_back(currentLatency);
-
-        } 
+        }
 
         lastSRTS_ = currentSRTS;
 
@@ -562,7 +578,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     return ret < 0 ? -errno : ret;
 }
 
-double 
+double
 SocketPair::getLastLatency()
 {
     return histoLatency_.back();

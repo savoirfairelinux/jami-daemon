@@ -339,7 +339,7 @@ VideoRtpSession::checkMediumRCTPInfo(RTCPInfo* rtcpi)
     unsigned totalJitter = 0;
     unsigned nbDropNotNull = 0;
     auto vectSize = rtcpInfoVect.size();
-    
+
     if (vectSize != 0)
     {
         for (const auto& it : rtcpInfoVect) {
@@ -357,10 +357,10 @@ VideoRtpSession::checkMediumRCTPInfo(RTCPInfo* rtcpi)
         rtcpi->latency = socketPair_->getLastLatency();
 
         return 1.0;
-    }     
+    }    
     else
         return NO_INFO_CALCULATED;
-    
+
 }
 
 unsigned
@@ -404,80 +404,40 @@ VideoRtpSession::adaptQualityAndBitrate()
     RTCPInfo rtcpi = {};
 
     setupVideoBitrateInfo();
-    
-    if(mediaJustRestarted_ < 1)
-    {
-        // Flush 2 next data after restart because RTCP value are not relevant, restarting the media cause drops
-        JAMI_WARN("Flush data after restart because RTCP value are not relevant");
-        checkMediumRCTPInfo(&rtcpi);
-        rtcpi = {};
-
-        mediaJustRestarted_++;
-    }
-        
 
     if(checkMediumRCTPInfo(&rtcpi) != NO_INFO_CALCULATED)
     {
-        JAMI_WARN("Medium packetLostRate : %f, Medium Jitter : %d, Samples : %d" , rtcpi.packetLoss, rtcpi.jitter, rtcpi.nb_sample);
-        //JAMI_WARN("Latency : %f, Number of sample : %d", rtcpi.latency, rtcpi.nb_sample);
+        JAMI_WARN("Medium packetLostRate : %f, Medium Jitter : %d" , rtcpi.packetLoss, rtcpi.jitter);
 
         auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
-        
-        if(rtcpi.packetLoss == 0)
-        {
-            nbCheckWithoutDrop++;
-            nbCheckWithoutDrop %= 100;
-        }
-            
-        if(rtcpi.packetLoss == 0 && (nbCheckWithoutDrop%11) == 10) // every 10 check without drops
-        {
-            //videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent * 1.08;
 
-            JAMI_WARN("packet loss = 0 : increase bitrate from %d Kbits to %d Kbits", oldBitrate, videoBitrateInfo_.videoBitrateCurrent);
-        }
-        else if(rtcpi.packetLoss >= 1)
+        if(rtcpi.packetLoss >= 1)
         {
-            videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent / ((rtcpi.packetLoss / 10)+1);
+            if(twoSuccesiveLosses)  //Avoid pikes and residual drops after restarting the media
+            {
+                twoSuccesiveLosses = false;
+                videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent / ((rtcpi.packetLoss / 20)+1);
 
-            JAMI_WARN("packet loss >= 1 : decrease bitrate from %d Kbits to %d Kbits", oldBitrate, videoBitrateInfo_.videoBitrateCurrent);
-            nbCheckWithoutDrop = 0;
+                JAMI_WARN("packet loss >= 1 : decrease bitrate from %d Kbits to %d Kbits", oldBitrate, videoBitrateInfo_.videoBitrateCurrent);
+            }
+            else
+                twoSuccesiveLosses = true;
         }
-        else if(rtcpi.jitter >= 100)
-        {
-            //videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent * 0.8;
-
-            JAMI_WARN("Jitter too high : decrease bitrate from %d Kbits to %d Kbits", oldBitrate, videoBitrateInfo_.videoBitrateCurrent);
-            nbCheckWithoutDrop = 0;
-        }
-        else if(rtcpi.packetLoss > 0 && rtcpi.packetLoss < 1 && nbCheckWithoutDrop == 0)
-        {
-            //videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent * 0.8;
-            
-            JAMI_WARN("2 successives drops => Bitrate max reached : decrease bitrate from %d Kbits to %d Kbits", oldBitrate, videoBitrateInfo_.videoBitrateCurrent);
-            nbCheckWithoutDrop = 0;
-        }
+        else
+            twoSuccesiveLosses = false;
 
         videoBitrateInfo_.videoBitrateCurrent = std::max(videoBitrateInfo_.videoBitrateCurrent, videoBitrateInfo_.videoBitrateMin);
         videoBitrateInfo_.videoBitrateCurrent = std::min(videoBitrateInfo_.videoBitrateCurrent, videoBitrateInfo_.videoBitrateMax);
 
         if(oldBitrate != videoBitrateInfo_.videoBitrateCurrent)
-        {
             mediaRestartNeeded = true;
-            rtcp_checking_interval = 3;
-        }
-        else 
-        {
-            if(nbCheckWithoutDrop > 5)
-                rtcp_checking_interval = 4;
-        }
-
+   
     }
     else
         JAMI_WARN("Sample not ready");
 
 
     if (mediaRestartNeeded) {
-        mediaJustRestarted_ = 0;
         storeVideoBitrateInfo();
         const auto& cid = callID_;
         JAMI_WARN("Autoadapt: restartMediaSender");
@@ -486,6 +446,9 @@ VideoRtpSession::adaptQualityAndBitrate()
             if (auto call = Manager::instance().callFactory.getCall(cid))
                 call->restartMediaSender();
             });
+
+        //Sleep 2.5 seconds while the media restart
+        std::this_thread::sleep_for(std::chrono::milliseconds(2500));
     }
 }
 
@@ -541,7 +504,7 @@ void
 VideoRtpSession::processRtcpChecker()
 {
     adaptQualityAndBitrate();
-    rtcpCheckerThread_.wait_for(std::chrono::seconds(rtcp_checking_interval));
+    socketPair_->waitForRTCP(std::chrono::seconds(rtcp_checking_interval));
 }
 
 void

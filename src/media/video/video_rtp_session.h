@@ -101,8 +101,6 @@ public:
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
-    
-
 private:
     void setupConferenceVideoPipeline(Conference& conference);
     void setupVideoPipeline();
@@ -132,8 +130,6 @@ private:
     void setupVideoBitrateInfo();
     void checkReceiver();
 
-    // long interval in seconds between RTCP checkings
-    const unsigned RTCP_LONG_CHECKING_INTERVAL {30};
     // no packet loss can be calculated as no data in input
     static constexpr float NO_INFO_CALCULATED {-1.0};
     // bitrate and quality info struct
@@ -155,14 +151,11 @@ private:
     void processRtcpChecker();
 
     std::function<void(int)> changeOrientationCallback_;
-    unsigned int mediaJustRestarted_ {0};
 
     // interval in seconds between RTCP checkings
-    unsigned rtcp_checking_interval {4};
+    std::chrono::seconds rtcp_checking_interval {4};
 
-    unsigned int nbCheckWithoutDrop {0};
-
-
+    bool twoSuccesiveLosses {false};
 };
 
 }} // namespace jami::video
