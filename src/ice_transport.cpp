@@ -315,18 +315,22 @@ add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& i
     JAMI_DBG("[ice] added stun server '%s', port %d", pj_strbuf(&stun.server), stun.port);
 }
 
-static void
-add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& info)
+static bool
+add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& info, int af = AF_UNSPEC)
 {
     if (cfg.turn_tp_cnt >= PJ_ICE_MAX_TURN)
         throw std::runtime_error("Too many TURN servers");
 
-    IpAddr ip {info.uri};
+    IpAddr ip;
+    auto resolved = ip_utils::getAddrList(info.uri, af);
+    if (resolved.size() > 0) {
+        ip = resolved.front();
+    }
 
     // Same comment as add_stun_server()
     if (ip.getFamily() == AF_UNSPEC) {
-        JAMI_WARN("[ice] TURN server '%s' not used, unresolvable address", info.uri.c_str());
-        return;
+        JAMI_WARN("[ice] TURN server '%s' not used, unresolvable address (AF=%d)", info.uri.c_str(), af);
+        return false;
     }
 
     auto& turn = cfg.turn_tp[cfg.turn_tp_cnt++];
@@ -347,6 +351,8 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
     }
 
     JAMI_DBG("[ice] added turn server '%s', port %d", pj_strbuf(&turn.server), turn.port);
+
+    return true;
 }
 
 //==============================================================================
@@ -432,8 +438,10 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
         add_stun_server(*pool_, config_, server);
 
     // Add TURN servers
-    for (auto& server : options.turnServers)
-        add_turn_server(*pool_, config_, server);
+    for (auto& server : options.turnServers) {
+        add_turn_server(*pool_, config_, server, pj_AF_INET());
+        add_turn_server(*pool_, config_, server, pj_AF_INET6());
+    }
 
     static constexpr auto IOQUEUE_MAX_HANDLES = std::min(PJ_IOQUEUE_MAX_HANDLES, 64);
     TRY( pj_timer_heap_create(pool_.get(), 100, &config_.stun_cfg.timer_heap) );
