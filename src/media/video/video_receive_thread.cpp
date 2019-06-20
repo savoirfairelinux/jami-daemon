@@ -40,6 +40,8 @@ namespace jami { namespace video {
 
 using std::string;
 
+constexpr auto MS_BETWEEN_2_KEYFRAME_REQUEST = std::chrono::milliseconds(500);
+
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
                                        const std::string &sdp,
                                        uint16_t mtu) :
@@ -199,7 +201,14 @@ bool VideoReceiveThread::decodeFrame()
         case MediaDecoder::Status::DecodeError:
             JAMI_WARN("video decoding failure");
             if (requestKeyFrameCallback_)
-                requestKeyFrameCallback_();
+            {
+                auto keyFrameCheckTimer = std::chrono::steady_clock::now() - lastKeyFrameTime_;
+                if (keyFrameCheckTimer >= MS_BETWEEN_2_KEYFRAME_REQUEST) 
+                {
+                    lastKeyFrameTime_ = std::chrono::steady_clock::now();
+                    requestKeyFrameCallback_();
+                }
+            }
             break;
 
         case MediaDecoder::Status::ReadError:
