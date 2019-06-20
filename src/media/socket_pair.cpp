@@ -59,6 +59,24 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
+
+// Swap 2 byte, 16 bit values:
+#define Swap2Bytes(val) \
+	 ( (((val) >> 8) & 0x00FF) | (((val) << 8) & 0xFF00) )
+
+// Swap 4 byte, 32 bit values:
+#define Swap4Bytes(val) \
+    ( (((val) >> 24) & 0x000000FF) | (((val) >>  8) & 0x0000FF00) | \
+    (((val) <<  8) & 0x00FF0000) | (((val) << 24) & 0xFF000000) )
+
+// Swap 8 byte, 64 bit values:
+#define Swap8Bytes(val) \
+    ( (((val) >> 56) & 0x00000000000000FF) | (((val) >> 40) & 0x000000000000FF00) | \
+    (((val) >> 24) & 0x0000000000FF0000) | (((val) >>  8) & 0x00000000FF000000) | \
+    (((val) <<  8) & 0x000000FF00000000) | (((val) << 24) & 0x0000FF0000000000) | \
+    (((val) << 40) & 0x00FF000000000000) | (((val) << 56) & 0xFF00000000000000) )
+
+
 namespace jami {
 
 static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
@@ -195,6 +213,15 @@ SocketPair::~SocketPair()
     closeSockets();
 }
 
+bool
+SocketPair::waitForRTCP(std::chrono::seconds interval)
+{
+    std::unique_lock<std::mutex> lock(rtcpInfo_mutex_);
+    return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this]{
+        return interrupted_ or not listRtcpHeader_.empty();
+    });
+}
+
 void
 SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
 {
@@ -212,19 +239,15 @@ SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
     }
 
     listRtcpHeader_.push_back(*header);
+
+    cvRtcpPacketReadyToRead_.notify_one();
 }
 
-std::vector<rtcpRRHeader>
+std::list<rtcpRRHeader>
 SocketPair::getRtcpInfo()
 {
-    decltype(listRtcpHeader_) l;
-    {
-        std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
-        if (listRtcpHeader_.empty())
-            return {};
-        l = std::move(listRtcpHeader_);
-    }
-    return {std::make_move_iterator(l.begin()), std::make_move_iterator(l.end())};
+    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+    return std::move(listRtcpHeader_);
 }
 
 void
@@ -406,6 +429,14 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     int len = 0;
     bool fromRTCP = false;
 
+    auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+    if(header->pt == 201) //201 = RR PT
+    {
+        lastDLSR_ = Swap4Bytes(header->dlsr);
+        //JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
+        lastRR_time = std::chrono::steady_clock::now();
+    }
+
     // Priority to RTCP as its less invasive in bandwidth
     if (datatype & static_cast<int>(DataType::RTCP)) {
         len = readRtcpData(buf, buf_size);
@@ -478,6 +509,8 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
 {
     int ret;
     bool isRTCP = RTP_PT_IS_RTCP(buf[1]);
+    unsigned int ts_LSB, ts_MSB;
+    double currentSRTS, currentLatency;
 
     // Encrypt?
     if (not isRTCP and srtpContext_ and srtpContext_->srtp_out.aes) {
@@ -505,15 +538,46 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
         ret = writeData(buf, buf_size);
     } while (ret < 0 and errno == EAGAIN);
 
+    if(buf[1] == 200) //Sender Report
+    {
+        auto header = reinterpret_cast<rtcpSRHeader*>(buf);
+        ts_LSB = Swap4Bytes(header->timestampLSB);
+        ts_MSB = Swap4Bytes(header->timestampMSB);
+
+        currentSRTS = ts_MSB + (ts_LSB / pow(2,32));
+
+        if(lastSRTS_ != 0 && lastDLSR_ != 0)
+        {
+            if (histoLatency_.size() >= MAX_LIST_SIZE)
+                histoLatency_.pop_front();
+
+            currentLatency = (currentSRTS - lastSRTS_) / 2;
+            //JAMI_WARN("Current Latency : %f from sender %X", currentLatency, header->ssrc);
+            histoLatency_.push_back(currentLatency);
+        }
+
+        lastSRTS_ = currentSRTS;
+
+        // JAMI_WARN("SENDING NEW RTCP SR !! ");
+
+    }
+    else if(buf[1] == 201) //Receiver Report
+    {
+        //auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+        //JAMI_WARN("SENDING NEW RTCP RR !! ");
+
+    }
+
     return ret < 0 ? -errno : ret;
 }
 
-bool
-SocketPair::rtcpPacketLossDetected() const
+double
+SocketPair::getLastLatency()
 {
-    // set to false on checking packet loss to avoid burst of keyframe requests
-    bool b = true;
-    return rtcpPacketLoss_.compare_exchange_strong(b, false);
+    if(not histoLatency_.empty())
+        return histoLatency_.back();
+    else
+        return -1;
 }
 
 } // namespace jami
