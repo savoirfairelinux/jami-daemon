@@ -66,11 +66,36 @@ typedef struct {
     uint32_t pt:8;      /* payload type */
     uint32_t len:16;    /* length of RTCP packet */
     uint32_t ssrc;      /* synchronization source identifier of packet send */
-    uint32_t ssrc_1;    /* synchronization source identifier of first source */
-    uint32_t fraction_lost; /* 8 bits of fraction, 24 bits of total packets lost */
-    uint32_t last_seq;  /*last sequence number */
-    uint32_t jitter;    /*jitter */
+    uint32_t id;        /* synchronization source identifier of first source */
+    uint32_t fraction_lost:8;       /* 8 bits of fraction, 24 bits of total packets lost */
+    uint32_t cum_lost_packet:24;    /* cumulative number packet lost */
+    uint32_t ext_high;  /* Extended highest sequence number received */
+    uint32_t jitter;    /* jitter */
+    uint32_t lsr;       /* last SR timestamp */
+    uint32_t dlsr;      /* Delay since last SR timestamp */
 } rtcpRRHeader;
+
+typedef struct {
+#ifdef WORDS_BIGENDIAN
+    uint32_t version:2; /* protocol version */
+    uint32_t p:1;       /* padding flag */
+    uint32_t rc:5;      /* reception report count must be 201 for report */
+
+#else
+    uint32_t rc:5;      /* reception report count must be 201 for report */
+    uint32_t p:1;       /* padding flag */
+    uint32_t version:2; /* protocol version */
+#endif
+    uint32_t pt:8;      /* payload type */
+    uint32_t len:16;    /* length of RTCP packet */
+    uint32_t ssrc;      /* synchronization source identifier of packet send */
+    uint32_t timestampMSB;      /* timestamp MSB */
+    uint32_t timestampLSB;      /* timestamp LSB */
+    uint32_t timestampRTP;      /* RTP timestamp */
+    uint32_t spc;       /* Sender's packet count */
+    uint32_t soc;       /* Sender's octet count */
+} rtcpSRHeader;
+
 
 class SocketPair {
     public:
@@ -107,7 +132,9 @@ class SocketPair {
 
         void stopSendOp(bool state = true);
         std::vector<rtcpRRHeader> getRtcpInfo();
-        bool rtcpPacketLossDetected() const;
+
+        bool waitForRTCP(std::chrono::seconds interval);
+        double getLastLatency();
 
     private:
         NON_COPYABLE(SocketPair);
@@ -139,12 +166,17 @@ class SocketPair {
 
         std::list<rtcpRRHeader> listRtcpHeader_;
         std::mutex rtcpInfo_mutex_;
-        static constexpr unsigned MAX_LIST_SIZE {20};
+        std::condition_variable cvRtcpPacketReadyToRead_;
+        static constexpr unsigned MAX_LIST_SIZE {10};
 
         mutable std::atomic_bool rtcpPacketLoss_ {false};
+        double lastSRTS_;
+        uint32_t lastDLSR_;
+
+        std::list<double> histoLatency_;
+
+        std::chrono::steady_clock::time_point lastRR_time;
 };
-
-
 
 
 } // namespace jami
