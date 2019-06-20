@@ -90,6 +90,7 @@ private:
     uint16_t mtu_;
     int rotation_;
     std::shared_ptr<AVBufferRef> displayMatrix_;
+    std::chrono::time_point<std::chrono::system_clock> lastKeyFrameTime_;
 
     std::function<void(void)> requestKeyFrameCallback_;
     void openDecoder();
