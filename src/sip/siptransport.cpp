@@ -440,9 +440,6 @@ SipTransportBroker::getTlsIceTransport(const std::shared_ptr<jami::IceTransport>
 {
     auto ipv6 = ice->getLocalAddress(comp_id).isIpv6();
     auto type = ipv6 ? PJSIP_TRANSPORT_DTLS6 : PJSIP_TRANSPORT_DTLS;
-    if (ice->isTCPEnabled()) {
-        type = ipv6 ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
-    }
     auto sip_ice_tr = std::unique_ptr<tls::SipsIceTransport>(
         new tls::SipsIceTransport(endpt_, type, params, ice, comp_id));
     auto tr = sip_ice_tr->getTransportBase();

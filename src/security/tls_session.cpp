@@ -234,7 +234,6 @@ public:
     std::unique_ptr<TlsAnonymousClientCredendials> cacred_; // ctor init.
     std::unique_ptr<TlsAnonymousServerCredendials> sacred_; // ctor init.
     std::unique_ptr<TlsCertificateCredendials> xcred_; // ctor init.
-    std::mutex sessionMutex_;
     gnutls_session_t session_ {nullptr};
     gnutls_datum_t cookie_key_ {nullptr, 0};
     gnutls_dtls_prestate_st prestate_ {};
@@ -725,16 +724,13 @@ TlsSession::TlsSessionImpl::cleanup()
     state_ = TlsSessionState::SHUTDOWN; // be sure to block any user operations
     stateCondition_.notify_all();
 
-    {
-        std::lock_guard<std::mutex> lk(sessionMutex_);
-        if (session_) {
-            if (transport_.isReliable())
-                gnutls_bye(session_, GNUTLS_SHUT_RDWR);
-            else
-                gnutls_bye(session_, GNUTLS_SHUT_WR); // not wait for a peer answer
-            gnutls_deinit(session_);
-            session_ = nullptr;
-        }
+    if (session_) {
+        if (transport_.isReliable())
+            gnutls_bye(session_, GNUTLS_SHUT_RDWR);
+        else
+            gnutls_bye(session_, GNUTLS_SHUT_WR); // not wait for a peer answer
+        gnutls_deinit(session_);
+        session_ = nullptr;
     }
 
     if (cookie_key_.data)
@@ -1222,7 +1218,7 @@ TlsSession::TlsSession(SocketType& transport, const TlsParams& params,
 
 TlsSession::~TlsSession()
 {
-    if (pimpl_) shutdown();
+    shutdown();
 }
 
 bool
@@ -1241,8 +1237,8 @@ int
 TlsSession::maxPayload() const
 {
     if (pimpl_->state_ == TlsSessionState::SHUTDOWN)
-        throw std::runtime_error("Getting maxPayload from non-valid TLS session");
-    return pimpl_->transport_.maxPayload();
+        throw std::runtime_error("Getting MTU from non-valid TLS session");
+    return gnutls_dtls_get_data_mtu(pimpl_->session_);
 }
 
 const char*
@@ -1299,22 +1295,15 @@ TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
     }
 
     while (true) {
-        ssize_t ret;
-        {
-            std::lock_guard<std::mutex> lk(pimpl_->sessionMutex_);
-            if (!pimpl_->session_) return 0;
-            ret = gnutls_record_recv(pimpl_->session_, data, size);
-        }
+        auto ret = gnutls_record_recv(pimpl_->session_, data, size);
         if (ret > 0) {
             ec.clear();
             return ret;
         }
 
         if (ret == 0) {
-            if (pimpl_) {
-                JAMI_ERR("[TLS] eof");
-                shutdown();
-            }
+            JAMI_DBG("[TLS] eof");
+            shutdown();
             error = std::errc::broken_pipe;
             break;
         } else if (ret == GNUTLS_E_REHANDSHAKE) {
@@ -1323,10 +1312,8 @@ TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
             pimpl_->rxCv_.notify_one(); // unblock waiting FSM
             pimpl_->stateCondition_.notify_all();
         } else if (gnutls_error_is_fatal(ret)) {
-            if (pimpl_ && pimpl_->state_ != TlsSessionState::SHUTDOWN) {
-                JAMI_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
-                shutdown();
-            }
+            JAMI_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
+            shutdown();
             error = std::errc::io_error;
             break;
         }

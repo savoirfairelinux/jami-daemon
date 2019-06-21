@@ -67,13 +67,12 @@ public:
     static constexpr uint16_t IPV4_HEADER_SIZE = 20; // Size in bytes of IPv4 packet header
     static constexpr uint16_t UDP_HEADER_SIZE = 8; // Size in bytes of UDP header
 
-    IceSocketTransport(std::shared_ptr<IceTransport>& ice, int comp_id, bool reliable = false)
+    IceSocketTransport(std::shared_ptr<IceTransport>& ice, int comp_id)
         : compId_ {comp_id}
-        , ice_ {ice}
-        , reliable_ {reliable} {}
+        , ice_ {ice} {}
 
     bool isReliable() const override {
-        return reliable_;
+        return false; // we consider that a ICE transport is never reliable (UDP support only)
     }
 
     bool isInitiator() const override;
@@ -95,7 +94,6 @@ public:
 private:
     const int compId_;
     std::shared_ptr<IceTransport> ice_;
-    bool reliable_;
 };
 
 };
