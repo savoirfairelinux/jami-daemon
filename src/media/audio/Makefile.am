@@ -32,11 +32,6 @@ if HAVE_PORTAUDIO
 SUBDIRS += portaudio
 endif
 
-if BUILD_SPEEXDSP
-RING_SPEEXDSP_SRC=dsp.cpp
-RING_SPEEXDSP_HEAD=dsp.h
-endif
-
 libaudio_la_SOURCES = \
 		audiobuffer.cpp \
 		audio_input.cpp \
@@ -46,7 +41,6 @@ libaudio_la_SOURCES = \
 		ringbufferpool.cpp \
 		audiolayer.cpp \
 		resampler.cpp \
-		$(RING_SPEEXDSP_SRC) \
 		dcblocker.cpp \
 		audio_sender.cpp \
 		audio_receive_thread.cpp \
@@ -55,11 +49,6 @@ libaudio_la_SOURCES = \
 
 libaudio_la_CXXFLAGS = -I$(top_srcdir)/src
 libaudio_la_LDFLAGS =
-
-if BUILD_SPEEXDSP
-libaudio_la_CXXFLAGS += @SPEEXDSP_CFLAGS@
-libaudio_la_LDFLAGS += @SPEEXDSP_LIBS@
-endif
 
 noinst_HEADERS = \
 		audiobuffer.h \
@@ -70,7 +59,6 @@ noinst_HEADERS = \
 		ringbufferpool.h \
 		audiolayer.h \
 		resampler.h \
-		$(RING_SPEEXDSP_HEAD) \
 		dcblocker.h \
 		audio_sender.h \
 		audio_receive_thread.h \

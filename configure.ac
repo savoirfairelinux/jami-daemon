@@ -499,30 +499,6 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
   PKG_CHECK_MODULES(AVUTIL, libavutil >= 55.75.100, [
     ring_accel="yes"
     AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled])
-    AS_IF([test "${SYS}" = "linux" && test -z "${HAVE_ANDROID_FALSE}"], [
-      dnl ffmpeg's vaapi and vdpau implementations depend on x11
-      PKG_CHECK_MODULES([X11], [x11], [x11_available="yes"], [x11_available="no"])
-      AS_IF([test "${x11_available}" = "yes"], [
-        PKG_CHECK_MODULES([LIBVA], [libva], [
-          PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
-            AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Defined if vaapi via DRM is available])
-          ], [])
-          PKG_CHECK_MODULES([LIBVA_X11], [libva-x11], [
-            AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Defined if vaapi via X11 is available])
-          ], [])
-          AC_CHECK_HEADERS([libavcodec/vaapi.h], [
-            ring_vaapi="yes"
-            AC_DEFINE([RING_VAAPI], [1], [Defined if vaapi is available])
-          ])
-        ], [])
-        PKG_CHECK_MODULES([VDPAU], [vdpau], [
-          AC_CHECK_HEADERS([libavcodec/vdpau.h], [
-            ring_vdpau="yes"
-            AC_DEFINE([RING_VDPAU], [1], [Defined if vdpau is available])
-          ])
-        ], [])
-      ])
-    ])
     AS_IF([test "${SYS}" = "darwin"], [
       AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
         AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
@@ -531,15 +507,12 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
         ])
       ])
     ])
-  ],[AC_MSG_NOTICE([HWAccel API not found])])
+  ],[])
 ])
 AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
-AM_CONDITIONAL([RING_VAAPI], [test "x${ring_vaapi}" = "xyes"])
-AM_CONDITIONAL([RING_VDPAU], [test "x${ring_vdpau}" = "xyes"])
-AM_CONDITIONAL([ENABLE_VIDEOTOOLBOX], [test "x${ring_vt}" = "xyes"])
 
 dnl check for GnuTLS
-PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
+PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.5.17], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
 
 # PTHREAD
 # required dependency(ies): libxpat
@@ -549,54 +522,10 @@ dnl Check for libcppunit-dev
 CPPUNIT_MIN_VERSION=1.12
 PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUILD_TEST, test 1 = 1 ), AM_CONDITIONAL(BUILD_TEST, test 0 = 1 ))
 
-
-# SPEEX CODEC
-# required dependency(ies): libspeex
-dnl Check for libspeex
-AC_ARG_WITH([speex],
-        [AS_HELP_STRING([--without-speex], [disable support for speex codec])],
-        [],
-        [with_speex=yes])
-
-AS_IF([test "x$with_speex" != xno], [PKG_CHECK_MODULES([SPEEX], [speex])])
-
-AC_DEFINE_UNQUOTED([HAVE_SPEEX], `if test "x$with_speex" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeex])
-AM_CONDITIONAL(BUILD_SPEEX, test "x$with_speex" = "xyes" )
-
-
-# SPEEX DSP
-# required dependency(ies): libspeexdsp
-dnl check in case the libspeexdsp is not installed
-AC_ARG_WITH([speexdsp],
-    [AS_HELP_STRING([--without-speexdsp],
-    [disable support for speexdp Noise Suppression and Automatic Gain Control])],
-    [],
-    [with_speexdsp=yes])
-
-AS_IF([test "x$with_speexdsp" != xno], [PKG_CHECK_MODULES([SPEEXDSP], [speexdsp])])
-
-AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeexdsp])
-AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
-
-dnl opus is enabled if it's installed
-AC_ARG_WITH([opus],
-  [AS_HELP_STRING([--with-opus], [support opus audio @<:@default=check@:>@])], [], [with_opus=check])
-AS_CASE(["$with_opus"],
-  [yes], [PKG_CHECK_MODULES([opus], [opus], [HAVE_OPUS=1])],
-  [no], [HAVE_OPUS=0],
-  [PKG_CHECK_MODULES([opus], [opus], [HAVE_OPUS=1], [HAVE_OPUS=0])])
-AM_CONDITIONAL([BUILD_OPUS], [test "$HAVE_OPUS" -eq 1])
-
 dnl check for openDHT
 PKG_CHECK_MODULES([OPENDHT], [opendht >= 0.6.1],, AC_MSG_WARN([Missing OpenDHT]))
 
 PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1],, AC_MSG_FAILURE([Missing secp256k1]))
-
-dnl IPv6 mode is default-disabled
-AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
-
-AC_DEFINE_UNQUOTED([HAVE_IPV6], `if test "x$enable_ipv6" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have IPv6])
-AM_CONDITIONAL(BUILD_IPV6, test "x$enable_ipv6" = "xyes" )
 
 # LIBUPNP
 dnl check for libupnp
