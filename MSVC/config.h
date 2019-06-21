@@ -1,4 +1,3 @@
-#pragma comment(lib, "secp256k1.lib")
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
 systems. This function is required for `alloca.c' support on those systems.
 */
@@ -45,7 +44,7 @@ systems. This function is required for `alloca.c' support on those systems.
 #define HAVE_INTTYPES_H 1
 
 /* Define if you have IPv6 */
-#define HAVE_IPV6 0
+#define HAVE_IPV6 1
 
 /* Define if you have jack */
 #define HAVE_JACK 0
@@ -96,16 +95,16 @@ systems. This function is required for `alloca.c' support on those systems.
 #define HAVE_SHM 0
 
 /* Define if you have libspeex */
-#define HAVE_SPEEX 1
+#define HAVE_SPEEX 0
 
 /* Define if you have libspeexdsp */
-#define HAVE_SPEEXDSP 1
+#define HAVE_SPEEXDSP 0
 
 /* Define to 1 if stdbool.h conforms to C99. */
 #define HAVE_STDBOOL_H 1
 
 /* Define to 1 if you have the <stdint.h> header file. */
-#define HAVE_STDINT_H 0
+#define HAVE_STDINT_H 1
 
 /* Define to 1 if you have the <stdlib.h> header file. */
 #define HAVE_STDLIB_H 1
@@ -117,19 +116,19 @@ systems. This function is required for `alloca.c' support on those systems.
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the <sys/ioctl.h> header file. */
-#define HAVE_SYS_IOCTL_H 1
+#define HAVE_SYS_IOCTL_H 0
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
-#define HAVE_SYS_SOCKET_H 1
+#define HAVE_SYS_SOCKET_H 0
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
-#define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_STAT_H 0
 
 /* Define to 1 if you have the <sys/time.h> header file. */
 #define HAVE_SYS_TIME_H 1
 
 /* Define to 1 if you have the <sys/types.h> header file. */
-#define HAVE_SYS_TYPES_H 1
+#define HAVE_SYS_TYPES_H 0
 
 /* Define if you have tls support */
 #define HAVE_TLS 1
@@ -138,38 +137,38 @@ systems. This function is required for `alloca.c' support on those systems.
 #define HAVE_UNISTD_H 1
 
 /* Define to 1 if the system has the type `_Bool'. */
-#define HAVE__BOOL 1
+/* #define HAVE__BOOL */
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
-#define LT_OBJDIR ".libs/"
+/* #undef LT_OBJDIR */
 
 /* Name of package */
 #define PACKAGE "ring"
 
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT "ring@lists.savoirfairelinux.net"
+/* #define PACKAGE_BUGREPORT */
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME "Ring"
+#define PACKAGE_NAME "Jami Daemon"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Ring 2.3.0"
+/* #undef PACKAGE_STRING */
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME "ring"
+/* #undef PACKAGE_TARNAME */
 
 /* Define to the home page for this package. */
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.3.0"
+#define PACKAGE_VERSION "7.7.0"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
 your system. */
 /* #undef PTHREAD_CREATE_JOINABLE */
 
 /* Video support enabled */
-#define ENABLE_VIDEO /**/
+#define ENABLE_VIDEO
 
 /* Name directory service support enabled */
 #define HAVE_RINGNS 1
@@ -195,7 +194,7 @@ STACK_DIRECTION = 0 => direction of growth unknown */
 /* #undef UNICODE */
 
 /* Version number of package */
-#define VERSION "2.3.0"
+#define VERSION "7.7.0"
 
 // UWP compatibility
 #define PROGSHAREDIR ""
