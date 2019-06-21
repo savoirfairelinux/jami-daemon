@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set ICONV_VERSION=73736371568e6976fa550c06d119fbbce7db8a15
+set ICONV_VERSION=a4d13b43f8bfc328a9d1d326b0d748d5236613be
 set ICONV_URL=https://github.com/ShiftMediaProject/libiconv/archive/%ICONV_VERSION%.tar.gz
 
 mkdir %BUILD%

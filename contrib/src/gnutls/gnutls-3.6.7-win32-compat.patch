@@ -1,0 +1,420 @@
+From e30e6957e0f7fa707e15fbcd8077023ec6c793d8 Mon Sep 17 00:00:00 2001
+From: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Date: Fri, 21 Jun 2019 15:53:30 -0400
+Subject: [PATCH] gnutls-3.6.7-win32-compat
+
+---
+ gl/c-strcase.h                    |  10 +-
+ gl/read-file.c                    | 379 +++++++++++++++++++-------------------
+ lib/nettle/gost/nettle-internal.h |   9 +-
+ lib/nettle/gost/streebog.c        |   4 +-
+ lib/nettle/pk.c                   |  10 +-
+ lib/priority.c                    |   8 -
+ lib/system/fastopen.c             |   9 +-
+ lib/x509/common.c                 |  16 +-
+ lib/x509/hostname-verify.c        |  12 +-
+ lib/x509/ip.c                     |   5 +-
+ 10 files changed, 230 insertions(+), 232 deletions(-)
+
+diff --git a/gl/c-strcase.h b/gl/c-strcase.h
+index b67c9b5..64d794f 100644
+--- a/gl/c-strcase.h
++++ b/gl/c-strcase.h
+@@ -20,7 +20,6 @@
+ 
+ #include <stddef.h>
+ 
+-
+ /* The functions defined in this file assume the "C" locale and a character
+    set without diacritics (ASCII-US or EBCDIC-US or something like that).
+    Even if the "C" locale on a particular system is an extension of the ASCII
+@@ -30,12 +29,11 @@
+    string; the other one can also contain non-ASCII characters (but then
+    the comparison result will be nonzero).  */
+ 
+-
+ #ifdef __cplusplus
+ extern "C" {
+ #endif
+ 
+-
++#ifndef _MSC_VER
+ /* Compare strings S1 and S2, ignoring case, returning less than, equal to or
+    greater than zero if S1 is lexicographically less than, equal to or greater
+    than S2.  */
+@@ -46,11 +44,13 @@ extern int c_strcasecmp (const char *s1, const char *s2) _GL_ATTRIBUTE_PURE;
+    lexicographically less than, equal to or greater than S2.  */
+ extern int c_strncasecmp (const char *s1, const char *s2, size_t n)
+   _GL_ATTRIBUTE_PURE;
+-
++#else
++#define c_strcasecmp strcasecmp
++#define c_strncasecmp strncasecmp
++#endif
+ 
+ #ifdef __cplusplus
+ }
+ #endif
+ 
+-
+ #endif /* C_STRCASE_H */
+diff --git a/lib/nettle/gost/nettle-internal.h b/lib/nettle/gost/nettle-internal.h
+index 2e06ebb..f40430e 100644
+--- a/lib/nettle/gost/nettle-internal.h
++++ b/lib/nettle/gost/nettle-internal.h
+@@ -42,11 +42,16 @@
+ 
+ #if HAVE_ALLOCA
+ # define TMP_DECL(name, type, max) type *name
+-# define TMP_ALLOC(name, size) (name = alloca(sizeof (*name) * (size)))
++# ifndef _MSC_VER
++#  define TMP_ALLOC(name, size) (name = alloca(sizeof (*name) * (size)))
++# else
++#  include <malloc.h>
++#  define TMP_ALLOC(name, size) (name = _alloca(sizeof (*name) * (size)))
++# endif
+ #else /* !HAVE_ALLOCA */
+ # define TMP_DECL(name, type, max) type name[max]
+ # define TMP_ALLOC(name, size) \
+   do { if ((size) > (sizeof(name) / sizeof(name[0]))) abort(); } while (0)
+-#endif 
++#endif
+ 
+ #endif /* NETTLE_INTERNAL_H_INCLUDED */
+diff --git a/lib/nettle/gost/streebog.c b/lib/nettle/gost/streebog.c
+index 12c5c08..bc5c1ee 100644
+--- a/lib/nettle/gost/streebog.c
++++ b/lib/nettle/gost/streebog.c
+@@ -45,7 +45,6 @@
+ #include <nettle/macros.h>
+ #include "nettle-write.h"
+ 
+-
+ /* Pre-computed results of multiplication of bytes on A and reordered with
+    Pi[]. */
+ static const uint64_t streebog_table[8][256] =
+@@ -1195,7 +1194,6 @@ static inline void g (uint64_t *h, uint64_t *m, uint64_t *N)
+   h[7] ^= T[7] ^ K[7] ^ m[7];
+ }
+ 
+-
+ static void
+ streebog512_compress (struct streebog512_ctx *ctx, const uint8_t *input, size_t count)
+ {
+@@ -1230,7 +1228,7 @@ streebog512_compress (struct streebog512_ctx *ctx, const uint8_t *input, size_t
+ static void
+ streebog_final (struct streebog512_ctx *ctx)
+ {
+-  uint64_t Z[8] = {};
++  uint64_t Z[8] = {0};
+   unsigned int i;
+ 
+   /* PAD. It does not count towards message length */
+diff --git a/lib/nettle/pk.c b/lib/nettle/pk.c
+index 9aa5166..ee90af6 100644
+--- a/lib/nettle/pk.c
++++ b/lib/nettle/pk.c
+@@ -99,7 +99,7 @@ ecc_point_zclear (struct ecc_point *p)
+ 	zeroize_key(p->p, ecc_size_a(p->ecc)*sizeof(mp_limb_t));
+ 	ecc_point_clear(p);
+ }
+- 
++
+ static void
+ _dsa_params_get(const gnutls_pk_params_st * pk_params,
+ 		struct dsa_params *pub)
+@@ -276,7 +276,6 @@ static int _wrap_nettle_pk_derive(gnutls_pk_algorithm_t algo,
+ 			goto dh_cleanup;
+ 		}
+ 
+-
+ 		ret = _gnutls_mpi_powm(k, f, x, prime);
+ 		if (ret < 0) {
+ 			gnutls_assert();
+@@ -562,7 +561,7 @@ _wrap_nettle_pk_decrypt2(gnutls_pk_algorithm_t algo,
+ 		return gnutls_assert_val (GNUTLS_E_MPI_SCAN_FAILED);
+ 	}
+ 
+-	ret = rsa_sec_decrypt(&pub, &priv, NULL, rnd_nonce_func,
++	ret = nettle_rsa_sec_decrypt(&pub, &priv, NULL, rnd_nonce_func,
+ 			     plaintext_size, plaintext, TOMPZ(c));
+ 	/* after this point, any conditional on failure that cause differences
+ 	 * in execution may create a timing or cache access pattern side
+@@ -1464,7 +1463,6 @@ int _gnutls_ecdh_generate_key(gnutls_ecc_curve_t curve,
+ 			      gnutls_datum_t *x, gnutls_datum_t *y,
+ 			      gnutls_datum_t *k);
+ 
+-
+ int _gnutls_dh_generate_key(gnutls_dh_params_t dh_params,
+ 			    gnutls_datum_t *priv_key, gnutls_datum_t *pub_key)
+ {
+@@ -1669,7 +1667,6 @@ int _gnutls_ecdh_compute_key(gnutls_ecc_curve_t curve,
+ 		goto cleanup;
+ 	}
+ 
+-
+ 	priv.params_nr = 3;
+ 	priv.algo = GNUTLS_PK_ECDSA;
+ 	priv.curve = curve;
+@@ -2170,7 +2167,6 @@ wrap_nettle_pk_generate_keys(gnutls_pk_algorithm_t algo,
+ 				goto ecc_fail;
+ 			}
+ 
+-
+ 			ret = _gnutls_mpi_init_multi(&params->params[GOST_X], &params->params[GOST_Y],
+ 					&params->params[GOST_K], NULL);
+ 			if (ret < 0) {
+@@ -2258,7 +2254,6 @@ wrap_nettle_pk_generate_keys(gnutls_pk_algorithm_t algo,
+ 	return ret;
+ }
+ 
+-
+ static int
+ wrap_nettle_pk_verify_priv_params(gnutls_pk_algorithm_t algo,
+ 			     const gnutls_pk_params_st * params)
+@@ -2703,7 +2698,6 @@ fail:
+ 	return ret;
+ }
+ 
+-
+ static int
+ wrap_nettle_pk_fixup(gnutls_pk_algorithm_t algo,
+ 		     gnutls_direction_t direction,
+diff --git a/lib/priority.c b/lib/priority.c
+index 900bbf7..5f158f3 100644
+--- a/lib/priority.c
++++ b/lib/priority.c
+@@ -337,7 +337,6 @@ static const int cipher_priority_normal_fips[] = {
+ 	0
+ };
+ 
+-
+ static const int _cipher_priority_suiteb128[] = {
+ 	GNUTLS_CIPHER_AES_256_GCM,
+ 	GNUTLS_CIPHER_AES_128_GCM,
+@@ -351,7 +350,6 @@ static const int _cipher_priority_suiteb192[] = {
+ };
+ static const int* cipher_priority_suiteb192 = _cipher_priority_suiteb192;
+ 
+-
+ static const int _cipher_priority_secure128[] = {
+ 	GNUTLS_CIPHER_AES_256_GCM,
+ 	GNUTLS_CIPHER_CHACHA20_POLY1305,
+@@ -365,7 +363,6 @@ static const int _cipher_priority_secure128[] = {
+ };
+ static const int *cipher_priority_secure128 = _cipher_priority_secure128;
+ 
+-
+ static const int _cipher_priority_secure192[] = {
+ 	GNUTLS_CIPHER_AES_256_GCM,
+ 	GNUTLS_CIPHER_CHACHA20_POLY1305,
+@@ -566,7 +563,6 @@ static void prio_add(priority_st * priority_list, unsigned int algo)
+ 	return;
+ }
+ 
+-
+ /**
+  * gnutls_priority_set:
+  * @session: is a #gnutls_session_t type.
+@@ -630,7 +626,6 @@ gnutls_priority_set(gnutls_session_t session, gnutls_priority_t priority)
+ 	return 0;
+ }
+ 
+-
+ #define LEVEL_NONE "NONE"
+ #define LEVEL_NORMAL "NORMAL"
+ #define LEVEL_PFS "PFS"
+@@ -993,7 +988,6 @@ static char *system_priority_buf = NULL;
+ static size_t system_priority_buf_size = 0;
+ static time_t system_priority_last_mod = 0;
+ 
+-
+ static void _gnutls_update_system_priorities(void)
+ {
+ #ifdef HAVE_FMEMOPEN
+@@ -1293,7 +1287,6 @@ static int set_ciphersuite_list(gnutls_priority_t priority_cache)
+ 	if ((!tlsmax || !tlsmin) && (!dtlsmax || !dtlsmin))
+ 		return gnutls_assert_val(GNUTLS_E_NO_PRIORITIES_WERE_SET);
+ 
+-
+ 	priority_cache->have_psk = have_psk;
+ 
+ 	/* if we are have TLS1.3+ do not enable any key exchange algorithms,
+@@ -1923,7 +1916,6 @@ void gnutls_priority_deinit(gnutls_priority_t priority_cache)
+ 	}
+ }
+ 
+-
+ /**
+  * gnutls_priority_set_direct:
+  * @session: is a #gnutls_session_t type.
+diff --git a/lib/system/fastopen.c b/lib/system/fastopen.c
+index 8d8409e..0118d77 100644
+--- a/lib/system/fastopen.c
++++ b/lib/system/fastopen.c
+@@ -26,7 +26,11 @@
+ #include "errors.h"
+ 
+ #include <sys/socket.h>
+-#include <netinet/in.h> /* IPPROTO_TCP */
++#ifndef _WIN32
++# include <netinet/in.h> /* IPPROTO_TCP */
++#else
++# include <winsock.h> /* IPPROTO_TCP */
++#endif
+ #include <errno.h>
+ #include <sys/stat.h>
+ #include <sys/types.h>
+@@ -191,7 +195,7 @@ tfo_read(gnutls_transport_ptr_t ptr, void *data, size_t data_size)
+  * Note: This function overrides all the transport callback functions.
+  * If this is undesirable, TCP Fast Open must be implemented on the user
+  * callback functions without calling this function. When using
+- * this function, transport callbacks must not be set, and 
++ * this function, transport callbacks must not be set, and
+  * gnutls_transport_set_ptr() or gnutls_transport_set_int()
+  * must not be called.
+  *
+@@ -238,4 +242,3 @@ gnutls_transport_set_fastopen(gnutls_session_t session,
+ 	gnutls_transport_set_vec_push_function(session, tfo_writev);
+ #endif
+ }
+-
+diff --git a/lib/x509/common.c b/lib/x509/common.c
+index 4669d37..39986ea 100644
+--- a/lib/x509/common.c
++++ b/lib/x509/common.c
+@@ -274,7 +274,7 @@ const char *gnutls_x509_dn_oid_name(const char *oid, unsigned int flags)
+ 	unsigned len = strlen(oid);
+ 
+ 	do {
+-		if ((_oid2str[i].oid_size == len) && 
++		if ((_oid2str[i].oid_size == len) &&
+ 			strcmp(_oid2str[i].oid, oid) == 0 && _oid2str[i].ldap_desc != NULL)
+ 			return _oid2str[i].ldap_desc;
+ 		i++;
+@@ -428,7 +428,6 @@ decode_complex_string(const struct oid_to_string *oentry, void *value,
+ 	return 0;
+ }
+ 
+-
+ /* This function will convert an attribute value, specified by the OID,
+  * to a string. The result will be a null terminated string.
+  *
+@@ -684,7 +683,6 @@ _gnutls_x509_decode_string(unsigned int etype,
+ 	return ret;
+ }
+ 
+-
+ /* Reads a value from an ASN1 tree, and puts the output
+  * in an allocated variable in the given datum.
+  *
+@@ -972,7 +970,7 @@ _gnutls_x509_der_encode_and_copy(ASN1_TYPE src, const char *src_name,
+ 	return 0;
+ }
+ 
+-/* Writes the value of the datum in the given ASN1_TYPE. 
++/* Writes the value of the datum in the given ASN1_TYPE.
+  */
+ int
+ _gnutls_x509_write_value(ASN1_TYPE c, const char *root,
+@@ -991,7 +989,7 @@ _gnutls_x509_write_value(ASN1_TYPE c, const char *root,
+ 	return 0;
+ }
+ 
+-/* Writes the value of the datum in the given ASN1_TYPE as a string. 
++/* Writes the value of the datum in the given ASN1_TYPE as a string.
+  */
+ int
+ _gnutls_x509_write_string(ASN1_TYPE c, const char *root,
+@@ -1034,8 +1032,6 @@ _asnstr_append_name(char *name, size_t name_size, const char *part1,
+ 				part2 + 1 /* remove initial dot */ );
+ }
+ 
+-
+-
+ /* Encodes and copies the private key parameters into a
+  * subjectPublicKeyInfo structure.
+  *
+@@ -1182,7 +1178,7 @@ _gnutls_x509_get_pk_algorithm(ASN1_TYPE src, const char *src_name,
+ 		return algo;
+ 	}
+ 
+-	/* Now read the parameters' bits 
++	/* Now read the parameters' bits
+ 	 */
+ 	if (lcurve != GNUTLS_ECC_CURVE_INVALID) { /* curve present */
+ 		bits[0] = gnutls_ecc_curve_get_size(lcurve)*8;
+@@ -1307,7 +1303,6 @@ _gnutls_x509_get_signature_algorithm(ASN1_TYPE src, const char *src_name)
+ 	return result;
+ }
+ 
+-
+ /* Reads the DER signature from the certificate and allocates space and
+  * returns them into signed_data.
+  */
+@@ -1321,7 +1316,7 @@ _gnutls_x509_get_signature(ASN1_TYPE src, const char *src_name,
+ 	signature->data = NULL;
+ 	signature->size = 0;
+ 
+-	/* Read the signature 
++	/* Read the signature
+ 	 */
+ 	len = 0;
+ 	result = asn1_read_value(src, src_name, NULL, &len);
+@@ -1445,7 +1440,6 @@ static int write_complex_string(ASN1_TYPE asn_struct, const char *where,
+ 	return result;
+ }
+ 
+-
+ /* This will encode and write the AttributeTypeAndValue field.
+  * 'multi' must be (0) if writing an AttributeTypeAndValue, and 1 if Attribute.
+  * In all cases only one value is written.
+diff --git a/lib/x509/hostname-verify.c b/lib/x509/hostname-verify.c
+index 967d9b8..d3b6968 100644
+--- a/lib/x509/hostname-verify.c
++++ b/lib/x509/hostname-verify.c
+@@ -26,8 +26,14 @@
+ #include <common.h>
+ #include "errors.h"
+ #include <system.h>
+-#include <netinet/in.h>
+-#include <arpa/inet.h>
++#ifndef _WIN32
++# include <netinet/in.h> /* IPPROTO_TCP */
++#else
++# include <winsock.h> /* IPPROTO_TCP */
++#endif
++#ifdef HAVE_INET_NTOP
++# include <arpa/inet.h>
++#endif
+ 
+ /**
+  * gnutls_x509_crt_check_hostname:
+@@ -100,7 +106,7 @@ static int has_embedded_null(const char *str, unsigned size)
+  * @ip_size: the number of bytes in ip (4 or 16)
+  * @flags: should be zero
+  *
+- * This function will check if the IP allowed IP addresses in 
++ * This function will check if the IP allowed IP addresses in
+  * the certificate's subject alternative name match the provided
+  * IP address.
+  *
+diff --git a/lib/x509/ip.c b/lib/x509/ip.c
+index c4cb008..b359d27 100644
+--- a/lib/x509/ip.c
++++ b/lib/x509/ip.c
+@@ -24,7 +24,10 @@
+ #include "gnutls_int.h"
+ #include "ip.h"
+ #include <gnutls/x509.h>
+-#include <arpa/inet.h>
++
++#ifdef HAVE_INET_NTOP
++# include <arpa/inet.h>
++#endif
+ 
+ /*-
+  * _gnutls_mask_to_prefix:
+-- 
+2.7.4
+
