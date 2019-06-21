@@ -1,0 +1,38 @@
+From 5f288fe0067f995b91ea87ba4ed19fd65b75ff31 Mon Sep 17 00:00:00 2001
+From: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Date: Tue, 11 Jun 2019 16:47:06 -0400
+Subject: [PATCH] fix for windows GetAdaptersAddresses
+
+---
+ pjnath/src/pjnath/ice_strans.c | 8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 6172172..33ac521 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -1645,9 +1645,7 @@ pj_ice_strans_sendto2(pj_ice_strans *ice_st, unsigned comp_id, const void *data,
+ 			dest_addr_len = dst_addr_len;
+ 		}
+ 
+-		pj_stun_sock_info stun_sock_info;
+-		pj_stun_sock_get_info(comp->stun[tp_idx].sock, &stun_sock_info);
+-		pj_bool_t add_header = stun_sock_info.conn_type != PJ_STUN_TP_UDP;
++        pj_bool_t add_header = comp->ice_st->cfg.stun_tp->conn_type == PJ_STUN_TP_TCP;
+ 		if (add_header) {
+ 			//TCP
+ 			/*
+@@ -1864,9 +1862,7 @@ static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
+         if (comp->stun[tp_idx].sock) {
+ 			pj_ssize_t sent_size;
+ 
+-			pj_stun_sock_info stun_sock_info;
+-			pj_stun_sock_get_info(comp->stun[tp_idx].sock, &stun_sock_info);
+-			pj_bool_t add_header = stun_sock_info.conn_type != PJ_STUN_TP_UDP;
++            pj_bool_t add_header = comp->ice_st->cfg.stun_tp->conn_type == PJ_STUN_TP_TCP;
+ 			if (add_header) {
+ 				//TCP
+ 				/*
+-- 
+2.7.4
+

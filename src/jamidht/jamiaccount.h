@@ -616,7 +616,6 @@ class JamiAccount : public SIPAccountBase {
 
         void replyToIncomingIceMsg(const std::shared_ptr<SIPCall>&,
                                    const std::shared_ptr<IceTransport>&,
-                                   const std::shared_ptr<IceTransport>&,
                                    const dht::IceCandidates&,
                                    const std::shared_ptr<dht::crypto::Certificate>& from_cert,
                                    const dht::InfoHash& from);
