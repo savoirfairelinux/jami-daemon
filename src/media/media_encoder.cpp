@@ -107,7 +107,12 @@ MediaEncoder::setOptions(const MediaStream& opts)
 void
 MediaEncoder::setOptions(const MediaDescription& args)
 {
-    libav_utils::setDictValue(&options_, "payload_type", std::to_string(args.payload_type));
+    int ret;
+    if ((ret = av_opt_set_int(reinterpret_cast<void*>(outputCtx_),
+        "payload_type", args.payload_type, AV_OPT_SEARCH_CHILDREN)) < 0)
+        JAMI_ERR() << "Failed to set payload type: " << libav_utils::getError(ret);
+
+    // NOTE none of these are format options, and we don't have a codec context yet
     libav_utils::setDictValue(&options_, "max_rate", std::to_string(args.codec->bitrate));
     libav_utils::setDictValue(&options_, "crf", std::to_string(args.codec->quality));
 
@@ -203,7 +208,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
 
     currentStreamIdx_ = stream->index;
 
-    readConfig(&options_, encoderCtx);
+    readConfig(encoderCtx);
     if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
         throw MediaEncoderException("Could not open encoder");
 
@@ -726,7 +731,7 @@ MediaEncoder::setBitrate(uint64_t br)
 
     std::lock_guard<std::mutex> lk(encMutex_);
     // No need to restart encoder for h264, h263 and MPEG4
-    // Change parameters on the fly  
+    // Change parameters on the fly
     if(codecId == AV_CODEC_ID_H264)
         initH264(encoderCtx, br);
     else if(codecId == AV_CODEC_ID_H263P)
@@ -845,7 +850,7 @@ MediaEncoder::stopEncoder()
 }
 
 void
-MediaEncoder::readConfig(AVDictionary** dict, AVCodecContext* encoderCtx)
+MediaEncoder::readConfig(AVCodecContext* encoderCtx)
 {
     std::string path = fileutils::get_config_dir() + DIR_SEPARATOR_STR + "encoder.json";
     std::string name = encoderCtx->codec->name;
@@ -867,7 +872,6 @@ MediaEncoder::readConfig(AVDictionary** dict, AVCodecContext* encoderCtx)
                 JAMI_ERR() << "Invalid encoder configuration: '" << name << "' is not an object";
                 return;
             }
-            // If users want to change these, they should use the settings page.
             for (Json::Value::const_iterator it = config.begin(); it != config.end(); ++it) {
                 Json::Value v = *it;
                 if (!it.key().isConvertibleTo(Json::ValueType::stringValue)
@@ -877,29 +881,12 @@ MediaEncoder::readConfig(AVDictionary** dict, AVCodecContext* encoderCtx)
                 }
                 const auto& key = it.key().asString();
                 const auto& value = v.asString();
-                // provides a way to override all AVCodecContext fields MediaEncoder sets
-                if (key == "parameters") // Used by MediaEncoder for profile-level-id, ignore
-                    continue;
-                else if (value.empty())
-                    libav_utils::setDictValue(dict, key, nullptr);
-                else if (key == "profile")
-                    encoderCtx->profile = v.asInt();
-                else if (key == "level")
-                    encoderCtx->level = v.asInt();
-                else if (key == "bit_rate")
-                    encoderCtx->bit_rate = v.asInt();
-                else if (key == "rc_buffer_size")
-                    encoderCtx->rc_buffer_size = v.asInt();
-                else if (key == "rc_min_rate")
-                    encoderCtx->rc_min_rate = v.asInt();
-                else if (key == "rc_max_rate")
-                    encoderCtx->rc_max_rate = v.asInt();
-                else if (key == "qmin")
-                    encoderCtx->qmin = v.asInt();
-                else if (key == "qmax")
-                    encoderCtx->qmax = v.asInt();
-                else
-                    libav_utils::setDictValue(dict, key, value);
+                int ret = av_opt_set(reinterpret_cast<void*>(encoderCtx),
+                                     key.c_str(), value.c_str(), AV_OPT_SEARCH_CHILDREN);
+                if (ret < 0) {
+                    JAMI_ERR() << "Failed to set option " << key << " in encoder context: "
+                        << libav_utils::getError(ret) << "\n";
+                }
             }
         } catch (const Json::Exception& e) {
             JAMI_ERR() << "Failed to load encoder configuration file: " << e.what();
