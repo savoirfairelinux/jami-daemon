@@ -139,7 +139,7 @@ private:
 #endif
 
 protected:
-    void readConfig(AVDictionary** dict, AVCodecContext* encoderCtx);
+    void readConfig(AVCodecContext* encoderCtx);
     AVDictionary* options_ = nullptr;
     MediaStream videoOpts_;
     MediaStream audioOpts_;
