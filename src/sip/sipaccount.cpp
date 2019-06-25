@@ -185,10 +185,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
     call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {
-        bool ipv6 = false;
-#if HAVE_IPV6
-        ipv6 = IpAddr::isIpv6(toUrl);
-#endif
+        bool ipv6 = IpAddr::isIpv6(toUrl);
         to = ipv6 ? IpAddr(toUrl).toString(false, true) : toUrl;
         family = ipv6 ? pj_AF_INET6() : pj_AF_INET();
 
@@ -767,18 +764,14 @@ void SIPAccount::doRegister2_()
     bool ipv6 = false;
     if (isIP2IP()) {
         JAMI_DBG("doRegister isIP2IP.");
-#if HAVE_IPV6
         ipv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
-#endif
     } else if (!hostIp_) {
         setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
         JAMI_ERR("Hostname not resolved.");
         return;
-    }
-#if HAVE_IPV6
-    else
+    } else {
         ipv6 = hostIp_.isIpv6();
-#endif
+    }
 
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_) {
@@ -1316,8 +1309,6 @@ std::string SIPAccount::getLoginName()
 #endif
 }
 
-
-
 std::string SIPAccount::getFromUri() const
 {
     std::string scheme;
@@ -1340,10 +1331,8 @@ std::string SIPAccount::getFromUri() const
     if (hostname_.empty())
         hostname = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
 
-#if HAVE_IPV6
     if (IpAddr::isIpv6(hostname))
         hostname = IpAddr(hostname).toString(false, true);
-#endif
 
     const std::string uri = "<" + scheme + username + "@" + hostname + transport + ">";
     if (not displayName_.empty())
@@ -1372,10 +1361,8 @@ std::string SIPAccount::getToUri(const std::string& username) const
     if (username.find('@') == std::string::npos)
         hostname = hostname_;
 
-#if HAVE_IPV6
     if (not hostname.empty() and IpAddr::isIpv6(hostname))
         hostname = IpAddr(hostname).toString(false, true);
-#endif
 
     return "<" + scheme + username + (hostname.empty() ? "" : "@") + hostname + transport + ">";
 }
@@ -1394,16 +1381,13 @@ std::string SIPAccount::getServerUri() const
     }
 
     std::string host;
-#if HAVE_IPV6
     if (IpAddr::isIpv6(hostname_))
         host = IpAddr(hostname_).toString(false, true);
     else
-#endif
         host = hostname_;
 
     return "<" + scheme + host + transport + ">";
 }
-
 
 pj_str_t
 SIPAccount::getContactHeader(pjsip_transport* t)
@@ -1463,12 +1447,10 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         }
     }
 
-#if HAVE_IPV6
     /* Enclose IPv6 address in square brackets */
     if (IpAddr::isIpv6(address)) {
         address = IpAddr(address).toString(false, true);
     }
-#endif
 
     const char* scheme = "sip";
     const char* transport = "";
@@ -1884,11 +1866,9 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
     }
 
     std::string via_addrstr(via_addr->ptr, via_addr->slen);
-#if HAVE_IPV6
     /* Enclose IPv6 address in square brackets */
     if (IpAddr::isIpv6(via_addrstr))
         via_addrstr = IpAddr(via_addrstr).toString(false, true);
-#endif
 
     JAMI_WARN("IP address change detected for account %s "
          "(%.*s:%d --> %s:%d). Updating registration "

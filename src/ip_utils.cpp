@@ -123,11 +123,7 @@ IpAddr
 ip_utils::getAnyHostAddr(pj_uint16_t family)
 {
     if (family == pj_AF_UNSPEC()) {
-#if HAVE_IPV6
         family = pj_AF_INET6();
-#else
-        family = pj_AF_INET();
-#endif
     }
     return IpAddr(family);
 }
@@ -136,23 +132,19 @@ IpAddr
 ip_utils::getLocalAddr(pj_uint16_t family)
 {
     if (family == pj_AF_UNSPEC()) {
-#if HAVE_IPV6
         family = pj_AF_INET6();
-#else
-        family = pj_AF_INET();
-#endif
     }
     IpAddr ip_addr {};
     pj_status_t status = pj_gethostip(family, ip_addr.pjPtr());
     if (status == PJ_SUCCESS) {
         return ip_addr;
     }
-#if HAVE_IPV6
     JAMI_WARN("Could not get preferred address familly (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
     family = (family == pj_AF_INET()) ? pj_AF_INET6() : pj_AF_INET();
     status = pj_gethostip(family, ip_addr.pjPtr());
-    if (status == PJ_SUCCESS) return ip_addr;
-#endif
+    if (status == PJ_SUCCESS) {
+        return ip_addr;
+    }
     JAMI_ERR("Could not get local IP");
     return ip_addr;
 }
