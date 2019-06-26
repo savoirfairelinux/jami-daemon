@@ -1176,7 +1176,7 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
         foundAccountDevice(crt);
         AccountArchive a;
         try {
-            a = fa->get();
+            a = fa.get();
         } catch (...) {
             emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(getAccountID(), device, 1);
             return;
