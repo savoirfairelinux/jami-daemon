@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2016-2019 Savoir-faire Linux Inc.
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *          Vsevolod Ivanov <vsevolod.ivanov@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +25,10 @@
 #include <string>
 #include <mutex>
 #include <memory>
+
+#include <opendht/http.h>
+#include <restinio/all.hpp>
+#include <http_parser.h>
 
 namespace dht {
 class Executor;
@@ -53,6 +58,7 @@ public:
 
     NameDirectory() {}
     NameDirectory(const std::string& s);
+    ~NameDirectory();
     void load();
 
     static NameDirectory& instance(const std::string& server);
@@ -76,6 +82,20 @@ private:
 
     std::mutex lock_ {};
 
+    /*
+     * ASIO I/O Context for sockets in httpClient_
+     * Note: Each context is used in one thread only
+     */
+    asio::io_context httpContext_;
+    /*
+     * http::Client instance used on http io_context
+     */
+    std::unique_ptr<http::Client> httpClient_;
+    /*
+     * Thread for executing the http io_context.run() blocking call
+     */
+    std::thread httpClientThread_;
+
     const std::string serverHost_ {DEFAULT_SERVER_HOST};
     const std::string cachePath_;
 
@@ -84,6 +104,8 @@ private:
 
     std::weak_ptr<Task> saveTask_;
     std::shared_ptr<dht::Executor> executor_;
+
+    restinio::http_header_fields_t initHeaderFields();
 
     std::string nameCache(const std::string& addr) {
         std::lock_guard<std::mutex> l(lock_);

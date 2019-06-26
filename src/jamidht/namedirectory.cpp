@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2016-2019 Savoir-faire Linux Inc.
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *          Vsevolod Ivanov <vsevolod.ivanov@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,9 +25,11 @@
 #include "base64.h"
 #include "scheduled_executor.h"
 #include "manager.h"
+#include "logger.h"
 
 #include <opendht/thread_pool.h>
 #include <opendht/crypto.h>
+#include <opendht/utils.h>
 #include <msgpack.hpp>
 #include <json/json.h>
 #include <restbed>
@@ -52,7 +55,8 @@ const std::regex NAME_VALIDATOR {"^[a-zA-Z0-9-_]{3,32}$"};
 
 constexpr size_t MAX_RESPONSE_SIZE {1024 * 1024};
 
-void toLower(std::string& string)
+void
+toLower(std::string& string)
 {
     std::transform(string.begin(), string.end(), string.begin(), ::tolower);
 }
@@ -76,9 +80,37 @@ NameDirectory::lookupUri(const std::string& uri, const std::string& default_serv
 
 NameDirectory::NameDirectory(const std::string& s)
    : serverHost_(s),
-     cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+CACHE_DIRECTORY+DIR_SEPARATOR_STR+serverHost_),
-     executor_(std::make_shared<dht::Executor>(dht::ThreadPool::io(), 8))
-{}
+     cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR +
+                CACHE_DIRECTORY + DIR_SEPARATOR_STR+serverHost_),
+     executor_(std::make_shared<dht::Executor>(dht::ThreadPool::io(), 7))
+{
+    // build http client
+    auto hostAndPort = dht::splitPort(serverHost_);
+    auto serverPort = std::atoi(hostAndPort.second.c_str());
+    httpClient_ = std::make_unique<http::Client>(httpContext_, hostAndPort.first, serverPort);
+
+    // run http client
+    httpClientThread_ = std::thread([this](){
+        try {
+            // Ensures the httpContext_ won't run out of work
+            auto work = asio::make_work_guard(httpContext_);
+            JAMI_DBG("[NameDirectory] Starting io_context");
+            httpContext_.run();
+            JAMI_DBG("[NameDirectory] Stopping io_context");
+        }
+        catch(const std::exception &ex){
+            JAMI_ERR("[NameDirectory] Failed starting io_context");
+        }
+    });
+}
+
+NameDirectory::~NameDirectory()
+{
+    if (!httpContext_.stopped())
+        httpContext_.stop();
+    if (httpClientThread_.joinable())
+        httpClientThread_.join();
+}
 
 void
 NameDirectory::load()
@@ -86,7 +118,8 @@ NameDirectory::load()
     loadCache();
 }
 
-NameDirectory& NameDirectory::instance(const std::string& server)
+NameDirectory&
+NameDirectory::instance(const std::string& server)
 {
     const std::string& s = server.empty() ? DEFAULT_SERVER_HOST : server;
     static std::mutex instanceMtx {};
@@ -101,7 +134,8 @@ NameDirectory& NameDirectory::instance(const std::string& server)
     return r.first->second;
 }
 
-size_t getContentLength(restbed::Response& reply)
+size_t
+getContentLength(restbed::Response& reply)
 {
     size_t length = 0;
 #ifdef RESTBED_OLD_API
@@ -112,70 +146,104 @@ size_t getContentLength(restbed::Response& reply)
     return length;
 }
 
-void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
+restinio::http_header_fields_t
+NameDirectory::initHeaderFields()
+{
+    restinio::http_header_fields_t header_fields;
+    header_fields.append_field(restinio::http_field_t::host, serverHost_.c_str());
+    header_fields.append_field(restinio::http_field_t::user_agent, "JamiDHT");
+    header_fields.append_field(restinio::http_field_t::accept, "*/*");
+    header_fields.append_field(restinio::http_field_t::content_type, "application/json");
+    return header_fields;
+}
+
+void
+NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 {
     std::string cacheResult = nameCache(addr);
     if (not cacheResult.empty()) {
         cb(cacheResult, Response::found);
         return;
     }
+    restinio::http_request_header_t header;
+    header.request_target(QUERY_ADDR + addr);
+    header.method(restinio::http_method_get());
+    auto header_fields = this->initHeaderFields();
+    auto request = httpClient_->create_request(header, header_fields,
+        restinio::http_connection_header_t::keep_alive, ""/*body*/);
 
-    restbed::Uri uri(HTTPS_PROTO + serverHost_ + QUERY_ADDR + addr);
-    auto req = std::make_shared<restbed::Request>(uri);
-    req->set_header("Accept", "*/*");
-    req->set_header("Host", serverHost_);
+    const std::string uri = HTTPS_PROTO + serverHost_ + QUERY_ADDR + addr;
+    JAMI_DBG("Address lookup for %s: %s", addr.c_str(), uri.c_str());
 
-    JAMI_DBG("Address lookup for %s: %s", addr.c_str(), uri.to_string().c_str());
-
-    executor_->run([this, req, cb=std::move(cb), addr] {
-        try {
-            restbed::Http::async(req, [this, cb=std::move(cb), addr=std::move(addr)]
-                (const std::shared_ptr<restbed::Request>&,
-                 const std::shared_ptr<restbed::Response>& reply)
-            {
-                auto code = reply->get_status_code();
-                if (code == 200) {
-                    size_t length = getContentLength(*reply);
-                    if (length > MAX_RESPONSE_SIZE) {
-                        cb("", Response::error);
-                        return;
-                    }
-                    restbed::Http::fetch(length, reply);
-                    std::string body;
-                    reply->get_body(body);
-
-                    Json::Value json;
-                    Json::CharReaderBuilder rbuilder;
-                    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                    if (!reader->parse(&body[0], &body[body.size()], &json, nullptr)) {
-                        JAMI_ERR("Address lookup for %s: can't parse server response: %s", addr.c_str(), body.c_str());
-                        cb("", Response::error);
-                        return;
-                    }
-                    auto name = json["name"].asString();
-                    if (not name.empty()) {
-                        JAMI_DBG("Found name for %s: %s", addr.c_str(), name.c_str());
-                        {
-                            std::lock_guard<std::mutex> l(lock_);
-                            addrCache_.emplace(name, addr);
-                            nameCache_.emplace(addr, name);
-                        }
-                        cb(name, Response::found);
-                        scheduleSave();
-                    } else {
-                        cb("", Response::notFound);
-                    }
-                } else if (code >= 400 && code < 500) {
-                    cb("", Response::notFound);
-                } else {
-                    cb("", Response::error);
-                }
-            });
-        } catch (const std::exception& e) {
-            JAMI_ERR("Error when performing address lookup: %s", e.what());
-            cb("", Response::error);
+    struct GetContext {
+        LookupCallback cb;
+        std::string addr;
+        size_t MaxResponseSize {MAX_RESPONSE_SIZE};
+    };
+    auto context = std::make_shared<GetContext>();
+    // keeping context data alive
+    context->cb = [this, context, cb, addr](const std::string& name, Response response){
+        if (response != Response::found){
+            cb(name, response);
+            return;
         }
-    });
+        JAMI_DBG("Found name for %s: %s", addr.c_str(), name.c_str());
+        {
+            std::lock_guard<std::mutex> l(lock_);
+            addrCache_.emplace(name, addr);
+            nameCache_.emplace(addr, name);
+        }
+        cb(name, response);
+        scheduleSave();
+    };
+    context->addr = addr;
+
+    auto parser = std::make_shared<http_parser>();
+    http_parser_init(parser.get(), HTTP_RESPONSE);
+    parser->data = static_cast<void*>(context.get());
+
+    auto parser_s = std::make_shared<http_parser_settings>();
+    http_parser_settings_init(parser_s.get());
+    parser_s->on_status = [](http_parser *parser, const char *at, size_t length) -> int {
+        auto context = static_cast<GetContext*>(parser->data);
+        if (parser->status_code >= 400 && parser->status_code < 500)
+            context->cb("", Response::notFound);
+        else if (parser->status_code != 200)
+            context->cb("", Response::error);
+        return 0;
+    };
+    parser_s->on_body = [](http_parser *parser, const char *at, size_t length) -> int {
+        auto context = static_cast<GetContext*>(parser->data);
+        try {
+            if (length > context->MaxResponseSize){
+                context->cb("", Response::error);
+                return 1;
+            }
+            Json::Value json;
+            std::string err;
+            Json::CharReaderBuilder rbuilder;
+            auto body = std::string(at, length);
+            auto* char_data = static_cast<const char*>(&body[0]);
+            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+            if (!reader->parse(char_data, char_data + body.size(), &json, &err)){
+                /*JAMI_DBG*/printf("Address lookup for %s: can't parse server response: %s",
+                         context->addr.c_str(), body.c_str());
+                context->cb("", Response::error);
+                return 1;
+            }
+            auto name = json["name"].asString();
+            if (name.empty())
+                context->cb("", Response::notFound);
+            context->cb(name, Response::found);
+        }
+        catch (const std::exception& e) {
+            /*JAMI_ERR*/printf("Error when performing address lookup: %s", e.what());
+            context->cb("", Response::error);
+            return 1;
+        }
+        return 0;
+    };
+    httpClient_->post_request(request, parser, parser_s);
 }
 
 bool
@@ -184,7 +252,8 @@ NameDirectory::verify(const std::string& name, const dht::crypto::PublicKey& pk,
     return pk.checkSignature(std::vector<uint8_t>(name.begin(), name.end()), base64::decode(signature));
 }
 
-void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
+void
+NameDirectory::lookupName(const std::string& n, LookupCallback cb)
 {
     std::string name {n};
     if (not validateName(name)) {
@@ -278,10 +347,12 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
     });
 }
 
-bool NameDirectory::validateName(const std::string& name) const
+bool
+NameDirectory::validateName(const std::string& name) const
 {
     return std::regex_match(name, NAME_VALIDATOR);
 }
+
 using Blob = std::vector<uint8_t>;
 void NameDirectory::registerName(const std::string& addr, const std::string& n, const std::string& owner, RegistrationCallback cb, const std::string& signedname, const std::string& publickey)
 {
