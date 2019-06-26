@@ -56,7 +56,7 @@ void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
     std::lock_guard<std::mutex> lock(mutex_);
     JAMI_DBG("Hardware audio format available : %s", playback.toString().c_str());
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
-    urgentRingBuffer_.setFormat(playback);
+    urgentRingBuffer_.setFormat(audioFormat_);
 }
 
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
@@ -142,13 +142,6 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
     notifyIncomingCall();
     auto& bufferPool = Manager::instance().getRingBufferPool();
 
-    if (auto urgentSamples = urgentRingBuffer_.get(RingBufferPool::DEFAULT_ID)) {
-        bufferPool.discard(1, RingBufferPool::DEFAULT_ID);
-        return urgentSamples;
-    }
-    // flush remaining samples in _urgentRingBuffer
-    flushUrgent();
-
     if (not playbackQueue_)
         playbackQueue_.reset(new AudioFrameResizer(format, writableSamples));
     else
@@ -156,7 +149,10 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
 
     std::shared_ptr<AudioFrame> playbackBuf {};
     while (!(playbackBuf = playbackQueue_->dequeue())) {
-        if (auto toneToPlay = Manager::instance().getTelephoneTone()) {
+        if (auto urgentSamples = urgentRingBuffer_.get(RingBufferPool::DEFAULT_ID)) {
+            bufferPool.discard(1, RingBufferPool::DEFAULT_ID);
+            playbackQueue_->enqueue(std::move(urgentSamples));
+        } else if (auto toneToPlay = Manager::instance().getTelephoneTone()) {
             playbackQueue_->enqueue(resampler_->resample(toneToPlay->getNext(), format));
         } else if (auto buf = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
             playbackQueue_->enqueue(resampler_->resample(std::move(buf), format));
@@ -164,7 +160,7 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
             break;
         }
     }
-    
+
     return playbackBuf;
 }
 
