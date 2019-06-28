@@ -273,6 +273,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(APPLY) $(SRC)/ffmpeg/remove-mjpeg-log.patch
+	$(APPLY) $(SRC)/ffmpeg/change-RTCP-ratio.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
