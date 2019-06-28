@@ -52,7 +52,6 @@ private:
 
     void run();
 
-    HRESULT enumerateVideoInputDevices(IEnumMoniker **ppEnum);
     std::vector<std::string> enumerateVideoInputDevices();
 
     std::thread thread_;
@@ -68,6 +67,11 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
 void
 VideoDeviceMonitorImpl::start()
 {
+    // Enumerate the initial capture device list.
+    auto captureDeviceList = enumerateVideoInputDevices();
+    for (auto node : captureDeviceList) {
+        monitor_->addDevice(node);
+    }
     thread_ = std::thread(&VideoDeviceMonitorImpl::run, this);
 }
 
@@ -244,12 +248,6 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
 void
 VideoDeviceMonitorImpl::run()
 {
-    // Enumerate the initial capture device list.
-    auto captureDeviceList = enumerateVideoInputDevices();
-    for (auto node : captureDeviceList) {
-        monitor_->addDevice(node);
-    }
-
     // Create a dummy window with the sole purpose to receive device change messages.
     static const char* className = "Message";
     WNDCLASSEX wx = {};
@@ -275,35 +273,13 @@ VideoDeviceMonitorImpl::run()
     }
 }
 
-HRESULT
-VideoDeviceMonitorImpl::enumerateVideoInputDevices(IEnumMoniker **ppEnum)
-{
-    ICreateDevEnum *pDevEnum;
-    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
-        CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
-
-    if (SUCCEEDED(hr)) {
-        hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, ppEnum, 0);
-        if (hr == S_FALSE) {
-            hr = VFW_E_NOT_FOUND;
-        }
-        pDevEnum->Release();
-    }
-    return hr;
-}
-
 std::vector<std::string>
 VideoDeviceMonitorImpl::enumerateVideoInputDevices()
 {
-    HRESULT hr = CoInitializeEx(NULL, COINIT_MULTITHREADED);
-    if (FAILED(hr)) {
-        return {};
-    }
-
     std::vector<std::string> deviceList;
 
     ICreateDevEnum *pDevEnum;
-    hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
+    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
         CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
 
     if (FAILED(hr)) {
@@ -312,7 +288,11 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
     }
 
     IEnumMoniker *pEnum = nullptr;
-    hr = enumerateVideoInputDevices(&pEnum);
+    hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &pEnum, 0);
+    if (hr == S_FALSE) {
+        hr = VFW_E_NOT_FOUND;
+    }
+    pDevEnum->Release();
     if (FAILED(hr) || pEnum == nullptr) {
         JAMI_ERR() << "No webcam found";
         return {};
@@ -351,7 +331,6 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
         deviceID++;
     }
     pEnum->Release();
-    CoUninitialize();
 
     return deviceList;
 }
