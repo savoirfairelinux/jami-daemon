@@ -63,7 +63,6 @@ class VideoDeviceImpl {
         std::map<VideoSize, std::vector<FrameRate> > rateList_;
         std::map<VideoSize, AM_MEDIA_TYPE*> capMap_;
 
-        //AM_MEDIA_TYPE* findCap(const std::string& size);
         void fail(const std::string& error);
 };
 
@@ -209,13 +208,6 @@ VideoDeviceImpl::setup()
                 bitrateList[std::make_pair(size, rate)] = bitrate;
                 capMap_[size] = pmt;
             }
-        }
-        // Sort rates descending.
-        for (auto& rateList : rateList_) {
-            std::sort(rateList.second.begin(), rateList.second.end(),
-                [](const jami::video::FrameRate& lhs, const  jami::video::FrameRate& rhs) {
-                    return lhs.denominator() < rhs.denominator();
-                });
         }
     }
     pSysDevEnum->Release();
