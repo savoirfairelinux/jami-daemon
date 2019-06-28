@@ -89,7 +89,9 @@ VideoDeviceMonitor::applySettings(const string& name, VideoSettings settings)
         return;
 
     iter->applySettings(settings);
-    overwritePreferences(iter->getSettings());
+    auto it = findPreferencesByName(settings.name);
+    if (it != preferences_.end())
+        (*it) = settings;
 }
 
 string
@@ -308,7 +310,7 @@ VideoDeviceMonitor::overwritePreferences(VideoSettings settings)
     auto it = findPreferencesByName(settings.name);
     if (it != preferences_.end())
         preferences_.erase(it);
-    preferences_.push_back(settings);
+    preferences_.emplace_back(settings);
 }
 
 void
