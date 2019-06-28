@@ -77,11 +77,7 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& path)
 void
 VideoDeviceImpl::setup()
 {
-    HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
-    if (FAILED(hr))
-        return fail("Could not initialize video device.");
-
-    hr = CoCreateInstance(
+    HRESULT hr = CoCreateInstance(
         CLSID_CaptureGraphBuilder2,
         nullptr,
         CLSCTX_INPROC_SERVER,
