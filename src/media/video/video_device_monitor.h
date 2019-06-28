@@ -51,7 +51,7 @@ class VideoDeviceMonitor : public Serializable
 
         DRing::VideoCapabilities getCapabilities(const std::string& name) const;
         VideoSettings getSettings(const std::string& name);
-        void applySettings(const std::string& name, VideoSettings settings);
+        void applySettings(const std::string& name, const VideoSettings& settings);
 
         std::string getDefaultDevice() const;
         std::string getMRLForDefaultDevice() const;
@@ -82,7 +82,7 @@ class VideoDeviceMonitor : public Serializable
          */
         std::vector<VideoSettings> preferences_;
 
-        void overwritePreferences(VideoSettings settings);
+        void overwritePreferences(const VideoSettings& settings);
         std::vector<VideoSettings>::iterator findPreferencesByName(const std::string& name);
 
         /*

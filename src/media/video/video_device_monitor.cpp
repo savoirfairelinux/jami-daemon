@@ -80,7 +80,7 @@ VideoDeviceMonitor::getSettings(const string& name)
 }
 
 void
-VideoDeviceMonitor::applySettings(const string& name, VideoSettings settings)
+VideoDeviceMonitor::applySettings(const string& name, const VideoSettings& settings)
 {
     std::lock_guard<std::mutex> l(lock_);
     const auto iter = findDeviceByName(name);
@@ -89,7 +89,9 @@ VideoDeviceMonitor::applySettings(const string& name, VideoSettings settings)
         return;
 
     iter->applySettings(settings);
-    overwritePreferences(iter->getSettings());
+    auto it = findPreferencesByName(settings.name);
+    if (it != preferences_.end())
+        (*it) = settings;
 }
 
 string
@@ -303,12 +305,12 @@ VideoDeviceMonitor::findPreferencesByName(const string& name)
 }
 
 void
-VideoDeviceMonitor::overwritePreferences(VideoSettings settings)
+VideoDeviceMonitor::overwritePreferences(const VideoSettings& settings)
 {
     auto it = findPreferencesByName(settings.name);
     if (it != preferences_.end())
         preferences_.erase(it);
-    preferences_.push_back(settings);
+    preferences_.emplace_back(settings);
 }
 
 void
