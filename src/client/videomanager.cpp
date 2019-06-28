@@ -380,6 +380,7 @@ applySettings(const std::string& name,
               const std::map<std::string, std::string>& settings)
 {
     jami::Manager::instance().getVideoManager().videoDeviceMonitor.applySettings(name, settings);
+    jami::Manager::instance().saveConfig();
 }
 
 void
