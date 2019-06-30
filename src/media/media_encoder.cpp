@@ -252,6 +252,12 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         encoderCtx->rc_buffer_size = bufSize;
         encoderCtx->rc_max_rate = maxBitrate;
+    } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_HEVC) {
+
+        forcePresetHEVC(encoderCtx);
+        //force profile
+        encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
+        encoderCtx->level = 0x01;
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         // For VP8 :
         // 1- if quality is set use it
@@ -279,6 +285,18 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         } else {
             JAMI_DBG("Using Max bitrate %d", maxBitrate);
         }
+    } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_VP9) {
+        // Using information given on this page:
+        // http://www.webmproject.org/docs/encoder-parameters/
+
+        av_opt_set(encoderCtx->priv_data, "quality", "realtime", 0);
+        av_opt_set_int(encoderCtx->priv_data, "error-resilient", 1, 0);
+        /*av_opt_set_int(encoderCtx_->priv_data, "cpu-used", 3, 0);
+        encoderCtx_->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
+        encoderCtx_->qmin = 4;
+        encoderCtx_->qmax = 56;
+        encoderCtx_->gop_size = 999999;
+        */
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
         // For MPEG4 :
         // No CRF avaiable.
@@ -645,6 +663,36 @@ MediaEncoder::forcePresetX264(AVCodecContext* encoderCtx)
     const char *tune = "zerolatency";
     if (av_opt_set(encoderCtx, "tune", tune, AV_OPT_SEARCH_CHILDREN))
         JAMI_WARN("Failed to set x264 tune '%s'", tune);
+}
+
+void MediaEncoder::forcePresetHEVC(AVCodecContext* encoderCtx)
+{
+    if (av_opt_set(encoderCtx->priv_data, "preset", "ultrafast", 0))
+        JAMI_WARN("Failed to set x265 preset");
+    /*
+    char *tune = "psnr";
+    if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
+        RING_WARN("Failed to set x265 tune '%s'", tune);
+    tune = "ssim";
+    if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
+        RING_WARN("Failed to set x265 tune '%s'", tune);
+    */
+    if (av_opt_set(encoderCtx->priv_data, "tune", "zerolatency", 0))
+        JAMI_WARN("Failed to set x265 tune");
+    if (av_opt_set(encoderCtx->priv_data, "crf", "40", 0))
+        JAMI_WARN("Failed to set x265 crf");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "crf-min=30", 0))
+        JAMI_WARN("Failed to set x265 crf");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "crf-max=50", 0))
+        JAMI_WARN("Failed to set x265 crf");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "rd=0", 0))
+        JAMI_WARN("Failed to set x265 rd");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "ctu=16", 0))
+        JAMI_WARN("Failed to set x265 ctu");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "min-cu-size=16", 0))
+        JAMI_WARN("Failed to set x265 ctu min");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "aq-strength=3", 0))
+        JAMI_WARN("Failed to set x265 aq-strengh");
 }
 
 void
