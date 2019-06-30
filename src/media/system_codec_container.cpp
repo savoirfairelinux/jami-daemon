@@ -65,7 +65,19 @@ SystemCodecContainer::initCodecConfig()
                                                minH264,
                                                maxH264),
 
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_HEVC,
+                                               "H265", "libx265",
+                                               CODEC_ENCODER_DECODER,
+                                               defaultBitrate,
+                                               minH264,
+                                               maxH264),
+
 #if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP9,
+                                               "VP9", "libvpx",
+                                               CODEC_ENCODER_DECODER,
+                                               defaultBitrate),
+
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
                                                "VP8", "libvpx",
                                                CODEC_ENCODER_DECODER,
