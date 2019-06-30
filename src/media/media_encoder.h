@@ -112,7 +112,7 @@ public:
 private:
     NON_COPYABLE(MediaEncoder);
     AVCodecContext* prepareEncoderContext(AVCodec* outputCodec, bool is_video);
-    void forcePresetX264(AVCodecContext* encoderCtx);
+    void forcePresetX264_X265(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
     int initStream(const std::string& codecName, AVBufferRef* framesCtx);
     int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx);
@@ -134,6 +134,7 @@ private:
     std::mutex encMutex_;
 
     void initH264(AVCodecContext* encoderCtx, uint64_t br);
+    void initH265(AVCodecContext* encoderCtx, uint64_t br);
     void initVP8(AVCodecContext* encoderCtx, uint64_t br);
     void initMPEG4(AVCodecContext* encoderCtx, uint64_t br);
     void initH263(AVCodecContext* encoderCtx, uint64_t br);
