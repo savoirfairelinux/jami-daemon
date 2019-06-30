@@ -560,6 +560,36 @@ MediaEncoder::forcePresetX264(AVCodecContext* encoderCtx)
         JAMI_WARN("Failed to set x264 tune '%s'", tune);
 }
 
+void MediaEncoder::forcePresetHEVC(AVCodecContext* encoderCtx)
+{
+    if (av_opt_set(encoderCtx->priv_data, "preset", "ultrafast", 0))
+        JAMI_WARN("Failed to set x265 preset");
+    /*
+    char *tune = "psnr";
+    if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
+        RING_WARN("Failed to set x265 tune '%s'", tune);
+    tune = "ssim";
+    if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
+        RING_WARN("Failed to set x265 tune '%s'", tune);
+    */
+    if (av_opt_set(encoderCtx->priv_data, "tune", "zerolatency", 0))
+        JAMI_WARN("Failed to set x265 tune");
+    if (av_opt_set(encoderCtx->priv_data, "crf", "40", 0))
+        JAMI_WARN("Failed to set x265 crf");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "crf-min=30", 0))
+        JAMI_WARN("Failed to set x265 crf");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "crf-max=50", 0))
+        JAMI_WARN("Failed to set x265 crf");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "rd=0", 0))
+        JAMI_WARN("Failed to set x265 rd");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "ctu=16", 0))
+        JAMI_WARN("Failed to set x265 ctu");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "min-cu-size=16", 0))
+        JAMI_WARN("Failed to set x265 ctu min");
+    if (av_opt_set(encoderCtx->priv_data, "x265-params", "aq-strength=3", 0))
+        JAMI_WARN("Failed to set x265 aq-strengh");
+}
+
 void
 MediaEncoder::extractProfileLevelID(const std::string &parameters,
                                          AVCodecContext *ctx)
@@ -712,6 +742,11 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
         extractProfileLevelID(profileLevelId, encoderCtx);
         forcePresetX264(encoderCtx);
         initH264(encoderCtx, br);
+    else if (systemCodecInfo.avcodecId == AV_CODEC_ID_HEVC) {
+        forcePresetHEVC(encoderCtx);
+        encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
+        encoderCtx->level = 0x01;
+    }
     } else if (avcodecId == AV_CODEC_ID_VP8) {
         initVP8(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_MPEG4) {
@@ -765,6 +800,14 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
     encoderCtx->rc_max_rate = maxBitrate;
     JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
 }
+
+else if (systemCodecInfo.avcodecId == AV_CODEC_ID_HEVC) {
+
+        forcePresetHEVC(encoderCtx);
+        //force profile
+        encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
+        encoderCtx->level = 0x01;
+    }
 
 void
 MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
