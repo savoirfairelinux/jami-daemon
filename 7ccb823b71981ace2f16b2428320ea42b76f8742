@@ -1,0 +1,140 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "798a77f0_a6110e32",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 681,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-06-30T01:58:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nISO C++11 does not allow conversion from string literal to \u0027char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-writable-strings",
+      "revId": "7ccb823b71981ace2f16b2428320ea42b76f8742",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "26b2cc5a_9695a405",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 685,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-06-30T01:58:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nISO C++11 does not allow conversion from string literal to \u0027char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-writable-strings",
+      "revId": "7ccb823b71981ace2f16b2428320ea42b76f8742",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "02b63a2d_d1696aad",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 689,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-06-30T01:58:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nISO C++11 does not allow conversion from string literal to \u0027char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-writable-strings",
+      "revId": "7ccb823b71981ace2f16b2428320ea42b76f8742",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "b48b29fc_d21e5305",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 692,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-06-30T01:58:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nISO C++11 does not allow conversion from string literal to \u0027char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-writable-strings",
+      "revId": "7ccb823b71981ace2f16b2428320ea42b76f8742",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "e1fc1990_0cf39761",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 696,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-06-30T01:58:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nISO C++11 does not allow conversion from string literal to \u0027char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-writable-strings",
+      "revId": "7ccb823b71981ace2f16b2428320ea42b76f8742",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "76273605_67318f2e",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 699,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-06-30T01:58:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nISO C++11 does not allow conversion from string literal to \u0027char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-writable-strings",
+      "revId": "7ccb823b71981ace2f16b2428320ea42b76f8742",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "943ecebb_665bf693",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 702,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-06-30T01:58:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nISO C++11 does not allow conversion from string literal to \u0027char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-writable-strings",
+      "revId": "7ccb823b71981ace2f16b2428320ea42b76f8742",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ed63db78_42ac6788",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 706,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-06-30T01:58:05Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nISO C++11 does not allow conversion from string literal to \u0027char *\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-writable-strings",
+      "revId": "7ccb823b71981ace2f16b2428320ea42b76f8742",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
