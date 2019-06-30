@@ -19,16 +19,56 @@ FFMPEGCONF += \
 	--enable-zlib \
 	--enable-gpl \
 	--enable-swscale \
-	--enable-protocols \
 	--enable-bsfs \
 	--disable-filters \
 	--disable-programs \
 	--disable-postproc
 
+FFMPEGCONF += \
+	--disable-protocols \
+	--enable-protocol=crypto \
+	--enable-protocol=file \
+	--enable-protocol=rtp \
+	--enable-protocol=srtp \
+	--enable-protocol=tcp \
+	--enable-protocol=udp \
+	--enable-protocol=unix \
+	--enable-protocol=pipe
+
 #enable muxers/demuxers
 FFMPEGCONF += \
-	--enable-demuxers \
-	--enable-muxers
+	--disable-demuxers \
+	--disable-muxers \
+	--enable-muxer=rtp \
+	--enable-muxer=g722 \
+	--enable-muxer=h263 \
+	--enable-muxer=h264 \
+	--enable-muxer=hevc \
+	--enable-muxer=webm \
+	--enable-muxer=ogg \
+	--enable-muxer=pcm_s16be \
+	--enable-muxer=pcm_s16le \
+	--enable-demuxer=rtp \
+	--enable-demuxer=mjpeg \
+	--enable-demuxer=mjpeg_2000 \
+	--enable-demuxer=gif \
+	--enable-demuxer=image_jpeg_pipe \
+	--enable-demuxer=image_png_pipe \
+	--enable-demuxer=image_webp_pipe \
+	--enable-demuxer=matroska \
+	--enable-demuxer=m4v \
+	--enable-demuxer=mp3 \
+	--enable-demuxer=ogg \
+	--enable-demuxer=flac \
+	--enable-demuxer=wav \
+	--enable-demuxer=g722 \
+	--enable-demuxer=pcm_mulaw \
+	--enable-demuxer=pcm_alaw \
+	--enable-demuxer=pcm_s16be \
+	--enable-demuxer=pcm_s16le \
+	--enable-demuxer=h263 \
+	--enable-demuxer=h264 \
+	--enable-demuxer=hevc
 
 #enable parsers
 FFMPEGCONF += \
