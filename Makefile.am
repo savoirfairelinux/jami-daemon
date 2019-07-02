@@ -33,4 +33,7 @@ coverage-clean:
 	$(AM_V_at)find -name '*.gcda' -exec rm -f {} +
 	$(AM_V_at)find -name '*.gcno' -exec rm -f {} +
 
-.PHONY: precoverage coverage coverage-clean
+integration:
+	$(top_builddir)/jami_test.sh
+
+.PHONY: precoverage coverage coverage-clean integration
