@@ -50,7 +50,19 @@ class JamiTest(DRingCtrl):
         if volatileCallerDetails['Account.registrationStatus'] != 'REGISTERED':
             raise DRingCtrlError("Caller Account not registered")
 
-        self.peer = args.peer
+        if args.peer:
+            self.peer = args.peer
+        elif len(ringAccounts) < 2:
+            callerDetails = {'Account.type':'RING', 'Account.alias':'testringaccount4'}
+            self.addAccount(callerDetails)
+            peer = ringAccounts[1]
+            details = self.getAccountDetails(peer)
+            self.peer = details['Account.username']
+        else:
+            peer = ringAccounts[1]
+            details = self.getAccountDetails(peer)
+            self.peer = details['Account.username']
+
         volatilePeerDetails = self.getVolatileAccountDetails()
 
         if volatilePeerDetails['Account.registrationStatus'] != 'REGISTERED':
@@ -120,8 +132,8 @@ if __name__ == "__main__":
     optional.add_argument('--messages', help = 'Number of messages to send', type = int)
     optional.add_argument('--duration', help = 'Specify the duration of the test (seconds)', default = 600, type = int)
     optional.add_argument('--interval', help = 'Specify the test interval (seconds)', default = 10, type = int)
-    required.add_argument('--peer', help = 'Specify the peer account ID', required = True)
-    required.add_argument('--calls', help = 'Number of calls to make', type = int, required = True)
+    required.add_argument('--peer', help = 'Specify the peer account ID')
+    required.add_argument('--calls', help = 'Number of calls to make', default = 5, type = int)
     parser._action_groups.append(optional)
     args = parser.parse_args()
 
