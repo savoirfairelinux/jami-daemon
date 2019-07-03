@@ -2024,8 +2024,6 @@ Manager::peerHungupCall(Call& call)
         pimpl_->unsetCurrentCall();
     }
 
-    call.peerHungup();
-
     checkAudio();
     pimpl_->removeWaitingCall(call_id);
     if (not incomingCallsWaiting())
