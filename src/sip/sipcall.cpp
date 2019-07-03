@@ -375,12 +375,13 @@ SIPCall::hangup(int reason)
             }
             route = route->next;
         }
-        const int status = reason ? reason :
-                           inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
-                           PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
-                           inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE : 0;
+        JAMI_ERR("alalalalal %d", inv->state);
+        JAMI_ERR("alalalalal %d", inv->role);
+        reason = inv->state <= PJSIP_INV_STATE_EARLY ? (inv->role == PJSIP_ROLE_UAC ? PJSIP_SC_REQUEST_TERMINATED : PJSIP_SC_DECLINE) : 0;
+
+        JAMI_ERR("alalalalal %d", reason);
         // Notify the peer
-        terminateSipSession(status);
+        terminateSipSession(reason);
     }
     // Stop all RTP streams
     stopAllMedia();
