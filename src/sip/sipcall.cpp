@@ -375,10 +375,8 @@ SIPCall::hangup(int reason)
             }
             route = route->next;
         }
-        const int status = reason ? reason :
-                           inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
-                           PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
-                           inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE : 0;
+        const int status = reason ? reason : (inv->state <= PJSIP_INV_STATE_EARLY ? PJSIP_SC_REQUEST_TERMINATED : 0);
+
         // Notify the peer
         terminateSipSession(status);
     }
@@ -399,7 +397,7 @@ SIPCall::refuse()
     // Notify the peer
     terminateSipSession(PJSIP_SC_DECLINE);
 
-    setState(Call::ConnectionState::DISCONNECTED, ECONNABORTED);
+    setState(Call::ConnectionState::DISCONNECTED, 0);
     removeCall();
 }
 
@@ -661,11 +659,9 @@ SIPCall::peerHungup()
     stopAllMedia();
 
     if (inv)
-        terminateSipSession(PJSIP_SC_NOT_FOUND);
+        terminateSipSession(PJSIP_SC_OK);
     else
         JAMI_ERR("[call:%s] peerHungup: no invite session for this call", getCallId().c_str());
-
-    Call::peerHungup();
 }
 
 void
@@ -768,11 +764,17 @@ SIPCall::onBusyHere()
 }
 
 void
-SIPCall::onClosed()
+SIPCall::onClosed(int reason)
 {
-    runOnMainThread([w = weak()] {
+    // right now, only 0 and PJSIP_SC_DECLINE(603) is used
+    if(reason == PJSIP_SC_DECLINE)
+        setState(CallState::PEER_BUSY, ConnectionState::DISCONNECTED, reason);
+    else
+        setState(ConnectionState::DISCONNECTED);
+    runOnMainThread([w = weak(), this] {
         if (auto shared = w.lock()) {
             auto& call = *shared;
+            peerHungup();
             Manager::instance().peerHungupCall(call);
             call.removeCall();
             Manager::instance().checkAudio();
