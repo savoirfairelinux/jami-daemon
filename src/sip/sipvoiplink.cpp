@@ -788,6 +788,12 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
                     break;
                 // When the peer manually refuse the call
                 case PJSIP_SC_DECLINE:
+                    if (inv->role == PJSIP_ROLE_UAS) {
+                        call->onClosed();
+                        break;
+                    }
+                    call->onFailure(PJSIP_SC_DECLINE);
+                    break;
                 case PJSIP_SC_BUSY_EVERYWHERE:
                     if (inv->role != PJSIP_ROLE_UAC)
                         break;
@@ -796,6 +802,8 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
                     break;
                 // The call terminates normally - BYE / CANCEL
                 case PJSIP_SC_OK:
+                    call->onClosed();
+                    break;
                 case PJSIP_SC_REQUEST_TERMINATED:
                     call->onClosed();
                     break;

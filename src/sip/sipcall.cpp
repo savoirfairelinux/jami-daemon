@@ -375,12 +375,10 @@ SIPCall::hangup(int reason)
             }
             route = route->next;
         }
-        const int status = reason ? reason :
-                           inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
-                           PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
-                           inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE : 0;
+        reason = reason ? reason : inv->state <= PJSIP_INV_STATE_EARLY ? PJSIP_SC_REQUEST_TERMINATED : 0;
+
         // Notify the peer
-        terminateSipSession(status);
+        terminateSipSession(reason);
     }
     // Stop all RTP streams
     stopAllMedia();
@@ -399,7 +397,7 @@ SIPCall::refuse()
     // Notify the peer
     terminateSipSession(PJSIP_SC_DECLINE);
 
-    setState(Call::ConnectionState::DISCONNECTED, ECONNABORTED);
+    setState(Call::ConnectionState::DISCONNECTED, 0);
     removeCall();
 }
 
