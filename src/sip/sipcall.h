@@ -95,7 +95,6 @@ public: // overridden
     bool onhold() override;
     bool offhold() override;
     void switchInput(const std::string& resource) override;
-    void peerHungup() override;
     void carryingDTMFdigits(char code) override;
 
     /**
@@ -150,10 +149,10 @@ public: // SIP related
     void onBusyHere();
 
     /**
-     * Peer close the connection
+     * Peer close the connection and a reason
      * @param
      */
-    void onClosed();
+    void onClosed(int reason);
 
     void onReceiveOffer(const pjmedia_sdp_session *offer);
 
@@ -247,6 +246,11 @@ private:
     void waitForIceAndStartMedia();
 
     void stopAllMedia();
+
+    /**
+    * Peer has hung up a call
+    */
+    void peerHungup();
 
     /**
      * Transfer method used for both type of transfer

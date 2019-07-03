@@ -240,11 +240,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual void sendKeyframe() = 0;
 
-        /**
-         * Peer has hung up a call
-         */
-        virtual void peerHungup();
-
         virtual void removeCall();
 
         using StateListener = std::function<void(CallState, int)>;
@@ -354,7 +349,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         void checkAudio();
 
-        void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState);
+        void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState, int code);
 
         SubcallSet safePopSubcalls();
 
