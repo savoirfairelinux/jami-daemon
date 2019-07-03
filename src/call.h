@@ -354,7 +354,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         void checkAudio();
 
-        void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState);
+        void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState, int code);
 
         SubcallSet safePopSubcalls();
 
