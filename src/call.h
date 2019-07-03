@@ -87,7 +87,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * \note modify validStateTransition/getStateStr if this enum changes
          */
         enum class CallState : unsigned {
-            INACTIVE, ACTIVE, HOLD, BUSY, PEER_BUSY, MERROR, OVER, COUNT__
+            INACTIVE, ACTIVE, HOLD, BUSY, PEER_BUSY, MERROR, OVER, COUNT__, DECLINED
         };
 
         virtual ~Call();
@@ -243,7 +243,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         /**
          * Peer has hung up a call
          */
-        virtual void peerHungup();
+        virtual void peerHungup() {}
 
         virtual void removeCall();
 
@@ -354,7 +354,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         void checkAudio();
 
-        void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState);
+        void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState, int code);
 
         SubcallSet safePopSubcalls();
 
