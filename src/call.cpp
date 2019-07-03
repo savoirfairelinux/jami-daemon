@@ -412,10 +412,10 @@ Call::addSubCall(Call& subcall)
         subcall.sendTextMessage(msg.first, msg.second);
 
     subcall.addStateListener(
-        [&subcall](Call::CallState new_state, Call::ConnectionState new_cstate, UNUSED int code) {
+        [&subcall](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
             auto parent = subcall.parent_;
             assert(parent != nullptr); // subcall cannot be "un-parented"
-            parent->subcallStateChanged(subcall, new_state, new_cstate);
+            parent->subcallStateChanged(subcall, new_state, new_cstate, code);
         });
 }
 
@@ -427,7 +427,8 @@ Call::addSubCall(Call& subcall)
 void
 Call::subcallStateChanged(Call& subcall,
                           Call::CallState new_state,
-                          Call::ConnectionState new_cstate)
+                          Call::ConnectionState new_cstate,
+                          int code)
 {
     {
         // This condition happens when a subcall hangups/fails after removed from parent's list.
@@ -479,9 +480,8 @@ Call::subcallStateChanged(Call& subcall,
             } else if (new_state == CallState::PEER_BUSY) {
                 setState(CallState::PEER_BUSY, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::device_or_resource_busy));
             } else {
-                // XXX: first idea was to use std::errc::host_unreachable, but it's not available on some platforms
-                // like mingw.
-                setState(CallState::MERROR, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::io_error));
+                // if the call failed, show code provided
+                setState(CallState::MERROR, ConnectionState::DISCONNECTED, code);
             }
             removeCall();
         } else {
