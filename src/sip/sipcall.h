@@ -150,10 +150,10 @@ public: // SIP related
     void onBusyHere();
 
     /**
-     * Peer close the connection
+     * Peer close the connection and a reason
      * @param
      */
-    void onClosed();
+    void onClosed(const int& reason);
 
     void onReceiveOffer(const pjmedia_sdp_session *offer);
 
