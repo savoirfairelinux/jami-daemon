@@ -17,6 +17,19 @@ del %FFMPEG_VERSION%.tar && del %FFMPEG_VERSION%.tar.gz && del pax_global_header
 rename FFmpeg-%FFMPEG_VERSION% ffmpeg
 
 cd ffmpeg
+
+for /F "tokens=* usebackq" %%F in (`bash -c "pwd | grep /mnt/c/"`) do (
+    set NO_AUTO=%%F
+)
+if "%NO_AUTO%"=="" (
+    set ROOTPATH=/c/
+) else (
+    set ROOTPATH=/mnt/c/
+)
+set UNIXPATH=%SRC:\=/%
+set UNIXPATH=%ROOTPATH%%UNIXPATH:C:/=%
+bash -c "%PATCH_CMD% %UNIXPATH%ffmpeg/change-RTCP-ratio.patch"
+
 git apply --reject --whitespace=fix %SRC%\ffmpeg\windows-configure.patch
 
 cd %SRC%
