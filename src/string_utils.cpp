@@ -71,6 +71,16 @@ bstrToStdString(BSTR bstr)
 #endif
 
 std::string
+to_string(double value)
+{
+    char buf[64];
+    int len = snprintf(buf, sizeof(buf), "%-.*G", 16, value);
+    if (len <= 0)
+        throw std::invalid_argument{"can't parse double"};
+    return {buf, (size_t)len};
+}
+
+std::string
 trim(const std::string &s)
 {
    auto wsfront = std::find_if_not(s.cbegin(),s.cend(), [](int c){return std::isspace(c);});

@@ -45,9 +45,9 @@ private:
     CPPUNIT_TEST(split_string_test);
     CPPUNIT_TEST_SUITE_END();
 
-    const double DOUBLE = 3.141593;
+    const double DOUBLE = 3.14159265359;
     const int INT = 42 ;
-    const std::string PI_DOUBLE = "3.141593";
+    const std::string PI_DOUBLE = "3.14159265359";
     const std::string PI_FLOAT = "3.14159265359";
     const std::string PI_42 = "42";
 };
@@ -65,11 +65,11 @@ void
 StringUtilsTest::to_string_test()
 {
     // test with double
-    CPPUNIT_ASSERT(std::to_string(DOUBLE) == PI_DOUBLE);
+    CPPUNIT_ASSERT(to_string(DOUBLE) == PI_DOUBLE);
 
     // test with float
     float varFloat = 3.14;
-    std::string sVarFloat = std::to_string(varFloat);
+    std::string sVarFloat = to_string(varFloat);
     CPPUNIT_ASSERT(sVarFloat.at(0) == '3' && sVarFloat.at(1) == '.'
                    && sVarFloat.at(2) == '1' && sVarFloat.at(3) == '4');
 
