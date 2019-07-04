@@ -83,7 +83,7 @@ public:
                 auto rates = getRateList(chan, size);
                 std::vector<std::string> rates_str {rates.size()};
                 std::transform(rates.begin(), rates.end(), rates_str.begin(),
-                               [](FrameRate r) { return std::to_string(r.real()); });
+                               [](FrameRate r) { return jami::to_string(r.real()); });
                 cap[chan][sz.str()] = std::move(rates_str);
             }
 
@@ -124,7 +124,7 @@ public:
             std::stringstream video_size;
             video_size << max_size.first << "x" << max_size.second;
             settings.video_size = video_size.str();
-            settings.framerate = std::to_string(max_size_rate.real());
+            settings.framerate = jami::to_string(max_size_rate.real());
             JAMI_WARN("Default video settings: %s, %s FPS", settings.video_size.c_str(),
                       settings.framerate.c_str());
         }
@@ -141,7 +141,7 @@ public:
         settings.name = params.name;
         settings.channel = params.channel_name;
         settings.video_size = sizeToString(params.width, params.height);
-        settings.framerate = std::to_string(params.framerate.real());
+        settings.framerate = jami::to_string(params.framerate.real());
         return settings;
     }
 
