@@ -7,6 +7,9 @@ systems. This function is required for `alloca.c' support on those systems.
 /* Define to 1 if using `alloca.c'. */
 /* #undef C_ALLOCA */
 
+/* Define to 1 if you want hardware acceleration support. */
+#define RING_ACCEL 1
+
 /* Define to 1 if you have `alloca', as a function or macro. */
 #define HAVE_ALLOCA 1
 
