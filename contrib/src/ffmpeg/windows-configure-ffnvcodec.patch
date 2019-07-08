@@ -1,0 +1,29 @@
+From 63d0edcee2744317fc0befad53000c206eb5ee31 Mon Sep 17 00:00:00 2001
+From: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+Date: Tue, 9 Jul 2019 10:52:29 -0400
+Subject: [PATCH] Remove ffnvcodec linux style package check for windows
+ support.
+
+---
+ configure | 7 -------
+ 1 file changed, 7 deletions(-)
+
+--- a/configure
++++ b/configure
+@@ -5897,13 +5897,6 @@ check_type "va/va.h va/va_enc_vp9.h"  "VAEncPictureParameterBufferVP9"
+ 
+ check_type "vdpau/vdpau.h" "VdpPictureInfoHEVC"
+ 
+-if ! disabled ffnvcodec; then
+-    check_pkg_config ffnvcodec "ffnvcodec >= 8.1.24.2" \
+-          "ffnvcodec/nvEncodeAPI.h ffnvcodec/dynlink_cuda.h ffnvcodec/dynlink_cuviddec.h ffnvcodec/dynlink_nvcuvid.h" "" || \
+-        { test_pkg_config ffnvcodec_tmp "ffnvcodec < 8.1" "" "" && check_pkg_config ffnvcodec "ffnvcodec >= 8.0.14.2" \
+-          "ffnvcodec/nvEncodeAPI.h ffnvcodec/dynlink_cuda.h ffnvcodec/dynlink_cuviddec.h ffnvcodec/dynlink_nvcuvid.h" ""; }
+-fi
+-
+ check_cpp_condition winrt windows.h "!WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)"
+ 
+ if ! disabled w32threads && ! enabled pthreads; then
+-- 
+2.22.0.windows.1
+
