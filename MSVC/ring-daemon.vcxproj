@@ -767,10 +767,7 @@
     <ClCompile Include="..\src\media\socket_pair.cpp" />
     <ClCompile Include="..\src\media\srtp.c" />
     <ClCompile Include="..\src\media\system_codec_container.cpp" />
-    <ClCompile Include="..\src\media\video\accel.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib_win32|x64'">true</ExcludedFromBuild>
-    </ClCompile>
+    <ClCompile Include="..\src\media\video\accel.cpp" />
     <ClCompile Include="..\src\media\video\filter_transpose.cpp" />
     <ClCompile Include="..\src\media\video\sinkclient.cpp" />
     <ClCompile Include="..\src\media\video\uwpvideo\video_device_impl.cpp">
@@ -931,10 +928,7 @@
     <ClInclude Include="..\src\media\socket_pair.h" />
     <ClInclude Include="..\src\media\srtp.h" />
     <ClInclude Include="..\src\media\system_codec_container.h" />
-    <ClInclude Include="..\src\media\video\accel.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib_win32|x64'">true</ExcludedFromBuild>
-    </ClInclude>
+    <ClInclude Include="..\src\media\video\accel.h" />
     <ClInclude Include="..\src\media\video\filter_transpose.h" />
     <ClInclude Include="..\src\media\video\shm_header.h" />
     <ClInclude Include="..\src\media\video\sinkclient.h" />
@@ -999,6 +993,7 @@
     <ClInclude Include="..\src\utf8_utils.h" />
     <ClInclude Include="..\src\windirent.h" />
     <ClInclude Include="..\src\winsyslog.h" />
+    <ClInclude Include="config.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\jamidht\eth\libdevcore\Makefile.am" />
