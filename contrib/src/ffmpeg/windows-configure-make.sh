@@ -142,7 +142,7 @@ if [ "$1" == "uwp" ]; then
             OUTDIR=Output/Windows10/x86
     fi
 elif [ "$1" == "win32" ]; then
-    EXTRACFLAGS='-MD -D_WINDLL -I../../../../../msvc/include -I../../../../../msvc/include/opus -I../../../../../msvc/include/vpx'
+    EXTRACFLAGS='-MD -D_WINDLL -I../../../../../msvc/include -I../../../../../msvc/include/opus -I../../../../../msvc/include/vpx -I../../../../../msvc/include/ffnvcodec'
     FFMPEGCONF+='
                 --enable-libvpx
                 --enable-encoder=libvpx_vp8
@@ -152,6 +152,25 @@ elif [ "$1" == "win32" ]; then
                 --enable-indev=dshow
                 --enable-indev=gdigrab
                 --enable-dxva2'
+	FFMPEGCONF+='
+                --enable-indev=v4l2
+				--enable-indev=xcbgrab
+				--enable-hwaccel=h264_vdpau
+				--enable-hwaccel=mpeg4_vdpau
+				--enable-hwaccel=h264_vaapi
+				--enable-hwaccel=mpeg4_vaapi
+				--enable-hwaccel=h263_vaapi
+				--enable-hwaccel=vp8_vaapi
+				--enable-hwaccel=mjpeg_vaapi
+				--enable-encoder=h264_vaapi
+				--enable-encoder=vp8_vaapi
+				--enable-encoder=mjpeg_vaapi
+				--enable-hwaccel=h264_nvdec
+				--enable-hwaccel=hevc_nvdec
+				--enable-hwaccel=vp8_nvdec
+				--enable-hwaccel=mjpeg_nvdec
+				--enable-encoder=h264_nvenc
+				--enable-encoder=hevc_nvenc'
     if [ "$2" == "x64" ]; then
         echo "configure and make ffmpeg for win32-x64..."
         EXTRALDFLAGS='-APPCONTAINER:NO -MACHINE:x64 Ole32.lib Kernel32.lib Gdi32.lib User32.lib Strmiids.lib OleAut32.lib Shlwapi.lib Vfw32.lib Secur32.lib libopus.lib libx264.lib libvpx.lib -LIBPATH:../../../../../msvc/lib/x64'
