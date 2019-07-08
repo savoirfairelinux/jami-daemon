@@ -36,6 +36,7 @@ lib_LTLIBRARIES = libring.la
 libring_la_LIBADD = \
 	./sip/libsiplink.la \
 	./media/libmedia.la \
+	./media/ml/libml.la \
 	./client/libclient.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
