@@ -86,7 +86,13 @@ nbproject
 *.kdev*
 tools/.vscode/
 .vscode/
-
+daemon.cflags
+daemon.config
+daemon.creator
+daemon.creator.user
+daemon.cxxflags
+daemon.files
+daemon.includes
 # JNI generated files
 *_wrap.cpp
 *_wrap.h

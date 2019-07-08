@@ -15,7 +15,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA.
  */
 #pragma once
 
@@ -30,15 +31,19 @@
 
 #include "audio/audiobuffer.h"
 
+// ML
+#include "ml/frameresizer.h"
+#include "ml/testframeinput.h"
+
 #include "media_device.h"
 #include "media_stream.h"
-#include "rational.h"
 #include "noncopyable.h"
+#include "rational.h"
 
-#include <map>
-#include <string>
-#include <memory>
 #include <chrono>
+#include <map>
+#include <memory>
+#include <string>
 
 extern "C" {
 struct AVCodecContext;
@@ -68,77 +73,79 @@ class HardwareAccel;
 #endif
 
 class MediaDecoder {
-    public:
-        enum class Status {
-            Success,
-            FrameFinished,
-            EOFError,
-            ReadError,
-            DecodeError,
-            RestartRequired
-        };
+public:
+  enum class Status {
+    Success,
+    FrameFinished,
+    EOFError,
+    ReadError,
+    DecodeError,
+    RestartRequired
+  };
 
-        MediaDecoder();
-        ~MediaDecoder();
+  MediaDecoder();
+  ~MediaDecoder();
 
-        void emulateRate() { emulateRate_ = true; }
-        void setInterruptCallback(int (*cb)(void*), void *opaque);
-        int openInput(const DeviceParams&);
+  void emulateRate() { emulateRate_ = true; }
+  void setInterruptCallback(int (*cb)(void *), void *opaque);
+  int openInput(const DeviceParams &);
 
-        void setIOContext(MediaIOHandle *ioctx);
+  void setIOContext(MediaIOHandle *ioctx);
 #ifdef ENABLE_VIDEO
-        int setupFromVideoData();
-        Status decode(VideoFrame&);
-        Status flush(VideoFrame&);
+  int setupFromVideoData();
+  Status decode(VideoFrame &);
+  Status flush(VideoFrame &);
 #endif // ENABLE_VIDEO
 
-        int setupFromAudioData();
-        Status decode(AudioFrame&);
+  int setupFromAudioData();
+  Status decode(AudioFrame &);
 
-        int getWidth() const;
-        int getHeight() const;
-        std::string getDecoderName() const;
+  int getWidth() const;
+  int getHeight() const;
+  std::string getDecoderName() const;
 
-        rational<double> getFps() const;
-        AVPixelFormat getPixelFormat() const;
+  rational<double> getFps() const;
+  AVPixelFormat getPixelFormat() const;
 
-        void setOptions(const std::map<std::string, std::string>& options);
+  void setOptions(const std::map<std::string, std::string> &options);
 #ifdef RING_ACCEL
-        void enableAccel(bool enableAccel);
+  void enableAccel(bool enableAccel);
 #endif
 
-        MediaStream getStream(std::string name = "") const;
+  MediaStream getStream(std::string name = "") const;
 
-    private:
-        NON_COPYABLE(MediaDecoder);
+private:
+  NON_COPYABLE(MediaDecoder);
 
-        rational<unsigned> getTimeBase() const;
+  rational<unsigned> getTimeBase() const;
 
-        AVCodec *inputDecoder_ = nullptr;
-        AVCodecContext *decoderCtx_ = nullptr;
-        AVFormatContext *inputCtx_ = nullptr;
-        AVStream *avStream_ = nullptr;
-        int streamIndex_ = -1;
-        bool emulateRate_ = false;
-        int64_t startTime_;
-        int64_t lastTimestamp_{0};
+  TestFrameInput tfi;
+  FrameResizer fr;
+  AVCodec *inputDecoder_ = nullptr;
+  AVCodecContext *decoderCtx_ = nullptr;
+  AVFormatContext *inputCtx_ = nullptr;
+  AVStream *avStream_ = nullptr;
+  int streamIndex_ = -1;
+  bool emulateRate_ = false;
+  int64_t startTime_;
+  int64_t lastTimestamp_{0};
 
-        DeviceParams inputParams_;
+  DeviceParams inputParams_;
 
-        int correctPixFmt(int input_pix_fmt);
-        int setupStream(AVMediaType mediaType);
-        int selectStream(AVMediaType type);
+  int correctPixFmt(int input_pix_fmt);
+  int setupStream(AVMediaType mediaType);
+  int selectStream(AVMediaType type);
 
-        bool fallback_ = false;
+  bool fallback_ = false;
 
 #ifdef RING_ACCEL
-        bool enableAccel_ = true;
-        std::unique_ptr<video::HardwareAccel> accel_;
-        unsigned short accelFailures_ = 0;
+  bool enableAccel_ = true;
+  std::unique_ptr<video::HardwareAccel> accel_;
+  unsigned short accelFailures_ = 0;
 #endif
 
-    protected:
-        AVDictionary *options_ = nullptr;
+protected:
+  AVDictionary *options_ = nullptr;
 };
 
 } // namespace jami
