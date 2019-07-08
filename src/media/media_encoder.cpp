@@ -736,6 +736,26 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
 }
 
 void
+MediaEncoder::setBitrateOnTheFly(uint16_t mb)
+{   
+    uint64_t maxBitrate = 1000 * mb;
+    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
+    uint64_t bufSize = 2 * maxBitrate;
+
+    for (auto encoderCtx : encoders_) {
+        if(encoderCtx->codec_id == AV_CODEC_ID_H264)
+        {
+            encoderCtx->rc_buffer_size = bufSize;
+            encoderCtx->rc_max_rate = maxBitrate;
+            av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+            libav_utils::setDictValue(&options_, "crf", std::to_string(crf));
+        }
+    }
+
+    JAMI_WARN("[setBitrateOnTheFly] maxBitrate: %ld, crf: %d", maxBitrate, crf);
+}
+
+void
 MediaEncoder::readConfig(AVDictionary** dict, AVCodecContext* encoderCtx)
 {
     std::string path = fileutils::get_config_dir() + DIR_SEPARATOR_STR + "encoder.json";

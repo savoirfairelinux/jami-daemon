@@ -400,13 +400,13 @@ VideoRtpSession::adaptQualityAndBitrate()
         return;
     }
 
-    auto now = clock::now();
-    auto restartTimer = now - lastMediaRestart_;
-    //Sleep 3 seconds while the media restart
-    if (restartTimer < DELAY_AFTER_RESTART) {
-        //JAMI_DBG("[AutoAdapt] Waiting for delay %ld ms", std::chrono::duration_cast<std::chrono::milliseconds>(restartTimer));
-        return;
-    }
+    // auto now = clock::now();
+    // auto restartTimer = now - lastMediaRestart_;
+    // //Sleep 3 seconds while the media restart
+    // if (restartTimer < DELAY_AFTER_RESTART) {
+    //     //JAMI_DBG("[AutoAdapt] Waiting for delay %ld ms", std::chrono::duration_cast<std::chrono::milliseconds>(restartTimer));
+    //     return;
+    // }
 
     if (rtcpi.jitter > 5000) {
         JAMI_DBG("[AutoAdapt] Jitter too high");
@@ -424,22 +424,34 @@ VideoRtpSession::adaptQualityAndBitrate()
         videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent / ((rtcpi.packetLoss / 20)+1);
         JAMI_WARN("[AutoAdapt] packet loss rate: %f%%, decrease bitrate from %d Kbps to %d Kbps", rtcpi.packetLoss, oldBitrate, videoBitrateInfo_.videoBitrateCurrent);
     }
+    if(pondLoss == 0.0f)
+    {
+        videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent * 1.08;
+        JAMI_WARN("[AutoAdapt] packet loss rate: %f%%, increase bitrate from %d Kbps to %d Kbps", rtcpi.packetLoss, oldBitrate, videoBitrateInfo_.videoBitrateCurrent);
+    }
+
 
     videoBitrateInfo_.videoBitrateCurrent = std::max(videoBitrateInfo_.videoBitrateCurrent, videoBitrateInfo_.videoBitrateMin);
     videoBitrateInfo_.videoBitrateCurrent = std::min(videoBitrateInfo_.videoBitrateCurrent, videoBitrateInfo_.videoBitrateMax);
 
     if(oldBitrate != videoBitrateInfo_.videoBitrateCurrent) {
         storeVideoBitrateInfo();
-        JAMI_DBG("[AutoAdapt] Restart media sender");
 
-        const auto& cid = callID_;
+        if(pondLoss == 0.0f)
+            sender_->setBitrateOnTheFly(videoBitrateInfo_.videoBitrateCurrent);
+        else
+        {
+            JAMI_DBG("[AutoAdapt] Restart media sender");
 
-        runOnMainThread([cid]{
-            if (auto call = Manager::instance().callFactory.getCall(cid))
-                call->restartMediaSender();
-            });
+            const auto& cid = callID_;
 
-        lastMediaRestart_ = now;
+            runOnMainThread([cid]{
+                if (auto call = Manager::instance().callFactory.getCall(cid))
+                    call->restartMediaSender();
+                });
+
+            //lastMediaRestart_ = now;
+        }
     }
 }
 

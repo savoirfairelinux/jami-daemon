@@ -100,6 +100,8 @@ public:
     const std::string& getAudioCodec() const { return audioCodec_; }
     const std::string& getVideoCodec() const { return videoCodec_; }
 
+    void setBitrateOnTheFly(uint16_t mb);
+
 #ifdef RING_ACCEL
     void enableAccel(bool enableAccel);
 #endif
