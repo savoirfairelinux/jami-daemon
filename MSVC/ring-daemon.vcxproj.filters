@@ -367,9 +367,6 @@
     <ClCompile Include="..\src\jamidht\p2p.cpp">
       <Filter>Source Files\jamidht</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\media\video\accel.cpp">
-      <Filter>Source Files\media\video</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\security\diffie-hellman.cpp">
       <Filter>Source Files\security</Filter>
     </ClCompile>
@@ -407,6 +404,9 @@
       <Filter>Source Files\media\audio</Filter>
     </ClCompile>
     <ClCompile Include="..\src\media\video\filter_transpose.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\accel.cpp">
       <Filter>Source Files\media\video</Filter>
     </ClCompile>
   </ItemGroup>
@@ -711,9 +711,6 @@
     <ClInclude Include="..\src\media\audio\sound\tonelist.h">
       <Filter>Source Files\media\audio\sound</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\media\video\accel.h">
-      <Filter>Source Files\media\video</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\media\video\shm_header.h">
       <Filter>Source Files\media\video</Filter>
     </ClInclude>
@@ -838,6 +835,12 @@
       <Filter>Source Files\media\audio</Filter>
     </ClInclude>
     <ClInclude Include="..\src\media\video\filter_transpose.h">
+      <Filter>Source Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\accel.h">
       <Filter>Source Files\media\video</Filter>
     </ClInclude>
   </ItemGroup>
