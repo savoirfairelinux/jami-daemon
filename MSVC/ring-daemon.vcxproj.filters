@@ -328,9 +328,6 @@
     <ClCompile Include="..\src\string_utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\thread_pool.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\threadloop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -505,9 +502,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\string_utils.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\thread_pool.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\threadloop.h">
