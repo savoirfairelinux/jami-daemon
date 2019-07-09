@@ -456,6 +456,7 @@ VideoInput::initAVFoundation(const std::string& display)
 
     clearOptions();
     decOpts_.format = "avfoundation";
+    decOpts_.pixel_format = "nv12";
     decOpts_.input = "Capture screen 0";
     decOpts_.framerate = 30;
 
