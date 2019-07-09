@@ -489,7 +489,6 @@ writeArchive(const std::string& archive_str, const std::string& path, const std:
     }
 }
 
-
 FileHandle::FileHandle(const std::string &n) : fd(-1), name(n)
 {}
 
@@ -623,6 +622,16 @@ get_data_dir(const char* pkg)
     return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Application Support"
             + DIR_SEPARATOR_STR + pkg;
+#elif defined(_WIN32)
+    if (!strcmp(pkg, "ring")) {
+        return get_home_dir() + DIR_SEPARATOR_STR
+            + ".local" + DIR_SEPARATOR_STR
+            + "share" DIR_SEPARATOR_STR + pkg;
+    } else{
+        return get_home_dir() + DIR_SEPARATOR_STR
+            + "AppData" + DIR_SEPARATOR_STR + "Local"
+            + DIR_SEPARATOR_STR + pkg;
+    }
 #elif defined (RING_UWP)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
@@ -679,6 +688,16 @@ get_config_dir(const char* pkg)
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR
         + "Library" + DIR_SEPARATOR_STR + "Application Support"
         + DIR_SEPARATOR_STR + pkg;
+#elif defined(_WIN32)
+    std::string configdir;
+    if (!strcmp(pkg, "ring")) {
+        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
+                    ".config" + DIR_SEPARATOR_STR + pkg;
+    } else {
+        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
+                    "AppData" + DIR_SEPARATOR_STR +
+                    "Local" + DIR_SEPARATOR_STR + pkg;
+    }
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + pkg;
