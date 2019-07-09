@@ -91,6 +91,10 @@ public:
     // Reset internal buffers (return to an empty MediaFrame)
     virtual void reset() noexcept;
 
+    std::unique_ptr<AVFrame, void(*)(AVFrame*)> getFrame() {
+        return std::move(frame_);
+    }
+
 protected:
     std::unique_ptr<AVFrame, void(*)(AVFrame*)> frame_;
     std::unique_ptr<AVPacket, void(*)(AVPacket*)> packet_;
