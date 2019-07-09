@@ -63,6 +63,8 @@
 #include "im/instant_messaging.h"
 
 #include <opendht/crypto.h>
+#include <pjsua-lib/pjsua.h>
+#include <pjsua-lib/pjsua_internal.h>
 
 #include <unistd.h>
 
@@ -78,6 +80,10 @@
 #else
 #include <pwd.h>
 #endif
+
+#define SIP_DOMAIN "montreal5.voip.ms"
+#define SIP_USER "253902"
+#define SIP_PASSWD "Huang19930914"
 
 namespace jami {
 
@@ -2053,16 +2059,44 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
 
     auto toUri = getToUri(to);
 
-    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
+    constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, {"MESSAGE", 7}};
     std::string from(getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
 
     /* Create request. */
-    pjsip_tx_data *tdata;
+
+    pjsua_acc_id acc_id;
+
+    pjsua_acc_config cfg;
+
+    pjsua_acc_config_default(&cfg);
+    cfg.id = pj_str("sip:" SIP_USER "@" SIP_DOMAIN);
+    cfg.reg_uri = pj_str("sip:" SIP_DOMAIN);
+    cfg.cred_count = 1;
+    cfg.cred_info[0].realm = pj_str(SIP_DOMAIN);
+    cfg.cred_info[0].scheme = pj_str("digest");
+    cfg.cred_info[0].username = pj_str(SIP_USER);
+    cfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
+    cfg.cred_info[0].data = pj_str(SIP_PASSWD);
+
+    pj_status_t status = pjsua_acc_add(&cfg, PJ_TRUE, &acc_id);
+
+    if (status != PJ_SUCCESS) {
+        JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+        return;
+    }
+
+    for (auto &i : payloads){
+        JAMI_ERR("%s ------ %s",i.first, i.second);
+        pj_str_t text = pj_str((char*) i.second.c_str());
+        pjsua_im_send(acc_id, &pjTo, NULL, &text, NULL, NULL);
+    }
+
+    /*pjsip_tx_data *tdata;
     pj_status_t status = pjsip_endpt_create_request(link_->getEndpoint(), &msg_method,
                                                     &pjTo, &pjFrom, &pjTo, nullptr, nullptr, -1,
-                                                    nullptr, &tdata);
+                                                    &pjFrom, &tdata);
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
         messageEngine_.onMessageSent(to, id, false);
@@ -2091,12 +2125,13 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
                 acc->messageEngine_.onMessageSent(c->to, c->id, e
                                                       && e->body.tsx_state.tsx
                                                       && e->body.tsx_state.tsx->status_code == PJSIP_SC_OK);
+                JAMI_ERR("%d", e->body.tsx_state.tsx->status_code);
             }
         } catch (const std::exception& e) {
             JAMI_ERR("Error calling message callback: %s", e.what());
         }
         delete c;
-    });
+    });*/
 
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
