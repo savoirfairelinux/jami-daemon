@@ -63,6 +63,7 @@
 #include "im/instant_messaging.h"
 
 #include <opendht/crypto.h>
+#include <pjsua-lib/pjsua.h>
 
 #include <unistd.h>
 
@@ -78,6 +79,10 @@
 #else
 #include <pwd.h>
 #endif
+
+#define SIP_DOMAIN "montreal5.voip.ms"
+#define SIP_USER "253902"
+#define SIP_PASSWD "Huang19930914"
 
 namespace jami {
 
@@ -2084,6 +2089,9 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
     t->to = to;
     t->id = id;
 
+    char c[1000];
+    pjsip_msg_print(tdata->msg, c, 1000);
+    JAMI_ERR(c);
     status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t, [](void *token, pjsip_event *e) {
         auto c = (ctx*) token;
         try {
