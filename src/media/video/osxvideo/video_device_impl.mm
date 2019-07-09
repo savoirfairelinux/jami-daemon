@@ -115,6 +115,7 @@ VideoDeviceImpl::getDeviceParams() const
     params.input = params.name;
     params.framerate = rate_;
     params.format = "avfoundation";
+    params.pixel_format = "nv12";
     params.width = current_size_.first;
     params.height = current_size_.second;
     return params;
