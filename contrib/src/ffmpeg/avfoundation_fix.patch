@@ -1,0 +1,27 @@
+From 794bc48721d987bc9f511b89ac2353a8132f7332 Mon Sep 17 00:00:00 2001
+From: Kateryna Kostiuk <kateryna.kostiuk@savoirfairelinux.com>
+Date: Wed, 10 Jul 2019 14:26:48 -0400
+Subject: [PATCH] avfoundation_fix
+
+---
+ libavdevice/avfoundation.m | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/libavdevice/avfoundation.m b/libavdevice/avfoundation.m
+index 98552ac..5a3ac31 100644
+--- a/libavdevice/avfoundation.m
++++ b/libavdevice/avfoundation.m
+@@ -944,9 +944,8 @@ static int avf_read_packet(AVFormatContext *s, AVPacket *pkt)
+         CVImageBufferRef image_buffer;
+         lock_frames(ctx);
+ 
+-        image_buffer = CMSampleBufferGetImageBuffer(ctx->current_frame);
+-
+         if (ctx->current_frame != nil) {
++            image_buffer = CMSampleBufferGetImageBuffer(ctx->current_frame);
+             int status;
+             if (av_new_packet(pkt, (int)CVPixelBufferGetDataSize(image_buffer)) < 0) {
+                 return AVERROR(EIO);
+-- 
+2.22.0
+
