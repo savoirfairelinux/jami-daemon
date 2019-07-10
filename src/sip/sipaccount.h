@@ -685,6 +685,11 @@ class SIPAccount : public SIPAccountBase {
          */
         pj_uint16_t tlsListenerPort_ {sip_utils::DEFAULT_SIP_TLS_PORT};
 
+        /**
+         * Send Request Callback
+         */
+        static void onComplete(void *token, pjsip_event *event);
+
         bool tlsEnable_ {false};
         std::string tlsMethod_;
         std::string tlsCiphers_;
