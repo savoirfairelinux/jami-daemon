@@ -93,6 +93,14 @@ static const char *const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", 
 
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
 
+struct ctx {
+    std::weak_ptr<SIPAccount> acc;
+    std::string to;
+    uint64_t id;
+    pjsip_endpoint* end;
+    pjsip_auth_clt_sess auth_sess_;
+};
+
 static void
 registration_cb(pjsip_regc_cbparam *param)
 {
@@ -2060,6 +2068,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
 
     /* Create request. */
     pjsip_tx_data *tdata;
+    //pj_status_t status;
     pj_status_t status = pjsip_endpt_create_request(link_->getEndpoint(), &msg_method,
                                                     &pjTo, &pjFrom, &pjTo, nullptr, nullptr, -1,
                                                     nullptr, &tdata);
@@ -2069,38 +2078,113 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
         return;
     }
 
+    /* Add auth header. */
+    pjsip_auth_clt_sess auth_sess;
+    auto cred = getCredInfo();
+    const_cast<pjsip_cred_info*>(cred)->realm = pj_str((char*) hostname_.c_str());
+
+    JAMI_ERR("%.*s", cred->realm.slen, cred->realm.ptr);
+
+    //pjsip_msg_add_hdr( tdata->msg, (pjsip_hdr*)pjsip_authorization_hdr_create(tdata->pool));
+
+    status = pjsip_auth_clt_init( &auth_sess, link_->getEndpoint(), tdata->pool, 0);
+    status = pjsip_auth_clt_set_credentials( &auth_sess, getCredentialCount(), cred);
+    //pjsip_auth_clt_init_req(&auth_sess, tdata);
+
+
+    /* For each realm, add either the cached authorization header
+	    * or add an empty authorization header.
+	    */
+   /*unsigned i;
+    pj_str_t uri;
+
+    uri.ptr = (char*)pj_pool_alloc(tdata->pool, PJSIP_MAX_URL_SIZE);
+    uri.slen = pjsip_uri_print(PJSIP_URI_IN_REQ_URI,
+	                            tdata->msg->line.req.uri,
+	                            uri.ptr, PJSIP_MAX_URL_SIZE);
+
+    for (i=0; i<(&auth_sess)->cred_cnt; ++i) {
+	    pjsip_cred_info *c = &((&auth_sess))->cred_info[i];
+
+	    pjsip_authorization_hdr *hs;
+
+	    hs = pjsip_authorization_hdr_create(tdata->pool);
+	    pj_strdup(tdata->pool, &hs->scheme, &c->scheme);
+		    pj_strdup(tdata->pool, &hs->credential.digest.username,
+				    &c->username);
+		    pj_strdup(tdata->pool, &hs->credential.digest.realm,
+				    &c->realm);
+		    pj_strdup(tdata->pool,&hs->credential.digest.uri, &uri);
+		    pj_strdup(tdata->pool, &hs->credential.digest.algorithm,
+			  	    &(&auth_sess)->pref.algorithm);
+	    pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*)hs);
+    }*/
+
+    //pjsip_msg_add_hdr( tdata->msg,
+		//       (pjsip_hdr*)pjsip_authorization_hdr_create(tdata->pool));
+
     const pjsip_tpselector tp_sel = getTransportSelector();
     pjsip_tx_data_set_transport(tdata, &tp_sel);
 
     im::fillPJSIPMessageBody(*tdata, payloads);
 
-    struct ctx {
-        std::weak_ptr<SIPAccount> acc;
-        std::string to;
-        uint64_t id;
-    };
     ctx* t = new ctx;
     t->acc = shared();
     t->to = to;
     t->id = id;
+    t->end = link_->getEndpoint();
+    t->auth_sess_ = auth_sess;
 
-    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t, [](void *token, pjsip_event *e) {
-        auto c = (ctx*) token;
-        try {
-            if (auto acc = c->acc.lock()) {
-                acc->messageEngine_.onMessageSent(c->to, c->id, e
-                                                      && e->body.tsx_state.tsx
-                                                      && e->body.tsx_state.tsx->status_code == PJSIP_SC_OK);
-            }
-        } catch (const std::exception& e) {
-            JAMI_ERR("Error calling message callback: %s", e.what());
-        }
-        delete c;
-    });
+    char c[1000];
+    pjsip_msg_print(tdata->msg, c, 1000);
+    JAMI_ERR(c);
+
+    char d[1000];
+    pjsip_print_text_body(tdata->msg->body, d, 1000);
+    JAMI_ERR(d);
+    //&on_complete
+    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t, &on_complete);
 
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
         return;
+    }
+}
+
+void
+SIPAccount::on_complete(void *token, pjsip_event *event)
+{
+    auto c = (ctx*) token;
+    int code;
+    pj_assert(event->type == PJSIP_EVENT_TSX_STATE);
+    code = event->body.tsx_state.tsx->status_code;
+    if (code == 401 || code == 407) {
+        pj_status_t status;
+        pjsip_tx_data *new_request;
+        status = pjsip_auth_clt_reinit_req( &c->auth_sess_, event->body.tsx_state.src.rdata, event->body.tsx_state.tsx->last_tx, &new_request);
+
+        if (status == PJ_SUCCESS) {
+            JAMI_ERR("SUCC");
+            char ct[1000];
+            pjsip_msg_print(new_request->msg, ct, 1000);
+            JAMI_ERR(ct);
+
+            status = pjsip_endpt_send_request(c->end, new_request, -1, NULL, [](void *token, pjsip_event *e) {
+                auto c = (ctx*) token;
+                try {
+                    if (auto acc = c->acc.lock()) {
+                        acc->messageEngine_.onMessageSent(c->to, c->id, e
+                                                              && e->body.tsx_state.tsx
+                                                              && e->body.tsx_state.tsx->status_code == PJSIP_SC_OK);
+                    }
+                } catch (const std::exception& e) {
+                    JAMI_ERR("Error calling message callback: %s", e.what());
+                }
+                delete c;
+            });
+        }
+        else
+            JAMI_ERR("FFF");
     }
 }
 
