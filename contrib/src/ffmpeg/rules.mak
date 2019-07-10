@@ -274,6 +274,9 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(APPLY) $(SRC)/ffmpeg/remove-mjpeg-log.patch
 	$(APPLY) $(SRC)/ffmpeg/change-RTCP-ratio.patch
+	ifdef HAVE_MACOSX
+	$(APPLY) $(SRC)/ffmpeg/avfoundation_fix.patch
+	endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
