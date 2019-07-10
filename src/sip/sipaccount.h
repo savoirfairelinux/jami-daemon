@@ -625,6 +625,11 @@ class SIPAccount : public SIPAccountBase {
         bool mapPortUPnP();
 
         /**
+         * Send Message Request Callback
+         */
+        static void SendMessageOnComplete(void *token, pjsip_event *event);
+
+        /**
          * Resolved IP of hostname_ (for registration)
          */
         IpAddr hostIp_;
@@ -773,6 +778,11 @@ class SIPAccount : public SIPAccountBase {
          * configured port is already used by another client
          */
         pj_uint16_t publishedPortUsed_ {sip_utils::DEFAULT_SIP_PORT};
+
+         /**
+         * Authorization Sesstion
+         */
+        pjsip_auth_clt_sess auth_sess_;
 };
 
 } // namespace jami

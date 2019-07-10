@@ -72,6 +72,8 @@
 #include <sstream>
 #include <cstdlib>
 #include <thread>
+#include <chrono>
+#include <ctime>
 
 #ifdef _WIN32
 #include <lmcons.h>
@@ -92,6 +94,12 @@ static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300; // seconds
 static const char *const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1"};
 
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
+
+struct ctx {
+    std::weak_ptr<SIPAccount> acc;
+    std::string to;
+    uint64_t id;
+};
 
 static void
 registration_cb(pjsip_regc_cbparam *param)
@@ -2069,39 +2077,136 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
         return;
     }
 
+    /* Add Date Header. */
+    pj_str_t date_str;
+    pj_str_t key;
+    pjsip_hdr *hdr;
+    auto time = std::chrono::system_clock::now();
+    std::time_t time_final = std::chrono::system_clock::to_time_t(time);
+    auto date = std::ctime(&time_final);
+    // the erase-remove idiom for a cstring, removes _all_ new lines with in date
+    *std::remove(date, date+strlen(date), '\n') = '\0';
+
+    // Add Header
+    key = pj_str("Date");
+    hdr = reinterpret_cast<pjsip_hdr*>(pjsip_date_hdr_create(tdata->pool, &key, pj_cstr(&date_str, date)));
+    pjsip_msg_add_hdr(tdata->msg, hdr);
+
+    /* Add user agent header. */
+    pjsip_hdr *hdr_list;
+    std::string useragent(getUserAgentName());
+    pj_str_t pJuseragent {(char*) useragent.data(), (pj_ssize_t) useragent.size()};
+    constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
+
+    // Add Header
+    hdr_list = reinterpret_cast<pjsip_hdr*>(pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent));
+    pjsip_msg_add_hdr(tdata->msg, hdr_list);
+
+    /* Initialize Auth header. */
+    auto cred = getCredInfo();
+    const_cast<pjsip_cred_info*>(cred)->realm = pj_str((char*) hostname_.c_str());
+    status = pjsip_auth_clt_init( &auth_sess_, link_->getEndpoint(), tdata->pool, 0);
+
+    if (status != PJ_SUCCESS) {
+        JAMI_ERR("Unable to initialize auth session: %s", sip_utils::sip_strerror(status).c_str());
+        messageEngine_.onMessageSent(to, id, false);
+        return;
+    }
+
+    status = pjsip_auth_clt_set_credentials( &auth_sess_, getCredentialCount(), cred);
+
+    if (status != PJ_SUCCESS) {
+        JAMI_ERR("Unable to set auth session data: %s", sip_utils::sip_strerror(status).c_str());
+        messageEngine_.onMessageSent(to, id, false);
+        return;
+    }
+
     const pjsip_tpselector tp_sel = getTransportSelector();
-    pjsip_tx_data_set_transport(tdata, &tp_sel);
+    status = pjsip_tx_data_set_transport(tdata, &tp_sel);
+
+    if (status != PJ_SUCCESS) {
+        JAMI_ERR("Unable to set transport: %s", sip_utils::sip_strerror(status).c_str());
+        messageEngine_.onMessageSent(to, id, false);
+        return;
+    }
 
     im::fillPJSIPMessageBody(*tdata, payloads);
 
-    struct ctx {
-        std::weak_ptr<SIPAccount> acc;
-        std::string to;
-        uint64_t id;
-    };
+    // Set input token into callback
     ctx* t = new ctx;
     t->acc = shared();
     t->to = to;
     t->id = id;
 
-    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t, [](void *token, pjsip_event *e) {
-        auto c = (ctx*) token;
-        try {
-            if (auto acc = c->acc.lock()) {
-                acc->messageEngine_.onMessageSent(c->to, c->id, e
-                                                      && e->body.tsx_state.tsx
-                                                      && e->body.tsx_state.tsx->status_code == PJSIP_SC_OK);
-            }
-        } catch (const std::exception& e) {
-            JAMI_ERR("Error calling message callback: %s", e.what());
-        }
-        delete c;
-    });
+    // Send message request with callback SendMessageOnComplete
+    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t, &SendMessageOnComplete);
 
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+        messageEngine_.onMessageSent(to, id, false);
         return;
     }
+}
+
+void
+SIPAccount::SendMessageOnComplete(void *token, pjsip_event *event)
+{
+    auto c = (ctx*) token;
+    std::shared_ptr<jami::SIPAccount> acc;
+    int code;
+    pj_assert(event->type == PJSIP_EVENT_TSX_STATE);
+    code = event->body.tsx_state.tsx->status_code;
+
+    try {
+        if (!(acc = c->acc.lock())) {
+            delete c;
+            return;
+        }
+    } catch (const std::exception& e) {
+        JAMI_ERR("Error calling message callback: %s", e.what());
+        return;
+    }
+
+    //Check if Authorization Header if needed (request rejected by server)
+    if (code == PJSIP_SC_UNAUTHORIZED || code == PJSIP_SC_PROXY_AUTHENTICATION_REQUIRED) {
+
+        JAMI_INFO("Authorization needed for SMS message - Resending");
+
+        pj_status_t status;
+        pjsip_tx_data *new_request;
+
+        // Add Authorization Header into msg
+        status = pjsip_auth_clt_reinit_req( &(acc->auth_sess_), event->body.tsx_state.src.rdata, event->body.tsx_state.tsx->last_tx, &new_request);
+
+        if (status == PJ_SUCCESS) {
+
+            // Increment Cseq number by one manually
+            pjsip_cseq_hdr *cseq_hdr;
+            cseq_hdr = (pjsip_cseq_hdr*)pjsip_msg_find_hdr(new_request->msg, PJSIP_H_CSEQ, NULL);
+            cseq_hdr->cseq += 1;
+
+            // Resend request
+            status = pjsip_endpt_send_request(acc->link_->getEndpoint(), new_request, -1, c, &SendMessageOnComplete);
+
+            if (status != PJ_SUCCESS) {
+                JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+                acc->messageEngine_.onMessageSent(c->to, c->id, false);
+            }
+            return;
+        }
+        else {
+            JAMI_ERR("Unable to add Authorization Header into msg");
+            acc->messageEngine_.onMessageSent(c->to, c->id, false);
+            delete c;
+            return;
+        }
+    }
+    acc->messageEngine_.onMessageSent(c->to, c->id, event
+                                                && event->body.tsx_state.tsx
+                                                && (event->body.tsx_state.tsx->status_code == PJSIP_SC_OK
+                                                || event->body.tsx_state.tsx->status_code == PJSIP_SC_ACCEPTED));
+
+    delete c;
 }
 
 std::string
