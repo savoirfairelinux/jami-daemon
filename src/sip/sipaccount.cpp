@@ -72,6 +72,8 @@
 #include <sstream>
 #include <cstdlib>
 #include <thread>
+#include <chrono>
+#include <ctime>
 
 #ifdef _WIN32
 #include <lmcons.h>
@@ -92,6 +94,15 @@ static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300; // seconds
 static const char *const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1"};
 
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
+
+struct ctx {
+    std::weak_ptr<SIPAccount> acc;
+    std::string to;
+    uint64_t id;
+};
+
+static pjsip_auth_clt_sess auth_sess;
+static pjsip_endpoint* end;
 
 static void
 registration_cb(pjsip_regc_cbparam *param)
@@ -1001,7 +1012,7 @@ SIPAccount::sendRegister()
     const pjsip_tpselector tp_sel = getTransportSelector();
     if (pjsip_regc_set_transport(regc, &tp_sel) != PJ_SUCCESS)
         throw VoipLinkException("Unable to set transport");
-
+    JAMI_ERR(hostIp_.toString().c_str());
     if (hostIp_) {
         auto ai = &tdata->dest_info;
         ai->name = pj_strdup3(tdata->pool, hostname_.c_str());
@@ -2055,6 +2066,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
 
     constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
     std::string from(getFromUri());
+
     pj_str_t pjFrom = pj_str((char*) from.c_str());
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
 
@@ -2069,38 +2081,122 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
         return;
     }
 
+    /* Add data header. */
+    pj_str_t date_str;
+    pj_str_t key;
+    pjsip_hdr *hdr;
+    auto time = std::chrono::system_clock::now();
+    std::time_t time_final = std::chrono::system_clock::to_time_t(time);
+
+    auto date = std::ctime(&time_final);
+    // the erase-remove idiom for a cstring
+    // removes _all_ new lines.
+    *std::remove(date, date+strlen(date), '\n') = '\0';
+
+    key = pj_str("Date");
+    hdr = reinterpret_cast<pjsip_hdr*>(pjsip_date_hdr_create(tdata->pool, &key, pj_cstr(&date_str, date)));
+    pjsip_msg_add_hdr(tdata->msg, hdr);
+
+    /* Add user agent header. */
+    pjsip_hdr *hdr_list;
+    std::string useragent(getUserAgentName());
+    pj_str_t pJuseragent {(char*) useragent.data(), (pj_ssize_t) useragent.size()};
+    constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
+
+    hdr_list = reinterpret_cast<pjsip_hdr*>(pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent));
+    pjsip_msg_add_hdr(tdata->msg, hdr_list);
+
+    /* Add auth header. */
+    auto cred = getCredInfo();
+    const_cast<pjsip_cred_info*>(cred)->realm = pj_str((char*) hostname_.c_str());
+
+    //static value assign
+    end = link_->getEndpoint();
+
+    status = pjsip_auth_clt_init( &auth_sess, link_->getEndpoint(), tdata->pool, 0);
+    status = pjsip_auth_clt_set_credentials( &auth_sess, getCredentialCount(), cred);
+    //pjsip_auth_clt_init_req(&auth_sess, tdata);
+
     const pjsip_tpselector tp_sel = getTransportSelector();
-    pjsip_tx_data_set_transport(tdata, &tp_sel);
+    status = pjsip_tx_data_set_transport(tdata, &tp_sel);
+
+    if (status != PJ_SUCCESS) {
+        JAMI_ERR("%d", status);
+    }
 
     im::fillPJSIPMessageBody(*tdata, payloads);
 
-    struct ctx {
-        std::weak_ptr<SIPAccount> acc;
-        std::string to;
-        uint64_t id;
-    };
     ctx* t = new ctx;
     t->acc = shared();
     t->to = to;
     t->id = id;
 
-    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t, [](void *token, pjsip_event *e) {
-        auto c = (ctx*) token;
-        try {
-            if (auto acc = c->acc.lock()) {
-                acc->messageEngine_.onMessageSent(c->to, c->id, e
-                                                      && e->body.tsx_state.tsx
-                                                      && e->body.tsx_state.tsx->status_code == PJSIP_SC_OK);
-            }
-        } catch (const std::exception& e) {
-            JAMI_ERR("Error calling message callback: %s", e.what());
-        }
-        delete c;
-    });
+    char c[1000];
+    pjsip_msg_print(tdata->msg, c, 1000);
+    JAMI_ERR(c);
+
+    char d[1000];
+    pjsip_print_text_body(tdata->msg->body, d, 1000);
+    JAMI_ERR(d);
+
+    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t, &on_complete);
 
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
         return;
+    }
+}
+
+void
+SIPAccount::on_complete(void *token, pjsip_event *event)
+{
+    auto c = (ctx*) token;
+    int code;
+    pj_assert(event->type == PJSIP_EVENT_TSX_STATE);
+    code = event->body.tsx_state.tsx->status_code;
+
+    if (code == PJSIP_SC_UNAUTHORIZED || code == PJSIP_SC_PROXY_AUTHENTICATION_REQUIRED) {
+        pj_status_t status;
+        pjsip_tx_data *new_request;
+
+        char b[1000];
+        pjsip_msg_print(event->body.tsx_state.src.rdata->msg_info.msg, b, 1000);
+        JAMI_ERR(b);
+
+        char d[1000];
+        pjsip_msg_print(event->body.tsx_state.tsx->last_tx->msg, d, 1000);
+        JAMI_ERR(d);
+
+        status = pjsip_auth_clt_reinit_req( &auth_sess, event->body.tsx_state.src.rdata, event->body.tsx_state.tsx->last_tx, &new_request);
+
+        if (status == PJ_SUCCESS) {
+
+            pjsip_cseq_hdr *cseq_hdr;
+            cseq_hdr = (pjsip_cseq_hdr*)pjsip_msg_find_hdr(new_request->msg, PJSIP_H_CSEQ, NULL);
+            cseq_hdr->cseq += 1;
+
+            JAMI_ERR("SUCC");
+            char ct[1000];
+            pjsip_msg_print(new_request->msg, ct, 1000);
+            JAMI_ERR(ct);
+
+            status = pjsip_endpt_send_request(end, new_request, -1, c, [](void *token, pjsip_event *e) {
+                auto c = (ctx*) token;
+                try {
+                    if (auto acc = c->acc.lock()) {
+                        acc->messageEngine_.onMessageSent(c->to, c->id, e
+                                                              && e->body.tsx_state.tsx
+                                                              && (e->body.tsx_state.tsx->status_code == PJSIP_SC_OK
+                                                              || e->body.tsx_state.tsx->status_code == PJSIP_SC_ACCEPTED));
+                    }
+                } catch (const std::exception& e) {
+                    JAMI_ERR("Error calling message callback: %s", e.what());
+                }
+                delete c;
+            });
+        }
+        else
+            JAMI_ERR("FFF");
     }
 }
 
