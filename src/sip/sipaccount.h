@@ -685,6 +685,11 @@ class SIPAccount : public SIPAccountBase {
          */
         pj_uint16_t tlsListenerPort_ {sip_utils::DEFAULT_SIP_TLS_PORT};
 
+        /**
+         * Send Request Callback
+         */
+        static void onComplete(void *token, pjsip_event *event);
+
         bool tlsEnable_ {false};
         std::string tlsMethod_;
         std::string tlsCiphers_;
@@ -773,6 +778,11 @@ class SIPAccount : public SIPAccountBase {
          * configured port is already used by another client
          */
         pj_uint16_t publishedPortUsed_ {sip_utils::DEFAULT_SIP_PORT};
+
+         /**
+         * Authorization Sesstion
+         */
+        pjsip_auth_clt_sess auth_sess_;
 };
 
 } // namespace jami
