@@ -625,6 +625,11 @@ class SIPAccount : public SIPAccountBase {
         bool mapPortUPnP();
 
         /**
+         * Send Message Request Callback
+         */
+        static void SendMessageOnComplete(void *token, pjsip_event *event);
+
+        /**
          * Resolved IP of hostname_ (for registration)
          */
         IpAddr hostIp_;
