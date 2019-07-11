@@ -553,6 +553,7 @@ private:
     std::string nameServer_;
     std::string registeredName_;
 #endif
+        std::shared_ptr<dht::Logger> logger_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
     std::unique_ptr<AccountManager> accountManager_;

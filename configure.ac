@@ -431,7 +431,7 @@ AS_IF([test "x$with_nodejs" = "xyes"], [
   AM_CONDITIONAL(ENABLE_NODEJS, false)
 );
 
-# Rest C++ with restbed
+# Rest C++ with restinio
 AC_ARG_WITH([restcpp],
     AS_HELP_STRING([--with-restcpp], [enable rest support with C++]))
 AC_ARG_ENABLE([restbed_old_api], AS_HELP_STRING([--enable-restbed-old-api], [Use the old restbed API]))
@@ -440,7 +440,6 @@ AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
 ])
 
 AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"], [
-  AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files]))
   PKG_CHECK_MODULES(LIBCRYPTO, libcrypto,, AC_MSG_ERROR([Missing libcrypto development files]))
   PKG_CHECK_MODULES(LIBSSL, libssl,, AC_MSG_ERROR([Missing libssl development files]))
 
