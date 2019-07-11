@@ -533,6 +533,8 @@ class SIPAccount : public SIPAccountBase {
          */
         IpAddr createBindingAddress();
 
+        void setActiveCodecs(const std::vector<unsigned>& list) override;
+
     private:
         void doRegister1_();
         void doRegister2_();

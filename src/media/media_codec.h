@@ -159,7 +159,7 @@ struct AccountCodecInfo
 
     const SystemCodecInfo& systemCodecInfo;
     unsigned order {0}; /*used to define preferred codec list order in UI*/
-    bool isActive {true};
+    bool isActive {false};
     /* account custom values */
     unsigned payloadType;
     unsigned bitrate;
