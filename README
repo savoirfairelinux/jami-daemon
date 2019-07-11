@@ -47,7 +47,7 @@ Short description of content of source tree
 - src/ is the core of DRing.
 - bin/ contains applications main code.
 - bin/dbus, the D-Bus XML interfaces, and C++ bindings
-- bin/restcpp, the C++ REST API implemented with Restbed
+- bin/restcpp, the C++ REST API implemented with Restinio
 
 About Savoir-faire Linux
 ------------------------
@@ -147,7 +147,6 @@ mkdir native
 cd native
 ../bootstrap
 make
-make .restbed
 
 2) Then compile the daemon
 cd ../../
