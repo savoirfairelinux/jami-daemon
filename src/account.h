@@ -248,7 +248,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
          */
-        void setActiveCodecs(const std::vector<unsigned>& list);
+        virtual void setActiveCodecs(const std::vector<unsigned>& list);
         std::shared_ptr<AccountCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
         std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType) const;
         std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
@@ -493,6 +493,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         std::shared_ptr<AccountCodecInfo> searchCodecByName(const std::string& name, MediaType mediaType);
         std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
         void setAllCodecsActive(MediaType mediaType, bool active);
+        void setCodecActive(unsigned codecId);
 };
 
 static inline std::ostream&

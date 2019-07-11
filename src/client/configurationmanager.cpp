@@ -570,8 +570,7 @@ getActiveCodecList(const std::string& accountID)
 }
 
 void
-setActiveCodecList(const std::string& accountID
-        , const std::vector<unsigned>& list)
+setActiveCodecList(const std::string& accountID, const std::vector<unsigned>& list)
 {
     if (auto acc = jami::Manager::instance().getAccount(accountID))
     {
