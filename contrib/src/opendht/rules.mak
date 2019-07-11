@@ -1,6 +1,6 @@
 # OPENDHT
-OPENDHT_VERSION := 1.10.1
-OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
+OPENDHT_VERSION := 6bc96bfcfc9fda9ad930a9fb62d0ca2fdae5fd3d
+OPENDHT_URL := https://github.com/binarytrails/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
 ifeq ($(call need_pkg,'opendht'),)
@@ -14,8 +14,8 @@ endif
 ifneq ($(call need_pkg,"libargon2"),)
 DEPS_opendht += argon2
 endif
-ifneq ($(call need_pkg,"restbed"),)
-DEPS_opendht += restbed
+ifneq ($(call need_pkg,"restinio >= v.0.5.1"),)
+DEPS_opendht += restinio
 endif
 ifneq ($(call need_pkg,"jsoncpp"),)
 DEPS_opendht += jsoncpp
@@ -36,6 +36,6 @@ opendht: opendht-$(OPENDHT_VERSION).tar.gz
 
 .opendht: opendht .sum-opendht
 	mkdir -p $</m4 && $(RECONF)
-	cd $< && $(HOSTVARS) ./configure --enable-static --disable-shared --disable-tools --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --enable-push-notifications $(HOSTCONF)
+	cd $< && $(HOSTVARS) $(OPENDHT_CONF) ./configure --enable-static --disable-shared --disable-tools --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --enable-push-notifications $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
