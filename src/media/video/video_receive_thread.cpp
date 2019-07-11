@@ -40,7 +40,7 @@ namespace jami { namespace video {
 
 using std::string;
 
-constexpr auto MS_BETWEEN_2_KEYFRAME_REQUEST = std::chrono::milliseconds(500);
+constexpr auto MS_BETWEEN_2_KEYFRAME_REQUEST = std::chrono::milliseconds(200);
 
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
                                        const std::string &sdp,
