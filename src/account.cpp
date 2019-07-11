@@ -564,6 +564,15 @@ Account::setAllCodecsActive(MediaType mediaType, bool active)
     }
 }
 
+void
+Account::setCodecActive(unsigned codecId)
+{
+    for (auto& codecIt: accountCodecInfoList_) {
+        if (codecIt->systemCodecInfo.avcodecId == codecId)
+            codecIt->isActive = true;
+    }
+}
+
 std::vector<std::shared_ptr<AccountCodecInfo>>
 Account::getActiveAccountCodecInfoList(MediaType mediaType) const
 {

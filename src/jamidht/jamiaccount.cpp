@@ -313,6 +313,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     std::ifstream proxyCache(cachePath_ + DIR_SEPARATOR_STR "dhtproxy");
     if (proxyCache)
       std::getline(proxyCache, proxyServerCached_);
+    setActiveCodecs();
 }
 
 JamiAccount::~JamiAccount()
@@ -3833,6 +3834,18 @@ std::map<std::string, std::string>
 JamiAccount::getNearbyPeers() const
 {
     return discoveredPeerMap_;
+}
+
+
+void
+JamiAccount::setActiveCodecs()
+{
+    if (!hasActiveCodec(MEDIA_AUDIO))
+        setCodecActive(AV_CODEC_ID_OPUS);
+    if (!hasActiveCodec(MEDIA_VIDEO)) {
+        setCodecActive(AV_CODEC_ID_H264);
+        setCodecActive(AV_CODEC_ID_VP8);
+    }
 }
 
 } // namespace jami

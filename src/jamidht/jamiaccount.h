@@ -78,6 +78,7 @@ class PeerConnection;
 class JamiAccount : public SIPAccountBase {
     private:
         struct PeerConnectionMsg;
+        void setActiveCodecs();
 
     public:
         constexpr static const char* const ACCOUNT_TYPE = "RING";
