@@ -509,6 +509,8 @@ class SIPAccount : public SIPAccountBase {
 
         std::string getUserUri() const override;
 
+        void setActiveCodecs(const std::vector<unsigned>& list) override;
+
     private:
         void doRegister1_();
         void doRegister2_();
