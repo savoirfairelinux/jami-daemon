@@ -52,7 +52,9 @@ SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID),
     messageEngine_(*this, fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()+DIR_SEPARATOR_STR "messages"),
     link_(getSIPVoIPLink())
-{}
+{
+    setActiveCodecs(getAccountCodecInfoIdList());
+}
 
 SIPAccountBase::~SIPAccountBase() {}
 
@@ -414,6 +416,21 @@ SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
     publishedIpAddress_ = ip_addr.toString();
     JAMI_DBG("[Account %s] Using public address %s", getAccountID().c_str(),
              publishedIpAddress_.c_str());
+}
+
+
+void
+SIPAccountBase::setActiveCodecs(const std::vector<unsigned>& list)
+{
+    Account::setActiveCodecs(list);
+    if (!hasActiveCodec(MEDIA_AUDIO)) {
+        JAMI_WARN("All audio codecs disabled, enabling all");
+        setAllCodecsActive(MEDIA_AUDIO, true);
+    }
+    if (!hasActiveCodec(MEDIA_VIDEO)) {
+        JAMI_WARN("All video codecs disabled, enabling all");
+        setAllCodecsActive(MEDIA_VIDEO, true);
+    }
 }
 
 } // namespace jami

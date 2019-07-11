@@ -2751,11 +2751,10 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     }
 
     newAccount->setAccountDetails(details);
-
-    preferences.addAccount(newAccountID);
-
+    saveConfig(newAccount);
     newAccount->doRegister();
 
+    preferences.addAccount(newAccountID);
     saveConfig();
 
     emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
