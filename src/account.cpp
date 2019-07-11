@@ -361,15 +361,6 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
                  const std::shared_ptr<AccountCodecInfo>& b) {
                   return a->order < b->order;
               });
-
-    if (!hasActiveCodec(MEDIA_AUDIO)) {
-        JAMI_WARN("All audio codecs disabled, enabling all");
-        setAllCodecsActive(MEDIA_AUDIO, true);
-    }
-    if (!hasActiveCodec(MEDIA_VIDEO)) {
-        JAMI_WARN("All video codecs disabled, enabling all");
-        setAllCodecsActive(MEDIA_VIDEO, true);
-    }
 }
 
 std::string
@@ -561,6 +552,15 @@ Account::setAllCodecsActive(MediaType mediaType, bool active)
     for (auto& codecIt: accountCodecInfoList_) {
         if (codecIt->systemCodecInfo.mediaType & mediaType)
             codecIt->isActive = active;
+    }
+}
+
+void
+Account::setCodecActive(unsigned codecId)
+{
+    for (auto& codecIt: accountCodecInfoList_) {
+        if (codecIt->systemCodecInfo.avcodecId == codecId)
+            codecIt->isActive = true;
     }
 }
 

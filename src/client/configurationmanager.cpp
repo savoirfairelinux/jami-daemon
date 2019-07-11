@@ -435,7 +435,10 @@ getAccountTemplate(const std::string& accountType)
 std::string
 addAccount(const std::map<std::string, std::string>& details)
 {
-    return jami::Manager::instance().addAccount(details);
+    auto accID = jami::Manager::instance().addAccount(details);
+    setActiveCodecList(accID, getActiveCodecList(accID));
+
+    return accID;
 }
 
 void

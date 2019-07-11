@@ -294,6 +294,8 @@ public:
         return {it, lastMessages_.end()};
     }
 
+    void setActiveCodecs(const std::vector<unsigned>& list) override;
+
 public: // overloaded methods
     virtual void flush() override;
 

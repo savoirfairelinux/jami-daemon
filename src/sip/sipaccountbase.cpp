@@ -416,4 +416,19 @@ SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
              publishedIpAddress_.c_str());
 }
 
+
+void
+SIPAccountBase::setActiveCodecs(const std::vector<unsigned>& list)
+{
+    Account::setActiveCodecs(list);
+    if (!hasActiveCodec(MEDIA_AUDIO)) {
+        JAMI_WARN("All audio codecs disabled, enabling all");
+        setAllCodecsActive(MEDIA_AUDIO, true);
+    }
+    if (!hasActiveCodec(MEDIA_VIDEO)) {
+        JAMI_WARN("All video codecs disabled, enabling all");
+        setAllCodecsActive(MEDIA_VIDEO, true);
+    }
+}
+
 } // namespace jami
