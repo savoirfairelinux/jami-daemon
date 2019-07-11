@@ -163,6 +163,8 @@ class JamiAccount : public SIPAccountBase {
          */
         std::map<std::string, bool> getTrackedBuddyPresence() const;
 
+        void setActiveCodecs(const std::vector<unsigned>& list) override;
+
         /**
          * Connect to the DHT.
          */
