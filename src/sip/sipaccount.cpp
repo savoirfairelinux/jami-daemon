@@ -157,6 +157,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     via_addr_.host.ptr = 0;
     via_addr_.host.slen = 0;
     via_addr_.port = 0;
+    setActiveCodecs({});
 }
 
 SIPAccount::~SIPAccount()
@@ -2205,6 +2206,20 @@ std::string
 SIPAccount::getUserUri() const
 {
     return getFromUri();
+}
+
+void
+SIPAccount::setActiveCodecs(const std::vector<unsigned>& list)
+{
+    Account::setActiveCodecs(list);
+    if (!hasActiveCodec(MEDIA_AUDIO)) {
+        JAMI_WARN("All audio codecs disabled, enabling all");
+        setAllCodecsActive(MEDIA_AUDIO, true);
+    }
+    if (!hasActiveCodec(MEDIA_VIDEO)) {
+        JAMI_WARN("All video codecs disabled, enabling all");
+        setAllCodecsActive(MEDIA_VIDEO, true);
+    }
 }
 
 } // namespace jami
