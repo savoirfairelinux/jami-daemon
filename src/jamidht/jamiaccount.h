@@ -430,6 +430,7 @@ class JamiAccount : public SIPAccountBase {
         std::string nameServer_;
         std::string registeredName_;
 #endif
+        std::shared_ptr<dht::Logger> logger_;
 
         /**
          * Compute archive encryption key and DHT storage location from password and PIN.
