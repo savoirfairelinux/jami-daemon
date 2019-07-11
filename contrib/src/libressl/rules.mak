@@ -29,7 +29,7 @@ ifeq ($(call need_pkg,"openssl >= 1.0.0" || call need_pkg,"libressl >= 1.0.0"),)
 PKGS_FOUND += libressl
 endif
 
-# Pure dependency of restbed: do not add to PKGS.
+# Pure dependency of restinio: do not add to PKGS.
 
 $(TARBALLS)/portable-$(LIBRESSL_VERSION).tar.gz:
 	$(call download,$(LIBRESSL_URL))
