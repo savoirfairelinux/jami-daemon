@@ -1,0 +1,7 @@
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Submitted-by: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+Submitted-at: Fri, 12 Jul 2019 10:26:47 -0400
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/11950
+Project: ring-daemon
+Branch: refs/heads/master
