@@ -97,9 +97,9 @@ int MediaDecoder::openInput(const DeviceParams& params)
         if (params.framerate.denominator() == 333333)
             framerate = (int)(params.framerate.real());
         if (params.framerate.denominator() != 4999998)
-            av_dict_set(&options_, "framerate", std::to_string(framerate).c_str(), 0);
+            av_dict_set(&options_, "framerate", jami::to_string(framerate).c_str(), 0);
 #else
-        av_dict_set(&options_, "framerate", std::to_string(params.framerate.real()).c_str(), 0);
+        av_dict_set(&options_, "framerate", jami::to_string(params.framerate.real()).c_str(), 0);
 #endif
     }
 
