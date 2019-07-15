@@ -32,5 +32,6 @@ bash -c "%PATCH_CMD% %UNIXPATH%ffmpeg/change-RTCP-ratio.patch"
 
 git apply --reject --whitespace=fix %SRC%\ffmpeg\windows-configure.patch
 git apply --reject --whitespace=fix %SRC%\ffmpeg\windows-configure-ffnvcodec.patch
+git apply --reject --whitespace=fix %SRC%\ffmpeg\windows-configure-libmfx.patch
 
 cd %SRC%
