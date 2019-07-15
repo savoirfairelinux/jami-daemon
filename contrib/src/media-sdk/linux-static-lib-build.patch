@@ -1,0 +1,43 @@
+From a1dd9672c2ce818b794061ca40ec37b838e93bae Mon Sep 17 00:00:00 2001
+From: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+Date: Fri, 26 Jul 2019 14:38:20 -0400
+Subject: [PATCH] Build libmfx static.
+
+---
+ api/mfx_dispatch/linux/CMakeLists.txt | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/api/mfx_dispatch/linux/CMakeLists.txt b/api/mfx_dispatch/linux/CMakeLists.txt
+index 15a4bd9a..b96dede6 100644
+--- a/api/mfx_dispatch/linux/CMakeLists.txt
++++ b/api/mfx_dispatch/linux/CMakeLists.txt
+@@ -94,8 +94,7 @@ include_directories (
+   ${MFX_API_FOLDER}
+ )
+ 
+-add_library(mfx SHARED ${sources})
+-target_link_libraries(mfx dl)
++add_library(mfx STATIC ${sources})
+ 
+ get_api_version(MFX_VERSION_MAJOR MFX_VERSION_MINOR)
+ 
+@@ -105,7 +104,7 @@ set_target_properties( mfx PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_LIB_DIR}/
+ set_target_properties( mfx PROPERTIES   VERSION ${MFX_VERSION_MAJOR}.${MFX_VERSION_MINOR})
+ set_target_properties( mfx PROPERTIES SOVERSION ${MFX_VERSION_MAJOR})
+ 
+-install(TARGETS mfx LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
++install(TARGETS mfx ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+ 
+ set( PKG_CONFIG_FNAME "${CMAKE_LIB_DIR}/${CMAKE_BUILD_TYPE}/lib${PROJECT_NAME}.pc")
+ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/pkg-config.pc.cmake" ${PKG_CONFIG_FNAME} @ONLY)
+@@ -115,6 +114,5 @@ install( DIRECTORY ${MFX_API_FOLDER}/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/mf
+ 
+ # For backwards compatibility, create a relative symbolic link without the "lib"
+ # prefix to the .pc file.
+-set( PKG_CONFIG_LFNAME "${CMAKE_LIB_DIR}/${CMAKE_BUILD_TYPE}/${PROJECT_NAME}.pc" )
+-add_custom_target(pc_link_target ALL COMMAND ${CMAKE_COMMAND} -E create_symlink lib${PROJECT_NAME}.pc ${PKG_CONFIG_LFNAME})
++set( PKG_CONFIG_LFNAME "${CMAKE_LIB_DIR}/${CMAKE_BUILD_TYPE}/lib${PROJECT_NAME}.pc" )
+ install( FILES ${PKG_CONFIG_LFNAME} DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig )
+-- 
+2.17.1
+
