@@ -210,7 +210,7 @@ FFMPEGCONF += --disable-asm
 endif
 else
 # Desktop Linux
-DEPS_ffmpeg += ffnvcodec
+DEPS_ffmpeg += ffnvcodec media-sdk
 FFMPEGCONF += \
 	--target-os=linux \
 	--enable-indev=v4l2 \
@@ -236,7 +236,17 @@ FFMPEGCONF += \
 	--enable-hwaccel=vp8_nvdec \
 	--enable-hwaccel=mjpeg_nvdec \
 	--enable-encoder=h264_nvenc \
-	--enable-encoder=hevc_nvenc
+	--enable-encoder=hevc_nvenc \
+ 	--enable-libmfx \
+ 	--enable-encoder=h264_qsv \
+ 	--enable-encoder=hevc_qsv \
+    --enable-encoder=mjpeg_qsv \
+ 	--enable-decoder=vp8_qsv \
+ 	--enable-decoder=h264_qsv \
+ 	--enable-decoder=hevc_qsv \
+    --enable-filter=scale_qsv \
+    --enable-filter=overlay_qsv
+
 endif
 endif
 
