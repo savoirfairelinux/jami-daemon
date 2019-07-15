@@ -35,6 +35,7 @@ bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_ioqueue_ipv6_sendto.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/add_dtls_transport.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/rfc6544.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/ice_config.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_first_packet_turn_tcp.patch"
 
 %APPLY_CMD% %SRC%\pjproject\win32_vs_gnutls.patch
 %APPLY_CMD% %SRC%\pjproject\win_config.patch
