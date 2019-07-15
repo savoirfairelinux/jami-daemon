@@ -301,8 +301,20 @@ endif
 
 # Windows
 ifdef HAVE_WIN32
-FFMPEGCONF += --target-os=mingw32
-FFMPEGCONF += --enable-w32threads --disable-decoder=dca
+DEPS_ffmpeg += ffnvcodec
+FFMPEGCONF += --target-os=mingw32 \
+    --enable-w32threads \
+    --disable-decoder=dca \
+	--enable-cuvid \
+	--enable-ffnvcodec \
+	--enable-nvdec \
+	--enable-nvenc \
+	--enable-hwaccel=h264_nvdec \
+	--enable-hwaccel=hevc_nvdec \
+	--enable-hwaccel=vp8_nvdec \
+	--enable-hwaccel=mjpeg_nvdec \
+	--enable-encoder=h264_nvenc \
+	--enable-encoder=hevc_nvenc
 endif
 
 $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.gz:
