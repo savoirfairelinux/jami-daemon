@@ -287,6 +287,7 @@ TcpSocketEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
 std::size_t
 TcpSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
 {
+    JAMI_ERR("@@@R %i", len);
     // NOTE: recv buf args is a void* on POSIX compliant system, but it's a char* on mingw
     auto res = ::recv(sock_, reinterpret_cast<char*>(buf), len, 0);
     if (res < 0)
@@ -299,6 +300,7 @@ TcpSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
 std::size_t
 TcpSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code& ec)
 {
+    JAMI_ERR("@@@ %i", len);
     // NOTE: recv buf args is a void* on POSIX compliant system, but it's a char* on mingw
     auto res = ::send(sock_, reinterpret_cast<const char*>(buf), len, 0);
     if (res < 0)
