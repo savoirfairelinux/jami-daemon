@@ -25,7 +25,7 @@ on behalf of Savoir-faire Linux.
  pjnath/src/pjnath-test/concur_test.c    |    8 +-
  pjnath/src/pjnath-test/sess_auth.c      |   12 +-
  pjnath/src/pjnath-test/stun_sock_test.c |    7 +-
- pjnath/src/pjnath/ice_session.c         |  582 +++++++---
+ pjnath/src/pjnath/ice_session.c         |  586 +++++++---
  pjnath/src/pjnath/ice_strans.c          |  986 ++++++++++++-----
  pjnath/src/pjnath/nat_detect.c          |   12 +-
  pjnath/src/pjnath/stun_session.c        |   12 +-
@@ -38,7 +38,7 @@ on behalf of Savoir-faire Linux.
  pjnath/src/pjturn-srv/server.c          |    2 +-
  pjsip-apps/src/samples/icedemo.c        |  671 +++++++-----
  pjsip/src/pjsua-lib/pjsua_core.c        |    8 +-
- 22 files changed, 2989 insertions(+), 1104 deletions(-)
+ 22 files changed, 2993 insertions(+), 1104 deletions(-)
 
 diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
 index fc1e27550..6f17a663b 100644
@@ -858,7 +858,7 @@ index fff4fad26..a54df74dc 100644
  	app_perror("    error: server sending data", status);
  	ret = -390;
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index c51dba771..0301c5c7b 100644
+index c51dba771..04cee7700 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -1,5 +1,5 @@
@@ -1157,7 +1157,7 @@ index c51dba771..0301c5c7b 100644
      /* Attach data to be retrieved later when STUN request transaction
       * completes and on_stun_request_complete() callback is called.
       */
-@@ -1796,57 +1898,98 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+@@ -1796,57 +1898,102 @@ static pj_status_t perform_check(pj_ice_sess *ice,
      msg_data->data.req.ckid = check_id;
  
      /* Add PRIORITY */
@@ -1218,7 +1218,6 @@ index c51dba771..0301c5c7b 100644
 +    if (lcand->transport == PJ_CAND_UDP) {
 +        status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
 +    } else if (lcand->transport == PJ_CAND_TCP_ACTIVE) {
-+
 +        if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY) {
 +            status = (*ice->cb.reconnect_tcp_connection)(ice, clist, check_id);
 +        } else if (check->state == PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET) {
@@ -1237,16 +1236,21 @@ index c51dba771..0301c5c7b 100644
 +                pj_assert(!"Not expected any timer active");
 +            }
 +        }
-+    } else if (lcand->transport == PJ_CAND_TCP_PASSIVE && lcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
-+        pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap, &ice->timer, TIMER_NONE);
-+        status = (*ice->cb.select_turn_dataconn)(ice, clist, check_id);
-+        if (ice->timer.id == TIMER_NONE) {
-+            pj_time_val delay = {0, 0};
-+            delay.msec = 1500;
-+            pj_time_val_normalize(&delay);
-+            pj_timer_heap_schedule_w_grp_lock(
-+                ice->stun_cfg.timer_heap, &ice->timer, &delay,
-+                TIMER_CONNECTION_TIMEOUT, ice->grp_lock);
++    } else {
++        // TCP PASSIVE
++        if (lcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++            pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap, &ice->timer, TIMER_NONE);
++            status = (*ice->cb.select_turn_dataconn)(ice, clist, check_id);
++            if (ice->timer.id == TIMER_NONE) {
++                pj_time_val delay = {0, 0};
++                delay.msec = 1500;
++                pj_time_val_normalize(&delay);
++                pj_timer_heap_schedule_w_grp_lock(
++                    ice->stun_cfg.timer_heap, &ice->timer, &delay,
++                    TIMER_CONNECTION_TIMEOUT, ice->grp_lock);
++            }
++        } else {
++            status = send_connectivity_check(ice, clist, check_id, nominate, msg_data);
 +        }
      }
 +#else
@@ -1290,7 +1294,7 @@ index c51dba771..0301c5c7b 100644
  }
  
  
-@@ -1882,44 +2025,101 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -1882,44 +2029,101 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
      LOG5((ice->obj_name, "Starting checklist periodic check"));
      pj_log_push_indent();
  
@@ -1415,7 +1419,7 @@ index c51dba771..0301c5c7b 100644
      }
  
      /* Cannot start check because there's no suitable candidate pair.
-@@ -1936,8 +2136,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
+@@ -1936,8 +2140,7 @@ static pj_status_t start_periodic_check(pj_timer_heap_t *th,
      pj_grp_lock_release(ice->grp_lock);
      pj_log_pop_indent();
      return PJ_SUCCESS;
@@ -1425,7 +1429,7 @@ index c51dba771..0301c5c7b 100644
  
  /* Start sending connectivity check with USE-CANDIDATE */
  static void start_nominated_check(pj_ice_sess *ice)
-@@ -2109,13 +2308,13 @@ PJ_DEF(pj_status_t) pj_ice_sess_start_check(pj_ice_sess *ice)
+@@ -2109,13 +2312,13 @@ PJ_DEF(pj_status_t) pj_ice_sess_start_check(pj_ice_sess *ice)
      /* First, perform all pending triggered checks, simultaneously. */
      rcheck = ice->early_check.next;
      while (rcheck != &ice->early_check) {
@@ -1446,7 +1450,7 @@ index c51dba771..0301c5c7b 100644
      }
      pj_list_init(&ice->early_check);
  
-@@ -2161,7 +2360,7 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+@@ -2161,7 +2364,7 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
  	/* Stray retransmit timer that could happen while
  	 * we're being destroyed */
  	pj_grp_lock_release(ice->grp_lock);
@@ -1455,7 +1459,7 @@ index c51dba771..0301c5c7b 100644
      }
  
      status = (*ice->cb.on_tx_pkt)(ice, sd->comp_id, msg_data->transport_id,
-@@ -2171,6 +2370,145 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+@@ -2171,6 +2374,145 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
      return status;
  }
  
@@ -1601,7 +1605,7 @@ index c51dba771..0301c5c7b 100644
  
  /* This callback is called when outgoing STUN request completed */
  static void on_stun_request_complete(pj_stun_session *stun_sess,
-@@ -2401,7 +2739,8 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+@@ -2401,7 +2743,8 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
  				      &check->lcand->base_addr, 
  				      &check->lcand->base_addr,
  				      pj_sockaddr_get_len(&xaddr->sockaddr),
@@ -1611,7 +1615,7 @@ index c51dba771..0301c5c7b 100644
  	if (status != PJ_SUCCESS) {
  	    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, 
  			    status);
-@@ -2516,8 +2855,8 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2516,8 +2859,8 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      pj_grp_lock_acquire(ice->grp_lock);
  
      if (ice->is_destroying) {
@@ -1622,7 +1626,7 @@ index c51dba771..0301c5c7b 100644
      }
  
      /*
-@@ -2532,9 +2871,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2532,9 +2875,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      prio_attr = (pj_stun_priority_attr*)
  	        pj_stun_msg_find_attr(msg, PJ_STUN_ATTR_PRIORITY, 0);
      if (prio_attr == NULL) {
@@ -1635,7 +1639,7 @@ index c51dba771..0301c5c7b 100644
      }
  
      /* Get USE-CANDIDATE attribute */
-@@ -2579,7 +2918,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2579,7 +2922,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
  				    NULL, token, PJ_TRUE, 
  				    src_addr, src_addr_len);
  	    pj_grp_lock_release(ice->grp_lock);
@@ -1644,7 +1648,7 @@ index c51dba771..0301c5c7b 100644
  	}
  
      } else if (ice->role == PJ_ICE_SESS_ROLE_CONTROLLED &&
-@@ -2591,7 +2930,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2591,7 +2934,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
  				    NULL, token, PJ_TRUE, 
  				    src_addr, src_addr_len);
  	    pj_grp_lock_release(ice->grp_lock);
@@ -1653,7 +1657,7 @@ index c51dba771..0301c5c7b 100644
  	} else {
  	    /* Switch role to controlled */
  	    LOG4((ice->obj_name, 
-@@ -2606,7 +2945,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2606,7 +2949,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      status = pj_stun_session_create_res(sess, rdata, 0, NULL, &tdata);
      if (status != PJ_SUCCESS) {
  	pj_grp_lock_release(ice->grp_lock);
@@ -1662,7 +1666,7 @@ index c51dba771..0301c5c7b 100644
      }
  
      if (((pj_sockaddr *)src_addr)->addr.sa_family == pj_AF_INET6()) {
-@@ -2663,9 +3002,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2663,9 +3006,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      msg_data->has_req_data = PJ_FALSE;
  
      /* Send the response */
@@ -1675,7 +1679,7 @@ index c51dba771..0301c5c7b 100644
  
      /* 
       * Handling early check.
-@@ -2784,14 +3123,16 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -2784,14 +3127,16 @@ static void handle_incoming_check(pj_ice_sess *ice,
      /* Just get candidate with the highest priority and same transport ID
       * for the specified  component ID in the checklist.
       */
@@ -1700,7 +1704,7 @@ index c51dba771..0301c5c7b 100644
      }
      if (lcand == NULL) {
  	/* Should not happen, but just in case remote is sending a
-@@ -2814,9 +3155,9 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -2814,9 +3159,9 @@ static void handle_incoming_check(pj_ice_sess *ice,
       * have this pair in our checklist.
       */
      for (i=0; i<ice->clist.count; ++i) {
@@ -1713,7 +1717,7 @@ index c51dba771..0301c5c7b 100644
      }
  
      /* If the pair is already on the check list:
-@@ -2839,7 +3180,6 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -2839,7 +3184,6 @@ static void handle_incoming_check(pj_ice_sess *ice,
  	 * Note: DO NOT overwrite nominated flag if one is already set.
  	 */
  	c->nominated = ((rcheck->use_candidate) || c->nominated);
@@ -3004,7 +3008,7 @@ index 7b53aba74..2b006d918 100644
 +  return sess ? sess->conn_type : PJ_STUN_TP_UDP;
 +}
 diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
-index 7692e6c14..3b8d509ab 100644
+index 7692e6c14..daa24cc28 100644
 --- a/pjnath/src/pjnath/stun_sock.c
 +++ b/pjnath/src/pjnath/stun_sock.c
 @@ -1,5 +1,5 @@
