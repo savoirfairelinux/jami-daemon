@@ -195,12 +195,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
     std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
     const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
     const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    char tmp[PJSIP_MAX_URL_SIZE];
-    size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
-    std::string peerNumber(tmp, length);
-    sip_utils::stripSipUriPrefix(peerNumber);
-    if (not remote_user.empty() and not remote_hostname.empty())
-        peerNumber = remote_user + "@" + remote_hostname;
 
     auto link = getSIPVoIPLink();
     if (not link) {
@@ -212,6 +206,19 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (!account) {
         JAMI_ERR("NULL account");
         return PJ_FALSE;
+    }
+
+    char tmp[PJSIP_MAX_URL_SIZE];
+    size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
+    std::string currentHost = account->getHostname();
+    std::string peerNumber(tmp, length);
+    sip_utils::stripSipUriPrefix(peerNumber);
+    if (not remote_user.empty() and not remote_hostname.empty()) {
+        if (currentHost == remote_hostname) {
+            peerNumber = remote_user;
+        } else {
+            peerNumber = remote_user + "@" + remote_hostname;
+        }
     }
 
     const auto& account_id = account->getAccountID();
