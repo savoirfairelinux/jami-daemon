@@ -1,0 +1,48 @@
+ pjnath/src/pjnath/turn_session.c | 3 +++
+ pjnath/src/pjnath/turn_sock.c    | 5 +++++
+ 2 files changed, 8 insertions(+)
+
+diff --git a/pjnath/src/pjnath/turn_session.c b/pjnath/src/pjnath/turn_session.c
+index 1c0430bc..2fa67206 100644
+--- a/pjnath/src/pjnath/turn_session.c
++++ b/pjnath/src/pjnath/turn_session.c
+@@ -1207,6 +1207,8 @@ PJ_DEF(pj_status_t) pj_turn_session_on_rx_pkt(pj_turn_session *sess,
+ 					      pj_size_t pkt_len,
+ 					      pj_size_t *parsed_len)
+ {
++
++	PJ_LOG(4,(sess->obj_name, "@@@ pj_turn_session_on_rx_pkt %i", pkt_len));
+     pj_turn_session_on_rx_pkt_param prm;
+     pj_status_t status;
+     
+@@ -1227,6 +1229,7 @@ PJ_DEF(pj_status_t) pj_turn_session_on_rx_pkt2(
+ 				pj_turn_session *sess,
+ 				pj_turn_session_on_rx_pkt_param *prm)
+ {
++	PJ_LOG(4,(sess->obj_name, "@@@ pj_turn_session_on_rx_pkt2 %i", prm->pkt_len));
+     pj_bool_t is_stun;
+     pj_status_t status;
+     pj_bool_t is_datagram;
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index 7033fd93..149aea18 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -799,6 +799,9 @@ static void turn_on_rx_data(pj_turn_session *sess,
+ {
+     pj_turn_sock *turn_sock = (pj_turn_sock*) 
+ 			   pj_turn_session_get_user_data(sess);
++	
++	if (turn_sock != NULL) PJ_LOG(4, (turn_sock->obj_name, "RECEIVE %i", pkt_len));
++
+     if (turn_sock == NULL || turn_sock->is_destroying) {
+ 	/* We've been destroyed */
+ 	return;
+@@ -1042,6 +1045,8 @@ static pj_bool_t dataconn_on_data_read(pj_activesock_t *asock,
+ 			    pj_activesock_get_user_data(asock);
+     pj_turn_sock *turn_sock = conn->turn_sock;
+ 
++	if (turn_sock != NULL) PJ_LOG(4, (turn_sock->obj_name, "@@@ RECEIVE %i", size));
++
+     pj_grp_lock_acquire(turn_sock->grp_lock);
+ 
+     if (size == 0 && status != PJ_SUCCESS) {

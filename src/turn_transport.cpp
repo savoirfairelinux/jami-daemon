@@ -222,6 +222,7 @@ void
 TurnTransportPimpl::onRxData(const uint8_t* pkt, unsigned pkt_len,
                              const pj_sockaddr_t* addr, unsigned addr_len)
 {
+    JAMI_ERR("ON RX");
     IpAddr peer_addr (*static_cast<const pj_sockaddr*>(addr), addr_len);
 
     decltype(peerChannels_)::iterator channel_it;
@@ -306,11 +307,14 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     pj_bzero(&relay_cb, sizeof(relay_cb));
     relay_cb.on_rx_data = [](pj_turn_sock* relay, void* pkt, unsigned pkt_len,
                              const pj_sockaddr_t* peer_addr, unsigned addr_len) {
+                                 JAMI_WARN("ON RX B %i", pkt_len);
         auto pimpl = static_cast<TurnTransportPimpl*>(pj_turn_sock_get_user_data(relay));
         pimpl->onRxData(reinterpret_cast<uint8_t*>(pkt), pkt_len, peer_addr, addr_len);
     };
     relay_cb.on_state = [](pj_turn_sock* relay, pj_turn_state_t old_state,
                            pj_turn_state_t new_state) {
+                                 JAMI_WARN("ON STATE");
+
         auto pimpl = static_cast<TurnTransportPimpl*>(pj_turn_sock_get_user_data(relay));
         pimpl->onTurnState(old_state, new_state);
     };
