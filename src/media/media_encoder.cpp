@@ -253,7 +253,6 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         encoderCtx->rc_buffer_size = bufSize;
         encoderCtx->rc_max_rate = maxBitrate;
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_HEVC) {
-
         forcePresetHEVC(encoderCtx);
         //force profile
         encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
