@@ -142,9 +142,9 @@ VideoSender::setChangeOrientationCallback(std::function<void(int)> cb)
 }
 
 void 
-VideoSender::setBitrateOnTheFly(uint16_t mb)
+VideoSender::setBitrate(uint64_t mb)
 {
-    videoEncoder_->setBitrateOnTheFly(mb);
+    videoEncoder_->setBitrate(mb);
 }
 
 }} // namespace jami::video
