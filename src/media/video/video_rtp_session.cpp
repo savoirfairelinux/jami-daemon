@@ -400,14 +400,6 @@ VideoRtpSession::adaptQualityAndBitrate()
         return;
     }
 
-    auto now = clock::now();
-    auto restartTimer = now - lastMediaRestart_;
-    //Sleep 3 seconds while the media restart
-    if (restartTimer < DELAY_AFTER_RESTART) {
-        //JAMI_DBG("[AutoAdapt] Waiting for delay %ld ms", std::chrono::duration_cast<std::chrono::milliseconds>(restartTimer));
-        return;
-    }
-
     if (rtcpi.jitter > 5000) {
         JAMI_DBG("[AutoAdapt] Jitter too high");
         return;
@@ -430,16 +422,8 @@ VideoRtpSession::adaptQualityAndBitrate()
 
     if(oldBitrate != videoBitrateInfo_.videoBitrateCurrent) {
         storeVideoBitrateInfo();
-        JAMI_DBG("[AutoAdapt] Restart media sender");
 
-        const auto& cid = callID_;
-
-        runOnMainThread([cid]{
-            if (auto call = Manager::instance().callFactory.getCall(cid))
-                call->restartMediaSender();
-            });
-
-        lastMediaRestart_ = now;
+        sender_->setBitrate(videoBitrateInfo_.videoBitrateCurrent);
     }
 }
 
