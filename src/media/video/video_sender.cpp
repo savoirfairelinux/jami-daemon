@@ -141,4 +141,10 @@ VideoSender::setChangeOrientationCallback(std::function<void(int)> cb)
     changeOrientationCallback_ = std::move(cb);
 }
 
+void
+VideoSender::setBitrate(uint64_t br)
+{
+    videoEncoder_->setBitrate(br);
+}
+
 }} // namespace jami::video

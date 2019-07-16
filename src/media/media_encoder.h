@@ -100,6 +100,8 @@ public:
     const std::string& getAudioCodec() const { return audioCodec_; }
     const std::string& getVideoCodec() const { return videoCodec_; }
 
+    void setBitrate(uint64_t br);
+
 #ifdef RING_ACCEL
     void enableAccel(bool enableAccel);
 #endif
@@ -116,6 +118,9 @@ private:
     int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx);
     void openIOContext();
     void startIO();
+    AVCodecContext* getCurrentVideoAVCtx();
+    void stopEncoder();
+    AVCodecContext* initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef* framesCtx, uint64_t br);
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext *outputCtx_ = nullptr;
@@ -123,6 +128,8 @@ private:
     int currentStreamIdx_ = -1;
     unsigned sent_samples = 0;
     bool initialized_ {false};
+    unsigned int currentVideoCodecID_ {0};
+    AVCodec* outputCodec_ = nullptr;
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
