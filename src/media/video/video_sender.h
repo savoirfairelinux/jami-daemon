@@ -60,6 +60,7 @@ public:
     uint16_t getLastSeqValue();
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
+    void setBitrate(uint64_t mb);
 
 private:
     static constexpr int KEYFRAMES_AT_START {4}; // Number of keyframes to enforce at stream startup
