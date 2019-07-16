@@ -180,127 +180,25 @@ MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx)
 int
 MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx)
 {
-    AVCodec* outputCodec = nullptr;
     AVCodecContext* encoderCtx = nullptr;
-#ifdef RING_ACCEL
-    if (systemCodecInfo.mediaType == MEDIA_VIDEO) {
-        if (enableAccel_) {
-            if (accel_ = video::HardwareAccel::setupEncoder(
-                static_cast<AVCodecID>(systemCodecInfo.avcodecId),
-                videoOpts_.width, videoOpts_.height, framesCtx)) {
-                outputCodec = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
-            }
-        } else {
-            JAMI_WARN() << "Hardware encoding disabled";
-        }
-    }
-#endif
+    AVMediaType mediaType;
 
-    if (!outputCodec) {
-        /* find the video encoder */
-        if (systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
-            // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
-            // H263-1998 can manage all frame sizes while H263 don't
-            // AV_CODEC_ID_H263 decoder will be used for decoding
-            outputCodec = avcodec_find_encoder(AV_CODEC_ID_H263P);
-        else
-            outputCodec = avcodec_find_encoder(static_cast<AVCodecID>(systemCodecInfo.avcodecId));
-        if (!outputCodec) {
-            JAMI_ERR("Encoder \"%s\" not found!", systemCodecInfo.name.c_str());
-            throw MediaEncoderException("No output encoder");
-        }
-    }
+    if(systemCodecInfo.mediaType == MEDIA_VIDEO)
+        mediaType = AVMEDIA_TYPE_VIDEO;
+    else if(systemCodecInfo.mediaType == MEDIA_AUDIO)
+        mediaType = AVMEDIA_TYPE_AUDIO;
 
-    encoderCtx = prepareEncoderContext(outputCodec, systemCodecInfo.mediaType == MEDIA_VIDEO);
-    encoders_.push_back(encoderCtx);
-
-#ifdef RING_ACCEL
-    if (accel_) {
-        accel_->setDetails(encoderCtx);
-        encoderCtx->opaque = accel_.get();
-    }
-#endif
-
-    uint64_t maxBitrate = 1000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
-    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
-    uint64_t bufSize = 2 * maxBitrate;
-
-    /* let x264 preset override our encoder settings */
-    if (systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
-        auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
-        extractProfileLevelID(profileLevelId, encoderCtx);
-#ifdef RING_ACCEL
-#ifdef ENABLE_VIDEOTOOLBOX
-        if (accel_) {
-            maxBitrate = 2000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
-            bufSize = 2 * maxBitrate;
-            crf = 20;
-        }
-#endif
-        if (accel_)
-            // limit the bitrate else it will easily go up to a few MiB/s
-            encoderCtx->bit_rate = maxBitrate;
-        else
-#endif
-        forcePresetX264(encoderCtx);
-        // For H264 :
-        // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
-        if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
-            crf = 30; // good value for H264-720p@30
-        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
-        libav_utils::setDictValue(&options_, "crf", std::to_string(crf));
-        av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
-        encoderCtx->rc_buffer_size = bufSize;
-        encoderCtx->rc_max_rate = maxBitrate;
-    } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
-        // For VP8 :
-        // 1- if quality is set use it
-        // bitrate need to be set. The target bitrate becomes the maximum allowed bitrate
-        // 2- otherwise set rc_max_rate and rc_buffer_size
-        // Using information given on this page:
-        // http://www.webmproject.org/docs/encoder-parameters/
-        av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "error-resilient", 1, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "cpu-used", 7, AV_OPT_SEARCH_CHILDREN); // value obtained from testing
-        av_opt_set_int(encoderCtx, "lag-in-frames", 0, AV_OPT_SEARCH_CHILDREN);
-        // allow encoder to drop frames if buffers are full and
-        // to undershoot target bitrate to lessen strain on resources
-        av_opt_set_int(encoderCtx, "drop-frame", 25, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "undershoot-pct", 95, AV_OPT_SEARCH_CHILDREN);
-        // don't set encoderCtx->gop_size: let libvpx decide when to insert a keyframe
-        encoderCtx->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
-        encoderCtx->qmin = 4;
-        encoderCtx->qmax = 56;
-        encoderCtx->rc_buffer_size = maxBitrate;
-        encoderCtx->bit_rate = maxBitrate;
-        if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
-            av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
-            JAMI_DBG("Using quality factor %d", crf);
-        } else {
-            JAMI_DBG("Using Max bitrate %lu", maxBitrate);
-        }
-    } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
-        // For MPEG4 :
-        // No CRF avaiable.
-        // Use CBR (set bitrate)
-        encoderCtx->rc_buffer_size = maxBitrate;
-        encoderCtx->bit_rate = encoderCtx->rc_min_rate = encoderCtx->rc_max_rate =  maxBitrate;
-        JAMI_DBG("Using Max bitrate %lu", maxBitrate);
-    } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_H263) {
-        encoderCtx->bit_rate = encoderCtx->rc_max_rate =  maxBitrate;
-        encoderCtx->rc_buffer_size = maxBitrate;
-        JAMI_DBG("Using Max bitrate %lu", maxBitrate);
-    }
+    encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), framesCtx, NULL);
 
     // add video stream to outputformat context
-    AVStream* stream = avformat_new_stream(outputCtx_, outputCodec);
+    AVStream* stream = avformat_new_stream(outputCtx_, outputCodec_);
     if (!stream)
         throw MediaEncoderException("Could not allocate stream");
 
     currentStreamIdx_ = stream->index;
 
     readConfig(&options_, encoderCtx);
-    if (avcodec_open2(encoderCtx, outputCodec, &options_) < 0)
+    if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
         throw MediaEncoderException("Could not open encoder");
 
 #ifndef _WIN32
@@ -733,6 +631,170 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
         ms.format = accel_->getSoftwareFormat();
 #endif
     return ms;
+}
+
+AVCodecContext*
+MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef* framesCtx, uint64_t br)
+{
+    outputCodec_ = nullptr;
+#ifdef RING_ACCEL
+    if (mediaType == AVMEDIA_TYPE_VIDEO) {
+        if (enableAccel_) {
+            if (accel_ = video::HardwareAccel::setupEncoder(
+                static_cast<AVCodecID>(avcodecId),
+                videoOpts_.width, videoOpts_.height, framesCtx)) {
+                outputCodec_ = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
+            }
+        } else {
+            JAMI_WARN() << "Hardware encoding disabled";
+        }
+    }
+#endif
+
+    if (!outputCodec_) {
+        /* find the video encoder */
+        if (avcodecId == AV_CODEC_ID_H263)
+            // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
+            // H263-1998 can manage all frame sizes while H263 don't
+            // AV_CODEC_ID_H263 decoder will be used for decoding
+            outputCodec_ = avcodec_find_encoder(AV_CODEC_ID_H263P);
+        else
+            outputCodec_ = avcodec_find_encoder(static_cast<AVCodecID>(avcodecId));
+        if (!outputCodec_) {
+            throw MediaEncoderException("No output encoder");
+        }
+    }
+
+    AVCodecContext* encoderCtx = prepareEncoderContext(outputCodec_, mediaType == AVMEDIA_TYPE_VIDEO);
+    encoders_.push_back(encoderCtx);
+
+#ifdef RING_ACCEL
+    if (accel_) {
+        accel_->setDetails(encoderCtx);
+        encoderCtx->opaque = accel_.get();
+    }
+#endif
+
+    uint64_t maxBitrate;
+    if(!br)
+        maxBitrate = 1000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
+    else
+        maxBitrate = 1000 * br;
+    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
+    uint64_t bufSize = 2 * maxBitrate;
+
+    /* let x264 preset override our encoder settings */
+    if (avcodecId == AV_CODEC_ID_H264) {
+        auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
+        extractProfileLevelID(profileLevelId, encoderCtx);
+#ifdef RING_ACCEL
+#ifdef ENABLE_VIDEOTOOLBOX
+        if (accel_) {
+            maxBitrate = 2000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
+            bufSize = 2 * maxBitrate;
+            crf = 20;
+        }
+#endif
+        if (accel_)
+            // limit the bitrate else it will easily go up to a few MiB/s
+            encoderCtx->bit_rate = maxBitrate;
+        else
+#endif
+        forcePresetX264(encoderCtx);
+        // For H264 :
+        // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
+        if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
+            crf = 30; // good value for H264-720p@30
+        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
+        libav_utils::setDictValue(&options_, "crf", std::to_string(crf));
+        av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+        encoderCtx->rc_buffer_size = bufSize;
+        encoderCtx->rc_max_rate = maxBitrate;
+    } else if (avcodecId == AV_CODEC_ID_VP8) {
+        // For VP8 :
+        // 1- if quality is set use it
+        // bitrate need to be set. The target bitrate becomes the maximum allowed bitrate
+        // 2- otherwise set rc_max_rate and rc_buffer_size
+        // Using information given on this page:
+        // http://www.webmproject.org/docs/encoder-parameters/
+        av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "error-resilient", 1, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "cpu-used", 7, AV_OPT_SEARCH_CHILDREN); // value obtained from testing
+        av_opt_set_int(encoderCtx, "lag-in-frames", 0, AV_OPT_SEARCH_CHILDREN);
+        // allow encoder to drop frames if buffers are full and
+        // to undershoot target bitrate to lessen strain on resources
+        av_opt_set_int(encoderCtx, "drop-frame", 25, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "undershoot-pct", 95, AV_OPT_SEARCH_CHILDREN);
+        // don't set encoderCtx->gop_size: let libvpx decide when to insert a keyframe
+        encoderCtx->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
+        encoderCtx->qmin = 4;
+        encoderCtx->qmax = 56;
+        encoderCtx->rc_buffer_size = maxBitrate;
+        encoderCtx->bit_rate = maxBitrate;
+        if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
+            av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+            JAMI_DBG("Using quality factor %d", crf);
+        } else {
+            JAMI_DBG("Using Max bitrate %lu", maxBitrate);
+        }
+    } else if (avcodecId == AV_CODEC_ID_MPEG4) {
+        // For MPEG4 :
+        // No CRF avaiable.
+        // Use CBR (set bitrate)
+        encoderCtx->qmax = crf;
+        encoderCtx->rc_buffer_size = maxBitrate;
+        encoderCtx->bit_rate = encoderCtx->rc_min_rate = encoderCtx->rc_max_rate =  maxBitrate;
+        JAMI_DBG("Using Max bitrate %lu", maxBitrate);
+    } else if (avcodecId == AV_CODEC_ID_H263) {
+        encoderCtx->qmax = crf;
+        encoderCtx->bit_rate = encoderCtx->rc_max_rate =  maxBitrate;
+        encoderCtx->rc_buffer_size = maxBitrate;
+        JAMI_DBG("Using Max bitrate %lu", maxBitrate);
+    }
+    return encoderCtx;
+}
+
+void
+MediaEncoder::setBitrate(uint64_t br)
+{    
+    AVCodecContext* encoderCtx = getCurrentVideoAVCtx();
+    AVMediaType codecType = encoderCtx->codec_type;
+    AVCodecID codecId = encoderCtx->codec_id;
+
+    stopEncoder();
+    encoderCtx = initCodec(codecType, codecId, NULL, br);
+
+    if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
+        throw MediaEncoderException("Could not open encoder");
+
+    //JAMI_WARN("[setBitrateOnTheFly] maxBitrate: %lu, crf: %d", maxBitrate, crf);
+}
+
+AVCodecContext*
+MediaEncoder::getCurrentVideoAVCtx()
+{
+    for (auto it : encoders_) {
+        if (it->codec_type == AVMEDIA_TYPE_VIDEO)
+            return it;
+    }
+    return nullptr;
+}
+
+
+void
+MediaEncoder::stopEncoder()
+{
+    flush();
+    for (auto it = encoders_.begin(); it != encoders_.end(); it++) {
+        if ((*it)->codec_type == AVMEDIA_TYPE_VIDEO)
+        {
+            encoders_.erase(it);
+            break;
+        }
+    }
+    AVCodecContext* encoderCtx = getCurrentVideoAVCtx();
+    avcodec_close(encoderCtx);
+    avcodec_free_context(&encoderCtx);
 }
 
 void
