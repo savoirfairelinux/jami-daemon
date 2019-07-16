@@ -57,7 +57,10 @@ AudioReceiveThread::~AudioReceiveThread()
 bool
 AudioReceiveThread::setup()
 {
-    audioDecoder_.reset(new MediaDecoder());
+    audioDecoder_.reset(new MediaDecoder([this](std::shared_ptr<MediaFrame>&& frame) mutable {
+        notify(frame);
+        ringbuffer_->put(std::move(std::static_pointer_cast<AudioFrame>(frame)));
+    }));
     audioDecoder_->setInterruptCallback(interruptCb, this);
 
     // custom_io so the SDP demuxer will not open any UDP connections
@@ -78,11 +81,10 @@ AudioReceiveThread::setup()
 
     // Now replace our custom AVIOContext with one that will read packets
     audioDecoder_->setIOContext(demuxContext_.get());
-    if (audioDecoder_->setupFromAudioData()) {
+    if (audioDecoder_->setupAudio()) {
         JAMI_ERR("decoder IO startup failed");
         return false;
     }
-
     Smartools::getInstance().setRemoteAudioCodec(audioDecoder_->getDecoderName());
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
@@ -92,7 +94,8 @@ AudioReceiveThread::setup()
 void
 AudioReceiveThread::process()
 {
-    auto decodedFrame = std::make_shared<AudioFrame>();
+    audioDecoder_->decode();
+    /*auto decodedFrame = std::make_shared<AudioFrame>();
     switch (audioDecoder_->decode(*decodedFrame)) {
         case MediaDecoder::Status::FrameFinished:
             notify(std::static_pointer_cast<MediaFrame>(decodedFrame));
@@ -103,7 +106,7 @@ AudioReceiveThread::process()
             if (not setup()) {
                 JAMI_ERR("fatal error, rx thread re-setup failed");
                 loop_.stop();
-            } else if (not audioDecoder_->setupFromAudioData()) {
+            } else if (not audioDecoder_->setupAudio()) {
                 JAMI_ERR("fatal error, a-decoder setup failed");
                 loop_.stop();
             }
@@ -116,7 +119,7 @@ AudioReceiveThread::process()
         case MediaDecoder::Status::EOFError:
         default:
             break;
-    }
+    }*/
 }
 
 void
