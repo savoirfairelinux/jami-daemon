@@ -45,7 +45,7 @@ namespace jami { namespace video {
 
 using std::string;
 
-constexpr auto DELAY_AFTER_RESTART = std::chrono::seconds(2);
+constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(750);
 constexpr auto EXPIRY_TIME_RTCP = std::chrono::milliseconds(2000);
 
 VideoRtpSession::VideoRtpSession(const string &callID,
@@ -402,7 +402,6 @@ VideoRtpSession::adaptQualityAndBitrate()
 
     auto now = clock::now();
     auto restartTimer = now - lastMediaRestart_;
-    //Sleep 3 seconds while the media restart
     if (restartTimer < DELAY_AFTER_RESTART) {
         //JAMI_DBG("[AutoAdapt] Waiting for delay %ld ms", std::chrono::duration_cast<std::chrono::milliseconds>(restartTimer));
         return;
@@ -418,11 +417,12 @@ VideoRtpSession::adaptQualityAndBitrate()
     //Take action only when two successive drop superior to 1% are catched...
     //and when jitter is less than 5 seconds
     auto pondLoss = getPonderateLoss(rtcpi.packetLoss);
-    //JAMI_DBG("[AutoAdapt] Ponderate packet loss rate: %f%, Last packet loss rate: %f%, Medium Jitter: %dms" , pondLoss, rtcpi.packetLoss, rtcpi.jitter);
-    if(pondLoss >= 2.0f)
+    JAMI_DBG("[AutoAdapt] Pondloss: %f%, last loss: %f%", pondLoss, rtcpi.packetLoss);
+    if(pondLoss >= 5.0f)
     {
-        videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent / ((rtcpi.packetLoss / 20)+1);
-        JAMI_WARN("[AutoAdapt] packet loss rate: %f%%, decrease bitrate from %d Kbps to %d Kbps", rtcpi.packetLoss, oldBitrate, videoBitrateInfo_.videoBitrateCurrent);
+        videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent * (1.0f - rtcpi.packetLoss/200.0f);
+        JAMI_DBG("[AutoAdapt] pondLoss: %f%%, packet loss rate: %f%%, decrease bitrate from %d Kbps to %d Kbps, ratio %f", pondLoss, rtcpi.packetLoss, oldBitrate, videoBitrateInfo_.videoBitrateCurrent, (float) videoBitrateInfo_.videoBitrateCurrent / oldBitrate);
+        histoLoss_.clear();
     }
 
     videoBitrateInfo_.videoBitrateCurrent = std::max(videoBitrateInfo_.videoBitrateCurrent, videoBitrateInfo_.videoBitrateMin);
@@ -430,15 +430,9 @@ VideoRtpSession::adaptQualityAndBitrate()
 
     if(oldBitrate != videoBitrateInfo_.videoBitrateCurrent) {
         storeVideoBitrateInfo();
-        JAMI_DBG("[AutoAdapt] Restart media sender");
 
-        const auto& cid = callID_;
-
-        runOnMainThread([cid]{
-            if (auto call = Manager::instance().callFactory.getCall(cid))
-                call->restartMediaSender();
-            });
-
+        sender_->setBitrate(videoBitrateInfo_.videoBitrateCurrent);
+        forceKeyFrame();
         lastMediaRestart_ = now;
     }
 }
