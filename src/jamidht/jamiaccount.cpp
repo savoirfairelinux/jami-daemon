@@ -384,10 +384,10 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
         startOutgoingCall(call, toUri);
     } catch (...) {
 #if HAVE_RINGNS
-        NameDirectory::lookupUri(suffix, nameServer_, [wthis_=weak(),call](const std::string& result,
+        NameDirectory::lookupUri(suffix, nameServer_, [wthis_=weak(), call](const std::string& result,
                                                                    NameDirectory::Response response) {
             // we may run inside an unknown thread, but following code must be called in main thread
-            runOnMainThread([=, &result]() {
+            runOnMainThread([wthis_, result, response, call]() {
                 if (response != NameDirectory::Response::found) {
                     call->onFailure(EINVAL);
                     return;

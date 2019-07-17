@@ -2940,16 +2940,14 @@ Manager::getDisplayNames(const std::string& confID) const
 std::vector<std::string>
 Manager::getParticipantList(const std::string& confID) const
 {
-    std::vector<std::string> v;
-    ConferenceMap::const_iterator iter_conf = pimpl_->conferenceMap_.find(confID);
-
+    auto iter_conf = pimpl_->conferenceMap_.find(confID);
     if (iter_conf != pimpl_->conferenceMap_.end()) {
-        const ParticipantSet participants(iter_conf->second->getParticipantList());
-        std::copy(participants.begin(), participants.end(), std::back_inserter(v));;
+        const ParticipantSet& participants(iter_conf->second->getParticipantList());
+        return {participants.begin(), participants.end()};
     } else
         JAMI_WARN("Did not find conference %s", confID.c_str());
 
-    return v;
+    return {};
 }
 
 std::string
