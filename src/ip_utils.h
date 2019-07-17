@@ -274,7 +274,7 @@ std::string getDeviceName();
  * Return the generic "any host" IP address of the specified family.
  * If family is unspecified, default to pj_AF_INET6() (IPv6).
  */
-IpAddr getAnyHostAddr(pj_uint16_t family = pj_AF_UNSPEC());
+inline IpAddr getAnyHostAddr(pj_uint16_t family)  { return IpAddr(family); }
 
 /**
  * Return the first host IP address of the specified family.
@@ -286,7 +286,7 @@ IpAddr getAnyHostAddr(pj_uint16_t family = pj_AF_UNSPEC());
  * If family is unspecified, default to pj_AF_INET6() if compiled
  * with IPv6, or pj_AF_INET() otherwise.
  */
-IpAddr getLocalAddr(pj_uint16_t family = pj_AF_UNSPEC());
+IpAddr getLocalAddr(pj_uint16_t family);
 
 /**
  * Get the IP address of the network interface interface with the specified
