@@ -93,7 +93,7 @@ class Conference : public Recordable {
         /**
          * Get the participant list for this conference
          */
-        ParticipantSet getParticipantList() const;
+        const ParticipantSet& getParticipantList() const;
 
         /**
          * Get the display names or peer numbers for this conference
