@@ -47,28 +47,34 @@ CoreLayer::~CoreLayer()
 std::vector<std::string>
 CoreLayer::getCaptureDeviceList() const
 {
+    auto list = getDeviceList(true);
     std::vector<std::string> ret;
-
-    for (const auto& x : getDeviceList(true))
-        ret.push_back(x.name_);
-
+    ret.reserve(list.size());
+    for (auto& x : list)
+        ret.emplace_back(std::move(x.name_));
     return ret;
 }
 
 std::vector<std::string>
 CoreLayer::getPlaybackDeviceList() const
 {
+    auto list = getDeviceList(false);
     std::vector<std::string> ret;
-
-    for (const auto& x : getDeviceList(false))
-        ret.push_back(x.name_);
-
+    ret.reserve(list.size());
+    for (auto& x : list)
+        ret.emplace_back(std::move(x.name_));
     return ret;
 }
 
 int
 CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 {
+    int i = 0;
+    for (const auto& device : getDeviceList(type == DeviceType::CAPTURE)) {
+        if (device.name_ == name)
+            return i;
+        i++;
+    }
     return 0;
 }
 
