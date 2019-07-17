@@ -534,9 +534,6 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
     if (status != PJ_SUCCESS)
         JAMI_ERR("Can't set transport callback: %s", sip_utils::sip_strerror(status).c_str());
 
-    if (!ip_utils::getLocalAddr())
-        throw VoipLinkException("UserAgent: Unable to determine network capabilities");
-
     TRY(pjsip_tsx_layer_init_module(endpt_));
     TRY(pjsip_ua_init_module(endpt_, nullptr));
     TRY(pjsip_replaces_init_module(endpt_)); // See the Replaces specification in RFC 3891

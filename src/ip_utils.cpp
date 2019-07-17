@@ -120,21 +120,8 @@ ip_utils::haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>
 }
 
 IpAddr
-ip_utils::getAnyHostAddr(pj_uint16_t family)
-{
-    if (family == pj_AF_UNSPEC()) {
-        family = pj_AF_INET6();
-    }
-    return IpAddr(family);
-}
-
-IpAddr
 ip_utils::getLocalAddr(pj_uint16_t family)
 {
-    sip_utils::register_thread();
-    if (family == pj_AF_UNSPEC()) {
-        family = pj_AF_INET6();
-    }
     IpAddr ip_addr {};
     pj_status_t status = pj_gethostip(family, ip_addr.pjPtr());
     if (status == PJ_SUCCESS) {
