@@ -69,6 +69,26 @@ CoreLayer::getPlaybackDeviceList() const
 int
 CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 {
+    std::vector<std::string> deviceList;
+    if (type == DeviceType::CAPTURE) {
+        deviceList = getCaptureDeviceList();
+    } else if (type == DeviceType::PLAYBACK){
+        deviceList = getPlaybackDeviceList();
+    } else {
+        return 0;
+    }
+    int numDevices = 0;
+    numDevices = deviceList.size();
+    if (numDevices < 0) {
+        JAMI_ERR("CoreLayer error, no audio devices");
+    } else {
+        int i = 0;
+        for (auto d = deviceList.cbegin(); d != deviceList.cend(); ++d, ++i) {
+            if (*d == name) {
+                return i;
+            }
+        }
+    }
     return 0;
 }
 
