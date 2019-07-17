@@ -69,6 +69,13 @@ CoreLayer::getPlaybackDeviceList() const
 int
 CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 {
+    const auto& deviceList(getDeviceList(type == DeviceType::CAPTURE));
+    int i = 0;
+    for (const auto& device : deviceList) {
+        if (device.name_ == name)
+            return i;
+        i++;
+    }
     return 0;
 }
 
