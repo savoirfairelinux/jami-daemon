@@ -28,6 +28,7 @@ public:
     virtual void newServerSubscriptionRequest(const std::string& /*remote*/){}
     virtual void serverError(const std::string& /*account_id*/, const std::string& /*error*/, const std::string& /*msg*/){}
     virtual void newBuddyNotification(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*status*/, const std::string& /*line_status*/){}
+    virtual void nearbyPeerNotification(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/, const std::string& /*displayname*/){}
     virtual void subscriptionStateChanged(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/){}
 };
 %}
@@ -50,5 +51,6 @@ public:
     virtual void newServerSubscriptionRequest(const std::string& /*remote*/){}
     virtual void serverError(const std::string& /*account_id*/, const std::string& /*error*/, const std::string& /*msg*/){}
     virtual void newBuddyNotification(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*status*/, const std::string& /*line_status*/){}
+    virtual void nearbyPeerNotification(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/, const std::string& /*displayname*/){}
     virtual void subscriptionStateChanged(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/){}
 };

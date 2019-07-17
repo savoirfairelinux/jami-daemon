@@ -275,6 +275,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<PresenceSignal::NewServerSubscriptionRequest>(bind(&PresenceCallback::newServerSubscriptionRequest, presM, _1 )),
         exportable_callback<PresenceSignal::ServerError>(bind(&PresenceCallback::serverError, presM, _1, _2, _3 )),
         exportable_callback<PresenceSignal::NewBuddyNotification>(bind(&PresenceCallback::newBuddyNotification, presM, _1, _2, _3, _4 )),
+        exportable_callback<PresenceSignal::NearbyPeerNotification>(bind(&PresenceCallback::nearbyPeerNotification, presM, _1, _2, _3, _4)),
         exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&PresenceCallback::subscriptionStateChanged, presM, _1, _2, _3 ))
     };
 
