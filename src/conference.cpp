@@ -125,7 +125,8 @@ std::string Conference::getStateStr() const
     }
 }
 
-ParticipantSet Conference::getParticipantList() const
+const ParticipantSet&
+Conference::getParticipantList() const
 {
     return participants_;
 }
