@@ -544,6 +544,7 @@ setDecodingAccelerated(bool state)
 #ifdef RING_ACCEL
     JAMI_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
     jami::Manager::instance().videoPreferences.setDecodingAccelerated(state);
+    jami::Manager::instance().saveConfig();
 #endif
 }
 
@@ -563,6 +564,7 @@ setEncodingAccelerated(bool state)
 #ifdef RING_ACCEL
     JAMI_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
     jami::Manager::instance().videoPreferences.setEncodingAccelerated(state);
+    jami::Manager::instance().saveConfig();
 #endif
 }
 
