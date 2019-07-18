@@ -2138,13 +2138,11 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
     im::fillPJSIPMessageBody(*tdata, payloads);
 
     // Send message request with callback SendMessageOnComplete
-    auto token = t.release();
-    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, token, &SendMessageOnComplete);
+    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t.release(), &SendMessageOnComplete);
 
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
         messageEngine_.onMessageSent(to, id, false);
-        delete token;
         return;
     }
 }
@@ -2179,13 +2177,11 @@ SIPAccount::SendMessageOnComplete(void *token, pjsip_event *event)
             cseq_hdr->cseq += 1;
 
             // Resend request
-            auto data = c.release();
-            status = pjsip_endpt_send_request(acc->link_->getEndpoint(), new_request, -1, data, &SendMessageOnComplete);
+            status = pjsip_endpt_send_request(acc->link_->getEndpoint(), new_request, -1, c.release(), &SendMessageOnComplete);
 
             if (status != PJ_SUCCESS) {
                 JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
                 acc->messageEngine_.onMessageSent(c->to, c->id, false);
-                delete data;
             }
             return;
         }
