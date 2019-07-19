@@ -3,6 +3,8 @@
 #include <numeric>
 // Logger
 #include "logger.h"
+// Tensorflow headers
+#include "tensorflow/lite/interpreter.h"
 
 MultipleObjectTracking::MultipleObjectTracking(SupervisedModel model)
     : TensorflowSupervisedInference(model) {}
