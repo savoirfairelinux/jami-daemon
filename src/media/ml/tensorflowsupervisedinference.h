@@ -1,14 +1,19 @@
 #ifndef TENSORFLOWSUPERVISEDINFERENCE_H
 #define TENSORFLOWSUPERVISEDINFERENCE_H
-// Tensorflow headers
-#include "tensorflow/lite/interpreter.h"
-#include "tensorflow/lite/model.h"
+// Std libraries
+#include <memory>
 // Library headers
 #include "model.h"
+
+namespace tflite {
+class FlatBufferModel;
+class Interpreter;
+} // namespace tflite
 
 class TensorflowSupervisedInference {
 public:
   TensorflowSupervisedInference(SupervisedModel model);
+  ~TensorflowSupervisedInference();
   void loadLabels();
   void loadModel();
   void buildInterpreter();

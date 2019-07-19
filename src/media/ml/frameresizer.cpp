@@ -46,6 +46,8 @@ void FrameResizer::onNewFrame(const AVFrame *frame) {
   nbFrames++;
 }
 
+void FrameResizer::onNewFrame(AVFrame *frame) {}
+
 void FrameResizer::createTransformedFrame(unsigned int width,
                                           unsigned int height) {
   /** Frame allocation
