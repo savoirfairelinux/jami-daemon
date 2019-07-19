@@ -2149,7 +2149,7 @@ Manager::playRingtone(const std::string& accountID)
     }
 
     std::string ringchoice = account->getRingtonePath();
-#ifdef TARGET_OS_IOS
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     //for ios file located in main buindle
     CFBundleRef bundle = CFBundleGetMainBundle();
     CFURLRef bundleURL = CFBundleCopyBundleURL(bundle);
