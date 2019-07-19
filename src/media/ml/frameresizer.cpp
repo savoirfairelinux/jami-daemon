@@ -4,6 +4,8 @@
 #include "tensorflow/lite/builtin_op_data.h"
 #include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/kernels/register.h"
+// Library headers
+#include "dring/videomanager_interface.h"
 
 FrameResizer::FrameResizer()
     : FrameListener(), resizeContext{nullptr,
@@ -17,10 +19,11 @@ FrameResizer::FrameResizer()
 
 FrameResizer::~FrameResizer() {}
 
-void FrameResizer::onNewFrame(const AVFrame *frame) {
+void FrameResizer::onNewFrame(const jami::VideoFrame &frame) {
   if (!resizeContext) {
     resizeContext.reset(sws_getContext(
-        frame->width, frame->height, static_cast<AVPixelFormat>(frame->format),
+        frame.width(), frame.height(),
+        static_cast<AVPixelFormat>(frame.format()),
         static_cast<int>(wantedWidth), static_cast<int>(wantedHeight),
         AV_PIX_FMT_RGB24, SWS_FAST_BILINEAR, nullptr, nullptr, nullptr));
   }
@@ -32,7 +35,7 @@ void FrameResizer::onNewFrame(const AVFrame *frame) {
   if (nbFrames < 1800) {
     std::chrono::steady_clock::time_point tic =
         std::chrono::steady_clock::now();
-    transformFrameToRGB(frame);
+    transformFrameToRGB(frame.pointer());
     std::chrono::steady_clock::time_point tac =
         std::chrono::steady_clock::now();
 
@@ -45,6 +48,8 @@ void FrameResizer::onNewFrame(const AVFrame *frame) {
 
   nbFrames++;
 }
+
+void FrameResizer::onNewFrame(jami::VideoFrame &frame) {}
 
 void FrameResizer::createTransformedFrame(unsigned int width,
                                           unsigned int height) {

@@ -9,7 +9,8 @@ public:
   FrameResizer();
   virtual ~FrameResizer() override;
 
-  void onNewFrame(const AVFrame *frame) override;
+  void onNewFrame(const jami::VideoFrame &frame) override;
+  void onNewFrame(jami::VideoFrame &frame) override;
   void transformFrameToRGB(const AVFrame *frame);
   void createTransformedFrame(unsigned int width, unsigned int height);
   void resizeWithTensorflow(uint8_t *, unsigned char *, int, int, int, int, int,
