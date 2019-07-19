@@ -6,6 +6,7 @@
 class FrameListener {
 public:
   virtual void onNewFrame(const AVFrame *frame) = 0;
+  virtual void onNewFrame(AVFrame *frame) = 0;
   virtual ~FrameListener();
 };
 #endif // FRAMELISTENER_H

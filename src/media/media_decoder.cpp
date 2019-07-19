@@ -245,13 +245,16 @@ int MediaDecoder::setupStream(AVMediaType mediaType) {
   }
 #endif
 
-    JAMI_DBG() << "Decoding " << streamType << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
-    decoderCtx_->err_recognition = (AV_EF_CRCCHECK | AV_EF_BITSTREAM | AV_EF_BUFFER | AV_EF_EXPLODE | AV_EF_CAREFUL | AV_EF_COMPLIANT | AV_EF_AGGRESSIVE);
-    ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
-    if (ret < 0) {
-        JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
-        return -1;
-    }
+  JAMI_DBG() << "Decoding " << streamType << " using "
+             << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
+  decoderCtx_->err_recognition =
+      (AV_EF_CRCCHECK | AV_EF_BITSTREAM | AV_EF_BUFFER | AV_EF_EXPLODE |
+       AV_EF_CAREFUL | AV_EF_COMPLIANT | AV_EF_AGGRESSIVE);
+  ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+  if (ret < 0) {
+    JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
+    return -1;
+  }
 
   return 0;
 }
@@ -314,7 +317,7 @@ MediaDecoder::Status MediaDecoder::decode(VideoFrame &result) {
       }
     }
     // ML
-    tfi.onNewFrame(frame);
+    tfi.onNewFrame(result);
     //    fr.onNewFrame(frame);
     return Status::FrameFinished;
   }
