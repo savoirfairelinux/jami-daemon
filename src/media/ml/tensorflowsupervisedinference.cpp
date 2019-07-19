@@ -4,7 +4,9 @@
 #include <numeric>
 // Tensorflow headers
 #include "tensorflow/lite/builtin_op_data.h"
+#include "tensorflow/lite/interpreter.h"
 #include "tensorflow/lite/kernels/register.h"
+#include "tensorflow/lite/model.h"
 #include "tensorflow/lite/optional_debug_tools.h"
 // Logger
 #include "logger.h"
@@ -14,6 +16,7 @@
 TensorflowSupervisedInference::TensorflowSupervisedInference(
     SupervisedModel model)
     : model(model) {}
+TensorflowSupervisedInference::~TensorflowSupervisedInference() {}
 
 std::vector<std::string> TensorflowSupervisedInference::readLinesFromFile(
     const std::string filename) const {
@@ -77,14 +80,17 @@ void TensorflowSupervisedInference::init() {
   setInterpreterSettings();
   // Loading the labels
   loadLabels();
+  allocateTensors();
+}
+
+void TensorflowSupervisedInference::allocateTensors() {
+  if (interpreter->AllocateTensors() != kTfLiteOk) {
+    JAMI_ERR() << "Failed to allocate tensors!"
+               << "\n";
+  }
 }
 
 void TensorflowSupervisedInference::describeModelTensors() const {
-  if (interpreter->AllocateTensors() != kTfLiteOk) {
-    JAMI_DBG() << "Failed to allocate tensors!"
-               << "\n";
-  }
-
   PrintInterpreterState(interpreter.get());
   JAMI_DBG() << "=============== inputs/outputs dimensions ==============="
              << "\n";
