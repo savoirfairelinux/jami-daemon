@@ -2149,7 +2149,7 @@ Manager::playRingtone(const std::string& accountID)
     }
 
     std::string ringchoice = account->getRingtonePath();
-#ifdef TARGET_OS_IOS
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     //for ios file located in main buindle
     CFBundleRef bundle = CFBundleGetMainBundle();
     CFURLRef bundleURL = CFBundleCopyBundleURL(bundle);
@@ -2157,7 +2157,7 @@ Manager::playRingtone(const std::string& accountID)
     CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
     const char *buindlePath = CFStringGetCStringPtr(stringPath, encodingMethod);
     ringchoice = std::string(buindlePath) + DIR_SEPARATOR_STR + ringchoice;
-#elif _WIN32
+#else if defined(_WIN32)
     ringchoice = decodeMultibyteString(ringchoice);
 #else
     if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
