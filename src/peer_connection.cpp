@@ -316,15 +316,16 @@ IceSocketEndpoint::IceSocketEndpoint(std::shared_ptr<IceTransport> ice, bool isS
 
 IceSocketEndpoint::~IceSocketEndpoint()
 {
-    if (ice_) {
-        ice_->stop();
-        return;
-    }
+    shutdown();
 }
 
 void
 IceSocketEndpoint::shutdown() {
     if (ice_) {
+        // Sometimes the other peer never send any packet
+        // So, we cancel pending read to avoid to have
+        // any blocking operation.
+        ice_->cancelOperations();
         ice_->stop();
     }
 }
@@ -496,7 +497,14 @@ TlsSocketEndpoint::TlsSocketEndpoint(AbstractSocketEndpoint& tr,
 }
 
 
-TlsSocketEndpoint::~TlsSocketEndpoint() = default;
+TlsSocketEndpoint::~TlsSocketEndpoint() {
+    shutdown();
+}
+
+void
+TlsSocketEndpoint::shutdown() {
+    pimpl_->tr.shutdown();
+}
 
 bool
 TlsSocketEndpoint::isInitiator() const
