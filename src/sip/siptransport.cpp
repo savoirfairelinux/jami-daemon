@@ -59,7 +59,10 @@ std::string
 SipTransportDescr::toString() const
 {
     std::stringstream ss;
-    ss << "{" << pjsip_transport_get_type_desc(type) << " on " << interface << ":" << listenerPort  << "}";
+    if(listenerPort == sip_utils::DEFAULT_SIP_PORT && !isIPToIP)
+        ss << "{" << pjsip_transport_get_type_desc(type) << " on " << interface << ":" << "Implicit"  << "}";
+    else
+        ss << "{" << pjsip_transport_get_type_desc(type) << " on " << interface << ":" << listenerPort  << "}";
     return ss.str();
 }
 
@@ -343,7 +346,8 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
     IpAddr listeningAddress = (d.interface == ip_utils::DEFAULT_INTERFACE) ?
         ip_utils::getAnyHostAddr(family) :
         ip_utils::getInterfaceAddr(d.interface, family);
-    listeningAddress.setPort(d.listenerPort);
+    if(d.listenerPort != sip_utils::DEFAULT_SIP_PORT || d.isIPToIP)
+        listeningAddress.setPort(d.listenerPort);
     RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
 
     pjsip_udp_transport_cfg pj_cfg;
