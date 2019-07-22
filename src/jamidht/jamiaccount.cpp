@@ -2674,6 +2674,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
     auto blob = ice->packIceMsg();
     if (ice_tcp) {
         auto ice_tcp_msg = ice_tcp->packIceMsg(2);
+        JAMI_ERR() << std::string(ice_tcp_msg.begin(), ice_tcp_msg.end()).c_str();
         blob.insert(blob.end(), ice_tcp_msg.begin(), ice_tcp_msg.end());
     }
 

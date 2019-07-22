@@ -369,6 +369,8 @@ private:
             return;
         }
 
+        parent_.account.registerDhtAddress(*parent_.ice_); // TODO (sblin) registerDhtAddress should be private
+
         auto iceAttributes = parent_.ice_->getLocalAttributes();
         std::stringstream icemsg;
         icemsg << iceAttributes.ufrag << "\n";
@@ -717,6 +719,8 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                     continue;
                 }
 
+                account.registerDhtAddress(*ice_); // TODO (sblin) registerDhtAddress should be private
+
                 auto sdp = parse_SDP(ip);
                 if (not ice_->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
                   JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
@@ -724,13 +728,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                   continue;
                 }
 
-                ice_->waitForNegotiation(10);
-                if (ice_->isRunning()) {
-                    sendIce = true;
-                    JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
-                } else {
-                    JAMI_WARN("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
-                }
+                sendIce = true;
             }
         } catch (const std::exception& e) {
             JAMI_WARN() << account << "[CNX] ignored peer connection '" << ip << "', " << e.what();
@@ -750,6 +748,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
           icemsg << addr << "\n";
         }
         addresses = {icemsg.str()};
+        JAMI_ERR() << icemsg.str();
     }
 
     if (sendTurn) {
@@ -773,14 +772,24 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
 
     if (sendIce) {
 
-        std::mutex mtx;
+        ice_->waitForNegotiation(10);
+        if (ice_->isRunning()) {
+            //sendIce = true;
+            // TODO return
+            JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
+        } else {
+            JAMI_WARN("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
+            return;
+        }
+
+        /*std::mutex mtx;
         std::unique_lock<std::mutex> lk{mtx};
         ice_->setSlaveSession();
         cv->wait_for(lk, ICE_READY_TIMEOUT);
         if (!*iceReady) {
             // This will fallback on TURN if ICE is not ready
             return;
-        }
+        }*/
         std::unique_ptr<AbstractSocketEndpoint> peer_ep =
             std::make_unique<IceSocketEndpoint>(ice_, false);
         JAMI_DBG() << account << "[CNX] start TLS session";
