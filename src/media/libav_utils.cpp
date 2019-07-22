@@ -48,6 +48,7 @@ av_frame_new_side_data_from_buf(AVFrame* frame, enum AVFrameSideDataType type, A
     side_data->buf = buf;
     side_data->data = side_data->buf->data;
     side_data->size = side_data->buf->size;
+    return side_data;
 }
 #endif
 }

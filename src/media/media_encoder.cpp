@@ -247,7 +247,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
         if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
             crf = 30; // good value for H264-720p@30
-        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
+        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
         libav_utils::setDictValue(&options_, "crf", std::to_string(crf));
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         encoderCtx->rc_buffer_size = bufSize;
@@ -277,7 +277,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
             av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
             JAMI_DBG("Using quality factor %d", crf);
         } else {
-            JAMI_DBG("Using Max bitrate %d", maxBitrate);
+            JAMI_DBG("Using Max bitrate %lu", maxBitrate);
         }
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
         // For MPEG4 :
@@ -285,11 +285,11 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         // Use CBR (set bitrate)
         encoderCtx->rc_buffer_size = maxBitrate;
         encoderCtx->bit_rate = encoderCtx->rc_min_rate = encoderCtx->rc_max_rate =  maxBitrate;
-        JAMI_DBG("Using Max bitrate %d", maxBitrate);
+        JAMI_DBG("Using Max bitrate %lu", maxBitrate);
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_H263) {
         encoderCtx->bit_rate = encoderCtx->rc_max_rate =  maxBitrate;
         encoderCtx->rc_buffer_size = maxBitrate;
-        JAMI_DBG("Using Max bitrate %d", maxBitrate);
+        JAMI_DBG("Using Max bitrate %lu", maxBitrate);
     }
 
     // add video stream to outputformat context
@@ -522,7 +522,7 @@ MediaEncoder::send(AVPacket& pkt, int streamIdx)
     }
     if (streamIdx < 0)
         streamIdx = currentStreamIdx_;
-    if (streamIdx >= 0 and streamIdx < encoders_.size()) {
+    if (streamIdx >= 0 and static_cast<size_t>(streamIdx) < encoders_.size()) {
         auto encoderCtx = encoders_[streamIdx];
         pkt.stream_index = streamIdx;
         if (pkt.pts != AV_NOPTS_VALUE)

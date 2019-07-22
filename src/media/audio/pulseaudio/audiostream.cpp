@@ -36,7 +36,7 @@ AudioStream::AudioStream(pa_context *c,
                          const PaDeviceInfos* infos,
                          bool ec,
                          OnReady onReady)
-    : audiostream_(0), mainloop_(m), onReady_(std::move(onReady))
+    : onReady_(std::move(onReady)), audiostream_(0), mainloop_(m)
 {
     const pa_channel_map channel_map = infos->channel_map;
 
