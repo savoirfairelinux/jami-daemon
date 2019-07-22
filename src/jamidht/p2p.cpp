@@ -369,6 +369,8 @@ private:
             return;
         }
 
+        parent_.account.registerDhtAddress(*parent_.ice_);
+
         auto iceAttributes = parent_.ice_->getLocalAttributes();
         std::stringstream icemsg;
         icemsg << iceAttributes.ufrag << "\n";
@@ -717,20 +719,17 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                     continue;
                 }
 
+                account.registerDhtAddress(*ice_);
+
                 auto sdp = parse_SDP(ip);
                 if (not ice_->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
-                  JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
-                            account.getAccountID().c_str());
-                  continue;
+                    JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
+                                account.getAccountID().c_str());
+                    continue;
                 }
 
-                ice_->waitForNegotiation(10);
-                if (ice_->isRunning()) {
-                    sendIce = true;
-                    JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
-                } else {
-                    JAMI_WARN("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
-                }
+                ice_->setSlaveSession();
+                sendIce = true; // Ice started with success, we can use it.
             }
         } catch (const std::exception& e) {
             JAMI_WARN() << account << "[CNX] ignored peer connection '" << ip << "', " << e.what();
@@ -773,14 +772,24 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
 
     if (sendIce) {
 
+        ice_->waitForNegotiation(10);
+        if (ice_->isRunning()) {
+            JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
+        } else {
+            JAMI_WARN("[Account:%s] ICE negotation failed - Fallbacking to TURN", account.getAccountID().c_str());
+            return; // wait for onTurnPeerConnection
+        }
+
         std::mutex mtx;
         std::unique_lock<std::mutex> lk{mtx};
-        ice_->setSlaveSession();
-        cv->wait_for(lk, ICE_READY_TIMEOUT);
         if (!*iceReady) {
-            // This will fallback on TURN if ICE is not ready
-            return;
+            cv->wait_for(lk, ICE_READY_TIMEOUT);
+            if (!*iceReady) {
+                // This will fallback on TURN if ICE is not ready
+                return;
+            }
         }
+
         std::unique_ptr<AbstractSocketEndpoint> peer_ep =
             std::make_unique<IceSocketEndpoint>(ice_, false);
         JAMI_DBG() << account << "[CNX] start TLS session";
