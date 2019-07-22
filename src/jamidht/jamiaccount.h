@@ -404,6 +404,11 @@ class JamiAccount : public SIPAccountBase {
          */
         std::map<std::string, std::string> getNearbyPeers() const override;
 
+        /**
+         * Add public addresses to ice transport
+         */
+        void registerDhtAddress(IceTransport&);
+
     private:
         NON_COPYABLE(JamiAccount);
 
@@ -694,7 +699,6 @@ class JamiAccount : public SIPAccountBase {
         template <class... Args>
         std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
 
-        void registerDhtAddress(IceTransport&);
 
         std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
 
