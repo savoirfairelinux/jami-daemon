@@ -343,12 +343,13 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
     IpAddr listeningAddress = (d.interface == ip_utils::DEFAULT_INTERFACE) ?
         ip_utils::getAnyHostAddr(family) :
         ip_utils::getInterfaceAddr(d.interface, family);
-    listeningAddress.setPort(d.listenerPort);
+    //listeningAddress.setPort(d.listenerPort);
     RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
 
     pjsip_udp_transport_cfg pj_cfg;
     pjsip_udp_transport_cfg_default(&pj_cfg, family);
     pj_cfg.bind_addr = listeningAddress;
+    //pj_cfg.sockopt_params.cnt = PJ_SO_REUSEADDR;
     pjsip_transport *transport = nullptr;
     if (pj_status_t status = pjsip_udp_transport_start2(endpt_, &pj_cfg, &transport)) {
         JAMI_ERR("pjsip_udp_transport_start2 failed with error %d: %s", status,
@@ -358,6 +359,9 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
             listeningAddress.toString(true).c_str());
         return nullptr;
     }
+    JAMI_ERR("UDP IPv%s Transport did start on %s",
+            listeningAddress.isIpv4() ? "4" : "6",
+            listeningAddress.toString(true).c_str());
 
     JAMI_DBG("Created UDP transport on %s : %s", d.interface.c_str(), listeningAddress.toString(true).c_str());
     return std::make_shared<SipTransport>(transport);
