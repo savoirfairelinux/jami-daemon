@@ -188,6 +188,7 @@ public:
                     std::function<bool(const dht::crypto::Certificate&)>&& cert_check);
     ~TlsSocketEndpoint();
 
+    void shutdown() override;
     bool isReliable() const override { return true; }
     bool isInitiator() const override;
     int maxPayload() const override;

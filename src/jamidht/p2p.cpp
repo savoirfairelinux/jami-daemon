@@ -247,6 +247,13 @@ public:
         return res;
     }
 
+    bool hasPublicIp(const ICESDP& sdp) {
+        for (const auto& cand: sdp.rem_candidates)
+            if (cand.type == PJ_ICE_CAND_TYPE_SRFLX)
+                return true;
+        return false;
+    }
+
 private:
     std::map<IpAddr, std::unique_ptr<ConnectedTurnTransport>> turnEndpoints_;
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<AbstractSocketEndpoint>> p2pEndpoints_;
@@ -326,6 +333,7 @@ public:
         for (auto& cb: listeners_)
             cb(nullptr);
         connection_.reset();
+
     }
 
     bool hasAlreadyAResponse() {
@@ -369,6 +377,8 @@ private:
             return;
         }
 
+        parent_.account.registerDhtAddress(*parent_.ice_);
+
         auto iceAttributes = parent_.ice_->getLocalAttributes();
         std::stringstream icemsg;
         icemsg << iceAttributes.ufrag << "\n";
@@ -411,8 +421,10 @@ private:
                 // Should be ICE SDP
                 // P2P File transfer. We received an ice SDP message:
                 auto sdp = parent_.parse_SDP(address);
-
-                parent_.ice_->setInitiatorSession();
+                // NOTE: hasPubIp is used for compability (because ICE is waiting for a certain state in old versions)
+                // This can be removed when old versions will be unsupported.
+                auto hasPubIp = parent_.hasPublicIp(sdp);
+                if (!hasPubIp) parent_.ice_->setInitiatorSession();
                 if (not parent_.ice_->start({sdp.rem_ufrag, sdp.rem_pwd},
                                             sdp.rem_candidates)) {
                   JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
@@ -425,6 +437,7 @@ private:
                     peer_ep = std::make_shared<IceSocketEndpoint>(parent_.ice_, true);
                     JAMI_DBG("[Account:%s] ICE negotiation succeed. Starting file transfer",
                              parent_.account.getAccountID().c_str());
+                    if (hasPubIp) parent_.ice_->setInitiatorSession();
                     break;
                 } else {
                   JAMI_ERR("[Account:%s] ICE negotation failed",
@@ -682,7 +695,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
     // Save peer certificate for later TLS session (MUST BE DONE BEFORE TURN PEER AUTHORIZATION)
     certMap_.emplace(cert->getId(), std::make_pair(cert, peer_h));
 
-    auto sendRelayV4 = false, sendRelayV6 = false, sendIce = false;
+    auto sendRelayV4 = false, sendRelayV6 = false, sendIce = false, hasPubIp = false;
     std::shared_ptr<bool> iceReady = std::make_shared<bool>(false);
 
     std::shared_ptr<std::condition_variable> cv =
@@ -717,20 +730,28 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                     continue;
                 }
 
+                account.registerDhtAddress(*ice_);
+
                 auto sdp = parse_SDP(ip);
+                // NOTE: hasPubIp is used for compability (because ICE is waiting for a certain state in old versions)
+                // This can be removed when old versions will be unsupported (version before this patch)
+                hasPubIp = hasPublicIp(sdp);
                 if (not ice_->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
-                  JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
-                            account.getAccountID().c_str());
-                  continue;
+                    JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
+                                account.getAccountID().c_str());
+                    continue;
                 }
 
-                ice_->waitForNegotiation(10);
-                if (ice_->isRunning()) {
-                    sendIce = true;
-                    JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
-                } else {
-                    JAMI_WARN("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
-                }
+                if (!hasPubIp) {
+                    ice_->waitForNegotiation(10);
+                    if (ice_->isRunning()) {
+                        sendIce = true;
+                        JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
+                    } else {
+                        JAMI_WARN("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
+                    }
+                } else
+                    sendIce = true; // Ice started with success, we can use it.
             }
         } catch (const std::exception& e) {
             JAMI_WARN() << account << "[CNX] ignored peer connection '" << ip << "', " << e.what();
@@ -773,18 +794,32 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
 
     if (sendIce) {
 
+        if (hasPubIp) {
+            ice_->waitForNegotiation(10);
+            if (ice_->isRunning()) {
+                JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
+            } else {
+                JAMI_WARN("[Account:%s] ICE negotation failed - Fallbacking to TURN", account.getAccountID().c_str());
+                return; // wait for onTurnPeerConnection
+            }
+        }
+
         std::mutex mtx;
         std::unique_lock<std::mutex> lk{mtx};
-        ice_->setSlaveSession();
-        cv->wait_for(lk, ICE_READY_TIMEOUT);
         if (!*iceReady) {
-            // This will fallback on TURN if ICE is not ready
-            return;
+            if (!hasPubIp) ice_->setSlaveSession();
+            cv->wait_for(lk, ICE_READY_TIMEOUT);
+            if (!*iceReady) {
+                // This will fallback on TURN if ICE is not ready
+                return;
+            }
         }
+
         std::unique_ptr<AbstractSocketEndpoint> peer_ep =
             std::make_unique<IceSocketEndpoint>(ice_, false);
         JAMI_DBG() << account << "[CNX] start TLS session";
         auto ph = peer_h;
+        if (hasPubIp) ice_->setSlaveSession();
         auto tls_ep = std::make_unique<TlsSocketEndpoint>(
             *peer_ep, account.identity(), account.dhParams(),
             [&, this](const dht::crypto::Certificate &cert) {
