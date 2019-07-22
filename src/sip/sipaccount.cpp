@@ -796,7 +796,7 @@ void SIPAccount::doRegister2_()
 
         if (!tlsListener_) {
             tlsListener_ = link_->sipTransportBroker->getTlsListener(
-                SipTransportDescr {getTransportType(), getTlsListenerPort(), getLocalInterface()},
+                SipTransportDescr {getTransportType(), getTlsListenerPort(), getLocalInterface(), isIP2IP()},
                 getTlsSetting());
             if (!tlsListener_) {
                 setRegistrationState(RegistrationState::ERROR_GENERIC);
@@ -821,7 +821,7 @@ void SIPAccount::doRegister2_()
         // If we use Tls for IP2IP, transports will be created on connection.
         if (!tlsEnable_)
             setTransport(link_->sipTransportBroker->getUdpTransport(
-                SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
+                SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface(), true}
             ));
         setRegistrationState(RegistrationState::REGISTERED);
         return;
@@ -834,7 +834,7 @@ void SIPAccount::doRegister2_()
             setTransport(link_->sipTransportBroker->getTlsTransport(tlsListener_, hostIp_, tlsServerName_.empty() ? hostname_ : tlsServerName_));
         } else {
             setTransport(link_->sipTransportBroker->getUdpTransport(
-                SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
+                SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface(), false}
             ));
         }
         if (!transport_)

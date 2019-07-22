@@ -55,8 +55,8 @@ struct SipTransportDescr
     SipTransportDescr() {}
     SipTransportDescr(pjsip_transport_type_e t)
      : type(t), listenerPort(pjsip_transport_get_default_port_for_type(t)) {}
-    SipTransportDescr(pjsip_transport_type_e t, pj_uint16_t port, const std::string& i)
-     : type(t), listenerPort(port), interface(i) {}
+    SipTransportDescr(pjsip_transport_type_e t, pj_uint16_t port, const std::string& i, bool type)
+     : type(t), listenerPort(port), interface(i), isIPToIP(type) {}
 
     static inline pjsip_transport_type_e actualType(pjsip_transport_type_e t) {
         return (t == PJSIP_TRANSPORT_START_OTHER) ? PJSIP_TRANSPORT_UDP : t;
@@ -65,7 +65,8 @@ struct SipTransportDescr
     inline bool operator==(SipTransportDescr const& o) const {
         return actualType(type) == actualType(o.type)
          && listenerPort == o.listenerPort
-         && interface == o.interface;
+         && interface == o.interface
+         && isIPToIP == o.isIPToIP; //Do we have to add this?
     }
 
     inline bool operator<(SipTransportDescr const& o) const {
@@ -79,6 +80,7 @@ struct SipTransportDescr
     pjsip_transport_type_e type {PJSIP_TRANSPORT_UNSPECIFIED};
     pj_uint16_t listenerPort {sip_utils::DEFAULT_SIP_PORT};
     std::string interface {"default"};
+    bool isIPToIP = false;
 };
 
 struct TlsListener
