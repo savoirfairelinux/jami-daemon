@@ -1,6 +1,6 @@
 # libvpx
 
-VPX_HASH := 48a3df87c0cced325f1bf95c72c8ac0f8392f919
+VPX_HASH := v1.8.1
 VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
 
 $(TARBALLS)/libvpx-$(VPX_HASH).tar.gz:
@@ -98,12 +98,6 @@ endif
 
 ifndef HAVE_WIN32
 VPX_CONF += --enable-pic
-endif
-ifdef HAVE_MACOSX
-VPX_CONF += --sdk-path=$(MACOSX_SDK)
-endif
-ifdef HAVE_IOS
-VPX_CONF += --sdk-path=$(IOS_SDK)
 endif
 LOCAL_HOSTVARS=
 ifdef HAVE_ANDROID
