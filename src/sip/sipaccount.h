@@ -678,7 +678,7 @@ class SIPAccount : public SIPAccountBase {
         /**
          * Local port to whih this account is bound
          */
-        pj_uint16_t localPort_ {sip_utils::DEFAULT_SIP_PORT};
+        pj_uint16_t localPort_ {sip_utils::DEFAULT_AUTO_SELECT_PORT};
 
         /**
          * The TLS listener port
