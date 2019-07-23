@@ -351,6 +351,21 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
     pj_cfg.bind_addr = listeningAddress;
     pjsip_transport *transport = nullptr;
     if (pj_status_t status = pjsip_udp_transport_start2(endpt_, &pj_cfg, &transport)) {
+        if (listeningAddress.getPort() != 0) {
+            if (status = WSAEADDRINUSE) { JAMI_DBG("JJ"); }
+            JAMI_ERR("pjsip_udp_transport_start2 failed with error %d: %s, try with another port", status,
+                 sip_utils::sip_strerror(status).c_str());
+            listeningAddress.setPort(0);
+            pj_cfg.bind_addr = listeningAddress;
+            if (pj_status_t status = pjsip_udp_transport_start2(endpt_, &pj_cfg, &transport)) {
+                JAMI_ERR("pjsip_udp_transport_start2 failed with error %d: %s", status,
+                 sip_utils::sip_strerror(status).c_str());
+                JAMI_ERR("UDP IPv%s Transport did not start on %s",
+                    listeningAddress.isIpv4() ? "4" : "6",
+                    listeningAddress.toString(true).c_str());
+                return nullptr;
+            }
+        }
         JAMI_ERR("pjsip_udp_transport_start2 failed with error %d: %s", status,
                  sip_utils::sip_strerror(status).c_str());
         JAMI_ERR("UDP IPv%s Transport did not start on %s",
