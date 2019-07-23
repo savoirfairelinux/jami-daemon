@@ -44,6 +44,7 @@ namespace jami { namespace sip_utils {
 
 static constexpr int DEFAULT_SIP_PORT {5060};
 static constexpr int DEFAULT_SIP_TLS_PORT {5061};
+static constexpr int DEFAULT_AUTO_SELECT_PORT {0};
 
 enum class KeyExchangeProtocol { NONE, SDES };
 
