@@ -512,7 +512,7 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
 AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
 
 dnl check for GnuTLS
-PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.5.17], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
+PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.6.7], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
 
 # PTHREAD
 # required dependency(ies): libxpat
