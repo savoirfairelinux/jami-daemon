@@ -614,6 +614,10 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
         v.push_back(map);
         setCredentials(v);
     }
+    if (isIP2IP()) {
+        localPort_ = (localPort_ == sip_utils::DEFAULT_AUTO_SELECT_PORT) ? sip_utils::DEFAULT_SIP_PORT : localPort_;
+        tlsListenerPort_ = (tlsListenerPort_ == sip_utils::DEFAULT_AUTO_SELECT_PORT) ? sip_utils::DEFAULT_SIP_TLS_PORT : tlsListenerPort_;
+    }
 }
 
 std::map<std::string, std::string>

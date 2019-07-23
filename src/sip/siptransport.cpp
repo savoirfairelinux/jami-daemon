@@ -329,7 +329,6 @@ SipTransportBroker::getUdpTransport(const IpAddr& ipAddress)
 std::shared_ptr<SipTransport>
 SipTransportBroker::createUdpTransport(const IpAddr& ipAddress)
 {
-    RETURN_IF_FAIL(ipAddress.getPort() != 0, nullptr, "Could not determine port for this transport");
     RETURN_IF_FAIL(ipAddress, nullptr, "Could not determine IP address for this transport");
 
     pjsip_udp_transport_cfg pj_cfg;
