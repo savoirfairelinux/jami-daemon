@@ -337,7 +337,6 @@ SipTransportBroker::getUdpTransport(const SipTransportDescr& descr)
 std::shared_ptr<SipTransport>
 SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
 {
-    RETURN_IF_FAIL(d.listenerPort != 0, nullptr, "Could not determine port for this transport");
     auto family = pjsip_transport_type_get_af(d.type);
 
     IpAddr listeningAddress = (d.interface == ip_utils::DEFAULT_INTERFACE) ?
