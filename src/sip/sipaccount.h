@@ -294,6 +294,24 @@ class SIPAccount : public SIPAccountBase {
         }
 
         /**
+         * Get the bind ip address on which the account should use, or is
+         * actually using.
+         * Note: if it is NULL, this address should not be used
+         * @return std::string The bind ip address used for that account
+         */
+        std::string getBindAddress() const {
+            return bindAddress_;
+        }
+
+        /**
+         * Set the new bind ip address on which this account is bind on.
+         * @pram address The bind ip address used by this account.
+         */
+        void setBindAddress(const std::string &address) {
+            bindAddress_ = address;
+        }
+
+        /**
          * @return pjsip_tls_setting structure, filled from the configuration
          * file, that can be used directly by PJSIP to initialize
          * TLS transport.
@@ -509,7 +527,7 @@ class SIPAccount : public SIPAccountBase {
 
         std::string getUserUri() const override;
 
-        IpAddr createIpAdress(const pjsip_transport_type_e &type, const pj_uint16_t port, const std::string& localInterface);
+        void createBindingAddress(const pjsip_transport_type_e &type, const pj_uint16_t port, const std::string& localInterface, IpAddr& address);
 
     private:
         void doRegister1_();
@@ -681,6 +699,11 @@ class SIPAccount : public SIPAccountBase {
          * Local port to whih this account is bound
          */
         pj_uint16_t localPort_ {sip_utils::DEFAULT_SIP_PORT};
+
+        /**
+         * Potential ip addresss on which this account is bound
+         */
+        std::string bindAddress_;
 
         /**
          * The TLS listener port

@@ -60,6 +60,7 @@ static const char *const CONFIG_ACCOUNT_AUDIO_PORT_MAX          = "Account.audio
 static const char *const CONFIG_ACCOUNT_VIDEO_PORT_MIN          = "Account.videoPortMin";
 static const char *const CONFIG_ACCOUNT_VIDEO_PORT_MAX          = "Account.videoPortMax";
 
+static const char *const CONFIG_BIND_ADDRESS                    = "Account.bindAddress";
 static const char *const CONFIG_LOCAL_INTERFACE                 = "Account.localInterface";
 static const char *const CONFIG_PUBLISHED_SAMEAS_LOCAL          = "Account.publishedSameAsLocal";
 static const char *const CONFIG_LOCAL_PORT                      = "Account.localPort";
