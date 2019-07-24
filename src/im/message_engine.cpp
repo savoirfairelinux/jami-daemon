@@ -33,7 +33,7 @@
 namespace jami {
 namespace im {
 
-static std::uniform_int_distribution<MessageToken> udist {1};
+static std::uniform_int_distribution<MessageToken> udist {1, 9007199254740992};
 
 MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path) : account_(acc), savePath_(path)
 {}
