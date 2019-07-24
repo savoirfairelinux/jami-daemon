@@ -55,14 +55,6 @@ constexpr const char* TRANSPORT_STATE_STR[] = {
 };
 constexpr const size_t TRANSPORT_STATE_SZ = arraySize(TRANSPORT_STATE_STR);
 
-std::string
-SipTransportDescr::toString() const
-{
-    std::stringstream ss;
-    ss << "{" << pjsip_transport_get_type_desc(type) << " on " << interface << ":" << listenerPort  << "}";
-    return ss.str();
-}
-
 void
 SipTransport::deleteTransport(pjsip_transport* t)
 {
@@ -253,7 +245,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
             if (type == PJSIP_TRANSPORT_UDP or type == PJSIP_TRANSPORT_UDP6) {
                 const auto updKey = std::find_if(
                     udpTransports_.cbegin(), udpTransports_.cend(),
-                    [tp](const std::pair<SipTransportDescr, pjsip_transport*>& pair) {
+                    [tp](const std::pair<IpAddr, pjsip_transport*>& pair) {
                         return pair.second == tp;
                     });
                 if (updKey != udpTransports_.cend())
@@ -303,79 +295,66 @@ SipTransportBroker::shutdown()
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::getUdpTransport(const SipTransportDescr& descr)
+SipTransportBroker::getUdpTransport(const IpAddr& ipAddress)
 {
     std::lock_guard<std::mutex> lock(transportMapMutex_);
-    auto itp = udpTransports_.find(descr);
+    auto itp = udpTransports_.find(ipAddress);
     if (itp != udpTransports_.end()) {
         auto it = transports_.find(itp->second);
         if (it != transports_.end()) {
             if (auto spt = it->second.lock()) {
-                JAMI_DBG("Reusing transport %s", descr.toString().c_str());
+                JAMI_DBG("Reusing transport %s", ipAddress.toString().c_str());
                 return spt;
             }
             else {
                 // Transport still exists but have not been destroyed yet.
-                JAMI_WARN("Recycling transport %s", descr.toString().c_str());
+                JAMI_WARN("Recycling transport %s", ipAddress.toString().c_str());
                 auto ret = std::make_shared<SipTransport>(itp->second);
                 it->second = ret;
                 return ret;
             }
         } else {
-            JAMI_WARN("Cleaning up UDP transport %s", descr.toString().c_str());
+            JAMI_WARN("Cleaning up UDP transport %s", ipAddress.toString().c_str());
             udpTransports_.erase(itp);
         }
     }
-    auto ret = createUdpTransport(descr);
+    auto ret = createUdpTransport(ipAddress);
     if (ret) {
-        udpTransports_[descr] = ret->get();
+        udpTransports_[ipAddress] = ret->get();
         transports_[ret->get()] = ret;
     }
     return ret;
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
+SipTransportBroker::createUdpTransport(const IpAddr& ipAddress)
 {
-    RETURN_IF_FAIL(d.listenerPort != 0, nullptr, "Could not determine port for this transport");
-    auto family = pjsip_transport_type_get_af(d.type);
-
-    IpAddr listeningAddress = (d.interface == ip_utils::DEFAULT_INTERFACE) ?
-        ip_utils::getAnyHostAddr(family) :
-        ip_utils::getInterfaceAddr(d.interface, family);
-    listeningAddress.setPort(d.listenerPort);
-    RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
+    RETURN_IF_FAIL(ipAddress.getPort() != 0, nullptr, "Could not determine port for this transport");
+    RETURN_IF_FAIL(ipAddress, nullptr, "Could not determine IP address for this transport");
 
     pjsip_udp_transport_cfg pj_cfg;
-    pjsip_udp_transport_cfg_default(&pj_cfg, family);
-    pj_cfg.bind_addr = listeningAddress;
+    pjsip_udp_transport_cfg_default(&pj_cfg, ipAddress.getFamily());
+    pj_cfg.bind_addr = ipAddress;
     pjsip_transport *transport = nullptr;
     if (pj_status_t status = pjsip_udp_transport_start2(endpt_, &pj_cfg, &transport)) {
         JAMI_ERR("pjsip_udp_transport_start2 failed with error %d: %s", status,
                  sip_utils::sip_strerror(status).c_str());
         JAMI_ERR("UDP IPv%s Transport did not start on %s",
-            listeningAddress.isIpv4() ? "4" : "6",
-            listeningAddress.toString(true).c_str());
+            ipAddress.isIpv4() ? "4" : "6",
+            ipAddress.toString(true).c_str());
         return nullptr;
     }
 
-    JAMI_DBG("Created UDP transport on %s : %s", d.interface.c_str(), listeningAddress.toString(true).c_str());
+    JAMI_DBG("Created UDP transport on address %s", ipAddress.toString(true).c_str());
     return std::make_shared<SipTransport>(transport);
 }
 
 std::shared_ptr<TlsListener>
-SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_setting* settings)
+SipTransportBroker::getTlsListener(const IpAddr& ipAddress, const pjsip_tls_setting* settings)
 {
     RETURN_IF_FAIL(settings, nullptr, "TLS settings not specified");
-    auto family = pjsip_transport_type_get_af(d.type);
-
-    IpAddr listeningAddress = (d.interface == ip_utils::DEFAULT_INTERFACE) ?
-        ip_utils::getAnyHostAddr(family) :
-        ip_utils::getInterfaceAddr(d.interface, family);
-    listeningAddress.setPort(d.listenerPort);
-
-    RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
-    JAMI_DBG("Creating TLS listener %s on %s...", d.toString().c_str(), listeningAddress.toString(true).c_str());
+    RETURN_IF_FAIL(ipAddress, nullptr, "Could not determine IP address for this transport");
+    JAMI_DBG("Creating TLS listener on %s...", ipAddress.toString(true).c_str());
 #if 0
     JAMI_DBG(" ca_list_file : %s", settings->ca_list_file.ptr);
     JAMI_DBG(" cert_file    : %s", settings->cert_file.ptr);
@@ -385,7 +364,7 @@ SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_s
 #endif
 
     pjsip_tpfactory *listener = nullptr;
-    const pj_status_t status = pjsip_tls_transport_start2(endpt_, settings, listeningAddress.pjPtr(), nullptr, 1, &listener);
+    const pj_status_t status = pjsip_tls_transport_start2(endpt_, settings, ipAddress.pjPtr(), nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
         JAMI_ERR("TLS listener did not start: %s", sip_utils::sip_strerror(status).c_str());
         return nullptr;
@@ -406,6 +385,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
     pjsip_tpselector sel;
     sel.type = PJSIP_TPSELECTOR_LISTENER;
     sel.u.listener = l->get();
+    sel.disable_connection_reuse = PJ_FALSE;
 
     pjsip_tx_data tx_data;
     tx_data.dest_info.name = pj_str_t{(char*)remote_name.data(), (pj_ssize_t)remote_name.size()};

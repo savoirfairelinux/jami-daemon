@@ -118,6 +118,7 @@ constexpr static const char AUTOANSWER              [] = "Account.autoAnswer";
 constexpr static const char ACTIVE_CALL_LIMIT       [] = "Account.activeCallLimit";
 constexpr static const char HOSTNAME                [] = "Account.hostname";
 constexpr static const char USERNAME                [] = "Account.username";
+constexpr static const char BIND_ADDRESS            [] = "Account.bindAddress";
 constexpr static const char ROUTE                   [] = "Account.routeset";
 constexpr static const char PASSWORD                [] = "Account.password";
 constexpr static const char REALM                   [] = "Account.realm";
