@@ -795,9 +795,8 @@ void SIPAccount::doRegister2_()
         initTlsConfiguration();
 
         if (!tlsListener_) {
-            tlsListener_ = link_->sipTransportBroker->getTlsListener(
-                SipTransportDescr {getTransportType(), getTlsListenerPort(), getLocalInterface()},
-                getTlsSetting());
+            auto ipAddress = createIpAdress(getTransportType(), getTlsListenerPort(), getLocalInterface());
+            tlsListener_ = link_->sipTransportBroker->getTlsListener(ipAddress, getTlsSetting());
             if (!tlsListener_) {
                 setRegistrationState(RegistrationState::ERROR_GENERIC);
                 JAMI_ERR("Error creating TLS listener.");
@@ -819,10 +818,10 @@ void SIPAccount::doRegister2_()
     // no registration should be performed
     if (isIP2IP()) {
         // If we use Tls for IP2IP, transports will be created on connection.
-        if (!tlsEnable_)
-            setTransport(link_->sipTransportBroker->getUdpTransport(
-                SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
-            ));
+        if (!tlsEnable_){
+            auto ipAddress = createIpAdress(getTransportType(), getLocalPort(), getLocalInterface());
+            setTransport(link_->sipTransportBroker->getUdpTransport(ipAddress));
+        }
         setRegistrationState(RegistrationState::REGISTERED);
         return;
     }
@@ -833,9 +832,8 @@ void SIPAccount::doRegister2_()
         if (isTlsEnabled()) {
             setTransport(link_->sipTransportBroker->getTlsTransport(tlsListener_, hostIp_, tlsServerName_.empty() ? hostname_ : tlsServerName_));
         } else {
-            setTransport(link_->sipTransportBroker->getUdpTransport(
-                SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
-            ));
+            auto ipAddress = createIpAdress(getTransportType(), getLocalPort(), getLocalInterface());
+            setTransport(link_->sipTransportBroker->getUdpTransport(ipAddress));
         }
         if (!transport_)
             throw VoipLinkException("Can't create transport");
@@ -2201,6 +2199,20 @@ std::string
 SIPAccount::getUserUri() const
 {
     return getFromUri();
+}
+
+IpAddr
+SIPAccount::createIpAdress(const pjsip_transport_type_e &type,
+               const pj_uint16_t port,
+               const std::string& localInterface)
+{
+    auto family = pjsip_transport_type_get_af(type);
+
+    IpAddr listeningAddress = (localInterface == ip_utils::DEFAULT_INTERFACE) ?
+        ip_utils::getAnyHostAddr(family) :
+        ip_utils::getInterfaceAddr(localInterface, family);
+    listeningAddress.setPort(port);
+    return listeningAddress;
 }
 
 } // namespace jami

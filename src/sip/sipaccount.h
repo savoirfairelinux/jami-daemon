@@ -509,6 +509,8 @@ class SIPAccount : public SIPAccountBase {
 
         std::string getUserUri() const override;
 
+        IpAddr createIpAdress(const pjsip_transport_type_e &type, const pj_uint16_t port, const std::string& localInterface);
+
     private:
         void doRegister1_();
         void doRegister2_();
