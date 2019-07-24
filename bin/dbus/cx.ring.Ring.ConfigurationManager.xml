@@ -38,6 +38,7 @@
                         <li>REALM</li>
                         <li>CONFIG_ACCOUNT_MAILBOX: Number to dial to access the voicemail box</li>
                         <li>CONFIG_ACCOUNT_REGISTRATION_EXPIRE: SIP header expiration value (Default: 1600)</li>
+                        <li>BIND_ADDRESS: Custom bind SIP ip address</li>
                         <li>LOCAL_INTERFACE: The network interface (Default: eth0)</li>
                         <li>PUBLISHED_SAMEAS_LOCAL: If False, the published address equals the local address. This is the default.</li>
                         <li>PUBLISHED_ADDRESS: The SIP published address</li>
