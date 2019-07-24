@@ -2790,7 +2790,7 @@ Manager::removeAccounts()
 std::string
 Manager::getNewCallID()
 {
-    static std::uniform_int_distribution<uint64_t> rand_call_id;
+    std::uniform_int_distribution<uint64_t> rand_call_id(1, 9007199254740992);
     std::ostringstream random_id;
 
     // generate something like s7ea037947eb9fb2f
