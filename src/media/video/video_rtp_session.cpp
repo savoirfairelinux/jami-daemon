@@ -544,9 +544,8 @@ VideoRtpSession::getPonderateLoss(float lastLoss)
 
     histoLoss_.emplace_back(now, lastLoss);
 
-    //for(auto& it : histoLoss_)
     for (auto it = histoLoss_.begin(); it != histoLoss_.end();) {
-        auto delay = now - it->first;
+        auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(now - it->first);
 
         //JAMI_WARN("now - it.first: %ld", std::chrono::duration_cast<std::chrono::milliseconds>(delay));
 
