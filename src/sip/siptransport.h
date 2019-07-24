@@ -50,37 +50,6 @@ struct Certificate;
 
 namespace jami {
 
-struct SipTransportDescr
-{
-    SipTransportDescr() {}
-    SipTransportDescr(pjsip_transport_type_e t)
-     : type(t), listenerPort(pjsip_transport_get_default_port_for_type(t)) {}
-    SipTransportDescr(pjsip_transport_type_e t, pj_uint16_t port, const std::string& i)
-     : type(t), listenerPort(port), interface(i) {}
-
-    static inline pjsip_transport_type_e actualType(pjsip_transport_type_e t) {
-        return (t == PJSIP_TRANSPORT_START_OTHER) ? PJSIP_TRANSPORT_UDP : t;
-    }
-
-    inline bool operator==(SipTransportDescr const& o) const {
-        return actualType(type) == actualType(o.type)
-         && listenerPort == o.listenerPort
-         && interface == o.interface;
-    }
-
-    inline bool operator<(SipTransportDescr const& o) const {
-        return actualType(type) < actualType(o.type)
-         || listenerPort < o.listenerPort
-         || std::hash<std::string>()(interface) < std::hash<std::string>()(o.interface);
-    }
-
-    std::string toString() const;
-
-    pjsip_transport_type_e type {PJSIP_TRANSPORT_UNSPECIFIED};
-    pj_uint16_t listenerPort {sip_utils::DEFAULT_SIP_PORT};
-    std::string interface {"default"};
-};
-
 struct TlsListener
 {
     TlsListener() {}
@@ -175,10 +144,10 @@ public:
     SipTransportBroker(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool);
     ~SipTransportBroker();
 
-    std::shared_ptr<SipTransport> getUdpTransport(const SipTransportDescr&);
+    std::shared_ptr<SipTransport> getUdpTransport(const IpAddr&);
 
     std::shared_ptr<TlsListener>
-    getTlsListener(const SipTransportDescr&, const pjsip_tls_setting*);
+    getTlsListener(const IpAddr&, const pjsip_tls_setting*);
 
     std::shared_ptr<SipTransport>
     getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote, const std::string& remote_name = {});
@@ -196,6 +165,8 @@ public:
 
     void transportStateChanged(pjsip_transport*, pjsip_transport_state, const pjsip_transport_state_info*);
 
+    IpAddr CreateIpAdress(const pjsip_transport_type_e &type, const pj_uint16_t port, const std::string& localInterface);
+
 private:
     NON_COPYABLE(SipTransportBroker);
 
@@ -205,7 +176,7 @@ private:
     * @param IP protocol version to use, can be pj_AF_INET() or pj_AF_INET6()
     * @return a pointer to the new transport
     */
-    std::shared_ptr<SipTransport> createUdpTransport(const SipTransportDescr&);
+    std::shared_ptr<SipTransport> createUdpTransport(const IpAddr&);
 
     /**
      * List of transports so we can bubble the events up.
@@ -217,7 +188,7 @@ private:
      * Transports are stored in this map in order to retrieve them in case
      * several accounts would share the same port number.
      */
-    std::map<SipTransportDescr, pjsip_transport*> udpTransports_;
+    std::map<IpAddr, pjsip_transport*> udpTransports_;
 
     /**
      * Storage for SIP/ICE transport instances.

@@ -795,9 +795,8 @@ void SIPAccount::doRegister2_()
         initTlsConfiguration();
 
         if (!tlsListener_) {
-            tlsListener_ = link_->sipTransportBroker->getTlsListener(
-                SipTransportDescr {getTransportType(), getTlsListenerPort(), getLocalInterface()},
-                getTlsSetting());
+            auto ipAddress = link_->sipTransportBroker->CreateIpAdress(getTransportType(), getTlsListenerPort(), getLocalInterface());
+            tlsListener_ = link_->sipTransportBroker->getTlsListener(ipAddress, getTlsSetting());
             if (!tlsListener_) {
                 setRegistrationState(RegistrationState::ERROR_GENERIC);
                 JAMI_ERR("Error creating TLS listener.");
@@ -819,10 +818,10 @@ void SIPAccount::doRegister2_()
     // no registration should be performed
     if (isIP2IP()) {
         // If we use Tls for IP2IP, transports will be created on connection.
-        if (!tlsEnable_)
-            setTransport(link_->sipTransportBroker->getUdpTransport(
-                SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
-            ));
+        if (!tlsEnable_){
+            auto ipAddress = link_->sipTransportBroker->CreateIpAdress(getTransportType(), getLocalPort(), getLocalInterface());
+            setTransport(link_->sipTransportBroker->getUdpTransport(ipAddress));
+        }
         setRegistrationState(RegistrationState::REGISTERED);
         return;
     }
@@ -833,9 +832,8 @@ void SIPAccount::doRegister2_()
         if (isTlsEnabled()) {
             setTransport(link_->sipTransportBroker->getTlsTransport(tlsListener_, hostIp_, tlsServerName_.empty() ? hostname_ : tlsServerName_));
         } else {
-            setTransport(link_->sipTransportBroker->getUdpTransport(
-                SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
-            ));
+            auto ipAddress = link_->sipTransportBroker->CreateIpAdress(getTransportType(), getLocalPort(), getLocalInterface());
+            setTransport(link_->sipTransportBroker->getUdpTransport(ipAddress));
         }
         if (!transport_)
             throw VoipLinkException("Can't create transport");
