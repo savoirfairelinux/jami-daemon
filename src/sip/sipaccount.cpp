@@ -404,6 +404,7 @@ void SIPAccount::serialize(YAML::Emitter &out) const
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
 
+    out << YAML::Key << Conf::SIP_BIND_ADDRESS_KEY << YAML::Value << sipBindAddress_;
     out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
 
     out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
@@ -478,6 +479,8 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
+
+    parseValue(node, Conf::SIP_BIND_ADDRESS_KEY, sipBindAddress_);
 
     int port = sip_utils::DEFAULT_SIP_PORT;
     parseValue(node, Conf::PORT_KEY, port);
@@ -562,6 +565,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
 
     // SIP specific account settings
+    parseString(details, Conf::CONFIG_SIP_BIND_ADDRESS, sipBindAddress_);
     parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
 
     if (not publishedSameasLocal_)
@@ -629,6 +633,7 @@ SIPAccount::getAccountDetails() const
     }
     a.emplace(Conf::CONFIG_ACCOUNT_PASSWORD,                std::move(password));
 
+    a.emplace(Conf::CONFIG_SIP_BIND_ADDRESS,                sipBindAddress_);
     a.emplace(Conf::CONFIG_LOCAL_PORT,                      std::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET,                serviceRoute_);
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     std::to_string(registrationExpire_));
@@ -772,7 +777,10 @@ void SIPAccount::doRegister1_()
 void SIPAccount::doRegister2_()
 {
     bool ipv6 = false;
-    if (isIP2IP()) {
+
+    if(!sipBindAddress_.empty()){
+        ipv6 = IpAddr(sipBindAddress_).isIpv6();
+    } else if (isIP2IP()) {
         JAMI_DBG("doRegister isIP2IP.");
         ipv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
     } else if (!hostIp_) {
@@ -795,7 +803,14 @@ void SIPAccount::doRegister2_()
         initTlsConfiguration();
 
         if (!tlsListener_) {
-            auto ipAddress = createIpAdress(getTransportType(), getTlsListenerPort(), getLocalInterface());
+
+            IpAddr ipAddress;
+            if(sipBindAddress_.empty()){
+                ipAddress = createIpAdress(getTransportType(), getTlsListenerPort(), getLocalInterface());
+            } else{
+                ipAddress = IpAddr(sipBindAddress_, ipv6 ? PJ_AF_INET6 : PJ_AF_INET);
+                ipAddress.setPort(getTlsListenerPort());
+            }
             tlsListener_ = link_->sipTransportBroker->getTlsListener(ipAddress, getTlsSetting());
             if (!tlsListener_) {
                 setRegistrationState(RegistrationState::ERROR_GENERIC);
@@ -819,7 +834,14 @@ void SIPAccount::doRegister2_()
     if (isIP2IP()) {
         // If we use Tls for IP2IP, transports will be created on connection.
         if (!tlsEnable_){
-            auto ipAddress = createIpAdress(getTransportType(), getLocalPort(), getLocalInterface());
+
+            IpAddr ipAddress;
+            if(sipBindAddress_.empty()){
+                ipAddress = createIpAdress(getTransportType(), getLocalPort(), getLocalInterface());
+            } else{
+                ipAddress = IpAddr(sipBindAddress_, ipv6 ? PJ_AF_INET6 : PJ_AF_INET);
+                ipAddress.setPort(getLocalPort());
+            }
             setTransport(link_->sipTransportBroker->getUdpTransport(ipAddress));
         }
         setRegistrationState(RegistrationState::REGISTERED);
@@ -832,7 +854,14 @@ void SIPAccount::doRegister2_()
         if (isTlsEnabled()) {
             setTransport(link_->sipTransportBroker->getTlsTransport(tlsListener_, hostIp_, tlsServerName_.empty() ? hostname_ : tlsServerName_));
         } else {
-            auto ipAddress = createIpAdress(getTransportType(), getLocalPort(), getLocalInterface());
+
+            IpAddr ipAddress;
+            if(sipBindAddress_.empty()){
+                ipAddress = createIpAdress(getTransportType(), getLocalPort(), getLocalInterface());
+            } else{
+                ipAddress = IpAddr(sipBindAddress_, ipv6 ? PJ_AF_INET6 : PJ_AF_INET);
+                ipAddress.setPort(getLocalPort());
+            }
             setTransport(link_->sipTransportBroker->getUdpTransport(ipAddress));
         }
         if (!transport_)
