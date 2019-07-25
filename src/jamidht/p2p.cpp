@@ -1089,31 +1089,9 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
 
 void
 DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid) {
-    // NOTE: see TODO in previous function.
-
-    // NOTE: There is two ways to store current PeerConnection. Indeed, if it is
-    // an incoming data transfer, it will be stored in servers, and will be
-    // determined via the pair (peer_h, tid), because we receives the file from
-    // a contact. If it's an outgoing file, we send the file to a device, so,
-    // will be determined via the pair (dev_h, tid).
-    // That's why we need to call CANCEL for the peer_h and each dev_h.
     const auto peer_h = dht::InfoHash(peer_id);
-
+    // The connection will be close and removed in the main loop
     pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_h, tid);
-    pimpl_->account.forEachDevice(
-        peer_h,
-        [this, tid](const dht::InfoHash& dev_h) {
-            if (dev_h == pimpl_->account.dht()->getId()) {
-                JAMI_ERR() << pimpl_->account.getAccountID() << "[CNX] no connection to yourself, bad person!";
-                return;
-            }
-            pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(dev_h, tid);
-        },
-        [this, peer_h](bool found) {
-            if (!found) {
-                JAMI_WARN() << pimpl_->account.getAccountID() << "[CNX] aborted, no devices for " << peer_h;
-            }
-        });
 }
 
 } // namespace jami
