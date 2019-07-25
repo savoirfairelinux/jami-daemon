@@ -220,21 +220,26 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
     bool accept = false;
      // Check existing contact
     auto contact = contacts_.find(peer_account);
+    bool active = false;
     if (contact != contacts_.end()) {
         // Banned contact: discard request
         if (contact->second.isBanned())
             return false;
-        // Send confirmation
-        if (not confirm)
-            accept = true;
-        // Contact exists, update confirmation status
-        if (not contact->second.confirmed) {
-            contact->second.confirmed = true;
-            callbacks_.contactAdded(peer_account.toString(), true);
-            saveContacts();
-            //syncDevices();
+
+        if (contact->second.isActive()) {
+            active = true;
+            // Send confirmation
+            if (not confirm)
+                accept = true;
+            if (not contact->second.confirmed) {
+                contact->second.confirmed = true;
+                callbacks_.contactAdded(peer_account.toString(), true);
+                saveContacts();
+                //syncDevices();
+            }
         }
-    } else {
+    }
+    if (not active) {
         auto req = trustRequests_.find(peer_account);
         if (req == trustRequests_.end()) {
             // Add trust request
