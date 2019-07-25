@@ -18,39 +18,32 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "dbuspresencemanager.h"
-#include "presencemanager_interface.h"
-
-DBusPresenceManager::DBusPresenceManager(DBus::Connection& connection)
-    : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/PresenceManager")
-{}
-
 void
-DBusPresenceManager::publish(const std::string& accountID, const bool& status, const std::string& note)
+publish(const std::string& accountID, const bool& status, const std::string& note)
 {
     DRing::publish(accountID, status, note);
 }
 
 void
-DBusPresenceManager::answerServerRequest(const std::string& uri, const bool& flag)
+answerServerRequest(const std::string& uri, const bool& flag)
 {
     DRing::answerServerRequest(uri, flag);
 }
 
 void
-DBusPresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
+subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
 {
     DRing::subscribeBuddy(accountID, uri, flag);
 }
 
 auto
-DBusPresenceManager::getSubscriptions(const std::string& accountID) -> decltype(DRing::getSubscriptions(accountID))
+getSubscriptions(const std::string& accountID) -> decltype(DRing::getSubscriptions(accountID))
 {
     return DRing::getSubscriptions(accountID);
 }
 
 void
-DBusPresenceManager::setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
+setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
     DRing::setSubscriptions(accountID, uris);
 }

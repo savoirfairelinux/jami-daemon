@@ -18,129 +18,122 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "dbusvideomanager.h"
-#include "client/videomanager.h"
-
-DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
-    : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/VideoManager")
-{}
-
 auto
-DBusVideoManager::getDeviceList() -> decltype(DRing::getDeviceList())
+getDeviceList() -> decltype(DRing::getDeviceList())
 {
     return DRing::getDeviceList();
 }
 
 auto
-DBusVideoManager::getCapabilities(const std::string& name) -> decltype(DRing::getCapabilities(name))
+getCapabilities(const std::string& name) -> decltype(DRing::getCapabilities(name))
 {
     return DRing::getCapabilities(name);
 }
 
 auto
-DBusVideoManager::getSettings(const std::string& name) -> decltype(DRing::getSettings(name))
+getSettings(const std::string& name) -> decltype(DRing::getSettings(name))
 {
     return DRing::getSettings(name);
 }
 
 void
-DBusVideoManager::applySettings(const std::string& name, const std::map<std::string, std::string>& settings)
+applySettings(const std::string& name, const std::map<std::string, std::string>& settings)
 {
     DRing::applySettings(name, settings);
 }
 
 void
-DBusVideoManager::setDefaultDevice(const std::string& dev)
+setDefaultDevice(const std::string& dev)
 {
     DRing::setDefaultDevice(dev);
 }
 
 auto
-DBusVideoManager::getDefaultDevice() -> decltype(DRing::getDefaultDevice())
+getDefaultDevice() -> decltype(DRing::getDefaultDevice())
 {
     return DRing::getDefaultDevice();
 }
 
 void
-DBusVideoManager::startCamera()
+startCamera()
 {
     DRing::startCamera();
 }
 
 void
-DBusVideoManager::stopCamera()
+stopCamera()
 {
     DRing::stopCamera();
 }
 
 void
-DBusVideoManager::startAudioDevice()
+startAudioDevice()
 {
     DRing::startAudioDevice();
 }
 
 void
-DBusVideoManager::stopAudioDevice()
+stopAudioDevice()
 {
     DRing::stopAudioDevice();
 }
 
 auto
-DBusVideoManager::switchInput(const std::string& resource) -> decltype(DRing::switchInput(resource))
+switchInput(const std::string& resource) -> decltype(DRing::switchInput(resource))
 {
     return DRing::switchInput(resource);
 }
 
 auto
-DBusVideoManager::hasCameraStarted() -> decltype(DRing::hasCameraStarted())
+hasCameraStarted() -> decltype(DRing::hasCameraStarted())
 {
     return DRing::hasCameraStarted();
 }
 
 auto
-DBusVideoManager::getDecodingAccelerated() -> decltype(DRing::getDecodingAccelerated())
+getDecodingAccelerated() -> decltype(DRing::getDecodingAccelerated())
 {
     return DRing::getDecodingAccelerated();
 }
 
 void
-DBusVideoManager::setDecodingAccelerated(const bool& state)
+setDecodingAccelerated(const bool& state)
 {
     DRing::setDecodingAccelerated(state);
 }
 
 auto
-DBusVideoManager::getEncodingAccelerated() -> decltype(DRing::getEncodingAccelerated())
+getEncodingAccelerated() -> decltype(DRing::getEncodingAccelerated())
 {
     return DRing::getEncodingAccelerated();
 }
 
 void
-DBusVideoManager::setEncodingAccelerated(const bool& state)
+setEncodingAccelerated(const bool& state)
 {
     DRing::setEncodingAccelerated(state);
 }
 
 void
-DBusVideoManager::setDeviceOrientation(const std::string& name, const int& angle)
+setDeviceOrientation(const std::string& name, const int& angle)
 {
     DRing::setDeviceOrientation(name, angle);
 }
 
 std::map<std::string, std::string>
-DBusVideoManager::getRenderer(const std::string& callId)
+getRenderer(const std::string& callId)
 {
     return DRing::getRenderer(callId);
 }
 
 std::string
-DBusVideoManager::startLocalRecorder(const bool& audioOnly, const std::string& filepath)
+startLocalRecorder(const bool& audioOnly, const std::string& filepath)
 {
     return DRing::startLocalRecorder(audioOnly, filepath);
 }
 
 void
-DBusVideoManager::stopLocalRecorder(const std::string& filepath)
+stopLocalRecorder(const std::string& filepath)
 {
     DRing::stopLocalRecorder(filepath);
 }

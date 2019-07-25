@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
+    <interface name="net.jami.daemon1.DataTransfer">
+
+       <method name="dataTransferList">
+           <tp:added version="4.2.0"/>
+           <arg type="at" name="dataTransferList" direction="out"/>
+       </method>
+
+       <method name="sendFile">
+           <tp:added version="4.2.0"/>
+           <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="(suuxxssss)" name="DataTransferInfo" direction="in"/>
+           <arg type="t" name="dataTransferId" direction="out"/>
+       </method>
+
+       <method name="dataTransferInfo">
+           <tp:added version="5.0.0"/>
+           <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="t" name="dataTransferId" direction="in"/>
+           <arg type="(suuxxssss)" name="dataTransferInfo" direction="out"/>
+       </method>
+
+       <method name="dataTransferBytesProgress">
+           <tp:added version="5.0.0"/>
+           <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="t" name="dataTransferId" direction="in"/>
+           <arg type="x" name="totalSize" direction="out"/>
+           <arg type="x" name="bytesProgress" direction="out"/>
+       </method>
+
+       <method name="acceptFileTransfer">
+           <tp:added version="5.0.0"/>
+           <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="t" name="dataTransferId" direction="in"/>
+           <arg type="s" name="filePath" direction="in"/>
+           <arg type="x" name="offset" direction="in"/>
+       </method>
+
+       <method name="cancelDataTransfer">
+           <tp:added version="5.0.0"/>
+           <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="t" name="dataTransferId" direction="in"/>
+       </method>
+
+       <signal name="dataTransferEvent">
+           <tp:added version="4.2.0"/>
+           <tp:docstring>
+               Notify clients when a data transfer state change.
+           </tp:docstring>
+           <arg type="t" name="id">
+               <tp:docstring>
+                   Data transfer unique id.
+               </tp:docstring>
+           </arg>
+           <arg type="i" name="code">
+               <tp:docstring>
+                   A DRing::DataTransferEventCode code
+               </tp:docstring>
+           </arg>
+       </signal>
+   </interface>
+</node>

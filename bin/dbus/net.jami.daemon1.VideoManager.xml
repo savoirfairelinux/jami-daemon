@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
+    <interface name="net.jami.daemon1.VideoManager">
+
+        <method name="getDeviceList">
+            <tp:docstring>Returns a list of the detected v4l2 devices</tp:docstring>
+            <arg type="as" name="list" direction="out"/>
+        </method>
+
+        <method name="getCapabilities">
+            <tp:docstring>Returns a map of map of array of strings, containing the capabilities (channel, size, rate) of a device</tp:docstring>
+            <arg type="s" name="name" direction="in"/>
+            <arg type="a{sa{sas}}" name="cap" direction="out"/>
+        </method>
+
+        <method name="getSettings">
+            <tp:docstring>Returns a map of settings for the given device name</tp:docstring>
+            <arg type="s" name="device" direction="in"/>
+            <arg type="a{ss}" name="map" direction="out"/>
+        </method>
+
+        <method name="applySettings">
+            <tp:docstring>Set the preferred settings for a given device name</tp:docstring>
+            <arg type="s" name="name" direction="in"/>
+            <arg type="a{ss}" name="settings" direction="in"/>
+        </method>
+
+        <method name="getDefaultDevice">
+            <arg type="s" name="name" direction="out"/>
+        </method>
+
+        <method name="setDefaultDevice">
+            <arg type="s" name="name" direction="in"/>
+        </method>
+
+        <method name="startLocalRecorder">
+            <tp:docstring> Starts a local recorder. Video and/or audio are recorded from preferred devices.</tp:docstring>
+            <arg type="b" name="audioOnly" direction="in"/>
+            <arg type="s" name="filepath" direction="in">
+                <tp:docstring> Base file path for local recording. This is not the final path as the file extension will be added (final path can be obtained as return value of this method).</tp:docstring>
+            </arg>
+            <arg type="s" name="finalPath" direction="out">
+                <tp:docstring> Output path of newly started local recording. This file path also serves as recording identifier for stopLocalRecorder.</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="stopLocalRecorder">
+            <arg type="s" name="filepath" direction="in">
+                <tp:docstring> Identifier for local recorder to be stopped (obtained as return value of startLocalRecorder).</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="startCamera">
+            <tp:docstring> Starts the video camera, which renders the active v4l2 device's video to shared memory. Useful for testing/debugging camera settings</tp:docstring>
+        </method>
+
+        <method name="stopCamera">
+        </method>
+
+        <method name="startAudioDevice">
+            <tp:docstring> Starts the audio layer stream, so the audio device can be read.</tp:docstring>
+        </method>
+
+        <method name="stopAudioDevice">
+        </method>
+
+        <method name="switchInput">
+            <arg type="s" name="resource" direction="in">
+                <tp:docstring>
+                    A media resource locator (MRL).
+                    Currently, the following are supported:
+                    <ul>
+                        <li>camera://DEVICE</li>
+                        <li>display://DISPLAY_NAME[ WIDTHxHEIGHT]</li>
+                        <li>file://IMAGE_PATH</li>
+                    </ul>
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="switched" direction="out">
+                <tp:docstring>Returns true if the input stream was successfully changed, false otherwise</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="hasCameraStarted">
+            <arg type="b" name="started" direction="out">
+                <tp:docstring>Returns true if the camera has already started, false otherwise</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="getDecodingAccelerated">
+            <arg type="b" name="state" direction="out">
+                <tp:docstring>Returns true if hardware decoding is enabled, false otherwise</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="setDecodingAccelerated">
+            <arg type="b" name="state" direction="in">
+                <tp:docstring>Toggle hardware decoding</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="getEncodingAccelerated">
+            <arg type="b" name="state" direction="out">
+                <tp:docstring>Returns true if hardware encoding is enabled, false otherwise</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="setEncodingAccelerated">
+            <arg type="b" name="state" direction="in">
+                <tp:docstring>Toggle hardware encoding</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="setDeviceOrientation">
+            <arg type="s" name="name" direction="in">
+                <tp:docstring>Device name</tp:docstring>
+            </arg>
+            <arg type="i" name="angle" direction="in">
+                <tp:docstring>Angle of device in degrees (counterclockwise)</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="getRenderer">
+            <tp:docstring>Returns a map of information about a call's renderer.</tp:docstring>
+            <arg type="s" name="callId" direction="in">
+                <tp:docstring>Call ID to get info about.</tp:docstring>
+            </arg>
+            <arg type="a{ss}" name="map" direction="out">
+                <tp:docstring>Map containing renderer info, with empty strings and "0" if not found.</tp:docstring>
+            </arg>
+        </method>
+
+        <signal name="deviceEvent">
+           <tp:docstring>Signal triggered by changes in the detected v4l2 devices, e.g. a camera being unplugged.</tp:docstring>
+        </signal>
+
+        <signal name="startedDecoding">
+            <tp:docstring>Signal triggered when video is available in a shared memory buffer.</tp:docstring>
+            <arg type="s" name="id">
+              <tp:docstring>The ID of the call associated with the video, or "local" in the case of local video</tp:docstring>
+            </arg>
+            <arg type="s" name="shmPath">
+              <tp:docstring>The path of the newly created shared memory</tp:docstring>
+            </arg>
+            <arg type="i" name="width">
+              <tp:docstring>The width of the video in the shared memory</tp:docstring>
+            </arg>
+            <arg type="i" name="height">
+              <tp:docstring>The height of the video in the shared memory</tp:docstring>
+            </arg>
+            <arg type="b" name="isMixer">
+              <tp:docstring>Whether or not this texture belongs to a video mixer or is a single texture</tp:docstring>
+            </arg>
+        </signal>
+
+        <signal name="stoppedDecoding">
+            <tp:docstring>Signal triggered when video is no longer available in a shared memory buffer.</tp:docstring>
+            <arg type="s" name="id">
+              <tp:docstring>The ID of the call associated with the video, or "local" in the case of local video</tp:docstring>
+            </arg>
+            <arg type="s" name="shmPath">
+              <tp:docstring>The path of the newly created shared memory</tp:docstring>
+            </arg>
+            <arg type="b" name="isMixer">
+              <tp:docstring>Whether or not this texture belongs to a video mixer or is a single texture</tp:docstring>
+            </arg>
+        </signal>
+    </interface>
+</node>
