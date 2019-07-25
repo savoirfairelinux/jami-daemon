@@ -66,6 +66,7 @@ cd contrib
 mkdir native
 cd native
 ../bootstrap
+make toolchain.cmake
 make
 
 2) Then the dring application
@@ -100,6 +101,7 @@ cd contrib
 mkdir native
 cd native
 ../bootstrap
+make toolchain.cmake
 make -j
 
 # Then the daemon
@@ -128,10 +130,6 @@ Clang compatibility (developers only)
 It is possible to compile dring with Clang by setting CC and CXX variables
 to 'clang' and 'clang++' respectively when calling ./configure.
 
-Currently it is not possible to use the DBus interface mechanism, and the
-interaction between daemon and client will not work; for each platform where
-D-Bus is not available the client should implement all the methods in the
-*_stub.cpp files.
 
 How to compile with the REST API
 --------------------------------
@@ -146,6 +144,7 @@ cd contrib
 mkdir native
 cd native
 ../bootstrap
+make toolchain.cmake
 make
 make .restbed
 

@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=cx.ring.Ring
+Exec=@LIBDIR@/ring/dring
