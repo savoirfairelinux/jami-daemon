@@ -315,7 +315,7 @@ MediaDecoder::decode(VideoFrame& result)
             }
         }
         if (videoFilter_) {
-            videoFilter_(frame);
+            videoFilter_(result);
         }
         return Status::FrameFinished;
     }

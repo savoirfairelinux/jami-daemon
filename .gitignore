@@ -132,3 +132,6 @@ clang-tidy-report.txt
 sonar-project.properties.save
 compile_commands.json
 
+#QtCreator generated files
+daemon.*
+

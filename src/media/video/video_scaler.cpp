@@ -63,28 +63,6 @@ VideoScaler::scale(const VideoFrame& input, VideoFrame& output)
 }
 
 void
-VideoScaler::scale(const AVFrame* input_frame, AVFrame* output_frame)
-{
-    ctx_ = sws_getCachedContext(ctx_,
-                                input_frame->width,
-                                input_frame->height,
-                                (AVPixelFormat) input_frame->format,
-                                output_frame->width,
-                                output_frame->height,
-                                (AVPixelFormat) output_frame->format,
-                                mode_,
-                                NULL, NULL, NULL);
-    if (!ctx_) {
-        RING_ERR("Unable to create a scaler context");
-        return;
-    }
-
-    sws_scale(ctx_, input_frame->data, input_frame->linesize, 0,
-              input_frame->height, output_frame->data,
-              output_frame->linesize);
-}
-
-void
 VideoScaler::scale_with_aspect(const VideoFrame& input, VideoFrame& output)
 {
     if (input.width() == output.width() && input.height() == output.height()) {
