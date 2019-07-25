@@ -87,7 +87,10 @@ class MediaDecoder {
 
         void setIOContext(MediaIOHandle *ioctx);
 
-        using MediaFilter = std::function<void(AVFrame*)>;
+        using MediaFilter = std::function<void(VideoFrame&)>;
+
+        void
+        setVideoFilter(MediaFilter&& filter);
 
 #ifdef ENABLE_VIDEO
         int setupFromVideoData();
