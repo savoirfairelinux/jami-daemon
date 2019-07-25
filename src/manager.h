@@ -57,6 +57,8 @@ class IceTransportFactory;
 class DataTransferFacade;
 class JamiAccount;
 
+static constexpr size_t DRING_ID_MAX_VAL = 9007199254740992;
+
 /** Manager (controller) of daemon */
 class Manager {
     public:

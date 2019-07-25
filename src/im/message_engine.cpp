@@ -33,8 +33,6 @@
 namespace jami {
 namespace im {
 
-static std::uniform_int_distribution<MessageToken> udist {1};
-
 MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path) : account_(acc), savePath_(path)
 {}
 
@@ -48,7 +46,7 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
         std::lock_guard<std::mutex> lock(messagesMutex_);
         auto& peerMessages = messages_[to];
         do {
-            token = udist(account_.rand);
+            token = std::uniform_int_distribution<MessageToken>{1, DRING_ID_MAX_VAL}(account_.rand);
         } while (peerMessages.find(token) != peerMessages.end());
         auto m = peerMessages.emplace(token, Message{});
         m.first->second.to = to;
