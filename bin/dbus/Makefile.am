@@ -2,74 +2,67 @@ include $(top_srcdir)/globals.mk
 
 noinst_LTLIBRARIES = libclient_dbus.la
 
+# Rules to generate the binding headers
+dbuscallmanager.adaptor.h: net.jami.daemon1.CallManager.xml Makefile.am
+	sdbus-c++-xml2cpp $< --adaptor=$@
+
+dbusconfigurationmanager.adaptor.h: net.jami.daemon1.ConfigurationManager.xml Makefile.am
+	sdbus-c++-xml2cpp $< --adaptor=$@
+
+dbusdatatransfer.adaptor.h: net.jami.daemon1.DataTransfer.xml Makefile.am
+	sdbus-c++-xml2cpp $< --adaptor=$@
+
+dbusinstance.adaptor.h: net.jami.daemon1.Instance.xml Makefile.am
+	sdbus-c++-xml2cpp $< --adaptor=$@
+
+dbuspresencemanager.adaptor.h: net.jami.daemon1.PresenceManager.xml Makefile.am
+	sdbus-c++-xml2cpp $< --adaptor=$@
+
+if ENABLE_VIDEO
+dbusvideomanager.adaptor.h: net.jami.daemon1.VideoManager.xml Makefile.am
+	sdbus-c++-xml2cpp $< --adaptor=$@
+endif
+
 BUILT_SOURCES=                      \
     dbuscallmanager.adaptor.h       \
     dbusconfigurationmanager.adaptor.h \
-    dbusinstance.adaptor.h
-
-BUILT_SOURCES+=dbuspresencemanager.adaptor.h
-dbuspresencemanager.adaptor.h: cx.ring.Ring.PresenceManager.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
+    dbusdatatransfer.adaptor.h \
+    dbusinstance.adaptor.h \
+    dbuspresencemanager.adaptor.h
 
 if ENABLE_VIDEO
-BUILT_SOURCES+=dbusvideomanager.adaptor.h
-dbusvideomanager.adaptor.h: cx.ring.Ring.VideoManager.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
+    BUILT_SOURCES += dbusvideomanager.adaptor.h
 endif
-
-# Rule to generate the binding headers
-dbuscallmanager.adaptor.h: cx.ring.Ring.CallManager.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
-
-# Rule to generate the binding headers
-dbusconfigurationmanager.adaptor.h: cx.ring.Ring.ConfigurationManager.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
-
-# Rule to generate the binding headers
-dbusinstance.adaptor.h: cx.ring.Ring.Instance.xml Makefile.am
-	dbusxx-xml2cpp $< --adaptor=$@
 
 libclient_dbus_la_SOURCES = \
-    dbuscallmanager.cpp \
-    dbuscallmanager.h \
-    dbusconfigurationmanager.cpp  \
-    dbusconfigurationmanager.h \
-    dbusinstance.cpp  \
     dbusclient.cpp \
     dbusclient.h \
-    dbusinstance.h \
-    dbus_cpp.h \
-    dbuspresencemanager.cpp \
-    dbuspresencemanager.h \
+    dbusdaemon1.hpp \
     $(BUILT_SOURCES)
 
-if ENABLE_VIDEO
-libclient_dbus_la_SOURCES += dbusvideomanager.cpp dbusvideomanager.h
-endif
-
-libclient_dbus_la_CXXFLAGS = -I../ \
+libclient_dbus_la_CXXFLAGS= \
             -I$(top_srcdir)/src \
             -I$(top_srcdir)/src/dring \
-            -DPREFIX=\"$(prefix)\" \
-            -DPROGSHAREDIR=\"${datadir}/ring\" \
-            $(DBUSCPP_CFLAGS)
+            $(DBUSCPP_CFLAGS) \
+            $(SIGCPP_CFLAGS)
 
 # Dbus service file
 servicedir = $(datadir)/dbus-1/services
-service_DATA = cx.ring.Ring.service
+service_DATA = net.jami.daemon1.service
 
 # Dbus interface files
 # https://dbus.freedesktop.org/doc/dbus-api-design.html#interface-files
 interfacedir = $(datadir)/dbus-1/interfaces
-interface_DATA = cx.ring.Ring.CallManager.xml \
-                 cx.ring.Ring.ConfigurationManager.xml \
-                 cx.ring.Ring.Instance.xml \
-                 cx.ring.Ring.PresenceManager.xml
+interface_DATA = net.jami.daemon1.CallManager.xml \
+                 net.jami.daemon1.ConfigurationManager.xml \
+                 net.jami.daemon1.DataTransfer.xml \
+                 net.jami.daemon1.Instance.xml \
+                 net.jami.daemon1.PresenceManager.xml
 
 if ENABLE_VIDEO
-interface_DATA += cx.ring.Ring.VideoManager.xml
+    interface_DATA += net.jami.daemon1.VideoManager.xml
 endif
 
 CLEANFILES= \
     $(BUILT_SOURCES) \
-	cx.ring.Ring.service
+    net.jami.daemon1.service

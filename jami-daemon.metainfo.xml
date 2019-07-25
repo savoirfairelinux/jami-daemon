@@ -26,7 +26,7 @@
  <url type="bugtracker">https://git.jami.net/savoirfairelinux/ring-daemon/issues/</url>
 
  <provides>
-  <dbus type="user">cx.ring.Ring</dbus>
+  <dbus type="user">net.jami.daemon1</dbus>
 ​ </provides>
 
  <categories>

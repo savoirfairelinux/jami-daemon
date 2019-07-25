@@ -1,4 +1,4 @@
-ringlibdir = $(libdir)/ring
+ringlibdir = $(libdir)/jami
 
 if HAVE_WIN32
 ringlib_PROGRAMS = ringcli
@@ -23,15 +23,16 @@ SUBDIRS=
 if RING_DBUS
 SUBDIRS+=dbus
 
-ringlib_PROGRAMS = dring
+ringlib_PROGRAMS = jamid-dbus
 
-dring_SOURCES = main.cpp
+jamid_dbus_SOURCES = main.cpp
 
-dring_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
-                -I$(top_srcdir)/src/dring \
-                -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
+jamid_dbus_CXXFLAGS= -I$(top_srcdir)/src \
+                  -I$(top_srcdir)/src/dring \
+                  $(DBUSCPP_CFLAGS) $(SIGCPP_CFLAGS) \
+                  -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
 
-dring_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring.la -ldl
+jamid_dbus_LDADD = dbus/libclient_dbus.la $(top_builddir)/src/libring.la ${DBUSCPP_LIBS} ${SIGCPP_LIBS} -ldl
 endif
 
 if RING_NODEJS

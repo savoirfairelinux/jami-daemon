@@ -320,7 +320,7 @@ endif
 HOSTTOOLS := \
 	CC="$(CC)" CXX="$(CXX)" LD="$(LD)" \
 	AR="$(AR)" CCAS="$(CCAS)" RANLIB="$(RANLIB)" STRIP="$(STRIP)" \
-	PATH="$(PREFIX)/bin:$(PATH)"
+	PATH="$(PREFIX)/bin:$(PATH)" ACLOCAL_PATH="$(PREFIX)/share/aclocal:$(ACLOCAL_PATH)"
 # this part is different from VideoLan main.mak
 HOSTVARS_NOPIC := $(HOSTTOOLS) \
 	CPPFLAGS="$(CPPFLAGS)" \
@@ -388,7 +388,8 @@ CMAKE = cmake . -DCMAKE_TOOLCHAIN_FILE=$(ANDROID_NDK)/build/cmake/android.toolch
 		-DCMAKE_INSTALL_PREFIX=$(PREFIX)
 else
 CMAKE = cmake . -DCMAKE_TOOLCHAIN_FILE=$(abspath toolchain.cmake) \
-		-DCMAKE_INSTALL_PREFIX=$(PREFIX)
+		-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
+                -DCMAKE_INSTALL_LIBDIR=lib
 endif
 
 #
@@ -502,9 +503,9 @@ endif
 	echo "set(CMAKE_C_COMPILER $(CC))" >> $@
 	echo "set(CMAKE_CXX_COMPILER $(CXX))" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH $(PREFIX))" >> $@
-	echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> $@
-	echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)" >> $@
-	echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)" >> $@
+	echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM BOTH)" >> $@
+	echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)" >> $@
+	echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)" >> $@
 	echo "set(CMAKE_BUILD_TYPE Release)" >> $@
 
 # Default pattern rules
