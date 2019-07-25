@@ -29,6 +29,7 @@
 #include "dcblocker.h"
 #include "noncopyable.h"
 #include "audio_frame_resizer.h"
+#include "audio_api_names.h"
 
 #include <chrono>
 #include <mutex>
@@ -40,13 +41,6 @@
  * @file  audiolayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
  */
-
-// Define the audio api
-#define PULSEAUDIO_API_STR          "pulseaudio"
-#define ALSA_API_STR                "alsa"
-#define JACK_API_STR                "jack"
-#define COREAUDIO_API_STR           "coreaudio"
-#define PORTAUDIO_API_STR           "portaudio"
 
 #define PCM_DEFAULT "default"         // Default ALSA plugin
 #define PCM_DSNOOP  "plug:dsnoop"     // Alsa plugin for microphone sharing

@@ -113,8 +113,8 @@ tools/.vscode/
 build-aux/
 configure
 bin/dbus/*.adaptor.h
-bin/dbus/cx.ring.Ring.service
-bin/dring
+bin/dbus/net.jami.daemon1.service
+bin/jamid.1
 bin/ringcli
 doltcompile
 doltlibtool

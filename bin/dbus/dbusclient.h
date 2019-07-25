@@ -20,50 +20,24 @@
  */
 
 #pragma once
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif // HAVE_CONFIG_H
-
-#include "dring/def.h"
+#include <sdbus-c++/sdbus-c++.h>
+#include "dbusdaemon1.hpp"
 #include <memory>
 
-class DBusConfigurationManager;
-class DBusCallManager;
-class DBusNetworkManager;
-class DBusInstance;
-class DBusPresenceManager;
+class DBusClient {
+public:
+    DBusClient(int flags, bool persistent);
+    ~DBusClient();
 
-#ifdef ENABLE_VIDEO
-class DBusVideoManager;
-#endif
+    void event_loop();
+    void exit();
 
-namespace DBus {
-    class BusDispatcher;
-    class DefaultTimeout;
-}
+protected:
+    void onNumberOfClientsChanged(uint_fast16_t newNumberOfClients);
 
-class DRING_PUBLIC DBusClient {
-    public:
-        DBusClient(int flags, bool persistent);
-        ~DBusClient();
+private:
+    int initLibrary(int flags);
 
-        int event_loop() noexcept;
-        int exit() noexcept;
-
-    private:
-        int initLibrary(int flags);
-        void finiLibrary() noexcept;
-
-        std::unique_ptr<DBus::BusDispatcher>  dispatcher_;
-        std::unique_ptr<DBus::DefaultTimeout> timeout_;
-
-        std::unique_ptr<DBusCallManager>          callManager_;
-        std::unique_ptr<DBusConfigurationManager> configurationManager_;
-        std::unique_ptr<DBusPresenceManager>      presenceManager_;
-        std::unique_ptr<DBusInstance>             instanceManager_;
-
-#ifdef ENABLE_VIDEO
-        std::unique_ptr<DBusVideoManager>         videoManager_;
-#endif
+    std::unique_ptr<sdbus::IConnection> connection_;
+    std::unique_ptr<DBusDaemon1> daemon_;
 };
