@@ -1,71 +1,155 @@
-/*
- *  Copyright (C) 2015-2018 Savoir-faire Linux Inc.
- *
- *  Author: Timothée Menais <timothee.menais@savoirfairelinux.com>
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 3 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
- */
 #pragma once
-
+// System includes
+#include <condition_variable>
+#include <cstdint>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <vector>
-#include <mutex>
-#include <condition_variable>
-
-#include "libav_deps.h"
+// OpenCV headers
+#include <opencv2/core.hpp>
+// LibFilters headers
+#include "framelistener.h"
+#include "multipleobjecttracking.h"
+// Jami Library headers
+#include "dring/videomanager_interface.h"
 #include "media/video/video_scaler.h"
 
-namespace tensorflow {
-
-class Tensor;
-class Session;
-
-}
-
 namespace jami {
-
-class MediaProcessor {
+class FrameCopy {
 public:
-    MediaProcessor();
-    ~MediaProcessor();
+  // This frame is a resized version of the original in RGB format
+  VideoFrame resizedFrameRGB;
+  // This frame is used to draw predictions into in RGB format
+  VideoFrame predictionsFrameBGR;
+  // An instance of the scaler
+  video::VideoScaler scaler;
 
-    void addFrame(AVFrame* frame);
-    std::shared_ptr<std::vector<tensorflow::Tensor>> getResult() { return lastOutput_; };
-    void stop() {
-        running = false;
-        inputCv.notify_all();
-    }
+  /**
+   * @brief createCopyFrames
+   * Takes the input frame and copies/scales the content in the
+   * frames contained by FrameCopy
+   * @param frame
+   */
+  void createCopyFrames(const VideoFrame &frame,
+                        const int resizedImageWidth,
+                        const int resizedImageHeight);
 
-private:
-	std::unique_ptr<tensorflow::Session> session_;
-    std::unique_ptr<tensorflow::Tensor> lastInput_;
-    std::shared_ptr<std::vector<tensorflow::Tensor>> lastOutput_ {nullptr};
-    std::vector<std::string> labels_;
-
-    std::unique_ptr<tensorflow::Session> initSession();
-    std::unique_ptr<video::VideoScaler> scaler_;
-    std::vector<std::string> ReadLabelsFile(const std::string file_name);
-
-    std::shared_ptr<std::vector<tensorflow::Tensor>> process(const tensorflow::Tensor&);
-
-    bool running {true};
-    std::thread t;
-
-    std::mutex inputLock;
-    std::condition_variable inputCv;
+  /**
+   * @brief copyFrameContent
+   * Copies the data from the input frame iFrame to the output frame oFrame
+   * Performs the scaling and format conversion
+   * @param iFrame
+   * @param oFrame
+   */
+  void copyFrameContent(const VideoFrame &iFrame, VideoFrame &oFrame);
 };
 
-}
+class MediaProcessor : public FrameListener {
+public:
+  MediaProcessor();
+  virtual ~MediaProcessor() override;
+
+  /**
+   * @brief onNewFrame
+   * Takes a const frame and processes its data
+   * @param frame
+   */
+  void onNewFrame(const VideoFrame &frame) override;
+
+  /**
+   * @brief onNewFrame
+   * Takes a frame and updates its content
+   * @param frame
+   */
+  void onNewFrame(VideoFrame &frame) override;
+
+  /**
+   * @brief stop
+   * Notifies the processing thread to stop processing
+   */
+  void stop();
+
+  /**
+   * @brief feedInput
+   * Takes a frame and feeds it to the model storage for predictions
+   * @param frame
+   */
+  void feedInput(const VideoFrame &frame);
+
+  /**
+   * @brief computePredictions
+   * Uses the model to compute the predictions and store them in
+   * computedPredictions
+   */
+  void computePredictions();
+  /**
+   * @brief printPredictions
+   * Prints the predictions names, probabilities
+   * and bounding boxes (top left point, bottom right point)
+   */
+  void printPredictions();
+
+  /**
+   * @brief drawPredictionsOnCopyFrame
+   * Takes a BGR frame (to conform with OpenCV format), a tuple of predictions
+   * and draws the predictions on the frame It draws the bounding box and writes
+   * text for each prediction
+   * @param frame
+   * @param predictions: tuple(BoundinxBox, probability, labelIndex)
+   * @param nbPredictions: maximum number of predictions to draw
+   * @param threshold: Only display predictions with a probability > threshold
+   */
+  void drawPredictionsOnCopyFrame(
+      const VideoFrame &frame,
+      const std::vector<std::tuple<std::array<float, 4>, float, int>>
+          &predictions,
+      const unsigned int nbPredictions = 5, const float threshold = 0.4f);
+
+private:
+  std::chrono::steady_clock::duration delta = std::chrono::nanoseconds::zero();
+  int counter = 0;
+  // Status variables of the processing
+  bool firstRun{true};
+  bool running{true};
+  bool newFrame{false};
+  bool processing{false};
+
+  FrameCopy fcopy;
+  std::thread processFrameThread;
+
+  std::mutex inputLock;
+  std::condition_variable inputCv;
+
+  // Model being used
+  MultipleObjectTracking mot;
+
+  // Output predictions
+  std::vector<std::tuple<std::array<float, 4>, float, int>> computedPredictions;
+
+  // Colors
+  cv::Scalar colors[10] = {
+      // Red
+      cv::Scalar{75, 25, 230},
+      // Orange
+      cv::Scalar{48, 130, 245},
+      // Yellow
+      cv::Scalar{25, 255, 255},
+      // Lime
+      cv::Scalar{25, 245, 210},
+      // Green
+      cv::Scalar{75, 180, 60},
+      // Cyan
+      cv::Scalar{240, 240, 70},
+      // Blue
+      cv::Scalar{200, 130, 0},
+      // Purple
+      cv::Scalar{180, 30, 145},
+      // Magenta
+      cv::Scalar{230, 50, 240},
+      // Apricot
+      cv::Scalar{180, 215, 255},
+  };
+};
+
+} // namespace jami
