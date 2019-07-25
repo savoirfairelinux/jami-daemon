@@ -42,6 +42,7 @@
  */
 
 // Define the audio api
+#define OPENSL_API_STR              "opensl"
 #define PULSEAUDIO_API_STR          "pulseaudio"
 #define ALSA_API_STR                "alsa"
 #define JACK_API_STR                "jack"

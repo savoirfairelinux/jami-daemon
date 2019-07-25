@@ -1,16 +1,16 @@
 =head1 NAME
 
-dring - core daemon for Jami: secure and distributed voice, video and chat communication platform.
+jamid - core daemon for Jami: secure and distributed voice, video and chat communication platform.
 
 =head1 SYNOPSIS
 
-B<dring> [OPTION]...
+B<jamid> [OPTION]...
 
 =head1 DESCRIPTION
 
 Jami is meant to be a robust enterprise-class desktop phone. It provides functions like call transfer, call hold, multiple lines, multiple accounts support.
 Jami audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
-B<dring> is the core of Jami; it communicates with the client side through DBus. You need to install a client to use the daemon, for instance GTK+ client, B<gnome-ring>.
+B<jamid> is the core of Jami; it provides the DBus service "net.jami.daemon1". You need to install a client to use the daemon, for instance GTK+ client, B<jami-gnome>.
 
 =head1 OPTIONS
 
@@ -30,7 +30,7 @@ Force automatic answer to incoming calls.
 
 =item B<-p, --persistent>
 
-Stay alive after client quits.
+Stay alive after all clients quit.
 
 =item B<-h, --help>
 
@@ -40,17 +40,17 @@ Print short list of command-line options.
 
 =head1 BUGS
 
-Please report bugs at https://tuleap.ring.cx/projects/ring.
+Please report bugs at https://git.jami.net/savoirfairelinux/ring-daemon/issues/.
 
 =head1 AUTHORS
 
-B<dring> is developed in Montreal by Savoir-faire Linux Inc.
+B<jamid> is developed in Montreal by Savoir-faire Linux Inc.
 
 This manual page was written by Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>.
 
 =head1 SEE ALSO
 
-B<gnome-ring>(1)
+B<jami-gnome>(1)
 
 =head1 COPYRIGHT
 

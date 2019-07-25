@@ -721,6 +721,12 @@ setRingingTimeout(int32_t timeout)
     jami::Manager::instance().setRingingTimeout(timeout);
 }
 
+std::vector<std::string>
+getSupportedAudioManagers()
+{
+    return jami::AudioPreference::getSupportedAudioManagers();
+}
+
 bool
 setAudioManager(const std::string& api)
 {

@@ -227,6 +227,8 @@ class AudioPreference : public Serializable {
         AudioLayer *createAudioLayer();
         AudioLayer *switchAndCreateAudioLayer();
 
+        static std::vector<std::string> getSupportedAudioManagers();
+
         std::string getAudioApi() const {
             return audioApi_;
         }

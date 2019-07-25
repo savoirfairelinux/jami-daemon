@@ -44,6 +44,7 @@ libtool
 doc/doxygen/core-doc
 doc/doxygen/gtk-gui-doc
 doc/*.html
+man/jamid.8
 
 # PJSIP files
 *.depend
@@ -113,8 +114,8 @@ tools/.vscode/
 build-aux/
 configure
 bin/dbus/*.adaptor.h
-bin/dbus/cx.ring.Ring.service
-bin/dring
+bin/dbus/net.jami.daemon1.service
+bin/jamid
 bin/ringcli
 doltcompile
 doltlibtool

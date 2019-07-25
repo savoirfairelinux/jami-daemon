@@ -431,6 +431,31 @@ AudioPreference::createAudioLayer()
     return nullptr;
 }
 
+std::vector<std::string>
+AudioPreference::getSupportedAudioManagers()
+{
+    return {
+#if HAVE_OPENSL
+        OPENSL_API_STR,
+#endif
+#if HAVE_ALSA
+        ALSA_API_STR,
+#endif
+#if HAVE_PULSE
+        PULSEAUDIO_API_STR,
+#endif
+#if HAVE_JACK
+        JACK_API_STR,
+#endif
+#if HAVE_COREAUDIO
+        COREAUDIO_API_STR,
+#endif
+#if HAVE_PORTAUDIO
+        PORTAUDIO_API_STR,
+#endif
+    };
+}
+
 void AudioPreference::serialize(YAML::Emitter &out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;

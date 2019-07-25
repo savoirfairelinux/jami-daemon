@@ -119,6 +119,7 @@ DRING_PUBLIC void mutePlayback(bool mute);
 DRING_PUBLIC bool isRingtoneMuted();
 DRING_PUBLIC void muteRingtone(bool mute);
 
+DRING_PUBLIC std::vector<std::string> getSupportedAudioManagers();
 DRING_PUBLIC std::string getAudioManager();
 DRING_PUBLIC bool setAudioManager(const std::string& api);
 

@@ -216,10 +216,12 @@ main(int argc, char *argv [])
 #endif
         {
             weakClient = client;
-            return client->event_loop();
+            client->event_loop();
         }
     } catch (const std::exception& ex) {
-        std::cerr << "One does not simply initialize the client: " << ex.what() << std::endl;
+        std::cerr << "Exception in the client: " << ex.what() << std::endl;
+        return 1;
     }
-    return 1;
+
+    return 0;
 }

@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,15 +17,21 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef DBUS_CPP_WRAPPER_H_
-#define DBUS_CPP_WRAPPER_H_
 
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include <dbus-c++/dbus.h>
-#pragma GCC diagnostic warning "-Wignored-qualifiers"
-#pragma GCC diagnostic warning "-Wshadow"
-#pragma GCC diagnostic warning "-Wunused-parameter"
+void
+Register(const int32_t& pid, const std::string& name)
+{
+    ++numberOfClients_;
+    signal_numberOfClientsChanged_.emit(numberOfClients_);
+}
 
-#endif // DBUS_CPP_WRAPPER_H_
+void
+Unregister(const int32_t& pid)
+{
+    if (numberOfClients_ == 0) {
+        std::cerr << "DBusDaemon: Unregister() was called when there are no registered clients.";
+    }
+
+    --numberOfClients_;
+    signal_numberOfClientsChanged_.emit(numberOfClients_);
+}

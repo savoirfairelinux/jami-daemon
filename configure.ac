@@ -386,29 +386,26 @@ AS_IF([test "x$enable_coverage" = "xyes"], [
         CXXFLAGS="${CXXFLAGS} --coverage"
         LDFLAGS="${LDFLAGS} --coverage"])
 
-# DBUSCPP
-dnl Check for dbuscpp, the C++ bindings for D-Bus
+dnl Check for sdbus-c++, the C++ bindings for D-Bus
 AC_ARG_WITH([dbus],
     [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
     [],
     [with_dbus=yes])
 AS_IF([test "x$with_dbus" = "xyes"], [
-       PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
+       PKG_CHECK_MODULES(DBUSCPP, sdbus-c++,, AC_MSG_WARN([Missing dbus development files]))
+       PKG_CHECK_MODULES([SIGCPP], [sigc++-2.0],, AC_MSG_ERROR([sigc++ not found]))
 
        AS_AC_EXPAND(LIBDIR, $libdir)
        AC_SUBST(LIBDIR)
 
        AC_CONFIG_FILES([bin/dbus/Makefile
-                        bin/dbus/cx.ring.Ring.service])
+                        bin/dbus/net.jami.daemon1.service])
 
-       AC_CHECK_PROG(HAVE_DBUSXML2CPP, dbusxx-xml2cpp, true, false)
+       AC_CHECK_PROG(HAVE_DBUSXML2CPP, sdbus-c++-xml2cpp, true, false)
        if test "x$HAVE_DBUSXML2CPP" = "xfalse"; then
-           AC_MSG_ERROR([dbusxx-xml2cpp not found])
+           AC_MSG_ERROR([sdbus-c++-xml2cpp not found])
        fi
 
-       AS_IF([test "x$CLANG" = "xyes"], [
-             AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
-       ]);
        AM_CONDITIONAL(RING_DBUS, true)],TESTS= $(check_PROGRAMS)
        AM_CONDITIONAL(RING_DBUS, false));
 

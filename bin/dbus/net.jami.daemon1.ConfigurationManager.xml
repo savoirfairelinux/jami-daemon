@@ -1,0 +1,1430 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<node xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
+    <interface name="net.jami.daemon1.ConfigurationManager">
+
+        <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+            Used to handle the configuration stuff: accounts settings, user preferences, ...
+            TODO: move runtime account stuff in accountmanager
+        </tp:docstring>
+
+        <method name="getAccountTemplate">
+            <arg type="s" name="accountType" direction="in"/>
+            <arg type="a{ss}" name="details" direction="out"/>
+        </method>
+
+        <method name="getAccountDetails">
+            <tp:docstring>
+                Get all parameters of the specified account.
+            </tp:docstring>
+            <arg type="s" name="accountID" direction="in">
+                <tp:docstring>
+                    The account ID
+                </tp:docstring>
+            </arg>
+            <arg type="a{ss}" name="details" direction="out">
+                <tp:docstring>
+                    The available keys / parameters are:
+                    <ul>
+                        <li>CONFIG_ACCOUNT_ENABLE:    True or False (Default: True)</li>
+                        <li>CONFIG_ACCOUNT_RESOLVE_ONCE</li>
+                        <li>CONFIG_ACCOUNT_TYPE: SIP or RING</li>
+                        <li>HOSTNAME: The IP address or hostname of the registrar</li>
+                        <li>USERNAME: The username (or extension) of the account</li>
+                        <li>PASSWORD: The password associated to the account</li>
+                        <li>REALM</li>
+                        <li>CONFIG_ACCOUNT_MAILBOX: Number to dial to access the voicemail box</li>
+                        <li>CONFIG_ACCOUNT_REGISTRATION_EXPIRE: SIP header expiration value (Default: 1600)</li>
+                        <li>BIND_ADDRESS: Custom bind SIP ip address</li>
+                        <li>LOCAL_INTERFACE: The network interface (Default: eth0)</li>
+                        <li>PUBLISHED_SAMEAS_LOCAL: If False, the published address equals the local address. This is the default.</li>
+                        <li>PUBLISHED_ADDRESS: The SIP published address</li>
+                        <li>LOCAL_PORT: The SIP listening port (Default: 5060)</li>
+                        <li>PUBLISHED_PORT: The SIP published port</li>
+                        <li>DISPLAY_NAMEL: The display name</li>
+                        <li>STUN_ENABLE: True or False (Default: False)</li>
+                        <li>STUN_SERVER: The STUN server address</li>
+                        <li>ACCOUNT_REGISTRATION_STATUS: The account registration status. Should be Registered to make calls.</li>
+                        <li>ACCOUNT_REGISTRATION_STATE_CODE</li>
+                        <li>ACCOUNT_REGISTRATION_STATE_DESC</li>
+                        <li>CONFIG_DEFAULT_PRESENCE_ENABLED: enable/disable presence support - true or false</li>
+                        <li>SRTP_KEY_EXCHANGE</li>
+                        <li>SRTP_ENABLE: Whether or not voice communication are encrypted - True or False (Default: False)</li>
+                        <li>SRTP_RTP_FALLBACK</li>
+                        <li>TLS_LISTENER_PORT: TLS listening port (Default: 5061)</li>
+                        <li>TLS_ENABLE: Whether or not signalling is encrypted - True or False (Default: False)</li>
+                        <li>TLS_CA_LIST_FILE</li>
+                        <li>TLS_CERTIFICATE_FILE</li>
+                        <li>TLS_PRIVATE_KEY_FILE</li>
+                        <li>TLS_METHOD</li>
+                        <li>TLS_CIPHERS</li>
+                        <li>TLS_SERVER_NAME</li>
+                        <li>TLS_VERIFY_SERVER</li>
+                        <li>TLS_VERIFY_CLIENT</li>
+                        <li>TLS_REQUIRE_CLIENT_CERTIFICATE</li>
+                        <li>TLS_NEGOTIATION_TIMEOUT_SEC</li>
+                    </ul>
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="getVolatileAccountDetails">
+           <arg type="s" name="accountID" direction="in">
+               <tp:docstring>
+                   The account ID
+               </tp:docstring>
+           </arg>
+           <arg type="a{ss}" name="details" direction="out">
+               <tp:docstring>
+                   Account.registrationCoarseStatus      ( Coarse status like, UNREGISTERED or TRYING )
+                   Account.registrationStatus            ( Error code, like 200 (OK) or 408 (Timeout) )
+                   Account.registrationStatusDescription ( A technical error message (from PJSIP)     )
+                   Account.lastSuccessfulRegister        ( Timestamp of the last "REGISTERED" event   )
+                   Account.presenceStatus                ( Published presence status                  )
+                   Account.presenceNote                  ( Published presence note (status string)    )
+               </tp:docstring>
+           </arg>
+       </method>
+
+        <method name="setAccountDetails">
+            <tp:docstring>
+                Send new account parameters, or account parameters changes, to the core. The hash table is not required to be complete, only the updated parameters may be specified.
+                <tp:rationale>Account settings are written to the configuration file when ring properly quits.</tp:rationale>
+                <tp:rationale>After calling this method, the core will emit the signal <tp:member-ref>accountDetailsChanged</tp:member-ref> with the updated data. The client must subscribe to this signal and use it to update its internal data structure.</tp:rationale>
+            </tp:docstring>
+            <arg type="s" name="accountID" direction="in">
+            </arg>
+            <arg type="a{ss}" name="details" direction="in">
+            </arg>
+        </method>
+
+        <method name="setAccountActive">
+            <tp:docstring>
+              Set if this account is currently enabled (can be used).
+              It is only a runtime proprety with no impact on the "enabled" state of the account.
+            </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+               <tp:docstring>
+                    The account ID
+               </tp:docstring>
+           </arg>
+           <arg type="b" name="enable" direction="in">
+               <tp:docstring>
+                    <p>Set if enabled.</p>
+               </tp:docstring>
+           </arg>
+        </method>
+
+        <method name="setCredentials">
+            <arg type="s" name="accountID" direction="in"/>
+            <arg type="aa{ss}" name="credentialInformation" direction="in"/>
+        </method>
+
+       <method name="getCredentials">
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="aa{ss}" name="credentialInformation" direction="out"/>
+       </method>
+
+       <method name="addAccount">
+           <tp:docstring>
+               Add a new account. When created, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
+               <tp:rationale>If no details are specified, the default parameters are used.</tp:rationale>
+               <tp:rationale>The core tries to register the account as soon it is created.</tp:rationale>
+           </tp:docstring>
+           <arg type="a{ss}" name="details" direction="in" >
+               <tp:docstring>
+                    The new account settings
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="createdAccountId" direction="out">
+               <tp:docstring>
+                    A new account ID
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="exportOnRing">
+           <tp:docstring>
+               Export account on the DHT using the given password and generated PIN (returned through exportOnRingEnded signal).
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="password" direction="in"/>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully. exportOnRingEnded will be trigered on completion.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="exportToFile">
+         <tp:added version="5.1.0"/>
+           <tp:docstring>
+               Copy the account archive to the path provided in argument.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="destinationPath" direction="in"/>
+           <arg type="s" name="password" direction="in"/>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <signal name="exportOnRingEnded">
+           <tp:docstring>
+               Notify clients when the exportOnRing operation ended.
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="i" name="status">
+               <tp:docstring>
+                   Status code: 0 for success
+                  <ul>
+                      <li>SUCCESS = 0         everything went fine. PIN is set.</li>
+                      <li>WRONG_PASSWORD = 1  wrong password provided.</li>
+                      <li>NETWORK_ERROR = 2   can't publish archive on the network.</li>
+                  </ul>
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="PIN">
+               <tp:docstring>
+                   A PIN to show to the user to import the account from somewhere else.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <method name="revokeDevice">
+           <tp:docstring>
+               Revoke device attached to the given Ring account, and publish the new revocation list.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="password" direction="in"/>
+           <arg type="s" name="deviceId" direction="in"/>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was performed successfully.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <signal name="deviceRevocationEnded">
+           <tp:docstring>
+               Notify clients when the revokeDevice operation ended.
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="s" name="deviceId"/>
+           <arg type="i" name="status">
+               <tp:docstring>
+                   Status code: 0 for success
+                   <ul>
+                     <li>SUCCESS = 0         everything went fine. Device is now revoked.</li>
+                     <li>WRONG_PASSWORD = 1  revocation failed: wrong password.</li>
+                     <li>UNKNOWN_DEVICE = 2  revocation failed: unknown device.</li>
+                   </ul>
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <signal name="knownDevicesChanged">
+           <tp:docstring>
+               Notify clients when a new device linked to this account is found.
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="a{ss}" name="devices">
+               <tp:docstring>
+                   A map of device IDs with corresponding labels.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <method name="getKnownRingDevices">
+           <tp:docstring>
+               Gets list of known devices for this account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="a{ss}" name="devices" direction="out">
+               <tp:docstring>
+                   A map of device IDs with corresponding labels.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="changeAccountPassword">
+           <tp:docstring>
+               Change the Ring account archive password.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="oldPassword" direction="in"/>
+           <arg type="s" name="newPassword" direction="in"/>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was successful.
+               </tp:docstring>
+           </arg>
+       </method>
+
+      <method name="lookupName">
+           <tp:docstring>
+               Performs name lookup with RingNS protocol for the specified account (if any) or using the default nameserver.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+               <tp:docstring>
+                   The account to use. If empty, use the default RingNS server.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="nameserverUri" direction="in">
+               <tp:docstring>
+                   The name server URI to use, considered only if accountID is empty.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="name" direction="in"/>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully. registeredNameFound will be trigered on completion.
+               </tp:docstring>
+           </arg>
+      </method>
+
+      <method name="lookupAddress">
+           <tp:docstring>
+               Performs address lookup with RingNS protocol for the specified account (if any) or using the default nameserver.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+               <tp:docstring>
+                   The account to use. If empty, use the default RingNS server.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="nameserverUri" direction="in">
+               <tp:docstring>
+                   The name server URI to use, considered only if accountID is empty.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="address" direction="in">
+               <tp:docstring>
+                   Address to lookup for. Must not include spaces.
+               </tp:docstring>
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully. registeredNameFound will be trigered on completion.
+                   False in case of operation initialization error. registeredNameFound won't be called in that case.
+               </tp:docstring>
+           </arg>
+      </method>
+
+      <signal name="registeredNameFound">
+           <tp:docstring>
+               Notify clients when a new registered address-name mapping is known.
+               If status is not success (0), requested field (name or address) is left empty.
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="i" name="status">
+               <tp:docstring>
+                  Status code: 0 for success
+                  <ul>
+                      <li>SUCCESS = 0         everything went fine. Name/address pair was found.</li>
+                      <li>INVALID_NAME = 1    provided name is not valid.</li>
+                      <li>NOT_FOUND = 2       everything went fine. Name/address pair was not found.</li>
+                      <li>ERROR = 3           An error happened</li>
+                  </ul>
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="address"/>
+           <arg type="s" name="name"/>
+      </signal>
+
+      <method name="registerName">
+           <tp:docstring>
+               Performs name registration with RingNS protocol for the specified account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="password" direction="in">
+               <tp:docstring>
+                   Ring account main password.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="name" direction="in">
+               <tp:docstring>
+                   Name to register. Must be lower-case ASCII, digits or "-" or "_".
+               </tp:docstring>
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully. nameRegistrationEnded will be trigered on completion.
+                   False in case of operation initialization error. nameRegistrationEnded won't be called in that case.
+               </tp:docstring>
+           </arg>
+      </method>
+
+       <signal name="nameRegistrationEnded">
+           <tp:docstring>
+               Notify clients when the registerName operation ended.
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="i" name="status">
+               <tp:docstring>
+                   Status code: 0 for success
+                  <ul>
+                      <li>SUCCESS = 0         everything went fine. Name is now registered.</li>
+                      <li>WRONG_PASSWORD = 1  registration failed: wrong password.</li>
+                      <li>INVALID_NAME = 2    registration failed: invalid name.</li>
+                      <li>ALREADY_TAKEN = 3   registration failed: name is already taken.</li>
+                      <li>NETWORK_ERROR = 4   registration failed: network or server error.</li>
+                  </ul>
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="name">
+               <tp:docstring>
+                   The name that was attempted to register.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <method name="testAccountICEInitialization">
+           <tp:docstring>
+               Test initializing an ICE transport with the current account configuration.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="a{ss}" name="result" direction="out">
+               <tp:docstring>
+                   A string map.
+                   Available attributes:
+                   <ul>
+                       <li>STATUS: 0 for success, non-0 for error</li>
+                       <li>MESSAGE: message explaining the status</li>
+                   </ul>
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="setAccountsOrder">
+           <tp:docstring>
+                Update the accounts order.
+                <tp:rationale>When placing a call, the first registered account in the list is used.</tp:rationale>
+           </tp:docstring>
+           <arg type="s" name="order" direction="in">
+               <tp:docstring>
+                   An ordered list of account IDs, delimited by '/'
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="removeAccount">
+           <tp:docstring>
+               Remove an existing account. When removed, the signal <tp:member-ref>accountsChanged</tp:member-ref> is emitted. The clients must then call <tp:member-ref>getAccountList</tp:member-ref> to update their internal data structure.
+           </tp:docstring>
+           <arg type="s" name="accoundID" direction="in">
+               <tp:docstring>
+                    The account to remove, identified by its ID
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getAccountList">
+           <tp:docstring>
+                Get a list of all created accounts, as stored by the core.
+           </tp:docstring>
+           <arg type="as" name="list" direction="out">
+               <tp:docstring>
+                   A list of account IDs
+               </tp:docstring>
+           </arg>
+       </method>
+
+        <method name="importAccounts">
+            <tp:docstring>
+              Import previously exported accounts
+            </tp:docstring>
+           <arg type="s" name="path" direction="in">
+               <tp:docstring>
+                    Path of the file to import
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="password" direction="in">
+               <tp:docstring>
+                    Decryption password
+               </tp:docstring>
+           </arg>
+           <arg type="i" direction="out">
+               <tp:docstring>
+                    <p>Return code, 0 for success.</p>
+               </tp:docstring>
+           </arg>
+        </method>
+
+        <method name="exportAccounts">
+            <tp:docstring>
+                Export account configuration to an encrypted file.
+            </tp:docstring>
+            <arg type="as" name="accountIDs" direction="in">
+               <tp:docstring>
+                   A list of account IDs
+               </tp:docstring>
+            </arg>
+            <arg type="s" name="filepath" direction="in">
+                <tp:docstring>
+                    Where to export the account
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="password" direction="in">
+                <tp:docstring>
+                    File encryption password
+                </tp:docstring>
+            </arg>
+            <arg type="i" direction="out">
+                <tp:docstring>
+                    Return code, 0 for success.
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="registerAllAccounts">
+            <tp:docstring>
+                Send account registration (REGISTER) for all accounts, even if they are not enabled.
+            </tp:docstring>
+        </method>
+
+        <method name="sendRegister">
+            <tp:docstring>
+                Send account registration (REGISTER) to the registrar.
+                Register the account if enable=true, unregister if enable=false.
+            </tp:docstring>
+            <arg type="s" name="accountID" direction="in">
+                <tp:docstring>
+                    The account ID
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="enable" direction="in">
+                <tp:docstring>
+                    <p>To register, enable must be true.</p>
+                    <p>To un-register, enable must be false.</p>
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="sendTextMessage">
+            <arg type="s" name="accountID" direction="in"/>
+            <arg type="s" name="to" direction="in"/>
+            <arg type="a{ss}" name="payloads" direction="in"/>
+            <arg type="t" name="id" direction="out">
+                <tp:docstring>
+                    The message ID. An ID of 0 means that the message was not sent,
+                    likely because one of the parameters was invalid.
+                </tp:docstring>
+            </arg>
+        </method>
+
+      <method name="cancelMessage">
+          <arg type="s" name="accountID" direction="in"/>
+          <arg type="t" name="id" direction="in"/>
+          <arg type="b" name="success" direction="out">
+             <tp:docstring>
+               Cancel pending message.
+             </tp:docstring>
+          </arg>
+       </method>
+
+       <method name="getLastMessages">
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="t" name="base_timestamp" direction="in"/>
+           <arg type="a(sa{ss}t)" name="messages" direction="out"/>
+        </method>
+
+       <method name="getNearbyPeers">
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="a{ss}" name="result" direction="out"/>
+           <tp:docstring>
+               Get Discovered Peer Map
+           </tp:docstring>
+        </method>
+
+       <method name="getMessageStatus">
+          <arg type="t" name="id" direction="in"/>
+          <arg type="i" name="status" direction="out">
+             <tp:docstring>
+               The message status.
+                <ul>
+                    <li>UNKNOWN = 0    unknown message or message status</li>
+                    <li>SENDING = 1    message is being sent or waiting for peer confirmation.</li>
+                    <li>SENT = 2      message have been received from the other end.</li>
+                    <li>READ = 3       message have been read by the peer.</li>
+                    <li>FAILURE = 4    the message coudn't be delivered.</li>
+                </ul>
+             </tp:docstring>
+          </arg>
+       </method>
+
+       <signal name="incomingAccountMessage">
+           <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a new text message has been received at the account level.
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="s" name="from"/>
+           <arg type="a{ss}" name="payloads"/>
+       </signal>
+
+       <signal name="accountMessageStatusChanged">
+           <tp:added version="2.3.0"/>
+           <tp:docstring>
+               Notify clients that a sent text message status have changed
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="t" name="id"/>
+           <arg type="s" name="to"/>
+           <arg type="i" name="status">
+              <tp:docstring>The new status of the message, see getMessageStatus for possible values.</tp:docstring>
+           </arg>
+       </signal>
+
+       <method name="setVolume">
+           <tp:docstring>
+             <p>Sets the volume using a linear scale [0,100].</p>
+             <tp:rationale>Pulseaudio has its own mechanism to modify application volume. This method is enabled only if the ALSA API is used.</tp:rationale>
+           </tp:docstring>
+           <arg type="s" name="device" direction="in">
+             <tp:docstring>
+               The device: mic or speaker
+             </tp:docstring>
+           </arg>
+           <arg type="d" name="value" direction="in">
+             <tp:docstring>
+               The volume value (between 0 and 100)
+             </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getVolume">
+           <tp:docstring>
+             <p>Return the volume value of the given device on a linear scale [0,100].</p>
+             <tp:rationale>Only enabled if the ALSA API is used, Pulseaudio has its own mechanism to modify application volume.</tp:rationale>
+           </tp:docstring>
+           <arg type="s" name="device" direction="in">
+             <tp:docstring>
+               The device: mic or speaker
+             </tp:docstring>
+           </arg>
+           <arg type="d" name="value" direction="out">
+             <tp:docstring>
+               The volume value (between 0 and 100)
+             </tp:docstring>
+           </arg>
+       </method>
+
+       <signal name="volumeChanged">
+           <tp:docstring>
+             <p>Notify clients of a volume level change.</p>
+             <p>This signal occurs only if ALSA is enabled since Pulseaudio streams are managed externally. </p>
+           </tp:docstring>
+           <arg type="s" name="device">
+             <tp:docstring>
+               The device: mic or speaker
+             </tp:docstring>
+           </arg>
+           <arg type="d" name="value">
+             <tp:docstring>
+               The new volume value
+             </tp:docstring>
+           </arg>
+       </signal>
+
+       <!-- For now only expose these two options to clients -->
+       <method name="muteDtmf">
+           <arg type="b" name="mute" direction="in"/>
+       </method>
+
+       <method name="isDtmfMuted">
+           <arg type="b" name="muted" direction="out"/>
+       </method>
+
+       <method name="muteCapture">
+           <arg type="b" name="mute" direction="in">
+               <tp:docstring>
+                   True to mute audio capture, false to unmute.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="isCaptureMuted">
+           <arg type="b" name="muted" direction="out">
+               <tp:docstring>
+                   Returns true if audio capture is muted, false otherwise.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="mutePlayback">
+           <arg type="b" name="mute" direction="in">
+               <tp:docstring>
+                   True to mute audio playback, false otherwise.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="isPlaybackMuted">
+           <arg type="b" name="muted" direction="out">
+               <tp:docstring>
+                   Returns true if audio playback is muted, false otherwise.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="muteRingtone">
+           <arg type="b" name="mute" direction="in">
+               <tp:docstring>
+                   True to mute ringtone, false otherwise.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="isRingtoneMuted">
+           <arg type="b" name="muted" direction="out">
+               <tp:docstring>
+                   Returns true if ringtone is muted, false otherwise.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getAudioManager">
+           <arg type="s" name="api" direction="out"/>
+       </method>
+
+       <method name="setAudioManager">
+           <arg type="s" name="api" direction="in"/>
+           <arg type="b" name="successful" direction="out"/>
+       </method>
+
+       <method name="getSupportedAudioManagers">
+           <tp:docstring>
+               Returns a list of compiled audio backends.
+           </tp:docstring>
+           <arg type="as" name="api" direction="out"/>
+       </method>
+
+       <method name="getRecordPath">
+           <arg type="s" name="rec" direction="out"/>
+       </method>
+
+       <method name="setRecordPath">
+           <arg type="s" name="rec" direction="in"/>
+       </method>
+
+       <method name="getIsAlwaysRecording">
+           <arg type="b" name="res" direction="out"/>
+       </method>
+
+       <method name="setIsAlwaysRecording">
+           <arg type="b" name="enabled" direction="in"/>
+       </method>
+
+       <!--      ///////////////////////               -->
+
+       <!-- Codecs-related methods -->
+
+       <method name="getCodecList">
+           <arg type="au" name="list" direction="out"/>
+       </method>
+
+       <method name="getCodecDetails">
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="u" name="codecId" direction="in"/>
+           <arg type="a{ss}" name="details" direction="out"/>
+       </method>
+
+       <method name="setCodecDetails">
+           <arg type="b" name="result" direction="out"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="u" name="codecId" direction="in"/>
+           <arg type="a{ss}" name="details" direction="in"/>
+       </method>
+
+       <method name="getActiveCodecList">
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="au" name="list" direction="out"/>
+       </method>
+
+       <method name="setActiveCodecList">
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="au" name="list" direction="in"/>
+       </method>
+
+        <!-- Hardware encoding/decoding signals -->
+        <signal name="hardwareDecodingChanged">
+           <arg type="b" name="state">
+               <tp:docstring>
+                   If hardware decoding is enabled
+               </tp:docstring>
+           </arg>
+           <tp:docstring>Signal triggered when hardware decoding changes.</tp:docstring>
+        </signal>
+
+        <signal name="hardwareEncodingChanged">
+           <arg type="b" name="state">
+               <tp:docstring>
+                   If hardware encoding is enabled
+               </tp:docstring>
+           </arg>
+           <tp:docstring>Signal triggered when hardware encoding changes.</tp:docstring>
+        </signal>
+
+        <!-- Audio devices methods -->
+        <method name="getAudioPluginList">
+            <arg type="as" name="list" direction="out"/>
+        </method>
+
+        <method name="setAudioPlugin">
+            <arg type="s" name="audioPlugin" direction="in"/>
+        </method>
+
+        <signal name="audioDeviceEvent">
+           <tp:docstring>Signal triggered by changes in the detected audio devices, e.g. a headset being unplugged.</tp:docstring>
+        </signal>
+
+        <method name="getAudioOutputDeviceList">
+            <arg type="as" name="list" direction="out"/>
+        </method>
+
+        <method name="setAudioOutputDevice">
+            <arg type="i" name="index" direction="in"/>
+        </method>
+
+        <method name="setAudioInputDevice">
+            <arg type="i" name="index" direction="in"/>
+        </method>
+
+        <method name="setAudioRingtoneDevice">
+            <arg type="i" name="index" direction="in"/>
+        </method>
+
+        <method name="getAudioInputDeviceList">
+            <arg type="as" name="list" direction="out"/>
+        </method>
+
+        <method name="getCurrentAudioDevicesIndex">
+            <arg type="as" name="list" direction="out"/>
+        </method>
+
+        <method name="getAudioInputDeviceIndex">
+            <arg type="s" name="devname" direction="in"/>
+            <arg type="i" name="index" direction="out"/>
+        </method>
+
+        <method name="getAudioOutputDeviceIndex">
+            <arg type="s" name="devname" direction="in"/>
+            <arg type="i" name="index" direction="out"/>
+        </method>
+
+        <method name="getCurrentAudioOutputPlugin">
+            <arg type="s" name="plugin" direction="out"/>
+        </method>
+
+        <!-- Audio meter -->
+        <method name="isAudioMeterActive">
+            <tp:docstring>
+                Gets whether or not an audio meter is active for id. If id is empty, returns whether or not there is at least one audio meter active.
+            </tp:docstring>
+            <arg type="s" name="id" direction="in">
+                <tp:docstring>Ring buffer id.</tp:docstring>
+            </arg>
+            <arg type="b" name="isActive" direction="out">
+                <tp:docstring>If the audio meter is active for the passed in id.</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="setAudioMeterState">
+            <tp:docstring>Sets whether or not the audio meter should be active for id. If id is empty, applies to all ring buffers.</tp:docstring>
+            <arg type="s" name="id" direction="in">
+                <tp:docstring>Ring buffer id.</tp:docstring>
+            </arg>
+            <arg type="b" name="state" direction="in">
+                <tp:docstring>True to enabled the audio meter, false to disable.</tp:docstring>
+            </arg>
+        </method>
+
+        <signal name="audioMeter">
+           <tp:docstring>Signal containing volume level.</tp:docstring>
+           <arg type="s" name="id">
+               <tp:docstring>Ring buffer id.</tp:docstring>
+           </arg>
+           <arg type="d" name="level">
+               <tp:docstring>RMS value for the volume. Conversion to dB can be done with dB=20*log10(level). Level is between 0 and 1.</tp:docstring>
+           </arg>
+        </signal>
+
+        <!--    General Settings Panel         -->
+        <method name="getNoiseSuppressState">
+            <arg type="b" name="state" direction="out"/>
+        </method>
+
+        <method name="setNoiseSuppressState">
+            <arg type="b" name="state" direction="in"/>
+        </method>
+
+        <method name="isAgcEnabled">
+            <arg type="b" name="enabled" direction="out"/>
+        </method>
+
+        <method name="setAgcState">
+            <arg type="b" name="enabled" direction="in"/>
+        </method>
+
+        <!--    General Settings Panel         -->
+        <method name="getHistoryLimit">
+            <arg type="i" name="days" direction="out"/>
+        </method>
+
+        <method name="setHistoryLimit">
+            <arg type="i" name="days" direction="in"/>
+        </method>
+
+        <method name="getRingingTimeout">
+            <arg type="i" name="timeout" direction="out"/>
+        </method>
+
+        <method name="setRingingTimeout">
+            <arg type="i" name="timeout" direction="in"/>
+        </method>
+
+        <!-- Hook configuration -->
+        <method name="getHookSettings">
+            <arg type="a{ss}" name="settings" direction="out"/>
+        </method>
+
+        <method name="setHookSettings">
+            <arg type="a{ss}" name="settings" direction="in"/>
+        </method>
+
+        <signal name="accountsChanged">
+        </signal>
+
+        <signal name="accountDetailsChanged">
+            <arg type="s" name="accountID">
+                <tp:docstring>
+                    The account ID
+                </tp:docstring>
+            </arg>
+            <arg type="a{ss}" name="details">
+                <tp:docstring>
+                    New persistent account details
+                </tp:docstring>
+            </arg>
+        </signal>
+
+        <signal name="registrationStateChanged">
+            <arg type="s" name="accountID"/>
+            <arg type="s" name="registrationState"/>
+            <arg type="i" name="registrationDetail">
+                <tp:docstring>
+                    The optional account-type specific message code. 0 when not available.
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="registrationDetailStr">
+                <tp:docstring>
+                    The optional account-type specific message string. Empty string when not available.
+                </tp:docstring>
+            </arg>
+        </signal>
+
+        <signal name="volatileAccountDetailsChanged">
+            <arg type="s" name="accountID">
+                <tp:docstring>
+                    The account ID
+                </tp:docstring>
+            </arg>
+            <arg type="a{ss}" name="details">
+                <tp:docstring>
+                    Account.registrationCoarseStatus      ( Coarse status like, UNREGISTERED or TRYING )
+                    Account.registrationStatus            ( Error code, like 200 (OK) or 408 (Timeout) )
+                    Account.registrationStatusDescription ( A technical error message (from PJSIP)     )
+                    Account.lastSuccessfulRegister        ( Timestamp of the last "REGISTERED" event   )
+                    Account.presenceStatus                ( Published presence status                  )
+                    Account.presenceNote                  ( Published presence note (status string)    )
+                </tp:docstring>
+            </arg>
+        </signal>
+
+        <signal name="stunStatusFailure">
+            <arg type="s" name="reason"/>
+        </signal>
+
+        <signal name="errorAlert">
+            <arg type="i" name="code"/>
+        </signal>
+
+        <!-- TLS Methods -->
+        <method name="getSupportedTlsMethod">
+            <arg type="as" name="list" direction="out"/>
+        </method>
+
+        <method name="getSupportedCiphers">
+           <tp:added version="2.0.0"/>
+           <tp:docstring>
+                Returns a list of supported encryption ciphers used to encrypt SIP messages. The list depends on the TLS library being used.
+                Only registered SIP accounts currently support setting custom ciphers. This method returns an empty list if TLS support is disabled in either pjproject or Jami.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+                <tp:docstring>
+                    A SIP account id, other account IDs will be rejected.
+                </tp:docstring>
+           </arg>
+           <arg type="as" name="list" direction="out">
+               <tp:docstring>
+                   A list of randomly sorted cipher names. The order may or may
+                   not be significant depending on the SSL library being used.
+               </tp:docstring>
+           </arg>
+        </method>
+
+        <method name="getTlsDefaultSettings">
+            <arg type="a{ss}" name="details" direction="out"/>
+        </method>
+
+        <method name="validateCertificate">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="certificate" direction="in">
+              <tp:docstring>
+                  A certificate ID
+              </tp:docstring>
+            </arg>
+            <arg type="a{ss}" name="details" direction="out">
+                <tp:docstring>
+                    <p>A key-value list of all certificate validation</p>
+                    <p>The constants used as keys are defined in the "security.h" constants header file</p>
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="validateCertificatePath">
+            <arg type="s" name="accountId" direction="in"/>
+            <arg type="s" name="certificatePath" direction="in">
+                <tp:docstring>
+                    A certificate path.
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="privateKeyPath" direction="in">
+                <tp:docstring>
+                    An optional path a the private key for the certificate
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="privateKeyPasswd" direction="in">
+                <tp:docstring>
+                    An optional private key password
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="caListPath" direction="in">
+                <tp:docstring>
+                    An optional path to an assumed valid ca list
+                </tp:docstring>
+            </arg>
+            <arg type="a{ss}" name="details" direction="out">
+                <tp:docstring>
+                    <p>A key-value list of all certificate validation</p>
+                    <p>The constants used as keys are defined in the "security.h" constants header file</p>
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="getCertificateDetails">
+            <arg type="s" name="certificate" direction="in">
+                <tp:docstring>
+                    A certificate ID
+                </tp:docstring>
+            </arg>
+            <arg type="a{ss}" name="details" direction="out">
+                <tp:docstring>
+                    <p>A key-value list of all certificate details</p>
+                    <p>The constants used as keys are defined in the "security.h" constants header file</p>
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="getCertificateDetailsPath">
+            <arg type="s" name="certificatePath" direction="in">
+                <tp:docstring>
+                    A certificate path
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="privateKeyPath" direction="in">
+                <tp:docstring>
+                    An optional path a the private key for the certificate
+                </tp:docstring>
+            </arg>
+            <arg type="s" name="privateKeyPasswd" direction="in">
+                <tp:docstring>
+                    An optional private key password
+                </tp:docstring>
+            </arg>
+            <arg type="a{ss}" name="details" direction="out">
+                <tp:docstring>
+                    <p>A key-value list of all certificate details</p>
+                    <p>The constants used as keys are defined in the "security.h" constants header file</p>
+               </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="getPinnedCertificates">
+            <tp:added version="2.2.0"/>
+            <arg type="as" name="certIds" direction="out">
+                <tp:docstring>
+                    A list of all known certificate IDs
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="pinCertificate">
+            <tp:added version="2.2.0"/>
+            <arg type="ay" name="certificateRaw" direction="in">
+                <tp:docstring>
+                    A raw certificate (PEM or DER encoded) to be pinned.
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="local" direction="in">
+                <tp:docstring>
+                    True to save the certificate in the daemon local store.
+                </tp:docstring>
+            </arg>
+            <arg type="as" name="certId" direction="out">
+                <tp:docstring>
+                    IDs of the pinned certificate chain (from subject to issuer) or empty string on failure.
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="unpinCertificate">
+            <tp:added version="2.2.0"/>
+            <arg type="s" name="certId" direction="in">
+                <tp:docstring>
+                    A certificate ID to unpin.
+                </tp:docstring>
+            </arg>
+            <arg type="b" name="success" direction="out">
+                <tp:docstring>
+                    True if a certificate was unpinned.
+                </tp:docstring>
+            </arg>
+        </method>
+
+       <method name="pinCertificatePath">
+           <tp:added version="2.2.0"/>
+           <arg type="s" name="certPath" direction="in">
+               <tp:docstring>
+                   A certificate path to be pinned (assumed non-local).
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="unpinCertificatePath">
+           <tp:added version="2.2.0"/>
+           <arg type="s" name="certPath" direction="in">
+               <tp:docstring>
+                   Certificates path.
+               </tp:docstring>
+           </arg>
+           <arg type="u" name="unpinned" direction="out">
+               <tp:docstring>
+                   Number of unpinned certificates.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="pinRemoteCertificate">
+           <tp:added version="2.2.0"/>
+           <arg type="s" name="accountId" direction="in">
+               <tp:docstring>
+                   An account ID
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="certId" direction="in">
+               <tp:docstring>
+                   A certificate public key ID
+               </tp:docstring>
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the search started
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="setCertificateStatus">
+           <tp:added version="2.2.0"/>
+           <arg type="s" name="accountId" direction="in">
+               <tp:docstring>
+                   An account ID
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="certId" direction="in">
+               <tp:docstring>
+                   A certificate ID
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="status" direction="in">
+               <tp:docstring>
+                   The new status of the certificate for the specified account.
+                   UNDEFINED : forget any previous certificate state for this account.
+                   ALLOWED   : consider the certificate as trusted for this account.
+                   BANNED    : consider the certificate as banned for this account.
+               </tp:docstring>
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the certificate state was successfully set.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getCertificatesByStatus">
+           <tp:added version="2.2.0"/>
+           <arg type="s" name="accountId" direction="in">
+               <tp:docstring>
+                   An account ID
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="status" direction="in">
+               <tp:docstring>
+                   The queried certificate status.
+                   ALLOWED : trusted certificate for this account.
+                   BANNED  : banned certificate for this account.
+               </tp:docstring>
+           </arg>
+           <arg type="as" name="list" direction="out">
+               <tp:docstring>
+                   A list of certificate ids with the provided status
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <signal name="certificateStateChanged">
+           <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a certificate status have changed.
+           </tp:docstring>
+           <arg type="s" name="accountId"/>
+           <arg type="s" name="certId"/>
+           <arg type="s" name="state"/>
+       </signal>
+
+       <signal name="certificatePinned">
+           <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a certificate have been added to the store.
+           </tp:docstring>
+           <arg type="s" name="certId"/>
+       </signal>
+
+       <signal name="certificatePathPinned">
+           <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a certificate path have been added to the store.
+           </tp:docstring>
+           <arg type="s" name="path">
+               <tp:docstring>
+                   Pinned path.
+               </tp:docstring>
+           </arg>
+           <arg type="as" name="certIds">
+               <tp:docstring>
+                   A list of certificate ids.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <signal name="certificateExpired">
+           <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a certificate expired.
+           </tp:docstring>
+           <arg type="s" name="certId">
+               <tp:docstring>
+                   A certificate id.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <method name="getTrustRequests">
+           <tp:added version="2.2.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="aa{ss}" name="requests" direction="out" >
+               <tp:docstring>
+                   A list of contact request details. Details:
+                   - from: account ID of sender
+                   - received: UNIX timestamp of reception date
+                   - payload: attached payload
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="acceptTrustRequest">
+           <tp:added version="2.2.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="from" direction="in"/>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation succeeded.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="discardTrustRequest">
+           <tp:added version="2.2.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="from" direction="in"/>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation succeeded.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <signal name="incomingTrustRequest">
+           <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a new contact request has been received.
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="s" name="from"/>
+           <arg type="ay" name="payload"/>
+           <arg type="t" name="receiveTime"/>
+       </signal>
+
+       <method name="sendTrustRequest">
+           <tp:added version="2.2.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="to" direction="in"/>
+           <arg type="ay" name="payload" direction="in"/>
+       </method>
+
+       <method name="addContact">
+           <tp:added version="3.0.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="uri" direction="in"/>
+       </method>
+
+       <method name="removeContact">
+           <tp:added version="3.0.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="uri" direction="in"/>
+           <arg type="b" name="ban" direction="in">
+               <tp:docstring>
+                   True if the the contact should be banned.
+                   If false, the contact is removed from the contact list (banned or not).
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getContactDetails">
+           <tp:added version="3.0.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="s" name="uri" direction="in"/>
+           <arg type="a{ss}" name="contactDetails" direction="out" >
+             <tp:docstring>
+                 The serialized details on given contact of given account.
+             </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getContacts">
+           <tp:added version="3.0.0"/>
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="aa{ss}" name="contacts" direction="out" >
+             <tp:docstring>
+                 The list of contact information of given account.
+             </tp:docstring>
+           </arg>
+       </method>
+
+       <signal name="contactAdded">
+           <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a new contact has been added.
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="s" name="uri"/>
+           <arg type="b" name="confirmed"/>
+       </signal>
+
+       <signal name="contactRemoved">
+           <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a new contact has been removed.
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="s" name="uri"/>
+           <arg type="b" name="banned"/>
+       </signal>
+
+       <method name="getAddrFromInterfaceName">
+           <arg type="s" name="interface" direction="in"/>
+           <arg type="s" name="address" direction="out"/>
+       </method>
+
+       <method name="getAllIpInterface">
+           <arg type="as" name="list" direction="out"/>
+       </method>
+
+       <method name="getAllIpInterfaceByName">
+           <arg type="as" name="list" direction="out"/>
+       </method>
+
+       <method name="getShortcuts">
+           <arg type="a{ss}" name="shortcutsMap" direction="out"/>
+       </method>
+
+       <method name="setShortcuts">
+           <arg type="a{ss}" name="shortcutsMap" direction="in"/>
+       </method>
+
+       <signal name="mediaParametersChanged">
+           <tp:added version="2.3.0"/>
+           <tp:docstring>
+               Notify clients that a media parameter changed.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+               <tp:docstring>
+                   An account id.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <method name="connectivityChanged">
+           <tp:added version="2.3.0"/>
+           <tp:docstring>
+               This notifies the daemon that the network connectivity has changed, eg:
+               - interface has disconnected from the network
+               - interface connected to a different network
+               - connected interface has changed (wifi to eth)
+           </tp:docstring>
+       </method>
+
+       <signal name="migrationEnded">
+           <tp:added version="3.0.0"/>
+           <tp:docstring>
+               Notify clients when migration is ended.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+               <tp:docstring>
+                   An account id.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="result">
+               <tp:docstring>
+                   The result of the migration.
+                   SUCCESS : account migrated.
+                   INVALID : account migration failed.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <signal name="debugMessageReceived">
+           <tp:added version="5.2.0"/>
+           <tp:docstring>
+               Notify clients when debug is outputted.
+           </tp:docstring>
+           <arg type="s" name="message">
+               <tp:docstring>
+                   The formatted message to be output.
+               </tp:docstring>
+           </arg>
+       </signal>
+   </interface>
+</node>

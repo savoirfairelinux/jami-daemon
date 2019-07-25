@@ -1,8 +1,8 @@
-SECTION="1"
+SECTION="8"
 
-TEMPLATES=dring.pod
+TEMPLATES=jamid.pod
 
-man_MANS=dring.1
+man_MANS=jamid.8
 
 POD2MAN=pod2man
 
@@ -10,10 +10,10 @@ EXTRA_DIST=$(man_MANS) $(TEMPLATES)
 
 all: $(MANPAGES)
 
-SUFFIXES=.pod .1
+SUFFIXES=.pod .8
 
-.pod.1:
+.pod.8:
 	$(POD2MAN) --section=$(SECTION) --release=@VERSION@ --center "" $< > $@
 
 clean-local:
-	rm -rf *.1
+	rm -rf *.8
