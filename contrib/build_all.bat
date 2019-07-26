@@ -54,6 +54,7 @@ if "%1"=="uwp" (
 set TOBUILD= ^
 x264=build\x264\SMP\libx264.vcxproj, ^
 opus=build\opus\SMP\libopus.vcxproj, ^
+media-sdk=build\media-sdk\api\mfx_dispatch\windows\libmfx_vs2015.vcxproj, ^
 ffmpeg=ffmpeg, ^
 restbed=restbed, ^
 jsoncpp=build\jsoncpp\makefiles\vs2017\lib_json.vcxproj, ^
@@ -81,6 +82,7 @@ set TOBUILD= ^
 vpx=build\vpx\SMP\libvpx.vcxproj, ^
 x264=build\x264\SMP\libx264.vcxproj, ^
 opus=build\opus\SMP\libopus.vcxproj, ^
+media-sdk=build\media-sdk\api\mfx_dispatch\windows\libmfx_vs2015.vcxproj, ^
 ffmpeg=ffmpeg, ^
 restbed=restbed, ^
 jsoncpp=build\jsoncpp\makefiles\vs2017\lib_json.vcxproj, ^

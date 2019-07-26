@@ -1,0 +1,98 @@
+From 689a7acb36963c8558db3e879e6c22dcaaa535e7 Mon Sep 17 00:00:00 2001
+From: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+Date: Tue, 23 Jul 2019 11:30:49 -0400
+Subject: [PATCH] Copy build output to correct directory
+
+---
+ api/mfx_dispatch/windows/libmfx_vs2015.sln    |  7 ++--
+ .../windows/libmfx_vs2015.vcxproj             | 33 +++++++++++++++++--
+ 2 files changed, 35 insertions(+), 5 deletions(-)
+
+--- a/api/mfx_dispatch/windows/libmfx_vs2015.sln
++++ b/api/mfx_dispatch/windows/libmfx_vs2015.sln
+@@ -1,7 +1,7 @@
+ ﻿
+ Microsoft Visual Studio Solution File, Format Version 12.00
+-# Visual Studio 14
+-VisualStudioVersion = 14.0.25420.1
++# Visual Studio 15
++VisualStudioVersion = 15.0.28307.757
+ MinimumVisualStudioVersion = 10.0.40219.1
+ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libmfx_vs2015", "libmfx_vs2015.vcxproj", "{A9F7AEFB-DC6C-49E8-8E71-5351ABDCE627}"
+ EndProject
+@@ -25,6 +25,9 @@ Global
+ 	GlobalSection(SolutionProperties) = preSolution
+ 		HideSolutionNode = FALSE
+ 	EndGlobalSection
++	GlobalSection(ExtensibilityGlobals) = postSolution
++		SolutionGuid = {94706D6C-B55B-49AB-B136-337F5E9B2FA3}
++	EndGlobalSection
+ 	GlobalSection(DPCodeReviewSolutionGUID) = preSolution
+ 		DPCodeReviewSolutionGUID = {00000000-0000-0000-0000-000000000000}
+ 	EndGlobalSection
+--- a/api/mfx_dispatch/windows/libmfx_vs2015.vcxproj
++++ b/api/mfx_dispatch/windows/libmfx_vs2015.vcxproj
+@@ -79,7 +79,7 @@
+   </PropertyGroup>
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+   <PropertyGroup>
+-    <OutDir>..\..\..\..\build\win_$(Platform)\$(Configuration)\lib\</OutDir>
++    <OutDir>..\..\..\build\win_$(Platform)\$(Configuration)\lib\</OutDir>
+     <IntDir>$(OutDir)..\objs\$(ProjectName)\</IntDir>
+     <IncludePath>$(MINIDDK_ROOT)\Include\um;$(MINIDDK_ROOT)\Include\shared;$(IncludePath)</IncludePath>
+     <LibraryPath>$(MINIDDK_ROOT)\Lib\win8\um\x86;$(LibraryPath)</LibraryPath>
+@@ -88,7 +88,7 @@
+     <TargetName>$(ProjectName)</TargetName>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)'=='Release'">
+-    <TargetName>$(ProjectName)</TargetName>
++    <TargetName>libmfx</TargetName>
+   </PropertyGroup>
+   <ItemDefinitionGroup>
+     <ClCompile>
+@@ -199,7 +199,7 @@
+       <AdditionalIncludeDirectories>include;..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+       <PreprocessorDefinitions>WIN64;NDEBUG;_LIB;_ALLOW_MSC_VER_MISMATCH;_ALLOW_ITERATOR_DEBUG_LEVEL_MISMATCH;_ALLOW_RUNTIME_LIBRARY_MISMATCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <ExceptionHandling>Async</ExceptionHandling>
+-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+       <BufferSecurityCheck>true</BufferSecurityCheck>
+       <WarningLevel>Level4</WarningLevel>
+       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+@@ -208,6 +208,33 @@
+       <ControlFlowGuard>Guard</ControlFlowGuard>
+     </ClCompile>
+     <Lib />
++    <Lib>
++      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
++      <AdditionalDependencies>Advapi32.lib</AdditionalDependencies>
++    </Lib>
++    <PostBuildEvent>
++      <Command>mkdir "$(OutDir)"..\..\..\..\..\..\msvc\include
++
++mkdir "$(OutDir)"..\..\..\..\..\..\msvc\include\mfx
++
++mkdir "$(OutDir)"..\..\..\..\..\..\msvc\lib
++
++mkdir "$(OutDir)"..\..\..\..\..\..\msvc\lib\x64
++
++xcopy /S /Y "$(OutDir)"*.lib "$(OutDir)"..\..\..\..\..\..\msvc\lib\x64
++
++
++
++
++xcopy /S /Y "$(OutDir)"*.pdb "$(OutDir)"..\..\..\..\..\..\msvc\lib\x64
++
++
++xcopy /S /Y $(ProjectDir)..\..\..\api\include\*.h "$(OutDir)"..\..\..\..\..\..\msvc\include\mfx
++</Command>
++    </PostBuildEvent>
++    <ProjectReference>
++      <LinkLibraryDependencies>true</LinkLibraryDependencies>
++    </ProjectReference>
+   </ItemDefinitionGroup>
+   <ItemGroup>
+     <ClCompile Include="src\main.cpp" />
+-- 
+2.22.0.windows.1
+
