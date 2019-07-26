@@ -21,6 +21,7 @@ if "%1"=="uwp" (
 
 :uwpDeps
 set DEPENDENCIES=( ^
+media-sdk, ^
 ffnvcodec, ^
 ffmpeg, ^
 argon2, ^
@@ -46,6 +47,7 @@ goto fetch
 
 :win32Deps
 set DEPENDENCIES=( ^
+media-sdk, ^
 ffnvcodec, ^
 ffmpeg, ^
 argon2, ^
