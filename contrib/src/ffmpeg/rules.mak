@@ -3,7 +3,7 @@ FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).t
 
 PKGS+=ffmpeg
 
-ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavformat >= 57.82.100 libavdevice >= 57.8.101 libavfilter >= 6.105.100 libswscale >= 4.7.103 libswresample >= 2.9.100"),)
+ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavformat >= 57.82.100 libavdevice >= 57.8.101 libavfilter >= 6.105.100 libswscale >= 4.7.103 libswresample >= 2.9.100 libmfx >= 1.26"),)
 PKGS_FOUND += ffmpeg
 endif
 
@@ -207,7 +207,7 @@ FFMPEGCONF += --disable-asm
 endif
 else
 # Desktop Linux
-DEPS_ffmpeg += ffnvcodec
+DEPS_ffmpeg += ffnvcodec media-sdk
 FFMPEGCONF += \
 	--target-os=linux \
 	--enable-indev=v4l2 \
@@ -233,7 +233,20 @@ FFMPEGCONF += \
 	--enable-hwaccel=vp8_nvdec \
 	--enable-hwaccel=mjpeg_nvdec \
 	--enable-encoder=h264_nvenc \
-	--enable-encoder=hevc_nvenc
+	--enable-encoder=hevc_nvenc \
+	--enable-libmfx \
+	--enable-encoder=h264_qsv \
+	--enable-encoder=hevc_qsv \
+	--enable-encoder=mjpeg_qsv \
+	--enable-decoder=vp8_qsv \
+	--enable-decoder=h264_qsv \
+	--enable-decoder=hevc_qsv \
+	--enable-decoder=mjpeg \
+	--enable-decoder=vp9 \
+	--enable-decoder=vc1_qsv \
+	--enable-filter=scale_qsv \
+	--enable-filter=overlay_qsv
+
 endif
 endif
 
