@@ -1031,6 +1031,14 @@ SIPCall::restartMediaSender()
 }
 
 void
+SIPCall::activeAutoAdapt()
+{
+#ifdef ENABLE_VIDEO
+    videortp_->activeAutoAdapt();
+#endif
+}
+
+void
 SIPCall::stopAllMedia()
 {
     JAMI_DBG("[call:%s] stopping all medias", getCallId().c_str());

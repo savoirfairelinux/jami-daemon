@@ -116,7 +116,7 @@ public: // overridden
     std::map<std::string, std::string> getDetails() const override;
 
     virtual bool toggleRecording() override; // SIPCall needs to spread recorder to rtp sessions, so override
-
+    void activeAutoAdapt() override;
 public: // SIP related
     /**
      * Return the SDP's manager of this call

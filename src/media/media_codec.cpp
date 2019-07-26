@@ -233,4 +233,19 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
     *this = std::move(copy);
 }
 
+bool
+AccountVideoCodecInfo::isAutoQualityActivated(const std::map<std::string, std::string>& newDetails)
+{
+
+    auto infoQuality = getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED];
+    if(infoQuality == TRUE_STR)
+        return false;
+    
+    auto it = newDetails.find(DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED);
+    
+    return it->second != infoQuality;
+}
+
+
+
 } // namespace jami

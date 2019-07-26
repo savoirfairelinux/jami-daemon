@@ -75,6 +75,7 @@ public:
     void start(std::unique_ptr<IceSocket> rtp_sock,
                std::unique_ptr<IceSocket> rtcp_sock) override;
     void restartSender() override;
+    void activeAutoAdapt();
     void stop() override;
 
     /**

@@ -185,6 +185,7 @@ struct AccountVideoCodecInfo : AccountCodecInfo
 
     void setCodecSpecifications(const std::map<std::string, std::string>& details);
     std::map<std::string, std::string>  getCodecSpecifications();
+    bool isAutoQualityActivated(const std::map<std::string, std::string>& newDetails);
 
     /* account custom values */
     unsigned frameRate;

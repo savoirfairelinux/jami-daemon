@@ -139,6 +139,18 @@ void VideoRtpSession::startSender()
 }
 
 void
+VideoRtpSession::activeAutoAdapt()
+{
+    auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
+    auto autoQuality = codecVideo->isAutoQualityEnabled;
+    if (autoQuality and not rtcpCheckerThread_.isRunning())
+        rtcpCheckerThread_.start();
+    else if (not autoQuality and rtcpCheckerThread_.isRunning())
+        rtcpCheckerThread_.join();
+}
+
+
+void
 VideoRtpSession::restartSender()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);

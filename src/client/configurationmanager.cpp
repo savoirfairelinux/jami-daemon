@@ -508,17 +508,30 @@ setCodecDetails(const std::string& accountID,
 
         if (codec->systemCodecInfo.mediaType & jami::MEDIA_VIDEO) {
             if (auto foundCodec = std::static_pointer_cast<jami::AccountVideoCodecInfo>(codec)) {
-                foundCodec->setCodecSpecifications(details);
-                JAMI_WARN("parameters for %s changed ",
-                          foundCodec->systemCodecInfo.name.c_str());
-                if (auto call = jami::Manager::instance().getCurrentCall()) {
-                    if (call->getVideoCodec() == foundCodec) {
-                        JAMI_WARN("%s running. Need to restart encoding",
-                                  foundCodec->systemCodecInfo.name.c_str());
-                        call->restartMediaSender();
+                if(foundCodec->isAutoQualityActivated(details)){
+                    foundCodec->setCodecSpecifications(details);
+                    if (auto call = jami::Manager::instance().getCurrentCall()) {
+                        if (call->getVideoCodec() == foundCodec) {
+                            JAMI_WARN("%s running. Need to restart encoding",
+                                    foundCodec->systemCodecInfo.name.c_str());
+                            call->activeAutoAdapt();
+                        }
                     }
                 }
-                jami::emitSignal<ConfigurationSignal::MediaParametersChanged>(accountID);
+                else
+                {
+                    foundCodec->setCodecSpecifications(details);
+                    JAMI_WARN("parameters for %s changed ",
+                    foundCodec->systemCodecInfo.name.c_str());
+                    if (auto call = jami::Manager::instance().getCurrentCall()) {
+                        if (call->getVideoCodec() == foundCodec) {
+                            JAMI_WARN("%s running. Need to restart encoding",
+                                    foundCodec->systemCodecInfo.name.c_str());
+                            call->restartMediaSender();
+                        }
+                    }
+                    jami::emitSignal<ConfigurationSignal::MediaParametersChanged>(accountID);
+                }
                 return true;
             }
         }
