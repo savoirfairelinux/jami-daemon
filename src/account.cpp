@@ -138,7 +138,6 @@ Account::freeAccount()
 {
     for (const auto& id : callIDSet_)
         Manager::instance().hangupCall(id);
-    doUnregister();
 }
 
 void
