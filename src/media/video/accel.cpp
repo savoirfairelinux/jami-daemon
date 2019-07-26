@@ -265,6 +265,7 @@ HardwareAccel::setupDecoder(AVCodecID id, int width, int height)
         { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
         { "vdpau", AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
+        { "qsv", AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP9 } },
     };
 
     for (const auto& api : apiList) {
@@ -291,6 +292,7 @@ HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* fr
         { "nvenc", AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 } },
         { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264 } },
+        { "qsv", AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_MJPEG } },
     };
 
     for (auto api : apiList) {
