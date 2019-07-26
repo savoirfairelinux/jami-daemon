@@ -113,21 +113,9 @@ MediaDecoderTest::testAudioFile()
 template<typename Word>
 static std::ostream& write(std::ostream& os, Word value, unsigned size)
 {
-    union {
-        uint32_t i;
-        char c[4];
-    } big = {0x01020304};
-
-    // big endian if 0x01 is the first byte
-    if (big.c[0] == 1) {
-        while (size)
-            os.put(static_cast<char>((value >> (8 * --size)) & 0xFF));
-        return os;
-    } else {
-        for (; size; --size, value >>= 8)
-            os.put(static_cast<char>(value & 0xFF));
-        return os;
-    }
+    for (; size; --size, value >>= 8)
+        os.put(static_cast<char>(value & 0xFF));
+    return os;
 }
 
 void
