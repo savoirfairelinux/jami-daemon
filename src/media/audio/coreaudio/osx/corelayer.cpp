@@ -232,14 +232,11 @@ CoreLayer::startStream()
 {
     JAMI_DBG("START STREAM");
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Idle)
-            return;
-        status_ = Status::Started;
-    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_ != Status::Idle)
+        return;
+    status_ = Status::Started;
 
-    dcblocker_.reset();
 
     initAudioLayerIO();
 
@@ -254,6 +251,7 @@ CoreLayer::destroyAudioLayer()
     AudioOutputUnitStop(ioUnit_);
     AudioUnitUninitialize(ioUnit_);
     AudioComponentInstanceDispose(ioUnit_);
+    dcblocker_.reset();
 }
 
 void
@@ -261,18 +259,15 @@ CoreLayer::stopStream()
 {
     JAMI_DBG("STOP STREAM");
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Started)
-            return;
-        status_ = Status::Idle;
-    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_ != Status::Started)
+        return;
+    status_ = Status::Idle;
 
     destroyAudioLayer();
 
     /* Flush the ring buffers */
-    flushUrgent();
-    flushMain();
+    flush();
 }
 
 //// PRIVATE /////

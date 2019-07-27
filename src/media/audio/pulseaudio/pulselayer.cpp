@@ -164,7 +164,7 @@ void PulseLayer::contextStateChanged(pa_context* c)
 
 void PulseLayer::updateSinkList()
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
+    std::unique_lock<std::mutex> lk(mutex_);
     if (not enumeratingSinks_) {
         JAMI_DBG("Updating PulseAudio sink list");
         enumeratingSinks_ = true;
@@ -180,7 +180,7 @@ void PulseLayer::updateSinkList()
 
 void PulseLayer::updateSourceList()
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
+    std::unique_lock<std::mutex> lk(mutex_);
     if (not enumeratingSources_) {
         JAMI_DBG("Updating PulseAudio source list");
         enumeratingSources_ = true;
@@ -196,7 +196,7 @@ void PulseLayer::updateSourceList()
 
 void PulseLayer::updateServerInfo()
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
+    std::unique_lock<std::mutex> lk(mutex_);
     if (not gettingServerInfo_) {
         JAMI_DBG("Updating PulseAudio server infos");
         gettingServerInfo_ = true;
@@ -324,6 +324,7 @@ void PulseLayer::createStreams(pa_context* c)
     hardwareFormatAvailable(defaultAudioFormat_);
 
     auto onReady = [this] {
+        std::unique_lock<std::mutex> lk(mutex_);
         bool playbackReady = not playback_ or playback_->isReady();
         bool ringtoneReady = not ringtone_ or ringtone_->isReady();
         bool recordReady = not record_ or record_->isReady();
@@ -332,6 +333,8 @@ void PulseLayer::createStreams(pa_context* c)
             if (playback_) playback_->start();
             if (ringtone_) ringtone_->start();
             if (record_) record_->start();
+            status_ = Status::Started;
+            startedCv_.notify_all();
         }
     };
 
@@ -362,8 +365,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     pa_threaded_mainloop_signal(mainloop_.get(), 0);
 
-    flushMain();
-    flushUrgent();
+    flush();
 }
 
 void PulseLayer::disconnectAudioStream()
@@ -375,8 +377,8 @@ void PulseLayer::disconnectAudioStream()
 
 void PulseLayer::startStream()
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
-    readyCv_.wait(lk, [this] {
+    std::unique_lock<std::mutex> lk(mutex_);
+    startedCv_.wait(lk, [this] {
         return !(enumeratingSinks_ or enumeratingSources_ or gettingServerInfo_);
     });
     if (status_ != Status::Idle)
@@ -389,20 +391,20 @@ void PulseLayer::startStream()
 
     // Flush outside the if statement: every time start stream is
     // called is to notify a new event
-    flushUrgent();
-    flushMain();
+    flush();
 
-    status_ = Status::Started;
     startedCv_.notify_all();
 }
 
 void
 PulseLayer::stopStream()
 {
-    std::unique_lock<std::mutex> lk(readyMtx_);
-    readyCv_.wait(lk, [this] {
+    std::unique_lock<std::mutex> lk(mutex_);
+    startedCv_.wait(lk, [this] {
         return !(enumeratingSinks_ or enumeratingSources_ or gettingServerInfo_);
     });
+    if (status_ != Status::Started)
+        return;
 
     {
         PulseMainLoopLock lock(mainloop_.get());
@@ -415,7 +417,6 @@ PulseLayer::stopStream()
     }
 
     disconnectAudioStream();
-
     status_ = Status::Idle;
     startedCv_.notify_all();
 }
@@ -551,7 +552,7 @@ PulseLayer::contextChanged(pa_context* c UNUSED, pa_subscription_event_type_t ty
 
 void PulseLayer::waitForDeviceList()
 {
-    std::unique_lock<std::mutex> lock(readyMtx_);
+    std::unique_lock<std::mutex> lock(mutex_);
     if (waitingDeviceList_)
         return;
     waitingDeviceList_ = true;
@@ -559,14 +560,14 @@ void PulseLayer::waitForDeviceList()
         streamStarter_.join();
     streamStarter_ = std::thread([this]() mutable {
         {
-            std::unique_lock<std::mutex> lock(readyMtx_);
-            readyCv_.wait(lock, [&]() {
+            std::unique_lock<std::mutex> lock(mutex_);
+            startedCv_.wait(lock, [&]() {
                 return not enumeratingSources_ and not enumeratingSinks_ and not gettingServerInfo_;
             });
         }
         devicesChanged();
         waitingDeviceList_ = false;
-        if (status_ != Status::Started)
+        if (status_ != Status::Starting)
             return;
 
         // If a current device changed, restart streams
@@ -617,10 +618,10 @@ void PulseLayer::server_info_callback(pa_context*, const pa_server_info *i, void
     if (not context->sourceList_.empty())
         context->sourceList_.front().channel_map.channels = std::min(i->sample_spec.channels, (uint8_t)2);
     {
-        std::lock_guard<std::mutex> lk(context->readyMtx_);
+        std::lock_guard<std::mutex> lk(context->mutex_);
         context->gettingServerInfo_ = false;
     }
-    context->readyCv_.notify_all();
+    context->startedCv_.notify_all();
 }
 
 void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_source_info *i, int eol, void *userdata)
@@ -629,10 +630,10 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
 
     if (eol) {
         {
-            std::lock_guard<std::mutex> lk(context->readyMtx_);
+            std::lock_guard<std::mutex> lk(context->mutex_);
             context->enumeratingSources_ = false;
         }
-        context->readyCv_.notify_all();
+        context->startedCv_.notify_all();
         return;
     }
 #ifdef PA_LOG_SINK_SOURCES
@@ -673,10 +674,10 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
 
     if (eol) {
         {
-            std::lock_guard<std::mutex> lk(context->readyMtx_);
+            std::lock_guard<std::mutex> lk(context->mutex_);
             context->enumeratingSinks_ = false;
         }
-        context->readyCv_.notify_all();
+        context->startedCv_.notify_all();
         return;
     }
 #ifdef PA_LOG_SINK_SOURCES

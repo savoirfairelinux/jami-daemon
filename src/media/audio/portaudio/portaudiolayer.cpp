@@ -152,23 +152,22 @@ PortAudioLayer::getIndexRingtone() const
 void
 PortAudioLayer::startStream()
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Idle)
-            return;
-        status_ = Status::Started;
-    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_ != Status::Idle)
+        return;
+    status_ = Status::Started;
     pimpl_->initStream(*this);
 
-    flushUrgent();
-    flushMain();
+    flush();
 }
 
 void
 PortAudioLayer::stopStream()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     if (status_ != Status::Started)
         return;
+    status_ = Status::Idle;
 
     JAMI_DBG("Stop PortAudio Streams");
 
@@ -185,14 +184,8 @@ PortAudioLayer::stopStream()
             JAMI_ERR("Pa_StopStream error : %s", Pa_GetErrorText(err));
     }
 
-    {
-        std::lock_guard<std::mutex> lock {mutex_};
-        status_ = Status::Idle;
-    }
-
     // Flush the ring buffers
-    flushUrgent();
-    flushMain();
+    flush();
 }
 
 void

@@ -230,8 +230,6 @@ class PulseLayer : public AudioLayer {
         bool enumeratingSources_ {false};
         bool gettingServerInfo_ {false};
         bool waitingDeviceList_ {false};
-        std::mutex readyMtx_ {};
-        std::condition_variable readyCv_ {};
         std::thread streamStarter_ {};
 
         AudioPreference &preference_;

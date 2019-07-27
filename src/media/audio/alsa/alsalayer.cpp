@@ -154,8 +154,7 @@ void AlsaLayer::initAudioLayer()
     startCaptureStream();
     startPlaybackStream();
 
-    flushMain();
-    flushUrgent();
+    flush();
 }
 
 /**
@@ -163,9 +162,9 @@ void AlsaLayer::initAudioLayer()
  */
 void AlsaLayer::run()
 {
-    initAudioLayer();
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        initAudioLayer();
         status_ = AudioLayer::Status::Started;
     }
     startedCv_.notify_all();
@@ -216,12 +215,10 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
 void
 AlsaLayer::startStream()
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Idle)
-            return;
-        status_ = Status::Starting;
-    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_ != Status::Idle)
+        return;
+    status_ = Status::Starting;
 
     dcblocker_.reset();
 
@@ -239,6 +236,7 @@ AlsaLayer::startStream()
 void
 AlsaLayer::stopStream()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     audioThread_.reset();
 
     closeCaptureStream();
@@ -249,8 +247,7 @@ AlsaLayer::stopStream()
     ringtoneHandle_ = nullptr;
 
     /* Flush the ring buffers */
-    flushUrgent();
-    flushMain();
+    flush();
 
     status_ = Status::Idle;
 }

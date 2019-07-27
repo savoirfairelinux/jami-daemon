@@ -312,14 +312,10 @@ CoreLayer::startStream()
 {
     JAMI_DBG("iOS CoreLayer - Start Stream");
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Idle)
-            return;
-        status_ = Status::Started;
-    }
-
-    dcblocker_.reset();
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_ != Status::Idle)
+        return;
+    status_ = Status::Started;
 
     initAudioLayerIO();
 
@@ -334,6 +330,7 @@ CoreLayer::destroyAudioLayer()
     AudioOutputUnitStop(ioUnit_);
     AudioUnitUninitialize(ioUnit_);
     AudioComponentInstanceDispose(ioUnit_);
+    dcblocker_.reset();
 }
 
 void
@@ -341,18 +338,15 @@ CoreLayer::stopStream()
 {
     JAMI_DBG("iOS CoreLayer - Stop Stream");
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Started)
-            return;
-        status_ = Status::Idle;
-    }
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_ != Status::Started)
+        return;
+    status_ = Status::Idle;
 
     destroyAudioLayer();
 
     /* Flush the ring buffers */
-    flushUrgent();
-    flushMain();
+    flush();
 }
 
 OSStatus

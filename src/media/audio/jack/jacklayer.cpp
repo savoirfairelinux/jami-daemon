@@ -145,8 +145,7 @@ JackLayer::read()
 void
 JackLayer::ringbuffer_worker()
 {
-    flushMain();
-    flushUrgent();
+    flush();
 
     while (true) {
 
@@ -394,8 +393,7 @@ JackLayer::stopStream()
     if (ringbuffer_thread_.joinable())
         ringbuffer_thread_.join();
 
-    flushMain();
-    flushUrgent();
+    flush();
 }
 
 } // namespace jami
