@@ -190,6 +190,7 @@ class OpenSLLayer : public AudioLayer {
         size_t hardwareBuffSize_ {BUFFER_SIZE};
 
         std::shared_ptr<RingBuffer> mainRingBuffer_;
+        std::thread startThread_;
 };
 
 }

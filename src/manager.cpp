@@ -1681,7 +1681,7 @@ Manager::addAudio(Call& call)
             return;
         }
         pimpl_->audiodriver_->flushUrgent();
-        pimpl_->audiodriver_->flushMain();
+        getRingBufferPool().flushAllBuffers();
     }
     startAudioDriverStream();
 }
@@ -1992,7 +1992,7 @@ Manager::peerAnsweredCall(Call& call)
 
     if (pimpl_->audiodriver_) {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-        pimpl_->audiodriver_->flushMain();
+        getRingBufferPool().flushAllBuffers();
         pimpl_->audiodriver_->flushUrgent();
     }
 
@@ -2209,6 +2209,7 @@ Manager::setAudioPlugin(const std::string& audioPlugin)
     bool wasStarted = pimpl_->audiodriver_->isStarted();
 
     // Recreate audio driver with new settings
+    pimpl_->audiodriver_.reset();
     pimpl_->audiodriver_.reset(audioPreference.createAudioLayer());
 
     if (pimpl_->audiodriver_ and wasStarted)

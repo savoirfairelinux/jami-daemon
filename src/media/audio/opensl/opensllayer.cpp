@@ -64,23 +64,17 @@ OpenSLLayer::init()
     initAudioPlayback();
     initAudioCapture();
 
-    flushMain();
-    flushUrgent();
+    flush();
 }
 
 void
 OpenSLLayer::startStream()
 {
-    dcblocker_.reset();
-
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Idle)
-            return;
-        status_ = Status::Starting;
-    }
-
-    JAMI_DBG("Start OpenSL audio layer");
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (status_ != Status::Idle)
+        return;
+    status_ = Status::Starting;
+    JAMI_WARN("Start OpenSL audio layer");
 
     std::vector<int32_t> hw_infos;
     hw_infos.reserve(4);
@@ -89,7 +83,7 @@ OpenSLLayer::startStream()
     hardwareBuffSize_ = hw_infos[1];
     hardwareFormatAvailable(hardwareFormat_);
 
-    std::thread launcher([this](){
+    startThread_ = std::thread([this](){
         init();
         startAudioPlayback();
         startAudioCapture();
@@ -100,26 +94,23 @@ OpenSLLayer::startStream()
         }
         startedCv_.notify_all();
     });
-    launcher.detach();
 }
 
 void
 OpenSLLayer::stopStream()
 {
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Started)
-            return;
-        status_ = Status::Idle;
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (startThread_.joinable()) {
+        startThread_.join();
     }
-
-    JAMI_WARN("Stop OpenSL audio layer");
+    if (status_ != Status::Started)
+        return;
+    status_ = Status::Idle;
+    JAMI_WARN("Stopping OpenSL audio layer");
 
     stopAudioPlayback();
     stopAudioCapture();
-
-    flushMain();
-    flushUrgent();
+    flush();
 
     if (engineObject_ != nullptr) {
         (*engineObject_)->Destroy(engineObject_);
@@ -134,6 +125,7 @@ OpenSLLayer::stopStream()
     freeRecBufQueue_.clear();
     recBufQueue_.clear();
     bufs_.clear();
+    dcblocker_.reset();
 }
 
 std::vector<sample_buf>

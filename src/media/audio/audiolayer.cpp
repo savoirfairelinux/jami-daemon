@@ -53,7 +53,6 @@ AudioLayer::~AudioLayer()
 
 void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
 {
-    std::lock_guard<std::mutex> lock(mutex_);
     JAMI_DBG("Hardware audio format available : %s", playback.toString().c_str());
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
     urgentRingBuffer_.setFormat(audioFormat_);
@@ -72,13 +71,18 @@ void AudioLayer::devicesChanged()
 void AudioLayer::flushMain()
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    // should pass call id
     Manager::instance().getRingBufferPool().flushAllBuffers();
 }
 
 void AudioLayer::flushUrgent()
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    urgentRingBuffer_.flushAll();
+}
+
+void AudioLayer::flush()
+{
+    Manager::instance().getRingBufferPool().flushAllBuffers();
     urgentRingBuffer_.flushAll();
 }
 

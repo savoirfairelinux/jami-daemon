@@ -239,6 +239,8 @@ class AudioLayer {
             return ringBuff ? ringBuff : playBuff;
         }
 
+        void flush();
+
         /**
          * True if capture is not to be used
          */
