@@ -425,7 +425,7 @@ AudioPreference::createAudioLayer()
     }
     return nullptr;
 #endif
-#endif // __ANDROID__
+#endif // HAVE_OPENSL
 
     JAMI_WARN("No audio layer provided");
     return nullptr;

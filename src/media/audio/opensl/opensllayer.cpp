@@ -88,18 +88,18 @@ OpenSLLayer::startStream()
         startAudioPlayback();
         startAudioCapture();
         JAMI_WARN("OpenSL audio layer started");
-        {
-            std::lock_guard<std::mutex> lock(mutex_);
-            status_ = Status::Started;
-        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        status_ = Status::Started;
         startedCv_.notify_all();
     });
+    startedCv_.notify_all();
 }
 
 void
 OpenSLLayer::stopStream()
 {
-    std::lock_guard<std::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(mutex_);
+    startedCv_.wait(lock, [this] { return status_ != Status::Starting; });
     if (startThread_.joinable()) {
         startThread_.join();
     }
@@ -126,6 +126,7 @@ OpenSLLayer::stopStream()
     recBufQueue_.clear();
     bufs_.clear();
     dcblocker_.reset();
+    startedCv_.notify_all();
 }
 
 std::vector<sample_buf>
@@ -246,7 +247,7 @@ OpenSLLayer::engineServiceRing(bool waiting) {
 
 void
 OpenSLLayer::engineServiceRec(bool /* waiting */) {
-    playCv.notify_one();
+    //playCv.notify_one();
     recCv.notify_one();
     return;
 }
@@ -334,10 +335,10 @@ OpenSLLayer::startAudioCapture()
         std::unique_lock<std::mutex> lck(recMtx);
         while (recorder_) {
             recCv.wait(lck);
-            while (true) {
-                sample_buf *buf;
-                if(!recBufQueue_.front(&buf))
-                    break;
+            if (not recorder_)
+                break;
+            sample_buf *buf;
+            while (recBufQueue_.front(&buf)) {
                 recBufQueue_.pop();
                 if (buf->size_ > 0) {
                     auto nb_samples = buf->size_ / hardwareFormat_.getBytesPerFrame();
@@ -394,8 +395,8 @@ OpenSLLayer::stopAudioCapture()
             recorder_.reset();
         }
     }
+    recCv.notify_all();
     if (recThread.joinable()) {
-        recCv.notify_all();
         recThread.join();
     }
 
