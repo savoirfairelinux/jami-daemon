@@ -247,7 +247,7 @@ OpenSLLayer::engineServiceRing(bool waiting) {
 
 void
 OpenSLLayer::engineServiceRec(bool /* waiting */) {
-    //playCv.notify_one();
+    playCv.notify_one();
     recCv.notify_one();
     return;
 }
@@ -334,7 +334,7 @@ OpenSLLayer::startAudioCapture()
     recThread = std::thread([&]() {
         std::unique_lock<std::mutex> lck(recMtx);
         while (recorder_) {
-            recCv.wait(lck);
+            recCv.wait_for(lck, std::chrono::seconds(1));
             if (not recorder_)
                 break;
             sample_buf *buf;
