@@ -268,6 +268,7 @@ Call::getStateStr() const
     switch (getState()) {
         case CallState::ACTIVE:
             switch (getConnectionState()) {
+                case ConnectionState::TRYING:
                 case ConnectionState::PROGRESSING:
                     return StateEvent::CONNECTING;
 
@@ -295,6 +296,7 @@ Call::getStateStr() const
 
         case CallState::INACTIVE:
             switch (getConnectionState()) {
+                case ConnectionState::TRYING:
                 case ConnectionState::PROGRESSING:
                     return StateEvent::CONNECTING;
 
