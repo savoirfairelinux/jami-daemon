@@ -857,10 +857,6 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
 {
     std::unique_lock<std::mutex> lock(configurationMutex_);
 
-    tlsListener_.reset();
-    if (transport_)
-        setTransport();
-
     if (!isIP2IP()) {
         try {
             sendUnregister();
@@ -868,6 +864,10 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
             JAMI_ERR("doUnregister %s", e.what());
         }
     }
+
+    tlsListener_.reset();
+    if (transport_)
+        setTransport();
 
     lock.unlock();
     if (released_cb)
