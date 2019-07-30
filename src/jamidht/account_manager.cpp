@@ -271,6 +271,32 @@ AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>&
     return true;
 }
 
+void
+AccountManager::checkImplicitTrustRequest(const dht::InfoHash& account, const dht::InfoHash& peer_device, const std::shared_ptr<dht::crypto::Certificate>& cert){
+    bool active = false;
+    const auto& contacts = info_->contacts->getContacts();
+    auto contact = contacts.find(account);
+    if (contact != contacts.end()){
+        active = contact->second.isActive();
+    }
+    if (not active){
+        auto func = [this, peer_device](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
+            // check peer certificate
+            dht::InfoHash peer_account;
+            if (not foundPeerDevice(cert, peer_account)) {
+                return;
+            }
+            JAMI_WARN("Got implicit trust request from: %s / %s", peer_account.toString().c_str(), peer_device.toString().c_str());
+            info_->contacts->onTrustRequest(peer_account, peer_device, time(nullptr), false, {});
+        };
+        if (not cert){
+            findCertificate(peer_device, func);
+        } else {
+            func(cert);
+        }
+    }
+}
+
 
 void
 AccountManager::onPeerMessage(const dht::InfoHash& peer_device, bool allowPublic, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>&& cb)
