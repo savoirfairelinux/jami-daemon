@@ -426,21 +426,17 @@ void PulseLayer::writeToSpeaker()
         return;
 
     // available bytes to be written in pulseaudio internal buffer
-    size_t writableBytes = pa_stream_writable_size(playback_->stream());
-    if (writableBytes == 0)
-        return;
-
-    const auto& buff = getToPlay(playback_->format(), writableBytes / playback_->frameSize());
-
     AudioSample* data = nullptr;
-    pa_stream_begin_write(playback_->stream(), (void**)&data, &writableBytes);
-
-    if (not buff or isPlaybackMuted_)
-        memset(data, 0, writableBytes);
-    else
-        std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * playback_->frameSize());
-
-    pa_stream_write(playback_->stream(), data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
+    size_t writableBytes = (size_t) -1;
+    int ret = pa_stream_begin_write(playback_->stream(), (void**)&data, &writableBytes);
+    if (ret == 0 and data and writableBytes > 0) {
+        const auto& buff = getToPlay(playback_->format(), writableBytes / playback_->frameSize());
+        if (not buff or isPlaybackMuted_)
+            memset(data, 0, writableBytes);
+        else
+            std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * playback_->frameSize());
+        pa_stream_write(playback_->stream(), data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
+    }
 }
 
 void PulseLayer::readFromMic()
@@ -477,21 +473,17 @@ void PulseLayer::ringtoneToSpeaker()
     if (!ringtone_ or !ringtone_->isReady())
         return;
 
-    size_t bytes = pa_stream_writable_size(ringtone_->stream());
-    if (bytes == 0)
-        return;
-
-    const auto& buff = getToRing(ringtone_->format(), bytes / ringtone_->frameSize());
-
-    AudioSample* data;
-    pa_stream_begin_write(ringtone_->stream(), (void**)&data, &bytes);
-
-    if (not buff or isRingtoneMuted_)
-        memset(data, 0, bytes);
-    else
-        std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * playback_->frameSize());
-
-    pa_stream_write(ringtone_->stream(), data, bytes, nullptr, 0, PA_SEEK_RELATIVE);
+    AudioSample* data = nullptr;
+    size_t writableBytes = (size_t) -1;
+    int ret = pa_stream_begin_write(ringtone_->stream(), (void**)&data, &writableBytes);
+    if (ret == 0 and data and writableBytes > 0) {
+        const auto& buff = getToRing(ringtone_->format(), writableBytes / ringtone_->frameSize());
+        if (not buff or isPlaybackMuted_)
+            memset(data, 0, writableBytes);
+        else
+            std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * ringtone_->frameSize());
+        pa_stream_write(ringtone_->stream(), data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
+    }
 }
 
 
