@@ -168,6 +168,7 @@ public:
     void onPeerMessage(const dht::InfoHash& peer_device, bool allowPublic, PeerCertificateCb&& cb);
     bool onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate>& crt, bool allowPublic, dht::InfoHash& account_id);
 
+    void checkImplicitTrustRequest(const dht::InfoHash& account, const dht::InfoHash& peer_device, const std::shared_ptr<dht::crypto::Certificate>& cert = {});
     /**
      * Inform that a potential peer device have been found.
      * Returns true only if the device certificate is a valid device certificate.

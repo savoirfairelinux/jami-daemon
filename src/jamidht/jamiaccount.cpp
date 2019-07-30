@@ -303,6 +303,7 @@ JamiAccount::newIncomingCall(const std::string& from, const std::map<std::string
             JAMI_DBG("newIncomingCall: found matching call for %s", from.c_str());
             pendingSipCalls_.erase(call_it);
             call->updateDetails(details);
+            accountManager_->checkImplicitTrustRequest(call_it->from_account, dht::InfoHash(from), call_it->from_cert);
             return call;
         } else {
             ++call_it;
@@ -1797,7 +1798,7 @@ JamiAccount::doRegister_()
                         return true;
                 }
                 saveTreatedMessages();
-                accountManager_->onPeerMessage(v.from, dhtPublicInCalls_, [this, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>&,
+                accountManager_->onPeerMessage(v.from, dhtPublicInCalls_, [this, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>& cert,
                                                                         const dht::InfoHash& peer_account)
                 {
                     auto now = clock::to_time_t(clock::now());
@@ -1812,6 +1813,7 @@ JamiAccount::doRegister_()
                     dht_->putEncrypted(inboxDeviceKey,
                               v.from,
                               dht::ImMessage(v.id, std::string(), now));
+                    accountManager_->checkImplicitTrustRequest(peer_account, v.from, cert);
                 });
                 return true;
             }
