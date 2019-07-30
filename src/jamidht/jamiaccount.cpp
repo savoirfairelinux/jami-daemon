@@ -355,6 +355,7 @@ JamiAccount::newIncomingCall(const std::string& from, const std::map<std::string
             JAMI_DBG("newIncomingCall: found matching call for %s", from.c_str());
             pendingSipCalls_.erase(call_it);
             call->updateDetails(details);
+            checkImplicitTrustRequest(call_it->from_account, dht::InfoHash(from), call_it->from_cert);
             return call;
         } else {
             ++call_it;
@@ -2429,7 +2430,7 @@ JamiAccount::doRegister_()
                         return true;
                 }
                 saveTreatedMessages();
-                onPeerMessage(v.from, [this, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>&,
+                onPeerMessage(v.from, [this, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>& cert,
                                                                         const dht::InfoHash& peer_account)
                 {
                     auto now = clock::to_time_t(clock::now());
@@ -2444,6 +2445,7 @@ JamiAccount::doRegister_()
                     dht_.putEncrypted(inboxDeviceKey,
                               v.from,
                               dht::ImMessage(v.id, std::string(), now));
+                    checkImplicitTrustRequest(peer_account, v.from, cert);
                 });
                 return true;
             }
@@ -2460,6 +2462,31 @@ JamiAccount::doRegister_()
     catch (const std::exception& e) {
         JAMI_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
+    }
+}
+
+void
+JamiAccount::checkImplicitTrustRequest(const dht::InfoHash& account, const dht::InfoHash& peer_device, const std::shared_ptr<dht::crypto::Certificate>& cert){
+    bool active = false;
+    auto contact = contacts_.find(account);
+    if (contact != contacts_.end()){
+        active = contact->second.isActive();
+    }
+    if (not active){
+        auto func = [this, peer_device](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
+            // check peer certificate
+            dht::InfoHash peer_account;
+            if (not foundPeerDevice(cert, peer_account)) {
+                return;
+            }
+            JAMI_WARN("Got implicit trust request from: %s / %s", peer_account.toString().c_str(), peer_device.toString().c_str());
+            onTrustRequest(peer_account, peer_device, time(nullptr), false, {});
+        };
+        if (not cert){
+            findCertificate(peer_device, func);
+        } else {
+            func(cert);
+        }
     }
 }
 
