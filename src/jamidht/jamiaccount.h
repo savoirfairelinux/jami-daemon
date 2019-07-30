@@ -498,6 +498,8 @@ class JamiAccount : public SIPAccountBase {
          */
         void onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& account_id)>&&);
 
+        void checkImplicitTrustRequest(const dht::InfoHash& account, const dht::InfoHash& peer_device, const std::shared_ptr<dht::crypto::Certificate>& cert = {});
+
         void onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received , bool confirm, std::vector<uint8_t>&& payload);
 
         /**
