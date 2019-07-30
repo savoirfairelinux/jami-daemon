@@ -467,7 +467,9 @@ transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
             if (status_line.code / 100 == 2) {
                 if (call->inv)
                     call->terminateSipSession(PJSIP_SC_GONE);
-                Manager::instance().hangupCall(call->getCallId());
+                runOnMainThread([id = call->getCallId()] {
+                    Manager::instance().hangupCall(id);
+                });
                 pjsip_evsub_set_mod_data(sub, mod_ua_id, NULL);
             }
 
