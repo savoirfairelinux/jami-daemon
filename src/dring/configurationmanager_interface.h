@@ -7,6 +7,7 @@
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -126,6 +127,10 @@ DRING_PUBLIC std::string getRecordPath();
 DRING_PUBLIC void setRecordPath(const std::string& recPath);
 DRING_PUBLIC bool getIsAlwaysRecording();
 DRING_PUBLIC void setIsAlwaysRecording(bool rec);
+DRING_PUBLIC bool getRecordPreview();
+DRING_PUBLIC void setRecordPreview(bool rec);
+DRING_PUBLIC int getRecordQuality();
+DRING_PUBLIC void setRecordQuality(int quality);
 
 DRING_PUBLIC void setHistoryLimit(int32_t days);
 DRING_PUBLIC int32_t getHistoryLimit();
