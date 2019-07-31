@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -139,6 +140,8 @@ static constexpr const char* TOGGLE_PICKUP_HANGUP_SHORT_KEY {"togglePickupHangup
 constexpr const char * const VideoPreferences::CONFIG_LABEL;
 static constexpr const char* DECODING_ACCELERATED_KEY {"decodingAccelerated"};
 static constexpr const char* ENCODING_ACCELERATED_KEY {"encodingAccelerated"};
+static constexpr const char* RECORD_PREVIEW_KEY {"recordPreview"};
+static constexpr const char* RECORD_QUALITY_KEY {"recordQuality"};
 #endif
 
 static constexpr int PULSE_LENGTH_DEFAULT {250}; /** Default DTMF length */
@@ -564,12 +567,16 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
 VideoPreferences::VideoPreferences()
     : decodingAccelerated_(true)
     , encodingAccelerated_(false)
+    , recordPreview_(true)
+    , recordQuality_(0)
 {
 }
 
 void VideoPreferences::serialize(YAML::Emitter &out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << RECORD_PREVIEW_KEY << YAML::Value << recordPreview_;
+    out << YAML::Key << RECORD_QUALITY_KEY << YAML::Value << recordQuality_;
 #ifdef RING_ACCEL
     out << YAML::Key << DECODING_ACCELERATED_KEY << YAML::Value << decodingAccelerated_;
     out << YAML::Key << ENCODING_ACCELERATED_KEY << YAML::Value << encodingAccelerated_;
@@ -580,9 +587,16 @@ void VideoPreferences::serialize(YAML::Emitter &out) const
 
 void VideoPreferences::unserialize(const YAML::Node &in)
 {
+    // values may or may not be present
     const auto &node = in[CONFIG_LABEL];
+    try {
+        parseValue(node, RECORD_PREVIEW_KEY, recordPreview_);
+        parseValue(node, RECORD_QUALITY_KEY, recordQuality_);
+    } catch (...) {
+        recordPreview_ = true;
+        recordQuality_ = 0;
+    }
 #ifdef RING_ACCEL
-    // value may or may not be present
     try {
         parseValue(node, DECODING_ACCELERATED_KEY, decodingAccelerated_);
         parseValue(node, ENCODING_ACCELERATED_KEY, encodingAccelerated_);
