@@ -431,6 +431,30 @@ DBusConfigurationManager::setIsAlwaysRecording(const bool& rec)
     DRing::setIsAlwaysRecording(rec);
 }
 
+auto
+DBusConfigurationManager::getRecordPreview() -> decltype(DRing::getRecordPreview())
+{
+    return DRing::getRecordPreview();
+}
+
+void
+DBusConfigurationManager::setRecordPreview(const bool& rec)
+{
+    DRing::setRecordPreview(rec);
+}
+
+auto
+DBusConfigurationManager::getRecordQuality() -> decltype(DRing::getRecordQuality())
+{
+    return DRing::getRecordQuality();
+}
+
+void
+DBusConfigurationManager::setRecordQuality(const int32_t& quality)
+{
+    DRing::setRecordQuality(quality);
+}
+
 void
 DBusConfigurationManager::setHistoryLimit(const int32_t& days)
 {

@@ -5,6 +5,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -695,6 +696,44 @@ void
 setIsAlwaysRecording(bool rec)
 {
     jami::Manager::instance().setIsAlwaysRecording(rec);
+}
+
+bool
+getRecordPreview()
+{
+#ifdef ENABLE_VIDEO
+    return jami::Manager::instance().videoPreferences.getRecordPreview();
+#else
+    return false;
+#endif
+}
+
+void
+setRecordPreview(bool rec)
+{
+#ifdef ENABLE_VIDEO
+    jami::Manager::instance().videoPreferences.setRecordPreview(rec);
+    jami::Manager::instance().saveConfig();
+#endif
+}
+
+int32_t
+getRecordQuality()
+{
+#ifdef ENABLE_VIDEO
+    return jami::Manager::instance().videoPreferences.getRecordQuality();
+#else
+    return 0;
+#endif
+}
+
+void
+setRecordQuality(int32_t quality)
+{
+#ifdef ENABLE_VIDEO
+    jami::Manager::instance().videoPreferences.setRecordQuality(quality);
+    jami::Manager::instance().saveConfig();
+#endif
 }
 
 int32_t

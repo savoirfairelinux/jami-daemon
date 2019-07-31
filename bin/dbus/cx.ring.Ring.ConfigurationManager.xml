@@ -756,6 +756,26 @@
            </arg>
        </method>
 
+       <method name="getRecordPreview" tp:name-for-bindings="getRecordPreview">
+           <arg type="b" name="res" direction="out">
+           </arg>
+       </method>
+
+       <method name="setRecordPreview" tp:name-for-bindings="setRecordPreview">
+           <arg type="b" name="enabled" direction="in">
+           </arg>
+       </method>
+
+       <method name="getRecordQuality" tp:name-for-bindings="getRecordQuality">
+           <arg type="i" name="res" direction="out">
+           </arg>
+       </method>
+
+       <method name="setRecordQuality" tp:name-for-bindings="setRecordQuality">
+           <arg type="i" name="enabled" direction="in">
+           </arg>
+       </method>
+
        <!--      ///////////////////////               -->
 
        <!-- Codecs-related methods -->
