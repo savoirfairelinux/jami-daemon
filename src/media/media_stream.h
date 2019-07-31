@@ -37,7 +37,7 @@ struct MediaStream {
     int64_t firstTimestamp {0};
     int width {0};
     int height {0};
-    rational<int> aspectRatio;
+    int bitrate;
     rational<int> frameRate;
     int sampleRate {0};
     int nbChannels {0};
@@ -47,14 +47,14 @@ struct MediaStream {
     {}
 
     MediaStream(const std::string& streamName, int fmt, rational<int> tb, int w, int h,
-                          rational<int> sar, rational<int> fr)
+                          int br, rational<int> fr)
         : name(streamName)
         , format(fmt)
         , isVideo(true)
         , timeBase(tb)
         , width(w)
         , height(h)
-        , aspectRatio(sar)
+        , bitrate(br)
         , frameRate(fr)
     {}
 
@@ -99,7 +99,7 @@ struct MediaStream {
                 isVideo = true;
                 width = c->width;
                 height = c->height;
-                aspectRatio = c->sample_aspect_ratio;
+                bitrate = c->bit_rate;
                 frameRate = c->framerate;
                 break;
             case AVMEDIA_TYPE_AUDIO:
@@ -131,12 +131,11 @@ struct MediaStream {
 
     void update(AVFrame* f)
     {
-        // update all info possible (AVFrame has no fps data)
+        // update all info possible (AVFrame has no fps or bitrate data)
         format = f->format;
         if (isVideo) {
             width = f->width;
             height = f->height;
-            aspectRatio = f->sample_aspect_ratio;
         } else {
             sampleRate = f->sample_rate;
             nbChannels = f->channels;
@@ -154,6 +153,8 @@ inline std::ostream& operator<<(std::ostream& os, const MediaStream& ms)
             << av_get_pix_fmt_name(static_cast<AVPixelFormat>(ms.format)) << " video, "
             << ms.width << "x" << ms.height << ", "
             << ms.frameRate << " fps (" << ms.timeBase << ")";
+        if (ms.bitrate > 0)
+            os << ", " << ms.bitrate << " kb/s";
     } else {
         os << (ms.name.empty() ? "(null)" : ms.name) << ": "
             << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, "
