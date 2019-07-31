@@ -3,6 +3,7 @@
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -505,9 +506,11 @@ VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
             receiveThread_->attach(ob);
         }
     }
-    if (auto input = std::static_pointer_cast<VideoInput>(videoLocal_)) {
-        if (auto ob = rec->addStream(input->getInfo())) {
-            input->attach(ob);
+    if (Manager::instance().videoPreferences.getRecordPreview()) {
+        if (auto input = std::static_pointer_cast<VideoInput>(videoLocal_)) {
+            if (auto ob = rec->addStream(input->getInfo())) {
+                input->attach(ob);
+            }
         }
     }
 }

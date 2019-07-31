@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -475,9 +476,27 @@ class VideoPreferences : public Serializable {
             emitSignal<DRing::ConfigurationSignal::HardwareEncodingChanged>(encodingAccelerated_);
         }
 
+        bool getRecordPreview() const {
+            return recordPreview_;
+        }
+
+        void setRecordPreview(bool rec) {
+            recordPreview_ = rec;
+        }
+
+        int getRecordQuality() const {
+            return recordQuality_;
+        }
+
+        void setRecordQuality(int rec) {
+            recordQuality_ = rec;
+        }
+
     private:
         bool decodingAccelerated_;
         bool encodingAccelerated_;
+        bool recordPreview_;
+        int recordQuality_;
         constexpr static const char* const CONFIG_LABEL = "video";
 };
 #endif // ENABLE_VIDEO

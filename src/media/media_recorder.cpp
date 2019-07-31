@@ -22,6 +22,7 @@
 #include "client/ring_signal.h"
 #include "fileutils.h"
 #include "logger.h"
+#include "manager.h"
 #include "media_io_handle.h"
 #include "media_recorder.h"
 #include "system_codec_container.h"
@@ -352,6 +353,7 @@ MediaRecorder::setupVideoOutput()
 
     if (ret >= 0) {
         encoderStream = videoFilter_->getOutputParams();
+        encoderStream.bitrate = Manager::instance().videoPreferences.getRecordQuality();
         JAMI_DBG() << "Recorder output: " << encoderStream;
     } else {
         JAMI_ERR() << "Failed to initialize video filter";

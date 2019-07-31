@@ -64,7 +64,7 @@ getTransposeFilter(int rotation, std::string inputName, int width, int height, i
 
     const auto one = rational<int>(1);
     std::vector<MediaStream> msv;
-    msv.emplace_back(inputName, format, one, width, height, one, one);
+    msv.emplace_back(inputName, format, one, width, height, 0, one);
 
     std::unique_ptr<MediaFilter> filter(new MediaFilter);
     auto ret = filter->initialize(ss.str(), msv);
