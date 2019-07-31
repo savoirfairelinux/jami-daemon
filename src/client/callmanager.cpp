@@ -317,7 +317,9 @@ switchInput(const std::string& callID, const std::string& resource)
 void
 sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed)
 {
-   jami::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);
+    jami::runOnMainThread([callID, messages, from, isMixed]{
+        jami::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);
+    });
 }
 
 } // namespace DRing

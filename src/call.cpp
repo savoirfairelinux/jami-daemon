@@ -541,9 +541,12 @@ Call::checkPendingIM()
                 Manager::instance().incomingMessage(getCallId(), getPeerNumber(), msg.first);
             pendingInMessages_.clear();
 
-            for (const auto& msg : pendingOutMessages_)
-                sendTextMessage(msg.first, msg.second);
-            pendingOutMessages_.clear();
+            std::weak_ptr<Call> callWkPtr = shared_from_this();
+            runOnMainThread([callWkPtr, pending = std::move(pendingOutMessages_)]{
+                if (auto call = callWkPtr.lock())
+                    for (const auto& msg : pending)
+                        call->sendTextMessage(msg.first, msg.second);
+            });
         }
     }
 }
