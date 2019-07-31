@@ -785,16 +785,16 @@ void
 SIPCall::onAnswered()
 {
     JAMI_WARN("[call:%s] onAnswered()", getCallId().c_str());
-    if (getConnectionState() != ConnectionState::CONNECTED) {
-        setState(CallState::ACTIVE, ConnectionState::CONNECTED);
-        if (not isSubcall()) {
-            runOnMainThread([w = weak()] {
-                if (auto shared = w.lock()) {
+    runOnMainThread([w = weak()] {
+        if (auto shared = w.lock()) {
+            if (shared->getConnectionState() != ConnectionState::CONNECTED) {
+                shared->setState(CallState::ACTIVE, ConnectionState::CONNECTED);
+                if (not shared->isSubcall()) {
                     Manager::instance().peerAnsweredCall(*shared);
                 }
-            });
+            }
         }
-    }
+    });
 }
 
 void
