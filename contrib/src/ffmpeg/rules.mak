@@ -195,9 +195,6 @@ FFMPEGCONF += \
 	--target-os=android \
 	--enable-jni \
 	--enable-mediacodec \
-	--enable-hwaccel=vp8_mediacodec \
-	--enable-hwaccel=h264_mediacodec \
-	--enable-hwaccel=mpeg4_mediacodec \
 	--enable-decoder=vp8_mediacodec \
 	--enable-decoder=h264_mediacodec \
 	--enable-decoder=mpeg4_mediacodec
