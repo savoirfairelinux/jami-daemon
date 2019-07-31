@@ -142,6 +142,10 @@ std::string getRecordPath();
 void setRecordPath(const std::string& recPath);
 bool getIsAlwaysRecording();
 void setIsAlwaysRecording(bool rec);
+bool getRecordPreview();
+void setRecordPreview(bool rec);
+int32_t getRecordQuality();
+void setRecordQuality(int32_t rec);
 
 void setHistoryLimit(int32_t days);
 int32_t getHistoryLimit();

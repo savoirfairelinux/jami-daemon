@@ -126,6 +126,10 @@ class DRING_PUBLIC DBusConfigurationManager :
         void setRecordPath(const std::string& recPath);
         bool getIsAlwaysRecording();
         void setIsAlwaysRecording(const bool& rec);
+        bool getRecordPreview();
+        void setRecordPreview(const bool& rec);
+        int32_t getRecordQuality();
+        void setRecordQuality(const int32_t& quality);
         void setHistoryLimit(const int32_t& days);
         int32_t getHistoryLimit();
         void setRingingTimeout(const int32_t& timeout);

@@ -10,6 +10,7 @@
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -981,10 +982,6 @@ Manager::answerCall(const std::string& call_id)
         pimpl_->switchCall(call);
 
     addAudio(*call);
-
-    // Start recording if set in preference
-    if (audioPreference.getIsAlwaysRecording())
-        toggleRecordingCall(call_id);
 
     return result;
 }
@@ -1995,9 +1992,6 @@ Manager::peerAnsweredCall(Call& call)
         getRingBufferPool().flushAllBuffers();
         pimpl_->audiodriver_->flushUrgent();
     }
-
-    if (audioPreference.getIsAlwaysRecording())
-        toggleRecordingCall(call_id);
 }
 
 //THREAD=VoIP Call=Outgoing

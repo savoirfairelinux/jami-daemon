@@ -136,7 +136,7 @@ MediaFilter::getOutputParams() const
         output.timeBase = av_buffersink_get_time_base(output_);
         output.width = av_buffersink_get_w(output_);
         output.height = av_buffersink_get_h(output_);
-        output.aspectRatio = av_buffersink_get_sample_aspect_ratio(output_);
+        output.bitrate = 0;
         output.frameRate = av_buffersink_get_frame_rate(output_);
         break;
     case AVMEDIA_TYPE_AUDIO:
@@ -275,7 +275,6 @@ MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp)
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
         params->width = msp.width;
         params->height = msp.height;
-        params->sample_aspect_ratio = msp.aspectRatio;
         params->frame_rate = msp.frameRate;
         buffersrc = avfilter_get_by_name("buffer");
     } else {
