@@ -522,7 +522,11 @@ Call::merge(Call& subcall)
         setState(subcall.getState(), subcall.getConnectionState());
     }
 
-    subcall.removeCall();
+    std::weak_ptr<Call> subCallWeak = subcall.shared_from_this();
+    runOnMainThread([subCallWeak] {
+        if (auto subcall = subCallWeak.lock())
+            subcall->removeCall();
+    });
 }
 
 /// Handle pending IM message
