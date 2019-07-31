@@ -706,6 +706,7 @@ void
 SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& from)
 {
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     //TODO: for now we ignore the "from" (the previous implementation for sending this info was
     //      buggy and verbose), another way to send the original message sender will be implemented
     //      in the future
