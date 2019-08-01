@@ -2328,10 +2328,6 @@ JamiAccount::doRegister_()
         setRegistrationState(RegistrationState::TRYING);
         dht_.run((in_port_t)dhtPortUsed_, config, std::move(context));
 
-        auto bootstrap = loadBootstrap();
-        if (not bootstrap.empty())
-            dht_.bootstrap(bootstrap);
-
         // Put device annoucement
         if (announce_) {
             auto h = dht::InfoHash(ringAccountId_);
@@ -2468,6 +2464,9 @@ JamiAccount::doRegister_()
             buddy.second.devices_cnt = 0;
             trackPresence(buddy.first, buddy.second);
         }
+        auto bootstrap = loadBootstrap();
+        if (not bootstrap.empty())
+            dht_.bootstrap(bootstrap);
     }
     catch (const std::exception& e) {
         JAMI_ERR("Error registering DHT account: %s", e.what());
