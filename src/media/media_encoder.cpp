@@ -62,8 +62,15 @@ MediaEncoder::MediaEncoder()
 MediaEncoder::~MediaEncoder()
 {
     if (outputCtx_) {
-        if (outputCtx_->priv_data)
+        if (outputCtx_->priv_data) {
             av_write_trailer(outputCtx_);
+            if (!(outputCtx_->oformat->flags & AVFMT_NOFILE) &&
+                strcmp(outputCtx_->oformat->name, "rtp")) {
+                if (avio_close(outputCtx_->pb) < 0) {
+                    JAMI_ERR() << "Error avio_close()";
+                }
+            }
+        }
         for (auto encoderCtx : encoders_) {
             if (encoderCtx) {
 #ifndef _MSC_VER
