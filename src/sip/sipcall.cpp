@@ -6,6 +6,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -972,6 +973,8 @@ SIPCall::startAllMedia()
 #endif
         rtp->updateMedia(remote, local);
 
+        rtp->setSuccessfulSetupCb([this](MediaType type){ rtpSetupSuccess(type); });
+
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
         // because of the audio loop
         if (getState() != CallState::HOLD) {
@@ -1374,6 +1377,21 @@ std::unique_ptr<IceSocket>
 SIPCall::newIceSocket(unsigned compId)
 {
     return std::unique_ptr<IceSocket> {new IceSocket(mediaTransport_, compId)};
+}
+
+void
+SIPCall::rtpSetupSuccess(MediaType type)
+{
+    if (not Manager::instance().getIsAlwaysRecording())
+        return;
+
+#ifdef ENABLE_VIDEO
+    if ((type == MEDIA_VIDEO && videortp_)
+        || (type == MEDIA_AUDIO && not videortp_))
+        toggleRecording();
+#else
+    toggleRecording();
+#endif
 }
 
 } // namespace jami

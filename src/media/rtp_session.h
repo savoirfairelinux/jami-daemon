@@ -3,6 +3,7 @@
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +26,7 @@
 #include "sip/sip_utils.h"
 #include "media/media_codec.h"
 
+#include <functional>
 #include <string>
 #include <memory>
 #include <mutex>
@@ -55,6 +57,11 @@ public:
 
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
 
+    void setSuccessfulSetupCb(const std::function<void(MediaType)>& cb)
+    {
+        onSuccessfulSetup_ = cb;
+    }
+
     virtual void initRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
     virtual void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
 
@@ -69,6 +76,8 @@ protected:
     MediaDescription receive_;
 
     uint16_t mtu_;
+
+    std::function<void(MediaType)> onSuccessfulSetup_;
 
     std::string getRemoteRtpUri() const {
         return "rtp://" + send_.addr.toString(true);

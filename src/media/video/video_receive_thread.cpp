@@ -3,6 +3,7 @@
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -67,8 +68,9 @@ VideoReceiveThread::~VideoReceiveThread()
 }
 
 void
-VideoReceiveThread::startLoop()
+VideoReceiveThread::startLoop(const std::function<void(MediaType)>& cb)
 {
+    onSetupSuccess_ = cb;
     loop_.start();
 }
 
@@ -145,6 +147,9 @@ bool VideoReceiveThread::setup()
 
     // Send the resolution in smartInfo
     Smartools::getInstance().setResolution(id_, dstWidth_, dstHeight_);
+
+    if (onSetupSuccess_)
+        onSetupSuccess_(MEDIA_VIDEO);
 
     return true;
 }
