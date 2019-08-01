@@ -3,6 +3,7 @@
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,11 +26,13 @@
 #include "video_base.h"
 #include "media_codec.h"
 #include "media_io_handle.h"
+#include "media_codec.h"
 #include "media_device.h"
 #include "media_stream.h"
 #include "threadloop.h"
 #include "noncopyable.h"
 
+#include <functional>
 #include <map>
 #include <string>
 #include <climits>
@@ -49,7 +52,7 @@ class VideoReceiveThread : public VideoGenerator {
 public:
     VideoReceiveThread(const std::string &id, const std::string &sdp, uint16_t mtu);
     ~VideoReceiveThread();
-    void startLoop();
+    void startLoop(const std::function<void(MediaType)>& cb);
 
     void addIOContext(SocketPair& socketPair);
     void setRequestKeyFrameCallback(std::function<void (void)>);
@@ -97,6 +100,8 @@ private:
     bool decodeFrame();
     static int interruptCb(void *ctx);
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
+
+    std::function<void(MediaType)> onSetupSuccess_;
 
     ThreadLoop loop_;
 

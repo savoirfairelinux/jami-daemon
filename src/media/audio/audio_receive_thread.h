@@ -22,11 +22,13 @@
 #include "audiobuffer.h"
 #include "media_buffer.h"
 #include "media_device.h"
+#include "media_codec.h"
 #include "noncopyable.h"
 #include "observer.h"
 #include "socket_pair.h"
 #include "threadloop.h"
 
+#include <functional>
 #include <sstream>
 
 namespace jami {
@@ -48,7 +50,7 @@ public:
     MediaStream getInfo() const;
 
     void addIOContext(SocketPair &socketPair);
-    void startLoop();
+    void startLoop(const std::function<void(MediaType)>& cb);
 
 private:
     NON_COPYABLE(AudioReceiveThread);
@@ -77,6 +79,8 @@ private:
     std::shared_ptr<RingBuffer> ringbuffer_;
 
     uint16_t mtu_;
+
+    std::function<void(MediaType)> onSetupSuccess_;
 
     ThreadLoop loop_;
     bool setup();
