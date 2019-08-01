@@ -47,6 +47,7 @@ using random_device = dht::crypto::random_device;
 #include "call_factory.h"
 
 #include "sip/sip_utils.h"
+#include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipaccount.h"
 
@@ -3157,6 +3158,18 @@ Manager::getNearbyPeers(const std::string& accountID)
     if (const auto acc = getAccount<JamiAccount>(accountID))
         return acc->getNearbyPeers();
     return {};
+}
+
+void
+Manager::mediaSetupSuccess()
+{
+    if (getIsAlwaysRecording()) {
+        if (auto call = getCurrentCall()) {
+            if (auto sipcall = std::static_pointer_cast<SIPCall>(call)) {
+                sipcall->mediaSetupSuccess();
+            }
+        }
+    }
 }
 
 } // namespace jami

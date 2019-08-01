@@ -86,6 +86,7 @@ private:
     std::atomic_bool decodingFile_ {false};
 
     ThreadLoop loop_;
+    bool setup();
     void process();
 };
 

@@ -1375,4 +1375,22 @@ SIPCall::newIceSocket(unsigned compId)
     return std::unique_ptr<IceSocket> {new IceSocket(mediaTransport_, compId)};
 }
 
+void
+SIPCall::mediaSetupSuccess()
+{
+    streamCount_++;
+    int expectedCount = 2; // audio streams
+#ifdef ENABLE_VIDEO
+    if (!isAudioOnly() && videortp_) {
+        expectedCount++; // peer video
+        if (Manager::instance().videoPreferences.getRecordPreview())
+            expectedCount++; // local video
+    }
+#endif
+
+    if (streamCount_ == expectedCount && Manager::instance().getIsAlwaysRecording()) {
+        toggleRecording();
+    }
+}
+
 } // namespace jami

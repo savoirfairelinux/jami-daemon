@@ -86,6 +86,9 @@ AudioReceiveThread::setup()
     Smartools::getInstance().setRemoteAudioCodec(audioDecoder_->getDecoderName());
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
+
+    Manager::instance().mediaSetupSuccess();
+
     return true;
 }
 

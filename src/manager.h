@@ -892,6 +892,8 @@ class Manager {
 
         std::vector<DRing::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
 
+        void mediaSetupSuccess();
+
 private:
         Manager();
         ~Manager();

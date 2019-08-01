@@ -239,6 +239,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
         return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
     }
 
+    void mediaSetupSuccess();
+
 private:
     NON_COPYABLE(SIPCall);
 
@@ -329,6 +331,9 @@ private:
     std::shared_ptr<IceTransport> tmpMediaTransport_;
 
     std::string peerUri_{};
+
+    // Start recording automatically if alwaysRecording is true
+    int streamCount_{0};
 };
 
 // Helpers

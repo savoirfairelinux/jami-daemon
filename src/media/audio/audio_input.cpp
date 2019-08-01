@@ -46,7 +46,7 @@ AudioInput::AudioInput(const std::string& id) :
     resizer_(new AudioFrameResizer(format_, frameSize_,
        [this](std::shared_ptr<AudioFrame>&& f){ frameResized(std::move(f)); })),
     fileId_(id + "_file"),
-    loop_([] { return true; },
+    loop_([this] { return setup(); },
           [this] { process(); },
           [] {})
 {
@@ -57,6 +57,13 @@ AudioInput::AudioInput(const std::string& id) :
 AudioInput::~AudioInput()
 {
     loop_.join();
+}
+
+bool
+AudioInput::setup()
+{
+    Manager::instance().mediaSetupSuccess();
+    return true;
 }
 
 void
