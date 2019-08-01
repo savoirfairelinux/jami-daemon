@@ -5,6 +5,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +29,7 @@
 #endif
 
 #include "call.h"
+#include "media_codec.h" // for MediaType enum
 #include "sip_utils.h"
 
 #ifdef ENABLE_VIDEO
@@ -239,6 +241,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
         return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
     }
 
+    void rtpSetupSuccess(MediaType type);
+
 private:
     NON_COPYABLE(SIPCall);
 
@@ -329,6 +333,9 @@ private:
     std::shared_ptr<IceTransport> tmpMediaTransport_;
 
     std::string peerUri_{};
+
+    bool readyToRecord_ {false};
+    bool pendingRecord_ {false};
 };
 
 // Helpers
