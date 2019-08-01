@@ -88,6 +88,10 @@ AudioReceiveThread::setup()
     Smartools::getInstance().setRemoteAudioCodec(audioDecoder_->getDecoderName());
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
+
+    if (onSetupSuccess_)
+        onSetupSuccess_(MEDIA_AUDIO);
+
     return true;
 }
 
@@ -135,8 +139,9 @@ AudioReceiveThread::getInfo() const
 }
 
 void
-AudioReceiveThread::startLoop()
+AudioReceiveThread::startLoop(const std::function<void(MediaType)>& cb)
 {
+    onSetupSuccess_ = cb;
     loop_.start();
 }
 

@@ -6,6 +6,7 @@
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -974,6 +975,8 @@ SIPCall::startAllMedia()
 #endif
         rtp->updateMedia(remote, local);
 
+        rtp->setSuccessfulSetupCb([this](MediaType type){ rtpSetupSuccess(type); });
+
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
         // because of the audio loop
         if (getState() != CallState::HOLD) {
@@ -1263,6 +1266,10 @@ SIPCall::getDetails() const
 bool
 SIPCall::toggleRecording()
 {
+    pendingRecord_ = true;
+    if (not readyToRecord_)
+        return true;
+
     // add streams to recorder before starting the record
     if (not Call::isRecording()) {
         std::stringstream ss;
@@ -1278,6 +1285,7 @@ SIPCall::toggleRecording()
     } else {
         deinitRecorder();
     }
+    pendingRecord_ = false;
     return Call::toggleRecording();
 }
 
@@ -1386,6 +1394,17 @@ std::unique_ptr<IceSocket>
 SIPCall::newIceSocket(unsigned compId)
 {
     return std::unique_ptr<IceSocket> {new IceSocket(mediaTransport_, compId)};
+}
+
+void
+SIPCall::rtpSetupSuccess(MediaType type)
+{
+    if ((not isAudioOnly() && type == MEDIA_VIDEO)
+        || (isAudioOnly() && type == MEDIA_AUDIO))
+        readyToRecord_ = true;
+
+    if (pendingRecord_ && readyToRecord_)
+        toggleRecording();
 }
 
 } // namespace jami
