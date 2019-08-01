@@ -983,6 +983,10 @@ Manager::answerCall(const std::string& call_id)
 
     addAudio(*call);
 
+    // Start recording if set in preference
+    if (audioPreference.getIsAlwaysRecording())
+        toggleRecordingCall(call_id);
+
     return result;
 }
 
@@ -1992,6 +1996,9 @@ Manager::peerAnsweredCall(Call& call)
         getRingBufferPool().flushAllBuffers();
         pimpl_->audiodriver_->flushUrgent();
     }
+
+    if (audioPreference.getIsAlwaysRecording())
+        toggleRecordingCall(call_id);
 }
 
 //THREAD=VoIP Call=Outgoing

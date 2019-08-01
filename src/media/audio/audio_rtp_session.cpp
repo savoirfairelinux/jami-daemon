@@ -135,7 +135,7 @@ AudioRtpSession::startReceiver()
                                                 receive_.receiving_sdp,
                                                 mtu_));
     receiveThread_->addIOContext(*socketPair_);
-    receiveThread_->startLoop();
+    receiveThread_->startLoop(onSuccessfulSetup_);
 }
 
 void
