@@ -190,7 +190,7 @@ struct AccountVideoCodecInfo : AccountCodecInfo
     unsigned frameRate;
     unsigned profileId;
     std::string parameters;
-    bool isAutoQualityEnabled{false};
+    bool isAutoQualityEnabled{true};
 };
 bool operator== (SystemCodecInfo codec1, SystemCodecInfo codec2);
 
