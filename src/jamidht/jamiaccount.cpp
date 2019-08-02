@@ -1300,13 +1300,18 @@ JamiAccount::loadAccountFromDHT(const std::string& archive_password, const std::
         JAMI_ERR("DHT already running (stopping it first).");
         dht_.join();
     }
-    dht_.setOnStatusChanged([](dht::NodeStatus s4, dht::NodeStatus s6) {
+
+    dht::DhtRunner::Config config {};
+    config.dht_config.node_config.persist_path = cachePath_+DIR_SEPARATOR_STR "dhtstate";
+    config.proxy_server = getDhtProxyServer();
+
+    dht::DhtRunner::Context context {};
+    context.statusChangedCallback = [](dht::NodeStatus s4, dht::NodeStatus s6) {
         JAMI_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
-    });
-    dht_.run((in_port_t)dhtPortUsed_, {}, true);
-    dht_.bootstrap(loadNodes());
-    auto bootstrap = loadBootstrap();
-    if (not bootstrap.empty())
+    };
+
+    dht_.run((in_port_t)dhtPortUsed_, config, std::move(context));
+    for (const auto& bootstrap : loadBootstrap())
         dht_.bootstrap(bootstrap);
 
     auto w = weak();
@@ -2078,33 +2083,17 @@ JamiAccount::doRegister()
 }
 
 
-std::vector<dht::SockAddr>
+std::vector<std::string>
 JamiAccount::loadBootstrap() const
 {
-    std::vector<dht::SockAddr> bootstrap;
+    std::vector<std::string> bootstrap;
     if (!hostname_.empty()) {
         std::stringstream ss(hostname_);
         std::string node_addr;
-        while (std::getline(ss, node_addr, ';')) {
-            auto ips = dht::SockAddr::resolve(node_addr);
-            if (ips.empty()) {
-                IpAddr resolved(node_addr);
-                if (resolved) {
-                    if (resolved.getPort() == 0)
-                        resolved.setPort(DHT_DEFAULT_PORT);
-                    bootstrap.emplace_back(static_cast<const sockaddr*>(resolved), resolved.getLength());
-                }
-            } else {
-                bootstrap.reserve(bootstrap.size() + ips.size());
-                for (auto& ip : ips) {
-                    if (ip.getPort() == 0)
-                        ip.setPort(DHT_DEFAULT_PORT);
-                    bootstrap.emplace_back(std::move(ip));
-                }
-            }
-        }
-        for (const auto& ip : bootstrap)
-            JAMI_DBG("Bootstrap node: %s", ip.toString().c_str());
+        while (std::getline(ss, node_addr, ';'))
+            bootstrap.emplace_back(std::move(node_addr));
+        for (const auto& b : bootstrap)
+            JAMI_DBG("Bootstrap node: %s", b.c_str());
     }
     return bootstrap;
 }
@@ -2328,8 +2317,7 @@ JamiAccount::doRegister_()
         setRegistrationState(RegistrationState::TRYING);
         dht_.run((in_port_t)dhtPortUsed_, config, std::move(context));
 
-        auto bootstrap = loadBootstrap();
-        if (not bootstrap.empty())
+        for (const auto& bootstrap : loadBootstrap())
             dht_.bootstrap(bootstrap);
 
         // Put device annoucement
@@ -2946,84 +2934,6 @@ JamiAccount::getKnownDevices() const
         ids.emplace(std::move(id), std::move(label));
     }
     return ids;
-}
-
-void
-JamiAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
-{
-    if (nodes.empty())
-        return;
-    fileutils::check_dir(cachePath_.c_str());
-    std::string nodesPath = cachePath_+DIR_SEPARATOR_STR "nodes";
-    {
-        std::lock_guard<std::mutex> lock(fileutils::getFileLock(nodesPath));
-        std::ofstream file(nodesPath, std::ios::trunc | std::ios::binary);
-        if (!file.is_open()) {
-            JAMI_ERR("Could not save nodes to %s", nodesPath.c_str());
-            return;
-        }
-        for (auto& n : nodes)
-            file << n.id << " " << IpAddr(n.ss).toString(true) << "\n";
-    }
-}
-
-void
-JamiAccount::saveValues(const std::vector<dht::ValuesExport>& values) const
-{
-    std::lock_guard<std::mutex> lock(dhtValuesMtx_);
-    fileutils::check_dir(dataPath_.c_str());
-    for (const auto& v : values) {
-        const std::string fname = dataPath_ + DIR_SEPARATOR_STR + v.first.toString();
-        std::ofstream file(fname, std::ios::trunc | std::ios::out | std::ios::binary);
-        file.write((const char*)v.second.data(), v.second.size());
-    }
-}
-
-std::vector<dht::NodeExport>
-JamiAccount::loadNodes() const
-{
-    std::vector<dht::NodeExport> nodes;
-    std::string nodesPath = cachePath_+DIR_SEPARATOR_STR "nodes";
-    {
-        std::lock_guard<std::mutex> lock(fileutils::getFileLock(nodesPath));
-        std::ifstream file(nodesPath);
-        if (!file.is_open()) {
-            JAMI_DBG("Could not load nodes from %s", nodesPath.c_str());
-            return nodes;
-        }
-        std::string line;
-        while (std::getline(file, line))
-        {
-            std::istringstream iss(line);
-            std::string id, ipstr;
-            if (!(iss >> id >> ipstr)) { break; }
-            IpAddr ip {ipstr};
-            dht::NodeExport e {dht::InfoHash(id), ip, ip.getLength()};
-            nodes.push_back(e);
-        }
-    }
-    return nodes;
-}
-
-std::vector<dht::ValuesExport>
-JamiAccount::loadValues() const
-{
-    std::lock_guard<std::mutex> lock(dhtValuesMtx_);
-    std::vector<dht::ValuesExport> values;
-    const auto dircontent(fileutils::readDirectory(dataPath_));
-    for (const auto& fname : dircontent) {
-        const auto file = dataPath_+DIR_SEPARATOR_STR+fname;
-        try {
-            std::ifstream ifs(file, std::ifstream::in | std::ifstream::binary);
-            std::istreambuf_iterator<char> begin(ifs), end;
-            values.emplace_back(dht::ValuesExport{dht::InfoHash(fname), std::vector<uint8_t>{begin, end}});
-        } catch (const std::exception& e) {
-            JAMI_ERR("[Account %s] error reading value from cache : %s", getAccountID().c_str(), e.what());
-        }
-        fileutils::remove(file);
-    }
-    JAMI_DBG("[Account %s] loaded %zu values", getAccountID().c_str(), values.size());
-    return values;
 }
 
 tls::DhParams
