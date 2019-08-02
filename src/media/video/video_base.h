@@ -80,7 +80,6 @@ public:
     // getNewFrame and publishFrame must be called by the same thread only
     VideoFrame& getNewFrame();
     void publishFrame();
-    void publishFrame(std::shared_ptr<VideoFrame>);
     void flushFrames();
 
 private:

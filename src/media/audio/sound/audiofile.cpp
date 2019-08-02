@@ -59,22 +59,46 @@ AudioFile::onBufferFinish()
 AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     AudioLoop(sampleRate), filepath_(fileName), updatePlaybackScale_(0)
 {
-    const auto& format = getFormat();
-    auto buf = std::make_unique<AudioBuffer>(0, format);
-    Resampler r {};
-    auto decoder = std::make_unique<MediaDecoder>([this, &r, &format, &buf](const std::shared_ptr<MediaFrame>& frame) mutable {
-        buf->append(*r.resample(std::static_pointer_cast<AudioFrame>(frame), format));
-    });
+    auto decoder = std::make_unique<MediaDecoder>();
     DeviceParams dev;
     dev.input = fileName;
 
     if (decoder->openInput(dev) < 0)
         throw AudioFileException("File could not be opened: " + fileName);
 
-    if (decoder->setupAudio() < 0)
+    if (decoder->setupFromAudioData() < 0)
         throw AudioFileException("Decoder setup failed: " + fileName);
 
-    while (decoder->decode() != MediaDemuxer::Status::EndOfFile);
+    auto resampler = std::make_unique<Resampler>();
+    const auto& format = getFormat();
+    auto buf = std::make_unique<AudioBuffer>(0, format);
+    bool done = false;
+    while (!done) {
+        AudioFrame input;
+        AudioFrame output;
+        auto resampled = output.pointer();
+        switch (decoder->decode(input)) {
+        case MediaDecoder::Status::FrameFinished:
+            resampled->sample_rate = format.sample_rate;
+            resampled->channel_layout = av_get_default_channel_layout(format.nb_channels);
+            resampled->channels = format.nb_channels;
+            resampled->format = format.sampleFormat;
+            if (resampler->resample(input.pointer(), resampled) < 0)
+                throw AudioFileException("Frame could not be resampled");
+            if (buf->append(output) < 0)
+                throw AudioFileException("Error while decoding: " + fileName);
+            break;
+        case MediaDecoder::Status::DecodeError:
+        case MediaDecoder::Status::ReadError:
+            throw AudioFileException("File cannot be decoded: " + fileName);
+        case MediaDecoder::Status::EOFError:
+            done = true;
+            break;
+        case MediaDecoder::Status::Success:
+        default:
+            break;
+        }
+    }
 
     delete buffer_;
     buffer_ = buf.release();

@@ -116,15 +116,23 @@ AudioInput::readFromFile()
 {
     if (!decoder_)
         return;
-    const auto ret = decoder_->decode();
-    switch (ret) {
-    case MediaDemuxer::Status::Success:
+
+    auto frame = std::make_unique<AudioFrame>();
+    const auto ret = decoder_->decode(*frame);
+    switch(ret) {
+    case MediaDecoder::Status::ReadError:
+    case MediaDecoder::Status::DecodeError:
+        JAMI_ERR() << "Failed to decode frame";
         break;
-    case MediaDemuxer::Status::EndOfFile:
+    case MediaDecoder::Status::RestartRequired:
+    case MediaDecoder::Status::EOFError:
         createDecoder();
         break;
-    case MediaDemuxer::Status::ReadError:
-        JAMI_ERR() << "Failed to decode frame";
+    case MediaDecoder::Status::FrameFinished:
+        fileBuf_->put(std::move(frame));
+        break;
+    case MediaDecoder::Status::Success:
+    default:
         break;
     }
 }
@@ -239,14 +247,11 @@ AudioInput::createDecoder()
         return false;
     }
 
-    auto decoder = std::make_unique<MediaDecoder>([this](std::shared_ptr<MediaFrame>&& frame) {
-        fileBuf_->put(std::move(std::static_pointer_cast<AudioFrame>(frame)));
-    });
-
     // NOTE don't emulate rate, file is read as frames are needed
-
+    auto decoder = std::make_unique<MediaDecoder>();
     decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
+        [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); },
+        this);
 
     if (decoder->openInput(devOpts_) < 0) {
         JAMI_ERR() << "Could not open input '" << devOpts_.input << "'";
@@ -254,7 +259,7 @@ AudioInput::createDecoder()
         return false;
     }
 
-    if (decoder->setupAudio() < 0) {
+    if (decoder->setupFromAudioData() < 0) {
         JAMI_ERR() << "Could not setup decoder for '" << devOpts_.input << "'";
         foundDevOpts(devOpts_);
         return false;

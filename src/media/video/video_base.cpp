@@ -48,14 +48,6 @@ VideoGenerator::publishFrame()
 }
 
 void
-VideoGenerator::publishFrame(std::shared_ptr<VideoFrame> frame)
-{
-    std::lock_guard<std::mutex> lk(mutex_);
-    lastFrame_ = std::move(frame);
-    notify(std::static_pointer_cast<MediaFrame>(lastFrame_));
-}
-
-void
 VideoGenerator::flushFrames()
 {
     std::lock_guard<std::mutex> lk(mutex_);

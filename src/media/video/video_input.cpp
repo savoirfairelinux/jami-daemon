@@ -228,18 +228,40 @@ VideoInput::isCapturing() const noexcept
 bool VideoInput::captureFrame()
 {
     // Return true if capture could continue, false if must be stop
+
     if (not decoder_)
         return false;
 
-    switch (decoder_->decode()) {
-    case MediaDemuxer::Status::EndOfFile:
-        createDecoder();
-        return static_cast<bool>(decoder_);
-    case MediaDemuxer::Status::ReadError:
-        JAMI_ERR() << "Failed to decode frame";
-        return false;
-    default:
-        return true;
+    auto& frame = getNewFrame();
+    const auto ret = decoder_->decode(frame);
+    switch (ret) {
+        case MediaDecoder::Status::ReadError:
+            return false;
+
+        // try to keep decoding
+        case MediaDecoder::Status::DecodeError:
+            return true;
+
+        case MediaDecoder::Status::RestartRequired:
+            createDecoder();
+#ifdef RING_ACCEL
+            JAMI_WARN("Disabling hardware decoding due to previous failure");
+            decoder_->enableAccel(false);
+#endif
+            return static_cast<bool>(decoder_);
+
+        // End of streamed file
+        case MediaDecoder::Status::EOFError:
+            createDecoder();
+            return static_cast<bool>(decoder_);
+
+        case MediaDecoder::Status::FrameFinished:
+            publishFrame();
+            return true;
+        // continue decoding
+        case MediaDecoder::Status::Success:
+        default:
+            return true;
     }
 }
 
@@ -341,9 +363,7 @@ VideoInput::createDecoder()
         return;
     }
 
-    auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
-        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
-    });
+    auto decoder = std::unique_ptr<MediaDecoder>(new MediaDecoder());
 
     if (emulateRate_)
         decoder->emulateRate();
@@ -359,7 +379,7 @@ VideoInput::createDecoder()
     }
 
     /* Data available, finish the decoding */
-    if (decoder->setupVideo() < 0) {
+    if (decoder->setupFromVideoData() < 0) {
         JAMI_ERR("decoder IO startup failed");
         foundDecOpts(decOpts_);
         return;
@@ -501,7 +521,7 @@ VideoInput::initFile(std::string path)
     DeviceParams p;
     p.input = path;
     auto dec = std::make_unique<MediaDecoder>();
-    if (dec->openInput(p) < 0 || dec->setupVideo() < 0) {
+    if (dec->openInput(p) < 0 || dec->setupFromVideoData() < 0) {
         return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
     }
 

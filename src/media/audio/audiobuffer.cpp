@@ -317,14 +317,14 @@ AudioBuffer::append(const AudioFrame& audioFrame)
         setFormat(newFormat);
     }
 
-    auto f = frames();
-    auto newSize = f + frame->nb_samples;
-    resize(newSize);
+    AudioBuffer toAppend(frame->nb_samples,
+        {(unsigned)frame->sample_rate, (unsigned)frame->channels});
+    toAppend.deinterleave(reinterpret_cast<const AudioSample*>(frame->extended_data[0]),
+        frame->nb_samples, frame->channels);
 
-    auto in = reinterpret_cast<const AudioSample*>(frame->extended_data[0]);
-    for (unsigned c=channels(); f < newSize; f++)
-        for (unsigned j = 0; j < c; j++)
-            samples_[j][f] = *in++;
+    for (size_t c = 0; c < samples_.size(); ++c) {
+        samples_[c].insert(samples_[c].end(), toAppend.samples_[c].begin(), toAppend.samples_[c].end());
+    }
 
     return 0;
 }

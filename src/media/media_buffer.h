@@ -22,7 +22,6 @@
 
 #include "config.h"
 #include "videomanager_interface.h"
-#include "observer.h"
 
 #include <memory>
 #include <functional>
@@ -39,7 +38,6 @@ namespace jami {
 
 using MediaFrame = DRing::MediaFrame;
 using AudioFrame = DRing::AudioFrame;
-using MediaObserver = std::function<void(std::shared_ptr<MediaFrame>&&)>;
 
 #ifdef ENABLE_VIDEO
 
