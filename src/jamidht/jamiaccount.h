@@ -81,7 +81,6 @@ class JamiAccount : public SIPAccountBase {
 
     public:
         constexpr static const char* const ACCOUNT_TYPE = "RING";
-        constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
         constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
         constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net:[80-100]";
         constexpr static const char* const DHT_TYPE_NS = "cx.ring";
@@ -604,11 +603,9 @@ class JamiAccount : public SIPAccountBase {
         void updateArchive(AccountArchive& content) const;
         void saveArchive(AccountArchive& content, const std::string& pwd);
         AccountArchive readArchive(const std::string& pwd) const;
-        std::vector<dht::SockAddr> loadBootstrap() const;
+        std::vector<std::string> loadBootstrap() const;
 
         static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name);
-        void saveNodes(const std::vector<dht::NodeExport>&) const;
-        void saveValues(const std::vector<dht::ValuesExport>&) const;
 
         void loadTreatedCalls();
         void saveTreatedCalls() const;
@@ -634,9 +631,6 @@ class JamiAccount : public SIPAccountBase {
          * Otherwise, generate a new identity and returns it.
          */
         dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const;
-        std::vector<dht::NodeExport> loadNodes() const;
-        std::vector<dht::ValuesExport> loadValues() const;
-        mutable std::mutex dhtValuesMtx_;
 
         bool dhtPublicInCalls_ {true};
 
