@@ -604,11 +604,9 @@ class JamiAccount : public SIPAccountBase {
         void updateArchive(AccountArchive& content) const;
         void saveArchive(AccountArchive& content, const std::string& pwd);
         AccountArchive readArchive(const std::string& pwd) const;
-        std::vector<dht::SockAddr> loadBootstrap() const;
+        std::vector<std::string> loadBootstrap() const;
 
         static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name);
-        void saveNodes(const std::vector<dht::NodeExport>&) const;
-        void saveValues(const std::vector<dht::ValuesExport>&) const;
 
         void loadTreatedCalls();
         void saveTreatedCalls() const;
@@ -634,9 +632,6 @@ class JamiAccount : public SIPAccountBase {
          * Otherwise, generate a new identity and returns it.
          */
         dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const;
-        std::vector<dht::NodeExport> loadNodes() const;
-        std::vector<dht::ValuesExport> loadValues() const;
-        mutable std::mutex dhtValuesMtx_;
 
         bool dhtPublicInCalls_ {true};
 
