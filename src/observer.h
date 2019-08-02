@@ -28,7 +28,6 @@
 #include <memory>
 #include <set>
 #include <mutex>
-#include <functional>
 #include <ciso646> // fix windows compiler bug
 
 namespace jami {
@@ -43,7 +42,6 @@ class Observable
 {
 public:
     Observable() : observers_(), mutex_() {}
-
     virtual ~Observable() {
         std::lock_guard<std::mutex> lk(mutex_);
         for (auto& o : observers_)
@@ -96,19 +94,6 @@ public:
     virtual void update(Observable<T>*, const T&) = 0;
     virtual void attached(Observable<T>*) {};
     virtual void detached(Observable<T>*) {};
-};
-
-
-template <typename T>
-class FuncObserver : public Observer<T>
-{
-public:
-    using F = std::function<void(const T&)>;
-    FuncObserver(F f) : f_(f) {};
-    virtual ~FuncObserver() {};
-    void update(Observable<T>*, const T& t) override { f_(t); }
-private:
-    F f_;
 };
 
 }; // namespace jami
