@@ -303,7 +303,7 @@ SipTransportBroker::getUdpTransport(const IpAddr& ipAddress)
         auto it = transports_.find(itp->second);
         if (it != transports_.end()) {
             if (auto spt = it->second.lock()) {
-                JAMI_DBG("Reusing transport %s", ipAddress.toString().c_str());
+                JAMI_DBG("Reusing transport %s", ipAddress.toString(true).c_str());
                 return spt;
             }
             else {
