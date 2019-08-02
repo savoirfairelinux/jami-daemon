@@ -39,7 +39,7 @@ namespace jami {
 std::wstring
 to_wstring(const std::string& s)
 {
-    int slength = (int)s.length() + 1;
+    int slength = (int)s.length();
     int len = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), slength, nullptr, 0);
     if (not len)
         throw std::runtime_error("Can't convert string to wchar");
