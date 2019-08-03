@@ -142,7 +142,7 @@ PUPnP::~PUPnP()
 }
 
 void
-PUPnP::connectivityChanged()
+PUPnP::clearIGDs()
 {
     // Lock internal IGD list.
     std::lock_guard<std::mutex> lk(validIgdMutex);
@@ -197,8 +197,7 @@ PUPnP::addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, Port
         }
     }
 
-    auto pupnp_igd = dynamic_cast<const UPnPIGD*>(igd);
-    if (pupnp_igd) { 
+    if (auto pupnp_igd = dynamic_cast<const UPnPIGD*>(igd)) { 
         if (actionAddPortMapping(*pupnp_igd, mapping, upnp_error)) {
             JAMI_WARN("PUPnP: Opened port %s", mapping.toString().c_str());
             globalMappings->emplace(port_external, GlobalMapping{mapping});
@@ -329,11 +328,12 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
         }
 
         // Check if this device ID is already in the list.
+        std::string cpDeviceId = UpnpDiscovery_get_DeviceID_cstr(d_event);
         std::lock_guard<std::mutex> lk(validIgdMutex);
-        if (cpDeviceList_.count(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event))) > 0) {
+        if (cpDeviceList_.count(cpDeviceId) > 0) {
             break;
         }
-        cpDeviceList_.emplace(std::pair<std::string, std::string>(std::string(UpnpDiscovery_get_DeviceID_cstr(d_event)), ""));
+        cpDeviceList_.emplace(std::move(cpDeviceId), std::string{});
 
         /*
          * NOTE: This thing will block until success for the system socket timeout

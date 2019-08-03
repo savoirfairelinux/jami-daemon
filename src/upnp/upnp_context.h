@@ -95,6 +95,16 @@ public:
     // Inform the UPnP context that the network status has changed. This clears the list of known
     void connectivityChanged();
 
+private:
+    // Checks if the IGD is in the list by checking the IGD's public Ip.
+    bool isIgdInList(const IpAddr& publicIpAddr);
+
+    // Returns the protocol of the IGD.
+    UPnPProtocol::Type getIgdProtocol(IGD* igd);
+
+    // Returns a random port that is not yet used by the daemon for UPnP.
+    uint16_t chooseRandomPort(const IGD& igd, PortType type);
+
     // Tries to add or remove IGD to the list via callback.
     bool igdListChanged(UPnPProtocol* protocol, IGD* igd, const IpAddr publicIpAddr, bool added);
 
@@ -109,19 +119,6 @@ public:
 
     // Tries to add mapping. Assumes mutex is already locked.
     Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error);
-
-private:
-    // Checks if the IGD is in the list by checking the IGD itself.
-    bool isIgdInList(IGD* igd);
-
-    // Checks if the IGD is in the list by checking the IGD's public Ip.
-    bool isIgdInList(IpAddr publicIpAddr);
-
-    // Returns the protocol of the IGD.
-    UPnPProtocol::Type getIgdProtocol(IGD* igd);
-
-    // Returns a random port that is not yet used by the daemon for UPnP.
-    uint16_t chooseRandomPort(const IGD& igd, PortType type);
 
 public:
     constexpr static unsigned MAX_RETRIES = 20;

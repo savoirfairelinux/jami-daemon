@@ -73,14 +73,12 @@ NatPmp::NatPmp()
         closenatpmp(&natpmp);
     })
 {
-
 }
 
 NatPmp::~NatPmp()
 {
     {
         std::lock_guard<std::mutex> lock(validIgdMutex);
-
         if (pmpIGD_) {
             {
                 std::lock_guard<std::mutex> lk(pmpMutex_);
@@ -99,37 +97,30 @@ NatPmp::~NatPmp()
 }
 
 void
-NatPmp::connectivityChanged()
+NatPmp::clearIGDs()
 {
-    {
-        // Lock valid IGD.
-        std::lock_guard<std::mutex> lock(validIgdMutex);
-
-        // Clear internal IGD (nat pmp only supports one).
-        if (pmpIGD_) {
-            std::lock_guard<std::mutex> lk(pmpMutex_);
-            pmpIGD_->renewal_ = clock::now();
-            pmpIGD_.reset();
-        }
-
-        validIgdMutex.unlock();
-
-        // Notify.
-        pmpCv_.notify_all();
-    }
-
-}
-
-void
-NatPmp::searchForIGD()
-{
-    pmpRun_ = true;
+    // Lock valid IGD.
+    std::lock_guard<std::mutex> lock(validIgdMutex);
 
     // Clear internal IGD (nat pmp only supports one).
     if (pmpIGD_) {
         std::lock_guard<std::mutex> lk(pmpMutex_);
         pmpIGD_->renewal_ = clock::now();
         pmpIGD_.reset();
+    }
+
+    pmpCv_.notify_all();
+}
+
+void
+NatPmp::searchForIGD()
+{
+    // Lock valid IGD.
+    std::lock_guard<std::mutex> lock(validIgdMutex);
+    if (pmpIGD_) {
+        // Clear internal IGD (nat pmp only supports one).
+        std::lock_guard<std::mutex> lk(pmpMutex_);
+        pmpIGD_->renewal_ = clock::now();
     }
     pmpCv_.notify_all();
 }
@@ -250,14 +241,11 @@ NatPmp::searchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& natpmp)
             if (not pmpIGD_) {
                 JAMI_DBG("NAT-PMP: Found device with external IP %s", pmp_igd->publicIp_.toString().c_str());
                 {
-                    // Store public Ip address.
-                    std::string publicIpStr(std::move(pmp_igd.get()->publicIp_.toString()));
-
                     // Add the igd to the upnp context class list.
-                    if (updateIgdListCb_(this, std::move(pmp_igd.get()), std::move(pmp_igd.get()->publicIp_), true)) {
-                        JAMI_DBG("NAT-PMP: IGD with public IP %s was added to the list", publicIpStr.c_str());
+                    if (updateIgdListCb_(this, pmp_igd.get(), pmp_igd->publicIp_, true)) {
+                        JAMI_DBG("NAT-PMP: IGD with public IP %s was added to the list", publicIpStr.toString().c_str());
                     } else {
-                        JAMI_DBG("NAT-PMP: IGD with public IP %s is already in the list", publicIpStr.c_str());
+                        JAMI_DBG("NAT-PMP: IGD with public IP %s is already in the list", publicIpStr.toString().c_str());
                     }
 
                     // Keep IGD internally.

@@ -75,7 +75,7 @@ public:
     Type getType() const override { return Type::PUPNP; }
 
     // Notifies a change in network.
-    void connectivityChanged() override;
+    void clearIGDs() override;
 
     // Sends out async search for IGD.
     void searchForIGD() override;

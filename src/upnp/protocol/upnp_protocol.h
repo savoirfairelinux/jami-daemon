@@ -72,8 +72,8 @@ public:
     // Allows each protocol to return it's type.
     virtual Type getType() const = 0;
 
-    // Signals a change in the network.
-    virtual void connectivityChanged() = 0;
+    // Clear all known IGDs.
+    virtual void clearIGDs() = 0;
 
     // Search for IGD.
     virtual void searchForIGD() = 0;

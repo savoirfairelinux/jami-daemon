@@ -55,7 +55,7 @@ public:
     Type getType() const override { return Type::NAT_PMP; }
 
     // Notifies a change in network.
-    void connectivityChanged() override;
+    void clearIGDs() override;
 
     // Renew pmp_igd.
     void searchForIGD() override;
