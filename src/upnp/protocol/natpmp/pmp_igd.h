@@ -30,7 +30,6 @@
 
 #include "noncopyable.h"
 #include "ip_utils.h"
-#include "string_utils.h"
 
 #include <map>
 #include <atomic>

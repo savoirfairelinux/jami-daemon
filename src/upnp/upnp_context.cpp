@@ -67,26 +67,27 @@ UPnPContext::~UPnPContext()
 void
 UPnPContext::connectivityChanged()
 {
-    if (not igdList_.empty()) {
-
-        // Clear main IGD list.
+    {
         std::lock_guard<std::mutex> lock(igdListMutex_);
-        igdList_.clear();
-    
-        for (const auto& item : igdListeners_) {
-            item.second();
+        for (auto const& protocol : protocolList_)
+            protocol->clearIGDs();
+        if (not igdList_.empty()) {
+            // Clear main IGD list.
+            igdList_.clear();
+            for (const auto& listener : igdListeners_) {
+                listener.second();
+            }
         }
     }
 
-    for (auto const& item : protocolList_) {
-        item->connectivityChanged();
-        item->searchForIGD();
-    }
+    for (auto const& protocol : protocolList_)
+        protocol->searchForIGD();
 }
 
 bool
 UPnPContext::hasValidIGD()
 {
+    std::lock_guard<std::mutex> lock(igdListMutex_);
     return not igdList_.empty();
 }
 
@@ -153,7 +154,6 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
 
     // If we want a unique port, we must make sure the client isn't already using the port.
     if (unique) {
-
         bool unique_found = false;
 
         // Keep generating random ports until we find a unique one.
@@ -256,24 +256,8 @@ UPnPContext::getExternalIP() const
 }
 
 bool
-UPnPContext::isIgdInList(IGD* igd)
+UPnPContext::isIgdInList(const IpAddr& publicIpAddr)
 {
-    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
-
-    for (auto const& item : igdList_) {
-        if (item.second->publicIp_ == igd->publicIp_) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool
-UPnPContext::isIgdInList(IpAddr publicIpAddr)
-{
-    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
-
     for (auto const& item : igdList_) {
         if (item.second->publicIp_) {
             if (item.second->publicIp_ == publicIpAddr) {
@@ -281,7 +265,6 @@ UPnPContext::isIgdInList(IpAddr publicIpAddr)
             }
         }
     }
-
     return false;
 }
 
@@ -302,6 +285,7 @@ UPnPContext::getIgdProtocol(IGD* igd)
 bool
 UPnPContext::igdListChanged(UPnPProtocol* protocol, IGD* igd, IpAddr publicIpAddr, bool added)
 {
+    std::lock_guard<std::mutex> lock(igdListMutex_);
     if (added) {
         return addIgdToList(protocol, igd);
     } else {
@@ -317,27 +301,25 @@ bool
 UPnPContext::addIgdToList(UPnPProtocol* protocol, IGD* igd)
 {
     // Check if IGD has a valid public IP.
-    if (not igd->publicIp_.isValid(igd->publicIp_.toString().c_str())) {
+    if (not igd->publicIp_) {
         JAMI_WARN("UPnPContext: IGD trying to be added has invalid public IpAddress");
         return false;
     }
 
-    if (isIgdInList(igd)) {
+    if (isIgdInList(igd->publicIp_)) {
         // If the protocol of the IGD that is already in the list isn't NatPmp, then swap.
-        if (getIgdProtocol(igd) != UPnPProtocol::Type::NAT_PMP and
-            protocol->getType() == UPnPProtocol::Type::NAT_PMP) {
-                JAMI_WARN("UPnPContext: Attempting to swap IGD UPnP protocol");
-                if (!removeIgdFromList(igd)) {
-                    JAMI_WARN("UPnPContext: Failed to swap IGD UPnP protocol");
-                    return false;
-                }
+        if (getIgdProtocol(igd) != UPnPProtocol::Type::NAT_PMP and protocol->getType() == UPnPProtocol::Type::NAT_PMP) {
+            JAMI_WARN("UPnPContext: Attempting to swap IGD UPnP protocol");
+            if (!removeIgdFromList(igd)) {
+                JAMI_WARN("UPnPContext: Failed to swap IGD UPnP protocol");
+                return false;
+            }
         } else {
             return false;
         }
     }
 
-    IpAddr publicIp = igd->publicIp_;
-    igdList_.emplace_back(std::make_pair(protocol, igd));
+    igdList_.emplace_back(protocol, igd);
     
     for (const auto& item : igdListeners_) {
         item.second();
@@ -349,9 +331,7 @@ UPnPContext::addIgdToList(UPnPProtocol* protocol, IGD* igd)
 bool
 UPnPContext::removeIgdFromList(IGD* igd)
 {
-    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
-
-    std::list<std::pair<UPnPProtocol*, IGD*>>::iterator it = igdList_.begin();
+    auto it = igdList_.begin();
     while (it != igdList_.end()) {
         if (it->second->publicIp_ == igd->publicIp_) {
             JAMI_WARN("UPnPContext: IGD with public IP %s was removed from the list", it->second->publicIp_.toString().c_str());
@@ -368,9 +348,7 @@ UPnPContext::removeIgdFromList(IGD* igd)
 bool
 UPnPContext::removeIgdFromList(IpAddr publicIpAddr)
 {
-    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
-
-    std::list<std::pair<UPnPProtocol*, IGD*>>::iterator it = igdList_.begin();
+    auto it = igdList_.begin();
     while (it != igdList_.end()) {
         if (it->second->publicIp_ == publicIpAddr) {
             JAMI_WARN("UPnPContext: IGD with public IP %s was removed from the list", it->second->publicIp_.toString().c_str());
@@ -382,7 +360,6 @@ UPnPContext::removeIgdFromList(IpAddr publicIpAddr)
     }
 
     return false;
-
 }
 
 }} // namespace jami::upnp
