@@ -66,8 +66,8 @@ getVideoSettings()
 }
 #endif
 
-static constexpr int DEFAULT_ICE_INIT_TIMEOUT {35}; // seconds
-static constexpr int DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
+static constexpr std::chrono::seconds DEFAULT_ICE_INIT_TIMEOUT {35}; // seconds
+static constexpr std::chrono::seconds DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
 
 // SDP media Ids
 static constexpr int SDP_AUDIO_MEDIA_ID {0};

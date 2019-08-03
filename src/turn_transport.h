@@ -135,7 +135,7 @@ public:
     ///
     bool sendto(const IpAddr& peer, const char* const buffer, std::size_t size);
 
-    int waitForData(const IpAddr& peer, unsigned ms_timeout, std::error_code& ec) const;
+    int waitForData(const IpAddr& peer, std::chrono::milliseconds timeout, std::error_code& ec) const;
 
 public:
     // Move semantic only, not copiable
@@ -159,7 +159,7 @@ public:
     bool isInitiator() const override { return turn_.isInitiator(); }
     int maxPayload() const override { return 3000; }
 
-    int waitForData(unsigned ms_timeout, std::error_code& ec) const override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const override;
     std::size_t read(ValueType* buf, std::size_t length, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t length, std::error_code& ec) override;
 
@@ -168,7 +168,7 @@ public:
 private:
     TurnTransport& turn_;
     const IpAddr peer_;
-    RecvCb onRxDataCb_;
+    //RecvCb onRxDataCb_;
 };
 
 } // namespace jami

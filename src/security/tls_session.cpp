@@ -217,7 +217,7 @@ public:
     ssize_t sendRaw(const void*, size_t);
     ssize_t sendRawVec(const giovec_t*, int);
     ssize_t recvRaw(void*, size_t);
-    int waitForRawData(unsigned);
+    int waitForRawData(std::chrono::milliseconds);
 
     bool initFromRecordState(int offset=0);
     void handleDataPacket(std::vector<ValueType>&&, uint64_t);
@@ -531,7 +531,7 @@ TlsSession::TlsSessionImpl::commonSessionInit()
     gnutls_transport_set_pull_timeout_function(session_,
                                                [](gnutls_transport_ptr_t t, unsigned ms) -> int {
                                                    auto this_ = reinterpret_cast<TlsSessionImpl*>(t);
-                                                   return this_->waitForRawData(ms);
+                                                   return this_->waitForRawData(std::chrono::milliseconds(ms));
                                                });
 
     return true;
@@ -660,7 +660,7 @@ TlsSession::TlsSessionImpl::recvRaw(void* buf, size_t size)
 // 'timeout' is in milliseconds.
 // Should return 0 on timeout, a positive number if data are available for read, or -1 on error.
 int
-TlsSession::TlsSessionImpl::waitForRawData(unsigned timeout)
+TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
 {
     if (transport_.isReliable()) {
         std::error_code ec;
@@ -677,13 +677,13 @@ TlsSession::TlsSessionImpl::waitForRawData(unsigned timeout)
 
     // non-reliable uses callback installed with setOnRecv()
     std::unique_lock<std::mutex> lk {rxMutex_};
-    rxCv_.wait_for(lk, std::chrono::milliseconds(timeout), [this]{ return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; });
+    rxCv_.wait_for(lk, timeout, [this]{ return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; });
     if (state_ == TlsSessionState::SHUTDOWN) {
         gnutls_transport_set_errno(session_, EINTR);
         return -1;
     }
     if (rxQueue_.empty()) {
-        JAMI_ERR("[TLS] waitForRawData: timeout after %u ms", timeout);
+        JAMI_ERR("[TLS] waitForRawData: timeout after %u ms", timeout.count());
         return 0;
     }
     return 1;
@@ -1355,9 +1355,9 @@ TlsSession::waitForReady(const std::chrono::steady_clock::duration& timeout)
 }
 
 int
-TlsSession::waitForData(unsigned ms_timeout, std::error_code& ec) const
+TlsSession::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
-    if (!pimpl_->transport_.waitForData(ms_timeout, ec))
+    if (!pimpl_->transport_.waitForData(timeout, ec))
         return 0;
     return 1;
 }

@@ -135,7 +135,7 @@ TlsTurnEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 }
 
 void
-TlsTurnEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
+TlsTurnEndpoint::Impl::onTlsStateChange(tls::TlsSessionState)
 {}
 
 void
@@ -221,9 +221,9 @@ TlsTurnEndpoint::peerCertificate() const
 }
 
 int
-TlsTurnEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
+TlsTurnEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
-    return pimpl_->tls->waitForData(ms_timeout, ec);
+    return pimpl_->tls->waitForData(timeout, ec);
 }
 
 //==============================================================================
@@ -249,9 +249,9 @@ TcpSocketEndpoint::~TcpSocketEndpoint()
 }
 
 void
-TcpSocketEndpoint::connect(const std::chrono::steady_clock::duration& timeout)
+TcpSocketEndpoint::connect(const std::chrono::milliseconds& timeout)
 {
-    int ms =  std::chrono::duration_cast<std::chrono::milliseconds>(timeout).count();
+    int ms =  timeout.count();
     setsockopt(sock_, SOL_SOCKET, SO_RCVTIMEO, (const char *)&ms, sizeof(ms));
     setsockopt(sock_, SOL_SOCKET, SO_SNDTIMEO, (const char *)&ms, sizeof(ms));
 
@@ -260,12 +260,12 @@ TcpSocketEndpoint::connect(const std::chrono::steady_clock::duration& timeout)
 }
 
 int
-TcpSocketEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
+TcpSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
     for (;;) {
         struct timeval tv;
-        tv.tv_sec = ms_timeout / 1000;
-        tv.tv_usec = (ms_timeout % 1000) * 1000;
+        tv.tv_sec = timeout.count() / 1000;
+        tv.tv_usec = (timeout.count() % 1000) * 1000;
 
         fd_set read_fds;
         FD_ZERO(&read_fds);
@@ -331,11 +331,11 @@ IceSocketEndpoint::shutdown() {
 }
 
 int
-IceSocketEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
+IceSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
     if (ice_) {
         if (!ice_->isRunning()) return -1;
-        return iceIsSender ? ice_->isDataAvailable(compId_) : ice_->waitForData(compId_, ms_timeout, ec);
+        return iceIsSender ? ice_->isDataAvailable(compId_) : ice_->waitForData(compId_, timeout, ec);
     }
     return -1;
 }
@@ -531,15 +531,15 @@ TlsSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code&
 }
 
 void
-TlsSocketEndpoint::waitForReady(const std::chrono::steady_clock::duration& timeout)
+TlsSocketEndpoint::waitForReady(const std::chrono::milliseconds& timeout)
 {
     pimpl_->tls->waitForReady(timeout);
 }
 
 int
-TlsSocketEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
+TlsSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
-    return pimpl_->tls->waitForData(ms_timeout, ec);
+    return pimpl_->tls->waitForData(timeout, ec);
 }
 
 //==============================================================================
@@ -670,7 +670,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     msg = ctrlChannel.receive();
                 } else {
                     std::error_code ec;
-                    if (endpoint_->waitForData(100, ec) > 0) {
+                    if (endpoint_->waitForData(std::chrono::milliseconds(100), ec) > 0) {
                         std::vector<uint8_t> buf(IO_BUFFER_SIZE);
                         JAMI_DBG("A good buffer arrived before any input or output attachment");
                         auto size = endpoint_->read(buf, ec);
@@ -734,7 +734,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 if (!bufferPool_.empty()) {
                   stream->write(bufferPool_);
                   bufferPool_.clear();
-                } else if (endpoint_->waitForData(0, ec) > 0) {
+                } else if (endpoint_->waitForData(std::chrono::milliseconds(0), ec) > 0) {
                   buf.resize(IO_BUFFER_SIZE);
                   endpoint_->read(buf, ec);
                   if (ec)
@@ -762,7 +762,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 if (!bufferPool_.empty()) {
                     stream->write(bufferPool_);
                     bufferPool_.clear();
-                } else if (endpoint_->waitForData(0, ec) > 0) {
+                } else if (endpoint_->waitForData(std::chrono::milliseconds(0), ec) > 0) {
                   buf.resize(IO_BUFFER_SIZE);
                   endpoint_->read(buf, ec);
                   if (ec)
