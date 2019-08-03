@@ -22,6 +22,7 @@
 #pragma once
 
 #include "noncopyable.h"
+#include <logger.h>
 
 #include <cstdlib>
 #include <cstdint>
@@ -41,7 +42,7 @@ template <typename T>
 class Observable
 {
 public:
-    Observable() : observers_(), mutex_() {}
+    Observable() : mutex_(), observers_() {}
     virtual ~Observable() {
         std::lock_guard<std::mutex> lk(mutex_);
         for (auto& o : observers_)
@@ -66,22 +67,25 @@ public:
         return false;
     }
 
-    void notify(T data) {
-        std::lock_guard<std::mutex> lk(mutex_);
-        for (auto observer : observers_)
-            observer->update(this, data);
-    }
-
     int getObserversCount() {
         std::lock_guard<std::mutex> lk(mutex_);
         return observers_.size();
     }
 
+protected:
+    void notify(T data) {
+        JAMI_WARN("notify start %p", this);
+        std::lock_guard<std::mutex> lk(mutex_);
+        for (auto observer : observers_)
+            observer->update(this, data);
+        JAMI_WARN("notify end %p", this);
+    }
+
 private:
     NON_COPYABLE(Observable<T>);
 
-    std::set<Observer<T>*> observers_;
     std::mutex mutex_; // lock observers_
+    std::set<Observer<T>*> observers_;
 };
 
 /*=== Observer =============================================================*/

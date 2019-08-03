@@ -19,6 +19,7 @@
  */
 
 #include "turn_transport.h"
+#include "transport/peer_channel.h"
 
 #include "logger.h"
 #include "ip_utils.h"
@@ -53,80 +54,6 @@ enum class RelayState
     NONE,
     READY,
     DOWN,
-};
-
-class PeerChannel
-{
-public:
-    PeerChannel() {}
-    ~PeerChannel() {
-        stop();
-    }
-
-    PeerChannel(PeerChannel&&o) {
-        MutexGuard lk {o.mutex_};
-        stream_ = std::move(o.stream_);
-    }
-
-    PeerChannel& operator =(PeerChannel&& o) {
-        std::lock(mutex_, o.mutex_);
-        MutexGuard lk1 {mutex_, std::adopt_lock};
-        MutexGuard lk2 {o.mutex_, std::adopt_lock};
-        stream_  = std::move(o.stream_);
-        return *this;
-    }
-
-    void operator <<(const std::string& data) {
-        MutexGuard lk {mutex_};
-        stream_.clear();
-        stream_ << data;
-        cv_.notify_one();
-    }
-
-    template <typename Duration>
-    bool wait(Duration timeout) {
-        std::lock(apiMutex_, mutex_);
-        MutexGuard lk_api {apiMutex_, std::adopt_lock};
-        MutexLock lk {mutex_, std::adopt_lock};
-        return cv_.wait_for(lk, timeout, [this]{ return stop_ or !stream_.eof(); });
-    }
-
-    std::size_t read(char* output, std::size_t size) {
-        std::lock(apiMutex_, mutex_);
-        MutexGuard lk_api {apiMutex_, std::adopt_lock};
-        MutexLock lk {mutex_, std::adopt_lock};
-        cv_.wait(lk, [&, this]{
-                if (stop_)
-                    return true;
-                stream_.read(&output[0], size);
-                return stream_.gcount() > 0;
-            });
-        return stop_ ? 0 : stream_.gcount();
-    }
-
-    void stop() noexcept {
-        {
-            MutexGuard lk {mutex_};
-            if (stop_)
-                return;
-            stop_ = true;
-        }
-        cv_.notify_all();
-
-        // Make sure that no thread is blocked into read() or wait() methods
-        MutexGuard lk_api {apiMutex_};
-    }
-
-private:
-    PeerChannel(const PeerChannel&o) = delete;
-    PeerChannel& operator =(const PeerChannel& o) = delete;
-    std::mutex apiMutex_ {};
-    std::mutex mutex_ {};
-    std::condition_variable cv_ {};
-    std::stringstream stream_ {};
-    bool stop_ {false};
-
-    friend void operator <<(std::vector<char>&, PeerChannel&);
 };
 
 }
@@ -169,7 +96,7 @@ public:
 
     std::map<IpAddr, PeerChannel> peerChannels_;
 
-    GenericSocket<uint8_t>::RecvCb onRxDataCb;
+    //GenericSocket<uint8_t>::RecvCb onRxDataCb;
     TurnTransportParams settings;
     pj_caching_pool poolCache {};
     pj_pool_t* pool {nullptr};
@@ -223,19 +150,20 @@ TurnTransportPimpl::onRxData(const uint8_t* pkt, unsigned pkt_len,
                              const pj_sockaddr_t* addr, unsigned addr_len)
 {
     IpAddr peer_addr (*static_cast<const pj_sockaddr*>(addr), addr_len);
-
-    decltype(peerChannels_)::iterator channel_it;
+    //decltype(peerChannels_)::iterator channel_it;
     {
         MutexGuard lk {apiMutex_};
-        channel_it = peerChannels_.find(peer_addr);
+        auto channel_it = peerChannels_.find(peer_addr);
         if (channel_it == std::end(peerChannels_))
             return;
+        channel_it->second.write((const char*)pkt, pkt_len);
     }
 
-    if (onRxDataCb)
-        onRxDataCb(pkt, pkt_len);
-    else
-        (channel_it->second) << std::string(reinterpret_cast<const char*>(pkt), pkt_len);
+    //if (onRxDataCb)
+    //    onRxDataCb(pkt, pkt_len);
+    //else
+    
+    //(channel_it->second) << std::string(reinterpret_cast<const char*>(pkt), pkt_len);
 }
 
 void
@@ -250,7 +178,8 @@ TurnTransportPimpl::onPeerConnection(pj_uint32_t conn_id,
                     << conn_id;
         {
             MutexGuard lk {apiMutex_};
-            peerChannels_.emplace(peer_addr, PeerChannel {});
+            peerChannels_[peer_addr];
+            //peerChannels_.emplace(peer_addr, PeerChannel {});
         }
     }
 
@@ -368,7 +297,7 @@ TurnTransport::shutdown(const IpAddr& addr)
 {
     MutexLock lk {pimpl_->apiMutex_};
     auto& channel = pimpl_->peerChannels_.at(addr);
-    lk.unlock();
+    //lk.unlock();
     channel.stop();
 }
 

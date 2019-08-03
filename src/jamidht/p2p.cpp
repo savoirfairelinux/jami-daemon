@@ -697,10 +697,13 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
     certMap_.emplace(cert->getId(), std::make_pair(cert, peer_h));
 
     auto sendRelayV4 = false, sendRelayV6 = false, sendIce = false, hasPubIp = false;
-    std::shared_ptr<bool> iceReady = std::make_shared<bool>(false);
 
-    std::shared_ptr<std::condition_variable> cv =
-        std::make_shared < std::condition_variable>();
+    struct IceReady {
+        std::mutex mtx {};
+        std::condition_variable cv {};
+        bool ready {false};
+    };
+    auto iceReady = std::make_shared<IceReady>();
     for (auto& ip: request.addresses) {
         try {
             if (IpAddr(ip).isIpv4()) {
@@ -720,9 +723,11 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                 auto ice_config = account.getIceOptions();
                 ice_config.tcpEnable = true;
                 ice_config.aggressive = true;
-                ice_config.onRecvReady = [this, cv, iceReady]() {
-                    if (iceReady) *iceReady = true;
-                    if (cv) cv->notify_one();
+                ice_config.onRecvReady = [iceReady]() {
+                    auto& ir = *iceReady;
+                    std::lock_guard<std::mutex> lk{ir.mtx};
+                    ir.ready = true;
+                    ir.cv.notify_one();
                 };
                 ice_ = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, true, ice_config);
 
@@ -804,12 +809,10 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
             }
         }
 
-        std::mutex mtx;
-        std::unique_lock<std::mutex> lk{mtx};
-        if (!*iceReady) {
+        if (not iceReady->ready) {
             if (!hasPubIp) ice_->setSlaveSession();
-            cv->wait_for(lk, ICE_READY_TIMEOUT);
-            if (!*iceReady) {
+            std::unique_lock<std::mutex> lk {iceReady->mtx};
+            if (not iceReady->cv.wait_for(lk, ICE_READY_TIMEOUT, [&]{ return iceReady->ready; })) {
                 // This will fallback on TURN if ICE is not ready
                 return;
             }
