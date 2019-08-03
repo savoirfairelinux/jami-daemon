@@ -47,7 +47,7 @@ class IceSocket
         void close();
         ssize_t recv(unsigned char* buf, size_t len);
         ssize_t send(const unsigned char* buf, size_t len);
-        ssize_t waitForData(unsigned int timeout);
+        ssize_t waitForData(std::chrono::milliseconds timeout);
         void setOnRecv(IceRecvCb cb);
         uint16_t getTransportOverhead();
 };
@@ -82,7 +82,7 @@ public:
 
     int maxPayload() const override;
 
-    int waitForData(unsigned ms_timeout, std::error_code& ec) const override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const override;
 
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 

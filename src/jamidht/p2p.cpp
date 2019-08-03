@@ -45,11 +45,12 @@
 
 namespace jami {
 
-static constexpr auto DHT_MSG_TIMEOUT = std::chrono::seconds(30);
-static constexpr auto NET_CONNECTION_TIMEOUT = std::chrono::seconds(10);
-static constexpr auto SOCK_TIMEOUT = std::chrono::seconds(3);
-static constexpr auto ICE_READY_TIMEOUT = std::chrono::seconds(10);
-static constexpr int ICE_INIT_TIMEOUT{10};
+static constexpr std::chrono::seconds DHT_MSG_TIMEOUT{30};
+static constexpr std::chrono::seconds NET_CONNECTION_TIMEOUT{10};
+static constexpr std::chrono::seconds SOCK_TIMEOUT{3};
+static constexpr std::chrono::seconds ICE_READY_TIMEOUT{10};
+static constexpr std::chrono::seconds ICE_INIT_TIMEOUT{10};
+static constexpr std::chrono::seconds ICE_NOGOTIATION_TIMEOUT{10};
 
 using Clock = std::chrono::system_clock;
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
@@ -432,7 +433,7 @@ private:
                   break;
                 }
 
-                parent_.ice_->waitForNegotiation(10);
+                parent_.ice_->waitForNegotiation(ICE_NOGOTIATION_TIMEOUT);
                 if (parent_.ice_->isRunning()) {
                     peer_ep = std::make_shared<IceSocketEndpoint>(parent_.ice_, true);
                     JAMI_DBG("[Account:%s] ICE negotiation succeed. Starting file transfer",
@@ -743,7 +744,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                 }
 
                 if (!hasPubIp) {
-                    ice_->waitForNegotiation(10);
+                    ice_->waitForNegotiation(ICE_NOGOTIATION_TIMEOUT);
                     if (ice_->isRunning()) {
                         sendIce = true;
                         JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
@@ -793,9 +794,8 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         request.from, request.respond(addresses));
 
     if (sendIce) {
-
         if (hasPubIp) {
-            ice_->waitForNegotiation(10);
+            ice_->waitForNegotiation(ICE_NOGOTIATION_TIMEOUT);
             if (ice_->isRunning()) {
                 JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
             } else {

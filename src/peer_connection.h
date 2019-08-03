@@ -96,8 +96,7 @@ public:
     void setOnRecv(RecvCb&&) override {
         throw std::logic_error("TlsTurnEndpoint::setOnRecv not implemented");
     }
-    int waitForData(unsigned, std::error_code&) const override;
-
+    int waitForData(std::chrono::milliseconds, std::error_code&) const override;
     void waitForReady(const std::chrono::steady_clock::duration& timeout = {});
 
     const dht::crypto::Certificate& peerCertificate() const;
@@ -112,7 +111,7 @@ private:
 class AbstractSocketEndpoint : public GenericSocket<uint8_t>
 {
 public:
-    virtual void connect(const std::chrono::steady_clock::duration &timeout = {}) {};
+    virtual void connect(const std::chrono::milliseconds& = {}) {};
 
     void setOnRecv(RecvCb &&) override {
       throw std::logic_error("AbstractSocketEndpoint::setOnRecv not implemented");
@@ -130,10 +129,10 @@ public:
     bool isReliable() const override { return true; }
     bool isInitiator() const override { return true; }
     int maxPayload() const override { return 1280; }
-    int waitForData(unsigned ms_timeout, std::error_code& ec) const override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const override;
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
-    void connect(const std::chrono::steady_clock::duration& timeout = {}) override;
+    void connect(const std::chrono::milliseconds& timeout = {}) override;
 
 private:
     const IpAddr addr_;
@@ -151,7 +150,7 @@ public:
     bool isReliable() const override { return ice_ ? ice_->isRunning() : false; }
     bool isInitiator() const override { return ice_ ? ice_->isInitiator() : true; }
     int maxPayload() const override { return 65536 /* The max for a RTP packet used to wrap data here */; }
-    int waitForData(unsigned ms_timeout, std::error_code& ec) const override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const override;
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 
@@ -198,9 +197,9 @@ public:
     void setOnRecv(RecvCb&&) override {
         throw std::logic_error("TlsSocketEndpoint::setOnRecv not implemented");
     }
-    int waitForData(unsigned, std::error_code&) const override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code&) const override;
 
-    void waitForReady(const std::chrono::steady_clock::duration& timeout = {});
+    void waitForReady(const std::chrono::milliseconds& timeout = {});
 
 private:
     class Impl;
