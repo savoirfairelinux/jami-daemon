@@ -308,13 +308,13 @@ SipTransportBroker::getUdpTransport(const IpAddr& ipAddress)
             }
             else {
                 // Transport still exists but have not been destroyed yet.
-                JAMI_WARN("Recycling transport %s", ipAddress.toString().c_str());
+                JAMI_WARN("Recycling transport %s", ipAddress.toString(true).c_str());
                 auto ret = std::make_shared<SipTransport>(itp->second);
                 it->second = ret;
                 return ret;
             }
         } else {
-            JAMI_WARN("Cleaning up UDP transport %s", ipAddress.toString().c_str());
+            JAMI_WARN("Cleaning up UDP transport %s", ipAddress.toString(true).c_str());
             udpTransports_.erase(itp);
         }
     }
