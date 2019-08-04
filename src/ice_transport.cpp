@@ -181,7 +181,7 @@ public:
 
     // Wait data on components
     std::vector<pj_ssize_t> lastReadLen_;
-    std::condition_variable waitDataCv_ = {};
+    std::condition_variable waitDataCv_{};
 };
 
 //==============================================================================
@@ -360,6 +360,8 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
 
     if (status != PJ_SUCCESS || icest == nullptr) {
         throw std::runtime_error("pj_ice_strans_create() failed");
+    } else {
+        icest_.reset(icest);
     }
 
     // Must be created after any potential failure
@@ -487,7 +489,7 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
 
     {
         std::lock_guard<std::mutex> lk(iceMutex_);
-        if (!icest_.get())
+        if (not icest_)
             icest_.reset(ice_st);
     }
 
