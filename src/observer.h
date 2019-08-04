@@ -41,7 +41,7 @@ template <typename T>
 class Observable
 {
 public:
-    Observable() : observers_(), mutex_() {}
+    Observable() : mutex_(), observers_() {}
     virtual ~Observable() {
         std::lock_guard<std::mutex> lk(mutex_);
         for (auto& o : observers_)
@@ -66,22 +66,23 @@ public:
         return false;
     }
 
+    int getObserversCount() {
+        std::lock_guard<std::mutex> lk(mutex_);
+        return observers_.size();
+    }
+
+protected:
     void notify(T data) {
         std::lock_guard<std::mutex> lk(mutex_);
         for (auto observer : observers_)
             observer->update(this, data);
     }
 
-    int getObserversCount() {
-        std::lock_guard<std::mutex> lk(mutex_);
-        return observers_.size();
-    }
-
 private:
     NON_COPYABLE(Observable<T>);
 
-    std::set<Observer<T>*> observers_;
     std::mutex mutex_; // lock observers_
+    std::set<Observer<T>*> observers_;
 };
 
 /*=== Observer =============================================================*/

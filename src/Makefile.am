@@ -145,7 +145,8 @@ libring_la_SOURCES = \
 		ftp_server.h \
 		generic_io.h \
 		scheduled_executor.h \
-		scheduled_executor.cpp
+		scheduled_executor.cpp \
+		transport/peer_channel.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \

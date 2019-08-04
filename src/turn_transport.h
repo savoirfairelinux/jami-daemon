@@ -168,7 +168,6 @@ public:
 private:
     TurnTransport& turn_;
     const IpAddr peer_;
-    RecvCb onRxDataCb_;
 };
 
 } // namespace jami

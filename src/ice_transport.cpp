@@ -24,6 +24,7 @@
 #include "sip/sip_utils.h"
 #include "manager.h"
 #include "upnp/upnp_control.h"
+#include "transport/peer_channel.h"
 
 #include <pjlib.h>
 
@@ -67,75 +68,6 @@ struct IceSTransDeleter
         pj_ice_strans_stop_ice(ptr);
         pj_ice_strans_destroy(ptr);
     }
-};
-
-class PeerChannel {
-public:
-  PeerChannel() {}
-  ~PeerChannel() { stop(); }
-
-  PeerChannel(PeerChannel &&o) {
-    MutexGuard lk{o.mutex_};
-    stream_ = std::move(o.stream_);
-  }
-
-  PeerChannel &operator=(PeerChannel &&o) {
-    std::lock(mutex_, o.mutex_);
-    MutexGuard lk1{mutex_, std::adopt_lock};
-    MutexGuard lk2{o.mutex_, std::adopt_lock};
-    stream_ = std::move(o.stream_);
-    return *this;
-  }
-
-  void operator<<(const std::string &data) {
-    MutexGuard lk{mutex_};
-    stream_.clear();
-    stream_ << data;
-    cv_.notify_one();
-  }
-
-  ssize_t isDataAvailable() {
-    MutexGuard lk{mutex_};
-    auto pos = stream_.tellg();
-    stream_.seekg(0, std::ios_base::end);
-    auto available = (stream_.tellg() - pos);
-    stream_.seekg(pos);
-    return available;
-  }
-
-  template <typename Duration> bool wait(Duration timeout) {
-    MutexLock lk{mutex_};
-    auto a = cv_.wait_for(lk, timeout,
-                        [this] { return stop_ or !stream_.eof(); });
-    return a;
-  }
-
-  std::size_t read(char *output, std::size_t size) {
-    MutexLock lk{mutex_};
-    if (stream_.eof()) return 0;
-    cv_.wait(lk, [&, this] {
-      if (stop_)
-        return true;
-      stream_.read(&output[0], size);
-      return stream_.gcount() > 0;
-    });
-    return stop_ ? 0 : stream_.gcount();
-  }
-
-  void stop() noexcept {
-    stop_ = true;
-    cv_.notify_all();
-  }
-
-private:
-  PeerChannel(const PeerChannel &o) = delete;
-  PeerChannel &operator=(const PeerChannel &o) = delete;
-  std::mutex mutex_{};
-  std::condition_variable cv_{};
-  std::stringstream stream_{};
-  bool stop_{false};
-
-  friend void operator<<(std::vector<char> &, PeerChannel &);
 };
 
 } // namespace <anonymous>
@@ -850,13 +782,13 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
     auto& io = compIO_[comp_id-1];
     std::unique_lock<std::mutex> lk(io.mutex);
     if (on_recv_cb_) {
-      on_recv_cb_();
+        on_recv_cb_();
     }
 
     if (io.cb) {
         io.cb((uint8_t*)pkt, size);
     } else {
-        peerChannels_.at(comp_id-1) << std::string(reinterpret_cast<const char *>(pkt), size);
+        peerChannels_.at(comp_id-1).write((char*)pkt, size);
     }
 }
 
