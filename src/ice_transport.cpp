@@ -942,6 +942,7 @@ IceTransport::stop()
             return false;
         }
     }
+    pimpl_->waitDataCv_.notify_all();
     return true;
 }
 
@@ -1232,9 +1233,8 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
     auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength(), &sent_size);
     if (status == PJ_EPENDING && isTCPEnabled()) {
         auto current_size = sent_size;
-        // NOTE; because we are in TCP, the sent size will count the header (2
-        // bytes length).
-        while (comp_id < pimpl_->lastReadLen_.size() && current_size < len) {
+        // NOTE; because we are in TCP, the sent size will count the header (2 bytes length).
+        while (not pimpl_->is_stopped_ and comp_id < pimpl_->lastReadLen_.size() and current_size < len) {
           std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
           pimpl_->waitDataCv_.wait(lk);
           current_size = pimpl_->lastReadLen_[comp_id];
