@@ -24,6 +24,7 @@
 
 #include <functional>
 #include <vector>
+#include <chrono>
 #include <system_error>
 #include <cstdint>
 
@@ -72,7 +73,7 @@ public:
     /// \note error code is not set in case of timeout, but set only in case of io error
     /// (i.e. socket deconnection).
     /// \todo make a std::chrono version for the timeout
-    virtual int waitForData(unsigned ms_timeout, std::error_code& ec) const = 0;
+    virtual int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const = 0;
 
     /// Write a given amount of data.
     /// \param buf data to write.

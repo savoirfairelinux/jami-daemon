@@ -188,11 +188,11 @@ public:
 
     ssize_t send(int comp_id, const unsigned char* buf, size_t len);
 
-    int waitForInitialization(unsigned timeout);
+    int waitForInitialization(std::chrono::milliseconds timeout);
 
-    int waitForNegotiation(unsigned timeout);
+    int waitForNegotiation(std::chrono::milliseconds timeout);
 
-    ssize_t waitForData(int comp_id, unsigned int timeout, std::error_code& ec);
+    ssize_t waitForData(int comp_id, std::chrono::milliseconds timeout, std::error_code& ec);
 
     /**
      * Return without waiting how many bytes are ready to read

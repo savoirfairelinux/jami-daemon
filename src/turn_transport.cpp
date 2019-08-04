@@ -460,13 +460,13 @@ TurnTransport::peerAddresses() const
 }
 
 int
-TurnTransport::waitForData(const IpAddr& peer, unsigned ms_timeout, std::error_code& ec) const
+TurnTransport::waitForData(const IpAddr& peer, std::chrono::milliseconds timeout, std::error_code& ec) const
 {
     (void)ec; ///< \todo handle errors
     MutexLock lk {pimpl_->apiMutex_};
     auto& channel = pimpl_->peerChannels_.at(peer);
     lk.unlock();
-    return channel.wait(std::chrono::milliseconds(ms_timeout));
+    return channel.wait(timeout);
 }
 
 //==============================================================================
@@ -483,9 +483,9 @@ ConnectedTurnTransport::shutdown()
 }
 
 int
-ConnectedTurnTransport::waitForData(unsigned ms_timeout, std::error_code& ec) const
+ConnectedTurnTransport::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
-    return turn_.waitForData(peer_, ms_timeout, ec);
+    return turn_.waitForData(peer_, timeout, ec);
 }
 
 std::size_t

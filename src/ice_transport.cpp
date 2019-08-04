@@ -1322,10 +1322,10 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 }
 
 int
-IceTransport::waitForInitialization(unsigned timeout)
+IceTransport::waitForInitialization(std::chrono::milliseconds timeout)
 {
     std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
-    if (!pimpl_->iceCV_.wait_for(lk, std::chrono::seconds(timeout),
+    if (!pimpl_->iceCV_.wait_for(lk, timeout,
                                  [this]{ return pimpl_->_isInitialized() or pimpl_->_isFailed(); })) {
         JAMI_WARN("[ice:%p] waitForInitialization: timeout", this);
         return -1;
@@ -1334,10 +1334,10 @@ IceTransport::waitForInitialization(unsigned timeout)
 }
 
 int
-IceTransport::waitForNegotiation(unsigned timeout)
+IceTransport::waitForNegotiation(std::chrono::milliseconds timeout)
 {
     std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
-    if (!pimpl_->iceCV_.wait_for(lk, std::chrono::seconds(timeout),
+    if (!pimpl_->iceCV_.wait_for(lk, timeout,
                          [this]{ return pimpl_->_isRunning() or pimpl_->_isFailed(); })) {
         JAMI_WARN("[ice:%p] waitForIceNegotiation: timeout", this);
         return -1;
@@ -1352,9 +1352,9 @@ IceTransport::isDataAvailable(int comp_id)
 }
 
 ssize_t
-IceTransport::waitForData(int comp_id, unsigned int timeout, std::error_code& ec)
+IceTransport::waitForData(int comp_id, std::chrono::milliseconds timeout, std::error_code& ec)
 {
-    return pimpl_->peerChannels_.at(comp_id).wait(std::chrono::milliseconds(timeout));
+    return pimpl_->peerChannels_.at(comp_id).wait(timeout);
 }
 
 std::vector<SDP>
@@ -1478,10 +1478,10 @@ IceSocketTransport::maxPayload() const
 }
 
 int
-IceSocketTransport::waitForData(unsigned ms_timeout, std::error_code& ec) const
+IceSocketTransport::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
     if (!ice_->isRunning()) return -1;
-    return ice_->waitForData(compId_, ms_timeout, ec);
+    return ice_->waitForData(compId_, timeout, ec);
 }
 
 std::size_t
@@ -1553,7 +1553,7 @@ IceSocket::send(const unsigned char* buf, size_t len)
 }
 
 ssize_t
-IceSocket::waitForData(unsigned int timeout)
+IceSocket::waitForData(std::chrono::milliseconds timeout)
 {
     if (!ice_transport_.get())
         return -1;

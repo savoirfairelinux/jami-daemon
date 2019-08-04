@@ -111,7 +111,7 @@ using ConferenceMap = std::map<std::string, std::shared_ptr<Conference>>;
 /** To store uniquely a list of Call ids */
 using CallIDSet = std::set<std::string>;
 
-static constexpr int ICE_INIT_TIMEOUT {10};
+static constexpr std::chrono::seconds ICE_INIT_TIMEOUT{10};
 static constexpr const char* PACKAGE_OLD = "ring";
 
 std::atomic_bool Manager::initialized = {false};

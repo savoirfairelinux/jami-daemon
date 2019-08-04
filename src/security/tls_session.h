@@ -139,7 +139,7 @@ public:
     /// Return a positive number for number of bytes read, or 0 and \a ec set in case of error.
     std::size_t read(ValueType* data, std::size_t size, std::error_code& ec) override;
 
-    int waitForData(unsigned, std::error_code&) const override;
+    int waitForData(std::chrono::milliseconds, std::error_code&) const override;
 
 private:
     class TlsSessionImpl;
