@@ -86,7 +86,7 @@ init_crt(gnutls_session_t session, dht::crypto::Certificate& crt)
 
 using lock = std::lock_guard<std::mutex>;
 
-static constexpr std::size_t IO_BUFFER_SIZE {3000}; ///< Size of char buffer used by IO operations
+static constexpr std::size_t IO_BUFFER_SIZE {8192}; ///< Size of char buffer used by IO operations
 
 //==============================================================================
 
