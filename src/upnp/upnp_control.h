@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,8 +32,13 @@
 #include "logger.h"
 #include "ip_utils.h"
 
+#include <list>
 #include <memory>
 #include <chrono>
+#include <string>
+#include <sstream>
+#include <iostream>
+#include <functional>
 
 namespace jami {
 class IpAddr;
@@ -41,43 +46,82 @@ class IpAddr;
 
 namespace jami { namespace upnp {
 
+using namespace std::placeholders;
+
 class UPnPContext;
 
 class Controller
 {
 public:
-    Controller();
+    using NotifyServiceCallback = std::function<void(uint16_t*, bool)>;
+    using mapCb = std::map<std::pair<uint16_t, uint16_t>, NotifyServiceCallback>;
+
+    Controller(bool keepCb = true);
     ~Controller();
 
     // Checks if a valid IGD is available.
-    bool hasValidIGD();
+    bool hasValidIgd();
 
-    // Sets or clears a listener for valid IGDs. There is one listener per controller.
-    void setIGDListener(IgdFoundCallback&& cb = {});
+    // Sends out request to upnp protocol to open a port. Gives option to use unique port (i.e. not one that is already in use).
+    void requestMappingAdd(NotifyServiceCallback&& cb,
+                           uint16_t portDesired, PortType type, bool unique, uint16_t portLocal = 0);
 
-    // Adds a mapping. Gives option to use unique port (i.e. not one that is already in use).
-    bool addMapping(uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local = 0);
+    // Callback function for when mapping is added.
+    void onMappingAdded(Mapping* mapping, bool success);
 
-    // Removes all mappings added by this instance.
-    void removeMappings();
+    // Sends out request to upnp protocol to close all opened ports from this controller.
+    void requestAllMappingRemove();
+
+    // Callback function for when mapping is removed.
+    void onMappingRemoved(Mapping* mapping, bool success);
+
+    // Callback function for when connectivity has changed.
+    void onConnectivityChange();
 
     // Gets the external ip of the first valid IGD in the list.
-    IpAddr getExternalIP() const;
+    IpAddr getExternalIp() const;
 
     // Gets the local ip that interface with the first valid IGD in the list.
-    IpAddr getLocalIP() const;
+    IpAddr getLocalIp() const;
 
 private:
     // Removes all mappings of the given type.
-    void removeMappings(PortType type);
+    void requestAllMappingRemove(PortType type);
+
+    // Checks if the map is present locally given a port and type.
+    bool isLocalMapPresent(const unsigned int portExternal, PortType type);
+
+    // Checks if the map is present locally given a mapping.
+    bool isLocalMapPresent(const Mapping& map);
+
+    // Adds a mapping locally to the list.
+    void addLocalMap(const Mapping& map);
+
+    // Removes a mapping locally from the list.
+    void removeLocalMap(const Mapping& map);
+
+    // Adds callback to callback list.
+    void registerCallback(unsigned int portExternal, unsigned int portInternal, NotifyServiceCallback&& cb);
+
+    // Removes callback from callback list.
+    void unregisterCallback(const Mapping& map);
+
+    // Calls corresponding callback.
+    void dispatchCallback(const Mapping& map, bool success);
 
 private:
-    std::shared_ptr<UPnPContext> upnpContext_;		// Context from which the controller executes the wanted commands.
+    std::shared_ptr<UPnPContext> upnpContext_;  // Context from which the controller executes the wanted commands.
 
-    PortMapLocal udpMappings_;						// List of UDP mappings created by this instance.
-    PortMapLocal tcpMappings_;						// List of TCP mappings created by this instance.
+    std::mutex mapListMutex_;                   // Mutex to protect mappings list.
+    PortMapLocal udpMappings_;                  // List of UDP mappings created by this instance.
+    PortMapLocal tcpMappings_;                  // List of TCP mappings created by this instance.
 
-    size_t listToken_ {0};							// IGD listener token.
+    std::mutex cbListMutex_;                    // Mutex to protect local callback list.
+    bool keepCb_ {false};                       // Variable that indicates if the controller wants to keep it's callbacks in the list after a connectivity change.
+    mapCb mapCbList_;                           // List of mappings with their corresponding callbacks.
+
+    const void* memAddr_ {nullptr};             // Variable to store address of instance.
+    std::string memAddrStr_ {};                 // Variable to store string of address to be used as the unique identifier.
 };
 
 }} // namespace jami::upnp
