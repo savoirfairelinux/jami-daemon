@@ -190,6 +190,7 @@ public:
     }
 
     std::string toString(bool include_port=false, bool force_ipv6_brackets=false) const {
+        if (addr.addr.sa_family == AF_UNSPEC) return {};
         std::string str(PJ_INET6_ADDRSTRLEN, (char)0);
         if (include_port) force_ipv6_brackets = true;
         pj_sockaddr_print(&addr, &(*str.begin()), PJ_INET6_ADDRSTRLEN, (include_port?1:0)|(force_ipv6_brackets?2:0));
