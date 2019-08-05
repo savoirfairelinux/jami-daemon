@@ -57,34 +57,58 @@
 
 using random_device = dht::crypto::random_device;
 
-using IgdFoundCallback = std::function<void()>;
-
 namespace jami {
 class IpAddr;
 }
 
 namespace jami { namespace upnp {
 
+using NotifyControllerCallback = std::function<void(Mapping*, bool)>;
+
+using namespace std::placeholders;
+
 class UPnPContext
 {
 public:
+    using cbMap = std::map<Mapping*, std::pair<std::pair<bool, std::string>, std::pair<NotifyControllerCallback, NotifyControllerCallback>>>;
+    using cbMapItr = std::map<Mapping*, std::pair<std::pair<bool, std::string>, std::pair<NotifyControllerCallback, NotifyControllerCallback>>>::iterator;
+    
     UPnPContext();
     ~UPnPContext();
 
     // Check if there is a valid IGD in the IGD list.
-    bool hasValidIGD();
+    bool hasValidIgd();
 
-    // Add IGD listener.
-    size_t addIGDListener(IgdFoundCallback&& cb);
+    // Clears callbacks associated with map list given as parameter.
+    void clearCallbacks(const PortMapLocal& mapList, const std::string& ctrlId);
 
-    // Remove IGD listener.
-    void removeIGDListener(size_t token);
+    // Adds callback associated with a mapping and its controller.
+    void addCallback(Mapping map, bool keepCb, const std::string& ctrlId, NotifyControllerCallback&& cbAdd, NotifyControllerCallback&& cbRm); 
 
-    // Tries to add a valid mapping. Will return it if successful.
-    Mapping addMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool unique);
+    // Informs the UPnP context that the network status has changed.
+    void connectivityChanged();
 
-    // Removes a mapping.
+    // Checks if the desired port is already in use on an IGD.
+    bool isMappingInUse(const unsigned int portDesired, PortType type);
+
+    // Increments the number of users for a given port.
+    void incrementNbOfUsers(const unsigned int portDesired, PortType type);
+
+    // Sends out a request to a protocol to add a mapping.
+    void addMapping(NotifyControllerCallback&& cbAdd,
+                    NotifyControllerCallback&& cbRm, 
+                    uint16_t portDesired, uint16_t portLocal,
+                    PortType type, bool unique,
+                    const std::string& ctrlId, bool keepCb = false);
+
+    // Callback function for when mapping is added.
+    void onAddMapping(IpAddr igdIp, Mapping* mapping, bool success);
+
+    // Sends out a request to protocol to remove a mapping.
     void removeMapping(const Mapping& mapping);
+
+    // Callback function for when mapping is removed.
+    void onRemoveMapping(IpAddr igdIp, Mapping* mapping, bool success);
 
     // Get external Ip of a chosen IGD.
     IpAddr getExternalIP() const;
@@ -92,18 +116,9 @@ public:
     // Get our local Ip.
     IpAddr getLocalIP() const;
 
-    // Inform the UPnP context that the network status has changed. This clears the list of known
-    void connectivityChanged();
-
 private:
     // Checks if the IGD is in the list by checking the IGD's public Ip.
     bool isIgdInList(const IpAddr& publicIpAddr);
-
-    // Returns the protocol of the IGD.
-    UPnPProtocol::Type getIgdProtocol(IGD* igd);
-
-    // Returns a random port that is not yet used by the daemon for UPnP.
-    uint16_t chooseRandomPort(const IGD& igd, PortType type);
 
     // Tries to add or remove IGD to the list via callback.
     bool igdListChanged(UPnPProtocol* protocol, IGD* igd, const IpAddr publicIpAddr, bool added);
@@ -117,22 +132,42 @@ private:
     // Removes IGD from list by specifiying the IGD's public Ip address.
     bool removeIgdFromList(IpAddr publicIpAddr);
 
-    // Tries to add mapping. Assumes mutex is already locked.
-    Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error);
+    // Returns the protocol of the IGD.
+    UPnPProtocol::Type getIgdProtocol(IGD* igd);
 
-public:
-    constexpr static unsigned MAX_RETRIES = 20;
+    // Tries to add a mapping to a specific IGD.
+    void addMapping(IGD* igd, uint16_t portExternal, uint16_t portInternal, PortType type);
+
+    // Adds mapping to corresponding IGD. 
+    void addMappingToIgd(IpAddr igdIp, Mapping map);
+
+    // Removes mapping from corresponding IGD. 
+    void removeMappingFromIgd(IpAddr igdIp, Mapping map);
+
+    // Add callbacks to callback list.
+    void registerCallback(Mapping map, bool keepCb, std::string ctrlId, NotifyControllerCallback&& cbAdd, NotifyControllerCallback&& cbRm);
+
+    // Removes callback from callback list given a mapping.
+    void unregisterCallback(Mapping map, bool force = false);
+
+    // Removes callback from callback list given a mapping and controller Id.
+    void unregisterCallback(Mapping map, const std::string& ctrlId);
+
+    // Calls corresponding callback.
+    void dispatchOnAddCallback(Mapping map, bool success);
+
+    // Calls corresponding callback.
+    void dispatchOnRmCallback(Mapping map, bool success);
 
 private:
     NON_COPYABLE(UPnPContext);
 
-    std::map<size_t, IgdFoundCallback> igdListeners_;           // Map of valid IGD listeners with their tokens.
-    size_t listenerToken_{ 0 };                                 // Last provided token for valid IGD listeners (0 is the invalid token).
-
-    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;	// Vector of available protocols.
-    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;			// List of IGDs with their corresponding public IPs.
-    mutable std::mutex igdListMutex_;							// Mutex used to access these lists and IGDs in a thread-safe manner.
-
+    mutable std::mutex igdListMutex_;                           // Mutex used to access these lists and IGDs in a thread-safe manner.
+    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;   // Vector of available protocols.
+    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;         // List of IGDs with their corresponding protocols that found them.
+    
+    std::mutex cbListMutex_;                                    // Mutex that protects the callback list.
+    cbMap mapCbList_;                                           // List of mappings with their corresponding callbacks.
 };
 
 std::shared_ptr<UPnPContext> getUPnPContext();
