@@ -52,7 +52,7 @@ public:
             std::string&& eventSubURL,
             IpAddr&& localIp = {},
             IpAddr&& publicIp = {});
-    ~UPnPIGD(){}
+    ~UPnPIGD();
     const std::string& getUDN() const          { return UDN_;          }
     const std::string& getBaseURL() const      { return baseURL_;      }
     const std::string& getFriendlyName() const { return friendlyName_; }

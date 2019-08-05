@@ -47,7 +47,7 @@ class PMPIGD : public IGD
 public:
     PMPIGD(IpAddr&& localIp = {}, IpAddr&& publicIp = {}):
         IGD(std::move(localIp), std::move(publicIp)){}
-    ~PMPIGD() = default;
+    ~PMPIGD();
     bool operator==(PMPIGD& other) const;
 
     void clear();

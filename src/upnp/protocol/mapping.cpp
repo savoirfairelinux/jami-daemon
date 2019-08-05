@@ -46,7 +46,7 @@ Mapping& Mapping::operator=(Mapping&& other) noexcept
     return *this;
 }
 
-bool operator== (const Mapping& cMap1, const Mapping& cMap2)
+bool operator==(const Mapping& cMap1, const Mapping& cMap2)
 {
     return (cMap1.port_external_ == cMap2.port_external_ &&
             cMap1.port_internal_ == cMap2.port_internal_ &&
