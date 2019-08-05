@@ -513,7 +513,9 @@ class JamiAccount : public SIPAccountBase {
         /**
          * Maps require port via UPnP
          */
-        bool mapPortUPnP();
+        void mapPortUPnP();
+
+        void onPortMappingAdd(uint16_t* port_used, bool success);
 
         void igdChanged();
 

@@ -53,6 +53,7 @@ UPnPContext::UPnPContext()
 #endif
 #if HAVE_LIBUPNP
     auto pupnp = std::make_unique<PUPnP>();
+    pupnp->setOnPortMapAdd(std::bind(&UPnPContext::onAddMapping, this, _1, _2));
     pupnp->setOnIgdChanged(std::bind(&UPnPContext::igdListChanged, this, _1, _2, _3, _4));
     pupnp->searchForIgd();
     protocolList_.push_back(std::move(pupnp));
@@ -62,6 +63,7 @@ UPnPContext::UPnPContext()
 UPnPContext::~UPnPContext()
 {
     igdList_.clear();
+    addPortMapCbList_.clear();
 }
 
 void
@@ -79,7 +81,7 @@ UPnPContext::connectivityChanged()
             }
         }
     }
-
+    addPortMapCbList_.clear();
     for (auto const& protocol : protocolList_)
         protocol->searchForIgd();
 }
@@ -128,10 +130,28 @@ UPnPContext::chooseRandomPort(const IGD& igd, PortType type)
 }
 
 Mapping
-UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool unique)
+UPnPContext::addMapping(NotifyControllerAddMapCallback&& cb, uint16_t port_desired, uint16_t port_local, PortType type, bool unique)
 {
     // Lock mutex on the igd list.
     std::lock_guard<std::mutex> igdListLock(igdListMutex_);
+
+    Mapping* mapToAdd = new Mapping(std::move(port_desired),
+                                    std::move(port_local),
+                                    std::move(type));
+
+    bool mapAlreadyPresent = false;
+    // Add callback with corresponding ports to list if it isn't already in the list.
+    for (auto& map : addPortMapCbList_) {
+        if (map.first->getPortExternal() == mapToAdd->getPortExternal() and
+            map.first->getPortInternal() == mapToAdd->getPortInternal() and 
+            map.first->getType() == mapToAdd->getType()) {
+            mapAlreadyPresent = true;
+            break;
+        }
+    }
+    if (not mapAlreadyPresent) {
+        addPortMapCbList_.emplace(mapToAdd, cb);
+    }
 
     // Add the mapping to the first valid IGD we find in the list.
     IGD* igd = nullptr;
@@ -145,7 +165,7 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
     }
 
     if (not igd) {
-        JAMI_WARN("UPnPContext: no valid IGD available");
+        JAMI_WARN("UPnP: Trying to add mapping with no Internet Gateway Device available");
         return {};
     }
 
@@ -160,8 +180,20 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
         while (not unique_found) {
             auto iter = globalMappings->find(port_desired);     // Check if that port is not already used by the client.
             if (iter != globalMappings->end()) {
-                port_desired = chooseRandomPort(*igd, type);    // Port already used, try another one.
+                // Port already in use, try another one.
                 JAMI_DBG("Port %d is already in use. Finding another unique port...", port_desired);
+                for (auto& cb : addPortMapCbList_) {
+                    if (cb.first->getPortExternal() == port_desired) {
+                        addPortMapCbList_.erase(cb.first);
+                        port_desired = (chooseRandomPort(*igd, type));
+                        Mapping* mapToReplace = new Mapping(std::move(port_desired),
+                                                            std::move(port_local),
+                                                            std::move(type));
+                        std::swap(addPortMapCbList_[mapToReplace], cb.second);
+                        addPortMapCbList_.erase(cb.first);
+                        break;
+                    }
+                }
             } else {
                 unique_found = true;
             }
@@ -177,8 +209,18 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
            upnp_err == UPnPProtocol::UpnpError::CONFLICT_IN_MAPPING and
            numberRetries < MAX_RETRIES) {
 
-        port_desired = chooseRandomPort(*igd, type);
-
+        for (auto& cb : addPortMapCbList_) {
+            if (cb.first->getPortExternal() == port_desired) {
+                addPortMapCbList_.erase(cb.first);
+                port_desired = (chooseRandomPort(*igd, type));
+                Mapping* mapToReplace = new Mapping(std::move(port_desired),
+                                                    std::move(port_local),
+                                                    std::move(type));
+                std::swap(addPortMapCbList_[mapToReplace], cb.second);
+                addPortMapCbList_.erase(cb.first);
+                break;
+            }
+        }
         upnp_err = UPnPProtocol::UpnpError::ERROR_OK;
         mapping = addMapping(igd, port_desired, port_local, type, upnp_err);
         ++numberRetries;
@@ -189,6 +231,28 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
     }
 
     return mapping;
+}
+
+void
+UPnPContext::onAddMapping(Mapping* mapping, bool success)
+{
+    JAMI_WARN("UPnPContext: Port mapping added NOTIFY");
+    if (success)
+        JAMI_WARN("UPnPContext: Opened port %s:%s %s", mapping->getPortExternalStr().c_str(), mapping->getPortInternalStr().c_str(), mapping->getTypeStr().c_str());
+    else 
+        JAMI_WARN("UPnPContext: Failed to open port %s:%s %s", mapping->getPortExternalStr().c_str(), mapping->getPortInternalStr().c_str(), mapping->getTypeStr().c_str());
+    
+    // Iterate over list of ports to find corresponding callback.
+    for (const auto& cb: addPortMapCbList_) {
+        if (cb.first->getPortExternal() == mapping->getPortExternal() and
+            cb.first->getPortInternal() == mapping->getPortInternal() and
+            cb.first->getType() == mapping->getType()) {
+            auto mapToErase = new Mapping(std::move(mapping->getPortExternal()), 
+                                          std::move(mapping->getPortExternal()),
+                                          std::move(mapping->getType()));
+            cb.second(mapping, success);
+        }
+    }
 }
 
 Mapping
@@ -283,8 +347,6 @@ UPnPContext::getIgdProtocol(IGD* igd)
 bool
 UPnPContext::igdListChanged(UPnPProtocol* protocol, IGD* igd, IpAddr publicIpAddr, bool added)
 {
-    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
-
     if (added) {
         return addIgdToList(protocol, igd);
     } else {
@@ -299,6 +361,8 @@ UPnPContext::igdListChanged(UPnPProtocol* protocol, IGD* igd, IpAddr publicIpAdd
 bool
 UPnPContext::addIgdToList(UPnPProtocol* protocol, IGD* igd)
 {
+    std::unique_lock<std::mutex> igdListLock(igdListMutex_);
+
     // Check if IGD has a valid public IP.
     if (not igd->publicIp_) {
         JAMI_WARN("UPnPContext: IGD trying to be added has invalid public IpAddress");
@@ -311,6 +375,12 @@ UPnPContext::addIgdToList(UPnPProtocol* protocol, IGD* igd)
     }
 
     igdList_.emplace_back(protocol, igd);
+    
+    igdListLock.unlock();
+    for (auto& cb : addPortMapCbList_) {
+        addMapping(std::move(cb.second), cb.first->getPortExternal(), cb.first->getPortInternal(), cb.first->getType(), false);
+    }
+    igdListLock.lock();
 
     for (const auto& item : igdListeners_) {
         item.second();
@@ -322,6 +392,8 @@ UPnPContext::addIgdToList(UPnPProtocol* protocol, IGD* igd)
 bool
 UPnPContext::removeIgdFromList(IGD* igd)
 {
+    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
+
     auto it = igdList_.begin();
     while (it != igdList_.end()) {
         if (it->second->publicIp_ == igd->publicIp_) {
@@ -339,6 +411,8 @@ UPnPContext::removeIgdFromList(IGD* igd)
 bool
 UPnPContext::removeIgdFromList(IpAddr publicIpAddr)
 {
+    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
+
     auto it = igdList_.begin();
     while (it != igdList_.end()) {
         if (it->second->publicIp_ == publicIpAddr) {
