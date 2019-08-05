@@ -34,6 +34,9 @@
 
 #include <memory>
 #include <chrono>
+#include <functional>
+
+using OnPortOpenCallback = std::function<void(uint16_t*, bool)>;
 
 namespace jami {
 class IpAddr;
@@ -46,7 +49,15 @@ class UPnPContext;
 class Controller
 {
 public:
-    Controller();
+    enum class Service {
+        UNKNOWN,
+        JAMI_ACCOUNT,
+        ICE_TRANSPORT,
+        SIP_ACCOUT,
+        SIP_CALL 
+    };
+
+    Controller(Service&& id, OnPortOpenCallback&& portOpenCb);
     ~Controller();
 
     // Checks if a valid IGD is available.
@@ -78,6 +89,13 @@ private:
     PortMapLocal tcpMappings_;						// List of TCP mappings created by this instance.
 
     size_t listToken_ {0};							// IGD listener token.
+
+    Service id_ {};
+
+    OnPortOpenCallback notifyOpenPortCb_;
 };
+
+// Global callback list.
+static std::list<std::pair<Controller::Service, std::function<void(uint16_t*, bool)>>> portOpenCbList;
 
 }} // namespace jami::upnp

@@ -170,6 +170,8 @@ public:
      */
     void selectUPnPIceCandidates();
 
+    void onPortOpenNotify(uint16_t* port_used, bool success);
+
     std::unique_ptr<upnp::Controller> upnp_;
 
     bool onlyIPv4Private_ {true};
@@ -277,9 +279,10 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     , initiatorSession_(master)
     , thread_()
 {
-    if (options.upnpEnable)
-        upnp_.reset(new upnp::Controller());
-
+    if (options.upnpEnable) {
+        using namespace std::placeholders;
+        upnp_.reset(new upnp::Controller(upnp::Controller::Service::ICE_TRANSPORT, std::bind(&IceTransport::Impl::onPortOpenNotify, this, _1, _1)));
+    }
     auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
     config_ = iceTransportFactory.getIceCfg(); // config copy
     if (options.tcpEnable) {
@@ -768,6 +771,12 @@ IceTransport::Impl::selectUPnPIceCandidates()
             JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates", this);
         }
     }
+}
+
+void
+IceTransport::Impl::onPortOpenNotify(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("IceTransport: Port open notify");
 }
 
 void

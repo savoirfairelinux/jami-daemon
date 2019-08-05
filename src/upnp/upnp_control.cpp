@@ -23,8 +23,11 @@
 
 namespace jami { namespace upnp {
 
-Controller::Controller()
+Controller::Controller(Service&& id, OnPortOpenCallback&& cb):
+    id_(std::move(id)),
+    notifyOpenPortCb_(std::move(cb))
 {
+    portOpenCbList.emplace_back(id_, notifyOpenPortCb_);
     try {
         upnpContext_ = getUPnPContext();
     } catch (std::runtime_error& e) {

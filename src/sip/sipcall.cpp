@@ -92,9 +92,10 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 #endif
     , sdp_(new Sdp(id))
 {
-    if (account.getUPnPActive())
-        upnp_.reset(new upnp::Controller());
-
+    if (account.getUPnPActive()) {
+        using namespace std::placeholders;
+        upnp_.reset(new upnp::Controller(upnp::Controller::Service::SIP_CALL, std::bind(&SIPCall::onPortOpenNotify, this, _1, _2)));
+    }
     setCallMediaLocal();
 }
 
@@ -1202,6 +1203,12 @@ SIPCall::openPortsUPnP()
         }
 #endif
     }
+}
+
+void
+SIPCall::onPortOpenNotify(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("SPICall: Port open notify");
 }
 
 std::map<std::string, std::string>
