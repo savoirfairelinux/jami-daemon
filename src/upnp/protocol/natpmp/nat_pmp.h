@@ -61,7 +61,7 @@ public:
     void searchForIgd() override;
 
     // Tries to add mapping. Assumes mutex is already locked.
-    Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) override;
+    void addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) override;
 
     // Removes a mapping.
     void removeMapping(const Mapping& igdMapping) override;
@@ -82,12 +82,12 @@ private:
 private:
     NON_COPYABLE(NatPmp);
 
-    std::mutex pmpMutex_ {};                            // NatPmp mutex.
-    std::condition_variable pmpCv_ {};                  // Condition variable for thread-safe signaling.
-    std::atomic_bool pmpRun_ { true };                 // Variable to allow the thread to run.
-    std::thread pmpThread_ {};                          // NatPmp thread.
+    std::mutex pmpMutex_ {};                // NatPmp mutex.
+    std::condition_variable pmpCv_ {};      // Condition variable for thread-safe signaling.
+    std::atomic_bool pmpRun_ { true };      // Variable to allow the thread to run.
+    std::thread pmpThread_ {};              // NatPmp thread.
 
-    std::shared_ptr<PMPIGD> pmpIGD_ {};                 // IGD discovered by NatPmp.
+    std::shared_ptr<PMPIGD> pmpIGD_ {};     // IGD discovered by NatPmp.
 };
 
 }} // namespace jami::upnp
