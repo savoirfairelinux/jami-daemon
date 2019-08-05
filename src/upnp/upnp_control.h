@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,8 +32,10 @@
 #include "logger.h"
 #include "ip_utils.h"
 
+#include <list>
 #include <memory>
 #include <chrono>
+#include <functional>
 
 namespace jami {
 class IpAddr;
@@ -41,13 +43,20 @@ class IpAddr;
 
 namespace jami { namespace upnp {
 
+using NotifyServiceAddMapCallback = std::function<void(uint16_t*, bool)>;
+
 class UPnPContext;
+
+// List that keeps track of all ports accross all Controller instances.
+static std::list<uint16_t> portList_;
 
 class Controller
 {
 public:
-    Controller();
+    Controller(upnp::Service&& id = upnp::Service::UNKNOWN);
     ~Controller();
+
+    upnp::Service getServiceId() const { return id_; }
 
     // Checks if a valid IGD is available.
     bool hasValidIGD();
@@ -56,7 +65,9 @@ public:
     void setIGDListener(IgdFoundCallback&& cb = {});
 
     // Adds a mapping. Gives option to use unique port (i.e. not one that is already in use).
-    bool addMapping(uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local = 0);
+    bool addMapping(NotifyServiceAddMapCallback&& cb, uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local = 0);
+
+    void onAddMapping(Mapping* mapping, bool success);
 
     // Removes all mappings added by this instance.
     void removeMappings();
@@ -67,17 +78,25 @@ public:
     // Gets the local ip that interface with the first valid IGD in the list.
     IpAddr getLocalIP() const;
 
+    // Gets all current opened ports.
+    std::list<uint16_t> getPorts() { return portList_; }
+
 private:
     // Removes all mappings of the given type.
     void removeMappings(PortType type);
 
 private:
-    std::shared_ptr<UPnPContext> upnpContext_;		// Context from which the controller executes the wanted commands.
+    std::shared_ptr<UPnPContext> upnpContext_;          // Context from which the controller executes the wanted commands.
 
-    PortMapLocal udpMappings_;						// List of UDP mappings created by this instance.
-    PortMapLocal tcpMappings_;						// List of TCP mappings created by this instance.
+    upnp::Service id_;
 
-    size_t listToken_ {0};							// IGD listener token.
+    PortMapLocal udpMappings_;                          // List of UDP mappings created by this instance.
+    PortMapLocal tcpMappings_;                          // List of TCP mappings created by this instance.
+
+    size_t listToken_ {0};                              // IGD listener token.
+
+    std::map<std::pair<uint16_t, uint16_t>, NotifyServiceAddMapCallback> addPortMapCbList_;
+
 };
 
 }} // namespace jami::upnp

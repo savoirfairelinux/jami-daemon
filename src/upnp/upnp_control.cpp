@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +23,10 @@
 
 namespace jami { namespace upnp {
 
-Controller::Controller()
+using namespace std::placeholders;
+
+Controller::Controller(upnp::Service&& id):
+    id_(id)
 {
     try {
         upnpContext_ = getUPnPContext();
@@ -39,6 +42,13 @@ Controller::~Controller()
     if (listToken_ and upnpContext_) {
         upnpContext_->removeIGDListener(listToken_);
     }
+
+    for (auto& cb : addPortMapCbList_) {
+        // Removes ports only of sepcific Controller instance.
+        portList_.remove(cb.first.first);
+    }
+
+    addPortMapCbList_.clear();
 }
 
 bool
@@ -62,7 +72,7 @@ Controller::setIGDListener(IgdFoundCallback&& cb)
 }
 
 bool
-Controller::addMapping(uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local)
+Controller::addMapping(NotifyServiceAddMapCallback&& cb, uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local)
 {
     if (not upnpContext_) {
         return false;
@@ -72,17 +82,49 @@ Controller::addMapping(uint16_t port_desired, PortType type, bool unique, uint16
         port_local = port_desired;
     }
 
-    Mapping mapping = upnpContext_->addMapping(port_desired, port_local, type, unique);
+    // Add callback with corresponding ports to list if it isn't already in the list.
+    if (addPortMapCbList_.find(std::make_pair(port_desired, port_local)) == addPortMapCbList_.end()){
+        addPortMapCbList_.emplace(std::make_pair(port_desired, port_local), cb);   
+    }
+
+    Mapping mapping = upnpContext_->addMapping(std::bind(&Controller::onAddMapping, this, _1, _2), 
+                                               port_desired, port_local, type, unique, id_);
     if (mapping) {
         auto usedPort = mapping.getPortExternal();
         if (port_used) {
             *port_used = usedPort;
         }
-        auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-        instanceMappings.emplace(usedPort, std::move(mapping));
         return true;
     }
     return false;
+}
+
+void
+Controller::onAddMapping(Mapping* mapping, bool success)
+{
+    JAMI_WARN("Controller: Port mapping added NOTIFY");
+    if (success)
+        JAMI_WARN("Controller: Opened port %s:%s %s", mapping->getPortExternalStr().c_str(), mapping->getPortInternalStr().c_str(), mapping->getTypeStr().c_str());
+    else 
+        JAMI_WARN("Controller: Failed to open port %s:%s %s", mapping->getPortExternalStr().c_str(), mapping->getPortInternalStr().c_str(), mapping->getTypeStr().c_str());
+    
+    if (success and mapping) {
+        portList_.emplace_back(std::move(mapping->getPortExternal()));
+        auto usedPort = mapping->getPortExternal();
+        auto& instanceMappings = mapping->getType() == PortType::UDP ? udpMappings_ : tcpMappings_;
+        Mapping map = Mapping(mapping->getPortExternal(),
+                              mapping->getPortInternal(),
+                              mapping->getType());
+        instanceMappings.emplace(usedPort, std::move(map));
+
+        for (const auto& cb: addPortMapCbList_) {
+            if (cb.first.first == mapping->getPortExternal() and
+                cb.first.second == mapping->getPortInternal()) {
+                uint16_t port = mapping->getPortExternal();
+                cb.second(&port, success);
+            }
+        }
+    }
 }
 
 void
@@ -96,6 +138,7 @@ Controller::removeMappings(PortType type) {
     for (auto iter = instanceMappings.begin(); iter != instanceMappings.end();) {
         auto& mapping = iter->second;
         upnpContext_->removeMapping(mapping);
+        portList_.remove(mapping.getPortExternal());
         iter = instanceMappings.erase(iter);
     }
 }
