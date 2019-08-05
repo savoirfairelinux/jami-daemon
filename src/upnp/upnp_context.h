@@ -65,6 +65,15 @@ class IpAddr;
 
 namespace jami { namespace upnp {
 
+enum class Service {
+        UNKNOWN,
+        ACCOUNT,
+        SIP_CALL,
+        ICE_TRANSPORT
+    };
+
+using NotifyControllerAddMapCallback = std::function<void(Mapping*, bool)>;
+
 class UPnPContext
 {
 public:
@@ -81,7 +90,11 @@ public:
     void removeIGDListener(size_t token);
 
     // Tries to add a valid mapping. Will return it if successful.
-    Mapping addMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool unique);
+    Mapping addMapping(NotifyControllerAddMapCallback&& cb, 
+                       uint16_t port_desired, uint16_t port_local, PortType type, bool unique,
+                       upnp::Service id = upnp::Service::UNKNOWN);
+
+    void onAddMapping(Mapping* mapping, bool success);
 
     // Removes a mapping.
     void removeMapping(const Mapping& mapping);
@@ -129,10 +142,11 @@ private:
     std::map<size_t, IgdFoundCallback> igdListeners_;           // Map of valid IGD listeners with their tokens.
     size_t listenerToken_{ 0 };                                 // Last provided token for valid IGD listeners (0 is the invalid token).
 
-    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;	// Vector of available protocols.
-    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;			// List of IGDs with their corresponding public IPs.
-    mutable std::mutex igdListMutex_;							// Mutex used to access these lists and IGDs in a thread-safe manner.
+    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;   // Vector of available protocols.
+    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;         // List of IGDs with their corresponding public IPs.
+    mutable std::mutex igdListMutex_;                           // Mutex used to access these lists and IGDs in a thread-safe manner.
 
+    std::map<Mapping*, std::pair<upnp::Service, NotifyControllerAddMapCallback>> addPortMapCbList_;
 };
 
 std::shared_ptr<UPnPContext> getUPnPContext();
