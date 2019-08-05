@@ -45,21 +45,52 @@ using time_point = clock::time_point;
 class PMPIGD : public IGD
 {
 public:
+    using mapItr = std::vector<Mapping>::iterator;
+
     PMPIGD(IpAddr&& localIp = {}, IpAddr&& publicIp = {}):
-        IGD(std::move(localIp), std::move(publicIp)){}
-    ~PMPIGD() = default;
+           IGD(std::move(localIp), std::move(publicIp)){}
+    ~PMPIGD();
+    bool operator==(IGD& other) const;
     bool operator==(PMPIGD& other) const;
 
-    void clear();
+    // Checks if the given mapping was already added.
+    bool isMapAdded(const Mapping map);
+
+    // Adds a mapping to the list of mappings we need to open.
+    void addMapToAdd(Mapping map);
+
+    // Removes a mapping from the list of mappings we need to open.
+    void removeMapToAdd(Mapping map);
+
+    // Adds an added mapping to the list of mappings to be considered for renewal.
+    void addMapToRenew(Mapping map);
+
+    // Removes a mapping from the renewal list.
+    void removeMapToRenew(Mapping map);
+
+    // Checks if a given mapping needs to be renewed.
+    bool isMapUpForRenewal(Mapping map, time_point now);
+
+    // Adds a mapping to the list of mappings we need to close.
+    void addMapToRemove(Mapping map);
+
+    // Removes a mapping from the list of mappings we need to close.
+    void removeMapToRemove(Mapping map);
+
+    // Clears all the mappings.
     void clearMappings();
 
-    GlobalMapping* getNextMappingToRenew() const;
+    Mapping* getNextMappingToRenew();
 
-    time_point getRenewalTime() const;
+    time_point getRenewalTime();
 
 public:
+    std::mutex mapListMutex_;                     // Mutex for protecting map lists.
+    std::vector<Mapping> mapToAddList_ {};        // List of maps to add.
+    std::vector<Mapping> mapToRenewList_ {};      // List of maps to renew.
+    std::vector<Mapping> mapToRemoveList_ {};     // List of maps to remove.
+
     time_point renewal_ {time_point::min()};
-    std::vector<GlobalMapping> toRemove_ {};
 
     // Upon creation, the thread will clear all the previously opened
     // mappings (if there are any). The NatPmp class will then set the
