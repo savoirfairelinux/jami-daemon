@@ -35,4 +35,384 @@ IGD::operator==(IGD& other) const
     return (localIp_ == other.localIp_ and publicIp_ == other.publicIp_);
 }
 
+bool
+IGD::isMapInUse(const unsigned int externalPort)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    for (GlobalMaptItr it = udpMappings_.begin(); it != udpMappings_.end(); it++) {
+        if (it->first == externalPort) {
+            return true;
+        }
+    }
+    for (GlobalMaptItr it = tcpMappings_.begin(); it != tcpMappings_.end(); it++) {
+        if (it->first == externalPort) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+IGD::isMapInUse(const unsigned int externalPort, upnp::PortType type)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->first == externalPort) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+IGD::isMapInUse(const Mapping map)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->second == map) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void
+IGD::addMapInUse(Mapping map)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->second == map) {
+            it->second.users_++;
+            JAMI_WARN("IGD: Incrementing the number of users for %u:%u %s to %u", 
+                       it->second.getPortExternal(), it->second.getPortInternal(),
+                       it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                       it->second.users_);
+            return;
+        }
+    }
+    GlobalMapping globalMap = GlobalMapping(map);
+    JAMI_WARN("IGD: Adding mapping %u:%u %s to the list", 
+              globalMap.getPortExternal(), globalMap.getPortInternal(),
+              globalMap.getType() == upnp::PortType::UDP ? "UDP" : "TCP");
+    mapList.insert({std::move(globalMap.getPortExternal()), std::move(globalMap)});
+}
+
+void
+IGD::removeMapInUse(unsigned int externalPort)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    for (GlobalMaptItr it = udpMappings_.begin(); it != udpMappings_.end(); it++) {
+        if (it->first == externalPort) {
+            if (it->second.users_ > 1) {
+                it->second.users_--;
+                JAMI_WARN("IGD: Decrementing the number of users for %u:%u %s to %u", 
+                          it->second.getPortExternal(), it->second.getPortInternal(),
+                          it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                          it->second.users_);
+            } else {
+                JAMI_WARN("IGD: Removing mapping %u:%u %s from the list", 
+                          it->second.getPortExternal(), it->second.getPortInternal(),
+                          it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP");
+                udpMappings_.erase(it->first);
+            }
+            return;
+        }
+    }
+    for (GlobalMaptItr it = tcpMappings_.begin(); it != tcpMappings_.end(); it++) {
+        if (it->first == externalPort) {
+            if (it->second.users_ > 1) {
+                it->second.users_--;
+                JAMI_WARN("IGD: Decrementing the number of users for %u:%u %s to %u", 
+                          it->second.getPortExternal(), it->second.getPortInternal(),
+                          it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                          it->second.users_);
+            } else {
+                JAMI_WARN("IGD: Removing mapping %u:%u %s from list", 
+                          it->second.getPortExternal(), it->second.getPortInternal(),
+                          it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP");
+                tcpMappings_.erase(it->first);
+            }
+            return;
+        }
+    }
+}
+
+void
+IGD::removeMapInUse(unsigned int externalPort, upnp::PortType type)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->first == externalPort) {
+            if (it->second.users_ > 1) {
+                it->second.users_--;
+                JAMI_WARN("IGD: Decrementing the number of users for %u:%u %s to %u", 
+                          it->second.getPortExternal(), it->second.getPortInternal(),
+                          it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                          it->second.users_);
+            } else {
+                JAMI_WARN("IGD: Removing mapping %u:%u %s from the list", 
+                          it->second.getPortExternal(), it->second.getPortInternal(),
+                          it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP");
+                mapList.erase(it->first);
+            }
+            return;
+        }
+    }
+}
+
+void
+IGD::removeMapInUse(Mapping map)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->second == map) {
+            if (it->second.users_ > 1) {
+                it->second.users_--;
+                JAMI_WARN("IGD: Decrementing the number of users for %u:%u %s to %u", 
+                          it->second.getPortExternal(), it->second.getPortInternal(),
+                          it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                          it->second.users_);
+            } else {
+                JAMI_WARN("IGD: Removing mapping %u:%u %s from the list", 
+                          it->second.getPortExternal(), it->second.getPortInternal(),
+                          it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP");
+                mapList.erase(it->first);
+            }
+            return;
+        }
+    }
+}
+
+Mapping*
+IGD::getMapping(unsigned int externalPort, upnp::PortType type)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->first == externalPort) {
+            return new Mapping(std::move(it->second.getPortExternal()),
+                               std::move(it->second.getPortInternal()),
+                               std::move(it->second.getType()));
+        }
+    }
+    return nullptr;
+}
+
+PortMapGlobal*
+IGD::getCurrentMappingList(upnp::PortType type)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    return &mapList;
+}
+
+unsigned int
+IGD::getNbOfUsers(const unsigned int externalPort)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    for (GlobalMaptItr it = udpMappings_.begin(); it != udpMappings_.end(); it++) {
+        if (it->first == externalPort) {
+            return it->second.users_;
+        }
+    }
+    for (GlobalMaptItr it = tcpMappings_.begin(); it != tcpMappings_.end(); it++) {
+        if (it->first == externalPort) {
+            return it->second.users_;
+        }
+    }
+    return 0;
+}
+
+unsigned int
+IGD::getNbOfUsers(const unsigned int externalPort, upnp::PortType type)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->first == externalPort) {
+            return it->second.users_;
+        }
+    }
+    return 0;
+}
+
+unsigned int
+IGD::getNbOfUsers(const Mapping map)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->second == map) {
+            return it->second.users_;
+        }
+    }
+    return 0;
+}
+
+void
+IGD::incrementNbOfUsers(const unsigned int externalPort)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    for (GlobalMaptItr it = udpMappings_.begin(); it != udpMappings_.end(); it++) {
+        if (it->first == externalPort) {
+            it->second.users_++;
+            JAMI_WARN("IGD: Incrementing the number of users for %u:%u %s to %u", 
+                       it->second.getPortExternal(), it->second.getPortInternal(),
+                       it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                       it->second.users_);
+            return;
+        }
+    }
+    for (GlobalMaptItr it = tcpMappings_.begin(); it != tcpMappings_.end(); it++) {
+        if (it->first == externalPort) {
+            it->second.users_++;
+            JAMI_WARN("IGD: Incrementing the number of users for %u:%u %s to %u", 
+                      it->second.getPortExternal(), it->second.getPortInternal(),
+                      it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                      it->second.users_);
+            return;
+        }
+    }
+}
+
+void
+IGD::incrementNbOfUsers(const unsigned int externalPort, upnp::PortType type)
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->first == externalPort) {
+            it->second.users_++;
+            JAMI_WARN("IGD: Incrementing the number of users for %u:%u %s to %u", 
+                      it->second.getPortExternal(), it->second.getPortInternal(),
+                      it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                      it->second.users_);
+            return;
+        }
+    }
+}
+
+void
+IGD::incrementNbOfUsers(const Mapping map)
+{
+    std::unique_lock<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->second == map) {
+            it->second.users_++;
+            JAMI_WARN("IGD: Incrementing the number of users for %u:%u %s to %u", 
+                      it->second.getPortExternal(), it->second.getPortInternal(),
+                      it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                      it->second.users_);
+            return;
+        }
+    }
+    lk.unlock();
+    addMapInUse(Mapping{std::move(map.getPortExternal()), std::move(map.getPortInternal()), std::move(map.getType())});
+    lk.lock();
+}
+
+void
+IGD::decrementNbOfUsers(const unsigned int externalPort)
+{
+    std::unique_lock<std::mutex> lk(mapListMutex_);
+
+    for (GlobalMaptItr it = udpMappings_.begin(); it != udpMappings_.end(); it++) {
+        if (it->first == externalPort) {
+            if (it->second.users_ > 1) {
+                it->second.users_--;
+                JAMI_WARN("IGD: Decrementing the number of users for %u:%u %s to %u", 
+                          it->second.getPortExternal(), it->second.getPortInternal(),
+                          it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                          it->second.users_);
+                return;
+            } else {
+                lk.unlock();
+                removeMapInUse(externalPort);
+                lk.lock();
+                return;
+            }
+        }
+    }
+    for (GlobalMaptItr it = tcpMappings_.begin(); it != tcpMappings_.end(); it++) {
+        if (it->first == externalPort) {
+            if (it->second.users_ > 1) {
+                it->second.users_--;
+                JAMI_WARN("IGD: Decrementing the number of users for %u:%u %s to %u", 
+                          it->second.getPortExternal(), it->second.getPortInternal(),
+                          it->second.getType() == upnp::PortType::UDP ? "UDP" : "TCP",
+                          it->second.users_);
+                return;
+            } else {
+                lk.unlock();
+                removeMapInUse(externalPort);
+                lk.lock();
+                return;
+            }
+        }
+    }
+}
+
+void
+IGD::decrementNbOfUsers(const unsigned int externalPort, upnp::PortType type)
+{
+    std::unique_lock<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->first == externalPort) {
+            if (it->second.users_ > 1) {
+                it->second.users_--;
+                return;
+            } else {
+                lk.unlock();
+                removeMapInUse(externalPort, type);
+                lk.lock();
+                return;
+            }
+        }
+    }
+}
+
+void
+IGD::decrementNbOfUsers(const Mapping map)
+{
+    std::unique_lock<std::mutex> lk(mapListMutex_);
+
+    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (GlobalMaptItr it = mapList.begin(); it != mapList.end(); it++) {
+        if (it->second == map) {
+            if (it->second.users_ > 1) {
+                it->second.users_--;
+                return;
+            } else {
+                lk.unlock();
+                removeMapInUse(map.getPortExternal());
+                lk.lock();
+                return;
+            }
+        }
+    }
+}
+
 }} // namespace jami::upnp
