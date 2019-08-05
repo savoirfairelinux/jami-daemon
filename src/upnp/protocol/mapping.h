@@ -35,21 +35,24 @@
 
 namespace jami { namespace upnp {
 
-enum class PortType { UDP, TCP };
+enum class PortType { 
+    UDP,
+    TCP
+};
 
 class Mapping
 {
 public:
-    constexpr static const char * UPNP_DEFAULT_MAPPING_DESCRIPTION = "RING";
+    constexpr static const char* UPNP_DEFAULT_MAPPING_DESCRIPTION = "DRING";
     constexpr static uint16_t UPNP_PORT_MIN = 1024;
     constexpr static uint16_t UPNP_PORT_MAX = 65535;
 
-    Mapping(uint16_t port_external = 0,
-            uint16_t port_internal = 0,
+    Mapping(uint16_t portExternal = 0,
+            uint16_t portInternal = 0,
             PortType type = PortType::UDP,
             const std::string& description = UPNP_DEFAULT_MAPPING_DESCRIPTION):
-            port_external_(port_external),
-            port_internal_(port_internal),
+            portExternal_(portExternal),
+            portInternal_(portInternal),
             type_(type),
             description_(description) {};
     Mapping(Mapping&&) noexcept;
@@ -59,18 +62,16 @@ public:
     friend bool operator== (const Mapping& cRedir1, const Mapping& cRedir2);
     friend bool operator!= (const Mapping& cRedir1, const Mapping& cRedir2);
 
-    uint16_t     getPortExternal()    const { return port_external_;                         }
-    std::string  getPortExternalStr() const { return std::to_string(port_external_);         }
-    uint16_t     getPortInternal()    const { return port_internal_;                         }
-    std::string  getPortInternalStr() const { return std::to_string(port_internal_);         }
+    uint16_t     getPortExternal()    const { return portExternal_;                          }
+    std::string  getPortExternalStr() const { return std::to_string(portExternal_);          }
+    uint16_t     getPortInternal()    const { return portInternal_;                          }
+    std::string  getPortInternalStr() const { return std::to_string(portInternal_);          }
     PortType     getType()            const { return type_;                                  }
     std::string  getTypeStr()         const { return type_ == PortType::UDP ? "UDP" : "TCP"; }
     std::string  getDescription()     const { return description_;                           }
 
     std::string toString() const;
     bool isValid() const;
-
-    inline explicit operator bool() const { return isValid(); }
 
 public:
 #if HAVE_LIBNATPMP
@@ -82,8 +83,8 @@ private:
     NON_COPYABLE(Mapping);
 
 protected:
-    uint16_t port_external_;
-    uint16_t port_internal_;
+    uint16_t portExternal_;
+    uint16_t portInternal_;
     PortType type_;
     std::string description_;
 };

@@ -40,6 +40,12 @@ UPnPIGD::UPnPIGD(std::string&& UDN, std::string&& baseURL,
     eventSubURL_ = std::move(eventSubURL);
 }
 
+UPnPIGD::~UPnPIGD()
+{
+    udpMappings_.clear();
+    tcpMappings_.clear();
+}
+
 bool
 UPnPIGD::operator==(IGD& other) const
 {
