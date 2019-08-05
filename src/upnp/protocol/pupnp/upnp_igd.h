@@ -52,7 +52,10 @@ public:
             std::string&& eventSubURL,
             IpAddr&& localIp = {},
             IpAddr&& publicIp = {});
-    ~UPnPIGD(){}
+    ~UPnPIGD();
+    bool operator==(IGD& other) const;
+    bool operator==(UPnPIGD& other) const;
+
     const std::string& getUDN() const          { return UDN_;          }
     const std::string& getBaseURL() const      { return baseURL_;      }
     const std::string& getFriendlyName() const { return friendlyName_; }
@@ -61,9 +64,6 @@ public:
     const std::string& getLocationURL() const  { return locationURL_;  }
     const std::string& getControlURL() const   { return controlURL_;   }
     const std::string& getEventSubURL() const  { return eventSubURL_;  }
-
-    bool operator==(IGD& other) const;
-    bool operator==(UPnPIGD& other) const;
 
 private:
     std::string UDN_ {};
