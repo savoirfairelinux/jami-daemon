@@ -59,6 +59,8 @@ static constexpr int MAX_CANDIDATES {32};
 using MutexGuard = std::lock_guard<std::mutex>;
 using MutexLock = std::unique_lock<std::mutex>;
 
+using namespace std::placeholders;
+
 namespace
 {
 
@@ -170,7 +172,17 @@ public:
      */
     void selectUPnPIceCandidates();
 
+    /**
+     * Add port mapping callback function.
+     */
+    void onPortMappingAdd(uint16_t* port_used, bool success);
+
     std::unique_ptr<upnp::Controller> upnp_;
+
+    std::mutex upnpMutex_;
+    std::mutex upnpOnAddMutex_;
+    std::condition_variable upnpCv_;
+    unsigned int upnpIceCntr_ {0};
 
     bool onlyIPv4Private_ {true};
 
@@ -278,7 +290,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     , thread_()
 {
     if (options.upnpEnable)
-        upnp_.reset(new upnp::Controller());
+        upnp_.reset(new upnp::Controller(false));
 
     auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
     config_ = iceTransportFactory.getIceCfg(); // config copy
@@ -374,7 +386,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
 IceTransport::Impl::~Impl()
 {
     sip_utils::register_thread();
-
+    
     threadTerminateFlags_ = true;
     if (thread_.joinable())
         thread_.join();
@@ -386,6 +398,7 @@ IceTransport::Impl::~Impl()
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
+    
 }
 
 bool
@@ -496,7 +509,28 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
             setInitiatorSession();
         else
             setSlaveSession();
+        
         selectUPnPIceCandidates();
+        
+        std::thread([this] {
+            while (upnpIceCntr_ > 0) {
+				JAMI_DBG("[ice%p] waiting for upnp to open port(s)", this);
+                std::unique_lock<std::mutex> lk(upnpMutex_);
+                upnpCv_.wait_for(lk, std::chrono::seconds(2), [this]{ return upnpIceCntr_ == 0; });
+				if (upnpIceCntr_ == 0) {
+					if (component_count_ > 1)
+						JAMI_DBG("[ice%p] upnp opened all %u ports successfully", this, component_count_);
+					else
+						JAMI_DBG("[ice%p] upnp opened port successfully", this);
+				} else {
+					if (component_count_ > 1)
+						JAMI_DBG("[ice%p] upnp opened %u%u ports", this, upnpIceCntr_, component_count_);
+					else
+						JAMI_DBG("[ice%p] upnp failed to open port", this);
+				}
+				break;
+            }
+        }).detach();
     }
 
     if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_)
@@ -733,39 +767,99 @@ void IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr &base,
 void
 IceTransport::Impl::selectUPnPIceCandidates()
 {
-    /* use upnp to open ports and add the proper candidates */
+    // For every component, get the candidate(s)
+    // Create a port mapping either with that port, or with an available port
+    // Add candidate with that port and public IP
+    std::lock_guard<std::mutex> lk(upnpMutex_);
+    
+	if (upnp_) {
+
+        auto publicIp = upnp_->getExternalIp();
+        if (not publicIp) {
+            JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates", this);
+            upnpCv_.notify_all();
+            return;
+        }
+        auto localIp = upnp_->getLocalIp();
+        if (not localIp) {
+            JAMI_WARN("[ice:%p] Could not determine local IP for ICE candidates", this);    
+            upnpCv_.notify_all();
+            return;
+        }
+
+        // Use local list to store needed ports with their corresponding port type.
+        std::map<uint16_t, upnp::PortType> portMapRequestList;
+        for (unsigned comp_id = 1; comp_id <= component_count_; ++comp_id) {
+            auto candidates = getLocalICECandidates(comp_id);
+            for (const auto& candidate : candidates) {
+                if (candidate.transport == PJ_CAND_TCP_ACTIVE)
+                    continue; // We don't need to map port 9.
+                localIp.setPort(candidate.addr.getPort());
+                if (candidate.addr != localIp)
+                    continue;
+                uint16_t port = candidate.addr.getPort();
+                auto portType = candidate.transport == PJ_CAND_UDP ? 
+                                upnp::PortType::UDP : upnp::PortType::TCP;
+                // Make list of ports we want to open.
+                portMapRequestList.emplace(std::move(port), std::move(portType));
+            }
+        }
+
+        // Send request for every port in the list.
+        upnpIceCntr_ = 0;
+        for (auto const& map : portMapRequestList) {
+            upnpIceCntr_++;
+            JAMI_DBG("[ice:%p] UPnP: Trying to open port %d for ICE comp %d/%d and adding candidate with public IP",
+                     this, map.first, upnpIceCntr_, component_count_);
+            upnp_->requestMappingAdd(std::bind(&IceTransport::Impl::onPortMappingAdd, this, _1, _2),
+                                     map.first, map.second, true);
+        }
+    }
+}
+
+void
+IceTransport::Impl::onPortMappingAdd(uint16_t* port_used, bool success)
+{
     if (upnp_) {
-        /* for every component, get the candidate(s)
-         * create a port mapping either with that port, or with an available port
-         * add candidate with that port and public IP
-         */
-        if (auto publicIP = upnp_->getExternalIP()) {
-            /* comp_id start at 1 */
+        
+        std::lock_guard<std::mutex> lk(upnpMutex_);
+        upnpIceCntr_--;
+
+        auto publicIp = upnp_->getExternalIp();
+        if (not publicIp) {
+            JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates", this);
+            return;
+        }
+        auto localIp = upnp_->getLocalIp();
+        if (not localIp) {
+            JAMI_WARN("[ice:%p] Could not determine local IP for ICE candidates", this);    
+            return;
+        }
+
+        if (success and port_used) {
+            uint16_t openedPort = *port_used;
             for (unsigned comp_id = 1; comp_id <= component_count_; ++comp_id) {
-                JAMI_DBG("[ice:%p] UPnP: Opening port(s) for ICE comp %d and adding candidate with public IP",
-                         this, comp_id);
                 auto candidates = getLocalICECandidates(comp_id);
                 for (const auto& candidate : candidates) {
                     if (candidate.transport == PJ_CAND_TCP_ACTIVE)
                         continue; // We don't need to map port 9.
-                    auto localIP = upnp_->getLocalIP();
-                    localIP.setPort(candidate.addr.getPort());
-                    if (candidate.addr != localIP)
+                    if (candidate.addr.toString() != localIp.toString())
                         continue;
-                    uint16_t port = candidate.addr.getPort();
-                    uint16_t port_used;
-                    auto portType = candidate.transport == PJ_CAND_UDP
-                                        ? upnp::PortType::UDP
-                                        : upnp::PortType::TCP;
-                    if (upnp_->addMapping(port, portType, true, &port_used)) {
-                        publicIP.setPort(port_used);
-                        addReflectiveCandidate(comp_id, candidate.addr, publicIP, candidate.transport);
-                    } else
-                        JAMI_WARN("[ice:%p] Could not create a port mapping for the ICE candide", this);
+                    auto portType = candidate.transport == PJ_CAND_UDP ? 
+                                    upnp::PortType::UDP : upnp::PortType::TCP;
+                    if (openedPort == candidate.addr.getPort()) {
+                        publicIp.setPort(openedPort);
+                        addReflectiveCandidate(comp_id, candidate.addr, publicIp, candidate.transport);
+                        if (upnpIceCntr_ < 1) {
+                            upnpCv_.notify_all();
+                        }
+                        return;
+                    }
                 }
             }
-        } else {
-            JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates", this);
+        }
+        if (upnpIceCntr_ < 1) {
+            upnpCv_.notify_all();
         }
     }
 }
