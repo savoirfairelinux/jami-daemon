@@ -26,8 +26,8 @@ void
 PMPIGD::clear()
 {
     toRemove_.clear();
-    udpMappings.clear();
-    tcpMappings.clear();
+    udpMappings_.clear();
+    tcpMappings_.clear();
 }
 
 void
@@ -41,7 +41,7 @@ GlobalMapping*
 PMPIGD::getNextMappingToRenew() const
 {
     const GlobalMapping* mapping {nullptr};
-    for (const auto& m : udpMappings)
+    for (const auto& m : udpMappings_)
     {
         if (!mapping or m.second.renewal_ < mapping->renewal_)
         {
@@ -49,7 +49,7 @@ PMPIGD::getNextMappingToRenew() const
         }
     }
 
-    for (const auto& m : tcpMappings)
+    for (const auto& m : tcpMappings_)
     {
         if (!mapping or m.second.renewal_ < mapping->renewal_)
         {
