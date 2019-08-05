@@ -41,6 +41,7 @@
 #include "pjsip/sip_config.h"
 
 #include <memory>
+#include <functional>
 
 struct pjsip_evsub;
 struct pjsip_inv_session;
@@ -224,6 +225,10 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     void startAllMedia();
 
     void openPortsUPnP();
+
+    void onMediaPortMappingAdd(uint16_t* port_used, bool success);
+
+    void onControlPortMappingAdd(uint16_t* port_used, bool success);
 
     void setPeerRegistredName(const std::string& name) {
         peerRegistredName_ = name;
