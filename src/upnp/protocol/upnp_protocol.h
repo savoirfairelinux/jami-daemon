@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@
 
 #include "igd.h"
 #include "mapping.h"
+#include "manager.h"
+#include "scheduled_executor.h"
 
 #include "logger.h"
 #include "noncopyable.h"
@@ -41,12 +43,14 @@
 namespace jami { namespace upnp {
 
 // UPnP device descriptions.
-constexpr static const char * UPNP_ROOT_DEVICE = "upnp:rootdevice";
-constexpr static const char * UPNP_IGD_DEVICE = "urn:schemas-upnp-org:device:InternetGatewayDevice:1";
-constexpr static const char * UPNP_WAN_DEVICE = "urn:schemas-upnp-org:device:WANDevice:1";
-constexpr static const char * UPNP_WANCON_DEVICE = "urn:schemas-upnp-org:device:WANConnectionDevice:1";
-constexpr static const char * UPNP_WANIP_SERVICE = "urn:schemas-upnp-org:service:WANIPConnection:1";
-constexpr static const char * UPNP_WANPPP_SERVICE = "urn:schemas-upnp-org:service:WANPPPConnection:1";
+constexpr static const char* UPNP_ROOT_DEVICE = "upnp:rootdevice";
+constexpr static const char* UPNP_IGD_DEVICE = "urn:schemas-upnp-org:device:InternetGatewayDevice:1";
+constexpr static const char* UPNP_WAN_DEVICE = "urn:schemas-upnp-org:device:WANDevice:1";
+constexpr static const char* UPNP_WANCON_DEVICE = "urn:schemas-upnp-org:device:WANConnectionDevice:1";
+constexpr static const char* UPNP_WANIP_SERVICE = "urn:schemas-upnp-org:service:WANIPConnection:1";
+constexpr static const char* UPNP_WANPPP_SERVICE = "urn:schemas-upnp-org:service:WANPPPConnection:1";
+
+const constexpr auto MAP_REQUEST_TIMEOUT = std::chrono::seconds(1);
 
 // Pure virtual interface class that UPnPContext uses to call protocol functions.
 class UPnPProtocol
@@ -64,7 +68,23 @@ public:
         NAT_PMP
     };
 
+    struct PendingAddMapRequest {
+        Mapping map;
+        std::shared_ptr<Task> cleanupTask;
+    };
+
+    struct PendingRmMapRequest {
+        uint16_t externalPort;
+        std::shared_ptr<Task> cleanupTask;
+    };
+
+    using PendingAddMap = std::vector<PendingAddMapRequest>;
+    using PendingAddMapItr = std::vector<PendingAddMapRequest>::iterator;
+    using PendingRmMap = std::vector<PendingRmMapRequest>;
+    using PendingRmMapItr = std::vector<PendingRmMapRequest>::iterator;
+
     using IgdListChangedCallback = std::function<bool(UPnPProtocol*, IGD*, IpAddr, bool)>;
+    using NotifyContextCallback = std::function<void(IpAddr, Mapping*, bool)>;
 
     UPnPProtocol(){};
     virtual ~UPnPProtocol(){};
@@ -75,13 +95,13 @@ public:
     // Clear all known IGDs.
     virtual void clearIgds() = 0;
 
-    // Search for IGD.
+    // Search for IGDs.
     virtual void searchForIgd() = 0;
 
-    // Tries to add mapping. Assumes mutex is already locked.
-    virtual Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) = 0;
+    // Sends a request to add a mapping.
+    virtual void addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type) = 0;
 
-    // Removes a mapping.
+    // Sends a request to remove a mapping.
     virtual void removeMapping(const Mapping& igdMapping) = 0;
 
     // Removes all local mappings of IGD that we're added by the application.
@@ -90,10 +110,22 @@ public:
     // Set the IGD list callback handler.
     void setOnIgdChanged(IgdListChangedCallback&& cb) { updateIgdListCb_ = std::move(cb); }
 
-protected:
-    mutable std::mutex validIgdMutex_;          // Mutex used to access these lists and IGDs in a thread-safe manner.
+    // Set the add port mapping callback handler.
+    void setOnPortMapAdd(NotifyContextCallback&& cb) { notifyContextPortOpenCb_ = std::move(cb); }
 
-    IgdListChangedCallback updateIgdListCb_;    // Callback for when the IGD list changes.
+    // Set the remove port mapping callback handler.
+    void setOnPortMapRemove(NotifyContextCallback&& cb) { notifyContextPortCloseCb_ = std::move(cb); }
+
+protected:
+    mutable std::mutex validIgdMutex_;                  // Mutex used to protect IGDs.
+
+    mutable std::mutex pendingMapRequestMutex_;         // Mutex to protect pending mapping request lists.
+    PendingAddMap pendingAddMapRequestList_ {};         // List of add mapping requests that are pending.
+    PendingRmMap pendingRmMapRequestList_ {};           // List of remove mapping requests that are pending.
+
+    IgdListChangedCallback updateIgdListCb_;            // Callback for when the IGD list changes.
+    NotifyContextCallback notifyContextPortOpenCb_;     // Callback for when a port mapping is added.
+    NotifyContextCallback notifyContextPortCloseCb_;    // Callback for when a port mapping is removed.
 };
 
 }} // namespace jami::upnp
