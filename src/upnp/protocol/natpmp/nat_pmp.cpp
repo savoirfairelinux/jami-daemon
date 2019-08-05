@@ -158,149 +158,266 @@ static int getLocalHostName(char *out, size_t out_len)
 
 NatPmp::NatPmp()
 {
-    clearNatPmpHdl(natpmpHdl_);
-    pmpIgd_ = std::make_unique<PMPIGD>();
+    clearNatPmpHdl(natpmpHdl_);             // Clear natpmp handle.
+    pmpIgd_ = std::make_unique<PMPIGD>();   // Create pmpIgd. NatPmp is the only owner.
 
     pmpThread_ = std::thread([this]() {
-        {
-            std::lock_guard<std::mutex> lk(natpmpMutex_);
-            while (pmpRun_) {
-                int err = 0;
-                char localHostBuf[INET_ADDRSTRLEN];
-                if (getLocalHostName(localHostBuf, INET_ADDRSTRLEN) < 0) {
-                    JAMI_WARN("NAT-PMP: Couldn't find local host");
-                    JAMI_DBG("NAT-PMP: Attempting to initialize with unknown gateway");
-                    err = initnatpmp(&natpmpHdl_, 0, 0);
-                } else {
-                    std::string gw = getGateway(localHostBuf);
-                    struct in_addr inaddr;
-                    inet_pton(AF_INET, gw.c_str(), &inaddr);
-                    err = initnatpmp(&natpmpHdl_, 1, inaddr.s_addr);
-                }
-
-                if (err < 0) {
-                    JAMI_ERR("NAT-PMP: Can't initialize libnatpmp -> %s", getNatPmpErrorStr(err).c_str());
-                } else {
-                    char addrbuf[INET_ADDRSTRLEN];
-                    inet_ntop(AF_INET, &natpmpHdl_.gateway, addrbuf, sizeof(addrbuf));
-                    std::string addr(addrbuf);
-                    JAMI_DBG("NAT-PMP: Initialized on gateway %s", addr.c_str());
-                    break;
-                }
-            }
-        }
 
         while (pmpRun_) {
-            std::unique_lock<std::mutex> lk(validIgdMutex_);
-            pmpCv_.wait_until(lk, pmpIgd_->getRenewalTime(), [&] {
-                return not pmpRun_ or
-                       pmpIgd_->getRenewalTime() <= clock::now() or
-                       not pmpIgd_->mapToRemoveList_.empty() or
-                       restart_;
-            });
 
-            // Exit thread if pmpRun_ was set to false. Signal program exit.
-            if (not pmpRun_) break;
+            std::unique_lock<std::mutex> lkState(queueMutex_);
+            pmpCv_.wait_for(lkState, std::chrono::milliseconds(750), [this, currentState = pmpState_] {
+                return currentState != NatPmpState::PMP_IDLE;
+            });
+            lkState.unlock();
 
             // Update clock;
             auto now = clock::now();
 
-            // If the restart flag is set, wait for 1 second to have passed by to try and reinitialize natpmp.
-            if (restart_ and (now - restartTimer_ >= std::chrono::seconds(1))) {
-                {
-                    clearNatPmpHdl(natpmpHdl_);
-                    int err = 0;
-                    char localHostBuf[INET_ADDRSTRLEN];
-                    if (getLocalHostName(localHostBuf, INET_ADDRSTRLEN) < 0) {
-                        JAMI_WARN("NAT-PMP: Couldn't find local host");
-                        JAMI_DBG("NAT-PMP: Attempting to initialize with unknown gateway");
-                        err = initnatpmp(&natpmpHdl_, 0, 0);
-                    } else {
-                        std::string gw = getGateway(localHostBuf);
-                        struct in_addr inaddr;
-                        inet_pton(AF_INET, gw.c_str(), &inaddr);
-                        err = initnatpmp(&natpmpHdl_, 1, inaddr.s_addr);
-                    }
+            switch (pmpState_) {
+            case NatPmpState::PMP_IDLE:
+                // Do nothing
+                break;
+            case NatPmpState::PMP_INIT:
+            {
+                std::lock_guard<std::mutex> lk(natpmpMutex_);
 
-                    if (err < 0) {
-                        JAMI_ERR("NAT-PMP: Can't initialize libnatpmp -> %s", getNatPmpErrorStr(err).c_str());
-                        restartTimer_ = clock::now();
-                    } else {
-                        char addrbuf[INET_ADDRSTRLEN];
-                        inet_ntop(AF_INET, &natpmpHdl_.gateway, addrbuf, sizeof(addrbuf));
-                        std::string addr(addrbuf);
-                        JAMI_DBG("NAT-PMP: Initialized on gateway %s", addr.c_str());
-                        restart_ = false;
+                if (not initNatPmp()) {
+                    initRetry_++;
+                    if (initRetry_ > MAX_INIT_RETRY) {
+                        initRetry_ = 0;
+                        changeState(NatPmpState::PMP_ERROR);
+                        errorTimer_ = clock::now();
+                        break;
+                    }
+                    // If init failed, try again after a delay.
+                    restartTimer_ = clock::now();
+                    changeState(NatPmpState::PMP_RESTART);
+                    break;
+                }
+                isInit_ = true;
+                initRetry_ = 0;
+                changeState(NatPmpState::PMP_SEARCH);
+                break;
+            }
+            case NatPmpState::PMP_RESTART:
+            {
+                isInit_ = false;
+                if (now - restartTimer_ >= std::chrono::seconds(1)) {
+                    std::lock_guard<std::mutex> lk(natpmpMutex_);
+                    clearNatPmpHdl(natpmpHdl_);
+                    changeState(NatPmpState::PMP_INIT);
+                }
+                break;
+            }
+            case NatPmpState::PMP_SEARCH:
+            {
+                std::unique_lock<std::mutex> lk1(validIgdMutex_);
+                std::lock_guard<std::mutex> lk2(natpmpMutex_);
+
+                if (not searchForPmpIgd(pmpIgd_.get())) {
+                    searchRetry_++;
+                    if (searchRetry_ > MAX_SEARCH_RETRY) {
+                        searchRetry_ = 0;
+                        changeState(NatPmpState::PMP_ERROR);
+                        errorTimer_ = clock::now();
+                    }
+                    break;
+                }
+
+                JAMI_DBG("NAT-PMP: Found device with external IP %s", pmpIgd_->publicIp_.toString().c_str());
+                // Add the igd to the upnp context class list.
+                lk1.unlock();
+                updateIgdListCb_(this, pmpIgd_.get(), pmpIgd_.get()->publicIp_, true);
+                lk1.lock();
+                pmpIgd_->renewal_ = clock::now() + std::chrono::minutes(1);
+
+                searchRetry_ = 0;
+                if (isRestart_)
+                     isRestart_ = false;
+                changeState(NatPmpState::PMP_CLOSE_ALL);
+            }
+            case NatPmpState::PMP_OPEN_PORT:
+            {
+                std::vector<Mapping> add;
+                std::unique_lock<std::mutex> lk(validIgdMutex_);
+                if (pmpIgd_) {
+                    if (not pmpIgd_->mapToAddList_.empty()) {
+                        for (unsigned int i = 0; i < pmpIgd_->mapToAddList_.size(); i++)
+                            add.push_back(pmpIgd_->mapToAddList_[i]);
                     }
                 }
-            }
 
-            // Check if we need to update IGD.
-            if (pmpIgd_->renewal_ < now) {
-                lk.unlock();
-                searchForPmpIgd();
-                lk.lock();
-            }
-
-            if (pmpIgd_) {
-                if (pmpIgd_->clearAll_) {
-                    // Clear all the mappings.
-                    deleteAllPortMappings(NATPMP_PROTOCOL_UDP);
-                    deleteAllPortMappings(NATPMP_PROTOCOL_TCP);
-                    pmpIgd_->mapToRemoveList_.clear();
-                    pmpIgd_->clearAll_ = false;
-                } else if (not pmpIgd_->mapToRemoveList_.empty()) {
-                    // Remove mappings to be removed.
-                    decltype(pmpIgd_->mapToRemoveList_) removed = std::move(pmpIgd_->mapToRemoveList_);
-                    for (auto& m : removed) {
-                        JAMI_DBG("NAT-PMP: Sent request to close port %s", m.toString().c_str());
-                        lk.unlock();
-                        removePortMapping(m);
-                        lk.lock();
-                    }
-                } else if (not pmpIgd_->mapToAddList_.empty()) {
-                    // Add mappings to be added.
-                    decltype(pmpIgd_->mapToAddList_) add = std::move(pmpIgd_->mapToAddList_);
+                if (not add.empty()) {
+                    std::lock_guard<std::mutex> lk2(natpmpMutex_);
                     for (auto& m : add) {
                         JAMI_DBG("NAT-PMP: Sent request to open port %s", m.toString().c_str());
-                        lk.unlock();
-                        addPortMapping(m, false);
-                        lk.lock();
+                        if (addPortMapping(m)) {
+                            JAMI_WARN("NAT-PMP: Opened port %s", m.toString().c_str());
+                            pmpIgd_->removeMapToAdd(m);
+                            m.renewal_ = clock::now() + std::chrono::seconds(ADD_MAP_LIFETIME/2);
+                            pmpIgd_->addMapToRenew(m);
+                            lk.unlock();
+                            notifyContextPortOpenCb_(pmpIgd_->publicIp_, m, true);
+                            lk.lock();
+                        } else {
+                            lk.unlock();
+                            notifyContextPortOpenCb_(pmpIgd_->publicIp_, m, false);
+                            lk.lock();
+                        }
                     }
                 }
 
-                // Add mappings who's renewal times are up.
-                decltype(pmpIgd_->mapToRenewList_) renew = std::move(pmpIgd_->mapToRenewList_);
-                for (auto& m : renew) {
-                    if (pmpIgd_->isMapUpForRenewal(Mapping(m.getPortExternal(), m.getPortInternal(), m.getType()), now)) {
+                changeState(NatPmpState::PMP_IDLE);
+                break;
+            }
+            case NatPmpState::PMP_CLOSE_PORT:
+            {
+                std::vector<Mapping> remove;
+                std::unique_lock<std::mutex> lk(validIgdMutex_);
+                if (pmpIgd_) {
+                    if (not pmpIgd_->mapToRemoveList_.empty()) {
+                        for (unsigned int i = 0; i < pmpIgd_->mapToRemoveList_.size(); i++)
+                            remove.push_back(pmpIgd_->mapToRemoveList_[i]);
+                    }
+                }
+
+                if (not remove.empty()) {
+                    std::lock_guard<std::mutex> lk2(natpmpMutex_);
+                    for (auto& m : remove) {
+                        JAMI_DBG("NAT-PMP: Sent request to close port %s", m.toString().c_str());
+                        if (removePortMapping(m)) {
+                            JAMI_WARN("NAT-PMP: Closed port %s", m.toString().c_str());
+                            pmpIgd_->removeMapToRemove(m);
+                            pmpIgd_->removeMapToRenew(m);
+                            lk.unlock();
+                            notifyContextPortCloseCb_(pmpIgd_->publicIp_, m, true);
+                            lk.lock();
+                        } else {
+                            lk.unlock();
+                            notifyContextPortCloseCb_(pmpIgd_->publicIp_, m, false);
+                            lk.lock();
+                        }
+                    }
+                }
+
+                changeState(NatPmpState::PMP_IDLE);
+                break;
+            }
+            case NatPmpState::PMP_CLOSE_ALL:
+            {
+                std::lock_guard<std::mutex> lk1(validIgdMutex_);
+                std::lock_guard<std::mutex> lk2(natpmpMutex_);
+
+                // Clear all the mappings.
+                deleteAllPortMappings(NATPMP_PROTOCOL_UDP);
+                deleteAllPortMappings(NATPMP_PROTOCOL_TCP);
+                if (pmpIgd_)
+                    pmpIgd_->mapToRemoveList_.clear();
+
+                changeState(NatPmpState::PMP_IDLE);
+                break;
+            }
+            case NatPmpState::PMP_RENEW:
+            {
+                std::vector<Mapping> renew;
+                std::unique_lock<std::mutex> lk(validIgdMutex_);
+                if (pmpIgd_) {
+                    if (not pmpIgd_->mapToRenewList_.empty()) {
+                        for (unsigned int i = 0; i < pmpIgd_->mapToAddList_.size(); i++)
+                            renew.push_back(pmpIgd_->mapToRenewList_[i]);
+                    }
+                }
+
+                if (not renew.empty()) {
+                    std::lock_guard<std::mutex> lk2(natpmpMutex_);
+                    for (auto& m : renew) {
                         JAMI_DBG("NAT-PMP: Sent request to renew port %s", m.toString().c_str());
-                        lk.unlock();
-                        addPortMapping(m, true);
-                        lk.lock();
+                        if (addPortMapping(m)) {
+                            JAMI_WARN("NAT-PMP: Renewed port %s", m.toString().c_str());
+                            auto mapToRenew = pmpIgd_->getMapping(m.getPortExternal(), m.getType());
+                            mapToRenew.renewal_ = clock::now() + std::chrono::seconds(ADD_MAP_LIFETIME/2);
+                        }
+                    }
+                }
+
+                changeState(NatPmpState::PMP_IDLE);
+                break;
+            }
+            case NatPmpState::PMP_ERROR:
+            {
+                // If we're in error for more than 30 seconds try and restart.
+                if (now - errorTimer_ >= std::chrono::seconds(30)) {
+                    changeState(NatPmpState::PMP_RESTART, true);
+                    errorTimer_ = clock::now();
+                }
+
+                break;
+            }
+            case NatPmpState::PMP_EXIT:
+            {
+                // Empty queue.
+                lkState.lock();
+                while(!stateQueue_.empty())
+                    stateQueue_.pop();
+                lkState.unlock();
+
+                std::lock_guard<std::mutex> lk(natpmpMutex_);
+
+                // Close all remaining mappings.
+                deleteAllPortMappings(NATPMP_PROTOCOL_UDP);
+                deleteAllPortMappings(NATPMP_PROTOCOL_TCP);
+
+                // Close natpmp library handle.
+                closenatpmp(&natpmpHdl_);
+
+                // Exit thread.
+                pmpRun_ = false;
+                break;
+            }
+            default: break;
+            }
+
+            // Update state.
+            updateState();
+
+            // Only check for renewal if:
+            // - Not in error.
+            // - Is initialized.
+            // - Not in restart mode.
+            // - Still in thread run mode.
+            {
+                if (pmpState_ != NatPmpState::PMP_ERROR and
+                    isInit_ and !isRestart_ and pmpRun_) {
+
+                    std::lock_guard<std::mutex> lk(validIgdMutex_);
+
+                    if (isIgdUpForRenewal(clock::now())) {
+                        changeState(NatPmpState::PMP_SEARCH);
+                    } else {
+                        if (isMappingUpForRenewal(clock::now())) {
+                            changeState(NatPmpState::PMP_RENEW);
+                        }
                     }
                 }
             }
         }
-        closenatpmp(&natpmpHdl_);
     });
 }
 
 NatPmp::~NatPmp()
 {
-
-    std::lock_guard<std::mutex> lk1(validIgdMutex_);
     {
-        pmpIgd_->clearMappings();
-        pmpIgd_->clearAll_ = true;
-        pmpCv_.notify_all();
+        std::lock_guard<std::mutex> lk1(validIgdMutex_);
+        pmpIgd_.reset();
     }
 
-    pmpIgd_.reset();
-    pmpRun_ = false;
-    pmpCv_.notify_all();
     if (pmpThread_.joinable()) {
         pmpThread_.join();
     }
+
+    updateState((int)NatPmpState::PMP_EXIT, true);
+    pmpCv_.notify_all();
 }
 
 void
@@ -308,226 +425,257 @@ NatPmp::clearIgds()
 {
     std::lock_guard<std::mutex> lk(validIgdMutex_);
     pmpIgd_.reset(new PMPIGD());
-    restart_ = true;
+    isRestart_ = true;
     restartTimer_ = clock::now();
+
+    updateState((int)NatPmpState::PMP_RESTART, true);
 }
 
 void
 NatPmp::searchForIgd()
 {
-    std::lock_guard<std::mutex> lk(validIgdMutex_);
+    if (not isRestart_ and isInit_) {
+        updateState((int)NatPmpState::PMP_SEARCH);
+    }
 
+    std::lock_guard<std::mutex> lk(validIgdMutex_);
     pmpIgd_->renewal_ = clock::now();
+
     pmpCv_.notify_all();
 }
 
 void
 NatPmp::requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type)
 {
+    if (not pmpRun_)
+        return;
+
     std::lock_guard<std::mutex> lk(validIgdMutex_);
 
     Mapping mapping {port_external, port_internal, type};
 
-    if (pmpIgd_) {
-        if (not igd->isMapInUse(mapping)) {
-            if (pmpIgd_->publicIp_ == igd->publicIp_) {
-                JAMI_DBG("NAT-PMP: Attempting to open port %s", mapping.toString().c_str());
-                pmpIgd_->addMapToAdd(std::move(mapping));
-                pmpCv_.notify_all();
-            }
-        } else {
-            igd->incrementNbOfUsers(mapping);
-        }
-    } else {
+    if (not pmpIgd_) {
         JAMI_WARN("NAT-PMP: no valid IGD available");
+        return;
     }
+
+    if (igd->isMapInUse(mapping)) {
+        igd->incrementNbOfUsers(mapping);
+        return;
+    }
+
+    if (pmpIgd_->publicIp_ == igd->publicIp_) {
+        JAMI_DBG("NAT-PMP: Attempting to open port %s", mapping.toString().c_str());
+        pmpIgd_->addMapToAdd(std::move(mapping));
+
+        updateState((int)NatPmpState::PMP_OPEN_PORT);
+    }
+
+    pmpCv_.notify_all();
 }
 
 void
 NatPmp::requestMappingRemove(const Mapping& igdMapping)
 {
+    if (not pmpRun_)
+        return;
+
     std::lock_guard<std::mutex> lk(validIgdMutex_);
 
-    if (pmpIgd_) {
-        JAMI_DBG("NAT-PMP: Attempting to close port %s", igdMapping.toString().c_str());
-        pmpIgd_->addMapToRemove(Mapping(igdMapping.getPortExternal(), igdMapping.getPortInternal(), igdMapping.getType()));
-        pmpCv_.notify_all();
-    } else {
+    if (not pmpIgd_) {
         JAMI_WARN("NAT-PMP: no valid IGD available");
-    }
-}
-
-void
-NatPmp::searchForPmpIgd()
-{
-    std::lock_guard<std::mutex> lk1(natpmpMutex_);
-    std::unique_lock<std::mutex> lk2(validIgdMutex_);
-
-    int err = sendpublicaddressrequest(&natpmpHdl_);
-    if (err < 0) {
-        JAMI_ERR("NAT-PMP: Can't send search request -> %s", getNatPmpErrorStr(err).c_str());
-        if (restart_) {
-            restartSearchRetry_++;
-            if (restartSearchRetry_ <= MAX_RESTART_SEARCH_RETRY) {
-                // If we're in restart mode and couldn't find an IGD, trigger another
-                // search in one second.
-                pmpIgd_->renewal_ = clock::now() + std::chrono::seconds(1);
-                return;
-            }
-        }
-        // If we're not in restart mode or we've exceeded the number of max retries,
-        // trigger another search in one minute (falls back on libupnp).
-        pmpIgd_->renewal_ = clock::now() + std::chrono::minutes(1);
         return;
     }
 
-    while (pmpRun_) {
-        natpmpresp_t response;
+    JAMI_DBG("NAT-PMP: Attempting to close port %s", igdMapping.toString().c_str());
+    pmpIgd_->addMapToRemove(igdMapping);
+
+    updateState((int)NatPmpState::PMP_CLOSE_PORT);
+    pmpCv_.notify_all();
+}
+
+inline void
+NatPmp::updateState(int state, bool clearBeforeInsert)
+{
+    std::lock_guard<std::mutex> lk(queueMutex_);
+
+    // Clear the state queue if requested.
+    if (clearBeforeInsert) {
+        while(!stateQueue_.empty())
+            stateQueue_.pop();
+    }
+
+    // Insert new state in queue if requested.
+    if (state != -1)
+        stateQueue_.push((NatPmpState)state);
+
+    // Update new state,
+    if (not stateQueue_.empty()) {
+        pmpState_ = stateQueue_.front();
+        stateQueue_.pop();
+    }
+}
+
+inline void
+NatPmp::changeState(NatPmpState state, bool clearBeforeInsert)
+{
+    std::lock_guard<std::mutex> lk(queueMutex_);
+
+    // Clear the state queue if requested.
+    if (clearBeforeInsert) {
+        while(!stateQueue_.empty())
+            stateQueue_.pop();
+    }
+
+    stateQueue_.push((NatPmpState)state);
+}
+
+bool
+NatPmp::initNatPmp()
+{
+    int err = 0;
+    char localHostBuf[INET_ADDRSTRLEN];
+    if (getLocalHostName(localHostBuf, INET_ADDRSTRLEN) < 0) {
+        JAMI_WARN("NAT-PMP: Couldn't find local host");
+        JAMI_DBG("NAT-PMP: Attempting to initialize with unknown gateway");
+        err = initnatpmp(&natpmpHdl_, 0, 0);
+    } else {
+        std::string gw = getGateway(localHostBuf);
+        struct in_addr inaddr;
+        inet_pton(AF_INET, gw.c_str(), &inaddr);
+        err = initnatpmp(&natpmpHdl_, 1, inaddr.s_addr);
+    }
+
+    if (err < 0) {
+        JAMI_ERR("NAT-PMP: Can't initialize libnatpmp -> %s", getNatPmpErrorStr(err).c_str());
+        return false;
+    } else {
+        char addrbuf[INET_ADDRSTRLEN];
+        inet_ntop(AF_INET, &natpmpHdl_.gateway, addrbuf, sizeof(addrbuf));
+        std::string addr(addrbuf);
+        JAMI_DBG("NAT-PMP: Initialized on gateway %s", addr.c_str());
+        return true;
+    }
+
+    return false;
+}
+
+bool
+NatPmp::searchForPmpIgd(PMPIGD* pmpIgd)
+{
+    if (not pmpRun_)
+        return false;
+
+    int sendErr = sendpublicaddressrequest(&natpmpHdl_);
+
+    if (sendErr < 0) {
+        JAMI_ERR("NAT-PMP: Can't send search request -> %s", getNatPmpErrorStr(sendErr).c_str());
+        pmpIgd_->renewal_ = clock::now() + std::chrono::minutes(1);
+        return false;
+    }
+
+    natpmpresp_t response;
+    int responseErr = 0;
+    unsigned int retry = 0;
+    while (retry <= MAX_READ_RESPONSE_RETRY) {
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
-        auto r = readnatpmpresponseorretry(&natpmpHdl_, &response);
-        if (r < 0 && r != NATPMP_TRYAGAIN) {
+        responseErr = readnatpmpresponseorretry(&natpmpHdl_, &response);
+        if (responseErr < 0 && responseErr != NATPMP_TRYAGAIN) {
+            JAMI_ERR("NAT-PMP: Can't find internet gateway device -> %s",
+            getNatPmpErrorStr(responseErr).c_str());
             pmpIgd_->renewal_ = clock::now() + std::chrono::minutes(5);
-            break;
-        } else if (r != NATPMP_TRYAGAIN) {
-            restartSearchRetry_ = 0;
+            return false;
+        } else if (responseErr != NATPMP_TRYAGAIN) {
             pmpIgd_->localIp_ = ip_utils::getLocalAddr(AF_INET);
             pmpIgd_->publicIp_ = IpAddr(response.pnu.publicaddress.addr);
-            JAMI_DBG("NAT-PMP: Found device with external IP %s", pmpIgd_->publicIp_.toString().c_str());
-            {
-                // Store public Ip address.
-                std::string publicIpStr(std::move(pmpIgd_.get()->publicIp_.toString()));
-
-                // Add the igd to the upnp context class list.
-                lk2.unlock();
-                if (updateIgdListCb_(this, pmpIgd_.get(), pmpIgd_.get()->publicIp_, true)) {
-                    JAMI_DBG("NAT-PMP: IGD with public IP %s was added to the list", publicIpStr.c_str());
-                } else {
-                    JAMI_DBG("NAT-PMP: IGD with public IP %s is already in the list", publicIpStr.c_str());
-                }
-                lk2.lock();
-            }
-            pmpIgd_->renewal_ = clock::now() + std::chrono::minutes(1);
-            break;
+            return true;
         }
+        retry++;
     }
+    pmpIgd_->renewal_ = clock::now() + std::chrono::minutes(5);
+    return false;
 }
 
-void
-NatPmp::addPortMapping(Mapping& mapping, bool renew)
+bool
+NatPmp::addPortMapping(Mapping map)
 {
-    std::lock_guard<std::mutex> lk1(natpmpMutex_);
-    std::unique_lock<std::mutex> lk2(validIgdMutex_);
+    if (not pmpRun_)
+        return false;
 
-    Mapping mapToAdd(mapping.getPortExternal(),
-                     mapping.getPortInternal(),
-                     mapping.getType() == PortType::UDP ?
-                     upnp::PortType::UDP : upnp::PortType::TCP);
+    int sendErr = sendnewportmappingrequest(
+                  &natpmpHdl_,
+                  map.getType() == PortType::UDP ?
+                  NATPMP_PROTOCOL_UDP : NATPMP_PROTOCOL_TCP,
+                  map.getPortInternal(),
+                  map.getPortExternal(),
+                  ADD_MAP_LIFETIME);
 
-    int err = sendnewportmappingrequest(&natpmpHdl_,
-                                        mapping.getType() == PortType::UDP ? NATPMP_PROTOCOL_UDP : NATPMP_PROTOCOL_TCP,
-                                        mapping.getPortInternal(),
-                                        mapping.getPortExternal(),
-                                        ADD_MAP_LIFETIME);
-    if (err < 0) {
-        JAMI_ERR("NAT-PMP: Can't send open port request -> %s", getNatPmpErrorStr(err).c_str());
-        mapping.renewal_ = clock::now() + std::chrono::minutes(1);
-        if (pmpIgd_) {
-            pmpIgd_->removeMapToAdd(mapping);
-            lk2.unlock();
-            notifyContextPortOpenCb_(pmpIgd_->publicIp_, std::move(mapToAdd), false);
-        }
-        return;
+    if (sendErr < 0) {
+        JAMI_ERR("NAT-PMP: Can't send open port request -> %s", getNatPmpErrorStr(sendErr).c_str());
+        return false;
     }
 
-    while (pmpRun_) {
-        natpmpresp_t response;
+    natpmpresp_t response;
+    int responseErr = 0;
+    unsigned int retry = 0;
+    while (retry <= MAX_READ_RESPONSE_RETRY) {
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
-        auto r = readnatpmpresponseorretry(&natpmpHdl_, &response);
-        if (r < 0 && r != NATPMP_TRYAGAIN) {
-            JAMI_ERR("NAT-PMP: Can't register port mapping %s", mapping.toString().c_str());
-            break;
-        } else if (r != NATPMP_TRYAGAIN) {
-            mapping.renewal_ = clock::now()
-                             + std::chrono::seconds(response.pnu.newportmapping.lifetime/2);
-            if (pmpIgd_) {
-                if (not renew) {
-                    JAMI_WARN("NAT-PMP: Opened port %s", mapping.toString().c_str());
-                    pmpIgd_->removeMapToAdd(mapping);
-                    pmpIgd_->addMapToRenew(std::move(mapping));
-                    lk2.unlock();
-                    notifyContextPortOpenCb_(pmpIgd_->publicIp_, std::move(mapToAdd), true);
-                } else {
-                    JAMI_WARN("NAT-PMP: Renewed port %s", mapping.toString().c_str());
-                }
-            }
-            break;
-        }
+        responseErr = readnatpmpresponseorretry(&natpmpHdl_, &response);
+        if (responseErr < 0 && responseErr != NATPMP_TRYAGAIN)
+            JAMI_ERR("NAT-PMP: Can't register port mapping %s -> %s",
+            map.toString().c_str(), getNatPmpErrorStr(responseErr).c_str());
+        else
+            return true;
+        retry++;
     }
+    return false;
 }
 
-void
-NatPmp::removePortMapping(Mapping& mapping)
+bool
+NatPmp::removePortMapping(Mapping map)
 {
-    std::lock_guard<std::mutex> lk1(natpmpMutex_);
-    std::unique_lock<std::mutex> lk2(validIgdMutex_);
+    if (not pmpRun_)
+        return false;
 
-    Mapping mapToRemove(mapping.getPortExternal(),
-                        mapping.getPortInternal(),
-                        mapping.getType() == PortType::UDP ?
-                        upnp::PortType::UDP : upnp::PortType::TCP);
+    int sendErr = sendnewportmappingrequest(
+                  &natpmpHdl_,
+                  map.getType() == PortType::UDP ?
+                  NATPMP_PROTOCOL_UDP : NATPMP_PROTOCOL_TCP,
+                  map.getPortInternal(),
+                  map.getPortExternal(),
+                  REMOVE_MAP_LIFETIME);
 
-    int err = sendnewportmappingrequest(&natpmpHdl_,
-                                        mapping.getType() == PortType::UDP ? NATPMP_PROTOCOL_UDP : NATPMP_PROTOCOL_TCP,
-                                        mapping.getPortInternal(),
-                                        mapping.getPortExternal(),
-                                        REMOVE_MAP_LIFETIME);
-    if (err < 0) {
-        JAMI_ERR("NAT-PMP: Can't send close port request -> %s", getNatPmpErrorStr(err).c_str());
-        mapping.renewal_ = clock::now() + std::chrono::minutes(1);
-        if (pmpIgd_) {
-            pmpIgd_->removeMapToRemove(mapping);
-            lk2.unlock();
-            notifyContextPortCloseCb_(pmpIgd_->publicIp_, std::move(mapToRemove), false);
-        }
-        return;
+    if (sendErr < 0) {
+        JAMI_ERR("NAT-PMP: Can't send close port request -> %s", getNatPmpErrorStr(sendErr).c_str());
+        return false;
     }
 
-    while (pmpRun_) {
-        natpmpresp_t response;
+    natpmpresp_t response;
+    int responseErr = 0;
+    unsigned int retry = 0;
+    while (retry <= MAX_READ_RESPONSE_RETRY) {
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
-        auto r = readnatpmpresponseorretry(&natpmpHdl_, &response);
-        if (r < 0 && r != NATPMP_TRYAGAIN) {
-            JAMI_ERR("NAT-PMP: Can't unregister port mapping %s", mapping.toString().c_str());
-            break;
-        } else if (r != NATPMP_TRYAGAIN) {
-            mapping.renewal_ = clock::now()
-                             + std::chrono::seconds(response.pnu.newportmapping.lifetime/2);
-            if (pmpIgd_) {
-                JAMI_WARN("NAT-PMP: Closed port %s", mapping.toString().c_str());
-                pmpIgd_->removeMapToRemove(mapping);
-                pmpIgd_->removeMapToRenew(mapping);
-                lk2.unlock();
-                notifyContextPortCloseCb_(pmpIgd_->publicIp_, std::move(mapToRemove), true);
-            }
-            break;
-        }
+        responseErr = readnatpmpresponseorretry(&natpmpHdl_, &response);
+        if (responseErr < 0 && responseErr != NATPMP_TRYAGAIN)
+            JAMI_ERR("NAT-PMP: Can't unregister port mapping %s -> %s",
+            map.toString().c_str(), getNatPmpErrorStr(responseErr).c_str());
+        else
+            return true;
+        retry++;
     }
+    return false;
 }
 
 void
 NatPmp::removeAllLocalMappings(IGD* /*igd*/)
 {
-    std::lock_guard<std::mutex> lk(validIgdMutex_);
-
-    pmpIgd_->clearAll_ = true;
+    updateState((int)NatPmpState::PMP_CLOSE_ALL);
     pmpCv_.notify_all();
 }
 
 void
 NatPmp::deleteAllPortMappings(int proto)
 {
-    std::lock_guard<std::mutex> lk(natpmpMutex_);
-
     if (sendnewportmappingrequest(&natpmpHdl_, proto, 0, 0, 0) < 0) {
         JAMI_ERR("NAT-PMP: Can't send all port mapping removal request");
         return;
@@ -547,11 +695,33 @@ NatPmp::deleteAllPortMappings(int proto)
     }
 }
 
+bool
+NatPmp::isMappingUpForRenewal(const time_point& now)
+{
+    if (pmpIgd_) {
+        decltype(pmpIgd_->mapToRenewList_) renew = std::move(pmpIgd_->mapToRenewList_);
+        for (auto& m : renew) {
+            if (pmpIgd_->isMapUpForRenewal(m, now)) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool
+NatPmp::isIgdUpForRenewal(const time_point& now)
+{
+    if (pmpIgd_) {
+        if (pmpIgd_->renewal_ < now)
+            return true;
+    }
+    return false;
+}
+
 void
 NatPmp::clearNatPmpHdl(natpmp_t& hdl)
 {
-    std::lock_guard<std::mutex> lk(natpmpMutex_);
-
     memset(&natpmpHdl_.s,                   0, sizeof(natpmpHdl_.s));
     memset(&natpmpHdl_.gateway,             0, sizeof(in_addr_t));
     memset(&natpmpHdl_.has_pending_request, 0, sizeof(natpmpHdl_.has_pending_request));
