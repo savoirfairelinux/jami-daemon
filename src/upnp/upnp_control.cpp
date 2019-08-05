@@ -170,9 +170,8 @@ Controller::requestAllMappingRemove(PortType type) {
         return;
 
     auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-    for (auto it = instanceMappings.cbegin(); it != instanceMappings.cend(); it++) {
+    for (auto it = instanceMappings.cbegin(); it != instanceMappings.cend(); it++)
         upnpContext_->requestMappingRemove(it->second);
-    }
 }
 
 bool
