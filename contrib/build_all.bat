@@ -104,6 +104,7 @@ pjproject=pjproject, ^
 pthreads=build\pthreads\MSVC\pthreads.vcxproj, ^
 xml=build\pupnp\build\vs2017\ixml.vcxproj, ^
 upnp=build\pupnp\build\vs2017\libupnp.vcxproj, ^
+natpmp=build\natpmp\msvc\libnatpmp.vcxproj, ^
 secp256k1=build\secp256k1\MSVC\secp256k1.vcxproj, ^
 portaudio=build\portaudio\msvc\portaudio.vcxproj, ^
 yaml-cpp=build\yaml-cpp\msvc\yaml-cpp.vcxproj
