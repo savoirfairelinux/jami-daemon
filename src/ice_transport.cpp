@@ -170,6 +170,11 @@ public:
      */
     void selectUPnPIceCandidates();
 
+    /**
+     * Add port mapping callback function.
+     */
+    void onPortMappingAdd(uint16_t* port_used, bool success);
+
     std::unique_ptr<upnp::Controller> upnp_;
 
     bool onlyIPv4Private_ {true};
@@ -733,6 +738,7 @@ void IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr &base,
 void
 IceTransport::Impl::selectUPnPIceCandidates()
 {
+    using namespace std::placeholders;
     /* use upnp to open ports and add the proper candidates */
     if (upnp_) {
         /* for every component, get the candidate(s)
@@ -757,7 +763,8 @@ IceTransport::Impl::selectUPnPIceCandidates()
                     auto portType = candidate.transport == PJ_CAND_UDP
                                         ? upnp::PortType::UDP
                                         : upnp::PortType::TCP;
-                    if (upnp_->addMapping(port, portType, true, &port_used)) {
+                    if (upnp_->addMapping(std::bind(&IceTransport::Impl::onPortMappingAdd, this, _1, _2),
+                                          port, portType, true, &port_used)) {
                         publicIP.setPort(port_used);
                         addReflectiveCandidate(comp_id, candidate.addr, publicIP, candidate.transport);
                     } else
@@ -768,6 +775,12 @@ IceTransport::Impl::selectUPnPIceCandidates()
             JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates", this);
         }
     }
+}
+
+void
+IceTransport::Impl::onPortMappingAdd(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("IceTransport: Port mapping added NOTIFY");
 }
 
 void
