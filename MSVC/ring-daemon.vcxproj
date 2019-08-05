@@ -593,7 +593,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x64\bin;$(ProjectDir)..\contrib\msvc\lib\x64;$(ProjectDir)..\contrib\build\boost\stage\lib;$(ProjectDir)..\contrib\build\pjproject\pjsip\lib;$(ProjectDir)..\contrib\build\pjproject\pjmedia\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\lib;$(ProjectDir)..\contrib\build\pjproject\third_party\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib\lib;$(ProjectDir)..\contrib\build\pjproject\pjnath\lib;$(ProjectDir)..\contrib\build\restbed\build\Release;$(ProjectDir)..\contrib\build\restbed\dependency\openssl\out32dll;$(ProjectDir)..\contrib\build\jsoncpp\makefiles\vs2017\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;Strmiids.lib;libavcodec.lib;libavdevice.lib;libavfilter.lib;libavformat.lib;libavutil.lib;libswresample.lib;libswscale.lib;libgnutls.lib;lib_json.lib;opendht.lib;Argon2Ref.lib;pjlib.lib;pjlib_util.lib;pjmedia.lib;pjmedia_codec.lib;pjnath.lib;pjsip_core.lib;pjsip_simple.lib;pjsip_ua.lib;pjsua2_lib.lib;pjsua_lib.lib;yaml-cpp.lib;libupnp.lib;pthreadVC2.lib;portaudio.lib;libspeex-pj.lib;secp256k1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;uuid.lib;Strmiids.lib;libavcodec.lib;libavdevice.lib;libavfilter.lib;libavformat.lib;libavutil.lib;libswresample.lib;libswscale.lib;libgnutls.lib;lib_json.lib;opendht.lib;Argon2Ref.lib;pjlib.lib;pjlib_util.lib;pjmedia.lib;pjmedia_codec.lib;pjnath.lib;pjsip_core.lib;pjsip_simple.lib;pjsip_ua.lib;pjsua2_lib.lib;pjsua_lib.lib;yaml-cpp.lib;libupnp.lib;libnatpmp.lib;pthreadVC2.lib;portaudio.lib;libspeex-pj.lib;secp256k1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/VERBOSE:LIB /NODEFAULTLIB:libcmtd /NODEFAULTLIB:libcmt /OPT:NOLBR /OPT:NOICF /ignore:4006 %(AdditionalOptions)</AdditionalOptions>
       <TargetMachine>MachineX64</TargetMachine>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
@@ -834,6 +834,8 @@
     <ClCompile Include="..\src\turn_transport.cpp" />
     <ClCompile Include="..\src\upnp\protocol\igd.cpp" />
     <ClCompile Include="..\src\upnp\protocol\mapping.cpp" />
+    <ClCompile Include="..\src\upnp\protocol\natpmp\nat_pmp.cpp" />
+    <ClCompile Include="..\src\upnp\protocol\natpmp\pmp_igd.cpp" />
     <ClCompile Include="..\src\upnp\protocol\pupnp\pupnp.cpp" />
     <ClCompile Include="..\src\upnp\protocol\pupnp\upnp_igd.cpp" />
     <ClCompile Include="..\src\upnp\upnp_context.cpp" />
@@ -1002,6 +1004,8 @@
     <ClInclude Include="..\src\upnp\protocol\global_mapping.h" />
     <ClInclude Include="..\src\upnp\protocol\igd.h" />
     <ClInclude Include="..\src\upnp\protocol\mapping.h" />
+    <ClInclude Include="..\src\upnp\protocol\natpmp\nat_pmp.h" />
+    <ClInclude Include="..\src\upnp\protocol\natpmp\pmp_igd.h" />
     <ClInclude Include="..\src\upnp\protocol\pupnp\pupnp.h" />
     <ClInclude Include="..\src\upnp\protocol\pupnp\upnp_igd.h" />
     <ClInclude Include="..\src\upnp\protocol\upnp_protocol.h" />
