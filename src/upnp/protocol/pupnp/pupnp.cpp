@@ -490,22 +490,21 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
             break;
 
         // Check if we already downloaded the xml doc based on the igd location string.
-        std::string igdLocationUrl(UpnpDiscovery_get_Location_cstr(d_event));
-        if (not igdLocationUrl.empty()) {
-            dwnldlXmlList_.emplace_back(dht::ThreadPool::io().get<pIgdInfo>([this, location = std::move(igdLocationUrl)]{
-                IXML_Document* doc_container_ptr = nullptr;
-                XmlDocument doc_desc_ptr(nullptr, ixmlDocument_free);
-                int upnp_err = UpnpDownloadXmlDoc(location.c_str(), &doc_container_ptr);
-                if (doc_container_ptr)
-                    doc_desc_ptr.reset(doc_container_ptr);
-                pupnpCv_.notify_all();
-                if (upnp_err != UPNP_E_SUCCESS or not doc_desc_ptr)
-                    JAMI_WARN("PUPnP: Error downloading device XML document from %s -> %s", location.c_str(), UpnpGetErrorMessage(upnp_err));
-                else
-                    return std::make_unique<IgdInfo>(IgdInfo {std::move(location), std::move(doc_desc_ptr)});
-                return std::make_unique<IgdInfo>(IgdInfo {std::move(location), XmlDocument(nullptr, ixmlDocument_free)});
-            }));
-        }
+        std::string igdLocationUrl {UpnpDiscovery_get_Location_cstr(d_event)};
+        dwnldlXmlList_.emplace_back(dht::ThreadPool::io().get<pIgdInfo>([this, location = std::move(igdLocationUrl)]{
+            IXML_Document* doc_container_ptr = nullptr;
+            XmlDocument doc_desc_ptr(nullptr, ixmlDocument_free);
+            int upnp_err = UpnpDownloadXmlDoc(location.c_str(), &doc_container_ptr);
+            if (doc_container_ptr)
+                doc_desc_ptr.reset(doc_container_ptr);
+            pupnpCv_.notify_all();
+            if (upnp_err != UPNP_E_SUCCESS or not doc_desc_ptr)
+                JAMI_WARN("PUPnP: Error downloading device XML document from %s -> %s", location.c_str(), UpnpGetErrorMessage(upnp_err));
+            else
+                return std::make_unique<IgdInfo>(IgdInfo {std::move(location), std::move(doc_desc_ptr)});
+            return std::make_unique<IgdInfo>(IgdInfo {std::move(location), XmlDocument(nullptr, ixmlDocument_free)});
+        }));
+
         break;
     }
     case UPNP_DISCOVERY_ADVERTISEMENT_BYEBYE:
