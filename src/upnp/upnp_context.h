@@ -57,13 +57,14 @@
 
 using random_device = dht::crypto::random_device;
 
-using IgdFoundCallback = std::function<void()>;
-
 namespace jami {
 class IpAddr;
 }
 
 namespace jami { namespace upnp {
+
+using NotifyControllerAddMapCallback = std::function<void(Mapping*, bool)>;
+using NotifyControllerRemoveMapCallback = std::function<void(Mapping*, bool)>;
 
 class UPnPContext
 {
@@ -74,17 +75,20 @@ public:
     // Check if there is a valid IGD in the IGD list.
     bool hasValidIGD();
 
-    // Add IGD listener.
-    size_t addIGDListener(IgdFoundCallback&& cb);
-
-    // Remove IGD listener.
-    void removeIGDListener(size_t token);
-
     // Tries to add a valid mapping. Will return it if successful.
-    Mapping addMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool unique);
+    void addMapping(NotifyControllerAddMapCallback&& cbAdd,
+                    NotifyControllerRemoveMapCallback&& cbRm, 
+                    uint16_t port_desired, uint16_t port_local, PortType type, bool unique,
+                    bool keepCb = false);
+
+    void onAddMapping(Mapping* mapping, bool success);
+    
+    void deleteRmCallbacks(const PortMapLocal& mapList);
 
     // Removes a mapping.
     void removeMapping(const Mapping& mapping);
+
+    void onRemoveMapping(Mapping* mapping, bool success);
 
     // Get external Ip of a chosen IGD.
     IpAddr getExternalIP() const;
@@ -118,7 +122,7 @@ private:
     bool removeIgdFromList(IpAddr publicIpAddr);
 
     // Tries to add mapping. Assumes mutex is already locked.
-    Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error);
+    void addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error);
 
 public:
     constexpr static unsigned MAX_RETRIES = 20;
@@ -126,13 +130,12 @@ public:
 private:
     NON_COPYABLE(UPnPContext);
 
-    std::map<size_t, IgdFoundCallback> igdListeners_;           // Map of valid IGD listeners with their tokens.
-    size_t listenerToken_{ 0 };                                 // Last provided token for valid IGD listeners (0 is the invalid token).
+    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;   // Vector of available protocols.
+    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;         // List of IGDs with their corresponding public IPs.
+    mutable std::mutex igdListMutex_;                           // Mutex used to access these lists and IGDs in a thread-safe manner.
 
-    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;	// Vector of available protocols.
-    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;			// List of IGDs with their corresponding public IPs.
-    mutable std::mutex igdListMutex_;							// Mutex used to access these lists and IGDs in a thread-safe manner.
-
+    std::map<Mapping*, std::pair<bool, std::pair<NotifyControllerAddMapCallback, NotifyControllerRemoveMapCallback>>> mapCbList_;
+    std::list<NotifyControllerRemoveMapCallback> rmMapCbList_;
 };
 
 std::shared_ptr<UPnPContext> getUPnPContext();
