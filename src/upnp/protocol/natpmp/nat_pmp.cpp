@@ -161,6 +161,7 @@ NatPmp::addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, Por
 
     {
         /* success; add it to global list */
+        JAMI_DBG("NAT-PMP: Attempting to open port %s", mapping.toString().c_str());
         globalMappings->emplace(port_external, GlobalMapping{mapping});
 
         pmpCv_.notify_all();
@@ -206,6 +207,7 @@ NatPmp::removeMapping(const Mapping& igdMapping)
             } else {
                 {
                     std::lock_guard<std::mutex> lk(pmpMutex_);
+                    JAMI_DBG("NAT-PMP: Attempting to close port %s", global_mapping.toString().c_str());
                     pmpIGD_->toRemove_.emplace_back(std::move(global_mapping));
                 }
                 pmpCv_.notify_all();
@@ -241,11 +243,14 @@ NatPmp::searchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& natpmp)
             if (not pmpIGD_) {
                 JAMI_DBG("NAT-PMP: Found device with external IP %s", pmp_igd->publicIp_.toString().c_str());
                 {
+                    // Store public Ip address.
+                    std::string publicIpStr(std::move(pmp_igd.get()->publicIp_.toString()));
+
                     // Add the igd to the upnp context class list.
-                    if (updateIgdListCb_(this, pmp_igd.get(), pmp_igd->publicIp_, true)) {
-                        JAMI_DBG("NAT-PMP: IGD with public IP %s was added to the list", pmp_igd->publicIp_.toString().c_str());
+                    if (updateIgdListCb_(this, std::move(pmp_igd.get()), std::move(pmp_igd.get()->publicIp_), true)) {
+                        JAMI_DBG("NAT-PMP: IGD with public IP %s was added to the list", publicIpStr.c_str());
                     } else {
-                        JAMI_DBG("NAT-PMP: IGD with public IP %s is already in the list", pmp_igd->publicIp_.toString().c_str());
+                        JAMI_DBG("NAT-PMP: IGD with public IP %s is already in the list", publicIpStr.c_str());
                     }
 
                     // Keep IGD internally.
