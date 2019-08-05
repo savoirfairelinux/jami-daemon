@@ -61,7 +61,7 @@ public:
     void searchForIgd() override;
 
     // Tries to add mapping. Assumes mutex is already locked.
-    Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) override;
+    void addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) override;
 
     // Removes a mapping.
     void removeMapping(const Mapping& igdMapping) override;

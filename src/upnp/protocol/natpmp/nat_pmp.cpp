@@ -125,7 +125,7 @@ NatPmp::searchForIgd()
     pmpCv_.notify_all();
 }
 
-Mapping
+void
 NatPmp::addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error)
 {
     upnp_error = UPnPProtocol::UpnpError::INVALID_ERR;
@@ -149,24 +149,23 @@ NatPmp::addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, Por
             ++(mapping_ptr->users);
             JAMI_DBG("NAT-PMP: Mapping already exists, incrementing number of users: %d",
                      iter->second.users);
-            return mapping;
+            return;
         } else {
             /* this port is already used by a different mapping */
             JAMI_WARN("NAT-PMP: Cannot add a mapping with an external port which is already used by another:\n\tcurrent: %s\n\ttrying to add: %s",
                       mapping_ptr->toString().c_str(), mapping.toString().c_str());
             upnp_error = UPnPProtocol::UpnpError::CONFLICT_IN_MAPPING;
-            return {};
+            return;
         }
     }
 
     {
         /* success; add it to global list */
+        JAMI_DBG("NAT-PMP: Attempting to open port %s", mapping.toString().c_str());
         globalMappings->emplace(port_external, GlobalMapping{mapping});
 
         pmpCv_.notify_all();
-        return mapping;
     }
-    return {};
 }
 
 void
@@ -206,6 +205,7 @@ NatPmp::removeMapping(const Mapping& igdMapping)
             } else {
                 {
                     std::lock_guard<std::mutex> lk(pmpMutex_);
+                    JAMI_DBG("NAT-PMP: Attempting to close port %s", global_mapping.toString().c_str());
                     pmpIGD_->toRemove_.emplace_back(std::move(global_mapping));
                 }
                 pmpCv_.notify_all();
@@ -241,11 +241,14 @@ NatPmp::searchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& natpmp)
             if (not pmpIGD_) {
                 JAMI_DBG("NAT-PMP: Found device with external IP %s", pmp_igd->publicIp_.toString().c_str());
                 {
+                    // Store public Ip address.
+                    std::string publicIpStr(std::move(pmp_igd.get()->publicIp_.toString()));
+
                     // Add the igd to the upnp context class list.
-                    if (updateIgdListCb_(this, pmp_igd.get(), pmp_igd->publicIp_, true)) {
-                        JAMI_DBG("NAT-PMP: IGD with public IP %s was added to the list", pmp_igd->publicIp_.toString().c_str());
+                    if (updateIgdListCb_(this, std::move(pmp_igd.get()), std::move(pmp_igd.get()->publicIp_), true)) {
+                        JAMI_DBG("NAT-PMP: IGD with public IP %s was added to the list", publicIpStr.c_str());
                     } else {
-                        JAMI_DBG("NAT-PMP: IGD with public IP %s is already in the list", pmp_igd->publicIp_.toString().c_str());
+                        JAMI_DBG("NAT-PMP: IGD with public IP %s is already in the list", publicIpStr.c_str());
                     }
 
                     // Keep IGD internally.
@@ -267,7 +270,12 @@ NatPmp::addPortMapping(const PMPIGD& /*pmp_igd*/, natpmp_t& natpmp, GlobalMappin
                                   mapping.getPortInternal(),
                                   mapping.getPortExternal(), remove ? 0 : 3600) < 0) {
         JAMI_ERR("NAT-PMP: Can't send port mapping request");
+        Mapping* map = new Mapping(std::move(mapping.getPortExternal()),
+                                       std::move(mapping.getPortInternal()),
+                                       std::move(mapping.getType() == PortType::UDP ? 
+                                       upnp::PortType::UDP : upnp::PortType::TCP));
         mapping.renewal_ = clock::now() + std::chrono::minutes(1);
+        notifyContextPortCloseCb_(map, false);
         return;
     }
 
@@ -282,14 +290,21 @@ NatPmp::addPortMapping(const PMPIGD& /*pmp_igd*/, natpmp_t& natpmp, GlobalMappin
         else if (r != NATPMP_TRYAGAIN) {
             mapping.renewal_ = clock::now()
                              + std::chrono::seconds(response.pnu.newportmapping.lifetime/2);
+            Mapping* map = new Mapping(std::move(mapping.getPortExternal()),
+                                       std::move(mapping.getPortInternal()),
+                                       std::move(mapping.getType() == PortType::UDP ? 
+                                       upnp::PortType::UDP : upnp::PortType::TCP));
             if (remove) {
             JAMI_WARN("NAT-PMP: Closed port %d:%d %s", mapping.getPortInternal(),
                                                          mapping.getPortExternal(),
                                                          mapping.getType() == PortType::UDP ? "UDP" : "TCP");
+                notifyContextPortCloseCb_(map, true);
             } else {
                 JAMI_WARN("NAT-PMP: Opened port %d:%d %s", mapping.getPortInternal(),
                                                             mapping.getPortExternal(),
                                                             mapping.getType() == PortType::UDP ? "UDP" : "TCP");
+                
+                notifyContextPortOpenCb_(map, true);
             }
             break;
         }
