@@ -29,11 +29,18 @@
 #include "ip_utils.h"
 #include "string_utils.h"
 
+#include <mutex>
+
+#ifdef _WIN32
+typedef uint16_t in_port_t;
+#else
+#include <netinet/in.h> // For in_port_t support
+#endif
+
 namespace jami { namespace upnp {
 
-// Subclasses to make it easier to differentiate and cast maps of port mappings.
-class PortMapLocal : public std::map<uint16_t, Mapping> {};
-class PortMapGlobal : public std::map<uint16_t, GlobalMapping> {};
+using PortMapLocal = std::map<uint16_t, Mapping>;
+using PortMapGlobal = std::map<uint16_t, GlobalMapping>;
 
 class IGD
 {
@@ -45,15 +52,46 @@ public:
     IGD& operator=(IGD&&) = default;
     bool operator==(IGD& other) const;
 
-public:
-    IpAddr localIp_ {};                    // Internal IP interface used to communication with IGD.
-    IpAddr publicIp_ {};                   // External IP of IGD.
+    // Checks if the port is currently being used (i.e. the port is already opened).
+    bool isMapInUse(const in_port_t externalPort, upnp::PortType type);
+    bool isMapInUse(const Mapping& map);
 
-    PortMapGlobal udpMappings {};          // IGD UDP port mappings.
-    PortMapGlobal tcpMappings {};          // IGD TCP port mappings.
+    // Adds the mapping to the list.
+    void addMapInUse(const Mapping& map);
+
+    // Removes the mapping from the list.
+    void removeMapInUse(in_port_t externalPort, upnp::PortType type);
+    void removeMapInUse(const Mapping& map);
+
+    // Returns the mapping associated to the given port and type.
+    Mapping getMapping(in_port_t externalPort, upnp::PortType type) const;
+
+    // Returns the list of currently used mappings according to the port type.
+    PortMapGlobal* getCurrentMappingList(upnp::PortType type);
+
+    // Returns number of users for a given mapping.
+    unsigned int getNbOfUsers(const in_port_t externalPort, upnp::PortType type);
+    unsigned int getNbOfUsers(const Mapping& map);
+
+    // Increments the number of users for a given mapping.
+    void incrementNbOfUsers(const in_port_t externalPort, upnp::PortType type);
+    void incrementNbOfUsers(const Mapping& map);
+
+    // Reduces the number of users for a given mapping.
+    void decrementNbOfUsers(const in_port_t externalPort, upnp::PortType type);
+    void decrementNbOfUsers(const Mapping& map);
+
+public:
+    IpAddr localIp_ {};                     // Internal IP interface used to communication with IGD.
+    IpAddr publicIp_ {};                    // External IP of IGD.
 
 private:
     NON_COPYABLE(IGD);
+
+protected:
+    std::mutex mapListMutex_;               // Mutex for protecting map lists.
+    PortMapGlobal udpMappings_ {};          // IGD UDP port mappings.
+    PortMapGlobal tcpMappings_ {};          // IGD TCP port mappings.
 };
 
 
