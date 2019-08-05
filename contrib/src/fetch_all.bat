@@ -72,6 +72,7 @@ portaudio, ^
 pthreads, ^
 secp256k1, ^
 upnp, ^
+natpmp, ^
 vpx, ^
 x264, ^
 yaml-cpp, ^
