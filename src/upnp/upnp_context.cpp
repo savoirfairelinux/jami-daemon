@@ -268,11 +268,9 @@ UPnPContext::isIgdInList(const IpAddr& publicIpAddr)
     return false;
 }
 
-UPnPProtocol::Type 
+UPnPProtocol::Type
 UPnPContext::getIgdProtocol(IGD* igd)
 {
-    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
-
     for (auto const& item : igdList_) {
         if (item.second->publicIp_ == igd->publicIp_) {
             return item.first->getType();
@@ -285,7 +283,8 @@ UPnPContext::getIgdProtocol(IGD* igd)
 bool
 UPnPContext::igdListChanged(UPnPProtocol* protocol, IGD* igd, IpAddr publicIpAddr, bool added)
 {
-    std::lock_guard<std::mutex> lock(igdListMutex_);
+    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
+
     if (added) {
         return addIgdToList(protocol, igd);
     } else {
@@ -307,20 +306,11 @@ UPnPContext::addIgdToList(UPnPProtocol* protocol, IGD* igd)
     }
 
     if (isIgdInList(igd->publicIp_)) {
-        // If the protocol of the IGD that is already in the list isn't NatPmp, then swap.
-        if (getIgdProtocol(igd) != UPnPProtocol::Type::NAT_PMP and protocol->getType() == UPnPProtocol::Type::NAT_PMP) {
-            JAMI_WARN("UPnPContext: Attempting to swap IGD UPnP protocol");
-            if (!removeIgdFromList(igd)) {
-                JAMI_WARN("UPnPContext: Failed to swap IGD UPnP protocol");
-                return false;
-            }
-        } else {
-            return false;
-        }
+        return false;
     }
 
     igdList_.emplace_back(protocol, igd);
-    
+
     for (const auto& item : igdListeners_) {
         item.second();
     }
