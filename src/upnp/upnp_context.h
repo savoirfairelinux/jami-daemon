@@ -70,12 +70,12 @@ using MapCb = std::function<void(const Mapping&, bool)>;
 using ConnectionChangeCb = std::function<void()>;
 
 struct ControllerData {
-    uint64_t id;
-    bool keepCb;
-    bool isNotified;
-    MapCb onMapAdded;
-    MapCb onMapRemoved;
-    ConnectionChangeCb onConnectionChanged;
+    uint64_t id;                                // Controllers unique identifier.
+    bool keepCb;                                // Option to keep callback through a connectivity change.
+    bool isNotified;                            // Flag to indicate of the controller was notified of a map change.
+    MapCb onMapAdded;                           // Callback for notifying the controller that a mapping was added.
+    MapCb onMapRemoved;                         // Callback for notifying the controller that a mapping was removed.
+    ConnectionChangeCb onConnectionChanged;     // Callback for notifying the controller that a connectivity change has occured.
 };
 
 const constexpr auto IGD_SEARCH_TIMEOUT = std::chrono::seconds(5);
@@ -95,7 +95,7 @@ public:
     // Check if there is a valid IGD in the IGD list.
     bool hasValidIgd();
 
-    // Clears callbacks associated with a lost of mappings given as parameter.
+    // Clears callbacks associated with a list of mappings for a given controller.
     void clearCallbacks(const PortMapLocal& mapList, uint16_t ctrlId);
 
     // Adds callback associated with a mapping and its controller.
@@ -135,7 +135,7 @@ private:
     // Checks if the IGD is in the list by checking the IGD's public Ip.
     bool isIgdInList(const IpAddr& publicIpAddr);
 
-    // Tries to add IGD to the list by getting it's public Ip address internally.
+    // Tries to add IGD to the list by getting its public Ip address internally.
     bool addIgdToList(UPnPProtocol* protocol, IGD* igd);
 
     // Removes IGD from list by specifiying the IGD itself.
@@ -144,7 +144,7 @@ private:
     // Removes IGD from list by specifiying the IGD's public Ip address.
     bool removeIgdFromList(IpAddr publicIpAddr);
 
-    // Returns the protocol of the IGD.
+    // Returns the protocol of the IGD (i.e. the protocol that found the IGD).
     UPnPProtocol::Type getIgdProtocol(IGD* igd);
 
     // Tries to add a mapping to a specific IGD.
@@ -165,10 +165,10 @@ private:
     // Removes callback from callback list given a mapping and controller Id.
     void unregisterCallback(const Mapping& map, uint64_t ctrlId);
 
-    // Calls corresponding callback.
+    // Calls corresponding callback for a mapping that was added.
     void dispatchOnAddCallback(const Mapping& map, bool success);
 
-    // Calls corresponding callback.
+    // Calls corresponding callback for a mapping that was removed.
     void dispatchOnRmCallback(const Mapping& map, bool success);
 
     // Registers a timeout for a given pending add map request.
@@ -192,7 +192,7 @@ private:
     std::shared_ptr<Task> cleanupIgdDiscovery;                  // Task that manages an IGD search timeout after a connectivity change.
 
     std::mutex cbListMutex_;                                    // Mutex that protects the callback list.
-    std::multimap<Mapping, ControllerData> mapCbList_;          // List of mappings with their corresponding callbacks.
+    std::multimap<Mapping, ControllerData> mapCbList_;          // List of mappings with their corresponding controller's information.
 
     std::mutex pendindRequestMutex_;                            // Mutex that protects the pending map request lists.
     std::vector<PendingMapRequest> pendingAddMapList_ {};       // Vector of pending add mapping requests.
