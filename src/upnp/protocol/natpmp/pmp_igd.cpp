@@ -77,7 +77,7 @@ PMPIGD::addMapToRenew(Mapping map)
             return;
         }
     }
-    mapToRenewList_.push_back(std::move(map));
+    mapToRenewList_.push_back(Mapping(map));
 }
 
 void
@@ -130,15 +130,15 @@ bool
 PMPIGD::isMapUpForRenewal(const Mapping& map, time_point now)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    for (auto it = mapToRenewList_.cbegin(); it != mapToRenewList_.cend(); it++) {
+    for (auto it = mapToRenewList_.begin(); it != mapToRenewList_.end(); it++) {
         if (*it == map) {
-            auto& element = (*it);
-            if (element.renewal_ < now)
+            if (map.renewal_ < now)
                 return true;
             else
                 return false;
         }
     }
+    return false;
 }
 
 Mapping*
@@ -146,21 +146,20 @@ PMPIGD::getNextMappingToRenew()
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
 
-    Mapping* mapping {nullptr};
-    if (not mapToAddList_.empty()) {
-        return (Mapping*)&mapToAddList_.front();
-    } else {
-        if (not mapToRenewList_.empty()) {
-            for (auto it = mapToRenewList_.begin(); it != mapToRenewList_.end(); it++) {
-                auto& element = (*it);
-                if (!mapping or element.renewal_ < mapping->renewal_) {
-                    mapping = &element;
-                }
-            }
+    if (mapToRenewList_.empty()) {
+        return nullptr;
+    }
+
+    Mapping* mapping = &mapToRenewList_.front();
+
+    for (auto it = mapToRenewList_.begin(); it != mapToRenewList_.end(); it++) {
+        auto& element = (*it);
+        if (element.renewal_ < mapping->renewal_) {
+            mapping = &element;
         }
     }
 
-    return (Mapping*)mapping;
+    return mapping;
 }
 
 time_point
