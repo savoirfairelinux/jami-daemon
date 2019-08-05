@@ -170,6 +170,8 @@ public:
      */
     void selectUPnPIceCandidates();
 
+    void onPortOpenNotify(uint16_t* port_used, bool success);
+
     std::unique_ptr<upnp::Controller> upnp_;
 
     bool onlyIPv4Private_ {true};
@@ -768,6 +770,12 @@ IceTransport::Impl::selectUPnPIceCandidates()
             JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates", this);
         }
     }
+}
+
+void
+IceTransport::Impl::onPortOpenNotify(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("IceTransport: Port open notify");
 }
 
 void

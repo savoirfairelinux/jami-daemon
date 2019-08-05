@@ -129,10 +129,9 @@ private:
     std::map<size_t, IgdFoundCallback> igdListeners_;           // Map of valid IGD listeners with their tokens.
     size_t listenerToken_{ 0 };                                 // Last provided token for valid IGD listeners (0 is the invalid token).
 
-    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;	// Vector of available protocols.
-    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;			// List of IGDs with their corresponding public IPs.
-    mutable std::mutex igdListMutex_;							// Mutex used to access these lists and IGDs in a thread-safe manner.
-
+    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;   // Vector of available protocols.
+    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;         // List of IGDs with their corresponding public IPs.
+    mutable std::mutex igdListMutex_;                           // Mutex used to access these lists and IGDs in a thread-safe manner.
 };
 
 std::shared_ptr<UPnPContext> getUPnPContext();
