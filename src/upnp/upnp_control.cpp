@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ Controller::setIGDListener(IgdFoundCallback&& cb)
 }
 
 bool
-Controller::addMapping(uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local)
+Controller::addMapping(NotifyServiceAddMapCallback&& cb, uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local)
 {
     if (not upnpContext_) {
         return false;
@@ -72,17 +72,40 @@ Controller::addMapping(uint16_t port_desired, PortType type, bool unique, uint16
         port_local = port_desired;
     }
 
-    Mapping mapping = upnpContext_->addMapping(port_desired, port_local, type, unique);
+    using namespace std::placeholders;
+    addPortMapCbList_.emplace(std::make_pair(port_desired, port_local), cb);
+    Mapping mapping = upnpContext_->addMapping(std::bind(&Controller::onAddMapping, this, _1, _2), 
+                                               port_desired, port_local, type, unique);
     if (mapping) {
         auto usedPort = mapping.getPortExternal();
         if (port_used) {
             *port_used = usedPort;
         }
-        auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-        instanceMappings.emplace(usedPort, std::move(mapping));
         return true;
     }
     return false;
+}
+
+void
+Controller::onAddMapping(Mapping* mapping, bool success)
+{
+    JAMI_WARN("Controller: Port mapping added NOTIFY");
+    if (success and mapping) {
+        auto usedPort = mapping->getPortExternal();
+        auto& instanceMappings = mapping->getType() == PortType::UDP ? udpMappings_ : tcpMappings_;
+        Mapping map = Mapping(mapping->getPortExternal(),
+                              mapping->getPortInternal(),
+                              mapping->getType());
+        instanceMappings.emplace(usedPort, std::move(map));
+
+        for (const auto& cb: addPortMapCbList_) {
+            if (cb.first.first == mapping->getPortExternal() and
+                cb.first.second == mapping->getPortInternal()) {
+                uint16_t port = mapping->getPortExternal();    
+                cb.second(&port, success);
+            }
+        }
+    }
 }
 
 void

@@ -2018,6 +2018,8 @@ JamiAccount::mapPortUPnP()
     // return true if not using UPnP
     bool added = true;
 
+    using namespace std::placeholders;
+
     if (getUPnPActive()) {
         /* create port mapping from published port to local port to the local IP
          * note that since different RING accounts can use the same port,
@@ -2029,7 +2031,8 @@ JamiAccount::mapPortUPnP()
         uint16_t port_used;
         std::lock_guard<std::mutex> lock(upnp_mtx);
         upnp_->removeMappings();
-        added = upnp_->addMapping(dhtPort_, jami::upnp::PortType::UDP, false, &port_used);
+        added = upnp_->addMapping(std::bind(&JamiAccount::onPortMappingAdd, this, _1, _2),
+                                  dhtPort_, jami::upnp::PortType::UDP, false, &port_used);
         if (added) {
             if (port_used != dhtPort_)
                 JAMI_WARN("[Account %s] Could not map port %u for DHT, using %u instead.", getAccountID().c_str(), dhtPort_, port_used);
@@ -2042,6 +2045,12 @@ JamiAccount::mapPortUPnP()
             shared->igdChanged();
     });
     return added;
+}
+
+void 
+JamiAccount::onPortMappingAdd(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("JamiAccount: Port mapping added NOTIFY");
 }
 
 void

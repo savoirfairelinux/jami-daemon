@@ -53,6 +53,7 @@ UPnPContext::UPnPContext()
 #endif
 #if HAVE_LIBUPNP
     auto pupnp = std::make_unique<PUPnP>();
+    pupnp->setOnPortMapAdd(std::bind(&UPnPContext::onAddMapping, this, _1, _2));
     pupnp->setOnIgdChanged(std::bind(&UPnPContext::igdListChanged, this, _1, _2, _3, _4));
     pupnp->searchForIgd();
     protocolList_.push_back(std::move(pupnp));
@@ -128,7 +129,7 @@ UPnPContext::chooseRandomPort(const IGD& igd, PortType type)
 }
 
 Mapping
-UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool unique)
+UPnPContext::addMapping(NotifyControllerAddMapCallback&& cb, uint16_t port_desired, uint16_t port_local, PortType type, bool unique)
 {
     // Lock mutex on the igd list.
     std::lock_guard<std::mutex> igdListLock(igdListMutex_);
@@ -171,14 +172,23 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
     UPnPProtocol::UpnpError upnp_err = UPnPProtocol::UpnpError::ERROR_OK;
     unsigned numberRetries = 0;
 
+
+    addPortMapCbList_.emplace(std::make_pair(port_desired, port_local), cb);
+
     Mapping mapping = addMapping(igd, port_desired, port_local, type, upnp_err);
 
     while (not mapping and
            upnp_err == UPnPProtocol::UpnpError::CONFLICT_IN_MAPPING and
            numberRetries < MAX_RETRIES) {
 
-        port_desired = chooseRandomPort(*igd, type);
-
+        auto it = addPortMapCbList_.find(std::make_pair(port_desired, port_local));
+        if (it != addPortMapCbList_.end()) {
+            port_desired = chooseRandomPort(*igd, type);
+            std::swap(addPortMapCbList_[std::make_pair(port_desired, port_local)], it->second);
+            addPortMapCbList_.erase(it);
+        } else {
+            port_desired = chooseRandomPort(*igd, type);
+        }
         upnp_err = UPnPProtocol::UpnpError::ERROR_OK;
         mapping = addMapping(igd, port_desired, port_local, type, upnp_err);
         ++numberRetries;
@@ -189,6 +199,22 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
     }
 
     return mapping;
+}
+
+void
+UPnPContext::onAddMapping(Mapping* mapping, bool success)
+{
+    JAMI_WARN("UPnPContext: Port mapping added NOTIFY");
+    if (success)
+        JAMI_WARN("UPnPContext: Opened port %s:%s %s", mapping->getPortExternalStr().c_str(), mapping->getPortInternalStr().c_str(), mapping->getTypeStr().c_str());
+    else 
+        JAMI_WARN("UPnPContext: Failed to open port %s:%s %s", mapping->getPortExternalStr().c_str(), mapping->getPortInternalStr().c_str(), mapping->getTypeStr().c_str());
+    for (const auto& cb: addPortMapCbList_) {
+        if (cb.first.first == mapping->getPortExternal() and
+            cb.first.second == mapping->getPortInternal()) {    
+            cb.second(mapping, success);
+        }
+    }
 }
 
 Mapping
