@@ -479,7 +479,12 @@ private:
     /**
      * Maps require port via UPnP
      */
-    bool mapPortUPnP();
+    void mapPortUPnP();
+
+    /**
+     * Add port mapping callback function.
+     */
+    void onPortMappingAdded(uint16_t port_used, bool success);
 
     void igdChanged();
 
@@ -539,7 +544,7 @@ private:
     std::string nameServer_;
     std::string registeredName_;
 #endif
-        std::shared_ptr<dht::Logger> logger_;
+    std::shared_ptr<dht::Logger> logger_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
     std::unique_ptr<AccountManager> accountManager_;

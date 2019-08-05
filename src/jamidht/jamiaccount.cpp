@@ -91,6 +91,8 @@
 #include <string>
 #include <system_error>
 
+using namespace std::placeholders;
+
 namespace jami {
 
 namespace Migration {
@@ -1448,42 +1450,43 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     return true;
     }
 
-bool
+void
 JamiAccount::mapPortUPnP()
 {
-    // return true if not using UPnP
-    bool added = true;
+    upnp_->requestMappingAdd(std::bind(&JamiAccount::onPortMappingAdded, this, _1, _2),
+                             dhtPort_, jami::upnp::PortType::UDP, false);
+}
 
-    if (getUPnPActive()) {
-        /* create port mapping from published port to local port to the local IP
-         * note that since different RING accounts can use the same port,
-         * it may already be open, thats OK
-         *
-         * if the desired port is taken by another client, then it will try to map
-         * a different port, if succesfull, then we have to use that port for DHT
-         */
-        uint16_t port_used;
-        std::lock_guard<std::mutex> lock(upnp_mtx);
-        upnp_->removeMappings();
-        added = upnp_->addMapping(dhtPort_, jami::upnp::PortType::UDP, false, &port_used);
-        if (added) {
-            if (port_used != dhtPort_)
-                JAMI_WARN("[Account %s] Could not map port %u for DHT, using %u instead.", getAccountID().c_str(), dhtPort_, port_used);
-            dhtPortUsed_ = port_used;
-        }
+void
+JamiAccount::onPortMappingAdded(uint16_t port_used, bool success)
+{
+    auto oldPort = static_cast<in_port_t>(dhtPortUsed_);
+    auto newPort = success ? port_used : dhtPort_;
+
+    if (not success and not dht_->isRunning()) {
+        JAMI_WARN("[Account %s] Failed to open port %u: starting DHT anyways", getAccountID().c_str(), oldPort);
+        doRegister_();
+        return;
     }
 
-    upnp_->setIGDListener([w=weak()] {
-        if (auto shared = w.lock())
-            shared->igdChanged();
-    });
-    return added;
+    if (oldPort != newPort or not dht_->isRunning()){
+        dhtPortUsed_ = newPort;
+        if (not dht_->isRunning()) {
+            JAMI_WARN("[Account %s] Starting DHT on port %u", getAccountID().c_str(), newPort);
+            doRegister_();
+        } else {
+            JAMI_WARN("[Account %s] DHT port changed to %u: restarting network", getAccountID().c_str(), newPort);
+            dht_->connectivityChanged();
+        }
+    } else {
+        JAMI_WARN("[Account %s] DHT port %u opened: restarting network", getAccountID().c_str(), newPort);
+        dht_->connectivityChanged();
+    }
 }
 
 void
 JamiAccount::doRegister()
 {
-    std::unique_lock<std::mutex> lock(configurationMutex_);
     if (not isUsable()) {
         JAMI_WARN("Account must be enabled and active to register, ignoring");
         return;
@@ -1502,18 +1505,10 @@ JamiAccount::doRegister()
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
-        JAMI_DBG("UPnP: waiting for IGD to register RING account");
-        lock.unlock();
+        JAMI_DBG("UPnP: Attempting to map ports for Jami account");
         setRegistrationState(RegistrationState::TRYING);
-        std::thread{ [w=weak()] {
-            if (auto acc = w.lock()) {
-                if (not acc->mapPortUPnP())
-                    JAMI_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
-                acc->doRegister_();
-            }
-        }}.detach();
+        mapPortUPnP();
     } else {
-        lock.unlock();
         doRegister_();
     }
 }
@@ -1965,11 +1960,6 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         checkPendingCallsTask();
     }
 
-    if (upnp_) {
-        upnp_->setIGDListener();
-        upnp_->removeMappings();
-    }
-
     dht_->join();
 
     lock.unlock();
@@ -2310,30 +2300,6 @@ JamiAccount::sendTrustRequestConfirm(const std::string& to)
 }
 
 /* sync */
-
-void
-JamiAccount::igdChanged()
-{
-    if (not dht_->isRunning())
-        return;
-    if (upnp_) {
-        dht::ThreadPool::io().run([w = weak(), oldPort = static_cast<in_port_t>(dhtPortUsed_)] {
-            if (auto s = w.lock()) {
-                auto& this_ = *s;
-                if (not this_.mapPortUPnP())
-                    JAMI_WARN("UPnP: Could not map DHT port");
-                auto newPort = static_cast<in_port_t>(this_.dhtPortUsed_);
-                if (oldPort != newPort) {
-                    JAMI_WARN("DHT port changed: restarting network");
-                    this_.doRegister_();
-                } else {
-                    this_.dht_->connectivityChanged();
-                }
-            }
-        });
-    } else
-        dht_->connectivityChanged();
-}
 
 void
 JamiAccount::forEachDevice(const dht::InfoHash& to,
