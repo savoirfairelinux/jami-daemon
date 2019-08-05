@@ -705,7 +705,9 @@ bool SIPAccount::mapPortUPnP()
          * a different port, if succesfull, then we have to use that port for SIP
          */
         uint16_t port_used;
-        bool added = upnp_->addMapping(publishedPort_, jami::upnp::PortType::UDP, false, &port_used, localPort_);
+        using namespace std::placeholders;
+        bool added = upnp_->addMapping(std::bind(&SIPAccount::onPortMappingAdd, this, _1, _2),
+                                       publishedPort_, jami::upnp::PortType::UDP, false, &port_used, localPort_);
         if (added) {
             if (port_used != publishedPort_)
                 JAMI_WARN("[Account %s] Could not map published port %u for SIP, using %u instead.", getAccountID().c_str(), publishedPort_, port_used);
@@ -719,6 +721,12 @@ bool SIPAccount::mapPortUPnP()
     });
 
     return added;
+}
+
+void
+SIPAccount::onPortMappingAdd(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("SIPAccount: Port mapping added NOTIFY");
 }
 
 void SIPAccount::doRegister()

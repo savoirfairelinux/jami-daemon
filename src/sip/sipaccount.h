@@ -649,6 +649,11 @@ class SIPAccount : public SIPAccountBase {
         bool mapPortUPnP();
 
         /**
+         * Add port mapping callback function.
+         */
+        void onPortMappingAdd(uint16_t* port_used, bool success);
+
+        /**
          * Resolved IP of hostname_ (for registration)
          */
         IpAddr hostIp_;
