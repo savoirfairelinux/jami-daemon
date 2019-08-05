@@ -23,33 +23,44 @@
 
 namespace jami { namespace upnp {
 
+Mapping::Mapping(uint16_t portExternal, uint16_t portInternal,
+                 PortType type, bool unique, const std::string& description):
+                 portExternal_(portExternal),
+                 portInternal_(portInternal),
+                 type_(type),
+                 unique_(unique),
+                 description_(description)
+{
+};
+
 Mapping::Mapping(Mapping&& other) noexcept:
-    port_external_(other.port_external_),
-    port_internal_(other.port_internal_),
+    portExternal_(other.portExternal_),
+    portInternal_(other.portInternal_),
     type_(other.type_),
+    unique_(other.unique_),
     description_(std::move(other.description_))
 {
-    other.port_external_ = 0;
-    other.port_internal_ = 0;
+    other.portExternal_ = 0;
+    other.portInternal_ = 0;
 }
 
 Mapping& Mapping::operator=(Mapping&& other) noexcept
 {
     if (this != &other) {
-        port_external_ = other.port_external_;
-        other.port_external_ = 0;
-        port_internal_ = other.port_internal_;
-        other.port_internal_ = 0;
+        portExternal_ = other.portExternal_;
+        other.portExternal_ = 0;
+        portInternal_ = other.portInternal_;
+        other.portInternal_ = 0;
         type_ = other.type_;
         description_ = std::move(other.description_);
     }
     return *this;
 }
 
-bool operator== (const Mapping& cMap1, const Mapping& cMap2)
+bool operator==(const Mapping& cMap1, const Mapping& cMap2)
 {
-    return (cMap1.port_external_ == cMap2.port_external_ &&
-            cMap1.port_internal_ == cMap2.port_internal_ &&
+    return (cMap1.portExternal_ == cMap2.portExternal_ &&
+            cMap1.portInternal_ == cMap2.portInternal_ &&
             cMap1.type_ == cMap2.type_);
 }
 
@@ -58,14 +69,16 @@ bool operator!= (const Mapping& cMap1, const Mapping& cMap2)
     return !(cMap1 == cMap2);
 }
 
-std::string Mapping::toString() const
+std::string
+Mapping::toString() const
 {
     return getPortExternalStr() + ":" + getPortInternalStr() + " " + getTypeStr();
 }
 
-bool Mapping::isValid() const
+bool
+Mapping::isValid() const
 {
-    return port_external_ == 0 or port_internal_ == 0 ? false : true;
+    return portExternal_ == 0 or portInternal_ == 0 ? false : true;
 };
 
 }} // namespace jami::upnp
