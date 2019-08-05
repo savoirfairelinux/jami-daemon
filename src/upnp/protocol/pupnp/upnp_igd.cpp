@@ -23,8 +23,8 @@
 
 namespace jami { namespace upnp {
 
-UPnPIGD::UPnPIGD(std::string&& UDN, std::string&& baseURL, 
-                 std::string&& friendlyName, std::string&& serviceType, 
+UPnPIGD::UPnPIGD(std::string&& UDN, std::string&& baseURL,
+                 std::string&& friendlyName, std::string&& serviceType,
                  std::string&& serviceId, std::string && locationURL,
                  std::string&& controlURL, std::string&& eventSubURL,
                  IpAddr&& localIp, IpAddr&& publicIp):
@@ -38,6 +38,12 @@ UPnPIGD::UPnPIGD(std::string&& UDN, std::string&& baseURL,
     locationURL_ = std::move(locationURL);
     controlURL_ = std::move(controlURL);
     eventSubURL_ = std::move(eventSubURL);
+}
+
+UPnPIGD::~UPnPIGD()
+{
+    udpMappings_.clear();
+    tcpMappings_.clear();
 }
 
 bool

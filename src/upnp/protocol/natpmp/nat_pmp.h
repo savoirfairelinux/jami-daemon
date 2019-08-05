@@ -39,11 +39,25 @@
 #include <atomic>
 #include <thread>
 
+#ifndef _WIN32
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
+
+#define NATPMP_MAX_INTERFACES     (256)
+#define NATPMP_DEFAULT_INTERFACE    (1)
+#define NATPMP_INVALID_SOCKET      (-1)
+
 namespace jami {
 class IpAddr;
 }
 
 namespace jami { namespace upnp {
+
+constexpr static unsigned int ADD_MAP_LIFETIME {3600};
+constexpr static unsigned int REMOVE_MAP_LIFETIME {0};
 
 class NatPmp : public UPnPProtocol
 {
@@ -57,37 +71,52 @@ public:
     // Notifies a change in network.
     void clearIgds() override;
 
-    // Renew pmp_igd.
+    // Renew IGD.
     void searchForIgd() override;
 
-    // Tries to add mapping. Assumes mutex is already locked.
-    Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) override;
+    // Tries to add mapping.
+    void requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type) override;
 
     // Removes a mapping.
-    void removeMapping(const Mapping& igdMapping) override;
+    void requestMappingRemove(const Mapping& igdMapping) override;
 
     // Removes all local mappings of IGD that we're added by the application.
     void removeAllLocalMappings(IGD* igd) override;
 
 private:
-    // Searches for an IGD.
-    void searchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& natpmp);
+    // Searches for an IGD discoverable by natpmp.
+    void searchForPmpIgd();
 
-    // Adds (or deletes) a port mapping.
-    void addPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool remove=false) const;
+    // Adds a port mapping.
+    void addPortMapping(Mapping& mapping, bool renew);
+
+    // Removes a port mapping.
+    void removePortMapping(Mapping& mapping);
 
     // Deletes all port mappings.
-    void deleteAllPortMappings(const PMPIGD& pmp_igd, natpmp_t& natpmp, int proto) const;
+    void deleteAllPortMappings(int proto);
+
+    // Clears the natpmp struct.
+    void clearNatPmpHdl(natpmp_t& hdl);
+
+    // Returns gateway based on the local host address.
+    std::string getGateway(char* localHost);
+
+    // Gets NAT-PMP error code string.
+    std::string getNatPmpErrorStr(int errorCode);
 
 private:
     NON_COPYABLE(NatPmp);
 
-    std::mutex pmpMutex_ {};                            // NatPmp mutex.
-    std::condition_variable pmpCv_ {};                  // Condition variable for thread-safe signaling.
-    std::atomic_bool pmpRun_ { true };                 // Variable to allow the thread to run.
-    std::thread pmpThread_ {};                          // NatPmp thread.
+    std::mutex pmpThreadMutex_ {};          // Thread mutex.
+    std::condition_variable pmpCv_ {};      // Condition variable for thread-safe signaling.
+    std::atomic_bool pmpRun_ { true };      // Variable to allow the thread to run.
+    std::thread pmpThread_ {};              // NatPmp thread.
 
-    std::shared_ptr<PMPIGD> pmpIGD_ {};                 // IGD discovered by NatPmp.
+    std::mutex natpmpMutex_;                // NatPmp handle mutex.
+    natpmp_t natpmpHdl_;                    // NatPmp handle.
+
+    std::unique_ptr<PMPIGD> pmpIgd_;        // IGD for NatPmp.
 };
 
 }} // namespace jami::upnp
