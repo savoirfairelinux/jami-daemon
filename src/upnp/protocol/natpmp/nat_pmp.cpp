@@ -78,7 +78,7 @@ NatPmp::NatPmp()
 NatPmp::~NatPmp()
 {
     {
-        std::lock_guard<std::mutex> lock(validIgdMutex);
+        std::lock_guard<std::mutex> lock(validIgdMutex_);
         if (pmpIGD_) {
             {
                 std::lock_guard<std::mutex> lk(pmpMutex_);
@@ -100,7 +100,7 @@ void
 NatPmp::clearIGDs()
 {
     // Lock valid IGD.
-    std::lock_guard<std::mutex> lock(validIgdMutex);
+    std::lock_guard<std::mutex> lock(validIgdMutex_);
 
     // Clear internal IGD (nat pmp only supports one).
     if (pmpIGD_) {
@@ -116,7 +116,7 @@ void
 NatPmp::searchForIGD()
 {
     // Lock valid IGD.
-    std::lock_guard<std::mutex> lock(validIgdMutex);
+    std::lock_guard<std::mutex> lock(validIgdMutex_);
     if (pmpIGD_) {
         // Clear internal IGD (nat pmp only supports one).
         std::lock_guard<std::mutex> lk(pmpMutex_);
@@ -181,7 +181,7 @@ NatPmp::removeAllLocalMappings(IGD* /*igd*/)
 void
 NatPmp::removeMapping(const Mapping& igdMapping)
 {
-    std::lock_guard<std::mutex> lock(validIgdMutex);
+    std::lock_guard<std::mutex> lock(validIgdMutex_);
 
     if (not pmpIGD_) {
         JAMI_WARN("NAT-PMP: no valid IGD available");
@@ -249,7 +249,7 @@ NatPmp::searchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& natpmp)
                     }
 
                     // Keep IGD internally.
-                    std::lock_guard<std::mutex> lock(validIgdMutex);
+                    std::lock_guard<std::mutex> lock(validIgdMutex_);
                     pmpIGD_ = pmp_igd;
                 }
             }

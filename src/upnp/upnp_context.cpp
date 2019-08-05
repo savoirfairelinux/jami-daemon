@@ -285,7 +285,8 @@ UPnPContext::getIgdProtocol(IGD* igd)
 bool
 UPnPContext::igdListChanged(UPnPProtocol* protocol, IGD* igd, IpAddr publicIpAddr, bool added)
 {
-    std::lock_guard<std::mutex> lock(igdListMutex_);
+    std::lock_guard<std::mutex> igdListLock(igdListMutex_);
+
     if (added) {
         return addIgdToList(protocol, igd);
     } else {

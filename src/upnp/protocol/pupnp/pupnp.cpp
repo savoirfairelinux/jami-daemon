@@ -124,7 +124,7 @@ PUPnP::~PUPnP()
 {
     // Clear all the lists.
     {
-        std::lock_guard<std::mutex> lk(validIgdMutex);
+        std::lock_guard<std::mutex> lk(validIgdMutex_);
         for(auto const &it : validIgdList_) {
             if (auto igd = dynamic_cast<UPnPIGD*>(it.second.get()))
                 actionDeletePortMappingsByDesc(*igd, Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
@@ -145,7 +145,7 @@ void
 PUPnP::clearIGDs()
 {
     // Lock internal IGD list.
-    std::lock_guard<std::mutex> lk(validIgdMutex);
+    std::lock_guard<std::mutex> lk(validIgdMutex_);
 
     // Clear internal IGD list.
     validIgdList_.clear();
@@ -211,7 +211,7 @@ void
 PUPnP::removeMapping(const Mapping& igdMapping)
 {
     // Lock mutex to protect IGD list.
-    std::lock_guard<std::mutex> lk(validIgdMutex);
+    std::lock_guard<std::mutex> lk(validIgdMutex_);
 
     // Iterate over all IGDs in internal list and try to remove selected mapping.
     for (auto const& item : validIgdList_) {
@@ -329,7 +329,7 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
 
         // Check if this device ID is already in the list.
         std::string cpDeviceId = UpnpDiscovery_get_DeviceID_cstr(d_event);
-        std::lock_guard<std::mutex> lk(validIgdMutex);
+        std::lock_guard<std::mutex> lk(validIgdMutex_);
         if (cpDeviceList_.count(cpDeviceId) > 0) {
             break;
         }
@@ -436,7 +436,7 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
     {
         const UpnpDiscovery *d_event = (const UpnpDiscovery *)event;
 
-        std::lock_guard<std::mutex> lk(validIgdMutex);
+        std::lock_guard<std::mutex> lk(validIgdMutex_);
 
         // Remvoe device Id from list.
         std::string cpDeviceId(UpnpDiscovery_get_DeviceID_cstr(d_event));
