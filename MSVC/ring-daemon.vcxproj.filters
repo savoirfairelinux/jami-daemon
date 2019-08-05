@@ -68,6 +68,9 @@
     <Filter Include="Source Files\upnp\protocol\pupnp">
       <UniqueIdentifier>{a75d6869-9eb3-4cdd-8006-08b5ee5e6050}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\upnp\protocol\natpmp">
+      <UniqueIdentifier>{95e18c55-2b23-4c7d-9d4d-d829da55dc95}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\hooks\urlhook.cpp">
@@ -432,6 +435,12 @@
     </ClCompile>
     <ClCompile Include="..\src\jamidht\server_account_manager.cpp">
       <Filter>Source Files\jamidht</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\protocol\natpmp\nat_pmp.cpp">
+      <Filter>Source Files\upnp\protocol\natpmp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\protocol\natpmp\pmp_igd.cpp">
+      <Filter>Source Files\upnp\protocol\natpmp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -893,6 +902,12 @@
     </ClInclude>
     <ClInclude Include="..\src\jamidht\server_account_manager.h">
       <Filter>Source Files\jamidht</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\protocol\natpmp\nat_pmp.h">
+      <Filter>Source Files\upnp\protocol\natpmp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\protocol\natpmp\pmp_igd.h">
+      <Filter>Source Files\upnp\protocol\natpmp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
