@@ -145,9 +145,10 @@ Account::enableUpnp(bool state)
 {
     std::lock_guard<std::mutex> lk {upnp_mtx};
 
-    if (state and !upnp_)
+    if (state and !upnp_) {
+        using namespace std::placeholders;
         upnp_.reset(new upnp::Controller());
-    else if (!state and upnp_)
+    } else if (!state and upnp_)
         upnp_.reset();
 }
 
@@ -453,7 +454,7 @@ Account::getUPnPIpAddress() const
 {
     std::lock_guard<std::mutex> lk(upnp_mtx);
     if (upnp_)
-        return upnp_->getExternalIP();
+        return upnp_->getExternalIp();
     return {};
 }
 
@@ -466,7 +467,7 @@ Account::getUPnPActive() const
 {
     std::lock_guard<std::mutex> lk(upnp_mtx);
     if (upnp_)
-        return upnp_->hasValidIGD();
+        return upnp_->hasValidIgd();
     return false;
 }
 
