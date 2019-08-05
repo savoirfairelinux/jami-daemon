@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,8 +32,10 @@
 #include "logger.h"
 #include "ip_utils.h"
 
+#include <list>
 #include <memory>
 #include <chrono>
+#include <functional>
 
 namespace jami {
 class IpAddr;
@@ -41,25 +43,36 @@ class IpAddr;
 
 namespace jami { namespace upnp {
 
+using namespace std::placeholders;
+
 class UPnPContext;
 
 class Controller
 {
 public:
-    Controller();
+    using NotifyServiceCallback = std::function<void(uint16_t*, bool)>;
+    using cbMap = std::map<std::pair<uint16_t, uint16_t>, NotifyServiceCallback>;
+    using cbMapItr = std::map<std::pair<uint16_t, uint16_t>, NotifyServiceCallback>::iterator;
+    using portMapItr = PortMapLocal::iterator;
+
+    Controller(bool keepCb = true);
     ~Controller();
+    bool operator==(Controller& other) const;
 
     // Checks if a valid IGD is available.
-    bool hasValidIGD();
+    bool hasValidIgd();
 
-    // Sets or clears a listener for valid IGDs. There is one listener per controller.
-    void setIGDListener(IgdFoundCallback&& cb = {});
+    // Requests to open a port. Gives option to use unique port (i.e. not one that is already in use).
+    void addMapping(NotifyServiceCallback&& cb, uint16_t port_desired, PortType type, bool unique, uint16_t port_local = 0);
 
-    // Adds a mapping. Gives option to use unique port (i.e. not one that is already in use).
-    bool addMapping(uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local = 0);
+    // Callback function for when mapping is added.
+    void onAddMapping(Mapping* mapping, bool success);
 
     // Removes all mappings added by this instance.
     void removeMappings();
+
+    // Callback function for when mapping is removed.
+    void onRemoveMapping(Mapping* mapping, bool success);
 
     // Gets the external ip of the first valid IGD in the list.
     IpAddr getExternalIP() const;
@@ -72,12 +85,15 @@ private:
     void removeMappings(PortType type);
 
 private:
-    std::shared_ptr<UPnPContext> upnpContext_;		// Context from which the controller executes the wanted commands.
+    std::shared_ptr<UPnPContext> upnpContext_;  // Context from which the controller executes the wanted commands.
 
-    PortMapLocal udpMappings_;						// List of UDP mappings created by this instance.
-    PortMapLocal tcpMappings_;						// List of TCP mappings created by this instance.
+    PortMapLocal udpMappings_;                  // List of UDP mappings created by this instance.
+    PortMapLocal tcpMappings_;                  // List of TCP mappings created by this instance.
 
-    size_t listToken_ {0};							// IGD listener token.
+    bool keepCb_ {false};                       // Variable that indicates if the controller wants to keep it's callback in the list after a connectivity change.
+
+    cbMap mapCbList_;                           // List of mappings with their corresponding callbacks.
+
 };
 
 }} // namespace jami::upnp

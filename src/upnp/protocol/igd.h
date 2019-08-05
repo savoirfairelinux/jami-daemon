@@ -31,9 +31,8 @@
 
 namespace jami { namespace upnp {
 
-// Subclasses to make it easier to differentiate and cast maps of port mappings.
-class PortMapLocal : public std::map<uint16_t, Mapping> {};
-class PortMapGlobal : public std::map<uint16_t, GlobalMapping> {};
+using PortMapLocal = std::map<uint16_t, Mapping>;
+using PortMapGlobal = std::map<uint16_t, GlobalMapping>;
 
 class IGD
 {
