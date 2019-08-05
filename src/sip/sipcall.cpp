@@ -94,9 +94,10 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 #endif
     , sdp_(new Sdp(id))
 {
-    if (account.getUPnPActive())
-        upnp_.reset(new upnp::Controller());
-
+    if (account.getUPnPActive()) {
+        using namespace std::placeholders;
+        upnp_.reset(new upnp::Controller(false));
+    }
     setCallMediaLocal();
 }
 
@@ -1190,6 +1191,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
 void
 SIPCall::openPortsUPnP()
 {
+    using namespace std::placeholders;
     if (upnp_) {
         /**
          * Try to open the desired ports with UPnP,
@@ -1200,21 +1202,47 @@ SIPCall::openPortsUPnP()
          *       as used, the old port should be "released"
          */
         JAMI_DBG("[call:%s] opening ports via UPNP for SDP session", getCallId().c_str());
-        uint16_t audio_port_used;
-        if (upnp_->addMapping(sdp_->getLocalAudioPort(), upnp::PortType::UDP, true, &audio_port_used)) {
-            uint16_t control_port_used;
-            if (upnp_->addMapping(sdp_->getLocalAudioControlPort(), upnp::PortType::UDP, true, &control_port_used)) {
-                sdp_->setLocalPublishedAudioPorts(audio_port_used, control_port_used);
-            }
+        upnp_->addMapping(std::bind(&SIPCall::onMediaPortMappingAdd, this, _1, _2),
+                          sdp_->getLocalAudioPort(), upnp::PortType::UDP, true);
+
+#ifdef ENABLE_VIDEO
+        upnp_->addMapping(std::bind(&SIPCall::onMediaPortMappingAdd, this, _1, _2),
+                          sdp_->getLocalVideoPort(), upnp::PortType::UDP, true);
+
+#endif
+    }
+}
+
+void
+SIPCall::onMediaPortMappingAdd(uint16_t* port_used, bool success)
+{
+    using namespace std::placeholders;
+    JAMI_WARN("SIPCall: Media port mapping added NOTIFY");
+    if (success) {
+        if (*port_used == sdp_->getLocalAudioPort()) {
+            upnp_->addMapping(std::bind(&SIPCall::onControlPortMappingAdd, this, _1, _2),
+                              sdp_->getLocalAudioControlPort(), upnp::PortType::UDP, true);
         }
 #ifdef ENABLE_VIDEO
-        uint16_t video_port_used;
-        if (upnp_->addMapping(sdp_->getLocalVideoPort(), upnp::PortType::UDP, true, &video_port_used)) {
+        if (*port_used == sdp_->getLocalVideoPort()) {
             uint16_t control_port_used;
-            if (upnp_->addMapping(sdp_->getLocalVideoControlPort(), upnp::PortType::UDP, true, &control_port_used)) {
-                sdp_->setLocalPublishedVideoPorts(video_port_used, control_port_used);
-            }
+            upnp_->addMapping(std::bind(&SIPCall::onControlPortMappingAdd, this, _1, _2),
+                              sdp_->getLocalVideoControlPort(), upnp::PortType::UDP, true);
         }
+#endif
+    }
+}
+
+void
+SIPCall::onControlPortMappingAdd(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("SIPCall: Control port mapping added NOTIFY");
+    if (success) {
+        if (*port_used == sdp_->getLocalAudioControlPort())
+            sdp_->setLocalPublishedAudioPorts(sdp_->getLocalAudioPort(), sdp_->getLocalAudioControlPort());
+#ifdef ENABLE_VIDEO
+        if (*port_used == sdp_->getLocalVideoControlPort())
+            sdp_->setLocalPublishedVideoPorts(sdp_->getLocalVideoPort(), sdp_->getLocalVideoControlPort());
 #endif
     }
 }
