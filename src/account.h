@@ -303,6 +303,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         IpAddr getUPnPIpAddress() const;
 
+        void onPortOpenNotify(uint16_t* port_used, bool success);
+
         virtual const IceTransportOptions getIceOptions() const noexcept;
 
         /**

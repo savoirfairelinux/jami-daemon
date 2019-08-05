@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,6 +34,9 @@
 
 #include <memory>
 #include <chrono>
+#include <functional>
+
+using PortOpenNotifyServiceCallback = std::function<void(uint16_t*, bool)>;
 
 namespace jami {
 class IpAddr;
@@ -46,7 +49,7 @@ class UPnPContext;
 class Controller
 {
 public:
-    Controller();
+    Controller(upnp::UPnPProtocol::Service&& id, PortOpenNotifyServiceCallback&& portOpenCb);
     ~Controller();
 
     // Checks if a valid IGD is available.
@@ -57,6 +60,9 @@ public:
 
     // Adds a mapping. Gives option to use unique port (i.e. not one that is already in use).
     bool addMapping(uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local = 0);
+
+    // Goes through the global open port callback list and calls the corresponding one.
+    void onPortOpenComplete(upnp::UPnPProtocol::Service id, uint16_t* port_used, bool success);
 
     // Removes all mappings added by this instance.
     void removeMappings();
@@ -72,12 +78,19 @@ private:
     void removeMappings(PortType type);
 
 private:
-    std::shared_ptr<UPnPContext> upnpContext_;		// Context from which the controller executes the wanted commands.
+    std::shared_ptr<UPnPContext> upnpContext_;          // Context from which the controller executes the wanted commands.
 
-    PortMapLocal udpMappings_;						// List of UDP mappings created by this instance.
-    PortMapLocal tcpMappings_;						// List of TCP mappings created by this instance.
+    PortMapLocal udpMappings_;                          // List of UDP mappings created by this instance.
+    PortMapLocal tcpMappings_;                          // List of TCP mappings created by this instance.
 
-    size_t listToken_ {0};							// IGD listener token.
+    size_t listToken_ {0};                              // IGD listener token.
+
+    upnp::UPnPProtocol::Service id_ {};                 // Id that represents the owner of the controller.            
+
+    PortOpenNotifyServiceCallback notifyPortOpenCb_;    // Callback for notifying the service when the port is opened.
 };
+
+// Global callback list.
+static std::list<std::pair<upnp::UPnPProtocol::Service, std::function<void(uint16_t*, bool)>>> portOpenCbList;
 
 }} // namespace jami::upnp

@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,6 +52,14 @@ constexpr static const char * UPNP_WANPPP_SERVICE = "urn:schemas-upnp-org:servic
 class UPnPProtocol
 {
 public:
+    enum class Service : int {
+        UNKNOWN = -1,
+        JAMI_ACCOUNT,
+        ICE_TRANSPORT,
+        SIP_ACCOUT,
+        SIP_CALL 
+    };
+    
     enum class UpnpError : int {
         INVALID_ERR = -1,
         ERROR_OK,
@@ -65,6 +73,7 @@ public:
     };
 
     using IgdListChangedCallback = std::function<bool(UPnPProtocol*, IGD*, IpAddr, bool)>;
+    using PortOpenNotifyContextCallback = std::function<void(upnp::UPnPProtocol::Service, Mapping*, uint16_t*, bool)>;
 
     UPnPProtocol(){};
     virtual ~UPnPProtocol(){};
@@ -89,11 +98,15 @@ public:
 
     // Set the IGD list callback handler.
     void setOnIgdChanged(IgdListChangedCallback&& cb) { updateIgdListCb_ = std::move(cb); }
+    
+    // Sets open port callback towards context.
+    void setOnPortOpenComplete(PortOpenNotifyContextCallback&& cb) { notifyPortOpenCb_ = std::move(cb); }
 
 protected:
-    mutable std::mutex validIgdMutex_;          // Mutex used to access these lists and IGDs in a thread-safe manner.
+    mutable std::mutex validIgdMutex_;                  // Mutex used to access these lists and IGDs in a thread-safe manner.
 
-    IgdListChangedCallback updateIgdListCb_;    // Callback for when the IGD list changes.
+    IgdListChangedCallback updateIgdListCb_;            // Callback for when the IGD list changes.
+    PortOpenNotifyContextCallback notifyPortOpenCb_;    // Callback for notifying the context when the port is opened.
 };
 
 }} // namespace jami::upnp

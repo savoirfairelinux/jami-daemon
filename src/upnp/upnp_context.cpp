@@ -53,6 +53,7 @@ UPnPContext::UPnPContext()
 #endif
 #if HAVE_LIBUPNP
     auto pupnp = std::make_unique<PUPnP>();
+    pupnp->setOnPortOpenComplete(std::bind(&UPnPContext::onPortOpenComplete, this, _1, _2, _3, _4));
     pupnp->setOnIgdChanged(std::bind(&UPnPContext::igdListChanged, this, _1, _2, _3, _4));
     pupnp->searchForIGD();
     protocolList_.push_back(std::move(pupnp));
@@ -189,6 +190,40 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
     }
 
     return mapping;
+}
+
+void
+UPnPContext::onPortOpenComplete(upnp::UPnPProtocol::Service request, Mapping* mapping, uint16_t* port_used, bool success)
+{
+    switch(request)
+    {
+    case upnp::UPnPProtocol::Service::JAMI_ACCOUNT:
+        JAMI_WARN("UPnPContext: %s port %s:%s %s for Jami Account.", success ? "Opened" : "Failed to open", 
+                                                                     mapping->getPortInternalStr().c_str(),
+                                                                     mapping->getPortExternalStr().c_str(),
+                                                                     mapping->getTypeStr().c_str());
+        break;
+    case upnp::UPnPProtocol::Service::ICE_TRANSPORT:
+        JAMI_WARN("UPnPContext: Opened port %s:%s %s for Ice Transport.", success ? "Opened" : "Failed to open", 
+                                                                          mapping->getPortInternalStr().c_str(),
+                                                                          mapping->getPortExternalStr().c_str(),
+                                                                          mapping->getTypeStr().c_str());
+        break;
+    case upnp::UPnPProtocol::Service::SIP_ACCOUT:
+        JAMI_WARN("UPnPContext: Opened port %s:%s %s for Sip Account.", success ? "Opened" : "Failed to open", 
+                                                                        mapping->getPortInternalStr().c_str(),
+                                                                        mapping->getPortExternalStr().c_str(),
+                                                                        mapping->getTypeStr().c_str());
+        break;
+    case upnp::UPnPProtocol::Service::SIP_CALL:
+        JAMI_WARN("UPnPContext: Opened port %s:%s %s for Sip Call.", success ? "Opened" : "Failed to open", 
+                                                                     mapping->getPortInternalStr().c_str(),
+                                                                     mapping->getPortExternalStr().c_str(),
+                                                                     mapping->getTypeStr().c_str());
+        break;
+    default: break;
+    }
+    notifyPortOpenCb_(request, port_used, success);
 }
 
 Mapping

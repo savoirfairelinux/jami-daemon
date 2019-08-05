@@ -2045,6 +2045,12 @@ JamiAccount::mapPortUPnP()
 }
 
 void
+JamiAccount::onPortOpenNotify(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("JamiAccount: Port open notify");
+}
+
+void
 JamiAccount::doRegister()
 {
     std::unique_lock<std::mutex> lock(configurationMutex_);
