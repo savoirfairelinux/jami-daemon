@@ -515,6 +515,8 @@ class JamiAccount : public SIPAccountBase {
          */
         bool mapPortUPnP();
 
+        void onPortOpenNotify(uint16_t* port_used, bool success);
+
         void igdChanged();
 
         dht::DhtRunner dht_ {};
