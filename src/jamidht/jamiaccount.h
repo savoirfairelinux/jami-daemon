@@ -513,9 +513,12 @@ class JamiAccount : public SIPAccountBase {
         /**
          * Maps require port via UPnP
          */
-        bool mapPortUPnP();
+        void mapPortUPnP();
 
-        void igdChanged();
+        /**
+         * Add port mapping callback function.
+         */
+        void onPortMappingAdd(uint16_t* port_used, bool success);
 
         dht::DhtRunner dht_ {};
         dht::crypto::Identity identity_ {};
