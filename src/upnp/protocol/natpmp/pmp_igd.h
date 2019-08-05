@@ -98,11 +98,6 @@ public:
     std::vector<Mapping> mapToRemoveList_ {};     // List of maps to remove.
 
     time_point renewal_ {time_point::min()};      // Renewal time of 1 minute.
-
-    // Upon creation, the thread will clear all the previously opened
-    // mappings (if there are any). The NatPmp class will then set the
-    // clearAll variable to false.
-    std::atomic_bool clearAll_ {true};
 };
 
 }} // namespace jami::upnp
