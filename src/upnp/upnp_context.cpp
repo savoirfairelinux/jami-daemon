@@ -45,12 +45,12 @@ getUPnPContext()
 UPnPContext::UPnPContext()
 {
 #if HAVE_LIBNATPMP
-    auto natPmp = std::make_unique<NatPmp>();
-    natPmp->setOnPortMapAdd(std::bind(&UPnPContext::onMappingAdded, this, _1, _2, _3));
-    natPmp->setOnPortMapRemove(std::bind(&UPnPContext::onMappingRemoved, this, _1, _2, _3));
-    natPmp->setOnIgdChanged(std::bind(&UPnPContext::onIgdListChanged, this, _1, _2, _3, _4));
-    natPmp->searchForIgd();
-    protocolList_.push_back(std::move(natPmp));
+    auto natpmp = std::make_unique<NatPmp>();
+    natpmp->setOnPortMapAdd(std::bind(&UPnPContext::onMappingAdded, this, _1, _2, _3));
+    natpmp->setOnPortMapRemove(std::bind(&UPnPContext::onMappingRemoved, this, _1, _2, _3));
+    natpmp->setOnIgdChanged(std::bind(&UPnPContext::onIgdListChanged, this, _1, _2, _3, _4));
+    natpmp->searchForIgd();
+    protocolList_.push_back(std::move(natpmp));
 #endif
 #if HAVE_LIBUPNP
     auto pupnp = std::make_unique<PUPnP>();
@@ -82,7 +82,6 @@ void
 UPnPContext::clearCallbacks(const PortMapLocal& mapList, uint16_t ctrlId)
 {
     std::vector<Mapping> mapCbToRm;
-
     {
         std::lock_guard<std::mutex> lk(cbListMutex_);
 
@@ -135,21 +134,22 @@ void
 UPnPContext::connectivityChanged()
 {
     // Lock all the mutexes.
-    std::unique_lock<std::mutex> lk1(cbListMutex_);
-    std::lock_guard<std::mutex> lk2(igdListMutex_);
-    std::lock_guard<std::mutex> lk3(pendindRequestMutex_);
+    std::lock_guard<std::mutex> lk1(igdListMutex_);
+    std::lock_guard<std::mutex> lk2(pendindRequestMutex_);
 
-    // Notify controllers that a connectivity change has occured.
+    // Make list of controllers that need to be notified.
     std::vector<ControllerData> ctrlList;
-    for (auto& cb : mapCbList_) {
-        cb.second.isNotified = false;
-        ctrlList.emplace_back(cb.second);
+    {
+        std::lock_guard<std::mutex> lk3(cbListMutex_);
+        for (auto& cb : mapCbList_) {
+            cb.second.isNotified = false;
+            ctrlList.emplace_back(cb.second);
+        }
     }
 
-    lk1.unlock();
+    // Notify controllers that a connectivity change has occured.
     for (auto const& ctrl : ctrlList)
         ctrl.onConnectionChanged();
-    lk1.lock();
 
     // Clear all IGDs from the protocols.
     for (auto const& protocol : protocolList_)
@@ -164,21 +164,26 @@ UPnPContext::connectivityChanged()
     pendingAddMapList_.clear();
     pendingRmMapList_.clear();
 
-    // Make list of callbacks we don't want to keep through a connectivity change.
-    std::vector<Mapping> mapToRemove;
-    for (auto const& cb : mapCbList_) {
-        if (not cb.second.keepCb)
-            mapToRemove.emplace_back(Mapping(cb.first));
-    }
+    {
+        std::lock_guard<std::mutex> lk4(cbListMutex_);
 
-    // Only remove registered callbacks that we don't want to keep.
-    for (auto& map : mapToRemove)
-        mapCbList_.erase(map);
+        // Make list of callbacks we don't want to keep through a connectivity change.
+        std::vector<Mapping> mapToRemove;
+        for (auto const& cb : mapCbList_) {
+            if (not cb.second.keepCb)
+                mapToRemove.emplace_back(Mapping(cb.first));
+        }
+
+        // Only remove registered callbacks that we don't want to keep.
+        for (auto& map : mapToRemove)
+            mapCbList_.erase(map);
+    }
 
     // Restart the search for new IGDs.
     for (auto const& protocol : protocolList_)
         protocol->searchForIgd();
 
+    // Reset the schedules discovery cleanup task.
     if (cleanupIgdDiscovery) {
         cleanupIgdDiscovery.reset();
     }
@@ -550,7 +555,6 @@ UPnPContext::dispatchOnAddCallback(const Mapping& map, bool success)
 void
 UPnPContext::dispatchOnRmCallback(const Mapping& map, bool success)
 {
-
     std::vector<MapCb> cbList;
     {
         std::lock_guard<std::mutex> lk(cbListMutex_);

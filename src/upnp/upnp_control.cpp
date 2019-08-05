@@ -170,9 +170,8 @@ Controller::requestAllMappingRemove(PortType type) {
         return;
 
     auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-    for (auto it = instanceMappings.cbegin(); it != instanceMappings.cend(); it++) {
+    for (auto it = instanceMappings.cbegin(); it != instanceMappings.cend(); it++)
         upnpContext_->requestMappingRemove(it->second);
-    }
 }
 
 bool
@@ -182,9 +181,8 @@ Controller::isLocalMapPresent(const unsigned int portExternal, PortType type)
 
     auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
     for (auto it = instanceMappings.cbegin(); it != instanceMappings.cend(); it++) {
-        if (it->second.getPortExternal() == portExternal) {
+        if (it->second.getPortExternal() == portExternal)
             return true;
-        }
     }
     return false;
 }
@@ -196,9 +194,8 @@ Controller::isLocalMapPresent(const Mapping& map)
 
     auto& instanceMappings = map.getType() == PortType::UDP ? udpMappings_ : tcpMappings_;
     for (auto it = instanceMappings.cbegin(); it != instanceMappings.cend(); it++) {
-        if (it->second == map) {
+        if (it->second == map)
             return true;
-        }
     }
     return false;
 }
@@ -219,9 +216,8 @@ Controller::removeLocalMap(const Mapping& map)
 
     auto& instanceMappings = map.getType() == PortType::UDP ? udpMappings_ : tcpMappings_;
     for (auto it = instanceMappings.cbegin(); it != instanceMappings.cend(); it++) {
-        if (it->second == map) {
+        if (it->second == map)
             instanceMappings.erase(it);
-        }
     }
 }
 
