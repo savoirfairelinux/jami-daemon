@@ -116,6 +116,172 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
     return ipList;
 }
 
+int
+ip_utils::getHostName(char *out, size_t out_len)
+{
+    char tempstr[INET_ADDRSTRLEN];
+    const char *p = NULL;
+
+#ifdef _WIN32
+
+    struct hostent* h = NULL;
+    struct sockaddr_in localAddr;
+
+    memset(&localAddr, 0, sizeof(localAddr));
+
+    gethostname(out, out_len);
+    h = gethostbyname(out);
+    if (h != NULL) {
+        memcpy(&localAddr.sin_addr, h->h_addr_list[0], 4);
+        p = inet_ntop(AF_INET, &localAddr.sin_addr, tempstr, sizeof(tempstr));
+        if (p)
+            strncpy(out, p, out_len);
+        else
+            return -1;
+    } else {
+        return -1;
+    }
+
+#elif (defined(BSD) && BSD >= 199306) || defined(__FreeBSD_kernel__)
+
+    int retVal = 0;
+    struct ifaddrs* ifap;
+    struct ifaddrs* ifa;
+
+    if (getifaddrs(&ifap) != 0)
+        return -1;
+
+    // Cycle through available interfaces.
+    for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
+
+        // Skip loopback, point-to-point and down interfaces.
+        // except don't skip down interfaces if we're trying to get
+        // a list of configurable interfaces.
+        if ((ifa->ifa_flags & IFF_LOOPBACK) || (!( ifa->ifa_flags & IFF_UP)))
+            continue;
+
+        if (ifa->ifa_addr->sa_family == AF_INET) {
+            if (((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr.s_addr == htonl(INADDR_LOOPBACK)) {
+                // We don't want the loopback interface. Go to next one.
+                continue;
+            }
+
+            p = inet_ntop(AF_INET, &((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr, tempstr, sizeof(tempstr));
+            if (p)
+                strncpy(out, p, out_len);
+            else
+                retVal = -1;
+            }
+            break;
+        }
+    }
+    freeifaddrs(ifap);
+
+    retVal = ifa ? 0 : -1;
+    return retVal;
+
+#else
+
+    struct ifconf ifConf;
+    struct ifreq ifReq;
+    struct sockaddr_in localAddr;
+
+    char szBuffer[MAX_INTERFACE * sizeof (struct ifreq)];
+    int nResult;
+    int localSock;
+
+    memset(&ifConf,  0, sizeof(ifConf));
+    memset(&ifReq,   0, sizeof(ifReq));
+    memset(szBuffer, 0, sizeof(szBuffer));
+    memset(&localAddr, 0, sizeof(localAddr));
+
+    // Create an unbound datagram socket to do the SIOCGIFADDR ioctl on.
+    localSock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if (localSock == INVALID_SOCKET)
+        return -1;
+
+    /* Get the interface configuration information... */
+    ifConf.ifc_len = (int)sizeof szBuffer;
+    ifConf.ifc_ifcu.ifcu_buf = (caddr_t) szBuffer;
+    nResult = ioctl(localSock, SIOCGIFCONF, &ifConf);
+    if (nResult < 0) {
+        close(localSock);
+        return -1;
+    }
+
+    unsigned int i;
+    unsigned int j = 0;
+
+    // Cycle through the list of interfaces looking for IP addresses.
+    for (i = 0u; i < (unsigned int)ifConf.ifc_len && j < MIN_INTERFACE; ) {
+
+        struct ifreq *pifReq = (struct ifreq *)((caddr_t)ifConf.ifc_req + i);
+        i += sizeof *pifReq;
+
+        // See if this is the sort of interface we want to deal with.
+        memset(ifReq.ifr_name, 0, sizeof(ifReq.ifr_name));
+        strncpy(ifReq.ifr_name, pifReq->ifr_name, sizeof(ifReq.ifr_name) - 1);
+        ioctl(localSock, SIOCGIFFLAGS, &ifReq);
+
+        // Skip loopback, point-to-point and down interfaces.
+        // except don't skip down interfaces if we're trying to get
+        // a list of configurable interfaces.
+        if ((ifReq.ifr_flags & IFF_LOOPBACK) || (!(ifReq.ifr_flags & IFF_UP)))
+            continue;
+
+        if (pifReq->ifr_addr.sa_family == AF_INET) {
+            memcpy(&localAddr, &pifReq->ifr_addr, sizeof pifReq->ifr_addr);
+            if (localAddr.sin_addr.s_addr == htonl(INADDR_LOOPBACK)) {
+                // We don't want the loopback interface. Go to the next one.
+                continue;
+            }
+        }
+        j++;    // Increment j if we found an address which is not loopback and is up.
+    }
+    close(localSock);
+
+    p = inet_ntop(AF_INET, &localAddr.sin_addr, tempstr, sizeof(tempstr));
+    if (p)
+        strncpy(out, p, out_len);
+    else
+        return -1;
+
+#endif
+
+    return 0;
+}
+
+std::string
+ip_utils::getGateway(char* localHost, subnet_mask prefix)
+{
+    std::string localHostStr(localHost);
+
+    if (prefix == prefix_32bit)
+        return localHostStr;
+
+    std::string defaultGw {};
+    std::istringstream iss(localHostStr);
+
+    // Make a vector of each individual number in the ip address.
+    std::vector<std::string> tokens;
+    std::string token;
+    while (std::getline(iss, token, '.')) {
+        if (!token.empty())
+            tokens.push_back(token);
+    }
+
+    // Build a gateway address from the individual ip components.
+    for (unsigned int i = 0; i <=(unsigned int)prefix; i++)
+        defaultGw += tokens[i] + ".";
+
+    for (unsigned int i = (unsigned int)prefix_32bit; i > (unsigned int)prefix+1; i--)
+        defaultGw += "0.";
+
+    defaultGw += "1";
+
+    return defaultGw;
+}
+
 bool
 ip_utils::haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>& b)
 {
