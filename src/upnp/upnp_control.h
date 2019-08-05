@@ -62,7 +62,8 @@ public:
 
     // Sends out request to upnp protocol to open a port. Gives option to use unique port (i.e. not one that is already in use).
     void requestMappingAdd(NotifyServiceCallback&& cb,
-                           uint16_t portDesired, PortType type, bool unique, uint16_t portLocal = 0);
+                           uint16_t portDesired, PortType type,
+                           bool unique, uint16_t portLocal = 0);
 
     // Callback function for when mapping is added.
     void onMappingAdded(const Mapping&, bool success);
@@ -71,7 +72,7 @@ public:
     void requestAllMappingRemove();
 
     // Callback function for when mapping is removed.
-    void onMappingRemoved(const Mapping&, bool success);
+    void onMappingRemoved(const Mapping& map, bool success);
 
     // Callback function for when connectivity has changed.
     void onConnectivityChange();
@@ -118,7 +119,7 @@ private:
     bool keepCb_ {false};                       // Variable that indicates if the controller wants to keep it's callbacks in the list after a connectivity change.
     MapCb mapCbList_;                           // List of mappings with their corresponding callbacks.
 
-    uint64_t id_ {0};                           // Variable to store string of address to be used as the unique identifier.
+    uint64_t id_ {0};                           // Variable to store unique identifier in order to allow the upnp stack to differentiate different controllers.
 };
 
 }} // namespace jami::upnp
