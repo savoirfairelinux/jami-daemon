@@ -42,6 +42,18 @@
 
 #include <atomic>
 #include <thread>
+#include <queue>
+
+#ifndef _WIN32
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+#endif
+
+#define NATPMP_MAX_INTERFACES     (256)
+#define NATPMP_DEFAULT_INTERFACE    (1)
+#define NATPMP_INVALID_SOCKET      (-1)
 
 #ifndef _WIN32
 #include <arpa/inet.h>
@@ -62,11 +74,27 @@ namespace jami { namespace upnp {
 
 constexpr static unsigned int ADD_MAP_LIFETIME {3600};
 constexpr static unsigned int REMOVE_MAP_LIFETIME {0};
-constexpr static unsigned int MAX_RESTART_SEARCH_RETRY {5};
+constexpr static unsigned int MAX_SEARCH_RETRY {5};
+constexpr static unsigned int MAX_INIT_RETRY {5};
+constexpr static unsigned int MAX_OPEN_PORT_RETRY {5};
+constexpr static unsigned int MAX_CLOSE_PORT_RETRY {5};
 
 class NatPmp : public UPnPProtocol
 {
 public:
+    enum class NatPmpState {
+        PMP_IDLE = 0,
+        PMP_INIT,
+        PMP_RESTART,
+        PMP_SEARCH,
+        PMP_OPEN_PORT,
+        PMP_CLOSE_PORT,
+        PMP_CLOSE_ALL,
+        PMP_RENEW,
+        PMP_ERROR,
+        PMP_EXIT
+    };
+
     NatPmp();
     ~NatPmp();
 
@@ -89,17 +117,32 @@ public:
     void removeAllLocalMappings(IGD* igd) override;
 
 private:
+    // Updates the state.
+    void updateState(int state = -1, bool clearBeforeInsert = false);
+
+    // Inserts new state in queue.
+    void changeState(NatPmpState state, bool clearBeforeInsert = false);
+
+    // Clears natpmp handle and initializes library.
+    bool initNatPmp();
+
     // Searches for an IGD discoverable by natpmp.
-    void searchForPmpIgd();
+    bool searchForPmpIgd();
 
     // Adds a port mapping.
-    void addPortMapping(Mapping& mapping, bool renew);
+    bool addPortMapping(Mapping map);
 
     // Removes a port mapping.
-    void removePortMapping(Mapping& mapping);
+    bool removePortMapping(Mapping map);
 
     // Deletes all port mappings.
     void deleteAllPortMappings(int proto);
+
+    // Checks if there is a mapping that needs to be renewed.
+    bool isMappingUpForRenewal(const time_point& now);
+
+    // Checks if the IGD needs to be renewed.
+    bool isIgdUpForRenewal(const time_point& now);
 
     // Clears the natpmp struct.
     void clearNatPmpHdl(natpmp_t& hdl);
@@ -113,18 +156,27 @@ private:
 private:
     NON_COPYABLE(NatPmp);
 
-    std::condition_variable pmpCv_ {};          // Condition variable for thread-safe signaling.
-    std::atomic_bool pmpRun_ { true };          // Variable to allow the thread to run.
+    std::atomic_bool pmpRun_ {true};            // Variable to allow the thread to run.
     std::thread pmpThread_ {};                  // NatPmp thread.
-
-    std::atomic_bool restart_ {false};          // Variable to indicate we need to restart natpmp after a connectivity change.
-    time_point restartTimer_ {clock::now()};    // Keeps track of time elapsed since restart was triggered.
-    unsigned int restartSearchRetry_ {0};       // Keeps track of number of times we try to find an IGD after a connectivity change.
+    std::condition_variable pmpCv_;
 
     std::mutex natpmpMutex_;                    // NatPmp handle mutex.
     natpmp_t natpmpHdl_;                        // NatPmp handle.
 
     std::unique_ptr<PMPIGD> pmpIgd_;            // IGD for NatPmp.
+
+    std::atomic_bool isInit_ {false};           // Variable that indicates if we are currently initialized.
+    std::atomic_bool isRestart_ {false};        // Variable that indicates we need to restart natpmp after a connectivity change.
+
+    unsigned int initRetry_ {0};                // Keeps track of number of times we try to initialize.
+    unsigned int searchRetry_ {0};              // Keeps track of number of times we try to find an IGD.
+
+    time_point restartTimer_ {clock::now()};    // Keeps track of time elapsed since restart was triggered.
+    time_point errorTimer_ {clock::now()};      // Keeps track of time elapsed since error was triggered.
+
+    std::mutex queueMutex_;                     // State queue mutex.
+    std::queue<NatPmpState> stateQueue_ {};     // Queue for storing the state changes.
+    NatPmpState pmpState_ {NatPmpState::PMP_INIT};  // State variable.
 };
 
 }} // namespace jami::upnp
