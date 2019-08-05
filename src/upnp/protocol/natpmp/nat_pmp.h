@@ -84,7 +84,7 @@ private:
 
     std::mutex pmpMutex_ {};                            // NatPmp mutex.
     std::condition_variable pmpCv_ {};                  // Condition variable for thread-safe signaling.
-    std::atomic_bool pmpRun_ { false };                 // Variable to allow the thread to run.
+    std::atomic_bool pmpRun_ { true };                 // Variable to allow the thread to run.
     std::thread pmpThread_ {};                          // NatPmp thread.
 
     std::shared_ptr<PMPIGD> pmpIGD_ {};                 // IGD discovered by NatPmp.
