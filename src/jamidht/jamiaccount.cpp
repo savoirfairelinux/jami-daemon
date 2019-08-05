@@ -2011,42 +2011,35 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     return true;
     }
 
-bool
+void
 JamiAccount::mapPortUPnP()
 {
-    // return true if not using UPnP
-    bool added = true;
+    using namespace std::placeholders;
+    upnp_->addMapping(std::bind(&JamiAccount::onPortMappingAdd, this, _1, _2),
+                      dhtPort_, jami::upnp::PortType::UDP, false);
+}
 
-    if (getUPnPActive()) {
-        /* create port mapping from published port to local port to the local IP
-         * note that since different RING accounts can use the same port,
-         * it may already be open, thats OK
-         *
-         * if the desired port is taken by another client, then it will try to map
-         * a different port, if succesfull, then we have to use that port for DHT
-         */
-        uint16_t port_used;
-        std::lock_guard<std::mutex> lock(upnp_mtx);
-        upnp_->removeMappings();
-        added = upnp_->addMapping(dhtPort_, jami::upnp::PortType::UDP, false, &port_used);
-        if (added) {
-            if (port_used != dhtPort_)
-                JAMI_WARN("[Account %s] Could not map port %u for DHT, using %u instead.", getAccountID().c_str(), dhtPort_, port_used);
-            dhtPortUsed_ = port_used;
-        }
-    }
+void 
+JamiAccount::onPortMappingAdd(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("JamiAccount: Port mapping added NOTIFY");
 
-    upnp_->setIGDListener([w=weak()] {
-        if (auto shared = w.lock())
-            shared->igdChanged();
-    });
-    return added;
+    auto oldPort = static_cast<in_port_t>(dhtPortUsed_);
+    auto newPort = success ? *port_used : dhtPort_;
+    if (oldPort != newPort or not dht_.isRunning()){
+        if (not dht_.isRunning())
+            JAMI_WARN("Starting DHT on port %u", newPort);
+        if (oldPort != newPort and dht_.isRunning())
+            JAMI_WARN("DHT port changed to %u: restarting network", newPort);
+        dhtPortUsed_ = newPort;
+        doRegister_();
+    } else
+        dht_.connectivityChanged();
 }
 
 void
 JamiAccount::doRegister()
 {
-    std::unique_lock<std::mutex> lock(configurationMutex_);
     if (not isUsable()) {
         JAMI_WARN("Account must be enabled and active to register, ignoring");
         return;
@@ -2066,17 +2059,9 @@ JamiAccount::doRegister()
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
         JAMI_DBG("UPnP: waiting for IGD to register RING account");
-        lock.unlock();
         setRegistrationState(RegistrationState::TRYING);
-        std::thread{ [w=weak()] {
-            if (auto acc = w.lock()) {
-                if (not acc->mapPortUPnP())
-                    JAMI_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
-                acc->doRegister_();
-            }
-        }}.detach();
+        mapPortUPnP();
     } else {
-        lock.unlock();
         doRegister_();
     }
 }
@@ -2732,8 +2717,7 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     if (upnp_) {
-        upnp_->setIGDListener();
-        upnp_->removeMappings();
+        upnp_->removeAllLocalMappings();
     }
 
     dht_.join();
@@ -3398,29 +3382,6 @@ JamiAccount::onReceiveDeviceSync(DeviceSync&& sync)
     for (const auto& tr : sync.trust_requests)
         onTrustRequest(tr.first, tr.second.device, tr.second.received, false, {});
 
-}
-
-void
-JamiAccount::igdChanged()
-{
-    if (not dht_.isRunning())
-        return;
-    if (upnp_) {
-        dht::ThreadPool::io().run([w = weak(), oldPort = static_cast<in_port_t>(dhtPortUsed_)] {
-            if (auto s = w.lock()) {
-                auto& this_ = *s;
-                if (not this_.mapPortUPnP())
-                    JAMI_WARN("UPnP: Could not map DHT port");
-                auto newPort = static_cast<in_port_t>(this_.dhtPortUsed_);
-                if (oldPort != newPort) {
-                    JAMI_WARN("DHT port changed: restarting network");
-                    this_.doRegister_();
-                } else
-                    this_.dht_.connectivityChanged();
-            }
-        });
-    } else
-        dht_.connectivityChanged();
 }
 
 void
