@@ -225,6 +225,10 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void openPortsUPnP();
 
+    void onMediaPortMappingAdded(uint16_t port_used, bool success);
+
+    void onControlPortMappingAdded(uint16_t port_used, bool success);
+
     void setPeerRegistredName(const std::string& name) {
         peerRegistredName_ = name;
     }
