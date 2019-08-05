@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,6 +65,7 @@ public:
     };
 
     using IgdListChangedCallback = std::function<bool(UPnPProtocol*, IGD*, IpAddr, bool)>;
+    using NotifyContextAddMapCallback = std::function<void(Mapping*, bool)>;
 
     UPnPProtocol(){};
     virtual ~UPnPProtocol(){};
@@ -79,7 +80,7 @@ public:
     virtual void searchForIgd() = 0;
 
     // Tries to add mapping. Assumes mutex is already locked.
-    virtual Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) = 0;
+    virtual void addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) = 0;
 
     // Removes a mapping.
     virtual void removeMapping(const Mapping& igdMapping) = 0;
@@ -90,10 +91,13 @@ public:
     // Set the IGD list callback handler.
     void setOnIgdChanged(IgdListChangedCallback&& cb) { updateIgdListCb_ = std::move(cb); }
 
-protected:
-    mutable std::mutex validIgdMutex_;          // Mutex used to access these lists and IGDs in a thread-safe manner.
+    void setOnPortMapAdd(NotifyContextAddMapCallback&& cb) { notifyContextPortOpenCb_ = std::move(cb); }
 
-    IgdListChangedCallback updateIgdListCb_;    // Callback for when the IGD list changes.
+protected:
+    mutable std::mutex validIgdMutex_;                      // Mutex used to access these lists and IGDs in a thread-safe manner.
+
+    IgdListChangedCallback updateIgdListCb_;                // Callback for when the IGD list changes.
+    NotifyContextAddMapCallback notifyContextPortOpenCb_;
 };
 
 }} // namespace jami::upnp

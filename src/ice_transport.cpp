@@ -170,6 +170,11 @@ public:
      */
     void selectUPnPIceCandidates();
 
+    /**
+     * Add port mapping callback function.
+     */
+    void onPortMappingAdd(uint16_t* port_used, bool success);
+
     std::unique_ptr<upnp::Controller> upnp_;
 
     bool onlyIPv4Private_ {true};
@@ -733,6 +738,7 @@ void IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr &base,
 void
 IceTransport::Impl::selectUPnPIceCandidates()
 {
+    using namespace std::placeholders;
     /* use upnp to open ports and add the proper candidates */
     if (upnp_) {
         /* for every component, get the candidate(s)
@@ -753,19 +759,44 @@ IceTransport::Impl::selectUPnPIceCandidates()
                     if (candidate.addr != localIP)
                         continue;
                     uint16_t port = candidate.addr.getPort();
-                    uint16_t port_used;
                     auto portType = candidate.transport == PJ_CAND_UDP
                                         ? upnp::PortType::UDP
                                         : upnp::PortType::TCP;
-                    if (upnp_->addMapping(port, portType, true, &port_used)) {
-                        publicIP.setPort(port_used);
-                        addReflectiveCandidate(comp_id, candidate.addr, publicIP, candidate.transport);
-                    } else
-                        JAMI_WARN("[ice:%p] Could not create a port mapping for the ICE candide", this);
+                    upnp_->addMapping(std::bind(&IceTransport::Impl::onPortMappingAdd, this, _1, _2),
+                                      port, portType, true);
                 }
             }
         } else {
             JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates", this);
+        }
+    }
+}
+
+void
+IceTransport::Impl::onPortMappingAdd(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("IceTransport: Port mapping added NOTIFY", *port_used);
+    if (success) {
+        if (auto publicIP = upnp_->getExternalIP()) {
+            if (auto localIP = upnp_->getLocalIP()) {
+                for (unsigned comp_id = 1; comp_id <= component_count_; ++comp_id) {
+                    auto candidates = getLocalICECandidates(comp_id);
+                    for (const auto& candidate : candidates) {
+                        if (candidate.transport == PJ_CAND_TCP_ACTIVE)
+                            continue; // We don't need to map port 9.
+                        if (candidate.addr.toString() != localIP.toString())
+                            continue;
+                        auto portType = candidate.transport == PJ_CAND_UDP
+                                            ? upnp::PortType::UDP
+                                            : upnp::PortType::TCP;
+                        if (*port_used == candidate.addr.getPort()) {
+                            publicIP.setPort(*port_used);
+                            addReflectiveCandidate(comp_id, candidate.addr, publicIP, candidate.transport);
+                            return;
+                        }
+                    }
+                }
+            }
         }
     }
 }
