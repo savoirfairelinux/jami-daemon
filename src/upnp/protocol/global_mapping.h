@@ -43,13 +43,14 @@ class GlobalMapping : public Mapping
 public:
     GlobalMapping(const Mapping& mapping, unsigned users = 1) :
         Mapping(mapping.getPortExternal(),
-        mapping.getPortInternal(),
-        mapping.getType(),
-        mapping.getDescription()),
-        users(users) {}
+                mapping.getPortInternal(),
+                mapping.getType(),
+                mapping.isUnique(),
+                mapping.getDescription()),
+                users_(users) {}
 
 public:
-    unsigned users;			// Number of users of this mapping. Multiple accounts can use the same SIP ports.
+    unsigned int users_;			// Number of users of this mapping. Multiple accounts can use the same SIP ports.
 };
 
 }} // namespace jami::upnp
