@@ -91,7 +91,7 @@ public:
     void setOnIgdChanged(IgdListChangedCallback&& cb) { updateIgdListCb_ = std::move(cb); }
 
 protected:
-    mutable std::mutex validIgdMutex;           // Mutex used to access these lists and IGDs in a thread-safe manner.
+    mutable std::mutex validIgdMutex_;          // Mutex used to access these lists and IGDs in a thread-safe manner.
 
     IgdListChangedCallback updateIgdListCb_;    // Callback for when the IGD list changes.
 };
