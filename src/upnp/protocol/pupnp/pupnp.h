@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ public:
     void searchForIGD() override;
 
     // Tries to add mapping. Assumes mutex is already locked.
-    Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) override;
+    Mapping addMapping(const upnp::UPnPProtocol::Service id, IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) override;
 
     // Removes a mapping.
     void removeMapping(const Mapping& igdMapping) override;
@@ -93,24 +93,8 @@ private:
     // Register client in an async manner using a thread.
     void registerClientAsync();
 
-    // Control point callback.
-    static int ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data);
-#if UPNP_VERSION < 10800
-    static inline int ctrlPtCallback(Upnp_EventType event_type, void* event, void* user_data) {
-        return ctrlPtCallback(event_type, (const void*)event, user_data);
-    };
-#endif
-
     // Callback event handler function for the UPnP client (control point).
     int handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event);
-
-    // Subscription event callback.
-    static int subEventCallback(Upnp_EventType event_type, const void* event, void* user_data);
-#if UPNP_VERSION < 10800
-    static inline int subEventCallback(Upnp_EventType event_type, void* event, void* user_data) {
-        return subEventCallback(event_type, (const void*)event, user_data);
-    };
-#endif
 
     // Callback subscription event function for handling subscription request.
     int handleSubscriptionUPnPEvent(Upnp_EventType event_type, const void* event);
@@ -123,7 +107,17 @@ private:
     IpAddr actionGetExternalIP(const UPnPIGD& igd);
     void   actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& description);
     bool   actionDeletePortMapping(const UPnPIGD& igd, const std::string& port_external, const std::string& protocol);
-    bool   actionAddPortMapping(const UPnPIGD& igd, const Mapping& mapping, UPnPProtocol::UpnpError& upnp_error);
+    bool   actionAddPortMapping(const UPnPIGD& igd, const Mapping& mapping, UPnPProtocol::UpnpError& error_code);
+
+    // These functions directly create UPnP actions and make asynchronous UPnP control point calls. Assumes mutex is already locked.
+    bool   actionDeletePortMappingAsync(const UPnPIGD& igd, const std::string& port_external, const std::string& protocol);
+    bool   actionAddPortMappingAsync(upnp::UPnPProtocol::Service id, const UPnPIGD& igd, const Mapping& mapping, UPnPProtocol::UpnpError& error_code);
+
+    // Control point callback.
+    static int ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data);
+
+    // Subscription event callback.
+    static int subEventCallback(Upnp_EventType event_type, const void* event, void* user_data);
 
 private:
     NON_COPYABLE(PUPnP);

@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *    Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,10 +23,15 @@
 
 namespace jami { namespace upnp {
 
-Controller::Controller()
+Controller::Controller(upnp::UPnPProtocol::Service&& id, PortOpenNotifyServiceCallback&& cb):
+    id_(std::move(id)),
+    notifyPortOpenCb_(std::move(cb))
 {
+    portOpenCbList.emplace_back(id_, notifyPortOpenCb_);
     try {
         upnpContext_ = getUPnPContext();
+        using namespace std::placeholders;
+        upnpContext_->setOnPortOpenComplete(std::bind(&Controller::onPortOpenComplete, this, _1, _2, _3));
     } catch (std::runtime_error& e) {
         JAMI_ERR("UPnP context error: %s", e.what());
     }
@@ -62,7 +67,7 @@ Controller::setIGDListener(IgdFoundCallback&& cb)
 }
 
 bool
-Controller::addMapping(uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local)
+Controller::addMapping(const upnp::UPnPProtocol::Service id, uint16_t port_desired, PortType type, bool unique, uint16_t* port_used, uint16_t port_local)
 {
     if (not upnpContext_) {
         return false;
@@ -72,7 +77,7 @@ Controller::addMapping(uint16_t port_desired, PortType type, bool unique, uint16
         port_local = port_desired;
     }
 
-    Mapping mapping = upnpContext_->addMapping(port_desired, port_local, type, unique);
+    Mapping mapping = upnpContext_->addMapping(id, port_desired, port_local, type, unique);
     if (mapping) {
         auto usedPort = mapping.getPortExternal();
         if (port_used) {
@@ -83,6 +88,24 @@ Controller::addMapping(uint16_t port_desired, PortType type, bool unique, uint16
         return true;
     }
     return false;
+}
+
+void
+Controller::onPortOpenComplete(upnp::UPnPProtocol::Service id, uint16_t* port_used, bool success)
+{
+    switch(id)
+    {
+    case upnp::UPnPProtocol::Service::JAMI_ACCOUNT: JAMI_WARN("Controller: %s port %u for Jami Account.", success ? "Opened" : "Failed to open",  *port_used); break;
+    case upnp::UPnPProtocol::Service::ICE_TRANSPORT: JAMI_WARN("Controller: Opened port %u for Ice Transport.", success ? "Opened" : "Failed to open", *port_used); break;
+    case upnp::UPnPProtocol::Service::SIP_ACCOUT: JAMI_WARN("Controller: Opened port %u for Sip Account.", success ? "Opened" : "Failed to open", *port_used); break;
+    case upnp::UPnPProtocol::Service::SIP_CALL: JAMI_WARN("Controller: Opened port %u for Sip Call.", success ? "Opened" : "Failed to open", *port_used); break;
+    default: break;
+    }
+
+    for (const auto& cb : portOpenCbList) {
+        if (cb.first == id)
+            cb.second(port_used, success);
+    }
 }
 
 void

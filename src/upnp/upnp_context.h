@@ -68,6 +68,8 @@ namespace jami { namespace upnp {
 class UPnPContext
 {
 public:
+    using PortOpenNotifyControllerCallback = std::function<void(upnp::UPnPProtocol::Service, uint16_t*, bool)>;
+    
     UPnPContext();
     ~UPnPContext();
 
@@ -80,8 +82,14 @@ public:
     // Remove IGD listener.
     void removeIGDListener(size_t token);
 
+    // Sets open port callback towards controller.
+    void setOnPortOpenComplete(PortOpenNotifyControllerCallback&& cb) { notifyPortOpenCb_ = std::move(cb); }
+
     // Tries to add a valid mapping. Will return it if successful.
-    Mapping addMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool unique);
+    Mapping addMapping(const upnp::UPnPProtocol::Service id, uint16_t port_desired, uint16_t port_local, PortType type, bool unique);
+
+    // Calls the controller callback to notify that the open port operation is complete.
+    void onPortOpenComplete(upnp::UPnPProtocol::Service request, Mapping* mapping, uint16_t* port_used, bool success);
 
     // Removes a mapping.
     void removeMapping(const Mapping& mapping);
@@ -118,7 +126,7 @@ private:
     bool removeIgdFromList(IpAddr publicIpAddr);
 
     // Tries to add mapping. Assumes mutex is already locked.
-    Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error);
+    Mapping addMapping(const upnp::UPnPProtocol::Service id, IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error);
 
 public:
     constexpr static unsigned MAX_RETRIES = 20;
@@ -129,10 +137,11 @@ private:
     std::map<size_t, IgdFoundCallback> igdListeners_;           // Map of valid IGD listeners with their tokens.
     size_t listenerToken_{ 0 };                                 // Last provided token for valid IGD listeners (0 is the invalid token).
 
-    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;	// Vector of available protocols.
-    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;			// List of IGDs with their corresponding public IPs.
-    mutable std::mutex igdListMutex_;							// Mutex used to access these lists and IGDs in a thread-safe manner.
+    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;   // Vector of available protocols.
+    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;         // List of IGDs with their corresponding public IPs.
+    mutable std::mutex igdListMutex_;                           // Mutex used to access these lists and IGDs in a thread-safe manner.
 
+    PortOpenNotifyControllerCallback notifyPortOpenCb_;         // Callback for notifying the controller when the port is opened.    
 };
 
 std::shared_ptr<UPnPContext> getUPnPContext();

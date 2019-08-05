@@ -2029,7 +2029,7 @@ JamiAccount::mapPortUPnP()
         uint16_t port_used;
         std::lock_guard<std::mutex> lock(upnp_mtx);
         upnp_->removeMappings();
-        added = upnp_->addMapping(dhtPort_, jami::upnp::PortType::UDP, false, &port_used);
+        added = upnp_->addMapping(upnp::UPnPProtocol::Service::JAMI_ACCOUNT, dhtPort_, jami::upnp::PortType::UDP, false, &port_used);
         if (added) {
             if (port_used != dhtPort_)
                 JAMI_WARN("[Account %s] Could not map port %u for DHT, using %u instead.", getAccountID().c_str(), dhtPort_, port_used);
@@ -2042,6 +2042,12 @@ JamiAccount::mapPortUPnP()
             shared->igdChanged();
     });
     return added;
+}
+
+void
+JamiAccount::onPortOpenNotify(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("JamiAccount: Port open notify");
 }
 
 void

@@ -53,6 +53,7 @@ UPnPContext::UPnPContext()
 #endif
 #if HAVE_LIBUPNP
     auto pupnp = std::make_unique<PUPnP>();
+    pupnp->setOnPortOpenComplete(std::bind(&UPnPContext::onPortOpenComplete, this, _1, _2, _3, _4));
     pupnp->setOnIgdChanged(std::bind(&UPnPContext::igdListChanged, this, _1, _2, _3, _4));
     pupnp->searchForIGD();
     protocolList_.push_back(std::move(pupnp));
@@ -128,7 +129,7 @@ UPnPContext::chooseRandomPort(const IGD& igd, PortType type)
 }
 
 Mapping
-UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool unique)
+UPnPContext::addMapping(const upnp::UPnPProtocol::Service id, uint16_t port_desired, uint16_t port_local, PortType type, bool unique)
 {
     // Lock mutex on the igd list.
     std::lock_guard<std::mutex> igdListLock(igdListMutex_);
@@ -171,7 +172,7 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
     UPnPProtocol::UpnpError upnp_err = UPnPProtocol::UpnpError::ERROR_OK;
     unsigned numberRetries = 0;
 
-    Mapping mapping = addMapping(igd, port_desired, port_local, type, upnp_err);
+    Mapping mapping = addMapping(id, igd, port_desired, port_local, type, upnp_err);
 
     while (not mapping and
            upnp_err == UPnPProtocol::UpnpError::CONFLICT_IN_MAPPING and
@@ -180,7 +181,7 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
         port_desired = chooseRandomPort(*igd, type);
 
         upnp_err = UPnPProtocol::UpnpError::ERROR_OK;
-        mapping = addMapping(igd, port_desired, port_local, type, upnp_err);
+        mapping = addMapping(id, igd, port_desired, port_local, type, upnp_err);
         ++numberRetries;
     }
 
@@ -191,14 +192,48 @@ UPnPContext::addMapping(uint16_t port_desired, uint16_t port_local, PortType typ
     return mapping;
 }
 
+void
+UPnPContext::onPortOpenComplete(upnp::UPnPProtocol::Service request, Mapping* mapping, uint16_t* port_used, bool success)
+{
+    switch(request)
+    {
+    case upnp::UPnPProtocol::Service::JAMI_ACCOUNT:
+        JAMI_WARN("UPnPContext: %s port %s:%s %s for Jami Account.", success ? "Opened" : "Failed to open", 
+                                                                     mapping->getPortInternalStr().c_str(),
+                                                                     mapping->getPortExternalStr().c_str(),
+                                                                     mapping->getTypeStr().c_str());
+        break;
+    case upnp::UPnPProtocol::Service::ICE_TRANSPORT:
+        JAMI_WARN("UPnPContext: Opened port %s:%s %s for Ice Transport.", success ? "Opened" : "Failed to open", 
+                                                                          mapping->getPortInternalStr().c_str(),
+                                                                          mapping->getPortExternalStr().c_str(),
+                                                                          mapping->getTypeStr().c_str());
+        break;
+    case upnp::UPnPProtocol::Service::SIP_ACCOUT:
+        JAMI_WARN("UPnPContext: Opened port %s:%s %s for Sip Account.", success ? "Opened" : "Failed to open", 
+                                                                        mapping->getPortInternalStr().c_str(),
+                                                                        mapping->getPortExternalStr().c_str(),
+                                                                        mapping->getTypeStr().c_str());
+        break;
+    case upnp::UPnPProtocol::Service::SIP_CALL:
+        JAMI_WARN("UPnPContext: Opened port %s:%s %s for Sip Call.", success ? "Opened" : "Failed to open", 
+                                                                     mapping->getPortInternalStr().c_str(),
+                                                                     mapping->getPortExternalStr().c_str(),
+                                                                     mapping->getTypeStr().c_str());
+        break;
+    default: break;
+    }
+    notifyPortOpenCb_(request, port_used, success);
+}
+
 Mapping
-UPnPContext::addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error)
+UPnPContext::addMapping(const upnp::UPnPProtocol::Service id, IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error)
 {
     // Iterate over the IGD list and call add the mapping with the corresponding protocol.
     if (not igdList_.empty()) {
         for (auto const& item : igdList_) {
             if (item.second == igd) {
-                return item.first->addMapping(item.second, port_external, port_internal, type, upnp_error);
+                return item.first->addMapping(id, item.second, port_external, port_internal, type, upnp_error);
             }
         }
     }
