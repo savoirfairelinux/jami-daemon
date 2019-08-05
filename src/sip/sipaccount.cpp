@@ -692,61 +692,44 @@ SIPAccount::getVolatileAccountDetails() const
     return a;
 }
 
-bool SIPAccount::mapPortUPnP()
+void SIPAccount::mapPortUPnP()
 {
-    // return true if not using UPnP
-    bool added = true;
+    using namespace std::placeholders;
+    uint16_t port_used;
+    upnp_->addMapping(std::bind(&SIPAccount::onPortMappingAdd, this, _1, _2),
+                      publishedPort_, jami::upnp::PortType::UDP, false, localPort_);
+}
 
-    if (getUPnPActive()) {
-        /* create port mapping from published port to local port to the local IP
-         * note that since different accounts can use the same port,
-         * it may already be open, thats OK
-         *
-         * if the desired port is taken by another client, then it will try to map
-         * a different port, if succesfull, then we have to use that port for SIP
-         */
-        uint16_t port_used;
-        bool added = upnp_->addMapping(publishedPort_, jami::upnp::PortType::UDP, false, &port_used, localPort_);
-        if (added) {
-            if (port_used != publishedPort_)
-                JAMI_WARN("[Account %s] Could not map published port %u for SIP, using %u instead.", getAccountID().c_str(), publishedPort_, port_used);
-            publishedPortUsed_ = port_used;
-        }
-    }
-
-    upnp_->setIGDListener([w=weak()] {
-        if (auto acc = w.lock())
-            acc->doRegister();
-    });
-
-    return added;
+void
+SIPAccount::onPortMappingAdd(uint16_t* port_used, bool success)
+{
+    JAMI_WARN("SIPAccount: Port mapping added NOTIFY");
+    auto oldPort = static_cast<in_port_t>(publishedPortUsed_);
+    auto newPort = success ? *port_used : publishedPort_;
+    if ((oldPort != newPort) or (getRegistrationState() != RegistrationState::REGISTERED)) {
+        JAMI_WARN("[Account %s] SIP account port changed to %u", getAccountID().c_str(), newPort);
+        publishedPortUsed_ = newPort;
+        doRegister1_();
+    } //else
+        // connectivityChanged();
+    doRegister1_();
 }
 
 void SIPAccount::doRegister()
 {
-    std::unique_lock<std::mutex> lock(configurationMutex_);
     if (not isUsable()) {
         JAMI_WARN("Account must be enabled and active to register, ignoring");
         return;
     }
 
     JAMI_DBG("doRegister %s", hostname_.c_str());
-
+    
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if (upnp_) {
-        JAMI_DBG("UPnP: waiting for IGD to register SIP account");
-        lock.unlock();
         setRegistrationState(RegistrationState::TRYING);
-        std::thread{ [w=weak()] {
-            if (auto acc = w.lock()) {
-                sip_utils::register_thread();
-                if (not acc->mapPortUPnP())
-                    JAMI_WARN("UPnP: Could not successfully map SIP port with UPnP, continuing with account registration anyways");
-                acc->doRegister1_();
-            }
-        }}.detach();
+        JAMI_DBG("UPnP: waiting for IGD to register SIP account");
+        mapPortUPnP();
     } else {
-        lock.unlock();
         doRegister1_();
     }
 }
@@ -878,11 +861,6 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     lock.unlock();
     if (released_cb)
         released_cb(not isIP2IP());
-
-    if (upnp_) {
-        upnp_->setIGDListener();
-        upnp_->removeMappings();
-    }
 }
 
 void
