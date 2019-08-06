@@ -48,13 +48,13 @@ UPnPContext::UPnPContext()
 #if HAVE_LIBNATPMP
     auto natPmp = std::make_unique<NatPmp>();
     natPmp->setOnIgdChanged(std::bind(&UPnPContext::igdListChanged, this, _1, _2, _3, _4));
-    natPmp->searchForIGD();
+    natPmp->searchForIgd();
     protocolList_.push_back(std::move(natPmp));
 #endif
 #if HAVE_LIBUPNP
     auto pupnp = std::make_unique<PUPnP>();
     pupnp->setOnIgdChanged(std::bind(&UPnPContext::igdListChanged, this, _1, _2, _3, _4));
-    pupnp->searchForIGD();
+    pupnp->searchForIgd();
     protocolList_.push_back(std::move(pupnp));
 #endif
 }
@@ -70,7 +70,7 @@ UPnPContext::connectivityChanged()
     {
         std::lock_guard<std::mutex> lock(igdListMutex_);
         for (auto const& protocol : protocolList_)
-            protocol->clearIGDs();
+            protocol->clearIgds();
         if (not igdList_.empty()) {
             // Clear main IGD list.
             igdList_.clear();
@@ -81,7 +81,7 @@ UPnPContext::connectivityChanged()
     }
 
     for (auto const& protocol : protocolList_)
-        protocol->searchForIGD();
+        protocol->searchForIgd();
 }
 
 bool
@@ -306,6 +306,7 @@ UPnPContext::addIgdToList(UPnPProtocol* protocol, IGD* igd)
     }
 
     if (isIgdInList(igd->publicIp_)) {
+        JAMI_DBG("UPnPContext: IGD with public IP %s is already in the list", igd->publicIp_.toString().c_str());
         return false;
     }
 
