@@ -3161,11 +3161,11 @@ JamiAccount::updateContact(const dht::InfoHash& id, const Contact& contact)
     bool stateChanged {false};
     auto c = contacts_.find(id);
     if (c == contacts_.end()) {
-        JAMI_DBG("[Account %s] new contact: %s", getAccountID().c_str(), id.toString().c_str());
+        //JAMI_DBG("[Account %s] new contact: %s", getAccountID().c_str(), id.toString().c_str());
         c = contacts_.emplace(id, contact).first;
         stateChanged = c->second.isActive() or c->second.isBanned();
     } else {
-        JAMI_DBG("[Account %s] updated contact: %s", getAccountID().c_str(), id.toString().c_str());
+        //JAMI_DBG("[Account %s] updated contact: %s", getAccountID().c_str(), id.toString().c_str());
         stateChanged = c->second.update(contact);
     }
     if (stateChanged) {
