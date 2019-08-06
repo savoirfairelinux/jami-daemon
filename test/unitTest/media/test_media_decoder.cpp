@@ -61,7 +61,6 @@ MediaDecoderTest::setUp()
 {
     DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
     libav_utils::ring_avcodec_init();
-    decoder_.reset(new MediaDecoder);
 }
 
 void
@@ -80,28 +79,26 @@ MediaDecoderTest::testAudioFile()
 
     writeWav();
 
+    decoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>&& f) mutable {
+        CPPUNIT_ASSERT(f->pointer()->sample_rate == decoder_->getStream().sampleRate);
+        CPPUNIT_ASSERT(f->pointer()->channels == decoder_->getStream().nbChannels);
+    }));
     DeviceParams dev;
     dev.input = filename_;
     CPPUNIT_ASSERT(decoder_->openInput(dev) >= 0);
-    CPPUNIT_ASSERT(decoder_->setupFromAudioData() >= 0);
+    CPPUNIT_ASSERT(decoder_->setupAudio() >= 0);
 
     bool done = false;
     while (!done) {
-        AudioFrame frame;
-        switch (decoder_->decode(frame)) {
-        case MediaDecoder::Status::FrameFinished:
-            CPPUNIT_ASSERT(frame.pointer()->sample_rate == decoder_->getStream().sampleRate);
-            CPPUNIT_ASSERT(frame.pointer()->channels == decoder_->getStream().nbChannels);
-            break;
-        case MediaDecoder::Status::DecodeError:
-        case MediaDecoder::Status::ReadError:
+        switch (decoder_->decode()) {
+        case MediaDemuxer::Status::ReadError:
             CPPUNIT_ASSERT_MESSAGE("Decode error", false);
             done = true;
             break;
-        case MediaDecoder::Status::EOFError:
+        case MediaDemuxer::Status::EndOfFile:
             done = true;
             break;
-        case MediaDecoder::Status::Success:
+        case MediaDemuxer::Status::Success:
         default:
             break;
         }
