@@ -2999,7 +2999,7 @@ Manager::sendRegister(const std::string& accountID, bool enable)
     acc->setEnabled(enable);
     acc->loadConfig();
 
-    saveConfig();
+    saveConfig(acc);
 
     if (acc->isEnabled()) {
         acc->doRegister();
