@@ -90,8 +90,8 @@ public:
     void removeAllLocalMappings(IGD* igd) override;
 
 private:
-    // Register client in an async manner using a thread.
-    void registerClientAsync();
+    // Validate IGD from the xml document received from the router.
+    void validateIgd(IXML_Document* descDoc, const std::string& locationUrl);
 
     // Control point callback.
     static int ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data);
@@ -116,7 +116,7 @@ private:
     int handleSubscriptionUPnPEvent(Upnp_EventType event_type, const void* event);
 
     // Parses the IGD candidate.
-    std::unique_ptr<UPnPIGD> parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event);
+    std::unique_ptr<UPnPIGD> parseIGD(IXML_Document* doc, const std::string& locationUrl);
 
     // These functions directly create UPnP actions and make synchronous UPnP control point calls. Assumes mutex is already locked.
     bool   actionIsIgdConnected(const UPnPIGD& igd);
@@ -132,8 +132,11 @@ private:
     std::atomic_bool pupnpRun_ { true };                        // Variable to allow the thread to run.
     std::thread pupnpThread_ {};                                // PUPnP thread for non-blocking client registration.
 
+    std::atomic_bool searchForIgd_ { false };					// Variable to signal thread for a search.
+
     std::map<std::string, std::shared_ptr<IGD>> validIgdList_;  // Map of valid IGDs with their UDN (universal Id).
     std::map<std::string, std::string> cpDeviceList_;           // Control point device list containing the device ID and device subscription event url.
+    std::map<std::string, bool> downloadledXml_;                // Map that contains an IGD's url location and boolean to indicate if the xml doc has been downloaded.
 
     std::mutex ctrlptMutex_;                                    // Mutex for client handle protection.
     UpnpClient_Handle ctrlptHandle_ {-1};                       // Control point handle.
