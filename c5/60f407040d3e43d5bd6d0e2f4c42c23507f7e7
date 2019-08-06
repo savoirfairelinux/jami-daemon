@@ -1,0 +1,8 @@
+Code-Review+1: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-by: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-at: Tue, 06 Aug 2019 18:48:34 -0400
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/12237
+Project: ring-daemon
+Branch: refs/heads/master
