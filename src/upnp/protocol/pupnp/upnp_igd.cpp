@@ -23,15 +23,19 @@
 
 namespace jami { namespace upnp {
 
-UPnPIGD::UPnPIGD(std::string&& UDN, std::string&& baseURL, std::string&& friendlyName, std::string&& serviceType, std::string&& serviceId, std::string&& controlURL, std::string&& eventSubURL,
-    IpAddr&& localIp, IpAddr&& publicIp):
-    IGD(std::move(localIp), std::move(publicIp))
+UPnPIGD::UPnPIGD(std::string&& UDN, std::string&& baseURL, 
+                 std::string&& friendlyName, std::string&& serviceType, 
+                 std::string&& serviceId, std::string && locationURL,
+                 std::string&& controlURL, std::string&& eventSubURL,
+                 IpAddr&& localIp, IpAddr&& publicIp):
+                 IGD(std::move(localIp), std::move(publicIp))
 {
     UDN_ = std::move(UDN);
     baseURL_ = std::move(baseURL);
     friendlyName_ = std::move(friendlyName);
     serviceType_ = std::move(serviceType);
     serviceId_ = std::move(serviceId);
+    locationURL_ = std::move(locationURL);
     controlURL_ = std::move(controlURL);
     eventSubURL_ = std::move(eventSubURL);
 }
@@ -56,6 +60,7 @@ UPnPIGD::operator==(UPnPIGD& other) const
            friendlyName_ == other.friendlyName_ and
            serviceType_ == other.serviceType_ and
            serviceId_ == other.serviceId_ and
+           locationURL_ == other.locationURL_ and
            controlURL_ == other.controlURL_ and
            eventSubURL_ == other.eventSubURL_;
 }
