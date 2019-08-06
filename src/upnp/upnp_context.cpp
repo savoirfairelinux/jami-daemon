@@ -306,6 +306,7 @@ UPnPContext::addIgdToList(UPnPProtocol* protocol, IGD* igd)
     }
 
     if (isIgdInList(igd->publicIp_)) {
+        JAMI_DBG("UPnPContext: IGD with public IP %s is already in the list", igd->publicIp_.toString().c_str());
         return false;
     }
 
