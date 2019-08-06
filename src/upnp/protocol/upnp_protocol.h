@@ -73,10 +73,10 @@ public:
     virtual Type getType() const = 0;
 
     // Clear all known IGDs.
-    virtual void clearIGDs() = 0;
+    virtual void clearIgds() = 0;
 
     // Search for IGD.
-    virtual void searchForIGD() = 0;
+    virtual void searchForIgd() = 0;
 
     // Tries to add mapping. Assumes mutex is already locked.
     virtual Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) = 0;

@@ -97,7 +97,7 @@ NatPmp::~NatPmp()
 }
 
 void
-NatPmp::clearIGDs()
+NatPmp::clearIgds()
 {
     // Lock valid IGD.
     std::lock_guard<std::mutex> lock(validIgdMutex_);
@@ -113,7 +113,7 @@ NatPmp::clearIGDs()
 }
 
 void
-NatPmp::searchForIGD()
+NatPmp::searchForIgd()
 {
     // Lock valid IGD.
     std::lock_guard<std::mutex> lock(validIgdMutex_);

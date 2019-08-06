@@ -21,6 +21,8 @@
 
 #include "pupnp.h"
 
+#include <opendht/thread_pool.h>
+
 namespace jami { namespace upnp {
 
 // Helper functions for xml parsing.
@@ -80,7 +82,57 @@ errorOnResponse(IXML_Document* doc)
 
 PUPnP::PUPnP()
 {
-    pupnpThread_ = std::thread([this] { registerClientAsync(); });
+    pupnpThread_ = std::thread([this] {
+        
+        std::unique_lock<std::mutex> lk(ctrlptMutex_);
+        while (pupnpRun_) {
+            pupnpCv_.wait(lk);
+
+            if (not clientRegistered_) {
+                // Register Upnp control point.
+                int upnp_err = UpnpRegisterClient(ctrlPtCallback, this, &ctrlptHandle_);
+                if (upnp_err != UPNP_E_SUCCESS)
+                    JAMI_ERR("PUPnP: Can't register client: %s", UpnpGetErrorMessage(upnp_err));
+                else
+                    clientRegistered_ = true;
+            }
+
+            if (not pupnpRun_)
+                break;
+
+            if (clientRegistered_ and searchForIgd_) {
+                // Send out search for multiple types of devices, as some routers may possibly only reply to one.
+                UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, this);
+                UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, this);
+                UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
+                UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, this);
+                
+                // Reset variable.
+                searchForIgd_ = false;
+            }
+
+            if (clientRegistered_) {
+                for (auto it = dwnldlXmlList_.begin(); it != dwnldlXmlList_.end();) {
+                    auto future = *it;
+                    lk.unlock();
+                    if (future.wait_for(std::chrono::seconds(1)) == std::future_status::ready) {
+                        auto& result = future.get();
+                        lk.lock();
+                        if (not result.document or not validateIgd(result)) {
+                            cpDeviceList_.erase(result.location);
+                        }
+                        it = dwnldlXmlList_.erase(it);
+                    } else {
+                        lk.lock();
+                        JAMI_WARN("PUPnP: XML download for %s timed out", future.get().location.c_str());
+                        ++it;
+                    }
+                }
+            }
+        }
+
+        UpnpFinish();
+    });
 
     int upnp_err = UPNP_E_SUCCESS;
     char* ip_address = nullptr;
@@ -109,11 +161,10 @@ PUPnP::PUPnP()
         ip_address6 = UpnpGetServerIp6Address();
         port6 = UpnpGetServerPort6();
 #endif
-        if (ip_address6 and port6) {
+        if (ip_address6 and port6)
             JAMI_DBG("PUPnP: Initialiazed on %s:%u | %s:%u", ip_address, port, ip_address6, port6);
-        } else {
+        else
             JAMI_DBG("PUPnP: Initialiazed on %s:%u", ip_address, port);
-        }
 
         // Relax the parser to allow malformed XML text.
         ixmlRelaxParser(1);
@@ -125,8 +176,9 @@ PUPnP::~PUPnP()
     // Clear all the lists.
     {
         std::lock_guard<std::mutex> lk(validIgdMutex_);
+        dwnldlXmlList_.clear();
         for(auto const &it : validIgdList_) {
-            if (auto igd = dynamic_cast<UPnPIGD*>(it.second.get()))
+            if (auto igd = std::dynamic_pointer_cast<UPnPIGD>(it.second))
                 actionDeletePortMappingsByDesc(*igd, Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
         }
         validIgdList_.clear();
@@ -136,31 +188,115 @@ PUPnP::~PUPnP()
     // Notify thread to terminate. UpnpFinish function will get called.
     pupnpRun_ = false;
     pupnpCv_.notify_all();
-    if (pupnpThread_.joinable()) {
+    if (pupnpThread_.joinable())
         pupnpThread_.join();
-    }
 }
 
 void
-PUPnP::clearIGDs()
+PUPnP::clearIgds()
 {
     // Lock internal IGD list.
     std::lock_guard<std::mutex> lk(validIgdMutex_);
 
-    // Clear internal IGD list.
+    // Clear all internal lists.
+    dwnldlXmlList_.clear();
     validIgdList_.clear();
     cpDeviceList_.clear();
 }
 
 void
-PUPnP::searchForIGD()
+PUPnP::searchForIgd()
 {
-    // Notify registerClientAsync function running in thread to execute in non-blocking fashion.
+    // Notify thread to execute in non-blocking fashion.
     {
         std::lock_guard<std::mutex> lk(ctrlptMutex_);
-        pupnpRun_ = true;
+        searchForIgd_ = true;
     }
     pupnpCv_.notify_one();
+}
+
+bool
+PUPnP::validateIgd(const IGDInfo& info)
+{
+    auto descDoc = info.document.get();
+    // Check device type.
+    std::string deviceType = getFirstDocItem(descDoc, "deviceType");
+    if (deviceType.empty()) {
+        // No device type.
+        return false;
+    }
+
+    if (deviceType.compare(UPNP_IGD_DEVICE) != 0) {
+        // Device type not IGD.
+        return false;
+    }
+
+    auto igd_candidate = parseIgd(descDoc, info.location);
+    if (not igd_candidate) {
+        // No valid IGD candidate.
+        return false;
+    }
+
+    JAMI_DBG("PUPnP: Validating IGD candidate\n"
+             "    UDN: %s\n"
+             "    Base URL: %s\n"
+             "    Name: %s\n"
+             "    serviceType: %s\n"
+             "    serviceID: %s\n"
+             "    locationURL: %s\n"
+             "    controlURL: %s\n"
+             "    eventSubURL: %s",
+             igd_candidate->getUDN().c_str(),
+             igd_candidate->getBaseURL().c_str(),
+             igd_candidate->getFriendlyName().c_str(),
+             igd_candidate->getServiceType().c_str(),
+             igd_candidate->getServiceId().c_str(),
+             igd_candidate->getLocationURL().c_str(),
+             igd_candidate->getControlURL().c_str(),
+             igd_candidate->getEventSubURL().c_str());
+
+    // Check if IGD is connected.
+    if (not actionIsIgdConnected(*igd_candidate)) {
+        JAMI_WARN("PUPnP: IGD candidate %s is not connected", igd_candidate->getUDN().c_str());
+        return false;
+    }
+
+    // Validate external Ip.
+    igd_candidate->publicIp_ = actionGetExternalIP(*igd_candidate);
+    if (igd_candidate->publicIp_.toString().empty()) {
+        JAMI_WARN("PUPnP: IGD candidate %s has no valid external Ip", igd_candidate->getUDN().c_str());
+        return false;
+    }
+
+    // Validate internal Ip.
+    igd_candidate->localIp_ = ip_utils::getLocalAddr(pj_AF_INET());
+    if (igd_candidate->localIp_.toString().empty()) {
+        JAMI_WARN("PUPnP: No valid internal Ip.");
+        return false;
+    }
+
+    JAMI_DBG("PUPnP: Found device with external IP %s", igd_candidate->publicIp_.toString().c_str());
+
+    // Store info for subscription.
+    std::string eventSub = igd_candidate->getEventSubURL();
+    std::string udn = igd_candidate->getUDN();
+
+    // Remove any local mappings that may be left over from last time used.
+    removeAllLocalMappings(igd_candidate.get());
+
+    // Add the igd to the upnp context class list.
+    if (updateIgdListCb_(this, std::move(igd_candidate.get()), std::move(igd_candidate.get()->publicIp_), true))
+        JAMI_DBG("PUPnP: IGD with public IP %s was added to the list", igd_candidate->publicIp_.toString().c_str());
+
+    // Keep local IGD list internally.
+    validIgdList_.emplace(igd_candidate->getUDN(), std::move(igd_candidate)).first;
+
+    // Subscribe to IGD events.
+    int upnp_err = UpnpSubscribeAsync(ctrlptHandle_, eventSub.c_str(), SUBSCRIBE_TIMEOUT, subEventCallback, this);
+    if (upnp_err != UPNP_E_SUCCESS)
+        JAMI_WARN("PUPnP: Error when trying to request subscription for %s -> %s", udn.c_str(), UpnpGetErrorMessage(upnp_err));
+
+    return true;
 }
 
 Mapping
@@ -179,17 +315,17 @@ PUPnP::addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, Port
     auto globalMappings = type == PortType::UDP ? &igd->udpMappings : &igd->tcpMappings;
     auto iter = globalMappings->find(port_external);
     if (iter != globalMappings->end()) {
-        /* mapping exists with same external port */
+        // Mapping exists with same external port.
         GlobalMapping* mapping_ptr = &iter->second;
         if (*mapping_ptr == mapping) {
-            /* the same mapping, so nothing needs to be done */
+            // The same mapping, so nothing needs to be done.
             upnp_error = UPnPProtocol::UpnpError::ERROR_OK;
             ++(mapping_ptr->users);
             JAMI_DBG("PUPnP: Mapping already exists, incrementing number of users: %d",
                      iter->second.users);
             return mapping;
         } else {
-            /* this port is already used by a different mapping */
+            // This port is already used by a different mapping.
             JAMI_WARN("PUPnP: Cannot add a mapping with an external port which is already used by another:\n\tcurrent: %s\n\ttrying to add: %s",
                       mapping_ptr->toString().c_str(), mapping.toString().c_str());
             upnp_error = UPnPProtocol::UpnpError::CONFLICT_IN_MAPPING;
@@ -216,17 +352,15 @@ PUPnP::removeMapping(const Mapping& igdMapping)
     // Iterate over all IGDs in internal list and try to remove selected mapping.
     for (auto const& item : validIgdList_) {
 
-        if (not item.second) {
+        if (not item.second)
             continue;
-        }
 
         // Get mappings of IGD depending on type.
         PortMapGlobal* globalMappings;
-        if (igdMapping.getType() == PortType::UDP) {
+        if (igdMapping.getType() == PortType::UDP)
             globalMappings = &item.second->udpMappings;
-        } else {
+        else
             globalMappings = &item.second->tcpMappings;
-        }
 
         // Check if the mapping we want to remove is present in the IGD.
         auto mapToRemove = globalMappings->find(igdMapping.getPortExternal());
@@ -258,52 +392,16 @@ PUPnP::removeMapping(const Mapping& igdMapping)
 void
 PUPnP::removeAllLocalMappings(IGD* igd)
 {
-    if (auto igd_del_map = dynamic_cast<UPnPIGD*>(igd)) {
+    if (auto igd_del_map = dynamic_cast<UPnPIGD*>(igd))
         actionDeletePortMappingsByDesc(*igd_del_map, Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
-    }
-}
-
-void
-PUPnP::registerClientAsync()
-{
-    std::unique_lock<std::mutex> lk(ctrlptMutex_);
-
-    while (pupnpRun_) {
-
-        pupnpCv_.wait(lk);
-
-        if (not clientRegistered_) {
-            // Register Upnp control point.
-            int upnp_err = UpnpRegisterClient(ctrlPtCallback, this, &ctrlptHandle_);
-            if (upnp_err != UPNP_E_SUCCESS) {
-                JAMI_ERR("PUPnP: Can't register client: %s", UpnpGetErrorMessage(upnp_err));
-            } else {
-                clientRegistered_ = true;
-            }
-        }
-
-        if (not pupnpRun_) {
-            break;
-        }
-
-        if (clientRegistered_) {
-            // Send out search for multiple types of devices, as some routers may possibly only reply to one.
-            UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, this);
-            UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, this);
-            UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
-            UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, this);
-        }
-    }
-
-    UpnpFinish();
 }
 
 int
 PUPnP::ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data)
 {
-    if (auto pupnp = static_cast<PUPnP*>(user_data)) {
+    if (auto pupnp = static_cast<PUPnP*>(user_data))
         return pupnp->handleCtrlPtUPnPEvents(event_type, event);
-    }
+
     JAMI_WARN("PUPnP: Control point callback without PUPnP");
     return 0;
 }
@@ -320,122 +418,38 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
     case UPNP_DISCOVERY_SEARCH_RESULT:
     {
         const UpnpDiscovery* d_event = (const UpnpDiscovery*)event;
-        int upnp_err;
 
         // First check the error code.
-        if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS) {
+        if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS)
             break;
-        }
 
         // Check if this device ID is already in the list.
         std::string cpDeviceId = UpnpDiscovery_get_DeviceID_cstr(d_event);
         std::lock_guard<std::mutex> lk(validIgdMutex_);
-        if (cpDeviceList_.count(cpDeviceId) > 0) {
+        if (not cpDeviceList_.emplace(cpDeviceId).second)
             break;
-        }
-        cpDeviceList_.emplace(std::move(cpDeviceId), std::string{});
 
-        /*
-         * NOTE: This thing will block until success for the system socket timeout
-         * unless libupnp is compile with '-disable-blocking-tcp-connections', in
-         * which case it will block for the libupnp specified timeout.
-         */
-        IXML_Document* doc_container_ptr = nullptr;
-        std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> doc_desc_ptr(nullptr, ixmlDocument_free);
-        upnp_err = UpnpDownloadXmlDoc(UpnpDiscovery_get_Location_cstr(d_event), &doc_container_ptr);
-        if (doc_container_ptr) {
-            doc_desc_ptr.reset(doc_container_ptr);
-        }
-
-        if (upnp_err != UPNP_E_SUCCESS or not doc_desc_ptr) {
-            JAMI_WARN("PUPnP: Error downloading device XML document -> %s", UpnpGetErrorMessage(upnp_err));
-            break;
-        }
-
-        // Check device type.
-        std::string deviceType = getFirstDocItem(doc_desc_ptr.get(), "deviceType");
-        if (deviceType.empty()) {
-            // No device type. Exit.
-            break;
-        }
-
-        if (deviceType.compare(UPNP_IGD_DEVICE) != 0) {
-            // Device type not IGD. Exit.
-            break;
-        }
-
-        std::unique_ptr<UPnPIGD> igd_candidate;
-        igd_candidate = parseIGD(doc_desc_ptr.get(), d_event);
-        if (not igd_candidate) {
-            // No valid IGD candidate. Exit.
-            break;
-        }
-
-        JAMI_DBG("PUPnP: Validating IGD candidate.\n\tUDN: %s\n\tBase URL: %s\n\tName: %s\n\tserviceType: %s\n\tserviceID: %s\n\tcontrolURL: %s\n\teventSubURL: %s",
-                    igd_candidate->getUDN().c_str(),
-                    igd_candidate->getBaseURL().c_str(),
-                    igd_candidate->getFriendlyName().c_str(),
-                    igd_candidate->getServiceType().c_str(),
-                    igd_candidate->getServiceId().c_str(),
-                    igd_candidate->getControlURL().c_str(),
-                    igd_candidate->getEventSubURL().c_str());
-
-        // Check if IGD is connected.
-        if (not actionIsIgdConnected(*igd_candidate)) {
-            JAMI_WARN("PUPnP: IGD candidate %s is not connected", igd_candidate->getUDN().c_str());
-            break;
-        }
-
-        // Validate external Ip.
-        igd_candidate->publicIp_ = actionGetExternalIP(*igd_candidate);
-        if (igd_candidate->publicIp_.toString().empty()) {
-            JAMI_WARN("PUPnP: IGD candidate %s has no valid external Ip", igd_candidate->getUDN().c_str());
-            break;
-        }
-
-        // Validate internal Ip.
-        igd_candidate->localIp_ = ip_utils::getLocalAddr(pj_AF_INET());
-        if (igd_candidate->localIp_.toString().empty()) {
-            JAMI_WARN("PUPnP: No valid internal Ip.");
-            break;
-        }
-
-        JAMI_DBG("PUPnP: Found device with external IP %s", igd_candidate->publicIp_.toString().c_str());
-
-        // Store public IP.
-        std::string publicIpStr(std::move(igd_candidate->publicIp_.toString()));
-
-        // Store info for subscription.
-        std::string eventSub = igd_candidate->getEventSubURL();
-        std::string udn = igd_candidate->getUDN();
-
-        // Remove any local mappings that may be left over from last time used.
-        removeAllLocalMappings(igd_candidate.get());
-
-        // Add the igd to the upnp context class list.
-        if (updateIgdListCb_(this, std::move(igd_candidate.get()), std::move(igd_candidate.get()->publicIp_), true)) {
-            JAMI_DBG("PUPnP: IGD with public IP %s was added to the list", publicIpStr.c_str());
-        } else {
-            JAMI_DBG("PUPnP: IGD with public IP %s is already in the list", publicIpStr.c_str());
-        }
-
-        // Keep local IGD list internally.
-        if (cpDeviceList_.count(udn) > 0) {
-            cpDeviceList_[udn] = eventSub;
-        }
-        validIgdList_.emplace(std::move(igd_candidate->getUDN()), std::move(igd_candidate));
-
-        // Subscribe to IGD events.
-        upnp_err = UpnpSubscribeAsync(ctrlptHandle_, eventSub.c_str(), SUBSCRIBE_TIMEOUT, subEventCallback, this);
-        if (upnp_err != UPNP_E_SUCCESS) {
-            JAMI_WARN("PUPnP: Error when trying to request subscription for %s -> %s", udn.c_str(), UpnpGetErrorMessage(upnp_err));
-        }
+        // Check if we already downloaded the xml doc based on the igd location string.
+        std::string igdLocationUrl {UpnpDiscovery_get_Location_cstr(d_event)};
+        dwnldlXmlList_.emplace_back(dht::ThreadPool::io().getShared<IGDInfo>([this, location = std::move(igdLocationUrl)]{
+            IXML_Document* doc_container_ptr = nullptr;
+            std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> doc_desc_ptr(nullptr, ixmlDocument_free);
+            int upnp_err = UpnpDownloadXmlDoc(location.c_str(), &doc_container_ptr);
+            if (doc_container_ptr)
+                doc_desc_ptr.reset(doc_container_ptr);
+            pupnpCv_.notify_all();
+            if (upnp_err != UPNP_E_SUCCESS or not doc_desc_ptr)
+                JAMI_WARN("PUPnP: Error downloading device XML document -> %s", UpnpGetErrorMessage(upnp_err));
+            else
+                return IGDInfo {std::move(location), std::move(doc_desc_ptr)};
+            return IGDInfo {std::move(location), {nullptr, ixmlDocument_free}};
+        }));
+        
         break;
     }
     case UPNP_DISCOVERY_ADVERTISEMENT_BYEBYE:
     {
         const UpnpDiscovery *d_event = (const UpnpDiscovery *)event;
-
         std::lock_guard<std::mutex> lk(validIgdMutex_);
 
         // Remvoe device Id from list.
@@ -444,7 +458,6 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
 
         IGD* igd_to_remove = nullptr;
         for (auto it = validIgdList_.find(cpDeviceId); it != validIgdList_.end(); it++) {
-
             // Store igd to remove.
             igd_to_remove = it->second.get();
 
@@ -471,31 +484,16 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
     case UPNP_EVENT_SUBSCRIPTION_EXPIRED:   // This event will occur only if autorenewal is disabled.
     {
         const UpnpEventSubscribe *es_event = (const UpnpEventSubscribe *)event;
-
         std::string eventSubUrl(UpnpEventSubscribe_get_PublisherUrl_cstr(es_event));
 
-        std::pair<std::string, std::string> foundDevice = std::make_pair("", "");
-        bool foundEventSubUrl = false;
-        auto it = cpDeviceList_.begin();
-        while(it != cpDeviceList_.end()) {
-            if(it->second == eventSubUrl) {
-                foundEventSubUrl = true;
-                foundDevice = std::make_pair(it->first, it->second);
-                break;
-            }
-            it++;
+        auto it = validIgdList_.begin();
+        for (; it != validIgdList_.end(); it++) {
+            if (auto igd = std::dynamic_pointer_cast<UPnPIGD>(it->second))
+                if (igd->getEventSubURL() == eventSubUrl) {
+                    UpnpSubscribeAsync(ctrlptHandle_, eventSubUrl.c_str(), SUBSCRIBE_TIMEOUT, subEventCallback, this);
+                    break;
+                }
         }
-
-        if (not foundEventSubUrl) {
-            // If we don't find event subscription url then exit.
-            break;
-        }
-
-        std::string udn = foundDevice.first;
-        std::string eventSub = foundDevice.second;
-
-        // Renew subscriptons to IGD events.
-        UpnpSubscribeAsync(ctrlptHandle_, eventSub.c_str(), SUBSCRIBE_TIMEOUT, subEventCallback, this);
 
         break;
     }
@@ -524,9 +522,8 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
 int
 PUPnP::subEventCallback(Upnp_EventType event_type, const void* event, void* user_data)
 {
-    if (auto pupnp = static_cast<PUPnP*>(user_data)) {
+    if (auto pupnp = static_cast<PUPnP*>(user_data))
         return pupnp->handleSubscriptionUPnPEvent(event_type, event);
-    }
     JAMI_WARN("PUPnP: Subscription callback without service Id string");
     return 0;
 }
@@ -550,9 +547,9 @@ PUPnP::handleSubscriptionUPnPEvent(Upnp_EventType event_type, const void* event)
 }
 
 std::unique_ptr<UPnPIGD>
-PUPnP::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
+PUPnP::parseIgd(IXML_Document* doc, std::string locationUrl)
 {
-    if (not doc or not d_event)
+    if (not (doc and locationUrl.c_str()))
         return nullptr;
 
     // Check the UDN to see if its already in our device list.
@@ -576,9 +573,8 @@ PUPnP::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
 
     // Get base URL.
     std::string baseURL = getFirstDocItem(doc, "URLBase");
-    if (baseURL.empty()) {
-        baseURL = std::string(UpnpDiscovery_get_Location_cstr(d_event));
-    }
+    if (baseURL.empty())
+        baseURL = locationUrl;
 
     // Get list of services defined by serviceType.
     std::unique_ptr<IXML_NodeList, decltype(ixmlNodeList_free)&> serviceList(nullptr, ixmlNodeList_free);
@@ -627,11 +623,11 @@ PUPnP::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
 
         char* absolute_control_url = nullptr;
         upnp_err = UpnpResolveURL2(baseURL.c_str(), controlURL.c_str(), &absolute_control_url);
-        if (upnp_err == UPNP_E_SUCCESS) {
+        if (upnp_err == UPNP_E_SUCCESS)
             controlURL = absolute_control_url;
-        } else {
+        else
             JAMI_WARN("PUPnP: Error resolving absolute controlURL -> %s", UpnpGetErrorMessage(upnp_err));
-        }
+
         std::free(absolute_control_url);
 
         // Get the relative eventSubURL and turn it into absolute address using the URLBase.
@@ -643,11 +639,11 @@ PUPnP::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
 
         char* absolute_event_sub_url = nullptr;
         upnp_err = UpnpResolveURL2(baseURL.c_str(), eventSubURL.c_str(), &absolute_event_sub_url);
-        if (upnp_err == UPNP_E_SUCCESS) {
+        if (upnp_err == UPNP_E_SUCCESS)
             eventSubURL = absolute_event_sub_url;
-        } else {
+        else
             JAMI_WARN("PUPnP: Error resolving absolute eventSubURL -> %s", UpnpGetErrorMessage(upnp_err));
-        }
+
         std::free(absolute_event_sub_url);
 
         new_igd.reset(new UPnPIGD(std::move(UDN),
@@ -655,6 +651,7 @@ PUPnP::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
                                   std::move(friendlyName),
                                   std::move(serviceType),
                                   std::move(serviceId),
+                                  std::move(locationUrl),
                                   std::move(controlURL),
                                   std::move(eventSubURL)));
 
@@ -667,9 +664,8 @@ PUPnP::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
 bool
 PUPnP::actionIsIgdConnected(const UPnPIGD& igd)
 {
-    if (not clientRegistered_) {
+    if (not clientRegistered_)
         return false;
-    }
 
     // Action and response pointers.
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);    // Action pointer.
@@ -701,9 +697,8 @@ PUPnP::actionIsIgdConnected(const UPnPIGD& igd)
 
     // Parse response.
     std::string status = getFirstDocItem(response.get(), "NewConnectionStatus");
-    if (status.compare("Connected") != 0) {
+    if (status.compare("Connected") != 0)
         return false;
-    }
 
     return true;
 }
@@ -711,9 +706,8 @@ PUPnP::actionIsIgdConnected(const UPnPIGD& igd)
 IpAddr
 PUPnP::actionGetExternalIP(const UPnPIGD& igd)
 {
-    if (not clientRegistered_) {
+    if (not clientRegistered_)
         return {};
-    }
 
     // Action and response pointers.
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);    // Action pointer.
@@ -749,13 +743,8 @@ PUPnP::actionGetExternalIP(const UPnPIGD& igd)
 void
 PUPnP::actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& description)
 {
-    if (not clientRegistered_) {
+    if (not (clientRegistered_ and igd.localIp_))
         return;
-    }
-
-    if (!igd.localIp_) {
-        return;
-    }
 
     // Set action name.
     std::string action_name { "GetGenericPortMappingEntry" };
@@ -821,9 +810,8 @@ PUPnP::actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& des
 bool
 PUPnP::actionDeletePortMapping(const UPnPIGD& igd, const std::string& port_external, const std::string& protocol)
 {
-    if (not clientRegistered_) {
+    if (not clientRegistered_)
         return false;
-    }
 
     // Action and response pointers.
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);    // Action pointer.
@@ -869,9 +857,8 @@ PUPnP::actionDeletePortMapping(const UPnPIGD& igd, const std::string& port_exter
 bool
 PUPnP::actionAddPortMapping(const UPnPIGD& igd, const Mapping& mapping, UPnPProtocol::UpnpError& error_code)
 {
-    if (not clientRegistered_) {
+    if (not clientRegistered_)
         return false;
-    }
 
     error_code = UPnPProtocol::UpnpError::ERROR_OK;
 
