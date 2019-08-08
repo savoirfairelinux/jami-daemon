@@ -64,6 +64,9 @@ MediaEncoder::~MediaEncoder()
     if (outputCtx_) {
         if (outputCtx_->priv_data)
             av_write_trailer(outputCtx_);
+        if (fileIO_) {
+            avio_close(outputCtx_->pb);
+        }
         for (auto encoderCtx : encoders_) {
             if (encoderCtx) {
 #ifndef _MSC_VER
@@ -354,6 +357,7 @@ MediaEncoder::openIOContext()
         const char* filename = outputCtx_->filename;
 #endif
         if (!(outputCtx_->oformat->flags & AVFMT_NOFILE)) {
+            fileIO_ = true;
             if ((ret = avio_open(&outputCtx_->pb, filename, AVIO_FLAG_WRITE)) < 0) {
                 std::stringstream ss;
                 ss << "Could not open IO context for '" << filename << "': " << libav_utils::getError(ret);

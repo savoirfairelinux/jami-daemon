@@ -123,6 +123,7 @@ private:
     int currentStreamIdx_ = -1;
     unsigned sent_samples = 0;
     bool initialized_ {false};
+    bool fileIO_ {false};
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
