@@ -239,6 +239,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
         return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
     }
 
+    void deinitRecorder();
+
 private:
     NON_COPYABLE(SIPCall);
 

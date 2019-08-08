@@ -525,8 +525,10 @@ SIPCall::transfer(const std::string& to)
 {
     auto& account = getSIPAccount();
 
-    if (Recordable::isRecording())
+    if (Recordable::isRecording()) {
+        deinitRecorder();
         stopRecording();
+    }
 
     std::string toUri = account.getToUri(to);
     const pj_str_t dst(CONST_PJ_STR(toUri));
@@ -1035,8 +1037,10 @@ void
 SIPCall::stopAllMedia()
 {
     JAMI_DBG("[call:%s] stopping all medias", getCallId().c_str());
-    if (Recordable::isRecording())
-        Recordable::stopRecording(); // if call stops, finish recording
+    if (Recordable::isRecording()) {
+        deinitRecorder();
+        stopRecording(); // if call stops, finish recording
+    }
     avformatrtp_->stop();
 #ifdef ENABLE_VIDEO
     videortp_->stop();
@@ -1272,6 +1276,15 @@ SIPCall::toggleRecording()
             videortp_->initRecorder(recorder_);
 #endif
     } else {
+        deinitRecorder();
+    }
+    return Call::toggleRecording();
+}
+
+void
+SIPCall::deinitRecorder()
+{
+    if (Call::isRecording()) {
         if (avformatrtp_)
             avformatrtp_->deinitRecorder(recorder_);
 #ifdef ENABLE_VIDEO
@@ -1279,7 +1292,6 @@ SIPCall::toggleRecording()
             videortp_->deinitRecorder(recorder_);
 #endif
     }
-    return Call::toggleRecording();
 }
 
 void
