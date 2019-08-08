@@ -62,7 +62,7 @@ MediaEncoder::MediaEncoder()
 MediaEncoder::~MediaEncoder()
 {
     if (outputCtx_) {
-        if (outputCtx_->priv_data)
+        if (outputCtx_->priv_data && outputCtx_->pb)
             av_write_trailer(outputCtx_);
         if (fileIO_) {
             avio_close(outputCtx_->pb);
