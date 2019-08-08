@@ -221,7 +221,20 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     }
 #endif
 
-    uint64_t maxBitrate = 1000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
+    uint64_t maxBitrate = std::atoi(libav_utils::getDictValue(options_, "max_rate"));
+    // Only clamp video bitrate
+    if (systemCodecInfo.mediaType == MEDIA_VIDEO && maxBitrate > 0) {
+        if (maxBitrate < SystemCodecInfo::DEFAULT_MIN_BITRATE) {
+            JAMI_WARN("Requested bitrate %lu too low, setting to %u",
+                maxBitrate, SystemCodecInfo::DEFAULT_MIN_BITRATE);
+            maxBitrate = SystemCodecInfo::DEFAULT_MIN_BITRATE;
+        } else if (maxBitrate > SystemCodecInfo::DEFAULT_MAX_BITRATE) {
+            JAMI_WARN("Requested bitrate %lu too high, setting to %u",
+                maxBitrate, SystemCodecInfo::DEFAULT_MAX_BITRATE);
+            maxBitrate = SystemCodecInfo::DEFAULT_MAX_BITRATE;
+        }
+    }
+    maxBitrate *= 1000; // convert to b/s for FFmpeg
     uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
     uint64_t bufSize = 2 * maxBitrate;
 
