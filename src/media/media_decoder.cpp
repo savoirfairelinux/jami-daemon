@@ -118,6 +118,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
     if(!params.pixel_format.empty()){
         av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
     }
+
     JAMI_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
 
@@ -262,6 +263,12 @@ MediaDecoder::setupStream()
 {
     int ret = 0;
     avcodec_free_context(&decoderCtx_);
+
+#ifdef RING_ACCEL
+    // if there was a fallback to software decoding, do not enable accel
+    // it has been disabled already by the video_receive_thread/video_input
+    enableAccel_ &= Manager::instance().videoPreferences.getDecodingAccelerated();
+#endif
 
     inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
