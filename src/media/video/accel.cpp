@@ -18,10 +18,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-extern "C" {
-#include <libavutil/hwcontext.h>
-}
-
 #include <algorithm>
 
 #include "media_buffer.h"
@@ -36,6 +32,7 @@ namespace jami { namespace video {
 struct HardwareAPI
 {
     std::string name;
+    AVHWDeviceType hwType;
     AVPixelFormat format;
     AVPixelFormat swFormat;
     std::vector<AVCodecID> supportedCodecs;
@@ -62,9 +59,10 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
     return fallback;
 }
 
-HardwareAccel::HardwareAccel(AVCodecID id, const std::string& name, AVPixelFormat format, AVPixelFormat swFormat, CodecType type)
+HardwareAccel::HardwareAccel(AVCodecID id, const std::string& name, AVHWDeviceType hwType, AVPixelFormat format, AVPixelFormat swFormat, CodecType type)
     : id_(id)
     , name_(name)
+    , hwType_(hwType)
     , format_(format)
     , swFormat_(swFormat)
     , type_(type)
@@ -158,27 +156,23 @@ bool
 HardwareAccel::initDevice()
 {
     int ret = 0;
-    auto hwType = av_hwdevice_find_type_by_name(name_.c_str());
-    if (hwType == AV_HWDEVICE_TYPE_NONE and (name_ == "nvenc" or name_ == "nvdec")) {
-        hwType = AV_HWDEVICE_TYPE_CUDA;
-    }
 #ifdef HAVE_VAAPI_ACCEL_DRM
     // default DRM device may not work on multi GPU computers, so check all possible values
-    if (name_ == "vaapi") {
+    if (hwType_ == AV_HWDEVICE_TYPE_VAAPI) {
         const std::string path = "/dev/dri/";
         auto files = jami::fileutils::readDirectory(path);
         // renderD* is preferred over card*
         std::sort(files.rbegin(), files.rend());
         for (auto& entry : files) {
             std::string deviceName = path + entry;
-            if ((ret = av_hwdevice_ctx_create(&deviceCtx_, hwType, deviceName.c_str(), nullptr, 0)) >= 0) {
+            if ((ret = av_hwdevice_ctx_create(&deviceCtx_, hwType_, deviceName.c_str(), nullptr, 0)) >= 0) {
                 return true;
             }
         }
     }
 #endif
     // default device (nullptr) works for most cases
-    ret = av_hwdevice_ctx_create(&deviceCtx_, hwType, nullptr, nullptr, 0);
+    ret = av_hwdevice_ctx_create(&deviceCtx_, hwType_, nullptr, nullptr, 0);
     return ret >= 0;
 }
 
@@ -261,15 +255,15 @@ std::unique_ptr<HardwareAccel>
 HardwareAccel::setupDecoder(AVCodecID id, int width, int height)
 {
     static const HardwareAPI apiList[] = {
-        { "nvdec", AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
-        { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
-        { "vdpau", AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
-        { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
+        { "nvdec", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
+        { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
+        { "vdpau", AV_HWDEVICE_TYPE_VDPAU, AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
+        { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
     };
 
     for (const auto& api : apiList) {
         if (std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id) != api.supportedCodecs.end()) {
-            auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_DECODER);
+            auto accel = std::make_unique<HardwareAccel>(id, api.name, api.hwType, api.format, api.swFormat, CODEC_DECODER);
             if (accel->initDevice()) {
                  // we don't need frame context for videotoolbox
                 if (api.format == AV_PIX_FMT_VIDEOTOOLBOX ||
@@ -288,15 +282,15 @@ std::unique_ptr<HardwareAccel>
 HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* framesCtx)
 {
     static const HardwareAPI apiList[] = {
-        { "nvenc", AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 } },
-        { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
-        { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264 } },
+        { "nvenc", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 } },
+        { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
+        { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264 } },
     };
 
     for (auto api : apiList) {
         const auto& it = std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id);
         if (it != api.supportedCodecs.end()) {
-            auto accel = std::make_unique<HardwareAccel>(id, api.name, api.format, api.swFormat, CODEC_ENCODER);
+            auto accel = std::make_unique<HardwareAccel>(id, api.name, api.hwType, api.format, api.swFormat, CODEC_ENCODER);
             const auto& codecName = accel->getCodecName();
             if (avcodec_find_encoder_by_name(codecName.c_str())) {
                 if (accel->initDevice()) {
