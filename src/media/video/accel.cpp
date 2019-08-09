@@ -159,9 +159,6 @@ HardwareAccel::initDevice()
 {
     int ret = 0;
     auto hwType = av_hwdevice_find_type_by_name(name_.c_str());
-    if (hwType == AV_HWDEVICE_TYPE_NONE and (name_ == "nvenc" or name_ == "nvdec")) {
-        hwType = AV_HWDEVICE_TYPE_CUDA;
-    }
 #ifdef HAVE_VAAPI_ACCEL_DRM
     // default DRM device may not work on multi GPU computers, so check all possible values
     if (name_ == "vaapi") {
@@ -261,7 +258,7 @@ std::unique_ptr<HardwareAccel>
 HardwareAccel::setupDecoder(AVCodecID id, int width, int height)
 {
     static const HardwareAPI apiList[] = {
-        { "nvdec", AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
+        { "cuda", AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
         { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
         { "vdpau", AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
@@ -288,7 +285,7 @@ std::unique_ptr<HardwareAccel>
 HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* framesCtx)
 {
     static const HardwareAPI apiList[] = {
-        { "nvenc", AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 } },
+        { "cuda", AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 } },
         { "vaapi", AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264 } },
     };
