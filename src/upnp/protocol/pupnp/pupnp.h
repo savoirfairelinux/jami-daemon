@@ -2,7 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
- *	Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+ *  Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,6 +50,12 @@
 
 #include <atomic>
 #include <thread>
+#include <list>
+#include <map>
+#include <set>
+#include <string>
+#include <memory>
+#include <future>
 
 namespace jami {
 class IpAddr;
@@ -68,6 +74,12 @@ constexpr static unsigned int SUBSCRIBE_TIMEOUT {300};
 class PUPnP : public UPnPProtocol
 {
 public:
+    using XMLDocument = std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&>;
+    struct IGDInfo {
+        std::string location;
+        XMLDocument document;
+    };
+
     PUPnP();
     ~PUPnP();
 
@@ -75,10 +87,10 @@ public:
     Type getType() const override { return Type::PUPNP; }
 
     // Notifies a change in network.
-    void clearIGDs() override;
+    void clearIgds() override;
 
     // Sends out async search for IGD.
-    void searchForIGD() override;
+    void searchForIgd() override;
 
     // Tries to add mapping. Assumes mutex is already locked.
     Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) override;
@@ -90,8 +102,8 @@ public:
     void removeAllLocalMappings(IGD* igd) override;
 
 private:
-    // Register client in an async manner using a thread.
-    void registerClientAsync();
+    // Validate IGD from the xml document received from the router.
+    bool validateIgd(const IGDInfo&);
 
     // Control point callback.
     static int ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data);
@@ -116,7 +128,7 @@ private:
     int handleSubscriptionUPnPEvent(Upnp_EventType event_type, const void* event);
 
     // Parses the IGD candidate.
-    std::unique_ptr<UPnPIGD> parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event);
+    std::unique_ptr<UPnPIGD> parseIgd(IXML_Document* doc, std::string locationUrl);
 
     // These functions directly create UPnP actions and make synchronous UPnP control point calls. Assumes mutex is already locked.
     bool   actionIsIgdConnected(const UPnPIGD& igd);
@@ -133,11 +145,14 @@ private:
     std::thread pupnpThread_ {};                                // PUPnP thread for non-blocking client registration.
 
     std::map<std::string, std::shared_ptr<IGD>> validIgdList_;  // Map of valid IGDs with their UDN (universal Id).
-    std::map<std::string, std::string> cpDeviceList_;           // Control point device list containing the device ID and device subscription event url.
+    std::set<std::string> cpDeviceList_;                        // Control point device list containing the device ID and device subscription event url.
+    std::list<std::future<IGDInfo>> dwnldlXmlList_;      // List of shared_futures for blocking xml download function calls.
 
     std::mutex ctrlptMutex_;                                    // Mutex for client handle protection.
     UpnpClient_Handle ctrlptHandle_ {-1};                       // Control point handle.
+
     std::atomic_bool clientRegistered_ { false };               // Indicates of the client is registered.
+    std::atomic_bool searchForIgd_ { false };                   // Variable to signal thread for a search.
 };
 
 }} // namespace jami::upnp
