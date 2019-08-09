@@ -27,6 +27,10 @@
 #include <string>
 #include <vector>
 
+extern "C" {
+#include <libavutil/hwcontext.h>
+}
+
 namespace jami { namespace video {
 
 /**
@@ -57,7 +61,7 @@ public:
     /**
      * Made public so std::unique_ptr can access it. Should not be called.
      */
-    HardwareAccel(AVCodecID id, const std::string& name, AVPixelFormat format, AVPixelFormat swFormat, CodecType type);
+    HardwareAccel(AVCodecID id, const std::string& name, AVHWDeviceType hwType, AVPixelFormat format, AVPixelFormat swFormat, CodecType type);
 
     /**
      * Dereferences hardware contexts.
@@ -131,6 +135,7 @@ private:
 
     AVCodecID id_ {AV_CODEC_ID_NONE};
     std::string name_;
+    AVHWDeviceType hwType_ {AV_HWDEVICE_TYPE_NONE};
     AVPixelFormat format_ {AV_PIX_FMT_NONE};
     AVPixelFormat swFormat_ {AV_PIX_FMT_NONE};
     CodecType type_ {CODEC_NONE};
