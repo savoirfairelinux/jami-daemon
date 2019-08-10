@@ -55,10 +55,10 @@ public:
     Type getType() const override { return Type::NAT_PMP; }
 
     // Notifies a change in network.
-    void clearIGDs() override;
+    void clearIgds() override;
 
     // Renew pmp_igd.
-    void searchForIGD() override;
+    void searchForIgd() override;
 
     // Tries to add mapping. Assumes mutex is already locked.
     Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) override;
