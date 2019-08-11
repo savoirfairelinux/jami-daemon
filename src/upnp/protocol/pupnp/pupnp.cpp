@@ -86,54 +86,63 @@ PUPnP::PUPnP()
     pupnpThread_ = std::thread([this] {
         std::unique_lock<std::mutex> lk(ctrlptMutex_);
         while (pupnpRun_) {
-            pupnpCv_.wait(lk);
+            pupnpCv_.wait(lk, [this]{
+                return not clientRegistered_ or
+                       not pupnpRun_ or
+                       searchForIgd_ or
+                       not dwnldlXmlList_.empty();
+            });
 
             if (not clientRegistered_) {
                 // Register Upnp control point.
                 int upnp_err = UpnpRegisterClient(ctrlPtCallback, this, &ctrlptHandle_);
-                if (upnp_err != UPNP_E_SUCCESS)
+                if (upnp_err != UPNP_E_SUCCESS) {
                     JAMI_ERR("PUPnP: Can't register client: %s", UpnpGetErrorMessage(upnp_err));
-                else
+                    pupnpRun_ = false;
+                    break;
+                } else
                     clientRegistered_ = true;
             }
 
             if (not pupnpRun_)
                 break;
 
-            if (clientRegistered_ and searchForIgd_) {
-                // Send out search for multiple types of devices, as some routers may possibly only reply to one.
-                UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, this);
-                UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, this);
-                UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
-                UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, this);
-
-                // Reset variable.
-                searchForIgd_ = false;
-            }
-
             if (clientRegistered_) {
-                auto xmlList = std::move(dwnldlXmlList_);
-                decltype(xmlList) finished {};
+                if (searchForIgd_) {
+                    // Send out search for multiple types of devices, as some routers may possibly only reply to one.
+                    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, this);
+                    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, this);
+                    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
+                    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, this);
 
-                // Wait on futures asynchronously
-                lk.unlock();
-                for (auto it = xmlList.begin(); it != xmlList.end();) {
-                    if (it->wait_for(std::chrono::seconds(1)) == std::future_status::ready) {
-                        finished.splice(finished.end(), xmlList, it++);
-                    } else {
-                        JAMI_WARN("PUPnP: XML download timed out");
-                        ++it;
-                    }
+                    // Reset variable.
+                    searchForIgd_ = false;
                 }
-                lk.lock();
 
-                // Move back failed items to end of list
-                dwnldlXmlList_.splice(dwnldlXmlList_.end(), xmlList);
-                // Handle successful downloads
-                for (auto& item : finished) {
-                    auto result = item.get();
-                    if (not result.document or not validateIgd(result)) {
-                        cpDeviceList_.erase(result.location);
+                if (not dwnldlXmlList_.empty()) {
+                    auto xmlList = std::move(dwnldlXmlList_);
+                    decltype(xmlList) finished {};
+
+                    // Wait on futures asynchronously
+                    lk.unlock();
+                    for (auto it = xmlList.begin(); it != xmlList.end();) {
+                        if (it->wait_for(std::chrono::seconds(1)) == std::future_status::ready) {
+                            finished.splice(finished.end(), xmlList, it++);
+                        } else {
+                            JAMI_WARN("PUPnP: XML download timed out");
+                            ++it;
+                        }
+                    }
+                    lk.lock();
+
+                    // Move back failed items to end of list
+                    dwnldlXmlList_.splice(dwnldlXmlList_.end(), xmlList);
+                    // Handle successful downloads
+                    for (auto& item : finished) {
+                        auto result = item.get();
+                        if (not result.document or not validateIgd(result)) {
+                            cpDeviceList_.erase(result.location);
+                        }
                     }
                 }
             }
