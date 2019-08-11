@@ -23,12 +23,16 @@
 #include <deque>
 #include <algorithm>
 
+#include "logger.h"
+
 namespace jami {
 
 class PeerChannel
 {
 public:
-    PeerChannel() {}
+    PeerChannel() {
+        JAMI_WARN("PeerChannel::PeerChannel() %p", this);
+    }
     ~PeerChannel() {
         stop();
     }
@@ -41,18 +45,22 @@ public:
 
     ssize_t isDataAvailable() {
         std::lock_guard<std::mutex> lk{mutex_};
+        JAMI_WARN("PeerChannel::isDataAvailable() %p %zu", this, stream_.size());
         return stream_.size();
     }
 
     template <typename Duration>
     ssize_t wait(Duration timeout) {
         std::unique_lock<std::mutex> lk {mutex_};
+        JAMI_WARN("PeerChannel::wait() %p start", this);
         cv_.wait_for(lk, timeout, [this]{ return stop_ or not stream_.empty(); });
+        JAMI_WARN("PeerChannel::wait() %p end", this);
         return stream_.size();
     }
 
     std::size_t read(char* output, std::size_t size) {
         std::unique_lock<std::mutex> lk {mutex_};
+        JAMI_WARN("PeerChannel::read() %p start %zu", this, size);
         cv_.wait(lk, [this]{
             return stop_ or not stream_.empty();
         });
@@ -64,17 +72,20 @@ public:
             std::copy(stream_.begin(), endIt, output);
             stream_.erase(stream_.begin(), endIt);
         }
+        JAMI_WARN("PeerChannel::read() %p end %zu", this, size);
         return toRead;
     }
 
     void write(const char* data, std::size_t size) {
         std::lock_guard<std::mutex> lk {mutex_};
+        JAMI_WARN("PeerChannel::write() %p %zu", this, size);
         stream_.insert(stream_.end(), data, data+size);
         cv_.notify_all();
     }
 
     void stop() noexcept {
         std::lock_guard<std::mutex> lk {mutex_};
+        JAMI_WARN("PeerChannel::stop() %p", this);
         if (stop_)
             return;
         stop_ = true;
