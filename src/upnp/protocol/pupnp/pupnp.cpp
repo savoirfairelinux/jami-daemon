@@ -83,6 +83,42 @@ errorOnResponse(IXML_Document* doc)
 
 PUPnP::PUPnP()
 {
+    int upnp_err = UPNP_E_SUCCESS;
+
+#if UPNP_ENABLE_IPV6
+    upnp_err = UpnpInit2(0, 0);
+    if (upnp_err != UPNP_E_SUCCESS) {
+        JAMI_WARN("PUPnP: UpnpInit2 Failed to initialize");
+        UpnpFinish();					// Destroy threads before reusing upnp init function.
+        upnp_err = UpnpInit(0, 0);      // Deprecated function but fall back on it if UpnpInit2 fails.
+    }
+#else
+    upnp_err = UpnpInit(0, 0);           // Deprecated function but fall back on it if IPv6 not enabled.
+#endif
+
+    if (upnp_err != UPNP_E_SUCCESS) {
+        JAMI_ERR("PUPnP: Can't initialize libupnp: %s", UpnpGetErrorMessage(upnp_err));
+        UpnpFinish();
+        pupnpRun_ = false;
+        return;
+    } else {
+        char* ip_address = UpnpGetServerIpAddress();
+        char* ip_address6 = nullptr;
+        unsigned short port = UpnpGetServerPort();
+        unsigned short port6 = 0;
+#if UPNP_ENABLE_IPV6
+        ip_address6 = UpnpGetServerIp6Address();
+        port6 = UpnpGetServerPort6();
+#endif
+        if (ip_address6 and port6)
+            JAMI_DBG("PUPnP: Initialiazed on %s:%u | %s:%u", ip_address, port, ip_address6, port6);
+        else
+            JAMI_DBG("PUPnP: Initialiazed on %s:%u", ip_address, port);
+
+        // Relax the parser to allow malformed XML text.
+        ixmlRelaxParser(1);
+    }
+
     pupnpThread_ = std::thread([this] {
         std::unique_lock<std::mutex> lk(ctrlptMutex_);
         while (pupnpRun_) {
@@ -150,42 +186,6 @@ PUPnP::PUPnP()
 
         UpnpFinish();
     });
-
-    int upnp_err = UPNP_E_SUCCESS;
-    char* ip_address = nullptr;
-    char* ip_address6 = nullptr;
-    unsigned short port = 0;
-    unsigned short port6 = 0;
-
-#if UPNP_ENABLE_IPV6
-    upnp_err = UpnpInit2(0, 0);
-    if (upnp_err != UPNP_E_SUCCESS) {
-        JAMI_WARN("PUPnP: UpnpInit2 Failed to initialize");
-        UpnpFinish();					// Destroy threads before reusing upnp init function.
-        upnp_err = UpnpInit(0, 0);      // Deprecated function but fall back on it if UpnpInit2 fails.
-    }
-#else
-    upnp_err = UpnpInit(0, 0);           // Deprecated function but fall back on it if IPv6 not enabled.
-#endif
-
-    if (upnp_err != UPNP_E_SUCCESS) {
-        JAMI_ERR("PUPnP: Can't initialize libupnp: %s", UpnpGetErrorMessage(upnp_err));
-        UpnpFinish();
-    } else {
-        ip_address = UpnpGetServerIpAddress();
-        port = UpnpGetServerPort();
-#if UPNP_ENABLE_IPV6
-        ip_address6 = UpnpGetServerIp6Address();
-        port6 = UpnpGetServerPort6();
-#endif
-        if (ip_address6 and port6)
-            JAMI_DBG("PUPnP: Initialiazed on %s:%u | %s:%u", ip_address, port, ip_address6, port6);
-        else
-            JAMI_DBG("PUPnP: Initialiazed on %s:%u", ip_address, port);
-
-        // Relax the parser to allow malformed XML text.
-        ixmlRelaxParser(1);
-    }
 }
 
 PUPnP::~PUPnP()
