@@ -686,8 +686,8 @@ PUPnP::actionIsIgdConnected(const UPnPIGD& igd)
         return false;
 
     // Action and response pointers.
-    std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);    // Action pointer.
-    std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);  // Response pointer.
+    XMLDocument action(nullptr, ixmlDocument_free);    // Action pointer.
+    XMLDocument response(nullptr, ixmlDocument_free);  // Response pointer.
     IXML_Document* action_container_ptr = nullptr;
     IXML_Document* response_container_ptr = nullptr;
 
@@ -730,19 +730,19 @@ PUPnP::actionGetExternalIP(const UPnPIGD& igd)
     // Action and response pointers.
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);    // Action pointer.
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);  // Response pointer.
-    IXML_Document* action_container_ptr = nullptr;
-    IXML_Document* response_container_ptr = nullptr;
 
     // Set action name.
-    std::string action_name { "GetExternalIPAddress" };
+    static constexpr const char* action_name { "GetExternalIPAddress" };
 
-    action_container_ptr = UpnpMakeAction(action_name.c_str(), igd.getServiceType().c_str(), 0, nullptr);
+    IXML_Document* action_container_ptr = nullptr;
+    action_container_ptr = UpnpMakeAction(action_name, igd.getServiceType().c_str(), 0, nullptr);
     if (not action_container_ptr) {
         JAMI_WARN("PUPnP: Failed to make GetExternalIPAddress action");
         return {};
     }
     action.reset(action_container_ptr);
 
+    IXML_Document* response_container_ptr = nullptr;
     int upnp_err = UpnpSendAction(ctrlptHandle_, igd.getControlURL().c_str(), igd.getServiceType().c_str(), nullptr, action.get(), &response_container_ptr);
     if (upnp_err != UPNP_E_SUCCESS) {
         JAMI_WARN("PUPnP: Failed to send GetExternalIPAddress action -> %s", UpnpGetErrorMessage(upnp_err));
@@ -750,7 +750,7 @@ PUPnP::actionGetExternalIP(const UPnPIGD& igd)
     }
     response.reset(response_container_ptr);
 
-    if(errorOnResponse(response.get())) {
+    if (errorOnResponse(response.get())) {
         JAMI_WARN("PUPnP: Failed to get GetExternalIPAddress from %s -> %d: %s", igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
         return {};
     }
@@ -765,7 +765,7 @@ PUPnP::actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& des
         return;
 
     // Set action name.
-    std::string action_name { "GetGenericPortMappingEntry" };
+    static constexpr const char* action_name { "GetGenericPortMappingEntry" };
 
     int entry_idx = 0;
     bool done = false;
@@ -777,7 +777,7 @@ PUPnP::actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& des
         IXML_Document* action_container_ptr = nullptr;
         IXML_Document* response_container_ptr = nullptr;
 
-        UpnpAddToAction(&action_container_ptr, action_name.c_str(), igd.getServiceType().c_str(), "NewPortMappingIndex", std::to_string(entry_idx).c_str());
+        UpnpAddToAction(&action_container_ptr, action_name, igd.getServiceType().c_str(), "NewPortMappingIndex", std::to_string(entry_idx).c_str());
         action.reset(action_container_ptr);
 
         int upnp_err = UpnpSendAction(ctrlptHandle_, igd.getControlURL().c_str(), igd.getServiceType().c_str(), nullptr, action.get(), &response_container_ptr);
@@ -799,7 +799,6 @@ PUPnP::actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& des
                         errorCode.c_str(), errorDescription.c_str());
             }
             done = true;
-
         } else {
             // Parse the rest of the response.
             std::string desc_actual = getFirstDocItem(response.get(), "NewPortMappingDescription");
@@ -881,8 +880,8 @@ PUPnP::actionAddPortMapping(const UPnPIGD& igd, const Mapping& mapping, UPnPProt
     error_code = UPnPProtocol::UpnpError::ERROR_OK;
 
     // Action and response pointers.
-    std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);    // Action pointer.
-    std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);  // Response pointer.
+    XMLDocument action(nullptr, ixmlDocument_free);    // Action pointer.
+    XMLDocument response(nullptr, ixmlDocument_free);  // Response pointer.
     IXML_Document* action_container_ptr = nullptr;
     IXML_Document* response_container_ptr = nullptr;
 
