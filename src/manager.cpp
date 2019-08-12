@@ -2355,7 +2355,8 @@ Manager::getIsAlwaysRecording() const
 void
 Manager::setIsAlwaysRecording(bool isAlwaysRec)
 {
-    return audioPreference.setIsAlwaysRecording(isAlwaysRec);
+    audioPreference.setIsAlwaysRecording(isAlwaysRec);
+    saveConfig();
 }
 
 bool
