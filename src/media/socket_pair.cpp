@@ -264,6 +264,7 @@ SocketPair::interrupt()
     if (rtp_sock_) rtp_sock_->setOnRecv(nullptr);
     if (rtcp_sock_) rtcp_sock_->setOnRecv(nullptr);
     cv_.notify_all();
+    cvRtcpPacketReadyToRead_.notify_all();
 }
 
 void
