@@ -1,0 +1,27 @@
+ pjnath/src/pjnath/ice_strans.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index ca15a74e8..040ab4595 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -396,6 +396,9 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+     data->comp = comp;
+     data->transport_id = cand->transport_id;
+ 
++    /* Commit the relayed candidate. */
++    comp->cand_cnt++;
++
+     /* Create the TURN transport */
+     status = pj_turn_sock_create(&ice_st->cfg.stun_cfg, turn_cfg->af,
+ 				 turn_cfg->conn_type,
+@@ -420,9 +423,6 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+ 	return status;
+     }
+ 
+-    /* Commit the relayed candidate. */
+-    comp->cand_cnt++;
+-
+     PJ_LOG(4,(ice_st->obj_name,
+ 		  "Comp %d/%d: TURN relay candidate (tpid=%d) "
+ 		  "waiting for allocation",
