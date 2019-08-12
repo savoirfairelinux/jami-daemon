@@ -427,9 +427,12 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
     } else if (isHardware) {
         // Hardware decoded frame, transfer back to main memory
         // Transfer to GPU if we have a hardware encoder
-        AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_YUV420P);
+        // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
+        AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
         framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
-        if (accel_)
+        if (!accel_)
+            framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
+        else
             framePtr = accel_->transfer(*framePtr);
         frame = framePtr->pointer();
     } else if (accel_) {
