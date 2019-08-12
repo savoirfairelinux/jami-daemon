@@ -79,6 +79,7 @@ public:
         std::string location;
         XMLDocument document;
     };
+    using pIGDInfo = std::unique_ptr<IGDInfo>;
 
     PUPnP();
     ~PUPnP();
@@ -146,7 +147,7 @@ private:
 
     std::map<std::string, std::shared_ptr<IGD>> validIgdList_;  // Map of valid IGDs with their UDN (universal Id).
     std::set<std::string> cpDeviceList_;                        // Control point device list containing the device ID and device subscription event url.
-    std::list<std::future<IGDInfo>> dwnldlXmlList_;      // List of shared_futures for blocking xml download function calls.
+    std::list<std::future<pIGDInfo>> dwnldlXmlList_;      // List of shared_futures for blocking xml download function calls.
 
     std::mutex ctrlptMutex_;                                    // Mutex for client handle protection.
     UpnpClient_Handle ctrlptHandle_ {-1};                       // Control point handle.
