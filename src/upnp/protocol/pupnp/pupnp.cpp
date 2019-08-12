@@ -132,8 +132,8 @@ PUPnP::PUPnP()
                 // Handle successful downloads
                 for (auto& item : finished) {
                     auto result = item.get();
-                    if (not result.document or not validateIgd(result)) {
-                        cpDeviceList_.erase(result.location);
+                    if (not result->document or not validateIgd(*result)) {
+                        cpDeviceList_.erase(result->location);
                     }
                 }
             }
@@ -440,7 +440,7 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
 
         // Check if we already downloaded the xml doc based on the igd location string.
         std::string igdLocationUrl {UpnpDiscovery_get_Location_cstr(d_event)};
-        dwnldlXmlList_.emplace_back(dht::ThreadPool::io().get<IGDInfo>([this, location = std::move(igdLocationUrl)]{
+        dwnldlXmlList_.emplace_back(dht::ThreadPool::io().get<pIGDInfo>([this, location = std::move(igdLocationUrl)]{
             IXML_Document* doc_container_ptr = nullptr;
             XMLDocument doc_desc_ptr(nullptr, ixmlDocument_free);
             int upnp_err = UpnpDownloadXmlDoc(location.c_str(), &doc_container_ptr);
@@ -450,8 +450,8 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
             if (upnp_err != UPNP_E_SUCCESS or not doc_desc_ptr)
                 JAMI_WARN("PUPnP: Error downloading device XML document -> %s", UpnpGetErrorMessage(upnp_err));
             else
-                return IGDInfo {std::move(location), std::move(doc_desc_ptr)};
-            return IGDInfo {std::move(location), XMLDocument(nullptr, ixmlDocument_free)};
+                return std::make_unique<IGDInfo>(IGDInfo{ std::move(location), std::move(doc_desc_ptr) });
+            return std::make_unique<IGDInfo>(IGDInfo{ std::move(location), XMLDocument(nullptr, ixmlDocument_free) });
         }));
 
         break;
