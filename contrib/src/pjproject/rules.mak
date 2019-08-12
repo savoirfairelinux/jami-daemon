@@ -54,6 +54,7 @@ endif
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/android.patch
 endif
+	$(APPLY) $(SRC)/pjproject/fix_turn_alloc_failure.patch
 	$(APPLY) $(SRC)/pjproject/rfc2466.patch
 	$(APPLY) $(SRC)/pjproject/ipv6.patch
 	$(APPLY) $(SRC)/pjproject/multiple_listeners.patch

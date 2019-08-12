@@ -27,6 +27,7 @@ if "%NO_AUTO%"=="" (
 )
 set UNIXPATH=%SRC:\=/%
 set UNIXPATH=%ROOTPATH%%UNIXPATH:C:/=%
+bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_turn_alloc_failure.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/ipv6.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/multiple_listeners.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/pj_ice_sess.patch"
