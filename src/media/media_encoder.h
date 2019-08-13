@@ -114,13 +114,13 @@ private:
     AVCodecContext* prepareEncoderContext(AVCodec* outputCodec, bool is_video);
     void forcePresetX264(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
-    int initStream(const std::string& codecName, AVBufferRef* framesCtx);
-    int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx);
+    int initStream(const std::string& codecName, AVBufferRef* framesCtx, int format);
+    int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx, int format);
     void openIOContext();
     void startIO();
     AVCodecContext* getCurrentVideoAVCtx();
     void stopEncoder();
-    AVCodecContext* initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef* framesCtx, uint64_t br);
+    AVCodecContext* initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef* framesCtx, uint64_t br, int format);
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext *outputCtx_ = nullptr;
