@@ -161,7 +161,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 {
     if (systemCodecInfo.mediaType == MEDIA_AUDIO) {
         audioCodec_ = systemCodecInfo.name;
-        return initStream(systemCodecInfo, nullptr);
+        return initStream(systemCodecInfo, nullptr, -1);
     } else {
         videoCodec_ = systemCodecInfo.name;
         // TODO only support 1 audio stream and 1 video stream per encoder
@@ -173,17 +173,17 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 }
 
 int
-MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx)
+MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx, int format)
 {
     const auto codecInfo = getSystemCodecContainer()->searchCodecByName(codecName, MEDIA_ALL);
     if (codecInfo)
-        return initStream(*codecInfo, framesCtx);
+        return initStream(*codecInfo, framesCtx, format);
     else
         return -1;
 }
 
 int
-MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx)
+MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx, int format)
 {
     AVCodecContext* encoderCtx = nullptr;
     AVMediaType mediaType;
@@ -194,7 +194,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         mediaType = AVMEDIA_TYPE_AUDIO;
 
     std::lock_guard<std::mutex> lk(encMutex_);
-    encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), framesCtx, 0);
+    encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), framesCtx, 0, format);
 
     // add video stream to outputformat context
     AVStream* stream = avformat_new_stream(outputCtx_, outputCodec_);
@@ -289,7 +289,12 @@ int
 MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
 {
     if (!initialized_) {
-        initStream(videoCodec_, input.pointer()->hw_frames_ctx);
+        int pix = input.format();
+#ifdef RING_ACCEL
+        if (input.pointer()->hw_frames_ctx)
+            pix = reinterpret_cast<AVHWFramesContext*>(input.pointer()->hw_frames_ctx)->sw_format;
+#endif
+        initStream(videoCodec_, input.pointer()->hw_frames_ctx, pix);
         startIO();
     }
 
@@ -314,7 +319,9 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
         // Hardware decoded frame, transfer back to main memory
         // Transfer to GPU if we have a hardware encoder
         // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
-        AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
+        AVPixelFormat pix = (accel_
+            ? accel_->getSoftwareFormat()
+            : reinterpret_cast<AVHWFramesContext*>(input.pointer()->hw_frames_ctx)->sw_format);
         framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
         if (!accel_)
             framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
@@ -382,7 +389,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         bool isVideo = (frame->width > 0 && frame->height > 0);
         if (isVideo and videoOpts_.isValid()) {
             // Has video stream, so init with video frame
-            streamIdx = initStream(videoCodec_, frame->hw_frames_ctx);
+            streamIdx = initStream(videoCodec_, frame->hw_frames_ctx, frame->format);
             startIO();
         } else if (!isVideo and !videoOpts_.isValid()) {
             // Only audio, for MediaRecorder, which doesn't use encodeAudio
@@ -425,7 +432,7 @@ bool
 MediaEncoder::send(AVPacket& pkt, int streamIdx)
 {
     if (!initialized_) {
-        streamIdx = initStream(videoCodec_, nullptr);
+        streamIdx = initStream(videoCodec_, nullptr, -1);
         startIO();
     }
     if (streamIdx < 0)
@@ -644,7 +651,7 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
 }
 
 AVCodecContext*
-MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef* framesCtx, uint64_t br)
+MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef* framesCtx, uint64_t br, int format)
 {
     outputCodec_ = nullptr;
 #ifdef RING_ACCEL
@@ -676,6 +683,15 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
     }
 
     AVCodecContext* encoderCtx = prepareEncoderContext(outputCodec_, mediaType == AVMEDIA_TYPE_VIDEO);
+    if (mediaType == AVMEDIA_TYPE_VIDEO && outputCodec_->pix_fmts) {
+        for (int i = 0; outputCodec_->pix_fmts[i] != AV_PIX_FMT_NONE; ++i) {
+            AVPixelFormat pix = outputCodec_->pix_fmts[i];
+            if (pix == format) {
+                encoderCtx->pix_fmt = pix;
+                break;
+            }
+        }
+    }
     encoders_.push_back(encoderCtx);
 
 #ifdef RING_ACCEL
@@ -735,7 +751,7 @@ MediaEncoder::setBitrate(uint64_t br)
         initMPEG4(encoderCtx, br);
     else {
         stopEncoder();
-        encoderCtx = initCodec(codecType, codecId, NULL, br);
+        encoderCtx = initCodec(codecType, codecId, NULL, br, -1);
         if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
             throw MediaEncoderException("Could not open encoder");
     }

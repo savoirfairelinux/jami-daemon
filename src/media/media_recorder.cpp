@@ -222,8 +222,16 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     const auto& ms = streams_[name]->info;
     if (ms.isVideo) {
 #ifdef RING_ACCEL
-        clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
-            static_cast<AVPixelFormat>(ms.format));
+        auto vf = std::static_pointer_cast<VideoFrame>(frame);
+        auto desc = av_pix_fmt_desc_get(static_cast<AVPixelFormat>(vf->format()));
+        bool isHardware = desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL);
+        if (isHardware) {
+            AVPixelFormat pix = reinterpret_cast<AVHWFramesContext*>(frame->pointer()->hw_frames_ctx)->sw_format;
+            clone = video::HardwareAccel::transferToMainMemory(*vf, pix);
+        } else {
+            clone = std::make_unique<MediaFrame>();
+            clone->copyFrom(*frame);
+        }
 #else
         clone = std::make_unique<MediaFrame>();
         clone->copyFrom(*frame);

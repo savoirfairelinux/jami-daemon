@@ -358,8 +358,9 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         std::shared_ptr<VideoFrame> frame;
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get((AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
+        AVPixelFormat pix = reinterpret_cast<AVHWFramesContext*>(frame_p->pointer()->hw_frames_ctx)->sw_format;
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
-            frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p), AV_PIX_FMT_NV12);
+            frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p), pix);
         else
 #endif
         frame = std::static_pointer_cast<VideoFrame>(frame_p);
