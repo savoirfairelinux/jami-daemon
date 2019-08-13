@@ -276,9 +276,13 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
 
     // TURN connection/allocation
     JAMI_DBG() << "Connecting to TURN " << server.toString(true, true);
-    PjsipCall(pj_turn_sock_alloc,
-              pimpl_->relay, &pimpl_->relayAddr, server.getPort(),
-              nullptr, &cred, &turn_alloc_param);
+    try {
+        PjsipCall(pj_turn_sock_alloc,
+                pimpl_->relay, &pimpl_->relayAddr, server.getPort(),
+                nullptr, &cred, &turn_alloc_param);
+    } catch (const sip_utils::PjsipFailure& e) {
+        JAMI_ERR("pj_turn_sock_alloc failed: %s", e.what());
+    }
 }
 
 TurnTransport::~TurnTransport() = default;
