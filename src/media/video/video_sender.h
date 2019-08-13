@@ -73,7 +73,6 @@ private:
     std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
     std::unique_ptr<MediaEncoder> videoEncoder_ = nullptr;
 
-    // XXX forceKeyFrame_ is always at -1, incremented to 0 when a keyframe is requested (still works though)
     std::atomic<int> forceKeyFrame_ {KEYFRAMES_AT_START};
     int keyFrameFreq_ {0}; // Set keyframe rate, 0 to disable auto-keyframe. Computed in constructor
     int64_t frameNumber_ = 0;
