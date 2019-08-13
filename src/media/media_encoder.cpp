@@ -161,7 +161,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 {
     if (systemCodecInfo.mediaType == MEDIA_AUDIO) {
         audioCodec_ = systemCodecInfo.name;
-        return initStream(systemCodecInfo, nullptr);
+        return initStream(systemCodecInfo, nullptr, -1);
     } else {
         videoCodec_ = systemCodecInfo.name;
         // TODO only support 1 audio stream and 1 video stream per encoder
@@ -173,17 +173,17 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
 }
 
 int
-MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx)
+MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx, int format)
 {
     const auto codecInfo = getSystemCodecContainer()->searchCodecByName(codecName, MEDIA_ALL);
     if (codecInfo)
-        return initStream(*codecInfo, framesCtx);
+        return initStream(*codecInfo, framesCtx, format);
     else
         return -1;
 }
 
 int
-MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx)
+MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx, int format)
 {
     AVCodecContext* encoderCtx = nullptr;
     AVMediaType mediaType;
@@ -289,7 +289,7 @@ int
 MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
 {
     if (!initialized_) {
-        initStream(videoCodec_, input.pointer()->hw_frames_ctx);
+        initStream(videoCodec_, input.pointer()->hw_frames_ctx, input.format());
         startIO();
     }
 
@@ -382,7 +382,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         bool isVideo = (frame->width > 0 && frame->height > 0);
         if (isVideo and videoOpts_.isValid()) {
             // Has video stream, so init with video frame
-            streamIdx = initStream(videoCodec_, frame->hw_frames_ctx);
+            streamIdx = initStream(videoCodec_, frame->hw_frames_ctx, frame->format);
             startIO();
         } else if (!isVideo and !videoOpts_.isValid()) {
             // Only audio, for MediaRecorder, which doesn't use encodeAudio
@@ -425,7 +425,7 @@ bool
 MediaEncoder::send(AVPacket& pkt, int streamIdx)
 {
     if (!initialized_) {
-        streamIdx = initStream(videoCodec_, nullptr);
+        streamIdx = initStream(videoCodec_, nullptr, -1);
         startIO();
     }
     if (streamIdx < 0)
@@ -676,6 +676,15 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
     }
 
     AVCodecContext* encoderCtx = prepareEncoderContext(outputCodec_, mediaType == AVMEDIA_TYPE_VIDEO);
+    if (systemCodecInfo.mediaType == MEDIA_VIDEO && outputCodec->pix_fmts) {
+        for (int i = 0; outputCodec->pix_fmts[i] != AV_PIX_FMT_NONE; ++i) {
+            AVPixelFormat pix = outputCodec->pix_fmts[i];
+            if (pix == format) {
+                encoderCtx->pix_fmt = pix;
+                break;
+            }
+        }
+    }
     encoders_.push_back(encoderCtx);
 
 #ifdef RING_ACCEL
@@ -726,7 +735,7 @@ MediaEncoder::setBitrate(uint64_t br)
 
     std::lock_guard<std::mutex> lk(encMutex_);
     // No need to restart encoder for h264, h263 and MPEG4
-    // Change parameters on the fly  
+    // Change parameters on the fly
     if(codecId == AV_CODEC_ID_H264)
         initH264(encoderCtx, br);
     else if(codecId == AV_CODEC_ID_H263P)
