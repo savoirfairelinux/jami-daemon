@@ -183,7 +183,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
         return;
 
 #ifdef RING_ACCEL
-    std::shared_ptr<VideoFrame> frame { HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12) };
+    std::shared_ptr<VideoFrame> frame { HardwareAccel::transferToMainMemory(input) };
 #else
     std::shared_ptr<VideoFrame> frame = input;
 #endif

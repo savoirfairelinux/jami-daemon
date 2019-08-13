@@ -29,6 +29,7 @@
 
 extern "C" {
 #include <libavutil/hwcontext.h>
+#include <libavutil/pixfmt.h>
 }
 
 namespace jami { namespace video {
@@ -56,7 +57,7 @@ public:
      * @frame: Refrerence to the decoded hardware frame.
      * @returns: Software frame.
      */
-    static std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat);
+    static std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat = AV_PIX_FMT_NONE);
 
     /**
      * Made public so std::unique_ptr can access it. Should not be called.
