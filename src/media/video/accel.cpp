@@ -156,7 +156,6 @@ bool
 HardwareAccel::initDevice()
 {
     int ret = 0;
-#ifdef HAVE_VAAPI_ACCEL_DRM
     // default DRM device may not work on multi GPU computers, so check all possible values
     if (hwType_ == AV_HWDEVICE_TYPE_VAAPI) {
         const std::string path = "/dev/dri/";
@@ -170,7 +169,6 @@ HardwareAccel::initDevice()
             }
         }
     }
-#endif
     // default device (nullptr) works for most cases
     ret = av_hwdevice_ctx_create(&deviceCtx_, hwType_, nullptr, nullptr, 0);
     return ret >= 0;
