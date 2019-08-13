@@ -4,6 +4,7 @@
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *  Author: Eloi Bail <eloi.bail@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -78,7 +79,7 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 #if __ANDROID__
         if (forceKeyFrame_) {
             emitSignal<DRing::VideoSignal::RequestKeyFrame>();
-            forceKeyFrame_ = 0;
+            --forceKeyFrame_;
         }
 #endif
         int size {0};
