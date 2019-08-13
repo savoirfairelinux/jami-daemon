@@ -234,11 +234,19 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
         return out;
     }
 
+    if (input->hw_frames_ctx && desiredFormat == AV_PIX_FMT_NONE) {
+        // If we have a HardwareAccel object, it is set by us, but in the case where we don't,
+        // sw_format is set to seemingly random pixel formats such as gray or yuv422p16le
+        //desiredFormat = reinterpret_cast<AVHWFramesContext*>(input->hw_frames_ctx)->sw_format;
+        desiredFormat = AV_PIX_FMT_NV12;
+    }
+
     auto output = out->pointer();
     output->format = desiredFormat;
 
     int ret = av_hwframe_transfer_data(output, input, 0);
     if (ret < 0) {
+        JAMI_ERR() << "Error transferring frame: " << libav_utils::getError(ret);
         out->copyFrom(frame);
         return out;
     }
