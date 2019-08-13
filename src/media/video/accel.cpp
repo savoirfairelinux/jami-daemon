@@ -234,6 +234,9 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
         return out;
     }
 
+    if (input->hw_frames_ctx && desiredFormat == AV_PIX_FMT_NONE)
+        desiredFormat = reinterpret_cast<AVHWFramesContext*>(input->hw_frames_ctx)->sw_format;
+
     auto output = out->pointer();
     output->format = desiredFormat;
 
