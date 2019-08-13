@@ -341,6 +341,10 @@ public:
         return responseReceived_;
     }
 
+    bool waitId(uint64_t id) {
+        return waitId_ == id;
+    }
+
     void addListener(const ListenerFunction& cb) {
         if (!connected_) {
             std::lock_guard<std::mutex> lk {listenersMutex_};
@@ -391,6 +395,7 @@ private:
         // Prepare connection request as a DHT message
         PeerConnectionMsg request;
         request.id = ValueIdDist()(parent_.account.rand); /* Random id for the message unicity */
+        waitId_ = request.id;
         request.addresses = {icemsg.str()};
         request.addresses.insert(request.addresses.end(), publicAddresses_.begin(), publicAddresses_.end());
 
@@ -512,6 +517,7 @@ private:
     std::atomic_bool responseReceived_ {false};
     std::condition_variable responseCV_{};
     PeerConnectionMsg response_;
+    uint64_t waitId_ {0};
     std::shared_ptr<dht::crypto::Certificate> peerCertificate_;
     std::shared_ptr<AbstractSocketEndpoint> peer_ep_;
     std::unique_ptr<PeerConnection> connection_;
@@ -857,9 +863,10 @@ DhtPeerConnector::Impl::onResponseMsg(PeerConnectionMsg&& response)
     JAMI_DBG() << account << "[CNX] rx DHT reply from " << response.from;
     std::lock_guard<std::mutex> lock(clientsMutex_);
     for (auto& client: clients_) {
-        // NOTE We can receives multiple files from one peer. So fill unanswered clients.
+        // NOTE We can receives multiple files from one peer. So fill unanswered clients with linked id.
         if (client.first.first == response.from
-            && client.second && !client.second->hasAlreadyAResponse()) {
+            && client.second && !client.second->hasAlreadyAResponse()
+            && client.second->waitId(response.id)) {
             client.second->onDhtResponse(std::move(response));
             break;
         }
