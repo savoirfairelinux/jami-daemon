@@ -122,6 +122,7 @@ MediaDemuxer::openInput(const DeviceParams& params)
     JAMI_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
 
+    inputCtx_->probesize = 1; // Don't waste time fetching framerate when finding stream info
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),
