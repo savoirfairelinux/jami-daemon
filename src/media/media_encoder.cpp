@@ -726,7 +726,7 @@ MediaEncoder::setBitrate(uint64_t br)
 
     std::lock_guard<std::mutex> lk(encMutex_);
     // No need to restart encoder for h264, h263 and MPEG4
-    // Change parameters on the fly  
+    // Change parameters on the fly
     if(codecId == AV_CODEC_ID_H264)
         initH264(encoderCtx, br);
     else if(codecId == AV_CODEC_ID_H263P)
@@ -785,6 +785,7 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
     encoderCtx->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
     encoderCtx->qmin = 4;
     encoderCtx->qmax = 56;
+    crf = std::min(encoderCtx->qmax, std::max((int)crf, encoderCtx->qmin));
     libav_utils::setDictValue(&options_, "crf", std::to_string(crf));
     av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
     encoderCtx->rc_buffer_size = bufSize;
