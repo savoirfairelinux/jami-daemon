@@ -154,7 +154,7 @@ VideoRtpSession::restartSender()
 
 void VideoRtpSession::startReceiver()
 {
-    if (receive_.enabled and not receive_.holding) {
+    if (receive_.enabled and not receive_.holding and 0) {
         if (receiveThread_)
             JAMI_WARN("Restarting video receiver");
         receiveThread_.reset(

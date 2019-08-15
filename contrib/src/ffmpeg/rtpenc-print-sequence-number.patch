@@ -1,0 +1,23 @@
+From f2e413a1b2f59ca015831caee1e22612d62778d5 Mon Sep 17 00:00:00 2001
+From: philippegorley <gorley.philippe@gmail.com>
+Date: Thu, 15 Aug 2019 11:00:53 -0400
+Subject: [PATCH] rtpenc: print sequence number
+
+---
+ libavformat/rtpenc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libavformat/rtpenc.c b/libavformat/rtpenc.c
+index 63047beccc..4ede275223 100644
+--- a/libavformat/rtpenc.c
++++ b/libavformat/rtpenc.c
+@@ -333,6 +333,7 @@ void ff_rtp_send_data(AVFormatContext *s1, const uint8_t *buf1, int len, int m)
+ {
+     RTPMuxContext *s = s1->priv_data;
+
++    av_log(s, AV_LOG_WARNING, "rtp_enc seq=%d\n", s->seq);
+     av_log(s1, AV_LOG_TRACE, "rtp_send_data size=%d\n", len);
+
+     /* build the RTP header */
+--
+2.17.1
