@@ -87,7 +87,7 @@ bool VideoReceiveThread::setup()
     dstWidth_ = args_.width;
     dstHeight_ = args_.height;
 
-    const std::string SDP_FILENAME = "dummyFilename";
+    static const std::string SDP_FILENAME = "dummyFilename";
     if (args_.input.empty()) {
         args_.format = "sdp";
         args_.input = SDP_FILENAME;

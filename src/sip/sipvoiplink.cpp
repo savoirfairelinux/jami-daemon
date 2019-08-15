@@ -952,26 +952,23 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
 
         /* Apply and answer the INFO request */
         pj_strset(&control_st, (char *) body->data, body->len);
-        constexpr pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
-        constexpr pj_str_t DEVICE_ORIENTATION = CONST_PJ_STR("device_orientation");
+        static constexpr pj_str_t PICT_FAST_UPDATE = CONST_PJ_STR("picture_fast_update");
+        static constexpr pj_str_t DEVICE_ORIENTATION = CONST_PJ_STR("device_orientation");
 
         if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
             call.sendKeyframe();
             return true;
         } else if (pj_strstr(&control_st, &DEVICE_ORIENTATION)) {
-            int rotation = 0;
-            std::string body_msg = control_st.ptr;
+            static const std::regex ORIENTATION_REGEX("device_orientation=([-+]?[0-9]+)");
+
+            std::string body_msg(control_st.ptr, control_st.slen);
             std::smatch matched_pattern;
-            std::regex str_pattern("device_orientation=([-+]?[0-9]+)");
+            std::regex_search(body_msg, matched_pattern, ORIENTATION_REGEX);
 
-            std::regex_search(body_msg, matched_pattern, str_pattern);
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
-                rotation = std::stoi(matched_pattern[1]);
-
+                int rotation = std::stoi(matched_pattern[1]);
                 JAMI_WARN("Rotate video %d deg.", rotation);
-
                 call.getVideoRtp().setRotation(rotation);
-
                 return true;
             }
         }
