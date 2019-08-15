@@ -63,7 +63,7 @@ AudioRtpSession::~AudioRtpSession()
 void
 AudioRtpSession::startSender()
 {
-    if (not send_.enabled or send_.holding) {
+    if (not send_.enabled or send_.holding or 1) {
         JAMI_WARN("Audio sending disabled");
         if (sender_) {
             if (socketPair_)
@@ -121,7 +121,7 @@ AudioRtpSession::restartSender()
 void
 AudioRtpSession::startReceiver()
 {
-    if (not receive_.enabled or receive_.holding) {
+    if (not receive_.enabled or receive_.holding or 1) {
         JAMI_WARN("Audio receiving disabled");
         receiveThread_.reset();
         return;

@@ -80,7 +80,7 @@ VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 
 void VideoRtpSession::startSender()
 {
-    if (send_.enabled and not send_.holding) {
+    if (send_.enabled and not send_.holding and 0) {
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
