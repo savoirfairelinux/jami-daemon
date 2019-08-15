@@ -416,13 +416,13 @@ VideoRtpSession::adaptQualityAndBitrate()
 
     auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
 
-    //Take action only when two successive drop superior to 1% are catched...
-    //and when jitter is less than 5 seconds
+    //Take action only when two successive drop superior to 5% are catched...
+    //and when jitter is less than 1 seconds
     auto pondLoss = getPonderateLoss(rtcpi.packetLoss);
-    //JAMI_DBG("[AutoAdapt] Pondloss: %f%, last loss: %f%", pondLoss, rtcpi.packetLoss);
-    if(pondLoss >= 2.0f)
+    JAMI_DBG("[AutoAdapt] Pondloss: %f%, last loss: %f%", pondLoss, rtcpi.packetLoss);
+    if(pondLoss >= 5.0f)
     {
-        videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent * (1.0f - rtcpi.packetLoss/150.0f);
+        videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent * (1.0f - rtcpi.packetLoss/200.0f); 
         JAMI_DBG("[AutoAdapt] pondLoss: %f%%, packet loss rate: %f%%, decrease bitrate from %d Kbps to %d Kbps, ratio %f", pondLoss, rtcpi.packetLoss, oldBitrate, videoBitrateInfo_.videoBitrateCurrent, (float) videoBitrateInfo_.videoBitrateCurrent / oldBitrate);
         histoLoss_.clear();
     }
