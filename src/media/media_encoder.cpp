@@ -208,7 +208,6 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
 
     currentStreamIdx_ = stream->index;
 
-    readConfig(encoderCtx);
     if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
         throw MediaEncoderException("Could not open encoder");
 
@@ -719,6 +718,7 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
     } else if (avcodecId == AV_CODEC_ID_H263) {
         initH263(encoderCtx, br);
     }
+    readConfig(encoderCtx);
     return encoderCtx;
 }
 
@@ -728,6 +728,11 @@ MediaEncoder::setBitrate(uint64_t br)
     AVCodecContext* encoderCtx = getCurrentVideoAVCtx();
     AVMediaType codecType = encoderCtx->codec_type;
     AVCodecID codecId = encoderCtx->codec_id;
+
+    if (hasCustomConfig_) {
+        JAMI_WARN() << avcodec_get_name(codecId) << " found in encoder.json file, ignoring auto quality setting";
+        return;
+    }
 
     std::lock_guard<std::mutex> lk(encMutex_);
     // No need to restart encoder for h264, h263 and MPEG4
@@ -855,6 +860,7 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
 {
     std::string path = fileutils::get_config_dir() + DIR_SEPARATOR_STR + "encoder.json";
     std::string name = encoderCtx->codec->name;
+    hasCustomConfig_ = false;
     if (fileutils::isFile(path)) {
         try {
             Json::Value root;
@@ -873,6 +879,7 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
                 JAMI_ERR() << "Invalid encoder configuration: '" << name << "' is not an object";
                 return;
             }
+            hasCustomConfig_ = true;
             for (Json::Value::const_iterator it = config.begin(); it != config.end(); ++it) {
                 Json::Value v = *it;
                 if (!it.key().isConvertibleTo(Json::ValueType::stringValue)

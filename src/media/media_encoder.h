@@ -153,6 +153,7 @@ private:
 
 protected:
     void readConfig(AVCodecContext* encoderCtx);
+    bool hasCustomConfig_ {false};
     AVDictionary* options_ = nullptr;
     MediaStream videoOpts_;
     MediaStream audioOpts_;
