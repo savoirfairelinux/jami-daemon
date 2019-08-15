@@ -70,7 +70,7 @@ struct SystemCodecInfo
     // indicates that the codec does not use quality factor
     static constexpr unsigned DEFAULT_NO_QUALITY {0};
 
-    static constexpr unsigned DEFAULT_MIN_BITRATE {220};
+    static constexpr unsigned DEFAULT_MIN_BITRATE {600};
     static constexpr unsigned DEFAULT_MAX_BITRATE {6000};
 
     SystemCodecInfo(unsigned avcodecId, const std::string& name,
