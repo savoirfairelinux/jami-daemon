@@ -328,6 +328,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 ifdef HAVE_MACOSX
 	$(APPLY) $(SRC)/ffmpeg/avfoundation_fix.patch
 endif
+	$(APPLY) $(SRC)/ffmpeg/rtpdec-print-sequence-number.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 

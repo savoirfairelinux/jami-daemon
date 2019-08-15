@@ -1,0 +1,23 @@
+From 266f9982fdcc38f6f385a1e9dd9aa1ac08a4c2d5 Mon Sep 17 00:00:00 2001
+From: philippegorley <gorley.philippe@gmail.com>
+Date: Thu, 15 Aug 2019 14:04:46 -0400
+Subject: [PATCH] rtpdec: print sequence number
+
+---
+ libavformat/rtpdec.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libavformat/rtpdec.c b/libavformat/rtpdec.c
+index e75a34cb93..5d11362a98 100644
+--- a/libavformat/rtpdec.c
++++ b/libavformat/rtpdec.c
+@@ -787,6 +787,7 @@ static int rtp_parse_one_packet(RTPDemuxContext *s, AVPacket *pkt,
+     uint32_t timestamp;
+     int rv = 0;
+
++    av_log(s, AV_LOG_WARNING, "rtp_dec seq=%d\n", s->seq);
+     if (!buf) {
+         /* If parsing of the previous packet actually returned 0 or an error,
+          * there's nothing more to be parsed from that packet, but we may have
+--
+2.17.1
