@@ -168,6 +168,14 @@ im::sendSipMessage(pjsip_inv_session* session,
         auto dialog = session->dlg;
         sip_utils::PJDialogLock dialog_lock {dialog};
 
+        // DIRTY HACK. But for now, I don't see a better solution
+        // If ICE negotiate 2 sockets on different transport (not a problem for ICE)
+        // the contact header will be different from the remote uri.
+        // The transport type will be incorrect. So, here we ensure to use
+        // the correct target by using the one in the remote infos.
+        pjsip_uri *uri = (pjsip_uri*) pjsip_uri_get_uri(dialog->remote.info->uri);
+        dialog->target = uri;
+
         pjsip_tx_data* tdata = nullptr;
         auto status = pjsip_dlg_create_request(dialog, &msg_method, -1, &tdata);
         if (status != PJ_SUCCESS) {
