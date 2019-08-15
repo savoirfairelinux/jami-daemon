@@ -1,27 +1,52 @@
-From a884b62c9e6f23b9f4369d724e25db2f42dad28d Mon Sep 17 00:00:00 2001
+From 6337cb6ea9811f9498ff8666f3853a1447c48ebd Mon Sep 17 00:00:00 2001
 From: Pierre LESPAGNOL <pierre.lespagnol@savoirfairelinux.com>
-Date: Tue, 28 May 2019 16:18:20 -0400
-Subject: [PATCH] Changement du ratio de 0.5% a 5%
+Date: Thu, 15 Aug 2019 16:20:04 -0400
+Subject: [PATCH] change rtcp ratio (1 rtcp for 5 rtp)
 
 ---
- libavformat/rtp.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ libavformat/rtp.h    | 1 +
+ libavformat/rtpdec.c | 9 +--------
+ 2 files changed, 2 insertions(+), 8 deletions(-)
 
 diff --git a/libavformat/rtp.h b/libavformat/rtp.h
-index 54512c6f71..16916ff86a 100644
+index 54512c6f71..0cf6aef592 100644
 --- a/libavformat/rtp.h
 +++ b/libavformat/rtp.h
-@@ -78,8 +78,8 @@ enum AVCodecID ff_rtp_codec_id(const char *buf, enum AVMediaType codec_type);
- #define RTP_VERSION 2
- #define RTP_MAX_SDES 256   /**< maximum text length for SDES */
- 
--/* RTCP packets use 0.5% of the bandwidth */
--#define RTCP_TX_RATIO_NUM 5
-+/* RTCP packets use 2.5% of the bandwidth */
-+#define RTCP_TX_RATIO_NUM 25
+@@ -81,6 +81,7 @@ enum AVCodecID ff_rtp_codec_id(const char *buf, enum AVMediaType codec_type);
+ /* RTCP packets use 0.5% of the bandwidth */
+ #define RTCP_TX_RATIO_NUM 5
  #define RTCP_TX_RATIO_DEN 1000
++#define RTCP_RATIO_BY_RTP_PACKET 5
  
  /* An arbitrary id value for RTP Xiph streams - only relevant to indicate
+  * that the configuration has changed within a stream (by changing the
+diff --git a/libavformat/rtpdec.c b/libavformat/rtpdec.c
+index e75a34cb93..9e28c1561b 100644
+--- a/libavformat/rtpdec.c
++++ b/libavformat/rtpdec.c
+@@ -302,7 +302,6 @@ int ff_rtp_check_and_send_back_rr(RTPDemuxContext *s, URLContext *fd,
+     AVIOContext *pb;
+     uint8_t *buf;
+     int len;
+-    int rtcp_bytes;
+     RTPStatistics *stats = &s->statistics;
+     uint32_t lost;
+     uint32_t extended_max;
+@@ -315,13 +314,7 @@ int ff_rtp_check_and_send_back_rr(RTPDemuxContext *s, URLContext *fd,
+     if ((!fd && !avio) || (count < 1))
+         return -1;
+ 
+-    /* TODO: I think this is way too often; RFC 1889 has algorithm for this */
+-    /* XXX: MPEG pts hardcoded. RTCP send every 0.5 seconds */
+-    s->octet_count += count;
+-    rtcp_bytes = ((s->octet_count - s->last_octet_count) * RTCP_TX_RATIO_NUM) /
+-        RTCP_TX_RATIO_DEN;
+-    rtcp_bytes /= 50; // mmu_man: that's enough for me... VLC sends much less btw !?
+-    if (rtcp_bytes < 28)
++    if ((stats->received % RTCP_RATIO_BY_RTP_PACKET) != 0)
+         return -1;
+     s->last_octet_count = s->octet_count;
+ 
 -- 
 2.17.1
 
