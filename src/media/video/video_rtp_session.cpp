@@ -116,7 +116,7 @@ void VideoRtpSession::startSender()
         // be sure to not send any packets before saving last RTP seq value
         socketPair_->stopSendOp();
         if (sender_)
-            initSeqVal_ = sender_->getLastSeqValue() + 1;
+            initSeqVal_ = sender_->getLastSeqValue() + 10; // Skip a few sequences to make nvenc happy on a sender restart
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
