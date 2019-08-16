@@ -748,8 +748,14 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
     uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
     uint64_t bufSize = 2 * maxBitrate;
 #ifdef RING_ACCEL
+#ifdef ENABLE_VIDEOTOOLBOX
     if (accel_) {
+        maxBitrate = 2000 * br;
         bufSize = 2 * maxBitrate;
+        crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B))) + 2;
+    }
+#endif
+    if (accel_) {
         encoderCtx->bit_rate = maxBitrate;
     }
 #endif
