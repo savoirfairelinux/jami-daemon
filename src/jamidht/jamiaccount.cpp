@@ -2436,6 +2436,7 @@ JamiAccount::doRegister_()
                     }
                     std::map<std::string, std::string> payloads = {{datatype,
                                                                    utf8_make_valid(v.msg)}};
+                    payloads.insert(v.metadatas.begin(), v.metadatas.end());
                     onTextMessage(peer_account.toString(), payloads);
                     JAMI_DBG() << "Sending message confirmation " << v.id;
                     dht_.putEncrypted(inboxDeviceKey,
@@ -3456,12 +3457,9 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
         return 0;
     }
-    if (payloads.size() != 1) {
-        JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
-        return 0;
-    }
     return SIPAccountBase::sendTextMessage(toUri, payloads);
 }
+
 
 void
 JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t token)
@@ -3472,13 +3470,6 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     } catch (...) {
         JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
         messageEngine_.onMessageSent(to, token, false);
-        return;
-    }
-    if (payloads.size() != 1) {
-        // Multi-part message
-        // TODO: not supported yet
-        JAMI_ERR("Multi-part im is not supported yet by JamiAccount");
-        messageEngine_.onMessageSent(toUri, token, false);
         return;
     }
 
@@ -3537,8 +3528,10 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             return false;
         });
         confirm->listenTokens.emplace(h, std::move(list_token));
+        std::map<std::string, std::string> metadatas(payloads);
+        metadatas.erase(payloads.begin()->first);
         dht_.putEncrypted(h, dev,
-            dht::ImMessage(token, std::string(payloads.begin()->first), std::string(payloads.begin()->second), now),
+            dht::ImMessage(token, std::string(payloads.begin()->first), std::string(payloads.begin()->second), std::move(metadatas), now),
             [this,to,token,confirm,h](bool ok) {
                 JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token << "] Put encrypted " << (ok ? "ok" : "failed");
                 if (not ok) {
