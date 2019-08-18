@@ -732,9 +732,16 @@ SipsIceTransport::eventLoop()
     while (!stopLoop_) {
         std::error_code err;
         if (tls_ && tls_->waitForData(std::chrono::seconds(10), err)) {
+            if (stopLoop_)
+                break;
             std::vector<uint8_t> pkt;
             pkt.resize(PJSIP_MAX_PKT_LEN);
             auto read = tls_->read(pkt.data(), PJSIP_MAX_PKT_LEN, err);
+            if (err == std::errc::broken_pipe || read == 0) {
+                JAMI_DBG("[SIPS] eof");
+                onTlsStateChange(TlsSessionState::SHUTDOWN);
+                break;
+            }
             if (read > 0) {
                 pkt.resize(read);
                 std::lock_guard<std::mutex> l(rxMtx_);
