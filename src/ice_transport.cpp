@@ -788,7 +788,11 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
     if (io.cb) {
         io.cb((uint8_t*)pkt, size);
     } else {
-        peerChannels_.at(comp_id-1).write((char*)pkt, size);
+        std::error_code ec;
+        auto err = peerChannels_.at(comp_id-1).write((char*)pkt, size, ec);
+        if (err < 0) {
+            JAMI_ERR("[ice:%p] rx: channel is closed", this);
+        }
     }
 }
 
@@ -1176,31 +1180,32 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
 }
 
 ssize_t
-IceTransport::recv(int comp_id, unsigned char* buf, size_t len)
+IceTransport::recv(int comp_id, unsigned char* buf, size_t len, std::error_code& ec)
 {
-    sip_utils::register_thread();
     auto &io = pimpl_->compIO_[comp_id];
     std::lock_guard<std::mutex> lk(io.mutex);
 
     if (io.queue.empty()) {
-        return 0;
+        ec = std::make_error_code(std::errc::resource_unavailable_try_again);
+        return -1;
     }
 
     auto& packet = io.queue.front();
     const auto count = std::min(len, packet.data.size());
     std::copy_n(packet.data.begin(), count, buf);
     if (count == packet.data.size()) {
-      io.queue.pop_front();
+        io.queue.pop_front();
     } else {
-      packet.data.erase(packet.data.begin(), packet.data.begin() + count);
+        packet.data.erase(packet.data.begin(), packet.data.begin() + count);
     }
 
+    ec.clear();
     return count;
 }
 
 ssize_t
-IceTransport::recvfrom(int comp_id, char *buf, size_t len) {
-  return pimpl_->peerChannels_.at(comp_id).read(buf, len);
+IceTransport::recvfrom(int comp_id, char *buf, size_t len, std::error_code& ec) {
+  return pimpl_->peerChannels_.at(comp_id).read(buf, len, ec);
 }
 
 void
@@ -1286,7 +1291,7 @@ IceTransport::isDataAvailable(int comp_id)
 ssize_t
 IceTransport::waitForData(int comp_id, std::chrono::milliseconds timeout, std::error_code& ec)
 {
-    return pimpl_->peerChannels_.at(comp_id).wait(timeout);
+    return pimpl_->peerChannels_.at(comp_id).wait(timeout, ec);
 }
 
 std::vector<SDP>
@@ -1434,14 +1439,9 @@ IceSocketTransport::read(ValueType* buf, std::size_t len, std::error_code& ec)
     if (!ice_->isRunning()) return 0;
     try {
         auto res = reliable_
-                ? ice_->recvfrom(compId_, reinterpret_cast<char *>(buf), len)
-                : ice_->recv(compId_, buf, len);
-        if (res < 0) {
-            ec.assign(errno, std::generic_category());
-            return 0;
-        }
-        ec.clear();
-        return res;
+                ? ice_->recvfrom(compId_, reinterpret_cast<char *>(buf), len, ec)
+                : ice_->recv(compId_, buf, len, ec);
+        return (res < 0) ? 0 : res;
     } catch (const std::exception &e) {
         JAMI_ERR("IceSocketTransport::read exception: %s", e.what());
     }
@@ -1466,14 +1466,6 @@ void
 IceSocket::close()
 {
     ice_transport_.reset();
-}
-
-ssize_t
-IceSocket::recv(unsigned char* buf, size_t len)
-{
-    if (!ice_transport_.get())
-        return -1;
-    return ice_transport_->recv(compId_, buf, len);
 }
 
 ssize_t

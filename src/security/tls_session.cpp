@@ -664,10 +664,15 @@ TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
 {
     if (transport_.isReliable()) {
         std::error_code ec;
-        if (transport_.waitForData(timeout, ec) <= 0) {
+        auto err = transport_.waitForData(timeout, ec);
+        if (err <= 0) {
             // shutdown?
             if (state_ == TlsSessionState::SHUTDOWN) {
                 gnutls_transport_set_errno(session_, EINTR);
+                return -1;
+            }
+            if (ec) {
+                gnutls_transport_set_errno(session_, ec.value());
                 return -1;
             }
             return 0;
@@ -683,7 +688,7 @@ TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
         return -1;
     }
     if (rxQueue_.empty()) {
-        JAMI_ERR("[TLS] waitForRawData: timeout after %u ms", timeout.count());
+        JAMI_ERR("[TLS] waitForRawData: timeout after %ld ms", timeout.count());
         return 0;
     }
     return 1;
