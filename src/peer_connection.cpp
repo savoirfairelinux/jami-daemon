@@ -335,7 +335,7 @@ IceSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_cod
 {
     if (ice_) {
         if (!ice_->isRunning()) return -1;
-        return iceIsSender ? ice_->isDataAvailable(compId_) : ice_->waitForData(compId_, timeout, ec);
+        return ice_->waitForData(compId_, timeout, ec);
     }
     return -1;
 }
