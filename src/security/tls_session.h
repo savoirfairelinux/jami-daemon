@@ -46,6 +46,7 @@ class DhParams;
 
 enum class TlsSessionState
 {
+    NONE,
     SETUP,
     COOKIE, // only used with non-initiator and non-reliable transport
     HANDSHAKE,

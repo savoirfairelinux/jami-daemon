@@ -188,6 +188,10 @@ public:
 
     SocketType& transport_;
 
+    // State protectors
+    std::mutex stateMutex_;
+    std::condition_variable stateCondition_;
+
     // State machine
     TlsSessionState handleStateSetup(TlsSessionState state);
     TlsSessionState handleStateCookie(TlsSessionState state);
@@ -197,6 +201,7 @@ public:
     TlsSessionState handleStateShutdown(TlsSessionState state);
     std::map<TlsSessionState, StateHandler> fsmHandlers_ {};
     std::atomic<TlsSessionState> state_ {TlsSessionState::SETUP};
+    std::atomic<TlsSessionState> newState_ {TlsSessionState::NONE};
     std::atomic<int> maxPayload_ {-1};
 
     // IO GnuTLS <-> ICE
@@ -251,9 +256,6 @@ public:
     bool setup();
     void process();
     void cleanup();
-    // State protectors
-    std::mutex stateMutex_;
-    std::condition_variable stateCondition_;
 
     ScheduledExecutor scheduler_;
 
@@ -302,6 +304,9 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(SocketType& transport,
 
 TlsSession::TlsSessionImpl::~TlsSessionImpl()
 {
+    state_ = TlsSessionState::SHUTDOWN;
+    stateCondition_.notify_all();
+    rxCv_.notify_all();
     thread_.join();
     if (not transport_.isReliable())
         transport_.setOnRecv(nullptr);
@@ -1130,11 +1135,20 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
     // Nothing to do in reliable mode, so just wait for state change
     if (transport_.isReliable()) {
         auto disconnected = [this]() ->  bool {
-            return state_.load() != TlsSessionState::ESTABLISHED;
+            return state_.load() != TlsSessionState::ESTABLISHED
+             or newState_.load() != TlsSessionState::NONE;
         };
         std::unique_lock<std::mutex> lk(stateMutex_);
         stateCondition_.wait(lk, disconnected);
-        return state;
+        auto oldState = state_.load();
+        if (oldState == TlsSessionState::ESTABLISHED) {
+            auto newState = newState_.load();
+            if (newState != TlsSessionState::NONE) {
+                newState_ = TlsSessionState::NONE;
+                return newState;
+            }
+        }
+        return oldState;
     }
 
     // block until rx packet or state change
@@ -1227,9 +1241,7 @@ TlsSession::TlsSession(SocketType& transport, const TlsParams& params,
 {}
 
 TlsSession::~TlsSession()
-{
-    if (pimpl_) shutdown();
-}
+{}
 
 bool
 TlsSession::isInitiator() const
@@ -1316,22 +1328,27 @@ TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
             return ret;
         }
 
+        std::lock_guard<std::mutex> lk(pimpl_->stateMutex_);
         if (ret == 0) {
             if (pimpl_) {
-                JAMI_ERR("[TLS] eof");
-                shutdown();
+                JAMI_DBG("[TLS] eof");
+                pimpl_->newState_ = TlsSessionState::SHUTDOWN;
+                pimpl_->stateCondition_.notify_all();
+                pimpl_->rxCv_.notify_one(); // unblock waiting FSM
             }
             error = std::errc::broken_pipe;
             break;
         } else if (ret == GNUTLS_E_REHANDSHAKE) {
             JAMI_DBG("[TLS] re-handshake");
-            pimpl_->state_ = TlsSessionState::HANDSHAKE;
+            pimpl_->newState_ = TlsSessionState::HANDSHAKE;
             pimpl_->rxCv_.notify_one(); // unblock waiting FSM
             pimpl_->stateCondition_.notify_all();
         } else if (gnutls_error_is_fatal(ret)) {
             if (pimpl_ && pimpl_->state_ != TlsSessionState::SHUTDOWN) {
                 JAMI_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
-                shutdown();
+                pimpl_->newState_ = TlsSessionState::SHUTDOWN;
+                pimpl_->stateCondition_.notify_all();
+                pimpl_->rxCv_.notify_one(); // unblock waiting FSM
             }
             error = std::errc::io_error;
             break;
