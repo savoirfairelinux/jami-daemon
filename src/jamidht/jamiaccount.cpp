@@ -421,7 +421,7 @@ initICE(const std::vector<uint8_t> &msg, const std::shared_ptr<IceTransport> &ic
         if (sdp.candidates.size() > 0) {
             if (sdp.candidates[0].find("TCP") != std::string::npos) {
                 // It is a SDP for the TCP component
-                tcp_failed = (ice_tcp && !ice_tcp->start(sdp));
+                tcp_failed = true;//(ice_tcp && !ice_tcp->start(sdp));
             } else {
                 // For UDP
                 udp_failed = (ice && !ice->start(sdp));
