@@ -249,16 +249,6 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
-
-    if (PJSIP_TRANSPORT_IS_RELIABLE(&trData_.base)) {
-        eventLoop_ = std::thread([this] {
-            try {
-                eventLoop();
-            } catch (const std::exception& e) {
-                JAMI_ERR() << "SipIceTransport: eventLoop() failure: " << e.what();
-            }
-        });
-    }
 }
 
 SipsIceTransport::~SipsIceTransport()
@@ -312,12 +302,24 @@ SipsIceTransport::handleEvents()
         for (auto& evdata : eventDataQueue) {
             evdata.tls_info.ssl_sock_info = &evdata.ssl_info;
             evdata.state_info.ext_info = &evdata.tls_info;
+            if (evdata.state == PJSIP_TP_STATE_CONNECTED) {
+                if (PJSIP_TRANSPORT_IS_RELIABLE(&trData_.base)) {
+                    eventLoop_ = std::thread([this] {
+                        try {
+                            eventLoop();
+                        } catch (const std::exception& e) {
+                            JAMI_ERR() << "SipIceTransport: eventLoop() failure: " << e.what();
+                        }
+                    });
+                }
+            }
             if (evdata.state != PJSIP_TP_STATE_DISCONNECTED) {
                 (*state_cb)(&trData_.base, evdata.state, &evdata.state_info);
             } else {
                 JAMI_WARN("[SIPS] got disconnected event!");
                 disconnectedEvent = std::move(evdata);
                 disconnected = true;
+                stopLoop_ = true;
                 break;
             }
         }
@@ -410,7 +412,7 @@ SipsIceTransport::pushChangeStateEvent(ChangeStateEventData&& ev)
 
 // - DO NOT BLOCK - (Called in TlsSession thread)
 void
-SipsIceTransport::onTlsStateChange(UNUSED TlsSessionState state)
+SipsIceTransport::onTlsStateChange(TlsSessionState state)
 {
     if (state == TlsSessionState::ESTABLISHED)
         updateTransportState(PJSIP_TP_STATE_CONNECTED);
