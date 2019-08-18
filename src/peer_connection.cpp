@@ -346,11 +346,7 @@ IceSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
     if (ice_) {
         if (!ice_->isRunning()) return 0;
         try {
-          auto res = ice_->recvfrom(compId_, reinterpret_cast<char *>(buf), len);
-          if (res < 0)
-            ec.assign(errno, std::generic_category());
-          else
-            ec.clear();
+          auto res = ice_->recvfrom(compId_, reinterpret_cast<char *>(buf), len, ec);
           return (res >= 0) ? res : 0;
         } catch (const std::exception &e) {
           JAMI_ERR("IceSocketEndpoint::read exception: %s", e.what());

@@ -105,7 +105,6 @@ public:
     /// Collect pending data from a given peer.
     ///
     /// Data are read from given \a peer incoming buffer until EOF or \a data size() is reached.
-    /// \a data is resized with exact number of characters read.
     /// If \a peer is not connected this function raise an exception.
     /// If \a peer exists but no data are available this method blocks until TURN deconnection
     /// or at first incoming character.
@@ -114,11 +113,9 @@ public:
     /// \param [in,out] pre-dimensionned character vector to write incoming data
     /// \exception std::out_of_range \a peer is not connected yet
     ///
-    void recvfrom(const IpAddr& peer, std::vector<char>& data);
-
     /// Works as recvfrom() vector version but accept a simple char array.
     ///
-    std::size_t recvfrom(const IpAddr& peer, char* buffer, std::size_t size);
+    ssize_t recvfrom(const IpAddr& peer, char* buffer, std::size_t size, std::error_code& ec);
 
     /// Send data to given peer through the TURN tunnel.
     ///

@@ -154,7 +154,11 @@ TurnTransportPimpl::onRxData(const uint8_t* pkt, unsigned pkt_len,
         auto channel_it = peerChannels_.find(peer_addr);
         if (channel_it == std::end(peerChannels_))
             return;
-        channel_it->second.write((const char*)pkt, pkt_len);
+        std::error_code ec;
+        auto ret = channel_it->second.write((const char*)pkt, pkt_len, ec);
+        if (ret < 0) {
+            JAMI_ERR("TURN rx: channel is closed");
+        }
     }
 }
 
@@ -359,20 +363,13 @@ TurnTransport::sendto(const IpAddr& peer, const std::vector<char>& buffer)
     return sendto(peer, &buffer[0], buffer.size());
 }
 
-std::size_t
-TurnTransport::recvfrom(const IpAddr& peer, char* buffer, std::size_t size)
+ssize_t
+TurnTransport::recvfrom(const IpAddr& peer, char* buffer, std::size_t size, std::error_code& ec)
 {
     MutexLock lk {pimpl_->apiMutex_};
     auto& channel = pimpl_->peerChannels_.at(peer);
     lk.unlock();
-    return channel.read(buffer, size);
-}
-
-void
-TurnTransport::recvfrom(const IpAddr& peer, std::vector<char>& result)
-{
-    auto res = recvfrom(peer, result.data(), result.size());
-    result.resize(res);
+    return channel.read(buffer, size, ec);
 }
 
 std::vector<IpAddr>
@@ -389,7 +386,7 @@ TurnTransport::waitForData(const IpAddr& peer, std::chrono::milliseconds timeout
     MutexLock lk {pimpl_->apiMutex_};
     auto& channel = pimpl_->peerChannels_.at(peer);
     lk.unlock();
-    return channel.wait(timeout);
+    return channel.wait(timeout, ec);
 }
 
 //==============================================================================
@@ -435,17 +432,7 @@ std::size_t
 ConnectedTurnTransport::read(ValueType* buf, std::size_t size, std::error_code& ec)
 {
     if (size > 0) {
-        try {
-            size = turn_.recvfrom(peer_, reinterpret_cast<char*>(buf), size);
-        } catch (const sip_utils::PjsipFailure& ex) {
-            ec = ex.code();
-            return 0;
-        }
-
-        if (size == 0) {
-            ec = std::make_error_code(std::errc::broken_pipe);
-            return 0;
-        }
+        return turn_.recvfrom(peer_, reinterpret_cast<char*>(buf), size, ec);
     }
 
     ec.clear();

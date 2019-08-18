@@ -45,7 +45,6 @@ class IceSocket
             : ice_transport_(std::move(iceTransport)), compId_(compId) {}
 
         void close();
-        ssize_t recv(unsigned char* buf, size_t len);
         ssize_t send(const unsigned char* buf, size_t len);
         ssize_t waitForData(std::chrono::milliseconds timeout);
         void setOnRecv(IceRecvCb cb);

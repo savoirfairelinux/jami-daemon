@@ -183,8 +183,8 @@ public:
 
     void setOnRecv(unsigned comp_id, IceRecvCb cb);
 
-    ssize_t recv(int comp_id, unsigned char* buf, size_t len);
-    ssize_t recvfrom(int comp_id, char *buf, size_t len);
+    ssize_t recv(int comp_id, unsigned char* buf, size_t len, std::error_code& ec);
+    ssize_t recvfrom(int comp_id, char *buf, size_t len, std::error_code& ec);
 
     ssize_t send(int comp_id, const unsigned char* buf, size_t len);
 
