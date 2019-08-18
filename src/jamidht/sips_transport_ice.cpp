@@ -729,9 +729,9 @@ SipsIceTransport::getTlsSessionMtu()
 void
 SipsIceTransport::eventLoop()
 {
-    while(!stopLoop_) {
+    while (!stopLoop_) {
         std::error_code err;
-        if (tls_ && tls_->waitForData(std::chrono::milliseconds(100), err)) {
+        if (tls_ && tls_->waitForData(std::chrono::seconds(10), err)) {
             std::vector<uint8_t> pkt;
             pkt.resize(PJSIP_MAX_PKT_LEN);
             auto read = tls_->read(pkt.data(), PJSIP_MAX_PKT_LEN, err);
