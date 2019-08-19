@@ -86,12 +86,7 @@ PUPnP::PUPnP()
     int upnp_err = UPNP_E_SUCCESS;
 
 #if UPNP_ENABLE_IPV6
-    upnp_err = UpnpInit2(0, 0);
-    if (upnp_err != UPNP_E_SUCCESS) {
-        JAMI_WARN("PUPnP: UpnpInit2 Failed to initialize");
-        UpnpFinish();					// Destroy threads before reusing upnp init function.
-        upnp_err = UpnpInit(0, 0);      // Deprecated function but fall back on it if UpnpInit2 fails.
-    }
+    upnp_err = UpnpInit2(nullptr, 0);
 #else
     upnp_err = UpnpInit(0, 0);           // Deprecated function but fall back on it if IPv6 not enabled.
 #endif
@@ -315,7 +310,7 @@ PUPnP::validateIgd(const IGDInfo& info)
         JAMI_DBG("PUPnP: IGD with public IP %s was added to the list", igd_candidate->publicIp_.toString().c_str());
 
     // Keep local IGD list internally.
-    validIgdList_.emplace(igd_candidate->getUDN(), std::move(igd_candidate)).first;
+    validIgdList_.emplace(igd_candidate->getUDN(), std::move(igd_candidate));
 
     // Subscribe to IGD events.
     int upnp_err = UpnpSubscribeAsync(ctrlptHandle_, eventSub.c_str(), SUBSCRIBE_TIMEOUT, subEventCallback, this);
