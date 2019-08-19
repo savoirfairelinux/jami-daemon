@@ -1,18 +1,18 @@
 # UPNP
-UPNP_VERSION := 1.8.4
-UPNP_URL := https://github.com/mrjimenez/pupnp/archive/release-$(UPNP_VERSION).tar.gz
+UPNP_VERSION := e2d015679441307cf0fb1cd18a9b446c21d5418d
+UPNP_URL := https://github.com/mrjimenez/pupnp/archive/$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
 ifeq ($(call need_pkg,"libupnp >= 1.8.2"),)
 PKGS_FOUND += upnp
 endif
 
-$(TARBALLS)/pupnp-release-$(UPNP_VERSION).tar.gz:
+$(TARBALLS)/pupnp-$(UPNP_VERSION).tar.gz:
 	$(call download,$(UPNP_URL))
 
-.sum-upnp: pupnp-release-$(UPNP_VERSION).tar.gz
+.sum-upnp: pupnp-$(UPNP_VERSION).tar.gz
 
-upnp: pupnp-release-$(UPNP_VERSION).tar.gz .sum-upnp
+upnp: pupnp-$(UPNP_VERSION).tar.gz .sum-upnp
 	$(UNPACK)
 ifeq ($(OS),Windows_NT)
 	$(APPLY) $(SRC)/upnp/libupnp-windows.patch
