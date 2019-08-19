@@ -171,14 +171,21 @@ PUPnP::PUPnP()
                     }
                     lk.lock();
 
-                    // Move back failed items to end of list
-                    dwnldlXmlList_.splice(dwnldlXmlList_.end(), xmlList);
+                    // Move back timed-out items to list
+                    dwnldlXmlList_.splice(dwnldlXmlList_.begin(), xmlList);
                     // Handle successful downloads
                     for (auto& item : finished) {
                         auto result = item.get();
                         if (not result->document or not validateIgd(*result)) {
                             cpDeviceList_.erase(result->location);
                         }
+                    }
+                }
+                for (auto it = cancelXmlList_.begin(); it != cancelXmlList_.end();) {
+                    if (it->wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+                        it = cancelXmlList_.erase(it);
+                    } else {
+                        ++it;
                     }
                 }
             }
@@ -217,7 +224,7 @@ PUPnP::clearIgds()
     std::lock_guard<std::mutex> lk(validIgdMutex_);
 
     // Clear all internal lists.
-    dwnldlXmlList_.clear();
+    cancelXmlList_.splice(cancelXmlList_.end(), dwnldlXmlList_);
     validIgdList_.clear();
     cpDeviceList_.clear();
 }
