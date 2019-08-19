@@ -90,7 +90,7 @@ PUPnP::PUPnP()
     upnp_err = UpnpInit2(0, 0);
     if (upnp_err != UPNP_E_SUCCESS) {
         JAMI_WARN("PUPnP: UpnpInit2 Failed to initialize: %s", UpnpGetErrorMessage(upnp_err));
-        UpnpFinish();					// Destroy threads before reusing upnp init function.
+        // UpnpFinish();				// Destroy threads before reusing upnp init function.
         JAMI_WARN("PUPnP: initializing fallback");
         upnp_err = UpnpInit(0, 0);      // Deprecated function but fall back on it if UpnpInit2 fails.
     }
@@ -100,7 +100,7 @@ PUPnP::PUPnP()
 
     if (upnp_err != UPNP_E_SUCCESS) {
         JAMI_ERR("PUPnP: Can't initialize libupnp: %s", UpnpGetErrorMessage(upnp_err));
-        UpnpFinish();
+        // UpnpFinish();
         pupnpRun_ = false;
         return;
     } else {
