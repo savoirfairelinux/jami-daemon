@@ -22,7 +22,6 @@
 
 #include "config.h"
 
-#include "audio/resampler.h"
 #include "libav_deps.h"
 #include "media_io_handle.h"
 #include "system_codec_container.h"
@@ -68,115 +67,118 @@ private:
 class WavWriter
 {
 public:
-    WavWriter(std::string filename, int channels, int sampleRate, int bytesPerSample)
+    WavWriter(std::string filename, AVFrame* frame)
+        : format_(static_cast<AVSampleFormat>(frame->format))
+        , channels_(frame->channels)
+        , planar_(av_sample_fmt_is_planar(format_))
+        , depth_(av_get_bytes_per_sample(format_))
+        , stepPerSample_(planar_ ? depth_ : depth_ * channels_)
     {
-        f_ = std::ofstream(filename, std::ios::binary);
+        std::vector<AVSampleFormat> v{AV_SAMPLE_FMT_FLT, AV_SAMPLE_FMT_FLTP, AV_SAMPLE_FMT_DBL, AV_SAMPLE_FMT_DBLP};
+        f_ = std::ofstream(filename, std::ios_base::out | std::ios_base::binary);
+        f_.imbue(std::locale::classic());
         f_ << "RIFF----WAVEfmt ";
-        write(16, 4); // no extension data
-        write(1, 2); // PCM integer samples
-        write(channels, 2); // channels
-        write(sampleRate, 4); // sample rate
-        write(sampleRate * channels * bytesPerSample, 4); // sample size
-        write(4, 2); // data block size
-        write(bytesPerSample * 8, 2); // bits per sample
-        dataChunk_ = f_.tellp();
-        f_ << "data----";
+        if (std::find(v.begin(), v.end(), format_) == v.end()) {
+            write(16, 4); // Chunk size
+            write(1, 2); // WAVE_FORMAT_PCM
+            write(frame->channels, 2);
+            write(frame->sample_rate, 4);
+            write(frame->sample_rate * depth_ * frame->channels, 4); // Bytes per second
+            write(depth_ * frame->channels, 2); // Multi-channel sample size
+            write(8 * depth_, 2); // Bits per sample
+            f_ << "data";
+            dataChunk_ = f_.tellp();
+            f_ << "----";
+        } else {
+            write(18, 4); // Chunk size
+            write(3, 2); // Non PCM data
+            write(frame->channels, 2);
+            write(frame->sample_rate, 4);
+            write(frame->sample_rate * depth_ * frame->channels, 4); // Bytes per second
+            write(depth_ * frame->channels, 2); // Multi-channel sample size
+            write(8 * depth_, 2); // Bits per sample
+            write(0, 2); // Extension size
+            f_ << "fact";
+            write(4, 4); // Chunk size
+            factChunk_ = f_.tellp();
+            f_ << "----";
+            f_ << "data";
+            dataChunk_ = f_.tellp();
+            f_ << "----";
+        }
     }
 
     ~WavWriter()
     {
         length_ = f_.tellp();
-        f_.seekp(dataChunk_ + 4);
-        write(length_ - dataChunk_ + 8, 4);
+        f_.seekp(dataChunk_);
+        write(length_ - dataChunk_ + 4, 4); // bytes_per_sample * channels * nb_samples
         f_.seekp(4);
         write(length_ - 8, 4);
+        if (factChunk_) {
+            f_.seekp(factChunk_);
+            write((length_ - dataChunk_ + 4) / depth_, 4); // channels * nb_samples
+        }
+        f_.flush();
     }
 
     template<typename Word>
-    void write(Word value, unsigned size)
+    void write(Word value, unsigned size = sizeof(Word))
     {
-        for (; size; --size, value >>= 8)
-            f_.put(static_cast<char>(value & 0xFF));
+        auto p = reinterpret_cast<unsigned char const *>(&value);
+        for (int i = 0; size; --size, ++i)
+            f_.put(p[i]);
     }
 
-    void write(AVFrame* frame)
+    void write(AVFrame *frame)
     {
-        resample(frame);
-        AVSampleFormat fmt = (AVSampleFormat)frame->format;
-        int channels = frame->channels;
-        int depth = av_get_bytes_per_sample(fmt);
-        int planar = av_sample_fmt_is_planar(fmt);
-        int step = (planar ? depth : depth * channels);
-        for (int i = 0; i < frame->nb_samples; ++i) {
-            int offset = i * step;
-            for (int ch = 0; ch < channels; ++ch) {
-                if (planar)
-                    writeSample(&frame->extended_data[ch][offset], fmt, depth);
-                else
-                    writeSample(&frame->extended_data[0][offset + ch * depth], fmt, depth);
+        for (int c = 0; c < frame->channels; ++c) {
+            int offset = planar_ ? 0 : depth_ * c;
+            for (int i = 0; i < frame->nb_samples; ++i) {
+                uint8_t *p = &frame->extended_data[planar_ ? c : 0][i + offset];
+                switch (format_) {
+                case AV_SAMPLE_FMT_U8:
+                case AV_SAMPLE_FMT_U8P:
+                    write<uint8_t>(*(uint8_t*)p);
+                    break;
+                case AV_SAMPLE_FMT_S16:
+                case AV_SAMPLE_FMT_S16P:
+                    write<int16_t>(*(int16_t*)p);
+                    break;
+                case AV_SAMPLE_FMT_S32:
+                case AV_SAMPLE_FMT_S32P:
+                    write<int32_t>(*(int32_t*)p);
+                    break;
+                case AV_SAMPLE_FMT_S64:
+                case AV_SAMPLE_FMT_S64P:
+                    write<int64_t>(*(int64_t*)p);
+                    break;
+                case AV_SAMPLE_FMT_FLT:
+                case AV_SAMPLE_FMT_FLTP:
+                    write<float>(*(float*)p);
+                    break;
+                case AV_SAMPLE_FMT_DBL:
+                case AV_SAMPLE_FMT_DBLP:
+                    write<double>(*(double*)p);
+                    break;
+                default:
+                    break;
+                }
             }
         }
+        f_.flush();
     }
 
 private:
-    void writeSample(uint8_t* p, AVSampleFormat format, int size)
-    {
-        switch (format) {
-        case AV_SAMPLE_FMT_U8:
-        case AV_SAMPLE_FMT_U8P:
-            write(*(uint8_t*)p, size);
-            break;
-        case AV_SAMPLE_FMT_S16:
-        case AV_SAMPLE_FMT_S16P:
-            write(*(int16_t*)p, size);
-            break;
-        case AV_SAMPLE_FMT_S32:
-        case AV_SAMPLE_FMT_S32P:
-            write(*(int32_t*)p, size);
-            break;
-        case AV_SAMPLE_FMT_S64:
-        case AV_SAMPLE_FMT_S64P:
-            write(*(int64_t*)p, size);
-            break;
-        default:
-            break;
-        }
-    }
-
-    void resample(AVFrame* frame)
-    {
-        auto fmt = (AVSampleFormat)frame->format;
-        switch (fmt) {
-        case AV_SAMPLE_FMT_FLT:
-        case AV_SAMPLE_FMT_FLTP:
-        case AV_SAMPLE_FMT_DBL:
-        case AV_SAMPLE_FMT_DBLP:
-        {
-            if (!resampler_)
-                resampler_.reset(new Resampler);
-            auto input = av_frame_clone(frame);
-            auto output = av_frame_alloc();
-            // keep same number of bytes per sample
-            if (fmt == AV_SAMPLE_FMT_FLT || fmt == AV_SAMPLE_FMT_FLTP)
-                output->format = AV_SAMPLE_FMT_S32;
-            else
-                output->format = AV_SAMPLE_FMT_S64;
-            output->sample_rate = input->sample_rate;
-            output->channel_layout = input->channel_layout;
-            output->channels = input->channels;
-            resampler_->resample(input, output);
-            av_frame_unref(input);
-            av_frame_move_ref(frame, output);
-        }
-        default:
-            return;
-        }
-    }
-
     std::ofstream f_;
-    size_t dataChunk_;
-    size_t length_;
-    std::unique_ptr<Resampler> resampler_; // convert from float to integer samples
+    size_t dataChunk_ {0};
+    size_t factChunk_ {0};
+    size_t length_ {0};
+    AVSampleFormat format_ {AV_SAMPLE_FMT_NONE};
+    size_t channels_ {0};
+    bool planar_ {false};
+    int depth_ {0};
+    int stepPerSample_ {0};
 };
 
 /**
