@@ -316,6 +316,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         void updateDetails(const std::map<std::string, std::string>& details);
 
+        bool hasVideo() const { return not isAudioOnly_; }
+
     protected:
         virtual void merge(Call& scall);
 
