@@ -36,6 +36,7 @@
 #include "audio/ringbufferpool.h"
 #include "dring/media_const.h"
 #include "libav_utils.h"
+#include "call_const.h"
 
 #include <functional>
 #include <memory>
@@ -463,20 +464,21 @@ bool
 switchInput(const std::string& resource)
 {
     if (auto call = jami::Manager::instance().getCurrentCall()) {
-        // TODO remove this part when clients are updated to use Calljami::Manager::switchInput
-        call->switchInput(resource);
-        return true;
-    } else {
-        bool ret = true;
-        if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
-            ret = input->switchInput(resource).valid();
-        else
-            JAMI_WARN("Video input not initialized");
-
-        if (auto input = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID))
-            ret &= input->switchInput(resource).valid();
-        return ret;
+        if (!(call->getDetails()[DRing::Call::Details::AUDIO_ONLY] == "true")) {
+            // TODO remove this part when clients are updated to use Calljami::Manager::switchInput
+            call->switchInput(resource);
+            return true;
+        }
     }
+    bool ret = true;
+    if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
+        ret = input->switchInput(resource).valid();
+    else
+        JAMI_WARN("Video input not initialized");
+
+    if (auto input = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID))
+        ret &= input->switchInput(resource).valid();
+    return ret;
 }
 
 bool
