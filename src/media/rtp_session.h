@@ -57,7 +57,7 @@ public:
 
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
 
-    void setSuccessfulSetupCb(const std::function<void(MediaType)>& cb)
+    void setSuccessfulSetupCb(const std::function<void(MediaType, StreamOriginType)>& cb)
     {
         onSuccessfulSetup_ = cb;
     }
@@ -77,7 +77,7 @@ protected:
 
     uint16_t mtu_;
 
-    std::function<void(MediaType)> onSuccessfulSetup_;
+    std::function<void(MediaType, StreamOriginType)> onSuccessfulSetup_;
 
     std::string getRemoteRtpUri() const {
         return "rtp://" + send_.addr.toString(true);

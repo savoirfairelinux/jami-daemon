@@ -51,6 +51,11 @@ enum MediaType : unsigned {
     MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO
 };
 
+enum StreamOriginType : unsigned {
+    STREAM_SENDER,
+    STREAM_RECEIVER
+};
+
 /*
  * SystemCodecInfo
  * represent information of a codec available on the system (using libav)
