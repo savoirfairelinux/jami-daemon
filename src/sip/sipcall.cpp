@@ -974,7 +974,7 @@ SIPCall::startAllMedia()
 #endif
         rtp->updateMedia(remote, local);
 
-        rtp->setSuccessfulSetupCb([this](MediaType type){ rtpSetupSuccess(type); });
+        rtp->setSuccessfulSetupCb([this](MediaType m, StreamOriginType s){ rtpSetupSuccess(m, s); });
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
         // because of the audio loop
@@ -1405,10 +1405,20 @@ SIPCall::newIceSocket(unsigned compId)
 }
 
 void
-SIPCall::rtpSetupSuccess(MediaType type)
+SIPCall::rtpSetupSuccess(MediaType /*m*/, StreamOriginType /*s*/)
 {
-    if ((not isAudioOnly() && type == MEDIA_VIDEO)
-        || (isAudioOnly() && type == MEDIA_AUDIO))
+    // FIXME This could probably be done in a better, more robust way
+    int streamCount = 2; // always record audio streams
+#ifdef ENABLE_VIDEO
+    if (not isAudioOnly()) {
+        ++streamCount;
+        if (Manager::instance().videoPreferences.getRecordPreview())
+            ++streamCount;
+    }
+#endif
+
+    ++receivedStreams_;
+    if (receivedStreams_ == streamCount)
         readyToRecord_ = true;
 
     if (pendingRecord_ && readyToRecord_)

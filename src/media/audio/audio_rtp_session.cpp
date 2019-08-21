@@ -83,6 +83,7 @@ AudioRtpSession::startSender()
         if (newParams.valid() &&
             newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
             localAudioParams_ = newParams.get();
+            onSuccessfulSetup_(MEDIA_AUDIO, STREAM_SENDER);
         } else {
             JAMI_ERR() << "No valid new audio parameters";
             return;

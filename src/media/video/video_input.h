@@ -4,6 +4,7 @@
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
