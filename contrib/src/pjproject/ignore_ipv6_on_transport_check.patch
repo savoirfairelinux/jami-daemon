@@ -1,0 +1,18 @@
+ pjsip/src/pjsip/sip_transport.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/pjsip/src/pjsip/sip_transport.c b/pjsip/src/pjsip/sip_transport.c
+index 1d0e28d32..cd9e462a4 100644
+--- a/pjsip/src/pjsip/sip_transport.c
++++ b/pjsip/src/pjsip/sip_transport.c
+@@ -2151,7 +2151,9 @@ PJ_DEF(pj_status_t) pjsip_tpmgr_acquire_transport2(pjsip_tpmgr *mgr,
+ 	pjsip_transport *seltp = sel->u.transport;
+ 
+ 	/* See if the transport is (not) suitable */
+-	if (seltp->key.type != type) {
++	pjsip_transport_type_e type_no_ipv6 = type % PJSIP_TRANSPORT_IPV6;
++	pjsip_transport_type_e key_type_no_ipv6 = seltp->key.type % PJSIP_TRANSPORT_IPV6;
++	if (type_no_ipv6 != key_type_no_ipv6) {
+ 	    pj_lock_release(mgr->lock);
+ 	    return PJSIP_ETPNOTSUITABLE;
+ 	}
