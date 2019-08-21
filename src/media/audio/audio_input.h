@@ -26,6 +26,7 @@
 #include <mutex>
 
 #include "audio/audiobuffer.h"
+#include "media_codec.h"
 #include "media_device.h"
 #include "media_buffer.h"
 #include "observer.h"
@@ -52,6 +53,11 @@ public:
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
     MediaStream getInfo() const;
+
+    void setSuccessfulSetupCb(const std::function<void(MediaType, StreamOriginType)>& cb)
+    {
+        onSetupSuccess_ = cb;
+    }
 
 private:
     void readFromDevice();
@@ -84,6 +90,8 @@ private:
     std::atomic_bool devOptsFound_ {false};
     void foundDevOpts(const DeviceParams& params);
     std::atomic_bool decodingFile_ {false};
+
+    std::function<void(MediaType, StreamOriginType)> onSetupSuccess_;
 
     ThreadLoop loop_;
     void process();

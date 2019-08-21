@@ -589,8 +589,11 @@ VideoInput::switchInput(const std::string& resource)
     }
 
     switchPending_ = true;
-    if (!loop_.isRunning())
+    if (!loop_.isRunning()) {
+        if (onSetupSuccess_)
+            onSetupSuccess_(MEDIA_VIDEO, STREAM_SENDER);
         loop_.start();
+    }
     futureDecOpts_ = foundDecOpts_.get_future().share();
     return futureDecOpts_;
 }

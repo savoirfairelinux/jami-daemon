@@ -92,6 +92,7 @@ void VideoRtpSession::startSender()
         if (not conference_) {
             videoLocal_ = getVideoCamera();
             if (auto input = Manager::instance().getVideoManager().videoInput.lock()) {
+                input->setSuccessfulSetupCb(onSuccessfulSetup_);
                 auto newParams = input->switchInput(input_);
                 try {
                     if (newParams.valid() &&

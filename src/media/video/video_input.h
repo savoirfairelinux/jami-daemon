@@ -4,6 +4,7 @@
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +26,7 @@
 
 #include "noncopyable.h"
 #include "threadloop.h"
+#include "media_codec.h"
 #include "media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
@@ -93,6 +95,11 @@ public:
     void releaseFrame(void *frame);
 #endif
 
+    void setSuccessfulSetupCb(const std::function<void(MediaType, StreamOriginType)>& cb)
+    {
+        onSetupSuccess_ = cb;
+    }
+
 private:
     NON_COPYABLE(VideoInput);
 
@@ -150,6 +157,8 @@ private:
     void releaseBufferCb(uint8_t* ptr);
     std::array<struct VideoFrameBuffer, 8> buffers_;
 #endif
+
+    std::function<void(MediaType, StreamOriginType)> onSetupSuccess_;
 };
 
 }} // namespace jami::video
