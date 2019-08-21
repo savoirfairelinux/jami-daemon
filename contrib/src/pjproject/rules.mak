@@ -67,6 +67,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/sip_config.patch
 	$(APPLY) $(SRC)/pjproject/fix_first_packet_turn_tcp.patch
 	$(APPLY) $(SRC)/pjproject/fix_ebusy_turn.patch
+	$(APPLY) $(SRC)/pjproject/ignore_ipv6_on_transport_check.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
