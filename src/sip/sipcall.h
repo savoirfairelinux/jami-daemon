@@ -243,7 +243,7 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void deinitRecorder();
 
-    void rtpSetupSuccess(MediaType type);
+    void rtpSetupSuccess(MediaType m, StreamOriginType s);
 
 private:
     NON_COPYABLE(SIPCall);
@@ -337,6 +337,7 @@ private:
     std::string peerUri_{};
 
     bool readyToRecord_ {false};
+    int receivedStreams_ {0};
     bool pendingRecord_ {false};
 };
 

@@ -50,7 +50,7 @@ public:
     MediaStream getInfo() const;
 
     void addIOContext(SocketPair &socketPair);
-    void startLoop(const std::function<void(MediaType)>& cb);
+    void startLoop(const std::function<void(MediaType, StreamOriginType)>& cb);
 
 private:
     NON_COPYABLE(AudioReceiveThread);
@@ -80,7 +80,7 @@ private:
 
     uint16_t mtu_;
 
-    std::function<void(MediaType)> onSetupSuccess_;
+    std::function<void(MediaType, StreamOriginType)> onSetupSuccess_;
 
     ThreadLoop loop_;
     bool setup();

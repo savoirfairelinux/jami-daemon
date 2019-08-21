@@ -68,7 +68,7 @@ VideoReceiveThread::~VideoReceiveThread()
 }
 
 void
-VideoReceiveThread::startLoop(const std::function<void(MediaType)>& cb)
+VideoReceiveThread::startLoop(const std::function<void(MediaType, StreamOriginType)>& cb)
 {
     onSetupSuccess_ = cb;
     loop_.start();
@@ -153,7 +153,7 @@ bool VideoReceiveThread::setup()
     Smartools::getInstance().setResolution(id_, dstWidth_, dstHeight_);
 
     if (onSetupSuccess_)
-        onSetupSuccess_(MEDIA_VIDEO);
+        onSetupSuccess_(MEDIA_VIDEO, STREAM_RECEIVER);
 
     return true;
 }

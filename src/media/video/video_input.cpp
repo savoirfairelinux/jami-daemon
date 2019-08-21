@@ -379,6 +379,9 @@ VideoInput::createDecoder()
 
     /* Signal the client about readable sink */
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
+
+    if (onSetupSuccess_)
+        onSetupSuccess_(MEDIA_VIDEO, STREAM_SENDER);
 }
 
 void

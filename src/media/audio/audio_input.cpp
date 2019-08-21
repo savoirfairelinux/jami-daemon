@@ -216,6 +216,9 @@ AudioInput::switchInput(const std::string& resource)
     if (ready)
         foundDevOpts(devOpts_);
 
+    if (onSetupSuccess_)
+        onSetupSuccess_(MEDIA_AUDIO, STREAM_SENDER);
+
     switchPending_ = true;
     futureDevOpts_ = foundDevOpts_.get_future().share();
     return futureDevOpts_;

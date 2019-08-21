@@ -52,7 +52,7 @@ class VideoReceiveThread : public VideoGenerator {
 public:
     VideoReceiveThread(const std::string &id, const std::string &sdp, uint16_t mtu);
     ~VideoReceiveThread();
-    void startLoop(const std::function<void(MediaType)>& cb);
+    void startLoop(const std::function<void(MediaType, StreamOriginType)>& cb);
 
     void addIOContext(SocketPair& socketPair);
     void setRequestKeyFrameCallback(std::function<void (void)>);
@@ -101,7 +101,7 @@ private:
     static int interruptCb(void *ctx);
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
 
-    std::function<void(MediaType)> onSetupSuccess_;
+    std::function<void(MediaType, StreamOriginType)> onSetupSuccess_;
 
     ThreadLoop loop_;
 
