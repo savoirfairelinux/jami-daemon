@@ -97,6 +97,7 @@ void VideoRtpSession::startSender()
                     if (newParams.valid() &&
                         newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
                         localVideoParams_ = newParams.get();
+                        onSuccessfulSetup_(MEDIA_VIDEO, STREAM_SENDER);
                     } else {
                         JAMI_ERR("No valid new video parameters.");
                         return;
