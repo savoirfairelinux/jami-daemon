@@ -20,21 +20,25 @@
 
 #include "noncopyable.h"
 
+#include <asio/io_context.hpp>
+
 #include <functional>
 #include <map>
 #include <string>
 #include <mutex>
 #include <memory>
-
-#include <opendht/http.h>
-#include <restinio/all.hpp>
-#include <http_parser.h>
+#include <thread>
 
 namespace dht {
 class Executor;
 namespace crypto {
 struct PublicKey;
 }
+namespace http {
+class Request;
+class Resolver;
+}
+class Logger;
 }
 
 namespace jami {
@@ -91,8 +95,8 @@ private:
      * Note: Each context is used in one thread only.
      */
     asio::io_context httpContext_;
-    std::shared_ptr<http::Resolver> resolver_;
-    std::map<unsigned int /*id*/, std::shared_ptr<http::Request>> requests_;
+    std::shared_ptr<dht::http::Resolver> resolver_;
+    std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;
     /*
      * Thread for executing the http io_context.run() blocking call.
      */
@@ -109,7 +113,7 @@ private:
 
     std::shared_ptr<dht::Logger> logger_;
 
-    void setHeaderFields(std::shared_ptr<http::Request> request);
+    void setHeaderFields(std::shared_ptr<dht::http::Request> request);
 
     std::string nameCache(const std::string& addr) {
         std::lock_guard<std::mutex> l(cacheLock_);

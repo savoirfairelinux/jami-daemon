@@ -19,16 +19,23 @@
 #include "config.h"
 #include "namedirectory.h"
 
+//#include <asio/ssl.hpp>
+
 #include "logger.h"
 #include "string_utils.h"
 #include "fileutils.h"
 #include "base64.h"
 #include "scheduled_executor.h"
-#include "manager.h"
 
+#include <asio.hpp>
+
+#include "manager.h"
 #include <opendht/thread_pool.h>
 #include <opendht/crypto.h>
 #include <opendht/utils.h>
+#include <opendht/http.h>
+#include <opendht/log_enable.h>
+
 #include <msgpack.hpp>
 #include <json/json.h>
 
@@ -53,6 +60,8 @@ const std::regex URI_VALIDATOR {"^([a-zA-Z]+:(?://)?)?(?:([a-z0-9-_]{1,64})@)?([
 const std::regex NAME_VALIDATOR {"^[a-zA-Z0-9-_]{3,32}$"};
 
 constexpr size_t MAX_RESPONSE_SIZE {1024 * 1024};
+
+using Request = dht::http::Request;
 
 void
 toLower(std::string& string)
@@ -84,7 +93,7 @@ NameDirectory::NameDirectory(const std::string& s, std::shared_ptr<dht::Logger> 
      executor_(std::make_shared<dht::Executor>(dht::ThreadPool::io(), 7)), logger_(l)
 {
     // resolve once
-    resolver_ = std::make_shared<http::Resolver>(httpContext_, serverHost_, HTTPS_PROTO, logger_);
+    resolver_ = std::make_shared<dht::http::Resolver>(httpContext_, serverHost_, HTTPS_PROTO, logger_);
 
     // run http client
     httpClientThread_ = std::thread([this](){
@@ -132,7 +141,7 @@ NameDirectory::instance(const std::string& server, std::shared_ptr<dht::Logger> 
 }
 
 void
-NameDirectory::setHeaderFields(std::shared_ptr<http::Request> request){
+NameDirectory::setHeaderFields(std::shared_ptr<Request> request){
     const std::string host = std::string(HTTPS_PROTO) + ":" + serverHost_;
     request->set_header_field(restinio::http_field_t::host, host.c_str());
     request->set_header_field(restinio::http_field_t::user_agent, "JamiDHT");
@@ -148,7 +157,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         cb(cacheResult, Response::found);
         return;
     }
-    auto request = std::make_shared<http::Request>(httpContext_, resolver_, logger_);
+    auto request = std::make_shared<Request>(httpContext_, resolver_, logger_);
     auto reqid = request->id();
     try {
         request->set_connection_type(restinio::http_connection_header_t::keep_alive);
@@ -210,8 +219,8 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
             }
         });
         request->add_on_state_change_callback([this, reqid, addr]
-                                              (const http::Request::State state, const http::Response response){
-            if (state == http::Request::State::DONE){
+                                              (const Request::State state, const dht::http::Response response){
+            if (state == Request::State::DONE){
                 if (response.status_code != 200){
                     JAMI_ERR("Adress lookup for %s failed with code=%i", addr.c_str(), response.status_code);
                 }
@@ -249,7 +258,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         cb(cacheResult, Response::found);
         return;
     }
-    auto request = std::make_shared<http::Request>(httpContext_, resolver_, logger_);
+    auto request = std::make_shared<Request>(httpContext_, resolver_, logger_);
     auto reqid = request->id();
     try {
         request->set_connection_type(restinio::http_connection_header_t::keep_alive);
@@ -331,8 +340,8 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
             }
         });
         request->add_on_state_change_callback([this, reqid, name]
-                                              (const http::Request::State state, const http::Response response){
-            if (state == http::Request::State::DONE){
+                                              (const Request::State state, const dht::http::Response response){
+            if (state == Request::State::DONE){
                 if (response.status_code != 200)
                     JAMI_ERR("Name lookup for %s failed with code=%i", name.c_str(), response.status_code);
                 requests_.erase(reqid);
@@ -382,7 +391,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n,
                     jami::Blob(publickey.begin(), publickey.end()))  << "\"}";
         body = ss.str();
     }
-    auto request = std::make_shared<http::Request>(httpContext_, resolver_, logger_);
+    auto request = std::make_shared<Request>(httpContext_, resolver_, logger_);
     auto reqid = request->id();
     try {
         request->set_connection_type(restinio::http_connection_header_t::keep_alive);
@@ -454,8 +463,8 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n,
             }
         });
         request->add_on_state_change_callback([this, reqid, name]
-                                              (const http::Request::State state, const http::Response response){
-            if (state == http::Request::State::DONE){
+                                              (const Request::State state, const dht::http::Response response){
+            if (state == Request::State::DONE){
                 if (response.status_code != 200)
                     JAMI_ERR("Name register for %s failed with code=%i", name.c_str(), response.status_code);
                 requests_.erase(reqid);

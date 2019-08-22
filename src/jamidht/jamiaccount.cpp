@@ -764,7 +764,6 @@ void JamiAccount::unserialize(const YAML::Node &node)
 
 #if HAVE_RINGNS
     parseValueOptional(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
-    nameDir_ = NameDirectory::instance(nameServer_, logger_);
     if (registeredName_.empty()) {
         parseValueOptional(node, DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
     }
@@ -1067,7 +1066,6 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
 
 #if HAVE_RINGNS
     parseString(details, DRing::Account::ConfProperties::RingNS::URI,     nameServer_);
-    nameDir_ = NameDirectory::instance(nameServer_, logger_);
 #endif
 
     loadAccount(archive_password, archive_pin, archive_path);
@@ -1682,7 +1680,7 @@ JamiAccount::doRegister_()
                 context.logger = std::make_shared<dht::Logger>(log_error, silent, silent);
             }
 #endif
-            logger_ = std::make_shared<dht::Logger>(log_error, log_warn, log_debug);
+            //logger_ = std::make_shared<dht::Logger>(log_error, log_warn, log_debug);
         }
         context.certificateStore = [](const dht::InfoHash& pk_id) {
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
