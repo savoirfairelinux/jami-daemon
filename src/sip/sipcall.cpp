@@ -69,6 +69,7 @@ getVideoSettings()
 
 static constexpr std::chrono::seconds DEFAULT_ICE_INIT_TIMEOUT {35}; // seconds
 static constexpr std::chrono::seconds DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
+static constexpr std::chrono::milliseconds MS_BETWEEN_2_KEYFRAME_REQUEST {1000};
 
 // SDP media Ids
 static constexpr int SDP_AUDIO_MEDIA_ID {0};
@@ -271,18 +272,22 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 void
 SIPCall::requestKeyframe()
 {
-    constexpr const char * const BODY =
-        "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
-        "<media_control><vc_primitive><to_encoder>"
-        "<picture_fast_update/>"
-        "</to_encoder></vc_primitive></media_control>";
+    auto now = clock::now();
+    if ((now - lastKeyFrameReq_) < MS_BETWEEN_2_KEYFRAME_REQUEST and lastKeyFrameReq_ != time_point::min()) 
+        return;
 
+    constexpr const char * const BODY =
+    "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+    "<media_control><vc_primitive><to_encoder>"
+    "<picture_fast_update/>"
+    "</to_encoder></vc_primitive></media_control>";
     JAMI_DBG("Sending video keyframe request via SIP INFO");
     try {
         sendSIPInfo(BODY, "media_control+xml");
     } catch (const std::exception& e) {
         JAMI_ERR("Error sending video keyframe request: %s", e.what());
     }
+    lastKeyFrameReq_ = now;
 }
 
 void
@@ -907,21 +912,6 @@ SIPCall::startAllMedia()
     bool peer_holding {true};
     int slotN = -1;
 
-#ifdef ENABLE_VIDEO
-    videortp_->setRequestKeyFrameCallback([wthis = weak()] {
-        runOnMainThread([wthis] {
-            if (auto this_ = wthis.lock())
-                this_->requestKeyframe();
-        });
-    });
-    videortp_->setChangeOrientationCallback([wthis = weak()] (int angle) {
-        runOnMainThread([wthis, angle] {
-            if (auto this_ = wthis.lock())
-                this_->setVideoOrientation(angle);
-        });
-    });
-#endif
-
     for (const auto& slot : slots) {
         ++slotN;
         const auto& local = slot.first;
@@ -1000,6 +990,21 @@ SIPCall::startAllMedia()
             default: break;
         }
     }
+
+#ifdef ENABLE_VIDEO
+    videortp_->setRequestKeyFrameCallback([wthis = weak()] {
+        runOnMainThread([wthis] {
+            if (auto this_ = wthis.lock())
+                this_->requestKeyframe();
+        });
+    });
+    videortp_->setChangeOrientationCallback([wthis = weak()] (int angle) {
+        runOnMainThread([wthis, angle] {
+            if (auto this_ = wthis.lock())
+                this_->setVideoOrientation(angle);
+        });
+    });
+#endif
 
     if (not isSubcall() and peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;

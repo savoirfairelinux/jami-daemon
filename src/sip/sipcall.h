@@ -246,6 +246,9 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     void rtpSetupSuccess(MediaType type);
 
 private:
+    using clock = std::chrono::steady_clock;
+    using time_point = clock::time_point;
+
     NON_COPYABLE(SIPCall);
 
     void setCallMediaLocal();
@@ -338,6 +341,8 @@ private:
 
     bool readyToRecord_ {false};
     bool pendingRecord_ {false};
+
+    time_point lastKeyFrameReq_ {time_point::min()};
 };
 
 // Helpers
