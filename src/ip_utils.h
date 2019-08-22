@@ -45,14 +45,8 @@ extern "C" {
     #undef interface
     #endif
 #else
-    #include <arpa/inet.h>
-    #include <netinet/in.h>
-    #include <arpa/nameser.h>
-    #include <resolv.h>
-    #include <netdb.h>
-    #include <netinet/ip.h>
-    #include <net/if.h>
-    #include <sys/ioctl.h>
+   #include <sys/socket.h>
+   #include <netinet/in.h>
 #endif
 
 #include <string>

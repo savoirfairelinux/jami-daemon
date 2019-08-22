@@ -37,6 +37,14 @@
 #ifdef _WIN32
 #define InetPtonA inet_pton
 WINSOCK_API_LINKAGE INT WSAAPI InetPtonA(INT Family, LPCSTR pStringBuf, PVOID pAddr);
+#else
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+#include <resolv.h>
+#include <netdb.h>
+#include <netinet/ip.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
 #endif
 
 #ifndef HOST_NAME_MAX
