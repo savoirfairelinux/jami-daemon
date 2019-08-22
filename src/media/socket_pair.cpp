@@ -223,6 +223,15 @@ SocketPair::waitForRTCP(std::chrono::seconds interval)
 }
 
 void
+SocketPair::rtpMissed()
+{
+    std::unique_lock<std::mutex> lock(rtpMissed_mutex_);
+    cvRtpMissed_.wait(lock, [this]{
+        return interrupted_ or not rtpDataBuff_.empty();
+    });
+}
+
+void
 SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
 {
     if (len < sizeof(rtcpRRHeader))
@@ -265,6 +274,7 @@ SocketPair::interrupt()
     if (rtcp_sock_) rtcp_sock_->setOnRecv(nullptr);
     cv_.notify_all();
     cvRtcpPacketReadyToRead_.notify_all();
+    cvRtpMissed_.notify_all();
 }
 
 void
@@ -457,6 +467,9 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     // SRTP decrypt
     if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
+        if((buf[2] << 8 | buf[3]) != lastSeqNum_+1)
+            cvRtpMissed_.notify_one();
+        lastSeqNum_ = buf[2] << 8 | buf[3];
         if (err < 0)
             JAMI_WARN("decrypt error %d", err);
     }

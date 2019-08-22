@@ -134,6 +134,7 @@ class SocketPair {
         std::list<rtcpRRHeader> getRtcpInfo();
 
         bool waitForRTCP(std::chrono::seconds interval);
+        void rtpMissed();
         double getLastLatency();
 
     private:
@@ -167,6 +168,9 @@ class SocketPair {
         std::list<rtcpRRHeader> listRtcpHeader_;
         std::mutex rtcpInfo_mutex_;
         std::condition_variable cvRtcpPacketReadyToRead_;
+
+        std::mutex rtpMissed_mutex_;
+        std::condition_variable cvRtpMissed_;
         static constexpr unsigned MAX_LIST_SIZE {10};
 
         mutable std::atomic_bool rtcpPacketLoss_ {false};
@@ -176,6 +180,7 @@ class SocketPair {
         std::list<double> histoLatency_;
 
         std::chrono::steady_clock::time_point lastRR_time;
+        uint16_t lastSeqNum_ {0};
 };
 
 

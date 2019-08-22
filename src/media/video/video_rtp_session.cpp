@@ -48,6 +48,7 @@ using std::string;
 
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
 constexpr auto EXPIRY_TIME_RTCP = std::chrono::milliseconds(1000);
+constexpr std::chrono::milliseconds MS_BETWEEN_2_KEYFRAME_REQUEST {1000};
 
 VideoRtpSession::VideoRtpSession(const string &callID,
                                  const DeviceParams& localVideoParams) :
@@ -55,6 +56,9 @@ VideoRtpSession::VideoRtpSession(const string &callID,
     , videoBitrateInfo_ {}
     , rtcpCheckerThread_([] { return true; },
             [this]{ processRtcpChecker(); },
+            []{})
+    , rtpMissedThread_([] { return true; },
+            [this]{ processRtpMissed(); },
             []{})
 {
     setupVideoBitrateInfo(); // reset bitrate
@@ -136,6 +140,8 @@ void VideoRtpSession::startSender()
             rtcpCheckerThread_.start();
         else if (not autoQuality and rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.join();
+
+        rtpMissedThread_.start();
     }
 }
 
@@ -222,6 +228,7 @@ void VideoRtpSession::stop()
         socketPair_->interrupt();
 
     rtcpCheckerThread_.join();
+    rtpMissedThread_.join();
 
     // reset default video quality if exist
     if (videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY)
@@ -490,6 +497,17 @@ VideoRtpSession::processRtcpChecker()
 {
     adaptQualityAndBitrate();
     socketPair_->waitForRTCP(std::chrono::seconds(rtcp_checking_interval));
+}
+
+void
+VideoRtpSession::processRtpMissed()
+{
+    socketPair_->rtpMissed();
+    auto now = clock::now();
+    if ((now - lastKeyFrameReq_) < MS_BETWEEN_2_KEYFRAME_REQUEST and lastKeyFrameReq_ != time_point::min())
+        return;
+    requestKeyFrameCallback_();
+    lastKeyFrameReq_ = now;
 }
 
 void

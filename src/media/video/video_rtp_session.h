@@ -149,6 +149,8 @@ private:
 
     InterruptedThreadLoop rtcpCheckerThread_;
     void processRtcpChecker();
+    InterruptedThreadLoop rtpMissedThread_;
+    void processRtpMissed();
 
     std::function<void(int)> changeOrientationCallback_;
 
@@ -158,6 +160,7 @@ private:
     time_point lastMediaRestart_ {time_point::min()};
 
     std::list< std::pair<time_point, float> > histoLoss_;
+    time_point lastKeyFrameReq_ {time_point::min()};
 };
 
 }} // namespace jami::video
