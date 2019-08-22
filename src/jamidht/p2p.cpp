@@ -224,7 +224,7 @@ public:
     JamiAccount& account;
     Channel<std::unique_ptr<CtrlMsgBase>> ctrl;
 
-    ICESDP parse_SDP(const std::string& sdp_msg) {
+    ICESDP parse_SDP(const std::string& sdp_msg, const std::shared_ptr<IceTransport>& ice) {
         ICESDP res;
         std::istringstream stream(sdp_msg);
         std::string line;
@@ -236,7 +236,7 @@ public:
                 res.rem_pwd = line;
             } else {
                 IceCandidate cand;
-                if (ice_->getCandidateFromSDP(line, cand)) {
+                if (ice->getCandidateFromSDP(line, cand)) {
                     JAMI_DBG("[Account:%s] add remote ICE candidate: %s",
                             account.getAccountID().c_str(),
                             line.c_str());
@@ -374,21 +374,21 @@ private:
         auto ice_config = parent_.account.getIceOptions();
         ice_config.tcpEnable = true;
         ice_config.aggressive = true; // This will directly select the first candidate.
-        parent_.ice_ = iceTransportFactory.createTransport(parent_.account.getAccountID().c_str(), 1, false, ice_config);
+        auto ice = iceTransportFactory.createTransport(parent_.account.getAccountID().c_str(), 1, false, ice_config);
 
-        if (parent_.ice_->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
+        if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
             JAMI_ERR("Cannot initialize ICE session.");
             cancel();
             return;
         }
 
-        parent_.account.registerDhtAddress(*parent_.ice_);
+        parent_.account.registerDhtAddress(*ice);
 
-        auto iceAttributes = parent_.ice_->getLocalAttributes();
+        auto iceAttributes = ice->getLocalAttributes();
         std::stringstream icemsg;
         icemsg << iceAttributes.ufrag << "\n";
         icemsg << iceAttributes.pwd << "\n";
-        for (const auto &addr : parent_.ice_->getLocalCandidates(0)) {
+        for (const auto &addr : ice->getLocalCandidates(0)) {
             icemsg << addr << "\n";
         }
 
@@ -426,24 +426,24 @@ private:
             if (!(relay_addr = address)) {
                 // Should be ICE SDP
                 // P2P File transfer. We received an ice SDP message:
-                auto sdp = parent_.parse_SDP(address);
+                auto sdp = parent_.parse_SDP(address, ice);
                 // NOTE: hasPubIp is used for compability (because ICE is waiting for a certain state in old versions)
                 // This can be removed when old versions will be unsupported.
                 auto hasPubIp = parent_.hasPublicIp(sdp);
-                if (!hasPubIp) parent_.ice_->setInitiatorSession();
-                if (not parent_.ice_->start({sdp.rem_ufrag, sdp.rem_pwd},
+                if (!hasPubIp) ice->setInitiatorSession();
+                if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd},
                                             sdp.rem_candidates)) {
                   JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
                             parent_.account.getAccountID().c_str());
                   break;
                 }
 
-                parent_.ice_->waitForNegotiation(ICE_NOGOTIATION_TIMEOUT);
-                if (parent_.ice_->isRunning()) {
-                    peer_ep = std::make_shared<IceSocketEndpoint>(parent_.ice_, true);
+                ice->waitForNegotiation(ICE_NOGOTIATION_TIMEOUT);
+                if (ice->isRunning()) {
+                    peer_ep = std::make_shared<IceSocketEndpoint>(ice, true);
                     JAMI_DBG("[Account:%s] ICE negotiation succeed. Starting file transfer",
                              parent_.account.getAccountID().c_str());
-                    if (hasPubIp) parent_.ice_->setInitiatorSession();
+                    if (hasPubIp) ice->setInitiatorSession();
                     break;
                 } else {
                   JAMI_ERR("[Account:%s] ICE negotation failed",
@@ -744,7 +744,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
 
                 account.registerDhtAddress(*ice_);
 
-                auto sdp = parse_SDP(ip);
+                auto sdp = parse_SDP(ip, ice_);
                 // NOTE: hasPubIp is used for compability (because ICE is waiting for a certain state in old versions)
                 // This can be removed when old versions will be unsupported (version before this patch)
                 hasPubIp = hasPublicIp(sdp);
