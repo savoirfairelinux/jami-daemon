@@ -344,6 +344,8 @@ VideoInput::createDecoder()
     }
 
     auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
+        decOpts_.pixel_format = av_get_pix_fmt_name(static_cast<AVPixelFormat>(decoder_->getPixelFormat()));
+        foundDecOpts(decOpts_);
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     });
 
@@ -371,11 +373,13 @@ VideoInput::createDecoder()
     decOpts_.height = decoder->getHeight();
     decOpts_.framerate = decoder->getFps();
 
-    JAMI_DBG("created decoder with video params : size=%dX%d, fps=%lf",
-             decOpts_.width, decOpts_.height, decOpts_.framerate.real());
+    JAMI_DBG("created decoder with video params : size=%dX%d, fps=%lf pix=%s",
+             decOpts_.width, decOpts_.height, decOpts_.framerate.real(),
+             decOpts_.pixel_format.c_str());
 
     decoder_ = std::move(decoder);
-    foundDecOpts(decOpts_);
+    if (decoder_->getPixelFormat() != AV_PIX_FMT_NONE)
+        foundDecOpts(decOpts_);
 
     /* Signal the client about readable sink */
     sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
@@ -565,27 +569,22 @@ VideoInput::switchInput(const std::string& resource)
 
     const auto suffix = resource.substr(pos + sep.size());
 
-    bool ready = false;
 
     if (prefix == DRing::Media::VideoProtocolPrefix::CAMERA) {
         /* Video4Linux2 */
-        ready = initCamera(suffix);
+        initCamera(suffix);
     } else if (prefix == DRing::Media::VideoProtocolPrefix::DISPLAY) {
         /* X11 display name */
 #ifdef __APPLE__
-        ready = initAVFoundation(suffix);
+        initAVFoundation(suffix);
 #elif defined(_WIN32)
-        ready = initGdiGrab(suffix);
+        initGdiGrab(suffix);
 #else
-        ready = initX11(suffix);
+        initX11(suffix);
 #endif
     } else if (prefix == DRing::Media::VideoProtocolPrefix::FILE) {
         /* Pathname */
-        ready = initFile(suffix);
-    }
-
-    if (ready) {
-        foundDecOpts(decOpts_);
+        initFile(suffix);
     }
 
     switchPending_ = true;
@@ -628,7 +627,12 @@ DeviceParams VideoInput::getParams() const
 MediaStream
 VideoInput::getInfo() const
 {
-    return decoder_->getStream("v:local");
+    if (decoder_)
+        return decoder_->getStream("v:local");
+    auto opts = futureDecOpts_.get();
+    rational<int> fr(opts.framerate.numerator(), opts.framerate.denominator());
+    return MediaStream("v:local", av_get_pix_fmt(opts.pixel_format.c_str()),
+        1 / fr, opts.width, opts.height, 0, fr);
 }
 
 void
