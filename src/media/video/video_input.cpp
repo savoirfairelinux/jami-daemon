@@ -367,12 +367,22 @@ VideoInput::createDecoder()
         return;
     }
 
+    decoder->decode(); // Populate AVCodecContext fields
+
     decOpts_.width = decoder->getWidth();
     decOpts_.height = decoder->getHeight();
     decOpts_.framerate = decoder->getFps();
+    AVPixelFormat fmt = decoder->getPixelFormat();
+    if (fmt != AV_PIX_FMT_NONE) {
+        decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
+    } else {
+        JAMI_WARN("Could not determine pixel format, using default");
+        decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
+    }
 
-    JAMI_DBG("created decoder with video params : size=%dX%d, fps=%lf",
-             decOpts_.width, decOpts_.height, decOpts_.framerate.real());
+    JAMI_DBG("created decoder with video params : size=%dX%d, fps=%lf pix=%s",
+             decOpts_.width, decOpts_.height, decOpts_.framerate.real(),
+             decOpts_.pixel_format.c_str());
 
     decoder_ = std::move(decoder);
     foundDecOpts(decOpts_);
@@ -455,7 +465,6 @@ VideoInput::initAVFoundation(const std::string& display)
     }
     return true;
 }
-
 
 bool
 VideoInput::initGdiGrab(const std::string& params)
@@ -628,7 +637,12 @@ DeviceParams VideoInput::getParams() const
 MediaStream
 VideoInput::getInfo() const
 {
-    return decoder_->getStream("v:local");
+    if (decoder_)
+        return decoder_->getStream("v:local");
+    auto opts = futureDecOpts_.get();
+    rational<int> fr(opts.framerate.numerator(), opts.framerate.denominator());
+    return MediaStream("v:local", av_get_pix_fmt(opts.pixel_format.c_str()),
+        1 / fr, opts.width, opts.height, 0, fr);
 }
 
 void
