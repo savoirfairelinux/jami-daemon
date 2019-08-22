@@ -27,16 +27,12 @@ if "%NO_AUTO%"=="" (
 )
 set UNIXPATH=%SRC:\=/%
 set UNIXPATH=%ROOTPATH%%UNIXPATH:C:/=%
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_turn_alloc_failure.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/ipv6.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/multiple_listeners.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/pj_ice_sess.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_turn_fallback.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_ioqueue_ipv6_sendto.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/add_dtls_transport.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/rfc6544.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/ice_config.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_first_packet_turn_tcp.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_ebusy_turn.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/ignore_ipv6_on_transport_check.patch"
 
