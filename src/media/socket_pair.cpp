@@ -457,6 +457,9 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     // SRTP decrypt
     if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
+        if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNum_+1)
+            packetLossCallback_();
+        lastSeqNum_ = buf[2] << 8 | buf[3];
         if (err < 0)
             JAMI_WARN("decrypt error %d", err);
     }
@@ -579,6 +582,12 @@ SocketPair::getLastLatency()
         return histoLatency_.back();
     else
         return -1;
+}
+
+void
+SocketPair::setPacketLossCallback(std::function<void(void)> cb)
+{
+    packetLossCallback_ = std::move(cb);
 }
 
 } // namespace jami

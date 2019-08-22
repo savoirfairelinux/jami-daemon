@@ -75,7 +75,10 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
 void
 VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 {
-    requestKeyFrameCallback_ = std::move(cb);
+    if(socketPair_)
+        socketPair_->setPacketLossCallback(std::move(cb));
+    else
+        JAMI_ERR("No socket pair, keyframe request callback not possible");
 }
 
 void VideoRtpSession::startSender()
