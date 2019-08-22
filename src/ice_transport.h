@@ -177,7 +177,7 @@ public:
      */
     std::vector<uint8_t> packIceMsg(uint8_t version = 1) const;
 
-    bool getCandidateFromSDP(const std::string& line, IceCandidate& cand);
+    bool getCandidateFromSDP(const std::string& line, IceCandidate& cand) const;
 
     // I/O methods
 

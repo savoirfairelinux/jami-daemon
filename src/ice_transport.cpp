@@ -1088,7 +1088,7 @@ IceTransport::packIceMsg(uint8_t version) const
 }
 
 bool
-IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
+IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) const
 {
     /**   Section 4.5, RFC 6544 (https://tools.ietf.org/html/rfc6544)
      *    candidate-attribute   = "candidate" ":" foundation SP component-id SP
