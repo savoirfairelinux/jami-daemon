@@ -3,7 +3,7 @@ FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).t
 
 PKGS+=ffmpeg
 
-ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavformat >= 57.82.100 libavdevice >= 57.8.101 libavfilter >= 6.105.100 libswscale >= 4.7.103 libswresample >= 2.9.100"),)
+ifeq ($(call need_pkg,"libavutil >= 56.22.100 libavcodec >= 58.35.100 libavformat >= 58.20.100 libavdevice >= 58.5.100 libavfilter >= 7.40.101 libswscale >= 4.7.103 libswresample >= 2.9.100"),)
 PKGS_FOUND += ffmpeg
 endif
 
