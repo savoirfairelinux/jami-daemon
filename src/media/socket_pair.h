@@ -45,7 +45,7 @@ using socklen_t = int;
 #include <list>
 #include <vector>
 #include <condition_variable>
-
+#include <functional>
 
 namespace jami {
 
@@ -136,6 +136,8 @@ class SocketPair {
         bool waitForRTCP(std::chrono::seconds interval);
         double getLastLatency();
 
+        void setPacketLossCallback(std::function<void (void)> cb);
+
     private:
         NON_COPYABLE(SocketPair);
 
@@ -163,6 +165,7 @@ class SocketPair {
         std::atomic_bool interrupted_ {false};
         std::atomic_bool noWrite_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
+        std::function<void(void)> packetLossCallback_;
 
         std::list<rtcpRRHeader> listRtcpHeader_;
         std::mutex rtcpInfo_mutex_;
@@ -176,6 +179,7 @@ class SocketPair {
         std::list<double> histoLatency_;
 
         std::chrono::steady_clock::time_point lastRR_time;
+        uint16_t lastSeqNum_ {0};
 };
 
 
