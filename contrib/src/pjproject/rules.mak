@@ -1,5 +1,5 @@
 # PJPROJECT
-PJPROJECT_VERSION := 5dfa75be7d69047387f9b0436dd9492bbbf03fe4
+PJPROJECT_VERSION := 34d306362742dd535b9b8ae80d836ab5e39def93
 PJPROJECT_URL := https://github.com/pjsip/pjproject/archive/$(PJPROJECT_VERSION).tar.gz
 
 PJPROJECT_OPTIONS := --disable-oss          \
@@ -54,14 +54,10 @@ endif
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/android.patch
 endif
-	$(APPLY) $(SRC)/pjproject/fix_turn_alloc_failure.patch
-	$(APPLY) $(SRC)/pjproject/rfc2466.patch
 	$(APPLY) $(SRC)/pjproject/ipv6.patch
-	$(APPLY) $(SRC)/pjproject/multiple_listeners.patch
 	$(APPLY) $(SRC)/pjproject/pj_ice_sess.patch
 	$(APPLY) $(SRC)/pjproject/fix_turn_fallback.patch
 	$(APPLY) $(SRC)/pjproject/fix_ioqueue_ipv6_sendto.patch
-	$(APPLY) $(SRC)/pjproject/add_dtls_transport.patch
 	$(APPLY) $(SRC)/pjproject/rfc6544.patch
 	$(APPLY) $(SRC)/pjproject/ice_config.patch
 	$(APPLY) $(SRC)/pjproject/sip_config.patch
