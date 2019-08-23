@@ -131,7 +131,7 @@ void VideoRtpSession::startSender()
         }
         lastMediaRestart_ = clock::now();
         auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
-        auto autoQuality = codecVideo->isAutoQualityEnabled;
+        auto autoQuality = Manager::instance().videoPreferences.getAutoQuality();
         if (autoQuality and not rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.start();
         else if (not autoQuality and rtcpCheckerThread_.isRunning())

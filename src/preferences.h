@@ -492,11 +492,20 @@ class VideoPreferences : public Serializable {
             recordQuality_ = rec;
         }
 
+        bool getAutoQuality() const {
+            return autoQuality_;
+        }
+
+        void setAutoQuality(bool autoQuality) {
+            autoQuality_ = autoQuality;
+        }
+
     private:
         bool decodingAccelerated_;
         bool encodingAccelerated_;
         bool recordPreview_;
         int recordQuality_;
+        bool autoQuality_;
         constexpr static const char* const CONFIG_LABEL = "video";
 };
 #endif // ENABLE_VIDEO
