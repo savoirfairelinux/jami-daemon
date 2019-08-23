@@ -306,7 +306,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
     //Videotoolbox handles frames allocations itself and do not need creating frame context manually.
     //Now videotoolbox supports only fully accelerated pipeline
     bool isVideotoolbox = static_cast<AVPixelFormat>(input.format()) == AV_PIX_FMT_VIDEOTOOLBOX;
-    if (accel_ &&  isVideotoolbox) {
+    if (isVideotoolbox) {
         // Fully accelerated pipeline, skip main memory
         frame = input.pointer();
     } else {
