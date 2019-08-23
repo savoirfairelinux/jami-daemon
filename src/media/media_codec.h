@@ -3,6 +3,7 @@
  *
  *  Author: Eloi BAIL <eloi.bail@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -190,7 +191,6 @@ struct AccountVideoCodecInfo : AccountCodecInfo
     unsigned frameRate;
     unsigned profileId;
     std::string parameters;
-    bool isAutoQualityEnabled{false};
 };
 bool operator== (SystemCodecInfo codec1, SystemCodecInfo codec2);
 
