@@ -163,6 +163,13 @@ HardwareAccel::initDevice()
         // renderD* is preferred over card*
         std::sort(files.rbegin(), files.rend());
         for (auto& entry : files) {
+            int fd = open(entry.c_str(), O_RDWR);
+            if (!fd)
+                continue;
+            VADisplay disp = vaGetDisplayDRM(fd);
+            if (!display)
+                continue;
+            close(fd);
             std::string deviceName = path + entry;
             if ((ret = av_hwdevice_ctx_create(&deviceCtx_, hwType_, deviceName.c_str(), nullptr, 0)) >= 0) {
                 return true;
