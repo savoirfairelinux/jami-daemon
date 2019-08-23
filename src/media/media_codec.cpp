@@ -2,6 +2,7 @@
  *  Copyright (C) 2015-2019 Savoir-faire Linux Inc.
  *
  *  Author: Eloi BAIL <eloi.bail@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +25,7 @@
 
 #include "string_utils.h"
 #include "logger.h"
+#include "manager.h"
 
 #include <string>
 #include <sstream>
@@ -204,7 +206,7 @@ AccountVideoCodecInfo::getCodecSpecifications()
         {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, std::to_string(systemCodecInfo.maxQuality)},
         {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, std::to_string(systemCodecInfo.minQuality)},
         {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)},
-        {DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED, bool_to_str(isAutoQualityEnabled)}
+        {DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED, std::to_string(Manager::instance().videoPreferences.getAutoQuality())}
     };
 }
 
@@ -227,7 +229,7 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED);
     if (it != details.end())
-        copy.isAutoQualityEnabled = (it->second == TRUE_STR) ? true : false;
+        Manager::instance().videoPreferences.setAutoQuality((it->second == TRUE_STR));
 
     // copy back if no exception was raised
     *this = std::move(copy);
