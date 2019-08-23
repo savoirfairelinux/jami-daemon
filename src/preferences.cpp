@@ -142,6 +142,7 @@ static constexpr const char* DECODING_ACCELERATED_KEY {"decodingAccelerated"};
 static constexpr const char* ENCODING_ACCELERATED_KEY {"encodingAccelerated"};
 static constexpr const char* RECORD_PREVIEW_KEY {"recordPreview"};
 static constexpr const char* RECORD_QUALITY_KEY {"recordQuality"};
+static constexpr const char* AUTO_QUALITY_KEY {"autoQuality"};
 #endif
 
 static constexpr int PULSE_LENGTH_DEFAULT {250}; /** Default DTMF length */
@@ -581,6 +582,7 @@ void VideoPreferences::serialize(YAML::Emitter &out) const
     out << YAML::Key << DECODING_ACCELERATED_KEY << YAML::Value << decodingAccelerated_;
     out << YAML::Key << ENCODING_ACCELERATED_KEY << YAML::Value << encodingAccelerated_;
 #endif
+    out << YAML::Key << AUTO_QUALITY_KEY << YAML::Value << autoQuality_;
     getVideoDeviceMonitor().serialize(out);
     out << YAML::EndMap;
 }
@@ -605,6 +607,11 @@ void VideoPreferences::unserialize(const YAML::Node &in)
         encodingAccelerated_ = false;
     }
 #endif
+    try {
+        parseValue(node, AUTO_QUALITY_KEY, autoQuality_);
+    } catch (...) {
+        autoQuality_ = false;
+    }
     getVideoDeviceMonitor().unserialize(in);
 }
 #endif // ENABLE_VIDEO
