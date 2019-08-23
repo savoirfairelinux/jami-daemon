@@ -293,7 +293,10 @@ HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* fr
             auto accel = std::make_unique<HardwareAccel>(id, api.name, api.hwType, api.format, api.swFormat, CODEC_ENCODER);
             const auto& codecName = accel->getCodecName();
             if (avcodec_find_encoder_by_name(codecName.c_str())) {
-                if (accel->initDevice()) {
+                if (api.hwType == AV_HWDEVICE_TYPE_VIDEOTOOLBOX) {
+                    JAMI_DBG() << "Attempting to use hardware encoder " << codecName << " with " << api.name;
+                    return accel;
+                } else if (accel->initDevice()) {
                     // we don't need frame context for videotoolbox
                     if (api.format == AV_PIX_FMT_VIDEOTOOLBOX ||
                         accel->linkHardware(framesCtx) ||
