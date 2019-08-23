@@ -162,7 +162,6 @@ void VideoRtpSession::startReceiver()
         );
 
         // XXX keyframe requests can timeout if unanswered
-        receiveThread_->setRequestKeyFrameCallback(requestKeyFrameCallback_);
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop(onSuccessfulSetup_);
     } else {

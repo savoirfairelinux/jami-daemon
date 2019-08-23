@@ -315,10 +315,6 @@ MediaDecoder::setupStream()
         JAMI_DBG() << "Using framerate emulation";
     startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
 
-    decoderCtx_->err_recognition = (AV_EF_CRCCHECK | AV_EF_BITSTREAM | AV_EF_BUFFER | AV_EF_CAREFUL | AV_EF_COMPLIANT | AV_EF_AGGRESSIVE);
-    if(inputDecoder_->id != AV_CODEC_ID_MPEG4)
-        decoderCtx_->err_recognition |= AV_EF_EXPLODE;
-
     ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
     if (ret < 0) {
         JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
