@@ -155,23 +155,7 @@ HardwareAccel::setDetails(AVCodecContext* codecCtx)
 bool
 HardwareAccel::initDevice()
 {
-    int ret = 0;
-    // default DRM device may not work on multi GPU computers, so check all possible values
-    if (hwType_ == AV_HWDEVICE_TYPE_VAAPI) {
-        const std::string path = "/dev/dri/";
-        auto files = jami::fileutils::readDirectory(path);
-        // renderD* is preferred over card*
-        std::sort(files.rbegin(), files.rend());
-        for (auto& entry : files) {
-            std::string deviceName = path + entry;
-            if ((ret = av_hwdevice_ctx_create(&deviceCtx_, hwType_, deviceName.c_str(), nullptr, 0)) >= 0) {
-                return true;
-            }
-        }
-    }
-    // default device (nullptr) works for most cases
-    ret = av_hwdevice_ctx_create(&deviceCtx_, hwType_, nullptr, nullptr, 0);
-    return ret >= 0;
+    return av_hwdevice_ctx_create(&deviceCtx_, hwType_, nullptr, nullptr, 0) >= 0;
 }
 
 bool
