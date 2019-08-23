@@ -64,7 +64,6 @@ public:
     int getHeight() const;
     AVPixelFormat getPixelFormat() const;
     MediaStream getInfo() const;
-    void triggerKeyFrameRequest();
 
     /**
       * Set angle of rotation to apply to the video by the decoder
@@ -93,9 +92,7 @@ private:
     uint16_t mtu_;
     int rotation_;
     std::shared_ptr<AVBufferRef> displayMatrix_;
-    std::chrono::steady_clock::time_point lastKeyFrameTime_;
 
-    std::function<void(void)> requestKeyFrameCallback_;
     void openDecoder();
     void decodeFrame();
     static int interruptCb(void *ctx);

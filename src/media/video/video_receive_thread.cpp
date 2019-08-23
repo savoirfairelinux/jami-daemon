@@ -41,8 +41,6 @@ namespace jami { namespace video {
 
 using std::string;
 
-constexpr auto MS_BETWEEN_2_KEYFRAME_REQUEST = std::chrono::milliseconds(200);
-
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
                                        const std::string &sdp,
                                        uint16_t mtu) :
@@ -56,7 +54,6 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , sink_ {Manager::instance().createSinkClient(id)}
     , mtu_(mtu)
     , rotation_(0)
-    , requestKeyFrameCallback_()
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::decodeFrame, this),
             std::bind(&VideoReceiveThread::cleanup, this))
@@ -122,9 +119,6 @@ bool VideoReceiveThread::setup()
         // Now replace our custom AVIOContext with one that will read packets
         videoDecoder_->setIOContext(demuxContext_.get());
     }
-
-    if (requestKeyFrameCallback_)
-        requestKeyFrameCallback_();
 
     if (videoDecoder_->setupVideo()) {
         JAMI_ERR("decoder IO startup failed");
@@ -218,9 +212,6 @@ void VideoReceiveThread::exitConference()
         sink_->setFrameSize(dstWidth_, dstHeight_);
 }
 
-void VideoReceiveThread::setRequestKeyFrameCallback(std::function<void (void)> cb)
-{ requestKeyFrameCallback_ = cb; }
-
 int VideoReceiveThread::getWidth() const
 { return dstWidth_; }
 
@@ -234,13 +225,6 @@ MediaStream
 VideoReceiveThread::getInfo() const
 {
     return videoDecoder_->getStream("v:remote");
-}
-
-void
-VideoReceiveThread::triggerKeyFrameRequest()
-{
-    if (requestKeyFrameCallback_)
-        requestKeyFrameCallback_();
 }
 
 void
