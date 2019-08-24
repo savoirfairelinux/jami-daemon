@@ -23,7 +23,11 @@ libringacc_la_SOURCES = \
         contact_list.h \
         contact_list.cpp \
         account_manager.h \
-        account_manager.cpp
+        account_manager.cpp \
+        archive_account_manager.h \
+        archive_account_manager.cpp \
+        server_account_manager.h \
+        server_account_manager.cpp
 
 if RINGNS
 libringacc_la_SOURCES += \
