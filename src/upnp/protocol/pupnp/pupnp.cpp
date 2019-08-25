@@ -118,6 +118,7 @@ PUPnP::PUPnP()
         std::unique_lock<std::mutex> lk(ctrlptMutex_);
         while (pupnpRun_) {
             pupnpCv_.wait(lk, [this]{
+                std::lock_guard<std::mutex> lk(validIgdMutex_);
                 return not clientRegistered_ or
                        not pupnpRun_ or
                        searchForIgd_ or
@@ -139,22 +140,21 @@ PUPnP::PUPnP()
                 break;
 
             if (clientRegistered_) {
-                if (searchForIgd_) {
+                if (searchForIgd_.exchange(false)) {
                     // Send out search for multiple types of devices, as some routers may possibly only reply to one.
                     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, this);
                     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, this);
                     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
                     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, this);
-
-                    // Reset variable.
-                    searchForIgd_ = false;
                 }
 
+                std::unique_lock<std::mutex> lk2(validIgdMutex_);
                 if (not dwnldlXmlList_.empty()) {
                     auto xmlList = std::move(dwnldlXmlList_);
                     decltype(xmlList) finished {};
 
                     // Wait on futures asynchronously
+                    lk2.unlock();
                     lk.unlock();
                     for (auto it = xmlList.begin(); it != xmlList.end();) {
                         if (it->wait_for(std::chrono::seconds(1)) == std::future_status::ready) {
@@ -165,6 +165,7 @@ PUPnP::PUPnP()
                         }
                     }
                     lk.lock();
+                    lk2.lock();
 
                     // Move back timed-out items to list
                     dwnldlXmlList_.splice(dwnldlXmlList_.begin(), xmlList);
@@ -192,10 +193,10 @@ PUPnP::PUPnP()
 
 PUPnP::~PUPnP()
 {
-    pupnpCv_.notify_all();
     // Clear all the lists.
     {
-        std::lock_guard<std::mutex> lk(validIgdMutex_);
+        std::lock_guard<std::mutex> lk(ctrlptMutex_);
+        std::lock_guard<std::mutex> lk2(validIgdMutex_);
         for(auto const &it : validIgdList_) {
             if (auto igd = std::dynamic_pointer_cast<UPnPIGD>(it.second))
                 actionDeletePortMappingsByDesc(*igd, Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
@@ -204,10 +205,10 @@ PUPnP::~PUPnP()
         cpDeviceList_.clear();
         dwnldlXmlList_.clear();
         cancelXmlList_.clear();
+        pupnpRun_ = false;
     }
 
     // Notify thread to terminate. UpnpFinish function will get called.
-    pupnpRun_ = false;
     pupnpCv_.notify_all();
     if (pupnpThread_.joinable())
         pupnpThread_.join();
@@ -229,10 +230,7 @@ void
 PUPnP::searchForIgd()
 {
     // Notify thread to execute in non-blocking fashion.
-    {
-        std::lock_guard<std::mutex> lk(ctrlptMutex_);
-        searchForIgd_ = true;
-    }
+    searchForIgd_ = true;
     pupnpCv_.notify_one();
 }
 
@@ -368,6 +366,7 @@ void
 PUPnP::removeMapping(const Mapping& igdMapping)
 {
     // Lock mutex to protect IGD list.
+    std::lock_guard<std::mutex> lk1(ctrlptMutex_);
     std::lock_guard<std::mutex> lk(validIgdMutex_);
 
     // Iterate over all IGDs in internal list and try to remove selected mapping.
@@ -430,9 +429,6 @@ PUPnP::ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_d
 int
 PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
 {
-     // Lock mutex to prevent handling other discovery search results (or advertisements) simultaneously.
-    std::lock_guard<std::mutex> lk(ctrlptMutex_);
-
     switch(event_type)
     {
     case UPNP_DISCOVERY_ADVERTISEMENT_ALIVE: // Fall through. Treat advertisements like discovery search results.
@@ -471,10 +467,10 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
     case UPNP_DISCOVERY_ADVERTISEMENT_BYEBYE:
     {
         const UpnpDiscovery *d_event = (const UpnpDiscovery *)event;
-        std::lock_guard<std::mutex> lk(validIgdMutex_);
 
         // Remvoe device Id from list.
         std::string cpDeviceId(UpnpDiscovery_get_DeviceID_cstr(d_event));
+        std::lock_guard<std::mutex> lk(validIgdMutex_);
         cpDeviceList_.erase(cpDeviceId);
 
         IGD* igd_to_remove = nullptr;
@@ -506,7 +502,8 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
     {
         const UpnpEventSubscribe *es_event = (const UpnpEventSubscribe *)event;
         std::string eventSubUrl(UpnpEventSubscribe_get_PublisherUrl_cstr(es_event));
-
+        std::lock_guard<std::mutex> lk1(ctrlptMutex_);
+        std::lock_guard<std::mutex> lk(validIgdMutex_);
         auto it = validIgdList_.begin();
         for (; it != validIgdList_.end(); it++) {
             if (auto igd = std::dynamic_pointer_cast<UPnPIGD>(it->second))
@@ -552,10 +549,7 @@ PUPnP::subEventCallback(Upnp_EventType event_type, const void* event, void* user
 int
 PUPnP::handleSubscriptionUPnPEvent(Upnp_EventType /*event_type */, const void* event)
 {
-    std::lock_guard<std::mutex> lk(ctrlptMutex_);
-
     const UpnpEventSubscribe *es_event = (const UpnpEventSubscribe *)event;
-
     int upnp_err = UpnpEventSubscribe_get_ErrCode(es_event);
     if (upnp_err != UPNP_E_SUCCESS) {
         JAMI_WARN("PUPnP: Error when trying to handle subscription callback -> %s", UpnpGetErrorMessage(upnp_err));
