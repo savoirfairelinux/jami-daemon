@@ -71,7 +71,6 @@ DRING_PUBLIC bool lookupAddress(const std::string& account, const std::string& n
 DRING_PUBLIC bool registerName(const std::string& account, const std::string& password, const std::string& name);
 
 DRING_PUBLIC void removeAccount(const std::string& accountID);
-DRING_PUBLIC void setAccountEnabled(const std::string& accountID, bool enable);
 DRING_PUBLIC std::vector<std::string> getAccountList();
 DRING_PUBLIC void sendRegister(const std::string& accountID, bool enable);
 DRING_PUBLIC void registerAllAccounts(void);

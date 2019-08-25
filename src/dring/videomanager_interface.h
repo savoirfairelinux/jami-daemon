@@ -172,7 +172,6 @@ DRING_PUBLIC void setDeviceOrientation(const std::string& name, int angle);
 DRING_PUBLIC std::map<std::string, std::string> getDeviceParams(const std::string& name);
 
 DRING_PUBLIC std::string getDefaultDevice();
-DRING_PUBLIC std::string getCurrentCodecName(const std::string& callID);
 DRING_PUBLIC void startCamera();
 DRING_PUBLIC void stopCamera();
 DRING_PUBLIC bool hasCameraStarted();

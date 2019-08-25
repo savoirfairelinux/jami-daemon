@@ -93,13 +93,6 @@ DRING_PUBLIC void startTone(int32_t start, int32_t type);
 
 DRING_PUBLIC bool switchInput(const std::string& callID, const std::string& resource);
 
-/* Security related methods */
-DRING_PUBLIC void setSASVerified(const std::string& callID);
-DRING_PUBLIC void resetSASVerified(const std::string& callID);
-DRING_PUBLIC void setConfirmGoClear(const std::string& callID);
-DRING_PUBLIC void requestGoClear(const std::string& callID);
-DRING_PUBLIC void acceptEnrollment(const std::string& callID, bool accepted);
-
 /* Instant messaging */
 DRING_PUBLIC void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed);
 
