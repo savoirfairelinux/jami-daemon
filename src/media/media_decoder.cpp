@@ -333,7 +333,9 @@ MediaDecoder::decode(AVPacket& packet)
         return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
     }
 
-    auto f = std::make_shared<MediaFrame>();
+    auto f = (inputDecoder_->type == AVMEDIA_TYPE_VIDEO)
+              ? std::static_pointer_cast<MediaFrame>(std::make_shared<VideoFrame>())
+              : std::static_pointer_cast<MediaFrame>(std::make_shared<AudioFrame>());
     auto frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
