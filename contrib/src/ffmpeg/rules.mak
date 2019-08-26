@@ -1,4 +1,4 @@
-FFMPEG_HASH := 5ab44ff20cdc0e05adecbd0cd352d25fcb930094
+FFMPEG_HASH := 59da9dcd7ef6277e4e04998ced71b05a6083c635
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
@@ -325,9 +325,6 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(APPLY) $(SRC)/ffmpeg/remove-mjpeg-log.patch
 	$(APPLY) $(SRC)/ffmpeg/change-RTCP-ratio.patch
-ifdef HAVE_MACOSX
-	$(APPLY) $(SRC)/ffmpeg/avfoundation_fix.patch
-endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
