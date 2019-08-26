@@ -1,6 +1,15 @@
+From 737a77c1399d5f8fdab5b913b5e6b43f6ec73751 Mon Sep 17 00:00:00 2001
+From: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
+Date: Tue, 27 Aug 2019 12:00:41 -0400
+Subject: [PATCH] windows configure patch
+
+---
+ configure | 35 +----------------------------------
+ 1 file changed, 1 insertion(+), 34 deletions(-)
+
 --- a/configure
 +++ b/configure
-@@ -1486,7 +1486,7 @@ require_cpp_condition(){
+@@ -1569,7 +1569,7 @@ require_cpp_condition(){
  require_pkg_config(){
      log require_pkg_config "$@"
      pkg_version="$2"
@@ -8,8 +17,37 @@
 +    #check_pkg_config "$@" || die "ERROR: $pkg_version not found using pkg-config$pkg_config_fail_message"
  }
  
- hostcc_e(){
-@@ -6735,17 +6735,6 @@ flatten_extralibs_wrapper(){
+ test_host_cc(){
+@@ -6286,28 +6286,6 @@ enabled libvo_amrwbenc    && require libvo_amrwbenc vo-amrwbenc/enc_if.h E_IF_in
+ enabled libvorbis         && require_pkg_config libvorbis vorbis vorbis/codec.h vorbis_info_init &&
+                              require_pkg_config libvorbisenc vorbisenc vorbis/vorbisenc.h vorbis_encode_init
+ 
+-enabled libvpx            && {
+-    enabled libvpx_vp8_decoder && {
+-        check_pkg_config libvpx_vp8_decoder "vpx >= 1.4.0" "vpx/vpx_decoder.h vpx/vp8dx.h" vpx_codec_vp8_dx ||
+-            check_lib libvpx_vp8_decoder "vpx/vpx_decoder.h vpx/vp8dx.h" "vpx_codec_vp8_dx VPX_IMG_FMT_HIGHBITDEPTH" "-lvpx $libm_extralibs $pthreads_extralibs"
+-    }
+-    enabled libvpx_vp8_encoder && {
+-        check_pkg_config libvpx_vp8_encoder "vpx >= 1.4.0" "vpx/vpx_encoder.h vpx/vp8cx.h" vpx_codec_vp8_cx ||
+-            check_lib libvpx_vp8_encoder "vpx/vpx_encoder.h vpx/vp8cx.h" "vpx_codec_vp8_cx VPX_IMG_FMT_HIGHBITDEPTH" "-lvpx $libm_extralibs $pthreads_extralibs"
+-    }
+-    enabled libvpx_vp9_decoder && {
+-        check_pkg_config libvpx_vp9_decoder "vpx >= 1.4.0" "vpx/vpx_decoder.h vpx/vp8dx.h" vpx_codec_vp9_dx ||
+-            check_lib libvpx_vp9_decoder "vpx/vpx_decoder.h vpx/vp8dx.h" "vpx_codec_vp9_dx VPX_IMG_FMT_HIGHBITDEPTH" "-lvpx $libm_extralibs $pthreads_extralibs"
+-    }
+-    enabled libvpx_vp9_encoder && {
+-        check_pkg_config libvpx_vp9_encoder "vpx >= 1.4.0" "vpx/vpx_encoder.h vpx/vp8cx.h" vpx_codec_vp9_cx ||
+-            check_lib libvpx_vp9_encoder "vpx/vpx_encoder.h vpx/vp8cx.h" "vpx_codec_vp9_cx VPX_IMG_FMT_HIGHBITDEPTH" "-lvpx $libm_extralibs $pthreads_extralibs"
+-    }
+-    if disabled_all libvpx_vp8_decoder libvpx_vp9_decoder libvpx_vp8_encoder libvpx_vp9_encoder; then
+-        die "libvpx enabled but no supported decoders found"
+-    fi
+-}
+-
+ enabled libwavpack        && require libwavpack wavpack/wavpack.h WavpackOpenFileOutput  -lwavpack
+ enabled libwebp           && {
+     enabled libwebp_encoder      && require_pkg_config libwebp "libwebp >= 0.2.0" webp/encode.h WebPGetEncoderVersion
+@@ -6973,17 +6951,6 @@ flatten_extralibs_wrapper(){
      eval printf \''%s'\' \""\$$list_name"\"
  }
  
@@ -27,37 +65,6 @@
  for linkunit in $LIBRARY_LIST $PROGRAM_LIST $EXTRALIBS_LIST; do
      eval ${linkunit}_extralibs=\$\(flatten_extralibs_wrapper ${linkunit}_extralibs\)
  done
-@@ -6068,29 +6068,7 @@ enabled libvo_amrwbenc    && require libvo_amrwbenc vo-amrwbenc/enc_if.h E_IF_in
- enabled libvorbis         && require_pkg_config libvorbis vorbis vorbis/codec.h vorbis_info_init &&
-                              require_pkg_config libvorbisenc vorbisenc vorbis/vorbisenc.h vorbis_encode_init
- 
--enabled libvpx            && {
--    enabled libvpx_vp8_decoder && {
--        check_pkg_config libvpx_vp8_decoder "vpx >= 1.4.0" "vpx/vpx_decoder.h vpx/vp8dx.h" vpx_codec_vp8_dx ||
--            check_lib libvpx_vp8_decoder "vpx/vpx_decoder.h vpx/vp8dx.h" "vpx_codec_dec_init_ver VPX_IMG_FMT_HIGHBITDEPTH" -lvpx ||
--                die "ERROR: libvpx decoder version must be >=1.4.0";
--    }
--    enabled libvpx_vp8_encoder && {
--        check_pkg_config libvpx_vp8_encoder "vpx >= 1.4.0" "vpx/vpx_encoder.h vpx/vp8cx.h" vpx_codec_vp8_cx ||
--            check_lib libvpx_vp8_encoder "vpx/vpx_encoder.h vpx/vp8cx.h" "vpx_codec_enc_init_ver VPX_IMG_FMT_HIGHBITDEPTH" -lvpx ||
--                die "ERROR: libvpx encoder version must be >=1.4.0";
--    }
--    enabled libvpx_vp9_decoder && {
--        check_pkg_config libvpx_vp9_decoder "vpx >= 1.4.0" "vpx/vpx_decoder.h vpx/vp8dx.h" vpx_codec_vp9_dx ||
--            check_lib libvpx_vp9_decoder "vpx/vpx_decoder.h vpx/vp8dx.h" "vpx_codec_vp9_dx VPX_IMG_FMT_HIGHBITDEPTH" "-lvpx $libm_extralibs"
--    }
--    enabled libvpx_vp9_encoder && {
--        check_pkg_config libvpx_vp9_encoder "vpx >= 1.4.0" "vpx/vpx_encoder.h vpx/vp8cx.h" vpx_codec_vp9_cx ||
--            check_lib libvpx_vp9_encoder "vpx/vpx_encoder.h vpx/vp8cx.h" "vpx_codec_vp9_cx VPX_IMG_FMT_HIGHBITDEPTH" "-lvpx $libm_extralibs"
--    }
--    if disabled_all libvpx_vp8_decoder libvpx_vp9_decoder libvpx_vp8_encoder libvpx_vp9_encoder; then
--        die "libvpx enabled but no supported decoders found"
--    fi
--}
-+
- 
- enabled libwavpack        && require libwavpack wavpack/wavpack.h WavpackOpenFileOutput  -lwavpack
- enabled libwebp           && {
 -- 
-2.10.2.windows.1
+2.22.0.windows.1
 
