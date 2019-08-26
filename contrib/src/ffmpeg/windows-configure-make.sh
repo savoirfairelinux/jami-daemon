@@ -171,8 +171,8 @@ elif [ "$1" == "win32" ]; then
                 --enable-decoder=vp8_qsv
                 --enable-decoder=h264_qsv
                 --enable-decoder=hevc_qsv
-                --enable-decoder=mjpeg
-                --enable-decoder=vp9
+                --enable-decoder=mjpeg_qsv
+                --enable-decoder=vp9_qsv
                 --enable-filter=scale_qsv
                 --enable-filter=overlay_qsv'
     if [ "$2" == "x64" ]; then
