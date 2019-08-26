@@ -1,7 +1,7 @@
-From 2358a7712c9cc88990131f04ea678b5020bc2bb0 Mon Sep 17 00:00:00 2001
+From f7e11c47904c43ada3821e7771229945c08a2080 Mon Sep 17 00:00:00 2001
 From: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
-Date: Tue, 23 Jul 2019 12:30:03 -0400
-Subject: [PATCH] Fix mfx link for windows.
+Date: Tue, 27 Aug 2019 12:07:02 -0400
+Subject: [PATCH] windows libmfx patch
 
 ---
  configure | 2 --
@@ -9,7 +9,7 @@ Subject: [PATCH] Fix mfx link for windows.
 
 --- a/configure
 +++ b/configure
-@@ -6016,8 +6016,6 @@ enabled libkvazaar        && require_pkg_config libkvazaar "kvazaar >= 0.8.1" kv
+@@ -6225,8 +6225,6 @@ enabled liblensfun        && require_pkg_config liblensfun lensfun lensfun.h lf_
  # Media SDK or Intel Media Server Studio, these don't come with
  # pkg-config support.  Instead, users should make sure that the build
  # can find the libraries and headers through other means.

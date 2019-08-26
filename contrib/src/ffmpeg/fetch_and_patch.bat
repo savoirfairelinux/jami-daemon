@@ -3,7 +3,7 @@ set BUILD=%SRC%..\build
 mkdir %BUILD%
 cd %BUILD%
 
-set FFMPEG_VERSION=5ee203076fa1b1b5da32f525f2b6df3bd5e93b09
+set FFMPEG_VERSION=59da9dcd7ef6277e4e04998ced71b05a6083c635
 set FFMPEG_URL=https://github.com/FFmpeg/FFmpeg/archive/%FFMPEG_VERSION%.tar.gz
 
 if %USE_CACHE%==1 (
