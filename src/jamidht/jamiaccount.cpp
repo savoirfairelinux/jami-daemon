@@ -482,7 +482,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         auto ice_config = getIceOptions();
         ice_config.tcpEnable = true;
-        ice_config.aggressive = true; // This will directly select the first candidate.
         auto ice_tcp = createIceTransport(("sip:" + dev_call->getCallId()).c_str(), ICE_COMPONENTS, true, ice_config);
         if (not ice_tcp) {
             JAMI_WARN("Can't create ICE over TCP, will only use UDP");
@@ -2543,7 +2542,6 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
     auto ice_config = getIceOptions();
     ice_config.tcpEnable = true;
-    ice_config.aggressive = true; // This will directly select the first candidate.
     auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(), ICE_COMPONENTS, true, ice_config);
 
     std::weak_ptr<SIPCall> wcall = call;
