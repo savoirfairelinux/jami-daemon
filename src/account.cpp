@@ -584,6 +584,9 @@ Account::getIceOptions() const noexcept
 {
     IceTransportOptions opts;
     opts.upnpEnable = getUPnPActive();
+    // See https://tools.ietf.org/html/rfc5245#section-8.1.1.2
+    // Make negotiation aggressive to avoid latencies.
+    opts.aggressive = true;
     return opts;
 }
 
