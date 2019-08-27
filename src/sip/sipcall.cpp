@@ -912,6 +912,15 @@ SIPCall::startAllMedia()
     bool peer_holding {true};
     int slotN = -1;
 
+#ifdef ENABLE_VIDEO
+    videortp_->setChangeOrientationCallback([wthis = weak()] (int angle) {
+        runOnMainThread([wthis, angle] {
+            if (auto this_ = wthis.lock())
+                this_->setVideoOrientation(angle);
+        });
+    });
+#endif
+
     for (const auto& slot : slots) {
         ++slotN;
         const auto& local = slot.first;
@@ -996,12 +1005,6 @@ SIPCall::startAllMedia()
         runOnMainThread([wthis] {
             if (auto this_ = wthis.lock())
                 this_->requestKeyframe();
-        });
-    });
-    videortp_->setChangeOrientationCallback([wthis = weak()] (int angle) {
-        runOnMainThread([wthis, angle] {
-            if (auto this_ = wthis.lock())
-                this_->setVideoOrientation(angle);
         });
     });
 #endif
