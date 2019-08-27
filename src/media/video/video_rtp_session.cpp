@@ -530,6 +530,8 @@ void
 VideoRtpSession::setChangeOrientationCallback(std::function<void(int)> cb)
 {
     changeOrientationCallback_ = std::move(cb);
+    if (sender_)
+        sender_->setChangeOrientationCallback(changeOrientationCallback_);
 }
 
 float
