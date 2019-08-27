@@ -169,7 +169,7 @@ private:
     AVStream *avStream_ = nullptr;
     bool emulateRate_ = false;
     int64_t startTime_;
-    int64_t lastTimestamp_;
+    int64_t lastTimestamp_ {0};
 
     DeviceParams inputParams_;
 
