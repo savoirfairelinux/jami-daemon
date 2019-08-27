@@ -373,7 +373,6 @@ private:
         auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
         auto ice_config = parent_.account.getIceOptions();
         ice_config.tcpEnable = true;
-        ice_config.aggressive = true; // This will directly select the first candidate.
         auto ice = iceTransportFactory.createTransport(parent_.account.getAccountID().c_str(), 1, false, ice_config);
 
         if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
@@ -728,7 +727,6 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                 auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
                 auto ice_config = account.getIceOptions();
                 ice_config.tcpEnable = true;
-                ice_config.aggressive = true;
                 ice_config.onRecvReady = [iceReady]() {
                     auto& ir = *iceReady;
                     std::lock_guard<std::mutex> lk{ir.mtx};
