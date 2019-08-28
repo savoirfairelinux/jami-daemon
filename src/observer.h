@@ -42,7 +42,7 @@ template <typename T>
 class Observable
 {
 public:
-    Observable() : mutex_(), observers_() {}
+    Observable(const std::string& name) : mutex_(), observers_(), name_(name) {}
 
     virtual ~Observable() {
         std::lock_guard<std::mutex> lk(mutex_);
@@ -73,6 +73,10 @@ public:
         return observers_.size();
     }
 
+    std::string getName() const {
+        return name_;
+    }
+
 protected:
     void notify(T data) {
         std::lock_guard<std::mutex> lk(mutex_);
@@ -85,6 +89,7 @@ private:
 
     std::mutex mutex_; // lock observers_
     std::set<Observer<T>*> observers_;
+    std::string name_; ///< Label to distinguish observable in observer
 };
 
 /*=== Observer =============================================================*/
