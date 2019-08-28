@@ -885,7 +885,7 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
                 int ret = av_opt_set(reinterpret_cast<void*>(encoderCtx),
                                      key.c_str(), value.c_str(), AV_OPT_SEARCH_CHILDREN);
                 if (ret < 0) {
-                    JAMI_ERR() << "Failed to set option " << key << " in encoder context: "
+                    JAMI_ERR() << "Failed to set option " << key << " in " << name << " context: "
                         << libav_utils::getError(ret) << "\n";
                 }
             }
