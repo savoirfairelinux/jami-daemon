@@ -597,18 +597,28 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 }
 
 void
-MediaEncoder::forcePresetX264_X265(AVCodecContext* encoderCtx)
+MediaEncoder::forcePresetX2645(AVCodecContext* encoderCtx)
 {
+    if(accel_ && accel_->getName() == "nvenc") {
+        if (av_opt_set(encoderCtx, "preset", "fast", AV_OPT_SEARCH_CHILDREN))
+            JAMI_WARN("Failed to set preset to 'fast'");
+        if (av_opt_set(encoderCtx, "level", "auto", AV_OPT_SEARCH_CHILDREN))
+            JAMI_WARN("Failed to set level to 'auto'");
+        if (av_opt_set_int(encoderCtx, "zerolatency", 1, AV_OPT_SEARCH_CHILDREN))
+            JAMI_WARN("Failed to set zerolatency to '1'");
+    }
+    else {
 #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-    const char *speedPreset = "ultrafast";
+        const char *speedPreset = "ultrafast";
 #else
-    const char *speedPreset = "veryfast";
+        const char *speedPreset = "veryfast";
 #endif
-    if (av_opt_set(encoderCtx, "preset", speedPreset, AV_OPT_SEARCH_CHILDREN))
-        JAMI_WARN("Failed to set x264 preset '%s'", speedPreset);
-    const char *tune = "zerolatency";
-    if (av_opt_set(encoderCtx, "tune", tune, AV_OPT_SEARCH_CHILDREN))
-        JAMI_WARN("Failed to set x264 tune '%s'", tune);
+        if (av_opt_set(encoderCtx, "preset", speedPreset, AV_OPT_SEARCH_CHILDREN))
+            JAMI_WARN("Failed to set preset '%s'", speedPreset);
+        const char *tune = "zerolatency";
+        if (av_opt_set(encoderCtx, "tune", tune, AV_OPT_SEARCH_CHILDREN))
+            JAMI_WARN("Failed to set tune '%s'", tune);
+    }
 }
 
 void
@@ -748,11 +758,11 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
     if (avcodecId == AV_CODEC_ID_H264) {
         auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
         extractProfileLevelID(profileLevelId, encoderCtx);
-        forcePresetX264_X265(encoderCtx);
+        forcePresetX2645(encoderCtx);
         initH264(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_HEVC) {
         encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
-        forcePresetX264_X265(encoderCtx);
+        forcePresetX2645(encoderCtx);
         initH265(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_VP8) {
         initVP8(encoderCtx, br);
