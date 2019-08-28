@@ -55,7 +55,7 @@ static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
 VideoInput::VideoInput()
-    : VideoGenerator::VideoGenerator()
+    : VideoGenerator::VideoGenerator("VideoInput")
     , sink_ {Manager::instance().createSinkClient("local")}
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),

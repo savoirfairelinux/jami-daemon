@@ -119,7 +119,7 @@ AudioRtpSession::restartSender()
 }
 
 void
-AudioRtpSession::startReceiver()
+AudioRtpSession::startReceiver(std::string peerUri)
 {
     if (not receive_.enabled or receive_.holding) {
         JAMI_WARN("Audio receiving disabled");
@@ -131,7 +131,8 @@ AudioRtpSession::startReceiver()
         JAMI_WARN("Restarting audio receiver");
 
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(receive_.codec);
-    receiveThread_.reset(new AudioReceiveThread(callID_, accountAudioCodec->audioformat,
+    receiveThread_.reset(new AudioReceiveThread(std::move(peerUri), callID_,
+                                                accountAudioCodec->audioformat,
                                                 receive_.receiving_sdp,
                                                 mtu_));
     receiveThread_->addIOContext(*socketPair_);
@@ -139,7 +140,7 @@ AudioRtpSession::startReceiver()
 }
 
 void
-AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock)
+AudioRtpSession::start(std::string peerUri, std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
@@ -166,7 +167,7 @@ AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
     }
 
     startSender();
-    startReceiver();
+    startReceiver(std::move(peerUri));
 }
 
 void

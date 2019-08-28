@@ -59,7 +59,7 @@ private:
 static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1/30.);
 
 VideoMixer::VideoMixer(const std::string& id)
-    : VideoGenerator::VideoGenerator()
+    : VideoGenerator::VideoGenerator("VideoMixer")
     , id_(id)
     , sink_ (Manager::instance().createSinkClient(id, true))
     , loop_([]{return true;},

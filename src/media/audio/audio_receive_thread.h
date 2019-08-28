@@ -41,7 +41,8 @@ class RingBuffer;
 class AudioReceiveThread : public Observable<std::shared_ptr<MediaFrame>>
 {
 public:
-    AudioReceiveThread(const std::string &id,
+    AudioReceiveThread(std::string peerUri,
+                       const std::string &id,
                        const AudioFormat& format,
                        const std::string& sdp,
                        const uint16_t mtu);

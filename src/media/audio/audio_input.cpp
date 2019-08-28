@@ -39,6 +39,7 @@ namespace jami {
 static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
 
 AudioInput::AudioInput(const std::string& id) :
+    Observable("AudioInput_" + id),
     id_(id),
     format_(Manager::instance().getRingBufferPool().getInternalAudioFormat()),
     frameSize_(format_.sample_rate * MS_PER_PACKET.count() / 1000),
