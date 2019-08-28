@@ -38,7 +38,8 @@ AudioReceiveThread::AudioReceiveThread(const std::string& id,
                                        const AudioFormat& format,
                                        const std::string& sdp,
                                        const uint16_t mtu)
-    : id_(id)
+    : Observable("AudioReceiver")
+    , id_(id)
     , format_(format)
     , stream_(sdp)
     , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction,

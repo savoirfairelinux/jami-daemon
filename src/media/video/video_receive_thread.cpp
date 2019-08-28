@@ -44,7 +44,7 @@ using std::string;
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
                                        const std::string &sdp,
                                        uint16_t mtu) :
-    VideoGenerator::VideoGenerator()
+    VideoGenerator::VideoGenerator("VideoReceiver")
     , args_()
     , dstWidth_(0)
     , dstHeight_(0)
