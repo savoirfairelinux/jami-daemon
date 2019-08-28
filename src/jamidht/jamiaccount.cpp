@@ -34,7 +34,8 @@
 #include "jami_contact.h"
 #include "configkeys.h"
 #include "contact_list.h"
-#include "account_manager.h"
+#include "archive_account_manager.h"
+#include "server_account_manager.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -912,15 +913,25 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
     };
 
     try {
-        accountManager_.reset(new ArchiveAccountManager(getPath(),
+        if (managerHostname_.empty()) {
+            accountManager_.reset(new ArchiveAccountManager(getPath(),
+                dht_,
+                [w = weak()](AccountManager::AsyncUser&& cb) {
+                    if (auto this_ = w.lock())
+                        cb(*this_->accountManager_);
+                },
+                [this]() { return getAccountDetails(); },
+                archivePath_.empty() ? "archive.gz" : archivePath_,
+                nameServer_));
+        } else {
+            accountManager_.reset(new ServerAccountManager(getPath(),
             dht_,
             [w = weak()](AccountManager::AsyncUser&& cb) {
                 if (auto this_ = w.lock())
                     cb(*this_->accountManager_);
             },
-            [this]() { return getAccountDetails(); },
-            archivePath_.empty() ? "archive.gz" : archivePath_,
-            nameServer_));
+            managerHostname_));
+        }
 
         auto id = accountManager_->loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
         bool hasArchive = not archivePath_.empty()

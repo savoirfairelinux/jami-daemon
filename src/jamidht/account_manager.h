@@ -50,23 +50,34 @@ struct AccountInfo {
     std::string ethAccount;
 };
 
+template <typename To, typename From>
+std::unique_ptr<To>
+dynamic_unique_cast(std::unique_ptr<From>&& p) {
+    if (auto cast = dynamic_cast<To*>(p.get())) {
+        std::unique_ptr<To> result(cast);
+        p.release();
+        return result;
+    }
+    return {};
+}
+
 class AccountManager {
 public:
     using AsyncUser = std::function<void(AccountManager&)>;
     using OnAsync = std::function<void(AsyncUser&&)>;
     using OnChangeCallback = ContactList::OnChangeCallback;
-    using OnExportConfig = std::function<std::map<std::string, std::string>()>;
     using clock = std::chrono::system_clock;
     using time_point = clock::time_point;
 
     AccountManager(
         const std::string& path,
         OnAsync&& onAsync,
-        OnExportConfig&& onExportConfig,
         std::shared_ptr<dht::DhtRunner> dht)
-    : path_(path), onAsync_(std::move(onAsync)), onExportConfig_(std::move(onExportConfig)), dht_(std::move(dht))  {};
+    : path_(path), onAsync_(std::move(onAsync)), dht_(std::move(dht))  {};
 
     virtual ~AccountManager() = default;
+
+    constexpr static const char* const DHT_TYPE_NS = "cx.ring";
 
     // Auth
 
@@ -196,88 +207,9 @@ public:
 protected:
     std::string path_;
     OnAsync onAsync_;
-    OnExportConfig onExportConfig_;
     OnChangeCallback onChange_;
     std::unique_ptr<AccountInfo> info_;
     std::shared_ptr<dht::DhtRunner> dht_;
-};
-
-
-class ArchiveAccountManager : public AccountManager {
-public:
-    ArchiveAccountManager(
-        const std::string& path,
-        std::shared_ptr<dht::DhtRunner> dht,
-        OnAsync&& onAsync,
-        OnExportConfig&& onExportConfig,
-        std::string archivePath,
-        const std::string& nameServer)
-     : AccountManager(path, std::move(onAsync), std::move(onExportConfig), std::move(dht)), archivePath_(std::move(archivePath)), nameDir_(NameDirectory::instance(nameServer)) {};
-
-    struct ArchiveAccountCredentials : AccountCredentials {
-        std::string archivePath;
-        in_port_t dhtPort;
-        std::vector<std::string> dhtBootstrap;
-        dht::crypto::Identity updateIdentity;
-    };
-
-    void initAuthentication(
-        CertRequest request,
-        std::unique_ptr<AccountCredentials> credentials,
-        AuthSuccessCallback onSuccess,
-        AuthFailureCallback onFailure,
-        OnChangeCallback onChange) override;
-
-    void startSync() override;
-
-    bool changePassword(const std::string& password_old, const std::string& password_new) override;
-
-    void syncDevices() override;
-    void onSyncData(DeviceSync&& device);
-
-    bool findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {}) override;
-
-    void addDevice(const std::string& password, AddDeviceCallback) override;
-    bool revokeDevice(const std::string& password, const std::string& device, RevokeDeviceCallback) override;
-    bool exportArchive(const std::string& destinationPath, const std::string& password);
-
-#if HAVE_RINGNS
-    void lookupName(const std::string& name, LookupCallback cb) override;
-    void lookupAddress(const std::string& address, LookupCallback cb) override;
-    void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) override;
-#endif
-
-private:
-    struct DhtLoadContext;
-    struct AuthContext {
-        CertRequest request;
-        //std::unique_ptr<dht::crypto::CertificateRequest> request;
-        std::unique_ptr<ArchiveAccountCredentials> credentials;
-        std::unique_ptr<DhtLoadContext> dhtContext;
-        AuthSuccessCallback onSuccess;
-        AuthFailureCallback onFailure;
-    };
-
-    void createAccount(const std::shared_ptr<AuthContext>& ctx);
-    std::pair<std::string, std::shared_ptr<dht::Value>> makeReceipt(const dht::crypto::Identity& id, const dht::crypto::Certificate& device, const std::string& ethAccount);
-    void updateArchive(AccountArchive& content/*, const ContactList& syncData*/) const;
-    void saveArchive(AccountArchive& content, const std::string& pwd);
-    AccountArchive readArchive(const std::string& pwd) const;
-    static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password, const std::string& pin, bool previous=false);
-    bool updateCertificates(AccountArchive& archive, dht::crypto::Identity& device);
-    static bool needsMigration(const dht::crypto::Identity& id);
-
-    void loadFromFile(const std::shared_ptr<AuthContext>& ctx);
-    void loadFromDHT(const std::shared_ptr<AuthContext>& ctx);
-    void onArchiveLoaded(AuthContext& ctx, AccountArchive&& a);
-
-    std::string archivePath_;
-    std::reference_wrapper<NameDirectory> nameDir_;
-};
-
-class ServerAccountManager : public AccountManager {
-
-
 };
 
 }
