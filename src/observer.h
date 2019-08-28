@@ -42,7 +42,7 @@ template <typename T>
 class Observable
 {
 public:
-    Observable() : mutex_(), observers_() {}
+    Observable(std::string name) : name_(std::move(name)), mutex_(), observers_() {}
 
     virtual ~Observable() {
         std::lock_guard<std::mutex> lk(mutex_);
@@ -73,6 +73,10 @@ public:
         return observers_.size();
     }
 
+    std::string getName() const {
+        return name_;
+    }
+
 protected:
     void notify(T data) {
         std::lock_guard<std::mutex> lk(mutex_);
@@ -82,6 +86,7 @@ protected:
 
 private:
     NON_COPYABLE(Observable<T>);
+    const std::string name_; ///< Label to distinguish observable in observer
 
     std::mutex mutex_; // lock observers_
     std::set<Observer<T>*> observers_;
