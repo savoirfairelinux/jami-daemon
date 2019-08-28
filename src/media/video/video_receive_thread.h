@@ -50,7 +50,8 @@ class SinkClient;
 
 class VideoReceiveThread : public VideoGenerator {
 public:
-    VideoReceiveThread(const std::string &id, const std::string &sdp, uint16_t mtu);
+    VideoReceiveThread(std::string peerUri, const std::string &id,
+                       const std::string &sdp, uint16_t mtu);
     ~VideoReceiveThread();
     void startLoop(const std::function<void(MediaType)>& cb);
 

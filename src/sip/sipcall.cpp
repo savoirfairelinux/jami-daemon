@@ -83,6 +83,21 @@ static constexpr int ICE_VIDEO_RTCP_COMPID {3};
 
 const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
 
+static std::string
+stripPrefix(std::string& uri)
+{
+    auto idx = uri.find("ring:");
+    if (idx != std::string::npos) {
+        idx = idx+5;
+    } else {
+        idx = uri.find("sips:");
+        idx = (idx == std::string::npos) ? 0 : idx+5;
+    }
+    while (idx < uri.length() && uri[idx] == '/')
+        idx++;
+    return uri.substr(idx);
+}
+
 SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type,
                  const std::map<std::string, std::string>& details)
     : Call(account, id, type, details)
@@ -980,11 +995,12 @@ SIPCall::startAllMedia()
         // because of the audio loop
         if (getState() != CallState::HOLD) {
             if (isIceRunning()) {
-                rtp->start(newIceSocket(ice_comp_id + 0),
+                rtp->start(std::move(stripPrefix(peerUri_)),
+                           newIceSocket(ice_comp_id + 0),
                            newIceSocket(ice_comp_id + 1));
                 ice_comp_id += 2;
             } else
-                rtp->start(nullptr, nullptr);
+                rtp->start(std::move(stripPrefix(peerUri_)), nullptr, nullptr);
         }
 
         switch (local.type) {

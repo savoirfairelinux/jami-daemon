@@ -44,7 +44,8 @@ class AudioRtpSession : public RtpSession {
         AudioRtpSession(const std::string& id);
         virtual ~AudioRtpSession();
 
-        void start(std::unique_ptr<IceSocket> rtp_sock,
+        void start(std::string peerUri,
+                   std::unique_ptr<IceSocket> rtp_sock,
                    std::unique_ptr<IceSocket> rtcp_sock) override;
         void restartSender() override;
         void stop() override;
@@ -57,7 +58,7 @@ class AudioRtpSession : public RtpSession {
 
     private:
         void startSender();
-        void startReceiver();
+        void startReceiver(std::string peerUri);
 
         std::unique_ptr<AudioSender> sender_;
         std::unique_ptr<AudioReceiveThread> receiveThread_;

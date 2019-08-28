@@ -60,7 +60,9 @@ using VideoFrame = DRing::VideoFrame;
 
 namespace jami { namespace video {
 
-struct VideoFrameActiveWriter: Observable<std::shared_ptr<MediaFrame>> {};
+struct VideoFrameActiveWriter: Observable<std::shared_ptr<MediaFrame>> {
+    VideoFrameActiveWriter(const std::string& name) : Observable(name) {}
+};
 struct VideoFramePassiveReader: Observer<std::shared_ptr<MediaFrame>> {};
 
 /*=== VideoGenerator =========================================================*/
@@ -68,7 +70,7 @@ struct VideoFramePassiveReader: Observer<std::shared_ptr<MediaFrame>> {};
 class VideoGenerator : public VideoFrameActiveWriter
 {
 public:
-    VideoGenerator() { }
+    VideoGenerator(const std::string& name) : VideoFrameActiveWriter(name) { }
 
     virtual int getWidth() const = 0;
     virtual int getHeight() const = 0;

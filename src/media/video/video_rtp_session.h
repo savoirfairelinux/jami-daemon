@@ -72,7 +72,8 @@ public:
 
     void updateMedia(const MediaDescription& send, const MediaDescription& receive) override;
 
-    void start(std::unique_ptr<IceSocket> rtp_sock,
+    void start(std::string peerUri,
+               std::unique_ptr<IceSocket> rtp_sock,
                std::unique_ptr<IceSocket> rtcp_sock) override;
     void restartSender() override;
     void stop() override;
@@ -105,7 +106,7 @@ private:
     void setupConferenceVideoPipeline(Conference& conference);
     void setupVideoPipeline();
     void startSender();
-    void startReceiver();
+    void startReceiver(std::string peerUri);
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 

@@ -41,10 +41,11 @@ namespace jami { namespace video {
 
 using std::string;
 
-VideoReceiveThread::VideoReceiveThread(const std::string& id,
+VideoReceiveThread::VideoReceiveThread(std::string peerUri,
+                                       const std::string& id,
                                        const std::string &sdp,
                                        uint16_t mtu) :
-    VideoGenerator::VideoGenerator()
+    VideoGenerator::VideoGenerator("VideoReceiver_" + std::move(peerUri))
     , args_()
     , dstWidth_(0)
     , dstHeight_(0)
