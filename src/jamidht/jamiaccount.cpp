@@ -2255,7 +2255,7 @@ JamiAccount::doRegister_()
             static auto log_warn = [](char const* m, va_list args) { Logger::vlog(LOG_WARNING, nullptr, 0, true, m, args); };
             static auto log_debug = [](char const* m, va_list args) { Logger::vlog(LOG_DEBUG, nullptr, 0, true, m, args); };
 #ifndef _MSC_VER
-            context.logger = std::make_unique<dht::Logger>(
+            context.logger = std::make_shared<dht::Logger>(
                 log_error,
                 (dht_log_level > 1) ? log_warn : silent,
                 (dht_log_level > 2) ? log_debug : silent);
@@ -2266,16 +2266,17 @@ JamiAccount::doRegister_()
                 auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
                 jami::emitSignal<DRing::DebugSignal::MessageSend>(std::to_string(now) + " " + std::string(tmp));
             };
-            context.logger = std::make_unique<dht::Logger>(log_all, log_all, silent);
+            context.logger = std::make_shared<dht::Logger>(log_all, log_all, silent);
 #else
             if (dht_log_level > 2) {
-                context.logger = std::make_unique<dht::Logger>(log_error, log_warn, log_debug);
+                context.logger = std::make_shared<dht::Logger>(log_error, log_warn, log_debug);
             } else if (dht_log_level > 1) {
-                context.logger = std::make_unique<dht::Logger>(log_error, log_warn, silent);
+                context.logger = std::make_shared<dht::Logger>(log_error, log_warn, silent);
             } else {
-                context.logger = std::make_unique<dht::Logger>(log_error, silent, silent);
+                context.logger = std::make_shared<dht::Logger>(log_error, silent, silent);
             }
 #endif
+            //logger_ = std::make_shared<dht::Logger>(log_error, log_warn, log_debug);
         }
         context.certificateStore = [](const dht::InfoHash& pk_id) {
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
