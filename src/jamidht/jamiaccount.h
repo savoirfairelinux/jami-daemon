@@ -631,6 +631,8 @@ private:
      */
     std::string receivedParameter_ {};
 
+    std::string managerHostname_ {};
+
     /**
      * Optional: "rport" parameter from VIA header
      */

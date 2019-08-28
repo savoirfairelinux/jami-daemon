@@ -1037,6 +1037,8 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
 
+    parseString(details, DRing::Account::ConfProperties::MANAGER_HOSTNAME, managerHostname_);
+
     std::string archive_password;
     std::string archive_pin;
     std::string archive_path;
@@ -1119,6 +1121,7 @@ JamiAccount::getAccountDetails() const
     a.emplace(DRing::Account::ConfProperties::PROXY_ENABLED,    proxyEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::PROXY_SERVER,     proxyServer_);
     a.emplace(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
+    a.emplace(DRing::Account::ConfProperties::MANAGER_HOSTNAME, managerHostname_);
 #if HAVE_RINGNS
     a.emplace(DRing::Account::ConfProperties::RingNS::URI,                   nameServer_);
 #endif
