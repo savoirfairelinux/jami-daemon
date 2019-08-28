@@ -34,11 +34,13 @@
 
 namespace jami {
 
-AudioReceiveThread::AudioReceiveThread(const std::string& id,
+AudioReceiveThread::AudioReceiveThread(std::string peerUri,
+                                       const std::string& id,
                                        const AudioFormat& format,
                                        const std::string& sdp,
                                        const uint16_t mtu)
-    : id_(id)
+    : Observable("AudioReceiver_" + std::move(peerUri))
+    , id_(id)
     , format_(format)
     , stream_(sdp)
     , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction,

@@ -155,13 +155,13 @@ VideoRtpSession::restartSender()
     setupVideoPipeline();
 }
 
-void VideoRtpSession::startReceiver()
+void VideoRtpSession::startReceiver(std::string peerUri)
 {
     if (receive_.enabled and not receive_.holding) {
         if (receiveThread_)
             JAMI_WARN("Restarting video receiver");
         receiveThread_.reset(
-            new VideoReceiveThread(callID_, receive_.receiving_sdp, mtu_)
+            new VideoReceiveThread(std::move(peerUri), callID_, receive_.receiving_sdp, mtu_)
         );
 
         // XXX keyframe requests can timeout if unanswered
@@ -175,7 +175,8 @@ void VideoRtpSession::startReceiver()
     }
 }
 
-void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
+void VideoRtpSession::start(std::string peerUri,
+                            std::unique_ptr<IceSocket> rtp_sock,
                             std::unique_ptr<IceSocket> rtcp_sock)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -203,7 +204,7 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
     }
 
     startSender();
-    startReceiver();
+    startReceiver(peerUri);
 
     setupVideoPipeline();
 }

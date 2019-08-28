@@ -41,7 +41,8 @@ public:
     RtpSession(const std::string &callID) : callID_(callID) {}
     virtual ~RtpSession() {};
 
-    virtual void start(std::unique_ptr<IceSocket> rtp_sock,
+    virtual void start(std::string peerUri,
+                       std::unique_ptr<IceSocket> rtp_sock,
                        std::unique_ptr<IceSocket> rtcp_sock) = 0;
     virtual void restartSender() = 0;
     virtual void stop() = 0;
