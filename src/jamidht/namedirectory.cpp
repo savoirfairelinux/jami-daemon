@@ -88,31 +88,19 @@ NameDirectory::lookupUri(const std::string& uri, const std::string& default_serv
 }
 
 NameDirectory::NameDirectory(const std::string& s, std::shared_ptr<dht::Logger> l)
-   : serverHost_(s), cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR +
-                                CACHE_DIRECTORY + DIR_SEPARATOR_STR + serverHost_),
-     executor_(std::make_shared<dht::Executor>(dht::ThreadPool::io(), 7)), logger_(l)
-{
-    // resolve once
-    resolver_ = std::make_shared<dht::http::Resolver>(httpContext_, serverHost_, HTTPS_PROTO, logger_);
-
-    // run http client
-    httpClientThread_ = std::thread([this](){
-        try {
-            // Ensures the httpContext_ won't run out of work
-            auto work = asio::make_work_guard(httpContext_);
-            httpContext_.run();
-        }
-        catch(const std::exception &ex){
-            JAMI_ERR("Unexpected HTTP thread exit: %s", ex.what());
-        }
-    });
-}
+   : serverHost_(s)
+   , cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + CACHE_DIRECTORY + DIR_SEPARATOR_STR + serverHost_)
+   , executor_(std::make_shared<dht::Executor>(dht::ThreadPool::io(), 7))
+   , httpContext_(Manager::instance().ioContext())
+   , logger_(l)
+   , resolver_(std::make_shared<dht::http::Resolver>(*httpContext_, serverHost_, HTTPS_PROTO, logger_))
+{}
 
 NameDirectory::~NameDirectory()
 {
-    if (!httpContext_.stopped()){
-        httpContext_.reset(); // allow to finish
-        httpContext_.stop();  // make thread stop
+    if (!httpContext_->stopped()){
+        httpContext_->reset(); // allow to finish
+        httpContext_->stop();  // make thread stop
     }
     if (httpClientThread_.joinable())
         httpClientThread_.join();
@@ -157,7 +145,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         cb(cacheResult, Response::found);
         return;
     }
-    auto request = std::make_shared<Request>(httpContext_, resolver_, logger_);
+    auto request = std::make_shared<Request>(*httpContext_, resolver_, logger_);
     auto reqid = request->id();
     try {
         request->set_connection_type(restinio::http_connection_header_t::keep_alive);
@@ -239,7 +227,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         cb(cacheResult, Response::found);
         return;
     }
-    auto request = std::make_shared<Request>(httpContext_, resolver_, logger_);
+    auto request = std::make_shared<Request>(*httpContext_, resolver_, logger_);
     auto reqid = request->id();
     try {
         request->set_connection_type(restinio::http_connection_header_t::keep_alive);
@@ -353,7 +341,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n,
                     jami::Blob(publickey.begin(), publickey.end()))  << "\"}";
         body = ss.str();
     }
-    auto request = std::make_shared<Request>(httpContext_, resolver_, logger_);
+    auto request = std::make_shared<Request>(*httpContext_, resolver_, logger_);
     auto reqid = request->id();
     try {
         request->set_connection_type(restinio::http_connection_header_t::keep_alive);

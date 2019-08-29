@@ -93,7 +93,7 @@ private:
      * ASIO I/O Context for sockets in httpClient_.
      * Note: Each context is used in one thread only.
      */
-    asio::io_context httpContext_;
+    std::shared_ptr<asio::io_context> httpContext_;
     std::shared_ptr<dht::http::Resolver> resolver_;
     std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;
     /*
