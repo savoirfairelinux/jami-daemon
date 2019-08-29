@@ -350,7 +350,9 @@ VideoRtpSession::checkMediumRCTPInfo(RTCPInfo& rtcpi)
             totalJitter += ntohl(it.jitter);
         }
         rtcpi.packetLoss = nbDropNotNull ? (float)( 100 * totalLost) / (256.0 * nbDropNotNull) : 0;
-        rtcpi.jitter = totalJitter / vectSize / 16;  // millisecond
+        // Jitter is expressed in timestamp unit -> convert to milliseconds
+        // https://stackoverflow.com/questions/51956520/convert-jitter-from-rtp-timestamp-unit-to-millisseconds
+        rtcpi.jitter = (totalJitter / vectSize / 90000.0f) * 1000;
         rtcpi.nb_sample = vectSize;
         rtcpi.latency = socketPair_->getLastLatency();
         return true;
