@@ -145,6 +145,7 @@ constexpr static const char PROXY_PUSH_TOKEN        [] = "Account.proxyPushToken
 constexpr static const char DHT_PEER_DISCOVERY      [] = "Account.peerDiscovery";
 constexpr static const char ACCOUNT_PEER_DISCOVERY  [] = "Account.accountDiscovery";
 constexpr static const char ACCOUNT_PUBLISH         [] = "Account.accountPublish";
+constexpr static const char MANAGER_URI             [] = "Account.managerUri";
 
 namespace Audio {
 
