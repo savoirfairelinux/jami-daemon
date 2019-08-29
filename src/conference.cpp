@@ -73,10 +73,12 @@ void Conference::add(const std::string &participant_id)
 {
     if (participants_.insert(participant_id).second) {
 #ifdef ENABLE_VIDEO
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             call->getVideoRtp().enterConference(this);
-        else
+            call->offhold();
+        } else {
             JAMI_ERR("no call associate to participant %s", participant_id.c_str());
+        }
 #endif // ENABLE_VIDEO
     }
 }
@@ -85,8 +87,10 @@ void Conference::remove(const std::string &participant_id)
 {
     if (participants_.erase(participant_id)) {
 #ifdef ENABLE_VIDEO
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             call->getVideoRtp().exitConference();
+            call->offhold();
+        }
 #endif // ENABLE_VIDEO
     }
 }
