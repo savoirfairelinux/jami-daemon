@@ -493,14 +493,7 @@ TlsSocketEndpoint::TlsSocketEndpoint(AbstractSocketEndpoint& tr,
 }
 
 
-TlsSocketEndpoint::~TlsSocketEndpoint() {
-    shutdown();
-}
-
-void
-TlsSocketEndpoint::shutdown() {
-    pimpl_->tr.shutdown();
-}
+TlsSocketEndpoint::~TlsSocketEndpoint() = default;
 
 bool
 TlsSocketEndpoint::isInitiator() const
