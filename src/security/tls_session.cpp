@@ -735,9 +735,6 @@ TlsSession::TlsSessionImpl::cleanup()
     state_ = TlsSessionState::SHUTDOWN; // be sure to block any user operations
     stateCondition_.notify_all();
 
-    // This will stop current read of the ice_transport.cpp
-    transport_.shutdown();
-
     {
         std::lock_guard<std::mutex> lk(sessionMutex_);
         if (session_) {
@@ -752,6 +749,8 @@ TlsSession::TlsSessionImpl::cleanup()
 
     if (cookie_key_.data)
         gnutls_free(cookie_key_.data);
+
+    transport_.shutdown();
 }
 
 TlsSessionState
