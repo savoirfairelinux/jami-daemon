@@ -45,12 +45,14 @@ public:
     ~MediaRecorder();
 
     /**
-     * Gets whether or not the recorder is active.
+     * @brief Gets whether or not the recorder is active.
      */
     bool isRecording() const;
 
     /**
-     * Get file path of file to be recorded. Same path as sent to @setPath, but with
+     * @brief Get file path of file to be recorded.
+     *
+     * Same path as sent to @setPath, but with
      * file extension appended.
      *
      * NOTE @audioOnly must be called to have the right extension.
@@ -58,20 +60,24 @@ public:
     std::string getPath() const;
 
     /**
+     * @brief Resulting file will be audio or video.
+     *
      * Sets whether or not output file will have audio. Determines the extension of the
      * output file (.ogg or .webm).
      */
     void audioOnly(bool audioOnly);
 
     /**
-     * Sets output file path.
+     * @brief Sets output file path.
      *
      * NOTE An empty path will put the output file in the working directory.
      */
     void setPath(const std::string& path);
 
     /**
-     * Sets title and description metadata for the file. Uses default if either is empty.
+     * @brief Sets title and description metadata for the file.
+     *
+     * Uses default if either is empty.
      * Default title is "Conversation at %Y-%m-%d %H:%M:%S".
      * Default description is "Recorded with Jami https://jami.net".
      *
@@ -80,23 +86,30 @@ public:
     void setMetadata(const std::string& title, const std::string& desc);
 
     /**
-     * Adds a stream to the recorder. Caller must then attach this to the media source.
+     * @brief Adds a stream to the recorder.
+     *
+     * Caller must then attach this to the media source.
      */
     Observer<std::shared_ptr<MediaFrame>>* addStream(const MediaStream& ms);
 
     /**
-     * Gets the stream observer so the caller can detach it from the media source.
+     * @brief Gets the stream observer.
+     *
+     * This is so the caller can detach it from the media source.
      */
     Observer<std::shared_ptr<MediaFrame>>* getStream(const std::string& name) const;
 
     /**
-     * Starts the record. Streams must have been added using Observable::attach and
-     * @addStream.
+     * @brief Initializes the file.
+     *
+     * Streams must have been added using Observable::attach and @addStream.
      */
     int startRecording();
 
     /**
-     * Stops the record. Streams must be removed using Observable::detach afterwards.
+     * @brief Finalizes the file.
+     *
+     * Streams must be removed using Observable::detach afterwards.
      */
     void stopRecording();
 
