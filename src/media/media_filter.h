@@ -37,7 +37,7 @@ struct AVFilterInOut;
 namespace jami {
 
 /**
- * Provides access to libavfilter.
+ * @brief Provides access to libavfilter.
  *
  * Can be used for filters with unlimited number of inputs.
  * Multiple outputs are not supported. They add complexity for little gain.
@@ -64,36 +64,38 @@ class MediaFilter {
         ~MediaFilter();
 
         /**
-         * Returns the current filter graph string.
+         * @brief Returns the current filter graph string.
          */
         std::string getFilterDesc() const;
 
         /**
-         * Initializes the filter graph with one or more inputs and one output. Returns a negative code on error.
+         * @brief Initializes the filter graph with one or more inputs and one output. Returns a negative code on error.
          */
         int initialize(const std::string& filterDesc, std::vector<MediaStream> msps);
 
         /**
-         * Returns a MediaStream object describing the input specified by @inputName.
+         * @brief Returns a MediaStream object describing the input specified by @inputName.
          */
         MediaStream getInputParams(const std::string& inputName) const;
 
         /**
-         * Returns a MediaStream struct describing the frames that will be output.
+         * @brief Returns a MediaStream struct describing the frames that will be output.
          *
          * When called in an invalid state, the returned format will be invalid (less than 0).
          */
         MediaStream getOutputParams() const;
 
         /**
-         * Give the specified source filter an input frame. Caller is responsible for freeing the frame.
+         * @brief Give the specified source filter an input frame.
+         *
+         * Caller is responsible for freeing the frame.
          *
          * NOTE Will fail if @inputName is not found in the graph.
          */
         int feedInput(AVFrame* frame, const std::string& inputName);
 
         /**
-         * Pull a frame from the filter graph. Caller owns the frame reference.
+         * @brief Pull a frame from the filter graph. Caller owns the frame reference.
          *
          * Returns AVERROR(EAGAIN) if filter graph requires more input.
          *
@@ -102,7 +104,7 @@ class MediaFilter {
         std::unique_ptr<MediaFrame> readOutput();
 
         /**
-         * Flush filter to indicate EOF.
+         * @brief Flush filter to indicate EOF.
          */
         void flush();
 
@@ -110,59 +112,67 @@ class MediaFilter {
         NON_COPYABLE(MediaFilter);
 
         /**
-         * Initializes output of filter graph.
+         * @brief Initializes output of filter graph.
          */
         int initOutputFilter(AVFilterInOut* out);
 
         /**
-         * Initializes an input of filter graph.
+         * @brief Initializes an input of filter graph.
          */
         int initInputFilter(AVFilterInOut* in, MediaStream msp);
 
         /**
-         * Reinitializes the filter graph with @inputParams_, which should be updated beforehand.
+         * @brief Reinitializes the filter graph.
+         *
+         * Reinitializes with @inputParams_, which should be updated beforehand.
          */
         int reinitialize();
 
         /**
-         * Convenience method that prints @msg and returns err.
+         * @brief Convenience method that prints @msg and returns err.
          *
          * NOTE @msg should not be null.
          */
         int fail(std::string msg, int err) const;
 
         /**
-         * Frees resources used by MediaFilter.
+         * @brief Frees resources used by MediaFilter.
          */
         void clean();
 
         /**
-         * Filter graph pointer.
+         * @brief Filter graph pointer.
          */
         AVFilterGraph* graph_ = nullptr;
 
         /**
-         * Filter graph output. Corresponds to a buffersink/abuffersink filter.
+         * @brief Filter graph output.
+         *
+         * Corresponds to a buffersink/abuffersink filter.
          */
         AVFilterContext* output_ = nullptr;
 
         /**
-         * List of filter graph inputs. Each corresponds to a buffer/abuffer filter.
+         * @brief List of filter graph inputs.
+         *
+         * Each corresponds to a buffer/abuffer filter.
          */
         std::vector<AVFilterContext*> inputs_;
 
         /**
-         * List of filter graph input parameters. Same order as @inputs_.
+         * @brief List of filter graph input parameters.
+         *
+         * Same order as @inputs_.
          */
         std::vector<MediaStream> inputParams_;
 
         /**
-         * Filter graph string.
+         * @brief Filter graph string.
          */
         std::string desc_ {};
 
         /**
-         * Flag to know whether or not the filter graph is initialized.
+         * @brief Flag to know whether or not the filter graph is initialized.
          */
         bool initialized_ {false};
 };
