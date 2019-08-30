@@ -1,12 +1,12 @@
 = Coding Standards =
 
 Please follow our coding standards when developing:
-https://git.ring.cx/savoirfairelinux/ring-project/wikis/guidelines/Libring-coding-rules
+https://git.jami.net/savoirfairelinux/ring-project/wikis/guidelines/Libring-coding-rules
 
 = Gerrit Workflow =
 
 Gerrit is used as a code review tool. It is also the primary Git repository.
-Wiki documentation: https://git.ring.cx/savoirfairelinux/ring-project/wikis/tutorials/Working-with-gerrit
+Wiki documentation: https://git.jami.net/savoirfairelinux/ring-project/wikis/tutorials/Working-with-gerrit
 
 == Commit Messages ==
 
