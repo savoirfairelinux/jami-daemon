@@ -49,13 +49,6 @@ public:
     virtual void stopCapture() {}
     virtual void decodingStarted(const std::string& id, const std::string& shm_path, int w, int h, bool is_mixer) {}
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
-    virtual std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath) {}
-    virtual void stopLocalRecorder(const std::string& filepath) {}
-    virtual bool getDecodingAccelerated() {}
-    virtual void setDecodingAccelerated(bool state) {}
-    virtual bool getEncodingAccelerated() {}
-    virtual void setEncodingAccelerated(bool state) {}
-    virtual void setDeviceOrientation(const std::string&, int angle) {}
 };
 %}
 
@@ -182,42 +175,54 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoPacket(JNI
 
 JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIEnv *jenv, jclass jcls, jobject image, jint rotation)
 {
-    jclass imageClass = jenv->GetObjectClass(image);
+    static jclass imageClass = jenv->GetObjectClass(image);
+    static jmethodID imageGetFormat = jenv->GetMethodID(imageClass, "getFormat", "()I");
+    static jmethodID imageGetWidth = jenv->GetMethodID(imageClass, "getWidth", "()I");
+    static jmethodID imageGetHeight = jenv->GetMethodID(imageClass, "getHeight", "()I");
+    static jmethodID imageGetCropRect = jenv->GetMethodID(imageClass, "getCropRect", "()Landroid/graphics/Rect;");
+    static jmethodID imageGetPlanes = jenv->GetMethodID(imageClass, "getPlanes", "()[Landroid/media/Image$Plane;");
+    static jmethodID imageClose = jenv->GetMethodID(imageClass, "close", "()V");
+
     auto frame = DRing::getNewFrame();
     if (not frame) {
-        jenv->CallVoidMethod(image, jenv->GetMethodID(imageClass, "close", "()V"));
+        jenv->CallVoidMethod(image, imageClose);
         return;
     }
     auto avframe = frame->pointer();
 
-    avframe->format = AndroidFormatToAVFormat(jenv->CallIntMethod(image, jenv->GetMethodID(imageClass, "getFormat", "()I")));
-    avframe->width = jenv->CallIntMethod(image, jenv->GetMethodID(imageClass, "getWidth", "()I"));
-    avframe->height = jenv->CallIntMethod(image, jenv->GetMethodID(imageClass, "getHeight", "()I"));
-    jobject crop = jenv->CallObjectMethod(image, jenv->GetMethodID(imageClass, "getCropRect", "()Landroid/graphics/Rect;"));
+    avframe->format = AndroidFormatToAVFormat(jenv->CallIntMethod(image, imageGetFormat));
+    avframe->width = jenv->CallIntMethod(image, imageGetWidth);
+    avframe->height = jenv->CallIntMethod(image, imageGetHeight);
+    jobject crop = jenv->CallObjectMethod(image, imageGetCropRect);
     if (crop) {
-        jclass rectClass = jenv->GetObjectClass(crop);
-        avframe->crop_top = jenv->GetIntField(crop, jenv->GetFieldID(rectClass, "top", "I"));
-        avframe->crop_left = jenv->GetIntField(crop, jenv->GetFieldID(rectClass, "left", "I"));
-        avframe->crop_bottom = avframe->height - jenv->GetIntField(crop, jenv->GetFieldID(rectClass, "bottom", "I"));
-        avframe->crop_right = avframe->width - jenv->GetIntField(crop, jenv->GetFieldID(rectClass, "right", "I"));
+        static jclass rectClass = jenv->GetObjectClass(crop);
+        static jfieldID rectTopField = jenv->GetFieldID(rectClass, "top", "I");
+        static jfieldID rectLeftField = jenv->GetFieldID(rectClass, "left", "I");
+        static jfieldID rectBottomField = jenv->GetFieldID(rectClass, "bottom", "I");
+        static jfieldID rectRightField = jenv->GetFieldID(rectClass, "right", "I");
+        avframe->crop_top = jenv->GetIntField(crop, rectTopField);
+        avframe->crop_left = jenv->GetIntField(crop, rectLeftField);
+        avframe->crop_bottom = avframe->height - jenv->GetIntField(crop, rectBottomField);
+        avframe->crop_right = avframe->width - jenv->GetIntField(crop, rectRightField);
     }
 
-    jobjectArray planes = (jobjectArray)jenv->CallObjectMethod(image, jenv->GetMethodID(imageClass, "getPlanes", "()[Landroid/media/Image$Plane;"));
+    jobjectArray planes = (jobjectArray)jenv->CallObjectMethod(image, imageGetPlanes);
+    static jclass planeClass = jenv->GetObjectClass(jenv->GetObjectArrayElement(planes, 0));
+    static jmethodID planeGetBuffer = jenv->GetMethodID(planeClass, "getBuffer", "()Ljava/nio/ByteBuffer;");
+    static jmethodID planeGetRowStride = jenv->GetMethodID(planeClass, "getRowStride", "()I");
+    static jmethodID planeGetPixelStride = jenv->GetMethodID(planeClass, "getPixelStride", "()I");
+
     jsize planeCount = jenv->GetArrayLength(planes);
     if (avframe->format == AV_PIX_FMT_YUV420P) {
         jobject yplane = jenv->GetObjectArrayElement(planes, 0);
         jobject uplane = jenv->GetObjectArrayElement(planes, 1);
         jobject vplane = jenv->GetObjectArrayElement(planes, 2);
-        jclass planeClass = jenv->GetObjectClass(yplane);
-        jmethodID getBuffer = jenv->GetMethodID(planeClass, "getBuffer", "()Ljava/nio/ByteBuffer;");
-        jmethodID getRowStride = jenv->GetMethodID(planeClass, "getRowStride", "()I");
-        jmethodID getPixelStride = jenv->GetMethodID(planeClass, "getPixelStride", "()I");
-        auto ydata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(yplane, getBuffer));
-        auto udata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(uplane, getBuffer));
-        auto vdata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(vplane, getBuffer));
-        auto ystride = jenv->CallIntMethod(yplane, getRowStride);
-        auto uvstride = jenv->CallIntMethod(uplane, getRowStride);
-        auto uvpixstride = jenv->CallIntMethod(uplane, getPixelStride);
+        auto ydata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(yplane, planeGetBuffer));
+        auto udata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(uplane, planeGetBuffer));
+        auto vdata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(vplane, planeGetBuffer));
+        auto ystride = jenv->CallIntMethod(yplane, planeGetRowStride);
+        auto uvstride = jenv->CallIntMethod(uplane, planeGetRowStride);
+        auto uvpixstride = jenv->CallIntMethod(uplane, planeGetPixelStride);
 
         if (uvpixstride == 1) {
             avframe->data[0] = ydata;
@@ -227,7 +232,7 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIE
             avframe->data[2] = vdata;
             avframe->linesize[2] = uvstride;
         } else if (uvpixstride == 2) {
-            // False YUV422, actually NV12 or NV21
+            // False YUV420, actually NV12 or NV21
             auto uvdata = std::min(udata, vdata);
             avframe->format = uvdata == udata ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NV21;
             avframe->data[0] = ydata;
@@ -238,12 +243,9 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIE
     } else {
         for (int i=0; i<planeCount; i++) {
             jobject plane = jenv->GetObjectArrayElement(planes, i);
-            jclass planeClass = jenv->GetObjectClass(plane);
-            jint stride = jenv->CallIntMethod(plane, jenv->GetMethodID(planeClass, "getRowStride", "()I"));
-            jint pxStride = jenv->CallIntMethod(plane, jenv->GetMethodID(planeClass, "getPixelStride", "()I"));
-            jobject buffer = jenv->CallObjectMethod(plane, jenv->GetMethodID(planeClass, "getBuffer", "()Ljava/nio/ByteBuffer;"));
-            avframe->data[i] = (uint8_t *)jenv->GetDirectBufferAddress(buffer);
-            avframe->linesize[i] = stride;
+            //jint pxStride = jenv->CallIntMethod(plane, planeGetPixelStride);
+            avframe->data[i] = (uint8_t *)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(plane, planeGetBuffer));
+            avframe->linesize[i] = jenv->CallIntMethod(plane, planeGetRowStride);
         }
     }
 
@@ -252,8 +254,7 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIE
         av_frame_new_side_data_from_buf(avframe, AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(rotMatrix));
 
     image = jenv->NewGlobalRef(image);
-    imageClass = (jclass)jenv->NewGlobalRef(imageClass);
-    frame->setReleaseCb([jenv, image, imageClass](uint8_t *) mutable {
+    frame->setReleaseCb([jenv, image](uint8_t *) mutable {
         bool justAttached = false;
         int envStat = gJavaVM->GetEnv((void**)&jenv, JNI_VERSION_1_6);
         if (envStat == JNI_EDETACHED) {
@@ -263,9 +264,8 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIE
         } else if (envStat == JNI_EVERSION) {
             return;
         }
-        jenv->CallVoidMethod(image, jenv->GetMethodID(imageClass, "close", "()V"));
+        jenv->CallVoidMethod(image, imageClose);
         jenv->DeleteGlobalRef(image);
-        jenv->DeleteGlobalRef(imageClass);
         if (justAttached)
             gJavaVM->DetachCurrentThread();
     });
@@ -411,6 +411,8 @@ void setDeviceOrientation(const std::string& name, int angle);
 uint8_t* obtainFrame(int length);
 void releaseFrame(uint8_t* frame);
 void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
+std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
+void stopLocalRecorder(const std::string& filepath);
 bool getDecodingAccelerated();
 void setDecodingAccelerated(bool state);
 bool getEncodingAccelerated();
