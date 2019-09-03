@@ -1,0 +1,27 @@
+{
+    "name": "ffmpeg",
+    "version": "59da9dcd7ef6277e4e04998ced71b05a6083c635",
+    "url": "https://github.com/FFmpeg/FFmpeg/archive/__VERSION__.tar.gz",
+    "deps": [
+        "vpx",
+        "x264",
+        "opus",
+        "ffnvcodec",
+        "media-sdk"
+    ],
+    "patches": ["change-RTCP-ratio.patch"],
+    "win-patches": [
+        "windows-configure.patch",
+        "windows-configure-ffnvcodec.patch",
+        "windows-configure-libmfx.patch"
+    ],
+    "project-paths": [],
+    "with_env" : "10.0.16299.0",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [
+            "call \"%CONTRIB_SRC_DIR%\\ffmpeg\\build_ffmpeg.bat\""
+        ],
+        "post-build": []
+    }
+}
