@@ -1,0 +1,15 @@
+{
+    "name": "opus",
+    "version": "be8b4fb30945c1ee239471d52e0350c78917ac94",
+    "url": "https://github.com/ShiftMediaProject/opus/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": ["SMP/libopus.vcxproj"],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
