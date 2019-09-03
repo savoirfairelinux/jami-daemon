@@ -1,0 +1,19 @@
+{
+    "name": "gnutls",
+    "version": "3.6.7",
+    "url": "https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-__VERSION__.tar.xz",
+    "deps": [
+        "nettle",
+        "zlib",
+        "gmp"
+    ],
+    "patches": [],
+    "win-patches": [],
+    "project-paths": [],
+    "with_env" : "false",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [],
+        "post-build": []
+    }
+}
