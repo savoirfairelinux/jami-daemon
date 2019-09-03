@@ -1,0 +1,7 @@
+{
+    "name": "gmp",
+    "version": "eb35fdadc072ecae2b262fd6e6709c308cadc07a",
+    "url": "https://github.com/ShiftMediaProject/gmp/archive/__VERSION__.tar.gz",
+    "patches": [],
+    "deps": []
+}
