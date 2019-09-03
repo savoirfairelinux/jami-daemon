@@ -1,0 +1,9 @@
+{
+    "name": "opendht",
+    "version": "1.10.1",
+    "url": "",
+    "patches": [],
+    "deps": [
+        "gnutls"
+    ]
+}
