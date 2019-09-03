@@ -231,23 +231,29 @@ getFileLock(const std::string& path)
 
 bool isFile(const std::string& path, bool resolveSymlink)
 {
+#ifdef _WIN32
+    if (resolveSymlink) {
+        struct _stat64i32 s;
+        if (_wstat(jami::to_wstring(path).c_str(), &s) == 0)
+            return S_ISREG(s.st_mode);
+    } else {
+        DWORD attr = GetFileAttributes(jami::to_wstring(path).c_str());
+        if ((attr != INVALID_FILE_ATTRIBUTES) &&
+            !(attr & FILE_ATTRIBUTE_DIRECTORY) &&
+            !(attr & FILE_ATTRIBUTE_REPARSE_POINT))
+            return true;
+    }
+#else
     if (resolveSymlink) {
         struct stat s;
         if (stat(path.c_str(), &s) == 0)
             return S_ISREG(s.st_mode);
     } else {
-#ifdef _WIN32
-        DWORD attr = GetFileAttributesA(path.c_str());
-        if ((attr != INVALID_FILE_ATTRIBUTES) &&
-            !(attr & FILE_ATTRIBUTE_DIRECTORY) &&
-            !(attr & FILE_ATTRIBUTE_REPARSE_POINT))
-            return true;
-#else
         struct stat s;
         if (lstat(path.c_str(), &s) == 0)
             return S_ISREG(s.st_mode);
-#endif
     }
+#endif
 
     return false;
 }
@@ -262,10 +268,7 @@ bool isDirectory(const std::string& path)
 
 bool isDirectoryWritable(const std::string &directory)
 {
-#ifdef _WIN32
-    return access(decodeMultibyteString(directory).c_str(), W_OK) == 0;
-#endif
-    return access(directory.c_str(), W_OK) == 0;
+    return accessFile(directory, W_OK) == 0;
 }
 
 bool isSymLink(const std::string& path)
@@ -301,10 +304,8 @@ writeTime(const std::string& path)
     ext_params.lpSecurityAttributes = nullptr;
     ext_params.hTemplateFile = nullptr;
     HANDLE h = CreateFile2(jami::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &ext_params);
-#elif _MSC_VER
-    HANDLE h = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-#else
-    HANDLE h = CreateFile(jami::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+#elif _WIN32
+    HANDLE h = CreateFileW(jami::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 #endif
     if (h == INVALID_HANDLE_VALUE)
         throw std::runtime_error("Can't open: " + path);
@@ -359,7 +360,7 @@ std::vector<uint8_t>
 loadFile(const std::string& path, const std::string& default_dir)
 {
     std::vector<uint8_t> buffer;
-    std::ifstream file(getFullPath(default_dir, path), std::ios::binary);
+    std::ifstream file = ifstream(getFullPath(default_dir, path), std::ios::binary);
     if (!file)
         throw std::runtime_error("Can't read file: "+path);
     file.seekg(0, std::ios::end);
@@ -378,7 +379,7 @@ saveFile(const std::string& path,
         const std::vector<uint8_t>& data,
         mode_t UNUSED mode)
 {
-    std::ofstream file(path, std::ios::trunc | std::ios::binary);
+    std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", path.c_str());
         return;
@@ -581,12 +582,9 @@ get_home_dir()
         files_path = paths[0];
     return files_path;
 #elif defined _WIN32
-    WCHAR path[MAX_PATH];
-    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_PROFILE, nullptr, 0, path))) {
-        char tmp[MAX_PATH];
-        char DefChar = ' ';
-        WideCharToMultiByte(CP_ACP, 0, path, -1, tmp, MAX_PATH, &DefChar, nullptr);
-        return std::string(tmp);
+    TCHAR path[MAX_PATH];
+    if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_PROFILE, nullptr, 0, path))) {
+        return jami::to_string(path);
     }
     return program_dir;
 #else
@@ -727,14 +725,14 @@ recursive_mkdir(const std::string& path, mode_t mode)
 #ifndef _WIN32
     if (mkdir(path.data(), mode) != 0) {
 #else
-    if (mkdir(path.data()) != 0) {
+    if (_wmkdir(jami::to_wstring(path.data()).c_str()) != 0) {
 #endif
         if (errno == ENOENT) {
             recursive_mkdir(path.substr(0, path.find_last_of(DIR_SEPARATOR_CH)), mode);
 #ifndef _WIN32
             if (mkdir(path.data(), mode) != 0) {
 #else
-            if (mkdir(path.data()) != 0) {
+            if (_wmkdir(jami::to_wstring(path.data()).c_str()) != 0) {
 #endif
                 JAMI_ERR("Could not create directory.");
                 return false;
@@ -889,6 +887,56 @@ removeAll(const std::string& path, bool erase)
             removeAll(dir + entry, erase);
     }
     return remove(path, erase);
+}
+
+void
+openStream(std::ifstream& file, const std::string& path, std::ios_base::openmode mode)
+{
+#ifdef _WIN32
+    file.open(jami::to_wstring(path), mode);
+#else
+    file.open(path, mode);
+#endif
+}
+
+void
+openStream(std::ofstream& file, const std::string& path, std::ios_base::openmode mode)
+{
+#ifdef _WIN32
+    file.open(jami::to_wstring(path), mode);
+#else
+    file.open(path, mode);
+#endif
+}
+
+std::ifstream
+ifstream(const std::string& path, std::ios_base::openmode mode)
+{
+#ifdef _WIN32
+    return std::ifstream(jami::to_wstring(path), mode);
+#else
+    return std::ifstream(path, mode);
+#endif
+}
+
+std::ofstream
+ofstream(const std::string& path, std::ios_base::openmode mode)
+{
+#ifdef _WIN32
+    return std::ofstream(jami::to_wstring(path), mode);
+#else
+    return std::ofstream(path, mode);
+#endif
+}
+
+int
+accessFile(const std::string& file, int mode)
+{
+#ifdef _WIN32
+    return _waccess(jami::to_wstring(file).c_str(), mode);
+#else
+    return access(file.c_str(), mode);
+#endif
 }
 
 }} // namespace jami::fileutils
