@@ -1,0 +1,17 @@
+{
+    "name": "natpmp",
+    "version": "6d5c0db6a06036fcd97bdba10b474d5369582dba",
+    "url": "http://github.com/miniupnp/libnatpmp/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win-patches": ["natpmp-win32-ssize_t.patch"],
+    "project-paths": ["msvc/natpmp.vcxproj"],
+    "with_env" : "",
+    "custom-scripts": {
+        "pre-build": [
+            "rmdir /s /q msvc & mkdir msvc & cd msvc & cmake .. -G %CMAKE_GENERATOR%"
+        ],
+        "build": [],
+        "post-build": []
+    }
+}
