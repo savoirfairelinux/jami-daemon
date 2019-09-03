@@ -1,0 +1,17 @@
+{
+    "name": "zlib",
+    "version": "8e4e3ead55cdd296130242d86b44b92fde3ea4d4",
+    "url": "https://github.com/ShiftMediaProject/zlib/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win-patches": [],
+    "project-paths": [
+        "SMP/libzlib.vcxproj"
+    ],
+    "with_env" : "",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [],
+        "post-build": []
+    }
+}
