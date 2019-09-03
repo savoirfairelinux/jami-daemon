@@ -1,0 +1,15 @@
+{
+    "name": "argon2",
+    "version": "670229c849b9fe882583688b74eb7dfdc846f9f6",
+    "url": "https://github.com/P-H-C/phc-winner-argon2/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": ["argon2-vs2017.patch"],
+    "project_paths": ["vs2015/Argon2Ref/Argon2Ref.vcxproj"],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
