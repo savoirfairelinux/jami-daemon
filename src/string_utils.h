@@ -19,8 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef STRING_UTILS_H
-#define STRING_UTILS_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -67,6 +66,6 @@ split_string(const std::string& s, char sep);
 std::vector<unsigned>
 split_string_to_unsigned(const std::string& s, char sep);
 
-} // namespace jami
+void string_replace(std::string& str, const std::string& from, const std::string& to);
 
-#endif
+} // namespace jami
