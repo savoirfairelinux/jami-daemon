@@ -16,12 +16,9 @@ if %USE_CACHE%==1 (
 del %FFNVCODEC_VERSION%.tar && del %FFNVCODEC_VERSION%.tar.gz && del pax_global_header
 rename nv-codec-headers-%FFNVCODEC_VERSION% ffnvcodec
 
+mkdir ..\msvc\include
+mkdir ..\msvc\include\ffnvcodec
 cd ffnvcodec\include\ffnvcodec
-
-mkdir ..\..\..\..\msvc\include
-
-mkdir ..\..\..\..\msvc\include\ffnvcodec
-
 xcopy /S /Y *.h ..\..\..\..\msvc\include\ffnvcodec
 
 cd %SRC%
