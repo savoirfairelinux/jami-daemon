@@ -233,7 +233,6 @@ static const auto PROXY_REGEX = std::regex("(https?://)?([\\w\\.]+)(:(\\d+)|:\\[
 static const std::string PEER_DISCOVERY_JAMI_SERVICE = "jami";
 const constexpr auto PEER_DISCOVERY_EXPIRATION = std::chrono::minutes(1);
 
-
 constexpr const char* const JamiAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
 
@@ -310,9 +309,9 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     turnServerRealm_ = DEFAULT_TURN_REALM;
     turnEnabled_ = true;
 
-    std::ifstream proxyCache(cachePath_ + DIR_SEPARATOR_STR "dhtproxy");
+    std::ifstream proxyCache = fileutils::ifstream(cachePath_ + DIR_SEPARATOR_STR "dhtproxy");
     if (proxyCache)
-      std::getline(proxyCache, proxyServerCached_);
+        std::getline(proxyCache, proxyServerCached_);
 
     setActiveCodecs({});
 }
@@ -662,7 +661,6 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
              (int)pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str(),
              (int)pjTarget.slen, pjTarget.ptr);
 
-
     auto local_sdp = call.getSDP().getLocalSdpSession();
     pjsip_dialog* dialog {nullptr};
     pjsip_inv_session* inv {nullptr};
@@ -712,7 +710,7 @@ void JamiAccount::saveConfig() const
         auto accountConfig = getPath() + DIR_SEPARATOR_STR + "config.yml";
 
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(accountConfig));
-        std::ofstream fout(accountConfig);
+        std::ofstream fout = fileutils::ofstream(accountConfig);
         fout << accountOut.c_str();
         JAMI_DBG("Exported account to %s", accountConfig.c_str());
     } catch (const std::exception& e) {
@@ -1022,7 +1020,6 @@ JamiAccount::readArchive(const std::string& pwd) const
     return AccountArchive(fileutils::getFullPath(idPath_, archivePath_), pwd);
 }
 
-
 void
 JamiAccount::updateArchive(AccountArchive& archive) const
 {
@@ -1190,9 +1187,9 @@ JamiAccount::exportArchive(const std::string& destinationPath, const std::string
         }
         // Export the file
         auto sourcePath = fileutils::getFullPath(idPath_, archivePath_);
-        std::ifstream src(sourcePath, std::ios::in | std::ios::binary);
+        std::ifstream src = fileutils::ifstream(sourcePath, std::ios::in | std::ios::binary);
         if (!src) return false;
-        std::ofstream dst(destinationPath, std::ios::out | std::ios::binary);
+        std::ofstream dst = fileutils::ofstream(destinationPath, std::ios::out | std::ios::binary);
         dst << src.rdbuf();
     } catch (const std::runtime_error& ex) {
         JAMI_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
@@ -2083,7 +2080,6 @@ JamiAccount::doRegister()
     }
 }
 
-
 std::vector<std::string>
 JamiAccount::loadBootstrap() const
 {
@@ -2809,7 +2805,7 @@ std::set<ID>
 loadIdList(const std::string& path)
 {
     std::set<ID> ids;
-    std::ifstream file(path);
+    std::ifstream file = fileutils::ifstream(path);
     if (!file.is_open()) {
         JAMI_DBG("Could not load %s", path.c_str());
         return ids;
@@ -2828,7 +2824,7 @@ template<typename ID=dht::Value::Id>
 void
 saveIdList(const std::string& path, const std::set<ID>& ids)
 {
-    std::ofstream file(path, std::ios::trunc | std::ios::binary);
+    std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not save to %s", path.c_str());
         return;
@@ -2915,7 +2911,7 @@ JamiAccount::loadKnownDevices()
 void
 JamiAccount::saveKnownDevices() const
 {
-    std::ofstream file(idPath_+DIR_SEPARATOR_STR "knownDevicesNames", std::ios::trunc | std::ios::binary);
+    std::ofstream file = fileutils::ofstream(idPath_+DIR_SEPARATOR_STR "knownDevicesNames", std::ios::trunc | std::ios::binary);
 
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> devices;
     for (const auto& id : knownDevices_)
@@ -2996,7 +2992,7 @@ JamiAccount::getDhtProxyServer()
         // Cache it!
         fileutils::check_dir(cachePath_.c_str(), 0700);
         std::string proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
-        std::ofstream file(proxyCachePath);
+        std::ofstream file = fileutils::ofstream(proxyCachePath);
         JAMI_DBG("Cache DHT proxy server: %s", proxyServerCached_.c_str());
         if (file.is_open())
             file << proxyServerCached_;
@@ -3202,7 +3198,7 @@ JamiAccount::loadContacts()
 void
 JamiAccount::saveContacts() const
 {
-    std::ofstream file(idPath_+DIR_SEPARATOR_STR "contacts", std::ios::trunc | std::ios::binary);
+    std::ofstream file = fileutils::ofstream(idPath_+DIR_SEPARATOR_STR "contacts", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, contacts_);
 }
 
@@ -3292,7 +3288,7 @@ JamiAccount::sendTrustRequestConfirm(const dht::InfoHash& to)
 void
 JamiAccount::saveTrustRequests() const
 {
-    std::ofstream file(idPath_+DIR_SEPARATOR_STR "incomingTrustRequests", std::ios::trunc | std::ios::binary);
+    std::ofstream file = fileutils::ofstream(idPath_+DIR_SEPARATOR_STR "incomingTrustRequests", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, trustRequests_);
 }
 
@@ -3661,7 +3657,6 @@ void JamiAccount::pushNotificationReceived(const std::string& from, const std::m
     dht_.pushNotificationReceived(data);
 }
 
-
 std::string
 JamiAccount::getUserUri() const
 {
@@ -3671,7 +3666,6 @@ JamiAccount::getUserUri() const
 #endif
     return username_;
 }
-
 
 std::vector<DRing::Message>
 JamiAccount::getLastMessages(const uint64_t& base_timestamp)
@@ -3745,7 +3739,6 @@ JamiAccount::getNearbyPeers() const
 {
     return discoveredPeerMap_;
 }
-
 
 void
 JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)

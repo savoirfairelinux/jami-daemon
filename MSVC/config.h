@@ -191,7 +191,8 @@ STACK_DIRECTION = 0 => direction of growth unknown */
 #define TIME_WITH_SYS_TIME 1
 
 /* Define to 1 for Unicode (Wide Chars) APIs. */
-/* #undef UNICODE */
+#define UNICODE 1
+#undef _MBCS
 
 /* Version number of package */
 #define VERSION "2.3.0"

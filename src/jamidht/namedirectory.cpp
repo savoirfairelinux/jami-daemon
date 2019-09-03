@@ -399,7 +399,7 @@ NameDirectory::saveCache()
 {
     fileutils::recursive_mkdir(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+CACHE_DIRECTORY);
     std::lock_guard<std::mutex> lock(fileutils::getFileLock(cachePath_));
-    std::ofstream file(cachePath_, std::ios::trunc | std::ios::binary);
+    std::ofstream file = fileutils::ofstream(cachePath_, std::ios::trunc | std::ios::binary);
     {
         std::lock_guard<std::mutex> l(lock_);
         msgpack::pack(file, nameCache_);
@@ -415,7 +415,7 @@ NameDirectory::loadCache()
     // read file
     {
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(cachePath_));
-        std::ifstream file(cachePath_);
+        std::ifstream file = fileutils::ifstream(cachePath_);
         if (!file.is_open()) {
             JAMI_DBG("Could not load %s", cachePath_.c_str());
             return;
