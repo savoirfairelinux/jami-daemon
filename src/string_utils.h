@@ -42,8 +42,10 @@ bool_to_str(bool b) noexcept
 std::string to_string(double value);
 
 #ifdef _WIN32
-std::wstring to_wstring(const std::string& s);
-std::string decodeMultibyteString(const std::string& s);
+std::wstring to_wstring(const std::string& str, int codePage = CP_ACP);
+std::string to_string(const std::wstring& wstr, int codePage = CP_UTF8);
+std::string decodeMultibyteString(const std::string& str);
+std::string decodeMultibyteWString(const std::wstring& wstr);
 std::string bstrToStdString(BSTR bstr);
 #endif
 

@@ -674,6 +674,7 @@ DataTransferFacade::list() const noexcept
     return map_utils::extractKeys(pimpl_->map_);
 }
 
+#pragma optimize("", off)
 DRing::DataTransferError
 DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
                              DRing::DataTransferId& tid) noexcept
@@ -712,6 +713,7 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
         return DRing::DataTransferError::unknown;
     }
 }
+#pragma optimize("", on)
 
 DRing::DataTransferError
 DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,

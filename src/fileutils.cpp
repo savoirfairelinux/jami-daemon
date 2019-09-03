@@ -301,10 +301,10 @@ writeTime(const std::string& path)
     ext_params.lpSecurityAttributes = nullptr;
     ext_params.hTemplateFile = nullptr;
     HANDLE h = CreateFile2(jami::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &ext_params);
-#elif _MSC_VER
-    HANDLE h = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+#elif UNICODE
+    HANDLE h = CreateFileW(jami::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 #else
-    HANDLE h = CreateFile(jami::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    HANDLE h = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 #endif
     if (h == INVALID_HANDLE_VALUE)
         throw std::runtime_error("Can't open: " + path);
@@ -336,6 +336,7 @@ bool isPathRelative(const std::string& path)
 #endif
 }
 
+#pragma optimize("", off)
 std::string
 getCleanPath(const std::string& base, const std::string& path)
 {
@@ -347,6 +348,7 @@ getCleanPath(const std::string& base, const std::string& path)
     else
         return path;
 }
+#pragma optimize("", on)
 
 std::string
 getFullPath(const std::string& base, const std::string& path)
@@ -565,6 +567,7 @@ get_cache_dir()
     return get_cache_dir(PACKAGE);
 }
 
+#pragma optimize("", off)
 std::string
 get_home_dir()
 {
@@ -581,12 +584,22 @@ get_home_dir()
         files_path = paths[0];
     return files_path;
 #elif defined _WIN32
-    WCHAR path[MAX_PATH];
-    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_PROFILE, nullptr, 0, path))) {
-        char tmp[MAX_PATH];
-        char DefChar = ' ';
-        WideCharToMultiByte(CP_ACP, 0, path, -1, tmp, MAX_PATH, &DefChar, nullptr);
-        return std::string(tmp);
+    TCHAR path[MAX_PATH];
+    if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_PROFILE, nullptr, 0, path))) {
+#ifdef UNICODE
+        wcscpy_s(path, MAX_PATH, L"C:\\Users\\fner\\汉字");
+		auto ws = L"C:\\Users\\fner\\汉字";
+		auto s = "C:\\Users\\fner\\汉字";
+		char * str = (char*)(L"你好");
+		// Provide "str" to this third party source code
+		// Once you get again "str", now you can:
+		wchar_t * wstr = (wchar_t*)(str);
+
+		auto t1 = jami::to_string(path, 936);
+        return jami::decodeMultibyteWString(path);
+#else
+        return std::string(path);
+#endif
     }
     return program_dir;
 #else
@@ -608,6 +621,7 @@ get_home_dir()
     return "";
 #endif
 }
+#pragma optimize("", on)
 
 std::string
 get_data_dir(const char* pkg)
@@ -727,14 +741,14 @@ recursive_mkdir(const std::string& path, mode_t mode)
 #ifndef _WIN32
     if (mkdir(path.data(), mode) != 0) {
 #else
-    if (mkdir(path.data()) != 0) {
+    if (_wmkdir(jami::to_wstring(path.data()).c_str()) != 0) {
 #endif
         if (errno == ENOENT) {
             recursive_mkdir(path.substr(0, path.find_last_of(DIR_SEPARATOR_CH)), mode);
 #ifndef _WIN32
             if (mkdir(path.data(), mode) != 0) {
 #else
-            if (mkdir(path.data()) != 0) {
+            if (_wmkdir(jami::to_wstring(path.data()).c_str()) != 0) {
 #endif
                 JAMI_ERR("Could not create directory.");
                 return false;

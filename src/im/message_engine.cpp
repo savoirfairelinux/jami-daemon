@@ -182,7 +182,9 @@ MessageEngine::load()
             std::lock_guard<std::mutex> lock(fileutils::getFileLock(savePath_));
             std::ifstream file;
             file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+#ifdef _WIN32
             file.open(savePath_);
+#endif
             file >> root;
         }
         std::lock_guard<std::mutex> lock(messagesMutex_);
