@@ -1,0 +1,15 @@
+{
+    "name": "secp256k1",
+    "version": "0b7024185045a49a1a6a4c5615bf31c94f63d9c4",
+    "url": "https://github.com/bitcoin-core/secp256k1/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": ["secp256k1-vs2017.patch"],
+    "project_paths": ["MSVC/secp256k1.vcxproj"],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
