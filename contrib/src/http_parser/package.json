@@ -1,0 +1,15 @@
+{
+    "name": "http_parser",
+    "version": "2.9.3",
+    "url": "https://github.com/binarytrails/http_parser/archive/v__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win-patches": ["http_parser-vs.patch"],
+    "project-paths": ["http-parser.vcxproj"],
+    "with_env" : "",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [],
+        "post-build": []
+    }
+}
