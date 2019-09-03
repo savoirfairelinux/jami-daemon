@@ -1,0 +1,19 @@
+{
+    "name": "openssl",
+    "version": "5cc1e25bc76bcf0db03bc37bd64b3290727963b6",
+    "url": "https://github.com/Microsoft/openssl/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win-patches": [],
+    "project-paths": [],
+    "with_env" : "10.0.16299.0",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [
+            "call perl Configure VC-WIN64A",
+            "call ms/do_win64a",
+            "call nmake -f ms/ntdll.mak"
+        ],
+        "post-build": []
+    }
+}
