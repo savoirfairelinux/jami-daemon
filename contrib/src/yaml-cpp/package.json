@@ -1,0 +1,17 @@
+{
+    "name": "yaml-cpp",
+    "version": "24fa1b33805c9a91df0f32c46c28e314dd7ad96f",
+    "url": "https://github.com/jbeder/yaml-cpp/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win-patches": [],
+    "project-paths": ["msvc/yaml-cpp.vcxproj"],
+    "with_env" : "false",
+    "custom-scripts": {
+        "pre-build": [
+            "mkdir msvc & cd msvc & cmake .. -G \"Visual Studio 15 2017 Win64\""
+        ],
+        "build": [],
+        "post-build": []
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "name": "portaudio",
+    "version": "v190600_20161030",
+    "url": "http://www.portaudio.com/archives/pa_stable___VERSION__.tgz",
+    "deps": [],
+    "patches": [],
+    "win-patches": [
+        "pa-vs2017.patch",
+        "pa-dsound-aecns.patch",
+        "pa-dsound.patch"
+    ],
+    "project-paths": ["MSVC/portaudio.vcxproj"],
+    "with_env" : "false",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [],
+        "post-build": []
+    }
+}
