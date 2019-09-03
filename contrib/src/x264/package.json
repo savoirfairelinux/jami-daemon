@@ -1,0 +1,15 @@
+{
+    "name": "x264",
+    "version": "5fee86cae91cd7b726db7408a3ed1c4da71fb78c",
+    "url": "https://github.com/ShiftMediaProject/x264/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": ["SMP/libx264.vcxproj"],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}

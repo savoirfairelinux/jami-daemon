@@ -50,50 +50,6 @@ Subject: [PATCH] Windows patch.
  delete mode 100644 upnp/src/inc/inet_pton.h
  delete mode 100644 upnp/src/inet_pton.c
 
---- a/.gitignore
-+++ b/.gitignore
-@@ -55,8 +55,6 @@ modules.builtin
- include/config
- include/linux/version.h
- include/generated
--build/inc/autoconfig.h
--build/inc/upnpconfig.h
- 
- # stgit generated dirs 
- patches-* 
-@@ -91,7 +89,6 @@ pupnp.includes
- Makefile
- Makefile.in
- aclocal.m4
--autoconfig.h
- autoconfig.h.in
- autom4te.cache/
- build-aux/
-@@ -107,7 +104,7 @@ m4/ltversion.m4
- m4/lt~obsolete.m4
- stamp-h1
- upnp/inc/stamp-h2
--upnp/inc/upnpconfig.h
-+
- upnp/sample/tv_combo
- upnp/sample/tv_combo-1.8
- upnp/sample/tv_ctrlpt
-@@ -135,7 +132,6 @@ upnp/test_url.trs
- /build/vc10/out.vc9.Win32/Debug
- /build/vc10/out.vc10.Win32
- /build/vc10/out.vc10.x64
--/pthreads
- /build/vc10/ipch
- /build/vc10/IUpnpErrFile.txt
- /build/vc10/IUpnpInfoFile.txt
---- /dev/null
-+++ b/build/vs2017/.gitignore
-@@ -0,0 +1,4 @@
-+
-+*.suo
-+*.user
-+*.sdf
-\ No newline at end of file
 --- /dev/null
 +++ b/build/vs2017/ixml.vcxproj
 @@ -0,0 +1,233 @@
