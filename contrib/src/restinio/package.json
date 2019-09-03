@@ -1,0 +1,19 @@
+{
+    "name": "restinio",
+    "version": "v.0.5.1.2",
+    "url": "https://github.com/Stiffstream/restinio/archive/__VERSION__.tar.gz",
+    "deps": [
+        "fmt",
+        "openssl",
+        "http_parser"
+    ],
+    "patches": [],
+    "win-patches": [],
+    "project-paths": [],
+    "with_env" : "",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [],
+        "post-build": []
+    }
+}
