@@ -1,0 +1,15 @@
+{
+    "name": "daemon",
+    "deps": [
+        "asio",
+        "ffmpeg",
+        "opendht",
+        "pjproject",
+        "portaudio",
+        "secp256k1",
+        "upnp",
+        "yaml-cpp"
+    ],
+    "configuration": "ReleaseLib_win32",
+    "project-paths": ["ring-daemon.vcxproj"]
+}
