@@ -1,0 +1,9 @@
+{
+    "name": "nettle",
+    "version": "c180b4d7afbda4049ad265d1366567f62a7a4a3a",
+    "url": "",
+    "patches": [],
+    "deps": [
+        "gmp"
+    ]
+}
