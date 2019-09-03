@@ -1,0 +1,22 @@
+{
+    "name": "opendht",
+    "version": "6a760a629cb7493e6c1e685cb9ceecf10268f338",
+    "url": "https://github.com/savoirfairelinux/opendht/archive/__VERSION__.tar.gz",
+    "deps": [
+        "argon2",
+        "asio",
+        "gnutls",
+        "jsoncpp",
+        "msgpack",
+        "restinio"
+    ],
+    "patches": [],
+    "win-patches": [],
+    "project-paths": ["msvc/opendht.vcxproj"],
+    "with_env" : "",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [],
+        "post-build": []
+    }
+}

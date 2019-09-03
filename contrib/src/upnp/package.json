@@ -1,0 +1,18 @@
+{
+    "name": "upnp",
+    "version": "1.8.4",
+    "url": "https://github.com/mrjimenez/pupnp/archive/release-__VERSION__.tar.gz",
+    "deps": ["pthreads"],
+    "patches": [],
+    "win-patches": ["libupnp-windows.patch"],
+    "project-paths": [
+        "build/vs2017/ixml.vcxproj",
+        "build/vs2017/libupnp.vcxproj"
+    ],
+    "with_env" : "",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [],
+        "post-build": []
+    }
+}

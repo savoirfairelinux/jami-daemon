@@ -1,0 +1,15 @@
+{
+    "name": "vpx",
+    "version": "c01b6dc8451f09745916c079e036364ab63b93cd",
+    "url": "https://github.com/ShiftMediaProject/libvpx/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win-patches": ["windows-vpx_config.patch"],
+    "project-paths": ["SMP/libvpx.vcxproj"],
+    "with_env" : "",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [],
+        "post-build": []
+    }
+}
