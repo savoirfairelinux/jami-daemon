@@ -1,0 +1,17 @@
+{
+    "name": "msgpack-c",
+    "version": "cpp-3.2.0",
+    "url": "https://github.com/msgpack/msgpack-c/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": ["vs2017/msgpackc.vcxproj"],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [
+            "mkdir vs2017 & cd vs2017 & cmake .. -DMSGPACK_CXX11=ON -G %CMAKE_GENERATOR%"
+        ],
+        "build": [],
+        "post_build": []
+    }
+}
