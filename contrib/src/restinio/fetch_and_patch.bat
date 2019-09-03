@@ -1,20 +1,17 @@
-set BUILD=%SRC%..\build
-
-set RESTINIO_VERSION=v.0.5.1.2
-set RESTINIO_URL=https://github.com/Stiffstream/restinio/archive/%RESTINIO_VERSION%.tar.gz
-
-mkdir %BUILD%
-
-if %USE_CACHE%==1 (
-    copy %CACHE_DIR%\%RESTINIO_VERSION%.tar.gz %cd%
-) else (
-    %WGET_CMD% %RESTINIO_URL%
-)
-
-7z -y x %RESTINIO_VERSION%.tar.gz && 7z -y x %RESTINIO_VERSION%.tar -o%BUILD%
-del %RESTINIO_VERSION%.tar && del %RESTINIO_VERSION%.tar.gz && del %BUILD%\pax_global_header
-rename %BUILD%\restinio-%RESTINIO_VERSION% restinio
-
-cd %BUILD%\restinio
-
-cd %SRC%
+{
+    "name": "restinio",
+    "version": "5.3.0",
+    "url": "https://github.com/fmtlib/fmt/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win-patches": [],
+    "project-paths": ["msvc/fmt.vcxproj"],
+    "with_env" : "false",
+    "custom-scripts": {
+        "pre-build": [
+            "mkdir msvc & cd msvc & cmake .. -G \"Visual Studio 15 2017 Win64\" -DBUILD_SHARED_LIBS=Off -DFMT_USE_USER_DEFINED_LITERALS=0"
+        ],
+        "build": [],
+        "post-build": []
+    }
+}
