@@ -1,0 +1,15 @@
+{
+    "name": "jsoncpp",
+    "version": "81065748e315026017c633fca1bfc57cba5b246a",
+    "url": "https://github.com/open-source-parsers/jsoncpp/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": ["jsoncpp-vs2017.patch"],
+    "project_paths": ["makefiles/vs2017/lib_json.vcxproj"],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}

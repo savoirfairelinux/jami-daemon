@@ -1,0 +1,19 @@
+{
+    "name": "asio",
+    "version": "asio-1-12-2",
+    "url": "https://github.com/chriskohlhoff/asio/archive/__VERSION__.tar.gz",
+    "deps": ["openssl"],
+    "patches": [],
+    "win_patches": [
+        "asio-vcxproj.patch"
+    ],
+    "project_paths": [
+        "asio/msvc/asio.vcxproj"
+    ],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
