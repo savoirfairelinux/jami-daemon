@@ -134,6 +134,13 @@ namespace jami { namespace fileutils {
      */
     int removeAll(const std::string& path, bool erase = false);
 
+    // win32 compat
+    void openStream(std::ifstream& file, const std::string& path, std::ios_base::openmode mode = std::ios_base::in);
+    void openStream(std::ofstream& file, const std::string& path, std::ios_base::openmode mode = std::ios_base::out);
+    std::ifstream ifstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::in);
+    std::ofstream ofstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::out);
+    int accessFile(const std::string& file, int mode);
+
 }} // namespace jami::fileutils
 
 #endif // FILEUTILS_H_

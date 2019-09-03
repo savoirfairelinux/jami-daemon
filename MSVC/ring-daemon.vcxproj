@@ -118,7 +118,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <WindowsAppContainer>false</WindowsAppContainer>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'" Label="Configuration">
@@ -579,7 +579,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\jamidht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\upnp\igd;$(ProjectDir)..\src\upnp\protocol;$(ProjectDir)..\src\upnp\mapping;$(ProjectDir)..\src\jamidht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pupnp\upnp\inc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>RING_UWP;STATICLIB;_USE_MATH_DEFINES;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>STATICLIB;_USE_MATH_DEFINES;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <BasicRuntimeChecks>
@@ -587,6 +587,7 @@
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
