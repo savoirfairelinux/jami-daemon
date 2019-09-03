@@ -1,0 +1,18 @@
+{
+    "name": "nettle",
+    "version": "c180b4d7afbda4049ad265d1366567f62a7a4a3a",
+    "url": "https://github.com/ShiftMediaProject/nettle/archive/__VERSION__.tar.gz",
+    "deps": ["gmp"],
+    "patches": [],
+    "win-patches": [],
+    "project-paths": [
+        "SMP/libnettle.vcxproj",
+        "SMP/libhogweed.vcxproj"
+    ],
+    "with_env" : "",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [],
+        "post-build": []
+    }
+}

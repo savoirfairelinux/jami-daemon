@@ -1,0 +1,26 @@
+{
+    "name": "gnutls",
+    "version": "3.6.7",
+    "url": "https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-__VERSION__.tar.xz",
+    "deps": [
+        "iconv",
+        "nettle",
+        "zlib",
+        "gmp"
+    ],
+    "patches": [
+        "gnutls-3.6.7-win32-compat.patch",
+        "gnutls-3.6.7-win32-vs-support.patch",
+        "read-file-limits.h.patch"
+    ],
+    "win-patches": [],
+    "project-paths": [
+        "SMP/libgnutls.vcxproj"
+    ],
+    "with_env" : "",
+    "custom-scripts": {
+        "pre-build": [],
+        "build": [],
+        "post-build": []
+    }
+}
