@@ -1307,18 +1307,19 @@ std::string SIPAccount::getLoginName()
 #elif defined (RING_UWP)
     return "Unknown";
 #else
-    TCHAR username[UNLEN + 1];
-    DWORD size = UNLEN + 1;
+    constexpr const DWORD userNameLength = UNLEN + 1;
+    DWORD size = userNameLength;
+    TCHAR username[userNameLength];
     std::string uname;
     if (GetUserName((TCHAR*)username, &size)) {
-#ifdef _MSC_VER
-        wchar_t* tmpstr = new wchar_t[UNLEN + 1];
-        mbstowcs(tmpstr, username, UNLEN + 1);
+#ifdef UNICODE
+        uname = jami::to_string(username, CP_ACP);
+#elif _MBCS
+        wchar_t* tmpstr = new wchar_t[userNameLength];
+        mbstowcs(tmpstr, username, userNameLength);
         std::wstring wStr = tmpstr;
-#else
-        std::wstring wStr = username;
-#endif
         uname = std::string(wStr.begin(), wStr.end());
+#endif
     }
     return uname;
 #endif

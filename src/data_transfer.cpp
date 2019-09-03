@@ -276,7 +276,7 @@ SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
 {
 
     info_ = metaInfo_->info();
-    input_.open(info_.path, std::ios::binary);
+    fileutils::openStream(input_, info_.path, std::ios::binary);
     if (!input_)
         throw std::runtime_error("input file open failed");
     metaInfo_->addLinkedTransfer(this);
@@ -438,7 +438,7 @@ private:
 OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info)
 : DataTransfer(tid)
 {
-    input_.open(info.path, std::ios::binary);
+    fileutils::openStream(input_, info.path, std::ios::binary);
     if (!input_)
         throw std::runtime_error("input file open failed");
 
@@ -518,7 +518,7 @@ IncomingFileTransfer::start()
     if (!DataTransfer::start())
         return false;
 
-    fout_.open(&info_.path[0], std::ios::binary);
+    fileutils::openStream(fout_, &info_.path[0], std::ios::binary);
     if (!fout_) {
         JAMI_ERR() << "[FTP] Can't open file " << info_.path;
         return false;
@@ -725,7 +725,7 @@ DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
 #ifndef _WIN32
     iter->second->accept(file_path, offset);
 #else
-    iter->second->accept(decodeMultibyteString(file_path), offset);
+    iter->second->accept(file_path, offset);
 #endif
     return DRing::DataTransferError::success;
 }

@@ -182,7 +182,7 @@ MessageEngine::load()
             std::lock_guard<std::mutex> lock(fileutils::getFileLock(savePath_));
             std::ifstream file;
             file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-            file.open(savePath_);
+            fileutils::openStream(file, savePath_);
             file >> root;
         }
         std::lock_guard<std::mutex> lock(messagesMutex_);
@@ -262,7 +262,7 @@ MessageEngine::save_() const
                 const std::unique_ptr<Json::StreamWriter> writer(wbuilder.newStreamWriter());
                 std::ofstream file;
                 file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-                file.open(path, std::ios::trunc);
+                fileutils::openStream(file, path, std::ios::trunc);
                 writer->write(root, &file);
             } catch (const std::exception& e) {
                 JAMI_ERR("[Account %s] Couldn't save messages to %s: %s", accountID.c_str(), path.c_str(), e.what());
