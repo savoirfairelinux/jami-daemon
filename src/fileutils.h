@@ -26,6 +26,7 @@
 #include <chrono>
 #include <mutex>
 #include <cstdio>
+#include <ios>
 
 #include "dring/def.h"
 
@@ -133,6 +134,20 @@ namespace jami { namespace fileutils {
      * Return 0 if succeed, -1 if directory is not removed (content can be removed partially).
      */
     int removeAll(const std::string& path, bool erase = false);
+
+    /**
+     * Wrappers for fstream opening that will convert paths to wstring
+     * on windows
+     */
+    void openStream(std::ifstream& file, const std::string& path, std::ios_base::openmode mode = std::ios_base::in);
+    void openStream(std::ofstream& file, const std::string& path, std::ios_base::openmode mode = std::ios_base::out);
+    std::ifstream ifstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::in);
+    std::ofstream ofstream(const std::string& path, std::ios_base::openmode mode = std::ios_base::out);
+
+    /**
+     * Windows compatibility wrapper for checking read-only attribute
+     */
+    int accessFile(const std::string& file, int mode);
 
 }} // namespace jami::fileutils
 

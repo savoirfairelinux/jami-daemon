@@ -120,8 +120,8 @@ std::atomic_bool Manager::initialized = {false};
 static void
 copy_over(const std::string &srcPath, const std::string &destPath)
 {
-    std::ifstream src(srcPath.c_str());
-    std::ofstream dest(destPath.c_str());
+    std::ifstream src = fileutils::ifstream(srcPath.c_str());
+    std::ofstream dest = fileutils::ofstream(destPath.c_str());
     dest << src.rdbuf();
     src.close();
     dest.close();
@@ -439,7 +439,8 @@ Manager::ManagerPimpl::parseConfiguration()
     bool result = true;
 
     try {
-        YAML::Node parsedFile = YAML::LoadFile(path_);
+        std::ifstream file = fileutils::ifstream(path_);
+        YAML::Node parsedFile = YAML::Load(file);
         const int error_count = base_.loadAccountMap(parsedFile);
 
         if (error_count > 0) {
@@ -1772,7 +1773,7 @@ Manager::saveConfig()
         shortcutPreferences.serialize(out);
 
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(pimpl_->path_));
-        std::ofstream fout(pimpl_->path_);
+        std::ofstream fout = fileutils::ofstream(pimpl_->path_);
         fout << out.c_str();
     } catch (const YAML::Exception &e) {
         JAMI_ERR("%s", e.what());
@@ -2158,9 +2159,7 @@ Manager::playRingtone(const std::string& accountID)
     CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
     const char *buindlePath = CFStringGetCStringPtr(stringPath, encodingMethod);
     ringchoice = std::string(buindlePath) + DIR_SEPARATOR_STR + ringchoice;
-#elif _WIN32
-    ringchoice = decodeMultibyteString(ringchoice);
-#else
+#elif !defined(_WIN32)
     if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
         // check inside global share directory
         static const char * const RINGDIR = "ringtones";
@@ -2858,7 +2857,8 @@ Manager::loadAccountMap(const YAML::Node& node)
             if (fileutils::isFile(configFile)) {
                 try {
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
-                        YAML::Node parsedConfig = YAML::LoadFile(configFile);
+                        std::ifstream file = fileutils::ifstream(configFile);
+                        YAML::Node parsedConfig = YAML::Load(file);
                         a->unserialize(parsedConfig);
                     }
                 } catch (const std::exception& e) {

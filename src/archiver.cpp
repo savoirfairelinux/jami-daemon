@@ -75,7 +75,7 @@ accountToJsonValue(const std::map<std::string, std::string>& details) {
                    i.first == DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE ||
                    i.first == DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) {
             // replace paths by the files content
-            std::ifstream ifs(i.second);
+            std::ifstream ifs = fileutils::ifstream(i.second);
             std::string fileContent((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
             root[i.first] = fileContent;
         } else

@@ -832,7 +832,6 @@ MediaEncoder::getCurrentVideoAVCtx()
     return nullptr;
 }
 
-
 void
 MediaEncoder::stopEncoder()
 {
@@ -858,7 +857,7 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
     if (fileutils::isFile(path)) {
         try {
             Json::Value root;
-            std::ifstream file(path);
+            std::ifstream file = fileutils::ifstream(path);
             file >> root;
             if (!root.isObject()) {
                 JAMI_ERR() << "Invalid encoder configuration: root is not an object";

@@ -37,25 +37,33 @@ namespace jami {
 #ifdef _WIN32
 
 std::wstring
-to_wstring(const std::string& s)
+to_wstring(const std::string& str, int codePage)
 {
-    int slength = (int)s.length();
-    int len = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), slength, nullptr, 0);
-    if (not len)
-        throw std::runtime_error("Can't convert string to wchar");
-    std::wstring r((size_t)len, 0);
-    if (!MultiByteToWideChar(CP_UTF8, 0, s.c_str(), slength, &(*r.begin()), len))
-        throw std::runtime_error("Can't convert string to wchar");
-    return r;
+    int srcLength = (int)str.length();
+    int requiredSize = MultiByteToWideChar(codePage, 0, str.c_str(), srcLength, nullptr, 0);
+    if (!requiredSize) {
+        throw std::runtime_error("Can't convert string to wstring");
+    }
+    std::wstring result((size_t)requiredSize, 0);
+    if (!MultiByteToWideChar(codePage, 0, str.c_str(), srcLength, &(*result.begin()), requiredSize)) {
+        throw std::runtime_error("Can't convert string to wstring");
+    }
+    return result;
 }
 
 std::string
-decodeMultibyteString(const std::string& s)
+to_string(const std::wstring& wstr, int codePage)
 {
-    if (not s.length())
-        return {};
-    auto wstr = to_wstring(s);
-    return std::string(wstr.begin(), wstr.end());
+    int srcLength = (int)wstr.length();
+    int requiredSize = WideCharToMultiByte(codePage, 0, wstr.c_str(), srcLength, nullptr, 0, 0, 0);
+    if (!requiredSize) {
+        throw std::runtime_error("Can't convert wstring to string");
+    }
+    std::string result((size_t)requiredSize, 0);
+    if (!WideCharToMultiByte(codePage, 0, wstr.c_str(), srcLength, &(*result.begin()), requiredSize, 0, 0)) {
+        throw std::runtime_error("Can't convert wstring to string");
+    }
+    return result;
 }
 
 std::string
