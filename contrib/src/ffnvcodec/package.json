@@ -1,0 +1,17 @@
+{
+    "name": "ffnvcodec",
+    "version": "5eeca8cc95267d55030e98a051effa47c45f13f3",
+    "url": "https://github.com/FFmpeg/nv-codec-headers/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [
+            "mkdir \"%DAEMON_DIR%\\contrib\\msvc\\include\\ffnvcodec\" & cd include/ffnvcodec & xcopy /S /Y *.h \"%DAEMON_DIR%\\contrib\\msvc\\include\\ffnvcodec\""
+        ],
+        "post_build": []
+    }
+}
