@@ -439,8 +439,13 @@ Manager::ManagerPimpl::parseConfiguration()
     bool result = true;
 
     try {
+        if (!fileutils::isFile(path_)) {
+            JAMI_WARN("Could not open configuration file");
+            return false;
+        }
         std::ifstream file = fileutils::ifstream(path_);
         YAML::Node parsedFile = YAML::Load(file);
+        file.close();
         const int error_count = base_.loadAccountMap(parsedFile);
 
         if (error_count > 0) {
@@ -449,6 +454,7 @@ Manager::ManagerPimpl::parseConfiguration()
         }
     } catch (const YAML::BadFile &e) {
         JAMI_WARN("Could not open configuration file");
+        result = false;
     }
 
     return result;
@@ -2859,6 +2865,7 @@ Manager::loadAccountMap(const YAML::Node& node)
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
                         std::ifstream file = fileutils::ifstream(configFile);
                         YAML::Node parsedConfig = YAML::Load(file);
+                        file.close();
                         a->unserialize(parsedConfig);
                     }
                 } catch (const std::exception& e) {
