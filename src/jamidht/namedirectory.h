@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2016-2019 Savoir-faire Linux Inc.
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *          Vsevolod Ivanov <vsevolod.ivanov@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,17 +20,25 @@
 
 #include "noncopyable.h"
 
+#include <asio/io_context.hpp>
+
 #include <functional>
 #include <map>
 #include <string>
 #include <mutex>
 #include <memory>
+#include <thread>
 
 namespace dht {
 class Executor;
 namespace crypto {
 struct PublicKey;
 }
+namespace http {
+class Request;
+class Resolver;
+}
+class Logger;
 }
 
 namespace jami {
@@ -52,18 +61,22 @@ public:
     using RegistrationCallback = std::function<void(RegistrationResponse response)>;
 
     NameDirectory() {}
-    NameDirectory(const std::string& s);
+    NameDirectory(const std::string& s, std::shared_ptr<dht::Logger> l = {});
+    ~NameDirectory();
     void load();
 
-    static NameDirectory& instance(const std::string& server);
+    static NameDirectory& instance(const std::string& server, std::shared_ptr<dht::Logger> l = {});
     static NameDirectory& instance() { return instance(DEFAULT_SERVER_HOST); }
 
-    static void lookupUri(const std::string& uri, const std::string& default_server, LookupCallback cb);
+    static void lookupUri(const std::string& uri, const std::string& default_server,
+                          LookupCallback cb);
 
     void lookupAddress(const std::string& addr, LookupCallback cb);
     void lookupName(const std::string& name, LookupCallback cb);
 
-    void registerName(const std::string& addr, const std::string& name, const std::string& owner, RegistrationCallback cb, const std::string& signedname, const std::string& publickey);
+    void registerName(const std::string& addr, const std::string& name,
+                      const std::string& owner, RegistrationCallback cb,
+                      const std::string& signedname, const std::string& publickey);
 
     const std::string& getServer() const {
         return serverHost_;
@@ -74,7 +87,19 @@ private:
     NameDirectory(NameDirectory&&) = delete;
     constexpr static const char* const DEFAULT_SERVER_HOST = "ns.jami.net";
 
-    std::mutex lock_ {};
+    std::mutex cacheLock_ {};
+
+    /*
+     * ASIO I/O Context for sockets in httpClient_.
+     * Note: Each context is used in one thread only.
+     */
+    asio::io_context httpContext_;
+    std::shared_ptr<dht::http::Resolver> resolver_;
+    std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;
+    /*
+     * Thread for executing the http io_context.run() blocking call.
+     */
+    std::thread httpClientThread_;
 
     const std::string serverHost_ {DEFAULT_SERVER_HOST};
     const std::string cachePath_;
@@ -85,21 +110,27 @@ private:
     std::weak_ptr<Task> saveTask_;
     std::shared_ptr<dht::Executor> executor_;
 
+    std::shared_ptr<dht::Logger> logger_;
+
+    void setHeaderFields(dht::http::Request& request);
+
     std::string nameCache(const std::string& addr) {
-        std::lock_guard<std::mutex> l(lock_);
+        std::lock_guard<std::mutex> l(cacheLock_);
         auto cacheRes = nameCache_.find(addr);
         return cacheRes != nameCache_.end() ? cacheRes->second : std::string{};
     }
     std::string addrCache(const std::string& name) {
-        std::lock_guard<std::mutex> l(lock_);
+        std::lock_guard<std::mutex> l(cacheLock_);
         auto cacheRes = addrCache_.find(name);
         return cacheRes != addrCache_.end() ? cacheRes->second : std::string{};
     }
 
     bool validateName(const std::string& name) const;
-    static bool verify(const std::string& name, const dht::crypto::PublicKey& publickey, const std::string& signature);
+    static bool verify(const std::string& name,
+                       const dht::crypto::PublicKey& publickey,
+                       const std::string& signature);
 
-    void scheduleSave();
+    void scheduleCacheSave();
     void saveCache();
     void loadCache();
 };
