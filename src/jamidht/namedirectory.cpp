@@ -49,9 +49,13 @@ namespace jami {
 
 constexpr const char* const QUERY_NAME {"/name/"};
 constexpr const char* const QUERY_ADDR {"/addr/"};
-constexpr const char* const HTTPS_PROTO {"https"};
-constexpr const char* const HTTPS_URI {"https://"};
 constexpr const char* const CACHE_DIRECTORY {"namecache"};
+
+//constexpr const char* const HTTPS_PROTO {"https"};
+constexpr const char* const HTTPS_URI {"https://"};
+static const std::string HTTPS_PROTO {"https"};
+
+
 const std::string  HEX_PREFIX = "0x";
 constexpr std::chrono::seconds SAVE_INTERVAL {5};
 
@@ -92,7 +96,7 @@ NameDirectory::NameDirectory(const std::string& s, std::shared_ptr<dht::Logger> 
    , cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + CACHE_DIRECTORY + DIR_SEPARATOR_STR + serverHost_)
    , logger_(l)
    , httpContext_(Manager::instance().ioContext())
-   , resolver_(std::make_shared<dht::http::Resolver>(*httpContext_, serverHost_, HTTPS_PROTO, logger_))
+   , resolver_(std::make_shared<dht::http::Resolver>(*httpContext_, serverHost_, HTTPS_PROTO, true, logger_))
 {}
 
 void
