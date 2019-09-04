@@ -60,45 +60,61 @@ MediaProcessor::~MediaProcessor() {
   processFrameThread.join();
 }
 
-void MediaProcessor::onNewFrame(VideoFrame &frame) {
-  if (firstRun) {
-    mot.setExpectedImageDimensions();
-    fcopy.createCopyFrames(frame, mot.getImageWidth(), mot.getImageHeight());
-    JAMI_DBG() << "FRAME[]: w: " << frame.width() << " , h: " << frame.height()
-               << " , format: "
-               << av_get_pix_fmt_name(
-                      static_cast<AVPixelFormat>(frame.format()));
-    firstRun = false;
-  }
-  std::chrono::steady_clock::time_point tic = std::chrono::steady_clock::now();
-  if (!newFrame) {
-
-    std::lock_guard<std::mutex> l(inputLock);
-    fcopy.copyFrameContent(frame, fcopy.resizedFrameRGB);
-    //      printPredictions();
-    newFrame = true;
-    inputCv.notify_all();
-  }
-
-  fcopy.copyFrameContent(frame, fcopy.predictionsFrameBGR);
-  drawPredictionsOnFrame(fcopy.predictionsFrameBGR, computedPredictions);
-  frame.copyFrom(fcopy.predictionsFrameBGR);
-  std::chrono::steady_clock::time_point tac = std::chrono::steady_clock::now();
-  const int totalFrames = 7200;
-  delta += tac - tic;
-  counter++;
-
-  if (counter == totalFrames) {
-    counter = 0;
-    auto diff =
-        std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
-    JAMI_DBG() << "Time per frame: " << diff / totalFrames;
-    JAMI_DBG() << "Frame rate: " << 1000000.0f / diff / totalFrames;
-    delta = std::chrono::nanoseconds::zero();
-  }
+void MediaProcessor::onSubscribe(std::shared_ptr<Subscription<std::shared_ptr<ExVideoFrame>>>&& sub){
+    subscription = sub;
+    JAMI_DBG() << "  Subscribed ! ";
+    //subscription->request(1);
 }
 
-void MediaProcessor::onNewFrame(const VideoFrame &frame) { (void)frame; }
+void MediaProcessor::onNext(std::shared_ptr<ExVideoFrame> frame) {
+    if(subscription) {
+        //subscription->request(1);
+        if (firstRun) {
+            mot.setExpectedImageDimensions();
+            //fcopy.createCopyFrames(*frame, mot.getImageWidth(), mot.getImageHeight());
+            JAMI_DBG() << "FRAME[]: w: " << frame->width() << " , h: " << frame->height()
+                       << " , format: "
+                       << av_get_pix_fmt_name(
+                              static_cast<AVPixelFormat>(frame->format()));
+            firstRun = false;
+        }
+        std::chrono::steady_clock::time_point tic = std::chrono::steady_clock::now();
+        /**if (!newFrame) {
+            std::lock_guard<std::mutex> l(inputLock);
+            fcopy.copyFrameContent(*frame, fcopy.resizedFrameRGB);
+            //printPredictions();
+            newFrame = true;
+            inputCv.notify_all();
+        }**/
+        //fcopy.copyFrameContent(*frame, fcopy.predictionsFrameBGR);
+        drawPredictionsOnFrame(fcopy.predictionsFrameBGR, computedPredictions);
+        JAMI_DBG() << " OnNext Called from Mediaprocessor";
+
+        //frame->copyFrom(fcopy.predictionsFrameBGR);
+
+        for(size_t i{0}; i< frame->width()*frame->height()*3;i+=10){
+          frame->pointer()[i] = static_cast<uint8_t>(i);
+        }
+
+        std::chrono::steady_clock::time_point tac = std::chrono::steady_clock::now();
+        const int totalFrames = 7200;
+        delta += tac - tic;
+        counter++;
+
+        if (counter == totalFrames) {
+            counter = 0;
+            auto diff =
+                std::chrono::duration_cast<std::chrono::microseconds>(delta).count();
+            JAMI_DBG() << "Time per frame: " << diff / totalFrames;
+            JAMI_DBG() << "Frame rate: " << 1000000.0f / diff / totalFrames;
+            delta = std::chrono::nanoseconds::zero();
+        }
+    }
+}
+
+void MediaProcessor::onComplete() {
+    JAMI_DBG()  << "  OnComplete called";
+}
 
 void MediaProcessor::stop() {
   running = false;
