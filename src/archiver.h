@@ -26,6 +26,8 @@
 #include <vector>
 #include <map>
 
+typedef struct gzFile_s *gzFile;
+
 namespace jami {
 
 /**
@@ -73,6 +75,11 @@ void compressGzip(const std::string& str, const std::string& path);
  * Decompress Gzip file to bytes
  */
 std::vector<uint8_t> decompressGzip(const std::string& path);
+
+/**
+ * Open Gzip file (uses wide string version of gzopen on windows)
+ */
+gzFile openGzip(const std::string& path, const char *mode);
 
 }
 
