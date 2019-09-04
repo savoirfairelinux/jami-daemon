@@ -79,7 +79,7 @@ bool VideoReceiveThread::setup()
         if (auto displayMatrix = displayMatrix_)
             av_frame_new_side_data_from_buf(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(displayMatrix.get()));
         if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame))
-        	mediaProcessor_.onNewFrame(*videoFrame);
+            //mediaProcessor_.onNext(videoFrame);
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
 
