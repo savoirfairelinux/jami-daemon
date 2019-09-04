@@ -42,7 +42,7 @@ std::string to_string(double value);
 
 #ifdef _WIN32
 std::wstring to_wstring(const std::string& str, int codePage = CP_UTF8);
-std::string to_string(const std::wstring& wstr, int codePage = CP_ACP);
+std::string to_string(const std::wstring& wstr, int codePage = CP_UTF8);
 std::string bstrToStdString(BSTR bstr);
 #endif
 
