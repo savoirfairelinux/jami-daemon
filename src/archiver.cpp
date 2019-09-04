@@ -227,7 +227,7 @@ compress(const std::string& str)
 void
 compressGzip(const std::string& str, const std::string& path)
 {
-    auto fi = gzopen(path.c_str(), "wb");
+    auto fi = gzopen(path, "wb");
     gzwrite(fi, str.data(), str.size());
     gzclose(fi);
 }
@@ -236,7 +236,7 @@ std::vector<uint8_t>
 decompressGzip(const std::string& path)
 {
     std::vector<uint8_t> out;
-    auto fi = gzopen(path.c_str(),"rb");
+    auto fi = gzopen(path, "rb");
     gzrewind(fi);
     while (not gzeof(fi)) {
         std::array<uint8_t, 32768> outbuffer;
@@ -292,6 +292,16 @@ decompress(const std::vector<uint8_t>& str)
     }
 
     return out;
+}
+
+gzFile
+gzopen(const std::string& path, const char *mode)
+{
+#ifdef _WIN32
+    return gzopen_w(jami::to_wstring(path).c_str(), mode);
+#else
+    return gzopen(path.c_str(), mode);
+#endif
 }
 
 }} // namespace jami::archiver
