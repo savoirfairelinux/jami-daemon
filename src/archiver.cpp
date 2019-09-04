@@ -227,7 +227,11 @@ compress(const std::string& str)
 void
 compressGzip(const std::string& str, const std::string& path)
 {
+#ifdef _WIN32
+    auto fi = gzopen_w(jami::to_wstring(path).c_str(), "wb");
+#else
     auto fi = gzopen(path.c_str(), "wb");
+#endif
     gzwrite(fi, str.data(), str.size());
     gzclose(fi);
 }
@@ -236,7 +240,11 @@ std::vector<uint8_t>
 decompressGzip(const std::string& path)
 {
     std::vector<uint8_t> out;
+#ifdef _WIN32
+    auto fi = gzopen_w(jami::to_wstring(path).c_str(),"rb");
+#else
     auto fi = gzopen(path.c_str(),"rb");
+#endif
     gzrewind(fi);
     while (not gzeof(fi)) {
         std::array<uint8_t, 32768> outbuffer;
