@@ -44,6 +44,10 @@
 #include <functional>
 #include <algorithm>
 
+namespace asio {
+    class io_context;
+}
+
 namespace jami {
 
 namespace video {
@@ -857,6 +861,8 @@ class Manager {
         IceTransportFactory& getIceTransportFactory();
 
         ScheduledExecutor& scheduler();
+
+        std::shared_ptr<asio::io_context> ioContext() const;
 
         void addTask(std::function<bool()>&& task);
         std::shared_ptr<Task> scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::time_point when);

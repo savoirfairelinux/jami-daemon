@@ -62,7 +62,6 @@ public:
 
     NameDirectory() {}
     NameDirectory(const std::string& s, std::shared_ptr<dht::Logger> l = {});
-    ~NameDirectory();
     void load();
 
     static NameDirectory& instance(const std::string& server, std::shared_ptr<dht::Logger> l = {});
@@ -87,30 +86,24 @@ private:
     NameDirectory(NameDirectory&&) = delete;
     constexpr static const char* const DEFAULT_SERVER_HOST = "ns.jami.net";
 
+    const std::string serverHost_ {DEFAULT_SERVER_HOST};
+    const std::string cachePath_;
+
     std::mutex cacheLock_ {};
+    std::shared_ptr<dht::Logger> logger_;
 
     /*
      * ASIO I/O Context for sockets in httpClient_.
      * Note: Each context is used in one thread only.
      */
-    asio::io_context httpContext_;
+    std::shared_ptr<asio::io_context> httpContext_;
     std::shared_ptr<dht::http::Resolver> resolver_;
     std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;
-    /*
-     * Thread for executing the http io_context.run() blocking call.
-     */
-    std::thread httpClientThread_;
-
-    const std::string serverHost_ {DEFAULT_SERVER_HOST};
-    const std::string cachePath_;
 
     std::map<std::string, std::string> nameCache_ {};
     std::map<std::string, std::string> addrCache_ {};
 
     std::weak_ptr<Task> saveTask_;
-    std::shared_ptr<dht::Executor> executor_;
-
-    std::shared_ptr<dht::Logger> logger_;
 
     void setHeaderFields(dht::http::Request& request);
 
