@@ -63,7 +63,9 @@ VideoInput::VideoInput()
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     , mutex_(), frame_cv_(), buffers_()
 #endif
-{}
+{
+    videoSubject.subscribe(mediaProcessor_);
+}
 
 VideoInput::~VideoInput()
 {
@@ -73,6 +75,7 @@ VideoInput::~VideoInput()
     loop_.stop();
     frame_cv_.notify_one();
 #endif
+    videoSubject.onComplete();
     loop_.join();
 }
 
@@ -344,8 +347,15 @@ VideoInput::createDecoder()
     }
 
     auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
-		if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame))
-        	mediaProcessor_.onNewFrame(*videoFrame);
+        if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame)){
+//            videoSubject.onNext(videoFrame);
+            // Convert incoming frame to RGB8 before sending it to subscribers
+            std::unique_ptr<VideoFrame> rgbFrameUniquePointer(scaler.convertFormat(*videoFrame,AV_PIX_FMT_RGB24));
+            std::shared_ptr<ExVideoFrame> exVideoFrame = std::make_shared<ExVideoFrame>(rgbFrameUniquePointer->pointer()->data[0],
+            AV_PIX_FMT_RGB24,videoFrame->width(),videoFrame->height());
+            mediaProcessor_.onNext(exVideoFrame);
+            videoFrame->copyFrom(*rgbFrameUniquePointer);
+        }
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     });
 

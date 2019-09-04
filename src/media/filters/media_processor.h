@@ -9,11 +9,19 @@
 // OpenCV headers
 #include <opencv2/core.hpp>
 // LibFilters headers
-#include "framelistener.h"
-#include "multipleobjecttracking.h"
+// For AVFRAME
+#include "libav_deps.h"
 // Jami Library headers
 #include "dring/videomanager_interface.h"
 #include "media/video/video_scaler.h"
+#include "video/video_base.h"
+// Filters
+#include "multipleobjecttracking.h"
+// Reactive Streams
+#include "reactive_streams.h"
+// Exchange video frame
+#include "media/filters/ExVideoFrame.h"
+
 
 namespace jami {
 class FrameCopy {
@@ -45,24 +53,28 @@ public:
   void copyFrameContent(const VideoFrame &iFrame, VideoFrame &oFrame);
 };
 
-class MediaProcessor : public FrameListener {
+class MediaProcessor : public Subscriber<std::shared_ptr<ExVideoFrame>>{
 public:
   MediaProcessor();
   virtual ~MediaProcessor() override;
 
   /**
-   * @brief onNewFrame
-   * Takes a const frame and processes its data
-   * @param frame
+   * @brief onSubscribe
+   * @param subscription
    */
-  void onNewFrame(const VideoFrame &frame) override;
+  virtual void onSubscribe(std::shared_ptr<Subscription<std::shared_ptr<ExVideoFrame>>>&& subscription) override;
 
   /**
    * @brief onNewFrame
    * Takes a frame and updates its content
    * @param frame
    */
-  void onNewFrame(VideoFrame &frame) override;
+  void onNext(std::shared_ptr<ExVideoFrame> frame) override;
+
+  /**
+   * @brief onComplete
+   */
+  virtual void onComplete() override;
 
   /**
    * @brief stop
@@ -150,6 +162,9 @@ private:
       // Apricot
       cv::Scalar{180, 215, 255},
   };
+
+  //Subscription
+  std::shared_ptr<Subscription<std::shared_ptr<ExVideoFrame>>> subscription = nullptr;
 };
 
 } // namespace jami
