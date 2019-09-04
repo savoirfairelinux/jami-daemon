@@ -3,16 +3,22 @@ include $(top_srcdir)/globals.mk
 noinst_LTLIBRARIES = libfilters.la
 
 libfilters_la_SOURCES = \
-        media_processor.cpp \
-        tensorflowsupervisedinference.cpp \
-        multipleobjecttracking.cpp
+    media_processor.cpp \
+    tensorflowsupervisedinference.cpp \
+	multipleobjecttracking.cpp \
+	reactive_streams_signals.cpp \
+	ExVideoFrame.cpp
 
 noinst_HEADERS = \
-        media_processor.h \
-        framelistener.h \
-        model.h \
-        tensorflowsupervisedinference.h \
-        multipleobjecttracking.h
+    media_processor.h \
+    model.h \
+    tensorflowsupervisedinference.h \
+	multipleobjecttracking.h \
+	asyncpublisher.h \
+	asyncsubject.h \
+	reactive_streams.h \
+	reactive_streams_signals.h \
+	ExVideoFrame.h
 
 
 LIBS_DIR := /home/ayounes/Libs
