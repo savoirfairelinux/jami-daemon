@@ -354,8 +354,9 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
         return false;
 
     // match certificate chain
-    if (not accountTrust_.verify(*crt)) {
-        JAMI_WARN("[Contacts] Found invalid account device: %s", crt->getId().toString().c_str());
+    auto verifyResult = accountTrust_.verify(*crt);
+    if (not verifyResult) {
+        JAMI_WARN("[Contacts] Found invalid account device: %s: %s", crt->getId().toString().c_str(), verifyResult.toString().c_str());
         return false;
     }
 
