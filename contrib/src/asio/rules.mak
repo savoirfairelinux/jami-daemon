@@ -21,7 +21,7 @@
 ASIO_VERSION := asio-1-14-0
 ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
-# Pure dependency of restbed: do not add to PKGS.
+# Pure dependency of restinio: do not add to PKGS.
 
 $(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
 	$(call download,$(ASIO_URL))
