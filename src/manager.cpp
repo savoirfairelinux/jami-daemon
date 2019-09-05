@@ -83,6 +83,9 @@ using random_device = dht::crypto::random_device;
 
 #include <opendht/thread_pool.h>
 
+#include <asio/io_context.hpp>
+#include <asio/executor_work_guard.hpp>
+
 #ifndef WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -331,6 +334,9 @@ struct Manager::ManagerPimpl
 
     Manager& base_; // pimpl back-pointer
 
+    std::shared_ptr<asio::io_context> ioContext_;
+    std::thread ioContextRunner_;
+
     /** Main scheduler */
     ScheduledExecutor scheduler_;
 
@@ -408,6 +414,7 @@ struct Manager::ManagerPimpl
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     : base_(base)
+    , ioContext_(std::make_shared<asio::io_context>())
     , toneCtrl_(base.preferences)
     , currentCallMutex_()
     , dtmfKey_()
@@ -431,6 +438,15 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     rand_.seed(seed);
 
     jami::libav_utils::ring_avcodec_init();
+
+    ioContextRunner_ = std::thread([context = ioContext_](){
+        try {
+            auto work = asio::make_work_guard(*context);
+            context->run();
+        } catch (const std::exception& ex) {
+            JAMI_ERR("Unexpected io_context thread exception: %s", ex.what());
+        }
+    });
 }
 
 bool
@@ -836,6 +852,13 @@ Manager::finish() noexcept
         dht::ThreadPool::computation().join();
 
         pj_shutdown();
+
+        if (!pimpl_->ioContext_->stopped()){
+            pimpl_->ioContext_->reset(); // allow to finish
+            pimpl_->ioContext_->stop();  // make thread stop
+        }
+        if (pimpl_->ioContextRunner_.joinable())
+            pimpl_->ioContextRunner_.join();
     } catch (const VoipLinkException &err) {
         JAMI_ERR("%s", err.what());
     }
@@ -1702,6 +1725,12 @@ ScheduledExecutor&
 Manager::scheduler()
 {
     return pimpl_->scheduler_;
+}
+
+std::shared_ptr<asio::io_context>
+Manager::ioContext() const
+{
+    return pimpl_->ioContext_;
 }
 
 void
