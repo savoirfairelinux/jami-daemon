@@ -37,19 +37,3 @@ endif
 if RING_NODEJS
 SUBDIRS+=nodejs
 endif
-
-if RING_RESTCPP
-SUBDIRS+=restcpp
-
-sbin_PROGRAMS = restdring
-
-restdring_SOURCES = main.cpp
-
-restdring_CXXFLAGS= -g \
-                -I$(top_srcdir)/src \
-                -I$(top_srcdir)/src/dring \
-                -DREST_API \
-                -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
-
-restdring_LDADD = restcpp/libclient_rest.la $(top_builddir)/src/libring.la
-endif
