@@ -416,27 +416,13 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     : base_(base)
     , ioContext_(std::make_shared<asio::io_context>())
     , toneCtrl_(base.preferences)
-    , currentCallMutex_()
-    , dtmfKey_()
     , dtmfBuf_(0, AudioFormat::MONO())
-    , audioLayerMutex_()
-    , waitingCalls_()
-    , waitingCallsMutex_()
-    , path_()
     , ringbufferpool_(new RingBufferPool)
-    , conferenceMap_()
-    , ice_tf_()
+    , rand_(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
 #ifdef ENABLE_VIDEO
     , videoManager_(new VideoManager)
 #endif
 {
-    // initialize random generator
-    // mt19937_64 should be seeded with 2 x 32 bits
-
-    random_device rdev;
-    std::seed_seq seed {rdev(), rdev()};
-    rand_.seed(seed);
-
     jami::libav_utils::ring_avcodec_init();
 
     ioContextRunner_ = std::thread([context = ioContext_](){
