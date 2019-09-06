@@ -17,4 +17,10 @@ rename %BUILD%\fmt-%FMT_VERSION% fmt
 
 cd %BUILD%\fmt
 
+mkdir msvc && cd msvc
+setlocal
+set PATH=C:\\Program Files\\CMake\\bin\\;%PATH%
+cmake .. -G "Visual Studio 15 2017 Win64" -DBUILD_SHARED_LIBS=Off -DFMT_USE_USER_DEFINED_LITERALS=0
+endlocal
+
 cd %SRC%
