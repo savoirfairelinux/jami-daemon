@@ -1,0 +1,30 @@
+--- a/ms/setVSvars.bat
++++ b/ms/setVSvars.bat
+@@ -166,7 +166,7 @@ exit /b
+ 	
+ :set_VS15VC
+ 	if not "%_VS15VC%"=="" goto :eof
+-	for /f "usebackq tokens=1* delims=: " %%i in (`%~dp0\vswhere -latest -requires Microsoft.VisualStudio.Workload.Universal -requires Microsoft.VisualStudio.ComponentGroup.UWP.VC`) do (
++	for /f "usebackq tokens=1* delims=: " %%i in (`%~dp0\vswhere -latest -requires Microsoft.VisualStudio.Workload.Universal`) do (
+ 	if /i "%%i"=="installationPath" set _VS15VC=%%j\VC\Auxiliary\Build
+ 	)
+ 	if not "%_VS15VC%"=="" goto :eof
+--- a/ms/winrt.cpp
++++ b/ms/winrt.cpp
+@@ -291,13 +291,6 @@ extern "C"
+ 		{
+ 		return 0;
+ 		}
+-
+-	BOOL WINAPI FlushConsoleInputBuffer(
+-									   _In_  HANDLE hConsoleInput
+-									   )
+-		{
+-		return 0;
+-		}
+ 	BOOL DeleteDC(
+ 				 _In_  HDC hdc
+ 				 )
+-- 
+2.10.2.windows.1
+
