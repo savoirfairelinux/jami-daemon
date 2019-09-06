@@ -56,7 +56,10 @@ x264=build\x264\SMP\libx264.vcxproj, ^
 opus=build\opus\SMP\libopus.vcxproj, ^
 media-sdk=build\media-sdk\api\mfx_dispatch\windows\libmfx_vs2015.vcxproj, ^
 ffmpeg=ffmpeg, ^
-restbed=restbed, ^
+openssl=openssl, ^
+asio=build\asio\asio\msvc\asio.vcxproj, ^
+fmt=build\fmt\msvc\fmt.vcxproj, ^
+http_parser=build\http_parser\http-parser.vcxproj, ^
 jsoncpp=build\jsoncpp\makefiles\vs2017\lib_json.vcxproj, ^
 argon2=build\argon2\vs2015\Argon2Ref\Argon2Ref.vcxproj, ^
 gmp=build\gmp\SMP\libgmp.vcxproj, ^
@@ -83,12 +86,15 @@ x264=build\x264\SMP\libx264.vcxproj, ^
 opus=build\opus\SMP\libopus.vcxproj, ^
 media-sdk=build\media-sdk\api\mfx_dispatch\windows\libmfx_vs2015.vcxproj, ^
 ffmpeg=ffmpeg, ^
-restbed=restbed, ^
+openssl=openssl, ^
+asio=build\asio\asio\msvc\asio.vcxproj, ^
+fmt=build\fmt\msvc\fmt.vcxproj, ^
+http_parser=build\http_parser\http-parser.vcxproj, ^
 jsoncpp=build\jsoncpp\makefiles\vs2017\lib_json.vcxproj, ^
 argon2=build\argon2\vs2015\Argon2Ref\Argon2Ref.vcxproj, ^
-gmp=build\gmp\SMP\libgmp.vcxproj, ^
 iconv=build\iconv\SMP\libiconv.vcxproj, ^
 zlib=build\zlib\SMP\libzlib.vcxproj, ^
+gmp=build\gmp\SMP\libgmp.vcxproj, ^
 nettle=build\nettle\SMP\libnettle.vcxproj, ^
 hogweed=build\nettle\SMP\libhogweed.vcxproj, ^
 gnutls=build\gnutls\SMP\libgnutls.vcxproj, ^
@@ -231,10 +237,10 @@ if %ERRORLEVEL% geq 1 (
 :build
 if /I %1 equ ffmpeg (
     %MSYS2_BIN% --login -x %CONTRIB_DIR%src/ffmpeg/windows-configure-make.sh %2 %3
-) else if /I %1 equ restbed (
-    goto build_restbed %2 %3
 ) else if /I %1 equ pjproject (
     goto build_pjproject %2 %3
+) else if /I %1 equ openssl (
+    goto build_openssl %2 %3
 ) else (
     msbuild %CONTRIB_DIR%%1 %MSBUILD_ARGS%
 )
@@ -243,9 +249,9 @@ if %ERRORLEVEL% geq 1 (
 )
 goto :eof
 
-:build_restbed
+:build_openssl
 :: build openssl
-cd %CONTRIB_DIR%build\restbed\dependency\openssl
+cd %CONTRIB_DIR%build\openssl
 if "%2"=="win32" (
     call perl Configure VC-WIN64A
     call ms\do_win64a
@@ -256,20 +262,6 @@ if "%2"=="win32" (
 )
 call nmake -f ms\ntdll.mak
 set PATH=restbed\dependency\openssl\out32dll;%PATH%
-:: build restbed w/asio+catch
-cd ..\..
-mkdir build
-cd build
-setlocal
-set PATH=C:\\Program Files\\CMake\\bin\\;%PATH%
-set CMAKE_FLAGS=-DBUILD_SSL=ON -DBUILD_TESTS=OFF
-if "%3"=="x86" (
-    cmake %CMAKE_FLAGS% -G "Visual Studio 15 2017 Win32" ..
-) else if "%3"=="x64" (
-    cmake %CMAKE_FLAGS% -G "Visual Studio 15 2017 Win64" ..
-)
-cmake --build . --target ALL_BUILD --config Release
-cd ..\..
 goto :eof
 
 :build_pjproject

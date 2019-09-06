@@ -26,6 +26,9 @@ ffnvcodec, ^
 ffmpeg, ^
 argon2, ^
 zlib ^
+fmt, ^
+http_parser, ^
+restinio, ^
 gmp, ^
 iconv, ^
 jsoncpp, ^
@@ -37,7 +40,6 @@ opus, ^
 pjproject, ^
 portaudio, ^
 pthreads, ^
-restbed, ^
 secp256k1, ^
 upnp, ^
 x264, ^
@@ -50,8 +52,12 @@ set DEPENDENCIES=( ^
 media-sdk, ^
 ffnvcodec, ^
 ffmpeg, ^
+asio, ^
 argon2, ^
 zlib ^
+fmt, ^
+http_parser, ^
+restinio, ^
 gmp, ^
 iconv, ^
 jsoncpp, ^
@@ -59,11 +65,11 @@ msgpack, ^
 nettle, ^
 gnutls, ^
 opendht, ^
+openssl, ^
 opus, ^
 pjproject, ^
 portaudio, ^
 pthreads, ^
-restbed, ^
 secp256k1, ^
 upnp, ^
 vpx, ^
