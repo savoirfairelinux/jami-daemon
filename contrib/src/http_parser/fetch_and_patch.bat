@@ -11,10 +11,12 @@ if %USE_CACHE%==1 (
     %WGET_CMD% %HTTP_PARSER_URL%
 )
 
-7z -y x %HTTP_PARSER_VERSION%.tar.gz && 7z -y x %HTTP_PARSER_VERSION%.tar -o%BUILD%
-del %HTTP_PARSER_VERSION%.tar && del %HTTP_PARSER_VERSION%.tar.gz && del %BUILD%\pax_global_header
+7z -y x v%HTTP_PARSER_VERSION%.tar.gz && 7z -y x v%HTTP_PARSER_VERSION%.tar -o%BUILD%
+del v%HTTP_PARSER_VERSION%.tar && del v%HTTP_PARSER_VERSION%.tar.gz && del %BUILD%\pax_global_header
 rename %BUILD%\http_parser-%HTTP_PARSER_VERSION% http_parser
 
 cd %BUILD%\http_parser
+
+%APPLY_CMD% %SRC%\http_parser-vs.patch
 
 cd %SRC%
