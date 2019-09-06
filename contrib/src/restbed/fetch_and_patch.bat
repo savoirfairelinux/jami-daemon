@@ -66,25 +66,4 @@ if %USE_CACHE%==1 (
 del %CATCH_VERSION%.tar && del %CATCH_VERSION%.tar.gz && del pax_global_header
 rename catch-dependency-%CATCH_VERSION% catch
 
-rem ------------ openssl ------------
-
-set OPENSSL_VERSION=5cc1e25bc76bcf0db03bc37bd64b3290727963b6
-set OPENSSL_URL=https://github.com/Microsoft/openssl/archive/%OPENSSL_VERSION%.tar.gz
-
-if %USE_CACHE%==1 (
-    copy %CACHE_DIR%\%OPENSSL_VERSION%.tar.gz %cd%
-) else (
-    %WGET_CMD% %OPENSSL_URL%
-)
-
-7z -y x %OPENSSL_VERSION%.tar.gz && 7z -y x %OPENSSL_VERSION%.tar
-del %OPENSSL_VERSION%.tar && del %OPENSSL_VERSION%.tar.gz && del pax_global_header
-rename openssl-%OPENSSL_VERSION% openssl
-
-cd openssl
-
-if "%1"=="uwp" (
-    %APPLY_CMD% %SRC%\restbed\openssl-uwp.patch
-)
-
 cd %SRC%
