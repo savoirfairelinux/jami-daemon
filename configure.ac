@@ -209,8 +209,6 @@ AS_IF([test "x$enable_shared" == "xyes"], [
 ])
 AC_MSG_RESULT([$RING_SHARED])
 
-CPPFLAGS="${CPPFLAGS} -DASIO_STANDALONE"
-
 dnl
 dnl  Check for the contrib directory
 dnl
