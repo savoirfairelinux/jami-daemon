@@ -50,6 +50,7 @@ set DEPENDENCIES=( ^
 media-sdk, ^
 ffnvcodec, ^
 ffmpeg, ^
+asio, ^
 argon2, ^
 zlib ^
 gmp, ^
@@ -59,6 +60,7 @@ msgpack, ^
 nettle, ^
 gnutls, ^
 opendht, ^
+openssl, ^
 opus, ^
 pjproject, ^
 portaudio, ^
