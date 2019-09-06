@@ -1,7 +1,7 @@
 set BUILD=%SRC%..\build
 
-RESTINIO_VERSION=v.0.5.1
-RESTINIO_URL=https://github.com/Stiffstream/restinio/archive/%RESTINIO_VERSION%.tar.gz
+set RESTINIO_VERSION=v.0.5.1.2
+set RESTINIO_URL=https://github.com/Stiffstream/restinio/archive/%RESTINIO_VERSION%.tar.gz
 
 mkdir %BUILD%
 
