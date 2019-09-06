@@ -97,6 +97,7 @@ DRING_PUBLIC std::vector<std::string> getAudioPluginList();
 DRING_PUBLIC void setAudioPlugin(const std::string& audioPlugin);
 DRING_PUBLIC std::vector<std::string> getAudioOutputDeviceList();
 DRING_PUBLIC void setAudioOutputDevice(int32_t index);
+DRING_PUBLIC void startAudio();
 DRING_PUBLIC void setAudioInputDevice(int32_t index);
 DRING_PUBLIC void setAudioRingtoneDevice(int32_t index);
 DRING_PUBLIC std::vector<std::string> getAudioInputDeviceList();
