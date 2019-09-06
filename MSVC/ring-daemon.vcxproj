@@ -711,7 +711,6 @@
     <ClCompile Include="..\src\conference.cpp" />
     <ClCompile Include="..\src\config\yamlparser.cpp" />
     <ClCompile Include="..\src\data_transfer.cpp" />
-    <ClCompile Include="..\src\dlfcn.c" />
     <ClCompile Include="..\src\fileutils.cpp" />
     <ClCompile Include="..\src\ftp_server.cpp" />
     <ClCompile Include="..\src\hooks\urlhook.cpp" />
@@ -837,6 +836,7 @@
     <ClCompile Include="..\src\upnp\upnp_control.cpp" />
     <ClCompile Include="..\src\utf8_utils.cpp" />
     <ClCompile Include="..\src\winsyslog.c" />
+    <ClCompile Include="dlfcn.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\account.h" />
@@ -855,7 +855,6 @@
     <ClInclude Include="..\src\config\serializable.h" />
     <ClInclude Include="..\src\config\yamlparser.h" />
     <ClInclude Include="..\src\data_transfer.h" />
-    <ClInclude Include="..\src\dlfcn.h" />
     <ClInclude Include="..\src\dring\account_const.h" />
     <ClInclude Include="..\src\dring\callmanager_interface.h" />
     <ClInclude Include="..\src\dring\call_const.h" />
@@ -1003,6 +1002,7 @@
     <ClInclude Include="..\src\windirent.h" />
     <ClInclude Include="..\src\winsyslog.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="dlfcn.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\jamidht\eth\libdevcore\Makefile.am" />

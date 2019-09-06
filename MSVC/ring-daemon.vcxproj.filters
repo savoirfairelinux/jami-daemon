@@ -289,9 +289,6 @@
     <ClCompile Include="..\src\data_transfer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\dlfcn.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\fileutils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -421,6 +418,9 @@
     <ClCompile Include="..\src\upnp\protocol\pupnp\upnp_igd.cpp">
       <Filter>Source Files\upnp\protocol\pupnp</Filter>
     </ClCompile>
+    <ClCompile Include="dlfcn.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\account.h">
@@ -457,9 +457,6 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\data_transfer.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\dlfcn.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\enumclass_utils.h">
@@ -866,6 +863,9 @@
     </ClInclude>
     <ClInclude Include="..\src\upnp\protocol\pupnp\upnp_igd.h">
       <Filter>Source Files\upnp\protocol\pupnp</Filter>
+    </ClInclude>
+    <ClInclude Include="dlfcn.h">
+      <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
