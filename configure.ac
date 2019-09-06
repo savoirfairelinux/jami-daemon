@@ -431,33 +431,14 @@ AS_IF([test "x$with_nodejs" = "xyes"], [
   AM_CONDITIONAL(RING_NODEJS, false)
 );
 
-# Rest C++ with restbed
-AC_ARG_WITH([restcpp],
-    AS_HELP_STRING([--with-restcpp], [enable rest support with C++]))
-AC_ARG_ENABLE([restbed_old_api], AS_HELP_STRING([--enable-restbed-old-api], [Use the old restbed API]))
-AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
-  AC_DEFINE([RESTBED_OLD_API], [1], [Defined if you use the old restbed API])
-])
-
-AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"], [
-  AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files]))
+AS_IF([test "x$enable_ringns" != "xno"], [
   PKG_CHECK_MODULES(LIBCRYPTO, libcrypto,, AC_MSG_ERROR([Missing libcrypto development files]))
   PKG_CHECK_MODULES(LIBSSL, libssl,, AC_MSG_ERROR([Missing libssl development files]))
-
   LIBS="${LIBS} -lssl -lcrypto"
   AS_IF([test "${HAVE_WIN32}" = "1"],[
       LIBS="${LIBS} -lssleay32 -leay32"
   ])
   ], []
-);
-
-AS_IF([test "x$with_restcpp" = "xyes"], [
-    AS_AC_EXPAND(SBINDIR, $sbindir)
-    AC_SUBST(SBINDIR)
-    AC_CONFIG_FILES([bin/restcpp/Makefile])
-    AM_CONDITIONAL(RING_RESTCPP, true)
-  ],
-  AM_CONDITIONAL(RING_RESTCPP, false)
 );
 
 dnl Check for libav
