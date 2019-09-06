@@ -324,8 +324,13 @@ CoreLayer::startStream()
     initAudioLayerIO();
 
     // Run
-    checkErr(AudioUnitInitialize(ioUnit_));
-    checkErr(AudioOutputUnitStart(ioUnit_));
+    auto inputRes = AudioUnitInitialize(ioUnit_);
+    auto outputRes = AudioOutputUnitStart(ioUnit_);
+    if(inputRes || outputRes) {
+        stopStream();
+        checkErr(inputRes);
+        checkErr(outputRes);
+    }
 }
 
 void

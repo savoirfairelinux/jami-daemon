@@ -618,6 +618,12 @@ setAudioInputDevice(int32_t index)
 }
 
 void
+startAudio()
+{
+    jami::Manager::instance().startAudioDriverStream();
+}
+
+void
 setAudioRingtoneDevice(int32_t index)
 {
     return jami::Manager::instance().setAudioDevice(index, DeviceType::RINGTONE);
