@@ -1,8 +1,9 @@
 #include "ExVideoFrame.h"
 
 namespace jami {
-ExVideoFrame::ExVideoFrame(uint8_t* data, int f ,int w, int h){
+ExVideoFrame::ExVideoFrame(uint8_t* data, int f ,int w, int h, int ls){
     ptr = data;
+    linesize_ = ls;
     setGeometry(f,w,h);
 }
 
@@ -19,6 +20,11 @@ int ExVideoFrame::height() const
 int ExVideoFrame::format() const
 {
     return format_;
+}
+
+int ExVideoFrame::linesize() const
+{
+    return linesize_;
 }
 
 void ExVideoFrame::setGeometry(int f, int w, int h){
