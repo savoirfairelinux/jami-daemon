@@ -30,7 +30,7 @@
 #include "media/video/video_base.h"
 #include "media/filters/media_processor.h"
 //Subject
-#include "media/filters/asyncsubject.h"
+#include "media/filters/syncsubject.h"
 #include "media/video/video_scaler.h"
 // Exchange video frame
 #include "media/filters/ExVideoFrame.h"
@@ -105,8 +105,8 @@ private:
     std::string currentResource_;
 
     // Subject
-    AsyncSubject<std::shared_ptr<ExVideoFrame>> videoSubject;
-    MediaProcessor mediaProcessor_;
+    SyncSubject<std::shared_ptr<ExVideoFrame>> videoSubject;
+    std::unique_ptr<Subscriber<std::shared_ptr<ExVideoFrame>>> mediaProcessor_ = std::make_unique<MediaProcessor>();
     // An instance of the scaler
     video::VideoScaler scaler;
     std::unique_ptr<MediaDecoder> decoder_;

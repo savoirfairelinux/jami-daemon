@@ -64,7 +64,7 @@ VideoInput::VideoInput()
     , mutex_(), frame_cv_(), buffers_()
 #endif
 {
-    videoSubject.subscribe(mediaProcessor_);
+    videoSubject.subscribe(*mediaProcessor_);
 }
 
 VideoInput::~VideoInput()
@@ -350,10 +350,10 @@ VideoInput::createDecoder()
         if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame)){
 //            videoSubject.onNext(videoFrame);
             // Convert incoming frame to RGB8 before sending it to subscribers
-            std::unique_ptr<VideoFrame> rgbFrameUniquePointer(scaler.convertFormat(*videoFrame,AV_PIX_FMT_RGB24));
+            std::unique_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(*videoFrame,AV_PIX_FMT_RGB24);
             std::shared_ptr<ExVideoFrame> exVideoFrame = std::make_shared<ExVideoFrame>(rgbFrameUniquePointer->pointer()->data[0],
-            AV_PIX_FMT_RGB24,videoFrame->width(),videoFrame->height());
-            mediaProcessor_.onNext(exVideoFrame);
+            AV_PIX_FMT_RGB24,videoFrame->width(),videoFrame->height(),videoFrame->pointer()->linesize[0]);
+            videoSubject.onNext(exVideoFrame);
             videoFrame->copyFrom(*rgbFrameUniquePointer);
         }
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
