@@ -27,9 +27,9 @@ namespace jami {
 class FrameCopy {
 public:
   // This frame is a resized version of the original in RGB format
-  VideoFrame resizedFrameRGB;
+  cv::Mat resizedFrameRGB;
   // This frame is used to draw predictions into in RGB format
-  VideoFrame predictionsFrameBGR;
+  cv::Mat predictionsFrameBGR;
   // An instance of the scaler
   video::VideoScaler scaler;
 
@@ -87,7 +87,7 @@ public:
    * Takes a frame and feeds it to the model storage for predictions
    * @param frame
    */
-  void feedInput(const VideoFrame &frame);
+  void feedInput(const cv::Mat &frame);
 
   /**
    * @brief computePredictions
@@ -113,7 +113,7 @@ public:
    * @param threshold: Only display predictions with a probability > threshold
    */
   void drawPredictionsOnFrame(
-      const VideoFrame &frame,
+      cv::Mat &frame,
       const std::vector<std::tuple<std::array<float, 4>, float, int>>
           &predictions,
       const unsigned int nbPredictions = 5, const float threshold = 0.4f);
