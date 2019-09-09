@@ -60,7 +60,6 @@ public:
     using LookupCallback = std::function<void(const std::string& result, Response response)>;
     using RegistrationCallback = std::function<void(RegistrationResponse response)>;
 
-    NameDirectory() {}
     NameDirectory(const std::string& s, std::shared_ptr<dht::Logger> l = {});
     void load();
 
@@ -84,6 +83,7 @@ public:
 private:
     NON_COPYABLE(NameDirectory);
     NameDirectory(NameDirectory&&) = delete;
+    NameDirectory& operator=(NameDirectory&&) = delete;
     constexpr static const char* const DEFAULT_SERVER_HOST = "ns.jami.net";
 
     const std::string serverHost_ {DEFAULT_SERVER_HOST};
