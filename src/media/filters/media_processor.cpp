@@ -16,10 +16,10 @@ void FrameCopy::createCopyFrames(const VideoFrame &frame,
                                  const int resizedImageWidth,
                                  const int resizedImageHeight) {
   // Allocate space for the resized frame
-  resizedFrameRGB.reserve(AV_PIX_FMT_RGB24, resizedImageWidth,
-                          resizedImageHeight);
+  //resizedFrameRGB.reserve(AV_PIX_FMT_RGB24, resizedImageWidth,
+  //                        resizedImageHeight);
   // Allocate space for the predictions frame
-  predictionsFrameBGR.reserve(AV_PIX_FMT_BGR24, frame.width(), frame.height());
+  //predictionsFrameBGR.reserve(AV_PIX_FMT_BGR24, frame.width(), frame.height());
 }
 
 void FrameCopy::copyFrameContent(const VideoFrame &iFrame, VideoFrame &oFrame) {
@@ -28,6 +28,8 @@ void FrameCopy::copyFrameContent(const VideoFrame &iFrame, VideoFrame &oFrame) {
 }
 
 MediaProcessor::MediaProcessor() : mot{SupervisedModel{}} {
+  auto prediction  = std::make_tuple<std::array<float, 4>, float, int>({0.25,0.25,0.75,0.75},0.9,5);
+  computedPredictions.push_back(prediction);
   mot.init();
   /**
    * Waits for new frames and then process them
@@ -41,7 +43,7 @@ MediaProcessor::MediaProcessor() : mot{SupervisedModel{}} {
         break;
       }
 
-      feedInput(fcopy.resizedFrameRGB);
+      //feedInput(fcopy.resizedFrameRGB);
       newFrame = false;
       /** Unclock the mutex, this way we let the other thread
        *  copy new data while we are processing the old one
@@ -49,7 +51,7 @@ MediaProcessor::MediaProcessor() : mot{SupervisedModel{}} {
 
       l.unlock();
 
-      computePredictions();
+      //computePredictions();
     }
   });
 }
@@ -63,15 +65,20 @@ MediaProcessor::~MediaProcessor() {
 void MediaProcessor::onSubscribe(std::shared_ptr<Subscription<std::shared_ptr<ExVideoFrame>>>&& sub){
     subscription = sub;
     JAMI_DBG() << "  Subscribed ! ";
-    //subscription->request(1);
+    subscription->request(1);
 }
 
 void MediaProcessor::onNext(std::shared_ptr<ExVideoFrame> frame) {
     if(subscription) {
-        //subscription->request(1);
+      cv::Mat opencvFrame{frame->height(), frame->width(), CV_8UC3,
+                      frame->pointer(),
+                      static_cast<size_t>(frame->linesize())};
+        cv::Size resizedSize;
         if (firstRun) {
             mot.setExpectedImageDimensions();
             //fcopy.createCopyFrames(*frame, mot.getImageWidth(), mot.getImageHeight());
+            //resizedSize = cv::Size{mot.getImageWidth(), mot.getImageHeight()};
+            //cv::resize(opencvFrame,fcopy.resizedFrameRGB,resizedSize);
             JAMI_DBG() << "FRAME[]: w: " << frame->width() << " , h: " << frame->height()
                        << " , format: "
                        << av_get_pix_fmt_name(
@@ -79,21 +86,23 @@ void MediaProcessor::onNext(std::shared_ptr<ExVideoFrame> frame) {
             firstRun = false;
         }
         std::chrono::steady_clock::time_point tic = std::chrono::steady_clock::now();
-        /**if (!newFrame) {
+        if (!newFrame) {
             std::lock_guard<std::mutex> l(inputLock);
-            fcopy.copyFrameContent(*frame, fcopy.resizedFrameRGB);
-            //printPredictions();
+            //fcopy.copyFrameContent(*frame, fcopy.resizedFrameRGB);
+            //cv::resize(opencvFrame,fcopy.resizedFrameRGB,resizedSize);
+            printPredictions();
             newFrame = true;
             inputCv.notify_all();
-        }**/
+        }
         //fcopy.copyFrameContent(*frame, fcopy.predictionsFrameBGR);
+        fcopy.predictionsFrameBGR = opencvFrame.clone();
         drawPredictionsOnFrame(fcopy.predictionsFrameBGR, computedPredictions);
         JAMI_DBG() << " OnNext Called from Mediaprocessor";
 
         //frame->copyFrom(fcopy.predictionsFrameBGR);
-
-        for(size_t i{0}; i< frame->width()*frame->height()*3;i+=10){
-          frame->pointer()[i] = static_cast<uint8_t>(i);
+        if(frame->pointer()) {
+          uint8_t* frameData = frame->pointer();
+          std::memcpy(frameData, fcopy.predictionsFrameBGR.data,frame->width()*frame->height()*3 * sizeof(uint8_t));
         }
 
         std::chrono::steady_clock::time_point tac = std::chrono::steady_clock::now();
@@ -109,6 +118,7 @@ void MediaProcessor::onNext(std::shared_ptr<ExVideoFrame> frame) {
             JAMI_DBG() << "Frame rate: " << 1000000.0f / diff / totalFrames;
             delta = std::chrono::nanoseconds::zero();
         }
+      subscription->request(1);
     }
 }
 
@@ -121,7 +131,7 @@ void MediaProcessor::stop() {
   inputCv.notify_all();
 }
 
-void MediaProcessor::feedInput(const VideoFrame &frame) {
+void MediaProcessor::feedInput(const cv::Mat &frame) {
   auto pair = mot.getInput();
   uint8_t *inputPointer = pair.first;
 
@@ -131,18 +141,22 @@ void MediaProcessor::feedInput(const VideoFrame &frame) {
   size_t imageNbChannels = static_cast<size_t>(pair.second[3]);
   const size_t dataLineSize = imageNbChannels * imageWidth;
 
-  uint8_t *line{nullptr};
+/*   uint8_t *line{nullptr};
   // LineSize = width*spectrum + padding, e.g: width*3  if rgb and padding = 0
-  size_t lineSize = static_cast<size_t>(frame.pointer()->linesize[0]);
+  size_t lineSize = static_cast<size_t>(3*frame.size().width);
 
   // Write pixel data
   for (size_t y = 0; y < imageHeight; y++) {
-    line = frame.pointer()->data[0] + y * lineSize;
+    line = frame.data + y * lineSize;
     std::memcpy(inputPointer + y * dataLineSize, line,
                 dataLineSize * sizeof(uint8_t));
   }
 
-  line = nullptr;
+  line = nullptr; */
+
+  std::memcpy(inputPointer, frame.data , imageWidth* imageHeight*imageNbChannels *  sizeof(uint8_t));
+
+  inputPointer = nullptr;
 }
 
 void MediaProcessor::computePredictions() {
@@ -174,16 +188,13 @@ void MediaProcessor::printPredictions() {
 }
 
 void MediaProcessor::drawPredictionsOnFrame(
-    const VideoFrame &frame,
+    cv::Mat &frame,
     const std::vector<std::tuple<std::array<float, 4>, float, int>>
         &predictions,
     const unsigned int nbPredictions, const float threshold) {
-  cv::Mat opencvFrame{frame.height(), frame.width(), CV_8UC3,
-                      frame.pointer()->data[0],
-                      static_cast<size_t>(frame.pointer()->linesize[0])};
 
-  int linewidth = std::max(1, int(frame.height() * .005));
-
+  int linewidth = std::max(1, int(frame.size().height * .005));
+  cv::cvtColor(frame,frame, cv::COLOR_RGB2BGR);
   for (size_t i = 0; i < predictions.size(); i++) {
     const auto &prediction = predictions[i];
     // Get the prediction label index
@@ -202,11 +213,11 @@ void MediaProcessor::drawPredictionsOnFrame(
        * Create two points (x0,y0) and (x1, y1) that define the upper left
        * and lower right corners of the rectangle
        **/
-      const int x0 = static_cast<int>(aa[1] * frame.width());
-      const int y0 = static_cast<int>(aa[0] * frame.height());
-      const int x1 = static_cast<int>(aa[3] * frame.width());
+      const int x0 = static_cast<int>(aa[1] * frame.size().width);
+      const int y0 = static_cast<int>(aa[0] * frame.size().height);
+      const int x1 = static_cast<int>(aa[3] * frame.size().width);
       const int y1 =
-          static_cast<int>(aa[2] * fcopy.predictionsFrameBGR.height());
+          static_cast<int>(aa[2] * frame.size().height);
 
       // Top left of the bounding box
       cv::Point tl = cvPoint(x0, y0);
@@ -214,20 +225,21 @@ void MediaProcessor::drawPredictionsOnFrame(
       cv::Point br = cvPoint(x1, y1);
 
       // Draw the bounding box
-      cv::rectangle(opencvFrame, tl, br, colors[i], linewidth);
+      cv::rectangle(frame, tl, br, colors[i], linewidth);
 
       // Text Position Point
       cv::Point txt_up = cvPoint(x0 + linewidth, y0 - 5 * linewidth);
       cv::Point txt_in = cvPoint(x0, y0 + 12 * linewidth);
 
       if (y0 > 0.05) {
-        cv::putText(opencvFrame, objectName, txt_up, 1, linewidth, colors[i]);
+        cv::putText(frame, objectName, txt_up, 1, linewidth, colors[i]);
       } else {
         // writes inside the bounding box if the boundary of the bounding box is
         // close to the frame image boundaries
-        cv::putText(opencvFrame, objectName, txt_in, 1, linewidth, colors[i]);
+        cv::putText(frame, objectName, txt_in, 1, linewidth, colors[i]);
       }
     }
   }
+  cv::cvtColor(frame,frame, cv::COLOR_BGR2RGB);
 }
 } // namespace jami
