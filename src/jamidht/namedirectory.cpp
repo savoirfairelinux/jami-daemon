@@ -109,6 +109,9 @@ NameDirectory::instance(const std::string& server, std::shared_ptr<dht::Logger> 
 
     std::lock_guard<std::mutex> lock(instanceMtx);
     static std::map<std::string, NameDirectory> instances {};
+    auto it = instances.find(s);
+    if (it != instances.end())
+        return it->second;
     auto r = instances.emplace(std::piecewise_construct,
                       std::forward_as_tuple(s),
                       std::forward_as_tuple(s, l));
