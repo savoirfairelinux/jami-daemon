@@ -34,7 +34,8 @@
 #include "jami_contact.h"
 #include "configkeys.h"
 #include "contact_list.h"
-#include "account_manager.h"
+#include "archive_account_manager.h"
+#include "server_account_manager.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -912,19 +913,28 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
     };
 
     try {
-        accountManager_.reset(new ArchiveAccountManager(getPath(),
-            dht_,
-            [w = weak()](AccountManager::AsyncUser&& cb) {
-                if (auto this_ = w.lock())
-                    cb(*this_->accountManager_);
-            },
-            [this]() { return getAccountDetails(); },
-            archivePath_.empty() ? "archive.gz" : archivePath_,
-            nameServer_));
+        auto onAsync = [w = weak()](AccountManager::AsyncUser&& cb) {
+            if (auto this_ = w.lock())
+                cb(*this_->accountManager_);
+        };
+        if (managerUri_.empty()) {
+            accountManager_.reset(new ArchiveAccountManager(getPath(),
+                dht_,
+                onAsync,
+                [this]() { return getAccountDetails(); },
+                archivePath_.empty() ? "archive.gz" : archivePath_,
+                nameServer_));
+        } else {
+            accountManager_.reset(new ServerAccountManager(getPath(),
+                dht_,
+                onAsync,
+                managerUri_,
+                nameServer_));
+        }
 
         auto id = accountManager_->loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
-        bool hasArchive = not archivePath_.empty()
-            and fileutils::isFile(fileutils::getFullPath(idPath_, archivePath_));
+        /*bool hasArchive = not archivePath_.empty()
+            and fileutils::isFile(fileutils::getFullPath(idPath_, archivePath_));*/
 
         if (auto info = accountManager_->useIdentity(id, receipt_, receiptSignature_, std::move(callbacks))) {
             // normal loading path
@@ -936,72 +946,87 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             }
         }
         else if (isEnabled()) {
-                setRegistrationState(RegistrationState::INITIALIZING);
-                auto fDeviceKey = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>([](){
-                    return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate());
-                });
+            setRegistrationState(RegistrationState::INITIALIZING);
+            auto fDeviceKey = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>([](){
+                return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate());
+            });
 
-                auto fReq = dht::ThreadPool::computation().get<std::unique_ptr<dht::crypto::CertificateRequest>>([fDeviceKey]{
-                    auto request = std::make_unique<dht::crypto::CertificateRequest>();
-                    request->setName("Jami device");
-                    auto deviceKey = fDeviceKey.get();
-                    request->setUID(deviceKey->getPublicKey().getId().toString());
-                    request->sign(*deviceKey);
-                    return request;
-                });
+            auto fReq = dht::ThreadPool::computation().get<std::unique_ptr<dht::crypto::CertificateRequest>>([fDeviceKey]{
+                auto request = std::make_unique<dht::crypto::CertificateRequest>();
+                request->setName("Jami device");
+                auto deviceKey = fDeviceKey.get();
+                request->setUID(deviceKey->getPublicKey().getId().toString());
+                request->sign(*deviceKey);
+                return request;
+            });
 
-                auto creds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
-                creds->archivePath = archivePath_.empty() ? "archive.gz" : archivePath_;
+            std::unique_ptr<AccountManager::AccountCredentials> creds;
+            if (managerUri_.empty()) {
+                auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
+                acreds->archivePath = archivePath_.empty() ? "archive.gz" : archivePath_;
                 if (not archive_path.empty()) {
-                    creds->scheme = "file";
-                    creds->uri = archive_path;
+                    acreds->scheme = "file";
+                    acreds->uri = archive_path;
                 }
                 else if (not archive_pin.empty()) {
-                    creds->scheme = "dht";
-                    creds->uri = archive_pin;
-                    creds->dhtBootstrap = loadBootstrap();
-                    creds->dhtPort = (in_port_t)dhtPortUsed_;
+                    acreds->scheme = "dht";
+                    acreds->uri = archive_pin;
+                    acreds->dhtBootstrap = loadBootstrap();
+                    acreds->dhtPort = (in_port_t)dhtPortUsed_;
                 }
-                creds->password = archive_password;
-                accountManager_->initAuthentication(
-                    std::move(fReq),
-                    std::move(creds),
-                        [this, fDeviceKey](const AccountInfo& info,
-                            const std::map<std::string, std::string>& config,
-                            std::string&& receipt,
-                            std::vector<uint8_t>&& receipt_signature) {
-                        JAMI_WARN("Auth success !");
+                creds = std::move(acreds);
+            } else {
+                auto screds = std::make_unique<ServerAccountManager::ServerAccountCredentials>();
+                screds->username = username_;
+                creds = std::move(screds);
+            }
+            creds->password = archive_password;
 
-                        fileutils::check_dir(idPath_.c_str(), 0700);
+            accountManager_->initAuthentication(
+                std::move(fReq),
+                std::move(creds),
+                [this, fDeviceKey](const AccountInfo& info,
+                    const std::map<std::string, std::string>& config,
+                    std::string&& receipt,
+                    std::vector<uint8_t>&& receipt_signature)
+            {
+                JAMI_WARN("Auth success !");
 
-                        // save the chain including CA
-                        auto id = info.identity;
-                        id.first = std::move(fDeviceKey.get());
-                        std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(id, idPath_, "ring_device");
-                        id_ = std::move(id);
-                        tlsPassword_ = {};
+                fileutils::check_dir(idPath_.c_str(), 0700);
 
-                        username_ = RING_URI_PREFIX+info.accountId;
+                // save the chain including CA
+                auto id = info.identity;
+                id.first = std::move(fDeviceKey.get());
+                std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(id, idPath_, "ring_device");
+                id_ = std::move(id);
+                tlsPassword_ = {};
 
-                        ringDeviceName_ = ip_utils::getDeviceName();
-                        if (ringDeviceName_.empty())
-                            ringDeviceName_ = info.deviceId.substr(8);
+                username_ = RING_URI_PREFIX+info.accountId;
 
-                        receipt_ = std::move(receipt);
-                        receiptSignature_ = std::move(receipt_signature);
-                        accountManager_->foundAccountDevice(info.identity.second, ringDeviceName_, clock::now());
-                        setRegistrationState(RegistrationState::UNREGISTERED);
+                ringDeviceName_ = ip_utils::getDeviceName();
+                if (ringDeviceName_.empty())
+                    ringDeviceName_ = info.deviceId.substr(8);
 
-                        saveConfig();
-                        doRegister();
-                    }, [this](AccountManager::AuthError error, const std::string& message) {
-                        JAMI_WARN("Auth error: %d %s", (int)error, message.c_str());
-                        {
-                            std::lock_guard<std::mutex> lock(configurationMutex_);
-                            setRegistrationState(RegistrationState::ERROR_GENERIC);
-                        }
-                        Manager::instance().removeAccount(getAccountID());
-                    }, std::move(callbacks));
+                auto nameServerIt = config.find("nameServer");
+                if (nameServerIt != config.end()) {
+                    nameServer_ = nameServerIt->second;
+                }
+                receipt_ = std::move(receipt);
+                receiptSignature_ = std::move(receipt_signature);
+                accountManager_->foundAccountDevice(info.identity.second, ringDeviceName_, clock::now());
+                setRegistrationState(RegistrationState::UNREGISTERED);
+
+                saveConfig();
+                doRegister();
+            }, [this](AccountManager::AuthError error, const std::string& message)
+            {
+                JAMI_WARN("Auth error: %d %s", (int)error, message.c_str());
+                {
+                    std::lock_guard<std::mutex> lock(configurationMutex_);
+                    setRegistrationState(RegistrationState::ERROR_GENERIC);
+                }
+                Manager::instance().removeAccount(getAccountID());
+            }, std::move(callbacks));
         }
     }
     catch (const std::exception& e) {
@@ -1036,6 +1061,9 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
+
+    parseString(details, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
+    parseString(details, DRing::Account::ConfProperties::USERNAME, username_);
 
     std::string archive_password;
     std::string archive_pin;
@@ -1119,6 +1147,7 @@ JamiAccount::getAccountDetails() const
     a.emplace(DRing::Account::ConfProperties::PROXY_ENABLED,    proxyEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::PROXY_SERVER,     proxyServer_);
     a.emplace(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
+    a.emplace(DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
 #if HAVE_RINGNS
     a.emplace(DRing::Account::ConfProperties::RingNS::URI,                   nameServer_);
 #endif
@@ -1590,7 +1619,7 @@ JamiAccount::doRegister_()
     std::lock_guard<std::mutex> lock(configurationMutex_);
 
     try {
-        if (not accountManager_->getInfo())
+        if (not accountManager_ or not accountManager_->getInfo())
             throw std::runtime_error("No identity configured for this account.");
 
         loadTreatedCalls();
@@ -2091,7 +2120,7 @@ JamiAccount::isMessageTreated(unsigned int id)
 std::map<std::string, std::string>
 JamiAccount::getKnownDevices() const
 {
-    if (not accountManager_->getInfo())
+    if (not accountManager_ or not accountManager_->getInfo())
         return {};
     std::map<std::string, std::string> ids;
     for (auto& d : accountManager_->getKnownDevices()) {
@@ -2184,7 +2213,7 @@ JamiAccount::generateDhParams()
 MatchRank
 JamiAccount::matches(const std::string &userName, const std::string &server) const
 {
-    if (not accountManager_->getInfo())
+    if (not accountManager_ or not accountManager_->getInfo())
         return MatchRank::NONE;
 
     if (userName == accountManager_->getInfo()->accountId || server == accountManager_->getInfo()->accountId || userName == accountManager_->getInfo()->deviceId) {
