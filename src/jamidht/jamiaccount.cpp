@@ -1021,6 +1021,23 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 accountManager_->foundAccountDevice(info.identity.second, ringDeviceName_, clock::now());
                 setRegistrationState(RegistrationState::UNREGISTERED);
 
+
+                AccountManager::OnChangeCallback callbacks {
+                    [this](const std::string& uri, bool confirmed) {
+                        emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, confirmed);
+                    },
+                    [this](const std::string& uri, bool banned){
+                        emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, banned);
+                    },
+                    [this](const std::string& uri, const std::vector<uint8_t>& payload, time_t received){
+                        emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(), uri, payload, received);
+                    },
+                    [this](){
+                        emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
+                    },
+                };
+                accountManager_->useIdentity(id_, receipt_, receiptSignature_, std::move(callbacks));
+
                 saveConfig();
                 doRegister();
             }, [this](AccountManager::AuthError error, const std::string& message)
