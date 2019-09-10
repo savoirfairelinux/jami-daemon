@@ -85,7 +85,6 @@ public:
     constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
     constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
     constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net:[80-100]";
-    constexpr static const char* const DHT_TYPE_NS = "cx.ring";
 
     /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
 
@@ -632,6 +631,8 @@ private:
      * Optional: "received" parameter from VIA header
      */
     std::string receivedParameter_ {};
+
+    std::string managerUri_ {};
 
     /**
      * Optional: "rport" parameter from VIA header

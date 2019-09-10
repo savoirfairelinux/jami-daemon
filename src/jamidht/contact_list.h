@@ -93,6 +93,7 @@ public:
 
     /* Devices */
     const std::map<dht::InfoHash, KnownDevice>& getKnownDevices() const { return knownDevices_; }
+    void foundAccountDevice(const dht::InfoHash& device, const std::string& name = {}, const time_point& last_sync = time_point::min());
     bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name = {}, const time_point& last_sync = time_point::min());
     bool removeAccountDevice(const dht::InfoHash& device);
     void setAccountDeviceName(const dht::InfoHash& device, const std::string& name);
