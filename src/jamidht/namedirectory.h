@@ -55,7 +55,8 @@ public:
                                             alreadyTaken,
                                             error,
                                             incompleteRequest,
-                                            signatureVerificationFailed
+                                            signatureVerificationFailed,
+                                            unsupported
                                         };
 
     using LookupCallback = std::function<void(const std::string& result, Response response)>;

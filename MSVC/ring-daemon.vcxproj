@@ -719,7 +719,9 @@
     <ClCompile Include="..\src\im\message_engine.cpp" />
     <ClCompile Include="..\src\ip_utils.cpp" />
     <ClCompile Include="..\src\jamidht\account_manager.cpp" />
+    <ClCompile Include="..\src\jamidht\archive_account_manager.cpp" />
     <ClCompile Include="..\src\jamidht\contact_list.cpp" />
+    <ClCompile Include="..\src\jamidht\server_account_manager.cpp" />
     <ClCompile Include="..\src\logger.cpp" />
     <ClCompile Include="..\src\manager.cpp" />
     <ClCompile Include="..\src\media\audio\audiobuffer.cpp" />
@@ -879,8 +881,10 @@
     <ClInclude Include="..\src\im\message_engine.h" />
     <ClInclude Include="..\src\ip_utils.h" />
     <ClInclude Include="..\src\jamidht\account_manager.h" />
+    <ClInclude Include="..\src\jamidht\archive_account_manager.h" />
     <ClInclude Include="..\src\jamidht\contact_list.h" />
     <ClInclude Include="..\src\jamidht\jami_contact.h" />
+    <ClInclude Include="..\src\jamidht\server_account_manager.h" />
     <ClInclude Include="..\src\logger.h" />
     <ClInclude Include="..\src\manager.h" />
     <ClInclude Include="..\src\map_utils.h" />

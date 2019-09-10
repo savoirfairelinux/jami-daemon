@@ -347,6 +347,28 @@ ContactList::saveKnownDevices() const
     msgpack::pack(file, devices);
 }
 
+void
+ContactList::foundAccountDevice(const dht::InfoHash& device, const std::string& name, const time_point& updated)
+{
+    // insert device
+    auto it = knownDevices_.emplace(device, KnownDevice{{}, name, updated});
+    if (it.second) {
+        JAMI_DBG("[Contacts] Found account device: %s %s", name.c_str(),
+                                                           device.toString().c_str());
+        saveKnownDevices();
+        callbacks_.devicesChanged();
+    } else {
+        // update device name
+        if (not name.empty() and it.first->second.name != name) {
+            JAMI_DBG("[Contacts] updating device name: %s %s", name.c_str(),
+                                                               device.toString().c_str());
+            it.first->second.name = name;
+            saveKnownDevices();
+            callbacks_.devicesChanged();
+        }
+    }
+}
+
 bool
 ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name, const time_point& updated)
 {
@@ -354,8 +376,9 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
         return false;
 
     // match certificate chain
-    if (not accountTrust_.verify(*crt)) {
-        JAMI_WARN("[Contacts] Found invalid account device: %s", crt->getId().toString().c_str());
+    auto verifyResult = accountTrust_.verify(*crt);
+    if (not verifyResult) {
+        JAMI_WARN("[Contacts] Found invalid account device: %s: %s", crt->getId().toString().c_str(), verifyResult.toString().c_str());
         return false;
     }
 
