@@ -62,10 +62,10 @@ public:
     using LookupCallback = std::function<void(const std::string& result, Response response)>;
     using RegistrationCallback = std::function<void(RegistrationResponse response)>;
 
-    NameDirectory(const std::string& s, std::shared_ptr<dht::Logger> l = {});
+    NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::Logger> l = {});
     void load();
 
-    static NameDirectory& instance(const std::string& server, std::shared_ptr<dht::Logger> l = {});
+    static NameDirectory& instance(const std::string& serverUrl, std::shared_ptr<dht::Logger> l = {});
     static NameDirectory& instance() { return instance(DEFAULT_SERVER_HOST); }
 
     static void lookupUri(const std::string& uri, const std::string& default_server,
@@ -86,10 +86,11 @@ private:
     NON_COPYABLE(NameDirectory);
     NameDirectory(NameDirectory&&) = delete;
     NameDirectory& operator=(NameDirectory&&) = delete;
-    constexpr static const char* const DEFAULT_SERVER_HOST = "ns.jami.net";
+    constexpr static const char* const DEFAULT_SERVER_HOST = "https://ns.jami.net";
 
-    const std::string serverHost_ {DEFAULT_SERVER_HOST};
-    const std::string cachePath_;
+    std::string serverUrl_;
+    std::string serverHost_ {DEFAULT_SERVER_HOST};
+    std::string cachePath_;
 
     std::mutex cacheLock_ {};
     std::shared_ptr<dht::Logger> logger_;
