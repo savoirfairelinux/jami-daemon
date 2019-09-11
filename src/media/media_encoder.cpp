@@ -751,10 +751,10 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 {
     uint64_t maxBitrate = 1000 * br;
     uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
-    uint64_t bufSize = 2 * maxBitrate;
+    uint64_t bufSize = maxBitrate;
 #ifdef RING_ACCEL
     if (accel_) {
-        bufSize = 2 * maxBitrate;
+        bufSize = maxBitrate;
         encoderCtx->bit_rate = maxBitrate;
     }
 #endif
@@ -776,7 +776,7 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
     // http://www.webmproject.org/docs/encoder-parameters/
     uint64_t maxBitrate = 1000 * br;
     uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
-    uint64_t bufSize = 2 * maxBitrate;
+    uint64_t bufSize = maxBitrate;
 
     av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
     av_opt_set_int(encoderCtx, "error-resilient", 1, AV_OPT_SEARCH_CHILDREN);
@@ -802,7 +802,7 @@ void
 MediaEncoder::initMPEG4(AVCodecContext* encoderCtx, uint64_t br)
 {
     uint64_t maxBitrate = 1000 * br;
-    uint64_t bufSize = 2 * maxBitrate;
+    uint64_t bufSize = maxBitrate;
 
     // Use CBR (set bitrate)
     encoderCtx->rc_buffer_size = bufSize;
@@ -814,7 +814,7 @@ void
 MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
 {
     uint64_t maxBitrate = 1000 * br;
-    uint64_t bufSize = 2 * maxBitrate;
+    uint64_t bufSize = maxBitrate;
 
     // Use CBR (set bitrate)
     encoderCtx->rc_buffer_size = bufSize;
