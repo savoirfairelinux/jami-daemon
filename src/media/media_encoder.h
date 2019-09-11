@@ -135,6 +135,7 @@ private:
 
     void initH264(AVCodecContext* encoderCtx, uint64_t br);
     void initVP8(AVCodecContext* encoderCtx, uint64_t br);
+    void initVP9(AVCodecContext* encoderCtx, uint64_t br);
     void initMPEG4(AVCodecContext* encoderCtx, uint64_t br);
     void initH263(AVCodecContext* encoderCtx, uint64_t br);
 

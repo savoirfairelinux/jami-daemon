@@ -64,6 +64,8 @@ struct SystemCodecInfo
     static constexpr unsigned DEFAULT_H264_MAX_QUALITY {20};
     static constexpr unsigned DEFAULT_VP8_MIN_QUALITY {50};
     static constexpr unsigned DEFAULT_VP8_MAX_QUALITY {20};
+    static constexpr unsigned DEFAULT_VP9_MIN_QUALITY {50};
+    static constexpr unsigned DEFAULT_VP9_MAX_QUALITY {20};
     static constexpr unsigned DEFAULT_VIDEO_BITRATE {1200}; // in Kbits/second
 #endif
 

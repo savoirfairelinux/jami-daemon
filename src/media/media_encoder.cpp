@@ -714,6 +714,8 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
         initH264(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_VP8) {
         initVP8(encoderCtx, br);
+    } else if (avcodecId == AV_CODEC_ID_VP9) {
+        initVP9(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_MPEG4) {
         initMPEG4(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_H263) {
@@ -796,6 +798,38 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
     encoderCtx->rc_buffer_size = bufSize;
     encoderCtx->rc_max_rate = maxBitrate;
     JAMI_DBG("VP8 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, maxBitrate);
+}
+
+void
+MediaEncoder::initVP9(AVCodecContext* encoderCtx, uint64_t br)
+{
+    // 1- if quality is set use it
+    // bitrate need to be set. The target bitrate becomes the maximum allowed bitrate
+    // 2- otherwise set rc_max_rate and rc_buffer_size
+    // Using information given on this page:
+    // http://www.webmproject.org/docs/encoder-parameters/
+    uint64_t maxBitrate = 1000 * br;
+    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
+    uint64_t bufSize = maxBitrate;
+
+    av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
+    av_opt_set_int(encoderCtx, "error-resilient", 1, AV_OPT_SEARCH_CHILDREN);
+    av_opt_set_int(encoderCtx, "cpu-used", 7, AV_OPT_SEARCH_CHILDREN); // value obtained from testing
+    av_opt_set_int(encoderCtx, "lag-in-frames", 0, AV_OPT_SEARCH_CHILDREN);
+    // allow encoder to drop frames if buffers are full and
+    // to undershoot target bitrate to lessen strain on resources
+    av_opt_set_int(encoderCtx, "drop-frame", 25, AV_OPT_SEARCH_CHILDREN);
+    av_opt_set_int(encoderCtx, "undershoot-pct", 95, AV_OPT_SEARCH_CHILDREN);
+    // don't set encoderCtx->gop_size: let libvpx decide when to insert a keyframe
+    encoderCtx->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
+    encoderCtx->qmin = 4;
+    encoderCtx->qmax = 56;
+    crf = std::min(encoderCtx->qmax, std::max((int)crf, encoderCtx->qmin));
+    libav_utils::setDictValue(&options_, "crf", std::to_string(crf));
+    av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+    encoderCtx->rc_buffer_size = bufSize;
+    encoderCtx->rc_max_rate = maxBitrate;
+    JAMI_DBG("VP9 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, maxBitrate);
 }
 
 void
