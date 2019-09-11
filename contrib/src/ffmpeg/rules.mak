@@ -97,6 +97,8 @@ FFMPEGCONF += \
 	--enable-decoder=mpeg4 \
 	--enable-encoder=libvpx_vp8 \
 	--enable-decoder=vp8 \
+	--enable-encoder=libvpx_vp9 \
+	--enable-decoder=libvpx_vp9 \
 	--enable-decoder=vp9 \
 	--enable-encoder=h263 \
 	--enable-encoder=h263p \
@@ -196,6 +198,7 @@ FFMPEGCONF += \
 	--enable-jni \
 	--enable-mediacodec \
 	--enable-decoder=vp8_mediacodec \
+	--enable-decoder=vp9_mediacodec \
 	--enable-decoder=h264_mediacodec \
 	--enable-decoder=mpeg4_mediacodec
 # ASM not working on Android x86 https://trac.ffmpeg.org/ticket/4928
@@ -220,18 +223,22 @@ FFMPEGCONF += \
 	--enable-hwaccel=mpeg4_vaapi \
 	--enable-hwaccel=h263_vaapi \
 	--enable-hwaccel=vp8_vaapi \
+	--enable-hwaccel=vp9_vaapi \
 	--enable-hwaccel=mjpeg_vaapi \
 	--enable-encoder=h264_vaapi \
 	--enable-encoder=vp8_vaapi \
+	--enable-encoder=vp9_vaapi \
 	--enable-encoder=mjpeg_vaapi \
 	--enable-cuvid \
+	--enable-decoder=vp9_cuvid \
 	--enable-ffnvcodec \
 	--enable-nvdec \
-	--enable-nvenc \
 	--enable-hwaccel=h264_nvdec \
 	--enable-hwaccel=hevc_nvdec \
-	--enable-hwaccel=vp8_nvdec \
 	--enable-hwaccel=mjpeg_nvdec \
+	--enable-hwaccel=vp8_nvdec \
+	--enable-hwaccel=vp9_nvdec \
+	--enable-nvenc \
 	--enable-encoder=h264_nvenc \
 	--enable-encoder=hevc_nvenc
 endif
@@ -303,13 +310,15 @@ FFMPEGCONF += --target-os=mingw32 \
     --enable-w32threads \
     --disable-decoder=dca \
 	--enable-cuvid \
+	--enable-decoder=vp9_cuvid \
 	--enable-ffnvcodec \
 	--enable-nvdec \
-	--enable-nvenc \
 	--enable-hwaccel=h264_nvdec \
 	--enable-hwaccel=hevc_nvdec \
-	--enable-hwaccel=vp8_nvdec \
 	--enable-hwaccel=mjpeg_nvdec \
+	--enable-hwaccel=vp8_nvdec \
+	--enable-hwaccel=vp9_nvdec \
+	--enable-nvenc \
 	--enable-encoder=h264_nvenc \
 	--enable-encoder=hevc_nvenc
 endif

@@ -53,6 +53,8 @@ SystemCodecContainer::initCodecConfig()
     auto maxH264 = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
     auto minVP8 = SystemCodecInfo::DEFAULT_VP8_MIN_QUALITY;
     auto maxVP8 = SystemCodecInfo::DEFAULT_VP8_MAX_QUALITY;
+    auto minVP9 = SystemCodecInfo::DEFAULT_VP8_MIN_QUALITY;
+    auto maxVP9 = SystemCodecInfo::DEFAULT_VP8_MAX_QUALITY;
     auto defaultBitrate = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
 #endif
     availableCodecList_ = {
@@ -70,6 +72,12 @@ SystemCodecContainer::initCodecConfig()
                                                defaultBitrate,
                                                minVP8,
                                                maxVP8),
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP9,
+                                               "VP9", "libvpx",
+                                               CODEC_ENCODER_DECODER,
+                                               defaultBitrate,
+                                               minVP9,
+                                               maxVP9),
 #if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,
                                                "MP4V-ES", "mpeg4",
