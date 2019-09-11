@@ -43,5 +43,4 @@ void SyncPublisher<T>::subscribe(Subscriber<T>& subscriber){
             throw e2;
         }
     }
-
 }

@@ -36,7 +36,6 @@ lib_LTLIBRARIES = libring.la
 libring_la_LIBADD = \
 	./sip/libsiplink.la \
 	./media/libmedia.la \
-	./media/filters/libfilters.la \
 	./client/libclient.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
@@ -147,7 +146,12 @@ libring_la_SOURCES = \
 		generic_io.h \
 		scheduled_executor.h \
 		scheduled_executor.cpp \
-		transport/peer_channel.h
+		transport/peer_channel.h \
+		plugin/ringplugin.h \
+		plugin/pluginloader.h \
+		plugin/pluginloaderdl.cpp \
+		plugin/pluginmanager.h \
+		plugin/pluginmanager.cpp
 
 if HAVE_WIN32
 libring_la_SOURCES += \
