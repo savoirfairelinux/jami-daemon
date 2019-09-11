@@ -49,9 +49,6 @@ constexpr const char* const QUERY_NAME {"/name/"};
 constexpr const char* const QUERY_ADDR {"/addr/"};
 constexpr const char* const CACHE_DIRECTORY {"namecache"};
 
-constexpr const char* const HTTPS_URI {"https://"};
-static const std::string HTTPS_PROTO {"https"};
-
 const std::string  HEX_PREFIX = "0x";
 constexpr std::chrono::seconds SAVE_INTERVAL {5};
 
@@ -92,7 +89,7 @@ NameDirectory::NameDirectory(const std::string& s, std::shared_ptr<dht::Logger> 
    , cachePath_(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + CACHE_DIRECTORY + DIR_SEPARATOR_STR + serverHost_)
    , logger_(l)
    , httpContext_(Manager::instance().ioContext())
-   , resolver_(std::make_shared<dht::http::Resolver>(*httpContext_, serverHost_, HTTPS_PROTO, true, logger_))
+   , resolver_(std::make_shared<dht::http::Resolver>(*httpContext_, serverHost_, logger_))
 {}
 
 void
@@ -122,8 +119,7 @@ NameDirectory::instance(const std::string& server, std::shared_ptr<dht::Logger> 
 
 void
 NameDirectory::setHeaderFields(Request& request){
-    const std::string host = HTTPS_PROTO + ":" + serverHost_;
-    request.set_header_field(restinio::http_field_t::host, host);
+    request.set_header_field(restinio::http_field_t::host, serverHost_);
     request.set_header_field(restinio::http_field_t::user_agent, "JamiDHT");
     request.set_header_field(restinio::http_field_t::accept, "*/*");
     request.set_header_field(restinio::http_field_t::content_type, "application/json");
@@ -145,7 +141,7 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
 
-        const std::string uri = HTTPS_URI + serverHost_ + QUERY_ADDR + addr;
+        const std::string uri = serverHost_ + QUERY_ADDR + addr;
         JAMI_DBG("Address lookup for %s: %s", addr.c_str(), uri.c_str());
         request->add_on_state_change_callback([this, cb=std::move(cb), reqid, addr]
                                               (Request::State state, const dht::http::Response& response){
@@ -227,7 +223,7 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
 
-        const std::string uri = HTTPS_URI + serverHost_ + QUERY_NAME + name;
+        const std::string uri = serverHost_ + QUERY_NAME + name;
         JAMI_DBG("Name lookup for %s: %s", name.c_str(), uri.c_str());
 
         request->add_on_state_change_callback([this, reqid, name, cb=std::move(cb)]
