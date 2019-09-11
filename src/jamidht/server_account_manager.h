@@ -76,6 +76,8 @@ private:
     std::shared_ptr<dht::Logger> logger_;
     std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;
     std::unique_ptr<ServerAccountCredentials> creds_;
+
+    void setHeaderFields(dht::http::Request& request);
 };
 
 }
