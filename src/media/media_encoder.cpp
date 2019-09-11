@@ -112,10 +112,6 @@ MediaEncoder::setOptions(const MediaDescription& args)
         "payload_type", args.payload_type, AV_OPT_SEARCH_CHILDREN)) < 0)
         JAMI_ERR() << "Failed to set payload type: " << libav_utils::getError(ret);
 
-    // NOTE none of these are format options, and we don't have a codec context yet
-    libav_utils::setDictValue(&options_, "max_rate", std::to_string(args.codec->bitrate));
-    libav_utils::setDictValue(&options_, "crf", std::to_string(args.codec->quality));
-
     if (not args.parameters.empty())
         libav_utils::setDictValue(&options_, "parameters", args.parameters);
 }
@@ -762,7 +758,6 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
     }
 #endif
 
-    libav_utils::setDictValue(&options_, "crf", std::to_string(crf));
     av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
     encoderCtx->rc_buffer_size = bufSize;
     encoderCtx->rc_max_rate = maxBitrate;
@@ -794,7 +789,6 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
     encoderCtx->qmin = 4;
     encoderCtx->qmax = 56;
     crf = std::min(encoderCtx->qmax, std::max((int)crf, encoderCtx->qmin));
-    libav_utils::setDictValue(&options_, "crf", std::to_string(crf));
     av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
     encoderCtx->rc_buffer_size = bufSize;
     encoderCtx->rc_max_rate = maxBitrate;
@@ -858,6 +852,7 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
     std::string path = fileutils::get_config_dir() + DIR_SEPARATOR_STR + "encoder.json";
     std::string name = encoderCtx->codec->name;
     if (fileutils::isFile(path)) {
+        JAMI_WARN("encoder.json file found, default settings will be erased");
         try {
             Json::Value root;
             std::ifstream file = fileutils::ifstream(path);
