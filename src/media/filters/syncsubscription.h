@@ -33,8 +33,14 @@ private:
 template <class T>
 void SyncSubscription<T>::onNext(T value){
     if(!cancelled && demand > 0) {
-        subscriber.onNext(value);
-        demand--;
+        try{
+            subscriber.onNext(value);
+            demand--;
+        } catch(const std::exception& e) {
+            cancelled = true;
+            std::cerr << "subscriber violated the Reactive Streams rule 2.13 by throwing an exception from onNext. " << std::endl;
+            std::cerr << e.what() << std::endl;
+        }
     }
 }
 
@@ -68,6 +74,12 @@ template <class T>
 void SyncSubscription<T>::onComplete(){
     if(!completed) {
         completed = true;
-        subscriber.onComplete();
+        try{
+            subscriber.onComplete();
+        } catch(const std::exception& e) {
+            cancelled = true;
+            std::cerr << "subscriber violated the Reactive Streams rule 2.13 by throwing an exception from onComplete. " << std::endl;
+            std::cerr << e.what() << std::endl;
+        }
     }
 }
