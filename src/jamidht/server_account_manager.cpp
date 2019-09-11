@@ -51,6 +51,14 @@ ServerAccountManager::ServerAccountManager(
 {};
 
 void
+ServerAccountManager::setHeaderFields(Request& request){
+    request.set_header_field(restinio::http_field_t::host, request.get_url().host + ":" + request.get_url().service);
+    request.set_header_field(restinio::http_field_t::user_agent, "Jami");
+    request.set_header_field(restinio::http_field_t::accept, "application/json");
+    request.set_header_field(restinio::http_field_t::content_type, "application/json");
+}
+
+void
 ServerAccountManager::initAuthentication(
     CertRequest csrRequest,
     std::unique_ptr<AccountCredentials> credentials,
@@ -71,11 +79,13 @@ ServerAccountManager::initAuthentication(
     onChange_ = std::move(onChange);
 
     const std::string url = managerHostname_ + PATH_DEVICE_REGISTER;
-    JAMI_WARN("[Auth] authentication with: %s %s to %s", ctx->credentials->username.c_str(), ctx->credentials->password.c_str(), url.c_str());
+    JAMI_WARN("[Auth] authentication with: %s to %s", ctx->credentials->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
-    request->set_connection_type(restinio::http_connection_header_t::close);
-    request->set_method(restinio::http_method_post());
+    restinio::http_request_header_t header;
+    header.method(restinio::http_method_post());
+    request->set_header(header);
+    request->set_target(PATH_DEVICE_REGISTER);
     request->set_auth(ctx->credentials->username, ctx->credentials->password);
     {
         std::stringstream ss;
@@ -86,12 +96,10 @@ ServerAccountManager::initAuthentication(
         JAMI_WARN("[Auth] Sending request: %s", csr.c_str());
         request->set_body(ss.str());
     }
-
-    request->set_header_field(restinio::http_field_t::user_agent, "Jami");
-    request->set_header_field(restinio::http_field_t::accept, "application/json");
-    request->set_header_field(restinio::http_field_t::content_type, "application/json");
+    setHeaderFields(*request);
+    request->set_header_field(restinio::http_field_t::expect, "100-continue");
     request->add_on_state_change_callback([reqid, ctx, onAsync = onAsync_]
-                                            (Request::State state, const dht::http::Response& response){
+                                          (Request::State state, const dht::http::Response& response){
 
         JAMI_ERR("[Auth] Got server response: %d", (int)state);
         if (state != Request::State::DONE)
@@ -186,16 +194,15 @@ ServerAccountManager::syncDevices()
     if (not creds_)
         return;
     const std::string url = managerHostname_ + PATH_DEVICES;
-    JAMI_WARN("[Auth] syncDevices with: %s %s to %s", creds_->username.c_str(), creds_->password.c_str(), url.c_str());
+    JAMI_WARN("[Auth] syncDevices with: %s to %s", creds_->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
-    request->set_connection_type(restinio::http_connection_header_t::close);
-    request->set_method(restinio::http_method_get());
+    restinio::http_request_header_t header;
+    header.method(restinio::http_method_get());
+    request->set_header(header);
+    request->set_target(PATH_DEVICES);
     request->set_auth(creds_->username, creds_->password);
-    request->set_header_field(restinio::http_field_t::user_agent, "Jami");
-    request->set_header_field(restinio::http_field_t::accept, "application/json");
-    request->set_header_field(restinio::http_field_t::content_type, "application/json");
-
+    setHeaderFields(*request);
     request->add_on_state_change_callback([reqid, onAsync = onAsync_]
                                             (Request::State state, const dht::http::Response& response){
         onAsync([reqid, state, response] (AccountManager& accountManager) {
