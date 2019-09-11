@@ -74,8 +74,10 @@ ServerAccountManager::initAuthentication(
     JAMI_WARN("[Auth] authentication with: %s %s to %s", ctx->credentials->username.c_str(), ctx->credentials->password.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
-    request->set_connection_type(restinio::http_connection_header_t::close);
-    request->set_method(restinio::http_method_post());
+    restinio::http_request_header_t header;
+    header.method(restinio::http_method_post());
+    request->set_header(header);
+    request->set_target(PATH_DEVICE_REGISTER);
     request->set_auth(ctx->credentials->username, ctx->credentials->password);
     {
         std::stringstream ss;
@@ -86,7 +88,6 @@ ServerAccountManager::initAuthentication(
         JAMI_WARN("[Auth] Sending request: %s", csr.c_str());
         request->set_body(ss.str());
     }
-
     request->set_header_field(restinio::http_field_t::user_agent, "Jami");
     request->set_header_field(restinio::http_field_t::accept, "application/json");
     request->set_header_field(restinio::http_field_t::content_type, "application/json");
@@ -189,8 +190,11 @@ ServerAccountManager::syncDevices()
     JAMI_WARN("[Auth] syncDevices with: %s %s to %s", creds_->username.c_str(), creds_->password.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
-    request->set_connection_type(restinio::http_connection_header_t::close);
-    request->set_method(restinio::http_method_get());
+    restinio::http_request_header_t header;
+    header.method(restinio::http_method_get());
+    request->set_header(header);
+    request->set_target(PATH_DEVICES);
+    request->set_connection_type(restinio::http_connection_header_t::keep_alive);
     request->set_auth(creds_->username, creds_->password);
     request->set_header_field(restinio::http_field_t::user_agent, "Jami");
     request->set_header_field(restinio::http_field_t::accept, "application/json");
