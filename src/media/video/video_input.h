@@ -28,12 +28,14 @@
 #include "media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
-#include "media/filters/media_processor.h"
-//Subject
+// Subject
 #include "media/filters/syncsubject.h"
+// Scaler used to convert the image to RGB
 #include "media/video/video_scaler.h"
 // Exchange video frame
 #include "media/filters/ExVideoFrame.h"
+// Plugin Manager
+#include "plugin/pluginmanager.h"
 
 #include <map>
 #include <atomic>
@@ -106,7 +108,10 @@ private:
 
     // Subject
     SyncSubject<std::shared_ptr<ExVideoFrame>> videoSubject;
-    std::unique_ptr<Subscriber<std::shared_ptr<ExVideoFrame>>> mediaProcessor_ = std::make_unique<MediaProcessor>();
+    // Plugin Manager
+    PluginManager pm;
+    // Subscribers
+    std::unique_ptr<Subscriber<std::shared_ptr<ExVideoFrame>>> mediaProcessor_;
     // An instance of the scaler
     video::VideoScaler scaler;
     std::unique_ptr<MediaDecoder> decoder_;
