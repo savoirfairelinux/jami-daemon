@@ -64,7 +64,17 @@ VideoInput::VideoInput()
     , mutex_(), frame_cv_(), buffers_()
 #endif
 {
-    videoSubject.subscribe(*mediaProcessor_);
+    auto attachInputVideoSubscriber = [this](void* data) {
+        mediaProcessor_.reset(reinterpret_cast<Subscriber<std::shared_ptr<ExVideoFrame>>*>(data));
+        videoSubject.subscribe(*mediaProcessor_);
+        return 0;
+    };
+
+    pm.registerService("attachInputVideoSubscriber", attachInputVideoSubscriber);
+    // Load the plugin
+    // std::string pluginAbsolutePath{"/home/ayounes/Projects/ring-plugins/videotest/libvideotest.so"};
+    std::string pluginAbsolutePath{"/home/ayounes/Projects/ring-plugins/multipleobjecttracking2/jamimultipleobjecttrackingtensorflow.so"};
+    pm.load(pluginAbsolutePath);
 }
 
 VideoInput::~VideoInput()
@@ -348,7 +358,6 @@ VideoInput::createDecoder()
 
     auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame)){
-//            videoSubject.onNext(videoFrame);
             // Convert incoming frame to RGB8 before sending it to subscribers
             std::unique_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(*videoFrame,AV_PIX_FMT_RGB24);
             std::shared_ptr<ExVideoFrame> exVideoFrame = std::make_shared<ExVideoFrame>(rgbFrameUniquePointer->pointer()->data[0],

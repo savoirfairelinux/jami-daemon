@@ -2,9 +2,7 @@
 // Std libraries
 #include <cstring>
 #include <numeric>
-
-// Logger
-#include "logger.h"
+#include <iostream>
 // Tensorflow headers
 #include "tensorflow/lite/interpreter.h"
 
@@ -32,10 +30,10 @@ void MultipleObjectTracking::feedInput(std::vector<uint8_t> &in, int imageWidth,
   int expectedNbChannels = dims.at(3);
 
   if (imageNbChannels != expectedNbChannels) {
-    JAMI_ERR() << "The number of channels in the input should match the number "
+      std::cerr << "The number of channels in the input should match the number "
                   "of channels in the model";
   } else if (imageWidth != expectedWidth || imageHeight != expectedHeight) {
-    JAMI_ERR() << "The width and height of the input image doesn't match the "
+    std::cerr << "The width and height of the input image doesn't match the "
                   "expected width and height of the model";
   } else {
     // Get the input pointer and feed it with data

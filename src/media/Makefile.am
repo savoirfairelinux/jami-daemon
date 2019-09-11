@@ -2,7 +2,7 @@ include $(top_srcdir)/globals.mk
 
 noinst_LTLIBRARIES = libmedia.la
 
-SUBDIRS = filters audio
+SUBDIRS = audio
 
 if ENABLE_VIDEO
 SUBDIRS += video

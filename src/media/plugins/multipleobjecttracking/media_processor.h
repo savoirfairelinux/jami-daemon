@@ -8,13 +8,6 @@
 #include <vector>
 // OpenCV headers
 #include <opencv2/core.hpp>
-// LibFilters headers
-// For AVFRAME
-#include "libav_deps.h"
-// Jami Library headers
-#include "dring/videomanager_interface.h"
-#include "media/video/video_scaler.h"
-#include "video/video_base.h"
 // Filters
 #include "multipleobjecttracking.h"
 // Reactive Streams
@@ -30,27 +23,6 @@ public:
   cv::Mat resizedFrameRGB;
   // This frame is used to draw predictions into in RGB format
   cv::Mat predictionsFrameBGR;
-  // An instance of the scaler
-  video::VideoScaler scaler;
-
-  /**
-   * @brief createCopyFrames
-   * Takes the input frame and copies/scales the content in the
-   * frames contained by FrameCopy
-   * @param frame
-   */
-  void createCopyFrames(const VideoFrame &frame,
-                        const int resizedImageWidth,
-                        const int resizedImageHeight);
-
-  /**
-   * @brief copyFrameContent
-   * Copies the data from the input frame iFrame to the output frame oFrame
-   * Performs the scaling and format conversion
-   * @param iFrame
-   * @param oFrame
-   */
-  void copyFrameContent(const VideoFrame &iFrame, VideoFrame &oFrame);
 };
 
 class MediaProcessor : public Subscriber<std::shared_ptr<ExVideoFrame>>{
@@ -142,25 +114,25 @@ private:
   // Colors
   cv::Scalar colors[10] = {
       // Red
-      cv::Scalar{75, 25, 230},
+      cv::Scalar{230, 25, 75},
       // Orange
-      cv::Scalar{48, 130, 245},
+      cv::Scalar{245, 130, 48},
       // Yellow
-      cv::Scalar{25, 255, 255},
+      cv::Scalar{255, 255, 25},
       // Lime
-      cv::Scalar{25, 245, 210},
+      cv::Scalar{210, 245, 25},
       // Green
-      cv::Scalar{75, 180, 60},
+      cv::Scalar{6075, 180, 75},
       // Cyan
-      cv::Scalar{240, 240, 70},
+      cv::Scalar{70, 240, 240},
       // Blue
-      cv::Scalar{200, 130, 0},
+      cv::Scalar{0, 130, 200},
       // Purple
-      cv::Scalar{180, 30, 145},
+      cv::Scalar{145, 30, 180},
       // Magenta
-      cv::Scalar{230, 50, 240},
+      cv::Scalar{240, 50, 230},
       // Apricot
-      cv::Scalar{180, 215, 255},
+      cv::Scalar{255, 215, 180},
   };
 
   //Subscription

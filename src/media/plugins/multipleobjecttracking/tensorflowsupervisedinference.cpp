@@ -2,16 +2,13 @@
 // Std libraries
 #include <fstream>
 #include <numeric>
+#include <iostream>
 // Tensorflow headers
 #include <tensorflow/lite/builtin_op_data.h>
 #include <tensorflow/lite/interpreter.h>
 #include <tensorflow/lite/kernels/register.h>
 #include <tensorflow/lite/model.h>
 #include <tensorflow/lite/optional_debug_tools.h>
-// Logger
-#include "logger.h"
-// For AVFRAME
-#include "libav_deps.h"
 
 namespace jami {
 TensorflowSupervisedInference::TensorflowSupervisedInference(
@@ -91,8 +88,8 @@ void TensorflowSupervisedInference::init() {
 
 void TensorflowSupervisedInference::allocateTensors() {
     if (interpreter->AllocateTensors() != kTfLiteOk) {
-        JAMI_ERR() << "Failed to allocate tensors!"
-                   << "\n";
+        std::cerr << "Failed to allocate tensors!"
+                   << std::endl;
     }else {
         allocated = true;
     }
@@ -100,19 +97,19 @@ void TensorflowSupervisedInference::allocateTensors() {
 
 void TensorflowSupervisedInference::describeModelTensors() const {
     PrintInterpreterState(interpreter.get());
-    JAMI_DBG() << "=============== inputs/outputs dimensions ==============="
+    std::cout << "=============== inputs/outputs dimensions ==============="
                << "\n";
     const std::vector<int> inputs = interpreter->inputs();
     const std::vector<int> outputs = interpreter->outputs();
-    JAMI_DBG() << "number of inputs: " << inputs.size() << "\n";
-    JAMI_DBG() << "number of outputs: " << outputs.size() << "\n";
+    std::cout << "number of inputs: " << inputs.size() << std::endl;
+    std::cout << "number of outputs: " << outputs.size() << std::endl;
 
     int input = interpreter->inputs()[0];
     int output = interpreter->outputs()[0];
-    JAMI_DBG() << "input 0 index: " << input << "\n";
-    JAMI_DBG() << "output 0 index: " << output << "\n";
-    JAMI_DBG() << "=============== input dimensions ==============="
-               << "\n";
+    std::cout << "input 0 index: " << input << std::endl;
+    std::cout << "output 0 index: " << output << std::endl;
+    std::cout << "=============== input dimensions ==============="
+              << std::endl;
     // get input dimension from the input tensor metadata
     // assuming one input only
 
@@ -122,7 +119,7 @@ void TensorflowSupervisedInference::describeModelTensors() const {
         describeTensor(ss.str(), interpreter->inputs()[i]);
     }
 
-    JAMI_DBG() << "=============== output dimensions ==============="
+    std::cout << "=============== output dimensions ==============="
                << "\n";
     // get input dimension from the input tensor metadata
     // assuming one input only
@@ -147,7 +144,7 @@ void TensorflowSupervisedInference::describeTensor(std::string prefix,
             tensorDescription << dimensions[i] << " x ";
         }
     }
-    JAMI_DBG() << tensorDescription.str() << "\n";
+    std::cout << tensorDescription.str() << std::endl;
 }
 
 std::vector<int>
@@ -168,7 +165,7 @@ TensorflowSupervisedInference::getTensorDimensions(int index) const {
 void TensorflowSupervisedInference::runGraph() {
     for (size_t i = 0; i < model.numberOfRuns; i++) {
         if (interpreter->Invoke() != kTfLiteOk) {
-            JAMI_ERR() << "A problem occured when running the graph";
+            std::cerr << "A problem occured when running the graph" << std::endl;
         }
     }
 }
