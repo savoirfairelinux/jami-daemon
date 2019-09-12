@@ -918,6 +918,9 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 cb(*this_->accountManager_);
         };
         if (managerUri_.empty()) {
+            if (archivePath_.empty()) {
+                archivePath_ = "archive.gz";
+            }
             accountManager_.reset(new ArchiveAccountManager(getPath(),
                 dht_,
                 onAsync,
