@@ -389,7 +389,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         const std::string accountID_;
 
-        mutable std::mutex configurationMutex_ {};
+        mutable std::recursive_mutex configurationMutex_ {};
 
         /**
          * Account login information: username

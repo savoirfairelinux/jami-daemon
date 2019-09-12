@@ -670,7 +670,7 @@ void JamiAccount::saveConfig() const
 
 void JamiAccount::serialize(YAML::Emitter &out) const
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
 
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
@@ -712,7 +712,7 @@ void JamiAccount::serialize(YAML::Emitter &out) const
 
 void JamiAccount::unserialize(const YAML::Node &node)
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
 
     using yaml_utils::parseValue;
     using yaml_utils::parseValueOptional;
@@ -876,7 +876,6 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
     return true;
 }
 
-
 std::pair<std::string, std::string>
 JamiAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name)
 {
@@ -1021,7 +1020,6 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 accountManager_->foundAccountDevice(info.identity.second, ringDeviceName_, clock::now());
                 setRegistrationState(RegistrationState::UNREGISTERED);
 
-
                 AccountManager::OnChangeCallback callbacks {
                     [this](const std::string& uri, bool confirmed) {
                         emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, confirmed);
@@ -1044,7 +1042,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             {
                 JAMI_WARN("Auth error: %d %s", (int)error, message.c_str());
                 {
-                    std::lock_guard<std::mutex> lock(configurationMutex_);
+                    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
                     setRegistrationState(RegistrationState::ERROR_GENERIC);
                 }
                 Manager::instance().removeAccount(getAccountID());
@@ -1061,7 +1059,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
 void
 JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details)
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     SIPAccountBase::setAccountDetails(details);
 
     // TLS
@@ -1127,7 +1125,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
 std::map<std::string, std::string>
 JamiAccount::getAccountDetails() const
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
     a.emplace(Conf::CONFIG_DHT_PORT, std::to_string(dhtPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
@@ -1498,7 +1496,7 @@ JamiAccount::mapPortUPnP()
 void
 JamiAccount::doRegister()
 {
-    std::unique_lock<std::mutex> lock(configurationMutex_);
+    std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
     if (not isUsable()) {
         JAMI_WARN("Account must be enabled and active to register, ignoring");
         return;
@@ -1638,7 +1636,7 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
 void
 JamiAccount::doRegister_()
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
+    std::lock_guard<std::recursive_mutex> lock(configurationMutex_);
 
     try {
         if (not accountManager_ or not accountManager_->getInfo())
@@ -1984,7 +1982,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 void
 JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 {
-    std::unique_lock<std::mutex> lock(configurationMutex_);
+    std::unique_lock<std::recursive_mutex> lock(configurationMutex_);
 
     if (registrationState_ == RegistrationState::INITIALIZING
      || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION) {
@@ -2315,7 +2313,6 @@ JamiAccount::getContacts() const
 }
 
 /* trust requests */
-
 
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getTrustRequests() const
