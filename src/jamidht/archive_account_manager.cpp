@@ -209,6 +209,9 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
         try {
             std::tie(key, loc) = computeKeys(ctx->credentials->password, ctx->credentials->uri, previous);
             JAMI_DBG("[Auth] trying to load account from DHT with %s at %s", /**/ctx->credentials->uri.c_str(), loc.toString().c_str());
+            if (not ctx->dhtContext or ctx->dhtContext->found) {
+                return;
+            }
             ctx->dhtContext->dht.get(loc, [ctx, key=std::move(key), onAsync](const std::shared_ptr<dht::Value>& val) {
                 std::vector<uint8_t> decrypted;
                 try {
