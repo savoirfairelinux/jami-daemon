@@ -2991,6 +2991,18 @@ Manager::startAudioDriverStream()
 }
 
 void
+Manager::restartAudioDriverStream()
+{
+    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+    if (!pimpl_->audiodriver_) {
+        JAMI_ERR("Audio driver not initialized");
+        return;
+    }
+    pimpl_->audiodriver_->stopStream();
+    pimpl_->audiodriver_->startStream();
+}
+
+void
 Manager::registerAccounts()
 {
     auto allAccounts(getAccountList());

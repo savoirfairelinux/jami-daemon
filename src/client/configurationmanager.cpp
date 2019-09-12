@@ -620,7 +620,7 @@ setAudioInputDevice(int32_t index)
 void
 startAudio()
 {
-    jami::Manager::instance().startAudioDriverStream();
+    jami::Manager::instance().restartAudioDriverStream();
 }
 
 void

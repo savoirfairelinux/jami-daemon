@@ -125,6 +125,7 @@ class Manager {
         std::shared_ptr<AudioLayer> getAudioDriver();
 
         void startAudioDriverStream();
+        void restartAudioDriverStream();
 
         /**
          * Functions which occur with a user's action
