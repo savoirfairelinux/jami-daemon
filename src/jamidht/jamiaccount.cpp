@@ -876,7 +876,6 @@ JamiAccount::revokeDevice(const std::string& password, const std::string& device
     return true;
 }
 
-
 std::pair<std::string, std::string>
 JamiAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name)
 {
@@ -896,19 +895,26 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
         return;
 
     JAMI_DBG("[Account %s] loading account", getAccountID().c_str());
-
     AccountManager::OnChangeCallback callbacks {
         [this](const std::string& uri, bool confirmed) {
-            emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, confirmed);
+            dht::ThreadPool::computation().run([this, uri, confirmed] {
+                    emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, confirmed);
+                });
         },
-        [this](const std::string& uri, bool banned){
-            emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, banned);
+        [this](const std::string& uri, bool banned) {
+            dht::ThreadPool::computation().run([this, uri, banned] {
+                    emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, banned);
+                });
         },
-        [this](const std::string& uri, const std::vector<uint8_t>& payload, time_t received){
-            emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(), uri, payload, received);
+        [this](const std::string& uri, const std::vector<uint8_t>& payload, time_t received) {
+            dht::ThreadPool::computation().run([this, uri, payload = std::move(payload), received] {
+                    emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(), uri, payload, received);
+                });
         },
-        [this](){
-            emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
+        [this]() {
+            dht::ThreadPool::computation().run([this] {
+                    emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
+                });
         },
     };
 
@@ -1021,19 +1027,26 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 accountManager_->foundAccountDevice(info.identity.second, ringDeviceName_, clock::now());
                 setRegistrationState(RegistrationState::UNREGISTERED);
 
-
                 AccountManager::OnChangeCallback callbacks {
                     [this](const std::string& uri, bool confirmed) {
-                        emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, confirmed);
+                        dht::ThreadPool::computation().run([this, uri, confirmed] {
+                                emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, confirmed);
+                            });
                     },
-                    [this](const std::string& uri, bool banned){
-                        emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, banned);
+                    [this](const std::string& uri, bool banned) {
+                        dht::ThreadPool::computation().run([this, uri, banned] {
+                                emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, banned);
+                            });
                     },
-                    [this](const std::string& uri, const std::vector<uint8_t>& payload, time_t received){
-                        emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(), uri, payload, received);
+                    [this](const std::string& uri, const std::vector<uint8_t>& payload, time_t received) {
+                        dht::ThreadPool::computation().run([this, uri, payload = std::move(payload), received] {
+                                emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(), uri, payload, received);
+                            });
                     },
-                    [this](){
-                        emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
+                    [this]() {
+                        dht::ThreadPool::computation().run([this] {
+                                emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
+                            });
                     },
                 };
                 accountManager_->useIdentity(id_, receipt_, receiptSignature_, std::move(callbacks));
@@ -2315,7 +2328,6 @@ JamiAccount::getContacts() const
 }
 
 /* trust requests */
-
 
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getTrustRequests() const
