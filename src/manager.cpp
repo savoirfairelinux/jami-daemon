@@ -815,7 +815,7 @@ Manager::finish() noexcept
 
         for (const auto &account : getAllAccounts<JamiAccount>()) {
             if (account->getRegistrationState() == RegistrationState::INITIALIZING)
-                removeAccount(account->getAccountID());
+                removeAccount(account->getAccountID(), true);
         }
 
         saveConfig();

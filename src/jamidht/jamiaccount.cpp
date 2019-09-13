@@ -1060,7 +1060,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                     std::lock_guard<std::mutex> lock(configurationMutex_);
                     setRegistrationState(RegistrationState::ERROR_GENERIC);
                 }
-                Manager::instance().removeAccount(getAccountID());
+                Manager::instance().removeAccount(getAccountID(), true);
             }, std::move(callbacks));
         }
     }
