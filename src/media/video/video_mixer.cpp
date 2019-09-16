@@ -142,7 +142,7 @@ VideoMixer::process()
 
     VideoFrame& output = getNewFrame();
     try {
-        output.reserve(AV_PIX_FMT_YUYV422, width_, height_);
+        output.reserve(AV_PIX_FMT_YUV422P, width_, height_);
     } catch (const std::bad_alloc& e) {
         JAMI_ERR("VideoFrame::allocBuffer() failed");
         return;
