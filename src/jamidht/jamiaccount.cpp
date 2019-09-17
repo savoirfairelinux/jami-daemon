@@ -701,6 +701,7 @@ void JamiAccount::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
     out << YAML::Key << DRing::Account::ConfProperties::RING_DEVICE_NAME << YAML::Value << ringDeviceName_;
+    out << YAML::Key << DRing::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -736,6 +737,7 @@ void JamiAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::PROXY_PUSH_TOKEN_KEY, deviceKey_);
 
     parseValueOptional(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
+    parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
 
     try {
         parsePath(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_, idPath_);
@@ -1105,6 +1107,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
     parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archive_path, idPath_);
     parseString(details, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
+    parseString(details, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
 
     parseBool(details, DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
     auto oldProxyServer = proxyServer_;
@@ -1151,6 +1154,7 @@ JamiAccount::getAccountDetails() const
         }
     }
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
+    a.emplace(DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
     a.emplace(DRing::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
     if (not archivePath_.empty())
         a.emplace(DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword_ ? TRUE_STR : FALSE_STR);
