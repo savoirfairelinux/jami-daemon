@@ -2770,13 +2770,17 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     }
 
     newAccount->setAccountDetails(details);
-    saveConfig(newAccount);
-    newAccount->doRegister();
+    if (newAccount->getRegistrationState() != RegistrationState::ERROR_GENERIC) {
+        saveConfig(newAccount);
+        newAccount->doRegister();
 
-    preferences.addAccount(newAccountID);
-    saveConfig();
+        preferences.addAccount(newAccountID);
+        saveConfig();
+        emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
+    } else {
+        removeAccount(newAccountID, true);
+    }
 
-    emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
 
     return newAccountID;
 }
