@@ -1056,11 +1056,10 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             }, [this](AccountManager::AuthError error, const std::string& message)
             {
                 JAMI_WARN("Auth error: %d %s", (int)error, message.c_str());
-                {
-                    std::lock_guard<std::mutex> lock(configurationMutex_);
-                    setRegistrationState(RegistrationState::ERROR_GENERIC);
-                }
-                Manager::instance().removeAccount(getAccountID());
+                setRegistrationState(RegistrationState::ERROR_GENERIC);
+                runOnMainThread([w = weak()] {
+                    Manager::instance().removeAccount(w.lock()->getAccountID());
+                });
             }, std::move(callbacks));
         }
     }
