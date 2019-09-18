@@ -969,7 +969,10 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             std::unique_ptr<AccountManager::AccountCredentials> creds;
             if (managerUri_.empty()) {
                 auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
-                acreds->archivePath = archivePath_.empty() ? "archive.gz" : archivePath_;
+                if (archivePath_.empty()) {
+                    archivePath_ = "archive.gz";
+                }
+                acreds->archivePath = archivePath_;
                 if (not archive_path.empty()) {
                     acreds->scheme = "file";
                     acreds->uri = archive_path;
@@ -987,6 +990,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 creds = std::move(screds);
             }
             creds->password = archive_password;
+            archiveHasPassword_ = !archive_password.empty();
 
             accountManager_->initAuthentication(
                 std::move(fReq),
