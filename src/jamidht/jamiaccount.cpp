@@ -702,6 +702,7 @@ void JamiAccount::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
     out << YAML::Key << DRing::Account::ConfProperties::RING_DEVICE_NAME << YAML::Value << ringDeviceName_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri_;
+    out << YAML::Key << DRing::Account::ConfProperties::MANAGER_USERNAME << YAML::Value << managerUsername_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -738,6 +739,7 @@ void JamiAccount::unserialize(const YAML::Node &node)
 
     parseValueOptional(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
+    parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
 
     try {
         parsePath(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_, idPath_);
@@ -985,7 +987,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 creds = std::move(acreds);
             } else {
                 auto screds = std::make_unique<ServerAccountManager::ServerAccountCredentials>();
-                screds->username = username_;
+                screds->username = managerUsername_;
                 creds = std::move(screds);
             }
             creds->password = archive_password;
@@ -1099,6 +1101,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     dhtPortUsed_ = dhtPort_;
 
     parseString(details, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
+    parseString(details, DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
     parseString(details, DRing::Account::ConfProperties::USERNAME, username_);
 
     std::string archive_password;
@@ -1184,6 +1187,7 @@ JamiAccount::getAccountDetails() const
     a.emplace(DRing::Account::ConfProperties::PROXY_SERVER,     proxyServer_);
     a.emplace(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
     a.emplace(DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
+    a.emplace(DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
 #if HAVE_RINGNS
     a.emplace(DRing::Account::ConfProperties::RingNS::URI,                   nameServer_);
 #endif

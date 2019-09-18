@@ -633,6 +633,7 @@ private:
     std::string receivedParameter_ {};
 
     std::string managerUri_ {};
+    std::string managerUsername_ {};
 
     /**
      * Optional: "rport" parameter from VIA header
