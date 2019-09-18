@@ -107,11 +107,11 @@ private:
     std::string currentResource_;
 
     // Subject
-    SyncSubject<std::shared_ptr<ExVideoFrame>> videoSubject;
+    SyncSubject<std::shared_ptr<VideoFrame>> videoSubject;
     // Plugin Manager
     PluginManager pm;
     // Subscribers
-    std::unique_ptr<Subscriber<std::shared_ptr<ExVideoFrame>>> mediaProcessor_;
+    std::unique_ptr<Subscriber<std::shared_ptr<VideoFrame>>> mediaProcessor_;
     // An instance of the scaler
     video::VideoScaler scaler;
     std::unique_ptr<MediaDecoder> decoder_;
