@@ -1008,6 +1008,8 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 tlsPassword_ = {};
 
                 username_ = RING_URI_PREFIX+info.accountId;
+                archivePath_ = info.archivePath;
+                archiveHasPassword_ = info.archiveHasPassword;
 
                 ringDeviceName_ = ip_utils::getDeviceName();
                 if (ringDeviceName_.empty())

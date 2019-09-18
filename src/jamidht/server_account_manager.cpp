@@ -158,6 +158,8 @@ ServerAccountManager::initAuthentication(
                     info->deviceId = cert->getPublicKey().getId().toString();
                     info->ethAccount = receiptJson["eth"].asString();
                     info->announce = parseAnnounce(receiptJson["announce"].asString(), info->accountId, info->deviceId);
+                    info->archivePath = {};
+                    info->archiveHasPassword = ctx->credentials && !ctx->credentials->password.empty();
                     if (not info->announce) {
                         ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse announce from server");
                     }

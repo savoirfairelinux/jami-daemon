@@ -294,6 +294,8 @@ ArchiveAccountManager::onArchiveLoaded(
     info->deviceId = deviceCertificate->getPublicKey().getId().toString();
     info->ethAccount = ethAccount;
     info->announce = std::move(receipt.second);
+    info->archivePath = archivePath_;
+    info->archiveHasPassword = ctx.credentials && !ctx.credentials->password.empty();
     info_ = std::move(info);
 
     JAMI_WARN("[Auth] created new device: %s", info_->deviceId.c_str());

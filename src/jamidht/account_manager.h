@@ -48,6 +48,8 @@ struct AccountInfo {
     std::string deviceId;
     std::shared_ptr<dht::Value> announce;
     std::string ethAccount;
+    std::string archivePath;
+    bool archiveHasPassword;
 };
 
 template <typename To, typename From>
