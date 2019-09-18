@@ -19,6 +19,7 @@
  * @date 2014
  */
 
+#include <stdexcept>
 #include "CommonData.h"
 
 using namespace std;
