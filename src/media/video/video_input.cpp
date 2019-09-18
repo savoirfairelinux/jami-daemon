@@ -65,16 +65,17 @@ VideoInput::VideoInput()
 #endif
 {
     auto attachInputVideoSubscriber = [this](void* data) {
-        mediaProcessor_.reset(reinterpret_cast<Subscriber<std::shared_ptr<ExVideoFrame>>*>(data));
+        mediaProcessor_.reset(reinterpret_cast<Subscriber<std::shared_ptr<VideoFrame>>*>(data));
         videoSubject.subscribe(*mediaProcessor_);
         return 0;
     };
 
     pm.registerService("attachInputVideoSubscriber", attachInputVideoSubscriber);
     // Load the plugin
-    //std::string pluginAbsolutePath{"/home/ayounes/Projects/ring-plugins/videotest/libvideotest.so"};
-    //std::string pluginAbsolutePath{"/home/ayounes/Projects/ring-project/daemon/src/media/plugins/FaceMarks/libfacemarks.so"};
-    std::string pluginAbsolutePath{"/home/ayounes/Projects/ring-project/daemon/src/media/plugins/multipleobjecttracking/jamimultipleobjecttrackingtensorflow.so"};
+    // std::string pluginAbsolutePath{"/home/ayounes/Projects/ring-plugins/videotest/libvideotest.so"};
+     std::string pluginAbsolutePath{"/home/ayounes/Projects/ring-project/daemon/src/media/plugins/FaceMarks/libfacemarks.so"};
+    // std::string pluginAbsolutePath{"/home/ayounes/Projects/ring-project/daemon/src/media/plugins/multipleobjecttracking/jamimultipleobjecttrackingtensorflow.so"};
+    // std::string pluginAbsolutePath{"/home/ayounes/Projects/ring-plugins/simplevideoplugin/simpleplugin.so"};
     pm.load(pluginAbsolutePath);
 }
 
@@ -360,10 +361,11 @@ VideoInput::createDecoder()
     auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame)){
             // Convert incoming frame to RGB8 before sending it to subscribers
-            std::unique_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(*videoFrame,AV_PIX_FMT_RGB24);
-            std::shared_ptr<ExVideoFrame> exVideoFrame = std::make_shared<ExVideoFrame>(rgbFrameUniquePointer->pointer()->data[0],
-            AV_PIX_FMT_RGB24,videoFrame->width(),videoFrame->height(),videoFrame->pointer()->linesize[0]);
-            videoSubject.onNext(exVideoFrame);
+            // std::unique_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(*videoFrame,AV_PIX_FMT_RGB24);
+            // std::shared_ptr<ExVideoFrame> exVideoFrame = std::make_shared<ExVideoFrame>(rgbFrameUniquePointer->pointer()->data[0],
+            // AV_PIX_FMT_RGB24,videoFrame->width(),videoFrame->height(),videoFrame->pointer()->linesize[0]);
+            std::shared_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(*videoFrame, AV_PIX_FMT_RGB24);
+            videoSubject.onNext(rgbFrameUniquePointer);
             videoFrame->copyFrom(*rgbFrameUniquePointer);
         }
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
