@@ -9,8 +9,8 @@ public:
     void cancel() {cancelled = true;}
 
 public:
-    SyncSubscription(Subscriber<T>& subscriber):
-        subscriber{subscriber}{}
+    SyncSubscription(Subscriber<T>& s):
+        subscriber{s}{}
     virtual ~SyncSubscription() = default;
     void onNext(T value);
     void onComplete();

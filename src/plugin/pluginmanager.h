@@ -65,6 +65,12 @@ public:
   bool load(const std::string &path);
 
   /**
+   * @brief unloads the plugin with pathname path
+   * @param path
+   * @return true if success
+   */
+  bool unload(const std::string& path);
+  /**
    * Register a plugin.
    *
    * @param initFunc plugin init function
