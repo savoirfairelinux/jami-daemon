@@ -68,7 +68,7 @@ constexpr static int ARRAY_IDX_INVALID = 713;
 constexpr static int CONFLICT_IN_MAPPING = 718;
 
 // Timeout values (in seconds).
-constexpr static unsigned int SEARCH_TIMEOUT {30};
+constexpr static unsigned int SEARCH_TIMEOUT {5};
 constexpr static unsigned int SUBSCRIBE_TIMEOUT {300};
 
 class PUPnP : public UPnPProtocol
