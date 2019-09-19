@@ -820,6 +820,12 @@
            </arg>
        </method>
 
+        <signal name="activeCodecListChanged" tp:name-for-bindings="activeCodecListChanged">
+           <arg type="s" name="accountID"></arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="VectorUInt"/>
+           <arg type="au" name="activatedCodec"></arg>
+        </signal>
+
         <!-- Hardware encoding/decoding signals -->
         <signal name="hardwareDecodingChanged" tp:name-for-bindings="hardwareDecodingChanged">
            <arg type="b" name="state">

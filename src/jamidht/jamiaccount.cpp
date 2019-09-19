@@ -2638,11 +2638,30 @@ void
 JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
 {
     Account::setActiveCodecs(list);
+    setH265Active();
     if (!hasActiveCodec(MEDIA_AUDIO))
         setCodecActive(AV_CODEC_ID_OPUS);
     if (!hasActiveCodec(MEDIA_VIDEO)) {
         setCodecActive(AV_CODEC_ID_H264);
         setCodecActive(AV_CODEC_ID_VP8);
+    }
+    Account::sortCodec();
+}
+
+void
+JamiAccount::setH265Active()
+{
+    if (MediaEncoder::testH265Accel()) {
+        if (auto accCodec = searchCodecByName("H265", MEDIA_VIDEO)) {
+            JAMI_ERR("activate h265");
+            accCodec->isActive = true;
+            accCodec->order = 1;
+        }
+    } else {
+        if (auto accCodec = searchCodecByName("H265", MEDIA_VIDEO)) {
+            JAMI_ERR("disactivate h265");
+            accCodec->isActive = false;
+        }
     }
 }
 
