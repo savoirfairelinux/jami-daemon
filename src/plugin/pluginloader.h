@@ -21,8 +21,9 @@
 #pragma once
 
 #include "ringplugin.h"
-
+#include <dlfcn.h>
 #include <string>
+#include <memory>
 
 namespace jami {
 
@@ -31,15 +32,38 @@ public:
   virtual ~Plugin() = default;
 
   static Plugin *load(const std::string &path, std::string &error);
-
   virtual void *getSymbol(const char *name) const = 0;
   virtual RING_PluginInitFunc getInitFunction() const {
     return reinterpret_cast<RING_PluginInitFunc>(
         getSymbol(RING_DYN_INIT_FUNC_NAME));
-  };
+  }
 
 protected:
   Plugin() = default;
+};
+
+class DLPlugin : public Plugin {
+public:
+    DLPlugin(void *handle) : handle_(handle, ::dlclose){}
+    //==========================================
+    bool unload() {
+        if(!handle_){
+            return false;
+        }
+        return ::dlclose(handle_.release());
+    }
+
+
+    void *getSymbol(const char *name) const {
+        if (!handle_)
+            return nullptr;
+
+        return ::dlsym(handle_.get(), name);
+    }
+
+    //==========================================
+private:
+    std::unique_ptr<void, int (*)(void *)> handle_;
 };
 
 } // namespace jami

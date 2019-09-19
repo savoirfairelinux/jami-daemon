@@ -13,18 +13,34 @@ public:
 template <class T>
 void SyncSubject<T>::onNext(T value){
     std::lock_guard<std::mutex> lock(this->mut);
-    for(auto& weakSubscription : this->subscriptions){
-        if (auto subscription = weakSubscription.lock())
+
+    typename std::list<std::weak_ptr<SyncSubscription<T>>> ::iterator it;
+    for (it = this->subscriptions.begin(); it != this->subscriptions.end(); ) {
+        auto subscription = it->lock();
+        if (subscription) {
             subscription->onNext(value);
+            ++it;
+        } else {
+            // Erase returns the it++
+            it = this->subscriptions.erase(it);
+        }
     }
 }
 
 template <class T>
 void SyncSubject<T>::onComplete(){
     std::lock_guard<std::mutex> lock(this->mut);
-    for(auto& weakSubscription : this->subscriptions){
-        if (auto subscription = weakSubscription.lock())
+
+    typename std::list<std::weak_ptr<SyncSubscription<T>>> ::iterator it;
+    for (it = this->subscriptions.begin(); it != this->subscriptions.end(); ) {
+        auto subscription = it->lock();
+        if (subscription) {
             subscription->onComplete();
+            ++it;
+        } else {
+            // Erase returns the it++
+            it = this->subscriptions.erase(it);
+        }
     }
 }
 

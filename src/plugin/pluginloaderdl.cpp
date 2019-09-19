@@ -21,26 +21,7 @@
 
 #include "pluginloader.h"
 
-#include <dlfcn.h>
-#include <memory>
-
 namespace jami {
-
-class DLPlugin : public Plugin {
-public:
-  DLPlugin(void *handle) : handle_(handle, ::dlclose){}
-  void *getSymbol(const char *name) const;
-
-private:
-  std::unique_ptr<void, int (*)(void *)> handle_;
-};
-
-void *DLPlugin::getSymbol(const char *name) const {
-  if (!handle_)
-    return nullptr;
-
-  return ::dlsym(handle_.get(), name);
-}
 
 Plugin *Plugin::load(const std::string &path, std::string &error) {
   if (path.empty()) {

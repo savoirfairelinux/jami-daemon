@@ -90,6 +90,19 @@ bool PluginManager::load(const std::string &path) {
   return true;
 }
 
+//===============================================================
+
+bool PluginManager::unload(const std::string& path) {
+    PluginMap::iterator it = dynPluginMap_.find(path);
+    if ( it != dynPluginMap_.end()) {
+        std::shared_ptr<DLPlugin> dlplugin = std::dynamic_pointer_cast<DLPlugin>(it->second);
+        dlplugin->unload();
+        dynPluginMap_.erase(it);
+    }
+}
+
+//===============================================================
+
 bool PluginManager::registerPlugin(RING_PluginInitFunc initFunc) {
   RING_PluginExitFunc exitFunc = nullptr;
 
