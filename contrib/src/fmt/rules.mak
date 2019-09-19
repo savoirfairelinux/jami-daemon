@@ -9,6 +9,7 @@ endif
 
 # fmt 5.3.0 fix: https://github.com/fmtlib/fmt/issues/1267
 FMT_CMAKECONF = -DBUILD_SHARED_LIBS=Off -DFMT_USE_USER_DEFINED_LITERALS=0 \
+				-DFMT_TEST=Off \
                 CMAKE_INSTALL_LIBDIR=$(PREFIX)/lib
 
 $(TARBALLS)/fmt-$(FMT_VERSION).tar.gz:
