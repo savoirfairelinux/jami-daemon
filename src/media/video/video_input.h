@@ -28,14 +28,11 @@
 #include "media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
-// Subject
-#include "media/filters/syncsubject.h"
 // Scaler used to convert the image to RGB
 #include "media/video/video_scaler.h"
-// Exchange video frame
-#include "media/filters/ExVideoFrame.h"
-// Plugin Manager
-#include "plugin/pluginmanager.h"
+// Plugin Stream Manager
+#include "plugin/pluginstreammanager.h"
+#include "plugin/customplugin.h"
 
 #include <map>
 #include <atomic>
@@ -105,13 +102,8 @@ private:
     NON_COPYABLE(VideoInput);
 
     std::string currentResource_;
-
-    // Subject
-    SyncSubject<std::shared_ptr<VideoFrame>> videoSubject;
-    // Plugin Manager
-    PluginManager pm;
-    // Subscribers
-    std::unique_ptr<Subscriber<std::shared_ptr<VideoFrame>>> mediaProcessor_;
+    //Plugin Stream Manager
+    PluginStreamManager psm;
     // An instance of the scaler
     video::VideoScaler scaler;
     std::unique_ptr<MediaDecoder> decoder_;
@@ -127,6 +119,8 @@ private:
 
     bool emulateRate_       = false;
     ThreadLoop loop_;
+
+    int i = 0;
 
     void clearOptions();
 
