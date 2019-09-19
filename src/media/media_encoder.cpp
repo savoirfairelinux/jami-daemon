@@ -233,14 +233,14 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
                 }
                 accel_->setDetails(encoderCtx);
                 if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0) {
-                    // Fail opening codec
+                    // Failed to open codec
                     JAMI_WARN("Fail to open hardware encoder %s with %s ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName().c_str());
                     avcodec_free_context(&encoderCtx);
                     encoderCtx = nullptr;
                     accel_ = nullptr;
                     continue;
                 } else {
-                    // Success opening codec
+                    // Succeed to open codec
                     JAMI_WARN("Using hardware encoding for %s with %s ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName().c_str());
                     encoders_.push_back(encoderCtx);
                     break;
@@ -600,7 +600,7 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 }
 
 void
-MediaEncoder::forcePresetX264(AVCodecContext* encoderCtx)
+MediaEncoder::forcePresetX264_X265(AVCodecContext* encoderCtx)
 {
     const char *speedPreset = "veryfast";
     if (av_opt_set(encoderCtx, "preset", speedPreset, AV_OPT_SEARCH_CHILDREN))
@@ -747,8 +747,12 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
     if (avcodecId == AV_CODEC_ID_H264) {
         auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
         extractProfileLevelID(profileLevelId, encoderCtx);
-        forcePresetX264(encoderCtx);
+        forcePresetX264_X265(encoderCtx);
         initH264(encoderCtx, br);
+    } else if (avcodecId == AV_CODEC_ID_HEVC) {
+        encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
+        forcePresetX264_X265(encoderCtx);
+        initH265(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_VP8) {
         initVP8(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_MPEG4) {
@@ -774,6 +778,8 @@ MediaEncoder::setBitrate(uint64_t br)
     // Change parameters on the fly
     if(codecId == AV_CODEC_ID_H264)
         initH264(encoderCtx, br);
+    if(codecId == AV_CODEC_ID_H265)
+        initH265(encoderCtx, br);
     else if(codecId == AV_CODEC_ID_H263P)
         initH263(encoderCtx, br);
     else if(codecId == AV_CODEC_ID_MPEG4)
@@ -813,6 +819,36 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 
         JAMI_DBG("H264 encoder setup cbr: bitrate=%lu kbit/s", br);
     }
+}
+
+void
+MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
+{
+    // If auto quality disabled use CRF mode
+    if(not auto_quality) {
+        uint64_t maxBitrate = 1000 * br;
+        // H265 use 50% less bitrate compared to H264 (half bitrate is equivalent to a change 6 for CRF)
+        // https://slhck.info/video/2017/02/24/crf-guide.html
+        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)) - 6);     // CRF = A + B*ln(maxBitrate)
+        uint64_t bufSize = maxBitrate * 2;
+
+        av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "b", maxBitrate, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "minrate", -1, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
+        JAMI_DBG("H265 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
+    }
+    else {
+        av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "bufsize", br * 500, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
+
+        JAMI_DBG("H265 encoder setup cbr: bitrate=%lu kbit/s", br);
+    }
+
 }
 
 void
@@ -941,6 +977,69 @@ MediaEncoder::readConfig(AVCodecContext* encoderCtx)
             JAMI_ERR() << "Failed to load encoder configuration file: " << e.what();
         }
     }
+}
+
+std::string
+MediaEncoder::testH265Accel()
+{
+#ifdef RING_ACCEL
+    if (jami::Manager::instance().videoPreferences.getEncodingAccelerated()) {
+        // Get compatible list of Hardware API
+        auto APIs = video::HardwareAccel::getCompatibleAccel(AV_CODEC_ID_H265,
+                1280, 720, CODEC_ENCODER);
+
+        std::unique_ptr<video::HardwareAccel> accel;
+
+        if (APIs.size() > 0) {
+            for (const auto& it : APIs) {
+                accel = std::make_unique<video::HardwareAccel>(it);    // save accel
+                // Init codec need accel to init encoderCtx accelerated
+                auto outputCodec = avcodec_find_encoder_by_name(accel->getCodecName().c_str());
+
+                AVCodecContext* encoderCtx = avcodec_alloc_context3(outputCodec);
+                encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), 16u);
+                encoderCtx->width = 1280;
+                encoderCtx->height = 720;
+                AVRational framerate;
+                framerate.num = 30;
+                framerate.den = 1;
+                encoderCtx->time_base = av_inv_q(framerate);
+                encoderCtx->pix_fmt = accel->getFormat();
+                encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
+                encoderCtx->opaque = accel.get();
+
+                auto br = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
+                av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
+                av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
+                av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
+                av_opt_set_int(encoderCtx, "bufsize", br * 500, AV_OPT_SEARCH_CHILDREN);
+                av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
+
+                auto ret = accel->initAPI(false, nullptr);
+                if (ret < 0) {
+                    accel = nullptr;
+                    encoderCtx = nullptr;
+                    continue;
+                }
+                accel->setDetails(encoderCtx);
+                if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0) {
+                    // Failed to open codec
+                    avcodec_free_context(&encoderCtx);
+                    encoderCtx = nullptr;
+                    accel = nullptr;
+                    continue;
+                } else {
+                    // Succeed to open codec
+                    avcodec_free_context(&encoderCtx);
+                    encoderCtx = nullptr;
+                    accel = nullptr;
+                    return it.getName();
+                }
+            }
+        }
+    }
+#endif
+    return "";
 }
 
 } // namespace jami

@@ -181,6 +181,8 @@ Account::loadDefaultCodecs()
     // default codec are system codecs
     auto systemCodecList = systemCodecContainer_->getSystemCodecInfoList();
 
+    accountCodecInfoList_.empty();
+
     for (const auto& systemCodec: systemCodecList) {
         // As defined in SDP RFC, only select a codec if he can encode and decode
         if ((systemCodec->codecType & CODEC_ENCODER_DECODER) != CODEC_ENCODER_DECODER)
@@ -353,7 +355,12 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
             ++order;
         }
     }
+    sortCodec();
+}
 
+void
+Account::sortCodec()
+{
     std::sort(std::begin(accountCodecInfoList_),
               std::end  (accountCodecInfoList_),
               [](const std::shared_ptr<AccountCodecInfo>& a,

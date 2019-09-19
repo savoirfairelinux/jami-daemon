@@ -316,6 +316,13 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         virtual void connectivityChanged() {};
 
+        /**
+         * Helper function used to load the default codec order from the codec factory
+         */
+        void loadDefaultCodecs();
+
+        void setCodecActive(unsigned codecId);
+
     public: // virtual methods that has to be implemented by concrete classes
         /**
          * This method is called to request removal of possible account traces on the system,
@@ -325,11 +332,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
     private:
         NON_COPYABLE(Account);
-
-        /**
-         * Helper function used to load the default codec order from the codec factory
-         */
-        void loadDefaultCodecs();
 
         /**
          * Set of call's ID attached to the account.
@@ -493,7 +495,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         std::shared_ptr<AccountCodecInfo> searchCodecByName(const std::string& name, MediaType mediaType);
         std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
         void setAllCodecsActive(MediaType mediaType, bool active);
-        void setCodecActive(unsigned codecId);
+        void sortCodec();
+
 };
 
 static inline std::ostream&
