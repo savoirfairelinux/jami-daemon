@@ -72,11 +72,9 @@ public:
     AccountManager(
         const std::string& path,
         OnAsync&& onAsync,
-        std::shared_ptr<dht::DhtRunner> dht,
         const std::string& nameServer)
     : path_(path)
     , onAsync_(std::move(onAsync))
-    , dht_(std::move(dht))
     , nameDir_(NameDirectory::instance(nameServer)) {};
 
     virtual ~AccountManager() = default;
@@ -127,6 +125,8 @@ public:
         const std::string& receipt,
         const std::vector<uint8_t>& receiptSignature,
         OnChangeCallback&& onChange);
+    
+    void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 
     virtual void startSync() {};
 
