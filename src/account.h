@@ -316,6 +316,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         virtual void connectivityChanged() {};
 
+        void sortCodec();
+
     public: // virtual methods that has to be implemented by concrete classes
         /**
          * This method is called to request removal of possible account traces on the system,
