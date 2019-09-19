@@ -37,6 +37,7 @@
 #include "dring/media_const.h"
 #include "libav_utils.h"
 #include "call_const.h"
+#include "ring_signal.h"
 
 #include <functional>
 #include <memory>
@@ -574,6 +575,13 @@ setEncodingAccelerated(bool state)
     jami::Manager::instance().videoPreferences.setEncodingAccelerated(state);
     jami::Manager::instance().saveConfig();
 #endif
+    // Update list of active codecs
+    auto accId = jami::Manager::instance().getAccountList().front();
+    auto acc = jami::Manager::instance().accountFactory.getAccount(accId);
+    if (!acc)
+        return;
+    acc->setActiveCodecs(acc->getActiveCodecs());
+    jami::emitSignal<DRing::ConfigurationSignal::ActiveCodecListChanged>(accId, acc->getActiveCodecs(jami::MEDIA_VIDEO));
 }
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)

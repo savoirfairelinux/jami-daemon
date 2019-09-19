@@ -346,6 +346,20 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
     uint16_t order = 1;
+
+    if (MediaEncoder::testH265Accel()) {
+        if (auto accCodec = searchCodecByName("H265", MEDIA_VIDEO)) {
+            JAMI_ERR("activate h265");
+            accCodec->isActive = true;
+            accCodec->order = order++;
+        }
+    } else {
+        if (auto accCodec = searchCodecByName("H265", MEDIA_VIDEO)) {
+            JAMI_ERR("disactivate h265");
+            accCodec->isActive = false;
+        }
+    }
+
     for (const auto& item : list) {
         if (auto accCodec = searchCodecById(item, MEDIA_ALL)) {
             accCodec->isActive = true;
@@ -353,7 +367,12 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
             ++order;
         }
     }
+    sortCodec();
+}
 
+void
+Account::sortCodec()
+{
     std::sort(std::begin(accountCodecInfoList_),
               std::end  (accountCodecInfoList_),
               [](const std::shared_ptr<AccountCodecInfo>& a,
