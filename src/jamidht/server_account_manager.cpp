@@ -38,11 +38,10 @@ constexpr const char* const HTTPS_PROTO {"https"};
 
 ServerAccountManager::ServerAccountManager(
     const std::string& path,
-    std::shared_ptr<dht::DhtRunner> dht,
     OnAsync&& onAsync,
     const std::string& managerHostname,
     const std::string& nameServer)
-: AccountManager(path, std::move(onAsync), std::move(dht), nameServer)
+: AccountManager(path, std::move(onAsync), nameServer)
 , managerHostname_(managerHostname)
 , logger_(std::make_shared<dht::Logger>(
     [](char const* m, va_list args) { Logger::vlog(LOG_ERR, nullptr, 0, true, m, args); }, 

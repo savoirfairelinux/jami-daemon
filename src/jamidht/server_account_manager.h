@@ -25,7 +25,6 @@ class ServerAccountManager : public AccountManager {
 public:
     ServerAccountManager(
         const std::string& path,
-        std::shared_ptr<dht::DhtRunner> dht,
         OnAsync&& onAsync,
         const std::string& managerHostname,
         const std::string& nameServer);
