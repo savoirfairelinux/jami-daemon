@@ -94,7 +94,7 @@ bool registerName(const std::string& account, const std::string& password, const
 
 std::map<std::string, std::string> getTlsDefaultSettings();
 
-std::vector<unsigned> getCodecList();
+std::vector<unsigned> getCodecList(const std::string& accountID);
 std::vector<std::string> getSupportedTlsMethod();
 std::vector<std::string> getSupportedCiphers(const std::string& accountID);
 std::map<std::string, std::string> getCodecDetails(const std::string& accountID, const unsigned& codecId);

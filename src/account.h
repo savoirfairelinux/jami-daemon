@@ -316,6 +316,10 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         virtual void connectivityChanged() {};
 
+        void sortCodec();
+
+        std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType = MEDIA_ALL) const;
+
     public: // virtual methods that has to be implemented by concrete classes
         /**
          * This method is called to request removal of possible account traces on the system,
@@ -491,9 +495,11 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * private account codec searching functions
          */
         std::shared_ptr<AccountCodecInfo> searchCodecByName(const std::string& name, MediaType mediaType);
-        std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
         void setAllCodecsActive(MediaType mediaType, bool active);
         void setCodecActive(unsigned codecId);
+        void removeCodecByName(const std::string& name);
+        void setActiveH265();
+
 };
 
 static inline std::ostream&

@@ -456,12 +456,12 @@ getAccountList()
  * Can stay global, as only the active codecs will be set per accounts
  */
 std::vector<unsigned>
-getCodecList()
+getCodecList(const std::string& accountID)
 {
-    std::vector<unsigned> list {jami::getSystemCodecContainer()->getSystemCodecInfoIdList(jami::MEDIA_ALL)};
-    if (list.empty())
-        jami::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
-    return list;
+    if (auto acc = jami::Manager::instance().getAccount(accountID))
+        return acc->getAccountCodecInfoIdList();
+    jami::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
+    return jami::Account::getDefaultCodecsId();
 }
 
 std::vector<std::string>
