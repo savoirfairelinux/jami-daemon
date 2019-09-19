@@ -24,6 +24,7 @@
 #endif
 #include "logger.h"
 #include "system_codec_container.h"
+#include "media_encoder.h"
 
 #include <sstream>
 
@@ -51,6 +52,8 @@ SystemCodecContainer::initCodecConfig()
 #ifdef ENABLE_VIDEO
     auto minH264 = SystemCodecInfo::DEFAULT_H264_MIN_QUALITY;
     auto maxH264 = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
+    auto minH265 = SystemCodecInfo::DEFAULT_H264_MIN_QUALITY;
+    auto maxH265 = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
     auto minVP8 = SystemCodecInfo::DEFAULT_VP8_MIN_QUALITY;
     auto maxVP8 = SystemCodecInfo::DEFAULT_VP8_MAX_QUALITY;
     auto defaultBitrate = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
@@ -58,12 +61,20 @@ SystemCodecContainer::initCodecConfig()
     availableCodecList_ = {
 #ifdef ENABLE_VIDEO
         /* Define supported video codec*/
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_HEVC,
+                                               "H265", "",
+                                               CODEC_ENCODER_DECODER,
+                                               defaultBitrate,
+                                               minH265,
+                                               maxH265),
+
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H264,
                                                "H264", "libx264",
                                                CODEC_ENCODER_DECODER,
                                                defaultBitrate,
                                                minH264,
                                                maxH264),
+
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
                                                "VP8", "libvpx",
                                                CODEC_ENCODER_DECODER,
@@ -120,8 +131,22 @@ SystemCodecContainer::initCodecConfig()
                                                CODEC_ENCODER_DECODER,
                                                64, 8000, 1, 0),
     };
-
+    setActiveH265();
     checkInstalledCodecs();
+}
+
+bool
+SystemCodecContainer::setActiveH265()
+{
+    auto apiName = MediaEncoder::testH265Accel();
+    if (apiName != "") {
+        JAMI_WARN("Found a usable accelerated H265/HEVC codec: %s, enabling.", apiName.c_str());
+        return true;
+    } else {
+        JAMI_ERR("Can't find a usable accelerated H265/HEVC codec, disabling.");
+        removeCodecByName("H265");
+    }
+    return false;
 }
 
 void
@@ -213,6 +238,16 @@ SystemCodecContainer::searchCodecByPayload(unsigned payload, MediaType mediaType
             return codecIt;
     }
     return {};
+}
+void
+SystemCodecContainer::removeCodecByName(const std::string& name, MediaType mediaType)
+{
+    for (auto codecIt = availableCodecList_.begin(); codecIt != availableCodecList_.end(); ++codecIt) {
+        if ((*codecIt)->name == name && (*codecIt)->mediaType & mediaType) {
+            availableCodecList_.erase(codecIt);
+            break;
+        }
+    }
 }
 
 } // namespace jami
