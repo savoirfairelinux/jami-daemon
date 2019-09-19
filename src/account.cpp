@@ -337,6 +337,33 @@ Account::hasActiveCodec(MediaType mediaType) const
 }
 
 void
+Account::setActiveH265()
+{
+    auto apiName = MediaEncoder::testH265Accel();
+    if (apiName != "") {
+        if (auto accH265 = searchCodecByName("H265", MEDIA_VIDEO)) {
+            JAMI_WARN("Found a usable accelerated H265/HEVC codec: %s, enabling.", apiName.c_str());
+            // increment other video codec positions
+            auto order = 1;
+            for (auto& item : accountCodecInfoList_) {
+                if (item->systemCodecInfo.mediaType == MEDIA_VIDEO)
+                    item->order = ++order;
+            }
+            // set h265 first
+            accH265->isActive = true;
+            accH265->order = 1;
+        }
+    } else {
+        if (auto accCodec = searchCodecByName("H265", MEDIA_VIDEO)) {
+            JAMI_ERR("Can't find a usable accelerated H265/HEVC codec, disabling.");
+            removeCodecByName("H265");
+            jami::getSystemCodecContainer()->removeCodecByName("H265");
+        }
+    }
+    sortCodec();
+}
+
+void
 Account::setActiveCodecs(const std::vector<unsigned>& list)
 {
     // first clear the previously stored codecs
@@ -353,7 +380,12 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
             ++order;
         }
     }
+    sortCodec();
+}
 
+void
+Account::sortCodec()
+{
     std::sort(std::begin(accountCodecInfoList_),
               std::end  (accountCodecInfoList_),
               [](const std::shared_ptr<AccountCodecInfo>& a,
@@ -511,6 +543,17 @@ Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
         }
     }
     return {};
+}
+
+void
+Account::removeCodecByName(const std::string& name)
+{
+    for (auto codecIt = accountCodecInfoList_.begin(); codecIt != accountCodecInfoList_.end(); ++codecIt) {
+        if ((*codecIt)->systemCodecInfo.name == name) {
+            accountCodecInfoList_.erase(codecIt);
+            break;
+        }
+    }
 }
 
 std::vector<unsigned>

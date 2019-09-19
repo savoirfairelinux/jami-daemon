@@ -415,6 +415,8 @@ public:
      */
     void registerDhtAddress(IceTransport&);
 
+    void setH265Active();
+
 private:
     NON_COPYABLE(JamiAccount);
 
