@@ -524,7 +524,7 @@ ArchiveAccountManager::updateArchive(AccountArchive& archive) const
                 archive.config.emplace(it.first, base64::encode(fileutils::loadFile(it.second)));
             } catch (...) {}
         } else
-            archive.config.insert(it);
+            archive.config[it.first] = it.second;
     }
     archive.contacts = info_->contacts->getContacts();
 }
@@ -537,7 +537,6 @@ ArchiveAccountManager::saveArchive(AccountArchive& archive, const std::string& p
         if (archivePath_.empty())
             archivePath_ = "export.gz";
         archive.save(fileutils::getFullPath(path_, archivePath_), pwd);
-        //archiveHasPassword_ = not pwd.empty();
     } catch (const std::runtime_error& ex) {
         JAMI_ERR("[Auth] Can't export archive: %s", ex.what());
         return;
