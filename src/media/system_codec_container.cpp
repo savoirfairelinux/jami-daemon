@@ -51,6 +51,8 @@ SystemCodecContainer::initCodecConfig()
 #ifdef ENABLE_VIDEO
     auto minH264 = SystemCodecInfo::DEFAULT_H264_MIN_QUALITY;
     auto maxH264 = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
+    auto minH265 = SystemCodecInfo::DEFAULT_H264_MIN_QUALITY;
+    auto maxH265 = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
     auto minVP8 = SystemCodecInfo::DEFAULT_VP8_MIN_QUALITY;
     auto maxVP8 = SystemCodecInfo::DEFAULT_VP8_MAX_QUALITY;
     auto defaultBitrate = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
@@ -64,6 +66,14 @@ SystemCodecContainer::initCodecConfig()
                                                defaultBitrate,
                                                minH264,
                                                maxH264),
+
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_HEVC,
+                                               "H265", "",
+                                               CODEC_ENCODER_DECODER,
+                                               defaultBitrate,
+                                               minH265,
+                                               maxH265),
+
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
                                                "VP8", "libvpx",
                                                CODEC_ENCODER_DECODER,
