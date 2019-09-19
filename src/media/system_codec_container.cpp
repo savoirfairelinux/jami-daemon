@@ -64,6 +64,14 @@ SystemCodecContainer::initCodecConfig()
                                                defaultBitrate,
                                                minH264,
                                                maxH264),
+
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_HEVC,
+                                               "H265", "libx265",
+                                               CODEC_ENCODER_DECODER,
+                                               defaultBitrate,
+                                               minH264,
+                                               maxH264),
+
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
                                                "VP8", "libvpx",
                                                CODEC_ENCODER_DECODER,
