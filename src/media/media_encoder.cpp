@@ -598,7 +598,7 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 }
 
 void
-MediaEncoder::forcePresetX264(AVCodecContext* encoderCtx)
+MediaEncoder::forcePresetX264_X265(AVCodecContext* encoderCtx)
 {
     const char *speedPreset = "veryfast";
     if (av_opt_set(encoderCtx, "preset", speedPreset, AV_OPT_SEARCH_CHILDREN))
@@ -743,10 +743,13 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
 
     /* let x264 preset override our encoder settings */
     if (avcodecId == AV_CODEC_ID_H264) {
-        auto profileLevelId = libav_utils::getDictValue(options_, "parameters");
         extractProfileLevelID(profileLevelId, encoderCtx);
-        forcePresetX264(encoderCtx);
+        forcePresetX264_X265(encoderCtx);
         initH264(encoderCtx, br);
+    } else if (avcodecId == AV_CODEC_ID_HEVC) {
+        encoderCtx_->profile = FF_PROFILE_HEVC_MAIN;
+        forcePresetX264_X265(encoderCtx);
+        initH265(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_VP8) {
         initVP8(encoderCtx, br);
     } else if (avcodecId == AV_CODEC_ID_MPEG4) {
@@ -772,6 +775,8 @@ MediaEncoder::setBitrate(uint64_t br)
     // Change parameters on the fly
     if(codecId == AV_CODEC_ID_H264)
         initH264(encoderCtx, br);
+    if(codecId == AV_CODEC_ID_H265)
+        initH265(encoderCtx, br);
     else if(codecId == AV_CODEC_ID_H263P)
         initH263(encoderCtx, br);
     else if(codecId == AV_CODEC_ID_MPEG4)
@@ -811,6 +816,36 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 
         JAMI_DBG("H264 encoder setup cbr: bitrate=%lu kbit/s", br);
     }
+}
+
+void
+MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
+{
+    // If auto quality disabled use CRF mode
+    if(not auto_quality) {
+        uint64_t maxBitrate = 1000 * br;
+        // H265 use 50% less bitrate compared to H264 (half bitrate is equivalent to a change 6 for CRF)
+        // https://slhck.info/video/2017/02/24/crf-guide.html
+        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)) - 6);     // CRF = A + B*ln(maxBitrate)
+        uint64_t bufSize = maxBitrate * 2;
+
+        av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "b", maxBitrate, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "minrate", -1, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
+        JAMI_DBG("H265 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
+    }
+    else {
+        av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "bufsize", br * 500, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
+
+        JAMI_DBG("H265 encoder setup cbr: bitrate=%lu kbit/s", br);
+    }
+
 }
 
 void
