@@ -2748,6 +2748,7 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
     if (!hasActiveCodec(MEDIA_VIDEO)) {
         setCodecActive(AV_CODEC_ID_H264);
         setCodecActive(AV_CODEC_ID_VP8);
+        Account::setActiveH265();
     }
 }
 

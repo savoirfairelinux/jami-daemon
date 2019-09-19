@@ -199,9 +199,9 @@ DBusConfigurationManager::getTlsDefaultSettings() -> decltype(DRing::getTlsDefau
 }
 
 auto
-DBusConfigurationManager::getCodecList() -> decltype(DRing::getCodecList())
+DBusConfigurationManager::getCodecList(const std::string& accountID) -> decltype(DRing::getCodecList(accountID))
 {
-    return DRing::getCodecList();
+    return DRing::getCodecList(accountID);
 }
 
 auto

@@ -84,7 +84,7 @@ DRING_PUBLIC int getMessageStatus(const std::string& accountID, uint64_t id);
 
 DRING_PUBLIC std::map<std::string, std::string> getTlsDefaultSettings();
 
-DRING_PUBLIC std::vector<unsigned> getCodecList();
+DRING_PUBLIC std::vector<unsigned> getCodecList(const std::string& accountID);
 DRING_PUBLIC std::vector<std::string> getSupportedTlsMethod();
 DRING_PUBLIC std::vector<std::string> getSupportedCiphers(const std::string& accountID);
 DRING_PUBLIC std::map<std::string, std::string> getCodecDetails(const std::string& accountID, const unsigned& codecId);
