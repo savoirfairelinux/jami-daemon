@@ -27,12 +27,11 @@ public:
 
     ArchiveAccountManager(
         const std::string& path,
-        std::shared_ptr<dht::DhtRunner> dht,
         OnAsync&& onAsync,
         OnExportConfig&& onExportConfig,
         std::string archivePath,
         const std::string& nameServer)
-     : AccountManager(path, std::move(onAsync), std::move(dht), nameServer)
+     : AccountManager(path, std::move(onAsync), nameServer)
         , onExportConfig_(std::move(onExportConfig))
         , archivePath_(std::move(archivePath))
         {};

@@ -892,14 +892,12 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
         };
         if (managerUri_.empty()) {
             accountManager_.reset(new ArchiveAccountManager(getPath(),
-                dht_,
                 onAsync,
                 [this]() { return getAccountDetails(); },
                 archivePath_.empty() ? "archive.gz" : archivePath_,
                 nameServer_));
         } else {
             accountManager_.reset(new ServerAccountManager(getPath(),
-                dht_,
                 onAsync,
                 managerUri_,
                 nameServer_));
@@ -997,31 +995,6 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 receiptSignature_ = std::move(receipt_signature);
                 accountManager_->foundAccountDevice(info.identity.second, ringDeviceName_, clock::now());
                 setRegistrationState(RegistrationState::UNREGISTERED);
-
-                AccountManager::OnChangeCallback callbacks {
-                    [this](const std::string& uri, bool confirmed) {
-                        dht::ThreadPool::computation().run([this, uri, confirmed] {
-                                emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, confirmed);
-                            });
-                    },
-                    [this](const std::string& uri, bool banned) {
-                        dht::ThreadPool::computation().run([this, uri, banned] {
-                                emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, banned);
-                            });
-                    },
-                    [this](const std::string& uri, const std::vector<uint8_t>& payload, time_t received) {
-                        dht::ThreadPool::computation().run([this, uri, payload = std::move(payload), received] {
-                                emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(), uri, payload, received);
-                            });
-                    },
-                    [this]() {
-                        dht::ThreadPool::computation().run([this] {
-                                emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
-                            });
-                    },
-                };
-                accountManager_->useIdentity(id_, receipt_, receiptSignature_, std::move(callbacks));
-
                 saveConfig();
                 doRegister();
             }, [this](AccountManager::AuthError error, const std::string& message)
@@ -1353,7 +1326,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
     auto remote_device = pc.from;
     auto remote_account = pc.from_account;
-    auto id = accountManager_->getInfo()->identity;
+    auto id = id_;
     if (not id.first or not id.second)
         throw std::runtime_error("No identity configured for this account.");
 
@@ -1659,7 +1632,7 @@ JamiAccount::doRegister_()
         config.dht_config.node_config.network = 0;
         config.dht_config.node_config.maintain_storage = false;
         config.dht_config.node_config.persist_path = cachePath_+DIR_SEPARATOR_STR "dhtstate";
-        config.dht_config.id = accountManager_->getInfo()->identity;
+        config.dht_config.id = id_;
         config.proxy_server = getDhtProxyServer();
         config.push_node_id = getAccountID();
         config.threaded = true;
@@ -1758,6 +1731,7 @@ JamiAccount::doRegister_()
         for (const auto& bootstrap : loadBootstrap())
             dht_->bootstrap(bootstrap);
 
+        accountManager_->setDht(dht_);
         accountManager_->startSync();
 
         // Listen for incoming calls
@@ -2257,7 +2231,7 @@ JamiAccount::getContactHeader(pjsip_transport* t)
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                          "%s<sips:%s%s%s;transport=dtls>",
                                          quotedDisplayName.c_str(),
-                                         accountManager_->getInfo()->identity.second->getId().toString().c_str(),
+                                         id_.second->getId().toString().c_str(),
                                          (address.empty() ? "" : "@"),
                                          address.c_str());
     } else {
@@ -2265,7 +2239,7 @@ JamiAccount::getContactHeader(pjsip_transport* t)
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                          "%s<sips:%s@ring.dht>",
                                          quotedDisplayName.c_str(),
-                                         accountManager_->getInfo()->identity.second->getId().toString().c_str());
+                                         id_.second->getId().toString().c_str());
     }
     return contact_;
 }
