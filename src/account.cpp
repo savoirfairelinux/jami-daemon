@@ -345,7 +345,7 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
-    uint16_t order = 1;
+    uint16_t order = 2;
     for (const auto& item : list) {
         if (auto accCodec = searchCodecById(item, MEDIA_ALL)) {
             accCodec->isActive = true;
@@ -353,7 +353,11 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
             ++order;
         }
     }
+}
 
+void
+Account::sortCodec()
+{
     std::sort(std::begin(accountCodecInfoList_),
               std::end  (accountCodecInfoList_),
               [](const std::shared_ptr<AccountCodecInfo>& a,

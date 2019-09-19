@@ -28,6 +28,7 @@
 #include "video/video_input.h"
 #include "video/video_device_monitor.h"
 #include "account.h"
+#include "jamidht/jamiaccount.h"
 #include "logger.h"
 #include "manager.h"
 #include "system_codec_container.h"
@@ -37,6 +38,7 @@
 #include "dring/media_const.h"
 #include "libav_utils.h"
 #include "call_const.h"
+#include "ring_signal.h"
 
 #include <functional>
 #include <memory>
@@ -574,6 +576,15 @@ setEncodingAccelerated(bool state)
     jami::Manager::instance().videoPreferences.setEncodingAccelerated(state);
     jami::Manager::instance().saveConfig();
 #endif
+    // Update list of active codecs
+    auto accId = jami::Manager::instance().getAccountList().front();
+    auto acc = std::dynamic_pointer_cast<jami::JamiAccount>(jami::Manager::instance().accountFactory.getAccount(accId));
+    if (!acc)
+        return;
+    acc->setH265Active();
+    acc->sortCodec();
+    acc->saveConfig();
+    jami::emitSignal<DRing::ConfigurationSignal::ActiveCodecListChanged>(accId, acc->getActiveCodecs(jami::MEDIA_VIDEO));
 }
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
