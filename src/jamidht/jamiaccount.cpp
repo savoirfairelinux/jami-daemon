@@ -777,44 +777,6 @@ void JamiAccount::unserialize(const YAML::Node &node)
 
     loadAccount();
 }
-/*
-
-void
-JamiAccount::updateArchive(AccountArchive& archive) const
-{
-    using namespace DRing::Account::ConfProperties;
-
-    // Keys not exported to archive
-    static const auto filtered_keys = { Ringtone::PATH,
-                                        ARCHIVE_PATH,
-                                        RING_DEVICE_ID,
-                                        RING_DEVICE_NAME,
-                                        Conf::CONFIG_DHT_PORT };
-
-    // Keys with meaning of file path where the contents has to be exported in base64
-    static const auto encoded_keys = { TLS::CA_LIST_FILE,
-                                       TLS::CERTIFICATE_FILE,
-                                       TLS::PRIVATE_KEY_FILE };
-
-    JAMI_DBG("[Account %s] building account archive", getAccountID().c_str());
-    for (const auto& it : getAccountDetails()) {
-        // filter-out?
-        if (std::any_of(std::begin(filtered_keys), std::end(filtered_keys),
-                        [&](const auto& key){ return key == it.first; }))
-            continue;
-
-        // file contents?
-        if (std::any_of(std::begin(encoded_keys), std::end(encoded_keys),
-                        [&](const auto& key){ return key == it.first; })) {
-            try {
-                archive.config.emplace(it.first, base64::encode(fileutils::loadFile(it.second)));
-            } catch (...) {}
-        } else
-            archive.config.insert(it);
-    }
-    archive.contacts = contactList_->getContacts();
-}
-*/
 
 bool
 JamiAccount::changeArchivePassword(const std::string& password_old, const std::string& password_new)
@@ -1017,7 +979,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 if (ringDeviceName_.empty())
                     ringDeviceName_ = info.deviceId.substr(8);
 
-                auto nameServerIt = config.find(DRing::Account::ConfProperties::RingNS::ACCOUNT);
+                auto nameServerIt = config.find(DRing::Account::ConfProperties::RingNS::URI);
                 if (nameServerIt != config.end()) {
                     nameServer_ = nameServerIt->second;
                 }
