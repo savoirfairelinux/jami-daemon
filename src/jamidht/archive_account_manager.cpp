@@ -69,9 +69,13 @@ ArchiveAccountManager::initAuthentication(
             try {
                 if (ctx->credentials->scheme == "file") {
                     this_.loadFromFile(ctx);
-                    return;
                 } else {
-                    if (ctx->credentials->updateIdentity.first and ctx->credentials->updateIdentity.second) {
+                    bool hasArchive = not ctx->credentials->archivePath.empty()
+                        and fileutils::isFile(ctx->credentials->archivePath);
+                    if (hasArchive) {
+                        this_.loadFromFile(ctx);
+                    }
+                    else if (ctx->credentials->updateIdentity.first and ctx->credentials->updateIdentity.second) {
                         auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(&dev::KeyPair::create);
                         AccountArchive a;
                         JAMI_WARN("[Auth] converting certificate from old account %s", ctx->credentials->updateIdentity.first->getPublicKey().getId().toString().c_str());
@@ -166,7 +170,7 @@ ArchiveAccountManager::loadFromFile(const std::shared_ptr<AuthContext>& ctx)
         archive = AccountArchive(ctx->credentials->uri, ctx->credentials->password);
     } catch (const std::exception& ex) {
         JAMI_WARN("[Auth] can't read file: %s", ex.what());
-        ctx->onFailure(AuthError::UNKNOWN, ex.what());
+        ctx->onFailure(AuthError::INVALID_ARGUMENTS, ex.what());
         return;
     }
     onArchiveLoaded(*ctx, std::move(archive));

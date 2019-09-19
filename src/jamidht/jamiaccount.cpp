@@ -917,6 +917,12 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             }
         }
         else if (isEnabled()) {
+            if ((not managerUri_.empty() and archive_password.empty())) {
+                Migration::setState(accountID_, Migration::State::INVALID);
+                setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+                return;
+            }
+
             setRegistrationState(RegistrationState::INITIALIZING);
             auto fDeviceKey = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>([](){
                 return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate());
@@ -937,7 +943,6 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 if (archivePath_.empty()) {
                     archivePath_ = "archive.gz";
                 }
-                acreds->archivePath = archivePath_;
                 if (not archive_path.empty()) {
                     acreds->scheme = "file";
                     acreds->uri = archive_path;
@@ -947,6 +952,10 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                     acreds->uri = archive_pin;
                     acreds->dhtBootstrap = loadBootstrap();
                     acreds->dhtPort = (in_port_t)dhtPortUsed_;
+                } else {
+                    acreds->scheme = "file";
+                    acreds->uri = fileutils::getFullPath(idPath_, archivePath_);
+                    acreds->updateIdentity = id;
                 }
                 creds = std::move(acreds);
             } else {
@@ -997,13 +1006,19 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 setRegistrationState(RegistrationState::UNREGISTERED);
                 saveConfig();
                 doRegister();
-            }, [this](AccountManager::AuthError error, const std::string& message)
-            {
+            }, [w = weak(), id = getAccountID()](AccountManager::AuthError error, const std::string& message) {
                 JAMI_WARN("Auth error: %d %s", (int)error, message.c_str());
-                setRegistrationState(RegistrationState::ERROR_GENERIC);
-                runOnMainThread([id = getAccountID()] {
-                    Manager::instance().removeAccount(id, true);
-                });
+                if (error == AccountManager::AuthError::INVALID_ARGUMENTS) {
+                    Migration::setState(id, Migration::State::INVALID);
+                    if (auto acc = w.lock())
+                        acc->setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+                } else {
+                    if (auto acc = w.lock())
+                        acc->setRegistrationState(RegistrationState::ERROR_GENERIC);
+                    runOnMainThread([id = std::move(id)] {
+                        Manager::instance().removeAccount(id, true);
+                    });
+                }
             }, std::move(callbacks));
         }
     }
