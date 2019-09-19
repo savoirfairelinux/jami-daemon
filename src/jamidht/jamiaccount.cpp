@@ -1066,8 +1066,8 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             {
                 JAMI_WARN("Auth error: %d %s", (int)error, message.c_str());
                 setRegistrationState(RegistrationState::ERROR_GENERIC);
-                runOnMainThread([w = weak()] {
-                    Manager::instance().removeAccount(w.lock()->getAccountID(), true);
+                runOnMainThread([id = getAccountID()] {
+                    Manager::instance().removeAccount(id, true);
                 });
             }, std::move(callbacks));
         }
