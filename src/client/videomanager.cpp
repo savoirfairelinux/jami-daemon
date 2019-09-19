@@ -37,6 +37,7 @@
 #include "dring/media_const.h"
 #include "libav_utils.h"
 #include "call_const.h"
+#include "system_codec_container.h"
 
 #include <functional>
 #include <memory>
@@ -574,6 +575,23 @@ setEncodingAccelerated(bool state)
     jami::Manager::instance().videoPreferences.setEncodingAccelerated(state);
     jami::Manager::instance().saveConfig();
 #endif
+    // refresh codec container + setH265
+    jami::getSystemCodecContainer()->initCodecConfig();
+    auto accIdList = jami::Manager::instance().getAccountList();
+    for (const auto accId : accIdList) {
+        auto acc = jami::Manager::instance().accountFactory.getAccount(accId);
+        if (!acc)
+            continue;
+        // Save activated codec
+        auto activeCodecs = acc->getActiveCodecs();
+        // Refresh codec list for the account
+        acc->loadDefaultCodecs();
+        // Activate H265 if it is available, if not ignore
+        acc->setCodecActive(AV_CODEC_ID_H265);
+        // Reactivate saved codec
+        acc->setActiveCodecs(activeCodecs);
+        jami::Manager::instance().saveConfig(acc);
+    }
 }
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)

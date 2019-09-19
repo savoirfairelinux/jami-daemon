@@ -55,11 +55,14 @@ class SystemCodecContainer
         std::shared_ptr<SystemCodecInfo>
         searchCodecByPayload(unsigned payload, MediaType type = MEDIA_ALL);
 
+        void removeCodecByName(const std::string& name, MediaType type = MEDIA_ALL);
+
+        void initCodecConfig();
     private:
         /* available audio & video codec  */
         std::vector<std::shared_ptr<SystemCodecInfo>> availableCodecList_;
 
-        void initCodecConfig();
+        bool setActiveH265();
         void checkInstalledCodecs();
 };
 
