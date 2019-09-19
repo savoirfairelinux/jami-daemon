@@ -72,7 +72,7 @@ ServerAccountManager::initAuthentication(
     ctx->onSuccess = std::move(onSuccess);
     ctx->onFailure = std::move(onFailure);
     if (not ctx->credentials or ctx->credentials->username.empty()) {
-        onFailure(AuthError::INVALID_ARGUMENTS, "invalid credentials");
+        ctx->onFailure(AuthError::INVALID_ARGUMENTS, "invalid credentials");
         return;
     }
 
