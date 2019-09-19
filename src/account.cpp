@@ -337,6 +337,31 @@ Account::hasActiveCodec(MediaType mediaType) const
 }
 
 void
+Account::setActiveH265()
+{
+    auto apiName = MediaEncoder::testH265Accel();
+    if (apiName != "") {
+        JAMI_WARN("Found a usable accelerated H265/HEVC codec: %s, enabling.", apiName.c_str());
+        // increment other video codec positions
+        auto order = 1;
+        for (auto& item : accountCodecInfoList_) {
+            if (item->systemCodecInfo.mediaType == MEDIA_VIDEO)
+                item->order = ++order;
+        }
+        // set h265 first
+        if (auto accH265 = searchCodecByName("H265", MEDIA_VIDEO)) {
+            accH265->isActive = true;
+            accH265->order = 1;
+        }
+    } else {
+        if (auto accCodec = searchCodecByName("H265", MEDIA_VIDEO)) {
+            JAMI_ERR("Can't find a usable accelerated H265/HEVC codec, disabling.");
+            removeCodecByName("H265");
+        }
+    }
+}
+
+void
 Account::setActiveCodecs(const std::vector<unsigned>& list)
 {
     // first clear the previously stored codecs
@@ -346,14 +371,19 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
     uint16_t order = 1;
-    for (const auto& item : list) {
+    for (auto& item : list) {
         if (auto accCodec = searchCodecById(item, MEDIA_ALL)) {
             accCodec->isActive = true;
             accCodec->order = order;
             ++order;
         }
     }
+    sortCodec();
+}
 
+void
+Account::sortCodec()
+{
     std::sort(std::begin(accountCodecInfoList_),
               std::end  (accountCodecInfoList_),
               [](const std::shared_ptr<AccountCodecInfo>& a,
@@ -511,6 +541,17 @@ Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
         }
     }
     return {};
+}
+
+void
+Account::removeCodecByName(const std::string& name)
+{
+    for (auto codecIt = accountCodecInfoList_.begin(); codecIt != accountCodecInfoList_.end(); ++codecIt) {
+        if ((*codecIt)->systemCodecInfo.name == name) {
+            accountCodecInfoList_.erase(codecIt);
+            break;
+        }
+    }
 }
 
 std::vector<unsigned>

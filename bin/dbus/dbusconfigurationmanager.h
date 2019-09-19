@@ -90,7 +90,7 @@ class DRING_PUBLIC DBusConfigurationManager :
         bool cancelMessage(const std::string& accountID, const uint64_t& messageId);
         std::map<std::string, std::string> getTlsDefaultSettings();
         std::vector<std::string> getSupportedCiphers(const std::string& accountID);
-        std::vector<unsigned> getCodecList();
+        std::vector<unsigned> getCodecList(const std::string& accountID);
         std::vector<std::string> getSupportedTlsMethod();
         std::map<std::string, std::string> getCodecDetails(const std::string& accountID, const unsigned& codecId);
         bool setCodecDetails(const std::string& accountID, const unsigned& codecId, const std::map<std::string, std::string>& details);

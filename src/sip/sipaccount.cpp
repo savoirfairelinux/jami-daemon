@@ -2194,6 +2194,7 @@ SIPAccount::setActiveCodecs(const std::vector<unsigned>& list)
         JAMI_WARN("All video codecs disabled, enabling all");
         setAllCodecsActive(MEDIA_VIDEO, true);
     }
+    Account::setActiveH265();
 }
 
 } // namespace jami

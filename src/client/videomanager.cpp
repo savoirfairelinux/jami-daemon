@@ -574,6 +574,15 @@ setEncodingAccelerated(bool state)
     jami::Manager::instance().videoPreferences.setEncodingAccelerated(state);
     jami::Manager::instance().saveConfig();
 #endif
+    // Update list of active codecs
+    auto accIdList = jami::Manager::instance().getAccountList();
+    for (auto accId : accIdList) {
+        auto acc = jami::Manager::instance().accountFactory.getAccount(accId);
+        if (!acc)
+            continue;
+        acc->setActiveCodecs(acc->getActiveCodecs());
+        jami::Manager::instance().saveConfig(acc);
+    }
 }
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)

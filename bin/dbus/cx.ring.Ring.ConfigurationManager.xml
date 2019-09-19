@@ -783,6 +783,8 @@
 
        <method name="getCodecList" tp:name-for-bindings="getCodecList">
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorUInt"/>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
            <arg type="au" name="list" direction="out">
            </arg>
        </method>
