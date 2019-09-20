@@ -78,6 +78,10 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
     } catch (const std::exception& ex) {
         JAMI_ERR("Can't parse JSON: %s", ex.what());
     }
+
+    if (not id.first) {
+        throw std::runtime_error("Archive doesn't include account private key");
+    }
 }
 
 std::string

@@ -68,10 +68,24 @@ ArchiveAccountManager::initAuthentication(
             auto& this_ = *static_cast<ArchiveAccountManager*>(&accountManager);
             try {
                 if (ctx->credentials->scheme == "file") {
-                    this_.loadFromFile(ctx);
-                    return;
+                    // Import from external archive
+                    this_.loadFromFile(*ctx);
                 } else {
-                    if (ctx->credentials->updateIdentity.first and ctx->credentials->updateIdentity.second) {
+                    // Create/migrate local account
+                    bool hasArchive = not ctx->credentials->uri.empty()
+                        and fileutils::isFile(ctx->credentials->uri);
+                    if (hasArchive) {
+                        // Create/migrate from local archive
+                        if (ctx->credentials->updateIdentity.first and
+                            ctx->credentials->updateIdentity.second and
+                            needsMigration(ctx->credentials->updateIdentity))
+                        {
+                            this_.migrateAccount(*ctx);
+                        } else {
+                            this_.loadFromFile(*ctx);
+                        }
+                    }
+                    else if (ctx->credentials->updateIdentity.first and ctx->credentials->updateIdentity.second) {
                         auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(&dev::KeyPair::create);
                         AccountArchive a;
                         JAMI_WARN("[Auth] converting certificate from old account %s", ctx->credentials->updateIdentity.first->getPublicKey().getId().toString().c_str());
@@ -80,11 +94,10 @@ ArchiveAccountManager::initAuthentication(
                             a.ca_key = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile("ca.key", this_.path_));
                         } catch (...) {}
                         this_.updateCertificates(a, ctx->credentials->updateIdentity);
-                        auto keypair = future_keypair.get();
-                        a.eth_key = keypair.secret().makeInsecure().asBytes();
+                        a.eth_key = future_keypair.get().secret().makeInsecure().asBytes();
                         this_.onArchiveLoaded(*ctx, std::move(a));
                     } else {
-                        this_.createAccount(ctx);
+                        this_.createAccount(*ctx);
                     }
                 }
             } catch (const std::exception& e) {
@@ -137,7 +150,7 @@ ArchiveAccountManager::updateCertificates(AccountArchive& archive, dht::crypto::
 }
 
 void
-ArchiveAccountManager::createAccount(const std::shared_ptr<AuthContext>& ctx)
+ArchiveAccountManager::createAccount(AuthContext& ctx)
 {
     AccountArchive a;
     auto future_keypair = dht::ThreadPool::computation().get<dev::KeyPair>(&dev::KeyPair::create);
@@ -155,21 +168,22 @@ ArchiveAccountManager::createAccount(const std::shared_ptr<AuthContext>& ctx)
     a.ca_key = ca.first;
     auto keypair = future_keypair.get();
     a.eth_key = keypair.secret().makeInsecure().asBytes();
-    onArchiveLoaded(*ctx, std::move(a));
+    onArchiveLoaded(ctx, std::move(a));
 }
 
 void
-ArchiveAccountManager::loadFromFile(const std::shared_ptr<AuthContext>& ctx)
+ArchiveAccountManager::loadFromFile(AuthContext& ctx)
 {
+    JAMI_WARN("[Auth] loading archive from: %s", ctx.credentials->uri.c_str());
     AccountArchive archive;
     try {
-        archive = AccountArchive(ctx->credentials->uri, ctx->credentials->password);
+        archive = AccountArchive(ctx.credentials->uri, ctx.credentials->password);
     } catch (const std::exception& ex) {
         JAMI_WARN("[Auth] can't read file: %s", ex.what());
-        ctx->onFailure(AuthError::UNKNOWN, ex.what());
+        ctx.onFailure(AuthError::INVALID_ARGUMENTS, ex.what());
         return;
     }
-    onArchiveLoaded(*ctx, std::move(archive));
+    onArchiveLoaded(ctx, std::move(archive));
 }
 
 struct ArchiveAccountManager::DhtLoadContext {
@@ -260,6 +274,25 @@ ArchiveAccountManager::loadFromDHT(const std::shared_ptr<AuthContext>& ctx)
 }
 
 void
+ArchiveAccountManager::migrateAccount(AuthContext& ctx)
+{
+    JAMI_WARN("[Auth] account migration needed");
+    AccountArchive archive;
+    try {
+        archive = readArchive(ctx.credentials->password);
+    } catch (...) {
+        JAMI_DBG("[Auth] Can't load archive");
+        ctx.onFailure(AuthError::INVALID_ARGUMENTS, "");
+        return;
+    }
+
+    if (updateCertificates(archive, ctx.credentials->updateIdentity)) {
+        onArchiveLoaded(ctx, std::move(archive));
+    } else
+        ctx.onFailure(AuthError::UNKNOWN, "");
+}
+
+void
 ArchiveAccountManager::onArchiveLoaded(
     AuthContext& ctx,
     AccountArchive&& a)
@@ -273,7 +306,7 @@ ArchiveAccountManager::onArchiveLoaded(
     if (not a.id.second->isCA()) {
         JAMI_ERR("[Auth] trying to sign a certificate with a non-CA.");
     }
-    JAMI_WARN("generating device certificate");
+    JAMI_WARN("[Auth] creating new device certificate");
 
     auto request = ctx.request.get();
     if (not request->verify()) {
