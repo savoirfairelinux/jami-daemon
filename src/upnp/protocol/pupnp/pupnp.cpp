@@ -456,7 +456,7 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
                 doc_desc_ptr.reset(doc_container_ptr);
             pupnpCv_.notify_all();
             if (upnp_err != UPNP_E_SUCCESS or not doc_desc_ptr)
-                JAMI_WARN("PUPnP: Error downloading device XML document -> %s", UpnpGetErrorMessage(upnp_err));
+                JAMI_WARN("PUPnP: Error downloading device XML document from %s -> %s", location.c_str(), UpnpGetErrorMessage(upnp_err));
             else
                 return std::make_unique<IGDInfo>(IGDInfo{ std::move(location), std::move(doc_desc_ptr) });
             return std::make_unique<IGDInfo>(IGDInfo{ std::move(location), XMLDocument(nullptr, ixmlDocument_free) });
