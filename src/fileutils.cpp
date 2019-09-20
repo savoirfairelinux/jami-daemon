@@ -231,6 +231,8 @@ getFileLock(const std::string& path)
 
 bool isFile(const std::string& path, bool resolveSymlink)
 {
+    if (path.empty())
+        return false;
 #ifdef _WIN32
     if (resolveSymlink) {
         struct _stat64i32 s;
