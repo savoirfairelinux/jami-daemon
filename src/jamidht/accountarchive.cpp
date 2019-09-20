@@ -35,6 +35,7 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
     std::string err;
     Json::Value value;
     Json::CharReaderBuilder rbuilder;
+    Json::CharReaderBuilder::strictMode(&rbuilder.settings_);
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
     if (!reader->parse(char_data, char_data + dat.size(), &value, &err)) {
         JAMI_ERR() << "Archive JSON parsing error: " << err;
