@@ -32,6 +32,9 @@
 #include "threadloop.h"
 #include "noncopyable.h"
 
+// Scaler used to convert the image to RGB
+#include "media/video/video_scaler.h"
+
 #include <functional>
 #include <map>
 #include <string>
@@ -73,6 +76,13 @@ public:
     void setRotation(int angle);
 
 private:
+
+
+    //==============================
+    // An instance of the scaler
+    video::VideoScaler scaler;
+    int i{0};
+    //==============================
     NON_COPYABLE(VideoReceiveThread);
 
     DeviceParams args_;

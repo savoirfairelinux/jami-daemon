@@ -105,6 +105,9 @@ SIPCall::~SIPCall()
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     setTransport({});
     inv.reset(); // prevents callback usage
+    // Remove subject
+    auto& psm = jami::Manager::instance().getPluginServicesManager();
+    psm->removeAVSubject(getCallId());
 }
 
 SIPAccountBase&
@@ -1032,6 +1035,9 @@ SIPCall::startAllMedia()
         }
         remainingRequest_ = Request::NoRequest;
     }
+
+    // Create A Subject associated with this stream
+    createPluginStream();
 }
 
 void
@@ -1169,6 +1175,7 @@ SIPCall::waitForIceAndStartMedia()
         }
         return false;
     });
+
 }
 
 void
@@ -1268,6 +1275,7 @@ SIPCall::getDetails() const
         }
     }
 #endif
+
     return details;
 }
 
@@ -1365,6 +1373,41 @@ SIPCall::merge(Call& call)
     Call::merge(subcall);
 
     waitForIceAndStartMedia();
+}
+
+void
+SIPCall::createPluginStream() {
+    auto details = getDetails();
+    const std::string& id = getCallId();
+    // Create AVSubject that can be used by plugins
+    auto itType = details.find(DRing::Call::Details::AUDIO_ONLY); // isAudioOnly_
+    auto itPeerId = details.find(DRing::Call::Details::PEER_NUMBER); // peerNumber_
+
+    //StreamData data{getCallId(), 1, StreamType::audio, getPeerNumber()};
+
+    if (itType != details.end() && itPeerId != details.end()) {
+        auto& psm = jami::Manager::instance().getPluginServicesManager();
+        std::string peerId = itPeerId->second;
+        if(itType->second == "false") {
+            // Create subject
+            StreamData data{id,1,StreamType::video, peerId};
+            psm->createAVSubject(data);
+            // Notify plugins
+            auto videoInputSubject = psm->getAVSubject(id);
+            if(videoInputSubject) {
+                psm->notifyAllAVSubject(data, videoInputSubject);
+            }
+        } else {
+            // Create subject
+            StreamData data{id,1,StreamType::audio, peerId};
+            psm->createAVSubject(data);
+            // Notify plugins
+            auto videoInputSubject = psm->getAVSubject(id);
+            if(videoInputSubject) {
+                psm->notifyAllAVSubject(data, videoInputSubject);
+            }
+        }
+    }
 }
 
 void

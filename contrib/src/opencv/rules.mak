@@ -1,5 +1,5 @@
 # OPENCV
-OPENCV_VERSION := 3.4.7
+OPENCV_VERSION := 4.1.1
 OPENCV_URL := https://github.com/opencv/opencv/archive/$(OPENCV_VERSION).tar.gz
 
 PKGS += opencv
