@@ -30,9 +30,6 @@
 #include "media/video/video_base.h"
 // Scaler used to convert the image to RGB
 #include "media/video/video_scaler.h"
-// Plugin Stream Manager
-#include "plugin/pluginstreammanager.h"
-#include "plugin/customplugin.h"
 
 #include <map>
 #include <atomic>
@@ -88,6 +85,8 @@ public:
     DeviceParams getParams() const;
     MediaStream getInfo() const;
 
+    void sendFrameToInputSubject(VideoFrame& frame);
+
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     /*
@@ -102,10 +101,6 @@ private:
     NON_COPYABLE(VideoInput);
 
     std::string currentResource_;
-    //Plugin Stream Manager
-    PluginStreamManager psm;
-    // An instance of the scaler
-    video::VideoScaler scaler;
     std::unique_ptr<MediaDecoder> decoder_;
     std::shared_ptr<SinkClient> sink_;
     std::atomic<bool> switchPending_ = {false};
@@ -119,9 +114,12 @@ private:
 
     bool emulateRate_       = false;
     ThreadLoop loop_;
-
+    //==============================
+    // An instance of the scaler
+    video::VideoScaler scaler;
     int i = 0;
-
+    const std::string streamId{"input"};
+    //==============================
     void clearOptions();
 
     void createDecoder();

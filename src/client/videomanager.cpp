@@ -598,6 +598,12 @@ releaseFrame(void* frame)
     if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
         (*input).releaseFrame(frame);
 }
+
+void
+sendFrameToPlugins(VideoFrame* frame){
+    if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
+        (*input).sendFrameToInputSubject(*frame);
+}
 #endif
 
 } // namespace DRing
@@ -614,6 +620,16 @@ getVideoCamera()
     vmgr.started = false;
     auto input = std::make_shared<video::VideoInput>();
     vmgr.videoInput = input;
+
+    // If not created before, create a videoInput subject
+    auto& psm = Manager::instance().getPluginServicesManager();
+    StreamData data{"input",0,StreamType::video,"local"};
+    psm->createAVSubject(data);
+    // Notify plugins
+    auto videoInputSubject = psm->getAVSubject("input");
+    if(videoInputSubject) {
+        psm->notifyAllAVSubject(data, videoInputSubject);
+    }
     return input;
 }
 

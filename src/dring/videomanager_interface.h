@@ -192,6 +192,7 @@ DRING_PUBLIC void addVideoDevice(const std::string &node, const std::vector<std:
 DRING_PUBLIC void removeVideoDevice(const std::string &node);
 DRING_PUBLIC void* obtainFrame(int length);
 DRING_PUBLIC void releaseFrame(void* frame);
+DRING_PUBLIC void sendFrameToPlugins(VideoFrame* frame);
 
 DRING_PUBLIC VideoFrame* getNewFrame();
 DRING_PUBLIC void publishFrame();

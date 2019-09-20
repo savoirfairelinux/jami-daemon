@@ -269,6 +269,7 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIE
         if (justAttached)
             gJavaVM->DetachCurrentThread();
     });
+    DRing::sendFrameToPlugins(frame);
     DRing::publishFrame();
 }
 
@@ -410,6 +411,7 @@ void removeVideoDevice(const std::string &node);
 void setDeviceOrientation(const std::string& name, int angle);
 uint8_t* obtainFrame(int length);
 void releaseFrame(uint8_t* frame);
+void sendFrameToPlugins(DRing::VideoFrame* frame);
 void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
 std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
 void stopLocalRecorder(const std::string& filepath);

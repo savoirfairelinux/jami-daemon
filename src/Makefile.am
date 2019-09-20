@@ -152,8 +152,8 @@ libring_la_SOURCES = \
 		plugin/pluginloaderdl.cpp \
 		plugin/pluginmanager.h \
 		plugin/pluginmanager.cpp \
-		plugin/customplugin.h \
-		plugin/pluginstreammanager.h
+		plugin/mediahandler.h \
+		plugin/pluginservicesmanager.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \

@@ -270,6 +270,8 @@ private:
 
     void merge(Call& call) override; // not public - only called by Call
 
+    void createPluginStream();
+
     inline std::shared_ptr<const SIPCall> shared() const {
         return std::static_pointer_cast<const SIPCall>(shared_from_this());
     }
