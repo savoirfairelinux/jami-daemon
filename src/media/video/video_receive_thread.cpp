@@ -76,10 +76,57 @@ VideoReceiveThread::startLoop(const std::function<void(MediaType)>& cb)
 bool VideoReceiveThread::setup()
 {
     videoDecoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>& frame) mutable {
-        if (auto displayMatrix = displayMatrix_)
-            av_frame_new_side_data_from_buf(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(displayMatrix.get()));
-        if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame))
-            //mediaProcessor_.onNext(videoFrame);
+    if (auto displayMatrix = displayMatrix_)
+        av_frame_new_side_data_from_buf(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(displayMatrix.get()));
+    auto& psm = jami::Manager::instance().getPluginServicesManager();
+#ifndef __ANDROID__
+        std::string path = "/home/ayounes/Projects/ring-plugins/simpleplugin/build/x86_64-linux/libsimpleplugin.so";
+
+        // If we have a plugin service
+        if(psm) {
+            // Is the frane a video frame push to the video input subject
+            if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame)){
+                if(i == 1) {
+                    JAMI_DBG() << "VIDEORECEIVETHREAD ID: " << id_;
+                    // Load the plugin
+                    psm->loadPlugin(path);
+                } else if(i == 100) {
+                    psm->unloadPlugin(path);
+                } else if(i == 400) {
+                    i = 0;
+                }
+                // Convert incoming frame to RGB8 before sending it to subscribers
+                std::shared_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(*videoFrame, AV_PIX_FMT_RGB24);
+                auto videoInputSubject = psm->getAVSubject(id_);
+                if(videoInputSubject) {
+                    videoInputSubject->onNext(rgbFrameUniquePointer->pointer());
+                    videoFrame->copyFrom(*rgbFrameUniquePointer);
+                }
+
+                i++;
+
+            }
+            else if (auto audioFrame = std::dynamic_pointer_cast<AudioFrame>(frame)) {
+
+            }
+        }
+
+#endif
+
+#ifdef __ANDROID__
+    if(psm) {
+        auto videoInputSubject = psm->getAVSubject(id_);
+        if (videoInputSubject){
+            if(auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame)) {
+                // Convert incoming frame to RGB8 before sending it to subscribers
+                std::shared_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(*videoFrame, AV_PIX_FMT_RGB24);
+                videoInputSubject->onNext(rgbFrameUniquePointer->pointer());
+                videoFrame->copyFrom(*rgbFrameUniquePointer);
+            }
+        }
+    }
+#endif
+
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
 
