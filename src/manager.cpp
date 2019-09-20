@@ -410,6 +410,9 @@ struct Manager::ManagerPimpl
 #ifdef ENABLE_VIDEO
     std::unique_ptr<VideoManager> videoManager_;
 #endif
+
+    /* Plugin Services Manager */
+    std::unique_ptr<PluginServicesManager> plugin_services_manager = std::make_unique<PluginServicesManager>();
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -3134,6 +3137,11 @@ Manager::getLastMessages(const std::string& accountID, const uint64_t& base_time
     if (const auto acc = getAccount(accountID))
         return acc->getLastMessages(base_timestamp);
     return {};
+}
+
+std::unique_ptr<PluginServicesManager>& Manager::getPluginServicesManager()
+{
+    return pimpl_->plugin_services_manager;
 }
 
 std::map<std::string, std::string>

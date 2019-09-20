@@ -32,7 +32,7 @@ private:
 
 template <class T>
 void SyncSubscription<T>::onNext(T value){
-    if(!cancelled && demand > 0) {
+    if(!cancelled && !completed && demand > 0) {
         try{
             subscriber.onNext(value);
             demand--;

@@ -74,7 +74,10 @@ VideoInput::~VideoInput()
     loop_.stop();
     frame_cv_.notify_one();
 #endif
-    psm.videoSubject.onComplete();
+    auto& psm = jami::Manager::instance().getPluginServicesManager();
+    if(psm) {
+        psm->removeAVSubject(streamId);
+    }
     loop_.join();
 }
 
@@ -140,6 +143,17 @@ void VideoInput::process()
                                 });
             publish_index_++;
             lck.unlock();
+
+            auto& psm = jami::Manager::instance().getPluginServicesManager();
+            if(psm) {
+                auto videoInputSubject = psm->getAVSubject(streamId);
+                if (videoInputSubject){
+                    // Convert incoming frame to RGB8 before sending it to subscribers
+                    std::shared_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(frame, AV_PIX_FMT_RGB24);
+                    videoInputSubject->onNext(rgbFrameUniquePointer->pointer());
+                    frame.copyFrom(*rgbFrameUniquePointer);
+                }
+            }
             publishFrame();
             break;
         }
@@ -346,27 +360,43 @@ VideoInput::createDecoder()
     }
 
     auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
-        std::string path = "/home/ayounes/Projects/ring-project/daemon/src/media/plugins/FaceMarks/libfacemarks.so";
-        if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame)){
-            if(i == 0 || i == 400) {
-                psm.loadPlugin(path);
-                i = 0;
+        #ifndef __ANDROID__
+        std::string path = "/home/ayounes/Projects/ring-plugins/simpleplugin/build/x86_64-linux/libsimpleplugin.so";
+        path = "";
+        auto& psm = jami::Manager::instance().getPluginServicesManager();
+        // If we have a plugin service
+        if(psm && !path.empty()) {
+            // Is the frame a video frame push to the video input subject
+            if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame)){
+                if(i == 0) {
+                    // Load the plugin
+                    psm->loadPlugin(path);
+                } else if(i == 100) {
+                    psm->unloadPlugin(path);
+                } else if (i == 400) {
+                    i = -1;
+                }
+
+                // Convert incoming frame to RGB8 before sending it to subscribers
+                std::shared_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(*videoFrame, AV_PIX_FMT_RGB24);
+                auto videoInputSubject = psm->getAVSubject(streamId);
+
+                if(videoInputSubject) {
+                    videoInputSubject->onNext(rgbFrameUniquePointer->pointer());
+                    videoFrame->copyFrom(*rgbFrameUniquePointer);
+                }
+
+                i++;
+
             }
-            // Convert incoming frame to RGB8 before sending it to subscribers
-            std::shared_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(*videoFrame, AV_PIX_FMT_RGB24);
-            psm.videoSubject.onNext(rgbFrameUniquePointer->pointer());
-            videoFrame->copyFrom(*rgbFrameUniquePointer);
-            i++;
-        }
-        else if (auto audioFrame = std::dynamic_pointer_cast<AudioFrame>(frame)) {
+            else if (auto audioFrame = std::dynamic_pointer_cast<AudioFrame>(frame)) {
 
+            }
         }
-
+        #endif
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
 
-        if(i>100) {
-            psm.unloadPlugin(path);
-        }
+
     });
 
     if (emulateRate_)

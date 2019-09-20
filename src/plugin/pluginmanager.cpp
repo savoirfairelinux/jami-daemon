@@ -20,10 +20,7 @@
  */
 
 #include "pluginmanager.h"
-//=====================
-//#include "logger.h"
-#include <iostream>
-//=====================
+#include "logger.h"
 #include "pluginloader.h"
 
 #include <utility>
@@ -39,10 +36,7 @@ PluginManager::~PluginManager() {
     try {
       (*func)();
     } catch (...) {
-      //=====================
-      //      RING_WARN("Exception caught during plugin exit");
-      std::cout << "Exception caught during plugin exit" << std::endl;
-      //=====================
+      JAMI_ERR() << "Exception caught during plugin exit";
     }
   }
 
@@ -57,29 +51,20 @@ bool PluginManager::load(const std::string &path) {
 
   // Don't load the same dynamic library twice
   if (dynPluginMap_.find(path) != dynPluginMap_.end()) {
-    //=====================
-    //    RING_WARN("plugin: already loaded");
-    std::cout << "plugin: already loaded" << std::endl;
-    //=====================
+    JAMI_WARN() << "Plugin: already loaded";
     return true;
   }
 
   std::string error;
   std::unique_ptr<Plugin> plugin(Plugin::load(path, error));
   if (!plugin) {
-    //=====================
-    //    RING_ERR("plugin: %s", error.c_str());
-    std::cerr << "plugin: " << error << std::endl;
-    //=====================
+    JAMI_ERR() << "Plugin: " << error;
     return false;
   }
 
   const auto &init_func = plugin->getInitFunction();
   if (!init_func) {
-    //=====================
-    //    RING_ERR("plugin: no init symbol");
-    std::cerr << "plugin: no init symbol" << error << std::endl;
-    //=====================
+    JAMI_ERR() << "Plugin: no init symbol" << error;
     return false;
   }
 
@@ -93,12 +78,17 @@ bool PluginManager::load(const std::string &path) {
 //===============================================================
 
 bool PluginManager::unload(const std::string& path) {
+    bool returnValue{false};
     PluginMap::iterator it = dynPluginMap_.find(path);
     if ( it != dynPluginMap_.end()) {
-        std::shared_ptr<DLPlugin> dlplugin = std::dynamic_pointer_cast<DLPlugin>(it->second);
-        dlplugin->unload();
+        if(auto dlplugin = std::dynamic_pointer_cast<DLPlugin>(it->second)) {
+            dlplugin->unload();
+            returnValue = true;
+        }
         dynPluginMap_.erase(it);
     }
+
+    return returnValue;
 }
 
 //===============================================================
@@ -109,19 +99,13 @@ bool PluginManager::registerPlugin(RING_PluginInitFunc initFunc) {
   try {
     exitFunc = initFunc(&pluginApi_);
   } catch (const std::runtime_error &e) {
-    //=====================
-    //    RING_ERR("%s", e.what());
-    std::cerr << e.what() << std::endl;
-    //=====================
+    JAMI_ERR() << e.what();
   }
 
   if (!exitFunc) {
     tempExactMatchMap_.clear();
     tempWildCardVec_.clear();
-    //=====================
-    //    RING_ERR("plugin: init failed");
-    std::cerr << "plugin: init failed" << std::endl;
-    //=====================
+    JAMI_ERR() << "Plugin: init failed";
     return false;
   }
 
@@ -145,10 +129,7 @@ void PluginManager::unRegisterService(const std::string &name) {
 int32_t PluginManager::invokeService(const std::string &name, void *data) {
   const auto &iterFunc = services_.find(name);
   if (iterFunc == services_.cend()) {
-    //=====================
-    //    RING_ERR("Services not found: %s", name.c_str());
-    std::cerr << "Services not found: " << name << std::endl;
-    //=====================
+    JAMI_ERR() << "Services not found: " << name;
     return -1;
   }
 
@@ -157,10 +138,7 @@ int32_t PluginManager::invokeService(const std::string &name, void *data) {
   try {
     return func(data);
   } catch (const std::runtime_error &e) {
-    //=====================
-    //    RING_ERR("%s", e.what());
-    std::cerr << e.what() << std::endl;
-    //=====================
+    JAMI_ERR() << e.what();
     return -1;
   }
 }
@@ -229,12 +207,8 @@ PluginManager::createObject(const std::string &type) {
       // (but keep also wildcard registration for other object types)
       int32_t res = registerObjectFactory(op.type, factory.data);
       if (res < 0) {
-        //=====================
-        //        RING_ERR("failed to register object %s", op.type);
-        std::cerr << "failed to register object " << op.type << std::endl;
-        //=====================
+        JAMI_ERR() << "failed to register object " << op.type;
         return {nullptr, nullptr};
-
       }
 
       return {object, factory.deleter};
@@ -249,20 +223,12 @@ int32_t PluginManager::registerObjectFactory_(const RING_PluginAPI *api,
                                               const char *type, void *data) {
   auto manager = reinterpret_cast<PluginManager *>(api->context);
   if (!manager) {
-    //=====================
-    //    RING_ERR("registerObjectFactory called with null plugin API");
-    std::cerr << "registerObjectFactory called with null plugin API"
-              << std::endl;
-    //=====================
+    JAMI_ERR() << "registerObjectFactory called with null plugin API";
     return -1;
   }
 
   if (!data) {
-    //=====================
-    //    RING_ERR("registerObjectFactory called with null factory data");
-    std::cerr << "registerObjectFactory called with null factory data"
-              << std::endl;
-    //=====================
+    JAMI_ERR() << "registerObjectFactory called with null factory data";
     return -1;
   }
 
@@ -275,10 +241,7 @@ int32_t PluginManager::invokeService_(const RING_PluginAPI *api,
                                       const char *name, void *data) {
   auto manager = reinterpret_cast<PluginManager *>(api->context);
   if (!manager) {
-    //=====================
-    //    RING_ERR("invokeService called with null plugin API");
-    std::cerr << "invokeService called with null plugin API" << std::endl;
-    //=====================
+    JAMI_ERR() << "invokeService called with null plugin API";
     return -1;
   }
 
