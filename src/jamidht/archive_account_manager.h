@@ -37,7 +37,6 @@ public:
         {};
 
     struct ArchiveAccountCredentials : AccountCredentials {
-        std::string archivePath;
         in_port_t dhtPort;
         std::vector<std::string> dhtBootstrap;
         dht::crypto::Identity updateIdentity;
@@ -73,14 +72,15 @@ private:
     struct DhtLoadContext;
     struct AuthContext {
         CertRequest request;
-        //std::unique_ptr<dht::crypto::CertificateRequest> request;
         std::unique_ptr<ArchiveAccountCredentials> credentials;
         std::unique_ptr<DhtLoadContext> dhtContext;
         AuthSuccessCallback onSuccess;
         AuthFailureCallback onFailure;
     };
 
-    void createAccount(const std::shared_ptr<AuthContext>& ctx);
+    void createAccount(AuthContext& ctx);
+    void migrateAccount(AuthContext& ctx);
+
     std::pair<std::string, std::shared_ptr<dht::Value>> makeReceipt(const dht::crypto::Identity& id, const dht::crypto::Certificate& device, const std::string& ethAccount);
     void updateArchive(AccountArchive& content/*, const ContactList& syncData*/) const;
     void saveArchive(AccountArchive& content, const std::string& pwd);
@@ -89,7 +89,7 @@ private:
     bool updateCertificates(AccountArchive& archive, dht::crypto::Identity& device);
     static bool needsMigration(const dht::crypto::Identity& id);
 
-    void loadFromFile(const std::shared_ptr<AuthContext>& ctx);
+    void loadFromFile(AuthContext& ctx);
     void loadFromDHT(const std::shared_ptr<AuthContext>& ctx);
     void onArchiveLoaded(AuthContext& ctx, AccountArchive&& a);
 

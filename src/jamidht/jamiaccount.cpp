@@ -904,9 +904,6 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
         }
 
         auto id = accountManager_->loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
-        /*bool hasArchive = not archivePath_.empty()
-            and fileutils::isFile(fileutils::getFullPath(idPath_, archivePath_));*/
-
         if (auto info = accountManager_->useIdentity(id, receipt_, receiptSignature_, std::move(callbacks))) {
             // normal loading path
             id_ = std::move(id);
@@ -917,6 +914,12 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             }
         }
         else if (isEnabled()) {
+            if ((not managerUri_.empty() and archive_password.empty())) {
+                Migration::setState(accountID_, Migration::State::INVALID);
+                setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+                return;
+            }
+
             setRegistrationState(RegistrationState::INITIALIZING);
             auto fDeviceKey = dht::ThreadPool::computation().getShared<std::shared_ptr<dht::crypto::PrivateKey>>([](){
                 return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate());
@@ -937,16 +940,24 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 if (archivePath_.empty()) {
                     archivePath_ = "archive.gz";
                 }
-                acreds->archivePath = archivePath_;
+                auto archivePath = fileutils::getFullPath(idPath_, archivePath_);
+                bool hasArchive = fileutils::isFile(archivePath);
                 if (not archive_path.empty()) {
+                    // Importing external archive
                     acreds->scheme = "file";
                     acreds->uri = archive_path;
                 }
                 else if (not archive_pin.empty()) {
+                    // Importing from DHT
                     acreds->scheme = "dht";
                     acreds->uri = archive_pin;
                     acreds->dhtBootstrap = loadBootstrap();
                     acreds->dhtPort = (in_port_t)dhtPortUsed_;
+                } else if (hasArchive) {
+                    // Migrating local account
+                    acreds->scheme = "local";
+                    acreds->uri = std::move(archivePath);
+                    acreds->updateIdentity = id;
                 }
                 creds = std::move(acreds);
             } else {
@@ -965,7 +976,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                     std::string&& receipt,
                     std::vector<uint8_t>&& receipt_signature)
             {
-                JAMI_WARN("Auth success !");
+                JAMI_WARN("[Account %s] Auth success !", getAccountID().c_str());
 
                 fileutils::check_dir(idPath_.c_str(), 0700);
 
@@ -997,13 +1008,19 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 setRegistrationState(RegistrationState::UNREGISTERED);
                 saveConfig();
                 doRegister();
-            }, [this](AccountManager::AuthError error, const std::string& message)
-            {
-                JAMI_WARN("Auth error: %d %s", (int)error, message.c_str());
-                setRegistrationState(RegistrationState::ERROR_GENERIC);
-                runOnMainThread([id = getAccountID()] {
-                    Manager::instance().removeAccount(id, true);
-                });
+            }, [w = weak(), id = getAccountID()](AccountManager::AuthError error, const std::string& message) {
+                JAMI_WARN("[Account %s] Auth error: %d %s", id.c_str(), (int)error, message.c_str());
+                if (error == AccountManager::AuthError::INVALID_ARGUMENTS) {
+                    Migration::setState(id, Migration::State::INVALID);
+                    if (auto acc = w.lock())
+                        acc->setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+                } else {
+                    if (auto acc = w.lock())
+                        acc->setRegistrationState(RegistrationState::ERROR_GENERIC);
+                    runOnMainThread([id = std::move(id)] {
+                        Manager::instance().removeAccount(id, true);
+                    });
+                }
             }, std::move(callbacks));
         }
     }
