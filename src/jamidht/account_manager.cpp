@@ -111,8 +111,9 @@ AccountManager::useIdentity(
 
     // match certificate chain
     auto contactList = std::make_unique<ContactList>(accountCertificate, path_, onChange);
-    if (not contactList->isValidAccountDevice(*identity.second)) {
-        JAMI_ERR("[Auth] can't use identity: device certificate chain can't be verified");
+    auto result = contactList->isValidAccountDevice(*identity.second);
+    if (not result) {
+        JAMI_ERR("[Auth] can't use identity: device certificate chain can't be verified: %s", result.toString().c_str());
         return nullptr;
     }
 
