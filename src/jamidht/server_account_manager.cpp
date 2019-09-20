@@ -166,7 +166,7 @@ ServerAccountManager::initAuthentication(
                     //auto info = useIdentity();
                     std::map<std::string, std::string> config;
                     if (json.isMember("nameServer")) {
-                        config.emplace(DRing::Account::ConfProperties::RingNS::ACCOUNT, json["nameServer"].asString());
+                        config.emplace(DRing::Account::ConfProperties::RingNS::URI, json["nameServer"].asString());
                     }
                     if (json.isMember("displayName")) {
                         config.emplace(DRing::Account::ConfProperties::DISPLAYNAME, json["displayName"].asString());
