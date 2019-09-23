@@ -286,6 +286,8 @@ ArchiveAccountManager::migrateAccount(AuthContext& ctx)
         return;
     }
 
+    updateArchive(archive);
+
     if (updateCertificates(archive, ctx.credentials->updateIdentity)) {
         onArchiveLoaded(ctx, std::move(archive));
     } else
