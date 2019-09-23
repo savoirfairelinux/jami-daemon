@@ -128,7 +128,7 @@ public:
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 
-    virtual void startSync() {};
+    virtual void startSync();
 
     const AccountInfo* getInfo() const {
         return info_.get()  ;
@@ -162,6 +162,10 @@ public:
     void forEachDevice(const dht::InfoHash& to,
                         std::function<void(const dht::InfoHash&)>&& op,
                         std::function<void(bool)>&& end = {});
+
+    using PeerCertificateCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>;
+    void onPeerMessage(const dht::InfoHash& peer_device, bool allowPublic, PeerCertificateCb&& cb);
+    bool onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate>& crt, bool allowPublic, dht::InfoHash& account_id);
 
     /**
      * Inform that a potential peer device have been found.
