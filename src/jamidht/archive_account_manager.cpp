@@ -418,59 +418,10 @@ ArchiveAccountManager::syncDevices()
 void
 ArchiveAccountManager::startSync()
 {
-    // Put device annoucement
-    if (info_->announce) {
-        auto h = dht::InfoHash(info_->accountId);
-        JAMI_DBG("announcing device at %s", h.toString().c_str());
-        dht_->put(h, info_->announce, dht::DoneCallback{}, {}, true);
-        for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
-            dht_->put(h, crl, dht::DoneCallback{}, {}, true);
-        dht_->listen<DeviceAnnouncement>(h, [this](DeviceAnnouncement&& dev) {
-            findCertificate(dev.dev, [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-                foundAccountDevice(crt);
-            });
-            return true;
-        });
-        dht_->listen<dht::crypto::RevocationList>(h, [this](dht::crypto::RevocationList&& crl) {
-            if (crl.isSignedBy(*info_->identity.second->issuer)) {
-                JAMI_DBG("found CRL for account.");
-                tls::CertificateStore::instance().pinRevocationList(
-                    info_->accountId,
-                    std::make_shared<dht::crypto::RevocationList>(std::move(crl)));
-            }
-            return true;
-        });
-        syncDevices();
-    } else {
-        JAMI_WARN("can't announce device: no annoucement...");
-    }
-
-    auto inboxKey = dht::InfoHash::get("inbox:"+info_->deviceId);
-    dht_->listen<dht::TrustRequest>(
-        inboxKey,
-        [this](dht::TrustRequest&& v) {
-            if (v.service != DHT_TYPE_NS)
-                return true;
-
-            findCertificate(v.from, [this, v](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
-                // check peer certificate
-                dht::InfoHash peer_account;
-                if (not foundPeerDevice(cert, peer_account)) {
-                    return;
-                }
-
-                JAMI_WARN("Got trust request from: %s / %s", peer_account.toString().c_str(), v.from.toString().c_str());
-                if (info_)
-                    if (info_->contacts->onTrustRequest(peer_account, v.from, time(nullptr), v.confirm, std::move(v.payload))) {
-                        sendTrustRequestConfirm(peer_account);
-                    }
-            });
-            return true;
-        }
-    );
+    AccountManager::startSync();
 
     dht_->listen<DeviceSync>(
-        inboxKey,
+        dht::InfoHash::get("inbox:"+info_->deviceId),
         [this](DeviceSync&& sync) {
             // Received device sync data.
             // check device certificate
@@ -488,6 +439,7 @@ ArchiveAccountManager::startSync()
         }
     );
 }
+
 
 void
 ArchiveAccountManager::onSyncData(DeviceSync&& sync)
