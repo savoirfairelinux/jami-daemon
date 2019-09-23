@@ -370,13 +370,6 @@ public:
                         std::function<void(bool)>&& end = {});
 
     /**
-     * Inform that a potential peer device have been found.
-     * Returns true only if the device certificate is a valid device certificate.
-     * In that case (true is returned) the account_id parameter is set to the peer account ID.
-     */
-    //static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id);
-
-    /**
      * Start or stop to use the proxy client
      * @param address of the proxy
      * @param deviceKey the device key for push notifications (empty to not use it)
@@ -468,18 +461,10 @@ private:
      * with session check status.
      * Put deserialized certificate to cert_out;
      */
-    static pj_status_t checkPeerTlsCertificate(dht::InfoHash from_device, dht::InfoHash from_account,
+    pj_status_t checkPeerTlsCertificate(dht::InfoHash from_device, dht::InfoHash from_account,
                             unsigned status,
                             const gnutls_datum_t* cert_list, unsigned cert_num,
                             std::shared_ptr<dht::crypto::Certificate>& cert_out);
-
-    /**
-     * Check that a peer is authorised to talk to us.
-     * If everything is in order, calls the callback with the
-     * peer certificate chain (down to the peer device certificate),
-     * and the peer account id.
-     */
-    void onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& account_id)>&&);
 
     /**
      * Update tracking info when buddy appears offline.

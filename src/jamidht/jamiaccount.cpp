@@ -1272,7 +1272,7 @@ JamiAccount::checkPeerTlsCertificate(dht::InfoHash from,
 
     // Check expected peer identity
     dht::InfoHash tls_account_id;
-    if (not AccountManager::foundPeerDevice(crt, tls_account_id)) {
+    if (not accountManager_->onPeerCertificate(crt, dhtPublicInCalls_, tls_account_id)) {
         JAMI_ERR("[peer:%s] Discarding message from invalid peer certificate.", from.toString().c_str());
         return PJ_SSL_CERT_EUNKNOWN;
     }
@@ -1368,7 +1368,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
                     if (auto sthis = waccount.lock()) {
                         auto& this_ = *sthis;
                         std::shared_ptr<dht::crypto::Certificate> peer_cert;
-                        auto ret = checkPeerTlsCertificate(remote_device, remote_account, status, cert_list, cert_num, peer_cert);
+                        auto ret = this_.checkPeerTlsCertificate(remote_device, remote_account, status, cert_list, cert_num, peer_cert);
                         if (ret == PJ_SUCCESS and peer_cert) {
                             std::lock_guard<std::mutex> lock(this_.callsMutex_);
                             for (auto& pscall : this_.pendingSipCalls_) {
@@ -1773,7 +1773,7 @@ JamiAccount::doRegister_()
 
                 JAMI_WARN("[Account %s] ICE candidate from %s.", getAccountID().c_str(), from.toString().c_str());
 
-                onPeerMessage(from, [this, msg=std::move(msg)](const std::shared_ptr<dht::crypto::Certificate>& cert,
+                accountManager_->onPeerMessage(from, dhtPublicInCalls_, [this, msg=std::move(msg)](const std::shared_ptr<dht::crypto::Certificate>& cert,
                                                                const dht::InfoHash& account) mutable
                 {
                     incomingCall(std::move(msg), cert, account);
@@ -1793,7 +1793,7 @@ JamiAccount::doRegister_()
                         return true;
                 }
                 saveTreatedMessages();
-                onPeerMessage(v.from, [this, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>&,
+                accountManager_->onPeerMessage(v.from, dhtPublicInCalls_, [this, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>&,
                                                                         const dht::InfoHash& peer_account)
                 {
                     auto now = clock::to_time_t(clock::now());
@@ -1825,33 +1825,6 @@ JamiAccount::doRegister_()
         JAMI_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
-}
-
-void
-JamiAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>&& cb)
-{
-    // quick check in case we already explicilty banned this device
-    auto trustStatus = accountManager_->getCertificateStatus(peer_device.toString());
-    if (trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
-        JAMI_WARN("[Account %s] Discarding message from banned device %s", getAccountID().c_str(), peer_device.toString().c_str());
-        return;
-    }
-
-    accountManager_->findCertificate(peer_device,
-        [this, peer_device, cb=std::move(cb)](const std::shared_ptr<dht::crypto::Certificate>& cert) {
-        dht::InfoHash peer_account_id;
-        if (not AccountManager::foundPeerDevice(cert, peer_account_id)) {
-            JAMI_WARN("[Account %s] Discarding message from invalid peer certificate %s.", getAccountID().c_str(), peer_device.toString().c_str());
-            return;
-        }
-
-        if (not accountManager_->isAllowed(*cert, dhtPublicInCalls_)) {
-            JAMI_WARN("[Account %s] Discarding message from unauthorized peer %s.", getAccountID().c_str(), peer_device.toString().c_str());
-            return;
-        }
-
-        cb(cert, peer_account_id);
-    });
 }
 
 void
