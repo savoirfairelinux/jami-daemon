@@ -995,11 +995,11 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                     ringDeviceName_ = info.deviceId.substr(8);
 
                 auto nameServerIt = config.find(DRing::Account::ConfProperties::RingNS::URI);
-                if (nameServerIt != config.end()) {
+                if (nameServer_.empty() && nameServerIt != config.end()) {
                     nameServer_ = nameServerIt->second;
                 }
                 auto displayNameIt = config.find(DRing::Account::ConfProperties::DISPLAYNAME);
-                if (displayNameIt != config.end()) {
+                if (displayName_.empty() && displayNameIt != config.end()) {
                     displayName_ = displayNameIt->second;
                 }
 
