@@ -68,6 +68,8 @@ endif
 	$(APPLY) $(SRC)/pjproject/fix_first_packet_turn_tcp.patch
 	$(APPLY) $(SRC)/pjproject/fix_ebusy_turn.patch
 	$(APPLY) $(SRC)/pjproject/ignore_ipv6_on_transport_check.patch
+	$(APPLY) $(SRC)/pjproject/fix_turn_connection_failure.patch
+	$(APPLY) $(SRC)/pjproject/disable_local_resolution.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
