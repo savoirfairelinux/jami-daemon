@@ -667,23 +667,6 @@ ArchiveAccountManager::exportArchive(const std::string& destinationPath, const s
     }
 }
 
-bool
-ArchiveAccountManager::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
-{
-    if (auto cert = tls::CertificateStore::instance().getCertificate(h.toString())) {
-        if (cb)
-            cb(cert);
-    } else {
-        dht_->findCertificate(h, [cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-            if (crt)
-                tls::CertificateStore::instance().pinCertificate(crt);
-            if (cb)
-                cb(crt);
-        });
-    }
-    return true;
-}
-
 
 #if HAVE_RINGNS
 void

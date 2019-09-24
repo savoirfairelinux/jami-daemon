@@ -363,6 +363,23 @@ AccountManager::getContactDetails(const std::string& uri) const
 }
 
 bool
+AccountManager::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
+{
+    if (auto cert = tls::CertificateStore::instance().getCertificate(h.toString())) {
+        if (cb)
+            cb(cert);
+    } else {
+        dht_->findCertificate(h, [cb](const std::shared_ptr<dht::crypto::Certificate>& crt) {
+            if (crt)
+                tls::CertificateStore::instance().pinCertificate(crt);
+            if (cb)
+                cb(crt);
+        });
+    }
+    return true;
+}
+
+bool
 AccountManager::setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status)
 {
     return info_->contacts->setCertificateStatus(cert_id, status);

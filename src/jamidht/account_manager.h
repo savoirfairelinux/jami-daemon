@@ -197,7 +197,7 @@ public:
     /** Obtain details about one account contact in serializable form. */
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
 
-    virtual bool findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {}) = 0;
+    virtual bool findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
     bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status);
     std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status);
     tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const;

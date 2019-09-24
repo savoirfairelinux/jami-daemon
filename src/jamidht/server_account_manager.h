@@ -41,32 +41,18 @@ public:
         AuthFailureCallback onFailure,
         OnChangeCallback onChange) override;
 
-    bool changePassword(const std::string& password_old, const std::string& password_new) {
+    bool changePassword(const std::string& password_old, const std::string& password_new) override {
         return false;
     }
 
-    void syncDevices();
+    void syncDevices() override;
 
-    bool findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {}) {
-        return false;
-    }
-/*
-    void lookupName(const std::string& name, LookupCallback cb) {
-
-    }
-
-    void lookupAddress(const std::string& address, LookupCallback cb) {
-
-    }*/
-
-    void registerName(const std::string& password, const std::string& name, RegistrationCallback cb);
+    void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) override;
 
 private:
     struct AuthContext {
         CertRequest request;
-        //std::unique_ptr<dht::crypto::CertificateRequest> request;
         std::unique_ptr<ServerAccountCredentials> credentials;
-        //std::unique_ptr<DhtLoadContext> dhtContext;
         AuthSuccessCallback onSuccess;
         AuthFailureCallback onFailure;
     };
