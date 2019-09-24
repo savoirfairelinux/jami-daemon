@@ -757,7 +757,12 @@ void JamiAccount::unserialize(const YAML::Node &node)
         JAMI_WARN("can't read receipt: %s", e.what());
     }
 
-    parseValueOptional(node, Conf::DHT_PORT_KEY, dhtPort_);
+    // HACK
+    // MacOS doesn't seems to close the DHT port sometimes, so re-using the DHT port seems
+    // to make the DHT unusable (Address already in use, and SO_REUSEADDR & SO_REUSEPORT
+    // doesn't seems to work). For now, use a random port
+    // See https://git.jami.net/savoirfairelinux/ring-client-macosx/issues/221
+    // TODO: parseValueOptional(node, Conf::DHT_PORT_KEY, dhtPort_);
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
