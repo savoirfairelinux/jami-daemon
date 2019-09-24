@@ -1,0 +1,17 @@
+ pjlib/include/pj/config.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/pjlib/include/pj/config.h b/pjlib/include/pj/config.h
+index ad0abbb5..6bba5a55 100644
+--- a/pjlib/include/pj/config.h
++++ b/pjlib/include/pj/config.h
+@@ -1003,6 +1003,9 @@
+ #endif
+ 
+ 
++#ifndef PJ_GETHOSTIP_DISABLE_LOCAL_RESOLUTION
++#   define PJ_GETHOSTIP_DISABLE_LOCAL_RESOLUTION	    1
++#endif
+ 
+ /** @} */
+ 
