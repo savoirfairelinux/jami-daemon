@@ -1,0 +1,16 @@
+ pjnath/src/pjnath/ice_strans.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 72f12700..d4790049 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -2854,7 +2854,7 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
+ 
+ 	sess_init_update(comp->ice_st);
+ 
+-    } else if ((old_state == PJ_TURN_STATE_RESOLVING || old_state == PJ_TURN_STATE_ALLOCATING) &&
++    } else if (old_state >= PJ_TURN_STATE_RESOLVING && old_state <= PJ_TURN_STATE_ALLOCATING &&
+                new_state >= PJ_TURN_STATE_DEALLOCATING)
+     {
+         pj_ice_sess_cand *cand = NULL;
