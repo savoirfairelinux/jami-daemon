@@ -96,7 +96,6 @@ ServerAccountManager::initAuthentication(
         request->set_body(ss.str());
     }
     setHeaderFields(*request);
-    request->set_header_field(restinio::http_field_t::expect, "100-continue");
     request->add_on_state_change_callback([reqid, ctx, onAsync = onAsync_]
                                           (Request::State state, const dht::http::Response& response){
 
@@ -163,7 +162,6 @@ ServerAccountManager::initAuthentication(
 
                     this_.creds_ = std::move(ctx->credentials);
                     this_.info_ = std::move(info);
-                    //auto info = useIdentity();
                     std::map<std::string, std::string> config;
                     if (json.isMember("nameServer")) {
                         config.emplace(DRing::Account::ConfProperties::RingNS::URI, json["nameServer"].asString());
