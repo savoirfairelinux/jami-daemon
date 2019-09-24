@@ -999,6 +999,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 tlsPassword_ = {};
 
                 username_ = RING_URI_PREFIX+info.accountId;
+                registeredName_ = managerUsername_;
                 ringDeviceName_ = accountManager_->getAccountDeviceName();
 
                 auto nameServerIt = config.find(DRing::Account::ConfProperties::RingNS::URI);
