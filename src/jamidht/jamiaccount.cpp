@@ -2605,7 +2605,7 @@ JamiAccount::startAccountDiscovery()
                 dp.cleanupTask->cancel();
             } else {
                 //Avoid Repeat Reception of Same peer
-                JAMI_INFO("Account discovered: %s", v.displayName.c_str());
+                JAMI_INFO("Account discovered: %s: %s", v.displayName.c_str(), v.accountId.to_c_str());
                 //Send Added Peer and corrsponding accoundID
                 emitSignal<DRing::PresenceSignal::NearbyPeerNotification>(getAccountID(), v.accountId.toString(), 0, v.displayName);
             }
