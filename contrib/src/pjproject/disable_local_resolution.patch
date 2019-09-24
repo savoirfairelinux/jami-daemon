@@ -1,0 +1,27 @@
+ pjlib/src/pj/sock_common.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/pjlib/src/pj/sock_common.c b/pjlib/src/pj/sock_common.c
+index 693f3af6..cb520dee 100644
+--- a/pjlib/src/pj/sock_common.c
++++ b/pjlib/src/pj/sock_common.c
+@@ -828,8 +828,9 @@ PJ_DEF(pj_status_t) pj_gethostip(int af, pj_sockaddr *addr)
+ #if !defined(PJ_GETHOSTIP_DISABLE_LOCAL_RESOLUTION) || \
+     PJ_GETHOSTIP_DISABLE_LOCAL_RESOLUTION == 0
+     /* Get hostname's IP address */
+-    {
++    /*{
+ 	const pj_str_t *hostname = pj_gethostname();
++	printf("RESOLVE %s\n", hostname->data);
+ 	count = 1;
+ 
+ 	if (hostname->slen > 0)
+@@ -847,7 +848,7 @@ PJ_DEF(pj_status_t) pj_gethostip(int af, pj_sockaddr *addr)
+ 	    TRACE_((THIS_FILE, "hostname IP is %s",
+ 		    pj_sockaddr_print(&ai.ai_addr, strip, sizeof(strip), 3)));
+ 	}
+-    }
++    }*/
+ #else
+     PJ_UNUSED_ARG(ai);
+ #endif
