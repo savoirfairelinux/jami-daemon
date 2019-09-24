@@ -197,7 +197,6 @@ TurnTransportPimpl::ioJob()
 //==============================================================================
 
 TurnTransport::TurnTransport(const TurnTransportParams& params)
-    : pimpl_ {new TurnTransportPimpl}
 {
     sip_utils::register_thread();
 
@@ -209,6 +208,8 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
         throw std::invalid_argument("invalid turn server address");
 
     pimpl_->settings = params;
+
+    pimpl_ = std::unique_ptr<TurnTransportPimpl>(new TurnTransportPimpl);
 
     // PJSIP memory pool
     pj_caching_pool_init(&pimpl_->poolCache, &pj_pool_factory_default_policy, 0);
