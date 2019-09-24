@@ -164,7 +164,9 @@ ServerAccountManager::initAuthentication(
                     this_.info_ = std::move(info);
                     std::map<std::string, std::string> config;
                     if (json.isMember("nameServer")) {
-                        config.emplace(DRing::Account::ConfProperties::RingNS::URI, json["nameServer"].asString());
+                        auto nameServer = json["nameServer"].asString();
+                        this_.nameDir_ = NameDirectory::instance(nameServer);
+                        config.emplace(DRing::Account::ConfProperties::RingNS::URI, std::move(nameServer));
                     }
                     if (json.isMember("displayName")) {
                         config.emplace(DRing::Account::ConfProperties::DISPLAYNAME, json["displayName"].asString());
