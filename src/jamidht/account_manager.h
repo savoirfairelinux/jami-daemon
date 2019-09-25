@@ -209,7 +209,7 @@ public:
     using LookupCallback = NameDirectory::LookupCallback;
     using RegistrationCallback = NameDirectory::RegistrationCallback;
 
-    virtual void lookupName(const std::string& name, LookupCallback cb);
+    virtual void lookupUri(const std::string& name, const std::string& defaultServer, LookupCallback cb);
     virtual void lookupAddress(const std::string& address, LookupCallback cb);
     virtual void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) = 0;
 
