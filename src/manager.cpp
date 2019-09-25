@@ -1662,6 +1662,28 @@ Manager::joinConference(const std::string& conf_id1,
     auto conf = pimpl_->conferenceMap_.find(conf_id1)->second;
     ParticipantSet participants(conf->getParticipantList());
 
+    // Detach and remove all participant from conf1 before add
+    // ... to conf2
+    for (const auto &p : participants) {
+        JAMI_DBG("Detach participant %s", p.c_str());
+        auto call = getCallFromCallID(p);
+        if (!call) {
+            JAMI_ERR("Could not find call %s", p.c_str());
+            return false;
+        }
+
+        if (!getConferenceFromCallID(p)) {
+            JAMI_ERR("Call is not conferencing, cannot detach");
+            return false;
+        }
+
+        conf->remove(p);
+        call->setConfId("");
+        removeAudio(*call);
+    }
+    // Remove conf1
+    pimpl_->base_.removeConference(conf_id1);
+
     for (const auto &p : participants)
         addParticipant(p, conf_id2);
 
