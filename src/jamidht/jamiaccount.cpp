@@ -1178,10 +1178,9 @@ void
 JamiAccount::lookupName(const std::string& name)
 {
     auto acc = getAccountID();
-    accountManager_->lookupName(name, [acc,name](const std::string& result, NameDirectory::Response response) {
+    accountManager_->lookupUri(name, nameServer_, [acc,name](const std::string& result, NameDirectory::Response response) {
         emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, result, name);
     });
-    //NameDirectory::lookupUri();
 }
 
 void

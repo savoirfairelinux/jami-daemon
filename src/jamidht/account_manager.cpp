@@ -491,9 +491,9 @@ AccountManager::forEachDevice(const dht::InfoHash& to,
 }
 
 void
-AccountManager::lookupName(const std::string& name, LookupCallback cb)
+AccountManager::lookupUri(const std::string& name, const std::string& defaultServer, LookupCallback cb)
 {
-    nameDir_.get().lookupName(name, cb);
+    nameDir_.get().lookupUri(name, defaultServer, std::move(cb));
 }
 
 void

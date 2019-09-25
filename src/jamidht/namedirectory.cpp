@@ -70,11 +70,13 @@ void
 NameDirectory::lookupUri(const std::string& uri, const std::string& default_server,
                          LookupCallback cb)
 {
+
+    const std::string& default_ns = default_server.empty() ? DEFAULT_SERVER_HOST : default_server;
     std::smatch pieces_match;
     if (std::regex_match(uri, pieces_match, URI_VALIDATOR)) {
         if (pieces_match.size() == 4) {
             if (pieces_match[2].length() == 0)
-                instance(default_server).lookupName(pieces_match[3], std::move(cb));
+                instance(default_ns).lookupName(pieces_match[3], std::move(cb));
             else
                 instance(pieces_match[3].str()).lookupName(pieces_match[2], std::move(cb));
             return;
