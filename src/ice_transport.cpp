@@ -1244,7 +1244,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
           pimpl_->waitDataCv_.wait(lk);
           current_size = pimpl_->lastReadLen_[comp_id];
         }
-    } else if (status != PJ_SUCCESS) {
+    } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
         if (status == PJ_EBUSY) {
             errno = EAGAIN;
         } else {
