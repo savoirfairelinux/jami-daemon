@@ -31,7 +31,7 @@ namespace jami {
 using Request = dht::http::Request;
 
 static const std::string PATH_AUTH = "/api/auth";
-static const std::string PATH_DEVICE_REGISTER = PATH_AUTH + "/device/register";
+static const std::string PATH_DEVICE_REGISTER = PATH_AUTH + "/device";
 static const std::string PATH_DEVICES = PATH_AUTH + "/devices";
 
 constexpr const char* const HTTPS_PROTO {"https"};
@@ -44,7 +44,7 @@ ServerAccountManager::ServerAccountManager(
 : AccountManager(path, std::move(onAsync), nameServer)
 , managerHostname_(managerHostname)
 , logger_(std::make_shared<dht::Logger>(
-    [](char const* m, va_list args) { Logger::vlog(LOG_ERR, nullptr, 0, true, m, args); }, 
+    [](char const* m, va_list args) { Logger::vlog(LOG_ERR, nullptr, 0, true, m, args); },
     [](char const* m, va_list args) { Logger::vlog(LOG_WARNING, nullptr, 0, true, m, args); },
     [](char const* m, va_list args) { Logger::vlog(LOG_DEBUG, nullptr, 0, true, m, args); }))
 {};
@@ -91,14 +91,13 @@ ServerAccountManager::initAuthentication(
         auto csr = ctx->request.get()->toString();
         string_replace(csr, "\n", "\\n");
         string_replace(csr, "\r", "\\r");
-        ss << "{\"csrRequest\":\"" << csr  << "\"}";
+        ss << "{\"csr\":\"" << csr  << "\"}";
         JAMI_WARN("[Auth] Sending request: %s", csr.c_str());
         request->set_body(ss.str());
     }
     setHeaderFields(*request);
     request->add_on_state_change_callback([reqid, ctx, onAsync = onAsync_]
                                           (Request::State state, const dht::http::Response& response){
-
         JAMI_ERR("[Auth] Got server response: %d", (int)state);
         if (state != Request::State::DONE)
             return;
@@ -119,7 +118,7 @@ ServerAccountManager::initAuthentication(
                 }
                 JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
 
-                auto certStr = json["x509Certificate"].asString();
+                auto certStr = json["certificateChain"].asString();
                 string_replace(certStr, "\\n", "\n");
                 string_replace(certStr, "\\r", "\r");
                 auto cert = std::make_shared<dht::crypto::Certificate>(certStr);
@@ -130,7 +129,7 @@ ServerAccountManager::initAuthentication(
                     ctx->onFailure(AuthError::SERVER_ERROR, "Invalid certificate from server");
                     return;
                 }
-                auto receipt = json["receipt"].asString();
+                auto receipt = json["deviceReceipt"].asString();
                 Json::Value receiptJson;
                 auto receiptReader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
                 if (!receiptReader->parse(receipt.data(), receipt.data() + receipt.size(), &receiptJson, &err)){
@@ -192,14 +191,14 @@ ServerAccountManager::syncDevices()
 {
     if (not creds_)
         return;
-    const std::string url = managerHostname_ + PATH_DEVICES;
+    const std::string url = managerHostname_ + PATH_DEVICES + "?username=" + creds_->username;
     JAMI_WARN("[Auth] syncDevices with: %s to %s", creds_->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
     restinio::http_request_header_t header;
     header.method(restinio::http_method_get());
     request->set_header(header);
-    request->set_target(PATH_DEVICES);
+    request->set_target(PATH_DEVICES + "?username=" + creds_->username);
     request->set_auth(creds_->username, creds_->password);
     setHeaderFields(*request);
     request->add_on_state_change_callback([reqid, onAsync = onAsync_]
@@ -209,7 +208,7 @@ ServerAccountManager::syncDevices()
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
             if (state != Request::State::DONE)
                 return;
-            if (response.status_code >= 200 || response.status_code < 300) {      
+            if (response.status_code >= 200 || response.status_code < 300) {
                 try {
                     Json::Value json;
                     std::string err;
