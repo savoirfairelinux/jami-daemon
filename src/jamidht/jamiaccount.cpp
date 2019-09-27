@@ -976,6 +976,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
 
             accountManager_->initAuthentication(
                 std::move(fReq),
+                ip_utils::getDeviceName(),
                 std::move(creds),
                 [this, fDeviceKey, migrating](const AccountInfo& info,
                     const std::map<std::string, std::string>& config,
@@ -994,10 +995,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 tlsPassword_ = {};
 
                 username_ = RING_URI_PREFIX+info.accountId;
-
-                ringDeviceName_ = ip_utils::getDeviceName();
-                if (ringDeviceName_.empty())
-                    ringDeviceName_ = info.deviceId.substr(8);
+                ringDeviceName_ = accountManager_->getAccountDeviceName();
 
                 auto nameServerIt = config.find(DRing::Account::ConfProperties::RingNS::URI);
                 if (nameServerIt != config.end() && !nameServerIt->second.empty()) {
@@ -1010,7 +1008,6 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
 
                 receipt_ = std::move(receipt);
                 receiptSignature_ = std::move(receipt_signature);
-                accountManager_->foundAccountDevice(info.identity.second, ringDeviceName_, clock::now());
                 if (migrating) {
                     Migration::setState(getAccountID(), Migration::State::SUCCESS);
                 }

@@ -37,6 +37,7 @@ const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 void
 ArchiveAccountManager::initAuthentication(
     CertRequest request,
+    std::string deviceName,
     std::unique_ptr<AccountCredentials> credentials,
     AuthSuccessCallback onSuccess,
     AuthFailureCallback onFailure,
@@ -44,6 +45,7 @@ ArchiveAccountManager::initAuthentication(
 {
     auto ctx = std::make_shared<AuthContext>();
     ctx->request = std::move(request);
+    ctx->deviceName = std::move(deviceName);
     ctx->credentials = dynamic_unique_cast<ArchiveAccountCredentials>(std::move(credentials));
     ctx->onSuccess = std::move(onSuccess);
     ctx->onFailure = std::move(onFailure);
@@ -323,13 +325,19 @@ ArchiveAccountManager::onArchiveLoaded(
 
     auto info = std::make_unique<AccountInfo>();
     info->identity.second = deviceCertificate;
-    info->contacts = std::make_unique<ContactList>(a.id.second, path_, onChange_);
-    info->contacts->setContacts(a.contacts);
     info->accountId = a.id.second->getId().toString();
     info->deviceId = deviceCertificate->getPublicKey().getId().toString();
+    if (ctx.deviceName.empty())
+        ctx.deviceName = info->deviceId.substr(8);
+
+    info->contacts = std::make_unique<ContactList>(a.id.second, path_, onChange_);
+    info->contacts->setContacts(a.contacts);
+    info->contacts->foundAccountDevice(deviceCertificate, ctx.deviceName, clock::now());
     info->ethAccount = ethAccount;
     info->announce = std::move(receipt.second);
+
     info_ = std::move(info);
+
 
     JAMI_WARN("[Auth] created new device: %s", info_->deviceId.c_str());
     ctx.onSuccess(*info_, std::move(a.config), std::move(receipt.first), std::move(receiptSignature));

@@ -36,6 +36,7 @@ public:
 
     void initAuthentication(
         CertRequest request,
+        std::string deviceName,
         std::unique_ptr<AccountCredentials> credentials,
         AuthSuccessCallback onSuccess,
         AuthFailureCallback onFailure,
@@ -52,6 +53,7 @@ public:
 private:
     struct AuthContext {
         CertRequest request;
+        std::string deviceName;
         std::unique_ptr<ServerAccountCredentials> credentials;
         AuthSuccessCallback onSuccess;
         AuthFailureCallback onFailure;
