@@ -60,6 +60,7 @@ ServerAccountManager::setHeaderFields(Request& request){
 void
 ServerAccountManager::initAuthentication(
     CertRequest csrRequest,
+    std::string deviceName,
     std::unique_ptr<AccountCredentials> credentials,
     AuthSuccessCallback onSuccess,
     AuthFailureCallback onFailure,
@@ -67,6 +68,7 @@ ServerAccountManager::initAuthentication(
 {
     auto ctx = std::make_shared<AuthContext>();
     ctx->request = std::move(csrRequest);
+    ctx->deviceName = std::move(deviceName);
     ctx->credentials = dynamic_unique_cast<ServerAccountCredentials>(std::move(credentials));
     ctx->onSuccess = std::move(onSuccess);
     ctx->onFailure = std::move(onFailure);
@@ -91,7 +93,7 @@ ServerAccountManager::initAuthentication(
         auto csr = ctx->request.get()->toString();
         string_replace(csr, "\n", "\\n");
         string_replace(csr, "\r", "\\r");
-        ss << "{\"csr\":\"" << csr  << "\"}";
+        ss << "{\"csr\":\"" << csr  << "\", \"deviceName\":\"" << ctx->deviceName  << "\"}";
         JAMI_WARN("[Auth] Sending request: %s", csr.c_str());
         request->set_body(ss.str());
     }
@@ -149,10 +151,13 @@ ServerAccountManager::initAuthentication(
 
                     auto info = std::make_unique<AccountInfo>();
                     info->identity.second = cert;
+                    info->deviceId = cert->getPublicKey().getId().toString();
+                    info->accountId = accountCert->getId().toString();
                     info->contacts = std::make_unique<ContactList>(accountCert, this_.path_, this_.onChange_);
                     //info->contacts->setContacts(a.contacts);
-                    info->accountId = accountCert->getId().toString();
-                    info->deviceId = cert->getPublicKey().getId().toString();
+                    if (ctx->deviceName.empty())
+                        ctx->deviceName = info->deviceId.substr(8);
+                    info->contacts->foundAccountDevice(cert, ctx->deviceName, clock::now());
                     info->ethAccount = receiptJson["eth"].asString();
                     info->announce = parseAnnounce(receiptJson["announce"].asString(), info->accountId, info->deviceId);
                     if (not info->announce) {
@@ -164,6 +169,8 @@ ServerAccountManager::initAuthentication(
                     std::map<std::string, std::string> config;
                     if (json.isMember("nameServer")) {
                         auto nameServer = json["nameServer"].asString();
+                        if (!nameServer.empty() && nameServer[0] == '/')
+                            nameServer = this_.managerHostname_ + nameServer;
                         this_.nameDir_ = NameDirectory::instance(nameServer);
                         config.emplace(DRing::Account::ConfProperties::RingNS::URI, std::move(nameServer));
                     }

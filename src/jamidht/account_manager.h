@@ -109,6 +109,7 @@ public:
 
     virtual void initAuthentication(
         CertRequest request,
+        std::string deviceName,
         std::unique_ptr<AccountCredentials> credentials,
         AuthSuccessCallback onSuccess,
         AuthFailureCallback onFailure,
@@ -157,7 +158,7 @@ public:
     bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name = {}, const time_point& last_sync = time_point::min());
     //bool removeAccountDevice(const dht::InfoHash& device);
     void setAccountDeviceName(/*const dht::InfoHash& device,  */const std::string& name);
-
+    std::string getAccountDeviceName() const;
 
     void forEachDevice(const dht::InfoHash& to,
                         std::function<void(const dht::InfoHash&)>&& op,

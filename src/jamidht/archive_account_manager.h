@@ -44,6 +44,7 @@ public:
 
     void initAuthentication(
         CertRequest request,
+        std::string deviceName,
         std::unique_ptr<AccountCredentials> credentials,
         AuthSuccessCallback onSuccess,
         AuthFailureCallback onFailure,
@@ -70,6 +71,7 @@ private:
     struct DhtLoadContext;
     struct AuthContext {
         CertRequest request;
+        std::string deviceName;
         std::unique_ptr<ArchiveAccountCredentials> credentials;
         std::unique_ptr<DhtLoadContext> dhtContext;
         AuthSuccessCallback onSuccess;

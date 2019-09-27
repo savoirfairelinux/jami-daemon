@@ -233,6 +233,13 @@ AccountManager::setAccountDeviceName(const std::string& name)
         info_->contacts->setAccountDeviceName(dht::InfoHash(info_->deviceId), name);
 }
 
+std::string
+AccountManager::getAccountDeviceName() const
+{
+    if (info_)
+        return info_->contacts->getAccountDeviceName(dht::InfoHash(info_->deviceId));
+    return {};
+}
 
 bool
 AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id)

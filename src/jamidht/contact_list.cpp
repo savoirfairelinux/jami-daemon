@@ -427,6 +427,16 @@ ContactList::setAccountDeviceName(const dht::InfoHash& device, const std::string
     }
 }
 
+std::string
+ContactList::getAccountDeviceName(const dht::InfoHash& device) const
+{
+    auto dev = knownDevices_.find(device);
+    if (dev != knownDevices_.end()) {
+        return dev->second.name;
+    }
+    return {};
+}
+
 DeviceSync
 ContactList::getSyncData() const
 {
