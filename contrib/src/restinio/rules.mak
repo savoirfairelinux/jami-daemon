@@ -33,6 +33,7 @@ $(TARBALLS)/restinio-$(RESTINIO_VERSION).tar.gz:
 
 restinio: restinio-$(RESTINIO_VERSION).tar.gz
 	$(UNPACK)
+	$(APPLY) $(SRC)/restinio/cmake.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
 

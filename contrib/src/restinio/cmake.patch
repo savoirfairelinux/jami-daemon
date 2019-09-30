@@ -1,0 +1,22 @@
+ dev/restinio/CMakeLists.txt | 8 +++-----
+ 1 file changed, 3 insertions(+), 5 deletions(-)
+
+diff --git a/dev/restinio/CMakeLists.txt b/dev/restinio/CMakeLists.txt
+index df2ecdf..e5f5489 100644
+--- a/dev/restinio/CMakeLists.txt
++++ b/dev/restinio/CMakeLists.txt
+@@ -10,11 +10,9 @@ add_library(${RESTINIO} INTERFACE)
+ add_library(restinio::restinio ALIAS ${RESTINIO})
+ 
+ IF (${CMAKE_VERSION} VERSION_LESS "3.8.0")
+-	set_target_properties(${RESTINIO} PROPERTIES
+-		CXX_STANDARD 14
+-		CXX_STANDARD_REQUIRED YES
+-		CXX_EXTENSIONS NO
+-	)
++	set (CMAKE_CXX_STANDARD 14)
++	set (CMAKE_CXX_STANDARD_REQUIRED on)
++	set (CMAKE_CXX_EXTENSIONS off)
+ ELSE ()
+ 	target_compile_features(${RESTINIO} INTERFACE cxx_std_14)
+ ENDIF ()
