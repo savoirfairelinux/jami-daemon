@@ -1660,15 +1660,16 @@ JamiAccount::doRegister_()
         config.dht_config.id = id_;
         config.proxy_server = getDhtProxyServer();
         config.push_node_id = getAccountID();
+        config.push_token = deviceKey_;
         config.threaded = true;
         config.peer_discovery = dhtPeerDiscovery_;
         config.peer_publish = dhtPeerDiscovery_;
-        if (not config.proxy_server.empty())
-            JAMI_INFO("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
 
-        if (not deviceKey_.empty()) {
-            JAMI_INFO("[Account %s] using push notifications", getAccountID().c_str());
-            dht_->setPushNotificationToken(deviceKey_);
+        if (not config.proxy_server.empty()) {
+            JAMI_INFO("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
+            if (not config.push_token.empty()) {
+                JAMI_INFO("[Account %s] using push notifications", getAccountID().c_str());
+            }
         }
 
         //check if dht peer service is enabled
