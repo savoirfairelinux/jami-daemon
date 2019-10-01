@@ -143,7 +143,7 @@ DBusClient::initLibrary(int flags)
         exportable_callback<CallSignal::TransferFailed>(bind(&DBusCallManager::transferFailed, callM)),
         exportable_callback<CallSignal::TransferSucceeded>(bind(&DBusCallManager::transferSucceeded, callM)),
         exportable_callback<CallSignal::RecordPlaybackStopped>(bind(&DBusCallManager::recordPlaybackStopped, callM, _1)),
-        exportable_callback<CallSignal::VoiceMailNotify>(bind(&DBusCallManager::voiceMailNotify, callM, _1, _2)),
+        exportable_callback<CallSignal::VoiceMailNotify>(bind(&DBusCallManager::voiceMailNotify, callM, _1, _2, _3, _4)),
         exportable_callback<CallSignal::IncomingMessage>(bind(&DBusCallManager::incomingMessage, callM, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingCall>(bind(&DBusCallManager::incomingCall, callM, _1, _2, _3)),
         exportable_callback<CallSignal::RecordPlaybackFilepath>(bind(&DBusCallManager::recordPlaybackFilepath, callM, _1, _2)),

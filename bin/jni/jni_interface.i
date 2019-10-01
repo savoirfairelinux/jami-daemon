@@ -227,7 +227,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<CallSignal::TransferFailed>(bind(&Callback::transferFailed, callM)),
         exportable_callback<CallSignal::TransferSucceeded>(bind(&Callback::transferSucceeded, callM)),
         exportable_callback<CallSignal::RecordPlaybackStopped>(bind(&Callback::recordPlaybackStopped, callM, _1)),
-        exportable_callback<CallSignal::VoiceMailNotify>(bind(&Callback::voiceMailNotify, callM, _1, _2)),
+        exportable_callback<CallSignal::VoiceMailNotify>(bind(&Callback::voiceMailNotify, callM, _1, _2, _3, _4)),
         exportable_callback<CallSignal::IncomingMessage>(bind(&Callback::incomingMessage, callM, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingCall>(bind(&Callback::incomingCall, callM, _1, _2, _3)),
         exportable_callback<CallSignal::RecordPlaybackFilepath>(bind(&Callback::recordPlaybackFilepath, callM, _1, _2)),
