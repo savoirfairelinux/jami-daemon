@@ -123,7 +123,7 @@ struct DRING_PUBLIC CallSignal {
         };
         struct DRING_PUBLIC VoiceMailNotify {
                 constexpr static const char* name = "VoiceMailNotify";
-                using cb_type = void(const std::string&, int32_t);
+                using cb_type = void(const std::string&, int32_t, int32_t, int32_t);
         };
         struct DRING_PUBLIC IncomingMessage {
                 constexpr static const char* name = "IncomingMessage";
