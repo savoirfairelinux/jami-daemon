@@ -2115,14 +2115,6 @@ Manager::callFailure(Call& call)
     removeAudio(call);
 }
 
-//THREAD=VoIP
-void
-Manager::startVoiceMessageNotification(const std::string& accountId,
-                                           int nb_msg)
-{
-    emitSignal<DRing::CallSignal::VoiceMailNotify>(accountId, nb_msg);
-}
-
 /**
  * Multi Thread
  */

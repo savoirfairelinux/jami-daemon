@@ -32,7 +32,7 @@ public:
     virtual void transferFailed(void){}
     virtual void transferSucceeded(void){}
     virtual void recordPlaybackStopped(const std::string& path){}
-    virtual void voiceMailNotify(const std::string& call_id, int nd_msg){}
+    virtual void voiceMailNotify(const std::string& accountId, int newCount, int oldCount, int urgentCount){}
     virtual void incomingMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& messages){}
     virtual void incomingCall(const std::string& account_id, const std::string& call_id, const std::string& from){}
     virtual void recordPlaybackFilepath(const std::string& id, const std::string& filename){}
@@ -118,7 +118,7 @@ public:
     virtual void transferFailed(void){}
     virtual void transferSucceeded(void){}
     virtual void recordPlaybackStopped(const std::string& path){}
-    virtual void voiceMailNotify(const std::string& call_id, int nd_msg){}
+    virtual void voiceMailNotify(const std::string& accountId, int newCount, int oldCount, int urgentCount){}
     virtual void incomingMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& messages){}
     virtual void incomingCall(const std::string& account_id, const std::string& call_id, const std::string& from){}
     virtual void recordPlaybackFilepath(const std::string& id, const std::string& filename){}

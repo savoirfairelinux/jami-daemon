@@ -134,6 +134,7 @@ void init(const v8::Handle<v8::Value> &funcMap){
     const std::map<std::string, SharedCallback> callEvHandlers = {
         exportable_callback<CallSignal::StateChange>(bind(&callStateChanged, _1, _2, _3)),
         exportable_callback<CallSignal::IncomingMessage>(bind(&incomingMessage, _1, _2, _3)),
+        exportable_callback<CallSignal::VoiceMailNotify>(bind(&voiceMailNotify, _1, _2, _3, _4)),
         exportable_callback<CallSignal::IncomingCall>(bind(&incomingCall, _1, _2, _3)),
         exportable_callback<CallSignal::NewCallCreated>(bind(&newCallCreated, _1, _2, _3))
     };
