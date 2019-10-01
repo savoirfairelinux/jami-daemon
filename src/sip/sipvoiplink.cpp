@@ -223,11 +223,23 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
         if (request.find("NOTIFY") != std::string::npos) {
             if (body and body->data) {
-                int voicemail = 0;
-                int ret = sscanf((const char*) body->data, "Voice-Message: %d/", &voicemail);
+                int newVM { 0 };
+                int oldVM { 0 };
+                int newUrgentVM { 0 };
 
-                if (ret == 1 and voicemail != 0)
-                    Manager::instance().startVoiceMessageNotification(account_id, voicemail);
+                std::string sp = std::string(static_cast<char*>(body->data));
+                auto pos = sp.find("Voice-Message: ");
+                sp = sp.substr(pos);
+
+                int ret = sscanf(sp.c_str() , "Voice-Message: %d/%d (%d/",
+                    &newVM,
+                    &oldVM,
+                    &newUrgentVM);
+
+                // According to rfc3842
+                // urgent messages are optional
+                if (ret >= 2)
+                    emitSignal<DRing::CallSignal::VoiceMailNotify>(account_id, newVM, oldVM, newUrgentVM);
             }
         } else if (request.find("MESSAGE") != std::string::npos) {
             // Reply 200 immediately (RFC 3428, ch. 7)

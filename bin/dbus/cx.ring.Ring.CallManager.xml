@@ -718,9 +718,19 @@
                 The account ID.
               </tp:docstring>
             </arg>
-            <arg type="i" name="count">
+            <arg type="i" name="newVM">
               <tp:docstring>
-                The number of waiting messages.
+                The number of new messages.
+              </tp:docstring>
+            </arg>
+            <arg type="i" name="oldVM">
+              <tp:docstring>
+                The number of old messages.
+              </tp:docstring>
+            </arg>
+            <arg type="i" name="newUrgentVM">
+              <tp:docstring>
+                The number of urgent messages.
               </tp:docstring>
             </arg>
         </signal>

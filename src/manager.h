@@ -376,13 +376,6 @@ class Manager {
                                  const std::string& from, bool isMixed);
 
         /**
-         * Notify the client he has voice mails
-         * @param accountId   The account identifier
-         * @param nb_msg The number of messages
-         */
-        void startVoiceMessageNotification(const std::string& accountId, int nb_msg);
-
-        /**
          * ConfigurationManager - Send registration request
          * @param accountId The account to register/unregister
          * @param enable The flag for the type of registration
