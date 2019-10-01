@@ -327,8 +327,9 @@ void VideoRtpSession::exitConference()
         videoMixer_.reset();
     }
 
-    if (videoLocal_)
-        videoLocal_->attach(sender_.get());
+    if (!videoLocal_)
+        videoLocal_ = getVideoCamera();
+    videoLocal_->attach(sender_.get());
 
     conference_ = nullptr;
 }
