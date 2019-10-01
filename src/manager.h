@@ -377,10 +377,12 @@ class Manager {
 
         /**
          * Notify the client he has voice mails
-         * @param accountId   The account identifier
-         * @param nb_msg The number of messages
+         * @param accountId    The account identifier
+         * @param newVM        The number of new voice messages
+         * @param oldVM        The number of old voice messages
+         * @param newUrgentVM  The number of urgent voice messages within new voice messages
          */
-        void startVoiceMessageNotification(const std::string& accountId, int nb_msg);
+        void startVoiceMessageNotification(const std::string& accountId, int newVM, int oldVM, int newUrgentVM);
 
         /**
          * ConfigurationManager - Send registration request

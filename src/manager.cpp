@@ -2095,10 +2095,9 @@ Manager::callFailure(Call& call)
 
 //THREAD=VoIP
 void
-Manager::startVoiceMessageNotification(const std::string& accountId,
-                                           int nb_msg)
+Manager::startVoiceMessageNotification(const std::string& accountId, int newVM, int oldVM, int newUrgentVM)
 {
-    emitSignal<DRing::CallSignal::VoiceMailNotify>(accountId, nb_msg);
+    emitSignal<DRing::CallSignal::VoiceMailNotify>(accountId, newVM, oldVM, newUrgentVM);
 }
 
 /**
