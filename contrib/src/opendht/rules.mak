@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_VERSION := 6f87e9dbc3ec9ef2609d338175fab0fcb4d7e70b
+OPENDHT_VERSION := 739f4d0c0d6aff5dd18d84269fe2e276e0530433
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
@@ -15,7 +15,7 @@ ifneq ($(call need_pkg,"libargon2"),)
 DEPS_opendht += argon2
 endif
 ifneq ($(call need_pkg,"libressl >= 1-12-2"),)
-DEPS_opendht += libressl	
+DEPS_opendht += libressl
 endif
 ifneq ($(call need_pkg,"restinio >= v.0.5.1"),)
 DEPS_opendht += restinio
