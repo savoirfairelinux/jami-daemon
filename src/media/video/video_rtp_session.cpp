@@ -327,6 +327,11 @@ void VideoRtpSession::exitConference()
         videoMixer_.reset();
     }
 
+    // videoLocal_ is reset when a conference is created (only mixer need videoInput)
+    // when the conference is removed, we need to set videoLocal_ for the remaining call
+    if (!videoLocal_)
+        videoLocal_ = getVideoCamera();
+
     if (videoLocal_)
         videoLocal_->attach(sender_.get());
 
