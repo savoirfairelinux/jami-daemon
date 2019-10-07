@@ -103,7 +103,10 @@ ServerAccountManager::initAuthentication(
         JAMI_ERR("[Auth] Got server response: %d", (int)state);
         if (state != Request::State::DONE)
             return;
-        if (response.status_code >= 400 && response.status_code < 500)
+        if (response.status_code == 0) {
+            ctx->onFailure(AuthError::SERVER_ERROR, "Invalid server provided");
+            return;
+        } else if (response.status_code >= 400 && response.status_code < 500)
             ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
         else if (response.status_code < 200 || response.status_code > 299)
             ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
