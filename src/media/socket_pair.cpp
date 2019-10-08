@@ -456,9 +456,15 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
 
     // SRTP decrypt
     if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
+        uint32_t curentSendTS = buf[4] << 24 | buf[5] << 16 | buf[6] << 8 | buf[7];
+        auto delay = getOneWayDelayGradient(curentSendTS);
+        if (delay)
+            rtpDelayCallback_(delay);
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
-        if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNum_+1)
-            packetLossCallback_();
+        if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNum_+1) {
+            JAMI_ERR("RTP missed !");
+            // packetLossCallback_();
+        }
         lastSeqNum_ = buf[2] << 8 | buf[3];
         if (err < 0)
             JAMI_WARN("decrypt error %d", err);
@@ -588,6 +594,34 @@ void
 SocketPair::setPacketLossCallback(std::function<void(void)> cb)
 {
     packetLossCallback_ = std::move(cb);
+}
+
+void
+SocketPair::setRtpDelayCallback(std::function<void(int)> cb)
+{
+    rtpDelayCallback_ = std::move(cb);
+}
+
+int32_t
+SocketPair::getOneWayDelayGradient(uint32_t sendTS)
+{
+    if (not lastSendTS_) {
+        lastSendTS_ = sendTS;
+        lastReceiveTS_ = std::chrono::steady_clock::now();
+        return 0;
+    }
+
+    if (sendTS == lastSendTS_)
+        return 0;
+
+    uint32_t deltaS = ((sendTS - lastSendTS_) / 90000.0) * 1000000;            // microseconds
+    lastSendTS_ = sendTS;
+
+    std::chrono::steady_clock::time_point arrival_TS = std::chrono::steady_clock::now();
+    auto deltaR = std::chrono::duration_cast<std::chrono::microseconds>(arrival_TS - lastReceiveTS_).count();
+    lastReceiveTS_ = arrival_TS;
+
+    return deltaR - deltaS;
 }
 
 } // namespace jami

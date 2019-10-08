@@ -137,6 +137,7 @@ class SocketPair {
         double getLastLatency();
 
         void setPacketLossCallback(std::function<void (void)> cb);
+        void setRtpDelayCallback(std::function<void (int)> cb);
 
     private:
         NON_COPYABLE(SocketPair);
@@ -166,6 +167,8 @@ class SocketPair {
         std::atomic_bool noWrite_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
         std::function<void(void)> packetLossCallback_;
+        std::function<void(int)> rtpDelayCallback_;
+        int32_t getOneWayDelayGradient(uint32_t sendTS);
 
         std::list<rtcpRRHeader> listRtcpHeader_;
         std::mutex rtcpInfo_mutex_;
@@ -180,6 +183,8 @@ class SocketPair {
 
         std::chrono::steady_clock::time_point lastRR_time;
         uint16_t lastSeqNum_ {0};
+        uint32_t lastSendTS_ {0};
+        std::chrono::steady_clock::time_point lastReceiveTS_ {};
 };
 
 

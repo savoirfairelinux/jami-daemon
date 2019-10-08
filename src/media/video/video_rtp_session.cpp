@@ -46,8 +46,16 @@ namespace jami { namespace video {
 
 using std::string;
 
+static constexpr unsigned MAX_SIZE_HISTO_QUALITY {30};
+static constexpr unsigned MAX_SIZE_HISTO_BITRATE {100};
+static constexpr unsigned MAX_SIZE_HISTO_JITTER {50};
+static constexpr unsigned MAX_SIZE_HISTO_DELAY {60};
+
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
-constexpr auto EXPIRY_TIME_RTCP = std::chrono::milliseconds(1000);
+constexpr auto DELAY_AFTER_INCREASE = std::chrono::seconds(20);
+constexpr auto EXPIRY_TIME_RTCP = std::chrono::milliseconds(2000);
+
+constexpr unsigned THRESHOLD_CONGESTION {3000};
 
 VideoRtpSession::VideoRtpSession(const string &callID,
                                  const DeviceParams& localVideoParams) :
@@ -75,7 +83,7 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
 void
 VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 {
-    if(socketPair_)
+    if (socketPair_)
         socketPair_->setPacketLossCallback(std::move(cb));
     else
         JAMI_ERR("No socket pair, keyframe request callback not possible");
@@ -133,12 +141,17 @@ void VideoRtpSession::startSender()
             send_.enabled = false;
         }
         lastMediaRestart_ = clock::now();
+        lastIncrease_ = clock::now();
         auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
         auto autoQuality = codecVideo->isAutoQualityEnabled;
         if (autoQuality and not rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.start();
         else if (not autoQuality and rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.join();
+
+        socketPair_->setRtpDelayCallback([&](int delay) {
+            this->delayMonitor(delay);
+        });
     }
 }
 
@@ -344,7 +357,7 @@ VideoRtpSession::checkMediumRCTPInfo(RTCPInfo& rtcpi)
 
     if (vectSize != 0) {
         for (const auto& it : rtcpInfoVect) {
-            if(it.fraction_lost != 0)               // Exclude null drop
+            if (it.fraction_lost != 0)               // Exclude null drop
                 nbDropNotNull++;
             totalLost += it.fraction_lost;
             totalJitter += ntohl(it.jitter);
@@ -408,37 +421,56 @@ VideoRtpSession::adaptQualityAndBitrate()
     // If bitrate has changed, let time to receive fresh RTCP packets
     auto now = clock::now();
     auto restartTimer = now - lastMediaRestart_;
+    auto increaseTimer = now - lastIncrease_;
     if (restartTimer < DELAY_AFTER_RESTART) {
-        //JAMI_DBG("[AutoAdapt] Waiting for delay %ld ms", std::chrono::duration_cast<std::chrono::milliseconds>(restartTimer));
         return;
     }
 
+    //Do nothing if jitter is more than 1 second
     if (rtcpi.jitter > 1000) {
-        //JAMI_DBG("[AutoAdapt] Jitter too high");
         return;
     }
 
+    auto pondLoss = getPonderateLoss(rtcpi.packetLoss);
     auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
 
-    //Take action only when two successive drop superior to 5% are catched...
-    //and when jitter is less than 1 seconds
-    auto pondLoss = getPonderateLoss(rtcpi.packetLoss);
-    //JAMI_DBG("[AutoAdapt] Pondloss: %f%%, last loss: %f%%", pondLoss, rtcpi.packetLoss);
-    if(pondLoss >= 5.0f) {
-        videoBitrateInfo_.videoBitrateCurrent =  videoBitrateInfo_.videoBitrateCurrent * (1.0f - rtcpi.packetLoss/200.0f);
-        JAMI_DBG("[AutoAdapt] pondLoss: %f%%, packet loss rate: %f%%, decrease bitrate from %d Kbps to %d Kbps, ratio %f", pondLoss, rtcpi.packetLoss, oldBitrate, videoBitrateInfo_.videoBitrateCurrent, (float) videoBitrateInfo_.videoBitrateCurrent / oldBitrate);
-        histoLoss_.clear();
+    // JAMI_DBG("[AutoAdapt] pond loss: %f%, last loss: %f%, last jitter: %dms, jitterAvg: %fms, jitterDev: %fms" , pondLoss, rtcpi.packetLoss, rtcpi.jitter, jitterAvg, jitterDev);
+
+    // Fill histoLoss and histoJitter_ with samples
+    if (restartTimer < DELAY_AFTER_RESTART + std::chrono::seconds(1)) {
+        return;
+    }
+    else {
+        // If ponderate drops are inferior to 10% that mean drop are not from congestion but from network...
+        // ... we can increase
+        if (pondLoss >= 10.0f && rtcpi.packetLoss > 0.0f) {
+            videoBitrateInfo_.videoBitrateCurrent *= 1.0f - rtcpi.packetLoss/150.0f;
+            histoLoss_.clear();
+            JAMI_DBG("[AutoAdapt] pondLoss: %f%%, packet loss rate: %f%%, decrease bitrate from %d Kbps to %d Kbps, ratio %f", pondLoss, rtcpi.packetLoss, oldBitrate, videoBitrateInfo_.videoBitrateCurrent, (float) videoBitrateInfo_.videoBitrateCurrent / oldBitrate);
+        }
+        else { 
+            if (increaseTimer < DELAY_AFTER_INCREASE)
+                return;
+
+            videoBitrateInfo_.videoBitrateCurrent *= 1.08f;
+            JAMI_DBG("[AutoAdapt] pondLoss: %f%%, packet loss rate: %f%%, increase bitrate from %d Kbps to %d Kbps, ratio %f", pondLoss, rtcpi.packetLoss, oldBitrate, videoBitrateInfo_.videoBitrateCurrent, (float) videoBitrateInfo_.videoBitrateCurrent / oldBitrate);
+            histoLoss_.clear();
+        }
     }
 
     videoBitrateInfo_.videoBitrateCurrent = std::max(videoBitrateInfo_.videoBitrateCurrent, videoBitrateInfo_.videoBitrateMin);
     videoBitrateInfo_.videoBitrateCurrent = std::min(videoBitrateInfo_.videoBitrateCurrent, videoBitrateInfo_.videoBitrateMax);
 
-    if(oldBitrate != videoBitrateInfo_.videoBitrateCurrent) {
+    if (oldBitrate != videoBitrateInfo_.videoBitrateCurrent) {
         storeVideoBitrateInfo();
 
         // If encoder no longer exist do nothing
-        if(sender_ && sender_->setBitrate(videoBitrateInfo_.videoBitrateCurrent) == 0)
+        if (sender_ && sender_->setBitrate(videoBitrateInfo_.videoBitrateCurrent) == 0) {
             lastMediaRestart_ = now;
+            // Reset increase timer for each bitrate change
+            lastIncrease_ = now;
+        }
+            
     }
 }
 
@@ -478,10 +510,10 @@ VideoRtpSession::storeVideoBitrateInfo() {
             {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, std::to_string(videoBitrateInfo_.videoQualityMax)}
         });
 
-        if (histoQuality_.size() > MAX_SIZE_HISTO_QUALITY_)
+        if (histoQuality_.size() > MAX_SIZE_HISTO_QUALITY)
             histoQuality_.pop_front();
 
-        if (histoBitrate_.size() > MAX_SIZE_HISTO_BITRATE_)
+        if (histoBitrate_.size() > MAX_SIZE_HISTO_BITRATE)
             histoBitrate_.pop_front();
 
         histoQuality_.push_back(videoBitrateInfo_.videoQualityCurrent);
@@ -540,8 +572,8 @@ float
 VideoRtpSession::getPonderateLoss(float lastLoss)
 {
     float pond  = 0.0f, pondLoss  = 0.0f, totalPond = 0.0f;
-    constexpr float coefficient_a = -1/1000.0f;
-    constexpr float coefficient_b = 1.0f;
+    constexpr float coefficient_a = -1/100.0f;
+    constexpr float coefficient_b = 100.0f;
 
     auto now = clock::now();
 
@@ -553,10 +585,12 @@ VideoRtpSession::getPonderateLoss(float lastLoss)
         //JAMI_WARN("now - it.first: %ld", std::chrono::duration_cast<std::chrono::milliseconds>(delay));
 
         // 1ms      -> 100%
-        // 1000ms   -> 1
-        if(delay <= EXPIRY_TIME_RTCP)
-        {
-            pond = std::min(delay.count() * coefficient_a + coefficient_b, 1.0f);
+        // 2000ms   -> 80%
+        if (delay <= EXPIRY_TIME_RTCP) {
+            if (it->second == 0.0f)
+                pond = 20.0f;           // Reduce weight of null drop
+            else
+                pond = std::min(delay.count() * coefficient_a + coefficient_b, 100.0f);
             totalPond += pond;
             pondLoss += it->second * pond;
             ++it;
@@ -564,9 +598,72 @@ VideoRtpSession::getPonderateLoss(float lastLoss)
         else
             it = histoLoss_.erase(it);
     }
+    if (totalPond == 0)
+        return 0.0f;
+
     return pondLoss / totalPond;
 }
 
+std::pair<float, float>
+VideoRtpSession::getDelayAvg()
+{
+    if (histoDelay_.size() != MAX_SIZE_HISTO_DELAY)
+        return std::make_pair(0.0f, 0.0f);
+
+    auto middle = std::next(histoDelay_.begin(), histoDelay_.size() / 2);
+    float totDelayInf = 0.0f;
+    float totDelaySup = 0.0f;
+    unsigned cntInf = 0;
+    unsigned cntSup = 0;
+
+    for (auto it = histoDelay_.begin(); it != middle; ++it) {
+        totDelayInf += *it;
+        cntInf++;
+    }
+
+    for (auto it = middle; it != histoDelay_.end(); ++it) {
+        totDelaySup += *it;
+        cntSup++;
+    }
+
+    return std::make_pair(totDelayInf/cntInf, totDelaySup/cntSup);
+}
+
+std::pair<float, float>
+VideoRtpSession::getDelayMedium()
+{
+    if (histoDelay_.size() != MAX_SIZE_HISTO_DELAY)
+        return std::make_pair(0.0f, 0.0f);
+
+    auto middle = std::next(histoDelay_.begin(), histoDelay_.size() / 2);
+    std::list<int> lst2( histoDelay_.begin(), middle ); 
+    std::list<int> lst3( middle, histoDelay_.end() );
+
+    lst2.sort(); lst3.sort();
+
+    auto mediumInf = *(std::next(lst2.begin(), lst2.size() / 2));
+    auto mediumSup = *(std::next(lst3.begin(), lst3.size() / 2));
+
+    JAMI_WARN("Last medium delay: %d, current medium delay: %d", mediumInf, mediumSup);
+
+    return std::make_pair(mediumInf, mediumSup);
+}
+
+void
+VideoRtpSession::delayMonitor(int delay)
+{
+    printf("%d\n", delay);
+    // if (histoDelay_.size() >= MAX_SIZE_HISTO_DELAY)
+    //    histoDelay_.pop_front();
+    // histoDelay_.push_back(delay);
+
+    // // auto pair_avg = getDelayAvg();
+    // auto pair_avg = getDelayMedium();
+    // JAMI_WARN("[delayMonitor] avg - lastDelayAVG_: %f", pair_avg.second - pair_avg.first);
+    // if(pair_avg.second - pair_avg.first > THRESHOLD_CONGESTION)
+    //     JAMI_ERR("[delayMonitor] CONGESTION !!!");
+
+}
 
 }} // namespace jami::video
 

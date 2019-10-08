@@ -129,17 +129,19 @@ private:
     void setupVideoBitrateInfo();
     void checkReceiver();
     float getPonderateLoss(float lastLoss);
+    void delayMonitor(int delay);
 
     // no packet loss can be calculated as no data in input
     static constexpr float NO_INFO_CALCULATED {-1.0};
     // bitrate and quality info struct
     VideoBitrateInfo videoBitrateInfo_;
-    // previous quality and bitrate used if quality or bitrate need to be decreased
+    // previous quality, bitrate, jitter and loss used if quality or bitrate need to be decreased
     std::list<unsigned> histoQuality_ {};
     std::list<unsigned> histoBitrate_ {};
+    std::list<unsigned> histoJitter_ {};
+    std::list<int> histoDelay_ {};
+    std::list< std::pair<time_point, float> > histoLoss_;
     // max size of quality and bitrate historic
-    static constexpr unsigned MAX_SIZE_HISTO_QUALITY_ {30};
-    static constexpr unsigned MAX_SIZE_HISTO_BITRATE_ {100};
 
     // 5 tries in a row
     static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
@@ -156,8 +158,13 @@ private:
     std::chrono::seconds rtcp_checking_interval {4};
 
     time_point lastMediaRestart_ {time_point::min()};
+    time_point lastIncrease_ {time_point::min()};
 
-    std::list< std::pair<time_point, float> > histoLoss_;
+    int lastDelayAVG_ {0};
+    unsigned cnt_delay_callback_ {0};
+    std::pair<float, float> getDelayAvg();
+    std::pair<float, float> getDelayMedium();
+
 };
 
 }} // namespace jami::video
