@@ -273,7 +273,12 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 
 IceTransport::Impl::Impl(const char* name, int component_count, bool master,
                          const IceTransportOptions& options)
-    : pool_(nullptr, [](pj_pool_t* pool) { sip_utils::register_thread(); pj_pool_release(pool); })
+    : pool_(nullptr, [](pj_pool_t* pool) {
+        if (!pool)
+            return;
+        sip_utils::register_thread();
+        pj_pool_release(pool);
+    })
     , on_initdone_cb_(options.onInitDone)
     , on_negodone_cb_(options.onNegoDone)
     , on_recv_cb_(options.onRecvReady)
@@ -1296,7 +1301,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         auto current_size = sent_size;
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
-        while (comp_id < pimpl_->lastReadLen_.size() && current_size < len) {
+        while (static_cast<std::size_t>(comp_id) < pimpl_->lastReadLen_.size() && current_size < len) {
           std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
           pimpl_->waitDataCv_.wait(lk);
           current_size = pimpl_->lastReadLen_[comp_id];
@@ -1398,11 +1403,40 @@ IceTransport::isTCPEnabled()
     return pimpl_->config_.protocol == PJ_ICE_TP_TCP;
 }
 
+ICESDP
+IceTransport::parse_SDP(const std::string& sdp_msg, const IceTransport& ice)
+{
+    ICESDP res;
+    std::istringstream stream(sdp_msg);
+    std::string line;
+    int nr = 0;
+    while (std::getline(stream, line)) {
+        if (nr == 0) {
+            res.rem_ufrag = line;
+        } else if (nr == 1) {
+            res.rem_pwd = line;
+        } else {
+            IceCandidate cand;
+            if (ice.getCandidateFromSDP(line, cand)) {
+                JAMI_DBG("Add remote ICE candidate: %s", line.c_str());
+                res.rem_candidates.emplace_back(cand);
+            }
+        }
+        nr++;
+    }
+    return res;
+}
+
 //==============================================================================
 
 IceTransportFactory::IceTransportFactory()
     : cp_()
-    , pool_(nullptr, [](pj_pool_t* pool) { sip_utils::register_thread(); pj_pool_release(pool); })
+    , pool_(nullptr, [](pj_pool_t* pool) {
+        if (!pool)
+            return;
+        sip_utils::register_thread();
+        pj_pool_release(pool);
+    })
     , ice_cfg_()
 {
     sip_utils::register_thread();
