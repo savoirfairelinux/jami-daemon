@@ -70,6 +70,7 @@ class IceTransport;
 struct Contact;
 struct DeviceSync;
 struct AccountArchive;
+class ConnectionManager;
 class DhtPeerConnector;
 class PeerConnection;
 class ContactList;
@@ -413,6 +414,10 @@ public:
      */
     void registerDhtAddress(IceTransport&);
 
+    ConnectionManager& connectionManager() {
+        return *connectionManager_;
+    }
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -635,6 +640,7 @@ private:
     pjsip_transport* via_tp_ {nullptr};
 
     std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
+    std::unique_ptr<ConnectionManager> connectionManager_;
 
     std::mutex discoveryMapMtx_;
     std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
@@ -644,6 +650,7 @@ private:
     bool accountPublish_ {false};
 
     std::shared_ptr<RepeatedTask> eventHandler {};
+
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)
