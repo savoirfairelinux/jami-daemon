@@ -14,6 +14,10 @@ libringacc_la_LIBADD = $(DHT_LIBS) \
 libringacc_la_SOURCES = \
         jamiaccount.cpp \
         jamiaccount.h \
+        connectionmanager.h \
+        connectionmanager.cpp \
+        multiplexed_socket.h \
+        multiplexed_socket.cpp \
         sips_transport_ice.cpp \
         sips_transport_ice.h \
         accountarchive.cpp \
