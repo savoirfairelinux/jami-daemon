@@ -53,70 +53,70 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{79F8DE42-595D-49D9-A66F-55244FD9DCC3}</ProjectGuid>
     <RootNamespace>ringdaemon</RootNamespace>
-<WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>$(LatestTargetPlatformVersion)</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugLib|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugLib_win32|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib_win32|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugLib|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugLib_win32|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <WindowsAppContainer>false</WindowsAppContainer>
@@ -124,14 +124,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib_win32|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -661,7 +661,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>
       </SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\jamidht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\upnp\igd;$(ProjectDir)..\src\upnp\protocol;$(ProjectDir)..\src\upnp\mapping;$(ProjectDir)..\src\jamidht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\msvc\include\upnp;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\ffmpeg\Build\win32\x64\include;$(ProjectDir)..\contrib\build\sndfile\src;$(ProjectDir)..\contrib\build\openssl\inc32;$(ProjectDir)..\contrib\build\asio\asio\include;$(ProjectDir)..\contrib\build\restinio\dev;$(ProjectDir)..\contrib\build\fmt\include;$(ProjectDir)..\contrib\build\http_parser;$(ProjectDir)..\contrib\build\natpmp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\jamidht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\upnp\igd;$(ProjectDir)..\src\upnp\protocol;$(ProjectDir)..\src\upnp\mapping;$(ProjectDir)..\src\jamidht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\msvc\include\upnp;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\ffmpeg\Build\win32\x64\include;$(ProjectDir)..\contrib\build\sndfile\src;$(ProjectDir)..\contrib\build\openssl\inc32;$(ProjectDir)..\contrib\build\asio\asio\include;$(ProjectDir)..\contrib\build\restinio\dev;$(ProjectDir)..\contrib\build\fmt\include;$(ProjectDir)..\contrib\build\http_parser;$(ProjectDir)..\contrib\build\natpmp;$(ProjectDir)..\contrib\build\libgit2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;ASIO_STANDALONE;STATIC_GETOPT;_USE_MATH_DEFINES;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;OPENDHT_PROXY_CLIENT;OPENDHT_PROXY_SERVER;OPENDHT_PUSH_NOTIFICATIONS;NATPMP_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -690,8 +690,8 @@
       </Command>
     </PreBuildEvent>
     <Lib>
-      <AdditionalDependencies>ws2_32.lib;advapi32.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;libgnutls.lib;lib_json.lib;libopendht.lib;Argon2Ref.lib;secp256k1.lib;libyaml-cppmd.lib;portaudio.lib;libupnp.lib;natpmp.lib;pjsip-core-x86_64-x64-vc15-Release.lib;pjsip-simple-x86_64-x64-vc15-Release.lib;pjsua2-lib-x86_64-x64-vc15-Release.lib;pjsua-lib-x86_64-x64-vc15-Release.lib;pjsip-ua-x86_64-x64-vc15-Release.lib;pjmedia-x86_64-x64-vc15-Release.lib;pjlib-util-x86_64-x64-vc15-Release.lib;pjlib-x86_64-x64-vc15-Release.lib;pjnath-x86_64-x64-vc15-Release.lib;fmt.lib;http-parser.lib;asio.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\contrib\build\ffmpeg\Build\win32\x64\bin;$(ProjectDir)..\contrib\msvc\lib\x64;$(ProjectDir)..\contrib\build\boost\stage\lib;$(ProjectDir)..\contrib\build\pjproject\pjsip\lib;$(ProjectDir)..\contrib\build\pjproject\pjmedia\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\lib;$(ProjectDir)..\contrib\build\pjproject\third_party\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib\lib;$(ProjectDir)..\contrib\build\pjproject\pjnath\lib;$(ProjectDir)..\contrib\build\openssl\out32dll;$(ProjectDir)..\contrib\build\argon2\vs2015\Argon2Ref\vs2015\build;$(ProjectDir)..\contrib\build\yaml-cpp\msvc\Release;$(ProjectDir)..\contrib\build\sndfile\msvc\x64\Release;$(ProjectDir)..\contrib\build\asio\asio\msvc\x64\Release;$(ProjectDir)..\contrib\build\fmt\msvc\Release;$(ProjectDir)..\contrib\build\http_parser\x64\Release;$(ProjectDir)..\contrib\build\natpmp\msvc\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;advapi32.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;libgnutls.lib;lib_json.lib;libopendht.lib;Argon2Ref.lib;secp256k1.lib;libyaml-cppmd.lib;portaudio.lib;libupnp.lib;natpmp.lib;pjsip-core-x86_64-x64-vc15-Release.lib;pjsip-simple-x86_64-x64-vc15-Release.lib;pjsua2-lib-x86_64-x64-vc15-Release.lib;pjsua-lib-x86_64-x64-vc15-Release.lib;pjsip-ua-x86_64-x64-vc15-Release.lib;pjmedia-x86_64-x64-vc15-Release.lib;pjlib-util-x86_64-x64-vc15-Release.lib;pjlib-x86_64-x64-vc15-Release.lib;pjnath-x86_64-x64-vc15-Release.lib;fmt.lib;http-parser.lib;asio.lib;libeay32.lib;ssleay32.lib;git2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\contrib\build\ffmpeg\Build\win32\x64\bin;$(ProjectDir)..\contrib\msvc\lib\x64;$(ProjectDir)..\contrib\build\boost\stage\lib;$(ProjectDir)..\contrib\build\pjproject\pjsip\lib;$(ProjectDir)..\contrib\build\pjproject\pjmedia\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\lib;$(ProjectDir)..\contrib\build\pjproject\third_party\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib\lib;$(ProjectDir)..\contrib\build\pjproject\pjnath\lib;$(ProjectDir)..\contrib\build\openssl\out32dll;$(ProjectDir)..\contrib\build\argon2\vs2015\Argon2Ref\vs2015\build;$(ProjectDir)..\contrib\build\yaml-cpp\msvc\Release;$(ProjectDir)..\contrib\build\sndfile\msvc\x64\Release;$(ProjectDir)..\contrib\build\asio\asio\msvc\x64\Release;$(ProjectDir)..\contrib\build\fmt\msvc\Release;$(ProjectDir)..\contrib\build\http_parser\x64\Release;$(ProjectDir)..\contrib\build\natpmp\msvc\Release;$(ProjectDir)..\contrib\build\libgit2\msvc\Release</AdditionalLibraryDirectories>
       <AdditionalOptions>/ignore:4006 /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
     </Lib>
