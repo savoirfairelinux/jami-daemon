@@ -73,6 +73,7 @@ struct AccountArchive;
 class DhtPeerConnector;
 class PeerConnection;
 class ContactList;
+class ConnectionManager;
 class AccountManager;
 struct AccountInfo;
 
@@ -644,6 +645,8 @@ private:
     bool accountPublish_ {false};
 
     std::shared_ptr<RepeatedTask> eventHandler {};
+
+    std::unique_ptr<ConnectionManager> connectionManager_ {};
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)

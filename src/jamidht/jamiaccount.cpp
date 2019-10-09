@@ -47,6 +47,7 @@
 #include "ice_transport.h"
 
 #include "p2p.h"
+#include "connectionmanager.h"
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
@@ -409,6 +410,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     dht::InfoHash peer_account(toUri);
     accountManager_->forEachDevice(peer_account, [this, wCall, toUri, peer_account](const dht::InfoHash& dev)
     {
+        JAMI_ERR("TODO");
+        this->connectionManager_->connectDevice(dev.toString(), "git://xxxx");
+        return;
         auto call = wCall.lock();
         if (not call) return;
         JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
@@ -1759,6 +1763,11 @@ JamiAccount::doRegister_()
 
         accountManager_->setDht(dht_);
         accountManager_->startSync();
+
+        // Init connection manager
+        connectionManager_.reset(new ConnectionManager(dht_, accountManager_->getInfo()->deviceId));
+
+
 
         // Listen for incoming calls
         callKey_ = dht::InfoHash::get("callto:"+accountManager_->getInfo()->deviceId);
