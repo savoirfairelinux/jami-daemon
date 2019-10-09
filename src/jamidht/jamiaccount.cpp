@@ -94,6 +94,10 @@
 
 using namespace std::placeholders;
 
+
+#include <git2.h>
+
+
 namespace jami {
 
 namespace Migration {
@@ -252,6 +256,8 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     , dhtPeerConnector_ {new DhtPeerConnector {*this}}
     , connectionManager_ {new ConnectionManager {*this}}
 {
+
+    git_libgit2_init();
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
     turnServerUserName_ = DEFAULT_TURN_USERNAME;
