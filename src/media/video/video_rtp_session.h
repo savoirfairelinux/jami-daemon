@@ -121,7 +121,8 @@ private:
 
     std::function<void (void)> requestKeyFrameCallback_;
 
-    bool checkMediumRCTPInfo(RTCPInfo&);
+    bool check_RCTP_Info_RR(RTCPInfo&);
+    bool check_RCTP_Info_REMB(uint64_t*);
     unsigned getLowerQuality();
     unsigned getLowerBitrate();
     void adaptQualityAndBitrate();
@@ -130,6 +131,9 @@ private:
     void checkReceiver();
     float getPonderateLoss(float lastLoss);
     void delayMonitor(int delay);
+    void dropProcessing(RTCPInfo* rtcpi);
+    void delayProcessing(int br);
+    void setNewBitrate(unsigned int newBR);
 
     // no packet loss can be calculated as no data in input
     static constexpr float NO_INFO_CALCULATED {-1.0};
@@ -164,6 +168,7 @@ private:
     unsigned cnt_delay_callback_ {0};
     std::pair<float, float> getDelayAvg();
     std::pair<float, float> getDelayMedium();
+    float getRollingAvg();
 
 };
 
