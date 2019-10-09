@@ -156,8 +156,9 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib-util/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/third_party;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include"
        )
    endif()
 
@@ -268,11 +269,11 @@ if(MSVC)
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/out32dll/libeay32.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/out32dll/ssleay32.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
-   /ignore:4006 
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/msvc/Release/git2.lib
+   /ignore:4006
    "
    )
 
    set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
 
 endif()
-
