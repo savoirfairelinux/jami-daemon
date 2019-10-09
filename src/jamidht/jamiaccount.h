@@ -70,6 +70,7 @@ class IceTransport;
 struct Contact;
 struct DeviceSync;
 struct AccountArchive;
+class ConnectionManager;
 class DhtPeerConnector;
 class PeerConnection;
 class ContactList;
@@ -415,6 +416,16 @@ public:
      */
     void registerDhtAddress(IceTransport&);
 
+    ConnectionManager& connectionManager() {
+        return *connectionManager_;
+    }
+
+    /**
+     * This should be called before flushing the account.
+     * ConnectionManager needs the account to exists
+     */
+    void shutdownConnections();
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -648,6 +659,7 @@ private:
     pjsip_transport* via_tp_ {nullptr};
 
     std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
+    std::unique_ptr<ConnectionManager> connectionManager_;
 
     std::mutex discoveryMapMtx_;
     std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
