@@ -1,0 +1,19 @@
+{
+    "name": "libgit2",
+    "version": "v0.27.9",
+    "url": "https://github.com/libgit2/libgit2/archive/__VERSION__.tar.gz",
+    "deps": ["zlib"],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [
+        "msvc/src/git2.vcxproj"
+    ],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [
+            "mkdir msvc & cd msvc & cmake .. -G %CMAKE_GENERATOR% -DUSE_HTTPS=OFF -DCURL=OFF -DBUILD_CLAR=OFF -DBUILD_SHARED_LIBS=OFF -DUSE_SSH=OFF -DWINHTTP=OFF"
+        ],
+        "build": [],
+        "post_build": []
+    }
+}

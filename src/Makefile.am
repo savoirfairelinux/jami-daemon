@@ -60,6 +60,7 @@ libring_la_LDFLAGS = \
 		@ZLIB_LIBS@ \
 		@LIBSSL_LIBS@ \
 		@LIBCRYPTO_LIBS@ \
+		@LIBGIT2_LIBS@ \
 		@LIBS@
 
 if HAVE_WIN32
@@ -79,6 +80,7 @@ libring_la_CFLAGS = \
 		@SPEEXDSP_CFLAGS@ \
 		@PORTAUDIO_CFLAGS@ \
 		@GNUTLS_CFLAGS@ \
+		@LIBGIT2_CFLAGS@ \
 		@OPENDHT_CFLAGS@
 
 libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
