@@ -181,6 +181,9 @@
     <ClCompile Include="..\src\jamidht\jamiaccount.cpp">
       <Filter>Source Files\jamidht</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\jamidht\connectionmanager.cpp">
+      <Filter>Source Files\jamidht</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\jamidht\sips_transport_ice.cpp">
       <Filter>Source Files\jamidht</Filter>
     </ClCompile>
@@ -444,6 +447,9 @@
     </ClCompile>
     <ClCompile Include="..\src\media\congestion_control.cpp">
       <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\jamidht\multiplexed_socket.cpp">
+      <Filter>Source Files\jamidht</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -870,6 +876,9 @@
     <ClInclude Include="..\src\jamidht\jamiaccount.h">
       <Filter>Source Files\jamidht</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\jamidht\connectionmanager.h">
+      <Filter>Source Files\jamidht</Filter>
+    </ClInclude>
     <ClInclude Include="..\src\upnp\protocol\global_mapping.h">
       <Filter>Source Files\upnp\protocol</Filter>
     </ClInclude>
@@ -914,6 +923,9 @@
     </ClInclude>
     <ClInclude Include="..\src\media\congestion_control.h">
       <Filter>Source Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\jamidht\multiplexed_socket.h">
+      <Filter>Source Files\jamidht</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

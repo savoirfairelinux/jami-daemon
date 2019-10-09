@@ -723,6 +723,7 @@
     <ClCompile Include="..\src\jamidht\account_manager.cpp" />
     <ClCompile Include="..\src\jamidht\archive_account_manager.cpp" />
     <ClCompile Include="..\src\jamidht\contact_list.cpp" />
+    <ClCompile Include="..\src\jamidht\multiplexed_socket.cpp" />
     <ClCompile Include="..\src\jamidht\server_account_manager.cpp" />
     <ClCompile Include="..\src\logger.cpp" />
     <ClCompile Include="..\src\manager.cpp" />
@@ -812,6 +813,7 @@
     <ClCompile Include="..\src\jamidht\namedirectory.cpp" />
     <ClCompile Include="..\src\jamidht\p2p.cpp" />
     <ClCompile Include="..\src\jamidht\jamiaccount.cpp" />
+    <ClCompile Include="..\src\jamidht\connectionmanager.cpp" />
     <ClCompile Include="..\src\jamidht\sips_transport_ice.cpp" />
     <ClCompile Include="..\src\ring_api.cpp" />
     <ClCompile Include="..\src\scheduled_executor.cpp" />
@@ -889,6 +891,7 @@
     <ClInclude Include="..\src\jamidht\archive_account_manager.h" />
     <ClInclude Include="..\src\jamidht\contact_list.h" />
     <ClInclude Include="..\src\jamidht\jami_contact.h" />
+    <ClInclude Include="..\src\jamidht\multiplexed_socket.h" />
     <ClInclude Include="..\src\jamidht\server_account_manager.h" />
     <ClInclude Include="..\src\logger.h" />
     <ClInclude Include="..\src\manager.h" />
@@ -980,6 +983,7 @@
     <ClInclude Include="..\src\jamidht\namedirectory.h" />
     <ClInclude Include="..\src\jamidht\p2p.h" />
     <ClInclude Include="..\src\jamidht\jamiaccount.h" />
+    <ClInclude Include="..\src\jamidht\connectionmanager.h" />
     <ClInclude Include="..\src\jamidht\ringcontact.h" />
     <ClInclude Include="..\src\jamidht\sips_transport_ice.h" />
     <ClInclude Include="..\src\ring_types.h" />
