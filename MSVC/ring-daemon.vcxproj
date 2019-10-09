@@ -809,6 +809,7 @@
     <ClCompile Include="..\src\jamidht\namedirectory.cpp" />
     <ClCompile Include="..\src\jamidht\p2p.cpp" />
     <ClCompile Include="..\src\jamidht\jamiaccount.cpp" />
+    <ClCompile Include="..\src\jamidht\connectionmanager.cpp" />
     <ClCompile Include="..\src\jamidht\sips_transport_ice.cpp" />
     <ClCompile Include="..\src\ring_api.cpp" />
     <ClCompile Include="..\src\scheduled_executor.cpp" />
@@ -974,6 +975,7 @@
     <ClInclude Include="..\src\jamidht\namedirectory.h" />
     <ClInclude Include="..\src\jamidht\p2p.h" />
     <ClInclude Include="..\src\jamidht\jamiaccount.h" />
+    <ClInclude Include="..\src\jamidht\connectionmanager.h" />
     <ClInclude Include="..\src\jamidht\ringcontact.h" />
     <ClInclude Include="..\src\jamidht\sips_transport_ice.h" />
     <ClInclude Include="..\src\ring_types.h" />
