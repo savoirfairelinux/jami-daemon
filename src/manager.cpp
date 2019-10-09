@@ -2655,6 +2655,8 @@ void Manager::removeAccount(const std::string& accountID, bool flush)
     // Get it down and dying
     if (const auto& remAccount = getAccount(accountID)) {
         remAccount->doUnregister();
+        if (auto acc = std::dynamic_pointer_cast<JamiAccount>(remAccount))
+            acc->shutdownConnections();
         if (flush)
             remAccount->flush();
         accountFactory.removeAccount(*remAccount);
