@@ -47,6 +47,7 @@
 #include "ice_transport.h"
 
 #include "p2p.h"
+#include "connectionmanager.h"
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
@@ -247,6 +248,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     , cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID())
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , dhtPeerConnector_ {new DhtPeerConnector {*this}}
+    , connectionManager_ {new ConnectionManager {*this}}
 {
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
@@ -409,6 +411,18 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     dht::InfoHash peer_account(toUri);
     accountManager_->forEachDevice(peer_account, [this, wCall, toUri, peer_account](const dht::InfoHash& dev)
     {
+        runOnMainThread([this, dev]{
+            JAMI_INFO("[Account %s] Connect to %s", getAccountID().c_str(), dev.toString().c_str());
+            this->connectionManager_->connectDevice(dev.toString(), "git://xxxx", [this, dev](std::shared_ptr<ChannelSocket> socket) {
+                if (!socket) {
+                    // TODO error code?
+                    JAMI_WARN("[Account %s] Connection to %s failed", getAccountID().c_str(), dev.toString().c_str());
+                    return;
+                }
+                JAMI_INFO("[Account %s] Connection to %s is ready", getAccountID().c_str(), dev.toString().c_str());
+            });
+        });
+        return;
         auto call = wCall.lock();
         if (not call) return;
         JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
@@ -1759,6 +1773,29 @@ JamiAccount::doRegister_()
 
         accountManager_->setDht(dht_);
         accountManager_->startSync();
+
+        // Init connection manager
+        connectionManager_->onDhtConnected(accountManager_->getInfo()->deviceId);
+
+        connectionManager_->onPeerRequest([this](const std::string& deviceId, const std::string& uri) {
+            // TODO pass certificate?
+            // TODO check if valid URI
+            // TODO check if valid Device
+            JAMI_INFO("[Account %s] Accept connection from %s", getAccountID().c_str(), deviceId.c_str());
+            return true;
+        });
+        connectionManager_->onConnectionReady([this](const std::string& deviceId, const std::string& uri, std::shared_ptr<ChannelSocket> socket) {
+            if (!socket) {
+                // TODO error code?
+                JAMI_WARN("[Account %s] Connection to %s failed", getAccountID().c_str(), deviceId.c_str());
+                return;
+            }
+            JAMI_INFO("[Account %s] Connection to %s is ready", getAccountID().c_str(), deviceId.c_str());
+            // TODO do something with the socket
+        });
+
+
+
 
         // Listen for incoming calls
         callKey_ = dht::InfoHash::get("callto:"+accountManager_->getInfo()->deviceId);
