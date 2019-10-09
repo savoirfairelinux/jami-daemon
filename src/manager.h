@@ -64,9 +64,11 @@ class JamiAccount;
 static constexpr uint64_t DRING_ID_MAX_VAL = 9007199254740992;
 
 /** Manager (controller) of daemon */
-class Manager {
+// TODO DRING_PUBLIC only if tests
+class DRING_TESTABLE Manager {
     public:
-        static Manager& instance();
+        // TODO DRING_PUBLIC only if tests
+        static DRING_TESTABLE Manager& instance();
 
         void setAutoAnswer(bool enable);
 
