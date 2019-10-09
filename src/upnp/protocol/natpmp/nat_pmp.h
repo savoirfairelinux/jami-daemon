@@ -95,7 +95,6 @@ private:
     std::thread pmpThread_ {};                          // NatPmp thread.
 
     std::atomic_bool restart_ {false};          // Variable to indicate we need to restart natpmp after a connectivity change.
-    time_point restartTimer_ {clock::now()};    // Keeps track of time elapsed since restart was triggered.
     unsigned int restartSearchRetry_ {0};       // Keeps track of number of times we try to find an IGD after a connectivity change.
 
     std::shared_ptr<PMPIGD> pmpIGD_ {};                 // IGD discovered by NatPmp.
