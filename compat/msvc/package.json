@@ -12,7 +12,8 @@
         "upnp",
         "yaml-cpp",
         "libarchive",
-        "webrtc-audio-processing"
+        "webrtc-audio-processing",
+        "libgit2"
     ],
     "configuration": "ReleaseLib_win32",
     "project_paths": ["ring-daemon.vcxproj"]
