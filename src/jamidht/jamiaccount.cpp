@@ -1126,7 +1126,7 @@ JamiAccount::getAccountDetails() const
     }
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     a.emplace(DRing::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
-    if (not archivePath_.empty())
+    if (not archivePath_.empty() or not managerUri_.empty())
         a.emplace(DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword_ ? TRUE_STR : FALSE_STR);
 
     /* these settings cannot be changed (read only), but clients should still be
