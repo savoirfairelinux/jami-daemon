@@ -47,6 +47,7 @@
 #include "ice_transport.h"
 
 #include "p2p.h"
+#include "connectionmanager.h"
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
@@ -249,6 +250,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     , cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID())
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , dhtPeerConnector_ {new DhtPeerConnector {*this}}
+    , connectionManager_ {new ConnectionManager {*this}}
 {
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
@@ -266,6 +268,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 
 JamiAccount::~JamiAccount()
 {
+    connectionManager_.reset();
     if (eventHandler) {
         eventHandler->cancel();
         eventHandler.reset();
@@ -1769,6 +1772,9 @@ JamiAccount::doRegister_()
 
         accountManager_->setDht(dht_);
         accountManager_->startSync();
+
+        // Init connection manager
+        connectionManager_->onDhtConnected(accountManager_->getInfo()->deviceId);
 
         // Listen for incoming calls
         callKey_ = dht::InfoHash::get("callto:"+accountManager_->getInfo()->deviceId);
