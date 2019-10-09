@@ -1387,6 +1387,30 @@ IceTransport::isTCPEnabled()
     return pimpl_->config_.protocol == PJ_ICE_TP_TCP;
 }
 
+ICESDP
+IceTransport::parse_SDP(const std::string& sdp_msg, const IceTransport& ice)
+{
+    ICESDP res;
+    std::istringstream stream(sdp_msg);
+    std::string line;
+    int nr = 0;
+    while (std::getline(stream, line)) {
+        if (nr == 0) {
+            res.rem_ufrag = line;
+        } else if (nr == 1) {
+            res.rem_pwd = line;
+        } else {
+            IceCandidate cand;
+            if (ice.getCandidateFromSDP(line, cand)) {
+                JAMI_DBG("Add remote ICE candidate: %s", line.c_str());
+                res.rem_candidates.emplace_back(cand);
+            }
+        }
+        nr++;
+    }
+    return res;
+}
+
 //==============================================================================
 
 IceTransportFactory::IceTransportFactory()
