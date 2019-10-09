@@ -329,6 +329,7 @@ IceSocketEndpoint::IceSocketEndpoint(std::shared_ptr<IceTransport> ice, bool isS
 IceSocketEndpoint::~IceSocketEndpoint()
 {
     shutdown();
+    ice_.reset();
 }
 
 void
@@ -396,7 +397,7 @@ public:
          const dht::crypto::Certificate& peer_cert,
          const Identity& local_identity,
          const std::shared_future<tls::DhParams>& dh_params)
-        : peerCertificate {peer_cert} {
+        : peerCertificate {peer_cert}, ep_ {ep.get()} {
         tls::TlsSession::TlsSessionCallbacks tls_cbs = {
             /*.onStateChange = */[this](tls::TlsSessionState state){ onTlsStateChange(state); },
             /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onTlsRxData(std::move(buf)); },
@@ -420,7 +421,7 @@ public:
          std::function<bool(const dht::crypto::Certificate &)>&& cert_check,
          const Identity& local_identity,
          const std::shared_future<tls::DhParams>& dh_params)
-        : peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert} {
+        : peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert}, ep_ {ep.get()} {
         tls::TlsSession::TlsSessionCallbacks tls_cbs = {
             /*.onStateChange = */[this](tls::TlsSessionState state){ onTlsStateChange(state); },
             /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onTlsRxData(std::move(buf)); },
@@ -440,6 +441,14 @@ public:
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
     }
 
+    ~Impl() {
+        tls.reset();
+        onReadyCb_ = {};
+        onStateChangeCb_ = {};
+    }
+
+    const AbstractSocketEndpoint* ep_;
+
     // TLS callbacks
     int verifyCertificate(gnutls_session_t);
     void onTlsStateChange(tls::TlsSessionState);
@@ -451,6 +460,8 @@ public:
     dht::crypto::Certificate null_cert;
     std::function<bool(const dht::crypto::Certificate &)> peerCertificateCheckFunc;
     OnStateChangeCb onStateChangeCb_;
+    std::atomic_bool isReady_ {false};
+    OnReadyCb onReadyCb_;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -482,6 +493,12 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 void
 TlsSocketEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
 {
+    if ((state == tls::TlsSessionState::SHUTDOWN || state == tls::TlsSessionState::ESTABLISHED)
+        && !isReady_) {
+        isReady_ = true;
+        if (onReadyCb_)
+            onReadyCb_(state == tls::TlsSessionState::ESTABLISHED);
+    }
     if (onStateChangeCb_)
         onStateChangeCb_(state);
 }
@@ -513,7 +530,7 @@ TlsSocketEndpoint::TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint>&& t
 }
 
 
-TlsSocketEndpoint::~TlsSocketEndpoint() = default;
+TlsSocketEndpoint::~TlsSocketEndpoint() {}
 
 bool
 TlsSocketEndpoint::isInitiator() const
@@ -556,6 +573,24 @@ TlsSocketEndpoint::setOnStateChange(std::function<void(tls::TlsSessionState stat
 {
     pimpl_->onStateChangeCb_ = std::move(cb);
 }
+
+void
+TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
+{
+    pimpl_->onReadyCb_ = std::move(cb);
+}
+
+void
+TlsSocketEndpoint::shutdown()
+{
+    const IceSocketEndpoint* iceSocket = (const IceSocketEndpoint*)(pimpl_->ep_);
+    if (iceSocket && iceSocket->underlyingICE()) {
+        iceSocket->underlyingICE()->cancelOperations();
+        iceSocket->underlyingICE()->stop();
+    }
+    pimpl_->tls->shutdown();
+}
+
 
 
 //==============================================================================
