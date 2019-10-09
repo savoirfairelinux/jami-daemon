@@ -304,12 +304,18 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(std::unique_ptr<SocketType>&& transpo
 
 TlsSession::TlsSessionImpl::~TlsSessionImpl()
 {
+    JAMI_ERR("=== ~TlsSessionImpl() 0");
     state_ = TlsSessionState::SHUTDOWN;
     stateCondition_.notify_all();
     rxCv_.notify_all();
     thread_.join();
-    if (not transport_->isReliable())
+    JAMI_ERR("=== ~TlsSessionImpl() 1");
+    if (transport_ and not transport_->isReliable())
         transport_->setOnRecv(nullptr);
+
+    JAMI_ERR("=== ~TlsSessionImpl() 2");
+    transport_.reset();
+    JAMI_ERR("=== ~TlsSessionImpl() end");
 }
 
 const char*
@@ -732,13 +738,15 @@ TlsSession::TlsSessionImpl::setup()
 void
 TlsSession::TlsSessionImpl::cleanup()
 {
+    JAMI_ERR("@@@ cleanup");
     state_ = TlsSessionState::SHUTDOWN; // be sure to block any user operations
     stateCondition_.notify_all();
+    JAMI_ERR("@@@ cleanup 2");
 
     {
         std::lock_guard<std::mutex> lk(sessionMutex_);
         if (session_) {
-            if (transport_->isReliable())
+            if (transport_ && transport_->isReliable())
                 gnutls_bye(session_, GNUTLS_SHUT_RDWR);
             else
                 gnutls_bye(session_, GNUTLS_SHUT_WR); // not wait for a peer answer
@@ -746,11 +754,26 @@ TlsSession::TlsSessionImpl::cleanup()
             session_ = nullptr;
         }
     }
+    JAMI_ERR("@@@ cleanup 3");
 
     if (cookie_key_.data)
         gnutls_free(cookie_key_.data);
+<<<<<<< HEAD
+<<<<<<< Updated upstream
 
     transport_->shutdown();
+=======
+    JAMI_ERR("@@@ cleanup 4");
+    if (transport_) transport_->shutdown();
+    JAMI_ERR("@@@ cleanup 5");
+>>>>>>> Stashed changes
+=======
+    JAMI_ERR("@@@ cleanup 4");
+    if (transport_) transport_->shutdown();
+    JAMI_ERR("@@@ cleanup 5");
+    transport_.reset();
+    JAMI_ERR("@@@ cleanup 6");
+>>>>>>> a3b86610f... debug jenkins
 }
 
 TlsSessionState
@@ -1210,7 +1233,9 @@ TlsSession::TlsSessionImpl::handleStateShutdown(TlsSessionState state)
     JAMI_DBG("[TLS] shutdown");
 
     // Stop ourself
+    JAMI_WARN("@@@ shutdown");
     thread_.stop();
+    JAMI_WARN("@@@ shutdown end");
     return state;
 }
 
@@ -1240,7 +1265,11 @@ TlsSession::TlsSession(std::unique_ptr<SocketType>&& transport, const TlsParams&
 {}
 
 TlsSession::~TlsSession()
-{}
+{
+    JAMI_ERR("@@@ ~TlsSession()");
+    pimpl_.reset();
+    JAMI_ERR("@@@ ~TlsSession() END");
+}
 
 bool
 TlsSession::isInitiator() const
