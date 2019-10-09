@@ -47,3 +47,9 @@
   #define DRING_PUBLIC
   #define DRING_LOCAL
 #endif // dring_EXPORTS
+
+#ifdef NDEBUG
+  #define DRING_TESTABLE DRING_EXPORT
+#else
+  #define DRING_TESTABLE
+#endif
