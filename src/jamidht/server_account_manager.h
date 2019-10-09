@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2014-2019 Savoir-faire Linux Inc.
  *  Author : Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *           Vsevolod Ivanov <vsevolod.ivanov@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -47,6 +48,8 @@ public:
     }
 
     void syncDevices() override;
+
+    bool revokeDevice(const std::string& password, const std::string& device, RevokeDeviceCallback cb);
 
     void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) override;
 
