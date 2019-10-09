@@ -181,6 +181,9 @@
     <ClCompile Include="..\src\jamidht\jamiaccount.cpp">
       <Filter>Source Files\jamidht</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\jamidht\connectionmanager.cpp">
+      <Filter>Source Files\jamidht</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\jamidht\sips_transport_ice.cpp">
       <Filter>Source Files\jamidht</Filter>
     </ClCompile>
@@ -868,6 +871,9 @@
       <Filter>Source Files\upnp</Filter>
     </ClInclude>
     <ClInclude Include="..\src\jamidht\jamiaccount.h">
+      <Filter>Source Files\jamidht</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\jamidht\connectionmanager.h">
       <Filter>Source Files\jamidht</Filter>
     </ClInclude>
     <ClInclude Include="..\src\upnp\protocol\global_mapping.h">
