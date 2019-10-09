@@ -9,7 +9,8 @@
         "portaudio",
         "secp256k1",
         "upnp",
-        "yaml-cpp"
+        "yaml-cpp",
+        "libgit2"
     ],
     "configuration": "ReleaseLib_win32",
     "project_paths": ["ring-daemon.vcxproj"]
