@@ -47,6 +47,7 @@
 #include "ice_transport.h"
 
 #include "p2p.h"
+#include "connectionmanager.h"
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
@@ -249,6 +250,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     , cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID())
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , dhtPeerConnector_ {new DhtPeerConnector {*this}}
+    , connectionManager_ {new ConnectionManager {*this}}
 {
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
@@ -266,16 +268,22 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 
 JamiAccount::~JamiAccount()
 {
+    JAMI_WARN("@@@ DESTROY ACCOUNT");
+    connectionManager_.reset();
+    JAMI_WARN("@@@ DESTROY ACCOUNT 1");
     if (eventHandler) {
         eventHandler->cancel();
         eventHandler.reset();
     }
+    JAMI_WARN("@@@ DESTROY ACCOUNT 2");
     if(peerDiscovery_){
         peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
         peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
     }
+    JAMI_WARN("@@@ DESTROY ACCOUNT 3");
     if (auto dht = dht_)
         dht->join();
+    JAMI_WARN("@@@ DESTROY ACCOUNT END");
 }
 
 void
@@ -1575,7 +1583,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
     if (not dht or not dht->isRunning()) {
         return;
     }
-    buddy.listenToken = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&&, bool expired){
+    buddy.listenToken = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired){
         bool wasConnected, isConnected;
         {
             std::lock_guard<std::mutex> lock(buddyInfoMtx);
@@ -1588,6 +1596,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
             else
                 ++buddy->second.devices_cnt;
             isConnected = buddy->second.devices_cnt > 0;
+            JAMI_WARN("### RECEIVE FOR %s, devicePresence for %s - expired: %u. Count %u", buddy->second.id.toString().c_str(), dev.dev.toString().c_str(), expired, buddy->second.devices_cnt);
         }
         if (not expired) {
             // Retry messages every time a new device announce its presence
@@ -1769,6 +1778,9 @@ JamiAccount::doRegister_()
 
         accountManager_->setDht(dht_);
         accountManager_->startSync();
+
+        // Init connection manager
+        connectionManager_->onDhtConnected(accountManager_->getInfo()->deviceId);
 
         // Listen for incoming calls
         callKey_ = dht::InfoHash::get("callto:"+accountManager_->getInfo()->deviceId);

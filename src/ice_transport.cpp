@@ -391,21 +391,27 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
 
 IceTransport::Impl::~Impl()
 {
+    JAMI_WARN("@@@ ICE END 1");
     sip_utils::register_thread();
 
+    JAMI_WARN("@@@ ICE END 2");
     icest_.reset(); // must be done before ioqueue/timer destruction
+    JAMI_WARN("@@@ ICE END 3");
 
     threadTerminateFlags_ = true;
     if (thread_.joinable())
         thread_.join();
 
+    JAMI_WARN("@@@ ICE END 4");
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
 
+    JAMI_WARN("@@@ ICE END 5");
     emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)this), 2);
+    JAMI_WARN("@@@ ICE END 6");
 }
 
 bool
@@ -847,6 +853,12 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
     : pimpl_ {std::make_unique<Impl>(name, component_count, master, options)}
 {}
 
+IceTransport::~IceTransport() {
+    JAMI_WARN("...ICE END");
+    pimpl_.reset();
+    JAMI_WARN("...ICE END 1");
+}
+
 bool
 IceTransport::isInitialized() const
 {
@@ -1004,8 +1016,11 @@ IceTransport::stop()
 void
 IceTransport::cancelOperations()
 {
+    JAMI_WARN("... pimpl %p", pimpl_.get());
     for (auto& c: pimpl_->peerChannels_) {
+        JAMI_WARN("... stop");
         c.stop();
+        JAMI_WARN("... stop end");
     }
 }
 
@@ -1396,6 +1411,30 @@ bool
 IceTransport::isTCPEnabled()
 {
     return pimpl_->config_.protocol == PJ_ICE_TP_TCP;
+}
+
+ICESDP
+IceTransport::parse_SDP(const std::string& sdp_msg, const IceTransport& ice)
+{
+    ICESDP res;
+    std::istringstream stream(sdp_msg);
+    std::string line;
+    int nr = 0;
+    while (std::getline(stream, line)) {
+        if (nr == 0) {
+            res.rem_ufrag = line;
+        } else if (nr == 1) {
+            res.rem_pwd = line;
+        } else {
+            IceCandidate cand;
+            if (ice.getCandidateFromSDP(line, cand)) {
+                JAMI_DBG("Add remote ICE candidate: %s", line.c_str());
+                res.rem_candidates.emplace_back(cand);
+            }
+        }
+        nr++;
+    }
+    return res;
 }
 
 //==============================================================================

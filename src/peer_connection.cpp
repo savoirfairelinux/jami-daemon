@@ -328,18 +328,27 @@ IceSocketEndpoint::IceSocketEndpoint(std::shared_ptr<IceTransport> ice, bool isS
 
 IceSocketEndpoint::~IceSocketEndpoint()
 {
+    JAMI_WARN("@@@ ~IceSocketEndpoint()");
     shutdown();
+    JAMI_WARN("@@@ ~IceSocketEndpoint() 1");
+    ice_.reset();
+    JAMI_WARN("@@@ ~IceSocketEndpoint() 2");
 }
 
 void
 IceSocketEndpoint::shutdown() {
+    JAMI_WARN("@@@ ICE shutdown()");
     if (ice_) {
         // Sometimes the other peer never send any packet
         // So, we cancel pending read to avoid to have
         // any blocking operation.
+        JAMI_WARN("@@@ ICE shutdown() 1 %p", ice_);
         ice_->cancelOperations();
+        JAMI_WARN("@@@ ICE shutdown() 2");
         ice_->stop();
+        JAMI_WARN("@@@ ICE shutdown() 3");
     }
+    JAMI_WARN("@@@ ICE 1 shutdown()");
 }
 
 int
@@ -440,6 +449,14 @@ public:
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
     }
 
+    ~Impl() {
+        JAMI_ERR("@@@ TLS RESET");
+        tls.reset();
+        JAMI_ERR("@@@ TLS RESET END");
+        onReadyCb_ = {};
+        onStateChangeCb_ = {};
+    }
+
     // TLS callbacks
     int verifyCertificate(gnutls_session_t);
     void onTlsStateChange(tls::TlsSessionState);
@@ -451,6 +468,8 @@ public:
     dht::crypto::Certificate null_cert;
     std::function<bool(const dht::crypto::Certificate &)> peerCertificateCheckFunc;
     OnStateChangeCb onStateChangeCb_;
+    std::atomic_bool isReady_ {false};
+    OnReadyCb onReadyCb_;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -482,6 +501,12 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 void
 TlsSocketEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
 {
+    if ((state == tls::TlsSessionState::SHUTDOWN || state == tls::TlsSessionState::ESTABLISHED)
+        && !isReady_) {
+        isReady_ = true;
+        if (onReadyCb_)
+            onReadyCb_(state == tls::TlsSessionState::ESTABLISHED);
+    }
     if (onStateChangeCb_)
         onStateChangeCb_(state);
 }
@@ -513,7 +538,7 @@ TlsSocketEndpoint::TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint>&& t
 }
 
 
-TlsSocketEndpoint::~TlsSocketEndpoint() = default;
+TlsSocketEndpoint::~TlsSocketEndpoint() {}
 
 bool
 TlsSocketEndpoint::isInitiator() const
@@ -555,6 +580,12 @@ void
 TlsSocketEndpoint::setOnStateChange(std::function<void(tls::TlsSessionState state)>&& cb)
 {
     pimpl_->onStateChangeCb_ = std::move(cb);
+}
+
+void
+TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
+{
+    pimpl_->onReadyCb_ = std::move(cb);
 }
 
 
