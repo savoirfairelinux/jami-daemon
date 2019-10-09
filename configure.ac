@@ -300,6 +300,8 @@ PKG_CHECK_MODULES(ZLIB, zlib,, AC_MSG_ERROR([zlib not found]))
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
 
+PKG_CHECK_MODULES([LIBGIT2], [libgit2 >= 0.27.9],, AC_MSG_ERROR([Missing libgit2 files]))
+
 PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],, AC_MSG_ERROR([yaml-cpp not found]))
 PKG_CHECK_MODULES([JSONCPP], [jsoncpp >= 1.6.5],, AC_MSG_ERROR([jsoncpp not found]))
 
