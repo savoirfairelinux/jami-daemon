@@ -396,6 +396,12 @@ public:
     Impl(AbstractSocketEndpoint &ep, std::function<bool(const dht::crypto::Certificate &)>&& cert_check)
         : tr{ep}, peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert} {}
 
+    ~Impl() {
+        tls.reset();
+        onReadyCb_ = {};
+        onStateChangeCb_ = {};
+    }
+
     // TLS callbacks
     int verifyCertificate(gnutls_session_t);
     void onTlsStateChange(tls::TlsSessionState);
@@ -408,6 +414,8 @@ public:
     dht::crypto::Certificate null_cert;
     std::function<bool(const dht::crypto::Certificate &)> peerCertificateCheckFunc;
     OnStateChangeCb onStateChangeCb_;
+    std::atomic_bool isReady_ {false};
+    OnReadyCb onReadyCb_;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -439,6 +447,12 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 void
 TlsSocketEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
 {
+    if ((state == tls::TlsSessionState::SHUTDOWN || state == tls::TlsSessionState::ESTABLISHED)
+        && !isReady_) {
+        isReady_ = true;
+        if (onReadyCb_)
+            onReadyCb_(state == tls::TlsSessionState::ESTABLISHED);
+    }
     if (onStateChangeCb_)
         onStateChangeCb_(state);
 }
@@ -506,7 +520,7 @@ TlsSocketEndpoint::TlsSocketEndpoint(AbstractSocketEndpoint& tr,
 }
 
 
-TlsSocketEndpoint::~TlsSocketEndpoint() = default;
+TlsSocketEndpoint::~TlsSocketEndpoint() {}
 
 bool
 TlsSocketEndpoint::isInitiator() const
@@ -548,6 +562,12 @@ void
 TlsSocketEndpoint::setOnStateChange(std::function<void(tls::TlsSessionState state)>&& cb)
 {
     pimpl_->onStateChangeCb_ = std::move(cb);
+}
+
+void
+TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
+{
+    pimpl_->onReadyCb_ = std::move(cb);
 }
 
 
