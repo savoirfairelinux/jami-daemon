@@ -44,6 +44,13 @@ using IceTransportCompleteCb = std::function<void(bool)>;
 using IceRecvInfo = std::function<void(void)>;
 using IceRecvCb = std::function<ssize_t(unsigned char *buf, size_t len)>;
 using IceCandidate = pj_ice_sess_cand;
+using onShutdownCb = std::function<void(void)>;
+
+struct ICESDP {
+  std::vector<IceCandidate> rem_candidates;
+  std::string rem_ufrag;
+  std::string rem_pwd;
+};
 
 struct StunServerInfo {
     StunServerInfo& setUri(const std::string& args) { uri = args; return *this; }
@@ -96,6 +103,7 @@ public:
      */
     IceTransport(const char* name, int component_count, bool master,
                  const IceTransportOptions& options = {});
+    ~IceTransport();
     /**
      * Get current state
      */
@@ -184,6 +192,7 @@ public:
     // I/O methods
 
     void setOnRecv(unsigned comp_id, IceRecvCb cb);
+    void setOnShutdown(onShutdownCb&& cb);
 
     ssize_t recv(int comp_id, unsigned char* buf, size_t len, std::error_code& ec);
     ssize_t recvfrom(int comp_id, char *buf, size_t len, std::error_code& ec);
@@ -218,6 +227,8 @@ public:
 
     bool isTCPEnabled();
 
+    static ICESDP parse_SDP(const std::string& sdp_msg, const IceTransport& ice);
+
   private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
@@ -232,6 +243,12 @@ public:
                                                   int component_count,
                                                   bool master,
                                                   const IceTransportOptions& options = {});
+
+    std::unique_ptr<IceTransport> createUTransport(const char* name,
+                                                  int component_count,
+                                                  bool master,
+                                                  const IceTransportOptions& options = {});
+
 
     /**
      * PJSIP specifics

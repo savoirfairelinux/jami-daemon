@@ -100,6 +100,10 @@ void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
 
 std::string sip_strerror(pj_status_t code);
 
+void sockaddr_to_host_port(pj_pool_t* pool,
+                      pjsip_host_port* host_port,
+                      const pj_sockaddr* addr);
+
 /// \brief PJSIP requires to register all threads that access to its API.
 ///
 /// This function is safe to be called multiple time by same thread,
@@ -145,6 +149,10 @@ smart_alloc_pool(pjsip_endpoint* endpt, const char* const name, pj_size_t initia
         throw std::bad_alloc();
     return std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&>(pool, pj_pool_release);
 }
+
+static constexpr int POOL_TP_INIT {512};
+static constexpr int POOL_TP_INC {512};
+static constexpr int TRANSPORT_INFO_LENGTH {64};
 
 }} // namespace jami::sip_utils
 

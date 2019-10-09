@@ -187,6 +187,8 @@ public:
     // Wait data on components
     std::vector<pj_ssize_t> lastReadLen_;
     std::condition_variable waitDataCv_ = {};
+
+    onShutdownCb scb;
 };
 
 //==============================================================================
@@ -347,6 +349,14 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
             JAMI_WARN("null IceTransport");
     };
 
+    icecb.on_destroy = [](pj_ice_strans* ice_st) {
+        if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st)))
+            if (tr->scb)
+                tr->scb();
+        else
+            JAMI_WARN("null IceTransport");
+    };
+
     // Add STUN servers
     for (auto& server : options.stunServers)
         add_stun_server(*pool_, config_, server);
@@ -404,8 +414,6 @@ IceTransport::Impl::~Impl()
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
-
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)this), 2);
 }
 
 bool
@@ -847,6 +855,9 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
     : pimpl_ {std::make_unique<Impl>(name, component_count, master, options)}
 {}
 
+IceTransport::~IceTransport()
+{}
+
 bool
 IceTransport::isInitialized() const
 {
@@ -943,7 +954,6 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
         return false;
     }
 
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)pimpl_.get()), 0);
     return true;
 }
 
@@ -980,7 +990,6 @@ IceTransport::start(const SDP& sdp)
         return false;
     }
 
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)pimpl_.get()), 0);
     return true;
 }
 
@@ -1280,6 +1289,13 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
     }
 }
 
+void
+IceTransport::setOnShutdown(onShutdownCb&& cb)
+{
+    pimpl_->scb = cb;
+}
+
+
 ssize_t
 IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 {
@@ -1296,7 +1312,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         auto current_size = sent_size;
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
-        while (comp_id < pimpl_->lastReadLen_.size() && current_size < len) {
+        while (static_cast<std::size_t>(comp_id) < pimpl_->lastReadLen_.size() && current_size < len) {
           std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
           pimpl_->waitDataCv_.wait(lk);
           current_size = pimpl_->lastReadLen_[comp_id];
@@ -1398,6 +1414,30 @@ IceTransport::isTCPEnabled()
     return pimpl_->config_.protocol == PJ_ICE_TP_TCP;
 }
 
+ICESDP
+IceTransport::parse_SDP(const std::string& sdp_msg, const IceTransport& ice)
+{
+    ICESDP res;
+    std::istringstream stream(sdp_msg);
+    std::string line;
+    int nr = 0;
+    while (std::getline(stream, line)) {
+        if (nr == 0) {
+            res.rem_ufrag = line;
+        } else if (nr == 1) {
+            res.rem_pwd = line;
+        } else {
+            IceCandidate cand;
+            if (ice.getCandidateFromSDP(line, cand)) {
+                JAMI_DBG("Add remote ICE candidate: %s", line.c_str());
+                res.rem_candidates.emplace_back(cand);
+            }
+        }
+        nr++;
+    }
+    return res;
+}
+
 //==============================================================================
 
 IceTransportFactory::IceTransportFactory()
@@ -1437,6 +1477,19 @@ IceTransportFactory::createTransport(const char* name, int component_count,
 {
     try {
         return std::make_shared<IceTransport>(name, component_count, master, options);
+    } catch(const std::exception& e) {
+        JAMI_ERR("%s",e.what());
+        return nullptr;
+    }
+}
+
+std::unique_ptr<IceTransport>
+IceTransportFactory::createUTransport(const char* name, int component_count,
+                                     bool master,
+                                     const IceTransportOptions& options)
+{
+    try {
+        return std::make_unique<IceTransport>(name, component_count, master, options);
     } catch(const std::exception& e) {
         JAMI_ERR("%s",e.what());
         return nullptr;

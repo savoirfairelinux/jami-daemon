@@ -46,6 +46,8 @@ struct Certificate;
 namespace jami {
 
 using OnStateChangeCb = std::function<void(tls::TlsSessionState state)>;
+using OnReadyCb = std::function<void(bool ok)>;
+using onShutdownCb = std::function<void(void)>;
 
 class TurnTransport;
 class ConnectedTurnTransport;
@@ -120,6 +122,8 @@ public:
     void setOnRecv(RecvCb &&) override {
       throw std::logic_error("AbstractSocketEndpoint::setOnRecv not implemented");
     }
+
+    virtual void setOnShutdown(onShutdownCb&&) {};
 };
 
 /// Implement system socket IO
@@ -138,7 +142,12 @@ public:
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
     void connect(const std::chrono::milliseconds& timeout = {}) override;
 
+    void setOnShutdown(onShutdownCb&& cb) {
+        scb = cb;
+    }
+
 private:
+    onShutdownCb scb;
     const IpAddr addr_;
     int sock_ {-1};
 };
@@ -158,12 +167,18 @@ public:
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 
-    void setOnRecv(RecvCb&& cb) override {
-        if (ice_) {
-            ice_->setOnRecv(compId_, cb);
-        }
+    std::shared_ptr<IceTransport> underlyingICE() const {
+        return ice_;
     }
 
+    void setOnRecv(RecvCb&& cb) override {
+        if (ice_)
+            ice_->setOnRecv(compId_, cb);
+    }
+
+    void setOnShutdown(onShutdownCb&& cb) {
+        ice_->setOnShutdown(std::move(cb));
+    }
 private:
     std::shared_ptr<IceTransport> ice_ {nullptr};
     std::atomic_bool iceStopped{false};
@@ -194,6 +209,7 @@ public:
     bool isReliable() const override { return true; }
     bool isInitiator() const override;
     int maxPayload() const override;
+    void shutdown() override;
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 
@@ -205,6 +221,9 @@ public:
     void waitForReady(const std::chrono::milliseconds& timeout = {});
 
     void setOnStateChange(OnStateChangeCb&& cb);
+    void setOnReady(OnReadyCb&& cb);
+
+    std::shared_ptr<IceTransport> underlyingICE() const;
 
 private:
     class Impl;
