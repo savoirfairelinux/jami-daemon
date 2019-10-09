@@ -47,6 +47,7 @@
 #include "ice_transport.h"
 
 #include "p2p.h"
+#include "connectionmanager.h"
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
@@ -251,6 +252,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     , cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID())
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , dhtPeerConnector_ {new DhtPeerConnector {*this}}
+    , connectionManager_ {new ConnectionManager {*this}}
 {
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
@@ -268,6 +270,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 
 JamiAccount::~JamiAccount()
 {
+    shutdownConnections();
     if (eventHandler) {
         eventHandler->cancel();
         eventHandler.reset();
@@ -278,6 +281,13 @@ JamiAccount::~JamiAccount()
     }
     if (auto dht = dht_)
         dht->join();
+}
+
+void
+JamiAccount::shutdownConnections()
+{
+    connectionManager_.reset();
+    dhtPeerConnector_.reset();
 }
 
 void
@@ -1793,6 +1803,9 @@ JamiAccount::doRegister_()
         accountManager_->setDht(dht_);
         accountManager_->startSync();
 
+        // Init connection manager
+        connectionManager_->onDhtConnected(accountManager_->getInfo()->deviceId);
+
         // Listen for incoming calls
         callKey_ = dht::InfoHash::get("callto:"+accountManager_->getInfo()->deviceId);
         JAMI_DBG("[Account %s] Listening on callto:%s : %s", getAccountID().c_str(), accountManager_->getInfo()->deviceId.c_str(), callKey_.toString().c_str());
@@ -2005,6 +2018,8 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
 
     if (released_cb)
         released_cb(false);
+
+    shutdownConnections();
 }
 
 void
