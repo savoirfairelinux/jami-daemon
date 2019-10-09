@@ -160,10 +160,11 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib-util/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/third_party;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/include;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing"
-           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/include"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/include"
        )
    endif()
 
@@ -272,10 +273,10 @@ if(MSVC)
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/webrtc-audio-processing/build/Release/webrtc-audio-processing.lib
         ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/portaudio/build/Release/portaudio_static_x64.lib
+        ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libgit2/msvc/Release/git2.lib
         /ignore:4006"
    )
 
    set ( CMAKE_STATIC_LINKER_FLAGS ${libAdditionalDependencies} )
 
 endif()
-
