@@ -197,12 +197,6 @@ auto ctrlMsgData(const T& msg)
 
 //==============================================================================
 
-struct ICESDP {
-  std::vector<IceCandidate> rem_candidates;
-  std::string rem_ufrag;
-  std::string rem_pwd;
-};
-
 class DhtPeerConnector::Impl {
 public:
     class ClientConnector;
@@ -224,30 +218,6 @@ public:
 
     JamiAccount& account;
     Channel<std::unique_ptr<CtrlMsgBase>> ctrl;
-
-    ICESDP parse_SDP(const std::string& sdp_msg, const IceTransport& ice) const {
-        ICESDP res;
-        std::istringstream stream(sdp_msg);
-        std::string line;
-        int nr = 0;
-        while (std::getline(stream, line)) {
-            if (nr == 0) {
-                res.rem_ufrag = line;
-            } else if (nr == 1) {
-                res.rem_pwd = line;
-            } else {
-                IceCandidate cand;
-                if (ice.getCandidateFromSDP(line, cand)) {
-                    JAMI_DBG("[Account:%s] add remote ICE candidate: %s",
-                            account.getAccountID().c_str(),
-                            line.c_str());
-                    res.rem_candidates.emplace_back(cand);
-                }
-            }
-            nr++;
-        }
-        return res;
-    }
 
     bool hasPublicIp(const ICESDP& sdp) {
         for (const auto& cand: sdp.rem_candidates)
@@ -428,7 +398,7 @@ private:
             if (!(address.size() <= PJ_MAX_HOSTNAME && (relay_addr = address))) {
                 // Should be ICE SDP
                 // P2P File transfer. We received an ice SDP message:
-                auto sdp = parent_.parse_SDP(address, *ice);
+                auto sdp = IceTransport::parse_SDP(address, *ice);
                 // NOTE: hasPubIp is used for compability (because ICE is waiting for a certain state in old versions)
                 // This can be removed when old versions will be unsupported.
                 auto hasPubIp = parent_.hasPublicIp(sdp);
@@ -770,7 +740,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
 
             account.registerDhtAddress(*ice);
 
-            auto sdp = parse_SDP(ip, *ice);
+            auto sdp = IceTransport::parse_SDP(ip, *ice);
             // NOTE: hasPubIp is used for compability (because ICE is waiting for a certain state in old versions)
             // This can be removed when old versions will be unsupported (version before this patch)
             hasPubIp = hasPublicIp(sdp);
@@ -1039,6 +1009,9 @@ DhtPeerConnector::onDhtConnected(const std::string& device_id)
                     pimpl_->ctrl << makeMsg<CtrlMsgType::DHT_RESPONSE>(std::move(msg));
             }
             return true;
+        }, [](const dht::Value& v) {
+            // Avoid to answer for peer requests
+            return v.user_type != "peer_request";
         });
 }
 
