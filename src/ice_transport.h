@@ -45,6 +45,12 @@ using IceRecvInfo = std::function<void(void)>;
 using IceRecvCb = std::function<ssize_t(unsigned char *buf, size_t len)>;
 using IceCandidate = pj_ice_sess_cand;
 
+struct ICESDP {
+  std::vector<IceCandidate> rem_candidates;
+  std::string rem_ufrag;
+  std::string rem_pwd;
+};
+
 struct StunServerInfo {
     StunServerInfo& setUri(const std::string& args) { uri = args; return *this; }
 
@@ -217,6 +223,8 @@ public:
     static std::vector<SDP> parseSDPList(const std::vector<uint8_t>& msg);
 
     bool isTCPEnabled();
+
+    static ICESDP parse_SDP(const std::string& sdp_msg, const IceTransport& ice);
 
   private:
     class Impl;
