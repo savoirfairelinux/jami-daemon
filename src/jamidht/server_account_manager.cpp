@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2014-2019 Savoir-faire Linux Inc.
  *  Author : Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *           Vsevolod Ivanov <vsevolod.ivanov@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,8 +32,7 @@ namespace jami {
 using Request = dht::http::Request;
 
 static const std::string PATH_AUTH = "/api/auth";
-static const std::string PATH_DEVICE_REGISTER = PATH_AUTH + "/device";
-static const std::string PATH_DEVICES = PATH_AUTH + "/devices";
+static const std::string PATH_DEVICE = PATH_AUTH + "/device";
 
 constexpr const char* const HTTPS_PROTO {"https"};
 
@@ -79,14 +79,14 @@ ServerAccountManager::initAuthentication(
 
     onChange_ = std::move(onChange);
 
-    const std::string url = managerHostname_ + PATH_DEVICE_REGISTER;
+    const std::string url = managerHostname_ + PATH_DEVICE;
     JAMI_WARN("[Auth] authentication with: %s to %s", ctx->credentials->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
     restinio::http_request_header_t header;
     header.method(restinio::http_method_post());
     request->set_header(header);
-    request->set_target(PATH_DEVICE_REGISTER);
+    request->set_target(PATH_DEVICE);
     request->set_auth(ctx->credentials->username, ctx->credentials->password);
     {
         std::stringstream ss;
@@ -100,7 +100,7 @@ ServerAccountManager::initAuthentication(
     setHeaderFields(*request);
     request->add_on_state_change_callback([reqid, ctx, onAsync = onAsync_]
                                           (Request::State state, const dht::http::Response& response){
-        JAMI_ERR("[Auth] Got server response: %d", (int)state);
+        JAMI_DBG("[Auth] Got request callback with state=%d", (int)state);
         if (state != Request::State::DONE)
             return;
         if (response.status_code == 0) {
@@ -202,20 +202,20 @@ ServerAccountManager::syncDevices()
 {
     if (not creds_)
         return;
-    const std::string url = managerHostname_ + PATH_DEVICES + "?username=" + creds_->username;
+    const std::string url = managerHostname_ + PATH_DEVICE + "?username=" + creds_->username;
     JAMI_WARN("[Auth] syncDevices with: %s to %s", creds_->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
     restinio::http_request_header_t header;
     header.method(restinio::http_method_get());
     request->set_header(header);
-    request->set_target(PATH_DEVICES + "?username=" + creds_->username);
+    request->set_target(PATH_DEVICE + "?username=" + creds_->username);
     request->set_auth(creds_->username, creds_->password);
     setHeaderFields(*request);
     request->add_on_state_change_callback([reqid, onAsync = onAsync_]
                                             (Request::State state, const dht::http::Response& response){
         onAsync([reqid, state, response] (AccountManager& accountManager) {
-            JAMI_ERR("[Auth] Got server response: %d", (int)state);
+            JAMI_DBG("[Auth] Got request callback with state=%d", (int)state);
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
             if (state != Request::State::DONE)
                 return;
@@ -251,6 +251,64 @@ ServerAccountManager::syncDevices()
     });
     request->send();
     requests_[reqid] = std::move(request);
+}
+
+bool
+ServerAccountManager::revokeDevice(const std::string& password, const std::string& device, RevokeDeviceCallback cb)
+{
+    if (not info_){
+        if (cb)
+            cb(RevokeDeviceResult::ERROR_CREDENTIALS);
+        return false;
+    }
+    const std::string url = managerHostname_ + PATH_DEVICE + "?deviceId=" + device;
+    JAMI_WARN("[Revoke] Removing device of %s at %s", info_->username.c_str(), url.c_str());
+    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
+    auto reqid = request->id();
+    restinio::http_request_header_t header;
+    header.method(restinio::http_method_delete());
+    request->set_header(header);
+    request->set_target(PATH_DEVICE + "?deviceId=" + device);
+    request->set_auth(info_->username, password);
+    setHeaderFields(*request);
+    request->add_on_state_change_callback([reqid, cb, onAsync = onAsync_]
+                                          (Request::State state, const dht::http::Response& response){
+        onAsync([reqid, cb, state, response] (AccountManager& accountManager) {
+            JAMI_DBG("[Revoke] Got request callback with state=%d", (int) state);
+            auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
+            if (state != Request::State::DONE)
+                return;
+            if (response.status_code >= 200 || response.status_code < 300) {
+                if (response.body.empty())
+                    return;
+                try {
+                    Json::Value json;
+                    std::string err;
+                    Json::CharReaderBuilder rbuilder;
+                    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                    if (!reader->parse(response.body.data(), response.body.data() + response.body.size(), &json, &err)){
+                        JAMI_ERR("[Revoke] Can't parse server response: %s", err.c_str());
+                    }
+                    JAMI_WARN("[Revoke] Got server response: %s", response.body.c_str());
+                    if (json["errorDetails"].empty()){
+                        if (cb)
+                            cb(RevokeDeviceResult::SUCCESS);
+                        this_.syncDevices();
+                    }
+                }
+                catch (const std::exception& e) {
+                    JAMI_ERR("Error when loading device list: %s", e.what());
+                }
+            }
+            else if (cb)
+                cb(RevokeDeviceResult::ERROR_NETWORK);
+            this_.requests_.erase(reqid);
+        });
+    });
+    JAMI_DBG("[Revoke] Sending revoke device '%s' to JAMS", device.c_str());
+    request->send();
+    requests_[reqid] = std::move(request);
+    return false;
 }
 
 void
