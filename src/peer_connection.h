@@ -46,6 +46,7 @@ struct Certificate;
 namespace jami {
 
 using OnStateChangeCb = std::function<void(tls::TlsSessionState state)>;
+using OnReadyCb = std::function<void(bool ok)>;
 
 class TurnTransport;
 class ConnectedTurnTransport;
@@ -205,6 +206,7 @@ public:
     void waitForReady(const std::chrono::milliseconds& timeout = {});
 
     void setOnStateChange(OnStateChangeCb&& cb);
+    void setOnReady(OnReadyCb&& cb);
 
 private:
     class Impl;
