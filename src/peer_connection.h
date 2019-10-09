@@ -46,6 +46,7 @@ struct Certificate;
 namespace jami {
 
 using OnStateChangeCb = std::function<void(tls::TlsSessionState state)>;
+using OnReadyCb = std::function<void(bool ok)>;
 
 class TurnTransport;
 class ConnectedTurnTransport;
@@ -158,6 +159,10 @@ public:
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 
+    std::shared_ptr<IceTransport> underlyingICE() const {
+        return ice_;
+    }
+
     void setOnRecv(RecvCb&& cb) override {
         if (ice_) {
             ice_->setOnRecv(compId_, cb);
@@ -194,6 +199,7 @@ public:
     bool isReliable() const override { return true; }
     bool isInitiator() const override;
     int maxPayload() const override;
+    void shutdown() override;
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 
@@ -205,6 +211,7 @@ public:
     void waitForReady(const std::chrono::milliseconds& timeout = {});
 
     void setOnStateChange(OnStateChangeCb&& cb);
+    void setOnReady(OnReadyCb&& cb);
 
 private:
     class Impl;
