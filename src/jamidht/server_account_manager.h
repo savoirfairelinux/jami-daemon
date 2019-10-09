@@ -48,6 +48,8 @@ public:
 
     void syncDevices() override;
 
+    bool revokeDevice(const std::string& password, const std::string& device, RevokeDeviceCallback cb);
+
     void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) override;
 
 private:
