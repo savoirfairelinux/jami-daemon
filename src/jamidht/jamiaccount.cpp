@@ -913,7 +913,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
         }
 
         auto id = accountManager_->loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
-        if (auto info = accountManager_->useIdentity(id, receipt_, receiptSignature_, std::move(callbacks))) {
+        if (auto info = accountManager_->useIdentity(id, receipt_, receiptSignature_, managerUsername_, std::move(callbacks))) {
             // normal loading path
             id_ = std::move(id);
             username_ = RING_URI_PREFIX+info->accountId;
