@@ -1444,7 +1444,7 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
     pimpl_->switchCall(conf->getConfID());
     conf->setState(Conference::ACTIVE_ATTACHED);
 
-    pimpl_->conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
+    pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
     emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
     return true;
 }
