@@ -93,6 +93,7 @@ AccountManager::useIdentity(
     const dht::crypto::Identity& identity,
     const std::string& receipt,
     const std::vector<uint8_t>& receiptSignature,
+    const std::string& username,
     OnChangeCallback&& onChange)
 {
     if (receipt.empty() or receiptSignature.empty())
@@ -158,6 +159,7 @@ AccountManager::useIdentity(
     info->deviceId = identity.first->getPublicKey().getId().toString();
     info->announce = std::move(announce);
     info->ethAccount = root["eth"].asString();
+    info->username = username;
     info_ = std::move(info);
 
     JAMI_DBG("[Auth] Device %s receipt checked successfully for account %s", info_->deviceId.c_str(), id.c_str());

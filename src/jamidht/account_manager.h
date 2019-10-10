@@ -48,6 +48,7 @@ struct AccountInfo {
     std::string deviceId;
     std::shared_ptr<dht::Value> announce;
     std::string ethAccount;
+    std::string username;
 };
 
 template <typename To, typename From>
@@ -125,6 +126,7 @@ public:
         const dht::crypto::Identity& id,
         const std::string& receipt,
         const std::vector<uint8_t>& receiptSignature,
+        const std::string& username,
         OnChangeCallback&& onChange);
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }

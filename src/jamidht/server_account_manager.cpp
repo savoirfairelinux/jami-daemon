@@ -166,6 +166,7 @@ ServerAccountManager::initAuthentication(
                     if (not info->announce) {
                         ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse announce from server");
                     }
+                    info->username = ctx->credentials->username;
 
                     this_.creds_ = std::move(ctx->credentials);
                     this_.info_ = std::move(info);
