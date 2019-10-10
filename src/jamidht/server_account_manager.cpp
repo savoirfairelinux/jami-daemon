@@ -51,7 +51,6 @@ ServerAccountManager::ServerAccountManager(
 
 void
 ServerAccountManager::setHeaderFields(Request& request){
-    request.set_header_field(restinio::http_field_t::host, request.get_url().host + ":" + request.get_url().service);
     request.set_header_field(restinio::http_field_t::user_agent, "Jami");
     request.set_header_field(restinio::http_field_t::accept, "application/json");
     request.set_header_field(restinio::http_field_t::content_type, "application/json");
@@ -83,10 +82,7 @@ ServerAccountManager::initAuthentication(
     JAMI_WARN("[Auth] authentication with: %s to %s", ctx->credentials->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
-    restinio::http_request_header_t header;
-    header.method(restinio::http_method_post());
-    request->set_header(header);
-    request->set_target(PATH_DEVICE);
+    request->set_method(restinio::http_method_post());
     request->set_auth(ctx->credentials->username, ctx->credentials->password);
     {
         std::stringstream ss;
@@ -206,10 +202,7 @@ ServerAccountManager::syncDevices()
     JAMI_WARN("[Auth] syncDevices with: %s to %s", creds_->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
-    restinio::http_request_header_t header;
-    header.method(restinio::http_method_get());
-    request->set_header(header);
-    request->set_target(PATH_DEVICE + "?username=" + creds_->username);
+    request->set_method(restinio::http_method_get());
     request->set_auth(creds_->username, creds_->password);
     setHeaderFields(*request);
     request->add_on_state_change_callback([reqid, onAsync = onAsync_]
@@ -265,10 +258,7 @@ ServerAccountManager::revokeDevice(const std::string& password, const std::strin
     JAMI_WARN("[Revoke] Removing device of %s at %s", info_->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
-    restinio::http_request_header_t header;
-    header.method(restinio::http_method_delete());
-    request->set_header(header);
-    request->set_target(PATH_DEVICE + "?deviceId=" + device);
+    request->set_method(restinio::http_method_delete());
     request->set_auth(info_->username, password);
     setHeaderFields(*request);
     request->add_on_state_change_callback([reqid, cb, onAsync = onAsync_]
