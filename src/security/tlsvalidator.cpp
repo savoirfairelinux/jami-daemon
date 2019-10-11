@@ -490,7 +490,7 @@ unsigned int TlsValidator::compareToCa()
  * @warning This function is blocking
  *
  * Mainly based on Fedora Defensive Coding tutorial
- * https://docs.fedoraproject.org/en-US/Fedora_Security_Team/html/Defensive_Coding/sect-Defensive_Coding-TLS-Client-GNUTLS.html
+ * https://docs.fedoraproject.org/en-US/Fedora_Security_Team/1/html/Defensive_Coding/sect-Defensive_Coding-TLS-Client-GNUTLS.html
  */
 int TlsValidator::verifyHostnameCertificate(const std::string& host, const uint16_t port)
 {
