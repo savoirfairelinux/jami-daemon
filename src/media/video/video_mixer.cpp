@@ -142,7 +142,7 @@ VideoMixer::process()
 
     VideoFrame& output = getNewFrame();
     try {
-        output.reserve(AV_PIX_FMT_YUV422P, width_, height_);
+        output.reserve(format_, width_, height_);
     } catch (const std::bad_alloc& e) {
         JAMI_ERR("VideoFrame::allocBuffer() failed");
         return;
@@ -217,12 +217,13 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
 }
 
 void
-VideoMixer::setDimensions(int width, int height)
+VideoMixer::setParameters(int width, int height, AVPixelFormat format)
 {
     auto lock(rwMutex_.write());
 
     width_ = width;
     height_ = height;
+    format_ = format;
 
     // cleanup the previous frame to have a nice copy in rendering method
     std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
@@ -268,6 +269,6 @@ VideoMixer::getHeight() const
 
 AVPixelFormat
 VideoMixer::getPixelFormat() const
-{ return AV_PIX_FMT_YUYV422; }
+{ return format_; }
 
 }} // namespace jami::video

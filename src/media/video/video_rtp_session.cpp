@@ -300,7 +300,13 @@ VideoRtpSession::enterConference(Conference* conference)
 
     if (send_.enabled or receiveThread_) {
         videoMixer_ = conference->getVideoMixer();
-        videoMixer_->setDimensions(localVideoParams_.width, localVideoParams_.height);
+#if defined(__APPLE__) && TARGET_OS_MAC
+        videoMixer_->setParameters(localVideoParams_.width,
+                                   localVideoParams_.height,
+                                   av_get_pix_fmt(localVideoParams_.pixel_format.c_str()));
+#else
+        videoMixer_->setParameters(localVideoParams_.width, localVideoParams_.height);
+#endif
         setupConferenceVideoPipeline(*conference_);
     }
 }
@@ -574,5 +580,3 @@ VideoRtpSession::getPonderateLoss(float lastLoss)
 
 
 }} // namespace jami::video
-
-

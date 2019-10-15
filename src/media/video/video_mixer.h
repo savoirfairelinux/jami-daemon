@@ -43,7 +43,7 @@ public:
     VideoMixer(const std::string& id);
     ~VideoMixer();
 
-    void setDimensions(int width, int height);
+    void setParameters(int width, int height, AVPixelFormat format = AV_PIX_FMT_YUV422P);
 
     int getWidth() const override;
     int getHeight() const override;
@@ -70,6 +70,7 @@ private:
     const std::string id_;
     int width_ = 0;
     int height_ = 0;
+    AVPixelFormat format_ = AV_PIX_FMT_YUV422P;
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
     rw_mutex rwMutex_;
 
