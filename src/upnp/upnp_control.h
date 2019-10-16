@@ -60,6 +60,12 @@ public:
     // Checks if a valid IGD is available.
     bool hasValidIgd();
 
+    // Tries to use a provisioned port.
+    bool useProvisionedPort(uint16_t& port, PortType type);
+
+    // Releases all provisioned mappings used by this controller.
+    void removeAllProvisionedMap();
+
     // Sends out request to upnp protocol to open a port. Gives option to use unique port (i.e. not one that is already in use).
     void requestMappingAdd(NotifyServiceCallback&& cb,
                            uint16_t portDesired, PortType type,
@@ -93,8 +99,11 @@ private:
     // Checks if the map is present locally given a mapping.
     bool isLocalMapPresent(const Mapping& map);
 
-    // Adds a mapping locally to the list.
+    // Adds a mapping locally to the opened mapping list.
     void addLocalMap(const Mapping& map);
+
+    // Adds a mapping locally to the provisioned port list.
+    void addLocalProbvisionMap(uint16_t port, PortType type);
 
     // Removes a mapping locally from the list.
     void removeLocalMap(const Mapping& map);
@@ -112,6 +121,7 @@ private:
     std::shared_ptr<UPnPContext> upnpContext_;  // Context from which the controller executes the wanted commands.
 
     std::mutex mapListMutex_;                   // Mutex to protect mappings list.
+    std::vector<Mapping> provisionedPorts_;
     PortMapLocal udpMappings_;                  // List of UDP mappings created by this instance.
     PortMapLocal tcpMappings_;                  // List of TCP mappings created by this instance.
 
