@@ -24,6 +24,7 @@
 #include "video_base.h"
 #include "noncopyable.h"
 
+
 struct SwsContext;
 
 namespace jami { namespace video {

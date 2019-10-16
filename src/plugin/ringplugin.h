@@ -87,7 +87,7 @@ typedef struct RING_PluginAPI {
 
 typedef void (*RING_PluginExitFunc)(void);
 
-typedef RING_PluginExitFunc (*RING_PluginInitFunc)(const RING_PluginAPI *api);
+typedef RING_PluginExitFunc (*RING_PluginInitFunc)(const RING_PluginAPI *api, char const* path);
 
 C_INTERFACE_END;
 
