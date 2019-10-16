@@ -6,13 +6,13 @@
 #include "pluginmanager.h"
 #include "streamdata.h"
 #include "mediahandler.h"
-// Std library
-#include <map>
+// STL
+#include <list>
 
 namespace jami {
 using MediaHandlerPtr = std::unique_ptr<MediaHandler>;
 using MediaStreamHandlerPtr = std::unique_ptr<MediaStreamHandler>;
-using AVSubjectSPtr = std::shared_ptr<SyncSubject<AVFrame*>>;
+using AVSubjectSPtr = std::shared_ptr<Observable<AVFrame*>>;
 
 class PluginServicesManager{
 
@@ -56,7 +56,7 @@ public:
      * @param peerId
      * This function is called whenever there is a new AVFrame subject available
      */
-    void notifyAllAVSubject(StreamData data, std::weak_ptr<SyncSubject<AVFrame*>> subject) {
+    void notifyAllAVSubject(StreamData data, AVSubjectSPtr subject) {
         for(auto& pair : plugins) {
             auto& pluginPtr = pair.second;
             notifyAVSubject(pluginPtr, data, subject);
@@ -77,17 +77,11 @@ public:
      * @param data
      * Creates an av frame subject with properties StreamData
      */
-    void createAVSubject(const StreamData& data){
-        decltype(avsubjects.begin()) it;
-        for(it = avsubjects.begin(); it != avsubjects.end(); ++it) {
-            if(it->first.id == data.id) {
-                break;
-            }
-        }
+    void createAVSubject(const StreamData& data, AVSubjectSPtr subject){
         // This guarantees unicity of subjects by id
-        if(it == avsubjects.end()) {
-            avsubjects.push_back(std::make_pair(data, std::make_shared<SyncSubject<AVFrame*>>()));
-        }
+        avsubjects.push_back(std::make_pair(data, subject));
+        auto inserted = avsubjects.back();
+        notifyAllAVSubject(inserted.first, inserted.second);
     }
 
 
@@ -117,10 +111,8 @@ private:
      */
     void notifyAVSubject(MediaStreamHandlerPtr& plugin,
                               const StreamData& data,
-                              std::weak_ptr<SyncSubject<AVFrame*>> subject) {
-        if (auto avsubject = subject.lock()) {
-            plugin->notifyAVFrameSubject(data, avsubject);
-        }
+                         AVSubjectSPtr subject) {
+        plugin->notifyAVFrameSubject(data, subject);
     }
 
     /**
@@ -153,7 +145,7 @@ private:
                 }
 
                 plugins.push_back(std::make_pair(pluginId, std::move(ptr)));
-                if(!plugins.empty()) {
+                if(!plugins.empty() && !avsubjects.empty()) {
                     listAvailableSubjects(plugins.back().second);
                 }
             }

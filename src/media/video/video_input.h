@@ -28,8 +28,6 @@
 #include "media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
-// Scaler used to convert the image to RGB
-#include "media/video/video_scaler.h"
 
 #include <map>
 #include <atomic>
@@ -115,10 +113,7 @@ private:
     bool emulateRate_       = false;
     ThreadLoop loop_;
     //==============================
-    // An instance of the scaler
-    video::VideoScaler scaler;
     int i = 0;
-    const std::string streamId{"input"};
     //==============================
     void clearOptions();
 

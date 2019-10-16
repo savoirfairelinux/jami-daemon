@@ -33,7 +33,10 @@
 #include "sip_utils.h"
 
 #ifdef ENABLE_VIDEO
+#include "media/video/video_receive_thread.h"
 #include "media/video/video_rtp_session.h"
+// Scaler used to convert the image to RGB
+#include "media/video/video_scaler.h"
 #endif
 
 #include "noncopyable.h"
@@ -250,6 +253,14 @@ private:
     using time_point = clock::time_point;
 
     NON_COPYABLE(SIPCall);
+
+#ifdef ENABLE_VIDEO
+    // An instance of the scaler
+    video::VideoScaler scaler;
+    void createCallAVStreams();
+    std::list<std::shared_ptr<PublishMapSubject<std::shared_ptr<MediaFrame>, std::shared_ptr<VideoFrame>, AVFrame*>>> callAVStreams;
+
+#endif
 
     void setCallMediaLocal();
 

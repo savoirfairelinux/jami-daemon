@@ -1,15 +1,15 @@
 #pragma once
-#include <string>
-#include "media/filters/detachablesubscriber.h"
-#include "media/filters/syncsubject.h"
-
 #include "streamdata.h"
+#include "observer.h"
 //FFMPEG
 #include <libavutil/frame.h>
+// STL
+#include <string>
+#include <memory>
 
 namespace jami {
 
-using avSubjectPtr = std::weak_ptr<SyncSubject<AVFrame*>>;
+using avSubjectPtr = std::shared_ptr<Observable<AVFrame*>>;
 
 /**
  * @brief The MediaHandler class
@@ -22,7 +22,6 @@ public:
 
     std::string id() const { return id_;}
     void setId(const std::string& id) {id_ = id;}
-    virtual void unregister() = 0;
 private:
     std::string id_;
 };

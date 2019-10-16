@@ -620,16 +620,6 @@ getVideoCamera()
     vmgr.started = false;
     auto input = std::make_shared<video::VideoInput>();
     vmgr.videoInput = input;
-
-    // If not created before, create a videoInput subject
-    auto& psm = Manager::instance().getPluginServicesManager();
-    StreamData data{"input",0,StreamType::video,"local"};
-    psm->createAVSubject(data);
-    // Notify plugins
-    auto videoInputSubject = psm->getAVSubject("input");
-    if(videoInputSubject) {
-        psm->notifyAllAVSubject(data, videoInputSubject);
-    }
     return input;
 }
 

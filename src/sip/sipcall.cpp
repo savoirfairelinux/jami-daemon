@@ -116,6 +116,59 @@ SIPCall::getSIPAccount() const
     return static_cast<SIPAccountBase&>(getAccount());
 }
 
+#ifdef ENABLE_VIDEO
+void SIPCall::createCallAVStreams()
+{
+    auto& psm = jami::Manager::instance().getPluginServicesManager();
+    if(hasVideo()){
+        // Preview
+        StreamData previewStreamData{getCallId(), 0, StreamType::video, getPeerNumber()};
+        auto& videoPreview = videortp_->getVideoLocal();
+
+        auto preprocess = [this] (const std::shared_ptr<jami::MediaFrame> iFrame) -> std::shared_ptr<VideoFrame> {
+            auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
+            std::shared_ptr<VideoFrame> rgbFrame = scaler.convertFormat(*ivFrame, AV_PIX_FMT_RGB24);
+            return rgbFrame;
+        };
+
+        auto map = [](std::shared_ptr<VideoFrame> m)->AVFrame* { return m->pointer();};
+
+        auto postprocess = [] (const std::shared_ptr<MediaFrame> iFrame, std::shared_ptr<VideoFrame> rgbFrame, AVFrame* data) {
+            auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
+            ivFrame->copyFrom(*rgbFrame);
+        };
+
+        auto previewSubject = std::make_shared<PublishMapSubject<std::shared_ptr<MediaFrame>, std::shared_ptr<VideoFrame>, AVFrame*>>(
+            preprocess,
+            map,
+            postprocess
+            );
+
+        callAVStreams.push_back(std::move(previewSubject));
+        decltype (previewSubject)& inserted = callAVStreams.back();
+        videoPreview->attachPriorityObserver(inserted);
+        psm->createAVSubject(previewStreamData, inserted);
+
+        // Receive
+        StreamData receiveStreamData{getCallId(), 1, StreamType::video, getPeerNumber()};
+        auto& videoReceive = videortp_->getVideoReceive();
+
+        auto receiveSubject = std::make_shared<PublishMapSubject<std::shared_ptr<MediaFrame>, std::shared_ptr<VideoFrame>, AVFrame*>>(
+            preprocess,
+            map,
+            postprocess
+            );
+
+        callAVStreams.push_back(std::move(receiveSubject));
+        inserted = callAVStreams.back();
+        videoReceive->attachPriorityObserver(inserted);
+        psm->createAVSubject(receiveStreamData, inserted);
+
+    }
+}
+
+#endif
+
 void
 SIPCall::setCallMediaLocal()
 {
@@ -1036,8 +1089,8 @@ SIPCall::startAllMedia()
         remainingRequest_ = Request::NoRequest;
     }
 
-    // Create A Subject associated with this stream
-    createPluginStream();
+    // Create AVStreams associated with the call
+    createCallAVStreams();
 }
 
 void
@@ -1373,41 +1426,6 @@ SIPCall::merge(Call& call)
     Call::merge(subcall);
 
     waitForIceAndStartMedia();
-}
-
-void
-SIPCall::createPluginStream() {
-    auto details = getDetails();
-    const std::string& id = getCallId();
-    // Create AVSubject that can be used by plugins
-    auto itType = details.find(DRing::Call::Details::AUDIO_ONLY); // isAudioOnly_
-    auto itPeerId = details.find(DRing::Call::Details::PEER_NUMBER); // peerNumber_
-
-    //StreamData data{getCallId(), 1, StreamType::audio, getPeerNumber()};
-
-    if (itType != details.end() && itPeerId != details.end()) {
-        auto& psm = jami::Manager::instance().getPluginServicesManager();
-        std::string peerId = itPeerId->second;
-        if(itType->second == "false") {
-            // Create subject
-            StreamData data{id,1,StreamType::video, peerId};
-            psm->createAVSubject(data);
-            // Notify plugins
-            auto videoInputSubject = psm->getAVSubject(id);
-            if(videoInputSubject) {
-                psm->notifyAllAVSubject(data, videoInputSubject);
-            }
-        } else {
-            // Create subject
-            StreamData data{id,1,StreamType::audio, peerId};
-            psm->createAVSubject(data);
-            // Notify plugins
-            auto videoInputSubject = psm->getAVSubject(id);
-            if(videoInputSubject) {
-                psm->notifyAllAVSubject(data, videoInputSubject);
-            }
-        }
-    }
 }
 
 void

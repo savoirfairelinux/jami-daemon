@@ -332,20 +332,6 @@ VideoInput::releaseFrame(void *ptr)
 }
 #endif
 
-
-void VideoInput::sendFrameToInputSubject(VideoFrame &frame)
-{
-    auto& psm = jami::Manager::instance().getPluginServicesManager();
-    // Convert incoming frame to RGB8 before sending it to subscribers
-    std::shared_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(frame, AV_PIX_FMT_RGB24);
-    auto videoInputSubject = psm->getAVSubject(streamId);
-
-    if(videoInputSubject) {
-        videoInputSubject->onNext(rgbFrameUniquePointer->pointer());
-        frame.copyFrom(*rgbFrameUniquePointer);
-    }
-}
-
 void
 VideoInput::createDecoder()
 {
@@ -374,8 +360,6 @@ VideoInput::createDecoder()
                 } else if (i == 400) {
                     i = -1;
                 }
-
-                sendFrameToInputSubject(*videoFrame);
                 i++;
             }
         }

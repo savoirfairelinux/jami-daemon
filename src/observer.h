@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <memory>
 #include <set>
+#include <list>
 #include <mutex>
 #include <functional>
 #include <ciso646> // fix windows compiler bug
@@ -34,6 +35,7 @@
 namespace jami {
 
 template <typename T> class Observer;
+template <typename T> class PriorityObserver;
 template <typename T> class Observable;
 
 /*=== Observable =============================================================*/
@@ -48,7 +50,7 @@ public:
         std::lock_guard<std::mutex> lk(mutex_);
         for (auto& o : observers_)
             o->detached(this);
-    };
+    }
 
     bool attach(Observer<T>* o) {
         std::lock_guard<std::mutex> lk(mutex_);
@@ -57,6 +59,11 @@ public:
             return true;
         }
         return false;
+    }
+
+    void attachPriorityObserver(std::shared_ptr<PriorityObserver<T>> o) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        priority_observers_.push_back(o);
     }
 
     bool detach(Observer<T>* o) {
@@ -76,14 +83,25 @@ public:
 protected:
     void notify(T data) {
         std::lock_guard<std::mutex> lk(mutex_);
-        for (auto observer : observers_)
-            observer->update(this, data);
+
+        for(auto& pobs: priority_observers_) {
+            if(auto so = pobs.lock()) {
+                so->update(this,data);
+            }
+        }
+
+        for (auto observer : observers_) {
+            if(observer) {
+                observer->update(this, data);
+            }
+        }
     }
 
 private:
     NON_COPYABLE(Observable<T>);
 
     std::mutex mutex_; // lock observers_
+    std::list<std::weak_ptr<PriorityObserver<T>>> priority_observers_;
     std::set<Observer<T>*> observers_;
 };
 
@@ -93,23 +111,52 @@ template <typename T>
 class Observer
 {
 public:
-    virtual ~Observer() {};
+    virtual ~Observer() {}
     virtual void update(Observable<T>*, const T&) = 0;
-    virtual void attached(Observable<T>*) {};
-    virtual void detached(Observable<T>*) {};
+    virtual void attached(Observable<T>*) {}
+    virtual void detached(Observable<T>*) {}
 };
 
+
+template <typename T>
+class PriorityObserver : public Observer<T>{
+public:
+    virtual ~PriorityObserver() {}
+};
 
 template <typename T>
 class FuncObserver : public Observer<T>
 {
 public:
     using F = std::function<void(const T&)>;
-    FuncObserver(F f) : f_(f) {};
-    virtual ~FuncObserver() {};
+    FuncObserver(F f) : f_(f) {}
+    virtual ~FuncObserver() {}
     void update(Observable<T>*, const T& t) override { f_(t); }
 private:
     F f_;
+};
+
+/*=== PublishMapSubject ====================================================*/
+template <typename T1, typename T2, typename T3>
+class PublishMapSubject : public PriorityObserver<T1> , public Observable<T3> {
+public:
+    using PreP = std::function<T2 (const T1&)>;
+    using F = std::function<T3(T2&)>;
+    using PostP = std::function<void (const T1&, T2&, T3&)>;
+
+    PublishMapSubject(PreP prep, F f, PostP postp) : preprocess_{prep}, map_{f}, postprocess_{postp} {}
+
+    void update(Observable<T1>*, const T1& t) override {
+        T2 tpreprocessed = preprocess_(t);
+        T3 tmapped = map_(tpreprocessed);
+        this->notify(tmapped);
+        postprocess_(t, tpreprocessed, tmapped);
+    }
+
+private:
+    PreP preprocess_;
+    F map_;
+    PostP postprocess_;
 };
 
 }; // namespace jami
