@@ -421,7 +421,7 @@ static TlsValidator::CheckResult formatDate(const time_t time)
 {
     char buffer[12];
     struct tm* timeinfo = localtime(&time);
-    strftime(buffer, sizeof(buffer), "%F", timeinfo);
+    strftime(buffer, sizeof(buffer), "%F\0", timeinfo);
     return TlsValidator::CheckResult(TlsValidator::CheckValues::ISO_DATE, buffer);
 }
 
