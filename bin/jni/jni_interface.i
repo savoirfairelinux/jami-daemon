@@ -199,6 +199,7 @@ namespace std {
 %include "datatransfer.i"
 %include "presencemanager.i"
 %include "videomanager.i"
+%include "plugin_manager_interface.i"
 
 #include "dring/callmanager_interface.h"
 
