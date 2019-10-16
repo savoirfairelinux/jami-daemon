@@ -358,7 +358,7 @@ NatPmp::changeState(NatPmpState state, bool clearBeforeInsert)
             stateQueue_.pop();
     }
 
-    stateQueue_.push((NatPmpState)state);
+    stateQueue_.push(state);
 }
 
 inline bool

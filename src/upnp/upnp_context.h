@@ -78,6 +78,8 @@ struct ControllerData {
     ConnectionChangeCb onConnectionChanged;     // Callback for notifying the controller that a connectivity change has occured.
 };
 
+constexpr static unsigned int NB_PROVISION_PORTS {12};
+
 const constexpr auto IGD_SEARCH_TIMEOUT = std::chrono::seconds(5);
 const constexpr auto MAP_REQUEST_TIMEOUT = std::chrono::seconds(1);
 
@@ -131,7 +133,16 @@ public:
     // Get our local Ip.
     IpAddr getLocalIp() const;
 
+    // Returns a selected provisioned port depending on the type of port that is being requested.
+    uint16_t selectProvisionedPort(upnp::PortType type);
+
+    // Releases a previously provisioned port.
+    void unselectProvisionedPort(uint16_t port, upnp::PortType type);
+
 private:
+    // Generates provision ports to be used throughout the application's lifetime.
+    void generateProvisionPorts();
+
     // Checks if the IGD is in the list by checking the IGD's public Ip.
     bool isIgdInList(const IpAddr& publicIpAddr);
 
@@ -171,6 +182,12 @@ private:
     // Calls corresponding callback for a mapping that was removed.
     void dispatchOnRmCallback(const Mapping& map, bool success);
 
+    // Adds the corresponding mapping to the provision list once it's opened.
+    void registerProvisionedMapping(const Mapping& map);
+
+    // Removes the corresponding mapping from the provision list once it's closed.
+    void unregisterProvisionedMapping(const Mapping& map);
+
     // Registers a timeout for a given pending add map request.
     void registerAddMappingTimeout(const Mapping& map);
 
@@ -186,17 +203,21 @@ private:
 private:
     NON_COPYABLE(UPnPContext);
 
-    mutable std::mutex igdListMutex_;                           // Mutex that protects IGD list.
-    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;   // Vector of available protocols.
-    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;         // List of IGDs with their corresponding protocols that found them.
-    std::shared_ptr<Task> cleanupIgdDiscovery;                  // Task that manages an IGD search timeout after a connectivity change.
+    mutable std::mutex igdListMutex_;                                   // Mutex that protects IGD list.
+    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;           // Vector of available protocols.
+    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;                 // List of IGDs with their corresponding protocols that found them.
+    std::shared_ptr<Task> cleanupIgdDiscovery;                          // Task that manages an IGD search timeout after a connectivity change.
 
-    std::mutex cbListMutex_;                                    // Mutex that protects the callback list.
-    std::multimap<Mapping, ControllerData> mapCbList_;          // List of mappings with their corresponding controller's information.
+    std::mutex cbListMutex_;                                            // Mutex that protects the callback list.
+    std::multimap<Mapping, ControllerData> mapCbList_;                  // List of mappings with their corresponding controller's information.
 
-    std::mutex pendindRequestMutex_;                            // Mutex that protects the pending map request lists.
-    std::vector<PendingMapRequest> pendingAddMapList_ {};       // Vector of pending add mapping requests.
-    std::vector<PendingMapRequest> pendingRmMapList_ {};        // Vector of pending remove mapping request.
+    std::mutex provisionListMutex_;                                     // Mutex that protects the provisioned mappings list.
+    std::map<Mapping, bool> mapProvisionList_;                          // List of provisioned mappings with a bool to indicate if it's in use.
+    std::array<uint16_t, NB_PROVISION_PORTS> provisionPortList_ {};     // List of generated provisioned ports.
+
+    std::mutex pendindRequestMutex_;                                    // Mutex that protects the pending map request lists.
+    std::vector<PendingMapRequest> pendingAddMapList_ {};               // Vector of pending add mapping requests.
+    std::vector<PendingMapRequest> pendingRmMapList_ {};                // Vector of pending remove mapping request.
 };
 
 std::shared_ptr<UPnPContext> getUPnPContext();
