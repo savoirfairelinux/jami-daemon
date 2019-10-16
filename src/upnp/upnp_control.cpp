@@ -46,7 +46,7 @@ Controller::~Controller()
 
     mapCbList_.clear();
 
-    std::lock_guard<std::mutex> lk(mapListMutex_);
+    removeAllProvisionedMap();
     requestAllMappingRemove();
 }
 
@@ -57,6 +57,37 @@ Controller::hasValidIgd()
         return false;
 
     return upnpContext_->hasValidIgd();
+}
+
+bool
+Controller::useProvisionedPort(uint16_t& port, PortType type)
+{
+    if (not upnpContext_)
+        return false;
+
+    uint16_t provPort = 0;
+    provPort = upnpContext_->selectProvisionedPort(type);
+
+    {
+        std::lock_guard<std::mutex> lk(mapListMutex_);
+        if (provPort != 0) {
+            addLocalProbvisionMap(provPort, type);
+            port = provPort;
+            return true;
+        }
+    }
+    return false;
+}
+
+void
+Controller::removeAllProvisionedMap()
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+
+    for (auto it  = provisionedPorts_.begin(); it != provisionedPorts_.end(); it++) {
+        JAMI_WARN("Controller@%ld: releasing provisioned port %s", (long)id_, it->toString().c_str());
+        upnpContext_->unselectProvisionedPort(it->getPortExternal(), it->getType());
+    }
 }
 
 void
@@ -141,6 +172,7 @@ Controller::onConnectivityChange()
         return;
 
     // Clear local mappings.
+    provisionedPorts_.clear();
     udpMappings_.clear();
     tcpMappings_.clear();
 }
@@ -170,8 +202,10 @@ Controller::requestAllMappingRemove(PortType type) {
         return;
 
     auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-    for (auto it = instanceMappings.cbegin(); it != instanceMappings.cend(); it++)
-        upnpContext_->requestMappingRemove(it->second);
+    if (not instanceMappings.empty()) {
+        for (auto it = instanceMappings.cbegin(); it != instanceMappings.cend(); it++)
+            upnpContext_->requestMappingRemove(it->second);
+    }
 }
 
 bool
@@ -207,6 +241,14 @@ Controller::addLocalMap(const Mapping& map)
 
     auto& instanceMappings = map.getType() == PortType::UDP ? udpMappings_ : tcpMappings_;
     instanceMappings.emplace(map.getPortExternal(), Mapping(map));
+}
+
+void
+Controller::addLocalProbvisionMap(uint16_t port, PortType type)
+{
+    // Mutex is already locked.
+
+    provisionedPorts_.push_back(Mapping(port, port, type));
 }
 
 void

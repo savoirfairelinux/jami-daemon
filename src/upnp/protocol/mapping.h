@@ -75,10 +75,7 @@ public:
     bool isValid() const;
 
 public:
-#if HAVE_LIBNATPMP
     std::chrono::system_clock::time_point renewal_ {std::chrono::system_clock::time_point::min()};
-    bool remove {false};
-#endif
 
 protected:
     uint16_t portExternal_;
