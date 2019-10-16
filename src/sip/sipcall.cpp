@@ -105,9 +105,8 @@ SIPCall::~SIPCall()
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     setTransport({});
     inv.reset(); // prevents callback usage
-    // Remove subject
-    auto& psm = jami::Manager::instance().getPluginServicesManager();
-    psm->removeAVSubject(getCallId());
+    // Destroy subjects
+    destroyCallAVStreams();
 }
 
 SIPAccountBase&
@@ -115,6 +114,77 @@ SIPCall::getSIPAccount() const
 {
     return static_cast<SIPAccountBase&>(getAccount());
 }
+
+#ifdef ENABLE_VIDEO
+void SIPCall::createCallAVStreams()
+{
+    if(hasVideo()){
+
+        auto preprocess = [this] (const std::shared_ptr<jami::MediaFrame> iFrame) -> std::shared_ptr<VideoFrame> {
+            auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
+            //JAMI_DBG() << "Frame dimensions: " << ivFrame->width() << " : " << ivFrame->height() << " : " << ivFrame->format();
+            std::shared_ptr<VideoFrame> rgbFrame = scaler.convertFormat(*ivFrame, AV_PIX_FMT_RGB24);
+            return rgbFrame;
+        };
+
+        auto preprocess2 = [this] (const std::shared_ptr<jami::MediaFrame> iFrame) -> std::shared_ptr<VideoFrame> {
+            auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
+            //JAMI_DBG() << "Frame dimensions: " << ivFrame->width() << " : " << ivFrame->height() << " : " << ivFrame->format();
+            std::shared_ptr<VideoFrame> rgbFrame = scaler2.convertFormat(*ivFrame, AV_PIX_FMT_BGR24);
+            return rgbFrame;
+        };
+
+        auto map = [](std::shared_ptr<VideoFrame> m)->AVFrame* { return m->pointer();};
+
+        auto postprocess = [] (const std::shared_ptr<MediaFrame> iFrame, std::shared_ptr<VideoFrame> videoFrame, AVFrame* data) {
+            auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
+            if(videoFrame) {
+                ivFrame->copyFrom(*videoFrame);
+            }
+        };
+
+
+        // Preview
+        StreamData previewStreamData{getCallId(), 0, StreamType::video, getPeerNumber()};
+        auto& videoPreview = videortp_->getVideoLocal();
+        auto previewSubject = std::make_shared<MediaStreamSubject>(
+            preprocess,
+            map,
+            postprocess
+            );
+
+        createCallAVStream(previewStreamData, *videoPreview, previewSubject);
+
+        // Receive
+        StreamData receiveStreamData{getCallId(), 1, StreamType::video, getPeerNumber()};
+        auto& videoReceive = videortp_->getVideoReceive();
+
+        auto receiveSubject = std::make_shared<MediaStreamSubject>(
+            preprocess2,
+            map,
+            postprocess
+            );
+
+        createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
+    }
+}
+
+void SIPCall::destroyCallAVStreams()
+{
+    // Cleanup week pointers subject
+    auto& psm = jami::Manager::instance().getPluginServicesManager();
+    psm->cleanup();
+}
+
+void SIPCall::createCallAVStream(const StreamData& StreamData, MediaStream& streamSource, const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject){
+    auto& psm = jami::Manager::instance().getPluginServicesManager();
+    callAVStreams.push_back(mediaStreamSubject);
+    std::shared_ptr<MediaStreamSubject>& inserted = callAVStreams.back();
+    streamSource.attachPriorityObserver(inserted);
+    psm->createAVSubject(StreamData, inserted);
+}
+
+#endif
 
 void
 SIPCall::setCallMediaLocal()
@@ -1036,8 +1106,8 @@ SIPCall::startAllMedia()
         remainingRequest_ = Request::NoRequest;
     }
 
-    // Create A Subject associated with this stream
-    createPluginStream();
+    // Create AVStreams associated with the call
+    createCallAVStreams();
 }
 
 void
@@ -1373,41 +1443,6 @@ SIPCall::merge(Call& call)
     Call::merge(subcall);
 
     waitForIceAndStartMedia();
-}
-
-void
-SIPCall::createPluginStream() {
-    auto details = getDetails();
-    const std::string& id = getCallId();
-    // Create AVSubject that can be used by plugins
-    auto itType = details.find(DRing::Call::Details::AUDIO_ONLY); // isAudioOnly_
-    auto itPeerId = details.find(DRing::Call::Details::PEER_NUMBER); // peerNumber_
-
-    //StreamData data{getCallId(), 1, StreamType::audio, getPeerNumber()};
-
-    if (itType != details.end() && itPeerId != details.end()) {
-        auto& psm = jami::Manager::instance().getPluginServicesManager();
-        std::string peerId = itPeerId->second;
-        if(itType->second == "false") {
-            // Create subject
-            StreamData data{id,1,StreamType::video, peerId};
-            psm->createAVSubject(data);
-            // Notify plugins
-            auto videoInputSubject = psm->getAVSubject(id);
-            if(videoInputSubject) {
-                psm->notifyAllAVSubject(data, videoInputSubject);
-            }
-        } else {
-            // Create subject
-            StreamData data{id,1,StreamType::audio, peerId};
-            psm->createAVSubject(data);
-            // Notify plugins
-            auto videoInputSubject = psm->getAVSubject(id);
-            if(videoInputSubject) {
-                psm->notifyAllAVSubject(data, videoInputSubject);
-            }
-        }
-    }
 }
 
 void

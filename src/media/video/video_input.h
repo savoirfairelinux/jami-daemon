@@ -28,8 +28,6 @@
 #include "media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
-// Scaler used to convert the image to RGB
-#include "media/video/video_scaler.h"
 
 #include <map>
 #include <atomic>
@@ -85,8 +83,6 @@ public:
     DeviceParams getParams() const;
     MediaStream getInfo() const;
 
-    void sendFrameToInputSubject(VideoFrame& frame);
-
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     /*
@@ -115,10 +111,7 @@ private:
     bool emulateRate_       = false;
     ThreadLoop loop_;
     //==============================
-    // An instance of the scaler
-    video::VideoScaler scaler;
     int i = 0;
-    const std::string streamId{"input"};
     //==============================
     void clearOptions();
 
