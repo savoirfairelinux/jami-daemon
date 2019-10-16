@@ -44,13 +44,6 @@
 #include <thread>
 #include <queue>
 
-#ifndef _WIN32
-#include <arpa/inet.h>
-#include <net/if.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
-#endif
-
 namespace jami {
 class IpAddr;
 }
