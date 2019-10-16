@@ -44,7 +44,7 @@ protected:
 
 class DLPlugin : public Plugin {
 public:
-    DLPlugin(void *handle) : handle_(handle, ::dlclose){}
+    DLPlugin(void *handle, const std::string& path) : handle_(handle, ::dlclose), path_{path} {}
     //==========================================
     bool unload() {
         if(!handle_){
@@ -61,9 +61,14 @@ public:
         return ::dlsym(handle_.get(), name);
     }
 
+    char const* getCPath() {
+        return path_.c_str();
+    }
+
     //==========================================
 private:
     std::unique_ptr<void, int (*)(void *)> handle_;
+    const std::string path_;
 };
 
 } // namespace jami

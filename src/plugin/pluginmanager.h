@@ -76,7 +76,7 @@ public:
    * @param initFunc plugin init function
    * @return true if success
    */
-  bool registerPlugin(RING_PluginInitFunc initFunc);
+  bool registerPlugin(std::unique_ptr<Plugin>& plugin);
 
   /**
    * Register a new service for plugin.

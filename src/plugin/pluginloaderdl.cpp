@@ -42,7 +42,7 @@ Plugin *Plugin::load(const std::string &path, std::string &error) {
     return nullptr;
   }
 
-  return new DLPlugin(handle);
+  return new DLPlugin(handle, path);
 }
 
 } // namespace jami

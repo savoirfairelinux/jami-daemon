@@ -63,8 +63,7 @@ VideoInput::VideoInput()
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     , mutex_(), frame_cv_(), buffers_()
 #endif
-{
-}
+{}
 
 VideoInput::~VideoInput()
 {
@@ -332,20 +331,6 @@ VideoInput::releaseFrame(void *ptr)
 }
 #endif
 
-
-void VideoInput::sendFrameToInputSubject(VideoFrame &frame)
-{
-    auto& psm = jami::Manager::instance().getPluginServicesManager();
-    // Convert incoming frame to RGB8 before sending it to subscribers
-    std::shared_ptr<VideoFrame> rgbFrameUniquePointer = scaler.convertFormat(frame, AV_PIX_FMT_RGB24);
-    auto videoInputSubject = psm->getAVSubject(streamId);
-
-    if(videoInputSubject) {
-        videoInputSubject->onNext(rgbFrameUniquePointer->pointer());
-        frame.copyFrom(*rgbFrameUniquePointer);
-    }
-}
-
 void
 VideoInput::createDecoder()
 {
@@ -361,6 +346,7 @@ VideoInput::createDecoder()
     auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         #ifndef __ANDROID__
         std::string path = "/home/ayounes/Projects/ring-plugins/simpleplugin/build/x86_64-linux/libsimpleplugin.so";
+        //std::string path = "/home/ayounes/Projects/ring-plugins/mmotplugin/build/x86_64-linux/libmmotplugin.so";
         auto& psm = jami::Manager::instance().getPluginServicesManager();
         // If we have a plugin service
         if(psm) {
@@ -370,12 +356,10 @@ VideoInput::createDecoder()
                     // Load the plugin
                     psm->loadPlugin(path);
                 } else if(i == 200) {
-                    psm->unloadPlugin(path);
+                    //psm->unloadPlugin(path);
                 } else if (i == 400) {
                     i = -1;
                 }
-
-                sendFrameToInputSubject(*videoFrame);
                 i++;
             }
         }

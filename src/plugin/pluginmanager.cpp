@@ -68,7 +68,7 @@ bool PluginManager::load(const std::string &path) {
     return false;
   }
 
-  if (!registerPlugin(init_func))
+  if (!registerPlugin(plugin))
     return false;
 
   dynPluginMap_[path] = std::move(plugin);
@@ -93,11 +93,13 @@ bool PluginManager::unload(const std::string& path) {
 
 //===============================================================
 
-bool PluginManager::registerPlugin(RING_PluginInitFunc initFunc) {
+bool PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin) {
+  // Here we know that Plugin is of type DLPlugin with a valid init symbol
+  const auto &initFunc = plugin->getInitFunction();
   RING_PluginExitFunc exitFunc = nullptr;
 
   try {
-    exitFunc = initFunc(&pluginApi_);
+      exitFunc = initFunc(&pluginApi_, static_cast<DLPlugin*>(plugin.get())->getCPath());
   } catch (const std::runtime_error &e) {
     JAMI_ERR() << e.what();
   }
