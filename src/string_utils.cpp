@@ -3,6 +3,7 @@
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Vsevolod Ivanov <vsevolod.ivanov@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -128,6 +129,15 @@ void string_replace(std::string& str, const std::string& from, const std::string
         str.replace(start_pos, from.length(), to);
         start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
     }
+}
+
+std::string
+hexstr(const unsigned char* data, const int size)
+{
+    char hexstr[size*2];
+    for (int i = 0; i < size; i++)
+        sprintf(hexstr + i*2, "%02x", data[i]);
+    return std::string(hexstr);
 }
 
 } // namespace jami
