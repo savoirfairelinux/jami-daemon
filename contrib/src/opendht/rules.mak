@@ -1,6 +1,6 @@
 # OPENDHT
-OPENDHT_VERSION := e2d7dbc2937acb914195de3d16d675a220c864e7
-OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
+OPENDHT_VERSION := ee33fc394d05c59a24228ca1925b55c577c24f63
+OPENDHT_URL := https://github.com/binarytrails/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
 ifeq ($(call need_pkg,'opendht'),)

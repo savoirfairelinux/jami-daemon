@@ -3,6 +3,7 @@
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Vsevolod Ivanov <vsevolod.ivanov@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +26,7 @@
 #include <algorithm>
 #include <ostream>
 #include <stdexcept>
+#include <iomanip>
 #ifdef _WIN32
 #include <windows.h>
 #include <oleauto.h>
@@ -116,6 +118,16 @@ void string_replace(std::string& str, const std::string& from, const std::string
         str.replace(start_pos, from.length(), to);
         start_pos += to.length(); // Handles case where 'to' is a substring of 'from'
     }
+}
+
+std::string
+bytes_to_hex_string(const unsigned char* data, const int size)
+{
+    std::stringstream ss;
+    ss << std::hex;
+    for (int i = 0; i < size; i++)
+        ss << std::setw(2) << std::setfill('0') << (int)data[i];
+    return ss.str();
 }
 
 } // namespace jami
