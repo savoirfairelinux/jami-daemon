@@ -30,6 +30,7 @@
 #include <exception>
 #include <future>
 #include <fstream>
+#include <gnutls/ocsp.h>
 
 namespace jami {
 
@@ -265,6 +266,12 @@ AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>&
     peer_trust.add(*top_issuer);
     if (not peer_trust.verify(*crt)) {
         JAMI_WARN("Found invalid peer device: %s", crt->getId().toString().c_str());
+        return false;
+    }
+
+    // Check cached OCSP response
+    if (crt->ocsp_response.size() > 0 and crt->getOcspResponseCertificateStatus() != GNUTLS_OCSP_CERT_GOOD){
+        JAMI_ERR("Certificate %s is disabled by cached OCSP response", crt->getId().to_c_str());
         return false;
     }
 
