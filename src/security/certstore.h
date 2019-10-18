@@ -76,6 +76,7 @@ public:
     void pinRevocationList(const std::string& id, dht::crypto::RevocationList&& crl) {
         pinRevocationList(id, std::make_shared<dht::crypto::RevocationList>(std::forward<dht::crypto::RevocationList>(crl)));
     }
+    void pinOcspResponse(const dht::crypto::Certificate& cert);
 
     void loadRevocations(crypto::Certificate& crt) const;
 
@@ -87,6 +88,7 @@ private:
 
     const std::string certPath_;
     const std::string crlPath_;
+    const std::string ocspPath_;
 
     mutable std::mutex lock_;
     std::map<std::string, std::shared_ptr<crypto::Certificate>> certs_;
