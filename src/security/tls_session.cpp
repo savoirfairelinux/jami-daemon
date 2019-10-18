@@ -37,6 +37,8 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
+#include <gnutls/crypto.h>
+#include <gnutls/ocsp.h>
 
 #include <list>
 #include <mutex>
@@ -251,6 +253,14 @@ public:
     void initCredentials();
     bool commonSessionInit();
 
+    // Implicit certificate validations
+    int verifyCertificateWrapper(gnutls_session_t session);
+    gnutls_x509_crt_t* loadCertificate(const char* certFile, unsigned int certMax = 1, unsigned flags = 0);
+    int generateOcspRequest(gnutls_x509_crt_t cert, gnutls_x509_crt_t issuer,
+                            gnutls_datum_t* rdata, gnutls_datum_t* nonce);
+    unsigned int verifyOcspResponse(gnutls_datum_t* data, gnutls_x509_crt_t cert,
+                                    gnutls_x509_crt_t signer, gnutls_datum_t* nonce);
+
     // FSM thread (TLS states)
     ThreadLoop thread_; // ctor init.
     bool setup();
@@ -410,9 +420,9 @@ TlsSession::TlsSessionImpl::initCredentials()
 
     if (callbacks_.verifyCertificate)
         gnutls_certificate_set_verify_function(*xcred_, [](gnutls_session_t session) -> int {
-                auto this_ = reinterpret_cast<TlsSessionImpl*>(gnutls_session_get_ptr(session));
-                return this_->callbacks_.verifyCertificate(session);
-            });
+            auto this_ = reinterpret_cast<TlsSessionImpl*>(gnutls_session_get_ptr(session));
+            return this_->verifyCertificateWrapper(session);
+        });
 
     // Load user-given CA list
     if (not params_.ca_list.empty()) {
@@ -540,6 +550,164 @@ TlsSession::TlsSessionImpl::commonSessionInit()
                                                });
 
     return true;
+}
+
+int
+TlsSession::TlsSessionImpl::verifyCertificateWrapper(gnutls_session_t session)
+{
+    int verified = 0;
+
+    // TODO OCSP verification logic flow
+
+    if (verified and callbacks_.verifyCertificate)
+    {
+        auto this_ = reinterpret_cast<TlsSessionImpl*>(gnutls_session_get_ptr(session));
+        return this_->callbacks_.verifyCertificate(session);
+    }
+    return verified;
+}
+
+gnutls_x509_crt_t*
+TlsSession::TlsSessionImpl::loadCertificate(const char* certFile, unsigned int certMax, unsigned flags)
+{
+    int ret;
+    gnutls_datum_t data;
+    static gnutls_x509_crt_t *crt;
+
+    std::ifstream certStream(certFile, std::ios::binary | std::ios::in);
+    std::string contents((std::istreambuf_iterator<char>(certStream)),
+                          std::istreambuf_iterator<char>());
+
+    data.data = (unsigned char*) contents.c_str();
+    data.size = contents.size();
+
+    if (!data.data){
+        JAMI_DBG("Cannot open file: %s", certFile);
+        return NULL;
+    }
+    /*
+     * Converts the given PEM encoded certificate list to the native gnutls_x509_crt_t format.
+     *     size(certMax): It will contain the size of the list
+     *     flags: must be (0) or an OR'd sequence of gnutls_certificate_import_flags
+     */
+    ret = gnutls_x509_crt_list_import2(&crt, &certMax, &data, GNUTLS_X509_FMT_PEM, flags);
+    if (ret < 0){
+        JAMI_DBG("Cannot import certificate in %s: %s", certFile, gnutls_strerror(ret));
+        return NULL;
+    }
+    JAMI_DBG("Loaded %d certificates.", (int) certMax);
+    return crt;
+}
+
+int
+TlsSession::TlsSessionImpl::generateOcspRequest(gnutls_x509_crt_t cert, gnutls_x509_crt_t issuer,
+                                                gnutls_datum_t* rdata, gnutls_datum_t* nonce)
+{
+    int ret;
+    gnutls_ocsp_req_t req;
+    ret = gnutls_ocsp_req_init(&req);
+    if (ret < 0) {
+        JAMI_DBG("ocsp_req_init: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    ret = gnutls_ocsp_req_add_cert(req, GNUTLS_DIG_SHA1, issuer, cert);
+    if (ret < 0) {
+        JAMI_DBG("ocsp_req_add_cert: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    if (nonce){
+        ret = gnutls_ocsp_req_set_nonce(req, 0, nonce);
+        if (ret < 0) {
+            JAMI_DBG("ocsp_req_set_nonce: %s", gnutls_strerror(ret));
+            goto out;
+        }
+    }
+    ret = gnutls_ocsp_req_export(req, rdata);
+    if (ret != 0) {
+        JAMI_DBG("ocsp_req_export: %s", gnutls_strerror(ret));
+        goto out;
+    }
+out:
+    gnutls_ocsp_req_deinit(req);
+    return ret;
+}
+
+unsigned int
+TlsSession::TlsSessionImpl::verifyOcspResponse(gnutls_datum_t* data, gnutls_x509_crt_t cert,
+                                               gnutls_x509_crt_t signer, gnutls_datum_t* nonce)
+{
+    int ret;
+    unsigned int verify;
+    gnutls_ocsp_resp_t resp;
+    gnutls_datum_t rnonce;
+    if (data->size == 0) {
+		JAMI_DBG("Received empty response");
+		goto out;
+	}
+    ret = gnutls_ocsp_resp_init(&resp);
+    if (ret < 0){
+        JAMI_DBG("ocsp_resp_init: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    ret = gnutls_ocsp_resp_import(resp, data);
+    if (ret < 0){
+        JAMI_DBG("ocsp_resp_import: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    gnutls_datum_t dat;
+    ret = gnutls_ocsp_resp_print(resp, GNUTLS_OCSP_PRINT_COMPACT, &dat);
+    if (ret < 0) {
+        JAMI_DBG("ocsp_resp_print: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    JAMI_DBG("%s", dat.data); // display ocsp response in readable format
+    /*
+     * This function will check whether the OCSP response is about the provided certificate.
+     *     index: Specifies response number to get. Use (0) to get the first one.
+     */
+    ret = gnutls_ocsp_resp_check_crt(resp, 0/*index*/, cert);
+    if (ret < 0){
+        JAMI_DBG("ocsp_resp_check_crt: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    // This function will return the Basic OCSP Response nonce extension data.
+    ret = gnutls_ocsp_resp_get_nonce(resp, NULL, &rnonce);
+    if (ret < 0){
+        goto out;
+    }
+    if (rnonce.size != nonce->size || memcmp(nonce->data, rnonce.data,
+        nonce->size) != 0){
+        goto out;
+    }
+    // Verify signature of the Basic OCSP Response against the public key in the issuer certificate.
+    ret = gnutls_ocsp_resp_verify_direct(resp, signer, &verify, 0);
+    if (ret < 0)
+        goto out;
+    JAMI_DBG("Verifying OCSP Response: ");
+    if (verify == 0)
+        JAMI_DBG("Verification success!");
+    else
+        JAMI_DBG("Verification error!");
+
+    if (verify & GNUTLS_OCSP_VERIFY_SIGNER_NOT_FOUND)
+        JAMI_DBG("Signer cert not found");
+    if (verify & GNUTLS_OCSP_VERIFY_SIGNER_KEYUSAGE_ERROR)
+        JAMI_DBG("Signer cert keyusage error");
+    if (verify & GNUTLS_OCSP_VERIFY_UNTRUSTED_SIGNER)
+        JAMI_DBG("Signer cert is not trusted");
+    if (verify & GNUTLS_OCSP_VERIFY_INSECURE_ALGORITHM)
+        JAMI_DBG("Insecure algorithm");
+    if (verify & GNUTLS_OCSP_VERIFY_SIGNATURE_FAILURE)
+        JAMI_DBG("Signature failure");
+    if (verify & GNUTLS_OCSP_VERIFY_CERT_NOT_ACTIVATED)
+        JAMI_DBG("Signer cert not yet activated");
+    if (verify & GNUTLS_OCSP_VERIFY_CERT_EXPIRED)
+        JAMI_DBG("Signer cert expired");
+out:
+    gnutls_free(dat.data);
+    gnutls_free(rnonce.data);
+    gnutls_ocsp_resp_deinit(resp);
+    return verify;
 }
 
 std::size_t
