@@ -2,8 +2,9 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
- *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
- *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+ *          Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *          Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+ *          Vsevolod Ivanov <vsevolod.ivanov@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -37,6 +38,10 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
+
+#include <gnutls/crypto.h>
+#include <gnutls/ocsp.h>
+#include <opendht/http.h>
 
 #include <list>
 #include <mutex>
@@ -72,6 +77,7 @@ static constexpr auto HEARTBEAT_TOTAL_TIMEOUT = HEARTBEAT_RETRANS_TIMEOUT * HEAR
 static constexpr int MISS_ORDERING_LIMIT = 32; // maximal accepted distance of out-of-order packet (note: must be a signed type)
 static constexpr auto RX_OOO_TIMEOUT = std::chrono::milliseconds(1500);
 static constexpr int ASYMETRIC_TRANSPORT_MTU_OFFSET = 20; // when client, if your local IP is IPV4 and server is IPV6; you must reduce your MTU to avoid packet too big error on server side. the offset is the difference in size of IP headers
+static constexpr auto OCSP_VERIFICATION_TIMEOUT = std::chrono::seconds(2); // Time to wait for an OCSP verification
 
 // Helper to cast any duration into an integer number of milliseconds
 template <class Rep, class Period>
@@ -172,6 +178,8 @@ class TlsSession::TlsSessionImpl
 public:
     using clock = std::chrono::steady_clock;
     using StateHandler = std::function<TlsSessionState(TlsSessionState state)>;
+    using OcspVerification = std::function<void(const int status)>;
+    using HttpResponse = std::function<void(const dht::http::Response& response)>;
 
     // Constants (ctor init.)
     const bool isServer_;
@@ -250,6 +258,30 @@ public:
     void initAnonymous();
     void initCredentials();
     bool commonSessionInit();
+
+    /*
+     * Implicit certificate validations.
+     */
+    int verifyCertificateWrapper(gnutls_session_t session);
+    /*
+     * Verify OCSP (Online Certificate Service Protocol):
+     */
+    void verifyOcsp(gnutls_x509_crt_t cert, gnutls_x509_crt_t issuer, gnutls_x509_crt_t signer,
+                    OcspVerification cb);
+    /*
+     * Generate OCSP Request.
+     */
+    int generateOcspRequest(gnutls_x509_crt_t cert, gnutls_x509_crt_t issuer,
+                            gnutls_datum_t* rdata, gnutls_datum_t* nonce);
+    /*
+     * Send OCSP Request to the specified URI.
+     */
+    void sendOcspRequest(const std::string& uri, const std::string& body,
+                         std::chrono::seconds timeout, HttpResponse cb = {});
+    /*
+     */
+    unsigned int verifyOcspResponse(gnutls_datum_t* data, gnutls_x509_crt_t cert,
+                                    gnutls_x509_crt_t signer, gnutls_datum_t* nonce);
 
     // FSM thread (TLS states)
     ThreadLoop thread_; // ctor init.
@@ -410,9 +442,9 @@ TlsSession::TlsSessionImpl::initCredentials()
 
     if (callbacks_.verifyCertificate)
         gnutls_certificate_set_verify_function(*xcred_, [](gnutls_session_t session) -> int {
-                auto this_ = reinterpret_cast<TlsSessionImpl*>(gnutls_session_get_ptr(session));
-                return this_->callbacks_.verifyCertificate(session);
-            });
+            auto this_ = reinterpret_cast<TlsSessionImpl*>(gnutls_session_get_ptr(session));
+            return this_->verifyCertificateWrapper(session);
+        });
 
     // Load user-given CA list
     if (not params_.ca_list.empty()) {
@@ -540,6 +572,301 @@ TlsSession::TlsSessionImpl::commonSessionInit()
                                                });
 
     return true;
+}
+
+int
+TlsSession::TlsSessionImpl::verifyCertificateWrapper(gnutls_session_t session)
+{
+    // Perform user-set verification first to avoid flooding with ocsp-requests if peer is denied
+    int verified;
+    if (callbacks_.verifyCertificate)
+    {
+        auto this_ = reinterpret_cast<TlsSessionImpl*>(gnutls_session_get_ptr(session));
+        verified = this_->callbacks_.verifyCertificate(session);
+    }
+    if (verified != GNUTLS_E_SUCCESS)
+        return verified;
+
+    // Support only x509 format
+    if (gnutls_certificate_type_get(session) != GNUTLS_CRT_X509) {
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+    // Get peer certificate chain from session
+    unsigned int cert_list_size = 0;
+    /*
+     * Get the peer's raw certificate (chain) as sent by the peer.
+     * The first certificate in the list is the peer's certificate, following the issuer's cert. etc.
+     */
+    auto cert_list = gnutls_certificate_get_peers(session, &cert_list_size);
+    if (cert_list == nullptr) {
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+    if (cert_list_size < 2) {
+        JAMI_ERR("Found %i certificates in gnutls session for verification: Insufficient", cert_list_size);
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+    // Extract verification data
+    // Unserialize certificate chain
+    std::vector<std::pair<uint8_t*, uint8_t*>> crt_data;
+    crt_data.reserve(cert_list_size);
+    for (unsigned i=0; i < cert_list_size; i++)
+        crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
+    auto dht_peer_chain = dht::crypto::Certificate(crt_data);
+
+    // Peer certificate
+    gnutls_x509_crt_t peer_crt = dht_peer_chain.getCopy();
+    std::string cert_id = dht_peer_chain.getUID();
+
+    // Root CA, is also signer
+    gnutls_x509_crt_t issuer_crt = dht_peer_chain.getChain(false/*copy*/).back();
+
+    /*
+     * Verifications following around standard:
+     * https://git.jami.net/savoirfairelinux/ring-project/issues/713
+     */
+    // TODO implement once defined
+
+    // OCSP (Online Certificate Service Protocol) {
+    bool ocsp_done = false;
+    std::mutex cv_m;
+    std::condition_variable cv;
+    std::unique_lock<std::mutex> cv_lk(cv_m);
+
+    verifyOcsp(peer_crt, issuer_crt, issuer_crt /*signer*/,
+               [&cert_id, &verified, &ocsp_done, &cv, &cv_m, &cv_lk](const int status)
+    {
+        if (status != GNUTLS_E_SUCCESS and status != GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE){
+            JAMI_ERR("OCSP verification failed with code %i for %s: %s",
+                     status, cert_id.c_str(), gnutls_strerror(status));
+        }
+        if (status == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE){
+            JAMI_WARN("Skipping OCSP verification %s: AIA not found", cert_id.c_str());
+        }
+        // OCSP URI is absent, don't fail the verification by overwritting the user-set one.
+        if (status != GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE){
+            verified = status;
+        }
+        ocsp_done = true;
+        cv.notify_all();
+    });
+    cv.wait_for(cv_lk, std::chrono::seconds(OCSP_VERIFICATION_TIMEOUT),
+                       [&ocsp_done]{ return ocsp_done; });
+    // } OCSP
+
+    return verified;
+}
+
+void
+TlsSession::TlsSessionImpl::verifyOcsp(gnutls_x509_crt_t cert, gnutls_x509_crt_t issuer, gnutls_x509_crt_t signer,
+                                       OcspVerification cb)
+{
+    int ret;
+    std::string uri;
+    std::string hostname;
+    for (unsigned int seq;; seq++)
+    {
+        gnutls_datum_t tmp;
+        // Extracts the Authority Information Access (AIA) extension, see RFC 5280 section 4.2.2.1
+        ret = gnutls_x509_crt_get_authority_info_access(cert, seq, GNUTLS_IA_OCSP_URI, &tmp, NULL);
+        if (ret == GNUTLS_E_UNKNOWN_ALGORITHM)
+            continue;
+        if (ret == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE){
+            if (cb)
+                cb(GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE);
+            return;
+        }
+        if (ret < 0){
+            if (cb)
+                cb(ret);
+            return;
+        }
+        JAMI_DBG("Certificate's AIA URI: %.*s\n", tmp.size, tmp.data);
+        std::stringstream uri_stream;
+        uri_stream.write((const char*)tmp.data, tmp.size);
+        uri = uri_stream.str();
+        gnutls_free(tmp.data);
+        break;
+    }
+
+    // Generate OCSP request
+    unsigned char noncebuf[23];
+    gnutls_datum_t nonce = { noncebuf, sizeof(noncebuf) };
+    ret = gnutls_rnd(GNUTLS_RND_NONCE, nonce.data, nonce.size);
+    if (ret < 0){
+        if (cb)
+            cb(ret);
+        return;
+    }
+    gnutls_datum_t ocsp_req;
+	generateOcspRequest(cert, issuer, &ocsp_req, &nonce);
+
+    // Extract OCSP request as body
+    std::stringstream body;
+    body.write((const char*)ocsp_req.data, ocsp_req.size);
+    gnutls_free(ocsp_req.data);
+
+    sendOcspRequest(uri, body.str(), std::chrono::seconds(1),
+                    [this, cb, &cert, &signer, &nonce](const dht::http::Response& response){
+        // Read OCSP response
+        auto body = response.body;
+        gnutls_datum_t ocsp_resp;
+        ocsp_resp.data = (unsigned char*)body.c_str();
+        ocsp_resp.size = body.size();
+        int verified = verifyOcspResponse(&ocsp_resp, cert, signer, &nonce);
+        gnutls_x509_crt_deinit(signer);
+        if (cb)
+            cb(verified);
+    });
+}
+
+int
+TlsSession::TlsSessionImpl::generateOcspRequest(gnutls_x509_crt_t cert, gnutls_x509_crt_t issuer,
+                                                gnutls_datum_t* rdata, gnutls_datum_t* nonce)
+{
+    int ret;
+    gnutls_ocsp_req_t req;
+    ret = gnutls_ocsp_req_init(&req);
+    if (ret < 0) {
+        JAMI_ERR("ocsp_req_init: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    ret = gnutls_ocsp_req_add_cert(req, GNUTLS_DIG_SHA1, issuer, cert);
+    if (ret < 0) {
+        JAMI_ERR("ocsp_req_add_cert: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    if (nonce){
+        ret = gnutls_ocsp_req_set_nonce(req, 0, nonce);
+        if (ret < 0) {
+            JAMI_ERR("ocsp_req_set_nonce: %s", gnutls_strerror(ret));
+            goto out;
+        }
+    }
+    ret = gnutls_ocsp_req_export(req, rdata);
+    if (ret != 0) {
+        JAMI_ERR("ocsp_req_export: %s", gnutls_strerror(ret));
+        goto out;
+    }
+out:
+    gnutls_ocsp_req_deinit(req);
+    return ret;
+}
+
+void
+TlsSession::TlsSessionImpl::sendOcspRequest(const std::string& uri, const std::string& body,
+                                            std::chrono::seconds timeout, HttpResponse cb)
+{
+    using namespace dht;
+    auto request = std::make_shared<http::Request>(*Manager::instance().ioContext(), uri);//, logger);
+    request->set_method(restinio::http_method_post());
+    request->set_header_field(restinio::http_field_t::user_agent, "Jami");
+    request->set_header_field(restinio::http_field_t::accept, "*/*");
+    request->set_header_field(restinio::http_field_t::content_type, "application/ocsp-request");
+    request->set_body(body);
+    request->set_connection_type(restinio::http_connection_header_t::close);
+
+    std::weak_ptr<http::Request> wreq = request;
+    request->add_on_state_change_callback([cb, timeout, wreq]
+        (const http::Request::State state, const http::Response response)
+    {
+        JAMI_DBG("HTTP OCSP Request state=%i status_code=%i", (unsigned int) state, response.status_code);
+        if (state == http::Request::State::SENDING){
+            auto request = wreq.lock();
+            JAMI_DBG("HTTP OCSP Request:\n%s", request->to_string().c_str());
+            request->get_connection()->timeout(timeout, [request](const asio::error_code& ec){
+                if (ec != asio::error::operation_aborted)
+                    JAMI_ERR("HTTP OCSP Request timeout with error: %s", ec.message().c_str());
+                request->cancel();
+            });
+        }
+        if (state != http::Request::State::DONE)
+            return;
+        if (response.status_code != 200)
+            JAMI_ERR("HTTP OCSP Request Failed with status_code=%i", response.status_code);
+        else
+            JAMI_DBG("HTTP OCSP Request done!");
+        if (cb)
+            cb(response);
+    });
+    request->send();
+}
+
+unsigned int
+TlsSession::TlsSessionImpl::verifyOcspResponse(gnutls_datum_t* data, gnutls_x509_crt_t cert,
+                                               gnutls_x509_crt_t signer, gnutls_datum_t* nonce)
+{
+    int ret;
+    unsigned int verify;
+    gnutls_ocsp_resp_t resp;
+    gnutls_datum_t rnonce;
+    if (data->size == 0) {
+		JAMI_ERR("Received empty response");
+		goto out;
+	}
+    ret = gnutls_ocsp_resp_init(&resp);
+    if (ret < 0){
+        JAMI_ERR("ocsp_resp_init: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    ret = gnutls_ocsp_resp_import(resp, data);
+    if (ret < 0){
+        JAMI_ERR("ocsp_resp_import: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    gnutls_datum_t dat;
+    ret = gnutls_ocsp_resp_print(resp, GNUTLS_OCSP_PRINT_COMPACT, &dat);
+    if (ret < 0) {
+        JAMI_ERR("ocsp_resp_print: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    JAMI_DBG("%s", dat.data); // display ocsp response in readable format
+    /*
+     * This function will check whether the OCSP response is about the provided certificate.
+     *     index: Specifies response number to get. Use (0) to get the first one.
+     */
+    ret = gnutls_ocsp_resp_check_crt(resp, 0/*index*/, cert);
+    if (ret < 0){
+        JAMI_ERR("ocsp_resp_check_crt: %s", gnutls_strerror(ret));
+        goto out;
+    }
+    // This function will return the Basic OCSP Response nonce extension data.
+    ret = gnutls_ocsp_resp_get_nonce(resp, NULL, &rnonce);
+    if (ret < 0){
+        goto out;
+    }
+    if (rnonce.size != nonce->size || memcmp(nonce->data, rnonce.data,
+        nonce->size) != 0){
+        goto out;
+    }
+    // Verify signature of the Basic OCSP Response against the public key in the issuer certificate.
+    ret = gnutls_ocsp_resp_verify_direct(resp, signer, &verify, 0);
+    if (ret < 0)
+        goto out;
+    JAMI_DBG("Verifying OCSP Response: ");
+    if (verify == 0)
+        JAMI_DBG("Verification success!");
+    else
+        JAMI_ERR("Verification error!");
+
+    if (verify & GNUTLS_OCSP_VERIFY_SIGNER_NOT_FOUND)
+        JAMI_ERR("Signer cert not found");
+    if (verify & GNUTLS_OCSP_VERIFY_SIGNER_KEYUSAGE_ERROR)
+        JAMI_ERR("Signer cert keyusage error");
+    if (verify & GNUTLS_OCSP_VERIFY_UNTRUSTED_SIGNER)
+        JAMI_ERR("Signer cert is not trusted");
+    if (verify & GNUTLS_OCSP_VERIFY_INSECURE_ALGORITHM)
+        JAMI_ERR("Insecure algorithm");
+    if (verify & GNUTLS_OCSP_VERIFY_SIGNATURE_FAILURE)
+        JAMI_ERR("Signature failure");
+    if (verify & GNUTLS_OCSP_VERIFY_CERT_NOT_ACTIVATED)
+        JAMI_ERR("Signer cert not yet activated");
+    if (verify & GNUTLS_OCSP_VERIFY_CERT_EXPIRED)
+        JAMI_ERR("Signer cert expired");
+out:
+    gnutls_free(dat.data);
+    gnutls_free(rnonce.data);
+    gnutls_ocsp_resp_deinit(resp);
+    return verify;
 }
 
 std::size_t
