@@ -37,6 +37,8 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
+#include <gnutls/crypto.h>
+#include <gnutls/ocsp.h>
 
 #include <list>
 #include <mutex>
@@ -251,6 +253,14 @@ public:
     void initCredentials();
     bool commonSessionInit();
 
+    // Implicit certificate validations
+    int verifyCertificateWrapper(gnutls_session_t session);
+    gnutls_x509_crt_t* loadCertificate(const char* certFile, unsigned int certMax = 1, unsigned flags = 0);
+    int generateOcspRequest(gnutls_x509_crt_t cert, gnutls_x509_crt_t issuer,
+                            gnutls_datum_t* rdata, gnutls_datum_t* nonce);
+    int processOcspResponse(gnutls_datum_t* data, gnutls_x509_crt_t cert,
+                            gnutls_x509_crt_t signer, gnutls_datum_t* nonce);
+
     // FSM thread (TLS states)
     ThreadLoop thread_; // ctor init.
     bool setup();
@@ -409,10 +419,7 @@ TlsSession::TlsSessionImpl::initCredentials()
     xcred_.reset(new TlsCertificateCredendials());
 
     if (callbacks_.verifyCertificate)
-        gnutls_certificate_set_verify_function(*xcred_, [](gnutls_session_t session) -> int {
-                auto this_ = reinterpret_cast<TlsSessionImpl*>(gnutls_session_get_ptr(session));
-                return this_->callbacks_.verifyCertificate(session);
-            });
+        gnutls_certificate_set_verify_function(*xcred_, verifyCertificateWrapper);
 
     // Load user-given CA list
     if (not params_.ca_list.empty()) {
@@ -540,6 +547,82 @@ TlsSession::TlsSessionImpl::commonSessionInit()
                                                });
 
     return true;
+}
+
+int
+TlsSession::TlsSessionImpl::verifyCertificateWrapper(gnutls_session_t session)
+{
+    int verified = 0;
+
+    if (verified and callbacks_.verifyCertificate)
+    {
+        auto this_ = reinterpret_cast<TlsSessionImpl*>(gnutls_session_get_ptr(session));
+        return this_->callbacks_.verifyCertificate(session);
+    }
+    return verified;
+}
+
+gnutls_x509_crt_t*
+TlsSession::TlsSessionImpl::loadCertificate(const char* certFile, unsigned int certMax = 1, unsigned flags = 0)
+{
+    int ret;
+    size_t size;
+    gnutls_datum_t data;
+    static gnutls_x509_crt_t *crt;
+
+    std::ifstream certStream(certFile, std::ios::binary | std::ios::in);
+    std::string contents((std::istreambuf_iterator<char>(certStream)),
+                          std::istreambuf_iterator<char>());
+
+    data.data = (unsigned char*) contents.c_str();
+    data.size = contents.size();
+
+    if (!data.data){
+        JAMI_DBG("Cannot open file: %s\n", certFile);
+        return NULL;
+    }
+    ret = gnutls_x509_crt_list_import2(&crt, &certMax, &data, GNUTLS_X509_FMT_PEM, flags);
+    if (ret < 0){
+        JAMI_DBG("Cannot import certificate in %s: %s\n", certFile, gnutls_strerror(ret));
+        return NULL;
+    }
+    JAMI_DBG("Loaded %d certificates.\n", (int) certMax);
+    return crt;
+}
+
+int
+TlsSession::TlsSessionImpl::generateOcspRequest(gnutls_x509_crt_t cert, gnutls_x509_crt_t issuer,
+                                                gnutls_datum_t* rdata, gnutls_datum_t* nonce)
+{
+    int ret;
+    gnutls_ocsp_req_t req;
+    ret = gnutls_ocsp_req_init(&req);
+    if (ret < 0) {
+        JAMI_DBG("ocsp_req_init: %s", gnutls_strerror(ret));
+    }
+    ret = gnutls_ocsp_req_add_cert(req, GNUTLS_DIG_SHA1, issuer, cert);
+    if (ret < 0) {
+        JAMI_DBG("ocsp_req_add_cert: %s", gnutls_strerror(ret));
+    }
+    if (nonce){
+        ret = gnutls_ocsp_req_set_nonce(req, 0, nonce);
+        if (ret < 0) {
+            JAMI_DBG("ocsp_req_set_nonce: %s", gnutls_strerror(ret));
+        }
+    }
+    ret = gnutls_ocsp_req_export(req, rdata);
+    if (ret != 0) {
+        JAMI_DBG("ocsp_req_export: %s", gnutls_strerror(ret));
+    }
+    gnutls_ocsp_req_deinit(req);
+    return ret;
+}
+
+int
+TlsSession::TlsSessionImpl::processOcspResponse(gnutls_datum_t* data, gnutls_x509_crt_t cert,
+                                                gnutls_x509_crt_t signer, gnutls_datum_t* nonce)
+{
+    return 0;
 }
 
 std::size_t
