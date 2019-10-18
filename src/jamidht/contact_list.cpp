@@ -390,18 +390,16 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     // insert device
     auto it = knownDevices_.emplace(crt->getId(), KnownDevice{crt, name, updated});
     if (it.second) {
-        JAMI_DBG("[Contacts] Found account device: %s %s",
-                                                              name.c_str(),
-                                                              crt->getId().toString().c_str());
+        JAMI_DBG("[Contacts] Found account device: %s %s", name.c_str(),
+                                                           crt->getId().toString().c_str());
         tls::CertificateStore::instance().pinCertificate(crt);
         saveKnownDevices();
         callbacks_.devicesChanged();
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
-            JAMI_DBG("[Contacts] updating device name: %s %s",
-                                                                  name.c_str(),
-                                                                  crt->getId().toString().c_str());
+            JAMI_DBG("[Contacts] updating device name: %s %s", name.c_str(),
+                                                               crt->getId().toString().c_str());
             it.first->second.name = name;
             saveKnownDevices();
             callbacks_.devicesChanged();

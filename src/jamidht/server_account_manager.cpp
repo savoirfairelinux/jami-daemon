@@ -33,6 +33,7 @@ using Request = dht::http::Request;
 
 static const std::string PATH_AUTH = "/api/auth";
 static const std::string PATH_DEVICE = PATH_AUTH + "/device";
+static const std::string PATH_DEVICES = PATH_AUTH + "/devices";
 
 constexpr const char* const HTTPS_PROTO {"https"};
 
@@ -198,7 +199,7 @@ ServerAccountManager::syncDevices()
 {
     if (not creds_)
         return;
-    const std::string url = managerHostname_ + PATH_DEVICE + "?username=" + creds_->username;
+    const std::string url = managerHostname_ + PATH_DEVICES + "?username=" + creds_->username;
     JAMI_WARN("[Auth] syncDevices with: %s to %s", creds_->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
