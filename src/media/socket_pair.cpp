@@ -84,6 +84,8 @@ static constexpr int RTP_MAX_PACKET_LENGTH = 2048;
 static constexpr auto UDP_HEADER_SIZE = 8;
 static constexpr auto SRTP_OVERHEAD = 10;
 static constexpr uint32_t RTCP_RR_FRACTION_MASK = 0xFF000000;
+static constexpr unsigned MINIMUM_RTP_HEADER_SIZE = 16;
+
 
 enum class DataType : unsigned { RTP=1<<0, RTCP=1<<1 };
 
@@ -218,12 +220,12 @@ SocketPair::waitForRTCP(std::chrono::seconds interval)
 {
     std::unique_lock<std::mutex> lock(rtcpInfo_mutex_);
     return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this]{
-        return interrupted_ or not listRtcpHeader_.empty();
+        return interrupted_ or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty();
     });
 }
 
 void
-SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
+SocketPair::saveRtcpRRPacket(uint8_t* buf, size_t len)
 {
     if (len < sizeof(rtcpRRHeader))
         return;
@@ -234,20 +236,49 @@ SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
 
     std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
 
-    if (listRtcpHeader_.size() >= MAX_LIST_SIZE) {
-        listRtcpHeader_.pop_front();
+    if (listRtcpRRHeader_.size() >= MAX_LIST_SIZE) {
+        listRtcpRRHeader_.pop_front();
     }
 
-    listRtcpHeader_.push_back(*header);
+    listRtcpRRHeader_.emplace_back(*header);
+
+    cvRtcpPacketReadyToRead_.notify_one();
+}
+
+
+void
+SocketPair::saveRtcpREMBPacket(uint8_t* buf, size_t len)
+{
+    if (len < sizeof(rtcpREMBHeader))
+        return;
+
+    auto header = reinterpret_cast<rtcpREMBHeader*>(buf);
+    if(header->pt != 206) //206 = REMB PT
+        return;
+
+    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+
+    if (listRtcpREMBHeader_.size() >= MAX_LIST_SIZE) {
+        listRtcpREMBHeader_.pop_front();
+    }
+
+    listRtcpREMBHeader_.push_back(*header);
 
     cvRtcpPacketReadyToRead_.notify_one();
 }
 
 std::list<rtcpRRHeader>
-SocketPair::getRtcpInfo()
+SocketPair::getRtcpRR()
 {
     std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
-    return std::move(listRtcpHeader_);
+    return std::move(listRtcpRRHeader_);
+}
+
+std::list<rtcpREMBHeader>
+SocketPair::getRtcpREMB()
+{
+    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+    return std::move(listRtcpREMBHeader_);
 }
 
 void
@@ -430,18 +461,21 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     int len = 0;
     bool fromRTCP = false;
 
-    auto header = reinterpret_cast<rtcpRRHeader*>(buf);
-    if(header->pt == 201) //201 = RR PT
-    {
-        lastDLSR_ = Swap4Bytes(header->dlsr);
-        //JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
-        lastRR_time = std::chrono::steady_clock::now();
-    }
-
-    // Priority to RTCP as its less invasive in bandwidth
     if (datatype & static_cast<int>(DataType::RTCP)) {
         len = readRtcpData(buf, buf_size);
-        saveRtcpPacket(buf, len);
+        auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+        if(header->pt == 201) //201 = RR PT
+        {
+            lastDLSR_ = Swap4Bytes(header->dlsr);
+            //JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
+            lastRR_time = std::chrono::steady_clock::now();
+            saveRtcpRRPacket(buf, len);
+        }
+        else if(header->pt == 206) //206 = REMB PT
+        {
+            JAMI_ERR("Receive Remb !!");
+            saveRtcpREMBPacket(buf, len);
+        }
         fromRTCP = true;
     }
 
@@ -454,11 +488,25 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     if (len <= 0)
         return len;
 
+    if (not fromRTCP && (buf_size < MINIMUM_RTP_HEADER_SIZE))
+        return len;
+
     // SRTP decrypt
     if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
+        uint32_t curentSendTS = buf[4] << 24 | buf[5] << 16 | buf[6] << 8 | buf[7];
+        int32_t delay = 0;
+        float abs = 0.0f;
+        bool marker = (buf[1] & 0x80) >> 7;
+        bool res = getOneWayDelayGradient2(abs, marker, &delay);
+
+        if (res)
+            rtpDelayCallback_(delay);
+
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
-        if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNum_+1)
-            packetLossCallback_();
+        if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNum_+1) {
+            JAMI_ERR("RTP missed !");
+            // packetLossCallback_();
+        }
         lastSeqNum_ = buf[2] << 8 | buf[3];
         if (err < 0)
             JAMI_WARN("decrypt error %d", err);
@@ -588,6 +636,107 @@ void
 SocketPair::setPacketLossCallback(std::function<void(void)> cb)
 {
     packetLossCallback_ = std::move(cb);
+}
+
+void
+SocketPair::setRtpDelayCallback(std::function<void(int)> cb)
+{
+    rtpDelayCallback_ = std::move(cb);
+}
+
+int32_t
+SocketPair::getOneWayDelayGradient(uint32_t sendTS)
+{
+    if (not lastSendTS_) {
+        lastSendTS_ = sendTS;
+        lastReceiveTS_ = std::chrono::steady_clock::now();
+        return 0;
+    }
+
+    if (sendTS == lastSendTS_)
+        return 0;
+
+    uint32_t deltaS = ((sendTS - lastSendTS_) / 90000.0) * 1000000;            // microseconds
+    lastSendTS_ = sendTS;
+
+    std::chrono::steady_clock::time_point arrival_TS = std::chrono::steady_clock::now();
+    auto deltaR = std::chrono::duration_cast<std::chrono::microseconds>(arrival_TS - lastReceiveTS_).count();
+    lastReceiveTS_ = arrival_TS;
+
+    return deltaR - deltaS;
+}
+
+bool
+SocketPair::getOneWayDelayGradient2(float sendTS, bool marker, int32_t* gradient)
+{
+    // Keep only last packet of each frame
+    if (not marker) {
+        return 0;
+    }
+
+    // 1st frame
+    if (not lastSendTS_) {
+        lastSendTS_ = sendTS;
+        lastReceiveTS_ = std::chrono::steady_clock::now();
+        return 0;
+    }
+
+    uint32_t deltaS = (sendTS - lastSendTS_) * 1000;            // milliseconds
+    if(deltaS < 0)
+        deltaS += 64000;
+    lastSendTS_ = sendTS;
+
+    std::chrono::steady_clock::time_point arrival_TS = std::chrono::steady_clock::now();
+    auto deltaR = std::chrono::duration_cast<std::chrono::milliseconds>(arrival_TS - lastReceiveTS_).count();
+    lastReceiveTS_ = arrival_TS;
+
+    *gradient = deltaR - deltaS;
+
+    return true;
+}
+
+bool
+SocketPair::getOneWayDelayGradient3(uint32_t sendTS, int32_t* gradient)
+{
+    // First sample, fill Ts0 and Tr0
+    if(not svgTS.send_ts) {
+        svgTS.send_ts = sendTS;
+        svgTS.receive_ts = std::chrono::steady_clock::now();
+        return false;
+    }
+
+    // new frame
+    if(svgTS.send_ts != sendTS) {
+        // Second sample, fill Ts1 and Tr1 and replace Ts0 and Tr0
+        if(not svgTS.last_send_ts) {
+            svgTS.last_send_ts = svgTS.send_ts;
+            svgTS.send_ts = sendTS;
+
+            svgTS.last_receive_ts = svgTS.receive_ts;
+            svgTS.receive_ts = std::chrono::steady_clock::now();
+            return false;
+        }
+        uint32_t deltaS = ((svgTS.send_ts - svgTS.last_send_ts) / 90000.0) * 1000000;             // microseconds
+        auto deltaR = std::chrono::duration_cast<std::chrono::microseconds>(svgTS.receive_ts - svgTS.last_receive_ts).count();
+
+        *gradient = deltaR - deltaS;
+
+        // JAMI_ERR("[PL] delR:%ld, delS:%ld, gradient:%d", deltaR, deltaS, *gradient);
+
+        // fill Ts1 and Tr1 and replace Ts0 and Tr0
+        svgTS.last_send_ts = svgTS.send_ts;
+        svgTS.send_ts = sendTS;
+
+        svgTS.last_receive_ts = svgTS.receive_ts;
+        svgTS.receive_ts = std::chrono::steady_clock::now();
+    }
+    else {
+        // Update receive TS
+        svgTS.receive_ts = std::chrono::steady_clock::now();
+        return false;
+    }
+
+    return true;
 }
 
 } // namespace jami

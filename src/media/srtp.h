@@ -54,7 +54,8 @@ enum RTCPType {
     RTCP_FIR    = 192,
     RTCP_IJ     = 195,
     RTCP_SR     = 200,
-    RTCP_TOKEN  = 210
+    RTCP_TOKEN  = 210,
+    RTCP_REMB   = 206
 };
 
 #define RTP_PT_IS_RTCP(x) (((x) >= RTCP_FIR && (x) <= RTCP_IJ) || \

@@ -97,6 +97,37 @@ typedef struct {
 } rtcpSRHeader;
 
 
+typedef struct {
+#ifdef WORDS_BIGENDIAN
+    uint32_t version:2; /* protocol version */
+    uint32_t p:1;       /* padding flag always 0 */
+    uint32_t fmt:5;     /* Feedback message type always 15 */
+
+#else
+    uint32_t fmt:5;     /* Feedback message type always 15 */
+    uint32_t p:1;       /* padding flag always 0 */
+    uint32_t version:2; /* protocol version */
+#endif
+    uint32_t pt:8;      /* payload type */
+    uint32_t len:16;    /* length of RTCP packet */
+    uint32_t ssrc;      /* synchronization source identifier of packet sender */
+    uint32_t ssrc_source;    /* synchronization source identifier of first source alway 0*/
+    uint32_t uid;       /* Unique identifier Always ‘R’ ‘E’ ‘M’ ‘B’ (4 ASCII characters). */
+    uint32_t n_ssrc:8;  /* Number of SSRCs in this message. */
+    uint32_t br_exp:6;  /* BR Exp */
+    uint32_t br_mantis:18;    /* BR Mantissa */
+    uint32_t f_ssrc;       /* SSRC feedback */
+} rtcpREMBHeader;
+
+
+
+typedef struct {
+    uint64_t last_send_ts;
+    std::chrono::steady_clock::time_point last_receive_ts;
+    uint64_t send_ts;
+    std::chrono::steady_clock::time_point receive_ts;
+} TS_Frame;
+
 class SocketPair {
     public:
         SocketPair(const char* uri, int localPort);
@@ -131,12 +162,16 @@ class SocketPair {
                         const char* in_suite, const char* in_params);
 
         void stopSendOp(bool state = true);
-        std::list<rtcpRRHeader> getRtcpInfo();
+        std::list<rtcpRRHeader> getRtcpRR();
+        std::list<rtcpREMBHeader> getRtcpREMB();
 
         bool waitForRTCP(std::chrono::seconds interval);
         double getLastLatency();
 
         void setPacketLossCallback(std::function<void (void)> cb);
+        void setRtpDelayCallback(std::function<void (int)> cb);
+
+        int writeData(uint8_t* buf, int buf_size);
 
     private:
         NON_COPYABLE(SocketPair);
@@ -147,8 +182,8 @@ class SocketPair {
         int waitForData();
         int readRtpData(void* buf, int buf_size);
         int readRtcpData(void* buf, int buf_size);
-        int writeData(uint8_t* buf, int buf_size);
-        void saveRtcpPacket(uint8_t* buf, size_t len);
+        void saveRtcpRRPacket(uint8_t* buf, size_t len);
+        void saveRtcpREMBPacket(uint8_t* buf, size_t len);
 
         std::mutex dataBuffMutex_;
         std::condition_variable cv_;
@@ -166,8 +201,13 @@ class SocketPair {
         std::atomic_bool noWrite_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
         std::function<void(void)> packetLossCallback_;
+        std::function<void(int)> rtpDelayCallback_;
+        int32_t getOneWayDelayGradient(uint32_t sendTS);
+        bool getOneWayDelayGradient2(float sendTS, bool marker, int32_t* gradient);
+        bool getOneWayDelayGradient3(uint32_t sendTS, int32_t* gradient);
 
-        std::list<rtcpRRHeader> listRtcpHeader_;
+        std::list<rtcpRRHeader> listRtcpRRHeader_;
+        std::list<rtcpREMBHeader> listRtcpREMBHeader_;
         std::mutex rtcpInfo_mutex_;
         std::condition_variable cvRtcpPacketReadyToRead_;
         static constexpr unsigned MAX_LIST_SIZE {10};
@@ -180,6 +220,13 @@ class SocketPair {
 
         std::chrono::steady_clock::time_point lastRR_time;
         uint16_t lastSeqNum_ {0};
+        uint32_t lastSendTS_ {0};
+        bool lastMarker_ {false};
+        std::chrono::steady_clock::time_point lastReceiveTS_ {};
+        std::chrono::steady_clock::time_point arrival_TS {};
+
+        TS_Frame svgTS = {};
+
 };
 
 
