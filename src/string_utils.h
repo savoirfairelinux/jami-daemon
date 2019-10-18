@@ -3,6 +3,7 @@
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Vsevolod Ivanov <vsevolod.ivanov@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -66,5 +67,7 @@ std::vector<unsigned>
 split_string_to_unsigned(const std::string& s, char sep);
 
 void string_replace(std::string& str, const std::string& from, const std::string& to);
+
+std::string bytes_to_hex_string(const unsigned char* data, const int size);
 
 } // namespace jami

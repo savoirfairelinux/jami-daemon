@@ -26,6 +26,7 @@
 #include "logger.h"
 
 #include <opendht/thread_pool.h>
+#include <gnutls/ocsp.h>
 
 #include <thread>
 #include <sstream>
@@ -45,10 +46,12 @@ CertificateStore::instance()
 
 CertificateStore::CertificateStore()
     : certPath_(fileutils::get_data_dir()+DIR_SEPARATOR_CH+"certificates"),
-      crlPath_(fileutils::get_data_dir()+DIR_SEPARATOR_CH+"crls")
+      crlPath_(fileutils::get_data_dir()+DIR_SEPARATOR_CH+"crls"),
+      ocspPath_(fileutils::get_data_dir()+DIR_SEPARATOR_CH+"ocsp")
 {
     fileutils::check_dir(certPath_.c_str());
     fileutils::check_dir(crlPath_.c_str());
+    fileutils::check_dir(ocspPath_.c_str());
     loadLocalCertificates();
 }
 
@@ -83,13 +86,47 @@ CertificateStore::loadLocalCertificates()
 void
 CertificateStore::loadRevocations(crypto::Certificate& crt) const
 {
-    auto dir = crlPath_+DIR_SEPARATOR_CH+crt.getId().toString();
-    auto crl_dir_content = fileutils::readDirectory(dir);
+    auto crl_dir = crlPath_+DIR_SEPARATOR_CH+crt.getId().toString();
+    auto crl_dir_content = fileutils::readDirectory(crl_dir);
     for (const auto& crl : crl_dir_content) {
         try {
-            crt.addRevocationList(std::make_shared<crypto::RevocationList>(fileutils::loadFile(dir+DIR_SEPARATOR_CH+crl)));
+            crt.addRevocationList(std::make_shared<crypto::RevocationList>(
+                fileutils::loadFile(crl_dir+DIR_SEPARATOR_CH+crl)));
         } catch (const std::exception& e) {
             JAMI_WARN("Can't load revocation list: %s", e.what());
+        }
+    }
+    auto ocsp_dir = ocspPath_+DIR_SEPARATOR_CH+crt.getId().toString();
+    auto ocsp_dir_content = fileutils::readDirectory(ocsp_dir);
+    for (const auto& ocsp /*filename*/ : ocsp_dir_content) {
+        try {
+            std::string ocsp_filepath = ocsp_dir+DIR_SEPARATOR_CH+ocsp;
+            JAMI_DBG("Found %s", ocsp_filepath.c_str());
+            auto cert_serialhex = crt.getSerialNumber();
+            if (cert_serialhex != ocsp)
+                continue;
+            JAMI_DBG("Certificate UID=%s SerialNumber=%s", crt.getUID().c_str(), cert_serialhex.c_str());
+            // Save the response
+            crt.ocsp_response = fileutils::loadFile(ocsp_filepath);
+            unsigned int status = crt.getOcspResponseCertificateStatus();
+            auto trustStatus = tls::TrustStore::PermissionStatus::UNDEFINED;
+            if (status == GNUTLS_OCSP_CERT_GOOD){
+                JAMI_DBG("Certificate %s has good OCSP status", crt.getUID().c_str());
+                trustStatus = tls::TrustStore::PermissionStatus::ALLOWED;
+            }
+            else if (status == GNUTLS_OCSP_CERT_REVOKED){
+                JAMI_ERR("Certificate %s has revoked OCSP status", crt.getUID().c_str());
+                trustStatus = tls::TrustStore::PermissionStatus::BANNED;
+            }
+            else if (status == GNUTLS_OCSP_CERT_UNKNOWN)
+                JAMI_ERR("Certificate %s has unknown OCSP status", crt.getUID().c_str());
+            else
+                JAMI_ERR("Certificate %s has invalid OCSP status", crt.getUID().c_str());
+            // Update Trust Store
+            //tls::TrustStore::setCertificateStatus(crt.getUID(), trustStatus);
+
+        } catch (const std::exception& e) {
+            JAMI_WARN("Can't load OCSP revocation status: %s", e.what());
         }
     }
 }
@@ -360,6 +397,40 @@ CertificateStore::pinRevocationList(const std::string& id, const dht::crypto::Re
 
     fileutils::check_dir((crlPath_+DIR_SEPARATOR_CH+id).c_str());
     fileutils::saveFile(crlPath_+DIR_SEPARATOR_CH+id+DIR_SEPARATOR_CH+ss.str(), crl.getPacked());
+}
+
+void
+CertificateStore::pinOcspResponse(const std::string& id, const gnutls_datum_t* data)
+{
+    int ret;
+    gnutls_ocsp_resp_t resp;
+
+    // make it is a valid response
+    ret = gnutls_ocsp_resp_init(&resp);
+    if (ret < 0)
+        JAMI_ERR("ocsp_resp_init: %s", gnutls_strerror(ret));
+
+    ret = gnutls_ocsp_resp_import(resp, data);
+    if (ret < 0)
+        JAMI_ERR("ocsp_resp_import: %s", gnutls_strerror(ret));
+
+    // get the serial number
+    gnutls_datum_t serial;
+    ret = gnutls_ocsp_resp_get_single(resp, 0, NULL, NULL, NULL, &serial, NULL, NULL, NULL, NULL, NULL);
+    if (ret < 0)
+        JAMI_ERR("gnutls_ocsp_resp_get_single: %s", gnutls_strerror(ret));
+
+    // free the resources
+    gnutls_ocsp_resp_deinit(resp);
+
+    if (ret == GNUTLS_E_SUCCESS){
+        auto serialhex = bytes_to_hex_string(serial.data, serial.size);
+        JAMI_DBG("Saving OCSP Response of device %s with serial %s", id.c_str(), serialhex.c_str());
+        fileutils::check_dir((ocspPath_+DIR_SEPARATOR_CH+id).c_str());
+        fileutils::saveFile(ocspPath_+DIR_SEPARATOR_CH+id+DIR_SEPARATOR_CH+serialhex,
+                            { data->data, data->data + data->size });
+    }
+
 }
 
 TrustStore::PermissionStatus
