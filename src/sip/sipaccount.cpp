@@ -406,6 +406,7 @@ void SIPAccount::serialize(YAML::Emitter &out) const
     SIPAccountBase::serialize(out);
 
     out << YAML::Key << Conf::BIND_ADDRESS_KEY << YAML::Value << bindAddress_;
+    out << YAML::Key << Conf::VOICEMAIL_NOTIFY_ENABLE_KEY << YAML::Value << voicemailNotifyEnabled_;
     out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
 
     out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
@@ -482,6 +483,7 @@ void SIPAccount::unserialize(const YAML::Node &node)
         usePublishedAddressPortInVIA();
 
     parseValue(node, Conf::BIND_ADDRESS_KEY, bindAddress_);
+    parseValue(node, Conf::VOICEMAIL_NOTIFY_ENABLE_KEY, voicemailNotifyEnabled_);
 
     int port = sip_utils::DEFAULT_SIP_PORT;
     parseValue(node, Conf::PORT_KEY, port);
@@ -567,6 +569,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
 
     // SIP specific account settings
     parseString(details, Conf::CONFIG_BIND_ADDRESS, bindAddress_);
+    parseBool(details, Conf::VOICEMAIL_NOTIFY_ENABLE, voicemailNotifyEnabled_);
     parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
 
     if (not publishedSameasLocal_)
@@ -639,6 +642,7 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_ACCOUNT_PASSWORD,                std::move(password));
 
     a.emplace(Conf::CONFIG_BIND_ADDRESS,                    bindAddress_);
+    a.emplace(Conf::VOICEMAIL_NOTIFY_ENABLE,                voicemailNotifyEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_LOCAL_PORT,                      std::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET,                serviceRoute_);
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     std::to_string(registrationExpire_));

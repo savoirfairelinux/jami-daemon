@@ -312,6 +312,22 @@ class SIPAccount : public SIPAccountBase {
         }
 
         /**
+         * Get whether voicemail notification is enabled
+         * @return bool
+         */
+        bool getVoicemailNotifyEnabled() const {
+            return voicemailNotifyEnabled_;
+        }
+
+        /**
+         * Set whether voicemail notification should be enabled
+         * @pram address The bind ip address used by this account.
+         */
+        void setBindAddress(bool enabled) {
+            voicemailNotifyEnabled_ = enabled;
+        }
+
+        /**
          * @return pjsip_tls_setting structure, filled from the configuration
          * file, that can be used directly by PJSIP to initialize
          * TLS transport.
@@ -710,6 +726,11 @@ class SIPAccount : public SIPAccountBase {
          * Potential ip addresss on which this account is bound
          */
         std::string bindAddress_;
+
+        /**
+         * Enable/disable voicemail notification
+         */
+        bool voicemailNotifyEnabled_;
 
         /**
          * The TLS listener port
