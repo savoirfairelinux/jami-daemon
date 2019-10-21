@@ -69,6 +69,7 @@ static const char *const CONFIG_PUBLISHED_ADDRESS               = "Account.publi
 static const char *const CONFIG_UPNP_ENABLED                    = "Account.upnpEnabled";
 
 // SIP specific parameters
+static const char *const VOICEMAIL_NOTIFY_ENABLE                = "Account.voicemailNotifyEnabled";
 static const char *const CONFIG_STUN_SERVER                     = "STUN.server";
 static const char *const CONFIG_STUN_ENABLE                     = "STUN.enable";
 static const char *const CONFIG_TURN_SERVER                     = "TURN.server";

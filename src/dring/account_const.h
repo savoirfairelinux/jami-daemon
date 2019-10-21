@@ -119,6 +119,7 @@ constexpr static const char ACTIVE_CALL_LIMIT       [] = "Account.activeCallLimi
 constexpr static const char HOSTNAME                [] = "Account.hostname";
 constexpr static const char USERNAME                [] = "Account.username";
 constexpr static const char BIND_ADDRESS            [] = "Account.bindAddress";
+constexpr static const char VOICEMAIL_NOTIFY_ENABLE [] = "Account.voicemailNotifyEnabled";
 constexpr static const char ROUTE                   [] = "Account.routeset";
 constexpr static const char PASSWORD                [] = "Account.password";
 constexpr static const char REALM                   [] = "Account.realm";
