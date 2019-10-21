@@ -55,6 +55,7 @@ namespace jami {
 namespace Conf {
     // SIP specific configuration keys
     const char *const BIND_ADDRESS_KEY = "bindAddress";
+    const char *const VOICEMAIL_NOTIFY_ENABLE_KEY = "voicemailNotifyEnabled";
     const char *const INTERFACE_KEY = "interface";
     const char *const PORT_KEY = "port";
     const char *const PUBLISH_ADDR_KEY = "publishAddr";
