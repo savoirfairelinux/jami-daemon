@@ -151,10 +151,6 @@ void VideoRtpSession::startSender()
             rtcpCheckerThread_.start();
         else if (not autoQuality and rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.join();
-
-        socketPair_->setRtpDelayCallback([&](int delay) {
-            this->delayMonitor(delay);
-        });
     }
 }
 
@@ -206,6 +202,8 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
             socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
         else
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
+
+        socketPair_->setRtpDelayCallback([&](int delay) {delayMonitor(delay);});
 
         if (send_.crypto and receive_.crypto) {
             socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
