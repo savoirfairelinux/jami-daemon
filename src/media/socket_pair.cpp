@@ -488,14 +488,21 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
 
     // SRTP decrypt
     if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
-        uint32_t curentSendTS = buf[4] << 24 | buf[5] << 16 | buf[6] << 8 | buf[7];
-        int32_t delay = 0;
+        int32_t gradient = 0;
+        int32_t deltaT = 0;
         float abs;
-        bool marker = (buf[1] & 0x80) >> 7;
-        bool res = getOneWayDelayGradient2(abs, marker, &delay);
+        bool res_parse = false;
+        bool res_delay = false;
 
-        if (res)
-            rtpDelayCallback_(delay);
+        res_parse = parse_RTP_ext(buf, &abs);
+        bool marker = (buf[1] & 0x80) >> 7;
+
+        if(res_parse)
+            res_delay = getOneWayDelayGradient2(abs, marker, &gradient, &deltaT);
+
+        // rtpDelayCallback_ is not set for audio
+        if (rtpDelayCallback_ && res_delay)
+                rtpDelayCallback_(gradient);
 
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
         if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNum_+1) {
@@ -662,7 +669,7 @@ SocketPair::getOneWayDelayGradient(uint32_t sendTS)
 }
 
 bool
-SocketPair::getOneWayDelayGradient2(float sendTS, bool marker, int32_t* gradient)
+SocketPair::getOneWayDelayGradient2(float sendTS, bool marker, int32_t* gradient, int32_t* deltaT)
 {
     // Keep only last packet of each frame
     if (not marker) {
@@ -676,7 +683,7 @@ SocketPair::getOneWayDelayGradient2(float sendTS, bool marker, int32_t* gradient
         return 0;
     }
 
-    uint32_t deltaS = (sendTS - lastSendTS_) * 1000;            // milliseconds
+    int32_t deltaS = (sendTS - lastSendTS_) * 1000;            // milliseconds
     if(deltaS < 0)
         deltaS += 64000;
     lastSendTS_ = sendTS;
@@ -686,6 +693,7 @@ SocketPair::getOneWayDelayGradient2(float sendTS, bool marker, int32_t* gradient
     lastReceiveTS_ = arrival_TS;
 
     *gradient = deltaR - deltaS;
+    *deltaT = deltaR; 
 
     return true;
 }
@@ -731,6 +739,24 @@ SocketPair::getOneWayDelayGradient3(uint32_t sendTS, int32_t* gradient)
         return false;
     }
 
+    return true;
+}
+
+bool
+SocketPair::parse_RTP_ext(uint8_t* buf, float* abs)
+{
+    if(not(buf[0] & 0x10))
+        return false;
+
+    uint16_t magic_word = (buf[12] << 8) + buf[13];
+    if(magic_word != 0xBEDE)
+        return false;
+
+    uint8_t sec = buf[17] >> 2;
+    uint32_t fract = ((buf[17] & 0x3) << 16 | (buf[18] << 8) | buf[19]) << 14;
+    float milli = fract / pow(2,32);
+
+    *abs = sec + (milli);
     return true;
 }
 
