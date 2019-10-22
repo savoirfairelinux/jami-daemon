@@ -205,6 +205,7 @@ class SocketPair {
         int32_t getOneWayDelayGradient(uint32_t sendTS);
         bool getOneWayDelayGradient2(float sendTS, bool marker, int32_t* gradient);
         bool getOneWayDelayGradient3(uint32_t sendTS, int32_t* gradient);
+        bool parse_RTP_ext(uint8_t* buf, int buf_size, float* abs);
 
         std::list<rtcpRRHeader> listRtcpRRHeader_;
         std::list<rtcpREMBHeader> listRtcpREMBHeader_;
