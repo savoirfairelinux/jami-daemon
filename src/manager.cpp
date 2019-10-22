@@ -1903,7 +1903,17 @@ Manager::incomingMessage(const std::string& callID,
         }
 
         JAMI_DBG("Is a conference, send incoming message to everyone");
-        pimpl_->sendTextMessageToConference(*conf, messages, from);
+        //filter out vcards messages  as they could be resent by master as its own vcard
+        // TODO. Implement a protocol to handle vcard messages
+        bool sendToOtherParicipants = true;
+        for (auto& message : messages) {
+            if (message.first.find("x-ring/ring.profile.vcard") != std::string::npos) {
+                sendToOtherParicipants = false;
+            }
+        }
+        if (sendToOtherParicipants) {
+            pimpl_->sendTextMessageToConference(*conf, messages, from);
+        }
 
         // in case of a conference we must notify client using conference id
         emitSignal<DRing::CallSignal::IncomingMessage>(conf->getConfID(), from, messages);
