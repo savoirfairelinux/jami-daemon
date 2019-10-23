@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1e06ae17_673bd7db",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 650,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-23T19:54:48Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "8a7b4975d0566d25323fc54a5d752de3e7a61c09",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "08d68253_f56a8ebc",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 687,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-23T19:54:48Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n1st function call argument is an uninitialized value\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-core.CallAndMessage",
+      "revId": "8a7b4975d0566d25323fc54a5d752de3e7a61c09",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f42b53e8_b35fe66b",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 739,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-23T19:54:48Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "8a7b4975d0566d25323fc54a5d752de3e7a61c09",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "45feeae3_13a59343",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 12
+      },
+      "lineNbr": 893,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-23T19:54:48Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nUndefined or garbage value returned to caller\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-core.uninitialized.UndefReturn",
+      "revId": "8a7b4975d0566d25323fc54a5d752de3e7a61c09",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
