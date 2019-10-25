@@ -282,7 +282,7 @@ vector<VideoDevice>::iterator
 VideoDeviceMonitor::findDeviceByNode(const string& node)
 {
     for (auto it = devices_.begin(); it != devices_.end(); ++it)
-        if (it->getNode() == node)
+        if (it->getNode().find(node) != std::string::npos)
             return it;
     return devices_.end();
 }
@@ -291,7 +291,7 @@ vector<VideoDevice>::const_iterator
 VideoDeviceMonitor::findDeviceByNode(const string& node) const
 {
     for (auto it = devices_.cbegin(); it != devices_.cend(); ++it)
-        if (it->getNode() == node)
+        if (it->getNode().find(node) != std::string::npos)
             return it;
     return devices_.end();
 }
@@ -346,5 +346,5 @@ VideoDeviceMonitor::unserialize(const YAML::Node &in)
     else
         defaultDevice_ = first;
 }
-
+#pragma optimize("", on)
 }} // namespace jami::video
