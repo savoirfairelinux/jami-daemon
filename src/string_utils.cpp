@@ -35,7 +35,6 @@
 namespace jami {
 
 #ifdef _WIN32
-
 std::wstring
 to_wstring(const std::string& str, int codePage)
 {
@@ -64,17 +63,6 @@ to_string(const std::wstring& wstr, int codePage)
         throw std::runtime_error("Can't convert wstring to string");
     }
     return result;
-}
-
-std::string
-bstrToStdString(BSTR bstr)
-{
-    int wslen = ::SysStringLen(bstr);
-    if (wslen != 0) {
-        std::wstring wstr(bstr, wslen);
-        return std::string(wstr.begin(), wstr.end());
-    }
-    return {};
 }
 #endif
 
