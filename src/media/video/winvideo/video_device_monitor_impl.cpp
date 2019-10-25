@@ -83,66 +83,18 @@ VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 }
 
 std::string
-getDeviceFriendlyName(PDEV_BROADCAST_DEVICEINTERFACE pbdi)
+getDeviceUniqueName(PDEV_BROADCAST_DEVICEINTERFACE pbdi)
 {
-    // As per: https://www.codeproject.com/Articles/14500/Detecting-Hardware-Insertion-and-or-Removal
-    // we need to convert the usb device descriptor string from:
-    //   \\?\USB#Vid_04e8&Pid_503b#0002F9A9828E0F06#{a5dcbf10-6530-11d2-901f-00c04fb951ed}
-    // to something like:
-    //   USB\Vid_04e8&Pid_503b\0002F9A9828E0F06
-    // in order to match the device's registry entry, and finally obtain the friendly name. (-_-)?
+    std::string unique_name = pbdi->dbcc_name;
 
-    std::string friendlyName;
-    std::string name = pbdi->dbcc_name;
-    name = name.substr(4);
-    auto pos = name.find("#");
-    name.replace(pos, 1, "\\");
-    pos = name.find_last_of("#");
-    name = name.substr(0, pos);
-    pos = name.find("#");
-    name.replace(pos, 1, "\\");
-    std::transform(name.begin(), name.end(), name.begin(),
-        [](unsigned char c) { return std::toupper(c); }
+    std::transform(unique_name.begin(), unique_name.end(), unique_name.begin(),
+        [](unsigned char c) { return std::tolower(c); }
     );
 
-    DWORD dwFlag = DIGCF_ALLCLASSES;
-    HDEVINFO hDevInfo = SetupDiGetClassDevs(&guidCamera, 0, NULL, dwFlag);
-    if (INVALID_HANDLE_VALUE == hDevInfo) {
-        return {};
-    }
+    auto pos = unique_name.find_last_of("#");
+    unique_name = unique_name.substr(0, pos);
 
-    SP_DEVINFO_DATA* pspDevInfoData =
-        (SP_DEVINFO_DATA*)HeapAlloc(GetProcessHeap(), 0, sizeof(SP_DEVINFO_DATA));
-    pspDevInfoData->cbSize = sizeof(SP_DEVINFO_DATA);
-
-    for (int i = 0; SetupDiEnumDeviceInfo(hDevInfo, i, pspDevInfoData); i++) {
-        GUID guid;
-        guid = pspDevInfoData->ClassGuid;
-
-        DWORD DataT;
-        DWORD nSize = 0;
-        TCHAR buf[260];
-
-        if (!SetupDiGetDeviceInstanceId(hDevInfo, pspDevInfoData, buf, sizeof(buf), &nSize)) {
-            break;
-        }
-
-        std::string strBuf(&buf[0]);
-        if (strBuf.find(name) != std::string::npos) {
-            if (SetupDiGetDeviceRegistryProperty(hDevInfo, pspDevInfoData,
-                SPDRP_FRIENDLYNAME, &DataT, (PBYTE)buf, sizeof(buf), &nSize)) {
-                friendlyName = std::string(buf);
-                break;
-            }
-        }
-    }
-
-    if (pspDevInfoData) {
-        HeapFree(GetProcessHeap(), 0, pspDevInfoData);
-    }
-    SetupDiDestroyDeviceInfoList(hDevInfo);
-
-    return friendlyName;
+    return unique_name;
 }
 
 bool
@@ -207,15 +159,15 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
         case DBT_DEVICEREMOVECOMPLETE:
         case DBT_DEVICEARRIVAL:
         {
-            PDEV_BROADCAST_DEVICEINTERFACE p = (PDEV_BROADCAST_DEVICEINTERFACE)lParam;
-            auto friendlyName = getDeviceFriendlyName(p);
-            if (!friendlyName.empty()) {
-                JAMI_DBG() << friendlyName << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
+            PDEV_BROADCAST_DEVICEINTERFACE pbdi = (PDEV_BROADCAST_DEVICEINTERFACE)lParam;
+            auto unique_name = getDeviceUniqueName(pbdi);
+            if (!unique_name.empty()) {
+                JAMI_DBG() << unique_name << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
                 if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
                     if (wParam == DBT_DEVICEARRIVAL) {
-                        pThis->monitor_->addDevice(friendlyName);
+                        pThis->monitor_->addDevice(unique_name);
                     } else if (wParam == DBT_DEVICEREMOVECOMPLETE) {
-                        pThis->monitor_->removeDevice(friendlyName);
+                        pThis->monitor_->removeDevice(unique_name);
                     }
                 }
             }
@@ -288,7 +240,8 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
     }
 
     IEnumMoniker *pEnum = nullptr;
-    hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &pEnum, 0);
+    hr = pDevEnum->CreateClassEnumerator(
+        CLSID_VideoInputDeviceCategory, &pEnum, 0);
     if (hr == S_FALSE) {
         hr = VFW_E_NOT_FOUND;
     }
@@ -299,7 +252,6 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
     }
 
     IMoniker *pMoniker = NULL;
-    unsigned deviceID = 0;
     while (pEnum->Next(1, &pMoniker, NULL) == S_OK) {
         IPropertyBag *pPropBag;
         HRESULT hr = pMoniker->BindToStorage(0, 0, IID_PPV_ARGS(&pPropBag));
@@ -308,27 +260,28 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
             continue;
         }
 
-        VARIANT var;
-        VariantInit(&var);
-        hr = pPropBag->Read(L"Description", &var, 0);
-        if (FAILED(hr)) {
-            hr = pPropBag->Read(L"FriendlyName", &var, 0);
-        }
+        IBindCtx *bind_ctx = NULL;
+        LPOLESTR olestr = NULL;
 
-        if (SUCCEEDED(hr)) {
-            auto deviceName = bstrToStdString(var.bstrVal);
-            if (!deviceName.empty()) {
-                deviceList.push_back(deviceName);
-            }
-            VariantClear(&var);
+        hr = CreateBindCtx(0, &bind_ctx);
+        if (hr != S_OK) {
+            pMoniker->Release();
+            continue;
         }
-
-        hr = pPropBag->Write(L"FriendlyName", &var);
+        hr = pMoniker->GetDisplayName(bind_ctx, NULL, &olestr);
+        if (hr != S_OK) {
+            pMoniker->Release();
+            continue;
+        }
+        auto unique_name = to_string(olestr);
+        if (!unique_name.empty()) {
+            // replace ':' with '_' since ffmpeg uses : to delineate between sources
+            std::replace(unique_name.begin(), unique_name.end(), ':', '_');
+            deviceList.push_back(unique_name);
+        }
 
         pPropBag->Release();
         pMoniker->Release();
-
-        deviceID++;
     }
     pEnum->Release();
 
