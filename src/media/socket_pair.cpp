@@ -256,6 +256,9 @@ SocketPair::saveRtcpREMBPacket(uint8_t* buf, size_t len)
     if(header->pt != 206) //206 = REMB PT
         return;
 
+    if(header->uid != 0x424D4552) // uid must be "REMB"
+        return;
+
     std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
 
     if (listRtcpREMBHeader_.size() >= MAX_LIST_SIZE) {
@@ -472,10 +475,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             saveRtcpRRPacket(buf, len);
         }
         else if(header->pt == 206) //206 = REMB PT
-        {
-            JAMI_ERR("Receive Remb !!");
             saveRtcpREMBPacket(buf, len);
-        }
         fromRTCP = true;
     }
 
@@ -503,17 +503,15 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         bool marker = (buf[1] & 0x80) >> 7;
 
         if(res_parse)
-            res_delay = getOneWayDelayGradient2(abs, marker, &gradient, &deltaT);
+            res_delay = getOneWayDelayGradient(abs, marker, &gradient, &deltaT);
 
         // rtpDelayCallback_ is not set for audio
-        if (rtpDelayCallback_ && res_delay)
-                rtpDelayCallback_(gradient);
+        if (rtpDelayCallback_ and res_delay)
+                rtpDelayCallback_(gradient, deltaT);
 
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
-        if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNum_+1) {
-            JAMI_ERR("RTP missed !");
-            // packetLossCallback_();
-        }
+        if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNum_+1)
+            packetLossCallback_();
         lastSeqNum_ = buf[2] << 8 | buf[3];
         if (err < 0)
             JAMI_WARN("decrypt error %d", err);
@@ -646,35 +644,13 @@ SocketPair::setPacketLossCallback(std::function<void(void)> cb)
 }
 
 void
-SocketPair::setRtpDelayCallback(std::function<void(int)> cb)
+SocketPair::setRtpDelayCallback(std::function<void(int, int)> cb)
 {
     rtpDelayCallback_ = std::move(cb);
 }
 
-int32_t
-SocketPair::getOneWayDelayGradient(uint32_t sendTS)
-{
-    if (not lastSendTS_) {
-        lastSendTS_ = sendTS;
-        lastReceiveTS_ = std::chrono::steady_clock::now();
-        return 0;
-    }
-
-    if (sendTS == lastSendTS_)
-        return 0;
-
-    uint32_t deltaS = ((sendTS - lastSendTS_) / 90000.0) * 1000000;            // microseconds
-    lastSendTS_ = sendTS;
-
-    std::chrono::steady_clock::time_point arrival_TS = std::chrono::steady_clock::now();
-    auto deltaR = std::chrono::duration_cast<std::chrono::microseconds>(arrival_TS - lastReceiveTS_).count();
-    lastReceiveTS_ = arrival_TS;
-
-    return deltaR - deltaS;
-}
-
 bool
-SocketPair::getOneWayDelayGradient2(float sendTS, bool marker, int32_t* gradient, int32_t* deltaT)
+SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient, int32_t* deltaT)
 {
     // Keep only last packet of each frame
     if (not marker) {
@@ -698,51 +674,7 @@ SocketPair::getOneWayDelayGradient2(float sendTS, bool marker, int32_t* gradient
     lastReceiveTS_ = arrival_TS;
 
     *gradient = deltaR - deltaS;
-    *deltaT = deltaR; 
-
-    return true;
-}
-
-bool
-SocketPair::getOneWayDelayGradient3(uint32_t sendTS, int32_t* gradient)
-{
-    // First sample, fill Ts0 and Tr0
-    if(not svgTS.send_ts) {
-        svgTS.send_ts = sendTS;
-        svgTS.receive_ts = std::chrono::steady_clock::now();
-        return false;
-    }
-
-    // new frame
-    if(svgTS.send_ts != sendTS) {
-        // Second sample, fill Ts1 and Tr1 and replace Ts0 and Tr0
-        if(not svgTS.last_send_ts) {
-            svgTS.last_send_ts = svgTS.send_ts;
-            svgTS.send_ts = sendTS;
-
-            svgTS.last_receive_ts = svgTS.receive_ts;
-            svgTS.receive_ts = std::chrono::steady_clock::now();
-            return false;
-        }
-        uint32_t deltaS = ((svgTS.send_ts - svgTS.last_send_ts) / 90000.0) * 1000000;             // microseconds
-        auto deltaR = std::chrono::duration_cast<std::chrono::microseconds>(svgTS.receive_ts - svgTS.last_receive_ts).count();
-
-        *gradient = deltaR - deltaS;
-
-        // JAMI_ERR("[PL] delR:%ld, delS:%ld, gradient:%d", deltaR, deltaS, *gradient);
-
-        // fill Ts1 and Tr1 and replace Ts0 and Tr0
-        svgTS.last_send_ts = svgTS.send_ts;
-        svgTS.send_ts = sendTS;
-
-        svgTS.last_receive_ts = svgTS.receive_ts;
-        svgTS.receive_ts = std::chrono::steady_clock::now();
-    }
-    else {
-        // Update receive TS
-        svgTS.receive_ts = std::chrono::steady_clock::now();
-        return false;
-    }
+    *deltaT = deltaR;
 
     return true;
 }
