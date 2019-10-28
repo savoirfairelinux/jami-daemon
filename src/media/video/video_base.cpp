@@ -83,6 +83,7 @@ extractString(const std::map<std::string, std::string>& settings, const std::str
 VideoSettings::VideoSettings(const std::map<std::string, std::string>& settings)
 {
     name = extractString(settings, "name");
+    node = extractString(settings, "node");
     channel = extractString(settings, "channel");
     video_size = extractString(settings, "size");
     framerate = extractString(settings, "rate");
@@ -93,6 +94,7 @@ VideoSettings::to_map() const
 {
     return {
         {"name", name},
+        {"node", node},
         {"size", video_size},
         {"channel", channel},
         {"rate", framerate}
@@ -107,6 +109,7 @@ Node
 convert<jami::video::VideoSettings>::encode(const jami::video::VideoSettings& rhs) {
     Node node;
     node["name"] = rhs.name;
+    node["node"] = rhs.node;
     node["video_size"] = rhs.video_size;
     node["channel"] = rhs.channel;
     node["framerate"] = rhs.framerate;
@@ -120,6 +123,7 @@ convert<jami::video::VideoSettings>::decode(const Node& node, jami::video::Video
         return false;
     }
     rhs.name = node["name"].as<std::string>();
+    rhs.node = node["node"].as<std::string>();
     rhs.video_size = node["video_size"].as<std::string>();
     rhs.channel = node["channel"].as<std::string>();
     rhs.framerate = node["framerate"].as<std::string>();
