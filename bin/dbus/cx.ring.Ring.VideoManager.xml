@@ -4,33 +4,33 @@
         <!-- Video device methods -->
 
         <method name="getDeviceList" tp:name-for-bindings="getDeviceList">
-            <tp:docstring>Returns a list of the detected v4l2 devices</tp:docstring>
+            <tp:docstring>Returns a list of ids for detected devices</tp:docstring>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
             <arg type="as" name="list" direction="out">
             </arg>
         </method>
 
         <method name="getCapabilities" tp:name-for-bindings="getCapabilities">
-           <tp:docstring>Returns a map of map of array of strings, containing the capabilities (channel, size, rate) of a device</tp:docstring>
+            <tp:docstring>Returns a map of map of array of strings, containing the capabilities (channel, size, rate) for a given device id</tp:docstring>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringMapStringVectorString"/>
-            <arg type="s" name="name" direction="in">
+            <arg type="s" name="deviceId" direction="in">
             </arg>
             <arg type="a{sa{sas}}" name="cap" direction="out">
             </arg>
         </method>
 
         <method name="getSettings" tp:name-for-bindings="getSettings">
-           <tp:docstring>Returns a map of settings for the given device name</tp:docstring>
+            <tp:docstring>Returns a map of settings for the given device id</tp:docstring>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <arg type="s" name="device" direction="in">
+            <arg type="s" name="deviceId" direction="in">
             </arg>
             <arg type="a{ss}" name="map" direction="out">
             </arg>
         </method>
 
         <method name="applySettings" tp:name-for-bindings="applySettings">
-            <tp:docstring>Set the preferred settings for a given device name</tp:docstring>
-            <arg type="s" name="name" direction="in">
+            <tp:docstring>Set the preferred settings for a given device id</tp:docstring>
+            <arg type="s" name="deviceId" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="a{ss}" name="settings" direction="in">
@@ -38,12 +38,14 @@
         </method>
 
         <method name="getDefaultDevice" tp:name-for-bindings="getDefaultDevice">
-            <arg type="s" name="name" direction="out">
+            <tp:docstring>Returns the default device id</tp:docstring>
+            <arg type="s" name="deviceId" direction="out">
             </arg>
         </method>
 
         <method name="setDefaultDevice" tp:name-for-bindings="setDefaultDevice">
-            <arg type="s" name="name" direction="in">
+            <tp:docstring>Sets the default device id</tp:docstring>
+            <arg type="s" name="deviceId" direction="in">
             </arg>
         </method>
 
@@ -132,8 +134,8 @@
         </method>
 
         <method name="setDeviceOrientation" tp:name-for-bindings="setDeviceOrientation">
-            <arg type="s" name="name" direction="in">
-                <tp:docstring>Device name</tp:docstring>
+            <arg type="s" name="deviceId" direction="in">
+                <tp:docstring>Device id</tp:docstring>
             </arg>
             <arg type="i" name="angle" direction="in">
                 <tp:docstring>Angle of device in degrees (counterclockwise)</tp:docstring>
