@@ -165,7 +165,11 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
                 JAMI_DBG() << unique_name << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
                 if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
                     if (wParam == DBT_DEVICEARRIVAL) {
-                        pThis->monitor_->addDevice(unique_name);
+                        auto captureDeviceList = pThis->enumerateVideoInputDevices();
+                        for (auto node : captureDeviceList) {
+                            if (node.find(unique_name) != std::string::npos)
+                                pThis->monitor_->addDevice(node);
+                        }
                     } else if (wParam == DBT_DEVICEREMOVECOMPLETE) {
                         pThis->monitor_->removeDevice(unique_name);
                     }
@@ -275,7 +279,7 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
         if (!unique_name.empty()) {
             // replace ':' with '_' since ffmpeg uses : to delineate between sources
             std::replace(unique_name.begin(), unique_name.end(), ':', '_');
-            deviceList.push_back(unique_name);
+            deviceList.push_back(std::string("video=") + unique_name);
         }
 
         pPropBag->Release();

@@ -138,7 +138,8 @@ public:
     VideoSettings getSettings() const {
         auto params = getDeviceParams();
         VideoSettings settings;
-        settings.name = params.name;
+        settings.name = name.empty() ? params.name : name;
+        settings.node = params.input;
         settings.channel = params.channel_name;
         settings.video_size = sizeToString(params.width, params.height);
         settings.framerate = jami::to_string(params.framerate.real());
@@ -155,6 +156,7 @@ public:
     void applySettings(VideoSettings settings) {
         DeviceParams params {};
         params.name = settings.name;
+        params.input = settings.node;
         params.channel_name = settings.channel;
         auto size = sizeFromString(settings.channel, settings.video_size);
         params.width = size.first;

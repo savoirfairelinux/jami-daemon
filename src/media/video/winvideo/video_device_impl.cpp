@@ -144,13 +144,15 @@ VideoDeviceImpl::setup()
 
         // replace ':' with '_' since ffmpeg uses : to delineate between sources */
         std::replace(unique_name.begin(), unique_name.end(), ':', '_');
+        unique_name = std::string("video=") + unique_name;
 
         // We want to get the capabilities of a device with the unique_name
         // that corresponds to what was enumerated by the video device monitor.
         if (unique_name.find(this->device) == std::string::npos) {
             continue;
         }
-        this->device = std::string("video=") + unique_name;
+
+        this->device = unique_name;
 
         // get friendly name
         VARIANT var;
