@@ -31,6 +31,7 @@
 #include <memory>
 
 namespace jami {
+class CongestionControl;
 class Conference;
 class MediaRecorder;
 } // namespace jami
@@ -130,7 +131,7 @@ private:
     void setupVideoBitrateInfo();
     void checkReceiver();
     float getPonderateLoss(float lastLoss);
-    void delayMonitor(int delay);
+    void delayMonitor(int gradient, int deltaT);
     void dropProcessing(RTCPInfo* rtcpi);
     void delayProcessing(int br);
     void setNewBitrate(unsigned int newBR);
@@ -162,16 +163,12 @@ private:
     std::chrono::seconds rtcp_checking_interval {4};
 
     time_point lastMediaRestart_ {time_point::min()};
-    time_point lastIncrease_ {time_point::min()};
-    time_point lastREMB_ {time_point::min()};
+    time_point last_REMB_inc_ {time_point::min()};
+    time_point last_REMB_dec_ {time_point::min()};
 
-    int lastDelayAVG_ {0};
-    unsigned cnt_delay_callback_ {0};
-    std::pair<float, float> getDelayAvg();
-    std::pair<float, float> getDelayMedian();
-    float getRollingAvg();
-    int getRollingMedian();
+    unsigned remb_dec_cnt_ {0};
 
+    CongestionControl* cc {nullptr};
 };
 
 }} // namespace jami::video

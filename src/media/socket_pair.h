@@ -169,12 +169,14 @@ class SocketPair {
         double getLastLatency();
 
         void setPacketLossCallback(std::function<void (void)> cb);
-        void setRtpDelayCallback(std::function<void (int)> cb);
+        void setRtpDelayCallback(std::function<void (int, int)> cb);
 
         int writeData(uint8_t* buf, int buf_size);
 
     private:
         NON_COPYABLE(SocketPair);
+        using clock = std::chrono::steady_clock;
+        using time_point = clock::time_point;
 
         int readCallback(uint8_t* buf, int buf_size);
         int writeCallback(uint8_t* buf, int buf_size);
@@ -201,10 +203,8 @@ class SocketPair {
         std::atomic_bool noWrite_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
         std::function<void(void)> packetLossCallback_;
-        std::function<void(int)> rtpDelayCallback_;
-        int32_t getOneWayDelayGradient(uint32_t sendTS);
-        bool getOneWayDelayGradient2(float sendTS, bool marker, int32_t* gradient, int32_t* deltaR);
-        bool getOneWayDelayGradient3(uint32_t sendTS, int32_t* gradient);
+        std::function<void(int, int)> rtpDelayCallback_;
+        bool getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient, int32_t* deltaR);
         bool parse_RTP_ext(uint8_t* buf, float* abs);
 
         std::list<rtcpRRHeader> listRtcpRRHeader_;
@@ -219,11 +219,11 @@ class SocketPair {
 
         std::list<double> histoLatency_;
 
-        std::chrono::steady_clock::time_point lastRR_time;
+        time_point lastRR_time;
         uint16_t lastSeqNum_ {0};
         float lastSendTS_ {0.0f};
-        std::chrono::steady_clock::time_point lastReceiveTS_ {};
-        std::chrono::steady_clock::time_point arrival_TS {};
+        time_point lastReceiveTS_ {};
+        time_point arrival_TS {};
 
         TS_Frame svgTS = {};
 

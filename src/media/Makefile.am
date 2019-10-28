@@ -23,7 +23,7 @@ libmedia_la_SOURCES = \
 	media_recorder.cpp \
 	localrecorder.cpp \
 	localrecordermanager.cpp \
-	remb.cpp
+	congestion_control.cpp
 
 noinst_HEADERS = \
 	rtp_session.h \
@@ -45,7 +45,7 @@ noinst_HEADERS = \
 	media_recorder.h \
 	localrecorder.h \
 	localrecordermanager.h \
-	remb.h
+	congestion_control.h
 
 libmedia_la_LIBADD = \
 	./audio/libaudio.la
