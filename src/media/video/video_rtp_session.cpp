@@ -33,7 +33,7 @@
 #include "string_utils.h"
 #include "call.h"
 #include "conference.h"
-#include "remb.h"
+#include "congestion_control.h"
 
 #include "account_const.h"
 
@@ -53,11 +53,8 @@ static constexpr unsigned MAX_SIZE_HISTO_JITTER {50};
 static constexpr unsigned MAX_SIZE_HISTO_DELAY {25};
 
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
-constexpr auto DELAY_AFTER_INCREASE = std::chrono::seconds(5);
 constexpr auto EXPIRY_TIME_RTCP = std::chrono::milliseconds(2000);
-constexpr auto DELAY_AFTER_REMB = std::chrono::milliseconds(300);
-
-constexpr int THRESHOLD_CONGESTION {1000};
+constexpr auto DELAY_AFTER_REMB = std::chrono::seconds(1);
 
 VideoRtpSession::VideoRtpSession(const string &callID,
                                  const DeviceParams& localVideoParams) :
@@ -68,6 +65,7 @@ VideoRtpSession::VideoRtpSession(const string &callID,
             []{})
 {
     setupVideoBitrateInfo(); // reset bitrate
+    cc = new CongestionControl();
 }
 
 VideoRtpSession::~VideoRtpSession()
@@ -143,7 +141,6 @@ void VideoRtpSession::startSender()
             send_.enabled = false;
         }
         lastMediaRestart_ = clock::now();
-        lastIncrease_ = clock::now();
         lastREMB_ = clock::now();
         auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
         auto autoQuality = codecVideo->isAutoQualityEnabled;
@@ -203,7 +200,7 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
         else
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
 
-        socketPair_->setRtpDelayCallback([&](int delay) {delayMonitor(delay);});
+        socketPair_->setRtpDelayCallback([&](int gradient, int deltaT) {delayMonitor(gradient, deltaT);});
 
         if (send_.crypto and receive_.crypto) {
             socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
@@ -392,9 +389,9 @@ VideoRtpSession::check_RCTP_Info_REMB(uint64_t* br)
     auto vectSize = rtcpInfoVect.size();
 
     if (vectSize != 0) {
-        for (auto& it : rtcpInfoVect) {
-            *br = Remb::parseREMB(&it);
-        }
+        auto pkt = rtcpInfoVect.back();
+        auto temp = cc->parseREMB(&pkt);
+        *br = (temp >> 10) | ((temp << 6) & 0xff00) | ((temp << 16) & 0x30000);
         return true;
     }
     return false;
@@ -441,7 +438,7 @@ VideoRtpSession::adaptQualityAndBitrate()
 
     uint64_t br;
     if (check_RCTP_Info_REMB(&br)) {
-        JAMI_WARN("[AutoAdapt] New REMB !");
+        // JAMI_WARN("[AutoAdapt] Received new REMB !");
         delayProcessing(br);
     }
 
@@ -458,7 +455,6 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
     // If bitrate has changed, let time to receive fresh RTCP packets
     auto now = clock::now();
     auto restartTimer = now - lastMediaRestart_;
-    auto increaseTimer = now - lastIncrease_;
     if (restartTimer < DELAY_AFTER_RESTART) {
         return;
     }
@@ -486,14 +482,6 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
             histoLoss_.clear();
             JAMI_DBG("[AutoAdapt] pondLoss: %f%%, packet loss rate: %f%%, decrease bitrate from %d Kbps to %d Kbps, ratio %f", pondLoss, rtcpi->packetLoss, oldBitrate, newBitrate, (float) newBitrate / oldBitrate);
         }
-        else {
-            if (increaseTimer < DELAY_AFTER_INCREASE)
-                return;
-
-            newBitrate += 50.0f;
-            JAMI_DBG("[AutoAdapt] pondLoss: %f%%, packet loss rate: %f%%, increase bitrate from %d Kbps to %d Kbps, ratio %f", pondLoss, rtcpi->packetLoss, oldBitrate, newBitrate, (float) newBitrate / oldBitrate);
-            histoLoss_.clear();
-        }
     }
 
     setNewBitrate(newBitrate);
@@ -502,12 +490,18 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
 void
 VideoRtpSession::delayProcessing(int br)
 {
-    // If bitrate has changed, let time to receive fresh RTCP packets
+    int newBitrate = videoBitrateInfo_.videoBitrateCurrent;
+    if(br == 0x6801)
+        newBitrate *= 0.95f;
+    else if(br == 0x6802)
+        newBitrate *= 0.90f;
+    else if(br == 0x6803)
+        newBitrate *= 0.85f;
+    else if(br == 0x7378)
+        newBitrate *= 1.05f;
+    else
+        return;
 
-    auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
-    int newBitrate = oldBitrate;
-
-    newBitrate *= 0.90f;
     setNewBitrate(newBitrate);
 }
 
@@ -528,7 +522,6 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
         if (sender_ && sender_->setBitrate(newBR) == 0) {
             lastMediaRestart_ = now;
             // Reset increase timer for each bitrate change
-            lastIncrease_ = now;
         }
     }
 }
@@ -663,106 +656,58 @@ VideoRtpSession::getPonderateLoss(float lastLoss)
     return pondLoss / totalPond;
 }
 
-std::pair<float, float>
-VideoRtpSession::getDelayAvg()
-{
-    if (histoDelay_.size() != MAX_SIZE_HISTO_DELAY)
-        return std::make_pair(0.0f, 0.0f);
-
-    auto middle = std::next(histoDelay_.begin(), histoDelay_.size() / 2);
-    float totDelayInf = 0.0f;
-    float totDelaySup = 0.0f;
-    unsigned cntInf = 0;
-    unsigned cntSup = 0;
-
-    for (auto it = histoDelay_.begin(); it != middle; ++it) {
-        totDelayInf += *it;
-        cntInf++;
-    }
-
-    for (auto it = middle; it != histoDelay_.end(); ++it) {
-        totDelaySup += *it;
-        cntSup++;
-    }
-
-    return std::make_pair(totDelayInf/cntInf, totDelaySup/cntSup);
-}
-
-std::pair<float, float>
-VideoRtpSession::getDelayMedian()
-{
-    if (histoDelay_.size() != MAX_SIZE_HISTO_DELAY)
-        return std::make_pair(0.0f, 0.0f);
-
-    auto middle = std::next(histoDelay_.begin(), histoDelay_.size() / 2);
-    std::list<int> lst2( histoDelay_.begin(), middle );
-    std::list<int> lst3( middle, histoDelay_.end() );
-
-    lst2.sort(); lst3.sort();
-
-    auto mediumInf = *(std::next(lst2.begin(), lst2.size() / 2));
-    auto mediumSup = *(std::next(lst3.begin(), lst3.size() / 2));
-
-    JAMI_WARN("Last medium delay: %d, current medium delay: %d", mediumInf, mediumSup);
-
-    return std::make_pair(mediumInf, mediumSup);
-}
-
-float
-VideoRtpSession::getRollingAvg()
-{
-    if (histoDelay_.size() < MAX_SIZE_HISTO_DELAY)
-        return 0.0f;
-
-    float totDelay = 0;
-
-    for (auto it = histoDelay_.begin(); it != histoDelay_.end(); ++it) {
-        totDelay += (float)*it;
-    }
-
-    return totDelay / histoDelay_.size();
-}
-
-int
-VideoRtpSession::getRollingMedian()
-{
-    if (histoDelay_.size() < MAX_SIZE_HISTO_DELAY)
-        return 0;
-
-    auto delay_bkp = histoDelay_;
-    delay_bkp.sort();
-    auto middle = *(std::next(delay_bkp.begin(), delay_bkp.size() / 2));
-
-    return middle;
-}
-
 void
-VideoRtpSession::delayMonitor(int delay)
+VideoRtpSession::delayMonitor(int gradient, int deltaT)
 {
-    JAMI_WARN("delay: %d", delay);
-    // if (histoDelay_.size() >= MAX_SIZE_HISTO_DELAY)
-    //    histoDelay_.pop_front();
-    // histoDelay_.push_back(delay);
+    float estimation = cc->kalmanFilter(gradient);
+    float thresh = cc->get_thresh();
 
-    // float avg = getRollingAvg();
-    // int mdn = getRollingMedian();
+    // JAMI_WARN("gradient:%d, estimation:%f, thresh:%f", gradient, estimation, thresh);
 
-    // if(mdn > THRESHOLD_CONGESTION/2)
-    //     JAMI_WARN("avg_delay: %f, mdn_delay: %d", avg, mdn);
+    cc->update_thresh(estimation, deltaT);
 
-    // auto now = clock::now();
+    BandwidthUsage bwState = cc->get_bw_state(estimation, thresh);
 
-    // if(mdn > THRESHOLD_CONGESTION &&  (now-lastREMB_) > DELAY_AFTER_REMB) {
-
-    //     JAMI_ERR("[delayMonitor] CONGESTION SEND REMB !!!");
-    //     Remb remb;
-    //     uint8_t* buf = nullptr;
-    //     uint64_t br = 0x3fb93 * 2;
-    //     auto v = remb.createREMB(br);
-    //     buf = &v[0];
-    //     socketPair_->writeData(buf, v.size());
-    //     lastREMB_ =  clock::now();
-    // }
+    if(bwState == BandwidthUsage::bwOverusing1) {
+        JAMI_WARN("[delayMonitor] Overusing1 SEND REMB !!!");
+        uint8_t* buf = nullptr;
+        uint64_t br = 0x6801;       // Decrease 1
+        auto v = cc->createREMB(br);
+        buf = &v[0];
+        socketPair_->writeData(buf, v.size());
+        lastREMB_ =  clock::now();
+    }
+    else if(bwState == BandwidthUsage::bwOverusing2) {
+        JAMI_WARN("[delayMonitor] Overusing2 SEND REMB !!!");
+        uint8_t* buf = nullptr;
+        uint64_t br = 0x6802;       // Decrease 2
+        auto v = cc->createREMB(br);
+        buf = &v[0];
+        socketPair_->writeData(buf, v.size());
+        lastREMB_ =  clock::now();
+    }
+    else if(bwState == BandwidthUsage::bwOverusing3) {
+        JAMI_WARN("[delayMonitor] Overusing3 SEND REMB !!!");
+        uint8_t* buf = nullptr;
+        uint64_t br = 0x6803;       // Decrease 3
+        auto v = cc->createREMB(br);
+        buf = &v[0];
+        socketPair_->writeData(buf, v.size());
+        lastREMB_ =  clock::now();
+    }
+    else if(bwState == BandwidthUsage::bwNormal) {
+        auto now = clock::now();
+        auto remb_timer = now-lastREMB_;
+        if(remb_timer > DELAY_AFTER_REMB) {
+            JAMI_DBG("[delayMonitor] Normal SEND REMB !!!");
+            uint8_t* buf = nullptr;
+            uint64_t br = 0x7378;   // INcrease
+            auto v = cc->createREMB(br);
+            buf = &v[0];
+            socketPair_->writeData(buf, v.size());
+            lastREMB_ =  clock::now();
+        }
+    }
 }
 
 }} // namespace jami::video
