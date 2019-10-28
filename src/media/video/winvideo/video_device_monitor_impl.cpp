@@ -166,9 +166,9 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
                 if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
                     if (wParam == DBT_DEVICEARRIVAL) {
                         auto captureDeviceList = pThis->enumerateVideoInputDevices();
-                        for (auto node : captureDeviceList) {
-                            if (node.find(unique_name) != std::string::npos)
-                                pThis->monitor_->addDevice(node);
+                        for (auto id : captureDeviceList) {
+                            if (id.find(unique_name) != std::string::npos)
+                                pThis->monitor_->addDevice(id);
                         }
                     } else if (wParam == DBT_DEVICEREMOVECOMPLETE) {
                         pThis->monitor_->removeDevice(unique_name);

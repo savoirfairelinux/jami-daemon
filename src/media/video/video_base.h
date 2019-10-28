@@ -96,6 +96,7 @@ struct VideoSettings
 
     std::map<std::string, std::string> to_map() const;
 
+    std::string id {};
     std::string name {};
     std::string channel {};
     std::string video_size {};

@@ -83,7 +83,7 @@ class VideoDeviceMonitor : public Serializable
         std::vector<VideoSettings> preferences_;
 
         void overwritePreferences(const VideoSettings& settings);
-        std::vector<VideoSettings>::iterator findPreferencesByName(const std::string& name);
+        std::vector<VideoSettings>::iterator findPreferencesById(const std::string& id);
 
         /*
          * Vector containing the video devices.
@@ -91,10 +91,8 @@ class VideoDeviceMonitor : public Serializable
         std::vector<VideoDevice> devices_;
         std::string defaultDevice_ = "";
 
-        std::vector<VideoDevice>::iterator findDeviceByName(const std::string& name);
-        std::vector<VideoDevice>::const_iterator findDeviceByName(const std::string& name) const;
-        std::vector<VideoDevice>::iterator findDeviceByNode(const std::string& node);
-        std::vector<VideoDevice>::const_iterator findDeviceByNode(const std::string& node) const;
+        std::vector<VideoDevice>::iterator findDeviceById(const std::string& id);
+        std::vector<VideoDevice>::const_iterator findDeviceById(const std::string& id) const;
 
         std::unique_ptr<VideoDeviceMonitorImpl> monitorImpl_;
 
