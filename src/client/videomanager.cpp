@@ -329,9 +329,9 @@ getDeviceList()
 }
 
 VideoCapabilities
-getCapabilities(const std::string& name)
+getCapabilities(const std::string& deviceId)
 {
-    return jami::Manager::instance().getVideoManager().videoDeviceMonitor.getCapabilities(name);
+    return jami::Manager::instance().getVideoManager().videoDeviceMonitor.getCapabilities(deviceId);
 }
 
 std::string
@@ -341,23 +341,23 @@ getDefaultDevice()
 }
 
 void
-setDefaultDevice(const std::string& name)
+setDefaultDevice(const std::string& deviceId)
 {
-    JAMI_DBG("Setting default device to %s", name.c_str());
-    jami::Manager::instance().getVideoManager().videoDeviceMonitor.setDefaultDevice(name);
+    JAMI_DBG("Setting default device to %s", deviceId.c_str());
+    jami::Manager::instance().getVideoManager().videoDeviceMonitor.setDefaultDevice(deviceId);
     jami::Manager::instance().saveConfig();
 }
 
 void
-setDeviceOrientation(const std::string& name, int angle)
+setDeviceOrientation(const std::string& deviceId, int angle)
 {
-    jami::Manager::instance().getVideoManager().setDeviceOrientation(name, angle);
+    jami::Manager::instance().getVideoManager().setDeviceOrientation(deviceId, angle);
 }
 
 std::map<std::string, std::string>
-getDeviceParams(const std::string& name)
+getDeviceParams(const std::string& deviceId)
 {
-    auto params = jami::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceParams(name);
+    auto params = jami::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceParams(deviceId);
     std::stringstream width, height, rate;
     width << params.width;
     height << params.height;
@@ -371,16 +371,16 @@ getDeviceParams(const std::string& name)
 }
 
 std::map<std::string, std::string>
-getSettings(const std::string& name)
+getSettings(const std::string& deviceId)
 {
-    return jami::Manager::instance().getVideoManager().videoDeviceMonitor.getSettings(name).to_map();
+    return jami::Manager::instance().getVideoManager().videoDeviceMonitor.getSettings(deviceId).to_map();
 }
 
 void
-applySettings(const std::string& name,
+applySettings(const std::string& deviceId,
               const std::map<std::string, std::string>& settings)
 {
-    jami::Manager::instance().getVideoManager().videoDeviceMonitor.applySettings(name, settings);
+    jami::Manager::instance().getVideoManager().videoDeviceMonitor.applySettings(deviceId, settings);
     jami::Manager::instance().saveConfig();
 }
 

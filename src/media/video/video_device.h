@@ -56,7 +56,7 @@ public:
      */
     std::string name {};
 
-    const std::string& getNode() const { return node_; }
+    const std::string& getDeviceId() const { return id_; }
 
     /*
      * Get the 3 level deep tree of possible settings for the device.
@@ -138,7 +138,8 @@ public:
     VideoSettings getSettings() const {
         auto params = getDeviceParams();
         VideoSettings settings;
-        settings.name = params.name;
+        settings.name = name.empty() ? params.name : name;
+        settings.id = params.input;
         settings.channel = params.channel_name;
         settings.video_size = sizeToString(params.width, params.height);
         settings.framerate = jami::to_string(params.framerate.real());
@@ -155,6 +156,7 @@ public:
     void applySettings(VideoSettings settings) {
         DeviceParams params {};
         params.name = settings.name;
+        params.input = settings.id;
         params.channel_name = settings.channel;
         auto size = sizeFromString(settings.channel, settings.video_size);
         params.width = size.first;
@@ -222,7 +224,7 @@ private:
     /*
      * The device node, e.g. "/dev/video0".
      */
-    std::string node_ {};
+    std::string id_ {};
 
     int orientation_ {0};
 
