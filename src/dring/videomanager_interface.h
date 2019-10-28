@@ -163,14 +163,12 @@ struct DRING_PUBLIC AVSinkTarget {
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
 
 DRING_PUBLIC std::vector<std::string> getDeviceList();
-DRING_PUBLIC VideoCapabilities getCapabilities(const std::string& name);
-DRING_PUBLIC std::map<std::string, std::string> getSettings(const std::string& name);
-DRING_PUBLIC void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
-DRING_PUBLIC void setDefaultDevice(const std::string& name);
-DRING_PUBLIC void setDeviceOrientation(const std::string& name, int angle);
-
-DRING_PUBLIC std::map<std::string, std::string> getDeviceParams(const std::string& name);
-
+DRING_PUBLIC VideoCapabilities getCapabilities(const std::string& deviceId);
+DRING_PUBLIC std::map<std::string, std::string> getSettings(const std::string& deviceId);
+DRING_PUBLIC void applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings);
+DRING_PUBLIC void setDefaultDevice(const std::string& deviceId);
+DRING_PUBLIC void setDeviceOrientation(const std::string& deviceId, int angle);
+DRING_PUBLIC std::map<std::string, std::string> getDeviceParams(const std::string& deviceId);
 DRING_PUBLIC std::string getDefaultDevice();
 DRING_PUBLIC std::string getCurrentCodecName(const std::string& callID);
 DRING_PUBLIC void startCamera();

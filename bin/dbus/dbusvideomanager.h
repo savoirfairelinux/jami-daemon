@@ -52,10 +52,10 @@ class DRING_PUBLIC DBusVideoManager :
 
         // Methods
         std::vector<std::string> getDeviceList();
-        std::map<std::string, std::map<std::string, std::vector<std::string>>> getCapabilities(const std::string& name);
-        std::map<std::string, std::string> getSettings(const std::string& name);
-        void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
-        void setDefaultDevice(const std::string& dev);
+        std::map<std::string, std::map<std::string, std::vector<std::string>>> getCapabilities(const std::string& deviceId);
+        std::map<std::string, std::string> getSettings(const std::string& deviceId);
+        void applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings);
+        void setDefaultDevice(const std::string& deviceId);
         std::string getDefaultDevice();
         void startCamera();
         void stopCamera();
@@ -67,7 +67,7 @@ class DRING_PUBLIC DBusVideoManager :
         void setDecodingAccelerated(const bool& state);
         bool getEncodingAccelerated();
         void setEncodingAccelerated(const bool& state);
-        void setDeviceOrientation(const std::string& name, const int& angle);
+        void setDeviceOrientation(const std::string& deviceId, const int& angle);
         std::map<std::string, std::string> getRenderer(const std::string& callId);
         std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
         void stopLocalRecorder(const std::string& filepath);
