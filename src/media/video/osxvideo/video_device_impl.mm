@@ -42,7 +42,7 @@ class VideoDeviceImpl {
          */
         VideoDeviceImpl(const std::string& path);
 
-        std::string device;
+        std::string id;
         std::string name;
 
         std::vector<std::string> getChannelList() const;
@@ -64,7 +64,7 @@ class VideoDeviceImpl {
 };
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
-    : device(uniqueID)
+    : id(uniqueID)
     , current_size_(-1, -1)
     , avDevice_([AVCaptureDevice deviceWithUniqueID:
         [NSString stringWithCString:uniqueID.c_str() encoding:[NSString defaultCStringEncoding]]])
@@ -112,7 +112,7 @@ VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
     params.name = [[avDevice_ localizedName] UTF8String];
-    params.input = params.name;
+    params.input = id;
     params.framerate = rate_;
     params.format = "avfoundation";
     params.pixel_format = "nv12";
@@ -155,7 +155,7 @@ VideoDeviceImpl::getChannelList() const
 VideoDevice::VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>&) :
     deviceImpl_(new VideoDeviceImpl(path))
 {
-    node_ = path;
+    id_ = path;
     name = deviceImpl_->name;
 }
 
