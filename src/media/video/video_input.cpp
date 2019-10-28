@@ -399,14 +399,14 @@ VideoInput::deleteDecoder()
     flushFrames();
     decoder_.reset();
 }
-
+#pragma optimize("", off)
 bool
 VideoInput::initCamera(const std::string& device)
 {
     decOpts_ = jami::getVideoDeviceMonitor().getDeviceParams(device);
     return true;
 }
-
+#pragma optimize("", on)
 static constexpr unsigned
 round2pow(unsigned i, unsigned n)
 {
