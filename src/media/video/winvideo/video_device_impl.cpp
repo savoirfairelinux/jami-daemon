@@ -43,8 +43,8 @@ class VideoDeviceImpl {
         /**
         * @throw std::runtime_error
         */
-        VideoDeviceImpl(const std::string& path);
-        std::string device;
+        VideoDeviceImpl(const std::string& id);
+        std::string id;
         std::string name;
 
         std::vector<std::string> getChannelList() const;
@@ -66,8 +66,8 @@ class VideoDeviceImpl {
         void fail(const std::string& error);
 };
 
-VideoDeviceImpl::VideoDeviceImpl(const std::string& path)
-    : device(path)
+VideoDeviceImpl::VideoDeviceImpl(const std::string& id)
+    : id(id)
     , name()
     , cInterface(new CaptureGraphInterfaces())
 {
@@ -148,11 +148,11 @@ VideoDeviceImpl::setup()
 
         // We want to get the capabilities of a device with the unique_name
         // that corresponds to what was enumerated by the video device monitor.
-        if (unique_name.find(this->device) == std::string::npos) {
+        if (unique_name.find(this->id) == std::string::npos) {
             continue;
         }
 
-        this->device = unique_name;
+        this->id = unique_name;
 
         // get friendly name
         VARIANT var;
@@ -257,7 +257,7 @@ VideoDeviceImpl::getDeviceParams() const
     DeviceParams params;
 
     params.name = name;
-    params.input = device;
+    params.input = id;
     params.format = "dshow";
 
     AM_MEDIA_TYPE *pmt;
@@ -316,7 +316,7 @@ VideoDeviceImpl::getChannelList() const
 VideoDevice::VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>&)
     : deviceImpl_(new VideoDeviceImpl(path))
 {
-    node_ = path;
+    id_ = path;
     name = deviceImpl_->name;
 }
 

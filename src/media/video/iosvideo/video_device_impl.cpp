@@ -179,7 +179,7 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 VideoDevice::VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo)
 : deviceImpl_(new VideoDeviceImpl(path, devInfo))
 {
-    node_ = path;
+    id_ = path;
     name = deviceImpl_->name;
 }
 
