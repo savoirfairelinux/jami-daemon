@@ -40,7 +40,7 @@ struct VideoManager
 {
 public:
 
-    void setDeviceOrientation(const std::string& name, int angle);
+    void setDeviceOrientation(const std::string& deviceId, int angle);
 
     /**
      * VideoManager acts as a cache of the active VideoInput.
