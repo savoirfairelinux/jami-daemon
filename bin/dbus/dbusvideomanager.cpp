@@ -32,27 +32,27 @@ DBusVideoManager::getDeviceList() -> decltype(DRing::getDeviceList())
 }
 
 auto
-DBusVideoManager::getCapabilities(const std::string& name) -> decltype(DRing::getCapabilities(name))
+DBusVideoManager::getCapabilities(const std::string& deviceId) -> decltype(DRing::getCapabilities(deviceId))
 {
-    return DRing::getCapabilities(name);
+    return DRing::getCapabilities(deviceId);
 }
 
 auto
-DBusVideoManager::getSettings(const std::string& name) -> decltype(DRing::getSettings(name))
+DBusVideoManager::getSettings(const std::string& deviceId) -> decltype(DRing::getSettings(deviceId))
 {
-    return DRing::getSettings(name);
+    return DRing::getSettings(deviceId);
 }
 
 void
-DBusVideoManager::applySettings(const std::string& name, const std::map<std::string, std::string>& settings)
+DBusVideoManager::applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings)
 {
-    DRing::applySettings(name, settings);
+    DRing::applySettings(deviceId, settings);
 }
 
 void
-DBusVideoManager::setDefaultDevice(const std::string& dev)
+DBusVideoManager::setDefaultDevice(const std::string& deviceId)
 {
-    DRing::setDefaultDevice(dev);
+    DRing::setDefaultDevice(deviceId);
 }
 
 auto
@@ -122,9 +122,9 @@ DBusVideoManager::setEncodingAccelerated(const bool& state)
 }
 
 void
-DBusVideoManager::setDeviceOrientation(const std::string& name, const int& angle)
+DBusVideoManager::setDeviceOrientation(const std::string& deviceId, const int& angle)
 {
-    DRing::setDeviceOrientation(name, angle);
+    DRing::setDeviceOrientation(deviceId, angle);
 }
 
 std::map<std::string, std::string>
