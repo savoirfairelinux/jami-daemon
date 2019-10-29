@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d0334e64_320d9b52",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 740,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-29T19:24:39Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "269aafe9ffa15cc2b5912c791ff01589b73551d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6a4fd8b3_48eb1955",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 17
+      },
+      "lineNbr": 897,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-29T19:24:39Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n1st function call argument is an uninitialized value\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-core.CallAndMessage",
+      "revId": "269aafe9ffa15cc2b5912c791ff01589b73551d5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
