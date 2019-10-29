@@ -1,0 +1,72 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "733e2fbf_992e44eb",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 650,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-29T22:34:15Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "8f39bdbd42fc62800a84922a0ad41cb1e74a0d27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "af2efc1b_a2d24cb2",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 742,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-29T22:34:15Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "8f39bdbd42fc62800a84922a0ad41cb1e74a0d27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ae86bddc_45d58f29",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 783,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-29T22:34:15Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027noncehex\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "8f39bdbd42fc62800a84922a0ad41cb1e74a0d27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d8e5d559_42ca2f02",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 900,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-29T22:34:15Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n1st function call argument is an uninitialized value\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-core.CallAndMessage",
+      "revId": "8f39bdbd42fc62800a84922a0ad41cb1e74a0d27",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
