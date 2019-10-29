@@ -16,6 +16,57 @@
       "revId": "f2a5d9967ca39cd07d0d12aed58309d8fe1196d8",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7b6efa18_1145567a",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 742,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-29T20:52:22Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "f2a5d9967ca39cd07d0d12aed58309d8fe1196d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "638a73b5_df34fb13",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 783,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-29T20:52:22Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027noncehex\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "f2a5d9967ca39cd07d0d12aed58309d8fe1196d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "284d1720_4ef8f374",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 900,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-10-29T20:52:22Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n1st function call argument is an uninitialized value\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-core.CallAndMessage",
+      "revId": "f2a5d9967ca39cd07d0d12aed58309d8fe1196d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
