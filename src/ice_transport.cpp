@@ -1001,12 +1001,12 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
          *     tcp-type-ext          = "tcptype" SP tcp-type
          *     tcp-type              = "active" / "passive" / "so"
          */
-        val << std::string(cand[i].foundation.ptr, cand[i].foundation.slen);
-        val << " " << (unsigned)cand[i].comp_id;
+        val.write(cand[i].foundation.ptr, cand[i].foundation.slen);
+        val << " " << std::to_string(cand[i].comp_id);
         val << (cand[i].transport == PJ_CAND_UDP ? " UDP " : " TCP ");
-        val << cand[i].prio;
+        val << std::to_string(cand[i].prio);
         val << " " << pj_sockaddr_print(&cand[i].addr, ipaddr, sizeof(ipaddr), 0);
-        val << " " << (unsigned)pj_sockaddr_get_port(&cand[i].addr);
+        val << " " << std::to_string((unsigned)pj_sockaddr_get_port(&cand[i].addr));
         val << " typ " << pj_ice_get_cand_type_name(cand[i].type);
 
         if (cand[i].transport != PJ_CAND_UDP) {
