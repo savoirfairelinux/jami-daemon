@@ -155,7 +155,7 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
     while (!(playbackBuf = playbackQueue_->dequeue())) {
         if (auto urgentSamples = urgentRingBuffer_.get(RingBufferPool::DEFAULT_ID)) {
             bufferPool.discard(1, RingBufferPool::DEFAULT_ID);
-            playbackQueue_->enqueue(std::move(urgentSamples));
+            playbackQueue_->enqueue(resampler_->resample(std::move(urgentSamples),format));
         } else if (auto toneToPlay = Manager::instance().getTelephoneTone()) {
             playbackQueue_->enqueue(resampler_->resample(toneToPlay->getNext(), format));
         } else if (auto buf = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
