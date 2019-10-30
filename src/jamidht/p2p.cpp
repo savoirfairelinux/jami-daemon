@@ -446,8 +446,7 @@ private:
                     if (hasPubIp) ice->setInitiatorSession();
                     break;
                 } else {
-                  JAMI_ERR("[Account:%s] ICE negotation failed",
-                           parent_.account.getAccountID().c_str());
+                    JAMI_ERR("[Account:%s] ICE negotation failed", parent_.account.getAccountID().c_str());
                 }
             } else {
                 try {
@@ -720,13 +719,19 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         try {
             if (IpAddr(ip).isIpv4()) {
                 if (!sendTurn) continue;
-                sendRelayV4 = true;
-                turnAuthv4_->permitPeer(ip);
+                std::lock_guard<std::mutex> lock(clientsMutex_);
+                if (turnAuthv4_) {
+                    sendRelayV4 = true;
+                    turnAuthv4_->permitPeer(ip);
+                }
                 JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
             } else if (IpAddr(ip).isIpv6()) {
                 if (!sendTurn) continue;
-                sendRelayV6 = true;
-                turnAuthv6_->permitPeer(ip);
+                std::lock_guard<std::mutex> lock(clientsMutex_);
+                if (turnAuthv6_) {
+                    sendRelayV6 = true;
+                    turnAuthv6_->permitPeer(ip);
+                }
                 JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
             } else {
                 // P2P File transfer. We received an ice SDP message:
