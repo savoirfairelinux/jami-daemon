@@ -42,7 +42,9 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
 {}
 
 CoreLayer::~CoreLayer()
-{}
+{
+    stopStream();
+}
 
 std::vector<std::string>
 CoreLayer::getCaptureDeviceList() const
