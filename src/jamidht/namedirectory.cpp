@@ -122,7 +122,6 @@ NameDirectory::instance(const std::string& serverUrl, std::shared_ptr<dht::Logge
 
 void
 NameDirectory::setHeaderFields(Request& request){
-    request.set_header_field(restinio::http_field_t::host, request.get_url().host + ":" + request.get_url().service);
     request.set_header_field(restinio::http_field_t::user_agent, "JamiDHT");
     request.set_header_field(restinio::http_field_t::accept, "*/*");
     request.set_header_field(restinio::http_field_t::content_type, "application/json");
@@ -136,22 +135,12 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         cb(cacheResult, Response::found);
         return;
     }
-    auto request = std::make_shared<Request>(*httpContext_, resolver_, logger_);
+    auto request = std::make_shared<Request>(*httpContext_, resolver_, QUERY_ADDR + addr);
     auto reqid = request->id();
     try {
         request->set_connection_type(restinio::http_connection_header_t::keep_alive);
-        auto target_prefix = request->get_url().target;
-        if (target_prefix.back() == '/')
-            target_prefix.pop_back();
-        request->set_target(target_prefix + QUERY_ADDR + addr);
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-
-        std::string uri = serverUrl_;
-        if (uri.back() == '/')
-            uri.pop_back();
-        uri += QUERY_ADDR + addr;
-        JAMI_DBG("Address lookup for %s: %s", addr.c_str(), uri.c_str());
         request->add_on_state_change_callback([this, cb=std::move(cb), reqid, addr]
                                               (Request::State state, const dht::http::Response& response){
             if (state != Request::State::DONE)
@@ -224,23 +213,11 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         cb(cacheResult, Response::found);
         return;
     }
-    auto request = std::make_shared<Request>(*httpContext_, resolver_, logger_);
+    auto request = std::make_shared<Request>(*httpContext_, resolver_, QUERY_NAME + name);
     auto reqid = request->id();
     try {
-        request->set_connection_type(restinio::http_connection_header_t::keep_alive);
-        auto target_prefix = request->get_url().target;
-        if (target_prefix.back() == '/')
-            target_prefix.pop_back();
-        request->set_target(target_prefix + QUERY_NAME + name);
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-
-        std::string uri = serverUrl_;
-        if (uri.back() == '/')
-            uri.pop_back();
-        uri += QUERY_NAME + name;
-        JAMI_DBG("Name lookup for %s: %s", name.c_str(), uri.c_str());
-
         request->add_on_state_change_callback([this, reqid, name, cb=std::move(cb)]
                                               (Request::State state, const dht::http::Response& response){
             if (state != Request::State::DONE)
@@ -344,14 +321,9 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n,
                     jami::Blob(publickey.begin(), publickey.end()))  << "\"}";
         body = ss.str();
     }
-    auto request = std::make_shared<Request>(*httpContext_, resolver_, logger_);
+    auto request = std::make_shared<Request>(*httpContext_, resolver_, QUERY_NAME + name);
     auto reqid = request->id();
     try {
-        request->set_connection_type(restinio::http_connection_header_t::keep_alive);
-        auto target_prefix = request->get_url().target;
-        if (target_prefix.back() == '/')
-            target_prefix.pop_back();
-        request->set_target(target_prefix + QUERY_NAME + name);
         request->set_method(restinio::http_method_post());
         setHeaderFields(*request);
         request->set_body(body);
