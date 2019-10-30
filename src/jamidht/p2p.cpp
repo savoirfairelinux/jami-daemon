@@ -271,6 +271,7 @@ protected:
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<PeerConnection>> servers_;
     std::map<std::pair<dht::InfoHash, DRing::DataTransferId>, std::unique_ptr<ClientConnector>> clients_;
     std::mutex clientsMutex_;
+    std::mutex turnMutex_;
 
 private:
     void onTurnPeerConnection(const IpAddr&);
@@ -446,8 +447,7 @@ private:
                     if (hasPubIp) ice->setInitiatorSession();
                     break;
                 } else {
-                  JAMI_ERR("[Account:%s] ICE negotation failed",
-                           parent_.account.getAccountID().c_str());
+                    JAMI_ERR("[Account:%s] ICE negotation failed", parent_.account.getAccountID().c_str());
                 }
             } else {
                 try {
@@ -538,7 +538,7 @@ private:
 bool
 DhtPeerConnector::Impl::turnConnect()
 {
-    std::lock_guard<std::mutex> lock(clientsMutex_);
+    std::lock_guard<std::mutex> lock(turnMutex_);
     // Don't retry to reconnect to the TURN server if already connected
     if (turnAuthv4_ && turnAuthv4_->isReady()
         && turnAuthv6_ && turnAuthv6_->isReady())
@@ -622,12 +622,19 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
 {
     JAMI_DBG() << account << "[CNX] TURN connection attempt from "
                << peer_addr.toString(true, true);
-
     auto turn_ep = std::unique_ptr<ConnectedTurnTransport>(nullptr);
-    if (peer_addr.isIpv4())
-        turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv4_, peer_addr);
-    else
-        turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv6_, peer_addr);
+
+    {
+        std::lock_guard<std::mutex> lock(turnMutex_);
+        if (peer_addr.isIpv4() && turnAuthv4_)
+            turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv4_, peer_addr);
+        else if (turnAuthv6_)
+            turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv6_, peer_addr);
+        else {
+            JAMI_WARN() << "No TURN initialized";
+            return;
+        }
+    }
 
     JAMI_DBG() << account << "[CNX] start TLS session over TURN socket";
     dht::InfoHash peer_h;
@@ -655,7 +662,10 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
     servers_.emplace(std::make_pair(peer_h, peer_addr), std::move(connection));
 
     // note: operating this way let endpoint to be deleted safely in case of exceptions
-    turnEndpoints_.emplace(std::make_pair(peer_addr, std::move(turn_ep)));
+    {
+        std::lock_guard<std::mutex> lock(turnMutex_);
+        turnEndpoints_.emplace(std::make_pair(peer_addr, std::move(turn_ep)));
+    }
 }
 
 void
@@ -668,7 +678,10 @@ DhtPeerConnector::Impl::onTurnPeerDisconnection(const IpAddr& peer_addr)
     JAMI_WARN() << account << "[CNX] disconnection from peer " << peer_addr.toString(true, true);
     servers_.erase(it);
     connectedPeers_.erase(peer_addr);
-    turnEndpoints_.erase(peer_addr);
+    {
+        std::lock_guard<std::mutex> lock(turnMutex_);
+        turnEndpoints_.erase(peer_addr);
+    }
 }
 
 void
@@ -720,13 +733,19 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         try {
             if (IpAddr(ip).isIpv4()) {
                 if (!sendTurn) continue;
-                sendRelayV4 = true;
-                turnAuthv4_->permitPeer(ip);
+                std::lock_guard<std::mutex> lock(turnMutex_);
+                if (turnAuthv4_) {
+                    sendRelayV4 = true;
+                    turnAuthv4_->permitPeer(ip);
+                }
                 JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
             } else if (IpAddr(ip).isIpv6()) {
                 if (!sendTurn) continue;
-                sendRelayV6 = true;
-                turnAuthv6_->permitPeer(ip);
+                std::lock_guard<std::mutex> lock(turnMutex_);
+                if (turnAuthv6_) {
+                    sendRelayV6 = true;
+                    turnAuthv6_->permitPeer(ip);
+                }
                 JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
             } else {
                 // P2P File transfer. We received an ice SDP message:
@@ -791,12 +810,17 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
     }
 
     if (sendTurn) {
-        auto relayIpv4 = turnAuthv4_->peerRelayAddr();
-        if (sendRelayV4 && relayIpv4)
-            addresses.emplace_back(relayIpv4.toString(true, true));
-        auto relayIpv6 = turnAuthv6_->peerRelayAddr();
-        if (sendRelayV6 && relayIpv6)
-            addresses.emplace_back(relayIpv6.toString(true, true));
+        std::lock_guard<std::mutex> lock(turnMutex_);
+        if (turnAuthv4_) {
+            auto relayIpv4 = turnAuthv4_->peerRelayAddr();
+            if (sendRelayV4 && relayIpv4)
+                addresses.emplace_back(relayIpv4.toString(true, true));
+        }
+        if (turnAuthv6_) {
+            auto relayIpv6 = turnAuthv6_->peerRelayAddr();
+            if (sendRelayV6 && relayIpv6)
+                addresses.emplace_back(relayIpv6.toString(true, true));
+        }
     }
 
     if (addresses.empty()) {
@@ -923,8 +947,10 @@ DhtPeerConnector::Impl::eventLoop()
                     auto dev_h = ctrlMsgData<CtrlMsgType::CANCEL, 0>(*msg);
                     auto id = ctrlMsgData<CtrlMsgType::CANCEL, 1>(*msg);
                     // Cancel outgoing files
-                    std::lock_guard<std::mutex> lock(clientsMutex_);
-                    clients_.erase(std::make_pair(dev_h, id));
+                    {
+                        std::lock_guard<std::mutex> lock(clientsMutex_);
+                        clients_.erase(std::make_pair(dev_h, id));
+                    }
                     // Cancel incoming files
                     auto it = std::find_if(
                         servers_.begin(), servers_.end(),
@@ -949,7 +975,10 @@ DhtPeerConnector::Impl::eventLoop()
                         p2pEndpoints_.erase(p2p_it);
                     connectedPeers_.erase(peer);
                     // Else it's via TURN!
-                    turnEndpoints_.erase(peer);
+                    {
+                        std::lock_guard<std::mutex> lock(turnMutex_);
+                        turnEndpoints_.erase(peer);
+                    }
                     Manager::instance().dataTransfers->close(id);
                 }
                 break;
