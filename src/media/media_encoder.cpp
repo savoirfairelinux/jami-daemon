@@ -190,6 +190,7 @@ MediaEncoder::initStream(const std::string& codecName, AVBufferRef* framesCtx)
 int
 MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx)
 {
+    std::lock_guard<std::mutex> lk(encMutex_);
     AVCodecContext* encoderCtx = nullptr;
     AVMediaType mediaType;
 
@@ -198,7 +199,6 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     else if(systemCodecInfo.mediaType == MEDIA_AUDIO)
         mediaType = AVMEDIA_TYPE_AUDIO;
 
-    std::lock_guard<std::mutex> lk(encMutex_);
     encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), framesCtx, 0);
 
     // add video stream to outputformat context
@@ -725,11 +725,14 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
 void
 MediaEncoder::setBitrate(uint64_t br)
 {
+    std::lock_guard<std::mutex> lk(encMutex_);
     AVCodecContext* encoderCtx = getCurrentVideoAVCtx();
+    if(not encoderCtx)
+        return;
+
     AVMediaType codecType = encoderCtx->codec_type;
     AVCodecID codecId = encoderCtx->codec_id;
 
-    std::lock_guard<std::mutex> lk(encMutex_);
     // No need to restart encoder for h264, h263 and MPEG4
     // Change parameters on the fly
     if(codecId == AV_CODEC_ID_H264)
