@@ -51,7 +51,7 @@ static constexpr std::chrono::seconds NET_CONNECTION_TIMEOUT{10};
 static constexpr std::chrono::seconds SOCK_TIMEOUT{3};
 static constexpr std::chrono::seconds ICE_READY_TIMEOUT{10};
 static constexpr std::chrono::seconds ICE_INIT_TIMEOUT{10};
-static constexpr std::chrono::seconds ICE_NOGOTIATION_TIMEOUT{10};
+static constexpr std::chrono::seconds ICE_NEGOTIATION_TIMEOUT{10};
 
 using Clock = std::chrono::system_clock;
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
@@ -292,8 +292,6 @@ private:
 
     std::future<void> loopFut_; // keep it last member
 
-    std::shared_ptr<IceTransport> ice_;
-
     std::vector<std::thread> answer_threads_;
 };
 
@@ -438,7 +436,7 @@ private:
                   break;
                 }
 
-                ice->waitForNegotiation(ICE_NOGOTIATION_TIMEOUT);
+                ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
                 if (ice->isRunning()) {
                     peer_ep = std::make_shared<IceSocketEndpoint>(ice, true);
                     JAMI_DBG("[Account:%s] ICE negotiation succeed. Starting file transfer",
@@ -717,6 +715,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         bool ready {false};
     };
     auto iceReady = std::make_shared<IceReady>();
+    std::shared_ptr<IceTransport> ice;
     for (auto& ip: request.addresses) {
         try {
             if (IpAddr(ip).isIpv4()) {
@@ -747,32 +746,33 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                     ir.ready = true;
                     ir.cv.notify_one();
                 };
-                ice_ = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, true, ice_config);
+                ice = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, true, ice_config);
 
-                if (ice_->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
+                if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
                     JAMI_ERR("Cannot initialize ICE session.");
                     continue;
                 }
 
-                account.registerDhtAddress(*ice_);
+                account.registerDhtAddress(*ice);
 
-                auto sdp = parse_SDP(ip, *ice_);
+                auto sdp = parse_SDP(ip, *ice);
                 // NOTE: hasPubIp is used for compability (because ICE is waiting for a certain state in old versions)
                 // This can be removed when old versions will be unsupported (version before this patch)
                 hasPubIp = hasPublicIp(sdp);
-                if (not ice_->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
+                if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
                     JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
                                 account.getAccountID().c_str());
                     continue;
                 }
 
                 if (!hasPubIp) {
-                    ice_->waitForNegotiation(ICE_NOGOTIATION_TIMEOUT);
-                    if (ice_->isRunning()) {
+                    ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
+                    if (ice->isRunning()) {
                         sendIce = true;
                         JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
                     } else {
                         JAMI_WARN("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
+                        ice->cancelOperations();
                     }
                 } else
                     sendIce = true; // Ice started with success, we can use it.
@@ -787,11 +787,11 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
 
     if (sendIce) {
         // NOTE: This is a shortest version of a real SDP message to save some bits
-        auto iceAttributes = ice_->getLocalAttributes();
+        auto iceAttributes = ice->getLocalAttributes();
         std::stringstream icemsg;
         icemsg << iceAttributes.ufrag << "\n";
         icemsg << iceAttributes.pwd << "\n";
-        for (const auto &addr : ice_->getLocalCandidates(0)) {
+        for (const auto &addr : ice->getLocalCandidates(0)) {
           icemsg << addr << "\n";
         }
         addresses = {icemsg.str()};
@@ -818,8 +818,8 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
 
     if (sendIce) {
         if (hasPubIp) {
-            ice_->waitForNegotiation(ICE_NOGOTIATION_TIMEOUT);
-            if (ice_->isRunning()) {
+            ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
+            if (ice->isRunning()) {
                 JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
             } else {
                 JAMI_WARN("[Account:%s] ICE negotation failed - Fallbacking to TURN", account.getAccountID().c_str());
@@ -828,7 +828,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         }
 
         if (not iceReady->ready) {
-            if (!hasPubIp) ice_->setSlaveSession();
+            if (!hasPubIp) ice->setSlaveSession();
             std::unique_lock<std::mutex> lk {iceReady->mtx};
             if (not iceReady->cv.wait_for(lk, ICE_READY_TIMEOUT, [&]{ return iceReady->ready; })) {
                 // This will fallback on TURN if ICE is not ready
@@ -837,10 +837,10 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         }
 
         std::unique_ptr<AbstractSocketEndpoint> peer_ep =
-            std::make_unique<IceSocketEndpoint>(ice_, false);
+            std::make_unique<IceSocketEndpoint>(ice, false);
         JAMI_DBG() << account << "[CNX] start TLS session";
         auto ph = peer_h;
-        if (hasPubIp) ice_->setSlaveSession();
+        if (hasPubIp) ice->setSlaveSession();
         auto tls_ep = std::make_unique<TlsSocketEndpoint>(
             *peer_ep, account.identity(), account.dhParams(),
             [&, this](const dht::crypto::Certificate &cert) {
@@ -861,9 +861,9 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
             std::move(tls_ep));
         connection->attachOutputStream(std::make_shared<FtpServer>(
             account.getAccountID(), peer_h.toString()));
-        servers_.emplace(std::make_pair(peer_h, ice_->getRemoteAddress(0)),
+        servers_.emplace(std::make_pair(peer_h, ice->getRemoteAddress(0)),
                         std::move(connection));
-        p2pEndpoints_.emplace(std::make_pair(peer_h, ice_->getRemoteAddress(0)),
+        p2pEndpoints_.emplace(std::make_pair(peer_h, ice->getRemoteAddress(0)),
                         std::move(peer_ep));
     }
     // Now wait for a TURN connection from peer (see onTurnPeerConnection) if fallbacking
