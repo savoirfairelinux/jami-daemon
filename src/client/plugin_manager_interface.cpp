@@ -25,4 +25,17 @@ unloadPlugin(const std::string& path){
     JAMI_WARN() << " UNLOADING PLUGIN " << path;
 }
 
+void
+togglePlugin(const std::string& path, bool toggle){
+    auto& psm = jami::Manager::instance().getPluginServicesManager();
+    if(psm) {
+        psm->togglePlugin(path,toggle);
+    }
+    if(toggle) {
+        JAMI_WARN() << " Plugin " << path << " ON";
+    } else {
+        JAMI_WARN() << " Plugin " << path << " OFF";
+    }
+}
+
 }
