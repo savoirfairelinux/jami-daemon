@@ -33,29 +33,29 @@ class PortAudioLayer : public AudioLayer {
 
 public:
     PortAudioLayer(const AudioPreference& pref);
-    virtual ~PortAudioLayer() = default;
+    ~PortAudioLayer();
 
-    virtual std::vector<std::string> getCaptureDeviceList() const;
-    virtual std::vector<std::string> getPlaybackDeviceList() const;
-    virtual int getAudioDeviceIndex(const std::string& name, DeviceType type) const;
-    virtual std::string getAudioDeviceName(int index, DeviceType type) const;
-    virtual int getIndexCapture() const;
-    virtual int getIndexPlayback() const;
-    virtual int getIndexRingtone() const;
+    std::vector<std::string> getCaptureDeviceList() const override;
+    std::vector<std::string> getPlaybackDeviceList() const override;
+    int getAudioDeviceIndex(const std::string& name, DeviceType type) const override;
+    std::string getAudioDeviceName(int index, DeviceType type) const override;
+    int getIndexCapture() const override;
+    int getIndexPlayback() const override;
+    int getIndexRingtone() const override;
 
     /**
      * Start the capture stream and prepare the playback stream.
      * The playback starts accordingly to its threshold
      */
-    virtual void startStream();
+    void startStream() override;
 
     /**
      * Stop the playback and capture streams.
      * Drops the pending frames and put the capture and playback handles to PREPARED state
      */
-    virtual void stopStream();
+    void stopStream() override;
 
-    virtual void updatePreference(AudioPreference& pref, int index, DeviceType type);
+    void updatePreference(AudioPreference& pref, int index, DeviceType type) override;
 
 private:
     NON_COPYABLE(PortAudioLayer);
