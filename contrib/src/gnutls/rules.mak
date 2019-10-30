@@ -1,6 +1,6 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.6.7
+GNUTLS_VERSION := 3.6.10
 GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
@@ -51,10 +51,6 @@ GNUTLS_CONF := \
 	--without-libintl-prefix \
 	--without-idn \
 	$(HOSTCONF)
-
-ifdef HAVE_ANDROID
-	GNUTLS_CONF += --disable-hardware-acceleration
-endif
 
 ifdef HAVE_IOS
 	GNUTLS_CONF += --disable-hardware-acceleration
