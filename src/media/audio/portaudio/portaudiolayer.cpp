@@ -88,6 +88,11 @@ PortAudioLayer::PortAudioLayer(const AudioPreference& pref)
     , pimpl_ {new PortAudioLayerImpl(*this, pref)}
 {}
 
+PortAudioLayer::~PortAudioLayer()
+{
+    stopStream();
+}
+
 std::vector<std::string>
 PortAudioLayer::getCaptureDeviceList() const
 {
@@ -281,6 +286,8 @@ PortAudioLayer::PortAudioLayerImpl::init(PortAudioLayer& parent)
             parent.audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
             parent.audioFormat_.sample_rate = outputDeviceInfo->defaultSampleRate;
             parent.hardwareFormatAvailable(parent.audioFormat_);
+            JAMI_DBG() << "PortAudioLayer initialized output using: "
+                << outputDeviceInfo->name;
         } else {
             indexOut_ = paNoDevice;
         }
@@ -291,6 +298,8 @@ PortAudioLayer::PortAudioLayerImpl::init(PortAudioLayer& parent)
             parent.audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
             parent.audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
             parent.hardwareInputFormatAvailable(parent.audioInputFormat_);
+            JAMI_DBG() << "PortAudioLayer initialized input using: "
+                << inputDeviceInfo->name;
         } else {
             indexIn_ = paNoDevice;
         }
