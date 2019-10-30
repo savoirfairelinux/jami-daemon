@@ -130,7 +130,7 @@ void SIPCall::createCallAVStreams()
         auto preprocess2 = [this] (const std::shared_ptr<jami::MediaFrame> iFrame) -> std::shared_ptr<VideoFrame> {
             auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
             //JAMI_DBG() << "Frame dimensions: " << ivFrame->width() << " : " << ivFrame->height() << " : " << ivFrame->format();
-            std::shared_ptr<VideoFrame> rgbFrame = scaler2.convertFormat(*ivFrame, AV_PIX_FMT_BGR24);
+            std::shared_ptr<VideoFrame> rgbFrame = scaler2.convertFormat(*ivFrame, AV_PIX_FMT_RGB24);
             return rgbFrame;
         };
 

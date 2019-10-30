@@ -48,6 +48,10 @@ public:
         }
     }
 
+    void togglePlugin(const std::string& path, bool toggle){
+        std::cout << path << "::" << toggle;
+    }
+
     /**
      * @brief notifyAllAVSubject
      * @param subject

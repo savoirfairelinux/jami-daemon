@@ -31,7 +31,7 @@
 #include <mutex>
 #include <functional>
 #include <ciso646> // fix windows compiler bug
-#include <iostream>
+#include "logger.h"
 
 namespace jami {
 
@@ -67,6 +67,17 @@ public:
         o->attached(this);
     }
 
+    void detachPriorityObserver(Observer<T>* o){
+        std::lock_guard<std::mutex> lk(mutex_);
+        for(auto it=priority_observers_.begin(); it != priority_observers_.end(); ++it){
+            if(auto so = it->lock()){
+                if(so.get() == o) {
+                    priority_observers_.erase(it);
+                }
+            }
+        }
+    }
+
     bool detach(Observer<T>* o) {
         std::lock_guard<std::mutex> lk(mutex_);
         if (o and observers_.erase(o)) {
@@ -89,7 +100,7 @@ protected:
                 try {
                    so->update(this,data);
                 } catch (std::exception& e) {
-                    std::cout << e.what() <<  std::endl;
+                    JAMI_ERR() << e.what();
                 }
             }
         }
@@ -99,7 +110,7 @@ protected:
 //                try {
 //                    so->update(this,data);
 //                } catch (std::exception& e) {
-//                    std::cout << e.what() <<  std::endl;
+//                    JAMI_ERR() << e.what();
 //                }
 //                ++it;
 //            } else {

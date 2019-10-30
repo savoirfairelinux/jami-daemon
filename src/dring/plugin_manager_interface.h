@@ -7,5 +7,6 @@
 namespace DRing {
 DRING_PUBLIC void loadPlugin(const std::string& path);
 DRING_PUBLIC void unloadPlugin(const std::string& path);
+DRING_PUBLIC void togglePlugin(const std::string& path, bool toggle);
 }
 
