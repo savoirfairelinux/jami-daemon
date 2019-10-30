@@ -488,11 +488,13 @@ private:
           // In case of a timeout
           JAMI_WARN() << "TLS connection timeout from peer " << peer_.toString()
                       << ": " << e.what();
+          ice->cancelOperations(); // This will stop current PeerChannel operations
           cancel();
           return;
         } catch (...) {
           JAMI_WARN() << "TLS connection failure from peer "
                       << peer_.toString();
+          ice->cancelOperations(); // This will stop current PeerChannel operations
           cancel();
           return;
         }
