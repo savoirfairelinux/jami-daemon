@@ -50,6 +50,8 @@
 #include <cstdlib>
 #include <cstring>
 
+static constexpr const char* const JAMI_DBUS_NAME = "cx.ring.Ring";
+
 class EventCallback :
     public DBus::Callback_Base<void, DBus::DefaultTimeout&>
 {
@@ -74,7 +76,10 @@ DBusClient::DBusClient(int flags, bool persistent)
         DBus::default_dispatcher = dispatcher_.get();
 
         DBus::Connection sessionConnection {DBus::Connection::SessionBus()};
-        sessionConnection.request_name("cx.ring.Ring");
+        if (sessionConnection.has_name(JAMI_DBUS_NAME)) {
+            throw std::runtime_error {"Another daemon is detected"};
+        }
+        sessionConnection.request_name(JAMI_DBUS_NAME);
 
         callManager_.reset(new DBusCallManager {sessionConnection});
         configurationManager_.reset(new DBusConfigurationManager {sessionConnection});
