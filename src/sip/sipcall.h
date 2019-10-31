@@ -261,6 +261,8 @@ private:
     // An instance of the scaler
     video::VideoScaler scaler;
     video::VideoScaler scaler2;
+    std::unique_ptr<MediaFilter> filter_;
+    double videoInputRotation{0.0};
     void createCallAVStream(const StreamData& StreamData, MediaStream& streamSource, const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject);
     void createCallAVStreams();
     void destroyCallAVStreams();
