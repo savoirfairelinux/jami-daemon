@@ -103,6 +103,8 @@ public:
 
     void getDefaultCanditates();
 
+    std::string toString() const;
+
     // Non-mutex protected of public versions
     bool _isInitialized() const;
     bool _isStarted() const;
@@ -459,7 +461,7 @@ IceTransport::Impl::handleEvents(unsigned max_msec)
             const auto err = pj_get_os_error();
             // Kept as debug as some errors are "normal" in regular context
             last_errmsg_ = sip_utils::sip_strerror(err);
-            JAMI_DBG("[ice:%p] ioqueue error %d: %s", this, err, last_errmsg_.c_str());
+            JAMI_DBG("%s ioqueue error %d: %s", this->toString().c_str(), err, last_errmsg_.c_str());
             std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
             return;
         }
@@ -478,11 +480,11 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
-        JAMI_DBG("[ice:%p] %s success", this, opname);
+        JAMI_DBG("%s %s success", this->toString().c_str(), opname);
     }
     else {
         last_errmsg_ = sip_utils::sip_strerror(status);
-        JAMI_ERR("[ice:%p] %s failed: %s", this, opname, last_errmsg_.c_str());
+        JAMI_ERR("%s %s failed: %s", this->toString().c_str(), opname, last_errmsg_.c_str());
     }
 
     {
@@ -518,7 +520,7 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
                     out << " [" << i << "] disabled\n";
                 }
             }
-            JAMI_DBG("[ice:%p] connection pairs (local <-> remote):\n%s", this, out.str().c_str());
+            JAMI_DBG("%s connection pairs (local <-> remote):\n%s", this->toString().c_str(), out.str().c_str());
         }
         if (on_negodone_cb_)
             on_negodone_cb_(done);
@@ -537,7 +539,7 @@ IceTransport::Impl::setInitiatorSession()
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
             last_errmsg_ = sip_utils::sip_strerror(status);
-            JAMI_ERR("[ice:%p] role change failed: %s", this, last_errmsg_.c_str());
+            JAMI_ERR("%s role change failed: %s", this->toString().c_str(), last_errmsg_.c_str());
             return false;
         }
         return true;
@@ -554,7 +556,7 @@ IceTransport::Impl::setSlaveSession()
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
             last_errmsg_ = sip_utils::sip_strerror(status);
-            JAMI_ERR("[ice:%p] role change failed: %s", this, last_errmsg_.c_str());
+            JAMI_ERR("%s role change failed: %s", this->toString().c_str(), last_errmsg_.c_str());
             return false;
         }
         return true;
@@ -572,13 +574,13 @@ IceTransport::Impl::getLocalAddress(unsigned comp_id) const
         else
             return {}; // disabled component
     } else
-        JAMI_WARN("[ice:%p] bad call: non-negotiated transport", this);
+        JAMI_WARN("%s bad call: non-negotiated transport", this->toString().c_str());
 
     // Return the default IP (could be not nominated and valid after negotiation)
     if (_isInitialized())
         return cand_[comp_id].addr;
 
-    JAMI_ERR("[ice:%p] bad call: non-initialized transport", this);
+    JAMI_ERR("%s bad call: non-initialized transport", this->toString().c_str());
     return {};
 }
 
@@ -592,9 +594,9 @@ IceTransport::Impl::getRemoteAddress(unsigned comp_id) const
         else
             return {}; // disabled component
     } else
-        JAMI_WARN("[ice:%p] bad call: non-negotiated transport", this);
+        JAMI_WARN("%s bad call: non-negotiated transport", this->toString().c_str());
 
-    JAMI_ERR("[ice:%p] bad call: non-negotiated transport", this);
+    JAMI_ERR("%s bad call: non-negotiated transport", this->toString().c_str());
     return {};
 }
 
@@ -618,14 +620,14 @@ bool
 IceTransport::Impl::createIceSession(pj_ice_sess_role role)
 {
     if (pj_ice_strans_init_ice(icest_.get(), role, nullptr, nullptr) != PJ_SUCCESS) {
-        JAMI_ERR("[ice:%p] pj_ice_strans_init_ice() failed", this);
+        JAMI_ERR("%s pj_ice_strans_init_ice() failed", this->toString().c_str());
         return false;
     }
 
     // Fetch some information on local configuration
     getUFragPwd();
     getDefaultCanditates();
-    JAMI_DBG("[ice:%p] (local) ufrag=%s, pwd=%s", this, local_ufrag_.c_str(), local_pwd_.c_str());
+    JAMI_DBG("%s (local) ufrag=%s, pwd=%s", this->toString().c_str(), local_ufrag_.c_str(), local_pwd_.c_str());
     return true;
 }
 
@@ -637,7 +639,7 @@ IceTransport::Impl::getLocalICECandidates(unsigned comp_id) const
     unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
 
     if (pj_ice_strans_enum_cands(icest_.get(), comp_id, &cand_cnt, cand) != PJ_SUCCESS) {
-        JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
+        JAMI_ERR("%s pj_ice_strans_enum_cands() failed", this->toString().c_str());
         return cand_addrs;
     }
 
@@ -678,8 +680,8 @@ void IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr &base,
     int idx = -1;
     auto af = addr.getFamily();
     if (af == AF_UNSPEC) {
-        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: unknown addess familly",
-                this, addr.toString().c_str());
+        JAMI_ERR("%s Unable to add reflective IP %s: unknown addess familly",
+                this->toString().c_str(), addr.toString().c_str());
         return;
     }
 
@@ -690,9 +692,9 @@ void IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr &base,
         }
     }
     if (idx < 0) {
-        JAMI_ERR("[ice:%p] Unable to add reflective IP %s: no suitable local STUN "
+        JAMI_ERR("%s Unable to add reflective IP %s: no suitable local STUN "
                 "host found",
-                this, addr.toString().c_str());
+                this->toString().c_str(), addr.toString().c_str());
         return;
     }
 
@@ -720,12 +722,12 @@ void IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr &base,
 
     if (ret != PJ_SUCCESS) {
         last_errmsg_ = sip_utils::sip_strerror(ret);
-        JAMI_ERR("[ice:%p] pj_ice_sess_add_cand failed with error %d: %s", this,
+        JAMI_ERR("%s pj_ice_sess_add_cand failed with error %d: %s", this->toString().c_str(),
                 ret, last_errmsg_.c_str());
-        JAMI_ERR("[ice:%p] failed to add candidate for comp_id=%d : %s : %s", this,
+        JAMI_ERR("%s failed to add candidate for comp_id=%d : %s : %s", this->toString().c_str(),
                 comp_id, base.toString().c_str(), addr.toString().c_str());
     } else {
-        JAMI_DBG("[ice:%p] succeed to add candidate for comp_id=%d : %s : %s", this,
+        JAMI_DBG("%s succeed to add candidate for comp_id=%d : %s : %s", this->toString().c_str(),
                 comp_id, base.toString().c_str(), addr.toString().c_str());
     }
 }
@@ -742,8 +744,8 @@ IceTransport::Impl::selectUPnPIceCandidates()
         if (auto publicIP = upnp_->getExternalIP()) {
             /* comp_id start at 1 */
             for (unsigned comp_id = 1; comp_id <= component_count_; ++comp_id) {
-                JAMI_DBG("[ice:%p] UPnP: Opening port(s) for ICE comp %d and adding candidate with public IP",
-                         this, comp_id);
+                JAMI_DBG("%s UPnP: Opening port(s) for ICE comp %d and adding candidate with public IP",
+                         this->toString().c_str(), comp_id);
                 auto candidates = getLocalICECandidates(comp_id);
                 for (const auto& candidate : candidates) {
                     if (candidate.transport == PJ_CAND_TCP_ACTIVE)
@@ -761,11 +763,11 @@ IceTransport::Impl::selectUPnPIceCandidates()
                         publicIP.setPort(port_used);
                         addReflectiveCandidate(comp_id, candidate.addr, publicIP, candidate.transport);
                     } else
-                        JAMI_WARN("[ice:%p] Could not create a port mapping for the ICE candide", this);
+                        JAMI_WARN("%s Could not create a port mapping for the ICE candide", this->toString().c_str());
                 }
             }
         } else {
-            JAMI_WARN("[ice:%p] Could not determine public IP for ICE candidates", this);
+            JAMI_WARN("%s Could not determine public IP for ICE candidates", this->toString().c_str());
         }
     }
 }
@@ -791,7 +793,7 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
         std::error_code ec;
         auto err = peerChannels_.at(comp_id-1).write((char*)pkt, size, ec);
         if (err < 0) {
-            JAMI_ERR("[ice:%p] rx: channel is closed", this);
+            JAMI_ERR("%s rx: channel is closed", this->toString().c_str());
         }
     }
 }
@@ -873,20 +875,20 @@ bool
 IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>& rem_candidates)
 {
     if (not isInitialized()) {
-        JAMI_ERR("[ice:%p] not initialized transport", this);
+        JAMI_ERR("%s not initialized transport", pimpl_->toString().c_str());
         pimpl_->is_stopped_ = true;
         return false;
     }
 
     // pj_ice_strans_start_ice crashes if remote candidates array is empty
     if (rem_candidates.empty()) {
-        JAMI_ERR("[ice:%p] start failed: no remote candidates", this);
+        JAMI_ERR("%s start failed: no remote candidates", pimpl_->toString().c_str());
         pimpl_->is_stopped_ = true;
         return false;
     }
 
     pj_str_t ufrag, pwd;
-    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", this, rem_candidates.size());
+    JAMI_DBG("%s negotiation starting (%zu remote candidates)", pimpl_->toString().c_str(), rem_candidates.size());
     auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
                                           pj_strset(&ufrag, (char*)rem_attrs.ufrag.c_str(), rem_attrs.ufrag.size()),
                                           pj_strset(&pwd, (char*)rem_attrs.pwd.c_str(), rem_attrs.pwd.size()),
@@ -894,7 +896,7 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
                                           rem_candidates.data());
     if (status != PJ_SUCCESS) {
         pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-        JAMI_ERR("[ice:%p] start failed: %s", this, pimpl_->last_errmsg_.c_str());
+        JAMI_ERR("%s start failed: %s", pimpl_->toString().c_str(), pimpl_->last_errmsg_.c_str());
         pimpl_->is_stopped_ = true;
         return false;
     }
@@ -905,12 +907,12 @@ bool
 IceTransport::start(const SDP& sdp)
 {
     if (not isInitialized()) {
-        JAMI_ERR("[ice:%p] not initialized transport", this);
+        JAMI_ERR("%s not initialized transport", pimpl_->toString().c_str());
         pimpl_->is_stopped_ = true;
         return false;
     }
 
-    JAMI_DBG("[ice:%p] negotiation starting (%zu remote candidates)", this, sdp.candidates.size());
+    JAMI_DBG("%s negotiation starting (%zu remote candidates)", pimpl_->toString().c_str(), sdp.candidates.size());
     pj_str_t ufrag, pwd;
 
     std::vector<IceCandidate> rem_candidates;
@@ -927,7 +929,7 @@ IceTransport::start(const SDP& sdp)
                                           rem_candidates.data());
     if (status != PJ_SUCCESS) {
         pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-        JAMI_ERR("[ice:%p] start failed: %s", this, pimpl_->last_errmsg_.c_str());
+        JAMI_ERR("%s start failed: %s", pimpl_->toString().c_str(), pimpl_->last_errmsg_.c_str());
         pimpl_->is_stopped_ = true;
         return false;
     }
@@ -983,7 +985,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
     unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
 
     if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id+1, &cand_cnt, cand) != PJ_SUCCESS) {
-        JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
+        JAMI_ERR("%s pj_ice_strans_enum_cands() failed", pimpl_->toString().c_str());
         return res;
     }
 
@@ -1035,7 +1037,7 @@ bool
 IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
 {
     if (not isInitialized()) {
-        JAMI_ERR("[ice:%p] registerPublicIP() called on non initialized transport", this);
+        JAMI_ERR("%s registerPublicIP() called on non initialized transport", pimpl_->toString().c_str());
         return false;
     }
 
@@ -1117,7 +1119,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
                  foundation, &comp_id, transport, &prio, ipaddr, &port, type,
                  tcp_type);
     if (cnt != 7 && cnt != 8) {
-      JAMI_ERR("[ice:%p] Invalid ICE candidate line", this);
+      JAMI_ERR("%s Invalid ICE candidate line", pimpl_->toString().c_str());
       return false;
     }
 
@@ -1136,7 +1138,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
     else if (strcmp(type, "relay") == 0)
       cand.type = PJ_ICE_CAND_TYPE_RELAYED;
     else {
-      JAMI_WARN("[ice:%p] invalid remote candidate type '%s'", this, type);
+      JAMI_WARN("%s invalid remote candidate type '%s'", pimpl_->toString().c_str(), type);
       return false;
     }
 
@@ -1148,7 +1150,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
       else if (strcmp(tcp_type, "so") == 0)
         cand.transport = PJ_CAND_TCP_SO;
       else {
-        JAMI_WARN("[ice:%p] invalid transport type type '%s'", this, tcp_type);
+        JAMI_WARN("%s invalid transport type type '%s'", pimpl_->toString().c_str(), tcp_type);
         return false;
       }
     } else {
@@ -1169,7 +1171,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
     pj_sockaddr_init(af, &cand.addr, NULL, 0);
     status = pj_sockaddr_set_str_addr(af, &cand.addr, &tmpaddr);
     if (status != PJ_SUCCESS) {
-      JAMI_WARN("[ice:%p] invalid IP address '%s'", this, ipaddr);
+      JAMI_WARN("%s invalid IP address '%s'", pimpl_->toString().c_str(), ipaddr);
       return false;
     }
 
@@ -1229,7 +1231,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
     sip_utils::register_thread();
     auto remote = getRemoteAddress(comp_id);
     if (!remote) {
-        JAMI_ERR("[ice:%p] can't find remote address for component %d", this, comp_id);
+        JAMI_ERR("%s can't find remote address for component %d", pimpl_->toString().c_str(), comp_id); 
         errno = EINVAL;
         return -1;
     }
@@ -1249,7 +1251,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
             errno = EAGAIN;
         } else {
             pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
-            JAMI_ERR("[ice:%p] ice send failed: %s", this, pimpl_->last_errmsg_.c_str());
+            JAMI_ERR("%s ice send failed: %s", pimpl_->toString().c_str(), pimpl_->last_errmsg_.c_str());
             errno = EIO;
         }
         return -1;
@@ -1264,7 +1266,7 @@ IceTransport::waitForInitialization(std::chrono::milliseconds timeout)
     std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
     if (!pimpl_->iceCV_.wait_for(lk, timeout,
                                  [this]{ return pimpl_->_isInitialized() or pimpl_->_isFailed(); })) {
-        JAMI_WARN("[ice:%p] waitForInitialization: timeout", this);
+        JAMI_WARN("%s waitForInitialization: timeout", pimpl_->toString().c_str());
         return -1;
     }
     return not pimpl_->_isFailed();
@@ -1276,7 +1278,7 @@ IceTransport::waitForNegotiation(std::chrono::milliseconds timeout)
     std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
     if (!pimpl_->iceCV_.wait_for(lk, timeout,
                          [this]{ return pimpl_->_isRunning() or pimpl_->_isFailed(); })) {
-        JAMI_WARN("[ice:%p] waitForIceNegotiation: timeout", this);
+        JAMI_WARN("%s waitForIceNegotiation: timeout", pimpl_->toString().c_str());
         return -1;
     }
     return not pimpl_->_isFailed();
@@ -1339,6 +1341,15 @@ bool
 IceTransport::isTCPEnabled()
 {
     return pimpl_->config_.protocol == PJ_ICE_TP_TCP;
+}
+
+std::string
+IceTransport::Impl::toString() const
+{
+    std::stringstream ice;
+    const void * address = static_cast<const void*>(this);
+    ice << "[ice-" << (config_.protocol == PJ_ICE_TP_TCP? "tcp" : "udp") << ":" << address << "]";
+    return ice.str();
 }
 
 //==============================================================================
