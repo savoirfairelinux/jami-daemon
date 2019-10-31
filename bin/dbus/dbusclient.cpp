@@ -74,6 +74,9 @@ DBusClient::DBusClient(int flags, bool persistent)
         DBus::default_dispatcher = dispatcher_.get();
 
         DBus::Connection sessionConnection {DBus::Connection::SessionBus()};
+        if (sessionConnection.has_name("cx.ring.Ring")) {
+            throw std::runtime_error {"Another daemon is detected"};
+        }
         sessionConnection.request_name("cx.ring.Ring");
 
         callManager_.reset(new DBusCallManager {sessionConnection});
