@@ -202,8 +202,9 @@ VideoInput::createDecoder()
     auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         #ifndef __ANDROID__
         //std::string path = "/home/ayounes/Projects/ring-plugins/build/x86_64-linux/simpleplugin/libsimpleplugin.so";
-        std::string path = "/home/ayounes/Projects/ring-plugins/build/x86_64-linux/mmotplugin/libmmotplugin.so";
-        path = "";
+        //std::string path = "/home/ayounes/Projects/ring-plugins/build/x86_64-linux/mmotplugin/libmmotplugin.so";
+        std::string path = "/home/ayounes/Projects/ring-plugins/build/x86_64-linux/facemarks/libfacemarks.so";
+        //path = "";
         auto& psm = jami::Manager::instance().getPluginServicesManager();
         // If we have a plugin service
         if(psm) {

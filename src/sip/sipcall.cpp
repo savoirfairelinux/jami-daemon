@@ -47,6 +47,10 @@
 #include "video/video_rtp_session.h"
 #include "dring/videomanager_interface.h"
 #include <chrono>
+extern "C" {
+#include <libavutil/display.h>
+}
+#include "media/video/filter_transpose.h"
 #endif
 
 #include "errno.h"
@@ -119,7 +123,9 @@ SIPCall::getSIPAccount() const
 void SIPCall::createCallAVStreams()
 {
     if(hasVideo()){
-
+        /**
+        *   PREPROCESS
+        **/
         auto preprocess = [this] (const std::shared_ptr<jami::MediaFrame> iFrame) -> std::shared_ptr<VideoFrame> {
             auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
             //JAMI_DBG() << "Frame dimensions: " << ivFrame->width() << " : " << ivFrame->height() << " : " << ivFrame->format();
@@ -127,6 +133,9 @@ void SIPCall::createCallAVStreams()
             return rgbFrame;
         };
 
+        /**
+        *   PREPROCESS2 (to avoid race conditions between input and receive threads)
+        **/
         auto preprocess2 = [this] (const std::shared_ptr<jami::MediaFrame> iFrame) -> std::shared_ptr<VideoFrame> {
             auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
             //JAMI_DBG() << "Frame dimensions: " << ivFrame->width() << " : " << ivFrame->height() << " : " << ivFrame->format();
@@ -134,8 +143,14 @@ void SIPCall::createCallAVStreams()
             return rgbFrame;
         };
 
+        /**
+        *   Map: maps the VideoFrame to an AVFrame
+        **/
         auto map = [](std::shared_ptr<VideoFrame> m)->AVFrame* { return m->pointer();};
 
+        /**
+        *   Postprocess
+        **/
         auto postprocess = [] (const std::shared_ptr<MediaFrame> iFrame, std::shared_ptr<VideoFrame> videoFrame, AVFrame* data) {
             auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
             if(videoFrame) {
