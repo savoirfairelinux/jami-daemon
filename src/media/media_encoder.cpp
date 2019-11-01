@@ -118,6 +118,8 @@ MediaEncoder::setOptions(const MediaDescription& args)
 
     if (not args.parameters.empty())
         libav_utils::setDictValue(&options_, "parameters", args.parameters);
+
+    auto_quality = args.auto_quality;
 }
 
 void
@@ -552,7 +554,7 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 void
 MediaEncoder::forcePresetX264(AVCodecContext* encoderCtx)
 {
-    const char *speedPreset = "ultrafast";
+    const char *speedPreset = "veryfast";
     if (av_opt_set(encoderCtx, "preset", speedPreset, AV_OPT_SEARCH_CHILDREN))
         JAMI_WARN("Failed to set x264 preset '%s'", speedPreset);
     const char *tune = "zerolatency";
@@ -752,21 +754,33 @@ MediaEncoder::setBitrate(uint64_t br)
 void
 MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 {
-    uint64_t maxBitrate = 1000 * br;
-    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
-    uint64_t bufSize = 2 * maxBitrate;
+    // If auto quality disabled use CRF mode
+    if(not auto_quality) {
+        uint64_t maxBitrate = 1000 * br;
+        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
+        uint64_t bufSize = 2 * maxBitrate;
 #ifdef RING_ACCEL
-    if (accel_) {
-        bufSize = 2 * maxBitrate;
-        encoderCtx->bit_rate = maxBitrate;
-    }
+        if (accel_) {
+            bufSize = 2 * maxBitrate;
+            encoderCtx->bit_rate = maxBitrate;
+        }
 #endif
 
-    libav_utils::setDictValue(&options_, "crf", std::to_string(crf));
-    av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
-    encoderCtx->rc_buffer_size = bufSize;
-    encoderCtx->rc_max_rate = maxBitrate;
-    JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
+        av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+        encoderCtx->rc_buffer_size = bufSize;
+        encoderCtx->rc_max_rate = maxBitrate;
+        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
+    }
+    // If auto quality enabled use CRB mode
+    else {
+        av_opt_set_double(encoderCtx, "qcomp", 0.0, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "bufsize", br * 500, AV_OPT_SEARCH_CHILDREN);
+
+        JAMI_DBG("H264 encoder setup cbr: bitrate=%lu kbit/s", br);
+    }
 }
 
 void
