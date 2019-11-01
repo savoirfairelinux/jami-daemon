@@ -118,6 +118,12 @@ void VideoRtpSession::startSender()
 
         // be sure to not send any packets before saving last RTP seq value
         socketPair_->stopSendOp();
+
+        auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
+        auto autoQuality = codecVideo->isAutoQualityEnabled;
+
+        send_.auto_quality = autoQuality;
+
         if (sender_)
             initSeqVal_ = sender_->getLastSeqValue() + 10; // Skip a few sequences to make nvenc happy on a sender restart
         try {
@@ -133,8 +139,7 @@ void VideoRtpSession::startSender()
             send_.enabled = false;
         }
         lastMediaRestart_ = clock::now();
-        auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
-        auto autoQuality = codecVideo->isAutoQualityEnabled;
+        lastREMB_ = clock::now();
         if (autoQuality and not rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.start();
         else if (not autoQuality and rtcpCheckerThread_.isRunning())
