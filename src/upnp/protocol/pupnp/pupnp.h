@@ -57,6 +57,13 @@
 #include <memory>
 #include <future>
 
+// Action identifiers.
+constexpr static const char* ACTION_ADD_PORT_MAPPING               {"AddPortMapping"};
+constexpr static const char* ACTION_DELETE_PORT_MAPPING            {"DeletePortMapping"};
+constexpr static const char* ACTION_GET_GENERIC_PORT_MAPPING_ENTRY {"GetGenericPortMappingEntry"};
+constexpr static const char* ACTION_GET_STATUS_INFO                {"GetStatusInfo"};
+constexpr static const char* ACTION_GET_EXTERNAL_IP_ADDRESS        {"GetExternalIPAddress"};
+
 namespace jami {
 class IpAddr;
 }
@@ -79,6 +86,14 @@ public:
         std::string location;
         XMLDocument document;
     };
+    enum class CtrlAction {
+        UNKNOWN,
+        ADD_PORT_MAPPING,
+        DELETE_PORT_MAPPING,
+        GET_GENERIC_PORT_MAPPING_ENTRY,
+        GET_STATUS_INFO,
+        GET_EXTERNAL_IP_ADDRESS
+    };
     using pIGDInfo = std::unique_ptr<IGDInfo>;
 
     PUPnP();
@@ -94,10 +109,17 @@ public:
     void searchForIgd() override;
 
     // Tries to add mapping. Assumes mutex is already locked.
-    Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) override;
+    void requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type) override;
+    // Treats the reception of an add mapping action answer.
+    void processAddMapAction(const std::string& ctrlURL, IXML_Document* actionRequest);
+
+    // Returns control point action callback based on xml node.
+    CtrlAction getAction(char* xmlNode);
 
     // Removes a mapping.
-    void removeMapping(const Mapping& igdMapping) override;
+    void requestMappingRemove(const Mapping& igdMapping) override;
+    // Treats the reception of a remove mapping action answer.
+    void processRemoveMapAction(const std::string& ctrlURL, IXML_Document* actionRequest);
 
     // Removes all local mappings of IGD that we're added by the application.
     void removeAllLocalMappings(IGD* igd) override;
@@ -137,6 +159,8 @@ private:
     void   actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& description);
     bool   actionDeletePortMapping(const UPnPIGD& igd, const std::string& port_external, const std::string& protocol);
     bool   actionAddPortMapping(const UPnPIGD& igd, const Mapping& mapping, UPnPProtocol::UpnpError& upnp_error);
+    bool   actionAddPortMappingAsync(const UPnPIGD& igd, const Mapping& mapping);
+    bool   actionDeletePortMappingAsync(const UPnPIGD& igd, const std::string& port_external, const std::string& protocol);
 
 private:
     NON_COPYABLE(PUPnP);
