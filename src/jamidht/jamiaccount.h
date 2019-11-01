@@ -479,9 +479,11 @@ private:
     /**
      * Maps require port via UPnP
      */
-    bool mapPortUPnP();
-
-    void igdChanged();
+    void mapPortUPnP();
+    /**
+     * Add port mapping callback function.
+     */
+    void onPortMappingAdded(uint16_t port_used, bool success);
 
     bool handlePendingCallList();
     bool handlePendingCall(PendingCall& pc, bool incoming);

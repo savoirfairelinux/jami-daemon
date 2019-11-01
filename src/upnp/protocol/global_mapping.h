@@ -45,11 +45,11 @@ public:
         Mapping(mapping.getPortExternal(),
         mapping.getPortInternal(),
         mapping.getType(),
+        mapping.isUnique(),
         mapping.getDescription()),
         users(users) {}
 
-public:
-    unsigned users;			// Number of users of this mapping. Multiple accounts can use the same SIP ports.
+    unsigned int users;            // Number of users of this mapping. Multiple accounts can use the same SIP ports.
 };
 
 }} // namespace jami::upnp
