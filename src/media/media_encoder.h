@@ -132,6 +132,7 @@ private:
     unsigned int currentVideoCodecID_ {0};
     AVCodec* outputCodec_ = nullptr;
     std::mutex encMutex_;
+    bool auto_quality {false};
 
     void initH264(AVCodecContext* encoderCtx, uint64_t br);
     void initVP8(AVCodecContext* encoderCtx, uint64_t br);
