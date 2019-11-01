@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2019 Savoir-faire Linux Inc.
  *
  *  Author: Eden Abitbol <eden.abitbol@savoirfairelinux.com>
  *
@@ -19,6 +19,8 @@
  */
 #pragma once
 
+#include <mutex>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -28,6 +30,10 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "string_utils.h"
+
+#ifdef _MSC_VER
+typedef uint16_t in_port_t;
+#endif
 
 namespace jami { namespace upnp {
 
@@ -45,16 +51,41 @@ public:
     IGD& operator=(IGD&&) = default;
     bool operator==(IGD& other) const;
 
-public:
+    // Checks if the port is currently being used (i.e. the port is already opened).
+    bool isMapInUse(const in_port_t externalPort, upnp::PortType type);
+    bool isMapInUse(const Mapping& map);
+
+    // Returns the mapping associated to the given port and type.
+    Mapping getMapping(in_port_t externalPort, upnp::PortType type) const;
+
+    // Increments the number of users for a given mapping.
+    void incrementNbOfUsers(const in_port_t externalPort, upnp::PortType type);
+    void incrementNbOfUsers(const Mapping& map);
+
+    // Removes the mapping from the list.
+    void removeMapInUse(const Mapping& map);
+
+    // Returns the list of currently used mappings according to the port type.
+    PortMapGlobal* getCurrentMappingList(upnp::PortType type);
+
+    // Returns number of users for a given mapping.
+    unsigned int getNbOfUsers(const in_port_t externalPort, upnp::PortType type);
+    unsigned int getNbOfUsers(const Mapping& map);
+
+    // Reduces the number of users for a given mapping.
+    void decrementNbOfUsers(const in_port_t externalPort, upnp::PortType type);
+    void decrementNbOfUsers(const Mapping& map);
+
     IpAddr localIp_ {};                    // Internal IP interface used to communication with IGD.
     IpAddr publicIp_ {};                   // External IP of IGD.
 
-    PortMapGlobal udpMappings {};          // IGD UDP port mappings.
-    PortMapGlobal tcpMappings {};          // IGD TCP port mappings.
+protected:
+    std::mutex mapListMutex_;               // Mutex for protecting map lists.
+    PortMapGlobal udpMappings_ {};          // IGD UDP port mappings.
+    PortMapGlobal tcpMappings_ {};          // IGD TCP port mappings.
 
 private:
     NON_COPYABLE(IGD);
 };
-
 
 }} // namespace jami::upnp

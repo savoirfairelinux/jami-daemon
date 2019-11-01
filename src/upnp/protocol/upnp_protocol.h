@@ -65,6 +65,7 @@ public:
     };
 
     using IgdListChangedCallback = std::function<bool(UPnPProtocol*, IGD*, IpAddr, bool)>;
+    using NotifyContextCallback = std::function<void(IpAddr, Mapping, bool)>;
 
     UPnPProtocol(){};
     virtual ~UPnPProtocol(){};
@@ -78,11 +79,11 @@ public:
     // Search for IGD.
     virtual void searchForIgd() = 0;
 
-    // Tries to add mapping. Assumes mutex is already locked.
-    virtual Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error) = 0;
+    // Sends a request to add a mapping.
+    virtual void requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type) = 0;
 
-    // Removes a mapping.
-    virtual void removeMapping(const Mapping& igdMapping) = 0;
+    // Sends a request to remove a mapping.
+    virtual void requestMappingRemove(const Mapping& igdMapping) = 0;
 
     // Removes all local mappings of IGD that we're added by the application.
     virtual void removeAllLocalMappings(IGD* igd) = 0;
@@ -90,10 +91,18 @@ public:
     // Set the IGD list callback handler.
     void setOnIgdChanged(IgdListChangedCallback&& cb) { updateIgdListCb_ = std::move(cb); }
 
+    // Set the add port mapping callback handler.
+    void setOnPortMapAdd(NotifyContextCallback&& cb) { notifyContextPortOpenCb_ = std::move(cb); }
+
+    // Set the remove port mapping callback handler.
+    void setOnPortMapRemove(NotifyContextCallback&& cb) { notifyContextPortCloseCb_ = std::move(cb); }
+
 protected:
     mutable std::mutex validIgdMutex_;          // Mutex used to access these lists and IGDs in a thread-safe manner.
 
     IgdListChangedCallback updateIgdListCb_;    // Callback for when the IGD list changes.
+    NotifyContextCallback notifyContextPortOpenCb_;     // Callback for when a port mapping is added.
+    NotifyContextCallback notifyContextPortCloseCb_;    // Callback for when a port mapping is removed.
 };
 
 }} // namespace jami::upnp
