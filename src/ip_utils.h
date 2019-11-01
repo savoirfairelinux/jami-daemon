@@ -45,8 +45,12 @@ extern "C" {
     #undef interface
     #endif
 #else
-   #include <sys/socket.h>
-   #include <netinet/in.h>
+    #include <sys/socket.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <net/if.h>
+    #include <sys/ioctl.h>
+    #include <unistd.h>
 #endif
 
 #include <string>
@@ -57,6 +61,8 @@ extern "C" {
 #ifndef IN_IS_ADDR_UNSPECIFIED
 #define IN_IS_ADDR_UNSPECIFIED(a) (((long int) (a)->s_addr) == 0x00000000)
 #endif /* IN_IS_ADDR_UNSPECIFIED */
+
+#define INVALID_SOCKET      (-1)
 
 namespace jami {
 
@@ -261,7 +267,19 @@ namespace ip_utils {
 
 static const char *const DEFAULT_INTERFACE = "default";
 
+static const unsigned int MAX_INTERFACE = 256;
+static const unsigned int MIN_INTERFACE = 1;
+enum subnet_mask {
+    prefix_8bit,
+    prefix_16bit,
+    prefix_24bit,
+    prefix_32bit
+};
+
 std::string getHostname();
+
+int getHostName(char *out, size_t out_len);
+std::string getGateway(char* localHost, ip_utils::subnet_mask prefix);
 
 std::string getDeviceName();
 
