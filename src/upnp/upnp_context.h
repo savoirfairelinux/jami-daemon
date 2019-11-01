@@ -55,6 +55,8 @@
 #include <condition_variable>
 #include <cstdlib>
 
+#include "manager.h"
+
 using random_device = dht::crypto::random_device;
 
 using IgdFoundCallback = std::function<void()>;
@@ -65,26 +67,31 @@ class IpAddr;
 
 namespace jami { namespace upnp {
 
+using MapCb = std::function<void(const Mapping&, bool)>;
+using ConnectionChangeCb = std::function<void()>;
+struct ControllerData {
+    uint64_t id;
+    bool keepCb;
+    MapCb onMapAdded;
+    MapCb onMapRemoved;
+    ConnectionChangeCb onConnectionChanged;
+};
+
+const constexpr auto MAP_REQUEST_TIMEOUT = std::chrono::seconds(1);
+
 class UPnPContext
 {
 public:
+    struct PendingMapRequest {
+        Mapping map;
+        std::shared_ptr<Task> cleanupMapRequest;
+    };
+
     UPnPContext();
     ~UPnPContext();
 
     // Check if there is a valid IGD in the IGD list.
     bool hasValidIGD();
-
-    // Add IGD listener.
-    size_t addIGDListener(IgdFoundCallback&& cb);
-
-    // Remove IGD listener.
-    void removeIGDListener(size_t token);
-
-    // Tries to add a valid mapping. Will return it if successful.
-    Mapping addMapping(uint16_t port_desired, uint16_t port_local, PortType type, bool unique);
-
-    // Removes a mapping.
-    void removeMapping(const Mapping& mapping);
 
     // Get external Ip of a chosen IGD.
     IpAddr getExternalIP() const;
@@ -95,6 +102,44 @@ public:
     // Inform the UPnP context that the network status has changed. This clears the list of known
     void connectivityChanged();
 
+    // Checks if the desired port is1 already in use by an IGD.
+    bool isMappingInUse(const unsigned int portDesired, PortType type);
+
+    // Increments the number of users for a given port.
+    void incrementNbOfUsers(const unsigned int portDesired, PortType type);
+
+    // Sends out a request to a protocol to add a mapping.
+    void requestMappingAdd(ControllerData&& ctrlData, uint16_t portDesired, uint16_t portLocal, PortType type, bool unique);
+    // Adds mapping to corresponding IGD.
+    void addMappingToIgd(IpAddr igdIp, const Mapping& map);
+    // Tries to add a mapping to a specific IGD.
+    void requestMappingAdd(IGD* igd, uint16_t portExternal, uint16_t portInternal, PortType type);
+    // Callback function for when mapping is added.
+    void onMappingAdded(IpAddr igdIp, const Mapping& map, bool success);
+    // Calls corresponding callback.
+    void dispatchOnAddCallback(const Mapping& map, bool success);
+
+    // Registers a timeout for a given pending add map request.
+    void registerAddMappingTimeout(const Mapping& map);
+    // Unregisters a timeout for a given pending add map request.
+    void unregisterAddMappingTimeout(const Mapping& map);
+
+    // Sends out a request to protocol to remove a mapping.
+    void requestMappingRemove(const Mapping& map);
+    // Removes mapping from corresponding IGD.
+    void removeMappingFromIgd(IpAddr igdIp, const Mapping& map);
+    // Callback function for when mapping is removed.
+    void onMappingRemoved(IpAddr igdIp, const Mapping& map, bool success);
+    // Calls corresponding callback.
+    void dispatchOnRmCallback(const Mapping& map, bool success);
+
+    // Add callbacks to callback list.
+    void registerCallback(const Mapping& map, ControllerData&& ctrlData);
+    // Removes callback from callback list given a mapping.
+    void unregisterCallback(const Mapping& map);
+    // Removes all callback with a specific controller Id.
+    void unregisterAllCallbacks(uint64_t ctrlId);
+
 private:
     // Checks if the IGD is in the list by checking the IGD's public Ip.
     bool isIgdInList(const IpAddr& publicIpAddr);
@@ -103,7 +148,7 @@ private:
     UPnPProtocol::Type getIgdProtocol(IGD* igd);
 
     // Returns a random port that is not yet used by the daemon for UPnP.
-    uint16_t chooseRandomPort(const IGD& igd, PortType type);
+    uint16_t chooseRandomPort(IGD& igd, PortType type);
 
     // Tries to add or remove IGD to the list via callback.
     bool igdListChanged(UPnPProtocol* protocol, IGD* igd, const IpAddr publicIpAddr, bool added);
@@ -117,21 +162,20 @@ private:
     // Removes IGD from list by specifiying the IGD's public Ip address.
     bool removeIgdFromList(IpAddr publicIpAddr);
 
-    // Tries to add mapping. Assumes mutex is already locked.
-    Mapping addMapping(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type, UPnPProtocol::UpnpError& upnp_error);
-
 public:
     constexpr static unsigned MAX_RETRIES = 20;
 
 private:
     NON_COPYABLE(UPnPContext);
 
-    std::map<size_t, IgdFoundCallback> igdListeners_;           // Map of valid IGD listeners with their tokens.
-    size_t listenerToken_{ 0 };                                 // Last provided token for valid IGD listeners (0 is the invalid token).
-
     std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;	// Vector of available protocols.
-    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;			// List of IGDs with their corresponding public IPs.
     mutable std::mutex igdListMutex_;							// Mutex used to access these lists and IGDs in a thread-safe manner.
+    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;			// List of IGDs with their corresponding public IPs.
+
+    std::mutex pendindRequestMutex_;                            // Mutex that protects the pending map request lists.
+    std::vector<PendingMapRequest> pendingAddMapList_ {};       // Vector of pending add mapping requests.
+    std::mutex cbListMutex_;                                    // Mutex that protects the callback list.
+    std::multimap<Mapping, ControllerData> mapCbList_;          // List of mappings with their corresponding callbacks.
 
 };
 

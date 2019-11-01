@@ -593,12 +593,14 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x64\bin;$(ProjectDir)..\contrib\msvc\lib\x64;$(ProjectDir)..\contrib\build\boost\stage\lib;$(ProjectDir)..\contrib\build\pjproject\pjsip\lib;$(ProjectDir)..\contrib\build\pjproject\pjmedia\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\lib;$(ProjectDir)..\contrib\build\pjproject\third_party\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib\lib;$(ProjectDir)..\contrib\build\pjproject\pjnath\lib;$(ProjectDir)..\contrib\build\restbed\build\Release;$(ProjectDir)..\contrib\build\restbed\dependency\openssl\out32dll;$(ProjectDir)..\contrib\build\jsoncpp\makefiles\vs2017\x64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;Strmiids.lib;libavcodec.lib;libavdevice.lib;libavfilter.lib;libavformat.lib;libavutil.lib;libswresample.lib;libswscale.lib;libgnutls.lib;lib_json.lib;opendht.lib;Argon2Ref.lib;pjlib.lib;pjlib_util.lib;pjmedia.lib;pjmedia_codec.lib;pjnath.lib;pjsip_core.lib;pjsip_simple.lib;pjsip_ua.lib;pjsua2_lib.lib;pjsua_lib.lib;yaml-cpp.lib;libupnp.lib;pthreadVC2.lib;portaudio.lib;libspeex-pj.lib;secp256k1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;uuid.lib;Strmiids.lib;libavcodec.lib;libavdevice.lib;libavfilter.lib;libavformat.lib;libavutil.lib;libswresample.lib;libswscale.lib;libgnutls.lib;lib_json.lib;opendht.lib;Argon2Ref.lib;pjlib.lib;pjlib_util.lib;pjmedia.lib;pjmedia_codec.lib;pjnath.lib;pjsip_core.lib;pjsip_simple.lib;pjsip_ua.lib;pjsua2_lib.lib;pjsua_lib.lib;yaml-cpp.lib;libupnp.lib;libnatpmp.lib;pthreadVC2.lib;portaudio.lib;libspeex-pj.lib;secp256k1.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalOptions>/VERBOSE:LIB /NODEFAULTLIB:libcmtd /NODEFAULTLIB:libcmt /OPT:NOLBR /OPT:NOICF /ignore:4006 %(AdditionalOptions)</AdditionalOptions>
       <TargetMachine>MachineX64</TargetMachine>
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
       <ForceFileOutput>MultiplyDefinedSymbolOnly</ForceFileOutput>
       <LinkStatus>false</LinkStatus>
+      <ModuleDefinitionFile>
+      </ModuleDefinitionFile>
     </Link>
     <ProjectReference>
       <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
@@ -659,8 +661,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>
       </SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\jamidht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\upnp\igd;$(ProjectDir)..\src\upnp\protocol;$(ProjectDir)..\src\upnp\mapping;$(ProjectDir)..\src\jamidht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\msvc\include\upnp;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\ffmpeg\Build\win32\x64\include;$(ProjectDir)..\contrib\build\sndfile\src;$(ProjectDir)..\contrib\build\openssl\inc32;$(ProjectDir)..\contrib\build\asio\asio\include;$(ProjectDir)..\contrib\build\restinio\dev;$(ProjectDir)..\contrib\build\fmt\include;$(ProjectDir)..\contrib\build\http_parser;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;ASIO_STANDALONE;STATIC_GETOPT;_USE_MATH_DEFINES;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;OPENDHT_PROXY_CLIENT;OPENDHT_PROXY_SERVER;OPENDHT_PUSH_NOTIFICATIONS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\jamidht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\upnp\igd;$(ProjectDir)..\src\upnp\protocol;$(ProjectDir)..\src\upnp\mapping;$(ProjectDir)..\src\jamidht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\msvc\include\upnp;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\ffmpeg\Build\win32\x64\include;$(ProjectDir)..\contrib\build\sndfile\src;$(ProjectDir)..\contrib\build\openssl\inc32;$(ProjectDir)..\contrib\build\asio\asio\include;$(ProjectDir)..\contrib\build\restinio\dev;$(ProjectDir)..\contrib\build\fmt\include;$(ProjectDir)..\contrib\build\http_parser;$(ProjectDir)..\contrib\build\natpmp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_WIN32_WINNT=0x0A00;ASIO_STANDALONE;STATIC_GETOPT;_USE_MATH_DEFINES;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;OPENDHT_PROXY_CLIENT;OPENDHT_PROXY_SERVER;OPENDHT_PUSH_NOTIFICATIONS;NATPMP_STATICLIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -688,8 +690,8 @@
       </Command>
     </PreBuildEvent>
     <Lib>
-      <AdditionalDependencies>ws2_32.lib;advapi32.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;libgnutls.lib;lib_json.lib;libopendht.lib;Argon2Ref.lib;secp256k1.lib;libyaml-cppmd.lib;portaudio.lib;libupnp.lib;pjsip-core-x86_64-x64-vc15-Release.lib;pjsip-simple-x86_64-x64-vc15-Release.lib;pjsua2-lib-x86_64-x64-vc15-Release.lib;pjsua-lib-x86_64-x64-vc15-Release.lib;pjsip-ua-x86_64-x64-vc15-Release.lib;pjmedia-x86_64-x64-vc15-Release.lib;pjlib-util-x86_64-x64-vc15-Release.lib;pjlib-x86_64-x64-vc15-Release.lib;pjnath-x86_64-x64-vc15-Release.lib;fmt.lib;http-parser.lib;asio.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(ProjectDir)..\contrib\build\ffmpeg\Build\win32\x64\bin;$(ProjectDir)..\contrib\msvc\lib\x64;$(ProjectDir)..\contrib\build\boost\stage\lib;$(ProjectDir)..\contrib\build\pjproject\pjsip\lib;$(ProjectDir)..\contrib\build\pjproject\pjmedia\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\lib;$(ProjectDir)..\contrib\build\pjproject\third_party\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib\lib;$(ProjectDir)..\contrib\build\pjproject\pjnath\lib;$(ProjectDir)..\contrib\build\openssl\out32dll;$(ProjectDir)..\contrib\build\argon2\vs2015\Argon2Ref\vs2015\build;$(ProjectDir)..\contrib\build\yaml-cpp\msvc\Release;$(ProjectDir)..\contrib\build\sndfile\msvc\x64\Release;$(ProjectDir)..\contrib\build\asio\asio\msvc\x64\Release;$(ProjectDir)..\contrib\build\fmt\msvc\Release;$(ProjectDir)..\contrib\build\http_parser\x64\Release</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;advapi32.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;libgnutls.lib;lib_json.lib;libopendht.lib;Argon2Ref.lib;secp256k1.lib;libyaml-cppmd.lib;portaudio.lib;libupnp.lib;natpmp.lib;pjsip-core-x86_64-x64-vc15-Release.lib;pjsip-simple-x86_64-x64-vc15-Release.lib;pjsua2-lib-x86_64-x64-vc15-Release.lib;pjsua-lib-x86_64-x64-vc15-Release.lib;pjsip-ua-x86_64-x64-vc15-Release.lib;pjmedia-x86_64-x64-vc15-Release.lib;pjlib-util-x86_64-x64-vc15-Release.lib;pjlib-x86_64-x64-vc15-Release.lib;pjnath-x86_64-x64-vc15-Release.lib;fmt.lib;http-parser.lib;asio.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\contrib\build\ffmpeg\Build\win32\x64\bin;$(ProjectDir)..\contrib\msvc\lib\x64;$(ProjectDir)..\contrib\build\boost\stage\lib;$(ProjectDir)..\contrib\build\pjproject\pjsip\lib;$(ProjectDir)..\contrib\build\pjproject\pjmedia\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\lib;$(ProjectDir)..\contrib\build\pjproject\third_party\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib\lib;$(ProjectDir)..\contrib\build\pjproject\pjnath\lib;$(ProjectDir)..\contrib\build\openssl\out32dll;$(ProjectDir)..\contrib\build\argon2\vs2015\Argon2Ref\vs2015\build;$(ProjectDir)..\contrib\build\yaml-cpp\msvc\Release;$(ProjectDir)..\contrib\build\sndfile\msvc\x64\Release;$(ProjectDir)..\contrib\build\asio\asio\msvc\x64\Release;$(ProjectDir)..\contrib\build\fmt\msvc\Release;$(ProjectDir)..\contrib\build\http_parser\x64\Release;$(ProjectDir)..\contrib\build\natpmp\msvc\Release</AdditionalLibraryDirectories>
       <AdditionalOptions>/ignore:4006 /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
     </Lib>
@@ -834,6 +836,8 @@
     <ClCompile Include="..\src\turn_transport.cpp" />
     <ClCompile Include="..\src\upnp\protocol\igd.cpp" />
     <ClCompile Include="..\src\upnp\protocol\mapping.cpp" />
+    <ClCompile Include="..\src\upnp\protocol\natpmp\nat_pmp.cpp" />
+    <ClCompile Include="..\src\upnp\protocol\natpmp\pmp_igd.cpp" />
     <ClCompile Include="..\src\upnp\protocol\pupnp\pupnp.cpp" />
     <ClCompile Include="..\src\upnp\protocol\pupnp\upnp_igd.cpp" />
     <ClCompile Include="..\src\upnp\upnp_context.cpp" />
@@ -1002,6 +1006,8 @@
     <ClInclude Include="..\src\upnp\protocol\global_mapping.h" />
     <ClInclude Include="..\src\upnp\protocol\igd.h" />
     <ClInclude Include="..\src\upnp\protocol\mapping.h" />
+    <ClInclude Include="..\src\upnp\protocol\natpmp\nat_pmp.h" />
+    <ClInclude Include="..\src\upnp\protocol\natpmp\pmp_igd.h" />
     <ClInclude Include="..\src\upnp\protocol\pupnp\pupnp.h" />
     <ClInclude Include="..\src\upnp\protocol\pupnp\upnp_igd.h" />
     <ClInclude Include="..\src\upnp\protocol\upnp_protocol.h" />
