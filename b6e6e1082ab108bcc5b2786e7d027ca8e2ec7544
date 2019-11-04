@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "71555d84_1ad5050e",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 650,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-11-04T16:01:26Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "b6e6e1082ab108bcc5b2786e7d027ca8e2ec7544",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7941904f_ddd3e7d2",
         "filename": "src/security/tls_session.cpp",
         "patchSetId": 26
@@ -36,6 +53,23 @@
     },
     {
       "key": {
+        "uuid": "c19daae4_617b6f4b",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 675,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-11-04T16:01:26Z",
+      "side": 1,
+      "message": "CRITICAL SonarQube violation:\n\n\nnon-constant-expression cannot be narrowed from type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027) to \u0027unsigned int\u0027 in initializer list\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-c%2B%2B11-narrowing",
+      "revId": "b6e6e1082ab108bcc5b2786e7d027ca8e2ec7544",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "595ea55a_10c56a31",
         "filename": "src/security/tls_session.cpp",
         "patchSetId": 26
@@ -45,6 +79,23 @@
         "id": 5
       },
       "writtenOn": "2019-11-04T16:01:20Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "b6e6e1082ab108bcc5b2786e7d027ca8e2ec7544",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2ccbfe4b_880161ba",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 741,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-11-04T16:01:26Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
       "revId": "b6e6e1082ab108bcc5b2786e7d027ca8e2ec7544",
