@@ -1,6 +1,6 @@
 # RESTINIO
-RESTINIO_VERSION := v.0.5.1.2
-RESTINIO_URL := https://github.com/Stiffstream/restinio/archive/$(RESTINIO_VERSION).tar.gz
+RESTINIO_VERSION := 8d5d3e8237e0947adb9ba1ffc8281f4ad7cb2a59
+RESTINIO_URL := https://github.com/aberaud/restinio/archive/$(RESTINIO_VERSION).tar.gz
 
 PKGS += restinio
 ifeq ($(call need_pkg,'restinio'),)
@@ -17,9 +17,7 @@ endif
 ifneq ($(call need_pkg,"fmt >= 5.3.0"),)
 DEPS_restinio += fmt
 endif
-ifneq ($(call need_pkg,"http_parser >= 2.9.3"),)
 DEPS_restinio += http_parser
-endif
 
 RESTINIO_CMAKECONF = -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF -DRESTINIO_INSTALL_SAMPLES=OFF \
 					 -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF -DRESTINIO_FIND_DEPS=ON \
@@ -33,7 +31,7 @@ $(TARBALLS)/restinio-$(RESTINIO_VERSION).tar.gz:
 
 restinio: restinio-$(RESTINIO_VERSION).tar.gz
 	$(UNPACK)
-	$(APPLY) $(SRC)/restinio/cmake.patch
+	#$(APPLY) $(SRC)/restinio/cmake.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
 
