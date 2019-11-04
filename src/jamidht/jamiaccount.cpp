@@ -968,6 +968,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                     acreds->scheme = "local";
                     acreds->uri = std::move(archivePath);
                     acreds->updateIdentity = id;
+                    migrating = true;
                 }
                 creds = std::move(acreds);
             } else {
@@ -977,6 +978,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             }
             creds->password = archive_password;
             archiveHasPassword_ = !archive_password.empty();
+            bool isManaged = !managerUri_.empty();
 
             accountManager_->initAuthentication(
                 std::move(fReq),
@@ -1019,13 +1021,15 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 setRegistrationState(RegistrationState::UNREGISTERED);
                 saveConfig();
                 doRegister();
-            }, [w = weak(), id = getAccountID()](AccountManager::AuthError error, const std::string& message) {
+            }, [w = weak(), id = getAccountID(), isManaged, migrating](AccountManager::AuthError error, const std::string& message) {
                 JAMI_WARN("[Account %s] Auth error: %d %s", id.c_str(), (int)error, message.c_str());
-                if (error == AccountManager::AuthError::INVALID_ARGUMENTS) {
+                if ((isManaged || migrating) && error == AccountManager::AuthError::INVALID_ARGUMENTS) {
+                    // In cast of a migration or manager connexion failure stop the migration and block the account
                     Migration::setState(id, Migration::State::INVALID);
                     if (auto acc = w.lock())
                         acc->setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
                 } else {
+                    // In case of a DHT or backup import failure, just remove the account
                     if (auto acc = w.lock())
                         acc->setRegistrationState(RegistrationState::ERROR_GENERIC);
                     runOnMainThread([id = std::move(id)] {
