@@ -179,7 +179,7 @@ void
 VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     const std::unique_ptr<VideoMixerSource>& source, int index)
 {
-    if (!width_ or !height_ or !input.pointer())
+    if (!width_ or !height_ or !input.pointer() or input.pointer()->format == -1)
         return;
 
 #ifdef RING_ACCEL
