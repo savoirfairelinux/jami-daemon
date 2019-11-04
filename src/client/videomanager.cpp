@@ -66,13 +66,19 @@ void
 MediaFrame::copyFrom(const MediaFrame& o)
 {
     reset();
-    av_frame_ref(frame_.get(), o.frame_.get());
+    if (o.frame_)
+        av_frame_ref(frame_.get(), o.frame_.get());
+    if (o.packet_) {
+        packet_.reset(av_packet_alloc());
+        av_packet_ref(packet_.get(), o.packet_.get());
+    }
 }
 
 void
 MediaFrame::reset() noexcept
 {
-    av_frame_unref(frame_.get());
+    if (frame_)
+        av_frame_unref(frame_.get());
     packet_.reset();
 }
 
