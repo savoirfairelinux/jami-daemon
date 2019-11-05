@@ -67,7 +67,7 @@ public:
     int getWidth() const;
     int getHeight() const;
     AVPixelFormat getPixelFormat() const;
-    DeviceParams getParams() const;
+    const DeviceParams& getParams() const;
     MediaStream getInfo() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);

@@ -447,6 +447,11 @@ VideoRtpSession::adaptQualityAndBitrate()
     if(oldBitrate != videoBitrateInfo_.videoBitrateCurrent) {
         storeVideoBitrateInfo();
 
+#if __ANDROID__
+    auto input_device = std::static_pointer_cast<VideoInput>(videoLocal_);
+    emitSignal<DRing::VideoSignal::SetBitrate>(input_device->getParams().name, (int)videoBitrateInfo_.videoBitrateCurrent);
+#endif
+
         // If encoder no longer exist do nothing
         if(sender_ && sender_->setBitrate(videoBitrateInfo_.videoBitrateCurrent) == 0)
             lastMediaRestart_ = now;
