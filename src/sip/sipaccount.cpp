@@ -1932,27 +1932,9 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
 
     if (contactRewriteMethod_ == 2 && regc_ != nullptr) {
         contactOverwritten_ = true;
-
-        /*  Unregister old contact */
-        try {
-            tmp_tp = transport_;
-            sendUnregister();
-        } catch (const VoipLinkException &e) {
-            JAMI_ERR("%s", e.what());
-        }
-
-        // sendUnregister may failed and cause regc_ to be reset to nullptr
-        // in this case re-registration has been scheduled, so just leave
-        if (!regc_)
-            return true;
         pjsip_regc_update_contact(regc_, 1, &contact_);
 
-        /*  Perform new registration */
-        try {
-            sendRegister();
-        } catch (const VoipLinkException &e) {
-            JAMI_ERR("%s", e.what());
-        }
+        /*  Perform new registration at the next registration cycle */
     }
 
     return true;
