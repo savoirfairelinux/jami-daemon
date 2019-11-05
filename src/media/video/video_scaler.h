@@ -40,6 +40,14 @@ public:
                        unsigned xoff, unsigned yoff,
                        unsigned dest_width, unsigned dest_height,
                        bool keep_aspect);
+    /**
+     * @brief convertFormat
+     * Converts the frame format to the specified pix format while
+     * keeping the frame size and metadata
+     * @param input
+     * @param pix
+     * @return
+     */
     std::unique_ptr<VideoFrame> convertFormat(const VideoFrame& input, AVPixelFormat pix);
 
 private:

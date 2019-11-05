@@ -122,7 +122,11 @@ public:
     // Reset internal buffers (return to an empty VideoFrame)
     void reset() noexcept override;
 
-    // Fill this VideoFrame with data from o
+    /**
+     * @brief copyFrom
+     * Copies data and metadata from frame o
+     * @param o: VideoFrame
+     */
     void copyFrom(const VideoFrame& o);
 
     // Return frame size in bytes
