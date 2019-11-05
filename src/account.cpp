@@ -267,7 +267,7 @@ Account::unserialize(const YAML::Node& node)
 
     bool enabled;
     parseValue(node, UPNP_ENABLED_KEY, enabled);
-    enableUpnp(enabled);
+    enableUpnp(enabled && isEnabled());
 }
 
 void
@@ -294,7 +294,7 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
         userAgent_ = DEFAULT_USER_AGENT;
     bool enabled;
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, enabled);
-    enableUpnp(enabled);
+    enableUpnp(enabled && isEnabled());
 }
 
 std::map<std::string, std::string>
