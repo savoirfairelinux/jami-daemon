@@ -20,8 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __VIDEO_INPUT_H__
-#define __VIDEO_INPUT_H__
+#pragma once
 
 #include "noncopyable.h"
 #include "threadloop.h"
@@ -135,11 +134,13 @@ private:
 
     bool captureFrame();
     bool isCapturing() const noexcept;
+    void startLoop();
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     int allocateOneBuffer(struct VideoFrameBuffer& b, int length);
     void freeOneBuffer(struct VideoFrameBuffer& b);
     bool waitForBufferFull();
+    void switchDevice();
 
     std::mutex mutex_;
     std::condition_variable frame_cv_;
@@ -153,5 +154,3 @@ private:
 };
 
 }} // namespace jami::video
-
-#endif // __VIDEO_INPUT_H__

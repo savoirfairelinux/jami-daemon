@@ -76,6 +76,17 @@ VideoInput::~VideoInput()
     loop_.join();
 }
 
+void
+VideoInput::startLoop()
+{
+#if defined(__ANDROID__)
+    switchDevice();
+#else
+    if (!loop_.isRunning())
+        loop_.start();
+#endif
+}
+
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 bool VideoInput::waitForBufferFull()
 {
@@ -88,10 +99,9 @@ bool VideoInput::waitForBufferFull()
     return !isCapturing();
 }
 
-void VideoInput::process()
+void
+VideoInput::switchDevice()
 {
-    foundDecOpts(decOpts_);
-
     if (switchPending_.exchange(false)) {
         JAMI_DBG("Switching input to '%s'", decOpts_.input.c_str());
         if (decOpts_.input.empty()) {
@@ -102,6 +112,12 @@ void VideoInput::process()
         emitSignal<DRing::VideoSignal::StopCapture>();
         emitSignal<DRing::VideoSignal::StartCapture>(decOpts_.input);
     }
+}
+
+void VideoInput::process()
+{
+    foundDecOpts(decOpts_);
+    switchDevice();
 
     std::unique_lock<std::mutex> lck(mutex_);
 
@@ -540,7 +556,7 @@ VideoInput::switchInput(const std::string& resource)
 
     JAMI_DBG("MRL: '%s'", resource.c_str());
 
-    if (switchPending_) {
+    if (switchPending_.exchange(true)) {
         JAMI_ERR("Video switch already requested");
         return {};
     }
@@ -554,10 +570,8 @@ VideoInput::switchInput(const std::string& resource)
     // Switch off video input?
     if (resource.empty()) {
         clearOptions();
-        switchPending_ = true;
-        if (!loop_.isRunning())
-            loop_.start();
-        futureDecOpts_   = foundDecOpts_.get_future();
+        futureDecOpts_  = foundDecOpts_.get_future();
+        startLoop();
         return futureDecOpts_;
     }
 
@@ -596,11 +610,8 @@ VideoInput::switchInput(const std::string& resource)
     if (ready) {
         foundDecOpts(decOpts_);
     }
-
-    switchPending_ = true;
-    if (!loop_.isRunning())
-        loop_.start();
     futureDecOpts_ = foundDecOpts_.get_future().share();
+    startLoop();
     return futureDecOpts_;
 }
 
