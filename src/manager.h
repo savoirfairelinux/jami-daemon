@@ -226,8 +226,9 @@ class Manager {
          * Return the conference id for which this call is attached
          * @ param the call id
          */
-        std::shared_ptr<Conference>
-        getConferenceFromCallID(const std::string& call_id);
+        std::shared_ptr<Conference> getConferenceFromCallID(const std::string& call_id) const;
+
+        std::shared_ptr<Conference> getConferenceFromID(const std::string &confID) const;
 
         /**
          * Hold every participant to a conference

@@ -500,7 +500,7 @@ Manager::ManagerPimpl::getCurrentDeviceIndex(DeviceType type)
 }
 
 void
-Manager::ManagerPimpl::processRemainingParticipants(Conference &conf)
+Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
 {
     const std::string current_call_id(base_.getCurrentCallId());
     ParticipantSet participants(conf.getParticipantList());
@@ -517,8 +517,7 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference &conf)
     } else if (n == 1) {
         // this call is the last participant, hence
         // the conference is over
-        ParticipantSet::iterator p = participants.begin();
-
+        auto p = participants.begin();
         if (auto call = base_.getCallFromCallID(*p)) {
             call->setConfId("");
             // if we are not listening to this conference
@@ -1032,26 +1031,15 @@ bool
 Manager::hangupConference(const std::string& id)
 {
     JAMI_DBG("Hangup conference %s", id.c_str());
-
-    ConferenceMap::iterator iter_conf = pimpl_->conferenceMap_.find(id);
-
-    if (iter_conf != pimpl_->conferenceMap_.end()) {
-        auto conf = iter_conf->second;
-
-        if (conf) {
-            ParticipantSet participants(conf->getParticipantList());
-
-            for (const auto &item : participants)
-                hangupCall(item);
-        } else {
-            JAMI_ERR("No such conference %s", id.c_str());
-            return false;
-        }
+    if (auto conf = getConferenceFromID(id)) {
+        ParticipantSet participants(conf->getParticipantList());
+        for (const auto &item : participants)
+            hangupCall(item);
+        pimpl_->unsetCurrentCall();
+        return true;
     }
-
-    pimpl_->unsetCurrentCall();
-
-    return true;
+    JAMI_ERR("No such conference %s", id.c_str());
+    return false;
 }
 
 //THREAD=Main
@@ -1202,16 +1190,9 @@ Manager::refuseCall(const std::string& id)
 void
 Manager::removeConference(const std::string& conference_id)
 {
-    JAMI_DBG("Remove conference %s", conference_id.c_str());
-    JAMI_DBG("number of participants: %zu", pimpl_->conferenceMap_.size());
-    ConferenceMap::iterator iter = pimpl_->conferenceMap_.find(conference_id);
-
-    std::shared_ptr<Conference> conf;
-
-    if (iter != pimpl_->conferenceMap_.end())
-        conf = iter->second;
-
-    if (not conf) {
+    JAMI_DBG("Remove conference %s with %zu participants", conference_id.c_str(), pimpl_->conferenceMap_.size());
+    auto iter = pimpl_->conferenceMap_.find(conference_id);
+    if (iter == pimpl_->conferenceMap_.end()) {
         JAMI_ERR("Conference not found");
         return;
     }
@@ -1219,57 +1200,47 @@ Manager::removeConference(const std::string& conference_id)
     emitSignal<DRing::CallSignal::ConferenceRemoved>(conference_id);
 
     // We now need to bind the audio to the remain participant
-
     // Unbind main participant audio from conference
     getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
 
-    ParticipantSet participants(conf->getParticipantList());
-
     // bind main participant audio to remaining conference call
-    ParticipantSet::iterator iter_p = participants.begin();
-
+    ParticipantSet participants(iter->second->getParticipantList());
+    auto iter_p = participants.begin();
     if (iter_p != participants.end())
         getRingBufferPool().bindCallID(*iter_p, RingBufferPool::DEFAULT_ID);
 
     // Then remove the conference from the conference map
-    if (pimpl_->conferenceMap_.erase(conference_id))
-        JAMI_DBG("Conference %s removed successfully", conference_id.c_str());
-    else
-        JAMI_ERR("Cannot remove conference: %s", conference_id.c_str());
+    pimpl_->conferenceMap_.erase(iter);
+    JAMI_DBG("Conference %s removed successfully", conference_id.c_str());
 }
 
 std::shared_ptr<Conference>
-Manager::getConferenceFromCallID(const std::string& call_id)
+Manager::getConferenceFromCallID(const std::string& call_id) const
 {
-    auto call = getCallFromCallID(call_id);
-    if (!call)
-        return nullptr;
+    if (auto call = getCallFromCallID(call_id))
+        return getConferenceFromID(call->getConfId());
+    return nullptr;
+}
 
-    ConferenceMap::const_iterator iter(pimpl_->conferenceMap_.find(call->getConfId()));
-
-    if (iter != pimpl_->conferenceMap_.end())
-        return iter->second;
-    else
-        return nullptr;
+std::shared_ptr<Conference>
+Manager::getConferenceFromID(const std::string& confID) const
+{
+    auto iter = pimpl_->conferenceMap_.find(confID);
+    return iter == pimpl_->conferenceMap_.end() ? nullptr : iter->second;
 }
 
 bool
 Manager::holdConference(const std::string& id)
 {
-    ConferenceMap::iterator iter_conf = pimpl_->conferenceMap_.find(id);
-
-    if (iter_conf == pimpl_->conferenceMap_.end())
+    auto conf = getConferenceFromID(id);
+    if (not conf)
         return false;
-
-    auto conf = iter_conf->second;
 
     bool isRec = conf->getState() == Conference::ACTIVE_ATTACHED_REC or
                  conf->getState() == Conference::ACTIVE_DETACHED_REC or
                  conf->getState() == Conference::HOLD_REC;
 
-    ParticipantSet participants(conf->getParticipantList());
-
-    for (const auto &item : participants) {
+    for (const auto &item : conf->getParticipantList()) {
         pimpl_->switchCall(getCallFromCallID(item));
         onHoldCall(item);
     }
@@ -1284,20 +1255,15 @@ Manager::holdConference(const std::string& id)
 bool
 Manager::unHoldConference(const std::string& id)
 {
-    ConferenceMap::iterator iter_conf = pimpl_->conferenceMap_.find(id);
-
-    if (iter_conf == pimpl_->conferenceMap_.end() or iter_conf->second == 0)
+    auto conf = getConferenceFromID(id);
+    if (not conf)
         return false;
-
-    auto conf = iter_conf->second;
 
     bool isRec = conf->getState() == Conference::ACTIVE_ATTACHED_REC or
         conf->getState() == Conference::ACTIVE_DETACHED_REC or
         conf->getState() == Conference::HOLD_REC;
 
-    ParticipantSet participants(conf->getParticipantList());
-
-    for (const auto &item : participants) {
+    for (const auto &item : conf->getParticipantList()) {
         if (auto call = getCallFromCallID(item)) {
             // if one call is currently recording, the conference is in state recording
             isRec |= call->isRecording();
@@ -1331,8 +1297,8 @@ bool
 Manager::addParticipant(const std::string& callId,
                         const std::string& conferenceId)
 {
-    auto iter = pimpl_->conferenceMap_.find(conferenceId);
-    if (iter == pimpl_->conferenceMap_.end() or iter->second == nullptr) {
+    auto conf = getConferenceFromID(conferenceId);
+    if (not conf) {
         JAMI_ERR("Conference id is not valid");
         return false;
     }
@@ -1354,7 +1320,7 @@ Manager::addParticipant(const std::string& callId,
     // store the current call id (it will change in offHoldCall or in answerCall)
     auto current_call_id = getCurrentCallId();
 
-    pimpl_->bindCallToConference(*call, *iter->second);
+    pimpl_->bindCallToConference(*call, *conf);
 
     // TODO: remove this ugly hack => There should be different calls when double clicking
     // a conference to add main participant to it, or (in this case) adding a participant
@@ -1374,17 +1340,11 @@ Manager::addMainParticipant(const std::string& conference_id)
 
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
-        ConferenceMap::const_iterator iter = pimpl_->conferenceMap_.find(conference_id);
-
-        if (iter == pimpl_->conferenceMap_.end() or iter->second == 0)
+        auto conf = getConferenceFromID(conference_id);
+        if (not conf)
             return false;
 
-        auto conf = iter->second;
-
-        ParticipantSet participants(conf->getParticipantList());
-
-        for (const auto &item_p : participants) {
+        for (const auto &item_p : conf->getParticipantList()) {
             getRingBufferPool().bindCallID(item_p, RingBufferPool::DEFAULT_ID);
             // Reset ringbuffer's readpointers
             getRingBufferPool().flush(item_p);
@@ -1498,15 +1458,14 @@ Manager::detachLocalParticipant()
         return false;
     }
 
-    auto iter = pimpl_->conferenceMap_.find(current_call_id);
-    if (iter == pimpl_->conferenceMap_.end() or iter->second == nullptr) {
+    auto conf = getConferenceFromID(current_call_id);
+    if (not conf) {
         JAMI_ERR("Conference is NULL");
         return false;
     }
 
     getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
 
-    auto conf = iter->second;
     switch (conf->getState()) {
         case Conference::ACTIVE_ATTACHED:
             conf->setState(Conference::ACTIVE_DETACHED);
@@ -1561,10 +1520,8 @@ Manager::removeParticipant(const std::string& call_id)
         return;
     }
 
-    ConferenceMap::const_iterator iter = pimpl_->conferenceMap_.find(call->getConfId());
-
-    auto conf = iter->second;
-    if (iter == pimpl_->conferenceMap_.end() or conf == 0) {
+    auto conf = getConferenceFromID(call->getConfId());
+    if (not conf) {
         JAMI_ERR("No conference with id %s, cannot remove participant", call->getConfId().c_str());
         return;
     }
@@ -1583,7 +1540,8 @@ bool
 Manager::joinConference(const std::string& conf_id1,
                             const std::string& conf_id2)
 {
-    if (pimpl_->conferenceMap_.find(conf_id1) == pimpl_->conferenceMap_.end()) {
+    auto conf = getConferenceFromID(conf_id1);
+    if (not conf) {
         JAMI_ERR("Not a valid conference ID: %s", conf_id1.c_str());
         return false;
     }
@@ -1593,7 +1551,6 @@ Manager::joinConference(const std::string& conf_id1,
         return false;
     }
 
-    auto conf = pimpl_->conferenceMap_.find(conf_id1)->second;
     ParticipantSet participants(conf->getParticipantList());
 
     // Detach and remove all participant from conf1 before add
@@ -1927,15 +1884,9 @@ Manager::sendCallTextMessage(const std::string& callID,
                              const std::string& from,
                              bool /*isMixed TODO: use it */)
 {
-    if (isConference(callID)) {
-        const auto& it = pimpl_->conferenceMap_.find(callID);
-        if (it == pimpl_->conferenceMap_.cend() or not it->second) {
-            JAMI_ERR("no conference associated to ID %s", callID.c_str());
-            return;
-        }
-
+    if (auto conf = getConferenceFromID(callID)) {
         JAMI_DBG("Is a conference, send instant message to everyone");
-        pimpl_->sendTextMessageToConference(*it->second, messages, from);
+        pimpl_->sendTextMessageToConference(*conf, messages, from);
 
     } else if (isConferenceParticipant(callID)) {
         auto conf = getConferenceFromCallID(callID);
