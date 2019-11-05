@@ -43,7 +43,8 @@ class VideoCallback {
 public:
     virtual ~VideoCallback(){}
     virtual void getCameraInfo(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates) {}
-    virtual void setParameters(const std::string, const int format, const int width, const int height, const int rate) {}
+    virtual void setParameters(const std::string&, const int format, const int width, const int height, const int rate) {}
+    virtual void setBitrate(const std::string&, const int bitrate) {}
     virtual void requestKeyFrame(){}
     virtual void startCapture(const std::string& camid) {}
     virtual void stopCapture() {}
@@ -421,7 +422,8 @@ class VideoCallback {
 public:
     virtual ~VideoCallback(){}
     virtual void getCameraInfo(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates){}
-    virtual void setParameters(const std::string, const int format, const int width, const int height, const int rate) {}
+    virtual void setParameters(const std::string&, const int format, const int width, const int height, const int rate) {}
+    virtual void setBitrate(const std::string&, const int bitrate) {}
     virtual void requestKeyFrame(){}
     virtual void startCapture(const std::string& camid) {}
     virtual void stopCapture() {}

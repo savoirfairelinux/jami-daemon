@@ -110,6 +110,7 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::GetCameraInfo>(),
         exported_callback<DRing::VideoSignal::SetParameters>(),
         exported_callback<DRing::VideoSignal::RequestKeyFrame>(),
+        exported_callback<DRing::VideoSignal::SetBitrate>(),
 #endif
         exported_callback<DRing::VideoSignal::StartCapture>(),
         exported_callback<DRing::VideoSignal::StopCapture>(),
