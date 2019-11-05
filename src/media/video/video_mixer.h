@@ -54,6 +54,8 @@ public:
     void attached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
     void detached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
 
+    void switchInput(const std::string& input);
+
 private:
     NON_COPYABLE(VideoMixer);
 
@@ -77,6 +79,8 @@ private:
     std::shared_ptr<SinkClient> sink_;
 
     std::chrono::time_point<std::chrono::system_clock> lastProcess_;
+
+    std::string localInput_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
     VideoScaler scaler_;
 

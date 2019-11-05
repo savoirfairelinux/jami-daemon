@@ -89,6 +89,15 @@ VideoMixer::~VideoMixer()
 }
 
 void
+VideoMixer::switchInput(const std::string& input)
+{
+    if (auto local = videoLocal_) {
+        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(local))
+            localInput->switchInput(input);
+    }
+}
+
+void
 VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     auto lock(rwMutex_.write());
@@ -203,6 +212,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     }
     const constexpr char filterIn[] = "mixin";
     if (angle != source->rotation) {
+        JAMI_WARN("Mixer: got rotation %d for source %d", angle, index);
         source->rotationFilter = video::getTransposeFilter(angle, filterIn,
             frame->width(), frame->height(), frame->format(), true);
         source->rotation = angle;

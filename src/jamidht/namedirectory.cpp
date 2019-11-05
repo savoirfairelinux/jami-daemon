@@ -90,7 +90,16 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
    : serverUrl_(serverUrl), logger_(std::move(l))
    , httpContext_(Manager::instance().ioContext())
 {
-    resolver_ = std::make_shared<dht::http::Resolver>(*httpContext_, serverUrl, logger_);
+    static auto silent = [](char const* /*m*/, va_list /*args*/) {};
+    static auto log_error = [](char const* m, va_list args) { Logger::vlog(LOG_ERR, nullptr, 0, true, m, args); };
+    static auto log_warn = [](char const* m, va_list args) { Logger::vlog(LOG_WARNING, nullptr, 0, true, m, args); };
+    static auto log_debug = [](char const* m, va_list args) { Logger::vlog(LOG_DEBUG, nullptr, 0, true, m, args); };
+    auto logger = std::make_shared<dht::Logger>(
+                log_error,
+                log_warn,
+                log_debug);
+
+    resolver_ = std::make_shared<dht::http::Resolver>(*httpContext_, serverUrl, logger);
     cachePath_ = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + CACHE_DIRECTORY +
                                               DIR_SEPARATOR_STR + resolver_->get_url().host;
 }
@@ -130,6 +139,7 @@ NameDirectory::setHeaderFields(Request& request){
 void
 NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 {
+    JAMI_ERR("Address lookup for %s", addr.c_str());
     std::string cacheResult = nameCache(addr);
     if (not cacheResult.empty()) {
         cb(cacheResult, Response::found);
@@ -202,6 +212,7 @@ NameDirectory::verify(const std::string& name, const dht::crypto::PublicKey& pk,
 void
 NameDirectory::lookupName(const std::string& n, LookupCallback cb)
 {
+    JAMI_ERR("Name lookup for %s", n.c_str());
     std::string name {n};
     if (not validateName(name)) {
         cb(name, Response::invalidResponse);

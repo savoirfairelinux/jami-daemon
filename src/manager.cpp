@@ -2236,13 +2236,14 @@ Manager::getCurrentAudioDevicesIndex()
 bool
 Manager::switchInput(const std::string& call_id, const std::string& res)
 {
-    auto call = getCallFromCallID(call_id);
-    if (!call) {
-        JAMI_ERR("Call %s is NULL", call_id.c_str());
-        return false;
+    if (auto conf = getConferenceFromID(call_id)) {
+        conf->switchInput(res);
+        return true;
+    } else if (auto call = getCallFromCallID(call_id)) {
+        call->switchInput(res);
+        return true;
     }
-    call->switchInput(res);
-    return true;
+    return false;
 }
 
 int
