@@ -20,8 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __VIDEO_INPUT_H__
-#define __VIDEO_INPUT_H__
+#pragma once
 
 #include "noncopyable.h"
 #include "threadloop.h"
@@ -49,23 +48,11 @@ namespace jami { namespace video {
 
 class SinkClient;
 
-enum VideoFrameStatus {
-    BUFFER_NOT_ALLOCATED,
-    BUFFER_AVAILABLE,       /* owned by us */
-    BUFFER_CAPTURING,       /* owned by Android Java Application */
-    BUFFER_FULL,            /* owned by us again */
-    BUFFER_PUBLISHED,       /* owned by libav */
-};
-
-struct VideoFrameBuffer {
-    void                    *data;
-    size_t                  length;
-    enum VideoFrameStatus   status;
-    int                     index;
-
-    VideoFrameBuffer() : data(nullptr), length(0),
-                         status(BUFFER_NOT_ALLOCATED), index(0) {}
-};
+#if (defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
+#define VIDEO_CLIENT_INPUT 1
+#else
+#define VIDEO_CLIENT_INPUT 0
+#endif
 
 class VideoInput : public VideoGenerator, public std::enable_shared_from_this<VideoInput>
 {
@@ -84,7 +71,7 @@ public:
     MediaStream getInfo() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#if VIDEO_CLIENT_INPUT
     /*
      * these functions are used to pass buffer from/to the daemon
      * on the Android and UWP builds
@@ -97,29 +84,17 @@ private:
     NON_COPYABLE(VideoInput);
 
     std::string currentResource_;
-
-    std::unique_ptr<MediaDecoder> decoder_;
-    std::shared_ptr<SinkClient> sink_;
     std::atomic<bool> switchPending_ = {false};
 
     DeviceParams decOpts_;
     std::promise<DeviceParams> foundDecOpts_;
     std::shared_future<DeviceParams> futureDecOpts_;
+    bool emulateRate_       = false;
 
     std::atomic_bool decOptsFound_ {false};
     void foundDecOpts(const DeviceParams& params);
 
-    bool emulateRate_       = false;
-    ThreadLoop loop_;
-
     void clearOptions();
-
-    void createDecoder();
-    void deleteDecoder();
-
-    int rotation_ {0};
-    std::shared_ptr<AVBufferRef> displayMatrix_;
-    void setRotation(int angle);
 
     // true if decOpts_ is ready to use, false if using promise/future
     bool initCamera(const std::string& device);
@@ -128,30 +103,30 @@ private:
     bool initFile(std::string path);
     bool initGdiGrab(const std::string& params);
 
+    bool isCapturing() const noexcept;
+    void startLoop();
+
+#if VIDEO_CLIENT_INPUT
+    void switchDevice();
+    bool capturing_ {false};
+#else
+    void createDecoder();
+    void deleteDecoder();
+    std::unique_ptr<MediaDecoder> decoder_;
+    std::shared_ptr<SinkClient> sink_;
+    ThreadLoop loop_;
+
     // for ThreadLoop
     bool setup();
     void process();
     void cleanup();
 
     bool captureFrame();
-    bool isCapturing() const noexcept;
 
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-    int allocateOneBuffer(struct VideoFrameBuffer& b, int length);
-    void freeOneBuffer(struct VideoFrameBuffer& b);
-    bool waitForBufferFull();
-
-    std::mutex mutex_;
-    std::condition_variable frame_cv_;
-    int capture_index_ = 0;
-    int publish_index_ = 0;
-
-    /* Get notified when libav is done with this buffer */
-    void releaseBufferCb(uint8_t* ptr);
-    std::array<struct VideoFrameBuffer, 8> buffers_;
+    int rotation_ {0};
+    std::shared_ptr<AVBufferRef> displayMatrix_;
+    void setRotation(int angle);
 #endif
 };
 
 }} // namespace jami::video
-
-#endif // __VIDEO_INPUT_H__
