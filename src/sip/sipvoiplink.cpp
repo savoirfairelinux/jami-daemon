@@ -972,9 +972,15 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
             std::regex_search(body_msg, matched_pattern, ORIENTATION_REGEX);
 
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
-                int rotation = std::stoi(matched_pattern[1]);
-                JAMI_WARN("Rotate video %d deg.", rotation);
-                call.getVideoRtp().setRotation(rotation);
+                try {
+                    int rotation = -std::stoi(matched_pattern[1]);
+                    while (rotation <= -180) rotation += 360;
+                    while (rotation > 180) rotation -= 360;
+                    JAMI_WARN("Rotate video %d deg.", rotation);
+                    call.getVideoRtp().setRotation(rotation);
+                } catch (const std::exception& e) {
+                    JAMI_WARN("Error parsing angle: %s", e.what());
+                }
                 return true;
             }
         }

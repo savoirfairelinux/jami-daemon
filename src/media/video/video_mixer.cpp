@@ -208,7 +208,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     int angle = 0;
     if (sideData) {
         auto matrixRotation = reinterpret_cast<int32_t*>(sideData->data);
-        angle = av_display_rotation_get(matrixRotation);
+        angle = -av_display_rotation_get(matrixRotation);
     }
     const constexpr char filterIn[] = "mixin";
     if (angle != source->rotation) {

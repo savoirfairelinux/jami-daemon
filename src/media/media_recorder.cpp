@@ -78,7 +78,7 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
         if (info.isVideo) {
             auto framePtr = static_cast<VideoFrame*>(m.get());
             AVFrameSideData* sideData = av_frame_get_side_data(framePtr->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
-            int angle = sideData ?  av_display_rotation_get(reinterpret_cast<int32_t*>(sideData->data)) : 0;
+            int angle = sideData ? -av_display_rotation_get(reinterpret_cast<int32_t*>(sideData->data)) : 0;
             if (angle != rotation_) {
                 videoRotationFilter_ = jami::video::getTransposeFilter(angle, ROTATION_FILTER_INPUT_NAME, framePtr->width(), framePtr->height(), framePtr->format(), true);
                 rotation_ = angle;
