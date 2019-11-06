@@ -54,95 +54,72 @@ namespace jami { namespace video {
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
+#define VIDEO_CLIENT_INPUT (defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
+
 VideoInput::VideoInput()
     : VideoGenerator::VideoGenerator()
+#if !VIDEO_CLIENT_INPUT
     , sink_ {Manager::instance().createSinkClient("local")}
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-    , mutex_(), frame_cv_(), buffers_()
 #endif
 {}
 
 VideoInput::~VideoInput()
 {
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-    /* we need to stop the loop and notify the condition variable
-     * to unblock the process loop */
-    loop_.stop();
-    frame_cv_.notify_one();
-#endif
+#if VIDEO_CLIENT_INPUT
+    emitSignal<DRing::VideoSignal::StopCapture>();
+    capturing_ = false;
+#else
     loop_.join();
+#endif
 }
 
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-bool VideoInput::waitForBufferFull()
+void
+VideoInput::startLoop()
 {
-    for(auto& buffer : buffers_) {
-        if (buffer.status == BUFFER_FULL)
-            return true;
-    }
-
-    /* If the loop is stopped, returned true so we can quit the process loop */
-    return !isCapturing();
+#if VIDEO_CLIENT_INPUT
+    switchDevice();
+#else
+    if (!loop_.isRunning())
+        loop_.start();
+#endif
 }
 
-void VideoInput::process()
+#if VIDEO_CLIENT_INPUT
+void
+VideoInput::switchDevice()
 {
-    foundDecOpts(decOpts_);
-
     if (switchPending_.exchange(false)) {
         JAMI_DBG("Switching input to '%s'", decOpts_.input.c_str());
         if (decOpts_.input.empty()) {
-            loop_.stop();
+            capturing_ = false;
             return;
         }
 
         emitSignal<DRing::VideoSignal::StopCapture>();
         emitSignal<DRing::VideoSignal::StartCapture>(decOpts_.input);
-    }
-
-    std::unique_lock<std::mutex> lck(mutex_);
-
-    frame_cv_.wait(lck, [this] { return waitForBufferFull(); });
-    std::weak_ptr<VideoInput> wthis;
-    // shared_from_this throws in destructor
-    // assumes C++17
-    try {
-        wthis = shared_from_this();
-    } catch (...) {
-        return;
-    }
-
-    if (decOpts_.orientation != rotation_) {
-        setRotation(decOpts_.orientation);
-        rotation_ = decOpts_.orientation;
-    }
-
-    for (auto& buffer : buffers_) {
-        if (buffer.status == BUFFER_FULL && buffer.index == publish_index_) {
-            auto& frame = getNewFrame();
-            AVPixelFormat format = getPixelFormat();
-
-            if (auto displayMatrix = displayMatrix_)
-                av_frame_new_side_data_from_buf(frame.pointer(), AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(displayMatrix.get()));
-
-            buffer.status = BUFFER_PUBLISHED;
-            frame.setFromMemory((uint8_t*)buffer.data, format, decOpts_.width, decOpts_.height,
-                                [wthis](uint8_t* ptr) {
-                                    if (auto sthis = wthis.lock())
-                                        sthis->releaseBufferCb(ptr);
-                                    else
-                                        std::free(ptr);
-                                });
-            publish_index_++;
-            lck.unlock();
-            publishFrame();
-            break;
-        }
+        capturing_ = true;
     }
 }
+
+int VideoInput::getWidth() const
+{ return decOpts_.width; }
+
+int VideoInput::getHeight() const
+{ return decOpts_.height; }
+
+AVPixelFormat VideoInput::getPixelFormat() const
+{
+    int format;
+    std::stringstream ss;
+    ss << decOpts_.format;
+    ss >> format;
+    return (AVPixelFormat)format;
+}
+
+#else
 
 void
 VideoInput::setRotation(int angle)
@@ -157,26 +134,20 @@ VideoInput::setRotation(int angle)
     }
 }
 
-void VideoInput::cleanup()
+bool VideoInput::setup()
 {
-    emitSignal<DRing::VideoSignal::StopCapture>();
-
-    if (detach(sink_.get()))
-        sink_->stop();
-
-    std::lock_guard<std::mutex> lck(mutex_);
-    for (auto& buffer : buffers_) {
-        if (buffer.status == BUFFER_AVAILABLE ||
-            buffer.status == BUFFER_FULL) {
-            freeOneBuffer(buffer);
-        } else if (buffer.status != BUFFER_NOT_ALLOCATED) {
-            JAMI_ERR("Failed to free buffer [%p]", buffer.data);
-        }
+    if (not attach(sink_.get())) {
+        JAMI_ERR("attach sink failed");
+        return false;
     }
 
-    setRotation(0);
+    if (!sink_->start())
+        JAMI_ERR("start sink failed");
+
+    JAMI_DBG("VideoInput ready to capture");
+
+    return true;
 }
-#else
 
 void
 VideoInput::process()
@@ -199,35 +170,8 @@ VideoInput::cleanup()
     JAMI_DBG("VideoInput closed");
 }
 
-#endif
-bool VideoInput::setup()
-{
-    if (not attach(sink_.get())) {
-        JAMI_ERR("attach sink failed");
-        return false;
-    }
-
-    if (!sink_->start())
-        JAMI_ERR("start sink failed");
-
-    JAMI_DBG("VideoInput ready to capture");
-
-    return true;
-}
-
-void VideoInput::clearOptions()
-{
-    decOpts_ = {};
-    emulateRate_ = false;
-}
-
 bool
-VideoInput::isCapturing() const noexcept
-{
-    return loop_.isRunning();
-}
-
-bool VideoInput::captureFrame()
+VideoInput::captureFrame()
 {
     // Return true if capture could continue, false if must be stop
     if (not decoder_)
@@ -244,92 +188,6 @@ bool VideoInput::captureFrame()
         return true;
     }
 }
-
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-int VideoInput::allocateOneBuffer(struct VideoFrameBuffer& b, int length)
-{
-    b.data = std::malloc(length);
-    if (b.data) {
-        b.status = BUFFER_AVAILABLE;
-        b.length = length;
-        JAMI_DBG("Allocated buffer [%p]", b.data);
-        return 0;
-    }
-
-    JAMI_DBG("Failed to allocate memory for one buffer");
-    return -ENOMEM;
-}
-
-void VideoInput::freeOneBuffer(struct VideoFrameBuffer& b)
-{
-    JAMI_DBG("Free buffer [%p]", b.data);
-    std::free(b.data);
-    b.data = nullptr;
-    b.length = 0;
-    b.status = BUFFER_NOT_ALLOCATED;
-}
-
-void VideoInput::releaseBufferCb(uint8_t* ptr)
-{
-    std::lock_guard<std::mutex> lck(mutex_);
-
-    for(auto &buffer : buffers_) {
-        if (buffer.data == ptr) {
-            buffer.status = BUFFER_AVAILABLE;
-            if (!isCapturing())
-                freeOneBuffer(buffer);
-            break;
-        }
-    }
-}
-
-void*
-VideoInput::obtainFrame(int length)
-{
-    std::lock_guard<std::mutex> lck(mutex_);
-
-    /* allocate buffers. This is done there because it's only when the Android
-     * application requests a buffer that we know its size
-     */
-    for(auto& buffer : buffers_) {
-        if (buffer.status == BUFFER_NOT_ALLOCATED) {
-            allocateOneBuffer(buffer, length);
-        }
-    }
-
-    /* search for an available frame */
-    for(auto& buffer : buffers_) {
-        if (buffer.length == static_cast<size_t>(length) && buffer.status == BUFFER_AVAILABLE) {
-            buffer.status = BUFFER_CAPTURING;
-            return buffer.data;
-        }
-    }
-
-    JAMI_WARN("No buffer found");
-    return nullptr;
-}
-
-void
-VideoInput::releaseFrame(void *ptr)
-{
-    std::lock_guard<std::mutex> lck(mutex_);
-    for(auto& buffer : buffers_) {
-        if (buffer.data  == ptr) {
-            if (buffer.status != BUFFER_CAPTURING)
-                JAMI_ERR("Released a buffer with status %d, expected %d",
-                         buffer.status, BUFFER_CAPTURING);
-            if (isCapturing()) {
-                buffer.status = BUFFER_FULL;
-                buffer.index = capture_index_++;
-                frame_cv_.notify_one();
-            } else {
-                freeOneBuffer(buffer);
-            }
-            break;
-        }
-    }
-}
-#endif
 
 void
 VideoInput::createDecoder()
@@ -398,6 +256,33 @@ VideoInput::deleteDecoder()
         return;
     flushFrames();
     decoder_.reset();
+}
+
+int VideoInput::getWidth() const
+{ return decoder_->getWidth(); }
+
+int VideoInput::getHeight() const
+{ return decoder_->getHeight(); }
+
+AVPixelFormat VideoInput::getPixelFormat() const
+{ return decoder_->getPixelFormat(); }
+
+#endif
+
+void VideoInput::clearOptions()
+{
+    decOpts_ = {};
+    emulateRate_ = false;
+}
+
+bool
+VideoInput::isCapturing() const noexcept
+{
+#if VIDEO_CLIENT_INPUT
+    return capturing_;
+#else
+    return loop_.isRunning();
+#endif
 }
 
 bool
@@ -540,7 +425,7 @@ VideoInput::switchInput(const std::string& resource)
 
     JAMI_DBG("MRL: '%s'", resource.c_str());
 
-    if (switchPending_) {
+    if (switchPending_.exchange(true)) {
         JAMI_ERR("Video switch already requested");
         return {};
     }
@@ -554,10 +439,8 @@ VideoInput::switchInput(const std::string& resource)
     // Switch off video input?
     if (resource.empty()) {
         clearOptions();
-        switchPending_ = true;
-        if (!loop_.isRunning())
-            loop_.start();
-        futureDecOpts_   = foundDecOpts_.get_future();
+        futureDecOpts_  = foundDecOpts_.get_future();
+        startLoop();
         return futureDecOpts_;
     }
 
@@ -596,40 +479,10 @@ VideoInput::switchInput(const std::string& resource)
     if (ready) {
         foundDecOpts(decOpts_);
     }
-
-    switchPending_ = true;
-    if (!loop_.isRunning())
-        loop_.start();
     futureDecOpts_ = foundDecOpts_.get_future().share();
+    startLoop();
     return futureDecOpts_;
 }
-
-#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-int VideoInput::getWidth() const
-{ return decOpts_.width; }
-
-int VideoInput::getHeight() const
-{ return decOpts_.height; }
-
-AVPixelFormat VideoInput::getPixelFormat() const
-{
-    int format;
-    std::stringstream ss;
-    ss << decOpts_.format;
-    ss >> format;
-
-    return (AVPixelFormat)format;
-}
-#else
-int VideoInput::getWidth() const
-{ return decoder_->getWidth(); }
-
-int VideoInput::getHeight() const
-{ return decoder_->getHeight(); }
-
-AVPixelFormat VideoInput::getPixelFormat() const
-{ return decoder_->getPixelFormat(); }
-#endif
 
 DeviceParams VideoInput::getParams() const
 { return decOpts_; }
@@ -637,8 +490,10 @@ DeviceParams VideoInput::getParams() const
 MediaStream
 VideoInput::getInfo() const
 {
+#if !VIDEO_CLIENT_INPUT
     if (decoder_)
         return decoder_->getStream("v:local");
+#endif
     auto opts = futureDecOpts_.get();
     rational<int> fr(opts.framerate.numerator(), opts.framerate.denominator());
     return MediaStream("v:local", av_get_pix_fmt(opts.pixel_format.c_str()),

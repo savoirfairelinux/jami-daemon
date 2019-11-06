@@ -588,22 +588,6 @@ removeVideoDevice(const std::string &node)
 {
     jami::Manager::instance().getVideoManager().videoDeviceMonitor.removeDevice(node);
 }
-
-void*
-obtainFrame(int length)
-{
-    if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
-        return (*input).obtainFrame(length);
-
-    return nullptr;
-}
-
-void
-releaseFrame(void* frame)
-{
-    if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
-        (*input).releaseFrame(frame);
-}
 #endif
 
 } // namespace DRing

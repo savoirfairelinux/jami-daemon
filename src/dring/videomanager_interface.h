@@ -188,9 +188,6 @@ DRING_PUBLIC void stopLocalRecorder(const std::string& filepath);
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 DRING_PUBLIC void addVideoDevice(const std::string &node, const std::vector<std::map<std::string, std::string>>* devInfo=nullptr);
 DRING_PUBLIC void removeVideoDevice(const std::string &node);
-DRING_PUBLIC void* obtainFrame(int length);
-DRING_PUBLIC void releaseFrame(void* frame);
-
 DRING_PUBLIC VideoFrame* getNewFrame();
 DRING_PUBLIC void publishFrame();
 #endif

@@ -408,8 +408,6 @@ void applySettings(const std::string& name, const std::map<std::string, std::str
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
 void setDeviceOrientation(const std::string& name, int angle);
-uint8_t* obtainFrame(int length);
-void releaseFrame(uint8_t* frame);
 void registerSinkTarget(const std::string& sinkId, const DRing::SinkTarget& target);
 std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
 void stopLocalRecorder(const std::string& filepath);
