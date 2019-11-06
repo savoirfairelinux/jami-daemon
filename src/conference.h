@@ -58,7 +58,7 @@ class Conference : public Recordable {
         /**
          * Return the conference id
          */
-        std::string getConfID() const;
+        const std::string& getConfID() const;
 
         /**
          * Return the current conference state
@@ -104,7 +104,9 @@ class Conference : public Recordable {
         /**
          * Start/stop recording toggle
          */
-        virtual bool toggleRecording();
+        bool toggleRecording() override;
+
+        void switchInput(const std::string& input);
 
 #ifdef ENABLE_VIDEO
         std::shared_ptr<video::VideoMixer> getVideoMixer();

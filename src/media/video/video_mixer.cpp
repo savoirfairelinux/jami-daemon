@@ -89,6 +89,15 @@ VideoMixer::~VideoMixer()
 }
 
 void
+VideoMixer::switchInput(const std::string& input)
+{
+    if (auto local = videoLocal_) {
+        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(local))
+            localInput->switchInput(input);
+    }
+}
+
+void
 VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     auto lock(rwMutex_.write());

@@ -150,8 +150,17 @@ bool Conference::toggleRecording()
     return startRecording;
 }
 
-std::string Conference::getConfID() const {
+const std::string&
+Conference::getConfID() const {
     return id_;
+}
+
+void
+Conference::switchInput(const std::string& input)
+{
+#ifdef ENABLE_VIDEO
+    getVideoMixer()->switchInput(input);
+#endif
 }
 
 #ifdef ENABLE_VIDEO

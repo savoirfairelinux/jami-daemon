@@ -54,6 +54,8 @@ public:
     void attached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
     void detached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
 
+    void switchInput(const std::string& input);
+
 private:
     NON_COPYABLE(VideoMixer);
 
