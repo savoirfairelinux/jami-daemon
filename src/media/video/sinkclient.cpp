@@ -367,7 +367,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         int angle = 0;
         if (side_data) {
             auto matrix_rotation = reinterpret_cast<int32_t*>(side_data->data);
-            angle = av_display_rotation_get(matrix_rotation);
+            angle = -av_display_rotation_get(matrix_rotation);
         }
         if (angle != rotation_) {
             filter_ = getTransposeFilter(angle, FILTER_INPUT_NAME, frame->width(), frame->height(), AV_PIX_FMT_RGB32, false);

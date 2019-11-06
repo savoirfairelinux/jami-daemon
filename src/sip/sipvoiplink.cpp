@@ -973,6 +973,8 @@ handleMediaControl(SIPCall& call, pjsip_msg_body* body)
 
             if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
                 int rotation = std::stoi(matched_pattern[1]);
+                while (rotation <= -180) rotation += 360;
+                while (rotation > 180) rotation -= 360;
                 JAMI_WARN("Rotate video %d deg.", rotation);
                 call.getVideoRtp().setRotation(rotation);
                 return true;
