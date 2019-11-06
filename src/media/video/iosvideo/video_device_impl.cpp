@@ -157,7 +157,7 @@ VideoDeviceImpl::getDeviceParams() const
 
     ss1 << fmt_->pixfmt;
     ss1 >> params.format;
-
+    params.pixel_format = "nv12";
     params.name = name;
     params.input = name;
     params.channel =  0;

@@ -300,7 +300,7 @@ VideoRtpSession::enterConference(Conference* conference)
 
     if (send_.enabled or receiveThread_) {
         videoMixer_ = conference->getVideoMixer();
-#if defined(__APPLE__) && TARGET_OS_MAC
+#if defined(__APPLE__)
         videoMixer_->setParameters(localVideoParams_.width,
                                    localVideoParams_.height,
                                    av_get_pix_fmt(localVideoParams_.pixel_format.c_str()));
