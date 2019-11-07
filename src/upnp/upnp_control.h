@@ -53,6 +53,11 @@ public:
     // Checks if a valid IGD is available.
     bool hasValidIGD();
 
+    // Tries to use a provisioned port.
+    bool useProvisionedPort(uint16_t& port, PortType type);
+    // Releases all provisioned mappings used by this controller.
+    void removeAllProvisionedMap();
+
     // Gets the external ip of the first valid IGD in the list.
     IpAddr getExternalIP() const;
 
@@ -75,6 +80,7 @@ private:
     std::mutex mapListMutex_;                       // Mutex to protect mappings list.
     PortMapLocal udpMappings_;						// List of UDP mappings created by this instance.
     PortMapLocal tcpMappings_;						// List of TCP mappings created by this instance.
+    std::vector<Mapping> provisionedPorts_;         // Vector of reserved provisioned ports.
 
     size_t listToken_ {0};							// IGD listener token.
     uint64_t id_ {0};                           // Variable to store string of address to be used as the unique identifier.

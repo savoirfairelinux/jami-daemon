@@ -41,6 +41,7 @@ Controller::~Controller()
         upnpContext_->unregisterAllCallbacks(id_);
     }
 
+    removeAllProvisionedMap();
     requestAllMappingRemove(PortType::UDP);
     requestAllMappingRemove(PortType::TCP);
 }
@@ -49,6 +50,32 @@ bool
 Controller::hasValidIGD()
 {
     return upnpContext_ and upnpContext_->hasValidIGD();
+}
+
+bool
+Controller::useProvisionedPort(uint16_t& port, PortType type)
+{
+    if (not upnpContext_) return false;
+    auto provPort = upnpContext_->selectProvisionedPort(type);
+    {
+        std::lock_guard<std::mutex> lk(mapListMutex_);
+        if (provPort != 0) {
+            provisionedPorts_.emplace_back(Mapping(port, port, type));
+            port = provPort;
+            return true;
+        }
+    }
+    return false;
+}
+
+void
+Controller::removeAllProvisionedMap()
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+    for (const auto& port: provisionedPorts_) {
+        JAMI_WARN("Controller@%ld: releasing provisioned port %s", (long)id_, port.toString().c_str());
+        upnpContext_->unselectProvisionedPort(port.getPortExternal(), port.getType());
+    }
 }
 
 IpAddr
@@ -109,6 +136,7 @@ Controller::requestMappingAdd(NotifyServiceCallback&& cb, uint16_t portDesired, 
             [this]() {
                 // Clear local mappings in case of a connectivity changed
                 std::lock_guard<std::mutex> lk(mapListMutex_);
+                provisionedPorts_.clear();
                 udpMappings_.clear();
                 tcpMappings_.clear();
             }
