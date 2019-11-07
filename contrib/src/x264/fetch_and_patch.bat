@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set X264_VERSION=5fee86cae91cd7b726db7408a3ed1c4da71fb78c
+set X264_VERSION=34bf9e914b5a87770c318f3de80e16fbf87d921e
 set X264_URL=https://github.com/ShiftMediaProject/x264/archive/%X264_VERSION%.tar.gz
 
 mkdir %BUILD%

@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set VPX_VERSION=c01b6dc8451f09745916c079e036364ab63b93cd
+set VPX_VERSION=540af22e9a85798cc6d0b484c85184a5c00270f0
 set VPX_URL=https://github.com/ShiftMediaProject/libvpx/archive/%VPX_VERSION%.tar.gz
 
 mkdir %BUILD%
