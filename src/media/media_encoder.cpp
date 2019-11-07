@@ -199,7 +199,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     else if(systemCodecInfo.mediaType == MEDIA_AUDIO)
         mediaType = AVMEDIA_TYPE_AUDIO;
 
-    encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), framesCtx, 0);
+    encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), framesCtx, SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
 
     // add video stream to outputformat context
     AVStream* stream = avformat_new_stream(outputCtx_, outputCodec_);
@@ -689,9 +689,6 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
         encoderCtx->opaque = accel_.get();
     }
 #endif
-
-    if(!br)
-        br = std::atoi(libav_utils::getDictValue(options_, "max_rate"));
 
     // Only clamp video bitrate
     if (mediaType == AVMEDIA_TYPE_VIDEO && br > 0) {

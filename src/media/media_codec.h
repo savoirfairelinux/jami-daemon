@@ -64,7 +64,6 @@ struct SystemCodecInfo
     static constexpr unsigned DEFAULT_H264_MAX_QUALITY {20};
     static constexpr unsigned DEFAULT_VP8_MIN_QUALITY {50};
     static constexpr unsigned DEFAULT_VP8_MAX_QUALITY {20};
-    static constexpr unsigned DEFAULT_VIDEO_BITRATE {1200}; // in Kbits/second
 #endif
 
     // indicates that the codec does not use quality factor
@@ -72,6 +71,7 @@ struct SystemCodecInfo
 
     static constexpr unsigned DEFAULT_MIN_BITRATE {600};
     static constexpr unsigned DEFAULT_MAX_BITRATE {6000};
+    static constexpr unsigned DEFAULT_VIDEO_BITRATE {1200}; // in Kbits/second
 
     SystemCodecInfo(unsigned avcodecId, const std::string& name,
                     const std::string& libName, MediaType mediaType,
