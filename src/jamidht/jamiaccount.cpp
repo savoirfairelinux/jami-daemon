@@ -319,6 +319,15 @@ std::shared_ptr<SIPCall>
 JamiAccount::newOutgoingCall(const std::string& toUrl,
                              const std::map<std::string, std::string>& volatileCallDetails)
 {
+    runOnMainThread([wthis=weak()]() {
+        if (auto sthis = wthis.lock()) {
+            if (sthis->upnp_) {
+                JAMI_ERR("GENERATE");
+                sthis->upnp_->generateProvisionPorts();
+                JAMI_ERR("GENERATE END");
+            }
+        }
+    });
     auto suffix = stripPrefix(toUrl);
     JAMI_DBG() << *this << "Calling DHT peer " << suffix;
     auto& manager = Manager::instance();

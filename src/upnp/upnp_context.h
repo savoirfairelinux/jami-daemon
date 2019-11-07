@@ -61,6 +61,8 @@ using random_device = dht::crypto::random_device;
 
 using IgdFoundCallback = std::function<void()>;
 
+constexpr static unsigned int NB_PROVISION_PORTS {4};
+
 namespace jami {
 class IpAddr;
 }
@@ -140,6 +142,14 @@ public:
     // Removes all callback with a specific controller Id.
     void unregisterAllCallbacks(uint64_t ctrlId);
 
+    // Returns a selected provisioned port depending on the type of port that is being requested.
+    uint16_t selectProvisionedPort(upnp::PortType type);
+    // Releases a previously provisioned port.
+    void unselectProvisionedPort(uint16_t port, upnp::PortType type);
+
+    // Generates provision ports to be used throughout the application's lifetime.
+    void generateProvisionPorts();
+
 private:
     // Checks if the IGD is in the list by checking the IGD's public Ip.
     bool isIgdInList(const IpAddr& publicIpAddr);
@@ -162,6 +172,11 @@ private:
     // Removes IGD from list by specifiying the IGD's public Ip address.
     bool removeIgdFromList(IpAddr publicIpAddr);
 
+    // Adds the corresponding mapping to the provision list once it's opened.
+    void registerProvisionedMapping(const Mapping& map);
+    // Removes the corresponding mapping from the provision list once it's closed.
+    void unregisterProvisionedMapping(const Mapping& map);
+
 public:
     constexpr static unsigned MAX_RETRIES = 20;
 
@@ -171,6 +186,10 @@ private:
     std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;	// Vector of available protocols.
     mutable std::mutex igdListMutex_;							// Mutex used to access these lists and IGDs in a thread-safe manner.
     std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;			// List of IGDs with their corresponding public IPs.
+
+    std::mutex provisionListMutex_;                                     // Mutex that protects the provisioned mappings list.
+    std::map<Mapping, bool> mapProvisionList_;                          // List of provisioned mappings with a bool to indicate if it's in use.
+    std::array<uint16_t, NB_PROVISION_PORTS> provisionPortList_ {};     // List of generated provisioned ports.
 
     std::mutex pendindRequestMutex_;                            // Mutex that protects the pending map request lists.
     std::vector<PendingMapRequest> pendingAddMapList_ {};       // Vector of pending add mapping requests.

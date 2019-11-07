@@ -41,6 +41,7 @@ Controller::~Controller()
         upnpContext_->unregisterAllCallbacks(id_);
     }
 
+    removeAllProvisionedMap();
     requestAllMappingRemove(PortType::UDP);
     requestAllMappingRemove(PortType::TCP);
 }
@@ -49,6 +50,34 @@ bool
 Controller::hasValidIGD()
 {
     return upnpContext_ and upnpContext_->hasValidIGD();
+}
+
+bool
+Controller::useProvisionedPort(uint16_t& port, PortType type)
+{
+    if (not upnpContext_) return false;
+    auto provPort = upnpContext_->selectProvisionedPort(type);
+    {
+        std::lock_guard<std::mutex> lk(mapListMutex_);
+        if (provPort != 0) {
+            port = provPort;
+            auto mapped = Mapping(port, port, type);
+            provisionedPorts_.emplace_back(mapped);
+            JAMI_WARN("Controller@%ld: ADD provisioned port %s", (long)id_, mapped.toString().c_str());
+            return true;
+        }
+    }
+    return false;
+}
+
+void
+Controller::removeAllProvisionedMap()
+{
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+    for (const auto& port: provisionedPorts_) {
+        JAMI_WARN("Controller@%ld: releasing provisioned port %s", (long)id_, port.toString().c_str());
+        upnpContext_->unselectProvisionedPort(port.getPortExternal(), port.getType());
+    }
 }
 
 IpAddr
@@ -109,6 +138,7 @@ Controller::requestMappingAdd(NotifyServiceCallback&& cb, uint16_t portDesired, 
             [this]() {
                 // Clear local mappings in case of a connectivity changed
                 std::lock_guard<std::mutex> lk(mapListMutex_);
+                provisionedPorts_.clear();
                 udpMappings_.clear();
                 tcpMappings_.clear();
             }
@@ -151,6 +181,13 @@ Controller::removeLocalMap(const Mapping& map)
     auto it = instanceMappings.find(map.getPortExternal());
     if (it != instanceMappings.end())
         instanceMappings.erase(it);
+}
+
+void
+Controller::generateProvisionPorts()
+{
+    if (upnpContext_)
+        upnpContext_->generateProvisionPorts();
 }
 
 }} // namespace jami::upnp

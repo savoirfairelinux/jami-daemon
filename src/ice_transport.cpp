@@ -759,6 +759,18 @@ IceTransport::Impl::selectUPnPIceCandidates()
                 localIp.setPort(candidate.addr.getPort());
                 if (candidate.addr != localIp)
                     continue;
+
+                uint16_t provPort = 0;
+                if (upnp_->useProvisionedPort(provPort, candidate.transport == PJ_CAND_UDP ?
+                                                upnp::PortType::UDP : upnp::PortType::TCP)) {
+                    JAMI_WARN("[ice:%p] Using provisioned upnp port %u %s", this, provPort,
+                        candidate.transport == PJ_CAND_UDP ? "UDP": "TCP");
+                    localIp.setPort(candidate.addr.getPort());
+                    publicIp.setPort(provPort);
+                    addReflectiveCandidate(comp_id, candidate.addr, publicIp, candidate.transport);
+                    continue;
+                }
+
                 uint16_t port = candidate.addr.getPort();
                 auto portType = candidate.transport == PJ_CAND_UDP ?
                                 upnp::PortType::UDP : upnp::PortType::TCP;
