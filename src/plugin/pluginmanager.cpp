@@ -91,6 +91,36 @@ bool PluginManager::unload(const std::string& path) {
     return returnValue;
 }
 
+
+bool PluginManager::callPluginInitFunction(const std::string &path){
+    bool returnValue{false};
+    PluginMap::iterator it = dynPluginMap_.find(path);
+    if ( it != dynPluginMap_.end()) {
+        // Plugin found
+        std::shared_ptr<Plugin> plugin = it->second;
+        // Since the Plugin was found it is of type DLPlugin with a valid init symbol
+        const auto &initFunc = plugin->getInitFunction();
+        RING_PluginExitFunc exitFunc = nullptr;
+
+        try {
+            // Call Plugin Init function
+            exitFunc = initFunc(&pluginApi_, static_cast<DLPlugin*>(plugin.get())->getCPath());
+        } catch (const std::runtime_error &e) {
+            JAMI_ERR() << e.what();
+            return false;
+        }
+
+        if (!exitFunc) {
+            JAMI_ERR() << "Plugin: init failed";
+            returnValue = false;
+        } else {
+            returnValue = true;
+        }
+    }
+
+    return returnValue;
+}
+
 //===============================================================
 
 bool PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin) {

@@ -70,6 +70,13 @@ public:
    * @return true if success
    */
   bool unload(const std::string& path);
+
+  /**
+   * @brief callPluginInitFunction
+   * @param path: plugin path used as an id in the plugin map
+   * @return true if succes
+   */
+  bool callPluginInitFunction(const std::string& path);
   /**
    * Register a plugin.
    *
