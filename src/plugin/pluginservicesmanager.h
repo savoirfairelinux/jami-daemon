@@ -48,8 +48,28 @@ public:
         }
     }
 
+    /**
+     * @brief togglePlugin
+     * @param path: used as an id
+     * @param toggle: if true, register a new instance of the plugin
+     * else, remove the existing instance
+     * N.B: before adding a new instance, remove any existing one
+     */
     void togglePlugin(const std::string& path, bool toggle){
-        std::cout << path << "::" << toggle;
+        // remove the previous plugin object if it was registered
+        for(auto it = plugins.begin(); it != plugins.end();) {
+            if(it->first == path) {
+                plugins.erase(it);
+                break;
+            } else {
+                ++it;
+            }
+        }
+        // If toggle, register a new instance of the plugin
+        // function
+        if(toggle){
+            pm.callPluginInitFunction(path);
+        }
     }
 
     /**
