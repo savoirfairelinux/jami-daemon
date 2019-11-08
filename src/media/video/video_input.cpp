@@ -201,22 +201,25 @@ VideoInput::createDecoder()
 
     auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         #ifndef __ANDROID__
-        //std::string path = "/home/ayounes/Projects/ring-plugins/build/x86_64-linux/simpleplugin/libsimpleplugin.so";
-        //std::string path = "/home/ayounes/Projects/ring-plugins/build/x86_64-linux/mmotplugin/libmmotplugin.so";
-        std::string path = "/home/ayounes/Projects/ring-plugins/build/x86_64-linux/facemarks/libfacemarks.so";
+        std::string path = "/home/ayounes/Projects/ring-plugins/build/x86_64-linux/simpleplugin/libsimpleplugin.so";
+//        std::string path = "/home/ayounes/Projects/ring-plugins/build/x86_64-linux/mmotplugin/libmmotplugin.so";
+//        std::string path = "/home/ayounes/Projects/ring-plugins/build/x86_64-linux/facemarks/libfacemarks.so";
         //path = "";
         auto& psm = jami::Manager::instance().getPluginServicesManager();
         // If we have a plugin service
         if(psm) {
             // Is the frame a video frame push to the video input subject
+
             if (auto videoFrame = std::dynamic_pointer_cast<VideoFrame>(frame)){
                 if(i == 0) {
                     // Load the plugin
-                    //psm->loadPlugin(path);
+                    psm->loadPlugin(path);
+                } else if (i==1){
+                    psm->togglePlugin(path, true);
                 } else if(i == 200) {
-                    //psm->unloadPlugin(path);
+                    psm->togglePlugin(path, false);
                 } else if (i == 400) {
-                    i = -1;
+                    i = 0;
                 }
                 i++;
             }
