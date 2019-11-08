@@ -135,6 +135,7 @@ private:
 
     std::string path_;
     std::tm startTime_;
+    int64_t startTimeStamp_;
     std::string title_;
     std::string description_;
 
