@@ -148,6 +148,7 @@ MediaRecorder::startRecording()
 {
     std::time_t t = std::time(nullptr);
     startTime_ = *std::localtime(&t);
+    startTimeStamp_ = av_gettime();
 
     encoder_.reset(new MediaEncoder);
 
@@ -232,7 +233,13 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
         clone = std::make_unique<MediaFrame>();
         clone->copyFrom(*frame);
     }
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    clone->pointer()->pts = av_rescale_q_rnd(av_gettime() - startTimeStamp_,
+                                             {1, AV_TIME_BASE}, ms.timeBase,
+                                             static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+#else
     clone->pointer()->pts -= ms.firstTimestamp;
+#endif
     if (ms.isVideo)
         videoFilter_->feedInput(clone->pointer(), name);
     else

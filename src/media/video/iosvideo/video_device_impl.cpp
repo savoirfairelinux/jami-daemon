@@ -161,6 +161,7 @@ VideoDeviceImpl::getDeviceParams() const
     params.name = name;
     params.input = name;
     params.channel =  0;
+    params.pixel_format = "nv12";
     params.width = size_.first;
     params.height = size_.second;
     params.framerate = rate_;
