@@ -43,13 +43,13 @@ public:
         AuthFailureCallback onFailure,
         OnChangeCallback onChange) override;
 
-    bool changePassword(const std::string& password_old, const std::string& password_new) override {
+    bool changePassword(const std::string& /*password_old*/, const std::string& /*password_new*/) override {
         return false;
     }
 
     void syncDevices() override;
 
-    bool revokeDevice(const std::string& password, const std::string& device, RevokeDeviceCallback cb);
+    bool revokeDevice(const std::string& password, const std::string& device, RevokeDeviceCallback cb) override;
 
     void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) override;
 

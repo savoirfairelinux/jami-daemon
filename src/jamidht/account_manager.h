@@ -34,12 +34,12 @@
 #include <map>
 
 namespace dht {
-    class DhtRunner;
+class DhtRunner;
 }
 
 namespace jami {
 
-class AccountArchive;
+struct AccountArchive;
 
 struct AccountInfo {
     dht::crypto::Identity identity;

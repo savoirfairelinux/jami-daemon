@@ -387,6 +387,10 @@ initICE(const std::vector<uint8_t> &msg, const std::shared_ptr<IceTransport> &ic
 void
 JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
 {
+    if (not accountManager_) {
+        call->onFailure(ENETDOWN);
+        return;
+    }
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
 
@@ -836,6 +840,8 @@ JamiAccount::exportArchive(const std::string& destinationPath, const std::string
 bool
 JamiAccount::revokeDevice(const std::string& password, const std::string& device)
 {
+    if (not accountManager_)
+        return false;
     return accountManager_->revokeDevice(password, device, [this, device](AccountManager::RevokeDeviceResult result){
         switch(result) {
         case AccountManager::RevokeDeviceResult::SUCCESS:
@@ -1184,34 +1190,37 @@ void
 JamiAccount::lookupName(const std::string& name)
 {
     auto acc = getAccountID();
-    accountManager_->lookupUri(name, nameServer_, [acc,name](const std::string& result, NameDirectory::Response response) {
-        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, result, name);
-    });
+    if (accountManager_)
+        accountManager_->lookupUri(name, nameServer_, [acc,name](const std::string& result, NameDirectory::Response response) {
+            emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, result, name);
+        });
 }
 
 void
 JamiAccount::lookupAddress(const std::string& addr)
 {
     auto acc = getAccountID();
-    accountManager_->lookupAddress(addr, [acc,addr](const std::string& result, NameDirectory::Response response) {
-        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, addr, result);
-    });
+    if (accountManager_)
+        accountManager_->lookupAddress(addr, [acc,addr](const std::string& result, NameDirectory::Response response) {
+            emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, addr, result);
+        });
 }
 
 void
 JamiAccount::registerName(const std::string& password, const std::string& name)
 {
-    accountManager_->registerName(password, name, [acc=getAccountID(), name, w=weak()](NameDirectory::RegistrationResponse response){
-        int res = (response == NameDirectory::RegistrationResponse::success)      ? 0 : (
-                  (response == NameDirectory::RegistrationResponse::invalidCredentials)  ? 1 : (
-                  (response == NameDirectory::RegistrationResponse::invalidName)  ? 2 : (
-                  (response == NameDirectory::RegistrationResponse::alreadyTaken) ? 3 : 4)));
-        if (response == NameDirectory::RegistrationResponse::success) {
-            if (auto this_ = w.lock())
-                this_->registeredName_ = name;
-        }
-        emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
-    });
+    if (accountManager_)
+        accountManager_->registerName(password, name, [acc=getAccountID(), name, w=weak()](NameDirectory::RegistrationResponse response){
+            int res = (response == NameDirectory::RegistrationResponse::success)      ? 0 : (
+                    (response == NameDirectory::RegistrationResponse::invalidCredentials)  ? 1 : (
+                    (response == NameDirectory::RegistrationResponse::invalidName)  ? 2 : (
+                    (response == NameDirectory::RegistrationResponse::alreadyTaken) ? 3 : 4)));
+            if (response == NameDirectory::RegistrationResponse::success) {
+                if (auto this_ = w.lock())
+                    this_->registeredName_ = name;
+            }
+            emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
+        });
 }
 #endif
 
@@ -1999,19 +2008,23 @@ JamiAccount::connectivityChanged()
 bool
 JamiAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
-    return accountManager_->findCertificate(h, std::move(cb));
+    if (accountManager_)
+        return accountManager_->findCertificate(h, std::move(cb));
+    return false;
 }
 
 bool
 JamiAccount::findCertificate(const std::string& crt_id)
 {
-    return accountManager_->findCertificate(dht::InfoHash(crt_id));
+    if (accountManager_)
+        return accountManager_->findCertificate(dht::InfoHash(crt_id));
+    return false;
 }
 
 bool
 JamiAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status)
 {
-    bool done = accountManager_->setCertificateStatus(cert_id, status);
+    bool done = accountManager_ ? accountManager_->setCertificateStatus(cert_id, status) : false;
     if (done) {
         findCertificate(cert_id);
         emitSignal<DRing::ConfigurationSignal::CertificateStateChanged>(getAccountID(), cert_id, tls::TrustStore::statusToStr(status));
@@ -2022,7 +2035,9 @@ JamiAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::P
 std::vector<std::string>
 JamiAccount::getCertificatesByStatus(tls::TrustStore::PermissionStatus status)
 {
-    return accountManager_->getCertificatesByStatus(status);
+    if (accountManager_)
+        return accountManager_->getCertificatesByStatus(status);
+    return {};
 }
 
 template<typename ID=dht::Value::Id>
@@ -2254,20 +2269,25 @@ JamiAccount::getContactHeader(pjsip_transport* t)
 void
 JamiAccount::addContact(const std::string& uri, bool confirmed)
 {
-    JAMI_WARN("JamiAccount::addContact %d", confirmed);
-    accountManager_->addContact(uri, confirmed);
+    if (accountManager_)
+        accountManager_->addContact(uri, confirmed);
+    else
+        JAMI_WARN("[Account %s] addContact: account not loaded", getAccountID().c_str());
 }
 
 void
 JamiAccount::removeContact(const std::string& uri, bool ban)
 {
-    accountManager_->removeContact(uri, ban);
+    if (accountManager_)
+        accountManager_->removeContact(uri, ban);
+    else
+        JAMI_WARN("[Account %s] removeContact: account not loaded", getAccountID().c_str());
 }
 
 std::map<std::string, std::string>
 JamiAccount::getContactDetails(const std::string& uri) const
 {
-    return accountManager_->getInfo() ? accountManager_->getContactDetails(uri) : std::map<std::string, std::string>{};
+    return (accountManager_ and accountManager_->getInfo()) ? accountManager_->getContactDetails(uri) : std::map<std::string, std::string>{};
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -2289,28 +2309,37 @@ JamiAccount::getTrustRequests() const
 bool
 JamiAccount::acceptTrustRequest(const std::string& from)
 {
-    JAMI_WARN("JamiAccount::acceptTrustRequest");
-    return accountManager_->acceptTrustRequest(from);
+    if (accountManager_)
+        return accountManager_->acceptTrustRequest(from);
+    JAMI_WARN("[Account %s] acceptTrustRequest: account not loaded", getAccountID().c_str());
+    return false;
 }
 
 bool
 JamiAccount::discardTrustRequest(const std::string& from)
 {
-    return accountManager_->discardTrustRequest(from);
+    if (accountManager_)
+        return accountManager_->discardTrustRequest(from);
+    JAMI_WARN("[Account %s] discardTrustRequest: account not loaded", getAccountID().c_str());
+    return false;
 }
 
 void
 JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
-    JAMI_WARN("JamiAccount::sendTrustRequest");
-    return accountManager_->sendTrustRequest(to, payload);
+    if (accountManager_)
+        accountManager_->sendTrustRequest(to, payload);
+    else
+        JAMI_WARN("[Account %s] sendTrustRequest: account not loaded", getAccountID().c_str());
 }
 
 void
 JamiAccount::sendTrustRequestConfirm(const std::string& to)
 {
-    JAMI_WARN("JamiAccount::sendTrustRequestConfirm");
-    return accountManager_->sendTrustRequestConfirm(dht::InfoHash(to));
+    if (accountManager_)
+        accountManager_->sendTrustRequestConfirm(dht::InfoHash(to));
+    else
+        JAMI_WARN("[Account %s] sendTrustRequestConfirm: account not loaded", getAccountID().c_str());
 }
 
 /* sync */
