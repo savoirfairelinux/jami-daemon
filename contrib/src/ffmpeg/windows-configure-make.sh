@@ -98,7 +98,7 @@ FFMPEGCONF+='
             --enable-decoder=pcm_s8_planar
             --enable-decoder=pcm_u16be
             --enable-decoder=pcm_u16le'
-            
+
 #encoders/decoders for images
 FFMPEGCONF+='
             --enable-encoder=gif
@@ -124,7 +124,8 @@ FFMPEGCONF+='
             --enable-filter=format
             --enable-filter=aformat
             --enable-filter=fps
-            --enable-filter=transpose'
+            --enable-filter=transpose
+            --enable-filter=pad'
 
 if [ "$1" == "uwp" ]; then
     EXTRACFLAGS='-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -I../../../../../msvc/include -I../../../../../msvc/include/opus'
