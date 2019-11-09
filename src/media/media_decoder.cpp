@@ -119,13 +119,19 @@ MediaDemuxer::openInput(const DeviceParams& params)
         av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
     }
 
-    JAMI_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
+#if defined(__APPLE__) && TARGET_OS_MAC
+    std::string input = params.name;
+#else
+    std::string input = params.input;
+#endif
+
+    JAMI_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
 
     av_opt_set_int(inputCtx_, "fpsprobesize", 1, AV_OPT_SEARCH_CHILDREN); // Don't waste time fetching framerate when finding stream info
     int ret = avformat_open_input(
         &inputCtx_,
-        params.input.c_str(),
+        input.c_str(),
         iformat,
         options_ ? &options_ : NULL);
 

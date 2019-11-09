@@ -112,7 +112,7 @@ VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
     params.name = [[avDevice_ localizedName] UTF8String];
-    params.input = [[avDevice_ localizedName] UTF8String];
+    params.input = id;
     params.framerate = rate_;
     params.format = "avfoundation";
     params.pixel_format = "nv12";
