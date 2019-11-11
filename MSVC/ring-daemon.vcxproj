@@ -759,6 +759,7 @@
     <ClCompile Include="..\src\media\audio\sound\tone.cpp" />
     <ClCompile Include="..\src\media\audio\sound\tonelist.cpp" />
     <ClCompile Include="..\src\media\audio\tonecontrol.cpp" />
+    <ClCompile Include="..\src\media\congestion_control.cpp" />
     <ClCompile Include="..\src\media\libav_utils.cpp" />
     <ClCompile Include="..\src\media\localrecorder.cpp" />
     <ClCompile Include="..\src\media\localrecordermanager.cpp" />
@@ -925,6 +926,7 @@
     <ClInclude Include="..\src\media\audio\sound\tone.h" />
     <ClInclude Include="..\src\media\audio\sound\tonelist.h" />
     <ClInclude Include="..\src\media\audio\tonecontrol.h" />
+    <ClInclude Include="..\src\media\congestion_control.h" />
     <ClInclude Include="..\src\media\decoder_finder.h" />
     <ClInclude Include="..\src\media\libav_deps.h" />
     <ClInclude Include="..\src\media\libav_utils.h" />

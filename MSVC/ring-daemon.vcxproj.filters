@@ -442,6 +442,9 @@
     <ClCompile Include="..\src\upnp\protocol\natpmp\pmp_igd.cpp">
       <Filter>Source Files\upnp\protocol\natpmp</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\media\congestion_control.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\account.h">
@@ -908,6 +911,9 @@
     </ClInclude>
     <ClInclude Include="..\src\upnp\protocol\natpmp\pmp_igd.h">
       <Filter>Source Files\upnp\protocol\natpmp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\congestion_control.h">
+      <Filter>Source Files\media</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
