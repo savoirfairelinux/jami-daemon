@@ -185,6 +185,10 @@ struct DRING_PUBLIC CallSignal {
                 constexpr static const char* name = "SmartInfo";
                 using cb_type = void(const std::map<std::string, std::string>&);
         };
+        struct DRING_PUBLIC ConnectionUpdate {
+                constexpr static const char* name = "ConnectionUpdate";
+                using cb_type = void(const std::string&, int);
+        };
 };
 
 } // namespace DRing
