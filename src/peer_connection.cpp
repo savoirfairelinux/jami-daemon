@@ -383,9 +383,8 @@ public:
     Impl(AbstractSocketEndpoint& ep, const dht::crypto::Certificate& peer_cert)
         : tr {ep}, peerCertificate {peer_cert} {}
 
-    Impl(AbstractSocketEndpoint &ep,
-         std::function<bool(const dht::crypto::Certificate &)> &&cert_check)
-        : tr{ep}, peerCertificateCheckFunc{std::make_unique<std::function<bool(const dht::crypto::Certificate &)>>(std::move(cert_check))}, peerCertificate {null_cert} {}
+    Impl(AbstractSocketEndpoint &ep, std::function<bool(const dht::crypto::Certificate &)>&& cert_check)
+        : tr{ep}, peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert} {}
 
     // TLS callbacks
     int verifyCertificate(gnutls_session_t);
@@ -397,7 +396,7 @@ public:
     AbstractSocketEndpoint& tr;
     const dht::crypto::Certificate& peerCertificate;
     dht::crypto::Certificate null_cert;
-    std::unique_ptr<std::function<bool(const dht::crypto::Certificate &)>> peerCertificateCheckFunc;
+    std::function<bool(const dht::crypto::Certificate &)> peerCertificateCheckFunc;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -410,7 +409,7 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
     auto verified = init_crt(session, crt);
     if (verified != GNUTLS_E_SUCCESS) return verified;
     if (peerCertificateCheckFunc) {
-        if (!(*peerCertificateCheckFunc)(crt)) {
+        if (!peerCertificateCheckFunc(crt)) {
           JAMI_ERR() << "[TLS-SOCKET] Unexpected peer certificate";
           return GNUTLS_E_CERTIFICATE_ERROR;
         }
