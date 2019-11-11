@@ -37,6 +37,8 @@
 #include <vector>
 #include <cstring> // strcmp
 
+#include "logger.h"
+
 struct pjsip_msg;
 struct pjsip_dialog;
 
@@ -124,7 +126,10 @@ inline const pj_str_t CONST_PJ_STR(const std::string& str) noexcept {
 class PJDialogLock {
 public:
     explicit PJDialogLock(pjsip_dialog* dialog) : dialog_(dialog) {
-        pjsip_dlg_inc_lock(dialog_);
+        auto status = pjsip_dlg_try_inc_lock(dialog_);
+        if (status != PJ_SUCCESS) {
+            throw std::runtime_error("Can't lock dialog. Status: " + std::to_string(static_cast<int>(status)));
+        }
     }
 
     ~PJDialogLock() {

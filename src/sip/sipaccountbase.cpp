@@ -73,19 +73,24 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
     auto dialog = *dlg;
 
     {
-        // lock dialog until invite session creation; this one will own the dialog after
-        sip_utils::PJDialogLock dlg_lock {dialog};
+        try {
+            // lock dialog until invite session creation; this one will own the dialog after
+            sip_utils::PJDialogLock dlg_lock {dialog};
 
-        // Append "Subject: Phone Call" header
-        constexpr auto subj_hdr_name = sip_utils::CONST_PJ_STR("Subject");
-        auto subj_hdr = reinterpret_cast<pjsip_hdr*>(pjsip_parse_hdr(dialog->pool,
-                                                                     &subj_hdr_name,
-                                                                     const_cast<char *>("Phone call"),
-                                                                     10, nullptr));
-        pj_list_push_back(&dialog->inv_hdr, subj_hdr);
+            // Append "Subject: Phone Call" header
+            constexpr auto subj_hdr_name = sip_utils::CONST_PJ_STR("Subject");
+            auto subj_hdr = reinterpret_cast<pjsip_hdr*>(pjsip_parse_hdr(dialog->pool,
+                                                                        &subj_hdr_name,
+                                                                        const_cast<char *>("Phone call"),
+                                                                        10, nullptr));
+            pj_list_push_back(&dialog->inv_hdr, subj_hdr);
 
-        if (pjsip_inv_create_uac(dialog, local_sdp, 0, inv) != PJ_SUCCESS) {
-            JAMI_ERR("Unable to create invite session for user agent client");
+            if (pjsip_inv_create_uac(dialog, local_sdp, 0, inv) != PJ_SUCCESS) {
+                JAMI_ERR("Unable to create invite session for user agent client");
+                return false;
+            }
+        } catch (const std::runtime_error& e) {
+            JAMI_ERR("Unable to lock dialog: %s", e.what());
             return false;
         }
     }
