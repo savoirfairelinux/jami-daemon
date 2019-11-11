@@ -368,7 +368,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     thread_ = std::thread([this]{
             sip_utils::register_thread();
             while (not threadTerminateFlags_) {
-                handleEvents(500); // limit polling to 500ms
+                handleEvents(50); // limit polling to 500ms
             }
         });
 }
@@ -433,44 +433,32 @@ IceTransport::Impl::_isFailed() const
 void
 IceTransport::Impl::handleEvents(unsigned max_msec)
 {
-    // By tests, never seen more than two events per 500ms
-    static constexpr auto MAX_NET_EVENTS = 2;
-
-    pj_time_val max_timeout = {0, 0};
     pj_time_val timeout = {0, 0};
-    unsigned net_event_count = 0;
-
-    max_timeout.msec = max_msec;
-
-    timeout.sec = timeout.msec = 0;
     pj_timer_heap_poll(config_.stun_cfg.timer_heap, &timeout);
 
     // timeout limitation
     if (timeout.msec >= 1000)
         timeout.msec = 999;
+
+    auto n_events = pj_ioqueue_poll(config_.stun_cfg.ioqueue, &timeout);
+
+    pj_time_val max_timeout = {0, max_msec};
     if (PJ_TIME_VAL_GT(timeout, max_timeout))
         timeout = max_timeout;
 
-    do {
-        auto n_events = pj_ioqueue_poll(config_.stun_cfg.ioqueue, &timeout);
+    // timeout
+    if (not n_events)
+        return;
 
-        // timeout
-        if (not n_events)
-            return;
-
-        // error
-        if (n_events < 0) {
-            const auto err = pj_get_os_error();
-            // Kept as debug as some errors are "normal" in regular context
-            last_errmsg_ = sip_utils::sip_strerror(err);
-            JAMI_DBG("[ice:%p] ioqueue error %d: %s", this, err, last_errmsg_.c_str());
-            std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
-            return;
-        }
-
-        net_event_count += n_events;
-        timeout.sec = timeout.msec = 0;
-    } while (net_event_count < MAX_NET_EVENTS);
+    // error
+    if (n_events < 0) {
+        const auto err = pj_get_os_error();
+        // Kept as debug as some errors are "normal" in regular context
+        last_errmsg_ = sip_utils::sip_strerror(err);
+        JAMI_DBG("[ice:%p] ioqueue error %d: %s", this, err, last_errmsg_.c_str());
+        std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
+        return;
+    }
 }
 
 void
