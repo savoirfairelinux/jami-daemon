@@ -1091,22 +1091,21 @@ void
 SIPCall::onMediaUpdate()
 {
     JAMI_WARN("[call:%s] medias changed", getCallId().c_str());
-
-    // If ICE is not used, start medias now
-    auto rem_ice_attrs = sdp_->getIceAttributes();
-    if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
-        JAMI_WARN("[call:%s] no remote ICE for medias", getCallId().c_str());
-        stopAllMedia();
-        startAllMedia();
-        return;
-    }
-
     // Main call (no subcalls) must wait for ICE now, the rest of code needs to access
     // to a negotiated transport.
     runOnMainThread([w = weak()] {
-        if (auto this_ = w.lock())
+        if (auto this_ = w.lock()) {
+            // If ICE is not used, start medias now
+            auto rem_ice_attrs = this_->sdp_->getIceAttributes();
+            if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
+                JAMI_WARN("[call:%s] no remote ICE for medias", this_->getCallId().c_str());
+                this_->stopAllMedia();
+                this_->startAllMedia();
+                return;
+            }
             if (not this_->isSubcall())
                 this_->waitForIceAndStartMedia();
+        }
     });
 }
 
