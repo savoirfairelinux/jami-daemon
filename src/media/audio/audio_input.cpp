@@ -149,6 +149,7 @@ AudioInput::initFile(const std::string& path)
 
     devOpts_ = {};
     devOpts_.input = path;
+    devOpts_.name = path;
     devOpts_.loop = "1";
     // sets devOpts_'s sample rate and number of channels
     if (!createDecoder()) {
