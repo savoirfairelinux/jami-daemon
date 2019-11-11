@@ -24,9 +24,9 @@ if "%1"=="fetch" (
 )
 
 set BUILD.x86=N
-set BUILD.x64=N
+set BUILD.x64=Y
 set BUILD.uwp=N
-set BUILD.win32=N
+set BUILD.win32=Y
 
 shift
 :ParseArgs
