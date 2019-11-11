@@ -25,6 +25,7 @@
 #include "manager.h"
 #include "upnp/upnp_control.h"
 #include "transport/peer_channel.h"
+#include "dring/callmanager_interface.h"
 
 #include <pjlib.h>
 
@@ -387,6 +388,8 @@ IceTransport::Impl::~Impl()
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
+
+    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)this), 2);
 }
 
 bool
@@ -919,6 +922,8 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
         pimpl_->is_stopped_ = true;
         return false;
     }
+
+    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)this), 0);
     return true;
 }
 
@@ -952,6 +957,8 @@ IceTransport::start(const SDP& sdp)
         pimpl_->is_stopped_ = true;
         return false;
     }
+
+    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)this), 0);
     return true;
 }
 
