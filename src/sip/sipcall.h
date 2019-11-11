@@ -35,8 +35,6 @@
 #ifdef ENABLE_VIDEO
 #include "media/video/video_receive_thread.h"
 #include "media/video/video_rtp_session.h"
-// Scaler used to convert the image to RGB
-#include "media/video/video_scaler.h"
 #include "plugin/streamdata.h"
 #endif
 
@@ -257,10 +255,7 @@ private:
 
 #ifdef ENABLE_VIDEO
     using MediaStream = Observable<std::shared_ptr<MediaFrame>>;
-    using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, std::shared_ptr<VideoFrame>, AVFrame*>;
-    // An instance of the scaler
-    video::VideoScaler scaler;
-    video::VideoScaler scaler2;
+    using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
     void createCallAVStream(const StreamData& StreamData, MediaStream& streamSource, const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject);
     void createCallAVStreams();
     void destroyCallAVStreams();

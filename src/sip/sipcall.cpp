@@ -124,49 +124,17 @@ void SIPCall::createCallAVStreams()
 {
     if(hasVideo()){
         /**
-        *   PREPROCESS
-        **/
-        auto preprocess = [this] (const std::shared_ptr<jami::MediaFrame> iFrame) -> std::shared_ptr<VideoFrame> {
-            auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
-            //JAMI_DBG() << "Frame dimensions: " << ivFrame->width() << " : " << ivFrame->height() << " : " << ivFrame->format();
-            std::shared_ptr<VideoFrame> rgbFrame = scaler.convertFormat(*ivFrame, AV_PIX_FMT_RGB24);
-            return rgbFrame;
-        };
-
-        /**
-        *   PREPROCESS2 (to avoid race conditions between input and receive threads)
-        **/
-        auto preprocess2 = [this] (const std::shared_ptr<jami::MediaFrame> iFrame) -> std::shared_ptr<VideoFrame> {
-            auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
-            //JAMI_DBG() << "Frame dimensions: " << ivFrame->width() << " : " << ivFrame->height() << " : " << ivFrame->format();
-            std::shared_ptr<VideoFrame> rgbFrame = scaler2.convertFormat(*ivFrame, AV_PIX_FMT_RGB24);
-            return rgbFrame;
-        };
-
-        /**
         *   Map: maps the VideoFrame to an AVFrame
         **/
-        auto map = [](std::shared_ptr<VideoFrame> m)->AVFrame* { return m->pointer();};
-
-        /**
-        *   Postprocess
-        **/
-        auto postprocess = [] (const std::shared_ptr<MediaFrame> iFrame, std::shared_ptr<VideoFrame> videoFrame, AVFrame* data) {
-            auto ivFrame = std::static_pointer_cast<VideoFrame>(iFrame);
-            if(videoFrame) {
-                ivFrame->copyFrom(*videoFrame);
-            }
+        auto map = [](const std::shared_ptr<jami::MediaFrame> m)->AVFrame* {
+            auto vFrame = std::static_pointer_cast<VideoFrame>(m);
+            return vFrame->pointer();
         };
-
 
         // Preview
         StreamData previewStreamData{getCallId(), 0, StreamType::video, getPeerNumber()};
         auto& videoPreview = videortp_->getVideoLocal();
-        auto previewSubject = std::make_shared<MediaStreamSubject>(
-            preprocess,
-            map,
-            postprocess
-            );
+        auto previewSubject = std::make_shared<MediaStreamSubject>(map);
 
         createCallAVStream(previewStreamData, *videoPreview, previewSubject);
 
@@ -174,11 +142,7 @@ void SIPCall::createCallAVStreams()
         StreamData receiveStreamData{getCallId(), 1, StreamType::video, getPeerNumber()};
         auto& videoReceive = videortp_->getVideoReceive();
 
-        auto receiveSubject = std::make_shared<MediaStreamSubject>(
-            preprocess2,
-            map,
-            postprocess
-            );
+        auto receiveSubject = std::make_shared<MediaStreamSubject>(map);
 
         createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
     }

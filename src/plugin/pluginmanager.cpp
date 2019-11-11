@@ -97,14 +97,14 @@ bool PluginManager::callPluginInitFunction(const std::string &path){
     PluginMap::iterator it = dynPluginMap_.find(path);
     if ( it != dynPluginMap_.end()) {
         // Plugin found
-        std::shared_ptr<Plugin> plugin = it->second;
         // Since the Plugin was found it is of type DLPlugin with a valid init symbol
+        std::shared_ptr<DLPlugin> plugin = std::static_pointer_cast<DLPlugin>(it->second);
         const auto &initFunc = plugin->getInitFunction();
         RING_PluginExitFunc exitFunc = nullptr;
 
         try {
             // Call Plugin Init function
-            exitFunc = initFunc(&pluginApi_, static_cast<DLPlugin*>(plugin.get())->getCPath());
+            exitFunc = initFunc(&pluginApi_, plugin->getCPath());
         } catch (const std::runtime_error &e) {
             JAMI_ERR() << e.what();
             return false;
