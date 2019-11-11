@@ -19,37 +19,40 @@
  */
 #pragma once
 
-#include "threadloop.h"
-#include "manager.h"
 #include <string>
+#include <chrono>
+#include <mutex>
+#include <map>
+#include <memory>
 
 namespace jami {
+class RepeatedTask;
+
 class Smartools
 {
-    // Use for the unit tests
-    #ifdef TESTING
-        friend class SmartoolsTest;
-    #endif
+// Use for the unit tests
+#ifdef TESTING
+    friend class SmartoolsTest;
+#endif
 
-    public:
-        static Smartools& getInstance();
-        void start(std::chrono::milliseconds refreshTimeMs);
-        void stop();
-        void setFrameRate(const std::string& id, const std::string& fps);
-        void setResolution(const std::string& id, int width, int height);
-        void setLocalVideoCodec(const std::string& localVideoCodec);
-        void setRemoteVideoCodec(const std::string& remoteVideoCodec, const std::string& callID);
-        void setRemoteAudioCodec(const std::string& remoteAudioCodec);
-        void setLocalAudioCodec(const std::string& remoteAudioCodec);
-        void sendInfo();
+public:
+    static Smartools& getInstance();
+    void start(std::chrono::milliseconds refreshTimeMs);
+    void stop();
+    void setFrameRate(const std::string& id, const std::string& fps);
+    void setResolution(const std::string& id, int width, int height);
+    void setLocalVideoCodec(const std::string& localVideoCodec);
+    void setRemoteVideoCodec(const std::string& remoteVideoCodec, const std::string& callID);
+    void setRemoteAudioCodec(const std::string& remoteAudioCodec);
+    void setLocalAudioCodec(const std::string& remoteAudioCodec);
+    void sendInfo();
 
-    private:
-        Smartools();
-        ~Smartools();
-        void process();
-        std::map<std::string, std::string> information_;
-        std::mutex mutexInfo_; // Protect information_ from multithreading
-        std::chrono::milliseconds refreshTimeMs_ {500};
-        ThreadLoop loop_; // Has to be last member
+private:
+    Smartools() {};
+    ~Smartools();
+    void process();
+    std::map<std::string, std::string> information_;
+    std::mutex mutexInfo_; // Protect information_ from multithreading
+    std::shared_ptr<RepeatedTask> task_;
 };
-} //ring namespace
+}

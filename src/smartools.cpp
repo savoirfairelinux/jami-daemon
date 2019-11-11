@@ -18,12 +18,9 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 #include "smartools.h"
-#include "media/media_decoder.h"
-#include "media/video/video_input.h"
-#include "media/video/video_device.h"
+#include "manager.h"
 #include "dring/callmanager_interface.h"
 #include "client/ring_signal.h"
-#include "string_utils.h"
 
 namespace jami {
 
@@ -34,14 +31,8 @@ Smartools& Smartools::getInstance()
     return instance_;
 }
 
-// Launch process() in new thread
-Smartools::Smartools()
-: loop_([] { return true; }, [this] { process(); }, [] {})
-{}
-
-Smartools::~Smartools()
-{
-    loop_.join();
+Smartools::~Smartools() {
+    stop();
 }
 
 void
@@ -53,20 +44,15 @@ Smartools::sendInfo()
 }
 
 void
-Smartools::process()
-{
-    // Send the signal SmartInfo
-    Smartools::sendInfo();
-    std::this_thread::sleep_for(refreshTimeMs_);
-}
-
-void
 Smartools::start(std::chrono::milliseconds refreshTimeMs)
 {
     JAMI_DBG("Start SmartInfo");
-    refreshTimeMs_ = refreshTimeMs;
-    loop_.stop();
-    loop_.start();
+    if (auto t = std::move(task_))
+        t->cancel();
+    task_ = Manager::instance().scheduler().scheduleAtFixedRate([this]{
+        sendInfo();
+        return true;
+    }, refreshTimeMs);
 }
 
 void
@@ -74,7 +60,8 @@ Smartools::stop()
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
     JAMI_DBG("Stop SmartInfo");
-    loop_.stop();
+    if (auto t = std::move(task_))
+        t->cancel();
     information_.clear();
 }
 
@@ -109,21 +96,21 @@ void
 Smartools::setRemoteAudioCodec(const std::string& remoteAudioCodec)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    information_["remote audio codec"]= remoteAudioCodec;
+    information_["remote audio codec"] = remoteAudioCodec;
 }
 
 void
 Smartools::setLocalAudioCodec(const std::string& localAudioCodec)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    information_["local audio codec"]= localAudioCodec;
+    information_["local audio codec"] = localAudioCodec;
 }
 
 void
 Smartools::setLocalVideoCodec(const std::string& localVideoCodec)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    information_["local video codec"]= localVideoCodec;
+    information_["local video codec"] = localVideoCodec;
 }
 
 void
@@ -131,17 +118,15 @@ Smartools::setRemoteVideoCodec(const std::string& remoteVideoCodec, const std::s
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
     information_["remote video codec"]= remoteVideoCodec;
-    auto call = Manager::instance().getCallFromCallID(callID);
-    if (!call) {
-        return;
-    }
-    auto confID = call->getConfId();
-    if (confID != ""){
-        information_["type"]= "conference";
-        information_["callID"]= confID;
-    } else {
-        information_["type"]= "no conference";
-        information_["callID"]= callID;
+    if (auto call = Manager::instance().getCallFromCallID(callID)) {
+        auto confID = call->getConfId();
+        if (not confID.empty()) {
+            information_["type"]= "conference";
+            information_["callID"]= confID;
+        } else {
+            information_["type"]= "no conference";
+            information_["callID"]= callID;
+        }
     }
  }
 
