@@ -160,26 +160,19 @@ private:
 
 /*=== PublishMapSubject ====================================================*/
 
-template <typename T1, typename T2, typename T3>
-class PublishMapSubject : public Observer<T1> , public Observable<T3> {
+template <typename T1, typename T2>
+class PublishMapSubject : public Observer<T1> , public Observable<T2> {
 public:
-    using PreP = std::function<T2 (const T1&)>;
-    using F = std::function<T3(T2&)>;
-    using PostP = std::function<void (const T1&, T2&, T3&)>;
+    using F = std::function<T2(const T1&)>;
 
-    PublishMapSubject(PreP prep, F f, PostP postp) : preprocess_{prep}, map_{f}, postprocess_{postp} {}
+    PublishMapSubject(F f) : map_{f} {}
 
     void update(Observable<T1>*, const T1& t) override {
-        T2 tpreprocessed = preprocess_(t);
-        T3 tmapped = map_(tpreprocessed);
-        this->notify(tmapped);
-        postprocess_(t, tpreprocessed, tmapped);
+        this->notify(map_(t));
     }
 
 private:
-    PreP preprocess_;
     F map_;
-    PostP postprocess_;
 };
 
 }; // namespace jami
