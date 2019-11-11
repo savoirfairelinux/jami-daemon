@@ -39,7 +39,6 @@ public:
     virtual void conferenceCreated(const std::string& conf_id){}
     virtual void conferenceChanged(const std::string& conf_id, const std::string& state){}
     virtual void conferenceRemoved(const std::string& conf_id){}
-    virtual void newCallCreated(const std::string& call_id, const std::string&, const std::string&){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
     virtual void conferenceRemove(const std::string& conf_id){}
     virtual void newCall(const std::string& account_id, const std::string& call_id, const std::string& to){}
@@ -125,7 +124,6 @@ public:
     virtual void conferenceCreated(const std::string& conf_id){}
     virtual void conferenceChanged(const std::string& conf_id, const std::string& state){}
     virtual void conferenceRemoved(const std::string& conf_id){}
-    virtual void newCallCreated(const std::string& call_id, const std::string&, const std::string&){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
     virtual void conferenceRemove(const std::string& conf_id){}
     virtual void newCall(const std::string& account_id, const std::string& call_id, const std::string& to){}

@@ -153,14 +153,6 @@ struct DRING_PUBLIC CallSignal {
                 constexpr static const char* name = "ConferenceRemoved";
                 using cb_type = void(const std::string&);
         };
-        struct DRING_PUBLIC NewCallCreated {
-                constexpr static const char* name = "NewCallCreated";
-                using cb_type = void(const std::string&, const std::string&, const std::string&);
-        };
-        struct DRING_PUBLIC SipCallStateChanged {
-                constexpr static const char* name = "SipCallStateChanged";
-                using cb_type = void(const std::string&, const std::string&, int);
-        };
         struct DRING_PUBLIC RecordingStateChanged {
                 constexpr static const char* name = "RecordingStateChanged";
                 using cb_type = void(const std::string&, int);
