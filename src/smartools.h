@@ -44,12 +44,12 @@ class Smartools
         void sendInfo();
 
     private:
-        Smartools();
+        Smartools() {};
         ~Smartools();
         void process();
         std::map<std::string, std::string> information_;
         std::mutex mutexInfo_; // Protect information_ from multithreading
         std::chrono::milliseconds refreshTimeMs_ {500};
-        ThreadLoop loop_; // Has to be last member
+        std::shared_ptr<RepeatedTask> task_;
 };
 } //ring namespace

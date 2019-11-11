@@ -34,14 +34,8 @@ Smartools& Smartools::getInstance()
     return instance_;
 }
 
-// Launch process() in new thread
-Smartools::Smartools()
-: loop_([] { return true; }, [this] { process(); }, [] {})
-{}
-
-Smartools::~Smartools()
-{
-    loop_.join();
+Smartools::~Smartools() {
+    stop();
 }
 
 void
@@ -53,20 +47,15 @@ Smartools::sendInfo()
 }
 
 void
-Smartools::process()
-{
-    // Send the signal SmartInfo
-    Smartools::sendInfo();
-    std::this_thread::sleep_for(refreshTimeMs_);
-}
-
-void
 Smartools::start(std::chrono::milliseconds refreshTimeMs)
 {
     JAMI_DBG("Start SmartInfo");
-    refreshTimeMs_ = refreshTimeMs;
-    loop_.stop();
-    loop_.start();
+    if (auto t = std::move(task_))
+        t->cancel();
+    task_ = Manager::instance().scheduler().scheduleAtFixedRate([this]{
+        sendInfo();
+        return true;
+    }, refreshTimeMs);
 }
 
 void
@@ -74,7 +63,8 @@ Smartools::stop()
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
     JAMI_DBG("Stop SmartInfo");
-    loop_.stop();
+    if (auto t = std::move(task_))
+        t->cancel();
     information_.clear();
 }
 
