@@ -29,6 +29,7 @@ if "%NO_AUTO%"=="" (
 set UNIXPATH=%SRC:\=/%
 set UNIXPATH=%ROOTPATH%%UNIXPATH:C:/=%
 bash -c "%PATCH_CMD% %UNIXPATH%ffmpeg/change-RTCP-ratio.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%ffmpeg/rtp_ext_abs_send_time.patch"
 
 git apply --reject --whitespace=fix %SRC%\ffmpeg\windows-configure.patch
 git apply --reject --whitespace=fix %SRC%\ffmpeg\windows-configure-ffnvcodec.patch
