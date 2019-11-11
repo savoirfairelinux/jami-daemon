@@ -332,6 +332,7 @@ VideoInput::initAVFoundation(const std::string& display)
     clearOptions();
     decOpts_.format = "avfoundation";
     decOpts_.pixel_format = "nv12";
+    decOpts_.name = "Capture screen 0";
     decOpts_.input = "Capture screen 0";
     decOpts_.framerate = 30;
 
@@ -394,6 +395,7 @@ VideoInput::initFile(std::string path)
     // would break the promise returned in switchInput
     DeviceParams p;
     p.input = path;
+    p.name = path;
     auto dec = std::make_unique<MediaDecoder>();
     if (dec->openInput(p) < 0 || dec->setupVideo() < 0) {
         return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
@@ -402,6 +404,7 @@ VideoInput::initFile(std::string path)
     clearOptions();
     emulateRate_ = true;
     decOpts_.input = path;
+    decOpts_.name = path;
     decOpts_.loop = "1";
 
     // Force 1fps for static image
