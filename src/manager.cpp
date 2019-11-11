@@ -1435,8 +1435,6 @@ Manager::createConfFromParticipantList(const std::vector< std::string > &partici
 
         // Manager methods may behave differently if the call id participates in a conference
         conf->add(call_id);
-
-        emitSignal<DRing::CallSignal::NewCallCreated>(account, call_id, tostr);
         successCounter++;
     }
 

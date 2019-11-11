@@ -24,7 +24,6 @@ Persistent<Function> registeredNameFoundCb;
 Persistent<Function> callStateChangedCb;
 Persistent<Function> incomingMessageCb;
 Persistent<Function> incomingCallCb;
-Persistent<Function> newCallCreatedCb;
 
 std::queue<std::function<void() >> pendingSignals;
 std::mutex pendingSignalsLock;
@@ -62,8 +61,6 @@ Persistent<Function>* getPresistentCb(const std::string &signal) {
         return &incomingMessageCb;
     else if (signal == "IncomingCall")
         return &incomingCallCb;
-    else if (signal == "NewCallCreated")
-        return &newCallCreatedCb;
     else return nullptr;
 }
 
@@ -323,19 +320,6 @@ void incomingCall(const std::string& account_id, const std::string& call_id, con
         Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), incomingCallCb);
         if (!func.IsEmpty()) {
             Local<Value> callback_args[] = {V8_STRING_NEW(account_id), V8_STRING_NEW(call_id), V8_STRING_NEW(from)};
-            func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 3, callback_args);
-        }
-    });
-
-    uv_async_send(&signalAsync);
-}
-void newCallCreated(const std::string& account_id, const std::string& call_id, const std::string& to_uri) {
-
-    std::lock_guard<std::mutex> lock(pendingSignalsLock);
-    pendingSignals.emplace([account_id, call_id, to_uri]() {
-        Local<Function> func = Local<Function>::New(Isolate::GetCurrent(), newCallCreatedCb);
-        if (!func.IsEmpty()) {
-            Local<Value> callback_args[] = {V8_STRING_NEW(account_id), V8_STRING_NEW(call_id), V8_STRING_NEW(to_uri)};
             func->Call(SWIGV8_CURRENT_CONTEXT()->Global(), 3, callback_args);
         }
     });
