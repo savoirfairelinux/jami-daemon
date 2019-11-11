@@ -39,8 +39,6 @@ getSignalHandlers()
         exported_callback<DRing::CallSignal::ConferenceChanged>(),
         exported_callback<DRing::CallSignal::UpdatePlaybackScale>(),
         exported_callback<DRing::CallSignal::ConferenceRemoved>(),
-        exported_callback<DRing::CallSignal::NewCallCreated>(),
-        exported_callback<DRing::CallSignal::SipCallStateChanged>(),
         exported_callback<DRing::CallSignal::RecordingStateChanged>(),
         exported_callback<DRing::CallSignal::SecureSdesOn>(),
         exported_callback<DRing::CallSignal::SecureSdesOff>(),
