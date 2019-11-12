@@ -33,6 +33,23 @@
       "revId": "e8485e23b8acfc34481ac99ea920ff7f6248bb4c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "552ce17a_605544ea",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 34
+      },
+      "lineNbr": 912,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-11-12T17:40:42Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nThe left operand of \u0027!\u003d\u0027 is a garbage value\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-core.UndefinedBinaryOperatorResult",
+      "revId": "e8485e23b8acfc34481ac99ea920ff7f6248bb4c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
