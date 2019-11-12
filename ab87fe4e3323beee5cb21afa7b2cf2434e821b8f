@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "87d56ede_06f59494",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 661,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-11-12T19:18:13Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ab87fe4e3323beee5cb21afa7b2cf2434e821b8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6fc5ce09_baa21d6c",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 752,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-11-12T19:18:13Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ab87fe4e3323beee5cb21afa7b2cf2434e821b8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "8a1c0502_af946a6f",
+        "filename": "src/security/tls_session.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 912,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-11-12T19:18:13Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nThe left operand of \u0027!\u003d\u0027 is a garbage value\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-core.UndefinedBinaryOperatorResult",
+      "revId": "ab87fe4e3323beee5cb21afa7b2cf2434e821b8f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
