@@ -40,7 +40,6 @@ public:
     virtual void conferenceChanged(const std::string& conf_id, const std::string& state){}
     virtual void conferenceRemoved(const std::string& conf_id){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
-    virtual void conferenceRemove(const std::string& conf_id){}
     virtual void newCall(const std::string& account_id, const std::string& call_id, const std::string& to){}
     virtual void sipCallStateChange(const std::string& call_id, const std::string& state, int code){}
     virtual void recordingStateChanged(const std::string& call_id, int code){}
@@ -125,7 +124,6 @@ public:
     virtual void conferenceChanged(const std::string& conf_id, const std::string& state){}
     virtual void conferenceRemoved(const std::string& conf_id){}
     virtual void updatePlaybackScale(const std::string& filepath, int position, int scale){}
-    virtual void conferenceRemove(const std::string& conf_id){}
     virtual void newCall(const std::string& account_id, const std::string& call_id, const std::string& to){}
     virtual void sipCallStateChange(const std::string& call_id, const std::string& state, int code){}
     virtual void recordingStateChanged(const std::string& call_id, int code){}
