@@ -900,6 +900,7 @@ SIPCall::getAudioCodec() const
 void
 SIPCall::startAllMedia()
 {
+    if (!transport_) return;
     JAMI_WARN("[call:%s] startAllMedia()", getCallId().c_str());
     if (isSecure() && not transport_->isSecure()) {
         JAMI_ERR("[call:%s] Can't perform secure call over insecure SIP transport",
