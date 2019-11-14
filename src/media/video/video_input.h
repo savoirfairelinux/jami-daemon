@@ -85,6 +85,7 @@ private:
 
     std::string currentResource_;
     std::atomic<bool> switchPending_ = {false};
+    std::atomic_bool  isStopped_ = {false};
 
     DeviceParams decOpts_;
     std::promise<DeviceParams> foundDecOpts_;
