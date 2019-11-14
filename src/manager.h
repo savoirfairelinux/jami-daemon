@@ -35,6 +35,8 @@
 #include "preferences.h"
 #include "audio/audiolayer.h"
 #include "scheduled_executor.h"
+// Plugin Services Manager
+#include "plugin/pluginservicesmanager.h"
 
 #include <string>
 #include <vector>
@@ -892,6 +894,8 @@ class Manager {
         std::unique_ptr<DataTransferFacade> dataTransfers;
 
         std::vector<DRing::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
+
+        PluginServicesManager& getPluginServicesManager();
 
 private:
         Manager();
