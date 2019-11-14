@@ -520,8 +520,8 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
         storeVideoBitrateInfo();
 
 #if __ANDROID__
-    auto input_device = std::static_pointer_cast<VideoInput>(videoLocal_);
-    emitSignal<DRing::VideoSignal::SetBitrate>(input_device->getParams().name, (int)newBR);
+        if (auto input_device = std::dynamic_pointer_cast<VideoInput>(videoLocal_))
+            emitSignal<DRing::VideoSignal::SetBitrate>(input_device->getParams().name, (int)newBR);
 #endif
 
         // If encoder no longer exist do nothing
@@ -555,9 +555,7 @@ VideoRtpSession::setupVideoBitrateInfo() {
 
 void
 VideoRtpSession::storeVideoBitrateInfo() {
-    auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
-
-    if (codecVideo) {
+    if (auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec)) {
         codecVideo->setCodecSpecifications({
             {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(videoBitrateInfo_.videoBitrateCurrent)},
             {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, std::to_string(videoBitrateInfo_.videoBitrateMin)},
@@ -566,16 +564,16 @@ VideoRtpSession::storeVideoBitrateInfo() {
             {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, std::to_string(videoBitrateInfo_.videoQualityMin)},
             {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, std::to_string(videoBitrateInfo_.videoQualityMax)}
         });
-
-        if (histoQuality_.size() > MAX_SIZE_HISTO_QUALITY)
-            histoQuality_.pop_front();
-
-        if (histoBitrate_.size() > MAX_SIZE_HISTO_BITRATE)
-            histoBitrate_.pop_front();
-
-        histoQuality_.push_back(videoBitrateInfo_.videoQualityCurrent);
-        histoBitrate_.push_back(videoBitrateInfo_.videoBitrateCurrent);
     }
+
+    if (histoQuality_.size() > MAX_SIZE_HISTO_QUALITY)
+        histoQuality_.pop_front();
+
+    if (histoBitrate_.size() > MAX_SIZE_HISTO_BITRATE)
+        histoBitrate_.pop_front();
+
+    histoQuality_.push_back(videoBitrateInfo_.videoQualityCurrent);
+    histoBitrate_.push_back(videoBitrateInfo_.videoBitrateCurrent);
 }
 
 void
