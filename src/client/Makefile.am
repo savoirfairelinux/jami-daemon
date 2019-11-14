@@ -17,6 +17,7 @@ libclient_la_SOURCES = \
 	callmanager.cpp \
 	configurationmanager.cpp \
 	datatransfer.cpp \
+	plugin_manager_interface.cpp \
 	$(PRESENCE_SRC) \
 	$(VIDEO_SRC)
 
