@@ -82,7 +82,7 @@ public:
 
 private:
     NON_COPYABLE(VideoInput);
-
+    int i{0};
     std::string currentResource_;
     std::atomic<bool> switchPending_ = {false};
     std::atomic_bool  isStopped_ = {false};
