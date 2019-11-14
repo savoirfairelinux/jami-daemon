@@ -23,7 +23,7 @@
  */
 
 #pragma once
-
+#define ENABLE_VIDEO
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -33,7 +33,9 @@
 #include "sip_utils.h"
 
 #ifdef ENABLE_VIDEO
+#include "media/video/video_receive_thread.h"
 #include "media/video/video_rtp_session.h"
+#include "plugin/streamdata.h"
 #endif
 
 #include "noncopyable.h"
@@ -251,6 +253,16 @@ private:
 
     NON_COPYABLE(SIPCall);
 
+#ifdef ENABLE_VIDEO
+    using MediaStream = Observable<std::shared_ptr<MediaFrame>>;
+    using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
+    void createCallAVStream(const StreamData& StreamData, MediaStream& streamSource, const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject);
+    void createCallAVStreams();
+    void destroyCallAVStreams();
+    std::list<std::shared_ptr<MediaStreamSubject>> callAVStreams;
+
+#endif
+
     void setCallMediaLocal();
 
     void waitForIceAndStartMedia();
@@ -269,6 +281,8 @@ private:
     std::vector<IceCandidate> getAllRemoteCandidates();
 
     void merge(Call& call) override; // not public - only called by Call
+
+    void createPluginStream();
 
     inline std::shared_ptr<const SIPCall> shared() const {
         return std::static_pointer_cast<const SIPCall>(shared_from_this());

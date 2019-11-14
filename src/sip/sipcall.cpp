@@ -47,6 +47,10 @@
 #include "video/video_rtp_session.h"
 #include "dring/videomanager_interface.h"
 #include <chrono>
+extern "C" {
+#include <libavutil/display.h>
+}
+#include "media/video/filter_transpose.h"
 #endif
 
 #include "errno.h"
@@ -105,6 +109,8 @@ SIPCall::~SIPCall()
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
     setTransport({});
     inv.reset(); // prevents callback usage
+    // Destroy subjects
+    destroyCallAVStreams();
 }
 
 SIPAccountBase&
@@ -112,6 +118,52 @@ SIPCall::getSIPAccount() const
 {
     return static_cast<SIPAccountBase&>(getAccount());
 }
+
+#ifdef ENABLE_VIDEO
+void SIPCall::createCallAVStreams()
+{
+    if(hasVideo()){
+        /**
+        *   Map: maps the VideoFrame to an AVFrame
+        **/
+        auto map = [](const std::shared_ptr<jami::MediaFrame> m)->AVFrame* {
+            auto vFrame = std::static_pointer_cast<VideoFrame>(m);
+            return vFrame->pointer();
+        };
+
+        // Preview
+        StreamData previewStreamData{getCallId(), 0, StreamType::video, getPeerNumber()};
+        auto& videoPreview = videortp_->getVideoLocal();
+        auto previewSubject = std::make_shared<MediaStreamSubject>(map);
+
+        createCallAVStream(previewStreamData, *videoPreview, previewSubject);
+
+        // Receive
+        StreamData receiveStreamData{getCallId(), 1, StreamType::video, getPeerNumber()};
+        auto& videoReceive = videortp_->getVideoReceive();
+
+        auto receiveSubject = std::make_shared<MediaStreamSubject>(map);
+
+        createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
+    }
+}
+
+void SIPCall::destroyCallAVStreams()
+{
+    // Cleanup week pointers subject
+    //auto& psm = jami::Manager::instance().getPluginServicesManager();
+    //psm->cleanup();
+}
+
+void SIPCall::createCallAVStream(const StreamData& StreamData, MediaStream& streamSource, const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject){
+    auto& psm = jami::Manager::instance().getPluginServicesManager();
+    callAVStreams.push_back(mediaStreamSubject);
+    std::shared_ptr<MediaStreamSubject>& inserted = callAVStreams.back();
+    streamSource.attachPriorityObserver(inserted);
+    psm->createAVSubject(StreamData, inserted);
+}
+
+#endif
 
 void
 SIPCall::setCallMediaLocal()
@@ -1033,6 +1085,9 @@ SIPCall::startAllMedia()
         }
         remainingRequest_ = Request::NoRequest;
     }
+
+    // Create AVStreams associated with the call
+    createCallAVStreams();
 }
 
 void
@@ -1169,6 +1224,7 @@ SIPCall::waitForIceAndStartMedia()
         }
         return false;
     });
+
 }
 
 void
@@ -1268,6 +1324,7 @@ SIPCall::getDetails() const
         }
     }
 #endif
+
     return details;
 }
 
