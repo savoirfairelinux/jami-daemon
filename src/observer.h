@@ -46,8 +46,20 @@ class Observable
 public:
     Observable() : mutex_(), observers_() {}
 
+    /**
+     * @brief ~Observable
+     * Detach all observers to avoid making them call this observable when
+     * destroyed
+     */
     virtual ~Observable() {
         std::lock_guard<std::mutex> lk(mutex_);
+
+        for(auto& pobs: priority_observers_) {
+            if(auto so = pobs.lock()) {
+                so->detached(this);
+            }
+        }
+
         for (auto& o : observers_)
             o->detached(this);
     }
@@ -98,25 +110,12 @@ protected:
         for(auto& pobs: priority_observers_) {
             if(auto so = pobs.lock()) {
                 try {
-                   so->update(this,data);
+                    so->update(this,data);
                 } catch (std::exception& e) {
                     JAMI_ERR() << e.what();
                 }
             }
         }
-
-//        for(auto it=priority_observers_.begin(); it != priority_observers_.end();) {
-//            if(auto so = it->lock()){
-//                try {
-//                    so->update(this,data);
-//                } catch (std::exception& e) {
-//                    JAMI_ERR() << e.what();
-//                }
-//                ++it;
-//            } else {
-//                it = priority_observers_.erase(it);
-//            }
-//        }
 
         for (auto observer : observers_) {
             if(observer) {
@@ -128,6 +127,7 @@ protected:
 private:
     NON_COPYABLE(Observable<T>);
 
+protected:
     std::mutex mutex_; // lock observers_
     std::list<std::weak_ptr<Observer<T>>> priority_observers_;
     std::set<Observer<T>*> observers_;
@@ -169,6 +169,28 @@ public:
 
     void update(Observable<T1>*, const T1& t) override {
         this->notify(map_(t));
+    }
+
+    /**
+     * @brief detached
+     * Since a MapSubject is only attached to one Observable, when detached
+     * We should detach all of it observers
+     */
+    virtual void detached(Observable<T1>*) {
+        std::lock_guard<std::mutex> lk(this->mutex_);
+        JAMI_WARN() << "PublishMapSubject: detaching observers";
+        for (auto& o : this->observers_)
+            o->detached(this);
+    }
+
+    /**
+     * @brief ~PublishMapSubject()
+     * Detach all observers to avoid making them call this observable when
+     * destroyed
+    **/
+    ~PublishMapSubject() {
+        JAMI_WARN() << "~PublishMapSubject()";
+        detached(nullptr);
     }
 
 private:

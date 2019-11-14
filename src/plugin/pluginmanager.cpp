@@ -81,11 +81,8 @@ bool PluginManager::unload(const std::string& path) {
     bool returnValue{false};
     PluginMap::iterator it = dynPluginMap_.find(path);
     if ( it != dynPluginMap_.end()) {
-        if(auto dlplugin = std::dynamic_pointer_cast<DLPlugin>(it->second)) {
-            dlplugin->unload();
-            returnValue = true;
-        }
         dynPluginMap_.erase(it);
+        returnValue = true;
     }
 
     return returnValue;

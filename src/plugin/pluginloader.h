@@ -45,6 +45,8 @@ protected:
 class DLPlugin : public Plugin {
 public:
     DLPlugin(void *handle, const std::string& path) : handle_(handle, ::dlclose), path_{path} {}
+
+    virtual ~DLPlugin() { unload();}
     //==========================================
     bool unload() {
         if(!handle_){

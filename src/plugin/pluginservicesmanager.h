@@ -24,11 +24,11 @@ public:
     *   unload all media handlers and their associated plugin.so
     **/
     ~PluginServicesManager(){
-        for(auto it = plugins.begin(); it != plugins.end(); ++it) {
-            std::string pluginId = it->first;
-            plugins.erase(it);
-            pm.unload(pluginId);
-        }
+        /** Remove all media stream handlers BEFORE the plugins
+        *   are destroyed (~DLPlugin), this way we avoid
+        *   Segfaults and Heap-use after free faults
+        **/
+        plugins.clear();
     }
 
 public:
@@ -48,15 +48,13 @@ public:
      */
     void unloadPlugin(const std::string& pluginId){
         std::cout << "UNLOAD PLUGIN" << std::endl;
-        for(auto it = plugins.begin(); it != plugins.end();) {
+        for(auto it = plugins.begin(); it != plugins.end(); ++it) {
+            // Remove all possible duplicates, before unloading a plugin
             if(it->first == pluginId) {
                 plugins.erase(it);
-                pm.unload(pluginId);
-                break;
-            } else {
-                ++it;
             }
         }
+        pm.unload(pluginId);
     }
 
     /**

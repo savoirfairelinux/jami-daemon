@@ -10,19 +10,21 @@ namespace DRing {
 void
 loadPlugin(const std::string& path){
     auto& psm = jami::Manager::instance().getPluginServicesManager();
+    JAMI_WARN() << " LOADING PLUGIN ...\t" << path;
     if(psm){
         psm->loadPlugin(path);
+        JAMI_WARN() << "PLUGIN LOADED \t" << path;
     }
-    JAMI_WARN() << " LOADING PLUGIN " << path;
 }
 
 void
 unloadPlugin(const std::string& path){
     auto& psm = jami::Manager::instance().getPluginServicesManager();
+    JAMI_WARN() << " UNLOADING PLUGIN ...\t" << path;
     if(psm){
         psm->unloadPlugin(path);
+        JAMI_WARN() << "PLUGIN UNLOADED \t" << path;
     }
-    JAMI_WARN() << " UNLOADING PLUGIN " << path;
 }
 
 void
