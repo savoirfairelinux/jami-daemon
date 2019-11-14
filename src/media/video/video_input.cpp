@@ -66,6 +66,7 @@ VideoInput::VideoInput()
 
 VideoInput::~VideoInput()
 {
+    isStopped_ = true;
 #if VIDEO_CLIENT_INPUT
     emitSignal<DRing::VideoSignal::StopCapture>();
     capturing_ = false;
@@ -210,10 +211,26 @@ VideoInput::createDecoder()
         [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); },
         this);
 
-    if (decoder->openInput(decOpts_) < 0) {
-        JAMI_ERR("Could not open input \"%s\"", decOpts_.input.c_str());
-        foundDecOpts(decOpts_);
-        return;
+    bool ready = false, restartSink = false;
+    while (!ready && !isStopped_) {
+        // Retry to open the video till the input is opened
+        auto ret = decoder->openInput(decOpts_);
+        ready = ret >= 0;
+        if (ret < 0 && -ret != EBUSY) {
+            JAMI_ERR("Could not open input \"%s\" with status %i", decOpts_.input.c_str(), ret);
+            foundDecOpts(decOpts_);
+            return;
+        } else if (-ret == EBUSY) {
+            // If the device is busy, this means that it can be used by another call.
+            // If this is the case, cleanup() can occurs and this will erase shmPath_
+            // So, be sure to regenerate a correct shmPath for clients.
+            restartSink = true;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    if (restartSink && !isStopped_) {
+        sink_->start();
     }
 
     /* Data available, finish the decoding */
