@@ -107,8 +107,11 @@ VideoScaler::scale_and_pad(const VideoFrame& input, VideoFrame& output,
     }
 
     // buffer overflow checks
-    assert(xoff + dest_width <= (unsigned)output_frame->width);
-    assert(yoff + dest_height <= (unsigned)output_frame->height);
+    if ((xoff + dest_width > (unsigned)output_frame->width)
+        || (yoff + dest_height > (unsigned)output_frame->height)) {
+        JAMI_ERR("Unable to scale video");
+        return;
+    }
 
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
