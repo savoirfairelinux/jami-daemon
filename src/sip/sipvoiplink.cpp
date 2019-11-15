@@ -53,6 +53,8 @@
 #include "string_utils.h"
 #include "logger.h"
 
+#include <opendht/thread_pool.h>
+
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_uri.h>
 
@@ -1199,10 +1201,10 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
             try {
                 if (s != PJ_SUCCESS || !r) {
                     JAMI_WARN("Can't resolve \"%s\" using pjsip_endpt_resolve, trying getaddrinfo.", name.c_str());
-                    std::thread([=,cb=std::move(cb)](){
+                    dht::ThreadPool::io().run([=,cb=std::move(cb)](){
                         auto ips = ip_utils::getAddrList(name.c_str());
-                        runOnMainThread(std::bind(cb, ips.empty() ? std::vector<IpAddr>{} : std::move(ips)));
-                    }).detach();
+                        runOnMainThread(std::bind(cb, std::move(ips)));
+                    });
                 } else {
                     std::vector<IpAddr> ips;
                     ips.reserve(r->count);
