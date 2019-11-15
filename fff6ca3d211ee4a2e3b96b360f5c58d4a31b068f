@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "28736424_6ba740d6",
+        "filename": "src/observer.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-11-15T15:27:21Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027detached\u0027 overrides a member function but is not marked \u0027override\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-inconsistent-missing-override",
+      "revId": "fff6ca3d211ee4a2e3b96b360f5c58d4a31b068f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
