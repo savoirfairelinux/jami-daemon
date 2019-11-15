@@ -1234,52 +1234,30 @@ Manager::getConferenceFromID(const std::string& confID) const
 bool
 Manager::holdConference(const std::string& id)
 {
-    auto conf = getConferenceFromID(id);
-    if (not conf)
-        return false;
+    if (auto conf = getConferenceFromID(id)) {
+        for (const auto &item : conf->getParticipantList())
+            onHoldCall(item);
 
-    bool isRec = conf->getState() == Conference::State::ACTIVE_ATTACHED_REC or
-                 conf->getState() == Conference::State::ACTIVE_DETACHED_REC or
-                 conf->getState() == Conference::State::HOLD_REC;
-
-    for (const auto &item : conf->getParticipantList()) {
-        pimpl_->switchCall(getCallFromCallID(item));
-        onHoldCall(item);
+        conf->setState(Conference::State::HOLD);
+        emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
+        return true;
     }
-
-    conf->setState(isRec ? Conference::State::HOLD_REC : Conference::State::HOLD);
-
-    emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
-
-    return true;
+    return false;
 }
 
 bool
 Manager::unHoldConference(const std::string& id)
 {
-    auto conf = getConferenceFromID(id);
-    if (not conf)
-        return false;
-
-    bool isRec = conf->getState() == Conference::State::ACTIVE_ATTACHED_REC or
-        conf->getState() == Conference::State::ACTIVE_DETACHED_REC or
-        conf->getState() == Conference::State::HOLD_REC;
-
-    for (const auto &item : conf->getParticipantList()) {
-        if (auto call = getCallFromCallID(item)) {
-            // if one call is currently recording, the conference is in state recording
-            isRec |= call->isRecording();
-
-            pimpl_->switchCall(call);
+    if (auto conf = getConferenceFromID(id)) {
+        for (const auto &item : conf->getParticipantList())
             offHoldCall(item);
-        }
+        
+        pimpl_->switchCall(id);
+        conf->setState(Conference::State::ACTIVE_ATTACHED);
+        emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
+        return true;
     }
-
-    conf->setState(isRec ? Conference::State::ACTIVE_ATTACHED_REC : Conference::State::ACTIVE_ATTACHED);
-
-    emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
-
-    return true;
+    return false;
 }
 
 bool
@@ -1351,8 +1329,6 @@ Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 
     if (conf.getState() == Conference::State::ACTIVE_DETACHED)
         conf.setState(Conference::State::ACTIVE_ATTACHED);
-    else if (conf.getState() == Conference::State::ACTIVE_DETACHED_REC)
-        conf.setState(Conference::State::ACTIVE_ATTACHED_REC);
     else
         JAMI_WARN("Invalid conference state %d while adding main participant", (int)conf.getState());
 
@@ -1464,9 +1440,6 @@ Manager::detachLocalParticipant()
     switch (conf->getState()) {
         case Conference::State::ACTIVE_ATTACHED:
             conf->setState(Conference::State::ACTIVE_DETACHED);
-            break;
-        case Conference::State::ACTIVE_ATTACHED_REC:
-            conf->setState(Conference::State::ACTIVE_DETACHED_REC);
             break;
         default:
             JAMI_WARN("Undefined behavior, invalid conference state in detach participant");
@@ -2284,28 +2257,16 @@ bool
 Manager::toggleRecordingCall(const std::string& id)
 {
     std::shared_ptr<Recordable> rec;
-
-    ConferenceMap::const_iterator it(pimpl_->conferenceMap_.find(id));
-    if (it == pimpl_->conferenceMap_.end()) {
-        JAMI_DBG("toggle recording for call %s", id.c_str());
-        rec = getCallFromCallID(id);
-    } else {
+    if (auto conf = getConferenceFromID(id)) {
         JAMI_DBG("toggle recording for conference %s", id.c_str());
-        auto conf = it->second;
-        if (conf) {
-            rec = conf;
-            if (conf->isRecording())
-                conf->setState(Conference::State::ACTIVE_ATTACHED);
-            else
-                conf->setState(Conference::State::ACTIVE_ATTACHED_REC);
-        }
-    }
-
-    if (!rec) {
+        rec = conf;
+    } else if (auto call = getCallFromCallID(id)) {
+        JAMI_DBG("toggle recording for call %s", id.c_str());
+        rec = call;
+    } else {
         JAMI_ERR("Could not find recordable instance %s", id.c_str());
         return false;
     }
-
     const bool result = rec->toggleRecording();
     emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(id, rec->getPath());
     emitSignal<DRing::CallSignal::RecordingStateChanged>(id, result);
@@ -2829,9 +2790,10 @@ std::map<std::string, std::string>
 Manager::getConferenceDetails(const std::string& confID) const
 {
     if (auto conf = getConferenceFromID(confID))
-        return {{"CONFID",     confID},
-                {"CONF_STATE", conf->getStateStr()},
-                {"VIDEO_SOURCE", conf->getVideoInput()}};
+        return {{"ID",        confID},
+                {"STATE",     conf->getStateStr()},
+                {"VIDEO_SOURCE", conf->getVideoInput()},
+                {"RECORDING", conf->isRecording() ? TRUE_STR : FALSE_STR}};
     return {};
 }
 
