@@ -329,6 +329,8 @@ struct Manager::ManagerPimpl
 
     void bindCallToConference(Call& call, Conference& conf);
 
+    void addMainParticipant(Conference& conf);
+
     template <class T>
     std::shared_ptr<T> findAccount(const std::function<bool(const std::shared_ptr<T>&)>&);
 
@@ -1236,16 +1238,16 @@ Manager::holdConference(const std::string& id)
     if (not conf)
         return false;
 
-    bool isRec = conf->getState() == Conference::ACTIVE_ATTACHED_REC or
-                 conf->getState() == Conference::ACTIVE_DETACHED_REC or
-                 conf->getState() == Conference::HOLD_REC;
+    bool isRec = conf->getState() == Conference::State::ACTIVE_ATTACHED_REC or
+                 conf->getState() == Conference::State::ACTIVE_DETACHED_REC or
+                 conf->getState() == Conference::State::HOLD_REC;
 
     for (const auto &item : conf->getParticipantList()) {
         pimpl_->switchCall(getCallFromCallID(item));
         onHoldCall(item);
     }
 
-    conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
+    conf->setState(isRec ? Conference::State::HOLD_REC : Conference::State::HOLD);
 
     emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
 
@@ -1259,9 +1261,9 @@ Manager::unHoldConference(const std::string& id)
     if (not conf)
         return false;
 
-    bool isRec = conf->getState() == Conference::ACTIVE_ATTACHED_REC or
-        conf->getState() == Conference::ACTIVE_DETACHED_REC or
-        conf->getState() == Conference::HOLD_REC;
+    bool isRec = conf->getState() == Conference::State::ACTIVE_ATTACHED_REC or
+        conf->getState() == Conference::State::ACTIVE_DETACHED_REC or
+        conf->getState() == Conference::State::HOLD_REC;
 
     for (const auto &item : conf->getParticipantList()) {
         if (auto call = getCallFromCallID(item)) {
@@ -1273,7 +1275,7 @@ Manager::unHoldConference(const std::string& id)
         }
     }
 
-    conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
+    conf->setState(isRec ? Conference::State::ACTIVE_ATTACHED_REC : Conference::State::ACTIVE_ATTACHED);
 
     emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
 
@@ -1327,43 +1329,45 @@ Manager::addParticipant(const std::string& callId,
     // toconference
     pimpl_->unsetCurrentCall();
 
-    addMainParticipant(conferenceId);
+    pimpl_->addMainParticipant(*conf);
     pimpl_->switchCall(conferenceId);
     addAudio(*call);
 
     return true;
 }
 
+void
+Manager::ManagerPimpl::addMainParticipant(Conference& conf)
+{
+    {
+        std::lock_guard<std::mutex> lock(audioLayerMutex_);
+        for (const auto &item_p : conf.getParticipantList()) {
+            ringbufferpool_->bindCallID(item_p, RingBufferPool::DEFAULT_ID);
+            // Reset ringbuffer's readpointers
+            ringbufferpool_->flush(item_p);
+        }
+        ringbufferpool_->flush(RingBufferPool::DEFAULT_ID);
+    }
+
+    if (conf.getState() == Conference::State::ACTIVE_DETACHED)
+        conf.setState(Conference::State::ACTIVE_ATTACHED);
+    else if (conf.getState() == Conference::State::ACTIVE_DETACHED_REC)
+        conf.setState(Conference::State::ACTIVE_ATTACHED_REC);
+    else
+        JAMI_WARN("Invalid conference state %d while adding main participant", (int)conf.getState());
+
+    emitSignal<DRing::CallSignal::ConferenceChanged>(conf.getConfID(), conf.getStateStr());
+    switchCall(conf.getConfID());
+}
+
 bool
 Manager::addMainParticipant(const std::string& conference_id)
 {
-
-    {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-        auto conf = getConferenceFromID(conference_id);
-        if (not conf)
-            return false;
-
-        for (const auto &item_p : conf->getParticipantList()) {
-            getRingBufferPool().bindCallID(item_p, RingBufferPool::DEFAULT_ID);
-            // Reset ringbuffer's readpointers
-            getRingBufferPool().flush(item_p);
-        }
-
-        getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
-
-        if (conf->getState() == Conference::ACTIVE_DETACHED)
-            conf->setState(Conference::ACTIVE_ATTACHED);
-        else if (conf->getState() == Conference::ACTIVE_DETACHED_REC)
-            conf->setState(Conference::ACTIVE_ATTACHED_REC);
-        else
-            JAMI_WARN("Invalid conference state while adding main participant");
-
-        emitSignal<DRing::CallSignal::ConferenceChanged>(conference_id, conf->getStateStr());
-    }
-
-    pimpl_->switchCall(conference_id);
-    return true;
+    if (auto conf = getConferenceFromID(conference_id)) {
+        pimpl_->addMainParticipant(*conf);
+        return true;
+    } else
+        return false;
 }
 
 std::shared_ptr<Call>
@@ -1402,7 +1406,7 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
 
     // Switch current call id to this conference
     pimpl_->switchCall(conf->getConfID());
-    conf->setState(Conference::ACTIVE_ATTACHED);
+    conf->setState(Conference::State::ACTIVE_ATTACHED);
 
     pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
     emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
@@ -1449,27 +1453,20 @@ bool
 Manager::detachLocalParticipant()
 {
     JAMI_DBG("Unbind local participant from conference");
-    const auto& current_call_id = getCurrentCallId();
-
-    if (not isConference(current_call_id)) {
-        JAMI_ERR("Current call id (%s) is not a conference", current_call_id.c_str());
-        return false;
-    }
-
-    auto conf = getConferenceFromID(current_call_id);
+    auto conf = getConferenceFromID(getCurrentCallId());
     if (not conf) {
-        JAMI_ERR("Conference is NULL");
+        JAMI_ERR("Current call id (%s) is not a conference", getCurrentCallId().c_str());
         return false;
     }
 
     getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
 
     switch (conf->getState()) {
-        case Conference::ACTIVE_ATTACHED:
-            conf->setState(Conference::ACTIVE_DETACHED);
+        case Conference::State::ACTIVE_ATTACHED:
+            conf->setState(Conference::State::ACTIVE_DETACHED);
             break;
-        case Conference::ACTIVE_ATTACHED_REC:
-            conf->setState(Conference::ACTIVE_DETACHED_REC);
+        case Conference::State::ACTIVE_ATTACHED_REC:
+            conf->setState(Conference::State::ACTIVE_DETACHED_REC);
             break;
         default:
             JAMI_WARN("Undefined behavior, invalid conference state in detach participant");
@@ -2298,9 +2295,9 @@ Manager::toggleRecordingCall(const std::string& id)
         if (conf) {
             rec = conf;
             if (conf->isRecording())
-                conf->setState(Conference::ACTIVE_ATTACHED);
+                conf->setState(Conference::State::ACTIVE_ATTACHED);
             else
-                conf->setState(Conference::ACTIVE_ATTACHED_REC);
+                conf->setState(Conference::State::ACTIVE_ATTACHED_REC);
         }
     }
 
@@ -2829,19 +2826,13 @@ Manager::getCallList() const
 }
 
 std::map<std::string, std::string>
-Manager::getConferenceDetails(
-    const std::string& confID) const
+Manager::getConferenceDetails(const std::string& confID) const
 {
-    std::map<std::string, std::string> conf_details;
-    ConferenceMap::const_iterator iter_conf = pimpl_->conferenceMap_.find(confID);
-
-    if (iter_conf != pimpl_->conferenceMap_.end()) {
-        conf_details["CONFID"] = confID;
-        conf_details["CONF_STATE"] = iter_conf->second->getStateStr();
-        conf_details["VIDEO_SOURCE"] = iter_conf->second->getVideoInput();
-    }
-
-    return conf_details;
+    if (auto conf = getConferenceFromID(confID))
+        return {{"CONFID",     confID},
+                {"CONF_STATE", conf->getStateStr()},
+                {"VIDEO_SOURCE", conf->getVideoInput()}};
+    return {};
 }
 
 std::vector<std::string>
@@ -2853,28 +2844,20 @@ Manager::getConferenceList() const
 std::vector<std::string>
 Manager::getDisplayNames(const std::string& confID) const
 {
-    std::vector<std::string> v;
-    ConferenceMap::const_iterator iter_conf = pimpl_->conferenceMap_.find(confID);
-
-    if (iter_conf != pimpl_->conferenceMap_.end()) {
-        return iter_conf->second->getDisplayNames();
-    } else {
-        JAMI_WARN("Did not find conference %s", confID.c_str());
-    }
-
-    return v;
+    if (auto conf = getConferenceFromID(confID))
+        return conf->getDisplayNames();
+    JAMI_WARN("Did not find conference %s", confID.c_str());
+    return {};
 }
 
 std::vector<std::string>
 Manager::getParticipantList(const std::string& confID) const
 {
-    auto iter_conf = pimpl_->conferenceMap_.find(confID);
-    if (iter_conf != pimpl_->conferenceMap_.end()) {
-        const ParticipantSet& participants(iter_conf->second->getParticipantList());
+    if (auto conf = getConferenceFromID(confID)) {
+        const auto& participants(conf->getParticipantList());
         return {participants.begin(), participants.end()};
-    } else
-        JAMI_WARN("Did not find conference %s", confID.c_str());
-
+    }
+    JAMI_WARN("Did not find conference %s", confID.c_str());
     return {};
 }
 

@@ -17,8 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef CONFERENCE_H
-#define CONFERENCE_H
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -39,91 +38,114 @@ class VideoMixer;
 }
 #endif
 
-typedef std::set<std::string> ParticipantSet;
+using ParticipantSet = std::set<std::string>;
 
 class Conference : public Recordable {
-    public:
-        enum ConferenceState {ACTIVE_ATTACHED, ACTIVE_DETACHED, ACTIVE_ATTACHED_REC, ACTIVE_DETACHED_REC, HOLD, HOLD_REC};
+public:
+    enum class State {
+        ACTIVE_ATTACHED,
+        ACTIVE_DETACHED,
+        ACTIVE_ATTACHED_REC,
+        ACTIVE_DETACHED_REC,
+        HOLD,
+        HOLD_REC
+    };
 
-        /**
-         * Constructor for this class, increment static counter
-         */
-        Conference();
+    /**
+     * Constructor for this class, increment static counter
+     */
+    Conference();
 
-        /**
-         * Destructor for this class, decrement static counter
-         */
-        ~Conference();
+    /**
+     * Destructor for this class, decrement static counter
+     */
+    ~Conference();
 
-        /**
-         * Return the conference id
-         */
-        const std::string& getConfID() const;
+    /**
+     * Return the conference id
+     */
+    const std::string& getConfID() const;
 
-        /**
-         * Return the current conference state
-         */
-        ConferenceState getState() const;
+    /**
+     * Return the current conference state
+     */
+    State getState() const;
 
-        /**
-         * Set conference state
-         */
-        void setState(ConferenceState state);
+    /**
+     * Set conference state
+     */
+    void setState(State state);
 
-        /**
-         * Return a string description of the conference state
-         */
-        std::string getStateStr() const;
+    /**
+     * Return a string description of the conference state
+     */
+    static constexpr const char* getStateStr(State state) {
+        switch (state) {
+        case State::ACTIVE_ATTACHED:
+            return "ACTIVE_ATTACHED";
+        case State::ACTIVE_DETACHED:
+            return "ACTIVE_DETACHED";
+        case State::ACTIVE_ATTACHED_REC:
+            return "ACTIVE_ATTACHED_REC";
+        case State::ACTIVE_DETACHED_REC:
+            return "ACTIVE_DETACHED_REC";
+        case State::HOLD:
+            return "HOLD";
+        case State::HOLD_REC:
+            return "HOLD_REC";
+        default:
+            return "";
+        }
+    }
 
-        /**
-         * Add a new participant to the conference
-         */
-        void add(const std::string &participant_id);
+    const char* getStateStr() const { return getStateStr(confState_);  }
 
-        /**
-         * Remove a participant from the conference
-         */
-        void remove(const std::string &participant_id);
+    /**
+     * Add a new participant to the conference
+     */
+    void add(const std::string &participant_id);
 
-        /**
-         * Bind a participant to the conference
-         */
-        void bindParticipant(const std::string &participant_id);
+    /**
+     * Remove a participant from the conference
+     */
+    void remove(const std::string &participant_id);
 
-        /**
-         * Get the participant list for this conference
-         */
-        const ParticipantSet& getParticipantList() const;
+    /**
+     * Bind a participant to the conference
+     */
+    void bindParticipant(const std::string &participant_id);
 
-        /**
-         * Get the display names or peer numbers for this conference
-         */
-        std::vector<std::string>
-        getDisplayNames() const;
+    /**
+     * Get the participant list for this conference
+     */
+    const ParticipantSet& getParticipantList() const;
 
-        /**
-         * Start/stop recording toggle
-         */
-        bool toggleRecording() override;
+    /**
+     * Get the display names or peer numbers for this conference
+     */
+    std::vector<std::string> getDisplayNames() const;
 
-        void switchInput(const std::string& input);
+    /**
+     * Start/stop recording toggle
+     */
+    bool toggleRecording() override;
+
+    void switchInput(const std::string& input);
 
 #ifdef ENABLE_VIDEO
-        std::shared_ptr<video::VideoMixer> getVideoMixer();
-        std::string getVideoInput() const { return mediaInput_; }
+    std::shared_ptr<video::VideoMixer> getVideoMixer();
+    std::string getVideoInput() const { return mediaInput_; }
 #endif
 
-    private:
-        std::string id_;
-        ConferenceState confState_;
-        ParticipantSet participants_;
+private:
+    std::string id_;
+    State confState_ {State::ACTIVE_ATTACHED};
+    ParticipantSet participants_;
 
 #ifdef ENABLE_VIDEO
-        std::string mediaInput_ {};
-        std::shared_ptr<video::VideoMixer> videoMixer_;
+    std::string mediaInput_ {};
+    std::shared_ptr<video::VideoMixer> videoMixer_;
 #endif
 };
 
 } // namespace jami
-
-#endif
