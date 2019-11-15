@@ -110,6 +110,7 @@ class Conference : public Recordable {
 
 #ifdef ENABLE_VIDEO
         std::shared_ptr<video::VideoMixer> getVideoMixer();
+        std::string getVideoInput() const { return mediaInput_; }
 #endif
 
     private:
@@ -118,6 +119,7 @@ class Conference : public Recordable {
         ParticipantSet participants_;
 
 #ifdef ENABLE_VIDEO
+        std::string mediaInput_ {};
         std::shared_ptr<video::VideoMixer> videoMixer_;
 #endif
 };
