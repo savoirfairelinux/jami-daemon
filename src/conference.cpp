@@ -41,13 +41,7 @@ namespace jami {
 
 Conference::Conference()
     : id_(Manager::instance().getNewCallID())
-    , confState_(ACTIVE_ATTACHED)
-    , participants_()
-#ifdef ENABLE_VIDEO
-    , videoMixer_(nullptr)
-#endif
-{
-}
+{}
 
 Conference::~Conference()
 {
@@ -59,12 +53,13 @@ Conference::~Conference()
 #endif // ENABLE_VIDEO
 }
 
-Conference::ConferenceState Conference::getState() const
+Conference::State
+Conference::getState() const
 {
     return confState_;
 }
 
-void Conference::setState(ConferenceState state)
+void Conference::setState(State state)
 {
     confState_ = state;
 }
@@ -103,26 +98,6 @@ void Conference::bindParticipant(const std::string &participant_id)
 
     rbPool.bindCallID(participant_id, RingBufferPool::DEFAULT_ID);
     rbPool.flush(RingBufferPool::DEFAULT_ID);
-}
-
-std::string Conference::getStateStr() const
-{
-    switch (confState_) {
-        case ACTIVE_ATTACHED:
-            return "ACTIVE_ATTACHED";
-        case ACTIVE_DETACHED:
-            return "ACTIVE_DETACHED";
-        case ACTIVE_ATTACHED_REC:
-            return "ACTIVE_ATTACHED_REC";
-        case ACTIVE_DETACHED_REC:
-            return "ACTIVE_DETACHED_REC";
-        case HOLD:
-            return "HOLD";
-        case HOLD_REC:
-            return "HOLD_REC";
-        default:
-            return "";
-    }
 }
 
 const ParticipantSet&
