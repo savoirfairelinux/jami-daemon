@@ -2838,6 +2838,7 @@ Manager::getConferenceDetails(
     if (iter_conf != pimpl_->conferenceMap_.end()) {
         conf_details["CONFID"] = confID;
         conf_details["CONF_STATE"] = iter_conf->second->getStateStr();
+        conf_details["VIDEO_SOURCE"] = iter_conf->second->getVideoInput();
     }
 
     return conf_details;

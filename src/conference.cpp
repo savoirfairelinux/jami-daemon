@@ -44,6 +44,7 @@ Conference::Conference()
     , confState_(ACTIVE_ATTACHED)
     , participants_()
 #ifdef ENABLE_VIDEO
+    , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
     , videoMixer_(nullptr)
 #endif
 {
@@ -159,6 +160,7 @@ void
 Conference::switchInput(const std::string& input)
 {
 #ifdef ENABLE_VIDEO
+    mediaInput_ = input;
     getVideoMixer()->switchInput(input);
 #endif
 }
