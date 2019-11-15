@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Savard  <alexandre.savard@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,10 +46,7 @@ public:
     enum class State {
         ACTIVE_ATTACHED,
         ACTIVE_DETACHED,
-        ACTIVE_ATTACHED_REC,
-        ACTIVE_DETACHED_REC,
-        HOLD,
-        HOLD_REC
+        HOLD
     };
 
     /**
@@ -85,14 +83,8 @@ public:
             return "ACTIVE_ATTACHED";
         case State::ACTIVE_DETACHED:
             return "ACTIVE_DETACHED";
-        case State::ACTIVE_ATTACHED_REC:
-            return "ACTIVE_ATTACHED_REC";
-        case State::ACTIVE_DETACHED_REC:
-            return "ACTIVE_DETACHED_REC";
         case State::HOLD:
             return "HOLD";
-        case State::HOLD_REC:
-            return "HOLD_REC";
         default:
             return "";
         }
