@@ -116,6 +116,7 @@ MediaEncoder::setOptions(const MediaDescription& args)
         libav_utils::setDictValue(&options_, "parameters", args.parameters);
 
     auto_quality = args.auto_quality;
+    isConf_ = args.isConf;
 }
 
 void
@@ -310,8 +311,11 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
     } else {
 #else
     std::unique_ptr<VideoFrame> framePtr;
-    if (accel_ && accel_->isLinked()) {
+    if (accel_ && accel_->isLinked() && isHardware) {
         // Fully accelerated pipeline, skip main memory
+        // We have to check if the frame is hardware even if
+        // we are using linked HW encoder and decoder because after
+        // conference mixing the frame become software (prevent crashes)
         frame = input.pointer();
     } else if (isHardware) {
         // Hardware decoded frame, transfer back to main memory
@@ -655,7 +659,7 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
         if (enableAccel_) {
             if (accel_ = video::HardwareAccel::setupEncoder(
                 static_cast<AVCodecID>(avcodecId),
-                videoOpts_.width, videoOpts_.height, framesCtx)) {
+                videoOpts_.width, videoOpts_.height, isConf_ == false, framesCtx)) {
                 outputCodec_ = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
             }
         } else {

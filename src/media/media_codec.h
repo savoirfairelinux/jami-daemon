@@ -279,6 +279,7 @@ struct MediaDescription {
     /** Video parameters */
     std::string parameters {};
     bool auto_quality {false};
+    bool isConf {false};
 
     /** Crypto parameters */
     CryptoAttribute crypto {};

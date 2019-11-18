@@ -46,7 +46,7 @@ public:
     /**
      * @brief Static factory method for hardware encoding.
      */
-    static std::unique_ptr<HardwareAccel> setupEncoder(AVCodecID id, int width, int height,
+    static std::unique_ptr<HardwareAccel> setupEncoder(AVCodecID id, int width, int height, bool linkable,
         AVBufferRef* framesCtx = nullptr);
 
     /**
