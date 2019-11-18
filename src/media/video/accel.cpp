@@ -155,7 +155,10 @@ HardwareAccel::setDetails(AVCodecContext* codecCtx)
 bool
 HardwareAccel::initDevice()
 {
-    return av_hwdevice_ctx_create(&deviceCtx_, hwType_, nullptr, nullptr, 0) >= 0;
+    int ret = av_hwdevice_ctx_create(&deviceCtx_, hwType_, nullptr, nullptr, 0);
+    if (ret < 0)
+        JAMI_ERR("Creating hardware device context failed: %s (%d)", libav_utils::getError(ret).c_str(), ret);
+    return ret >= 0;
 }
 
 bool
@@ -178,8 +181,10 @@ HardwareAccel::initFrame(int width, int height)
     ctx->height = height;
     ctx->initial_pool_size = 20; // TODO try other values
 
-    if ((ret = av_hwframe_ctx_init(framesCtx_)) < 0)
+    if ((ret = av_hwframe_ctx_init(framesCtx_)) < 0) {
+        JAMI_ERR("Failed to initialize hardware frame context: %s (%d)", libav_utils::getError(ret).c_str(), ret);
         av_buffer_unref(&framesCtx_);
+    }
 
     return ret >= 0;
 }
@@ -262,7 +267,7 @@ HardwareAccel::setupDecoder(AVCodecID id, int width, int height)
 }
 
 std::unique_ptr<HardwareAccel>
-HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* framesCtx)
+HardwareAccel::setupEncoder(AVCodecID id, int width, int height, bool linkable, AVBufferRef* framesCtx)
 {
     static const HardwareAPI apiList[] = {
         { "nvenc", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 } },
@@ -278,10 +283,12 @@ HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* fr
             const auto& codecName = accel->getCodecName();
             if (avcodec_find_encoder_by_name(codecName.c_str())) {
                 if (accel->initDevice()) {
+                    bool link = false;
+                    if (linkable)
+                        link = accel->linkHardware(framesCtx);
                     // we don't need frame context for videotoolbox
                     if (api.format == AV_PIX_FMT_VIDEOTOOLBOX ||
-                        accel->linkHardware(framesCtx) ||
-                        accel->initFrame(width, height)) {
+                        link || accel->initFrame(width, height)) {
                         JAMI_DBG() << "Attempting to use hardware encoder " << codecName << " with " << api.name;
                         return accel;
                     }

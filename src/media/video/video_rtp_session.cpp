@@ -133,6 +133,7 @@ void VideoRtpSession::startSender()
         auto autoQuality = codecVideo->isAutoQualityEnabled;
 
         send_.auto_quality = autoQuality;
+        send_.linkableHW = conference_ == nullptr;
 
         if (sender_)
             initSeqVal_ = sender_->getLastSeqValue() + 10; // Skip a few sequences to make nvenc happy on a sender restart
@@ -326,6 +327,10 @@ VideoRtpSession::enterConference(Conference* conference)
         videoMixer_->setParameters(localVideoParams_.width, localVideoParams_.height);
 #endif
         setupConferenceVideoPipeline(*conference_);
+
+        // Restart encoder with conference parameter ON in order to unlink HW encoder
+        // from HW decoder.
+        restartSender();
     }
 }
 
