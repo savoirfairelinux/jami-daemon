@@ -310,21 +310,28 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
     } else {
 #else
     std::unique_ptr<VideoFrame> framePtr;
-    if (accel_ && accel_->isLinked()) {
+    if (accel_ && accel_->isLinked() && isHardware) {
         // Fully accelerated pipeline, skip main memory
         frame = input.pointer();
+        // JAMI_ERR("[PL ] 1 Fully accelerated pipeline");
     } else if (isHardware) {
         // Hardware decoded frame, transfer back to main memory
         // Transfer to GPU if we have a hardware encoder
         // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
+        // JAMI_ERR("[PL] 2 HW decoded frame");
         AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
         framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
-        if (!accel_)
+        if (!accel_){
+            // JAMI_ERR("[PL] 2.1 SW encoder");
             framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
-        else
+            }
+        else{
+            // JAMI_ERR("[PL] 2.2 HW encoder (encoder/decoder HW but not full HW)");
             framePtr = accel_->transfer(*framePtr);
+        }
         frame = framePtr->pointer();
     } else if (accel_) {
+        // JAMI_ERR("[PL] 3 SW decoded frame, HW encoder available");
         // Software decoded frame with a hardware encoder, convert to accepted format first
         auto pix = accel_->getSoftwareFormat();
         if (input.format() != pix) {

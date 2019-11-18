@@ -154,8 +154,10 @@ HardwareAccel::setDetails(AVCodecContext* codecCtx)
 
 bool
 HardwareAccel::initDevice()
-{
-    return av_hwdevice_ctx_create(&deviceCtx_, hwType_, nullptr, nullptr, 0) >= 0;
+{ 
+    int res = av_hwdevice_ctx_create(&deviceCtx_, hwType_, "/dev/dri/renderD129", nullptr, 0);
+    JAMI_ERR("[PL initDevice] create hw device context -> res:%d", res);
+    return res >= 0;
 }
 
 bool
@@ -178,8 +180,21 @@ HardwareAccel::initFrame(int width, int height)
     ctx->height = height;
     ctx->initial_pool_size = 20; // TODO try other values
 
-    if ((ret = av_hwframe_ctx_init(framesCtx_)) < 0)
+    // if ((ret = av_hwframe_ctx_init(framesCtx_)) < 0) {
+    //     JAMI_ERR("Failed to initialize VAAPI frame context. Error code: %s\n",av_err2str(ret));
+    //     av_buffer_unref(&framesCtx_);
+    //     return ret >= 0;
+    // }
+
+    // ctx->hw_frames_ctx = av_buffer_ref(framesCtx_);
+    // if (!ctx->hw_frames_ctx)
+    //     err = AVERROR(ENOMEM);
+    // av_buffer_unref(&hw_frames_ref);
+    
+    if ((ret = av_hwframe_ctx_init(framesCtx_)) < 0) {
+        JAMI_ERR("Failed to initialize HW frame context. Error code: %d\n", ret);
         av_buffer_unref(&framesCtx_);
+    }
 
     return ret >= 0;
 }
@@ -237,8 +252,8 @@ std::unique_ptr<HardwareAccel>
 HardwareAccel::setupDecoder(AVCodecID id, int width, int height)
 {
     static const HardwareAPI apiList[] = {
-        { "nvdec", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
         { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
+        { "nvdec", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
         { "vdpau", AV_HWDEVICE_TYPE_VDPAU, AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
         { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
         { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8, AV_CODEC_ID_VP9 } },
@@ -265,8 +280,8 @@ std::unique_ptr<HardwareAccel>
 HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* framesCtx)
 {
     static const HardwareAPI apiList[] = {
-        { "nvenc", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 } },
         { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
+        { "nvenc", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 } },
         { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264 } },
         { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
     };
