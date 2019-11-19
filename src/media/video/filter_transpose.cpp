@@ -43,7 +43,7 @@ getTransposeFilter(int rotation, std::string inputName, int width, int height, i
         case 90:
         case -270:
             ss << "transpose=2";
-            if (rescale)
+            if (rescale && width > height )
                 ss << ", scale=w=-1:h=" << height
                     << ", pad=" << width << ":" << height << ":(ow-iw)/2";
             break;
@@ -54,7 +54,7 @@ getTransposeFilter(int rotation, std::string inputName, int width, int height, i
         case 270 :
         case -90 :
             ss << "transpose=1";
-            if (rescale)
+            if (rescale && width > height )
                 ss << ", scale=w=-1:h=" << height
                     << ", pad=" << width << ":" << height << ":(ow-iw)/2";
             break;
