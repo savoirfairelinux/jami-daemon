@@ -105,7 +105,7 @@ class SipTransport
             return tlsInfos_;
         }
 
-        static bool isAlive(const std::shared_ptr<SipTransport>&, pjsip_transport_state state);
+        static bool isAlive(pjsip_transport_state state);
 
         /** Only makes sense for connection-oriented transports */
         bool isConnected() const noexcept { return connected_; }

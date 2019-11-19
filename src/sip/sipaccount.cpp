@@ -276,7 +276,7 @@ SIPAccount::onTransportStateChanged(pjsip_transport_state state, const pjsip_tra
 {
     pj_status_t currentStatus = transportStatus_;
     JAMI_DBG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
-    if (!SipTransport::isAlive(transport_, state)) {
+    if (!SipTransport::isAlive(state)) {
         if (info) {
             transportStatus_ = info->status;
             transportError_  = sip_utils::sip_strerror(info->status);

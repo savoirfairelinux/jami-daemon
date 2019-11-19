@@ -88,19 +88,11 @@ SipTransport::~SipTransport()
 }
 
 bool
-SipTransport::isAlive(UNUSED const std::shared_ptr<SipTransport>& t,
-                      pjsip_transport_state state)
+SipTransport::isAlive(pjsip_transport_state state)
 {
     return state != PJSIP_TP_STATE_DISCONNECTED
-#if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
     && state != PJSIP_TP_STATE_SHUTDOWN
-    && state != PJSIP_TP_STATE_DESTROY
-#else
-    && t && t->get()
-    && !t->get()->is_shutdown
-    && !t->get()->is_destroying
-#endif
-    ;
+    && state != PJSIP_TP_STATE_DESTROY;
 }
 
 const char*
