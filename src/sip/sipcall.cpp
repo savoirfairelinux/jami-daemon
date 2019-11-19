@@ -163,6 +163,7 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
     }
 
     const auto list_id = reinterpret_cast<uintptr_t>(this);
+    std::lock_guard<std::mutex> lk(transportMutex_);
     if (transport_)
         transport_->removeStateListener(list_id);
     transport_ = t;
@@ -175,7 +176,13 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
             [wthis_ = weak()] (pjsip_transport_state state, const pjsip_transport_state_info*) {
                 if (auto this_ = wthis_.lock()) {
                     // end the call if the SIP transport is shut down
-                    if (not SipTransport::isAlive(this_->transport_, state) and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
+                    auto isAlive = false;
+                    {
+                        std::lock_guard<std::mutex> lk(this_->transportMutex_);
+                        if (!this_->transport_) return;
+                        isAlive = SipTransport::isAlive(this_->transport_, state);
+                    }
+                    if (not isAlive and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
                         JAMI_WARN("[call:%s] Ending call because underlying SIP transport was closed",
                                   this_->getCallId().c_str());
                         this_->onFailure(ECONNRESET);
@@ -306,7 +313,9 @@ SIPCall::terminateSipSession(int status)
         auto ret = pjsip_inv_end_session(inv.get(), status, nullptr, &tdata);
         if (ret == PJ_SUCCESS) {
             if (tdata) {
+                std::unique_lock<std::mutex> lk(transportMutex_);
                 auto contact = getSIPAccount().getContactHeader(transport_ ? transport_->get() : nullptr);
+                lk.unlock();
                 sip_utils::addContactHeader(&contact, tdata);
                 ret = pjsip_inv_send_msg(inv.get(), tdata);
                 if (ret != PJ_SUCCESS)
@@ -340,8 +349,11 @@ SIPCall::answer()
             updateSDPFromSTUN();
     }
 
-    pj_str_t contact(account.getContactHeader(transport_ ? transport_->get() : nullptr));
-    setContactHeader(&contact);
+    {
+        std::lock_guard<std::mutex> lk(transportMutex_);
+        pj_str_t contact(account.getContactHeader(transport_ ? transport_->get() : nullptr));
+        setContactHeader(&contact);
+    }
 
     pjsip_tx_data *tdata;
     if (!inv->last_answer)
@@ -900,6 +912,8 @@ SIPCall::getAudioCodec() const
 void
 SIPCall::startAllMedia()
 {
+    std::lock_guard<std::recursive_mutex> lock(callMutex_);
+    std::lock_guard<std::mutex> lk(transportMutex_);
     if (!transport_) return;
     JAMI_WARN("[call:%s] startAllMedia()", getCallId().c_str());
     if (isSecure() && not transport_->isSecure()) {
@@ -1241,6 +1255,7 @@ SIPCall::getDetails() const
 #endif
 
 #ifdef ENABLE_CLIENT_CERT
+    std::lock_guard<std::mutex> lk(transportMutex_);
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         if (tlsInfos.cipher != PJ_TLS_UNKNOWN_CIPHER) {
