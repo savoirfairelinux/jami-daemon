@@ -301,6 +301,7 @@ private:
      * Will be different from the account registration transport for
      * non-IP2IP calls.
      */
+    std::mutex transportMutex_ {};
     std::shared_ptr<SipTransport> transport_ {};
 
     /**

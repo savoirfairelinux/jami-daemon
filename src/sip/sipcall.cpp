@@ -175,7 +175,13 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
             [wthis_ = weak()] (pjsip_transport_state state, const pjsip_transport_state_info*) {
                 if (auto this_ = wthis_.lock()) {
                     // end the call if the SIP transport is shut down
-                    if (not SipTransport::isAlive(this_->transport_, state) and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
+                    auto isAlive = false;
+                    {
+                        std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
+                        if (!this_->transport_) return;
+                        isAlive = SipTransport::isAlive(this_->transport_, state);
+                    }
+                    if (not isAlive and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
                         JAMI_WARN("[call:%s] Ending call because underlying SIP transport was closed",
                                   this_->getCallId().c_str());
                         this_->onFailure(ECONNRESET);
@@ -900,6 +906,7 @@ SIPCall::getAudioCodec() const
 void
 SIPCall::startAllMedia()
 {
+    std::lock_guard<std::recursive_mutex> lock(callMutex_);
     if (!transport_) return;
     JAMI_WARN("[call:%s] startAllMedia()", getCallId().c_str());
     if (isSecure() && not transport_->isSecure()) {
@@ -1241,6 +1248,7 @@ SIPCall::getDetails() const
 #endif
 
 #ifdef ENABLE_CLIENT_CERT
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         if (tlsInfos.cipher != PJ_TLS_UNKNOWN_CIPHER) {
