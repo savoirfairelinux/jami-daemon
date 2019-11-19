@@ -213,7 +213,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     const constexpr char filterIn[] = "mixin";
     if (angle != source->rotation) {
         source->rotationFilter = video::getTransposeFilter(angle, filterIn,
-            frame->width(), frame->height(), frame->format(), true);
+            frame->width(), frame->height(), frame->format(), false);
         source->rotation = angle;
     }
     if (source->rotationFilter) {
