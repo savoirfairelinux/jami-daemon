@@ -963,6 +963,7 @@ SIPCall::startAllMedia()
             continue;
         }
 
+        if (!transport_) return;
         auto new_mtu = transport_->getTlsMtu();
         if (local.type & MEDIA_AUDIO)
             avformatrtp_->switchInput(mediaInput_);
