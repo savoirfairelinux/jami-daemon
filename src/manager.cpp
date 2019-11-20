@@ -54,6 +54,7 @@ using random_device = dht::crypto::random_device;
 
 #include "config/yamlparser.h"
 
+
 #if HAVE_ALSA
 #include "audio/alsa/alsalayer.h"
 #endif
@@ -415,6 +416,8 @@ struct Manager::ManagerPimpl
 
     /* Plugin Services Manager */
     PluginServicesManager plugin_services_manager;
+    /* Plugin Preferences Manager*/
+    PluginPreferencesManager plugin_preferences_manager;
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -3048,6 +3051,11 @@ Manager::getLastMessages(const std::string& accountID, const uint64_t& base_time
 PluginServicesManager& Manager::getPluginServicesManager()
 {
     return pimpl_->plugin_services_manager;
+}
+
+PluginPreferencesManager& Manager::getPluginPreferencesManager()
+{
+    return pimpl_->plugin_preferences_manager;
 }
 
 std::map<std::string, std::string>
