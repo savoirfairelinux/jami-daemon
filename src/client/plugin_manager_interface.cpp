@@ -1,7 +1,5 @@
 #include "plugin_manager_interface.h"
 #include "manager.h"
-#include "videomanager.h"
-#include "video/video_input.h"
 #include "logger.h"
 #include <iostream>
 
@@ -32,6 +30,26 @@ togglePlugin(const std::string& path, bool toggle){
     } else {
         JAMI_WARN() << " Plugin " << path << " OFF";
     }
+}
+
+std::string
+getPluginIconPath(const std::string& path){
+    return jami::Manager::instance().getPluginPreferencesManager().getPluginIconPath(path);
+}
+
+std::vector<std::map<std::string,std::string>>
+getPluginPreferences(const std::string& path){
+    return jami::Manager::instance().getPluginPreferencesManager().getPluginPreferences(path);
+}
+
+bool
+setPluginPreference(const std::string& path, const std::string& key, const std::string& value) {
+    return jami::Manager::instance().getPluginPreferencesManager().savePluginPreferenceValue(path, key, value);
+}
+
+std::map<std::string,std::string>
+getPluginPreferencesValuesMap(const std::string& path){
+    return jami::Manager::instance().getPluginPreferencesManager().getPluginPreferencesValuesMap(path);
 }
 
 }
