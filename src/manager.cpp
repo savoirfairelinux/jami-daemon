@@ -903,7 +903,6 @@ Manager::outgoingCall(const std::string& account_id,
     JAMI_DBG() << "try outgoing call to '" << to << "'"
                << " with account '" << account_id << "'";
 
-    const auto& current_call_id(getCurrentCallId());
     std::string to_cleaned = hookPreference.getNumberAddPrefix() + trim(to);
     std::shared_ptr<Call> call;
 
@@ -939,11 +938,8 @@ Manager::answerCall(const std::string& call_id)
         return false;
     }
 
-    // If ring is ringing
+    // If ringing
     stopTone();
-
-    // store the current call id
-    const auto& current_call_id(getCurrentCallId());
 
     try {
         call->answer();

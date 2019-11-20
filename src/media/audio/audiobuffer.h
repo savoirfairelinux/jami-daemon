@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef _AUDIO_BUFFER_H
-#define _AUDIO_BUFFER_H
+#pragma once
 
 #if __cplusplus >= 201103L
  #undef isblank
@@ -376,4 +375,3 @@ class AudioBuffer {
 
 } // namespace jami
 
-#endif // _AUDIO_BUFFER_H

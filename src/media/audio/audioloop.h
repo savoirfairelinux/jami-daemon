@@ -20,7 +20,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-
 #pragma once
 
 #include "ring_types.h"
@@ -35,58 +34,58 @@
 namespace jami {
 
 class AudioLoop {
-    public:
-        AudioLoop() {}
+public:
+    AudioLoop() {}
 
-        AudioLoop(unsigned int sampleRate);
+    AudioLoop(unsigned int sampleRate);
 
-        AudioLoop& operator=(AudioLoop&& o) noexcept {
-            std::swap(buffer_, o.buffer_);
-            std::swap(pos_, o.pos_);
-            return *this;
-        }
+    AudioLoop& operator=(AudioLoop&& o) noexcept {
+        std::swap(buffer_, o.buffer_);
+        std::swap(pos_, o.pos_);
+        return *this;
+    }
 
-        virtual ~AudioLoop();
+    virtual ~AudioLoop();
 
-        /**
-         * Get the next fragment of the tone
-         * the function change the intern position, and will loop
-         * @param output  The data buffer
-         * @param nb of int16 to send
-         * @param gain The gain [-1.0, 1.0]
-         */
-        void getNext(AudioBuffer& output, double gain);
-        std::unique_ptr<AudioFrame> getNext(size_t samples = 0);
+    /**
+     * Get the next fragment of the tone
+     * the function change the intern position, and will loop
+     * @param output  The data buffer
+     * @param nb of int16 to send
+     * @param gain The gain [-1.0, 1.0]
+     */
+    void getNext(AudioBuffer& output, double gain);
+    std::unique_ptr<AudioFrame> getNext(size_t samples = 0);
 
-        void seek(double relative_position);
+    void seek(double relative_position);
 
-        /**
-         * Reset the pointer position
-         */
-        void reset() {
-            pos_ = 0;
-        }
+    /**
+     * Reset the pointer position
+     */
+    void reset() {
+        pos_ = 0;
+    }
 
-        /**
-         * Accessor to the size of the buffer
-         * @return unsigned int The size
-         */
-        size_t getSize() const {
-            return buffer_->frames();
-        }
-        AudioFormat getFormat() const {
-            return buffer_->getFormat();
-        }
-    protected:
-        /** The data buffer */
-        AudioBuffer * buffer_ {nullptr};
+    /**
+     * Accessor to the size of the buffer
+     * @return unsigned int The size
+     */
+    size_t getSize() const {
+        return buffer_->frames();
+    }
+    AudioFormat getFormat() const {
+        return buffer_->getFormat();
+    }
+protected:
+    /** The data buffer */
+    AudioBuffer * buffer_ {nullptr};
 
-        /** current position, set to 0, when initialize */
-        size_t pos_ {0};
+    /** current position, set to 0, when initialize */
+    size_t pos_ {0};
 
-    private:
-        NON_COPYABLE(AudioLoop);
-        virtual void onBufferFinish();
+private:
+    NON_COPYABLE(AudioLoop);
+    virtual void onBufferFinish();
 };
 
 } // namespace jami
