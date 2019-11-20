@@ -15,8 +15,10 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#pragma once
 
+#pragma once
+// Utils
+#include "noncopyable.h"
 // Plugin Manager
 #include "pluginmanager.h"
 #include "streamdata.h"
@@ -47,6 +49,8 @@ public:
         **/
         callMediaHandlers.clear();
     }
+    
+    NON_COPYABLE(PluginServicesManager);
 
 public:
 
@@ -157,7 +161,6 @@ private:
             std::cout<< "LOCK SUCCESSFUL NOTIFYING NEW SUBJECT " << std::endl;
             plugin->notifyAVFrameSubject(data, soSubject);
         }
-
     }
 
     /**
@@ -197,7 +200,6 @@ private:
 
             return 0;
         };
-
 
         pm.registerService("registerCallMediaHandler", registerPlugin);
     }
