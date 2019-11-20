@@ -34,9 +34,22 @@ class MediaHandler{
 
 public:
     virtual ~MediaHandler() = default;
-
+    /**
+     * @brief id
+     * The id is the path of the plugin
+     * @return
+     */
     std::string id() const { return id_;}
     void setId(const std::string& id) {id_ = id;}
+    /**
+     * @brief setPreferenceAttribute
+     * Sets a preference attribute to the new value
+     * @param key
+     * @param value
+     */
+    void setPreferenceAttribute(const std::string& key, const std::string& value) {
+        (void)key;(void)value;
+    }
 private:
     std::string id_;
 };

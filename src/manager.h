@@ -35,8 +35,10 @@
 #include "preferences.h"
 #include "audio/audiolayer.h"
 #include "scheduled_executor.h"
-// Plugin Services Manager
+
+// Plugin Managers
 #include "plugin/pluginservicesmanager.h"
+#include "plugin/pluginpreferencesmanager.h"
 
 #include <string>
 #include <vector>
@@ -896,6 +898,7 @@ class Manager {
         std::vector<DRing::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
 
         PluginServicesManager& getPluginServicesManager();
+        PluginPreferencesManager& getPluginPreferencesManager();
 
 private:
         Manager();
