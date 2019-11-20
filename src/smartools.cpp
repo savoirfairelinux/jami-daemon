@@ -47,12 +47,13 @@ void
 Smartools::start(std::chrono::milliseconds refreshTimeMs)
 {
     JAMI_DBG("Start SmartInfo");
-    if (auto t = std::move(task_))
-        t->cancel();
-    task_ = Manager::instance().scheduler().scheduleAtFixedRate([this]{
+    auto task = Manager::instance().scheduler().scheduleAtFixedRate([this]{
         sendInfo();
         return true;
     }, refreshTimeMs);
+    task_.swap(task);
+    if (task)
+        task->cancel();
 }
 
 void

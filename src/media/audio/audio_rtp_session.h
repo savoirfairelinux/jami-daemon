@@ -19,13 +19,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef AUDIO_RTP_SESSION_H__
-#define AUDIO_RTP_SESSION_H__
+#pragma once
 
 #include "audiobuffer.h"
 #include "media_device.h"
 #include "rtp_session.h"
-#include "threadloop.h"
 
 #include <string>
 #include <memory>
@@ -70,5 +68,3 @@ class AudioRtpSession : public RtpSession {
 };
 
 } // namespace jami
-
-#endif // __AUDIO_RTP_SESSION_H__
