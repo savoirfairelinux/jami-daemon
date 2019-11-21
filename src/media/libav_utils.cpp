@@ -183,14 +183,6 @@ void ring_avcodec_init()
     std::call_once(already_called, init_once);
 }
 
-void ring_url_split(const char *url,
-                   char *hostname, size_t hostname_size, int *port,
-                   char *path, size_t path_size)
-{
-    av_url_split(NULL, 0, NULL, 0, hostname, hostname_size, port,
-                 path, path_size, url);
-}
-
 bool
 is_yuv_planar(const AVPixFmtDescriptor& desc)
 {
