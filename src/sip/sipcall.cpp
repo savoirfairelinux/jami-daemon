@@ -1349,9 +1349,12 @@ SIPCall::merge(Call& call)
     // This static cast is safe as this method is private and overload Call::merge
     auto& subcall = static_cast<SIPCall&>(call);
 
+    std::lock(callMutex_, subcall.callMutex_);
+    std::lock_guard<std::recursive_mutex> lk1 {callMutex_, std::adopt_lock};
+    std::lock_guard<std::recursive_mutex> lk2 {subcall.callMutex_, std::adopt_lock};
     inv = std::move(subcall.inv);
     inv->mod_data[getSIPVoIPLink()->getModId()] = this;
-    setTransport(subcall.transport_);
+    setTransport(std::move(subcall.transport_));
     sdp_ = std::move(subcall.sdp_);
     peerHolding_ = subcall.peerHolding_;
     upnp_ = std::move(subcall.upnp_);
