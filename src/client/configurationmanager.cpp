@@ -903,7 +903,7 @@ void setAccountsOrder(const std::string& order)
 std::string
 getAddrFromInterfaceName(const std::string& interface)
 {
-    return jami::ip_utils::getInterfaceAddr(interface);
+    return jami::ip_utils::getInterfaceAddr(interface, AF_INET);
 }
 
 std::vector<std::string>

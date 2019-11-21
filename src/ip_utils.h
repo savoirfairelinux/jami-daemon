@@ -305,7 +305,7 @@ IpAddr getLocalAddr(pj_uint16_t family);
  * Get the IP address of the network interface interface with the specified
  * address family, or of any address family if unspecified (default).
  */
-IpAddr getInterfaceAddr(const std::string &interface, pj_uint16_t family = pj_AF_UNSPEC());
+IpAddr getInterfaceAddr(const std::string &interface, pj_uint16_t family);
 
 /**
  * List all the interfaces on the system and return

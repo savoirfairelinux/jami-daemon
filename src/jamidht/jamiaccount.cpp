@@ -550,7 +550,7 @@ JamiAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
     call.setIPToIP(true);
     call.setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
 
-    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface());
+    const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
 
     IpAddr addrSdp;
     if (getUPnPActive()) {
