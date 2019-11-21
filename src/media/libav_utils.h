@@ -38,10 +38,6 @@ namespace jami { namespace libav_utils {
     const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428029";
     const char *const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
 
-    void ring_url_split(const char *url,
-                      char *hostname, size_t hostname_size, int *port,
-                      char *path, size_t path_size);
-
     bool is_yuv_planar(const AVPixFmtDescriptor& desc);
 
     std::string getError(int err);

@@ -323,7 +323,7 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
     char path[1024];
     int dst_rtp_port;
 
-    libav_utils::ring_url_split(uri, hostname, sizeof(hostname), &dst_rtp_port, path, sizeof(path));
+    av_url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &dst_rtp_port, path, sizeof(path), uri);
 
     const int local_rtcp_port = local_rtp_port + 1;
     const int dst_rtcp_port = dst_rtp_port + 1;
