@@ -26,6 +26,7 @@
 #include "logger.h"
 #include "accel.h"
 #include "config.h"
+#include "client/ring_signal.h"
 
 namespace jami { namespace video {
 
@@ -289,7 +290,9 @@ HardwareAccel::setupEncoder(AVCodecID id, int width, int height, AVBufferRef* fr
             }
         }
     }
-
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    emitSignal<DRing::VideoSignal::UseSoftwareEncoding>();
+#endif
     JAMI_WARN() << "Not using hardware encoding";
     return nullptr;
 }

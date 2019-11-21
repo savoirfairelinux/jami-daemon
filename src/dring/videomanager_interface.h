@@ -211,6 +211,12 @@ struct DRING_PUBLIC VideoSignal {
                 constexpr static const char* name = "DecodingStopped";
                 using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/);
         };
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+        struct DRING_PUBLIC UseSoftwareEncoding {
+               constexpr static const char* name = "UseSoftwareEncoding";
+               using cb_type = void();
+        };
+#endif
 #if __ANDROID__
         struct DRING_PUBLIC SetParameters {
             constexpr static const char* name = "SetParameters";

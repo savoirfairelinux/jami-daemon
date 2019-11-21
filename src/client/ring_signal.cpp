@@ -105,6 +105,9 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::DeviceEvent>(),
         exported_callback<DRing::VideoSignal::DecodingStarted>(),
         exported_callback<DRing::VideoSignal::DecodingStopped>(),
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+        exported_callback<DRing::VideoSignal::UseSoftwareEncoding>(),
+#endif
 #ifdef __ANDROID__
         exported_callback<DRing::VideoSignal::GetCameraInfo>(),
         exported_callback<DRing::VideoSignal::SetParameters>(),
