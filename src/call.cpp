@@ -502,23 +502,18 @@ Call::subcallStateChanged(Call& subcall,
 }
 
 /// Replace current call data with ones from the given \a subcall.
-///
+/// Must be called while locked by subclass
 void
 Call::merge(Call& subcall)
 {
     JAMI_DBG("[call:%s] merge subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
 
     // Merge data
-    {
-        std::lock(callMutex_, subcall.callMutex_);
-        std::lock_guard<std::recursive_mutex> lk1 {callMutex_, std::adopt_lock};
-        std::lock_guard<std::recursive_mutex> lk2 {subcall.callMutex_, std::adopt_lock};
-        pendingInMessages_ = std::move(subcall.pendingInMessages_);
-        if (peerNumber_.empty())
-            peerNumber_ = std::move(subcall.peerNumber_);
-        peerDisplayName_ = std::move(subcall.peerDisplayName_);
-        setState(subcall.getState(), subcall.getConnectionState());
-    }
+    pendingInMessages_ = std::move(subcall.pendingInMessages_);
+    if (peerNumber_.empty())
+        peerNumber_ = std::move(subcall.peerNumber_);
+    peerDisplayName_ = std::move(subcall.peerDisplayName_);
+    setState(subcall.getState(), subcall.getConnectionState());
 
     std::weak_ptr<Call> subCallWeak = subcall.shared_from_this();
     runOnMainThread([subCallWeak] {
