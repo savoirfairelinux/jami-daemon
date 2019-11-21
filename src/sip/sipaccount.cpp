@@ -983,7 +983,7 @@ SIPAccount::sendRegister()
     pjsip_hdr hdr_list;
     pj_list_init(&hdr_list);
     std::string useragent(getUserAgentName());
-    pj_str_t pJuseragent {(char*) useragent.data(), (pj_ssize_t) useragent.size()};
+    auto pJuseragent = CONST_PJ_STR(useragent);
     constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
 
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(link_->getPool(), &STR_USER_AGENT, &pJuseragent);

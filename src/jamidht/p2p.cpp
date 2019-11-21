@@ -48,7 +48,7 @@ namespace jami {
 
 static constexpr std::chrono::seconds DHT_MSG_TIMEOUT{30};
 static constexpr std::chrono::seconds NET_CONNECTION_TIMEOUT{10};
-static constexpr std::chrono::seconds SOCK_TIMEOUT{3};
+static constexpr std::chrono::seconds SOCK_TIMEOUT{10};
 static constexpr std::chrono::seconds ICE_READY_TIMEOUT{10};
 static constexpr std::chrono::seconds ICE_INIT_TIMEOUT{10};
 static constexpr std::chrono::seconds ICE_NEGOTIATION_TIMEOUT{10};
@@ -876,7 +876,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
           tls_ep->waitForReady(SOCK_TIMEOUT);
         } catch (const std::exception &e) {
           // In case of a timeout
-          JAMI_WARN() << "TLS connection timeout " << e.what();
+          JAMI_WARN() << "TLS connection timeout: " << e.what();
           return;
         }
 

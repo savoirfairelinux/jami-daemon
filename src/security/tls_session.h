@@ -55,6 +55,9 @@ enum class TlsSessionState
     SHUTDOWN
 };
 
+using clock = std::chrono::steady_clock;
+using duration = clock::duration;
+
 struct TlsParams
 {
     // User CA list for session credentials
@@ -70,7 +73,7 @@ struct TlsParams
     std::shared_future<DhParams> dh_params;
 
     // DTLS timeout
-    std::chrono::steady_clock::duration timeout;
+    duration timeout;
 
     // Callback for certificate checkings
     std::function<int(unsigned status,
@@ -130,7 +133,7 @@ public:
 
     int maxPayload() const override;
 
-    void waitForReady(const std::chrono::steady_clock::duration& timeout = {});
+    void waitForReady(const duration& timeout = {});
 
     /// Synchronous writing.
     /// Return a positive number for number of bytes write, or 0 and \a ec set in case of error.

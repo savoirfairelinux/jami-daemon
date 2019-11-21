@@ -1461,7 +1461,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     call->setState(Call::ConnectionState::PROGRESSING);
 
     return true;
-    }
+}
 
 void
 JamiAccount::mapPortUPnP()
