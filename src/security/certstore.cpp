@@ -84,8 +84,7 @@ void
 CertificateStore::loadRevocations(crypto::Certificate& crt) const
 {
     auto dir = crlPath_+DIR_SEPARATOR_CH+crt.getId().toString();
-    auto crl_dir_content = fileutils::readDirectory(dir);
-    for (const auto& crl : crl_dir_content) {
+    for (const auto& crl : fileutils::readDirectory(dir)) {
         try {
             crt.addRevocationList(std::make_shared<crypto::RevocationList>(fileutils::loadFile(dir+DIR_SEPARATOR_CH+crl)));
         } catch (const std::exception& e) {

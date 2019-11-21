@@ -243,11 +243,11 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     if (not inv or not inv->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
 
-    pj_str_t methodName = CONST_PJ_STR("INFO");
+    constexpr pj_str_t methodName = CONST_PJ_STR("INFO");
     constexpr pj_str_t type = CONST_PJ_STR("application");
 
     pjsip_method method;
-    pjsip_method_init_np(&method, &methodName);
+    pjsip_method_init_np(&method, (pj_str_t*)&methodName);
 
     /* Create request message. */
     pjsip_tx_data *tdata;
