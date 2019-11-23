@@ -762,6 +762,13 @@ Manager::init(const std::string &config_file)
         no_errors = false;
     }
 
+    // Some VoIP services support SIP/TLS and SRTP, but do not set the
+    // correct schema in the INVITE request. For more details, see:
+    // https://trac.pjsip.org/repos/ticket/1735
+    if (voipPreferences.getDisableSecureDlgCheck()) {
+        pjsip_cfg()->endpt.disable_secure_dlg_check = PJ_TRUE;
+    }
+
     // always back up last error-free configuration
     if (no_errors) {
         make_backup(pimpl_->path_);

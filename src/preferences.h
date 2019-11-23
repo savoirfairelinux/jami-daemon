@@ -146,6 +146,13 @@ class VoipPreference : public Serializable {
         void serialize(YAML::Emitter &out) const override;
         void unserialize(const YAML::Node &in) override;
 
+        bool getDisableSecureDlgCheck() const {
+            return disableSecureDlgCheck_;
+        }
+        void setDisableSecureDlgCheck(bool disable) {
+            disableSecureDlgCheck_ = disable;
+        }
+
         bool getPlayDtmf() const {
             return playDtmf_;
         }
@@ -185,6 +192,7 @@ class VoipPreference : public Serializable {
         }
 
     private:
+        bool disableSecureDlgCheck_;
         bool playDtmf_;
         bool playTones_;
         int pulseLength_;

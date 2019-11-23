@@ -92,6 +92,7 @@ static constexpr const char* MD5_HASH_KEY {"md5Hash"};
 
 // voip preferences
 constexpr const char * const VoipPreference::CONFIG_LABEL;
+static constexpr const char* DISABLE_SECURE_DLG_CHECK_KEY {"disableSecureDlgCheck"};
 static constexpr const char* PLAY_DTMF_KEY {"playDtmf"};
 static constexpr const char* PLAY_TONES_KEY {"playTones"};
 static constexpr const char* PULSE_LENGTH_KEY {"pulseLength"};
@@ -240,7 +241,8 @@ void Preferences::unserialize(const YAML::Node &in)
 }
 
 VoipPreference::VoipPreference() :
-    playDtmf_(true)
+    disableSecureDlgCheck_(false)
+    , playDtmf_(true)
     , playTones_(true)
     , pulseLength_(PULSE_LENGTH_DEFAULT)
     , symmetricRtp_(true)
@@ -249,6 +251,7 @@ VoipPreference::VoipPreference() :
 void VoipPreference::serialize(YAML::Emitter &out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << DISABLE_SECURE_DLG_CHECK_KEY << YAML::Value << disableSecureDlgCheck_;
     out << YAML::Key << PLAY_DTMF_KEY << YAML::Value << playDtmf_;
     out << YAML::Key << PLAY_TONES_KEY << YAML::Value << playTones_;
     out << YAML::Key << PULSE_LENGTH_KEY << YAML::Value << pulseLength_;
@@ -260,6 +263,7 @@ void VoipPreference::serialize(YAML::Emitter &out) const
 void VoipPreference::unserialize(const YAML::Node &in)
 {
     const auto &node = in[CONFIG_LABEL];
+    parseValue(node, DISABLE_SECURE_DLG_CHECK_KEY, disableSecureDlgCheck_);
     parseValue(node, PLAY_DTMF_KEY, playDtmf_);
     parseValue(node, PLAY_TONES_KEY, playTones_);
     parseValue(node, PULSE_LENGTH_KEY, pulseLength_);
