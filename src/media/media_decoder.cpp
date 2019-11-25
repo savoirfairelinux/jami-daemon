@@ -301,7 +301,7 @@ MediaDecoder::setupStream()
 #ifdef RING_ACCEL
         if (enableAccel_) {
             accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id,
-                decoderCtx_->width, decoderCtx_->height);
+                decoderCtx_->width, decoderCtx_->height, decoderCtx_->pix_fmt);
             if (accel_) {
                 accel_->setDetails(decoderCtx_);
                 decoderCtx_->opaque = accel_.get();
