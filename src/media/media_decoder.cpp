@@ -206,6 +206,17 @@ MediaDemuxer::decode()
     return Status::Success;
 }
 
+int
+MediaDemuxer::getFirstPacket(AVPacket* pkt)
+{
+    int ret = av_read_frame(inputCtx_, pkt);
+    if (ret < 0) {
+        JAMI_ERR("Failed to read first packet");
+        return -1;
+    }
+    return 0;
+}
+
 MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index)
  : demuxer_(demuxer),
    avStream_(demuxer->getStream(index))
@@ -300,8 +311,12 @@ MediaDecoder::setupStream()
 
 #ifdef RING_ACCEL
         if (enableAccel_) {
-            accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id,
-                decoderCtx_->width, decoderCtx_->height);
+            AVPacket pkt;
+            auto ret = demuxer_->getFirstPacket(&pkt);
+            if (ret == 0)
+                accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id,
+                            decoderCtx_->width, decoderCtx_->height, decoderCtx_->pix_fmt, &pkt);
+            av_packet_unref(&pkt);
             if (accel_) {
                 accel_->setDetails(decoderCtx_);
                 decoderCtx_->opaque = accel_.get();
