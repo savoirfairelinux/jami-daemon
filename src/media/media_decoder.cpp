@@ -271,12 +271,69 @@ MediaDecoder::setupStream()
     int ret = 0;
     avcodec_free_context(&decoderCtx_);
 
+    if(prepareDecoderContext() < 0)
+        return -1; // failed
+
 #ifdef RING_ACCEL
     // if there was a fallback to software decoding, do not enable accel
     // it has been disabled already by the video_receive_thread/video_input
     enableAccel_ &= Manager::instance().videoPreferences.getDecodingAccelerated();
+
+    if (enableAccel_) {
+        auto APIs = video::HardwareAccel::getCompatibleAccel(decoderCtx_->codec_id,
+                    decoderCtx_->width, decoderCtx_->height, CODEC_DECODER);
+        if (APIs.size() > 0) {
+            for (const auto& it : APIs) {
+                accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
+                auto ret = accel_->initAPI(false, nullptr);
+                if (ret < 0) {
+                    accel_ = nullptr;
+                    continue;
+                }
+                if(prepareDecoderContext() < 0)
+                    return -1; // failed
+                accel_->setDetails(decoderCtx_);
+                decoderCtx_->opaque = accel_.get();
+                decoderCtx_->pix_fmt = accel_->getFormat();
+                if (avcodec_open2(decoderCtx_, inputDecoder_, &options_) < 0) {
+                    // Failed to open codec
+                    JAMI_WARN("Fail to open hardware decoder for %s with %s ", avcodec_get_name(decoderCtx_->codec_id), it.getName().c_str());
+                    avcodec_free_context(&decoderCtx_);
+                    decoderCtx_ = nullptr;
+                    accel_ = nullptr;
+                    continue;
+                } else {
+                    // Succeed to open codec
+                    JAMI_WARN("Using hardware decoding for %s with %s ", avcodec_get_name(decoderCtx_->codec_id), it.getName().c_str());
+                    break;
+                }
+            }
+        }
+    }
 #endif
 
+    JAMI_DBG() << "Decoding " << av_get_media_type_string(avStream_->codecpar->codec_type) << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
+
+    decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
+    if (emulateRate_)
+        JAMI_DBG() << "Using framerate emulation";
+    startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
+
+    if(!accel_) {
+        JAMI_WARN("Not using hardware decoding for %s",  avcodec_get_name(decoderCtx_->codec_id));
+        ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+    }
+    if (ret < 0) {
+        JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
+        return -1;
+    }
+
+    return 0;
+}
+
+int
+MediaDecoder::prepareDecoderContext()
+{
     inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
         JAMI_ERR() << "Unsupported codec";
@@ -297,36 +354,7 @@ MediaDecoder::setupStream()
             decoderCtx_->framerate = av_inv_q(decoderCtx_->time_base);
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = {30, 1};
-
-#ifdef RING_ACCEL
-        if (enableAccel_) {
-            accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id,
-                decoderCtx_->width, decoderCtx_->height);
-            if (accel_) {
-                accel_->setDetails(decoderCtx_);
-                decoderCtx_->opaque = accel_.get();
-            }
-        } else if (Manager::instance().videoPreferences.getDecodingAccelerated()) {
-            JAMI_WARN() << "Hardware decoding disabled because of previous failure";
-        } else {
-            JAMI_WARN() << "Hardware decoding disabled by user preference";
-        }
-#endif
     }
-
-    JAMI_DBG() << "Decoding " << av_get_media_type_string(avStream_->codecpar->codec_type) << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
-
-    decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
-    if (emulateRate_)
-        JAMI_DBG() << "Using framerate emulation";
-    startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
-
-    ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
-    if (ret < 0) {
-        JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
-        return -1;
-    }
-
     return 0;
 }
 
