@@ -120,7 +120,7 @@ private:
     void startIO();
     AVCodecContext* getCurrentVideoAVCtx();
     void stopEncoder();
-    AVCodecContext* initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef* framesCtx, uint64_t br);
+    AVCodecContext* initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br);
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext *outputCtx_ = nullptr;
