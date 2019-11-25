@@ -100,6 +100,7 @@ public:
     }
 
     Status decode();
+    void getFirstPacket(AVPacket* pkt);
 
 private:
     bool streamInfoFound_ {false};
