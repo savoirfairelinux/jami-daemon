@@ -2,6 +2,7 @@
  *  Copyright (C) 2016-2019 Savoir-faire Linux Inc.
  *
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,12 +27,23 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <list>
 
 extern "C" {
 #include <libavutil/hwcontext.h>
 }
 
 namespace jami { namespace video {
+
+struct HardwareAPI
+{
+    std::string name;
+    AVHWDeviceType hwType;
+    AVPixelFormat format;
+    AVPixelFormat swFormat;
+    std::vector<AVCodecID> supportedCodecs;
+    std::vector<std::string> possible_devices;
+};
 
 /**
  * @brief Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
@@ -146,9 +158,13 @@ public:
      */
     bool linkHardware(AVBufferRef* framesCtx);
 
+
+    static std::list<HardwareAccel> getAccelCompatible(AVCodecID id, int width, int height, CodecType type);
+    int initAPI(bool linkable, AVBufferRef* framesCtx);
+
 private:
-    bool initDevice();
-    bool initFrame(int width, int height);
+    bool initDevice(const std::string& device);
+    bool initFrame();
 
     AVCodecID id_ {AV_CODEC_ID_NONE};
     std::string name_;
@@ -157,9 +173,16 @@ private:
     AVPixelFormat swFormat_ {AV_PIX_FMT_NONE};
     CodecType type_ {CODEC_NONE};
     bool linked_ {false};
+    int width_ {0};
+    int height_ {0};
 
     AVBufferRef* deviceCtx_ {nullptr};
     AVBufferRef* framesCtx_ {nullptr};
+
+    int test_device(const char* name, const char* device, int flags);
+    int test_device_type(std::string& dev);
+
+    std::vector<std::string> possible_devices_;
 };
 
 }} // namespace jami::video
