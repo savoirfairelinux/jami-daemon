@@ -1,0 +1,45 @@
+diff --git a/src/media/video/accel.cpp b/src/media/video/accel.cpp
+index 25b98622c..6772432b5 100644
+--- a/src/media/video/accel.cpp
++++ b/src/media/video/accel.cpp
+@@ -53,10 +53,13 @@ HardwareAccel::set_hwframe_ctx(AVCodecContext *ctx, AVBufferRef *hw_device_ctx)
+     AVHWFramesContext *frames_ctx = NULL;
+     int err = 0;
+ 
++    JAMI_WARN("Enter set_hwframe_ctx");
+     if (!(hw_frames_ref = av_hwframe_ctx_alloc(hw_device_ctx))) {
+-        fprintf(stderr, "Failed to create hardware frame context.\n");
++        JAMI_DBG("Failed to create hardware frame context.");
+         return -1;
+     }
++    JAMI_WARN("OK HW frame alloc");
++    
+     frames_ctx = (AVHWFramesContext *)(hw_frames_ref->data);
+     frames_ctx->format    = format_;
+     frames_ctx->sw_format = swFormat_;
+@@ -68,10 +71,13 @@ HardwareAccel::set_hwframe_ctx(AVCodecContext *ctx, AVBufferRef *hw_device_ctx)
+                 "Error code: %s\n",libav_utils::getError(err).c_str());
+         av_buffer_unref(&hw_frames_ref);
+         return err;
+-    }
++    } 
++    JAMI_WARN("OK HW frame init");
+     ctx->hw_frames_ctx = av_buffer_ref(hw_frames_ref);
+-    if (!ctx->hw_frames_ctx)
+-        err = AVERROR(ENOMEM);
++    if (!ctx->hw_frames_ctx) {
++        JAMI_WARN("Failed to init HW frame.");
++       return -1;
++    }
+ 
+     av_buffer_unref(&hw_frames_ref);
+     return err;
+@@ -137,6 +143,7 @@ HardwareAccel::test_encode_black_frame(AVBufferRef* hw_device_ctx)
+ 
+     // Configure codec ctx
+     init_codec_ctx(avctx);
++    JAMI_WARN("OK codec init");
+ 
+     // Open decoder
+     if (type_ == CODEC_DECODER) {
+
