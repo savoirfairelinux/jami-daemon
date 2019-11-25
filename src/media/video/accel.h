@@ -2,6 +2,7 @@
  *  Copyright (C) 2016-2019 Savoir-faire Linux Inc.
  *
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +33,16 @@ extern "C" {
 }
 
 namespace jami { namespace video {
+
+struct HardwareAPI
+{
+    std::string name;
+    AVHWDeviceType hwType;
+    AVPixelFormat format;
+    AVPixelFormat swFormat;
+    std::vector<AVCodecID> supportedCodecs;
+    std::vector<std::string> possible_devices;
+};
 
 /**
  * @brief Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
@@ -147,7 +158,7 @@ public:
     bool linkHardware(AVBufferRef* framesCtx);
 
 private:
-    bool initDevice();
+    bool initDevice(std::string device);
     bool initFrame(int width, int height);
 
     AVCodecID id_ {AV_CODEC_ID_NONE};
@@ -160,6 +171,10 @@ private:
 
     AVBufferRef* deviceCtx_ {nullptr};
     AVBufferRef* framesCtx_ {nullptr};
+
+    static int test_device(const HardwareAPI& api, const char* name,
+                        const char* device, int flags);
+    static std::string test_device_type(const HardwareAPI& api);
 };
 
 }} // namespace jami::video

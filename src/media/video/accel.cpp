@@ -2,6 +2,7 @@
  *  Copyright (C) 2016-2019 Savoir-faire Linux Inc.
  *
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,14 +30,92 @@
 
 namespace jami { namespace video {
 
-struct HardwareAPI
-{
-    std::string name;
-    AVHWDeviceType hwType;
-    AVPixelFormat format;
-    AVPixelFormat swFormat;
-    std::vector<AVCodecID> supportedCodecs;
+static const HardwareAPI apiListDec[] = {
+    { "nvdec", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG }, { "0", "1", "2" } },
+    { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG }, { "/dev/dri/renderD128", "/dev/dri/renderD129", ":0" } },
+    { "vdpau", AV_HWDEVICE_TYPE_VDPAU, AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 }, { } },
+    { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 }, { } },
+    { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8, AV_CODEC_ID_VP9 }, { } },
 };
+
+static const HardwareAPI apiListEnc[] = {
+    { "nvenc", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 }, { "0", "1", "2" } },
+    { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 }, { "/dev/dri/renderD128", "/dev/dri/renderD129", ":0" } },
+    { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264 }, { } },
+    { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 }, { } },
+};
+
+int
+HardwareAccel::test_device(const HardwareAPI& api, const char* name,
+                        const char* device, int flags)
+{
+    AVBufferRef *ref;
+    AVHWDeviceContext *dev;
+    int err;
+
+    err = av_hwdevice_ctx_create(&ref, api.hwType, device, NULL, flags);
+    if (err < 0) {
+        JAMI_DBG("Failed to create %s device: %d.\n", name, err);
+        return 1;
+    }
+
+    dev = (AVHWDeviceContext*)ref->data;
+    if (dev->type != api.hwType) {
+        JAMI_DBG("Device created as type %d has type %d.",
+                api.hwType, dev->type);
+        av_buffer_unref(&ref);
+        return -1;
+    }
+
+    JAMI_DBG("Device type %s successfully created.", name);
+    av_buffer_unref(&ref);
+
+    return err;
+}
+
+std::string
+HardwareAccel::test_device_type(const HardwareAPI& api)
+{
+    AVHWDeviceType check;
+    const char *name;
+    int err;
+
+    name = av_hwdevice_get_type_name(api.hwType);
+    if (!name) {
+        JAMI_DBG("No name available for device type %d.", api.hwType);
+        return "";
+    }
+
+    check = av_hwdevice_find_type_by_name(name);
+    if (check != api.hwType) {
+        JAMI_DBG("Type %d maps to name %s maps to type %d.",
+               api.hwType, name, check);
+        return "";
+    }
+
+    err = test_device(api, name, NULL, 0);
+    if (err == 0) {
+        JAMI_DBG("O Test passed for %s with default options.", name);
+        return "default";
+    } else {
+        JAMI_DBG("X Test failed for %s with default options.", name);
+    }
+
+    for (unsigned j = 0; j < api.possible_devices.size(); j++) {
+        err = test_device(api, name, api.possible_devices[j].c_str(), 0);
+        if (err == 0) {
+            JAMI_DBG("O Test passed for %s with device %s.",
+                    name, api.possible_devices[j].c_str());
+            return api.possible_devices[j];
+        }
+        else {
+            JAMI_DBG("X Test failed for %s with device %s.",
+                    name, api.possible_devices[j].c_str());
+        }
+    }
+
+    return "";
+}
 
 static AVPixelFormat
 getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
@@ -116,7 +195,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
         auto hwFrame = framePtr->pointer();
 
         if ((ret = av_hwframe_get_buffer(framesCtx_, hwFrame, 0)) < 0) {
-            JAMI_ERR() << "Failed to allocate hardware buffer: " << libav_utils::getError(ret);
+            JAMI_ERR() << "Failed to allocate hardware buffer: " << libav_utils::getError(ret).c_str();
             return nullptr;
         }
 
@@ -126,7 +205,7 @@ HardwareAccel::transfer(const VideoFrame& frame)
         }
 
         if ((ret = av_hwframe_transfer_data(hwFrame, input, 0)) < 0) {
-            JAMI_ERR() << "Failed to push frame to GPU: " << libav_utils::getError(ret);
+            JAMI_ERR() << "Failed to push frame to GPU: " << libav_utils::getError(ret).c_str();
             return nullptr;
         }
 
@@ -153,9 +232,14 @@ HardwareAccel::setDetails(AVCodecContext* codecCtx)
 }
 
 bool
-HardwareAccel::initDevice()
+HardwareAccel::initDevice(std::string device)
 {
-    int ret = av_hwdevice_ctx_create(&deviceCtx_, hwType_, nullptr, nullptr, 0);
+    int ret;
+    if (device == "default")
+        ret = av_hwdevice_ctx_create(&deviceCtx_, hwType_, nullptr, nullptr, 0);
+    else
+        ret = av_hwdevice_ctx_create(&deviceCtx_, hwType_, device.c_str(), nullptr, 0);
+
     if (ret < 0)
         JAMI_ERR("Creating hardware device context failed: %s (%d)", libav_utils::getError(ret).c_str(), ret);
     return ret >= 0;
@@ -241,62 +325,47 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
 std::unique_ptr<HardwareAccel>
 HardwareAccel::setupDecoder(AVCodecID id, int width, int height)
 {
-    static const HardwareAPI apiList[] = {
-        { "nvdec", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
-        { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG } },
-        { "vdpau", AV_HWDEVICE_TYPE_VDPAU, AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
-        { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 } },
-        { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8, AV_CODEC_ID_VP9 } },
-    };
-
-    for (const auto& api : apiList) {
+    for (const auto& api : apiListDec) {
         if (std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id) != api.supportedCodecs.end()) {
             auto accel = std::make_unique<HardwareAccel>(id, api.name, api.hwType, api.format, api.swFormat, CODEC_DECODER);
-            if (accel->initDevice()) {
-                 // we don't need frame context for videotoolbox
-                if (api.format == AV_PIX_FMT_VIDEOTOOLBOX ||
-                    accel->initFrame(width, height))  {
-                    JAMI_DBG() << "Attempting to use hardware decoder " << accel->getCodecName() << " with " << api.name;
+            std::string device = test_device_type(api);
+            if(device != "" && accel->initDevice(device)) {
+                // we don't need frame context for videotoolbox
+                if (api.format == AV_PIX_FMT_VIDEOTOOLBOX || accel->initFrame(width, height)) {
+                    JAMI_DBG() << "Using hardware decoder " << accel->getCodecName() << " with " << api.name << ", device: " << device;
                     return accel;
                 }
             }
         }
     }
-
+    JAMI_WARN() << "Not using hardware decoding";
     return nullptr;
 }
 
 std::unique_ptr<HardwareAccel>
 HardwareAccel::setupEncoder(AVCodecID id, int width, int height, bool linkable, AVBufferRef* framesCtx)
 {
-    static const HardwareAPI apiList[] = {
-        { "nvenc", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265 } },
-        { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
-        { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264 } },
-        { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 } },
-    };
-
-    for (auto api : apiList) {
+    for (auto api : apiListEnc) {
         const auto& it = std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id);
         if (it != api.supportedCodecs.end()) {
             auto accel = std::make_unique<HardwareAccel>(id, api.name, api.hwType, api.format, api.swFormat, CODEC_ENCODER);
             const auto& codecName = accel->getCodecName();
             if (avcodec_find_encoder_by_name(codecName.c_str())) {
-                if (accel->initDevice()) {
+                std::string device = test_device_type(api);
+                if(device != "" && accel->initDevice(device)) {
                     bool link = false;
                     if (linkable)
                         link = accel->linkHardware(framesCtx);
                     // we don't need frame context for videotoolbox
-                    if (api.format == AV_PIX_FMT_VIDEOTOOLBOX ||
-                        link || accel->initFrame(width, height)) {
-                        JAMI_DBG() << "Attempting to use hardware encoder " << codecName << " with " << api.name;
+                    if (api.format == AV_PIX_FMT_VIDEOTOOLBOX || accel->linkHardware(framesCtx) ||
+                       link || accel->initFrame(width, height)) {
+                        JAMI_DBG() << "Using hardware encoder " << codecName << " with " << api.name << ", device: " << device;
                         return accel;
                     }
                 }
             }
         }
     }
-
     JAMI_WARN() << "Not using hardware encoding";
     return nullptr;
 }
