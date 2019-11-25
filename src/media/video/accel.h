@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
  *
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <list>
 
 extern "C" {
 #include <libavutil/hwcontext.h>
@@ -33,22 +35,21 @@ extern "C" {
 
 namespace jami { namespace video {
 
+struct HardwareAPI
+{
+    std::string name;
+    AVHWDeviceType hwType;
+    AVPixelFormat format;
+    AVPixelFormat swFormat;
+    std::vector<AVCodecID> supportedCodecs;
+    std::set<std::string> possible_devices;
+};
+
 /**
  * @brief Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
  */
 class HardwareAccel {
 public:
-    /**
-     * @brief Static factory method for hardware decoding.
-     */
-    static std::unique_ptr<HardwareAccel> setupDecoder(AVCodecID id, int width, int height);
-
-    /**
-     * @brief Static factory method for hardware encoding.
-     */
-    static std::unique_ptr<HardwareAccel> setupEncoder(AVCodecID id, int width, int height, bool linkable,
-        AVBufferRef* framesCtx = nullptr);
-
     /**
      * @brief Transfers hardware frame to main memory.
      *
@@ -146,9 +147,13 @@ public:
      */
     bool linkHardware(AVBufferRef* framesCtx);
 
+
+    static std::list<HardwareAccel> getCompatibleAccel(AVCodecID id, int width, int height, CodecType type);
+    int initAPI(bool linkable, AVBufferRef* framesCtx);
+
 private:
-    bool initDevice();
-    bool initFrame(int width, int height);
+    bool initDevice(const std::string& device);
+    bool initFrame();
 
     AVCodecID id_ {AV_CODEC_ID_NONE};
     std::string name_;
@@ -157,9 +162,16 @@ private:
     AVPixelFormat swFormat_ {AV_PIX_FMT_NONE};
     CodecType type_ {CODEC_NONE};
     bool linked_ {false};
+    int width_ {0};
+    int height_ {0};
 
     AVBufferRef* deviceCtx_ {nullptr};
     AVBufferRef* framesCtx_ {nullptr};
+
+    int test_device(const char* name, const char* device, int flags);
+    int test_device_type(std::string& dev);
+
+    std::set<std::string> possible_devices_;
 };
 
 }} // namespace jami::video

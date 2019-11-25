@@ -184,6 +184,7 @@ private:
     unsigned short accelFailures_ = 0;
 #endif
     MediaObserver callback_;
+    int prepareDecoderContext();
 
 protected:
     AVDictionary *options_ = nullptr;
