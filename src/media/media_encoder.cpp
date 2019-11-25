@@ -198,7 +198,6 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     else if(systemCodecInfo.mediaType == MEDIA_AUDIO)
         mediaType = AVMEDIA_TYPE_AUDIO;
 
-    encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), framesCtx, SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
 
     // add video stream to outputformat context
     AVStream* stream = avformat_new_stream(outputCtx_, outputCodec_);
@@ -206,10 +205,59 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         throw MediaEncoderException("Could not allocate stream");
 
     currentStreamIdx_ = stream->index;
+#ifdef RING_ACCEL
+    // Get compatible list of Hardware API
+    if (enableAccel_ && mediaType == AVMEDIA_TYPE_VIDEO) {
+        auto APIs = video::HardwareAccel::getCompatibleAccel(static_cast<AVCodecID>(systemCodecInfo.avcodecId),
+                videoOpts_.width, videoOpts_.height, CODEC_ENCODER);
 
-    readConfig(encoderCtx);
-    if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
-        throw MediaEncoderException("Could not open encoder");
+        if (APIs.size() > 0) {
+            for (const auto& it : APIs) {
+                accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
+                // Init codec need accel_ to init encoderCtx accelerated
+                encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+                encoderCtx->opaque = accel_.get();
+                // Check if pixel format from encoder match pixel format from decoder frame context
+                // if it mismatch, it means that we are using two different hardware API (nvenc and vaapi for example)
+                // in this case we don't want link the APIs
+                if (framesCtx) {
+                    auto hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
+                    if (encoderCtx->pix_fmt != hw->format)
+                        linkableHW_ = false;
+                }
+                auto ret = accel_->initAPI(linkableHW_, framesCtx);
+                if (ret < 0) {
+                    accel_ = nullptr;
+                    encoderCtx = nullptr;
+                    continue;
+                }
+                accel_->setDetails(encoderCtx);
+                if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0) {
+                    // Fail opening codec
+                    JAMI_WARN("Fail to open hardware encoder %s with %s ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName().c_str());
+                    avcodec_free_context(&encoderCtx);
+                    encoderCtx = nullptr;
+                    accel_ = nullptr;
+                    continue;
+                } else {
+                    // Success opening codec
+                    JAMI_WARN("Using hardware encoding for %s with %s ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName().c_str());
+                    encoders_.push_back(encoderCtx);
+                    break;
+                }
+            }
+        }
+    }
+#endif
+
+    if (!encoderCtx) {
+        JAMI_WARN("Not using hardware encoding for %s", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)));
+        encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+        readConfig(encoderCtx);
+        encoders_.push_back(encoderCtx);
+        if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
+            throw MediaEncoderException("Could not open encoder");
+    }
 
 #ifndef _WIN32
     avcodec_parameters_from_context(stream->codecpar, encoderCtx);
@@ -651,15 +699,13 @@ MediaEncoder::getStream(const std::string& name, int streamIdx) const
 }
 
 AVCodecContext*
-MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef* framesCtx, uint64_t br)
+MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
 {
     outputCodec_ = nullptr;
 #ifdef RING_ACCEL
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
         if (enableAccel_) {
-            if (accel_ = video::HardwareAccel::setupEncoder(
-                static_cast<AVCodecID>(avcodecId),
-                videoOpts_.width, videoOpts_.height, linkableHW_, framesCtx)) {
+            if (accel_) {
                 outputCodec_ = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
             }
         } else {
@@ -683,14 +729,6 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
     }
 
     AVCodecContext* encoderCtx = prepareEncoderContext(outputCodec_, mediaType == AVMEDIA_TYPE_VIDEO);
-    encoders_.push_back(encoderCtx);
-
-#ifdef RING_ACCEL
-    if (accel_) {
-        accel_->setDetails(encoderCtx);
-        encoderCtx->opaque = accel_.get();
-    }
-#endif
 
     // Only clamp video bitrate
     if (mediaType == AVMEDIA_TYPE_VIDEO && br > 0) {
@@ -743,7 +781,7 @@ MediaEncoder::setBitrate(uint64_t br)
     else {
         // restart encoder on runtime doesn't work for VP8
         // stopEncoder();
-        // encoderCtx = initCodec(codecType, codecId, NULL, br);
+        // encoderCtx = initCodec(codecType, codecId, br);
         // if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
         //     throw MediaEncoderException("Could not open encoder");
     }
