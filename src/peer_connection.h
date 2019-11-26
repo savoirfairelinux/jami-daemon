@@ -27,6 +27,7 @@
 #include "security/diffie-hellman.h"
 #include "opendht/crypto.h"
 #include "ice_transport.h"
+#include "security/tls_session.h"
 
 #include <functional>
 #include <future>
@@ -43,6 +44,8 @@ struct Certificate;
 }}
 
 namespace jami {
+
+using OnStateChangeCb = std::function<void(tls::TlsSessionState state)>;
 
 class TurnTransport;
 class ConnectedTurnTransport;
@@ -100,6 +103,7 @@ public:
     void waitForReady(const std::chrono::steady_clock::duration& timeout = {});
 
     const dht::crypto::Certificate& peerCertificate() const;
+    void setOnStateChange(OnStateChangeCb&& cb);
 
 private:
     class Impl;
@@ -199,6 +203,8 @@ public:
     int waitForData(std::chrono::milliseconds timeout, std::error_code&) const override;
 
     void waitForReady(const std::chrono::milliseconds& timeout = {});
+
+    void setOnStateChange(OnStateChangeCb&& cb);
 
 private:
     class Impl;

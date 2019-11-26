@@ -111,6 +111,7 @@ public:
     ConnectedTurnTransport& turn;
     std::function<bool(const dht::crypto::Certificate&)> peerCertificateCheckFunc;
     dht::crypto::Certificate peerCertificate;
+    OnStateChangeCb onStateChangeCb_;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -135,8 +136,11 @@ TlsTurnEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 }
 
 void
-TlsTurnEndpoint::Impl::onTlsStateChange(tls::TlsSessionState)
-{}
+TlsTurnEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
+{
+    if (onStateChangeCb_)
+        onStateChangeCb_(state);
+}
 
 void
 TlsTurnEndpoint::Impl::onTlsRxData(UNUSED std::vector<uint8_t>&& buf)
@@ -224,6 +228,12 @@ int
 TlsTurnEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
     return pimpl_->tls->waitForData(timeout, ec);
+}
+
+void
+TlsTurnEndpoint::setOnStateChange(std::function<void(tls::TlsSessionState state)>&& cb)
+{
+    pimpl_->onStateChangeCb_ = std::move(cb);
 }
 
 //==============================================================================
@@ -397,6 +407,7 @@ public:
     const dht::crypto::Certificate& peerCertificate;
     dht::crypto::Certificate null_cert;
     std::function<bool(const dht::crypto::Certificate &)> peerCertificateCheckFunc;
+    OnStateChangeCb onStateChangeCb_;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -426,8 +437,11 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 }
 
 void
-TlsSocketEndpoint::Impl::onTlsStateChange(UNUSED tls::TlsSessionState state)
-{}
+TlsSocketEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
+{
+    if (onStateChangeCb_)
+        onStateChangeCb_(state);
+}
 
 void
 TlsSocketEndpoint::Impl::onTlsRxData(UNUSED std::vector<uint8_t>&& buf)
@@ -529,6 +543,13 @@ TlsSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_cod
 {
     return pimpl_->tls->waitForData(timeout, ec);
 }
+
+void
+TlsSocketEndpoint::setOnStateChange(std::function<void(tls::TlsSessionState state)>&& cb)
+{
+    pimpl_->onStateChangeCb_ = std::move(cb);
+}
+
 
 //==============================================================================
 

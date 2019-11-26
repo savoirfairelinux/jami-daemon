@@ -28,7 +28,6 @@
 #include "ftp_server.h"
 #include "manager.h"
 #include "peer_connection.h"
-#include "security/tls_session.h"
 #include "turn_transport.h"
 #include "account_manager.h"
 
@@ -217,6 +216,7 @@ public:
         thread.join();
       servers_.clear();
       clients_.clear();
+      waitForReadyEndpoints_.clear();
       turnAuthv4_.reset();
       turnAuthv6_.reset();
       ctrl << makeMsg<CtrlMsgType::STOP>();
@@ -259,6 +259,7 @@ public:
 private:
     std::map<IpAddr, std::unique_ptr<ConnectedTurnTransport>> turnEndpoints_;
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<AbstractSocketEndpoint>> p2pEndpoints_;
+    std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<TlsSocketEndpoint>> waitForReadyEndpoints_;
     std::unique_ptr<TurnTransport> turnAuthv4_;
     std::unique_ptr<TurnTransport> turnAuthv6_;
 
@@ -269,6 +270,8 @@ private:
 
 protected:
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<PeerConnection>> servers_;
+    std::map<IpAddr, std::unique_ptr<TlsTurnEndpoint>> tls_turn_ep_;
+
     std::map<std::pair<dht::InfoHash, DRing::DataTransferId>, std::unique_ptr<ClientConnector>> clients_;
     std::mutex clientsMutex_;
     std::mutex turnMutex_;
@@ -480,38 +483,27 @@ private:
 
         // Negotiate a TLS session
         JAMI_DBG() << parent_.account << "[CNX] start TLS session";
-        auto tls_ep = std::make_unique<TlsSocketEndpoint>(
+        tls_ep_ = std::make_unique<TlsSocketEndpoint>(
             *peer_ep, parent_.account.identity(), parent_.account.dhParams(),
             *peerCertificate_);
-        // block until TLS is negotiated (with 3 secs of
-        // timeout) (must throw in case of error)
-        try {
-          tls_ep->waitForReady(SOCK_TIMEOUT);
-        } catch (const std::logic_error &e) {
-          // In case of a timeout
-          JAMI_WARN() << "TLS connection timeout from peer " << peer_.toString()
-                      << ": " << e.what();
-          ice->cancelOperations(); // This will stop current PeerChannel operations
-          cancel();
-          return;
-        } catch (...) {
-          JAMI_WARN() << "TLS connection failure from peer "
-                      << peer_.toString();
-          ice->cancelOperations(); // This will stop current PeerChannel operations
-          cancel();
-          return;
-        }
-
-        // Connected!
-        connection_ = std::make_unique<PeerConnection>(
-            [this] { cancel(); }, peer_.toString(),
-            std::move(tls_ep));
-        peer_ep_ = std::move(peer_ep);
-
-        connected_ = true;
-        for (auto &cb : listeners_) {
-          cb(connection_.get());
-        }
+        tls_ep_->setOnStateChange([this, ice=std::move(ice), peer_ep] (tls::TlsSessionState state) {
+            if (state == tls::TlsSessionState::SHUTDOWN) {
+                JAMI_WARN() << "TLS connection failure from peer "
+                            << peer_.toString();
+                ice->cancelOperations(); // This will stop current PeerChannel operations
+                cancel();
+            } else if (state == tls::TlsSessionState::ESTABLISHED) {
+                // Connected!
+                connected_ = true;
+                connection_ = std::make_unique<PeerConnection>(
+                    [this] { cancel(); }, peer_.toString(),
+                    std::move(tls_ep_));
+                peer_ep_ = std::move(peer_ep);
+                for (auto &cb : listeners_) {
+                    cb(connection_.get());
+                }
+            }
+        });
     }
 
     Impl& parent_;
@@ -526,6 +518,7 @@ private:
     std::shared_ptr<dht::crypto::Certificate> peerCertificate_;
     std::shared_ptr<AbstractSocketEndpoint> peer_ep_;
     std::unique_ptr<PeerConnection> connection_;
+    std::unique_ptr<TlsSocketEndpoint> tls_ep_;
 
     std::atomic_bool connected_ {false};
     std::mutex listenersMutex_;
@@ -643,28 +636,25 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
 
     JAMI_DBG() << account << "[CNX] start TLS session over TURN socket";
     dht::InfoHash peer_h;
-    auto tls_ep = std::make_unique<TlsTurnEndpoint>(
+    tls_turn_ep_[peer_addr] = std::make_unique<TlsTurnEndpoint>(
         *turn_ep, account.identity(), account.dhParams(),
         [&, this] (const dht::crypto::Certificate& cert) { return validatePeerCertificate(cert, peer_h); });
 
-    // block until TLS is negotiated (with 3 secs of timeout) (must throw in case of error)
-    try {
-        tls_ep->waitForReady(SOCK_TIMEOUT);
-    } catch (const std::logic_error& e) {
-        // In case of a timeout
-        JAMI_WARN() << "TLS connection timeout from peer " << peer_addr.toString(true, true) << ": " << e.what();
-        return;
-    } catch (...) {
-        JAMI_WARN() << "[CNX] TLS connection failure from peer " << peer_addr.toString(true, true);
-        return;
-    }
 
-    JAMI_DBG() << account << "[CNX] Accepted TLS-TURN connection from RingID " << peer_h;
-    connectedPeers_.emplace(peer_addr, tls_ep->peerCertificate().getId());
-    auto connection = std::make_unique<PeerConnection>(
-        [] {}, peer_addr.toString(), std::move(tls_ep));
-    connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h.toString()));
-    servers_.emplace(std::make_pair(peer_h, peer_addr), std::move(connection));
+    tls_turn_ep_[peer_addr]->setOnStateChange([this, peer_addr, peer_h] (tls::TlsSessionState state) {
+        if (state == tls::TlsSessionState::SHUTDOWN) {
+            JAMI_WARN() << "[CNX] TLS connection failure from peer " << peer_addr.toString(true, true);
+            tls_turn_ep_.erase(peer_addr);
+        } else if (state == tls::TlsSessionState::ESTABLISHED) {
+            JAMI_DBG() << account << "[CNX] Accepted TLS-TURN connection from RingID " << peer_h;
+            connectedPeers_.emplace(peer_addr, tls_turn_ep_[peer_addr]->peerCertificate().getId());
+            auto connection = std::make_unique<PeerConnection>(
+                [] {}, peer_addr.toString(), std::move(tls_turn_ep_[peer_addr]));
+            connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h.toString()));
+            servers_.emplace(std::make_pair(peer_h, peer_addr), std::move(connection));
+            tls_turn_ep_.erase(peer_addr);
+        }
+    });
 
     // note: operating this way let endpoint to be deleted safely in case of exceptions
     {
@@ -865,30 +855,36 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         JAMI_DBG() << account << "[CNX] start TLS session";
         auto ph = peer_h;
         if (hasPubIp) ice->setSlaveSession();
-        auto tls_ep = std::make_unique<TlsSocketEndpoint>(
-            *peer_ep, account.identity(), account.dhParams(),
-            [&, this](const dht::crypto::Certificate &cert) {
-              return validatePeerCertificate(cert, ph);
-            });
-        // block until TLS is negotiated (with 3 secs of timeout)
-        // (must throw in case of error)
-        try {
-          tls_ep->waitForReady(SOCK_TIMEOUT);
-        } catch (const std::exception &e) {
-          // In case of a timeout
-          JAMI_WARN() << "TLS connection timeout: " << e.what();
-          return;
-        }
 
-        auto connection = std::make_unique<PeerConnection>(
-            [] {}, peer_h.toString(),
-            std::move(tls_ep));
-        connection->attachOutputStream(std::make_shared<FtpServer>(
-            account.getAccountID(), peer_h.toString()));
-        servers_.emplace(std::make_pair(peer_h, ice->getRemoteAddress(0)),
-                        std::move(connection));
-        p2pEndpoints_.emplace(std::make_pair(peer_h, ice->getRemoteAddress(0)),
-                        std::move(peer_ep));
+        auto idx = std::make_pair(peer_h, ice->getRemoteAddress(0));
+        auto it = waitForReadyEndpoints_.emplace(
+            idx,
+            std::make_unique<TlsSocketEndpoint>(*peer_ep, account.identity(), account.dhParams(),
+                [&, this](const dht::crypto::Certificate &cert) {
+                    return validatePeerCertificate(cert, ph);
+                }
+            )
+        );
+        p2pEndpoints_.emplace(idx, std::move(peer_ep));
+
+        it.first->second->setOnStateChange([this, idx=std::move(idx)] (tls::TlsSessionState state) {
+            if (waitForReadyEndpoints_.find(idx) == waitForReadyEndpoints_.end()) {
+                return;
+            }
+            if (state == tls::TlsSessionState::SHUTDOWN) {
+                JAMI_WARN() << "TLS connection failure";
+                waitForReadyEndpoints_.erase(idx);
+            } else if (state == tls::TlsSessionState::ESTABLISHED) {
+                // Connected!
+                auto peer_h = idx.first.toString();
+                auto connection = std::make_unique<PeerConnection>(
+                    [] {}, peer_h,
+                    std::move(waitForReadyEndpoints_[idx]));
+                connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h));
+                servers_.emplace(idx, std::move(connection));
+                waitForReadyEndpoints_.erase(idx);
+            }
+        });
     }
     // Now wait for a TURN connection from peer (see onTurnPeerConnection) if fallbacking
 }
