@@ -416,7 +416,7 @@ SocketPair::readRtpData(void* buf, int buf_size)
     // handle ICE
     std::unique_lock<std::mutex> lk(dataBuffMutex_);
     if (not rtpDataBuff_.empty()) {
-        auto pkt = rtpDataBuff_.front();
+        auto pkt = std::move(rtpDataBuff_.front());
         rtpDataBuff_.pop_front();
         lk.unlock(); // to not block our ICE callbacks
         int pkt_size = pkt.size();
@@ -442,7 +442,7 @@ SocketPair::readRtcpData(void* buf, int buf_size)
     // handle ICE
     std::unique_lock<std::mutex> lk(dataBuffMutex_);
     if (not rtcpDataBuff_.empty()) {
-        auto pkt = rtcpDataBuff_.front();
+        auto pkt = std::move(rtcpDataBuff_.front());
         rtcpDataBuff_.pop_front();
         lk.unlock();
         int pkt_size = pkt.size();
@@ -466,17 +466,22 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
 
     if (datatype & static_cast<int>(DataType::RTCP)) {
         len = readRtcpData(buf, buf_size);
-        auto header = reinterpret_cast<rtcpRRHeader*>(buf);
-        if(header->pt == 201) //201 = RR PT
-        {
-            lastDLSR_ = Swap4Bytes(header->dlsr);
-            //JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
-            lastRR_time = std::chrono::steady_clock::now();
-            saveRtcpRRPacket(buf, len);
+        if (len >= 0) {
+            auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+            if(header->pt == 201) //201 = RR PT
+            {
+                lastDLSR_ = Swap4Bytes(header->dlsr);
+                //JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
+                lastRR_time = std::chrono::steady_clock::now();
+                saveRtcpRRPacket(buf, len);
+            }
+            else if(header->pt == 206) //206 = REMB PT
+                saveRtcpREMBPacket(buf, len);
+            else {
+                JAMI_DBG("Can't read RTCP: unknown packet type %u", header->pt);
+            }
+            fromRTCP = true;
         }
-        else if(header->pt == 206) //206 = REMB PT
-            saveRtcpREMBPacket(buf, len);
-        fromRTCP = true;
     }
 
     // No RTCP... try RTP
