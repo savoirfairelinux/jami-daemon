@@ -319,7 +319,6 @@ SipsIceTransport::handleEvents()
                 JAMI_WARN("[SIPS] got disconnected event!");
                 disconnectedEvent = std::move(evdata);
                 disconnected = true;
-                stopLoop_ = true;
                 break;
             }
         }
@@ -396,9 +395,10 @@ SipsIceTransport::handleEvents()
     }
 
     // Time to deliver disconnected event if exists
-    if (disconnected and state_cb) {
+    if (disconnected and state_cb and not stopLoop_) {
         JAMI_WARN("[SIPS] process disconnect event");
         (*state_cb)(&trData_.base, disconnectedEvent.state, &disconnectedEvent.state_info);
+        stopLoop_ = true;
     }
 }
 
