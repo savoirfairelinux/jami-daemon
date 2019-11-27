@@ -425,7 +425,7 @@ private:
 
         IpAddr relay_addr;
         for (const auto& address: response_.addresses) {
-            if (!(relay_addr = address)) {
+            if (!(address.size() <= PJ_MAX_HOSTNAME && (relay_addr = address))) {
                 // Should be ICE SDP
                 // P2P File transfer. We received an ice SDP message:
                 auto sdp = parent_.parse_SDP(address, *ice);
@@ -727,65 +727,70 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
     std::shared_ptr<IceTransport> ice;
     for (auto& ip: request.addresses) {
         try {
-            if (IpAddr(ip).isIpv4()) {
-                if (!sendTurn) continue;
-                std::lock_guard<std::mutex> lock(turnMutex_);
-                if (turnAuthv4_) {
-                    sendRelayV4 = true;
-                    turnAuthv4_->permitPeer(ip);
-                }
-                JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
-            } else if (IpAddr(ip).isIpv6()) {
-                if (!sendTurn) continue;
-                std::lock_guard<std::mutex> lock(turnMutex_);
-                if (turnAuthv6_) {
-                    sendRelayV6 = true;
-                    turnAuthv6_->permitPeer(ip);
-                }
-                JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
-            } else {
-                // P2P File transfer. We received an ice SDP message:
-                JAMI_DBG() << account << "[CNX] receiving ICE session request";
-                auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
-                auto ice_config = account.getIceOptions();
-                ice_config.tcpEnable = true;
-                ice_config.onRecvReady = [iceReady]() {
-                    auto& ir = *iceReady;
-                    std::lock_guard<std::mutex> lk{ir.mtx};
-                    ir.ready = true;
-                    ir.cv.notify_one();
-                };
-                ice = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, true, ice_config);
-
-                if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
-                    JAMI_ERR("Cannot initialize ICE session.");
-                    continue;
-                }
-
-                account.registerDhtAddress(*ice);
-
-                auto sdp = parse_SDP(ip, *ice);
-                // NOTE: hasPubIp is used for compability (because ICE is waiting for a certain state in old versions)
-                // This can be removed when old versions will be unsupported (version before this patch)
-                hasPubIp = hasPublicIp(sdp);
-                if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
-                    JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
-                                account.getAccountID().c_str());
-                    continue;
-                }
-
-                if (!hasPubIp) {
-                    ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
-                    if (ice->isRunning()) {
-                        sendIce = true;
-                        JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
-                    } else {
-                        JAMI_WARN("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
-                        ice->cancelOperations();
+            if (ip.size() <= PJ_MAX_HOSTNAME) {
+                IpAddr addr(ip);
+                if (addr.isIpv4()) {
+                    if (!sendTurn) continue;
+                    std::lock_guard<std::mutex> lock(turnMutex_);
+                    if (turnAuthv4_) {
+                        sendRelayV4 = true;
+                        turnAuthv4_->permitPeer(ip);
                     }
-                } else
-                    sendIce = true; // Ice started with success, we can use it.
+                    JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
+                    continue;
+                } else if (addr.isIpv6()) {
+                    if (!sendTurn) continue;
+                    std::lock_guard<std::mutex> lock(turnMutex_);
+                    if (turnAuthv6_) {
+                        sendRelayV6 = true;
+                        turnAuthv6_->permitPeer(ip);
+                    }
+                    JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
+                    continue;
+                }
             }
+
+            // P2P File transfer. We received an ice SDP message:
+            JAMI_DBG() << account << "[CNX] receiving ICE session request";
+            auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
+            auto ice_config = account.getIceOptions();
+            ice_config.tcpEnable = true;
+            ice_config.onRecvReady = [iceReady]() {
+                auto& ir = *iceReady;
+                std::lock_guard<std::mutex> lk{ir.mtx};
+                ir.ready = true;
+                ir.cv.notify_one();
+            };
+            ice = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, true, ice_config);
+
+            if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
+                JAMI_ERR("Cannot initialize ICE session.");
+                continue;
+            }
+
+            account.registerDhtAddress(*ice);
+
+            auto sdp = parse_SDP(ip, *ice);
+            // NOTE: hasPubIp is used for compability (because ICE is waiting for a certain state in old versions)
+            // This can be removed when old versions will be unsupported (version before this patch)
+            hasPubIp = hasPublicIp(sdp);
+            if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
+                JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
+                            account.getAccountID().c_str());
+                continue;
+            }
+
+            if (!hasPubIp) {
+                ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
+                if (ice->isRunning()) {
+                    sendIce = true;
+                    JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
+                } else {
+                    JAMI_WARN("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
+                    ice->cancelOperations();
+                }
+            } else
+                sendIce = true; // Ice started with success, we can use it.
         } catch (const std::exception& e) {
             JAMI_WARN() << account << "[CNX] ignored peer connection '" << ip << "', " << e.what();
         }
