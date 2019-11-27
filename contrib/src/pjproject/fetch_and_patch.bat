@@ -41,6 +41,7 @@ bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_ebusy_turn.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/ignore_ipv6_on_transport_check.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_turn_connection_failure.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/disable_local_resolution.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_assert_on_connection_attempt.patch"
 
 %APPLY_CMD% %SRC%\pjproject\win32_vs_gnutls.patch
 %APPLY_CMD% %SRC%\pjproject\win_config.patch

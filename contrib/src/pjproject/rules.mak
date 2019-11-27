@@ -70,6 +70,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/ignore_ipv6_on_transport_check.patch
 	$(APPLY) $(SRC)/pjproject/fix_turn_connection_failure.patch
 	$(APPLY) $(SRC)/pjproject/disable_local_resolution.patch
+	$(APPLY) $(SRC)/pjproject/fix_assert_on_connection_attempt.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
