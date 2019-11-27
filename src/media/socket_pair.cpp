@@ -466,7 +466,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
 
     if (datatype & static_cast<int>(DataType::RTCP)) {
         len = readRtcpData(buf, buf_size);
-        if (len >= 0) {
+        if (len > 0) {
             auto header = reinterpret_cast<rtcpRRHeader*>(buf);
             if(header->pt == 201) //201 = RR PT
             {
