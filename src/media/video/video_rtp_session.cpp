@@ -699,7 +699,6 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
     else if(bwState == BandwidthUsage::bwNormal) {
         auto remb_timer_inc = now-last_REMB_inc_;
         if(remb_timer_inc > DELAY_AFTER_REMB_INC) {
-            JAMI_DBG("[delayMonitor] Normal SEND REMB !!!");
             uint8_t* buf = nullptr;
             uint64_t br = 0x7378;   // INcrease
             auto v = cc->createREMB(br);
