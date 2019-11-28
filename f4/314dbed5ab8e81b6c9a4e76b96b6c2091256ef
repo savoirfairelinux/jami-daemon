@@ -1,0 +1,7 @@
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-by: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
+Submitted-at: Thu, 28 Nov 2019 15:15:41 -0500
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/13205
+Project: ring-daemon
+Branch: refs/heads/master
