@@ -468,15 +468,20 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         len = readRtcpData(buf, buf_size);
         if (len > 0) {
             auto header = reinterpret_cast<rtcpRRHeader*>(buf);
-            if(header->pt == 201) //201 = RR PT
-            {
+            // 201 = RR PT
+            if (header->pt == 201) {
                 lastDLSR_ = Swap4Bytes(header->dlsr);
                 //JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
                 lastRR_time = std::chrono::steady_clock::now();
                 saveRtcpRRPacket(buf, len);
             }
-            else if(header->pt == 206) //206 = REMB PT
+            // 206 = REMB PT
+            else if (header->pt == 206)
                 saveRtcpREMBPacket(buf, len);
+            // 200 = SR PT
+            else if (header->pt == 200) {
+                // not used yet
+            }
             else {
                 JAMI_DBG("Can't read RTCP: unknown packet type %u", header->pt);
             }
