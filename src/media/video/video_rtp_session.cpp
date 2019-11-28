@@ -449,13 +449,11 @@ VideoRtpSession::adaptQualityAndBitrate()
 
     uint64_t br;
     if (check_RCTP_Info_REMB(&br)) {
-        // JAMI_WARN("[AutoAdapt] Received new REMB !");
         delayProcessing(br);
     }
 
     RTCPInfo rtcpi {};
     if (check_RCTP_Info_RR(rtcpi)) {
-        // JAMI_WARN("[AutoAdapt] New RR !");
         dropProcessing(&rtcpi);
     }
 }
@@ -492,7 +490,8 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
             newBitrate *= 1.0f - rtcpi->packetLoss/150.0f;
             histoLoss_.clear();
             lastMediaRestart_ = now;
-            JAMI_DBG("[AutoAdapt] pondLoss: %f%%, packet loss rate: %f%%, decrease bitrate from %d Kbps to %d Kbps, ratio %f", pondLoss, rtcpi->packetLoss, oldBitrate, newBitrate, (float) newBitrate / oldBitrate);
+            JAMI_DBG("[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from %u Kbps to %d Kbps, ratio %f (ponderate loss: %f%%, packet loss rate: %f%%)",
+                        oldBitrate, newBitrate, (float) newBitrate / oldBitrate, pondLoss, rtcpi->packetLoss);
         }
     }
 
@@ -687,7 +686,7 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
         // Limit REMB decrease to MAX_REMB_DEC every DELAY_AFTER_REMB_DEC ms
         if(remb_dec_cnt_ < MAX_REMB_DEC && remb_timer_dec < DELAY_AFTER_REMB_DEC) {
             remb_dec_cnt_++;
-            JAMI_WARN("[delayMonitor] Overusing SEND REMB !!!");
+            JAMI_WARN("[BandwidthAdapt] Detected reception bandwidth overuse");
             uint8_t* buf = nullptr;
             uint64_t br = 0x6803;       // Decrease 3
             auto v = cc->createREMB(br);
@@ -699,7 +698,6 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
     else if(bwState == BandwidthUsage::bwNormal) {
         auto remb_timer_inc = now-last_REMB_inc_;
         if(remb_timer_inc > DELAY_AFTER_REMB_INC) {
-            JAMI_DBG("[delayMonitor] Normal SEND REMB !!!");
             uint8_t* buf = nullptr;
             uint64_t br = 0x7378;   // INcrease
             auto v = cc->createREMB(br);
