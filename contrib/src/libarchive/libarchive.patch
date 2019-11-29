@@ -1,0 +1,8 @@
+--- libarchive.pc	2019-12-05 14:25:00.245524712 -0500
++++ libarchive.new.pc	2019-12-06 09:19:48.990580850 -0500
+@@ -9,4 +9,4 @@
+ Cflags: -I${includedir}
+ Cflags.private: -DLIBARCHIVE_STATIC
+ Libs: -L${libdir} -larchive
+-Libs.private:  -lz -lnettle -lcrypto -lxml2 -lxml2 -licui18n -licuuc -licudata -lz -llzma -lm
++Libs.private:  -lz -lnettle -lcrypto -lxml2 -licui18n -licuuc -licudata -lm
