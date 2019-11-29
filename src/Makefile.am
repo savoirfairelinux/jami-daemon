@@ -57,6 +57,7 @@ libring_la_LDFLAGS = \
 		@GNUTLS_LIBS@ \
 		@OPENDHT_LIBS@ \
 		@SECP256K1_LIBS@ \
+		@ARCHIVE_LIBS@ \
 		@ZLIB_LIBS@ \
 		@LIBSSL_LIBS@ \
 		@LIBCRYPTO_LIBS@ \

@@ -503,8 +503,8 @@ endif
 	echo "set(CMAKE_CXX_COMPILER $(CXX))" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH $(PREFIX))" >> $@
 	echo "set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)" >> $@
-	echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)" >> $@
-	echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)" >> $@
+	echo "set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)" >> $@
+	echo "set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)" >> $@
 	echo "set(CMAKE_BUILD_TYPE Release)" >> $@
 
 # Default pattern rules

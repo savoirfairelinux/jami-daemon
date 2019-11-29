@@ -25,6 +25,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <functional>
 
 typedef struct gzFile_s *gzFile;
 
@@ -35,6 +36,8 @@ namespace jami {
  */
 namespace archiver {
 
+using FileMatchPair = std::function<std::pair<bool,const std::string>(const std::string&)>;
+
 /**
  * Create a protected archive containing a list of accounts
  * @param accountIDs The accounts to exports
@@ -43,8 +46,8 @@ namespace archiver {
  * @returns 0 for OK, error code otherwise
  */
 int exportAccounts(const std::vector<std::string>& accountIDs,
-                    const std::string& filepath,
-                    const std::string& password);
+                   const std::string& filepath,
+                   const std::string& password);
 
 /**
  * Read a protected archive and add accounts found in it
@@ -81,6 +84,37 @@ std::vector<uint8_t> decompressGzip(const std::string& path);
  */
 gzFile openGzip(const std::string& path, const char *mode);
 
+/**
+ * @brief listArchiveContent
+ * @param archivePath
+ * @return list of relative file path names
+ */
+std::vector<std::string> listArchiveContent(const std::string& archivePath);
+
+/**
+ * @brief uncompressArchive Uncompresses an archive and puts the different files
+ * in dir folder according to a FileMatchPair f
+ * @param path
+ * @param dir
+ * @param f takes a file name relative path inside the archive like mysubfolder/myfile
+ * and returns a pair (bool, new file name relative path)
+ * Where the bool indicates if we should uncompress this file
+ * and the new file name relative path puts the file in the directory dir under a different
+ * relative path name like mynewsubfolder/myfile
+ * @return void
+ */
+void uncompressArchive(const std::string& path, const std::string &dir, const FileMatchPair& f);
+
+/**
+ * @brief readFileFromArchive read a file from an archive without uncompressing
+ * the whole archive
+ * @param path archive path
+ * @param fileRelativePathName file path relative path name in the archive
+ * E.g: data/myfile.txt inside the archive
+ * @return fileContent std::vector<uint8_t> that contains the file content
+ */
+std::vector<uint8_t> readFileFromArchive(const std::string &path,
+                                 const std::string &fileRelativePathName);
 }
 
 } // namespace jami
