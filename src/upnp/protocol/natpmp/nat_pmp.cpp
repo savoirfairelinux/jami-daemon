@@ -44,6 +44,8 @@ NatPmp::NatPmp()
                 }
                 if (err < 0) {
                     JAMI_ERR("NAT-PMP: Can't initialize libnatpmp -> %s", getNatPmpErrorStr(err).c_str());
+                    // Retry to init nat pmp in 10 seconds
+                    std::this_thread::sleep_for(std::chrono::seconds(10));
                 } else {
                     char addrbuf[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, &natpmpHdl_.gateway, addrbuf, sizeof(addrbuf));
