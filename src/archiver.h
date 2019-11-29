@@ -43,8 +43,8 @@ namespace archiver {
  * @returns 0 for OK, error code otherwise
  */
 int exportAccounts(const std::vector<std::string>& accountIDs,
-                    const std::string& filepath,
-                    const std::string& password);
+                   const std::string& filepath,
+                   const std::string& password);
 
 /**
  * Read a protected archive and add accounts found in it
@@ -81,6 +81,20 @@ std::vector<uint8_t> decompressGzip(const std::string& path);
  */
 gzFile openGzip(const std::string& path, const char *mode);
 
+/**
+ * @brief listArchiveContent
+ * @param archivePath
+ * @return list of relative file path names
+ */
+std::vector<std::string> listArchiveContent(const std::string& archivePath);
+
+/**
+ * @brief uncompressArchive
+ * @param path archive path
+ * @param dir directory where we want to extract the archive
+ * @return 0 if success
+ */
+long uncompressArchive(const std::string& path, const std::string& dir);
 }
 
 } // namespace jami
