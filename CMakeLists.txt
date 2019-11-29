@@ -144,6 +144,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/msgpack-c/include;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libarchive/libarchive;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/jsoncpp/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib/include;"
@@ -164,6 +165,7 @@ if(MSVC)
                "_WIN32_WINNT=0x0A00;"
                "ASIO_STANDALONE;"
                "STATIC_GETOPT;"
+               "LIBARCHIVE_STATIC;"
                "OPENDHT_PROXY_CLIENT;"
                "OPENDHT_PROXY_SERVER;"
                "OPENDHT_PUSH_NOTIFICATIONS;"
@@ -242,6 +244,7 @@ if(MSVC)
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/portaudio.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libupnp.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/msvc/Release/natpmp.lib 
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/libarchive/msvc/libarchive/Release/archive_static.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc15-Release.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc15-Release.lib 
    ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc15-Release.lib 
