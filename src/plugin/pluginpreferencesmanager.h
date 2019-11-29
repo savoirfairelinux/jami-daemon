@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 #pragma once
 #include "noncopyable.h"
 #include "fileutils.h"
+#include "archiver.h"
 #include "pluginpreferencesparser.h"
 #include "pluginpreferencesvaluesmanager.h"
 
@@ -26,7 +27,7 @@
 #include <map>
 #include <string>
 #include <mutex>
-#include <algorithm> 
+#include <algorithm>
 
 namespace jami {
 class PluginPreferencesManager
@@ -34,7 +35,7 @@ class PluginPreferencesManager
 public:
     PluginPreferencesManager() = default;
     NON_COPYABLE(PluginPreferencesManager);
-    
+
     /**
      * @brief getPluginPreferences
      * Parses the plugin preferences configuration file
@@ -64,7 +65,7 @@ public:
     bool savePluginPreferenceValue(const std::string& rootPath, const std::string& key, const std::string& value) {
         return PluginPreferencesValuesManager::savePreferenceValue(pluginPreferencesValuesFilePath(rootPath), key, value);
     }
-    
+
     // TODO : improve getPluginDetails
     /**
      * @brief getPluginDetails
@@ -83,10 +84,10 @@ public:
         details["soPath"] = rootPath;
         return details;
     }
-    
+
     /**
      * @brief listPlugins
-     * @return 
+     * @return
      */
     std::vector<std::string> listPlugins(std::string arch ) {
         std::string pluginsPath = fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins" + DIR_SEPARATOR_CH + arch;
@@ -95,12 +96,12 @@ public:
                       [&pluginsPath](std::string& x){ x = pluginsPath + DIR_SEPARATOR_CH + x;});
         return pluginsPaths;
     }
-    
+
     /**
      * @brief removePlugin
      * Removes plugin folder
      * @param pluginRootPath
-     * @return 
+     * @return
      */
     int removePlugin(const std::string& pluginRootPath){
         if(checkPluginValidity(pluginRootPath)) {
@@ -109,7 +110,7 @@ public:
             return -1;
         }
     }
-    
+
 private:
     /**
      * @brief getPreferencesConfigFilePath
