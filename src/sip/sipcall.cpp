@@ -129,15 +129,12 @@ void SIPCall::createCallAVStreams()
         StreamData previewStreamData{getCallId(), 0, StreamType::video, getPeerNumber()};
         auto& videoPreview = videortp_->getVideoLocal();
         auto previewSubject = std::make_shared<MediaStreamSubject>(map);
-
         createCallAVStream(previewStreamData, *videoPreview, previewSubject);
 
         // Receive
         StreamData receiveStreamData{getCallId(), 1, StreamType::video, getPeerNumber()};
         auto& videoReceive = videortp_->getVideoReceive();
-
         auto receiveSubject = std::make_shared<MediaStreamSubject>(map);
-
         createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
     }
 }
