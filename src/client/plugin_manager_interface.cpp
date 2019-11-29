@@ -53,8 +53,11 @@ getPluginPreferencesValuesMap(const std::string& path){
 }
 
 std::vector<std::string>
-    listPlugins(std::string arch) {
-    return jami::Manager::instance().getPluginPreferencesManager().listPlugins(arch);
+    listPlugins() {
+    return jami::Manager::instance().getPluginPreferencesManager().listPlugins();
+}
+int addPlugin(const std::string& jplPath) {
+    return jami::Manager::instance().getPluginPreferencesManager().addPlugin(jplPath);
 }
 
 int removePlugin(const std::string& pluginRootPath) {

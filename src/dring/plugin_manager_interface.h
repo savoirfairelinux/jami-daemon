@@ -14,7 +14,8 @@ DRING_PUBLIC std::map<std::string,std::string> getPluginDetails(const std::strin
 DRING_PUBLIC std::vector<std::map<std::string,std::string>> getPluginPreferences(const std::string& path);
 DRING_PUBLIC bool setPluginPreference(const std::string& path, const std::string& key, const std::string& value);
 DRING_PUBLIC std::map<std::string,std::string> getPluginPreferencesValuesMap(const std::string& path);
-DRING_PUBLIC std::vector<std::string> listPlugins(std::string arch);
+DRING_PUBLIC std::vector<std::string> listPlugins();
+DRING_PUBLIC int addPlugin(const std::string& jplPath);
 DRING_PUBLIC int removePlugin(const std::string& pluginRootPath);
 }
 
