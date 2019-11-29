@@ -32,6 +32,11 @@
 #include <json/json.h>
 #include <zlib.h>
 
+extern "C" {
+#include <archive.h>
+#include <archive_entry.h>
+}
+
 #include <sys/stat.h>
 #include <fstream>
 
@@ -43,25 +48,25 @@ jsonValueToAccount(Json::Value& value, const std::string& accountId) {
     auto idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + accountId;
     fileutils::check_dir(idPath_.c_str(), 0700);
     auto detailsMap = DRing::getAccountTemplate(value[DRing::Account::ConfProperties::TYPE].asString());
-
+    
     for( Json::ValueIterator itr = value.begin() ; itr != value.end() ; itr++ ) {
         if (itr->asString().empty())
             continue;
         if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
             std::string fileContent(itr->asString());
             fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key", {fileContent.begin(), fileContent.end()}, 0600);
-
+            
         } else if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
             std::string fileContent(itr->asString());
             fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "dht.key", {fileContent.begin(), fileContent.end()}, 0600);
-
+            
         } else if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
             std::string fileContent(itr->asString());
             fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "dht.crt", {fileContent.begin(), fileContent.end()}, 0600);
         } else
             detailsMap[itr.key().asString()] = itr->asString();
     }
-
+    
     return detailsMap;
 }
 
@@ -81,40 +86,40 @@ accountToJsonValue(const std::map<std::string, std::string>& details) {
         } else
             root[i.first] = i.second;
     }
-
+    
     return root;
 }
 
 int
 exportAccounts(const std::vector<std::string>& accountIDs,
-                        const std::string& filepath,
-                        const std::string& password)
+               const std::string& filepath,
+               const std::string& password)
 {
     if (filepath.empty() || !accountIDs.size()) {
         JAMI_ERR("Missing arguments");
         return EINVAL;
     }
-
+    
     std::size_t found = filepath.find_last_of(DIR_SEPARATOR_CH);
     auto toDir = filepath.substr(0,found);
     auto filename = filepath.substr(found+1);
-
+    
     if (!fileutils::isDirectory(toDir)) {
         JAMI_ERR("%s is not a directory", toDir.c_str());
         return ENOTDIR;
     }
-
+    
     // Add
     Json::Value root;
     Json::Value array;
-
+    
     for (size_t i = 0; i < accountIDs.size(); ++i) {
         auto detailsMap = Manager::instance().getAccountDetails(accountIDs[i]);
         if (detailsMap.empty()) {
             JAMI_WARN("Can't export account %s", accountIDs[i].c_str());
             continue;
         }
-
+        
         auto jsonAccount = accountToJsonValue(detailsMap);
         array.append(jsonAccount);
     }
@@ -123,7 +128,7 @@ exportAccounts(const std::vector<std::string>& accountIDs,
     wbuilder["commentStyle"] = "None";
     wbuilder["indentation"] = "";
     auto output = Json::writeString(wbuilder, root);
-
+    
     // Compress
     std::vector<uint8_t> compressed;
     try {
@@ -132,10 +137,10 @@ exportAccounts(const std::vector<std::string>& accountIDs,
         JAMI_ERR("Export failed: %s", ex.what());
         return 1;
     }
-
+    
     // Encrypt using provided password
     auto encrypted = dht::crypto::aesEncrypt(compressed, password);
-
+    
     // Write
     try {
         fileutils::saveFile(toDir + DIR_SEPARATOR_STR + filename, encrypted);
@@ -153,7 +158,7 @@ importAccounts(const std::string& archivePath, const std::string& password)
         JAMI_ERR("Missing arguments");
         return EINVAL;
     }
-
+    
     // Read file
     std::vector<uint8_t> file;
     try {
@@ -162,7 +167,7 @@ importAccounts(const std::string& archivePath, const std::string& password)
         JAMI_ERR("Read failed: %s", ex.what());
         return ENOENT;
     }
-
+    
     // Decrypt
     try {
         file = dht::crypto::aesDecrypt(file, password);
@@ -170,7 +175,7 @@ importAccounts(const std::string& archivePath, const std::string& password)
         JAMI_ERR("Decryption failed: %s", ex.what());
         return EPERM;
     }
-
+    
     // Decompress
     try {
         file = decompress(file);
@@ -178,11 +183,11 @@ importAccounts(const std::string& archivePath, const std::string& password)
         JAMI_ERR("Decompression failed: %s", ex.what());
         return ERANGE;
     }
-
+    
     try {
         const auto* char_file_begin = reinterpret_cast<const char*>(&file[0]);
         const auto* char_file_end = reinterpret_cast<const char*>(&file[file.size()]);
-
+        
         // Add
         std::string err;
         Json::Value root;
@@ -192,7 +197,7 @@ importAccounts(const std::string& archivePath, const std::string& password)
             JAMI_ERR() << "Failed to parse " << err;
             return ERANGE;
         }
-
+        
         auto& accounts = root["accounts"];
         for (int i = 0, n = accounts.size(); i < n; ++i) {
             // Generate a new account id
@@ -214,13 +219,13 @@ compress(const std::string& str)
     std::vector<uint8_t> outbuffer(destSize);
     int ret = ::compress(reinterpret_cast<Bytef*>(outbuffer.data()), &destSize, (Bytef*)str.data(), str.size());
     outbuffer.resize(destSize);
-
+    
     if (ret != Z_OK) {
         std::ostringstream oss;
         oss << "Exception during zlib compression: (" << ret << ") ";
         throw std::runtime_error(oss.str());
     }
-
+    
     return outbuffer;
 }
 
@@ -256,41 +261,41 @@ decompress(const std::vector<uint8_t>& str)
 {
     z_stream zs; // z_stream is zlib's control structure
     memset(&zs, 0, sizeof(zs));
-
+    
     if (inflateInit(&zs) != Z_OK)
         throw std::runtime_error("inflateInit failed while decompressing.");
-
+    
     zs.next_in = (Bytef*)str.data();
     zs.avail_in = str.size();
-
+    
     int ret;
     std::vector<uint8_t> out;
-
+    
     // get the decompressed bytes blockwise using repeated calls to inflate
     do {
         std::array<uint8_t, 32768> outbuffer;
         zs.next_out = reinterpret_cast<Bytef*>(outbuffer.data());
         zs.avail_out = outbuffer.size();
-
+        
         ret = inflate(&zs, 0);
         if (ret == Z_DATA_ERROR || ret == Z_MEM_ERROR)
             break;
-
+        
         if (out.size() < zs.total_out) {
             // append the block to the output string
             out.insert(out.end(), outbuffer.begin(), outbuffer.begin() + zs.total_out - out.size());
         }
     } while (ret == Z_OK);
-
+    
     inflateEnd(&zs);
-
+    
     // an error occurred that was not EOF
     if (ret != Z_STREAM_END) {
         std::ostringstream oss;
         oss << "Exception during zlib decompression: (" << ret << ") " << zs.msg;
         throw(std::runtime_error(oss.str()));
     }
-
+    
     return out;
 }
 
@@ -303,5 +308,155 @@ openGzip(const std::string& path, const char *mode)
     return gzopen(path.c_str(), mode);
 #endif
 }
+
+// LIBARCHIVE DEFINITIONS
+//==========================
+using ArchivePtr = std::unique_ptr<archive, void(*)(archive*)>;
+using ArchiveEntryPtr = std::unique_ptr<archive_entry, void(*)(archive_entry*)>;
+
+struct DataBlock {
+    const void *buff;
+    size_t size;
+    int64_t offset;
+};
+
+long readDataBlock(const ArchivePtr &a, DataBlock &b)
+{
+    return archive_read_data_block(a.get(), &b.buff, &b.size, &b.offset);
+}
+
+long writeDataBlock(const ArchivePtr &a, DataBlock &b)
+{
+    return archive_write_data_block(a.get(), b.buff, b.size, b.offset);
+}
+
+
+ArchivePtr createArchiveReader() {
+    ArchivePtr archivePtr{archive_read_new(), [](archive * a) {
+                              archive_read_close(a);
+                              archive_read_free(a);
+                          }};
+    return archivePtr;
+}
+
+static ArchivePtr createArchiveDiskWriter() {
+    return {archive_write_disk_new(), [](archive * a) {
+                archive_write_close(a);
+                archive_write_free(a);
+            }};
+}
+
+//==========================
+
+std::vector<std::string> listArchiveContent(const std::string &archivePath)
+{
+    std::vector<std::string> fileNames;
+    ArchivePtr archiveReader = createArchiveReader();
+    struct archive_entry* entry;
+    int r;
+    
+    // Set reader formats(archive) and filters(compression)
+    archive_read_support_filter_all(archiveReader.get());
+    archive_read_support_format_all(archiveReader.get());
+    
+    // Try to read the archive
+    if ((r = archive_read_open_filename(archiveReader.get(), archivePath.c_str(), 10240))) {
+        JAMI_ERR() << archive_error_string(archiveReader.get());
+    }
+    
+    while (archive_read_next_header(archiveReader.get(), &entry) == ARCHIVE_OK) {
+        std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry) : "Undefined";
+        fileNames.push_back(fileEntry);
+    }
+    
+    return fileNames; 
+}
+
+long uncompressArchive(const std::string &archivePath, const std::string &dir)
+{
+    long r;
+    
+    ArchivePtr archiveReader = createArchiveReader();
+    ArchivePtr archiveDiskWriter = createArchiveDiskWriter();
+    struct archive_entry* entry;
+    
+    int flags = ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_NO_HFS_COMPRESSION;
+    
+    // Set reader formats(archive) and filters(compression)
+    archive_read_support_filter_all(archiveReader.get());
+    archive_read_support_format_all(archiveReader.get());
+    
+    // Set written files flags and standard lookup(uid/gid)
+    archive_write_disk_set_options(archiveDiskWriter.get(), flags);
+    archive_write_disk_set_standard_lookup(archiveDiskWriter.get());
+    
+     // Try to read the archive
+    if ((r = archive_read_open_filename(archiveReader.get(), archivePath.c_str(), 10240))) {
+        JAMI_ERR() << "Read file header: " << archivePath;
+        JAMI_ERR() << archive_error_string(archiveReader.get());
+    }
+    
+    while(true) {
+        // Read headers until End of File
+        r = archive_read_next_header(archiveReader.get(), &entry);
+        if( r == ARCHIVE_EOF) {
+            r = ARCHIVE_OK;
+            break;
+        }
+        
+        std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry) : "Undefined";
+        
+        if (r != ARCHIVE_OK) {
+            JAMI_ERR() << "Write file header: " << fileEntry;
+            JAMI_ERR() << archive_error_string(archiveReader.get());
+            return r;
+        }
+        
+        // File is ok, copy its header to the ext writer
+        std::string entryDestinationPath = dir + "/" +fileEntry;
+        archive_entry_set_pathname(entry, entryDestinationPath.c_str());
+        r = archive_write_header(archiveDiskWriter.get(), entry);
+        if (r != ARCHIVE_OK) {
+            JAMI_ERR() << "Write file header: " << fileEntry;
+            JAMI_ERR() << "\t" << archive_error_string(archiveDiskWriter.get());
+            // Rollback if failed at a write operation
+            fileutils::removeAll(dir);
+            return r;
+            
+        } else {
+            // Here both the reader and the writer have moved past the headers
+            // Copying the data content
+            DataBlock db;
+            
+            while(true) {
+                r = readDataBlock(archiveReader,db);
+                if (r == ARCHIVE_EOF) {
+                    r = ARCHIVE_OK;
+                    break;
+                }
+                
+                if (r != ARCHIVE_OK) {
+                    JAMI_ERR() << "Read file data: " << fileEntry;
+                    JAMI_ERR() << "\t" << archive_error_string(archiveReader.get());
+                    return r;
+                }
+                
+                r = writeDataBlock(archiveDiskWriter, db);
+                
+                if (r != ARCHIVE_OK) {
+                    // Rollback if failed at a write operation
+                    fileutils::removeAll(dir);
+                    JAMI_ERR() << "Write file data: " << fileEntry;
+                    JAMI_ERR() << "\t" << archive_error_string(archiveDiskWriter.get());
+                    return r;
+                }
+            }
+        }
+    }
+
+    return r;
+}
+
+
 
 }} // namespace jami::archiver
