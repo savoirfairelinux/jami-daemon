@@ -46,12 +46,12 @@
 
 #ifndef _WIN32
 #include <sys/stat.h>           // mode_t
-#define DIR_SEPARATOR_STR "/"   // Directory separator char
-#define DIR_SEPARATOR_CH  '/'   // Directory separator string
+#define DIR_SEPARATOR_STR "/"   // Directory separator string
+#define DIR_SEPARATOR_CH  '/'   // Directory separator char
 #else
 #define mode_t unsigned
-#define DIR_SEPARATOR_STR "\\"  // Directory separator char
-#define DIR_SEPARATOR_CH  '\\'  // Directory separator string
+#define DIR_SEPARATOR_STR "\\"  // Directory separator string
+#define DIR_SEPARATOR_CH  '\\'  // Directory separator char
 #endif
 
 namespace jami { namespace fileutils {
