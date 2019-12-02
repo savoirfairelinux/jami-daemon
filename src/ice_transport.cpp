@@ -120,6 +120,7 @@ public:
     IceTransportCompleteCb on_initdone_cb_;
     IceTransportCompleteCb on_negodone_cb_;
     IceRecvInfo on_recv_cb_;
+    mutable std::mutex iceMutex_ {};
     std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
     unsigned component_count_;
     pj_ice_sess_cand cand_[MAX_CANDIDATES] {};
@@ -127,7 +128,6 @@ public:
     std::string local_pwd_;
     pj_sockaddr remoteAddr_;
     std::condition_variable iceCV_ {};
-    mutable std::mutex iceMutex_ {};
     pj_ice_strans_cfg config_;
     std::string last_errmsg_;
 
@@ -707,8 +707,8 @@ void IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr &base,
 
     for (unsigned i = 0; i < config_.stun_tp_cnt; ++i) {
         if (config_.stun_tp[i].af == af) {
-        idx = i;
-        break;
+            idx = i;
+            break;
         }
     }
     if (idx < 0) {
@@ -735,6 +735,8 @@ void IceTransport::Impl::addReflectiveCandidate(int comp_id, const IpAddr &base,
     pj_ice_calc_foundation(pool_.get(), &cand.foundation, cand.type,
                             &cand.base_addr);
 
+    std::lock_guard<std::mutex> lk(iceMutex_);
+    if (!icest_) return;
     auto ret = pj_ice_sess_add_cand(
         pj_ice_strans_get_ice_sess(icest_.get()), cand.comp_id, cand.transport_id,
         cand.type, cand.local_pref, &cand.foundation, &cand.addr, &cand.base_addr,
@@ -964,6 +966,8 @@ IceTransport::start(const SDP& sdp)
         if (getCandidateFromSDP(line, cand))
             rem_candidates.emplace_back(cand);
     }
+    std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
+    if (!pimpl_->icest_) return false;
     auto status = pj_ice_strans_start_ice(pimpl_->icest_.get(),
                                           pj_strset(&ufrag, (char*)sdp.ufrag.c_str(), sdp.ufrag.size()),
                                           pj_strset(&pwd, (char*)sdp.pwd.c_str(), sdp.pwd.size()),
@@ -985,6 +989,8 @@ IceTransport::stop()
 {
     pimpl_->is_stopped_ = true;
     if (isStarted()) {
+        std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
+        if (!pimpl_->icest_) return false;
         auto status = pj_ice_strans_stop_ice(pimpl_->icest_.get());
         if (status != PJ_SUCCESS) {
             pimpl_->last_errmsg_ = sip_utils::sip_strerror(status);
@@ -1028,9 +1034,14 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
     pj_ice_sess_cand cand[PJ_ARRAY_SIZE(pimpl_->cand_)];
     unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
 
-    if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id+1, &cand_cnt, cand) != PJ_SUCCESS) {
-        JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
-        return res;
+
+    {
+        std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
+        if (!pimpl_->icest_) return res;
+        if (pj_ice_strans_enum_cands(pimpl_->icest_.get(), comp_id+1, &cand_cnt, cand) != PJ_SUCCESS) {
+            JAMI_ERR("[ice:%p] pj_ice_strans_enum_cands() failed", this);
+            return res;
+        }
     }
 
     for (unsigned i=0; i<cand_cnt; ++i) {
