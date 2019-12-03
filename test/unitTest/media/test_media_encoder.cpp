@@ -57,7 +57,7 @@ void
 MediaEncoderTest::setUp()
 {
     DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    libav_utils::ring_avcodec_init();
+    libav_utils::av_init();
     encoder_.reset(new MediaEncoder);
     files_.push_back("test.mkv");
 }
