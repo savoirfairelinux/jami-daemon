@@ -425,7 +425,7 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , videoManager_(new VideoManager)
 #endif
 {
-    jami::libav_utils::ring_avcodec_init();
+    jami::libav_utils::av_init();
 
     ioContextRunner_ = std::thread([context = ioContext_](){
         try {

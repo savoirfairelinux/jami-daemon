@@ -38,33 +38,33 @@ namespace jami {
  */
 
 class LocalRecorder : public Recordable {
-    public:
+public:
 
-        LocalRecorder(const bool& audioOnly);
-        ~LocalRecorder();
+    LocalRecorder(const bool& audioOnly);
+    ~LocalRecorder();
 
-        /**
-         * Start local recording. Return true if recording was successfully
-         * started, false otherwise.
-         */
-        bool startRecording();
+    /**
+     * Start local recording. Return true if recording was successfully
+     * started, false otherwise.
+     */
+    bool startRecording();
 
-        /**
-         * Stops recording.
-         */
-        void stopRecording();
+    /**
+     * Stops recording.
+     */
+    void stopRecording();
 
-        /**
-         * Set recording path
-         */
-        void setPath(const std::string& path);
+    /**
+     * Set recording path
+     */
+    void setPath(const std::string& path);
 
-    private:
-        std::string path_;
+private:
+    std::string path_;
 
-        // media inputs
-        std::shared_ptr<jami::video::VideoInput> videoInput_;
-        std::shared_ptr<jami::AudioInput> audioInput_;
+    // media inputs
+    std::shared_ptr<jami::video::VideoInput> videoInput_;
+    std::shared_ptr<jami::AudioInput> audioInput_;
 };
 
 } // namespace jami
