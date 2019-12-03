@@ -33,7 +33,7 @@ struct AVPixFmtDescriptor;
 
 namespace jami { namespace libav_utils {
 
-    void ring_avcodec_init();
+    void av_init();
 
     const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428029";
     const char *const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
