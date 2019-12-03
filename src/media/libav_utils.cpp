@@ -178,7 +178,7 @@ init_once()
 
 static std::once_flag already_called;
 
-void ring_avcodec_init()
+void av_init()
 {
     std::call_once(already_called, init_once);
 }
