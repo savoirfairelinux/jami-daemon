@@ -602,6 +602,7 @@ VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
             }
         }
     }
+    recordingStateCallback_(true);
 }
 
 void
@@ -617,6 +618,8 @@ VideoRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
             input->detach(ob);
         }
     }
+    recordingStateCallback_(false);
+
 }
 
 void
@@ -625,6 +628,12 @@ VideoRtpSession::setChangeOrientationCallback(std::function<void(int)> cb)
     changeOrientationCallback_ = std::move(cb);
     if (sender_)
         sender_->setChangeOrientationCallback(changeOrientationCallback_);
+}
+
+void
+VideoRtpSession::setRecStateCallback(std::function<void(bool)> cb)
+{
+    recordingStateCallback_ = std::move(cb);
 }
 
 float

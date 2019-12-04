@@ -99,6 +99,7 @@ public:
     }
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
+    void setRecStateCallback(std::function<void(bool)> cb);
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
@@ -158,6 +159,8 @@ private:
     void processRtcpChecker();
 
     std::function<void(int)> changeOrientationCallback_;
+
+    std::function<void(bool)> recordingStateCallback_;
 
     // interval in seconds between RTCP checkings
     std::chrono::seconds rtcp_checking_interval {4};
