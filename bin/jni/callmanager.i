@@ -47,6 +47,7 @@ public:
     virtual void onRtcpReportReceived(const std::string& call_id, const std::map<std::string, int>& stats){}
     virtual void peerHold(const std::string& call_id, bool holding){}
     virtual void connectionUpdate(const std::string& id, int state){}
+    virtual void remoteRecordingChanged(const std::string& id, bool state){}
 };
 
 
@@ -132,4 +133,6 @@ public:
     virtual void onRtcpReportReceived(const std::string& call_id, const std::map<std::string, int>& stats){}
     virtual void peerHold(const std::string& call_id, bool holding){}
     virtual void connectionUpdate(const std::string& id, int state){}
+    virtual void remoteRecordingChanged(const std::string& id, bool state){}
+
 };
