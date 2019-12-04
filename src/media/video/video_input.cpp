@@ -334,6 +334,14 @@ VideoInput::deleteDecoder()
     decoder_.reset();
 }
 
+
+void
+VideoInput::stopInput()
+{
+    clearOptions();
+    loop_.stop();
+}
+
 void VideoInput::clearOptions()
 {
     decOpts_ = {};
