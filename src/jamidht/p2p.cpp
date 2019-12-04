@@ -858,15 +858,16 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         std::unique_ptr<AbstractSocketEndpoint> peer_ep =
             std::make_unique<IceSocketEndpoint>(ice, false);
         JAMI_DBG() << account << "[CNX] start TLS session";
-        auto ph = peer_h;
         if (hasPubIp) ice->setSlaveSession();
 
         auto idx = std::make_pair(peer_h, ice->getRemoteAddress(0));
         auto it = waitForReadyEndpoints_.emplace(
             idx,
             std::make_unique<TlsSocketEndpoint>(*peer_ep, account.identity(), account.dhParams(),
-                [&, this](const dht::crypto::Certificate &cert) {
-                    return validatePeerCertificate(cert, ph);
+                [peer_h, this](const dht::crypto::Certificate &cert) {
+                    InfoHash peer_h_found;
+                    return validatePeerCertificate(cert, peer_h_found)
+                        and peer_h_found == peer_h;
                 }
             )
         );
