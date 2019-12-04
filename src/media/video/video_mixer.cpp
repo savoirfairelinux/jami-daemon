@@ -91,10 +91,20 @@ VideoMixer::~VideoMixer()
 void
 VideoMixer::switchInput(const std::string& input)
 {
+    // Detach videoInput from mixer
+    videoLocal_->detach(this);
     if (auto local = videoLocal_) {
-        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(local))
+        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(local)) {
+#if !VIDEO_CLIENT_INPUT
+            // Stop old VideoInput
+            localInput->stopInput();
+#endif
+            // Start new VideoInput
             localInput->switchInput(input);
+        }
     }
+    // Re-attach videoInput to mixer
+    videoLocal_->attach(this);
 }
 
 void

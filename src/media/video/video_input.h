@@ -78,6 +78,8 @@ public:
      */
     void* obtainFrame(int length);
     void releaseFrame(void *frame);
+#else
+    void stopInput();
 #endif
 
 private:
