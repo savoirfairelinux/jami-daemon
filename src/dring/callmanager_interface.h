@@ -228,6 +228,10 @@ struct DRING_PUBLIC CallSignal
         using cb_type = void(const std::string&,
                              const std::vector<std::map<std::string, std::string>>&);
     };
+    struct DRING_PUBLIC RemoteRecordingChanged {
+                constexpr static const char* name = "RemoteRecordingChanged";
+                using cb_type = void(const std::string&, bool);
+        };
 };
 
 } // namespace DRing
