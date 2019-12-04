@@ -173,6 +173,8 @@ public: // SIP related
 
     void requestKeyframe();
 
+    void updateRecState(bool state);
+
     SIPAccountBase& getSIPAccount() const;
 
     void updateSDPFromSTUN();

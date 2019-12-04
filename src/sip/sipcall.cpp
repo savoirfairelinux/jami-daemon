@@ -271,6 +271,24 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 }
 
 void
+SIPCall::updateRecState(bool state)
+{
+    std::string BODY =
+    "<?xml version=\"1.0\" encoding=\"utf-8\" ?>"
+    "<media_control><vc_primitive><to_encoder>"
+    "<recording_state=" + std::to_string(state) + "/>"
+    "</to_encoder></vc_primitive></media_control>";
+
+    JAMI_ERR("[PL] Sending recording state via SIP INFO");
+
+    try {
+        sendSIPInfo(BODY.c_str(), "media_control+xml");
+    } catch (const std::exception& e) {
+        JAMI_ERR("Error sending recording state: %s", e.what());
+    }
+}
+
+void
 SIPCall::requestKeyframe()
 {
     auto now = clock::now();
@@ -920,6 +938,12 @@ SIPCall::startAllMedia()
         runOnMainThread([wthis, angle] {
             if (auto this_ = wthis.lock())
                 this_->setVideoOrientation(angle);
+        });
+    });
+    videortp_->setRecStateCallback([wthis = weak()] (bool state) {
+        runOnMainThread([wthis, state] {
+            if (auto this_ = wthis.lock())
+                this_->updateRecState(state);
         });
     });
 #endif
