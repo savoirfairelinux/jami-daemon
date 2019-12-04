@@ -174,6 +174,8 @@ public: // SIP related
 
     void requestKeyframe();
 
+    void updateRecState(bool state);
+
     SIPAccountBase& getSIPAccount() const;
 
     void updateSDPFromSTUN();
@@ -232,6 +234,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     void deinitRecorder();
 
     void rtpSetupSuccess(MediaType type);
+
+    void setRemoteRecording(bool state);
 
 private:
     using clock = std::chrono::steady_clock;

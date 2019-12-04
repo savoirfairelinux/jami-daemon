@@ -842,5 +842,11 @@
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
             <arg type="aa{ss}" name="infos" />
         </signal>
+
+        <signal name="remoteRecordingChanged" tp:name-for-bindings="remoteRecordingChanged">
+            <tp:added version="1.0.0"/>
+            <arg type="s" name="callID" />
+            <arg type="b" name="remoteRecordingState" />
+        </signal>
     </interface>
 </node>
