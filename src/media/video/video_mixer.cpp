@@ -91,10 +91,22 @@ VideoMixer::~VideoMixer()
 void
 VideoMixer::switchInput(const std::string& input)
 {
+    JAMI_ERR("[PL] switchInput mixer");
+
+    // Detach videoInput from mixer
+    videoLocal_->detach(this);
     if (auto local = videoLocal_) {
-        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(local))
+        if (auto localInput = std::dynamic_pointer_cast<VideoInput>(local)) {
+            // Stop old VideoInput
+            localInput->switchInput("");
+            // Let time to old VideoInput to stop
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            // Start new VideoInput
             localInput->switchInput(input);
+        }
     }
+    // Re-attach videoInput to mixer
+    videoLocal_->attach(this);
 }
 
 void
