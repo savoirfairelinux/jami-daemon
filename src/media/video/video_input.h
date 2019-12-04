@@ -71,6 +71,7 @@ public:
     MediaStream getInfo() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
+    void stopInput();
 #if VIDEO_CLIENT_INPUT
     /*
      * these functions are used to pass buffer from/to the daemon

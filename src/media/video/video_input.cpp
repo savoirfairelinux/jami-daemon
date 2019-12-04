@@ -528,4 +528,11 @@ VideoInput::foundDecOpts(const DeviceParams& params)
     }
 }
 
+void
+VideoInput::stopInput()
+{
+    clearOptions();
+    loop_.stop();
+}
+
 }} // namespace jami::video
