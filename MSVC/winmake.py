@@ -157,6 +157,7 @@ def make(pkg_info, force, sdk_version, toolset):
             os.remove(build_file)
         else:
             pkg_build_uptodate = is_build_uptodate(pkg_name, build_file)
+            log.warning("Error is here??")
             with open(build_file, 'r+') as f:
                 current_version = f.read()
                 if current_version == version:
