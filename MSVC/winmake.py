@@ -157,7 +157,7 @@ def make(pkg_info, force, sdk_version, toolset):
             os.remove(build_file)
         else:
             pkg_build_uptodate = is_build_uptodate(pkg_name, build_file)
-            with open(build_file, 'r+') as f:
+            with open(build_file, 'r+', errors='ignore') as f:
                 current_version = f.read()
                 if current_version == version:
                     pkg_ver_uptodate = True
@@ -242,7 +242,7 @@ def remove_archive_if_needed(pkg_build_path, dirty_path):
 
 
 def extract_tar(pkg_build_path, name, path):
-    with tarfile.open(path, 'r') as tarball:
+    with tarfile.open(path, 'r', errors='ignore') as tarball:
         tar_common_prefix = os.path.commonprefix(tarball.getnames())
         dirty_path = contrib_build_dir + '\\' + tar_common_prefix
         remove_archive_if_needed(pkg_build_path, dirty_path)
@@ -332,7 +332,7 @@ def get_pkg_file(pkg_name):
 
 def resolve(pkg_name, force=False, sdk_version='', toolset=''):
     pkg_json_file = get_pkg_file(pkg_name)
-    with open(pkg_json_file) as json_file:
+    with open(pkg_json_file, errors='ignore') as json_file:
         log.info('Resolving: ' + pkg_name)
         pkg_info = json.load(json_file)
         try:
@@ -345,13 +345,18 @@ def resolve(pkg_name, force=False, sdk_version='', toolset=''):
 
 def track_build(pkg_name, version):
     build_file = contrib_build_dir + '\\.' + pkg_name
-    f = open(build_file, "w+")
+    f = open(build_file, "w+", errors='ignore')
     f.write(version)
     f.close()
 
 
 def build(pkg_name, pkg_dir, project_paths, custom_scripts, with_env, sdk,
           toolset, arch='x64', conf='Release'):
+
+    if os.environ.get('JENKINS_URL'):
+        log.info("Jenkins Remove DebugInformationFormat")
+        getSHrunner().exec_batch("bash -c \"find . -name '*.vcxproj' -exec sed -i '/DebugInformationFormat/c\\<DebugInformationFormat>None</DebugInformationFormat>' {} +\"")
+
     getMSbuilder().set_msbuild_configuration(with_env, arch, conf, toolset)
     getMSbuilder().setup_vs_env(sdk)
 
@@ -637,7 +642,7 @@ def main():
             getSHrunner().exec_batch('rmdir', ['/s', '/q', contrib_build_dir])
         else:
             pkg_json_file = get_pkg_file(parsed_args.clean)
-            with open(pkg_json_file) as json_file:
+            with open(pkg_json_file, errors='ignore') as json_file:
                 pkg_info = json.load(json_file)
                 dir_to_clean = contrib_build_dir + '\\' + pkg_info['name']
                 file_to_clean = contrib_build_dir + '\\.' + pkg_info['name']
