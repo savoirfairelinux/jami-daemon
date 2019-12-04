@@ -37,6 +37,7 @@
 #include "dring/media_const.h"
 #include "libav_utils.h"
 #include "call_const.h"
+#include "conference.h"
 
 #include <functional>
 #include <memory>
