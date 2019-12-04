@@ -282,6 +282,13 @@ int VideoInput::getHeight() const
 AVPixelFormat VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
 
+void
+VideoInput::stopInput()
+{
+    clearOptions();
+    loop_.stop();
+}
+
 #endif
 
 void VideoInput::clearOptions()
