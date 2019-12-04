@@ -37,6 +37,7 @@
 #include "dring/media_const.h"
 #include "libav_utils.h"
 #include "call_const.h"
+#include "conference.h"
 
 #include <functional>
 #include <memory>
@@ -469,7 +470,14 @@ stopLocalRecorder(const std::string& filepath)
 bool
 switchInput(const std::string& resource)
 {
-    if (auto call = jami::Manager::instance().getCurrentCall()) {
+    JAMI_ERR("[PL] switchInput video Manager");
+    auto callID = jami::Manager::instance().getCurrentCallId();
+    if (auto conf = jami::Manager::instance().getConferenceFromID(callID)) {
+        JAMI_ERR("[PL] conf found, will switch input on mixer");
+        conf->switchInput(resource);
+        return true;
+    }
+    else if (auto call = jami::Manager::instance().getCurrentCall()) {
         if (call->hasVideo()) {
             // TODO remove this part when clients are updated to use Calljami::Manager::switchInput
             call->switchInput(resource);
