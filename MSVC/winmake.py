@@ -180,7 +180,7 @@ def make(pkg_info, force, sdk_version, toolset):
             if (should_fetch or force) and fetch_pkg(pkg_name, version, pkg_info['url'], force):
                 apply(pkg_name, pkg_info.get('patches', []),
                       pkg_info.get('win_patches', []))
-        env_set = 'false' if pkg_info.get('with_env', '') != '' else 'true'
+        env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
         sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get('with_env', '')
         if build(pkg_name,
                  contrib_build_dir + '\\' + pkg_name,
