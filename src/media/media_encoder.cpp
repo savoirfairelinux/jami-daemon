@@ -657,7 +657,10 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
 #ifdef RING_ACCEL
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
         if (enableAccel_) {
-            if (accel_ = video::HardwareAccel::setupEncoder(
+            outputCodec_ = avcodec_find_encoder_by_name("h264_omx");
+            if (outputCodec_)
+                JAMI_ERR("Use OMX encoding acceleration");
+            else if (accel_ = video::HardwareAccel::setupEncoder(
                 static_cast<AVCodecID>(avcodecId),
                 videoOpts_.width, videoOpts_.height, linkableHW_, framesCtx)) {
                 outputCodec_ = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
