@@ -1,6 +1,6 @@
 {
     "name": "restinio",
-    "version": "8d5d3e8237e0947adb9ba1ffc8281f4ad7cb2a59",
+    "version": "4e1ab4e7718a14d4cf043cc9c3f85395bd46e34b",
     "url": "https://github.com/Stiffstream/restinio/archive/__VERSION__.tar.gz",
     "deps": [
         "fmt",
