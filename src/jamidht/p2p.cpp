@@ -635,23 +635,33 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
     }
 
     JAMI_DBG() << account << "[CNX] start TLS session over TURN socket";
-    dht::InfoHash peer_h;
-    tls_turn_ep_[peer_addr] = std::make_unique<TlsTurnEndpoint>(
-        *turn_ep, account.identity(), account.dhParams(),
-        [&, this] (const dht::crypto::Certificate& cert) { return validatePeerCertificate(cert, peer_h); });
+    auto peer_h = std::make_shared<dht::InfoHash>();
+    tls_turn_ep_[peer_addr] =
+    std::make_unique<TlsTurnEndpoint>(*turn_ep,
+                                      account.identity(),
+                                      account.dhParams(),
+                                      [peer_h, this] (const dht::crypto::Certificate& cert) {
+        return validatePeerCertificate(cert, *peer_h);
+    });
 
-
-    tls_turn_ep_[peer_addr]->setOnStateChange([this, peer_addr, peer_h] (tls::TlsSessionState state) {
+    tls_turn_ep_[peer_addr]->setOnStateChange([this, peer_addr, peer_h] (tls::TlsSessionState state)
+    {
         if (state == tls::TlsSessionState::SHUTDOWN) {
             JAMI_WARN() << "[CNX] TLS connection failure from peer " << peer_addr.toString(true, true);
             tls_turn_ep_.erase(peer_addr);
         } else if (state == tls::TlsSessionState::ESTABLISHED) {
-            JAMI_DBG() << account << "[CNX] Accepted TLS-TURN connection from RingID " << peer_h;
-            connectedPeers_.emplace(peer_addr, tls_turn_ep_[peer_addr]->peerCertificate().getId());
-            auto connection = std::make_unique<PeerConnection>(
-                [] {}, peer_addr.toString(), std::move(tls_turn_ep_[peer_addr]));
-            connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h.toString()));
-            servers_.emplace(std::make_pair(peer_h, peer_addr), std::move(connection));
+            if (peer_h) {
+                 JAMI_DBG() << account << "[CNX] Accepted TLS-TURN connection from RingID " << *peer_h;
+                 connectedPeers_
+                .emplace(peer_addr, tls_turn_ep_[peer_addr]->peerCertificate().getId());
+                 auto connection =
+                 std::make_unique<PeerConnection>([] {},
+                                                 peer_addr.toString(),
+                                                 std::move(tls_turn_ep_[peer_addr]));
+                 connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(),
+                                                                            peer_h->toString()));
+                 servers_.emplace(std::make_pair(*peer_h, peer_addr), std::move(connection));
+            }
             tls_turn_ep_.erase(peer_addr);
         }
     });
