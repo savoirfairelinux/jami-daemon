@@ -657,9 +657,10 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
 #ifdef RING_ACCEL
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
         if (enableAccel_) {
-            if (accel_ = video::HardwareAccel::setupEncoder(
+            auto use_omx = init_omx(avcodecId);
+            if ((accel_ = video::HardwareAccel::setupEncoder(
                 static_cast<AVCodecID>(avcodecId),
-                videoOpts_.width, videoOpts_.height, linkableHW_, framesCtx)) {
+                videoOpts_.width, videoOpts_.height, linkableHW_, framesCtx)) && not use_omx) {
                 outputCodec_ = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
             }
         } else {
@@ -719,6 +720,20 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
         initH263(encoderCtx, br);
     }
     return encoderCtx;
+}
+
+bool
+MediaEncoder::init_omx(AVCodecID id)
+{
+    std::stringstream ss;
+    ss << avcodec_get_name(id) << '_omx';
+    auto codec = avcodec_find_decoder_by_name(ss.str().c_str());
+    if (codec) {
+        JAMI_WARN("Found encoding acceleration for RPI (%s), using it", ss.str().c_str());
+        outputCodec_ = codec;
+        return true;
+    }
+    return false;
 }
 
 void

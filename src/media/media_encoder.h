@@ -139,6 +139,7 @@ private:
     void initVP8(AVCodecContext* encoderCtx, uint64_t br);
     void initMPEG4(AVCodecContext* encoderCtx, uint64_t br);
     void initH263(AVCodecContext* encoderCtx, uint64_t br);
+    bool init_omx(AVCodecID id);
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
