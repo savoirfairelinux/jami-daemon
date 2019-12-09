@@ -30,7 +30,7 @@ std::vector<MapStrStr> PluginPreferencesParser::parsePreferencesConfigFile(const
                            preferences.push_back(std::move(preferenceAttributes));
                            keys.insert(key);
                        }
-                    } 
+                    }
                 }
             }
         } else {
@@ -38,7 +38,7 @@ std::vector<MapStrStr> PluginPreferencesParser::parsePreferencesConfigFile(const
                        << preferenceFilePath;
         }
     }
-    
+
     return preferences;
 }
 
@@ -51,17 +51,18 @@ MapStrStr PluginPreferencesParser::parsePreferenceConfig(const Json::Value& json
     for(const auto& member : members) {
         const Json::Value& value = jsonPreference[member];
         if(value.isString()) {
-            preferenceMap.insert(std::pair<std::string,std::string>{member, jsonPreference[member].asString()});
+            preferenceMap.emplace(member, jsonPreference[member].asString());
         } else if (value.isArray()) {
-            preferenceMap.insert(std::pair<std::string,std::string>{member, convertArrayToString(jsonPreference[member])});
+            preferenceMap.emplace(member, convertArrayToString(jsonPreference[member]));
         }
     }
     return preferenceMap;
 }
 
 std::string PluginPreferencesParser::convertArrayToString(const Json::Value& jsonArray)
-{   std::string stringArray = "[";
-    
+{
+    std::string stringArray = "[";
+
     for(int i=0; i< static_cast<int>(jsonArray.size()) - 1; i++) {
         if(jsonArray[i].isString()) {
             stringArray+=jsonArray[i].asString()+",";
@@ -69,14 +70,14 @@ std::string PluginPreferencesParser::convertArrayToString(const Json::Value& jso
             stringArray+=convertArrayToString(jsonArray[i])+",";
         }
     }
-    
+
     int lastIndex = static_cast<int>(jsonArray.size()) - 1;
     if(jsonArray[lastIndex].isString()) {
         stringArray+=jsonArray[lastIndex].asString();
     }
-    
+
     stringArray+="]";
-    
+
     return stringArray;
 }
 }
