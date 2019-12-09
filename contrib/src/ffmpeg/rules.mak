@@ -199,11 +199,33 @@ FFMPEGCONF += \
 	--enable-decoder=h264_mediacodec \
 	--enable-decoder=mpeg4_mediacodec
 # ASM not working on Android x86 https://trac.ffmpeg.org/ticket/4928
+# ffnvcodec is not supported on ARM then we enable it here for i386 and x86
+# FIXME we have same for i386 and X86_64 does a merge makes sense?
 ifeq ($(ARCH),i386)
-FFMPEGCONF += --disable-asm
+FFMPEGCONF += --disable-asm \
+	      --enable-cuvid \
+	      --enable-ffnvcodec \
+	      --enabl--enable-nvdec \
+	      --enabl--enable-nvenc \
+	      --enabl--enable-hwaccel=h264_nvdec \
+	      --enabl--enable-hwaccel=hevc_nvdec \
+	      --enabl--enable-hwaccel=vp8_nvdec \
+	      --enabl--enable-hwaccel=mjpeg_nvdec \
+	      --enabl--enable-encoder=h264_nvenc \
+	      --enabl--enable-encoder=hevc_nvenc
 endif
 ifeq ($(ARCH),x86_64)
-FFMPEGCONF += --disable-asm
+FFMPEGCONF += --disable-asm \
+	      --enable-cuvid \
+	      --enable-ffnvcodec \
+	      --enabl--enable-nvdec \
+	      --enabl--enable-nvenc \
+	      --enabl--enable-hwaccel=h264_nvdec \
+	      --enabl--enable-hwaccel=hevc_nvdec \
+	      --enabl--enable-hwaccel=vp8_nvdec \
+	      --enabl--enable-hwaccel=mjpeg_nvdec \
+	      --enabl--enable-encoder=h264_nvenc \
+	      --enabl--enable-encoder=hevc_nvenc
 endif
 else
 # Desktop Linux
@@ -223,17 +245,7 @@ FFMPEGCONF += \
 	--enable-hwaccel=mjpeg_vaapi \
 	--enable-encoder=h264_vaapi \
 	--enable-encoder=vp8_vaapi \
-	--enable-encoder=mjpeg_vaapi \
-	--enable-cuvid \
-	--enable-ffnvcodec \
-	--enable-nvdec \
-	--enable-nvenc \
-	--enable-hwaccel=h264_nvdec \
-	--enable-hwaccel=hevc_nvdec \
-	--enable-hwaccel=vp8_nvdec \
-	--enable-hwaccel=mjpeg_nvdec \
-	--enable-encoder=h264_nvenc \
-	--enable-encoder=hevc_nvenc
+	--enable-encoder=mjpeg_vaapi
 endif
 endif
 
@@ -279,7 +291,8 @@ endif
 
 # ARM stuff
 ifeq ($(ARCH),arm)
-FFMPEGCONF += --arch=arm
+FFMPEGCONF += --arch=arm \
+	      --disable-cuvid
 ifdef HAVE_ARMV7A
 FFMPEGCONF += --cpu=cortex-a8
 endif
@@ -290,10 +303,12 @@ endif
 
 # ARM64 stuff
 ifeq ($(ARCH),aarch64)
-FFMPEGCONF += --arch=aarch64
+FFMPEGCONF += --arch=aarch64 \
+	      --disable-cuvid
 endif
 ifeq ($(ARCH),arm64)
-FFMPEGCONF += --arch=aarch64
+FFMPEGCONF += --arch=aarch64 \
+	      --disable-cuvid
 endif
 
 # Windows
