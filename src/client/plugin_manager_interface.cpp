@@ -34,7 +34,7 @@ togglePlugin(const std::string& path, bool toggle){
 
 std::map<std::string,std::string>
 getPluginDetails(const std::string& path){
-    return jami::Manager::instance().getPluginPreferencesManager().getPluginDetails(path);
+    return jami::Manager::instance().getJamiPluginManager().getPluginDetails(path);
 }
 
 std::vector<std::map<std::string,std::string>>
@@ -48,16 +48,23 @@ setPluginPreference(const std::string& path, const std::string& key, const std::
 }
 
 std::map<std::string,std::string>
-getPluginPreferencesValuesMap(const std::string& path){
+getPluginPreferencesValues(const std::string& path){
     return jami::Manager::instance().getPluginPreferencesManager().getPluginPreferencesValuesMap(path);
+}
+bool
+resetPluginPreferencesValues(const std::string& path){
+    return jami::Manager::instance().getPluginPreferencesManager().resetPluginPreferencesValuesMap(path);
 }
 
 std::vector<std::string>
-    listPlugins(std::string arch) {
-    return jami::Manager::instance().getPluginPreferencesManager().listPlugins(arch);
+    listPlugins() {
+    return jami::Manager::instance().getJamiPluginManager().listPlugins();
+}
+int installPlugin(const std::string& jplPath, bool force) {
+    return jami::Manager::instance().getJamiPluginManager().installPlugin(jplPath, force);
 }
 
-int removePlugin(const std::string& pluginRootPath) {
-    return jami::Manager::instance().getPluginPreferencesManager().removePlugin(pluginRootPath);
+int uninstallPlugin(const std::string& pluginRootPath) {
+    return jami::Manager::instance().getJamiPluginManager().uninstallPlugin(pluginRootPath);
 }
 }
