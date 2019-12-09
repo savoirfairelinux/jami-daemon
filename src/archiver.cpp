@@ -457,5 +457,65 @@ long uncompressArchive(const std::string &archivePath, const std::string &dir)
 }
 
 
+long readFileFromArchiveToStream(const std::string &archivePath, const std::string &fileRelativePathName,
+                                    std::stringstream& fileContent)
+{
+    long r;
+    bool fileFound = false;
+    ArchivePtr archiveReader = createArchiveReader();
+    struct archive_entry* entry;
+    
+    // Set reader formats(archive) and filters(compression)
+    archive_read_support_filter_all(archiveReader.get());
+    archive_read_support_format_all(archiveReader.get());
+    
+    // Try to read the archive
+    if ((r = archive_read_open_filename(archiveReader.get(), archivePath.c_str(), 10240))) {
+        std::cerr << "Open Archive: " << archivePath;
+        std::cerr << archive_error_string(archiveReader.get());
+    }
+    
+    while(not fileFound) {
+        // Read headers until End of File
+        r = archive_read_next_header(archiveReader.get(), &entry);
+        if( r == ARCHIVE_EOF) {
+            return r;
+        }
+        
+        std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry) : "";
+        
+        if (r != ARCHIVE_OK) {
+            std::cerr << "Read file pathname: " << fileEntry;
+            std::cerr << archive_error_string(archiveReader.get());
+            return r;
+        }
+        
+        // File is ok, push the content to a buffer
+        if(fileEntry == fileRelativePathName){
+            fileFound = true;
+            // Here both the reader and the writer have moved past the headers
+            // Copying the data content
+            DataBlock db;
+            
+            while(true) {
+                r = readDataBlock(archiveReader,db);
+                if (r == ARCHIVE_EOF) {
+                    r = ARCHIVE_OK;
+                    break;
+                }
+                
+                if (r != ARCHIVE_OK) {
+                    std::cerr << "Read file data: " << fileEntry;
+                    std::cerr << "\t" << archive_error_string(archiveReader.get());
+                    return r;
+                }
+                // push the buffer data in the string stream
+                fileContent << static_cast<const char*>(db.buff);
+            }
+        }
+    }
+    return r;
+}
+
 
 }} // namespace jami::archiver
