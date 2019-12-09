@@ -199,11 +199,14 @@ FFMPEGCONF += \
 	--enable-decoder=h264_mediacodec \
 	--enable-decoder=mpeg4_mediacodec
 # ASM not working on Android x86 https://trac.ffmpeg.org/ticket/4928
+# ffnvcodec is not supported on ARM then we enable it here for i386 and x86
 ifeq ($(ARCH),i386)
-FFMPEGCONF += --disable-asm
+FFMPEGCONF += --disable-asm \
+	      --enable-cuvid
 endif
 ifeq ($(ARCH),x86_64)
-FFMPEGCONF += --disable-asm
+FFMPEGCONF += --disable-asm \
+	      --enable-cuvid
 endif
 else
 # Desktop Linux
@@ -224,7 +227,6 @@ FFMPEGCONF += \
 	--enable-encoder=h264_vaapi \
 	--enable-encoder=vp8_vaapi \
 	--enable-encoder=mjpeg_vaapi \
-	--enable-cuvid \
 	--enable-ffnvcodec \
 	--enable-nvdec \
 	--enable-nvenc \
@@ -279,7 +281,8 @@ endif
 
 # ARM stuff
 ifeq ($(ARCH),arm)
-FFMPEGCONF += --arch=arm
+FFMPEGCONF += --arch=arm \
+	      --disable-cuvid
 ifdef HAVE_ARMV7A
 FFMPEGCONF += --cpu=cortex-a8
 endif
@@ -290,10 +293,12 @@ endif
 
 # ARM64 stuff
 ifeq ($(ARCH),aarch64)
-FFMPEGCONF += --arch=aarch64
+FFMPEGCONF += --arch=aarch64 \
+	      --disable-cuvid
 endif
 ifeq ($(ARCH),arm64)
-FFMPEGCONF += --arch=aarch64
+FFMPEGCONF += --arch=aarch64 \
+	      --disable-cuvid
 endif
 
 # Windows
