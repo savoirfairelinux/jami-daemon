@@ -54,18 +54,24 @@ class ConnectionManager::Impl {
 public:
     explicit Impl(JamiAccount& account) : account {account} {}
     ~Impl() {
-        for (auto& sockets: nonReadySockets_) {
-            for (auto& info: sockets.second) {
-                if (info.second) info.second->shutdown();
-                info.second.reset();
-            }
-        }
+        JAMI_ERR("STOP 1");
         for (auto& connection: connectionsInfos_) {
             for (auto& info: connection.second) {
                 info.second.ice_->cancelOperations();
                 info.second.responseCv_.notify_all();
             }
         }
+        JAMI_ERR("STOP 1");
+        for (auto& sockets: nonReadySockets_) {
+            for (auto& info: sockets.second) {
+                JAMI_ERR("STOP 1");
+                if (info.second) info.second->shutdown();
+                JAMI_ERR("STOP 1");
+                info.second.reset();
+                JAMI_ERR("STOP 1");
+            }
+        }
+        JAMI_ERR("STOP 1");
     }
 
     void connectDevice(const std::string& deviceId, const std::string& uri, ConnectCallback cb);
@@ -470,14 +476,17 @@ ConnectionManager::closeConnectionsWith(const std::string& deviceId)
             if (pimpl_->connectionsInfos_.find(deviceId) != pimpl_->connectionsInfos_.end()) {
                 for (auto& info: pimpl_->connectionsInfos_[deviceId]) {
                     // Cancel operations to avoid any blocking in peer_channel
+                    JAMI_ERR("STOP 1");
                     info.second.ice_->cancelOperations();
                 }
                 // This will close the TLS Shutdown
                 // !!! Warning, erase ICE after, because it's used as a transport
                 // TODO, redo TlsSocketEndpoint to handle only ICE to simplify this
                 // cf https://git.jami.net/savoirfairelinux/ring-daemon/issues/190
+                JAMI_ERR("STOP 1");
                 pimpl_->multiplexedSockets_.erase(deviceId);
                 // Erase ICE transport
+                JAMI_ERR("STOP 1");
                 pimpl_->connectionsInfos_.erase(deviceId);
             }
         }
