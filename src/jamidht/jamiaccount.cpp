@@ -268,16 +268,22 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 
 JamiAccount::~JamiAccount()
 {
+    JAMI_ERR("Xv");
+    connectionManager_.reset();
+    JAMI_ERR("Xv");
     if (eventHandler) {
         eventHandler->cancel();
         eventHandler.reset();
     }
+    JAMI_ERR("Xv");
     if(peerDiscovery_){
         peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
         peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
     }
+    JAMI_ERR("Xv");
     if (auto dht = dht_)
         dht->join();
+    JAMI_ERR("Xv");
 }
 
 void
