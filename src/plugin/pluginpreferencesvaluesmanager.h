@@ -47,6 +47,11 @@ public:
      */
     static std::map<std::string, std::string> getPreferencesValuesMap(
         const std::string& preferencesValuesFilePath);
+    /**
+     * @brief resetPluginPreferencesValuesMap
+     * @param preferencesValuesFilePath
+     */
+    static bool resetPluginPreferencesValuesMap(const std::string& preferencesValuesFilePath);
 };
 }
 
