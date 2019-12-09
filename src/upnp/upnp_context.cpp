@@ -63,7 +63,9 @@ UPnPContext::UPnPContext()
 
 UPnPContext::~UPnPContext()
 {
+    JAMI_ERR("DEBUG UPNP");
     igdList_.clear();
+    JAMI_ERR("DEBUG UPNP 2");
 }
 
 void

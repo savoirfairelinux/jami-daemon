@@ -193,6 +193,7 @@ PUPnP::PUPnP()
 
 PUPnP::~PUPnP()
 {
+    JAMI_ERR("DEBUG PUPNP");
     // Clear all the lists.
     {
         std::lock_guard<std::mutex> lk(ctrlptMutex_);
@@ -212,6 +213,7 @@ PUPnP::~PUPnP()
     pupnpCv_.notify_all();
     if (pupnpThread_.joinable())
         pupnpThread_.join();
+    JAMI_ERR("DEBUG PUPNP END");
 }
 
 void

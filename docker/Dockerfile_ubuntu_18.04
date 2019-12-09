@@ -58,7 +58,7 @@ RUN apt-get update && \
         libssl-dev \
         libsndfile1-dev \
         libsecp256k1-dev \
-        libasio-dev
+        libasio-dev gdb
 
 # Tests framework
 RUN apt-get install -y -o Acquire::Retries=10 \
