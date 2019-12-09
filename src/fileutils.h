@@ -48,10 +48,12 @@
 #include <sys/stat.h>           // mode_t
 #define DIR_SEPARATOR_STR "/"   // Directory separator string
 #define DIR_SEPARATOR_CH  '/'   // Directory separator char
+#define ESC_DIR_SEPARATOR_STR "\\/"   // Escaped directory separator string
 #else
 #define mode_t unsigned
 #define DIR_SEPARATOR_STR "\\"  // Directory separator string
 #define DIR_SEPARATOR_CH  '\\'  // Directory separator char
+#define ESC_DIR_SEPARATOR_STR "\\\\"   // Escaped directory separator string
 #endif
 
 namespace jami { namespace fileutils {

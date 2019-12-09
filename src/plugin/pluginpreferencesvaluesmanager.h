@@ -39,14 +39,19 @@ public:
      */
     static bool savePreferenceValue(const std::string& preferencesValuesFilePath,
                                     const std::string& key, const std::string& value);
-    
+
     /**
      * @brief getPreferencesValuesMap
      * @param rootPath
-     * @return map of preferences from the specified preferencesValuesFilePath 
+     * @return map of preferences from the specified preferencesValuesFilePath
      */
     static std::map<std::string, std::string> getPreferencesValuesMap(
         const std::string& preferencesValuesFilePath);
+    /**
+     * @brief resetPluginPreferencesValuesMap
+     * @param preferencesValuesFilePath
+     */
+    static bool resetPluginPreferencesValuesMap(const std::string& preferencesValuesFilePath);
 };
 }
 
