@@ -18,6 +18,8 @@ libringacc_la_SOURCES = \
         connectionmanager.cpp \
         multiplexed_socket.h \
         multiplexed_socket.cpp \
+        routing_manager.h \
+        routing_manager.cpp \
         sips_transport_ice.cpp \
         sips_transport_ice.h \
         accountarchive.cpp \
