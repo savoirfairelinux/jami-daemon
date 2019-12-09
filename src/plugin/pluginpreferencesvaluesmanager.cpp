@@ -65,4 +65,26 @@ std::map<std::string, std::string> PluginPreferencesValuesManager::getPreference
     return rmap;  
 }
 
+bool PluginPreferencesValuesManager::resetPluginPreferencesValuesMap(const std::string &preferencesValuesFilePath)
+{
+    bool returnValue = true;
+    std::map<std::string, std::string> pluginPreferencesMap{};
+    
+    {
+        std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
+        if(!fs.good()) {
+            return false;
+        }
+        try {
+            std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
+            msgpack::pack(fs, pluginPreferencesMap);
+        } catch (const std::exception& e) {
+            returnValue = false;
+            JAMI_ERR() << e.what();
+        }
+    }
+    
+    return returnValue;     
+}
+
 }
