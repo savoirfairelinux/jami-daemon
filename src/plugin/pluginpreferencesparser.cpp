@@ -51,9 +51,9 @@ MapStrStr PluginPreferencesParser::parsePreferenceConfig(const Json::Value& json
     for(const auto& member : members) {
         const Json::Value& value = jsonPreference[member];
         if(value.isString()) {
-            preferenceMap.insert(std::pair<std::string,std::string>{member, jsonPreference[member].asString()});
+            preferenceMap.emplace(member, jsonPreference[member].asString());
         } else if (value.isArray()) {
-            preferenceMap.insert(std::pair<std::string,std::string>{member, convertArrayToString(jsonPreference[member])});
+            preferenceMap.emplace(member, convertArrayToString(jsonPreference[member]));
         }
     }
     return preferenceMap;
