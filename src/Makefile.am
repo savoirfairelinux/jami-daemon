@@ -169,6 +169,8 @@ libring_la_SOURCES = \
 		plugin/pluginmanager.cpp \
 		plugin/mediahandler.h \
 		plugin/pluginservicesmanager.h \
+		plugin/jamipluginmanager.h \
+		plugin/jamipluginmanager.cpp \
 		plugin/pluginpreferencesmanager.h \
 		plugin/pluginpreferencesmanager.cpp \
 		plugin/pluginpreferencesparser.h \
