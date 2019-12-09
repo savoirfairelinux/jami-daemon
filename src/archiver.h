@@ -95,6 +95,18 @@ std::vector<std::string> listArchiveContent(const std::string& archivePath);
  * @return 0 if success
  */
 long uncompressArchive(const std::string& path, const std::string& dir);
+
+/**
+ * @brief readFileFromArchive
+ * @param path archive path
+ * @param fileRelativePathName file path relative path name in the archive
+ * E.g: data/myfile.txt inside the archive
+ * @param fileContent string stream that contains the file content
+ * @return 0 if success
+ */
+long readFileFromArchiveToStream(const std::string &path,
+                                 const std::string &fileRelativePathName,
+                                 std::stringstream& fileContent);
 }
 
 } // namespace jami

@@ -54,6 +54,14 @@ public:
     std::map<std::string, std::string> getPluginPreferencesValuesMap(const std::string& rootPath) {
         return PluginPreferencesValuesManager::getPreferencesValuesMap(pluginPreferencesValuesFilePath(rootPath));
     }
+    
+    /**
+     * @brief resetPluginPreferencesValuesMap
+     * @param rootPath
+     */
+    bool resetPluginPreferencesValuesMap(const std::string& rootPath) {
+        return PluginPreferencesValuesManager::resetPluginPreferencesValuesMap(pluginPreferencesValuesFilePath(rootPath));
+    }
 
     /**
      * @brief savePluginPreferenceValue
@@ -66,43 +74,7 @@ public:
         return PluginPreferencesValuesManager::savePreferenceValue(pluginPreferencesValuesFilePath(rootPath), key, value);
     }
     
-    // TODO : improve getPluginDetails
-    /**
-     * @brief getPluginDetails
-     * Returns the tuple (name, description, icon path, so path)
-     * The icon should ideally be 192x192 pixels or better 512x512 pixels
-     * In order to match with android specifications
-     * https://developer.android.com/google-play/resources/icon-design-specifications
-     * @param plugin rootPath
-     * @return map where the keyset is {"name", "description", "iconPath"}
-     */
-    std::map<std::string, std::string> getPluginDetails(const std::string& rootPath) {
-        std::map<std::string, std::string> details;
-        std::string pluginName = rootPath.substr(rootPath.find_last_of("/\\") + 1);
-        details["name"] = pluginName;
-        details["description"] = "A simple description";
-        details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
-        details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + pluginName + ".so";
-        return details;
-    }
-    
-    /**
-     * @brief listPlugins
-     * @return 
-     */
-    std::vector<std::string> listPlugins() {
-        std::string pluginsPath = fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins";
-        std::vector<std::string> pluginsPaths = fileutils::readDirectory(pluginsPath);
-        std::for_each(pluginsPaths.begin(), pluginsPaths.end(),
-                      [&pluginsPath](std::string& x){ x = pluginsPath + DIR_SEPARATOR_CH + x;});
-        return pluginsPaths;
-    }
-    
-    /**
-     * @brief addPlugin
-     * @param jplPath
-     * @return 
-     */
+    int readManifestFromJpl(const std::string& jplPath);
     int addPlugin(const std::string& jplPath) {
         int i{0};
         if(fileutils::isFile(jplPath)) {
@@ -113,21 +85,6 @@ public:
         }
         return i;
     }
-    
-    /**
-     * @brief removePlugin
-     * Removes plugin folder
-     * @param pluginRootPath
-     * @return 
-     */
-    int removePlugin(const std::string& pluginRootPath){
-        if(checkPluginValidity(pluginRootPath)) {
-          return fileutils::removeAll(pluginRootPath);
-        } else {
-            return -1;
-        }
-    }
-    
 private:
     /**
      * @brief getPreferencesConfigFilePath
@@ -149,15 +106,6 @@ private:
      */
     std::string pluginPreferencesValuesFilePath(const std::string& rootPath) const {
         return rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "preferences.msgpack";
-    }
-    
-    /**
-     * @brief checkPluginValidity
-     * @return 
-     */
-    bool checkPluginValidity(const std::string& pluginRootPath) {
-        (void) pluginRootPath;
-        return true;
     }
 };
 }
