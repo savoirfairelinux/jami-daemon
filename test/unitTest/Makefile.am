@@ -121,7 +121,7 @@ ut_connectionManager_SOURCES = connectionManager/connectionManager.cpp
 # conversationRepository
 #
 #check_PROGRAMS += ut_conversationRepository
-check_PROGRAMS = ut_conversationRepository
+check_PROGRAMS += ut_conversationRepository
 ut_conversationRepository_SOURCES = conversationRepository/conversationRepository.cpp
 
 TESTS = $(check_PROGRAMS)

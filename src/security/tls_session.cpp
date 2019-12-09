@@ -304,12 +304,18 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(SocketType& transport,
 
 TlsSession::TlsSessionImpl::~TlsSessionImpl()
 {
+    JAMI_ERR("X");
     state_ = TlsSessionState::SHUTDOWN;
+    JAMI_ERR("X");
     stateCondition_.notify_all();
+    JAMI_ERR("X");
     rxCv_.notify_all();
+    JAMI_ERR("X");
     thread_.join();
+    JAMI_ERR("X");
     if (not transport_.isReliable())
         transport_.setOnRecv(nullptr);
+    JAMI_ERR("X");
 }
 
 const char*
@@ -689,9 +695,12 @@ TlsSession::TlsSessionImpl::waitForRawData(std::chrono::milliseconds timeout)
     std::unique_lock<std::mutex> lk {rxMutex_};
     rxCv_.wait_for(lk, timeout, [this]{ return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; });
     if (state_ == TlsSessionState::SHUTDOWN) {
+        JAMI_WARN("@@@");
         gnutls_transport_set_errno(session_, EINTR);
+        JAMI_WARN("@@@");
         return -1;
     }
+    JAMI_WARN("@@@");
     if (rxQueue_.empty()) {
         JAMI_ERR("[TLS] waitForRawData: timeout after %ld ms", timeout.count());
         return 0;
@@ -793,6 +802,7 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
             JAMI_ERR("[TLS] SYN cookie failed: timeout");
             return TlsSessionState::SHUTDOWN;
         }
+        JAMI_WARN("@@@");
         // Shutdown state?
         if (rxQueue_.empty())
             return TlsSessionState::SHUTDOWN;
@@ -1154,6 +1164,7 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
     {
         std::unique_lock<std::mutex> lk {rxMutex_};
         rxCv_.wait(lk, [this]{ return !rxQueue_.empty() or state_ != TlsSessionState::ESTABLISHED; });
+        JAMI_WARN("@@@");
         state = state_.load();
         if (state != TlsSessionState::ESTABLISHED)
             return state;
@@ -1217,7 +1228,9 @@ TlsSession::TlsSessionImpl::handleStateShutdown(TlsSessionState state)
 void
 TlsSession::TlsSessionImpl::process()
 {
+    JAMI_WARN("@@@");
     auto old_state = state_.load();
+    JAMI_WARN("@@@");
     auto new_state = fsmHandlers_[old_state](old_state);
 
     // update state_ with taking care for external state change
@@ -1227,8 +1240,11 @@ TlsSession::TlsSessionImpl::process()
     if (old_state != new_state)
         stateCondition_.notify_all();
 
-    if (old_state != new_state and callbacks_.onStateChange)
+    if (old_state != new_state and callbacks_.onStateChange) {
+        JAMI_WARN("@@@");
+
         callbacks_.onStateChange(new_state);
+    }
 }
 
 //==============================================================================
@@ -1292,6 +1308,7 @@ TlsSession::shutdown()
     pimpl_->state_ = TlsSessionState::SHUTDOWN;
     pimpl_->stateCondition_.notify_all();
     pimpl_->rxCv_.notify_one(); // unblock waiting FSM
+    JAMI_WARN("@@@");
 }
 
 std::size_t
