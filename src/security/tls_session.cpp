@@ -304,12 +304,18 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(SocketType& transport,
 
 TlsSession::TlsSessionImpl::~TlsSessionImpl()
 {
+    JAMI_ERR("X");
     state_ = TlsSessionState::SHUTDOWN;
+    JAMI_ERR("X");
     stateCondition_.notify_all();
+    JAMI_ERR("X");
     rxCv_.notify_all();
+    JAMI_ERR("X");
     thread_.join();
+    JAMI_ERR("X");
     if (not transport_.isReliable())
         transport_.setOnRecv(nullptr);
+    JAMI_ERR("X");
 }
 
 const char*

@@ -391,20 +391,26 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
 
 IceTransport::Impl::~Impl()
 {
+    JAMI_ERR("X");
     sip_utils::register_thread();
+    JAMI_ERR("X");
 
     icest_.reset(); // must be done before ioqueue/timer destruction
+    JAMI_ERR("X");
 
     threadTerminateFlags_ = true;
     if (thread_.joinable())
         thread_.join();
+    JAMI_ERR("X");
 
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
 
+    JAMI_ERR("X");
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
 
+    JAMI_ERR("X");
     emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)this), 2);
 }
 
