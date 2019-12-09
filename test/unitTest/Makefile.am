@@ -118,4 +118,11 @@ ut_audio_frame_resizer_SOURCES = media/audio/test_audio_frame_resizer.cpp
 check_PROGRAMS = ut_connectionManager
 ut_connectionManager_SOURCES = connectionManager/connectionManager.cpp
 
+#
+# routingManager
+#
+#check_PROGRAMS += ut_routingManager
+check_PROGRAMS = ut_routingManager
+ut_routingManager_SOURCES = routingManager/routingManager.cpp
+
 TESTS = $(check_PROGRAMS)
