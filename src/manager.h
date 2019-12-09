@@ -39,6 +39,7 @@
 // Plugin Managers
 #include "plugin/pluginservicesmanager.h"
 #include "plugin/pluginpreferencesmanager.h"
+#include "plugin/jamipluginmanager.h"
 
 #include <string>
 #include <vector>
@@ -899,6 +900,7 @@ class Manager {
 
         PluginServicesManager& getPluginServicesManager();
         PluginPreferencesManager& getPluginPreferencesManager();
+        JamiPluginManager& getJamiPluginManager();
 
 private:
         Manager();
