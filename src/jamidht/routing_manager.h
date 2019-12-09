@@ -75,10 +75,10 @@ public:
     void removePeers(const std::vector<dht::InfoHash>& uris);
 
     /**
-     * Get current peers the user needs to connect
+     * Get current closest peers the user needs to connect
      * @return peers to connect
      */
-    std::vector<dht::InfoHash> getPeersToConnect();
+    std::vector<dht::InfoHash> getClosestPeers();
     /**
      * Set a callback to detect changes in the connection to maintain
      * @param cb        Callback triggered when a connection needs to be removed or added

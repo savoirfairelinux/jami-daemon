@@ -49,7 +49,9 @@ public:
     }) } { }
 
     ~Impl() {
+        JAMI_ERR("STOP 1");
         stop.store(true);
+        JAMI_ERR("STOP 1");
     }
 
     void shutdown() {
@@ -115,6 +117,7 @@ MultiplexedSocket::Impl::eventLoop()
 {
     std::error_code ec;
     while (!stop) {
+        JAMI_ERR("LOOP 1");
         std::vector<uint8_t> buf;
         auto data_len = endpoint->waitForData(std::chrono::milliseconds(0), ec);
         if (data_len > 0) {
@@ -124,11 +127,13 @@ MultiplexedSocket::Impl::eventLoop()
                 JAMI_ERR("Read error detected: %i", ec);
                 wantedSize_ = -1; wantedChan_ = -1;
                 RtpPkt_.clear();
+                JAMI_ERR("LOOP 2");
                 break;
             }
             if (size == 0) {
                 // We can close the socket
                 shutdown();
+                JAMI_ERR("LOOP 2");
                 break;
             }
 
@@ -210,6 +215,7 @@ MultiplexedSocket::Impl::eventLoop()
                     handleChannelPacket(current_channel, {packet.begin(), packet.end()});
                 }
                 packet.clear();
+            JAMI_ERR("LOOP 2");
             } while (parsed < size && !stop);
         }
     }
@@ -551,11 +557,13 @@ ChannelSocket::stop()
 void
 ChannelSocket::shutdown()
 {
+    JAMI_ERR("STOP 1");
     stop();
     if (auto ep = pimpl_->endpoint.lock()) {
         std::error_code ec;
         ep->write(pimpl_->channel, nullptr, 0, ec);
     }
+    JAMI_ERR("STOP 1");
 }
 
 

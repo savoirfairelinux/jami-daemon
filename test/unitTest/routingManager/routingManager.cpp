@@ -48,9 +48,11 @@ public:
 
 private:
     void testNoPeersToConnect();
+    void DEBUG();
 
     CPPUNIT_TEST_SUITE(RoutingManagerTest);
-    CPPUNIT_TEST(testNoPeersToConnect);
+    //CPPUNIT_TEST(testNoPeersToConnect);
+    CPPUNIT_TEST(DEBUG);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -63,7 +65,7 @@ RoutingManagerTest::setUp()
     DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
     CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
 
-    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    /*std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE";
     details[ConfProperties::ALIAS] = "ALICE";
@@ -99,7 +101,7 @@ RoutingManagerTest::setUp()
             idx += 1;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
-    }
+    }*/
 }
 
 void
@@ -118,11 +120,40 @@ RoutingManagerTest::tearDown()
 void
 RoutingManagerTest::testNoPeersToConnect()
 {
-    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
-    auto rmBob = std::unique_ptr<RoutingManager>(new RoutingManager(dht::InfoHash(bobDeviceId)));
+    //auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    //auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    //auto rmBob = std::unique_ptr<RoutingManager>(new RoutingManager(dht::InfoHash(bobDeviceId)));
+//
+    //CPPUNIT_ASSERT_EQUAL(0, static_cast<int>(rmBob->getPeersToConnect().size()));
+}
 
-    CPPUNIT_ASSERT_EQUAL(0, static_cast<int>(rmBob->getPeersToConnect().size()));
+
+
+void
+RoutingManagerTest::DEBUG()
+{
+    auto rm = std::unique_ptr<RoutingManager>(new RoutingManager(dht::InfoHash("debug")));
+
+    JAMI_INFO("==");
+    rm->injectPeers(dht::InfoHash::get("test"), nullptr);
+    JAMI_INFO("==");
+    rm->injectPeers(dht::InfoHash::get("test1"), nullptr);
+    JAMI_INFO("==");
+    rm->injectPeers(dht::InfoHash::get("test2"), nullptr);
+    JAMI_INFO("==");
+    rm->injectPeers(dht::InfoHash::get("test3"), nullptr);
+    JAMI_INFO("==");
+    rm->injectPeers(dht::InfoHash::get("test4"), nullptr);
+    JAMI_INFO("==");
+    rm->injectPeers(dht::InfoHash::get("test5"), nullptr);
+    JAMI_INFO("==");
+    rm->removePeers(dht::InfoHash::get("test"));
+    JAMI_INFO("==");
+    rm->removePeers(dht::InfoHash::get("test1"));
+    JAMI_INFO("==");
+    rm->removePeers(dht::InfoHash::get("test2"));
+    JAMI_INFO("==");
+
 }
 
 }} // namespace test
