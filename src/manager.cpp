@@ -418,6 +418,8 @@ struct Manager::ManagerPimpl
     PluginServicesManager plugin_services_manager;
     /* Plugin Preferences Manager*/
     PluginPreferencesManager plugin_preferences_manager;
+    /* Jami Plugin Manager */
+    JamiPluginManager jami_plugin_manager;
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -3059,6 +3061,11 @@ PluginServicesManager& Manager::getPluginServicesManager()
 PluginPreferencesManager& Manager::getPluginPreferencesManager()
 {
     return pimpl_->plugin_preferences_manager;
+}
+
+JamiPluginManager& Manager::getJamiPluginManager()
+{
+    return pimpl_->jami_plugin_manager;
 }
 
 std::map<std::string, std::string>

@@ -14,7 +14,7 @@ bool PluginPreferencesValuesManager::savePreferenceValue(const std::string &pref
     std::map<std::string, std::string> pluginPreferencesMap = getPreferencesValuesMap(preferencesValuesFilePath);
     // Using [] instead of insert to get insert or update effect
     pluginPreferencesMap[key] = value;
-    
+
     {
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if(!fs.good()) {
@@ -28,7 +28,7 @@ bool PluginPreferencesValuesManager::savePreferenceValue(const std::string &pref
             JAMI_ERR() << e.what();
         }
     }
-    
+
     return returnValue; 
 }
 
@@ -61,8 +61,30 @@ std::map<std::string, std::string> PluginPreferencesValuesManager::getPreference
             }
         }
     }
-    
-    return rmap;  
+
+    return rmap;
+}
+
+bool PluginPreferencesValuesManager::resetPluginPreferencesValuesMap(const std::string &preferencesValuesFilePath)
+{
+    bool returnValue = true;
+    std::map<std::string, std::string> pluginPreferencesMap{};
+
+    {
+        std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
+        if(!fs.good()) {
+            return false;
+        }
+        try {
+            std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
+            msgpack::pack(fs, pluginPreferencesMap);
+        } catch (const std::exception& e) {
+            returnValue = false;
+            JAMI_ERR() << e.what();
+        }
+    }
+
+    return returnValue;
 }
 
 }
