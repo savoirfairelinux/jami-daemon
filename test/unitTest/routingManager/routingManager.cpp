@@ -1,0 +1,130 @@
+/*
+ *  Copyright (C) 2019 Savoir-faire Linux Inc.
+ *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include <condition_variable>
+
+#include "manager.h"
+#include "jamidht/connectionmanager.h"
+#include "jamidht/jamiaccount.h"
+#include "jamidht/routing_manager.h"
+#include "../../test_runner.h"
+#include "dring.h"
+#include "account_const.h"
+
+using namespace DRing::Account;
+
+namespace jami { namespace test {
+
+class RoutingManagerTest : public CppUnit::TestFixture {
+public:
+    ~RoutingManagerTest() {
+        DRing::fini();
+    }
+    static std::string name() { return "RoutingManager"; }
+    void setUp();
+    void tearDown();
+
+    std::string aliceId;
+    std::string bobId;
+
+private:
+    void testNoPeersToConnect();
+
+    CPPUNIT_TEST_SUITE(RoutingManagerTest);
+    CPPUNIT_TEST(testNoPeersToConnect);
+    CPPUNIT_TEST_SUITE_END();
+};
+
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(RoutingManagerTest, RoutingManagerTest::name());
+
+void
+RoutingManagerTest::setUp()
+{
+    // Init daemon
+    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+
+    std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "ALICE";
+    details[ConfProperties::ALIAS] = "ALICE";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = "";
+    aliceId = Manager::instance().addAccount(details);
+
+    details = DRing::getAccountTemplate("RING");
+    details[ConfProperties::TYPE] = "RING";
+    details[ConfProperties::DISPLAYNAME] = "BOB";
+    details[ConfProperties::ALIAS] = "BOB";
+    details[ConfProperties::UPNP_ENABLED] = "true";
+    details[ConfProperties::ARCHIVE_PASSWORD] = "";
+    details[ConfProperties::ARCHIVE_PIN] = "";
+    details[ConfProperties::ARCHIVE_PATH] = "";
+    bobId = Manager::instance().addAccount(details);
+
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+
+    bool ready = false;
+    bool idx = 0;
+    while(!ready && idx < 100) {
+        auto details = aliceAccount->getVolatileAccountDetails();
+        auto daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+        ready = (daemonStatus == "REGISTERED");
+        details = bobAccount->getVolatileAccountDetails();
+        daemonStatus = details[DRing::Account::ConfProperties::Registration::STATUS];
+        ready &= (daemonStatus == "REGISTERED");
+        if (!ready) {
+            idx += 1;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
+}
+
+void
+RoutingManagerTest::tearDown()
+{
+    auto currentAccSize = Manager::instance().getAccountList().size();
+    Manager::instance().removeAccount(aliceId);
+    Manager::instance().removeAccount(bobId);
+    // Because cppunit is not linked with dbus, just poll if removed
+    for (int i = 0; i < 40; ++i) {
+        if (Manager::instance().getAccountList().size() <= currentAccSize - 2) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+void
+RoutingManagerTest::testNoPeersToConnect()
+{
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto rmBob = std::unique_ptr<RoutingManager>(new RoutingManager(dht::InfoHash(bobDeviceId)));
+
+    CPPUNIT_ASSERT_EQUAL(0, static_cast<int>(rmBob->getPeersToConnect().size()));
+}
+
+}} // namespace test
+
+RING_TEST_RUNNER(jami::test::RoutingManagerTest::name())
