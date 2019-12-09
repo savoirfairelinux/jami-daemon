@@ -47,7 +47,7 @@ public:
      * @param key
      * @param value
      */
-    void setPreferenceAttribute(const std::string& key, const std::string& value) {
+    virtual void setPreferenceAttribute(const std::string& key, const std::string& value) {
         (void)key;(void)value;
     }
 private:
