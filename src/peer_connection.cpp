@@ -396,6 +396,12 @@ public:
     Impl(AbstractSocketEndpoint &ep, std::function<bool(const dht::crypto::Certificate &)>&& cert_check)
         : tr{ep}, peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert} {}
 
+    ~Impl() {
+        tls.reset();
+        onReadyCb_ = {};
+        onStateChangeCb_ = {};
+    }
+
     // TLS callbacks
     int verifyCertificate(gnutls_session_t);
     void onTlsStateChange(tls::TlsSessionState);
@@ -514,7 +520,10 @@ TlsSocketEndpoint::TlsSocketEndpoint(AbstractSocketEndpoint& tr,
 }
 
 
-TlsSocketEndpoint::~TlsSocketEndpoint() = default;
+TlsSocketEndpoint::~TlsSocketEndpoint()
+{
+
+}
 
 bool
 TlsSocketEndpoint::isInitiator() const
