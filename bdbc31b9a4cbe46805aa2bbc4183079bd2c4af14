@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "39b331d1_ad99e709",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 502,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-12-09T17:25:22Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\naddress of function \u0027accept\u0027 will always evaluate to \u0027true\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-pointer-bool-conversion",
+      "revId": "bdbc31b9a4cbe46805aa2bbc4183079bd2c4af14",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "35941a91_afa6a48a",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 328,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-12-09T17:25:22Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe const qualified parameter \u0027name\u0027 is copied for each invocation; consider making it a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "bdbc31b9a4cbe46805aa2bbc4183079bd2c4af14",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "40784a5b_5d074547",
+        "filename": "src/jamidht/multiplexed_socket.cpp",
+        "patchSetId": 54
+      },
+      "lineNbr": 477,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2019-12-09T17:25:22Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027endpoint\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "bdbc31b9a4cbe46805aa2bbc4183079bd2c4af14",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
