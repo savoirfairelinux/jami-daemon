@@ -1,0 +1,383 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c37548fb_aa00957f",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 13,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "cleanup",
+      "range": {
+        "startLine": 13,
+        "startChar": 4,
+        "endLine": 13,
+        "endChar": 51
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6beb47b1_dabc1b3b",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "cleanup",
+      "range": {
+        "startLine": 15,
+        "startChar": 0,
+        "endLine": 15,
+        "endChar": 46
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3bae973a_e850865f",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "cleanup",
+      "range": {
+        "startLine": 21,
+        "startChar": 1,
+        "endLine": 21,
+        "endChar": 53
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d7cd518f_0f595719",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "cleanup",
+      "range": {
+        "startLine": 23,
+        "startChar": 3,
+        "endLine": 23,
+        "endChar": 48
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0aaee7f7_614b4f7a",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "cleanup",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 34,
+        "endChar": 5
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "21ede30f_594f9c39",
+        "filename": "src/observer.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 82,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "std::weak_ptr\u003cObserver\u003cT\u003e\u003e or std::shared_ptr\u003cObserver\u003cT\u003e\u003e",
+      "range": {
+        "startLine": 82,
+        "startChar": 32,
+        "endLine": 82,
+        "endChar": 44
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "666cdfba_4347796a",
+        "filename": "src/observer.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "should call o-\u003edetached(this) for consistency",
+      "range": {
+        "startLine": 87,
+        "startChar": 20,
+        "endLine": 87,
+        "endChar": 50
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "603d9bfa_c2383f61",
+        "filename": "src/observer.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "erase from map if weak_ptr is expired",
+      "range": {
+        "startLine": 89,
+        "startChar": 12,
+        "endLine": 89,
+        "endChar": 13
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6cc2c548_c08156cc",
+        "filename": "src/observer.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "move above attachPriorityObserver/detachPriorityObserver",
+      "range": {
+        "startLine": 93,
+        "startChar": 0,
+        "endLine": 100,
+        "endChar": 5
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fe1b453e_8fc48f08",
+        "filename": "src/observer.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "try-catch behavior should be consistent between pri/non-prio observers",
+      "range": {
+        "startLine": 112,
+        "startChar": 16,
+        "endLine": 117,
+        "endChar": 17
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "26828a1a_92954950",
+        "filename": "src/observer.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 166,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "MapSubject",
+      "range": {
+        "startLine": 166,
+        "startChar": 6,
+        "endLine": 166,
+        "endChar": 23
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ded5f3dd_d90b42fd",
+        "filename": "src/observer.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "* If you signal the subscriber that it was detached, at least actually detach them (by clearing the observers_ map). Also why detach normal and not priority observers ?",
+      "range": {
+        "startLine": 189,
+        "startChar": 0,
+        "endLine": 193,
+        "endChar": 7
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "48637b4b_aaaa700a",
+        "filename": "src/observer.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "~Observable() already does this",
+      "range": {
+        "startLine": 208,
+        "startChar": 8,
+        "endLine": 208,
+        "endChar": 26
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "99ebf82e_a2419fe6",
+        "filename": "src/observer.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "ideally should be std::weak_ptr",
+      "range": {
+        "startLine": 213,
+        "startChar": 4,
+        "endLine": 213,
+        "endChar": 19
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7a8c3035_73e55ace",
+        "filename": "src/plugin/.dirstamp",
+        "patchSetId": 7
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "remove file from commit",
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "42d90a49_490c52df",
+        "filename": "src/plugin/pluginservicesmanager.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 207,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "shouldn\u0027t be there (see bellow)",
+      "range": {
+        "startLine": 207,
+        "startChar": 4,
+        "endLine": 207,
+        "endChar": 21
+      },
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5beae619_4aa5c2e3",
+        "filename": "src/plugin/pluginservicesmanager.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-10T22:15:51Z",
+      "side": 1,
+      "message": "* services should be independent from plugins\n* a plugin can interact with many various services\n* ideally, internal Jami components should be able to use services\n* The only link between services and plugin is that services expose themself to the pluginmanager to be used by plugins.\n\nI don\u0027t see a need for a service manager in the architecture. Every service can be independent and simnly register to the single instance PluginManager (in the manager).\n\nThe only feature actually provided by this class is the CallMediaService. So maybe this class should be refactored to be a CallMediaService ?",
+      "revId": "ed58ee61505cd07c8365b1ae95b78914179b6eab",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
