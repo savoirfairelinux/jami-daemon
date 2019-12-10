@@ -66,7 +66,7 @@ def getLatestVSVersion():
         '-property installationVersion'
     ]
     cmd = [vs_where_path] + args
-    output = subprocess.check_output(' '.join(cmd)).decode('utf-8')
+    output = subprocess.check_output(' '.join(cmd)).decode('utf-8', errors='ignore')
     if output:
         return output.splitlines()[0].split('.')[0]
     else:
@@ -81,7 +81,7 @@ def findVSLatestDir():
         '-property installationPath'
     ]
     cmd = [vs_where_path] + args
-    output = subprocess.check_output(' '.join(cmd)).decode('utf-8')
+    output = subprocess.check_output(' '.join(cmd)).decode('utf-8', errors='ignore')
     if output:
         return output.splitlines()[0]
     else:
