@@ -37,6 +37,7 @@
 #include "dring/media_const.h"
 #include "libav_utils.h"
 #include "call_const.h"
+#include "media_player.h"
 
 #include <functional>
 #include <memory>
@@ -536,6 +537,18 @@ getRenderer(const std::string& callId)
        };
 }
 
+std::string
+openFile(const std::string& path)
+{
+    return jami::openMediaFile(path);
+}
+
+bool
+togglePause(const std::string& id)
+{
+    return jami::togglePause(id);
+}
+
 bool
 getDecodingAccelerated()
 {
@@ -639,10 +652,62 @@ getAudioInput(const std::string& id)
     return input;
 }
 
+std::shared_ptr<video::VideoFrameActiveWriter>
+getVideoInput(const std::string& id)
+{
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto it = vmgr.videoInputs.find(id);
+    if (it != vmgr.videoInputs.end()) {
+        if (auto input = it->second.lock()) {
+            return input;
+        }
+    }
+
+    auto input = std::make_shared<video::VideoInput>();
+    vmgr.videoInputs[id] = input;
+    return input;
+}
+
 void
 VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
 {
     videoDeviceMonitor.setDeviceOrientation(deviceId, angle);
+}
+
+std::shared_ptr<MediaPlayer>
+getMediaPlayer(const std::string& id) {
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto it = vmgr.mediaPlayers.find(id);
+      if (it != vmgr.mediaPlayers.end()) {
+          //if (auto player = it->second.lock()) {
+              return it->second;
+          //}
+      }
+    return {};
+}
+
+std::string
+openMediaFile(const std::string& path) {
+    auto& vmgr = jami::Manager::instance().getVideoManager();
+    auto input = std::make_shared<MediaPlayer>(path);
+    auto id = input.get()->getSinkId();
+    vmgr.mediaPlayers[id] = input;
+    return id;
+}
+
+bool
+togglePause(const std::string& id) {
+    auto player = getMediaPlayer(id);
+    if (player) {
+        player->toglePause();
+        return true;
+    }
+    return false;
+}
+
+bool
+closePlayer(const std::string& id) {
+    return true;
 }
 
 } // namespace jami
