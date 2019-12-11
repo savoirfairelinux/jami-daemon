@@ -17,6 +17,7 @@
  */
 #pragma once
 
+#include <functional>
 #include <memory>
 #include <string>
 
@@ -25,6 +26,8 @@
 namespace jami {
 
 class ChannelSocket;
+
+using onFetchedCb = std::function<void(const std::string&)>;
 
 /**
  * This class offers to a ChannelSocket the possibility to interact with a Git repository
@@ -45,9 +48,10 @@ public:
     ~GitServer();
 
     /**
-     * Launch the server
+     * Add a callback which will be triggered when the peer gets the data
+     * @param cb
      */
-    void run();
+    void setOnFetched(const onFetchedCb& cb);
 
     /**
      * Stopping a GitServer will shut the channel down
