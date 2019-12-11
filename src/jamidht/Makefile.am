@@ -16,6 +16,8 @@ libringacc_la_SOURCES = \
         jamiaccount.h \
         connectionmanager.h \
         connectionmanager.cpp \
+        conversationrepository.h \
+        conversationrepository.cpp \
         multiplexed_socket.h \
         multiplexed_socket.cpp \
         sips_transport_ice.cpp \
