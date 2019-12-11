@@ -76,6 +76,22 @@ AudioInput::process()
 }
 
 void
+AudioInput::setPaused(bool paused) {
+    if (!paused) {
+        Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
+        fileBuf_.reset();
+        fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    }
+    paused_ = paused;
+}
+
+void
+AudioInput::updateStartTime(int64_t start) {
+    if (decoder_) {
+           decoder_->updateStartTime(start);
+    }
+}
+void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
     std::shared_ptr<AudioFrame> frame = std::move(ptr);
@@ -116,17 +132,31 @@ AudioInput::readFromFile()
 {
     if (!decoder_)
         return;
+    if (paused_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        return;
+    }
     const auto ret = decoder_->decode();
     switch (ret) {
     case MediaDemuxer::Status::Success:
         break;
     case MediaDemuxer::Status::EndOfFile:
-        createDecoder();
+        if (fileFinished) {
+            paused_ = true;
+            fileFinished();
+        } else {
+            createDecoder();
+        }
         break;
     case MediaDemuxer::Status::ReadError:
         JAMI_ERR() << "Failed to decode frame";
         break;
     }
+}
+
+int64_t
+AudioInput::duration() const {
+    return decoder_->getDuration();
 }
 
 bool
@@ -158,7 +188,7 @@ AudioInput::initFile(const std::string& path)
     }
     fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
     // have file audio mixed into the call buffer so it gets sent to the peer
-    Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
+   // Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
     // have file audio mixed into the local buffer so it gets played
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
     decodingFile_ = true;
@@ -272,6 +302,20 @@ AudioInput::createDecoder()
 }
 
 void
+AudioInput::setFileFinishedCallback(const std::function<void(void)>& cb) noexcept
+{
+    if (cb) {
+        fileFinished = cb;
+    }
+}
+
+void
+AudioInput::emulateRate()
+{
+decoder_->emulateRate();
+}
+
+void
 AudioInput::setFormat(const AudioFormat& fmt)
 {
     std::lock_guard<std::mutex> lk(fmtMutex_);
@@ -283,6 +327,12 @@ void
 AudioInput::setMuted(bool isMuted)
 {
     muteState_ = isMuted;
+}
+
+MediaStream
+AudioInput::getStream(const std::string& path) const
+{
+    return decoder_->getStream(path);
 }
 
 MediaStream
