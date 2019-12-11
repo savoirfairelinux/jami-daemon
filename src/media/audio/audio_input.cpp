@@ -62,6 +62,10 @@ AudioInput::~AudioInput()
 void
 AudioInput::process()
 {
+    if (paused_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        return;
+       }
     // NOTE This is only useful if the device params weren't yet found in switchInput
     // For both files and audio devices, this is already done
     //foundDevOpts(devOpts_);
@@ -75,6 +79,13 @@ AudioInput::process()
     readFromDevice();
 }
 
+void
+AudioInput::setPaused(bool paused) {
+    paused_ = paused;
+    //if (!paused_) {
+           decoder_->updateStartTime();
+     //  }
+}
 void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
