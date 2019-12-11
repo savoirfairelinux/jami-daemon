@@ -121,7 +121,9 @@ getSubscriptions(const std::string& accountID)
 
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         if (auto pres = sipaccount->getPresence()) {
-            for (const auto& s : pres->getClientSubscriptions()) {
+            auto subs = pres->getClientSubscriptions();
+            ret.reserve(subs.size());
+            for (const auto& s : subs) {
                 ret.push_back({
                     {DRing::Presence::BUDDY_KEY, s->getURI()},
                     {DRing::Presence::STATUS_KEY, s->isPresent() ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY},
@@ -131,11 +133,13 @@ getSubscriptions(const std::string& accountID)
         } else
             JAMI_ERR("Presence not initialized");
     } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID)) {
-        for (const auto& tracked_id : ringaccount->getTrackedBuddyPresence()) {
+        const auto& trackedBuddies = ringaccount->getTrackedBuddyPresence();
+        ret.reserve(trackedBuddies.size());
+        for (const auto& tracked_id : trackedBuddies) {
             ret.push_back({
-                    {DRing::Presence::BUDDY_KEY, tracked_id.first},
-                    {DRing::Presence::STATUS_KEY, tracked_id.second ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY}
-                });
+                {DRing::Presence::BUDDY_KEY, tracked_id.first},
+                {DRing::Presence::STATUS_KEY, tracked_id.second ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY}
+            });
         }
     } else
         JAMI_ERR("Could not find account %s.", accountID.c_str());
@@ -155,6 +159,9 @@ setSubscriptions(const std::string& accountID, const std::vector<std::string>& u
                 pres->subscribeClient(u, true);
         } else
             JAMI_ERR("Presence not initialized");
+    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID)) {
+        for (const auto &u : uris)
+            ringaccount->trackBuddyPresence(u, true);
     } else
         JAMI_ERR("Could not find account %s.", accountID.c_str());
 }
