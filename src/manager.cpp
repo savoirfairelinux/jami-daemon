@@ -749,7 +749,8 @@ Manager::init(const std::string& config_file)
     git_libgit2_init();
     auto res = git_transport_register("git", p2p_transport_cb, nullptr);
     if (res < 0) {
-        JAMI_ERR("Unable to initialize git transport");
+        const git_error* error = giterr_last();
+        JAMI_ERR("Unable to initialize git transport %s", error ? error->message : "(unknown)");
     }
 
 #ifndef WIN32
@@ -3231,7 +3232,9 @@ Manager::getJamiPluginManager() const
 #endif
 
 std::shared_ptr<ChannelSocket>
-Manager::gitSocket(const std::string& accountId, const std::string& deviceId, const std::string& conversationId)
+Manager::gitSocket(const std::string& accountId,
+                   const std::string& deviceId,
+                   const std::string& conversationId)
 {
     if (const auto acc = getAccount<JamiAccount>(accountId))
         return acc->gitSocket(deviceId, conversationId);
