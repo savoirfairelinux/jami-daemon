@@ -166,10 +166,9 @@ FileTransferTest::testCachedFileTransfer()
     JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    bobUri = bobUri.substr(std::string("ring:").size());
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
-    auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
+    auto bobUri = bobAccount->getUsername();
+    auto bobDeviceId = bobAccount->currentDeviceId();
+    auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -240,10 +239,9 @@ FileTransferTest::testMultipleFileTransfer()
     JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    bobUri = bobUri.substr(std::string("ring:").size());
-    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
-    auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
+    auto bobUri = bobAccount->getUsername();
+    auto bobDeviceId = bobAccount->currentDeviceId();
+    auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
