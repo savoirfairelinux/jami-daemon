@@ -51,19 +51,27 @@ public:
     bool isCapturing() const { return loop_.isRunning(); }
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
+    void setPaused(bool paused);
     MediaStream getInfo() const;
+    MediaStream getStream(const std::string& path) const;
+    void updateStartTime(int64_t start);
+    int64_t duration() const;
+    void setFileFinishedCallback(const std::function<void(void)>& cb) noexcept;
+    bool createDecoder();
 
 private:
     void readFromDevice();
     void readFromFile();
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
-    bool createDecoder();
+   // bool createDecoder();
     void frameResized(std::shared_ptr<AudioFrame>&& ptr);
+
 
     std::string id_;
     AudioBuffer micData_;
     bool muteState_ = false;
+    bool paused_ = false;
     uint64_t sent_samples = 0;
     mutable std::mutex fmtMutex_ {};
     AudioFormat format_;
@@ -84,6 +92,7 @@ private:
     std::atomic_bool devOptsFound_ {false};
     void foundDevOpts(const DeviceParams& params);
     std::atomic_bool decodingFile_ {false};
+    std::function<void(void)> fileFinished {};
 
     ThreadLoop loop_;
     void process();
