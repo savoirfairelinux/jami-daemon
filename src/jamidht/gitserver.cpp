@@ -20,7 +20,9 @@
 #include "fileutils.h"
 #include "logger.h"
 #include "gittransport.h"
+#include "manager.h"
 #include "multiplexed_socket.h"
+#include "opendht/thread_pool.h"
 
 #include <ctime>
 #include <fstream>
@@ -38,14 +40,6 @@ using namespace std::string_view_literals;
 
 namespace jami {
 
-enum class ServerState {
-    WAIT_ORDER,
-    SEND_REFERENCES_CAPABILITIES,
-    ANSWER_TO_WANT_ORDER,
-    SEND_PACKDATA,
-    TERMINATE
-};
-
 class GitServer::Impl
 {
 public:
@@ -55,100 +49,87 @@ public:
         : repositoryId_(repositoryId)
         , repository_(repository)
         , socket_(socket)
-    {}
+    {
+        socket_->setOnRecv([this](const uint8_t* buf, std::size_t len) {
+            if (isDestroying_)
+                return len;
+            auto needMoreParsing = parseOrder(buf, len);
+            while (needMoreParsing) {
+                needMoreParsing = parseOrder();
+            };
+            return len;
+        });
+    }
     ~Impl() = default;
 
-    void run();
-    void waitOrder();
-    void sendReferenceCapabilities();
+    bool parseOrder(const uint8_t* buf = nullptr, std::size_t len = 0);
+
+    void sendReferenceCapabilities(bool sendVersion = false);
     void answerToWantOrder();
     void sendPackData();
+    std::map<std::string, std::string> getParameters(const std::string& pkt_line);
 
     std::string repositoryId_ {};
     std::string repository_ {};
     std::shared_ptr<ChannelSocket> socket_ {};
-    ServerState state_ {ServerState::WAIT_ORDER};
     std::string wantedReference_ {};
     std::vector<std::string> haveRefs_ {};
-    std::string currentHead_ {};
     std::string cachedPkt_ {};
     std::atomic_bool isDestroying_ {false};
 };
 
-void
-GitServer::Impl::run()
+bool
+GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
 {
-    while (!isDestroying_.load()) {
-        switch (state_) {
-        case ServerState::WAIT_ORDER:
-            waitOrder();
-            break;
-        case ServerState::SEND_REFERENCES_CAPABILITIES:
-            sendReferenceCapabilities();
-            break;
-        case ServerState::ANSWER_TO_WANT_ORDER:
-            answerToWantOrder();
-            break;
-        case ServerState::SEND_PACKDATA:
-            sendPackData();
-            break;
-        case ServerState::TERMINATE:
-            break;
-        }
-    }
-}
-
-void
-GitServer::Impl::waitOrder()
-{
-    // TODO blocking read
     std::string pkt = cachedPkt_;
-    if (pkt.empty()) {
-        std::error_code ec;
-        auto res = socket_->waitForData(std::chrono::milliseconds(5000), ec);
-        if (ec) {
-            if (!isDestroying_.load())
-                JAMI_WARN("Error when reading socket for %s: %s",
-                          repository_.c_str(),
-                          ec.message().c_str());
-            state_ = ServerState::TERMINATE;
-            return;
-        }
-        if (res <= 4)
-            return;
-        uint8_t buf[UINT16_MAX];
-        socket_->read(buf, res, ec);
-        if (ec) {
-            if (!isDestroying_.load())
-                JAMI_WARN("Error when reading socket for %s: %s",
-                          repository_.c_str(),
-                          ec.message().c_str());
-            state_ = ServerState::TERMINATE;
-            return;
-        }
-        pkt = {buf, buf + res};
-    } else {
-        cachedPkt_ = "";
-    }
+    if (buf)
+        pkt += std::string({buf, buf + len});
+    cachedPkt_.clear();
+
+    // Parse pkt len
+    // Reference: https://github.com/git/git/blob/master/Documentation/technical/protocol-common.txt#L51
+    // The first four bytes define the length of the packet and 0000 is a FLUSH pkt
 
     unsigned int pkt_len;
     std::stringstream stream;
     stream << std::hex << pkt.substr(0, 4);
     stream >> pkt_len;
     if (pkt_len != pkt.size()) {
+        // Store next packet part
         if (pkt_len == 0) {
             // FLUSH_PKT
             pkt_len = 4;
         }
         cachedPkt_ = pkt.substr(pkt_len, pkt.size() - pkt_len);
-        pkt = pkt.substr(0, pkt_len);
     }
+    // NOTE: do not remove the size to detect the 0009done packet
+    pkt = pkt.substr(0, pkt_len);
 
     if (pkt.find(UPLOAD_PACK_CMD) == 4) {
-        // NOTE: We do not retrieve version or repo for now
+        // Cf: https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
+        // References discovery
         JAMI_INFO("Upload pack command detected.");
-        state_ = ServerState::SEND_REFERENCES_CAPABILITIES;
+        auto version = 1;
+        auto parameters = getParameters(pkt);
+        auto versionIt = parameters.find("version");
+        bool sendVersion = false;
+        if (versionIt != parameters.end()) {
+            try {
+                version = std::stoi(versionIt->second);
+                sendVersion = true;
+            } catch (...) {
+                JAMI_WARN("Invalid version detected: %s", versionIt->second.c_str());
+            }
+        }
+        if (version == 1) {
+            sendReferenceCapabilities(sendVersion);
+        } else {
+            JAMI_ERR("That protocol version is not yet supported (version: %u)", version);
+        }
     } else if (pkt.find(WANT_CMD) == 4) {
+        // Reference:
+        // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L229
+        // TODO can have more want
         auto content = pkt.substr(5, pkt_len - 5);
         auto commit = content.substr(4, 40);
         wantedReference_ = commit;
@@ -158,50 +139,90 @@ GitServer::Impl::waitOrder()
         auto commit = content.substr(4, 40);
         haveRefs_.emplace_back(commit);
     } else if (pkt == DONE_PKT) {
+        // Reference:
+        // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L390 Do
+        // not do multi-ack, just send ACK + pack file
+        // TODO: in case of no common base, send NAK
         JAMI_INFO("Peer negotiation is done. Answering to want order");
-        state_ = ServerState::ANSWER_TO_WANT_ORDER;
+        answerToWantOrder();
     } else if (pkt == FLUSH_PKT) {
         // Nothing to do for now
     } else {
-        JAMI_WARN("Unkown packet received: %s", pkt.c_str());
+        JAMI_WARN("Unwanted packet received: %s", pkt.c_str());
     }
+    return !cachedPkt_.empty();
 }
 
 void
-GitServer::Impl::sendReferenceCapabilities()
+GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
 {
-    // TODO store more references?
-    state_ = ServerState::WAIT_ORDER;
-
+    // Get references
+    // First, get the HEAD reference
+    // https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
     git_repository* repo;
     if (git_repository_open(&repo, repository_.c_str()) != 0) {
         JAMI_WARN("Couldn't open %s", repository_.c_str());
         return;
     }
+
+    // Answer with the version number
+    // **** When the client initially connects the server will immediately respond
+    // **** with a version number (if "version=1" is sent as an Extra Parameter),
+    std::string currentHead;
+    std::error_code ec;
+    std::stringstream packet;
+    if (sendVersion) {
+        packet << "000eversion 1\0";
+        socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()),
+                       packet.str().size(),
+                       ec);
+        if (ec) {
+            JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
+            return;
+        }
+    }
+
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, repo, "HEAD") < 0) {
         JAMI_ERR("Cannot get reference for HEAD");
         git_repository_free(repo);
         return;
     }
-    currentHead_ = git_oid_tostr_s(&commit_id);
-    git_repository_free(repo);
+    currentHead = git_oid_tostr_s(&commit_id);
 
+    // Send references
     std::stringstream capabilities;
-    capabilities << currentHead_
+    capabilities << currentHead
                  << " HEAD\0side-band side-band-64k shallow no-progress include-tag"sv;
     std::string capStr = capabilities.str();
 
-    std::stringstream packet;
+    packet.clear();
     packet << std::setw(4) << std::setfill('0') << std::hex << ((5 + capStr.size()) & 0x0FFFF);
     packet << capStr << "\n";
-    packet << "003f" << currentHead_ << " refs/heads/master\n";
-    packet << FLUSH_PKT;
 
-    std::error_code ec;
-    auto res = socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()),
-                              packet.str().size(),
-                              ec);
+    // Now, add other references
+    git_strarray refs;
+    if (git_reference_list(&refs, repo) == 0) {
+        for (int i = 0; i < refs.count; ++i) {
+            std::string ref = refs.strings[i];
+            if (git_reference_name_to_id(&commit_id, repo, ref.c_str()) < 0) {
+                JAMI_WARN("Cannot get reference for %s");
+                continue;
+            }
+            currentHead = git_oid_tostr_s(&commit_id);
+
+            packet << std::setw(4) << std::setfill('0') << std::hex
+                   << ((6 /* size + space + \n */ + currentHead.size() + ref.size()) & 0x0FFFF);
+            packet << currentHead << " " << ref << "\n";
+        }
+    }
+    git_repository_free(repo);
+
+    // And add FLUSH
+    packet << FLUSH_PKT;
+    socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()),
+                   packet.str().size(),
+                   ec);
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
     }
@@ -210,20 +231,18 @@ GitServer::Impl::sendReferenceCapabilities()
 void
 GitServer::Impl::answerToWantOrder()
 {
-    state_ = ServerState::WAIT_ORDER;
     std::error_code ec;
     socket_->write(reinterpret_cast<const unsigned char*>(NAK_PKT.data()), NAK_PKT.size(), ec);
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
         return;
     }
-    state_ = ServerState::SEND_PACKDATA;
+    sendPackData();
 }
 
 void
 GitServer::Impl::sendPackData()
 {
-    state_ = ServerState::WAIT_ORDER;
     git_repository* repo;
 
     if (git_repository_open(&repo, repository_.c_str()) != 0) {
@@ -328,6 +347,37 @@ GitServer::Impl::sendPackData()
     wantedReference_.clear();
 }
 
+std::map<std::string, std::string>
+GitServer::Impl::getParameters(const std::string& pkt_line)
+{
+    std::map<std::string, std::string> parameters;
+    std::string key, value;
+    auto isKey = true;
+    auto nullChar = 0;
+    for (auto i = 0; i < pkt_line.size(); ++i) {
+        auto letter = pkt_line[i];
+        if (letter == '\0') {
+            // parameters such as host or version are after the first \0
+            if (nullChar != 0 && !key.empty()) {
+                parameters[key] = value;
+            }
+            nullChar += 1;
+            isKey = true;
+            key.clear();
+            value.clear();
+        } else if (letter == '=') {
+            isKey = false;
+        } else if (nullChar != 0) {
+            if (isKey) {
+                key += letter;
+            } else {
+                value += letter;
+            }
+        }
+    }
+    return parameters;
+}
+
 GitServer::GitServer(const std::string& accountId,
                      const std::string& conversationId,
                      const std::shared_ptr<ChannelSocket>& client)
@@ -345,16 +395,10 @@ GitServer::~GitServer()
 }
 
 void
-GitServer::run()
-{
-    JAMI_INFO("Running GitServer for %s", pimpl_->repository_.c_str());
-    pimpl_->run();
-}
-
-void
 GitServer::stop()
 {
     pimpl_->isDestroying_.exchange(true);
+    pimpl_->socket_->setOnRecv({});
     pimpl_->socket_->shutdown();
 }
 
