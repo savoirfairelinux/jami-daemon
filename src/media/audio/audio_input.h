@@ -51,6 +51,7 @@ public:
     bool isCapturing() const { return loop_.isRunning(); }
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
+    void setPaused(bool paused);
     MediaStream getInfo() const;
 
 private:
@@ -64,6 +65,7 @@ private:
     std::string id_;
     AudioBuffer micData_;
     bool muteState_ = false;
+    bool paused_ = false;
     uint64_t sent_samples = 0;
     mutable std::mutex fmtMutex_ {};
     AudioFormat format_;

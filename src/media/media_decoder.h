@@ -143,6 +143,7 @@ public:
 
     int getWidth() const;
     int getHeight() const;
+    void updateStartTime();
     std::string getDecoderName() const;
 
     rational<double> getFps() const;
