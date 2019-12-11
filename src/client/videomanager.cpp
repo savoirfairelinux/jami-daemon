@@ -536,6 +536,15 @@ getRenderer(const std::string& callId)
        };
 }
 
+std::string
+openFile(const std::string& path) {
+    return jami::openMediaFile(path);
+    // auto input = std::make_shared<MediaPlayer>(path);
+    // auto id = input.get()->getSinkId();
+    // vmgr.mediaPlayers[id] = input;
+    // return id;
+}
+
 bool
 getDecodingAccelerated()
 {
@@ -643,6 +652,41 @@ void
 VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
 {
     videoDeviceMonitor.setDeviceOrientation(deviceId, angle);
+}
+
+std::shared_ptr<JamiPlayer>
+getMediaPlayer(const std::string& id) {
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto it = vmgr.mediaPlayers.find(id);
+      if (it != vmgr.mediaPlayers.end()) {
+          if (auto player = it->second.lock()) {
+              return player;
+          }
+      }
+    return {};
+}
+std::string
+openMediaFile(const std::string& path) {
+//    auto& vmgr = jami::Manager::instance().getVideoManager();
+    jami::JamiPlayer player = JamiPlayer();
+  //  auto input = std::make_shared<MediaPlayer>("");
+//    auto id = input.get()->getSinkId();
+//    vmgr.mediaPlayers[id] = input;
+//    return id;
+    return "";
+}
+bool
+togglePause(const std::string& id) {
+    auto player = getMediaPlayer(id);
+    if (player) {
+        player->toglePause();
+        return true;
+    }
+    return false;
+}
+bool
+closePlayer(const std::string& id) {
+    return true;
 }
 
 } // namespace jami
