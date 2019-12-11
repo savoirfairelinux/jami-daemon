@@ -47,7 +47,7 @@ generateRequest(git_buf* request, const std::string& cmd, const std::string& url
                  + cmd.size()                        /* followed by the command */
                  + 1                                 /* space */
                  + conversationId.size()             /* conversation */
-                 + nullSeparator.size()              /* \0 */
+                 + 1                                 /* \0 */
                  + HOST_TAG.size() + deviceId.size() /* device */
                  + nullSeparator.size() /* \0 */;
 
@@ -74,6 +74,7 @@ sendCmd(P2PStream* s)
     if ((res = s->socket->write(reinterpret_cast<const unsigned char*>(request.ptr),
                                 request.size,
                                 ec))) {
+        s->sent_command = 1;
         git_buf_free(&request);
         return res;
     }
