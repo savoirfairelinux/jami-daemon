@@ -69,8 +69,16 @@ public:
     AVPixelFormat getPixelFormat() const;
     const DeviceParams& getParams() const;
     MediaStream getInfo() const;
+    MediaStream getStream(const std::string& path);
+    void setPaused(bool paused);
+    void setSink(const std::string& sinkId);
+    void updateStartTime(int64_t start);
+    int64_t duration() const;
+    void createDecoder();
+    std::function<void(void)> fileFinished {};
+     void setFileFinishedCallback(const std::function<void(void)>& cb) noexcept;
 
-    std::shared_future<DeviceParams> switchInput(const std::string& resource);
+    std::shared_future<DeviceParams> switchInput(const std::string& resource, bool fallbackToCamera = true);
 #if VIDEO_CLIENT_INPUT
     /*
      * these functions are used to pass buffer from/to the daemon
@@ -91,6 +99,7 @@ private:
     std::promise<DeviceParams> foundDecOpts_;
     std::shared_future<DeviceParams> futureDecOpts_;
     bool emulateRate_       = false;
+    bool paused_            = false;
 
     std::atomic_bool decOptsFound_ {false};
     void foundDecOpts(const DeviceParams& params);
@@ -101,28 +110,39 @@ private:
     bool initCamera(const std::string& device);
     bool initX11(std::string display);
     bool initAVFoundation(const std::string& display);
-    bool initFile(std::string path);
+    bool initFile(std::string path, bool fallbackToCamera = true);
     bool initGdiGrab(const std::string& params);
 
     bool isCapturing() const noexcept;
     void startLoop();
+    std::unique_ptr<MediaDecoder> decoder_;
+    std::shared_ptr<SinkClient> sink_;
+    ThreadLoop loop_;
+//    void setSink(const std::string& sinkId);
+    void process();
+    bool setup();
+    bool captureFrame();
+    //void createDecoder();
+     void deleteDecoder();
+    void cleanup();
 
 #if VIDEO_CLIENT_INPUT
     void switchDevice();
     bool capturing_ {false};
 #else
-    void createDecoder();
-    void deleteDecoder();
-    std::unique_ptr<MediaDecoder> decoder_;
-    std::shared_ptr<SinkClient> sink_;
-    ThreadLoop loop_;
+//    void createDecoder();
+//    void deleteDecoder();
+//    std::unique_ptr<MediaDecoder> decoder_;
+//    std::shared_ptr<SinkClient> sink_;
+//    ThreadLoop loop_;
+//    void setSink(const std::string& sinkId);
 
     // for ThreadLoop
-    bool setup();
-    void process();
-    void cleanup();
+    //bool setup();
+   // void process();
+//    void cleanup();
 
-    bool captureFrame();
+    //bool captureFrame();
 
     int rotation_ {0};
     std::shared_ptr<AVBufferRef> displayMatrix_;
