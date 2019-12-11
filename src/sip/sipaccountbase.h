@@ -128,7 +128,7 @@ public:
      */
     SIPAccountBase(const std::string& accountID);
 
-    virtual ~SIPAccountBase();
+    virtual ~SIPAccountBase() noexcept;
 
     /**
      * Create incoming SIPCall.
