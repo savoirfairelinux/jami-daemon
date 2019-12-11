@@ -56,12 +56,12 @@ static constexpr unsigned default_grab_height = 480;
 
 VideoInput::VideoInput()
     : VideoGenerator::VideoGenerator()
-#if !VIDEO_CLIENT_INPUT
-    , sink_ {Manager::instance().createSinkClient("local")}
+//#if !VIDEO_CLIENT_INPUT
+   // , sink_ {Manager::instance().createSinkClient("local")}
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
-#endif
+//#endif
 {}
 
 VideoInput::~VideoInput()
@@ -80,10 +80,12 @@ VideoInput::startLoop()
 {
 #if VIDEO_CLIENT_INPUT
     switchDevice();
-#else
-    if (!loop_.isRunning())
-        loop_.start();
+//#else
+//    if (!loop_.isRunning())
+//        loop_.start();
 #endif
+    if (!loop_.isRunning())
+    loop_.start();
 }
 
 #if VIDEO_CLIENT_INPUT
@@ -103,20 +105,20 @@ VideoInput::switchDevice()
     }
 }
 
-int VideoInput::getWidth() const
-{ return decOpts_.width; }
-
-int VideoInput::getHeight() const
-{ return decOpts_.height; }
-
-AVPixelFormat VideoInput::getPixelFormat() const
-{
-    int format;
-    std::stringstream ss;
-    ss << decOpts_.format;
-    ss >> format;
-    return (AVPixelFormat)format;
-}
+//int VideoInput::getWidth() const
+//{ return decOpts_.width; }
+//
+//int VideoInput::getHeight() const
+//{ return decOpts_.height; }
+//
+//AVPixelFormat VideoInput::getPixelFormat() const
+//{
+//    int format;
+//    std::stringstream ss;
+//    ss << decOpts_.format;
+//    ss >> format;
+//    return (AVPixelFormat)format;
+//}
 
 #else
 
@@ -133,32 +135,178 @@ VideoInput::setRotation(int angle)
     }
 }
 
-bool VideoInput::setup()
-{
-    if (not attach(sink_.get())) {
-        JAMI_ERR("attach sink failed");
-        return false;
-    }
+//bool VideoInput::setup()
+//{
+//    if (not attach(sink_.get())) {
+//        JAMI_ERR("attach sink failed");
+//        return false;
+//    }
+//
+//    if (!sink_->start())
+//        JAMI_ERR("start sink failed");
+//
+//    JAMI_DBG("VideoInput ready to capture");
+//
+//    return true;
+//}
+//
+//void
+//VideoInput::process()
+//{
+//    if (paused_) {
+//        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+//        return;
+//    }
+//    if (switchPending_)
+//        createDecoder();
+//
+//    if (not captureFrame()) {
+//        loop_.stop();
+//        return;
+//    }
+//}
+//
+//void
+//VideoInput::setPaused(bool paused) {
+//    paused_ = paused;
+//}
 
-    if (!sink_->start())
-        JAMI_ERR("start sink failed");
+//void
+//VideoInput::cleanup()
+//{
+//    deleteDecoder(); // do it first to let a chance to last frame to be displayed
+//    detach(sink_.get());
+//    sink_->stop();
+//    JAMI_DBG("VideoInput closed");
+//}
+//
+//bool
+//VideoInput::captureFrame()
+//{
+//    // Return true if capture could continue, false if must be stop
+//    if (not decoder_)
+//        return false;
+//
+//    switch (decoder_->decode()) {
+//    case MediaDemuxer::Status::EndOfFile:
+//        createDecoder();
+//        return static_cast<bool>(decoder_);
+//    case MediaDemuxer::Status::ReadError:
+//        JAMI_ERR() << "Failed to decode frame";
+//        return false;
+//    default:
+//        return true;
+//    }
+//}
+//
+//void
+//VideoInput::setSink(const std::string& sinkId) {
+//    sink_ = SinkClient(sinkId);
+//}
+//
+//void
+//VideoInput::createDecoder()
+//{
+//    deleteDecoder();
+//
+//    switchPending_ = false;
+//
+//    if (decOpts_.input.empty()) {
+//        foundDecOpts(decOpts_);
+//        return;
+//    }
+//
+//    auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
+//        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
+//    });
+//
+//    if (emulateRate_)
+//        decoder->emulateRate();
+//
+//    decoder->setInterruptCallback(
+//        [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); },
+//        this);
+//
+//    bool ready = false, restartSink = false;
+//    while (!ready && !isStopped_) {
+//        // Retry to open the video till the input is opened
+//        auto ret = decoder->openInput(decOpts_);
+//        ready = ret >= 0;
+//        if (ret < 0 && -ret != EBUSY) {
+//            JAMI_ERR("Could not open input \"%s\" with status %i", decOpts_.input.c_str(), ret);
+//            foundDecOpts(decOpts_);
+//            return;
+//        } else if (-ret == EBUSY) {
+//            // If the device is busy, this means that it can be used by another call.
+//            // If this is the case, cleanup() can occurs and this will erase shmPath_
+//            // So, be sure to regenerate a correct shmPath for clients.
+//            restartSink = true;
+//        }
+//        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+//    }
+//
+//    if (restartSink && !isStopped_) {
+//        sink_->start();
+//    }
+//
+//    /* Data available, finish the decoding */
+//    if (decoder->setupVideo() < 0) {
+//        JAMI_ERR("decoder IO startup failed");
+//        foundDecOpts(decOpts_);
+//        return;
+//    }
+//
+//    decoder->decode(); // Populate AVCodecContext fields
+//
+//    decOpts_.width = decoder->getWidth();
+//    decOpts_.height = decoder->getHeight();
+//    decOpts_.framerate = decoder->getFps();
+//    AVPixelFormat fmt = decoder->getPixelFormat();
+//    if (fmt != AV_PIX_FMT_NONE) {
+//        decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
+//    } else {
+//        JAMI_WARN("Could not determine pixel format, using default");
+//        decOpts_.pixel_format = av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
+//    }
+//
+//    JAMI_DBG("created decoder with video params : size=%dX%d, fps=%lf pix=%s",
+//             decOpts_.width, decOpts_.height, decOpts_.framerate.real(),
+//             decOpts_.pixel_format.c_str());
+//
+//    decoder_ = std::move(decoder);
+//    foundDecOpts(decOpts_);
+//
+//    /* Signal the client about readable sink */
+//    sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
+//}
+//
+//void
+//VideoInput::deleteDecoder()
+//{
+//    if (not decoder_)
+//        return;
+//    flushFrames();
+//    decoder_.reset();
+//}
 
-    JAMI_DBG("VideoInput ready to capture");
+//int VideoInput::getWidth() const
+//{ return decoder_->getWidth(); }
+//
+//int VideoInput::getHeight() const
+//{ return decoder_->getHeight(); }
+//
+//AVPixelFormat VideoInput::getPixelFormat() const
+//{ return decoder_->getPixelFormat(); }
 
-    return true;
-}
+#endif
+int VideoInput::getWidth() const
+{ return decoder_->getWidth(); }
 
-void
-VideoInput::process()
-{
-    if (switchPending_)
-        createDecoder();
+int VideoInput::getHeight() const
+{ return decoder_->getHeight(); }
 
-    if (not captureFrame()) {
-        loop_.stop();
-        return;
-    }
-}
+AVPixelFormat VideoInput::getPixelFormat() const
+{ return decoder_->getPixelFormat(); }
 
 void
 VideoInput::cleanup()
@@ -186,6 +334,11 @@ VideoInput::captureFrame()
     default:
         return true;
     }
+}
+
+void
+VideoInput::setSink(const std::string& sinkId) {
+    sink_ = Manager::instance().createSinkClient(sinkId);
 }
 
 void
@@ -240,7 +393,7 @@ VideoInput::createDecoder()
         return;
     }
 
-    decoder->decode(); // Populate AVCodecContext fields
+   // decoder->decode(); // Populate AVCodecContext fields
 
     decOpts_.width = decoder->getWidth();
     decOpts_.height = decoder->getHeight();
@@ -273,16 +426,48 @@ VideoInput::deleteDecoder()
     decoder_.reset();
 }
 
-int VideoInput::getWidth() const
-{ return decoder_->getWidth(); }
 
-int VideoInput::getHeight() const
-{ return decoder_->getHeight(); }
+bool VideoInput::setup()
+{
+    if (not attach(sink_.get())) {
+        JAMI_ERR("attach sink failed");
+        return false;
+    }
 
-AVPixelFormat VideoInput::getPixelFormat() const
-{ return decoder_->getPixelFormat(); }
+    if (!sink_->start())
+        JAMI_ERR("start sink failed");
 
-#endif
+    JAMI_DBG("VideoInput ready to capture");
+
+    return true;
+}
+
+void
+VideoInput::process()
+{
+    if (paused_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        return;
+    }
+    if (not decoder_)
+    createDecoder();
+//    if (switchPending_)
+//        createDecoder();
+
+    if (not captureFrame()) {
+        loop_.stop();
+        return;
+    }
+}
+
+void
+VideoInput::setPaused(bool paused) {
+    paused_ = paused;
+    if (decoder_) {
+        decoder_->updateStartTime();
+    }
+}
+
 
 void VideoInput::clearOptions()
 {
@@ -448,6 +633,8 @@ VideoInput::switchInput(const std::string& resource)
         return {};
     }
 
+    switchPending_ = true;
+
     currentResource_ = resource;
     decOptsFound_ = false;
 
@@ -505,6 +692,14 @@ VideoInput::switchInput(const std::string& resource)
 const DeviceParams&
 VideoInput::getParams() const
 { return decOpts_; }
+
+MediaStream
+VideoInput::getStream(const std::string& path)
+{
+    if (not decoder_)
+        createDecoder();
+    return decoder_->getStream(path);
+}
 
 MediaStream
 VideoInput::getInfo() const

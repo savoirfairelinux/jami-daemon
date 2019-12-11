@@ -69,6 +69,9 @@ public:
     AVPixelFormat getPixelFormat() const;
     const DeviceParams& getParams() const;
     MediaStream getInfo() const;
+    MediaStream getStream(const std::string& path);
+    void setPaused(bool paused);
+    void setSink(const std::string& sinkId);
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 #if VIDEO_CLIENT_INPUT
@@ -91,6 +94,7 @@ private:
     std::promise<DeviceParams> foundDecOpts_;
     std::shared_future<DeviceParams> futureDecOpts_;
     bool emulateRate_       = false;
+    bool paused_             = true;
 
     std::atomic_bool decOptsFound_ {false};
     void foundDecOpts(const DeviceParams& params);
@@ -106,23 +110,34 @@ private:
 
     bool isCapturing() const noexcept;
     void startLoop();
+    std::unique_ptr<MediaDecoder> decoder_;
+    std::shared_ptr<SinkClient> sink_;
+    ThreadLoop loop_;
+//    void setSink(const std::string& sinkId);
+    void process();
+    bool setup();
+    bool captureFrame();
+    void createDecoder();
+     void deleteDecoder();
+    void cleanup();
 
 #if VIDEO_CLIENT_INPUT
     void switchDevice();
     bool capturing_ {false};
 #else
-    void createDecoder();
-    void deleteDecoder();
-    std::unique_ptr<MediaDecoder> decoder_;
-    std::shared_ptr<SinkClient> sink_;
-    ThreadLoop loop_;
+//    void createDecoder();
+//    void deleteDecoder();
+//    std::unique_ptr<MediaDecoder> decoder_;
+//    std::shared_ptr<SinkClient> sink_;
+//    ThreadLoop loop_;
+//    void setSink(const std::string& sinkId);
 
     // for ThreadLoop
-    bool setup();
-    void process();
-    void cleanup();
+    //bool setup();
+   // void process();
+//    void cleanup();
 
-    bool captureFrame();
+    //bool captureFrame();
 
     int rotation_ {0};
     std::shared_ptr<AVBufferRef> displayMatrix_;

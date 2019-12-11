@@ -330,6 +330,11 @@ MediaDecoder::setupStream()
     return 0;
 }
 
+void
+MediaDecoder::updateStartTime() {
+     startTime_ = av_gettime() - startTime_;
+}
+
 MediaDecoder::Status
 MediaDecoder::decode(AVPacket& packet)
 {

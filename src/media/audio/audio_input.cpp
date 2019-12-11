@@ -62,6 +62,10 @@ AudioInput::~AudioInput()
 void
 AudioInput::process()
 {
+    if (paused_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        return;
+       }
     // NOTE This is only useful if the device params weren't yet found in switchInput
     // For both files and audio devices, this is already done
     //foundDevOpts(devOpts_);
@@ -75,6 +79,13 @@ AudioInput::process()
     readFromDevice();
 }
 
+void
+AudioInput::setPaused(bool paused) {
+    paused_ = paused;
+    if (decoder_) {
+           decoder_->updateStartTime();
+       }
+}
 void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
@@ -116,6 +127,10 @@ AudioInput::readFromFile()
 {
     if (!decoder_)
         return;
+    if (paused_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        return;
+    }
     const auto ret = decoder_->decode();
     switch (ret) {
     case MediaDemuxer::Status::Success:
@@ -283,6 +298,12 @@ void
 AudioInput::setMuted(bool isMuted)
 {
     muteState_ = isMuted;
+}
+
+MediaStream
+AudioInput::getStream(const std::string& path) const
+{
+    return decoder_->getStream(path);
 }
 
 MediaStream
