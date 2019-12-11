@@ -156,8 +156,8 @@ CallTest::testCall()
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -201,9 +201,9 @@ CallTest::testCachedCall()
     JAMI_INFO("Waiting....");
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
-    auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
+    auto bobUri = bobAccount->getUsername();
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
+    auto aliceUri = aliceAccount->getUsername();
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -259,8 +259,8 @@ CallTest::testStopSearching()
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
 
     Manager::instance().sendRegister(bobId, false);
 
