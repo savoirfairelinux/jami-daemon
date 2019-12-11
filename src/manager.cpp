@@ -86,6 +86,8 @@ using random_device = dht::crypto::random_device;
 #include <asio/io_context.hpp>
 #include <asio/executor_work_guard.hpp>
 
+#include <git2.h>
+
 #ifndef WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -708,6 +710,8 @@ Manager::init(const std::string &config_file)
     // FIXME: this is no good
     initialized = true;
 
+    git_libgit2_init();
+
 #ifndef WIN32
     // Set the max number of open files.
     struct rlimit nofiles;
@@ -807,6 +811,7 @@ Manager::init(const std::string &config_file)
 void
 Manager::finish() noexcept
 {
+    git_libgit2_shutdown();
     bool expected = false;
     if (not pimpl_->finished_.compare_exchange_strong(expected, true))
         return;
@@ -1259,7 +1264,7 @@ Manager::unHoldConference(const std::string& id)
     if (auto conf = getConferenceFromID(id)) {
         for (const auto &item : conf->getParticipantList())
             offHoldCall(item);
-        
+
         pimpl_->switchCall(id);
         conf->setState(Conference::State::ACTIVE_ATTACHED);
         emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
