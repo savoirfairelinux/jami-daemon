@@ -45,11 +45,6 @@ public:
     ~GitServer();
 
     /**
-     * Launch the server
-     */
-    void run();
-
-    /**
      * Stopping a GitServer will shut the channel down
      */
     void stop();
