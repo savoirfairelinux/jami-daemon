@@ -645,4 +645,37 @@ VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
     videoDeviceMonitor.setDeviceOrientation(deviceId, angle);
 }
 
+std::shared_ptr<MediaPlayer>
+getMediaPlayer(const std::string& id) {
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto it = vmgr.mediaPlayers.find(id);
+      if (it != vmgr.mediaPlayers.end()) {
+          if (auto player = it->second.lock()) {
+              return player;
+          }
+      }
+    return {};
+}
+std::string
+openFile(const std::string& path) {
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto input = std::make_shared<MediaPlayer>(path);
+    auto id = input.get()->getSinkId();
+    vmgr.mediaPlayers[id] = input;
+    return id;
+}
+bool
+togglePause(const std::string& id) {
+    auto player = getMediaPlayer(id);
+    if (player) {
+        player->toglePause();
+        return true;
+    }
+    return false;
+}
+bool
+closePlayer(const std::string& id) {
+    return true;
+}
+
 } // namespace jami

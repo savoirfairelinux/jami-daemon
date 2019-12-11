@@ -176,6 +176,8 @@ DRING_PUBLIC void stopCamera();
 DRING_PUBLIC bool hasCameraStarted();
 DRING_PUBLIC void startAudioDevice();
 DRING_PUBLIC void stopAudioDevice();
+DRING_PUBLIC std::string openFile(const std::string& path);
+
 DRING_PUBLIC bool switchInput(const std::string& resource);
 DRING_PUBLIC bool switchToCamera();
 DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);

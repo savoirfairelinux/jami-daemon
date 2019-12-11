@@ -151,6 +151,10 @@ bool VideoInput::setup()
 void
 VideoInput::process()
 {
+    if (paused_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        return;
+    }
     if (switchPending_)
         createDecoder();
 
@@ -158,6 +162,11 @@ VideoInput::process()
         loop_.stop();
         return;
     }
+}
+
+void
+VideoInput::setPaused(bool paused) {
+    paused_ = paused;
 }
 
 void
@@ -186,6 +195,11 @@ VideoInput::captureFrame()
     default:
         return true;
     }
+}
+
+void
+VideoInput::setSink(const std::string& sinkId) {
+    sink_ = SinkClient(sinkId);
 }
 
 void
