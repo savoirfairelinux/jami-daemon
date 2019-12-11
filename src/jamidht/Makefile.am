@@ -21,6 +21,8 @@ libringacc_la_SOURCES = \
         channeled_transport.cpp \
         channeled_transfers.h \
         channeled_transfers.cpp \
+        conversationrepository.h \
+        conversationrepository.cpp \
         multiplexed_socket.h \
         multiplexed_socket.cpp \
         sips_transport_ice.cpp \
