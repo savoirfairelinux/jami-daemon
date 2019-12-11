@@ -62,6 +62,10 @@ AudioInput::~AudioInput()
 void
 AudioInput::process()
 {
+//    if (paused_) {
+//        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+//        return;
+//    }
     // NOTE This is only useful if the device params weren't yet found in switchInput
     // For both files and audio devices, this is already done
     //foundDevOpts(devOpts_);
@@ -75,6 +79,21 @@ AudioInput::process()
     readFromDevice();
 }
 
+void
+AudioInput::setPaused(bool paused) {
+    paused_ = paused;
+//    if (decoder_) {
+//           decoder_->updateStartTime();
+//    }
+}
+
+void
+AudioInput::updateStartTime(int64_t start) {
+    if (decoder_) {
+           decoder_->updateStartTime(start);
+    }
+
+}
 void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
@@ -116,17 +135,32 @@ AudioInput::readFromFile()
 {
     if (!decoder_)
         return;
+    if (paused_) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        return;
+    }
     const auto ret = decoder_->decode();
     switch (ret) {
     case MediaDemuxer::Status::Success:
         break;
     case MediaDemuxer::Status::EndOfFile:
-        createDecoder();
+             //setPaused(true);
+            if (fileFinished) {
+                paused_ = true;
+                fileFinished();
+            } else {
+                createDecoder();
+            }
         break;
     case MediaDemuxer::Status::ReadError:
         JAMI_ERR() << "Failed to decode frame";
         break;
     }
+}
+
+int64_t
+AudioInput::duration() const {
+    return decoder_->duration();
 }
 
 bool
@@ -243,6 +277,7 @@ AudioInput::createDecoder()
     auto decoder = std::make_unique<MediaDecoder>([this](std::shared_ptr<MediaFrame>&& frame) {
         fileBuf_->put(std::move(std::static_pointer_cast<AudioFrame>(frame)));
     });
+    decoder->emulateRate();
 
     // NOTE don't emulate rate, file is read as frames are needed
 
@@ -272,6 +307,20 @@ AudioInput::createDecoder()
 }
 
 void
+AudioInput::setFileFinishedCallback(const std::function<void(void)>& cb) noexcept
+{
+    if (cb) {
+        fileFinished = cb;
+    }
+}
+
+void
+AudioInput::emulateRate()
+{
+decoder_->emulateRate();
+}
+
+void
 AudioInput::setFormat(const AudioFormat& fmt)
 {
     std::lock_guard<std::mutex> lk(fmtMutex_);
@@ -283,6 +332,12 @@ void
 AudioInput::setMuted(bool isMuted)
 {
     muteState_ = isMuted;
+}
+
+MediaStream
+AudioInput::getStream(const std::string& path) const
+{
+    return decoder_->getStream(path);
 }
 
 MediaStream
