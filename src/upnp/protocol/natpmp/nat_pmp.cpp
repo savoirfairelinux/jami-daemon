@@ -67,10 +67,7 @@ NatPmp::NatPmp()
                     or restart_;
             });
             if (not pmpRun_ or not pmpIGD_) break;
-            auto now = clock::now();
-
-            // If the restart flag is set, wait for 1 second to have passed by to try and reinitialize natpmp.
-            if (restart_ and (now - restartTimer_ >= std::chrono::seconds(1))) {
+            if (restart_) {
                 std::lock_guard<std::mutex> lk(natpmpMutex_);
                 clearNatPmpHdl(natpmpHdl_);
                 int err = 0;
@@ -87,7 +84,9 @@ NatPmp::NatPmp()
                 }
                 if (err < 0) {
                     JAMI_ERR("NAT-PMP: Can't initialize libnatpmp -> %s", getNatPmpErrorStr(err).c_str());
-                    restartTimer_ = clock::now();
+                    // Retry to re-init nat pmp in 10 seconds
+                    std::this_thread::sleep_for(std::chrono::seconds(10));
+                    continue;
                 } else {
                     char addrbuf[INET_ADDRSTRLEN];
                     inet_ntop(AF_INET, &natpmpHdl_.gateway, addrbuf, sizeof(addrbuf));
@@ -98,6 +97,7 @@ NatPmp::NatPmp()
             }
 
             // Check if we need to update IGD.
+            auto now = clock::now();
             if (pmpIGD_->renewal_ < now) {
                 lk.unlock();
                 searchForPmpIgd();
@@ -172,7 +172,6 @@ NatPmp::clearIgds()
     std::lock_guard<std::mutex> lk(validIgdMutex_);
     pmpIGD_.reset(new PMPIGD());
     restart_ = true;
-    restartTimer_ = clock::now();
 }
 
 void
