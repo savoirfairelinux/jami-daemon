@@ -75,6 +75,7 @@ class PeerConnection;
 class ContactList;
 class AccountManager;
 struct AccountInfo;
+class Conversation;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -115,7 +116,7 @@ public:
      */
     JamiAccount(const std::string& accountID, bool presenceEnabled);
 
-    ~JamiAccount();
+    ~JamiAccount() noexcept;
 
     /**
      * Serialize internal state of this account for configuration
@@ -413,6 +414,19 @@ public:
      */
     void registerDhtAddress(IceTransport&);
 
+    // Conversation management
+    std::string startConversation();
+    bool removeConversation(const std::string& conversationId);
+
+    // Member management
+    void addConversationMember(const std::string& conversationId, const std::string& contactUri);
+    bool removeConversationMember(const std::string& conversationId, const std::string& contactUri);
+    std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& conversationId);
+
+    // Message send/load
+    void sendMessage(const std::string& conversationId, const std::string& message, const std::string& parent);
+    void loadConversationMessages(const std::string& conversationId, const std::string& fromMessage, size_t n);
+
 private:
     NON_COPYABLE(JamiAccount);
 
@@ -541,7 +555,7 @@ private:
     std::string nameServer_;
     std::string registeredName_;
 #endif
-        std::shared_ptr<dht::Logger> logger_;
+    std::shared_ptr<dht::Logger> logger_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
     std::unique_ptr<AccountManager> accountManager_;
@@ -579,6 +593,9 @@ private:
     /* tracked buddies presence */
     mutable std::mutex buddyInfoMtx;
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
+
+    /** Conversations */
+    std::map<std::string, std::shared_ptr<Conversation>> conversations_;
 
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
