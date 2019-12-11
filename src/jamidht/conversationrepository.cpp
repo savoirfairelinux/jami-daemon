@@ -30,6 +30,7 @@ using random_device = dht::crypto::random_device;
 #include <fstream>
 #include <json/json.h>
 #include <regex>
+#include <exception>
 
 namespace jami {
 
@@ -42,15 +43,13 @@ public:
     {
         auto shared = account.lock();
         if (!shared)
-            return;
+            throw std::logic_error("No account detected when loading conversation");
         auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
                     + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + id_;
         git_repository* repo = nullptr;
         // TODO share this repo with GitServer
-        if (git_repository_open(&repo, path.c_str()) != 0) {
-            JAMI_WARN("Couldn't open %s", path.c_str());
-            return;
-        }
+        if (git_repository_open(&repo, path.c_str()) != 0)
+            throw std::logic_error("Couldn't open " + path);
         repository_ = {std::move(repo), git_repository_free};
     }
     ~Impl() = default;
@@ -64,6 +63,8 @@ public:
 
     GitDiff diff(const std::string& idNew, const std::string& idOld) const;
     std::string diffStats(const GitDiff& diff) const;
+
+    std::vector<ConversationCommit> log(const std::string& from, const std::string& to, unsigned n);
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
@@ -535,7 +536,27 @@ ConversationRepository::Impl::commit(const std::string& msg)
     }
     GitSignature sig {sig_ptr, git_signature_free};
 
-    // Retrieve current HEAD
+    // Retrieve current index
+    git_index* index_ptr = nullptr;
+    if (git_repository_index(&index_ptr, repository_.get()) < 0) {
+        JAMI_ERR("Could not open repository index");
+        return {};
+    }
+    GitIndex index {index_ptr, git_index_free};
+
+    git_oid tree_id;
+    if (git_index_write_tree(&tree_id, index.get()) < 0) {
+        JAMI_ERR("Unable to write initial tree from index");
+        return {};
+    }
+
+    git_tree* tree_ptr = nullptr;
+    if (git_tree_lookup(&tree_ptr, repository_.get(), &tree_id) < 0) {
+        JAMI_ERR("Could not look up initial tree");
+        return {};
+    }
+    GitTree tree = {tree_ptr, git_tree_free};
+
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, repository_.get(), "HEAD") < 0) {
         JAMI_ERR("Cannot get reference for HEAD");
@@ -548,13 +569,6 @@ ConversationRepository::Impl::commit(const std::string& msg)
         return {};
     }
     GitCommit head_commit {head_ptr, git_commit_free};
-
-    git_tree* tree_ptr = nullptr;
-    if (git_commit_tree(&tree_ptr, head_commit.get()) < 0) {
-        JAMI_ERR("Could not look up initial tree");
-        return {};
-    }
-    GitTree tree {tree_ptr, git_tree_free};
 
     git_buf to_sign = {};
     const git_commit* head_ref[1] = {head_commit.get()};
@@ -616,7 +630,6 @@ ConversationRepository::Impl::diff(const std::string& idNew, const std::string& 
     git_oid oid;
     git_commit* commitNew = nullptr;
     if (idNew == "HEAD") {
-        JAMI_ERR("@@@ HEAD");
         if (git_reference_name_to_id(&oid, repository_.get(), "HEAD") < 0) {
             JAMI_ERR("Cannot get reference for HEAD");
             return {nullptr, git_diff_free};
@@ -673,6 +686,89 @@ ConversationRepository::Impl::diff(const std::string& idNew, const std::string& 
         return {nullptr, git_diff_free};
     }
     return {diff_ptr, git_diff_free};
+}
+
+std::vector<ConversationCommit>
+ConversationRepository::Impl::log(const std::string& from, const std::string& to, unsigned n)
+{
+    std::vector<ConversationCommit> commits {};
+
+    git_oid oid;
+    if (from.empty()) {
+        if (git_reference_name_to_id(&oid, repository_.get(), "HEAD") < 0) {
+            JAMI_ERR("Cannot get reference for HEAD");
+            return commits;
+        }
+    } else {
+        if (git_oid_fromstr(&oid, from.c_str()) < 0) {
+            JAMI_ERR("Cannot get reference for commit %s", from.c_str());
+            return commits;
+        }
+    }
+
+    git_revwalk* walker_ptr = nullptr;
+    if (git_revwalk_new(&walker_ptr, repository_.get()) < 0
+        || git_revwalk_push(walker_ptr, &oid) < 0) {
+        JAMI_ERR("Couldn't init revwalker for conversation %s", id_.c_str());
+        return commits;
+    }
+    GitRevWalker walker {walker_ptr, git_revwalk_free};
+    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL);
+
+    auto x = git_oid_tostr_s(&oid);
+    for (auto idx = 0; !git_revwalk_next(&oid, walker.get()); ++idx) {
+        if (n != 0 && idx == n) {
+            break;
+        }
+        git_commit* commit_ptr = nullptr;
+        std::string id = git_oid_tostr_s(&oid);
+        if (git_commit_lookup(&commit_ptr, repository_.get(), &oid) < 0) {
+            JAMI_WARN("Failed to look up commit %s", id.c_str());
+            break;
+        }
+        GitCommit commit {commit_ptr, git_commit_free};
+        if (id == to) {
+            break;
+        }
+
+        const git_signature* sig = git_commit_author(commit.get());
+        GitAuthor author;
+        author.name = sig->name;
+        author.email = sig->email;
+        std::vector<std::string> parents;
+        auto parentsCount = git_commit_parentcount(commit.get());
+        for (unsigned int p = 0; p < parentsCount; ++p) {
+            std::string parent {};
+            const git_oid* pid = git_commit_parent_id(commit.get(), p);
+            if (pid) {
+                parent = git_oid_tostr_s(pid);
+                parents.emplace_back(parent);
+            }
+        }
+
+        auto cc = commits.emplace(commits.end(), ConversationCommit {});
+        cc->id = id;
+        cc->commit_msg = git_commit_message(commit.get());
+        cc->author = author;
+        cc->parents = parents;
+        git_buf signature = {}, signed_data = {};
+        if (git_commit_extract_signature(&signature,
+                                         &signed_data,
+                                         repository_.get(),
+                                         &oid,
+                                         "signature")
+            < 0) {
+            JAMI_WARN("Could not extract signature for commit %s", id.c_str());
+        } else {
+            cc->signature = base64::decode(
+                std::string(signature.ptr, signature.ptr + signature.size));
+            cc->signed_content = std::vector<uint8_t>(signed_data.ptr,
+                                                      signed_data.ptr + signed_data.size);
+        }
+        cc->timestamp = git_commit_time(commit.get());
+    }
+
+    return commits;
 }
 
 std::string
@@ -790,6 +886,59 @@ ConversationRepository::id() const
     return pimpl_->id_;
 }
 
+std::string
+ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate>& memberCert)
+{
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return {};
+    auto deviceId = account->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto name = account->getAccountDetails()[DRing::Account::ConfProperties::DISPLAYNAME];
+    if (name.empty())
+        name = account
+                   ->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+    if (name.empty())
+        name = deviceId;
+
+    // First, we need to add the member file to the repository if not present
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+
+    if (!memberCert) {
+        JAMI_ERR("Cert is null!");
+        return {};
+    }
+
+    std::string membersPath = repoPath + "members";
+    if (!fileutils::recursive_mkdir(membersPath, 0700)) {
+        JAMI_ERR("Error when creating %s.", membersPath.c_str());
+        return {};
+    }
+    std::string memberId = memberCert->getId().toString();
+    std::string devicePath = membersPath + DIR_SEPARATOR_STR + memberId + ".crt";
+    if (fileutils::isFile(devicePath)) {
+        JAMI_WARN("Member %s already present!", memberId.c_str());
+        return {};
+    }
+
+    auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    if (!file.is_open()) {
+        JAMI_ERR("Could not write data to %s", devicePath.c_str());
+        return {};
+    }
+    file << memberCert->toString(true);
+    std::string path = "members/" + memberId + ".crt";
+    if (!pimpl_->add(path.c_str()))
+        return {};
+    Json::Value json;
+    json["body"] = "Add member " + memberId;
+    ;
+    json["type"] = "member";
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    return pimpl_->commit(Json::writeString(wbuilder, json));
+}
+
 bool
 ConversationRepository::fetch(const std::string& remoteDeviceId)
 {
@@ -851,23 +1000,17 @@ ConversationRepository::remoteHead(const std::string& remoteDeviceId, const std:
 }
 
 std::string
-ConversationRepository::sendMessage(const std::string& msg)
+ConversationRepository::commitMessage(const std::string& msg)
 {
     auto account = pimpl_->account_.lock();
     if (!account)
         return {};
     auto deviceId = account->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
-    auto name = account->getAccountDetails()[DRing::Account::ConfProperties::DISPLAYNAME];
-    if (name.empty())
-        name = account
-                   ->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
-    if (name.empty())
-        name = deviceId;
 
     // First, we need to add device file to the repository if not present
     std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
-    std::string devicePath = repoPath + DIR_SEPARATOR_STR + "devices" + DIR_SEPARATOR_STR + deviceId
-                             + ".crt";
+    std::string path = std::string("devices") + DIR_SEPARATOR_STR + deviceId + ".crt";
+    std::string devicePath = repoPath + path;
     if (!fileutils::isFile(devicePath)) {
         auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
@@ -879,170 +1022,23 @@ ConversationRepository::sendMessage(const std::string& msg)
         file << deviceCert;
         file.close();
 
-        // git add
-        git_index* index_ptr = nullptr;
-        if (git_repository_index(&index_ptr, pimpl_->repository_.get()) < 0) {
-            JAMI_ERR("Could not open repository index");
-            return {};
-        }
-        GitIndex index {index_ptr, git_index_free};
-
-        git_index_add_bypath(index.get(), devicePath.c_str());
-        git_index_write(index.get());
+        if (!pimpl_->add(path))
+            JAMI_WARN("Couldn't add file %s", devicePath.c_str());
     }
 
-    git_signature* sig_ptr = nullptr;
-    // Sign commit's buffer
-    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
-        JAMI_ERR("Unable to create a commit signature.");
-        return {};
-    }
-    GitSignature sig {sig_ptr, git_signature_free};
-
-    // Retrieve current HEAD
-    git_oid commit_id;
-    if (git_reference_name_to_id(&commit_id, pimpl_->repository_.get(), "HEAD") < 0) {
-        JAMI_ERR("Cannot get reference for HEAD");
-        return {};
-    }
-
-    git_commit* head_ptr = nullptr;
-    if (git_commit_lookup(&head_ptr, pimpl_->repository_.get(), &commit_id) < 0) {
-        JAMI_ERR("Could not look up HEAD commit");
-        return {};
-    }
-    GitCommit head_commit {head_ptr, git_commit_free};
-
-    git_tree* tree_ptr = nullptr;
-    if (git_commit_tree(&tree_ptr, head_commit.get()) < 0) {
-        JAMI_ERR("Could not look up initial tree");
-        return {};
-    }
-    GitTree tree {tree_ptr, git_tree_free};
-
-    git_buf to_sign = {};
-    const git_commit* head_ref[1] = {head_commit.get()};
-    if (git_commit_create_buffer(&to_sign,
-                                 pimpl_->repository_.get(),
-                                 sig.get(),
-                                 sig.get(),
-                                 nullptr,
-                                 msg.c_str(),
-                                 tree.get(),
-                                 1,
-                                 &head_ref[0])
-        < 0) {
-        JAMI_ERR("Could not create commit buffer");
-        return {};
-    }
-
-    // git commit -S
-    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
-    auto signed_buf = account->identity().first->sign(to_sign_vec);
-    std::string signed_str = base64::encode(signed_buf.begin(), signed_buf.end());
-    if (git_commit_create_with_signature(&commit_id,
-                                         pimpl_->repository_.get(),
-                                         to_sign.ptr,
-                                         signed_str.c_str(),
-                                         "signature")
-        < 0) {
-        JAMI_ERR("Could not sign commit");
-        return {};
-    }
-
-    // Move commit to master branch
-    git_reference* ref_ptr = nullptr;
-    if (git_reference_create(&ref_ptr,
-                             pimpl_->repository_.get(),
-                             "refs/heads/master",
-                             &commit_id,
-                             true,
-                             nullptr)
-        < 0) {
-        JAMI_WARN("Could not move commit to master");
-    }
-    git_reference_free(ref_ptr);
-
-    auto commit_str = git_oid_tostr_s(&commit_id);
-    if (commit_str) {
-        JAMI_INFO("New message added with id: %s", commit_str);
-    }
-    return commit_str ? commit_str : "";
+    return pimpl_->commit(msg);
 }
 
 std::vector<ConversationCommit>
-ConversationRepository::log(const std::string& last, unsigned n)
+ConversationRepository::logN(const std::string& last, unsigned n)
 {
-    std::vector<ConversationCommit> commits {};
+    return pimpl_->log(last, "", n);
+}
 
-    git_oid oid;
-    if (last.empty()) {
-        if (git_reference_name_to_id(&oid, pimpl_->repository_.get(), "HEAD") < 0) {
-            JAMI_ERR("Cannot get reference for HEAD");
-            return commits;
-        }
-    } else {
-        if (git_oid_fromstr(&oid, last.c_str()) < 0) {
-            JAMI_ERR("Cannot get reference for commit %s", last.c_str());
-            return commits;
-        }
-    }
-
-    git_revwalk* walker_ptr = nullptr;
-    if (git_revwalk_new(&walker_ptr, pimpl_->repository_.get()) < 0
-        || git_revwalk_push(walker_ptr, &oid) < 0) {
-        JAMI_ERR("Couldn't init revwalker for conversation %s", pimpl_->id_.c_str());
-        return commits;
-    }
-    GitRevWalker walker {walker_ptr, git_revwalk_free};
-    git_revwalk_sorting(walker.get(), GIT_SORT_TOPOLOGICAL);
-
-    auto x = git_oid_tostr_s(&oid);
-    for (auto idx = 0; !git_revwalk_next(&oid, walker.get()); ++idx) {
-        if (n != 0 && idx == n) {
-            break;
-        }
-        git_commit* commit_ptr = nullptr;
-        std::string id = git_oid_tostr_s(&oid);
-        if (git_commit_lookup(&commit_ptr, pimpl_->repository_.get(), &oid) < 0) {
-            JAMI_WARN("Failed to look up commit %s", id.c_str());
-            break;
-        }
-        GitCommit commit {commit_ptr, git_commit_free};
-
-        const git_signature* sig = git_commit_author(commit.get());
-        GitAuthor author;
-        author.name = sig->name;
-        author.email = sig->email;
-        std::string parent {};
-        const git_oid* pid = git_commit_parent_id(commit.get(), 0);
-        if (pid) {
-            parent = git_oid_tostr_s(pid);
-        }
-
-        auto cc = commits.emplace(commits.end(), ConversationCommit {});
-        cc->id = id;
-        cc->commit_msg = git_commit_message(commit.get());
-        cc->author = author;
-        cc->parent = parent;
-        git_buf signature = {}, signed_data = {};
-        if (git_commit_extract_signature(&signature,
-                                         &signed_data,
-                                         pimpl_->repository_.get(),
-                                         &oid,
-                                         "signature")
-            < 0) {
-            JAMI_WARN("Could not extract signature for commit %s", id.c_str());
-        } else {
-            cc->signature = base64::decode(
-                std::string(signature.ptr, signature.ptr + signature.size));
-            cc->signed_content = std::vector<uint8_t>(signed_data.ptr,
-                                                      signed_data.ptr + signed_data.size);
-        }
-        cc->timestamp = git_commit_time(commit.get());
-    }
-
-    return commits;
+std::vector<ConversationCommit>
+ConversationRepository::log(const std::string& from, const std::string& to)
+{
+    return pimpl_->log(from, to, 0);
 }
 
 bool
