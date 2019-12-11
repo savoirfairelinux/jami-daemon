@@ -69,6 +69,7 @@
 #include "string_utils.h"
 #include "array_size.h"
 #include "archiver.h"
+#include "conversation.h"
 
 #include "config/yamlparser.h"
 #include "security/certstore.h"
@@ -3168,6 +3169,50 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
         setCodecActive(AV_CODEC_ID_VP8);
     }
 }
+std::string
+JamiAccount::startConversation()
+{
+
+}
+
+bool
+JamiAccount::removeConversation(const std::string& conversationId)
+{
+
+}
+
+// Member management
+void
+JamiAccount::addConversationMember(const std::string& conversationId, const std::string& contactUri)
+{
+    conversations_[conversationId]->addMember(contactUri);
+}
+
+bool
+JamiAccount::removeConversationMember(const std::string& conversationId, const std::string& contactUri)
+{
+    conversations_[conversationId]->removeMember(contactUri);
+}
+
+std::vector<std::map<std::string, std::string>>
+JamiAccount::getConversationMembers(const std::string& conversationId)
+{
+
+}
+
+// Message send/load
+void
+JamiAccount::sendMessage(const std::string& conversationId, const std::string& message, const std::string& parent)
+{
+
+}
+
+void
+JamiAccount::loadConversationMessages(const std::string& conversationId, const std::string& fromMessage, size_t n)
+{
+
+}
+
 
 void
 JamiAccount::cacheTurnServers()

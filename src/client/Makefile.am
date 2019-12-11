@@ -17,6 +17,7 @@ libclient_la_SOURCES = \
 	callmanager.cpp \
 	configurationmanager.cpp \
 	datatransfer.cpp \
+	conversation.cpp \
 	$(PRESENCE_SRC) \
 	$(VIDEO_SRC)
 
