@@ -166,7 +166,7 @@ ConnectionManagerTest::testConnectDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
@@ -204,7 +204,7 @@ ConnectionManagerTest::testAcceptConnection()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
@@ -250,7 +250,7 @@ ConnectionManagerTest::testMultipleChannels()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
@@ -306,7 +306,7 @@ ConnectionManagerTest::testMultipleChannelsSameName()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
@@ -362,7 +362,7 @@ ConnectionManagerTest::testSendReceiveData()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
@@ -439,7 +439,7 @@ ConnectionManagerTest::testDeclineConnection()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
@@ -486,7 +486,7 @@ ConnectionManagerTest::testAcceptsICERequest()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
 
@@ -532,7 +532,7 @@ ConnectionManagerTest::testDeclineICERequest()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
 
@@ -579,7 +579,7 @@ ConnectionManagerTest::testChannelRcvShutdown()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
@@ -631,7 +631,7 @@ ConnectionManagerTest::testChannelSenderShutdown()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
@@ -685,7 +685,7 @@ ConnectionManagerTest::testCloseConnectionWithDevice()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
@@ -742,8 +742,8 @@ ConnectionManagerTest::testShutdownCallbacks()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
-    auto aliceDeviceId = DeviceId(aliceAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
+    auto aliceDeviceId = DeviceId(std::string(aliceAccount->currentDeviceId()));
 
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
@@ -807,7 +807,7 @@ ConnectionManagerTest::testFloodSocket()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     std::mutex mtx;
@@ -913,7 +913,7 @@ ConnectionManagerTest::testDestroyWhileSending()
     // This test if a segfault occurs
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobDeviceId = DeviceId(bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID]);
+    auto bobDeviceId = DeviceId(std::string(bobAccount->currentDeviceId()));
     bobAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     aliceAccount->connectionManager().onICERequest([](const DeviceId&) { return true; });
     std::mutex mtx;
