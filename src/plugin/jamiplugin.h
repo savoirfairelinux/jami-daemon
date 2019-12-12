@@ -71,6 +71,10 @@ typedef struct JAMI_PluginObjectFactory {
 /* Plugins exposed API prototype */
 typedef int32_t (*JAMI_PluginFunc)(const JAMI_PluginAPI *api, const char *name,
                                    void *data);
+/* Plugins exposed functions that take a context */
+typedef int32_t (*JAMI_PluginContextFunc)(void* context,
+                                          const JAMI_PluginAPI* api,
+                                          const char* name, void* data);
 
 /* JAMI_PluginInitFunc parameters.
  * This structure is filled by the Plugin manager.
@@ -83,11 +87,12 @@ typedef struct JAMI_PluginAPI {
   /* API usable by plugin implementors */
   JAMI_PluginFunc registerObjectFactory;
   JAMI_PluginFunc invokeService;
+  JAMI_PluginContextFunc manageComponent;
 } JAMI_PluginAPI;
 
 typedef void (*JAMI_PluginExitFunc)(void);
 
-typedef JAMI_PluginExitFunc (*JAMI_PluginInitFunc)(const JAMI_PluginAPI *api, char const* path);
+typedef JAMI_PluginExitFunc (*JAMI_PluginInitFunc)(void* context, const JAMI_PluginAPI *api, char const* path);
 
 C_INTERFACE_END;
 

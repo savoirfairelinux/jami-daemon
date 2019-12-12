@@ -79,6 +79,7 @@ bool PluginManager::load(const std::string &path) {
 
 bool PluginManager::unload(const std::string& path) {
     bool returnValue{false};
+    destroyPluginComponents(path);
     PluginMap::iterator it = dynPluginMap_.find(path);
     if ( it != dynPluginMap_.end()) {
         dynPluginMap_.erase(it);
@@ -86,6 +87,19 @@ bool PluginManager::unload(const std::string& path) {
     }
 
     return returnValue;
+}
+
+void PluginManager::destroyPluginComponents(const std::string &path)
+{
+    auto itComponents = pluginComponentsMap_.find(path);
+    if(itComponents != pluginComponentsMap_.end()) {
+        for(const auto& pair : itComponents->second) {
+            auto clcm = componentsLifeCycleManagers_.find(pair.first);
+            if(clcm != componentsLifeCycleManagers_.end()) {
+                clcm->second.destroyComponent(pair.second);
+            }
+        }
+    }
 }
 
 
@@ -101,7 +115,7 @@ bool PluginManager::callPluginInitFunction(const std::string &path){
 
         try {
             // Call Plugin Init function
-            exitFunc = initFunc(&pluginApi_, plugin->getCPath());
+            exitFunc = initFunc(plugin.get(), &pluginApi_, plugin->getPath().c_str());
         } catch (const std::runtime_error &e) {
             JAMI_ERR() << e.what();
             return false;
@@ -126,7 +140,8 @@ bool PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin) {
   JAMI_PluginExitFunc exitFunc = nullptr;
 
   try {
-      exitFunc = initFunc(&pluginApi_, static_cast<DLPlugin*>(plugin.get())->getCPath());
+      DLPlugin* pluginPtr = static_cast<DLPlugin*>(plugin.get());
+      exitFunc = initFunc(pluginPtr, &pluginApi_, pluginPtr->getPath().c_str());
   } catch (const std::runtime_error &e) {
     JAMI_ERR() << e.what();
   }
@@ -172,6 +187,28 @@ int32_t PluginManager::invokeService(const std::string &name, void *data) {
   }
 }
 
+int32_t PluginManager::manageComponent(const std::string& pluginId, const std::string& name, void *data)
+{
+    const auto& iter = componentsLifeCycleManagers_.find(name);
+    if(iter == componentsLifeCycleManagers_.end()) {
+        JAMI_ERR() << "Component lifecycle manager not found: " << name;
+        return -1;
+    }
+
+    const auto& componentLifecycleManager = iter->second;
+    
+    try {
+        int32_t r =  componentLifecycleManager.takeComponentOwnership(data);
+        if(r == 0) {
+            pluginComponentsMap_[pluginId].emplace_back(name,data);
+        }
+        return r;
+    } catch(const std::runtime_error &e) {
+        JAMI_ERR() << e.what();
+        return -1;
+    }
+}
+
 /* WARNING: exposed to plugins through JAMI_PluginAPI */
 bool PluginManager::registerObjectFactory(
     const char *type, const JAMI_PluginObjectFactory &factoryData) {
@@ -207,6 +244,15 @@ bool PluginManager::registerObjectFactory(
 
   exactMatchMap_[key] = factory;
   return true;
+}
+
+bool PluginManager::registerComponentManager(const std::string &name,
+                                             ServiceFunction &&takeOwnership,
+                                             ServiceFunction &&destroyComponent)
+{
+    componentsLifeCycleManagers_[name] = {std::forward<ServiceFunction>(takeOwnership),
+                                          std::forward<ServiceFunction>(destroyComponent)};
+    return true;
 }
 
 std::unique_ptr<void, PluginManager::ObjectDeleter>
@@ -275,6 +321,25 @@ int32_t PluginManager::invokeService_(const JAMI_PluginAPI *api,
   }
 
   return manager->invokeService(name, data);
+}
+
+
+int32_t PluginManager::manageComponent_(void* context,
+                                        const JAMI_PluginAPI* api,
+                                        const char* name,
+                                        void *data)
+{
+    auto manager = reinterpret_cast<PluginManager *>(api->context);
+    auto plugin = reinterpret_cast<DLPlugin *>(context);
+    if (!manager) {
+        JAMI_ERR() << "createComponent called with null plugin API";
+        return -1;
+    } else if(!plugin){
+        JAMI_ERR() << "createComponent called with null context";
+        return -1;
+    }
+    
+    return manager->manageComponent(plugin->getPath(), name, data);
 }
 
 } // namespace jami
