@@ -1,4 +1,4 @@
-/*
+﻿/*
  *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,9 @@
 #include "noncopyable.h"
 #include "fileutils.h"
 #include "archiver.h"
+#include "pluginmanager.h"
+#include "callservicesmanager.h"
+#include "pluginpreferencesmanager.h"
 
 #include <vector>
 #include <map>
@@ -30,39 +33,30 @@ namespace jami {
 class JamiPluginManager
 {
 public:
-    JamiPluginManager() = default;
+    JamiPluginManager() {
+        csm_.registerComponentsLifeCycleManagers(pm_);
+    }
+
     NON_COPYABLE(JamiPluginManager);
     // TODO : improve getPluginDetails
     /**
      * @brief getPluginDetails
-     * Returns the tuple (name, description, icon path, so path)
+     * Parses a manifest file and returns :
+     * The tuple (name, description, version, icon path, so path)
      * The icon should ideally be 192x192 pixels or better 512x512 pixels
      * In order to match with android specifications
      * https://developer.android.com/google-play/resources/icon-design-specifications
-     * @param plugin rootPath
+     * Saves the result in a map
+     * @param plugin rootPath (folder of the plugin)
      * @return map where the keyset is {"name", "description", "iconPath"}
      */
-    std::map<std::string, std::string> getPluginDetails(const std::string& rootPath) {
-        std::map<std::string, std::string> details = parseManifestFile(manifestPath(rootPath));
-        details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
-        details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
-        return details;
-    }
+    std::map<std::string, std::string> getPluginDetails(const std::string& rootPath);
 
     /**
      * @brief listPlugins
      * @return list of installed plugin directories on the device
      */
-    std::vector<std::string> listPlugins() {
-        std::string pluginsPath = fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins";
-        std::vector<std::string> pluginsPaths = fileutils::readDirectory(pluginsPath);
-        std::for_each(pluginsPaths.begin(), pluginsPaths.end(),
-                      [&pluginsPath](std::string& x){ x = pluginsPath + DIR_SEPARATOR_CH + x;});
-        auto predicate = [this](std::string path){ return !checkPluginValidity(path);};
-        auto returnIterator = std::remove_if(pluginsPaths.begin(),pluginsPaths.end(),predicate);
-        pluginsPaths.erase(returnIterator,std::end(pluginsPaths));
-        return pluginsPaths;
-    }
+    std::vector<std::string> listPlugins();
 
     /**
      * @brief installPlugin
@@ -81,12 +75,55 @@ public:
      * @param pluginRootPath
      * @return 0 if success
      */
-    int uninstallPlugin(const std::string& pluginRootPath){
-        if(checkPluginValidity(pluginRootPath)) {
-            return fileutils::removeAll(pluginRootPath);
-        } else {
-            return -1;
+    int uninstallPlugin(const std::string& rootPath);
+
+    /**
+     * @brief loadPlugin
+     * @param rootPath of the plugin folder
+     */
+    void loadPlugin(const std::string& rootPath);
+
+    /**
+     * @brief unloadPlugin
+     * @param rootPath of the plugin folder
+     */
+    void unloadPlugin(const std::string& rootPath);
+
+    /**
+     * @brief togglePlugin
+     * @param rootPath of the plugin folder
+     * @param toggle: if true, register a new instance of the plugin
+     * else, remove the existing instance
+     * N.B: before adding a new instance, remove any existing one
+     */
+    void togglePlugin(const std::string& rootPath, bool toggle);
+
+    std::vector<std::map<std::string,std::string>>
+    getPluginPreferences(const std::string& path) {
+        return ppm_.getPluginPreferences(path);
+    }
+
+    bool setPluginPreference(const std::string& path,
+                             const std::string& key,
+                             const std::string& value){
+        bool r =  ppm_.savePluginPreferenceValue(path,key,value);
+        if(r == 0) {
+            csm_.notifySetPreferenceValueChange(path, key, value);
         }
+        return r;
+    }
+
+    std::map<std::string,std::string>
+    getPluginPreferencesValuesMap(const std::string& path){
+        return ppm_.getPluginPreferencesValuesMap(path);
+    }
+
+    bool resetPluginPreferencesValuesMap(const std::string& path){
+        return ppm_.resetPluginPreferencesValuesMap(path);
+    }
+
+    CallServicesManager& getCsm() {
+        return csm_;
     }
 
 private:
@@ -119,6 +156,14 @@ private:
     const std::string manifestPath(const std::string& pluginRootPath) {
         return pluginRootPath + DIR_SEPARATOR_CH + "manifest.json";
     }
+
+private:
+    PluginManager pm_;
+    CallServicesManager csm_;
+    PluginPreferencesManager ppm_;
+
+private:
+    std::map<std::string, std::map<std::string, std::string>> pluginDetailsMap_;
 };
 }
 
