@@ -414,10 +414,6 @@ struct Manager::ManagerPimpl
     std::unique_ptr<VideoManager> videoManager_;
 #endif
 
-    /* Plugin Services Manager */
-    PluginServicesManager plugin_services_manager;
-    /* Plugin Preferences Manager*/
-    PluginPreferencesManager plugin_preferences_manager;
     /* Jami Plugin Manager */
     JamiPluginManager jami_plugin_manager;
 };
@@ -3051,16 +3047,6 @@ Manager::getLastMessages(const std::string& accountID, const uint64_t& base_time
     if (const auto acc = getAccount(accountID))
         return acc->getLastMessages(base_timestamp);
     return {};
-}
-
-PluginServicesManager& Manager::getPluginServicesManager()
-{
-    return pimpl_->plugin_services_manager;
-}
-
-PluginPreferencesManager& Manager::getPluginPreferencesManager()
-{
-    return pimpl_->plugin_preferences_manager;
 }
 
 JamiPluginManager& Manager::getJamiPluginManager()
