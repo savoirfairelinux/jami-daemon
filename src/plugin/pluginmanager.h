@@ -46,8 +46,14 @@ private:
     JAMI_PluginObjectFactory data;
     ObjectDeleter deleter;
   };
+  
+  struct ComponentLifeCycleManager{
+      ServiceFunction takeComponentOwnership;
+      ServiceFunction destroyComponent;
+  };
 
   using PluginMap = std::map<std::string, std::shared_ptr<Plugin>>;
+  using PluginComponentsMap = std::map<std::string, std::vector<std::pair<std::string, void*>>>;
   using ExitFuncVec = std::vector<JAMI_PluginExitFunc>;
   using ObjectFactoryVec = std::vector<ObjectFactory>;
   using ObjectFactoryMap = std::map<std::string, ObjectFactory>;
@@ -70,7 +76,13 @@ public:
    * @return true if success
    */
   bool unload(const std::string& path);
-
+  
+  /**
+   * @brief destroyPluginComponents
+   * @param path
+   */
+  void destroyPluginComponents(const std::string& path);
+  
   /**
    * @brief callPluginInitFunction
    * @param path: plugin path used as an id in the plugin map
@@ -108,6 +120,10 @@ public:
    */
   bool registerObjectFactory(const char *type,
                              const JAMI_PluginObjectFactory &factory);
+  
+  
+  bool registerComponentManager(const std::string& name, ServiceFunction&& takeOwnership,
+                                ServiceFunction&& destroyComponent);
 
   /**
    * Create a new plugin's exported object.
@@ -137,6 +153,10 @@ private:
                                 void *data);
 
   int32_t invokeService(const std::string &name, void *data);
+  
+  int32_t manageComponent(const std::string& pluginId, const std::string& name, void *data);
+  static int32_t manageComponent_(void* context, const JAMI_PluginAPI* api, const char* name,
+                                 void *data);
 
   std::mutex mutex_{};
   JAMI_PluginAPI pluginApi_ = {
@@ -144,6 +164,7 @@ private:
       nullptr, // set by PluginManager constructor
       registerObjectFactory_,
       invokeService_,
+      manageComponent_
   };
   PluginMap dynPluginMap_{}; // Only dynamic loaded plugins
   ExitFuncVec exitFuncVec_{};
@@ -157,6 +178,11 @@ private:
 
   // registered services
   std::map<std::string, ServiceFunction> services_{};
+  // registered component lifecycle managers
+  std::map<std::string, ComponentLifeCycleManager> componentsLifeCycleManagers_ {};
+
+  // references to plugins components, used for cleanup
+  PluginComponentsMap pluginComponentsMap_ {};
 };
 
 } // namespace jami

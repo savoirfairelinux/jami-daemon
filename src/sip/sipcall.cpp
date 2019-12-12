@@ -142,12 +142,12 @@ void SIPCall::createCallAVStreams()
     }
 }
 
-void SIPCall::createCallAVStream(const StreamData& StreamData, MediaStream& streamSource, const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject){
-    auto& psm = jami::Manager::instance().getPluginServicesManager();
+void SIPCall::createCallAVStream(const StreamData& StreamData, MediaStream& streamSource,
+                                 const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject){
     callAVStreams.push_back(mediaStreamSubject);
     auto& inserted = callAVStreams.back();
     streamSource.attachPriorityObserver(inserted);
-    psm.createAVSubject(StreamData, inserted);
+    jami::Manager::instance().getJamiPluginManager().getCsm().createAVSubject(StreamData, inserted);
 }
 
 void
