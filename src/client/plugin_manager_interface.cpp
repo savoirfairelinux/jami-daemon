@@ -7,24 +7,24 @@ namespace DRing {
 //
 void
 loadPlugin(const std::string& path){
-    auto& psm = jami::Manager::instance().getPluginServicesManager();
+    auto& jpm = jami::Manager::instance().getJamiPluginManager();
     JAMI_WARN() << " LOADING PLUGIN ...\t" << path;
-    psm.loadPlugin(path);
+    jpm.loadPlugin(path);
     JAMI_WARN() << "PLUGIN LOADED \t" << path;
 }
 
 void
 unloadPlugin(const std::string& path){
-    auto& psm = jami::Manager::instance().getPluginServicesManager();
+    auto& jpm = jami::Manager::instance().getJamiPluginManager();
     JAMI_WARN() << " UNLOADING PLUGIN ...\t" << path;
-    psm.unloadPlugin(path);
+    jpm.unloadPlugin(path);
     JAMI_WARN() << "PLUGIN UNLOADED \t" << path;
 }
 
 void
 togglePlugin(const std::string& path, bool toggle){
-    auto& psm = jami::Manager::instance().getPluginServicesManager();
-    psm.togglePlugin(path,toggle);
+    auto& jpm = jami::Manager::instance().getJamiPluginManager();
+    jpm.togglePlugin(path,toggle);
     if(toggle) {
         JAMI_WARN() << " Plugin " << path << " ON";
     } else {
@@ -39,12 +39,12 @@ getPluginDetails(const std::string& path){
 
 std::vector<std::map<std::string,std::string>>
 getPluginPreferences(const std::string& path){
-    return jami::Manager::instance().getPluginPreferencesManager().getPluginPreferences(path);
+    return jami::Manager::instance().getJamiPluginManager().getPluginPreferences(path);
 }
 
 bool
 setPluginPreference(const std::string& path, const std::string& key, const std::string& value) {
-    return jami::Manager::instance().getPluginPreferencesManager().savePluginPreferenceValue(path, key, value);
+    return jami::Manager::instance().getJamiPluginManager().setPluginPreference(path, key, value);
 }
 
 std::map<std::string,std::string>
