@@ -41,7 +41,7 @@ public:
      * @param path
      * @return
      */
-    std::vector<MapStrStr> getPluginPreferences(const std::string& path) {
+    std::vector<MapStrStr> getPluginPreferences(const std::string& path) const {
         return PluginPreferencesParser::parsePreferencesConfigFile(getPreferencesConfigFilePath(path));
     }
 

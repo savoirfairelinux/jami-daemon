@@ -110,6 +110,31 @@ const archiver::FileMatchPair  uncompressJplFunction = [](const std::string& rel
     return std::make_pair(false, std::string{""});
 };
 
+std::map<std::string, std::string> JamiPluginManager::getPluginDetails(const std::string &rootPath)
+{
+    if(pluginDetailsMap_.find(rootPath) != pluginDetailsMap_.end()) {
+        return pluginDetailsMap_.at(rootPath);
+    }
+
+    std::map<std::string, std::string> details = parseManifestFile(manifestPath(rootPath));
+    details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
+    details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
+    pluginDetailsMap_.emplace(std::make_pair(rootPath, std::move(details)));
+    return pluginDetailsMap_.at(rootPath);
+}
+
+std::vector<std::string> JamiPluginManager::listPlugins()
+{
+    std::string pluginsPath = fileutils::get_data_dir() + DIR_SEPARATOR_CH + "plugins";
+    std::vector<std::string> pluginsPaths = fileutils::readDirectory(pluginsPath);
+    std::for_each(pluginsPaths.begin(), pluginsPaths.end(),
+                  [&pluginsPath](std::string& x){ x = pluginsPath + DIR_SEPARATOR_CH + x;});
+    auto predicate = [this](std::string path){ return !checkPluginValidity(path);};
+    auto returnIterator = std::remove_if(pluginsPaths.begin(),pluginsPaths.end(),predicate);
+    pluginsPaths.erase(returnIterator,std::end(pluginsPaths));
+    return pluginsPaths;
+}
+
 int JamiPluginManager::installPlugin(const std::string &jplPath, bool force)
 {
     int r{0};
@@ -153,6 +178,49 @@ int JamiPluginManager::installPlugin(const std::string &jplPath, bool force)
         }
     }
     return r;
+}
+
+int JamiPluginManager::uninstallPlugin(const std::string &rootPath)
+{
+    if(checkPluginValidity(rootPath)) {
+        return fileutils::removeAll(rootPath);
+    } else {
+        return -1;
+    }
+}
+
+void JamiPluginManager::loadPlugin(const std::string &rootPath)
+{
+    try {
+        pm_.load(getPluginDetails(rootPath).at("soPath"));
+    } catch(const std::exception& e) {
+        JAMI_ERR() << e.what();
+    }
+}
+
+void JamiPluginManager::unloadPlugin(const std::string &rootPath)
+{
+    try {
+        pm_.unload(getPluginDetails(rootPath).at("soPath"));
+    } catch(const std::exception& e) {
+        JAMI_ERR() << e.what();
+    }
+}
+
+void JamiPluginManager::togglePlugin(const std::string &rootPath, bool toggle)
+{
+    try {
+        std::string soPath = getPluginDetails(rootPath).at("soPath");
+        // remove the previous plugin object if it was registered
+        pm_.destroyPluginComponents(soPath);
+        // If toggle, register a new instance of the plugin
+        // function
+        if(toggle){
+            pm_.callPluginInitFunction(soPath);
+        }
+    } catch (const std::exception& e) {
+        JAMI_ERR() << e.what();
+    }
 }
 
 std::map<std::string, std::string> JamiPluginManager::readPluginManifestFromArchive(const std::string &jplPath)
