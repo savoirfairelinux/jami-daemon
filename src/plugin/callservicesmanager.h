@@ -31,18 +31,16 @@ using MediaHandlerPtr = std::unique_ptr<MediaHandler>;
 using CallMediaHandlerPtr = std::unique_ptr<CallMediaHandler>;
 using AVSubjectSPtr = std::weak_ptr<Observable<AVFrame*>>;
 
-class PluginServicesManager{
+class CallServicesManager{
 
 public:
-
-    PluginServicesManager(){
-        registerServices();
-    }
+    
+    CallServicesManager() = default;
 
     /**
     *   unload all media handlers and their associated plugin.so
     **/
-    ~PluginServicesManager(){
+    ~CallServicesManager(){
         /** Remove all media stream handlers BEFORE the plugins
         *   are destroyed (~DLPlugin), this way we avoid
         *   Segfaults and Heap-use after free faults
@@ -50,58 +48,9 @@ public:
         callMediaHandlers.clear();
     }
     
-    NON_COPYABLE(PluginServicesManager);
+    NON_COPYABLE(CallServicesManager);
 
 public:
-
-    /**
-     * @brief loadPlugin
-     * @param path of the plugin .so file
-     */
-    void loadPlugin(const std::string& path){
-        std::cout << "LOAD PLUGIN" << std::endl;
-        pm.load(path);
-    }
-
-    /**
-     * @brief unloadPlugin
-     * @param pluginId
-     */
-    void unloadPlugin(const std::string& pluginId){
-        std::cout << "UNLOAD PLUGIN" << std::endl;
-        for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
-            // Remove all possible duplicates, before unloading a plugin
-            if(it->first == pluginId) {
-                callMediaHandlers.erase(it);
-            }
-        }
-        pm.unload(pluginId);
-    }
-
-    /**
-     * @brief togglePlugin
-     * @param path: used as an id
-     * @param toggle: if true, register a new instance of the plugin
-     * else, remove the existing instance
-     * N.B: before adding a new instance, remove any existing one
-     */
-    void togglePlugin(const std::string& path, bool toggle){
-        // remove the previous plugin object if it was registered
-        for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end();) {
-            if(it->first == path) {
-                callMediaHandlers.erase(it);
-                break;
-            } else {
-                ++it;
-            }
-        }
-        // If toggle, register a new instance of the plugin
-        // function
-        if(toggle){
-            pm.callPluginInitFunction(path);
-        }
-    }
-
     /**
      * @brief notifyAllAVSubject
      * @param subject
@@ -124,27 +73,54 @@ public:
      */
     void createAVSubject(const StreamData& data, AVSubjectSPtr subject){
         // This guarantees unicity of subjects by id
-        std::cout << "CREATED AV SUBJECT: DIRECTION " << data.direction << std::endl;
         callAVsubjects.push_back(std::make_pair(data, subject));
         auto inserted = callAVsubjects.back();
         notifyAllAVSubject(inserted.first, inserted.second);
     }
-
-
+    
+    
     /**
-     * @brief cleanup
-     *
+     * @brief registerServices
+     * Main Api, exposes functions to the plugins
      */
-    void cleanup() {
-        for(auto it=callAVsubjects.begin(); it != callAVsubjects.end();) {
-            if(it->second.expired()) {
-                it = callAVsubjects.erase(it);
-            } else {
-                ++it;
+    void registerComponentsLifeCycleManagers(PluginManager& pm) {
+        
+        auto registerCallMediaHandler = [this](void* data) {
+            CallMediaHandlerPtr ptr{(reinterpret_cast<CallMediaHandler*>(data))};
+            
+            if(ptr) {
+                const std::string pluginId = ptr->id();
+                
+                for(auto it=callMediaHandlers.begin(); it!=callMediaHandlers.end(); ++it){
+                    if(it->first ==  pluginId) {
+                        return 1;
+                    }
+                }
+                
+                callMediaHandlers.push_back(std::make_pair(pluginId, std::move(ptr)));
+                if(!callMediaHandlers.empty() && !callAVsubjects.empty()) {
+                    listAvailableSubjects(callMediaHandlers.back().second);
+                }
             }
-        }
+            
+            return 0;
+        };
+        
+        auto unregisterMediaHandler = [this](void* data) {
+            for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
+                // Remove all possible duplicates, before unloading a plugin
+                if(it->second.get() == data) {
+                    callMediaHandlers.erase(it);
+                }
+            }
+            return 0;  
+        };
+        
+        //pm.registerService("registerCallMediaHandler", registerPlugin);
+        pm.registerComponentManager("CallMediaHandlerManager",
+                                    registerCallMediaHandler, unregisterMediaHandler);
     }
-
+    
 private:
 
     /**
@@ -156,9 +132,7 @@ private:
     void notifyAVSubject(CallMediaHandlerPtr& plugin,
                               const StreamData& data,
                          AVSubjectSPtr& subject) {
-        std::cout<< "NOTIFYING NEW SUBJECT " << std::endl;
         if(auto soSubject = subject.lock()) {
-            std::cout<< "LOCK SUCCESSFUL NOTIFYING NEW SUBJECT " << std::endl;
             plugin->notifyAVFrameSubject(data, soSubject);
         }
     }
@@ -174,40 +148,7 @@ private:
         }
     }
 
-    /**
-     * @brief registerServices
-     * Main Api, exposes functions to the plugins
-     */
-    void registerServices() {
-
-        auto registerPlugin = [this](void* data) {
-            CallMediaHandlerPtr ptr{(reinterpret_cast<CallMediaHandler*>(data))};
-
-            if(ptr) {
-                const std::string pluginId = ptr->id();
-
-                for(auto it=callMediaHandlers.begin(); it!=callMediaHandlers.end(); ++it){
-                    if(it->first ==  pluginId) {
-                        return 1;
-                    }
-                }
-
-                callMediaHandlers.push_back(std::make_pair(pluginId, std::move(ptr)));
-                if(!callMediaHandlers.empty() && !callAVsubjects.empty()) {
-                    listAvailableSubjects(callMediaHandlers.back().second);
-                }
-            }
-
-            return 0;
-        };
-
-        pm.registerService("registerCallMediaHandler", registerPlugin);
-    }
-
 private:
-    // Plugin Manager
-    PluginManager pm;
-
     /**
      * @brief callMediaHandlers
      * Objects that a plugin can register through registerCallMediaHandler service

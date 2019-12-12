@@ -37,7 +37,7 @@
 #include "scheduled_executor.h"
 
 // Plugin Managers
-#include "plugin/pluginservicesmanager.h"
+#include "plugin/callservicesmanager.h"
 #include "plugin/pluginpreferencesmanager.h"
 #include "plugin/jamipluginmanager.h"
 
@@ -898,8 +898,6 @@ class Manager {
 
         std::vector<DRing::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
 
-        PluginServicesManager& getPluginServicesManager();
-        PluginPreferencesManager& getPluginPreferencesManager();
         JamiPluginManager& getJamiPluginManager();
 
 private:

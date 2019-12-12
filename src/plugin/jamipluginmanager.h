@@ -20,6 +20,9 @@
 #include "noncopyable.h"
 #include "fileutils.h"
 #include "archiver.h"
+#include "pluginmanager.h"
+#include "callservicesmanager.h"
+#include "pluginpreferencesmanager.h"
 
 #include <vector>
 #include <map>
@@ -30,16 +33,19 @@ namespace jami {
 class JamiPluginManager
 {
 public:
-    JamiPluginManager() = default;
+    JamiPluginManager() {
+        csm.registerComponentsLifeCycleManagers(pm);
+    }
+    
     NON_COPYABLE(JamiPluginManager);
     // TODO : improve getPluginDetails
     /**
      * @brief getPluginDetails
-     * Returns the tuple (name, description, icon path, so path)
+     * Returns the tuple (name, description, version, icon path, so path)
      * The icon should ideally be 192x192 pixels or better 512x512 pixels
      * In order to match with android specifications
      * https://developer.android.com/google-play/resources/icon-design-specifications
-     * @param plugin rootPath
+     * @param plugin rootPath (folder of the plugin)
      * @return map where the keyset is {"name", "description", "iconPath"}
      */
     std::map<std::string, std::string> getPluginDetails(const std::string& rootPath) {
@@ -51,6 +57,7 @@ public:
 
     /**
      * @brief listPlugins
+     * Lists available plugins with valid manifest files
      * @return 
      */
     std::vector<std::string> listPlugins() {
@@ -89,6 +96,47 @@ public:
         }
     }
     
+    /**
+     * @brief loadPlugin
+     * @param sopath of the plugin .so file
+     */
+    void loadPlugin(const std::string& sopath){
+        pm.load(sopath);
+    }
+    
+    /**
+     * @brief unloadPlugin
+     * @param sopath of the plugin .so file
+     */
+    void unloadPlugin(const std::string& sopath){
+        pm.unload(sopath);
+    }
+    
+    /**
+     * @brief togglePlugin
+     * @param sopath: used as an id
+     * @param toggle: if true, register a new instance of the plugin
+     * else, remove the existing instance
+     * N.B: before adding a new instance, remove any existing one
+     */
+    void togglePlugin(const std::string& sopath, bool toggle){
+        // remove the previous plugin object if it was registered
+        pm.destroyPluginComponents(sopath);
+        // If toggle, register a new instance of the plugin
+        // function
+        if(toggle){
+            pm.callPluginInitFunction(sopath);
+        }
+    }
+    
+    CallServicesManager& getCsm() {
+        return csm;
+    }
+    
+    PluginPreferencesManager& getPpm() {
+        return ppm;
+    }
+    
 private:
     
     /**
@@ -117,6 +165,11 @@ private:
     const std::string manifestPath(const std::string& pluginRootPath) {
         return pluginRootPath + DIR_SEPARATOR_CH + "manifest.json";
     }
+    
+private:
+    PluginManager pm;
+    CallServicesManager csm;
+    PluginPreferencesManager ppm;
 };
 }
 
