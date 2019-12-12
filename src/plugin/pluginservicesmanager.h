@@ -36,7 +36,7 @@ class PluginServicesManager{
 public:
 
     PluginServicesManager(){
-        registerServices();
+        registerComponentsLifeCycleManagers();
     }
 
     /**
@@ -69,12 +69,6 @@ public:
      */
     void unloadPlugin(const std::string& pluginId){
         std::cout << "UNLOAD PLUGIN" << std::endl;
-        for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
-            // Remove all possible duplicates, before unloading a plugin
-            if(it->first == pluginId) {
-                callMediaHandlers.erase(it);
-            }
-        }
         pm.unload(pluginId);
     }
 
@@ -87,14 +81,7 @@ public:
      */
     void togglePlugin(const std::string& path, bool toggle){
         // remove the previous plugin object if it was registered
-        for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end();) {
-            if(it->first == path) {
-                callMediaHandlers.erase(it);
-                break;
-            } else {
-                ++it;
-            }
-        }
+        pm.destroyPluginComponents(path);
         // If toggle, register a new instance of the plugin
         // function
         if(toggle){
@@ -178,9 +165,9 @@ private:
      * @brief registerServices
      * Main Api, exposes functions to the plugins
      */
-    void registerServices() {
+    void registerComponentsLifeCycleManagers() {
 
-        auto registerPlugin = [this](void* data) {
+        auto registerCallMediaHandler = [this](void* data) {
             CallMediaHandlerPtr ptr{(reinterpret_cast<CallMediaHandler*>(data))};
 
             if(ptr) {
@@ -200,8 +187,20 @@ private:
 
             return 0;
         };
+        
+        auto unregisterMediaHandler = [this](void* data) {
+            for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
+                // Remove all possible duplicates, before unloading a plugin
+                if(it->second.get() == data) {
+                    callMediaHandlers.erase(it);
+                }
+            }
+            return 0;  
+        };
 
-        pm.registerService("registerCallMediaHandler", registerPlugin);
+        //pm.registerService("registerCallMediaHandler", registerPlugin);
+        pm.registerComponentManager("CallMediaHandlerManager",
+                                    registerCallMediaHandler, unregisterMediaHandler);
     }
 
 private:
