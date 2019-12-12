@@ -62,14 +62,14 @@ public:
 
         return ::dlsym(handle_.get(), name);
     }
-
-    char const* getCPath() {
-        return path_.c_str();
+    
+    const std::string& getPath() {
+        return path_;
     }
 
-    //==========================================
 private:
     std::unique_ptr<void, int (*)(void *)> handle_;
+    //==========================================
     const std::string path_;
 };
 
