@@ -3,6 +3,12 @@
 GMP_VERSION := 6.1.2
 GMP_URL := $(GNU)/gmp/gmp-$(GMP_VERSION).tar.bz2
 
+ifndef HAVE_CROSS_COMPILE
+ifeq ($(shell echo '\#include <gmp.h>' | $(CC) -E - >/dev/null 2>&1 || echo FAIL),)
+PKGS_FOUND += gmp
+endif
+endif
+
 $(TARBALLS)/gmp-$(GMP_VERSION).tar.bz2:
 	$(call download,$(GMP_URL))
 
