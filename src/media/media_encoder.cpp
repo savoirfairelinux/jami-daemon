@@ -213,7 +213,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         for (const auto& it : APIs) {
             accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
             // Init codec need accel_ to init encoderCtx accelerated
-            encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+            encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), videoOpts_.bitrate);
             encoderCtx->opaque = accel_.get();
             // Check if pixel format from encoder match pixel format from decoder frame context
             // if it mismatch, it means that we are using two different hardware API (nvenc and vaapi for example)
@@ -249,7 +249,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
 
     if (!encoderCtx) {
         JAMI_WARN("Not using hardware encoding for %s", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)));
-        encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+        encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), videoOpts_.bitrate);
         readConfig(encoderCtx);
         encoders_.push_back(encoderCtx);
         if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
