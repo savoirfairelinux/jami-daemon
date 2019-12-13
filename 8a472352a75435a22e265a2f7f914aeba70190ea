@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "301facb5_b748943e",
+        "filename": "contrib/src/gmp/rules.mak",
+        "patchSetId": 1
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2019-12-13T16:23:47Z",
+      "side": 1,
+      "message": "ifeq ($(call need_pkg,\"gmp \u003e\u003d 6.1.2\"),)\nPKGS_FOUND +\u003d gmp\nendif\n\nOr libgmp\n\nShould do the job",
+      "range": {
+        "startLine": 6,
+        "startChar": 1,
+        "endLine": 10,
+        "endChar": 5
+      },
+      "revId": "8a472352a75435a22e265a2f7f914aeba70190ea",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
