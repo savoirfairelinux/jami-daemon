@@ -143,6 +143,7 @@ private:
     void dropProcessing(RTCPInfo* rtcpi);
     void delayProcessing(int br);
     void setNewBitrate(unsigned int newBR);
+    unsigned int getMaxCBR();
 
     // no packet loss can be calculated as no data in input
     static constexpr float NO_INFO_CALCULATED {-1.0};
