@@ -517,7 +517,7 @@ void
 VideoRtpSession::setNewBitrate(unsigned int newBR)
 {
     newBR = std::max(newBR, videoBitrateInfo_.videoBitrateMin);
-    newBR = std::min(newBR, videoBitrateInfo_.videoBitrateMax);
+    newBR = std::min(newBR, getMaxCBR());
 
     if (videoBitrateInfo_.videoBitrateCurrent != newBR) {
         videoBitrateInfo_.videoBitrateCurrent = newBR;
@@ -661,6 +661,20 @@ VideoRtpSession::getPonderateLoss(float lastLoss)
         return 0.0f;
 
     return pondLoss / totalPond;
+}
+
+unsigned int
+VideoRtpSession::getMaxCBR()
+{
+    auto ret = 4.5 * localVideoParams_.height + ((int)(localVideoParams_.framerate.numerator() / 30) - 1) * 1500;
+    // 480p   30fps -> 2160 kbps
+    // 720p   30fps -> 3240 kbps
+    // 720p   60fps -> 4724 kbps
+    // 1080p  30fps -> 4860 kbps
+    // 1080p  60fps -> 6360 kbps
+    // Follow main standards for video streaming (twitch, netflix, youtube, ...)
+
+    return static_cast<unsigned int>(ret);
 }
 
 void
