@@ -53,7 +53,7 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
 {
     keyFrameFreq_ = dev.framerate.numerator() * KEY_FRAME_PERIOD;
     videoEncoder_->openOutput(dest, "rtp");
-    auto opts = MediaStream("video sender", AV_PIX_FMT_YUV420P, 1 / (rational<int>)dev.framerate, dev.width, dev.height, 1, (rational<int>)dev.framerate);
+    auto opts = MediaStream("video sender", AV_PIX_FMT_YUV420P, 1 / (rational<int>)dev.framerate, dev.width, dev.height, args.bitrate, (rational<int>)dev.framerate);
     videoEncoder_->setOptions(opts);
     videoEncoder_->setOptions(args);
     videoEncoder_->addStream(args.codec->systemCodecInfo);

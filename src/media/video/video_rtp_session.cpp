@@ -51,7 +51,7 @@ static constexpr unsigned MAX_SIZE_HISTO_QUALITY {30};
 static constexpr unsigned MAX_SIZE_HISTO_BITRATE {100};
 static constexpr unsigned MAX_SIZE_HISTO_JITTER {50};
 static constexpr unsigned MAX_SIZE_HISTO_DELAY {25};
-static constexpr unsigned MAX_REMB_DEC {2};
+static constexpr unsigned MAX_REMB_DEC {1};
 
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
 constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(2);
@@ -131,6 +131,7 @@ void VideoRtpSession::startSender()
 
         send_.auto_quality = autoQuality;
         send_.linkableHW = conference_ == nullptr;
+        send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
 
         if (sender_)
             initSeqVal_ = sender_->getLastSeqValue() + 10; // Skip a few sequences to make nvenc happy on a sender restart
@@ -489,7 +490,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
     else {
         // If ponderate drops are inferior to 10% that mean drop are not from congestion but from network...
         // ... we can increase
-        if (pondLoss >= 10.0f && rtcpi->packetLoss > 0.0f) {
+        if (pondLoss >= 5.0f && rtcpi->packetLoss > 0.0f) {
             newBitrate *= 1.0f - rtcpi->packetLoss/150.0f;
             histoLoss_.clear();
             lastMediaRestart_ = now;
@@ -498,7 +499,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
         }
     }
 
-    setNewBitrate(newBitrate);
+    setNewBitrate(newBitrate, true);
 }
 
 void
@@ -515,9 +516,8 @@ VideoRtpSession::delayProcessing(int br)
     setNewBitrate(newBitrate);
 }
 
-
 void
-VideoRtpSession::setNewBitrate(unsigned int newBR)
+VideoRtpSession::setNewBitrate(unsigned int newBR, bool fromDrops)
 {
     newBR = std::max(newBR, videoBitrateInfo_.videoBitrateMin);
     newBR = std::min(newBR, videoBitrateInfo_.videoBitrateMax);
@@ -531,9 +531,13 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
             emitSignal<DRing::VideoSignal::SetBitrate>(input_device->getParams().name, (int)newBR);
 #endif
 
-        // If encoder no longer exist do nothing
-        if (sender_ && sender_->setBitrate(newBR) == 0) {
-            // Reset increase timer for each bitrate change
+        if (fromDrops) {
+            restartSender();
+        } else {
+            // If encoder no longer exist do nothing
+            if (sender_ && sender_->setBitrate(newBR) == 0) {
+                // Reset increase timer for each bitrate change
+            }
         }
     }
 }

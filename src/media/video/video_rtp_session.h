@@ -134,7 +134,7 @@ private:
     void delayMonitor(int gradient, int deltaT);
     void dropProcessing(RTCPInfo* rtcpi);
     void delayProcessing(int br);
-    void setNewBitrate(unsigned int newBR);
+    void setNewBitrate(unsigned int newBR, bool fromDrops = false);
 
     // no packet loss can be calculated as no data in input
     static constexpr float NO_INFO_CALCULATED {-1.0};
