@@ -31,8 +31,10 @@ PKGS_FOUND += pjproject
 endif
 
 DEPS_pjproject += gnutls
+ifndef HAVE_WIN32
 ifndef HAVE_MACOSX
 DEPS_pjproject += uuid
+endif
 endif
 
 $(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.gz:
