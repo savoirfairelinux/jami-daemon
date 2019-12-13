@@ -51,7 +51,7 @@ static constexpr unsigned MAX_SIZE_HISTO_QUALITY {30};
 static constexpr unsigned MAX_SIZE_HISTO_BITRATE {100};
 static constexpr unsigned MAX_SIZE_HISTO_JITTER {50};
 static constexpr unsigned MAX_SIZE_HISTO_DELAY {25};
-static constexpr unsigned MAX_REMB_DEC {2};
+static constexpr unsigned MAX_REMB_DEC {1};
 
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
 constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(2);
@@ -489,7 +489,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
     else {
         // If ponderate drops are inferior to 10% that mean drop are not from congestion but from network...
         // ... we can increase
-        if (pondLoss >= 10.0f && rtcpi->packetLoss > 0.0f) {
+        if (pondLoss >= 5.0f && rtcpi->packetLoss > 0.0f) {
             newBitrate *= 1.0f - rtcpi->packetLoss/150.0f;
             histoLoss_.clear();
             lastMediaRestart_ = now;
@@ -514,7 +514,6 @@ VideoRtpSession::delayProcessing(int br)
 
     setNewBitrate(newBitrate);
 }
-
 
 void
 VideoRtpSession::setNewBitrate(unsigned int newBR)
