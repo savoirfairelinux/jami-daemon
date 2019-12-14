@@ -404,7 +404,11 @@ private:
         // Send connection request through DHT
         JAMI_DBG() << parent_.account << "[CNX] request connection to " << peer_;
         parent_.account.dht()->putEncrypted(
-            dht::InfoHash::get(PeerConnectionMsg::key_prefix + peer_.toString()), peer_, request);
+            dht::InfoHash::get(PeerConnectionMsg::key_prefix + peer_.toString()), peer_, request,
+            [](bool ok) {
+                if (ok) JAMI_DBG("[CNX] successfully put CNX request on DHT");
+                else    JAMI_ERR("[CNX] error putting CNX request on DHT");
+            });
 
         // Wait for call to onResponse() operated by DHT
         std::mutex mtx;
