@@ -1,0 +1,39 @@
+From 468e88598dfbada5529f31c8f10ad788e5f2bdd7 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Tue, 17 Dec 2019 12:11:40 -0500
+Subject: [PATCH 21/21] remove unnecessary casts; current_buffer declared u8
+ already
+
+---
+ pjnath/src/pjnath/stun_sock.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index 97cd042d..00a1de53 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -610,8 +610,8 @@ parse_rx_packet(pj_activesock_t *asock, void *data, pj_size_t size,
+                 // We currently have a packet to complete
+                 if (buf->rx_buffer_size == 1) {
+                     // We do not know the current size, parse it.
+-                    pkt_len = (((pj_uint8_t *)buf->rx_buffer)[0] << 8) | \
+-                              (((pj_uint8_t *)current_packet)[0] << 0);
++                    pkt_len = ((buf->rx_buffer)[0] << 8) | \
++                              ((current_packet[0]  << 0));
+                     buf->rx_buffer_size = 0; // We have eaten the temp packet.
+                     current_packet = current_packet + 1;
+                     parsed += 1;
+@@ -634,8 +634,8 @@ parse_rx_packet(pj_activesock_t *asock, void *data, pj_size_t size,
+                     buf->rx_wanted_size = 0;
+                 }
+             } else if (pkt_len > 1) {
+-                pkt_len = (((pj_uint8_t *)current_packet)[0] << 8) | \
+-                          (((pj_uint8_t *)current_packet)[1] << 0);
++                pkt_len = (current_packet[0] << 8) | \
++                          (current_packet[1] << 0);
+                 current_packet = current_packet + 2;
+                 parsed += 2;
+                 if (pkt_len + parsed <= size) {
+-- 
+2.24.1
+

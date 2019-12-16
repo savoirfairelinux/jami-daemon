@@ -1,15 +1,14 @@
-From 2c4a267fbd68f394630acbab0a0e358d0c905464 Mon Sep 17 00:00:00 2001
-From: Sebastien Blin <sebastien.blin@savoirfairelinux.com>
-Date: Wed, 18 Jul 2018 12:12:04 -0400
-Subject: [PATCH 1/1] RFC 2466: ignore deprecated candidates for new ICE
- candidates
+From ee67ae679d44d6b8ab229f6ebb68d2072f59bbff Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 14:30:21 -0500
+Subject: [PATCH 03/17] rfc2466
 
 ---
- pjnath/src/pjnath/ice_session.c | 162 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 162 insertions(+)
+ pjnath/src/pjnath/ice_session.c | 160 ++++++++++++++++++++++++++++++++
+ 1 file changed, 160 insertions(+)
 
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index c51dba77..a5c7a5b0 100644
+index b0c89c80..34c66e98 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -29,6 +29,21 @@
@@ -34,7 +33,7 @@ index c51dba77..a5c7a5b0 100644
  /* String names for candidate types */
  static const char *cand_type_names[] =
  {
-@@ -701,6 +716,128 @@ static pj_uint32_t CALC_CAND_PRIO(pj_ice_sess *ice,
+@@ -705,6 +720,128 @@ static pj_uint32_t CALC_CAND_PRIO(pj_ice_sess *ice,
  #endif
  }
  
@@ -160,15 +159,13 @@ index c51dba77..a5c7a5b0 100644
 +#endif
 +}
 +
- 
  /*
   * Add ICE candidate
-@@ -717,6 +854,31 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
- 					 int addr_len,
- 					 unsigned *p_cand_id)
+  */
+@@ -722,6 +859,29 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+ 					 pj_ice_cand_transport transport)
  {
-+
-+
+ 
 +  /**
 +   * RFC 2466: an ip address can have the status DEPRECATED and SHOULD NOT
 +   * be used by new by applications unless they already use it.
@@ -195,3 +192,6 @@ index c51dba77..a5c7a5b0 100644
      pj_ice_sess_cand *lcand;
      pj_status_t status = PJ_SUCCESS;
      char address[PJ_INET6_ADDRSTRLEN];
+-- 
+2.23.0
+
