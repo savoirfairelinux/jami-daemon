@@ -75,10 +75,10 @@ endif
 	$(MOVE)
 
 .pjproject: pjproject
-	ifdef HAVE_IOS
+ifdef HAVE_IOS
 	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) EXCLUDE_APP=1 ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
 else
 	cd $< && $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 endif
-cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
-touch $@
+	cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
+	touch $@
