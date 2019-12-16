@@ -1,0 +1,82 @@
+From 1b0b62f37be52c8cc56089840f26dbb401da122e Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 16:11:40 -0500
+Subject: [PATCH 17/17] android
+
+---
+ aconfigure                        |  3 ---
+ aconfigure.ac                     |  3 ---
+ pjlib/include/pj/config.h         | 15 +++++++++++++++
+ pjlib/src/pj/os_timestamp_posix.c |  2 +-
+ 4 files changed, 16 insertions(+), 7 deletions(-)
+
+diff --git a/aconfigure b/aconfigure
+index be4cd0fe..456df876 100755
+--- a/aconfigure
++++ b/aconfigure
+@@ -5948,9 +5948,6 @@ case $target in
+ 	esac
+ 	# UUID
+ 	case $target in
+-	  *android*)
+-	  	ac_os_objs="$ac_os_objs guid_android.o"
+-	  	;;
+ 	  *)
+ 		if test "$ac_has_uuid_lib" = "1" -a "$ac_has_uuid_h" = "1"; then
+ 			ac_os_objs="$ac_os_objs guid_uuid.o"
+diff --git a/aconfigure.ac b/aconfigure.ac
+index 781b01bc..96c4b6d4 100644
+--- a/aconfigure.ac
++++ b/aconfigure.ac
+@@ -489,9 +489,6 @@ case $target in
+ 	esac
+ 	# UUID
+ 	case $target in
+-	  *android*)
+-	  	ac_os_objs="$ac_os_objs guid_android.o"
+-	  	;;
+ 	  *)
+ 		if test "$ac_has_uuid_lib" = "1" -a "$ac_has_uuid_h" = "1"; then
+ 			ac_os_objs="$ac_os_objs guid_uuid.o"
+diff --git a/pjlib/include/pj/config.h b/pjlib/include/pj/config.h
+index 67c4e0a3..d3cb28a1 100644
+--- a/pjlib/include/pj/config.h
++++ b/pjlib/include/pj/config.h
+@@ -311,6 +311,21 @@
+  */
+ #include <pj/config_site.h>
+ 
++#undef PJ_ANDROID
++#define PJ_ANDROID                            0
++#define PJ_JNI_HAS_JNI_ONLOAD                 0
++#undef PJ_HAS_FLOATING_POINT
++#define PJ_HAS_FLOATING_POINT                 0
++#define PJMEDIA_AUDIO_DEV_HAS_PORTAUDIO       0
++#define PJMEDIA_AUDIO_DEV_HAS_WMME            0
++#define PJMEDIA_AUDIO_DEV_HAS_OPENSL          0
++#define PJMEDIA_AUDIO_DEV_HAS_ANDROID_JNI     0
++#define PJMEDIA_HAS_L16_CODEC                 0
++#define PJMEDIA_CODEC_SPEEX_DEFAULT_QUALITY   5
++#define PJMEDIA_VID_DEV_INFO_FMT_CNT          128
++#define PJSIP_MAX_TSX_COUNT                   31
++#define PJSIP_MAX_DIALOG_COUNT                31
++
+ /********************************************************************
+  * PJLIB Features.
+  */
+diff --git a/pjlib/src/pj/os_timestamp_posix.c b/pjlib/src/pj/os_timestamp_posix.c
+index 0aed8c47..1ec156b0 100644
+--- a/pjlib/src/pj/os_timestamp_posix.c
++++ b/pjlib/src/pj/os_timestamp_posix.c
+@@ -203,7 +203,7 @@ PJ_DEF(pj_status_t) pj_get_timestamp_freq(pj_timestamp *freq)
+     return PJ_SUCCESS;
+ }
+ 
+-#elif defined(__ANDROID__)
++#elif defined(PJ_ANDROID) && PJ_ANDROID
+ 
+ #include <errno.h>
+ #include <time.h>
+-- 
+2.23.0
+
