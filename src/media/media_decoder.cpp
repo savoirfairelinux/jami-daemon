@@ -206,17 +206,6 @@ MediaDemuxer::decode()
     return Status::Success;
 }
 
-int
-MediaDemuxer::getFirstPacket(AVPacket* pkt)
-{
-    int ret = av_read_frame(inputCtx_, pkt);
-    if (ret < 0) {
-        JAMI_ERR("Failed to read first packet");
-        return -1;
-    }
-    return 0;
-}
-
 MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index)
  : demuxer_(demuxer),
    avStream_(demuxer->getStream(index))
@@ -288,6 +277,7 @@ MediaDecoder::setupStream()
     enableAccel_ &= Manager::instance().videoPreferences.getDecodingAccelerated();
 #endif
 
+    enableAccel_= false;
     inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
         JAMI_ERR() << "Unsupported codec";
@@ -311,20 +301,31 @@ MediaDecoder::setupStream()
 
 #ifdef RING_ACCEL
         if (enableAccel_) {
-            AVPacket pkt;
-            auto ret = demuxer_->getFirstPacket(&pkt);
-            if (ret == 0)
-                accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id,
-                            decoderCtx_->width, decoderCtx_->height, decoderCtx_->pix_fmt, &pkt);
-            av_packet_unref(&pkt);
-            if (accel_) {
-                accel_->setDetails(decoderCtx_);
-                decoderCtx_->opaque = accel_.get();
+            auto APIs = video::HardwareAccel::getAccelCompatible(decoderCtx_->codec_id,
+                        decoderCtx_->width, decoderCtx_->height, CODEC_DECODER);
+            if (APIs.size() > 0) {
+                for (const auto& it : APIs) {
+                    accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
+                    auto ret = accel_->initAPI(false, nullptr);
+                    if (ret < 0) {
+                        accel_ = nullptr; 
+                        continue;
+                    }
+                    accel_->setDetails(decoderCtx_);
+                    decoderCtx_->opaque = accel_.get();
+                    decoderCtx_->pix_fmt = accel_->getFormat();
+                    if (avcodec_open2(decoderCtx_, inputDecoder_, &options_) < 0) {
+                        // Fail to open codec 
+                        avcodec_free_context(&decoderCtx_);
+                        decoderCtx_ = nullptr;
+                        accel_ = nullptr;
+                        continue;
+                    } else {
+                        // Success to open codec 
+                        break;
+                    }
+                }
             }
-        } else if (Manager::instance().videoPreferences.getDecodingAccelerated()) {
-            JAMI_WARN() << "Hardware decoding disabled because of previous failure";
-        } else {
-            JAMI_WARN() << "Hardware decoding disabled by user preference";
         }
 #endif
     }
@@ -336,7 +337,8 @@ MediaDecoder::setupStream()
         JAMI_DBG() << "Using framerate emulation";
     startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
 
-    ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+    if(!accel_)
+        ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
     if (ret < 0) {
         JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
         return -1;

@@ -198,7 +198,6 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     else if(systemCodecInfo.mediaType == MEDIA_AUDIO)
         mediaType = AVMEDIA_TYPE_AUDIO;
 
-    encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), framesCtx, SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
 
     // add video stream to outputformat context
     AVStream* stream = avformat_new_stream(outputCtx_, outputCodec_);
@@ -206,10 +205,42 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         throw MediaEncoderException("Could not allocate stream");
 
     currentStreamIdx_ = stream->index;
+#ifdef RING_ACCEL
+    auto APIs = video::HardwareAccel::getAccelCompatible(static_cast<AVCodecID>(systemCodecInfo.avcodecId),
+                videoOpts_.width, videoOpts_.height, CODEC_ENCODER);
+    if (systemCodecInfo.mediaType == MEDIA_VIDEO && APIs.size() > 0) {
+        for (const auto& it : APIs) {
+            accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
+            // Init codec need accel to init encoderCtx accelerated
+            encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), framesCtx, SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+            auto ret = accel_->initAPI(false, framesCtx);
+            if (ret < 0) {
+                accel_ = nullptr; 
+                continue;
+            }
+            accel_->setDetails(encoderCtx);
+            encoderCtx->opaque = accel_.get();
+            encoderCtx->pix_fmt = accel_->getFormat();
+            if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0) {
+                // Fail to open codec 
+                avcodec_free_context(&encoderCtx);
+                encoderCtx = nullptr;
+                accel_ = nullptr;
+                continue;
+            } else {
+                // Success to open codec 
+                break;
+            }
+        }
+    }
+#endif
 
-    readConfig(encoderCtx);
-    if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
-        throw MediaEncoderException("Could not open encoder");
+    if (!accel_) {
+        encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), framesCtx, SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+        readConfig(encoderCtx);
+        if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
+            throw MediaEncoderException("Could not open encoder");
+    }
 
 #ifndef _WIN32
     avcodec_parameters_from_context(stream->codecpar, encoderCtx);
@@ -518,10 +549,6 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
         // emit one intra frame every gop_size frames
         encoderCtx->max_b_frames = 0;
         encoderCtx->pix_fmt = AV_PIX_FMT_YUV420P;
-#ifdef RING_ACCEL
-        if (accel_)
-            encoderCtx->pix_fmt = accel_->getFormat();
-#endif
 
         // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
         // pps and sps to be sent in-band for RTP
@@ -657,9 +684,7 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
 #ifdef RING_ACCEL
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
         if (enableAccel_) {
-            if (accel_ = video::HardwareAccel::setupEncoder(
-                static_cast<AVCodecID>(avcodecId),
-                videoOpts_.width, videoOpts_.height, linkableHW_, framesCtx)) {
+            if (accel_) {
                 outputCodec_ = avcodec_find_encoder_by_name(accel_->getCodecName().c_str());
             }
         } else {
@@ -668,29 +693,20 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, AVBufferRef*
     }
 #endif
 
+    /* find the video encoder */
+    if (avcodecId == AV_CODEC_ID_H263)
+        // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
+        // H263-1998 can manage all frame sizes while H263 don't
+        // AV_CODEC_ID_H263 decoder will be used for decoding
+        outputCodec_ = avcodec_find_encoder(AV_CODEC_ID_H263P);
+    else
+        outputCodec_ = avcodec_find_encoder(static_cast<AVCodecID>(avcodecId));
     if (!outputCodec_) {
-        /* find the video encoder */
-        if (avcodecId == AV_CODEC_ID_H263)
-            // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
-            // H263-1998 can manage all frame sizes while H263 don't
-            // AV_CODEC_ID_H263 decoder will be used for decoding
-            outputCodec_ = avcodec_find_encoder(AV_CODEC_ID_H263P);
-        else
-            outputCodec_ = avcodec_find_encoder(static_cast<AVCodecID>(avcodecId));
-        if (!outputCodec_) {
-            throw MediaEncoderException("No output encoder");
-        }
+        throw MediaEncoderException("No output encoder");
     }
 
     AVCodecContext* encoderCtx = prepareEncoderContext(outputCodec_, mediaType == AVMEDIA_TYPE_VIDEO);
     encoders_.push_back(encoderCtx);
-
-#ifdef RING_ACCEL
-    if (accel_) {
-        accel_->setDetails(encoderCtx);
-        encoderCtx->opaque = accel_.get();
-    }
-#endif
 
     // Only clamp video bitrate
     if (mediaType == AVMEDIA_TYPE_VIDEO && br > 0) {

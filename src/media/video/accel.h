@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <list>
 
 extern "C" {
 #include <libavutil/hwcontext.h>
@@ -52,7 +53,7 @@ public:
     /**
      * @brief Static factory method for hardware decoding.
      */
-    static std::unique_ptr<HardwareAccel> setupDecoder(AVCodecID id, int width, int height, AVPixelFormat pix_dec, AVPacket* pkt);
+    static std::unique_ptr<HardwareAccel> setupDecoder(AVCodecID id, int width, int height);
 
     /**
      * @brief Static factory method for hardware encoding.
@@ -157,6 +158,10 @@ public:
      */
     bool linkHardware(AVBufferRef* framesCtx);
 
+
+    static std::list<HardwareAccel> getAccelCompatible(AVCodecID id, int width, int height, CodecType type);
+    int initAPI(bool linkable, AVBufferRef* framesCtx);
+
 private:
     bool initDevice(const std::string& device);
     bool initFrame();
@@ -170,24 +175,14 @@ private:
     bool linked_ {false};
     int width_ {0};
     int height_ {0};
-    AVPacket* test_AVPacket_;
 
     AVBufferRef* deviceCtx_ {nullptr};
     AVBufferRef* framesCtx_ {nullptr};
 
-    int encode(AVCodecContext* enc_ctx, AVFrame* frame, AVPacket* enc_pkt);
-    int decode(AVCodecContext *dec_ctx);
-    int set_hwframe_ctx(AVCodecContext* avctx, AVBufferRef* hw_device_ctx);
-    int init_codec_ctx(AVCodecContext** avctx, AVBufferRef* hw_device_ctx);
-    void close_codec_ctx(AVCodecContext* avctx, AVBufferRef* hw_device_ctx, 
-            AVFrame* sw_frame, AVFrame* hw_frame, AVPacket* pkt);
-    int test_encode_black_frame(AVCodecContext* avctx, AVFrame* sw_frame, AVFrame* hw_frame, AVPacket* pkt);
-    int test_device(const HardwareAPI& api, const char* name, const char* device, int flags);
-    const std::string test_device_type(const HardwareAPI& api);
+    int test_device(const char* name, const char* device, int flags);
+    int test_device_type(std::string& dev);
 
-    AVPixelFormat fmtDec_;
-
-
+    std::vector<std::string> possible_devices_;
 };
 
 }} // namespace jami::video
