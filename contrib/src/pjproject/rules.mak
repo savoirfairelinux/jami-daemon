@@ -70,15 +70,14 @@ endif
 	$(APPLY) $(SRC)/pjproject/0014-ignore_ipv6_on_transport_check.patch
 	$(APPLY) $(SRC)/pjproject/0015-disable_local_resolution.patch
 	$(APPLY) $(SRC)/pjproject/0016-fix_assert_on_connection_attempt.patch
-	$(APPLY) $(SRC)/pjproject/0017-android.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
 .pjproject: pjproject
-	ifdef HAVE_IOS
+ifdef HAVE_IOS
 	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) EXCLUDE_APP=1 ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
 else
 	cd $< && $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 endif
-cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
-touch $@
+	cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
+	touch $@
