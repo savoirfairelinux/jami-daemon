@@ -148,7 +148,7 @@ void SIPCall::createCallAVStream(const StreamData& StreamData, MediaStream& stre
     callAVStreams.push_back(mediaStreamSubject);
     auto& inserted = callAVStreams.back();
     streamSource.attachPriorityObserver(inserted);
-    jami::Manager::instance().getJamiPluginManager().getCsm().createAVSubject(StreamData, inserted);
+    jami::Manager::instance().getJamiPluginManager().getCallServicesManager().createAVSubject(StreamData, inserted);
 }
 
 void

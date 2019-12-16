@@ -86,7 +86,7 @@ public:
     void registerComponentsLifeCycleManagers(PluginManager& pm) {
         
         auto registerCallMediaHandler = [this](void* data) {
-            CallMediaHandlerPtr ptr{(reinterpret_cast<CallMediaHandler*>(data))};
+            CallMediaHandlerPtr ptr{(static_cast<CallMediaHandler*>(data))};
             
             if(ptr) {
                 const std::string pluginId = ptr->id();
