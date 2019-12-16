@@ -1,0 +1,80 @@
+From 9b876d4ff54b035759a36ede0b7e539a0b04e29f Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 15:00:32 -0500
+Subject: [PATCH 07/17] fix_turn_fallback
+
+---
+ pjnath/src/pjnath/ice_strans.c   | 36 ++++++++++++++++++++++++++++++++
+ pjnath/src/pjnath/turn_session.c |  2 +-
+ 2 files changed, 37 insertions(+), 1 deletion(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index ac50b33c..14510a06 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -1463,6 +1463,9 @@ PJ_DEF(pj_status_t) pj_ice_strans_start_ice( pj_ice_strans *ice_st,
+ 	    pj_sockaddr addrs[PJ_ICE_ST_MAX_CAND];
+ 	    unsigned j, count=0;
+ 
++		if (!comp->turn[n].sock)
++			continue;
++
+ 	    /* Gather remote addresses for this component */
+ 	    for (j=0; j<rem_cand_cnt && count<PJ_ARRAY_SIZE(addrs); ++j) {
+ 		if (rem_cand[j].comp_id==i+1 &&
+@@ -2708,6 +2711,39 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
+ 
+ 	sess_init_update(comp->ice_st);
+ 
++    } else if (old_state >= PJ_TURN_STATE_RESOLVING && old_state <= PJ_TURN_STATE_ALLOCATING &&
++               new_state >= PJ_TURN_STATE_DEALLOCATING)
++    {
++        pj_ice_sess_cand *cand = NULL;
++        unsigned i;
++
++        /* DNS resolution has failed! */
++        ++comp->turn[tp_idx].err_cnt;
++
++        /* Unregister ourself from the TURN relay */
++        pj_turn_sock_set_user_data(turn_sock, NULL);
++        comp->turn[tp_idx].sock = NULL;
++
++        /* Wait until initialization completes */
++        pj_grp_lock_acquire(comp->ice_st->grp_lock);
++
++        /* Find relayed candidate in the component */
++        for (i=0; i<comp->cand_cnt; ++i) {
++            if (comp->cand_list[i].type == PJ_ICE_CAND_TYPE_RELAYED &&
++                comp->cand_list[i].transport_id == data->transport_id)
++            {
++                cand = &comp->cand_list[i];
++                break;
++            }
++        }
++        pj_assert(cand != NULL);
++
++        pj_grp_lock_release(comp->ice_st->grp_lock);
++
++        cand->status = old_state == PJ_TURN_STATE_RESOLVING ? PJ_ERESOLVE : PJ_EINVALIDOP;
++
++        sess_init_update(comp->ice_st);
++
+     } else if (new_state >= PJ_TURN_STATE_DEALLOCATING) {
+ 	pj_turn_session_info info;
+ 
+diff --git a/pjnath/src/pjnath/turn_session.c b/pjnath/src/pjnath/turn_session.c
+index 1c0430bc..9f91dd34 100644
+--- a/pjnath/src/pjnath/turn_session.c
++++ b/pjnath/src/pjnath/turn_session.c
+@@ -659,7 +659,7 @@ PJ_DEF(pj_status_t) pj_turn_session_set_server( pj_turn_session *sess,
+ 	PJ_ASSERT_RETURN(default_port>0 && default_port<65536, PJ_EINVAL);
+ 	sess->default_port = (pj_uint16_t)default_port;
+ 
+-	cnt = PJ_TURN_MAX_DNS_SRV_CNT;
++	cnt = 1;
+ 	ai = (pj_addrinfo*)
+ 	     pj_pool_calloc(sess->pool, cnt, sizeof(pj_addrinfo));
+ 
+-- 
+2.23.0
+

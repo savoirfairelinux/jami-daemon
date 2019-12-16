@@ -1,0 +1,25 @@
+From 49072dd9ab6fe6dfed42b624aa30ae7ae1424ea5 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 16:09:35 -0500
+Subject: [PATCH 16/17] fix_assert_on_connection_attempt
+
+---
+ pjnath/src/pjnath/turn_sock.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index 2fec2be3..1e62969d 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -1580,7 +1580,7 @@ static void turn_on_connection_attempt(pj_turn_session *sess,
+ 	if (turn_sock->data_conn[i].state == DATACONN_STATE_NULL)
+ 	    break;
+     }
+-    pj_assert(i < turn_sock->data_conn_cnt);
++    pj_assert(i < PJ_TURN_MAX_TCP_CONN_CNT);
+     ++turn_sock->data_conn_cnt;
+ 
+     /* Init new data connection */
+-- 
+2.23.0
+
