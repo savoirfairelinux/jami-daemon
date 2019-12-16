@@ -23,6 +23,7 @@
 #include "pluginmanager.h"
 #include "callservicesmanager.h"
 #include "pluginpreferencesmanager.h"
+#include "preferenceservice.h"
 
 #include <vector>
 #include <map>
@@ -35,6 +36,14 @@ class JamiPluginManager
 public:
     JamiPluginManager() {
         csm.registerComponentsLifeCycleManagers(pm);
+
+        // Register pluginPreferences
+        auto pluginPreferences = [this](void* data) {
+            auto ppp =(reinterpret_cast<PluginPreferencesMap*>(data));
+            ppp->preferenceValuesMap = ppm.getPluginPreferencesValuesMap(ppp->path);
+            return 0;
+        };
+        pm.registerService("getPluginPreferences", pluginPreferences);
     }
     
     NON_COPYABLE(JamiPluginManager);
