@@ -1,11 +1,17 @@
- pjnath/src/pjnath/turn_sock.c | 64 +++++++++++++++++++++++++++++++++-------------------------------
+From 5cee94b13a9ee4397791f0e67c6e0d671569e5c0 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 15:08:32 -0500
+Subject: [PATCH 12/17] fix_first_packet_turn_tcp
+
+---
+ pjnath/src/pjnath/turn_sock.c | 64 ++++++++++++++++++-----------------
  1 file changed, 33 insertions(+), 31 deletions(-)
 
 diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
-index 7033fd93..6a3a3e31 100644
+index a7b68861..374462bf 100644
 --- a/pjnath/src/pjnath/turn_sock.c
 +++ b/pjnath/src/pjnath/turn_sock.c
-@@ -1052,38 +1052,40 @@ static pj_bool_t dataconn_on_data_read(pj_activesock_t *asock,
+@@ -1357,38 +1357,40 @@ static pj_bool_t dataconn_on_data_read(pj_activesock_t *asock,
  	return PJ_FALSE;
      }
  
@@ -77,3 +83,6 @@ index 7033fd93..6a3a3e31 100644
  
  on_return:
      pj_grp_lock_release(turn_sock->grp_lock);
+-- 
+2.23.0
+

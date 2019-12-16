@@ -1,0 +1,61 @@
+From d00a7d067d3df842353e965bdf25f95e8b3e3b41 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Tue, 17 Dec 2019 11:09:10 -0500
+Subject: [PATCH 20/20] return actual status for sess_on_send_msg()
+
+---
+ pjnath/src/pjnath/stun_sock.c | 24 +++++++++++++-----------
+ 1 file changed, 13 insertions(+), 11 deletions(-)
+
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index 17c4f829..97cd042d 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -1446,6 +1446,7 @@ static pj_status_t sess_on_send_msg(pj_stun_session *sess,
+ {
+     pj_stun_sock *stun_sock;
+     pj_ssize_t size;
++    pj_status_t status;
+ 
+     stun_sock = (pj_stun_sock *) pj_stun_session_get_user_data(sess);
+     if (!stun_sock || !stun_sock->main_sock) {
+@@ -1460,24 +1461,25 @@ static pj_status_t sess_on_send_msg(pj_stun_session *sess,
+ 
+     size = pkt_size;
+     if (stun_sock->conn_type == PJ_STUN_TP_UDP) {
+-        pj_status_t status = pj_activesock_sendto(stun_sock->main_sock,
+-                                    &stun_sock->int_send_key,
+-                                    pkt, &size, 0, dst_addr, addr_len);
++            status = pj_activesock_sendto(stun_sock->main_sock,
++                            &stun_sock->int_send_key,pkt, &size, 0, dst_addr, addr_len);
+     }
+ #if PJ_HAS_TCP
+     else {
+-        for (int i = 0 ; i <= stun_sock->incoming_nb; ++i) {
++        for (int i = 0 ; i <= stun_sock->incoming_nb; ++i)
+             if (pj_sockaddr_cmp(&stun_sock->incoming_socks[i].addr, dst_addr) == 0) {
+-                pj_status_t status = pj_activesock_send(stun_sock->incoming_socks[i].sock,
+-                                            &stun_sock->int_send_key, pkt, &size, 0);
++                status = pj_activesock_send(stun_sock->incoming_socks[i].sock,
++                                &stun_sock->int_send_key, pkt, &size, 0);
++                if (status != PJ_SUCCESS && status != PJ_EPENDING)
++                        PJ_PERROR(4,(stun_sock->obj_name, status,
++                                     "Error sending answer on incoming_sock(s)"));
+             }
+-        }
+-        pj_status_t status = pj_activesock_send(stun_sock->main_sock, &stun_sock->int_send_key,
+-                        pkt, &size, 0);
+-        return status;
++        /* last attempt */
++        status = pj_activesock_send(stun_sock->main_sock,
++                        &stun_sock->int_send_key, pkt, &size, 0);
+     }
+ #else
+-    return PJ_EINVAL;
++    return status;
+ #endif
+ }
+ 
+-- 
+2.24.1
+
