@@ -1,0 +1,28 @@
+From d99fc45439d320901f73b089f4983690b4a47e7c Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 14:54:50 -0500
+Subject: [PATCH 06/17] pj_ice_sess
+
+---
+ pjnath/src/pjnath/ice_strans.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 53dd61be..ac50b33c 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -1312,6 +1312,11 @@ PJ_DEF(unsigned) pj_ice_strans_get_running_comp_cnt(pj_ice_strans *ice_st)
+     }
+ }
+ 
++PJ_DECL(pj_ice_sess *) pj_ice_strans_get_ice_sess( pj_ice_strans *ice_st )
++{
++	return ice_st->ice;
++}
++
+ /*
+  * Get the ICE username fragment and password of the ICE session.
+  */
+-- 
+2.23.0
+

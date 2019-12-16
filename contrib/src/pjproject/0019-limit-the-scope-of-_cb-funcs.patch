@@ -1,0 +1,128 @@
+From b06a8a2be5bd5a8af4c7b897d7e669c1d21f0b64 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Tue, 17 Dec 2019 10:26:14 -0500
+Subject: [PATCH 19/20] limit the scope of *_cb funcs
+
+---
+ pjnath/src/pjnath/stun_sock.c | 24 ++++++++++++------------
+ pjnath/src/pjnath/turn_sock.c |  2 +-
+ 2 files changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index 60c94386..17c4f829 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -115,13 +115,13 @@ static pj_bool_t on_stun_sock_accept(pj_activesock_t *asock, pj_sock_t newsock,
+                                      const pj_sockaddr_t *src_addr,
+                                      int src_addr_len);
+ 
+-pj_bool_t on_connect_complete(pj_activesock_t *asock, pj_status_t status);
++static pj_bool_t on_connect_complete(pj_activesock_t *asock, pj_status_t status);
+ 
+ /* Destructor for group lock */
+ static void stun_sock_destructor(void *obj);
+ 
+ /* This callback is called by the STUN session to send packet */
+-pj_status_t sess_on_send_msg(pj_stun_session *sess,
++static pj_status_t sess_on_send_msg(pj_stun_session *sess,
+ 				    void *token,
+ 				    const void *pkt,
+ 				    pj_size_t pkt_size,
+@@ -150,7 +150,7 @@ static void dns_srv_resolver_cb(void *user_data,
+ static pj_status_t get_mapped_addr(pj_stun_sock *stun_sock);
+ 
+ /* Callback from active socket when incoming packet is received */
+-pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
++static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+ 				  void *data,
+ 				  pj_size_t size,
+ 				  const pj_sockaddr_t *src_addr,
+@@ -158,15 +158,15 @@ pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+ 				  pj_status_t status);
+ 
+ /* Callback from active socket about send status */
+-pj_bool_t on_data_sent(pj_activesock_t *asock,
++static pj_bool_t on_data_sent(pj_activesock_t *asock,
+ 			      pj_ioqueue_op_key_t *send_key,
+ 			      pj_ssize_t sent);
+ 
+ /* Schedule keep-alive timer */
+-void start_ka_timer(pj_stun_sock *stun_sock);
++static void start_ka_timer(pj_stun_sock *stun_sock);
+ 
+ /* Keep-alive timer callback */
+-void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te);
++static void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te);
+ 
+ #define INTERNAL_MSG_TOKEN  (void*)(pj_ssize_t)1
+ 
+@@ -1407,7 +1407,7 @@ pj_stun_sock_close(pj_stun_sock *stun_sock, const pj_sockaddr_t *remote_addr) {
+     return PJ_EINVAL;
+ }
+ 
+-pj_bool_t on_connect_complete(pj_activesock_t *asock, pj_status_t status) {
++static pj_bool_t on_connect_complete(pj_activesock_t *asock, pj_status_t status) {
+   pj_stun_sock *stun_sock;
+   stun_sock = (pj_stun_sock *)pj_activesock_get_user_data(asock);
+ 
+@@ -1437,7 +1437,7 @@ pj_bool_t on_connect_complete(pj_activesock_t *asock, pj_status_t status) {
+ #endif
+ 
+ /* This callback is called by the STUN session to send packet */
+-pj_status_t sess_on_send_msg(pj_stun_session *sess,
++static pj_status_t sess_on_send_msg(pj_stun_session *sess,
+ 				    void *token,
+ 				    const void *pkt,
+ 				    pj_size_t pkt_size,
+@@ -1568,7 +1568,7 @@ on_return:
+ }
+ 
+ /* Schedule keep-alive timer */
+-void start_ka_timer(pj_stun_sock *stun_sock)
++static void start_ka_timer(pj_stun_sock *stun_sock)
+ {
+     pj_timer_heap_cancel_if_active(stun_sock->cfg.timer_heap,
+                                    &stun_sock->ka_timer, 0);
+@@ -1588,7 +1588,7 @@ void start_ka_timer(pj_stun_sock *stun_sock)
+ }
+ 
+ /* Keep-alive timer callback */
+-void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te)
++static void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te)
+ {
+     pj_stun_sock *stun_sock;
+ 
+@@ -1610,7 +1610,7 @@ void ka_timer_cb(pj_timer_heap_t *th, pj_timer_entry *te)
+ }
+ 
+ /* Callback from active socket when incoming packet is received */
+-pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
++static pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+ 				  void *data,
+ 				  pj_size_t size,
+ 				  const pj_sockaddr_t *src_addr,
+@@ -1633,7 +1633,7 @@ pj_bool_t on_data_recvfrom(pj_activesock_t *asock,
+ }
+ 
+ /* Callback from active socket about send status */
+-pj_bool_t on_data_sent(pj_activesock_t *asock,
++static pj_bool_t on_data_sent(pj_activesock_t *asock,
+ 			      pj_ioqueue_op_key_t *send_key,
+ 			      pj_ssize_t sent)
+ {
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index 1e62969d..252fe799 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -1757,7 +1757,7 @@ static void turn_on_connection_bind_status(pj_turn_session *sess,
+     }
+ }
+ 
+-pj_bool_t
++PJ_DECL(pj_bool_t)
+ pj_turn_sock_has_dataconn(pj_turn_sock *turn_sock, const pj_sockaddr_t *peer)
+ {
+ 	if (!turn_sock) return PJ_FALSE;
+-- 
+2.24.1
+

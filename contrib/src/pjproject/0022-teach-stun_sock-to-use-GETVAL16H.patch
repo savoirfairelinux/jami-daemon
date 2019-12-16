@@ -1,0 +1,46 @@
+From 14b41aee5b6d38ce144cf33034eab6c9e8248528 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Tue, 17 Dec 2019 14:46:08 -0500
+Subject: [PATCH 22/22] teach stun_sock to use GETVAL16H() this is similar to
+ turn_sock and stun_msg hopefully upstream will widen the scope of GETVAL16H()
+ for everyone to use.
+
+---
+ pjnath/src/pjnath/stun_sock.c | 14 ++++++++++++--
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index 00a1de53..289c1680 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -105,6 +105,17 @@ typedef struct pj_stun_sock {
+   pj_grp_lock_t *grp_lock;    /* Session group lock         */
+ } pj_stun_sock;
+ 
++
++//////////////////////////////////////////////////////////////////////////////
++
++static pj_uint16_t GETVAL16H(const pj_uint8_t *buf, unsigned pos)
++{
++    return (pj_uint16_t) ((buf[pos + 0] << 8) | \
++                          (buf[pos + 1] << 0));
++}
++
++//////////////////////////////////////////////////////////////////////////////
++
+ /* 
+  * Prototypes for static functions 
+  */
+@@ -634,8 +645,7 @@ parse_rx_packet(pj_activesock_t *asock, void *data, pj_size_t size,
+                     buf->rx_wanted_size = 0;
+                 }
+             } else if (pkt_len > 1) {
+-                pkt_len = (current_packet[0] << 8) | \
+-                          (current_packet[1] << 0);
++                pkt_len = GETVAL16H(current_packet, 0);
+                 current_packet = current_packet + 2;
+                 parsed += 2;
+                 if (pkt_len + parsed <= size) {
+-- 
+2.24.1
+
