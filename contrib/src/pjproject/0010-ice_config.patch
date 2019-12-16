@@ -1,0 +1,78 @@
+From 3230758c3e8b9ef7933e4d039230cc40642c6897 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 15:04:22 -0500
+Subject: [PATCH 10/17] ice_config
+
+---
+ pjnath/include/pjnath/config.h | 16 ++++++++--------
+ 1 file changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
+index fc1e2755..716d87d3 100644
+--- a/pjnath/include/pjnath/config.h
++++ b/pjnath/include/pjnath/config.h
+@@ -238,7 +238,7 @@
+  * Default: 16
+  */
+ #ifndef PJ_ICE_MAX_CAND
+-#   define PJ_ICE_MAX_CAND			    16
++#   define PJ_ICE_MAX_CAND			    256
+ #endif
+ 
+ 
+@@ -248,7 +248,7 @@
+  * Default: 8
+  */
+ #ifndef PJ_ICE_ST_MAX_CAND
+-#   define PJ_ICE_ST_MAX_CAND			    8
++#   define PJ_ICE_ST_MAX_CAND			    32
+ #endif
+ 
+ 
+@@ -256,10 +256,10 @@
+  * Maximum number of STUN transports for each ICE stream transport component.
+  * Valid values are 1 - 64.
+  *
+- * Default: 2
++ * Default: 4 (one active and one passive for IPv4 and IPv6)
+  */
+ #ifndef PJ_ICE_MAX_STUN
+-#   define PJ_ICE_MAX_STUN			    2
++#   define PJ_ICE_MAX_STUN			    6
+ #endif
+ 
+ 
+@@ -267,10 +267,10 @@
+  * Maximum number of TURN transports for each ICE stream transport component.
+  * Valid values are 1 - 64.
+  *
+- * Default: 2
++ * Default: 4 (one active and one passive for IPv4 and IPv6)
+  */
+ #ifndef PJ_ICE_MAX_TURN
+-#   define PJ_ICE_MAX_TURN			    3
++#   define PJ_ICE_MAX_TURN			    4
+ #endif
+ 
+ 
+@@ -279,7 +279,7 @@
+  * the maximum number of components (PJ_ICE_MAX_COMP) value.
+  */
+ #ifndef PJ_ICE_COMP_BITS
+-#   define PJ_ICE_COMP_BITS			    1
++#   define PJ_ICE_COMP_BITS			    2
+ #endif
+ 
+ 
+@@ -330,7 +330,7 @@
+  * Default: 32
+  */
+ #ifndef PJ_ICE_MAX_CHECKS
+-#   define PJ_ICE_MAX_CHECKS			    32
++#   define PJ_ICE_MAX_CHECKS			    1024
+ #endif
+ 
+ 
+-- 
+2.23.0
+

@@ -1,0 +1,80 @@
+From 96e282b81e8e4ebaa9d156b6919afba9ab43acdc Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 15:02:39 -0500
+Subject: [PATCH 09/17] add_dtls_transport
+
+---
+ pjsip/include/pjsip/sip_types.h |  8 +++++++-
+ pjsip/src/pjsip/sip_transport.c | 16 +++++++++++++++-
+ 2 files changed, 22 insertions(+), 2 deletions(-)
+
+diff --git a/pjsip/include/pjsip/sip_types.h b/pjsip/include/pjsip/sip_types.h
+index d212dd2e..bf6b1b0f 100644
+--- a/pjsip/include/pjsip/sip_types.h
++++ b/pjsip/include/pjsip/sip_types.h
+@@ -73,6 +73,9 @@ typedef enum pjsip_transport_type_e
+     /** TLS. */
+     PJSIP_TRANSPORT_TLS,
+ 
++    /** DTLS. */
++    PJSIP_TRANSPORT_DTLS,
++
+     /** SCTP. */
+     PJSIP_TRANSPORT_SCTP,
+ 
+@@ -95,7 +98,10 @@ typedef enum pjsip_transport_type_e
+     PJSIP_TRANSPORT_TCP6 = PJSIP_TRANSPORT_TCP + PJSIP_TRANSPORT_IPV6,
+ 
+     /** TLS over IPv6 */
+-    PJSIP_TRANSPORT_TLS6 = PJSIP_TRANSPORT_TLS + PJSIP_TRANSPORT_IPV6
++    PJSIP_TRANSPORT_TLS6 = PJSIP_TRANSPORT_TLS + PJSIP_TRANSPORT_IPV6,
++
++    /** DTLS over IPv6 */
++    PJSIP_TRANSPORT_DTLS6 = PJSIP_TRANSPORT_DTLS + PJSIP_TRANSPORT_IPV6
+ 
+ } pjsip_transport_type_e;
+ 
+diff --git a/pjsip/src/pjsip/sip_transport.c b/pjsip/src/pjsip/sip_transport.c
+index d4339d40..2325ab2c 100644
+--- a/pjsip/src/pjsip/sip_transport.c
++++ b/pjsip/src/pjsip/sip_transport.c
+@@ -200,6 +200,13 @@ static struct transport_names_t
+ 	"TLS transport", 
+ 	PJSIP_TRANSPORT_RELIABLE | PJSIP_TRANSPORT_SECURE
+     },
++    { 
++    PJSIP_TRANSPORT_DTLS,
++	5061, 
++	{"DTLS", 4}, 
++	"DTLS transport", 
++	PJSIP_TRANSPORT_SECURE
++    },
+     { 
+ 	PJSIP_TRANSPORT_SCTP, 
+ 	5060, 
+@@ -242,6 +249,13 @@ static struct transport_names_t
+ 	"TLS IPv6 transport",
+ 	PJSIP_TRANSPORT_RELIABLE | PJSIP_TRANSPORT_SECURE
+     },
++    {
++	PJSIP_TRANSPORT_DTLS6,
++	5061,
++	{"DTLS", 4},
++	"DTLS IPv6 transport",
++	PJSIP_TRANSPORT_SECURE
++    },
+ };
+ 
+ static void tp_state_callback(pjsip_transport *tp,
+@@ -267,7 +281,7 @@ static struct transport_names_t *get_tpname(pjsip_transport_type_e type)
+  */
+ PJ_DEF(pj_status_t) pjsip_transport_register_type( unsigned tp_flag,
+ 						   const char *tp_name,
+-						   int def_port,
++                           int def_port,
+ 						   int *p_tp_type)
+ {
+     unsigned i;
+-- 
+2.23.0
+
