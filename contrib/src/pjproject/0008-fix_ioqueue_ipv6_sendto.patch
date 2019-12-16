@@ -1,0 +1,40 @@
+From 4f84ed395c3b98587e17f968693d0f3e8407ff65 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 15:01:22 -0500
+Subject: [PATCH 08/17] fix_ioqueue_ipv6_sendto
+
+---
+ pjlib/src/pj/ioqueue_common_abs.c | 3 ++-
+ pjlib/src/pj/ioqueue_common_abs.h | 2 +-
+ 2 files changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/pjlib/src/pj/ioqueue_common_abs.c b/pjlib/src/pj/ioqueue_common_abs.c
+index 40cd04e4..fe28abd7 100644
+--- a/pjlib/src/pj/ioqueue_common_abs.c
++++ b/pjlib/src/pj/ioqueue_common_abs.c
+@@ -1053,7 +1053,8 @@ retry_on_restart:
+     /*
+      * Check that address storage can hold the address parameter.
+      */
+-    PJ_ASSERT_RETURN(addrlen <= (int)sizeof(pj_sockaddr_in), PJ_EBUG);
++    PJ_ASSERT_RETURN((((pj_sockaddr*)addr)->addr.sa_family == pj_AF_INET() && addrlen <= (int)sizeof(pj_sockaddr_in)) ||
++					 (((pj_sockaddr*)addr)->addr.sa_family == pj_AF_INET6() && addrlen <= (int)sizeof(pj_sockaddr_in6)), PJ_EBUG);
+ 
+     /*
+      * Schedule asynchronous send.
+diff --git a/pjlib/src/pj/ioqueue_common_abs.h b/pjlib/src/pj/ioqueue_common_abs.h
+index d5e36b4d..8c6e0295 100644
+--- a/pjlib/src/pj/ioqueue_common_abs.h
++++ b/pjlib/src/pj/ioqueue_common_abs.h
+@@ -63,7 +63,7 @@ struct write_operation
+     pj_size_t		    size;
+     pj_ssize_t              written;
+     unsigned                flags;
+-    pj_sockaddr_in	    rmt_addr;
++    pj_sockaddr	    rmt_addr;
+     int			    rmt_addrlen;
+ };
+ 
+-- 
+2.23.0
+
