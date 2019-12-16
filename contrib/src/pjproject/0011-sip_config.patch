@@ -1,0 +1,34 @@
+From bc9148f6ce93832662cc57ac16b29bcf39be7586 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 15:07:32 -0500
+Subject: [PATCH 11/17] sip_config
+
+---
+ pjsip/include/pjsip/sip_config.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/pjsip/include/pjsip/sip_config.h b/pjsip/include/pjsip/sip_config.h
+index 585aa722..9f6c4169 100644
+--- a/pjsip/include/pjsip/sip_config.h
++++ b/pjsip/include/pjsip/sip_config.h
+@@ -359,7 +359,7 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
+  * containing presence information can be quite large (>1500).
+  */
+ #ifndef PJSIP_MAX_PKT_LEN
+-#   define PJSIP_MAX_PKT_LEN		4000
++#   define PJSIP_MAX_PKT_LEN		8000
+ #endif
+ 
+ 
+@@ -658,7 +658,7 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
+  * Default: 600
+  */
+ #ifndef PJSIP_TRANSPORT_SERVER_IDLE_TIME
+-#   define PJSIP_TRANSPORT_SERVER_IDLE_TIME	600
++#   define PJSIP_TRANSPORT_SERVER_IDLE_TIME	3
+ #endif
+ 
+ 
+-- 
+2.23.0
+

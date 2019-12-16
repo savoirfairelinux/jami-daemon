@@ -1,0 +1,26 @@
+From 1448774801a73e5a99abc3ec684799c04a9aa287 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 16:09:10 -0500
+Subject: [PATCH 15/17] disable_local_resolution
+
+---
+ pjlib/include/pj/config.h | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/pjlib/include/pj/config.h b/pjlib/include/pj/config.h
+index 9372986c..67c4e0a3 100644
+--- a/pjlib/include/pj/config.h
++++ b/pjlib/include/pj/config.h
+@@ -1003,6 +1003,9 @@
+ #endif
+ 
+ 
++#ifndef PJ_GETHOSTIP_DISABLE_LOCAL_RESOLUTION
++#   define PJ_GETHOSTIP_DISABLE_LOCAL_RESOLUTION	    1
++#endif
+ 
+ /** @} */
+ 
+-- 
+2.23.0
+

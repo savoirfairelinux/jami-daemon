@@ -1,0 +1,60 @@
+From 1031e69d6d384e07fc0fb2025e687a8310827439 Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 14:45:01 -0500
+Subject: [PATCH 05/17] multiple_listeners
+
+---
+ pjsip/src/pjsip/sip_transport.c | 18 ++++++++++++++++--
+ 1 file changed, 16 insertions(+), 2 deletions(-)
+
+diff --git a/pjsip/src/pjsip/sip_transport.c b/pjsip/src/pjsip/sip_transport.c
+index 65ac823d..d4339d40 100644
+--- a/pjsip/src/pjsip/sip_transport.c
++++ b/pjsip/src/pjsip/sip_transport.c
+@@ -1416,9 +1416,15 @@ PJ_DEF(pj_status_t) pjsip_tpmgr_register_tpfactory( pjsip_tpmgr *mgr,
+ 
+     pj_lock_acquire(mgr->lock);
+ 
+-    /* Check that no same factory has been registered. */
++    /* Check that no factory with the same type and bound address has been
++     * registered. */
+     status = PJ_SUCCESS;
+     for (p=mgr->factory_list.next; p!=&mgr->factory_list; p=p->next) {
++       if (p->type == tpf->type &&
++           !pj_sockaddr_cmp(&tpf->local_addr, &p->local_addr)) {
++         status = PJSIP_ETYPEEXISTS;
++         break;
++       }
+ 	if (p == tpf) {
+ 	    status = PJ_EEXISTS;
+ 	    break;
+@@ -2267,10 +2273,10 @@ PJ_DEF(pj_status_t) pjsip_tpmgr_acquire_transport2(pjsip_tpmgr *mgr,
+ 	    }
+ 	}
+ 
++	unsigned flag = pjsip_transport_get_flag_from_type(type);
+ 	if (tp_ref == NULL &&
+ 	    (!sel || sel->disable_connection_reuse == PJ_FALSE))
+ 	{
+-	    unsigned flag = pjsip_transport_get_flag_from_type(type);
+ 	    const pj_sockaddr *remote_addr = (const pj_sockaddr*)remote;
+ 
+ 
+@@ -2365,6 +2371,14 @@ PJ_DEF(pj_status_t) pjsip_tpmgr_acquire_transport2(pjsip_tpmgr *mgr,
+ 
+ 	} else {
+ 
++         /* Make sure we don't use another factory than the one given if
++            secure flag is set */
++         if (flag & PJSIP_TRANSPORT_SECURE) {
++             TRACE_((THIS_FILE, "Can't create new TLS transport with no "
++                                 "provided suitable TLS listener."));
++             return PJSIP_ETPNOTSUITABLE;
++         }
++ 
+ 	    /* Find factory with type matches the destination type */
+ 	    factory = mgr->factory_list.next;
+ 	    while (factory != &mgr->factory_list) {
+-- 
+2.23.0
+

@@ -1,0 +1,33 @@
+From b4e89a710b89cfc7392f73700815f8d8791463fe Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 14:24:36 -0500
+Subject: [PATCH 02/17] fix_turn_alloc_failure
+
+---
+ pjnath/src/pjnath/ice_strans.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 0b445a6e..53dd61be 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -422,13 +422,13 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+     data->comp = comp;
+     data->transport_id = cand->transport_id;
+ 
+-    /* Commit the relayed candidate. */
+-    comp->cand_cnt++;
+-
+     if (turn_cfg->conn_type == PJ_TURN_TP_TCP) {
+         turn_cfg->alloc_param.peer_conn_type = PJ_TURN_TP_TCP;
+     }
+ 
++    /* Commit the relayed candidate. */
++    comp->cand_cnt++;
++
+     /* Create the TURN transport */
+     status = pj_turn_sock_create(&ice_st->cfg.stun_cfg, turn_cfg->af,
+ 				 turn_cfg->conn_type,
+-- 
+2.23.0
+

@@ -1,5 +1,5 @@
 # PJPROJECT
-PJPROJECT_VERSION := 5dfa75be7d69047387f9b0436dd9492bbbf03fe4
+PJPROJECT_VERSION := 2.9
 PJPROJECT_URL := https://github.com/pjsip/pjproject/archive/$(PJPROJECT_VERSION).tar.gz
 
 PJPROJECT_OPTIONS := --disable-oss          \
@@ -52,33 +52,32 @@ ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/pjproject/pj_win.patch
 endif
 ifdef HAVE_ANDROID
-	$(APPLY) $(SRC)/pjproject/android.patch
+	$(APPLY) $(SRC)/pjproject/0017-android.patch.patch
 endif
-	$(APPLY) $(SRC)/pjproject/fix_turn_alloc_failure.patch
-	$(APPLY) $(SRC)/pjproject/rfc2466.patch
-	$(APPLY) $(SRC)/pjproject/ipv6.patch
-	$(APPLY) $(SRC)/pjproject/multiple_listeners.patch
-	$(APPLY) $(SRC)/pjproject/pj_ice_sess.patch
-	$(APPLY) $(SRC)/pjproject/fix_turn_fallback.patch
-	$(APPLY) $(SRC)/pjproject/fix_ioqueue_ipv6_sendto.patch
-	$(APPLY) $(SRC)/pjproject/add_dtls_transport.patch
-	$(APPLY) $(SRC)/pjproject/rfc6544.patch
-	$(APPLY) $(SRC)/pjproject/ice_config.patch
-	$(APPLY) $(SRC)/pjproject/sip_config.patch
-	$(APPLY) $(SRC)/pjproject/fix_first_packet_turn_tcp.patch
-	$(APPLY) $(SRC)/pjproject/fix_ebusy_turn.patch
-	$(APPLY) $(SRC)/pjproject/ignore_ipv6_on_transport_check.patch
-	$(APPLY) $(SRC)/pjproject/fix_turn_connection_failure.patch
-	$(APPLY) $(SRC)/pjproject/disable_local_resolution.patch
-	$(APPLY) $(SRC)/pjproject/fix_assert_on_connection_attempt.patch
+	$(APPLY) $(SRC)/pjproject/0001-rfc6544.patch.patch
+	$(APPLY) $(SRC)/pjproject/0002-fix_turn_alloc_failure.patch.patch
+	$(APPLY) $(SRC)/pjproject/0003-rfc2466.patch.patch
+	$(APPLY) $(SRC)/pjproject/0004-ipv6.patch.patch
+	$(APPLY) $(SRC)/pjproject/0005-multiple_listeners.patch.patch
+	$(APPLY) $(SRC)/pjproject/0006-pj_ice_sess.patch.patch
+	$(APPLY) $(SRC)/pjproject/0007-fix_turn_fallback.patch.patch
+	$(APPLY) $(SRC)/pjproject/0008-fix_ioqueue_ipv6_sendto.patch.patch
+	$(APPLY) $(SRC)/pjproject/0009-add_dtls_transport.patch.patch
+	$(APPLY) $(SRC)/pjproject/0010-ice_config.patch.patch
+	$(APPLY) $(SRC)/pjproject/0011-sip_config.patch.patch
+	$(APPLY) $(SRC)/pjproject/0012-fix_first_packet_turn_tcp.patch.patch
+	$(APPLY) $(SRC)/pjproject/0013-fix_ebusy_turn.patch.patch
+	$(APPLY) $(SRC)/pjproject/0014-ignore_ipv6_on_transport_check.patch.patch
+	$(APPLY) $(SRC)/pjproject/0015-disable_local_resolution.patch.patch
+	$(APPLY) $(SRC)/pjproject/0016-fix_assert_on_connection_attempt.patch.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
 .pjproject: pjproject
-ifdef HAVE_IOS
+	ifdef HAVE_IOS
 	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) EXCLUDE_APP=1 ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
 else
 	cd $< && $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 endif
-	cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
-	touch $@
+cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
+touch $@
