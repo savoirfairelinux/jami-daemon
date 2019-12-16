@@ -1,0 +1,25 @@
+From 2a9b7a75d446ba5c01da684e767d5ecbe51aa5ed Mon Sep 17 00:00:00 2001
+From: Paymon <paymon@savoirfairelinux.com>
+Date: Mon, 16 Dec 2019 14:31:26 -0500
+Subject: [PATCH 04/17] ipv6
+
+---
+ pjlib/include/pj/config.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pjlib/include/pj/config.h b/pjlib/include/pj/config.h
+index 5a3c8628..9372986c 100644
+--- a/pjlib/include/pj/config.h
++++ b/pjlib/include/pj/config.h
+@@ -601,7 +601,7 @@
+  * Default: 0 (disabled, for now)
+  */
+ #ifndef PJ_HAS_IPV6
+-#  define PJ_HAS_IPV6		    0
++#  define PJ_HAS_IPV6		    1
+ #endif
+ 
+  /**
+-- 
+2.23.0
+
