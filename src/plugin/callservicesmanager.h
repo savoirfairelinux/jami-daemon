@@ -34,7 +34,6 @@ using AVSubjectSPtr = std::weak_ptr<Observable<AVFrame*>>;
 class CallServicesManager{
 
 public:
-    
     CallServicesManager() = default;
 
     /**
@@ -47,7 +46,7 @@ public:
         **/
         callMediaHandlers.clear();
     }
-    
+
     NON_COPYABLE(CallServicesManager);
 
 public:
@@ -77,58 +76,57 @@ public:
         auto inserted = callAVsubjects.back();
         notifyAllAVSubject(inserted.first, inserted.second);
     }
-    
-    
+
     /**
      * @brief registerServices
      * Main Api, exposes functions to the plugins
      */
     void registerComponentsLifeCycleManagers(PluginManager& pm) {
-        
-        auto registerCallMediaHandler = [this](void* data) {
+
+        auto registerCallMediaHandler = [this](const DLPlugin* plugin, void* data) {
             CallMediaHandlerPtr ptr{(static_cast<CallMediaHandler*>(data))};
-            
+
             if(ptr) {
-                const std::string pluginId = ptr->id();
-                
+                const std::string& pluginId = plugin->getPath();
+
                 for(auto it=callMediaHandlers.begin(); it!=callMediaHandlers.end(); ++it){
                     if(it->first ==  pluginId) {
                         return 1;
                     }
                 }
-                
+
                 callMediaHandlers.push_back(std::make_pair(pluginId, std::move(ptr)));
                 if(!callMediaHandlers.empty() && !callAVsubjects.empty()) {
                     listAvailableSubjects(callMediaHandlers.back().second);
                 }
             }
-            
+
             return 0;
         };
-        
-        auto unregisterMediaHandler = [this](void* data) {
+
+        auto unregisterMediaHandler = [this](const DLPlugin* plugin, void* data) {
             for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
                 // Remove all possible duplicates, before unloading a plugin
                 if(it->second.get() == data) {
                     callMediaHandlers.erase(it);
                 }
             }
-            return 0;  
+            return 0;
         };
-        
+
         //pm.registerService("registerCallMediaHandler", registerPlugin);
         pm.registerComponentManager("CallMediaHandlerManager",
                                     registerCallMediaHandler, unregisterMediaHandler);
     }
-    
+
     void notifySetPreferenceValueChange(const std::string& path, const std::string& key, const std::string& value) {
         for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
             if(it->first == path) {
                 it->second->setPreferenceAttribute(key, value);
             }
-        }   
+        }
     }
-    
+
 private:
 
     /**
