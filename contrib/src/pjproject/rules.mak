@@ -70,7 +70,6 @@ endif
 	$(APPLY) $(SRC)/pjproject/0014-ignore_ipv6_on_transport_check.patch
 	$(APPLY) $(SRC)/pjproject/0015-disable_local_resolution.patch
 	$(APPLY) $(SRC)/pjproject/0016-fix_assert_on_connection_attempt.patch
-	$(APPLY) $(SRC)/pjproject/0017-android.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
