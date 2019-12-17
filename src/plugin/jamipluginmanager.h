@@ -23,7 +23,6 @@
 #include "pluginmanager.h"
 #include "callservicesmanager.h"
 #include "pluginpreferencesmanager.h"
-#include "preferenceservice.h"
 
 #include <vector>
 #include <map>
@@ -35,15 +34,8 @@ class JamiPluginManager
 {
 public:
     JamiPluginManager() {
-        csm.registerComponentsLifeCycleManagers(pm);
-
-        // Register pluginPreferences
-        auto pluginPreferences = [this](void* data) {
-            auto ppp =(static_cast<PluginPreferencesMap*>(data));
-            ppp->preferenceValuesMap = ppm.getPluginPreferencesValuesMap(ppp->path);
-            return 0;
-        };
-        pm.registerService("getPluginPreferences", pluginPreferences);
+        csm_.registerComponentsLifeCycleManagers(pm_);
+        registerServices();
     }
     
     NON_COPYABLE(JamiPluginManager);
@@ -110,7 +102,7 @@ public:
      * @param sopath of the plugin .so file
      */
     void loadPlugin(const std::string& sopath){
-        pm.load(sopath);
+        pm_.load(sopath);
     }
     
     /**
@@ -118,7 +110,7 @@ public:
      * @param sopath of the plugin .so file
      */
     void unloadPlugin(const std::string& sopath){
-        pm.unload(sopath);
+        pm_.unload(sopath);
     }
     
     /**
@@ -130,40 +122,40 @@ public:
      */
     void togglePlugin(const std::string& sopath, bool toggle){
         // remove the previous plugin object if it was registered
-        pm.destroyPluginComponents(sopath);
+        pm_.destroyPluginComponents(sopath);
         // If toggle, register a new instance of the plugin
         // function
         if(toggle){
-            pm.callPluginInitFunction(sopath);
+            pm_.callPluginInitFunction(sopath);
         }
     }
     
     std::vector<std::map<std::string,std::string>>
     getPluginPreferences(const std::string& path) {
-        return ppm.getPluginPreferences(path);
+        return ppm_.getPluginPreferences(path);
     }
     
     bool setPluginPreference(const std::string& path,
                              const std::string& key,
                              const std::string& value){
-        bool r =  ppm.savePluginPreferenceValue(path,key,value);
+        bool r =  ppm_.savePluginPreferenceValue(path,key,value);
         if(r == 0) {
-            csm.notifySetPreferenceValueChange(path, key, value);
+            csm_.notifySetPreferenceValueChange(path, key, value);
         }
         return r;
     }
     
     std::map<std::string,std::string>
     getPluginPreferencesValuesMap(const std::string& path){
-        return ppm.getPluginPreferencesValuesMap(path);
+        return ppm_.getPluginPreferencesValuesMap(path);
     }
     
     bool resetPluginPreferencesValuesMap(const std::string& path){
-        return ppm.resetPluginPreferencesValuesMap(path);
+        return ppm_.resetPluginPreferencesValuesMap(path);
     }
     
     CallServicesManager& getCallServicesManager() {
-        return csm;
+        return csm_;
     }
     
 private:
@@ -191,14 +183,44 @@ private:
     
     std::map<std::string, std::string> parseManifestFile(const std::string &manifestFilePath);
     
-    const std::string manifestPath(const std::string& pluginRootPath) {
+    
+    const std::string getRootPathFromSoPath(const std::string& soPath) const {
+        return soPath.substr(0,soPath.find_last_of(DIR_SEPARATOR_CH));
+    }
+    
+    const std::string manifestPath(const std::string& pluginRootPath) const {
         return pluginRootPath + DIR_SEPARATOR_CH + "manifest.json";
     }
     
+    const std::string dataPath(const std::string& pluginSoPath) const {
+        return getRootPathFromSoPath(pluginSoPath) + DIR_SEPARATOR_CH + "data";
+    }
+
+    void registerServices(){
+        
+        // Register pluginPreferences
+        auto pluginPreferences = [this](const DLPlugin* plugin, void* data) {
+            auto ppp = static_cast<std::map<std::string, std::string>*>(data);
+            *ppp = ppm_.getPluginPreferencesValuesMap(
+                getRootPathFromSoPath(plugin->getPath()));
+            return 0;
+        };
+        pm_.registerService("getPluginPreferences", pluginPreferences);
+        
+        
+        auto getPluginData = [this](const DLPlugin* plugin, void* data) {
+            auto dataPath_ = static_cast<std::string*>(data);
+            dataPath_->assign(dataPath(plugin->getPath()));
+            return 0;
+        };
+        
+        pm_.registerService("getPluginDataPath", getPluginData);
+    }
+    
 private:
-    PluginManager pm;
-    CallServicesManager csm;
-    PluginPreferencesManager ppm;
+    PluginManager pm_;
+    CallServicesManager csm_;
+    PluginPreferencesManager ppm_;
 };
 }
 
