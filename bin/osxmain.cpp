@@ -31,9 +31,7 @@
 #include "callmanager_interface.h"
 #include "configurationmanager_interface.h"
 #include "presencemanager_interface.h"
-#ifdef ENABLE_VIDEO
 #include "videomanager_interface.h"
-#endif
 #include "fileutils.h"
 
 static int ringFlags = 0;
@@ -45,9 +43,7 @@ print_title()
         << "Jami Daemon " << DRing::version()
         << ", by Savoir-faire Linux 2004-2019" << std::endl
         << "https://jami.net/" << std::endl
-#ifdef ENABLE_VIDEO
         << "[Video support enabled]" << std::endl
-#endif
         << std::endl;
 }
 

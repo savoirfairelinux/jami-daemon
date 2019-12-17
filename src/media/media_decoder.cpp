@@ -384,7 +384,6 @@ MediaDecoder::decode()
     return demuxer_->decode();
 }
 
-#ifdef ENABLE_VIDEO
 #ifdef RING_ACCEL
 void
 MediaDecoder::enableAccel(bool enableAccel)
@@ -427,7 +426,6 @@ MediaDecoder::flush()
 
     return Status::Success;
 }
-#endif // ENABLE_VIDEO
 
 int MediaDecoder::getWidth() const
 { return decoderCtx_->width; }

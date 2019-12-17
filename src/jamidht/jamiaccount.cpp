@@ -59,9 +59,7 @@
 #include "manager.h"
 #include "utf8_utils.h"
 
-#ifdef ENABLE_VIDEO
 #include "libav_utils.h"
-#endif
 #include "fileutils.h"
 #include "string_utils.h"
 #include "array_size.h"
@@ -333,7 +331,6 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
         const std::string toUri = parseRingUri(suffix);
         startOutgoingCall(call, toUri);
     } catch (...) {
-#if HAVE_RINGNS
         NameDirectory::lookupUri(suffix, nameServer_, [wthis_=weak(), call](const std::string& result,
                                                                    NameDirectory::Response response) {
             // we may run inside an unknown thread, but following code must be called in main thread
@@ -354,9 +351,6 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
                 }
             });
         });
-#else
-        call->onFailure(ENOENT);
-#endif
     }
 
     return call;
@@ -401,7 +395,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
 
-#if HAVE_RINGNS
     accountManager_->lookupAddress(toUri, [wCall](const std::string& result, const NameDirectory::Response& response){
         if (response == NameDirectory::Response::found)
             if (auto call = wCall.lock()) {
@@ -409,7 +402,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 call->setPeerUri(RING_URI_PREFIX + result);
             }
     });
-#endif
 
     // Find listening devices for this account
     dht::InfoHash peer_account(toUri);
@@ -696,11 +688,9 @@ void JamiAccount::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::PROXY_SERVER_KEY << YAML::Value << proxyServer_;
     out << YAML::Key << Conf::PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey_;
 
-#if HAVE_RINGNS
     out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value <<  nameServer_;
     if (not registeredName_.empty())
         out << YAML::Key << DRing::Account::VolatileProperties::REGISTERED_NAME << YAML::Value << registeredName_;
-#endif
 
     out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
     out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD << YAML::Value << archiveHasPassword_;
@@ -778,12 +768,10 @@ void JamiAccount::unserialize(const YAML::Node &node)
     parseValueOptional(node, DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY, accountPeerDiscovery_);
     parseValueOptional(node, DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
 
-#if HAVE_RINGNS
     parseValueOptional(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
     if (registeredName_.empty()) {
         parseValueOptional(node, DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
     }
-#endif
 
     parseValue(node, Conf::DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
 
@@ -1110,9 +1098,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
         std::remove(proxyCachePath.c_str());
     }
 
-#if HAVE_RINGNS
     parseString(details, DRing::Account::ConfProperties::RingNS::URI,     nameServer_);
-#endif
 
     loadAccount(archive_password, archive_pin, archive_path);
 
@@ -1168,9 +1154,7 @@ JamiAccount::getAccountDetails() const
     a.emplace(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
     a.emplace(DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
     a.emplace(DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
-#if HAVE_RINGNS
     a.emplace(DRing::Account::ConfProperties::RingNS::URI,                   nameServer_);
-#endif
 
     return a;
 }
@@ -1180,14 +1164,11 @@ JamiAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
     a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
-#if HAVE_RINGNS
     if (not registeredName_.empty())
         a.emplace(DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
-#endif
     return a;
 }
 
-#if HAVE_RINGNS
 void
 JamiAccount::lookupName(const std::string& name)
 {
@@ -1224,7 +1205,6 @@ JamiAccount::registerName(const std::string& password, const std::string& name)
             emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
         });
 }
-#endif
 
 bool
 JamiAccount::handlePendingCallList()
@@ -1639,7 +1619,6 @@ JamiAccount::doRegister_()
             dht_->join();
         }
 
-#if HAVE_RINGNS
         // Look for registered name on the blockchain
         accountManager_->lookupAddress(accountManager_->getInfo()->accountId, [w=weak()](const std::string& result, const NameDirectory::Response& response) {
             if (auto this_ = w.lock()) {
@@ -1656,7 +1635,6 @@ JamiAccount::doRegister_()
                 }
             }
         });
-#endif
 
         dht::DhtRunner::Config config {};
         config.dht_config.node_config.network = 0;
@@ -1882,7 +1860,6 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
     auto from = from_id.toString();
     call->setPeerUri(RING_URI_PREFIX + from);
     std::weak_ptr<SIPCall> wcall = call;
-#if HAVE_RINGNS
     accountManager_->lookupAddress(from, [wcall](const std::string& result, const NameDirectory::Response& response){
         if (response == NameDirectory::Response::found)
             if (auto call = wcall.lock()) {
@@ -1890,7 +1867,6 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                 call->setPeerUri(RING_URI_PREFIX + result);
             }
     });
-#endif
     registerDhtAddress(*ice);
     if (ice_tcp) registerDhtAddress(*ice_tcp);
 
@@ -2549,10 +2525,8 @@ void JamiAccount::pushNotificationReceived(const std::string& from, const std::m
 std::string
 JamiAccount::getUserUri() const
 {
-#ifdef HAVE_RINGNS
     if (not registeredName_.empty())
         return RING_URI_PREFIX + registeredName_;
-#endif
     return username_;
 }
 

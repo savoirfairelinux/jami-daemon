@@ -40,10 +40,8 @@
 #include "system_codec_container.h"
 #include "audio/audio_rtp_session.h"
 
-#ifdef ENABLE_VIDEO
 #include "video/video_rtp_session.h"
 #include "client/videomanager.h"
-#endif
 
 #include "pres_sub_server.h"
 

@@ -24,10 +24,8 @@
 
 #include "config.h"
 
-#ifdef ENABLE_VIDEO
 #include "video/video_base.h"
 #include "video/video_scaler.h"
-#endif
 
 #include "noncopyable.h"
 #include "media_buffer.h"
@@ -76,9 +74,7 @@ public:
 
     bool send(AVPacket& packet, int streamIdx = -1);
 
-#ifdef ENABLE_VIDEO
     int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
-#endif // ENABLE_VIDEO
 
     int encodeAudio(AudioFrame& frame);
 
@@ -140,10 +136,8 @@ private:
     void initMPEG4(AVCodecContext* encoderCtx, uint64_t br);
     void initH263(AVCodecContext* encoderCtx, uint64_t br);
 
-#ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
     VideoFrame scaledFrame_;
-#endif // ENABLE_VIDEO
 
     std::vector<uint8_t> scaledFrameBuffer_;
     int scaledFrameBufferSize_ = 0;

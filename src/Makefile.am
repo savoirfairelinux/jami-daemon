@@ -1,9 +1,6 @@
 include ../globals.mk
 
-ENABLE_VIDEO_LIBS=
-
-if ENABLE_VIDEO
-ENABLE_VIDEO_LIBS+=./media/video/libvideo.la
+ENABLE_VIDEO_LIBS=./media/video/libvideo.la
 if HAVE_LINUX
 if HAVE_ANDROID
 ENABLE_VIDEO_LIBS+= \
@@ -24,7 +21,6 @@ endif
 if HAVE_WIN32
 ENABLE_VIDEO_LIBS+= \
                 ./media/video/winvideo/libwinvideo.la
-endif
 endif
 
 SUBDIRS = client media config hooks sip upnp security jamidht im $(ENABLE_VIDEO_SUBDIR)
@@ -166,7 +162,5 @@ nobase_include_HEADERS= dring/dring.h \
 		dring/media_const.h \
 		dring/def.h
 
-if ENABLE_VIDEO
 nobase_include_HEADERS+= \
 		dring/videomanager_interface.h
-endif

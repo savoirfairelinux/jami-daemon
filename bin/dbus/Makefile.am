@@ -11,11 +11,9 @@ BUILT_SOURCES+=dbuspresencemanager.adaptor.h
 dbuspresencemanager.adaptor.h: cx.ring.Ring.PresenceManager.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
-if ENABLE_VIDEO
 BUILT_SOURCES+=dbusvideomanager.adaptor.h
 dbusvideomanager.adaptor.h: cx.ring.Ring.VideoManager.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
-endif
 
 # Rule to generate the binding headers
 dbuscallmanager.adaptor.h: cx.ring.Ring.CallManager.xml Makefile.am
@@ -43,9 +41,7 @@ libclient_dbus_la_SOURCES = \
     dbuspresencemanager.h \
     $(BUILT_SOURCES)
 
-if ENABLE_VIDEO
 libclient_dbus_la_SOURCES += dbusvideomanager.cpp dbusvideomanager.h
-endif
 
 libclient_dbus_la_CXXFLAGS = -I../ \
             -I$(top_srcdir)/src \
@@ -66,9 +62,7 @@ interface_DATA = cx.ring.Ring.CallManager.xml \
                  cx.ring.Ring.Instance.xml \
                  cx.ring.Ring.PresenceManager.xml
 
-if ENABLE_VIDEO
 interface_DATA += cx.ring.Ring.VideoManager.xml
-endif
 
 CLEANFILES= \
     $(BUILT_SOURCES) \
