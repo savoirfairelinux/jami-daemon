@@ -85,11 +85,11 @@ public:
      */
     void registerComponentsLifeCycleManagers(PluginManager& pm) {
         
-        auto registerCallMediaHandler = [this](void* data) {
+        auto registerCallMediaHandler = [this](const DLPlugin* plugin, void* data) {
             CallMediaHandlerPtr ptr{(static_cast<CallMediaHandler*>(data))};
             
             if(ptr) {
-                const std::string pluginId = ptr->id();
+                const std::string pluginId = plugin->getPath();
                 
                 for(auto it=callMediaHandlers.begin(); it!=callMediaHandlers.end(); ++it){
                     if(it->first ==  pluginId) {
@@ -106,7 +106,7 @@ public:
             return 0;
         };
         
-        auto unregisterMediaHandler = [this](void* data) {
+        auto unregisterMediaHandler = [this](const DLPlugin* plugin, void* data) {
             for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
                 // Remove all possible duplicates, before unloading a plugin
                 if(it->second.get() == data) {

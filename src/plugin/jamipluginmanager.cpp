@@ -43,10 +43,6 @@ long checkManifestValidity(std::istream& stream, std::map<std::string, std::stri
     return r;
 }
 
-auto fileMatchPair = [](const std::string& fileRelativePathName){
-    return std::make_pair(true, fileRelativePathName);
-};
-
 int JamiPluginManager::installPlugin(const std::string &jplPath, bool force)
 {
     int r{0};
@@ -67,7 +63,7 @@ int JamiPluginManager::installPlugin(const std::string &jplPath, bool force)
                     r = uninstallPlugin(destinationDir);
                     if(r == 0) {
                         r = static_cast<int>(archiver::uncompressArchive(jplPath, destinationDir,
-                                                                         fileMatchPair));
+                                                                         uncompressor.fileMatchPair));
                     }
                 } else {
                     std::string installedVersion = alreadyInstalledManifestMap.at("version");
@@ -75,7 +71,7 @@ int JamiPluginManager::installPlugin(const std::string &jplPath, bool force)
                         r = uninstallPlugin(destinationDir);
                         if(r == 0) {
                             r = static_cast<int>(archiver::uncompressArchive(jplPath, destinationDir,
-                                                                             fileMatchPair));
+                                                                             uncompressor.fileMatchPair));
                         }
                     } else if (version == installedVersion){
                         // An error code of 100 to know that this version is the same as the one installed
@@ -86,7 +82,8 @@ int JamiPluginManager::installPlugin(const std::string &jplPath, bool force)
                     }
                 }
             } else {
-                r = static_cast<int>(archiver::uncompressArchive(jplPath, destinationDir,fileMatchPair)); 
+                r = static_cast<int>(archiver::uncompressArchive(jplPath, destinationDir,
+                                                                 uncompressor.fileMatchPair));
             }
         }
     }
