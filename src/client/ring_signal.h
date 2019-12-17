@@ -29,9 +29,7 @@
 #include "presencemanager_interface.h"
 #include "datatransfer_interface.h"
 
-#ifdef ENABLE_VIDEO
 #include "videomanager_interface.h"
-#endif
 
 #include "dring.h"
 #include "logger.h"

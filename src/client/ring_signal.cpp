@@ -100,7 +100,6 @@ getSignalHandlers()
         /* DataTransfer */
         exported_callback<DRing::DataTransferSignal::DataTransferEvent>(),
 
-#ifdef ENABLE_VIDEO
         /* Video */
         exported_callback<DRing::VideoSignal::DeviceEvent>(),
         exported_callback<DRing::VideoSignal::DecodingStarted>(),
@@ -115,7 +114,6 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::StopCapture>(),
         exported_callback<DRing::VideoSignal::DeviceAdded>(),
         exported_callback<DRing::VideoSignal::ParametersChanged>(),
-#endif
     };
 
     return handlers;
