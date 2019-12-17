@@ -23,7 +23,6 @@
 #include "pluginmanager.h"
 #include "callservicesmanager.h"
 #include "pluginpreferencesmanager.h"
-#include "preferenceservice.h"
 
 #include <vector>
 #include <map>
@@ -36,14 +35,7 @@ class JamiPluginManager
 public:
     JamiPluginManager() {
         csm_.registerComponentsLifeCycleManagers(pm_);
-
-        // Register pluginPreferences
-        auto pluginPreferences = [this](void* data) {
-            auto ppp =(static_cast<PluginPreferencesMap*>(data));
-            ppp->preferenceValuesMap = ppm_.getPluginPreferencesValuesMap(ppp->path);
-            return 0;
-        };
-        pm_.registerService("getPluginPreferences", pluginPreferences);
+        registerServices();
     }
 
     NON_COPYABLE(JamiPluginManager);
@@ -63,7 +55,8 @@ public:
 
     /**
      * @brief listPlugins
-     * @return list of installed plugin directories on the device
+     * Lists available plugins with valid manifest files
+     * @return list of plugin directory names
      */
     std::vector<std::string> listPlugins();
 
@@ -74,7 +67,10 @@ public:
      * If force is true, we force install the plugin
      * @param jplPath
      * @param force
-     * @return 0 if success
+     * @return + 0 if success
+     * 100 if already installed with similar version 
+     * 200 if already installed with newer version
+     * libarchive error codes otherwise
      */
     int installPlugin(const std::string& jplPath, bool force);
 
@@ -164,6 +160,38 @@ private:
 
     const std::string manifestPath(const std::string& pluginRootPath) {
         return pluginRootPath + DIR_SEPARATOR_CH + "manifest.json";
+    }
+
+    const std::string getRootPathFromSoPath(const std::string& soPath) const {
+        return soPath.substr(0,soPath.find_last_of(DIR_SEPARATOR_CH));
+    }
+
+    const std::string manifestPath(const std::string& pluginRootPath) const {
+        return pluginRootPath + DIR_SEPARATOR_CH + "manifest.json";
+    }
+
+    const std::string dataPath(const std::string& pluginSoPath) const {
+        return getRootPathFromSoPath(pluginSoPath) + DIR_SEPARATOR_CH + "data";
+    }
+
+    void registerServices(){
+        // Register pluginPreferences
+        auto pluginPreferences = [this](const DLPlugin* plugin, void* data) {
+            auto ppp = static_cast<std::map<std::string, std::string>*>(data);
+            *ppp = ppm_.getPluginPreferencesValuesMap(
+                getRootPathFromSoPath(plugin->getPath()));
+            return 0;
+        };
+
+        pm_.registerService("getPluginPreferences", pluginPreferences);
+
+        auto getPluginData = [this](const DLPlugin* plugin, void* data) {
+            auto dataPath_ = static_cast<std::string*>(data);
+            dataPath_->assign(dataPath(plugin->getPath()));
+            return 0;
+        };
+
+        pm_.registerService("getPluginDataPath", getPluginData);
     }
 
 private:
