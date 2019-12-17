@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_VERSION := 0fbebf8e039c242208697108feddb5a0744d9867
+OPENDHT_VERSION := 2.0.0beta3
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
@@ -42,6 +42,6 @@ opendht: opendht-$(OPENDHT_VERSION).tar.gz
 
 .opendht: opendht .sum-opendht
 	mkdir -p $</m4 && $(RECONF)
-	cd $< && $(HOSTVARS) $(OPENDHT_CONF) ./configure --enable-static --disable-shared --disable-tools --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --with-http-parser-fork --enable-push-notifications $(HOSTCONF)
+	cd $< && $(HOSTVARS) $(OPENDHT_CONF) ./configure --enable-static --disable-shared --disable-tools --disable-indexation --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --with-http-parser-fork --enable-push-notifications $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
