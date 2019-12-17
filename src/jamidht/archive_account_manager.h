@@ -61,11 +61,9 @@ public:
     bool revokeDevice(const std::string& password, const std::string& device, RevokeDeviceCallback) override;
     bool exportArchive(const std::string& destinationPath, const std::string& password);
 
-#if HAVE_RINGNS
     /*void lookupName(const std::string& name, LookupCallback cb) override;
     void lookupAddress(const std::string& address, LookupCallback cb) override;*/
     void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) override;
-#endif
 
 private:
     struct DhtLoadContext;

@@ -95,12 +95,10 @@ class Manager {
          */
         ShortcutPreferences shortcutPreferences;
 
-#ifdef ENABLE_VIDEO
         /**
          * Video preferences
          */
         VideoPreferences videoPreferences;
-#endif
 
         // Manager should not be accessed until initialized.
         // FIXME this is an evil hack!
@@ -864,7 +862,6 @@ class Manager {
 
         std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 
-#ifdef ENABLE_VIDEO
         /**
          * Create a new SinkClient instance, store it in an internal cache as a weak_ptr
          * and return it as a shared_ptr. If a SinkClient is already stored for the given id,
@@ -884,7 +881,6 @@ class Manager {
         std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
 
         VideoManager& getVideoManager() const;
-#endif // ENABLE_VIDEO
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable
         AccountFactory accountFactory;

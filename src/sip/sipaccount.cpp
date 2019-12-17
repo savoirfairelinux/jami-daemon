@@ -50,9 +50,7 @@
 #include "client/ring_signal.h"
 #include "dring/account_const.h"
 
-#ifdef ENABLE_VIDEO
 #include "libav_utils.h"
-#endif
 
 #include "system_codec_container.h"
 

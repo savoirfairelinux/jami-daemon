@@ -26,12 +26,10 @@
 #include "audio/audiolayer.h"
 #include "audio/ringbufferpool.h"
 
-#ifdef ENABLE_VIDEO
 #include "sip/sipcall.h"
 #include "client/videomanager.h"
 #include "video/video_input.h"
 #include "video/video_mixer.h"
-#endif
 
 #include "call_factory.h"
 
@@ -41,19 +39,15 @@ namespace jami {
 
 Conference::Conference()
     : id_(Manager::instance().getNewCallID())
-#ifdef ENABLE_VIDEO
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
-#endif
 {}
 
 Conference::~Conference()
 {
-#ifdef ENABLE_VIDEO
     for (const auto &participant_id : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
             call->getVideoRtp().exitConference();
     }
-#endif // ENABLE_VIDEO
 }
 
 Conference::State
@@ -70,22 +64,18 @@ void Conference::setState(State state)
 void Conference::add(const std::string &participant_id)
 {
     if (participants_.insert(participant_id).second) {
-#ifdef ENABLE_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
             call->getVideoRtp().enterConference(this);
         else
             JAMI_ERR("no call associate to participant %s", participant_id.c_str());
-#endif // ENABLE_VIDEO
     }
 }
 
 void Conference::remove(const std::string &participant_id)
 {
     if (participants_.erase(participant_id)) {
-#ifdef ENABLE_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
             call->getVideoRtp().exitConference();
-#endif // ENABLE_VIDEO
     }
 }
 
@@ -136,19 +126,15 @@ Conference::getConfID() const {
 void
 Conference::switchInput(const std::string& input)
 {
-#ifdef ENABLE_VIDEO
     mediaInput_ = input;
     getVideoMixer()->switchInput(input);
-#endif
 }
 
-#ifdef ENABLE_VIDEO
 std::shared_ptr<video::VideoMixer> Conference::getVideoMixer()
 {
     if (!videoMixer_)
         videoMixer_.reset(new video::VideoMixer(id_));
     return videoMixer_;
 }
-#endif
 
 } // namespace jami

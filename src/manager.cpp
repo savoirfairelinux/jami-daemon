@@ -63,10 +63,8 @@ using random_device = dht::crypto::random_device;
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
 
-#ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
 #include "video/video_scaler.h"
-#endif
 
 #include "conference.h"
 #include "ice_transport.h"
@@ -409,9 +407,7 @@ struct Manager::ManagerPimpl
     /* Sink ID mapping */
     std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
 
-#ifdef ENABLE_VIDEO
     std::unique_ptr<VideoManager> videoManager_;
-#endif
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -421,9 +417,7 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , dtmfBuf_(0, AudioFormat::MONO())
     , ringbufferpool_(new RingBufferPool)
     , rand_(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
-#ifdef ENABLE_VIDEO
     , videoManager_(new VideoManager)
-#endif
 {
     jami::libav_utils::av_init();
 
@@ -684,9 +678,7 @@ Manager::Manager()
     , hookPreference()
     , audioPreference()
     , shortcutPreferences()
-#ifdef ENABLE_VIDEO
     , videoPreferences()
-#endif
     , callFactory()
     , accountFactory()
     , dataTransfers(std::make_unique<DataTransferFacade>())
@@ -983,9 +975,7 @@ Manager::checkAudio()
 {
     // FIXME dirty, the manager should not need to be aware of local recorders
     if (getCallList().empty()
-#ifdef ENABLE_VIDEO
         and not getVideoManager().audioPreview
-#endif
         and not jami::LocalRecorderManager::instance().hasRunningRecorders()) {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         if (pimpl_->audiodriver_)
@@ -1668,9 +1658,7 @@ Manager::saveConfig()
         voipPreferences.serialize(out);
         hookPreference.serialize(out);
         audioPreference.serialize(out);
-#ifdef ENABLE_VIDEO
         videoPreferences.serialize(out);
-#endif
         shortcutPreferences.serialize(out);
 
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(pimpl_->path_));
@@ -2706,9 +2694,7 @@ Manager::loadAccountMap(const YAML::Node& node)
 
     int errorCount = 0;
     try {
-#ifdef ENABLE_VIDEO
         videoPreferences.unserialize(node);
-#endif
     } catch (const YAML::Exception &e) {
         JAMI_ERR("%s: No video node in config file", e.what());
         ++errorCount;
@@ -2984,7 +2970,6 @@ Manager::newOutgoingCall(const std::string& toUrl,
     return account->newOutgoingCall(toUrl, volatileCallDetails);
 }
 
-#ifdef ENABLE_VIDEO
 std::shared_ptr<video::SinkClient>
 Manager::createSinkClient(const std::string& id, bool mixer)
 {
@@ -3009,7 +2994,6 @@ Manager::getSinkClient(const std::string& id)
             return sink;
     return nullptr;
 }
-#endif // ENABLE_VIDEO
 
 RingBufferPool&
 Manager::getRingBufferPool()
@@ -3029,13 +3013,11 @@ Manager::getIceTransportFactory()
     return *pimpl_->ice_tf_;
 }
 
-#ifdef ENABLE_VIDEO
 VideoManager&
 Manager::getVideoManager() const
 {
     return *pimpl_->videoManager_;
 }
-#endif
 
 std::vector<DRing::Message>
 Manager::getLastMessages(const std::string& accountID, const uint64_t& base_timestamp)

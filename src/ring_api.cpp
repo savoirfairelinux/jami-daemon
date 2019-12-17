@@ -35,9 +35,7 @@
 #include "presencemanager_interface.h"
 #include "client/ring_signal.h"
 
-#ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
-#endif // ENABLE_VIDEO
 
 namespace DRing {
 

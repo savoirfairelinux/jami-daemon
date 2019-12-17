@@ -32,9 +32,7 @@
 #include "media_codec.h" // for MediaType enum
 #include "sip_utils.h"
 
-#ifdef ENABLE_VIDEO
 #include "media/video/video_rtp_session.h"
-#endif
 
 #include "noncopyable.h"
 
@@ -204,14 +202,12 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
         return *avformatrtp_;
     }
 
-#ifdef ENABLE_VIDEO
     /**
      * Returns a pointer to the VideoRtp object
      */
     video::VideoRtpSession& getVideoRtp () {
         return *videortp_;
     }
-#endif
 
     void setSecure(bool sec);
 
@@ -285,12 +281,10 @@ private:
 
     std::unique_ptr<AudioRtpSession> avformatrtp_;
 
-#ifdef ENABLE_VIDEO
     /**
      * Video Rtp Session factory
      */
     std::unique_ptr<video::VideoRtpSession> videortp_;
-#endif
 
     std::string mediaInput_;
 

@@ -41,13 +41,11 @@ using MediaFrame = DRing::MediaFrame;
 using AudioFrame = DRing::AudioFrame;
 using MediaObserver = std::function<void(std::shared_ptr<MediaFrame>&&)>;
 
-#ifdef ENABLE_VIDEO
 
 using VideoFrame = DRing::VideoFrame;
 
 // Some helpers
 int videoFrameSize(int format, int width, int height);
 
-#endif // ENABLE_VIDEO
 
 } // namespace jami

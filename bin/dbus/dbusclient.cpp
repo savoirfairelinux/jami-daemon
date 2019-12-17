@@ -40,10 +40,8 @@
 
 #include "datatransfer_interface.h"
 
-#ifdef ENABLE_VIDEO
 #include "dbusvideomanager.h"
 #include "videomanager_interface.h"
-#endif
 
 #include <iostream>
 #include <stdexcept>
@@ -91,9 +89,7 @@ DBusClient::DBusClient(int flags, bool persistent)
 
         instanceManager_.reset(new DBusInstance {sessionConnection, onNoMoreClientFunc});
 
-#ifdef ENABLE_VIDEO
         videoManager_.reset(new DBusVideoManager {sessionConnection});
-#endif
     } catch (const DBus::Error &err) {
         throw std::runtime_error {"cannot initialize DBus stuff"};
     }
@@ -109,9 +105,7 @@ DBusClient::~DBusClient()
     // instances destruction order is important
     // so we enforce it here
     DRing::unregisterSignalHandlers();
-#ifdef ENABLE_VIDEO
     videoManager_.reset();
-#endif
     instanceManager_.reset();
     presenceManager_.reset();
     configurationManager_.reset();
@@ -137,10 +131,8 @@ DBusClient::initLibrary(int flags)
     auto confM = configurationManager_.get();
     auto presM = presenceManager_.get();
 
-#ifdef ENABLE_VIDEO
     using DRing::VideoSignal;
     auto videoM = videoManager_.get();
-#endif
 
     // Call event handlers
     const std::map<std::string, SharedCallback> callEvHandlers = {
@@ -214,14 +206,12 @@ DBusClient::initLibrary(int flags)
         exportable_callback<DataTransferSignal::DataTransferEvent>(bind(&DBusConfigurationManager::dataTransferEvent, confM, _1, _2)),
     };
 
-#ifdef ENABLE_VIDEO
     // Video event handlers
     const std::map<std::string, SharedCallback> videoEvHandlers = {
         exportable_callback<VideoSignal::DeviceEvent>(bind(&DBusVideoManager::deviceEvent, videoM)),
         exportable_callback<VideoSignal::DecodingStarted>(bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5)),
         exportable_callback<VideoSignal::DecodingStopped>(bind(&DBusVideoManager::stoppedDecoding, videoM, _1, _2, _3)),
     };
-#endif
 
     if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
         return -1;
@@ -231,9 +221,7 @@ DBusClient::initLibrary(int flags)
     DRing::registerSignalHandlers(presEvHandlers);
     DRing::registerSignalHandlers(audioEvHandlers);
     DRing::registerSignalHandlers(dataXferEvHandlers);
-#ifdef ENABLE_VIDEO
     DRing::registerSignalHandlers(videoEvHandlers);
-#endif
 
     if (!DRing::start())
         return -1;
