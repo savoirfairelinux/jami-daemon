@@ -63,6 +63,9 @@ endif
 	$(APPLY) $(SRC)/pjproject/0014-ignore_ipv6_on_transport_check.patch
 	$(APPLY) $(SRC)/pjproject/0015-disable_local_resolution.patch
 	$(APPLY) $(SRC)/pjproject/0016-fix_assert_on_connection_attempt.patch
+	$(APPLY) $(SRC)/pjproject/0018-read-header-LEN-in-style-of-GETVAL16H.patch
+	$(APPLY) $(SRC)/pjproject/0019-limit-the-scope-of-_cb-funcs.patch
+	$(APPLY) $(SRC)/pjproject/0020-return-actual-status-for-sess_on_send_msg.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
