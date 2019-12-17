@@ -21,7 +21,6 @@
 
 #include "pluginmanager.h"
 #include "logger.h"
-#include "pluginloader.h"
 
 #include <utility>
 
@@ -96,7 +95,7 @@ void PluginManager::destroyPluginComponents(const std::string &path)
         for(const auto& pair : itComponents->second) {
             auto clcm = componentsLifeCycleManagers_.find(pair.first);
             if(clcm != componentsLifeCycleManagers_.end()) {
-                clcm->second.destroyComponent(pair.second);
+                clcm->second.destroyComponent(nullptr, pair.second);
             }
         }
     }
@@ -115,7 +114,7 @@ bool PluginManager::callPluginInitFunction(const std::string &path){
 
         try {
             // Call Plugin Init function
-            exitFunc = initFunc(plugin.get(), &pluginApi_, plugin->getPath().c_str());
+            exitFunc = initFunc(&plugin->api_);
         } catch (const std::runtime_error &e) {
             JAMI_ERR() << e.what();
             return false;
@@ -139,9 +138,47 @@ bool PluginManager::registerPlugin(std::unique_ptr<Plugin>& plugin) {
   const auto &initFunc = plugin->getInitFunction();
   JAMI_PluginExitFunc exitFunc = nullptr;
 
+  DLPlugin* pluginPtr = static_cast<DLPlugin*>(plugin.get());
+
+  pluginPtr->apiImplementationContext_ = this;
+  pluginPtr->api_.version = {JAMI_PLUGIN_ABI_VERSION, JAMI_PLUGIN_API_VERSION};
+  pluginPtr->api_.registerObjectFactory = registerObjectFactory_;
+  /**
+   * Implements JAMI_PluginAPI.invokeService().
+   * Must be C accessible.
+   */
+  pluginPtr->api_.invokeService = [](const JAMI_PluginAPI *api,
+                                const char *name, void *data) {
+      auto plugin = static_cast<DLPlugin*>(api->context);
+      auto manager = reinterpret_cast<PluginManager *>(plugin->apiImplementationContext_);
+      if (!manager) {
+          JAMI_ERR() << "invokeService called with null plugin API";
+          return -1;
+      }
+
+      return manager->invokeService(plugin, name, data);
+  };
+
+  /**
+   * Implements JAMI_PluginAPI.invokeService().
+   * Must be C accessible.
+   */
+  pluginPtr->api_.manageComponent = [](const JAMI_PluginAPI* api, const char* name, void *data){
+      auto plugin = static_cast<DLPlugin*>(api->context);
+      auto manager = reinterpret_cast<PluginManager *>(plugin->apiImplementationContext_);
+      if (!manager) {
+          JAMI_ERR() << "createComponent called with null plugin API";
+          return -1;
+      } else if(!plugin){
+          JAMI_ERR() << "createComponent called with null context";
+          return -1;
+      }
+
+      return manager->manageComponent(plugin, name, data);
+  };
+
   try {
-      DLPlugin* pluginPtr = static_cast<DLPlugin*>(plugin.get());
-      exitFunc = initFunc(pluginPtr, &pluginApi_, pluginPtr->getPath().c_str());
+      exitFunc = initFunc(&pluginPtr->api_);
   } catch (const std::runtime_error &e) {
     JAMI_ERR() << e.what();
   }
@@ -170,7 +207,7 @@ void PluginManager::unRegisterService(const std::string &name) {
   services_.erase(name);
 }
 
-int32_t PluginManager::invokeService(const std::string &name, void *data) {
+int32_t PluginManager::invokeService(const DLPlugin* plugin, const std::string &name, void *data) {
   const auto &iterFunc = services_.find(name);
   if (iterFunc == services_.cend()) {
     JAMI_ERR() << "Services not found: " << name;
@@ -180,15 +217,14 @@ int32_t PluginManager::invokeService(const std::string &name, void *data) {
   const auto &func = iterFunc->second;
 
   try {
-    return func(data);
+    return func(plugin, data);
   } catch (const std::runtime_error &e) {
     JAMI_ERR() << e.what();
     return -1;
   }
 }
 
-int32_t PluginManager::manageComponent(const std::string& pluginId, const std::string& name, void *data)
-{
+int32_t PluginManager::manageComponent(const DLPlugin* plugin, const std::string& name, void *data) {
     const auto& iter = componentsLifeCycleManagers_.find(name);
     if(iter == componentsLifeCycleManagers_.end()) {
         JAMI_ERR() << "Component lifecycle manager not found: " << name;
@@ -196,11 +232,11 @@ int32_t PluginManager::manageComponent(const std::string& pluginId, const std::s
     }
 
     const auto& componentLifecycleManager = iter->second;
-    
+
     try {
-        int32_t r =  componentLifecycleManager.takeComponentOwnership(data);
+        int32_t r =  componentLifecycleManager.takeComponentOwnership(plugin, data);
         if(r == 0) {
-            pluginComponentsMap_[pluginId].emplace_back(name,data);
+            pluginComponentsMap_[plugin->getPath()].emplace_back(name,data);
         }
         return r;
     } catch(const std::runtime_error &e) {
@@ -309,37 +345,6 @@ int32_t PluginManager::registerObjectFactory_(const JAMI_PluginAPI *api,
 
   const auto factory = reinterpret_cast<JAMI_PluginObjectFactory *>(data);
   return manager->registerObjectFactory(type, *factory) ? 0 : -1;
-}
-
-/* WARNING: exposed to plugins through JAMI_PluginAPI */
-int32_t PluginManager::invokeService_(const JAMI_PluginAPI *api,
-                                      const char *name, void *data) {
-  auto manager = reinterpret_cast<PluginManager *>(api->context);
-  if (!manager) {
-    JAMI_ERR() << "invokeService called with null plugin API";
-    return -1;
-  }
-
-  return manager->invokeService(name, data);
-}
-
-
-int32_t PluginManager::manageComponent_(void* context,
-                                        const JAMI_PluginAPI* api,
-                                        const char* name,
-                                        void *data)
-{
-    auto manager = reinterpret_cast<PluginManager *>(api->context);
-    auto plugin = reinterpret_cast<DLPlugin *>(context);
-    if (!manager) {
-        JAMI_ERR() << "createComponent called with null plugin API";
-        return -1;
-    } else if(!plugin){
-        JAMI_ERR() << "createComponent called with null context";
-        return -1;
-    }
-    
-    return manager->manageComponent(plugin->getPath(), name, data);
 }
 
 } // namespace jami
