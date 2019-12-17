@@ -74,9 +74,7 @@ Sdp::Sdp(const std::string& id)
 Sdp::~Sdp()
 {
     SIPAccount::releasePort(localAudioDataPort_);
-#ifdef ENABLE_VIDEO
     SIPAccount::releasePort(localVideoDataPort_);
-#endif
 }
 
 std::shared_ptr<AccountCodecInfo>
@@ -227,7 +225,6 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
         pjmedia_sdp_rtpmap_to_attr(memPool_.get(), &rtpmap, &attr);
         med->attr[med->attr_count++] = attr;
 
-#ifdef ENABLE_VIDEO
         if (enc_name == "H264") {
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
@@ -239,7 +236,6 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
             os << "fmtp:" << payload << " " << profileLevelID;
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), os.str().c_str(), NULL);
         }
-#endif
     }
 
     if (audio) {
@@ -312,9 +308,7 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 
 void Sdp::setLocalMediaVideoCapabilities(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedCodecs)
 {
-#ifdef ENABLE_VIDEO
     video_codec_list_ = selectedCodecs;
-#else
     (void) selectedCodecs;
 #endif
 }

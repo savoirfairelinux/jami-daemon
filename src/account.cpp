@@ -29,9 +29,7 @@
 #include <iterator>
 #include <mutex>
 
-#ifdef ENABLE_VIDEO
 #include "libav_utils.h"
-#endif
 
 #include "logger.h"
 #include "manager.h"

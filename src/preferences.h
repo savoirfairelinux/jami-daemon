@@ -458,7 +458,6 @@ class ShortcutPreferences : public Serializable {
         constexpr static const char * const CONFIG_LABEL = "shortcuts";
 };
 
-#ifdef ENABLE_VIDEO
 class VideoPreferences : public Serializable {
     public:
         VideoPreferences();
@@ -507,7 +506,6 @@ class VideoPreferences : public Serializable {
         int recordQuality_;
         constexpr static const char* const CONFIG_LABEL = "video";
 };
-#endif // ENABLE_VIDEO
 
 } // namespace jami
 

@@ -22,9 +22,7 @@
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
 
-#ifdef ENABLE_VIDEO
 #include "libav_utils.h"
-#endif
 
 #include "account_schema.h"
 #include "manager.h"
@@ -232,13 +230,11 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
     int tmpMax = -1;
     parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, audioPortRange_);
-#ifdef ENABLE_VIDEO
     tmpMin = -1;
     parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
     tmpMax = -1;
     parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, videoPortRange_);
-#endif
 
     // ICE - STUN
     parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled_);
@@ -259,9 +255,7 @@ SIPAccountBase::getAccountDetails() const
     a.emplace(Conf::CONFIG_VIDEO_ENABLED, videoEnabled_ ? TRUE_STR : FALSE_STR);
 
     addRangeToDetails(a, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
-#ifdef ENABLE_VIDEO
     addRangeToDetails(a, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
-#endif
 
     a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE,       dtmfType_);
     a.emplace(Conf::CONFIG_LOCAL_INTERFACE,         interface_);
@@ -357,13 +351,11 @@ SIPAccountBase::generateAudioPort() const
     return acquireRandomEvenPort(audioPortRange_);
 }
 
-#ifdef ENABLE_VIDEO
 uint16_t
 SIPAccountBase::generateVideoPort() const
 {
     return acquireRandomEvenPort(videoPortRange_);
 }
-#endif
 
 const IceTransportOptions
 SIPAccountBase::getIceOptions() const noexcept

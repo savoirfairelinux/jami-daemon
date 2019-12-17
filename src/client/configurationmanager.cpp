@@ -706,39 +706,27 @@ setIsAlwaysRecording(bool rec)
 bool
 getRecordPreview()
 {
-#ifdef ENABLE_VIDEO
     return jami::Manager::instance().videoPreferences.getRecordPreview();
-#else
-    return false;
-#endif
 }
 
 void
 setRecordPreview(bool rec)
 {
-#ifdef ENABLE_VIDEO
     jami::Manager::instance().videoPreferences.setRecordPreview(rec);
     jami::Manager::instance().saveConfig();
-#endif
 }
 
 int32_t
 getRecordQuality()
 {
-#ifdef ENABLE_VIDEO
     return jami::Manager::instance().videoPreferences.getRecordQuality();
-#else
-    return 0;
-#endif
 }
 
 void
 setRecordQuality(int32_t quality)
 {
-#ifdef ENABLE_VIDEO
     jami::Manager::instance().videoPreferences.setRecordQuality(quality);
     jami::Manager::instance().saveConfig();
-#endif
 }
 
 int32_t
@@ -973,7 +961,6 @@ connectivityChanged()
 
 bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name)
 {
-#if HAVE_RINGNS
     if (account.empty()) {
         auto cb = [name](const std::string& result, jami::NameDirectory::Response response) {
             jami::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>("", (int)response, result, name);
@@ -987,13 +974,11 @@ bool lookupName(const std::string& account, const std::string& nameserver, const
         acc->lookupName(name);
         return true;
     }
-#endif
     return false;
 }
 
 bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address)
 {
-#if HAVE_RINGNS
     if (account.empty()) {
         jami::NameDirectory::instance(nameserver).lookupAddress(address, [address](const std::string& result, jami::NameDirectory::Response response) {
             jami::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>("", (int)response, address, result);
@@ -1003,18 +988,15 @@ bool lookupAddress(const std::string& account, const std::string& nameserver, co
         acc->lookupAddress(address);
         return true;
     }
-#endif
     return false;
 }
 
 bool registerName(const std::string& account, const std::string& password, const std::string& name)
 {
-#if HAVE_RINGNS
     if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
         acc->registerName(password, name);
         return true;
     }
-#endif
     return false;
 }
 

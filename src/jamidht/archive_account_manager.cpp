@@ -674,7 +674,6 @@ ArchiveAccountManager::exportArchive(const std::string& destinationPath, const s
 }
 
 
-#if HAVE_RINGNS
 void
 ArchiveAccountManager::registerName(const std::string& password, const std::string& name, RegistrationCallback cb)
 {
@@ -701,6 +700,5 @@ ArchiveAccountManager::registerName(const std::string& password, const std::stri
 
     nameDir_.get().registerName(accountId, nameLowercase, ethAccount, cb, signedName, publickey);
 }
-#endif
 
 }
