@@ -218,7 +218,6 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
 #endif
     // framerate is not copied from encoderCtx to stream
     stream->avg_frame_rate = encoderCtx->framerate;
-#ifdef ENABLE_VIDEO
     if (systemCodecInfo.mediaType == MEDIA_VIDEO) {
         // allocate buffers for both scaled (pre-encoder) and encoded frames
         const int width = encoderCtx->width;
@@ -241,7 +240,6 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
         scaledFrameBuffer_.reserve(scaledFrameBufferSize_);
         scaledFrame_.setFromMemory(scaledFrameBuffer_.data(), format, width, height);
     }
-#endif // ENABLE_VIDEO
 
     return stream->index;
 }
@@ -288,7 +286,6 @@ MediaEncoder::startIO()
     initialized_ = true;
 }
 
-#ifdef ENABLE_VIDEO
 int
 MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
 {
@@ -363,7 +360,6 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
 
     return encode(frame, currentStreamIdx_);
 }
-#endif // ENABLE_VIDEO
 
 int
 MediaEncoder::encodeAudio(AudioFrame& frame)

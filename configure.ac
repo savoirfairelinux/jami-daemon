@@ -414,11 +414,6 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AM_CONDITIONAL(RING_DBUS, true)],TESTS= $(check_PROGRAMS)
        AM_CONDITIONAL(RING_DBUS, false));
 
-dnl name service is default-enabled
-AC_ARG_ENABLE([ringns], AS_HELP_STRING([--disable-ringns], [Enable Name Service]))
-AM_CONDITIONAL([RINGNS], test "x$enable_ringns" != "xno", [Define if you use the Name Service])
-AC_DEFINE_UNQUOTED([HAVE_RINGNS], `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`, [Define if you use the Name Service])
-
 dnl nodejs module
 AC_ARG_WITH([nodejs], AS_HELP_STRING([--with-nodejs], [Enable NodeJS module]))
 AM_CONDITIONAL([ENABLE_NODEJS], test "x$enable_nodejs" != "xno", [Define if you use the NodeJS module])
@@ -459,24 +454,11 @@ PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 3.1.101,, AC_MSG_ERROR([Missing libs
 
 PKG_CHECK_MODULES(LIBSWRESAMPLE, libswresample >= 1.2.101,, AC_MSG_ERROR([Missing libswresample development files]))
 
-dnl Video is default-enabled
-AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
-
-AS_IF([test "x$enable_video" != "xno"],
-      [
-        AC_DEFINE(ENABLE_VIDEO, [], [Video support enabled])
-        AM_CONDITIONAL(ENABLE_VIDEO, true)
-        AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
-            PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
-        ],[
-        ])
-    ],
-    [
-     AM_CONDITIONAL(ENABLE_VIDEO, false)
-     ]);
+AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
+    PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))])
 
 AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations (enabled by default)]))
-AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
+AS_IF([test "x$enable_accel" != "xno"], [
   dnl if new hwaccel api is found, activate hardware accel
   dnl prefix needs to be different from the one above
   PKG_CHECK_MODULES(AVUTIL, libavutil >= 55.75.100, [

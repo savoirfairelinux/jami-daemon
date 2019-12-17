@@ -23,9 +23,7 @@
 
 #include "contact_list.h"
 #include "logger.h"
-#if HAVE_RINGNS
 #include "namedirectory.h"
-#endif
 
 #include <opendht/crypto.h>
 
