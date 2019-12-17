@@ -48,9 +48,7 @@
 #include <list>
 #include <future>
 
-#if HAVE_RINGNS
 #include "namedirectory.h"
-#endif
 
 namespace YAML {
 class Node;
@@ -329,11 +327,9 @@ public:
     // overloaded methods
     void flush() override;
 
-#if HAVE_RINGNS
     void lookupName(const std::string& name);
     void lookupAddress(const std::string& address);
     void registerName(const std::string& password, const std::string& name);
-#endif
 
     ///
     /// Send a E2E connection request to a given peer for the given transfer id
@@ -537,10 +533,8 @@ private:
 
     void checkPendingCallsTask();
 
-#if HAVE_RINGNS
     std::string nameServer_;
     std::string registeredName_;
-#endif
         std::shared_ptr<dht::Logger> logger_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};

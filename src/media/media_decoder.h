@@ -24,10 +24,8 @@
 #include "rational.h"
 #include "observer.h"
 
-#ifdef ENABLE_VIDEO
 #include "video/video_base.h"
 #include "video/video_scaler.h"
-#endif // ENABLE_VIDEO
 
 #ifdef RING_ACCEL
 #include "video/accel.h"

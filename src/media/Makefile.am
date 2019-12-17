@@ -4,9 +4,7 @@ noinst_LTLIBRARIES = libmedia.la
 
 SUBDIRS = audio
 
-if ENABLE_VIDEO
 SUBDIRS += video
-endif
 
 libmedia_la_SOURCES = \
 	libav_utils.cpp \
@@ -50,10 +48,8 @@ noinst_HEADERS = \
 libmedia_la_LIBADD = \
 	./audio/libaudio.la
 
-if ENABLE_VIDEO
 libmedia_la_libADD = \
 	./video/libvideo.la
-endif
 
 libmedia_la_LDFLAGS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBAVFILTER_LIBS@ @LIBSWRESAMPLE_LIBS@ @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
 

@@ -53,9 +53,7 @@
 #endif
 #endif /* HAVE_OPENSL */
 
-#ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
-#endif
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -136,14 +134,12 @@ static constexpr const char* POPUP_SHORT_KEY {"popupWindow"};
 static constexpr const char* TOGGLE_HOLD_SHORT_KEY {"toggleHold"};
 static constexpr const char* TOGGLE_PICKUP_HANGUP_SHORT_KEY {"togglePickupHangup"};
 
-#ifdef ENABLE_VIDEO
 // video preferences
 constexpr const char * const VideoPreferences::CONFIG_LABEL;
 static constexpr const char* DECODING_ACCELERATED_KEY {"decodingAccelerated"};
 static constexpr const char* ENCODING_ACCELERATED_KEY {"encodingAccelerated"};
 static constexpr const char* RECORD_PREVIEW_KEY {"recordPreview"};
 static constexpr const char* RECORD_QUALITY_KEY {"recordQuality"};
-#endif
 
 static constexpr int PULSE_LENGTH_DEFAULT {250}; /** Default DTMF length */
 #ifndef _MSC_VER
@@ -567,7 +563,6 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
     parseValue(node, TOGGLE_PICKUP_HANGUP_SHORT_KEY, togglePickupHangup_);
 }
 
-#ifdef ENABLE_VIDEO
 VideoPreferences::VideoPreferences()
     : decodingAccelerated_(true)
     , encodingAccelerated_(false)
@@ -611,6 +606,5 @@ void VideoPreferences::unserialize(const YAML::Node &in)
 #endif
     getVideoDeviceMonitor().unserialize(in);
 }
-#endif // ENABLE_VIDEO
 
 } // namespace jami

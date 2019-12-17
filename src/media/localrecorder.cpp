@@ -81,7 +81,6 @@ LocalRecorder::startRecording()
     audioInput_->setFormat(AudioFormat::STEREO());
     audioInput_->attach(recorder_->addStream(audioInput_->getInfo()));
 
-#ifdef ENABLE_VIDEO
     // video recording
     if (!isAudioOnly_) {
         videoInput_ = std::static_pointer_cast<video::VideoInput>(jami::getVideoCamera());
@@ -92,7 +91,6 @@ LocalRecorder::startRecording()
             return false;
         }
     }
-#endif
 
     return Recordable::startRecording(path_);
 }

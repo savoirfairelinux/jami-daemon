@@ -59,12 +59,10 @@ enum MediaType : unsigned {
 struct SystemCodecInfo
 {
     static constexpr unsigned DEFAULT_CODEC_QUALITY {30};
-#ifdef ENABLE_VIDEO
     static constexpr unsigned DEFAULT_H264_MIN_QUALITY {40};
     static constexpr unsigned DEFAULT_H264_MAX_QUALITY {20};
     static constexpr unsigned DEFAULT_VP8_MIN_QUALITY {50};
     static constexpr unsigned DEFAULT_VP8_MAX_QUALITY {20};
-#endif
 
     // indicates that the codec does not use quality factor
     static constexpr unsigned DEFAULT_NO_QUALITY {0};
