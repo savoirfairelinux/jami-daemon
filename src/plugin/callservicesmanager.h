@@ -34,7 +34,6 @@ using AVSubjectSPtr = std::weak_ptr<Observable<AVFrame*>>;
 class CallServicesManager{
 
 public:
-
     CallServicesManager() = default;
 
     /**
@@ -61,8 +60,8 @@ public:
      */
     void notifyAllAVSubject(const StreamData& data, AVSubjectSPtr& subject) {
         for(auto& pair : callMediaHandlers) {
-            auto& pluginPtr = pair.second;
-            notifyAVSubject(pluginPtr, data, subject);
+            auto& callMediaHandlerPtr = pair.second;
+            notifyAVSubject(callMediaHandlerPtr, data, subject);
         }
     }
 
@@ -84,12 +83,12 @@ public:
      */
     void registerComponentsLifeCycleManagers(PluginManager& pm) {
 
-        auto registerCallMediaHandler = [this](void* data) {
+        auto registerCallMediaHandler = [this](const DLPlugin* plugin, void* data) {
             CallMediaHandlerPtr ptr{(static_cast<CallMediaHandler*>(data))};
 
             if(ptr) {
-                const std::string pluginId = ptr->id();
-                
+                const std::string& pluginId = plugin->getPath();
+
                 for(auto it=callMediaHandlers.begin(); it!=callMediaHandlers.end(); ++it){
                     if(it->first ==  pluginId) {
                         return 1;
@@ -104,17 +103,16 @@ public:
             return 0;
         };
 
-        auto unregisterMediaHandler = [this](void* data) {
+        auto unregisterMediaHandler = [this](const DLPlugin* plugin, void* data) {
             for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
-                // Remove all possible duplicates, before unloading a plugin
+
                 if(it->second.get() == data) {
                     callMediaHandlers.erase(it);
                 }
             }
-            return 0;  
+            return 0;
         };
 
-        //pm.registerService("registerCallMediaHandler", registerPlugin);
         pm.registerComponentManager("CallMediaHandlerManager",
                                     registerCallMediaHandler, unregisterMediaHandler);
     }
@@ -124,40 +122,40 @@ public:
             if(it->first == path) {
                 it->second->setPreferenceAttribute(key, value);
             }
-        }   
+        }
     }
 
 private:
 
     /**
      * @brief notifyAVSubject
-     * @param plugin
+     * @param callMediaHandlerPtr
      * @param data
      * @param subject
      */
-    void notifyAVSubject(CallMediaHandlerPtr& plugin,
+    void notifyAVSubject(CallMediaHandlerPtr& callMediaHandlerPtr,
                               const StreamData& data,
                          AVSubjectSPtr& subject) {
         if(auto soSubject = subject.lock()) {
-            plugin->notifyAVFrameSubject(data, soSubject);
+            callMediaHandlerPtr->notifyAVFrameSubject(data, soSubject);
         }
     }
 
     /**
      * @brief listAvailableSubjects
-     * @param plugin
-     * This functions lets the plugin know which subjects are available
+     * @param callMediaHandlerPtr
+     * This functions lets the call media handler component know which subjects are available
      */
-    void listAvailableSubjects(CallMediaHandlerPtr& plugin) {
+    void listAvailableSubjects(CallMediaHandlerPtr& callMediaHandlerPtr) {
         for(auto it=callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
-            notifyAVSubject(plugin, it->first, it->second);
+            notifyAVSubject(callMediaHandlerPtr, it->first, it->second);
         }
     }
 
 private:
     /**
      * @brief callMediaHandlers
-     * Objects that a plugin can register through registerCallMediaHandler service
+     * Components that a plugin can register through registerCallMediaHandler service
      * These objects can then be notified with notify notifyAVFrameSubject
      * whenever there is a new CallAVSubject like a video receive
      */
