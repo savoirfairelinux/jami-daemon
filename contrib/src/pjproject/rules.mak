@@ -24,10 +24,6 @@ PJPROJECT_OPTIONS := --disable-oss          \
                      --disable-libwebrtc    \
                      --with-gnutls=$(PREFIX)
 
-ifdef HAVE_WIN64
-PJPROJECT_EXTRA_CFLAGS += -DPJ_WIN64=1
-endif
-
 PKGS += pjproject
 # FIXME: nominally 2.2.0 is enough, but it has to be patched for gnutls
 ifeq ($(call need_pkg,'libpjproject'),)
@@ -48,9 +44,6 @@ $(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.gz:
 
 pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(UNPACK)
-ifdef HAVE_WIN32
-	$(APPLY) $(SRC)/pjproject/pj_win.patch
-endif
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0017-android.patch.patch
 endif
