@@ -238,9 +238,7 @@ public:
      * releasePort().
      */
     uint16_t generateAudioPort() const;
-#ifdef ENABLE_VIDEO
     uint16_t generateVideoPort() const;
-#endif
     static void releasePort(uint16_t port) noexcept;
 
     /**

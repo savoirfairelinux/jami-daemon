@@ -29,10 +29,8 @@ libringacc_la_SOURCES = \
         server_account_manager.h \
         server_account_manager.cpp
 
-if RINGNS
 libringacc_la_SOURCES += \
         namedirectory.cpp \
         namedirectory.h
-endif
 
 nobase_include_HEADERS= jami_contact.h

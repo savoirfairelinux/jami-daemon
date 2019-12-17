@@ -33,11 +33,9 @@
 
 namespace jami {
 
-#ifdef ENABLE_VIDEO
 namespace video {
 class VideoMixer;
 }
-#endif
 
 using ParticipantSet = std::set<std::string>;
 
@@ -124,20 +122,16 @@ public:
 
     void switchInput(const std::string& input);
 
-#ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
     std::string getVideoInput() const { return mediaInput_; }
-#endif
 
 private:
     std::string id_;
     State confState_ {State::ACTIVE_ATTACHED};
     ParticipantSet participants_;
 
-#ifdef ENABLE_VIDEO
     std::string mediaInput_ {};
     std::shared_ptr<video::VideoMixer> videoMixer_;
-#endif
 };
 
 } // namespace jami

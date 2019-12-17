@@ -39,9 +39,7 @@
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
 
-#ifdef ENABLE_VIDEO
 #include <queue>
-#endif
 #include <map>
 #include <mutex>
 #include <memory>
@@ -163,9 +161,7 @@ class SIPVoIPLink {
         std::atomic_bool running_ {true};
         std::thread sipThread_;
 
-#ifdef ENABLE_VIDEO
         void requestKeyframe(const std::string &callID);
-#endif
 
         friend class SIPTest;
 };

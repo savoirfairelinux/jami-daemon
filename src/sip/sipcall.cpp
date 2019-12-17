@@ -42,12 +42,10 @@
 #include "client/ring_signal.h"
 #include "ice_transport.h"
 
-#ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
 #include "video/video_rtp_session.h"
 #include "dring/videomanager_interface.h"
 #include <chrono>
-#endif
 
 #include "errno.h"
 
@@ -58,14 +56,12 @@ namespace jami {
 
 using sip_utils::CONST_PJ_STR;
 
-#ifdef ENABLE_VIDEO
 static DeviceParams
 getVideoSettings()
 {
     const auto& videomon = jami::getVideoDeviceMonitor();
     return videomon.getDeviceParams(videomon.getDefaultDevice());
 }
-#endif
 
 static constexpr std::chrono::seconds DEFAULT_ICE_INIT_TIMEOUT {35}; // seconds
 static constexpr std::chrono::seconds DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
@@ -87,11 +83,9 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
                  const std::map<std::string, std::string>& details)
     : Call(account, id, type, details)
     , avformatrtp_(new AudioRtpSession(id))
-#ifdef ENABLE_VIDEO
     // The ID is used to associate video streams to calls
     , videortp_(new video::VideoRtpSession(id, getVideoSettings()))
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
-#endif
     , sdp_(new Sdp(id))
 {
     if (account.getUPnPActive())
@@ -117,9 +111,7 @@ void
 SIPCall::setCallMediaLocal()
 {
     if (localAudioPort_ == 0
-#ifdef ENABLE_VIDEO
         || localVideoPort_ == 0
-#endif
         )
         generateMediaPorts();
 }
@@ -137,7 +129,6 @@ SIPCall::generateMediaPorts()
     localAudioPort_ = callLocalAudioPort;
     sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
 
-#ifdef ENABLE_VIDEO
     // https://projects.savoirfairelinux.com/issues/17498
     const unsigned int callLocalVideoPort = account.generateVideoPort();
     if (localVideoPort_ != 0)
@@ -146,7 +137,6 @@ SIPCall::generateMediaPorts()
     assert(localAudioPort_ != callLocalVideoPort);
     localVideoPort_ = callLocalVideoPort;
     sdp_->setLocalPublishedVideoPort(callLocalVideoPort);
-#endif
 }
 
 void SIPCall::setContactHeader(pj_str_t *contact)
@@ -809,14 +799,12 @@ SIPCall::onAnswered()
 void
 SIPCall::sendKeyframe()
 {
-#ifdef ENABLE_VIDEO
     dht::ThreadPool::computation().run([w = weak()] {
         if (auto sthis = w.lock()) {
             JAMI_DBG("handling picture fast update request");
             sthis->getVideoRtp().forceKeyFrame();
         }
     });
-#endif
 }
 
 void
@@ -852,10 +840,8 @@ SIPCall::setupLocalSDPFromIce()
     // Add video and audio channels
     sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, media_tr->getLocalCandidates(ICE_AUDIO_RTP_COMPID));
     sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, media_tr->getLocalCandidates(ICE_AUDIO_RTCP_COMPID));
-#ifdef ENABLE_VIDEO
     sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, media_tr->getLocalCandidates(ICE_VIDEO_RTP_COMPID));
     sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, media_tr->getLocalCandidates(ICE_VIDEO_RTCP_COMPID));
-#endif
 }
 
 std::vector<IceCandidate>
@@ -876,9 +862,7 @@ SIPCall::getAllRemoteCandidates()
     };
 
     addSDPCandidates(SDP_AUDIO_MEDIA_ID, rem_candidates);
-#ifdef ENABLE_VIDEO
     addSDPCandidates(SDP_VIDEO_MEDIA_ID, rem_candidates);
-#endif
 
     return rem_candidates;
 }
@@ -886,9 +870,7 @@ SIPCall::getAllRemoteCandidates()
 std::shared_ptr<AccountCodecInfo>
 SIPCall::getVideoCodec() const
 {
-#ifdef ENABLE_VIDEO
     return videortp_->getCodec();
-#endif
     return {};
 }
 
@@ -915,14 +897,12 @@ SIPCall::startAllMedia()
     bool peer_holding {true};
     int slotN = -1;
 
-#ifdef ENABLE_VIDEO
     videortp_->setChangeOrientationCallback([wthis = weak()] (int angle) {
         runOnMainThread([wthis, angle] {
             if (auto this_ = wthis.lock())
                 this_->setVideoOrientation(angle);
         });
     });
-#endif
 
     for (const auto& slot : slots) {
         ++slotN;
@@ -937,11 +917,7 @@ SIPCall::startAllMedia()
 
         RtpSession* rtp = local.type == MEDIA_AUDIO
             ? static_cast<RtpSession*>(avformatrtp_.get())
-#ifdef ENABLE_VIDEO
             : static_cast<RtpSession*>(videortp_.get());
-#else
-            : nullptr;
-#endif
 
         if (not rtp)
             continue;
@@ -970,11 +946,9 @@ SIPCall::startAllMedia()
             avformatrtp_->switchInput(mediaInput_);
         avformatrtp_->setMtu(new_mtu);
 
-#ifdef ENABLE_VIDEO
         if (local.type & MEDIA_VIDEO)
             videortp_->switchInput(mediaInput_);
         videortp_->setMtu(new_mtu);
-#endif
         rtp->updateMedia(remote, local);
 
         rtp->setSuccessfulSetupCb([this](MediaType type){ rtpSetupSuccess(type); });
@@ -991,11 +965,9 @@ SIPCall::startAllMedia()
         }
 
         switch (local.type) {
-#ifdef ENABLE_VIDEO
             case MEDIA_VIDEO:
                 isVideoMuted_ = mediaInput_.empty();
                 break;
-#endif
             case MEDIA_AUDIO:
                 isAudioMuted_ = not rtp->isSending();
                 break;
@@ -1003,14 +975,12 @@ SIPCall::startAllMedia()
         }
     }
 
-#ifdef ENABLE_VIDEO
     videortp_->setRequestKeyFrameCallback([wthis = weak()] {
         runOnMainThread([wthis] {
             if (auto this_ = wthis.lock())
                 this_->requestKeyframe();
         });
     });
-#endif
 
     if (not isSubcall() and peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;
@@ -1042,9 +1012,7 @@ SIPCall::restartMediaSender()
 {
     JAMI_DBG("[call:%s] restarting TX media streams", getCallId().c_str());
     avformatrtp_->restartSender();
-#ifdef ENABLE_VIDEO
     videortp_->restartSender();
-#endif
 }
 
 void
@@ -1056,16 +1024,13 @@ SIPCall::stopAllMedia()
         stopRecording(); // if call stops, finish recording
     }
     avformatrtp_->stop();
-#ifdef ENABLE_VIDEO
     videortp_->stop();
-#endif
 }
 
 void
 SIPCall::muteMedia(const std::string& mediaType, bool mute)
 {
     if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
-#ifdef ENABLE_VIDEO
         if (mute == isVideoMuted_) return;
         JAMI_WARN("[call:%s] video muting %s", getCallId().c_str(), bool_to_str(mute));
         isVideoMuted_ = mute;
@@ -1073,7 +1038,6 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         DRing::switchInput(getCallId(), mediaInput_);
         if (not isSubcall())
             emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
-#endif
     } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
         if (mute == isAudioMuted_) return;
         JAMI_WARN("[call:%s] audio muting %s", getCallId().c_str(), bool_to_str(mute));
@@ -1209,7 +1173,6 @@ SIPCall::openPortsUPnP()
                 sdp_->setLocalPublishedAudioPorts(sdp_->getLocalAudioPort(), sdp_->getLocalAudioControlPort());
             }, sdp_->getLocalAudioControlPort(), upnp::PortType::UDP, true);
         }, sdp_->getLocalAudioPort(), upnp::PortType::UDP, true);
-#ifdef ENABLE_VIDEO
         upnp_->requestMappingAdd([this](uint16_t, bool success) {
             if (!success) return;
             upnp_->requestMappingAdd([this](uint16_t, bool success) {
@@ -1217,7 +1180,6 @@ SIPCall::openPortsUPnP()
                 sdp_->setLocalPublishedVideoPorts(sdp_->getLocalVideoPort(), sdp_->getLocalVideoControlPort());
             }, sdp_->getLocalVideoControlPort(), upnp::PortType::UDP, true);
         }, sdp_->getLocalVideoPort(), upnp::PortType::UDP, true);
-#endif
     }
 }
 
@@ -1230,17 +1192,13 @@ SIPCall::getDetails() const
 
     auto& acc = getSIPAccount();
 
-#ifdef ENABLE_VIDEO
     // If Video is not enabled return an empty string
     details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc.isVideoEnabled() ? mediaInput_ : "");
     if (auto codec = videortp_->getCodec())
         details.emplace(DRing::Call::Details::VIDEO_CODEC, codec->systemCodecInfo.name);
-#endif
 
-#if HAVE_RINGNS
     if (not peerRegistredName_.empty())
         details.emplace(DRing::Call::Details::REGISTERED_NAME, peerRegistredName_);
-#endif
 
 #ifdef ENABLE_CLIENT_CERT
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
@@ -1289,10 +1247,8 @@ SIPCall::toggleRecording()
         recorder_->setMetadata(ss.str(), ""); // use default description
         if (avformatrtp_)
             avformatrtp_->initRecorder(recorder_);
-#ifdef ENABLE_VIDEO
         if (!isAudioOnly_ && videortp_)
             videortp_->initRecorder(recorder_);
-#endif
     } else {
         deinitRecorder();
     }
@@ -1306,10 +1262,8 @@ SIPCall::deinitRecorder()
     if (Call::isRecording()) {
         if (avformatrtp_)
             avformatrtp_->deinitRecorder(recorder_);
-#ifdef ENABLE_VIDEO
         if (!isAudioOnly_ && videortp_)
             videortp_->deinitRecorder(recorder_);
-#endif
     }
 }
 

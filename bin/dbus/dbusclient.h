@@ -34,9 +34,7 @@ class DBusNetworkManager;
 class DBusInstance;
 class DBusPresenceManager;
 
-#ifdef ENABLE_VIDEO
 class DBusVideoManager;
-#endif
 
 namespace DBus {
     class BusDispatcher;
@@ -63,7 +61,5 @@ class DRING_PUBLIC DBusClient {
         std::unique_ptr<DBusPresenceManager>      presenceManager_;
         std::unique_ptr<DBusInstance>             instanceManager_;
 
-#ifdef ENABLE_VIDEO
         std::unique_ptr<DBusVideoManager>         videoManager_;
-#endif
 };
