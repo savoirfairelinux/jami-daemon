@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "446996b8_26021e77",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 16,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2019-12-17T18:17:08Z",
+      "side": 0,
+      "message": "Re-add the comment",
+      "range": {
+        "startLine": 2,
+        "startChar": 0,
+        "endLine": 16,
+        "endChar": 32
+      },
+      "revId": "8599bcdd235064dc566fa351dff65eea047adb19",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}

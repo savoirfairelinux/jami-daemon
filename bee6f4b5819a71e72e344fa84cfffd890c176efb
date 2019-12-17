@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "6c362371_9dcacc27",
+        "filename": "contrib/src/pjproject/0002-fix_turn_alloc_failure.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2019-12-17T18:17:08Z",
+      "side": 1,
+      "message": "This patch is upstreamed and now useless",
+      "revId": "bee6f4b5819a71e72e344fa84cfffd890c176efb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c3769341_b7f64e66",
+        "filename": "contrib/src/pjproject/0003-rfc2466.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2019-12-17T18:17:08Z",
+      "side": 1,
+      "message": "same here. upstreamed and can be moved. This change should be moved in rfc6544 :)",
+      "range": {
+        "startLine": 164,
+        "startChar": 4,
+        "endLine": 167,
+        "endChar": 2
+      },
+      "revId": "bee6f4b5819a71e72e344fa84cfffd890c176efb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2e09c80e_84ec58e6",
+        "filename": "contrib/src/pjproject/0018-read-header-LEN-in-style-of-GETVAL16H.patch",
+        "patchSetId": 6
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2019-12-17T18:17:08Z",
+      "side": 1,
+      "message": "GETVAL16H is usable here, right?",
+      "range": {
+        "startLine": 30,
+        "startChar": 27,
+        "endLine": 31,
+        "endChar": 68
+      },
+      "revId": "bee6f4b5819a71e72e344fa84cfffd890c176efb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
