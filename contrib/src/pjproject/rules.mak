@@ -44,9 +44,7 @@ $(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.gz:
 
 pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(UNPACK)
-ifdef HAVE_ANDROID
-	$(APPLY) $(SRC)/pjproject/0017-android.patch.patch
-endif
+
 	$(APPLY) $(SRC)/pjproject/0001-rfc6544.patch
 	$(APPLY) $(SRC)/pjproject/0002-fix_turn_alloc_failure.patch
 	$(APPLY) $(SRC)/pjproject/0003-rfc2466.patch
@@ -63,6 +61,12 @@ endif
 	$(APPLY) $(SRC)/pjproject/0014-ignore_ipv6_on_transport_check.patch
 	$(APPLY) $(SRC)/pjproject/0015-disable_local_resolution.patch
 	$(APPLY) $(SRC)/pjproject/0016-fix_assert_on_connection_attempt.patch
+ifdef HAVE_ANDROID
+	$(APPLY) $(SRC)/pjproject/0017-android.patch.patch
+endif
+	$(APPLY) $(SRC)/pjproject/0018-read-header-LEN-in-style-of-GETVAL16H.patch
+	$(APPLY) $(SRC)/pjproject/0019-limit-the-scope-of-_cb-funcs.patch
+	$(APPLY) $(SRC)/pjproject/0020-return-actual-status-for-sess_on_send_msg.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
