@@ -153,8 +153,8 @@ libring_la_SOURCES = \
 		plugin/pluginloaderdl.cpp \
 		plugin/pluginmanager.h \
 		plugin/pluginmanager.cpp \
+		plugin/jpluncompressor.h \
 		plugin/mediahandler.h \
-		src/plugin/preferenceservice.h \
 		plugin/callservicemanager.h \
 		plugin/jamipluginmanager.h \
 		plugin/jamipluginmanager.cpp \
