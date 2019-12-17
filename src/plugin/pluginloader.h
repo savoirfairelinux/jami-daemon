@@ -44,7 +44,9 @@ protected:
 
 class DLPlugin : public Plugin {
 public:
-    DLPlugin(void *handle, const std::string& path) : handle_(handle, ::dlclose), path_{path} {}
+    DLPlugin(void *handle, const std::string& path) : handle_(handle, ::dlclose), path_{path} {
+        api_.context = this;
+    }
 
     virtual ~DLPlugin() { unload();}
     //==========================================
@@ -63,9 +65,13 @@ public:
         return ::dlsym(handle_.get(), name);
     }
     
-    const std::string& getPath() {
+    const std::string& getPath() const {
         return path_;
     }
+
+public:
+    void* apiImplementationContext_;
+    JAMI_PluginAPI api_;
 
 private:
     std::unique_ptr<void, int (*)(void *)> handle_;

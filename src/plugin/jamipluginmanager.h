@@ -38,7 +38,7 @@ public:
         csm.registerComponentsLifeCycleManagers(pm);
 
         // Register pluginPreferences
-        auto pluginPreferences = [this](void* data) {
+        auto pluginPreferences = [this](const DLPlugin* plugin, void* data) {
             auto ppp =(static_cast<PluginPreferencesMap*>(data));
             ppp->preferenceValuesMap = ppm.getPluginPreferencesValuesMap(ppp->path);
             return 0;

@@ -22,6 +22,7 @@
 
 #include "noncopyable.h"
 #include "jamiplugin.h"
+#include "pluginloader.h"
 
 #include <functional>
 #include <map>
@@ -39,7 +40,7 @@ class Plugin;
 class PluginManager {
 public:
   using ObjectDeleter = std::function<void(void *)>;
-  using ServiceFunction = std::function<int32_t(void *)>;
+  using ServiceFunction = std::function<int32_t(const DLPlugin*, void *)>;
 
 private:
   struct ObjectFactory {
@@ -133,8 +134,6 @@ public:
    */
   std::unique_ptr<void, ObjectDeleter> createObject(const std::string &type);
 
-  const JAMI_PluginAPI &getPluginAPI() const { return pluginApi_; }
-
 private:
   NON_COPYABLE(PluginManager);
 
@@ -144,27 +143,17 @@ private:
    */
   static int32_t registerObjectFactory_(const JAMI_PluginAPI *api,
                                         const char *type, void *data);
-
-  /**
-   * Implements JAMI_PluginAPI.invokeService().
-   * Must be C accessible.
-   */
-  static int32_t invokeService_(const JAMI_PluginAPI *api, const char *name,
-                                void *data);
-
-  int32_t invokeService(const std::string &name, void *data);
+  int32_t invokeService(const DLPlugin* plugin, const std::string &name, void *data);
   
-  int32_t manageComponent(const std::string& pluginId, const std::string& name, void *data);
-  static int32_t manageComponent_(void* context, const JAMI_PluginAPI* api, const char* name,
-                                 void *data);
+  int32_t manageComponent(const DLPlugin* plugin, const std::string& name, void *data);
 
   std::mutex mutex_{};
   JAMI_PluginAPI pluginApi_ = {
       {JAMI_PLUGIN_ABI_VERSION, JAMI_PLUGIN_API_VERSION},
       nullptr, // set by PluginManager constructor
       registerObjectFactory_,
-      invokeService_,
-      manageComponent_
+      nullptr,
+      nullptr
   };
   PluginMap dynPluginMap_{}; // Only dynamic loaded plugins
   ExitFuncVec exitFuncVec_{};
