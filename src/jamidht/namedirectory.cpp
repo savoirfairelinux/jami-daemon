@@ -16,6 +16,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <opendht/sockaddr.h>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -35,6 +37,7 @@
 #include <opendht/utils.h>
 #include <opendht/http.h>
 #include <opendht/log_enable.h>
+
 
 #include <msgpack.hpp>
 #include <json/json.h>
