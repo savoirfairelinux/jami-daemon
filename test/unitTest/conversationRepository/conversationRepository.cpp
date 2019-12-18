@@ -34,9 +34,156 @@
 #include "fileutils.h"
 #include "account_const.h"
 
-#include "git2.h"
+#include <git2.h>
 
 using namespace DRing::Account;
+
+
+
+
+
+#include <git2/sys/transport.h>
+#include <git2/errors.h>
+#include "jamidht/multiplexed_socket.h"
+#include "jamidht/connectionmanager.h"
+
+
+typedef struct {
+    jami::ChannelSocket* socket;
+    git_transport* owner;
+	git_smart_subtransport base;
+} ChannelSocketTransport;
+
+typedef struct {
+    jami::ChannelSocket* socket;
+    git_smart_subtransport_stream base;
+} ChannelStream;
+
+
+static int stream_read(git_smart_subtransport_stream *stream,
+	char *buffer,
+	size_t buf_size,
+	size_t *bytes_read)
+{
+	ChannelStream* st = (ChannelStream*) stream;
+    std::error_code ec;
+    *bytes_read = st->socket->read((unsigned char*)(buffer), buf_size, ec);
+    JAMI_ERR("READ %u", read);
+	return 0;
+}
+
+static int stream_write(git_smart_subtransport_stream *stream,
+	  const char *buffer, size_t len)
+{
+	ChannelStream* st = (ChannelStream*) stream;
+    std::error_code ec;
+    auto written = st->socket->write((const unsigned char*)(buffer), len, ec);
+    JAMI_ERR("WRITTEN: %u", written);
+	return 0;
+}
+
+static void stream_free(git_smart_subtransport_stream *stream)
+{
+	delete stream;
+}
+
+static int stream_new(
+	ChannelStream **out,
+	jami::ChannelSocket* socket)
+{
+	ChannelStream *stream = new ChannelStream();
+
+	stream->socket = socket;
+	stream->base.read = stream_read;
+	stream->base.write = stream_write;
+	stream->base.free = stream_free;
+
+	*out = stream;
+
+	return 0;
+}
+
+
+static int subtransport_action(
+	git_smart_subtransport_stream **out,
+	git_smart_subtransport *transport,
+	const char *url,
+	git_smart_service_t action)
+{
+	ChannelSocketTransport *ft = (ChannelSocketTransport *)transport;
+	return stream_new((ChannelStream **) out, ft->socket);
+}
+
+static int subtransport_close(git_smart_subtransport *transport)
+{
+	ChannelSocketTransport *ft = (ChannelSocketTransport *)transport;
+	ft->socket->shutdown();
+	return 0;
+}
+
+static void subtransport_free(git_smart_subtransport *transport)
+{
+	delete transport;
+}
+
+static int subtransport_new(
+	ChannelSocketTransport **out,
+	git_transport *owner,
+	void *payload)
+{
+    ChannelSocketTransport *sub = new ChannelSocketTransport();
+    jami::ChannelSocket* channelSocket = (jami::ChannelSocket*)payload;
+
+	sub->owner = owner;
+	sub->socket = channelSocket;
+	sub->base.action = subtransport_action;
+	sub->base.close = subtransport_close;
+	sub->base.free = subtransport_free;
+
+	*out = sub;
+
+	return 0;
+}
+
+int subtransport_cb(
+	git_smart_subtransport **out,
+	git_transport *owner,
+	void *payload)
+{
+	ChannelSocketTransport *sub;
+
+	if (subtransport_new(&sub, owner, payload) < 0)
+		return -1;
+
+	*out = &sub->base;
+	return 0;
+}
+
+static int
+test_cb(git_transport **out, git_remote *owner, void *param)
+{
+    git_transport* parent = nullptr;
+
+    git_smart_subtransport_definition sbDef = {
+		subtransport_cb,
+		1,
+		param
+	};
+    git_transport_smart(&parent, owner, &sbDef);
+
+
+    JAMI_ERR("...");
+    return 0;
+}
+
+
+
+
+
+
+
+
+
 
 namespace jami { namespace test {
 
@@ -54,9 +201,11 @@ public:
 
 private:
     void testCreateRepository();
+    void testCloneViaChannelSocket();
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
     CPPUNIT_TEST(testCreateRepository);
+    CPPUNIT_TEST(testCloneViaChannelSocket);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -173,6 +322,62 @@ ConversationRepositoryTest::testCreateRepository()
     std::string deviceCrtStr((std::istreambuf_iterator<char>(crt)), std::istreambuf_iterator<char>());
 
     CPPUNIT_ASSERT(deviceCrtStr == deviceCert);
+}
+
+void
+ConversationRepositoryTest::testCloneViaChannelSocket()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceDeviceId = aliceAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+
+    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repoPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+aliceAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+repository->id();
+    auto clonedPath = repoPath + ".test_cloned";
+
+
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk{ mtx };
+    std::condition_variable rcv, scv;
+    bool successfullyConnected = false;
+    bool successfullyReceive = false;
+    bool receiverConnected = false;
+    std::shared_ptr<ChannelSocket> channelSocket = nullptr;
+
+    bobAccount->connectionManager().onChannelRequest(
+    [&successfullyReceive](const std::string&, const std::string& name) {
+        successfullyReceive = name == "git://*";
+        return true;
+    });
+
+    bobAccount->connectionManager().onConnectionReady(
+    [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        receiverConnected = socket && (name == "git://*");
+        channelSocket = socket;
+        rcv.notify_one();
+    });
+
+    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
+        [&](std::shared_ptr<ChannelSocket> socket) {
+        if (socket)
+            successfullyConnected = true;
+    });
+
+    rcv.wait_for(lk, std::chrono::seconds(10));
+    scv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+
+    auto res = git_transport_register("git", test_cb, (void*)&*channelSocket);
+    git_repository *rep = nullptr;
+    git_repository_init(&rep, "/home/amarok/gittmp", true);
+    res = git_clone(&rep, "git://test", clonedPath.c_str(), nullptr);
+    git_repository_free(rep);
 }
 
 }} // namespace test
