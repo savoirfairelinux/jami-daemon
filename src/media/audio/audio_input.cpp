@@ -57,6 +57,11 @@ AudioInput::AudioInput(const std::string& id) :
 AudioInput::~AudioInput()
 {
     loop_.join();
+    if (decodingFile_ ) {
+        Manager::instance()
+        .getRingBufferPool()
+        .unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    }
 }
 
 void
@@ -76,6 +81,14 @@ AudioInput::process()
 }
 
 void
+AudioInput::updateStartTime(int64_t start)
+{
+    if (decoder_) {
+        decoder_->updateStartTime(start);
+    }
+}
+
+void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
     std::shared_ptr<AudioFrame> frame = std::move(ptr);
@@ -92,7 +105,7 @@ AudioInput::readFromDevice()
     auto bufferFormat = mainBuffer.getInternalAudioFormat();
 
     if (decodingFile_ )
-        while (fileBuf_->isEmpty())
+        while (fileBuf_->isEmpty() && isCapturing())
             readFromFile();
 
     if (not mainBuffer.waitForDataAvailable(id_, MS_PER_PACKET))
@@ -116,6 +129,10 @@ AudioInput::readFromFile()
 {
     if (!decoder_)
         return;
+    if (needFrame) {
+        needFrame();
+        return;
+    }
     const auto ret = decoder_->decode();
     switch (ret) {
     case MediaDemuxer::Status::Success:
@@ -129,6 +146,14 @@ AudioInput::readFromFile()
     }
 }
 
+void
+AudioInput::setNeedFrameCallback(const std::function<void(void)>& cb) noexcept
+{
+    if (cb) {
+        needFrame = cb;
+    }
+}
+
 bool
 AudioInput::initDevice(const std::string& device)
 {
@@ -137,6 +162,51 @@ AudioInput::initDevice(const std::string& device)
     devOpts_.channel = format_.nb_channels;
     devOpts_.framerate = format_.sample_rate;
     return true;
+}
+
+void
+AudioInput::configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index)
+{
+    decoder_.reset();
+    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    fileBuf_.reset();
+    devOpts_ = {};
+    devOpts_.input = path;
+    devOpts_.name = path;
+    auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
+        if (muteState_) {
+            libav_utils::fillWithSilence(frame->pointer());
+        }
+        fileBuf_->put(std::move(std::static_pointer_cast<AudioFrame>(frame)));
+    });
+    decoder->setInterruptCallback([](void* data) -> int {
+        return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
+    decoder->skipFrames();
+
+    fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(id_);
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    decodingFile_ = true;
+    decoder_ = std::move(decoder);
+}
+
+bool
+AudioInput::setPaused(bool paused) {
+    if (paused) {
+        Manager::instance()
+        .getRingBufferPool()
+        .unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    } else {
+        Manager::instance()
+        .getRingBufferPool()
+        .bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    }
+}
+void
+AudioInput::setSeekTime(int64_t time)
+{
+    if (decoder_) {
+        decoder_->setSeekTime(time);
+    }
 }
 
 bool
