@@ -35,6 +35,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <array>
+#include <atomic>
 
 #if __APPLE__
 #import "TargetConditionals.h"
@@ -42,6 +43,7 @@
 
 namespace jami {
 class MediaDecoder;
+class MediaDemuxer;
 }
 
 namespace jami { namespace video {
@@ -53,7 +55,7 @@ enum class VideoInputMode {ManagedByClient, ManagedByDaemon, Undefined};
 class VideoInput : public VideoGenerator, public std::enable_shared_from_this<VideoInput>
 {
 public:
-    VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined);
+    VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined, const std::string& id_ = "local");
     ~VideoInput();
 
     // as VideoGenerator
@@ -65,6 +67,17 @@ public:
     AVPixelFormat getPixelFormat() const;
     const DeviceParams& getParams() const;
     MediaStream getInfo() const;
+
+    void setSink(const std::string& sinkId);
+    void updateStartTime(int64_t startTime);
+    bool configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    void flushBuffers();
+    void setSeekTime(int64_t time);
+    void getFramesBeforeTime(int64_t time);
+    void emulateRate();
+    void setPaused(bool paused) {
+        paused_ = paused;
+    }
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 #if VIDEO_CLIENT_INPUT
@@ -79,6 +92,7 @@ public:
 private:
     NON_COPYABLE(VideoInput);
 
+    std::string id_;
     std::string currentResource_;
     std::atomic<bool> switchPending_ = {false};
     std::atomic_bool  isStopped_ = {false};
@@ -125,6 +139,9 @@ private:
     inline bool videoManagedByClient() const {
          return inputMode_ == VideoInputMode::ManagedByClient;
     }
+    bool playingFile_ = false;
+    std::atomic_int64_t timeToSync_ { -1};
+    bool paused_ = true;
 };
 
 }} // namespace jami::video
