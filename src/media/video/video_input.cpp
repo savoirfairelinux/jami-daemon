@@ -172,6 +172,10 @@ VideoInput::process()
 {
     if (switchPending_)
         createDecoder();
+    if (paused_) {
+          std::this_thread::sleep_for(std::chrono::milliseconds(20));
+          return;
+    }
 
     if (not captureFrame()) {
         loop_.stop();
@@ -197,7 +201,12 @@ VideoInput::captureFrame()
 
     switch (decoder_->decode()) {
     case MediaDemuxer::Status::EndOfFile:
-        createDecoder();
+        if (fileFinished) {
+            paused_ = true;
+            fileFinished();
+        } else {
+            createDecoder();
+        }
         return static_cast<bool>(decoder_);
     case MediaDemuxer::Status::ReadError:
         JAMI_ERR() << "Failed to decode frame";
@@ -403,7 +412,7 @@ VideoInput::initGdiGrab(const std::string& params)
 }
 
 bool
-VideoInput::initFile(std::string path)
+VideoInput::initFile(std::string path, bool fallbackToCamera)
 {
     size_t dot = path.find_last_of('.');
     std::string ext = dot == std::string::npos ? "" : path.substr(dot + 1);
@@ -422,6 +431,9 @@ VideoInput::initFile(std::string path)
     p.name = path;
     auto dec = std::make_unique<MediaDecoder>();
     if (dec->openInput(p) < 0 || dec->setupVideo() < 0) {
+        if (!fallbackToCamera) {
+            return false;
+        }
         return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
     }
 
@@ -443,7 +455,7 @@ VideoInput::initFile(std::string path)
 }
 
 std::shared_future<DeviceParams>
-VideoInput::switchInput(const std::string& resource)
+VideoInput::switchInput(const std::string& resource, bool fallbackToCamera)
 {
     if (resource == currentResource_)
         return futureDecOpts_;
@@ -498,7 +510,7 @@ VideoInput::switchInput(const std::string& resource)
 #endif
     } else if (prefix == DRing::Media::VideoProtocolPrefix::FILE) {
         /* Pathname */
-        ready = initFile(suffix);
+        ready = initFile(suffix, fallbackToCamera);
     }
 
     if (ready) {
@@ -532,6 +544,36 @@ VideoInput::foundDecOpts(const DeviceParams& params)
     if (not decOptsFound_) {
         decOptsFound_ = true;
         foundDecOpts_.set_value(params);
+    }
+}
+
+void
+VideoInput::setFileFinishedCallback(const std::function<void(void)>& cb) noexcept
+{
+    if (cb) {
+        fileFinished = cb;
+    }
+}
+
+void
+VideoInput::setSink(const std::string& sinkId) {
+    sink_ = Manager::instance().createSinkClient(sinkId);
+}
+
+int64_t
+VideoInput::duration() const {
+    return decoder_->getDuration();
+}
+
+void
+VideoInput::setPaused(bool paused) {
+    paused_ = paused;
+}
+
+void
+VideoInput::updateStartTime(int64_t start) {
+    if (decoder_) {
+        decoder_->updateStartTime(start);
     }
 }
 

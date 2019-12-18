@@ -36,6 +36,8 @@
 
 namespace jami {
 
+class MediaPlayer;
+
 struct VideoManager
 {
 public:
@@ -61,6 +63,8 @@ public:
      * create an instance if need be and return a shared_ptr.
      */
     std::map<std::string, std::weak_ptr<AudioInput>> audioInputs;
+    std::map<std::string, std::weak_ptr<video::VideoFrameActiveWriter>> videoInputs;
+    std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers;
     std::mutex audioMutex;
     std::shared_ptr<AudioInput> audioPreview;
 };
@@ -68,6 +72,11 @@ public:
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
+std::shared_ptr<video::VideoFrameActiveWriter> getVideoInput(const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
+std::string openMediaFile(const std::string& path);
+std::shared_ptr<MediaPlayer> getMediaPlayer(const std::string& id);
+bool pausePlayer(const std::string& id, bool pause);
+bool closePlayer(const std::string& id);
 
 } // namespace jami
 
