@@ -88,6 +88,8 @@ using random_device = dht::crypto::random_device;
 
 #include <git2.h>
 
+#include "gittransport.h"
+
 #ifndef WIN32
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -711,6 +713,10 @@ Manager::init(const std::string &config_file)
     initialized = true;
 
     git_libgit2_init();
+    auto res = git_transport_register("git", p2p_transport_cb, nullptr);
+    if (res < 0) {
+        JAMI_ERR("Unable to initialize git transport");
+    }
 
 #ifndef WIN32
     // Set the max number of open files.
@@ -3078,6 +3084,15 @@ Manager::getLastMessages(const std::string& accountID, const uint64_t& base_time
         return acc->getLastMessages(base_timestamp);
     return {};
 }
+
+std::shared_ptr<ChannelSocket>
+Manager::gitSocket(const std::string& accountId, const std::string& deviceId, const std::string& conversationId)
+{
+    if (const auto acc = getAccount<JamiAccount>(accountId))
+        return acc->gitSocket(deviceId, conversationId);
+    return {};
+}
+
 
 std::map<std::string, std::string>
 Manager::getNearbyPeers(const std::string& accountID)

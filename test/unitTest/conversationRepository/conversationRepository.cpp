@@ -27,6 +27,7 @@
 
 #include "manager.h"
 #include "jamidht/conversationrepository.h"
+#include "jamidht/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "dring.h"
@@ -34,8 +35,9 @@
 #include "fileutils.h"
 #include "account_const.h"
 
-#include "git2.h"
+#include <git2.h>
 
+using namespace std::string_literals;
 using namespace DRing::Account;
 
 namespace jami { namespace test {
@@ -54,9 +56,11 @@ public:
 
 private:
     void testCreateRepository();
+    void testCloneViaChannelSocket();
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
     CPPUNIT_TEST(testCreateRepository);
+    CPPUNIT_TEST(testCloneViaChannelSocket);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -170,6 +174,118 @@ ConversationRepositoryTest::testCreateRepository()
     CPPUNIT_ASSERT(adminCrtStr == parentCert);
 
     auto deviceCrt = repoPath + DIR_SEPARATOR_STR + "devices" + DIR_SEPARATOR_STR + aliceDeviceId + ".crt";
+    CPPUNIT_ASSERT(fileutils::isFile(deviceCrt));
+
+    crt = std::ifstream(deviceCrt);
+    std::string deviceCrtStr((std::istreambuf_iterator<char>(crt)), std::istreambuf_iterator<char>());
+
+    CPPUNIT_ASSERT(deviceCrtStr == deviceCert);
+}
+
+void
+ConversationRepositoryTest::testCloneViaChannelSocket()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceDeviceId = aliceAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto uri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
+    if (uri.find("ring:") == 0)
+        uri = uri.substr(std::string("ring:").size());
+    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+
+    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repoPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+aliceAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+repository->id();
+    auto clonedPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+bobAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+repository->id();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk{ mtx };
+    std::condition_variable rcv, scv;
+    bool successfullyConnected = false;
+    bool successfullyReceive = false;
+    bool receiverConnected = false;
+    std::shared_ptr<ChannelSocket> channelSocket = nullptr;
+    std::shared_ptr<ChannelSocket> sendSocket = nullptr;
+
+    bobAccount->connectionManager().onChannelRequest(
+    [&successfullyReceive](const std::string&, const std::string& name) {
+        successfullyReceive = name == "git://*";
+        return true;
+    });
+
+    aliceAccount->connectionManager().onChannelRequest(
+    [&successfullyReceive](const std::string&, const std::string& name) {
+        return true;
+    });
+
+    bobAccount->connectionManager().onConnectionReady(
+    [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        receiverConnected = socket && (name == "git://*");
+        channelSocket = socket;
+        rcv.notify_one();
+    });
+
+    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
+        [&](std::shared_ptr<ChannelSocket> socket) {
+        if (socket) {
+            successfullyConnected = true;
+            sendSocket = socket;
+        }
+        scv.notify_one();
+    });
+
+    rcv.wait_for(lk, std::chrono::seconds(10));
+    scv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+
+    bobAccount->addGitSocket(aliceDeviceId, repository->id(), channelSocket);
+    std::thread sendT = std::thread([&]() {
+        repository->serve(sendSocket);
+    });
+
+    auto cloned = ConversationRepository::cloneConversation(bobAccount->weak(), aliceDeviceId, repository->id());
+    channelSocket->shutdown();
+    sendT.join();
+
+    CPPUNIT_ASSERT(cloned != nullptr);
+    CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
+
+    // Assert that first commit is signed by alice
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, clonedPath.c_str()) == 0);
+
+    // 1. Verify that last commit is correctly signed by alice
+    git_oid commit_id;
+    CPPUNIT_ASSERT(git_reference_name_to_id(&commit_id, repo, "HEAD") == 0);
+
+	git_buf signature = {}, signed_data = {};
+    git_commit_extract_signature(&signature, &signed_data, repo, &commit_id, "signature");
+    auto pk = base64::decode(std::string(signature.ptr, signature.ptr + signature.size));
+    auto data = std::vector<uint8_t>(signed_data.ptr, signed_data.ptr + signed_data.size);
+    git_repository_free(repo);
+
+    CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(data, pk));
+
+    // 2. Check created files
+    auto CRLsPath = clonedPath + DIR_SEPARATOR_STR + "CRLs" + DIR_SEPARATOR_STR + aliceDeviceId;
+    CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
+
+    auto adminCrt = clonedPath + DIR_SEPARATOR_STR + "admins" + DIR_SEPARATOR_STR + uri + ".crt";
+    CPPUNIT_ASSERT(fileutils::isFile(adminCrt));
+
+    auto crt = std::ifstream(adminCrt);
+    std::string adminCrtStr((std::istreambuf_iterator<char>(crt)), std::istreambuf_iterator<char>());
+
+    auto cert = aliceAccount->identity().second;
+    auto deviceCert = cert->toString(false);
+    auto parentCert = cert->issuer->toString(true);
+
+    CPPUNIT_ASSERT(adminCrtStr == parentCert);
+
+    auto deviceCrt = clonedPath + DIR_SEPARATOR_STR + "devices" + DIR_SEPARATOR_STR + aliceDeviceId + ".crt";
     CPPUNIT_ASSERT(fileutils::isFile(deviceCrt));
 
     crt = std::ifstream(deviceCrt);
