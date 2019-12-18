@@ -89,7 +89,7 @@ case "${host_os}" in
 
     CPPFLAGS+="-D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -D__USE_MINGW_ANSI_STDIO=1"
     LDFLAGS+="-Wl,--nxcompat -Wl,--dynamicbase"
-    LIBS+=" -lws2_32"
+    LIBS+=" -lws2_32 -lwsock32 -lshlwapi"
     ac_default_prefix="`pwd`/_win32"
     DESTDIR="`pwd`/_win32/"
     AC_SUBST(WINDOWS_ARCH)
