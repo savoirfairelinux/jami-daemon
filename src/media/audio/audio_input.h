@@ -30,6 +30,7 @@
 #include "media_buffer.h"
 #include "observer.h"
 #include "threadloop.h"
+#include "media_decoder.h"
 
 namespace jami {
 
@@ -52,6 +53,8 @@ public:
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
     MediaStream getInfo() const;
+    void updateStartTime(int64_t start);
+    void configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
 
 private:
     void readFromDevice();
