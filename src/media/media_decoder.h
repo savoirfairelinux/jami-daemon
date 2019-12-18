@@ -101,6 +101,9 @@ public:
 
     Status decode();
 
+    int64_t getDuration() const;
+    bool seekFrame(int stream_index, int64_t timestamp);
+
 private:
     bool streamInfoFound_ {false};
     AVFormatContext *inputCtx_ = nullptr;
@@ -125,6 +128,7 @@ public:
     MediaDecoder();
     MediaDecoder(MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, AVMediaType type) : MediaDecoder(demuxer, demuxer->selectStream(type)) {}
     ~MediaDecoder();
 
@@ -143,7 +147,9 @@ public:
 
     int getWidth() const;
     int getHeight() const;
+    int64_t getDuration() const;
     std::string getDecoderName() const;
+    void updateStartTime(int64_t startTime);
 
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;

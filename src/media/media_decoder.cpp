@@ -144,6 +144,21 @@ MediaDemuxer::openInput(const DeviceParams& params)
     return ret;
 }
 
+int64_t
+MediaDemuxer::getDuration() const
+{
+    return inputCtx_->duration;
+}
+
+bool
+MediaDemuxer::seekFrame(int stream_index, int64_t timestamp)
+{
+    if (av_seek_frame(inputCtx_, -1, timestamp, AVSEEK_FLAG_ANY) >= 0) {
+        return true;
+    }
+    return false;
+}
+
 void
 MediaDemuxer::findStreamInfo()
 {
@@ -214,6 +229,17 @@ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int ind
         decode(packet);
     });
     setupStream();
+}
+
+MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer)
+: demuxer_(demuxer),
+  avStream_(demuxer->getStream(index)),
+  callback_(std::move(observer))
+{
+    demuxer->setStreamCallback(index, [this](AVPacket& packet) {
+           decode(packet);
+       });
+       setupStream();
 }
 
 MediaDecoder::MediaDecoder()
@@ -330,6 +356,11 @@ MediaDecoder::setupStream()
     return 0;
 }
 
+void
+MediaDecoder::updateStartTime(int64_t startTime) {
+     startTime_ = startTime;
+}
+
 MediaDecoder::Status
 MediaDecoder::decode(AVPacket& packet)
 {
@@ -434,6 +465,11 @@ int MediaDecoder::getWidth() const
 
 int MediaDecoder::getHeight() const
 { return decoderCtx_->height; }
+
+int64_t MediaDecoder::getDuration() const
+{
+    return demuxer_->getDuration();
+}
 
 std::string MediaDecoder::getDecoderName() const
 { return decoderCtx_->codec->name; }
