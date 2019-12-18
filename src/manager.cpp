@@ -38,6 +38,7 @@
 #include "account_schema.h"
 
 #include "fileutils.h"
+#include "gittransport.h"
 #include "map_utils.h"
 #include "account.h"
 #include "string_utils.h"
@@ -747,6 +748,10 @@ Manager::init(const std::string& config_file)
     initialized = true;
 
     git_libgit2_init();
+    auto res = git_transport_register("git", p2p_transport_cb, nullptr);
+    if (res < 0) {
+        JAMI_ERR("Unable to initialize git transport");
+    }
 
 #ifndef WIN32
     // Set the max number of open files.
@@ -3234,6 +3239,16 @@ Manager::getJamiPluginManager() const
     return pimpl_->jami_plugin_manager;
 }
 #endif
+
+std::shared_ptr<ChannelSocket>
+Manager::gitSocket(const std::string& accountId,
+                   const std::string& deviceId,
+                   const std::string& conversationId)
+{
+    if (const auto acc = getAccount<JamiAccount>(accountId))
+        return acc->gitSocket(deviceId, conversationId);
+    return {};
+}
 
 std::map<std::string, std::string>
 Manager::getNearbyPeers(const std::string& accountID)
