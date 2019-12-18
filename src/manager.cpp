@@ -986,6 +986,7 @@ Manager::checkAudio()
 #ifdef ENABLE_VIDEO
         and not getVideoManager().audioPreview
 #endif
+        and not getVideoManager().hasRunningPlayers()
         and not jami::LocalRecorderManager::instance().hasRunningRecorders()) {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         if (pimpl_->audiodriver_)
@@ -2302,6 +2303,23 @@ Manager::startRecordedFilePlayback(const std::string& filepath)
 
     return pimpl_->toneCtrl_.setAudioFile(filepath);
 }
+
+bool
+Manager::startAudioPlayback()
+{
+    if (not pimpl_->audiodriver_) {
+        JAMI_ERR("No audio layer");
+        return false;
+    }
+
+    if (pimpl_->audiodriver_->isStarted()) {
+        JAMI_DBG("Audio is running");
+        return true;
+    }
+    pimpl_->audiodriver_->startStream(AudioStreamType::PLAYBACK);
+    return true;
+}
+
 
 void
 Manager::recordingPlaybackSeek(const double value)
