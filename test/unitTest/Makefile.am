@@ -1,7 +1,7 @@
 # Rules for the test code (use `make check` to execute)
 include $(top_srcdir)/globals.mk
 
-AM_CXXFLAGS = -I$(top_srcdir)/src
+AM_CXXFLAGS = -I$(top_srcdir)/src -g
 AM_LDFLAGS = $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
 check_PROGRAMS =
 

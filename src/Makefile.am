@@ -112,6 +112,7 @@ libring_la_SOURCES = \
 		preferences.cpp \
 		manager.cpp \
 		call.cpp \
+		gittransport.cpp \
 		account.cpp \
 		logger.cpp \
 		fileutils.cpp \
@@ -128,6 +129,7 @@ libring_la_SOURCES = \
 		call_factory.h \
 		preferences.h \
 		manager.h \
+		gittransport.h \
 		account.h \
 		call.h \
 		logger.h \
