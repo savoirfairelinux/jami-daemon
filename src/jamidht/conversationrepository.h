@@ -1,6 +1,5 @@
 /*
-/*
- *  Copyright (C) 2017-2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2019 Savoir-faire Linux Inc.
  *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -26,6 +25,7 @@
 namespace jami {
 
 class JamiAccount;
+class ChannelSocket;
 
 /**
  * This class gives access to the git repository that represents the conversation
@@ -37,7 +37,22 @@ public:
      * @param account       The related account
      * @return  the conversation repository object
      */
-    static DRING_TESTABLE std::unique_ptr<ConversationRepository> createConversation(const std::weak_ptr<JamiAccount>& account);
+    static DRING_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
+        const std::weak_ptr<JamiAccount>& account
+    );
+
+    /**
+     * Clones a conversation on a remote device
+     * @note This will use the socket registered for the conversation with JamiAccount::addGitSocket()
+     * @param account           The account getting the conversation
+     * @param deviceId          Remote device
+     * @param conversationId    Conversation to clone
+     */
+    static DRING_TESTABLE std::unique_ptr<ConversationRepository> cloneConversation(
+        const std::weak_ptr<JamiAccount>& account,
+        const std::string& deviceId,
+        const std::string& conversationId
+    );
 
     /**
      * Open a conversation repository for an account and an id
@@ -46,6 +61,13 @@ public:
      */
     ConversationRepository(const std::weak_ptr<JamiAccount>& account, const std::string& id);
     ~ConversationRepository();
+
+    /**
+     * Serve a conversation to a remote client
+     * This client will be able to fetch commits/clone the repository
+     * @param client        The client to serve
+     */
+    void serve(const std::shared_ptr<ChannelSocket>& client);
 
     /**
      * Return the conversation id
