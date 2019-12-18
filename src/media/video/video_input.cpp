@@ -54,39 +54,48 @@ namespace jami { namespace video {
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
-VideoInput::VideoInput()
-    : VideoGenerator::VideoGenerator()
-#if !VIDEO_CLIENT_INPUT
-    , sink_ {Manager::instance().createSinkClient("local")}
-    , loop_(std::bind(&VideoInput::setup, this),
-            std::bind(&VideoInput::process, this),
-            std::bind(&VideoInput::cleanup, this))
+VideoInput::VideoInput(VideoInputMode inputMode)
+    : VideoGenerator::VideoGenerator(),
+    loop_(std::bind(&VideoInput::setup, this),
+          std::bind(&VideoInput::process, this),
+          std::bind(&VideoInput::cleanup, this))
+{
+    if (inputMode == VideoInputMode::Undefined) {
+#if (defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
+        inputMode_ = VideoInputMode::ManagedByClient;
+#else
+        inputMode_ = VideoInputMode::ManagedByDaemon;
 #endif
-{}
+    } else {
+        inputMode_ = inputMode;
+    }
+    if (inputMode_ == VideoInputMode::ManagedByDaemon) {
+        sink_ = Manager::instance().createSinkClient("local");
+    }
+}
 
 VideoInput::~VideoInput()
 {
     isStopped_ = true;
-#if VIDEO_CLIENT_INPUT
-    emitSignal<DRing::VideoSignal::StopCapture>();
-    capturing_ = false;
-#else
+    if (videoManagedByClient()) {
+        emitSignal<DRing::VideoSignal::StopCapture>();
+        capturing_ = false;
+        return;
+    }
     loop_.join();
-#endif
 }
 
 void
 VideoInput::startLoop()
 {
-#if VIDEO_CLIENT_INPUT
-    switchDevice();
-#else
+    if (videoManagedByClient()) {
+        switchDevice();
+        return;
+    }
     if (!loop_.isRunning())
         loop_.start();
-#endif
 }
 
-#if VIDEO_CLIENT_INPUT
 void
 VideoInput::switchDevice()
 {
@@ -104,21 +113,32 @@ VideoInput::switchDevice()
 }
 
 int VideoInput::getWidth() const
-{ return decOpts_.width; }
+{
+    if (videoManagedByClient()) {
+        return decOpts_.width;
+    }
+    return decoder_->getWidth();
+}
 
 int VideoInput::getHeight() const
-{ return decOpts_.height; }
+{
+    if (videoManagedByClient()) {
+        return decOpts_.height;
+    }
+    return decoder_->getHeight();
+}
 
 AVPixelFormat VideoInput::getPixelFormat() const
 {
+    if (!videoManagedByClient()) {
+        return decoder_->getPixelFormat();
+    }
     int format;
     std::stringstream ss;
     ss << decOpts_.format;
     ss >> format;
     return (AVPixelFormat)format;
 }
-
-#else
 
 void
 VideoInput::setRotation(int angle)
@@ -153,6 +173,10 @@ VideoInput::process()
 {
     if (switchPending_)
         createDecoder();
+    if (paused_) {
+         std::this_thread::sleep_for(std::chrono::milliseconds(20));
+         return;
+     }
 
     if (not captureFrame()) {
         loop_.stop();
@@ -178,7 +202,12 @@ VideoInput::captureFrame()
 
     switch (decoder_->decode()) {
     case MediaDemuxer::Status::EndOfFile:
-        createDecoder();
+        if (fileFinished) {
+            paused_ = true;
+            fileFinished();
+        } else {
+            createDecoder();
+        }
         return static_cast<bool>(decoder_);
     case MediaDemuxer::Status::ReadError:
         JAMI_ERR() << "Failed to decode frame";
@@ -273,17 +302,6 @@ VideoInput::deleteDecoder()
     decoder_.reset();
 }
 
-int VideoInput::getWidth() const
-{ return decoder_->getWidth(); }
-
-int VideoInput::getHeight() const
-{ return decoder_->getHeight(); }
-
-AVPixelFormat VideoInput::getPixelFormat() const
-{ return decoder_->getPixelFormat(); }
-
-#endif
-
 void VideoInput::clearOptions()
 {
     decOpts_ = {};
@@ -293,11 +311,10 @@ void VideoInput::clearOptions()
 bool
 VideoInput::isCapturing() const noexcept
 {
-#if VIDEO_CLIENT_INPUT
-    return capturing_;
-#else
+    if (videoManagedByClient()) {
+        return capturing_;
+    }
     return loop_.isRunning();
-#endif
 }
 
 bool
@@ -396,7 +413,7 @@ VideoInput::initGdiGrab(const std::string& params)
 }
 
 bool
-VideoInput::initFile(std::string path)
+VideoInput::initFile(std::string path, bool fallbackToCamera)
 {
     size_t dot = path.find_last_of('.');
     std::string ext = dot == std::string::npos ? "" : path.substr(dot + 1);
@@ -415,6 +432,9 @@ VideoInput::initFile(std::string path)
     p.name = path;
     auto dec = std::make_unique<MediaDecoder>();
     if (dec->openInput(p) < 0 || dec->setupVideo() < 0) {
+        if (!fallbackToCamera) {
+            return false;
+        }
         return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
     }
 
@@ -436,7 +456,7 @@ VideoInput::initFile(std::string path)
 }
 
 std::shared_future<DeviceParams>
-VideoInput::switchInput(const std::string& resource)
+VideoInput::switchInput(const std::string& resource, bool fallbackToCamera)
 {
     if (resource == currentResource_)
         return futureDecOpts_;
@@ -491,7 +511,7 @@ VideoInput::switchInput(const std::string& resource)
 #endif
     } else if (prefix == DRing::Media::VideoProtocolPrefix::FILE) {
         /* Pathname */
-        ready = initFile(suffix);
+        ready = initFile(suffix, fallbackToCamera);
     }
 
     if (ready) {
@@ -509,10 +529,10 @@ VideoInput::getParams() const
 MediaStream
 VideoInput::getInfo() const
 {
-#if !VIDEO_CLIENT_INPUT
-    if (decoder_)
-        return decoder_->getStream("v:local");
-#endif
+    if (!videoManagedByClient()) {
+        if (decoder_)
+            return decoder_->getStream("v:local");
+    }
     auto opts = futureDecOpts_.get();
     rational<int> fr(opts.framerate.numerator(), opts.framerate.denominator());
     return MediaStream("v:local", av_get_pix_fmt(opts.pixel_format.c_str()),
@@ -525,6 +545,44 @@ VideoInput::foundDecOpts(const DeviceParams& params)
     if (not decOptsFound_) {
         decOptsFound_ = true;
         foundDecOpts_.set_value(params);
+    }
+}
+
+void
+VideoInput::setFileFinishedCallback(const std::function<void(void)>& cb) noexcept
+{
+    if (cb) {
+        fileFinished = cb;
+    }
+}
+
+void
+VideoInput::setSink(const std::string& sinkId) {
+    sink_ = Manager::instance().createSinkClient(sinkId);
+}
+
+MediaStream
+VideoInput::getStream(const std::string& path)
+{
+    if (not decoder_)
+        createDecoder();
+    return decoder_->getStream(path);
+}
+
+int64_t
+VideoInput::duration() const {
+    return decoder_->getDuration();
+}
+
+void
+VideoInput::setPaused(bool paused) {
+    paused_ = paused;
+}
+
+void
+VideoInput::updateStartTime(int64_t start) {
+    if (decoder_) {
+        decoder_->updateStartTime(start);
     }
 }
 

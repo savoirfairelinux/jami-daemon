@@ -48,16 +48,12 @@ namespace jami { namespace video {
 
 class SinkClient;
 
-#if (defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
-#define VIDEO_CLIENT_INPUT 1
-#else
-#define VIDEO_CLIENT_INPUT 0
-#endif
+enum class VideoInputMode {ManagedByClient, ManagedByDaemon, Undefined};
 
 class VideoInput : public VideoGenerator, public std::enable_shared_from_this<VideoInput>
 {
 public:
-    VideoInput();
+    VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined);
     ~VideoInput();
 
     // as VideoGenerator
@@ -70,15 +66,22 @@ public:
     const DeviceParams& getParams() const;
     MediaStream getInfo() const;
 
-    std::shared_future<DeviceParams> switchInput(const std::string& resource);
-#if VIDEO_CLIENT_INPUT
+    MediaStream getStream(const std::string& path);
+    void setPaused(bool paused);
+    void setSink(const std::string& sinkId);
+    void updateStartTime(int64_t start);
+    int64_t duration() const;
+    void createDecoder();
+    std::function<void(void)> fileFinished {};
+    void setFileFinishedCallback(const std::function<void(void)>& cb) noexcept;
+
+    std::shared_future<DeviceParams> switchInput(const std::string& resource, bool fallbackToCamera = true);
     /*
      * these functions are used to pass buffer from/to the daemon
      * on the Android and UWP builds
      */
     void* obtainFrame(int length);
     void releaseFrame(void *frame);
-#endif
 
 private:
     NON_COPYABLE(VideoInput);
@@ -86,11 +89,16 @@ private:
     std::string currentResource_;
     std::atomic<bool> switchPending_ = {false};
     std::atomic_bool  isStopped_ = {false};
+    VideoInputMode inputMode_;
+    inline bool videoManagedByClient() const {
+        return inputMode_ == VideoInputMode::ManagedByClient;
+    }
 
     DeviceParams decOpts_;
     std::promise<DeviceParams> foundDecOpts_;
     std::shared_future<DeviceParams> futureDecOpts_;
     bool emulateRate_       = false;
+    bool paused_            = false;
 
     std::atomic_bool decOptsFound_ {false};
     void foundDecOpts(const DeviceParams& params);
@@ -101,17 +109,15 @@ private:
     bool initCamera(const std::string& device);
     bool initX11(std::string display);
     bool initAVFoundation(const std::string& display);
-    bool initFile(std::string path);
+    bool initFile(std::string path,  bool fallbackToCamera = true);
     bool initGdiGrab(const std::string& params);
 
     bool isCapturing() const noexcept;
     void startLoop();
 
-#if VIDEO_CLIENT_INPUT
     void switchDevice();
     bool capturing_ {false};
-#else
-    void createDecoder();
+
     void deleteDecoder();
     std::unique_ptr<MediaDecoder> decoder_;
     std::shared_ptr<SinkClient> sink_;
@@ -127,7 +133,6 @@ private:
     int rotation_ {0};
     std::shared_ptr<AVBufferRef> displayMatrix_;
     void setRotation(int angle);
-#endif
 };
 
 }} // namespace jami::video
