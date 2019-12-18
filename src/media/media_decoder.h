@@ -101,6 +101,8 @@ public:
 
     Status decode();
 
+    int64_t getDuration() const;
+
 private:
     bool streamInfoFound_ {false};
     AVFormatContext *inputCtx_ = nullptr;
@@ -143,7 +145,9 @@ public:
 
     int getWidth() const;
     int getHeight() const;
+    int64_t getDuration() const;
     std::string getDecoderName() const;
+    void updateStartTime(int64_t startTime);
 
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;
