@@ -119,6 +119,7 @@ MultiplexedSocket::Impl::eventLoop()
         std::vector<uint8_t> buf;
         auto data_len = endpoint->waitForData(std::chrono::milliseconds(100), ec);
         if (data_len > 0) {
+            JAMI_ERR("... %u", data_len);
             buf.resize(IO_BUFFER_SIZE);
             auto size = endpoint->read(&buf[0], 3000, ec);
             if (size < 0) {
@@ -132,6 +133,8 @@ MultiplexedSocket::Impl::eventLoop()
                 shutdown();
                 break;
             }
+
+            JAMI_ERR("size %u", size);
 
             // A packet has the following format:
             //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -208,6 +211,8 @@ MultiplexedSocket::Impl::eventLoop()
                 if (current_channel == 0) {
                     handleControlPacket({packet.begin(), packet.end()});
                 } else {
+                    JAMI_ERR("Channel %u", current_channel);
+                    JAMI_ERR("pkt_len %u", pkt_len);
                     handleChannelPacket(current_channel, {packet.begin(), packet.end()});
                 }
                 packet.clear();

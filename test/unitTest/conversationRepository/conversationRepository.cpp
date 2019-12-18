@@ -34,9 +34,265 @@
 #include "fileutils.h"
 #include "account_const.h"
 
-#include "git2.h"
+#include <git2.h>
 
 using namespace DRing::Account;
+
+
+
+
+#include <algorithm>
+#include <git2/sys/transport.h>
+#include <git2/errors.h>
+#include "jamidht/multiplexed_socket.h"
+#include "jamidht/connectionmanager.h"
+
+
+typedef struct {
+	git_smart_subtransport_stream base;
+	jami::ChannelSocket* socket;
+
+	const char *cmd;
+	std::string url;
+	unsigned sent_command : 1;
+} fuzzer_stream;
+
+typedef struct {
+	git_smart_subtransport base;
+	git_transport *owner;
+	jami::ChannelSocket* socket;
+	fuzzer_stream* current_stream;
+} fuzzer_subtransport;
+
+static git_repository *repo;
+
+static const char cmd_uploadpack[] = "git-upload-pack";
+static const char cmd_receivepack[] = "git-receive-pack";
+
+/*
+ * Create a git protocol request.
+ *
+ * For example: 0035git-upload-pack /libgit2/libgit2\0host=github.com\0
+ */
+static int gen_proto(git_buf *request, const char *cmd, const std::string& url)
+{
+    if (!cmd) return -1;
+	auto delim = url.find('/');
+	if (delim == std::string::npos) {
+		giterr_set_str(GITERR_NET, "malformed URL");
+		return -1;
+	}
+
+	auto repo = url.substr(delim, url.size());
+	if (url[delim + 1] == '~')
+		repo = url.substr(delim+1, url.size());
+
+    // Retrieve host without port
+	if (url.find(':') != std::string::npos)
+		delim = url.find(':');
+
+	std::string host = "host=";
+	auto len = 4 /* len */ + strlen(cmd) + 1 /* space */ + repo.size() + 1 /* \0 */ + host.size() + delim /* host */ + 1 /* \0 */;
+
+    std::stringstream streamed;
+    streamed << std::setw(4) << std::setfill('0') << std::hex << (len & 0x0FFFF) << cmd;
+    streamed << " " << repo;
+    
+    auto buflen = streamed.str().size();
+    git_buf_set(request, streamed.str().c_str(), buflen);
+    streamed.str("");
+    streamed.clear();
+    streamed << host << url.substr(0,delim);
+    auto part_size = buflen;
+    buflen = streamed.str().size();
+    git_buf_grow(request, len);
+    std::strncpy(request->ptr + part_size + 1, streamed.str().c_str(), buflen);
+    request->ptr[len] = '\0';
+	return 0;
+}
+
+static int send_command(fuzzer_stream *s)
+{
+	git_buf request = {};
+	int error;
+    std::error_code ec;
+
+	if ((error = gen_proto(&request, s->cmd, s->url)) < 0)
+		goto cleanup;
+
+	if ((error = s->socket->write((const unsigned char*)(request.ptr), request.size, ec)));
+		goto cleanup;
+
+	s->sent_command = 1;
+
+cleanup:
+	git_buf_free(&request);
+	return error;
+}
+
+
+static int fuzzer_stream_read(git_smart_subtransport_stream *stream,
+	char *buffer,
+	size_t buf_size,
+	size_t *bytes_read)
+{
+    JAMI_ERR("READ! %u", buf_size);
+	fuzzer_stream *fs = (fuzzer_stream *) stream;
+	int error;
+
+	if (!fs->sent_command && (error = send_command(fs)) < 0)
+		return error;
+
+    std::error_code ec;
+    auto len = fs->socket->waitForData(std::chrono::milliseconds(99999999), ec);
+    if (len > 0) {
+        JAMI_ERR("READ! %u", len);
+        *bytes_read = fs->socket->read((unsigned char*)(buffer), len, ec);
+        for (int i = 0; i < *bytes_read; i++) {
+            if (buffer[i] == 0x00) {
+                std::cout << "|";
+                continue;
+            }
+            std::cout << buffer[i];
+        }
+        std::cout <<  std::endl;
+    }
+
+	return 0;
+}
+
+static int fuzzer_stream_write(git_smart_subtransport_stream *stream,
+	  const char *buffer, size_t len)
+{
+    JAMI_ERR("WRITE! %s", buffer);
+	fuzzer_stream *fs = (fuzzer_stream *) stream;
+	int error;
+
+	if (!fs->sent_command && (error = send_command(fs)) < 0)
+		return error;
+    std::error_code ec;
+    auto written = fs->socket->write((const unsigned char*)(buffer), len, ec);
+	return 0;
+}
+
+static void fuzzer_stream_free(git_smart_subtransport_stream *stream)
+{
+    JAMI_ERR("FREE!");
+	delete stream;
+}
+
+static int fuzzer_stream_new(
+	fuzzer_stream **out,
+	jami::ChannelSocket* socket)
+{
+    JAMI_ERR("NEW!");
+	fuzzer_stream *stream = new fuzzer_stream();
+
+	stream->socket = socket;
+	stream->base.read = fuzzer_stream_read;
+	stream->base.write = fuzzer_stream_write;
+	stream->base.free = fuzzer_stream_free;
+
+	*out = stream;
+
+	return 0;
+}
+
+static int fuzzer_subtransport_action(
+	git_smart_subtransport_stream **out,
+	git_smart_subtransport *transport,
+	const char *url,
+	git_smart_service_t action)
+{
+    JAMI_ERR("ACTION! %i", action);
+	fuzzer_subtransport *ft = (fuzzer_subtransport *) transport;
+
+    if (action == GIT_SERVICE_UPLOADPACK_LS) {
+        auto res = fuzzer_stream_new((fuzzer_stream **) out, ft->socket);
+        (*((fuzzer_stream **) out))->cmd = cmd_uploadpack;
+        (*((fuzzer_stream **) out))->url = url + std::string("git://").size();
+        ft->current_stream = (*((fuzzer_stream **) out));
+        return res;
+    } else if (action == GIT_SERVICE_UPLOADPACK) {
+        if (ft->current_stream) {
+            *out = &ft->current_stream->base;
+            return 0;
+        }
+        return -1;
+    }
+    return 0;
+}
+
+static int fuzzer_subtransport_close(git_smart_subtransport *transport)
+{
+    JAMI_ERR("CLOSE!");
+	UNUSED(transport);
+	return 0;
+}
+
+static void fuzzer_subtransport_free(git_smart_subtransport *transport)
+{
+    JAMI_ERR("FREE!");
+	delete transport;
+}
+
+static int fuzzer_subtransport_new(
+	fuzzer_subtransport **out,
+	git_transport *owner,
+	jami::ChannelSocket* socket)
+{
+    JAMI_ERR("NEW!");
+	fuzzer_subtransport *sub = new fuzzer_subtransport();
+
+	sub->owner = owner;
+    sub->socket = socket;
+	sub->base.action = fuzzer_subtransport_action;
+	sub->base.close = fuzzer_subtransport_close;
+	sub->base.free = fuzzer_subtransport_free;
+
+	*out = sub;
+
+	return 0;
+}
+
+int fuzzer_subtransport_cb(
+	git_smart_subtransport **out,
+	git_transport *owner,
+	void *payload)
+{
+	jami::ChannelSocket* socket = (jami::ChannelSocket*) payload;
+	fuzzer_subtransport *sub;
+
+	if (fuzzer_subtransport_new(&sub, owner, socket) < 0)
+		return -1;
+
+	*out = &sub->base;
+	return 0;
+}
+
+int fuzzer_transport_cb(git_transport **out, git_remote *owner, void *param)
+{
+	git_smart_subtransport_definition def = {
+		fuzzer_subtransport_cb,
+		0,
+		param
+	};
+	return git_transport_smart(out, owner, &def);
+}
+
+void fuzzer_git_abort(const char *op)
+{
+	const git_error *err = giterr_last();
+	fprintf(stderr, "unexpected libgit error: %s: %s\n",
+		op, err ? err->message : "<none>");
+	abort();
+}
+
+
+
+
+
+
 
 namespace jami { namespace test {
 
@@ -54,9 +310,11 @@ public:
 
 private:
     void testCreateRepository();
+    void testCloneViaChannelSocket();
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
-    CPPUNIT_TEST(testCreateRepository);
+   // CPPUNIT_TEST(testCreateRepository);
+    CPPUNIT_TEST(testCloneViaChannelSocket);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -173,6 +431,123 @@ ConversationRepositoryTest::testCreateRepository()
     std::string deviceCrtStr((std::istreambuf_iterator<char>(crt)), std::istreambuf_iterator<char>());
 
     CPPUNIT_ASSERT(deviceCrtStr == deviceCert);
+}
+
+void
+ConversationRepositoryTest::testCloneViaChannelSocket()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceDeviceId = aliceAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+
+    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repoPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+aliceAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+repository->id();
+    auto clonedPath = repoPath + ".test_cloned";
+
+
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk{ mtx };
+    std::condition_variable rcv, scv;
+    bool successfullyConnected = false;
+    bool successfullyReceive = false;
+    bool receiverConnected = false;
+    std::shared_ptr<ChannelSocket> channelSocket = nullptr;
+    std::shared_ptr<ChannelSocket> sendSocket = nullptr;
+
+    bobAccount->connectionManager().onChannelRequest(
+    [&successfullyReceive](const std::string&, const std::string& name) {
+        JAMI_ERR("...");
+        successfullyReceive = name == "git://*";
+        return true;
+    });
+
+    aliceAccount->connectionManager().onChannelRequest(
+    [&successfullyReceive](const std::string&, const std::string& name) {
+        JAMI_ERR("...");
+        return true;
+    });
+
+    bobAccount->connectionManager().onConnectionReady(
+    [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        receiverConnected = socket && (name == "git://*");
+        JAMI_ERR("...");
+        channelSocket = socket;
+        rcv.notify_one();
+    });
+
+    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
+        [&](std::shared_ptr<ChannelSocket> socket) {
+        JAMI_ERR("...");
+        if (socket) {
+            successfullyConnected = true;
+            sendSocket = socket;
+        }
+        scv.notify_one();
+    });
+
+    rcv.wait_for(lk, std::chrono::seconds(10));
+    scv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+
+    std::thread sendT = std::thread([&]() {
+        // Get order!
+        std::error_code ec;
+        auto res = sendSocket->waitForData(std::chrono::milliseconds(5000), ec);
+        uint8_t buf[3000];
+        sendSocket->read(&buf[0], res, ec);
+
+        std::string result = "003f" + repository->id() + " refs/heads/master\n0000";
+        sendSocket->write((const unsigned char*)result.c_str(), result.size(), ec);
+
+        // Get WANT request
+        res = sendSocket->waitForData(std::chrono::milliseconds(5000), ec);
+        sendSocket->read(&buf[0], res, ec);
+
+        result = "0008NAK\n";
+        sendSocket->write((const unsigned char*)result.c_str(), result.size(), ec);
+
+        res = sendSocket->waitForData(std::chrono::milliseconds(1000), ec);
+
+        git_repository* repo;
+        CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+        git_packbuilder *pb;
+        CPPUNIT_ASSERT(git_packbuilder_new(&pb, repo) == 0);
+
+
+        git_oid commit_id;
+        CPPUNIT_ASSERT(git_reference_name_to_id(&commit_id, repo, "HEAD") == 0);
+        CPPUNIT_ASSERT(git_packbuilder_insert_commit(pb, &commit_id) == 0);
+
+        git_buf data;
+        CPPUNIT_ASSERT(git_packbuilder_write_buf(&data, pb) == 0);
+        JAMI_ERR("SEND %u", data.size);
+        //for (int i = 0; i < data.size; ++i) {
+        //    std::cout << data.ptr[i];
+        //}
+        //std::cout << std::endl;
+        // TODO MSG TOO LONG
+        res = sendSocket->write((const unsigned char*)data.ptr, data.size, ec);
+        JAMI_ERR("RESULT: %s", ec.message().c_str());
+
+        git_packbuilder_free(pb);
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    });
+
+    auto res = git_transport_register("git", fuzzer_transport_cb, (void*)channelSocket.get());
+    git_repository *rep = nullptr;
+    res = git_clone(&rep, "git://device/conversation", clonedPath.c_str(), nullptr);
+    if (res != 0) {
+    	const git_error *err = giterr_last();
+        if (err) JAMI_ERR("ERR %s", err->message);
+    }
+    git_repository_free(rep);
 }
 
 }} // namespace test
