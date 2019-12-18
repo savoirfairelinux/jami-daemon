@@ -76,6 +76,24 @@ AudioInput::process()
 }
 
 void
+AudioInput::setPaused(bool paused)
+{
+    if (!paused) {
+        Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
+        fileBuf_.reset();
+        fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    }
+    paused_ = paused;
+}
+
+void
+AudioInput::updateStartTime(int64_t start)
+{
+    if (decoder_) {
+        decoder_->updateStartTime(start);
+    }
+}
+void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
     std::shared_ptr<AudioFrame> frame = std::move(ptr);
@@ -92,7 +110,7 @@ AudioInput::readFromDevice()
     auto bufferFormat = mainBuffer.getInternalAudioFormat();
 
     if (decodingFile_ )
-        while (fileBuf_->isEmpty())
+        while (fileBuf_->isEmpty() && loop_.isRunning())
             readFromFile();
 
     if (not mainBuffer.waitForDataAvailable(id_, MS_PER_PACKET))
@@ -116,17 +134,32 @@ AudioInput::readFromFile()
 {
     if (!decoder_)
         return;
+    if (paused_) {
+        std::this_thread::sleep_for(MS_PER_PACKET);
+        return;
+    }
     const auto ret = decoder_->decode();
     switch (ret) {
     case MediaDemuxer::Status::Success:
         break;
     case MediaDemuxer::Status::EndOfFile:
-        createDecoder();
+        if (fileFinished) {
+            paused_ = true;
+            fileFinished();
+        } else {
+            createDecoder();
+        }
         break;
     case MediaDemuxer::Status::ReadError:
         JAMI_ERR() << "Failed to decode frame";
         break;
     }
+}
+
+int64_t
+AudioInput::duration() const
+{
+    return decoder_->getDuration();
 }
 
 bool
@@ -269,6 +302,14 @@ AudioInput::createDecoder()
     decoder_ = std::move(decoder);
     foundDevOpts(devOpts_);
     return true;
+}
+
+void
+AudioInput::setFileFinishedCallback(const std::function<void(void)>& cb) noexcept
+{
+    if (cb) {
+        fileFinished = cb;
+    }
 }
 
 void
