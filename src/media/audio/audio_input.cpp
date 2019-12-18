@@ -76,6 +76,13 @@ AudioInput::process()
 }
 
 void
+AudioInput::updateStartTime(int64_t start)
+{
+    if (decoder_) {
+        decoder_->updateStartTime(start);
+    }
+}
+void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
     std::shared_ptr<AudioFrame> frame = std::move(ptr);
@@ -137,6 +144,32 @@ AudioInput::initDevice(const std::string& device)
     devOpts_.channel = format_.nb_channels;
     devOpts_.framerate = format_.sample_rate;
     return true;
+}
+
+void
+AudioInput::playFile(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index)
+{
+    loop_.stop();
+    decoder_.reset();
+    fileBuf_.reset();
+    fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    devOpts_ = {};
+    devOpts_.input = path;
+    devOpts_.name = path;
+    devOpts_.loop = "1";
+    auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
+           fileBuf_->put(std::move(std::static_pointer_cast<AudioFrame>(frame)));
+       });
+    decoder->emulateRate();
+       // NOTE don't emulate rate, file is read as frames are needed
+
+    decoder ->setInterruptCallback(
+           [](void* data) -> int { return not static_cast<AudioInput*>(data)->isCapturing(); }, this);
+    // have file audio mixed into the call buffer so it gets sent to the peer
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
+    // have file audio mixed into the local buffer so it gets played
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
+    decoder_ = std::move(decoder);
 }
 
 bool
