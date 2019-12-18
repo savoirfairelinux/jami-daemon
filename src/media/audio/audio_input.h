@@ -32,6 +32,10 @@
 #include "threadloop.h"
 
 namespace jami {
+class MediaDecoder;
+class MediaDemuxer;
+}
+namespace jami {
 
 class AudioFrameResizer;
 class MediaDecoder;
@@ -52,10 +56,16 @@ public:
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
     MediaStream getInfo() const;
+    void updateStartTime(int64_t start);
+    void setPaused(bool paused);
+    void configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    void flushBuffers();
+    void setSeekTime(int64_t time);
 
 private:
     void readFromDevice();
     void readFromFile();
+    void readFromQueue();
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
     bool createDecoder();
@@ -68,6 +78,7 @@ private:
     mutable std::mutex fmtMutex_ {};
     AudioFormat format_;
     int frameSize_;
+    std::atomic_bool paused_ {true};
 
     std::unique_ptr<Resampler> resampler_;
     std::unique_ptr<AudioFrameResizer> resizer_;
@@ -84,6 +95,7 @@ private:
     std::atomic_bool devOptsFound_ {false};
     void foundDevOpts(const DeviceParams& params);
     std::atomic_bool decodingFile_ {false};
+    std::atomic_bool playingFile_ {false};
 
     ThreadLoop loop_;
     void process();
