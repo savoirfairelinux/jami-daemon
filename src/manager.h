@@ -35,6 +35,7 @@
 #include "preferences.h"
 #include "audio/audiolayer.h"
 #include "scheduled_executor.h"
+#include "jamidht/multiplexed_socket.h"
 
 #include <string>
 #include <vector>
@@ -899,6 +900,15 @@ class DRING_TESTABLE Manager {
         std::unique_ptr<DataTransferFacade> dataTransfers;
 
         std::vector<DRing::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
+
+        /**
+         * Return current git socket used for a conversation
+         * @param accountId         Related account
+         * @param deviceId          Related device
+         * @param conversationId    Related conversation
+         * @return shared_ptr<ChannelSocket> the related socket
+         */
+        std::shared_ptr<ChannelSocket> gitSocket(const std::string& accountId, const std::string& deviceId, const std::string& conversationId);
 
 private:
         Manager();

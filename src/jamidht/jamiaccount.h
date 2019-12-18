@@ -30,6 +30,7 @@
 #include "security/diffie-hellman.h"
 #include "sip/sipaccountbase.h"
 #include "dring/datatransfer_interface.h"
+#include "multiplexed_socket.h"
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -78,6 +79,14 @@ class AccountManager;
 struct AccountInfo;
 class ChannelSocket;
 class SipTransport;
+
+using GitSocketList =   std::map<
+                            std::string, /* device Id */
+                            std::map<
+                                std::string, /* conversation */
+                                std::shared_ptr<ChannelSocket> /* related socket */
+                            >
+                        >;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -432,6 +441,36 @@ public:
      * ConnectionManager needs the account to exists
      */
     void shutdownConnections();
+    std::shared_ptr<ChannelSocket>
+    gitSocket(const std::string& deviceId, const std::string& conversationId) {
+        auto deviceSockets = gitSocketList_.find(deviceId);
+        if (deviceSockets == gitSocketList_.end()) {
+            return nullptr;
+        }
+        auto socketIt = deviceSockets->second.find(conversationId);
+        if (socketIt == deviceSockets->second.end()) {
+            return nullptr;
+        }
+        return socketIt->second;
+    }
+
+    void addGitSocket(const std::string& deviceId, const std::string& conversationId, const std::shared_ptr<ChannelSocket> socket)
+    {
+        auto& deviceSockets = gitSocketList_[deviceId];
+        deviceSockets[conversationId] = socket;
+    }
+
+    void removeGitSocket(const std::string& deviceId, const std::string& conversationId)
+    {
+        auto deviceSockets = gitSocketList_.find(deviceId);
+        if (deviceSockets == gitSocketList_.end()) {
+            return;
+        }
+        deviceSockets->second.erase(conversationId);
+        if (deviceSockets->second.empty()) {
+            gitSocketList_.erase(deviceSockets);
+        }
+    }
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -667,6 +706,7 @@ private:
 
     std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
     std::unique_ptr<ConnectionManager> connectionManager_;
+    GitSocketList gitSocketList_ {};
 
     std::mutex discoveryMapMtx_;
     std::shared_ptr<dht::PeerDiscovery> peerDiscovery_;
