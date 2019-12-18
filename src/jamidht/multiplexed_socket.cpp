@@ -120,7 +120,7 @@ MultiplexedSocket::Impl::eventLoop()
         auto data_len = endpoint->waitForData(std::chrono::milliseconds(100), ec);
         if (data_len > 0) {
             buf.resize(IO_BUFFER_SIZE);
-            auto size = endpoint->read(&buf[0], 3000, ec);
+            auto size = endpoint->read(&buf[0], IO_BUFFER_SIZE, ec);
             if (size < 0) {
                 JAMI_ERR("Read error detected: %i", ec);
                 wantedSize_ = -1; wantedChan_ = -1;
@@ -425,7 +425,7 @@ MultiplexedSocket::write(const uint16_t& channel, const uint8_t* buf, std::size_
         ec = std::make_error_code(std::errc::broken_pipe);
         return -1;
     }
-    if (len > UINT8_MAX) {
+    if (len > UINT16_MAX) {
         ec = std::make_error_code(std::errc::message_size);
         return -1;
     }
