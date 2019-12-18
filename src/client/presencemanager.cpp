@@ -121,7 +121,7 @@ getSubscriptions(const std::string& accountID)
 
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         if (auto pres = sipaccount->getPresence()) {
-            auto subs = pres->getClientSubscriptions();
+            const auto& subs = pres->getClientSubscriptions();
             ret.reserve(subs.size());
             for (const auto& s : subs) {
                 ret.push_back({
