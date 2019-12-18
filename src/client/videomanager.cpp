@@ -37,6 +37,7 @@
 #include "dring/media_const.h"
 #include "libav_utils.h"
 #include "call_const.h"
+#include "media_player.h"
 
 #include <functional>
 #include <memory>
@@ -536,6 +537,30 @@ getRenderer(const std::string& callId)
        };
 }
 
+std::string
+openFile(const std::string& path)
+{
+    return jami::openMediaFile(path);
+}
+
+bool
+pausePlayer(const std::string& id, bool pause)
+{
+    return jami::pausePlayer(id, pause);
+}
+
+bool
+closePlayer(const std::string& id)
+{
+    return jami::closePlayer(id);
+}
+
+bool
+mutePlayerAudio(const std::string& id, bool mute)
+{
+    return jami::mutePlayerAudio(id, mute);
+}
+
 bool
 getDecodingAccelerated()
 {
@@ -639,10 +664,82 @@ getAudioInput(const std::string& id)
     return input;
 }
 
+std::shared_ptr<video::VideoInput>
+getVideoInput(const std::string& id, video::VideoInputMode inputMode)
+{
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto it = vmgr.videoInputs.find(id);
+    if (it != vmgr.videoInputs.end()) {
+        if (auto input = it->second.lock()) {
+            return input;
+        }
+    }
+
+    auto input = std::make_shared<video::VideoInput>(inputMode);
+    vmgr.videoInputs[id] = input;
+    return input;
+}
+
 void
 VideoManager::setDeviceOrientation(const std::string& deviceId, int angle)
 {
     videoDeviceMonitor.setDeviceOrientation(deviceId, angle);
+}
+
+std::shared_ptr<MediaPlayer>
+getMediaPlayer(const std::string& id)
+{
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto it = vmgr.mediaPlayers.find(id);
+      if (it != vmgr.mediaPlayers.end()) {
+          return it->second;
+      }
+    return {};
+}
+
+std::string
+openMediaFile(const std::string& path)
+{
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto player = std::make_shared<MediaPlayer>(path);
+    auto playerId = player.get()->getId();
+    vmgr.mediaPlayers[playerId] = player;
+    return playerId;
+}
+
+bool
+pausePlayer(const std::string& id, bool pause)
+{
+    auto player = getMediaPlayer(id);
+    if (player) {
+        player->pause(pause);
+        return true;
+    }
+    return false;
+}
+
+bool
+closePlayer(const std::string& id)
+{
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto player = getMediaPlayer(id);
+    if (player) {
+        vmgr.mediaPlayers.erase(id);
+        return true;
+    }
+    return false;
+}
+
+bool
+mutePlayerAudio(const std::string& id, bool mute)
+{
+    auto& vmgr = Manager::instance().getVideoManager();
+    auto player = getMediaPlayer(id);
+    if (player) {
+        player->muteAudio(mute);
+        return true;
+    }
+    return false;
 }
 
 } // namespace jami
