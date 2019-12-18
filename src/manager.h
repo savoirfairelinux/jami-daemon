@@ -36,6 +36,7 @@
 #include "preferences.h"
 #include "audio/audiolayer.h"
 #include "scheduled_executor.h"
+#include "jamidht/multiplexed_socket.h"
 
 #include <string>
 #include <vector>
@@ -929,6 +930,14 @@ public:
 #ifdef ENABLE_PLUGIN
     JamiPluginManager& getJamiPluginManager() const;
 #endif
+        /**
+         * Return current git socket used for a conversation
+         * @param accountId         Related account
+         * @param deviceId          Related device
+         * @param conversationId    Related conversation
+         * @return shared_ptr<ChannelSocket> the related socket
+         */
+        std::shared_ptr<ChannelSocket> gitSocket(const std::string& accountId, const std::string& deviceId, const std::string& conversationId);
 
     void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
