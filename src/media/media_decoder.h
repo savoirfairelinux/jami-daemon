@@ -44,6 +44,7 @@
 #include <string>
 #include <memory>
 #include <chrono>
+#include <queue>
 
 extern "C" {
 struct AVCodecContext;
@@ -67,6 +68,8 @@ class Resampler;
 class MediaIOHandle;
 class MediaDecoder;
 
+const int DEMUXE_SEC_IN_ADVANCE = 3;
+
 class MediaDemuxer {
 public:
     MediaDemuxer();
@@ -75,7 +78,13 @@ public:
     enum class Status {
         Success,
         EndOfFile,
+        ReadBufferOverflow,
         ReadError
+    };
+
+    enum class CurrentState {
+        Demuxing,
+        Finished
     };
     using StreamCallback = std::function<void(AVPacket&)>;
 
@@ -93,6 +102,16 @@ public:
         streams_[stream] = std::move(cb);
     }
 
+    void updateCurrentState(MediaDemuxer::CurrentState state) {
+        currentState_ = state;
+    }
+
+    void setFileFinishedCb(std::function<void()> cb);
+
+    MediaDemuxer::CurrentState getCurrentState() {
+        return currentState_;
+    }
+
     AVStream* getStream(unsigned stream) {
         if (stream >= inputCtx_->nb_streams)
             throw std::invalid_argument("Invalid stream index");
@@ -100,6 +119,13 @@ public:
     }
 
     Status decode();
+    Status demuxe();
+
+    int64_t getDuration() const;
+    bool seekFrame(int stream_index, int64_t timestamp);
+    void setNeedFrameCb(std::function<void()> cb);
+    void emitAudioFrame();
+    void emitVideoFrame();
 
 private:
     bool streamInfoFound_ {false};
@@ -108,6 +134,15 @@ private:
     int64_t startTime_;
     DeviceParams inputParams_;
     AVDictionary *options_ = nullptr;
+    MediaDemuxer::CurrentState currentState_;
+    std::mutex audioBufferMutex_ {};
+    std::mutex videoBufferMutex_ {};
+    std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>> videoBuffer_ {};
+    std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>> audioBuffer_ {};
+    std::function<void()> needFrameCb_;
+    void nofifyBufferEmpty();
+    std::function<void()> fileFinishedCb_;
+    void clearFrames();
 };
 
 class MediaDecoder
@@ -125,6 +160,7 @@ public:
     MediaDecoder();
     MediaDecoder(MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, AVMediaType type) : MediaDecoder(demuxer, demuxer->selectStream(type)) {}
     ~MediaDecoder();
 
@@ -147,8 +183,16 @@ public:
 
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;
-
     void setOptions(const std::map<std::string, std::string>& options);
+
+    void updateStartTime(int64_t startTime);
+
+    using StreamSync = std::function<void(int64_t)>;
+    void setStreamSynk(StreamSync sync);
+    void emitAudioFrame();
+    void emitVideoFrame();
+    void flushBuffers();
+    void setSeekTime(int64_t time);
 #ifdef RING_ACCEL
     void enableAccel(bool enableAccel);
 #endif
@@ -170,6 +214,7 @@ private:
     bool emulateRate_ = false;
     int64_t startTime_;
     int64_t lastTimestamp_ {0};
+    StreamSync streamSync;
 
     DeviceParams inputParams_;
 
@@ -185,6 +230,10 @@ private:
 #endif
     MediaObserver callback_;
     int prepareDecoderContext();
+    int64_t seekTime_ = -1;
+    void resetSeekTime() {
+        seekTime_ = -1;
+    }
 
 protected:
     AVDictionary *options_ = nullptr;
