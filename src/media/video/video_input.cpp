@@ -54,7 +54,7 @@ namespace jami { namespace video {
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
-VideoInput::VideoInput(VideoInputMode inputMode)
+VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
     : VideoGenerator::VideoGenerator()
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
@@ -69,7 +69,7 @@ VideoInput::VideoInput(VideoInputMode inputMode)
 #endif
     }
     if (inputMode_ == VideoInputMode::ManagedByDaemon) {
-        sink_ = Manager::instance().createSinkClient("local");
+        sink_ = Manager::instance().createSinkClient(id_);
     }
 }
 
@@ -80,6 +80,9 @@ VideoInput::~VideoInput()
         emitSignal<DRing::VideoSignal::StopCapture>();
         capturing_ = false;
         return;
+    }
+    if (!isCapturing()) {
+        cleanup();
     }
     loop_.join();
 }
@@ -170,12 +173,27 @@ bool VideoInput::setup()
 void
 VideoInput::process()
 {
+    if (playingFile_) {
+        if(paused_) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            return;
+        }
+        decoder_->emitFrame(false);
+        return;
+    }
     if (switchPending_)
         createDecoder();
 
     if (not captureFrame()) {
         loop_.stop();
         return;
+    }
+}
+
+void
+VideoInput::setSeekTime(int64_t time) {
+    if (decoder_) {
+        decoder_->setSeekTime(time);
     }
 }
 
@@ -204,6 +222,40 @@ VideoInput::captureFrame()
         return false;
     default:
         return true;
+    }
+}
+void
+VideoInput::flushBuffers() {
+    if (decoder_) {
+        decoder_->flushBuffers();
+    }
+}
+
+bool
+VideoInput::configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index)
+{
+    deleteDecoder();
+    clearOptions();
+
+    auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
+        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
+    });
+    decoder->setInterruptCallback([](void* data) -> int {
+        return not static_cast<VideoInput*>(data)->isCapturing(); },this);
+    decoder->emulateRate();
+
+    decoder_ = std::move(decoder);
+    playingFile_ = true;
+    loop_.start();
+
+    /* Signal the client about readable sink */
+    sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
+}
+
+void
+VideoInput::emulateRate() {
+    if (decoder_) {
+        decoder_->emulateRate();
     }
 }
 
@@ -532,6 +584,20 @@ VideoInput::foundDecOpts(const DeviceParams& params)
     if (not decOptsFound_) {
         decOptsFound_ = true;
         foundDecOpts_.set_value(params);
+    }
+}
+
+void
+VideoInput::setSink(const std::string& sinkId)
+{
+    sink_ = Manager::instance().createSinkClient(sinkId);
+}
+
+void
+VideoInput::updateStartTime(int64_t startTime)
+{
+    if (decoder_) {
+        decoder_->updateStartTime(startTime);
     }
 }
 
