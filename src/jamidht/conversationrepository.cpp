@@ -26,13 +26,97 @@
 using random_device = dht::crypto::random_device;
 
 #include <git2.h>
+#include <git2/sys/stream.h>
+#include <git2/sys/transport.h>
 
 #include <ctime>
 #include <fstream>
 
 using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
 
+
+
+#include "multiplexed_socket.h"
+
 namespace jami {
+
+/*
+typedef struct {
+    git_stream parent;
+    std::shared_ptr<ChannelSocket> socket;
+} ChannelStream;
+
+
+static int
+socket_connect(git_stream* stream)
+{
+	JAMI_ERR("SOCKET CONNECT");
+    // Channel socket is already connected
+	return 0;
+}
+
+static ssize_t
+socket_write(git_stream* stream, const char *data, size_t len, int flags)
+{
+	ChannelStream *st = (ChannelStream*) stream;
+    if (!st || !st->socket) {
+        JAMI_ERR("WRITTEN ERROR");
+        return -1;
+    }
+    std::error_code ec;
+    auto written = st->socket->write((const unsigned char*)(data), len, ec);
+    JAMI_ERR("WRITTEN %u", written);
+	return written;
+}
+
+static ssize_t
+socket_read(git_stream* stream, void *data, size_t len)
+{
+	ChannelStream *st = (ChannelStream*) stream;
+    if (!st || !st->socket) {
+        JAMI_ERR("READ ERROR");
+        return -1;
+    }
+    std::error_code ec;
+    auto read = st->socket->read(static_cast<unsigned char*>(data), len, ec);
+    JAMI_ERR("READ %u", read);
+	return read;
+}
+
+static int
+socket_close(git_stream* stream)
+{
+	ChannelStream *st = (ChannelStream*) stream;
+    if (!st || !st->socket) {
+        JAMI_ERR("CLOSE ERROR");
+        return -1;
+    }
+    st->socket->shutdown();
+    return 0;
+}
+
+static void socket_free(git_stream* stream)
+{
+	delete stream;
+}
+
+static int channel_stream_new(
+	git_stream **out,
+	const std::shared_ptr<ChannelSocket>& socket)
+{
+	ChannelStream *st = new ChannelStream();
+
+	st->parent.version = GIT_STREAM_VERSION;
+	st->parent.connect = socket_connect;
+	st->parent.write = socket_write;
+	st->parent.read = socket_read;
+	st->parent.close = socket_close;
+	st->parent.free = socket_free;
+	st->socket = socket;
+
+	*out = (git_stream *) st;
+	return 0;
+}*/
 
 /**
  * For now, this does nothing

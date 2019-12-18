@@ -34,9 +34,323 @@
 #include "fileutils.h"
 #include "account_const.h"
 
-#include "git2.h"
+#include <git2.h>
 
 using namespace DRing::Account;
+
+
+
+
+
+#include <git2/sys/transport.h>
+#include <git2/errors.h>
+#include "jamidht/multiplexed_socket.h"
+#include "jamidht/connectionmanager.h"
+
+
+typedef struct {
+    jami::ChannelSocket* socket;
+    git_transport* owner;
+	git_smart_subtransport base;
+} ChannelSocketTransport;
+
+typedef struct {
+    jami::ChannelSocket* socket;
+    git_smart_subtransport_stream base;
+} ChannelStream;
+
+
+static int stream_read(git_smart_subtransport_stream *stream,
+	char *buffer,
+	size_t buf_size,
+	size_t *bytes_read)
+{
+    JAMI_ERR("READ");
+	ChannelStream* st = (ChannelStream*) stream;
+    std::error_code ec;
+    *bytes_read = st->socket->read((unsigned char*)(buffer), buf_size, ec);
+    JAMI_ERR("READ %u", read);
+	return 0;
+}
+
+static int stream_write(git_smart_subtransport_stream *stream,
+	  const char *buffer, size_t len)
+{
+    JAMI_ERR("WRITE");
+	ChannelStream* st = (ChannelStream*) stream;
+    std::error_code ec;
+    auto written = st->socket->write((const unsigned char*)(buffer), len, ec);
+    JAMI_ERR("WRITTEN: %u", written);
+	return 0;
+}
+
+static void stream_free(git_smart_subtransport_stream *stream)
+{
+    JAMI_ERR("FREE");
+	delete stream;
+}
+
+static int stream_new(
+	ChannelStream **out,
+	jami::ChannelSocket* socket)
+{
+    JAMI_ERR("NEW");
+	ChannelStream *stream = new ChannelStream();
+
+	stream->socket = socket;
+	stream->base.read = stream_read;
+	stream->base.write = stream_write;
+	stream->base.free = stream_free;
+
+	*out = stream;
+    JAMI_ERR("NEW END");
+
+	return 0;
+}
+
+
+static int subtransport_action(
+	git_smart_subtransport_stream **out,
+	git_smart_subtransport *transport,
+	const char *url,
+	git_smart_service_t action)
+{
+    JAMI_ERR("ACTION %u", action);
+    JAMI_ERR("URL %s", url);
+	ChannelSocketTransport *ft = (ChannelSocketTransport *)transport;
+	return stream_new((ChannelStream **) out, ft->socket);
+}
+
+static int subtransport_close(git_smart_subtransport *transport)
+{
+    JAMI_ERR("CLOSE");
+	ChannelSocketTransport *ft = (ChannelSocketTransport *)transport;
+//	ft->socket->shutdown();
+	return 0;
+}
+
+static void subtransport_free(git_smart_subtransport *transport)
+{
+    JAMI_ERR("FREE");
+	delete transport;
+}
+
+static int subtransport_new(
+	ChannelSocketTransport **out,
+	git_transport *owner,
+	void *payload)
+{
+    JAMI_ERR("NEW");
+    ChannelSocketTransport *sub = new ChannelSocketTransport();
+    jami::ChannelSocket* channelSocket = (jami::ChannelSocket*)payload;
+
+	sub->owner = owner;
+	sub->socket = channelSocket;
+	sub->base.action = subtransport_action;
+	sub->base.close = subtransport_close;
+	sub->base.free = subtransport_free;
+
+    JAMI_ERR("...");
+	*out = sub;
+
+	return 0;
+}
+
+int subtransport_cb(
+	git_smart_subtransport **out,
+	git_transport *owner,
+	void *payload)
+{
+    JAMI_ERR("CB");
+	ChannelSocketTransport *sub;
+
+	if (subtransport_new(&sub, owner, payload) < 0)
+		return -1;
+
+	*out = &sub->base;
+	return 0;
+}
+
+static int
+test_cb(git_transport **out, git_remote *owner, void *param)
+{
+    git_transport* parent = nullptr;
+
+    git_smart_subtransport_definition sbDef = {
+		subtransport_cb,
+		1,
+		param
+	};
+    git_transport_smart(&parent, owner, &sbDef);
+
+    *out = parent;
+
+
+    JAMI_ERR("TEST CB");
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+#define UNUSED(x) (void)(x)
+
+typedef struct {
+	git_smart_subtransport_stream base;
+	jami::ChannelSocket* socket;
+} fuzzer_stream;
+
+typedef struct {
+	git_smart_subtransport base;
+	git_transport *owner;
+	jami::ChannelSocket* socket;
+} fuzzer_subtransport;
+
+static git_repository *repo;
+
+static int fuzzer_stream_read(git_smart_subtransport_stream *stream,
+	char *buffer,
+	size_t buf_size,
+	size_t *bytes_read)
+{
+    JAMI_ERR("READ!");
+	fuzzer_stream *fs = (fuzzer_stream *) stream;
+
+    std::error_code ec;
+    auto len = fs->socket->waitForData(std::chrono::milliseconds(99999999), ec);
+    if (len > 0) {
+        JAMI_ERR("READ! %u", len);
+        *bytes_read = fs->socket->read((unsigned char*)(buffer), len, ec);
+    }
+    JAMI_ERR("READ! %u", *bytes_read);
+
+	return 0;
+}
+
+static int fuzzer_stream_write(git_smart_subtransport_stream *stream,
+	  const char *buffer, size_t len)
+{
+    JAMI_ERR("WRITE!");
+	fuzzer_stream *fs = (fuzzer_stream *) stream;
+    std::error_code ec;
+    auto written = fs->socket->write((const unsigned char*)(buffer), len, ec);
+	return 0;
+}
+
+static void fuzzer_stream_free(git_smart_subtransport_stream *stream)
+{
+    JAMI_ERR("FREE!");
+	delete stream;
+}
+
+static int fuzzer_stream_new(
+	fuzzer_stream **out,
+	jami::ChannelSocket* socket)
+{
+    JAMI_ERR("NEW!");
+	fuzzer_stream *stream = new fuzzer_stream();
+
+	stream->socket = socket;
+	stream->base.read = fuzzer_stream_read;
+	stream->base.write = fuzzer_stream_write;
+	stream->base.free = fuzzer_stream_free;
+
+	*out = stream;
+
+	return 0;
+}
+
+static int fuzzer_subtransport_action(
+	git_smart_subtransport_stream **out,
+	git_smart_subtransport *transport,
+	const char *url,
+	git_smart_service_t action)
+{
+    JAMI_ERR("ACTION!");
+	fuzzer_subtransport *ft = (fuzzer_subtransport *) transport;
+
+	UNUSED(url);
+	UNUSED(action);
+
+	return fuzzer_stream_new((fuzzer_stream **) out, ft->socket);
+}
+
+static int fuzzer_subtransport_close(git_smart_subtransport *transport)
+{
+    JAMI_ERR("CLOSE!");
+	UNUSED(transport);
+	return 0;
+}
+
+static void fuzzer_subtransport_free(git_smart_subtransport *transport)
+{
+    JAMI_ERR("FREE!");
+	delete transport;
+}
+
+static int fuzzer_subtransport_new(
+	fuzzer_subtransport **out,
+	git_transport *owner,
+	jami::ChannelSocket* socket)
+{
+    JAMI_ERR("NEW!");
+	fuzzer_subtransport *sub = new fuzzer_subtransport();
+
+	sub->owner = owner;
+    sub->socket = socket;
+	sub->base.action = fuzzer_subtransport_action;
+	sub->base.close = fuzzer_subtransport_close;
+	sub->base.free = fuzzer_subtransport_free;
+
+	*out = sub;
+
+	return 0;
+}
+
+int fuzzer_subtransport_cb(
+	git_smart_subtransport **out,
+	git_transport *owner,
+	void *payload)
+{
+	jami::ChannelSocket* socket = (jami::ChannelSocket*) payload;
+	fuzzer_subtransport *sub;
+
+	if (fuzzer_subtransport_new(&sub, owner, socket) < 0)
+		return -1;
+
+	*out = &sub->base;
+	return 0;
+}
+
+int fuzzer_transport_cb(git_transport **out, git_remote *owner, void *param)
+{
+	git_smart_subtransport_definition def = {
+		fuzzer_subtransport_cb,
+		1,
+		param
+	};
+	return git_transport_smart(out, owner, &def);
+}
+
+void fuzzer_git_abort(const char *op)
+{
+	const git_error *err = giterr_last();
+	fprintf(stderr, "unexpected libgit error: %s: %s\n",
+		op, err ? err->message : "<none>");
+	abort();
+}
+
+
+
+
+
+
 
 namespace jami { namespace test {
 
@@ -54,9 +368,11 @@ public:
 
 private:
     void testCreateRepository();
+    void testCloneViaChannelSocket();
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
-    CPPUNIT_TEST(testCreateRepository);
+   // CPPUNIT_TEST(testCreateRepository);
+    CPPUNIT_TEST(testCloneViaChannelSocket);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -173,6 +489,104 @@ ConversationRepositoryTest::testCreateRepository()
     std::string deviceCrtStr((std::istreambuf_iterator<char>(crt)), std::istreambuf_iterator<char>());
 
     CPPUNIT_ASSERT(deviceCrtStr == deviceCert);
+}
+
+void
+ConversationRepositoryTest::testCloneViaChannelSocket()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceDeviceId = aliceAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+
+    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repoPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+aliceAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+repository->id();
+    auto clonedPath = repoPath + ".test_cloned";
+
+
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk{ mtx };
+    std::condition_variable rcv, scv;
+    bool successfullyConnected = false;
+    bool successfullyReceive = false;
+    bool receiverConnected = false;
+    std::shared_ptr<ChannelSocket> channelSocket = nullptr;
+
+    bobAccount->connectionManager().onChannelRequest(
+    [&successfullyReceive](const std::string&, const std::string& name) {
+        JAMI_ERR("...");
+        successfullyReceive = name == "git://*";
+        return true;
+    });
+
+    aliceAccount->connectionManager().onChannelRequest(
+    [&successfullyReceive](const std::string&, const std::string& name) {
+        JAMI_ERR("...");
+        return true;
+    });
+
+    bobAccount->connectionManager().onConnectionReady(
+    [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        receiverConnected = socket && (name == "git://*");
+        JAMI_ERR("...");
+        channelSocket = socket;
+        rcv.notify_one();
+    });
+
+    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
+        [&](std::shared_ptr<ChannelSocket> socket) {
+        JAMI_ERR("...");
+        if (socket) {
+            successfullyConnected = true;
+
+            std::string buf = "From d21399329cfa4a414a917355a3061f007fa0d3d0 Mon Sep 17 00:00:00 2001\
+From: =?UTF-8?q?S=C3=A9bastien=20Blin?=\
+ <sebastien.blin@savoirfairelinux.com>\
+Date: Wed, 18 Dec 2019 17:03:47 -0500\
+Subject: [PATCH] das\
+\
+---\
+ x | 6 ++++++\
+ 1 file changed, 6 insertions(+)\
+ create mode 100644 x\
+\
+diff --git a/x b/x\
+new file mode 100644\
+index 0000000..cc6d6dc\
+--- /dev/null\
++++ b/x\
+@@ -0,0 +1,6 @@\
++dashdsahklhdklasda\
++f\
++ds\
++ fas\
++\
++\
+--\
+2.21.0\
+";
+
+            std::vector<uint8_t> vec(buf.begin(), buf.end());
+            std::error_code ec;
+            JAMI_ERR("%u", vec.size());
+            socket->write(&vec[0], vec.size(), ec);
+        }
+        scv.notify_one();
+    });
+
+    rcv.wait_for(lk, std::chrono::seconds(10));
+    scv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+
+    auto res = git_transport_register("git", fuzzer_transport_cb, (void*)channelSocket.get());
+    git_repository *rep = nullptr;
+    res = git_clone(&rep, "git://test", clonedPath.c_str(), nullptr);
+    git_repository_free(rep);
 }
 
 }} // namespace test
