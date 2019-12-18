@@ -33,6 +33,7 @@
 #include "video/video_device_monitor.h"
 #include "video/video_base.h"
 #include "video/video_input.h"
+#include "media_player.h"
 
 namespace jami {
 
@@ -61,13 +62,24 @@ public:
      * create an instance if need be and return a shared_ptr.
      */
     std::map<std::string, std::weak_ptr<AudioInput>> audioInputs;
+    std::map<std::string, std::weak_ptr<video::VideoInput>> videoInputs;
+    std::map<std::string, std::shared_ptr<MediaPlayer>> mediaPlayers;
     std::mutex audioMutex;
     std::shared_ptr<AudioInput> audioPreview;
+    bool hasRunningPlayers();
 };
 
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
+std::shared_ptr<video::VideoInput> getVideoInput(const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);
+std::string createMediaPlayer(const std::string& path);
+std::shared_ptr<MediaPlayer> getMediaPlayer(const std::string& id);
+bool pausePlayer(const std::string& id, bool pause);
+bool closePlayer(const std::string& id);
+bool mutePlayerAudio(const std::string& id, bool mute);
+bool playerSeekToTime(const std::string& id, int time);
+int64_t getPlayerPosition(const std::string& id);
 
 } // namespace jami
 
