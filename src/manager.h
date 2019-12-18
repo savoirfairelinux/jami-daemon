@@ -50,10 +50,10 @@ class io_context;
 }
 
 namespace jami {
-
 namespace video {
 class SinkClient;
 }
+class ChannelSocket;
 class RingBufferPool;
 struct VideoManager;
 class Conference;
@@ -64,13 +64,13 @@ class JamiAccount;
 class SIPVoIPLink;
 class JamiPluginManager;
 
-
 /** Manager (controller) of daemon */
 // TODO DRING_PUBLIC only if tests
 class DRING_TESTABLE Manager
 {
 private:
     std::mt19937_64 rand_;
+
 public:
     // TODO DRING_PUBLIC only if tests
     static DRING_TESTABLE Manager& instance();
@@ -929,20 +929,27 @@ public:
 #ifdef ENABLE_PLUGIN
     JamiPluginManager& getJamiPluginManager() const;
 #endif
+    /**
+     * Return current git socket used for a conversation
+     * @param accountId         Related account
+     * @param deviceId          Related device
+     * @param conversationId    Related conversation
+     * @return shared_ptr<ChannelSocket> the related socket
+     */
+    std::shared_ptr<ChannelSocket> gitSocket(const std::string& accountId,
+                                             const std::string& deviceId,
+                                             const std::string& conversationId);
 
     void setModerator(const std::string& confId, const std::string& peerId, const bool& state);
     void muteParticipant(const std::string& confId, const std::string& peerId, const bool& state);
     void hangupParticipant(const std::string& confId, const std::string& participant);
 
-    void setDefaultModerator(const std::string& accountID,
-                                const std::string& peerURI,
-                                bool state);
+    void setDefaultModerator(const std::string& accountID, const std::string& peerURI, bool state);
     std::vector<std::string> getDefaultModerators(const std::string& accountID);
     void enableLocalModerators(const std::string& accountID, bool state);
     bool isLocalModeratorsEnabled(const std::string& accountID);
     void setAllModerators(const std::string& accountID, bool allModerators);
     bool isAllModerators(const std::string& accountID);
-
 
 private:
     Manager();

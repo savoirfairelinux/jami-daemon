@@ -16,6 +16,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -30,11 +31,11 @@
 #include <asio.hpp>
 
 #include "manager.h"
-#include <opendht/thread_pool.h>
 #include <opendht/crypto.h>
 #include <opendht/utils.h>
 #include <opendht/http.h>
 #include <opendht/log_enable.h>
+#include <opendht/thread_pool.h>
 
 #include <msgpack.hpp>
 #include <json/json.h>
@@ -359,8 +360,7 @@ NameDirectory::registerName(const std::string& addr,
     {
         std::stringstream ss;
         ss << "{\"addr\":\"" << addr << "\",\"owner\":\"" << owner << "\",\"signature\":\""
-           << signedname << "\",\"publickey\":\""
-           << base64::encode(publickey) << "\"}";
+           << signedname << "\",\"publickey\":\"" << base64::encode(publickey) << "\"}";
         body = ss.str();
     }
     auto request = std::make_shared<Request>(*httpContext_,
