@@ -112,6 +112,8 @@ AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
 AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
 AM_CONDITIONAL(HAVE_IOS,   test "${HAVE_IOS}" = "1")
 
+AC_DEFINE([MSGPACK_DISABLE_LEGACY_NIL], [1], [msgpack])
+
 dnl FIXME this should be deduced automatically
 AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],
                     `if test "${HAVE_OSX}" = "1" || test "${HAVE_IOS}" = "1"; then echo 1; else echo 0; fi`,

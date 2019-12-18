@@ -27,14 +27,15 @@
 #include "base64.h"
 #include "scheduled_executor.h"
 
-#include <asio.hpp>
-
 #include "manager.h"
 #include <opendht/thread_pool.h>
 #include <opendht/crypto.h>
 #include <opendht/utils.h>
 #include <opendht/http.h>
 #include <opendht/log_enable.h>
+#include <opendht/sockaddr.h>
+
+#include <asio.hpp>
 
 #include <msgpack.hpp>
 #include <json/json.h>
