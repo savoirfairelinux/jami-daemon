@@ -833,6 +833,7 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
         io.cb((uint8_t*)pkt, size);
     } else {
         std::error_code ec;
+        JAMI_ERR("RCV %u", size);
         auto err = peerChannels_.at(comp_id-1).write((char*)pkt, size, ec);
         if (err < 0) {
             JAMI_ERR("[ice:%p] rx: channel is closed", this);
