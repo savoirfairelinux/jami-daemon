@@ -48,16 +48,12 @@ namespace jami { namespace video {
 
 class SinkClient;
 
-#if (defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
-#define VIDEO_CLIENT_INPUT 1
-#else
-#define VIDEO_CLIENT_INPUT 0
-#endif
+enum class VideoInputMode {ManagedByClient, ManagedByDaemon, Undefined};
 
 class VideoInput : public VideoGenerator, public std::enable_shared_from_this<VideoInput>
 {
 public:
-    VideoInput();
+    VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined);
     ~VideoInput();
 
     // as VideoGenerator
@@ -107,10 +103,8 @@ private:
     bool isCapturing() const noexcept;
     void startLoop();
 
-#if VIDEO_CLIENT_INPUT
     void switchDevice();
     bool capturing_ {false};
-#else
     void createDecoder();
     void deleteDecoder();
     std::unique_ptr<MediaDecoder> decoder_;
@@ -127,7 +121,10 @@ private:
     int rotation_ {0};
     std::shared_ptr<AVBufferRef> displayMatrix_;
     void setRotation(int angle);
-#endif
+    VideoInputMode inputMode_;
+    inline bool videoManagedByClient() const {
+         return inputMode_ == VideoInputMode::ManagedByClient;
+    }
 };
 
 }} // namespace jami::video
