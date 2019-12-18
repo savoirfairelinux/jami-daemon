@@ -30,6 +30,7 @@
 #include "media_buffer.h"
 #include "observer.h"
 #include "threadloop.h"
+#include "media_decoder.h"
 
 namespace jami {
 
@@ -52,9 +53,17 @@ public:
     void setFormat(const AudioFormat& fmt);
     void setMuted(bool isMuted);
     MediaStream getInfo() const;
+    void updateStartTime(int64_t start);
+    void readFromDevice();
+    void setPaused(bool paused);
+    void configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    void setSeekTime(int64_t time);
+    using StreamSync = std::function<void(int64_t)>;
+    void setStreamSynk(StreamSync sync);
+    void flushBuffers();
+    void readFromQueue();
 
 private:
-    void readFromDevice();
     void readFromFile();
     bool initDevice(const std::string& device);
     bool initFile(const std::string& path);
@@ -68,6 +77,7 @@ private:
     mutable std::mutex fmtMutex_ {};
     AudioFormat format_;
     int frameSize_;
+    bool paused_ = false;
 
     std::unique_ptr<Resampler> resampler_;
     std::unique_ptr<AudioFrameResizer> resizer_;
@@ -84,6 +94,7 @@ private:
     std::atomic_bool devOptsFound_ {false};
     void foundDevOpts(const DeviceParams& params);
     std::atomic_bool decodingFile_ {false};
+    std::atomic_bool playingFile_ {false};
 
     ThreadLoop loop_;
     void process();

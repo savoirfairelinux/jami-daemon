@@ -39,11 +39,13 @@
 #include "media_device.h"
 #include "media_stream.h"
 #include "noncopyable.h"
+#include "threadloop.h"
 
 #include <map>
 #include <string>
 #include <memory>
 #include <chrono>
+#include <queue>
 
 extern "C" {
 struct AVCodecContext;
@@ -101,6 +103,9 @@ public:
 
     Status decode();
 
+    int64_t getDuration() const;
+    bool seekFrame(int stream_index, int64_t timestamp);
+
 private:
     bool streamInfoFound_ {false};
     AVFormatContext *inputCtx_ = nullptr;
@@ -125,10 +130,13 @@ public:
     MediaDecoder();
     MediaDecoder(MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, AVMediaType type) : MediaDecoder(demuxer, demuxer->selectStream(type)) {}
     ~MediaDecoder();
 
     void emulateRate() { emulateRate_ = true; }
+    void skipFrames() { skipFrames_ = true; }
+    void syncToOtherStream() { syncToOtherStream_ = true; }
 
     int openInput(const DeviceParams&);
     void setInterruptCallback(int (*cb)(void*), void *opaque);
@@ -144,11 +152,19 @@ public:
     int getWidth() const;
     int getHeight() const;
     std::string getDecoderName() const;
+    void updateStartTime(int64_t startTime);
 
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;
-
+    void flushBuffers();
     void setOptions(const std::map<std::string, std::string>& options);
+    void setSeekTime(int64_t time);
+    void syncToStream(int index);
+    void emitNewFrame();
+    using StreamSync = std::function<void(int64_t)>;
+    void setStreamSynk(StreamSync sync);
+    StreamSync streamSync;
+    void playFramesBeforeTimestamp(int64_t timestamp);
 #ifdef RING_ACCEL
     void enableAccel(bool enableAccel);
 #endif
@@ -169,7 +185,17 @@ private:
     AVStream *avStream_ = nullptr;
     bool emulateRate_ = false;
     int64_t startTime_;
+    int seekTime_ {-1};
+    bool skipFrames_ {false}; //used for media player to skeep frames after seeking
     int64_t lastTimestamp_ {0};
+    int64_t lastSynctamp_ {-INT_MAX};
+    std::mutex framesBufferMutex {};
+    std::map<int64_t, std::shared_ptr<MediaFrame>> framesBuffer {};
+    bool syncToOtherStream_ = false;
+    void resetSeekTime() {
+        seekTime_ = -1;
+    }
+    void clearFrames();
 
     DeviceParams inputParams_;
 
