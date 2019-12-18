@@ -42,6 +42,7 @@
 
 namespace jami {
 class MediaDecoder;
+class MediaDemuxer;
 }
 
 namespace jami { namespace video {
@@ -65,6 +66,11 @@ public:
     AVPixelFormat getPixelFormat() const;
     const DeviceParams& getParams() const;
     MediaStream getInfo() const;
+
+    void setSink(const std::string& sinkId);
+    void updateStartTime(int64_t startTime);
+    bool configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    void flushBuffers();
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 #if VIDEO_CLIENT_INPUT
