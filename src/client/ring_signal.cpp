@@ -100,6 +100,9 @@ getSignalHandlers()
         /* DataTransfer */
         exported_callback<DRing::DataTransferSignal::DataTransferEvent>(),
 
+        /* DataTransfer */
+        exported_callback<DRing::MediaPlayerSignal::FileOpened>(),
+
 #ifdef ENABLE_VIDEO
         /* Video */
         exported_callback<DRing::VideoSignal::DeviceEvent>(),

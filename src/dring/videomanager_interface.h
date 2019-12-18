@@ -176,6 +176,10 @@ DRING_PUBLIC void stopCamera();
 DRING_PUBLIC bool hasCameraStarted();
 DRING_PUBLIC void startAudioDevice();
 DRING_PUBLIC void stopAudioDevice();
+DRING_PUBLIC std::string openFile(const std::string& path);
+DRING_PUBLIC bool pausePlayer(const std::string& id, bool pause);
+DRING_PUBLIC bool closePlayer(const std::string& id);
+
 DRING_PUBLIC bool switchInput(const std::string& resource);
 DRING_PUBLIC bool switchToCamera();
 DRING_PUBLIC void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
@@ -196,6 +200,14 @@ DRING_PUBLIC bool getDecodingAccelerated();
 DRING_PUBLIC void setDecodingAccelerated(bool state);
 DRING_PUBLIC bool getEncodingAccelerated();
 DRING_PUBLIC void setEncodingAccelerated(bool state);
+
+// player signal type definitions
+struct DRING_PUBLIC MediaPlayerSignal {
+        struct DRING_PUBLIC FileOpened {
+                constexpr static const char* name = "FileOpened";
+                using cb_type = void(const std::string& /*playerId*/, double /*duration*/);
+        };
+};
 
 // Video signal type definitions
 struct DRING_PUBLIC VideoSignal {
