@@ -27,6 +27,7 @@
 #include "media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
+#include "media_decoder.h"
 
 #include <map>
 #include <atomic>
@@ -65,6 +66,10 @@ public:
     AVPixelFormat getPixelFormat() const;
     const DeviceParams& getParams() const;
     MediaStream getInfo() const;
+
+    void setSink(const std::string& sinkId);
+    void updateStartTime(int64_t startTime);
+    bool configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 #if VIDEO_CLIENT_INPUT
