@@ -42,7 +42,11 @@
 
 namespace jami {
 class MediaDecoder;
+class MediaDemuxer;
 }
+
+const int MAX_NUMBER_OF_VIDEO_FRAMES = 100;
+const int MIN_NUMBER_OF_VIDEO_FRAMES = 20;
 
 namespace jami { namespace video {
 
@@ -53,7 +57,7 @@ enum class VideoInputMode {ManagedByClient, ManagedByDaemon, Undefined};
 class VideoInput : public VideoGenerator, public std::enable_shared_from_this<VideoInput>
 {
 public:
-    VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined);
+    VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined, const std::string& id_ = "local");
     ~VideoInput();
 
     // as VideoGenerator
@@ -65,6 +69,16 @@ public:
     AVPixelFormat getPixelFormat() const;
     const DeviceParams& getParams() const;
     MediaStream getInfo() const;
+
+    void setSink(const std::string& sinkId);
+    void updateStartTime(int64_t startTime);
+    bool configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    void flushBuffers();
+    void setSeekTime(int64_t time);
+    void getFramesBeforeTime(int64_t time);
+    void emulateRate();
+    void useSynchronization();
+    void setNeedFrameCb(std::function<void()> cb);
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 #if VIDEO_CLIENT_INPUT
@@ -79,6 +93,7 @@ public:
 private:
     NON_COPYABLE(VideoInput);
 
+    std::string id_;
     std::string currentResource_;
     std::atomic<bool> switchPending_ = {false};
     std::atomic_bool  isStopped_ = {false};
