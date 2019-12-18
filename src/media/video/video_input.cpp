@@ -54,39 +54,47 @@ namespace jami { namespace video {
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
-VideoInput::VideoInput()
+VideoInput::VideoInput(VideoInputMode inputMode)
     : VideoGenerator::VideoGenerator()
-#if !VIDEO_CLIENT_INPUT
-    , sink_ {Manager::instance().createSinkClient("local")}
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
+{
+    inputMode_ = inputMode;
+    if (inputMode_ == VideoInputMode::Undefined) {
+#if (defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS))
+        inputMode_ = VideoInputMode::ManagedByClient;
+#else
+        inputMode_ = VideoInputMode::ManagedByDaemon;
 #endif
-{}
+    }
+    if (inputMode_ == VideoInputMode::ManagedByDaemon) {
+        sink_ = Manager::instance().createSinkClient("local");
+    }
+}
 
 VideoInput::~VideoInput()
 {
     isStopped_ = true;
-#if VIDEO_CLIENT_INPUT
-    emitSignal<DRing::VideoSignal::StopCapture>();
-    capturing_ = false;
-#else
+    if (videoManagedByClient()) {
+        emitSignal<DRing::VideoSignal::StopCapture>();
+        capturing_ = false;
+        return;
+    }
     loop_.join();
-#endif
 }
 
 void
 VideoInput::startLoop()
 {
-#if VIDEO_CLIENT_INPUT
-    switchDevice();
-#else
+    if (videoManagedByClient()) {
+        switchDevice();
+        return;
+    }
     if (!loop_.isRunning())
         loop_.start();
-#endif
 }
 
-#if VIDEO_CLIENT_INPUT
 void
 VideoInput::switchDevice()
 {
@@ -104,21 +112,32 @@ VideoInput::switchDevice()
 }
 
 int VideoInput::getWidth() const
-{ return decOpts_.width; }
+{
+    if (videoManagedByClient()) {
+        return decOpts_.width;
+    }
+    return decoder_->getWidth();
+}
 
 int VideoInput::getHeight() const
-{ return decOpts_.height; }
+{
+    if (videoManagedByClient()) {
+        return decOpts_.height;
+    }
+    return decoder_->getHeight();
+}
 
 AVPixelFormat VideoInput::getPixelFormat() const
 {
+    if (!videoManagedByClient()) {
+        return decoder_->getPixelFormat();
+    }
     int format;
     std::stringstream ss;
     ss << decOpts_.format;
     ss >> format;
     return (AVPixelFormat)format;
 }
-
-#else
 
 void
 VideoInput::setRotation(int angle)
@@ -273,17 +292,6 @@ VideoInput::deleteDecoder()
     decoder_.reset();
 }
 
-int VideoInput::getWidth() const
-{ return decoder_->getWidth(); }
-
-int VideoInput::getHeight() const
-{ return decoder_->getHeight(); }
-
-AVPixelFormat VideoInput::getPixelFormat() const
-{ return decoder_->getPixelFormat(); }
-
-#endif
-
 void VideoInput::clearOptions()
 {
     decOpts_ = {};
@@ -293,11 +301,10 @@ void VideoInput::clearOptions()
 bool
 VideoInput::isCapturing() const noexcept
 {
-#if VIDEO_CLIENT_INPUT
-    return capturing_;
-#else
+    if (videoManagedByClient()) {
+        return capturing_;
+    }
     return loop_.isRunning();
-#endif
 }
 
 bool
@@ -509,10 +516,10 @@ VideoInput::getParams() const
 MediaStream
 VideoInput::getInfo() const
 {
-#if !VIDEO_CLIENT_INPUT
-    if (decoder_)
-        return decoder_->getStream("v:local");
-#endif
+    if (!videoManagedByClient()) {
+        if (decoder_)
+            return decoder_->getStream("v:local");
+    }
     auto opts = futureDecOpts_.get();
     rational<int> fr(opts.framerate.numerator(), opts.framerate.denominator());
     return MediaStream("v:local", av_get_pix_fmt(opts.pixel_format.c_str()),
