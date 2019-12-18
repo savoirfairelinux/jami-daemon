@@ -66,7 +66,16 @@ public:
     const DeviceParams& getParams() const;
     MediaStream getInfo() const;
 
-    std::shared_future<DeviceParams> switchInput(const std::string& resource);
+    MediaStream getStream(const std::string& path);
+    void setPaused(bool paused);
+    void setSink(const std::string& sinkId);
+    void updateStartTime(int64_t start);
+    int64_t duration() const;
+    void createDecoder();
+    std::function<void(void)> fileFinished {};
+    void setFileFinishedCallback(const std::function<void(void)>& cb) noexcept;
+
+    std::shared_future<DeviceParams> switchInput(const std::string& resource, bool fallbackToCamera = true);
 #if VIDEO_CLIENT_INPUT
     /*
      * these functions are used to pass buffer from/to the daemon
@@ -87,6 +96,7 @@ private:
     std::promise<DeviceParams> foundDecOpts_;
     std::shared_future<DeviceParams> futureDecOpts_;
     bool emulateRate_       = false;
+    bool paused_            = false;
 
     std::atomic_bool decOptsFound_ {false};
     void foundDecOpts(const DeviceParams& params);
@@ -97,7 +107,7 @@ private:
     bool initCamera(const std::string& device);
     bool initX11(std::string display);
     bool initAVFoundation(const std::string& display);
-    bool initFile(std::string path);
+    bool initFile(std::string path,  bool fallbackToCamera = true);
     bool initGdiGrab(const std::string& params);
 
     bool isCapturing() const noexcept;
@@ -105,7 +115,6 @@ private:
 
     void switchDevice();
     bool capturing_ {false};
-    void createDecoder();
     void deleteDecoder();
     std::unique_ptr<MediaDecoder> decoder_;
     std::shared_ptr<SinkClient> sink_;
