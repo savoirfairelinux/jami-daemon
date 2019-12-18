@@ -56,6 +56,11 @@ AudioInput::AudioInput(const std::string& id) :
 
 AudioInput::~AudioInput()
 {
+    if (playingFile_) {
+        Manager::instance()
+        .getRingBufferPool()
+        .unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    }
     loop_.join();
 }
 
@@ -76,6 +81,14 @@ AudioInput::process()
 }
 
 void
+AudioInput::updateStartTime(int64_t start)
+{
+    if (decoder_) {
+        decoder_->updateStartTime(start);
+    }
+}
+
+void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
     std::shared_ptr<AudioFrame> frame = std::move(ptr);
@@ -83,6 +96,13 @@ AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
     sent_samples += frame->pointer()->nb_samples;
 
     notify(std::static_pointer_cast<MediaFrame>(frame));
+}
+
+void
+AudioInput::setSeekTime(int64_t time) {
+    if (decoder_) {
+        decoder_->setSeekTime(time);
+    }
 }
 
 void
@@ -94,6 +114,11 @@ AudioInput::readFromDevice()
     if (decodingFile_ )
         while (fileBuf_->isEmpty())
             readFromFile();
+
+    if (playingFile_ ) {
+        readFromQueue();
+        return;
+    }
 
     if (not mainBuffer.waitForDataAvailable(id_, MS_PER_PACKET))
         return;
@@ -109,6 +134,18 @@ AudioInput::readFromDevice()
     if (bufferFormat != format_)
         samples = resampler_->resample(std::move(samples), format_);
     resizer_->enqueue(std::move(samples));
+}
+
+void
+AudioInput::readFromQueue()
+{
+    if (!decoder_)
+        return;
+    if (paused_) {
+        std::this_thread::sleep_for(MS_PER_PACKET);
+        return;
+    }
+    decoder_->emitFrame(true);
 }
 
 void
@@ -137,6 +174,54 @@ AudioInput::initDevice(const std::string& device)
     devOpts_.channel = format_.nb_channels;
     devOpts_.framerate = format_.sample_rate;
     return true;
+}
+
+void
+AudioInput::configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index)
+{
+    decoder_.reset();
+    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    fileBuf_.reset();
+    devOpts_ = {};
+    devOpts_.input = path;
+    devOpts_.name = path;
+    auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
+        if (muteState_) {
+            libav_utils::fillWithSilence(frame->pointer());
+            return;
+        }
+        fileBuf_->put(std::static_pointer_cast<AudioFrame>(frame));
+    });
+    decoder->emulateRate();
+
+    fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(id_);
+    Manager::instance()
+    .getRingBufferPool()
+    .bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    playingFile_ = true;
+    decoder_ = std::move(decoder);
+}
+
+void
+AudioInput::setPaused(bool paused) {
+    paused_ = paused;
+    if (paused_) {
+        Manager::instance()
+        .getRingBufferPool()
+        .unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    } else {
+        Manager::instance()
+        .getRingBufferPool()
+        .bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
+    }
+}
+
+void
+AudioInput::flushBuffers()
+{
+    if (decoder_) {
+        decoder_->flushBuffers();
+    }
 }
 
 bool
@@ -197,7 +282,7 @@ AudioInput::switchInput(const std::string& resource)
         return futureDevOpts_;
     }
 
-    static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
+    static const std::string& sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
 
     const auto pos = resource.find(sep);
     if (pos == std::string::npos)
