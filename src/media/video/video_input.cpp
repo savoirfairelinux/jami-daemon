@@ -54,7 +54,7 @@ namespace jami { namespace video {
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
 
-VideoInput::VideoInput(VideoInputMode inputMode)
+VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
     : VideoGenerator::VideoGenerator()
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
@@ -69,7 +69,7 @@ VideoInput::VideoInput(VideoInputMode inputMode)
 #endif
     }
     if (inputMode_ == VideoInputMode::ManagedByDaemon) {
-        sink_ = Manager::instance().createSinkClient("local");
+        sink_ = Manager::instance().createSinkClient(id_);
     }
 }
 
@@ -205,6 +205,33 @@ VideoInput::captureFrame()
     default:
         return true;
     }
+}
+void
+VideoInput::flushBuffers() {
+    decoder_->flushBuffers();
+}
+
+bool
+VideoInput::configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index)
+{
+    deleteDecoder();
+    clearOptions();
+
+    auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
+        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
+    });
+    decoder->skipFrames();
+
+    if (not attach(sink_.get())) {
+        JAMI_ERR("attach sink failed");
+        return false;
+    }
+    sink_->start();
+
+    decoder_ = std::move(decoder);
+
+    /* Signal the client about readable sink */
+    sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
 }
 
 void
@@ -532,6 +559,20 @@ VideoInput::foundDecOpts(const DeviceParams& params)
     if (not decOptsFound_) {
         decOptsFound_ = true;
         foundDecOpts_.set_value(params);
+    }
+}
+
+void
+VideoInput::setSink(const std::string& sinkId)
+{
+    sink_ = Manager::instance().createSinkClient(sinkId);
+}
+
+void
+VideoInput::updateStartTime(int64_t startTime)
+{
+    if (decoder_) {
+        decoder_->updateStartTime(startTime);
     }
 }
 
