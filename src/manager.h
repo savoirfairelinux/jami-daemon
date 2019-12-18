@@ -604,6 +604,11 @@ class DRING_TESTABLE Manager {
          */
         bool startRecordedFilePlayback(const std::string&);
 
+        /**
+         * Start audio playback
+        */
+        bool startAudioPlayback();
+
         void recordingPlaybackSeek(const double value);
 
         /**

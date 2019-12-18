@@ -144,6 +144,22 @@ MediaDemuxer::openInput(const DeviceParams& params)
     return ret;
 }
 
+int64_t
+MediaDemuxer::getDuration() const
+{
+    return inputCtx_->duration;
+}
+
+bool
+MediaDemuxer::seekFrame(int stream_index, int64_t timestamp)
+{
+    if (av_seek_frame(inputCtx_, -1, timestamp, AVSEEK_FLAG_BACKWARD) >= 0) {
+        clearFrames();
+        return true;
+    }
+    return false;
+}
+
 void
 MediaDemuxer::findStreamInfo()
 {
@@ -172,10 +188,118 @@ void MediaDemuxer::setInterruptCallback(int (*cb)(void*), void *opaque)
         inputCtx_->interrupt_callback.callback = 0;
     }
 }
+void
+MediaDemuxer::setNeedFrameCb(std::function<void()> cb)
+{
+    needFrameCb_ = std::move(cb);
+}
+
+void
+MediaDemuxer::setFileFinishedCb(std::function<void(bool)> cb)
+{
+    fileFinishedCb_ = std::move(cb);
+}
+
+void
+MediaDemuxer::clearFrames()
+{
+    {
+        std::lock_guard<std::mutex> lk {videoBufferMutex_};
+        while (!videoBuffer_.empty())
+        {
+            videoBuffer_.pop();
+        }
+    }
+    {
+        std::lock_guard<std::mutex> lk {audioBufferMutex_};
+        while (!audioBuffer_.empty())
+        {
+            audioBuffer_.pop();
+        }
+    }
+}
+
+void
+MediaDemuxer::emitFrame(bool isAudio)
+{
+    if (isAudio) {
+        pushFrameFrom(audioBuffer_, isAudio, audioBufferMutex_);
+    } else {
+        pushFrameFrom(videoBuffer_, isAudio, videoBufferMutex_);
+    }
+}
+
+void
+MediaDemuxer::pushFrameFrom(std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer, bool isAudio, std::mutex& mutex)
+{
+    std::unique_lock<std::mutex> lock(mutex);
+    if (buffer.empty()) {
+        if (currentState_ == MediaDemuxer::CurrentState::Finished) {
+            fileFinishedCb_(isAudio);
+        } else {
+            needFrameCb_();
+        }
+        return;
+    }
+    auto packet = std::move(buffer.front());
+    if (!packet) {
+        return;
+    }
+    auto streamIndex = packet->stream_index;
+    if (static_cast<unsigned>(streamIndex) >= streams_.size() || streamIndex < 0) {
+        return;
+    }
+    auto& cb = streams_[streamIndex];
+    if (!cb) {
+        return;
+    }
+    buffer.pop();
+    lock.unlock();
+    cb(*packet.get());
+}
+
+MediaDemuxer::Status
+MediaDemuxer::demuxe()
+{
+    auto packet = std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>(av_packet_alloc(), [](AVPacket* p){
+        if (p)
+            av_packet_free(&p);
+    });
+
+    int ret = av_read_frame(inputCtx_, packet.get());
+    if (ret == AVERROR(EAGAIN)) {
+        return Status::Success;
+    } else if (ret == AVERROR_EOF) {
+        return Status::EndOfFile;
+    } else if (ret < 0) {
+        JAMI_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
+        return Status::ReadError;
+    }
+
+    auto streamIndex = packet->stream_index;
+    if (static_cast<unsigned>(streamIndex) >= streams_.size() || streamIndex < 0) {
+        return Status::Success;
+    }
+
+    AVStream* stream = inputCtx_->streams[streamIndex];
+    if (stream->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+        std::lock_guard<std::mutex> lk {videoBufferMutex_};
+        videoBuffer_.push(std::move(packet));
+        if (videoBuffer_.size() >= 90) {
+            return Status::ReadBufferOverflow;
+        }
+    } else {
+        std::lock_guard<std::mutex> lk {audioBufferMutex_};
+        audioBuffer_.push(std::move(packet));
+        if (audioBuffer_.size() >= 300) {
+            return Status::ReadBufferOverflow;
+        }
+    }
+    return Status::Success;
+}
 
 void MediaDemuxer::setIOContext(MediaIOHandle *ioctx)
 { inputCtx_->pb = ioctx->getContext(); }
-
 
 MediaDemuxer::Status
 MediaDemuxer::decode()
@@ -216,6 +340,23 @@ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int ind
     setupStream();
 }
 
+MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer)
+: demuxer_(demuxer),
+  avStream_(demuxer->getStream(index)),
+  callback_(std::move(observer))
+{
+    demuxer->setStreamCallback(index, [this](AVPacket& packet) {
+        decode(packet);
+    });
+    setupStream();
+}
+
+void
+MediaDecoder::emitFrame(bool isAudio)
+{
+    demuxer_->emitFrame(isAudio);
+}
+
 MediaDecoder::MediaDecoder()
  : demuxer_(new MediaDemuxer)
  {}
@@ -232,6 +373,12 @@ MediaDecoder::~MediaDecoder()
 #endif
     if (decoderCtx_)
         avcodec_free_context(&decoderCtx_);
+}
+
+void
+MediaDecoder::flushBuffers()
+{
+    avcodec_flush_buffers(decoderCtx_);
 }
 
 int
@@ -356,6 +503,11 @@ MediaDecoder::prepareDecoderContext()
     return 0;
 }
 
+void
+MediaDecoder::updateStartTime(int64_t startTime) {
+     startTime_ = startTime;
+}
+
 MediaDecoder::Status
 MediaDecoder::decode(AVPacket& packet)
 {
@@ -387,21 +539,33 @@ MediaDecoder::decode(AVPacket& packet)
             {1, AV_TIME_BASE}, decoderCtx_->time_base,
             static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
         lastTimestamp_ = frame->pts;
-
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
-            auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
+            auto target_relative = static_cast<std::int64_t>(frame_time.real() * 1e6);
+            auto target_absolute = startTime_ + target_relative;
+            if (target_relative < seekTime_) {
+                return Status::Success;
+            }
+            //required frame found. Reset seek time
+            if (target_relative >= seekTime_) {
+                resetSeekTime();
+            }
             auto now = av_gettime();
-            if (target > now) {
-                std::this_thread::sleep_for(std::chrono::microseconds(target - now));
+            if (target_absolute > now) {
+                std::this_thread::sleep_for(std::chrono::microseconds(target_absolute - now));
             }
         }
+
         if (callback_)
             callback_(std::move(f));
         return Status::FrameFinished;
     }
-
     return Status::Success;
+}
+
+void
+MediaDecoder::setSeekTime(int64_t time) {
+    seekTime_ = time;
 }
 
 MediaDemuxer::Status

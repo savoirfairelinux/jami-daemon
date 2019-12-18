@@ -105,8 +105,10 @@ CoreLayer::initAudioLayerIO(AudioStreamType stream)
     }
 
     checkErr(AudioComponentInstanceNew(comp, &ioUnit_));
+    bool setUpOutput = stream == AudioStreamType::DEFAULT || stream == AudioStreamType::PLAYBACK;
+    bool setUpInput = stream == AudioStreamType::DEFAULT || stream == AudioStreamType::CAPTURE;
 
-    UInt32 audioCategory = kAudioSessionCategory_PlayAndRecord;
+    UInt32 audioCategory = setUpInput ? kAudioSessionCategory_PlayAndRecord : kAudioSessionCategory_MediaPlayback;
     AudioSessionSetProperty(kAudioSessionProperty_AudioCategory,
                             sizeof(audioCategory),
                             &audioCategory);
@@ -135,8 +137,6 @@ CoreLayer::initAudioLayerIO(AudioStreamType stream)
             break;
     }
 
-    bool setUpOutput = stream == AudioStreamType::DEFAULT || stream == AudioStreamType::PLAYBACK;
-    bool setUpInput = stream == AudioStreamType::DEFAULT || stream == AudioStreamType::CAPTURE;
     if (setUpOutput) {
         setupOutputBus();
     }
