@@ -77,6 +77,11 @@ public:
         EndOfFile,
         ReadError
     };
+
+    enum class CurrentState {
+        Demuxing,
+        Finished
+    };
     using StreamCallback = std::function<void(AVPacket&)>;
 
     int openInput(const DeviceParams&);
@@ -93,6 +98,14 @@ public:
         streams_[stream] = std::move(cb);
     }
 
+    void updateCurrentState(MediaDemuxer::CurrentState state) {
+        currentState_ = state;
+    }
+
+    MediaDemuxer::CurrentState getCurrentState() {
+        return currentState_;
+    }
+
     AVStream* getStream(unsigned stream) {
         if (stream >= inputCtx_->nb_streams)
             throw std::invalid_argument("Invalid stream index");
@@ -101,6 +114,9 @@ public:
 
     Status decode();
 
+    int64_t getDuration() const;
+    bool seekFrame(int stream_index, int64_t timestamp);
+
 private:
     bool streamInfoFound_ {false};
     AVFormatContext *inputCtx_ = nullptr;
@@ -108,6 +124,7 @@ private:
     int64_t startTime_;
     DeviceParams inputParams_;
     AVDictionary *options_ = nullptr;
+    MediaDemuxer::CurrentState currentState_;
 };
 
 class MediaDecoder
@@ -125,10 +142,12 @@ public:
     MediaDecoder();
     MediaDecoder(MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, AVMediaType type) : MediaDecoder(demuxer, demuxer->selectStream(type)) {}
     ~MediaDecoder();
 
     void emulateRate() { emulateRate_ = true; }
+    void skipFrames() { skipFrames_ = true; }
 
     int openInput(const DeviceParams&);
     void setInterruptCallback(int (*cb)(void*), void *opaque);
@@ -147,8 +166,18 @@ public:
 
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;
-
     void setOptions(const std::map<std::string, std::string>& options);
+
+    void setSeekTime(int64_t time);
+    void updateStartTime(int64_t startTime);
+
+    void syncToStream(int index);
+    void syncToOtherStream() { syncToOtherStream_ = true; }
+    using StreamSync = std::function<void(int64_t)>;
+    void setStreamSynk(StreamSync sync);
+    bool emitNewFrame();
+    void playFramesBeforeTimestamp(int64_t timestamp);
+    void flushBuffers();
 #ifdef RING_ACCEL
     void enableAccel(bool enableAccel);
 #endif
@@ -169,7 +198,17 @@ private:
     AVStream *avStream_ = nullptr;
     bool emulateRate_ = false;
     int64_t startTime_;
+    int seekTime_ {-1};
+    bool skipFrames_ {false}; //used for media player to skeep frames after seeking
     int64_t lastTimestamp_ {0};
+    std::mutex framesBufferMutex {};
+    std::map<int64_t, std::shared_ptr<MediaFrame>> framesBuffer {};
+    bool syncToOtherStream_ = false;
+    void resetSeekTime() {
+        seekTime_ = -1;
+    }
+    void clearFrames();
+    StreamSync streamSync;
 
     DeviceParams inputParams_;
 
