@@ -39,11 +39,13 @@
 #include "media_device.h"
 #include "media_stream.h"
 #include "noncopyable.h"
+#include "threadloop.h"
 
 #include <map>
 #include <string>
 #include <memory>
 #include <chrono>
+#include <queue>
 
 extern "C" {
 struct AVCodecContext;
@@ -101,6 +103,9 @@ public:
 
     Status decode();
 
+    int64_t getDuration() const;
+    bool seekFrame(int stream_index, int64_t timestamp);
+
 private:
     bool streamInfoFound_ {false};
     AVFormatContext *inputCtx_ = nullptr;
@@ -108,6 +113,31 @@ private:
     int64_t startTime_;
     DeviceParams inputParams_;
     AVDictionary *options_ = nullptr;
+};
+
+class PlayBackQueue {
+public:
+    PlayBackQueue();
+    ~PlayBackQueue();
+
+    void clearAll();
+    void setPaused(bool paused);
+
+    using frameToEmit = std::function<void()>;
+    void addFrame(frameToEmit&& frame) {
+        std::lock_guard<std::mutex> lk(taskMutex);
+        videoPlaybackQueue.push_back(std::move(frame));
+        hasFrames.notify_one();
+    }
+
+private:
+    std::mutex taskMutex;
+    std::condition_variable hasFrames;
+    std::deque<frameToEmit> videoPlaybackQueue;
+    PlayBackQueue::frameToEmit getFrame();
+    bool paused_  = true;
+    ThreadLoop loop_;
+    void process();
 };
 
 class MediaDecoder
@@ -125,10 +155,13 @@ public:
     MediaDecoder();
     MediaDecoder(MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, AVMediaType type) : MediaDecoder(demuxer, demuxer->selectStream(type)) {}
     ~MediaDecoder();
 
     void emulateRate() { emulateRate_ = true; }
+    void skipFrames() { skipFrames_ = true; }
+    bool skipFrames_ {false}; //used for media player to skeep frames after seeking
 
     int openInput(const DeviceParams&);
     void setInterruptCallback(int (*cb)(void*), void *opaque);
@@ -144,11 +177,14 @@ public:
     int getWidth() const;
     int getHeight() const;
     std::string getDecoderName() const;
+    void updateStartTime(int64_t startTime);
 
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;
-
+    void flushBuffers();
+    void emitFrame(std::shared_ptr<MediaFrame> frame);
     void setOptions(const std::map<std::string, std::string>& options);
+    void setPaused(bool paused);
 #ifdef RING_ACCEL
     void enableAccel(bool enableAccel);
 #endif
@@ -160,9 +196,13 @@ private:
 
     Status decode(AVPacket&);
 
+    std::atomic_bool paused_ {true};
+    bool hasFramesPlayback_ = false;
+
     rational<unsigned> getTimeBase() const;
 
     std::shared_ptr<MediaDemuxer> demuxer_;
+    std::shared_ptr<PlayBackQueue> playbackQueue_;
 
     AVCodec *inputDecoder_ = nullptr;
     AVCodecContext *decoderCtx_ = nullptr;

@@ -54,6 +54,63 @@ const constexpr auto jitterBufferMaxDelay_ = std::chrono::milliseconds(50);
 // maximum number of times accelerated decoding can fail in a row before falling back to software
 const constexpr unsigned MAX_ACCEL_FAILURES { 5 };
 
+static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
+
+PlayBackQueue::PlayBackQueue() :
+loop_([] { return true; },
+      [this] { process(); },
+      [] {})
+{
+    loop_.start();
+}
+
+PlayBackQueue::~PlayBackQueue()
+{
+    videoPlaybackQueue.clear();
+    hasFrames.notify_all();
+    loop_.join();
+}
+
+void
+PlayBackQueue::clearAll()
+{
+    videoPlaybackQueue.clear();
+}
+
+void
+PlayBackQueue::process()
+{
+    if (paused_) {
+        std::this_thread::sleep_for(MS_PER_PACKET);
+        return;
+    }
+    auto frame = getFrame();
+    if (frame) {
+        frame();
+    }
+}
+
+PlayBackQueue::frameToEmit
+PlayBackQueue::getFrame()
+{
+    std::unique_lock<std::mutex> lk(taskMutex);
+    if (videoPlaybackQueue.empty()) {
+        hasFrames.wait(lk);
+    }
+    if (videoPlaybackQueue.empty()) {
+        return nullptr;
+    }
+    auto frame = std::move(videoPlaybackQueue.front());
+    videoPlaybackQueue.pop_front();
+    return std::move(frame);
+}
+
+void
+PlayBackQueue::setPaused(bool paused) {
+    paused_ = paused;
+}
+
+
 MediaDemuxer::MediaDemuxer() :
     inputCtx_(avformat_alloc_context()),
     startTime_(AV_NOPTS_VALUE)
@@ -144,6 +201,21 @@ MediaDemuxer::openInput(const DeviceParams& params)
     return ret;
 }
 
+int64_t
+MediaDemuxer::getDuration() const
+{
+    return inputCtx_->duration;
+}
+
+bool
+MediaDemuxer::seekFrame(int stream_index, int64_t timestamp)
+{
+    if (av_seek_frame(inputCtx_, -1, timestamp, AVSEEK_FLAG_BACKWARD) >= 0) {
+        return true;
+    }
+    return false;
+}
+
 void
 MediaDemuxer::findStreamInfo()
 {
@@ -216,6 +288,18 @@ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int ind
     setupStream();
 }
 
+MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer)
+: demuxer_(demuxer),
+  avStream_(demuxer->getStream(index)),
+  callback_(std::move(observer))
+{
+    demuxer->setStreamCallback(index, [this](AVPacket& packet) {
+        decode(packet);
+    });
+    hasFramesPlayback_ = true;
+    setupStream();
+}
+
 MediaDecoder::MediaDecoder()
  : demuxer_(new MediaDemuxer)
  {}
@@ -232,6 +316,15 @@ MediaDecoder::~MediaDecoder()
 #endif
     if (decoderCtx_)
         avcodec_free_context(&decoderCtx_);
+}
+
+void
+MediaDecoder::flushBuffers()
+{
+    if (playbackQueue_) {
+        playbackQueue_->clearAll();
+    }
+    avcodec_flush_buffers(decoderCtx_);
 }
 
 int
@@ -291,6 +384,11 @@ MediaDecoder::setupStream()
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
     decoderCtx_->framerate = avStream_->avg_frame_rate;
     if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+        if (hasFramesPlayback_) {
+            playbackQueue_ = std::make_shared<PlayBackQueue>();
+        } else {
+            playbackQueue_ = nullptr;
+        }
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
             decoderCtx_->framerate = inputParams_.framerate;
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
@@ -312,6 +410,8 @@ MediaDecoder::setupStream()
             JAMI_WARN() << "Hardware decoding disabled by user preference";
         }
 #endif
+    } else {
+        playbackQueue_ = nullptr;
     }
 
     JAMI_DBG() << "Decoding " << av_get_media_type_string(avStream_->codecpar->codec_type) << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
@@ -328,6 +428,11 @@ MediaDecoder::setupStream()
     }
 
     return 0;
+}
+
+void
+MediaDecoder::updateStartTime(int64_t startTime) {
+     startTime_ = startTime;
 }
 
 MediaDecoder::Status
@@ -356,6 +461,10 @@ MediaDecoder::decode(AVPacket& packet)
             frame->channel_layout = av_get_default_channel_layout(frame->channels);
 
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
+        if (playbackQueue_) {
+            playbackQueue_->addFrame(std::bind(&MediaDecoder::emitFrame, this, std::move(f)));
+            return Status::FrameFinished;
+        }
         auto packetTimestamp = frame->pts; // in stream time base
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
             {1, AV_TIME_BASE}, decoderCtx_->time_base,
@@ -366,6 +475,8 @@ MediaDecoder::decode(AVPacket& packet)
             auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
+            if (target < now && skipFrames_)
+                return Status::FrameFinished;
             if (target > now) {
                 std::this_thread::sleep_for(std::chrono::microseconds(target - now));
             }
@@ -376,6 +487,36 @@ MediaDecoder::decode(AVPacket& packet)
     }
 
     return Status::Success;
+}
+
+void
+MediaDecoder::setPaused(bool paused) {
+    paused_ = paused;
+    if (playbackQueue_) {
+        playbackQueue_->setPaused(paused_);
+    }
+}
+
+void
+MediaDecoder::emitFrame(std::shared_ptr<MediaFrame> frame) {
+    auto packetTimestamp = frame->pointer()->pts;
+    frame->pointer()->pts = av_rescale_q_rnd(av_gettime() - startTime_,
+                                  {1, AV_TIME_BASE}, decoderCtx_->time_base,
+                                  static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+    lastTimestamp_ = frame->pointer()->pts;
+
+    if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
+        auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
+        auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
+        auto now = av_gettime();
+
+        if (target > now) {
+            std::this_thread::sleep_for(std::chrono::microseconds(target - now));
+        }
+    }
+    if (callback_)
+        callback_(std::move(frame));
+
 }
 
 MediaDemuxer::Status
