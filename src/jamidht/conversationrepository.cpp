@@ -32,6 +32,10 @@ using random_device = dht::crypto::random_device;
 
 using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
 
+constexpr const char* const FLUSH_PKT = "0000";
+constexpr const char* const NAK_PKT = "0008NAK\n";
+
+
 namespace jami {
 
 /**
@@ -290,6 +294,132 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
     return std::make_unique<ConversationRepository>(account, id);
 }
 
+std::unique_ptr<ConversationRepository>
+ConversationRepository::cloneConversation(
+    const std::weak_ptr<JamiAccount>& account,
+    const std::string& deviceId,
+    const std::string& conversationId
+)
+{
+    auto shared = account.lock();
+    if (!shared) return {};
+    auto path = fileutils::get_data_dir()+DIR_SEPARATOR_STR+shared->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+conversationId;
+    git_repository *rep = nullptr;
+    std::stringstream url;
+    url << "git://" << deviceId << '/' << conversationId;
+    if (git_clone(&rep, url.str().c_str(), path.c_str(), nullptr) < 0) {
+    	const git_error *err = giterr_last();
+        if (err) JAMI_ERR("Error when retrieving remote conversation: %s", err->message);
+        return nullptr;
+    }
+    JAMI_INFO("New conversation cloned in %s", path.c_str());
+    git_repository_free(rep);
+    return std::make_unique<ConversationRepository>(account, conversationId);
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+
+enum class ServerState
+{
+    WAIT_ORDER,
+    SEND_REFERENCES_CAPABILITIES,
+    ANSWER_TO_WANT_ORDER,
+    SEND_PACKDATA,
+    TERMINATE
+};
+
+class GitServer
+{
+public:
+    GitServer(const std::shared_ptr<ChannelSocket> socket) : socket_(socket) {}
+
+    void execute();
+    void waitOrder();
+    void sendReferenceCapabilities();
+    void answerToWantOrder();
+    void sendPackData();
+
+    std::shared_ptr<ChannelSocket> socket_ {};
+    ServerState state_ {ServerState::WAIT_ORDER};
+    std::string wantedReference_ {};
+};
+
+void
+GitServer::execute()
+{
+    auto stop = false;
+    while (!stop) {
+        switch state_ {
+            case ServerState::WAIT_ORDER:
+            waitOrder();
+            break;
+            case ServerState::SEND_REFERENCES_CAPABILITIES:
+            sendReferenceCapabilities();
+            break;
+            case ServerState::ANSWER_TO_WANT_ORDER:
+            answerToWantOrder();
+            break;
+            case ServerState::SEND_PACKDATA:
+            sendPackData();
+            break;
+            case ServerState::TERMINATE:
+            stop = true;
+            break;
+        }
+    }
+}
+
+void
+GitServer::waitOrder()
+{
+
+}
+
+void
+GitServer::sendReferenceCapabilities()
+{
+
+}
+
+void
+GitServer::answerToWantOrder()
+{
+
+}
+
+void
+GitServer::sendPackData()
+{
+    state_ = ServerState::WAIT_ORDER;
+
+        git_repository* repo;
+        CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+
+        git_packbuilder *pb;
+        CPPUNIT_ASSERT(git_packbuilder_new(&pb, repo) == 0);
+
+
+        git_oid commit_id;
+        CPPUNIT_ASSERT(git_reference_name_to_id(&commit_id, repo, "HEAD") == 0);
+        CPPUNIT_ASSERT(git_packbuilder_insert_commit(pb, &commit_id) == 0);
+
+        git_buf data;
+        CPPUNIT_ASSERT(git_packbuilder_write_buf(&data, pb) == 0);
+
+        std::stringstream toSend;
+        toSend << std::setw(4) << std::setfill('0') << std::hex << ((data.size + 5) & 0x0FFFF);
+        result = toSend.str() + "\x1";
+
+        sendSocket->write((const unsigned char*)result.c_str(), result.size(), ec);
+
+        res = sendSocket->write((const unsigned char*)data.ptr, data.size, ec);
+
+        git_packbuilder_free(pb);
+
+        result = "0000";
+        sendSocket->write((const unsigned char*)result.c_str(), result.size(), ec);
+}
+
 /////////////////////////////////////////////////////////////////////////////////
 
 ConversationRepository::ConversationRepository(const std::weak_ptr<JamiAccount>& account, const std::string& id)
@@ -297,6 +427,12 @@ ConversationRepository::ConversationRepository(const std::weak_ptr<JamiAccount>&
 {}
 
 ConversationRepository::~ConversationRepository() = default;
+
+void
+ConversationRepository::serve(std::shared_ptr<ChannelSocket> client)
+{
+
+}
 
 std::string
 ConversationRepository::id() const
