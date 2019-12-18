@@ -22,6 +22,7 @@ libmedia_la_SOURCES = \
 	media_filter.cpp \
 	media_recorder.cpp \
 	localrecorder.cpp \
+	media_player.cpp \
 	localrecordermanager.cpp \
 	congestion_control.cpp
 
@@ -44,6 +45,7 @@ noinst_HEADERS = \
 	media_stream.h \
 	media_recorder.h \
 	localrecorder.h \
+	media_player.h \
 	localrecordermanager.h \
 	congestion_control.h
 
