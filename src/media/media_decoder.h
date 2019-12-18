@@ -101,6 +101,9 @@ public:
 
     Status decode();
 
+    int64_t getDuration() const;
+    bool seekFrame(int stream_index, int64_t timestamp);
+
 private:
     bool streamInfoFound_ {false};
     AVFormatContext *inputCtx_ = nullptr;
@@ -125,10 +128,13 @@ public:
     MediaDecoder();
     MediaDecoder(MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer);
     MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, AVMediaType type) : MediaDecoder(demuxer, demuxer->selectStream(type)) {}
     ~MediaDecoder();
 
     void emulateRate() { emulateRate_ = true; }
+    void skipFrames() { skipFrames_ = true; }
+    bool skipFrames_ {false};
 
     int openInput(const DeviceParams&);
     void setInterruptCallback(int (*cb)(void*), void *opaque);
@@ -144,9 +150,11 @@ public:
     int getWidth() const;
     int getHeight() const;
     std::string getDecoderName() const;
+    void updateStartTime(int64_t startTime);
 
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;
+    void flushBuffers();
 
     void setOptions(const std::map<std::string, std::string>& options);
 #ifdef RING_ACCEL

@@ -76,6 +76,14 @@ AudioInput::process()
 }
 
 void
+AudioInput::updateStartTime(int64_t start)
+{
+    if (decoder_) {
+        decoder_->updateStartTime(start);
+    }
+}
+
+void
 AudioInput::frameResized(std::shared_ptr<AudioFrame>&& ptr)
 {
     std::shared_ptr<AudioFrame> frame = std::move(ptr);
@@ -114,8 +122,16 @@ AudioInput::readFromDevice()
 void
 AudioInput::readFromFile()
 {
+    if (paused_) {
+        std::this_thread::sleep_for(MS_PER_PACKET);
+        return;
+    }
     if (!decoder_)
         return;
+    if (needFrame) {
+        needFrame();
+        return;
+    }
     const auto ret = decoder_->decode();
     switch (ret) {
     case MediaDemuxer::Status::Success:
@@ -129,6 +145,14 @@ AudioInput::readFromFile()
     }
 }
 
+void
+AudioInput::setNeedFrameCallback(const std::function<void(void)>& cb) noexcept
+{
+    if (cb) {
+        needFrame = cb;
+    }
+}
+
 bool
 AudioInput::initDevice(const std::string& device)
 {
@@ -137,6 +161,36 @@ AudioInput::initDevice(const std::string& device)
     devOpts_.channel = format_.nb_channels;
     devOpts_.framerate = format_.sample_rate;
     return true;
+}
+
+void
+AudioInput::configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index)
+{
+    loop_.stop();
+    decoder_.reset();
+  //  Manager::instance().getRingBufferPool().unBindHalfDuplexOut(id_, fileId_);
+    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
+    fileBuf_.reset();
+    devOpts_ = {};
+    devOpts_.input = path;
+    devOpts_.name = path;
+    auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
+        fileBuf_->put(std::move(std::static_pointer_cast<AudioFrame>(frame)));
+    });
+
+    fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(fileId_);
+    // when streaming during call
+    // have file audio mixed into the call buffer so it gets sent to the peer
+   // Manager::instance().getRingBufferPool().bindHalfDuplexOut(id_, fileId_);
+    // have file audio mixed into the local buffer so it gets played
+    Manager::instance().getRingBufferPool().bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
+    decodingFile_ = true;
+    decoder_ = std::move(decoder);
+}
+
+bool
+AudioInput::setPaused(bool paused) {
+    paused_ = paused;
 }
 
 bool
