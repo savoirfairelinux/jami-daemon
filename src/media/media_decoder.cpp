@@ -144,6 +144,23 @@ MediaDemuxer::openInput(const DeviceParams& params)
     return ret;
 }
 
+int64_t
+MediaDemuxer::getDuration() const
+{
+    av_dump_format(inputCtx_, 0, inputParams_.name.c_str(), false);
+    av_dump_format(inputCtx_, 1, inputParams_.name.c_str(), false);
+    return inputCtx_->duration;
+}
+
+bool
+MediaDemuxer::seekFrame(int stream_index, int64_t timestamp)
+{
+    if (av_seek_frame(inputCtx_, -1, timestamp, AVSEEK_FLAG_BACKWARD) >= 0) {
+        return true;
+    }
+    return false;
+}
+
 void
 MediaDemuxer::findStreamInfo()
 {
@@ -176,7 +193,6 @@ void MediaDemuxer::setInterruptCallback(int (*cb)(void*), void *opaque)
 void MediaDemuxer::setIOContext(MediaIOHandle *ioctx)
 { inputCtx_->pb = ioctx->getContext(); }
 
-
 MediaDemuxer::Status
 MediaDemuxer::decode()
 {
@@ -200,6 +216,7 @@ MediaDemuxer::decode()
         return Status::Success;
     }
 
+    auto pts = packet->pts;
     auto& cb = streams_[streamIndex];
     if (cb)
         cb(*packet.get());
@@ -215,6 +232,72 @@ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int ind
     });
     setupStream();
 }
+
+MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int index, MediaObserver observer)
+: demuxer_(demuxer),
+  avStream_(demuxer->getStream(index)),
+  callback_(std::move(observer))
+{
+    demuxer->setStreamCallback(index, [this](AVPacket& packet) {
+        decode(packet);
+    });
+    setupStream();
+}
+
+void
+MediaDecoder::emitNewFrame()
+{
+    if (framesBuffer.empty()) {
+        return;
+    }
+    if (callback_) {
+        auto time = std::move(framesBuffer.begin()->first);
+        callback_(std::move(framesBuffer.begin()->second));
+        if (streamSync) {
+        streamSync(time);
+        }
+    }
+    framesBuffer.erase(framesBuffer.begin()->first);
+}
+
+void
+MediaDecoder::setStreamSynk(StreamSync sync)
+{
+    streamSync = sync;
+}
+
+void
+MediaDecoder::playFramesBeforeTimestamp(int64_t timestamp) {
+    auto it = framesBuffer.begin();
+       while (it != framesBuffer.end()) {
+           int64_t key = it->first;
+           if (key < timestamp) {
+               if (callback_)
+                   callback_(std::move(it->second));
+               it = framesBuffer.erase(it);
+           } else
+               break;
+       }
+}
+
+void
+MediaDecoder::clearFramesBeforeTimestamp(int64_t timestamp) {
+    std::map<int64_t, std::shared_ptr<MediaFrame>>::iterator it = framesBuffer.begin();
+    std::vector<int64_t> vect;
+    while (it != framesBuffer.end())
+    {
+        int64_t key = it->first;
+        if (key < timestamp) {
+            vect.push_back(key);
+        }
+        it++;
+    }
+
+    for(auto const& value: vect) {
+        framesBuffer.erase (value);
+    }
+}
+
 
 MediaDecoder::MediaDecoder()
  : demuxer_(new MediaDemuxer)
@@ -232,6 +315,13 @@ MediaDecoder::~MediaDecoder()
 #endif
     if (decoderCtx_)
         avcodec_free_context(&decoderCtx_);
+}
+
+void
+MediaDecoder::flushBuffers()
+{
+    avcodec_flush_buffers(decoderCtx_);
+    clearFramesBeforeTimestamp(seekTime_);
 }
 
 int
@@ -358,6 +448,11 @@ MediaDecoder::prepareDecoderContext()
     return 0;
 }
 
+void
+MediaDecoder::updateStartTime(int64_t startTime) {
+     startTime_ = startTime;
+}
+
 MediaDecoder::Status
 MediaDecoder::decode(AVPacket& packet)
 {
@@ -388,8 +483,19 @@ MediaDecoder::decode(AVPacket& packet)
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
             {1, AV_TIME_BASE}, decoderCtx_->time_base,
             static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-        lastTimestamp_ = frame->pts;
 
+        auto target_time = static_cast<std::int64_t>((getTimeBase()*(packetTimestamp - avStream_->start_time)).real() * 1e6);
+        if (target_time < seekTime_ && skipFrames_) {
+            return Status::Success;
+        }
+        //required frame found. Reset seek time
+        if (target_time >= seekTime_ && skipFrames_) {
+            resetSeekTime();
+        }
+        if (syncToOtherStream_) {
+            framesBuffer.insert(std::make_pair<int64_t, std::shared_ptr<MediaFrame>>(std::move(target_time), std::move(f)));
+                return Status::FrameFinished;
+        }
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
@@ -404,6 +510,13 @@ MediaDecoder::decode(AVPacket& packet)
     }
 
     return Status::Success;
+}
+
+void
+MediaDecoder::setSeekTime(int64_t time) {
+    auto streamTime = static_cast<std::int64_t>((getTimeBase()*(time - avStream_->start_time)).real() * 1e6);
+    //auto streamTime = av_rescale(time,avStream_->time_base.den,avStream_->time_base.num);
+    seekTime_ = streamTime;
 }
 
 MediaDemuxer::Status
