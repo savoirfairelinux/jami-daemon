@@ -83,7 +83,7 @@ public:
     using Identity = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
                                std::shared_ptr<dht::crypto::Certificate>>;
 
-    TlsTurnEndpoint(ConnectedTurnTransport& turn,
+    TlsTurnEndpoint(std::unique_ptr<ConnectedTurnTransport> turn,
                     const Identity& local_identity,
                     const std::shared_future<tls::DhParams>& dh_params,
                     std::function<bool(const dht::crypto::Certificate&)>&& cert_check);
@@ -181,11 +181,11 @@ public:
     using Identity = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
                                std::shared_ptr<dht::crypto::Certificate>>;
 
-    TlsSocketEndpoint(AbstractSocketEndpoint& tr,
+    TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint> tr,
                       const Identity& local_identity,
                       const std::shared_future<tls::DhParams>& dh_params,
                       const dht::crypto::Certificate& peer_cert);
-    TlsSocketEndpoint(AbstractSocketEndpoint& tr,
+    TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint> tr,
                     const Identity& local_identity,
                     const std::shared_future<tls::DhParams>& dh_params,
                     std::function<bool(const dht::crypto::Certificate&)>&& cert_check);

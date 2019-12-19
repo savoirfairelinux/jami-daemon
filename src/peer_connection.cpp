@@ -95,9 +95,31 @@ class TlsTurnEndpoint::Impl
 public:
     static constexpr auto TLS_TIMEOUT = std::chrono::seconds(20);
 
-    Impl(ConnectedTurnTransport& tr,
-         std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
-        : turn {tr}, peerCertificateCheckFunc {std::move(cert_check)} {}
+    Impl(std::unique_ptr<ConnectedTurnTransport> turn_ep,
+         std::function<bool(const dht::crypto::Certificate&)>&& cert_check,
+         const Identity& local_identity,
+         const std::shared_future<tls::DhParams>& dh_params)
+        : peerCertificateCheckFunc {std::move(cert_check)} {
+
+        // Add TLS over TURN
+        tls::TlsSession::TlsSessionCallbacks tls_cbs = {
+            /*.onStateChange = */[this](tls::TlsSessionState state){ onTlsStateChange(state); },
+            /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onTlsRxData(std::move(buf)); },
+            /*.onCertificatesUpdate = */[this](const gnutls_datum_t* l, const gnutls_datum_t* r,
+                                            unsigned int n){ onTlsCertificatesUpdate(l, r, n); },
+            /*.verifyCertificate = */[this](gnutls_session_t session){ return verifyCertificate(session); }
+        };
+        tls::TlsParams tls_param = {
+            /*.ca_list = */     "",
+            /*.peer_ca = */     nullptr,
+            /*.cert = */        local_identity.second,
+            /*.cert_key = */    local_identity.first,
+            /*.dh_params = */   dh_params,
+            /*.timeout = */     Impl::TLS_TIMEOUT,
+            /*.cert_check = */  nullptr,
+        };
+        tls = std::make_unique<tls::TlsSession>(std::move(turn_ep), tls_param, tls_cbs);
+    }
 
     ~Impl();
 
@@ -108,7 +130,6 @@ public:
     void onTlsCertificatesUpdate(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int);
 
     std::unique_ptr<tls::TlsSession> tls;
-    ConnectedTurnTransport& turn;
     std::function<bool(const dht::crypto::Certificate&)> peerCertificateCheckFunc;
     dht::crypto::Certificate peerCertificate;
     OnStateChangeCb onStateChangeCb_;
@@ -154,31 +175,12 @@ TlsTurnEndpoint::Impl::onTlsCertificatesUpdate(UNUSED const gnutls_datum_t* loca
                                                UNUSED unsigned int remote_count)
 {}
 
-TlsTurnEndpoint::TlsTurnEndpoint(ConnectedTurnTransport& turn_ep,
+TlsTurnEndpoint::TlsTurnEndpoint(std::unique_ptr<ConnectedTurnTransport> turn_ep,
                                  const Identity& local_identity,
                                  const std::shared_future<tls::DhParams>& dh_params,
                                  std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
-    : pimpl_ { std::make_unique<Impl>(turn_ep, std::move(cert_check)) }
-{
-    // Add TLS over TURN
-    tls::TlsSession::TlsSessionCallbacks tls_cbs = {
-        /*.onStateChange = */[this](tls::TlsSessionState state){ pimpl_->onTlsStateChange(state); },
-        /*.onRxData = */[this](std::vector<uint8_t>&& buf){ pimpl_->onTlsRxData(std::move(buf)); },
-        /*.onCertificatesUpdate = */[this](const gnutls_datum_t* l, const gnutls_datum_t* r,
-                                           unsigned int n){ pimpl_->onTlsCertificatesUpdate(l, r, n); },
-        /*.verifyCertificate = */[this](gnutls_session_t session){ return pimpl_->verifyCertificate(session); }
-    };
-    tls::TlsParams tls_param = {
-        /*.ca_list = */     "",
-        /*.peer_ca = */     nullptr,
-        /*.cert = */        local_identity.second,
-        /*.cert_key = */    local_identity.first,
-        /*.dh_params = */   dh_params,
-        /*.timeout = */     Impl::TLS_TIMEOUT,
-        /*.cert_check = */  nullptr,
-    };
-    pimpl_->tls = std::make_unique<tls::TlsSession>(turn_ep, tls_param, tls_cbs);
-}
+    : pimpl_ { std::make_unique<Impl>(std::move(turn_ep), std::move(cert_check), local_identity, dh_params) }
+{}
 
 TlsTurnEndpoint::~TlsTurnEndpoint() = default;
 
@@ -390,11 +392,53 @@ class TlsSocketEndpoint::Impl
 public:
     static constexpr auto TLS_TIMEOUT = std::chrono::seconds(20);
 
-    Impl(AbstractSocketEndpoint& ep, const dht::crypto::Certificate& peer_cert)
-        : tr {ep}, peerCertificate {peer_cert} {}
+    Impl(std::unique_ptr<AbstractSocketEndpoint> ep,
+         const dht::crypto::Certificate& peer_cert,
+         const Identity& local_identity,
+         const std::shared_future<tls::DhParams>& dh_params)
+        : peerCertificate {peer_cert} {
+        tls::TlsSession::TlsSessionCallbacks tls_cbs = {
+            /*.onStateChange = */[this](tls::TlsSessionState state){ onTlsStateChange(state); },
+            /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onTlsRxData(std::move(buf)); },
+            /*.onCertificatesUpdate = */[this](const gnutls_datum_t* l, const gnutls_datum_t* r,
+                                            unsigned int n){ onTlsCertificatesUpdate(l, r, n); },
+            /*.verifyCertificate = */[this](gnutls_session_t session){ return verifyCertificate(session); }
+        };
+        tls::TlsParams tls_param = {
+            /*.ca_list = */     "",
+            /*.peer_ca = */     nullptr,
+            /*.cert = */        local_identity.second,
+            /*.cert_key = */    local_identity.first,
+            /*.dh_params = */   dh_params,
+            /*.timeout = */     Impl::TLS_TIMEOUT,
+            /*.cert_check = */  nullptr,
+        };
+        tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
+    }
 
-    Impl(AbstractSocketEndpoint &ep, std::function<bool(const dht::crypto::Certificate &)>&& cert_check)
-        : tr{ep}, peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert} {}
+    Impl(std::unique_ptr<AbstractSocketEndpoint> ep,
+         std::function<bool(const dht::crypto::Certificate &)>&& cert_check,
+         const Identity& local_identity,
+         const std::shared_future<tls::DhParams>& dh_params)
+        : peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert} {
+        tls::TlsSession::TlsSessionCallbacks tls_cbs = {
+            /*.onStateChange = */[this](tls::TlsSessionState state){ onTlsStateChange(state); },
+            /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onTlsRxData(std::move(buf)); },
+            /*.onCertificatesUpdate = */[this](const gnutls_datum_t* l, const gnutls_datum_t* r,
+                                            unsigned int n){ onTlsCertificatesUpdate(l, r, n); },
+            /*.verifyCertificate = */[this](gnutls_session_t session){ return verifyCertificate(session); }
+        };
+        tls::TlsParams tls_param = {
+            /*.ca_list = */     "",
+            /*.peer_ca = */     nullptr,
+            /*.cert = */        local_identity.second,
+            /*.cert_key = */    local_identity.first,
+            /*.dh_params = */   dh_params,
+            /*.timeout = */     Impl::TLS_TIMEOUT,
+            /*.cert_check = */  nullptr,
+        };
+        tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
+    }
 
     // TLS callbacks
     int verifyCertificate(gnutls_session_t);
@@ -403,7 +447,6 @@ public:
     void onTlsCertificatesUpdate(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int);
 
     std::unique_ptr<tls::TlsSession> tls;
-    AbstractSocketEndpoint& tr;
     const dht::crypto::Certificate& peerCertificate;
     dht::crypto::Certificate null_cert;
     std::function<bool(const dht::crypto::Certificate &)> peerCertificateCheckFunc;
@@ -453,56 +496,20 @@ TlsSocketEndpoint::Impl::onTlsCertificatesUpdate(UNUSED const gnutls_datum_t* lo
                                                 UNUSED unsigned int remote_count)
 {}
 
-TlsSocketEndpoint::TlsSocketEndpoint(AbstractSocketEndpoint& tr,
+TlsSocketEndpoint::TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint> tr,
                                      const Identity& local_identity,
                                      const std::shared_future<tls::DhParams>& dh_params,
                                      const dht::crypto::Certificate& peer_cert)
-    : pimpl_ { std::make_unique<Impl>(tr, peer_cert) }
-{
-    // Add TLS over TURN
-    tls::TlsSession::TlsSessionCallbacks tls_cbs = {
-        /*.onStateChange = */[this](tls::TlsSessionState state){ pimpl_->onTlsStateChange(state); },
-        /*.onRxData = */[this](std::vector<uint8_t>&& buf){ pimpl_->onTlsRxData(std::move(buf)); },
-        /*.onCertificatesUpdate = */[this](const gnutls_datum_t* l, const gnutls_datum_t* r,
-                                           unsigned int n){ pimpl_->onTlsCertificatesUpdate(l, r, n); },
-        /*.verifyCertificate = */[this](gnutls_session_t session){ return pimpl_->verifyCertificate(session); }
-    };
-    tls::TlsParams tls_param = {
-        /*.ca_list = */     "",
-        /*.peer_ca = */     nullptr,
-        /*.cert = */        local_identity.second,
-        /*.cert_key = */    local_identity.first,
-        /*.dh_params = */   dh_params,
-        /*.timeout = */     Impl::TLS_TIMEOUT,
-        /*.cert_check = */  nullptr,
-    };
-    pimpl_->tls = std::make_unique<tls::TlsSession>(tr, tls_param, tls_cbs);
-}
+    : pimpl_ { std::make_unique<Impl>(std::move(tr), peer_cert, local_identity, dh_params) }
+{}
 
-TlsSocketEndpoint::TlsSocketEndpoint(AbstractSocketEndpoint& tr,
+TlsSocketEndpoint::TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint> tr,
                                     const Identity& local_identity,
                                     const std::shared_future<tls::DhParams>& dh_params,
                                     std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
-    : pimpl_ { std::make_unique<Impl>(tr, std::move(cert_check)) }
+    : pimpl_ { std::make_unique<Impl>(std::move(tr), std::move(cert_check), local_identity, dh_params) }
 {
-    // Add TLS over TURN
-    tls::TlsSession::TlsSessionCallbacks tls_cbs = {
-        /*.onStateChange = */[this](tls::TlsSessionState state){ pimpl_->onTlsStateChange(state); },
-        /*.onRxData = */[this](std::vector<uint8_t>&& buf){ pimpl_->onTlsRxData(std::move(buf)); },
-        /*.onCertificatesUpdate = */[this](const gnutls_datum_t* l, const gnutls_datum_t* r,
-                                           unsigned int n){ pimpl_->onTlsCertificatesUpdate(l, r, n); },
-        /*.verifyCertificate = */[this](gnutls_session_t session){ return pimpl_->verifyCertificate(session); }
-    };
-    tls::TlsParams tls_param = {
-        /*.ca_list = */     "",
-        /*.peer_ca = */     nullptr,
-        /*.cert = */        local_identity.second,
-        /*.cert_key = */    local_identity.first,
-        /*.dh_params = */   dh_params,
-        /*.timeout = */     Impl::TLS_TIMEOUT,
-        /*.cert_check = */  nullptr,
-    };
-    pimpl_->tls = std::make_unique<tls::TlsSession>(tr, tls_param, tls_cbs);
+
 }
 
 
