@@ -1,0 +1,90 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "06676665_63dc0385",
+        "filename": "src/dring/videomanager_interface.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-19T16:06:56Z",
+      "side": 1,
+      "message": "createMediaPlayer ?",
+      "range": {
+        "startLine": 179,
+        "startChar": 25,
+        "endLine": 179,
+        "endChar": 33
+      },
+      "revId": "9ab88af611927452628f64562b66d6981f69a4b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eca222cb_709f5bbb",
+        "filename": "src/dring/videomanager_interface.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 209,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-19T16:06:56Z",
+      "side": 1,
+      "message": "map\u003cstring, string\u003e to add more information later",
+      "range": {
+        "startLine": 209,
+        "startChar": 70,
+        "endLine": 209,
+        "endChar": 89
+      },
+      "revId": "9ab88af611927452628f64562b66d6981f69a4b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c175c279_df7b3253",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-19T16:06:56Z",
+      "side": 1,
+      "message": "audio and video inputs should share the same MediaDemuxer instead of opening the file twice",
+      "range": {
+        "startLine": 44,
+        "startChar": 2,
+        "endLine": 46,
+        "endChar": 78
+      },
+      "revId": "9ab88af611927452628f64562b66d6981f69a4b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "59c3c7fe_8810a261",
+        "filename": "src/media/media_player.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-19T16:06:56Z",
+      "side": 1,
+      "message": "#pragma once",
+      "revId": "9ab88af611927452628f64562b66d6981f69a4b9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
