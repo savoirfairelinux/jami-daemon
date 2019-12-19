@@ -236,7 +236,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     std::memset(&localCertInfo_, 0, sizeof(pj_ssl_cert_info));
     std::memset(&remoteCertInfo_, 0, sizeof(pj_ssl_cert_info));
 
-    iceSocket_ = std::make_unique<IceSocketTransport>(ice_, comp_id, PJSIP_TRANSPORT_IS_RELIABLE(&trData_.base));
+    auto iceSocket = std::make_unique<IceSocketTransport>(ice_, comp_id, PJSIP_TRANSPORT_IS_RELIABLE(&trData_.base));
 
     TlsSession::TlsSessionCallbacks cbs = {
         /*.onStateChange = */[this](TlsSessionState state){ onTlsStateChange(state); },
@@ -245,7 +245,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                                            unsigned int n){ onCertificatesUpdate(l, r, n); },
         /*.verifyCertificate = */[this](gnutls_session_t session){ return verifyCertificate(session); }
     };
-    tls_ = std::make_unique<TlsSession>(*iceSocket_, param, cbs);
+    tls_ = std::make_unique<TlsSession>(std::move(iceSocket), param, cbs);
 
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
