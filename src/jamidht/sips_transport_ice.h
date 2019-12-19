@@ -111,7 +111,6 @@ private:
         decltype(PJSIP_TP_STATE_DISCONNECTED) state;
     };
 
-    std::unique_ptr<IceSocketTransport> iceSocket_;
     std::unique_ptr<TlsSession> tls_;
 
     std::mutex txMutex_ {};
