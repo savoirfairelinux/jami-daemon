@@ -257,8 +257,6 @@ public:
     }
 
 private:
-    std::map<IpAddr, std::unique_ptr<ConnectedTurnTransport>> turnEndpoints_;
-    std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<AbstractSocketEndpoint>> p2pEndpoints_;
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<TlsSocketEndpoint>> waitForReadyEndpoints_;
     std::unique_ptr<TurnTransport> turnAuthv4_;
     std::unique_ptr<TurnTransport> turnAuthv6_;
@@ -421,7 +419,7 @@ private:
         }
 
         // Check response validity
-        std::shared_ptr<AbstractSocketEndpoint> peer_ep;
+        std::unique_ptr<AbstractSocketEndpoint> peer_ep;
         if (response_.from != peer_ or
             response_.id != request.id or
             response_.addresses.empty())
@@ -446,7 +444,7 @@ private:
 
                 ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
                 if (ice->isRunning()) {
-                    peer_ep = std::make_shared<IceSocketEndpoint>(ice, true);
+                    peer_ep = std::make_unique<IceSocketEndpoint>(ice, true);
                     JAMI_DBG("[Account:%s] ICE negotiation succeed. Starting file transfer",
                              parent_.account.getAccountID().c_str());
                     if (hasPubIp) ice->setInitiatorSession();
@@ -459,7 +457,7 @@ private:
                     // Connect to TURN peer using a raw socket
                     JAMI_DBG() << parent_.account << "[CNX] connecting to TURN relay "
                             << relay_addr.toString(true, true);
-                    peer_ep = std::make_shared<TcpSocketEndpoint>(relay_addr);
+                    peer_ep = std::make_unique<TcpSocketEndpoint>(relay_addr);
                     try {
                         peer_ep->connect(SOCK_TIMEOUT);
                     } catch (const std::logic_error& e) {
@@ -488,9 +486,9 @@ private:
         // Negotiate a TLS session
         JAMI_DBG() << parent_.account << "[CNX] start TLS session";
         tls_ep_ = std::make_unique<TlsSocketEndpoint>(
-            *peer_ep, parent_.account.identity(), parent_.account.dhParams(),
+            std::move(peer_ep), parent_.account.identity(), parent_.account.dhParams(),
             *peerCertificate_);
-        tls_ep_->setOnStateChange([this, ice=std::move(ice), peer_ep] (tls::TlsSessionState state) {
+        tls_ep_->setOnStateChange([this, ice=std::move(ice)] (tls::TlsSessionState state) {
             if (state == tls::TlsSessionState::SHUTDOWN) {
                 JAMI_WARN() << "TLS connection failure from peer "
                             << peer_.toString();
@@ -502,7 +500,6 @@ private:
                 connection_ = std::make_unique<PeerConnection>(
                     [this] { cancel(); }, peer_.toString(),
                     std::move(tls_ep_));
-                peer_ep_ = std::move(peer_ep);
                 for (auto &cb : listeners_) {
                     cb(connection_.get());
                 }
@@ -520,7 +517,6 @@ private:
     PeerConnectionMsg response_;
     uint64_t waitId_ {0};
     std::shared_ptr<dht::crypto::Certificate> peerCertificate_;
-    std::shared_ptr<AbstractSocketEndpoint> peer_ep_;
     std::unique_ptr<PeerConnection> connection_;
     std::unique_ptr<TlsSocketEndpoint> tls_ep_;
 
@@ -641,7 +637,7 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
     JAMI_DBG() << account << "[CNX] start TLS session over TURN socket";
     auto peer_h = std::make_shared<dht::InfoHash>();
     tls_turn_ep_[peer_addr] =
-    std::make_unique<TlsTurnEndpoint>(*turn_ep,
+    std::make_unique<TlsTurnEndpoint>(std::move(turn_ep),
                                       account.identity(),
                                       account.dhParams(),
                                       [peer_h, this] (const dht::crypto::Certificate& cert) {
@@ -669,12 +665,6 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
             tls_turn_ep_.erase(peer_addr);
         }
     });
-
-    // note: operating this way let endpoint to be deleted safely in case of exceptions
-    {
-        std::lock_guard<std::mutex> lock(turnMutex_);
-        turnEndpoints_.emplace(std::make_pair(peer_addr, std::move(turn_ep)));
-    }
 }
 
 void
@@ -687,10 +677,6 @@ DhtPeerConnector::Impl::onTurnPeerDisconnection(const IpAddr& peer_addr)
     JAMI_WARN() << account << "[CNX] disconnection from peer " << peer_addr.toString(true, true);
     servers_.erase(it);
     connectedPeers_.erase(peer_addr);
-    {
-        std::lock_guard<std::mutex> lock(turnMutex_);
-        turnEndpoints_.erase(peer_addr);
-    }
 }
 
 void
@@ -877,7 +863,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         auto idx = std::make_pair(peer_h, ice->getRemoteAddress(0));
         auto it = waitForReadyEndpoints_.emplace(
             idx,
-            std::make_unique<TlsSocketEndpoint>(*peer_ep, account.identity(), account.dhParams(),
+            std::make_unique<TlsSocketEndpoint>(std::move(peer_ep), account.identity(), account.dhParams(),
                 [peer_h, this](const dht::crypto::Certificate &cert) {
                     dht::InfoHash peer_h_found;
                     return validatePeerCertificate(cert, peer_h_found)
@@ -885,7 +871,6 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                 }
             )
         );
-        p2pEndpoints_.emplace(idx, std::move(peer_ep));
 
         it.first->second->setOnStateChange([this, idx=std::move(idx)] (tls::TlsSessionState state) {
             if (waitForReadyEndpoints_.find(idx) == waitForReadyEndpoints_.end()) {
@@ -989,19 +974,7 @@ DhtPeerConnector::Impl::eventLoop()
                     auto peer = it->first.second; // tmp copy to prevent use-after-free below
                     servers_.erase(it);
                     // Remove the file transfer if p2p
-                    auto p2p_it = std::find_if(p2pEndpoints_.begin(), p2pEndpoints_.end(),
-                                    [&dev_h, &peer](const auto &element) {
-                                        return (element.first.first == dev_h &&
-                                                element.first.second == peer);
-                                    });
-                    if (p2p_it != p2pEndpoints_.end())
-                        p2pEndpoints_.erase(p2p_it);
                     connectedPeers_.erase(peer);
-                    // Else it's via TURN!
-                    {
-                        std::lock_guard<std::mutex> lock(turnMutex_);
-                        turnEndpoints_.erase(peer);
-                    }
                     Manager::instance().dataTransfers->close(id);
                 }
                 break;
