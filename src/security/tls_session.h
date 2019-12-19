@@ -108,7 +108,7 @@ public:
         VerifyCertificate verifyCertificate;
     };
 
-    TlsSession(SocketType& transport, const TlsParams& params, const TlsSessionCallbacks& cbs,
+    TlsSession(std::unique_ptr<SocketType>& transport, const TlsParams& params, const TlsSessionCallbacks& cbs,
                bool anonymous=true);
     ~TlsSession();
 
