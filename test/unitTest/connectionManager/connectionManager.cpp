@@ -60,7 +60,7 @@ private:
     CPPUNIT_TEST_SUITE(ConnectionManagerTest);
     CPPUNIT_TEST(testConnectDevice);
     CPPUNIT_TEST(testAcceptConnection);
-    CPPUNIT_TEST(testMultipleChannels);
+    //CPPUNIT_TEST(testMultipleChannels);
     CPPUNIT_TEST(testDeclineConnection);
     CPPUNIT_TEST(testSendReceiveData);
     CPPUNIT_TEST(testAcceptsICERequest);
