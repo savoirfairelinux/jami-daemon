@@ -47,7 +47,6 @@ struct ConnectionInfo {
     PeerConnectionRequest response_;
     std::mutex mutex_;
     std::shared_ptr<IceTransport> ice_ {nullptr};
-    std::shared_ptr<IceSocketEndpoint> iceSocket_ {nullptr};
 };
 
 class ConnectionManager::Impl {
@@ -212,12 +211,12 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
             }
 
             // Build socket
-            connectionInfo.iceSocket_ = std::make_shared<IceSocketEndpoint>(ice, true);
+            auto endpoint = std::make_unique<IceSocketEndpoint>(ice, true);
 
             // Negotiate a TLS session
             JAMI_DBG() << account << "Start TLS session";
             auto tlsSocket = std::make_unique<TlsSocketEndpoint>(
-                *connectionInfo.iceSocket_, account.identity(), account.dhParams(),
+                std::move(endpoint), account.identity(), account.dhParams(),
                 *cert);
 
             std::lock_guard<std::mutex> lknrs(nonReadySocketsMutex_);
@@ -372,12 +371,12 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
         req.from, value);
 
     // Build socket
-    connectionInfo.iceSocket_ = std::make_shared<IceSocketEndpoint>(ice, false);
+    auto endpoint = std::make_unique<IceSocketEndpoint>(ice, false);
 
     // init TLS session
     auto ph = req.from;
     auto tlsSocket = std::make_unique<TlsSocketEndpoint>(
-        *connectionInfo.iceSocket_, account.identity(), account.dhParams(),
+        std::move(endpoint), account.identity(), account.dhParams(),
         [ph, this](const dht::crypto::Certificate &cert) {
             dht::InfoHash peer_h;
             return validatePeerCertificate(cert, peer_h) && peer_h == ph;
