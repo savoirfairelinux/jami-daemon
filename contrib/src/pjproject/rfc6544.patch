@@ -17,31 +17,31 @@ on behalf of Savoir-faire Linux.
 
 ---
  pjnath/include/pjnath/config.h          |   13 +-
- pjnath/include/pjnath/ice_session.h     |  187 ++++++++++++++++++++++++--
- pjnath/include/pjnath/ice_strans.h      |   61 ++++++++-
- pjnath/include/pjnath/stun_session.h    |   82 +++++++++++-
- pjnath/include/pjnath/stun_sock.h       |   93 ++++++++++---
- pjnath/include/pjnath/turn_sock.h       |   11 ++
+ pjnath/include/pjnath/ice_session.h     |  187 +++++++++-
+ pjnath/include/pjnath/ice_strans.h      |   61 +++-
+ pjnath/include/pjnath/stun_session.h    |   82 ++++-
+ pjnath/include/pjnath/stun_sock.h       |   93 ++++-
+ pjnath/include/pjnath/turn_sock.h       |   11 +
  pjnath/src/pjnath-test/concur_test.c    |    8 +-
  pjnath/src/pjnath-test/sess_auth.c      |   12 +-
  pjnath/src/pjnath-test/stun_sock_test.c |    7 +-
- pjnath/src/pjnath/ice_session.c         |  586 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------
- pjnath/src/pjnath/ice_strans.c          |  984 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------
+ pjnath/src/pjnath/ice_session.c         |  593 +++++++++++++++++++++++-------
+ pjnath/src/pjnath/ice_strans.c          |  986 +++++++++++++++++++++++++++++++++++++-------------
  pjnath/src/pjnath/nat_detect.c          |   12 +-
  pjnath/src/pjnath/stun_session.c        |   12 +-
- pjnath/src/pjnath/stun_sock.c           | 1359 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---------------------------------------------------
+ pjnath/src/pjnath/stun_sock.c           | 1359 ++++++++++++++++++++++++++++++++++++++++++++++++++-------------------
  pjnath/src/pjnath/stun_transaction.c    |    1 +
  pjnath/src/pjnath/turn_session.c        |    3 +-
- pjnath/src/pjnath/turn_sock.c           |   16 +++
+ pjnath/src/pjnath/turn_sock.c           |   16 +
  pjnath/src/pjturn-client/client_main.c  |   11 +-
  pjnath/src/pjturn-srv/allocation.c      |    2 +-
  pjnath/src/pjturn-srv/server.c          |    2 +-
- pjsip-apps/src/samples/icedemo.c        |  671 ++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------------------------
+ pjsip-apps/src/samples/icedemo.c        |  671 +++++++++++++++++++---------------
  pjsip/src/pjsua-lib/pjsua_core.c        |    8 +-
- 22 files changed, 3038 insertions(+), 1103 deletions(-)
+ 22 files changed, 3047 insertions(+), 1103 deletions(-)
 
 diff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
-index fc1e27550..6f17a663b 100644
+index fc1e2755..6f17a663 100644
 --- a/pjnath/include/pjnath/config.h
 +++ b/pjnath/include/pjnath/config.h
 @@ -1,5 +1,5 @@
@@ -87,7 +87,7 @@ index fc1e27550..6f17a663b 100644
  
  
 diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
-index fa13a3b7c..77e1278dc 100644
+index fa13a3b7..77e1278d 100644
 --- a/pjnath/include/pjnath/ice_session.h
 +++ b/pjnath/include/pjnath/ice_session.h
 @@ -163,6 +163,51 @@ typedef enum pj_ice_cand_type
@@ -352,7 +352,7 @@ index fa13a3b7c..77e1278dc 100644
  /**
   * @}
 diff --git a/pjnath/include/pjnath/ice_strans.h b/pjnath/include/pjnath/ice_strans.h
-index cb6777245..afaddce20 100644
+index cb677724..afaddce2 100644
 --- a/pjnath/include/pjnath/ice_strans.h
 +++ b/pjnath/include/pjnath/ice_strans.h
 @@ -1,5 +1,5 @@
@@ -457,7 +457,7 @@ index cb6777245..afaddce20 100644
  PJ_DECL(pj_ice_sess *) pj_ice_strans_get_ice_sess(pj_ice_strans *ice_st);
  
 diff --git a/pjnath/include/pjnath/stun_session.h b/pjnath/include/pjnath/stun_session.h
-index f8ea4d1dc..3d42af5a2 100644
+index f8ea4d1d..3d42af5a 100644
 --- a/pjnath/include/pjnath/stun_session.h
 +++ b/pjnath/include/pjnath/stun_session.h
 @@ -1,5 +1,5 @@
@@ -579,7 +579,7 @@ index f8ea4d1dc..3d42af5a2 100644
   * @}
   */
 diff --git a/pjnath/include/pjnath/stun_sock.h b/pjnath/include/pjnath/stun_sock.h
-index fff4df885..05a61bb11 100644
+index fff4df88..05a61bb1 100644
 --- a/pjnath/include/pjnath/stun_sock.h
 +++ b/pjnath/include/pjnath/stun_sock.h
 @@ -1,5 +1,5 @@
@@ -753,7 +753,7 @@ index fff4df885..05a61bb11 100644
  /**
   * @}
 diff --git a/pjnath/include/pjnath/turn_sock.h b/pjnath/include/pjnath/turn_sock.h
-index 8650cfc59..99570ac25 100644
+index 8650cfc5..99570ac2 100644
 --- a/pjnath/include/pjnath/turn_sock.h
 +++ b/pjnath/include/pjnath/turn_sock.h
 @@ -490,6 +490,17 @@ PJ_DECL(pj_status_t) pj_turn_sock_bind_channel(pj_turn_sock *turn_sock,
@@ -775,7 +775,7 @@ index 8650cfc59..99570ac25 100644
   * @}
   */
 diff --git a/pjnath/src/pjnath-test/concur_test.c b/pjnath/src/pjnath-test/concur_test.c
-index c3013d2ab..ebe173922 100644
+index c3013d2a..ebe17392 100644
 --- a/pjnath/src/pjnath-test/concur_test.c
 +++ b/pjnath/src/pjnath-test/concur_test.c
 @@ -183,10 +183,10 @@ static int stun_destroy_test_session(struct stun_test_session *test_sess)
@@ -794,7 +794,7 @@ index c3013d2ab..ebe173922 100644
  	    return -10;
  	}
 diff --git a/pjnath/src/pjnath-test/sess_auth.c b/pjnath/src/pjnath-test/sess_auth.c
-index 055eaad61..d1ad137a3 100644
+index 055eaad6..d1ad137a 100644
 --- a/pjnath/src/pjnath-test/sess_auth.c
 +++ b/pjnath/src/pjnath-test/sess_auth.c
 @@ -248,7 +248,8 @@ static int create_std_server(pj_stun_auth_type auth_type,
@@ -831,7 +831,7 @@ index 055eaad61..d1ad137a3 100644
  	destroy_client_server();
  	return -270;
 diff --git a/pjnath/src/pjnath-test/stun_sock_test.c b/pjnath/src/pjnath-test/stun_sock_test.c
-index fff4fad26..a54df74dc 100644
+index fff4fad2..a54df74d 100644
 --- a/pjnath/src/pjnath-test/stun_sock_test.c
 +++ b/pjnath/src/pjnath-test/stun_sock_test.c
 @@ -255,8 +255,8 @@ static pj_status_t create_client(pj_stun_config *cfg,
@@ -858,7 +858,7 @@ index fff4fad26..a54df74dc 100644
  	app_perror("    error: server sending data", status);
  	ret = -390;
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index a5c7a5b0b..7373cdf35 100644
+index a5c7a5b0..2f5bd03b 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -1,5 +1,5 @@
@@ -1095,7 +1095,7 @@ index a5c7a5b0b..7373cdf35 100644
 +    /* Note that USERNAME and MESSAGE-INTEGRITY will be added by the
 +     * STUN session.
 +     */
- 
++
 +    /* Initiate STUN transaction to send the request */
 +    status = pj_stun_session_send_msg(
 +        comp->stun_sess, msg_data, PJ_FALSE,
@@ -1109,7 +1109,7 @@ index a5c7a5b0b..7373cdf35 100644
 +        pj_log_pop_indent();
 +        return status;
 +    }
-+
+ 
 +
 +    return PJ_SUCCESS;
 +}
@@ -1459,7 +1459,7 @@ index a5c7a5b0b..7373cdf35 100644
      }
  
      status = (*ice->cb.on_tx_pkt)(ice, sd->comp_id, msg_data->transport_id,
-@@ -2333,6 +2536,145 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
+@@ -2333,6 +2536,152 @@ static pj_status_t on_stun_send_msg(pj_stun_session *sess,
      return status;
  }
  
@@ -1505,38 +1505,45 @@ index a5c7a5b0b..7373cdf35 100644
 +        }
 +  }
 +
-+  if (status != PJ_SUCCESS) {
-+    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
-+    on_check_complete(ice, check);
-+    return;
-+  }
++    if (status != PJ_SUCCESS) {
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++        on_check_complete(ice, check);
++        return;
++    }
 +
-+  // TCP is correctly connected. Craft the message to send
-+  const pj_ice_sess_cand *lcand = check->lcand;
-+  const pj_ice_sess_cand *rcand = check->rcand;
-+  if (check->tdata == NULL) {
-+    LOG5((ice->obj_name, "Error sending STUN request, empty data"));
-+    return;
-+  }
-+  pj_ice_msg_data *msg_data =
-+      PJ_POOL_ZALLOC_T(check->tdata->pool, pj_ice_msg_data);
++    // TCP is correctly connected. Craft the message to send
++    if (check->tdata == NULL) {
++        LOG5((ice->obj_name, "Error sending STUN request, empty data"));
++        return;
++    }
++    pj_ice_msg_data *msg_data =
++        PJ_POOL_ZALLOC_T(check->tdata->pool, pj_ice_msg_data);
 +
-+  msg_data->transport_id = transport_id;
-+  msg_data->has_req_data = PJ_TRUE;
-+  msg_data->data.req.ice = ice;
-+  msg_data->data.req.clist = &ice->clist;
-+  msg_data->data.req.ckid = current_check;
++    msg_data->transport_id = transport_id;
++    msg_data->has_req_data = PJ_TRUE;
++    msg_data->data.req.ice = ice;
++    msg_data->data.req.clist = &ice->clist;
++    msg_data->data.req.ckid = current_check;
 +
-+  pj_ice_sess_comp *comp = find_comp(ice, lcand->comp_id);
-+  pj_status_t status_send_msg;
-+  // Note that USERNAME and MESSAGE-INTEGRITY will be added by the
-+  // STUN session.
++    pj_ice_sess_comp *comp = find_comp(ice, lcand->comp_id);
++    pj_status_t status_send_msg;
++    // Note that USERNAME and MESSAGE-INTEGRITY will be added by the
++    // STUN session.
 +
 +    // Initiate STUN transaction to send the request
 +    status_send_msg = pj_stun_session_send_msg(
 +        comp->stun_sess, msg_data, PJ_FALSE, PJ_FALSE, &rcand->addr,
 +        pj_sockaddr_get_len(&rcand->addr), check->tdata);
-+    if ((status_send_msg == 120104 || status_send_msg == 130054)/* CONNECTION RESET BY PEER */
++    if (status_send_msg == 70011 /* EBUSY */) {
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
++        return;
++    }
++    if (status_send_msg == 120033 /* BROKEN PIPE */) {
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY, status);
++        return;
++    }
++
++    if ((status_send_msg == 120104 || status_send_msg == 130054 || status_send_msg == 120033)/* CONNECTION RESET BY PEER */
 +        && rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
 +        /**
 +         * This part of the code is triggered when using ICE over TCP via TURN
@@ -1605,7 +1612,7 @@ index a5c7a5b0b..7373cdf35 100644
  
  /* This callback is called when outgoing STUN request completed */
  static void on_stun_request_complete(pj_stun_session *stun_sess,
-@@ -2563,7 +2905,8 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+@@ -2563,7 +2912,8 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
  				      &check->lcand->base_addr, 
  				      &check->lcand->base_addr,
  				      pj_sockaddr_get_len(&xaddr->sockaddr),
@@ -1615,7 +1622,7 @@ index a5c7a5b0b..7373cdf35 100644
  	if (status != PJ_SUCCESS) {
  	    check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, 
  			    status);
-@@ -2678,8 +3021,8 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2678,8 +3028,8 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      pj_grp_lock_acquire(ice->grp_lock);
  
      if (ice->is_destroying) {
@@ -1626,7 +1633,7 @@ index a5c7a5b0b..7373cdf35 100644
      }
  
      /*
-@@ -2694,9 +3037,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2694,9 +3044,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      prio_attr = (pj_stun_priority_attr*)
  	        pj_stun_msg_find_attr(msg, PJ_STUN_ATTR_PRIORITY, 0);
      if (prio_attr == NULL) {
@@ -1639,7 +1646,7 @@ index a5c7a5b0b..7373cdf35 100644
      }
  
      /* Get USE-CANDIDATE attribute */
-@@ -2741,7 +3084,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2741,7 +3091,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
  				    NULL, token, PJ_TRUE, 
  				    src_addr, src_addr_len);
  	    pj_grp_lock_release(ice->grp_lock);
@@ -1648,7 +1655,7 @@ index a5c7a5b0b..7373cdf35 100644
  	}
  
      } else if (ice->role == PJ_ICE_SESS_ROLE_CONTROLLED &&
-@@ -2753,7 +3096,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2753,7 +3103,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
  				    NULL, token, PJ_TRUE, 
  				    src_addr, src_addr_len);
  	    pj_grp_lock_release(ice->grp_lock);
@@ -1657,7 +1664,7 @@ index a5c7a5b0b..7373cdf35 100644
  	} else {
  	    /* Switch role to controlled */
  	    LOG4((ice->obj_name, 
-@@ -2768,7 +3111,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2768,7 +3118,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      status = pj_stun_session_create_res(sess, rdata, 0, NULL, &tdata);
      if (status != PJ_SUCCESS) {
  	pj_grp_lock_release(ice->grp_lock);
@@ -1666,7 +1673,7 @@ index a5c7a5b0b..7373cdf35 100644
      }
  
      if (((pj_sockaddr *)src_addr)->addr.sa_family == pj_AF_INET6()) {
-@@ -2825,9 +3168,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+@@ -2825,9 +3175,9 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
      msg_data->has_req_data = PJ_FALSE;
  
      /* Send the response */
@@ -1679,7 +1686,7 @@ index a5c7a5b0b..7373cdf35 100644
  
      /* 
       * Handling early check.
-@@ -2946,14 +3289,16 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -2946,14 +3296,16 @@ static void handle_incoming_check(pj_ice_sess *ice,
      /* Just get candidate with the highest priority and same transport ID
       * for the specified  component ID in the checklist.
       */
@@ -1704,7 +1711,7 @@ index a5c7a5b0b..7373cdf35 100644
      }
      if (lcand == NULL) {
  	/* Should not happen, but just in case remote is sending a
-@@ -2976,9 +3321,9 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -2976,9 +3328,9 @@ static void handle_incoming_check(pj_ice_sess *ice,
       * have this pair in our checklist.
       */
      for (i=0; i<ice->clist.count; ++i) {
@@ -1717,7 +1724,7 @@ index a5c7a5b0b..7373cdf35 100644
      }
  
      /* If the pair is already on the check list:
-@@ -3001,7 +3346,6 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -3001,7 +3353,6 @@ static void handle_incoming_check(pj_ice_sess *ice,
  	 * Note: DO NOT overwrite nominated flag if one is already set.
  	 */
  	c->nominated = ((rcheck->use_candidate) || c->nominated);
@@ -1726,7 +1733,7 @@ index a5c7a5b0b..7373cdf35 100644
  	    c->state == PJ_ICE_SESS_CHECK_STATE_WAITING)
  	{
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index c7c2a5e71..e758ad84e 100644
+index c7c2a5e7..7f2b6470 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
 @@ -69,6 +69,7 @@ enum tp_type
@@ -2516,7 +2523,7 @@ index c7c2a5e71..e758ad84e 100644
      }
  
      return (status==PJ_SUCCESS||status==PJ_EPENDING) ? PJ_SUCCESS : status;
-@@ -1763,22 +1932,239 @@ static void ice_rx_data(pj_ice_sess *ice,
+@@ -1763,22 +1932,241 @@ static void ice_rx_data(pj_ice_sess *ice,
      }
  }
  
@@ -2543,6 +2550,7 @@ index c7c2a5e71..e758ad84e 100644
 +	  return;
 +  }
 +
++  ice_st->is_pending = PJ_FALSE;
 +  ice_sess_on_peer_connection(ice_st->ice, data->transport_id, status, remote_addr);
 +}
 +
@@ -2733,6 +2741,7 @@ index c7c2a5e71..e758ad84e 100644
 +	}
 +	if (idx != -1 && st_comp->stun[idx].sock) {
 +		const pj_ice_sess_cand *rcand = check->rcand;
++	    ice_st->is_pending = PJ_FALSE;
 +		return pj_stun_sock_close(st_comp->stun[idx].sock, &rcand->addr);
 +	}
 +
@@ -2769,7 +2778,7 @@ index c7c2a5e71..e758ad84e 100644
  	/* We have disassociated ourselves from the STUN socket */
  	return PJ_FALSE;
      }
-@@ -1822,9 +2208,34 @@ static pj_bool_t stun_on_data_sent(pj_stun_sock *stun_sock,
+@@ -1822,9 +2210,34 @@ static pj_bool_t stun_on_data_sent(pj_stun_sock *stun_sock,
  				   pj_ioqueue_op_key_t *send_key,
  				   pj_ssize_t sent)
  {
@@ -2807,7 +2816,7 @@ index c7c2a5e71..e758ad84e 100644
      return PJ_TRUE;
  }
  
-@@ -2029,6 +2440,10 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+@@ -2029,6 +2442,10 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
  	    }
  	}
  	break;
@@ -2818,7 +2827,7 @@ index c7c2a5e71..e758ad84e 100644
      }
  
      return pj_grp_lock_dec_ref(ice_st->grp_lock)? PJ_FALSE : PJ_TRUE;
-@@ -2037,7 +2452,7 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
+@@ -2037,7 +2454,7 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,
  /* Callback when TURN socket has received a packet */
  static void turn_on_rx_data(pj_turn_sock *turn_sock,
  			    void *pkt,
@@ -2827,7 +2836,7 @@ index c7c2a5e71..e758ad84e 100644
  			    const pj_sockaddr_t *peer_addr,
  			    unsigned addr_len)
  {
-@@ -2063,20 +2478,90 @@ static void turn_on_rx_data(pj_turn_sock *turn_sock,
+@@ -2063,20 +2480,90 @@ static void turn_on_rx_data(pj_turn_sock *turn_sock,
  	 */
  	if (comp->ice_st->cb.on_rx_data) {
  	    (*comp->ice_st->cb.on_rx_data)(comp->ice_st, comp->comp_id, pkt,
@@ -2927,7 +2936,7 @@ index c7c2a5e71..e758ad84e 100644
  	}
      }
  
-@@ -2293,5 +2778,4 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
+@@ -2293,5 +2780,4 @@ static void turn_on_state(pj_turn_sock *turn_sock, pj_turn_state_t old_state,
      pj_grp_lock_dec_ref(comp->ice_st->grp_lock);
  
      pj_log_pop_indent();
@@ -2936,7 +2945,7 @@ index c7c2a5e71..e758ad84e 100644
 +}
 \ No newline at end of file
 diff --git a/pjnath/src/pjnath/nat_detect.c b/pjnath/src/pjnath/nat_detect.c
-index db0de10bc..3013eeed2 100644
+index db0de10b..3013eeed 100644
 --- a/pjnath/src/pjnath/nat_detect.c
 +++ b/pjnath/src/pjnath/nat_detect.c
 @@ -329,7 +329,8 @@ PJ_DEF(pj_status_t) pj_stun_detect_nat_type2(const pj_sockaddr *server,
@@ -2966,7 +2975,7 @@ index db0de10bc..3013eeed2 100644
  	goto on_error;
  
 diff --git a/pjnath/src/pjnath/stun_session.c b/pjnath/src/pjnath/stun_session.c
-index 7b53aba74..2b006d918 100644
+index 7b53aba7..2b006d91 100644
 --- a/pjnath/src/pjnath/stun_session.c
 +++ b/pjnath/src/pjnath/stun_session.c
 @@ -49,6 +49,8 @@ struct pj_stun_session
@@ -3007,7 +3016,7 @@ index 7b53aba74..2b006d918 100644
 +  return sess ? sess->conn_type : PJ_STUN_TP_UDP;
 +}
 diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
-index 7692e6c14..e7e876ce7 100644
+index 7692e6c1..e7e876ce 100644
 --- a/pjnath/src/pjnath/stun_sock.c
 +++ b/pjnath/src/pjnath/stun_sock.c
 @@ -1,5 +1,5 @@
@@ -4613,7 +4622,7 @@ index 7692e6c14..e7e876ce7 100644
 +  return stun_sock ? stun_sock->stun_sess : NULL;
 +}
 diff --git a/pjnath/src/pjnath/stun_transaction.c b/pjnath/src/pjnath/stun_transaction.c
-index 28f623005..0c15763c2 100644
+index 28f62300..0c15763c 100644
 --- a/pjnath/src/pjnath/stun_transaction.c
 +++ b/pjnath/src/pjnath/stun_transaction.c
 @@ -394,6 +394,7 @@ static void retransmit_timer_callback(pj_timer_heap_t *timer_heap,
@@ -4625,7 +4634,7 @@ index 28f623005..0c15763c2 100644
  	return PJ_SUCCESS;
      }
 diff --git a/pjnath/src/pjnath/turn_session.c b/pjnath/src/pjnath/turn_session.c
-index 97e9435c1..9f91dd34c 100644
+index 97e9435c..9f91dd34 100644
 --- a/pjnath/src/pjnath/turn_session.c
 +++ b/pjnath/src/pjnath/turn_session.c
 @@ -311,7 +311,8 @@ PJ_DEF(pj_status_t) pj_turn_session_create( const pj_stun_config *cfg,
@@ -4639,7 +4648,7 @@ index 97e9435c1..9f91dd34c 100644
  	do_destroy(sess);
  	return status;
 diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
-index a8d9ed009..7033fd939 100644
+index a8d9ed00..7033fd93 100644
 --- a/pjnath/src/pjnath/turn_sock.c
 +++ b/pjnath/src/pjnath/turn_sock.c
 @@ -1357,3 +1357,19 @@ static void turn_on_connection_bind_status(pj_turn_session *sess,
@@ -4664,7 +4673,7 @@ index a8d9ed009..7033fd939 100644
 +}
 \ No newline at end of file
 diff --git a/pjnath/src/pjturn-client/client_main.c b/pjnath/src/pjturn-client/client_main.c
-index 1a8667220..5f013631a 100644
+index 1a866722..5f013631 100644
 --- a/pjnath/src/pjturn-client/client_main.c
 +++ b/pjnath/src/pjturn-client/client_main.c
 @@ -154,10 +154,10 @@ static int init()
@@ -4694,7 +4703,7 @@ index 1a8667220..5f013631a 100644
  	case 'q':
  	    g.quit = PJ_TRUE;
 diff --git a/pjnath/src/pjturn-srv/allocation.c b/pjnath/src/pjturn-srv/allocation.c
-index 6c9c9ce11..eea91f01b 100644
+index 6c9c9ce1..eea91f01 100644
 --- a/pjnath/src/pjturn-srv/allocation.c
 +++ b/pjnath/src/pjturn-srv/allocation.c
 @@ -338,7 +338,7 @@ PJ_DEF(pj_status_t) pj_turn_allocation_create(pj_turn_transport *transport,
@@ -4707,7 +4716,7 @@ index 6c9c9ce11..eea91f01b 100644
  	goto on_error;
      }
 diff --git a/pjnath/src/pjturn-srv/server.c b/pjnath/src/pjturn-srv/server.c
-index 94dda29a3..95ad1793d 100644
+index 94dda29a..95ad1793 100644
 --- a/pjnath/src/pjturn-srv/server.c
 +++ b/pjnath/src/pjturn-srv/server.c
 @@ -156,7 +156,7 @@ PJ_DEF(pj_status_t) pj_turn_srv_create(pj_pool_factory *pf,
@@ -4720,7 +4729,7 @@ index 94dda29a3..95ad1793d 100644
  	goto on_error;
      }
 diff --git a/pjsip-apps/src/samples/icedemo.c b/pjsip-apps/src/samples/icedemo.c
-index 9d811374a..92826fd8d 100644
+index 9d811374..92826fd8 100644
 --- a/pjsip-apps/src/samples/icedemo.c
 +++ b/pjsip-apps/src/samples/icedemo.c
 @@ -43,7 +43,7 @@ static struct app_t
@@ -5470,7 +5479,7 @@ index 9d811374a..92826fd8d 100644
  
      status = icedemo_init();
 diff --git a/pjsip/src/pjsua-lib/pjsua_core.c b/pjsip/src/pjsua-lib/pjsua_core.c
-index ea1e72b85..39d05d1ed 100644
+index ea1e72b8..39d05d1e 100644
 --- a/pjsip/src/pjsua-lib/pjsua_core.c
 +++ b/pjsip/src/pjsua-lib/pjsua_core.c
 @@ -1529,10 +1529,10 @@ static void resolve_stun_entry(pjsua_stun_resolve *sess)
