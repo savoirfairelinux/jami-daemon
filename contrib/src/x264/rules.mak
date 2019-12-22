@@ -4,7 +4,7 @@ X264_HASH := 8c2974255b01728d4eda2434cc1997c4a3ca5eff
 else
 X264_HASH := fa3cac516cb71b8ece09cedbfd0ce631ca8a2a4c
 endif
-X264_GITURL := git://git.videolan.org/x264.git
+X264_GITURL := https://code.videolan.org/videolan/x264.git
 
 ifeq ($(call need_pkg,"x264 >= 0.86"),)
 PKGS_FOUND += x264
