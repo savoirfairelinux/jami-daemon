@@ -1329,7 +1329,10 @@ SIPCall::InvSessionDeleter::operator ()(pjsip_inv_session* inv) const noexcept
 {
     // prevent this from getting accessed in callbacks
     // JAMI_WARN: this is not thread-safe!
+    if (!inv) return;
     inv->mod_data[getSIPVoIPLink()->getModId()] = nullptr;
+    // NOTE: the counter is incremented by sipvoiplink (transaction_request_cb)
+    pjsip_inv_dec_ref(inv);
 }
 
 bool
