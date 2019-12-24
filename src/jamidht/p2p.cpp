@@ -548,8 +548,14 @@ DhtPeerConnector::Impl::turnConnect()
     auto username = details[Conf::CONFIG_TURN_SERVER_UNAME];
     auto password = details[Conf::CONFIG_TURN_SERVER_PWD];
 
+    auto turnCache = account.turnCache();
+
     auto turn_param_v4 = TurnTransportParams {};
-    turn_param_v4.server = IpAddr {server.empty() ? "turn.jami.net" : server};
+    if (turnCache.v4Valid) {
+        turn_param_v4.server = turnCache.v4;
+    } else {
+        turn_param_v4.server = IpAddr {server.empty() ? "turn.jami.net" : server};
+    }
     turn_param_v4.realm = realm.empty() ? "ring" : realm;
     turn_param_v4.username = username.empty() ? "ring" : username;
     turn_param_v4.password = password.empty() ? "ring" : password;
@@ -576,6 +582,11 @@ DhtPeerConnector::Impl::turnConnect()
 
         if (!turnAuthv6_ || !turnAuthv6_->isReady()) {
             auto turn_param_v6 = turn_param_v4;
+            if (turnCache.v6Valid) {
+                turn_param_v6.server = turnCache.v6;
+            } else {
+                turn_param_v6.server = IpAddr {server.empty() ? "turn.jami.net" : server};
+            }
             turn_param_v6.authorized_family = PJ_AF_INET6;
             turnAuthv6_ = std::make_unique<TurnTransport>(turn_param_v6);
         }

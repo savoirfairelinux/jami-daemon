@@ -646,6 +646,9 @@ private:
     bool accountPublish_ {false};
 
     std::shared_ptr<RepeatedTask> eventHandler {};
+
+    std::atomic_bool isRefreshing_ {false};
+    void cacheTurnServers();
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)

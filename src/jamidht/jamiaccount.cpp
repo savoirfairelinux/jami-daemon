@@ -1519,6 +1519,8 @@ JamiAccount::doRegister()
     } else {
         doRegister_();
     }
+
+    cacheTurnServers(); // reset cache for TURN servers
 }
 
 std::vector<std::string>
@@ -1988,6 +1990,7 @@ JamiAccount::connectivityChanged()
 
     dht_->connectivityChanged();
     setPublishedAddress({}); // reset cache
+    cacheTurnServers();
 }
 
 bool
@@ -2640,6 +2643,70 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
         setCodecActive(AV_CODEC_ID_H264);
         setCodecActive(AV_CODEC_ID_VP8);
     }
+}
+
+void
+JamiAccount::cacheTurnServers()
+{
+    dht::ThreadPool::io().run([this] {
+        JAMI_WARN("@@@REFRESH CACHE");
+        if (isRefreshing_) return;
+        isRefreshing_ = true;
+        if (!turnEnabled_) {
+            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+            cacheTurnV4_.reset();
+            cacheTurnV6_.reset();
+            isRefreshing_ = false;
+            return;
+        }
+        // Retrieve old value if available
+        auto server = getAccountDetails()[Conf::CONFIG_TURN_SERVER];
+        server = server.empty() ? "turn.jami.net" : server;
+        fileutils::recursive_mkdir(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + "domains", 0700);
+        auto pathV4 = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v4." + server;
+        if (auto turnV4File = std::ifstream(pathV4)) {
+            std::string content((std::istreambuf_iterator<char>(turnV4File)), std::istreambuf_iterator<char>());
+            cacheTurnV4_ = std::make_unique<IpAddr>(content, AF_INET);
+            JAMI_ERR("CACHED: %s", cacheTurnV4_->toString().c_str());
+        }
+        auto pathV6 = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v6." + server;
+        if (auto turnV6File = std::ifstream(pathV6)) {
+            std::string content((std::istreambuf_iterator<char>(turnV6File)), std::istreambuf_iterator<char>());
+            cacheTurnV6_ = std::make_unique<IpAddr>(content, AF_INET6);
+            JAMI_ERR("CACHED: %s", cacheTurnV6_->toString().c_str());
+        }
+        // Resolve just in case
+        auto turnV4 = IpAddr {server, AF_INET};
+        {
+            if (turnV4) {
+                // Cache value to avoid a delay when starting up Jami
+                std::ofstream turnV4File(pathV4);
+                turnV4File << turnV4.toString();
+            } else {
+                fileutils::remove(pathV4, true);
+            }
+            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+            // Only update if new TURN is not invalid
+            JAMI_WARN("@@@UPDATE TURN V4");
+            cacheTurnV4_ = std::make_unique<IpAddr>(std::move(turnV4));
+        }
+        auto turnV6 = IpAddr {server.empty() ? "turn.jami.net" : server, AF_INET6};
+        {
+            if (turnV6) {
+                // Cache value to avoid a delay when starting up Jami
+                std::ofstream turnV6File(pathV6);
+                turnV6File << turnV6.toString();
+            } else {
+                fileutils::remove(pathV6, true);
+            }
+            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+            // Only update if new TURN is not invalid
+            JAMI_WARN("@@@UPDATE TURN V6");
+            cacheTurnV6_ = std::make_unique<IpAddr>(std::move(turnV6));
+        }
+        JAMI_WARN("@@@REFRESHED CACHE");
+        isRefreshing_ = false;
+    });
 }
 
 } // namespace jami
