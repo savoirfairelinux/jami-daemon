@@ -298,6 +298,25 @@ public:
 public: // overloaded methods
     virtual void flush() override;
 
+    struct TurnCache {
+        bool v4Valid {false};
+        IpAddr v4 {};
+        bool v6Valid {false};
+        IpAddr v6 {};
+    };
+
+    TurnCache turnCache() {
+        std::lock_guard<std::mutex> lk {cachedTurnMutex_};
+        IpAddr v4 {}, v6 {};
+        auto v4Valid = cacheTurnV4_ == nullptr;
+        if (v4Valid)
+            v4 = *cacheTurnV4_;
+        auto v6Valid = cacheTurnV6_ == nullptr;
+        if (v6Valid)
+            v6 = *cacheTurnV6_;
+        return TurnCache { v4Valid, v4, v6Valid, v6 };
+    }
+
 protected:
     virtual void serialize(YAML::Emitter &out) const override;
     virtual void serializeTls(YAML::Emitter &out) const;
@@ -444,6 +463,10 @@ protected:
     std::mutex mutexLastMessages_;
     static constexpr size_t MAX_WAITING_MESSAGES_SIZE = 1000;
     std::deque<DRing::Message> lastMessages_;
+
+    mutable std::mutex cachedTurnMutex_ {};
+    std::unique_ptr<IpAddr> cacheTurnV4_ {};
+    std::unique_ptr<IpAddr> cacheTurnV6_ {};
 
 private:
     NON_COPYABLE(SIPAccountBase);

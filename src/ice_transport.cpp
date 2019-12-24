@@ -352,8 +352,11 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
         add_stun_server(*pool_, config_, server);
 
     // Add TURN servers
-    for (auto& server : options.turnServers)
+    for (auto& server : options.turnServers) {
+        JAMI_ERR("ADD...");
         add_turn_server(*pool_, config_, server);
+        JAMI_ERR("ADD... END");
+    }
 
     static constexpr auto IOQUEUE_MAX_HANDLES = std::min(PJ_IOQUEUE_MAX_HANDLES, 64);
     TRY( pj_timer_heap_create(pool_.get(), 100, &config_.stun_cfg.timer_heap) );

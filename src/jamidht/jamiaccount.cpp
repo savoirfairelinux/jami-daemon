@@ -1519,6 +1519,8 @@ JamiAccount::doRegister()
     } else {
         doRegister_();
     }
+
+    cacheTurnServers(); // reset cache for TURN servers
 }
 
 std::vector<std::string>
@@ -1988,6 +1990,7 @@ JamiAccount::connectivityChanged()
 
     dht_->connectivityChanged();
     setPublishedAddress({}); // reset cache
+    cacheTurnServers();
 }
 
 bool
@@ -2640,6 +2643,40 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
         setCodecActive(AV_CODEC_ID_H264);
         setCodecActive(AV_CODEC_ID_VP8);
     }
+}
+
+void
+JamiAccount::cacheTurnServers()
+{
+    dht::ThreadPool::io().run([this] {
+        JAMI_WARN("@@@REFRESH CACHE");
+        if (isRefreshing_) return;
+        isRefreshing_ = true;
+        if (!turnEnabled_) {
+            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+            cacheTurnV4_.reset();
+            cacheTurnV6_.reset();
+            isRefreshing_ = false;
+            return;
+        }
+        auto server = getAccountDetails()[Conf::CONFIG_TURN_SERVER];
+        auto turnV4 = IpAddr {server.empty() ? "turn.jami.net" : server, AF_INET};
+        {
+            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+            // Only update if new TURN is not invalid
+            JAMI_WARN("@@@UPDATE TURN V4");
+            cacheTurnV4_ = std::make_unique<IpAddr>(std::move(turnV4));
+        }
+        auto turnV6 = IpAddr {server.empty() ? "turn.jami.net" : server, AF_INET6};
+        {
+            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+            // Only update if new TURN is not invalid
+            JAMI_WARN("@@@UPDATE TURN V6");
+            cacheTurnV6_ = std::make_unique<IpAddr>(std::move(turnV6));
+        }
+        JAMI_WARN("@@@REFRESHED CACHE");
+        isRefreshing_ = false;
+    });
 }
 
 } // namespace jami
