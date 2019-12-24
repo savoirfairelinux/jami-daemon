@@ -298,6 +298,20 @@ public:
 public: // overloaded methods
     virtual void flush() override;
 
+    /**
+     * Return current turn resolved addresses
+     * @return {unique_ptr(v4 resolved), unique_ptr(v6 resolved)}
+     */
+    std::array<std::unique_ptr<IpAddr>, 2> turnCache() {
+        std::lock_guard<std::mutex> lk {cachedTurnMutex_};
+        std::array<std::unique_ptr<IpAddr>, 2> result = {};
+        if (cacheTurnV4_ && *cacheTurnV4_)
+            result[0] = std::make_unique<IpAddr>(*cacheTurnV4_);
+        if (cacheTurnV6_ && *cacheTurnV6_)
+            result[1] = std::make_unique<IpAddr>(*cacheTurnV6_);
+        return result;
+    }
+
 protected:
     virtual void serialize(YAML::Emitter &out) const override;
     virtual void serializeTls(YAML::Emitter &out) const;
@@ -444,6 +458,10 @@ protected:
     std::mutex mutexLastMessages_;
     static constexpr size_t MAX_WAITING_MESSAGES_SIZE = 1000;
     std::deque<DRing::Message> lastMessages_;
+
+    mutable std::mutex cachedTurnMutex_ {};
+    std::unique_ptr<IpAddr> cacheTurnV4_ {};
+    std::unique_ptr<IpAddr> cacheTurnV6_ {};
 
 private:
     NON_COPYABLE(SIPAccountBase);
