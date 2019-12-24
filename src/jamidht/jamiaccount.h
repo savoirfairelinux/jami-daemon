@@ -646,6 +646,16 @@ private:
     bool accountPublish_ {false};
 
     std::shared_ptr<RepeatedTask> eventHandler {};
+
+    /**
+     * Avoid to refresh the cache multiple times
+     */
+    std::atomic_bool isRefreshing_ {false};
+    /**
+     * This will cache the turn server resolution each time we launch
+     * Jami, or for each connectivityChange()
+     */
+    void cacheTurnServers();
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)
