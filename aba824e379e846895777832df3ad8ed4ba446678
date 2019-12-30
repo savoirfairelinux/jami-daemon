@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7c88f104_b718fec1",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-30T20:47:14Z",
+      "side": 1,
+      "message": "configureMediaInputs() here (return true/false)",
+      "range": {
+        "startLine": 31,
+        "startChar": 12,
+        "endLine": 31,
+        "endChar": 24
+      },
+      "revId": "aba824e379e846895777832df3ad8ed4ba446678",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b903dea4_3a4608df",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-30T20:47:14Z",
+      "side": 1,
+      "message": "no need for a second thread",
+      "range": {
+        "startLine": 53,
+        "startChar": 4,
+        "endLine": 53,
+        "endChar": 11
+      },
+      "revId": "aba824e379e846895777832df3ad8ed4ba446678",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "46aea1da_e35be0da",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-30T20:47:14Z",
+      "side": 1,
+      "message": "print message to log ?",
+      "range": {
+        "startLine": 87,
+        "startChar": 38,
+        "endLine": 87,
+        "endChar": 40
+      },
+      "revId": "aba824e379e846895777832df3ad8ed4ba446678",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6bb7dde8_495fa005",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-30T20:47:14Z",
+      "side": 1,
+      "message": "print message to log ?",
+      "range": {
+        "startLine": 94,
+        "startChar": 6,
+        "endLine": 94,
+        "endChar": 40
+      },
+      "revId": "aba824e379e846895777832df3ad8ed4ba446678",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
