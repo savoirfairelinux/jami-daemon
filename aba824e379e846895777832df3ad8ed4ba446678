@@ -25,6 +25,29 @@
     },
     {
       "key": {
+        "uuid": "cb8da480_f13f02e8",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 33
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-30T20:53:23Z",
+      "side": 1,
+      "message": "how does the client (or even the class user) knows an error happened ?",
+      "range": {
+        "startLine": 40,
+        "startChar": 0,
+        "endLine": 40,
+        "endChar": 17
+      },
+      "revId": "aba824e379e846895777832df3ad8ed4ba446678",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "b903dea4_3a4608df",
         "filename": "src/media/media_player.cpp",
         "patchSetId": 33
