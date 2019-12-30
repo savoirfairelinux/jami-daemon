@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0f00d802_6f7b85fa",
+        "filename": "src/media/media_player.cpp",
+        "patchSetId": 32
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-30T18:16:42Z",
+      "side": 1,
+      "message": "std::map\u003cstd::string, std::string\u003e info {\n     {\"duration\", std::to_string(fileDuration_)},\n     {\"audio_stream\", std::to_string(audioStream_)},\n     {\"video_stream\", std::to_string(videoStream_)}\n};",
+      "range": {
+        "startLine": 105,
+        "startChar": 4,
+        "endLine": 108,
+        "endChar": 99
+      },
+      "revId": "8f516c1b8a1f04acab4362a8876ffbcce0f7f50f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "de259270_cd5e6129",
+        "filename": "src/media/video/video_input.h",
+        "patchSetId": 32
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2019-12-30T18:16:42Z",
+      "side": 1,
+      "message": "should not be needed in header (forward-declare MediaDemuxer just like MediaDecoder).",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 30,
+        "endChar": 26
+      },
+      "revId": "8f516c1b8a1f04acab4362a8876ffbcce0f7f50f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
