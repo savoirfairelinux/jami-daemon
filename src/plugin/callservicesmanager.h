@@ -105,6 +105,7 @@ public:
         };
 
         auto unregisterMediaHandler = [this](const DLPlugin* plugin, void* data) {
+            (void) plugin;
             for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
 
                 if(it->second.get() == data) {
