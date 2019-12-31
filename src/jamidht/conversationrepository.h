@@ -74,6 +74,13 @@ public:
      */
     std::string id() const;
 
+    /**
+     * Add a new commit to the conversation
+     * @param msg     The msg to send
+     * @return <empty> on failure, else the message id
+     */
+    std::string sendMessage(const std::string& msg);
+
 private:
     ConversationRepository() = delete;
     class Impl;
