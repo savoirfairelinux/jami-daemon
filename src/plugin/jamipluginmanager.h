@@ -21,9 +21,12 @@
 #include "fileutils.h"
 #include "archiver.h"
 #include "pluginmanager.h"
-#include "callservicesmanager.h"
 #include "pluginpreferencesmanager.h"
 #include "jpluncompressor.h"
+
+//Services
+#include "callservicesmanager.h"
+#include "conversationservicesmanager.h"
 
 #include <vector>
 #include <map>
@@ -36,6 +39,7 @@ class JamiPluginManager
 public:
     JamiPluginManager() {
         csm_.registerComponentsLifeCycleManagers(pm_);
+        convsm_.registerComponentsLifeCycleManagers(pm_);
         registerServices();
     }
 
@@ -162,6 +166,10 @@ public:
         return csm_;
     }
 
+    ConversationServicesManager& getConversationServicesManager() {
+        return convsm_;
+    }
+
 private:
     /**
      * @brief checkPluginValidity
@@ -221,6 +229,7 @@ private:
 private:
     PluginManager pm_;
     CallServicesManager csm_;
+    ConversationServicesManager convsm_;
     PluginPreferencesManager ppm_;
     JplUncompressor uncompressor;
 };

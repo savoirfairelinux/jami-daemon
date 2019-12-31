@@ -135,6 +135,15 @@ protected:
     std::set<Observer<T>*> observers_;
 };
 
+
+template <typename T>
+class PublishObservable : public Observable<T> {
+public:
+    void publish(T data) {
+        this->notify(data);
+    }
+};
+
 /*=== Observer =============================================================*/
 
 template <typename T>
