@@ -281,8 +281,9 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector
                 std::make_move_iterator(pkt.end()));
             dataIt->second->cv.notify_all();
         }
-    } else {
-        JAMI_WARN("Non existing channel: %u", channel);
+    } else if (pkt.size() != 0) {
+        std::string p = std::string(pkt.begin(), pkt.end());
+        JAMI_WARN("Non existing channel: %u - %s - %u", channel, p.c_str(), pkt.size());
     }
 }
 
