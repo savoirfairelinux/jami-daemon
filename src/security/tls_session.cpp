@@ -578,7 +578,7 @@ TlsSession::TlsSessionImpl::send(const ValueType* tx_data, std::size_t tx_size, 
         do {
             nwritten = gnutls_record_send(session_, data_seq, chunck_sz);
         } while ((nwritten == GNUTLS_E_INTERRUPTED and state_ != TlsSessionState::SHUTDOWN) or nwritten == GNUTLS_E_AGAIN);
-        if (nwritten <= 0) {
+        if (nwritten < 0) {
             /* Normally we would have to retry record_send but our internal
              * state has not changed, so we have to ask for more data first.
              * We will just try again later, although this should never happen.

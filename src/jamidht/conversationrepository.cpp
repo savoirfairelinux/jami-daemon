@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2017-2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2019 Savoir-faire Linux Inc.
  *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -33,15 +33,6 @@ using random_device = dht::crypto::random_device;
 
 using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
 
-constexpr const char* const FLUSH_PKT = "0000";
-constexpr const char* const NAK_PKT = "0008NAK\n";
-constexpr const char* const DONE_PKT = "0009done\n";
-
-constexpr const char* const WANT_CMD = "want";
-constexpr const char* const HAVE_CMD = "have";
-
-using namespace std::string_literals;
-
 namespace jami {
 
 class ConversationRepository::Impl
@@ -52,7 +43,6 @@ public:
         if (!shared) return;
         auto path = fileutils::get_data_dir()+DIR_SEPARATOR_STR+shared->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+id_;
         git_repository *repo = nullptr;
-        // TODO share this repo with GitServer
         if (git_repository_open(&repo, path.c_str()) != 0) {
             JAMI_WARN("Couldn't open %s", path.c_str());
             return;
@@ -330,254 +320,74 @@ ConversationRepository::cloneConversation(
 
 /////////////////////////////////////////////////////////////////////////////////
 
-enum class ServerState
-{
-    WAIT_ORDER,
-    SEND_REFERENCES_CAPABILITIES,
-    ANSWER_TO_WANT_ORDER,
-    SEND_PACKDATA,
-    TERMINATE
-};
-
-class GitServer
-{
-public:
-    GitServer(const std::string& repositoryId, const std::string& repository,
-        const std::shared_ptr<ChannelSocket>& socket)
-    : repositoryId_(repositoryId), repository_(repository), socket_(socket) {
-        execute();
-    }
-
-    void execute();
-    void waitOrder();
-    void sendReferenceCapabilities();
-    void answerToWantOrder();
-    void sendPackData();
-
-    std::string repositoryId_ {};
-    std::string repository_ {};
-    std::shared_ptr<ChannelSocket> socket_ {};
-    ServerState state_ {ServerState::WAIT_ORDER};
-    std::string wantedReference_ {};
-};
-
-void
-GitServer::execute()
-{
-    auto stop = false;
-    while (!stop) {
-        switch (state_) {
-            case ServerState::WAIT_ORDER:
-            waitOrder();
-            break;
-            case ServerState::SEND_REFERENCES_CAPABILITIES:
-            sendReferenceCapabilities();
-            break;
-            case ServerState::ANSWER_TO_WANT_ORDER:
-            answerToWantOrder();
-            break;
-            case ServerState::SEND_PACKDATA:
-            sendPackData();
-            break;
-            case ServerState::TERMINATE:
-            stop = true;
-            break;
-        }
-    }
-}
-
-void
-GitServer::waitOrder()
-{
-    // TODO blocking read
-    std::error_code ec;
-    auto res = socket_->waitForData(std::chrono::milliseconds(5000), ec);
-    if (ec) {
-        JAMI_WARN("Error when reading socket for %s: %s", repository_.c_str(), ec.message().c_str());
-        state_ = ServerState::TERMINATE;
-        return;
-    }
-    if (res <= 4) return;
-    uint8_t buf[UINT16_MAX];
-    socket_->read(buf, res, ec);
-    if (ec) {
-        JAMI_WARN("Error when reading socket for %s: %s", repository_.c_str(), ec.message().c_str());
-        state_ = ServerState::TERMINATE;
-        return;
-    }
-    std::string pkt = {buf, buf + res};
-
-    if (pkt.find(UPLOAD_PACK_CMD) == 4) {
-        // NOTE: We do not retrieve version or repo for now
-        JAMI_INFO("Upload pack command detected.");
-        state_ = ServerState::SEND_REFERENCES_CAPABILITIES;
-    } else if (pkt.find(WANT_CMD) == 4) {
-        // TODO HAVE_CMD
-        // TODO more than one pkt
-        auto done = false;
-        std::string stopFlag = std::string(FLUSH_PKT) + DONE_PKT;
-        while (pkt != stopFlag) {
-            // Get pktlen
-            unsigned int pktlen;
-            std::stringstream ss;
-            ss << std::hex << pkt.substr(0,4);
-            ss >> pktlen;
-            auto content = pkt.substr(5, pktlen-5);
-            auto commit = content.substr(4, 40);
-            if (commit == repositoryId_) {
-                // TODO
-                wantedReference_ = "HEAD";
-            }
-            pkt = pkt.substr(pktlen, pkt.size() - pktlen);
-        }
-        state_ = ServerState::ANSWER_TO_WANT_ORDER;
-    } else {
-        JAMI_WARN("Unkown packet received: %s", pkt.c_str());
-    }
-}
-
-void
-GitServer::sendReferenceCapabilities()
-{
-    // TODO store more references?
-    state_ = ServerState::WAIT_ORDER;
-
-    git_repository* repo;
-    if (git_repository_open(&repo, repository_.c_str()) != 0) {
-        JAMI_WARN("Couldn't open %s", repository_.c_str());
-        return;
-    }
-    git_oid commit_id;
-    if (git_reference_name_to_id(&commit_id, repo, "HEAD") < 0) {
-        JAMI_ERR("Cannot get reference for HEAD");
-        git_repository_free(repo);
-        return;
-    }
-    std::string headRef = git_oid_tostr_s(&commit_id);
-    git_repository_free(repo);
-
-    std::stringstream capabilities;
-    capabilities << headRef << " HEAD\0side-band side-band-64k shallow no-progress include-tag"s;
-    std::string capStr = capabilities.str();
-
-    std::stringstream packet;
-    packet << std::setw(4) << std::setfill('0') << std::hex << ((5 + capStr.size()) & 0x0FFFF);
-    packet << capStr << "\n";
-    // TODO get last commit and store references for want!
-    packet << "003f" << headRef << " refs/heads/master\n";
-    packet << FLUSH_PKT;
-
-    std::error_code ec;
-    socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()), packet.str().size(), ec);
-    if (ec) {
-        JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
-    }
-}
-
-void
-GitServer::answerToWantOrder()
-{
-    state_ = ServerState::WAIT_ORDER;
-    std::error_code ec;
-    socket_->write(reinterpret_cast<const unsigned char*>(NAK_PKT), std::strlen(NAK_PKT), ec);
-    if (ec) {
-        JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
-        return;
-    }
-    state_ = ServerState::SEND_PACKDATA;
-}
-
-void
-GitServer::sendPackData()
-{
-    state_ = ServerState::WAIT_ORDER;
-    git_repository* repo;
-
-    if (git_repository_open(&repo, repository_.c_str()) != 0) {
-        JAMI_WARN("Couldn't open %s", repository_.c_str());
-        return;
-    }
-
-    git_packbuilder *pb;
-    if (git_packbuilder_new(&pb, repo) != 0) {
-        JAMI_WARN("Couldn't open packbuilder for %s", repository_.c_str());
-        git_repository_free(repo);
-        return;
-    }
-
-    // TODO: here only one commit is written!
-    git_oid commit_id;
-    if (git_reference_name_to_id(&commit_id, repo, wantedReference_.c_str()) != 0) {
-        JAMI_WARN("Couldn't open reference %s for %s", wantedReference_.c_str(), repository_.c_str());
-        git_repository_free(repo);
-        return;
-    }
-    if (git_packbuilder_insert_commit(pb, &commit_id) != 0) {
-        JAMI_WARN("Couldn't open insert commit %s for %s", git_oid_tostr_s(&commit_id), repository_.c_str());
-        git_repository_free(repo);
-        return;
-    }
-
-    git_buf data = {};
-    if (git_packbuilder_write_buf(&data, pb) != 0) {
-        JAMI_WARN("Couldn't write data commit %s for %s", git_oid_tostr_s(&commit_id), repository_.c_str());
-        git_repository_free(repo);
-        return;
-    }
-
-    std::stringstream toSend;
-    toSend << std::setw(4) << std::setfill('0') << std::hex << ((data.size + 5) & 0x0FFFF);
-    toSend << "\x1";
-    std::string toSendStr = toSend.str();
-
-    std::error_code ec;
-    socket_->write(reinterpret_cast<const unsigned char*>(toSendStr.c_str()), toSendStr.size(), ec);
-    if (ec) {
-        JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
-        git_packbuilder_free(pb);
-        git_repository_free(repo);
-        return;
-    }
-
-    socket_->write(reinterpret_cast<const unsigned char*>(data.ptr), data.size, ec);
-    if (ec) {
-        JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
-        git_packbuilder_free(pb);
-        git_repository_free(repo);
-        return;
-    }
-
-    git_repository_free(repo);
-    git_packbuilder_free(pb);
-
-    socket_->write(reinterpret_cast<const unsigned char*>(FLUSH_PKT), std::strlen(FLUSH_PKT), ec);
-    if (ec) {
-        JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
-    }
-}
-
-/////////////////////////////////////////////////////////////////////////////////
-
 ConversationRepository::ConversationRepository(const std::weak_ptr<JamiAccount>& account, const std::string& id)
 : pimpl_ { new Impl { account, id } }
 {}
 
 ConversationRepository::~ConversationRepository() = default;
 
-void
-ConversationRepository::serve(const std::shared_ptr<ChannelSocket>& client)
-{
-    auto shared = pimpl_->account_.lock();
-    if (!shared) return;
-    auto path = fileutils::get_data_dir()+DIR_SEPARATOR_STR+shared->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+pimpl_->id_;
-    GitServer server(pimpl_->id_, path, client);
-}
-
 std::string
 ConversationRepository::id() const
 {
     return pimpl_->id_;
 }
+
+bool
+ConversationRepository::fetch(const std::string& remoteDeviceId)
+{
+    // Fetch distant repository
+    git_remote *remote = nullptr;
+	git_fetch_options fetch_opts = GIT_FETCH_OPTIONS_INIT;
+
+    // Assert that repository exists
+    std::string channelName = "git://" + remoteDeviceId + '/' + pimpl_->id_;
+    auto res = git_remote_lookup(&remote_ptr, pimpl_->repository_.get(), remoteDeviceId.c_str());
+    if (res != 0) {
+        if (res != GIT_ENOTFOUND) {
+            JAMI_ERR("Couldn't lookup for remote %s", remoteDeviceId.c_str());
+            return false;
+        }
+        if (git_remote_create(&remote_ptr, pimpl_->repository_.get(),
+            remoteDeviceId.c_str(), channelName.c_str()) < 0) {
+            JAMI_ERR("Could not create remote for repository for conversation %s", pimpl_->id_.c_str());
+            return false;
+        }
+    }
+
+    if (git_remote_fetch(remote, nullptr, &fetch_opts, "fetch") < 0) {
+        JAMI_ERR("Could not fetch remote repository for conversation %s", pimpl_->id_.c_str());
+	    git_remote_free(remote);
+        return false;
+    }
+
+	git_remote_free(remote);
+    return true;
+}
+
+std::string
+ConversationRepository::remoteHead(const std::string& remoteDeviceId, const std::string& branch)
+{
+    git_remote* remote_ptr = nullptr;
+    if (git_remote_lookup(&remote_ptr, pimpl_->repository_.get(), remoteDeviceId.c_str()) < 0) {
+        JAMI_WARN("No remote found with id: %s", remoteDeviceId.c_str());
+        return {};
+    }
+    GitRemote remote {remote_ptr, git_remote_free};
+
+    git_reference *head_ref_ptr = nullptr;
+    std::string remoteHead = "refs/remotes/" + remoteDeviceId + "/" + branch;
+    git_oid commit_id;
+    if (git_reference_name_to_id(&commit_id, pimpl_->repository_.get(), remoteHead.c_str()) < 0) {
+        JAMI_ERR("failed to lookup %s ref", remoteHead.c_str());
+        return {};
+    }
+    GitReference head_ref {head_ref_ptr, git_reference_free};
+
+    auto commit_str = git_oid_tostr_s(&commit_id);
+    if (!commit_str) return {};
+    return commit_str;
+}
+
 
 std::string
 ConversationRepository::sendMessage(const std::string& msg)
