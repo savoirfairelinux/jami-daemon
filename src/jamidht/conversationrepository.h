@@ -30,7 +30,8 @@ class ChannelSocket;
 /**
  * This class gives access to the git repository that represents the conversation
  */
-class DRING_TESTABLE ConversationRepository {
+class DRING_TESTABLE ConversationRepository
+{
 public:
     /**
      * Creates a new repository, with initial files, where the first commit hash is the conversation id
@@ -38,8 +39,7 @@ public:
      * @return  the conversation repository object
      */
     static DRING_TESTABLE std::unique_ptr<ConversationRepository> createConversation(
-        const std::weak_ptr<JamiAccount>& account
-    );
+        const std::weak_ptr<JamiAccount>& account);
 
     /**
      * Clones a conversation on a remote device
@@ -51,8 +51,7 @@ public:
     static DRING_TESTABLE std::unique_ptr<ConversationRepository> cloneConversation(
         const std::weak_ptr<JamiAccount>& account,
         const std::string& deviceId,
-        const std::string& conversationId
-    );
+        const std::string& conversationId);
 
     /**
      * Open a conversation repository for an account and an id
@@ -74,10 +73,17 @@ public:
      */
     std::string id() const;
 
+    /**
+     * Add a new commit to the conversation
+     * @param msg     The msg to send
+     * @return <empty> on failure, else the message id
+     */
+    std::string sendMessage(const std::string& msg);
+
 private:
     ConversationRepository() = delete;
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
 
-}
+} // namespace jami

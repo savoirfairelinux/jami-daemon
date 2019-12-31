@@ -57,10 +57,12 @@ public:
 private:
     void testCreateRepository();
     void testCloneViaChannelSocket();
+    void testAddSomeMessages();
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
     CPPUNIT_TEST(testCreateRepository);
     CPPUNIT_TEST(testCloneViaChannelSocket);
+    CPPUNIT_TEST(testAddSomeMessages);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -301,6 +303,18 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
                              std::istreambuf_iterator<char>());
 
     CPPUNIT_ASSERT(deviceCrtStr == deviceCert);
+}
+
+void
+ConversationRepositoryTest::testAddSomeMessages()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+
+    repository->sendMessage("Commit 1");
+    repository->sendMessage("Commit 2");
+    repository->sendMessage("Commit 3");
+    // TODO check commits
 }
 
 } // namespace test
