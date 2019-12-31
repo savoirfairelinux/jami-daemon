@@ -46,6 +46,8 @@
 #include <ctime>
 #include <type_traits>
 
+#include "manager.h"
+
 namespace jami {
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
@@ -395,10 +397,17 @@ SIPAccountBase::onTextMessage(const std::string& from,
             return;
         }
     }
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
+
+    auto& convManager = jami::Manager::instance().getJamiPluginManager()
+            .getConversationServicesManager();
+    std::shared_ptr<ConversationMessage> cm =
+            std::make_shared<ConversationMessage>(from,
+                                                  const_cast<std::map<std::string, std::string>&>(payloads));
+    convManager.onTextMessage(cm);
+    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, cm->data);
     DRing::Message message;
-    message.from = from;
-    message.payloads = payloads;
+    message.from = cm->address;
+    message.payloads = cm->data;
     message.received = std::time(nullptr);
     std::lock_guard<std::mutex> lck(mutexLastMessages_);
     lastMessages_.emplace_back(message);
