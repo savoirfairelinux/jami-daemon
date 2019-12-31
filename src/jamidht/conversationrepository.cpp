@@ -44,17 +44,26 @@ using namespace std::string_literals;
 
 namespace jami {
 
-/**
- * For now, this does nothing
- */
 class ConversationRepository::Impl
 {
 public:
-    Impl(const std::weak_ptr<JamiAccount>& account, const std::string& id) : account_(account), id_(id) {}
+    Impl(const std::weak_ptr<JamiAccount>& account, const std::string& id) : account_(account), id_(id) {
+        auto shared = account.lock();
+        if (!shared) return;
+        auto path = fileutils::get_data_dir()+DIR_SEPARATOR_STR+shared->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+id_;
+        git_repository *repo = nullptr;
+        // TODO share this repo with GitServer
+        if (git_repository_open(&repo, path.c_str()) != 0) {
+            JAMI_WARN("Couldn't open %s", path.c_str());
+            return;
+        }
+        repository_ = {std::move(repo), git_repository_free};
+    }
     ~Impl() = default;
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
+    GitRepository repository_ {nullptr, git_repository_free};
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -239,7 +248,7 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
     }
 
 	git_tree_free(tree);
-	git_signature_free(sig);
+        git_signature_free(sig);
 
     auto commit_str = git_oid_tostr_s(&commit_id);
     if (commit_str) return commit_str;
@@ -568,6 +577,113 @@ std::string
 ConversationRepository::id() const
 {
     return pimpl_->id_;
+}
+
+std::string
+ConversationRepository::sendMessage(const std::string& msg)
+{
+    auto account = pimpl_->account_.lock();
+    if (!account) return {};
+    auto deviceId = account->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto name = account->getAccountDetails()[DRing::Account::ConfProperties::DISPLAYNAME];
+    if (name.empty())
+        name = account->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+    if (name.empty())
+        name = deviceId;
+
+    // First, we need to add device file to the repository if not present
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+    std::string devicePath = repoPath + DIR_SEPARATOR_STR + "devices" + DIR_SEPARATOR_STR + deviceId + ".crt";
+    if (!fileutils::isFile(devicePath)) {
+        auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+        if (!file.is_open()) {
+            JAMI_ERR("Could not write data to %s", devicePath.c_str());
+            return {};
+        }
+        auto cert = account->identity().second;
+        auto deviceCert = cert->toString(false);
+        file << deviceCert;
+        file.close();
+
+        // git add
+        git_index *index;
+
+        if (git_repository_index(&index, pimpl_->repository_.get()) < 0) {
+            JAMI_ERR("Could not open repository index");
+            return {};
+        }
+
+        git_index_add_bypath(index, devicePath.c_str());
+        git_index_write(index);
+        git_index_free(index);
+    }
+
+    git_signature *sig;
+    // Sign commit's buffer
+    if (git_signature_new(&sig, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
+		JAMI_ERR("Unable to create a commit signature.");
+        return {};
+    }
+
+    // Retrieve current HEAD
+    git_oid commit_id;
+    if (git_reference_name_to_id(&commit_id, pimpl_->repository_.get(), "HEAD") < 0) {
+        JAMI_ERR("Cannot get reference for HEAD");
+        git_signature_free(sig);
+        return {};
+    }
+
+    git_commit* head_commit;
+    if (git_commit_lookup(&head_commit, pimpl_->repository_.get(), &commit_id) < 0) {
+		JAMI_ERR("Could not look up HEAD commit");
+        git_signature_free(sig);
+        return {};
+    }
+
+    git_tree *tree;
+	if (git_commit_tree(&tree, head_commit) < 0) {
+		JAMI_ERR("Could not look up initial tree");
+        git_signature_free(sig);
+        return {};
+    }
+
+    git_buf to_sign = {};
+    const git_commit* head_ref[1] = { head_commit };
+    if (git_commit_create_buffer(&to_sign, pimpl_->repository_.get(),
+            sig, sig, nullptr, msg.c_str(), tree, 1, &head_ref[0]) < 0) {
+        JAMI_ERR("Could not create commit buffer");
+        git_commit_free(head_commit);
+        git_tree_free(tree);
+        git_signature_free(sig);
+        return {};
+    }
+
+    git_tree_free(tree);
+    git_commit_free(head_commit);
+
+    // git commit -S
+    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
+    auto signed_buf = account->identity().first->sign(to_sign_vec);
+    std::string signed_str = base64::encode(signed_buf.begin(), signed_buf.end());
+    if (git_commit_create_with_signature(&commit_id, pimpl_->repository_.get(), to_sign.ptr, signed_str.c_str(), "signature") < 0) {
+        JAMI_ERR("Could not sign commit");
+        return {};
+    }
+
+    git_signature_free(sig);
+
+    // Move commit to master branch
+    git_reference *ref;
+    if (git_reference_create(&ref, pimpl_->repository_.get(), "refs/heads/master", &commit_id, true, nullptr) < 0) {
+        JAMI_WARN("Could not move commit to master");
+    }
+    git_reference_free(ref);
+
+    auto commit_str = git_oid_tostr_s(&commit_id);
+    if (commit_str) {
+        JAMI_INFO("New message added with id: %s", commit_str);
+    }
+    return commit_str ? commit_str : "";
 }
 
 }
