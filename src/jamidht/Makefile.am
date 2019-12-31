@@ -18,6 +18,8 @@ libringacc_la_SOURCES = \
         connectionmanager.cpp \
         conversationrepository.h \
         conversationrepository.cpp \
+        gitserver.h \
+        gitserver.cpp \
         multiplexed_socket.h \
         multiplexed_socket.cpp \
         sips_transport_ice.cpp \

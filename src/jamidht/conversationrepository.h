@@ -47,6 +47,7 @@ public:
      * @param account           The account getting the conversation
      * @param deviceId          Remote device
      * @param conversationId    Conversation to clone
+     * @param socket            Socket used to clone
      */
     static DRING_TESTABLE std::unique_ptr<ConversationRepository> cloneConversation(
         const std::weak_ptr<JamiAccount>& account,
@@ -63,11 +64,12 @@ public:
     ~ConversationRepository();
 
     /**
-     * Serve a conversation to a remote client
-     * This client will be able to fetch commits/clone the repository
-     * @param client        The client to serve
+     * Fetch a remote repository via the given socket
+     * @note This will use the socket registered for the conversation with JamiAccount::addGitSocket()
+     * @param remoteDeviceId    Remote device id to fetch
+     * @return if the operation was successful
      */
-    void serve(const std::shared_ptr<ChannelSocket>& client);
+    bool fetch(const std::string& remoteDeviceId);
 
     /**
      * Return the conversation id
