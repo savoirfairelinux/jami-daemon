@@ -28,6 +28,7 @@
 #include "manager.h"
 #include "jamidht/conversationrepository.h"
 #include "jamidht/connectionmanager.h"
+#include "jamidht/gitserver.h"
 #include "jamidht/jamiaccount.h"
 #include "../../test_runner.h"
 #include "dring.h"
@@ -58,11 +59,13 @@ private:
     void testCreateRepository();
     void testCloneViaChannelSocket();
     void testAddSomeMessages();
+    void testFetch();
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
-    CPPUNIT_TEST(testCreateRepository);
-    CPPUNIT_TEST(testCloneViaChannelSocket);
-    CPPUNIT_TEST(testAddSomeMessages);
+    //CPPUNIT_TEST(testCreateRepository);
+    //CPPUNIT_TEST(testCloneViaChannelSocket);
+    //CPPUNIT_TEST(testAddSomeMessages);
+    CPPUNIT_TEST(testFetch);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -244,12 +247,13 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
     CPPUNIT_ASSERT(receiverConnected);
 
     bobAccount->addGitSocket(aliceDeviceId, repository->id(), channelSocket);
+    GitServer gs(aliceId, repository->id(), sendSocket);
     std::thread sendT = std::thread([&]() {
-        repository->serve(sendSocket);
+        gs.run();
     });
 
     auto cloned = ConversationRepository::cloneConversation(bobAccount->weak(), aliceDeviceId, repository->id());
-    channelSocket->shutdown();
+    gs.stop();
     sendT.join();
 
     CPPUNIT_ASSERT(cloned != nullptr);
@@ -305,7 +309,111 @@ ConversationRepositoryTest::testAddSomeMessages()
     repository->sendMessage("Commit 1");
     repository->sendMessage("Commit 2");
     repository->sendMessage("Commit 3");
-    // TODO check commits
+    // TODO check commits => needs something to get messages
+}
+
+void
+ConversationRepositoryTest::testFetch()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto aliceDeviceId = aliceAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto bobDeviceId = bobAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+
+    bobAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    aliceAccount->connectionManager().onICERequest([](const std::string&) {return true;});
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+    auto repoPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+aliceAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+repository->id();
+    auto clonedPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+bobAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+repository->id();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk{ mtx };
+    std::condition_variable rcv, scv, ccv;
+    bool successfullyConnected = false;
+    bool successfullyReceive = false;
+    bool receiverConnected = false;
+    std::shared_ptr<ChannelSocket> channelSocket = nullptr;
+    std::shared_ptr<ChannelSocket> sendSocket = nullptr;
+
+    bobAccount->connectionManager().onChannelRequest(
+    [&](const std::string&, const std::string& name) {
+        successfullyReceive = name == "git://*";
+        ccv.notify_one();
+        return true;
+    });
+
+    aliceAccount->connectionManager().onChannelRequest(
+    [&](const std::string&, const std::string& name) {
+        return true;
+    });
+
+    bobAccount->connectionManager().onConnectionReady(
+    [&](const std::string&, const std::string& name, std::shared_ptr<ChannelSocket> socket) {
+        receiverConnected = socket && (name == "git://*");
+        channelSocket = socket;
+        rcv.notify_one();
+    });
+
+    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
+        [&](std::shared_ptr<ChannelSocket> socket) {
+        if (socket) {
+            successfullyConnected = true;
+            sendSocket = socket;
+        }
+        scv.notify_one();
+    });
+
+    rcv.wait_for(lk, std::chrono::seconds(10));
+    scv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(successfullyReceive);
+    CPPUNIT_ASSERT(successfullyConnected);
+    CPPUNIT_ASSERT(receiverConnected);
+    CPPUNIT_ASSERT(repository != nullptr);
+
+    bobAccount->addGitSocket(aliceDeviceId, repository->id(), channelSocket);
+    GitServer gs(aliceId, repository->id(), sendSocket);
+    std::thread sendT = std::thread([&]() {
+        gs.run();
+    });
+
+    // Clone repository
+    repository->sendMessage("Commit 1");
+    auto cloned = ConversationRepository::cloneConversation(bobAccount->weak(), aliceDeviceId, repository->id());
+    gs.stop();
+    sendT.join();
+    bobAccount->removeGitSocket(aliceDeviceId, repository->id());
+
+    // Add some new messages to fetch
+    repository->sendMessage("Commit 2");
+    repository->sendMessage("Commit 3");
+
+    // Open a new channel to simulate the fact that we are later
+    aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
+        [&](std::shared_ptr<ChannelSocket> socket) {
+        if (socket) {
+            successfullyConnected = true;
+            sendSocket = socket;
+        }
+        scv.notify_one();
+    });
+
+    rcv.wait_for(lk, std::chrono::seconds(10));
+    scv.wait_for(lk, std::chrono::seconds(10));
+    ccv.wait_for(lk, std::chrono::seconds(10));
+    bobAccount->addGitSocket(aliceDeviceId, repository->id(), channelSocket);
+    GitServer gs2(aliceId, repository->id(), sendSocket);
+    std::thread sendT2 = std::thread([&]() {
+        gs2.run();
+    });
+
+    CPPUNIT_ASSERT(cloned->fetch(aliceDeviceId));
+    CPPUNIT_ASSERT(id3 == cloned->remoteHead(aliceDeviceId));
+
+    gs2.stop();
+    bobAccount->removeGitSocket(aliceDeviceId, repository->id());
+    sendT2.join();
+
+    // TODO check commits => needs something to get messages
 }
 
 }} // namespace test
