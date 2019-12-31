@@ -363,6 +363,7 @@ public:
     std::shared_ptr<ChannelSocket> socket_ {};
     ServerState state_ {ServerState::WAIT_ORDER};
     std::string wantedReference_ {};
+    std::string currentHead_ {};
 };
 
 void
@@ -411,6 +412,8 @@ GitServer::waitOrder()
     }
     std::string pkt = {buf, buf + res};
 
+    JAMI_WARN("@@@ pkt: %s", pkt.c_str());
+
     if (pkt.find(UPLOAD_PACK_CMD) == 4) {
         // NOTE: We do not retrieve version or repo for now
         JAMI_INFO("Upload pack command detected.");
@@ -428,10 +431,7 @@ GitServer::waitOrder()
             ss >> pktlen;
             auto content = pkt.substr(5, pktlen-5);
             auto commit = content.substr(4, 40);
-            if (commit == repositoryId_) {
-                // TODO
-                wantedReference_ = "HEAD";
-            }
+            wantedReference_ = commit;
             pkt = pkt.substr(pktlen, pkt.size() - pktlen);
         }
         state_ = ServerState::ANSWER_TO_WANT_ORDER;
@@ -457,18 +457,18 @@ GitServer::sendReferenceCapabilities()
         git_repository_free(repo);
         return;
     }
-    std::string headRef = git_oid_tostr_s(&commit_id);
+    currentHead_ = git_oid_tostr_s(&commit_id);
     git_repository_free(repo);
 
     std::stringstream capabilities;
-    capabilities << headRef << " HEAD\0side-band side-band-64k shallow no-progress include-tag"s;
+    capabilities << currentHead_ << " HEAD\0side-band side-band-64k shallow no-progress include-tag"s;
     std::string capStr = capabilities.str();
 
     std::stringstream packet;
     packet << std::setw(4) << std::setfill('0') << std::hex << ((5 + capStr.size()) & 0x0FFFF);
     packet << capStr << "\n";
     // TODO get last commit and store references for want!
-    packet << "003f" << headRef << " refs/heads/master\n";
+    packet << "003f" << currentHead_ << " refs/heads/master\n";
     packet << FLUSH_PKT;
 
     std::error_code ec;
@@ -509,22 +509,49 @@ GitServer::sendPackData()
         return;
     }
 
-    // TODO: here only one commit is written!
-    git_oid commit_id;
-    if (git_reference_name_to_id(&commit_id, repo, wantedReference_.c_str()) != 0) {
-        JAMI_WARN("Couldn't open reference %s for %s", wantedReference_.c_str(), repository_.c_str());
-        git_repository_free(repo);
-        return;
-    }
-    if (git_packbuilder_insert_commit(pb, &commit_id) != 0) {
-        JAMI_WARN("Couldn't open insert commit %s for %s", git_oid_tostr_s(&commit_id), repository_.c_str());
-        git_repository_free(repo);
-        return;
+    while (true) {
+        git_oid commit_id;
+        if (git_oid_fromstr(&commit_id, wantedReference_.c_str()) < 0) {
+            JAMI_WARN("Couldn't open reference %s for %s", wantedReference_.c_str(), repository_.c_str());
+            git_repository_free(repo);
+            git_packbuilder_free(pb);
+            return;
+        }
+        if (git_packbuilder_insert_commit(pb, &commit_id) != 0) {
+            JAMI_WARN("Couldn't open insert commit %s for %s", git_oid_tostr_s(&commit_id), repository_.c_str());
+            git_repository_free(repo);
+            git_packbuilder_free(pb);
+            return;
+        }
+
+        // Get next commit to pack
+        git_commit* current_commit;
+        if (git_commit_lookup(&current_commit, repo, &commit_id) < 0) {
+            JAMI_ERR("Could not look up current commit");
+            git_packbuilder_free(pb);
+            return;
+        }
+        git_commit* parent_commit;
+        if (git_commit_parent(&parent_commit, current_commit, 0) < 0) {
+            git_commit_free(current_commit);
+            break;
+        }
+        auto* oid_str = git_oid_tostr_s(git_commit_id(parent_commit));
+        if (!oid_str) {
+            git_packbuilder_free(pb);
+            git_commit_free(parent_commit);
+            git_commit_free(current_commit);
+            JAMI_ERR("Could not look up current commit");
+            return;
+        }
+        wantedReference_ = oid_str;
+        git_commit_free(current_commit);
+        git_commit_free(parent_commit);
     }
 
     git_buf data = {};
     if (git_packbuilder_write_buf(&data, pb) != 0) {
-        JAMI_WARN("Couldn't write data commit %s for %s", git_oid_tostr_s(&commit_id), repository_.c_str());
+        JAMI_WARN("Couldn't write pack data for %s", repository_.c_str());
         git_repository_free(repo);
         return;
     }
@@ -551,8 +578,8 @@ GitServer::sendPackData()
         return;
     }
 
-    git_repository_free(repo);
     git_packbuilder_free(pb);
+    git_repository_free(repo);
 
     socket_->write(reinterpret_cast<const unsigned char*>(FLUSH_PKT), std::strlen(FLUSH_PKT), ec);
     if (ec) {
