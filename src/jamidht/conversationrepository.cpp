@@ -363,6 +363,9 @@ public:
     std::shared_ptr<ChannelSocket> socket_ {};
     ServerState state_ {ServerState::WAIT_ORDER};
     std::string wantedReference_ {};
+    std::vector<std::string> haveRefs_ {};
+    std::string currentHead_ {};
+    std::string cachedPkt_ {};
 };
 
 void
@@ -388,53 +391,68 @@ GitServer::execute()
             break;
         }
     }
+    JAMI_ERR("END SERV");
 }
 
 void
 GitServer::waitOrder()
 {
     // TODO blocking read
-    std::error_code ec;
-    auto res = socket_->waitForData(std::chrono::milliseconds(5000), ec);
-    if (ec) {
-        JAMI_WARN("Error when reading socket for %s: %s", repository_.c_str(), ec.message().c_str());
-        state_ = ServerState::TERMINATE;
-        return;
+    std::string pkt = cachedPkt_;
+    if (pkt.empty()) {
+        std::error_code ec;
+        JAMI_ERR("...");
+        auto res = socket_->waitForData(std::chrono::milliseconds(5000), ec);
+        JAMI_ERR("... end");
+        if (ec) {
+            JAMI_WARN("Error when reading socket for %s: %s", repository_.c_str(), ec.message().c_str());
+            state_ = ServerState::TERMINATE;
+            return;
+        }
+        if (res <= 4) return;
+        uint8_t buf[UINT16_MAX];
+        socket_->read(buf, res, ec);
+        if (ec) {
+            JAMI_WARN("Error when reading socket for %s: %s", repository_.c_str(), ec.message().c_str());
+            state_ = ServerState::TERMINATE;
+            return;
+        }
+        pkt = {buf, buf + res};
+    } else {
+        cachedPkt_ = "";
     }
-    if (res <= 4) return;
-    uint8_t buf[UINT16_MAX];
-    socket_->read(buf, res, ec);
-    if (ec) {
-        JAMI_WARN("Error when reading socket for %s: %s", repository_.c_str(), ec.message().c_str());
-        state_ = ServerState::TERMINATE;
-        return;
+
+    unsigned int pkt_len;
+    std::stringstream stream;
+    stream << std::hex << pkt.substr(0,4);
+    stream >> pkt_len;
+    if (pkt_len != pkt.size()) {
+        if (pkt_len == 0) {
+            // FLUSH_PKT
+            pkt_len = 4;
+        }
+        cachedPkt_ = pkt.substr(pkt_len, pkt.size() - pkt_len);
+        pkt = pkt.substr(0, pkt_len);
     }
-    std::string pkt = {buf, buf + res};
 
     if (pkt.find(UPLOAD_PACK_CMD) == 4) {
         // NOTE: We do not retrieve version or repo for now
         JAMI_INFO("Upload pack command detected.");
         state_ = ServerState::SEND_REFERENCES_CAPABILITIES;
     } else if (pkt.find(WANT_CMD) == 4) {
-        // TODO HAVE_CMD
-        // TODO more than one pkt
-        auto done = false;
-        std::string stopFlag = std::string(FLUSH_PKT) + DONE_PKT;
-        while (pkt != stopFlag) {
-            // Get pktlen
-            unsigned int pktlen;
-            std::stringstream ss;
-            ss << std::hex << pkt.substr(0,4);
-            ss >> pktlen;
-            auto content = pkt.substr(5, pktlen-5);
-            auto commit = content.substr(4, 40);
-            if (commit == repositoryId_) {
-                // TODO
-                wantedReference_ = "HEAD";
-            }
-            pkt = pkt.substr(pktlen, pkt.size() - pktlen);
-        }
+        auto content = pkt.substr(5, pkt_len-5);
+        auto commit = content.substr(4, 40);
+        wantedReference_ = commit;
+        JAMI_INFO("Peer want ref: %s", wantedReference_.c_str());
+    } else if (pkt.find(HAVE_CMD) == 4) {
+        auto content = pkt.substr(5, pkt_len-5);
+        auto commit = content.substr(4, 40);
+        haveRefs_.emplace_back(commit);
+    } else if (pkt == DONE_PKT) {
+        JAMI_INFO("Peer negotiation is done. Answering to want order");
         state_ = ServerState::ANSWER_TO_WANT_ORDER;
+    } else if (pkt == FLUSH_PKT) {
+        // Nothing to do for now
     } else {
         JAMI_WARN("Unkown packet received: %s", pkt.c_str());
     }
@@ -457,22 +475,22 @@ GitServer::sendReferenceCapabilities()
         git_repository_free(repo);
         return;
     }
-    std::string headRef = git_oid_tostr_s(&commit_id);
+    currentHead_ = git_oid_tostr_s(&commit_id);
     git_repository_free(repo);
 
     std::stringstream capabilities;
-    capabilities << headRef << " HEAD\0side-band side-band-64k shallow no-progress include-tag"s;
+    capabilities << currentHead_ << " HEAD\0side-band side-band-64k shallow no-progress include-tag"s;
     std::string capStr = capabilities.str();
 
     std::stringstream packet;
     packet << std::setw(4) << std::setfill('0') << std::hex << ((5 + capStr.size()) & 0x0FFFF);
     packet << capStr << "\n";
-    // TODO get last commit and store references for want!
-    packet << "003f" << headRef << " refs/heads/master\n";
+    packet << "003f" << currentHead_ << " refs/heads/master\n";
     packet << FLUSH_PKT;
 
     std::error_code ec;
-    socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()), packet.str().size(), ec);
+    auto res = socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()), packet.str().size(), ec);
+    JAMI_ERR("SEND %u, head: %s", res, currentHead_.c_str());
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
     }
@@ -509,22 +527,55 @@ GitServer::sendPackData()
         return;
     }
 
-    // TODO: here only one commit is written!
-    git_oid commit_id;
-    if (git_reference_name_to_id(&commit_id, repo, wantedReference_.c_str()) != 0) {
-        JAMI_WARN("Couldn't open reference %s for %s", wantedReference_.c_str(), repository_.c_str());
-        git_repository_free(repo);
-        return;
-    }
-    if (git_packbuilder_insert_commit(pb, &commit_id) != 0) {
-        JAMI_WARN("Couldn't open insert commit %s for %s", git_oid_tostr_s(&commit_id), repository_.c_str());
-        git_repository_free(repo);
-        return;
+    while (true) {
+        JAMI_WARN("want: %s", wantedReference_.c_str());
+        if (std::find(haveRefs_.begin(), haveRefs_.end(), wantedReference_) != haveRefs_.end()) {
+            // The peer already have the reference
+            JAMI_WARN("PEER ALREADY HAVE THIS COMMIT!");
+            break;
+        }
+        git_oid commit_id;
+        if (git_oid_fromstr(&commit_id, wantedReference_.c_str()) < 0) {
+            JAMI_WARN("Couldn't open reference %s for %s", wantedReference_.c_str(), repository_.c_str());
+            git_repository_free(repo);
+            git_packbuilder_free(pb);
+            return;
+        }
+        if (git_packbuilder_insert_commit(pb, &commit_id) != 0) {
+            JAMI_WARN("Couldn't open insert commit %s for %s", git_oid_tostr_s(&commit_id), repository_.c_str());
+            git_repository_free(repo);
+            git_packbuilder_free(pb);
+            return;
+        }
+
+        // Get next commit to pack
+        git_commit* current_commit;
+        if (git_commit_lookup(&current_commit, repo, &commit_id) < 0) {
+            JAMI_ERR("Could not look up current commit");
+            git_packbuilder_free(pb);
+            return;
+        }
+        git_commit* parent_commit;
+        if (git_commit_parent(&parent_commit, current_commit, 0) < 0) {
+            git_commit_free(current_commit);
+            break;
+        }
+        auto* oid_str = git_oid_tostr_s(git_commit_id(parent_commit));
+        if (!oid_str) {
+            git_packbuilder_free(pb);
+            git_commit_free(parent_commit);
+            git_commit_free(current_commit);
+            JAMI_ERR("Could not look up current commit");
+            return;
+        }
+        wantedReference_ = oid_str;
+        git_commit_free(current_commit);
+        git_commit_free(parent_commit);
     }
 
     git_buf data = {};
     if (git_packbuilder_write_buf(&data, pb) != 0) {
-        JAMI_WARN("Couldn't write data commit %s for %s", git_oid_tostr_s(&commit_id), repository_.c_str());
+        JAMI_WARN("Couldn't write pack data for %s", repository_.c_str());
         git_repository_free(repo);
         return;
     }
@@ -551,13 +602,17 @@ GitServer::sendPackData()
         return;
     }
 
-    git_repository_free(repo);
     git_packbuilder_free(pb);
+    git_repository_free(repo);
 
     socket_->write(reinterpret_cast<const unsigned char*>(FLUSH_PKT), std::strlen(FLUSH_PKT), ec);
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
     }
+
+    // Clear sent data
+    haveRefs_.clear();
+    wantedReference_.clear();
 }
 
 /////////////////////////////////////////////////////////////////////////////////
