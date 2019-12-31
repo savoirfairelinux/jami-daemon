@@ -44,17 +44,31 @@ using namespace std::string_literals;
 
 namespace jami {
 
-/**
- * For now, this does nothing
- */
 class ConversationRepository::Impl
 {
 public:
-    Impl(const std::weak_ptr<JamiAccount>& account, const std::string& id) : account_(account), id_(id) {}
+    Impl(const std::weak_ptr<JamiAccount>& account, const std::string& id)
+        : account_(account)
+        , id_(id)
+    {
+        auto shared = account.lock();
+        if (!shared)
+            return;
+        auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+                    + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + id_;
+        git_repository* repo = nullptr;
+        // TODO share this repo with GitServer
+        if (git_repository_open(&repo, path.c_str()) != 0) {
+            JAMI_WARN("Couldn't open %s", path.c_str());
+            return;
+        }
+        repository_ = {std::move(repo), git_repository_free};
+    }
     ~Impl() = default;
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
+    GitRepository repository_ {nullptr, git_repository_free};
 };
 
 /////////////////////////////////////////////////////////////////////////////////
@@ -65,9 +79,11 @@ public:
  * @return The libgit2's managed repository
  */
 GitRepository
-create_empty_repository(const std::string path) {
-    git_repository *repo = nullptr;
-    if (git_repository_init(&repo, path.c_str(), false /* we want a non-bare repo to work on it */) < 0) {
+create_empty_repository(const std::string path)
+{
+    git_repository* repo = nullptr;
+    if (git_repository_init(&repo, path.c_str(), false /* we want a non-bare repo to work on it */)
+        < 0) {
         JAMI_ERR("Couldn't create a git repository in %s", path.c_str());
     }
     return {std::move(repo), git_repository_free};
@@ -102,7 +118,8 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
     }
 
     // /admins
-    std::string adminPath = adminsPath + DIR_SEPARATOR_STR + parentCert->getId().toString() + ".crt";
+    std::string adminPath = adminsPath + DIR_SEPARATOR_STR + parentCert->getId().toString()
+                            + ".crt";
     auto file = fileutils::ofstream(adminPath, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", adminPath.c_str());
@@ -133,13 +150,15 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
 
     // /CRLs
     for (const auto& crl : account->identity().second->getRevocationLists()) {
-        if (!crl) continue;
+        if (!crl)
+            continue;
         auto v = crl->getNumber();
         std::stringstream ss;
         ss << std::hex;
         for (const auto& b : v)
-            ss << (unsigned)b;
-        std::string crlPath = crlsPath + DIR_SEPARATOR_STR + deviceId + DIR_SEPARATOR_STR + ss.str() + ".crl";
+            ss << (unsigned) b;
+        std::string crlPath = crlsPath + DIR_SEPARATOR_STR + deviceId + DIR_SEPARATOR_STR + ss.str()
+                              + ".crl";
         file = fileutils::ofstream(crlPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             JAMI_ERR("Could not write data to %s", crlPath.c_str());
@@ -150,7 +169,7 @@ add_initial_files(GitRepository& repo, const std::shared_ptr<JamiAccount>& accou
     }
 
     // git add -A
-    git_index *index;
+    git_index* index;
     git_strarray array = {0};
 
     if (git_repository_index(&index, repo.get()) < 0) {
@@ -178,41 +197,44 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
     auto deviceId = account->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
     auto name = account->getAccountDetails()[DRing::Account::ConfProperties::DISPLAYNAME];
     if (name.empty())
-        name = account->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+        name = account
+                   ->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
     if (name.empty())
         name = deviceId;
 
-    git_signature *sig;
-	git_index *index;
-	git_oid tree_id, commit_id;
-	git_tree *tree;
+    git_signature* sig;
+    git_index* index;
+    git_oid tree_id, commit_id;
+    git_tree* tree;
     git_buf to_sign = {};
 
     // Sign commit's buffer
     if (git_signature_new(&sig, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
-		JAMI_ERR("Unable to create a commit signature.");
+        JAMI_ERR("Unable to create a commit signature.");
         return {};
     }
 
     if (git_repository_index(&index, repo.get()) < 0) {
-		JAMI_ERR("Could not open repository index");
+        JAMI_ERR("Could not open repository index");
         return {};
     }
 
-	if (git_index_write_tree(&tree_id, index) < 0) {
-		JAMI_ERR("Unable to write initial tree from index");
+    if (git_index_write_tree(&tree_id, index) < 0) {
+        JAMI_ERR("Unable to write initial tree from index");
         return {};
     }
 
-	git_index_free(index);
+    git_index_free(index);
 
-	if (git_tree_lookup(&tree, repo.get(), &tree_id) < 0) {
-		JAMI_ERR("Could not look up initial tree");
+    if (git_tree_lookup(&tree, repo.get(), &tree_id) < 0) {
+        JAMI_ERR("Could not look up initial tree");
         git_tree_free(tree);
         return {};
     }
 
-    if (git_commit_create_buffer(&to_sign, repo.get(), sig, sig, nullptr, "Initial commit", tree, 0, nullptr) < 0) {
+    if (git_commit_create_buffer(
+            &to_sign, repo.get(), sig, sig, nullptr, "Initial commit", tree, 0, nullptr)
+        < 0) {
         JAMI_ERR("Could not create initial buffer");
         git_tree_free(tree);
         return {};
@@ -223,7 +245,12 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
     std::string signed_str = base64::encode(signed_buf.begin(), signed_buf.end());
 
     // git commit -S
-    if (git_commit_create_with_signature(&commit_id, repo.get(), to_sign.ptr, signed_str.c_str(), "signature") < 0) {
+    if (git_commit_create_with_signature(&commit_id,
+                                         repo.get(),
+                                         to_sign.ptr,
+                                         signed_str.c_str(),
+                                         "signature")
+        < 0) {
         JAMI_ERR("Could not sign initial commit");
         git_tree_free(tree);
         return {};
@@ -238,11 +265,12 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
         git_commit_free(commit);
     }
 
-	git_tree_free(tree);
-	git_signature_free(sig);
+    git_tree_free(tree);
+    git_signature_free(sig);
 
     auto commit_str = git_oid_tostr_s(&commit_id);
-    if (commit_str) return commit_str;
+    if (commit_str)
+        return commit_str;
     return {};
 }
 
@@ -250,11 +278,14 @@ std::unique_ptr<ConversationRepository>
 ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account)
 {
     auto shared = account.lock();
-    if (!shared) return {};
+    if (!shared)
+        return {};
     // Create temporary directory because we can't know the first hash for now
-    std::uniform_int_distribution<uint64_t> dist{ 0, std::numeric_limits<uint64_t>::max() };
+    std::uniform_int_distribution<uint64_t> dist {0, std::numeric_limits<uint64_t>::max()};
     random_device rdev;
-    auto tmpPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+shared->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+std::to_string(dist(rdev));
+    auto tmpPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+                   + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR
+                   + std::to_string(dist(rdev));
     if (fileutils::isDirectory(tmpPath)) {
         JAMI_ERR("%s already exists. Abort create conversations", tmpPath.c_str());
         return {};
@@ -284,7 +315,8 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
     }
 
     // Move to wanted directory
-    auto newPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+shared->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+id;
+    auto newPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+                   + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + id;
     if (std::rename(tmpPath.c_str(), newPath.c_str())) {
         JAMI_ERR("Couldn't move %s in %s", tmpPath.c_str(), newPath.c_str());
         fileutils::removeAll(tmpPath, true);
@@ -297,21 +329,22 @@ ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& acc
 }
 
 std::unique_ptr<ConversationRepository>
-ConversationRepository::cloneConversation(
-    const std::weak_ptr<JamiAccount>& account,
-    const std::string& deviceId,
-    const std::string& conversationId
-)
+ConversationRepository::cloneConversation(const std::weak_ptr<JamiAccount>& account,
+                                          const std::string& deviceId,
+                                          const std::string& conversationId)
 {
     auto shared = account.lock();
-    if (!shared) return {};
-    auto path = fileutils::get_data_dir()+DIR_SEPARATOR_STR+shared->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+conversationId;
-    git_repository *rep = nullptr;
+    if (!shared)
+        return {};
+    auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+                + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + conversationId;
+    git_repository* rep = nullptr;
     std::stringstream url;
     url << "git://" << deviceId << '/' << conversationId;
     if (git_clone(&rep, url.str().c_str(), path.c_str(), nullptr) < 0) {
-        const git_error *err = giterr_last();
-        if (err) JAMI_ERR("Error when retrieving remote conversation: %s", err->message);
+        const git_error* err = giterr_last();
+        if (err)
+            JAMI_ERR("Error when retrieving remote conversation: %s", err->message);
         return nullptr;
     }
     JAMI_INFO("New conversation cloned in %s", path.c_str());
@@ -321,8 +354,7 @@ ConversationRepository::cloneConversation(
 
 /////////////////////////////////////////////////////////////////////////////////
 
-enum class ServerState
-{
+enum class ServerState {
     WAIT_ORDER,
     SEND_REFERENCES_CAPABILITIES,
     ANSWER_TO_WANT_ORDER,
@@ -333,9 +365,13 @@ enum class ServerState
 class GitServer
 {
 public:
-    GitServer(const std::string& repositoryId, const std::string& repository,
-        const std::shared_ptr<ChannelSocket>& socket)
-    : repositoryId_(repositoryId), repository_(repository), socket_(socket) {
+    GitServer(const std::string& repositoryId,
+              const std::string& repository,
+              const std::shared_ptr<ChannelSocket>& socket)
+        : repositoryId_(repositoryId)
+        , repository_(repository)
+        , socket_(socket)
+    {
         execute();
     }
 
@@ -358,19 +394,19 @@ GitServer::execute()
     auto stop = false;
     while (!stop) {
         switch (state_) {
-            case ServerState::WAIT_ORDER:
+        case ServerState::WAIT_ORDER:
             waitOrder();
             break;
-            case ServerState::SEND_REFERENCES_CAPABILITIES:
+        case ServerState::SEND_REFERENCES_CAPABILITIES:
             sendReferenceCapabilities();
             break;
-            case ServerState::ANSWER_TO_WANT_ORDER:
+        case ServerState::ANSWER_TO_WANT_ORDER:
             answerToWantOrder();
             break;
-            case ServerState::SEND_PACKDATA:
+        case ServerState::SEND_PACKDATA:
             sendPackData();
             break;
-            case ServerState::TERMINATE:
+        case ServerState::TERMINATE:
             stop = true;
             break;
         }
@@ -388,7 +424,8 @@ GitServer::waitOrder()
         state_ = ServerState::TERMINATE;
         return;
     }
-    if (res <= 4) return;
+    if (res <= 4)
+        return;
     uint8_t buf[UINT16_MAX];
     socket_->read(buf, res, ec);
     if (ec) {
@@ -411,9 +448,9 @@ GitServer::waitOrder()
             // Get pktlen
             unsigned int pktlen;
             std::stringstream ss;
-            ss << std::hex << pkt.substr(0,4);
+            ss << std::hex << pkt.substr(0, 4);
             ss >> pktlen;
-            auto content = pkt.substr(5, pktlen-5);
+            auto content = pkt.substr(5, pktlen - 5);
             auto commit = content.substr(4, 40);
             if (commit == repositoryId_) {
                 // TODO
@@ -459,7 +496,9 @@ GitServer::sendReferenceCapabilities()
     packet << FLUSH_PKT;
 
     std::error_code ec;
-    socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()), packet.str().size(), ec);
+    socket_->write(reinterpret_cast<const unsigned char*>(packet.str().c_str()),
+                   packet.str().size(),
+                   ec);
     if (ec) {
         JAMI_WARN("Couldn't send data for %s: %s", repository_.c_str(), ec.message().c_str());
     }
@@ -489,7 +528,7 @@ GitServer::sendPackData()
         return;
     }
 
-    git_packbuilder *pb;
+    git_packbuilder* pb;
     if (git_packbuilder_new(&pb, repo) != 0) {
         JAMI_WARN("Couldn't open packbuilder for %s", repository_.c_str());
         git_repository_free(repo);
@@ -499,19 +538,25 @@ GitServer::sendPackData()
     // TODO: here only one commit is written!
     git_oid commit_id;
     if (git_reference_name_to_id(&commit_id, repo, wantedReference_.c_str()) != 0) {
-        JAMI_WARN("Couldn't open reference %s for %s", wantedReference_.c_str(), repository_.c_str());
+        JAMI_WARN("Couldn't open reference %s for %s",
+                  wantedReference_.c_str(),
+                  repository_.c_str());
         git_repository_free(repo);
         return;
     }
     if (git_packbuilder_insert_commit(pb, &commit_id) != 0) {
-        JAMI_WARN("Couldn't open insert commit %s for %s", git_oid_tostr_s(&commit_id), repository_.c_str());
+        JAMI_WARN("Couldn't open insert commit %s for %s",
+                  git_oid_tostr_s(&commit_id),
+                  repository_.c_str());
         git_repository_free(repo);
         return;
     }
 
     git_buf data = {};
     if (git_packbuilder_write_buf(&data, pb) != 0) {
-        JAMI_WARN("Couldn't write data commit %s for %s", git_oid_tostr_s(&commit_id), repository_.c_str());
+        JAMI_WARN("Couldn't write data commit %s for %s",
+                  git_oid_tostr_s(&commit_id),
+                  repository_.c_str());
         git_repository_free(repo);
         return;
     }
@@ -549,8 +594,9 @@ GitServer::sendPackData()
 
 /////////////////////////////////////////////////////////////////////////////////
 
-ConversationRepository::ConversationRepository(const std::weak_ptr<JamiAccount>& account, const std::string& id)
-: pimpl_ { new Impl { account, id } }
+ConversationRepository::ConversationRepository(const std::weak_ptr<JamiAccount>& account,
+                                               const std::string& id)
+    : pimpl_ {new Impl {account, id}}
 {}
 
 ConversationRepository::~ConversationRepository() = default;
@@ -559,8 +605,10 @@ void
 ConversationRepository::serve(const std::shared_ptr<ChannelSocket>& client)
 {
     auto shared = pimpl_->account_.lock();
-    if (!shared) return;
-    auto path = fileutils::get_data_dir()+DIR_SEPARATOR_STR+shared->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+pimpl_->id_;
+    if (!shared)
+        return;
+    auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + shared->getAccountID()
+                + DIR_SEPARATOR_STR + "conversations" + DIR_SEPARATOR_STR + pimpl_->id_;
     GitServer server(pimpl_->id_, path, client);
 }
 
@@ -570,4 +618,133 @@ ConversationRepository::id() const
     return pimpl_->id_;
 }
 
+std::string
+ConversationRepository::sendMessage(const std::string& msg)
+{
+    auto account = pimpl_->account_.lock();
+    if (!account)
+        return {};
+    auto deviceId = account->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto name = account->getAccountDetails()[DRing::Account::ConfProperties::DISPLAYNAME];
+    if (name.empty())
+        name = account
+                   ->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+    if (name.empty())
+        name = deviceId;
+
+    // First, we need to add device file to the repository if not present
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+    std::string devicePath = repoPath + DIR_SEPARATOR_STR + "devices" + DIR_SEPARATOR_STR + deviceId
+                             + ".crt";
+    if (!fileutils::isFile(devicePath)) {
+        auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+        if (!file.is_open()) {
+            JAMI_ERR("Could not write data to %s", devicePath.c_str());
+            return {};
+        }
+        auto cert = account->identity().second;
+        auto deviceCert = cert->toString(false);
+        file << deviceCert;
+        file.close();
+
+        // git add
+        git_index* index;
+
+        if (git_repository_index(&index, pimpl_->repository_.get()) < 0) {
+            JAMI_ERR("Could not open repository index");
+            return {};
+        }
+
+        git_index_add_bypath(index, devicePath.c_str());
+        git_index_write(index);
+        git_index_free(index);
+    }
+
+    git_signature* sig;
+    // Sign commit's buffer
+    if (git_signature_new(&sig, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
+        JAMI_ERR("Unable to create a commit signature.");
+        return {};
+    }
+
+    // Retrieve current HEAD
+    git_oid commit_id;
+    if (git_reference_name_to_id(&commit_id, pimpl_->repository_.get(), "HEAD") < 0) {
+        JAMI_ERR("Cannot get reference for HEAD");
+        git_signature_free(sig);
+        return {};
+    }
+
+    git_commit* head_commit;
+    if (git_commit_lookup(&head_commit, pimpl_->repository_.get(), &commit_id) < 0) {
+        JAMI_ERR("Could not look up HEAD commit");
+        git_signature_free(sig);
+        return {};
+    }
+
+    git_tree* tree;
+    if (git_commit_tree(&tree, head_commit) < 0) {
+        JAMI_ERR("Could not look up initial tree");
+        git_signature_free(sig);
+        return {};
+    }
+
+    git_buf to_sign = {};
+    const git_commit* head_ref[1] = {head_commit};
+    if (git_commit_create_buffer(&to_sign,
+                                 pimpl_->repository_.get(),
+                                 sig,
+                                 sig,
+                                 nullptr,
+                                 msg.c_str(),
+                                 tree,
+                                 1,
+                                 &head_ref[0])
+        < 0) {
+        JAMI_ERR("Could not create commit buffer");
+        git_commit_free(head_commit);
+        git_tree_free(tree);
+        git_signature_free(sig);
+        return {};
+    }
+
+    git_tree_free(tree);
+    git_commit_free(head_commit);
+
+    // git commit -S
+    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
+    auto signed_buf = account->identity().first->sign(to_sign_vec);
+    std::string signed_str = base64::encode(signed_buf.begin(), signed_buf.end());
+    if (git_commit_create_with_signature(&commit_id,
+                                         pimpl_->repository_.get(),
+                                         to_sign.ptr,
+                                         signed_str.c_str(),
+                                         "signature")
+        < 0) {
+        JAMI_ERR("Could not sign commit");
+        return {};
+    }
+
+    git_signature_free(sig);
+
+    // Move commit to master branch
+    git_reference* ref;
+    if (git_reference_create(&ref,
+                             pimpl_->repository_.get(),
+                             "refs/heads/master",
+                             &commit_id,
+                             true,
+                             nullptr)
+        < 0) {
+        JAMI_WARN("Could not move commit to master");
+    }
+    git_reference_free(ref);
+
+    auto commit_str = git_oid_tostr_s(&commit_id);
+    if (commit_str) {
+        JAMI_INFO("New message added with id: %s", commit_str);
+    }
+    return commit_str ? commit_str : "";
 }
+
+} // namespace jami
