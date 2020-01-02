@@ -36,7 +36,8 @@ constexpr auto NAK_PKT = "0008NAK\n"sv;
 constexpr auto DONE_PKT = "0009done\n"sv;
 constexpr auto WANT_CMD = "want"sv;
 constexpr auto HAVE_CMD = "have"sv;
-constexpr auto SERVER_CAPABILITIES = " HEAD\0side-band side-band-64k shallow no-progress include-tag"sv;
+constexpr auto SERVER_CAPABILITIES
+    = " HEAD\0side-band side-band-64k shallow no-progress include-tag"sv;
 
 namespace jami {
 
@@ -106,7 +107,7 @@ GitServer::Impl::parseOrder(const uint8_t* buf, std::size_t len)
     // The first four bytes define the length of the packet and 0000 is a FLUSH pkt
 
     unsigned int pkt_len;
-    std::from_chars(pkt.data(), pkt.data()+4, pkt_len, 16);
+    std::from_chars(pkt.data(), pkt.data() + 4, pkt_len, 16);
     if (pkt_len != pkt.size()) {
         // Store next packet part
         if (pkt_len == 0) {
@@ -234,8 +235,7 @@ GitServer::Impl::sendReferenceCapabilities(bool sendVersion)
 
     // Send references
     std::stringstream capabilities;
-    capabilities << currentHead
-                 << SERVER_CAPABILITIES;
+    capabilities << currentHead << SERVER_CAPABILITIES;
     std::string capStr = capabilities.str();
 
     packet.str("");
@@ -401,7 +401,7 @@ GitServer::Impl::sendPackData()
         // cf https://github.com/git/git/blob/master/Documentation/technical/pack-protocol.txt#L166
         // In 'side-band-64k' mode it will send up to 65519 data bytes plus 1 control code, for a
         // total of up to 65520 bytes in a pkt-line.
-        std::size_t pkt_size = std::min(static_cast<std::size_t>(65519), len - sent);
+        std::size_t pkt_size = std::min(static_cast<std::size_t>(65515), len - sent);
         std::stringstream toSend;
         toSend << std::setw(4) << std::setfill('0') << std::hex << ((pkt_size + 5) & 0x0FFFF);
         toSend << "\x1" << std::string_view(data.ptr + sent, pkt_size);
