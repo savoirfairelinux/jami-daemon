@@ -467,4 +467,73 @@ ConversationRepository::sendMessage(const std::string& msg)
     return commit_str ? commit_str : "";
 }
 
+std::vector<GitCommit>
+ConversationRepository::log(const std::string& last, unsigned n)
+{
+    std::vector<GitCommit> commits {};
+
+    git_oid oid;
+    git_commit* commit = nullptr;
+    if (last.empty()) {
+        if (git_reference_name_to_id(&oid, pimpl_->repository_.get(), "HEAD") < 0) {
+            JAMI_ERR("Cannot get reference for HEAD");
+            return commits;
+        }
+    } else {
+        if (git_oid_fromstr(&oid, last.c_str()) < 0
+            || git_commit_lookup(&commit, pimpl_->repository_.get(), &oid) < 0) {
+            JAMI_WARN("Failed to look up commit %s", last.c_str());
+        }
+    }
+
+    git_revwalk *walker;
+    if (git_revwalk_new(&walker, pimpl_->repository_.get()) < 0
+        || git_revwalk_push(walker, &oid) < 0) {
+        JAMI_ERR("Couldn't init revwalker for conversation %s", pimpl_->id_);
+        git_commit_free(commit);
+        return commits;
+    }
+    git_revwalk_sorting(walker, GIT_SORT_TOPOLOGICAL);
+
+    auto x = git_oid_tostr_s(&oid);
+    for (auto idx = 0; !git_revwalk_next(&oid, walker); git_commit_free(commit)) {
+        if (n != 0 && idx == n) {
+            break;
+        }
+        std::string id = git_oid_tostr_s(&oid);
+        if (git_commit_lookup(&commit, pimpl_->repository_.get(), &oid) < 0) {
+            JAMI_WARN("Failed to look up commit %s", id);
+            break;
+        }
+        const git_signature* sig = git_commit_author(commit);
+        GitAuthor author;
+        author.name = sig->name;
+        author.email = sig->email;
+        std::string parent {};
+        const git_oid* pid = git_commit_parent_id(commit, 0);
+        if (pid) {
+            parent = git_oid_tostr_s(pid);
+        }
+
+        GitCommit gc;
+        gc.id = id;
+        gc.commit_msg = git_commit_message(commit);
+        gc.author = author;
+        gc.parent = parent;
+        git_buf signature = {}, signed_data = {};
+        if (git_commit_extract_signature(&signature, &signed_data, pimpl_->repository_.get(), &oid, "signature") < 0) {
+            JAMI_WARN("Could not extract signature for commit %s", id);
+        } else {
+            gc.signature = base64::decode(std::string(signature.ptr, signature.ptr + signature.size));
+            gc.signed_content  = std::vector<uint8_t>(signed_data.ptr, signed_data.ptr + signed_data.size);
+        }
+        gc.timestamp = git_commit_time(commit);
+        commits.emplace_back(gc);
+        idx++;
+    }
+
+    return commits;
+}
+
+
 }
