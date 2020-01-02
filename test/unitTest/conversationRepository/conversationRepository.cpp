@@ -59,12 +59,14 @@ private:
     void testCreateRepository();
     void testCloneViaChannelSocket();
     void testAddSomeMessages();
+    void testLogMessages();
     void testFetch();
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
-    //CPPUNIT_TEST(testCreateRepository);
-    //CPPUNIT_TEST(testCloneViaChannelSocket);
-    //CPPUNIT_TEST(testAddSomeMessages);
+    CPPUNIT_TEST(testCreateRepository);
+    CPPUNIT_TEST(testCloneViaChannelSocket);
+    CPPUNIT_TEST(testAddSomeMessages);
+    CPPUNIT_TEST(testLogMessages);
     CPPUNIT_TEST(testFetch);
     CPPUNIT_TEST_SUITE_END();
 };
@@ -298,6 +300,12 @@ ConversationRepositoryTest::testCloneViaChannelSocket()
     std::string deviceCrtStr((std::istreambuf_iterator<char>(crt)), std::istreambuf_iterator<char>());
 
     CPPUNIT_ASSERT(deviceCrtStr == deviceCert);
+
+    // Check cloned messages
+    auto messages = cloned->log();
+    CPPUNIT_ASSERT(messages.size() == 1);
+    CPPUNIT_ASSERT(messages[0].id == repository->id());
+    CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(messages[0].signed_content, messages[0].signature));
 }
 
 void
@@ -306,10 +314,53 @@ ConversationRepositoryTest::testAddSomeMessages()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto repository = ConversationRepository::createConversation(aliceAccount->weak());
 
-    repository->sendMessage("Commit 1");
-    repository->sendMessage("Commit 2");
-    repository->sendMessage("Commit 3");
-    // TODO check commits => needs something to get messages
+    auto id1 = repository->sendMessage("Commit 1");
+    auto id2 = repository->sendMessage("Commit 2");
+    auto id3 = repository->sendMessage("Commit 3");
+
+    auto messages = repository->log();
+    CPPUNIT_ASSERT(messages.size() == 4 /* 3 + initial */);
+    CPPUNIT_ASSERT(messages[0].id == id3);
+    CPPUNIT_ASSERT(messages[0].parent == id2);
+    CPPUNIT_ASSERT(messages[0].commit_msg == "Commit 3");
+    CPPUNIT_ASSERT(messages[0].author.name == messages[3].author.name);
+    CPPUNIT_ASSERT(messages[0].author.email == messages[3].author.email);
+    CPPUNIT_ASSERT(messages[1].id == id2);
+    CPPUNIT_ASSERT(messages[1].parent == id1);
+    CPPUNIT_ASSERT(messages[1].commit_msg == "Commit 2");
+    CPPUNIT_ASSERT(messages[1].author.name == messages[3].author.name);
+    CPPUNIT_ASSERT(messages[1].author.email == messages[3].author.email);
+    CPPUNIT_ASSERT(messages[2].id == id1);
+    CPPUNIT_ASSERT(messages[2].commit_msg == "Commit 1");
+    CPPUNIT_ASSERT(messages[2].author.name == messages[3].author.name);
+    CPPUNIT_ASSERT(messages[2].author.email == messages[3].author.email);
+    CPPUNIT_ASSERT(messages[2].parent == repository->id());
+    // Check sig
+    CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(messages[0].signed_content, messages[0].signature));
+    CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(messages[1].signed_content, messages[1].signature));
+    CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(messages[2].signed_content, messages[2].signature));
+}
+
+void
+ConversationRepositoryTest::testLogMessages()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+
+    auto id1 = repository->sendMessage("Commit 1");
+    auto id2 = repository->sendMessage("Commit 2");
+    auto id3 = repository->sendMessage("Commit 3");
+
+    auto messages = repository->log(repository->id(), 1);
+    CPPUNIT_ASSERT(messages.size() == 1);
+    CPPUNIT_ASSERT(messages[0].id == repository->id());
+    messages = repository->log(id2, 2);
+    CPPUNIT_ASSERT(messages.size() == 2);
+    CPPUNIT_ASSERT(messages[0].id == id2);
+    CPPUNIT_ASSERT(messages[1].id == id1);
+    messages = repository->log(repository->id(), 3);
+    CPPUNIT_ASSERT(messages.size() == 1);
+    CPPUNIT_ASSERT(messages[0].id == repository->id());
 }
 
 void
@@ -377,15 +428,15 @@ ConversationRepositoryTest::testFetch()
     });
 
     // Clone repository
-    repository->sendMessage("Commit 1");
+    auto id1 = repository->sendMessage("Commit 1");
     auto cloned = ConversationRepository::cloneConversation(bobAccount->weak(), aliceDeviceId, repository->id());
     gs.stop();
     sendT.join();
     bobAccount->removeGitSocket(aliceDeviceId, repository->id());
 
     // Add some new messages to fetch
-    repository->sendMessage("Commit 2");
-    repository->sendMessage("Commit 3");
+    auto id2 = repository->sendMessage("Commit 2");
+    auto id3 = repository->sendMessage("Commit 3");
 
     // Open a new channel to simulate the fact that we are later
     aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
@@ -413,7 +464,27 @@ ConversationRepositoryTest::testFetch()
     bobAccount->removeGitSocket(aliceDeviceId, repository->id());
     sendT2.join();
 
-    // TODO check commits => needs something to get messages
+    auto messages = cloned->log(id3);
+    CPPUNIT_ASSERT(messages.size() == 4 /* 3 + initial */);
+    CPPUNIT_ASSERT(messages[0].id == id3);
+    CPPUNIT_ASSERT(messages[0].parent == id2);
+    CPPUNIT_ASSERT(messages[0].commit_msg == "Commit 3");
+    CPPUNIT_ASSERT(messages[0].author.name == messages[3].author.name);
+    CPPUNIT_ASSERT(messages[0].author.email == messages[3].author.email);
+    CPPUNIT_ASSERT(messages[1].id == id2);
+    CPPUNIT_ASSERT(messages[1].parent == id1);
+    CPPUNIT_ASSERT(messages[1].commit_msg == "Commit 2");
+    CPPUNIT_ASSERT(messages[1].author.name == messages[3].author.name);
+    CPPUNIT_ASSERT(messages[1].author.email == messages[3].author.email);
+    CPPUNIT_ASSERT(messages[2].id == id1);
+    CPPUNIT_ASSERT(messages[2].commit_msg == "Commit 1");
+    CPPUNIT_ASSERT(messages[2].author.name == messages[3].author.name);
+    CPPUNIT_ASSERT(messages[2].author.email == messages[3].author.email);
+    CPPUNIT_ASSERT(messages[2].parent == repository->id());
+    // Check sig
+    CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(messages[0].signed_content, messages[0].signature));
+    CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(messages[1].signed_content, messages[1].signature));
+    CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(messages[2].signed_content, messages[2].signature));
 }
 
 }} // namespace test
