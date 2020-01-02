@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "def.h"
 
@@ -26,6 +27,21 @@ namespace jami {
 
 class JamiAccount;
 class ChannelSocket;
+
+struct GitAuthor {
+    std::string name {};
+    std::string email {};
+};
+
+struct ConversationCommit {
+    std::string id {};
+    std::string parent {};
+    GitAuthor author {};
+    std::vector<uint8_t> signed_content {};
+    std::vector<uint8_t> signature {};
+    std::string commit_msg {};
+    int64_t timestamp {0};
+};
 
 /**
  * This class gives access to the git repository that represents the conversation
@@ -91,6 +107,14 @@ public:
      * @return <empty> on failure, else the message id
      */
     std::string sendMessage(const std::string& msg);
+
+    /**
+     * Get commits from [last-n, last]
+     * @param last  last commit (default empty)
+     * @param n     Max commits number to get (default: 0)
+     * @return a list of commits
+     */
+    std::vector<ConversationCommit> log(const std::string& last = "", unsigned n = 0);
 
 private:
     ConversationRepository() = delete;
