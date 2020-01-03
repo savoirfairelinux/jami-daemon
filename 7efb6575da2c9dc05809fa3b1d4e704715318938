@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4389e2dd_c4aaa0fb",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 167,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-03T21:58:32Z",
+      "side": 1,
+      "message": "unique_ptr not set at that point",
+      "range": {
+        "startLine": 167,
+        "startChar": 8,
+        "endLine": 167,
+        "endChar": 39
+      },
+      "revId": "7efb6575da2c9dc05809fa3b1d4e704715318938",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "293bf3ac_b4624564",
+        "filename": "src/jamidht/conversationrepository.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 205,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-03T21:58:32Z",
+      "side": 1,
+      "message": "unique_ptr not set at that point",
+      "range": {
+        "startLine": 205,
+        "startChar": 27,
+        "endLine": 205,
+        "endChar": 34
+      },
+      "revId": "7efb6575da2c9dc05809fa3b1d4e704715318938",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
