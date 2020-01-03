@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "e2104652_43e293f1",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 375,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-03T23:19:58Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027f\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "ab919195b04a8ef4a678596029aa72895d79a4ae",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5ab303b4_7dbbf449",
         "filename": "src/archiver.cpp",
         "patchSetId": 14
@@ -28,6 +45,23 @@
         "id": 5
       },
       "writtenOn": "2020-01-03T23:19:49Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nValue stored to \u0027r\u0027 is never read\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-deadcode.DeadStores",
+      "revId": "ab919195b04a8ef4a678596029aa72895d79a4ae",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "1052e892_82ce7be0",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 14
+      },
+      "lineNbr": 435,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-03T23:19:58Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nValue stored to \u0027r\u0027 is never read\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-deadcode.DeadStores",
       "revId": "ab919195b04a8ef4a678596029aa72895d79a4ae",
