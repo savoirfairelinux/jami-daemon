@@ -1,0 +1,136 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3eaa9a99_6cc4fa92",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-03T17:28:29Z",
+      "side": 1,
+      "message": "avoid trailing whitespaces",
+      "range": {
+        "startLine": 106,
+        "startChar": 1,
+        "endLine": 106,
+        "endChar": 4
+      },
+      "revId": "87f3727490fce06be889d581b573c98ba3b5ff0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2801ad9a_81d36047",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 445,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-03T17:28:29Z",
+      "side": 1,
+      "message": "archive_write_data_block creates and compress to a new archive. Why call it in a function called \"uncompressArchive\" ?",
+      "range": {
+        "startLine": 445,
+        "startChar": 24,
+        "endLine": 445,
+        "endChar": 38
+      },
+      "revId": "87f3727490fce06be889d581b573c98ba3b5ff0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8c079fe7_aad39810",
+        "filename": "src/dring/plugin_manager_interface.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 18,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-03T17:28:29Z",
+      "side": 1,
+      "message": "unrelated to libarchive",
+      "revId": "87f3727490fce06be889d581b573c98ba3b5ff0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bbadaae8_c4266837",
+        "filename": "src/plugin/pluginpreferencesmanager.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-03T17:28:29Z",
+      "side": 1,
+      "message": "unrelated to libarchive",
+      "range": {
+        "startLine": 106,
+        "startChar": 8,
+        "endLine": 106,
+        "endChar": 17
+      },
+      "revId": "87f3727490fce06be889d581b573c98ba3b5ff0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "156b58d6_450baa35",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 131,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-03T17:28:29Z",
+      "side": 1,
+      "message": "unrelated to libarchive",
+      "range": {
+        "startLine": 131,
+        "startChar": 8,
+        "endLine": 131,
+        "endChar": 26
+      },
+      "revId": "87f3727490fce06be889d581b573c98ba3b5ff0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b7ed5f23_ffab35e6",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 139,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-03T17:28:29Z",
+      "side": 1,
+      "message": "unrelated to libarchive",
+      "range": {
+        "startLine": 139,
+        "startChar": 7,
+        "endLine": 139,
+        "endChar": 26
+      },
+      "revId": "87f3727490fce06be889d581b573c98ba3b5ff0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
