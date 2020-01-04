@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "42b1620f_621f59cf",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 375,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-04T00:06:09Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027f\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "7780fd1f1ae7062ddcb2db608944813da8abedce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "db58ea4a_d83bda48",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 435,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-04T00:06:09Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nValue stored to \u0027r\u0027 is never read\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-deadcode.DeadStores",
+      "revId": "7780fd1f1ae7062ddcb2db608944813da8abedce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
