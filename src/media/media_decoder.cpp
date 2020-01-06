@@ -279,7 +279,7 @@ MediaDecoder::setupStream()
     // it has been disabled already by the video_receive_thread/video_input
     enableAccel_ &= Manager::instance().videoPreferences.getDecodingAccelerated();
 
-    if (enableAccel_) {
+    if (enableAccel_ && not swFallback_) {
         auto APIs = video::HardwareAccel::getCompatibleAccel(decoderCtx_->codec_id,
                     decoderCtx_->width, decoderCtx_->height, CODEC_DECODER);
         if (APIs.size() > 0) {
@@ -514,6 +514,12 @@ MediaDecoder::getStream(std::string name) const
         ms.format = accel_->getSoftwareFormat();
 #endif
     return ms;
+}
+
+void
+MediaDecoder::setOptions(const MediaDescription& opt)
+{
+    swFallback_ = opt.swFallback;
 }
 
 } // namespace jami

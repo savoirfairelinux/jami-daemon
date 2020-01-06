@@ -34,6 +34,7 @@
 #include "call.h"
 #include "conference.h"
 #include "congestion_control.h"
+#include "accel.h"
 
 #include "account_const.h"
 
@@ -85,6 +86,7 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
 void
 VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 {
+    packetLossCallback_ = cb;
     if (socketPair_)
         socketPair_->setPacketLossCallback(std::move(cb));
     else
@@ -102,29 +104,7 @@ void VideoRtpSession::startSender()
             JAMI_WARN("Restarting video sender");
         }
 
-        if (not conference_) {
-            videoLocal_ = getVideoCamera();
-            if (auto input = Manager::instance().getVideoManager().videoInput.lock()) {
-                auto newParams = input->switchInput(input_);
-                try {
-                    if (newParams.valid() &&
-                        newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
-                        localVideoParams_ = newParams.get();
-                    } else {
-                        JAMI_ERR("No valid new video parameters.");
-                        return;
-                    }
-                } catch (const std::exception& e) {
-                    JAMI_ERR("Exception during retrieving video parameters: %s",
-                             e.what());
-                    return;
-                }
-            } else {
-                JAMI_WARN("Can't lock video input");
-                return;
-            }
-        }
-
+        startInput();
 
         // be sure to not send any packets before saving last RTP seq value
         socketPair_->stopSendOp();
@@ -149,6 +129,17 @@ void VideoRtpSession::startSender()
             JAMI_ERR("%s", e.what());
             send_.enabled = false;
         }
+
+        // Set callbacks for software fallback
+        if (sender_)
+            sender_->setSwFallbackCallback([&](ComponentType type) {accelSwFallback(type);});
+        if (receiveThread_)
+            receiveThread_->setSwFallbackCallback([&](ComponentType type) {accelSwFallback(type);});
+        if (videoLocal_) {
+            auto localInput = std::dynamic_pointer_cast<VideoInput>(videoLocal_);
+            localInput->setSwFallbackCallback([&](ComponentType type) {accelSwFallback(type);});
+        }
+
         lastMediaRestart_ = clock::now();
         last_REMB_inc_ = clock::now();
         last_REMB_dec_ = clock::now();
@@ -178,7 +169,7 @@ void VideoRtpSession::startReceiver()
         if (receiveThread_)
             JAMI_WARN("Restarting video receiver");
         receiveThread_.reset(
-            new VideoReceiveThread(callID_, receive_.receiving_sdp, mtu_)
+            new VideoReceiveThread(callID_, receive_, mtu_)
         );
 
         // XXX keyframe requests can timeout if unanswered
@@ -189,6 +180,33 @@ void VideoRtpSession::startReceiver()
         if (receiveThread_)
             receiveThread_->detach(videoMixer_.get());
         receiveThread_.reset();
+    }
+}
+
+void
+VideoRtpSession::startInput() 
+{
+    if (not conference_) {
+        videoLocal_ = getVideoCamera();
+        if (auto input = Manager::instance().getVideoManager().videoInput.lock()) {
+            auto newParams = input->switchInput(input_);
+            try {
+                if (newParams.valid() &&
+                    newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+                    localVideoParams_ = newParams.get();
+                } else {
+                    JAMI_ERR("No valid new video parameters.");
+                    return;
+                }
+            } catch (const std::exception& e) {
+                JAMI_ERR("Exception during retrieving video parameters: %s",
+                            e.what());
+                return;
+            }
+        } else {
+            JAMI_WARN("Can't lock video input");
+            return;
+        }
     }
 }
 
@@ -522,6 +540,12 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
     if (videoBitrateInfo_.videoBitrateCurrent != newBR) {
         videoBitrateInfo_.videoBitrateCurrent = newBR;
         storeVideoBitrateInfo();
+        // if (videoBitrateInfo_.videoBitrateCurrent > 2000){
+        //     videoBitrateInfo_.videoBitrateCurrent = 1200;
+        //     storeVideoBitrateInfo();
+        //     accelSwFallback(ComponentType::RECEIVER);
+        //     return;
+        // }
 
 #if __ANDROID__
         if (auto input_device = std::dynamic_pointer_cast<VideoInput>(videoLocal_))
@@ -705,6 +729,28 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
             socketPair_->writeData(buf, v.size());
             last_REMB_inc_ =  clock::now();
         }
+    }
+}
+
+void
+VideoRtpSession::accelSwFallback(ComponentType type)
+{
+    if (type == ComponentType::SENDER) {
+        JAMI_ERR("Sender accel failed fallback to software");
+        send_.swFallback = true;
+        restartSender();
+    }
+    else if (type == ComponentType::RECEIVER) {
+        JAMI_ERR("Receiver accel failed fallback to software");
+        receive_.swFallback = true;
+        startReceiver();
+        packetLossCallback_();
+    }
+    else if (type == ComponentType::INPUT) {
+        JAMI_ERR("Input accel failed fallback to software");
+        receive_.swFallback = true;
+        videoLocal_.reset();
+        startInput();
     }
 }
 

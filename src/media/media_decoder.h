@@ -148,7 +148,7 @@ public:
     rational<double> getFps() const;
     AVPixelFormat getPixelFormat() const;
 
-    void setOptions(const std::map<std::string, std::string>& options);
+    void setOptions(const MediaDescription& opt);
 #ifdef RING_ACCEL
     void enableAccel(bool enableAccel);
 #endif
@@ -185,6 +185,7 @@ private:
 #endif
     MediaObserver callback_;
     int prepareDecoderContext();
+    bool swFallback_ {false};
 
 protected:
     AVDictionary *options_ = nullptr;

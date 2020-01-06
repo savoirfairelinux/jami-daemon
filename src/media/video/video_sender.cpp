@@ -155,4 +155,18 @@ VideoSender::setBitrate(uint64_t br)
 
 }
 
+void
+VideoSender::setSwFallbackCallback(std::function<void(ComponentType)> cb) 
+{
+    swFallbackCallback_ = std::move(cb);
+    videoEncoder_->setSwFallbackCallback([&]() {softwareCallback();});
+}
+
+void
+VideoSender::softwareCallback() 
+{
+    if (swFallbackCallback_)
+        swFallbackCallback_((ComponentType::SENDER));
+}
+
 }} // namespace jami::video

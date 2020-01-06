@@ -107,6 +107,7 @@ private:
     void setupVideoPipeline();
     void startSender();
     void startReceiver();
+    void startInput();
     using clock = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
@@ -169,6 +170,10 @@ private:
     unsigned remb_dec_cnt_ {0};
 
     std::unique_ptr<CongestionControl> cc;
+
+    void accelSwFallback(ComponentType type);
+
+    std::function<void(void)> packetLossCallback_;
 };
 
 }} // namespace jami::video

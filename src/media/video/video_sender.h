@@ -62,6 +62,8 @@ public:
     void setChangeOrientationCallback(std::function<void(int)> cb);
     int setBitrate(uint64_t br);
 
+    void setSwFallbackCallback(std::function<void(ComponentType)> cb);
+
 private:
     static constexpr int KEYFRAMES_AT_START {1}; // Number of keyframes to enforce at stream startup
     static constexpr unsigned KEY_FRAME_PERIOD {0}; // seconds before forcing a keyframe
@@ -80,5 +82,8 @@ private:
 
     int rotation_ = 0;
     std::function<void(int)> changeOrientationCallback_;
+    std::function<void(ComponentType)> swFallbackCallback_;
+
+    void softwareCallback();
 };
 }} // namespace jami::video

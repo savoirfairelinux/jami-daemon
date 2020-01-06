@@ -27,6 +27,7 @@
 #endif
 
 #include "video_base.h"
+#include "media_codec.h"
 #include <videomanager_interface.h>
 
 #include <string>
@@ -84,6 +85,10 @@ class SinkClient : public VideoFramePassiveReader
             avTarget_ = target;
         }
 
+        void setSwFallbackCallback(std::function<void(void)> cb) {
+            swFallbackCallback_ = std::move(cb);
+        }
+
     private:
         const std::string id_;
         const bool mixer_;
@@ -97,6 +102,8 @@ class SinkClient : public VideoFramePassiveReader
         std::unique_ptr<MediaFilter> filter_;
 
         void setRotation(int rotation);
+
+        std::function<void(void)> swFallbackCallback_;
 
 #ifdef DEBUG_FPS
         unsigned frameCount_;

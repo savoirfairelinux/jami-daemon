@@ -27,6 +27,7 @@
 #include "media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
+#include "media_codec.h"
 
 #include <map>
 #include <atomic>
@@ -80,6 +81,8 @@ public:
     void releaseFrame(void *frame);
 #endif
 
+    void setSwFallbackCallback(std::function<void(ComponentType)> cb);
+
 private:
     NON_COPYABLE(VideoInput);
 
@@ -128,6 +131,9 @@ private:
     std::shared_ptr<AVBufferRef> displayMatrix_;
     void setRotation(int angle);
 #endif
+    std::function<void(ComponentType)> swFallbackCallback_;
+
+    void softwareCallback();
 };
 
 }} // namespace jami::video

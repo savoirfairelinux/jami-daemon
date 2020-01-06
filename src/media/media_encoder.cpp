@@ -117,6 +117,7 @@ MediaEncoder::setOptions(const MediaDescription& args)
 
     auto_quality = args.auto_quality;
     linkableHW_ = args.linkableHW;
+    swFallback_ = args.swFallback;
 }
 
 void
@@ -207,7 +208,7 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     currentStreamIdx_ = stream->index;
 #ifdef RING_ACCEL
     // Get compatible list of Hardware API 
-    if (enableAccel_ && mediaType == AVMEDIA_TYPE_VIDEO) {
+    if (enableAccel_ && not swFallback_ && mediaType == AVMEDIA_TYPE_VIDEO) {
         auto APIs = video::HardwareAccel::getCompatibleAccel(static_cast<AVCodecID>(systemCodecInfo.avcodecId),
                 videoOpts_.width, videoOpts_.height, CODEC_ENCODER);
     
@@ -359,20 +360,49 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
         // Transfer to GPU if we have a hardware encoder
         // Hardware decoders decode to NV12, but Jami's supported software encoders want YUV420P
         AVPixelFormat pix = (accel_ ? accel_->getSoftwareFormat() : AV_PIX_FMT_NV12);
-        framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
+        try {
+            framePtr = video::HardwareAccel::transferToMainMemory(input, pix);
+        } catch (const video::AccelException &e) {
+            JAMI_ERR("%s", e.what());
+            if (swFallbackCallback_)
+                swFallbackCallback_();
+            return -1;
+        }
         if (!accel_)
             framePtr = scaler_.convertFormat(*framePtr, AV_PIX_FMT_YUV420P);
-        else
-            framePtr = accel_->transfer(*framePtr);
+        else {
+            try {
+                framePtr = accel_->transfer(*framePtr);
+            } catch (const video::AccelException &e) {
+                JAMI_ERR("%s", e.what());
+                if (swFallbackCallback_)
+                    swFallbackCallback_();
+                return -1;
+            }
+        }
         frame = framePtr->pointer();
     } else if (accel_) {
         // Software decoded frame with a hardware encoder, convert to accepted format first
         auto pix = accel_->getSoftwareFormat();
         if (input.format() != pix) {
             framePtr = scaler_.convertFormat(input, pix);
-            framePtr = accel_->transfer(*framePtr);
+            try {
+                framePtr = accel_->transfer(*framePtr);
+            } catch (const video::AccelException &e) {
+                JAMI_ERR("%s", e.what());
+                if (swFallbackCallback_)
+                    swFallbackCallback_();
+                return -1;
+            }
         } else {
-            framePtr = accel_->transfer(input);
+            try {
+                framePtr = accel_->transfer(input);
+            } catch (const video::AccelException &e) {
+                JAMI_ERR("%s", e.what());
+                if (swFallbackCallback_)
+                    swFallbackCallback_();
+                return -1;
+            }
         }
         frame = framePtr->pointer();
     } else {
@@ -447,7 +477,14 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
         return -1;
 
     while (ret >= 0) {
-        ret = avcodec_receive_packet(encoderCtx, &pkt);
+        try {
+            ret = avcodec_receive_packet(encoderCtx, &pkt);
+        } catch (std::exception& e) {
+            if (not swFallback_)
+                swFallbackCallback_();
+            return -1;
+        }
+
         if (ret == AVERROR(EAGAIN))
             break;
         if (ret < 0 && ret != AVERROR_EOF) { // we still want to write our frame on EOF

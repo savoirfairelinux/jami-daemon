@@ -528,4 +528,18 @@ VideoInput::foundDecOpts(const DeviceParams& params)
     }
 }
 
+void
+VideoInput::setSwFallbackCallback(std::function<void(ComponentType)> cb) 
+{
+    swFallbackCallback_ = std::move(cb);
+    sink_->setSwFallbackCallback([&]() {softwareCallback();});
+}
+
+void
+VideoInput::softwareCallback() 
+{
+    if (swFallbackCallback_)
+        swFallbackCallback_((ComponentType::INPUT));
+}
+
 }} // namespace jami::video

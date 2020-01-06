@@ -191,10 +191,18 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     if (!width_ or !height_ or !input.pointer() or input.pointer()->format == -1)
         return;
 
+    std::shared_ptr<VideoFrame> frame;
 #ifdef RING_ACCEL
-    std::shared_ptr<VideoFrame> frame { HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12) };
+    try {
+        frame = HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12);
+    } catch (const AccelException &e) {
+        JAMI_ERR("%s", e.what());
+        if (swFallbackCallback_)
+            swFallbackCallback_(ComponentType::MIXER);
+        return;
+    }
 #else
-    std::shared_ptr<VideoFrame> frame = input;
+    frame = input;
 #endif
 
     const int n = sources_.size();

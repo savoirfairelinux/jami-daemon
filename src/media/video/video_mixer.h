@@ -26,6 +26,7 @@
 #include "video_scaler.h"
 #include "threadloop.h"
 #include "rw_mutex.h"
+#include "media_codec.h"
 
 #include <list>
 #include <chrono>
@@ -56,6 +57,10 @@ public:
 
     void switchInput(const std::string& input);
 
+    void setSwFallbackCallback(std::function<void(ComponentType)> cb) {
+        swFallbackCallback_ = std::move(cb);
+    }
+
 private:
     NON_COPYABLE(VideoMixer);
 
@@ -83,6 +88,8 @@ private:
     VideoScaler scaler_;
 
     ThreadLoop loop_; // as to be last member
+
+    std::function<void(ComponentType)> swFallbackCallback_;
 };
 
 }} // namespace jami::video

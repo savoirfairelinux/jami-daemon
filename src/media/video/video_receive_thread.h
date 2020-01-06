@@ -50,7 +50,7 @@ class SinkClient;
 
 class VideoReceiveThread : public VideoGenerator {
 public:
-    VideoReceiveThread(const std::string &id, const std::string &sdp, uint16_t mtu);
+    VideoReceiveThread(const std::string &id, const MediaDescription &opt, uint16_t mtu);
     ~VideoReceiveThread();
     void startLoop(const std::function<void(MediaType)>& cb);
 
@@ -72,10 +72,13 @@ public:
       */
     void setRotation(int angle);
 
+    void setSwFallbackCallback(std::function<void(ComponentType)> cb);
+
 private:
     NON_COPYABLE(VideoReceiveThread);
 
     DeviceParams args_;
+    MediaDescription opt_;
 
     /*-------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. run()) only! */
@@ -106,6 +109,10 @@ private:
     bool setup();
     void process();
     void cleanup();
+
+    std::function<void(ComponentType)> swFallbackCallback_;
+
+    void softwareCallback();
 };
 
 }} // namespace jami::video

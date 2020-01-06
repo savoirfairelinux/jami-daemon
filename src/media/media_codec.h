@@ -51,6 +51,14 @@ enum MediaType : unsigned {
     MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO
 };
 
+enum ComponentType : unsigned {
+    SENDER = 0,
+    RECEIVER = 1,
+    INPUT = 2,
+    MIXER = 3,
+    RECORDER = 4
+};
+
 /*
  * SystemCodecInfo
  * represent information of a codec available on the system (using libav)
@@ -280,6 +288,7 @@ struct MediaDescription {
     std::string parameters {};
     bool auto_quality {false};
     bool linkableHW {false};
+    bool swFallback {false};
 
     /** Crypto parameters */
     CryptoAttribute crypto {};

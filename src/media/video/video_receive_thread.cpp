@@ -42,14 +42,15 @@ namespace jami { namespace video {
 using std::string;
 
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
-                                       const std::string &sdp,
+                                       const MediaDescription &opt,
                                        uint16_t mtu) :
     VideoGenerator::VideoGenerator()
     , args_()
     , dstWidth_(0)
     , dstHeight_(0)
     , id_(id)
-    , stream_(sdp)
+    , opt_(opt)
+    , stream_(opt.receiving_sdp)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , mtu_(mtu)
@@ -80,6 +81,7 @@ bool VideoReceiveThread::setup()
             av_frame_new_side_data_from_buf(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(displayMatrix.get()));
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
+    videoDecoder_->setOptions(opt_);
 
     dstWidth_ = args_.width;
     dstHeight_ = args_.height;
@@ -238,6 +240,18 @@ VideoReceiveThread::setRotation(int angle)
         av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
         displayMatrix_ = std::move(displayMatrix);
     }
+}
+
+void
+VideoReceiveThread::setSwFallbackCallback(std::function<void(ComponentType)> cb) {
+    swFallbackCallback_ = std::move(cb);
+    sink_->setSwFallbackCallback([&]() {softwareCallback();});
+}
+
+void
+VideoReceiveThread::softwareCallback() {
+    if (swFallbackCallback_)
+        swFallbackCallback_((ComponentType::RECEIVER));
 }
 
 }} // namespace jami::video
