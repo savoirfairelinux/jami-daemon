@@ -26,18 +26,8 @@
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
 
-#include <git2.h>
-
 #include <ctime>
 #include <fstream>
-
-using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
-using GitRevWalker = std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)>;
-using GitCommit = std::unique_ptr<git_commit, decltype(&git_commit_free)>;
-using GitIndex = std::unique_ptr<git_index, decltype(&git_index_free)>;
-using GitTree = std::unique_ptr<git_tree, decltype(&git_tree_free)>;
-using GitRemote = std::unique_ptr<git_remote, decltype(&git_remote_free)>;
-using GitSignature = std::unique_ptr<git_signature, decltype(&git_signature_free)>;
 
 namespace jami {
 
@@ -56,6 +46,10 @@ public:
         repository_ = {std::move(repo), git_repository_free};
     }
     ~Impl() = default;
+
+    GitSignature signature();
+    bool mergeFastforward(const git_oid *target_oid, int is_unborn);
+    bool createMergeCommit(git_index *index, const std::string& wanted_ref);
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
@@ -245,6 +239,194 @@ initial_commit(GitRepository& repo, const std::shared_ptr<JamiAccount>& account)
     if (commit_str) return commit_str;
     return {};
 }
+
+//////////////////////////////////
+
+GitSignature
+ConversationRepository::Impl::signature()
+{
+    auto account = account_.lock();
+    if (!account) return {nullptr, git_signature_free};
+    auto deviceId = account->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto name = account->getAccountDetails()[DRing::Account::ConfProperties::DISPLAYNAME];
+    if (name.empty())
+        name = account->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+    if (name.empty())
+        name = deviceId;
+
+    git_signature* sig_ptr = nullptr;
+    // Sign commit's buffer
+    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
+		JAMI_ERR("Unable to create a commit signature.");
+        return {nullptr, git_signature_free};
+    }
+    GitSignature sig {sig_ptr, git_signature_free};
+    return std::move(sig);
+}
+
+bool
+ConversationRepository::Impl::createMergeCommit(git_index *index, const std::string& wanted_ref)
+{
+    // The merge will occur between current HEAD and wanted_ref
+	git_reference *head_ref_ptr = nullptr;
+	if (git_repository_head(&head_ref_ptr, repository_.get()) < 0) {
+        JAMI_ERR("Could not get HEAD reference");
+        return false;
+    }
+    GitReference head_ref {head_ref_ptr, git_reference_free};
+
+	// Maybe that's a ref, so DWIM it
+	git_reference *merge_ref_ptr = nullptr;
+	git_reference_dwim(&merge_ref_ptr, repository_.get(), wanted_ref.c_str());
+    GitReference merge_ref {merge_ref_ptr, git_reference_free};
+
+    GitSignature sig {signature()};
+
+    // Prepare a standard merge commit message
+	const char *msg_target = nullptr;
+	if (merge_ref) {
+        git_branch_name(&msg_target, merge_ref.get());
+	} else {
+		msg_target = wanted_ref.c_str();
+	}
+
+    std::stringstream stream;
+    stream << "Merge " << (merge_ref ? "branch" : "commit") << " '" << msg_target << "'";
+
+	// Setup our parent commits
+    GitCommit parents[2] {{nullptr, git_commit_free},  {nullptr, git_commit_free}};
+    git_commit* parent = nullptr;
+    if (git_reference_peel((git_object **)&parent, head_ref.get(), GIT_OBJ_COMMIT) < 0) {
+        JAMI_ERR("Could not peel HEAD reference");
+        return false;
+    }
+    parents[0] = {parent, git_commit_free};
+    git_oid commit_id;
+    if (git_oid_fromstr(&commit_id, wanted_ref.c_str()) < 0) {
+        return false;
+    }
+    git_annotated_commit* annotated_ptr = nullptr;
+    if (git_annotated_commit_lookup(&annotated_ptr, repository_.get(), &commit_id) < 0) {
+        JAMI_ERR("Couldn't lookup commit %s", wanted_ref.c_str());
+        return false;
+    }
+    GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
+    if (git_commit_lookup(&parent, repository_.get(), git_annotated_commit_id(annotated.get())) < 0) {
+        JAMI_ERR("Couldn't lookup commit %s", wanted_ref.c_str());
+        return false;
+    }
+    parents[1] = {parent, git_commit_free};
+
+	// Prepare our commit tree
+    git_oid tree_oid;
+	git_tree *tree = nullptr;
+    if (git_index_write_tree(&tree_oid, index) < 0) {
+        JAMI_ERR("Couldn't write index");
+        return false;
+    }
+    if (git_tree_lookup(&tree, repository_.get(), &tree_oid) < 0) {
+        JAMI_ERR("Couldn't lookup tree");
+        return false;
+    }
+
+    // Commit
+    git_buf to_sign = {};
+    const git_commit* parents_ptr[2] {parents[0].get(), parents[1].get()};
+    if (git_commit_create_buffer(&to_sign, repository_.get(),
+            sig.get(), sig.get(), nullptr, stream.str().c_str(), tree,
+            2, &parents_ptr[0]) < 0) {
+        JAMI_ERR("Could not create commit buffer");
+        return false;
+    }
+
+    auto account = account_.lock();
+    if (!account) false;
+    // git commit -S
+    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
+    auto signed_buf = account->identity().first->sign(to_sign_vec);
+    std::string signed_str = base64::encode(signed_buf.begin(), signed_buf.end());
+    git_oid commit_oid;
+    if (git_commit_create_with_signature(&commit_oid, repository_.get(), to_sign.ptr,
+        signed_str.c_str(), "signature") < 0) {
+        JAMI_ERR("Could not sign commit");
+        return false;
+    }
+
+    auto commit_str = git_oid_tostr_s(&commit_oid);
+    if (commit_str) {
+        JAMI_INFO("New merge commit added with id: %s", commit_str);
+        // Move commit to master branch
+        git_reference* ref_ptr = nullptr;
+        if (git_reference_create(&ref_ptr, repository_.get(), "refs/heads/master", &commit_oid, true, nullptr) < 0) {
+            JAMI_WARN("Could not move commit to master");
+        }
+        git_reference_free(ref_ptr);
+    }
+
+	// We're done merging, cleanup the repository state
+	git_repository_state_cleanup(repository_.get());
+
+    return true;
+}
+
+bool
+ConversationRepository::Impl::mergeFastforward(const git_oid *target_oid, int is_unborn)
+{
+    // Initialize target
+	git_reference *target_ref_ptr = nullptr;
+	if (is_unborn) {
+		git_reference *head_ref_ptr = nullptr;
+		// HEAD reference is unborn, lookup manually so we don't try to resolve it
+		if (git_reference_lookup(&head_ref_ptr, repository_.get(), "HEAD") < 0) {
+            JAMI_ERR("failed to lookup HEAD ref");
+			return false;
+		}
+        GitReference head_ref {head_ref_ptr, git_reference_free};
+
+		// Grab the reference HEAD should be pointing to
+		const auto* symbolic_ref = git_reference_symbolic_target(head_ref.get());
+
+		// Create our master reference on the target OID
+		if (git_reference_create(&target_ref_ptr, repository_.get(), symbolic_ref, target_oid, 0, nullptr) < 0) {
+            JAMI_ERR("failed to create master reference");
+			return false;
+		}
+
+	} else if (git_repository_head(&target_ref_ptr, repository_.get()) < 0) {
+        // HEAD exists, just lookup and resolve
+        JAMI_ERR("failed to get HEAD reference");
+        return false;
+	}
+    GitReference target_ref {target_ref_ptr, git_reference_free};
+
+	// Lookup the target object
+	git_object* target_ptr = nullptr;
+	if (git_object_lookup(&target_ptr, repository_.get(), target_oid, GIT_OBJ_COMMIT) != 0) {
+		JAMI_ERR("failed to lookup OID %s", git_oid_tostr_s(target_oid));
+		return false;
+	}
+    GitObject target {target_ptr, git_object_free};
+
+	// Checkout the result so the workdir is in the expected state
+	git_checkout_options ff_checkout_options = GIT_CHECKOUT_OPTIONS_INIT;
+	ff_checkout_options.checkout_strategy = GIT_CHECKOUT_SAFE;
+	if (git_checkout_tree(repository_.get(), target.get(), &ff_checkout_options) != 0) {
+		JAMI_ERR("failed to checkout HEAD reference");
+		return false;
+	}
+
+	// Move the target reference to the target OID
+	git_reference *new_target_ref;
+	if (git_reference_set_target(&new_target_ref, target_ref.get(), target_oid, nullptr) < 0) {
+		JAMI_ERR("failed to move HEAD reference");
+		return false;
+	}
+	git_reference_free(new_target_ref);
+
+	return 0;
+}
+
+//////////////////////////////////
 
 std::unique_ptr<ConversationRepository>
 ConversationRepository::createConversation(const std::weak_ptr<JamiAccount>& account)
@@ -557,6 +739,95 @@ ConversationRepository::log(const std::string& last, unsigned n)
 
     return commits;
 }
+
+bool
+ConversationRepository::merge(const std::string& merge_id)
+{
+    // First, the repository must be in a clean state
+    int state = git_repository_state(pimpl_->repository_.get());
+	if (state != GIT_REPOSITORY_STATE_NONE) {
+        JAMI_ERR("Merge operation aborted: repository is in unexpected state %d", state);
+        return false;
+    }
+    // Checkout master (to do a `git_merge branch`)
+    if (git_repository_set_head(pimpl_->repository_.get(), "refs/heads/master") < 0) {
+        JAMI_ERR("Merge operation aborted: couldn't checkout master branch");
+        return false;
+    }
+
+    // Then check that merge_id exists
+    git_oid commit_id;
+    if (git_oid_fromstr(&commit_id, merge_id.c_str()) < 0) {
+        JAMI_ERR("Merge operation aborted: couldn't lookup commit %s", merge_id.c_str());
+        return false;
+    }
+	git_annotated_commit* annotated_ptr = nullptr;
+    if (git_annotated_commit_lookup(&annotated_ptr, pimpl_->repository_.get(), &commit_id) < 0) {
+        JAMI_ERR("Merge operation aborted: couldn't lookup commit %s", merge_id.c_str());
+        return false;
+    }
+    GitAnnotatedCommit annotated {annotated_ptr, git_annotated_commit_free};
+
+    // Now, we can analyze which type of merge do we need
+	git_merge_analysis_t analysis;
+	git_merge_preference_t preference;
+    const git_annotated_commit* const_annotated = annotated.get();
+    if (git_merge_analysis(&analysis, &preference, pimpl_->repository_.get(), &const_annotated, 1) < 0) {
+        JAMI_ERR("Merge operation aborted: repository analysis failed");
+        return false;
+    }
+
+    if (analysis & GIT_MERGE_ANALYSIS_UP_TO_DATE) {
+        JAMI_INFO("Already up-to-date");
+        return true;
+    } else if (analysis & GIT_MERGE_ANALYSIS_UNBORN ||
+	          (analysis & GIT_MERGE_ANALYSIS_FASTFORWARD &&
+	          !(preference & GIT_MERGE_PREFERENCE_NO_FASTFORWARD))) {
+		if (analysis & GIT_MERGE_ANALYSIS_UNBORN)
+			JAMI_INFO("Merge analysis result: Unborn");
+		else
+			JAMI_INFO("Merge analysis result: Fast-forward");
+		const auto* target_oid = git_annotated_commit_id(annotated.get());
+
+		if (pimpl_->mergeFastforward(target_oid, (analysis & GIT_MERGE_ANALYSIS_UNBORN)) < 0) {
+            const git_error *err = giterr_last();
+            if (err) JAMI_ERR("Fast forward merge failed: %s", err->message);
+            return false;
+        }
+        return true;
+    } else if (analysis & GIT_MERGE_ANALYSIS_NORMAL) {
+		git_merge_options merge_opts = GIT_MERGE_OPTIONS_INIT;
+		merge_opts.file_flags = GIT_MERGE_FILE_STYLE_DIFF3;
+		git_checkout_options checkout_opts = GIT_CHECKOUT_OPTIONS_INIT;
+		checkout_opts.checkout_strategy = GIT_CHECKOUT_FORCE|GIT_CHECKOUT_ALLOW_CONFLICTS;
+
+		if (preference & GIT_MERGE_PREFERENCE_FASTFORWARD_ONLY) {
+			JAMI_ERR("Fast-forward is preferred, but only a merge is possible");
+			return false;
+		}
+
+		if (git_merge(pimpl_->repository_.get(), &const_annotated, 1, &merge_opts, &checkout_opts) < 0) {
+            const git_error *err = giterr_last();
+            if (err) JAMI_ERR("Git merge failed: %s", err->message);
+            return false;
+        }
+	}
+
+    git_index* index_ptr = nullptr;
+    if (git_repository_index(&index_ptr, pimpl_->repository_.get()) < 0) {
+        JAMI_ERR("Merge operation aborted: could not open repository index");
+        return false;
+    }
+    GitIndex index {index_ptr, git_index_free};
+    if (git_index_has_conflicts(index.get())) {
+		JAMI_WARN("Merge operation aborted: the merge operation resulted in some conflicts");
+        return false;
+	}
+    auto result = pimpl_->createMergeCommit(index.get(), merge_id);
+    JAMI_INFO("Merge done between %s and master", merge_id.c_str());
+    return result;
+}
+
 
 
 }
