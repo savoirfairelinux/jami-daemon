@@ -61,6 +61,11 @@ private:
     void testAddSomeMessages();
     void testLogMessages();
     void testFetch();
+    void testMerge();
+    void testFFMerge();
+
+    std::string addCommit(git_repository* repo, const std::shared_ptr<JamiAccount> account, const std::string& branch, const std::string& commit_msg);
+    bool merge_in_master(const std::shared_ptr<JamiAccount> account, git_repository* repo, const std::string& commit_ref);
 
     CPPUNIT_TEST_SUITE(ConversationRepositoryTest);
     CPPUNIT_TEST(testCreateRepository);
@@ -68,6 +73,8 @@ private:
     CPPUNIT_TEST(testAddSomeMessages);
     CPPUNIT_TEST(testLogMessages);
     CPPUNIT_TEST(testFetch);
+    CPPUNIT_TEST(testMerge);
+    CPPUNIT_TEST(testFFMerge);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -485,6 +492,144 @@ ConversationRepositoryTest::testFetch()
     CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(messages[0].signed_content, messages[0].signature));
     CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(messages[1].signed_content, messages[1].signature));
     CPPUNIT_ASSERT(aliceAccount->identity().second->getPublicKey().checkSignature(messages[2].signed_content, messages[2].signature));
+}
+
+std::string
+ConversationRepositoryTest::addCommit(git_repository* repo, const std::shared_ptr<JamiAccount> account, const std::string& branch, const std::string& commit_msg)
+{
+    auto deviceId = account->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto name = account->getAccountDetails()[DRing::Account::ConfProperties::DISPLAYNAME];
+    if (name.empty())
+        name = account->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+    if (name.empty())
+        name = deviceId;
+
+    git_signature* sig_ptr = nullptr;
+    // Sign commit's buffer
+    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
+		JAMI_ERR("Unable to create a commit signature.");
+        return {};
+    }
+    GitSignature sig {sig_ptr, git_signature_free};
+
+    // Retrieve current HEAD
+    git_oid commit_id;
+    if (git_reference_name_to_id(&commit_id, repo, "HEAD") < 0) {
+        JAMI_ERR("Cannot get reference for HEAD");
+        return {};
+    }
+
+    git_commit* head_ptr = nullptr;
+    if (git_commit_lookup(&head_ptr, repo, &commit_id) < 0) {
+		JAMI_ERR("Could not look up HEAD commit");
+        return {};
+    }
+    GitCommit head_commit {head_ptr, git_commit_free};
+
+    git_tree* tree_ptr = nullptr;
+	if (git_commit_tree(&tree_ptr, head_commit.get()) < 0) {
+		JAMI_ERR("Could not look up initial tree");
+        return {};
+    }
+    GitTree tree {tree_ptr, git_tree_free};
+
+    git_buf to_sign = {};
+    const git_commit* head_ref[1] = { head_commit.get() };
+    if (git_commit_create_buffer(&to_sign, repo,
+            sig.get(), sig.get(), nullptr, commit_msg.c_str(), tree.get(), 1, &head_ref[0]) < 0) {
+        JAMI_ERR("Could not create commit buffer");
+        return {};
+    }
+
+    // git commit -S
+    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
+    auto signed_buf = account->identity().first->sign(to_sign_vec);
+    std::string signed_str = base64::encode(signed_buf.begin(), signed_buf.end());
+    if (git_commit_create_with_signature(&commit_id, repo, to_sign.ptr, signed_str.c_str(), "signature") < 0) {
+        JAMI_ERR("Could not sign commit");
+        return {};
+    }
+
+    auto commit_str = git_oid_tostr_s(&commit_id);
+    if (commit_str) {
+        JAMI_INFO("New commit added with id: %s", commit_str);
+        // Move commit to master branch
+        git_reference* ref_ptr = nullptr;
+        std::string branch_name = "refs/heads/" + branch;
+        if (git_reference_create(&ref_ptr, repo, branch_name.c_str(), &commit_id, true, nullptr) < 0) {
+            JAMI_WARN("Could not move commit to master");
+        }
+        git_reference_free(ref_ptr);
+    }
+    return commit_str ? commit_str : "";
+}
+
+void
+ConversationRepositoryTest::testMerge()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+
+    // Assert that repository exists
+    CPPUNIT_ASSERT(repository != nullptr);
+    auto repoPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+aliceAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+repository->id();
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+
+    // Assert that first commit is signed by alice
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+    auto id1 = addCommit(repo, aliceAccount, "master", "Commit 1");
+
+    git_reference* ref = nullptr;
+    git_commit* commit = nullptr;
+    git_oid commit_id;
+    git_oid_fromstr(&commit_id, repository->id().c_str());
+    git_commit_lookup(&commit, repo, &commit_id);
+    git_branch_create(&ref, repo, "to_merge", commit, false);
+    git_reference_free(ref);
+    git_repository_set_head(repo, "refs/heads/to_merge");
+
+    auto id2 = addCommit(repo, aliceAccount, "to_merge", "Commit 2");
+    git_repository_free(repo);
+
+    // This will create a merge commit
+    repository->merge(id2);
+
+    CPPUNIT_ASSERT(repository->log().size() == 4 /* Initial, commit 1, 2, merge */);
+}
+
+void
+ConversationRepositoryTest::testFFMerge()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+
+    // Assert that repository exists
+    CPPUNIT_ASSERT(repository != nullptr);
+    auto repoPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+aliceAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+repository->id();
+    CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
+
+    // Assert that first commit is signed by alice
+    git_repository* repo;
+    CPPUNIT_ASSERT(git_repository_open(&repo, repoPath.c_str()) == 0);
+    auto id1 = addCommit(repo, aliceAccount, "master", "Commit 1");
+
+    git_reference* ref = nullptr;
+    git_commit* commit = nullptr;
+    git_oid commit_id;
+    git_oid_fromstr(&commit_id, id1.c_str());
+    git_commit_lookup(&commit, repo, &commit_id);
+    git_branch_create(&ref, repo, "to_merge", commit, false);
+    git_reference_free(ref);
+    git_repository_set_head(repo, "refs/heads/to_merge");
+
+    auto id2 = addCommit(repo, aliceAccount, "to_merge", "Commit 2");
+    git_repository_free(repo);
+
+    // This will use a fast forward merge
+    repository->merge(id2);
+
+    CPPUNIT_ASSERT(repository->log().size() == 3 /* Initial, commit 1, 2 */);
 }
 
 }} // namespace test
