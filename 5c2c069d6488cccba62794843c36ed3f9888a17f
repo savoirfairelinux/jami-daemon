@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c9e80a3a_f1c9c311",
+        "filename": "src/media/video/sinkclient.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 366,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-06T15:30:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\npotentially unintended semicolon\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-suspicious-semicolon",
+      "revId": "5c2c069d6488cccba62794843c36ed3f9888a17f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
