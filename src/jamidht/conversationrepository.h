@@ -20,8 +20,20 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <git2.h>
 
 #include "def.h"
+
+using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
+using GitRevWalker = std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)>;
+using GitCommit = std::unique_ptr<git_commit, decltype(&git_commit_free)>;
+using GitAnnotatedCommit = std::unique_ptr<git_annotated_commit, decltype(&git_annotated_commit_free)>;
+using GitIndex = std::unique_ptr<git_index, decltype(&git_index_free)>;
+using GitTree = std::unique_ptr<git_tree, decltype(&git_tree_free)>;
+using GitRemote = std::unique_ptr<git_remote, decltype(&git_remote_free)>;
+using GitReference = std::unique_ptr<git_reference, decltype(&git_reference_free)>;
+using GitSignature = std::unique_ptr<git_signature, decltype(&git_signature_free)>;
+using GitObject = std::unique_ptr<git_object, decltype(&git_object_free)>;
 
 namespace jami {
 
@@ -115,6 +127,13 @@ public:
      * @return a list of commits
      */
     std::vector<ConversationCommit> log(const std::string& last = "", unsigned n = 0);
+
+    /**
+     * Merge another branch into the master branch
+     * @param merge_id      The reference to merge
+     * @return if the merge was successful
+     */
+    bool merge(const std::string& merge_id);
 
 private:
     ConversationRepository() = delete;
