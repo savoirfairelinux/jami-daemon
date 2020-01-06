@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <git2.h>
 
 #include "def.h"
 
@@ -40,7 +41,6 @@ using GitDiff = std::unique_ptr<git_diff, decltype(&git_diff_free)>;
 using GitDiffStats = std::unique_ptr<git_diff_stats, decltype(&git_diff_stats_free)>;
 using GitIndexConflictIterator
     = std::unique_ptr<git_index_conflict_iterator, decltype(&git_index_conflict_iterator_free)>;
-
 
 namespace jami {
 
@@ -111,10 +111,10 @@ public:
     /**
      * Retrieve remote head. Can be useful after a fetch operation
      * @param remoteDeviceId        The remote name
-     * @param branch                Remote branch to check (default: master)
+     * @param branch                Remote branch to check (default: main)
      * @return the commit id pointed
      */
-    std::string remoteHead(const std::string& remoteDeviceId, const std::string& branch = "master");
+    std::string remoteHead(const std::string& remoteDeviceId, const std::string& branch = "main");
 
     /**
      * Return the conversation id
@@ -135,6 +135,13 @@ public:
      * @return a list of commits
      */
     std::vector<ConversationCommit> log(const std::string& last = "", unsigned n = 0);
+
+    /**
+     * Merge another branch into the main branch
+     * @param merge_id      The reference to merge
+     * @return if the merge was successful
+     */
+    bool merge(const std::string& merge_id);
 
 private:
     ConversationRepository() = delete;
