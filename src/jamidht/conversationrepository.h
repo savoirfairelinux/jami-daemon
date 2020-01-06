@@ -20,8 +20,17 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <git2.h>
 
 #include "def.h"
+
+using GitRepository = std::unique_ptr<git_repository, decltype(&git_repository_free)>;
+using GitRevWalker = std::unique_ptr<git_revwalk, decltype(&git_revwalk_free)>;
+using GitCommit = std::unique_ptr<git_commit, decltype(&git_commit_free)>;
+using GitIndex = std::unique_ptr<git_index, decltype(&git_index_free)>;
+using GitTree = std::unique_ptr<git_tree, decltype(&git_tree_free)>;
+using GitRemote = std::unique_ptr<git_remote, decltype(&git_remote_free)>;
+using GitSignature = std::unique_ptr<git_signature, decltype(&git_signature_free)>;
 
 namespace jami {
 
