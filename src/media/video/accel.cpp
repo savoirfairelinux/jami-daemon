@@ -302,8 +302,8 @@ HardwareAccel::transferToMainMemory(const VideoFrame& frame, AVPixelFormat desir
 
     int ret = av_hwframe_transfer_data(output, input, 0);
     if (ret < 0) {
-        out->copyFrom(frame);
-        return out;
+        JAMI_ERR("Failed to tranfer frame to CPU fallback to software");
+        throw AccelException("Failed to tranfer frame to CPU");
     }
 
     output->pts = input->pts;

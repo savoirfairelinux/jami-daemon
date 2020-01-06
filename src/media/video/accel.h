@@ -45,6 +45,11 @@ struct HardwareAPI
     std::vector<std::string> possible_devices;
 };
 
+class AccelException : public std::runtime_error {
+    public:
+        AccelException(const char *msg) : std::runtime_error(msg) {}
+};
+
 /**
  * @brief Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
  */

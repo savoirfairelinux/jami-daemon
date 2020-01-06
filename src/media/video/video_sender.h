@@ -62,6 +62,10 @@ public:
     void setChangeOrientationCallback(std::function<void(int)> cb);
     int setBitrate(uint64_t br);
 
+    void setSwFallbackCallback(std::function<void(void)> cb) {
+        videoEncoder_->setSwFallbackCallback(std::move(cb));
+    }
+
 private:
     static constexpr int KEYFRAMES_AT_START {1}; // Number of keyframes to enforce at stream startup
     static constexpr unsigned KEY_FRAME_PERIOD {0}; // seconds before forcing a keyframe

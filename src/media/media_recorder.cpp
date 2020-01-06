@@ -223,8 +223,15 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     const auto& ms = streams_[name]->info;
     if (ms.isVideo) {
 #ifdef RING_ACCEL
+    try {
         clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
             static_cast<AVPixelFormat>(ms.format));
+    } catch (const video::AccelException &e) {
+        JAMI_ERR("%s", e.what());
+        if (swFallbackCallback_)
+            swFallbackCallback_();
+        //callback pl
+    }
 #else
         clone = std::make_unique<MediaFrame>();
         clone->copyFrom(*frame);

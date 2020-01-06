@@ -113,6 +113,10 @@ public:
      */
     void stopRecording();
 
+    void setSwFallbackCallback(std::function<void(void)> cb) {
+        swFallbackCallback_ = std::move(cb);
+    }
+
 private:
     NON_COPYABLE(MediaRecorder);
 
@@ -151,6 +155,8 @@ private:
     bool audioOnly_ = false;
 
     void filterAndEncode(MediaFilter* filter, int streamIdx);
+
+    std::function<void(void)> swFallbackCallback_;
 };
 
 }; // namespace jami

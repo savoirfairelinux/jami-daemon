@@ -54,6 +54,7 @@ struct AccountCodecInfo;
 #ifdef RING_ACCEL
 namespace video {
 class HardwareAccel;
+class AccelException;
 }
 #endif
 
@@ -109,6 +110,10 @@ public:
     unsigned getStreamCount() const;
     MediaStream getStream(const std::string& name, int streamIdx = -1) const;
 
+    void setSwFallbackCallback(std::function<void(void)> cb) {
+        swFallbackCallback_ = std::move(cb);
+    }
+
 private:
     NON_COPYABLE(MediaEncoder);
     AVCodecContext* prepareEncoderContext(AVCodec* outputCodec, bool is_video);
@@ -134,6 +139,7 @@ private:
     std::mutex encMutex_;
     bool auto_quality {false};
     bool linkableHW_ {false};
+    bool swFallback_ {false};
 
     void initH264(AVCodecContext* encoderCtx, uint64_t br);
     void initVP8(AVCodecContext* encoderCtx, uint64_t br);
@@ -152,6 +158,8 @@ private:
     bool enableAccel_ = true;
     std::unique_ptr<video::HardwareAccel> accel_;
 #endif
+
+    std::function<void(void)> swFallbackCallback_;
 
 protected:
     void readConfig(AVCodecContext* encoderCtx);

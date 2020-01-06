@@ -149,6 +149,11 @@ void VideoRtpSession::startSender()
             JAMI_ERR("%s", e.what());
             send_.enabled = false;
         }
+
+        // Set callback for software fallback
+        if (sender_)
+            sender_->setSwFallbackCallback([&]() {accelSwFallback();});
+
         lastMediaRestart_ = clock::now();
         last_REMB_inc_ = clock::now();
         last_REMB_dec_ = clock::now();
@@ -706,6 +711,13 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
             last_REMB_inc_ =  clock::now();
         }
     }
+}
+
+void
+VideoRtpSession::accelSwFallback()
+{
+    send_.swFallback = true;
+    restartSender();
 }
 
 }} // namespace jami::video

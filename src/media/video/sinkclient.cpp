@@ -358,9 +358,16 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         std::shared_ptr<VideoFrame> frame;
 #ifdef RING_ACCEL
         auto desc = av_pix_fmt_desc_get((AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
-        if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
-            frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p), AV_PIX_FMT_NV12);
-        else
+        if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
+            try {
+                frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p), AV_PIX_FMT_NV12);
+            } catch (const AccelException &e) {
+                JAMI_ERR("%s", e.what());
+                if (swFallbackCallback_);
+                    swFallbackCallback_();
+                //callback pl
+            }
+        } else
 #endif
         frame = std::static_pointer_cast<VideoFrame>(frame_p);
         AVFrameSideData* side_data = av_frame_get_side_data(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);

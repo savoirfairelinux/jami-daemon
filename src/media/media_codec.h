@@ -280,6 +280,7 @@ struct MediaDescription {
     std::string parameters {};
     bool auto_quality {false};
     bool linkableHW {false};
+    bool swFallback {false};
 
     /** Crypto parameters */
     CryptoAttribute crypto {};
