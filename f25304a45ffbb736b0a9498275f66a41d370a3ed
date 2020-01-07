@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8db22e6d_3b1422e4",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 752,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-07T21:33:29Z",
+      "side": 1,
+      "message": "std::dynamic_pointer_cast\u003cVideoInput\u003e(videoLocal_)-\u003estopInput();",
+      "range": {
+        "startLine": 752,
+        "startChar": 8,
+        "endLine": 752,
+        "endChar": 28
+      },
+      "revId": "f25304a45ffbb736b0a9498275f66a41d370a3ed",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
