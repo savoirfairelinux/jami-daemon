@@ -271,13 +271,20 @@ MediaDecoder::setupStream()
     int ret = 0;
     avcodec_free_context(&decoderCtx_);
 
+    bool use_mmal {false};
+
 #ifdef RING_ACCEL
     // if there was a fallback to software decoding, do not enable accel
     // it has been disabled already by the video_receive_thread/video_input
     enableAccel_ &= Manager::instance().videoPreferences.getDecodingAccelerated();
+    
+    if (enableAccel_)
+        use_mmal = init_mmal(avStream_->codecpar->codec_id);
 #endif
 
-    inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
+    if (not use_mmal)
+        inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
+
     if (!inputDecoder_) {
         JAMI_ERR() << "Unsupported codec";
         return -1;
@@ -299,7 +306,7 @@ MediaDecoder::setupStream()
             decoderCtx_->framerate = {30, 1};
 
 #ifdef RING_ACCEL
-        if (enableAccel_) {
+        if (enableAccel_ && not use_mmal) {
             accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id,
                 decoderCtx_->width, decoderCtx_->height);
             if (accel_) {
@@ -328,6 +335,20 @@ MediaDecoder::setupStream()
     }
 
     return 0;
+}
+
+bool
+MediaDecoder::init_mmal(AVCodecID id)
+{
+    std::stringstream ss;
+    ss << avcodec_get_name(id) << '_mmal';
+    auto codec = avcodec_find_decoder_by_name(ss.str().c_str());
+    if (codec) {
+        JAMI_WARN("Found decoding acceleration for RPI (%s), using it", ss.str().c_str());
+        inputDecoder_ = codec;
+        return true;
+    }
+    return false;
 }
 
 MediaDecoder::Status

@@ -185,6 +185,8 @@ private:
 #endif
     MediaObserver callback_;
 
+    bool init_mmal(AVCodecID id);
+
 protected:
     AVDictionary *options_ = nullptr;
 };
