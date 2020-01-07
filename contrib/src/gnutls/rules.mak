@@ -1,6 +1,11 @@
 # GnuTLS
 
+ifdef HAVE_ANDROID
+GNUTLS_VERSION := 3.6.7
+else
 GNUTLS_VERSION := 3.6.10
+endif
+
 GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
