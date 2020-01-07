@@ -186,6 +186,8 @@ private:
     MediaObserver callback_;
     int prepareDecoderContext();
 
+    bool init_mmal(AVCodecID id);
+
 protected:
     AVDictionary *options_ = nullptr;
 };

@@ -271,6 +271,8 @@ MediaDecoder::setupStream()
     int ret = 0;
     avcodec_free_context(&decoderCtx_);
 
+	bool use_mmal {false};
+    
     if(prepareDecoderContext() < 0)
         return -1; // failed
 
@@ -282,7 +284,7 @@ MediaDecoder::setupStream()
     if (enableAccel_) {
         auto APIs = video::HardwareAccel::getCompatibleAccel(decoderCtx_->codec_id,
                     decoderCtx_->width, decoderCtx_->height, CODEC_DECODER);
-        if (!APIs.empty()) {
+        if (!APIs.empty() && !use_mmal) {
             for (const auto& it : APIs) {
                 accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
                 auto ret = accel_->initAPI(false, nullptr);
@@ -319,9 +321,11 @@ MediaDecoder::setupStream()
         JAMI_DBG() << "Using framerate emulation";
     startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
 
-    if(!accel_) {
-        JAMI_WARN("Not using hardware decoding for %s",  avcodec_get_name(decoderCtx_->codec_id));
-        ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+    if (!accel_) {
+    	ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+		if (not use_mmal) {
+        	JAMI_WARN("Not using hardware decoding for %s",  avcodec_get_name(decoderCtx_->codec_id));
+		}
     }
     if (ret < 0) {
         JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
@@ -334,7 +338,10 @@ MediaDecoder::setupStream()
 int
 MediaDecoder::prepareDecoderContext()
 {
-    inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
+	auto use_mmal = init_mmal(avStream_->codecpar->codec_id);
+
+	if (not use_mmal)
+    	inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
         JAMI_ERR() << "Unsupported codec";
         return -1;
@@ -356,6 +363,20 @@ MediaDecoder::prepareDecoderContext()
             decoderCtx_->framerate = {30, 1};
     }
     return 0;
+}
+
+bool
+MediaDecoder::init_mmal(AVCodecID id)
+{
+    std::stringstream ss;
+    ss << avcodec_get_name(id) << "_mmal";
+    auto codec = avcodec_find_decoder_by_name(ss.str().c_str());
+    if (codec) {
+        JAMI_WARN("Found decoding acceleration for RPI (%s), using it", ss.str().c_str());
+        inputDecoder_ = codec;
+        return true;
+    }
+    return false;
 }
 
 MediaDecoder::Status
