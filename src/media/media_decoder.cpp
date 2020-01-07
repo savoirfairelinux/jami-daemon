@@ -277,7 +277,16 @@ MediaDecoder::setupStream()
     enableAccel_ &= Manager::instance().videoPreferences.getDecodingAccelerated();
 #endif
 
+    bool use_mmal {false};
+
     inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
+    if (avStream_->codecpar->codec_id == AV_CODEC_ID_H264) {
+        auto codec = avcodec_find_decoder_by_name("h264_mmal");
+        if (codec) {
+            inputDecoder_ = codec;
+            use_mmal = true;
+        }
+    }
     if (!inputDecoder_) {
         JAMI_ERR() << "Unsupported codec";
         return -1;
@@ -299,7 +308,7 @@ MediaDecoder::setupStream()
             decoderCtx_->framerate = {30, 1};
 
 #ifdef RING_ACCEL
-        if (enableAccel_) {
+        if (enableAccel_ && not use_mmal) {
             accel_ = video::HardwareAccel::setupDecoder(decoderCtx_->codec_id,
                 decoderCtx_->width, decoderCtx_->height);
             if (accel_) {
