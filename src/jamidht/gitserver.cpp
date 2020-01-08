@@ -78,7 +78,7 @@ GitServer::Impl::run()
     while (!isDestroying_.load()) {
         switch (state_) {
             case ServerState::WAIT_ORDER:
-            waitOrder();
+            waitOrder(); // TODO don't close at the end
             break;
             case ServerState::SEND_REFERENCES_CAPABILITIES:
             sendReferenceCapabilities();

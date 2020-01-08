@@ -19,6 +19,8 @@ libringacc_la_SOURCES = \
         connectionmanager.cpp \
         channeled_transport.h \
         channeled_transport.cpp \
+        conversation.h \
+        conversation.cpp \
         conversationrepository.h \
         conversationrepository.cpp \
         gitserver.h \
