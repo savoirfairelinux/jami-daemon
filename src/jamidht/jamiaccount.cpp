@@ -1834,6 +1834,15 @@ JamiAccount::doRegister_()
 
         dhtPeerConnector_->onDhtConnected(accountManager_->getInfo()->deviceId);
 
+        dht_->listen<ConversationRequest>(inboxDeviceKey, [this, inboxDeviceKey](ConversationRequest&& req) {
+            // TODO it's a trust request, we need to confirm incoming device
+            JAMI_WARN("@@@ RECEIVE CONVERSATION REQUEST FOR CONV %s", req.conversationId.c_str());
+            auto convId = req.conversationId;
+            conversationsRequests_[convId] = std::move(req);
+            emitSignal<DRing::ConversationSignal::ConversationRequestReceived>(accountID_, convId, conversationsRequests_[convId].metadatas);
+            return true;
+        });
+
         std::lock_guard<std::mutex> lock(buddyInfoMtx);
         for (auto& buddy : trackedBuddies_) {
             buddy.second.devices_cnt = 0;
@@ -2652,35 +2661,91 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
         setCodecActive(AV_CODEC_ID_VP8);
     }
 }
+
 std::string
 JamiAccount::startConversation()
 {
+    // Create the conversation object
+    auto conversation = std::make_unique<Conversation>(weak());
+    auto convId = conversation->id();
+    conversations_[convId] = std::move(conversation);
+    // TODO
+    // And send an invite to others devices to sync the conversation between device
+    return convId;
+}
 
+bool
+JamiAccount::acceptConversationRequest(const std::string& conversationId)
+{
+    // TODO in a io thread to avoid any lock
+    // TODO temporary file to store that the conversation is accepted
+    // TODO For all conversation members, try to open a git channel with this conversation ID
+
+    //aliceAccount->connectionManager().connectDevice(bobDeviceId, "git://*",
+    //    [&](std::shared_ptr<ChannelSocket> socket) {
+    //    if (socket) {
+    //        successfullyConnected = true;
+    //        sendSocket = socket;
+    //    }
+    //    scv.notify_one();
+    //});
+
+    // TODO As soon as we have a channel, add the git socket
+
+    // bobAccount->addGitSocket(aliceDeviceId, repository->id(), channelSocket);
+
+    // TODO then clone and store conversation
+
+    // ConversationRepository::cloneConversation(bobAccount->weak(), aliceDeviceId, repository->id());
+    // bobAccount->removeGitSocket(aliceDeviceId, repository->id());
+
+    // TODO emit signal
+
+    return true;
+}
+
+bool
+JamiAccount::declineConversationRequest(const std::string& conversationId)
+{
+    return true;
 }
 
 bool
 JamiAccount::removeConversation(const std::string& conversationId)
 {
-
+    return true;
 }
 
 // Member management
 void
 JamiAccount::addConversationMember(const std::string& conversationId, const std::string& contactUri)
 {
+    // Add a new member in the conversation
     conversations_[conversationId]->addMember(contactUri);
+    // Invite the new member to the conversation
+    auto toH = dht::InfoHash(contactUri);
+    ConversationRequest req;
+    req.conversationId = conversationId;
+    req.members = {/* TODO */};
+    req.metadatas = {/* TODO */};
+    // TODO message engine
+    forEachDevice(toH, [this,toH,req](const dht::InfoHash& dev) {
+        JAMI_INFO("Sending conversation invite %s / %s", toH.toString().c_str(), dev.toString().c_str());
+        dht_->putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()), dev, req);
+    });
 }
 
 bool
 JamiAccount::removeConversationMember(const std::string& conversationId, const std::string& contactUri)
 {
     conversations_[conversationId]->removeMember(contactUri);
+    return true;
 }
 
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getConversationMembers(const std::string& conversationId)
 {
-
+    return {};
 }
 
 // Message send/load

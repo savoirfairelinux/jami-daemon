@@ -33,6 +33,8 @@ namespace DRing {
 
 // Conversation management
 DRING_PUBLIC std::string startConversation(const std::string& accountId);
+DRING_PUBLIC bool acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
+DRING_PUBLIC bool declineConversationRequest(const std::string& accountId, const std::string& conversationId);
 DRING_PUBLIC bool removeConversation(const std::string& accountId, const std::string& conversationId);
 
 // Member management
@@ -52,7 +54,11 @@ struct DRING_PUBLIC ConversationSignal {
     };
     struct DRING_PUBLIC MessageReceived {
         constexpr static const char* name = "MessageReceived";
-        using cb_type = void(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*messages*/);
+        using cb_type = void(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*message*/);
+    };
+    struct DRING_PUBLIC ConversationRequestReceived {
+        constexpr static const char* name = "ConversationRequestReceived";
+        using cb_type = void(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*metadatas*/);
     };
 };
 
