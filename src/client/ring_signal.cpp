@@ -116,6 +116,11 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::DeviceAdded>(),
         exported_callback<DRing::VideoSignal::ParametersChanged>(),
 #endif
+
+        /* Conversation */
+        exported_callback<DRing::ConversationSignal::ConversationLoaded>(),
+        exported_callback<DRing::ConversationSignal::MessageReceived>(),
+        exported_callback<DRing::ConversationSignal::ConversationRequestReceived>(),
     };
 
     return handlers;
