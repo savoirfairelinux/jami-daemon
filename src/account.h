@@ -298,6 +298,11 @@ public:
      */
     virtual void connectivityChanged() {};
 
+    virtual void onNewGitCommit(const std::string& /*peer*/,
+                                const std::string& /*deviceId*/,
+                                const std::string& /*conversationId*/,
+                                const std::string& /*commitId*/) {};
+
     /**
      * Helper function used to load the default codec order from the codec factory
      */
