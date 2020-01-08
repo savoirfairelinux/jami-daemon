@@ -35,14 +35,30 @@
 namespace DRing {
 
 std::string
-startConversation(const std::string& accountId) {
+startConversation(const std::string& accountId)
+{
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->startConversation();
     return {};
 }
 
+void
+acceptConversationRequest(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->acceptConversationRequest(conversationId);
+}
+
+void
+declineConversationRequest(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->declineConversationRequest(conversationId);
+}
+
 bool
-removeConversation(const std::string& accountId, const std::string& conversationId) {
+removeConversation(const std::string& accountId, const std::string& conversationId)
+{
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->removeConversation(conversationId);
     return false;
@@ -66,20 +82,27 @@ getConversationRequests(const std::string& accountId)
 
 // Member management
 void
-addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri) {
+addConversationMember(const std::string& accountId,
+                      const std::string& conversationId,
+                      const std::string& contactUri)
+{
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         acc->addConversationMember(conversationId, contactUri);
 }
 
 bool
-removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri) {
+removeConversationMember(const std::string& accountId,
+                         const std::string& conversationId,
+                         const std::string& contactUri)
+{
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->removeConversationMember(conversationId, contactUri);
     return false;
 }
 
 std::vector<std::map<std::string, std::string>>
-getConversationMembers(const std::string& accountId, const std::string& conversationId) {
+getConversationMembers(const std::string& accountId, const std::string& conversationId)
+{
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         return acc->getConversationMembers(conversationId);
     return {};
@@ -87,13 +110,21 @@ getConversationMembers(const std::string& accountId, const std::string& conversa
 
 // Message send/load
 void
-sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& parent) {
+sendMessage(const std::string& accountId,
+            const std::string& conversationId,
+            const std::string& message,
+            const std::string& parent)
+{
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         acc->sendMessage(conversationId, message, parent);
 }
 
 void
-loadConversationMessages(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n) {
+loadConversationMessages(const std::string& accountId,
+                         const std::string& conversationId,
+                         const std::string& fromMessage,
+                         size_t n)
+{
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
         acc->loadConversationMessages(conversationId, fromMessage, n);
 }
