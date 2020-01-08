@@ -2652,35 +2652,45 @@ JamiAccount::setActiveCodecs(const std::vector<unsigned>& list)
         setCodecActive(AV_CODEC_ID_VP8);
     }
 }
+
 std::string
 JamiAccount::startConversation()
 {
-
+    // Create the conversation object
+    auto conversation = std::make_unique<Conversation>(weak());
+    auto convId = conversation->id();
+    conversations_[convId] = std::move(conversation);
+    // TODO
+    // And send an invite to others devices to sync the conversation between device
+    return convId;
 }
 
 bool
 JamiAccount::removeConversation(const std::string& conversationId)
 {
-
+    return true;
 }
 
 // Member management
 void
 JamiAccount::addConversationMember(const std::string& conversationId, const std::string& contactUri)
 {
+    // Add a new member in the conversation
     conversations_[conversationId]->addMember(contactUri);
+    // TODO: invite the other member to the conversation
 }
 
 bool
 JamiAccount::removeConversationMember(const std::string& conversationId, const std::string& contactUri)
 {
     conversations_[conversationId]->removeMember(contactUri);
+    return true;
 }
 
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getConversationMembers(const std::string& conversationId)
 {
-
+    return {};
 }
 
 // Message send/load

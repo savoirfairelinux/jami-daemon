@@ -516,6 +516,108 @@ ConversationRepository::id() const
 }
 
 bool
+ConversationRepository::addMember(const std::shared_ptr<dht::crypto::Certificate>& memberCert)
+{
+    // TODO remove duplicate code
+    auto account = pimpl_->account_.lock();
+    if (!account) return {};
+    auto deviceId = account->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto name = account->getAccountDetails()[DRing::Account::ConfProperties::DISPLAYNAME];
+    if (name.empty())
+        name = account->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+    if (name.empty())
+        name = deviceId;
+
+    // First, we need to add the member file to the repository if not present
+    std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
+
+    if (!memberCert) {
+        JAMI_ERR("Cert is null!");
+        return false;
+    }
+
+    std::string membersPath = repoPath + "members";
+    if (!fileutils::recursive_mkdir(membersPath, 0700)) {
+        JAMI_ERR("Error when creating %s.", membersPath.c_str());
+        return false;
+    }
+    std::string devicePath = membersPath + DIR_SEPARATOR_STR + memberCert->getId().toString() + ".crt";
+    if (fileutils::isFile(devicePath)) {
+        JAMI_WARN("Member %s already present!", memberCert->getId().toString().c_str());
+        return false;
+    }
+
+    auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
+    if (!file.is_open()) {
+        JAMI_ERR("Could not write data to %s", devicePath.c_str());
+        return false;
+    }
+    file << memberCert->toString(true);
+
+    git_signature* sig_ptr = nullptr;
+    // Sign commit's buffer
+    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
+		JAMI_ERR("Unable to create a commit signature.");
+        return {};
+    }
+    GitSignature sig {sig_ptr, git_signature_free};
+
+    // Retrieve current HEAD
+    git_oid commit_id;
+    if (git_reference_name_to_id(&commit_id, pimpl_->repository_.get(), "HEAD") < 0) {
+        JAMI_ERR("Cannot get reference for HEAD");
+        return {};
+    }
+
+    git_commit* head_ptr = nullptr;
+    if (git_commit_lookup(&head_ptr, pimpl_->repository_.get(), &commit_id) < 0) {
+		JAMI_ERR("Could not look up HEAD commit");
+        return {};
+    }
+    GitCommit head_commit {head_ptr, git_commit_free};
+
+    git_tree* tree_ptr = nullptr;
+	if (git_commit_tree(&tree_ptr, head_commit.get()) < 0) {
+		JAMI_ERR("Could not look up initial tree");
+        return {};
+    }
+    GitTree tree {tree_ptr, git_tree_free};
+
+    git_buf to_sign = {};
+    const git_commit* head_ref[1] = { head_commit.get() };
+    // TODO DETERMINE FORMAT
+    std::string msg = "Add member " + memberCert->getId().toString();
+    if (git_commit_create_buffer(&to_sign, pimpl_->repository_.get(),
+            sig.get(), sig.get(), nullptr, msg.c_str(), tree.get(), 1, &head_ref[0]) < 0) {
+        JAMI_ERR("Could not create commit buffer");
+        return {};
+    }
+
+    // git commit -S
+    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
+    auto signed_buf = account->identity().first->sign(to_sign_vec);
+    std::string signed_str = base64::encode(signed_buf.begin(), signed_buf.end());
+    if (git_commit_create_with_signature(&commit_id, pimpl_->repository_.get(), to_sign.ptr, signed_str.c_str(), "signature") < 0) {
+        JAMI_ERR("Could not sign commit");
+        return {};
+    }
+
+    // Move commit to master branch
+    git_reference* ref_ptr = nullptr;
+    if (git_reference_create(&ref_ptr, pimpl_->repository_.get(), "refs/heads/master", &commit_id, true, nullptr) < 0) {
+        JAMI_WARN("Could not move commit to master");
+    }
+    git_reference_free(ref_ptr);
+
+    auto commit_str = git_oid_tostr_s(&commit_id);
+    if (commit_str) {
+        JAMI_INFO("New member commit added with id: %s", commit_str);
+        return commit_str;
+    }
+    return {};
+}
+
+bool
 ConversationRepository::fetch(const std::string& remoteDeviceId)
 {
     // Fetch distant repository
@@ -585,7 +687,7 @@ ConversationRepository::sendMessage(const std::string& msg)
 
     // First, we need to add device file to the repository if not present
     std::string repoPath = git_repository_workdir(pimpl_->repository_.get());
-    std::string devicePath = repoPath + DIR_SEPARATOR_STR + "devices" + DIR_SEPARATOR_STR + deviceId + ".crt";
+    std::string devicePath = repoPath + "devices" + DIR_SEPARATOR_STR + deviceId + ".crt";
     if (!fileutils::isFile(devicePath)) {
         auto file = fileutils::ofstream(devicePath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
@@ -827,7 +929,5 @@ ConversationRepository::merge(const std::string& merge_id)
     JAMI_INFO("Merge done between %s and master", merge_id.c_str());
     return result;
 }
-
-
 
 }
