@@ -16,6 +16,8 @@ libringacc_la_SOURCES = \
         jamiaccount.h \
         connectionmanager.h \
         connectionmanager.cpp \
+        conversation.h \
+        conversation.cpp \
         conversationrepository.h \
         conversationrepository.cpp \
         gitserver.h \
