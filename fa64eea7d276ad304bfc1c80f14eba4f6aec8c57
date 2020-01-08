@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "259b335b_5064b48a",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 478,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-08T21:32:16Z",
+      "side": 1,
+      "message": "not needed",
+      "range": {
+        "startLine": 469,
+        "startChar": 0,
+        "endLine": 478,
+        "endChar": 70
+      },
+      "revId": "fa64eea7d276ad304bfc1c80f14eba4f6aec8c57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
