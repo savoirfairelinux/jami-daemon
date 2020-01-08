@@ -4,6 +4,7 @@
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Simon Désaulniers <simon.desaulniers@gmail.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -640,7 +641,7 @@ private:
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
 
     /** Conversations */
-    std::map<std::string, std::shared_ptr<Conversation>> conversations_;
+    std::map<std::string, std::unique_ptr<Conversation>> conversations_;
 
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
