@@ -17,10 +17,11 @@
  */
 #pragma once
 
+#include <git2.h>
 #include <memory>
+#include <opendht/default_types.h>
 #include <string>
 #include <vector>
-#include <git2.h>
 
 #include "def.h"
 
@@ -49,7 +50,7 @@ struct GitAuthor {
 
 struct ConversationCommit {
     std::string id {};
-    std::string parent {};
+    std::vector<std::string> parents {};
     GitAuthor author {};
     std::vector<uint8_t> signed_content {};
     std::vector<uint8_t> signature {};
@@ -94,6 +95,13 @@ public:
     ~ConversationRepository();
 
     /**
+     * Write the certificate in /members and commit the change
+     * @param memberCert    Certificate to write
+     * @return the commit id if successful
+     */
+    std::string addMember(const std::shared_ptr<dht::crypto::Certificate>& memberCert);
+
+    /**
      * Fetch a remote repository via the given socket
      * @note This will use the socket registered for the conversation with JamiAccount::addGitSocket()
      * @note will create a remote identified by the deviceId
@@ -117,10 +125,10 @@ public:
 
     /**
      * Add a new commit to the conversation
-     * @param msg     The msg to send
+     * @param msg     The commit message of the commit
      * @return <empty> on failure, else the message id
      */
-    std::string sendMessage(const std::string& msg);
+    std::string commitMessage(const std::string& msg);
 
     /**
      * Get commits from [last-n, last]
