@@ -33,29 +33,64 @@ namespace DRing {
 
 // Conversation management
 DRING_PUBLIC std::string startConversation(const std::string& accountId);
-DRING_PUBLIC bool removeConversation(const std::string& accountId, const std::string& conversationId);
+DRING_PUBLIC void acceptConversationRequest(const std::string& accountId,
+                                            const std::string& conversationId);
+DRING_PUBLIC void declineConversationRequest(const std::string& accountId,
+                                             const std::string& conversationId);
+DRING_PUBLIC bool removeConversation(const std::string& accountId,
+                                     const std::string& conversationId);
 
 // Member management
-DRING_PUBLIC void addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
-DRING_PUBLIC bool removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
-DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
+DRING_PUBLIC void addConversationMember(const std::string& accountId,
+                                        const std::string& conversationId,
+                                        const std::string& contactUri);
+DRING_PUBLIC bool removeConversationMember(const std::string& accountId,
+                                           const std::string& conversationId,
+                                           const std::string& contactUri);
+DRING_PUBLIC std::vector<std::map<std::string, std::string>> getConversationMembers(
+    const std::string& accountId, const std::string& conversationId);
 
 // Message send/load
-DRING_PUBLIC void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& parent);
-DRING_PUBLIC void loadConversationMessages(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, size_t n);
+DRING_PUBLIC void sendMessage(const std::string& accountId,
+                              const std::string& conversationId,
+                              const std::string& message,
+                              const std::string& parent);
+DRING_PUBLIC void loadConversationMessages(const std::string& accountId,
+                                           const std::string& conversationId,
+                                           const std::string& fromMessage,
+                                           size_t n);
 
-
-struct DRING_PUBLIC ConversationSignal {
-    struct DRING_PUBLIC ConversationLoaded {
+struct DRING_PUBLIC ConversationSignal
+{
+    struct DRING_PUBLIC ConversationLoaded
+    {
         constexpr static const char* name = "ConversationLoaded";
-        using cb_type = void(const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<std::map<std::string, std::string>> /*messages*/);
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             std::vector<std::map<std::string, std::string>> /*messages*/);
     };
-    struct DRING_PUBLIC MessageReceived {
+    struct DRING_PUBLIC MessageReceived
+    {
         constexpr static const char* name = "MessageReceived";
-        using cb_type = void(const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*messages*/);
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             std::map<std::string, std::string> /*message*/);
+    };
+    struct DRING_PUBLIC ConversationRequestReceived
+    {
+        constexpr static const char* name = "ConversationRequestReceived";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */,
+                             std::map<std::string, std::string> /*metadatas*/);
+    };
+    struct DRING_PUBLIC ConversationReady
+    {
+        constexpr static const char* name = "ConversationReady";
+        using cb_type = void(const std::string& /*accountId*/,
+                             const std::string& /* conversationId */);
     };
 };
 
 } // namespace DRing
 
-#endif //DRING_CONVERSATIONI_H
+#endif // DRING_CONVERSATIONI_H

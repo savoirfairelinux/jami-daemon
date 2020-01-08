@@ -341,19 +341,19 @@ ConversationRepositoryTest::testAddSomeMessages()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto repository = ConversationRepository::createConversation(aliceAccount->weak());
 
-    auto id1 = repository->sendMessage("Commit 1");
-    auto id2 = repository->sendMessage("Commit 2");
-    auto id3 = repository->sendMessage("Commit 3");
+    auto id1 = repository->commitMessage("Commit 1");
+    auto id2 = repository->commitMessage("Commit 2");
+    auto id3 = repository->commitMessage("Commit 3");
 
     auto messages = repository->log();
     CPPUNIT_ASSERT(messages.size() == 4 /* 3 + initial */);
     CPPUNIT_ASSERT(messages[0].id == id3);
-    CPPUNIT_ASSERT(messages[0].parent == id2);
+    CPPUNIT_ASSERT(messages[0].parents.front() == id2);
     CPPUNIT_ASSERT(messages[0].commit_msg == "Commit 3");
     CPPUNIT_ASSERT(messages[0].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[0].author.email == messages[3].author.email);
     CPPUNIT_ASSERT(messages[1].id == id2);
-    CPPUNIT_ASSERT(messages[1].parent == id1);
+    CPPUNIT_ASSERT(messages[1].parents.front() == id1);
     CPPUNIT_ASSERT(messages[1].commit_msg == "Commit 2");
     CPPUNIT_ASSERT(messages[1].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[1].author.email == messages[3].author.email);
@@ -361,7 +361,7 @@ ConversationRepositoryTest::testAddSomeMessages()
     CPPUNIT_ASSERT(messages[2].commit_msg == "Commit 1");
     CPPUNIT_ASSERT(messages[2].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[2].author.email == messages[3].author.email);
-    CPPUNIT_ASSERT(messages[2].parent == repository->id());
+    CPPUNIT_ASSERT(messages[2].parents.front() == repository->id());
     // Check sig
     CPPUNIT_ASSERT(
         aliceAccount->identity().second->getPublicKey().checkSignature(messages[0].signed_content,
@@ -380,18 +380,18 @@ ConversationRepositoryTest::testLogMessages()
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto repository = ConversationRepository::createConversation(aliceAccount->weak());
 
-    auto id1 = repository->sendMessage("Commit 1");
-    auto id2 = repository->sendMessage("Commit 2");
-    auto id3 = repository->sendMessage("Commit 3");
+    auto id1 = repository->commitMessage("Commit 1");
+    auto id2 = repository->commitMessage("Commit 2");
+    auto id3 = repository->commitMessage("Commit 3");
 
-    auto messages = repository->log(repository->id(), 1);
+    auto messages = repository->logN(repository->id(), 1);
     CPPUNIT_ASSERT(messages.size() == 1);
     CPPUNIT_ASSERT(messages[0].id == repository->id());
-    messages = repository->log(id2, 2);
+    messages = repository->logN(id2, 2);
     CPPUNIT_ASSERT(messages.size() == 2);
     CPPUNIT_ASSERT(messages[0].id == id2);
     CPPUNIT_ASSERT(messages[1].id == id1);
-    messages = repository->log(repository->id(), 3);
+    messages = repository->logN(repository->id(), 3);
     CPPUNIT_ASSERT(messages.size() == 1);
     CPPUNIT_ASSERT(messages[0].id == repository->id());
 }
@@ -460,7 +460,7 @@ ConversationRepositoryTest::testFetch()
     std::thread sendT = std::thread([&]() { gs.run(); });
 
     // Clone repository
-    auto id1 = repository->sendMessage("Commit 1");
+    auto id1 = repository->commitMessage("Commit 1");
     auto cloned = ConversationRepository::cloneConversation(bobAccount->weak(),
                                                             aliceDeviceId,
                                                             repository->id());
@@ -469,8 +469,8 @@ ConversationRepositoryTest::testFetch()
     bobAccount->removeGitSocket(aliceDeviceId, repository->id());
 
     // Add some new messages to fetch
-    auto id2 = repository->sendMessage("Commit 2");
-    auto id3 = repository->sendMessage("Commit 3");
+    auto id2 = repository->commitMessage("Commit 2");
+    auto id3 = repository->commitMessage("Commit 3");
 
     // Open a new channel to simulate the fact that we are later
     aliceAccount->connectionManager().connectDevice(bobDeviceId,
@@ -500,12 +500,12 @@ ConversationRepositoryTest::testFetch()
     auto messages = cloned->log(id3);
     CPPUNIT_ASSERT(messages.size() == 4 /* 3 + initial */);
     CPPUNIT_ASSERT(messages[0].id == id3);
-    CPPUNIT_ASSERT(messages[0].parent == id2);
+    CPPUNIT_ASSERT(messages[0].parents.front() == id2);
     CPPUNIT_ASSERT(messages[0].commit_msg == "Commit 3");
     CPPUNIT_ASSERT(messages[0].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[0].author.email == messages[3].author.email);
     CPPUNIT_ASSERT(messages[1].id == id2);
-    CPPUNIT_ASSERT(messages[1].parent == id1);
+    CPPUNIT_ASSERT(messages[1].parents.front() == id1);
     CPPUNIT_ASSERT(messages[1].commit_msg == "Commit 2");
     CPPUNIT_ASSERT(messages[1].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[1].author.email == messages[3].author.email);
@@ -513,7 +513,7 @@ ConversationRepositoryTest::testFetch()
     CPPUNIT_ASSERT(messages[2].commit_msg == "Commit 1");
     CPPUNIT_ASSERT(messages[2].author.name == messages[3].author.name);
     CPPUNIT_ASSERT(messages[2].author.email == messages[3].author.email);
-    CPPUNIT_ASSERT(messages[2].parent == repository->id());
+    CPPUNIT_ASSERT(messages[2].parents.front() == repository->id());
     // Check sig
     CPPUNIT_ASSERT(
         aliceAccount->identity().second->getPublicKey().checkSignature(messages[0].signed_content,
@@ -694,9 +694,9 @@ ConversationRepositoryTest::testDiff()
         uri = uri.substr(std::string("ring:").size());
     auto repository = ConversationRepository::createConversation(aliceAccount->weak());
 
-    auto id1 = repository->sendMessage("Commit 1");
-    auto id2 = repository->sendMessage("Commit 2");
-    auto id3 = repository->sendMessage("Commit 3");
+    auto id1 = repository->commitMessage("Commit 1");
+    auto id2 = repository->commitMessage("Commit 2");
+    auto id3 = repository->commitMessage("Commit 3");
 
     auto diff = repository->diffStats(id2, id1);
     CPPUNIT_ASSERT(ConversationRepository::changedFiles(diff).empty());
