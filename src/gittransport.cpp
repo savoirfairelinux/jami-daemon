@@ -71,6 +71,7 @@ sendCmd(P2PStream *s)
 
     std::error_code ec;
 	if ((res = s->socket->write(reinterpret_cast<const unsigned char*>(request.ptr), request.size, ec))) {
+        s->sent_command = 1;
         git_buf_free(&request);
         return res;
     }
