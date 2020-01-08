@@ -36,6 +36,23 @@ namespace im {
 MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path) : account_(acc), savePath_(path)
 {}
 
+
+ValueToken
+MessageEngine::sendValue(const std::string& to, dht::Value&& v)
+{
+    ValueToken token = v.id;
+    {
+        std::lock_guard<std::mutex> lock(valuesMutex_);
+        auto& peerValues = values_[to];
+        peerValues.emplace(token, std::move(v));
+        // TODO save_();
+    }
+    // TODO runOnMainThread([this, to]() {
+    // TODO     retrySend(to);
+    // TODO });
+    return token;
+}
+
 MessageToken
 MessageEngine::sendMessage(const std::string& to, const std::map<std::string, std::string>& payloads)
 {

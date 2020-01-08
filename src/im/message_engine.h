@@ -25,6 +25,8 @@
 #include <chrono>
 #include <mutex>
 #include <cstdint>
+#include <opendht/default_types.h>
+#include <opendht/value.h>
 
 namespace jami {
 
@@ -33,6 +35,7 @@ class SIPAccountBase;
 namespace im {
 
 using MessageToken = uint64_t;
+using ValueToken = uint64_t;
 
 enum class MessageStatus {
     UNKNOWN = 0,
@@ -49,6 +52,8 @@ class MessageEngine
 public:
 
     MessageEngine(SIPAccountBase&, const std::string& path);
+
+    ValueToken sendValue(const std::string& to, dht::Value&& v);
 
     MessageToken sendMessage(const std::string& to, const std::map<std::string, std::string>& payloads);
 
@@ -94,9 +99,11 @@ private:
     const std::string savePath_;
 
     std::map<std::string, std::map<MessageToken, Message>> messages_;
+    std::map<std::string, std::map<ValueToken, dht::Value>> values_ {};
     std::set<MessageToken> sentMessages_;
 
     mutable std::mutex messagesMutex_ {};
+    mutable std::mutex valuesMutex_ {};
 };
 
 }} // namespace jami::im
