@@ -41,6 +41,20 @@ startConversation(const std::string& accountId) {
     return {};
 }
 
+void
+acceptConversationRequest(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->acceptConversationRequest(conversationId);
+}
+
+void
+declineConversationRequest(const std::string& accountId, const std::string& conversationId)
+{
+    if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
+        acc->declineConversationRequest(conversationId);
+}
+
 bool
 removeConversation(const std::string& accountId, const std::string& conversationId) {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
