@@ -4,6 +4,7 @@
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Simon Désaulniers <simon.desaulniers@gmail.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,6 +81,22 @@ struct AccountInfo;
 class ChannelSocket;
 class SipTransport;
 class Conversation;
+
+/**
+ * A ConversationRequest is a request which corresponds to a trust request, but for conversations
+ * It's signed by the sender and contains the members list, the conversationId, and the metadatas
+ * such as the conversation's vcard, etc. (TODO determine)
+ * Transmitted via the UDP DHT
+ */
+struct ConversationRequest : public dht::EncryptedValue<ConversationRequest>
+{
+    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+    dht::Value::Id id = dht::Value::INVALID_ID;
+    std::string conversationId;
+    std::vector<std::string> members;
+    std::map<std::string, std::string> metadatas;
+    MSGPACK_DEFINE_MAP(id, conversationId, members, metadatas)
+};
 
 using GitSocketList =   std::map<
                             std::string, /* device Id */
@@ -475,6 +492,8 @@ public:
 
     // Conversation management
     std::string startConversation();
+    void acceptConversationRequest(const std::string& conversationId);
+    void declineConversationRequest(const std::string& conversationId);
     bool removeConversation(const std::string& conversationId);
 
     // Member management
@@ -483,8 +502,11 @@ public:
     std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& conversationId);
 
     // Message send/load
-    void sendMessage(const std::string& conversationId, const std::string& message, const std::string& parent);
-    void loadConversationMessages(const std::string& conversationId, const std::string& fromMessage, size_t n);
+    void sendMessage(const std::string& conversationId, const std::string& message, const std::string& parent = "", const std::string& type = "text/plain");
+    void loadConversationMessages(const std::string& conversationId, const std::string& fromMessage = "", size_t n = 0);
+
+    // Received a new commit notification
+    void onNewGitCommit(const std::string& peer, const std::string& conversationId, const std::string& commitId) override;
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -496,6 +518,7 @@ private:
      * Private structures
      */
     struct PendingCall;
+    struct PendingConversationClone;
     struct PendingMessage;
     struct BuddyInfo;
     struct DiscoveredPeer;
@@ -660,7 +683,7 @@ private:
     std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
 
     /** Conversations */
-    std::map<std::string, std::shared_ptr<Conversation>> conversations_;
+    std::map<std::string, std::unique_ptr<Conversation>> conversations_;
 
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
@@ -775,6 +798,17 @@ private:
      * @param deviceId  Device linked to that transport
      */
     void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const std::string& peerId, const std::string& deviceId);
+
+    // Conversations
+    std::mutex conversationsRequestsMtx_ {};
+    std::map<std::string, ConversationRequest> conversationsRequests_ {};
+    std::mutex pendingConversationsCloneMtx_ {};
+    std::map<std::string, PendingConversationClone> pendingConversationsClone_;
+
+    std::shared_ptr<RepeatedTask> conversationsEventHandler {};
+    void checkConversationsEvents();
+    bool handlePendingConversations();
+
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)
