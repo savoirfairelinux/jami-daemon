@@ -17,10 +17,11 @@
  */
 #pragma once
 
+#include <git2.h>
 #include <memory>
+#include <opendht/default_types.h>
 #include <string>
 #include <vector>
-#include <git2.h>
 
 #include "def.h"
 
@@ -47,7 +48,7 @@ struct GitAuthor {
 
 struct ConversationCommit {
     std::string id {};
-    std::string parent {};
+    std::vector<std::string> parents {};
     GitAuthor author {};
     std::vector<uint8_t> signed_content {};
     std::vector<uint8_t> signature {};
@@ -90,6 +91,13 @@ public:
      */
     ConversationRepository(const std::weak_ptr<JamiAccount>& account, const std::string& id);
     ~ConversationRepository();
+
+    /**
+     * Write the certificate in /members and commit the change
+     * @param memberCert    Certificate to write
+     * @return the commit id if successful
+     */
+    std::string addMember(const std::shared_ptr<dht::crypto::Certificate>& memberCert);
 
     /**
      * Fetch a remote repository via the given socket
