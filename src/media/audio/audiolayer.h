@@ -60,6 +60,12 @@ enum class DeviceType {
     RINGTONE       /** To open the ringtone device only */
 };
 
+enum class AudioStreamType {
+    PLAYBACK,      /** To start playback stream only */
+    CAPTURE,       /** To start capture stream only */
+    DEFAULT        /** To start both playback and capture streams */
+};
+
 class AudioLayer {
 
 private:
@@ -91,7 +97,7 @@ public:
      * The playback starts accordingly to its threshold
      * ALSA Library API
      */
-    virtual void startStream() = 0;
+    virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT) = 0;
 
     /**
      * Stop the playback and capture streams.
