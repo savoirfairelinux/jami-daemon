@@ -75,7 +75,7 @@ private:
     /**
      * Start the capture and playback.
      */
-    void startStream();
+    void startStream(StreamType stream = StreamType::DEFAULT);
 
     /**
      * Stop playback and capture.
