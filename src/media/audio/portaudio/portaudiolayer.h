@@ -47,7 +47,7 @@ public:
      * Start the capture stream and prepare the playback stream.
      * The playback starts accordingly to its threshold
      */
-    void startStream() override;
+    void startStream(StreamType stream = StreamType::DEFAULT) override;
 
     /**
      * Stop the playback and capture streams.

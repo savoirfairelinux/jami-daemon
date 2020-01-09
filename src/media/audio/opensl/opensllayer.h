@@ -67,7 +67,7 @@ class OpenSLLayer : public AudioLayer {
          * Start the capture stream and prepare the playback stream.
          * The playback starts accordingly to its threshold
          */
-        virtual void startStream();
+        virtual void startStream(StreamType stream = StreamType::DEFAULT);
 
         /**
          * Stop the playback and capture streams.

@@ -373,7 +373,7 @@ void PulseLayer::disconnectAudioStream()
     record_.reset();
 }
 
-void PulseLayer::startStream()
+void PulseLayer::startStream(StreamType stream)
 {
     std::unique_lock<std::mutex> lk(readyMtx_);
     readyCv_.wait(lk, [this] {
