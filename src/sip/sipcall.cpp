@@ -41,12 +41,15 @@
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
 #include "ice_transport.h"
+//Plugin manager
+#include "plugin/jamipluginmanager.h"
 
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
 #include "video/video_rtp_session.h"
 #include "dring/videomanager_interface.h"
 #include <chrono>
+#include <libavutil/display.h>
 #endif
 
 #include "errno.h"
@@ -111,6 +114,44 @@ SIPAccountBase&
 SIPCall::getSIPAccount() const
 {
     return static_cast<SIPAccountBase&>(getAccount());
+}
+
+void SIPCall::createCallAVStreams()
+{
+    if(hasVideo()){
+        /**
+        *   Map: maps the VideoFrame to an AVFrame
+        **/
+        auto map = [](const std::shared_ptr<jami::MediaFrame> m)->AVFrame* {
+            return std::static_pointer_cast<VideoFrame>(m)->pointer();
+        };
+
+        // Preview
+        auto& videoPreview = videortp_->getVideoLocal();
+
+        if(videoPreview) {
+            auto previewSubject = std::make_shared<MediaStreamSubject>(map);
+            StreamData previewStreamData{getCallId(), 0, StreamType::video, getPeerNumber()};
+            createCallAVStream(previewStreamData, *videoPreview, previewSubject);
+        }
+
+        // Receive
+        auto& videoReceive = videortp_->getVideoReceive();
+
+        if(videoReceive) {
+            auto receiveSubject = std::make_shared<MediaStreamSubject>(map);
+            StreamData receiveStreamData{getCallId(), 1, StreamType::video, getPeerNumber()};
+            createCallAVStream(receiveStreamData, *videoReceive, receiveSubject);
+        }
+    }
+}
+
+void SIPCall::createCallAVStream(const StreamData& StreamData, MediaStream& streamSource,
+                                 const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject){
+    callAVStreams.push_back(mediaStreamSubject);
+    auto& inserted = callAVStreams.back();
+    streamSource.attachPriorityObserver(inserted);
+    jami::Manager::instance().getJamiPluginManager().getCallServicesManager().createAVSubject(StreamData, inserted);
 }
 
 void
@@ -1035,6 +1076,9 @@ SIPCall::startAllMedia()
         }
         remainingRequest_ = Request::NoRequest;
     }
+
+    // Create AVStreams associated with the call
+    createCallAVStreams();
 }
 
 void
