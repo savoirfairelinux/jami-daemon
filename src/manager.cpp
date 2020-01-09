@@ -2905,7 +2905,14 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
 {
     if (const auto acc = getAccount(accountID)) {
         try {
-            return acc->sendTextMessage(to, payloads);
+            auto& convManager = jami::Manager::instance().getJamiPluginManager()
+                    .getConversationServicesManager();
+            std::shared_ptr<jami::ConversationMessage> cm =
+                    std::make_shared<jami::ConversationMessage>(accountID, to,
+                                                                const_cast<std::map<std::string,
+                                                                std::string>&>(payloads));
+            convManager.sendTextMessage(cm);
+            return acc->sendTextMessage(cm->to_, cm->data_);
         } catch (const std::exception& e) {
             JAMI_ERR("Exception during text message sending: %s", e.what());
         }
