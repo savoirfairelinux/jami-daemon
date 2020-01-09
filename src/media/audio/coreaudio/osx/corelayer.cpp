@@ -230,7 +230,7 @@ CoreLayer::initAudioLayerIO()
 }
 
 void
-CoreLayer::startStream()
+CoreLayer::startStream(AudioStreamType stream)
 {
     JAMI_DBG("START STREAM");
 

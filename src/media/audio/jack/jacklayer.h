@@ -75,7 +75,7 @@ private:
     /**
      * Start the capture and playback.
      */
-    void startStream();
+    void startStream(AudioStreamType stream = AudioStreamType::DEFAULT);
 
     /**
      * Stop playback and capture.
