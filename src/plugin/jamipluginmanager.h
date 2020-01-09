@@ -25,6 +25,7 @@
 
 //Services
 #include "callservicesmanager.h"
+#include "conversationservicesmanager.h"
 
 #include <vector>
 #include <map>
@@ -35,7 +36,8 @@ namespace jami {
 class JamiPluginManager
 {
 public:
-    JamiPluginManager() : csm_{pm_}{
+
+    JamiPluginManager() : csm_{pm_}, convsm_{pm_}{
         registerServices();
     }
 
@@ -139,6 +141,10 @@ public:
         return csm_;
     }
 
+    ConversationServicesManager& getConversationServicesManager() {
+        return convsm_;
+    }
+
 private:
 
     /**
@@ -190,6 +196,7 @@ private:
 
 private:
     CallServicesManager csm_;
+    ConversationServicesManager convsm_;
 
 private:
     std::map<std::string, std::map<std::string, std::string>> pluginDetailsMap_;
