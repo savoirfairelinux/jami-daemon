@@ -87,7 +87,7 @@ CoreLayer::getAudioDeviceName(int index, DeviceType type) const
 }
 
 void
-CoreLayer::initAudioLayerIO()
+CoreLayer::initAudioLayerIO(const std::string& stream)
 {
     JAMI_DBG("iOS CoreLayer - initializing audio session");
 
@@ -135,8 +135,14 @@ CoreLayer::initAudioLayerIO()
             break;
     }
 
-    setupOutputBus();
-    setupInputBus();
+    bool setUpOutput = stream.empty() || stream == PLAYBACK_STREAM;
+    bool setUpInput = stream.empty() || stream == CAPTURE_STREAM;
+    if (setUpOutput) {
+        setupOutputBus();
+    }
+    if (setUpInput) {
+        setupInputBus();
+    }
     bindCallbacks();
 }
 
@@ -308,7 +314,7 @@ CoreLayer::bindCallbacks() {
 }
 
 void
-CoreLayer::startStream()
+CoreLayer::startStream(const std::string& stream)
 {
     JAMI_DBG("iOS CoreLayer - Start Stream");
 
@@ -321,7 +327,7 @@ CoreLayer::startStream()
 
     dcblocker_.reset();
 
-    initAudioLayerIO();
+    initAudioLayerIO(stream);
 
     // Run
     auto inputRes = AudioUnitInitialize(ioUnit_);
