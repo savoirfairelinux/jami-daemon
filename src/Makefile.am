@@ -161,7 +161,21 @@ libring_la_SOURCES = \
 		generic_io.h \
 		scheduled_executor.h \
 		scheduled_executor.cpp \
-		transport/peer_channel.h
+		transport/peer_channel.h \
+		plugin/pluginloader.h \
+		plugin/pluginloaderdl.cpp \
+		plugin/pluginmanager.h \
+		plugin/pluginmanager.cpp \
+		plugin/mediahandler.h \
+		plugin/callservicemanager.h \
+		plugin/jamipluginmanager.h \
+		plugin/jamipluginmanager.cpp \
+		plugin/pluginpreferencesmanager.h \
+		plugin/pluginpreferencesmanager.cpp \
+		plugin/pluginpreferencesparser.h \
+		plugin/pluginpreferencesparser.cpp \
+		plugin/pluginpreferencesvaluesmanager.h \
+		plugin/pluginpreferencesvaluesmanager.cpp
 
 if HAVE_WIN32
 libring_la_SOURCES += \
