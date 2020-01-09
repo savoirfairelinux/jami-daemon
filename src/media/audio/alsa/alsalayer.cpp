@@ -214,7 +214,7 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
 }
 
 void
-AlsaLayer::startStream()
+AlsaLayer::startStream(const std::string& stream)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);

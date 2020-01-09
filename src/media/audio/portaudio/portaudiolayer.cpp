@@ -155,7 +155,7 @@ PortAudioLayer::getIndexRingtone() const
 }
 
 void
-PortAudioLayer::startStream()
+PortAudioLayer::startStream(const std::string& stream)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);

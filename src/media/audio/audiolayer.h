@@ -48,6 +48,8 @@
 #define PCM_DEFAULT "default"         // Default ALSA plugin
 #define PCM_DSNOOP  "plug:dsnoop"     // Alsa plugin for microphone sharing
 #define PCM_DMIX_DSNOOP "dmix/dsnoop" // Audio profile using Alsa dmix/dsnoop
+#define PLAYBACK_STREAM "playback_stream" // start playback stream
+#define CAPTURE_STREAM "capture_stream" // start capture stream
 
 namespace jami {
 
@@ -91,7 +93,7 @@ public:
      * The playback starts accordingly to its threshold
      * ALSA Library API
      */
-    virtual void startStream() = 0;
+    virtual void startStream(const std::string& stream = "") = 0;
 
     /**
      * Stop the playback and capture streams.
