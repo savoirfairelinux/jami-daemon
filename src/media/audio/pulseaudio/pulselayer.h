@@ -130,7 +130,7 @@ class PulseLayer : public AudioLayer {
 
         std::string getAudioDeviceName(int index, DeviceType type) const;
 
-        virtual void startStream();
+        virtual void startStream(const std::string& stream = "");
         virtual void stopStream();
 
     private:

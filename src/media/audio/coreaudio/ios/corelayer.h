@@ -83,7 +83,7 @@ class CoreLayer : public AudioLayer {
         /**
          * Configure the AudioUnit
          */
-        void initAudioLayerIO();
+        void initAudioLayerIO(const std::string& stream = "");
         void setupOutputBus();
         void setupInputBus();
         void bindCallbacks();
@@ -96,7 +96,7 @@ class CoreLayer : public AudioLayer {
          * CoreAudio Library API
          */
 
-        virtual void startStream();
+        virtual void startStream(const std::string& stream = "");
 
         void destroyAudioLayer();
 

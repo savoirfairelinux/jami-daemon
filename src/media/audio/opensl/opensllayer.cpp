@@ -68,7 +68,7 @@ OpenSLLayer::init()
 }
 
 void
-OpenSLLayer::startStream()
+OpenSLLayer::startStream(const std::string& stream)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (status_ != Status::Idle)

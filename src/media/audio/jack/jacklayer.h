@@ -75,7 +75,7 @@ private:
     /**
      * Start the capture and playback.
      */
-    void startStream();
+    void startStream(const std::string& stream = "");
 
     /**
      * Stop playback and capture.
