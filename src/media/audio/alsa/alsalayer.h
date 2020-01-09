@@ -67,7 +67,7 @@ class AlsaLayer : public AudioLayer {
          * The playback starts accordingly to its threshold
          * ALSA Library API
          */
-        virtual void startStream();
+        virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT);
 
         /**
          * Stop the playback and capture streams.

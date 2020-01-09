@@ -83,7 +83,7 @@ class CoreLayer : public AudioLayer {
         /**
          * Configure the AudioUnit
          */
-        void initAudioLayerIO();
+        void initAudioLayerIO(AudioStreamType stream);
         void setupOutputBus();
         void setupInputBus();
         void bindCallbacks();
@@ -96,7 +96,7 @@ class CoreLayer : public AudioLayer {
          * CoreAudio Library API
          */
 
-        virtual void startStream();
+        virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT);
 
         void destroyAudioLayer();
 
