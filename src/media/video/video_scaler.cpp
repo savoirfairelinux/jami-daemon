@@ -150,6 +150,7 @@ VideoScaler::convertFormat(const VideoFrame& input, AVPixelFormat pix)
     auto output = std::make_unique<VideoFrame>();
     output->reserve(pix, input.width(), input.height());
     scale(input, *output);
+    av_frame_copy_props(output->pointer(), input.pointer());
     return output;
 }
 
