@@ -97,7 +97,7 @@ class CoreLayer : public AudioLayer {
          * CoreAudio Library API
          */
 
-        virtual void startStream();
+        virtual void startStream(StreamType stream = StreamType::DEFAULT);
 
         void destroyAudioLayer();
 
