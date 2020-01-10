@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "fcc0c06e_ce2ff8e6",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 375,
+      "author": {
+        "id": 644
+      },
+      "writtenOn": "2020-01-10T16:39:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "42b1620f_621f59cf",
+      "revId": "7780fd1f1ae7062ddcb2db608944813da8abedce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "db58ea4a_d83bda48",
         "filename": "src/archiver.cpp",
         "patchSetId": 15
@@ -30,6 +48,24 @@
       "writtenOn": "2020-01-04T00:06:09Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nValue stored to \u0027r\u0027 is never read\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-analyzer-deadcode.DeadStores",
+      "revId": "7780fd1f1ae7062ddcb2db608944813da8abedce",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "0a6340e5_1d081b16",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 15
+      },
+      "lineNbr": 435,
+      "author": {
+        "id": 644
+      },
+      "writtenOn": "2020-01-10T16:39:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "db58ea4a_d83bda48",
       "revId": "7780fd1f1ae7062ddcb2db608944813da8abedce",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
