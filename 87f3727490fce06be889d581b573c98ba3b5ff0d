@@ -48,6 +48,30 @@
     },
     {
       "key": {
+        "uuid": "314db225_81fba4cc",
+        "filename": "src/archiver.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 445,
+      "author": {
+        "id": 644
+      },
+      "writtenOn": "2020-01-10T16:39:11Z",
+      "side": 1,
+      "message": "archive_write_data_block writes files to disk, here we are extracting the archive file content and writing the files to disk",
+      "parentUuid": "2801ad9a_81d36047",
+      "range": {
+        "startLine": 445,
+        "startChar": 24,
+        "endLine": 445,
+        "endChar": 38
+      },
+      "revId": "87f3727490fce06be889d581b573c98ba3b5ff0d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "8c079fe7_aad39810",
         "filename": "src/dring/plugin_manager_interface.h",
         "patchSetId": 11
