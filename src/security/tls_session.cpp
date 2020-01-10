@@ -56,8 +56,20 @@ namespace jami { namespace tls {
 
 static constexpr const char* DTLS_CERT_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr const char* DTLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
-static constexpr const char* TLS_CERT_PRIORITY_STRING {"SECURE192:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
-static constexpr const char* TLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
+// Note: -GROUP-FFDHE4096:-GROUP-FFDHE6144:-GROUP-FFDHE8192:+GROUP-X25519:
+// is added after gnutls 3.6.7, because some safety checks were introduced for FFDHE resulting in a performance drop for our usage (2/3s of delay)
+// This performance drop is visible on mobiles devices.
+
+// Benchmark result (on a computer)
+// $gnutls-cli --benchmark-tls-kx
+// (TLS1.3)-(DHE-FFDHE3072)-(RSA-PSS-RSAE-SHA256)-(AES-128-GCM)  20.48 transactions/sec
+//            (avg. handshake time: 48.45 ms, sample variance: 0.68)
+// (TLS1.3)-(ECDHE-SECP256R1)-(RSA-PSS-RSAE-SHA256)-(AES-128-GCM)  208.14 transactions/sec
+//            (avg. handshake time: 4.01 ms, sample variance: 0.01)
+// (TLS1.3)-(ECDHE-X25519)-(RSA-PSS-RSAE-SHA256)-(AES-128-GCM)  240.93 transactions/sec
+//            (avg. handshake time: 4.00 ms, sample variance: 0.00)
+static constexpr const char* TLS_CERT_PRIORITY_STRING {"SECURE192:-RSA:-GROUP-FFDHE4096:-GROUP-FFDHE6144:-GROUP-FFDHE8192:+GROUP-X25519:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
+static constexpr const char* TLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-RSA:-GROUP-FFDHE4096:-GROUP-FFDHE6144:-GROUP-FFDHE8192:+GROUP-X25519:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr uint32_t RX_MAX_SIZE {64*1024}; // 64k = max size of a UDP packet
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum number of packets to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
