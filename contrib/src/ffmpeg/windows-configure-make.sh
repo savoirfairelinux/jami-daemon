@@ -11,10 +11,10 @@ FFMPEGCONF='
 FFMPEGCONF+='
             --disable-everything
             --disable-programs
-            --disable-d3d11va
             --disable-dxva2
             --disable-postproc
-            --disable-filters'
+            --disable-filters
+            --enable-debug'
 
 FFMPEGCONF+='
             --enable-shared
@@ -165,6 +165,32 @@ elif [ "$1" == "win32" ]; then
                 --enable-encoder=h264_nvenc
                 --enable-encoder=hevc_nvenc'
     FFMPEGCONF+='
+                --enable-d3d11va
+                --enable-hwaccel=h264_d3d11va
+                --enable-hwaccel=h264_d3d11va2
+                --enable-hwaccel=hevc_d3d11va
+                --enable-hwaccel=hevc_d3d11va2
+                --enable-hwaccel=vc1_d3d11va
+                --enable-hwaccel=vc1_d3d11va2
+                --enable-hwaccel=vp9_d3d11va
+                --enable-hwaccel=vp9_d3d11va2
+                --enable-hwaccel=wmv3_d3d11va
+                --enable-hwaccel=wmv3_d3d11va2
+                --enable-hwaccel=mpeg2_d3d11va
+                --enable-hwaccel=mpeg2_d3d11va2
+                --enable-decoder=h264_d3d11va
+                --enable-decoder=h264_d3d11va2
+                --enable-decoder=hevc_d3d11va
+                --enable-decoder=hevc_d3d11va2
+                --enable-decoder=vc1_d3d11va
+                --enable-decoder=vc1_d3d11va2
+                --enable-decoder=vp9_d3d11va
+                --enable-decoder=vp9_d3d11va2
+                --enable-decoder=wmv3_d3d11va
+                --enable-decoder=wmv3_d3d11va2
+                --enable-decoder=mpeg2_d3d11va
+                --enable-decoder=mpeg2_d3d11va2'
+    FFMPEGCONF+='
                 --enable-libmfx
                 --enable-encoder=h264_qsv
                 --enable-encoder=hevc_qsv
@@ -178,13 +204,13 @@ elif [ "$1" == "win32" ]; then
                 --enable-filter=overlay_qsv'
     if [ "$2" == "x64" ]; then
         echo "configure and make ffmpeg for win32-x64..."
-        EXTRALDFLAGS='-APPCONTAINER:NO -MACHINE:x64 Ole32.lib Kernel32.lib Gdi32.lib User32.lib Strmiids.lib Advapi32.lib OleAut32.lib Shlwapi.lib Vfw32.lib Secur32.lib Advapi32.lib libopus.lib libx264.lib libvpx.lib libmfx.lib -LIBPATH:../../../../../msvc/lib/x64'
+        EXTRALDFLAGS='-APPCONTAINER:NO -MACHINE:x64 Ole32.lib Kernel32.lib Gdi32.lib User32.lib Strmiids.lib Advapi32.lib OleAut32.lib Shlwapi.lib Vfw32.lib Secur32.lib Advapi32.lib libopus.lib libx264.lib libvpx.lib libmfx.lib d3d11.lib -LIBPATH:../../../../../msvc/lib/x64'
         FFMPEGCONF+=' --arch=x86_64'
         PREFIX=../../../Build/win32/x64
         OUTDIR=Output/win32/x64
     elif [ "$2" == "x86" ]; then
         echo "configure and make ffmpeg for win32-x86..."
-        EXTRALDFLAGS='-APPCONTAINER:NO -MACHINE:x86 Ole32.lib Kernel32.lib Gdi32.lib User32.lib Strmiids.lib OleAut32.lib Shlwapi.lib Vfw32.lib Secur32.lib Advapi32.lib libopus.lib libx264.lib libvpx.lib libmfx.lib -LIBPATH:../../../../../msvc/lib/x86'
+        EXTRALDFLAGS='-APPCONTAINER:NO -MACHINE:x86 Ole32.lib Kernel32.lib Gdi32.lib User32.lib Strmiids.lib OleAut32.lib Shlwapi.lib Vfw32.lib Secur32.lib Advapi32.lib libopus.lib libx264.lib libvpx.lib libmfx.lib d3d11.lib -LIBPATH:../../../../../msvc/lib/x86'
         FFMPEGCONF+=' --arch=x86'
         PREFIX=../../../Build/win32/x86
         OUTDIR=Output/win32/x86
