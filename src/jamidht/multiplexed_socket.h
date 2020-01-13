@@ -23,6 +23,7 @@
 
 namespace jami {
 
+class IceTransport;
 class ChannelSocket;
 class TlsSocketEndpoint;
 
@@ -111,6 +112,8 @@ public:
      */
     void onShutdown(OnShutdownCb&& cb);
 
+    std::shared_ptr<IceTransport> underlyingICE() const;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
@@ -146,7 +149,7 @@ public:
     /**
      * Will trigger that callback when shutdown() is called
      */
-    void onShutdown(OnShutdownCb&& cb);
+    void onShutdown(OnShutdownCb&& cb = {});
 
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     /**
@@ -155,7 +158,9 @@ public:
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
     int waitForData(std::chrono::milliseconds timeout, std::error_code&) const override;
 
-    void setOnRecv(RecvCb&&) override;
+    void setOnRecv(RecvCb&& = {}) override;
+
+    std::shared_ptr<IceTransport> underlyingICE() const;
 
 private:
     class Impl;

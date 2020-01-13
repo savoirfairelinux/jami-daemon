@@ -91,11 +91,6 @@ public:
 
     MultiplexedSocket& parent_;
 
-    OnConnectionReadyCb onChannelReady_;
-    OnConnectionRequestCb onRequest_;
-    OnShutdownCb onShutdown_;
-    std::atomic_bool isShutdown_ {false};
-
     std::string deviceId;
     // Main socket
     std::unique_ptr<TlsSocketEndpoint> endpoint;
@@ -114,6 +109,11 @@ public:
     std::map<uint16_t, std::unique_ptr<ChannelInfo>> channelDatas_ {};
     std::mutex channelCbsMtx_ {};
     std::map<uint16_t, GenericSocket<uint8_t>::RecvCb> channelCbs_ {};
+
+    OnConnectionReadyCb onChannelReady_;
+    OnConnectionRequestCb onRequest_;
+    OnShutdownCb onShutdown_;
+    std::atomic_bool isShutdown_ {false};
 };
 
 void
@@ -456,6 +456,12 @@ MultiplexedSocket::onShutdown(OnShutdownCb&& cb)
     }
 }
 
+std::shared_ptr<IceTransport>
+MultiplexedSocket::underlyingICE() const
+{
+    return pimpl_->endpoint->underlyingICE();
+}
+
 ////////////////////////////////////////////////////////////////
 
 class ChannelSocket::Impl
@@ -534,6 +540,14 @@ ChannelSocket::setOnRecv(RecvCb&& cb)
 {
     if (auto ep = pimpl_->endpoint.lock())
         ep->setOnRecv(pimpl_->channel, std::move(cb));
+}
+
+std::shared_ptr<IceTransport>
+ChannelSocket::underlyingICE() const
+{
+    if (auto mtx = pimpl_->endpoint.lock())
+        return mtx->underlyingICE();
+    return {};
 }
 
 void
