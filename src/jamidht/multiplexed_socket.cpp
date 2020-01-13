@@ -104,6 +104,8 @@ public:
 
     // Multiplexed available datas
     std::map<uint16_t, std::unique_ptr<ChannelInfo>> channelDatas_ {};
+    std::mutex channelCbsMtx_ {};
+    std::map<uint16_t, GenericSocket<uint8_t>::RecvCb> channelCbs_ {};
 
     onConnectionReadyCb onChannelReady_;
     onConnectionRequestCb onRequest_;
@@ -301,6 +303,8 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>& pkt)
 void
 MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector<uint8_t>& pkt)
 {
+    JAMI_WARN("RECV %p", this);
+
     if (channel > 0 && sockets[channel] && channelDatas_[channel]) {
         if (pkt.size() == 0) {
             sockets[channel]->shutdown();
@@ -308,6 +312,15 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector
             channelDatas_.erase(channel);
             sockets.erase(channel);
         } else {
+            std::unique_lock<std::mutex> lk(channelCbsMtx_);
+            auto cb = channelCbs_.find(channel);
+            JAMI_WARN("... %u", channel);
+            if (cb != channelCbs_.end()) {
+                JAMI_WARN("RECV");
+                cb->second(&pkt[0], pkt.size());
+                return;
+            }
+            lk.unlock();
             channelDatas_[channel]->buf.insert(
                 channelDatas_[channel]->buf.end(),
                 std::make_move_iterator(pkt.begin()),
@@ -469,6 +482,13 @@ MultiplexedSocket::waitForData(const uint16_t& channel, std::chrono::millisecond
 }
 
 void
+MultiplexedSocket::setOnRecv(const uint16_t& channel, GenericSocket<uint8_t>::RecvCb&& cb)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->channelCbsMtx_);
+    pimpl_->channelCbs_[channel] = cb;
+}
+
+void
 MultiplexedSocket::shutdown()
 {
     pimpl_->shutdown();
@@ -556,6 +576,14 @@ ChannelSocket::maxPayload() const
     }
     return -1;
 }
+
+void
+ChannelSocket::setOnRecv(RecvCb&& cb)
+{
+    if (auto ep = pimpl_->endpoint.lock())
+        ep->setOnRecv(pimpl_->channel, std::move(cb));
+}
+
 
 void
 ChannelSocket::stop()

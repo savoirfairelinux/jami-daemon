@@ -94,6 +94,7 @@ public:
     std::size_t read(const uint16_t& channel, uint8_t* buf, std::size_t len, std::error_code& ec);
     std::size_t write(const uint16_t& channel, const uint8_t* buf, std::size_t len, std::error_code& ec);
     int waitForData(const uint16_t& channel, std::chrono::milliseconds timeout, std::error_code&) const;
+    void setOnRecv(const uint16_t& channel, GenericSocket<uint8_t>::RecvCb&& cb);
 
     /**
      * This will close all channels and send a TLS EOF on the main socket.
@@ -148,9 +149,7 @@ public:
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
     int waitForData(std::chrono::milliseconds timeout, std::error_code&) const override;
 
-    void setOnRecv(RecvCb&&) override {
-        throw std::logic_error("ChannelSocket::setOnRecv not implemented");
-    }
+    void setOnRecv(RecvCb&&) override;
 
 private:
     class Impl;
