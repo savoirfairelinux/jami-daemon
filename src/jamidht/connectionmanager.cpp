@@ -54,6 +54,7 @@ public:
     explicit Impl(JamiAccount& account) : account {account} {}
     ~Impl() {}
     void shutdown() {
+        isDestroying_ = true;
         {
             std::lock_guard<std::mutex> lk(connectCbsMtx_);
             pendingCbs_.clear();
@@ -65,12 +66,15 @@ public:
                     info.second.ice_->stop();
                 }
                 info.second.responseCv_.notify_all();
-                if (info.second.ice_) {
-                    info.second.ice_.reset();
-                }
             }
         }
-        connectionsInfos_.clear();
+        // Move this on the thread pool because each
+        // IceTransport takes 500ms to delete, and it's sequential
+        // So, it can increase quickly the time to unregister an account
+        dht::ThreadPool::io().run([w=weak()] {
+            if (auto shared = w.lock())
+                shared->connectionsInfos_.clear();
+        });
         {
             std::lock_guard<std::mutex> lk(nonReadySocketsMutex_);
             for (auto& listSocks : nonReadySockets_) {
@@ -156,11 +160,14 @@ public:
     std::weak_ptr<ConnectionManager::Impl const> weak() const {
         return std::static_pointer_cast<ConnectionManager::Impl const>(shared_from_this());
     }
+
+    std::atomic_bool isDestroying_ {false};
 };
 
 void
 ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::string& name, ConnectCallback cb)
 {
+    JAMI_WARN("ConnectionManager::Impl::connectDevice %s %s", deviceId.c_str(), name.c_str());
     if (!account.dht()) {
         cb(nullptr);
         return;
@@ -178,7 +185,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
         // TLSSession and ICETransport async.
         dht::ThreadPool::io().run([w, deviceId, name, cert, cb=std::move(cb)] {
             auto sthis = w.lock();
-            if (!sthis) return;
+            if (!sthis || sthis->isDestroying_) return;
             auto vid = ValueIdDist()(sthis->account.rand);
             std::pair<std::string, dht::Value::Id> cbId(deviceId, vid);
             {
@@ -247,7 +254,9 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
             );
 
             // Wait for call to onResponse() operated by DHT
+            if (sthis->isDestroying_) return; // This avoid to wait new negotiation when destroying
             connectionInfo.responseCv_.wait_for(lk, DHT_MSG_TIMEOUT);
+            if (sthis->isDestroying_) return; // The destructor can wake a pending wait here.
             if (!connectionInfo.responseReceived_) {
                 JAMI_ERR("no response from DHT to E2E request.");
                 ice.reset();
@@ -526,6 +535,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
         return false;
     });
     mSock->onShutdown([w=weak(), deviceId, vid]() {
+        JAMI_WARN("ON SHUTDOWN MTX SOCK");
         auto sthis = w.lock();
         if (!sthis) return;
         // Cancel current outgoing connections
@@ -570,6 +580,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
                     sthis->nonReadySockets_[deviceId].erase(vid);
                     if (sthis->nonReadySockets_[deviceId].empty()) {
                         sthis->nonReadySockets_.erase(deviceId);
+
                     }
                 }
             }
