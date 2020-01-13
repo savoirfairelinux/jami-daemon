@@ -76,6 +76,8 @@ class PeerConnection;
 class ContactList;
 class AccountManager;
 struct AccountInfo;
+class ChannelSocket;
+class SipTransport;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -310,7 +312,7 @@ public:
 
     void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
     void sendTrustRequestConfirm(const std::string& to);
-    virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;
+    virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id, bool retryOnTimeout=true) override;
     virtual uint64_t sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads) override;
 
     /* Devices */
@@ -425,6 +427,8 @@ public:
      * ConnectionManager needs the account to exists
      */
     void shutdownConnections();
+
+    void permitPeer(const IpAddr& ip);
 
 private:
     NON_COPYABLE(JamiAccount);
@@ -681,6 +685,25 @@ private:
     void cacheTurnServers();
 
     std::set<std::shared_ptr<dht::http::Request>> requests_;
+
+    std::mutex sipConnectionsMtx_ {};
+    struct SipConnection {
+        std::shared_ptr<SipTransport> transport;
+        // TODO try with SIP transport
+        // Needs to keep track of that channel to access underlying ICE
+        // informations, as the SipTransport use a generic transport
+        std::shared_ptr<ChannelSocket> channel;
+    };
+    // NOTE: here we use a vector to avoid race conditions. In fact the contact
+    // can ask for a SIP channel when we are creating a new SIP Channel with this
+    // peer too.
+    // TODO, choose to close one socket if multiple sockets are presents
+    std::map<std::string, std::vector<SipConnection>> sipConnections_ {};
+    // However, we only negotiate one socket from our side
+    std::set<std::string> pendingSipConnections_ {};
+
+    void askForSIPConnection(const std::string& deviceId);
+    void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const std::string& deviceId);
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)

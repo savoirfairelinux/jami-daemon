@@ -148,6 +148,7 @@ public:
 void
 ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::string& name, ConnectCallback cb)
 {
+    JAMI_WARN("ConnectionManager::Impl::connectDevice %s %s", deviceId.c_str(), name.c_str());
     if (!account.dht()) {
         cb(nullptr);
         return;
@@ -245,6 +246,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
             }
 
             auto& response = connectionInfo.response_;
+            JAMI_WARN("PARSE DSP WITH %p", ice);
             auto sdp = IceTransport::parse_SDP(response.ice_msg, *ice);
             auto hasPubIp = hasPublicIp(sdp);
             if (!hasPubIp) ice->setInitiatorSession();
@@ -274,6 +276,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
             }
 
             // Build socket
+            JAMI_WARN("@@@ %u", vid);
             auto endpoint = std::make_unique<IceSocketEndpoint>(ice, true);
 
             // Negotiate a TLS session
@@ -296,6 +299,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                         pendingCbs_.erase(cbId);
                     }
                 } else {
+                    JAMI_WARN("@@@ %u", vid);
                     // The socket is ready, store it in multiplexedSockets_
                     std::lock_guard<std::mutex> lkmSockets(msocketsMutex_);
                     std::lock_guard<std::mutex> lknrs(nonReadySocketsMutex_);
@@ -422,7 +426,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
             if (connReadyCb_) connReadyCb_(deviceId, "", nullptr);
             return;
         }
-    }
+    } 
 
     // NOTE: This is a shortest version of a real SDP message to save some bits
     auto iceAttributes = ice->getLocalAttributes();
@@ -445,6 +449,18 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
     account.dht()->putEncrypted(
         dht::InfoHash::get(PeerConnectionRequest::key_prefix + deviceId),
         req.from, value);
+    
+    if (hasPubIp) {
+        ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
+        if (ice->isRunning()) {
+            JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
+        } else {
+            JAMI_ERR("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
+            ice = nullptr;
+            if (connReadyCb_) connReadyCb_(deviceId, "", nullptr);
+            return;
+        }
+    } 
 
     if (hasPubIp) {
         ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
@@ -551,6 +567,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
                     sthis->nonReadySockets_[deviceId].erase(vid);
                     if (sthis->nonReadySockets_[deviceId].empty()) {
                         sthis->nonReadySockets_.erase(deviceId);
+
                     }
                 }
             }
