@@ -20,6 +20,7 @@
 #include "manager.h"
 #include "multiplexed_socket.h"
 #include "peer_connection.h"
+#include "ice_transport.h"
 
 #include <deque>
 #include <opendht/thread_pool.h>
@@ -59,13 +60,15 @@ public:
         isShutdown_ = true;
         if (onShutdown_) onShutdown_();
         endpoint->shutdown();
-        for (auto& socket : sockets) {
-            // Just trigger onShutdown() to make client know
-            // No need to write the EOF for the channel, the write will fail because endpoint is already shutdown
-            if (socket.second) socket.second->stop();
+        {
+            std::lock_guard<std::mutex> lkSockets(socketsMutex);
+            for (auto& socket : sockets) {
+                // Just trigger onShutdown() to make client know
+                // No need to write the EOF for the channel, the write will fail because endpoint is already shutdown
+                if (socket.second) socket.second->stop();
+            }
+            sockets.clear();
         }
-        sockets.clear();
-        eventLoopFut_.wait();
     }
 
     /**
@@ -85,6 +88,11 @@ public:
     void setOnRequest(onConnectionRequestCb&& cb) { onRequest_ = std::move(cb); }
 
     MultiplexedSocket& parent_;
+
+    onConnectionReadyCb onChannelReady_;
+    onConnectionRequestCb onRequest_;
+    onShutdownCb onShutdown_;
+    std::atomic_bool isShutdown_ {false};
 
     std::string deviceId;
     // Main socket
@@ -109,10 +117,6 @@ public:
     std::mutex channelCbsMtx_ {};
     std::map<uint16_t, GenericSocket<uint8_t>::RecvCb> channelCbs_ {};
 
-    onConnectionReadyCb onChannelReady_;
-    onConnectionRequestCb onRequest_;
-    onShutdownCb onShutdown_;
-    std::atomic_bool isShutdown_ {false};
 };
 
 void
@@ -514,6 +518,11 @@ MultiplexedSocket::onShutdown(onShutdownCb&& cb)
     }
 }
 
+std::shared_ptr<IceTransport>
+MultiplexedSocket::underlyingICE() const
+{
+    return pimpl_->endpoint->underlyingICE();
+}
 
 ////////////////////////////////////////////////////////////////
 
@@ -525,11 +534,11 @@ public:
 
     ~Impl() {}
 
-    std::weak_ptr<MultiplexedSocket> endpoint;
+    std::atomic_bool isShutdown_ {false};
+    onShutdownCb shutdownCb_;
     std::string name;
     uint16_t channel;
-    onShutdownCb shutdownCb_;
-    std::atomic_bool isShutdown_ {false};
+    std::weak_ptr<MultiplexedSocket> endpoint;
 };
 
 ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint, const std::string& name, const uint16_t& channel)
@@ -595,6 +604,13 @@ ChannelSocket::setOnRecv(RecvCb&& cb)
         ep->setOnRecv(pimpl_->channel, std::move(cb));
 }
 
+std::shared_ptr<IceTransport>
+ChannelSocket::underlyingICE() const
+{
+    if (auto mtx = pimpl_->endpoint.lock())
+        return mtx->underlyingICE();
+    return {};
+}
 
 void
 ChannelSocket::stop()

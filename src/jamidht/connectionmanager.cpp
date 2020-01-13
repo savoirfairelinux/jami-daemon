@@ -52,8 +52,10 @@ struct ConnectionInfo {
 class ConnectionManager::Impl : public std::enable_shared_from_this<ConnectionManager::Impl> {
 public:
     explicit Impl(JamiAccount& account) : account {account} {}
-    ~Impl() {}
+    ~Impl() { }
     void shutdown() {
+        if (isDestroying_) return;
+        isDestroying_ = true;
         {
             std::lock_guard<std::mutex> lk(connectCbsMtx_);
             pendingCbs_.clear();
@@ -65,12 +67,15 @@ public:
                     info.second.ice_->stop();
                 }
                 info.second.responseCv_.notify_all();
-                if (info.second.ice_) {
-                    info.second.ice_.reset();
-                }
             }
         }
-        connectionsInfos_.clear();
+        // This is called when the account is only disabled.
+        // Move this on the thread pool because each
+        // IceTransport takes 500ms to delete, and it's sequential
+        // So, it can increase quickly the time to unregister an account
+        dht::ThreadPool::io().run([co=std::make_shared<decltype(connectionsInfos_)>(std::move(connectionsInfos_))] {
+            co->clear();
+        });
         {
             std::lock_guard<std::mutex> lk(nonReadySocketsMutex_);
             for (auto& listSocks : nonReadySockets_) {
@@ -156,6 +161,8 @@ public:
     std::weak_ptr<ConnectionManager::Impl const> weak() const {
         return std::static_pointer_cast<ConnectionManager::Impl const>(shared_from_this());
     }
+
+    std::atomic_bool isDestroying_ {false};
 };
 
 void
@@ -178,7 +185,10 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
         // TLSSession and ICETransport async.
         dht::ThreadPool::io().run([w, deviceId, name, cert, cb=std::move(cb)] {
             auto sthis = w.lock();
-            if (!sthis) return;
+            if (!sthis || sthis->isDestroying_) {
+                cb(nullptr);
+                return;
+            }
             auto vid = ValueIdDist()(sthis->account.rand);
             std::pair<std::string, dht::Value::Id> cbId(deviceId, vid);
             {
@@ -199,7 +209,6 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                     return;
                 }
             }
-
             // If no socket exists, we need to initiate an ICE connection.
             auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
             auto ice_config = sthis->account.getIceOptions();
@@ -247,7 +256,9 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
             );
 
             // Wait for call to onResponse() operated by DHT
+            if (sthis->isDestroying_) return; // This avoid to wait new negotiation when destroying
             connectionInfo.responseCv_.wait_for(lk, DHT_MSG_TIMEOUT);
+            if (sthis->isDestroying_) return; // The destructor can wake a pending wait here.
             if (!connectionInfo.responseReceived_) {
                 JAMI_ERR("no response from DHT to E2E request.");
                 ice.reset();
@@ -560,9 +571,8 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
                 if (it != sthis->connectionsInfos_[deviceId].end()) {
                     if (it->second.ice_) it->second.ice_->cancelOperations();
                     sthis->connectionsInfos_[deviceId].erase(vid);
-                    if (sthis->connectionsInfos_[deviceId].empty()) {
+                    if (sthis->connectionsInfos_[deviceId].empty())
                         sthis->connectionsInfos_.erase(deviceId);
-                    }
                 }
                 // This will close the TLS Session
                 std::lock_guard<std::mutex> lk (sthis->nonReadySocketsMutex_);
@@ -570,6 +580,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
                     sthis->nonReadySockets_[deviceId].erase(vid);
                     if (sthis->nonReadySockets_[deviceId].empty()) {
                         sthis->nonReadySockets_.erase(deviceId);
+
                     }
                 }
             }
