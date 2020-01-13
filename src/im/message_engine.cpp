@@ -60,13 +60,13 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
 }
 
 void
-MessageEngine::onPeerOnline(const std::string& peer)
+MessageEngine::onPeerOnline(const std::string& peer, bool retryOnTimeout)
 {
-    retrySend(peer);
+    retrySend(peer, retryOnTimeout);
 }
 
 void
-MessageEngine::retrySend(const std::string& peer)
+MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
 {
     struct PendingMsg {
         MessageToken token;
@@ -97,7 +97,7 @@ MessageEngine::retrySend(const std::string& peer)
             p.token,
             p.to,
             (int)DRing::Account::MessageStates::SENDING);
-        account_.sendTextMessage(p.to, p.payloads, p.token);
+        account_.sendTextMessage(p.to, p.payloads, p.token, retryOnTimeout);
     }
 }
 

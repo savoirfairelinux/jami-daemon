@@ -2013,7 +2013,7 @@ static pjsip_accept_hdr* im_create_accept(pj_pool_t *pool)
 #endif
 
 void
-SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id)
+SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id, bool retryOnTimeout)
 {
     if (to.empty() or payloads.empty()) {
         JAMI_WARN("No sender or payload");
