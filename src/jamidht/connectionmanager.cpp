@@ -708,6 +708,7 @@ ConnectionManager::closeConnectionsWith(const std::string& deviceId)
             }
             info.second.responseCv_.notify_all();
             if (info.second.ice_) {
+                std::unique_lock<std::mutex> lk{ info.second.mutex_ };
                 info.second.ice_.reset();
             }
         }
