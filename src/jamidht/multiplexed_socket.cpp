@@ -518,6 +518,12 @@ MultiplexedSocket::onShutdown(onShutdownCb&& cb)
     }
 }
 
+std::shared_ptr<IceTransport>
+MultiplexedSocket::underlyingICE() const
+{
+    return pimpl_->endpoint->underlyingICE();
+}
+
 ////////////////////////////////////////////////////////////////
 
 class ChannelSocket::Impl
@@ -596,6 +602,14 @@ ChannelSocket::setOnRecv(RecvCb&& cb)
 {
     if (auto ep = pimpl_->endpoint.lock())
         ep->setOnRecv(pimpl_->channel, std::move(cb));
+}
+
+std::shared_ptr<IceTransport>
+ChannelSocket::underlyingICE() const
+{
+    if (auto mtx = pimpl_->endpoint.lock())
+        return mtx->underlyingICE();
+    return {};
 }
 
 void
