@@ -146,6 +146,12 @@ smart_alloc_pool(pjsip_endpoint* endpt, const char* const name, pj_size_t initia
     return std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&>(pool, pj_pool_release);
 }
 
+void sockaddr_to_host_port(pj_pool_t* pool, pjsip_host_port* host_port, const pj_sockaddr* addr);
+
+static constexpr int POOL_TP_INIT {512};
+static constexpr int POOL_TP_INC {512};
+static constexpr int TRANSPORT_INFO_LENGTH {64};
+
 }} // namespace jami::sip_utils
 
 #endif // SIP_UTILS_H_
