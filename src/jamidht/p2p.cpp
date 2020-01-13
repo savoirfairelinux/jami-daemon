@@ -226,7 +226,6 @@ public:
         return false;
     }
 
-private:
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<TlsSocketEndpoint>> waitForReadyEndpoints_;
     std::unique_ptr<TurnTransport> turnAuthv4_;
     std::unique_ptr<TurnTransport> turnAuthv6_;
@@ -236,7 +235,6 @@ private:
     std::map<dht::InfoHash, std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::InfoHash>> certMap_;
     std::map<IpAddr, dht::InfoHash> connectedPeers_;
 
-protected:
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<PeerConnection>> servers_;
     std::map<IpAddr, std::unique_ptr<TlsTurnEndpoint>> tls_turn_ep_;
 
@@ -244,7 +242,6 @@ protected:
     std::mutex clientsMutex_;
     std::mutex turnMutex_;
 
-private:
     void onTurnPeerConnection(const IpAddr&);
     void onTurnPeerDisconnection(const IpAddr&);
     void onRequestMsg(PeerConnectionMsg&&);
@@ -367,6 +364,7 @@ private:
         request.id = ValueIdDist()(parent_.account.rand); /* Random id for the message unicity */
         waitId_ = request.id;
         request.addresses = {icemsg.str()};
+        JAMI_WARN("addresses %s", icemsg.str().c_str());
         request.addresses.insert(request.addresses.end(), publicAddresses_.begin(), publicAddresses_.end());
 
         // Send connection request through DHT
@@ -506,6 +504,7 @@ private:
 bool
 DhtPeerConnector::Impl::turnConnect()
 {
+    JAMI_WARN("@@@ TURN CONNECT");
     std::lock_guard<std::mutex> lock(turnMutex_);
     // Don't retry to reconnect to the TURN server if already connected
     if (turnAuthv4_ && turnAuthv4_->isReady()
@@ -790,6 +789,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
           icemsg << addr << "\n";
         }
         addresses = {icemsg.str()};
+        JAMI_WARN("addresses %s", icemsg.str().c_str());
     }
 
     if (sendTurn) {
@@ -1065,6 +1065,24 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
     const auto peer_h = dht::InfoHash(peer_id);
     // The connection will be close and removed in the main loop
     pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_h, tid);
+}
+
+void
+DhtPeerConnector::permitPeer(const IpAddr& ip)
+{
+    if (ip.isIpv4()) {
+        std::lock_guard<std::mutex> lock(pimpl_->turnMutex_);
+        if (pimpl_->turnAuthv4_) {
+            pimpl_->turnAuthv4_->permitPeer(ip.toString());
+        }
+        JAMI_DBG() << pimpl_->account << "[CNX] authorized peer connection from " << ip.toString();
+    } else if (ip.isIpv6()) {
+        std::lock_guard<std::mutex> lock(pimpl_->turnMutex_);
+        if (pimpl_->turnAuthv6_) {
+            pimpl_->turnAuthv6_->permitPeer(ip.toString());
+        }
+        JAMI_DBG() << pimpl_->account << "[CNX] authorized peer connection from " << ip.toString();
+    }
 }
 
 } // namespace jami
