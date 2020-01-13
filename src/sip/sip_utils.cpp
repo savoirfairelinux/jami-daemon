@@ -204,4 +204,15 @@ register_thread()
     }
 }
 
+void
+sockaddr_to_host_port(pj_pool_t* pool,
+                      pjsip_host_port* host_port,
+                      const pj_sockaddr* addr)
+{
+    host_port->host.ptr = (char*) pj_pool_alloc(pool, PJ_INET6_ADDRSTRLEN+4);
+    pj_sockaddr_print(addr, host_port->host.ptr, PJ_INET6_ADDRSTRLEN+4, 0);
+    host_port->host.slen = pj_ansi_strlen(host_port->host.ptr);
+    host_port->port = pj_sockaddr_get_port(addr);
+}
+
 }} // namespace jami::sip_utils
