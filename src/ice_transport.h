@@ -103,6 +103,7 @@ public:
      */
     IceTransport(const char* name, int component_count, bool master,
                  const IceTransportOptions& options = {});
+    ~IceTransport();
     /**
      * Get current state
      */

@@ -61,7 +61,7 @@ public:
     }
 
     void onMessageSent(const std::string& peer, MessageToken t, bool success);
-    void onPeerOnline(const std::string& peer);
+    void onPeerOnline(const std::string& peer, bool retryOnTimeout=true);
 
     /**
      * Load persisted messages
@@ -79,7 +79,7 @@ private:
     static const std::chrono::minutes RETRY_PERIOD;
     using clock = std::chrono::steady_clock;
 
-    void retrySend(const std::string& peer);
+    void retrySend(const std::string& peer, bool retryOnTimeout=true);
     void save_() const;
 
     struct Message {
