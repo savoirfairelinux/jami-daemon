@@ -76,6 +76,7 @@ class PeerConnection;
 class ContactList;
 class AccountManager;
 struct AccountInfo;
+class ChannelSocket;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -662,6 +663,13 @@ private:
      * Jami, or for each connectivityChange()
      */
     void cacheTurnServers();
+
+    std::mutex sipConnectionsMtx_ {};
+    std::map<std::string, std::shared_ptr<ChannelSocket>> sipConnections_ {};
+    std::set<std::string> pendingSipConnections_ {};
+
+    void askForSIPConnection(const std::string& deviceId);
+    void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const std::string& deviceId);
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)

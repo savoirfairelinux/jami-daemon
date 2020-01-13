@@ -303,6 +303,8 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>& pkt)
 void
 MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector<uint8_t>& pkt)
 {
+    JAMI_WARN("RECV %p", this);
+
     if (channel > 0 && sockets[channel] && channelDatas_[channel]) {
         if (pkt.size() == 0) {
             sockets[channel]->shutdown();
