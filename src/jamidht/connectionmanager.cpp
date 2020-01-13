@@ -148,6 +148,7 @@ public:
 void
 ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::string& name, ConnectCallback cb)
 {
+    JAMI_WARN("ConnectionManager::Impl::connectDevice %s %s", deviceId.c_str(), name.c_str());
     if (!account.dht()) {
         cb(nullptr);
         return;
@@ -508,6 +509,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
         return false;
     });
     mSock->onShutdown([w=weak(), deviceId, vid]() {
+        JAMI_WARN("ON SHUTDOWN MTX SOCK");
         auto sthis = w.lock();
         if (!sthis) return;
         // Cancel current outgoing connections
@@ -552,6 +554,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
                     sthis->nonReadySockets_[deviceId].erase(vid);
                     if (sthis->nonReadySockets_[deviceId].empty()) {
                         sthis->nonReadySockets_.erase(deviceId);
+
                     }
                 }
             }
@@ -613,7 +616,6 @@ ConnectionManager::closeConnectionsWith(const std::string& deviceId)
             // Cancel operations to avoid any blocking in peer_channel
             if (info.second.ice_) info.second.ice_->cancelOperations();
         }
-        pimpl_->connectionsInfos_.erase(deviceId);
         // This will close the TLS Session
         {
             std::lock_guard<std::mutex> lk (pimpl_->nonReadySocketsMutex_);
