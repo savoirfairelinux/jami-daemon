@@ -76,4 +76,12 @@ int installPlugin(const std::string& jplPath, bool force) {
 int uninstallPlugin(const std::string& pluginRootPath) {
     return jami::Manager::instance().getJamiPluginManager().uninstallPlugin(pluginRootPath);
 }
+
+std::vector<std::string> listCallMediaHandlers() {
+    return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().listCallMediaHandlers();
+}
+
+void toggleCallMediaHandler(const std::string& id) {
+    return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().toggleCallMediaHandler(id);
+}
 }

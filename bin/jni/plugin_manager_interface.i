@@ -17,4 +17,6 @@ std::vector<std::string> listAvailablePlugins();
 std::vector<std::string> listLoadedPlugins();
 int installPlugin(const std::string& jplPath, bool force);
 int uninstallPlugin(const std::string& pluginRootPath);
+std::vector<std::string> listCallMediaHandlers();
+void toggleCallMediaHandler(const std::string& id);
 }
