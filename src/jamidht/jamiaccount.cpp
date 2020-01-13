@@ -1610,7 +1610,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
     if (not dht or not dht->isRunning()) {
         return;
     }
-    buddy.listenToken = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&&, bool expired){
+    buddy.listenToken = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired){
         bool wasConnected, isConnected;
         {
             std::lock_guard<std::mutex> lock(buddyInfoMtx);
@@ -1627,12 +1627,14 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
         if (not expired) {
             // Retry messages every time a new device announce its presence
             messageEngine_.onPeerOnline(h.toString());
+            askForSIPConnection(dev.dev.toString());
         }
         if (isConnected and not wasConnected) {
             onTrackedBuddyOnline(h);
         } else if (not isConnected and wasConnected) {
             onTrackedBuddyOffline(h);
         }
+
         return true;
     });
     JAMI_DBG("[Account %s] tracking buddy %s", getAccountID().c_str(), h.to_c_str());
@@ -1806,7 +1808,45 @@ JamiAccount::doRegister_()
         accountManager_->startSync();
 
         // Init connection manager
+        if (!connectionManager_)
+            connectionManager_ = std::make_unique<ConnectionManager>(*this);
         connectionManager_->onDhtConnected(accountManager_->getInfo()->deviceId);
+        connectionManager_->onICERequest([this](const std::string& deviceId) {
+            std::promise<bool> accept;
+            std::future<bool> fut = accept.get_future();
+            accountManager_->findCertificate(dht::InfoHash(deviceId),
+                [this, &accept](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                dht::InfoHash peer_account_id;
+                auto res = accountManager_->onPeerCertificate(cert, dhtPublicInCalls_, peer_account_id);
+                if (res)
+                    JAMI_INFO("Accepting ICE request from account %s", peer_account_id.toString().c_str());
+                else
+                    JAMI_INFO("Discarding ICE request from account %s", peer_account_id.toString().c_str());
+                accept.set_value(res);
+            });
+            fut.wait();
+            auto result = fut.get();
+            return result;
+        });
+        connectionManager_->onChannelRequest([](const std::string& /* deviceId */, const std::string& name) {
+            // TODO
+            if (name == "sip") {
+                return true;
+            }
+            return false;
+        });
+        connectionManager_->onConnectionReady([this](const std::string& deviceId, const std::string& name, std::shared_ptr<ChannelSocket> channel) {
+            if (channel && name == "sip") {
+                std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+                if (sipConnections_.find(deviceId) != sipConnections_.end()) {
+                    // Already have one active sip connection
+                    return;
+                }
+                lk.unlock();
+                cacheSIPConnection(std::move(channel), deviceId);
+            }
+            // TODO
+        });
 
         // Listen for incoming calls
         callKey_ = dht::InfoHash::get("callto:"+accountManager_->getInfo()->deviceId);
@@ -2014,6 +2054,16 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     dht_->join();
 
     lock.unlock();
+
+    // Stop all current p2p connections if account is disabled
+    // Else, we let the system managing if the co is down or not
+    if (not isEnabled()) {
+        connectionManager_.reset();
+        std::lock_guard<std::mutex> lk(sipConnectionsMtx_);
+        sipConnections_.clear();
+        pendingSipConnections_.clear();
+    }
+
     setRegistrationState(RegistrationState::UNREGISTERED);
 
     if (released_cb)
@@ -2392,6 +2442,15 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
         accountManager_->removeContact(uri, ban);
     else
         JAMI_WARN("[Account %s] removeContact: account not loaded", getAccountID().c_str());
+
+    // Remove current connections with contact
+    dht::InfoHash peer_account(uri);
+    accountManager_->forEachDevice(peer_account, [this](const dht::InfoHash& dev) {
+        std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+        pendingSipConnections_.erase(dev.toString());
+        sipConnections_.erase(dev.toString());
+        connectionManager().closeConnectionsWith(dev.toString());
+    });
 }
 
 std::map<std::string, std::string>
@@ -2509,6 +2568,45 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     // Find listening devices for this account
     accountManager_->forEachDevice(toH, [this,confirm,to,token,payloads,now](const dht::InfoHash& dev)
     {
+        {
+            // If a connection already exists, no need to do this
+            std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+            auto connection = sipConnections_.find(dev.toString());
+            if (connection != sipConnections_.end() && connection->second) {
+                // TODO SIP
+                Json::Value root;
+                for (const auto& payload: payloads) {
+                    root[payload.first] = payload.second;
+                }
+                Json::StreamWriterBuilder wbuilder;
+                wbuilder["commentStyle"] = "None";
+                wbuilder["indentation"] = "";
+                auto output = Json::writeString(wbuilder, root);
+                std::error_code ec;
+                // TODO cast
+                JAMI_WARN("SEND");
+                if (connection->second->write((const unsigned char*)output.c_str(), output.size(), ec) < 0) {
+                    if(ec) JAMI_WARN("Could not send data: %s", ec.message());
+                    return;
+                }
+                // TODO avoid duplicate
+                // report message as confirmed received
+                {
+                    std::lock_guard<std::mutex> l(confirm->lock);
+                    for (auto& t : confirm->listenTokens)
+                        dht_->cancelListen(t.first, std::move(t.second));
+                    confirm->listenTokens.clear();
+                    confirm->replied = true;
+                }
+                messageEngine_.onMessageSent(to, token, true);
+
+                // TODO check retry
+                return;
+            } else {
+                lk.unlock();
+                askForSIPConnection(dev.toString());
+            }
+        }
         {
             std::lock_guard<std::mutex> lock(messageMutex_);
             auto e = sentMessages_.emplace(token, PendingMessage {});
@@ -2835,5 +2933,70 @@ JamiAccount::cacheTurnServers()
         JAMI_INFO("Cache refreshed for TURN resolution");
     });
 }
+
+void
+JamiAccount::askForSIPConnection(const std::string& deviceId)
+{
+    // If a connection already exists or is in progress, no need to do this
+    std::lock_guard<std::mutex> lk(sipConnectionsMtx_);
+    if (sipConnections_.find(deviceId) != sipConnections_.end()
+    || pendingSipConnections_.find(deviceId) != pendingSipConnections_.end())
+        return;
+    pendingSipConnections_.emplace(deviceId);
+    // If not present, create it
+    JAMI_INFO("Ask %s for a new SIP channel", deviceId.c_str());
+    connectionManager().connectDevice(deviceId, "sip",
+        [w=weak(), deviceId](std::shared_ptr<ChannelSocket> socket) {
+        auto shared = w.lock();
+        if (!shared) return;
+        if (socket) {
+            shared->cacheSIPConnection(std::move(socket), deviceId);
+        }
+        std::lock_guard<std::mutex> lk(shared->sipConnectionsMtx_);
+        shared->pendingSipConnections_.erase(deviceId);
+    });
+}
+
+void
+JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const std::string& deviceId)
+{
+    std::lock_guard<std::mutex> lk(sipConnectionsMtx_);
+    // Setup SIP callback when receiving data
+    auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
+    if (!cert || !cert->issuer) return;
+    auto peerId = cert->issuer->getId().toString();
+    socket->setOnRecv([w=weak(), peerId](const uint8_t* buf, size_t len) {
+        // TODO avoid dup
+        // TODO errors
+        auto shared = w.lock();
+        if (!shared) return len;
+        std::string err;
+        Json::Value root;
+        Json::CharReaderBuilder rbuilder;
+        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+        // TODO cast
+        if (!reader->parse((const char*)buf, (const char*)buf+len, &root, &err)) {
+            JAMI_ERR() << "Failed to parse " << err;
+            return len;
+        }
+        std::map<std::string, std::string> payloads {};
+        for (const auto& member: root.getMemberNames()) {
+            payloads[member] = root[member].asString();
+        }
+        shared->onTextMessage(peerId, payloads);
+        return len;
+    });
+    // Store the connection
+    sipConnections_[deviceId] = socket;
+    socket->onShutdown([w=weak(), deviceId]() {
+        auto shared = w.lock();
+        if (!shared) return;
+        std::unique_lock<std::mutex> lk(shared->sipConnectionsMtx_);
+        shared->sipConnections_.erase(deviceId);
+        shared->pendingSipConnections_.erase(deviceId);
+    });
+    JAMI_INFO("New SIP channel opened with %s", deviceId.c_str());
+}
+
 
 } // namespace jami
