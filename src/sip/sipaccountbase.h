@@ -258,7 +258,7 @@ public:
 
     const IceTransportOptions getIceOptions() const noexcept override;
 
-    virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) = 0;
+    virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id, bool retryOnTimeout=true) = 0;
 
     virtual uint64_t sendTextMessage(const std::string& to,
                                      const std::map<std::string, std::string>& payloads) override {
