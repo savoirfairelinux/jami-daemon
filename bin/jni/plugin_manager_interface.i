@@ -16,4 +16,6 @@ bool resetPluginPreferencesValues(const std::string& path);
 std::vector<std::string> listPlugins();
 int installPlugin(const std::string& jplPath, bool force);
 int uninstallPlugin(const std::string& pluginRootPath);
+std::vector<std::string> listCallMediaHandlers();
+void toggleCallMediaHandler(const std::string& id);
 }
