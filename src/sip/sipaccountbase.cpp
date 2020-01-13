@@ -150,7 +150,10 @@ void SIPAccountBase::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::AUDIO_PORT_MIN_KEY << YAML::Value << audioPortRange_.first;
     out << YAML::Key << Conf::DTMF_TYPE_KEY << YAML::Value << dtmfType_;
     out << YAML::Key << Conf::INTERFACE_KEY << YAML::Value << interface_;
-    out << YAML::Key << Conf::PUBLISH_ADDR_KEY << YAML::Value << publishedIpAddress_;
+    {
+        std::lock_guard<std::mutex> lk(publishedMtx_);
+        out << YAML::Key << Conf::PUBLISH_ADDR_KEY << YAML::Value << publishedIpAddress_;
+    }
     out << YAML::Key << Conf::PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
     out << YAML::Key << Conf::SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
 
@@ -222,7 +225,10 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
     // general sip settings
     parseString(details, Conf::CONFIG_LOCAL_INTERFACE, interface_);
     parseBool(details, Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
-    parseString(details, Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
+    {
+        std::lock_guard<std::mutex> lk(publishedMtx_);
+        parseString(details, Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
+    }
     parseInt(details, Conf::CONFIG_PUBLISHED_PORT, publishedPort_);
 
     parseString(details, Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
@@ -267,7 +273,10 @@ SIPAccountBase::getAccountDetails() const
     a.emplace(Conf::CONFIG_LOCAL_INTERFACE,         interface_);
     a.emplace(Conf::CONFIG_PUBLISHED_PORT,          std::to_string(publishedPort_));
     a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL,  publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
+    {
+        std::lock_guard<std::mutex> lk(publishedMtx_);
+        a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
+    }
 
     a.emplace(Conf::CONFIG_STUN_ENABLE, stunEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_STUN_SERVER, stunServer_);
@@ -430,6 +439,7 @@ SIPAccountBase::onTextMessage(const std::string& from,
 void
 SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
 {
+    std::lock_guard<std::mutex> lk(publishedMtx_);
     publishedIp_ = ip_addr;
     publishedIpAddress_ = ip_addr.toString();
     JAMI_DBG("[Account %s] Using public address %s", getAccountID().c_str(),

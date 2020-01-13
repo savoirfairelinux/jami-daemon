@@ -104,6 +104,8 @@ public:
 
     // Multiplexed available datas
     std::map<uint16_t, std::unique_ptr<ChannelInfo>> channelDatas_ {};
+    std::mutex channelCbsMtx_ {};
+    std::map<uint16_t, GenericSocket<uint8_t>::RecvCb> channelCbs_ {};
 
     onConnectionReadyCb onChannelReady_;
     onConnectionRequestCb onRequest_;
@@ -132,6 +134,8 @@ MultiplexedSocket::Impl::eventLoop()
                 shutdown();
                 break;
             }
+
+            JAMI_WARN("...%u", size);
 
             // A packet has the following format:
             //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
@@ -301,6 +305,8 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>& pkt)
 void
 MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector<uint8_t>& pkt)
 {
+    JAMI_WARN("RECV %p", this);
+
     if (channel > 0 && sockets[channel] && channelDatas_[channel]) {
         if (pkt.size() == 0) {
             sockets[channel]->shutdown();
@@ -308,6 +314,15 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector
             channelDatas_.erase(channel);
             sockets.erase(channel);
         } else {
+            std::unique_lock<std::mutex> lk(channelCbsMtx_);
+            auto cb = channelCbs_.find(channel);
+            JAMI_WARN("... %u", channel);
+            if (cb != channelCbs_.end()) {
+                JAMI_WARN("RECV");
+                cb->second(&pkt[0], pkt.size());
+                return;
+            }
+            lk.unlock();
             channelDatas_[channel]->buf.insert(
                 channelDatas_[channel]->buf.end(),
                 std::make_move_iterator(pkt.begin()),
@@ -421,12 +436,14 @@ MultiplexedSocket::read(const uint16_t& channel, uint8_t* buf, std::size_t len, 
 std::size_t
 MultiplexedSocket::write(const uint16_t& channel, const uint8_t* buf, std::size_t len, std::error_code& ec)
 {
+    JAMI_WARN("WRITE %u", len);
     if (pimpl_->isShutdown_) {
         ec = std::make_error_code(std::errc::broken_pipe);
         return -1;
     }
     if (len > UINT16_MAX) {
         ec = std::make_error_code(std::errc::message_size);
+        JAMI_WARN("RETURN -1");
         return -1;
     }
     if (!pimpl_->endpoint) {
@@ -443,6 +460,7 @@ MultiplexedSocket::write(const uint16_t& channel, const uint8_t* buf, std::size_
 
     auto v = std::vector<uint8_t>(buf, buf + len);
     toSend.insert(toSend.end(), std::make_move_iterator(v.begin()), std::make_move_iterator(v.end()));
+    JAMI_WARN("WRITE");
     return pimpl_->endpoint->write(&toSend[0], len + 4, ec);
 }
 
@@ -467,6 +485,15 @@ MultiplexedSocket::waitForData(const uint16_t& channel, std::chrono::millisecond
     });
     return channelData->buf.size();
 }
+
+void
+MultiplexedSocket::setOnRecv(const uint16_t& channel, GenericSocket<uint8_t>::RecvCb&& cb)
+{
+    std::lock_guard<std::mutex> lk(pimpl_->channelCbsMtx_);
+    JAMI_WARN("... %u %p", channel, this);
+    pimpl_->channelCbs_[channel] = cb;
+}
+
 
 void
 MultiplexedSocket::shutdown()
@@ -533,6 +560,7 @@ ChannelSocket::channel() const
 bool
 ChannelSocket::isReliable() const
 {
+    JAMI_ERR("isReliable");
     if (auto ep = pimpl_->endpoint.lock()) {
         return ep->isReliable();
     }
@@ -542,6 +570,7 @@ ChannelSocket::isReliable() const
 bool
 ChannelSocket::isInitiator() const
 {
+    JAMI_ERR("isInit");
     if (auto ep = pimpl_->endpoint.lock()) {
         return ep->isInitiator();
     }
@@ -551,11 +580,22 @@ ChannelSocket::isInitiator() const
 int
 ChannelSocket::maxPayload() const
 {
+    JAMI_ERR("maxPayload");
     if (auto ep = pimpl_->endpoint.lock()) {
         return ep->maxPayload();
     }
     return -1;
 }
+
+void
+ChannelSocket::setOnRecv(RecvCb&& cb)
+{
+    JAMI_ERR("setOnRecv");
+    if (auto ep = pimpl_->endpoint.lock())
+        ep->setOnRecv(pimpl_->channel, std::move(cb));
+    JAMI_ERR("setOnRecv end");
+}
+
 
 void
 ChannelSocket::stop()
@@ -568,6 +608,7 @@ void
 ChannelSocket::shutdown()
 {
     stop();
+    JAMI_ERR("shutdown");
     if (auto ep = pimpl_->endpoint.lock()) {
         std::error_code ec;
         ep->write(pimpl_->channel, nullptr, 0, ec);
@@ -578,6 +619,7 @@ ChannelSocket::shutdown()
 std::size_t
 ChannelSocket::read(ValueType* buf, std::size_t len, std::error_code& ec)
 {
+    JAMI_ERR("read");
     if (auto ep = pimpl_->endpoint.lock()) {
         return ep->read(pimpl_->channel, buf, len, ec);
     }
@@ -588,9 +630,12 @@ ChannelSocket::read(ValueType* buf, std::size_t len, std::error_code& ec)
 std::size_t
 ChannelSocket::write(const ValueType* buf, std::size_t len, std::error_code& ec)
 {
+    JAMI_ERR("WRITE");
     if (auto ep = pimpl_->endpoint.lock()) {
+        JAMI_ERR("WRITE");
         return ep->write(pimpl_->channel, buf, len, ec);
     }
+    JAMI_ERR("WRITE");
     ec = std::make_error_code(std::errc::broken_pipe);
     return -1;
 }
@@ -598,6 +643,7 @@ ChannelSocket::write(const ValueType* buf, std::size_t len, std::error_code& ec)
 int
 ChannelSocket::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
+    JAMI_ERR("waitForData");
     if (auto ep = pimpl_->endpoint.lock()) {
         return ep->waitForData(pimpl_->channel, timeout, ec);
     }

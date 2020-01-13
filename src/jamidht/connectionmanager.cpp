@@ -231,11 +231,13 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                     // The socket is ready, store it in multiplexedSockets_
                     std::lock_guard<std::mutex> lkmSockets(msocketsMutex_);
                     std::lock_guard<std::mutex> lknrs(nonReadySocketsMutex_);
+                    JAMI_WARN("addNewMultiplexedSocket %p", this);
                     addNewMultiplexedSocket(deviceId, vid, std::move(nonReadySockets_[deviceId][vid]));
                     nonReadySockets_[deviceId].erase(vid);
                     if (nonReadySockets_[deviceId].size() == 0) {
                         nonReadySockets_.erase(deviceId);
                     }
+                    JAMI_WARN("addNewMultiplexedSocket END %p", this);
                     // Finally, open the channel
                     sendChannelRequest(multiplexedSockets_.at(deviceId).rbegin()->second, name, cb);
                 }
@@ -394,6 +396,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
             // The socket is ready, store it in multiplexedSockets_
             std::lock_guard<std::mutex> lk(msocketsMutex_);
             std::lock_guard<std::mutex> lknrs(nonReadySocketsMutex_);
+            JAMI_WARN("addNewMultiplexedSocket %p", this);
             addNewMultiplexedSocket(deviceId, vid, std::move(nonReadySockets_[deviceId][vid]));
             JAMI_DBG("Connection to %s is ready", deviceId.c_str());
             nonReadySockets_[deviceId].erase(vid);
@@ -418,12 +421,12 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
             return channelReqCb_(deviceId, name);
         return false;
     });
-    std::map<dht::Value::Id /* uid */, std::shared_ptr<MultiplexedSocket>> elem;
-    elem[vid] = std::move(mSock);
-    if (multiplexedSockets_.find(deviceId) == multiplexedSockets_.end())
+    if (multiplexedSockets_.find(deviceId) == multiplexedSockets_.end()) {
+        std::map<dht::Value::Id /* uid */, std::shared_ptr<MultiplexedSocket>> elem;
+        elem[vid] = std::move(mSock);
         multiplexedSockets_.emplace(deviceId, std::move(elem));
-    else
-        multiplexedSockets_[deviceId] = std::move(elem);
+    } else
+        multiplexedSockets_[deviceId][vid] = std::move(mSock);
 
 }
 
