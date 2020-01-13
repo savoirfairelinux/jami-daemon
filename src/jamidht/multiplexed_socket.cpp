@@ -20,6 +20,7 @@
 #include "manager.h"
 #include "multiplexed_socket.h"
 #include "peer_connection.h"
+#include "ice_transport.h"
 
 #include <deque>
 #include <opendht/thread_pool.h>
@@ -514,6 +515,11 @@ MultiplexedSocket::onShutdown(onShutdownCb&& cb)
     }
 }
 
+std::shared_ptr<IceTransport>
+MultiplexedSocket::underlyingICE() const
+{
+    return pimpl_->endpoint->underlyingICE();
+}
 
 ////////////////////////////////////////////////////////////////
 
@@ -595,6 +601,13 @@ ChannelSocket::setOnRecv(RecvCb&& cb)
         ep->setOnRecv(pimpl_->channel, std::move(cb));
 }
 
+std::shared_ptr<IceTransport>
+ChannelSocket::underlyingICE() const
+{
+    if (auto mtx = pimpl_->endpoint.lock())
+        return mtx->underlyingICE();
+    return {};
+}
 
 void
 ChannelSocket::stop()

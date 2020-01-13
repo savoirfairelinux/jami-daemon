@@ -418,7 +418,7 @@ public:
         const IceSocketEndpoint* iceSocket = (const IceSocketEndpoint*)(ep_);
         if (iceSocket) {
             iceSocket->underlyingICE()->setOnShutdown([this]() {
-                tls.reset();
+                tls->shutdown();
             });
         }
     }
@@ -450,8 +450,6 @@ public:
         if (iceSocket) {
             iceSocket->underlyingICE()->setOnShutdown([this]() {
                 tls->shutdown();
-                if (onStateChangeCb_)
-                    onStateChangeCb_(tls::TlsSessionState::SHUTDOWN);
             });
         }
     }
@@ -474,7 +472,6 @@ public:
     const dht::crypto::Certificate& peerCertificate;
     dht::crypto::Certificate null_cert;
     std::function<bool(const dht::crypto::Certificate &)> peerCertificateCheckFunc;
-    OnStateChangeCb onStateChangeCb_;
     std::atomic_bool isReady_ {false};
     OnReadyCb onReadyCb_;
     std::unique_ptr<tls::TlsSession> tls;

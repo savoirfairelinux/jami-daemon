@@ -414,8 +414,6 @@ IceTransport::Impl::~Impl()
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
-
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)this), 2);
 }
 
 bool
@@ -827,6 +825,7 @@ IceTransport::Impl::selectUPnPIceCandidates()
 void
 IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
 {
+    JAMI_WARN("@@@ RECV size %u", size);
     if (!comp_id or comp_id > component_count_) {
         JAMI_ERR("rx: invalid comp_id (%u)", comp_id);
         return;
@@ -956,7 +955,6 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
         return false;
     }
 
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)pimpl_.get()), 0);
     return true;
 }
 
@@ -993,7 +991,6 @@ IceTransport::start(const SDP& sdp)
         return false;
     }
 
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)pimpl_.get()), 0);
     return true;
 }
 
