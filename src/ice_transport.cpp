@@ -350,6 +350,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     };
 
     icecb.on_destroy = [](pj_ice_strans* ice_st) {
+        JAMI_WARN("ON DESTROY ICE");
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st)))
             if (tr->scb)
                 tr->scb();
@@ -414,8 +415,6 @@ IceTransport::Impl::~Impl()
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
-
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)this), 2);
 }
 
 bool
@@ -956,7 +955,6 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
         return false;
     }
 
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)pimpl_.get()), 0);
     return true;
 }
 
@@ -993,7 +991,6 @@ IceTransport::start(const SDP& sdp)
         return false;
     }
 
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)pimpl_.get()), 0);
     return true;
 }
 
