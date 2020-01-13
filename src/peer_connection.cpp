@@ -418,7 +418,7 @@ public:
         const IceSocketEndpoint* iceSocket = (const IceSocketEndpoint*)(ep_);
         if (iceSocket) {
             iceSocket->underlyingICE()->setOnShutdown([this]() {
-                tls.reset();
+                tls->shutdown();
             });
         }
     }
@@ -450,8 +450,6 @@ public:
         if (iceSocket) {
             iceSocket->underlyingICE()->setOnShutdown([this]() {
                 tls->shutdown();
-                if (onStateChangeCb_)
-                    onStateChangeCb_(tls::TlsSessionState::SHUTDOWN);
             });
         }
     }
