@@ -37,6 +37,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 namespace dht { namespace crypto {
 struct PrivateKey;

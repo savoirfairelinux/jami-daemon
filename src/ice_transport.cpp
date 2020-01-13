@@ -414,8 +414,6 @@ IceTransport::Impl::~Impl()
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
-
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)this), 2);
 }
 
 bool
@@ -855,7 +853,9 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
 IceTransport::IceTransport(const char* name, int component_count, bool master,
                            const IceTransportOptions& options)
     : pimpl_ {std::make_unique<Impl>(name, component_count, master, options)}
-{}
+{
+    JAMI_WARN("CREATE %p", this);
+}
 
 IceTransport::~IceTransport()
 {}
@@ -956,7 +956,6 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
         return false;
     }
 
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)pimpl_.get()), 0);
     return true;
 }
 
@@ -993,7 +992,6 @@ IceTransport::start(const SDP& sdp)
         return false;
     }
 
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)pimpl_.get()), 0);
     return true;
 }
 
@@ -1232,6 +1230,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand) c
       af = pj_AF_INET6();
     else {
       af = pj_AF_INET();
+      JAMI_WARN("... %s", &ipaddr[0]);
       pimpl_->onlyIPv4Private_ &= IpAddr(ipaddr).isPrivate();
     }
 
