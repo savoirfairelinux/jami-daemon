@@ -37,5 +37,8 @@ DRING_PUBLIC std::vector<std::string> listAvailablePlugins();
 DRING_PUBLIC std::vector<std::string> listLoadedPlugins();
 DRING_PUBLIC int installPlugin(const std::string& jplPath, bool force);
 DRING_PUBLIC int uninstallPlugin(const std::string& pluginRootPath);
+DRING_PUBLIC std::vector<std::string> listCallMediaHandlers();
+DRING_PUBLIC void toggleCallMediaHandler(const std::string& id, const bool toggle);
+DRING_PUBLIC std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& id);
 }
 
