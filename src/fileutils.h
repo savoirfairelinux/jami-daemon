@@ -108,7 +108,10 @@ namespace jami { namespace fileutils {
      * If path is relative, it is appended to default_dir.
      */
     std::vector<uint8_t> loadFile(const std::string& path, const std::string& default_dir = {});
-    void saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode=0644);
+    void saveFile(const std::string& path, const uint8_t* data, size_t data_size, mode_t mode=0644);
+    inline void saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode=0644) {
+        saveFile(path, data.data(), data.size(), mode);
+    }
 
     std::vector<uint8_t> readArchive(const std::string& path, const std::string& password = {});
     void writeArchive(const std::string& data, const std::string& path, const std::string& password = {});
