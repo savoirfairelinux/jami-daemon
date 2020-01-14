@@ -102,6 +102,14 @@ public:
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
+    std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() {
+        return videoLocal_;
+    }
+
+    std::unique_ptr<VideoReceiveThread>& getVideoReceive() {
+        return receiveThread_;
+    }
+
 private:
     void setupConferenceVideoPipeline(Conference& conference);
     void setupVideoPipeline();
