@@ -1589,6 +1589,10 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
                 ++buddy->second.devices_cnt;
             isConnected = buddy->second.devices_cnt > 0;
         }
+        if (not expired) {
+            // Retry messages every time a new device announce its presence
+            messageEngine_.onPeerOnline(id);
+        }
         if (isConnected and not wasConnected) {
             onTrackedBuddyOnline(h);
         } else if (not isConnected and wasConnected) {
@@ -1615,7 +1619,6 @@ JamiAccount::onTrackedBuddyOnline(const dht::InfoHash& contactId)
     JAMI_DBG("Buddy %s online", contactId.toString().c_str());
     std::string id(contactId.toString());
     emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), id, 1,  "");
-    messageEngine_.onPeerOnline(id);
 }
 
 void
