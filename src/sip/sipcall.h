@@ -33,8 +33,10 @@
 #include "sip_utils.h"
 
 #ifdef ENABLE_VIDEO
+#include "media/video/video_receive_thread.h"
 #include "media/video/video_rtp_session.h"
 #endif
+#include "plugin/streamdata.h"
 
 #include "noncopyable.h"
 
@@ -247,9 +249,35 @@ private:
 
     NON_COPYABLE(SIPCall);
 
+
     IceTransport* getIceMediaTransport() const {
         return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
     }
+
+    /**
+     * Call Streams and some typedefs
+     */
+    using MediaStream = Observable<std::shared_ptr<MediaFrame>>;
+    using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
+
+    /**
+     * @brief createCallAVStream
+     * Creates a call AV stream like video input, video receive, audio input or audio receive
+     * @param StreamData The type of the stream (audio/video, input/output,
+     * @param streamSource
+     * @param mediaStreamSubject
+     */
+    void createCallAVStream(const StreamData& StreamData, MediaStream& streamSource,
+                            const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject);
+    /**
+     * @brief createCallAVStreams
+     * Creates all Call AV Streams (2 if audio, 4 if audio video)
+     */
+    void createCallAVStreams();
+
+    std::list<std::shared_ptr<MediaStreamSubject>> callAVStreams;
+
+
     void setCallMediaLocal();
 
     void waitForIceAndStartMedia();
