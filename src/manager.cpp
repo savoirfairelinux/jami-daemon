@@ -62,6 +62,7 @@ using random_device = dht::crypto::random_device;
 #include "audio/sound/tonelist.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
+#include "plugin/jamipluginmanager.h"
 
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
@@ -412,6 +413,9 @@ struct Manager::ManagerPimpl
 #ifdef ENABLE_VIDEO
     std::unique_ptr<VideoManager> videoManager_;
 #endif
+
+    /* Jami Plugin Manager */
+    JamiPluginManager jami_plugin_manager;
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -3043,6 +3047,11 @@ Manager::getLastMessages(const std::string& accountID, const uint64_t& base_time
     if (const auto acc = getAccount(accountID))
         return acc->getLastMessages(base_timestamp);
     return {};
+}
+
+JamiPluginManager& Manager::getJamiPluginManager() const
+{
+    return pimpl_->jami_plugin_manager;
 }
 
 std::map<std::string, std::string>
