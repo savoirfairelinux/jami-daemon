@@ -378,7 +378,7 @@ loadFile(const std::string& path, const std::string& default_dir)
 
 void
 saveFile(const std::string& path,
-        const std::vector<uint8_t>& data,
+        const uint8_t* data, size_t data_size,
         mode_t UNUSED mode)
 {
     std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
@@ -386,7 +386,7 @@ saveFile(const std::string& path,
         JAMI_ERR("Could not write data to %s", path.c_str());
         return;
     }
-    file.write((char*)data.data(), data.size());
+    file.write((char*)data, data_size);
 #ifndef _WIN32
     if (chmod(path.c_str(), mode) < 0)
         JAMI_WARN("fileutils::saveFile(): chmod() failed on '%s', %s", path.c_str(), strerror(errno));
