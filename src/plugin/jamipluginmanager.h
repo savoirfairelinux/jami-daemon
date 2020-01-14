@@ -23,6 +23,9 @@
 #include "pluginmanager.h"
 #include "pluginpreferencesmanager.h"
 
+//Services
+#include "callservicesmanager.h"
+
 #include <vector>
 #include <map>
 #include <string>
@@ -32,7 +35,7 @@ namespace jami {
 class JamiPluginManager
 {
 public:
-    JamiPluginManager() {
+    JamiPluginManager() : csm_{pm_}{
         registerServices();
     }
 
@@ -130,6 +133,12 @@ public:
         return ppm_.resetPluginPreferencesValuesMap(path);
     }
 
+public:
+
+    CallServicesManager& getCallServicesManager() {
+        return csm_;
+    }
+
 private:
 
     /**
@@ -178,6 +187,9 @@ private:
 private:
     PluginManager pm_;
     PluginPreferencesManager ppm_;
+
+private:
+    CallServicesManager csm_;
 
 private:
     std::map<std::string, std::map<std::string, std::string>> pluginDetailsMap_;
