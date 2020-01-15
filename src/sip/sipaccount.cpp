@@ -1421,7 +1421,10 @@ SIPAccount::getContactHeader(pjsip_transport* t)
                                                        stunPort_, address, port);
         if (not success)
             emitSignal<DRing::ConfigurationSignal::StunStatusFailed>(getAccountID());
-        setPublishedAddress(address);
+        {
+            std::lock_guard<std::mutex> lock(configurationMutex_);
+            setPublishedAddress(address);
+        }
         publishedPort_ = port;
         usePublishedAddressPortInVIA();
     } else {
