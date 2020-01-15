@@ -446,8 +446,9 @@ void SIPAccount::serialize(YAML::Emitter &out) const
 
 void SIPAccount::usePublishedAddressPortInVIA()
 {
-    via_addr_.host.ptr = (char *) publishedIpAddress_.c_str();
-    via_addr_.host.slen = publishedIpAddress_.size();
+    publishedIpStr_ = publishedIp_.toString();
+    via_addr_.host.ptr = (char *) publishedIpStr_.c_str();
+    via_addr_.host.slen = publishedIpStr_.size();
     via_addr_.port = publishedPort_;
 }
 
