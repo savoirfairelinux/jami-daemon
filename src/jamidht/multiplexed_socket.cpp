@@ -20,6 +20,7 @@
 #include "manager.h"
 #include "multiplexed_socket.h"
 #include "peer_connection.h"
+#include "ice_transport.h"
 
 #include <deque>
 #include <opendht/thread_pool.h>
@@ -116,108 +117,113 @@ public:
 void
 MultiplexedSocket::Impl::eventLoop()
 {
+    endpoint->setOnStateChange([this](tls::TlsSessionState state) {
+        if (state == tls::TlsSessionState::SHUTDOWN) {
+            if (isShutdown_) return;
+            JAMI_INFO("Tls endpoint is down, shutdown multiplexed socket");
+            shutdown();
+        }
+    });
     std::error_code ec;
     while (!stop) {
         std::vector<uint8_t> buf;
-        auto data_len = endpoint->waitForData(std::chrono::milliseconds(100), ec);
-        if (data_len > 0) {
-            buf.resize(IO_BUFFER_SIZE);
-            auto size = endpoint->read(&buf[0], IO_BUFFER_SIZE, ec);
-            if (size < 0) {
-                JAMI_ERR("Read error detected: %i", ec);
-                wantedSize_ = -1; wantedChan_ = -1;
-                RtpPkt_.clear();
-                break;
-            }
-            if (size == 0) {
-                // We can close the socket
-                shutdown();
-                break;
-            }
-
-            // A packet has the following format:
-            //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-            // | DATA_LEN MSB  | DATA_LEN LSB  | CHANNEL MSB   |  CHANNEL LSB  |         DATA
-            // NOTE: if DATA_LEN == 0, it's a EOF
-            uint16_t parsed = 0, current_size = 0, current_channel = 0; // Already parsed idx
-            std::deque<uint8_t> packet;
-            do {
-    			uint16_t pkt_len = size - parsed;
-                bool store_remaining = true;
-
-                // Get channel
-                if (wantedChan_ == -1 && pkt_len + RtpPkt_.size() >= 2) {
-                    if (RtpPkt_.size() >= 2) {
-                        wantedChan_ = static_cast<uint16_t>((RtpPkt_[0] << 8) + RtpPkt_[0]);
-                        RtpPkt_.pop_front();
-                        RtpPkt_.pop_front();
-                    } else if (RtpPkt_.size() == 1) {
-                        wantedChan_ = static_cast<uint16_t>((RtpPkt_[0] << 8) + buf[parsed]);
-                        RtpPkt_.pop_front();
-                        parsed += 1;
-                    } else {
-                        wantedChan_ = static_cast<uint16_t>((buf[parsed] << 8) + buf[parsed + 1]);
-                        parsed += 2;
-                    }
-                    pkt_len = size - parsed;
-                }
-
-                // Get size
-                if (wantedSize_ == -1 && pkt_len + RtpPkt_.size() >= 2) {
-                    if (RtpPkt_.size() >= 2) {
-                        wantedSize_ = static_cast<uint16_t>((RtpPkt_[0] << 8) + RtpPkt_[0]);
-                        RtpPkt_.pop_front();
-                        RtpPkt_.pop_front();
-                    } else if (RtpPkt_.size() == 1) {
-                        wantedSize_ = static_cast<uint16_t>((RtpPkt_[0] << 8) + buf[parsed]);
-                        RtpPkt_.pop_front();
-                        parsed += 1;
-                    } else {
-                        wantedSize_ = static_cast<uint16_t>((buf[parsed] << 8) + buf[parsed + 1]);
-                        parsed += 2;
-                    }
-                    pkt_len = size - parsed;
-                }
-
-                // Get data
-                if (pkt_len + RtpPkt_.size() >= wantedSize_) {
-                    // We have enough infos to handle the packet
-                    store_remaining = false;
-                    current_channel = wantedChan_;
-                    current_size = wantedSize_;
-                    auto offset_size = RtpPkt_.size();
-                    auto parsed_size = current_size - offset_size;
-                    packet.swap(RtpPkt_);
-                    packet.insert(packet.end(),
-                        std::make_move_iterator(buf.begin() + parsed),
-                        std::make_move_iterator(buf.begin() + parsed + parsed_size));
-                    parsed += parsed_size;
-                    pkt_len = size - parsed;
-                    // Reset loop values
-                    wantedSize_ = -1; wantedChan_ = -1;
-                    RtpPkt_.clear();
-                }
-
-                // Uncomplete packet
-                if (store_remaining) {
-                    RtpPkt_.insert(RtpPkt_.end(),
-                        std::make_move_iterator(buf.begin() + parsed),
-                        std::make_move_iterator(buf.begin() + parsed + pkt_len));
-                    parsed += pkt_len;
-                }
-
-                // Parse data
-                if (current_channel == 0) {
-                    handleControlPacket({packet.begin(), packet.end()});
-                } else {
-                    handleChannelPacket(current_channel, {packet.begin(), packet.end()});
-                }
-                packet.clear();
-            } while (parsed < size && !stop);
-        } else if (ec) {
-            JAMI_ERR("Multiplexed socket - error in event loop: %i", ec);
+        buf.resize(IO_BUFFER_SIZE);
+        if (!endpoint) {
+            shutdown();
             return;
         }
+        auto size = endpoint->read(&buf[0], IO_BUFFER_SIZE, ec);
+        if (size < 0) {
+            JAMI_ERR("Read error detected: %i", ec);
+            wantedSize_ = -1; wantedChan_ = -1;
+            RtpPkt_.clear();
+            break;
+        }
+        if (size == 0) {
+            // We can close the socket
+            shutdown();
+            break;
+        }
+
+        // A packet has the following format:
+        //  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+        // | DATA_LEN MSB  | DATA_LEN LSB  | CHANNEL MSB   |  CHANNEL LSB  |         DATA
+        // NOTE: if DATA_LEN == 0, it's a EOF
+        uint16_t parsed = 0, current_size = 0, current_channel = 0; // Already parsed idx
+        std::deque<uint8_t> packet;
+        do {
+            uint16_t pkt_len = size - parsed;
+            bool store_remaining = true;
+
+            // Get channel
+            if (wantedChan_ == -1 && pkt_len + RtpPkt_.size() >= 2) {
+                if (RtpPkt_.size() >= 2) {
+                    wantedChan_ = static_cast<uint16_t>((RtpPkt_[0] << 8) + RtpPkt_[0]);
+                    RtpPkt_.pop_front();
+                    RtpPkt_.pop_front();
+                } else if (RtpPkt_.size() == 1) {
+                    wantedChan_ = static_cast<uint16_t>((RtpPkt_[0] << 8) + buf[parsed]);
+                    RtpPkt_.pop_front();
+                    parsed += 1;
+                } else {
+                    wantedChan_ = static_cast<uint16_t>((buf[parsed] << 8) + buf[parsed + 1]);
+                    parsed += 2;
+                }
+                pkt_len = size - parsed;
+            }
+
+            // Get size
+            if (wantedSize_ == -1 && pkt_len + RtpPkt_.size() >= 2) {
+                if (RtpPkt_.size() >= 2) {
+                    wantedSize_ = static_cast<uint16_t>((RtpPkt_[0] << 8) + RtpPkt_[0]);
+                    RtpPkt_.pop_front();
+                    RtpPkt_.pop_front();
+                } else if (RtpPkt_.size() == 1) {
+                    wantedSize_ = static_cast<uint16_t>((RtpPkt_[0] << 8) + buf[parsed]);
+                    RtpPkt_.pop_front();
+                    parsed += 1;
+                } else {
+                    wantedSize_ = static_cast<uint16_t>((buf[parsed] << 8) + buf[parsed + 1]);
+                    parsed += 2;
+                }
+                pkt_len = size - parsed;
+            }
+
+            // Get data
+            if (pkt_len + RtpPkt_.size() >= wantedSize_) {
+                // We have enough infos to handle the packet
+                store_remaining = false;
+                current_channel = wantedChan_;
+                current_size = wantedSize_;
+                auto offset_size = RtpPkt_.size();
+                auto parsed_size = current_size - offset_size;
+                packet.swap(RtpPkt_);
+                packet.insert(packet.end(),
+                    std::make_move_iterator(buf.begin() + parsed),
+                    std::make_move_iterator(buf.begin() + parsed + parsed_size));
+                parsed += parsed_size;
+                pkt_len = size - parsed;
+                // Reset loop values
+                wantedSize_ = -1; wantedChan_ = -1;
+                RtpPkt_.clear();
+            }
+
+            // Uncomplete packet
+            if (store_remaining) {
+                RtpPkt_.insert(RtpPkt_.end(),
+                    std::make_move_iterator(buf.begin() + parsed),
+                    std::make_move_iterator(buf.begin() + parsed + pkt_len));
+                parsed += pkt_len;
+            }
+
+            // Parse data
+            if (current_channel == 0) {
+                handleControlPacket({packet.begin(), packet.end()});
+            } else {
+                handleChannelPacket(current_channel, {packet.begin(), packet.end()});
+            }
+            packet.clear();
+        } while (parsed < size && !stop);
     }
 }
 
@@ -283,7 +289,13 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>& pkt)
                     msgpack::pack(ss, val);
                     std::error_code ec;
                     auto toSend = ss.str();
-                    this->parent_.write(CONTROL_CHANNEL, reinterpret_cast<const uint8_t*>(&toSend[0]), toSend.size(), ec);
+                    auto wr = this->parent_.write(CONTROL_CHANNEL, reinterpret_cast<const uint8_t*>(&toSend[0]), toSend.size(), ec);
+                    if (wr < 0) {
+                        if (ec)
+                            JAMI_ERR("The write operation failed with error: ", ec.message().c_str());
+                        stop.store(true);
+                        return;
+                    }
 
                     if (accept) {
                         this->onChannelReady_(this->deviceId, channelSocket);
@@ -295,6 +307,7 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>& pkt)
                 }
             } catch (const std::exception& e) {
                 JAMI_ERR("Error on the control channel: %s", e.what());
+                stop.store(true);
             }
         }
     });
@@ -303,8 +316,6 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>& pkt)
 void
 MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector<uint8_t>& pkt)
 {
-    JAMI_WARN("RECV %p", this);
-
     if (channel > 0 && sockets[channel] && channelDatas_[channel]) {
         if (pkt.size() == 0) {
             sockets[channel]->shutdown();
@@ -455,7 +466,13 @@ MultiplexedSocket::write(const uint16_t& channel, const uint8_t* buf, std::size_
 
     auto v = std::vector<uint8_t>(buf, buf + len);
     toSend.insert(toSend.end(), std::make_move_iterator(v.begin()), std::make_move_iterator(v.end()));
-    return pimpl_->endpoint->write(&toSend[0], len + 4, ec);
+    auto res = pimpl_->endpoint->write(&toSend[0], len + 4, ec);
+    if (res < 0) {
+        if (ec)
+            JAMI_ERR("Error when writing on socket: %s", ec.message().c_str());
+        shutdown();
+    }
+    return res;
 }
 
 int
@@ -502,6 +519,11 @@ MultiplexedSocket::onShutdown(onShutdownCb&& cb)
     }
 }
 
+std::shared_ptr<IceTransport>
+MultiplexedSocket::underlyingICE() const
+{
+    return pimpl_->endpoint->underlyingICE();
+}
 
 ////////////////////////////////////////////////////////////////
 
@@ -583,6 +605,13 @@ ChannelSocket::setOnRecv(RecvCb&& cb)
         ep->setOnRecv(pimpl_->channel, std::move(cb));
 }
 
+std::shared_ptr<IceTransport>
+ChannelSocket::underlyingICE() const
+{
+    if (auto mtx = pimpl_->endpoint.lock())
+        return mtx->underlyingICE();
+    return {};
+}
 
 void
 ChannelSocket::stop()
@@ -606,7 +635,13 @@ std::size_t
 ChannelSocket::read(ValueType* buf, std::size_t len, std::error_code& ec)
 {
     if (auto ep = pimpl_->endpoint.lock()) {
-        return ep->read(pimpl_->channel, buf, len, ec);
+        auto res = ep->read(pimpl_->channel, buf, len, ec);
+        if (res < 0) {
+            if (ec)
+                JAMI_ERR("Error when reading on channel: %s", ec.message().c_str());
+            shutdown();
+        }
+        return res;
     }
     ec = std::make_error_code(std::errc::broken_pipe);
     return -1;
@@ -616,7 +651,13 @@ std::size_t
 ChannelSocket::write(const ValueType* buf, std::size_t len, std::error_code& ec)
 {
     if (auto ep = pimpl_->endpoint.lock()) {
-        return ep->write(pimpl_->channel, buf, len, ec);
+        auto res = ep->write(pimpl_->channel, buf, len, ec);
+        if (res < 0) {
+            if (ec)
+                JAMI_ERR("Error when writing on channel: %s", ec.message().c_str());
+            shutdown();
+        }
+        return res;
     }
     ec = std::make_error_code(std::errc::broken_pipe);
     return -1;
@@ -626,7 +667,12 @@ int
 ChannelSocket::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
     if (auto ep = pimpl_->endpoint.lock()) {
-        return ep->waitForData(pimpl_->channel, timeout, ec);
+        auto res = ep->waitForData(pimpl_->channel, timeout, ec);
+        if (res < 0) {
+            if (ec)
+                JAMI_ERR("Error when waiting on channel: %s", ec.message().c_str());
+        }
+        return res;
     }
     ec = std::make_error_code(std::errc::broken_pipe);
     return -1;

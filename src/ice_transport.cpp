@@ -187,6 +187,8 @@ public:
     // Wait data on components
     std::vector<pj_ssize_t> lastReadLen_;
     std::condition_variable waitDataCv_ = {};
+
+    onShutdownCb scb;
 };
 
 //==============================================================================
@@ -347,6 +349,18 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
             JAMI_WARN("null IceTransport");
     };
 
+    icecb.on_destroy = [](pj_ice_strans* ice_st) {
+        JAMI_WARN("@@@ ON DESTROY ICE");
+        if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
+            JAMI_WARN("@@@ ON DESTROY ICE 2");
+            if (tr->scb) {
+                JAMI_WARN("@@@ ON DESTROY ICE 3");
+                tr->scb();
+            }
+        } else
+            JAMI_WARN("null IceTransport");
+    };
+
     // Add STUN servers
     for (auto& server : options.stunServers)
         add_stun_server(*pool_, config_, server);
@@ -404,8 +418,6 @@ IceTransport::Impl::~Impl()
 
     if (config_.stun_cfg.timer_heap)
         pj_timer_heap_destroy(config_.stun_cfg.timer_heap);
-
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)this), 2);
 }
 
 bool
@@ -943,7 +955,6 @@ IceTransport::start(const Attribute& rem_attrs, const std::vector<IceCandidate>&
         return false;
     }
 
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)pimpl_.get()), 0);
     return true;
 }
 
@@ -980,7 +991,6 @@ IceTransport::start(const SDP& sdp)
         return false;
     }
 
-    emitSignal<DRing::CallSignal::ConnectionUpdate>(std::to_string((uintptr_t)pimpl_.get()), 0);
     return true;
 }
 
@@ -1279,6 +1289,13 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
         io.queue.clear();
     }
 }
+
+void
+IceTransport::setOnShutdown(onShutdownCb&& cb)
+{
+    pimpl_->scb = cb;
+}
+
 
 ssize_t
 IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
