@@ -267,7 +267,10 @@ SIPAccountBase::getAccountDetails() const
     a.emplace(Conf::CONFIG_LOCAL_INTERFACE,         interface_);
     a.emplace(Conf::CONFIG_PUBLISHED_PORT,          std::to_string(publishedPort_));
     a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL,  publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
+    {
+        std::lock_guard<std::mutex> lk(publishedMtx_);
+        a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
+    }
 
     a.emplace(Conf::CONFIG_STUN_ENABLE, stunEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_STUN_SERVER, stunServer_);
@@ -430,6 +433,7 @@ SIPAccountBase::onTextMessage(const std::string& from,
 void
 SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     publishedIp_ = ip_addr;
     publishedIpAddress_ = ip_addr.toString();
     JAMI_DBG("[Account %s] Using public address %s", getAccountID().c_str(),
