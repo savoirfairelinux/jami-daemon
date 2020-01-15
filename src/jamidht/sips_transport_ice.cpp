@@ -283,6 +283,7 @@ SipsIceTransport::~SipsIceTransport()
 void
 SipsIceTransport::handleEvents()
 {
+    JAMI_WARN("@@@ handleEvents()");
     // Notify transport manager about state changes first
     // Note: stop when disconnected event is encountered
     // and differ its notification AFTER pending rx msg to let
@@ -341,6 +342,7 @@ SipsIceTransport::handleEvents()
         if (!fatal) {
             const std::size_t size = tdata->buf.cur - tdata->buf.start;
             std::error_code ec;
+            JAMI_WARN("@@@ %s", reinterpret_cast<const char*>(tdata->buf.start));
             status = tls_->write(reinterpret_cast<const uint8_t*>(tdata->buf.start), size, ec);
             if (ec) {
                 status = tls_status_from_err(ec.value());
@@ -405,6 +407,7 @@ SipsIceTransport::handleEvents()
 void
 SipsIceTransport::pushChangeStateEvent(ChangeStateEventData&& ev)
 {
+    JAMI_WARN("pushChangeStateEvent");
     std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
     stateChangeEvents_.emplace_back(std::move(ev));
     scheduler_.run([this]{ handleEvents(); });
@@ -424,6 +427,7 @@ SipsIceTransport::onTlsStateChange(TlsSessionState state)
 void
 SipsIceTransport::onRxData(std::vector<uint8_t>&& buf)
 {
+    JAMI_WARN("onRxData");
     std::lock_guard<std::mutex> l(rxMtx_);
     rxPending_.emplace_back(std::move(buf));
     scheduler_.run([this]{ handleEvents(); });
@@ -681,6 +685,7 @@ SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
                        int addr_len, void* token,
                        pjsip_transport_callback callback)
 {
+    JAMI_WARN("@@@ SEND()");
     // Sanity check
     PJ_ASSERT_RETURN(tdata, PJ_EINVAL);
 
@@ -698,6 +703,7 @@ SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
     std::unique_lock<std::mutex> lk {txMutex_};
     if (syncTx_ and txQueue_.empty()) {
         std::error_code ec;
+        JAMI_WARN("@@@ %s", reinterpret_cast<const char*>(tdata->buf.start));
         tls_->write(reinterpret_cast<const uint8_t*>(tdata->buf.start), size, ec);
         lk.unlock();
 
@@ -746,6 +752,7 @@ SipsIceTransport::eventLoop()
                 pkt.resize(read);
                 std::lock_guard<std::mutex> l(rxMtx_);
                 rxPending_.emplace_back(std::move(pkt));
+                JAMI_WARN("eventLopp");
                 scheduler_.run([this]{ handleEvents(); });
             }
         }

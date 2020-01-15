@@ -20,6 +20,7 @@
 #include "manager.h"
 #include "multiplexed_socket.h"
 #include "peer_connection.h"
+#include "ice_transport.h"
 
 #include <deque>
 #include <opendht/thread_pool.h>
@@ -283,7 +284,13 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>& pkt)
                     msgpack::pack(ss, val);
                     std::error_code ec;
                     auto toSend = ss.str();
-                    this->parent_.write(CONTROL_CHANNEL, reinterpret_cast<const uint8_t*>(&toSend[0]), toSend.size(), ec);
+                    auto wr = this->parent_.write(CONTROL_CHANNEL, reinterpret_cast<const uint8_t*>(&toSend[0]), toSend.size(), ec);
+                    if (wr < 0) {
+                        if (ec)
+                            JAMI_ERR("The write operation failed with error: ", ec.message().c_str());
+                        stop.store(true);
+                        return;
+                    }
 
                     if (accept) {
                         this->onChannelReady_(this->deviceId, channelSocket);
@@ -295,6 +302,7 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>& pkt)
                 }
             } catch (const std::exception& e) {
                 JAMI_ERR("Error on the control channel: %s", e.what());
+                stop.store(true);
             }
         }
     });
@@ -303,8 +311,6 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>& pkt)
 void
 MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector<uint8_t>& pkt)
 {
-    JAMI_WARN("RECV %p", this);
-
     if (channel > 0 && sockets[channel] && channelDatas_[channel]) {
         if (pkt.size() == 0) {
             sockets[channel]->shutdown();
@@ -327,6 +333,8 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector
             channelDatas_[channel]->cv.notify_all();
         }
     } else {
+        std::string content {pkt.begin(), pkt.end()};
+        JAMI_WARN("%s", content.c_str());
         JAMI_WARN("Non existing channel: %u", channel);
     }
 }
@@ -455,7 +463,13 @@ MultiplexedSocket::write(const uint16_t& channel, const uint8_t* buf, std::size_
 
     auto v = std::vector<uint8_t>(buf, buf + len);
     toSend.insert(toSend.end(), std::make_move_iterator(v.begin()), std::make_move_iterator(v.end()));
-    return pimpl_->endpoint->write(&toSend[0], len + 4, ec);
+    auto res = pimpl_->endpoint->write(&toSend[0], len + 4, ec);
+    if (res < 0) {
+        if (ec)
+            JAMI_ERR("Error when writing on socket: %s", ec.message().c_str());
+        shutdown();
+    }
+    return res;
 }
 
 int
@@ -502,6 +516,11 @@ MultiplexedSocket::onShutdown(onShutdownCb&& cb)
     }
 }
 
+std::shared_ptr<IceTransport>
+MultiplexedSocket::underlyingICE() const
+{
+    return pimpl_->endpoint->underlyingICE();
+}
 
 ////////////////////////////////////////////////////////////////
 
@@ -583,6 +602,13 @@ ChannelSocket::setOnRecv(RecvCb&& cb)
         ep->setOnRecv(pimpl_->channel, std::move(cb));
 }
 
+std::shared_ptr<IceTransport>
+ChannelSocket::underlyingICE() const
+{
+    if (auto mtx = pimpl_->endpoint.lock())
+        return mtx->underlyingICE();
+    return {};
+}
 
 void
 ChannelSocket::stop()
@@ -606,7 +632,13 @@ std::size_t
 ChannelSocket::read(ValueType* buf, std::size_t len, std::error_code& ec)
 {
     if (auto ep = pimpl_->endpoint.lock()) {
-        return ep->read(pimpl_->channel, buf, len, ec);
+        auto res = ep->read(pimpl_->channel, buf, len, ec);
+        if (res < 0) {
+            if (ec)
+                JAMI_ERR("Error when reading on channel: %s", ec.message().c_str());
+            shutdown();
+        }
+        return res;
     }
     ec = std::make_error_code(std::errc::broken_pipe);
     return -1;
@@ -616,7 +648,15 @@ std::size_t
 ChannelSocket::write(const ValueType* buf, std::size_t len, std::error_code& ec)
 {
     if (auto ep = pimpl_->endpoint.lock()) {
-        return ep->write(pimpl_->channel, buf, len, ec);
+        auto res = ep->write(pimpl_->channel, buf, len, ec);
+        std::string data {buf, buf+len};
+        JAMI_WARN("WRITE %s", data.c_str());
+        if (res < 0) {
+            if (ec)
+                JAMI_ERR("Error when writing on channel: %s", ec.message().c_str());
+            shutdown();
+        }
+        return res;
     }
     ec = std::make_error_code(std::errc::broken_pipe);
     return -1;
@@ -626,7 +666,12 @@ int
 ChannelSocket::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
     if (auto ep = pimpl_->endpoint.lock()) {
-        return ep->waitForData(pimpl_->channel, timeout, ec);
+        auto res = ep->waitForData(pimpl_->channel, timeout, ec);
+        if (res < 0) {
+            if (ec)
+                JAMI_ERR("Error when waiting on channel: %s", ec.message().c_str());
+        }
+        return res;
     }
     ec = std::make_error_code(std::errc::broken_pipe);
     return -1;

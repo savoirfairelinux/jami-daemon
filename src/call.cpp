@@ -375,6 +375,7 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
             return;
         }
     }
+    JAMI_WARN("%s==", getPeerNumber().c_str());
     Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
 }
 

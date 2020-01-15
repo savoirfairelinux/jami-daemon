@@ -1223,7 +1223,9 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
             }
         });
 
+    JAMI_WARN("... %s", name.c_str());
     pjsip_endpt_resolve(endpt_, pool_.get(), &host_info, (void*)token, resolver_callback);
+    JAMI_WARN("... end");
 }
 
 #define RETURN_IF_NULL(A, ...) \
