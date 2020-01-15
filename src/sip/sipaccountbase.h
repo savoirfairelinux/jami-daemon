@@ -353,6 +353,7 @@ protected:
      */
     IpAddr publishedIp_ {};
 
+    // This will be stored in the configuration
     std::string publishedIpAddress_ {};
 
     /**
