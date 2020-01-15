@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "34022895_b2b6b5a2",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 704,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-15T21:44:48Z",
+      "side": 1,
+      "message": "!vgmr.mediaPlayers.empty()",
+      "range": {
+        "startLine": 704,
+        "startChar": 29,
+        "endLine": 704,
+        "endChar": 39
+      },
+      "revId": "a1213ed646a2416e15adc0c88cd7541537e645d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a47b2b14_1c351760",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 749,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-15T21:44:48Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 749,
+        "startChar": 30,
+        "endLine": 749,
+        "endChar": 34
+      },
+      "revId": "a1213ed646a2416e15adc0c88cd7541537e645d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "66538094_b124530f",
+        "filename": "src/dring/videomanager_interface.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 184,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-15T21:44:48Z",
+      "side": 1,
+      "message": "Change the daemon\u0027s version in configure.ac if the API is changing",
+      "range": {
+        "startLine": 178,
+        "startChar": 36,
+        "endLine": 184,
+        "endChar": 49
+      },
+      "revId": "a1213ed646a2416e15adc0c88cd7541537e645d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "667d967e_aca32668",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-15T21:44:48Z",
+      "side": 1,
+      "message": "Is this check necessary, the user should be able to set all the cb they wants",
+      "range": {
+        "startLine": 155,
+        "startChar": 1,
+        "endLine": 156,
+        "endChar": 13
+      },
+      "revId": "a1213ed646a2416e15adc0c88cd7541537e645d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2f7d64cc_0f753c13",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 197,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-15T21:44:48Z",
+      "side": 1,
+      "message": "paused can be an atomic_bool",
+      "range": {
+        "startLine": 197,
+        "startChar": 4,
+        "endLine": 197,
+        "endChar": 11
+      },
+      "revId": "a1213ed646a2416e15adc0c88cd7541537e645d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "31f1ad1d_37c9fbfd",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 45
+      },
+      "lineNbr": 159,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-15T21:44:48Z",
+      "side": 1,
+      "message": "return av_seek...",
+      "range": {
+        "startLine": 156,
+        "startChar": 3,
+        "endLine": 159,
+        "endChar": 17
+      },
+      "revId": "a1213ed646a2416e15adc0c88cd7541537e645d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5192a9c0_07d37e22",
+        "filename": "src/media/media_player.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-15T21:44:48Z",
+      "side": 1,
+      "message": "std::string id() const?",
+      "range": {
+        "startLine": 35,
+        "startChar": 22,
+        "endLine": 36,
+        "endChar": 31
+      },
+      "revId": "a1213ed646a2416e15adc0c88cd7541537e645d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "452cbc0f_486f9f42",
+        "filename": "src/media/media_player.h",
+        "patchSetId": 45
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-15T21:44:48Z",
+      "side": 1,
+      "message": "const methods",
+      "range": {
+        "startLine": 39,
+        "startChar": 2,
+        "endLine": 40,
+        "endChar": 20
+      },
+      "revId": "a1213ed646a2416e15adc0c88cd7541537e645d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
