@@ -351,6 +351,7 @@ protected:
      * Published IP address, used only if defined by the user in account
      * configuration
      */
+    mutable std::mutex publishedMtx_ {};
     IpAddr publishedIp_ {};
 
     std::string publishedIpAddress_ {};
