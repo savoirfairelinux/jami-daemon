@@ -782,6 +782,9 @@ class SIPAccount : public SIPAccountBase {
          */
         pjsip_host_port via_addr_;
 
+        // This is used at runtime . Mainly by SIPAccount::usePublishedAddressPortInVIA()
+        std::string publishedIpStr_ {};
+
         /**
          * Temporary storage for getUPnPIpAddress().toString()
          * Used only by useUPnPAddressPortInVIA().
