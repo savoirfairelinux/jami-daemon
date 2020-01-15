@@ -26,6 +26,7 @@
 #include "security/tls_session.h"
 
 #include "jamidht/sips_transport_ice.h"
+#include "jamidht/channeled_transport.h"
 
 #include "array_size.h"
 #include "compiler_intrinsics.h"
@@ -420,6 +421,28 @@ SipTransportBroker::getTlsIceTransport(const std::shared_ptr<jami::IceTransport>
     auto sip_tr = std::make_shared<SipTransport>(tr);
     sip_tr->setIsIceTransport();
     sip_ice_tr.release(); // managed by PJSIP now
+
+    {
+        std::lock_guard<std::mutex> lock(transportMapMutex_);
+        // we do not check for key existence as we've just created it
+        // (member of new SipIceTransport instance)
+        transports_.emplace(std::make_pair(tr, sip_tr));
+    }
+    return sip_tr;
+}
+
+std::shared_ptr<SipTransport>
+SipTransportBroker::getChanneledTransport(const std::shared_ptr<ChannelSocket>& socket)
+{
+    // TODO
+    auto type = false ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
+    IpAddr ip; // TODO
+    auto sips_tr = std::unique_ptr<tls::ChanneledSIPTransport>(
+        new tls::ChanneledSIPTransport(endpt_, type, socket, ip, ip));
+    auto tr = sips_tr->getTransportBase();
+    auto sip_tr = std::make_shared<SipTransport>(tr);
+    sip_tr->setIsIceTransport();
+    sips_tr.release(); // managed by PJSIP now
 
     {
         std::lock_guard<std::mutex> lock(transportMapMutex_);
