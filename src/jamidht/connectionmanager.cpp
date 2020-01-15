@@ -72,9 +72,9 @@ public:
      * Send a ChannelRequest on the TLS socket. Triggers cb when ready
      * @param sock      socket used to send the request
      * @param name      channel's name
-     * @param cb        on channel ready callback
+     * @param deviceId  to identify the linked ConnectCallback
      */
-    void sendChannelRequest(std::shared_ptr<MultiplexedSocket>& sock, const std::string& name, ConnectCallback cb);
+    void sendChannelRequest(std::shared_ptr<MultiplexedSocket>& sock, const std::string& name, const std::string& deviceId);
     /**
      * Triggered when a PeerConnectionRequest comes from the DHT
      */
@@ -108,6 +108,9 @@ public:
     ChannelRequestCallBack channelReqCb_;
     ConnectionReadyCallBack connReadyCb_;
     onICERequestCallback iceReqCb_;
+
+    std::mutex connectCbsMtx_ {};
+    std::map<std::pair<std::string, std::string>, ConnectCallback> pendingCbs_ {};
 };
 
 void
@@ -129,13 +132,22 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
         // TODO use runOnMainThread instead but first, this needs to make the
         // TLSSession and ICETransport async.
         dht::ThreadPool::io().run([this, deviceId, name, cert, cb=std::move(cb)] {
+            std::pair<std::string, std::string> cbId(deviceId, name);
+            {
+                std::lock_guard<std::mutex> lk(connectCbsMtx_);
+                if (pendingCbs_.find(cbId) != pendingCbs_.end()) {
+                    JAMI_WARN("Already have a current callback for same channel");
+                }
+                pendingCbs_[cbId] = std::move(cb);
+            }
+
             {
                 // Test if a socket already exists for this device
                 std::lock_guard<std::mutex> lk(msocketsMutex_);
                 auto it = multiplexedSockets_.find(deviceId);
                 if (it != multiplexedSockets_.end()) {
                     JAMI_DBG("Peer already connected. Add a new channel");
-                    sendChannelRequest(it->second.rbegin()->second, name, cb);
+                    sendChannelRequest(it->second.rbegin()->second, name, deviceId);
                     return;
                 }
             }
@@ -147,13 +159,19 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
             auto ice_config = account.getIceOptions();
             ice_config.tcpEnable = true;
             auto& connectionInfo = connectionsInfos_[deviceId][vid];
+            std::unique_lock<std::mutex> lk{ connectionInfo.mutex_ };
+            connectionInfo.ice_ = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, false, ice_config);
             auto& ice = connectionInfo.ice_;
-            ice = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, false, ice_config);
+            account.registerDhtAddress(*ice);
 
             if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
                 JAMI_ERR("Cannot initialize ICE session.");
                 ice.reset();
-                cb(nullptr);
+                std::lock_guard<std::mutex> lk(connectCbsMtx_);
+                if (pendingCbs_.find(cbId) != pendingCbs_.end()) {
+                    pendingCbs_[cbId](nullptr);
+                    pendingCbs_.erase(cbId);
+                }
                 return;
             }
 
@@ -169,6 +187,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
 
             // Prepare connection request as a DHT message
             PeerConnectionRequest val;
+
             val.id = vid; /* Random id for the message unicity */
             val.ice_msg = icemsg.str();
             auto value = std::make_shared<dht::Value>(std::move(val));
@@ -183,12 +202,15 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
             );
 
             // Wait for call to onResponse() operated by DHT
-            std::unique_lock<std::mutex> lk{ connectionInfo.mutex_ };
             connectionInfo.responseCv_.wait_for(lk, DHT_MSG_TIMEOUT);
             if (!connectionInfo.responseReceived_) {
                 JAMI_ERR("no response from DHT to E2E request.");
                 ice.reset();
-                cb(nullptr);
+                std::lock_guard<std::mutex> lk(connectCbsMtx_);
+                if (pendingCbs_.find(cbId) != pendingCbs_.end()) {
+                    pendingCbs_[cbId](nullptr);
+                    pendingCbs_.erase(cbId);
+                }
                 return;
             }
 
@@ -198,19 +220,29 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                                         sdp.rem_candidates)) {
                 JAMI_WARN("[Account:%s] start ICE failed", account.getAccountID().c_str());
                 ice.reset();
-                cb(nullptr);
+                std::lock_guard<std::mutex> lk(connectCbsMtx_);
+                if (pendingCbs_.find(cbId) != pendingCbs_.end()) {
+                    pendingCbs_[cbId](nullptr);
+                    pendingCbs_.erase(cbId);
+                }
                 return;
             }
 
             ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
+
             if (!ice->isRunning()) {
                 JAMI_ERR("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
                 ice.reset();
-                cb(nullptr);
+                std::lock_guard<std::mutex> lk(connectCbsMtx_);
+                if (pendingCbs_.find(cbId) != pendingCbs_.end()) {
+                    pendingCbs_[cbId](nullptr);
+                    pendingCbs_.erase(cbId);
+                }
                 return;
             }
 
             // Build socket
+            JAMI_WARN("@@@ %u", vid);
             auto endpoint = std::make_unique<IceSocketEndpoint>(ice, true);
 
             // Negotiate a TLS session
@@ -222,12 +254,20 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
             std::lock_guard<std::mutex> lknrs(nonReadySocketsMutex_);
             nonReadySockets_[deviceId][vid] = std::move(tlsSocket);
             nonReadySockets_[deviceId][vid]->setOnReady([this, deviceId=std::move(deviceId), vid=std::move(vid), name=std::move(name), cb=std::move(cb)] (bool ok) {
+                JAMI_WARN("@@@ %u", vid);
                 if (multiplexedSockets_[deviceId].find(vid) != multiplexedSockets_[deviceId].end())
                     return;
                 if (!ok) {
                     JAMI_ERR() << "TLS connection failure for peer " << deviceId;
-                    cb(nullptr);
+                    JAMI_WARN("@@@ %u", vid);
+                    std::lock_guard<std::mutex> lk(connectCbsMtx_);
+                    std::pair<std::string, std::string> cbId(deviceId, name);
+                    if (pendingCbs_.find(cbId) != pendingCbs_.end()) {
+                        pendingCbs_[cbId](nullptr);
+                        pendingCbs_.erase(cbId);
+                    }
                 } else {
+                    JAMI_WARN("@@@ %u", vid);
                     // The socket is ready, store it in multiplexedSockets_
                     std::lock_guard<std::mutex> lkmSockets(msocketsMutex_);
                     std::lock_guard<std::mutex> lknrs(nonReadySocketsMutex_);
@@ -237,7 +277,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                         nonReadySockets_.erase(deviceId);
                     }
                     // Finally, open the channel
-                    sendChannelRequest(multiplexedSockets_.at(deviceId).rbegin()->second, name, cb);
+                    sendChannelRequest(multiplexedSockets_.at(deviceId).rbegin()->second, name, deviceId);
                 }
             });
         });
@@ -246,7 +286,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
 }
 
 void
-ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& sock, const std::string& name, ConnectCallback cb)
+ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& sock, const std::string& name, const std::string& deviceId)
 {
     auto channelSock = sock->addChannel(name);
     ChannelRequest val;
@@ -255,8 +295,13 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
     std::stringstream ss;
     msgpack::pack(ss, val);
     auto toSend = ss.str();
-    sock->setOnChannelReady(channelSock->channel(), [channelSock = channelSock, cb = std::move(cb)]() {
-        cb(channelSock);
+    sock->setOnChannelReady(channelSock->channel(), [channelSock, deviceId, name, this]() {
+        std::lock_guard<std::mutex> lk(connectCbsMtx_);
+        std::pair<std::string, std::string> cbId(deviceId, name);
+        if (pendingCbs_.find(cbId) != pendingCbs_.end()) {
+            pendingCbs_[cbId](channelSock);
+            pendingCbs_.erase(cbId);
+        }
     });
     std::error_code ec;
     auto res = sock->write(CONTROL_CHANNEL, reinterpret_cast<const uint8_t*>(&toSend[0]), toSend.size(), ec);
@@ -319,6 +364,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
     auto& connectionInfo = connectionsInfos_[deviceId][req.id];
     auto& ice = connectionInfo.ice_;
     ice = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, true, ice_config);
+    account.registerDhtAddress(*ice);
 
     if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
         JAMI_ERR("Cannot initialize ICE session.");
@@ -418,6 +464,23 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
             return channelReqCb_(deviceId, name);
         return false;
     });
+    mSock->onShutdown([this, deviceId]() {
+        // Cancel current outgoing connections
+        JAMI_WARN("SHUT @@@ %s", deviceId.c_str());
+        //std::lock_guard<std::mutex> lk(connectCbsMtx_);
+        JAMI_WARN("SHUT @@@ SIZE: %u", pendingCbs_.size());
+        auto it = pendingCbs_.begin();
+        while (it != pendingCbs_.end()) {
+            JAMI_WARN("SHUT @@@ ?", it->first.first.c_str());
+            if (it->first.first == deviceId) {
+                it->second(nullptr);
+                it = pendingCbs_.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        pendingCbs_.clear();
+    });
     if (multiplexedSockets_.find(deviceId) == multiplexedSockets_.end()) {
         std::map<dht::Value::Id /* uid */, std::shared_ptr<MultiplexedSocket>> elem;
         elem[vid] = std::move(mSock);
@@ -466,7 +529,7 @@ ConnectionManager::closeConnectionsWith(const std::string& deviceId)
     if (pimpl_->connectionsInfos_.find(deviceId) != pimpl_->connectionsInfos_.end()) {
         for (auto& info: pimpl_->connectionsInfos_[deviceId]) {
             // Cancel operations to avoid any blocking in peer_channel
-            info.second.ice_->cancelOperations();
+            if (info.second.ice_) info.second.ice_->cancelOperations();
         }
         pimpl_->connectionsInfos_.erase(deviceId);
         // This will close the TLS Session
