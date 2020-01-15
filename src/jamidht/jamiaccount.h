@@ -77,6 +77,7 @@ class ContactList;
 class AccountManager;
 struct AccountInfo;
 class ChannelSocket;
+class SipTransport;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -671,7 +672,14 @@ private:
     void cacheTurnServers();
 
     std::mutex sipConnectionsMtx_ {};
-    std::map<std::string, std::shared_ptr<ChannelSocket>> sipConnections_ {};
+    struct SipConnection {
+        std::shared_ptr<SipTransport> transport;
+        // TODO try with SIP transport
+        // Needs to keep track of that channel to access underlying ICE
+        // informations, as the SipTransport use a generic transport
+        std::shared_ptr<ChannelSocket> channel;
+    };
+    std::map<std::string, SipConnection> sipConnections_ {};
     std::set<std::string> pendingSipConnections_ {};
 
     void askForSIPConnection(const std::string& deviceId);

@@ -165,6 +165,10 @@ public:
         }
     }
 
+    std::shared_ptr<IceTransport> underlyingICE() const {
+        return ice_;
+    }
+
 private:
     std::shared_ptr<IceTransport> ice_ {nullptr};
     std::atomic_bool iceStopped{false};
@@ -207,6 +211,8 @@ public:
 
     void setOnStateChange(OnStateChangeCb&& cb);
     void setOnReady(OnReadyCb&& cb);
+
+    std::shared_ptr<IceTransport> underlyingICE() const;
 
 private:
     class Impl;
