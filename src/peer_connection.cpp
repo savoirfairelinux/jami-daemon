@@ -396,7 +396,7 @@ public:
          const dht::crypto::Certificate& peer_cert,
          const Identity& local_identity,
          const std::shared_future<tls::DhParams>& dh_params)
-        : peerCertificate {peer_cert} {
+        : peerCertificate {peer_cert}, ep_ {ep.get()} {
         tls::TlsSession::TlsSessionCallbacks tls_cbs = {
             /*.onStateChange = */[this](tls::TlsSessionState state){ onTlsStateChange(state); },
             /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onTlsRxData(std::move(buf)); },
@@ -414,13 +414,22 @@ public:
             /*.cert_check = */  nullptr,
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
+
+        JAMI_WARN("@@@#############");
+        const IceSocketEndpoint* iceSocket = (const IceSocketEndpoint*)(ep_);
+        if (iceSocket) {
+            iceSocket->underlyingICE()->setOnShutdown([this]() {
+                tls.reset();
+            });
+        }
+        JAMI_WARN("@@@#############");
     }
 
     Impl(std::unique_ptr<AbstractSocketEndpoint>&& ep,
          std::function<bool(const dht::crypto::Certificate &)>&& cert_check,
          const Identity& local_identity,
          const std::shared_future<tls::DhParams>& dh_params)
-        : peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert} {
+        : peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert}, ep_ {ep.get()} {
         tls::TlsSession::TlsSessionCallbacks tls_cbs = {
             /*.onStateChange = */[this](tls::TlsSessionState state){ onTlsStateChange(state); },
             /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onTlsRxData(std::move(buf)); },
@@ -438,6 +447,20 @@ public:
             /*.cert_check = */  nullptr,
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
+
+        JAMI_WARN("@@@#############");
+        const IceSocketEndpoint* iceSocket = (const IceSocketEndpoint*)(ep_);
+        if (iceSocket) {
+            JAMI_WARN("@@@#############");
+            iceSocket->underlyingICE()->setOnShutdown([this]() {
+                JAMI_WARN("@@@#############");
+                tls->shutdown();
+                if (onStateChangeCb_) {
+                    onStateChangeCb_(tls::TlsSessionState::SHUTDOWN);
+                }
+            });
+        }
+        JAMI_WARN("@@@#############");
     }
 
     ~Impl() {
@@ -459,6 +482,8 @@ public:
     OnStateChangeCb onStateChangeCb_;
     std::atomic_bool isReady_ {false};
     OnReadyCb onReadyCb_;
+
+    const AbstractSocketEndpoint* ep_;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -523,7 +548,6 @@ TlsSocketEndpoint::TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint>&& t
                                     std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
     : pimpl_ { std::make_unique<Impl>(std::move(tr), std::move(cert_check), local_identity, dh_params) }
 {
-
 }
 
 
@@ -575,6 +599,18 @@ void
 TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
 {
     pimpl_->onReadyCb_ = std::move(cb);
+}
+
+std::shared_ptr<IceTransport>
+TlsSocketEndpoint::underlyingICE() const
+{
+    if (pimpl_->ep_) {
+        const IceSocketEndpoint* iceSocket = (const IceSocketEndpoint*)(pimpl_->ep_);
+        if (iceSocket) {
+            return iceSocket->underlyingICE();
+        }
+    }
+    return {};
 }
 
 
