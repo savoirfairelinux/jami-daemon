@@ -396,7 +396,7 @@ public:
          const dht::crypto::Certificate& peer_cert,
          const Identity& local_identity,
          const std::shared_future<tls::DhParams>& dh_params)
-        : peerCertificate {peer_cert} {
+        : peerCertificate {peer_cert}, ep_ {ep.get()} {
         tls::TlsSession::TlsSessionCallbacks tls_cbs = {
             /*.onStateChange = */[this](tls::TlsSessionState state){ onTlsStateChange(state); },
             /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onTlsRxData(std::move(buf)); },
@@ -420,7 +420,7 @@ public:
          std::function<bool(const dht::crypto::Certificate &)>&& cert_check,
          const Identity& local_identity,
          const std::shared_future<tls::DhParams>& dh_params)
-        : peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert} {
+        : peerCertificateCheckFunc{std::move(cert_check)}, peerCertificate {null_cert}, ep_ {ep.get()} {
         tls::TlsSession::TlsSessionCallbacks tls_cbs = {
             /*.onStateChange = */[this](tls::TlsSessionState state){ onTlsStateChange(state); },
             /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onTlsRxData(std::move(buf)); },
@@ -459,6 +459,8 @@ public:
     OnStateChangeCb onStateChangeCb_;
     std::atomic_bool isReady_ {false};
     OnReadyCb onReadyCb_;
+
+    const AbstractSocketEndpoint* ep_;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
@@ -575,6 +577,18 @@ void
 TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
 {
     pimpl_->onReadyCb_ = std::move(cb);
+}
+
+std::shared_ptr<IceTransport>
+TlsSocketEndpoint::underlyingICE() const
+{
+    if (pimpl_->ep_) {
+        const auto* iceSocket = (const IceSocketEndpoint*)(pimpl_->ep_);
+        if (iceSocket) {
+            return iceSocket->underlyingICE();
+        }
+    }
+    return {};
 }
 
 
