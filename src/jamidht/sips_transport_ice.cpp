@@ -45,21 +45,6 @@
 
 namespace jami { namespace tls {
 
-static constexpr int POOL_TP_INIT {512};
-static constexpr int POOL_TP_INC {512};
-static constexpr int TRANSPORT_INFO_LENGTH {64};
-
-static void
-sockaddr_to_host_port(pj_pool_t* pool,
-                      pjsip_host_port* host_port,
-                      const pj_sockaddr* addr)
-{
-    host_port->host.ptr = (char*) pj_pool_alloc(pool, PJ_INET6_ADDRSTRLEN+4);
-    pj_sockaddr_print(addr, host_port->host.ptr, PJ_INET6_ADDRSTRLEN+4, 0);
-    host_port->host.slen = pj_ansi_strlen(host_port->host.ptr);
-    host_port->port = pj_sockaddr_get_port(addr);
-}
-
 static pj_status_t
 tls_status_from_err(int err)
 {
@@ -138,7 +123,7 @@ tls_status_from_err(int err)
 SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                                    int tp_type,
                                    const TlsParams& param,
-                                   const std::shared_ptr<jami::IceTransport>& ice,
+                                   const std::shared_ptr<IceTransport>& ice,
                                    int comp_id)
     : ice_ (ice)
     , comp_id_ (comp_id)
@@ -155,7 +140,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     trData_.self = this; // up-link for PJSIP callbacks
 
     pool_ = sip_utils::smart_alloc_pool(endpt, "dtls.pool",
-                                        POOL_TP_INIT, POOL_TP_INC);
+                                        sip_utils::POOL_TP_INIT, sip_utils::POOL_TP_INC);
 
     auto& base = trData_.base;
     std::memset(&base, 0, sizeof(base));
@@ -179,10 +164,10 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     auto reg_type = static_cast<pjsip_transport_type_e>(tp_type);
     base.type_name = const_cast<char*>(pjsip_transport_get_type_name(reg_type));
     base.flag = pjsip_transport_get_flag_from_type(reg_type);
-    base.info = static_cast<char*>(pj_pool_alloc(pool_.get(), TRANSPORT_INFO_LENGTH));
+    base.info = static_cast<char*>(pj_pool_alloc(pool_.get(), sip_utils::TRANSPORT_INFO_LENGTH));
 
     auto remote_addr = remote_.toString();
-    pj_ansi_snprintf(base.info, TRANSPORT_INFO_LENGTH, "%s to %s", base.type_name,
+    pj_ansi_snprintf(base.info, sip_utils::TRANSPORT_INFO_LENGTH, "%s to %s", base.type_name,
                      remote_addr.c_str());
     base.addr_len = remote_.getLength();
     base.dir = PJSIP_TP_DIR_NONE;
@@ -191,8 +176,8 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     auto local = ice->getDefaultLocalAddress();
     pj_sockaddr_cp(&base.local_addr, local.pjPtr());
 
-    sockaddr_to_host_port(pool_.get(), &base.local_name, &base.local_addr);
-    sockaddr_to_host_port(pool_.get(), &base.remote_name, remote_.pjPtr());
+    sip_utils::sockaddr_to_host_port(pool_.get(), &base.local_name, &base.local_addr);
+    sip_utils::sockaddr_to_host_port(pool_.get(), &base.remote_name, remote_.pjPtr());
 
     base.send_msg = [](pjsip_transport *transport,
                        pjsip_tx_data *tdata,
