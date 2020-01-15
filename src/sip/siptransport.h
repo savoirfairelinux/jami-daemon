@@ -50,6 +50,8 @@ struct Certificate;
 
 namespace jami {
 
+class ChannelSocket;
+
 struct TlsListener
 {
     TlsListener() {}
@@ -157,6 +159,8 @@ public:
                        const tls::TlsParams&);
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
+
+    std::shared_ptr<SipTransport> getChanneledTransport(const std::shared_ptr<ChannelSocket>& socket);
 
     /**
      * Start graceful shutdown procedure for all transports
