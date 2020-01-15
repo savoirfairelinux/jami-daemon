@@ -268,7 +268,6 @@ SIPAccountBase::getAccountDetails() const
     a.emplace(Conf::CONFIG_PUBLISHED_PORT,          std::to_string(publishedPort_));
     a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL,  publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
-
     a.emplace(Conf::CONFIG_STUN_ENABLE, stunEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_STUN_SERVER, stunServer_);
     a.emplace(Conf::CONFIG_TURN_ENABLE, turnEnabled_ ? TRUE_STR : FALSE_STR);
