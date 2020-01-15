@@ -183,7 +183,7 @@ public:
      * @return std::string The public IPv4 or IPv6 address formatted in standard notation.
      */
     std::string getPublishedAddress() const {
-        return publishedIpAddress_;
+        return publishedIpStr_;
     }
 
     IpAddr getPublishedIpAddress() const {
@@ -353,7 +353,10 @@ protected:
      */
     IpAddr publishedIp_ {};
 
+    // This will be stored in the configuration
     std::string publishedIpAddress_ {};
+    // This is used at runtime . Mainly by SIPAccount::usePublishedAddressPortInVIA()
+    std::string publishedIpStr_ {};
 
     /**
      * Published port, used only if defined by the user
