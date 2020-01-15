@@ -466,7 +466,7 @@ ConnectionManager::closeConnectionsWith(const std::string& deviceId)
     if (pimpl_->connectionsInfos_.find(deviceId) != pimpl_->connectionsInfos_.end()) {
         for (auto& info: pimpl_->connectionsInfos_[deviceId]) {
             // Cancel operations to avoid any blocking in peer_channel
-            info.second.ice_->cancelOperations();
+            if (info.second.ice_) info.second.ice_->cancelOperations();
         }
         pimpl_->connectionsInfos_.erase(deviceId);
         // This will close the TLS Session
