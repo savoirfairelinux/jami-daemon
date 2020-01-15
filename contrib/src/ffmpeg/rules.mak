@@ -225,19 +225,7 @@ FFMPEGCONF += \
 	--enable-encoder=vp8_vaapi \
 	--enable-encoder=mjpeg_vaapi
 # ffnvcodec is not supported on ARM then we enable it here for i386 and x86_64
-ifeq ($(ARCH),i386)
-FFMPEGCONF += --enable-cuvid \
-	      --enable-ffnvcodec \
-	      --enable-nvdec \
-	      --enable-nvenc \
-	      --enable-hwaccel=h264_nvdec \
-	      --enable-hwaccel=hevc_nvdec \
-	      --enable-hwaccel=vp8_nvdec \
-	      --enable-hwaccel=mjpeg_nvdec \
-	      --enable-encoder=h264_nvenc \
-	      --enable-encoder=hevc_nvenc
-endif
-ifeq ($(ARCH),x86_64)
+ifeq ($(ARCH),$(filter $(ARCH),i386 x86_64))
 FFMPEGCONF += --enable-cuvid \
 	      --enable-ffnvcodec \
 	      --enable-nvdec \
