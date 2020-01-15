@@ -2018,7 +2018,10 @@ JamiAccount::connectivityChanged()
 
     dht_->connectivityChanged();
     // reset cache
-    setPublishedAddress({});
+    {
+        std::lock_guard<std::mutex> lock(configurationMutex_);
+        setPublishedAddress({});
+    }
     cacheTurnServers();
 }
 
@@ -2594,13 +2597,17 @@ JamiAccount::registerDhtAddress(IceTransport& ice)
 
         // IPv6 (sdp support only one IP, put IPv6 before IPv4 as this last has the priority over IPv6 less NAT'able)
         const auto& addr6 = dht_->getPublicAddress(AF_INET6);
-        if (addr6.size())
+        if (addr6.size()) {
+            std::lock_guard<std::mutex> lock(configurationMutex_);
             setPublishedAddress(reg_addr(ice, *addr6[0].get()));
+        }
 
         // IPv4
         const auto& addr4 = dht_->getPublicAddress(AF_INET);
-        if (addr4.size())
+        if (addr4.size()) {
+            std::lock_guard<std::mutex> lock(configurationMutex_);
             setPublishedAddress(reg_addr(ice, *addr4[0].get()));
+        }
     } else {
         reg_addr(ice, ip);
     }
