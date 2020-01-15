@@ -2426,6 +2426,15 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     return SIPAccountBase::sendTextMessage(toUri, payloads);
 }
 
+
+struct ctx {
+    ctx(pjsip_auth_clt_sess* auth) : auth_sess(auth, &pjsip_auth_clt_deinit) {}
+    std::weak_ptr<JamiAccount> acc;
+    std::string to;
+    uint64_t id;
+    std::unique_ptr<pjsip_auth_clt_sess, decltype(&pjsip_auth_clt_deinit)> auth_sess;
+};
+
 void
 JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t token)
 {
@@ -2463,6 +2472,124 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
             auto connection = sipConnections_.find(dev.toString());
             if (connection != sipConnections_.end() && connection->second) {
+
+                sip_utils::register_thread();
+
+                auto toUri = getToUri(to);
+
+                constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, jami::sip_utils::CONST_PJ_STR("MESSAGE")};
+                std::string from(getFromUri());
+                pj_str_t pjFrom = pj_str((char*) from.c_str());
+                pj_str_t pjTo = pj_str((char*) toUri.c_str());
+
+                /* Create request. */
+                pjsip_tx_data *tdata;
+                pj_status_t status = pjsip_endpt_create_request(link_->getEndpoint(), &msg_method,
+                                                                &pjTo, &pjFrom, &pjTo, nullptr, nullptr, -1,
+                                                                nullptr, &tdata);
+                if (status != PJ_SUCCESS) {
+                    JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
+                    messageEngine_.onMessageSent(to, token, false);
+                    return;
+                }
+
+                /* Add Date Header. */
+                pj_str_t date_str;
+                constexpr auto key = jami::sip_utils::CONST_PJ_STR("Date");
+                pjsip_hdr *hdr;
+                auto time = std::time(nullptr);
+                auto date = std::ctime(&time);
+                // the erase-remove idiom for a cstring, removes _all_ new lines with in date
+                *std::remove(date, date+strlen(date), '\n') = '\0';
+
+                // Add Header
+                hdr = reinterpret_cast<pjsip_hdr*>(pjsip_date_hdr_create(tdata->pool, &key, pj_cstr(&date_str, date)));
+                pjsip_msg_add_hdr(tdata->msg, hdr);
+
+                /* Add user agent header. */
+                pjsip_hdr *hdr_list;
+                auto pJuseragent = jami::sip_utils::CONST_PJ_STR("TODO");
+                constexpr pj_str_t STR_USER_AGENT = jami::sip_utils::CONST_PJ_STR("User-Agent");
+
+                // Add Header
+                hdr_list = reinterpret_cast<pjsip_hdr*>(pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent));
+                pjsip_msg_add_hdr(tdata->msg, hdr_list);
+
+                // Set input token into callback
+                std::unique_ptr<ctx> t{ new ctx(new pjsip_auth_clt_sess) };
+                t->acc = shared();
+                t->to = to;
+                t->id = token;
+
+                /* Initialize Auth header. * /
+                auto cred = getCredInfo();
+                const_cast<pjsip_cred_info*>(cred)->realm = CONST_PJ_STR(hostname_);
+                status = pjsip_auth_clt_init(t->auth_sess.get(), link_->getEndpoint(), tdata->pool, 0);
+
+                if (status != PJ_SUCCESS) {
+                    JAMI_ERR("Unable to initialize auth session: %s", sip_utils::sip_strerror(status).c_str());
+                    messageEngine_.onMessageSent(to, token, false);
+                    return;
+                }
+
+                status = pjsip_auth_clt_set_credentials(t->auth_sess.get(), getCredentialCount(), cred);
+
+                if (status != PJ_SUCCESS) {
+                    JAMI_ERR("Unable to set auth session data: %s", sip_utils::sip_strerror(status).c_str());
+                    messageEngine_.onMessageSent(to, token, false);
+                    return;
+                }*/
+
+                // TODO we need a class to do the transport
+                /*pjsip_transport sip_tr = std::make_shared<SipTransport>(tr);
+
+                const pjsip_tpselector tp_sel = SIPVoIPLink::getTransportSelector(sip_tr);
+                status = pjsip_tx_data_set_transport(tdata, &tp_sel);
+
+                if (status != PJ_SUCCESS) {
+                    JAMI_ERR("Unable to set transport: %s", sip_utils::sip_strerror(status).c_str());
+                    messageEngine_.onMessageSent(to, token, false);
+                    return;
+                }*/
+
+                jami::im::fillPJSIPMessageBody(*tdata, payloads);
+
+                // Send message request with callback SendMessageOnComplete
+                status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t.release(), [](void *token, pjsip_event *event)
+                        {
+                            JAMI_WARN("TODO");
+                            std::unique_ptr<ctx> c{ (ctx*)token };
+                            int code;
+                            pj_status_t status;
+                            pj_assert(event->type == PJSIP_EVENT_TSX_STATE);
+                            code = event->body.tsx_state.tsx->status_code;
+
+                            auto acc = c->acc.lock();
+                            if (not acc)
+                                return;
+
+                            //Check if Authorization Header if needed (request rejected by server)
+                            if (code == PJSIP_SC_UNAUTHORIZED || code == PJSIP_SC_PROXY_AUTHENTICATION_REQUIRED) {
+
+                                JAMI_INFO("Authorization needed for SMS message - Resending");
+                            }
+                        });
+
+                if (status != PJ_SUCCESS) {
+                    JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+                    messageEngine_.onMessageSent(to, token, false);
+                    return;
+                }
+
+
+
+
+
+
+
+
+
+
                 // TODO SIP
                 Json::Value root;
                 for (const auto& payload: payloads) {
