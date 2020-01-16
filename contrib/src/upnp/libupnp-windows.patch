@@ -2597,7 +2597,7 @@ Subject: [PATCH] Windows patch.
 +
 +/** Defined to 1 if the library has been compiled with integrated web server
 + *  (i.e. configure --enable-webserver --enable-device) */
-+#define UPNP_HAVE_WEBSERVER 1
++#define UPNP_HAVE_WEBSERVER 0
 +
 +/** Defined to 1 if the library has been compiled with the SSDP part enabled
 + *  (i.e. configure --enable-ssdp) */
@@ -2898,7 +2898,7 @@ Subject: [PATCH] Windows patch.
 +#define UPNP_HAVE_TOOLS 1
 +
 +/* see upnpconfig.h */
-+#define UPNP_HAVE_WEBSERVER 1
++#define UPNP_HAVE_WEBSERVER 0
 +
 +/* whether the system defaults to 32bit off_t but can do 64bit when requested
 +   */
