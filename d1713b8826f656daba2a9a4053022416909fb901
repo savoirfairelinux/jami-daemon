@@ -1,0 +1,520 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c661c06b_caa9450a",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "add copyright",
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d1df40c8_9367c544",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 12,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "cleanup log",
+      "range": {
+        "startLine": 12,
+        "startChar": 4,
+        "endLine": 12,
+        "endChar": 51
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8a78338f_2f84bc79",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 14,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "cleanup log",
+      "range": {
+        "startLine": 14,
+        "startChar": 4,
+        "endLine": 14,
+        "endChar": 46
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f49104f8_f9136310",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 15,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "one line",
+      "range": {
+        "startLine": 11,
+        "startChar": 4,
+        "endLine": 15,
+        "endChar": 13
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "336eabee_1494247e",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "cleanup log",
+      "range": {
+        "startLine": 21,
+        "startChar": 4,
+        "endLine": 21,
+        "endChar": 53
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c823f744_3280406d",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "cleanup log",
+      "range": {
+        "startLine": 23,
+        "startChar": 4,
+        "endLine": 23,
+        "endChar": 48
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cd151dee_350b29e9",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 24,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "one line\nreturn jami::Manager::instance().getJamiPluginManager().unloadPlugin(path);",
+      "range": {
+        "startLine": 20,
+        "startChar": 4,
+        "endLine": 24,
+        "endChar": 13
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e8703091_bf78ec25",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "one line",
+      "range": {
+        "startLine": 29,
+        "startChar": 4,
+        "endLine": 30,
+        "endChar": 34
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "26fb958b_5f154772",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "cleanup log",
+      "range": {
+        "startLine": 31,
+        "startChar": 4,
+        "endLine": 35,
+        "endChar": 5
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "33d461b2_e62eff47",
+        "filename": "src/dring/plugin_manager_interface.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "add copyright",
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "330d6787_b249378a",
+        "filename": "src/fileutils.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "DIR_SEPARATOR_STR_ESC",
+      "range": {
+        "startLine": 51,
+        "startChar": 8,
+        "endLine": 51,
+        "endChar": 29
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "38709faf_50d08276",
+        "filename": "src/fileutils.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "DIR_SEPARATOR_STR_ESC",
+      "range": {
+        "startLine": 56,
+        "startChar": 8,
+        "endLine": 56,
+        "endChar": 29
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a257c219_d22e21a9",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "add copyright",
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ac0b4039_646921cc",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 257,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "manifestMap is never modified in this function, and is always returned empty.",
+      "range": {
+        "startLine": 257,
+        "startChar": 11,
+        "endLine": 257,
+        "endChar": 22
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ca5486de_6468d3b7",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "one instruction",
+      "range": {
+        "startLine": 263,
+        "startChar": 4,
+        "endLine": 270,
+        "endChar": 67
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "886e72b9_2a914d56",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 278,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "one instruction",
+      "range": {
+        "startLine": 272,
+        "startChar": 4,
+        "endLine": 278,
+        "endChar": 60
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1c66c468_fa3cb2bf",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "add your name and email as author",
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d45eea02_8c7d981b",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 39,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "private",
+      "range": {
+        "startLine": 39,
+        "startChar": 4,
+        "endLine": 39,
+        "endChar": 36
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fb16e832_30cefacc",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "trailing space",
+      "range": {
+        "startLine": 69,
+        "startChar": 52,
+        "endLine": 69,
+        "endChar": 53
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a411255e_5b8b299e",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "duplicate private",
+      "range": {
+        "startLine": 182,
+        "startChar": 0,
+        "endLine": 182,
+        "endChar": 8
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d92ecf7e_28cf5c08",
+        "filename": "src/plugin/pluginpreferencesmanager.cpp",
+        "patchSetId": 24
+      },
+      "lineNbr": 0,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "?",
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1d5e4534_b4d949e5",
+        "filename": "src/plugin/pluginpreferencesmanager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "add name and email",
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "efe49b66_3b3069a8",
+        "filename": "src/plugin/pluginpreferencesparser.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "use namespace or move to other classes",
+      "range": {
+        "startLine": 32,
+        "startChar": 6,
+        "endLine": 32,
+        "endChar": 29
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eb691514_b614d365",
+        "filename": "src/plugin/pluginpreferencesvaluesmanager.h",
+        "patchSetId": 24
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-16T01:06:59Z",
+      "side": 1,
+      "message": "use namespace and move with parser methods, or move to other classes.",
+      "range": {
+        "startLine": 27,
+        "startChar": 6,
+        "endLine": 27,
+        "endChar": 36
+      },
+      "revId": "d1713b8826f656daba2a9a4053022416909fb901",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
