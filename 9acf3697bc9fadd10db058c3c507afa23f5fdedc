@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "241372dc_c8de816c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1123,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-21T21:16:30Z",
+      "side": 1,
+      "message": "For now, this only show a cached proxy, but it\u0027s not used. do we want to overwrite proxyServer_ now?",
+      "range": {
+        "startLine": 1121,
+        "startChar": 8,
+        "endLine": 1123,
+        "endChar": 11
+      },
+      "revId": "9acf3697bc9fadd10db058c3c507afa23f5fdedc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "012f0adb_a1cee716",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 7
@@ -16,6 +39,29 @@
       "revId": "9acf3697bc9fadd10db058c3c507afa23f5fdedc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "dee90589_d9c4e88b",
+        "filename": "src/jamidht/jamiaccount.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 89,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-21T21:16:30Z",
+      "side": 1,
+      "message": "dl.jami.net/config/proxyList\n\nor \n\nconfig.jami.net/proxyList",
+      "range": {
+        "startLine": 89,
+        "startChar": 69,
+        "endLine": 89,
+        "endChar": 102
+      },
+      "revId": "9acf3697bc9fadd10db058c3c507afa23f5fdedc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
