@@ -74,6 +74,8 @@
 
 #include <opendht/thread_pool.h>
 #include <opendht/peer_discovery.h>
+#include <opendht/http.h>
+
 #include <yaml-cpp/yaml.h>
 #include <json/json.h>
 
@@ -695,6 +697,7 @@ void JamiAccount::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::PROXY_ENABLED_KEY << YAML::Value << proxyEnabled_;
     out << YAML::Key << Conf::PROXY_SERVER_KEY << YAML::Value << proxyServer_;
     out << YAML::Key << Conf::PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey_;
+    out << YAML::Key << DRing::Account::ConfProperties::DHT_PROXY_LIST_URL << YAML::Value << proxyListUrl_;
 
 #if HAVE_RINGNS
     out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value <<  nameServer_;
@@ -743,6 +746,11 @@ void JamiAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::PROXY_ENABLED_KEY, proxyEnabled_);
     parseValue(node, Conf::PROXY_SERVER_KEY, proxyServer_);
     parseValue(node, Conf::PROXY_PUSH_TOKEN_KEY, deviceKey_);
+    try {
+        parseValue(node, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
+    } catch (const std::exception& e) {
+        proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
+    }
 
     parseValueOptional(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
@@ -1068,6 +1076,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
 
     if (hostname_.empty())
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
+    parseString(details, DRing::Account::ConfProperties::BOOTSTRAP_LIST_URL, bootstrapListUrl_);
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
     parseBool(details, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
@@ -1093,6 +1102,7 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archive_path, idPath_);
     parseString(details, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
 
+    parseString(details, DRing::Account::ConfProperties::DHT_PROXY_LIST_URL, proxyListUrl_);
     parseBool(details, DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
     auto oldProxyServer = proxyServer_;
     parseString(details, DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
@@ -1108,6 +1118,9 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
         proxyServerCached_ = {};
         auto proxyCachePath = cachePath_ + DIR_SEPARATOR_STR "dhtproxy";
         std::remove(proxyCachePath.c_str());
+        loadCachedProxyServer([](const std::string& response) {
+            JAMI_DBG("DHT Proxy loaded: %.*s", (int)response.size(), response.data());
+        });
     }
 
 #if HAVE_RINGNS
@@ -1165,6 +1178,7 @@ JamiAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC,    "-1");
     a.emplace(DRing::Account::ConfProperties::PROXY_ENABLED,    proxyEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::PROXY_SERVER,     proxyServer_);
+    a.emplace(DRing::Account::ConfProperties::DHT_PROXY_LIST_URL,     proxyListUrl_);
     a.emplace(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
     a.emplace(DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
     a.emplace(DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
@@ -1466,30 +1480,44 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
 void
 JamiAccount::mapPortUPnP()
 {
-    upnp_->requestMappingAdd([this](uint16_t port_used, bool success) {
-        auto oldPort = static_cast<in_port_t>(dhtPortUsed_);
-        auto newPort = success ? port_used : dhtPort_;
-
-        if (not success and not dht_->isRunning()) {
-            JAMI_WARN("[Account %s] Failed to open port %u: starting DHT anyways", getAccountID().c_str(), oldPort);
+    auto onLoad = [this, loaded = std::make_shared<std::atomic_uint>()]{
+        (*loaded)++;
+        if ((*loaded) == 2u) {
             doRegister_();
-            return;
         }
+    };
 
-        if (oldPort != newPort or not dht_->isRunning()){
-            dhtPortUsed_ = newPort;
-            if (not dht_->isRunning()) {
-                JAMI_WARN("[Account %s] Starting DHT on port %u", getAccountID().c_str(), newPort);
-                doRegister_();
+    loadCachedProxyServer([this, onLoad](const std::string& proxy) {
+        onLoad();
+    });
+
+    if (upnp_) {
+        upnp_->requestMappingAdd([this, onLoad](uint16_t port_used, bool success) {
+            auto oldPort = static_cast<in_port_t>(dhtPortUsed_);
+            auto newPort = success ? port_used : dhtPort_;
+
+            if (not success and not dht_->isRunning()) {
+                JAMI_WARN("[Account %s] Failed to open port %u: starting DHT anyways", getAccountID().c_str(), oldPort);
+                onLoad();
+                return;
+            }
+
+            if (oldPort != newPort or not dht_->isRunning()){
+                dhtPortUsed_ = newPort;
+                if (not dht_->isRunning()) {
+                    JAMI_WARN("[Account %s] Starting DHT on port %u", getAccountID().c_str(), newPort);
+                    onLoad();
+                } else {
+                    JAMI_WARN("[Account %s] DHT port changed to %u: restarting network", getAccountID().c_str(), newPort);
+                    dht_->connectivityChanged();
+                }
             } else {
-                JAMI_WARN("[Account %s] DHT port changed to %u: restarting network", getAccountID().c_str(), newPort);
+                JAMI_WARN("[Account %s] DHT port %u opened: restarting network", getAccountID().c_str(), newPort);
                 dht_->connectivityChanged();
             }
-        } else {
-            JAMI_WARN("[Account %s] DHT port %u opened: restarting network", getAccountID().c_str(), newPort);
-            dht_->connectivityChanged();
-        }
-    }, dhtPort_, jami::upnp::PortType::UDP, false);
+        }, dhtPort_, jami::upnp::PortType::UDP, false);
+    } else
+        onLoad();
 }
 
 void
@@ -1512,7 +1540,7 @@ JamiAccount::doRegister()
     }
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
-    if (upnp_) {
+    if (upnp_ or proxyServerCached_.empty()) {
         JAMI_DBG("UPnP: Attempting to map ports for Jami account");
         setRegistrationState(RegistrationState::TRYING);
         mapPortUPnP();
@@ -1668,7 +1696,7 @@ JamiAccount::doRegister_()
         config.dht_config.node_config.maintain_storage = false;
         config.dht_config.node_config.persist_path = cachePath_+DIR_SEPARATOR_STR "dhtstate";
         config.dht_config.id = id_;
-        config.proxy_server = getDhtProxyServer();
+        config.proxy_server = getDhtProxyServer(proxyServer_);
         config.push_node_id = getAccountID();
         config.push_token = deviceKey_;
         config.threaded = true;
@@ -1830,7 +1858,7 @@ JamiAccount::doRegister_()
 
         dhtPeerConnector_->onDhtConnected(accountManager_->getInfo()->deviceId);
 
-        std::lock_guard<std::mutex> lock(buddyInfoMtx);
+        std::lock_guard<std::mutex> bLock(buddyInfoMtx);
         for (auto& buddy : trackedBuddies_) {
             buddy.second.devices_cnt = 0;
             trackPresence(buddy.first, buddy.second);
@@ -2127,6 +2155,7 @@ JamiAccount::getKnownDevices() const
 tls::DhParams
 JamiAccount::loadDhParams(std::string path)
 {
+    std::lock_guard<std::mutex> l(fileutils::getFileLock(path));
     try {
         // writeTime throw exception if file doesn't exist
         auto duration = clock::now() - fileutils::writeTime(path);
@@ -2151,14 +2180,90 @@ JamiAccount::loadDhParams(std::string path)
     }
 }
 
+void
+JamiAccount::loadCachedUrl(const std::string& url,
+                const std::string& cachePath,
+                const std::chrono::seconds& cacheDuration,
+                std::function<void(const dht::http::Response& response)> cb)
+{
+    auto lock = std::make_shared<std::lock_guard<std::mutex>>(fileutils::getFileLock(cachePath));
+    dht::ThreadPool::io().run([lock, cb, url, cachePath, cacheDuration, w=weak()]() {
+        try {
+            // writeTime throws exception if file doesn't exist
+            auto duration = clock::now() - fileutils::writeTime(cachePath);
+            if (duration > cacheDuration)
+                throw std::runtime_error("file too old");
+
+            JAMI_DBG("Loading '%.*s' from cache file '%.*s'", (int)url.size(), url.c_str(), (int)cachePath.size(), cachePath.c_str());
+            auto data = fileutils::loadFile(cachePath);
+            dht::http::Response ret;
+            ret.body = {data.begin(), data.end()};
+            ret.status_code = 200;
+            cb(ret);
+        } catch (const std::exception& e) {
+            JAMI_DBG("Failed to load '%.*s' from '%.*s': %s", (int)url.size(), url.c_str(), (int)cachePath.size(), cachePath.c_str(), e.what());
+
+            if (auto sthis = w.lock()) {
+                auto ioContext = Manager::instance().ioContext();
+                auto req = std::make_shared<dht::http::Request>(*ioContext, url, [lock, cb, cachePath, w](const dht::http::Response& response) {
+                    if (response.status_code == 200) {
+                        try {
+                            fileutils::saveFile(cachePath, (const uint8_t*)response.body.data(), response.body.size(), 0600);
+                            JAMI_DBG("Cached result to '%.*s'", (int)cachePath.size(), cachePath.c_str());
+                        } catch (const std::exception& ex) {
+                            JAMI_WARN("Failed to save result to %.*s: %s", (int)cachePath.size(), cachePath.c_str(), ex.what());
+                        }
+                    } else {
+                        JAMI_WARN("Failed to download url");
+                    }
+                    cb(response);
+                    if (auto req = response.request.lock())
+                        if (auto sthis = w.lock())
+                            sthis->requests_.erase(req);
+                });
+                sthis->requests_.emplace(req);
+                req->send();
+            }
+        }
+    });
+}
+
+void
+JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)> cb)
+{
+    if (proxyServerCached_.empty()) {
+        JAMI_DBG("[Account %s] loading DHT proxy URL", getAccountID().c_str());
+        if (proxyListUrl_.empty()) {
+            cb(getDhtProxyServer(proxyServer_));
+        } else {
+            loadCachedUrl(proxyListUrl_,
+                cachePath_ + DIR_SEPARATOR_STR "dhtproxylist",
+                std::chrono::hours(24 * 3),
+                [w=weak(), cb=std::move(cb)](const dht::http::Response& response){
+                    if (auto sthis = w.lock()) {
+                        sthis->proxyServerCached_.clear();
+                        if (response.status_code == 200) {
+                            cb(sthis->getDhtProxyServer(response.body));
+                        } else {
+                            cb(sthis->getDhtProxyServer(sthis->proxyServer_));
+                        }
+                    }
+                }
+            );
+        }
+    } else {
+        cb(proxyServerCached_);
+    }
+}
+
 std::string
-JamiAccount::getDhtProxyServer()
+JamiAccount::getDhtProxyServer(const std::string& serverList)
 {
     if (!proxyEnabled_) return {};
     if (proxyServerCached_.empty()) {
         std::vector<std::string> proxys;
         // Split the list of servers
-        std::sregex_iterator begin = {proxyServer_.begin(), proxyServer_.end(), PROXY_REGEX}, end;
+        std::sregex_iterator begin = {serverList.begin(), serverList.end(), PROXY_REGEX}, end;
         for (auto it = begin; it != end; ++it) {
             auto &match = *it;
             if (match[5].matched and match[6].matched) {
