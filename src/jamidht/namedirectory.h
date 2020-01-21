@@ -36,6 +36,7 @@ struct PublicKey;
 }
 namespace http {
 class Request;
+struct Response;
 class Resolver;
 }
 struct Logger;
@@ -96,7 +97,7 @@ private:
      */
     std::shared_ptr<asio::io_context> httpContext_;
     std::shared_ptr<dht::http::Resolver> resolver_;
-    std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;
+    std::map<unsigned, std::shared_ptr<dht::http::Request>> requests_;
 
     std::map<std::string, std::string> nameCache_ {};
     std::map<std::string, std::string> addrCache_ {};
