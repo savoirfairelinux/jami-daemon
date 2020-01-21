@@ -147,6 +147,8 @@ constexpr static const char ACCOUNT_PEER_DISCOVERY  [] = "Account.accountDiscove
 constexpr static const char ACCOUNT_PUBLISH         [] = "Account.accountPublish";
 constexpr static const char MANAGER_URI             [] = "Account.managerUri";
 constexpr static const char MANAGER_USERNAME        [] = "Account.managerUsername";
+constexpr static const char BOOTSTRAP_LIST_URL      [] = "Account.bootstrapListUrl";
+constexpr static const char DHT_PROXY_LIST_URL      [] = "Account.dhtProxyListUrl";
 
 namespace Audio {
 
