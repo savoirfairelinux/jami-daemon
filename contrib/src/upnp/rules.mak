@@ -25,9 +25,9 @@ endif
 .upnp: upnp
 	$(RECONF)
 ifdef HAVE_WIN32
-	cd $< && $(HOSTVARS) CFLAGS="-DUPNP_STATIC_LIB" ./configure --disable-largefile --disable-samples --disable-device --disable-webserver --without-documentation $(HOSTCONF)
+	cd $< && $(HOSTVARS) CFLAGS="-DUPNP_STATIC_LIB" ./configure --disable-largefile --disable-tools --disable-samples --disable-device --disable-webserver --without-documentation $(HOSTCONF)
 else
-	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -DUPNP_STATIC_LIB" ./configure --disable-largefile --disable-samples --disable-device --disable-webserver --without-documentation $(HOSTCONF)
+	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -DUPNP_STATIC_LIB" ./configure --disable-largefile --disable-tools --disable-samples --disable-device --disable-webserver --without-documentation $(HOSTCONF)
 endif
 	cd $< && $(MAKE) install
 	touch $@
