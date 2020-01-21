@@ -59,9 +59,9 @@ class Emitter;
 
 namespace dev
 {
-    template <unsigned N> class FixedHash;
-    using h160 = FixedHash<20>;
-    using Address = h160;
+template <unsigned N> class FixedHash;
+using h160 = FixedHash<20>;
+using Address = h160;
 }
 
 namespace jami {
@@ -85,6 +85,8 @@ public:
     constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
     constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
     constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net:[80-100]";
+    constexpr static const char* const DHT_DEFAULT_BOOTSTRAP_LIST_URL = "https://jami.net/config/boostrapList.txt";
+    constexpr static const char* const DHT_DEFAULT_PROXY_LIST_URL = "https://dl.jami.net/proxyList.txt";
 
     /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
 
@@ -524,8 +526,16 @@ private:
                                 const dht::InfoHash& from);
 
     static tls::DhParams loadDhParams(std::string path);
+    //static void loadProxyServer(std::string path);
 
-    std::string getDhtProxyServer();
+    void
+    loadCachedUrl(const std::string& url,
+                    const std::string& cachePath,
+                    const std::chrono::seconds& cacheDuration,
+                    std::function<void(const dht::http::Response& response)>);
+
+    std::string getDhtProxyServer(const std::string& serverList);
+    void loadCachedProxyServer(std::function<void(const std::string&)> cb);
 
     /**
      * The TLS settings, used only if tls is chosen as a sip transport.
@@ -541,7 +551,7 @@ private:
     std::string nameServer_;
     std::string registeredName_;
 #endif
-        std::shared_ptr<dht::Logger> logger_;
+    std::shared_ptr<dht::Logger> logger_;
 
     std::shared_ptr<dht::DhtRunner> dht_ {};
     std::unique_ptr<AccountManager> accountManager_;
@@ -583,6 +593,8 @@ private:
     mutable std::mutex dhtValuesMtx_;
     bool dhtPublicInCalls_ {true};
 
+    std::string bootstrapListUrl_;
+
     /**
      * DHT port preference
      */
@@ -601,6 +613,7 @@ private:
     /**
      * Proxy
      */
+    std::string proxyListUrl_;
     bool proxyEnabled_ {false};
     std::string proxyServer_ {};
     std::string proxyServerCached_ {};
@@ -656,6 +669,8 @@ private:
      * Jami, or for each connectivityChange()
      */
     void cacheTurnServers();
+
+    std::set<std::shared_ptr<dht::http::Request>> requests_;
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)
