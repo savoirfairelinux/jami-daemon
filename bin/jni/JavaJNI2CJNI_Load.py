@@ -49,9 +49,9 @@ def type_to_signature(itype):
 		return "D"
 	if itype == "String":
 		return "Ljava/lang/String;"
-	if itype == "Object":
-		return "Ljava/lang/Object;"
-	return "Lcx/ring/daemon/%s;" % itype
+	if itype == "Object" or itype == "java.lang.Object":
+        return "Ljava/lang/Object;"
+    return "Lcx/ring/daemon/%s;" % itype.replace('.', '$')
 
 def parse_java_file(input_stream, package, module):
 	outputs = []
