@@ -51,6 +51,8 @@ def type_to_signature(itype):
 		return "Ljava/lang/String;"
 	if itype == "Object":
 		return "Ljava/lang/Object;"
+	if '.' in itype:
+		return
 	return "Lcx/ring/daemon/%s;" % itype
 
 def parse_java_file(input_stream, package, module):
@@ -64,12 +66,19 @@ def parse_java_file(input_stream, package, module):
 			args = definition.group(3)
 			args_sigs = []
 			args_frags = args.split(',')
+			complex_arg_flag = False
 			for args_frag in args_frags:
 				argf = re.match(r'(\b)?([^ ]+) .*', args_frag.strip())
-				if argf is not None:
-					args_sigs.append(type_to_signature(argf.group(2)))
-			sig = "(%s)%s" % (''.join(args_sigs), type_to_signature(retour))
-			outputs.append("{\"%s\", \"%s\", (void*)& %s_%s}" % (name, sig, package_prefix, name.replace('_', '_1')))
+				if argf is not None :
+					mangled_arg = type_to_signature(argf.group(2))
+					if mangled_arg is not None:
+						args_sigs.append(mangled_arg)
+					else:
+						complex_arg_flag = True
+						break
+			if not complex_arg_flag:
+				sig = "(%s)%s" % (''.join(args_sigs), type_to_signature(retour))
+				outputs.append("{\"%s\", \"%s\", (void*)& %s_%s}" % (name, sig, package_prefix, name.replace('_', '_1')))
 	return outputs
 
 def render_to_template(defs, template_string):

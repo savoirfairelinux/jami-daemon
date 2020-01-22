@@ -52,6 +52,29 @@
     return $jnicall;
 }
 
+/* Convert unsigned char and thus uint8_t to jbyte */
+%typemap(jni) unsigned char,      const unsigned char &      "jbyte"
+%typemap(jtype) unsigned char,      const unsigned char &      "byte"
+%typemap(jstype) unsigned char,      const unsigned char &      "byte"
+%typemap(jboxtype) unsigned char,      const unsigned char &      "Byte"
+%typemap(directorin, descriptor="B") unsigned char    "$input = (jbyte) $1;"
+%typemap(out) unsigned char  %{ $result = (jbyte)$1; %}
+%typemap(out) const unsigned char &  %{ $result = (jbyte)*$1; %}
+
+%typecheck(SWIG_TYPECHECK_INT8) /* Java byte */
+    jbyte,
+    signed char,
+    const signed char &,
+    unsigned char,
+    const unsigned char
+    ""
+
+%typecheck(SWIG_TYPECHECK_INT16) /* Java short */
+    jshort,
+    short,
+    const short &
+    ""
+
 /* Maps exceptions */
 %typemap(throws, throws="java.lang.IllegalArgumentException") std::invalid_argument {
   jclass excep = jenv->FindClass("java/lang/IllegalArgumentException");
@@ -79,19 +102,19 @@ namespace std {
     $javaclassname n = new $javaclassname();
     for (java.util.Map.Entry<String, String> entry : in.entrySet()) {
       if (entry.getValue() != null) {
-        n.set(entry.getKey(), entry.getValue());
+        n.put(entry.getKey(), entry.getValue());
       }
     }
     return n;
   }
+
   public java.util.HashMap<String,String> toNative() {
     java.util.HashMap<String,String> out = new java.util.HashMap<>((int)size());
-    StringVect keys = keys();
-    for (String s : keys) {
-        out.put(s, get(s));
-    }
+    for (Entry<String, String> e : entrySet())
+        out.put(e.getKey(), e.getValue());
     return out;
   }
+
   public java.util.HashMap<String,String> toNativeFromUtf8() {
       java.util.HashMap<String,String> out = new java.util.HashMap<>((int)size());
       StringVect keys = keys();
@@ -101,6 +124,7 @@ namespace std {
       return out;
   }
 %}
+
 %extend map<string, string> {
     std::vector<std::string> keys() const {
         std::vector<std::string> k;
@@ -118,24 +142,8 @@ namespace std {
         return {v.begin(), v.end()};
     }
 }
-%template(StringMap) map<string, string>;
 
-%typemap(javabase) vector<string> "java.util.AbstractList<String>"
-%typemap(javainterface) vector<string> "java.util.RandomAccess"
-%extend vector<string> {
-  value_type set(int i, const value_type& in) throw (std::out_of_range) {
-    const std::string old = $self->at(i);
-    $self->at(i) = in;
-    return old;
-  }
-  bool add(const value_type& in) {
-    $self->push_back(in);
-    return true;
-  }
-  int32_t size() const {
-    return $self->size();
-  }
-}
+%template(StringMap) map<string, string>;
 %template(StringVect) vector<string>;
 
 %typemap(javacode) vector< map<string,string> > %{
@@ -160,9 +168,10 @@ namespace std {
     } catch (java.io.UnsupportedEncodingException e) {
       dat = in.getBytes();
     }
-    Blob n = new Blob(dat.length);
+    Blob n = new Blob();
+    n.reserve(dat.length);
     for (int i=0; i<dat.length; i++) {
-      n.set(i, dat[i]);
+      n.add(dat[i]);
     }
     return n;
   }
