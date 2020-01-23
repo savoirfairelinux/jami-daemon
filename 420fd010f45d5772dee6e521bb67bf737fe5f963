@@ -22,6 +22,30 @@
       "revId": "420fd010f45d5772dee6e521bb67bf737fe5f963",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0d1c9d6b_0115391b",
+        "filename": "configure.ac",
+        "patchSetId": 16
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-01-23T20:45:42Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8907c9af_6b492bcf",
+      "range": {
+        "startLine": 5,
+        "startChar": 31,
+        "endLine": 5,
+        "endChar": 35
+      },
+      "revId": "420fd010f45d5772dee6e521bb67bf737fe5f963",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
