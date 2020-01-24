@@ -1,0 +1,191 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ae8e45de_995c2551",
+        "filename": "src/jamidht/channeled_transport.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::__cxx11::list::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "4d7bb0ee_5582bb05",
+        "filename": "src/jamidht/channeled_transport.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 224,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::__cxx11::list::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3f4d645a_62eb097f",
+        "filename": "src/jamidht/channeled_transport.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 329,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::__cxx11::list::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7570fc6c_b43ba65a",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027unsigned long\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "860910c7_8cdb522d",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027unsigned long\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "09356075_260b559d",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027unsigned long\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f6650bf8_f5f61842",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 274,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027unsigned long\u0027\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fe99be06_859b3c7b",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 479,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::map\u003cstd::pair\u003cstd::__cxx11::basic_string\u003cchar\u003e, std::__cxx11::basic_string\u003cchar\u003e \u003e, std::function\u003cvoid (const std::shared_ptr\u003cjami::ChannelSocket\u003e \u0026)\u003e, std::less\u003cstd::pair\u003cstd::__cxx11::basic_string\u003cchar\u003e, std::__cxx11::basic_string\u003cchar\u003e \u003e \u003e, std::allocator\u003cstd::pair\u003cconst std::pair\u003cstd::__cxx11::basic_string\u003cchar\u003e, std::__cxx11::basic_string\u003cchar\u003e \u003e, std::function\u003cvoid (const std::shared_ptr\u003cjami::ChannelSocket\u003e \u0026)\u003e \u003e \u003e \u003e::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "25bffb62_67de5045",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 482,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\ndata argument not used by format string\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format-extra-args",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "80db99fc_4f61bea3",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2976,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ea65f8ac_a3b5965c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 2987,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-24T17:08:53Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "292d1060a864ab8f5b0e754fc4c79764ddb8fd57",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
