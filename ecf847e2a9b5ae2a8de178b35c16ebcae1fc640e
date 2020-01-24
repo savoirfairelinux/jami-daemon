@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c6b235c3_abcb78a0",
+        "filename": "src/dring/def.h",
+        "patchSetId": 85
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-24T15:52:53Z",
+      "side": 1,
+      "message": "Invert",
+      "range": {
+        "startLine": 51,
+        "startChar": 0,
+        "endLine": 55,
+        "endChar": 6
+      },
+      "revId": "ecf847e2a9b5ae2a8de178b35c16ebcae1fc640e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
