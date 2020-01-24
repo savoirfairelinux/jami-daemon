@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "46adb925_dc9a4186",
+        "filename": "src/account.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 352,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-24T16:02:57Z",
+      "side": 1,
+      "message": "Can\u0027t find a usable accelerated H265/HEVC codec, disabling.",
+      "range": {
+        "startLine": 352,
+        "startChar": 22,
+        "endLine": 352,
+        "endChar": 35
+      },
+      "revId": "68a5e567bc31fb2374c1dcf23f4d4a63a81f08d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1f0fce6e_b57b1128",
+        "filename": "src/account.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 358,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-24T16:02:57Z",
+      "side": 1,
+      "message": "\"Found a usable accelerated H265/HEVC codec: %s, enabling.\", accCodec-\u003esystemCodecInfo.libName.c_str()",
+      "range": {
+        "startLine": 358,
+        "startChar": 12,
+        "endLine": 358,
+        "endChar": 41
+      },
+      "revId": "68a5e567bc31fb2374c1dcf23f4d4a63a81f08d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3a25e4bd_515b538c",
+        "filename": "src/account.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 361,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-24T16:02:57Z",
+      "side": 1,
+      "message": "this prevents the user to disable H265.\n\n--\u003e If H265 is not available, it should not be in the list\n--\u003e If H265 is in the list, it should be activable/desactivable like any other codec.",
+      "range": {
+        "startLine": 350,
+        "startChar": 3,
+        "endLine": 361,
+        "endChar": 5
+      },
+      "revId": "68a5e567bc31fb2374c1dcf23f4d4a63a81f08d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "19a5b4f3_6e9fad96",
+        "filename": "src/account.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 365,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-24T16:02:57Z",
+      "side": 1,
+      "message": "this prevents the user to disable H265",
+      "range": {
+        "startLine": 365,
+        "startChar": 12,
+        "endLine": 365,
+        "endChar": 71
+      },
+      "revId": "68a5e567bc31fb2374c1dcf23f4d4a63a81f08d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2a68ecb9_20671667",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 22
+      },
+      "lineNbr": 579,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-24T16:02:57Z",
+      "side": 1,
+      "message": "no reason to only do it for the first account",
+      "range": {
+        "startLine": 579,
+        "startChar": 4,
+        "endLine": 579,
+        "endChar": 68
+      },
+      "revId": "68a5e567bc31fb2374c1dcf23f4d4a63a81f08d8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
