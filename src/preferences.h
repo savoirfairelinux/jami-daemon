@@ -509,6 +509,26 @@ class VideoPreferences : public Serializable {
 };
 #endif // ENABLE_VIDEO
 
+class NetworkPreferences : public Serializable {
+    public:
+        NetworkPreferences();
+
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
+
+#ifdef ENABLE_CONNSTAT
+        bool getUseConnStat() const {
+            return useConnstat_;
+        }
+#endif
+
+    private:
+#ifdef ENABLE_CONNSTAT
+        bool useConnstat_;
+#endif
+        constexpr static const char* const CONFIG_LABEL = "network";
+};
+
 } // namespace jami
 
 #endif

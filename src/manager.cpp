@@ -68,6 +68,10 @@ using random_device = dht::crypto::random_device;
 #include "video/video_scaler.h"
 #endif
 
+#ifdef ENABLE_CONNSTAT
+#include "connstat/connstat.h"
+#endif
+
 #include "conference.h"
 #include "ice_transport.h"
 
@@ -412,6 +416,9 @@ struct Manager::ManagerPimpl
 #ifdef ENABLE_VIDEO
     std::unique_ptr<VideoManager> videoManager_;
 #endif
+#ifdef ENABLE_CONNSTAT
+        std::unique_ptr<connstat::connstat> connstat_;
+#endif
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -423,6 +430,9 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , rand_(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
 #ifdef ENABLE_VIDEO
     , videoManager_(new VideoManager)
+#endif
+#ifdef ENABLE_CONNSTAT
+    , connstat_(new connstat::connstat)
 #endif
 {
     jami::libav_utils::av_init();
@@ -687,6 +697,9 @@ Manager::Manager()
 #ifdef ENABLE_VIDEO
     , videoPreferences()
 #endif
+#ifdef ENABLE_CONNSTAT
+    ,networkPreferences()
+#endif
     , callFactory()
     , accountFactory()
     , dataTransfers(std::make_unique<DataTransferFacade>())
@@ -802,6 +815,24 @@ Manager::init(const std::string &config_file)
     }
 
     registerAccounts();
+
+#ifdef ENABLE_CONNSTAT
+    if (networkPreferences.getUseConnStat()) {
+        JAMI_DBG("constat IS enabled");
+        connstat::cb cc_cb = [] (unsigned int event) { DRing::connectivityChanged(event); };
+        unsigned int e = 0;
+        /* wireless association is not of interest */
+        // e |= connstat_->addtopic(NEWLINK);
+        e |= pimpl_->connstat_->addtopic(connstat::DELLINK);
+        e |= pimpl_->connstat_->addtopic(connstat::NEWROUTE4);
+        e |= pimpl_->connstat_->addtopic(connstat::NEWROUTE6);
+        e |= pimpl_->connstat_->addtopic(connstat::NEWADDR4);
+        e |= pimpl_->connstat_->addtopic(connstat::NEWADDR6);
+        if (pimpl_->connstat_)
+            pimpl_->connstat_->registerCB(cc_cb, e);
+    } else
+            JAMI_DBG("constat is not enabled");
+#endif
 }
 
 void
@@ -1670,6 +1701,9 @@ Manager::saveConfig()
         audioPreference.serialize(out);
 #ifdef ENABLE_VIDEO
         videoPreferences.serialize(out);
+#endif
+#ifdef ENABLE_CONNSTAT
+        networkPreferences.serialize(out);
 #endif
         shortcutPreferences.serialize(out);
 
@@ -2709,6 +2743,9 @@ Manager::loadAccountMap(const YAML::Node& node)
 #ifdef ENABLE_VIDEO
         videoPreferences.unserialize(node);
 #endif
+#ifdef ENABLE_CONNSTAT
+        networkPreferences.unserialize(node);
+#endif
     } catch (const YAML::Exception &e) {
         JAMI_ERR("%s: No video node in config file", e.what());
         ++errorCount;
@@ -3034,6 +3071,14 @@ VideoManager&
 Manager::getVideoManager() const
 {
     return *pimpl_->videoManager_;
+}
+#endif
+
+#ifdef ENABLE_CONNSTAT
+connstat::connstat&
+Manager::getConnStat() const
+{
+    return *pimpl_->connstat_;
 }
 #endif
 
