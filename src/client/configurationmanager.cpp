@@ -971,6 +971,27 @@ connectivityChanged()
     }
 }
 
+/**
+ * we land here on net events if ENABLE_CONNSTAT is defined
+ */
+void
+connectivityChanged(unsigned int event)
+{
+    // reset the UPnP context
+#if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    try {
+        jami::upnp::getUPnPContext()->connectivityChanged();
+    } catch (std::runtime_error& e) {
+        JAMI_ERR("UPnP context error: %s", e.what());
+    }
+#endif
+
+    for (const auto &account : jami::Manager::instance().getAllAccounts()) {
+	JAMI_WARN("received connectivity changed event=%d", event);
+        account->connectivityChanged();
+    }
+}
+
 bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name)
 {
 #if HAVE_RINGNS
