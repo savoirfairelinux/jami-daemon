@@ -57,6 +57,10 @@
 #include "client/videomanager.h"
 #endif
 
+#ifdef ENABLE_CONNSTAT
+#include <opendht/connstat.h>
+#endif
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <yaml-cpp/yaml.h>
@@ -143,6 +147,12 @@ static constexpr const char* DECODING_ACCELERATED_KEY {"decodingAccelerated"};
 static constexpr const char* ENCODING_ACCELERATED_KEY {"encodingAccelerated"};
 static constexpr const char* RECORD_PREVIEW_KEY {"recordPreview"};
 static constexpr const char* RECORD_QUALITY_KEY {"recordQuality"};
+#endif
+
+// network preferences
+constexpr const char * const NetworkPreferences::CONFIG_LABEL;
+#ifdef ENABLE_CONNSTAT
+static constexpr const char* USE_CONNSTAT_KEY {"useConnstat"};
 #endif
 
 static constexpr int PULSE_LENGTH_DEFAULT {250}; /** Default DTMF length */
@@ -612,5 +622,37 @@ void VideoPreferences::unserialize(const YAML::Node &in)
     getVideoDeviceMonitor().unserialize(in);
 }
 #endif // ENABLE_VIDEO
+
+NetworkPreferences::NetworkPreferences()
+#ifdef ENABLE_CONNSTAT
+    : useConnstat_(true)
+#endif
+{
+}
+
+void NetworkPreferences::serialize(YAML::Emitter &out) const
+{
+    out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
+
+#ifdef ENABLE_CONNSTAT
+    out << YAML::Key << USE_CONNSTAT_KEY << YAML::Value << useConnstat_;
+#endif
+
+    out << YAML::EndMap;
+}
+
+void NetworkPreferences::unserialize(const YAML::Node &in)
+{
+    const auto &node = in[CONFIG_LABEL];
+
+#ifdef ENABLE_CONNSTAT
+    try {
+        parseValue(node, USE_CONNSTAT_KEY, useConnstat_);
+    } catch (...) {
+	JAMI_WARN("failed to parse useconnstat_ constructor");
+        useConnstat_ = true;
+    }
+#endif
+}
 
 } // namespace jami

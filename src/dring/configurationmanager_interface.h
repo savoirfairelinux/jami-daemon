@@ -27,6 +27,9 @@
 #pragma once
 
 #include "def.h"
+#ifdef ENABLE_CONNSTAT
+#include <opendht/connstat.h>
+#endif
 
 #include <vector>
 #include <map>
@@ -203,6 +206,9 @@ DRING_PUBLIC int importAccounts(const std::string& archivePath, const std::strin
  * Network connectivity
  */
 DRING_PUBLIC void connectivityChanged();
+#ifdef ENABLE_CONNSTAT
+DRING_PUBLIC void connectivityChanged(dht::net::ConnectivityStatus::Event event);
+#endif
 
 /* Dht proxy */
 
