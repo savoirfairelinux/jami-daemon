@@ -589,6 +589,24 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 # Actually perform the doxygen check
 BB_ENABLE_DOXYGEN
 
+
+AS_IF([test "$SYS" = linux],[
+AC_ARG_ENABLE([connstat], AS_HELP_STRING([--disable-connstat], [Disable native connectivity stat reports]))
+AS_IF([test "x$enable_connstat" == "xyes"], [
+       PKG_CHECK_MODULES([NL3], [libnl-3.0 libnl-genl-3.0 libnl-route-3.0],
+			 [have_libnl=yes], [have_libnl=no])
+])
+AM_CONDITIONAL(ENABLE_CONNSTAT, [test "x$have_libnl" == "xyes"])
+
+AS_IF([test "x$have_libnl" == "xyes"], [
+    AC_MSG_NOTICE([have libnl])
+    AM_COND_IF(ENABLE_CONNSTAT, [AC_DEFINE([ENABLE_CONNSTAT], [1], [Enable connstat])])
+], [
+    AC_MSG_ERROR(["libnl is required connectivity stat"])
+])
+])
+
+
 AC_CONFIG_FILES([Makefile \
                  bin/Makefile \
                  src/Makefile \
@@ -621,6 +639,7 @@ AC_CONFIG_FILES([Makefile \
                  src/upnp/protocol/natpmp/Makefile \
                  src/upnp/protocol/pupnp/Makefile \
                  ringtones/Makefile \
+                 src/connstat/Makefile \
                  test/Makefile\
                  test/sip/Makefile
                  test/turn/Makefile \

@@ -35,6 +35,9 @@
 #include "preferences.h"
 #include "audio/audiolayer.h"
 #include "scheduled_executor.h"
+#ifdef ENABLE_CONNSTAT
+#include "connstat/connstat.h"
+#endif
 
 #include <string>
 #include <vector>
@@ -101,6 +104,11 @@ class Manager {
          */
         VideoPreferences videoPreferences;
 #endif
+
+        /**
+         * Network preferences
+         */
+        NetworkPreferences networkPreferences;
 
         // Manager should not be accessed until initialized.
         // FIXME this is an evil hack!
@@ -885,6 +893,13 @@ class Manager {
 
         VideoManager& getVideoManager() const;
 #endif // ENABLE_VIDEO
+
+#ifdef ENABLE_CONNSTAT
+        /**
+         * initialise a netlink socket to get notified from kernel on network events
+         **/
+	connstat::connstat& getConnStat() const;
+#endif // ENABLE_CONNSTAT
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable
         AccountFactory accountFactory;

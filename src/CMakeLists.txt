@@ -2,7 +2,7 @@
 # Source groups - src
 ################################################################################
 
-# client|config|dring|hooks|im|jamidht|media|security|sip|transport|upnp
+# client|config|dring|hooks|im|jamidht|media|security|sip|transport|upnp|connstat
 
 list (APPEND Source_Files
       "${CMAKE_CURRENT_SOURCE_DIR}/account.cpp"
@@ -86,6 +86,7 @@ add_subdirectory(media)
 add_subdirectory(security)
 add_subdirectory(sip)
 add_subdirectory(upnp)
+add_subdirectory(connstat)
 
 set (Source_Files__client ${Source_Files__client} PARENT_SCOPE)
 set (Source_Files__config ${Source_Files__config} PARENT_SCOPE)
@@ -112,3 +113,4 @@ set (Source_Files__upnp ${Source_Files__upnp} PARENT_SCOPE)
 set (Source_Files__upnp__protocol ${Source_Files__upnp__protocol} PARENT_SCOPE)
 set (Source_Files__upnp__protocol__pupnp ${Source_Files__upnp__protocol__pupnp} PARENT_SCOPE)
 set (Source_Files__upnp__protocol__natpmp ${Source_Files__upnp__protocol__natpmp} PARENT_SCOPE)
+set (Source_Files__connstat ${Source_Files__connstat} PARENT_SCOPE)
