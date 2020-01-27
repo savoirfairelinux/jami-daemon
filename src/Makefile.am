@@ -27,7 +27,17 @@ ENABLE_VIDEO_LIBS+= \
 endif
 endif
 
-SUBDIRS = client media config hooks sip upnp security jamidht im $(ENABLE_VIDEO_SUBDIR)
+ENABLE_CONNSTAT_LIBS=
+if HAVE_LINUX
+ENABLE_CONNSTAT_LIBS+= \
+	       ./connstat/libconnstat.la
+endif
+ENABLE_CONNSTAT_SUBDIR=
+if HAVE_LINUX
+ENABLE_CONNSTAT_SUBDIR+=connstat
+endif
+
+SUBDIRS = client media config hooks sip upnp security jamidht im $(ENABLE_VIDEO_SUBDIR) ${ENABLE_CONNSTAT_SUBDIR}
 
 # libring
 
@@ -43,7 +53,8 @@ libring_la_LIBADD = \
 	./upnp/libupnpcontrol.la \
 	./jamidht/libringacc.la \
 	./im/libim.la \
-	$(ENABLE_VIDEO_LIBS)
+	$(ENABLE_VIDEO_LIBS) \
+	$(ENABLE_CONNSTAT_LIBS)
 
 libring_la_LDFLAGS = \
 		@PJPROJECT_LIBS@ \
@@ -67,6 +78,7 @@ libring_la_LDFLAGS = \
 		@LIBSWRESAMPLE_LIBS@ \
 		@LIBSWSCALE_LIBS@ \
 		@LIBAVUTIL_LIBS@ \
+		@NL3_LIBS@ \
 		@LIBS@
 
 if HAVE_WIN32
@@ -94,6 +106,9 @@ libring_la_CFLAGS = \
 		@LIBAVFILTER_CFLAGS@ \
 		@LIBSWRESAMPLE_CFLAGS@ \
 		@LIBSWSCALE_CFLAGS@
+if HAVE_LINUX
+libring_la_CFLAGS += @NL3_CFLAGS@
+endif
 
 libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
 
