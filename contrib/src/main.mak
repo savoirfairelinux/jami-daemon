@@ -27,6 +27,7 @@ TOPSRC ?= ../../contrib
 TOPDST ?= ..
 SRC := $(TOPSRC)/src
 TARBALLS := $(TOPSRC)/tarballs
+GITREPOS := $(TOPSRC)/gitrepos
 
 PATH :=$(abspath ../../extras/tools/build/bin):$(PATH)
 export PATH
@@ -344,6 +345,10 @@ download_git = \
 	(cd $(dir $@) && \
 	tar cJ $(notdir $(@:.tar.xz=))) > $@ && \
 	rm -Rf $(@:.tar.xz=)
+# git clone --depth=1 --branch=v4.1 URL linus
+download_git2 = \
+	rm -Rf $(@) && \
+	$(GIT) clone --depth=1 $(2:%=--branch %) $(1) $(@)
 endif
 
 checksum = \
@@ -366,6 +371,7 @@ APPLY = (cd $(UNPACK_DIR) && patch -flp1) <
 APPLY_BIN = (cd $(UNPACK_DIR) && patch --binary -flp1) <
 pkg_static = (cd $(UNPACK_DIR) && ../../../contrib/src/pkg-static.sh $(1))
 MOVE = mv $(UNPACK_DIR) $@ && touch $@
+MOVE_GIT = rm -Rf $@  && mv $< $@
 
 AUTOMAKE_DATA_DIRS=$(foreach n,$(foreach n,$(subst :, ,$(shell echo $$PATH)),$(abspath $(n)/../share)),$(wildcard $(n)/automake*))
 UPDATE_AUTOCONFIG = for dir in $(AUTOMAKE_DATA_DIRS); do \
