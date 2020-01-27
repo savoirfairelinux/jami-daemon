@@ -1,6 +1,9 @@
 # OPENDHT
 OPENDHT_VERSION := 2.0.0rc1
-OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
+OPENDHT_URL     := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
+GIT_URL         := https://github.com/257/opendht.git
+GIT_BRANCH      := connstat
+GIT_COMMIT      := f591ef3d9c3a73ef3b7188b2717d3dcb060c9a62
 
 PKGS += opendht
 ifeq ($(call need_pkg,'opendht'),)
@@ -27,21 +30,42 @@ ifneq ($(call need_pkg,"gnutls >= 3.3.0"),)
 DEPS_opendht += gnutls
 endif
 
+OPENDHT_CONF_FLAGS += $(HOSTCONF)
+OPENDHT_CONF_FLAGS += --enable-static
+OPENDHT_CONF_FLAGS += --disable-shared
+OPENDHT_CONF_FLAGS += --disable-tools
+OPENDHT_CONF_FLAGS += --disable-indexation
+OPENDHT_CONF_FLAGS += --disable-python
+OPENDHT_CONF_FLAGS += --disable-doc
+OPENDHT_CONF_FLAGS += --enable-proxy-server
+OPENDHT_CONF_FLAGS += --enable-proxy-client
+OPENDHT_CONF_FLAGS += --with-http-parser-fork
+OPENDHT_CONF_FLAGS += --enable-push-notifications
+ifdef ENABLE_CONNSTAT
+    OPENDHT_CONF_FLAGS += --enable-connstat
+endif
+ifdef ENABLE_DEBUG
+    OPENDHT_CONF_FLAGS += --enable-debug
+endif
 # fmt 5.3.0 fix: https://github.com/fmtlib/fmt/issues/1267
 OPENDHT_CONF = FMT_USE_USER_DEFINED_LITERALS=0
 
 $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 	$(call download,$(OPENDHT_URL))
 
-.sum-opendht: opendht-$(OPENDHT_VERSION).tar.gz
+$(GITREPOS)/opendht.git:
+	$(call download_git2,$(GIT_URL),$(GIT_BRANCH))
 
-opendht: opendht-$(OPENDHT_VERSION).tar.gz
-	$(UNPACK)
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
-	$(MOVE)
+.sum-opendht: opendht
+	$(call gitverify,$<,$(GIT_COMMIT))
+	touch $@
+
+opendht: $(GITREPOS)/opendht.git
+	$(UPDATE_AUTOCONFIG)
+	$(MOVE_GIT)
 
 .opendht: opendht .sum-opendht
 	mkdir -p $</m4 && $(RECONF)
-	cd $< && $(HOSTVARS) $(OPENDHT_CONF) ./configure --enable-static --disable-shared --disable-tools --disable-indexation --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --with-http-parser-fork --enable-push-notifications $(HOSTCONF)
+	cd $< && $(HOSTVARS) $(OPENDHT_CONF) ./configure $(OPENDHT_CONF_FLAGS)
 	cd $< && $(MAKE) install
 	touch $@
