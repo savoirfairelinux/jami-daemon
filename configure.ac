@@ -24,8 +24,14 @@ m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 dnl debug mode is default-disabled
 AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [Build in debug mode, adds stricter warnings, disables optimization]))
 AS_IF([test "x$enable_debug" = "xyes"], [
-    CFLAGS="${CFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-unknown-pragmas -Wformat=2 -O0"
-    CXXFLAGS="${CXXFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-unknown-pragmas -Wformat=2 -O0"
+    CFLAGS_DEBUG=()
+    CFLAGS_DEBUG+=('-g -ggdb -O0')
+    CFLAGS_DEBUG+=('-pedantic-errors -pedantic')
+    CFLAGS_DEBUG+=('-Wall -Wextra')
+    # CFLAGS_DEBUG+=('-fsanitize=address')
+    CFLAGS="${CFLAGS} ${CXXFLAGS_DEBUG[[@]]}"
+    CXXFLAGS="${CFLAGS} ${CXXFLAGS}"
+    LDFLAGS+='-fsanitize=address'
 ], [
     CFLAGS="${CFLAGS} -DNDEBUG=1 -O3"
     CXXFLAGS="${CXXFLAGS} -DNDEBUG=1 -O3"
@@ -588,6 +594,23 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 
 # Actually perform the doxygen check
 BB_ENABLE_DOXYGEN
+
+dnl connectivity status
+AC_ARG_ENABLE([connstat],
+	      AS_HELP_STRING([--disable-connstat],
+			     [Disable native connectivity stat reports]))
+AS_IF([test "$SYS" == "android"], [have_libnl=yes],
+      [test "$SYS" == "linux"], [PKG_CHECK_MODULES([NL3],
+						  [libnl-3.0 libnl-genl-3.0 libnl-route-3.0],
+						  [have_libnl=yes], [have_libnl=no])],
+	[have_libnl=no]
+)
+dnl assert on other hosts
+AS_IF([ [[ "x$enable_connstat" = "xyes" ]] && [[ "x$have_libnl" = "xno" ]] ], [
+       AC_MSG_ERROR(["libnl is required connectivity stat"])]
+)
+AM_CONDITIONAL([ENABLE_CONNSTAT], [test "x$have_libnl" = "xyes"])
+AM_COND_IF([ENABLE_CONNSTAT], [AC_DEFINE([ENABLE_CONNSTAT], [1], [Enable connstat])])
 
 AC_CONFIG_FILES([Makefile \
                  bin/Makefile \
