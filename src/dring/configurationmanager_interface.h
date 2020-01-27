@@ -203,6 +203,7 @@ DRING_PUBLIC int importAccounts(const std::string& archivePath, const std::strin
  * Network connectivity
  */
 DRING_PUBLIC void connectivityChanged();
+DRING_PUBLIC void connectivityChanged(unsigned int what);
 
 /* Dht proxy */
 
