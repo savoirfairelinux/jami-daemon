@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fa6f1821_71ea101c",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 25
+      },
+      "lineNbr": 579,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-01-28T16:52:07Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe loop variable\u0027s type is not a reference type; this creates a copy in each iteration; consider making this a reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-for-range-copy",
+      "revId": "56d6886384fe2d760b92dcc42ab1dabb19b22bf7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
