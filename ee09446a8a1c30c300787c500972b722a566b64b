@@ -1,0 +1,182 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "105dda82_fa8ab4b6",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 978,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-28T18:38:56Z",
+      "side": 1,
+      "message": "For now event is not really used, we should discuss what to restart and when depending the event :)",
+      "range": {
+        "startLine": 978,
+        "startChar": 33,
+        "endLine": 978,
+        "endChar": 38
+      },
+      "revId": "ee09446a8a1c30c300787c500972b722a566b64b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bd1469fe_f9a8411e",
+        "filename": "src/client/configurationmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 990,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-28T18:38:56Z",
+      "side": 1,
+      "message": "indent",
+      "range": {
+        "startLine": 990,
+        "startChar": 0,
+        "endLine": 990,
+        "endChar": 1
+      },
+      "revId": "ee09446a8a1c30c300787c500972b722a566b64b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "55c71980_ebd15136",
+        "filename": "src/connstat/connstat.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-28T18:38:56Z",
+      "side": 1,
+      "message": "cpp \u003d\u003e nullptr",
+      "range": {
+        "startLine": 34,
+        "startChar": 30,
+        "endLine": 34,
+        "endChar": 34
+      },
+      "revId": "ee09446a8a1c30c300787c500972b722a566b64b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b8094c6b_cb12acc1",
+        "filename": "src/connstat/connstat.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 226,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-28T18:38:56Z",
+      "side": 1,
+      "message": "Please remove that log, we already have a logger",
+      "revId": "ee09446a8a1c30c300787c500972b722a566b64b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9d45895e_cd35ea6e",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-28T18:38:56Z",
+      "side": 1,
+      "message": "#pragma once",
+      "range": {
+        "startLine": 18,
+        "startChar": 0,
+        "endLine": 20,
+        "endChar": 18
+      },
+      "revId": "ee09446a8a1c30c300787c500972b722a566b64b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f54b4eda_510f466c",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-28T18:38:56Z",
+      "side": 1,
+      "message": "enum class",
+      "range": {
+        "startLine": 27,
+        "startChar": 0,
+        "endLine": 28,
+        "endChar": 23
+      },
+      "revId": "ee09446a8a1c30c300787c500972b722a566b64b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4f1fb756_29d23bef",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 51,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-28T18:38:56Z",
+      "side": 1,
+      "message": "Just tested, but there is really too much connectivityChanged.\n\nI think reacting to DELADDR/NewAddr should be enough",
+      "range": {
+        "startLine": 29,
+        "startChar": 4,
+        "endLine": 51,
+        "endChar": 23
+      },
+      "revId": "ee09446a8a1c30c300787c500972b722a566b64b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "05938366_e76471b6",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-01-28T18:38:56Z",
+      "side": 1,
+      "message": "connstat -\u003e Connstat",
+      "range": {
+        "startLine": 66,
+        "startChar": 19,
+        "endLine": 66,
+        "endChar": 27
+      },
+      "revId": "ee09446a8a1c30c300787c500972b722a566b64b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
