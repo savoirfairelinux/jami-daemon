@@ -329,7 +329,6 @@ IceSocketEndpoint::IceSocketEndpoint(std::shared_ptr<IceTransport> ice, bool isS
 IceSocketEndpoint::~IceSocketEndpoint()
 {
     shutdown();
-    ice_.reset();
 }
 
 void
@@ -415,6 +414,13 @@ public:
             /*.cert_check = */  nullptr,
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
+
+        const IceSocketEndpoint* iceSocket = (const IceSocketEndpoint*)(ep_);
+        if (iceSocket) {
+            iceSocket->underlyingICE()->setOnShutdown([this]() {
+                tls.reset();
+            });
+        }
     }
 
     Impl(std::unique_ptr<AbstractSocketEndpoint>&& ep,
@@ -439,6 +445,15 @@ public:
             /*.cert_check = */  nullptr,
         };
         tls = std::make_unique<tls::TlsSession>(std::move(ep), tls_param, tls_cbs);
+
+        const IceSocketEndpoint* iceSocket = (const IceSocketEndpoint*)(ep_);
+        if (iceSocket) {
+            iceSocket->underlyingICE()->setOnShutdown([this]() {
+                tls->shutdown();
+                if (onStateChangeCb_)
+                    onStateChangeCb_(tls::TlsSessionState::SHUTDOWN);
+            });
+        }
     }
 
     ~Impl() {
@@ -527,7 +542,6 @@ TlsSocketEndpoint::TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint>&& t
                                     std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
     : pimpl_ { std::make_unique<Impl>(std::move(tr), std::move(cert_check), local_identity, dh_params) }
 {
-
 }
 
 
@@ -536,36 +550,57 @@ TlsSocketEndpoint::~TlsSocketEndpoint() {}
 bool
 TlsSocketEndpoint::isInitiator() const
 {
+    if (!pimpl_->tls) {
+        return false;
+    }
     return pimpl_->tls->isInitiator();
 }
 
 int
 TlsSocketEndpoint::maxPayload() const
 {
-  return pimpl_->tls->maxPayload();
+    if (!pimpl_->tls) {
+        return -1;
+    }
+    return pimpl_->tls->maxPayload();
 }
 
 std::size_t
 TlsSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
 {
+    if (!pimpl_->tls) {
+        ec = std::make_error_code(std::errc::broken_pipe);
+        return -1;
+    }
     return pimpl_->tls->read(buf, len, ec);
 }
 
 std::size_t
 TlsSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code& ec)
 {
+    if (!pimpl_->tls) {
+        ec = std::make_error_code(std::errc::broken_pipe);
+        return -1;
+    }
     return pimpl_->tls->write(buf, len, ec);
 }
 
 void
 TlsSocketEndpoint::waitForReady(const std::chrono::milliseconds& timeout)
 {
+    if (!pimpl_->tls) {
+        return;
+    }
     pimpl_->tls->waitForReady(timeout);
 }
 
 int
 TlsSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const
 {
+    if (!pimpl_->tls) {
+        ec = std::make_error_code(std::errc::broken_pipe);
+        return -1;
+    }
     return pimpl_->tls->waitForData(timeout, ec);
 }
 
@@ -592,6 +627,18 @@ TlsSocketEndpoint::shutdown()
     pimpl_->tls->shutdown();
 }
 
+
+std::shared_ptr<IceTransport>
+TlsSocketEndpoint::underlyingICE() const
+{
+    if (pimpl_->ep_) {
+        const IceSocketEndpoint* iceSocket = (const IceSocketEndpoint*)(pimpl_->ep_);
+        if (iceSocket) {
+            return iceSocket->underlyingICE();
+        }
+    }
+    return {};
+}
 
 
 //==============================================================================
