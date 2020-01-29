@@ -47,11 +47,11 @@ class Controller
 {
 public:
     using NotifyServiceCallback = std::function<void(uint16_t, bool)>;
-    Controller(bool keepCb = true);
+    Controller(bool keepCb = false);
     ~Controller();
 
     // Checks if a valid IGD is available.
-    bool hasValidIGD();
+    bool hasValidIGD() const;
 
     // Gets the external ip of the first valid IGD in the list.
     IpAddr getExternalIP() const;
@@ -60,26 +60,26 @@ public:
     IpAddr getLocalIP() const;
 
     void requestMappingAdd(NotifyServiceCallback&& cb, uint16_t portDesired, PortType type, bool unique, uint16_t portLocal = 0);
+    bool requestMappingRemove(uint16_t portExternal, PortType type);
 
     // Checks if the map is present locally given a port and type.
-    bool isLocalMapPresent(const unsigned int portExternal, PortType type);
-
-    // Adds a mapping locally to the list.
-    void addLocalMap(const Mapping& map);
-    // Removes a mapping locally from the list.
-    void removeLocalMap(const Mapping& map);
+    bool isLocalMapPresent(uint16_t portExternal, PortType type) const;
 
 private:
     std::shared_ptr<UPnPContext> upnpContext_;		// Context from which the controller executes the wanted commands.
 
-    std::mutex mapListMutex_;                       // Mutex to protect mappings list.
+    mutable std::mutex mapListMutex_;                       // Mutex to protect mappings list.
     PortMapLocal udpMappings_;						// List of UDP mappings created by this instance.
     PortMapLocal tcpMappings_;						// List of TCP mappings created by this instance.
 
     size_t listToken_ {0};							// IGD listener token.
     uint64_t id_ {0};                           // Variable to store string of address to be used as the unique identifier.
-    bool keepCb_ {true};                       // Variable that indicates if the controller wants to keep it's callbacks in the list after a connectivity change.
+    bool keepCb_ {false};                       // Variable that indicates if the controller wants to keep it's callbacks in the list after a connectivity change.
 
+    // Adds a mapping locally to the list.
+    void addLocalMap(const Mapping& map);
+    // Removes a mapping locally from the list.
+    bool removeLocalMap(const Mapping& map);
     // Removes all mappings of the given type.
     void requestAllMappingRemove(PortType type);
 };

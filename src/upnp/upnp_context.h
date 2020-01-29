@@ -125,7 +125,7 @@ public:
     void unregisterAddMappingTimeout(const Mapping& map);
 
     // Sends out a request to protocol to remove a mapping.
-    void requestMappingRemove(const Mapping& map);
+    bool requestMappingRemove(const Mapping& map);
     // Removes mapping from corresponding IGD.
     void removeMappingFromIgd(IpAddr igdIp, const Mapping& map);
     // Callback function for when mapping is removed.
