@@ -187,6 +187,8 @@ public:
     // Wait data on components
     std::vector<pj_ssize_t> lastReadLen_;
     std::condition_variable waitDataCv_ = {};
+
+    onShutdownCb scb;
 };
 
 //==============================================================================
@@ -345,6 +347,15 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
           }
         } else
             JAMI_WARN("null IceTransport");
+    };
+
+    icecb.on_destroy = [](pj_ice_strans* ice_st) {
+        if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
+            if (tr->scb)
+                tr->scb();
+        } else {
+            JAMI_WARN("null IceTransport");
+        }
     };
 
     // Add STUN servers
@@ -1283,6 +1294,13 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
     }
 }
 
+void
+IceTransport::setOnShutdown(onShutdownCb&& cb)
+{
+    pimpl_->scb = cb;
+}
+
+
 ssize_t
 IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 {
@@ -1299,7 +1317,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         auto current_size = sent_size;
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
-        while (static_cast<std::size_t>(comp_id) < pimpl_->lastReadLen_.size() && current_size < len) {
+        while (static_cast<std::size_t>(comp_id) < pimpl_->lastReadLen_.size() && current_size < static_cast<pj_ssize_t>(len)) {
           std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
           pimpl_->waitDataCv_.wait(lk);
           current_size = pimpl_->lastReadLen_[comp_id];
