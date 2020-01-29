@@ -71,6 +71,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/fix_turn_connection_failure.patch
 	$(APPLY) $(SRC)/pjproject/disable_local_resolution.patch
 	$(APPLY) $(SRC)/pjproject/fix_assert_on_connection_attempt.patch
+	$(APPLY) $(SRC)/pjproject/keep_alive.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
