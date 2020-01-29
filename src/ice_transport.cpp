@@ -187,6 +187,8 @@ public:
     // Wait data on components
     std::vector<pj_ssize_t> lastReadLen_;
     std::condition_variable waitDataCv_ = {};
+
+    onShutdownCb scb;
 };
 
 //==============================================================================
@@ -344,6 +346,14 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
             tr->waitDataCv_.notify_all();
           }
         } else
+            JAMI_WARN("null IceTransport");
+    };
+
+    icecb.on_destroy = [](pj_ice_strans* ice_st) {
+        if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st)))
+            if (tr->scb)
+                tr->scb();
+        else
             JAMI_WARN("null IceTransport");
     };
 
@@ -1282,6 +1292,13 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
         io.queue.clear();
     }
 }
+
+void
+IceTransport::setOnShutdown(onShutdownCb&& cb)
+{
+    pimpl_->scb = cb;
+}
+
 
 ssize_t
 IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
