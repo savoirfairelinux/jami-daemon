@@ -484,8 +484,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * UPnP IGD controller and the mutex to access it
          */
-        std::unique_ptr<jami::upnp::Controller> upnp_;
         mutable std::mutex upnp_mtx {};
+        std::unique_ptr<jami::upnp::Controller> upnp_;
 
         /**
          * private account codec searching functions

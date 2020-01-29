@@ -1512,7 +1512,7 @@ JamiAccount::registerAsyncOps()
                 JAMI_WARN("[Account %s] DHT port %u opened: restarting network", getAccountID().c_str(), newPort);
                 dht_->connectivityChanged();
             }
-        }, dhtPort_, jami::upnp::PortType::UDP, false);
+        }, dhtPort_, upnp::PortType::UDP, false);
     } else
         onLoad();
 }
@@ -1999,6 +1999,8 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     dht_->join();
+
+    upnp_->requestMappingRemove(static_cast<in_port_t>(dhtPortUsed_), upnp::PortType::UDP);
 
     lock.unlock();
     setRegistrationState(RegistrationState::UNREGISTERED);
