@@ -1118,6 +1118,8 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
 
                 fileutils::check_dir(idPath_.c_str(), 0700);
 
+                emitSignal<DRing::ConfigurationSignal::AccountAvatarReceived>(getAccountID(), info.photo);
+
                 // save the chain including CA
                 auto id = info.identity;
                 id.first = std::move(fDeviceKey.get());
@@ -3247,6 +3249,5 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const s
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
 }
-
 
 } // namespace jami
