@@ -1493,15 +1493,15 @@ JamiAccount::registerAsyncOps()
             auto oldPort = static_cast<in_port_t>(dhtPortUsed_);
             auto newPort = success ? port_used : dhtPort_;
 
-            if (not success and not dht_->isRunning()) {
+            if (not success and not isUsable()) {
                 JAMI_WARN("[Account %s] Failed to open port %u: starting DHT anyways", getAccountID().c_str(), oldPort);
                 onLoad();
                 return;
             }
 
-            if (oldPort != newPort or not dht_->isRunning()){
+            if (oldPort != newPort or not isUsable()){
                 dhtPortUsed_ = newPort;
-                if (not dht_->isRunning()) {
+                if (not isUsable()) {
                     JAMI_WARN("[Account %s] Starting DHT on port %u", getAccountID().c_str(), newPort);
                     onLoad();
                 } else {
@@ -1512,7 +1512,7 @@ JamiAccount::registerAsyncOps()
                 JAMI_WARN("[Account %s] DHT port %u opened: restarting network", getAccountID().c_str(), newPort);
                 dht_->connectivityChanged();
             }
-        }, dhtPort_, jami::upnp::PortType::UDP, false);
+        }, dhtPort_, upnp::PortType::UDP, false);
     } else
         onLoad();
 }
@@ -1999,6 +1999,8 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     dht_->join();
+
+    if (upnp_) upnp_->requestMappingRemove(static_cast<in_port_t>(dhtPortUsed_), upnp::PortType::UDP);
 
     lock.unlock();
     setRegistrationState(RegistrationState::UNREGISTERED);

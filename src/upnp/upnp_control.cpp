@@ -46,7 +46,7 @@ Controller::~Controller()
 }
 
 bool
-Controller::hasValidIGD()
+Controller::hasValidIGD() const
 {
     return upnpContext_ and upnpContext_->hasValidIGD();
 }
@@ -99,11 +99,11 @@ Controller::requestMappingAdd(NotifyServiceCallback&& cb, uint16_t portDesired, 
             id_, keepCb_,
             [cb, portDesired, this](const Mapping& map, bool success) {
                 cb(portDesired, success);
-                if (success && map.isValid())
+                if (map.isValid())
                     addLocalMap(map);
             },
             [this](const Mapping& map, bool success) {
-                if (map.isValid() and success)
+                if (map.isValid())
                     removeLocalMap(map);
             },
             [this]() {
@@ -117,12 +117,45 @@ Controller::requestMappingAdd(NotifyServiceCallback&& cb, uint16_t portDesired, 
 }
 
 bool
-Controller::isLocalMapPresent(const unsigned int portExternal, PortType type)
+Controller::requestMappingRemove(uint16_t portExternal, PortType type)
+{
+    if (not upnpContext_) return false;
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+    auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto mapIt = instanceMappings.find(portExternal);
+    if (mapIt != instanceMappings.end()) {
+        if (!upnpContext_->requestMappingRemove(mapIt->second)) {
+            // No port mapped, so the callback will not be removed,
+            // remove it anyway
+            upnpContext_->unregisterCallback(mapIt->second);
+        }
+        instanceMappings.erase(mapIt);
+        return true;
+    }
+    return false;
+}
+
+bool
+Controller::isLocalMapPresent(uint16_t portExternal, PortType type) const
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
     auto it = instanceMappings.find(portExternal);
     return it != instanceMappings.end();
+}
+
+void
+Controller::requestAllMappingRemove(PortType type) {
+    if (not upnpContext_) return;
+    std::lock_guard<std::mutex> lk(mapListMutex_);
+    auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
+    for (const auto& map: instanceMappings) {
+        if (!upnpContext_->requestMappingRemove(map.second)) {
+            // No port mapped, so the callback will not be removed,
+            // remove it anyway
+            upnpContext_->unregisterCallback(map.second);
+        }
+    }
 }
 
 void
@@ -133,24 +166,18 @@ Controller::addLocalMap(const Mapping& map)
     instanceMappings.emplace(map.getPortExternal(), Mapping(map));
 }
 
-void
-Controller::requestAllMappingRemove(PortType type) {
-    if (not upnpContext_) return;
-    std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-    for (const auto& map: instanceMappings)
-        upnpContext_->requestMappingRemove(map.second);
-}
-
-void
+bool
 Controller::removeLocalMap(const Mapping& map)
 {
-    if (not upnpContext_) return;
+    if (not upnpContext_) return false;
     std::lock_guard<std::mutex> lk(mapListMutex_);
     auto& instanceMappings = map.getType() == PortType::UDP ? udpMappings_ : tcpMappings_;
     auto it = instanceMappings.find(map.getPortExternal());
-    if (it != instanceMappings.end())
+    if (it != instanceMappings.end()) {
         instanceMappings.erase(it);
+        return true;
+    }
+    return false;
 }
 
 }} // namespace jami::upnp
