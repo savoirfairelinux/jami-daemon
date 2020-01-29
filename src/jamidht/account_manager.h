@@ -49,6 +49,7 @@ struct AccountInfo {
     std::shared_ptr<dht::Value> announce;
     std::string ethAccount;
     std::string username;
+    std::string photo;
 };
 
 template <typename To, typename From>
@@ -176,7 +177,6 @@ public:
      * In that case (true is returned) the account_id parameter is set to the peer account ID.
      */
     static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id);
-
 
     // Contact requests
 

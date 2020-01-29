@@ -177,6 +177,9 @@ ServerAccountManager::initAuthentication(
                     if (json.isMember("displayName")) {
                         config.emplace(DRing::Account::ConfProperties::DISPLAYNAME, json["displayName"].asString());
                     }
+                    if (json.isMember("userPhoto")) {
+                        this_.info_->photo = json["userPhoto"].asString();
+                    }
 
                     ctx->onSuccess(*this_.info_, std::move(config), std::move(receipt), std::move(receiptSignature));
                     this_.syncDevices();
