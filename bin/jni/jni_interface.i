@@ -277,7 +277,8 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<ConfigurationSignal::RegisteredNameFound>(bind(&ConfigurationCallback::registeredNameFound, confM, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::NameRegistrationEnded>(bind(&ConfigurationCallback::nameRegistrationEnded, confM, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::MigrationEnded>(bind(&ConfigurationCallback::migrationEnded, confM, _1, _2)),
-        exportable_callback<ConfigurationSignal::DeviceRevocationEnded>(bind(&ConfigurationCallback::deviceRevocationEnded, confM, _1, _2, _3))
+        exportable_callback<ConfigurationSignal::DeviceRevocationEnded>(bind(&ConfigurationCallback::deviceRevocationEnded, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::AccountAvatarReceived>(bind(&ConfigurationCallback::accountAvatarReceived, confM, _1, _2))
     };
 
     // Presence event handlers
