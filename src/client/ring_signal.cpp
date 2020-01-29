@@ -72,6 +72,7 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::MediaParametersChanged>(),
         exported_callback<DRing::ConfigurationSignal::MigrationEnded>(),
         exported_callback<DRing::ConfigurationSignal::DeviceRevocationEnded>(),
+        exported_callback<DRing::ConfigurationSignal::AvatarReceived>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
@@ -148,6 +149,5 @@ unregisterSignalHandlers()
         item.second = {};
     }
 }
-
 
 }
