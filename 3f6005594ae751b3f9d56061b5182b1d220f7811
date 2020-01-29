@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "4fa77154_7c948248",
+        "filename": "src/sip/sipaccountbase.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 436,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-29T16:25:24Z",
+      "side": 1,
+      "message": "deadlock in ::unserialize()",
+      "range": {
+        "startLine": 436,
+        "startChar": 37,
+        "endLine": 436,
+        "endChar": 56
+      },
+      "revId": "3f6005594ae751b3f9d56061b5182b1d220f7811",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
