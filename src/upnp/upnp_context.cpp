@@ -379,10 +379,10 @@ UPnPContext::dispatchOnAddCallback(const Mapping& map, bool success)
         cb(map, success);
 }
 
-void
+bool
 UPnPContext::requestMappingRemove(const Mapping& map)
 {
-
+    auto removed = false;
     std::lock_guard<std::mutex> lk(igdListMutex_);
     if (not igdList_.empty()) {
         for (auto const& igd : igdList_) {
@@ -392,9 +392,11 @@ UPnPContext::requestMappingRemove(const Mapping& map)
                 } else {
                     igd.first->requestMappingRemove(map);
                 }
+                removed = true;
             }
         }
     }
+    return removed;
 }
 
 void
