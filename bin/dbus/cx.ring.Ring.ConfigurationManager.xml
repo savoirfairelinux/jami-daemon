@@ -247,6 +247,16 @@
            </arg>
        </signal>
 
+       <signal name="accountAvatarReceived" tp:name-for-bindings="accountAvatarReceived">
+           <tp:docstring>
+               Notify clients when a newly created account's avatar image is available for storage.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="s" name="photo">
+           </arg>
+       </signal>
+
        <signal name="knownDevicesChanged" tp:name-for-bindings="knownDevicesChanged">
            <tp:docstring>
                Notify clients when a new device linked to this account is found.
