@@ -19,23 +19,21 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 #pragma once
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
 #include "../igd.h"
 #include "../global_mapping.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
+
 #include <map>
 #include <atomic>
 #include <string>
 #include <chrono>
 #include <functional>
-#ifdef _WIN32
-#include <windows.h>
-#include <algorithm>
-//#include <minmax.h>
-#endif
 
 namespace jami { namespace upnp {
 
@@ -47,7 +45,7 @@ class PMPIGD : public IGD
 public:
     PMPIGD(IpAddr&& localIp = {}, IpAddr&& publicIp = {}):
            IGD(std::move(localIp), std::move(publicIp)){}
-    ~PMPIGD();
+    ~PMPIGD() = default;
 
     bool operator==(IGD& other) const;
     bool operator==(PMPIGD& other) const;
@@ -74,8 +72,6 @@ public:
 
     // Checks if a given mapping needs to be renewed.
     bool isMapUpForRenewal(const Mapping& map, time_point now);
-    // Gets the next mapping to renew.
-    Mapping* getNextMappingToRenew();
     // Gets the next renewal time.
     time_point getRenewalTime();
 
