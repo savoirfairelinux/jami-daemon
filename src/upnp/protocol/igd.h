@@ -45,10 +45,7 @@ class IGD
 {
 public:
     IGD(IpAddr&& localIp = {}, IpAddr&& publicIp = {});
-    IGD(IGD&&) = default;
     virtual ~IGD() = default;
-
-    IGD& operator=(IGD&&) = default;
     bool operator==(IGD& other) const;
 
     // Checks if the port is currently being used (i.e. the port is already opened).
