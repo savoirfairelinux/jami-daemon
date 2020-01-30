@@ -1493,7 +1493,7 @@ JamiAccount::registerAsyncOps()
             auto oldPort = static_cast<in_port_t>(dhtPortUsed_);
             auto newPort = success ? port_used : dhtPort_;
             if (*update) {
-                if (oldPort != newPort) {
+                if (oldPort != newPort or not dht_->isRunning()) {
                     JAMI_WARN("[Account %s] DHT port changed to %u: restarting network", getAccountID().c_str(), newPort);
                     dht_->connectivityChanged();
                 }
