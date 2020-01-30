@@ -34,24 +34,29 @@ Mapping::Mapping(uint16_t portExternal, uint16_t portInternal,
 };
 
 Mapping::Mapping(Mapping&& other) noexcept:
+#if HAVE_LIBNATPMP
+    renewal_(other.renewal_),
+#endif
     portExternal_(other.portExternal_),
     portInternal_(other.portInternal_),
     type_(other.type_),
-    description_(other.description_),
+    description_(std::move(other.description_)),
     unique_(other.unique_)
 {
     other.portExternal_ = 0;
     other.portInternal_ = 0;
 }
 
-Mapping::Mapping(const Mapping& other) noexcept
-{
-    portExternal_ = other.portExternal_;
-    portInternal_ = other.portInternal_;
-    type_ = other.type_;
-    description_ = other.description_;
-    unique_ = other.unique_;
-}
+Mapping::Mapping(const Mapping& other) :
+#if HAVE_LIBNATPMP
+    renewal_(other.renewal_),
+#endif
+    portExternal_(other.portExternal_),
+    portInternal_(other.portInternal_),
+    type_(other.type_),
+    description_(std::move(other.description_)),
+    unique_(other.unique_)
+{}
 
 Mapping& Mapping::operator=(Mapping&& other) noexcept
 {
@@ -62,6 +67,9 @@ Mapping& Mapping::operator=(Mapping&& other) noexcept
         other.portInternal_ = 0;
         type_ = other.type_;
         description_ = std::move(other.description_);
+#if HAVE_LIBNATPMP
+        renewal_ = other.renewal_;
+#endif
     }
     return *this;
 }

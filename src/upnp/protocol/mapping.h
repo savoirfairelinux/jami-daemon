@@ -48,7 +48,7 @@ public:
             PortType type = PortType::UDP, bool unique = true,
             const std::string& description = UPNP_DEFAULT_MAPPING_DESCRIPTION);
     Mapping(Mapping&& other) noexcept;
-    Mapping(const Mapping& other) noexcept;
+    Mapping(const Mapping& other);
     ~Mapping() = default;
 
     Mapping& operator=(Mapping&&) noexcept;

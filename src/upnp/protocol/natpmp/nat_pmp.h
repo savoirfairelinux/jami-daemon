@@ -34,6 +34,8 @@
 #include "noncopyable.h"
 #include "compiler_intrinsics.h"
 
+// uncomment to enable native natpmp error messages
+//#define ENABLE_STRNATPMPERR 1
 #include <natpmp.h>
 
 #include <atomic>
@@ -44,10 +46,6 @@ class IpAddr;
 }
 
 namespace jami { namespace upnp {
-
-constexpr static unsigned int ADD_MAP_LIFETIME {3600};
-constexpr static unsigned int REMOVE_MAP_LIFETIME {0};
-constexpr static unsigned int MAX_RESTART_SEARCH_RETRY {5};
 
 class NatPmp : public UPnPProtocol
 {
@@ -66,13 +64,9 @@ public:
 
     // Tries to add mapping.
     void requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type) override;
-    // Adds a port mapping.
-    void addPortMapping(Mapping& mapping, bool renew);
 
     // Removes a mapping.
     void requestMappingRemove(const Mapping& igdMapping) override;
-    // Removes a port mapping.
-    void removePortMapping(Mapping& mapping);
 
     // Removes all local mappings of IGD that we're added by the application.
     void removeAllLocalMappings(IGD* igd) override;
@@ -80,11 +74,14 @@ public:
 private:
     void searchForPmpIgd();
 
-    // Adds (or deletes) a port mapping.
-    void addPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool remove=false) const;
+    // Adds a port mapping.
+    void addPortMapping(Mapping& mapping, bool renew);
+    // Removes a port mapping.
+    void removePortMapping(Mapping& mapping);
+    //void addPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool remove=false) const;
 
     // Deletes all port mappings.
-    void deleteAllPortMappings(const PMPIGD& pmp_igd, natpmp_t& natpmp, int proto) const;
+    void deleteAllPortMappings(int proto);
 
 private:
     NON_COPYABLE(NatPmp);
@@ -103,7 +100,7 @@ private:
     // Clears the natpmp struct.
     void clearNatPmpHdl(natpmp_t& hdl);
     // Gets NAT-PMP error code string.
-    std::string getNatPmpErrorStr(int errorCode);
+    const char* getNatPmpErrorStr(int errorCode);
 };
 
 }} // namespace jami::upnp
