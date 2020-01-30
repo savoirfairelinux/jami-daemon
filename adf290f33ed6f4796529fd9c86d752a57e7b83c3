@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e0d49cdb_90023b64",
+        "filename": "contrib/tarballs/.gitignore",
+        "patchSetId": 4
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 0,
+      "message": "don\u0027t remove file",
+      "range": {
+        "startLine": 1,
+        "startChar": 0,
+        "endLine": 6,
+        "endChar": 10
+      },
+      "revId": "adf290f33ed6f4796529fd9c86d752a57e7b83c3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}

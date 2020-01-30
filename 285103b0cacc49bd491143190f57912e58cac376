@@ -1,0 +1,257 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "15f33fcc_7502284c",
+        "filename": "src/connstat/connstat.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "bool",
+      "range": {
+        "startLine": 19,
+        "startChar": 31,
+        "endLine": 20,
+        "endChar": 42
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "5516fe39_a59bb805",
+        "filename": "src/connstat/connstat.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 104,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "no goto",
+      "range": {
+        "startLine": 104,
+        "startChar": 3,
+        "endLine": 104,
+        "endChar": 7
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "13f69fc3_6b310a31",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "#pragma once",
+      "range": {
+        "startLine": 19,
+        "startChar": 0,
+        "endLine": 20,
+        "endChar": 18
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4e99c508_0c1a6185",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 26,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "in OpenDHT:\ndht::net::",
+      "range": {
+        "startLine": 26,
+        "startChar": 10,
+        "endLine": 26,
+        "endChar": 18
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "559a9b42_b5fc0ba0",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "enum class",
+      "range": {
+        "startLine": 28,
+        "startChar": 0,
+        "endLine": 28,
+        "endChar": 4
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "16c98a27_aaff68bd",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 56,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "choose proper name",
+      "range": {
+        "startLine": 56,
+        "startChar": 6,
+        "endLine": 56,
+        "endChar": 8
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b506caa3_12f81406",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "ConnectivityStatus",
+      "range": {
+        "startLine": 59,
+        "startChar": 19,
+        "endLine": 59,
+        "endChar": 27
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "609100a4_7aa5f11e",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 66,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "remove",
+      "range": {
+        "startLine": 66,
+        "startChar": 17,
+        "endLine": 66,
+        "endChar": 25
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b0f15d63_f88828e4",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "setTopicListener(",
+      "range": {
+        "startLine": 67,
+        "startChar": 8,
+        "endLine": 67,
+        "endChar": 18
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "92ed6a2f_c3d9a462",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "removeTopicListener(",
+      "range": {
+        "startLine": 68,
+        "startChar": 8,
+        "endLine": 68,
+        "endChar": 19
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9fc7a35c_593a583b",
+        "filename": "src/connstat/connstat.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-01-30T22:45:41Z",
+      "side": 1,
+      "message": "non-static",
+      "range": {
+        "startLine": 73,
+        "startChar": 4,
+        "endLine": 73,
+        "endChar": 10
+      },
+      "revId": "285103b0cacc49bd491143190f57912e58cac376",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
