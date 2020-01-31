@@ -214,7 +214,6 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
         std::lock_guard<std::mutex> lock(transportMapMutex_);
         auto key = transports_.find(tp);
         if (key == transports_.end()) {
-            JAMI_WARN("spurious pjsip transport state change");
             return;
         }
 

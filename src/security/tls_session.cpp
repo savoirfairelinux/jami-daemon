@@ -316,7 +316,7 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(std::unique_ptr<SocketType>&& transpo
 
 TlsSession::TlsSessionImpl::~TlsSessionImpl()
 {
-    state_ = TlsSessionState::SHUTDOWN;
+    newState_ = TlsSessionState::SHUTDOWN;
     stateCondition_.notify_all();
     rxCv_.notify_all();
     thread_.join();
@@ -1305,7 +1305,7 @@ TlsSession::currentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
 void
 TlsSession::shutdown()
 {
-    pimpl_->state_ = TlsSessionState::SHUTDOWN;
+    pimpl_->newState_ = TlsSessionState::SHUTDOWN;
     pimpl_->stateCondition_.notify_all();
     pimpl_->rxCv_.notify_one(); // unblock waiting FSM
 }

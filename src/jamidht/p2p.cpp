@@ -490,8 +490,8 @@ private:
             *peerCertificate_);
         tls_ep_->setOnStateChange([this, ice=std::move(ice)] (tls::TlsSessionState state) {
             if (state == tls::TlsSessionState::SHUTDOWN) {
-                JAMI_WARN() << "TLS connection failure from peer "
-                            << peer_.toString();
+                if (!connected_)
+                    JAMI_WARN() << "TLS connection failure from peer " << peer_.toString();
                 ice->cancelOperations(); // This will stop current PeerChannel operations
                 cancel();
             } else if (state == tls::TlsSessionState::ESTABLISHED) {
