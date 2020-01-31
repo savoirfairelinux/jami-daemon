@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "b319ae7c_44018148",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 290,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-01-31T19:46:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d75f0fe6_7c0bad07",
+      "range": {
+        "startLine": 290,
+        "startChar": 20,
+        "endLine": 290,
+        "endChar": 37
+      },
+      "revId": "84253bd1eac04033366f1c3dee5d0b79008cdecc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d8ce29c3_3ff26bad",
         "filename": "src/media/media_encoder.cpp",
         "patchSetId": 19
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "55f88f88_0faf2307",
+        "filename": "src/media/media_encoder.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 214,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-01-31T19:46:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d8ce29c3_3ff26bad",
+      "range": {
+        "startLine": 214,
+        "startChar": 17,
+        "endLine": 214,
+        "endChar": 27
+      },
+      "revId": "84253bd1eac04033366f1c3dee5d0b79008cdecc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "9f3e1a69_bff6ee7b",
         "filename": "src/media/video/accel.cpp",
         "patchSetId": 19
@@ -59,6 +107,30 @@
       "writtenOn": "2020-01-31T15:11:53Z",
       "side": 1,
       "message": "const ptr if you just want to print info.\nBtw only storing the type is ok as you only use dev-\u003etype",
+      "range": {
+        "startLine": 101,
+        "startChar": 54,
+        "endLine": 102,
+        "endChar": 47
+      },
+      "revId": "84253bd1eac04033366f1c3dee5d0b79008cdecc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2946cbd2_0c9bddf6",
+        "filename": "src/media/video/accel.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-01-31T19:46:34Z",
+      "side": 1,
+      "message": "DeviceType is not directly accessible, we have to cast deviceCtx_ into AVHWDeviceContext* before",
+      "parentUuid": "9f3e1a69_bff6ee7b",
       "range": {
         "startLine": 101,
         "startChar": 54,
@@ -94,6 +166,30 @@
     },
     {
       "key": {
+        "uuid": "06231017_99aa05f0",
+        "filename": "src/media/video/accel.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 135,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-01-31T19:46:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "1c10c060_60092a71",
+      "range": {
+        "startLine": 135,
+        "startChar": 28,
+        "endLine": 135,
+        "endChar": 32
+      },
+      "revId": "84253bd1eac04033366f1c3dee5d0b79008cdecc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "cedf4f59_1a2614ec",
         "filename": "src/media/video/accel.cpp",
         "patchSetId": 19
@@ -114,6 +210,30 @@
       "revId": "84253bd1eac04033366f1c3dee5d0b79008cdecc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fdaad47b_61e678aa",
+        "filename": "src/media/video/accel.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-01-31T19:46:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cedf4f59_1a2614ec",
+      "range": {
+        "startLine": 144,
+        "startChar": 4,
+        "endLine": 156,
+        "endChar": 9
+      },
+      "revId": "84253bd1eac04033366f1c3dee5d0b79008cdecc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -140,6 +260,30 @@
     },
     {
       "key": {
+        "uuid": "f2ed54e1_470781de",
+        "filename": "src/media/video/accel.cpp",
+        "patchSetId": 19
+      },
+      "lineNbr": 345,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-01-31T19:46:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "17db9548_61880d80",
+      "range": {
+        "startLine": 345,
+        "startChar": 14,
+        "endLine": 345,
+        "endChar": 23
+      },
+      "revId": "84253bd1eac04033366f1c3dee5d0b79008cdecc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "92072095_563f31b9",
         "filename": "src/media/video/accel.h",
         "patchSetId": 19
@@ -160,6 +304,30 @@
       "revId": "84253bd1eac04033366f1c3dee5d0b79008cdecc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "82d6acff_47678ca6",
+        "filename": "src/media/video/accel.h",
+        "patchSetId": 19
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-01-31T19:46:34Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "92072095_563f31b9",
+      "range": {
+        "startLine": 45,
+        "startChar": 9,
+        "endLine": 45,
+        "endChar": 15
+      },
+      "revId": "84253bd1eac04033366f1c3dee5d0b79008cdecc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
