@@ -67,6 +67,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     });
     DeviceParams dev;
     dev.input = fileName;
+    dev.name = fileName;
 
     if (decoder->openInput(dev) < 0)
         throw AudioFileException("File could not be opened: " + fileName);
