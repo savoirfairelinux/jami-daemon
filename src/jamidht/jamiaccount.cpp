@@ -2228,7 +2228,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
 void
 JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)> cb)
 {
-    if (proxyServerCached_.empty()) {
+    if (proxyEnabled_ and proxyServerCached_.empty()) {
         JAMI_DBG("[Account %s] loading DHT proxy URL", getAccountID().c_str());
         if (proxyListUrl_.empty()) {
             cb(getDhtProxyServer(proxyServer_));
