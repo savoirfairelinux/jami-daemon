@@ -63,6 +63,7 @@ using random_device = dht::crypto::random_device;
 #include "audio/sound/tonelist.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
+#include "plugin/jamipluginmanager.h"
 
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
@@ -415,6 +416,8 @@ struct Manager::ManagerPimpl
 #endif
 
     std::unique_ptr<SIPVoIPLink> sipLink_;
+    /* Jami Plugin Manager */
+    JamiPluginManager jami_plugin_manager;
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -3098,6 +3101,11 @@ Manager::sipVoIPLink() const
     return *pimpl_->sipLink_;
 }
 
+
+JamiPluginManager& Manager::getJamiPluginManager() const
+{
+    return pimpl_->jami_plugin_manager;
+}
 
 std::map<std::string, std::string>
 Manager::getNearbyPeers(const std::string& accountID)
