@@ -61,6 +61,7 @@ class IceTransportFactory;
 class DataTransferFacade;
 class JamiAccount;
 class SIPVoIPLink;
+class JamiPluginManager;
 
 static constexpr uint64_t DRING_ID_MAX_VAL = 9007199254740992;
 
@@ -904,6 +905,7 @@ class DRING_TESTABLE Manager {
         std::vector<DRing::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
 
         SIPVoIPLink& sipVoIPLink() const;
+        JamiPluginManager& getJamiPluginManager() const;
 
 private:
         Manager();
