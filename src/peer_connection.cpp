@@ -446,11 +446,11 @@ public:
     void onTlsRxData(std::vector<uint8_t>&&);
     void onTlsCertificatesUpdate(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int);
 
-    std::unique_ptr<tls::TlsSession> tls;
+    OnStateChangeCb onStateChangeCb_;
     const dht::crypto::Certificate& peerCertificate;
     dht::crypto::Certificate null_cert;
     std::function<bool(const dht::crypto::Certificate &)> peerCertificateCheckFunc;
-    OnStateChangeCb onStateChangeCb_;
+    std::unique_ptr<tls::TlsSession> tls;
 };
 
 // Declaration at namespace scope is necessary (until C++17)
