@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7122b498_ce9c5243",
+        "filename": "src/plugin/jamiplugin.h",
+        "patchSetId": 27
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-03T15:20:59Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nmacro argument should be enclosed in parentheses\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-macro-parentheses",
+      "revId": "c562dee256dc5c8b3df311386b987f5737bc8c77",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
