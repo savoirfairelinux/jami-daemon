@@ -135,16 +135,12 @@ NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         cb(cacheResult, Response::found);
         return;
     }
-    auto request = std::make_shared<Request>(*httpContext_, resolver_, QUERY_ADDR + addr);
+    auto request = std::make_shared<Request>(*httpContext_, resolver_, serverUrl_ + QUERY_ADDR + addr);
     auto reqid = request->id();
     try {
-        request->set_connection_type(restinio::http_connection_header_t::keep_alive);
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-        request->add_on_state_change_callback([this, cb=std::move(cb), reqid, addr]
-                                              (Request::State state, const dht::http::Response& response){
-            if (state != Request::State::DONE)
-                return;
+        request->add_on_done_callback([this, cb=std::move(cb), reqid, addr] (const dht::http::Response& response){
             if (response.status_code >= 400 && response.status_code < 500){
                 cb("", Response::notFound);
             }
@@ -213,15 +209,13 @@ NameDirectory::lookupName(const std::string& n, LookupCallback cb)
         cb(cacheResult, Response::found);
         return;
     }
-    auto request = std::make_shared<Request>(*httpContext_, resolver_, QUERY_NAME + name);
+    auto request = std::make_shared<Request>(*httpContext_, resolver_, serverUrl_ + QUERY_NAME + name);
     auto reqid = request->id();
     try {
         request->set_method(restinio::http_method_get());
         setHeaderFields(*request);
-        request->add_on_state_change_callback([this, reqid, name, cb=std::move(cb)]
-                                              (Request::State state, const dht::http::Response& response){
-            if (state != Request::State::DONE)
-                return;
+        request->add_on_done_callback([this, reqid, name, cb=std::move(cb)]
+                                              (const dht::http::Response& response){
             if (response.status_code >= 400 && response.status_code < 500)
                 cb("", Response::notFound);
             else if (response.status_code < 200 || response.status_code > 299)
@@ -321,7 +315,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n,
                     jami::Blob(publickey.begin(), publickey.end()))  << "\"}";
         body = ss.str();
     }
-    auto request = std::make_shared<Request>(*httpContext_, resolver_, QUERY_NAME + name);
+    auto request = std::make_shared<Request>(*httpContext_, resolver_, serverUrl_ + QUERY_NAME + name);
     auto reqid = request->id();
     try {
         request->set_method(restinio::http_method_post());
@@ -330,10 +324,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n,
 
         JAMI_WARN("RegisterName: sending request %s %s", addr.c_str(), name.c_str());
 
-        request->add_on_state_change_callback([this, reqid, name, addr, cb=std::move(cb)]
-                                              (Request::State state, const dht::http::Response& response){
-            if (state != Request::State::DONE)
-                return;
+        request->add_on_done_callback([this, reqid, name, addr, cb=std::move(cb)](const dht::http::Response& response){
             if (response.status_code == 400){
                 cb(RegistrationResponse::incompleteRequest);
                 JAMI_ERR("RegistrationResponse::incompleteRequest");
