@@ -1,0 +1,55 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "2e4a295e_eed936d0",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 95,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-04T19:30:15Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027sync\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "aa05580e69abd0f2e62e64926f0fe926a17c59b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "9975ae83_eabf9fae",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 213,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-04T19:30:15Z",
+      "side": 1,
+      "message": "CRITICAL SonarQube violation:\n\n\ncontrol reaches end of non-void function\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-return-type",
+      "revId": "aa05580e69abd0f2e62e64926f0fe926a17c59b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5887329e_382995a1",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 48
+      },
+      "lineNbr": 266,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-04T19:30:15Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027sync\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "aa05580e69abd0f2e62e64926f0fe926a17c59b2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
