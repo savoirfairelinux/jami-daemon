@@ -36,6 +36,7 @@
 #include "contact_list.h"
 #include "archive_account_manager.h"
 #include "server_account_manager.h"
+#include "jamidht/channeled_transport.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
@@ -325,6 +326,26 @@ std::shared_ptr<SIPCall>
 JamiAccount::newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details)
 {
     std::lock_guard<std::mutex> lock(callsMutex_);
+    std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+
+    // TODO, be sure that this channeled transport is used
+    auto sipConnIt = sipConnections_.find(from);
+    if (sipConnIt != sipConnections_.end() && !sipConnIt->second.empty()) {
+        auto it = sipConnIt->second.rbegin();
+
+        auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
+        if (!call) return {};
+
+        std::weak_ptr<SIPCall> wcall = call;
+        call->setPeerUri(RING_URI_PREFIX + from);
+        call->setPeerNumber(from);
+
+        call->updateDetails(details);
+        return call;
+    }
+
+    lk.unlock();
+    
     auto call_it = pendingSipCalls_.begin();
     while (call_it != pendingSipCalls_.end()) {
         auto call = call_it->call.lock();
@@ -443,10 +464,31 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     });
 #endif
 
+    // Call connected devices
+    std::set<std::string> devices;
+    std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+    sip_utils::register_thread();
+    for (auto deviceConnIt = sipConnections_[toUri].begin(); deviceConnIt != sipConnections_[toUri].end(); ++deviceConnIt) {
+        // TODO remove this for retro compability
+        if (deviceConnIt->second.empty()) continue;
+        auto& it = deviceConnIt->second.back();
+
+        auto transport = it.transport;
+        if (!transport) continue;
+        call->setTransport(transport);
+
+        auto remote_addr = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
+        // TODO io pool?
+        onConnectedOutgoingCall(*call, deviceConnIt->first, remote_addr);
+
+        devices.emplace(deviceConnIt->first);
+    }
+
     // Find listening devices for this account
     dht::InfoHash peer_account(toUri);
-    accountManager_->forEachDevice(peer_account, [this, wCall, toUri, peer_account](const dht::InfoHash& dev)
+    accountManager_->forEachDevice(peer_account, [this, wCall, toUri, peer_account, devices](const dht::InfoHash& dev)
     {
+        if (devices.find(dev.toString()) != devices.end()) return;
         auto call = wCall.lock();
         if (not call) return;
         JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
@@ -458,6 +500,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         std::weak_ptr<SIPCall> weak_dev_call = dev_call;
         dev_call->setIPToIP(true);
         dev_call->setSecure(isTlsEnabled());
+
         auto ice = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
                                              ICE_COMPONENTS, true, getIceOptions());
         if (not ice) {
@@ -652,6 +695,8 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     auto local_sdp = call.getSDP().getLocalSdpSession();
     pjsip_dialog* dialog {nullptr};
     pjsip_inv_session* inv {nullptr};
+    // TODO!!!!
+    JAMI_WARN("@@@@ %s", pj_strbuf(&pjContact));
     if (!CreateClientDialogAndInvite(&pjFrom, &pjContact, &pjTo, &pjTarget, local_sdp, &dialog, &inv))
         return false;
 
@@ -2445,9 +2490,9 @@ JamiAccount::getContactHeader(pjsip_transport* t)
 {
     std::string quotedDisplayName = "\"" + displayName_ + "\" " + (displayName_.empty() ? "" : " ");
     if (t) {
-        // FIXME: be sure that given transport is from SipIceTransport
-        auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
-        auto address = tlsTr->getLocalAddress().toString(true);
+        auto* td = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(t);
+        auto address = td->self->getLocalAddress().toString(true);
+
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                          "%s<sips:%s%s%s;transport=dtls>",
                                          quotedDisplayName.c_str(),

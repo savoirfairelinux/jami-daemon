@@ -724,8 +724,9 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
     //      in the future
     if (not subcalls_.empty()) {
         pendingOutMessages_.emplace_back(messages, from);
-        for (auto& c : subcalls_)
+        for (auto& c : subcalls_) {
             c->sendTextMessage(messages, from);
+        }
     } else {
         if (inv) {
             try {
