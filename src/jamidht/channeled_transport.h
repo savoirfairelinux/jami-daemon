@@ -20,13 +20,9 @@
 
 #pragma once
 
-#include "ip_utils.h"
 #include "noncopyable.h"
 #include "scheduled_executor.h"
-#include "sip/sip_utils.h"
-
-#include <pjsip.h>
-#include <pj/pool.h>
+#include "jamidht/abstract_sip_transport.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -49,23 +45,23 @@ namespace tls {
  *
  * Implements a pjsip_transport on top of a ChannelSocket
  */
-class ChanneledSIPTransport
+class ChanneledSIPTransport : public AbstractSIPTransport
 {
 public:
-    using TransportData = struct {
-        pjsip_transport base; // do not move, SHOULD be the fist member
-        ChanneledSIPTransport* self {nullptr};
-    };
-    static_assert(std::is_standard_layout<TransportData>::value,
-                  "TranportData requires standard-layout");
-
     ChanneledSIPTransport(pjsip_endpoint* endpt, int tp_type,
                     const std::shared_ptr<ChannelSocket>& socket,
                     const IpAddr& local, const IpAddr& remote,
                     onShutdownCb&& cb);
     ~ChanneledSIPTransport();
 
-    pjsip_transport* getTransportBase() { return &trData_.base; }
+    pjsip_transport* getTransportBase() override { return &trData_.base; }
+
+    uint16_t getTlsSessionMtu() const override;
+
+    IpAddr getLocalAddress() const override {
+        return local_;
+    }
+
 private:
     NON_COPYABLE(ChanneledSIPTransport);
 

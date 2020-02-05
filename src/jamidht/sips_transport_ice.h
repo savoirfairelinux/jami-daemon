@@ -22,9 +22,9 @@
 #pragma once
 
 #include "security/tls_session.h"
-#include "ip_utils.h"
 #include "noncopyable.h"
 #include "scheduled_executor.h"
+#include "jamidht/abstract_sip_transport.h"
 
 #include <pjsip.h>
 #include <pj/pool.h>
@@ -54,16 +54,9 @@ namespace jami { namespace tls {
  *
  * Implements TLS transport as an pjsip_transport
  */
-struct SipsIceTransport
+class SipsIceTransport : public AbstractSIPTransport
 {
-    using clock = std::chrono::steady_clock;
-    using TransportData = struct {
-        pjsip_transport base; // do not move, SHOULD be the fist member
-        SipsIceTransport* self {nullptr};
-    };
-    static_assert(std::is_standard_layout<TransportData>::value,
-                  "TranportData requires standard-layout");
-
+public:
     SipsIceTransport(pjsip_endpoint* endpt, int tp_type, const TlsParams& param,
                     const std::shared_ptr<IceTransport>& ice, int comp_id);
     ~SipsIceTransport();
@@ -71,13 +64,13 @@ struct SipsIceTransport
     void shutdown();
 
     std::shared_ptr<IceTransport> getIceTransport() const { return ice_; }
-    pjsip_transport* getTransportBase() { return &trData_.base; }
+    pjsip_transport* getTransportBase() override { return &trData_.base; }
 
-    IpAddr getLocalAddress() const { return local_; }
+    IpAddr getLocalAddress() const override { return local_; }
     IpAddr getRemoteAddress() const { return remote_; }
 
     // uses the tls_ uniquepointer internal gnutls_session_t, to call its method to get its MTU
-    uint16_t getTlsSessionMtu();
+    uint16_t getTlsSessionMtu() const override;
 
 private:
     NON_COPYABLE(SipsIceTransport);

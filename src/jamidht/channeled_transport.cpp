@@ -89,18 +89,18 @@ ChanneledSIPTransport::ChanneledSIPTransport(pjsip_endpoint* endpt, int tp_type,
                        pjsip_tx_data *tdata,
                        const pj_sockaddr_t *rem_addr, int addr_len,
                        void *token, pjsip_transport_callback callback) -> pj_status_t {
-        auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
+        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(reinterpret_cast<TransportData*>(transport)->self);
         return this_->send(tdata, rem_addr, addr_len, token, callback);
     };
     base.do_shutdown = [](pjsip_transport *transport) -> pj_status_t {
-        auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
+        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(reinterpret_cast<TransportData*>(transport)->self);
         JAMI_DBG("ChanneledSIPTransport@%p {tr=%p {rc=%ld}}: shutdown", this_,
                  transport, pj_atomic_get(transport->ref_cnt));
         if (this_->socket_) this_->socket_->shutdown();
         return PJ_SUCCESS;
     };
     base.destroy = [](pjsip_transport *transport) -> pj_status_t {
-        auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
+        auto* this_ = reinterpret_cast<ChanneledSIPTransport*>(reinterpret_cast<TransportData*>(transport)->self);
         JAMI_DBG("ChanneledSIPTransport@%p: destroying", this_);
         delete this_;
         return PJ_SUCCESS;
@@ -288,5 +288,12 @@ ChanneledSIPTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
     scheduler_.run([this]{ handleEvents(); });
     return PJ_EPENDING;
 }
+
+uint16_t
+ChanneledSIPTransport::getTlsSessionMtu() const
+{
+    return socket_->getTlsSessionMtu();
+}
+
 
 }} // namespace jami::tls
