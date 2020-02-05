@@ -114,6 +114,7 @@ class SipTransport
         bool isConnected() const noexcept { return connected_; }
 
         void setIsIceTransport() { isIceTransport_ = true; }
+        void setIsChanneledTransport() { isChanneledTransport_ = true; }
 
         uint16_t getTlsMtu();
 
@@ -129,6 +130,7 @@ class SipTransport
 
         bool connected_ {false};
         bool isIceTransport_ {false};
+        bool isChanneledTransport_ {false};
         TlsInfos tlsInfos_;
 };
 
