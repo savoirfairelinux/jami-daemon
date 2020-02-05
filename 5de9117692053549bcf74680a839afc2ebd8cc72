@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "73362b84_8a0de595",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 2544,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-05T17:36:39Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nlocal copy \u0027test\u0027 of the variable \u0027payloads\u0027 is never modified; consider avoiding the copy\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-copy-initialization",
+      "revId": "5de9117692053549bcf74680a839afc2ebd8cc72",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
