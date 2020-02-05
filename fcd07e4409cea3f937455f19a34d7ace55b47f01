@@ -16,6 +16,23 @@
       "revId": "fcd07e4409cea3f937455f19a34d7ace55b47f01",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c6d1d25f_d487614f",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 50
+      },
+      "lineNbr": 267,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-05T21:08:06Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027sync\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "fcd07e4409cea3f937455f19a34d7ace55b47f01",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
