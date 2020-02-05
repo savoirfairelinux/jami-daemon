@@ -1,0 +1,123 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c6c4e782_7f9da008",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1412,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-05T21:39:02Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027/*\u0027 within block comment\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-comment",
+      "revId": "a2a7c4e73fb925893b3eb979a3e1a1fde52738d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "93eb1768_e4f46ae9",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1413,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-05T21:39:02Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027/*\u0027 within block comment\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-comment",
+      "revId": "a2a7c4e73fb925893b3eb979a3e1a1fde52738d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2f36f3b0_3005f6df",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1414,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-05T21:39:02Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027/*\u0027 within block comment\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-comment",
+      "revId": "a2a7c4e73fb925893b3eb979a3e1a1fde52738d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d924f5a4_7bfef383",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1415,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-05T21:39:02Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027/*\u0027 within block comment\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-comment",
+      "revId": "a2a7c4e73fb925893b3eb979a3e1a1fde52738d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "057ed273_c307d96d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1416,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-05T21:39:02Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027/*\u0027 within block comment\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-comment",
+      "revId": "a2a7c4e73fb925893b3eb979a3e1a1fde52738d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "c0c90bf5_de837b92",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1417,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-05T21:39:02Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027/*\u0027 within block comment\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-comment",
+      "revId": "a2a7c4e73fb925893b3eb979a3e1a1fde52738d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "6110a828_4ae46961",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1418,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-05T21:39:02Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\n\u0027/*\u0027 within block comment\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-comment",
+      "revId": "a2a7c4e73fb925893b3eb979a3e1a1fde52738d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
