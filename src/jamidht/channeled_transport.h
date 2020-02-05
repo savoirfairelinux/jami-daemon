@@ -66,6 +66,9 @@ public:
     ~ChanneledSIPTransport();
 
     pjsip_transport* getTransportBase() { return &trData_.base; }
+
+    uint16_t getTlsSessionMtu() const;
+
 private:
     NON_COPYABLE(ChanneledSIPTransport);
 

@@ -724,9 +724,12 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
     //      in the future
     if (not subcalls_.empty()) {
         pendingOutMessages_.emplace_back(messages, from);
-        for (auto& c : subcalls_)
+        for (auto& c : subcalls_) {
+            JAMI_WARN("SEND TO SUBCALL FROM %p", this);
             c->sendTextMessage(messages, from);
+        }
     } else {
+        JAMI_WARN("@@@ %p - inv: %p", this, inv.get());
         if (inv) {
             try {
                 im::sendSipMessage(inv.get(), messages);

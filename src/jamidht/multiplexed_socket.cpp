@@ -462,6 +462,13 @@ MultiplexedSocket::underlyingICE() const
     return pimpl_->endpoint->underlyingICE();
 }
 
+uint16_t
+MultiplexedSocket::getTlsSessionMtu() const
+{
+    if (!pimpl_->endpoint) return 0;
+    return pimpl_->endpoint->maxPayload();
+}
+
 ////////////////////////////////////////////////////////////////
 
 class ChannelSocket::Impl
@@ -548,6 +555,14 @@ ChannelSocket::underlyingICE() const
     if (auto mtx = pimpl_->endpoint.lock())
         return mtx->underlyingICE();
     return {};
+}
+
+uint16_t
+ChannelSocket::getTlsSessionMtu() const
+{
+    if (auto ep = pimpl_->endpoint.lock())
+        return ep->getTlsSessionMtu();
+    return 0;
 }
 
 void
