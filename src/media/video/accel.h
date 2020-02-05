@@ -35,16 +35,6 @@ extern "C" {
 
 namespace jami { namespace video {
 
-struct HardwareAPI
-{
-    std::string name;
-    AVHWDeviceType hwType;
-    AVPixelFormat format;
-    AVPixelFormat swFormat;
-    std::vector<AVCodecID> supportedCodecs;
-    std::set<std::string> possible_devices;
-};
-
 /**
  * @brief Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
  */

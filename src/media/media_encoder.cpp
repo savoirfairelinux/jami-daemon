@@ -778,7 +778,7 @@ MediaEncoder::setBitrate(uint64_t br)
     // Change parameters on the fly
     if(codecId == AV_CODEC_ID_H264)
         initH264(encoderCtx, br);
-    if(codecId == AV_CODEC_ID_H265)
+    if(codecId == AV_CODEC_ID_HEVC)
         initH265(encoderCtx, br);
     else if(codecId == AV_CODEC_ID_H263P)
         initH263(encoderCtx, br);

@@ -20,7 +20,6 @@
  */
 
 #include <algorithm>
-#include <thread> // hardware_concurrency
 
 #include "media_buffer.h"
 #include "string_utils.h"
@@ -30,6 +29,16 @@
 #include "config.h"
 
 namespace jami { namespace video {
+
+struct HardwareAPI
+{
+    std::string name;
+    AVHWDeviceType hwType;
+    AVPixelFormat format;
+    AVPixelFormat swFormat;
+    std::vector<AVCodecID> supportedCodecs;
+    std::set<std::string> possible_devices;
+};
 
 static const std::list<HardwareAPI> apiListDec = {
     { "nvdec", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_H265, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG }, { "0", "1", "2" } },

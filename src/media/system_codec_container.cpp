@@ -243,7 +243,7 @@ void
 SystemCodecContainer::removeCodecByName(const std::string& name, MediaType mediaType)
 {
     for (auto codecIt = availableCodecList_.begin(); codecIt != availableCodecList_.end(); ++codecIt) {
-        if ((*codecIt)->name == name && (*codecIt)->mediaType & mediaType) {
+        if ((*codecIt)->mediaType & mediaType and (*codecIt)->name == name) {
             availableCodecList_.erase(codecIt);
             break;
         }

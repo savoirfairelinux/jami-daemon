@@ -179,29 +179,22 @@ void
 Account::loadDefaultCodecs()
 {
     // default codec are system codecs
-    auto systemCodecList = systemCodecContainer_->getSystemCodecInfoList();
-
-    accountCodecInfoList_.empty();
-
+    const auto& systemCodecList = systemCodecContainer_->getSystemCodecInfoList();
+    accountCodecInfoList_.clear();
+    accountCodecInfoList_.reserve(systemCodecList.size());
     for (const auto& systemCodec: systemCodecList) {
-        // As defined in SDP RFC, only select a codec if he can encode and decode
+        // As defined in SDP RFC, only select a codec if it can encode and decode
         if ((systemCodec->codecType & CODEC_ENCODER_DECODER) != CODEC_ENCODER_DECODER)
             continue;
 
         if (systemCodec->mediaType & MEDIA_AUDIO) {
-            // we are sure of our downcast type : use static_pointer_cast
-            auto audioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(systemCodec);
-            // instantiate AccountAudioCodecInfo initialized with our system codec
-            auto codec = std::make_shared <AccountAudioCodecInfo>(*audioCodec);
-            accountCodecInfoList_.push_back(codec);
+            accountCodecInfoList_.emplace_back(std::make_shared <AccountAudioCodecInfo>(
+                *std::static_pointer_cast<SystemAudioCodecInfo>(systemCodec)));
         }
 
         if (systemCodec->mediaType & MEDIA_VIDEO) {
-            // we are sure of our downcast type : use static_pointer_cast
-            auto videoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(systemCodec);
-            // instantiate AccountVideoCodecInfo initialized with our system codec
-            auto codec = std::make_shared<AccountVideoCodecInfo>(*videoCodec);
-            accountCodecInfoList_.push_back(codec);
+            accountCodecInfoList_.emplace_back(std::make_shared<AccountVideoCodecInfo>(
+                *std::static_pointer_cast<SystemVideoCodecInfo>(systemCodec)));
         }
     }
 }
