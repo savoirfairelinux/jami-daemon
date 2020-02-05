@@ -12,6 +12,7 @@ libringacc_la_LIBADD = $(DHT_LIBS) \
     ./eth/libdevcrypto/libdevcrypto.la
 
 libringacc_la_SOURCES = \
+        abstract_sip_transport.h \
         jamiaccount.cpp \
         jamiaccount.h \
         connectionmanager.h \

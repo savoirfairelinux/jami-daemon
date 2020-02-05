@@ -114,6 +114,8 @@ public:
 
     std::shared_ptr<IceTransport> underlyingICE() const;
 
+    uint16_t getTlsSessionMtu() const;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
@@ -161,6 +163,8 @@ public:
     void setOnRecv(RecvCb&&) override;
 
     std::shared_ptr<IceTransport> underlyingICE() const;
+
+    uint16_t getTlsSessionMtu() const;
 
 private:
     class Impl;
