@@ -163,8 +163,9 @@ SipTransport::removeStateListener(uintptr_t lid)
 uint16_t
 SipTransport::getTlsMtu()
 {
+    auto* td = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(transport_.get());
     if (isIceTransport_ && isSecure()) {
-        auto tls_tr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(transport_.get())->self;
+        auto* tls_tr = reinterpret_cast<tls::SipsIceTransport*>(td->self);
         return tls_tr->getTlsSessionMtu();
     }
     return 1232; /* Hardcoded yes (it's the IPv6 value).
@@ -440,7 +441,7 @@ SipTransportBroker::getChanneledTransport(const std::shared_ptr<ChannelSocket>& 
     auto sips_tr = std::make_unique<tls::ChanneledSIPTransport>(endpt_, type, socket, local, remote, std::move(cb));
     auto tr = sips_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr);
-    sip_tr->setIsIceTransport();
+    sip_tr->setIsChanneledTransport();
     sips_tr.release(); // managed by PJSIP now
 
     {

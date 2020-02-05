@@ -294,7 +294,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
 
-    auto call = account->newIncomingCall(remote_user, {{"AUDIO_ONLY", (hasVideo ? "false" : "true") }});
+    auto transport = link->sipTransportBroker->addTransport(rdata->tp_info.transport);
+    auto call = account->newIncomingCall(remote_user, {{"AUDIO_ONLY", (hasVideo ? "false" : "true") }}, transport);
     if (!call) {
         return PJ_FALSE;
     }
@@ -303,7 +304,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
 
     // Append PJSIP transport to the broker's SipTransport list
-    auto transport = link->sipTransportBroker->addTransport(rdata->tp_info.transport);
     if (!transport) {
         if (not ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
             JAMI_WARN("Using transport from account.");

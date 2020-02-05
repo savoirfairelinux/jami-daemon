@@ -52,6 +52,8 @@ struct pjmedia_sdp_session;
 
 namespace jami {
 
+class SipTransport;
+
 namespace Conf {
     // SIP specific configuration keys
     const char *const BIND_ADDRESS_KEY = "bindAddress";
@@ -134,7 +136,7 @@ public:
      *      This type can be any base class of SIPCall class (included).
      */
     virtual std::shared_ptr<SIPCall>
-    newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}) = 0;
+    newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}, const std::shared_ptr<SipTransport>& = nullptr) = 0;
 
     virtual bool isStunEnabled() const {
         return false;
