@@ -1375,7 +1375,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
         return true;
     }
 
-    auto ice_tcp = pc.ice_tcp_sp.get();
+    /*auto ice_tcp = pc.ice_tcp_sp.get();
     auto ice = pc.ice_sp.get();
 
     bool tcp_finished = ice_tcp == nullptr || ice_tcp->isStopped();
@@ -1406,7 +1406,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
         JAMI_ERR("[call:%s] Both ICE negotations failed", call->getCallId().c_str());
         call->onFailure();
         return true;
-    }
+    }*/
 
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
     auto remote_device = pc.from;
@@ -1415,16 +1415,16 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     if (not id.first or not id.second)
         throw std::runtime_error("No identity configured for this account.");
 
-    std::weak_ptr<JamiAccount> waccount = weak();
+    /*std::weak_ptr<JamiAccount> waccount = weak();
     std::weak_ptr<SIPCall> wcall = call;
     tls::TlsParams tlsParams {
-        /*.ca_list = */"",
-        /*.ca = */pc.from_cert,
-        /*.cert = */id.second,
-        /*.cert_key = */id.first,
-        /*.dh_params = */dhParams_,
-        /*.timeout = */std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
-        /*.cert_check = */[waccount,wcall,remote_device,remote_account](unsigned status,
+        /*.ca_list = * /"",
+        /*.ca = * /pc.from_cert,
+        /*.cert = * /id.second,
+        /*.cert_key = * /id.first,
+        /*.dh_params = * /dhParams_,
+        /*.timeout = * /std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
+        /*.cert_check = * /[waccount,wcall,remote_device,remote_account](unsigned status,
                                                              const gnutls_datum_t* cert_list,
                                                              unsigned cert_num) -> pj_status_t {
             try {
@@ -1470,8 +1470,10 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
                                                                    ICE_COMP_SIP_TRANSPORT,
                                                                    tlsParams);
     if (!transport)
-        throw std::runtime_error("transport creation failed");
+        throw std::runtime_error("transport creation failed");*/
 
+
+    auto transport = sipConnections_[pc.from.toString()].rbegin()->transport;
     call->setTransport(transport);
 
     if (incoming) {
@@ -1481,10 +1483,11 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
         // Be acknowledged on transport connection/disconnection
         auto lid = reinterpret_cast<uintptr_t>(this);
         auto remote_id = remote_device.toString();
-        auto remote_addr = best_transport->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
+        auto remote_addr = sipConnections_[pc.from.toString()].rbegin()->channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
         auto& tr_self = *transport;
 
-        transport->addStateListener(lid,
+        onConnectedOutgoingCall(*call, remote_id, remote_addr);
+        /*transport->addStateListener(lid,
             [&tr_self, lid, wcall, waccount, remote_id, remote_addr](pjsip_transport_state state,
                                                                      UNUSED const pjsip_transport_state_info* info) {
                 if (state == PJSIP_TP_STATE_CONNECTED) {
@@ -1498,7 +1501,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
                 } else if (state == PJSIP_TP_STATE_DISCONNECTED) {
                     tr_self.removeStateListener(lid);
                 }
-            });
+            });*/
     }
 
     // Notify of fully available connection between peers
