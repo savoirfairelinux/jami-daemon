@@ -515,7 +515,7 @@ class SIPAccount : public SIPAccountBase {
          *      This type can be any base class of SIPCall class (included).
          */
         std::shared_ptr<SIPCall>
-        newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}) override;
+        newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}, const std::shared_ptr<SipTransport>& = nullptr) override;
 
         void onRegister(pjsip_regc_cbparam *param);
 

@@ -170,7 +170,7 @@ SIPAccount::~SIPAccount()
 }
 
 std::shared_ptr<SIPCall>
-SIPAccount::newIncomingCall(const std::string& from UNUSED, const std::map<std::string, std::string>& details)
+SIPAccount::newIncomingCall(const std::string& from UNUSED, const std::map<std::string, std::string>& details, const std::shared_ptr<SipTransport>&)
 {
     auto& manager = Manager::instance();
     return manager.callFactory.newCall<SIPCall, SIPAccount>(*this,
