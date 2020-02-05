@@ -263,12 +263,13 @@ public:
      * Create incoming SIPCall.
      * @param[in] from The origin of the call
      * @param details use to set some specific details
+     * @param sipTr: current SIP Transport
      * @return std::shared_ptr<T> A shared pointer on the created call.
      *      The type of this instance is given in template argument.
      *      This type can be any base class of SIPCall class (included).
      */
     virtual std::shared_ptr<SIPCall>
-    newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}) override;
+    newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}, const std::shared_ptr<SipTransport>& sipTr = nullptr) override;
 
     virtual bool isTlsEnabled() const override {
         return true;

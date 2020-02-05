@@ -183,7 +183,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                        pjsip_tx_data *tdata,
                        const pj_sockaddr_t *rem_addr, int addr_len,
                        void *token, pjsip_transport_callback callback) -> pj_status_t {
-        auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
+        auto* this_ = reinterpret_cast<SipsIceTransport*>(reinterpret_cast<TransportData*>(transport)->self);
         return this_->send(tdata, rem_addr, addr_len, token, callback);
     };
     base.do_shutdown = [](pjsip_transport *transport) -> pj_status_t {
@@ -706,7 +706,7 @@ SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
 }
 
 uint16_t
-SipsIceTransport::getTlsSessionMtu()
+SipsIceTransport::getTlsSessionMtu() const
 {
     return tls_->maxPayload();
 }
