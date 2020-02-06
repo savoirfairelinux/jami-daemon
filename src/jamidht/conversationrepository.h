@@ -143,6 +143,22 @@ public:
      */
     bool merge(const std::string& merge_id);
 
+    /**
+     * Get current diff stats between two commits
+     * @param oldId     Old commit
+     * @param newId     Recent commit (empty value will compare to the empty repository)
+     * @note "HEAD" is also accepted as parameter for newId
+     * @return diff stats
+     */
+    std::string diffStats(const std::string& newId, const std::string& oldId = "") const;
+
+    /**
+     * Get changed files from a git diff
+     * @param diffStats     The stats to analyze
+     * @return get the changed files from a git diff
+     */
+    static std::vector<std::string> changedFiles(const std::string_view& diffStats);
+
 private:
     ConversationRepository() = delete;
     class Impl;
