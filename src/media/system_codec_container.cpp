@@ -204,7 +204,7 @@ SystemCodecContainer::getSystemCodecInfoIdList(MediaType mediaType)
     std::vector<unsigned> idList;
     for (const auto& codecIt: availableCodecList_) {
         if (codecIt->mediaType & mediaType)
-            idList.push_back(codecIt->id);
+            idList.push_back(codecIt->avcodecId);
     }
     return idList;
 }
@@ -213,7 +213,7 @@ std::shared_ptr<SystemCodecInfo>
 SystemCodecContainer::searchCodecById(unsigned codecId, MediaType mediaType)
 {
     for (const auto& codecIt: availableCodecList_) {
-        if ((codecIt->id == codecId) &&
+        if ((codecIt->avcodecId == codecId) &&
             (codecIt->mediaType & mediaType ))
             return codecIt;
     }

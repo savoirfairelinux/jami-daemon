@@ -85,6 +85,7 @@ const char * const Account::USER_AGENT_KEY                = "useragent";
 const char * const Account::HAS_CUSTOM_USER_AGENT_KEY     = "hasCustomUserAgent";
 const char * const Account::PRESENCE_MODULE_ENABLED_KEY   = "presenceModuleEnabled";
 const char * const Account::UPNP_ENABLED_KEY              = "upnpEnabled";
+const char * const Account::ACTIVE_CODEC_KEY              = "activeCodecs";
 
 #ifdef __ANDROID__
 constexpr const char * const DEFAULT_RINGTONE_PATH = "/data/data/cx.ring/files/ringtones/default.opus";
@@ -219,7 +220,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
     out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
     out << YAML::Key << TYPE_KEY << YAML::Value << getAccountType();
-    out << YAML::Key << ALL_CODECS_KEY << YAML::Value << activeCodecs;
+    out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << activeCodecs;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
     out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
     out << YAML::Key << ACCOUNT_ACTIVE_CALL_LIMIT_KEY << YAML::Value << activeCallLimit_;
@@ -236,6 +237,7 @@ void
 Account::unserialize(const YAML::Node& node)
 {
     using yaml_utils::parseValue;
+    using yaml_utils::parseValueOptional;
 
     parseValue(node, ALIAS_KEY, alias_);
     parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
@@ -245,9 +247,18 @@ Account::unserialize(const YAML::Node& node)
 
     parseValue(node, MAILBOX_KEY, mailBox_);
 
+    std::string allCodecs;
+    parseValueOptional(node, ALL_CODECS_KEY, allCodecs);
+
     std::string activeCodecs;
-    parseValue(node, ALL_CODECS_KEY, activeCodecs);
-    setActiveCodecs(split_string_to_unsigned(activeCodecs, '/'));
+    if (parseValueOptional(node, ACTIVE_CODEC_KEY, activeCodecs)) {
+        JAMI_WARN("Found new key ACTIVE_CODEC_KEY, use it");
+        setActiveCodecs(split_string_to_unsigned(activeCodecs, '/'));
+    }
+    else {
+        JAMI_WARN("Found old key ALL_CODECS_KEY, convert id to AVCodecId");
+        setActiveCodecs(convertIdToAVId(split_string_to_unsigned(allCodecs, '/')));
+    }
 
     parseValue(node, DISPLAY_NAME_KEY, displayName_);
     parseValue(node, HOSTNAME_KEY, hostname_);
@@ -360,6 +371,19 @@ Account::sortCodec()
                  const std::shared_ptr<AccountCodecInfo>& b) {
                   return a->order < b->order;
               });
+}
+
+std::vector<unsigned>
+Account::convertIdToAVId(const std::vector<unsigned>& list)
+{
+    std::vector<unsigned> av_list;
+    av_list.reserve(list.size());
+    for (auto& item : list) {
+        auto codec = searchCodecById(item, MEDIA_ALL);
+        if (codec)
+            av_list.emplace_back(codec->systemCodecInfo.avcodecId);
+    }
+    return av_list;
 }
 
 std::string
@@ -479,7 +503,7 @@ Account::searchCodecById(unsigned codecId, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt: accountCodecInfoList_) {
-            if ((codecIt->systemCodecInfo.id == codecId) &&
+            if ((codecIt->systemCodecInfo.avcodecId == codecId) &&
                 (codecIt->systemCodecInfo.mediaType & mediaType ))
                 return codecIt;
         }
@@ -523,7 +547,7 @@ Account::getActiveCodecs(MediaType mediaType) const
     for (auto& codecIt: accountCodecInfoList_) {
         if ((codecIt->systemCodecInfo.mediaType & mediaType) &&
             (codecIt->isActive))
-            idList.push_back(codecIt->systemCodecInfo.id);
+            idList.push_back(codecIt->systemCodecInfo.avcodecId);
     }
     return idList;
 }
@@ -537,7 +561,7 @@ Account::getAccountCodecInfoIdList(MediaType mediaType) const
     std::vector<unsigned> idList;
     for (auto& codecIt: accountCodecInfoList_) {
         if (codecIt->systemCodecInfo.mediaType & mediaType)
-            idList.push_back(codecIt->systemCodecInfo.id);
+            idList.push_back(codecIt->systemCodecInfo.avcodecId);
     }
 
     return idList;

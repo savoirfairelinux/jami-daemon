@@ -323,6 +323,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         void setCodecActive(unsigned codecId);
 
+        std::vector<unsigned> convertIdToAVId(const std::vector<unsigned>& list);
+
     public: // virtual methods that has to be implemented by concrete classes
         /**
          * This method is called to request removal of possible account traces on the system,
@@ -383,6 +385,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         static const char * const PROXY_ENABLED_KEY;
         static const char * const PROXY_SERVER_KEY;
         static const char * const PROXY_PUSH_TOKEN_KEY;
+        static const char * const ACTIVE_CODEC_KEY;
 
         static std::string mapStateNumberToString(RegistrationState state);
 
