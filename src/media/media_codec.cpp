@@ -30,24 +30,17 @@
 
 namespace jami {
 
-static unsigned
-generateId()
-{
-    static unsigned id = 0;
-    return ++id;
-}
-
 /*
  * SystemCodecInfo
  */
-SystemCodecInfo::SystemCodecInfo(unsigned avcodecId, const std::string& name,
+SystemCodecInfo::SystemCodecInfo(unsigned codecId, unsigned avcodecId, const std::string& name,
                                  const std::string& libName,
                                  MediaType mediaType, CodecType codecType,
                                  unsigned bitrate,
                                  unsigned payloadType,
                                  unsigned minQuality,
                                  unsigned maxQuality)
-    : id(generateId())
+    : id(codecId)
     , avcodecId(avcodecId)
     , name(name)
     , libName(libName)
@@ -65,14 +58,15 @@ SystemCodecInfo::~SystemCodecInfo()
 /*
  * SystemAudioCodecInfo
  */
-SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned m_avcodecId,
+SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned codecId,
+                                           unsigned m_avcodecId,
                                            const std::string& m_name,
                                            const std::string& m_libName,
                                            CodecType m_type, unsigned m_bitrate,
                                            unsigned m_sampleRate,
                                            unsigned m_nbChannels,
                                            unsigned m_payloadType)
-    : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_AUDIO, m_type, m_bitrate, m_payloadType)
+    : SystemCodecInfo(codecId, m_avcodecId, m_name, m_libName, MEDIA_AUDIO, m_type, m_bitrate, m_payloadType)
     , audioformat{m_sampleRate, m_nbChannels}
 {}
 
@@ -89,13 +83,14 @@ SystemAudioCodecInfo::getCodecSpecifications()
         {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
         {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, std::to_string(audioformat.sample_rate)},
         {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, std::to_string(audioformat.nb_channels)}
-        };
+    };
 }
 
 /*
  * SystemVideoCodecInfo
  */
-SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned m_avcodecId,
+SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned codecId,
+                                           unsigned m_avcodecId,
                                            const std::string& m_name,
                                            const std::string& m_libName,
                                            CodecType m_type,
@@ -105,7 +100,7 @@ SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned m_avcodecId,
                                            unsigned m_payloadType,
                                            unsigned m_frameRate,
                                            unsigned m_profileId)
-    : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_VIDEO,
+    : SystemCodecInfo(codecId, m_avcodecId, m_name, m_libName, MEDIA_VIDEO,
                       m_type, m_bitrate, m_payloadType, m_minQuality, m_maxQuality)
     , frameRate(m_frameRate), profileId(m_profileId)
 {}
