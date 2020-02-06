@@ -34,6 +34,8 @@ using GitRemote = std::unique_ptr<git_remote, decltype(&git_remote_free)>;
 using GitReference = std::unique_ptr<git_reference, decltype(&git_reference_free)>;
 using GitSignature = std::unique_ptr<git_signature, decltype(&git_signature_free)>;
 using GitObject = std::unique_ptr<git_object, decltype(&git_object_free)>;
+using GitDiff = std::unique_ptr<git_diff, decltype(&git_diff_free)>;
+using GitDiffStats = std::unique_ptr<git_diff_stats, decltype(&git_diff_stats_free)>;
 
 namespace jami {
 
@@ -134,6 +136,22 @@ public:
      * @return if the merge was successful
      */
     bool merge(const std::string& merge_id);
+
+    /**
+     * Get current diff stats between two commits
+     * @param oldId     Old commit
+     * @param newId     Recent commit (empty value will compare to the empty repository)
+     * @note "HEAD" is also accepted as parameter for newId
+     * @return diff stats
+     */
+    std::string diffStats(const std::string& newId, const std::string& oldId = "") const;
+
+    /**
+     * Get changed files from a git diff
+     * @param diffStats     The stats to analyze
+     * @return get the changed files from a git diff
+     */
+    static std::vector<std::string> changedFiles(const std::string& diffStats);
 
 private:
     ConversationRepository() = delete;
