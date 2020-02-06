@@ -181,7 +181,7 @@ Account::loadDefaultCodecs()
     // default codec are system codecs
     auto systemCodecList = systemCodecContainer_->getSystemCodecInfoList();
 
-    accountCodecInfoList_.empty();
+    accountCodecInfoList_.clear();
 
     for (const auto& systemCodec: systemCodecList) {
         // As defined in SDP RFC, only select a codec if he can encode and decode
