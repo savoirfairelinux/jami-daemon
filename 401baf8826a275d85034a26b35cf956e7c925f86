@@ -22,6 +22,30 @@
       "revId": "401baf8826a275d85034a26b35cf956e7c925f86",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9d52b06b_408db004",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 105
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-06T21:39:29Z",
+      "side": 1,
+      "message": "The connections is already shutdown, it\u0027s the reset which take some time. So we can iterate over the map and do a ice reset in a io::run() then clear, but imho it\u0027s not a real problem if it\u0027s done sequentially in its thread",
+      "parentUuid": "af59acf3_47028d1a",
+      "range": {
+        "startLine": 77,
+        "startChar": 12,
+        "endLine": 77,
+        "endChar": 24
+      },
+      "revId": "401baf8826a275d85034a26b35cf956e7c925f86",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
