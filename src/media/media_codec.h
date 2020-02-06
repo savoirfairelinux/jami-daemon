@@ -73,7 +73,7 @@ struct SystemCodecInfo
     static constexpr unsigned DEFAULT_MAX_BITRATE {6000};
     static constexpr unsigned DEFAULT_VIDEO_BITRATE {1200}; // in Kbits/second
 
-    SystemCodecInfo(unsigned avcodecId, const std::string& name,
+    SystemCodecInfo(unsigned codecId, unsigned avcodecId, const std::string& name,
                     const std::string& libName, MediaType mediaType,
                     CodecType codecType = CODEC_NONE, unsigned bitrate = 0,
                     unsigned payloadType = 0,
@@ -106,7 +106,7 @@ struct SystemCodecInfo
  */
 struct SystemAudioCodecInfo : SystemCodecInfo
 {
-    SystemAudioCodecInfo(unsigned avcodecId, const std::string& name,
+    SystemAudioCodecInfo(unsigned codecId, unsigned avcodecId, const std::string& name,
                          const std::string& libName, CodecType type,
                          unsigned bitrate = 0,
                          unsigned sampleRate = 0, unsigned nbChannels = 0,
@@ -126,7 +126,7 @@ struct SystemAudioCodecInfo : SystemCodecInfo
  */
 struct SystemVideoCodecInfo : SystemCodecInfo
 {
-    SystemVideoCodecInfo(unsigned avcodecId, const std::string& name,
+    SystemVideoCodecInfo(unsigned codecId, unsigned avcodecId, const std::string& name,
                          const std::string& libName, CodecType type = CODEC_NONE,
                          unsigned bitrate = 0,
                          unsigned m_minQuality = 0,

@@ -314,6 +314,14 @@ void Sdp::setLocalMediaVideoCapabilities(const std::vector<std::shared_ptr<Accou
 {
 #ifdef ENABLE_VIDEO
     video_codec_list_ = selectedCodecs;
+    // Do not expose H265 if accel is disactivated
+    if (not jami::Manager::instance().videoPreferences.getEncodingAccelerated()) {
+        for (auto it = video_codec_list_.begin(); it != video_codec_list_.end(); ++it) {
+            if ((*it)->systemCodecInfo.name == "H265") {
+                video_codec_list_.erase(it);
+            }
+        }
+    }
 #else
     (void) selectedCodecs;
 #endif
