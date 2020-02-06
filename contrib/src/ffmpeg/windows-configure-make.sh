@@ -33,6 +33,7 @@ FFMPEGCONF+='
 FFMPEGCONF+='
             --enable-parser=h263
             --enable-parser=h264
+            --enable-parser=hevc
             --enable-parser=mpeg4video
             --enable-parser=vp8
             --enable-parser=vp9
