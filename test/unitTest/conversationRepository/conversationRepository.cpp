@@ -47,6 +47,13 @@ namespace test {
 class ConversationRepositoryTest : public CppUnit::TestFixture
 {
 public:
+    ConversationRepositoryTest()
+    {
+        // Init daemon
+        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        if (not Manager::instance().initialized)
+            CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
+    }
     ~ConversationRepositoryTest() { DRing::fini(); }
     static std::string name() { return "ConversationRepository"; }
     void setUp();
@@ -63,6 +70,7 @@ private:
     void testFetch();
     void testMerge();
     void testFFMerge();
+    void testDiff();
 
     std::string addCommit(git_repository* repo,
                           const std::shared_ptr<JamiAccount> account,
@@ -80,6 +88,7 @@ private:
     CPPUNIT_TEST(testFetch);
     CPPUNIT_TEST(testMerge);
     CPPUNIT_TEST(testFFMerge);
+    CPPUNIT_TEST(testDiff);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -89,11 +98,6 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConversationRepositoryTest,
 void
 ConversationRepositoryTest::setUp()
 {
-    // Init daemon
-    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
-    if (not Manager::instance().initialized)
-        CPPUNIT_ASSERT(DRing::start("dring-sample.yml"));
-
     std::map<std::string, std::string> details = DRing::getAccountTemplate("RING");
     details[ConfProperties::TYPE] = "RING";
     details[ConfProperties::DISPLAYNAME] = "ALICE";
@@ -678,6 +682,29 @@ ConversationRepositoryTest::testFFMerge()
     repository->merge(id2);
 
     CPPUNIT_ASSERT(repository->log().size() == 3 /* Initial, commit 1, 2 */);
+}
+
+void
+ConversationRepositoryTest::testDiff()
+{
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto aliceDeviceId = aliceAccount->getAccountDetails()[ConfProperties::RING_DEVICE_ID];
+    auto uri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
+    if (uri.find("ring:") == 0)
+        uri = uri.substr(std::string("ring:").size());
+    auto repository = ConversationRepository::createConversation(aliceAccount->weak());
+
+    auto id1 = repository->sendMessage("Commit 1");
+    auto id2 = repository->sendMessage("Commit 2");
+    auto id3 = repository->sendMessage("Commit 3");
+
+    auto diff = repository->diffStats(id2, id1);
+    CPPUNIT_ASSERT(ConversationRepository::changedFiles(diff).empty());
+    diff = repository->diffStats(id1);
+    auto changedFiles = ConversationRepository::changedFiles(diff);
+    CPPUNIT_ASSERT(!changedFiles.empty());
+    CPPUNIT_ASSERT(changedFiles[0] == "admins/" + uri + ".crt");
+    CPPUNIT_ASSERT(changedFiles[1] == "devices/" + aliceDeviceId + ".crt");
 }
 
 } // namespace test
