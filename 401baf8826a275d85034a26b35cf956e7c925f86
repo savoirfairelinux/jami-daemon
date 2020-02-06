@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "af59acf3_47028d1a",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 105
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-06T21:28:26Z",
+      "side": 1,
+      "message": "is there a way to initiate the shutdown on all connectionsInfo, then call clear() ?",
+      "range": {
+        "startLine": 77,
+        "startChar": 12,
+        "endLine": 77,
+        "endChar": 24
+      },
+      "revId": "401baf8826a275d85034a26b35cf956e7c925f86",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
