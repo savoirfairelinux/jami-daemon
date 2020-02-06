@@ -28,6 +28,8 @@ using random_device = dht::crypto::random_device;
 
 #include <ctime>
 #include <fstream>
+#include <json/json.h>
+#include <regex>
 
 namespace jami {
 
@@ -50,6 +52,12 @@ public:
     GitSignature signature();
     bool mergeFastforward(const git_oid *target_oid, int is_unborn);
     bool createMergeCommit(git_index *index, const std::string& wanted_ref);
+
+    bool add(const std::string& path);
+    std::string commit(const std::string& msg);
+
+    GitDiff diff(const std::string& idNew, const std::string& idOld) const;
+    std::string diffStats(const GitDiff& diff) const;
 
     std::weak_ptr<JamiAccount> account_;
     const std::string id_;
@@ -260,8 +268,7 @@ ConversationRepository::Impl::signature()
 		JAMI_ERR("Unable to create a commit signature.");
         return {nullptr, git_signature_free};
     }
-    GitSignature sig {sig_ptr, git_signature_free};
-    return std::move(sig);
+    return {sig_ptr, git_signature_free};
 }
 
 bool
@@ -424,6 +431,187 @@ ConversationRepository::Impl::mergeFastforward(const git_oid *target_oid, int is
 	git_reference_free(new_target_ref);
 
 	return 0;
+}
+
+bool
+ConversationRepository::Impl::add(const std::string& path)
+{
+    if (!repository_) return false;
+    git_index* index_ptr = nullptr;
+    if (git_repository_index(&index_ptr, repository_.get()) < 0) {
+        JAMI_ERR("Could not open repository index");
+        return false;
+    }
+    GitIndex index {index_ptr, git_index_free};
+    if (git_index_add_bypath(index.get(), path.c_str()) != 0) {
+        const git_error *err = giterr_last();
+        if (err) JAMI_ERR("Error when adding file: %s", err->message);
+        return false;
+    }
+    return git_index_write(index.get()) == 0;
+}
+
+std::string
+ConversationRepository::Impl::commit(const std::string& msg)
+{
+    if (!repository_) return {};
+
+    auto account = account_.lock();
+    if (!account) return {};
+    auto deviceId = account->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
+    auto name = account->getAccountDetails()[DRing::Account::ConfProperties::DISPLAYNAME];
+    if (name.empty())
+        name = account->getVolatileAccountDetails()[DRing::Account::VolatileProperties::REGISTERED_NAME];
+    if (name.empty())
+        name = deviceId;
+
+
+    git_signature* sig_ptr = nullptr;
+    // Sign commit's buffer
+    if (git_signature_new(&sig_ptr, name.c_str(), deviceId.c_str(), std::time(nullptr), 0) < 0) {
+		JAMI_ERR("Unable to create a commit signature.");
+        return {};
+    }
+    GitSignature sig {sig_ptr, git_signature_free};
+
+    // Retrieve current HEAD
+    git_oid commit_id;
+    if (git_reference_name_to_id(&commit_id, repository_.get(), "HEAD") < 0) {
+        JAMI_ERR("Cannot get reference for HEAD");
+        return {};
+    }
+
+    git_commit* head_ptr = nullptr;
+    if (git_commit_lookup(&head_ptr, repository_.get(), &commit_id) < 0) {
+		JAMI_ERR("Could not look up HEAD commit");
+        return {};
+    }
+    GitCommit head_commit {head_ptr, git_commit_free};
+
+    git_tree* tree_ptr = nullptr;
+	if (git_commit_tree(&tree_ptr, head_commit.get()) < 0) {
+		JAMI_ERR("Could not look up initial tree");
+        return {};
+    }
+    GitTree tree {tree_ptr, git_tree_free};
+
+    git_buf to_sign = {};
+    const git_commit* head_ref[1] = { head_commit.get() };
+    if (git_commit_create_buffer(&to_sign, repository_.get(),
+            sig.get(), sig.get(), nullptr, msg.c_str(), tree.get(), 1, &head_ref[0]) < 0) {
+        JAMI_ERR("Could not create commit buffer");
+        return {};
+    }
+
+    // git commit -S
+    auto to_sign_vec = std::vector<uint8_t>(to_sign.ptr, to_sign.ptr + to_sign.size);
+    auto signed_buf = account->identity().first->sign(to_sign_vec);
+    std::string signed_str = base64::encode(signed_buf.begin(), signed_buf.end());
+    if (git_commit_create_with_signature(&commit_id, repository_.get(), to_sign.ptr, signed_str.c_str(), "signature") < 0) {
+        JAMI_ERR("Could not sign commit");
+        return {};
+    }
+
+    // Move commit to master branch
+    git_reference* ref_ptr = nullptr;
+    if (git_reference_create(&ref_ptr, repository_.get(), "refs/heads/master", &commit_id, true, nullptr) < 0) {
+        JAMI_WARN("Could not move commit to master");
+    }
+    git_reference_free(ref_ptr);
+
+    auto commit_str = git_oid_tostr_s(&commit_id);
+    if (commit_str) {
+        JAMI_INFO("New message added with id: %s", commit_str);
+    }
+    return commit_str ? commit_str : "";
+}
+
+GitDiff
+ConversationRepository::Impl::diff(const std::string& idNew, const std::string& idOld) const
+{
+    if (!repository_) return {nullptr, git_diff_free};
+
+    // Retrieve tree for commit new
+    git_oid oid;
+    git_commit* commitNew = nullptr;
+    if (idNew == "HEAD") {
+        JAMI_ERR("@@@ HEAD");
+        if (git_reference_name_to_id(&oid, repository_.get(), "HEAD") < 0) {
+            JAMI_ERR("Cannot get reference for HEAD");
+            return {nullptr, git_diff_free};
+        }
+
+        if (git_commit_lookup(&commitNew, repository_.get(), &oid) < 0) {
+            JAMI_ERR("Could not look up HEAD commit");
+            return {nullptr, git_diff_free};
+        }
+    } else {
+        if (git_oid_fromstr(&oid, idNew.c_str()) < 0
+            || git_commit_lookup(&commitNew, repository_.get(), &oid) < 0) {
+            JAMI_WARN("Failed to look up commit %s", idNew.c_str());
+            return {nullptr, git_diff_free};
+        }
+    }
+    GitCommit new_commit = {commitNew, git_commit_free};
+
+    git_tree *tNew = nullptr;
+	if (git_commit_tree(&tNew, new_commit.get()) < 0) {
+		JAMI_ERR("Could not look up initial tree");
+        return {nullptr, git_diff_free};
+    }
+    GitTree treeNew = {tNew, git_tree_free};
+
+    git_diff *diff_ptr = nullptr;
+    if (idOld.empty()) {
+        if (git_diff_tree_to_tree(&diff_ptr, repository_.get(), nullptr, treeNew.get(), {}) < 0) {
+            JAMI_ERR("Could not get diff to empty repository");
+            return {nullptr, git_diff_free};
+        }
+        return {diff_ptr, git_diff_free};
+    }
+
+    // Retrieve tree for commit old
+    git_commit* commitOld = nullptr;
+    if (git_oid_fromstr(&oid, idOld.c_str()) < 0
+        || git_commit_lookup(&commitOld, repository_.get(), &oid) < 0) {
+        JAMI_WARN("Failed to look up commit %s", idOld.c_str());
+        return {nullptr, git_diff_free};
+    }
+    GitCommit old_commit {commitOld, git_commit_free};
+
+    git_tree *tOld = nullptr;
+	if (git_commit_tree(&tOld, old_commit.get()) < 0) {
+		JAMI_ERR("Could not look up initial tree");
+        return {nullptr, git_diff_free};
+    }
+    GitTree treeOld = {tOld, git_tree_free};
+
+    // Calc diff
+    if (git_diff_tree_to_tree(&diff_ptr, repository_.get(), treeOld.get(), treeNew.get(), {}) < 0) {
+		JAMI_ERR("Could not get diff between %s and %s", idOld.c_str(), idNew.c_str());
+        return {nullptr, git_diff_free};
+    }
+    return {diff_ptr, git_diff_free};
+}
+
+std::string
+ConversationRepository::Impl::diffStats(const GitDiff& diff) const
+{
+    git_diff_stats *stats_ptr = nullptr;
+    if (git_diff_get_stats(&stats_ptr, diff.get()) < 0) {
+		JAMI_ERR("Could not get diff stats");
+        return {};
+    }
+    GitDiffStats stats = {stats_ptr, git_diff_stats_free};
+
+    git_diff_stats_format_t format = GIT_DIFF_STATS_FULL;
+    git_buf statsBuf = {};
+    if (git_diff_stats_to_buf(&statsBuf, stats.get(), format, 80) < 0) {
+		JAMI_ERR("Could not format diff stats");
+        return {};
+    }
+
+    return std::string(statsBuf.ptr, statsBuf.ptr + statsBuf.size);
 }
 
 //////////////////////////////////
@@ -828,6 +1016,33 @@ ConversationRepository::merge(const std::string& merge_id)
     return result;
 }
 
+std::string
+ConversationRepository::diffStats(const std::string& newId, const std::string& oldId) const
+{
+    auto diff = pimpl_->diff(newId, oldId);
+    if (!diff)
+        return {};
+    return pimpl_->diffStats(diff);
+}
+
+std::vector<std::string>
+ConversationRepository::changedFiles(const std::string& diffStats)
+{
+    std::stringstream ss(diffStats);
+    std::string line;
+    std::vector<std::string> changedFiles;
+    while(std::getline(ss, line, '\n')){
+        std::regex re(" +\\| +[0-9]+.*");
+        std::smatch match;
+        if (!std::regex_search(line, match, re) && match.size() == 0) {
+            JAMI_WARN("NO MATCHED");
+            continue;
+        }
+        line = std::regex_replace(line, re, "");
+        changedFiles.emplace_back(line.substr(1));
+    }
+    return changedFiles;
+}
 
 
 }
