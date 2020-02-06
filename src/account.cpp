@@ -85,6 +85,7 @@ const char * const Account::USER_AGENT_KEY                = "useragent";
 const char * const Account::HAS_CUSTOM_USER_AGENT_KEY     = "hasCustomUserAgent";
 const char * const Account::PRESENCE_MODULE_ENABLED_KEY   = "presenceModuleEnabled";
 const char * const Account::UPNP_ENABLED_KEY              = "upnpEnabled";
+const char * const Account::ACTIVE_CODEC_KEY              = "activeCodecs";
 
 #ifdef __ANDROID__
 constexpr const char * const DEFAULT_RINGTONE_PATH = "/data/data/cx.ring/files/ringtones/default.opus";
@@ -219,7 +220,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
     out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
     out << YAML::Key << TYPE_KEY << YAML::Value << getAccountType();
-    out << YAML::Key << ALL_CODECS_KEY << YAML::Value << activeCodecs;
+    out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << activeCodecs;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
     out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
     out << YAML::Key << ACCOUNT_ACTIVE_CALL_LIMIT_KEY << YAML::Value << activeCallLimit_;
@@ -236,6 +237,7 @@ void
 Account::unserialize(const YAML::Node& node)
 {
     using yaml_utils::parseValue;
+    using yaml_utils::parseValueOptional;
 
     parseValue(node, ALIAS_KEY, alias_);
     parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
@@ -246,8 +248,24 @@ Account::unserialize(const YAML::Node& node)
     parseValue(node, MAILBOX_KEY, mailBox_);
 
     std::string activeCodecs;
-    parseValue(node, ALL_CODECS_KEY, activeCodecs);
-    setActiveCodecs(split_string_to_unsigned(activeCodecs, '/'));
+    if (parseValueOptional(node, ACTIVE_CODEC_KEY, activeCodecs))
+        setActiveCodecs(split_string_to_unsigned(activeCodecs, '/'));
+    else {
+        std::string allCodecs;
+        if (parseValueOptional(node, ALL_CODECS_KEY, allCodecs)) {
+            JAMI_WARN("Converting deprecated codec list");
+            auto list = convertIdToAVId(split_string_to_unsigned(allCodecs, '/'));
+            auto codec = searchCodecByName("H265", MEDIA_ALL);
+            // set H265 as first active codec if found
+            if (codec)
+                list.emplace(list.begin(), codec->systemCodecInfo.id);
+            setActiveCodecs(list);
+            runOnMainThread([id = getAccountID()]{
+                if (auto sthis = Manager::instance().getAccount(id))
+                    Manager::instance().saveConfig(sthis);
+            });
+        }
+    }
 
     parseValue(node, DISPLAY_NAME_KEY, displayName_);
     parseValue(node, HOSTNAME_KEY, hostname_);
@@ -360,6 +378,41 @@ Account::sortCodec()
                  const std::shared_ptr<AccountCodecInfo>& b) {
                   return a->order < b->order;
               });
+}
+
+std::vector<unsigned>
+Account::convertIdToAVId(const std::vector<unsigned>& list)
+{
+#if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    constexpr size_t CODEC_NUM = 12;
+#else
+    constexpr size_t CODEC_NUM = 10;
+#endif
+
+    static constexpr std::array<unsigned, CODEC_NUM> CODEC_ID_MAPPING = {
+        AV_CODEC_ID_NONE,
+        AV_CODEC_ID_H264,
+        AV_CODEC_ID_VP8,
+#if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+        AV_CODEC_ID_MPEG4,
+        AV_CODEC_ID_H263,
+#endif
+        AV_CODEC_ID_OPUS,
+        AV_CODEC_ID_ADPCM_G722,
+        AV_CODEC_ID_SPEEX & 0x20000000,
+        AV_CODEC_ID_SPEEX & 0x10000000,
+        AV_CODEC_ID_SPEEX,
+        AV_CODEC_ID_PCM_ALAW,
+        AV_CODEC_ID_PCM_MULAW
+    };
+
+    std::vector<unsigned> av_list;
+    av_list.reserve(list.size());
+    for (auto& item : list) {
+        if (item > 0 and item < CODEC_ID_MAPPING.size())
+            av_list.emplace_back(CODEC_ID_MAPPING[item]);
+    }
+    return av_list;
 }
 
 std::string
@@ -560,6 +613,15 @@ Account::setCodecActive(unsigned codecId)
     for (auto& codecIt: accountCodecInfoList_) {
         if (codecIt->systemCodecInfo.avcodecId == codecId)
             codecIt->isActive = true;
+    }
+}
+
+void
+Account::setCodecInactive(unsigned codecId)
+{
+    for (auto& codecIt: accountCodecInfoList_) {
+        if (codecIt->systemCodecInfo.avcodecId == codecId)
+            codecIt->isActive = false;
     }
 }
 

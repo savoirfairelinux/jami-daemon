@@ -575,17 +575,13 @@ setEncodingAccelerated(bool state)
     jami::Manager::instance().videoPreferences.setEncodingAccelerated(state);
     jami::Manager::instance().saveConfig();
 #endif
-    // refresh codec container + setH265
-    jami::getSystemCodecContainer()->initCodecConfig();
     for (const auto& acc : jami::Manager::instance().getAllAccounts()) {
-        // Save activated codec
-        auto activeCodecs = acc->getActiveCodecs();
-        // Refresh codec list for the account
-        acc->loadDefaultCodecs();
-        // Activate H265 if it is available, if not ignore
-        acc->setCodecActive(AV_CODEC_ID_HEVC);
-        // Reactivate saved codec
-        acc->setActiveCodecs(activeCodecs);
+        if (state)
+            acc->setCodecActive(AV_CODEC_ID_HEVC);
+        else
+            acc->setCodecInactive(AV_CODEC_ID_HEVC);
+        // Update and sort codecs
+        acc->setActiveCodecs(acc->getActiveCodecs());
         jami::Manager::instance().saveConfig(acc);
     }
 }
