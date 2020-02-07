@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1f52998d_8bb6e7f7",
+        "filename": "src/account.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-07T00:03:49Z",
+      "side": 1,
+      "message": "not needed if ACTIVE_CODEC_KEY is set (move in else block)",
+      "range": {
+        "startLine": 250,
+        "startChar": 1,
+        "endLine": 252,
+        "endChar": 0
+      },
+      "revId": "cdb1f0dd1e7d6d3499c8704074d56ba2745e0418",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "134936ba_6f586404",
+        "filename": "src/account.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 260,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-07T00:03:49Z",
+      "side": 1,
+      "message": "only if ALL_CODECS_KEY is set",
+      "range": {
+        "startLine": 260,
+        "startChar": 8,
+        "endLine": 260,
+        "endChar": 23
+      },
+      "revId": "cdb1f0dd1e7d6d3499c8704074d56ba2745e0418",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
