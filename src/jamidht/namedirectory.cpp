@@ -90,6 +90,8 @@ NameDirectory::NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::
    : serverUrl_(serverUrl), logger_(std::move(l))
    , httpContext_(Manager::instance().ioContext())
 {
+    if (!serverUrl_.empty() && serverUrl_.back() == '/')
+        serverUrl_.pop_back();
     resolver_ = std::make_shared<dht::http::Resolver>(*httpContext_, serverUrl, logger_);
     cachePath_ = fileutils::get_cache_dir() + DIR_SEPARATOR_STR + CACHE_DIRECTORY +
                                               DIR_SEPARATOR_STR + resolver_->get_url().host;
