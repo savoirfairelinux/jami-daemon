@@ -61,6 +61,8 @@ public:
     virtual void hardwareDecodingChanged(bool /*state*/){}
     virtual void hardwareEncodingChanged(bool /*state*/){}
 
+    virtual void activeCodecListChanged(const std::string& /*accountId*/, std::vector<unsigned> /*activated_codecs*/){}
+
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
 };
 %}
@@ -266,6 +268,9 @@ public:
 
     virtual void hardwareDecodingChanged(bool /*state*/){}
     virtual void hardwareEncodingChanged(bool /*state*/){}
+
+    virtual void activeCodecListChanged(const std::string& /*accountId*/, std::vector<unsigned> /*activated_codecs*/){}
+
 
     virtual void audioMeter(const std::string& /*id*/, float /*level*/){}
 };

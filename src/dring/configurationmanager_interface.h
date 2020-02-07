@@ -373,6 +373,10 @@ struct DRING_PUBLIC ConfigurationSignal {
             constexpr static const char* name = "HardwareEncodingChanged";
             using cb_type = void(bool /* state */);
         };
+        struct DRING_PUBLIC ActiveCodecListChanged {
+            constexpr static const char* name = "ActiveCodecListChanged";
+            using cb_type = void(const std::string& /*accountId*/, std::vector<unsigned> /*activated_codecs*/);
+        };
 };
 
 // Can be used when a client's stdout is not available

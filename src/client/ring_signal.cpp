@@ -82,6 +82,7 @@ getSignalHandlers()
 #endif
         exported_callback<DRing::ConfigurationSignal::HardwareDecodingChanged>(),
         exported_callback<DRing::ConfigurationSignal::HardwareEncodingChanged>(),
+        exported_callback<DRing::ConfigurationSignal::ActiveCodecListChanged>(),
 
         /* Debug */
         exported_callback<DRing::DebugSignal::MessageSend>(),

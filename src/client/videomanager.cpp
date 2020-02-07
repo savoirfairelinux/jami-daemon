@@ -38,6 +38,7 @@
 #include "libav_utils.h"
 #include "call_const.h"
 #include "system_codec_container.h"
+#include "ring_signal.h"
 
 #include <functional>
 #include <memory>
@@ -583,6 +584,7 @@ setEncodingAccelerated(bool state)
         // Update and sort codecs
         acc->setActiveCodecs(acc->getActiveCodecs());
         jami::Manager::instance().saveConfig(acc);
+        jami::emitSignal<DRing::ConfigurationSignal::ActiveCodecListChanged>(acc->getAccountID(), acc->getActiveCodecs());
     }
 }
 
