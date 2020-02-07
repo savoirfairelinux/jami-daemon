@@ -193,6 +193,7 @@ DBusClient::initLibrary(int flags)
         exportable_callback<ConfigurationSignal::MigrationEnded>(bind(&DBusConfigurationManager::migrationEnded, confM, _1, _2 )),
         exportable_callback<ConfigurationSignal::HardwareDecodingChanged>(bind(&DBusConfigurationManager::hardwareDecodingChanged, confM, _1 )),
         exportable_callback<ConfigurationSignal::HardwareEncodingChanged>(bind(&DBusConfigurationManager::hardwareEncodingChanged, confM, _1 )),
+        exportable_callback<ConfigurationSignal::ActiveCodecListChanged>(bind(&DBusConfigurationManager::activeCodecListChanged, confM, _1, _2 )),
     };
 
     // Presence event handlers

@@ -367,6 +367,7 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
         }
     }
     sortCodec();
+    jami::emitSignal<DRing::ConfigurationSignal::ActiveCodecListChanged>(accountID_, list);
 }
 
 void

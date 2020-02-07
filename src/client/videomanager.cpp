@@ -38,6 +38,7 @@
 #include "libav_utils.h"
 #include "call_const.h"
 #include "system_codec_container.h"
+#include "ring_signal.h"
 
 #include <functional>
 #include <memory>
