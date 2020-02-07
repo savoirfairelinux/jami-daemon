@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bbc2fbe5_78a73ae4",
+        "filename": "src/account.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-07T17:45:06Z",
+      "side": 1,
+      "message": "remove log",
+      "range": {
+        "startLine": 252,
+        "startChar": 8,
+        "endLine": 252,
+        "endChar": 60
+      },
+      "revId": "d839eafed62be91f556332da500c3002648b78d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "80ce0dbe_0266f1a7",
+        "filename": "src/account.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 258,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-07T17:45:06Z",
+      "side": 1,
+      "message": "cleanup log:\n\"Converting deprecated codec list\"",
+      "range": {
+        "startLine": 258,
+        "startChar": 12,
+        "endLine": 258,
+        "endChar": 79
+      },
+      "revId": "d839eafed62be91f556332da500c3002648b78d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ec20b4c3_0c533550",
+        "filename": "src/account.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 259,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-07T17:45:06Z",
+      "side": 1,
+      "message": "in that case the configuration needs to be saved to persist the new IDs.",
+      "range": {
+        "startLine": 259,
+        "startChar": 12,
+        "endLine": 259,
+        "endChar": 87
+      },
+      "revId": "d839eafed62be91f556332da500c3002648b78d1",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
