@@ -1993,8 +1993,9 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.clear();
         pendingSipCalls_.clear();
-        checkPendingCallsTask();
     }
+
+    checkPendingCallsTask();
 
     dht_->join();
 
