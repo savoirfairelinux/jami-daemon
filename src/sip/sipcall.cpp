@@ -392,7 +392,10 @@ SIPCall::hangup(int reason)
     // Stop all RTP streams
     stopAllMedia();
     setState(Call::ConnectionState::DISCONNECTED, reason);
-    removeCall();
+    runOnMainThread([w = weak()] {
+        if (auto shared = w.lock())
+            shared->removeCall();
+    });
 }
 
 void
@@ -822,7 +825,10 @@ SIPCall::sendKeyframe()
 void
 SIPCall::onPeerRinging()
 {
-    setState(ConnectionState::RINGING);
+    runOnMainThread([w = weak()] {
+        if (auto shared = w.lock())
+            shared->setState(ConnectionState::RINGING);
+    });
 }
 
 void
