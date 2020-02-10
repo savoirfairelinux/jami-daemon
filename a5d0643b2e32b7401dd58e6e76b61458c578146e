@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "094d0d01_23918051",
+        "filename": "src/client/videomanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 587,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-10T18:56:39Z",
+      "side": 1,
+      "message": "in setActiveCodecs ?",
+      "range": {
+        "startLine": 587,
+        "startChar": 8,
+        "endLine": 587,
+        "endChar": 122
+      },
+      "revId": "a5d0643b2e32b7401dd58e6e76b61458c578146e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
