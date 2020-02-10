@@ -59,7 +59,7 @@ AudioReceiveThread::setup()
 {
     audioDecoder_.reset(new MediaDecoder([this](std::shared_ptr<MediaFrame>&& frame) mutable {
         notify(frame);
-        ringbuffer_->put(std::move(std::static_pointer_cast<AudioFrame>(frame)));
+        ringbuffer_->put(std::static_pointer_cast<AudioFrame>(frame));
     }));
     audioDecoder_->setInterruptCallback(interruptCb, this);
 
