@@ -61,12 +61,12 @@ SystemCodecContainer::initCodecConfig()
     availableCodecList_ = {
 #ifdef ENABLE_VIDEO
         /* Define supported video codec*/
-        // std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_HEVC,
-        //                                        "H265", "",
-        //                                        CODEC_ENCODER_DECODER,
-        //                                        defaultBitrate,
-        //                                        minH265,
-        //                                        maxH265),
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_HEVC,
+                                               "H265", "",
+                                               CODEC_ENCODER_DECODER,
+                                               defaultBitrate,
+                                               minH265,
+                                               maxH265),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H264,
                                                "H264", "libx264",
@@ -131,7 +131,7 @@ SystemCodecContainer::initCodecConfig()
                                                CODEC_ENCODER_DECODER,
                                                64, 8000, 1, 0),
     };
-    // setActiveH265();
+    setActiveH265();
     checkInstalledCodecs();
 }
 
