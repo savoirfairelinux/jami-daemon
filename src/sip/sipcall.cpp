@@ -822,7 +822,10 @@ SIPCall::sendKeyframe()
 void
 SIPCall::onPeerRinging()
 {
-    setState(ConnectionState::RINGING);
+    runOnMainThread([w = weak()] {
+        if (auto shared = w.lock())
+            shared->setState(ConnectionState::RINGING);
+    });
 }
 
 void
