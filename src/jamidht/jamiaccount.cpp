@@ -1869,6 +1869,9 @@ void
 JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from)
 {
     auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
+    if (!call) {
+        return;
+    }
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
     auto ice_config = getIceOptions();
     ice_config.tcpEnable = true;
