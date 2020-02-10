@@ -316,7 +316,7 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(std::unique_ptr<SocketType>&& transpo
 
 TlsSession::TlsSessionImpl::~TlsSessionImpl()
 {
-    newState_ = TlsSessionState::SHUTDOWN;
+    state_ = TlsSessionState::SHUTDOWN;
     stateCondition_.notify_all();
     rxCv_.notify_all();
     thread_.join();
