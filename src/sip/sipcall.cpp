@@ -738,12 +738,16 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
 void
 SIPCall::removeCall()
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
-    JAMI_WARN("[call:%s] removeCall()", getCallId().c_str());
-    Call::removeCall();
-    mediaTransport_.reset();
-    inv.reset();
-    setTransport({});
+    runOnMainThread([w = weak()] {
+        if (auto shared = w.lock()) {
+            std::lock_guard<std::recursive_mutex> lk {shared->callMutex_};
+            JAMI_WARN("[call:%s] removeCall()", shared->getCallId().c_str());
+            shared->Call::removeCall();
+            shared->mediaTransport_.reset();
+            shared->inv.reset();
+            shared->setTransport({});
+        }
+    });
 }
 
 void
@@ -822,7 +826,10 @@ SIPCall::sendKeyframe()
 void
 SIPCall::onPeerRinging()
 {
-    setState(ConnectionState::RINGING);
+    runOnMainThread([w = weak()] {
+        if (auto shared = w.lock())
+            shared->setState(ConnectionState::RINGING);
+    });
 }
 
 void
