@@ -1484,7 +1484,7 @@ JamiAccount::registerAsyncOps()
             doRegister_();
     };
 
-    loadCachedProxyServer([this, onLoad](const std::string& proxy) {
+    loadCachedProxyServer([onLoad](const std::string& proxy) {
         onLoad();
     });
 
@@ -1691,6 +1691,7 @@ JamiAccount::doRegister_()
         config.dht_config.node_config.maintain_storage = false;
         config.dht_config.node_config.persist_path = cachePath_+DIR_SEPARATOR_STR "dhtstate";
         config.dht_config.id = id_;
+        config.dht_config.cert_cache_all = true;
         config.proxy_server = getDhtProxyServer(proxyServer_);
         config.push_node_id = getAccountID();
         config.push_token = deviceKey_;
