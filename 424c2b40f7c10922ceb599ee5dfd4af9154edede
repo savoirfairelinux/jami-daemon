@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0a15c64a_d0353b2e",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 101,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-11T16:46:46Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027cb\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "424c2b40f7c10922ceb599ee5dfd4af9154edede",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "d6ba76c6_7a343fc7",
+        "filename": "src/media/media_decoder.cpp",
+        "patchSetId": 51
+      },
+      "lineNbr": 273,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-02-11T16:46:46Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027sync\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "424c2b40f7c10922ceb599ee5dfd4af9154edede",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
