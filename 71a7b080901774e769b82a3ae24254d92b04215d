@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "39f97932_caad8b76",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2501,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-11T21:19:49Z",
+      "side": 1,
+      "message": "sentMessages_[token].to.emplace(dev);",
+      "range": {
+        "startLine": 2500,
+        "startChar": 12,
+        "endLine": 2501,
+        "endChar": 31
+      },
+      "revId": "71a7b080901774e769b82a3ae24254d92b04215d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
