@@ -156,8 +156,7 @@ struct JamiAccount::PendingCall
 
 struct JamiAccount::PendingMessage
 {
-    dht::InfoHash to;
-    std::chrono::steady_clock::time_point received;
+    std::set<dht::InfoHash> to;
 };
 
 struct AccountPeerInfo
@@ -2498,8 +2497,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     {
         {
             std::lock_guard<std::mutex> lock(messageMutex_);
-            auto e = sentMessages_.emplace(token, PendingMessage {});
-            e.first->second.to = dev;
+            sentMessages_[token].to.emplace(dev);
         }
 
         auto h = dht::InfoHash::get("inbox:"+dev.toString());
@@ -2512,7 +2510,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             {
                 std::lock_guard<std::mutex> lock(messageMutex_);
                 auto e = sentMessages_.find(msg.id);
-                if (e == sentMessages_.end() or e->second.to != msg.from) {
+                if (e == sentMessages_.end() or e->second.to.find(msg.from) == e->second.to.end()) {
                     JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token << "] Message not found";
                     return true;
                 }
