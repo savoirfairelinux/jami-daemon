@@ -6,9 +6,8 @@ project(ring-daemon C CXX)
 # Source groups
 ################################################################################
 
-# MSVC, src source group
+# src source group
 
-add_subdirectory("MSVC")
 add_subdirectory("src")
 
 source_group("Source Files" FILES ${Source_Files})
@@ -100,7 +99,7 @@ if(MSVC)
    ################################################################################
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
        set_target_properties(${PROJECT_NAME} PROPERTIES
-           OUTPUT_DIRECTORY_RELEASELIB_WIN32 "${CMAKE_CURRENT_SOURCE_DIR}/MSVC/${CMAKE_VS_PLATFORM_NAME}/$<CONFIG>/bin/"
+           OUTPUT_DIRECTORY_RELEASELIB_WIN32 "${CMAKE_CURRENT_SOURCE_DIR}/src/compat/msvc/${CMAKE_VS_PLATFORM_NAME}/$<CONFIG>/bin/"
        )
    endif()
    if("${CMAKE_VS_PLATFORM_NAME}" STREQUAL "x64")
@@ -125,7 +124,6 @@ if(MSVC)
                "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp"
            ">"
            "${CMAKE_CURRENT_SOURCE_DIR}/.;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/MSVC;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/client;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/config;"
@@ -136,6 +134,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/security;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/sip;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/src/compat/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp/igd;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp/protocol;"
