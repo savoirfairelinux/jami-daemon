@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "47d73893_bc56e84d",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 76
+      },
+      "lineNbr": 2667,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2020-02-12T16:17:51Z",
+      "side": 1,
+      "message": "this comment doesn\u0027t describe the following code",
+      "range": {
+        "startLine": 2667,
+        "startChar": 8,
+        "endLine": 2667,
+        "endChar": 67
+      },
+      "revId": "17c1235727d5123e0e12a5feabaca84b2bfe4716",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "40ef221b_4510b06a",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 76
+      },
+      "lineNbr": 3062,
+      "author": {
+        "id": 90
+      },
+      "writtenOn": "2020-02-12T16:17:51Z",
+      "side": 1,
+      "message": "requestSIPConnection?",
+      "range": {
+        "startLine": 3062,
+        "startChar": 13,
+        "endLine": 3062,
+        "endChar": 32
+      },
+      "revId": "17c1235727d5123e0e12a5feabaca84b2bfe4716",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
