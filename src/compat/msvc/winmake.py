@@ -25,7 +25,8 @@ log = None
 
 # project paths
 daemon_msvc_dir = os.path.dirname(os.path.realpath(__file__))
-daemon_dir = os.path.dirname(daemon_msvc_dir)
+daemon_dir = os.path.dirname(os.path.dirname(os.path.dirname(daemon_msvc_dir)))
+daemon_msvc_build_local_dir = daemon_dir + r'\build-local'
 contrib_src_dir = daemon_dir + r'\contrib\src'
 contrib_build_dir = daemon_dir + r'\contrib\build'
 contrib_tmp_dir = daemon_dir + r'\contrib\tarballs'
@@ -126,7 +127,7 @@ def getVSEnvCmd(arch='x64', platform='', version=''):
 
 
 def make_daemon(pkg_info, force, sdk_version, toolset):
-    cmake_script = 'cmake -DCMAKE_CONFIGURATION_TYPES="ReleaseLib_win32" -DCMAKE_VS_PLATFORM_NAME="x64" -G ' + getCMakeGenerator(getLatestVSVersion()) + ' -T $(DefaultPlatformToolset) ..'
+    cmake_script = 'cmake -DCMAKE_CONFIGURATION_TYPES="ReleaseLib_win32" -DCMAKE_VS_PLATFORM_NAME="x64" -G ' + getCMakeGenerator(getLatestVSVersion()) + ' -T $(DefaultPlatformToolset) -S ../../../ -B ../../../build-local'
     root_logger.warning("Cmake generating vcxproj files")
     result = getSHrunner().exec_batch(cmake_script)
     if result[0] is not 0:
@@ -138,7 +139,7 @@ def make_daemon(pkg_info, force, sdk_version, toolset):
         "Building daemon with preferred sdk version %s and toolset %s", sdk_version, toolset)
     env_set = 'false' if pkg_info.get('with_env', '') == '' else 'true'
     sdk_to_use = sdk_version if env_set == 'false' else pkg_info.get('with_env', '')
-    build('daemon', daemon_msvc_dir,
+    build('daemon', daemon_msvc_build_local_dir,
           pkg_info.get('project_paths', []),
           pkg_info.get('custom_scripts', {}),
           env_set,
@@ -326,7 +327,7 @@ def apply(pkg_name, patches, win_patches):
 
 def get_pkg_file(pkg_name):
     if pkg_name == 'daemon':
-        pkg_location = daemon_msvc_dir
+        pkg_location = daemon_dir
     else:
         pkg_location = daemon_dir + r'\contrib\src\\' + pkg_name
     pkg_json_file = pkg_location + r"\\package.json"

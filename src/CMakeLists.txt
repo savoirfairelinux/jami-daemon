@@ -74,6 +74,8 @@ if(MSVC)
    )
 endif()
 
+add_subdirectory(compat)
+
 set (Source_Files ${Source_Files} PARENT_SCOPE)
 
 add_subdirectory(client)
