@@ -6,6 +6,8 @@ DebugLib/
 Debug/
 ReleaseLib/
 Release/
+CMakeFiles/
+ring-daemon.dir/
 .config/
 # User-specific files
 *.suo
@@ -15,6 +17,13 @@ Release/
 *.VC.VC.opendb
 *.VC.db
 *.db
+*.cmake
+*.stamp
+*.tlog
+*.vcxproj
+*.vcxproj.filters
+*.sln
+CMakeCache.txt
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs

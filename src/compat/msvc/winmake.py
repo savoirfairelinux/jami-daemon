@@ -25,7 +25,7 @@ log = None
 
 # project paths
 daemon_msvc_dir = os.path.dirname(os.path.realpath(__file__))
-daemon_dir = os.path.dirname(daemon_msvc_dir)
+daemon_dir = os.path.dirname(os.path.dirname(os.path.dirname(daemon_msvc_dir)))
 contrib_src_dir = daemon_dir + r'\contrib\src'
 contrib_build_dir = daemon_dir + r'\contrib\build'
 contrib_tmp_dir = daemon_dir + r'\contrib\tarballs'
@@ -126,7 +126,7 @@ def getVSEnvCmd(arch='x64', platform='', version=''):
 
 
 def make_daemon(pkg_info, force, sdk_version, toolset):
-    cmake_script = 'cmake -DCMAKE_CONFIGURATION_TYPES="ReleaseLib_win32" -DCMAKE_VS_PLATFORM_NAME="x64" -G ' + getCMakeGenerator(getLatestVSVersion()) + ' -A x64 -T $(DefaultPlatformToolset) ..'
+    cmake_script = 'cmake -DCMAKE_CONFIGURATION_TYPES="ReleaseLib_win32" -DCMAKE_VS_PLATFORM_NAME="x64" -G ' + getCMakeGenerator(getLatestVSVersion()) + ' -A x64 -T $(DefaultPlatformToolset) ../../../'
     root_logger.warning("Cmake generating vcxproj files")
     result = getSHrunner().exec_batch(cmake_script)
     if result[0] is not 0:
@@ -326,7 +326,7 @@ def apply(pkg_name, patches, win_patches):
 
 def get_pkg_file(pkg_name):
     if pkg_name == 'daemon':
-        pkg_location = daemon_msvc_dir
+        pkg_location = daemon_dir
     else:
         pkg_location = daemon_dir + r'\contrib\src\\' + pkg_name
     pkg_json_file = pkg_location + r"\\package.json"
