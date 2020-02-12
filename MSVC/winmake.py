@@ -110,7 +110,7 @@ def getCMakeGenerator(vs_version):
     if vs_version == '15':
         return '\"Visual Studio 15 2017 Win64\"'
     else:
-        return '\"Visual Studio ' + vs_version + ' 2019\"'
+        return '\"Visual Studio ' + vs_version + ' 2019\" -A x64'
 
 
 def getVSEnvCmd(arch='x64', platform='', version=''):
@@ -126,6 +126,12 @@ def getVSEnvCmd(arch='x64', platform='', version=''):
 
 
 def make_daemon(pkg_info, force, sdk_version, toolset):
+    cmake_script = 'cmake -DCMAKE_CONFIGURATION_TYPES="ReleaseLib_win32" -DCMAKE_VS_PLATFORM_NAME="x64" -G ' + getCMakeGenerator(getLatestVSVersion()) + ' -T $(DefaultPlatformToolset) ..'
+    root_logger.warning("Cmake generating vcxproj files")
+    result = getSHrunner().exec_batch(cmake_script)
+    if result[0] is not 0:
+        sys.exit("Cmake Errors")
+
     for dep in pkg_info.get('deps', []):
         resolve(dep, False, sdk_version, toolset)
     root_logger.warning(
