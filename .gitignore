@@ -23,7 +23,6 @@ Makefile
 aclocal.m4
 autom4te.cache
 config.guess
-config.*
 depcomp
 install-sh
 missing
@@ -39,6 +38,9 @@ libtool
 *orig
 *.1
 *-glue.h
+
+# Ignored folders
+build-local/
 
 # Ignore rendered docs
 doc/doxygen/core-doc
