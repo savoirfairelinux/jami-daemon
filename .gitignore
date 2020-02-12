@@ -40,6 +40,9 @@ libtool
 *.1
 *-glue.h
 
+# Ignored folders
+build-local/
+
 # Ignore rendered docs
 doc/doxygen/core-doc
 doc/doxygen/gtk-gui-doc
