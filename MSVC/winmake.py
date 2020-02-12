@@ -126,6 +126,12 @@ def getVSEnvCmd(arch='x64', platform='', version=''):
 
 
 def make_daemon(pkg_info, force, sdk_version, toolset):
+    cmake_script = 'cmake -DCMAKE_CONFIGURATION_TYPES="ReleaseLib_win32" -DCMAKE_VS_PLATFORM_NAME="x64" -G ' + getCMakeGenerator(getLatestVSVersion()) + ' -A x64 -T $(DefaultPlatformToolset) ..'
+    root_logger.warning("Cmake generating vcxproj files")
+    result = getSHrunner().exec_batch(cmake_script)
+    if result[0] is not 0:
+        sys.exit("Cmake Errors")
+
     for dep in pkg_info.get('deps', []):
         resolve(dep, False, sdk_version, toolset)
     root_logger.warning(
