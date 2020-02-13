@@ -220,7 +220,8 @@ VideoDeviceImpl::setup()
         }
         auto videoInfo = (VIDEOINFOHEADER*)pmt->pbFormat;
         auto size = jami::video::VideoSize(videoInfo->bmiHeader.biWidth, videoInfo->bmiHeader.biHeight);
-        auto rate = jami::video::FrameRate(1e7, videoInfo->AvgTimePerFrame);
+        // use 1e7 / MinFrameInterval to get maximum fps
+        auto rate = jami::video::FrameRate(1e7, pSCC.MinFrameInterval);
         auto bitrate = videoInfo->dwBitRate;
         // Only add configurations with positive bitrates.
         if (bitrate == 0)
