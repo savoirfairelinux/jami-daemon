@@ -347,11 +347,16 @@ HardwareAccel::getCompatibleAccel(AVCodecID id, int width, int height, CodecType
     for (auto api : *list) {
         const auto& it = std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id);
         if (it != api.supportedCodecs.end()) {
-            auto accel = HardwareAccel(id, api.name, api.hwType, api.format, api.swFormat, type);
-            accel.height_ = height;
-            accel.width_ = width;
-            accel.possible_devices_= api.possible_devices;
-            l.emplace_back(std::move(accel));
+            auto hwtype = AV_HWDEVICE_TYPE_NONE;
+            while ((hwtype = av_hwdevice_iterate_types(hwtype)) != AV_HWDEVICE_TYPE_NONE) {
+                if (hwtype == api.hwType) {
+                    auto accel = HardwareAccel(id, api.name, api.hwType, api.format, api.swFormat, type);
+                    accel.height_ = height;
+                    accel.width_ = width;
+                    accel.possible_devices_= api.possible_devices;
+                    l.emplace_back(std::move(accel));
+                }
+            }
         }
     }
     return l;
