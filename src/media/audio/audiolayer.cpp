@@ -28,6 +28,10 @@
 #include "tonecontrol.h"
 #include "client/ring_signal.h"
 
+extern "C" {
+#include <speex/speex_echo.h>
+}
+
 #include <ctime>
 #include <algorithm>
 
@@ -38,12 +42,14 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , isPlaybackMuted_(pref.getPlaybackMuted())
     , captureGain_(pref.getVolumemic())
     , playbackGain_(pref.getVolumespkr())
+    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
     , audioFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , audioInputFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
     , resampler_(new Resampler)
     , inputResampler_(new Resampler)
     , lastNotificationTime_()
+    , echoState_(nullptr, &speex_echo_state_destroy)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
 }
@@ -56,6 +62,15 @@ void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
     JAMI_DBG("Hardware audio format available : %s", playback.toString().c_str());
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
     urgentRingBuffer_.setFormat(audioFormat_);
+
+    //constexpr std::chrono::milliseconds echoWindow {10};
+    //constexpr std::chrono::milliseconds tailWindow {100};
+
+    echoState_.reset(speex_echo_state_init_mc(
+                        audioFormat_.sample_rate / 100,
+					   audioFormat_.sample_rate / 10,
+					   audioFormat_.nb_channels,
+                       audioFormat_.nb_channels));
 }
 
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
@@ -153,19 +168,47 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
 
     std::shared_ptr<AudioFrame> playbackBuf {};
     while (!(playbackBuf = playbackQueue_->dequeue())) {
+        std::shared_ptr<AudioFrame> resampled;
+
         if (auto urgentSamples = urgentRingBuffer_.get(RingBufferPool::DEFAULT_ID)) {
             bufferPool.discard(1, RingBufferPool::DEFAULT_ID);
-            playbackQueue_->enqueue(resampler_->resample(std::move(urgentSamples),format));
+            resampled = resampler_->resample(std::move(urgentSamples),format);
         } else if (auto toneToPlay = Manager::instance().getTelephoneTone()) {
-            playbackQueue_->enqueue(resampler_->resample(toneToPlay->getNext(), format));
+            resampled = resampler_->resample(toneToPlay->getNext(), format);
         } else if (auto buf = bufferPool.getData(RingBufferPool::DEFAULT_ID)) {
-            playbackQueue_->enqueue(resampler_->resample(std::move(buf), format));
+            resampled = resampler_->resample(std::move(buf), format);
         } else {
             break;
         }
+
+        if (resampled) {
+            if (echoState_) {
+                std::cout << "playback " << resampled->getFormat().toString() << " " << resampled->pointer()->nb_samples << std::endl;
+                speex_echo_playback(echoState_.get(), (const int16_t*)resampled->pointer()->data[0]);
+                speex_echo_playback(echoState_.get(), (const int16_t*)resampled->pointer()->data[0] + (resampled->pointer()->nb_samples/2 * resampled->pointer()->channels));
+            }
+            playbackQueue_->enqueue(std::move(resampled));
+        } else
+            break;
     }
 
     return playbackBuf;
+}
+
+void
+AudioLayer::putRecorded(std::shared_ptr<AudioFrame>&& frame)
+{
+    //if (isCaptureMuted_)
+    //    libav_utils::fillWithSilence(frame->pointer());
+
+    if (echoState_) {
+        std::cout << "capture " << frame->getFormat().toString() << " " << frame->getNbSamples() << std::endl;
+        auto out = std::make_shared<AudioFrame>(frame->getFormat(), frame->getNbSamples());
+        speex_echo_capture(echoState_.get(), (const int16_t*)frame->pointer()->data[0], (int16_t*)out->pointer()->data[0]);
+        mainRingBuffer_->put(std::move(out));
+    } else {
+        mainRingBuffer_->put(std::move(frame));
+    }
 }
 
 } // namespace jami

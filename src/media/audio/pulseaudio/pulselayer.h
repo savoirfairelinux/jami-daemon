@@ -235,7 +235,6 @@ class PulseLayer : public AudioLayer {
         std::thread streamStarter_ {};
 
         AudioPreference &preference_;
-        std::shared_ptr<RingBuffer> mainRingBuffer_;
 
         pa_operation* subscribeOp_ {nullptr};
         friend class AudioLayerTest;
