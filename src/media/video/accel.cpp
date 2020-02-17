@@ -342,9 +342,17 @@ HardwareAccel::initAPI(bool linkable, AVBufferRef* framesCtx)
 std::list<HardwareAccel>
 HardwareAccel::getCompatibleAccel(AVCodecID id, int width, int height, CodecType type)
 {
+    std::vector<AVHWDeviceType> usableTypes;
+    auto hwtype = AV_HWDEVICE_TYPE_NONE;
+    while ((hwtype = av_hwdevice_iterate_types(hwtype)) != AV_HWDEVICE_TYPE_NONE)
+        usableTypes.emplace_back(hwtype);
+
     std::list<HardwareAccel> l;
     const auto& list = (type == CODEC_ENCODER) ? &apiListEnc : &apiListDec;
     for (auto api : *list) {
+        if (std::find(usableTypes.begin(), usableTypes.end(), api.hwType) == usableTypes.end()){
+            continue;
+        }
         const auto& it = std::find(api.supportedCodecs.begin(), api.supportedCodecs.end(), id);
         if (it != api.supportedCodecs.end()) {
             auto accel = HardwareAccel(id, api.name, api.hwType, api.format, api.swFormat, type);
