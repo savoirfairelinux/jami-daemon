@@ -141,7 +141,10 @@ HardwareAccel::test_device_type(std::string& dev)
     }
 
     JAMI_WARN("-- Starting %s test for %s with default device.", (type_ == CODEC_ENCODER) ? "encoding" : "decoding", name);
-    err = test_device(name, nullptr, 0);
+	if (name_ == "qsv")
+		err = test_device(name, "auto", 0);
+	else
+		err = test_device(name, nullptr, 0);
     if (err == 0) {
         JAMI_DBG("-- Test passed for %s with default device.", name);
         dev = "default";
