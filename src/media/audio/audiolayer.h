@@ -33,6 +33,11 @@
 #include <atomic>
 #include <condition_variable>
 
+extern "C" {
+struct SpeexEchoState_;
+typedef struct SpeexEchoState_ SpeexEchoState;
+}
+
 /**
  * @file  audiolayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
@@ -242,6 +247,8 @@ protected:
         return ringBuff ? ringBuff : playBuff;
     }
 
+    void putRecorded(std::shared_ptr<AudioFrame>&& frame);
+
     void flush();
 
     /**
@@ -272,6 +279,7 @@ protected:
     /**
      * Buffers for audio processing
      */
+    std::shared_ptr<RingBuffer> mainRingBuffer_;
     AudioBuffer playbackBuffer_;
     AudioBuffer playbackResampleBuffer_;
     AudioBuffer ringtoneBuffer_;
@@ -318,6 +326,9 @@ protected:
      * Manage input sampling rate conversions
      */
     std::unique_ptr<Resampler> inputResampler_;
+
+    struct EchoState;
+    std::unique_ptr<EchoState> echoState_;
 
 private:
 
