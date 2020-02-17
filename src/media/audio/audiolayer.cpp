@@ -28,6 +28,10 @@
 #include "tonecontrol.h"
 #include "client/ring_signal.h"
 
+extern "C" {
+#include <speex/speex_echo.h>
+}
+
 #include <ctime>
 #include <algorithm>
 
@@ -38,12 +42,14 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , isPlaybackMuted_(pref.getPlaybackMuted())
     , captureGain_(pref.getVolumemic())
     , playbackGain_(pref.getVolumespkr())
+    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
     , audioFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , audioInputFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
     , resampler_(new Resampler)
     , inputResampler_(new Resampler)
     , lastNotificationTime_()
+    , echoState_(nullptr, &speex_echo_state_destroy)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
 }
@@ -56,6 +62,15 @@ void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
     JAMI_DBG("Hardware audio format available : %s", playback.toString().c_str());
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
     urgentRingBuffer_.setFormat(audioFormat_);
+
+    //constexpr std::chrono::milliseconds echoWindow {10};
+    //constexpr std::chrono::milliseconds tailWindow {100};
+
+    echoState_.reset(speex_echo_state_init_mc(
+                        audioFormat_.sample_rate / 100,
+					   audioFormat_.sample_rate / 10,
+					   audioFormat_.nb_channels,
+                       audioFormat_.nb_channels));
 }
 
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
@@ -165,7 +180,23 @@ AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
         }
     }
 
+    if (echoState_) {
+        speex_echo_playback(echoState_.get(), (const int16_t*)playbackBuf->pointer()->data[0]);
+    }
+
     return playbackBuf;
+}
+
+void
+AudioLayer::putRecorded(std::shared_ptr<AudioFrame>&& frame)
+{
+    if (echoState_) {
+        auto out = std::make_shared<AudioFrame>(frame->getFormat(), frame->getNbSamples());
+        speex_echo_capture(echoState_.get(), (const int16_t*)frame->pointer()->data[0], (int16_t*)out->pointer()->data[0]);
+        mainRingBuffer_->put(std::move(frame));
+    } else {
+        mainRingBuffer_->put(std::move(frame));
+    }
 }
 
 } // namespace jami

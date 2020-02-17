@@ -65,7 +65,6 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , ringtone_()
     , mainloop_(pa_threaded_mainloop_new(), pa_threaded_mainloop_free)
     , preference_(pref)
-    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
@@ -456,7 +455,7 @@ void PulseLayer::readFromMic()
     size_t sample_size = record_->frameSize();
     const size_t samples = bytes / sample_size;
 
-    auto out = std::make_unique<AudioFrame>(record_->format(), samples);
+    auto out = std::make_shared<AudioFrame>(record_->format(), samples);
     if (isCaptureMuted_)
         libav_utils::fillWithSilence(out->pointer());
     else

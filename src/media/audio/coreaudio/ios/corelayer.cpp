@@ -41,7 +41,6 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardring())
     , playbackBuff_(0, audioFormat_)
-    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {}
 
 CoreLayer::~CoreLayer()
@@ -440,7 +439,7 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
 
     auto format = audioInputFormat_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
-    auto inBuff = std::make_unique<AudioFrame>(format, inNumberFrames);
+    auto inBuff = std::make_shared<AudioFrame>(format, inNumberFrames);
     if (isCaptureMuted_) {
         libav_utils::fillWithSilence(inBuff->pointer());
     } else {
