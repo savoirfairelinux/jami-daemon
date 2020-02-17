@@ -1,6 +1,6 @@
 # speexdsp
 
-SPEEXDSP_HASH := 83b63852e0e4755a8c04a1f9c87dd73b5aa6293f
+SPEEXDSP_HASH := SpeexDSP-1.2.0
 SPEEXDSP_GITURL := https://git.xiph.org/?p=speexdsp.git;a=snapshot;h=$(SPEEXDSP_HASH);sf=tgz
 
 PKGS += speexdsp
