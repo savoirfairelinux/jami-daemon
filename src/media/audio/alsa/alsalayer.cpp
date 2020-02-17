@@ -99,7 +99,6 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     , is_playback_open_(false)
     , is_capture_open_(false)
     , audioThread_(nullptr)
-    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {}
 
 AlsaLayer::~AlsaLayer()
