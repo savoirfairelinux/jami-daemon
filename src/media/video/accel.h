@@ -158,8 +158,8 @@ private:
     AVBufferRef* deviceCtx_ {nullptr};
     AVBufferRef* framesCtx_ {nullptr};
 
-    int test_device(const char* name, const char* device, int flags);
-    int test_device_type(std::string& dev);
+    int init_device(const char* name, const char* device, int flags);
+    int init_device_type(std::string& dev);
 
     std::set<std::string> possible_devices_;
 };

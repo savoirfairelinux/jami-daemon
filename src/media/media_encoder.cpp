@@ -210,41 +210,38 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
     if (enableAccel_ && mediaType == AVMEDIA_TYPE_VIDEO) {
         auto APIs = video::HardwareAccel::getCompatibleAccel(static_cast<AVCodecID>(systemCodecInfo.avcodecId),
                 videoOpts_.width, videoOpts_.height, CODEC_ENCODER);
-
-        if (APIs.size() > 0) {
-            for (const auto& it : APIs) {
-                accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
-                // Init codec need accel_ to init encoderCtx accelerated
-                encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
-                encoderCtx->opaque = accel_.get();
-                // Check if pixel format from encoder match pixel format from decoder frame context
-                // if it mismatch, it means that we are using two different hardware API (nvenc and vaapi for example)
-                // in this case we don't want link the APIs
-                if (framesCtx) {
-                    auto hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
-                    if (encoderCtx->pix_fmt != hw->format)
-                        linkableHW_ = false;
-                }
-                auto ret = accel_->initAPI(linkableHW_, framesCtx);
-                if (ret < 0) {
-                    accel_.reset();
-                    encoderCtx = nullptr;
-                    continue;
-                }
-                accel_->setDetails(encoderCtx);
-                if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0) {
-                    // Failed to open codec
-                    JAMI_WARN("Fail to open hardware encoder %s with %s ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName().c_str());
-                    avcodec_free_context(&encoderCtx);
-                    encoderCtx = nullptr;
-                    accel_ = nullptr;
-                    continue;
-                } else {
-                    // Succeed to open codec
-                    JAMI_WARN("Using hardware encoding for %s with %s ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName().c_str());
-                    encoders_.push_back(encoderCtx);
-                    break;
-                }
+        for (const auto& it : APIs) {
+            accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
+            // Init codec need accel_ to init encoderCtx accelerated
+            encoderCtx = initCodec(mediaType, static_cast<AVCodecID>(systemCodecInfo.avcodecId), SystemCodecInfo::DEFAULT_VIDEO_BITRATE);
+            encoderCtx->opaque = accel_.get();
+            // Check if pixel format from encoder match pixel format from decoder frame context
+            // if it mismatch, it means that we are using two different hardware API (nvenc and vaapi for example)
+            // in this case we don't want link the APIs
+            if (framesCtx) {
+                auto hw = reinterpret_cast<AVHWFramesContext*>(framesCtx->data);
+                if (encoderCtx->pix_fmt != hw->format)
+                    linkableHW_ = false;
+            }
+            auto ret = accel_->initAPI(linkableHW_, framesCtx);
+            if (ret < 0) {
+                accel_.reset();
+                encoderCtx = nullptr;
+                continue;
+            }
+            accel_->setDetails(encoderCtx);
+            if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0) {
+                // Failed to open codec
+                JAMI_WARN("Fail to open hardware encoder %s with %s ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName().c_str());
+                avcodec_free_context(&encoderCtx);
+                encoderCtx = nullptr;
+                accel_ = nullptr;
+                continue;
+            } else {
+                // Succeed to open codec
+                JAMI_WARN("Using hardware encoding for %s with %s ", avcodec_get_name(static_cast<AVCodecID>(systemCodecInfo.avcodecId)), it.getName().c_str());
+                encoders_.push_back(encoderCtx);
+                break;
             }
         }
     }
@@ -990,51 +987,50 @@ MediaEncoder::testH265Accel()
 
         std::unique_ptr<video::HardwareAccel> accel;
 
-        if (APIs.size() > 0) {
-            for (const auto& it : APIs) {
-                accel = std::make_unique<video::HardwareAccel>(it);    // save accel
-                // Init codec need accel to init encoderCtx accelerated
-                auto outputCodec = avcodec_find_encoder_by_name(accel->getCodecName().c_str());
+        for (const auto& it : APIs) {
+            accel = std::make_unique<video::HardwareAccel>(it);    // save accel
+            // Init codec need accel to init encoderCtx accelerated
+            auto outputCodec = avcodec_find_encoder_by_name(accel->getCodecName().c_str());
 
-                AVCodecContext* encoderCtx = avcodec_alloc_context3(outputCodec);
-                encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), 16u);
-                encoderCtx->width = 1280;
-                encoderCtx->height = 720;
-                AVRational framerate;
-                framerate.num = 30;
-                framerate.den = 1;
-                encoderCtx->time_base = av_inv_q(framerate);
-                encoderCtx->pix_fmt = accel->getFormat();
-                encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
-                encoderCtx->opaque = accel.get();
+            AVCodecContext* encoderCtx = avcodec_alloc_context3(outputCodec);
+            encoderCtx->thread_count = std::min(std::thread::hardware_concurrency(), 16u);
+            encoderCtx->width = 1280;
+            encoderCtx->height = 720;
+            AVRational framerate;
+            framerate.num = 30;
+            framerate.den = 1;
+            encoderCtx->time_base = av_inv_q(framerate);
+            encoderCtx->pix_fmt = accel->getFormat();
+            encoderCtx->profile = FF_PROFILE_HEVC_MAIN;
+            encoderCtx->opaque = accel.get();
 
-                auto br = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
-                av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
-                av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
-                av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
-                av_opt_set_int(encoderCtx, "bufsize", br * 500, AV_OPT_SEARCH_CHILDREN);
-                av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
+            auto br = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
+            av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
+            av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
+            av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
+            av_opt_set_int(encoderCtx, "bufsize", br * 500, AV_OPT_SEARCH_CHILDREN);
+            av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
 
-                auto ret = accel->initAPI(false, nullptr);
-                if (ret < 0) {
-                    accel = nullptr;
-                    encoderCtx = nullptr;
-                    continue;
-                }
-                accel->setDetails(encoderCtx);
-                if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0) {
-                    // Failed to open codec
-                    avcodec_free_context(&encoderCtx);
-                    encoderCtx = nullptr;
-                    accel = nullptr;
-                    continue;
-                } else {
-                    // Succeed to open codec
-                    avcodec_free_context(&encoderCtx);
-                    encoderCtx = nullptr;
-                    accel = nullptr;
-                    return it.getName();
-                }
+            auto ret = accel->initAPI(false, nullptr);
+            if (ret < 0) {
+                accel.reset();;
+                encoderCtx = nullptr;
+                continue;
+            }
+            accel->setDetails(encoderCtx);
+            if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0) {
+                // Failed to open codec
+                JAMI_WARN("Fail to open hardware encoder H265 with %s ", it.getName().c_str());
+                avcodec_free_context(&encoderCtx);
+                encoderCtx = nullptr;
+                accel = nullptr;
+                continue;
+            } else {
+                // Succeed to open codec
+                avcodec_free_context(&encoderCtx);
+                encoderCtx = nullptr;
+                accel = nullptr;
+                return it.getName();
             }
         }
     }
