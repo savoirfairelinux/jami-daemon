@@ -282,31 +282,29 @@ MediaDecoder::setupStream()
     if (enableAccel_) {
         auto APIs = video::HardwareAccel::getCompatibleAccel(decoderCtx_->codec_id,
                     decoderCtx_->width, decoderCtx_->height, CODEC_DECODER);
-        if (!APIs.empty()) {
-            for (const auto& it : APIs) {
-                accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
-                auto ret = accel_->initAPI(false, nullptr);
-                if (ret < 0) {
-                    accel_ = nullptr;
-                    continue;
-                }
-                if(prepareDecoderContext() < 0)
-                    return -1; // failed
-                accel_->setDetails(decoderCtx_);
-                decoderCtx_->opaque = accel_.get();
-                decoderCtx_->pix_fmt = accel_->getFormat();
-                if (avcodec_open2(decoderCtx_, inputDecoder_, &options_) < 0) {
-                    // Failed to open codec
-                    JAMI_WARN("Fail to open hardware decoder for %s with %s ", avcodec_get_name(decoderCtx_->codec_id), it.getName().c_str());
-                    avcodec_free_context(&decoderCtx_);
-                    decoderCtx_ = nullptr;
-                    accel_.reset();
-                    continue;
-                } else {
-                    // Succeed to open codec
-                    JAMI_WARN("Using hardware decoding for %s with %s ", avcodec_get_name(decoderCtx_->codec_id), it.getName().c_str());
-                    break;
-                }
+        for (const auto& it : APIs) {
+            accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
+            auto ret = accel_->initAPI(false, nullptr);
+            if (ret < 0) {
+                accel_ = nullptr;
+                continue;
+            }
+            if(prepareDecoderContext() < 0)
+                return -1; // failed
+            accel_->setDetails(decoderCtx_);
+            decoderCtx_->opaque = accel_.get();
+            decoderCtx_->pix_fmt = accel_->getFormat();
+            if (avcodec_open2(decoderCtx_, inputDecoder_, &options_) < 0) {
+                // Failed to open codec
+                JAMI_WARN("Fail to open hardware decoder for %s with %s ", avcodec_get_name(decoderCtx_->codec_id), it.getName().c_str());
+                avcodec_free_context(&decoderCtx_);
+                decoderCtx_ = nullptr;
+                accel_.reset();
+                continue;
+            } else {
+                // Succeed to open codec
+                JAMI_WARN("Using hardware decoding for %s with %s ", avcodec_get_name(decoderCtx_->codec_id), it.getName().c_str());
+                break;
             }
         }
     }
