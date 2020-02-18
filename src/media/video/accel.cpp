@@ -94,7 +94,7 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
 }
 
 int
-HardwareAccel::test_device(const char* name,
+HardwareAccel::init_device(const char* name,
                         const char* device, int flags)
 {
     const AVHWDeviceContext* dev = nullptr;
@@ -121,7 +121,7 @@ HardwareAccel::test_device(const char* name,
 }
 
 int
-HardwareAccel::test_device_type(std::string& dev)
+HardwareAccel::init_device_type(std::string& dev)
 {
     AVHWDeviceType check;
     const char* name;
@@ -140,30 +140,30 @@ HardwareAccel::test_device_type(std::string& dev)
         return -1;
     }
 
-    JAMI_WARN("-- Starting %s test for %s with default device.", (type_ == CODEC_ENCODER) ? "encoding" : "decoding", name);
+    JAMI_WARN("-- Init %s for %s with default device.", (type_ == CODEC_ENCODER) ? "encoding" : "decoding", name);
 	if (name_ == "qsv")
-		err = test_device(name, "auto", 0);
+		err = init_device(name, "auto", 0);
 	else
-		err = test_device(name, nullptr, 0);
+		err = init_device(name, nullptr, 0);
     if (err == 0) {
-        JAMI_DBG("-- Test passed for %s with default device.", name);
+        JAMI_DBG("-- Init passed for %s with default device.", name);
         dev = "default";
         return 0;
     } else {
-        JAMI_DBG("-- Test failed for %s with default device.", name);
+        JAMI_DBG("-- Init failed for %s with default device.", name);
     }
 
     for (const auto& device : possible_devices_) {
-        JAMI_WARN("-- Starting %s test for %s with device %s.", (type_ == CODEC_ENCODER) ? "encoding" : "decoding", name, device.c_str());
-        err = test_device(name, device.c_str(), 0);
+        JAMI_WARN("-- Init %s for %s with device %s.", (type_ == CODEC_ENCODER) ? "encoding" : "decoding", name, device.c_str());
+        err = init_device(name, device.c_str(), 0);
         if (err == 0) {
-            JAMI_DBG("-- Test passed for %s with device %s.",
+            JAMI_DBG("-- Init passed for %s with device %s.",
                     name, device.c_str());
             dev = device;
             return 0;
         }
         else {
-            JAMI_DBG("-- Test failed for %s with device %s.",
+            JAMI_DBG("-- Init failed for %s with device %s.",
                     name, device.c_str());
         }
     }
@@ -329,7 +329,7 @@ HardwareAccel::initAPI(bool linkable, AVBufferRef* framesCtx)
 {
     const auto& codecName = getCodecName();
     std::string device;
-    auto ret = test_device_type(device);
+    auto ret = init_device_type(device);
     if(ret == 0) {
         bool link = false;
         if (linkable && framesCtx)
