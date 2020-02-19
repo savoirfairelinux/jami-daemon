@@ -172,6 +172,7 @@ VideoDeviceImpl::getDeviceParams() const
     ss1 << fmt_->ring_format;
     ss1 >> params.format;
 
+    params.unique_id = name;
     params.name = name;
     params.input = name;
     params.channel = 0;
@@ -194,11 +195,11 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
                                                   rate_.real());
 }
 
-VideoDevice::VideoDevice(const std::string& path,
+VideoDevice::VideoDevice(const std::string& id,
                          const std::vector<std::map<std::string, std::string>>&)
-    : deviceImpl_(new VideoDeviceImpl(path))
+    : deviceImpl_(new VideoDeviceImpl(id))
 {
-    id_ = path;
+    id_ = id;
     name = deviceImpl_->name;
 }
 

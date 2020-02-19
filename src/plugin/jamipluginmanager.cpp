@@ -69,10 +69,10 @@ extern "C" {
 #define PLUGIN_OLD_VERSION       200 /* Plugin already installed with a newer version */
 
 #ifdef WIN32
-#define LIB_TYPE ".dll"
+#define LIB_TYPE   ".dll"
 #define LIB_PREFIX ""
 #else
-#define LIB_TYPE ".so"
+#define LIB_TYPE   ".so"
 #define LIB_PREFIX "lib"
 #endif
 
