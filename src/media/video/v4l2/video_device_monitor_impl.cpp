@@ -77,6 +77,37 @@ class VideoDeviceMonitorImpl {
         bool probing_;
 };
 
+std::string
+getDeviceString(udev* udev, const std::string& dev_path)
+{
+    std::string unique_device_string;
+    struct stat statbuf;
+    if (stat(dev_path.c_str(), &statbuf) < 0) {
+        return {};
+    }
+    auto type =  S_ISBLK(statbuf.st_mode) ? 'b' : S_ISCHR(statbuf.st_mode) ? 'c' : 0;
+
+    auto opened_dev = udev_device_new_from_devnum(udev, type, statbuf.st_rdev);
+    auto dev = opened_dev;
+
+    while (dev != nullptr) {
+        auto serial = udev_device_get_sysattr_value(dev, "serial");
+        if (nullptr == serial) {
+            dev = udev_device_get_parent(dev);
+        } else {
+            unique_device_string += udev_device_get_sysattr_value(dev, "idVendor");
+            unique_device_string += udev_device_get_sysattr_value(dev, "idProduct");
+            unique_device_string += serial;
+            break;
+        }
+    }
+    if (opened_dev) {
+        udev_device_unref(opened_dev);
+    }
+    udev_unref(udev);
+    return unique_device_string;
+}
+
 static int is_v4l2(struct udev_device *dev)
 {
     const char *version = udev_device_get_property_value(dev, "ID_V4L_VERSION");
@@ -124,13 +155,13 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
         struct udev_device *dev = udev_device_new_from_syspath(udev_, path);
 
         if (is_v4l2(dev)) {
-            const char *devpath = udev_device_get_devnode(dev);
-            if (devpath) {
-                try {
-                    monitor_->addDevice(string(devpath));
-                } catch (const std::runtime_error &e) {
-                    JAMI_ERR("%s", e.what());
-                }
+            const char *path = udev_device_get_devnode(dev);
+            auto unique_name = getDeviceString(udev_, path);
+            JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
+            try {
+                monitor_->addDevice(unique_name);
+            } catch (const std::runtime_error &e) {
+                JAMI_ERR("%s", e.what());
             }
         }
         udev_device_unref(dev);
@@ -206,18 +237,19 @@ void VideoDeviceMonitorImpl::run()
                         break;
                     }
 
-                    const char *node = udev_device_get_devnode(dev);
+                    const char *path = udev_device_get_devnode(dev);
+                    auto unique_name = getDeviceString(udev_, path);
                     const char *action = udev_device_get_action(dev);
                     if (!strcmp(action, "add")) {
-                        JAMI_DBG("udev: adding %s", node);
+                        JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
                         try {
-                            monitor_->addDevice(node);
+                            monitor_->addDevice(unique_name);
                         } catch (const std::runtime_error &e) {
                             JAMI_ERR("%s", e.what());
                         }
                     } else if (!strcmp(action, "remove")) {
-                        JAMI_DBG("udev: removing %s", node);
-                        monitor_->removeDevice(string(node));
+                        JAMI_DBG("udev: removing %s", unique_name.c_str());
+                        monitor_->removeDevice(unique_name);
                     }
                     udev_device_unref(dev);
                     break;
