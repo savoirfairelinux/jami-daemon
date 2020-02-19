@@ -602,7 +602,11 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 void
 MediaEncoder::forcePresetX264_X265(AVCodecContext* encoderCtx)
 {
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    const char *speedPreset = "ultrafast";
+#else
     const char *speedPreset = "veryfast";
+#endif
     if (av_opt_set(encoderCtx, "preset", speedPreset, AV_OPT_SEARCH_CHILDREN))
         JAMI_WARN("Failed to set x264 preset '%s'", speedPreset);
     const char *tune = "zerolatency";
