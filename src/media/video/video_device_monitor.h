@@ -60,6 +60,7 @@ class VideoDeviceMonitor : public Serializable
 
         void addDevice(const std::string &node, const std::vector<std::map<std::string, std::string>>* devInfo=nullptr);
         void removeDevice(const std::string &node);
+        void removeDeviceViaInput(const std::string &path);
 
         /**
          * Params for libav
