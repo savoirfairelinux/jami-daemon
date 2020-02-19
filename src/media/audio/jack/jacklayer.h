@@ -49,7 +49,6 @@ private:
     std::thread ringbuffer_thread_;
     std::mutex ringbuffer_thread_mutex_;
     std::condition_variable data_ready_;
-    std::shared_ptr<RingBuffer> mainRingBuffer_;
 
     static int process_capture(jack_nframes_t frames, void *arg);
     static int process_playback(jack_nframes_t frames, void *arg);
