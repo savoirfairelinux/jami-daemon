@@ -1,0 +1,15 @@
+{
+    "name": "speexdsp",
+    "version": "SpeexDSP-1.2.0",
+    "url": "https://github.com/xiph/speexdsp/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": ["speexdsp_vs_proj.patch"],
+    "win_patches": [],
+    "project_paths": ["win32/msvc/libspeexdsp/libspeexdsp.vcxproj"],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}
