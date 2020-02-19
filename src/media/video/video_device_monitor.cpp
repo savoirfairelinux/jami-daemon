@@ -53,8 +53,9 @@ VideoDeviceMonitor::getDeviceList() const
     std::lock_guard<std::mutex> l(lock_);
     vector<string> ids;
     ids.reserve(devices_.size());
-    for (const auto& dev : devices_)
+    for (const auto& dev : devices_) {
         ids.emplace_back(dev.getDeviceId());
+    }
     return ids;
 }
 
@@ -91,7 +92,7 @@ VideoDeviceMonitor::applySettings(const string& id, const VideoSettings& setting
         return;
 
     iter->applySettings(settings);
-    auto it = findPreferencesById(settings.id);
+    auto it = findPreferencesById(settings.unique_id);
     if (it != preferences_.end())
         (*it) = settings;
 }
@@ -263,7 +264,7 @@ vector<VideoSettings>::iterator
 VideoDeviceMonitor::findPreferencesById(const string& id)
 {
     for (auto it = preferences_.begin(); it != preferences_.end(); ++it)
-        if (it->id.find(id) != std::string::npos)
+        if (it->unique_id.find(id) != std::string::npos)
             return it;
     return preferences_.end();
 }
@@ -271,7 +272,7 @@ VideoDeviceMonitor::findPreferencesById(const string& id)
 void
 VideoDeviceMonitor::overwritePreferences(const VideoSettings& settings)
 {
-    auto it = findPreferencesById(settings.id);
+    auto it = findPreferencesById(settings.unique_id);
     if (it != preferences_.end())
         preferences_.erase(it);
     preferences_.emplace_back(settings);
@@ -294,16 +295,16 @@ VideoDeviceMonitor::unserialize(const YAML::Node& in)
     const auto& devices = node["devices"];
     for (const auto& dev : devices) {
         VideoSettings pref = dev.as<VideoSettings>();
-        if (pref.id.empty())
+        if (pref.unique_id.empty())
             continue; // discard malformed section
         overwritePreferences(pref);
-        auto itd = findDeviceById(pref.id);
+        auto itd = findDeviceById(pref.unique_id);
         if (itd != devices_.end())
             itd->applySettings(pref);
     }
 
     // Restore the default device if present, or select the first one
-    const string prefId = preferences_.empty() ? "" : preferences_[0].id;
+    const string prefId = preferences_.empty() ? "" : preferences_[0].unique_id;
     const string firstId = devices_.empty() ? "" : devices_[0].getDeviceId();
     const auto devIter = findDeviceById(prefId);
     if (devIter != devices_.end()) {
