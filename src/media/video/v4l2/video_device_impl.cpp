@@ -127,9 +127,10 @@ public:
     /**
      * @throw std::runtime_error
      */
-    VideoDeviceImpl(const std::string& path);
+    VideoDeviceImpl(const std::string& id, const std::string& path);
 
-    std::string id;
+    std::string unique_id;
+    std::string path;
     std::string name;
 
     std::vector<std::string> getChannelList() const;
@@ -433,15 +434,16 @@ VideoV4l2Channel::getSize(VideoSize s) const
     return sizes_.front();
 }
 
-VideoDeviceImpl::VideoDeviceImpl(const string& path)
-    : id(path)
+VideoDeviceImpl::VideoDeviceImpl(const string& id, const std::string& path)
+    : unique_id(id)
+    , path(path)
     , name()
     , channels_()
     , channel_(-1, "")
     , size_(-1, -1)
     , rate_(-1, 1, 0)
 {
-    int fd = open(id.c_str(), O_RDWR);
+    int fd = open(path.c_str(), O_RDWR);
     if (fd == -1)
         throw std::runtime_error("could not open device");
 
@@ -550,7 +552,8 @@ VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
     params.name = name;
-    params.input = id;
+    params.unique_id = unique_id;
+    params.input = path;
     params.format = "video4linux2";
     params.channel_name = channel_.name;
     params.channel = channel_.idx;
@@ -574,11 +577,13 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
     }
 }
 
-VideoDevice::VideoDevice(const std::string& path,
-                         const std::vector<std::map<std::string, std::string>>&)
-    : deviceImpl_(new VideoDeviceImpl(path))
+VideoDevice::VideoDevice(const std::string& id,
+                         const std::vector<std::map<std::string, std::string>>& devInfo)
+    : id_(id)
 {
-    id_ = path;
+    deviceImpl_ = std::make_shared<VideoDeviceImpl>(id,
+                                                    devInfo.empty() ? id
+                                                                    : devInfo.at(0).at("devPath"));
     name = deviceImpl_->name;
 }
 

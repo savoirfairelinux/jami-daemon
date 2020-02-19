@@ -1392,13 +1392,11 @@ Manager::addMainParticipant(const std::string& conference_id)
 
     if (auto conf = getConferenceFromID(conference_id)) {
         pimpl_->addMainParticipant(*conf);
-        JAMI_DBG("Successfully added main participant to conference %s",
-            conference_id.c_str());
+        JAMI_DBG("Successfully added main participant to conference %s", conference_id.c_str());
         return true;
     } else
-        JAMI_WARN("Failed to add main participant to conference %s",
-            conference_id.c_str());
-        return false;
+        JAMI_WARN("Failed to add main participant to conference %s", conference_id.c_str());
+    return false;
 }
 
 std::shared_ptr<Call>
@@ -1834,8 +1832,7 @@ Manager::incomingCallsWaiting()
 void
 Manager::incomingCall(Call& call, const std::string& accountId)
 {
-    JAMI_INFO("Incoming call %s on account %s)",
-        call.getCallId().c_str(), accountId.c_str());
+    JAMI_INFO("Incoming call %s on account %s)", call.getCallId().c_str(), accountId.c_str());
 
     stopTone();
     const std::string callID(call.getCallId());
