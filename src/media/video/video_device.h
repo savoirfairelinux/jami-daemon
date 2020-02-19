@@ -146,7 +146,8 @@ public:
         auto params = getDeviceParams();
         VideoSettings settings;
         settings.name = name.empty() ? params.name : name;
-        settings.id = params.input;
+        settings.unique_id = params.unique_id;
+        settings.input = params.input;
         settings.channel = params.channel_name;
         settings.video_size = sizeToString(params.width, params.height);
         settings.framerate = jami::to_string(params.framerate.real());
@@ -164,7 +165,8 @@ public:
     {
         DeviceParams params {};
         params.name = settings.name;
-        params.input = settings.id;
+        params.input = settings.input;
+        params.unique_id = settings.unique_id;
         params.channel_name = settings.channel;
         auto size = sizeFromString(settings.channel, settings.video_size);
         params.width = size.first;
@@ -231,7 +233,7 @@ private:
     void setDeviceParams(const DeviceParams&);
 
     /*
-     * The device node, e.g. "/dev/video0".
+     * The device node, e.g. "046d082dF41A2B3F".
      */
     std::string id_ {};
 

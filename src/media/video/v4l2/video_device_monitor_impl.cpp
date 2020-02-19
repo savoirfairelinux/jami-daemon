@@ -49,35 +49,66 @@ namespace video {
 using std::vector;
 using std::string;
 
-class VideoDeviceMonitorImpl
-{
-public:
-    /*
-     * This is the only restriction to the pImpl design:
-     * as the Linux implementation has a thread, it needs a way to notify
-     * devices addition and deletion.
-     *
-     * This class should maybe inherit from VideoDeviceMonitor instead of
-     * being its pImpl.
-     */
-    VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
-    ~VideoDeviceMonitorImpl();
+class VideoDeviceMonitorImpl {
+    public:
+        /*
+         * This is the only restriction to the pImpl design:
+         * as the Linux implementation has a thread, it needs a way to notify
+         * devices addition and deletion.
+         *
+         * This class should maybe inherit from VideoDeviceMonitor instead of
+         * being its pImpl.
+         */
+        VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
+        ~VideoDeviceMonitorImpl();
 
-    void start();
+        void start();
 
-private:
-    NON_COPYABLE(VideoDeviceMonitorImpl);
+        std::map<std::string, std::string> currentPathToId_ {};
 
-    VideoDeviceMonitor* monitor_;
+    private:
+        NON_COPYABLE(VideoDeviceMonitorImpl);
 
-    void run();
-    std::thread thread_;
-    mutable std::mutex mutex_;
+        VideoDeviceMonitor* monitor_;
 
-    udev* udev_;
-    udev_monitor* udev_mon_;
-    bool probing_;
+        void run();
+        std::thread thread_;
+        mutable std::mutex mutex_;
+
+        udev *udev_;
+        udev_monitor *udev_mon_;
+        bool probing_;
 };
+
+std::string
+getDeviceString(udev* udev, const std::string& dev_path)
+{
+    std::string unique_device_string;
+    struct stat statbuf;
+    if (stat(dev_path.c_str(), &statbuf) < 0) {
+        return {};
+    }
+    auto type =  S_ISBLK(statbuf.st_mode) ? 'b' : S_ISCHR(statbuf.st_mode) ? 'c' : 0;
+
+    auto opened_dev = udev_device_new_from_devnum(udev, type, statbuf.st_rdev);
+    auto dev = opened_dev;
+
+    while (dev != nullptr) {
+        auto serial = udev_device_get_sysattr_value(dev, "serial");
+        if (nullptr == serial) {
+            dev = udev_device_get_parent(dev);
+        } else {
+            unique_device_string += udev_device_get_sysattr_value(dev, "idVendor");
+            unique_device_string += udev_device_get_sysattr_value(dev, "idProduct");
+            unique_device_string += serial;
+            break;
+        }
+    }
+    if (opened_dev) {
+        udev_device_unref(opened_dev);
+    }
+    return unique_device_string;
+}
 
 static int
 is_v4l2(struct udev_device* dev)
@@ -130,13 +161,20 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
         struct udev_device* dev = udev_device_new_from_syspath(udev_, path);
 
         if (is_v4l2(dev)) {
-            const char* devpath = udev_device_get_devnode(dev);
-            if (devpath) {
-                try {
-                    monitor_->addDevice(string(devpath));
-                } catch (const std::runtime_error& e) {
-                    JAMI_ERR("%s", e.what());
-                }
+            const char *path = udev_device_get_devnode(dev);
+            if (path && std::string(path).find("/dev") != 0) {
+                // udev_device_get_devnode will fail
+                continue;
+            }
+            auto unique_name = getDeviceString(udev_, path);
+            JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
+            std::map<std::string, std::string> info = {{"devPath", path}};
+            std::vector<std::map<std::string, std::string>> devInfo = {info};
+            try {
+                monitor_->addDevice(unique_name, &devInfo);
+                currentPathToId_.emplace(path, unique_name);
+            } catch (const std::runtime_error &e) {
+                JAMI_ERR("%s", e.what());
             }
         }
         udev_device_unref(dev);
@@ -204,43 +242,58 @@ VideoDeviceMonitorImpl::run()
 
         int ret = select(udev_fd + 1, &set, NULL, NULL, &timeout);
         switch (ret) {
-        case 0:
-            break;
-        case 1: {
-            udev_device* dev = udev_monitor_receive_device(udev_mon_);
-            if (!is_v4l2(dev)) {
-                udev_device_unref(dev);
+            case 0:
                 break;
-            }
+            case 1:
+                {
+                    udev_device *dev = udev_monitor_receive_device(udev_mon_);
+                    if (is_v4l2(dev)) {
+                        const char *path = udev_device_get_devnode(dev);
+                        if (path && std::string(path).find("/dev") != 0) {
+                            // udev_device_get_devnode will fail
+                            break;
+                        }
+                        auto unique_name = getDeviceString(udev_, path);
 
-            const char* node = udev_device_get_devnode(dev);
-            const char* action = udev_device_get_action(dev);
-            if (!strcmp(action, "add")) {
-                JAMI_DBG("udev: adding %s", node);
-                try {
-                    monitor_->addDevice(node);
-                } catch (const std::runtime_error& e) {
-                    JAMI_ERR("%s", e.what());
+                        const char *action = udev_device_get_action(dev);
+                        if (!strcmp(action, "add")) {
+                            JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
+                            std::map<std::string, std::string> info = {{"devPath", path}};
+                            std::vector<std::map<std::string, std::string>> devInfo = {info};
+                            try {
+                                monitor_->addDevice(unique_name, &devInfo);
+                                currentPathToId_.emplace(path, unique_name);
+                            } catch (const std::runtime_error &e) {
+                                JAMI_ERR("%s", e.what());
+                            }
+                        } else if (!strcmp(action, "remove")) {
+                            auto it = currentPathToId_.find(path);
+                            if (it != currentPathToId_.end()) {
+                                JAMI_DBG("udev: removing %s", it->second.c_str());
+                                monitor_->removeDevice(it->second);
+                                currentPathToId_.erase(it);
+                            } else {
+                                // In case of fallback
+                                JAMI_DBG("udev: removing %s", path);
+                                monitor_->removeDevice(path);
+                            }
+                        }
+                    }
+                    udev_device_unref(dev);
+                    break;
                 }
-            } else if (!strcmp(action, "remove")) {
-                JAMI_DBG("udev: removing %s", node);
-                monitor_->removeDevice(string(node));
-            }
-            udev_device_unref(dev);
-            break;
-        }
 
-        case -1:
-            if (errno == EAGAIN)
-                continue;
-            JAMI_ERR("udev monitoring thread: select failed (%m)");
-            probing_ = false;
-            return;
+            case -1:
+                if (errno == EAGAIN)
+                    continue;
+                JAMI_ERR("udev monitoring thread: select failed (%m)");
+                probing_ = false;
+                return;
 
-        default:
-            JAMI_ERR("select() returned %d (%m)", ret);
-            probing_ = false;
-            return;
+            default:
+                JAMI_ERR("select() returned %d (%m)", ret);
+                probing_ = false;
+                return;
         }
     }
 }
