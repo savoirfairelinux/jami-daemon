@@ -36,8 +36,9 @@ constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
  * to open a LibAV device/stream
  */
 struct DeviceParams {
-    std::string name {};
-    std::string input {}; // Device path (e.g. /dev/video0)
+    std::string name {};        // friendly name (e.g. Logitech BRIO)
+    std::string input {};       // Device path (e.g. /dev/video0)
+    std::string unique_id {};   // unique id (e.g. 046d082d8A8B667F)
     std::string format {};
     unsigned width {}, height {};
     rational<double> framerate {};
