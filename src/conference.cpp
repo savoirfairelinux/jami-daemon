@@ -253,8 +253,10 @@ Conference::attach()
 #endif
         setState(State::ACTIVE_ATTACHED);
     } else {
-        JAMI_WARN("Invalid conference state in attach participant: current \"%s\" - expected \"%s\"",
-            getStateStr(), "ACTIVE_DETACHED");
+        JAMI_WARN(
+            "Invalid conference state in attach participant: current \"%s\" - expected \"%s\"",
+            getStateStr(),
+            "ACTIVE_DETACHED");
     }
 }
 
@@ -272,16 +274,17 @@ Conference::detach()
 #endif
         setState(State::ACTIVE_DETACHED);
     } else {
-        JAMI_WARN("Invalid conference state in detach participant: current \"%s\" - expected \"%s\"",
-            getStateStr(), "ACTIVE_ATTACHED");
+        JAMI_WARN(
+            "Invalid conference state in detach participant: current \"%s\" - expected \"%s\"",
+            getStateStr(),
+            "ACTIVE_ATTACHED");
     }
 }
 
 void
 Conference::bindParticipant(const std::string& participant_id)
 {
-    JAMI_INFO("Bind participant %s to conference %s",
-        participant_id.c_str(), id_.c_str());
+    JAMI_INFO("Bind participant %s to conference %s", participant_id.c_str(), id_.c_str());
 
     auto& rbPool = Manager::instance().getRingBufferPool();
 
