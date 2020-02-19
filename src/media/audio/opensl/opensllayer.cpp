@@ -38,17 +38,11 @@
 
 #include "SLES/OpenSLES_AndroidConfiguration.h"
 
-/* available only from api 14 */
-#ifndef SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION
-#define SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION ((SLuint32) 0x00000004)
-#endif
-
 namespace jami {
 
 // Constructor
 OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
-    : AudioLayer(pref),
-     mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
+    : AudioLayer(pref)
 {}
 
 // Destructor
@@ -342,13 +336,12 @@ OpenSLLayer::startAudioCapture()
                 recBufQueue_.pop();
                 if (buf->size_ > 0) {
                     auto nb_samples = buf->size_ / hardwareFormat_.getBytesPerFrame();
-                    auto out = std::make_unique<AudioFrame>(hardwareFormat_, nb_samples);
+                    auto out = std::make_shared<AudioFrame>(hardwareFormat_, nb_samples);
                     if (isCaptureMuted_)
                         libav_utils::fillWithSilence(out->pointer());
                     else
                         std::copy_n((const AudioSample*)buf->buf_, nb_samples, (AudioSample*)out->pointer()->data[0]);
-                    // dcblocker_.process(buffer);
-                    mainRingBuffer_->put(std::move(out));
+                    putRecorded(std::move(out));
                 }
                 buf->size_ = 0;
                 freeRecBufQueue_.push(buf);

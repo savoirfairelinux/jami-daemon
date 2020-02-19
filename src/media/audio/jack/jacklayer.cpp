@@ -209,8 +209,7 @@ createPorts(jack_client_t *client, std::vector<jack_port_t *> &ports,
 JackLayer::JackLayer(const AudioPreference &p) :
     AudioLayer(p),
     captureClient_(nullptr),
-    playbackClient_(nullptr),
-    mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
+    playbackClient_(nullptr)
 {
     playbackClient_ = jack_client_open(PACKAGE_NAME,
             (jack_options_t) (JackNullOption | JackNoStartServer), NULL);
