@@ -271,7 +271,7 @@ RingBufferPool::getData(const std::string& call_id)
     if (bindings->size() == 1)
         return (*bindings->cbegin())->get(call_id);
 
-    auto mixBuffer = std::make_unique<AudioFrame>(internalAudioFormat_);
+    auto mixBuffer = std::make_shared<AudioFrame>(internalAudioFormat_);
     for (const auto& rbuf : *bindings) {
         if (auto b = rbuf->get(call_id)) {
             mixBuffer->mix(*b);
@@ -326,7 +326,7 @@ RingBufferPool::getAvailableData(const std::string& call_id)
     if (availableFrames == 0)
         return {};
 
-    auto buf = std::make_unique<AudioFrame>(internalAudioFormat_);
+    auto buf = std::make_shared<AudioFrame>(internalAudioFormat_);
     for (const auto &rbuf : *bindings) {
         if (auto b = rbuf->get(call_id))
             buf->mix(*b);
