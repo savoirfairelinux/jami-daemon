@@ -1,0 +1,573 @@
+From fec3e6980596b2cab1e13b72a82983424fe368f8 Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Thu, 20 Feb 2020 16:29:38 -0500
+Subject: [PATCH 03/12] add_tcp_keep_alive
+
+---
+ pjlib/include/pj/sock.h             |  29 +++++++
+ pjlib/src/pj/sock_bsd.c             | 127 ++++++++++++++++++----------
+ pjlib/src/pj/sock_common.c          |  20 +++++
+ pjlib/src/pj/sock_uwp.cpp           |  24 ++++++
+ pjnath/include/pjnath/ice_session.h |   2 +-
+ pjnath/include/pjnath/ice_strans.h  |   7 ++
+ pjnath/src/pjnath/ice_session.c     |  18 ++--
+ pjnath/src/pjnath/ice_strans.c      |  10 +++
+ 8 files changed, 184 insertions(+), 53 deletions(-)
+
+diff --git a/pjlib/include/pj/sock.h b/pjlib/include/pj/sock.h
+index 4daf298c5..095a38335 100644
+--- a/pjlib/include/pj/sock.h
++++ b/pjlib/include/pj/sock.h
+@@ -313,6 +313,11 @@ extern const pj_uint16_t PJ_SO_REUSEADDR;
+ /** Do not generate SIGPIPE. @see pj_SO_NOSIGPIPE */
+ extern const pj_uint16_t PJ_SO_NOSIGPIPE;
+ 
++extern const pj_uint16_t PJ_SO_KEEPALIVE;
++extern const pj_uint16_t PJ_TCP_KEEPIDLE;
++extern const pj_uint16_t PJ_TCP_KEEPINTVL;
++extern const pj_uint16_t PJ_TCP_KEEPCNT;
++
+ /** Set the protocol-defined priority for all packets to be sent on socket.
+  */
+ extern const pj_uint16_t PJ_SO_PRIORITY;
+@@ -343,9 +348,21 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
+     /** Get #PJ_SO_SNDBUF constant */
+     PJ_DECL(pj_uint16_t) pj_SO_SNDBUF(void);
+ 
++    /** Get #PJ_SO_KEEPALIVE constant */
++#   define pj_SO_KEEPALIVE() PJ_SO_KEEPALIVE(void);
++
+     /** Get #PJ_TCP_NODELAY constant */
+     PJ_DECL(pj_uint16_t) pj_TCP_NODELAY(void);
+ 
++    /** Get #PJ_TCP_KEEPIDLE constant */
++#   define pj_TCP_KEEPIDLE() PJ_TCP_KEEPIDLE(void);
++
++    /** Get #PJ_TCP_KEEPINTVL constant */
++#   define pj_TCP_KEEPINTVL() PJ_TCP_KEEPINTVL(void);
++
++    /** Get #PJ_TCP_KEEPCNT constant */
++#   define pj_TCP_KEEPCNT() PJ_TCP_KEEPCNT(void);
++
+     /** Get #PJ_SO_REUSEADDR constant */
+     PJ_DECL(pj_uint16_t) pj_SO_REUSEADDR(void);
+ 
+@@ -379,9 +396,21 @@ extern const pj_uint16_t PJ_IP_DROP_MEMBERSHIP;
+     /** Get #PJ_SO_SNDBUF constant */
+ #   define pj_SO_SNDBUF()   PJ_SO_SNDBUF
+ 
++    /** Get #PJ_SO_KEEPALIVE constant */
++#   define pj_SO_KEEPALIVE() PJ_SO_KEEPALIVE
++
+     /** Get #PJ_TCP_NODELAY constant */
+ #   define pj_TCP_NODELAY() PJ_TCP_NODELAY
+ 
++    /** Get #PJ_TCP_KEEPIDLE constant */
++#   define pj_TCP_KEEPIDLE() PJ_TCP_KEEPIDLE
++
++    /** Get #PJ_TCP_KEEPINTVL constant */
++#   define pj_TCP_KEEPINTVL() PJ_TCP_KEEPINTVL
++
++    /** Get #PJ_TCP_KEEPCNT constant */
++#   define pj_TCP_KEEPCNT() PJ_TCP_KEEPCNT
++
+     /** Get #PJ_SO_REUSEADDR constant */
+ #   define pj_SO_REUSEADDR() PJ_SO_REUSEADDR
+ 
+diff --git a/pjlib/src/pj/sock_bsd.c b/pjlib/src/pj/sock_bsd.c
+index e416991de..683268b17 100644
+--- a/pjlib/src/pj/sock_bsd.c
++++ b/pjlib/src/pj/sock_bsd.c
+@@ -1,5 +1,5 @@
+ /* $Id$ */
+-/* 
++/*
+  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+  *
+@@ -15,7 +15,7 @@
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ #include <pj/sock.h>
+ #include <pj/os.h>
+@@ -28,6 +28,15 @@
+ 
+ #define THIS_FILE	"sock_bsd.c"
+ 
++#if !defined(PJ_WIN32) && !defined(PJ_WIN64)
++# if !defined(SOL_TCP) && defined(IPPROTO_TCP)
++#  define SOL_TCP IPPROTO_TCP
++# endif
++# if !defined(TCP_KEEPIDLE) && defined(TCP_KEEPALIVE)
++#  define TCP_KEEPIDLE TCP_KEEPALIVE
++# endif
++#endif
++
+ /*
+  * Address families conversion.
+  * The values here are indexed based on pj_addr_family.
+@@ -141,21 +150,25 @@ const pj_uint16_t PJ_IPV6_TCLASS = 0xFFFF;
+ 
+ 
+ /* optname values. */
+-const pj_uint16_t PJ_SO_TYPE    = SO_TYPE;
+-const pj_uint16_t PJ_SO_RCVBUF  = SO_RCVBUF;
+-const pj_uint16_t PJ_SO_SNDBUF  = SO_SNDBUF;
+-const pj_uint16_t PJ_TCP_NODELAY= TCP_NODELAY;
+-const pj_uint16_t PJ_SO_REUSEADDR= SO_REUSEADDR;
++const pj_uint16_t PJ_SO_TYPE       = SO_TYPE;
++const pj_uint16_t PJ_SO_RCVBUF     = SO_RCVBUF;
++const pj_uint16_t PJ_SO_SNDBUF     = SO_SNDBUF;
++const pj_uint16_t PJ_SO_KEEPALIVE  = SO_KEEPALIVE;
++const pj_uint16_t PJ_TCP_NODELAY   = TCP_NODELAY;
++const pj_uint16_t PJ_TCP_KEEPIDLE  = TCP_KEEPIDLE;
++const pj_uint16_t PJ_TCP_KEEPINTVL = TCP_KEEPINTVL;
++const pj_uint16_t PJ_TCP_KEEPCNT   = TCP_KEEPCNT;
++const pj_uint16_t PJ_SO_REUSEADDR  = SO_REUSEADDR;
+ #ifdef SO_NOSIGPIPE
+-const pj_uint16_t PJ_SO_NOSIGPIPE = SO_NOSIGPIPE;
++const pj_uint16_t PJ_SO_NOSIGPIPE  = SO_NOSIGPIPE;
+ #else
+-const pj_uint16_t PJ_SO_NOSIGPIPE = 0xFFFF;
++const pj_uint16_t PJ_SO_NOSIGPIPE  = 0xFFFF;
+ #endif
+ #if defined(SO_PRIORITY)
+-const pj_uint16_t PJ_SO_PRIORITY = SO_PRIORITY;
++const pj_uint16_t PJ_SO_PRIORITY   = SO_PRIORITY;
+ #else
+ /* This is from Linux, YMMV */
+-const pj_uint16_t PJ_SO_PRIORITY = 12;
++const pj_uint16_t PJ_SO_PRIORITY   = 12;
+ #endif
+ 
+ /* Multicasting is not supported e.g. in PocketPC 2003 SDK */
+@@ -242,7 +255,7 @@ PJ_DEF(char*) pj_inet_ntoa(pj_in_addr inaddr)
+ /*
+  * This function converts the Internet host address cp from the standard
+  * numbers-and-dots notation into binary data and stores it in the structure
+- * that inp points to. 
++ * that inp points to.
+  */
+ PJ_DEF(int) pj_inet_aton(const pj_str_t *cp, struct pj_in_addr *inp)
+ {
+@@ -284,7 +297,7 @@ PJ_DEF(pj_status_t) pj_inet_pton(int af, const pj_str_t *src, void *dst)
+     PJ_ASSERT_RETURN(af==PJ_AF_INET || af==PJ_AF_INET6, PJ_EAFNOTSUP);
+     PJ_ASSERT_RETURN(src && src->slen && dst, PJ_EINVAL);
+ 
+-    /* Initialize output with PJ_IN_ADDR_NONE for IPv4 (to be 
++    /* Initialize output with PJ_IN_ADDR_NONE for IPv4 (to be
+      * compatible with pj_inet_aton()
+      */
+     if (af==PJ_AF_INET) {
+@@ -329,7 +342,7 @@ PJ_DEF(pj_status_t) pj_inet_pton(int af, const pj_str_t *src, void *dst)
+ 
+ 	sock_addr.addr.sa_family = (pj_uint16_t)af;
+ 	rc = WSAStringToAddress(
+-		PJ_STRING_TO_NATIVE(tempaddr,wtempaddr,sizeof(wtempaddr)), 
++		PJ_STRING_TO_NATIVE(tempaddr,wtempaddr,sizeof(wtempaddr)),
+ 		af, NULL, (LPSOCKADDR)&sock_addr, &addr_len);
+ 	if (rc != 0) {
+ 	    /* If you get rc 130022 Invalid argument (WSAEINVAL) with IPv6,
+@@ -477,8 +490,8 @@ PJ_DEF(const pj_str_t*) pj_gethostname(void)
+ /*
+  * Create new socket/endpoint for communication and returns a descriptor.
+  */
+-PJ_DEF(pj_status_t) pj_sock_socket(int af, 
+-				   int type, 
++PJ_DEF(pj_status_t) pj_sock_socket(int af,
++				   int type,
+ 				   int proto,
+ 				   pj_sock_t *sock)
+ {
+@@ -486,14 +499,14 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
+ 
+     /* Sanity checks. */
+     PJ_ASSERT_RETURN(sock!=NULL, PJ_EINVAL);
+-    PJ_ASSERT_RETURN((SOCKET)PJ_INVALID_SOCKET==INVALID_SOCKET, 
++    PJ_ASSERT_RETURN((SOCKET)PJ_INVALID_SOCKET==INVALID_SOCKET,
+                      (*sock=PJ_INVALID_SOCKET, PJ_EINVAL));
+ 
+     *sock = WSASocket(af, type, proto, NULL, 0, WSA_FLAG_OVERLAPPED);
+ 
+-    if (*sock == PJ_INVALID_SOCKET) 
++    if (*sock == PJ_INVALID_SOCKET)
+ 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
+-    
++
+ #if PJ_SOCK_DISABLE_WSAECONNRESET && \
+     (!defined(PJ_WIN32_WINCE) || PJ_WIN32_WINCE==0)
+ 
+@@ -517,6 +530,20 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
+ 	if (rc==SOCKET_ERROR) {
+ 	    // Ignored..
+ 	}
++    } else if(type == pj_SOCK_STREAM()) {
++#ifndef SIO_KEEPALIVE_VALS
++# define SIO_KEEPALIVE_VALS _WSAIOW(IOC_VENDOR, 4)
++#endif
++	DWORD dwBytesReturned = 0;
++	struct tcp_keepalive {
++	    ULONG onoff;
++	    ULONG keepalivetime;
++	    ULONG keepaliveinterval;
++	} vals = { TRUE, 30000, 30000 };
++	WSAIoctl(*sock, SIO_KEEPALIVE_VALS,
++		 &vals, sizeof(vals),
++		 NULL, 0, &dwBytesReturned,
++		 NULL, NULL);
+     }
+ #endif
+ 
+@@ -527,9 +554,9 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
+ /*
+  * Create new socket/endpoint for communication and returns a descriptor.
+  */
+-PJ_DEF(pj_status_t) pj_sock_socket(int af, 
+-				   int type, 
+-				   int proto, 
++PJ_DEF(pj_status_t) pj_sock_socket(int af,
++				   int type,
++				   int proto,
+ 				   pj_sock_t *sock)
+ {
+ 
+@@ -537,9 +564,9 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
+ 
+     /* Sanity checks. */
+     PJ_ASSERT_RETURN(sock!=NULL, PJ_EINVAL);
+-    PJ_ASSERT_RETURN(PJ_INVALID_SOCKET==-1, 
++    PJ_ASSERT_RETURN(PJ_INVALID_SOCKET==-1,
+                      (*sock=PJ_INVALID_SOCKET, PJ_EINVAL));
+-    
++
+     *sock = socket(af, type, proto);
+     if (*sock == PJ_INVALID_SOCKET)
+ 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
+@@ -548,6 +575,16 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
+ 	if (type == pj_SOCK_STREAM()) {
+ 	    pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), pj_SO_NOSIGPIPE(),
+ 			       &val, sizeof(val));
++            pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), pj_SO_KEEPALIVE(),
++                               &val, sizeof(val));
++            pj_sock_setsockopt(*sock, pj_SOL_TCP(), pj_TCP_KEEPCNT(),
++                               &val, sizeof(val));
++            val = 30;
++            pj_sock_setsockopt(*sock, pj_SOL_TCP(), pj_TCP_KEEPIDLE(),
++                               &val, sizeof(val));
++            pj_sock_setsockopt(*sock, pj_SOL_TCP(), pj_TCP_KEEPINTVL(),
++                               &val, sizeof(val));
++            val = 1;
+ 	}
+ #if defined(PJ_SOCK_HAS_IPV6_V6ONLY) && PJ_SOCK_HAS_IPV6_V6ONLY != 0
+ 	if (af == PJ_AF_INET6) {
+@@ -558,7 +595,7 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
+ #if defined(PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT) && \
+     PJ_IPHONE_OS_HAS_MULTITASKING_SUPPORT!=0
+ 	if (type == pj_SOCK_DGRAM()) {
+-	    pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), SO_NOSIGPIPE, 
++	    pj_sock_setsockopt(*sock, pj_SOL_SOCKET(), SO_NOSIGPIPE,
+ 			       &val, sizeof(val));
+ 	}
+ #endif
+@@ -570,7 +607,7 @@ PJ_DEF(pj_status_t) pj_sock_socket(int af,
+ /*
+  * Bind socket.
+  */
+-PJ_DEF(pj_status_t) pj_sock_bind( pj_sock_t sock, 
++PJ_DEF(pj_status_t) pj_sock_bind( pj_sock_t sock,
+ 				  const pj_sockaddr_t *addr,
+ 				  int len)
+ {
+@@ -590,7 +627,7 @@ PJ_DEF(pj_status_t) pj_sock_bind( pj_sock_t sock,
+ /*
+  * Bind socket.
+  */
+-PJ_DEF(pj_status_t) pj_sock_bind_in( pj_sock_t sock, 
++PJ_DEF(pj_status_t) pj_sock_bind_in( pj_sock_t sock,
+ 				     pj_uint32_t addr32,
+ 				     pj_uint16_t port)
+ {
+@@ -699,15 +736,15 @@ PJ_DEF(pj_status_t) pj_sock_sendto(pj_sock_t sock,
+ {
+     PJ_CHECK_STACK();
+     PJ_ASSERT_RETURN(len, PJ_EINVAL);
+-    
++
+     CHECK_ADDR_LEN(to, tolen);
+ 
+-    *len = sendto(sock, (const char*)buf, (int)(*len), flags, 
++    *len = sendto(sock, (const char*)buf, (int)(*len), flags,
+ 		  (const struct sockaddr*)to, tolen);
+ 
+-    if (*len < 0) 
++    if (*len < 0)
+ 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
+-    else 
++    else
+ 	return PJ_SUCCESS;
+ }
+ 
+@@ -724,7 +761,7 @@ PJ_DEF(pj_status_t) pj_sock_recv(pj_sock_t sock,
+ 
+     *len = recv(sock, (char*)buf, (int)(*len), flags);
+ 
+-    if (*len < 0) 
++    if (*len < 0)
+ 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
+     else
+ 	return PJ_SUCCESS;
+@@ -743,10 +780,10 @@ PJ_DEF(pj_status_t) pj_sock_recvfrom(pj_sock_t sock,
+     PJ_CHECK_STACK();
+     PJ_ASSERT_RETURN(buf && len, PJ_EINVAL);
+ 
+-    *len = recvfrom(sock, (char*)buf, (int)(*len), flags, 
++    *len = recvfrom(sock, (char*)buf, (int)(*len), flags,
+ 		    (struct sockaddr*)from, (socklen_t*)fromlen);
+ 
+-    if (*len < 0) 
++    if (*len < 0)
+ 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
+     else {
+         if (from) {
+@@ -785,12 +822,12 @@ PJ_DEF(pj_status_t) pj_sock_setsockopt( pj_sock_t sock,
+ {
+     int status;
+     PJ_CHECK_STACK();
+-    
++
+ #if (defined(PJ_WIN32) && PJ_WIN32) || (defined(PJ_SUNOS) && PJ_SUNOS)
+     /* Some opt may still need int value (e.g:SO_EXCLUSIVEADDRUSE in win32). */
+-    status = setsockopt(sock, 
+-		     level, 
+-		     ((optname&0xff00)==0xff00)?(int)optname|0xffff0000:optname, 		     
++    status = setsockopt(sock,
++		     level,
++		     ((optname&0xff00)==0xff00)?(int)optname|0xffff0000:optname,
+ 		     (const char*)optval, optlen);
+ #else
+     status = setsockopt(sock, level, optname, (const char*)optval, optlen);
+@@ -812,12 +849,12 @@ PJ_DEF(pj_status_t) pj_sock_setsockopt_params( pj_sock_t sockfd,
+     pj_status_t retval = PJ_SUCCESS;
+     PJ_CHECK_STACK();
+     PJ_ASSERT_RETURN(params, PJ_EINVAL);
+-    
++
+     for (;i<params->cnt && i<PJ_MAX_SOCKOPT_PARAMS;++i) {
+-	pj_status_t status = pj_sock_setsockopt(sockfd, 
++	pj_status_t status = pj_sock_setsockopt(sockfd,
+ 					(pj_uint16_t)params->options[i].level,
+ 					(pj_uint16_t)params->options[i].optname,
+-					params->options[i].optval, 
++					params->options[i].optval,
+ 					params->options[i].optlen);
+ 	if (status != PJ_SUCCESS) {
+ 	    retval = status;
+@@ -888,21 +925,19 @@ PJ_DEF(pj_status_t) pj_sock_accept( pj_sock_t serverfd,
+ 	PJ_SOCKADDR_SET_LEN(addr, *addrlen);
+     }
+ #endif
+-    
++
+     *newsock = accept(serverfd, (struct sockaddr*)addr, (socklen_t*)addrlen);
+     if (*newsock==PJ_INVALID_SOCKET)
+ 	return PJ_RETURN_OS_ERROR(pj_get_native_netos_error());
+     else {
+-	
++
+ #if defined(PJ_SOCKADDR_HAS_LEN) && PJ_SOCKADDR_HAS_LEN!=0
+ 	if (addr) {
+ 	    PJ_SOCKADDR_RESET_LEN(addr);
+ 	}
+ #endif
+-	    
++
+ 	return PJ_SUCCESS;
+     }
+ }
+ #endif	/* PJ_HAS_TCP */
+-
+-
+diff --git a/pjlib/src/pj/sock_common.c b/pjlib/src/pj/sock_common.c
+index 693f3af62..6beb28590 100644
+--- a/pjlib/src/pj/sock_common.c
++++ b/pjlib/src/pj/sock_common.c
+@@ -1346,11 +1346,31 @@ PJ_DEF(pj_uint16_t) pj_SO_SNDBUF(void)
+     return PJ_SO_SNDBUF;
+ }
+ 
++PJ_DEF(pj_uint16_t) pj_SO_KEEPALIVE(void)
++{
++    return PJ_SO_KEEPALIVE;
++}
++
+ PJ_DEF(pj_uint16_t) pj_TCP_NODELAY(void)
+ {
+     return PJ_TCP_NODELAY;
+ }
+ 
++PJ_DEF(pj_uint16_t) pj_TCP_KEEPIDLE(void)
++{
++    return PJ_TCP_KEEPIDLE
++}
++
++PJ_DEF(pj_uint16_t) pj_TCP_KEEPINTVL(void)
++{
++    return PJ_TCP_KEEPINTVL
++}
++
++PJ_DEF(pj_uint16_t) pj_TCP_KEEPCNT(void)
++{
++    return PJ_TCP_KEEPCNT
++}
++
+ PJ_DEF(pj_uint16_t) pj_SO_REUSEADDR(void)
+ {
+     return PJ_SO_REUSEADDR;
+diff --git a/pjlib/src/pj/sock_uwp.cpp b/pjlib/src/pj/sock_uwp.cpp
+index 876c3287a..34baebcee 100644
+--- a/pjlib/src/pj/sock_uwp.cpp
++++ b/pjlib/src/pj/sock_uwp.cpp
+@@ -69,6 +69,24 @@ const pj_uint16_t PJ_SOL_IP	= IPPROTO_IP;
+ const pj_uint16_t PJ_SOL_IP	= 0;
+ #endif /* SOL_IP */
+ 
++#if defined(TCP_KEEPIDLE)
++const pj_uint16_t PJ_TCP_KEEPIDLE = TCP_KEEPIDLE;
++#else
++const pj_uint16_t PJ_TCP_KEEPIDLE = 4;
++#endif
++
++#if defined(TCP_KEEPINTVL)
++const pj_uint16_t PJ_TCP_KEEPINTVL = TCP_KEEPINTVL;
++#else
++const pj_uint16_t PJ_TCP_KEEPINTVL = 5;
++#endif
++
++#if defined(TCP_KEEPCNT)
++const pj_uint16_t PJ_TCP_KEEPCNT = TCP_KEEPCNT;
++#else
++const pj_uint16_t PJ_TCP_KEEPCNT = 6;
++#endif
++
+ #if defined(SOL_TCP)
+ const pj_uint16_t PJ_SOL_TCP	= SOL_TCP;
+ #elif defined(IPPROTO_TCP)
+@@ -79,6 +97,12 @@ const pj_uint16_t PJ_SOL_TCP	= IPPROTO_TCP;
+ const pj_uint16_t PJ_SOL_TCP	= 6;
+ #endif /* SOL_TCP */
+ 
++#if defined(SOL_KEEPALIVE)
++const pj_uint16_t PJ_SOL_KEEPALIVE = SOL_KEEPALIVE;
++#else
++const pj_uint16_t PJ_SOL_KEEPALIVE = 9;
++#endif
++
+ #ifdef SOL_UDP
+ const pj_uint16_t PJ_SOL_UDP	= SOL_UDP;
+ #elif defined(IPPROTO_UDP)
+diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
+index ccf5cec54..fb016e009 100644
+--- a/pjnath/include/pjnath/ice_session.h
++++ b/pjnath/include/pjnath/ice_session.h
+@@ -638,6 +638,7 @@ typedef struct pj_ice_sess_cb
+     pj_status_t (*close_tcp_connection)(pj_ice_sess *ice,
+                                         pj_ice_sess_checklist *clist,
+                                         unsigned check_id);
++
+     /**
+      * If an internal TCP keep alive, this mount the error to the application
+      */
+@@ -1166,4 +1167,3 @@ PJ_END_DECL
+ 
+ 
+ #endif	/* __PJNATH_ICE_SESSION_H__ */
+-
+diff --git a/pjnath/include/pjnath/ice_strans.h b/pjnath/include/pjnath/ice_strans.h
+index 9eb74b35f..1269442cd 100644
+--- a/pjnath/include/pjnath/ice_strans.h
++++ b/pjnath/include/pjnath/ice_strans.h
+@@ -192,6 +192,13 @@ typedef struct pj_ice_strans_cb
+ 			       pj_ice_strans_op op,
+ 			       pj_status_t status);
+ 
++    /**
++     * This callback is called if an internal operation fails
++     *
++     * @param ice_st	    The ICE stream transport.
++     */
++    void (*on_destroy)(pj_ice_strans *ice_st);
++
+ } pj_ice_strans_cb;
+ 
+ 
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 248c1217d..fe714aced 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1258,12 +1258,18 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+          */
+         saved = pj_stun_session_use_fingerprint(comp->stun_sess, PJ_TRUE);
+ 
+-        /* Send to session */
+-        addr_len = pj_sockaddr_get_len(&the_check->rcand->addr);
+-        status = pj_stun_session_send_msg(comp->stun_sess, msg_data,
+-                                          PJ_FALSE, PJ_FALSE, 
+-                                          &the_check->rcand->addr, 
+-                                          addr_len, tdata);
++	/* Send to session */
++	addr_len = pj_sockaddr_get_len(&the_check->rcand->addr);
++	status = pj_stun_session_send_msg(comp->stun_sess, msg_data,
++					  PJ_FALSE, PJ_FALSE, 
++					  &the_check->rcand->addr, 
++					  addr_len, tdata);
++	if (status == 120032) {
++	    if (ice->cb.on_ice_destroy) {
++		ice->cb.on_ice_destroy(ice);
++	    }
++	    return;
++	}
+ 
+         /* Restore FINGERPRINT usage */
+         pj_stun_session_use_fingerprint(comp->stun_sess, saved);
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 747518232..eeac29dbe 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -100,6 +100,7 @@ static pj_uint16_t GETVAL16H(const pj_uint8_t *buf, unsigned pos)
+ 
+ 
+ /* ICE callbacks */
++static void	   on_ice_destroy(pj_ice_sess *ice);
+ static void	   on_ice_complete(pj_ice_sess *ice, pj_status_t status);
+ static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
+ 			      unsigned comp_id,
+@@ -1288,6 +1289,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
+     ice_cb.select_turn_dataconn     = &ice_select_turn_dataconn;
+     ice_cb.reconnect_tcp_connection = &ice_reconnect_tcp_connection;
+     ice_cb.close_tcp_connection     = &ice_close_tcp_connection;
++    ice_cb.on_ice_destroy           = &on_ice_destroy;
+ #endif
+ 
+     /* Create! */
+@@ -1876,6 +1878,14 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
+ 		     dst_addr_len, PJ_TRUE, PJ_FALSE);
+ }
+ 
++static void on_ice_destroy(pj_ice_sess *ice)
++{
++    pj_ice_strans *ice_st = (pj_ice_strans*)ice->user_data;
++
++    if (ice_st->cb.on_destroy) {
++	(*ice_st->cb.on_destroy)(ice_st);
++    }
++}
+ 
+ /*
+  * Callback called by ICE session when ICE processing is complete, either
+-- 
+2.24.1
+

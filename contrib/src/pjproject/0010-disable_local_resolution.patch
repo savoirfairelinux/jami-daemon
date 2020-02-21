@@ -1,0 +1,43 @@
+From 244763ddf6d7fc8e449b2207ccf64b75931f289f Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Fri, 21 Feb 2020 11:37:21 -0500
+Subject: [PATCH 10/12] disable_local_resolution
+
+---
+ pjlib/include/pj/config_site.h | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
+
+diff --git a/pjlib/include/pj/config_site.h b/pjlib/include/pj/config_site.h
+index f51eef004..e3e030bd0 100644
+--- a/pjlib/include/pj/config_site.h
++++ b/pjlib/include/pj/config_site.h
+@@ -1,17 +1,19 @@
+ /*
+ * PJLIB settings.
+ */
+-#define PJ_HAS_IPV6         1
++#define PJ_HAS_IPV6                             1
++#define PJ_GETHOSTIP_DISABLE_LOCAL_RESOLUTION   1
++
+ /*
+ * PJNAT settings.
+ */
+-#define PJ_ICE_MAX_CAND                    256
+-#define PJ_ICE_MAX_STUN                    6
+-#define PJ_ICE_COMP_BITS                   2
+-#define PJ_ICE_MAX_CHECKS                  1024
++#define PJ_ICE_MAX_CAND                         256
++#define PJ_ICE_MAX_STUN                         6
++#define PJ_ICE_COMP_BITS                        2
++#define PJ_ICE_MAX_CHECKS                       1024
+ 
+ /*
+ * PJSIP settings.
+ */
+-#define PJSIP_MAX_PKT_LEN                  8000
+-#define PJSIP_TRANSPORT_SERVER_IDLE_TIME   3
++#define PJSIP_MAX_PKT_LEN                       8000
++#define PJSIP_TRANSPORT_SERVER_IDLE_TIME        3
+-- 
+2.24.1
+
