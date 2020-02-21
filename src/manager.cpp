@@ -2697,20 +2697,19 @@ Manager::loadAccountOrder() const
 int
 Manager::loadAccountMap(const YAML::Node& node)
 {
-    // build preferences
-    preferences.unserialize(node);
-    voipPreferences.unserialize(node);
-    hookPreference.unserialize(node);
-    audioPreference.unserialize(node);
-    shortcutPreferences.unserialize(node);
-
     int errorCount = 0;
     try {
+        // build preferences
+        preferences.unserialize(node);
+        voipPreferences.unserialize(node);
+        hookPreference.unserialize(node);
+        audioPreference.unserialize(node);
+        shortcutPreferences.unserialize(node);
 #ifdef ENABLE_VIDEO
         videoPreferences.unserialize(node);
 #endif
     } catch (const YAML::Exception &e) {
-        JAMI_ERR("%s: No video node in config file", e.what());
+        JAMI_ERR("%s: Preferences node unserialize error: ", e.what());
         ++errorCount;
     }
 
