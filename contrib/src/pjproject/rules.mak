@@ -1,9 +1,13 @@
 # PJPROJECT
-PJPROJECT_VERSION := 5dfa75be7d69047387f9b0436dd9492bbbf03fe4
-PJPROJECT_URL := https://github.com/pjsip/pjproject/archive/$(PJPROJECT_VERSION).tar.gz
+PKG_NAME = pjproject
 
-PJPROJECT_OPTIONS := --disable-oss          \
-                     --disable-sound        \
+PJPROJECT_VERSION := 5dfa75be7d69047387f9b0436dd9492bbbf03fe4
+PJPROJECT_URL     := https://github.com/pjsip/pjproject/archive/$(PJPROJECT_VERSION).tar.gz
+PJ_GIT_URL        := https://github.com/pjsip/pjproject.git
+PJ_GIT_BRANCH     := master
+PJ_GIT_COMMIT     := 3e7b75cb2e482baee58c1991bd2fa4fb06774e0d
+
+PJPROJECT_OPTIONS := --disable-sound        \
                      --disable-video        \
                      --enable-ext-sound     \
                      --disable-speex-aec    \
@@ -38,42 +42,41 @@ DEPS_pjproject += gnutls
 ifndef HAVE_WIN32
 ifndef HAVE_MACOSX
 DEPS_pjproject += uuid
+PJPROJECT_OPTIONS += --enable-epoll
 endif
 endif
 
-$(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.gz:
+$(TARBALLS)/$(PKG_NAME)-$(PJPROJECT_VERSION).tar.gz:
 	$(call download,$(PJPROJECT_URL))
 
-.sum-pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz
+$(GITREPOS)/pjproject.git:
+	$(call download_git2,$(PJ_GIT_BRANCH),$(PJ_GIT_URL))
 
-pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
-	$(UNPACK)
+.sum-pjproject: $(GITREPOS)/pjproject.git
+	$(call gitverify,$<,$(PJ_GIT_COMMIT))
+	touch $@
+
+pjproject: $(GITREPOS)/$(PKG_NAME).git
+	$(MOVE_GIT)
+	$(UPDATE_AUTOCONFIG)
 ifdef HAVE_WIN32
-	$(APPLY) $(SRC)/pjproject/pj_win.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/pj_win.patch
 endif
 ifdef HAVE_ANDROID
-	$(APPLY) $(SRC)/pjproject/android.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/android.patch
 endif
-	$(APPLY) $(SRC)/pjproject/fix_turn_alloc_failure.patch
-	$(APPLY) $(SRC)/pjproject/rfc2466.patch
-	$(APPLY) $(SRC)/pjproject/ipv6.patch
-	$(APPLY) $(SRC)/pjproject/multiple_listeners.patch
-	$(APPLY) $(SRC)/pjproject/pj_ice_sess.patch
-	$(APPLY) $(SRC)/pjproject/fix_turn_fallback.patch
-	$(APPLY) $(SRC)/pjproject/fix_ioqueue_ipv6_sendto.patch
-	$(APPLY) $(SRC)/pjproject/add_dtls_transport.patch
-	$(APPLY) $(SRC)/pjproject/rfc6544.patch
-	$(APPLY) $(SRC)/pjproject/ice_config.patch
-	$(APPLY) $(SRC)/pjproject/sip_config.patch
-	$(APPLY) $(SRC)/pjproject/fix_first_packet_turn_tcp.patch
-	$(APPLY) $(SRC)/pjproject/fix_ebusy_turn.patch
-	$(APPLY) $(SRC)/pjproject/ignore_ipv6_on_transport_check.patch
-	$(APPLY) $(SRC)/pjproject/fix_turn_connection_failure.patch
-	$(APPLY) $(SRC)/pjproject/disable_local_resolution.patch
-	$(APPLY) $(SRC)/pjproject/fix_assert_on_connection_attempt.patch
-	$(APPLY) $(SRC)/pjproject/keep_alive.patch
-	$(UPDATE_AUTOCONFIG)
-	$(MOVE)
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0001-rfc6544.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0002-fix_ebusy_turn.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0003-add_tcp_keep_alive.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0004-enable-ipv6.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0005-multiple_listeners.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0006-pj_ice_sess.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0007-fix_ioqueue_ipv6_sendto.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0008-ice_config.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0009-sip_config.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0010-disable_local_resolution.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0011-fix_turn_fallback.patch
+	$(GIT_APPLY) $(SRC)/$(PKG_NAME)/0012-add-compid-argument-to-pj_ice_strans_cb.on_data_sent.patch
 
 .pjproject: pjproject
 ifdef HAVE_IOS
@@ -81,5 +84,5 @@ ifdef HAVE_IOS
 else
 	cd $< && $(HOSTVARS) EXCLUDE_APP=1 ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 endif
-	cd $< && EXCLUDE_APP=1 $(MAKE) && $(MAKE) install
+	cd $< && $(HOSTVARS) EXCLUDE_APP=1 $(MAKE) -j && $(MAKE) install
 	touch $@

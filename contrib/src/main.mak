@@ -27,6 +27,7 @@ TOPSRC ?= ../../contrib
 TOPDST ?= ..
 SRC := $(TOPSRC)/src
 TARBALLS := $(TOPSRC)/tarballs
+GITREPOS := $(TOPSRC)/gitrepos
 
 PATH :=$(abspath ../../extras/tools/build/bin):$(PATH)
 export PATH
@@ -289,6 +290,8 @@ else
 SHA512SUM = $(error SHA-512 checksumming not found!)
 endif
 
+SHA1GIT = cd $(1) && $(GIT) rev-parse --verify "$(2)^{commit}"
+
 #
 # Common helpers
 #
@@ -344,6 +347,9 @@ download_git = \
 	(cd $(dir $@) && \
 	tar cJ $(notdir $(@:.tar.xz=))) > $@ && \
 	rm -Rf $(@:.tar.xz=)
+download_git2 = \
+	rm -Rf $(@) ; \
+	$(GIT) clone --depth=1 $(1:%=--branch=%) -- $(2) $(@)
 endif
 
 checksum = \
@@ -351,11 +357,17 @@ checksum = \
 		grep -- " $(f:$(TARBALLS)/%=%)$$" \
 			"$(SRC)/$(patsubst .sum-%,%,$@)/$(2)SUMS" |) \
 	(cd $(TARBALLS) && $(1))
+
+gitverify = $(call SHA1GIT,$(1),$(2))
+
 ifeq ($(DISABLE_CONTRIB_CHECKSUMS),TRUE)
     CHECK_SHA512 = @echo "Skipping checksum verification..."
 else
     CHECK_SHA512 = $(call checksum,$(SHA512SUM),SHA512)
 endif
+
+CHECK_GITSHA1 = $(call gitverify, $(SHA1GIT), $(GIT_BRANCH), $(GIT_COMMIT))
+
 UNPACK = $(RM) -R $@ \
 	$(foreach f,$(filter %.tar.gz %.tgz,$^), && tar xzf $(f) $(if ${BATCH_MODE},,-v)) \
 	$(foreach f,$(filter %.tar.bz2,$^), && tar xjf $(f) $(if ${BATCH_MODE},,-v)) \
@@ -363,9 +375,11 @@ UNPACK = $(RM) -R $@ \
 	$(foreach f,$(filter %.zip,$^), && unzip $(if ${BATCH_MODE},-q) $(f))
 UNPACK_DIR = $(basename $(basename $(notdir $<)))
 APPLY = (cd $(UNPACK_DIR) && patch -flp1) <
+GIT_APPLY = (cd $(UNPACK_DIR) && git apply) <
 APPLY_BIN = (cd $(UNPACK_DIR) && patch --binary -flp1) <
 pkg_static = (cd $(UNPACK_DIR) && ../../../contrib/src/pkg-static.sh $(1))
 MOVE = mv $(UNPACK_DIR) $@ && touch $@
+MOVE_GIT = rm -Rf $@; mv $< $@
 
 AUTOMAKE_DATA_DIRS=$(foreach n,$(foreach n,$(subst :, ,$(shell echo $$PATH)),$(abspath $(n)/../share)),$(wildcard $(n)/automake*))
 UPDATE_AUTOCONFIG = for dir in $(AUTOMAKE_DATA_DIRS); do \
@@ -512,6 +526,9 @@ endif
 	$(CHECK_SHA512)
 	touch $@
 
+.sum-%:
+	$(CHECK_GITSHA1)
+	touch $@
 .sum-%:
 	$(error Download and check '$@' target not defined for $* contrib)
 

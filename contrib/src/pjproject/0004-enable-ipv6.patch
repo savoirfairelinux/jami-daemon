@@ -1,0 +1,20 @@
+From b8c5e5a34658caa20948cdd2eb79b2bae48b2215 Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Thu, 20 Feb 2020 11:51:48 -0500
+Subject: [PATCH 04/12] enable ipv6
+
+---
+ pjlib/include/pj/config_site.h | 1 +
+ 1 file changed, 1 insertion(+)
+ create mode 100644 pjlib/include/pj/config_site.h
+
+diff --git a/pjlib/include/pj/config_site.h b/pjlib/include/pj/config_site.h
+new file mode 100644
+index 000000000..ca55642b9
+--- /dev/null
++++ b/pjlib/include/pj/config_site.h
+@@ -0,0 +1 @@
++#define PJ_HAS_IPV6		    1
+-- 
+2.24.1
+

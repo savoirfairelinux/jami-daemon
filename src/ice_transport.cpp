@@ -1312,7 +1312,8 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         return -1;
     }
     pj_ssize_t sent_size = 0;
-    auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength(), &sent_size);
+    auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(), comp_id+1, buf,
+                                        len, remote.pjPtr(), remote.getLength());
     if (status == PJ_EPENDING && isTCPEnabled()) {
         auto current_size = sent_size;
         // NOTE; because we are in TCP, the sent size will count the header (2
