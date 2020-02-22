@@ -26,22 +26,13 @@ if [ -z "$PACKAGEDIR" ]; then
    exit 1
 fi
 
-echo "Checking for SWIG version 3.0.8 or later"
+echo "Checking for SWIG version 4.0.0 or later"
 SWIGVER=`swig -version | grep -i "SWIG version" | awk '{print $3}'`
 SWIGVER1=`echo $SWIGVER | awk '{split($0, array, ".")} END{print array[1]}'`
 SWIGVER2=`echo $SWIGVER | awk '{split($0, array, ".")} END{print array[2]}'`
 SWIGVER3=`echo $SWIGVER | awk '{split($0, array, ".")} END{print array[3]}'`
-if [[ $SWIGVER1 -ge 3 ]]; then
-    if [[ $SWIGVER1 -eq 3 ]]; then
-        if [[ $SWIGVER2 -eq 0 ]]; then
-            if [[ $SWIGVER3 -lt 8 ]]; then
-                echo "error: SWIG version $SWIGVER1.$SWIGVER2.$SWIGVER3 is less than 3.0.8"
-                exit 4
-            fi
-        fi
-    fi
-else
-    echo "error: SWIG version $SWIGVER1.$SWIGVER2.$SWIGVER3 is less than 3.x"
+if [[ $SWIGVER1 -lt 4 ]]; then
+    echo "error: SWIG version $SWIGVER1.$SWIGVER2.$SWIGVER3 is less than 4.x"
     exit 3
 fi
 
