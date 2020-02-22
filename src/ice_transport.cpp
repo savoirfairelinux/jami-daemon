@@ -402,13 +402,18 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
 
 IceTransport::Impl::~Impl()
 {
+    JAMI_WARN("[ice:%p] IceTransport::Impl::~Impl() %p", this);
     sip_utils::register_thread();
-
-    icest_.reset(); // must be done before ioqueue/timer destruction
-
     threadTerminateFlags_ = true;
+    iceCV_.notify_all();
+
     if (thread_.joinable())
         thread_.join();
+
+    {
+        std::lock_guard<std::mutex> lk {iceMutex_};
+        icest_.reset(); // must be done before ioqueue/timer destruction
+    }
 
     if (config_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(config_.stun_cfg.ioqueue);
@@ -1337,11 +1342,11 @@ IceTransport::waitForInitialization(std::chrono::milliseconds timeout)
 {
     std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
     if (!pimpl_->iceCV_.wait_for(lk, timeout,
-                                 [this]{ return pimpl_->_isInitialized() or pimpl_->_isFailed(); })) {
+                                 [this]{ return pimpl_->threadTerminateFlags_ or pimpl_->_isInitialized() or pimpl_->_isFailed(); })) {
         JAMI_WARN("[ice:%p] waitForInitialization: timeout", this);
         return -1;
     }
-    return not pimpl_->_isFailed();
+    return not (pimpl_->threadTerminateFlags_ or pimpl_->_isFailed());
 }
 
 int
@@ -1349,11 +1354,11 @@ IceTransport::waitForNegotiation(std::chrono::milliseconds timeout)
 {
     std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
     if (!pimpl_->iceCV_.wait_for(lk, timeout,
-                         [this]{ return pimpl_->_isRunning() or pimpl_->_isFailed(); })) {
+                         [this]{ return pimpl_->threadTerminateFlags_ or pimpl_->_isRunning() or pimpl_->_isFailed(); })) {
         JAMI_WARN("[ice:%p] waitForIceNegotiation: timeout", this);
         return -1;
     }
-    return not pimpl_->_isFailed();
+    return not (pimpl_->threadTerminateFlags_ or pimpl_->_isFailed());
 }
 
 ssize_t
