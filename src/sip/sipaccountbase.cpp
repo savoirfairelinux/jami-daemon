@@ -420,7 +420,7 @@ SIPAccountBase::onTextMessage(const std::string& from,
     message.payloads = payloads;
     message.received = std::time(nullptr);
     std::lock_guard<std::mutex> lck(mutexLastMessages_);
-    lastMessages_.emplace_back(message);
+    lastMessages_.emplace_back(std::move(message));
     while (lastMessages_.size() > MAX_WAITING_MESSAGES_SIZE) {
         lastMessages_.pop_front();
     }
