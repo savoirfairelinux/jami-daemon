@@ -199,6 +199,7 @@ static constexpr auto TLS_TIMEOUT = std::chrono::seconds(30);
 const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 
 static constexpr const char * const RING_URI_PREFIX = "ring:";
+static constexpr const char * const JAMI_URI_PREFIX = "jami:";
 static constexpr const char * DEFAULT_TURN_SERVER = "turn.jami.net";
 static constexpr const char * DEFAULT_TURN_USERNAME = "ring";
 static constexpr const char * DEFAULT_TURN_PWD = "ring";
@@ -219,8 +220,13 @@ stripPrefix(const std::string& toUrl)
     if (dhtf != std::string::npos) {
         dhtf = dhtf+5;
     } else {
-        dhtf = toUrl.find("sips:");
-        dhtf = (dhtf == std::string::npos) ? 0 : dhtf+5;
+        dhtf = toUrl.find(JAMI_URI_PREFIX);
+        if (dhtf != std::string::npos) {
+            dhtf = dhtf+5;
+        } else {
+            dhtf = toUrl.find("sips:");
+            dhtf = (dhtf == std::string::npos) ? 0 : dhtf+5;
+        }
     }
     while (dhtf < toUrl.length() && toUrl[dhtf] == '/')
         dhtf++;
@@ -228,7 +234,7 @@ stripPrefix(const std::string& toUrl)
 }
 
 static const std::string
-parseRingUri(const std::string& toUrl)
+parseJamiUri(const std::string& toUrl)
 {
     auto sufix = stripPrefix(toUrl);
     if (sufix.length() < 40)
@@ -388,7 +394,7 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
     call->setSecure(isTlsEnabled());
 
     try {
-        const std::string toUri = parseRingUri(suffix);
+        const std::string toUri = parseJamiUri(suffix);
         startOutgoingCall(call, toUri);
     } catch (...) {
 #if HAVE_RINGNS
@@ -402,7 +408,7 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
                 }
                 if (auto sthis = wthis_.lock()) {
                     try {
-                        const std::string toUri = parseRingUri(result);
+                        const std::string toUri = parseJamiUri(result);
                         sthis->startOutgoingCall(call, toUri);
                     } catch (...) {
                         call->onFailure(ENOENT);
@@ -1638,7 +1644,7 @@ JamiAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
     std::string buddyUri;
 
     try {
-        buddyUri = parseRingUri(buddy_id);
+        buddyUri = parseJamiUri(buddy_id);
     }
     catch (...) {
         JAMI_ERR("[Account %s] Failed to track a buddy due to an invalid URI %s", getAccountID().c_str(), buddy_id.c_str());
@@ -2625,7 +2631,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 {
     std::string toUri;
     try {
-        toUri = parseRingUri(to);
+        toUri = parseJamiUri(to);
     } catch (...) {
         JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
         return 0;
@@ -2642,7 +2648,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 {
     std::string toUri;
     try {
-        toUri = parseRingUri(to);
+        toUri = parseJamiUri(to);
     } catch (...) {
         JAMI_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
         messageEngine_.onMessageSent(to, token, false);
