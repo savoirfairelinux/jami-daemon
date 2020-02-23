@@ -2499,7 +2499,7 @@ JamiAccount::getFromUri() const
 std::string
 JamiAccount::getToUri(const std::string& to) const
 {
-    return "<sips:" + to + ";transport=dtls>";
+    return "<sips:" + to + ";transport=tls>";
 }
 
 pj_str_t
@@ -2509,13 +2509,14 @@ JamiAccount::getContactHeader(pjsip_transport* t)
     if (t) {
         auto* td = reinterpret_cast<tls::AbstractSIPTransport::TransportData*>(t);
         auto address = td->self->getLocalAddress().toString(true);
+        bool reliable = t->flag & PJSIP_TRANSPORT_RELIABLE;
 
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                         "%s<sips:%s%s%s;transport=dtls>",
+                                         "%s<sips:%s%s%s;transport=%s>",
                                          quotedDisplayName.c_str(),
                                          id_.second->getId().toString().c_str(),
                                          (address.empty() ? "" : "@"),
-                                         address.c_str());
+                                         address.c_str(), reliable  ? "tls" : "dtls");
     } else {
         JAMI_ERR("getContactHeader: no SIP transport provided");
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
