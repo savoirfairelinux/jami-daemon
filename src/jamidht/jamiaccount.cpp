@@ -2014,6 +2014,17 @@ JamiAccount::doRegister_()
 }
 
 void
+JamiAccount::onTextMessage(const std::string& from,
+                              const std::map<std::string, std::string>& payloads)
+{
+    try {
+        const std::string fromUri = parseJamiUri(from);
+        SIPAccountBase::onTextMessage(fromUri, payloads);
+    } catch (...) {
+    }
+}
+
+void
 JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from)
 {
     auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);

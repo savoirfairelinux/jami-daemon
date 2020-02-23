@@ -268,8 +268,10 @@ public:
      *      The type of this instance is given in template argument.
      *      This type can be any base class of SIPCall class (included).
      */
-    virtual std::shared_ptr<SIPCall>
+    std::shared_ptr<SIPCall>
     newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}, const std::shared_ptr<SipTransport>& sipTr = nullptr) override;
+
+    void onTextMessage(const std::string& from, const std::map<std::string, std::string>& payloads) override;
 
     virtual bool isTlsEnabled() const override {
         return true;
