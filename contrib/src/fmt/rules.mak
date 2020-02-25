@@ -1,5 +1,5 @@
 # FMT
-FMT_VERSION := 5.3.0
+FMT_VERSION := 6.1.2
 FMT_URL := https://github.com/fmtlib/fmt/archive/$(FMT_VERSION).tar.gz
 
 PKGS += fmt
@@ -25,5 +25,4 @@ fmt: fmt-$(FMT_VERSION).tar.gz
 .fmt: fmt toolchain.cmake .sum-fmt
 	cd $< && $(HOSTVARS) $(CMAKE) $(FMT_CMAKECONF) .
 	cd $< && $(MAKE) install
-	cd $< && mv $(PREFIX)/share/pkgconfig/fmt.pc $(PREFIX)/lib/pkgconfig/
 	touch $@
