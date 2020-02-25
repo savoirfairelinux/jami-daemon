@@ -51,7 +51,7 @@ static const std::list<HardwareAPI> apiListDec = {
 static const std::list<HardwareAPI> apiListEnc = {
     { "nvenc", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC }, { "0", "1", "2" } },
     { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 }, { "/dev/dri/renderD128", "/dev/dri/renderD129", ":0" } },
-    { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC }, { } },
+    { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_YUV420P, AV_PIX_FMT_NONE /* non used */, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC }, { } },
     { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 }, { } },
 };
 
@@ -335,7 +335,7 @@ HardwareAccel::initAPI(bool linkable, AVBufferRef* framesCtx)
         if (linkable && framesCtx)
             link = linkHardware(framesCtx);
         // we don't need frame context for videotoolbox
-        if (format_ == AV_PIX_FMT_VIDEOTOOLBOX || link || initFrame()) {
+        if (hwType_ == AV_HWDEVICE_TYPE_VIDEOTOOLBOX || link || initFrame()) {
             return 0;
         }
     }
