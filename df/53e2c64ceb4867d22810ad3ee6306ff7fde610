@@ -1,0 +1,7 @@
+Code-Review+2: Pierre Lespagnol <pierre.lespagnol@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Kateryna Kostiuk <kateryna.kostiuk@savoirfairelinux.com>
+Submitted-at: Tue, 25 Feb 2020 12:00:25 -0500
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/13693
+Project: ring-daemon
+Branch: refs/heads/master
