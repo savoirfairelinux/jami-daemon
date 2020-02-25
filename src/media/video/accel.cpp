@@ -335,7 +335,7 @@ HardwareAccel::initAPI(bool linkable, AVBufferRef* framesCtx)
         if (linkable && framesCtx)
             link = linkHardware(framesCtx);
         // we don't need frame context for videotoolbox
-        if (format_ == AV_PIX_FMT_VIDEOTOOLBOX || link || initFrame()) {
+        if (hwType_ == AV_HWDEVICE_TYPE_VIDEOTOOLBOX || link || initFrame()) {
             return 0;
         }
     }
