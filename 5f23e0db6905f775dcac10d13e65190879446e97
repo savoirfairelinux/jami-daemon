@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a8198d4c_1ebac96d",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 30,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-25T18:51:17Z",
+      "side": 1,
+      "message": "not necessary. see other dependencies using git.",
+      "range": {
+        "startLine": 30,
+        "startChar": 1,
+        "endLine": 30,
+        "endChar": 30
+      },
+      "revId": "5f23e0db6905f775dcac10d13e65190879446e97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d424c323_c5ff5559",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 293,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-25T18:51:17Z",
+      "side": 1,
+      "message": "not necessary. see other dependencies using git",
+      "range": {
+        "startLine": 292,
+        "startChar": 0,
+        "endLine": 293,
+        "endChar": 62
+      },
+      "revId": "5f23e0db6905f775dcac10d13e65190879446e97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
