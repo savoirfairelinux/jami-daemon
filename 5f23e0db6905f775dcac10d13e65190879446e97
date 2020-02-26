@@ -45,6 +45,75 @@
       "revId": "5f23e0db6905f775dcac10d13e65190879446e97",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7b3fb628_5500f74b",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 53,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-26T13:47:59Z",
+      "side": 1,
+      "message": "prefer to clone commit or tag than just master, pj bumped to 2.10",
+      "range": {
+        "startLine": 53,
+        "startChar": 24,
+        "endLine": 53,
+        "endChar": 37
+      },
+      "revId": "5f23e0db6905f775dcac10d13e65190879446e97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "848b1d6c_f282ad6c",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 87,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-26T13:47:59Z",
+      "side": 1,
+      "message": "not necessary, detected in $MAKE and avoid -j",
+      "range": {
+        "startLine": 87,
+        "startChar": 44,
+        "endLine": 87,
+        "endChar": 47
+      },
+      "revId": "5f23e0db6905f775dcac10d13e65190879446e97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "72ce1517_1ef0d15e",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 1314,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-26T13:47:59Z",
+      "side": 1,
+      "message": "sent_size will always be 0",
+      "range": {
+        "startLine": 1314,
+        "startChar": 4,
+        "endLine": 1314,
+        "endChar": 28
+      },
+      "revId": "5f23e0db6905f775dcac10d13e65190879446e97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
