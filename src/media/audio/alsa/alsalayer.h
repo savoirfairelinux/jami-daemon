@@ -250,7 +250,6 @@ class AlsaLayer : public AudioLayer {
         bool is_capture_open_;
 
         std::unique_ptr<AlsaThread> audioThread_;
-        std::shared_ptr<RingBuffer> mainRingBuffer_;
 };
 
 } // namespace jami
