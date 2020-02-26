@@ -55,8 +55,6 @@ struct PortAudioLayer::PortAudioLayerImpl
 
     AudioBuffer playbackBuff_;
 
-    std::shared_ptr<RingBuffer> mainRingBuffer_;
-
     std::array<PaStream*, static_cast<int>(Direction::End)> streams_;
 
     int paOutputCallback(PortAudioLayer& parent,
@@ -226,7 +224,6 @@ PortAudioLayer::PortAudioLayerImpl::PortAudioLayerImpl(PortAudioLayer& parent, c
     , indexOut_ {pref.getAlsaCardout()}
     , indexRing_ {pref.getAlsaCardring()}
     , playbackBuff_ {0, parent.audioFormat_}
-    , mainRingBuffer_ {Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID)}
 {
     init(parent);
 }
@@ -562,13 +559,13 @@ PortAudioLayer::PortAudioLayerImpl::paInputCallback(PortAudioLayer& parent,
         return paContinue;
     }
 
-    auto inBuff = std::make_unique<AudioFrame>(parent.audioInputFormat_, framesPerBuffer);
+    auto inBuff = std::make_shared<AudioFrame>(parent.audioInputFormat_, framesPerBuffer);
     auto nFrames = framesPerBuffer * parent.audioInputFormat_.nb_channels;
     if (parent.isCaptureMuted_)
         libav_utils::fillWithSilence(inBuff->pointer());
     else
         std::copy_n(inputBuffer, nFrames, (AudioSample*)inBuff->pointer()->extended_data[0]);
-    mainRingBuffer_->put(std::move(inBuff));
+    putRecorded(std::move(inBuff));
     return paContinue;
 }
 
