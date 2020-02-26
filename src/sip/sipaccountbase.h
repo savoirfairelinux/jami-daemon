@@ -267,6 +267,8 @@ public:
         return messageEngine_.sendMessage(to, payloads);
     }
 
+    void setIsComposing(const std::string& to, bool isWriting) override;
+
     virtual im::MessageStatus getMessageStatus(uint64_t id) const override {
         return messageEngine_.getStatus(id);
     }

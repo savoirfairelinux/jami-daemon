@@ -32,21 +32,25 @@
 
 #include "config/yamlparser.h"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#include <yaml-cpp/yaml.h>
-#pragma GCC diagnostic pop
-
 #include "client/ring_signal.h"
 #include "string_utils.h"
 #include "fileutils.h"
 #include "sip_utils.h"
 #include "utf8_utils.h"
 
-#include <ctime>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#include <yaml-cpp/yaml.h>
+#pragma GCC diagnostic pop
+
 #include <type_traits>
+#include <regex>
+
+#include <ctime>
 
 namespace jami {
+
+static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID),
@@ -100,6 +104,18 @@ SIPAccountBase::flush()
     Account::flush();
 
     fileutils::remove(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID() + DIR_SEPARATOR_STR "messages");
+}
+
+void
+SIPAccountBase::setIsComposing(const std::string& to, bool isWriting)
+{
+    // implementing https://tools.ietf.org/rfc/rfc3994.txt
+    std::ostringstream ss;
+    ss << "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" << std::endl
+       << "<isComposing><state>" << (isWriting ? "active" : "idle") << "</state></isComposing>";
+    sendTextMessage(to, {
+        {MIME_TYPE_IM_COMPOSING, ss.str()}
+    });
 }
 
 template <typename T>
@@ -412,6 +428,20 @@ SIPAccountBase::onTextMessage(const std::string& from,
         if (!utf8_validate(m.second)) {
             JAMI_WARN("Dropping invalid message with MIME type %s", m.first.c_str());
             return;
+        }
+        if (m.first == MIME_TYPE_IM_COMPOSING) {
+            try {
+                static const std::regex COMPOSING_REGEX("<state>\\s*(\\w+)\\s*<\\/state>");
+                std::smatch matched_pattern;
+                std::regex_search(m.second, matched_pattern, COMPOSING_REGEX);
+                bool isComposing {false};
+                if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                    isComposing = matched_pattern[1] == "active";
+                }
+                emitSignal<DRing::ConfigurationSignal::ComposingStatusChanged>(accountID_, from, isComposing);
+            } catch (const std::exception& e) {
+                JAMI_WARN("Error parsing composing state: %s", e.what());
+            }
         }
     }
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
