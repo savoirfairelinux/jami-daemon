@@ -1,0 +1,44 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0c20a1d1_d00dae1b",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-26T15:30:16Z",
+      "side": 1,
+      "message": "std::move prevents copy elision (static_pointer_cast creates a new shared_ptr r-value already)",
+      "revId": "f82e3b98649e1777bd8db8b72bd31d3905be7e2e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d0d43329_95878b2e",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 285,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-26T15:30:16Z",
+      "side": 1,
+      "message": "const auto\u0026",
+      "range": {
+        "startLine": 285,
+        "startChar": 4,
+        "endLine": 285,
+        "endChar": 29
+      },
+      "revId": "f82e3b98649e1777bd8db8b72bd31d3905be7e2e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
