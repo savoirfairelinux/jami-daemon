@@ -65,7 +65,6 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , ringtone_()
     , mainloop_(pa_threaded_mainloop_new(), pa_threaded_mainloop_free)
     , preference_(pref)
-    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
@@ -456,7 +455,7 @@ void PulseLayer::readFromMic()
     size_t sample_size = record_->frameSize();
     const size_t samples = bytes / sample_size;
 
-    auto out = std::make_unique<AudioFrame>(record_->format(), samples);
+    auto out = std::make_shared<AudioFrame>(record_->format(), samples);
     if (isCaptureMuted_)
         libav_utils::fillWithSilence(out->pointer());
     else
@@ -465,8 +464,7 @@ void PulseLayer::readFromMic()
     if (pa_stream_drop(record_->stream()) < 0)
         JAMI_ERR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
 
-    //dcblocker_.process(*out);
-    mainRingBuffer_->put(std::move(out));
+    putRecorded(std::move(out));
 }
 
 void PulseLayer::ringtoneToSpeaker()
@@ -710,20 +708,20 @@ void PulseLayer::updatePreference(AudioPreference &preference, int index, Device
     const std::string devName(getAudioDeviceName(index, type));
 
     switch (type) {
-        case DeviceType::PLAYBACK:
-            JAMI_DBG("setting %s for playback", devName.c_str());
-            preference.setPulseDevicePlayback(devName);
-            break;
+    case DeviceType::PLAYBACK:
+        JAMI_DBG("setting %s for playback", devName.c_str());
+        preference.setPulseDevicePlayback(devName);
+        break;
 
-        case DeviceType::CAPTURE:
-            JAMI_DBG("setting %s for capture", devName.c_str());
-            preference.setPulseDeviceRecord(devName);
-            break;
+    case DeviceType::CAPTURE:
+        JAMI_DBG("setting %s for capture", devName.c_str());
+        preference.setPulseDeviceRecord(devName);
+        break;
 
-        case DeviceType::RINGTONE:
-            JAMI_DBG("setting %s for ringer", devName.c_str());
-            preference.setPulseDeviceRingtone(devName);
-            break;
+    case DeviceType::RINGTONE:
+        JAMI_DBG("setting %s for ringer", devName.c_str());
+        preference.setPulseDeviceRingtone(devName);
+        break;
     }
 }
 

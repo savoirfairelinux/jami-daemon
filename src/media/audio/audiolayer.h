@@ -33,6 +33,11 @@
 #include <atomic>
 #include <condition_variable>
 
+extern "C" {
+struct SpeexEchoState_;
+typedef struct SpeexEchoState_ SpeexEchoState;
+}
+
 /**
  * @file  audiolayer.h
  * @brief Main sound class. Manages the data transfers between the application and the hardware.
@@ -223,7 +228,7 @@ protected:
     /**
      * Callback to be called by derived classes when the audio output is opened.
      */
-    void hardwareFormatAvailable(AudioFormat playback);
+    void hardwareFormatAvailable(AudioFormat playback, size_t bufSize = 0);
 
     /**
      * Set the input format on necessary objects.
@@ -231,6 +236,10 @@ protected:
     void hardwareInputFormatAvailable(AudioFormat capture);
 
     void devicesChanged();
+
+    void playbackChanged(bool started);
+    void recordChanged(bool started);
+    void setHasNativeAEC(bool hasEAC);
 
     std::shared_ptr<AudioFrame> getToPlay(AudioFormat format, size_t writableSamples);
 
@@ -241,6 +250,8 @@ protected:
         const auto& playBuff = getToPlay(format, samples);
         return ringBuff ? ringBuff : playBuff;
     }
+
+    void putRecorded(std::shared_ptr<AudioFrame>&& frame);
 
     void flush();
 
@@ -259,6 +270,10 @@ protected:
      */
     bool isRingtoneMuted_ {false};
 
+    bool playbackStarted_ {false};
+    bool recordStarted_ {false};
+    bool hasNativeAEC_ {true};
+
     /**
      * Gain applied to mic signal
      */
@@ -272,10 +287,8 @@ protected:
     /**
      * Buffers for audio processing
      */
-    AudioBuffer playbackBuffer_;
-    AudioBuffer playbackResampleBuffer_;
+    std::shared_ptr<RingBuffer> mainRingBuffer_;
     AudioBuffer ringtoneBuffer_;
-    AudioBuffer ringtoneResampleBuffer_;
     std::unique_ptr<AudioFrameResizer> playbackQueue_;
 
     /**
@@ -293,6 +306,8 @@ protected:
      * Sample Rate for input.
      */
     AudioFormat audioInputFormat_;
+
+    size_t nativeFrameSize_ {0};
 
     /**
      * Urgent ring buffer used for ringtones
@@ -314,12 +329,11 @@ protected:
      */
     std::unique_ptr<Resampler> resampler_;
 
-    /**
-     * Manage input sampling rate conversions
-     */
-    std::unique_ptr<Resampler> inputResampler_;
+    struct EchoState;
+    std::unique_ptr<EchoState> echoState_;
 
 private:
+    void checkAEC();
 
     /**
      * Time of the last incoming call notification
