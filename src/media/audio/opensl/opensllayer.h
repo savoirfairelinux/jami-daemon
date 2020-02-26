@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef _OPENSL_LAYER_H
-#define _OPENSL_LAYER_H
+#pragma once
 
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
@@ -52,147 +51,144 @@ class RingBuffer;
  */
 
 class OpenSLLayer : public AudioLayer {
-    public:
-        /**
-         * Constructor
-         */
-        OpenSLLayer(const AudioPreference &pref);
+public:
+    /**
+     * Constructor
+     */
+    OpenSLLayer(const AudioPreference &pref);
 
-        /**
-         * Destructor
-         */
-        ~OpenSLLayer();
+    /**
+     * Destructor
+     */
+    ~OpenSLLayer();
 
-        /**
-         * Start the capture stream and prepare the playback stream.
-         * The playback starts accordingly to its threshold
-         */
-        virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT);
+    /**
+     * Start the capture stream and prepare the playback stream.
+     * The playback starts accordingly to its threshold
+     */
+    virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT);
 
-        /**
-         * Stop the playback and capture streams.
-         * Drops the pending frames and put the capture and playback handles to PREPARED state
-         */
-        virtual void stopStream();
+    /**
+     * Stop the playback and capture streams.
+     * Drops the pending frames and put the capture and playback handles to PREPARED state
+     */
+    virtual void stopStream();
 
-        /**
-         * Scan the sound card available for capture on the system
-         * @return std::vector<std::string> The vector containing the string description of the card
-         */
-        virtual std::vector<std::string> getCaptureDeviceList() const;
+    /**
+     * Scan the sound card available for capture on the system
+     * @return std::vector<std::string> The vector containing the string description of the card
+     */
+    virtual std::vector<std::string> getCaptureDeviceList() const;
 
-        /**
-         * Scan the sound card available for capture on the system
-         * @return std::vector<std::string> The vector containing the string description of the card
-         */
-        virtual std::vector<std::string> getPlaybackDeviceList() const;
+    /**
+     * Scan the sound card available for capture on the system
+     * @return std::vector<std::string> The vector containing the string description of the card
+     */
+    virtual std::vector<std::string> getPlaybackDeviceList() const;
 
-        void init();
+    void init();
 
-        void initAudioEngine();
+    void initAudioEngine();
 
-        void shutdownAudioEngine();
+    void shutdownAudioEngine();
 
-        void initAudioPlayback();
+    void initAudioPlayback();
 
-        void initAudioCapture();
+    void initAudioCapture();
 
-        void startAudioPlayback();
+    void startAudioPlayback();
 
-        void startAudioCapture();
+    void startAudioCapture();
 
-        void stopAudioPlayback();
+    void stopAudioPlayback();
 
-        void stopAudioCapture();
+    void stopAudioCapture();
 
-        virtual int getAudioDeviceIndex(const std::string&, DeviceType) const {
-            return 0;
-        }
+    virtual int getAudioDeviceIndex(const std::string&, DeviceType) const {
+        return 0;
+    }
 
-        virtual std::string getAudioDeviceName(int, DeviceType) const {
-            return "";
-        }
+    virtual std::string getAudioDeviceName(int, DeviceType) const {
+        return "";
+    }
 
-        void engineServicePlay(bool waiting);
-        void engineServiceRing(bool waiting);
-        void engineServiceRec(bool waiting);
+    void engineServicePlay(bool waiting);
+    void engineServiceRing(bool waiting);
+    void engineServiceRec(bool waiting);
 
-    private:
-        /**
-         * Get the index of the audio card for capture
-         * @return int The index of the card used for capture
-         *                     0 for the first available card on the system, 1 ...
-         */
-        virtual int getIndexCapture() const {
-            return 0;
-        }
+private:
+    /**
+     * Get the index of the audio card for capture
+     * @return int The index of the card used for capture
+     *                     0 for the first available card on the system, 1 ...
+     */
+    virtual int getIndexCapture() const {
+        return 0;
+    }
 
-        /**
-         * Get the index of the audio card for playback
-         * @return int The index of the card used for playback
-         *                     0 for the first available card on the system, 1 ...
-         */
-        virtual int getIndexPlayback() const {
-            return 0;
-        }
+    /**
+     * Get the index of the audio card for playback
+     * @return int The index of the card used for playback
+     *                     0 for the first available card on the system, 1 ...
+     */
+    virtual int getIndexPlayback() const {
+        return 0;
+    }
 
-        /**
-         * Get the index of the audio card for ringtone (could be differnet from playback)
-         * @return int The index of the card used for ringtone
-         *                 0 for the first available card on the system, 1 ...
-         */
-        virtual int getIndexRingtone() const {
-            return 0;
-        }
+    /**
+     * Get the index of the audio card for ringtone (could be differnet from playback)
+     * @return int The index of the card used for ringtone
+     *                 0 for the first available card on the system, 1 ...
+     */
+    virtual int getIndexRingtone() const {
+        return 0;
+    }
 
-        uint32_t dbgEngineGetBufCount();
+    uint32_t dbgEngineGetBufCount();
 
-        void dumpAvailableEngineInterfaces();
+    void dumpAvailableEngineInterfaces();
 
-        NON_COPYABLE(OpenSLLayer);
+    NON_COPYABLE(OpenSLLayer);
 
-        virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
+    virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
-        /**
-         * OpenSL standard object interface
-         */
-        SLObjectItf engineObject_ {nullptr};
+    /**
+     * OpenSL standard object interface
+     */
+    SLObjectItf engineObject_ {nullptr};
 
-        /**
-         * OpenSL sound engine interface
-         */
-        SLEngineItf engineInterface_ {nullptr};
+    /**
+     * OpenSL sound engine interface
+     */
+    SLEngineItf engineInterface_ {nullptr};
 
-        std::unique_ptr<opensl::AudioPlayer> player_ {};
-        std::unique_ptr<opensl::AudioPlayer> ringtone_ {};
-        std::unique_ptr<opensl::AudioRecorder> recorder_ {};
+    std::unique_ptr<opensl::AudioPlayer> player_ {};
+    std::unique_ptr<opensl::AudioPlayer> ringtone_ {};
+    std::unique_ptr<opensl::AudioRecorder> recorder_ {};
 
-        AudioQueue     freePlayBufQueue_ {BUF_COUNT};
-        AudioQueue     playBufQueue_ {BUF_COUNT};
+    AudioQueue     freePlayBufQueue_ {BUF_COUNT};
+    AudioQueue     playBufQueue_ {BUF_COUNT};
 
-        AudioQueue     freeRingBufQueue_ {BUF_COUNT};
-        AudioQueue     ringBufQueue_ {BUF_COUNT};
+    AudioQueue     freeRingBufQueue_ {BUF_COUNT};
+    AudioQueue     ringBufQueue_ {BUF_COUNT};
 
-        std::mutex     playMtx {};
-        std::condition_variable playCv {};
-        std::thread    playThread {};
+    std::mutex     playMtx {};
+    std::condition_variable playCv {};
+    std::thread    playThread {};
 
-        AudioQueue     freeRecBufQueue_ {BUF_COUNT};    //Owner of the queue
-        AudioQueue     recBufQueue_ {BUF_COUNT};     //Owner of the queue
+    AudioQueue     freeRecBufQueue_ {BUF_COUNT};    //Owner of the queue
+    AudioQueue     recBufQueue_ {BUF_COUNT};     //Owner of the queue
 
-        std::mutex     recMtx {};
-        std::condition_variable recCv {};
-        std::thread    recThread {};
+    std::mutex     recMtx {};
+    std::condition_variable recCv {};
+    std::thread    recThread {};
 
-        std::vector<sample_buf> bufs_ {};
+    std::vector<sample_buf> bufs_ {};
 
-        AudioFormat hardwareFormat_ {AudioFormat::MONO()};
-        size_t hardwareBuffSize_ {BUFFER_SIZE};
+    AudioFormat hardwareFormat_ {AudioFormat::MONO()};
+    size_t hardwareBuffSize_ {BUFFER_SIZE};
 
-        std::shared_ptr<RingBuffer> mainRingBuffer_;
-        std::thread startThread_;
+    std::thread startThread_;
 };
 
 }
-
-#endif // _OPENSL_LAYER_H_

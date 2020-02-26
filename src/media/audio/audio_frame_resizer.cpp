@@ -123,7 +123,7 @@ AudioFrameResizer::dequeue()
     if (samples() < frameSize_)
         return {};
 
-    auto frame = std::make_unique<AudioFrame>(format_, frameSize_);
+    auto frame = std::make_shared<AudioFrame>(format_, frameSize_);
     int ret;
     if ((ret = av_audio_fifo_read(queue_, reinterpret_cast<void**>(frame->pointer()->data), frameSize_)) < 0) {
         JAMI_ERR() << "Could not read samples from queue: " << libav_utils::getError(ret);

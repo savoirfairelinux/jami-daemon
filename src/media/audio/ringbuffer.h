@@ -91,7 +91,7 @@ public:
      * @param buffer Data to copied
      * @param toCopy Number of bytes to copy
      */
-        void put(std::shared_ptr<AudioFrame>&& data);
+    void put(std::shared_ptr<AudioFrame>&& data);
 
     /**
      * To get how much samples are available in the buffer to read in
@@ -128,6 +128,10 @@ public:
 
     inline bool isEmpty() const {
         return putLength() == 0;
+    }
+
+    inline void setFrameSize(int nb_samples) {
+        resizer_.setFrameSize(nb_samples);
     }
 
     /**

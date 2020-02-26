@@ -166,8 +166,6 @@ class CoreLayer : public AudioLayer {
         UInt32 inChannelsPerFrame_;
         Float64 outSampleRate_;
         UInt32 outChannelsPerFrame_;
-
-        std::shared_ptr<RingBuffer> mainRingBuffer_;
 };
 
 } // namespace jami
