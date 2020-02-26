@@ -376,6 +376,24 @@ loadFile(const std::string& path, const std::string& default_dir)
     return buffer;
 }
 
+std::string
+loadTextFile(const std::string& path, const std::string& default_dir)
+{
+    std::string buffer;
+    std::ifstream file = ifstream(getFullPath(default_dir, path));
+    if (!file)
+        throw std::runtime_error("Can't read file: "+path);
+    file.seekg(0, std::ios::end);
+    auto size = file.tellg();
+    if (size > std::numeric_limits<unsigned>::max())
+        throw std::runtime_error("File is too big: "+path);
+    buffer.resize(size);
+    file.seekg(0, std::ios::beg);
+    if (!file.read((char*)buffer.data(), size))
+        throw std::runtime_error("Can't load file: "+path);
+    return buffer;
+}
+
 void
 saveFile(const std::string& path,
         const uint8_t* data, size_t data_size,
@@ -391,6 +409,30 @@ saveFile(const std::string& path,
     if (chmod(path.c_str(), mode) < 0)
         JAMI_WARN("fileutils::saveFile(): chmod() failed on '%s', %s", path.c_str(), strerror(errno));
 #endif
+}
+
+std::vector<uint8_t>
+loadCacheFile(const std::string& path, std::chrono::system_clock::duration maxAge)
+{
+    // writeTime throws exception if file doesn't exist
+    auto duration = std::chrono::system_clock::now() - writeTime(path);
+    if (duration > maxAge)
+        throw std::runtime_error("file too old");
+
+    JAMI_DBG("Loading cache file '%.*s'", (int)path.size(), path.c_str());
+    return loadFile(path);
+}
+
+std::string
+loadCacheTextFile(const std::string& path, std::chrono::system_clock::duration maxAge)
+{
+    // writeTime throws exception if file doesn't exist
+    auto duration = std::chrono::system_clock::now() - writeTime(path);
+    if (duration > maxAge)
+        throw std::runtime_error("file too old");
+
+    JAMI_DBG("Loading cache file '%.*s'", (int)path.size(), path.c_str());
+    return loadTextFile(path);
 }
 
 static size_t
