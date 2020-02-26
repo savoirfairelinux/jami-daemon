@@ -286,9 +286,11 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     turnServerRealm_ = DEFAULT_TURN_REALM;
     turnEnabled_ = true;
 
-    std::ifstream proxyCache = fileutils::ifstream(cachePath_ + DIR_SEPARATOR_STR "dhtproxy");
-    if (proxyCache)
-        std::getline(proxyCache, proxyServerCached_);
+    try {
+        std::istringstream is(fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy", std::chrono::hours(24 * 7)));
+        std::getline(is, proxyServerCached_);
+    } catch (...) {
+    }
 
     setActiveCodecs({});
 }
@@ -2385,13 +2387,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
     auto lock = std::make_shared<std::lock_guard<std::mutex>>(fileutils::getFileLock(cachePath));
     dht::ThreadPool::io().run([lock, cb, url, cachePath, cacheDuration, w=weak()]() {
         try {
-            // writeTime throws exception if file doesn't exist
-            auto duration = clock::now() - fileutils::writeTime(cachePath);
-            if (duration > cacheDuration)
-                throw std::runtime_error("file too old");
-
-            JAMI_DBG("Loading '%.*s' from cache file '%.*s'", (int)url.size(), url.c_str(), (int)cachePath.size(), cachePath.c_str());
-            auto data = fileutils::loadFile(cachePath);
+            auto data = fileutils::loadCacheFile(cachePath, cacheDuration);
             dht::http::Response ret;
             ret.body = {data.begin(), data.end()};
             ret.status_code = 200;
@@ -2400,8 +2396,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
             JAMI_DBG("Failed to load '%.*s' from '%.*s': %s", (int)url.size(), url.c_str(), (int)cachePath.size(), cachePath.c_str(), e.what());
 
             if (auto sthis = w.lock()) {
-                auto ioContext = Manager::instance().ioContext();
-                auto req = std::make_shared<dht::http::Request>(*ioContext, url, [lock, cb, cachePath, w](const dht::http::Response& response) {
+                auto req = std::make_shared<dht::http::Request>(*Manager::instance().ioContext(), url, [lock, cb, cachePath, w](const dht::http::Response& response) {
                     if (response.status_code == 200) {
                         try {
                             fileutils::saveFile(cachePath, (const uint8_t*)response.body.data(), response.body.size(), 0600);
