@@ -48,6 +48,52 @@
     },
     {
       "key": {
+        "uuid": "8ad2727b_53e675fa",
+        "filename": "contrib/src/pjproject/0009-sip_config.patch",
+        "patchSetId": 2
+      },
+      "lineNbr": 25,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-26T14:24:36Z",
+      "side": 1,
+      "message": "Note, there is some duplicates with 0008. Maybe merge?",
+      "range": {
+        "startLine": 24,
+        "startChar": 24,
+        "endLine": 25,
+        "endChar": 48
+      },
+      "revId": "5f23e0db6905f775dcac10d13e65190879446e97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d26fab45_6439efff",
+        "filename": "contrib/src/pjproject/0010-disable_local_resolution.patch",
+        "patchSetId": 2
+      },
+      "lineNbr": 32,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-26T14:24:36Z",
+      "side": 1,
+      "message": "same there",
+      "range": {
+        "startLine": 29,
+        "startChar": 52,
+        "endLine": 32,
+        "endChar": 53
+      },
+      "revId": "5f23e0db6905f775dcac10d13e65190879446e97",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "7b3fb628_5500f74b",
         "filename": "contrib/src/pjproject/rules.mak",
         "patchSetId": 2
