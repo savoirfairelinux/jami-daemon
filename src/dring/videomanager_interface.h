@@ -107,6 +107,8 @@ public:
     ~AudioFrame() {};
     void mix(const AudioFrame& o);
     float calcRMS() const;
+    jami::AudioFormat getFormat() const;
+    size_t getFrameSize() const;
 
 private:
     void setFormat(const jami::AudioFormat& format);

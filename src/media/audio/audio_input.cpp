@@ -326,7 +326,7 @@ AudioInput::createDecoder()
     }
 
     auto decoder = std::make_unique<MediaDecoder>([this](std::shared_ptr<MediaFrame>&& frame) {
-        fileBuf_->put(std::move(std::static_pointer_cast<AudioFrame>(frame)));
+        fileBuf_->put(std::static_pointer_cast<AudioFrame>(frame));
     });
 
     // NOTE don't emulate rate, file is read as frames are needed
