@@ -30,25 +30,19 @@
 #include "logger.h"
 #include "array_size.h"
 
+#include <SLES/OpenSLES_AndroidConfiguration.h>
+
 #include <thread>
 #include <chrono>
 #include <cstdio>
 #include <cassert>
 #include <unistd.h>
 
-#include "SLES/OpenSLES_AndroidConfiguration.h"
-
-/* available only from api 14 */
-#ifndef SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION
-#define SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION ((SLuint32) 0x00000004)
-#endif
-
 namespace jami {
 
 // Constructor
 OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
-    : AudioLayer(pref),
-     mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
+    : AudioLayer(pref)
 {}
 
 // Destructor
@@ -81,7 +75,7 @@ OpenSLLayer::startStream(AudioStreamType stream)
     emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
     hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
     hardwareBuffSize_ = hw_infos[1];
-    hardwareFormatAvailable(hardwareFormat_);
+    hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);
 
     startThread_ = std::thread([this](){
         init();
@@ -216,8 +210,9 @@ OpenSLLayer::engineServicePlay(bool waiting) {
                 break;
             } else
                 freePlayBufQueue_.pop();
-        } else
+        } else {
             break;
+        }
     }
 }
 
@@ -284,6 +279,7 @@ OpenSLLayer::initAudioCapture()
         recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, engineInterface_));
         recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
         recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this, _1));
+        setHasNativeAEC(recorder_->hasNativeAEC());
     } catch (const std::exception& e) {
         JAMI_ERR("Error initializing audio capture: %s", e.what());
     }
@@ -301,24 +297,26 @@ OpenSLLayer::startAudioPlayback()
     if (ringtone_)
         ringtone_->start();
     playThread = std::thread([&]() {
+        playbackChanged(true);
         std::unique_lock<std::mutex> lck(playMtx);
         while (player_ || ringtone_) {
             playCv.wait_for(lck, std::chrono::seconds(1));
             if (player_ && player_->waiting_) {
-                std::lock_guard<std::mutex> lk(player_->m_);
+                //std::lock_guard<std::mutex> lk(player_->m_);
                 engineServicePlay(false);
                 auto n = playBufQueue_.size();
                 if (n >= PLAY_KICKSTART_BUFFER_COUNT)
                     player_->playAudioBuffers(n);
             }
             if (ringtone_ && ringtone_->waiting_) {
-                std::lock_guard<std::mutex> lk(ringtone_->m_);
+                //std::lock_guard<std::mutex> lk(ringtone_->m_);
                 engineServiceRing(false);
                 auto n = ringBufQueue_.size();
                 if (n >= PLAY_KICKSTART_BUFFER_COUNT)
                     ringtone_->playAudioBuffers(n);
             }
         }
+        playbackChanged(false);
     });
     JAMI_WARN("Audio playback started");
 }
@@ -332,6 +330,7 @@ OpenSLLayer::startAudioCapture()
 
     recorder_->start();
     recThread = std::thread([&]() {
+        recordChanged(true);
         std::unique_lock<std::mutex> lck(recMtx);
         while (recorder_) {
             recCv.wait_for(lck, std::chrono::seconds(1));
@@ -342,18 +341,18 @@ OpenSLLayer::startAudioCapture()
                 recBufQueue_.pop();
                 if (buf->size_ > 0) {
                     auto nb_samples = buf->size_ / hardwareFormat_.getBytesPerFrame();
-                    auto out = std::make_unique<AudioFrame>(hardwareFormat_, nb_samples);
+                    auto out = std::make_shared<AudioFrame>(hardwareFormat_, nb_samples);
                     if (isCaptureMuted_)
                         libav_utils::fillWithSilence(out->pointer());
                     else
                         std::copy_n((const AudioSample*)buf->buf_, nb_samples, (AudioSample*)out->pointer()->data[0]);
-                    // dcblocker_.process(buffer);
-                    mainRingBuffer_->put(std::move(out));
+                    putRecorded(std::move(out));
                 }
                 buf->size_ = 0;
                 freeRecBufQueue_.push(buf);
             }
         }
+        recordChanged(false);
     });
 
     JAMI_DBG("Audio capture started");

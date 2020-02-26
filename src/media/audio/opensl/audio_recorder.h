@@ -40,6 +40,7 @@ class AudioRecorder {
     uint32_t    audioBufCount;
 
     EngineCallback callback_ {};
+    bool hasNativeAEC_ {false};
 
 public:
     explicit AudioRecorder(jami::AudioFormat, SLEngineItf engineEngine);
@@ -52,6 +53,8 @@ public:
     void processSLCallback(SLAndroidSimpleBufferQueueItf bq);
     void registerCallback(EngineCallback cb) {callback_ = cb;}
     size_t dbgGetDevBufCount();
+
+    bool hasNativeAEC() const { return hasNativeAEC_; }
 };
 
 }

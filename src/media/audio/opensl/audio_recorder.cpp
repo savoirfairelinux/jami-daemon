@@ -59,7 +59,7 @@ void AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
 AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngine) :
         sampleInfo_(sampleFormat)
 {
-    // configure audio source
+    // configure audio source/
     SLDataLocator_IODevice loc_dev = {SL_DATALOCATOR_IODEVICE,
                                       SL_IODEVICE_AUDIOINPUT,
                                       SL_DEFAULTDEVICEID_AUDIOINPUT,
@@ -76,7 +76,13 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
 
     // create audio recorder
     // (requires the RECORD_AUDIO permission)
-    const SLInterfaceID ids[2] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, SL_IID_ANDROIDCONFIGURATION};
+    const SLInterfaceID ids[] = {
+        SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
+        SL_IID_ANDROIDCONFIGURATION,
+        SL_IID_ANDROIDACOUSTICECHOCANCELLATION,
+        SL_IID_ANDROIDAUTOMATICGAINCONTROL,
+        SL_IID_ANDROIDNOISESUPPRESSION
+    };
     const SLboolean req[1] = {SL_BOOLEAN_TRUE};
     SLresult result;
     result = (*slEngine)->CreateAudioRecorder(slEngine,
@@ -91,10 +97,84 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
     result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDCONFIGURATION, &recordConfig);
     result = (*recordConfig)->SetConfiguration(recordConfig, SL_ANDROID_KEY_RECORDING_PRESET, &streamType, sizeof(SLint32));
 
+    bool aec{true}, agc(true), ns(true);
+
+
     result = (*recObjectItf_)->Realize(recObjectItf_, SL_BOOLEAN_FALSE);
     SLASSERT(result);
     result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_RECORD, &recItf_);
     SLASSERT(result);
+
+
+    /* Check actual performance mode granted*/
+    SLuint32 modeRetrieved = SL_ANDROID_PERFORMANCE_NONE;
+    SLuint32 modeSize = sizeof(SLuint32);
+    result = (*recordConfig)->GetConfiguration(recordConfig, SL_ANDROID_KEY_PERFORMANCE_MODE,
+            &modeSize, (void*)&modeRetrieved);
+    SLASSERT(result);
+    JAMI_WARN("Actual performance mode is %u\n", modeRetrieved);
+
+    /* Enable AEC if requested */
+    if (aec) {
+        SLAndroidAcousticEchoCancellationItf aecItf;
+        result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDACOUSTICECHOCANCELLATION, (void*)&aecItf);
+        JAMI_WARN("AEC is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
+        if (SL_RESULT_SUCCESS == result) {
+            SLboolean enabled;
+            result = (*aecItf)->IsEnabled(aecItf, &enabled);
+            SLASSERT(result);
+            JAMI_WARN("AEC was %s\n", enabled ? "enabled" : "not enabled");
+
+            result = (*aecItf)->SetEnabled(aecItf, true);
+            SLASSERT(result);
+
+            result = (*aecItf)->IsEnabled(aecItf, &enabled);
+            SLASSERT(result);
+            JAMI_WARN("AEC is now %s\n", enabled ? "enabled" : "not enabled");
+
+            hasNativeAEC_ = enabled;
+        }
+    }
+    /* Enable AGC if requested */
+    if (agc) {
+        SLAndroidAutomaticGainControlItf agcItf;
+        result = (*recObjectItf_)->GetInterface(
+                recObjectItf_, SL_IID_ANDROIDAUTOMATICGAINCONTROL, (void*)&agcItf);
+        JAMI_WARN("AGC is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
+        if (SL_RESULT_SUCCESS == result) {
+            SLboolean enabled;
+            result = (*agcItf)->IsEnabled(agcItf, &enabled);
+            SLASSERT(result);
+            JAMI_WARN("AGC was %s\n", enabled ? "enabled" : "not enabled");
+
+            result = (*agcItf)->SetEnabled(agcItf, true);
+            SLASSERT(result);
+
+            result = (*agcItf)->IsEnabled(agcItf, &enabled);
+            SLASSERT(result);
+            JAMI_WARN("AGC is now %s\n", enabled ? "enabled" : "not enabled");
+        }
+    }
+    /* Enable NS if requested */
+    if (ns) {
+        SLAndroidNoiseSuppressionItf nsItf;
+        result = (*recObjectItf_)->GetInterface(
+                recObjectItf_, SL_IID_ANDROIDNOISESUPPRESSION, (void*)&nsItf);
+        JAMI_WARN("NS is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
+        if (SL_RESULT_SUCCESS == result) {
+            SLboolean enabled;
+            result = (*nsItf)->IsEnabled(nsItf, &enabled);
+            SLASSERT(result);
+            JAMI_WARN("NS was %s\n", enabled ? "enabled" : "not enabled");
+
+            result = (*nsItf)->SetEnabled(nsItf, true);
+            SLASSERT(result);
+
+            result = (*nsItf)->IsEnabled(nsItf, &enabled);
+            SLASSERT(result);
+            JAMI_WARN("NS is now %s\n", enabled ? "enabled" : "not enabled");
+        }
+    }
 
     result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &recBufQueueItf_);
     SLASSERT(result);
