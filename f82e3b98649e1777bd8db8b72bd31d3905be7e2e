@@ -19,6 +19,24 @@
     },
     {
       "key": {
+        "uuid": "dea6550b_62247ba9",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 193,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2020-02-26T16:10:21Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0c20a1d1_d00dae1b",
+      "revId": "f82e3b98649e1777bd8db8b72bd31d3905be7e2e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d0d43329_95878b2e",
         "filename": "src/media/audio/audio_input.cpp",
         "patchSetId": 62
@@ -30,6 +48,30 @@
       "writtenOn": "2020-02-26T15:30:16Z",
       "side": 1,
       "message": "const auto\u0026",
+      "range": {
+        "startLine": 285,
+        "startChar": 4,
+        "endLine": 285,
+        "endChar": 29
+      },
+      "revId": "f82e3b98649e1777bd8db8b72bd31d3905be7e2e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "90d75f83_71b0ee2c",
+        "filename": "src/media/audio/audio_input.cpp",
+        "patchSetId": 62
+      },
+      "lineNbr": 285,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2020-02-26T16:10:21Z",
+      "side": 1,
+      "message": "The type is const char*, it need to be casted to string to get size.",
+      "parentUuid": "d0d43329_95878b2e",
       "range": {
         "startLine": 285,
         "startChar": 4,
