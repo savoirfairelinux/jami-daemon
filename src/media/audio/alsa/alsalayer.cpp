@@ -99,7 +99,6 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     , is_playback_open_(false)
     , is_capture_open_(false)
     , audioThread_(nullptr)
-    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {}
 
 AlsaLayer::~AlsaLayer()
@@ -702,10 +701,7 @@ void AlsaLayer::capture()
     const int framesPerBufferAlsa = 2048;
     toGetFrames = std::min(framesPerBufferAlsa, toGetFrames);
     if (auto r = read(toGetFrames)) {
-        if (isCaptureMuted_)
-            libav_utils::fillWithSilence(r->pointer());
-        //dcblocker_.process(captureBuff_);
-        mainRingBuffer_->put(std::move(r));
+        putRecorded(std::move(r));
     } else
         JAMI_ERR("ALSA MIC : Couldn't read!");
 }

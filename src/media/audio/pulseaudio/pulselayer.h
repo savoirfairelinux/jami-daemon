@@ -206,18 +206,6 @@ class PulseLayer : public AudioLayer {
          */
         std::vector<PaDeviceInfos> sourceList_ {};
 
-        /*
-         * Buffers used to avoid doing malloc/free in the audio thread
-         */
-        AudioBuffer micBuffer_;
-        AudioBuffer micResampleBuffer_;
-
-        AudioBuffer playbackBuffer_;
-        AudioBuffer playbackResampleBuffer_;
-
-        AudioBuffer ringtoneBuffer_;
-        AudioBuffer ringtoneResampleBuffer_;
-
         /** PulseAudio server defaults */
         AudioFormat defaultAudioFormat_ {AudioFormat::MONO()};
         std::string defaultSink_ {};
@@ -235,7 +223,6 @@ class PulseLayer : public AudioLayer {
         std::thread streamStarter_ {};
 
         AudioPreference &preference_;
-        std::shared_ptr<RingBuffer> mainRingBuffer_;
 
         pa_operation* subscribeOp_ {nullptr};
         friend class AudioLayerTest;
