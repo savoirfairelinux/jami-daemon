@@ -107,6 +107,22 @@ AudioFrame::setFormat(const jami::AudioFormat& format)
     d->format = format.sampleFormat;
 }
 
+jami::AudioFormat
+AudioFrame::getFormat() const
+{
+    return {
+        (unsigned)frame_->sample_rate,
+        (unsigned)frame_->channels,
+        (AVSampleFormat)frame_->format
+    };
+}
+
+size_t
+AudioFrame::getFrameSize() const
+{
+    return frame_->nb_samples;
+}
+
 void
 AudioFrame::reserve(size_t nb_samples)
 {

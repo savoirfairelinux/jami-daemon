@@ -135,12 +135,12 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/security;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/sip;"
-           "${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp/igd;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp/protocol;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/upnp/mapping;"
            "${CMAKE_CURRENT_SOURCE_DIR}/src/jamidht/eth;"
+           "${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/msgpack-c/include;"
@@ -152,6 +152,7 @@ if(MSVC)
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/include;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/third_party;"
            "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/include"
+           "${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/include;"
        )
    endif()
 
@@ -224,39 +225,40 @@ if(MSVC)
    # Dependencies
    ################################################################################
 
-   set(libAdditionalDependencies "${CMAKE_STATIC_LINKER_FLAGS} /LTCG ws2_32.lib 
-   advapi32.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avcodec.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avdevice.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avfilter.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avformat.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avutil.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/swresample.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/swscale.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libgnutls.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/lib_json.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libopendht.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/argon2/vs2015/Argon2Ref/vs2015/build/Argon2Ref.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/secp256k1.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/msvc/Release/libyaml-cppmd.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/portaudio.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libupnp.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/msvc/Release/natpmp.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua-lib-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-ua-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/lib/pjmedia-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib-util/lib/pjlib-util-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib/lib/pjlib-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjnath/lib/pjnath-x86_64-x64-vc15-Release.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/msvc/Release/fmt.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser/x64/Release/http-parser.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/asio/asio/msvc/x64/Release/asio.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/out32dll/libeay32.lib 
-   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/out32dll/ssleay32.lib 
-   /ignore:4006 
+   set(libAdditionalDependencies "${CMAKE_STATIC_LINKER_FLAGS} /LTCG ws2_32.lib
+   advapi32.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avcodec.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avdevice.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avfilter.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avformat.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/avutil.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/swresample.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/ffmpeg/Build/win32/x64/bin/swscale.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libgnutls.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/lib_json.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libopendht.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/argon2/vs2015/Argon2Ref/vs2015/build/Argon2Ref.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/secp256k1.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/yaml-cpp/msvc/Release/libyaml-cppmd.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/portaudio.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/msvc/lib/x64/libupnp.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/natpmp/msvc/Release/natpmp.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-core-x86_64-x64-vc15-Release.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-simple-x86_64-x64-vc15-Release.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua2-lib-x86_64-x64-vc15-Release.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsua-lib-x86_64-x64-vc15-Release.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjsip/lib/pjsip-ua-x86_64-x64-vc15-Release.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjmedia/lib/pjmedia-x86_64-x64-vc15-Release.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib-util/lib/pjlib-util-x86_64-x64-vc15-Release.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjlib/lib/pjlib-x86_64-x64-vc15-Release.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/pjproject/pjnath/lib/pjnath-x86_64-x64-vc15-Release.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/fmt/msvc/Release/fmt.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/http_parser/x64/Release/http-parser.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/asio/asio/msvc/x64/Release/asio.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/out32dll/libeay32.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/openssl/out32dll/ssleay32.lib
+   ${CMAKE_CURRENT_SOURCE_DIR}/contrib/build/speexdsp/lib/libspeexdsp.lib
+   /ignore:4006
    "
    )
 
