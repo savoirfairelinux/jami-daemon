@@ -9,7 +9,7 @@ B<dring> [OPTION]...
 =head1 DESCRIPTION
 
 Jami is meant to be a robust enterprise-class desktop phone. It provides functions like call transfer, call hold, multiple lines, multiple accounts support.
-Jami audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
+Jami audio layer is build upon a native ALSA interface and a native PulseAudio interface.
 B<dring> is the core of Jami; it communicates with the client side through DBus. You need to install a client to use the daemon, for instance GTK+ client, B<gnome-ring>.
 
 =head1 OPTIONS
@@ -40,7 +40,7 @@ Print short list of command-line options.
 
 =head1 BUGS
 
-Please report bugs at https://tuleap.ring.cx/projects/ring.
+Please report bugs at https://git.jami.net.
 
 =head1 AUTHORS
 
