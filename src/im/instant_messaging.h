@@ -30,10 +30,12 @@
 
 #include "config.h"
 
+extern "C" {
 struct pjsip_inv_session;
 struct pjsip_rx_data;
 struct pjsip_msg;
 struct pjsip_tx_data;
+}
 
 namespace jami { namespace im {
 
