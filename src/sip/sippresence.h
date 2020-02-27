@@ -39,11 +39,6 @@
 #define PRESENCE_LOCK_FLAG          1
 #define PRESENCE_CLIENT_LOCK_FLAG   2
 
-/**
- * TODO Clean this:
- */
-struct pj_caching_pool;
-
 namespace jami {
 
 struct pres_msg_data {

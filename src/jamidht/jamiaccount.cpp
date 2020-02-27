@@ -37,6 +37,7 @@
 #include "archive_account_manager.h"
 #include "server_account_manager.h"
 #include "jamidht/channeled_transport.h"
+#include "multiplexed_socket.h"
 
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"

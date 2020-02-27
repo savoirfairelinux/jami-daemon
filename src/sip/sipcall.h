@@ -38,14 +38,15 @@
 
 #include "noncopyable.h"
 
-#include "pjsip/sip_config.h"
-
 #include <memory>
 
+extern "C" {
+#include <pjsip/sip_config.h>
 struct pjsip_evsub;
 struct pjsip_inv_session;
 struct pjmedia_sdp_session;
 struct pj_ice_sess_cand;
+}
 
 namespace jami {
 

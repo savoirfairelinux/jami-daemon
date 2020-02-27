@@ -18,27 +18,23 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef SIP_UTILS_H_
-#define SIP_UTILS_H_
+#pragma once
 
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "media/audio/audiobuffer.h"
 #include "noncopyable.h"
 
-#include <pjsip/sip_msg.h>
-#include <pjlib.h>
-#include <pj/pool.h>
-#include <pjsip/sip_endpoint.h>
-#include <pjsip/sip_dialog.h>
-
 #include <utility>
 #include <string>
 #include <vector>
 #include <cstring> // strcmp
 
-struct pjsip_msg;
-struct pjsip_dialog;
+#include <pjsip/sip_msg.h>
+#include <pjlib.h>
+#include <pj/pool.h>
+#include <pjsip/sip_endpoint.h>
+#include <pjsip/sip_dialog.h>
 
 namespace jami { namespace sip_utils {
 
@@ -153,5 +149,3 @@ static constexpr int POOL_TP_INC {512};
 static constexpr int TRANSPORT_INFO_LENGTH {64};
 
 }} // namespace jami::sip_utils
-
-#endif // SIP_UTILS_H_
