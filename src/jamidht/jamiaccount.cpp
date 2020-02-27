@@ -487,7 +487,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         call->setTransport(transport);
 
         auto remote_addr = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
-        onConnectedOutgoingCall(*call, deviceConnIt->first, remote_addr);
+        onConnectedOutgoingCall(*call, toUri, remote_addr);
 
         devices.emplace(deviceConnIt->first);
     }
@@ -2017,6 +2017,7 @@ void
 JamiAccount::onTextMessage(const std::string& from,
                               const std::map<std::string, std::string>& payloads)
 {
+    JAMI_ERR("@@@ ON TEXT FROM %s", from.c_str());
     try {
         const std::string fromUri = parseJamiUri(from);
         SIPAccountBase::onTextMessage(fromUri, payloads);
