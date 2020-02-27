@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "96b6a924_b4af9378",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 828,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-02-27T18:23:35Z",
+      "side": 1,
+      "message": "why onPeerRinging on io thread ?\n\nIf this cause subcalls to block, only the blocking op should be scheduled on io pool.",
+      "range": {
+        "startLine": 828,
+        "startChar": 4,
+        "endLine": 828,
+        "endChar": 44
+      },
+      "revId": "c7f3ba72d2e90728b5ddf6026d216aec5493b5f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
