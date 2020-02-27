@@ -392,7 +392,7 @@ SIPCall::hangup(int reason)
     // Stop all RTP streams
     stopAllMedia();
     setState(Call::ConnectionState::DISCONNECTED, reason);
-    runOnMainThread([w = weak()] {
+    dht::ThreadPool::io().run([w = weak()] {
         if (auto shared = w.lock())
             shared->removeCall();
     });
@@ -825,7 +825,7 @@ SIPCall::sendKeyframe()
 void
 SIPCall::onPeerRinging()
 {
-    runOnMainThread([w = weak()] {
+    dht::ThreadPool::io().run([w = weak()] {
         if (auto shared = w.lock())
             shared->setState(ConnectionState::RINGING);
     });
