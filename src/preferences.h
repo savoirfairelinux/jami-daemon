@@ -29,11 +29,13 @@
 #include <vector>
 
 namespace YAML {
-    class Emitter;
-    class Node;
+class Emitter;
+class Node;
 }
 
+extern "C" {
 struct pjsip_msg;
+}
 
 namespace jami {
 

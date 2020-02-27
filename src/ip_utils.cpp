@@ -178,7 +178,7 @@ std::string
 ip_utils::getGateway(char* localHost, ip_utils::subnet_mask prefix)
 {
     std::string localHostStr(localHost);
-    if (prefix == ip_utils::prefix_32bit)
+    if (prefix == ip_utils::subnet_mask::prefix_32bit)
         return localHostStr;
     std::string defaultGw {};
     std::istringstream iss(localHostStr);
@@ -192,7 +192,7 @@ ip_utils::getGateway(char* localHost, ip_utils::subnet_mask prefix)
     // Build a gateway address from the individual ip components.
     for (unsigned int i = 0; i <=(unsigned int)prefix; i++)
         defaultGw += tokens[i] + ".";
-    for (unsigned int i = (unsigned int)ip_utils::prefix_32bit; i > (unsigned int)prefix+1; i--)
+    for (unsigned int i = (unsigned int)ip_utils::subnet_mask::prefix_32bit; i > (unsigned int)prefix+1; i--)
         defaultGw += "0.";
     defaultGw += "1";
     return defaultGw;

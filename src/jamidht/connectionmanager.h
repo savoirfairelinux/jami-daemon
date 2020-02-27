@@ -24,8 +24,7 @@
 #include <opendht/dhtrunner.h>
 #include <opendht/infohash.h>
 #include <opendht/value.h>
-
-#include "multiplexed_socket.h"
+#include <opendht/default_types.h>
 
 namespace jami {
 
