@@ -83,7 +83,9 @@ public:
                     if (tlsSock.second) tlsSock.second->shutdown();
                 }
             }
-            nonReadySockets_.clear();
+            dht::ThreadPool::io().run([nrs=std::make_shared<decltype(nonReadySockets_)>(std::move(nonReadySockets_))] {
+                nrs->clear();
+            });
         }
         {
             std::lock_guard<std::mutex> lk(msocketsMutex_);
@@ -92,7 +94,9 @@ public:
                     if (mxSock.second) mxSock.second->shutdown();
                 }
             }
-            multiplexedSockets_.clear();
+            dht::ThreadPool::io().run([ms=std::make_shared<decltype(multiplexedSockets_)>(std::move(multiplexedSockets_))] {
+                ms->clear();
+            });
         }
     }
 
