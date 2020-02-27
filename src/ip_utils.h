@@ -20,15 +20,15 @@
 
 #pragma once
 
+#ifdef HAVE_CONFIG
+#include <config.h>
+#endif
+
 #include <sstream> // include before pjlib.h to fix macros issues with pjlib.h
 
 extern "C" {
 #include <pjlib.h>
 }
-
-#ifdef HAVE_CONFIG
- #include <config.h>
-#endif
 
 #include <ciso646> // fix windows compiler bug
 
@@ -269,7 +269,7 @@ static const char *const DEFAULT_INTERFACE = "default";
 
 static const unsigned int MAX_INTERFACE = 256;
 static const unsigned int MIN_INTERFACE = 1;
-enum subnet_mask {
+enum class subnet_mask {
     prefix_8bit,
     prefix_16bit,
     prefix_24bit,
