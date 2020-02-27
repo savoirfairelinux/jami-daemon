@@ -392,7 +392,7 @@ SIPCall::hangup(int reason)
     // Stop all RTP streams
     stopAllMedia();
     setState(Call::ConnectionState::DISCONNECTED, reason);
-    runOnMainThread([w = weak()] {
+    dht::ThreadPool::io().run([w = weak()] {
         if (auto shared = w.lock())
             shared->removeCall();
     });
@@ -1104,6 +1104,8 @@ SIPCall::onMediaUpdate()
     // to a negotiated transport.
     runOnMainThread([w = weak()] {
         if (auto this_ = w.lock()) {
+            // The call is already ended, so we don't need to restart medias
+            if (!this_->inv or this_->inv->state == PJSIP_INV_STATE_DISCONNECTED) return;
             // If ICE is not used, start medias now
             auto rem_ice_attrs = this_->sdp_->getIceAttributes();
             if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {

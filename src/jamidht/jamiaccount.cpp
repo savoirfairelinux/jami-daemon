@@ -527,17 +527,22 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         manager.addTask([w=weak(), weak_dev_call, ice, ice_tcp, dev, toUri, peer_account] {
             auto sthis = w.lock();
-            if (not sthis)
+            if (not sthis) {
+                dht::ThreadPool::io().run([ice=std::move(ice), ice_tcp=std::move(ice_tcp)](){});
                 return false;
+            }
             auto call = weak_dev_call.lock();
 
             // call aborted?
-            if (not call)
+            if (not call) {
+                dht::ThreadPool::io().run([ice=std::move(ice), ice_tcp=std::move(ice_tcp)](){});
                 return false;
+            }
 
             if (ice->isFailed()) {
                 JAMI_ERR("[call:%s] ice init failed", call->getCallId().c_str());
                 call->onFailure(EIO);
+                dht::ThreadPool::io().run([ice=std::move(ice), ice_tcp=std::move(ice_tcp)](){});
                 return false;
             }
 
@@ -604,7 +609,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             std::lock_guard<std::mutex> lock(sthis->callsMutex_);
             sthis->pendingCalls_.emplace_back(PendingCall{
                 std::chrono::steady_clock::now(),
-                ice, ice_tcp, weak_dev_call,
+                std::move(ice), std::move(ice_tcp), weak_dev_call,
                 std::move(listenKey),
                 callkey,
                 dev,
