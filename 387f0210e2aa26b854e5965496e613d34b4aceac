@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "0e205662_1ef51d94",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 4
+      },
+      "lineNbr": 619,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-28T18:44:27Z",
+      "side": 1,
+      "message": "from",
+      "range": {
+        "startLine": 619,
+        "startChar": 31,
+        "endLine": 619,
+        "endChar": 33
+      },
+      "revId": "387f0210e2aa26b854e5965496e613d34b4aceac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "52a95c8f_c96d2032",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 4
+      },
+      "lineNbr": 623,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-28T18:44:27Z",
+      "side": 1,
+      "message": "Missing methods. Also bump daemon version due to API changes",
+      "range": {
+        "startLine": 622,
+        "startChar": 17,
+        "endLine": 623,
+        "endChar": 16
+      },
+      "revId": "387f0210e2aa26b854e5965496e613d34b4aceac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c700b8c3_dc15cca7",
+        "filename": "src/sip/sipaccountbase.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 471,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-28T18:44:27Z",
+      "side": 1,
+      "message": "Timeout",
+      "range": {
+        "startLine": 471,
+        "startChar": 26,
+        "endLine": 471,
+        "endChar": 42
+      },
+      "revId": "387f0210e2aa26b854e5965496e613d34b4aceac",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
