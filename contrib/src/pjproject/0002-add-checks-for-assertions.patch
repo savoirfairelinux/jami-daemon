@@ -1,0 +1,164 @@
+From 53af603c3d48f83e69d930e5753a37a51c84ea09 Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Thu, 12 Mar 2020 13:38:23 -0400
+Subject: [PATCH 2/2] add checks for assertions
+
+---
+ pjnath/src/pjnath/ice_session.c | 62 ++++++++++++++++++++-------------
+ 1 file changed, 38 insertions(+), 24 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index c29a6a240..0896d196c 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1666,7 +1666,7 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ 		(*ice->cb.close_tcp_connection)(ice, &ice->clist, i);
+ 
+ 	    check_set_state(ice, check,
+-			    PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
++	                    PJ_ICE_SESS_CHECK_STATE_FAILED, PJ_ECANCELLED);
+ 	    on_check_complete(ice, check);
+ 	    first_found = PJ_TRUE;
+ 	} else if(check->state == PJ_ICE_SESS_CHECK_STATE_PENDING) {
+@@ -1885,7 +1885,6 @@ static pj_status_t send_connectivity_check(pj_ice_sess *ice,
+     if (status != PJ_SUCCESS && status != PJ_EPENDING) {
+         pjnath_perror(ice->obj_name, "Error sending STUN request", status);
+         pj_log_pop_indent();
+-
+         check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+         on_check_complete(ice, check);
+     }
+@@ -2031,20 +2030,25 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     status = send_connectivity_check(&ice, &clist, check_id, nominate, msg_data);
+ #endif
+ 
+-    if (status == PJ_EPENDING) {
+-        check_set_state(ice, check,
+-                        PJ_ICE_SESS_CHECK_STATE_PENDING, status);
+-    } else {
+-        if (check->rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++    if (status != PJ_SUCCESS) {
++        if (status == PJ_EPENDING) {
++            check->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
++            check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_PENDING,
++                            status);
++        }
++    } else if (check->rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+             // TODO (sblin) remove this - https://github.com/coturn/coturn/issues/408
++            check->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
+             check_set_state(ice, check,
+-                            PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
+-        } else {
+-            check_set_state(ice, check,
+-                            PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, PJ_SUCCESS);
+-        }
++                            PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
++                            status);
++    } else {
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
++                        status);
+     }
++
+     pj_log_pop_indent();
++
+     return status;
+ }
+ 
+@@ -2476,11 +2480,10 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 	    return;
+ 	}
+     }
+-
+     if (status != PJ_SUCCESS) {
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+-	on_check_complete(ice, check);
+-	return;
++        check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
++        on_check_complete(ice, check);
++        return;
+     }
+ 
+     // TCP is correctly connected. Craft the message to send
+@@ -2510,11 +2513,13 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 					       pj_sockaddr_get_len(&rcand->addr),
+ 					       check->tdata);
+     if (status_send_msg == PJ_EBUSY /* EBUSY */) {
++        check->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
+ 	check_set_state(ice, check,
+ 			PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
+ 	return;
+     }
+     if (status_send_msg == 120033 /* BROKEN PIPE */) {
++        check->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
+ 	check_set_state(ice, check,
+ 			PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY, status);
+ 	return;
+@@ -2531,6 +2536,7 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 	 * In this case, we can try to reconnect a bit after and this until the check
+ 	 * reached its timeout.
+ 	 */
++	check->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
+ 	check_set_state(ice, check,PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY, status);
+     } else if (status_send_msg != PJ_SUCCESS) {
+ 	check->tdata = NULL;
+@@ -2539,9 +2545,12 @@ void ice_sess_on_peer_connection(pj_ice_sess *ice,
+ 	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_FAILED, status);
+ 	on_check_complete(ice, check);
+     } else if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET, status);
++        check->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
++	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_NEEDS_FIRST_PACKET,
++	                status);
+     } else {
+-	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, status);
++	check_set_state(ice, check, PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS,
++	                status);
+     }
+ }
+ 
+@@ -2566,9 +2575,11 @@ void ice_sess_on_peer_reset_connection(pj_ice_sess *ice,
+     }
+ 
+     const pj_ice_sess_cand *rcand = check->rcand;
+-    if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED)
++    if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++        check->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
+ 	check_set_state(ice, check,
+ 			PJ_ICE_SESS_CHECK_STATE_NEEDS_RETRY, 120104);
++    }
+ }
+ 
+ void ice_sess_on_peer_packet(pj_ice_sess *ice,
+@@ -2585,9 +2596,11 @@ void ice_sess_on_peer_packet(pj_ice_sess *ice,
+ 	return;
+ 
+     const pj_ice_sess_cand *rcand = check->rcand;
+-    if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED)
++    if (rcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
++        check->state = PJ_ICE_SESS_CHECK_STATE_WAITING;
+ 	check_set_state(ice, check,
+ 			PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS, PJ_SUCCESS);
++    }
+ }
+ 
+ 
+@@ -2595,11 +2608,12 @@ void ice_select_incoming_turn(pj_ice_sess *ice,
+ 			      pj_ice_sess_checklist *clist,
+ 			      unsigned check_id)
+ {
+-    check_set_state(ice, &clist->checks[check_id],
+-		    PJ_ICE_SESS_CHECK_STATE_SUCCEEDED, PJ_SUCCESS);
+-    update_comp_check(ice, clist->checks[check_id].lcand->comp_id,
++	pj_ice_sess_check *check = &clist->checks[check_id];
++	check->state = PJ_ICE_SESS_CHECK_STATE_SUCCEEDED;
++	check->err_code = PJ_SUCCESS;
++	update_comp_check(ice, clist->checks[check_id].lcand->comp_id,
+ 		      &clist->checks[check_id]);
+-    on_check_complete(ice, &clist->checks[check_id]);
++	on_check_complete(ice, &clist->checks[check_id]);
+ }
+ 
+ /* This callback is called when outgoing STUN request completed */
+-- 
+2.24.1
+
