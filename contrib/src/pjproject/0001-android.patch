@@ -1,0 +1,76 @@
+From 8ab16c4a5335deec9d914a200f38ee22185f78e2 Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Fri, 28 Feb 2020 12:33:24 -0500
+Subject: [PATCH] android
+
+---
+ aconfigure                        |  3 ---
+ aconfigure.ac                     |  3 ---
+ pjlib/include/pj/config_site.h    | 12 ++++++++++++
+ pjlib/src/pj/os_timestamp_posix.c |  2 +-
+ 4 files changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/aconfigure b/aconfigure
+index 7fcb12ec4..066a1d0f4 100755
+--- a/aconfigure
++++ b/aconfigure
+@@ -5954,9 +5954,6 @@ case $target in
+ 	esac
+ 	# UUID
+ 	case $target in
+-	  *android*)
+-	  	ac_os_objs="$ac_os_objs guid_android.o"
+-	  	;;
+ 	  *)
+ 		if test "$ac_has_uuid_lib" = "1" -a "$ac_has_uuid_h" = "1"; then
+ 			ac_os_objs="$ac_os_objs guid_uuid.o"
+diff --git a/aconfigure.ac b/aconfigure.ac
+index 0367679e2..0280f6894 100644
+--- a/aconfigure.ac
++++ b/aconfigure.ac
+@@ -489,9 +489,6 @@ case $target in
+ 	esac
+ 	# UUID
+ 	case $target in
+-	  *android*)
+-	  	ac_os_objs="$ac_os_objs guid_android.o"
+-	  	;;
+ 	  *)
+ 		if test "$ac_has_uuid_lib" = "1" -a "$ac_has_uuid_h" = "1"; then
+ 			ac_os_objs="$ac_os_objs guid_uuid.o"
+diff --git a/pjlib/include/pj/config_site.h b/pjlib/include/pj/config_site.h
+index 8c54e4e09..31e517a06 100644
+--- a/pjlib/include/pj/config_site.h
++++ b/pjlib/include/pj/config_site.h
+@@ -20,3 +20,15 @@
+ #define PJ_ICE_COMP_BITS                        2
+ #define PJ_ICE_MAX_CHECKS                       1024
+ 
++/*
++ * ANDROID settings.
++ */
++#if PJ_CONFIG_ANDROID
++    #undef  PJ_ANDROID
++    #define PJ_ANDROID                          0
++    #undef  PJ_JNI_HAS_JNI_ONLOAD
++    #define PJ_JNI_HAS_JNI_ONLOAD               0
++    #undef  PJMEDIA_HAS_G722_CODEC
++    #define PJMEDIA_HAS_G722_CODEC              1
++    #define PJMEDIA_VID_DEV_INFO_FMT_CNT        128
++#endif
+diff --git a/pjlib/src/pj/os_timestamp_posix.c b/pjlib/src/pj/os_timestamp_posix.c
+index 0aed8c470..1ec156b0d 100644
+--- a/pjlib/src/pj/os_timestamp_posix.c
++++ b/pjlib/src/pj/os_timestamp_posix.c
+@@ -203,7 +203,7 @@ PJ_DEF(pj_status_t) pj_get_timestamp_freq(pj_timestamp *freq)
+     return PJ_SUCCESS;
+ }
+ 
+-#elif defined(__ANDROID__)
++#elif defined(PJ_ANDROID) && PJ_ANDROID
+ 
+ #include <errno.h>
+ #include <time.h>
+-- 
+2.24.1
+
