@@ -238,7 +238,7 @@ im::parseSipMessage(const pjsip_msg* msg)
     }
 
     // check if its a multipart message
-    pj_str_t typeMultipart {const_cast<char*>("multipart"), 9};
+    constexpr pj_str_t typeMultipart {CONST_PJ_STR("multipart")};
 
     if (pj_strcmp(&typeMultipart, &msg->body->content_type.type) != 0) {
         // treat as single content type message

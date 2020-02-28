@@ -32,21 +32,26 @@
 
 #include "config/yamlparser.h"
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#include <yaml-cpp/yaml.h>
-#pragma GCC diagnostic pop
-
 #include "client/ring_signal.h"
 #include "string_utils.h"
 #include "fileutils.h"
 #include "sip_utils.h"
 #include "utf8_utils.h"
 
-#include <ctime>
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#include <yaml-cpp/yaml.h>
+#pragma GCC diagnostic pop
+
 #include <type_traits>
+#include <regex>
+
+#include <ctime>
 
 namespace jami {
+
+static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
+static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID),
@@ -100,6 +105,53 @@ SIPAccountBase::flush()
     Account::flush();
 
     fileutils::remove(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID() + DIR_SEPARATOR_STR "messages");
+}
+
+std::string
+getIsComposing(bool isWriting)
+{
+    // implementing https://tools.ietf.org/rfc/rfc3994.txt
+    std::ostringstream ss;
+    ss << "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" << std::endl
+       << "<isComposing><state>" << (isWriting ? "active" : "idle") << "</state></isComposing>";
+    return  ss.str();
+}
+
+void
+SIPAccountBase::setIsComposing(const std::string& to, bool isWriting)
+{
+    if (not isWriting and to != composingUri_)
+        return;
+
+    if (composingTimeout_) {
+        composingTimeout_->cancel();
+        composingTimeout_.reset();
+    }
+    if (isWriting)  {
+        if (not composingUri_.empty() and composingUri_ != to) {
+            sendTextMessage(composingUri_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(false)}});
+            composingTime_  = std::chrono::steady_clock::time_point::min();
+        }
+        composingUri_.clear();
+        composingUri_.insert(composingUri_.end(), to.begin(), to.end());
+        auto now = std::chrono::steady_clock::now();
+        if (now >= composingTime_ + COMPOSING_TIMEOUT) {
+            sendTextMessage(composingUri_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(true)}});
+            composingTime_ = now;
+        }
+        std::weak_ptr<SIPAccountBase> weak = std::static_pointer_cast<SIPAccountBase>(shared_from_this());
+        composingTimeout_ = Manager::instance().scheduleTask([weak, to](){
+            if (auto sthis = weak.lock())  {
+                sthis->sendTextMessage(to, {{MIME_TYPE_IM_COMPOSING, getIsComposing(false)}});
+                sthis->composingUri_.clear();
+                sthis->composingTime_  = std::chrono::steady_clock::time_point::min();
+            }
+        }, now + COMPOSING_TIMEOUT);
+    } else {
+        sendTextMessage(to, {{MIME_TYPE_IM_COMPOSING, getIsComposing(false)}});
+        composingUri_.clear();
+        composingTime_  = std::chrono::steady_clock::time_point::min();
+    }
 }
 
 template <typename T>
@@ -412,6 +464,22 @@ SIPAccountBase::onTextMessage(const std::string& from,
         if (!utf8_validate(m.second)) {
             JAMI_WARN("Dropping invalid message with MIME type %s", m.first.c_str());
             return;
+        }
+        if (m.first == MIME_TYPE_IM_COMPOSING) {
+            try {
+                static const std::regex COMPOSING_REGEX("<state>\\s*(\\w+)\\s*<\\/state>");
+                std::smatch matched_pattern;
+                std::regex_search(m.second, matched_pattern, COMPOSING_REGEX);
+                bool isComposing {false};
+                if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                    isComposing = matched_pattern[1] == "active";
+                }
+                onIsComposing(from, isComposing);
+                if (payloads.size() == 1)
+                    return;
+            } catch (const std::exception& e) {
+                JAMI_WARN("Error parsing composing state: %s", e.what());
+            }
         }
     }
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
