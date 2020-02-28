@@ -1,0 +1,24 @@
+From e888b0b50d886275da14369bc7dc76df94e69d74 Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Tue, 3 Mar 2020 13:06:16 -0500
+Subject: [PATCH 4/4] include winsock2 for tcpkeep identifiers
+
+---
+ pjlib/src/pj/sock_bsd.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/pjlib/src/pj/sock_bsd.c b/pjlib/src/pj/sock_bsd.c
+index 33a4f21c3..07b406bfa 100644
+--- a/pjlib/src/pj/sock_bsd.c
++++ b/pjlib/src/pj/sock_bsd.c
+@@ -35,6 +35,8 @@
+ # if !defined(TCP_KEEPIDLE) && defined(TCP_KEEPALIVE)
+ #  define TCP_KEEPIDLE TCP_KEEPALIVE
+ # endif
++#else
++# include <Winsock2.h>
+ #endif
+
+ /*
+--
+2.24.1
