@@ -1,0 +1,25 @@
+From 05248335c70bbbbfb1dfc7f57b7539a02da13679 Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Mon, 2 Mar 2020 11:48:54 -0500
+Subject: [PATCH 10/10] export keep alive symbols
+
+---
+ pjlib/src/pj/symbols.c | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/pjlib/src/pj/symbols.c b/pjlib/src/pj/symbols.c
+index ab83af956..046651e57 100644
+--- a/pjlib/src/pj/symbols.c
++++ b/pjlib/src/pj/symbols.c
+@@ -259,6 +259,9 @@ PJ_EXPORT_SYMBOL(PJ_SOCK_RAW)
+ PJ_EXPORT_SYMBOL(PJ_SOCK_RDM)
+ PJ_EXPORT_SYMBOL(PJ_SOL_SOCKET)
+ PJ_EXPORT_SYMBOL(PJ_SOL_IP)
++PJ_EXPORT_SYMBOL(PJ_SOL_TCP_KEEPIDLE)
++PJ_EXPORT_SYMBOL(PJ_SOL_TCP_KEEPINTVL)
++PJ_EXPORT_SYMBOL(PJ_SOL_TCP_KEEPCNT)
+ PJ_EXPORT_SYMBOL(PJ_SOL_TCP)
+ PJ_EXPORT_SYMBOL(PJ_SOL_UDP)
+ PJ_EXPORT_SYMBOL(PJ_SOL_IPV6)
+--
+2.24.1

@@ -1,0 +1,60 @@
+From 4186409939df34e1f9ddb126f55be6404da70953 Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Thu, 20 Feb 2020 12:26:02 -0500
+Subject: [PATCH 4/9] multiple_listeners
+
+---
+ pjsip/src/pjsip/sip_transport.c | 20 +++++++++++++++-----
+ 1 file changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/pjsip/src/pjsip/sip_transport.c b/pjsip/src/pjsip/sip_transport.c
+index 24b59153b..e19b90fee 100644
+--- a/pjsip/src/pjsip/sip_transport.c
++++ b/pjsip/src/pjsip/sip_transport.c
+@@ -1471,10 +1471,12 @@ PJ_DEF(pj_status_t) pjsip_tpmgr_register_tpfactory( pjsip_tpmgr *mgr,
+     /* Check that no same factory has been registered. */
+     status = PJ_SUCCESS;
+     for (p=mgr->factory_list.next; p!=&mgr->factory_list; p=p->next) {
+-	if (p == tpf) {
+-	    status = PJ_EEXISTS;
+-	    break;
+-	}
++        if (p->type == tpf->type &&
++            !pj_sockaddr_cmp(&tpf->local_addr, &p->local_addr))
++        {
++            status = PJSIP_ETYPEEXISTS;
++            break;
++        }
+     }
+ 
+     if (status != PJ_SUCCESS) {
+@@ -2327,10 +2329,10 @@ PJ_DEF(pj_status_t) pjsip_tpmgr_acquire_transport2(pjsip_tpmgr *mgr,
+ 	    }
+ 	}
+ 
++        unsigned flag = pjsip_transport_get_flag_from_type(type);
+ 	if (tp_ref == NULL &&
+ 	    (!sel || sel->disable_connection_reuse == PJ_FALSE))
+ 	{
+-	    unsigned flag = pjsip_transport_get_flag_from_type(type);
+ 	    const pj_sockaddr *remote_addr = (const pj_sockaddr*)remote;
+ 
+ 
+@@ -2429,6 +2431,14 @@ PJ_DEF(pj_status_t) pjsip_tpmgr_acquire_transport2(pjsip_tpmgr *mgr,
+ 
+ 	} else {
+ 
++            /* Make sure we don't use another factory than the one given if
++               secure flag is set */
++            if (flag & PJSIP_TRANSPORT_SECURE) {
++                TRACE_((THIS_FILE, "Can't create new TLS transport with no "
++                        "provided suitable TLS listener."));
++                return PJSIP_ETPNOTSUITABLE;
++            }
++
+ 	    /* Find factory with type matches the destination type */
+ 	    factory = mgr->factory_list.next;
+ 	    while (factory != &mgr->factory_list) {
+-- 
+2.24.1
+
