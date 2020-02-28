@@ -1,0 +1,24 @@
+From e715fd69575e33d05886abd4bec2e73820572f1f Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Wed, 4 Mar 2020 09:34:42 -0500
+Subject: [PATCH 1/4] win config
+
+---
+ pjlib/include/pj/config_site.h | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/pjlib/include/pj/config_site.h b/pjlib/include/pj/config_site.h
+index 8c54e4e09..814688915 100644
+--- a/pjlib/include/pj/config_site.h
++++ b/pjlib/include/pj/config_site.h
+@@ -20,3 +20,7 @@
+ #define PJ_ICE_COMP_BITS                        2
+ #define PJ_ICE_MAX_CHECKS                       1024
+ 
++/*
++ * WINDOWS settings.
++ */
++#define THIRD_PARTY_MEDIA                       0
+-- 
+2.24.1
+
