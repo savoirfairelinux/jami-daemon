@@ -1,0 +1,582 @@
+From 967bc71178957d6dbc11803b9ffb223dcb17ec4e Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Wed, 19 Feb 2020 15:17:38 -0500
+Subject: [PATCH 5/9] fix_ebusy_turn
+
+---
+ pjnath/include/pjnath/turn_session.h | 126 ++++++++++++++++++++-------
+ pjnath/include/pjnath/turn_sock.h    |  27 ++++++
+ pjnath/src/pjnath/ice_strans.c       |   2 +-
+ pjnath/src/pjnath/turn_session.c     |  39 ++++++---
+ pjnath/src/pjnath/turn_sock.c        | 102 +++++++++++++++++++++-
+ 5 files changed, 248 insertions(+), 48 deletions(-)
+
+diff --git a/pjnath/include/pjnath/turn_session.h b/pjnath/include/pjnath/turn_session.h
+index 956f57bf0..04add93db 100644
+--- a/pjnath/include/pjnath/turn_session.h
++++ b/pjnath/include/pjnath/turn_session.h
+@@ -1,5 +1,5 @@
+ /* $Id$ */
+-/* 
++/*
+  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+  *
+@@ -15,7 +15,7 @@
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ #ifndef __PJNATH_TURN_SESSION_H__
+ #define __PJNATH_TURN_SESSION_H__
+@@ -50,10 +50,10 @@ or to support new transport types to TURN, such as TLS.
+ These steps describes how to use the TURN session:
+ 
+  - <b>Creating the session</b>:\n
+-   use #pj_turn_session_create() to create the session. 
++   use #pj_turn_session_create() to create the session.
+ 
+  - <b>Configuring credential</b>:\n
+-   all TURN operations requires the use of authentication (it uses STUN 
++   all TURN operations requires the use of authentication (it uses STUN
+    long term autentication method). Use #pj_turn_session_set_credential()
+    to configure the TURN credential to be used by the session.
+ 
+@@ -62,8 +62,8 @@ These steps describes how to use the TURN session:
+    Allocate request (with pj_turn_session_alloc()). This function will
+    resolve the TURN server using DNS SRV resolution if the \a resolver
+    is set. The server resolution process will complete asynchronously,
+-   and application will be notified in \a on_state() callback of the 
+-   #pj_turn_session_cb structurewith the session state set to 
++   and application will be notified in \a on_state() callback of the
++   #pj_turn_session_cb structurewith the session state set to
+    PJ_TURN_STATE_RESOLVED.
+ 
+  - <b>Creating allocation</b>:\n
+@@ -75,40 +75,40 @@ These steps describes how to use the TURN session:
+ 
+  - <b>Getting the allocation result</b>:\n
+    if allocation is successful, the session state will progress to
+-   \a PJ_TURN_STATE_READY, otherwise the state will be 
++   \a PJ_TURN_STATE_READY, otherwise the state will be
+    \a PJ_TURN_STATE_DEALLOCATED or higher. Session state progression is
+-   reported in the \a on_state() callback of the #pj_turn_session_cb 
++   reported in the \a on_state() callback of the #pj_turn_session_cb
+    structure. On successful allocation, application may retrieve the
+    allocation info by calling #pj_turn_session_get_info().
+ 
+  - <b>Sending data through the relay</b>.\n
+-   Once allocation has been created, client may send data to any remote 
++   Once allocation has been created, client may send data to any remote
+    endpoints (called peers in TURN terminology) via the "relay port". It does
+-   so by calling #pj_turn_session_sendto(), giving the peer address 
++   so by calling #pj_turn_session_sendto(), giving the peer address
+    in the function argument. But note that at this point peers are not allowed
+    to send data towards the client (via the "relay port") before permission is
+    installed for that peer.
+ 
+  - <b>Creating permissions</b>.\n
+-   Permission needs to be created in the TURN server so that a peer can send 
++   Permission needs to be created in the TURN server so that a peer can send
+    data to the client via the relay port (a peer in this case is identified by
+    its IP address). Without this, when the TURN server receives data from the
+    peer in the "relay port", it will drop this data. Create the permission by
+    calling #pj_turn_session_set_perm(), specifying the peer IP address in the
+-   argument (the port part of the address is ignored). More than one IP 
++   argument (the port part of the address is ignored). More than one IP
+    addresses may be specified.
+ 
+  - <b>Receiving data from peers</b>.\n
+-   Once permission has been installed for the peer, any data received by the 
+-   TURN server (from that peer) in the "relay port" will be relayed back to 
++   Once permission has been installed for the peer, any data received by the
++   TURN server (from that peer) in the "relay port" will be relayed back to
+    client by the server, and application will be notified via \a on_rx_data
+    callback of the #pj_turn_session_cb.
+ 
+  - <b>Using ChannelData</b>.\n
+-   TURN provides optimized framing to the data by using ChannelData 
++   TURN provides optimized framing to the data by using ChannelData
+    packetization. The client activates this format for the specified peer by
+    calling #pj_turn_session_bind_channel(). Data sent or received to/for
+-   this peer will then use ChannelData format instead of Send or Data 
++   this peer will then use ChannelData format instead of Send or Data
+    Indications.
+ 
+  - <b>Refreshing the allocation, permissions, and channel bindings</b>.\n
+@@ -125,15 +125,15 @@ These steps describes how to use the TURN session:
+ 
+  */
+ 
+-/** 
++/**
+  * Opaque declaration for TURN client session.
+  */
+ typedef struct pj_turn_session pj_turn_session;
+ 
+ 
+-/** 
+- * TURN transport types, which will be used both to specify the connection 
+- * type for reaching TURN server and the type of allocation transport to be 
++/**
++ * TURN transport types, which will be used both to specify the connection
++ * type for reaching TURN server and the type of allocation transport to be
+  * requested to server (the REQUESTED-TRANSPORT attribute).
+  */
+ typedef enum pj_turn_tp_type
+@@ -246,7 +246,7 @@ typedef struct pj_turn_session_cb
+      * @param addr_len	Length of the destination address.
+      *
+      * @return		The callback should return the status of the
+-     *			send operation. 
++     *			send operation.
+      */
+     pj_status_t (*on_send_pkt)(pj_turn_session *sess,
+ 			       const pj_uint8_t *pkt,
+@@ -254,6 +254,35 @@ typedef struct pj_turn_session_cb
+ 			       const pj_sockaddr_t *dst_addr,
+ 			       unsigned addr_len);
+ 
++    /**
++     * This callback will be called by the TURN session whenever it
++     * needs to send outgoing message. Since the TURN session doesn't
++     * have a socket on its own, this callback must be implemented.
++     *
++     * The difference with on_send_pkt is that this function returns
++     * the size of the packet actually sent to predict when a busy will
++     * occurs. Indeed, activesock send the data asynchronously. When the
++     * data are actually sent, on_data_sent will be triggered.
++     *
++     * @param sess		The TURN session.
++     * @param pkt		The packet/data to be sent.
++     * @param pkt_len		Length of the packet/data.
++     * @param dst_addr		Destination address of the packet.
++     * @param addr_len		Length of the destination address.
++     * @param send_size		Length sent.
++     * @param original_size	The length of the packet without the HEADER
++     *
++     * @return			The callback should return the status of the
++     *				send operation.
++     */
++    pj_status_t (*on_send_pkt2)(pj_turn_session *sess,
++                                const pj_uint8_t *pkt,
++                                unsigned pkt_len,
++                                const pj_sockaddr_t *dst_addr,
++                                unsigned addr_len,
++                                unsigned* sent_size,
++                                unsigned original_size);
++
+     /**
+      * This callback will be called by the TURN session whenever it
+      * needs to send outgoing STUN requests/messages for TURN signalling
+@@ -268,7 +297,7 @@ typedef struct pj_turn_session_cb
+      * @param addr_len	Length of the destination address.
+      *
+      * @return		The callback should return the status of the
+-     *			send operation. 
++     *			send operation.
+      */
+     pj_status_t (*on_stun_send_pkt)(pj_turn_session *sess,
+ 			       	    const pj_uint8_t *pkt,
+@@ -277,7 +306,7 @@ typedef struct pj_turn_session_cb
+ 			       	    unsigned addr_len);
+ 
+     /**
+-     * Notification when peer address has been bound successfully to 
++     * Notification when peer address has been bound successfully to
+      * a channel number.
+      *
+      * This callback is optional since the nature of this callback is
+@@ -320,7 +349,7 @@ typedef struct pj_turn_session_cb
+      * @param old_state	The previous state of the session.
+      * @param new_state	The current state of the session.
+      */
+-    void (*on_state)(pj_turn_session *sess, 
++    void (*on_state)(pj_turn_session *sess,
+ 		     pj_turn_state_t old_state,
+ 		     pj_turn_state_t new_state);
+ 
+@@ -365,7 +394,7 @@ typedef struct pj_turn_session_cb
+ 
+ 
+ /**
+- * Allocation parameter, which can be given when application calls 
++ * Allocation parameter, which can be given when application calls
+  * pj_turn_session_alloc() to allocate relay address in the TURN server.
+  * Application should call pj_turn_alloc_param_default() to initialize
+  * this structure with the default values.
+@@ -505,7 +534,7 @@ PJ_DECL(void) pj_turn_alloc_param_default(pj_turn_alloc_param *prm);
+  * @param dst	Destination parameter.
+  * @param src	Source parameter.
+  */
+-PJ_DECL(void) pj_turn_alloc_param_copy(pj_pool_t *pool, 
++PJ_DECL(void) pj_turn_alloc_param_copy(pj_pool_t *pool,
+ 				       pj_turn_alloc_param *dst,
+ 				       const pj_turn_alloc_param *src);
+ 
+@@ -703,7 +732,7 @@ PJ_DECL(pj_status_t) pj_turn_session_set_server(pj_turn_session *sess,
+ 
+ 
+ /**
+- * Set credential to be used to authenticate against TURN server. 
++ * Set credential to be used to authenticate against TURN server.
+  * Application must call this function before sending Allocate request
+  * with pj_turn_session_alloc().
+  *
+@@ -724,7 +753,7 @@ PJ_DECL(pj_status_t) pj_turn_session_set_credential(pj_turn_session *sess,
+  * used with pj_turn_session_set_credential() before calling this function.
+  *
+  * This function will complete asynchronously, and the application will be
+- * notified about the allocation result in \a on_state() callback. The 
++ * notified about the allocation result in \a on_state() callback. The
+  * TURN session state will move to PJ_TURN_STATE_READY if allocation is
+  * successful, and PJ_TURN_STATE_DEALLOCATING or greater state if allocation
+  * has failed.
+@@ -768,7 +797,7 @@ PJ_DECL(pj_status_t) pj_turn_session_set_perm(pj_turn_session *sess,
+ 
+ 
+ /**
+- * Send a data to the specified peer address via the TURN relay. This 
++ * Send a data to the specified peer address via the TURN relay. This
+  * function will encapsulate the data as STUN Send Indication or TURN
+  * ChannelData packet and send the message to the TURN server. The TURN
+  * server then will send the data to the peer.
+@@ -777,7 +806,7 @@ PJ_DECL(pj_status_t) pj_turn_session_set_perm(pj_turn_session *sess,
+  * created before application can relay any data.
+  *
+  * Since TURN session is transport independent, this function will
+- * ultimately call \a on_send_pkt() callback to request the application 
++ * ultimately call \a on_send_pkt() callback to request the application
+  * to actually send the packet containing the data to the TURN server.
+  *
+  * @param sess		The TURN client session.
+@@ -798,6 +827,42 @@ PJ_DECL(pj_status_t) pj_turn_session_sendto(pj_turn_session *sess,
+ 					    const pj_sockaddr_t *peer_addr,
+ 					    unsigned addr_len);
+ 
++/**
++ * Send a data to the specified peer address via the TURN relay. This
++ * function will encapsulate the data as STUN Send Indication or TURN
++ * ChannelData packet and send the message to the TURN server. The TURN
++ * server then will send the data to the peer.
++ *
++ * The allocation (pj_turn_session_alloc()) must have been successfully
++ * created before application can relay any data.
++ *
++ * Since TURN session is transport independent, this function will
++ * ultimately call \a on_send_pkt() callback to request the application
++ * to actually send the packet containing the data to the TURN server.
++ *
++ * The difference with pj_turn_session_sendto is that this function returns
++ * the size of the packet actually sent to predict when a busy will
++ * occurs. Indeed, activesock send the data asynchronously. When the
++ * data are actually sent, on_data_sent will be triggered.
++ *
++ * @param sess		The TURN client session.
++ * @param pkt		The data/packet to be sent to peer.
++ * @param pkt_len	Length of the data.
++ * @param peer_addr	The remote peer address (the ultimate destination
++ *			of the data, and not the TURN server address).
++ * @param addr_len	Length of the address.
++ * @param sent		The size of the packet actually sent
++ *
++ * @return		PJ_SUCCESS if the operation has been successful,
++ *			or the appropriate error code on failure.
++ */
++PJ_DECL(pj_status_t) pj_turn_session_sendto2(pj_turn_session *sess,
++                                             const pj_uint8_t *pkt,
++                                             unsigned pkt_len,
++                                             const pj_sockaddr_t *peer_addr,
++                                             unsigned addr_len,
++                                             unsigned *sent);
++
+ /**
+  * Optionally establish channel binding for the specified a peer address.
+  * This function will assign a unique channel number for the peer address
+@@ -907,4 +972,3 @@ PJ_END_DECL
+ 
+ 
+ #endif	/* __PJNATH_TURN_SESSION_H__ */
+-
+diff --git a/pjnath/include/pjnath/turn_sock.h b/pjnath/include/pjnath/turn_sock.h
+index 35388809f..645c414fe 100644
+--- a/pjnath/include/pjnath/turn_sock.h
++++ b/pjnath/include/pjnath/turn_sock.h
+@@ -603,6 +603,33 @@ PJ_DECL(pj_status_t) pj_turn_sock_sendto(pj_turn_sock *turn_sock,
+ 					const pj_sockaddr_t *peer_addr,
+ 					unsigned addr_len);
+ 
++/**
++ * Send a data to the specified peer address via the TURN relay. This
++ * function will encapsulate the data as STUN Send Indication or TURN
++ * ChannelData packet and send the message to the TURN server. The TURN
++ * server then will send the data to the peer.
++ *
++ * The allocation (pj_turn_sock_alloc()) must have been successfully
++ * created before application can relay any data.
++ *
++ * @param turn_sock	The TURN transport instance.
++ * @param pkt		The data/packet to be sent to peer.
++ * @param pkt_len	Length of the data.
++ * @param peer_addr	The remote peer address (the ultimate destination
++ *			of the data, and not the TURN server address).
++ * @param addr_len	Length of the address.
++ * @param sent	    Size actually sent.
++ *
++ * @return		PJ_SUCCESS if the operation has been successful,
++ *			or the appropriate error code on failure.
++ */
++PJ_DECL(pj_status_t) pj_turn_sock_sendto2(pj_turn_sock *turn_sock,
++                                          const pj_uint8_t *pkt,
++                                          unsigned pkt_len,
++                                          const pj_sockaddr_t *peer_addr,
++                                          unsigned addr_len,
++                                          unsigned* sent);
++
+ /**
+  * Optionally establish channel binding for the specified a peer address.
+  * This function will assign a unique channel number for the peer address
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 4adc9bc70..643bbbac9 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -1937,7 +1937,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
+ {
+     ice_st->call_send_cb = PJ_TRUE;
+     return send_data(ice_st, comp_id, data, data_len, dst_addr,
+-    		     dst_addr_len, PJ_TRUE, PJ_FALSE);
++		     dst_addr_len, PJ_TRUE, PJ_FALSE);
+ }
+ 
+ static void on_ice_destroy(pj_ice_sess *ice)
+diff --git a/pjnath/src/pjnath/turn_session.c b/pjnath/src/pjnath/turn_session.c
+index 88985af69..12738c8e7 100644
+--- a/pjnath/src/pjnath/turn_session.c
++++ b/pjnath/src/pjnath/turn_session.c
+@@ -971,10 +971,21 @@ on_error:
+  * Relay data to the specified peer through the session.
+  */
+ PJ_DEF(pj_status_t) pj_turn_session_sendto( pj_turn_session *sess,
+-					    const pj_uint8_t *pkt,
+-					    unsigned pkt_len,
+-					    const pj_sockaddr_t *addr,
+-					    unsigned addr_len)
++                                            const pj_uint8_t *pkt,
++                                            unsigned pkt_len,
++                                            const pj_sockaddr_t *addr,
++                                            unsigned addr_len)
++{
++    unsigned sent;
++    return pj_turn_session_sendto2(sess, pkt, pkt_len, addr, addr_len, &sent);
++}
++
++PJ_DEF(pj_status_t) pj_turn_session_sendto2(pj_turn_session *sess,
++                                            const pj_uint8_t *pkt,
++                                            unsigned pkt_len,
++                                            const pj_sockaddr_t *addr,
++                                            unsigned addr_len,
++                                            unsigned *sent)
+ {
+     struct ch_t *ch;
+     struct perm_t *perm;
+@@ -1011,7 +1022,8 @@ PJ_DEF(pj_status_t) pj_turn_session_sendto( pj_turn_session *sess,
+ 
+     /* If peer connection is TCP (RFC 6062), send it directly */
+     if (sess->alloc_param.peer_conn_type == PJ_TURN_TP_TCP) {
+-	status = sess->cb.on_send_pkt(sess, pkt, pkt_len, addr, addr_len);
++        status = sess->cb.on_send_pkt2(sess, pkt, pkt_len, addr, addr_len,sent,
++                                       pkt_len);
+ 	goto on_return;
+     }
+ 
+@@ -1039,9 +1051,10 @@ PJ_DEF(pj_status_t) pj_turn_session_sendto( pj_turn_session *sess,
+ 
+ 	pj_assert(sess->srv_addr != NULL);
+ 
+-	status = sess->cb.on_send_pkt(sess, sess->tx_pkt, total_len,
+-				      sess->srv_addr,
+-				      pj_sockaddr_get_len(sess->srv_addr));
++        status = sess->cb.on_send_pkt2(sess, sess->tx_pkt, total_len,
++                                       sess->srv_addr,
++                                       pj_sockaddr_get_len(sess->srv_addr),
++                                       sent, pkt_len);
+ 
+     } else {
+ 	/* Use Send Indication. */
+@@ -1079,10 +1092,11 @@ PJ_DEF(pj_status_t) pj_turn_session_sendto( pj_turn_session *sess,
+ 	    goto on_return;
+ 
+ 	/* Send the Send Indication */
+-	status = sess->cb.on_send_pkt(sess, sess->tx_pkt, 
+-				      (unsigned)send_ind_len,
+-				      sess->srv_addr,
+-				      pj_sockaddr_get_len(sess->srv_addr));
++        status = sess->cb.on_send_pkt2(sess, sess->tx_pkt,
++                                       (unsigned)send_ind_len,
++                                       sess->srv_addr,
++                                       pj_sockaddr_get_len(sess->srv_addr),
++                                       sent, pkt_len);
+     }
+ 
+ on_return:
+@@ -1090,7 +1104,6 @@ on_return:
+     return status;
+ }
+ 
+-
+ /**
+  * Bind a peer address to a channel number.
+  */
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index 9b69a6a21..bacc80859 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -100,6 +100,10 @@ struct pj_turn_sock
+     /* Data connection, when peer_conn_type==PJ_TURN_TP_TCP (RFC 6062) */
+     unsigned		 data_conn_cnt;
+     tcp_data_conn_t	 data_conn[PJ_TURN_MAX_TCP_CONN_CNT];
++
++    /* The following variables are used by the on_data_sent callback */
++    unsigned current_pkt_len;
++    unsigned current_body_len;
+ };
+ 
+ 
+@@ -111,6 +115,13 @@ static pj_status_t turn_on_send_pkt(pj_turn_session *sess,
+ 				    unsigned pkt_len,
+ 				    const pj_sockaddr_t *dst_addr,
+ 				    unsigned dst_addr_len);
++static pj_status_t turn_on_send_pkt2(pj_turn_session *sess,
++                                     const pj_uint8_t *pkt,
++                                     unsigned pkt_len,
++                                     const pj_sockaddr_t *dst_addr,
++                                     unsigned dst_addr_len,
++                                     unsigned *sent,
++                                     unsigned body_len);
+ static pj_status_t turn_on_stun_send_pkt(pj_turn_session *sess,
+ 				    	 const pj_uint8_t *pkt,
+ 				    	 unsigned pkt_len,
+@@ -182,8 +193,8 @@ static pj_bool_t dataconn_on_data_read(pj_activesock_t *asock,
+ 				       pj_status_t status,
+ 				       pj_size_t *remainder);
+ static pj_bool_t dataconn_on_data_sent(pj_activesock_t *asock,
+-			      	       pj_ioqueue_op_key_t *send_key,
+-			      	       pj_ssize_t sent);
++                                       pj_ioqueue_op_key_t *send_key,
++                                       pj_ssize_t sent);
+ static pj_bool_t dataconn_on_connect_complete(pj_activesock_t *asock,
+ 					      pj_status_t status);
+ static void dataconn_cleanup(tcp_data_conn_t *conn);
+@@ -345,6 +356,7 @@ PJ_DEF(pj_status_t) pj_turn_sock_create(pj_stun_config *cfg,
+     pj_bzero(&sess_cb, sizeof(sess_cb));
+     sess_cb.on_send_pkt = &turn_on_send_pkt;
+     sess_cb.on_stun_send_pkt = &turn_on_stun_send_pkt;
++    sess_cb.on_send_pkt2 = &turn_on_send_pkt2;
+     sess_cb.on_channel_bound = &turn_on_channel_bound;
+     sess_cb.on_rx_data = &turn_on_rx_data;
+     sess_cb.on_state = &turn_on_state;
+@@ -653,6 +665,22 @@ PJ_DEF(pj_status_t) pj_turn_sock_sendto( pj_turn_sock *turn_sock,
+ 				  addr, addr_len);
+ }
+ 
++PJ_DEF(pj_status_t) pj_turn_sock_sendto2( pj_turn_sock *turn_sock,
++                                          const pj_uint8_t *pkt,
++                                          unsigned pkt_len,
++                                          const pj_sockaddr_t *addr,
++                                          unsigned addr_len,
++                                          unsigned *sent)
++{
++    PJ_ASSERT_RETURN(turn_sock && addr && addr_len, PJ_EINVAL);
++
++    if (turn_sock->sess == NULL)
++        return PJ_EINVALIDOP;
++
++    return pj_turn_session_sendto2(turn_sock->sess, pkt, pkt_len,
++                                   addr, addr_len, sent);
++}
++
+ /*
+  * Bind a peer address to a channel number.
+  */
+@@ -1043,7 +1071,75 @@ static pj_status_t turn_on_send_pkt(pj_turn_session *sess,
+ 				    unsigned dst_addr_len)
+ {
+     return send_pkt(sess, PJ_FALSE, pkt, pkt_len,
+-    		    dst_addr, dst_addr_len);
++                    dst_addr, dst_addr_len);
++}
++
++static pj_status_t turn_on_send_pkt2(pj_turn_session *sess,
++                                     const pj_uint8_t *pkt,
++                                     unsigned pkt_len,
++                                     const pj_sockaddr_t *dst_addr,
++                                     unsigned dst_addr_len,
++                                     unsigned *sent,
++                                     unsigned body_len)
++{
++    *sent = pkt_len;
++    pj_turn_sock *turn_sock = (pj_turn_sock*)pj_turn_session_get_user_data(sess);
++    pj_status_t status = PJ_SUCCESS;
++
++    pj_ssize_t len = pkt_len;
++    turn_sock->current_body_len = body_len;
++    turn_sock->current_pkt_len = pkt_len;
++
++    if (turn_sock == NULL || turn_sock->is_destroying) {
++        /* We've been destroyed */
++        // https://trac.pjsip.org/repos/ticket/1316
++        //pj_assert(!"We should shutdown gracefully");
++        return PJ_EINVALIDOP;
++    }
++
++    if (turn_sock->conn_type == PJ_TURN_TP_UDP) {
++        status = pj_activesock_sendto(turn_sock->active_sock,
++                                      &turn_sock->send_key, pkt, &len, 0,
++                                      dst_addr, dst_addr_len);
++    } else if (turn_sock->alloc_param.peer_conn_type == PJ_TURN_TP_TCP) {
++        pj_turn_session_info info;
++        pj_turn_session_get_info(turn_sock->sess, &info);
++        if (pj_sockaddr_cmp(&info.server, dst_addr) == 0) {
++            /* Destination address is TURN server */
++            status = pj_activesock_send(turn_sock->active_sock,
++                                        &turn_sock->send_key, pkt, &len, 0);
++        } else {
++            /* Destination address is peer, lookup data connection */
++            unsigned i;
++
++            status = PJ_ENOTFOUND;
++            for (i=0; i < PJ_TURN_MAX_TCP_CONN_CNT; ++i) {
++                tcp_data_conn_t *conn = &turn_sock->data_conn[i];
++                if (conn->state < DATACONN_STATE_CONN_BINDING)
++                    continue;
++                if (pj_sockaddr_cmp(&conn->peer_addr, dst_addr) == 0) {
++                    status = pj_activesock_send(conn->asock,
++                                                &conn->send_key,
++                                                pkt, &len, 0);
++                    break;
++                }
++            }
++        }
++    } else {
++        status = pj_activesock_send(turn_sock->active_sock,
++                                    &turn_sock->send_key, pkt, &len, 0);
++    }
++
++    if (status != PJ_SUCCESS && status != PJ_EPENDING) {
++        show_err(turn_sock, "socket send()", status);
++    }
++
++    // Remove header from sent size.
++    // The application only wants to know if the packet is actually sent.
++    unsigned header_len = pkt_len - body_len;
++    *sent = (len > header_len)? (len - header_len) : 0;
++
++    return status;
+ }
+ 
+ static pj_status_t turn_on_stun_send_pkt(pj_turn_session *sess,
+-- 
+2.24.1
+
