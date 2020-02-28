@@ -1,0 +1,28 @@
+From 172da386bc2e8108e5e8584d2d46cad1dbd620e8 Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Thu, 20 Feb 2020 13:37:23 -0500
+Subject: [PATCH 6/9] ignore_ipv6_on_transport_check
+
+---
+ pjsip/src/pjsip/sip_transport.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/pjsip/src/pjsip/sip_transport.c b/pjsip/src/pjsip/sip_transport.c
+index e19b90fee..62a21526c 100644
+--- a/pjsip/src/pjsip/sip_transport.c
++++ b/pjsip/src/pjsip/sip_transport.c
+@@ -2248,7 +2248,10 @@ PJ_DEF(pj_status_t) pjsip_tpmgr_acquire_transport2(pjsip_tpmgr *mgr,
+ 	pjsip_transport *seltp = sel->u.transport;
+ 
+ 	/* See if the transport is (not) suitable */
+-	if (seltp->key.type != type) {
++	pjsip_transport_type_e type_no_ipv6 = type % PJSIP_TRANSPORT_IPV6;
++	pjsip_transport_type_e key_type_no_ipv6 = seltp->key.type %
++	    PJSIP_TRANSPORT_IPV6;
++	if (type_no_ipv6 != key_type_no_ipv6) {
+ 	    pj_lock_release(mgr->lock);
+ 	    TRACE_((THIS_FILE, "Transport type in tpsel not matched"));
+ 	    return PJSIP_ETPNOTSUITABLE;
+-- 
+2.24.1
+

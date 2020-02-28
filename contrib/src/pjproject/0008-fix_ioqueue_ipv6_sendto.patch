@@ -1,0 +1,85 @@
+From dbaada5fc3a7a3ad6288648cac9e4bd061008fad Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Thu, 20 Feb 2020 12:39:23 -0500
+Subject: [PATCH 8/9] fix_ioqueue_ipv6_sendto
+
+---
+ pjlib/src/pj/ioqueue_common_abs.c |  5 ++++-
+ pjlib/src/pj/ioqueue_common_abs.h | 17 ++++++++---------
+ 2 files changed, 12 insertions(+), 10 deletions(-)
+
+diff --git a/pjlib/src/pj/ioqueue_common_abs.c b/pjlib/src/pj/ioqueue_common_abs.c
+index aaefc80e8..e8b929e7a 100644
+--- a/pjlib/src/pj/ioqueue_common_abs.c
++++ b/pjlib/src/pj/ioqueue_common_abs.c
+@@ -1053,7 +1053,10 @@ retry_on_restart:
+     /*
+      * Check that address storage can hold the address parameter.
+      */
+-    PJ_ASSERT_RETURN(addrlen <= (int)sizeof(pj_sockaddr_in), PJ_EBUG);
++    PJ_ASSERT_RETURN((((pj_sockaddr*)addr)->addr.sa_family == pj_AF_INET() &&
++                      addrlen <= (int)sizeof(pj_sockaddr_in)) ||
++                     (((pj_sockaddr*)addr)->addr.sa_family == pj_AF_INET6() &&
++                      addrlen <= (int)sizeof(pj_sockaddr_in6)), PJ_EBUG);
+ 
+     /*
+      * Schedule asynchronous send.
+diff --git a/pjlib/src/pj/ioqueue_common_abs.h b/pjlib/src/pj/ioqueue_common_abs.h
+index d5e36b4d6..b1e9b2083 100644
+--- a/pjlib/src/pj/ioqueue_common_abs.h
++++ b/pjlib/src/pj/ioqueue_common_abs.h
+@@ -1,5 +1,5 @@
+ /* $Id */
+-/* 
++/*
+  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)
+  * Copyright (C) 2003-2008 Benny Prijono <benny@prijono.org>
+  *
+@@ -15,14 +15,14 @@
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program; if not, write to the Free Software
+- * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA 
++ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+ 
+ /* ioqueue_common_abs.h
+  *
+- * This file contains private declarations for abstracting various 
+- * event polling/dispatching mechanisms (e.g. select, poll, epoll) 
+- * to the ioqueue. 
++ * This file contains private declarations for abstracting various
++ * event polling/dispatching mechanisms (e.g. select, poll, epoll)
++ * to the ioqueue.
+  */
+ 
+ #include <pj/list.h>
+@@ -63,7 +63,7 @@ struct write_operation
+     pj_size_t		    size;
+     pj_ssize_t              written;
+     unsigned                flags;
+-    pj_sockaddr_in	    rmt_addr;
++    pj_sockaddr		    rmt_addr;
+     int			    rmt_addrlen;
+ };
+ 
+@@ -93,7 +93,7 @@ union operation_key
+ 	unsigned	    ref_count;	\
+ 	pj_bool_t	    closing;	\
+ 	pj_time_val	    free_time;	\
+-	
++
+ #else
+ #   define UNREG_FIELDS
+ #endif
+@@ -135,6 +135,5 @@ static void ioqueue_add_to_set( pj_ioqueue_t *ioqueue,
+                                 pj_ioqueue_key_t *key,
+                                 enum ioqueue_event_type event_type );
+ static void ioqueue_remove_from_set( pj_ioqueue_t *ioqueue,
+-                                     pj_ioqueue_key_t *key, 
++                                     pj_ioqueue_key_t *key,
+                                      enum ioqueue_event_type event_type);
+-
+-- 
+2.24.1
+

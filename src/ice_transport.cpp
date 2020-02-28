@@ -185,7 +185,7 @@ public:
     bool handleEvents(unsigned max_msec);
 
     // Wait data on components
-    std::vector<pj_ssize_t> lastReadLen_;
+    pj_ssize_t lastReadLen_;
     std::condition_variable waitDataCv_ = {};
 
     onShutdownCb scb;
@@ -306,7 +306,6 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     }
 
     peerChannels_.resize(component_count_ + 1);
-    lastReadLen_.resize(component_count_);
 
     // Add local hosts (IPv4, IPv6) as stun candidates
     add_stun_server(config_, pj_AF_INET6());
@@ -338,13 +337,10 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
             JAMI_WARN("null IceTransport");
     };
 
-    icecb.on_data_sent = [](pj_ice_strans* ice_st, unsigned comp_id,
-                                pj_ssize_t size) {
+    icecb.on_data_sent = [](pj_ice_strans* ice_st, pj_ssize_t size) {
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
-          if (comp_id > 0 && comp_id - 1 < tr->lastReadLen_.size()) {
-            tr->lastReadLen_[comp_id - 1] = size;
+            tr->lastReadLen_ = size;
             tr->waitDataCv_.notify_all();
-          }
         } else
             JAMI_WARN("null IceTransport");
     };
@@ -1313,15 +1309,15 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         return -1;
     }
     pj_ssize_t sent_size = 0;
-    auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength(), &sent_size);
+    auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength());
     if (status == PJ_EPENDING && isTCPEnabled()) {
         auto current_size = sent_size;
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
-        while (static_cast<std::size_t>(comp_id) < pimpl_->lastReadLen_.size() && current_size < static_cast<pj_ssize_t>(len)) {
+        while (current_size < static_cast<pj_ssize_t>(len)) {
           std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
           pimpl_->waitDataCv_.wait(lk);
-          current_size = pimpl_->lastReadLen_[comp_id];
+          current_size = pimpl_->lastReadLen_;
         }
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
         if (status == PJ_EBUSY) {
