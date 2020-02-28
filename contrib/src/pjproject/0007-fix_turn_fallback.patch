@@ -1,0 +1,25 @@
+From d4aed07089eb59068ad8de2cc74f7ac34197df89 Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Thu, 27 Feb 2020 13:07:36 -0500
+Subject: [PATCH 07/10] fix_turn_fallback
+
+---
+ pjnath/src/pjnath/turn_session.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pjnath/src/pjnath/turn_session.c b/pjnath/src/pjnath/turn_session.c
+index 88985af69..8f696e4e5 100644
+--- a/pjnath/src/pjnath/turn_session.c
++++ b/pjnath/src/pjnath/turn_session.c
+@@ -659,7 +659,7 @@ PJ_DEF(pj_status_t) pj_turn_session_set_server( pj_turn_session *sess,
+ 	PJ_ASSERT_RETURN(default_port>0 && default_port<65536, PJ_EINVAL);
+ 	sess->default_port = (pj_uint16_t)default_port;
+ 
+-	cnt = PJ_TURN_MAX_DNS_SRV_CNT;
++	cnt = 1;
+ 	ai = (pj_addrinfo*)
+ 	     pj_pool_calloc(sess->pool, cnt, sizeof(pj_addrinfo));
+ 
+-- 
+2.24.1
+
