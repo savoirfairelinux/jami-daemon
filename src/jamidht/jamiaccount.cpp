@@ -2909,6 +2909,16 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 }
 
 void
+JamiAccount::onIsComposing(const std::string& peer, bool isWriting)
+{
+    try {
+        Account::onIsComposing(parseJamiUri(peer), isWriting);
+    } catch (...) {
+        JAMI_ERR("[Account %s] Can't parse URI: %s", getAccountID().c_str(), peer.c_str());
+    }
+}
+
+void
 JamiAccount::registerDhtAddress(IceTransport& ice)
 {
     const auto reg_addr = [&](IceTransport& ice, const IpAddr& ip) {
