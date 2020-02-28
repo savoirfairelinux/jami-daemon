@@ -426,14 +426,14 @@ MediaDecoder::setupStream()
     // it has been disabled already by the video_receive_thread/video_input
     enableAccel_ &= Manager::instance().videoPreferences.getDecodingAccelerated();
 
-    if (enableAccel_) {
+    if (enableAccel_ and not fallback_) {
         auto APIs = video::HardwareAccel::getCompatibleAccel(decoderCtx_->codec_id,
                     decoderCtx_->width, decoderCtx_->height, CODEC_DECODER);
         for (const auto& it : APIs) {
             accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
             auto ret = accel_->initAPI(false, nullptr);
             if (ret < 0) {
-                accel_ = nullptr;
+                accel_.reset();
                 continue;
             }
             if(prepareDecoderContext() < 0)
@@ -513,7 +513,14 @@ MediaDecoder::decode(AVPacket& packet)
 {
     int frameFinished = 0;
     auto ret = avcodec_send_packet(decoderCtx_, &packet);
-    if (ret < 0 && ret != AVERROR(EAGAIN)) {
+    if (accel_ && ret == AVERROR(EINVAL)) {
+        JAMI_WARN("Decoding error falling back to software");
+        fallback_ = true;
+        accel_.reset();
+        avcodec_flush_buffers(decoderCtx_);
+        setupStream();
+        return Status::DecodeError;
+    } else if (ret < 0 && ret != AVERROR(EAGAIN)) {
         return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
     }
 
