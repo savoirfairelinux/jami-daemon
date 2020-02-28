@@ -1,0 +1,64 @@
+From 54056d85d705add3f6a2c10ab251b9635ee5c856 Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Thu, 27 Feb 2020 14:43:27 -0500
+Subject: [PATCH 2/4] win vs2017 props
+
+---
+ build/vs/pjproject-vs14-common-config.props   | 8 ++++----
+ build/vs/pjproject-vs14-common-defaults.props | 4 ++--
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/build/vs/pjproject-vs14-common-config.props b/build/vs/pjproject-vs14-common-config.props
+index de8848ff5..6aa0276ba 100644
+--- a/build/vs/pjproject-vs14-common-config.props
++++ b/build/vs/pjproject-vs14-common-config.props
+@@ -18,22 +18,22 @@
+   <PropertyGroup>    
+     <API_Family Condition="'$(API_Family)'==''">WinDesktop</API_Family>
+     <PreprocessorDef></PreprocessorDef>
+-    <DefaultToolset>v140</DefaultToolset>
++    <DefaultToolset>v141</DefaultToolset>
+   </PropertyGroup>  
+   <Choose>
+     <When Condition="'$(API_Family)'=='WinDesktop'">
+       <PropertyGroup>
+-        <BuildToolset>v140</BuildToolset>
++        <BuildToolset>v141</BuildToolset>
+         <PreprocessorDef Condition="'$(Platform)'=='Win32'">WIN32;PJ_WIN32=1;PJ_M_I386=1;</PreprocessorDef>
+         <PreprocessorDef Condition="'$(Platform)'=='x64'">WIN64;PJ_WIN64=1;PJ_M_X86_64=1;</PreprocessorDef>
+       </PropertyGroup>
+     </When>
+     <When Condition="'$(API_Family)'=='UWP'">
+       <PropertyGroup>
+-        <BuildToolset>v140</BuildToolset>
++        <BuildToolset>v141</BuildToolset>
+         <PreprocessorDef>PJ_WIN32_UWP;UNICODE;_UNICODE;</PreprocessorDef>
+         <PreprocessorDef Condition="'$(Platform)'=='ARM'">$(PreprocessorDef);PJ_M_ARMV7=1;</PreprocessorDef>
+-        <PlatformVersion>10.0.10586.0</PlatformVersion>
++	<PlatformVersion>10.0.16299.0</PlatformVersion>
+         <MinPlatformVersion>10.0.10240.0</MinPlatformVersion>
+         <AppTypeRev>10.0</AppTypeRev>
+         
+diff --git a/build/vs/pjproject-vs14-common-defaults.props b/build/vs/pjproject-vs14-common-defaults.props
+index 526f6c925..198282b90 100644
+--- a/build/vs/pjproject-vs14-common-defaults.props
++++ b/build/vs/pjproject-vs14-common-defaults.props
+@@ -3,7 +3,7 @@
+   <ImportGroup Label="PropertySheets">
+   </ImportGroup>
+   <PropertyGroup Label="UserMacros">
+-    <VSVer>14</VSVer>
++    <VSVer>15</VSVer>
+   </PropertyGroup>
+   <PropertyGroup>
+     <_ProjectFileVersion>14.0.22823.1</_ProjectFileVersion>
+@@ -35,4 +35,4 @@
+       <Value>$(VSVer)</Value>
+     </BuildMacro>
+   </ItemGroup>
+-</Project>
+\ No newline at end of file
++</Project>
+-- 
+2.24.1
+

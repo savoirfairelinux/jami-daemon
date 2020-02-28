@@ -1,0 +1,42 @@
+From 2964d40d94c60ddd607ecb142d5b8e27619f0e4a Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Thu, 20 Feb 2020 12:33:47 -0500
+Subject: [PATCH 7/9] pj_ice_sess
+
+---
+ pjnath/include/pjnath/ice_strans.h | 2 ++
+ pjnath/src/pjnath/ice_strans.c     | 5 +++++
+ 2 files changed, 7 insertions(+)
+
+diff --git a/pjnath/include/pjnath/ice_strans.h b/pjnath/include/pjnath/ice_strans.h
+index 1269442cd..41f3b6297 100644
+--- a/pjnath/include/pjnath/ice_strans.h
++++ b/pjnath/include/pjnath/ice_strans.h
+@@ -1054,6 +1054,8 @@ PJ_DECL(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
+ 					   const pj_sockaddr_t *dst_addr,
+ 					   int dst_addr_len);
+ 
++PJ_DECL(pj_ice_sess *) pj_ice_strans_get_ice_sess(pj_ice_strans   *ice_st);
++
+ 
+ /**
+  * @}
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 643bbbac9..603b75121 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -1949,6 +1949,11 @@ static void on_ice_destroy(pj_ice_sess *ice)
+     }
+ }
+ 
++PJ_DECL(pj_ice_sess *) pj_ice_strans_get_ice_sess( pj_ice_strans *ice_st )
++{
++    return ice_st->ice;
++}
++
+ /*
+  * Callback called by ICE session when ICE processing is complete, either
+  * successfully or with failure.
+-- 
+2.24.1
+
