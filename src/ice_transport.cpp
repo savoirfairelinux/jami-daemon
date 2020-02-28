@@ -402,7 +402,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
 
 IceTransport::Impl::~Impl()
 {
-    JAMI_WARN("[ice:%p] IceTransport::Impl::~Impl() %p", this);
+    JAMI_DBG("[ice:%p] destroying", this);
     sip_utils::register_thread();
     threadTerminateFlags_ = true;
     iceCV_.notify_all();
