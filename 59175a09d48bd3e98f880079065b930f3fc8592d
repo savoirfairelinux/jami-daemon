@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1ea6c77f_c4c95bfa",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-28T18:36:28Z",
+      "side": 1,
+      "message": "you can directly take the 2.10 release to be more explicit",
+      "range": {
+        "startLine": 2,
+        "startChar": 0,
+        "endLine": 3,
+        "endChar": 87
+      },
+      "revId": "59175a09d48bd3e98f880079065b930f3fc8592d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a6101a23_6383eca2",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-28T18:36:28Z",
+      "side": 1,
+      "message": "0010",
+      "range": {
+        "startLine": 57,
+        "startChar": 27,
+        "endLine": 57,
+        "endChar": 31
+      },
+      "revId": "59175a09d48bd3e98f880079065b930f3fc8592d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}

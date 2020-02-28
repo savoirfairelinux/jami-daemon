@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3df5812e_efdce459",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-02-28T18:36:28Z",
+      "side": 0,
+      "message": "why removed\u0026",
+      "range": {
+        "startLine": 5,
+        "startChar": 20,
+        "endLine": 6,
+        "endChar": 39
+      },
+      "revId": "20b1f1f920fb8613dae8a209eac40916a7243f0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
