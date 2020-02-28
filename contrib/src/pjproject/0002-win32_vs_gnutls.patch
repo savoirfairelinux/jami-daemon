@@ -1,3 +1,16 @@
+From 78e95268a4e83ba2f4b304d8d041dabfdaa844cc Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Thu, 27 Feb 2020 14:40:07 -0500
+Subject: [PATCH 2/3] win32_vs_gnutls
+
+---
+ pjlib/build/pjlib.vcxproj      | 12 +++++++++---
+ pjlib/include/pj/config_site.h |  5 ++++-
+ pjmedia/build/pjmedia.vcxproj  | 12 +++++++++---
+ 3 files changed, 22 insertions(+), 7 deletions(-)
+
+diff --git a/pjlib/build/pjlib.vcxproj b/pjlib/build/pjlib.vcxproj
+index f2d6fb42c..dee805a7c 100644
 --- a/pjlib/build/pjlib.vcxproj
 +++ b/pjlib/build/pjlib.vcxproj
 @@ -309,14 +309,17 @@
@@ -35,34 +48,21 @@
    </ItemDefinitionGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug-Static|Win32'">
      <ClCompile>
---- a/pjlib/include/pj/config.h
-+++ b/pjlib/include/pj/config.h
-@@ -570,6 +570,7 @@
-  * that this will increase the footprint of the libraries since it
-  * tracks the filename and line number of each functions.
+diff --git a/pjlib/include/pj/config_site.h b/pjlib/include/pj/config_site.h
+index e99ecc95b..bb6d5654c 100644
+--- a/pjlib/include/pj/config_site.h
++++ b/pjlib/include/pj/config_site.h
+@@ -23,4 +23,7 @@
+ /*
+  * WINDOWS settings.
   */
-+#define PJ_OS_HAS_CHECK_STACK		0
- #ifndef PJ_OS_HAS_CHECK_STACK
- #	define PJ_OS_HAS_CHECK_STACK		0
- #endif
-@@ -919,7 +920,7 @@
-  * Default: 0 (for now)
-  */
- #ifndef PJ_HAS_SSL_SOCK
--#  define PJ_HAS_SSL_SOCK	    0
-+#  define PJ_HAS_SSL_SOCK	    1
- #endif
- 
- 
-@@ -945,7 +946,7 @@
- #   if PJ_HAS_SSL_SOCK==0
- #	define PJ_SSL_SOCK_IMP		    PJ_SSL_SOCK_IMP_NONE
- #   else
--#	define PJ_SSL_SOCK_IMP		    PJ_SSL_SOCK_IMP_OPENSSL
-+#	define PJ_SSL_SOCK_IMP		    PJ_SSL_SOCK_IMP_GNUTLS
- #   endif
- #endif
- 
+-#define THIRD_PARTY_MEDIA			0
++#define THIRD_PARTY_MEDIA                       0
++#define PJ_OS_HAS_CHECK_STACK                   0
++#define PJ_HAS_SSL_SOCK                         1
++#define PJ_SSL_SOCK_IMP                         PJ_SSL_SOCK_IMP_GNUTLS
+diff --git a/pjmedia/build/pjmedia.vcxproj b/pjmedia/build/pjmedia.vcxproj
+index e596939d0..0c7108b83 100644
 --- a/pjmedia/build/pjmedia.vcxproj
 +++ b/pjmedia/build/pjmedia.vcxproj
 @@ -307,14 +307,17 @@
@@ -101,5 +101,5 @@
    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
      <ClCompile>
 -- 
-2.19.0.windows.1
+2.24.1
 
