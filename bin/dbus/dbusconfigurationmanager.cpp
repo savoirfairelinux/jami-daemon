@@ -192,6 +192,12 @@ DBusConfigurationManager::cancelMessage(const std::string& accountID, const uint
     return DRing::cancelMessage(accountID, id);
 }
 
+void
+DBusConfigurationManager::setIsComposing(const std::string& accountID, const std::string& to, bool isWriting)
+{
+    return DRing::setIsComposing(accountID, id, isWriting);
+}
+
 auto
 DBusConfigurationManager::getTlsDefaultSettings() -> decltype(DRing::getTlsDefaultSettings())
 {

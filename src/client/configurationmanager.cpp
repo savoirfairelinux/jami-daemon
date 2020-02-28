@@ -298,6 +298,13 @@ cancelMessage(const std::string& accountID, uint64_t messageId)
     return {};
 }
 
+void
+setIsComposing(const std::string& accountID, const std::string& to, bool isWriting)
+{
+    if (const auto acc = jami::Manager::instance().getAccount(accountID))
+        return acc->setIsComposing(to, isWriting);
+}
+
 bool
 exportOnRing(const std::string& accountID, const std::string& password)
 {
