@@ -340,6 +340,12 @@ Account::getVolatileAccountDetails() const
     };
 }
 
+void
+Account::onIsComposing(const std::string& peer, bool isComposing)
+{
+    emitSignal<DRing::ConfigurationSignal::ComposingStatusChanged>(accountID_, peer, isComposing ? 1 : 0);
+}
+
 bool
 Account::hasActiveCodec(MediaType mediaType) const
 {
