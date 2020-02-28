@@ -81,6 +81,7 @@ DRING_PUBLIC std::vector<Message> getLastMessages(const std::string& accountID, 
 DRING_PUBLIC std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 DRING_PUBLIC int getMessageStatus(uint64_t id);
 DRING_PUBLIC int getMessageStatus(const std::string& accountID, uint64_t id);
+DRING_PUBLIC void setIsComposing(const std::string& accountID, const std::string& to, bool isWriting);
 
 DRING_PUBLIC std::map<std::string, std::string> getTlsDefaultSettings();
 
@@ -288,6 +289,10 @@ struct DRING_PUBLIC ConfigurationSignal {
         struct DRING_PUBLIC AccountMessageStatusChanged {
                 constexpr static const char* name = "AccountMessageStatusChanged";
                 using cb_type = void(const std::string& /*account_id*/, uint64_t /*message_id*/, const std::string& /*to*/, int /*state*/);
+        };
+        struct DRING_PUBLIC ComposingStatusChanged {
+                constexpr static const char* name = "ComposingStatusChanged";
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, int /*status*/);
         };
         struct DRING_PUBLIC IncomingTrustRequest {
                 constexpr static const char* name = "IncomingTrustRequest";
