@@ -409,7 +409,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // the invite will be destroyed, and the unique_ptr will point freed datas.
     // To avoid this, we increment the ref counter and let our unique_ptr manage
     // when the invite will be freed
-    pjsip_inv_add_ref(inv);
+    if (!inv->ref_cnt)
+        JAMI_ERR("inv->ref_cnt is gone!");
+    else
+        pjsip_inv_add_ref(inv);
     call->inv.reset(inv);
 
     // Check whether Replaces header is present in the request and process accordingly.
