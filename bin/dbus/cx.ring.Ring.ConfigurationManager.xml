@@ -610,6 +610,18 @@
            </arg>
        </signal>
 
+       <signal name="composingStatusChanged" tp:name-for-bindings="composingStatusChanged">
+           <tp:added version="4.1.0"/>
+           <tp:docstring>
+               Notify clients that a message composition status changed
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="t" name="id"/>
+           <arg type="i" name="status">
+              <tp:docstring>The new status of the message, 0 for Idle, 1 for Active</tp:docstring>
+           </arg>
+       </signal>
+
        <method name="setVolume" tp:name-for-bindings="setVolume">
            <tp:docstring>
              <p>Sets the volume using a linear scale [0,100].</p>

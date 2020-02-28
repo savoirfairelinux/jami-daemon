@@ -315,8 +315,9 @@ public:
 
     void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
     void sendTrustRequestConfirm(const std::string& to);
-    virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id, bool retryOnTimeout=true) override;
-    virtual uint64_t sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads) override;
+    void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id, bool retryOnTimeout=true) override;
+    uint64_t sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads) override;
+    void onIsComposing(const std::string& peer, bool isWriting) override;
 
     /* Devices */
     void addDevice(const std::string& password);

@@ -153,8 +153,12 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * If supported, send a text message from this account.
          * @return a token to query the message status
          */
-        virtual uint64_t sendTextMessage(const std::string& to UNUSED,
-                                     const std::map<std::string, std::string>& payloads UNUSED) { return 0; }
+        virtual uint64_t sendTextMessage(const std::string& /*to*/,
+                                     const std::map<std::string, std::string>& /*payloads*/) { return 0; }
+
+        virtual void setIsComposing(const std::string& /*to*/, bool /*isWriting*/) {};
+
+        virtual void onIsComposing(const std::string& /*peer*/, bool /*isWriting*/);
 
         virtual std::vector<DRing::Message> getLastMessages(const uint64_t& /*base_timestamp*/) {
             return {};
