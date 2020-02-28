@@ -1337,7 +1337,8 @@ SIPCall::InvSessionDeleter::operator ()(pjsip_inv_session* inv) const noexcept
     if (!inv) return;
     inv->mod_data[getSIPVoIPLink()->getModId()] = nullptr;
     // NOTE: the counter is incremented by sipvoiplink (transaction_request_cb)
-    pjsip_inv_dec_ref(inv);
+    // pjsip_inv_dec_ref(inv);
+    pjsip_inv_terminate(inv, PJSIP_SC_OK, PJ_FALSE);
 }
 
 bool
