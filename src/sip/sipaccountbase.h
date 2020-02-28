@@ -31,8 +31,6 @@
 #include "noncopyable.h"
 #include "im/message_engine.h"
 
-#include <pjsip/sip_types.h>
-
 #include <array>
 #include <deque>
 #include <map>
@@ -40,6 +38,8 @@
 #include <mutex>
 #include <vector>
 
+extern "C" {
+#include <pjsip/sip_types.h>
 #ifdef _WIN32
 typedef uint16_t in_port_t;
 #else
@@ -49,10 +49,12 @@ typedef uint16_t in_port_t;
 struct pjsip_dialog;
 struct pjsip_inv_session;
 struct pjmedia_sdp_session;
+}
 
 namespace jami {
 
 class SipTransport;
+class Task;
 
 namespace Conf {
     // SIP specific configuration keys
@@ -267,6 +269,8 @@ public:
         return messageEngine_.sendMessage(to, payloads);
     }
 
+    void setIsComposing(const std::string& to, bool isWriting) override;
+
     virtual im::MessageStatus getMessageStatus(uint64_t id) const override {
         return messageEngine_.getStatus(id);
     }
@@ -461,6 +465,10 @@ protected:
     std::mutex mutexLastMessages_;
     static constexpr size_t MAX_WAITING_MESSAGES_SIZE = 1000;
     std::deque<DRing::Message> lastMessages_;
+
+    std::string composingUri_;
+    std::chrono::steady_clock::time_point composingTime_ {std::chrono::steady_clock::time_point::min()};
+    std::shared_ptr<Task> composingTimeout_;
 
     mutable std::mutex cachedTurnMutex_ {};
     std::unique_ptr<IpAddr> cacheTurnV4_ {};
