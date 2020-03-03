@@ -181,7 +181,7 @@ DRING_PUBLIC bool pausePlayer(const std::string& id, bool pause);
 DRING_PUBLIC bool closePlayer(const std::string& id);
 DRING_PUBLIC bool mutePlayerAudio(const std::string& id, bool mute);
 DRING_PUBLIC bool playerSeekToTime(const std::string& id, int time);
-int64_t getPlayerPosition(const std::string& id);
+DRING_PUBLIC int64_t getPlayerPosition(const std::string& id);
 
 DRING_PUBLIC bool switchInput(const std::string& resource);
 DRING_PUBLIC bool switchToCamera();
