@@ -71,6 +71,12 @@ class DRING_PUBLIC DBusVideoManager :
         std::map<std::string, std::string> getRenderer(const std::string& callId);
         std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
         void stopLocalRecorder(const std::string& filepath);
+        std::string createMediaPlayer(const std::string& path);
+        bool pausePlayer(const std::string& id, bool pause);
+        bool closePlayer(const std::string& id);
+        bool mutePlayerAudio(const std::string& id, bool mute);
+        bool playerSeekToTime(const std::string& id, int time);
+        int64_t getPlayerPosition(const std::string& id);
 };
 
 #endif // __RING_DBUSVIDEOMANAGER_H__
