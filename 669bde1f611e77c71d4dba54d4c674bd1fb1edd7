@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ed04e19e_d794234b",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2041,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-03T23:26:54Z",
+      "side": 1,
+      "message": "break: a message might use this mechanism for other uses than message ID. do we want to skip it in that case ?\nfor instance: VCards would be dropped by this.",
+      "range": {
+        "startLine": 2041,
+        "startChar": 28,
+        "endLine": 2041,
+        "endChar": 35
+      },
+      "revId": "669bde1f611e77c71d4dba54d4c674bd1fb1edd7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "85846c66_2c3cc694",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2783,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-03T23:26:54Z",
+      "side": 1,
+      "message": "unused",
+      "range": {
+        "startLine": 2783,
+        "startChar": 8,
+        "endLine": 2783,
+        "endChar": 48
+      },
+      "revId": "669bde1f611e77c71d4dba54d4c674bd1fb1edd7",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
