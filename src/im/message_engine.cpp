@@ -144,7 +144,8 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
     }
     auto f = p->second.find(token);
     if (f != p->second.end()) {
-        if (ok) {
+        if (f->second.status == MessageStatus::SENDING) {
+            if (ok) {
                 f->second.status = MessageStatus::SENT;
                 JAMI_DBG() << "[message " << token << "] Status changed to SENT";
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
@@ -152,8 +153,7 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::SENT));
                 save_();
-        } else if (f->second.status == MessageStatus::SENDING) {
-            if (f->second.retried >= MAX_RETRIES) {
+            } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
                 JAMI_DBG() << "[message " << token << "] Status changed to FAILURE";
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
