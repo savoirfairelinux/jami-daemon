@@ -43,6 +43,7 @@ public:
     virtual bool getEncodingAccelerated() {}
     virtual void setEncodingAccelerated(bool state) {}
     virtual void setDeviceOrientation(const std::string& name, int angle) {}
+    virtual void fileOpened(const std::string& playerId, std::map<std::string, std::string> playerInfo) {}
 };
 %}
 
@@ -69,6 +70,12 @@ void setDecodingAccelerated(bool state);
 bool getEncodingAccelerated();
 void setEncodingAccelerated(bool state);
 void setDeviceOrientation(const std::string& name, int angle);
+std::string createMediaPlayer(const std::string& path);
+bool pausePlayer(const std::string& id, bool pause);
+bool closePlayer(const std::string& id);
+bool mutePlayerAudio(const std::string& id, bool mute);
+bool playerSeekToTime(const std::string& id, int time);
+int64_t getPlayerPosition(const std::string& id);
 }
 
 class VideoCallback {
@@ -80,4 +87,5 @@ public:
     virtual void stopCapture() {}
     virtual void decodingStarted(const std::string& id, const std::string& shm_path, int w, int h, bool is_mixer) {}
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
+    virtual void fileOpened(const std::string& playerId, std::map<std::string, std::string> playerInfo) {}
 };

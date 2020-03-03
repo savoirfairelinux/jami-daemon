@@ -144,3 +144,39 @@ DBusVideoManager::stopLocalRecorder(const std::string& filepath)
 {
     DRing::stopLocalRecorder(filepath);
 }
+
+std::string
+DBusVideoManager::createMediaPlayer(const std::string& path)
+{
+    return DRing::createMediaPlayer(path);
+}
+
+auto
+DBusVideoManager::pausePlayer(const std::string& id, bool pause)
+{
+    return DRing::pausePlayer(id, pause);
+}
+
+auto
+DBusVideoManager::closePlayer(const std::string& id)
+{
+    return DRing::closePlayer(id);
+}
+
+auto
+DBusVideoManager::mutePlayerAudio(const std::string& id, bool mute)
+{
+    return DRing::mutePlayerAudio(id, mute);
+}
+
+auto
+DBusVideoManager::playerSeekToTime(const std::string& id, int time)
+{
+    return DRing::playerSeekToTime(id, time);
+}
+
+auto
+DBusVideoManager::getPlayerPosition(const std::string& id)
+{
+    return DRing::getPlayerPosition(id);
+}
