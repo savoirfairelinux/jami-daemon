@@ -449,7 +449,7 @@ public:
         const IceSocketEndpoint* iceSocket = (const IceSocketEndpoint*)(ep_);
         if (iceSocket) {
             iceSocket->underlyingICE()->setOnShutdown([this]() {
-                tls->shutdown();
+                if (tls) tls->shutdown();
             });
         }
     }
