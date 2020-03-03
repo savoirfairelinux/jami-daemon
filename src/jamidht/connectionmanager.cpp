@@ -53,6 +53,41 @@ class ConnectionManager::Impl : public std::enable_shared_from_this<ConnectionMa
 public:
     explicit Impl(JamiAccount& account) : account {account} {}
     ~Impl() { }
+
+    void removeUnusedConnections(const std::string& deviceId = "") {
+        {
+            std::lock_guard<std::mutex> lk(nonReadySocketsMutex_);
+            for (auto& listSocks : nonReadySockets_) {
+                if (!deviceId.empty() && listSocks.first != deviceId) continue;
+                for (auto& tlsSock : listSocks.second) {
+                    if (tlsSock.second) tlsSock.second->shutdown();
+                }
+            }
+            if (deviceId.empty()) {
+                dht::ThreadPool::io().run([nrs=std::make_shared<decltype(nonReadySockets_)>(std::move(nonReadySockets_))] {
+                    nrs->clear();
+                });
+            } else {
+                nonReadySockets_.erase(deviceId);
+            }
+        }
+        {
+            std::lock_guard<std::mutex> lk(msocketsMutex_);
+            for (auto& listSocks : multiplexedSockets_) {
+                if (!deviceId.empty() && listSocks.first != deviceId) continue;
+                for (auto& mxSock : listSocks.second) {
+                    if (mxSock.second) mxSock.second->shutdown();
+                }
+            }
+            if (deviceId.empty()) {
+                dht::ThreadPool::io().run([ms=std::make_shared<decltype(multiplexedSockets_)>(std::move(multiplexedSockets_))] {
+                    ms->clear();
+                });
+            } else {
+                multiplexedSockets_.erase(deviceId);
+            }
+        }
+    }
     void shutdown() {
         if (isDestroying_) return;
         isDestroying_ = true;
@@ -76,28 +111,7 @@ public:
         dht::ThreadPool::io().run([co=std::make_shared<decltype(connectionsInfos_)>(std::move(connectionsInfos_))] {
             co->clear();
         });
-        {
-            std::lock_guard<std::mutex> lk(nonReadySocketsMutex_);
-            for (auto& listSocks : nonReadySockets_) {
-                for (auto& tlsSock : listSocks.second) {
-                    if (tlsSock.second) tlsSock.second->shutdown();
-                }
-            }
-            dht::ThreadPool::io().run([nrs=std::make_shared<decltype(nonReadySockets_)>(std::move(nonReadySockets_))] {
-                nrs->clear();
-            });
-        }
-        {
-            std::lock_guard<std::mutex> lk(msocketsMutex_);
-            for (auto& listSocks : multiplexedSockets_) {
-                for (auto& mxSock : listSocks.second) {
-                    if (mxSock.second) mxSock.second->shutdown();
-                }
-            }
-            dht::ThreadPool::io().run([ms=std::make_shared<decltype(multiplexedSockets_)>(std::move(multiplexedSockets_))] {
-                ms->clear();
-            });
-        }
+        removeUnusedConnections();
     }
 
     void connectDevice(const std::string& deviceId, const std::string& uri, ConnectCallback cb);
@@ -718,14 +732,7 @@ ConnectionManager::closeConnectionsWith(const std::string& deviceId)
         }
     }
     // This will close the TLS Session
-    {
-        std::lock_guard<std::mutex> lk (pimpl_->nonReadySocketsMutex_);
-        pimpl_->nonReadySockets_.erase(deviceId);
-    }
-    {
-        std::lock_guard<std::mutex> lk(pimpl_->msocketsMutex_);
-        pimpl_->multiplexedSockets_.erase(deviceId);
-    }
+    pimpl_->removeUnusedConnections(deviceId);
 }
 
 void
