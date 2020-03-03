@@ -100,6 +100,8 @@ using namespace std::placeholders;
 
 namespace jami {
 
+constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
+
 struct PendingConfirmation {
     std::mutex lock;
     bool replied {false};
@@ -111,7 +113,6 @@ struct TextMessageCtx {
     std::weak_ptr<JamiAccount> acc;
     std::string to;
     std::string deviceId;
-    std::map<std::string, std::string> payloads;
     uint64_t id;
     bool retryOnTimeout;
     std::shared_ptr<PendingConfirmation> confirmation;
@@ -1975,13 +1976,7 @@ JamiAccount::doRegister_()
         dht_->listen<dht::ImMessage>(
             inboxDeviceKey,
             [this,inboxDeviceKey](dht::ImMessage&& v) {
-                {
-                    std::lock_guard<std::mutex> lock(messageMutex_);
-                    auto res = treatedMessages_.insert(v.id);
-                    if (!res.second)
-                        return true;
-                }
-                saveTreatedMessages();
+                if (!setMessageTreated(v.id)) return true;
                 accountManager_->onPeerMessage(v.from, dhtPublicInCalls_, [this, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>&,
                                                                         const dht::InfoHash& peer_account)
                 {
@@ -2016,6 +2011,19 @@ JamiAccount::doRegister_()
         JAMI_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
+}
+
+bool
+JamiAccount::setMessageTreated(const dht::Value::Id& id)
+{
+    {
+        std::lock_guard<std::mutex> lock(messageMutex_);
+        auto res = treatedMessages_.insert(id);
+        if (!res.second)
+            return false;
+    }
+    saveTreatedMessages();
+    return true;
 }
 
 void
@@ -2735,6 +2743,12 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         hdr = reinterpret_cast<pjsip_hdr*>(pjsip_date_hdr_create(tdata->pool, &key, pj_cstr(&date_str, date)));
         pjsip_msg_add_hdr(tdata->msg, hdr);
 
+        // https://tools.ietf.org/html/rfc5438#section-6.3
+        auto token_str = std::to_string(token);
+        auto pjMessageId = sip_utils::CONST_PJ_STR(token_str);
+        hdr = reinterpret_cast<pjsip_hdr*>(pjsip_generic_string_hdr_create(tdata->pool, &STR_MESSAGE_ID, &pjMessageId));
+        pjsip_msg_add_hdr(tdata->msg, hdr);
+
         // Add user agent header.
         pjsip_hdr *hdr_list;
         auto pJuseragent = sip_utils::CONST_PJ_STR("Jami");
@@ -2752,10 +2766,8 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             messageEngine_.onMessageSent(to, token, false);
             continue;
         }
+        auto content = payloads.begin()->second;
         im::fillPJSIPMessageBody(*tdata, payloads);
-
-        // Re-init sent status
-        messageEngine_.onMessageSent(to, token, false);
 
         // Because pjsip_endpt_send_request can take quite some time, move it in a io thread to avoid to block
         dht::ThreadPool::io().run([w=weak(), tdata, to, token, payloads, retryOnTimeout, deviceId = deviceConnIt->first, confirm] {
@@ -2768,7 +2780,6 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             ctx->to = to;
             ctx->deviceId = deviceId;
             ctx->id = token;
-            ctx->payloads = payloads;
             ctx->retryOnTimeout = retryOnTimeout;
             ctx->confirmation = confirm;
 
@@ -2807,7 +2818,6 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
             if (status != PJ_SUCCESS) {
                 JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
-                shared->messageEngine_.onMessageSent(to, token, false);
             }
         });
 

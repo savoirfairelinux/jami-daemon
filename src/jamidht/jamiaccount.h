@@ -271,6 +271,12 @@ public:
     std::shared_ptr<SIPCall>
     newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}, const std::shared_ptr<SipTransport>& sipTr = nullptr) override;
 
+    /**
+     * Mark message as treated
+     * @return false if the message was already treated
+     */
+    bool setMessageTreated(const dht::Value::Id& id);
+
     void onTextMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& payloads) override;
 
     virtual bool isTlsEnabled() const override {
