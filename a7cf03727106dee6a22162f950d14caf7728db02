@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5e2e5a4b_0125dcd8",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-03T23:55:12Z",
+      "side": 1,
+      "message": "If deviceId is set, the method currently only shutdowns one socket but still clears all sockets on ioPool. Is that on. purpose ?",
+      "range": {
+        "startLine": 67,
+        "startChar": 102,
+        "endLine": 67,
+        "endChar": 118
+      },
+      "revId": "a7cf03727106dee6a22162f950d14caf7728db02",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
