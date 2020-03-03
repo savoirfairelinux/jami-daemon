@@ -636,7 +636,7 @@ JamiAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
 
     call.initIceMediaTransport(true);
     call.setIPToIP(true);
-    call.setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
+    call.setPeerNumber(to_id);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), target.getFamily());
 
@@ -684,7 +684,7 @@ bool
 JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 {
     call.setupLocalSDPFromIce();
-    std::string toUri(call.getPeerNumber()); // expecting a fully well formed sip uri
+    std::string toUri(getToUri(call.getPeerNumber()+"@"+target.toString(true).c_str())); // expecting a fully well formed sip uri
 
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
 
