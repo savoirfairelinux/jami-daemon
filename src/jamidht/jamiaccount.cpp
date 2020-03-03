@@ -100,6 +100,9 @@ using namespace std::placeholders;
 
 namespace jami {
 
+constexpr const char* MESSAGE_ID = "Message-ID";
+constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
+
 struct PendingConfirmation {
     std::mutex lock;
     bool replied {false};
@@ -111,7 +114,6 @@ struct TextMessageCtx {
     std::weak_ptr<JamiAccount> acc;
     std::string to;
     std::string deviceId;
-    std::map<std::string, std::string> payloads;
     uint64_t id;
     bool retryOnTimeout;
     std::shared_ptr<PendingConfirmation> confirmation;
@@ -2020,11 +2022,25 @@ JamiAccount::doRegister_()
 
 void
 JamiAccount::onTextMessage(const std::string& from,
-                              const std::map<std::string, std::string>& payloads)
+                           const std::map<std::string, std::string>& payloads)
 {
     try {
+        // If the payloads contains "Message-ID" (defined by https://tools.ietf.org/html/rfc5438#section-6.3)
+        // This means that the message comes from a p2p cached connection and via sipvoiplink
+        // In this case, check if the message id is already in treated message
+        // and handle or drop the message depending the result
+        auto midIt = payloads.find(STR_MESSAGE_ID.ptr);
+        auto received = payloads;
+        if (midIt != payloads.end()) {
+            std::lock_guard<std::mutex> lock(messageMutex_);
+            auto res = treatedMessages_.insert(std::stol(midIt->second));
+            if (!res.second)
+                return;
+            // Message-ID is not a content type, so we don't want to pass it to SIPAccountBase::onTextMessage
+            received.erase(STR_MESSAGE_ID.ptr);
+        }
         const std::string fromUri = parseJamiUri(from);
-        SIPAccountBase::onTextMessage(fromUri, payloads);
+        SIPAccountBase::onTextMessage(fromUri, received);
     } catch (...) {
     }
 }
@@ -2735,6 +2751,11 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         hdr = reinterpret_cast<pjsip_hdr*>(pjsip_date_hdr_create(tdata->pool, &key, pj_cstr(&date_str, date)));
         pjsip_msg_add_hdr(tdata->msg, hdr);
 
+        // https://tools.ietf.org/html/rfc5438#section-6.3
+        auto pjMessageId = sip_utils::CONST_PJ_STR(std::to_string(token).c_str());
+        hdr = reinterpret_cast<pjsip_hdr*>(pjsip_generic_string_hdr_create(tdata->pool, &STR_MESSAGE_ID, &pjMessageId));
+        pjsip_msg_add_hdr(tdata->msg, hdr);
+
         // Add user agent header.
         pjsip_hdr *hdr_list;
         auto pJuseragent = sip_utils::CONST_PJ_STR("Jami");
@@ -2752,10 +2773,8 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             messageEngine_.onMessageSent(to, token, false);
             continue;
         }
+        auto content = payloads.begin()->second;
         im::fillPJSIPMessageBody(*tdata, payloads);
-
-        // Re-init sent status
-        messageEngine_.onMessageSent(to, token, false);
 
         // Because pjsip_endpt_send_request can take quite some time, move it in a io thread to avoid to block
         dht::ThreadPool::io().run([w=weak(), tdata, to, token, payloads, retryOnTimeout, deviceId = deviceConnIt->first, confirm] {
@@ -2768,7 +2787,6 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             ctx->to = to;
             ctx->deviceId = deviceId;
             ctx->id = token;
-            ctx->payloads = payloads;
             ctx->retryOnTimeout = retryOnTimeout;
             ctx->confirmation = confirm;
 
@@ -2807,7 +2825,6 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
             if (status != PJ_SUCCESS) {
                 JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
-                shared->messageEngine_.onMessageSent(to, token, false);
             }
         });
 

@@ -248,8 +248,15 @@ transaction_request_cb(pjsip_rx_data *rdata)
             try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
             // Process message content in case of multi-part body
             auto payloads = im::parseSipMessage(rdata->msg_info.msg);
-            if (payloads.size() > 0)
+            if (payloads.size() > 0) {
+                constexpr pj_str_t STR_MESSAGE_ID = jami::sip_utils::CONST_PJ_STR("Message-ID");
+                auto *msgId = (pjsip_generic_string_hdr*)pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &STR_MESSAGE_ID, nullptr);
+                if (msgId) {
+                    std::string value(msgId->hvalue.ptr, msgId->hvalue.slen);
+                    payloads["Message-ID"] = value;
+                }
                 account->onTextMessage(peerNumber, payloads);
+            }
             return PJ_FALSE;
         }
 
