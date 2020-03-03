@@ -111,7 +111,6 @@ struct TextMessageCtx {
     std::weak_ptr<JamiAccount> acc;
     std::string to;
     std::string deviceId;
-    std::map<std::string, std::string> payloads;
     uint64_t id;
     bool retryOnTimeout;
     std::shared_ptr<PendingConfirmation> confirmation;
@@ -2020,11 +2019,38 @@ JamiAccount::doRegister_()
 
 void
 JamiAccount::onTextMessage(const std::string& from,
-                              const std::map<std::string, std::string>& payloads)
+                           const std::map<std::string, std::string>& payloads)
 {
+    // The payloads key can contains "mimetype;arg=value;arg2=value2..."
+    std::map<std::string, std::string> received = payloads;
+    try {
+        std::stringstream ss(payloads.begin()->first);
+        std::string item;
+        auto idx = 0;
+        while (std::getline(ss, item, ';')) {
+            if (idx == 0) {
+                received.clear();
+                received[item] = payloads.begin()->second;
+            } else {
+                // Intercept id parameter if present (p2p SIP cached)
+                auto sep = item.find("=");
+                if (sep != std::string::npos && item.substr(0, sep) == "id") {
+                    std::lock_guard<std::mutex> lock(messageMutex_);
+                    auto res = treatedMessages_.insert(std::stol(item.substr(sep + 1)));
+                    if (!res.second)
+                        return;
+                } else {
+                    JAMI_WARN("Unknown argument detected in Content-Type: %s", item.c_str());
+                }
+            }
+            idx += 1;
+        }
+    } catch(...) {
+        // Ignore if stol fails and continue
+    }
     try {
         const std::string fromUri = parseJamiUri(from);
-        SIPAccountBase::onTextMessage(fromUri, payloads);
+        SIPAccountBase::onTextMessage(fromUri, received);
     } catch (...) {
     }
 }
@@ -2752,10 +2778,12 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             messageEngine_.onMessageSent(to, token, false);
             continue;
         }
-        im::fillPJSIPMessageBody(*tdata, payloads);
-
-        // Re-init sent status
-        messageEngine_.onMessageSent(to, token, false);
+        auto content = payloads.begin()->second;
+        std::map<std::string, std::string> sipPayloads;
+        // RFC: Content-Type: type/subtype; arg=value; arg=value; ... and we need to follow the id
+        // to avoid duplicates between SIP and DHT
+        sipPayloads.emplace(payloads.begin()->first + "; id=" + std::to_string(token), std::move(content));
+        im::fillPJSIPMessageBody(*tdata, sipPayloads);
 
         // Because pjsip_endpt_send_request can take quite some time, move it in a io thread to avoid to block
         dht::ThreadPool::io().run([w=weak(), tdata, to, token, payloads, retryOnTimeout, deviceId = deviceConnIt->first, confirm] {
@@ -2768,7 +2796,6 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             ctx->to = to;
             ctx->deviceId = deviceId;
             ctx->id = token;
-            ctx->payloads = payloads;
             ctx->retryOnTimeout = retryOnTimeout;
             ctx->confirmation = confirm;
 
@@ -2807,7 +2834,6 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
             if (status != PJ_SUCCESS) {
                 JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
-                shared->messageEngine_.onMessageSent(to, token, false);
             }
         });
 
