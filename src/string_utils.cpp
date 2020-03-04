@@ -20,11 +20,14 @@
  */
 
 #include "string_utils.h"
+
 #include <sstream>
 #include <cctype>
 #include <algorithm>
 #include <ostream>
+#include <iomanip>
 #include <stdexcept>
+#include <ios>
 #ifdef _WIN32
 #include <windows.h>
 #include <oleauto.h>
@@ -74,6 +77,23 @@ to_string(double value)
     if (len <= 0)
         throw std::invalid_argument{"can't parse double"};
     return {buf, (size_t)len};
+}
+
+std::string
+to_hex_string(uint64_t id) {
+    std::ostringstream ss;
+    ss << std::hex << std::setfill('0') << std::setw(16) << id;
+    return ss.str();
+}
+
+uint64_t
+from_hex_string(const std::string& str) {
+    std::istringstream ss(str);
+    ss >> std::hex;
+    uint64_t id;
+    if (!(ss >> id))
+        throw std::invalid_argument("Can't parse id: " + str);
+    return id;
 }
 
 std::string

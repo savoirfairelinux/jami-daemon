@@ -271,12 +271,6 @@ public:
     std::shared_ptr<SIPCall>
     newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}, const std::shared_ptr<SipTransport>& sipTr = nullptr) override;
 
-    /**
-     * Mark message as treated
-     * @return false if the message was already treated
-     */
-    bool setMessageTreated(const dht::Value::Id& id);
-
     void onTextMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& payloads) override;
 
     virtual bool isTlsEnabled() const override {
@@ -369,10 +363,9 @@ public:
 
     std::vector<std::string> publicAddresses();
 
-
     /// \return true if the given DHT message identifier has been treated
     /// \note if message has not been treated yet this method store this id and returns true at further calls
-    bool isMessageTreated(unsigned int id) ;
+    bool isMessageTreated(const std::string& id);
 
     std::shared_ptr<dht::DhtRunner> dht() { return dht_; }
 
@@ -596,7 +589,7 @@ private:
 
     mutable std::mutex messageMutex_ {};
     std::map<dht::Value::Id, PendingMessage> sentMessages_;
-    std::set<dht::Value::Id> treatedMessages_ {};
+    std::set<std::string> treatedMessages_ {};
 
     std::string ringDeviceName_ {};
     std::string idPath_ {};
