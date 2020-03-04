@@ -293,6 +293,7 @@ def apply_linux(patch_path):
 def apply_windows(patch_path):
     log.debug('applying windows patch ' + patch_path)
     args = []
+    args.append('--work-tree=' + patch_path)
     args.extend(git_apply_args)
     args.append(patch_path)
     return getSHrunner().exec_batch('git', args)
