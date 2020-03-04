@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "151398ee_bc34bc82",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 103,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-04T18:47:59Z",
+      "side": 1,
+      "message": "unused",
+      "range": {
+        "startLine": 103,
+        "startChar": 0,
+        "endLine": 103,
+        "endChar": 48
+      },
+      "revId": "cc0c1ccba54a23b23374efaa0ae630bd1c00471d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e5e4748a_6e024dcf",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 2749,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-04T18:47:59Z",
+      "side": 1,
+      "message": "string is destroyed after this line, causing use-after-free next line",
+      "range": {
+        "startLine": 2749,
+        "startChar": 8,
+        "endLine": 2749,
+        "endChar": 74
+      },
+      "revId": "cc0c1ccba54a23b23374efaa0ae630bd1c00471d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
