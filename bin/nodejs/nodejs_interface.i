@@ -153,11 +153,16 @@ void init(const v8::Handle<v8::Value> &funcMap){
         exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4 )),
     };
 
+    const std::map<std::string, SharedCallback> playerHandlers = {
+        exportable_callback<MediaPlayerSignal::FileOpened>(bind(&VideoCallback::fileOpened, videoM, _1, _2)),
+    };
+
     if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
         return;
 
     registerSignalHandlers(configEvHandlers);
     registerSignalHandlers(callEvHandlers);
+    registerSignalHandlers(playerHandlers);
 
     DRing::start();
 }

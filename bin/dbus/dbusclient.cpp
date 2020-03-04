@@ -130,6 +130,7 @@ DBusClient::initLibrary(int flags)
     using DRing::PresenceSignal;
     using DRing::AudioSignal;
     using DRing::DataTransferSignal;
+    using DRing::MediaPlayerSignal;
 
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
 
@@ -222,6 +223,10 @@ DBusClient::initLibrary(int flags)
         exportable_callback<VideoSignal::DecodingStarted>(bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5)),
         exportable_callback<VideoSignal::DecodingStopped>(bind(&DBusVideoManager::stoppedDecoding, videoM, _1, _2, _3)),
     };
+
+    const std::map<std::string, SharedCallback> playerHandlers = {
+        exportable_callback<MediaPlayerSignal::FileOpened>(bind(&DBusVideoManager::FileOpened, videoM, _1, _2)),
+    };
 #endif
 
     if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
@@ -234,6 +239,7 @@ DBusClient::initLibrary(int flags)
     DRing::registerSignalHandlers(dataXferEvHandlers);
 #ifdef ENABLE_VIDEO
     DRing::registerSignalHandlers(videoEvHandlers);
+    DRing::registerSignalHandlers(playerHandlers);
 #endif
 
     if (!DRing::start())

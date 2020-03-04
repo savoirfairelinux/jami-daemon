@@ -227,6 +227,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     using DRing::DataTransferSignal;
     using DRing::PresenceSignal;
     using DRing::VideoSignal;
+    using DRing::MediaPlayerSignal;
 
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
 
@@ -304,6 +305,10 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<VideoSignal::DecodingStopped>(bind(&VideoCallback::decodingStopped, videoM, _1, _2, _3)),
     };
 
+    const std::map<std::string, SharedCallback> playerHandlers = {
+        exportable_callback<MediaPlayerSignal::FileOpened>(bind(&VideoCallback::fileOpened, videoM, _1, _2)),
+    };
+
     if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
         return;
 
@@ -312,6 +317,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     registerSignalHandlers(presenceEvHandlers);
     registerSignalHandlers(dataTransferEvHandlers);
     registerSignalHandlers(videoEvHandlers);
+    registerSignalHandlers(playerHandlers);
 
     DRing::start();
 }
