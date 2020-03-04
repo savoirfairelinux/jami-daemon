@@ -429,7 +429,7 @@ ConnectionManager::Impl::onDhtConnected(const std::string& deviceId)
         [w=weak()](PeerConnectionRequest&& req) {
             auto shared = w.lock();
             if (!shared) return false;
-            if (shared->account.isMessageTreated(req.id)) {
+            if (shared->account.isMessageTreated(to_hex_string(req.id))) {
                 // Message already treated. Just ignore
                 return true;
             }

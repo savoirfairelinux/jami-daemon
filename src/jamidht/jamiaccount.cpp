@@ -1976,8 +1976,9 @@ JamiAccount::doRegister_()
         dht_->listen<dht::ImMessage>(
             inboxDeviceKey,
             [this,inboxDeviceKey](dht::ImMessage&& v) {
-                if (!setMessageTreated(v.id)) return true;
-                accountManager_->onPeerMessage(v.from, dhtPublicInCalls_, [this, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>&,
+                auto msgId = to_hex_string(v.id);
+                if (!isMessageTreated(msgId)) return true;
+                accountManager_->onPeerMessage(v.from, dhtPublicInCalls_, [this, v, inboxDeviceKey, msgId](const std::shared_ptr<dht::crypto::Certificate>&,
                                                                         const dht::InfoHash& peer_account)
                 {
                     auto now = clock::to_time_t(clock::now());
@@ -1987,7 +1988,7 @@ JamiAccount::doRegister_()
                     }
                     std::map<std::string, std::string> payloads = {{datatype,
                                                                    utf8_make_valid(v.msg)}};
-                    onTextMessage(std::to_string(v.id), peer_account.toString(), payloads);
+                    onTextMessage(msgId, peer_account.toString(), payloads);
                     JAMI_DBG() << "Sending message confirmation " << v.id;
                     dht_->putEncrypted(inboxDeviceKey,
                               v.from,
@@ -2011,19 +2012,6 @@ JamiAccount::doRegister_()
         JAMI_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
-}
-
-bool
-JamiAccount::setMessageTreated(const dht::Value::Id& id)
-{
-    {
-        std::lock_guard<std::mutex> lock(messageMutex_);
-        auto res = treatedMessages_.insert(id);
-        if (!res.second)
-            return false;
-    }
-    saveTreatedMessages();
-    return true;
 }
 
 void
@@ -2288,7 +2276,13 @@ void
 JamiAccount::loadTreatedMessages()
 {
     std::lock_guard<std::mutex> lock(messageMutex_);
-    treatedMessages_ = loadIdList(cachePath_+DIR_SEPARATOR_STR "treatedMessages");
+    auto path = cachePath_+DIR_SEPARATOR_STR "treatedMessages";
+    treatedMessages_ = loadIdList<std::string>(path);
+    if (treatedMessages_.empty()) {
+        auto messages = loadIdList(path);
+        for (const auto& m : messages)
+            treatedMessages_.emplace(to_hex_string(m));
+    }
 }
 
 void
@@ -2299,16 +2293,16 @@ JamiAccount::saveTreatedMessages() const
             auto& this_ = *sthis;
             std::lock_guard<std::mutex> lock(this_.messageMutex_);
             fileutils::check_dir(this_.cachePath_.c_str());
-            saveIdList(this_.cachePath_+DIR_SEPARATOR_STR "treatedMessages", this_.treatedMessages_);
+            saveIdList<std::string>(this_.cachePath_+DIR_SEPARATOR_STR "treatedMessages", this_.treatedMessages_);
         }
     });
 }
 
 bool
-JamiAccount::isMessageTreated(unsigned int id)
+JamiAccount::isMessageTreated(const std::string& id)
 {
     std::lock_guard<std::mutex> lock(messageMutex_);
-    auto res = treatedMessages_.insert(id);
+    auto res = treatedMessages_.emplace(id);
     if (res.second) {
         saveTreatedMessages();
         return false;
@@ -2766,7 +2760,6 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             messageEngine_.onMessageSent(to, token, false);
             continue;
         }
-        auto content = payloads.begin()->second;
         im::fillPJSIPMessageBody(*tdata, payloads);
 
         // Because pjsip_endpt_send_request can take quite some time, move it in a io thread to avoid to block
@@ -2858,7 +2851,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                 JAMI_DBG() << "[Account " << getAccountID() << "] [message " << token << "] Received text message reply";
 
                 // add treated message
-                auto res = treatedMessages_.insert(msg.id);
+                auto res = treatedMessages_.emplace(to_hex_string(msg.id));
                 if (!res.second)
                     return true;
             }

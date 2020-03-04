@@ -260,12 +260,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
                 if (msgId)
                     id = std::string(msgId->hvalue.ptr, msgId->hvalue.slen);
 
-                try {
-                    // Mark message as treated
-                    auto acc = std::dynamic_pointer_cast<JamiAccount>(account);
-                    if (acc && !id.empty() && !acc->setMessageTreated(std::stol(id)))
-                        return PJ_FALSE;
-                } catch (...) {}
+                if (not id.empty()) {
+                    try {
+                        // Mark message as treated
+                        auto acc = std::dynamic_pointer_cast<JamiAccount>(account);
+                        if (acc and not acc->isMessageTreated(id))
+                            return PJ_FALSE;
+                    } catch (...) {}
+                }
                 account->onTextMessage(id, peerNumber, payloads);
             }
             return PJ_FALSE;
