@@ -284,7 +284,7 @@ struct DRING_PUBLIC ConfigurationSignal {
         };
         struct DRING_PUBLIC IncomingAccountMessage {
                 constexpr static const char* name = "IncomingAccountMessage";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payloads*/);
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*message_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payloads*/);
         };
         struct DRING_PUBLIC AccountMessageStatusChanged {
                 constexpr static const char* name = "AccountMessageStatusChanged";

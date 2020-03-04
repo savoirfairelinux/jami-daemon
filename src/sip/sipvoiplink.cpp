@@ -249,7 +249,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             // Process message content in case of multi-part body
             auto payloads = im::parseSipMessage(rdata->msg_info.msg);
             if (payloads.size() > 0)
-                account->onTextMessage(peerNumber, payloads);
+                account->onTextMessage({}, peerNumber, payloads);
             return PJ_FALSE;
         }
 

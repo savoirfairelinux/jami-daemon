@@ -11,6 +11,7 @@
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="s" name="accountType" direction="in" tp:type="String">
             </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
             </arg>
         </method>
@@ -99,6 +100,7 @@
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="s" name="accountID" direction="in">
             </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
             <arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
             </arg>
         </method>
@@ -563,8 +565,8 @@
 
        <method name="getNearbyPeers" tp:name-for-bindings="getNearbyPeers">
            <arg type="s" name="accountID" direction="in"/>
-           <arg type="a{ss}" name="result" direction="out" tp:type="String_String_Map"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="result" direction="out" tp:type="String_String_Map"/>
              <tp:docstring>
                Get Discovered Peer Map
              </tp:docstring>
@@ -592,9 +594,10 @@
                Notify clients that a new text message has been received at the account level.
            </tp:docstring>
            <arg type="s" name="accountID"/>
+           <arg type="s" name="messageID"/>
            <arg type="s" name="from"/>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
-          <arg type="a{ss}" name="payloads"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In3" value="MapStringString"/>
+           <arg type="a{ss}" name="payloads"/>
        </signal>
 
        <signal name="accountMessageStatusChanged" tp:name-for-bindings="accountMessageStatusChanged">
