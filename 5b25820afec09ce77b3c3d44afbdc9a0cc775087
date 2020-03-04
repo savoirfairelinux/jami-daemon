@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "6c4ffa23_4671032c",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2027,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-04T19:48:25Z",
+      "side": 1,
+      "message": "oops my bad, was thinking only for SIP messages",
+      "parentUuid": "41d6bc35_d032ec2a",
+      "range": {
+        "startLine": 2027,
+        "startChar": 29,
+        "endLine": 2027,
+        "endChar": 52
+      },
+      "revId": "5b25820afec09ce77b3c3d44afbdc9a0cc775087",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "28cfcd59_55006359",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 1
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "579adde9_fa56fcd4",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2032,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-04T19:48:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "28cfcd59_55006359",
+      "range": {
+        "startLine": 2032,
+        "startChar": 16,
+        "endLine": 2032,
+        "endChar": 33
+      },
+      "revId": "5b25820afec09ce77b3c3d44afbdc9a0cc775087",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b533e445_9c207987",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 1
@@ -59,6 +107,30 @@
       "writtenOn": "2020-03-03T22:24:12Z",
       "side": 1,
       "message": "break",
+      "range": {
+        "startLine": 2041,
+        "startChar": 24,
+        "endLine": 2041,
+        "endChar": 31
+      },
+      "revId": "5b25820afec09ce77b3c3d44afbdc9a0cc775087",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "eb8f713e_882cafcb",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2041,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-04T19:48:25Z",
+      "side": 1,
+      "message": "return is ok. Message is treated, we don\u0027t want to re-read it",
+      "parentUuid": "b533e445_9c207987",
       "range": {
         "startLine": 2041,
         "startChar": 24,
@@ -94,6 +166,30 @@
     },
     {
       "key": {
+        "uuid": "5371b7f9_30217564",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2046,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-04T19:48:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "685cf7a1_a1e8cf31",
+      "range": {
+        "startLine": 2046,
+        "startChar": 12,
+        "endLine": 2046,
+        "endChar": 21
+      },
+      "revId": "5b25820afec09ce77b3c3d44afbdc9a0cc775087",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0fbe869c_1c5dd106",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 1
@@ -114,6 +210,30 @@
       "revId": "5b25820afec09ce77b3c3d44afbdc9a0cc775087",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8f14a67d_b98e37f1",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2786,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-04T19:48:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "0fbe869c_1c5dd106",
+      "range": {
+        "startLine": 2781,
+        "startChar": 0,
+        "endLine": 2786,
+        "endChar": 54
+      },
+      "revId": "5b25820afec09ce77b3c3d44afbdc9a0cc775087",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
