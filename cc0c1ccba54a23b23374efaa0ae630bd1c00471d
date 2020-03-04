@@ -45,6 +45,29 @@
       "revId": "cc0c1ccba54a23b23374efaa0ae630bd1c00471d",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1d64062e_f4e5019b",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 252,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-04T19:14:18Z",
+      "side": 1,
+      "message": "Even if we simply send\n\"Message-ID\",\nwe should also support receiving \n\"imdn.Message-ID\",\nas in this example https://tools.ietf.org/html/rfc5438#section-7.1.1.3",
+      "range": {
+        "startLine": 252,
+        "startChar": 0,
+        "endLine": 252,
+        "endChar": 96
+      },
+      "revId": "cc0c1ccba54a23b23374efaa0ae630bd1c00471d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
