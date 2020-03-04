@@ -33,7 +33,7 @@ public:
     virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
-    virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payload*/){}
+    virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*message_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payload*/){}
     virtual void accountMessageStatusChanged(const std::string& /*account_id*/, uint64_t /*message_id*/, const std::string& /*to*/, int /*state*/){}
     virtual void composingStatusChanged(const std::string& /*account_id*/, const std::string& /*from*/, int /*state*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}
@@ -242,7 +242,7 @@ public:
     virtual void accountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
     virtual void registrationStateChanged(const std::string& account_id, const std::string& state, int code, const std::string& detail_str){}
     virtual void volatileAccountDetailsChanged(const std::string& account_id, const std::map<std::string, std::string>& details){}
-    virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payload*/){}
+    virtual void incomingAccountMessage(const std::string& /*account_id*/, const std::string& /*message_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payload*/){}
     virtual void accountMessageStatusChanged(const std::string& /*account_id*/, uint64_t /*message_id*/, const std::string& /*to*/, int /*state*/){}
     virtual void composingStatusChanged(const std::string& /*account_id*/, const std::string& /*from*/, int /*state*/){}
     virtual void knownDevicesChanged(const std::string& /*account_id*/, const std::map<std::string, std::string>& /*devices*/){}

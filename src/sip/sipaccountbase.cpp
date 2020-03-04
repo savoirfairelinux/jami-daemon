@@ -454,7 +454,7 @@ SIPAccountBase::getIceOptions() const noexcept
 }
 
 void
-SIPAccountBase::onTextMessage(const std::string& from,
+SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
                               const std::map<std::string, std::string>& payloads)
 {
     JAMI_DBG("Text message received from %s, %zu part(s)", from.c_str(), payloads.size());
@@ -482,7 +482,7 @@ SIPAccountBase::onTextMessage(const std::string& from,
             }
         }
     }
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
+    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, payloads);
     DRing::Message message;
     message.from = from;
     message.payloads = payloads;

@@ -1992,7 +1992,7 @@ JamiAccount::doRegister_()
                     }
                     std::map<std::string, std::string> payloads = {{datatype,
                                                                    utf8_make_valid(v.msg)}};
-                    onTextMessage(peer_account.toString(), payloads);
+                    onTextMessage(std::to_string(v.id), peer_account.toString(), payloads);
                     JAMI_DBG() << "Sending message confirmation " << v.id;
                     dht_->putEncrypted(inboxDeviceKey,
                               v.from,
@@ -2019,12 +2019,12 @@ JamiAccount::doRegister_()
 }
 
 void
-JamiAccount::onTextMessage(const std::string& from,
+JamiAccount::onTextMessage(const std::string& id, const std::string& from,
                               const std::map<std::string, std::string>& payloads)
 {
     try {
         const std::string fromUri = parseJamiUri(from);
-        SIPAccountBase::onTextMessage(fromUri, payloads);
+        SIPAccountBase::onTextMessage(id, fromUri, payloads);
     } catch (...) {
     }
 }
