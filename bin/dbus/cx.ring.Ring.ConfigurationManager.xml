@@ -592,6 +592,7 @@
                Notify clients that a new text message has been received at the account level.
            </tp:docstring>
            <arg type="s" name="accountID"/>
+           <arg type="s" name="messageID"/>
            <arg type="s" name="from"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
           <arg type="a{ss}" name="payloads"/>

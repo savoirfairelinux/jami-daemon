@@ -279,7 +279,7 @@ public:
         return messageEngine_.cancel(id);
     }
 
-    virtual void onTextMessage(const std::string& from, const std::map<std::string, std::string>& payloads);
+    virtual void onTextMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& payloads);
 
     /* Returns true if the username and/or hostname match this account */
     virtual MatchRank matches(const std::string &username, const std::string &hostname) const = 0;
