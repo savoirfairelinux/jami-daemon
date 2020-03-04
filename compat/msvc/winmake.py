@@ -292,6 +292,8 @@ def apply_linux(patch_path):
 
 def apply_windows(patch_path):
     log.debug('applying windows patch ' + patch_path)
+    os.environ["GIT_CEILING_DIRECTORIES"] = patch_path
+    os.environ["GIT_WORK_TREE"] = patch_path
     args = []
     args.extend(git_apply_args)
     args.append(patch_path)
