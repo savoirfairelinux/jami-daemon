@@ -1000,7 +1000,7 @@ DhtPeerConnector::onDhtConnected(const std::string& device_id)
         [this](PeerConnectionMsg&& msg) {
             if (msg.from == pimpl_->account.dht()->getId())
                 return true;
-            if (!pimpl_->account.isMessageTreated(msg.id)) {
+            if (!pimpl_->account.isMessageTreated(to_hex_string(msg.id))) {
                 if (msg.isRequest()) {
                     // TODO: filter-out request from non trusted peer
                     pimpl_->ctrl << makeMsg<CtrlMsgType::DHT_REQUEST>(std::move(msg));
