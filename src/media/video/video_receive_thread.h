@@ -55,7 +55,9 @@ public:
     void startLoop(const std::function<void(MediaType)>& cb);
 
     void addIOContext(SocketPair& socketPair);
-    void setRequestKeyFrameCallback(std::function<void (void)>);
+    void setRequestKeyFrameCallback(std::function<void (void)> cb) {
+      keyFrameRequestCallback_ = std::move(cb);
+    };
     void enterConference();
     void exitConference();
 
@@ -106,6 +108,8 @@ private:
     bool setup();
     void process();
     void cleanup();
+
+    std::function<void(void)> keyFrameRequestCallback_;
 };
 
 }} // namespace jami::video

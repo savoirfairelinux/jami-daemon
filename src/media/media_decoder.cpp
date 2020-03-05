@@ -325,8 +325,11 @@ MediaDemuxer::decode()
     }
 
     auto& cb = streams_[streamIndex];
-    if (cb)
-        cb(*packet.get());
+    if (cb) {
+        DecodeStatus ret = cb(*packet.get());
+        if (ret == DecodeStatus::FallBack)
+            return Status::FallBack;
+    }
     return Status::Success;
 }
 
@@ -335,7 +338,7 @@ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int ind
    avStream_(demuxer->getStream(index))
 {
     demuxer->setStreamCallback(index, [this](AVPacket& packet) {
-        decode(packet);
+        return decode(packet);
     });
     setupStream();
 }
@@ -346,7 +349,7 @@ MediaDecoder::MediaDecoder(const std::shared_ptr<MediaDemuxer>& demuxer, int ind
   callback_(std::move(observer))
 {
     demuxer->setStreamCallback(index, [this](AVPacket& packet) {
-        decode(packet);
+        return decode(packet);
     });
     setupStream();
 }
@@ -407,7 +410,7 @@ int MediaDecoder::setup(AVMediaType type)
         return -1;
     avStream_ = demuxer_->getStream(stream);
     demuxer_->setStreamCallback(stream, [this](AVPacket& packet) {
-        decode(packet);
+        return decode(packet);
     });
     return setupStream();
 }
@@ -426,14 +429,14 @@ MediaDecoder::setupStream()
     // it has been disabled already by the video_receive_thread/video_input
     enableAccel_ &= Manager::instance().videoPreferences.getDecodingAccelerated();
 
-    if (enableAccel_) {
+    if (enableAccel_ and not fallback_) {
         auto APIs = video::HardwareAccel::getCompatibleAccel(decoderCtx_->codec_id,
                     decoderCtx_->width, decoderCtx_->height, CODEC_DECODER);
         for (const auto& it : APIs) {
             accel_ = std::make_unique<video::HardwareAccel>(it);    // save accel
             auto ret = accel_->initAPI(false, nullptr);
             if (ret < 0) {
-                accel_ = nullptr;
+                accel_.reset();
                 continue;
             }
             if(prepareDecoderContext() < 0)
@@ -508,13 +511,20 @@ MediaDecoder::updateStartTime(int64_t startTime) {
      startTime_ = startTime;
 }
 
-MediaDecoder::Status
+DecodeStatus
 MediaDecoder::decode(AVPacket& packet)
 {
     int frameFinished = 0;
     auto ret = avcodec_send_packet(decoderCtx_, &packet);
-    if (ret < 0 && ret != AVERROR(EAGAIN)) {
-        return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
+    if (accel_ && ret == AVERROR(EINVAL)) {
+        JAMI_WARN("Decoding error falling back to software");
+        fallback_ = true;
+        accel_.reset();
+        avcodec_flush_buffers(decoderCtx_);
+        setupStream();
+        return DecodeStatus::FallBack;
+    } else if (ret < 0 && ret != AVERROR(EAGAIN)) {
+        return ret == AVERROR_EOF ? DecodeStatus::Success : DecodeStatus::DecodeError;
     }
 
     auto f = (inputDecoder_->type == AVMEDIA_TYPE_VIDEO)
@@ -523,7 +533,7 @@ MediaDecoder::decode(AVPacket& packet)
     auto frame = f->pointer();
     ret = avcodec_receive_frame(decoderCtx_, frame);
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
-        return Status::DecodeError;
+        return DecodeStatus::DecodeError;
     }
     if (ret >= 0)
         frameFinished = 1;
@@ -544,7 +554,7 @@ MediaDecoder::decode(AVPacket& packet)
             auto target_relative = static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto target_absolute = startTime_ + target_relative;
             if (target_relative < seekTime_) {
-                return Status::Success;
+                return DecodeStatus::Success;
             }
             //required frame found. Reset seek time
             if (target_relative >= seekTime_) {
@@ -558,9 +568,9 @@ MediaDecoder::decode(AVPacket& packet)
 
         if (callback_)
             callback_(std::move(f));
-        return Status::FrameFinished;
+        return DecodeStatus::FrameFinished;
     }
-    return Status::Success;
+    return DecodeStatus::Success;
 }
 
 void
@@ -589,7 +599,7 @@ MediaDecoder::enableAccel(bool enableAccel)
 }
 #endif
 
-MediaDecoder::Status
+DecodeStatus
 MediaDecoder::flush()
 {
     AVPacket inpacket;
@@ -599,12 +609,12 @@ MediaDecoder::flush()
     int ret = 0;
     ret = avcodec_send_packet(decoderCtx_, &inpacket);
     if (ret < 0 && ret != AVERROR(EAGAIN))
-        return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
+        return ret == AVERROR_EOF ? DecodeStatus::Success : DecodeStatus::DecodeError;
 
     auto result = std::make_shared<MediaFrame>();
     ret = avcodec_receive_frame(decoderCtx_, result->pointer());
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return Status::DecodeError;
+        return DecodeStatus::DecodeError;
     if (ret >= 0)
         frameFinished = 1;
 
@@ -612,10 +622,10 @@ MediaDecoder::flush()
         av_packet_unref(&inpacket);
         if (callback_)
             callback_(std::move(result));
-        return Status::FrameFinished;
+        return DecodeStatus::FrameFinished;
     }
 
-    return Status::Success;
+    return DecodeStatus::Success;
 }
 #endif // ENABLE_VIDEO
 

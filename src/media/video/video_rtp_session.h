@@ -169,6 +169,8 @@ private:
     unsigned remb_dec_cnt_ {0};
 
     std::unique_ptr<CongestionControl> cc;
+
+    std::function<void(void)> cbKeyFrameRequest_;
 };
 
 }} // namespace jami::video
