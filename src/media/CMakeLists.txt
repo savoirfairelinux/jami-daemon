@@ -40,6 +40,8 @@ list (APPEND Source_Files__media
       "${CMAKE_CURRENT_SOURCE_DIR}/srtp.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/system_codec_container.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/system_codec_container.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/media_player.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/media_player.h"
 )
 
 set (Source_Files__media ${Source_Files__media} PARENT_SCOPE)
