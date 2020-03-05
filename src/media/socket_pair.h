@@ -168,7 +168,9 @@ class SocketPair {
         bool waitForRTCP(std::chrono::seconds interval);
         double getLastLatency();
 
-        void setPacketLossCallback(std::function<void (void)> cb);
+        void setPacketLossCallback(std::function<void(void)> cb) {
+            packetLossCallback_ = std::move(cb);
+        }
         void setRtpDelayCallback(std::function<void (int, int)> cb);
 
         int writeData(uint8_t* buf, int buf_size);
