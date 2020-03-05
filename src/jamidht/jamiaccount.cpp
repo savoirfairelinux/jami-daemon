@@ -1519,6 +1519,11 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     if (!tcp_finished) {
         JAMI_DBG("TCP not running, will use SIP over UDP");
         best_transport = pc.ice_sp;
+        // Move the ice destruction in its own thread to avoid
+        // slow operations on main thread
+        dht::ThreadPool::io().run([ice = std::move(pc.ice_tcp_sp)] { });
+    } else {
+        dht::ThreadPool::io().run([ice = std::move(pc.ice_sp)] { });
     }
 
     // Following can create a transport that need to be negotiated (TLS).
