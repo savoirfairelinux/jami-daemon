@@ -85,10 +85,7 @@ VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescriptio
 void
 VideoRtpSession::setRequestKeyFrameCallback(std::function<void(void)> cb)
 {
-    if (socketPair_)
-        socketPair_->setPacketLossCallback(std::move(cb));
-    else
-        JAMI_ERR("No socket pair, keyframe request callback not possible");
+    cbKeyFrameRequest_ = std::move(cb);
 }
 
 void VideoRtpSession::startSender()
@@ -144,6 +141,9 @@ void VideoRtpSession::startSender()
                                           send_, *socketPair_, initSeqVal_, mtu_));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
+            if (socketPair_)
+                socketPair_->setPacketLossCallback([this] (){
+                cbKeyFrameRequest_();});
 
         } catch (const MediaEncoderException &e) {
             JAMI_ERR("%s", e.what());
@@ -184,6 +184,9 @@ void VideoRtpSession::startReceiver()
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop(onSuccessfulSetup_);
+        if (receiveThread_)
+            receiveThread_->setRequestKeyFrameCallback([this] (){
+                cbKeyFrameRequest_();});
     } else {
         JAMI_DBG("Video receiving disabled");
         if (receiveThread_)

@@ -648,12 +648,6 @@ SocketPair::getLastLatency()
 }
 
 void
-SocketPair::setPacketLossCallback(std::function<void(void)> cb)
-{
-    packetLossCallback_ = std::move(cb);
-}
-
-void
 SocketPair::setRtpDelayCallback(std::function<void(int, int)> cb)
 {
     rtpDelayCallback_ = std::move(cb);
