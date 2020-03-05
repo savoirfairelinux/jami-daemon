@@ -192,6 +192,10 @@ void VideoReceiveThread::decodeFrame()
         status == MediaDemuxer::Status::ReadError) {
         loop_.stop();
     }
+    if (status == MediaDemuxer::Status::FallBack) {
+        if (keyFrameRequestCallback_)
+            keyFrameRequestCallback_();
+    }
 }
 
 void VideoReceiveThread::enterConference()
