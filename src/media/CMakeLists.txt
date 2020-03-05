@@ -28,6 +28,8 @@ list (APPEND Source_Files__media
       "${CMAKE_CURRENT_SOURCE_DIR}/media_filter.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/media_io_handle.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/media_io_handle.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/media_player.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/media_player.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/media_recorder.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/media_recorder.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/media_stream.h"
