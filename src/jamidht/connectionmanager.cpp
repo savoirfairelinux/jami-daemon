@@ -444,7 +444,7 @@ ConnectionManager::Impl::onDhtConnected(const std::string& deviceId)
                         if (!shared) return;
                         dht::InfoHash peer_h;
                         if (AccountManager::foundPeerDevice(cert, peer_h)) {
-                            runOnMainThread([w, req, cert] {
+                            dht::ThreadPool::io().run([w, req, cert] {
                                 auto shared = w.lock();
                                 if (!shared) return;
                                 shared->onDhtPeerRequest(req, cert);
@@ -631,7 +631,6 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
                 }
             }
         }
-        // TODO run on Main thread
         dht::ThreadPool::io().run([w, deviceId, vid] {
             auto sthis = w.lock();
             if (!sthis) return;
