@@ -3181,10 +3181,12 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const std::string& 
     JAMI_INFO("Ask %s for a new SIP channel", deviceId.c_str());
     if (!connectionManager_) return;
     connectionManager_->connectDevice(deviceId, "sip",
-        [w=weak(), id](std::shared_ptr<ChannelSocket> socket) {
+        [w=weak(), id](std::shared_ptr<ChannelSocket>) {
         auto shared = w.lock();
         if (!shared) return;
-        if (socket) shared->cacheSIPConnection(std::move(socket), id.first, id.second);
+        // NOTE: No need to cache Connection there. OnConnectionReady
+        // is called before this callback, so the socket is already
+        // cached if succeed. We just need to remove the pending request.
         std::lock_guard<std::mutex> lk(shared->sipConnectionsMtx_);
         shared->pendingSipConnections_.erase(id);
     });
@@ -3194,6 +3196,16 @@ void
 JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const std::string& peerId, const std::string& deviceId)
 {
     std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+    // Verify that the connection is not already cached
+    auto& connections = sipConnections_[peerId][deviceId];
+    auto conn = std::find_if(connections.begin(), connections.end(), [socket](auto v) {
+        return v.channel == socket;
+    });
+    if (conn != connections.end()) {
+        JAMI_WARN("Channel socket already cached with this peer");
+        return;
+    }
+
     // Convert to SIP transport
     sip_utils::register_thread();
     auto onShutdown = [w=weak(), peerId, deviceId, socket]() {
@@ -3201,11 +3213,12 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const s
         if (!shared) return;
         std::lock_guard<std::mutex> lk(shared->sipConnectionsMtx_);
         auto& connections = shared->sipConnections_[peerId][deviceId];
-        auto conn = std::find_if(connections.begin(), connections.end(), [socket](auto v) {
-            return v.channel == socket;
-        });
-        if (conn != connections.end()) {
-            connections.erase(conn);
+        auto conn = connections.begin();
+        while (conn != connections.end()) {
+            if (conn->channel == socket)
+                conn = connections.erase(conn);
+            else
+                conn++;
         }
     };
     auto sip_tr = link_->sipTransportBroker->getChanneledTransport(socket, std::move(onShutdown));
