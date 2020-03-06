@@ -753,6 +753,8 @@ void
 SIPCall::onFailure(signed cause)
 {
     if (setState(CallState::MERROR, ConnectionState::DISCONNECTED, cause)) {
+        inv.reset(); // Reset the invite here as it must not be used on
+        // a non existing link and runOnMainThread can take time to be called
         runOnMainThread([w = weak()] {
             if (auto shared = w.lock()) {
                 auto& call = *shared;
