@@ -78,6 +78,8 @@ private:
     void emitInfo();
     void flushMediaBuffers();
 
+    bool streamsFinished();
+
 };
 } // namespace jami
 
