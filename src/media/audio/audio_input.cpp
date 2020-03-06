@@ -195,17 +195,13 @@ AudioInput::configureFilePlayback(const std::string& path, std::shared_ptr<Media
     decoder->emulateRate();
 
     fileBuf_ = Manager::instance().getRingBufferPool().createRingBuffer(id_);
-    Manager::instance()
-    .getRingBufferPool()
-    .bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
     playingFile_ = true;
     decoder_ = std::move(decoder);
 }
 
 void
 AudioInput::setPaused(bool paused) {
-    paused_ = paused;
-    if (paused_) {
+    if (paused) {
         Manager::instance()
         .getRingBufferPool()
         .unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
@@ -214,6 +210,7 @@ AudioInput::setPaused(bool paused) {
         .getRingBufferPool()
         .bindHalfDuplexOut(RingBufferPool::DEFAULT_ID, id_);
     }
+    paused_ = paused;
 }
 
 void
