@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d6fd035d_1294be94",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 465,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-06T19:38:04Z",
+      "side": 1,
+      "message": "why here ? not a single pjsip method is called here",
+      "range": {
+        "startLine": 465,
+        "startChar": 4,
+        "endLine": 465,
+        "endChar": 33
+      },
+      "revId": "0c202d5a8f13bd7c5a3923d02a71108f2afbdfb6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
