@@ -540,7 +540,8 @@ MediaDecoder::decode(AVPacket& packet)
             static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
         lastTimestamp_ = frame->pts;
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
-            auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
+            auto startTime = avStream_->start_time == AV_NOPTS_VALUE ? 0 : avStream_->start_time;
+            rational<double> frame_time = rational<double>(getTimeBase())*(packetTimestamp - startTime);
             auto target_relative = static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto target_absolute = startTime_ + target_relative;
             if (target_relative < seekTime_) {
