@@ -462,6 +462,7 @@ ConnectionManager::Impl::onDhtConnected(const std::string& deviceId)
 void
 ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, const std::shared_ptr<dht::crypto::Certificate>& cert)
 {
+    sip_utils::register_thread();
     auto vid = req.id;
     auto deviceId = req.from.toString();
     JAMI_INFO() << account << "New connection requested by " << deviceId.c_str();
