@@ -129,8 +129,8 @@ MediaPlayer::process()
 {
     if (!demuxer_)
         return;
-    if (videoStreamEnded_ && videoStreamEnded_) {
-        videoStreamEnded_ = false;
+    if (streamsFinished()) {
+        audioStreamEnded_ = false;
         videoStreamEnded_ = false;
         playFileFromBeginning();
     }
@@ -280,6 +280,14 @@ bool
 MediaPlayer::isPaused() const
 {
     return paused_;
+}
+
+bool
+MediaPlayer::streamsFinished()
+{
+    bool audioFinished = hasAudio() ? audioStreamEnded_ : true;
+    bool videoFinished = hasVideo() ? videoStreamEnded_ : true;
+    return audioFinished && videoFinished;
 }
 
 }// namespace jami
