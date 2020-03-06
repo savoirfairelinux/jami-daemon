@@ -284,6 +284,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     , initiatorSession_(master)
     , thread_()
 {
+    sip_utils::register_thread();
     if (options.upnpEnable)
         upnp_.reset(new upnp::Controller(false));
 
@@ -312,7 +313,6 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     add_stun_server(config_, pj_AF_INET6());
     add_stun_server(config_, pj_AF_INET());
 
-    sip_utils::register_thread();
     pool_.reset(pj_pool_create(iceTransportFactory.getPoolFactory(),
                                "IceTransport.pool", 512, 512, NULL));
     if (not pool_)
