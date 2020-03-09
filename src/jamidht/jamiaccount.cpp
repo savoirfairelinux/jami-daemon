@@ -489,11 +489,18 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             continue;
         }
         if (!transport) continue;
-        call->setTransport(transport);
 
-        auto remote_addr = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
-        onConnectedOutgoingCall(*call, toUri, remote_addr);
+        auto& manager = Manager::instance();
+        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
+                                                                          Call::CallType::OUTGOING,
+                                                                          call->getDetails());
+        dev_call->setIPToIP(true);
+        dev_call->setSecure(isTlsEnabled());
+        dev_call->setTransport(transport);
+        call->addSubCall(*dev_call);
 
+        auto remoted_address = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
+        onConnectedOutgoingCall(*dev_call, toUri, remoted_address);
         devices.emplace(deviceConnIt->first);
     }
 
@@ -632,6 +639,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             }
         }
     });
+
 }
 
 void
@@ -734,6 +742,10 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 
     pjsip_tpselector tp_sel;
     tp_sel.type = PJSIP_TPSELECTOR_TRANSPORT;
+    if (!call.getTransport()) {
+        JAMI_ERR("Could not get transport for this call");
+        return false;
+    }
     tp_sel.u.transport = call.getTransport()->get();
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         JAMI_ERR("Unable to associate transport for invite session dialog");
