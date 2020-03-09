@@ -479,6 +479,11 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // Call connected devices
     std::set<std::string> devices;
     std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+    struct PendingCachedCall {
+        IpAddr remoteAddr;
+        std::shared_ptr<SIPCall> call;
+    };
+    std::vector<PendingCachedCall> cachedCalls;
     for (auto deviceConnIt = sipConnections_[toUri].begin(); deviceConnIt != sipConnections_[toUri].end(); ++deviceConnIt) {
         if (deviceConnIt->second.empty()) continue;
         auto& it = deviceConnIt->second.back();
@@ -489,11 +494,20 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             continue;
         }
         if (!transport) continue;
-        call->setTransport(transport);
 
-        auto remote_addr = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
-        onConnectedOutgoingCall(*call, toUri, remote_addr);
+        auto& manager = Manager::instance();
+        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
+                                                                          Call::CallType::OUTGOING,
+                                                                          call->getDetails());
+        dev_call->setIPToIP(true);
+        dev_call->setSecure(isTlsEnabled());
+        dev_call->setTransport(transport);
+        call->addSubCall(*dev_call);
 
+        cachedCalls.emplace_back(PendingCachedCall {
+            it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT),
+            dev_call
+        });
         devices.emplace(deviceConnIt->first);
     }
 
@@ -624,14 +638,21 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             sthis->checkPendingCallsTask();
             return false;
         });
-    }, [wCall](bool ok){
+    }, [w=weak(), wCall, cachedCalls=std::move(cachedCalls), toUri](bool ok){
         if (not ok) {
             if (auto call = wCall.lock()) {
                 JAMI_WARN("[call:%s] no devices found", call->getCallId().c_str());
                 call->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
             }
+        } else if (auto shared = w.lock()) {
+            for (const auto& cached: cachedCalls) {
+                // Need to be called after every subcall is added
+                // Else, addSubCall will remove the following subcalls
+                shared->onConnectedOutgoingCall(*cached.call, toUri, cached.remoteAddr);
+            }
         }
     });
+
 }
 
 void
@@ -734,6 +755,10 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
 
     pjsip_tpselector tp_sel;
     tp_sel.type = PJSIP_TPSELECTOR_TRANSPORT;
+    if (!call.getTransport()) {
+        JAMI_ERR("Could not get transport for this call");
+        return false;
+    }
     tp_sel.u.transport = call.getTransport()->get();
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         JAMI_ERR("Unable to associate transport for invite session dialog");
@@ -1730,9 +1755,9 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
             isConnected = buddy->second.devices_cnt > 0;
         }
         if (not expired) {
+            requestSIPConnection(h.toString(), dev.dev.toString());
             // Retry messages every time a new device announce its presence
             messageEngine_.onPeerOnline(h.toString());
-            requestSIPConnection(h.toString(), dev.dev.toString());
         }
         if (isConnected and not wasConnected) {
             onTrackedBuddyOnline(h);
