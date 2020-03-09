@@ -200,8 +200,6 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
         }
 
         // Avoid dht operation in a DHT callback to avoid deadlocks
-        // TODO use runOnMainThread instead but first, this needs to make the
-        // TLSSession and ICETransport async.
         dht::ThreadPool::io().run([w, deviceId, name, cert, cb=std::move(cb)] {
             auto sthis = w.lock();
             if (!sthis || sthis->isDestroying_) {

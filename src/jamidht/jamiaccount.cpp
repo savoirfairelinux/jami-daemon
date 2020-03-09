@@ -480,6 +480,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     std::set<std::string> devices;
     std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
     for (auto deviceConnIt = sipConnections_[toUri].begin(); deviceConnIt != sipConnections_[toUri].end(); ++deviceConnIt) {
+        JAMI_ERR("@@@ X %s", deviceConnIt->first.c_str());
         if (deviceConnIt->second.empty()) continue;
         auto& it = deviceConnIt->second.back();
 
@@ -489,10 +490,21 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             continue;
         }
         if (!transport) continue;
-        call->setTransport(transport);
+
+        JAMI_ERR("@@@ X %s", deviceConnIt->first.c_str());
+
+        auto& manager = Manager::instance();
+        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
+                                                                          Call::CallType::OUTGOING,
+                                                                          call->getDetails());
+        dev_call->setIPToIP(true);
+        dev_call->setSecure(isTlsEnabled());
+        dev_call->setTransport(transport);
+
+        call->addSubCall(*dev_call);
 
         auto remote_addr = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
-        onConnectedOutgoingCall(*call, toUri, remote_addr);
+        onConnectedOutgoingCall(*dev_call, toUri, remote_addr);
 
         devices.emplace(deviceConnIt->first);
     }
@@ -1730,9 +1742,9 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
             isConnected = buddy->second.devices_cnt > 0;
         }
         if (not expired) {
+            requestSIPConnection(h.toString(), dev.dev.toString());
             // Retry messages every time a new device announce its presence
             messageEngine_.onPeerOnline(h.toString());
-            requestSIPConnection(h.toString(), dev.dev.toString());
         }
         if (isConnected and not wasConnected) {
             onTrackedBuddyOnline(h);
@@ -2701,6 +2713,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     for (auto deviceConnIt = sipConnections_[to].begin(); deviceConnIt != sipConnections_[to].end(); ++deviceConnIt) {
         if (deviceConnIt->second.empty()) continue;
         auto& it = deviceConnIt->second.back();
+        JAMI_WARN("@@@ SEND TO %s", deviceConnIt->first.c_str());
 
         auto transport = it.transport;
         auto channel = it.channel;
@@ -2786,6 +2799,8 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             ctx->confirmation = confirm;
 
             sip_utils::register_thread();
+
+            JAMI_WARN("@@@ SEND TO %s", deviceId.c_str());
 
             auto status = pjsip_endpt_send_request(shared->link_->getEndpoint(), tdata, -1, ctx.release(),
                 [](void *token, pjsip_event *event)
