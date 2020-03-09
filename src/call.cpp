@@ -392,10 +392,10 @@ Call::addSubCall(Call& subcall)
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
 
-    // XXX: following check seems wobbly - need comment
-    if (connectionState_ == ConnectionState::CONNECTED
-        || callState_ == CallState::ACTIVE
-        || callState_ == CallState::OVER) {
+    // Add subCall only if call is not connected or terminated
+    // Because we only want to addSubCall if the peer didn't answer
+    // So till it's <= RINGING
+    if (connectionState_ == ConnectionState::CONNECTED) {
         subcall.removeCall();
         return;
     }
