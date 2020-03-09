@@ -838,12 +838,16 @@ Manager::finish() noexcept
             pimpl_->audiodriver_.reset();
         }
 
-        pimpl_->ice_tf_.reset();
 
         // Flush remaining tasks (free lambda' with capture)
         pimpl_->scheduler_.stop();
         dht::ThreadPool::io().join();
         dht::ThreadPool::computation().join();
+
+        // IceTransportFactory should be stopped after the io pool
+        // as some ICE are destroyed in a ioPool (see ConnectionManager)
+        // Also, it must be called before pj_shutdown to avoid any problem
+        pimpl_->ice_tf_.reset();
 
         pj_shutdown();
 
