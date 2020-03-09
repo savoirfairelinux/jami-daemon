@@ -510,6 +510,10 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     {
         // Test if already sent via a SIP transport
         if (devices.find(dev.toString()) != devices.end()) return;
+
+        // Else, ask for a channel (for future calls/text messages) and send a DHT message
+        requestSIPConnection(toUri, dev.toString());
+
         auto call = wCall.lock();
         if (not call) return;
         JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
@@ -1744,7 +1748,6 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
         if (not expired) {
             // Retry messages every time a new device announce its presence
             messageEngine_.onPeerOnline(h.toString());
-            requestSIPConnection(h.toString(), dev.dev.toString());
         }
         if (isConnected and not wasConnected) {
             onTrackedBuddyOnline(h);
