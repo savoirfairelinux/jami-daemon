@@ -199,9 +199,9 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
             return;
         }
 
+        JAMI_ERR("@@@ CONNECT TO %s", deviceId.c_str());
+
         // Avoid dht operation in a DHT callback to avoid deadlocks
-        // TODO use runOnMainThread instead but first, this needs to make the
-        // TLSSession and ICETransport async.
         dht::ThreadPool::io().run([w, deviceId, name, cert, cb=std::move(cb)] {
             auto sthis = w.lock();
             if (!sthis || sthis->isDestroying_) {
@@ -221,6 +221,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                 }
             }
 
+            JAMI_ERR("@@@ CONNECT TO 2 %s", deviceId.c_str());
             {
                 // Test if a socket already exists for this device
                 std::lock_guard<std::mutex> lk(sthis->msocketsMutex_);
@@ -294,6 +295,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                 return;
             }
 
+            JAMI_ERR("@@@ CONNECT TO 3 %s", deviceId.c_str());
             auto& response = connectionInfo.response_;
             if (!ice) return;
             auto sdp = IceTransport::parse_SDP(response.ice_msg, *ice);
@@ -314,6 +316,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
 
             ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
 
+            JAMI_ERR("@@@ CONNECT TO 4 %s", deviceId.c_str());
             if (!ice->isRunning()) {
                 JAMI_ERR("[Account:%s] ICE negotation failed", sthis->account.getAccountID().c_str());
                 ice.reset();
@@ -336,6 +339,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                 std::move(endpoint), sthis->account.identity(), sthis->account.dhParams(),
                 *cert);
 
+            JAMI_ERR("@@@ CONNECT TO 5 %s", deviceId.c_str());
             auto& nonReadyIt = sthis->nonReadySockets_[deviceId][vid];
             nonReadyIt = std::move(tlsSocket);
             nonReadyIt->setOnReady([w, deviceId=std::move(deviceId), vid=std::move(vid), name=std::move(name)] (bool ok) {
@@ -359,6 +363,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                     std::lock_guard<std::mutex> lknrs(sthis->nonReadySocketsMutex_);
                     auto nonReadyIt = sthis->nonReadySockets_.find(deviceId);
                     if (nonReadyIt != sthis->nonReadySockets_.end()) {
+                    JAMI_ERR("@@@ CONNECT TO 6 %s", deviceId.c_str());
                         sthis->addNewMultiplexedSocket(deviceId, vid, std::move(nonReadyIt->second[vid]));
                         nonReadyIt->second.erase(vid);
                         if (nonReadyIt->second.empty()) {
@@ -427,6 +432,7 @@ ConnectionManager::Impl::onDhtConnected(const std::string& deviceId)
     account.dht()->listen<PeerConnectionRequest>(
         dht::InfoHash::get(PeerConnectionRequest::key_prefix + deviceId),
         [w=weak()](PeerConnectionRequest&& req) {
+            JAMI_ERR("@@@ %s", req.from.toString().c_str());
             auto shared = w.lock();
             if (!shared) return false;
             if (shared->account.isMessageTreated(to_hex_string(req.id))) {
@@ -436,8 +442,20 @@ ConnectionManager::Impl::onDhtConnected(const std::string& deviceId)
             if (req.isAnswer) {
                 shared->onPeerResponse(req);
             } else {
+                auto cert = tls::CertificateStore::instance().getCertificate(req.from.toString());
+                if (!cert || !cert->issuer) {
+                    JAMI_WARN() << shared->account << "Rejected untrusted connection request from " << req.from;
+                    return true;
+                }
+
+                dht::ThreadPool::io().run([w, req, cert] {
+                    auto shared = w.lock();
+                    if (!shared) return;
+                    shared->onDhtPeerRequest(req, cert);
+                });
+
                 // Async certificate checking
-                shared->account.findCertificate(
+                /*shared->account.findCertificate(
                     req.from,
                     [w, req=std::move(req)] (const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
                         auto shared = w.lock();
@@ -453,7 +471,7 @@ ConnectionManager::Impl::onDhtConnected(const std::string& deviceId)
                             JAMI_WARN() << shared->account << "Rejected untrusted connection request from "
                                         << req.from;
                         }
-                });
+                });*/
             }
             return true;
         }, dht::Value::UserTypeFilter("peer_request"));
