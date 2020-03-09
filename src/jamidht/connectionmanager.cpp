@@ -200,8 +200,6 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
         }
 
         // Avoid dht operation in a DHT callback to avoid deadlocks
-        // TODO use runOnMainThread instead but first, this needs to make the
-        // TLSSession and ICETransport async.
         dht::ThreadPool::io().run([w, deviceId, name, cert, cb=std::move(cb)] {
             auto sthis = w.lock();
             if (!sthis || sthis->isDestroying_) {
@@ -427,6 +425,7 @@ ConnectionManager::Impl::onDhtConnected(const std::string& deviceId)
     account.dht()->listen<PeerConnectionRequest>(
         dht::InfoHash::get(PeerConnectionRequest::key_prefix + deviceId),
         [w=weak()](PeerConnectionRequest&& req) {
+            JAMI_ERR("@@@ %s", req.from.toString().c_str());
             auto shared = w.lock();
             if (!shared) return false;
             if (shared->account.isMessageTreated(to_hex_string(req.id))) {
@@ -436,8 +435,20 @@ ConnectionManager::Impl::onDhtConnected(const std::string& deviceId)
             if (req.isAnswer) {
                 shared->onPeerResponse(req);
             } else {
+                auto cert = tls::CertificateStore::instance().getCertificate(req.from.toString());
+                if (!cert || !cert->issuer) {
+                    JAMI_WARN() << shared->account << "Rejected untrusted connection request from " << req.from;
+                    return true;
+                }
+
+                dht::ThreadPool::io().run([w, req, cert] {
+                    auto shared = w.lock();
+                    if (!shared) return;
+                    shared->onDhtPeerRequest(req, cert);
+                });
+
                 // Async certificate checking
-                shared->account.findCertificate(
+                /*shared->account.findCertificate(
                     req.from,
                     [w, req=std::move(req)] (const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
                         auto shared = w.lock();
@@ -453,7 +464,7 @@ ConnectionManager::Impl::onDhtConnected(const std::string& deviceId)
                             JAMI_WARN() << shared->account << "Rejected untrusted connection request from "
                                         << req.from;
                         }
-                });
+                });*/
             }
             return true;
         }, dht::Value::UserTypeFilter("peer_request"));
