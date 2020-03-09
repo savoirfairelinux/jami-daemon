@@ -635,6 +635,33 @@
            </arg>
        </method>
 
+       <method name="setMessageDisplayed" tp:name-for-bindings="setMessageDisplayed">
+           <tp:added version="8.1.0"/>
+           <tp:docstring>
+             <p>Informs that a message have been read</p>
+           </tp:docstring>
+           <arg type="s" name="accountId" direction="in">
+             <tp:docstring>
+               The account ID
+             </tp:docstring>
+           </arg>
+           <arg type="s" name="contactId" direction="in">
+             <tp:docstring>
+               The contact ID
+             </tp:docstring>
+           </arg>
+           <arg type="s" name="messageId" direction="in">
+             <tp:docstring>
+               The message ID
+             </tp:docstring>
+           </arg>
+           <arg type="i" name="status" direction="in">
+             <tp:docstring>
+               The message status, 4 for displayed
+             </tp:docstring>
+           </arg>
+       </method>
+
        <signal name="composingStatusChanged" tp:name-for-bindings="composingStatusChanged">
            <tp:added version="7.9.0"/>
            <tp:docstring>

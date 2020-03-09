@@ -89,6 +89,7 @@ class DRING_PUBLIC DBusConfigurationManager :
         int getMessageStatus(const std::string& accountID, const uint64_t& id);
         bool cancelMessage(const std::string& accountID, const uint64_t& messageId);
         void setIsComposing(const std::string& accountID, const std::string& to, const bool& isWriting);
+        bool setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, int status);
         std::map<std::string, std::string> getTlsDefaultSettings();
         std::vector<std::string> getSupportedCiphers(const std::string& accountID);
         std::vector<unsigned> getCodecList();

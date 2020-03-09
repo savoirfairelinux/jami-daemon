@@ -39,7 +39,7 @@ enum class MessageStatus {
     IDLE,
     SENDING,
     SENT,
-    READ,
+    DISPLAYED,
     FAILURE,
     CANCELLED
 };
@@ -61,6 +61,8 @@ public:
     }
 
     void onMessageSent(const std::string& peer, MessageToken t, bool success);
+    void onMessageDisplayed(const std::string& peer, MessageToken t, bool displayed);
+
     /**
      * @TODO change MessageEngine by a queue,
      * @NOTE retryOnTimeout is used for failing SIP messages (jamiAccount::sendTextMessage)

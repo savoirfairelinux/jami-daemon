@@ -302,7 +302,15 @@ void
 setIsComposing(const std::string& accountID, const std::string& to, bool isWriting)
 {
     if (const auto acc = jami::Manager::instance().getAccount(accountID))
-        return acc->setIsComposing(to, isWriting);
+        acc->setIsComposing(to, isWriting);
+}
+
+bool
+setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, int status)
+{
+    if (const auto acc = jami::Manager::instance().getAccount(accountID))
+        return acc->setMessageDisplayed(contactId, messageId, status);
+    return false;
 }
 
 bool
