@@ -198,6 +198,12 @@ DBusConfigurationManager::setIsComposing(const std::string& accountID, const std
     DRing::setIsComposing(accountID, to, isWriting);
 }
 
+bool
+DBusConfigurationManager::setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, const int32_t& status)
+{
+    return DRing::setMessageDisplayed(accountID, contactId, messageId, status);
+}
+
 auto
 DBusConfigurationManager::getTlsDefaultSettings() -> decltype(DRing::getTlsDefaultSettings())
 {

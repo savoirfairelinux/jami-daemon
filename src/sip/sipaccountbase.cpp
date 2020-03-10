@@ -50,6 +50,7 @@
 
 namespace jami {
 
+static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
 static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
 
@@ -114,6 +115,20 @@ getIsComposing(bool isWriting)
     std::ostringstream ss;
     ss << "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" << std::endl
        << "<isComposing><state>" << (isWriting ? "active" : "idle") << "</state></isComposing>";
+    return  ss.str();
+}
+
+std::string
+getDisplayed(const std::string& messageId)
+{
+    // implementing https://tools.ietf.org/rfc/rfc5438.txt
+    std::ostringstream ss;
+    ss << "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" << std::endl
+       << "<imdn>" << std::endl
+       << "<message-id>" << messageId << "</message-id>" << std::endl
+       << "<display-notification><status><displayed/></status></display-notification>" << std::endl
+       << "</imdn>";
+
     return  ss.str();
 }
 
@@ -480,6 +495,33 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
             } catch (const std::exception& e) {
                 JAMI_WARN("Error parsing composing state: %s", e.what());
             }
+        } else if (m.first == MIME_TYPE_IMDN) {
+            try {
+                static const std::regex IMDN_MSG_ID_REGEX("<message-id>\\s*(\\w+)\\s*<\\/message-id>");
+                static const std::regex IMDN_STATUS_REGEX("<status>\\s*<(\\w+)\\/>\\s*<\\/status>");
+                std::smatch matched_pattern;
+
+                std::regex_search(m.second, matched_pattern, IMDN_MSG_ID_REGEX);
+                std::string messageId;
+                if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                    messageId = matched_pattern[1];
+                } else {
+                    continue;
+                }
+
+                std::regex_search(m.second, matched_pattern, IMDN_STATUS_REGEX);
+                bool isDisplayed {false};
+                if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                    isDisplayed = matched_pattern[1] == "active";
+                } else {
+                    continue;
+                }
+                messageEngine_.onMessageDisplayed(from, from_hex_string(messageId), isDisplayed);
+                if (payloads.size() == 1)
+                    return;
+            } catch (const std::exception& e) {
+                JAMI_WARN("Error parsing display notification: %s", e.what());
+            }
         }
     }
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, payloads);
@@ -492,6 +534,15 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
     while (lastMessages_.size() > MAX_WAITING_MESSAGES_SIZE) {
         lastMessages_.pop_front();
     }
+}
+
+bool
+SIPAccountBase::setMessageDisplayed(const std::string& contactId, const std::string& messageId, int status)
+{
+    JAMI_WARN("[Account %s] setMessageDisplayed %s %s %d", getAccountID().c_str(), contactId.c_str(), messageId.c_str(), status);
+    if (status == (int)im::MessageStatus::DISPLAYED)
+        sendTextMessage(contactId, {{MIME_TYPE_IMDN, getDisplayed(messageId)}});
+    return true;
 }
 
 void
