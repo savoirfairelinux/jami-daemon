@@ -2938,8 +2938,8 @@ statusFromImStatus(im::MessageStatus status) {
         return static_cast<int>(DRing::Account::MessageStates::SENDING);
     case im::MessageStatus::SENT:
         return static_cast<int>(DRing::Account::MessageStates::SENT);
-    case im::MessageStatus::READ:
-        return static_cast<int>(DRing::Account::MessageStates::READ);
+    case im::MessageStatus::DISPLAYED:
+        return static_cast<int>(DRing::Account::MessageStates::DISPLAYED);
     case im::MessageStatus::FAILURE:
         return static_cast<int>(DRing::Account::MessageStates::FAILURE);
     default:

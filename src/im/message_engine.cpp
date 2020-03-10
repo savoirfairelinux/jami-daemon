@@ -174,6 +174,18 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
 }
 
 void
+MessageEngine::onMessageDisplayed(const std::string& peer, MessageToken token, bool displayed)
+{
+    if (not displayed)
+        return;
+    JAMI_DBG() << "[message " << token << "] Displayed by peer";
+    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
+                                                                    token,
+                                                                    peer,
+                                                                    static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
+}
+
+void
 MessageEngine::load()
 {
     try {

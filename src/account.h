@@ -160,6 +160,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         virtual void onIsComposing(const std::string& /*peer*/, bool /*isWriting*/);
 
+        virtual bool setMessageDisplayed(const std::string& /*contactId*/, const std::string& /*messageId*/, int /*status*/) { return false; };
+
         virtual std::vector<DRing::Message> getLastMessages(const uint64_t& /*base_timestamp*/) {
             return {};
         }
