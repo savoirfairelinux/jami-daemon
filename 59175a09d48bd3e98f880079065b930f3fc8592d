@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "aa51a719_1f5ceeca",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 3,
+      "author": {
+        "id": 684
+      },
+      "writtenOn": "2020-03-10T19:03:39Z",
+      "side": 1,
+      "message": "done.",
+      "parentUuid": "1ea6c77f_c4c95bfa",
+      "range": {
+        "startLine": 2,
+        "startChar": 0,
+        "endLine": 3,
+        "endChar": 87
+      },
+      "revId": "59175a09d48bd3e98f880079065b930f3fc8592d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "a6101a23_6383eca2",
         "filename": "contrib/src/pjproject/rules.mak",
         "patchSetId": 2
@@ -36,6 +60,30 @@
       "writtenOn": "2020-02-28T18:36:28Z",
       "side": 1,
       "message": "0010",
+      "range": {
+        "startLine": 57,
+        "startChar": 27,
+        "endLine": 57,
+        "endChar": 31
+      },
+      "revId": "59175a09d48bd3e98f880079065b930f3fc8592d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "893f4778_4b976160",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 684
+      },
+      "writtenOn": "2020-03-10T19:03:39Z",
+      "side": 1,
+      "message": "the thing is that locally i\u0027m keeping android is on it\u0027s own branch, so is windows btw. i rather keep it that way so we can add to them in the future if we want. bringing it on top of common patches would make the maintenance more cumbersome, i think.",
+      "parentUuid": "a6101a23_6383eca2",
       "range": {
         "startLine": 57,
         "startChar": 27,

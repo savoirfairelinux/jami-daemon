@@ -22,6 +22,30 @@
       "revId": "20b1f1f920fb8613dae8a209eac40916a7243f0f",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f1f2cd21_376872c9",
+        "filename": "contrib/src/pjproject/rules.mak",
+        "patchSetId": 2
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 684
+      },
+      "writtenOn": "2020-03-10T19:03:39Z",
+      "side": 0,
+      "message": "--disable-sound was by mistake, oss is deprecated.",
+      "parentUuid": "3df5812e_efdce459",
+      "range": {
+        "startLine": 5,
+        "startChar": 20,
+        "endLine": 6,
+        "endChar": 39
+      },
+      "revId": "20b1f1f920fb8613dae8a209eac40916a7243f0f",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }

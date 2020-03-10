@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "a99b60e5_a1c672ee",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 31
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 684
+      },
+      "writtenOn": "2020-03-10T19:03:39Z",
+      "side": 1,
+      "message": "- added missing PJ_ICE_ST_MAX_CAND\n- all moved to add-config-site",
+      "parentUuid": "e7d3b059_d4e25a47",
+      "range": {
+        "startLine": 34,
+        "startChar": 29,
+        "endLine": 36,
+        "endChar": 20
+      },
+      "revId": "8f5bcf1f8009cf75113b21f966b9c3b469508ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "8e6ac5bc_d0522908",
         "filename": "contrib/src/pjproject/0001-rfc6544.patch",
         "patchSetId": 31
@@ -36,6 +60,30 @@
       "writtenOn": "2020-03-10T17:01:43Z",
       "side": 1,
       "message": "missing break",
+      "range": {
+        "startLine": 1040,
+        "startChar": 19,
+        "endLine": 1044,
+        "endChar": 17
+      },
+      "revId": "8f5bcf1f8009cf75113b21f966b9c3b469508ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "20b4b5f9_89e8bfdc",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 31
+      },
+      "lineNbr": 1044,
+      "author": {
+        "id": 684
+      },
+      "writtenOn": "2020-03-10T19:03:39Z",
+      "side": 1,
+      "message": "fixed; thanks.",
+      "parentUuid": "8e6ac5bc_d0522908",
       "range": {
         "startLine": 1040,
         "startChar": 19,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "990a5fbe_15f2767b",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 31
+      },
+      "lineNbr": 2264,
+      "author": {
+        "id": 684
+      },
+      "writtenOn": "2020-03-10T19:03:39Z",
+      "side": 1,
+      "message": "you mean this?:\n\n@@ -2037,7 +2454,7 @@ static pj_bool_t stun_on_status(pj_stun_sock *stun_sock,\n /* Callback when TURN socket has received a packet */\n static void turn_on_rx_data(pj_turn_sock *turn_sock,\n \t\t\t    void *pkt,\n-\t\t\t    unsigned pkt_len,\n+\t\t\t    unsigned size,\n \t\t\t    const pj_sockaddr_t *peer_addr,\n \t\t\t    unsigned addr_len)\n {\n@@ -2063,20 +2480,90 @@ static void turn_on_rx_data(pj_turn_sock *turn_sock,\n\ni just keep the arg names the same, modified the rest accordingly.",
+      "parentUuid": "147d09c4_8733122f",
+      "range": {
+        "startLine": 2264,
+        "startChar": 37,
+        "endLine": 2264,
+        "endChar": 52
+      },
+      "revId": "8f5bcf1f8009cf75113b21f966b9c3b469508ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "4c5e63f0_d5579478",
         "filename": "contrib/src/pjproject/0004-multiple_listeners.patch",
         "patchSetId": 31
@@ -94,6 +166,30 @@
     },
     {
       "key": {
+        "uuid": "5fd19bfd_f662e220",
+        "filename": "contrib/src/pjproject/0004-multiple_listeners.patch",
+        "patchSetId": 31
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 684
+      },
+      "writtenOn": "2020-03-10T19:03:39Z",
+      "side": 1,
+      "message": "no, my bad. thanks.",
+      "parentUuid": "4c5e63f0_d5579478",
+      "range": {
+        "startLine": 18,
+        "startChar": 2,
+        "endLine": 21,
+        "endChar": 3
+      },
+      "revId": "8f5bcf1f8009cf75113b21f966b9c3b469508ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b1571ab8_20bda05a",
         "filename": "contrib/src/pjproject/0005-fix_ebusy_turn.patch",
         "patchSetId": 31
@@ -105,6 +201,30 @@
       "writtenOn": "2020-03-10T17:01:43Z",
       "side": 1,
       "message": "Where is the def? (sorry gerrit interface)",
+      "range": {
+        "startLine": 464,
+        "startChar": 18,
+        "endLine": 464,
+        "endChar": 39
+      },
+      "revId": "8f5bcf1f8009cf75113b21f966b9c3b469508ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "58c094f2_7ccc06e8",
+        "filename": "contrib/src/pjproject/0005-fix_ebusy_turn.patch",
+        "patchSetId": 31
+      },
+      "lineNbr": 464,
+      "author": {
+        "id": 684
+      },
+      "writtenOn": "2020-03-10T19:03:39Z",
+      "side": 1,
+      "message": "should i close this?",
+      "parentUuid": "b1571ab8_20bda05a",
       "range": {
         "startLine": 464,
         "startChar": 18,
