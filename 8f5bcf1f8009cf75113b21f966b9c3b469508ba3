@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e7d3b059_d4e25a47",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 31
+      },
+      "lineNbr": 36,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-10T17:01:43Z",
+      "side": 1,
+      "message": "Missing\n\ndiff --git a/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h\nindex fc1e2755..6f17a663 100644\n--- a/pjnath/include/pjnath/config.h\n+++ b/pjnath/include/pjnath/config.h\n@@ -1,5 +1,5 @@\n /* $Id$ */\n-/* \n+/*\n  * Copyright (C) 2008-2011 Teluu Inc. (http://www.teluu.com)\n  * Copyright (C) 2003-2008 Benny Prijono \u003cbenny@prijono.org\u003e\n  *\n@@ -248,7 +248,7 @@\n  * Default: 8\n  */\n #ifndef PJ_ICE_ST_MAX_CAND\n-#   define PJ_ICE_ST_MAX_CAND\t\t\t    8\n+#   define PJ_ICE_ST_MAX_CAND\t\t\t    32\n #endif\n \n \n@@ -256,21 +256,20 @@\n  * Maximum number of STUN transports for each ICE stream transport component.\n  * Valid values are 1 - 64.\n  *\n- * Default: 2\n+ * Default: 4 (one active and one passive for IPv4 and IPv6)\n  */\n #ifndef PJ_ICE_MAX_STUN\n-#   define PJ_ICE_MAX_STUN\t\t\t    2\n+#   define PJ_ICE_MAX_STUN\t\t\t    4\n #endif\n \n-\n /**\n  * Maximum number of TURN transports for each ICE stream transport component.\n  * Valid values are 1 - 64.\n  *\n- * Default: 2\n+ * Default: 4 (one active and one passive for IPv4 and IPv6)\n  */\n #ifndef PJ_ICE_MAX_TURN\n-#   define PJ_ICE_MAX_TURN\t\t\t    3\n+#   define PJ_ICE_MAX_TURN\t\t\t    4\n #endif",
+      "range": {
+        "startLine": 34,
+        "startChar": 29,
+        "endLine": 36,
+        "endChar": 20
+      },
+      "revId": "8f5bcf1f8009cf75113b21f966b9c3b469508ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8e6ac5bc_d0522908",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 31
+      },
+      "lineNbr": 1044,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-10T17:01:43Z",
+      "side": 1,
+      "message": "missing break",
+      "range": {
+        "startLine": 1040,
+        "startChar": 19,
+        "endLine": 1044,
+        "endChar": 17
+      },
+      "revId": "8f5bcf1f8009cf75113b21f966b9c3b469508ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "147d09c4_8733122f",
+        "filename": "contrib/src/pjproject/0001-rfc6544.patch",
+        "patchSetId": 31
+      },
+      "lineNbr": 2264,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-10T17:01:43Z",
+      "side": 1,
+      "message": "no more turn_data_sent?",
+      "range": {
+        "startLine": 2264,
+        "startChar": 37,
+        "endLine": 2264,
+        "endChar": 52
+      },
+      "revId": "8f5bcf1f8009cf75113b21f966b9c3b469508ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4c5e63f0_d5579478",
+        "filename": "contrib/src/pjproject/0004-multiple_listeners.patch",
+        "patchSetId": 31
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-10T17:01:43Z",
+      "side": 1,
+      "message": "This is removed?",
+      "range": {
+        "startLine": 18,
+        "startChar": 2,
+        "endLine": 21,
+        "endChar": 3
+      },
+      "revId": "8f5bcf1f8009cf75113b21f966b9c3b469508ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b1571ab8_20bda05a",
+        "filename": "contrib/src/pjproject/0005-fix_ebusy_turn.patch",
+        "patchSetId": 31
+      },
+      "lineNbr": 464,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-10T17:01:43Z",
+      "side": 1,
+      "message": "Where is the def? (sorry gerrit interface)",
+      "range": {
+        "startLine": 464,
+        "startChar": 18,
+        "endLine": 464,
+        "endChar": 39
+      },
+      "revId": "8f5bcf1f8009cf75113b21f966b9c3b469508ba3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
