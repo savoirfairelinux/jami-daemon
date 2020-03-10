@@ -124,6 +124,11 @@ CoreLayer::initAudioLayerIO(AudioStreamType stream)
                                              &setSpeaker));
             break;
         case 1:
+            UInt32 setBluetooth;
+            setBluetooth = 1;
+            checkErr(AudioSessionSetProperty(kAudioSessionProperty_OverrideCategoryEnableBluetoothInput,
+                                             sizeof(setBluetooth),
+                                             &setBluetooth));
         case 2:
             break;
         case 3:
