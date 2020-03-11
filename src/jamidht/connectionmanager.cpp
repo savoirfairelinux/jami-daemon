@@ -710,6 +710,7 @@ ConnectionManager::closeConnectionsWith(const std::string& deviceId)
         auto it = pimpl_->pendingCbs_.begin();
         while (it != pimpl_->pendingCbs_.end()) {
             if (it->first.first == deviceId) {
+                if (it->second) it->second(nullptr);
                 it = pimpl_->pendingCbs_.erase(it);
             } else {
                 ++it;
