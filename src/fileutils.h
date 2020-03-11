@@ -114,6 +114,7 @@ void saveFile(const std::string& path, const uint8_t* data, size_t data_size, mo
 inline void saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode=0644) {
     saveFile(path, data.data(), data.size(), mode);
 }
+void saveTextFile(const std::string& path, const char* data, size_t data_size, mode_t mode=0644);
 
 std::vector<uint8_t> loadCacheFile(const std::string& path, std::chrono::system_clock::duration maxAge);
 std::string loadCacheTextFile(const std::string& path, std::chrono::system_clock::duration maxAge);
