@@ -2389,9 +2389,8 @@ JamiAccount::loadCachedUrl(const std::string& url,
     auto lock = std::make_shared<std::lock_guard<std::mutex>>(fileutils::getFileLock(cachePath));
     dht::ThreadPool::io().run([lock, cb, url, cachePath, cacheDuration, w=weak()]() {
         try {
-            auto data = fileutils::loadCacheFile(cachePath, cacheDuration);
             dht::http::Response ret;
-            ret.body = {data.begin(), data.end()};
+            ret.body = fileutils::loadCacheTextFile(cachePath, cacheDuration);
             ret.status_code = 200;
             cb(ret);
         } catch (const std::exception& e) {
@@ -2401,7 +2400,7 @@ JamiAccount::loadCachedUrl(const std::string& url,
                 auto req = std::make_shared<dht::http::Request>(*Manager::instance().ioContext(), url, [lock, cb, cachePath, w](const dht::http::Response& response) {
                     if (response.status_code == 200) {
                         try {
-                            fileutils::saveFile(cachePath, (const uint8_t*)response.body.data(), response.body.size(), 0600);
+                            fileutils::saveTextFile(cachePath, response.body.data(), response.body.size(), 0600);
                             JAMI_DBG("Cached result to '%.*s'", (int)cachePath.size(), cachePath.c_str());
                         } catch (const std::exception& ex) {
                             JAMI_WARN("Failed to save result to %.*s: %s", (int)cachePath.size(), cachePath.c_str(), ex.what());

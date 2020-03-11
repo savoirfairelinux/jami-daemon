@@ -411,6 +411,23 @@ saveFile(const std::string& path,
 #endif
 }
 
+void
+saveTextFile(const std::string& path,
+        const char* data, size_t data_size,
+        mode_t UNUSED mode)
+{
+    std::ofstream file = fileutils::ofstream(path, std::ios::trunc);
+    if (!file.is_open()) {
+        JAMI_ERR("Could not write data to %s", path.c_str());
+        return;
+    }
+    file.write(data, data_size);
+#ifndef _WIN32
+    if (chmod(path.c_str(), mode) < 0)
+        JAMI_WARN("fileutils::saveFile(): chmod() failed on '%s', %s", path.c_str(), strerror(errno));
+#endif
+}
+
 std::vector<uint8_t>
 loadCacheFile(const std::string& path, std::chrono::system_clock::duration maxAge)
 {
