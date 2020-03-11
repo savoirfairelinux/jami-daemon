@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "569305c9_fe592512",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 8
+      },
+      "lineNbr": 660,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-11T20:49:22Z",
+      "side": 1,
+      "message": "Do we really want to make it possible to set a status to something else? I mean, setMessage !\u003d 4 as no sense for the client",
+      "range": {
+        "startLine": 659,
+        "startChar": 27,
+        "endLine": 660,
+        "endChar": 50
+      },
+      "revId": "2aa5b9d85705c368e0332ea2e473357a4ce42c1c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
