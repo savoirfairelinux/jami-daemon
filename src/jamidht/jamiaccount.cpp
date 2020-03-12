@@ -2757,14 +2757,14 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         pjsip_msg_add_hdr(tdata->msg, hdr);
 
         // https://tools.ietf.org/html/rfc5438#section-6.3
-        auto token_str = std::to_string(token);
+        auto token_str = to_hex_string(token);
         auto pjMessageId = sip_utils::CONST_PJ_STR(token_str);
         hdr = reinterpret_cast<pjsip_hdr*>(pjsip_generic_string_hdr_create(tdata->pool, &STR_MESSAGE_ID, &pjMessageId));
         pjsip_msg_add_hdr(tdata->msg, hdr);
 
         // Add user agent header.
         pjsip_hdr *hdr_list;
-        auto pJuseragent = sip_utils::CONST_PJ_STR("Jami");
+        constexpr auto pJuseragent = sip_utils::CONST_PJ_STR("Jami");
         constexpr pj_str_t STR_USER_AGENT = jami::sip_utils::CONST_PJ_STR("User-Agent");
 
         // Add Header

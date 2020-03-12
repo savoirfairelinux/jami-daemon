@@ -66,7 +66,7 @@ enum class MessageStates : int {
     UNKNOWN = 0,
     SENDING,
     SENT,
-    READ,
+    DISPLAYED,
     FAILURE,
     CANCELLED
 }; //DRing::Account::MessageStates
