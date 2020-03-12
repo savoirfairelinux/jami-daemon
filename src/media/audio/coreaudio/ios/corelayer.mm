@@ -26,6 +26,8 @@
 #include "audio/ringbuffer.h"
 #include "libav_utils.h"
 
+#include <AVFoundation/AVAudioSession.h>
+
 #include <cmath>
 #include <vector>
 
@@ -107,31 +109,28 @@ CoreLayer::initAudioLayerIO(AudioStreamType stream)
     checkErr(AudioComponentInstanceNew(comp, &ioUnit_));
     bool setUpOutput = stream == AudioStreamType::DEFAULT || stream == AudioStreamType::PLAYBACK;
     bool setUpInput = stream == AudioStreamType::DEFAULT || stream == AudioStreamType::CAPTURE;
-
-    UInt32 audioCategory = setUpInput ? kAudioSessionCategory_PlayAndRecord : kAudioSessionCategory_MediaPlayback;
-    AudioSessionSetProperty(kAudioSessionProperty_AudioCategory,
-                            sizeof(audioCategory),
-                            &audioCategory);
-
+    NSError* error = nil;
+    AVAudioSessionCategory audioCategory = setUpInput ? AVAudioSessionCategoryPlayAndRecord : AVAudioSessionCategoryPlayback;
+    AVAudioSessionMode mode = setUpInput ? AVAudioSessionModeVoiceChat : AVAudioSessionModeMoviePlayback;
+    [[AVAudioSession sharedInstance] setCategory:audioCategory mode: mode options:AVAudioSessionCategoryOptionAllowBluetooth error:&error];
+    if (error) {
+        JAMI_DBG("***Initializing audio session failed");
+    }
+    [[AVAudioSession sharedInstance] setActive: true withOptions: AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error: &error];
+    if (error) {
+        JAMI_DBG("***set active audio session failed");
+    }
     auto playBackDeviceList = getPlaybackDeviceList();
     JAMI_DBG("Setting playback device: %s", playBackDeviceList[indexOut_].c_str());
     switch(indexOut_) {
         case 0:
-            UInt32 setSpeaker;
-            setSpeaker = 1;
-            checkErr(AudioSessionSetProperty(kAudioSessionProperty_OverrideCategoryDefaultToSpeaker,
-                                             sizeof(setSpeaker),
-                                             &setSpeaker));
+            [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:nil];
             break;
         case 1:
         case 2:
             break;
         case 3:
-            UInt32 audioRouteOverrideNone;
-            audioRouteOverrideNone = kAudioSessionOverrideAudioRoute_None;
-            checkErr(AudioSessionSetProperty(kAudioSessionProperty_OverrideAudioRoute,
-                                             sizeof(audioRouteOverrideNone),
-                                             &audioRouteOverrideNone));
+            [[AVAudioSession sharedInstance] overrideOutputAudioPort:AVAudioSessionPortOverrideNone error:nil];
             break;
         default:
             break;
@@ -342,6 +341,7 @@ CoreLayer::startStream(AudioStreamType stream)
 void
 CoreLayer::destroyAudioLayer()
 {
+    [[AVAudioSession sharedInstance] setActive: false withOptions: AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error: nil];
     AudioOutputUnitStop(ioUnit_);
     AudioUnitUninitialize(ioUnit_);
     AudioComponentInstanceDispose(ioUnit_);

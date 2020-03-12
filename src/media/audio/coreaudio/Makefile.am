@@ -7,7 +7,7 @@ endif
 
 if HAVE_IOS
 noinst_LTLIBRARIES = libcoreaudiolayer.la
-libcoreaudiolayer_la_SOURCES = ios/corelayer.cpp ios/corelayer.h
+libcoreaudiolayer_la_SOURCES = ios/corelayer.mm ios/corelayer.h
 endif
 
 libcoreaudiolayer_la_CXXFLAGS = -I$(top_srcdir)/src
