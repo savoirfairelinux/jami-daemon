@@ -52,9 +52,9 @@ index e416991d..9db16b93 100644
  			       &val, sizeof(val));
 +	    uint32_t val = 1;
 +	    setsockopt(*sock, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(uint32_t));
-+	    uint32_t keepint = 30; // seconds
++	    uint32_t keepint = 2; // seconds
 +	    setsockopt(*sock, SOL_TCP, TCP_KEEPIDLE, &keepint, sizeof(uint32_t));
-+	    keepint = 30; // seconds
++	    keepint = 2; // seconds
 +	    setsockopt(*sock, SOL_TCP, TCP_KEEPINTVL, &keepint, sizeof(uint32_t));
 +	    uint32_t cnt = 1;
 +	    setsockopt(*sock, SOL_TCP, TCP_KEEPCNT, &cnt, sizeof(uint32_t));
