@@ -20,6 +20,7 @@
         "disable_local_resolution.patch",
         "fix_assert_on_connection_attempt.patch",
         "keep_alive.patch"
+        "sip_td_timeout.patch"
     ],
     "win_patches": [
         "win32_vs_gnutls.patch",
