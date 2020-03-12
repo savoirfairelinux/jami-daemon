@@ -24,7 +24,6 @@
 
 #include "audio/audiolayer.h"
 #include "noncopyable.h"
-#include <CoreFoundation/CoreFoundation.h>
 #include <AudioToolbox/AudioToolbox.h>
 
 #define checkErr( err) \
