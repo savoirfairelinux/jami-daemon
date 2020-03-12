@@ -72,6 +72,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/disable_local_resolution.patch
 	$(APPLY) $(SRC)/pjproject/fix_assert_on_connection_attempt.patch
 	$(APPLY) $(SRC)/pjproject/keep_alive.patch
+	$(APPLY) $(SRC)/pjproject/sip_td_timeout.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 

@@ -1,0 +1,15 @@
+ pjsip/include/pjsip/sip_config.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/pjsip/include/pjsip/sip_config.h b/pjsip/include/pjsip/sip_config.h
+index 904df24e..0831e4ef 100644
+--- a/pjsip/include/pjsip/sip_config.h
++++ b/pjsip/include/pjsip/sip_config.h
+@@ -1054,7 +1054,7 @@ PJ_INLINE(pjsip_cfg_t*) pjsip_cfg(void)
+
+ /** Transaction completed timer for INVITE */
+ #if !defined(PJSIP_TD_TIMEOUT)
+-#  define PJSIP_TD_TIMEOUT	32000
++#  define PJSIP_TD_TIMEOUT	15000
+ #endif
+
