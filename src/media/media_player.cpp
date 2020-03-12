@@ -246,7 +246,6 @@ MediaPlayer::playFileFromBeginning()
     if (hasVideo()) {
         videoInput_->updateStartTime(startTime_);
     }
-    pause(false);
 }
 
 void
