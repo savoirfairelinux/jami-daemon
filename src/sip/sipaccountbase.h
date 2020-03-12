@@ -271,11 +271,13 @@ public:
 
     void setIsComposing(const std::string& to, bool isWriting) override;
 
-    virtual im::MessageStatus getMessageStatus(uint64_t id) const override {
+    bool setMessageDisplayed(const std::string& contactId, const std::string& messageId, int status) override;
+
+    im::MessageStatus getMessageStatus(uint64_t id) const override {
         return messageEngine_.getStatus(id);
     }
 
-    virtual bool cancelMessage(uint64_t id) override {
+    bool cancelMessage(uint64_t id) override {
         return messageEngine_.cancel(id);
     }
 

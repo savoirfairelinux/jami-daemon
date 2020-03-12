@@ -33,6 +33,7 @@
 #include "config/yamlparser.h"
 
 #include "client/ring_signal.h"
+#include "dring/account_const.h"
 #include "string_utils.h"
 #include "fileutils.h"
 #include "sip_utils.h"
@@ -50,6 +51,7 @@
 
 namespace jami {
 
+static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
 static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
 
@@ -114,6 +116,20 @@ getIsComposing(bool isWriting)
     std::ostringstream ss;
     ss << "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" << std::endl
        << "<isComposing><state>" << (isWriting ? "active" : "idle") << "</state></isComposing>";
+    return  ss.str();
+}
+
+std::string
+getDisplayed(const std::string& messageId)
+{
+    // implementing https://tools.ietf.org/rfc/rfc5438.txt
+    std::ostringstream ss;
+    ss << "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" << std::endl
+       << "<imdn>" << std::endl
+       << "<message-id>" << messageId << "</message-id>" << std::endl
+       << "<display-notification><status><displayed/></status></display-notification>" << std::endl
+       << "</imdn>";
+
     return  ss.str();
 }
 
@@ -480,6 +496,37 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
             } catch (const std::exception& e) {
                 JAMI_WARN("Error parsing composing state: %s", e.what());
             }
+        } else if (m.first == MIME_TYPE_IMDN) {
+            JAMI_WARN("Received message displayed: %s", m.second.c_str());
+            try {
+                static const std::regex IMDN_MSG_ID_REGEX("<message-id>\\s*(\\w+)\\s*<\\/message-id>");
+                static const std::regex IMDN_STATUS_REGEX("<status>\\s*<(\\w+)\\/>\\s*<\\/status>");
+                std::smatch matched_pattern;
+
+                std::regex_search(m.second, matched_pattern, IMDN_MSG_ID_REGEX);
+                std::string messageId;
+                if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                    messageId = matched_pattern[1];
+                } else {
+                    JAMI_WARN("Message displayed: can't parse message ID");
+                    continue;
+                }
+
+                std::regex_search(m.second, matched_pattern, IMDN_STATUS_REGEX);
+                bool isDisplayed {false};
+                if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                    isDisplayed = matched_pattern[1] == "displayed";
+                } else {
+                    JAMI_WARN("Message displayed: can't parse status");
+                    continue;
+                }
+                JAMI_WARN("Received message displayed: %lld %d", from_hex_string(messageId), isDisplayed);
+                messageEngine_.onMessageDisplayed(from, from_hex_string(messageId), isDisplayed);
+                if (payloads.size() == 1)
+                    return;
+            } catch (const std::exception& e) {
+                JAMI_WARN("Error parsing display notification: %s", e.what());
+            }
         }
     }
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, payloads);
@@ -492,6 +539,14 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
     while (lastMessages_.size() > MAX_WAITING_MESSAGES_SIZE) {
         lastMessages_.pop_front();
     }
+}
+
+bool
+SIPAccountBase::setMessageDisplayed(const std::string& contactId, const std::string& messageId, int status)
+{
+    if (status == (int)DRing::Account::MessageStates::DISPLAYED)
+        sendTextMessage(contactId, {{MIME_TYPE_IMDN, getDisplayed(messageId)}});
+    return true;
 }
 
 void
