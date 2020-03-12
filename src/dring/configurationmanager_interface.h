@@ -82,6 +82,7 @@ DRING_PUBLIC std::map<std::string, std::string> getNearbyPeers(const std::string
 DRING_PUBLIC int getMessageStatus(uint64_t id);
 DRING_PUBLIC int getMessageStatus(const std::string& accountID, uint64_t id);
 DRING_PUBLIC void setIsComposing(const std::string& accountID, const std::string& to, bool isWriting);
+DRING_PUBLIC bool setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, int status);
 
 DRING_PUBLIC std::map<std::string, std::string> getTlsDefaultSettings();
 

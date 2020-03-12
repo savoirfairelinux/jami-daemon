@@ -95,7 +95,7 @@ int getMessageStatus(uint64_t id);
 int getMessageStatus(const std::string& accountID, uint64_t id);
 bool cancelMessage(const std::string& accountID, uint64_t id);
 void setIsComposing(const std::string& accountID, const std::string& to, bool isWriting);
-
+bool setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, int status);
 bool changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new);
 
 bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);

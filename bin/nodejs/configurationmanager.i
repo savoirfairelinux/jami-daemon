@@ -88,7 +88,7 @@ std::vector<Message> getLastMessages(const std::string& accountID, const uint64_
 int getMessageStatus(uint64_t id);
 int getMessageStatus(const std::string& accountID, uint64_t id);
 bool cancelMessage(const std::string& accountID, uint64_t id);
-
+bool setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, int status);
 bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
 bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);
 bool registerName(const std::string& account, const std::string& password, const std::string& name);
