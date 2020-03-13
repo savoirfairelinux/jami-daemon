@@ -58,6 +58,7 @@ template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 class Call : public Recordable, public std::enable_shared_from_this<Call> {
     public:
         using SubcallSet = std::set<std::shared_ptr<Call>, std::owner_less<std::shared_ptr<Call>>>;
+        using OnNeedFallbackCb = std::function<void()>;
 
         static const char * const DEFAULT_ID;
 
@@ -268,6 +269,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
             return parent_ != nullptr;
         }
 
+        void setOnNeedFallback(OnNeedFallbackCb&& cb) {
+            onNeedFallback_ = std::move(cb);
+        }
+
     public: // media management
         virtual bool toggleRecording();
 
@@ -393,6 +398,9 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         ///< MultiDevice: message received by subcall to merged yet
         MsgList pendingInMessages_;
+
+        // If the call is blocked during the progressing state
+        OnNeedFallbackCb onNeedFallback_;
 };
 
 // Helpers

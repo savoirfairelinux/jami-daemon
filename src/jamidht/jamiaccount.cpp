@@ -478,47 +478,11 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     });
 #endif
 
-    // Call connected devices
-    std::set<std::string> devices;
-    std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
-    for (auto deviceConnIt = sipConnections_[toUri].begin(); deviceConnIt != sipConnections_[toUri].end(); ++deviceConnIt) {
-        if (deviceConnIt->second.empty()) continue;
-        auto& it = deviceConnIt->second.back();
-
-        auto transport = it.transport;
-        if (!it.channel->underlyingICE()) {
-            JAMI_WARN("A SIP transport exists without Channel, this is a bug. Please report");
-            continue;
-        }
-        if (!transport) continue;
-
-        auto& manager = Manager::instance();
-        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
-                                                                          Call::CallType::OUTGOING,
-                                                                          call->getDetails());
-        dev_call->setIPToIP(true);
-        dev_call->setSecure(isTlsEnabled());
-        dev_call->setTransport(transport);
-        call->addSubCall(*dev_call);
-
-        auto remoted_address = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
-        onConnectedOutgoingCall(*dev_call, toUri, remoted_address);
-        devices.emplace(deviceConnIt->first);
-    }
-
-    // Find listening devices for this account
     dht::InfoHash peer_account(toUri);
-    accountManager_->forEachDevice(peer_account, [this, wCall, toUri, peer_account, devices](const dht::InfoHash& dev)
-    {
-        // Test if already sent via a SIP transport
-        if (devices.find(dev.toString()) != devices.end()) return;
-
-        // Else, ask for a channel (for future calls/text messages) and send a DHT message
-        requestSIPConnection(toUri, dev.toString());
-
+    auto sendDhtRequest = [this, wCall, toUri, peer_account](const std::string& deviceId) {
         auto call = wCall.lock();
         if (not call) return;
-        JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
+        JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), deviceId.c_str());
 
         auto& manager = Manager::instance();
         auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
@@ -543,7 +507,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         }
         call->addSubCall(*dev_call);
 
-        manager.addTask([w=weak(), weak_dev_call, ice, ice_tcp, dev, toUri, peer_account] {
+        manager.addTask([w=weak(), weak_dev_call, ice, ice_tcp, deviceId, toUri, peer_account] {
             auto sthis = w.lock();
             if (not sthis) {
                 dht::ThreadPool::io().run([ice=std::move(ice), ice_tcp=std::move(ice_tcp)](){});
@@ -578,7 +542,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             if (ice_tcp) sthis->registerDhtAddress(*ice_tcp);
             // Next step: sent the ICE data to peer through DHT
             const dht::Value::Id callvid  = ValueIdDist()(sthis->rand);
-            const auto callkey = dht::InfoHash::get("callto:" + dev.toString());
+            const auto callkey = dht::InfoHash::get("callto:" + deviceId);
             auto blob = ice->packIceMsg();
             if (ice_tcp)  {
                 auto ice_tcp_msg = ice_tcp->packIceMsg(2);
@@ -586,6 +550,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             }
             dht::Value val { dht::IceCandidates(callvid,  blob) };
 
+            dht::InfoHash dev(deviceId);
             sthis->dht_->putEncrypted(
                 callkey, dev,
                 std::move(val),
@@ -601,15 +566,15 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
             auto listenKey = sthis->dht_->listen<dht::IceCandidates>(
                 callkey,
-                [weak_dev_call, ice, ice_tcp, callvid, dev] (dht::IceCandidates&& msg) {
-                    if (msg.id != callvid or msg.from != dev)
+                [weak_dev_call, ice, ice_tcp, callvid, deviceId] (dht::IceCandidates&& msg) {
+                    if (msg.id != callvid or msg.from.toString() != deviceId)
                         return true;
                     // remove unprintable characters
                     auto iceData = std::string(msg.ice_data.cbegin(), msg.ice_data.cend());
                     iceData.erase(std::remove_if(iceData.begin(), iceData.end(),
                                                  [](unsigned char c){ return !std::isprint(c) && !std::isspace(c); }
                                                 ), iceData.end());
-                    JAMI_WARN("ICE request replied from DHT peer %s\nData: %s", dev.toString().c_str(), iceData.c_str());
+                    JAMI_WARN("ICE request replied from DHT peer %s\nData: %s", deviceId.c_str(), iceData.c_str());
                     if (auto call = weak_dev_call.lock()) {
                         call->setState(Call::ConnectionState::PROGRESSING);
 
@@ -637,6 +602,50 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             sthis->checkPendingCallsTask();
             return false;
         });
+    };
+
+    // Call connected devices
+    std::set<std::string> devices;
+    std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+    for (auto deviceConnIt = sipConnections_[toUri].begin(); deviceConnIt != sipConnections_[toUri].end(); ++deviceConnIt) {
+        if (deviceConnIt->second.empty()) continue;
+        auto& it = deviceConnIt->second.back();
+
+        auto transport = it.transport;
+        if (!it.channel->underlyingICE()) {
+            JAMI_WARN("A SIP transport exists without Channel, this is a bug. Please report");
+            continue;
+        }
+        if (!transport) continue;
+
+        auto& manager = Manager::instance();
+        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
+                                                                          Call::CallType::OUTGOING,
+                                                                          call->getDetails());
+        dev_call->setIPToIP(true);
+        dev_call->setSecure(isTlsEnabled());
+        dev_call->setTransport(transport);
+        call->addSubCall(*dev_call);
+
+        auto remoted_address = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
+        onConnectedOutgoingCall(*dev_call, toUri, remoted_address);
+        devices.emplace(deviceConnIt->first);
+
+        call->setOnNeedFallback([sendDhtRequest, deviceId = deviceConnIt->first]() {
+            sendDhtRequest(deviceId);
+        });
+    }
+
+    // Find listening devices for this account
+    accountManager_->forEachDevice(peer_account, [this, toUri, devices, sendDhtRequest](const dht::InfoHash& dev)
+    {
+        // Test if already sent via a SIP transport
+        if (devices.find(dev.toString()) != devices.end()) return;
+
+        // Else, ask for a channel (for future calls/text messages) and send a DHT message
+        requestSIPConnection(toUri, dev.toString());
+
+        sendDhtRequest(dev.toString());
     }, [wCall](bool ok){
         if (not ok) {
             if (auto call = wCall.lock()) {
