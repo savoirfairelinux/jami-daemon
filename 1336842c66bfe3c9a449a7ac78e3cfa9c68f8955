@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "e5414fb3_85c83668",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 38
+      },
+      "lineNbr": 1341,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-03-13T15:32:45Z",
+      "side": 1,
+      "message": "Crash",
+      "range": {
+        "startLine": 1340,
+        "startChar": 30,
+        "endLine": 1341,
+        "endChar": 52
+      },
+      "revId": "1336842c66bfe3c9a449a7ac78e3cfa9c68f8955",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
