@@ -998,24 +998,24 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
     JAMI_DBG("[Account %s] loading account", getAccountID().c_str());
     AccountManager::OnChangeCallback callbacks {
         [this](const std::string& uri, bool confirmed) {
-            dht::ThreadPool::computation().run([this, uri, confirmed] {
-                    emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, confirmed);
-                });
+            dht::ThreadPool::computation().run([id=getAccountID(), uri, confirmed] {
+                emitSignal<DRing::ConfigurationSignal::ContactAdded>(id, uri, confirmed);
+            });
         },
         [this](const std::string& uri, bool banned) {
-            dht::ThreadPool::computation().run([this, uri, banned] {
-                    emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, banned);
-                });
+            dht::ThreadPool::computation().run([id=getAccountID(), uri, banned] {
+                emitSignal<DRing::ConfigurationSignal::ContactRemoved>(id, uri, banned);
+            });
         },
         [this](const std::string& uri, const std::vector<uint8_t>& payload, time_t received) {
-            dht::ThreadPool::computation().run([this, uri, payload = std::move(payload), received] {
-                    emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(getAccountID(), uri, payload, received);
-                });
+            dht::ThreadPool::computation().run([id=getAccountID(), uri, payload = std::move(payload), received] {
+                emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(id, uri, payload, received);
+            });
         },
         [this]() {
-            dht::ThreadPool::computation().run([this] {
-                    emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
-                });
+            dht::ThreadPool::computation().run([id=getAccountID(), devices=getKnownDevices()] {
+                emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(id, devices);
+            });
         },
     };
 
@@ -1635,6 +1635,8 @@ JamiAccount::doRegister()
         return;
     }
 
+    JAMI_DBG("[Account %s] Starting account..", getAccountID().c_str());
+
     // invalid state transitions:
     // INITIALIZING: generating/loading certificates, can't register
     // NEED_MIGRATION: old account detected, user needs to migrate
@@ -1798,6 +1800,8 @@ JamiAccount::doRegister_()
         JAMI_ERR("[Account %s] already registered", getAccountID().c_str());
         return;
     }
+
+    JAMI_DBG("[Account %s] Starting account...", getAccountID().c_str());
 
     try {
         if (not accountManager_ or not accountManager_->getInfo())
@@ -3122,33 +3126,36 @@ JamiAccount::cacheTurnServers()
 {
     // The resolution of the TURN server can take quite some time (if timeout).
     // So, run this in its own io thread to avoid to block the main thread.
-    dht::ThreadPool::io().run([this] {
+    dht::ThreadPool::io().run([w=weak()] {
+        auto this_ = w.lock();
+        if (not this_)
+            return;
         // Avoid multiple refresh
-        if (isRefreshing_.exchange(true)) return;
-        if (!turnEnabled_) {
+        if (this_->isRefreshing_.exchange(true)) return;
+        if (!this_->turnEnabled_) {
             // In this case, we do not use any TURN server
-            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
-            cacheTurnV4_.reset();
-            cacheTurnV6_.reset();
-            isRefreshing_ = false;
+            std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
+            this_->cacheTurnV4_.reset();
+            this_->cacheTurnV6_.reset();
+            this_->isRefreshing_ = false;
             return;
         }
         JAMI_INFO("Refresh cache for TURN server resolution");
         // Retrieve old cached value if available.
         // This means that we directly get the correct value when launching the application on the same network
-        std::string server = turnServer_.empty() ? DEFAULT_TURN_SERVER : turnServer_;
-        fileutils::recursive_mkdir(cachePath_ + DIR_SEPARATOR_STR + "domains", 0700);
-        auto pathV4 = cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v4." + server;
+        std::string server = this_->turnServer_.empty() ? DEFAULT_TURN_SERVER : this_->turnServer_;
+        fileutils::recursive_mkdir(this_->cachePath_ + DIR_SEPARATOR_STR + "domains", 0700);
+        auto pathV4 = this_->cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v4." + server;
         if (auto turnV4File = std::ifstream(pathV4)) {
             std::string content((std::istreambuf_iterator<char>(turnV4File)), std::istreambuf_iterator<char>());
-            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
-            cacheTurnV4_ = std::make_unique<IpAddr>(content, AF_INET);
+            std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
+            this_->cacheTurnV4_ = std::make_unique<IpAddr>(content, AF_INET);
         }
-        auto pathV6 = cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v6." + server;
+        auto pathV6 = this_->cachePath_ + DIR_SEPARATOR_STR + "domains" + DIR_SEPARATOR_STR + "v6." + server;
         if (auto turnV6File = std::ifstream(pathV6)) {
             std::string content((std::istreambuf_iterator<char>(turnV6File)), std::istreambuf_iterator<char>());
-            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
-            cacheTurnV6_ = std::make_unique<IpAddr>(content, AF_INET6);
+            std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
+            this_->cacheTurnV6_ = std::make_unique<IpAddr>(content, AF_INET6);
         }
         // Resolve just in case. The user can have a different connectivity
         auto turnV4 = IpAddr {server, AF_INET};
@@ -3160,9 +3167,9 @@ JamiAccount::cacheTurnServers()
             } else {
                 fileutils::remove(pathV4, true);
             }
-            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+            std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
             // Update TURN
-            cacheTurnV4_ = std::make_unique<IpAddr>(std::move(turnV4));
+            this_->cacheTurnV4_ = std::make_unique<IpAddr>(std::move(turnV4));
         }
         auto turnV6 = IpAddr {server.empty() ? DEFAULT_TURN_SERVER : server, AF_INET6};
         {
@@ -3173,11 +3180,11 @@ JamiAccount::cacheTurnServers()
             } else {
                 fileutils::remove(pathV6, true);
             }
-            std::lock_guard<std::mutex> lk(cachedTurnMutex_);
+            std::lock_guard<std::mutex> lk(this_->cachedTurnMutex_);
             // Update TURN
-            cacheTurnV6_ = std::make_unique<IpAddr>(std::move(turnV6));
+            this_->cacheTurnV6_ = std::make_unique<IpAddr>(std::move(turnV6));
         }
-        isRefreshing_ = false;
+        this_->isRefreshing_ = false;
         JAMI_INFO("Cache refreshed for TURN resolution");
     });
 }
