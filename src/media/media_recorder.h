@@ -151,6 +151,12 @@ private:
     bool audioOnly_ = false;
 
     void filterAndEncode(MediaFilter* filter, int streamIdx);
+
+    std::list<std::pair<std::string, std::shared_ptr<MediaFrame>>> pair_bkp {};
+
+    std::mutex onFrameRecMutex_ {};
+    std::mutex readFiltredFrameRecMutex_ {};
+
 };
 
 }; // namespace jami

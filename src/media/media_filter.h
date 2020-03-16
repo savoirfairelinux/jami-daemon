@@ -175,6 +175,9 @@ class MediaFilter {
          * @brief Flag to know whether or not the filter graph is initialized.
          */
         bool initialized_ {false};
+
+        std::mutex feedInputMutex_ {};
+        std::mutex readOutputMutex_ {};
 };
 
 }; // namespace jami

@@ -215,6 +215,7 @@ MediaRecorder::getStream(const std::string& name) const
 void
 MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame>& frame)
 {
+    std::lock_guard<std::mutex> lk(onFrameRecMutex_);
     if (!isRecording_)
         return;
 
@@ -230,6 +231,13 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
         clone->copyFrom(*frame);
 #endif
     } else {
+        if (pair_bkp.size() > 50)
+            pair_bkp.pop_front();
+
+        std::shared_ptr<MediaFrame> clone2 = std::make_shared<MediaFrame>();
+        clone2->copyFrom(*frame);
+        pair_bkp.emplace_back(name, clone2);
+
         clone = std::make_unique<MediaFrame>();
         clone->copyFrom(*frame);
     }
@@ -503,6 +511,7 @@ MediaRecorder::reset()
 void
 MediaRecorder::filterAndEncode(MediaFilter* filter, int streamIdx)
 {
+    std::lock_guard<std::mutex> lk(readFiltredFrameRecMutex_);
     if (filter && streamIdx >= 0) {
         while (auto frame = filter->readOutput()) {
             try {

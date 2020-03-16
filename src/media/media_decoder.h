@@ -140,6 +140,8 @@ private:
     std::function<void(bool)> fileFinishedCb_;
     void clearFrames();
     void pushFrameFrom(std::queue<std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>>& buffer, bool isAudio, std::mutex& mutex);
+    std::mutex readAVFrame_ {};
+
 };
 
 class MediaDecoder
