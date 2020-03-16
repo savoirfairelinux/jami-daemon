@@ -157,6 +157,7 @@ MediaFilter::getOutputParams() const
 int
 MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
 {
+    std::lock_guard<std::mutex> lk{feedInputMutex_};
     int ret = 0;
     if (!initialized_)
         return fail("Filter not initialized", -1);
@@ -192,6 +193,7 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
 std::unique_ptr<MediaFrame>
 MediaFilter::readOutput()
 {
+    std::lock_guard<std::mutex> lk{readOutputMutex_};
     if (!initialized_) {
         fail("Not properly initialized", -1);
         return {};

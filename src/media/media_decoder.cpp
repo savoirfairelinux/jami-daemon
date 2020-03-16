@@ -261,6 +261,7 @@ MediaDemuxer::pushFrameFrom(std::queue<std::unique_ptr<AVPacket, std::function<v
 MediaDemuxer::Status
 MediaDemuxer::demuxe()
 {
+    std::lock_guard<std::mutex> lk {readAVFrame_};
     auto packet = std::unique_ptr<AVPacket, std::function<void(AVPacket*)>>(av_packet_alloc(), [](AVPacket* p){
         if (p)
             av_packet_free(&p);

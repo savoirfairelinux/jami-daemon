@@ -50,6 +50,8 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
         throw std::bad_alloc();
     }
 
+    JAMI_ERR("*** in->sample_rate:%d", in->sample_rate);
+
     av_opt_set_int(swrCtx, "ich", in->channels, 0);
     av_opt_set_int(swrCtx, "icl", in->channel_layout, 0);
     av_opt_set_int(swrCtx, "isr", in->sample_rate, 0);
