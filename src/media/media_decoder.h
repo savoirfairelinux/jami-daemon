@@ -68,16 +68,6 @@ class Resampler;
 class MediaIOHandle;
 class MediaDecoder;
 
-enum class DecodeStatus {
-    Success,
-    FrameFinished,
-    EndOfFile,
-    ReadError,
-    DecodeError,
-    RestartRequired,
-    FallBack
-};
-
 class MediaDemuxer {
 public:
     MediaDemuxer();
@@ -87,15 +77,14 @@ public:
         Success,
         EndOfFile,
         ReadBufferOverflow,
-        ReadError,
-        FallBack
+        ReadError
     };
 
     enum class CurrentState {
         Demuxing,
         Finished
     };
-    using StreamCallback = std::function<DecodeStatus (AVPacket&)>;
+    using StreamCallback = std::function<void(AVPacket&)>;
 
     int openInput(const DeviceParams&);
 
@@ -156,6 +145,14 @@ private:
 class MediaDecoder
 {
 public:
+    enum class Status {
+        Success,
+        FrameFinished,
+        EndOfFile,
+        ReadError,
+        DecodeError,
+        RestartRequired
+    };
 
     MediaDecoder();
     MediaDecoder(MediaObserver observer);
@@ -175,7 +172,7 @@ public:
     int setupVideo() { return setup(AVMEDIA_TYPE_VIDEO); }
 
     MediaDemuxer::Status decode();
-    DecodeStatus flush();
+    Status flush();
 
     int getWidth() const;
     int getHeight() const;
@@ -199,7 +196,7 @@ public:
 private:
     NON_COPYABLE(MediaDecoder);
 
-    DecodeStatus decode(AVPacket&);
+    Status decode(AVPacket&);
 
     rational<unsigned> getTimeBase() const;
 
