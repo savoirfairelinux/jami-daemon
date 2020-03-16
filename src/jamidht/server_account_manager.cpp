@@ -22,6 +22,7 @@
 
 #include <opendht/http.h>
 #include <opendht/log.h>
+#include <opendht/thread_pool.h>
 
 #include "manager.h"
 
@@ -77,123 +78,128 @@ ServerAccountManager::initAuthentication(
     }
 
     onChange_ = std::move(onChange);
-
     const std::string url = managerHostname_ + PATH_DEVICE;
     JAMI_WARN("[Auth] authentication with: %s to %s", ctx->credentials->username.c_str(), url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
     auto reqid = request->id();
     request->set_method(restinio::http_method_post());
     request->set_auth(ctx->credentials->username, ctx->credentials->password);
-    {
-        std::stringstream ss;
-        auto csr = ctx->request.get()->toString();
-        string_replace(csr, "\n", "\\n");
-        string_replace(csr, "\r", "\\r");
-        ss << "{\"csr\":\"" << csr  << "\", \"deviceName\":\"" << ctx->deviceName  << "\"}";
-        JAMI_WARN("[Auth] Sending request: %s", csr.c_str());
-        request->set_body(ss.str());
-    }
-    setHeaderFields(*request);
-    request->add_on_state_change_callback([reqid, ctx, onAsync = onAsync_]
-                                          (Request::State state, const dht::http::Response& response){
-        JAMI_DBG("[Auth] Got request callback with state=%d", (int)state);
-        if (state != Request::State::DONE)
-            return;
-        if (response.status_code == 0) {
-            ctx->onFailure(AuthError::SERVER_ERROR, "Invalid server provided");
-            return;
-        } else if (response.status_code >= 400 && response.status_code < 500)
-            ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
-        else if (response.status_code < 200 || response.status_code > 299)
-            ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
-        else {
-            try {
-                Json::Value json;
-                std::string err;
-                Json::CharReaderBuilder rbuilder;
-                auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                if (!reader->parse(response.body.data(), response.body.data() + response.body.size(), &json, &err)){
-                    JAMI_ERR("[Auth] Can't parse server response: %s", err.c_str());
-                    ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse server response");
-                    return;
-                }
-                JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
+    requests_[reqid] = request;
 
-                auto certStr = json["certificateChain"].asString();
-                string_replace(certStr, "\\n", "\n");
-                string_replace(certStr, "\\r", "\r");
-                auto cert = std::make_shared<dht::crypto::Certificate>(certStr);
-
-                auto accountCert = cert->issuer;
-                if (not accountCert) {
-                    JAMI_ERR("[Auth] Can't parse certificate: no issuer");
-                    ctx->onFailure(AuthError::SERVER_ERROR, "Invalid certificate from server");
-                    return;
-                }
-                auto receipt = json["deviceReceipt"].asString();
-                Json::Value receiptJson;
-                auto receiptReader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                if (!receiptReader->parse(receipt.data(), receipt.data() + receipt.size(), &receiptJson, &err)){
-                    JAMI_ERR("[Auth] Can't parse receipt from server: %s", err.c_str());
-                    ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse receipt from server");
-                    return;
-                }
-                onAsync([reqid, ctx,
-                            json=std::move(json),
-                            receiptJson=std::move(receiptJson),
-                            cert,
-                            accountCert,
-                            receipt=std::move(receipt)] (AccountManager& accountManager) mutable
-                {
-                    auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-                    auto receiptSignature = base64::decode(json["receiptSignature"].asString());
-
-                    auto info = std::make_unique<AccountInfo>();
-                    info->identity.second = cert;
-                    info->deviceId = cert->getPublicKey().getId().toString();
-                    info->accountId = accountCert->getId().toString();
-                    info->contacts = std::make_unique<ContactList>(accountCert, this_.path_, this_.onChange_);
-                    //info->contacts->setContacts(a.contacts);
-                    if (ctx->deviceName.empty())
-                        ctx->deviceName = info->deviceId.substr(8);
-                    info->contacts->foundAccountDevice(cert, ctx->deviceName, clock::now());
-                    info->ethAccount = receiptJson["eth"].asString();
-                    info->announce = parseAnnounce(receiptJson["announce"].asString(), info->accountId, info->deviceId);
-                    if (not info->announce) {
-                        ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse announce from server");
-                    }
-                    info->username = ctx->credentials->username;
-
-                    this_.creds_ = std::move(ctx->credentials);
-                    this_.info_ = std::move(info);
-                    std::map<std::string, std::string> config;
-                    if (json.isMember("nameServer")) {
-                        auto nameServer = json["nameServer"].asString();
-                        if (!nameServer.empty() && nameServer[0] == '/')
-                            nameServer = this_.managerHostname_ + nameServer;
-                        this_.nameDir_ = NameDirectory::instance(nameServer);
-                        config.emplace(DRing::Account::ConfProperties::RingNS::URI, std::move(nameServer));
-                    }
-                    if (json.isMember("displayName")) {
-                        config.emplace(DRing::Account::ConfProperties::DISPLAYNAME, json["displayName"].asString());
-                    }
-                    if (json.isMember("userPhoto")) {
-                        this_.info_->photo = json["userPhoto"].asString();
-                    }
-
-                    ctx->onSuccess(*this_.info_, std::move(config), std::move(receipt), std::move(receiptSignature));
-                    this_.syncDevices();
-                    this_.requests_.erase(reqid);
-                });
+    dht::ThreadPool::computation().run([onAsync = onAsync_, ctx, request, reqid]{
+        onAsync([ctx, request, reqid, onAsync](AccountManager& accountManager){
+            auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
+            {
+                std::stringstream ss;
+                auto csr = ctx->request.get()->toString();
+                string_replace(csr, "\n", "\\n");
+                string_replace(csr, "\r", "\\r");
+                ss << "{\"csr\":\"" << csr  << "\", \"deviceName\":\"" << ctx->deviceName  << "\"}";
+                JAMI_WARN("[Auth] Sending request: %s", csr.c_str());
+                request->set_body(ss.str());
             }
-            catch (const std::exception& e) {
-                JAMI_ERR("Error when loading account: %s", e.what());
-                ctx->onFailure(AuthError::NETWORK, "");
-            }
-        }
+            this_.setHeaderFields(*request);
+            request->add_on_state_change_callback([reqid, request, ctx, onAsync]
+                                                (Request::State state, const dht::http::Response& response){
+                JAMI_DBG("[Auth] Got request callback with state=%d", (int)state);
+                if (state != Request::State::DONE)
+                    return;
+                if (response.status_code == 0) {
+                    ctx->onFailure(AuthError::SERVER_ERROR, "Invalid server provided");
+                    return;
+                } else if (response.status_code >= 400 && response.status_code < 500)
+                    ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
+                else if (response.status_code < 200 || response.status_code > 299)
+                    ctx->onFailure(AuthError::INVALID_ARGUMENTS, "");
+                else {
+                    try {
+                        Json::Value json;
+                        std::string err;
+                        Json::CharReaderBuilder rbuilder;
+                        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                        if (!reader->parse(response.body.data(), response.body.data() + response.body.size(), &json, &err)){
+                            JAMI_ERR("[Auth] Can't parse server response: %s", err.c_str());
+                            ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse server response");
+                            return;
+                        }
+                        JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
+
+                        auto certStr = json["certificateChain"].asString();
+                        string_replace(certStr, "\\n", "\n");
+                        string_replace(certStr, "\\r", "\r");
+                        auto cert = std::make_shared<dht::crypto::Certificate>(certStr);
+
+                        auto accountCert = cert->issuer;
+                        if (not accountCert) {
+                            JAMI_ERR("[Auth] Can't parse certificate: no issuer");
+                            ctx->onFailure(AuthError::SERVER_ERROR, "Invalid certificate from server");
+                            return;
+                        }
+                        auto receipt = json["deviceReceipt"].asString();
+                        Json::Value receiptJson;
+                        auto receiptReader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                        if (!receiptReader->parse(receipt.data(), receipt.data() + receipt.size(), &receiptJson, &err)){
+                            JAMI_ERR("[Auth] Can't parse receipt from server: %s", err.c_str());
+                            ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse receipt from server");
+                            return;
+                        }
+                        onAsync([reqid, ctx,
+                                    json=std::move(json),
+                                    receiptJson=std::move(receiptJson),
+                                    cert,
+                                    accountCert,
+                                    receipt=std::move(receipt)] (AccountManager& accountManager) mutable
+                        {
+                            auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
+                            auto receiptSignature = base64::decode(json["receiptSignature"].asString());
+
+                            auto info = std::make_unique<AccountInfo>();
+                            info->identity.second = cert;
+                            info->deviceId = cert->getPublicKey().getId().toString();
+                            info->accountId = accountCert->getId().toString();
+                            info->contacts = std::make_unique<ContactList>(accountCert, this_.path_, this_.onChange_);
+                            //info->contacts->setContacts(a.contacts);
+                            if (ctx->deviceName.empty())
+                                ctx->deviceName = info->deviceId.substr(8);
+                            info->contacts->foundAccountDevice(cert, ctx->deviceName, clock::now());
+                            info->ethAccount = receiptJson["eth"].asString();
+                            info->announce = parseAnnounce(receiptJson["announce"].asString(), info->accountId, info->deviceId);
+                            if (not info->announce) {
+                                ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse announce from server");
+                            }
+                            info->username = ctx->credentials->username;
+
+                            this_.creds_ = std::move(ctx->credentials);
+                            this_.info_ = std::move(info);
+                            std::map<std::string, std::string> config;
+                            if (json.isMember("nameServer")) {
+                                auto nameServer = json["nameServer"].asString();
+                                if (!nameServer.empty() && nameServer[0] == '/')
+                                    nameServer = this_.managerHostname_ + nameServer;
+                                this_.nameDir_ = NameDirectory::instance(nameServer);
+                                config.emplace(DRing::Account::ConfProperties::RingNS::URI, std::move(nameServer));
+                            }
+                            if (json.isMember("displayName")) {
+                                config.emplace(DRing::Account::ConfProperties::DISPLAYNAME, json["displayName"].asString());
+                            }
+                            if (json.isMember("userPhoto")) {
+                                this_.info_->photo = json["userPhoto"].asString();
+                            }
+
+                            ctx->onSuccess(*this_.info_, std::move(config), std::move(receipt), std::move(receiptSignature));
+                            this_.syncDevices();
+                            this_.requests_.erase(reqid);
+                        });
+                    }
+                    catch (const std::exception& e) {
+                        JAMI_ERR("Error when loading account: %s", e.what());
+                        ctx->onFailure(AuthError::NETWORK, "");
+                    }
+                }
+            });
+            request->send();
+        });
     });
-    request->send();
-    requests_[reqid] = std::move(request);
 }
 
 void
