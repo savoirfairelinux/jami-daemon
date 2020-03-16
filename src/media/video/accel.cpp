@@ -77,7 +77,9 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
 {
     auto accel = static_cast<HardwareAccel*>(codecCtx->opaque);
 
+    AVPixelFormat fallback = AV_PIX_FMT_NONE;
     for (int i = 0; formats[i] != AV_PIX_FMT_NONE; ++i) {
+        fallback = formats[i];
         if (accel && formats[i] == accel->getFormat()) {
             // found hardware format for codec with api
             JAMI_DBG() << "Found compatible hardware format for "
@@ -86,7 +88,9 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
             return formats[i];
         }
     }
-    return AV_PIX_FMT_NONE;
+
+    JAMI_WARN() << "Not using hardware decoding";
+    return fallback;
 }
 
 int
