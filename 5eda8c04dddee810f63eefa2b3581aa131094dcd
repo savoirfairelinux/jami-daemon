@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "267a0fe8_6ec3fbf9",
+        "filename": "bin/dbus/cx.ring.Ring.CallManager.xml",
+        "patchSetId": 8
+      },
+      "lineNbr": 798,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-16T14:31:38Z",
+      "side": 1,
+      "message": "add contactId to handle conferences",
+      "range": {
+        "startLine": 798,
+        "startChar": 12,
+        "endLine": 798,
+        "endChar": 56
+      },
+      "revId": "5eda8c04dddee810f63eefa2b3581aa131094dcd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "763e9628_2291ce97",
+        "filename": "src/sip/sipvoiplink.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 1034,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-16T14:31:38Z",
+      "side": 1,
+      "message": "call-\u003esetRemoteRecording();\n\nemit signal from the Call",
+      "range": {
+        "startLine": 1027,
+        "startChar": 20,
+        "endLine": 1034,
+        "endChar": 21
+      },
+      "revId": "5eda8c04dddee810f63eefa2b3581aa131094dcd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
