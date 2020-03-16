@@ -607,7 +607,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // Call connected devices
     std::set<std::string> devices;
     std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
-    for (auto deviceConnIt = sipConnections_[toUri].begin(); deviceConnIt != sipConnections_[toUri].end(); ++deviceConnIt) {
+    auto& sipConns = sipConnections_[toUri];
+    auto deviceConnIt = sipConns.begin();
+    for (; deviceConnIt != sipConns.end(); ++deviceConnIt) {
         if (deviceConnIt->second.empty()) continue;
         auto& it = deviceConnIt->second.back();
 
@@ -2723,8 +2725,12 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     std::set<std::string> devices;
     std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
     sip_utils::register_thread();
-    for (auto deviceConnIt = sipConnections_[to].begin(); deviceConnIt != sipConnections_[to].end(); ++deviceConnIt) {
-        if (deviceConnIt->second.empty()) continue;
+    auto& sipConns = sipConnections_[to];
+    auto deviceConnIt = sipConns.begin();
+    while (deviceConnIt != sipConns.end()) {
+        if (deviceConnIt->second.empty()) {
+            ++deviceConnIt;
+        }
         auto& it = deviceConnIt->second.back();
 
         auto transport = it.transport;
@@ -2733,7 +2739,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             messageEngine_.onMessageSent(to, token, false);
             JAMI_WARN("A SIP transport exists without Channel, this is a bug. Please report");
             // Remove connection in incorrect state
-            sipConnections_.erase(to);
+            deviceConnIt = sipConns.erase(deviceConnIt);
             continue;
         }
 
@@ -2755,6 +2761,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         if (status != PJ_SUCCESS) {
             JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
             messageEngine_.onMessageSent(to, token, false);
+            ++deviceConnIt;
             continue;
         }
 
@@ -2792,6 +2799,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         if (status != PJ_SUCCESS) {
             JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
             messageEngine_.onMessageSent(to, token, false);
+            ++deviceConnIt;
             continue;
         }
         im::fillPJSIPMessageBody(*tdata, payloads);
@@ -2849,6 +2857,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         });
 
         devices.emplace(deviceConnIt->first);
+        ++deviceConnIt;
     }
     lk.unlock();
 
