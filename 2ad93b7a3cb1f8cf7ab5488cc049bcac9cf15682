@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ae86a765_7875cdcb",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 611,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-16T19:23:35Z",
+      "side": 1,
+      "message": "can remain in for loop",
+      "range": {
+        "startLine": 611,
+        "startChar": 4,
+        "endLine": 611,
+        "endChar": 41
+      },
+      "revId": "2ad93b7a3cb1f8cf7ab5488cc049bcac9cf15682",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4c0c9b8d_8f411554",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2733,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-16T19:23:35Z",
+      "side": 1,
+      "message": "missing continue",
+      "range": {
+        "startLine": 2731,
+        "startChar": 0,
+        "endLine": 2733,
+        "endChar": 9
+      },
+      "revId": "2ad93b7a3cb1f8cf7ab5488cc049bcac9cf15682",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
