@@ -51,7 +51,15 @@ public:
     }) } { }
 
     ~Impl() {
-        shutdown();
+        if (!isShutdown_) {
+            shutdown();
+        } else {
+            std::lock_guard<std::mutex> lkSockets(socketsMutex);
+            for (auto& socket : sockets) {
+                if (socket.second) socket.second->stop();
+            }
+            sockets.clear();
+        }
     }
 
     void shutdown() {
@@ -68,6 +76,7 @@ public:
                 // No need to write the EOF for the channel, the write will fail because endpoint is already shutdown
                 if (socket.second) socket.second->stop();
             }
+            sockets.clear();
         }
     }
 
