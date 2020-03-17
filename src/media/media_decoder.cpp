@@ -494,6 +494,10 @@ MediaDecoder::prepareDecoderContext()
         return -1;
     }
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
+    if (avStream_->codecpar->codec_id == AV_CODEC_ID_HEVC 
+                    or avStream_->codecpar->codec_id == AV_CODEC_ID_H264
+                    or avStream_->codecpar->codec_id == AV_CODEC_ID_VP8)
+        JAMI_ERR("-PL- size from stream: %d x %d, size from decoder: %d x %d ", avStream_->codecpar->width, avStream_->codecpar->height, decoderCtx_->width, decoderCtx_->height);
     decoderCtx_->framerate = avStream_->avg_frame_rate;
     if (avStream_->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
         if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)

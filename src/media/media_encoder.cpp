@@ -261,6 +261,10 @@ MediaEncoder::initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* fr
 #else
     stream->codec = encoderCtx;
 #endif
+    if (encoderCtx->codec_id == AV_CODEC_ID_HEVC 
+                    or encoderCtx->codec_id == AV_CODEC_ID_H264
+                    or encoderCtx->codec_id == AV_CODEC_ID_VP8)
+        JAMI_ERR("-PL- size from encoder: %d x %d, size from stream: %d x %d", encoderCtx->width, encoderCtx->height, stream->codecpar->width, stream->codecpar->height);
     // framerate is not copied from encoderCtx to stream
     stream->avg_frame_rate = encoderCtx->framerate;
 #ifdef ENABLE_VIDEO
