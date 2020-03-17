@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d8ea5763_2bc77d18",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 642,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-03-17T20:06:43Z",
+      "side": 1,
+      "message": "does not make any sense to me oo\"",
+      "range": {
+        "startLine": 634,
+        "startChar": 7,
+        "endLine": 642,
+        "endChar": 0
+      },
+      "revId": "47ff3f69a3728e588bb623bbccdbb752e54c6d65",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
