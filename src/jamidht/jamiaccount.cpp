@@ -608,6 +608,15 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     std::set<std::string> devices;
     std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
     auto& sipConns = sipConnections_[toUri];
+    // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
+    // cached connection is failing with ICE (close event still not detected).
+    auto& manager = Manager::instance();
+    auto dummyCall = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
+                                                                            Call::CallType::OUTGOING,
+                                                                            call->getDetails());
+    dummyCall->setIPToIP(true);
+    dummyCall->setSecure(isTlsEnabled());
+    call->addSubCall(*dummyCall);
     for (auto deviceConnIt = sipConns.begin(); deviceConnIt != sipConns.end(); ++deviceConnIt) {
         if (deviceConnIt->second.empty()) continue;
         auto& it = deviceConnIt->second.back();
@@ -619,7 +628,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         }
         if (!transport) continue;
 
-        auto& manager = Manager::instance();
         auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING,
                                                                           call->getDetails());
@@ -629,7 +637,16 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         call->addSubCall(*dev_call);
 
         auto remoted_address = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
-        onConnectedOutgoingCall(*dev_call, toUri, remoted_address);
+        try {
+            onConnectedOutgoingCall(*dev_call, toUri, remoted_address);
+        } catch (const VoipLinkException&) {
+            // In this case, the main scenario is that SIPStartCall failed because
+            // the ICE is dead and the TLS session didn't send any packet on that dead
+            // link (connectivity change, killed by the os, etc)
+            // Here, we don't need to do anything, the TLS will fail and will delete
+            // the cached transport
+            continue;
+        }
         devices.emplace(deviceConnIt->first);
 
         call->setOnNeedFallback([sendDhtRequest, deviceId = deviceConnIt->first]() {
@@ -647,7 +664,9 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         requestSIPConnection(toUri, dev.toString());
 
         sendDhtRequest(dev.toString());
-    }, [wCall](bool ok){
+    }, [wCall, dummyCall] (bool ok) {
+        // Mark the temp call as failed to stop the main call if necessary
+        if (dummyCall) dummyCall->onFailure(static_cast<int>(std::errc::no_such_device_or_address));
         if (not ok) {
             if (auto call = wCall.lock()) {
                 JAMI_WARN("[call:%s] no devices found", call->getCallId().c_str());
