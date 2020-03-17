@@ -470,8 +470,8 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
         return;
     }
 
-    auto certToDev = std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::InfoHash>(cert, deviceId);
-    certMap_.emplace(cert->getId(), std::move(certToDev));
+    auto crt = cert; // This copy the shared_ptr for gcc 6
+    certMap_.emplace(cert->getId(), std::make_pair(crt, dht::InfoHash(deviceId)));
 
     // Because the connection is accepted, create an ICE socket.
     auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
