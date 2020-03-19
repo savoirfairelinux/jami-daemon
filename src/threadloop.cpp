@@ -118,7 +118,7 @@ ThreadLoop::exit()
 bool
 ThreadLoop::isRunning() const noexcept
 {
-#ifdef _WIN32
+#if defined(_WIN32) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     return state_ == RUNNING;
 #else
     return thread_.joinable() and state_ == RUNNING;

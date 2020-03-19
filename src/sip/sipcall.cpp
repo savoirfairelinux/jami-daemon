@@ -982,6 +982,15 @@ SIPCall::startAllMedia()
 
         rtp->setSuccessfulSetupCb([this](MediaType type){ rtpSetupSuccess(type); });
 
+#ifdef ENABLE_VIDEO
+        videortp_->setRequestKeyFrameCallback([wthis = weak()] {
+            runOnMainThread([wthis] {
+                if (auto this_ = wthis.lock())
+                    this_->requestKeyframe();
+            });
+        });
+#endif
+
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
         // because of the audio loop
         if (getState() != CallState::HOLD) {
@@ -1005,15 +1014,6 @@ SIPCall::startAllMedia()
             default: break;
         }
     }
-
-#ifdef ENABLE_VIDEO
-    videortp_->setRequestKeyFrameCallback([wthis = weak()] {
-        runOnMainThread([wthis] {
-            if (auto this_ = wthis.lock())
-                this_->requestKeyframe();
-        });
-    });
-#endif
 
     if (not isSubcall() and peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;
