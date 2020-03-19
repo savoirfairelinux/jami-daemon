@@ -52,6 +52,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , stream_(sdp)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
+    , isVideoConfigured_(false)
     , mtu_(mtu)
     , rotation_(0)
     , loop_(std::bind(&VideoReceiveThread::setup, this),
@@ -119,36 +120,6 @@ bool VideoReceiveThread::setup()
         // Now replace our custom AVIOContext with one that will read packets
         videoDecoder_->setIOContext(demuxContext_.get());
     }
-
-    if (videoDecoder_->setupVideo()) {
-        JAMI_ERR("decoder IO startup failed");
-        return false;
-    }
-
-    // Default size from input video
-    if (dstWidth_ == 0 and dstHeight_ == 0) {
-        dstWidth_ = videoDecoder_->getWidth();
-        dstHeight_ = videoDecoder_->getHeight();
-    }
-
-    if (not sink_->start()) {
-        JAMI_ERR("RX: sink startup failed");
-        return false;
-    }
-
-    auto conf = Manager::instance().getConferenceFromCallID(id_);
-    if (!conf)
-        exitConference();
-
-    // Send remote video codec in SmartInfo
-    Smartools::getInstance().setRemoteVideoCodec(videoDecoder_->getDecoderName(), id_);
-
-    // Send the resolution in smartInfo
-    Smartools::getInstance().setResolution(id_, dstWidth_, dstHeight_);
-
-    if (onSetupSuccess_)
-        onSetupSuccess_(MEDIA_VIDEO);
-
     return true;
 }
 
@@ -187,6 +158,9 @@ void VideoReceiveThread::addIOContext(SocketPair& socketPair)
 
 void VideoReceiveThread::decodeFrame()
 {
+    if (!configureVideoOutput()) {
+        return;
+    }
     auto status = videoDecoder_->decode();
     if (status == MediaDemuxer::Status::EndOfFile ||
         status == MediaDemuxer::Status::ReadError) {
@@ -196,6 +170,48 @@ void VideoReceiveThread::decodeFrame()
         if (keyFrameRequestCallback_)
             keyFrameRequestCallback_();
     }
+}
+
+bool VideoReceiveThread::configureVideoOutput()
+{
+    if (isVideoConfigured_) {
+        return true;
+    }
+    if (!loop_.isRunning()) {
+        return false;
+    }
+   if (videoDecoder_->setupVideo()) {
+        JAMI_ERR("decoder IO startup failed");
+        loop_.stop();
+        return false;
+    }
+
+    // Default size from input video
+    if (dstWidth_ == 0 and dstHeight_ == 0) {
+        dstWidth_ = videoDecoder_->getWidth();
+        dstHeight_ = videoDecoder_->getHeight();
+    }
+
+    if (not sink_->start()) {
+        JAMI_ERR("RX: sink startup failed");
+        loop_.stop();
+        return false;
+    }
+
+    auto conf = Manager::instance().getConferenceFromCallID(id_);
+    if (!conf)
+        exitConference();
+
+    // Send remote video codec in SmartInfo
+    Smartools::getInstance().setRemoteVideoCodec(videoDecoder_->getDecoderName(), id_);
+
+    // Send the resolution in smartInfo
+    Smartools::getInstance().setResolution(id_, dstWidth_, dstHeight_);
+
+    if (onSetupSuccess_)
+        onSetupSuccess_(MEDIA_VIDEO);
+    isVideoConfigured_ = true;
+    return true;
 }
 
 void VideoReceiveThread::enterConference()
