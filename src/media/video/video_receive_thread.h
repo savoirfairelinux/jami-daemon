@@ -91,6 +91,7 @@ private:
     std::unique_ptr<MediaIOHandle> demuxContext_;
     std::shared_ptr<SinkClient> sink_;
     bool isReset_;
+    bool isVideoConfigured_;
     uint16_t mtu_;
     int rotation_;
     std::shared_ptr<AVBufferRef> displayMatrix_;
@@ -99,6 +100,7 @@ private:
     void decodeFrame();
     static int interruptCb(void *ctx);
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
+    bool configureVideoOutput();
 
     std::function<void(MediaType)> onSetupSuccess_;
 
