@@ -16,6 +16,24 @@
       "revId": "c8f2a491868df59484705bbedea93eaa09411204",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d0dc6620_d2de3942",
+        "filename": "src/threadloop.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 121,
+      "author": {
+        "id": 225
+      },
+      "writtenOn": "2020-03-19T18:39:08Z",
+      "side": 1,
+      "message": "So far we do not see it on other platforms, except Windows(patch fedf875). But it is a race condition and theoretically could happens on every platform. It is one solution and another would be to manage timing of setup video in video receive thread.",
+      "parentUuid": "d347b0d6_260e7b6a",
+      "revId": "c8f2a491868df59484705bbedea93eaa09411204",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
