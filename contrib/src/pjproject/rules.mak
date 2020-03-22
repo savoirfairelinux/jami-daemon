@@ -48,15 +48,17 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0001-rfc6544.patch
 	$(APPLY) $(SRC)/pjproject/0002-rfc2466.patch
 	$(APPLY) $(SRC)/pjproject/0003-add-tcp-keep-alive.patch
-	$(APPLY) $(SRC)/pjproject/0004-multiple_listeners.patch
-	$(APPLY) $(SRC)/pjproject/0005-fix_ebusy_turn.patch
-	$(APPLY) $(SRC)/pjproject/0006-ignore_ipv6_on_transport_check.patch
-	$(APPLY) $(SRC)/pjproject/0007-pj_ice_sess.patch
-	$(APPLY) $(SRC)/pjproject/0008-fix_ioqueue_ipv6_sendto.patch
-	$(APPLY) $(SRC)/pjproject/0009-add-config-site.patch
+	$(APPLY) $(SRC)/pjproject/0004-allow-multiple-listeners.patch
+	$(APPLY) $(SRC)/pjproject/0005-fix-ebusy-turn.patch
+	$(APPLY) $(SRC)/pjproject/0006-ignore-ipv6-on-transport-check.patch
+	$(APPLY) $(SRC)/pjproject/0007-pj-ice-sess.patch
+	$(APPLY) $(SRC)/pjproject/0008-fix-ioqueue-ipv6-sendto.patch
+	$(APPLY) $(SRC)/pjproject/0009-icest-add-on_valid_pair-to-ice-strans-callbacks.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
+	cp $(SRC)/pjproject/config_site.h pjproject-$(PJPROJECT_VERSION)/pjlib/include/pj/config_site.h
+	cp $(SRC)/pjproject/user.mak pjproject-$(PJPROJECT_VERSION)/
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
