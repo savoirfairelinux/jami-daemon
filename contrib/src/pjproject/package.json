@@ -13,7 +13,6 @@
         "0007-pj_ice_sess.patch",
         "0008-fix_ioqueue_ipv6_sendto.patch",
         "0009-add-config-site.patch",
-        "0001-win-config.patch",
         "0002-win-vs-gnutls.patch",
         "0003-win-vs2017-props.patch"
     ],
@@ -31,7 +30,9 @@
     ],
     "with_env" : "",
     "custom_scripts": {
-        "pre_build": [],
+        "pre_build": [
+		"ln -s ../../src/pjproject/config_site_win.h config_site.h"
+        ],
         "build": [],
         "post_build": []
     }

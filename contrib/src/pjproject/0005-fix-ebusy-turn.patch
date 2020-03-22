@@ -1,7 +1,7 @@
-From a9a8cc6b62dc08e34ed4f7893a822809dd051572 Mon Sep 17 00:00:00 2001
+From a57db72aa4baf62eca6d85f630c2bb5d40a1a61f Mon Sep 17 00:00:00 2001
 From: jrun <darwinskernel@gmail.com>
 Date: Wed, 19 Feb 2020 15:17:38 -0500
-Subject: [PATCH 5/9] fix_ebusy_turn
+Subject: [PATCH 5/9] fix ebusy turn
 
 ---
  pjnath/include/pjnath/turn_session.h | 126 ++++++++++++++++++++-------
@@ -339,10 +339,10 @@ index 35388809f..645c414fe 100644
   * Optionally establish channel binding for the specified a peer address.
   * This function will assign a unique channel number for the peer address
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 4adc9bc70..643bbbac9 100644
+index 2e7862842..13572adae 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
-@@ -1937,7 +1937,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
+@@ -1932,7 +1932,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
  {
      ice_st->call_send_cb = PJ_TRUE;
      return send_data(ice_st, comp_id, data, data_len, dst_addr,
