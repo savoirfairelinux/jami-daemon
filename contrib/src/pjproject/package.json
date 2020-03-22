@@ -31,7 +31,7 @@
     ],
     "with_env" : "",
     "custom_scripts": {
-        "pre_build": [],
+        "pre_build": ['ln -s ../../src/pjproject/config_site_win.h config_site.h'],
         "build": [],
         "post_build": []
     }
