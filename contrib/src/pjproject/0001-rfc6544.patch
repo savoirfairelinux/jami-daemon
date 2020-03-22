@@ -1,7 +1,7 @@
-From bbf656dd46216c2551895abfb487b51ff786d1ae Mon Sep 17 00:00:00 2001
+From 6378e6217ea8b7962a8f5fcded7099ce184bf6a0 Mon Sep 17 00:00:00 2001
 From: jrun <darwinskernel@gmail.com>
 Date: Wed, 26 Feb 2020 13:27:51 -0500
-Subject: [PATCH] rfc6544
+Subject: [PATCH 1/9] rfc6544
 
 ---
  pjnath/include/pjnath/ice_session.h     |  173 +++-
