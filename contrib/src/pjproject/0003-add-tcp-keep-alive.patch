@@ -1,4 +1,4 @@
-From 0d46f77fe2cd2e3197f3b7b745d822b6c1cb9790 Mon Sep 17 00:00:00 2001
+From 64e4f1d37d4fee5811f5bcfc02dbc8a6bc5afff5 Mon Sep 17 00:00:00 2001
 From: jrun <darwinskernel@gmail.com>
 Date: Thu, 27 Feb 2020 12:57:17 -0500
 Subject: [PATCH 3/9] add tcp keep alive
@@ -280,10 +280,10 @@ index 9eb74b35f..1269442cd 100644
  
  
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index a50c21c94..4ba44f38b 100644
+index 26df4aeff..80e498247 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
-@@ -1435,6 +1435,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+@@ -1427,6 +1427,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
  					  PJ_FALSE, PJ_FALSE, 
  					  &the_check->rcand->addr, 
  					  addr_len, tdata);
@@ -297,18 +297,18 @@ index a50c21c94..4ba44f38b 100644
  	/* Restore FINGERPRINT usage */
  	pj_stun_session_use_fingerprint(comp->stun_sess, saved);
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 8ba2172e5..4adc9bc70 100644
+index 1cb6a6d14..2e7862842 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
-@@ -98,6 +98,7 @@ static pj_uint16_t GETVAL16H(const pj_uint8_t *buf1, const pj_uint8_t *buf2)
- //////////////////////////////////////////////////////////////////////////////
+@@ -99,6 +99,7 @@ static pj_uint16_t GETVAL16H(const pj_uint8_t *buf1, const pj_uint8_t *buf2)
  
  /* ICE callbacks */
-+static void	   on_ice_destroy(pj_ice_sess *ice);
  static void	   on_ice_complete(pj_ice_sess *ice, pj_status_t status);
++static void	   on_ice_destroy(pj_ice_sess *ice);
  static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
  			      unsigned comp_id,
-@@ -1322,6 +1323,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
+ 			      unsigned transport_id,
+@@ -1317,6 +1318,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
      ice_cb.select_turn_dataconn     = &ice_select_turn_dataconn;
      ice_cb.reconnect_tcp_connection = &ice_reconnect_tcp_connection;
      ice_cb.close_tcp_connection     = &ice_close_tcp_connection;
@@ -316,7 +316,7 @@ index 8ba2172e5..4adc9bc70 100644
  #endif
  
      /* Create! */
-@@ -1938,6 +1940,14 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
+@@ -1933,6 +1935,14 @@ PJ_DEF(pj_status_t) pj_ice_strans_sendto2(pj_ice_strans *ice_st,
      		     dst_addr_len, PJ_TRUE, PJ_FALSE);
  }
  

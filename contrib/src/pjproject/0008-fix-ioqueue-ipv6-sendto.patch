@@ -1,7 +1,7 @@
-From 52f0c422e41ace1f2b682adbbaf67c4ddb0d17ed Mon Sep 17 00:00:00 2001
+From d8cbbfec2f5d580f3f231fbbd1c178fb352bf247 Mon Sep 17 00:00:00 2001
 From: jrun <darwinskernel@gmail.com>
 Date: Thu, 20 Feb 2020 12:39:23 -0500
-Subject: [PATCH 8/9] fix_ioqueue_ipv6_sendto
+Subject: [PATCH 8/9] fix ioqueue ipv6 sendto
 
 ---
  pjlib/src/pj/ioqueue_common_abs.c |  5 ++++-
