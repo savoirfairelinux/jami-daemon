@@ -1,7 +1,7 @@
-From 02c53ba6beb9e9faeb59059bf466e444dfdb14a6 Mon Sep 17 00:00:00 2001
+From 1671700478aaf3c107ece6c02f1d986f7b6df3d3 Mon Sep 17 00:00:00 2001
 From: jrun <darwinskernel@gmail.com>
 Date: Thu, 20 Feb 2020 12:33:47 -0500
-Subject: [PATCH 7/9] pj_ice_sess
+Subject: [PATCH 7/9] pj ice sess
 
 ---
  pjnath/include/pjnath/ice_strans.h | 2 ++
@@ -22,10 +22,10 @@ index 1269442cd..41f3b6297 100644
  /**
   * @}
 diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
-index 643bbbac9..603b75121 100644
+index 13572adae..edeed7189 100644
 --- a/pjnath/src/pjnath/ice_strans.c
 +++ b/pjnath/src/pjnath/ice_strans.c
-@@ -1949,6 +1949,11 @@ static void on_ice_destroy(pj_ice_sess *ice)
+@@ -1944,6 +1944,11 @@ static void on_ice_destroy(pj_ice_sess *ice)
      }
  }
  
