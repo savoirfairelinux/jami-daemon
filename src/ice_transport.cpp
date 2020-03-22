@@ -84,6 +84,7 @@ public:
     Impl(const char* name, int component_count, bool master, const IceTransportOptions& options);
     ~Impl();
 
+    // void onValidPair(pj_ice_strans* ice_st);
     void onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
                     pj_status_t status);
 
@@ -336,6 +337,13 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
         else
             JAMI_WARN("null IceTransport");
     };
+    icecb.on_valid_pair = \
+        [] (pj_ice_strans* ice_st, pj_ice_strans_op op) {
+        if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st)))
+            tr->onComplete(ice_st, op, PJ_SUCCESS);
+        else
+            JAMI_WARN("null IceTransport");
+    };
 
     icecb.on_data_sent = [](pj_ice_strans* ice_st, pj_ssize_t size) {
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
@@ -506,11 +514,12 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
 {
     const char *opname =
         op == PJ_ICE_STRANS_OP_INIT ? "initialization" :
-        op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
+        op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" :
+        op == PJ_ICE_STRANS_OP_FIRST_CAND? "first_candidate" : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
-        JAMI_DBG("[ice:%p] %s success", this, opname);
+        JAMI_WARN("[ice:%p] %s success", this, opname);
     }
     else {
         last_errmsg_ = sip_utils::sip_strerror(status);
@@ -533,7 +542,7 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
 
     if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_)
         on_initdone_cb_(done);
-    else if (op == PJ_ICE_STRANS_OP_NEGOTIATION) {
+    else if (op == PJ_ICE_STRANS_OP_NEGOTIATION || op == PJ_ICE_STRANS_OP_FIRST_CAND) {
         if (done) {
             // Dump of connection pairs
             std::stringstream out;

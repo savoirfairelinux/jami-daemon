@@ -4,16 +4,15 @@
     "url": "https://github.com/pjsip/pjproject/archive/__VERSION__.tar.gz",
     "deps": ["gnutls"],
     "patches": [
-        "0001-rfc6544.patch",
-        "0002-rfc2466.patch",
-        "0003-add-tcp-keep-alive.patch",
-        "0004-multiple_listeners.patch",
-        "0005-fix_ebusy_turn.patch",
-        "0006-ignore_ipv6_on_transport_check.patch",
-        "0007-pj_ice_sess.patch",
-        "0008-fix_ioqueue_ipv6_sendto.patch",
-        "0009-add-config-site.patch",
-        "0001-win-config.patch",
+        "0001-rfc6544.patch"
+        "0002-rfc2466.patch"
+        "0003-add-tcp-keep-alive.patch"
+        "0004-allow-multiple-listeners.patch"
+        "0005-fix-ebusy-turn.patch"
+        "0006-ignore-ipv6-on-transport-check.patch"
+        "0007-pj-ice-sess.patch"
+        "0008-fix-ioqueue-ipv6-sendto.patch"
+        "0009-icest-add-on_valid_pair-to-ice-strans-callbacks.patch"
         "0002-win-vs-gnutls.patch",
         "0003-win-vs2017-props.patch"
     ],
@@ -31,7 +30,9 @@
     ],
     "with_env" : "",
     "custom_scripts": {
-        "pre_build": [],
+        "pre_build": [
+                "ln -s ../../src/pjproject/config_site_win.h config_site.h"
+        ],
         "build": [],
         "post_build": []
     }
