@@ -142,7 +142,7 @@ public:
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
     void connect(const std::chrono::milliseconds& timeout = {}) override;
 
-    void setOnShutdown(onShutdownCb&& cb) {
+    void setOnShutdown(onShutdownCb&& cb) override {
         scb = cb;
     }
 
@@ -176,7 +176,7 @@ public:
             ice_->setOnRecv(compId_, cb);
     }
 
-    void setOnShutdown(onShutdownCb&& cb) {
+    void setOnShutdown(onShutdownCb&& cb) override {
         ice_->setOnShutdown(std::move(cb));
     }
 private:
