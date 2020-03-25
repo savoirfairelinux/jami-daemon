@@ -53,9 +53,11 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0006-ignore_ipv6_on_transport_check.patch
 	$(APPLY) $(SRC)/pjproject/0007-pj_ice_sess.patch
 	$(APPLY) $(SRC)/pjproject/0008-fix_ioqueue_ipv6_sendto.patch
-	$(APPLY) $(SRC)/pjproject/0009-add-config-site.patch
+	cp $(SRC)/pjproject/config_site_main.h pjproject-$(PJPROJECT_VERSION)/pjlib/include/pj/config_site.h
+	cp $(SRC)/pjproject/user.mak pjproject-$(PJPROJECT_VERSION)/
 ifdef HAVE_ANDROID
-	$(APPLY) $(SRC)/pjproject/0001-android.patch
+	$(APPLY) $(SRC)/pjproject/0010-android.patch
+	cp $(SRC)/pjproject/config_site_android.h pjproject-$(PJPROJECT_VERSION)/pjlib/include/pj/config_site.h
 endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
