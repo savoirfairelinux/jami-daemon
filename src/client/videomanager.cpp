@@ -727,7 +727,12 @@ bool
 VideoManager::hasRunningPlayers()
 {
     auto& vmgr = Manager::instance().getVideoManager();
-    return !vmgr.mediaPlayers.empty();
+    for (auto it: vmgr.mediaPlayers) {
+        if (!it.second->isPaused()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 std::shared_ptr<MediaPlayer>
@@ -760,6 +765,13 @@ pausePlayer(const std::string& id, bool pause)
     auto player = getMediaPlayer(id);
     if (player) {
         player->pause(pause);
+        if (pause) {
+            auto& vmgr = Manager::instance().getVideoManager();
+            if (!vmgr.hasRunningPlayers()) {
+            //if (vmgr.mediaPlayers.empty()) {
+                jami::Manager::instance().checkAudio();
+            }
+        }
         return true;
     }
     return false;
@@ -771,10 +783,17 @@ closePlayer(const std::string& id)
     auto& vmgr = Manager::instance().getVideoManager();
     auto player = getMediaPlayer(id);
     if (player) {
+        if (!vmgr.hasRunningPlayers() || vmgr.mediaPlayers.size() == 1) {
+             //if (vmgr.mediaPlayers.empty()) {
+                 jami::Manager::instance().checkAudio();
+             }
+
         vmgr.mediaPlayers.erase(id);
-        if (vmgr.mediaPlayers.empty()) {
-            jami::Manager::instance().checkAudio();
-        }
+//        if (!vmgr.hasRunningPlayers()) {
+//        //if (vmgr.mediaPlayers.empty()) {
+//            jami::Manager::instance().checkAudio();
+//        }
+        //}
         return true;
     }
     return false;

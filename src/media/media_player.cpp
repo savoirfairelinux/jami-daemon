@@ -44,7 +44,7 @@ MediaPlayer::MediaPlayer(const std::string& path)
 
     path_ = path;
     id_ = std::to_string(rand());
-    Manager::instance().startAudioPlayback();
+    //Manager::instance().startAudioPlayback();
     audioInput_ = jami::getAudioInput(id_);
     audioInput_->setPaused(paused_);
     videoInput_ = jami::getVideoInput(id_,
@@ -187,6 +187,9 @@ MediaPlayer::pause(bool pause)
         return;
     }
     paused_ = pause;
+    if (!paused_) {
+         Manager::instance().startAudioPlayback();
+    }
     if (!pause) {
         pauseInterval_ += av_gettime() - lastPausedTime_;
     } else {
