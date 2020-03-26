@@ -100,11 +100,9 @@ ServerAccountManager::initAuthentication(
                 request->set_body(ss.str());
             }
             this_.setHeaderFields(*request);
-            request->add_on_state_change_callback([reqid, request, ctx, onAsync]
-                                                (Request::State state, const dht::http::Response& response){
-                JAMI_DBG("[Auth] Got request callback with state=%d", (int)state);
-                if (state != Request::State::DONE)
-                    return;
+            request->add_on_done_callback([reqid, request, ctx, onAsync]
+                                                (const dht::http::Response& response){
+                JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
                 if (response.status_code == 0)
                     ctx->onFailure(AuthError::SERVER_ERROR, "Can't connect to server");
                 else if (response.status_code >= 400 && response.status_code < 500)
@@ -219,13 +217,10 @@ ServerAccountManager::syncDevices()
     request->set_method(restinio::http_method_get());
     request->set_auth(creds_->username, creds_->password);
     setHeaderFields(*request);
-    request->add_on_state_change_callback([reqid, onAsync = onAsync_]
-                                            (Request::State state, const dht::http::Response& response){
-        onAsync([reqid, state, response] (AccountManager& accountManager) {
-            JAMI_DBG("[Auth] Got request callback with state=%d", (int)state);
+    request->add_on_done_callback([reqid, onAsync = onAsync_] (const dht::http::Response& response){
+        onAsync([reqid, response] (AccountManager& accountManager) {
+            JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-            if (state != Request::State::DONE)
-                return;
             if (response.status_code >= 200 || response.status_code < 300) {
                 try {
                     Json::Value json;
@@ -275,13 +270,10 @@ ServerAccountManager::revokeDevice(const std::string& password, const std::strin
     request->set_method(restinio::http_method_delete());
     request->set_auth(info_->username, password);
     setHeaderFields(*request);
-    request->add_on_state_change_callback([reqid, cb, onAsync = onAsync_]
-                                          (Request::State state, const dht::http::Response& response){
-        onAsync([reqid, cb, state, response] (AccountManager& accountManager) {
-            JAMI_DBG("[Revoke] Got request callback with state=%d", (int) state);
+    request->add_on_done_callback([reqid, cb, onAsync = onAsync_] (const dht::http::Response& response){
+        onAsync([reqid, cb, response] (AccountManager& accountManager) {
+            JAMI_DBG("[Revoke] Got request callback with status code=%u", response.status_code);
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-            if (state != Request::State::DONE)
-                return;
             if (response.status_code >= 200 || response.status_code < 300) {
                 if (response.body.empty())
                     return;
