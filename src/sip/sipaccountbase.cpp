@@ -497,7 +497,6 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
                 JAMI_WARN("Error parsing composing state: %s", e.what());
             }
         } else if (m.first == MIME_TYPE_IMDN) {
-            JAMI_WARN("Received message displayed: %s", m.second.c_str());
             try {
                 static const std::regex IMDN_MSG_ID_REGEX("<message-id>\\s*(\\w+)\\s*<\\/message-id>");
                 static const std::regex IMDN_STATUS_REGEX("<status>\\s*<(\\w+)\\/>\\s*<\\/status>");
@@ -520,7 +519,6 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
                     JAMI_WARN("Message displayed: can't parse status");
                     continue;
                 }
-                JAMI_WARN("Received message displayed: %lld %d", from_hex_string(messageId), isDisplayed);
                 messageEngine_.onMessageDisplayed(from, from_hex_string(messageId), isDisplayed);
                 if (payloads.size() == 1)
                     return;
