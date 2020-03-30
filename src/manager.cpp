@@ -1257,13 +1257,17 @@ bool
 Manager::unHoldConference(const std::string& id)
 {
     if (auto conf = getConferenceFromID(id)) {
-        for (const auto &item : conf->getParticipantList())
-            offHoldCall(item);
-        
-        pimpl_->switchCall(id);
-        conf->setState(Conference::State::ACTIVE_ATTACHED);
-        emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
-        return true;
+        // Unhold conf only if it was in hold state otherwise...
+        // all participants are restarted
+        if (conf->getState() == Conference::State::HOLD) {
+            for (const auto &item : conf->getParticipantList())
+                offHoldCall(item);
+
+            pimpl_->switchCall(id);
+            conf->setState(Conference::State::ACTIVE_ATTACHED);
+            emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
+            return true;
+        }
     }
     return false;
 }
