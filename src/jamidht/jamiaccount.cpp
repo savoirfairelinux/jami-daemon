@@ -1177,19 +1177,19 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 setRegistrationState(RegistrationState::UNREGISTERED);
                 saveConfig();
                 doRegister();
-            }, [w = weak(), id = getAccountID(), isManaged, migrating](AccountManager::AuthError error, const std::string& message) {
-                JAMI_WARN("[Account %s] Auth error: %d %s", id.c_str(), (int)error, message.c_str());
-                if ((isManaged || migrating) && error == AccountManager::AuthError::INVALID_ARGUMENTS) {
+            }, [w = weak(), id, accountId = getAccountID(), isManaged, migrating](AccountManager::AuthError error, const std::string& message) {
+                JAMI_WARN("[Account %s] Auth error: %d %s", accountId.c_str(), (int)error, message.c_str());
+                if ((id.first || migrating) && error == AccountManager::AuthError::INVALID_ARGUMENTS) {
                     // In cast of a migration or manager connexion failure stop the migration and block the account
-                    Migration::setState(id, Migration::State::INVALID);
+                    Migration::setState(accountId, Migration::State::INVALID);
                     if (auto acc = w.lock())
                         acc->setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
                 } else {
                     // In case of a DHT or backup import failure, just remove the account
                     if (auto acc = w.lock())
                         acc->setRegistrationState(RegistrationState::ERROR_GENERIC);
-                    runOnMainThread([id = std::move(id)] {
-                        Manager::instance().removeAccount(id, true);
+                    runOnMainThread([accountId = std::move(accountId)] {
+                        Manager::instance().removeAccount(accountId, true);
                     });
                 }
             }, std::move(callbacks));
