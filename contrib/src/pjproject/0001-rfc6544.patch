@@ -19,29 +19,28 @@ Rebased for pjsip 2.10 by Peymane Marandi
 <paymon@savoirfairelinux.com>
 on behalf of Savoir-faire Linux.
 
----
- pjnath/include/pjnath/ice_session.h     |  173 ++++++++++++++++++++++++++++++-
- pjnath/include/pjnath/ice_strans.h      |   21 ++++
- pjnath/include/pjnath/stun_session.h    |   75 +++++++++++++-
- pjnath/include/pjnath/stun_sock.h       |   67 +++++++++++-
- pjnath/include/pjnath/turn_sock.h       |   11 ++
+ pjnath/include/pjnath/ice_session.h     |  173 +++-
+ pjnath/include/pjnath/ice_strans.h      |   21 +
+ pjnath/include/pjnath/stun_session.h    |   75 +-
+ pjnath/include/pjnath/stun_sock.h       |   67 +-
+ pjnath/include/pjnath/turn_sock.h       |   11 +
  pjnath/src/pjnath-test/concur_test.c    |    5 +-
- pjnath/src/pjnath-test/sess_auth.c      |   14 ++-
+ pjnath/src/pjnath-test/sess_auth.c      |   14 +-
  pjnath/src/pjnath-test/stun_sock_test.c |    7 +-
- pjnath/src/pjnath/ice_session.c         |  513 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---------
- pjnath/src/pjnath/ice_strans.c          |  759 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------------------
+ pjnath/src/pjnath/ice_session.c         |  515 ++++++++++-
+ pjnath/src/pjnath/ice_strans.c          |  759 +++++++++++++---
  pjnath/src/pjnath/nat_detect.c          |    7 +-
- pjnath/src/pjnath/stun_session.c        |   15 ++-
- pjnath/src/pjnath/stun_sock.c           | 1074 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++----------------------------------
+ pjnath/src/pjnath/stun_session.c        |   15 +-
+ pjnath/src/pjnath/stun_sock.c           | 1074 +++++++++++++++++++----
  pjnath/src/pjnath/stun_transaction.c    |    3 +
  pjnath/src/pjnath/turn_session.c        |    3 +-
- pjnath/src/pjnath/turn_sock.c           |   24 +++--
+ pjnath/src/pjnath/turn_sock.c           |   24 +-
  pjnath/src/pjturn-client/client_main.c  |    2 +-
  pjnath/src/pjturn-srv/allocation.c      |    3 +-
  pjnath/src/pjturn-srv/server.c          |    2 +-
- pjsip-apps/src/samples/icedemo.c        |  116 +++++++++++++++++++--
+ pjsip-apps/src/samples/icedemo.c        |  116 ++-
  pjsip/src/pjsua-lib/pjsua_core.c        |    2 +-
- 21 files changed, 2497 insertions(+), 399 deletions(-)
+ 21 files changed, 2498 insertions(+), 400 deletions(-)
 
 diff --git a/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
 index 8971220f0..39c197c29 100644
@@ -670,7 +669,7 @@ index fff4fad26..e7f8b84eb 100644
      if (status != PJ_SUCCESS && status != PJ_EPENDING) {
  	app_perror("    error: server sending data", status);
 diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
-index 2a4125bc5..cd9e32e25 100644
+index 2a4125bc5..526c8e13f 100644
 --- a/pjnath/src/pjnath/ice_session.c
 +++ b/pjnath/src/pjnath/ice_session.c
 @@ -18,6 +18,7 @@
@@ -1369,13 +1368,15 @@ index 2a4125bc5..cd9e32e25 100644
  				      src_addr, src_addr_len, tdata);
  
  
-@@ -2795,11 +3216,11 @@ static void handle_incoming_check(pj_ice_sess *ice,
+@@ -2794,12 +3215,12 @@ static void handle_incoming_check(pj_ice_sess *ice,
+     /* Just get candidate with the highest priority and same transport ID
       * for the specified  component ID in the checklist.
       */
-     for (i=0; i<ice->clist.count; ++i) {
+-    for (i=0; i<ice->clist.count; ++i) {
 -	pj_ice_sess_check *c = &ice->clist.checks[i];
 -	if (c->lcand->comp_id == rcheck->comp_id &&
 -	    c->lcand->transport_id == rcheck->transport_id) 
++    for (i=0; i<ice->lcand_cnt; ++i) {
 +	pj_ice_sess_cand* lcand_tmp = &ice->lcand[i];
 +	if (lcand_tmp->comp_id == rcheck->comp_id &&
 +	    lcand_tmp->transport_id == rcheck->transport_id)
