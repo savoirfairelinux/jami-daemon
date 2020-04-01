@@ -58,6 +58,7 @@ public:
     void registerCallback(EngineCallback cb) {callback_ = cb;}
     size_t dbgGetDevBufCount();
 
+    std::mutex m_;
     std::atomic_bool waiting_ {false};
 };
 

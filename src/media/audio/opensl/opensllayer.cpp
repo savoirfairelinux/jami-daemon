@@ -302,14 +302,14 @@ OpenSLLayer::startAudioPlayback()
         while (player_ || ringtone_) {
             playCv.wait_for(lck, std::chrono::seconds(1));
             if (player_ && player_->waiting_) {
-                //std::lock_guard<std::mutex> lk(player_->m_);
+                std::lock_guard<std::mutex> lk(player_->m_);
                 engineServicePlay(false);
                 auto n = playBufQueue_.size();
                 if (n >= PLAY_KICKSTART_BUFFER_COUNT)
                     player_->playAudioBuffers(n);
             }
             if (ringtone_ && ringtone_->waiting_) {
-                //std::lock_guard<std::mutex> lk(ringtone_->m_);
+                std::lock_guard<std::mutex> lk(ringtone_->m_);
                 engineServiceRing(false);
                 auto n = ringBufQueue_.size();
                 if (n >= PLAY_KICKSTART_BUFFER_COUNT)
