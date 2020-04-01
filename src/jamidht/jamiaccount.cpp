@@ -635,6 +635,11 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         dev_call->setSecure(isTlsEnabled());
         dev_call->setTransport(transport);
         call->addSubCall(*dev_call);
+        // Set the call in PROGRESSING State because the ICE session
+        // is already ready. Note that this line should be after
+        // addSubcall() to change the state of the main call
+        // and avoid to get an active call in a TRYING state.
+        dev_call->setState(Call::ConnectionState::PROGRESSING);
 
         auto remoted_address = it.channel->underlyingICE()->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
         try {
