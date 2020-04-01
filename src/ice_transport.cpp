@@ -230,11 +230,12 @@ add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& i
     pj_ice_strans_stun_cfg_default(&stun);
     pj_strdup2_with_null(&pool, &stun.server, ip.toString().c_str());
     stun.af = ip.getFamily();
-    stun.port = PJ_STUN_PORT;
+    if (!(stun.port = ip.getPort()))
+        stun.port = PJ_STUN_PORT;
     stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
     stun.conn_type = cfg.stun.conn_type;
 
-    JAMI_DBG("[ice] added stun server '%s', port %d", pj_strbuf(&stun.server), stun.port);
+    JAMI_DBG("[ice] added stun server '%s', port %u", pj_strbuf(&stun.server), stun.port);
 }
 
 static void
