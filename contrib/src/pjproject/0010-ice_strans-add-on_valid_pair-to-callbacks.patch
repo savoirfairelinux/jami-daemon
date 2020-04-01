@@ -1,0 +1,145 @@
+From dfae6c9da955e9122462b5d73bf4dde33ec0289e Mon Sep 17 00:00:00 2001
+From: jrun <darwinskernel@gmail.com>
+Date: Wed, 20 May 2020 14:00:05 -0400
+Subject: [PATCH] ice_strans: add on_valid_pair() to callbacks
+
+It's possible to start sending as soon as one valid pair is found during
+ICE negotiation. The reason we would want to do this is because it is
+possible for a delay to occur at the start of a call for up to 3 seconds
+until ICE negotiation has actually completed. More information can be
+found here:
+https://bugs.chromium.org/p/chromium/issues/detail?id=1024096
+---
+ pjnath/include/pjnath/ice_strans.h |  8 +++
+ pjnath/src/pjnath/ice_strans.c     | 83 ++++++++++++++++++++++++++++++
+ 2 files changed, 91 insertions(+)
+
+diff --git a/pjnath/include/pjnath/ice_strans.h b/pjnath/include/pjnath/ice_strans.h
+index 41f3b6297..8884c8a2c 100644
+--- a/pjnath/include/pjnath/ice_strans.h
++++ b/pjnath/include/pjnath/ice_strans.h
+@@ -181,6 +181,14 @@ typedef struct pj_ice_strans_cb
+     void    (*on_data_sent)(pj_ice_strans *sock,
+			    pj_ssize_t sent);
+
++    /**
++     * An optional callback that will be called by the ICE transport when a
++     * valid pair has been found during ICE negotiation.
++     *
++     * @param ice_st	    The ICE stream transport.
++     */
++    void (*on_valid_pair)(pj_ice_strans *ice_st);
++
+     /**
+      * Callback to report status of various ICE operations.
+      *
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index db45d91cc..623e8b29a 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -98,6 +98,7 @@ static pj_uint16_t GETVAL16H(const pj_uint8_t *buf1, const pj_uint8_t *buf2)
+ //////////////////////////////////////////////////////////////////////////////
+
+ /* ICE callbacks */
++static void	   on_valid_pair(pj_ice_sess *ice);
+ static void	   on_ice_destroy(pj_ice_sess *ice);
+ static void	   on_ice_complete(pj_ice_sess *ice, pj_status_t status);
+ static pj_status_t ice_tx_pkt(pj_ice_sess *ice,
+@@ -1311,6 +1312,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_init_ice(pj_ice_strans *ice_st,
+
+     /* Init callback */
+     pj_bzero(&ice_cb, sizeof(ice_cb));
++    ice_cb.on_valid_pair   = &on_valid_pair;
+     ice_cb.on_ice_complete = &on_ice_complete;
+     ice_cb.on_rx_data = &ice_rx_data;
+     ice_cb.on_tx_pkt = &ice_tx_pkt;
+@@ -1956,6 +1958,87 @@ PJ_DECL(pj_ice_sess *) pj_ice_strans_get_ice_sess( pj_ice_strans *ice_st )
+     return ice_st->ice;
+ }
+
++static void on_valid_pair(pj_ice_sess *ice)
++{
++    pj_time_val t;
++    unsigned msec;
++    pj_ice_strans *ice_st = (pj_ice_strans *)ice->user_data;
++    pj_ice_strans_cb cb   = ice_st->cb;
++    pj_status_t status    = PJ_SUCCESS;
++
++    pj_grp_lock_add_ref(ice_st->grp_lock);
++
++    pj_gettimeofday(&t);
++    PJ_TIME_VAL_SUB(t, ice_st->start_time);
++    msec = PJ_TIME_VAL_MSEC(t);
++
++    if (cb.on_valid_pair) {
++	unsigned i;
++	enum {
++	    msg_disable_ind = 0xFFFF & ~(PJ_STUN_SESS_LOG_TX_IND |
++	                                 PJ_STUN_SESS_LOG_RX_IND)
++	};
++
++	PJ_LOG(4,
++	       (ice_st->obj_name, "First ICE candidate nominated in %ds:%03d",
++	        msec / 1000, msec % 1000));
++
++	for (i = 0; i < ice_st->comp_cnt; ++i) {
++	    const pj_ice_sess_check *check;
++	    pj_ice_strans_comp *comp = ice_st->comp[i];
++
++	    check = pj_ice_strans_get_valid_pair(ice_st, i + 1);
++	    if (check) {
++		char lip[PJ_INET6_ADDRSTRLEN + 10];
++		char rip[PJ_INET6_ADDRSTRLEN + 10];
++		unsigned tp_idx = GET_TP_IDX(check->lcand->transport_id);
++		unsigned tp_typ = GET_TP_TYPE(check->lcand->transport_id);
++
++		pj_sockaddr_print(&check->lcand->addr, lip, sizeof(lip), 3);
++		pj_sockaddr_print(&check->rcand->addr, rip, sizeof(rip), 3);
++
++		if (tp_typ == TP_TURN) {
++		    /* Activate channel binding for the remote address
++		     * for more efficient data transfer using TURN.
++		     */
++		    status = pj_turn_sock_bind_channel(
++		            comp->turn[tp_idx].sock, &check->rcand->addr,
++		            sizeof(check->rcand->addr));
++
++		    /* Disable logging for Send/Data indications */
++		    PJ_LOG(5, (ice_st->obj_name,
++		               "Disabling STUN Indication logging for "
++		               "component %d",
++		               i + 1));
++		    pj_turn_sock_set_log(comp->turn[tp_idx].sock,
++		                         msg_disable_ind);
++		    comp->turn[tp_idx].log_off = PJ_TRUE;
++		}
++
++		PJ_LOG(4, (ice_st->obj_name,
++		           " Comp %d: "
++		           "sending from %s candidate %s to "
++		           "%s candidate %s",
++		           i + 1, pj_ice_get_cand_type_name(check->lcand->type),
++		           lip, pj_ice_get_cand_type_name(check->rcand->type),
++		           rip));
++
++	    } else {
++		PJ_LOG(4, (ice_st->obj_name, "Comp %d: disabled", i + 1));
++	    }
++	}
++
++	ice_st->state = (status == PJ_SUCCESS) ? PJ_ICE_STRANS_STATE_RUNNING :
++	                                         PJ_ICE_STRANS_STATE_FAILED;
++
++	pj_log_push_indent();
++	(*cb.on_valid_pair)(ice_st);
++	pj_log_pop_indent();
++    }
++
++    pj_grp_lock_dec_ref(ice_st->grp_lock);
++}
++
+ /*
+  * Callback called by ICE session when ICE processing is complete, either
+  * successfully or with failure.
+--
+2.26.2
