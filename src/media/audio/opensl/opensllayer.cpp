@@ -62,7 +62,7 @@ OpenSLLayer::init()
 }
 
 void
-OpenSLLayer::startStream(AudioStreamType stream)
+OpenSLLayer::startStream(DeviceType stream)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     if (status_ != Status::Idle)
@@ -77,33 +77,26 @@ OpenSLLayer::startStream(AudioStreamType stream)
     hardwareBuffSize_ = hw_infos[1];
     hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);
 
-    startThread_ = std::thread([this](){
-        init();
-        startAudioPlayback();
-        startAudioCapture();
-        JAMI_WARN("OpenSL audio layer started");
-        std::lock_guard<std::mutex> lock(mutex_);
-        status_ = Status::Started;
-        startedCv_.notify_all();
-    });
-    startedCv_.notify_all();
+    init();
+    startAudioPlayback();
+    startAudioCapture();
+    JAMI_WARN("OpenSL audio layer started");
+    status_ = Status::Started;
 }
 
 void
-OpenSLLayer::stopStream()
+OpenSLLayer::stopStream(DeviceType stream)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    startedCv_.wait(lock, [this] { return status_ != Status::Starting; });
-    if (startThread_.joinable()) {
-        startThread_.join();
-    }
     if (status_ != Status::Started)
         return;
     status_ = Status::Idle;
     JAMI_WARN("Stopping OpenSL audio layer");
 
-    stopAudioPlayback();
-    stopAudioCapture();
+    if (stream == DeviceType::ALL || stream == DeviceType::PLAYBACK)
+        stopAudioPlayback();
+    if (stream == DeviceType::ALL || stream == DeviceType::CAPTURE)
+        stopAudioCapture();
     flush();
 
     if (engineObject_ != nullptr) {

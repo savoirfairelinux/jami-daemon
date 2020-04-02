@@ -61,9 +61,9 @@ void AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
         JAMI_ERR("buffer lost");
     }
 
-    callback_(false);
+    // callback_(false);
 
-    while(playQueue_->front(&buf) && devShadowQueue_.push(buf)) {
+    while (playQueue_->front(&buf) && devShadowQueue_.push(buf)) {
         if ((*bq)->Enqueue(bq, buf->buf_, buf->size_) != SL_RESULT_SUCCESS) {
             devShadowQueue_.pop();
             JAMI_ERR("enqueue failed %zu %zu %zu %zu", buf->size_, freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
@@ -72,7 +72,7 @@ void AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
             playQueue_->pop();
     }
     if (devShadowQueue_.size() == 0) {
-        JAMI_ERR("AudioPlayer: nothing to play %zu %zu %zu", freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
+        // JAMI_ERR("AudioPlayer: nothing to play %zu %zu %zu", freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
         waiting_ = true;
         callback_(true);
     }

@@ -60,15 +60,10 @@ class AudioPreference;
 class Resampler;
 
 enum class DeviceType {
-    PLAYBACK,      /** To open playback device only */
-    CAPTURE,       /** To open capture device only */
-    RINGTONE       /** To open the ringtone device only */
-};
-
-enum class AudioStreamType {
-    PLAYBACK,      /** To start playback stream only */
-    CAPTURE,       /** To start capture stream only */
-    DEFAULT        /** To start both playback and capture streams */
+    ALL = -1,
+    PLAYBACK = 0,
+    CAPTURE,
+    RINGTONE
 };
 
 class AudioLayer {
@@ -100,16 +95,14 @@ public:
     /**
      * Start the capture stream and prepare the playback stream.
      * The playback starts accordingly to its threshold
-     * ALSA Library API
      */
-    virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT) = 0;
+    virtual void startStream(DeviceType stream = DeviceType::ALL) = 0;
 
     /**
      * Stop the playback and capture streams.
      * Drops the pending frames and put the capture and playback handles to PREPARED state
-     * ALSA Library API
      */
-    virtual void stopStream() = 0;
+    virtual void stopStream(DeviceType stream = DeviceType::ALL) = 0;
 
     /**
      * Determine wether or not the audio layer is active (i.e. stream opened)
@@ -242,16 +235,14 @@ protected:
     void setHasNativeAEC(bool hasEAC);
 
     std::shared_ptr<AudioFrame> getToPlay(AudioFormat format, size_t writableSamples);
-
     std::shared_ptr<AudioFrame> getToRing(AudioFormat format, size_t writableSamples);
-
     std::shared_ptr<AudioFrame> getPlayback(AudioFormat format, size_t samples) {
         const auto& ringBuff = getToRing(format, samples);
         const auto& playBuff = getToPlay(format, samples);
         return ringBuff ? ringBuff : playBuff;
     }
 
-    void putRecorded(std::shared_ptr<AudioFrame>&& frame);
+    void std::shared_ptr<AudioFrame>&& frame);
 
     void flush();
 
