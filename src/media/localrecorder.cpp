@@ -80,6 +80,7 @@ LocalRecorder::startRecording()
     audioInput_ = jami::getAudioInput(path_);
     audioInput_->setFormat(AudioFormat::STEREO());
     audioInput_->attach(recorder_->addStream(audioInput_->getInfo()));
+    audioInput_->switchInput("");
 
 #ifdef ENABLE_VIDEO
     // video recording

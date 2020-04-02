@@ -48,6 +48,7 @@ class AudioInput : public Observable<std::shared_ptr<MediaFrame>>
 {
 public:
     AudioInput(const std::string& id);
+    AudioInput(const std::string& id, const std::string& resource);
     ~AudioInput();
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);

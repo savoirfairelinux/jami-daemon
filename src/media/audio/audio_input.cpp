@@ -51,7 +51,11 @@ AudioInput::AudioInput(const std::string& id) :
           [] {})
 {
     JAMI_DBG() << "Creating audio input with id: " << id;
-    loop_.start();
+}
+
+AudioInput::AudioInput(const std::string& id, const std::string& resource) : AudioInput(id)
+{
+    switchInput(resource);
 }
 
 AudioInput::~AudioInput()
@@ -108,9 +112,6 @@ AudioInput::setSeekTime(int64_t time) {
 void
 AudioInput::readFromDevice()
 {
-    auto& mainBuffer = Manager::instance().getRingBufferPool();
-    auto bufferFormat = mainBuffer.getInternalAudioFormat();
-
     if (decodingFile_ )
         while (fileBuf_->isEmpty())
             readFromFile();
@@ -120,6 +121,7 @@ AudioInput::readFromDevice()
         return;
     }
 
+    auto& mainBuffer = Manager::instance().getRingBufferPool();
     if (not mainBuffer.waitForDataAvailable(id_, MS_PER_PACKET))
         return;
 
@@ -131,7 +133,7 @@ AudioInput::readFromDevice()
         libav_utils::fillWithSilence(samples->pointer());
 
     std::lock_guard<std::mutex> lk(fmtMutex_);
-    if (bufferFormat != format_)
+    if (mainBuffer.getInternalAudioFormat() != format_)
         samples = resampler_->resample(std::move(samples), format_);
     resizer_->enqueue(std::move(samples));
 }
@@ -251,7 +253,6 @@ std::shared_future<DeviceParams>
 AudioInput::switchInput(const std::string& resource)
 {
     // Always switch inputs, even if it's the same resource, so audio will be in sync with video
-
     if (switchPending_) {
         JAMI_ERR() << "Audio switch already requested";
         return {};
@@ -260,9 +261,11 @@ AudioInput::switchInput(const std::string& resource)
     JAMI_DBG() << "Switching audio source to match '" << resource << "'";
 
     decoder_.reset();
-    decodingFile_ = false;
-    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(id_, fileId_);
-    Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
+    if (decodingFile_) {
+        decodingFile_ = false;
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(id_, fileId_);
+        Manager::instance().getRingBufferPool().unBindHalfDuplexOut(RingBufferPool::DEFAULT_ID, fileId_);
+    }
     fileBuf_.reset();
 
     currentResource_ = resource;
@@ -274,33 +277,30 @@ AudioInput::switchInput(const std::string& resource)
     if (resource.empty()) {
         if (initDevice(""))
             foundDevOpts(devOpts_);
-        switchPending_ = true;
-        futureDevOpts_ = foundDevOpts_.get_future();
-        return futureDevOpts_;
+    } else {
+        static const std::string& sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
+        const auto pos = resource.find(sep);
+        if (pos == std::string::npos)
+            return {};
+
+        const auto prefix = resource.substr(0, pos);
+        if ((pos + sep.size()) >= resource.size())
+            return {};
+
+        const auto suffix = resource.substr(pos + sep.size());
+        bool ready = false;
+        if (prefix == DRing::Media::VideoProtocolPrefix::FILE)
+            ready = initFile(suffix);
+        else
+            ready = initDevice(suffix);
+
+        if (ready)
+            foundDevOpts(devOpts_);
     }
-
-    static const std::string& sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
-
-    const auto pos = resource.find(sep);
-    if (pos == std::string::npos)
-        return {};
-
-    const auto prefix = resource.substr(0, pos);
-    if ((pos + sep.size()) >= resource.size())
-        return {};
-
-    const auto suffix = resource.substr(pos + sep.size());
-    bool ready = false;
-    if (prefix == DRing::Media::VideoProtocolPrefix::FILE)
-        ready = initFile(suffix);
-    else
-        ready = initDevice(suffix);
-
-    if (ready)
-        foundDevOpts(devOpts_);
 
     switchPending_ = true;
     futureDevOpts_ = foundDevOpts_.get_future().share();
+    loop_.start();
     return futureDevOpts_;
 }
 
