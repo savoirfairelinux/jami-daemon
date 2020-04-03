@@ -138,6 +138,10 @@ SystemCodecContainer::initCodecConfig()
 bool
 SystemCodecContainer::setActiveH265()
 {
+#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+    removeCodecByName("H265");
+#endif
+
     auto apiName = MediaEncoder::testH265Accel();
     if (apiName != "") {
         JAMI_WARN("Found a usable accelerated H265/HEVC codec: %s, enabling.", apiName.c_str());
