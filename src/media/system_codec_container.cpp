@@ -61,12 +61,14 @@ SystemCodecContainer::initCodecConfig()
     availableCodecList_ = {
 #ifdef ENABLE_VIDEO
         /* Define supported video codec*/
+#if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_HEVC, AV_CODEC_ID_HEVC,
                                                "H265", "",
                                                CODEC_ENCODER_DECODER,
                                                defaultBitrate,
                                                minH265,
                                                maxH265),
+#endif
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H264, AV_CODEC_ID_H264,
                                                "H264", "libx264",
