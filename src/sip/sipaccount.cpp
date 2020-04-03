@@ -245,7 +245,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
     if (getPublishedSameasLocal())
         sdp.setPublishedIP(addrSdp);
     else
-        sdp.setPublishedIP(getPublishedAddress());
+        sdp.setPublishedIP(getPublishedAddress(), IpAddr::isIpv6(getPublishedAddress()) ? pj_AF_INET6() : pj_AF_INET());
 
     const bool created = sdp.createOffer(
         getActiveAccountCodecInfoList(MEDIA_AUDIO),

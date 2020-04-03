@@ -257,9 +257,10 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     std::string publishedIpAddress;
     parseValue(node, Conf::PUBLISH_ADDR_KEY, publishedIpAddress);
     IpAddr publishedIp = publishedIpAddress;
-    if (publishedIp and not publishedSameasLocal_)
+    if (publishedIp and not publishedSameasLocal_) {
         setPublishedAddress(publishedIp);
-
+        publishedIpAddress_ = publishedIpAddress;
+    }
     int port = sip_utils::DEFAULT_SIP_PORT;
     parseValue(node, Conf::PUBLISH_PORT_KEY, port);
     publishedPort_ = port;
