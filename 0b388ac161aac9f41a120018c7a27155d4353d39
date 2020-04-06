@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "761f5127_5012ca65",
+        "filename": "meson.build",
+        "patchSetId": 3
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-06T14:25:04Z",
+      "side": 1,
+      "message": "2.0.0",
+      "range": {
+        "startLine": 11,
+        "startChar": 47,
+        "endLine": 11,
+        "endChar": 53
+      },
+      "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
