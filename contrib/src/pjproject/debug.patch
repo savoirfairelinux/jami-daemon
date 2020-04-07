@@ -1,0 +1,39 @@
+ pjnath/src/pjnath/ice_session.c | 9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index 526c8e13f..4f461aa22 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1646,9 +1646,6 @@ static pj_bool_t on_check_complete(pj_ice_sess *ice,
+ 
+ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+ {
+-    pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap,&ice->timer,
+-				   TIMER_NONE);
+-
+     pj_bool_t first_found = PJ_FALSE, set_timer = PJ_FALSE;
+ 
+     for (int i = 0; i<ice->clist.count && !set_timer; ++i) {
+@@ -1669,6 +1666,8 @@ static void on_tcp_connect_timeout(pj_ice_sess* ice)
+     }
+ 
+     if (set_timer && ice->timer.id == TIMER_NONE) {
++    pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap,&ice->timer,
++				   TIMER_NONE);
+ 	/* Reschedule */
+ 	pj_time_val delay = {
+ 	    .sec  = 0,
+@@ -1993,10 +1992,10 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+     case PJ_CAND_TCP_SO:
+     default:
+         if (lcand->type == PJ_ICE_CAND_TYPE_RELAYED) {
+-            pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap,
+-                                           &ice->timer, TIMER_NONE);
+             status = (*ice->cb.select_turn_dataconn)(ice, clist, check_id);
+             if (ice->timer.id == TIMER_NONE) {
++				pj_timer_heap_cancel_if_active(ice->stun_cfg.timer_heap,
++											&ice->timer, TIMER_NONE);
+                 pj_time_val delay = {
+                     .sec  = 0,
+                     .msec = 1500
