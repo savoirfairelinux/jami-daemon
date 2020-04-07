@@ -68,10 +68,10 @@ CoreLayer::getPlaybackDeviceList() const
 }
 
 int
-CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
+CoreLayer::getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const
 {
     int i = 0;
-    for (const auto& device : getDeviceList(type == DeviceType::CAPTURE)) {
+    for (const auto& device : getDeviceList(type == AudioDeviceType::CAPTURE)) {
         if (device.name_ == name)
             return i;
         i++;
@@ -80,7 +80,7 @@ CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 }
 
 std::string
-CoreLayer::getAudioDeviceName(int index, DeviceType type) const
+CoreLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 {
     return "";
 }
@@ -355,18 +355,18 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     putRecorded(std::move(inBuff));
 }
 
-void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
+void CoreLayer::updatePreference(AudioPreference &preference, int index, AudioDeviceType type)
 {
     switch (type) {
-        case DeviceType::PLAYBACK:
+        case AudioDeviceType::PLAYBACK:
             preference.setAlsaCardout(index);
             break;
 
-        case DeviceType::CAPTURE:
+        case AudioDeviceType::CAPTURE:
             preference.setAlsaCardin(index);
             break;
 
-        case DeviceType::RINGTONE:
+        case AudioDeviceType::RINGTONE:
             preference.setAlsaCardring(index);
             break;
 

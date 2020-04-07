@@ -59,6 +59,8 @@ void AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
 AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngine) :
         sampleInfo_(sampleFormat)
 {
+    JAMI_DBG("Creating OpenSL record stream");
+
     // configure audio source/
     SLDataLocator_IODevice loc_dev = {SL_DATALOCATOR_IODEVICE,
                                       SL_IODEVICE_AUDIOINPUT,
@@ -245,6 +247,8 @@ AudioRecorder::stop()
 }
 
 AudioRecorder::~AudioRecorder() {
+    JAMI_DBG("Destroying OpenSL record stream");
+
     // destroy audio recorder object, and invalidate all associated interfaces
     if (recObjectItf_) {
         (*recObjectItf_)->Destroy(recObjectItf_);

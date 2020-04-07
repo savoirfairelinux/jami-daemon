@@ -61,9 +61,10 @@ void AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
         JAMI_ERR("buffer lost");
     }
 
-    callback_(false);
+    // callback_(false);
+    callback_(true);
 
-    while(playQueue_->front(&buf) && devShadowQueue_.push(buf)) {
+    while (playQueue_->front(&buf) && devShadowQueue_.push(buf)) {
         if ((*bq)->Enqueue(bq, buf->buf_, buf->size_) != SL_RESULT_SUCCESS) {
             devShadowQueue_.pop();
             JAMI_ERR("enqueue failed %zu %zu %zu %zu", buf->size_, freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
@@ -72,7 +73,7 @@ void AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
             playQueue_->pop();
     }
     if (devShadowQueue_.size() == 0) {
-        JAMI_ERR("AudioPlayer: nothing to play %zu %zu %zu", freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
+        // JAMI_ERR("AudioPlayer: nothing to play %zu %zu %zu", freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
         waiting_ = true;
         callback_(true);
     }
@@ -81,6 +82,8 @@ void AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
 AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat, SLEngineItf slEngine, SLint32 streamType) :
     sampleInfo_(sampleFormat)
 {
+    JAMI_DBG("Creating OpenSL playback stream %s", sampleFormat.toString().c_str());
+
     SLresult result;
     result = (*slEngine)->CreateOutputMix(slEngine, &outputMixObjectItf_, 0, nullptr, nullptr);
     SLASSERT(result);
@@ -135,6 +138,7 @@ AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat, SLEngineItf slEngine, S
 }
 
 AudioPlayer::~AudioPlayer() {
+    JAMI_DBG("Destroying OpenSL playback stream");
 
     // destroy buffer queue audio player object, and invalidate all associated interfaces
     if (playerObjectItf_) {

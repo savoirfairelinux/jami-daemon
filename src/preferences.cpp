@@ -352,7 +352,7 @@ AudioPreference::AudioPreference() :
 static const int ALSA_DFT_CARD_ID = 0; // Index of the default soundcard
 
 static void
-checkSoundCard(int &card, DeviceType type)
+checkSoundCard(int &card, AudioDeviceType type)
 {
     if (not AlsaLayer::soundCardIndexExists(card, type)) {
         JAMI_WARN(" Card with index %d doesn't exist or is unusable.", card);
@@ -406,9 +406,9 @@ AudioPreference::createAudioLayer()
 #if HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
-    checkSoundCard(alsaCardin_, DeviceType::CAPTURE);
-    checkSoundCard(alsaCardout_, DeviceType::PLAYBACK);
-    checkSoundCard(alsaCardring_, DeviceType::RINGTONE);
+    checkSoundCard(alsaCardin_, AudioDeviceType::CAPTURE);
+    checkSoundCard(alsaCardout_, AudioDeviceType::PLAYBACK);
+    checkSoundCard(alsaCardring_, AudioDeviceType::RINGTONE);
 
     return new AlsaLayer(*this);
 #endif
