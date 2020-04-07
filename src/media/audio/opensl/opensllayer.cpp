@@ -43,84 +43,112 @@ namespace jami {
 // Constructor
 OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
     : AudioLayer(pref)
-{}
+{
+    initAudioEngine();
+}
 
 // Destructor
 OpenSLLayer::~OpenSLLayer()
 {
     shutdownAudioEngine();
 }
-
+/*
 void
 OpenSLLayer::init()
 {
-    initAudioEngine();
     initAudioPlayback();
     initAudioCapture();
 
     flush();
-}
+}*/
 
 void
-OpenSLLayer::startStream(AudioStreamType stream)
+OpenSLLayer::startStream(AudioDeviceType stream)
 {
+    using namespace std::placeholders;
     std::lock_guard<std::mutex> lock(mutex_);
-    if (status_ != Status::Idle)
+    /*if (status_ != Status::Idle)
         return;
-    status_ = Status::Starting;
+    status_ = Status::Starting;*/
     JAMI_WARN("Start OpenSL audio layer");
-
-    std::vector<int32_t> hw_infos;
-    hw_infos.reserve(4);
-    emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
-    hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
-    hardwareBuffSize_ = hw_infos[1];
-    hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);
-
-    startThread_ = std::thread([this](){
-        init();
-        startAudioPlayback();
-        startAudioCapture();
-        JAMI_WARN("OpenSL audio layer started");
-        std::lock_guard<std::mutex> lock(mutex_);
-        status_ = Status::Started;
-        startedCv_.notify_all();
-    });
-    startedCv_.notify_all();
+    if (stream == AudioDeviceType::PLAYBACK) {
+        if (not player_) {
+            try  {
+                player_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+                player_->setBufQueue(&playBufQueue_, &freePlayBufQueue_);
+                player_->registerCallback(std::bind(&OpenSLLayer::engineServicePlay, this, _1));
+            } catch (const std::exception& e) {
+                JAMI_ERR("Error initializing audio playback: %s", e.what());
+            }
+            startAudioPlayback();
+        }
+    } else if (stream == AudioDeviceType::RINGTONE) {
+        if (not ringtone_) {
+            try  {
+                ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+                ringtone_->setBufQueue(&ringBufQueue_, &freeRingBufQueue_);
+                ringtone_->registerCallback(std::bind(&OpenSLLayer::engineServiceRing, this, _1));
+            } catch (const std::exception& e) {
+                JAMI_ERR("Error initializing ringtone playback: %s", e.what());
+            }
+            startAudioPlayback();
+        }
+    }
+    else if (stream == AudioDeviceType::CAPTURE) {
+        if (not recorder_) {
+            std::lock_guard<std::mutex> lck(recMtx);
+            try  {
+                recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, engineInterface_));
+                recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
+                recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this, _1));
+                setHasNativeAEC(recorder_->hasNativeAEC());
+            } catch (const std::exception& e) {
+                JAMI_ERR("Error initializing audio capture: %s", e.what());
+            }
+            startAudioCapture();
+        }
+    }
+    JAMI_WARN("OpenSL audio layer started");
+    status_ = Status::Started;
 }
 
 void
-OpenSLLayer::stopStream()
+OpenSLLayer::stopStream(AudioDeviceType stream)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    startedCv_.wait(lock, [this] { return status_ != Status::Starting; });
-    if (startThread_.joinable()) {
-        startThread_.join();
-    }
     if (status_ != Status::Started)
         return;
     status_ = Status::Idle;
     JAMI_WARN("Stopping OpenSL audio layer");
 
-    stopAudioPlayback();
-    stopAudioCapture();
-    flush();
-
-    if (engineObject_ != nullptr) {
-        (*engineObject_)->Destroy(engineObject_);
-        engineObject_ = nullptr;
-        engineInterface_ = nullptr;
+    if (stream == AudioDeviceType::PLAYBACK) {
+        std::lock_guard<std::mutex> lck(playMtx);
+        if (player_) {
+            player_->stop();
+            player_.reset();
+        }
+        freePlayBufQueue_.clear();
+        playBufQueue_.clear();
+    } else if (stream == AudioDeviceType::RINGTONE) {
+        std::lock_guard<std::mutex> lck(playMtx);
+        if (ringtone_) {
+            ringtone_->stop();
+            ringtone_.reset();
+        }
+        freeRingBufQueue_.clear();
+        ringBufQueue_.clear();
+    } else if (stream == AudioDeviceType::CAPTURE) {
+        stopAudioCapture();
+        freeRecBufQueue_.clear();
+        recBufQueue_.clear();
     }
 
-    freePlayBufQueue_.clear();
-    freeRingBufQueue_.clear();
-    playBufQueue_.clear();
-    ringBufQueue_.clear();
-    freeRecBufQueue_.clear();
-    recBufQueue_.clear();
-    bufs_.clear();
-    dcblocker_.reset();
-    startedCv_.notify_all();
+    if (not player_ and not ringtone_ and playThread.joinable()) {
+        playCv.notify_all();
+        playThread.join();
+    }
+
+    flush();
 }
 
 std::vector<sample_buf>
@@ -158,14 +186,50 @@ OpenSLLayer::initAudioEngine()
         freeRingBufQueue_.push(&bufs_[i]);
     for(int i=2*BUF_COUNT; i<3*BUF_COUNT; i++)
         freeRecBufQueue_.push(&bufs_[i]);
+
+    std::vector<int32_t> hw_infos;
+    hw_infos.reserve(4);
+    emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
+    hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
+    hardwareBuffSize_ = hw_infos[1];
+    hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);
 }
 
 void
 OpenSLLayer::shutdownAudioEngine()
 {
+    stopAudioCapture();
+    {
+        std::lock_guard<std::mutex> lck(playMtx);
+        if (player_) {
+            player_->stop();
+            player_.reset();
+        }
+        if (ringtone_) {
+            ringtone_->stop();
+            ringtone_.reset();
+        }
+        freePlayBufQueue_.clear();
+        playBufQueue_.clear();
+        freeRingBufQueue_.clear();
+        ringBufQueue_.clear();
+    }
+
+    playCv.notify_all();
+    if (playThread.joinable())
+        playThread.join();
+
     // destroy engine object, and invalidate all associated interfaces
     JAMI_DBG("Shutdown audio engine");
-    stopStream();
+    if (engineObject_ != nullptr) {
+        (*engineObject_)->Destroy(engineObject_);
+        engineObject_ = nullptr;
+        engineInterface_ = nullptr;
+    }
+
+    dcblocker_.reset();
+    startedCv_.notify_all();
+    bufs_.clear();
 }
 
 uint32_t
@@ -194,12 +258,13 @@ OpenSLLayer::dbgEngineGetBufCount() {
     return count_player;
 }
 
-void
+std::chrono::microseconds
 OpenSLLayer::engineServicePlay(bool waiting) {
     if (waiting) {
         playCv.notify_one();
-        return;
+        return {};
     }
+    std::chrono::microseconds ret {0};
     sample_buf* buf;
     while (player_ and freePlayBufQueue_.front(&buf)) {
         if (auto dat = getToPlay(hardwareFormat_, hardwareBuffSize_)) {
@@ -210,18 +275,21 @@ OpenSLLayer::engineServicePlay(bool waiting) {
                 break;
             } else
                 freePlayBufQueue_.pop();
+            ret += std::chrono::microseconds(std::chrono::seconds(dat->pointer()->nb_samples)) / hardwareFormat_.sample_rate;
         } else {
             break;
         }
     }
+    return ret;
 }
 
-void
+std::chrono::microseconds
 OpenSLLayer::engineServiceRing(bool waiting) {
     if (waiting) {
         playCv.notify_one();
-        return;
+        return {};
     }
+    std::chrono::microseconds ret {0};
     sample_buf* buf;
     while (ringtone_ and freeRingBufQueue_.front(&buf)) {
         freeRingBufQueue_.pop();
@@ -233,11 +301,13 @@ OpenSLLayer::engineServiceRing(bool waiting) {
                 freeRingBufQueue_.push(buf);
                 break;
             }
+            ret += std::chrono::microseconds(std::chrono::seconds(dat->pointer()->nb_samples)) / hardwareFormat_.sample_rate;
         } else {
             freeRingBufQueue_.push(buf);
             break;
         }
     }
+    return ret;
 }
 
 void
@@ -296,21 +366,24 @@ OpenSLLayer::startAudioPlayback()
         player_->start();
     if (ringtone_)
         ringtone_->start();
+    if (playThread.joinable())
+        return;
     playThread = std::thread([&]() {
         playbackChanged(true);
         std::unique_lock<std::mutex> lck(playMtx);
+        std::chrono::microseconds lastPlay {0};
         while (player_ || ringtone_) {
-            playCv.wait_for(lck, std::chrono::seconds(1));
+            playCv.wait_for(lck, std::max(std::chrono::microseconds(std::chrono::milliseconds(5)), lastPlay));
             if (player_ && player_->waiting_) {
                 std::lock_guard<std::mutex> lk(player_->m_);
-                engineServicePlay(false);
+                lastPlay = engineServicePlay(false);
                 auto n = playBufQueue_.size();
                 if (n >= PLAY_KICKSTART_BUFFER_COUNT)
                     player_->playAudioBuffers(n);
             }
             if (ringtone_ && ringtone_->waiting_) {
                 std::lock_guard<std::mutex> lk(ringtone_->m_);
-                engineServiceRing(false);
+                lastPlay = engineServiceRing(false);
                 auto n = ringBufQueue_.size();
                 if (n >= PLAY_KICKSTART_BUFFER_COUNT)
                     ringtone_->playAudioBuffers(n);
@@ -329,6 +402,8 @@ OpenSLLayer::startAudioCapture()
     JAMI_DBG("Start audio capture");
 
     recorder_->start();
+    if (recThread.joinable())
+        return;
     recThread = std::thread([&]() {
         recordChanged(true);
         std::unique_lock<std::mutex> lck(recMtx);
@@ -394,8 +469,8 @@ OpenSLLayer::stopAudioCapture()
             recorder_.reset();
         }
     }
-    recCv.notify_all();
     if (recThread.joinable()) {
+        recCv.notify_all();
         recThread.join();
     }
 
@@ -471,7 +546,7 @@ OpenSLLayer::getPlaybackDeviceList() const
 }
 
 void
-OpenSLLayer::updatePreference(AudioPreference& /*preference*/, int /*index*/, DeviceType /*type*/)
+OpenSLLayer::updatePreference(AudioPreference& /*preference*/, int /*index*/, AudioDeviceType /*type*/)
 {}
 
 void dumpAvailableEngineInterfaces()
