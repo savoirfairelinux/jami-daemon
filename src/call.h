@@ -59,6 +59,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
     public:
         using SubcallSet = std::set<std::shared_ptr<Call>, std::owner_less<std::shared_ptr<Call>>>;
         using OnNeedFallbackCb = std::function<void()>;
+        using OnReadyCb = std::function<void(bool)>;
 
         static const char * const DEFAULT_ID;
 
@@ -229,15 +230,17 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         /**
          * Put a call on hold
-         * @return bool True on success
+         * @param cb    On hold can be queued if waiting for ICE. This callback will be called when ready
+         * @return bool True on success, False if failed or pending
          */
-        virtual bool onhold() = 0;
+        virtual bool onhold(OnReadyCb&& cb) = 0;
 
         /**
          * Resume a call from hold state
-         * @return bool True on success
+         * @param cb    On hold can be queued if waiting for ICE. This callback will be called when ready
+         * @return bool True on success, False if failed or pending
          */
-        virtual bool offhold() = 0;
+        virtual bool offhold(OnReadyCb&& cb) = 0;
 
         virtual void sendKeyframe() = 0;
 
