@@ -946,7 +946,11 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
 TlsSessionState
 TlsSession::TlsSessionImpl::handleStateMtuDiscovery(UNUSED TlsSessionState state)
 {
-    mtuProbe_ = transport_ and transport_->maxPayload();
+    if (!transport_) {
+        JAMI_WARN("No transport available when discovering the MTU");
+        return TlsSessionState::SHUTDOWN;
+    }
+    mtuProbe_ = transport_->maxPayload();
     assert(mtuProbe_ >= MIN_MTU);
     MTUS_ = {MIN_MTU, std::max((mtuProbe_ + MIN_MTU)/2, MIN_MTU), mtuProbe_};
 
