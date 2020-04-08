@@ -94,8 +94,8 @@ public: // overridden
     void refuse() override;
     void transfer(const std::string& to) override;
     bool attendedTransfer(const std::string& to) override;
-    bool onhold() override;
-    bool offhold() override;
+    bool onhold(OnReadyCb&& cb) override;
+    bool offhold(OnReadyCb&& cb) override;
     void switchInput(const std::string& resource) override;
     void peerHungup() override;
     void carryingDTMFdigits(char code) override;
@@ -264,6 +264,10 @@ private:
 
     bool internalOffHold(const std::function<void()> &SDPUpdateFunc);
 
+    bool hold();
+
+    bool unhold();
+
     int SIPSessionReinvite();
 
     std::vector<IceCandidate> getAllRemoteCandidates();
@@ -343,6 +347,9 @@ private:
     bool pendingRecord_ {false};
 
     time_point lastKeyFrameReq_ {time_point::min()};
+
+    OnReadyCb holdCb_ {};
+    OnReadyCb offHoldCb_ {};
 };
 
 // Helpers
