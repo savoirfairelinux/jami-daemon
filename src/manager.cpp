@@ -1064,27 +1064,27 @@ Manager::onHoldCall(const std::string& callId)
 
     if (auto call = getCallFromCallID(callId)) {
         try {
-            result = call->onhold();
-            if (result)
+            result = call->onhold([call, current_call_id, callId, this](bool ok) {
+                if (!ok) {
+                    JAMI_ERR("hold failed for call %s", callId.c_str());
+                    return;
+                }
                 removeAudio(*call); // Unbind calls in main buffer
+                // Remove call from the queue if it was still there
+                pimpl_->removeWaitingCall(callId);
+
+                // keeps current call id if the action is not holding this call
+                // or a new outgoing call. This could happen in case of a conference
+                if (current_call_id == callId)
+                    pimpl_->unsetCurrentCall();
+            });
         } catch (const VoipLinkException &e) {
             JAMI_ERR("%s", e.what());
             result = false;
         }
-
     } else {
         JAMI_DBG("CallID %s doesn't exist in call onHold", callId.c_str());
         return false;
-    }
-
-    if (result) {
-        // Remove call from the queue if it was still there
-        pimpl_->removeWaitingCall(callId);
-
-        // keeps current call id if the action is not holding this call
-        // or a new outgoing call. This could happen in case of a conference
-        if (current_call_id == callId)
-            pimpl_->unsetCurrentCall();
     }
 
     return result;
@@ -1103,19 +1103,22 @@ Manager::offHoldCall(const std::string& callId)
         return false;
 
     try {
-        result = call->offhold();
+        result = call->offhold([call, callId, this](bool ok) {
+            if (!ok) {
+                JAMI_ERR("off hold failed for call %s", callId.c_str());
+                return;
+            }
+
+            if (isConferenceParticipant(callId))
+                pimpl_->switchCall(call->getConfId());
+            else
+                pimpl_->switchCall(call);
+
+            addAudio(*call);
+        });
     } catch (const VoipLinkException &e) {
         JAMI_ERR("%s", e.what());
         return false;
-    }
-
-    if (result) {
-        if (isConferenceParticipant(callId))
-            pimpl_->switchCall(call->getConfId());
-        else
-            pimpl_->switchCall(call);
-
-        addAudio(*call);
     }
 
     return result;
