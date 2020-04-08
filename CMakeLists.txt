@@ -169,6 +169,7 @@ if(MSVC)
                "OPENDHT_PROXY_SERVER;"
                "OPENDHT_PUSH_NOTIFICATIONS;"
                "NATPMP_STATICLIB;"
+               "NDEBUG;"
            ">"
            "_USE_MATH_DEFINES;"
            "_SCL_SECURE_NO_WARNINGS;"
