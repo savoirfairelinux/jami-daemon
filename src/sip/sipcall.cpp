@@ -582,13 +582,26 @@ SIPCall::attendedTransfer(const std::string& to)
 }
 
 bool
-SIPCall::onhold()
+SIPCall::onhold(OnReadyCb&& cb)
 {
     // If ICE is currently negotiating, we must wait before hold the call
     if (isWaitingForIceAndMedia_) {
+        holdCb_ = std::move(cb);
         remainingRequest_ = Request::HoldingOn;
         return false;
     }
+
+    auto result = hold();
+
+    if (cb)
+        cb(result);
+
+    return result;
+}
+
+bool
+SIPCall::hold()
+{
     if (not setState(CallState::HOLD))
         return false;
 
@@ -602,22 +615,33 @@ SIPCall::onhold()
     }
 
     isWaitingForIceAndMedia_ = true;
-
     return true;
 }
 
 bool
-SIPCall::offhold()
+SIPCall::offhold(OnReadyCb&& cb)
 {
-    bool success = false;
     // If ICE is currently negotiating, we must wait before unhold the call
     if (isWaitingForIceAndMedia_) {
+        offHoldCb_ = std::move(cb);
         remainingRequest_ = Request::HoldingOff;
         return false;
     }
 
+    auto result = unhold();
+
+    if (cb)
+        cb(result);
+
+    return result;
+}
+
+bool
+SIPCall::unhold()
+{
     auto& account = getSIPAccount();
 
+    bool success = false;
     try {
         if (account.isStunEnabled())
             success = internalOffHold([&] { updateSDPFromSTUN(); });
@@ -645,7 +669,11 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
     if (getConnectionState() == ConnectionState::CONNECTED) {
         if (SIPSessionReinvite() != PJ_SUCCESS) {
             JAMI_WARN("[call:%s] resuming hold", getCallId().c_str());
-            onhold();
+            if (isWaitingForIceAndMedia_) {
+                remainingRequest_ = Request::HoldingOn;
+            } else {
+                hold();
+            }
             return false;
         }
     }
@@ -1023,12 +1051,21 @@ SIPCall::startAllMedia()
     // Media is restarted, we can process the last holding request.
     isWaitingForIceAndMedia_ = false;
     if (remainingRequest_ != Request::NoRequest) {
+        bool result = true;
         switch (remainingRequest_) {
         case Request::HoldingOn:
-            onhold();
+            result = hold();
+            if (holdCb_) {
+                holdCb_(result);
+                holdCb_ = nullptr;
+            }
             break;
         case Request::HoldingOff:
-            offhold();
+            result = unhold();
+            if (offHoldCb_) {
+                offHoldCb_(result);
+                offHoldCb_ = nullptr;
+            }
             break;
         case Request::SwitchInput:
             SIPSessionReinvite();
