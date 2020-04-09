@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "281851b2_ee783e8c",
+        "filename": "meson.build",
+        "patchSetId": 3
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-09T20:52:20Z",
+      "side": 1,
+      "message": "I don\u0027t know meson, but a lot of dependecies are built in the contrib directory. For now, it doesn\u0027t search for this libs\n\n sblin@sblin-pbody  ~/ring-project/daemon  ➦ d2513417e  meson buildir         \nThe Meson build system\nVersion: 0.51.2\nSource dir: /home/sblin/ring-project/daemon\nBuild dir: /home/sblin/ring-project/daemon/buildir\nBuild type: native build\nProject name: jami-daemon\nProject version: 9.1.0\nC compiler for the host machine: cc (gcc 9.2.1 \"cc (Ubuntu 9.2.1-9ubuntu2) 9.2.1 20191008\")\nC++ compiler for the host machine: c++ (gcc 9.2.1 \"c++ (Ubuntu 9.2.1-9ubuntu2) 9.2.1 20191008\")\nBuild machine cpu family: x86_64\nBuild machine cpu: x86_64\nRun-time dependency threads found: YES \nFound pkg-config: /usr/bin/pkg-config (0.29.1)\nFound CMake: /usr/bin/cmake (3.13.4)\nRun-time dependency opendht found: YES 2.0.0\nRun-time dependency gnutls found: YES 3.6.9\nRun-time dependency yaml-cpp found: YES 0.6.2\nRun-time dependency jsoncpp found: YES 1.7.4\nRun-time dependency libpjproject found: NO (tried pkgconfig and cmake)\n\nmeson.build:15:0: ERROR: Dependency \"libpjproject\" not found, tried pkgconfig and cmake\n\nA full log can be found at /home/sblin/ring-project/daemon/buildir/meson-logs/meson-log.txt\n\n\nMoreover, instructions used should be added somewhere :)",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 8,
+        "endChar": 34
+      },
+      "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "761f5127_5012ca65",
         "filename": "meson.build",
         "patchSetId": 3
@@ -18,6 +41,75 @@
         "startChar": 47,
         "endLine": 11,
         "endChar": 53
+      },
+      "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7730000d_b589d6d1",
+        "filename": "src/meson.build",
+        "patchSetId": 3
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-09T20:52:20Z",
+      "side": 1,
+      "message": ":)",
+      "range": {
+        "startLine": 261,
+        "startChar": 0,
+        "endLine": 261,
+        "endChar": 7
+      },
+      "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "191cfcaa_ac04faa5",
+        "filename": "src/meson.build",
+        "patchSetId": 3
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-09T20:52:20Z",
+      "side": 1,
+      "message": "mmh, still ring, maybe we can use jami there?",
+      "range": {
+        "startLine": 261,
+        "startChar": 19,
+        "endLine": 261,
+        "endChar": 23
+      },
+      "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0b95bb61_d06de5fd",
+        "filename": "subprojects/jsoncpp.wrap",
+        "patchSetId": 3
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-09T20:52:20Z",
+      "side": 1,
+      "message": "Oh that\u0027s nice from a build system. Question, is this necessary for all dependencies? (Just did a quick read)",
+      "range": {
+        "startLine": 2,
+        "startChar": 25,
+        "endLine": 10,
+        "endChar": 41
       },
       "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
