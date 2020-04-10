@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "6ddc1880_0abc4ed3",
+        "filename": "meson.build",
+        "patchSetId": 3
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2020-04-10T08:28:03Z",
+      "side": 1,
+      "message": "Try to use this command: meson -Dpkg_config_path\u003d~/ring-project/daemon/contrib/x86_64-pc-linux-gnu/lib/pkgconfig/ builddir\n\nAnd don\u0027t forget to apply this PR: https://github.com/savoirfairelinux/opendht/pull/487",
+      "parentUuid": "281851b2_ee783e8c",
+      "range": {
+        "startLine": 7,
+        "startChar": 0,
+        "endLine": 8,
+        "endChar": 34
+      },
+      "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "761f5127_5012ca65",
         "filename": "meson.build",
         "patchSetId": 3
@@ -45,6 +69,30 @@
       "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c874a4ff_0365a252",
+        "filename": "meson.build",
+        "patchSetId": 3
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2020-04-10T08:28:03Z",
+      "side": 1,
+      "message": "Will be fixed in the next patchset.",
+      "parentUuid": "761f5127_5012ca65",
+      "range": {
+        "startLine": 11,
+        "startChar": 47,
+        "endLine": 11,
+        "endChar": 53
+      },
+      "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -94,6 +142,54 @@
     },
     {
       "key": {
+        "uuid": "a09def14_d4502ee1",
+        "filename": "src/meson.build",
+        "patchSetId": 3
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2020-04-10T08:28:03Z",
+      "side": 1,
+      "message": "I don\u0027t mind it. This is just for compatibility.",
+      "parentUuid": "191cfcaa_ac04faa5",
+      "range": {
+        "startLine": 261,
+        "startChar": 19,
+        "endLine": 261,
+        "endChar": 23
+      },
+      "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "405271ca_084b5f85",
+        "filename": "src/meson.build",
+        "patchSetId": 3
+      },
+      "lineNbr": 261,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2020-04-10T08:28:03Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "7730000d_b589d6d1",
+      "range": {
+        "startLine": 261,
+        "startChar": 0,
+        "endLine": 261,
+        "endChar": 7
+      },
+      "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0b95bb61_d06de5fd",
         "filename": "subprojects/jsoncpp.wrap",
         "patchSetId": 3
@@ -105,6 +201,30 @@
       "writtenOn": "2020-04-09T20:52:20Z",
       "side": 1,
       "message": "Oh that\u0027s nice from a build system. Question, is this necessary for all dependencies? (Just did a quick read)",
+      "range": {
+        "startLine": 2,
+        "startChar": 25,
+        "endLine": 10,
+        "endChar": 41
+      },
+      "revId": "0b388ac161aac9f41a120018c7a27155d4353d39",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8213657d_ba2f3ec6",
+        "filename": "subprojects/jsoncpp.wrap",
+        "patchSetId": 3
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2020-04-10T08:28:03Z",
+      "side": 1,
+      "message": "Meson currently can automatically build dependencies with Meson and CMake build scripts. But the contrib directory should be supported for Autotools projects.",
+      "parentUuid": "0b95bb61_d06de5fd",
       "range": {
         "startLine": 2,
         "startChar": 25,

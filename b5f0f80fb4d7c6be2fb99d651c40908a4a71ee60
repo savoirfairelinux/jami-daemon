@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "b4b5be71_8a81e7a8",
+        "filename": "contrib/src/main.mak",
+        "patchSetId": 3
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2020-04-10T08:28:03Z",
+      "side": 0,
+      "message": "pjproject inherits this flag and adds it to the pkgconfig file. But Jami can\u0027t be built with -std\u003dc++14, it requires -std\u003dgnu++14 (because of implementation of logger.h).\n\nIn any case, I think this flag should be set per project, not globally.",
+      "parentUuid": "50fb5f88_76a5766e",
+      "range": {
+        "startLine": 198,
+        "startChar": 0,
+        "endLine": 198,
+        "endChar": 14
+      },
+      "revId": "b5f0f80fb4d7c6be2fb99d651c40908a4a71ee60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "4a3196b0_77fae5a5",
         "filename": "src/media/audio/portaudio/portaudiolayer.cpp",
         "patchSetId": 3
@@ -36,6 +60,30 @@
       "writtenOn": "2020-04-09T20:52:20Z",
       "side": 0,
       "message": "Not related to this patch",
+      "range": {
+        "startLine": 36,
+        "startChar": 4,
+        "endLine": 37,
+        "endChar": 29
+      },
+      "revId": "b5f0f80fb4d7c6be2fb99d651c40908a4a71ee60",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6be6033d_1d1887f6",
+        "filename": "src/media/audio/portaudio/portaudiolayer.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2020-04-10T08:28:03Z",
+      "side": 0,
+      "message": "Yes, but it causes a build error on my machine. This is unused declaration, so I removed it.",
+      "parentUuid": "4a3196b0_77fae5a5",
       "range": {
         "startLine": 36,
         "startChar": 4,
