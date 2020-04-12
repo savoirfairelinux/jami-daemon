@@ -56,14 +56,17 @@ void AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
         return;
     }
     devShadowQueue_.pop();
-    buf->size_ = 0;
-    if (!freeQueue_->push(buf)) {
-        JAMI_ERR("buffer lost");
+
+    if (buf != &silentBuf_) {
+        buf->size_ = 0;
+        if (!freeQueue_->push(buf)) {
+            JAMI_ERR("buffer lost");
+        }
     }
 
-    callback_(false);
+    callback_(true);
 
-    while(playQueue_->front(&buf) && devShadowQueue_.push(buf)) {
+    while (playQueue_->front(&buf) && devShadowQueue_.push(buf)) {
         if ((*bq)->Enqueue(bq, buf->buf_, buf->size_) != SL_RESULT_SUCCESS) {
             devShadowQueue_.pop();
             JAMI_ERR("enqueue failed %zu %zu %zu %zu", buf->size_, freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
@@ -72,15 +75,21 @@ void AudioPlayer::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
             playQueue_->pop();
     }
     if (devShadowQueue_.size() == 0) {
-        JAMI_ERR("AudioPlayer: nothing to play %zu %zu %zu", freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
+        // JAMI_ERR("AudioPlayer: nothing to play %zu %zu %zu", freeQueue_->size(), playQueue_->size(), devShadowQueue_.size());
+        for (int i=0; i<DEVICE_SHADOW_BUFFER_QUEUE_LEN; i++) {
+            (*bq)->Enqueue(bq, silentBuf_.buf_, silentBuf_.size_);
+            devShadowQueue_.push(&silentBuf_);
+        }
         waiting_ = true;
         callback_(true);
     }
 }
 
-AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat, SLEngineItf slEngine, SLint32 streamType) :
+AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat, size_t bufSize, SLEngineItf slEngine, SLint32 streamType) :
     sampleInfo_(sampleFormat)
 {
+    JAMI_DBG("Creating OpenSL playback stream %s", sampleFormat.toString().c_str());
+
     SLresult result;
     result = (*slEngine)->CreateOutputMix(slEngine, &outputMixObjectItf_, 0, nullptr, nullptr);
     SLASSERT(result);
@@ -132,9 +141,15 @@ AudioPlayer::AudioPlayer(jami::AudioFormat sampleFormat, SLEngineItf slEngine, S
 
     result = (*playItf_)->SetPlayState(playItf_, SL_PLAYSTATE_STOPPED);
     SLASSERT(result);
+
+    silentBuf_.cap_ = (format_pcm.containerSize >> 3) * format_pcm.numChannels * bufSize;
+    silentBuf_.buf_ = new uint8_t[silentBuf_.cap_];
+    memset(silentBuf_.buf_, 0, silentBuf_.cap_);
+    silentBuf_.size_ = silentBuf_.cap_;
 }
 
 AudioPlayer::~AudioPlayer() {
+    JAMI_DBG("Destroying OpenSL playback stream");
 
     // destroy buffer queue audio player object, and invalidate all associated interfaces
     if (playerObjectItf_) {
@@ -153,6 +168,7 @@ void AudioPlayer::setBufQueue(AudioQueue *playQ, AudioQueue *freeQ) {
 }
 
 bool AudioPlayer::start() {
+    JAMI_DBG("OpenSL playback start");
     SLuint32   state;
     SLresult  result = (*playItf_)->GetPlayState(playItf_, &state);
     if (result != SL_RESULT_SUCCESS)
@@ -163,26 +179,12 @@ bool AudioPlayer::start() {
     result = (*playItf_)->SetPlayState(playItf_, SL_PLAYSTATE_STOPPED);
     SLASSERT(result);
 
+    SLASSERT((*playBufferQueueItf_)->Enqueue(playBufferQueueItf_, silentBuf_.buf_, silentBuf_.size_));
+    devShadowQueue_.push(&silentBuf_);
+
     result = (*playItf_)->SetPlayState(playItf_, SL_PLAYSTATE_PLAYING);
     SLASSERT(result);
 
-    // send pre-defined audio buffers to device
-    int i = PLAY_KICKSTART_BUFFER_COUNT;
-    while(i--) {
-        sample_buf *buf;
-        if(!playQueue_->front(&buf))    //we have buffers for sure
-            break;
-        if(SL_RESULT_SUCCESS !=
-           (*playBufferQueueItf_)->Enqueue(playBufferQueueItf_, buf, buf->size_))
-        {
-            JAMI_ERR("====failed to enqueue (%d) in %s", i, __FUNCTION__);
-            return false;
-        } else {
-            playQueue_->pop();
-            devShadowQueue_.push(buf);
-        }
-    }
-    waiting_ = devShadowQueue_.size() == 0;
     return true;
 }
 
@@ -196,6 +198,7 @@ bool AudioPlayer::started() const
 }
 
 void AudioPlayer::stop() {
+    JAMI_DBG("OpenSL playback stop");
     SLuint32   state;
 
     SLresult   result = (*playItf_)->GetPlayState(playItf_, &state);

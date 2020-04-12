@@ -70,22 +70,11 @@ OpenSLLayer::startStream(AudioStreamType stream)
     status_ = Status::Starting;
     JAMI_WARN("Start OpenSL audio layer");
 
-    std::vector<int32_t> hw_infos;
-    hw_infos.reserve(4);
-    emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
-    hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
-    hardwareBuffSize_ = hw_infos[1];
-    hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);
-
-    startThread_ = std::thread([this](){
-        init();
-        startAudioPlayback();
-        startAudioCapture();
-        JAMI_WARN("OpenSL audio layer started");
-        std::lock_guard<std::mutex> lock(mutex_);
-        status_ = Status::Started;
-        startedCv_.notify_all();
-    });
+    init();
+    startAudioPlayback();
+    startAudioCapture();
+    JAMI_WARN("OpenSL audio layer started");
+    status_ = Status::Started;
     startedCv_.notify_all();
 }
 
@@ -94,9 +83,6 @@ OpenSLLayer::stopStream()
 {
     std::unique_lock<std::mutex> lock(mutex_);
     startedCv_.wait(lock, [this] { return status_ != Status::Starting; });
-    if (startThread_.joinable()) {
-        startThread_.join();
-    }
     if (status_ != Status::Started)
         return;
     status_ = Status::Idle;
@@ -139,16 +125,16 @@ allocateSampleBufs(unsigned count, size_t sizeInByte)
 void
 OpenSLLayer::initAudioEngine()
 {
-    SLresult result;
+    std::vector<int32_t> hw_infos;
+    hw_infos.reserve(4);
+    emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
+    hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
+    hardwareBuffSize_ = hw_infos[1];
+    hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);
 
-    result = slCreateEngine(&engineObject_, 0, nullptr, 0, nullptr, nullptr);
-    SLASSERT(result);
-
-    result = (*engineObject_)->Realize(engineObject_, SL_BOOLEAN_FALSE);
-    SLASSERT(result);
-
-    result = (*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE, &engineInterface_);
-    SLASSERT(result);
+    SLASSERT(slCreateEngine(&engineObject_, 0, nullptr, 0, nullptr, nullptr));
+    SLASSERT((*engineObject_)->Realize(engineObject_, SL_BOOLEAN_FALSE));
+    SLASSERT((*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE, &engineInterface_));
 
     uint32_t bufSize = hardwareBuffSize_ * hardwareFormat_.getBytesPerFrame();
     bufs_ = allocateSampleBufs(BUF_COUNT*3, bufSize);
@@ -194,12 +180,13 @@ OpenSLLayer::dbgEngineGetBufCount() {
     return count_player;
 }
 
-void
+std::chrono::microseconds
 OpenSLLayer::engineServicePlay(bool waiting) {
     if (waiting) {
         playCv.notify_one();
-        return;
+        return {};
     }
+    std::chrono::microseconds ret {0};
     sample_buf* buf;
     while (player_ and freePlayBufQueue_.front(&buf)) {
         if (auto dat = getToPlay(hardwareFormat_, hardwareBuffSize_)) {
@@ -210,18 +197,21 @@ OpenSLLayer::engineServicePlay(bool waiting) {
                 break;
             } else
                 freePlayBufQueue_.pop();
+            ret += std::chrono::microseconds(std::chrono::seconds(dat->pointer()->nb_samples)) / hardwareFormat_.sample_rate;
         } else {
             break;
         }
     }
+    return ret;
 }
 
-void
+std::chrono::microseconds
 OpenSLLayer::engineServiceRing(bool waiting) {
     if (waiting) {
         playCv.notify_one();
-        return;
+        return {};
     }
+    std::chrono::microseconds ret {0};
     sample_buf* buf;
     while (ringtone_ and freeRingBufQueue_.front(&buf)) {
         freeRingBufQueue_.pop();
@@ -233,11 +223,13 @@ OpenSLLayer::engineServiceRing(bool waiting) {
                 freeRingBufQueue_.push(buf);
                 break;
             }
+            ret += std::chrono::microseconds(std::chrono::seconds(dat->pointer()->nb_samples)) / hardwareFormat_.sample_rate;
         } else {
             freeRingBufQueue_.push(buf);
             break;
         }
     }
+    return ret;
 }
 
 void
@@ -253,7 +245,7 @@ OpenSLLayer::initAudioPlayback()
     using namespace std::placeholders;
     std::lock_guard<std::mutex> lck(playMtx);
     try  {
-        player_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+        player_.reset(new opensl::AudioPlayer(hardwareFormat_, hardwareBuffSize_, engineInterface_, SL_ANDROID_STREAM_VOICE));
         player_->setBufQueue(&playBufQueue_, &freePlayBufQueue_);
         player_->registerCallback(std::bind(&OpenSLLayer::engineServicePlay, this, _1));
     } catch (const std::exception& e) {
@@ -262,7 +254,7 @@ OpenSLLayer::initAudioPlayback()
     }
 
     try  {
-        ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+        ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_, hardwareBuffSize_, engineInterface_, SL_ANDROID_STREAM_VOICE));
         ringtone_->setBufQueue(&ringBufQueue_, &freeRingBufQueue_);
         ringtone_->registerCallback(std::bind(&OpenSLLayer::engineServiceRing, this, _1));
     } catch (const std::exception& e) {
@@ -299,18 +291,21 @@ OpenSLLayer::startAudioPlayback()
     playThread = std::thread([&]() {
         playbackChanged(true);
         std::unique_lock<std::mutex> lck(playMtx);
+        std::chrono::microseconds lastPlay {0};
+        auto frameLength = std::chrono::microseconds(std::chrono::seconds(hardwareBuffSize_)) / hardwareFormat_.sample_rate;
+        JAMI_WARN("playback frameLength %lld", frameLength.count());
         while (player_ || ringtone_) {
-            playCv.wait_for(lck, std::chrono::seconds(1));
-            if (player_ && player_->waiting_) {
+            playCv.wait_for(lck, std::max(frameLength * DEVICE_SHADOW_BUFFER_QUEUE_LEN, lastPlay));
+            if (player_) {
                 std::lock_guard<std::mutex> lk(player_->m_);
-                engineServicePlay(false);
+                lastPlay = engineServicePlay(false);
                 auto n = playBufQueue_.size();
                 if (n >= PLAY_KICKSTART_BUFFER_COUNT)
                     player_->playAudioBuffers(n);
             }
-            if (ringtone_ && ringtone_->waiting_) {
+            if (ringtone_) {
                 std::lock_guard<std::mutex> lk(ringtone_->m_);
-                engineServiceRing(false);
+                lastPlay = engineServiceRing(false);
                 auto n = ringBufQueue_.size();
                 if (n >= PLAY_KICKSTART_BUFFER_COUNT)
                     ringtone_->playAudioBuffers(n);

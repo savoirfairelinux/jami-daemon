@@ -112,8 +112,8 @@ public:
         return "";
     }
 
-    void engineServicePlay(bool waiting);
-    void engineServiceRing(bool waiting);
+    std::chrono::microseconds engineServicePlay(bool waiting);
+    std::chrono::microseconds engineServiceRing(bool waiting);
     void engineServiceRec(bool waiting);
 
 private:
@@ -187,8 +187,6 @@ private:
 
     AudioFormat hardwareFormat_ {AudioFormat::MONO()};
     size_t hardwareBuffSize_ {BUFFER_SIZE};
-
-    std::thread startThread_;
 };
 
 }
