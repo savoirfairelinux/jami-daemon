@@ -123,7 +123,8 @@ TurnTransportPimpl::~TurnTransportPimpl()
     if (ioWorker.joinable())
         ioWorker.join();
     pj_caching_pool_destroy(&poolCache);
-
+    if (stunConfig.ioqueue)
+        pj_ioqueue_destroy(stunConfig.ioqueue);
 }
 
 void
