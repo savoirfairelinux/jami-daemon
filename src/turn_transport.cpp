@@ -122,8 +122,11 @@ TurnTransportPimpl::~TurnTransportPimpl()
     ioJobQuit = true;
     if (ioWorker.joinable())
         ioWorker.join();
+    if (stunConfig.ioqueue)
+        pj_ioqueue_destroy(stunConfig.ioqueue);
+    if (stunConfig.timer_heap)
+        pj_timer_heap_destroy(stunConfig.timer_heap);
     pj_caching_pool_destroy(&poolCache);
-
 }
 
 void
