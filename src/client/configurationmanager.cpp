@@ -70,7 +70,7 @@ using jami::SIPAccount;
 using jami::JamiAccount;
 using jami::tls::TlsValidator;
 using jami::tls::CertificateStore;
-using jami::DeviceType;
+using jami::AudioDeviceType;
 using jami::HookPreference;
 
 void
@@ -623,25 +623,25 @@ getAudioInputDeviceList()
 void
 setAudioOutputDevice(int32_t index)
 {
-    return jami::Manager::instance().setAudioDevice(index, DeviceType::PLAYBACK);
+    return jami::Manager::instance().setAudioDevice(index, AudioDeviceType::PLAYBACK);
 }
 
 void
 setAudioInputDevice(int32_t index)
 {
-    return jami::Manager::instance().setAudioDevice(index, DeviceType::CAPTURE);
+    return jami::Manager::instance().setAudioDevice(index, AudioDeviceType::CAPTURE);
 }
 
 void
 startAudio()
 {
-    jami::Manager::instance().restartAudioDriverStream();
+    JAMI_WARN("DRing::startAudio() is deprecated");
 }
 
 void
 setAudioRingtoneDevice(int32_t index)
 {
-    return jami::Manager::instance().setAudioDevice(index, DeviceType::RINGTONE);
+    return jami::Manager::instance().setAudioDevice(index, AudioDeviceType::RINGTONE);
 }
 
 std::vector<std::string>

@@ -66,25 +66,25 @@ public:
      * Start the capture stream and prepare the playback stream.
      * The playback starts accordingly to its threshold
      */
-    virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT);
+    void startStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
 
     /**
      * Stop the playback and capture streams.
      * Drops the pending frames and put the capture and playback handles to PREPARED state
      */
-    virtual void stopStream();
+    void stopStream(AudioDeviceType stream = AudioDeviceType::ALL) override;
 
     /**
      * Scan the sound card available for capture on the system
      * @return std::vector<std::string> The vector containing the string description of the card
      */
-    virtual std::vector<std::string> getCaptureDeviceList() const;
+    std::vector<std::string> getCaptureDeviceList() const override;
 
     /**
      * Scan the sound card available for capture on the system
      * @return std::vector<std::string> The vector containing the string description of the card
      */
-    virtual std::vector<std::string> getPlaybackDeviceList() const;
+    std::vector<std::string> getPlaybackDeviceList() const override;
 
     void init();
 
@@ -92,23 +92,19 @@ public:
 
     void shutdownAudioEngine();
 
-    void initAudioPlayback();
-
     void initAudioCapture();
 
     void startAudioPlayback();
 
     void startAudioCapture();
 
-    void stopAudioPlayback();
-
     void stopAudioCapture();
 
-    virtual int getAudioDeviceIndex(const std::string&, DeviceType) const {
+    virtual int getAudioDeviceIndex(const std::string&, AudioDeviceType) const {
         return 0;
     }
 
-    virtual std::string getAudioDeviceName(int, DeviceType) const {
+    virtual std::string getAudioDeviceName(int, AudioDeviceType) const {
         return "";
     }
 
@@ -150,7 +146,13 @@ private:
 
     NON_COPYABLE(OpenSLLayer);
 
-    virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
+    virtual void updatePreference(AudioPreference &pref, int index, AudioDeviceType type);
+
+    std::mutex     playMtx {};
+    std::condition_variable playCv {};
+
+    std::mutex     recMtx {};
+    std::condition_variable recCv {};
 
     /**
      * OpenSL standard object interface
@@ -162,9 +164,8 @@ private:
      */
     SLEngineItf engineInterface_ {nullptr};
 
-    std::unique_ptr<opensl::AudioPlayer> player_ {};
-    std::unique_ptr<opensl::AudioPlayer> ringtone_ {};
-    std::unique_ptr<opensl::AudioRecorder> recorder_ {};
+    AudioFormat hardwareFormat_ {AudioFormat::MONO()};
+    size_t hardwareBuffSize_ {BUFFER_SIZE};
 
     AudioQueue     freePlayBufQueue_ {BUF_COUNT};
     AudioQueue     playBufQueue_ {BUF_COUNT};
@@ -172,21 +173,17 @@ private:
     AudioQueue     freeRingBufQueue_ {BUF_COUNT};
     AudioQueue     ringBufQueue_ {BUF_COUNT};
 
-    std::mutex     playMtx {};
-    std::condition_variable playCv {};
-    std::thread    playThread {};
-
     AudioQueue     freeRecBufQueue_ {BUF_COUNT};    //Owner of the queue
     AudioQueue     recBufQueue_ {BUF_COUNT};     //Owner of the queue
-
-    std::mutex     recMtx {};
-    std::condition_variable recCv {};
-    std::thread    recThread {};
-
+ 
     std::vector<sample_buf> bufs_ {};
 
-    AudioFormat hardwareFormat_ {AudioFormat::MONO()};
-    size_t hardwareBuffSize_ {BUFFER_SIZE};
+    std::unique_ptr<opensl::AudioPlayer> player_ {};
+    std::unique_ptr<opensl::AudioPlayer> ringtone_ {};
+    std::unique_ptr<opensl::AudioRecorder> recorder_ {};
+
+    std::thread    playThread {};
+    std::thread    recThread {};
 };
 
 }

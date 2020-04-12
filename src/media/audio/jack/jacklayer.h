@@ -64,12 +64,12 @@ private:
     std::vector<std::string> getCaptureDeviceList() const;
     std::vector<std::string> getPlaybackDeviceList() const;
 
-    int getAudioDeviceIndex(const std::string& name, DeviceType type) const;
-    std::string getAudioDeviceName(int index, DeviceType type) const;
+    int getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const;
+    std::string getAudioDeviceName(int index, AudioDeviceType type) const;
     int getIndexCapture() const;
     int getIndexPlayback() const;
     int getIndexRingtone() const;
-    void updatePreference(AudioPreference &pref, int index, DeviceType type);
+    void updatePreference(AudioPreference &pref, int index, AudioDeviceType type);
 
     /**
      * Start the capture and playback.
