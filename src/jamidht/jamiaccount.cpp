@@ -290,7 +290,8 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     try {
         std::istringstream is(fileutils::loadCacheTextFile(cachePath_ + DIR_SEPARATOR_STR "dhtproxy", std::chrono::hours(24 * 7)));
         std::getline(is, proxyServerCached_);
-    } catch (...) {
+    } catch (const std::exception& e) {
+        JAMI_DBG("Can't load proxy URL from cache: %s", e.what());
     }
 
     setActiveCodecs({});
@@ -1874,12 +1875,13 @@ JamiAccount::doRegister_()
         config.dht_config.node_config.persist_path = cachePath_+DIR_SEPARATOR_STR "dhtstate";
         config.dht_config.id = id_;
         config.dht_config.cert_cache_all = true;
-        config.proxy_server = getDhtProxyServer(proxyServer_);
         config.push_node_id = getAccountID();
         config.push_token = deviceKey_;
         config.threaded = true;
         config.peer_discovery = dhtPeerDiscovery_;
         config.peer_publish = dhtPeerDiscovery_;
+        if (proxyEnabled_)
+            config.proxy_server = proxyServerCached_;
 
         if (not config.proxy_server.empty()) {
             JAMI_INFO("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
@@ -2473,7 +2475,6 @@ JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)>
                 std::chrono::hours(24 * 3),
                 [w=weak(), cb=std::move(cb)](const dht::http::Response& response){
                     if (auto sthis = w.lock()) {
-                        sthis->proxyServerCached_.clear();
                         if (response.status_code == 200) {
                             cb(sthis->getDhtProxyServer(response.body));
                         } else {
@@ -2491,7 +2492,6 @@ JamiAccount::loadCachedProxyServer(std::function<void(const std::string& proxy)>
 std::string
 JamiAccount::getDhtProxyServer(const std::string& serverList)
 {
-    if (!proxyEnabled_) return {};
     if (proxyServerCached_.empty()) {
         std::vector<std::string> proxys;
         // Split the list of servers
@@ -2513,7 +2513,7 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
             }
         }
         if (proxys.empty())
-          return {};
+            return {};
         // Select one of the list as the current proxy.
         auto randIt = proxys.begin();
         std::advance(randIt, std::rand() % proxys.size());
@@ -2527,7 +2527,6 @@ JamiAccount::getDhtProxyServer(const std::string& serverList)
             file << proxyServerCached_;
         else
             JAMI_WARN("Cannot write into %s", proxyCachePath.c_str());
-        return proxyServerCached_;
     }
     return proxyServerCached_;
 }
