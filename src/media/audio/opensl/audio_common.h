@@ -57,6 +57,6 @@ inline SLDataFormat_PCM convertToSLSampleFormat(const jami::AudioFormat& infos)
 #define ENGINE_SERVICE_MSG_KICKSTART_PLAYER    1
 #define ENGINE_SERVICE_MSG_RETRIEVE_DUMP_BUFS  2
 
-using EngineCallback = std::function<void(bool waiting)>;
+using EngineCallback = std::function<void()>;
 
 }}

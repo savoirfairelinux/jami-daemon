@@ -40,11 +40,12 @@ class AudioPlayer {
     AudioQueue *freeQueue_ {nullptr};       // user
     AudioQueue *playQueue_ {nullptr};       // user
     AudioQueue devShadowQueue_ {DEVICE_SHADOW_BUFFER_QUEUE_LEN};  // owner
+    sample_buf silentBuf_;
 
     EngineCallback callback_ {};
 
 public:
-    explicit AudioPlayer(jami::AudioFormat sampleFormat, SLEngineItf engine, SLint32 streamType);
+    explicit AudioPlayer(jami::AudioFormat sampleFormat, size_t bufSize, SLEngineItf engine, SLint32 streamType);
     ~AudioPlayer();
     NON_COPYABLE(AudioPlayer);
 
@@ -59,7 +60,6 @@ public:
     size_t dbgGetDevBufCount();
 
     std::mutex m_;
-    std::atomic_bool waiting_ {false};
 };
 
 }}

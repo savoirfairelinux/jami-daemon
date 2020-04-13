@@ -112,9 +112,9 @@ public:
         return "";
     }
 
-    void engineServicePlay(bool waiting);
-    void engineServiceRing(bool waiting);
-    void engineServiceRec(bool waiting);
+    void engineServicePlay();
+    void engineServiceRing();
+    void engineServiceRec();
 
 private:
     /**
@@ -172,10 +172,6 @@ private:
     AudioQueue     freeRingBufQueue_ {BUF_COUNT};
     AudioQueue     ringBufQueue_ {BUF_COUNT};
 
-    std::mutex     playMtx {};
-    std::condition_variable playCv {};
-    std::thread    playThread {};
-
     AudioQueue     freeRecBufQueue_ {BUF_COUNT};    //Owner of the queue
     AudioQueue     recBufQueue_ {BUF_COUNT};     //Owner of the queue
 
@@ -187,8 +183,6 @@ private:
 
     AudioFormat hardwareFormat_ {AudioFormat::MONO()};
     size_t hardwareBuffSize_ {BUFFER_SIZE};
-
-    std::thread startThread_;
 };
 
 }
