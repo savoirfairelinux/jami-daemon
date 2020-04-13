@@ -43,7 +43,9 @@ namespace jami {
 // Constructor
 OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
     : AudioLayer(pref)
-{}
+{
+    initAudioEngine();
+}
 
 // Destructor
 OpenSLLayer::~OpenSLLayer()
@@ -52,61 +54,79 @@ OpenSLLayer::~OpenSLLayer()
 }
 
 void
-OpenSLLayer::init()
+OpenSLLayer::startStream(AudioDeviceType stream)
 {
-    initAudioEngine();
-    initAudioPlayback();
-    initAudioCapture();
-
-    flush();
-}
-
-void
-OpenSLLayer::startStream(AudioStreamType stream)
-{
+    using namespace std::placeholders;
     std::lock_guard<std::mutex> lock(mutex_);
-    if (status_ != Status::Idle)
-        return;
-    status_ = Status::Starting;
     JAMI_WARN("Start OpenSL audio layer");
-
-    init();
-    startAudioPlayback();
-    startAudioCapture();
+    if (stream == AudioDeviceType::PLAYBACK) {
+        if (not player_) {
+            try  {
+                player_.reset(new opensl::AudioPlayer(hardwareFormat_, hardwareBuffSize_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+                player_->setBufQueue(&playBufQueue_, &freePlayBufQueue_);
+                player_->registerCallback(std::bind(&OpenSLLayer::engineServicePlay, this));
+                player_->start();
+            } catch (const std::exception& e) {
+                JAMI_ERR("Error initializing audio playback: %s", e.what());
+            }
+            if (recorder_)
+                startAudioCapture();
+        }
+    } else if (stream == AudioDeviceType::RINGTONE) {
+        if (not ringtone_) {
+            try  {
+                ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_, hardwareBuffSize_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+                ringtone_->setBufQueue(&ringBufQueue_, &freeRingBufQueue_);
+                ringtone_->registerCallback(std::bind(&OpenSLLayer::engineServiceRing, this));
+                ringtone_->start();
+            } catch (const std::exception& e) {
+                JAMI_ERR("Error initializing ringtone playback: %s", e.what());
+            }
+        }
+    }
+    else if (stream == AudioDeviceType::CAPTURE) {
+        if (not recorder_) {
+            std::lock_guard<std::mutex> lck(recMtx);
+            try  {
+                recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, engineInterface_));
+                recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
+                recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this));
+                setHasNativeAEC(recorder_->hasNativeAEC());
+            } catch (const std::exception& e) {
+                JAMI_ERR("Error initializing audio capture: %s", e.what());
+            }
+            if (player_)
+                startAudioCapture();
+        }
+    }
     JAMI_WARN("OpenSL audio layer started");
     status_ = Status::Started;
-    startedCv_.notify_all();
 }
 
 void
-OpenSLLayer::stopStream()
+OpenSLLayer::stopStream(AudioDeviceType stream)
 {
     std::unique_lock<std::mutex> lock(mutex_);
-    startedCv_.wait(lock, [this] { return status_ != Status::Starting; });
-    if (status_ != Status::Started)
-        return;
-    status_ = Status::Idle;
-    JAMI_WARN("Stopping OpenSL audio layer");
+    JAMI_WARN("Stopping OpenSL audio layer for type %u", (unsigned)stream);
 
-    stopAudioPlayback();
-    stopAudioCapture();
-    flush();
-
-    if (engineObject_ != nullptr) {
-        (*engineObject_)->Destroy(engineObject_);
-        engineObject_ = nullptr;
-        engineInterface_ = nullptr;
+    if (stream == AudioDeviceType::PLAYBACK) {
+        if (player_) {
+            player_->stop();
+            player_.reset();
+        }
+    } else if (stream == AudioDeviceType::RINGTONE) {
+        if (ringtone_) {
+            ringtone_->stop();
+            ringtone_.reset();
+        }
+    } else if (stream == AudioDeviceType::CAPTURE) {
+        stopAudioCapture();
     }
 
-    freePlayBufQueue_.clear();
-    freeRingBufQueue_.clear();
-    playBufQueue_.clear();
-    ringBufQueue_.clear();
-    freeRecBufQueue_.clear();
-    recBufQueue_.clear();
-    bufs_.clear();
-    dcblocker_.reset();
-    startedCv_.notify_all();
+    if (not player_ and not ringtone_ and not recorder_)
+        status_ = Status::Idle;
+
+    flush();
 }
 
 std::vector<sample_buf>
@@ -149,9 +169,33 @@ OpenSLLayer::initAudioEngine()
 void
 OpenSLLayer::shutdownAudioEngine()
 {
+    stopAudioCapture();
+    freeRecBufQueue_.clear();
+    recBufQueue_.clear();
+
+    if (player_) {
+        player_->stop();
+        player_.reset();
+    }
+    if (ringtone_) {
+        ringtone_->stop();
+        ringtone_.reset();
+    }
+    freePlayBufQueue_.clear();
+    playBufQueue_.clear();
+    freeRingBufQueue_.clear();
+    ringBufQueue_.clear();
+
     // destroy engine object, and invalidate all associated interfaces
     JAMI_DBG("Shutdown audio engine");
-    stopStream();
+    if (engineObject_ != nullptr) {
+        (*engineObject_)->Destroy(engineObject_);
+        engineObject_ = nullptr;
+        engineInterface_ = nullptr;
+    }
+
+    startedCv_.notify_all();
+    bufs_.clear();
 }
 
 uint32_t
@@ -225,28 +269,6 @@ OpenSLLayer::engineServiceRec() {
 }
 
 void
-OpenSLLayer::initAudioPlayback()
-{
-    using namespace std::placeholders;
-    try  {
-        player_.reset(new opensl::AudioPlayer(hardwareFormat_, hardwareBuffSize_, engineInterface_, SL_ANDROID_STREAM_VOICE));
-        player_->setBufQueue(&playBufQueue_, &freePlayBufQueue_);
-        player_->registerCallback(std::bind(&OpenSLLayer::engineServicePlay, this));
-    } catch (const std::exception& e) {
-        JAMI_ERR("Error initializing audio playback: %s", e.what());
-        return;
-    }
-
-    try  {
-        ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_, hardwareBuffSize_, engineInterface_, SL_ANDROID_STREAM_VOICE));
-        ringtone_->setBufQueue(&ringBufQueue_, &freeRingBufQueue_);
-        ringtone_->registerCallback(std::bind(&OpenSLLayer::engineServiceRing, this));
-    } catch (const std::exception& e) {
-        JAMI_ERR("Error initializing ringtone playback: %s", e.what());
-    }
-}
-
-void
 OpenSLLayer::initAudioCapture()
 {
     using namespace std::placeholders;
@@ -262,30 +284,19 @@ OpenSLLayer::initAudioCapture()
 }
 
 void
-OpenSLLayer::startAudioPlayback()
-{
-    if (not player_ and not ringtone_)
-        return;
-    JAMI_WARN("Start audio playback");
-    playbackChanged(true);
-    if (player_)
-        player_->start();
-    if (ringtone_)
-        ringtone_->start();
-    JAMI_WARN("Audio playback started");
-}
-
-void
 OpenSLLayer::startAudioCapture()
 {
     if (not recorder_)
         return;
     JAMI_DBG("Start audio capture");
 
-    recorder_->start();
+    if (recThread.joinable())
+        return;
     recThread = std::thread([&]() {
-        recordChanged(true);
         std::unique_lock<std::mutex> lck(recMtx);
+        if (recorder_)
+            recorder_->start();
+        recordChanged(true);
         while (recorder_) {
             recCv.wait_for(lck, std::chrono::seconds(1));
             if (not recorder_)
@@ -313,23 +324,6 @@ OpenSLLayer::startAudioCapture()
 }
 
 void
-OpenSLLayer::stopAudioPlayback()
-{
-    JAMI_DBG("Stop audio playback");
-    playbackChanged(false);
-    if (player_) {
-        player_->stop();
-        player_.reset();
-    }
-    if (ringtone_) {
-        ringtone_->stop();
-        ringtone_.reset();
-    }
-
-    JAMI_DBG("Audio playback stopped");
-}
-
-void
 OpenSLLayer::stopAudioCapture()
 {
     JAMI_DBG("Stop audio capture");
@@ -341,8 +335,8 @@ OpenSLLayer::stopAudioCapture()
             recorder_.reset();
         }
     }
-    recCv.notify_all();
     if (recThread.joinable()) {
+        recCv.notify_all();
         recThread.join();
     }
 
@@ -418,7 +412,7 @@ OpenSLLayer::getPlaybackDeviceList() const
 }
 
 void
-OpenSLLayer::updatePreference(AudioPreference& /*preference*/, int /*index*/, DeviceType /*type*/)
+OpenSLLayer::updatePreference(AudioPreference& /*preference*/, int /*index*/, AudioDeviceType /*type*/)
 {}
 
 void dumpAvailableEngineInterfaces()

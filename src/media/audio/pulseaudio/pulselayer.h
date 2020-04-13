@@ -125,10 +125,10 @@ class PulseLayer : public AudioLayer {
 
         virtual std::vector<std::string> getCaptureDeviceList() const;
         virtual std::vector<std::string> getPlaybackDeviceList() const;
-        int getAudioDeviceIndex(const std::string& descr, DeviceType type) const;
-        int getAudioDeviceIndexByName(const std::string& name, DeviceType type) const;
+        int getAudioDeviceIndex(const std::string& descr, AudioDeviceType type) const;
+        int getAudioDeviceIndexByName(const std::string& name, AudioDeviceType type) const;
 
-        std::string getAudioDeviceName(int index, DeviceType type) const;
+        std::string getAudioDeviceName(int index, AudioDeviceType type) const;
 
         virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT);
         virtual void stopStream();
@@ -151,7 +151,7 @@ class PulseLayer : public AudioLayer {
                                          const pa_server_info *i,
                                          void *userdata);
 
-        virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
+        virtual void updatePreference(AudioPreference &pref, int index, AudioDeviceType type);
 
         virtual int getIndexCapture() const;
         virtual int getIndexPlayback() const;
