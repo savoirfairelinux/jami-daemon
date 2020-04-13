@@ -47,9 +47,9 @@ struct PortAudioLayer::PortAudioLayerImpl
     void terminate() const;
     void initStream(PortAudioLayer&);
 
-    std::vector<std::string> getDeviceByType(DeviceType type) const;
-    int getIndexByType(DeviceType type);
-    int getInternalIndexByType(const int index, DeviceType type);
+    std::vector<std::string> getDeviceByType(AudioDeviceType type) const;
+    int getIndexByType(AudioDeviceType type);
+    int getInternalIndexByType(const int index, AudioDeviceType type);
 
     PaDeviceIndex indexIn_;
     PaDeviceIndex indexOut_;
@@ -96,17 +96,17 @@ PortAudioLayer::~PortAudioLayer()
 std::vector<std::string>
 PortAudioLayer::getCaptureDeviceList() const
 {
-    return pimpl_->getDeviceByType(DeviceType::CAPTURE);
+    return pimpl_->getDeviceByType(AudioDeviceType::CAPTURE);
 }
 
 std::vector<std::string>
 PortAudioLayer::getPlaybackDeviceList() const
 {
-    return pimpl_->getDeviceByType(DeviceType::PLAYBACK);
+    return pimpl_->getDeviceByType(AudioDeviceType::PLAYBACK);
 }
 
 int
-PortAudioLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
+PortAudioLayer::getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const
 {
 
     auto deviceList = pimpl_->getDeviceByType(type);
@@ -127,7 +127,7 @@ PortAudioLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) co
 }
 
 std::string
-PortAudioLayer::getAudioDeviceName(int index, DeviceType type) const
+PortAudioLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 {
     (void) type;
     const PaDeviceInfo *deviceInfo;
@@ -138,20 +138,20 @@ PortAudioLayer::getAudioDeviceName(int index, DeviceType type) const
 int
 PortAudioLayer::getIndexCapture() const
 {
-    return pimpl_->getIndexByType(DeviceType::CAPTURE);
+    return pimpl_->getIndexByType(AudioDeviceType::CAPTURE);
 }
 
 int
 PortAudioLayer::getIndexPlayback() const
 {
-    auto index = pimpl_->getIndexByType(DeviceType::PLAYBACK);
+    auto index = pimpl_->getIndexByType(AudioDeviceType::PLAYBACK);
     return index;
 }
 
 int
 PortAudioLayer::getIndexRingtone() const
 {
-    return pimpl_->getIndexByType(DeviceType::RINGTONE);
+    return pimpl_->getIndexByType(AudioDeviceType::RINGTONE);
 }
 
 void
@@ -201,17 +201,17 @@ PortAudioLayer::stopStream()
 }
 
 void
-PortAudioLayer::updatePreference(AudioPreference& preference, int index, DeviceType type)
+PortAudioLayer::updatePreference(AudioPreference& preference, int index, AudioDeviceType type)
 {
     auto internalIndex = pimpl_->getInternalIndexByType(index, type);
     switch (type) {
-        case DeviceType::PLAYBACK:
+        case AudioDeviceType::PLAYBACK:
             preference.setAlsaCardout(internalIndex);
             break;
-        case DeviceType::CAPTURE:
+        case AudioDeviceType::CAPTURE:
             preference.setAlsaCardin(internalIndex);
             break;
-        case DeviceType::RINGTONE:
+        case AudioDeviceType::RINGTONE:
             preference.setAlsaCardring(internalIndex);
             break;
         default:
@@ -236,7 +236,7 @@ PortAudioLayer::PortAudioLayerImpl::~PortAudioLayerImpl()
 }
 
 std::vector<std::string>
-PortAudioLayer::PortAudioLayerImpl::getDeviceByType(DeviceType type) const
+PortAudioLayer::PortAudioLayerImpl::getDeviceByType(AudioDeviceType type) const
 {
     std::vector<std::string> ret;
     int numDevices = 0;
@@ -247,7 +247,7 @@ PortAudioLayer::PortAudioLayerImpl::getDeviceByType(DeviceType type) const
     else {
         for (int i = 0; i < numDevices; i++) {
             const auto deviceInfo = Pa_GetDeviceInfo(i);
-            if (type == DeviceType::PLAYBACK) {
+            if (type == AudioDeviceType::PLAYBACK) {
                 if (deviceInfo->maxOutputChannels > 0)
                     ret.push_back(deviceInfo->name);
             } else {
@@ -308,12 +308,12 @@ PortAudioLayer::PortAudioLayerImpl::init(PortAudioLayer& parent)
 }
 
 int
-PortAudioLayer::PortAudioLayerImpl::getIndexByType(DeviceType type)
+PortAudioLayer::PortAudioLayerImpl::getIndexByType(AudioDeviceType type)
 {
     int index = indexRing_;
-    if (type == DeviceType::PLAYBACK) {
+    if (type == AudioDeviceType::PLAYBACK) {
         index = indexOut_;
-    } else if (type == DeviceType::CAPTURE) {
+    } else if (type == AudioDeviceType::CAPTURE) {
         index = indexIn_;
     }
 
@@ -338,7 +338,7 @@ PortAudioLayer::PortAudioLayerImpl::getIndexByType(DeviceType type)
 }
 
 int
-PortAudioLayer::PortAudioLayerImpl::getInternalIndexByType(const int index, DeviceType type)
+PortAudioLayer::PortAudioLayerImpl::getInternalIndexByType(const int index, AudioDeviceType type)
 {
     auto deviceList = getDeviceByType(type);
     if (!deviceList.size() || index >= deviceList.size()) {
