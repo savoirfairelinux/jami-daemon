@@ -50,7 +50,7 @@ void AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
         if (devShadowQueue_.size() == 0) {
             (*recItf_)->SetRecordState(recItf_, SL_RECORDSTATE_STOPPED);
         }
-        callback_(false);
+        callback_();
     } catch (const std::exception& e) {
         JAMI_ERR("processSLCallback exception: %s", e.what());
     }
@@ -59,6 +59,8 @@ void AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
 AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngine) :
         sampleInfo_(sampleFormat)
 {
+    JAMI_DBG("Creating OpenSL record stream");
+
     // configure audio source/
     SLDataLocator_IODevice loc_dev = {SL_DATALOCATOR_IODEVICE,
                                       SL_IODEVICE_AUDIOINPUT,
@@ -186,6 +188,7 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
 bool
 AudioRecorder::start()
 {
+    JAMI_DBG("OpenSL record start");
     if(!freeQueue_ || !recQueue_) {
         JAMI_ERR("====NULL pointer to Start(%p, %p)", freeQueue_, recQueue_);
         return false;
@@ -223,6 +226,7 @@ AudioRecorder::start()
 bool
 AudioRecorder::stop()
 {
+    JAMI_DBG("OpenSL record stop");
     // in case already recording, stop recording and clear buffer queue
     SLuint32 curState;
     SLresult result = (*recItf_)->GetRecordState(recItf_, &curState);
@@ -236,7 +240,7 @@ AudioRecorder::stop()
     SLASSERT(result);
 
     sample_buf *buf {nullptr};
-    while(devShadowQueue_.front(&buf)) {
+    while (devShadowQueue_.front(&buf)) {
         devShadowQueue_.pop();
         freeQueue_->push(buf);
     }
@@ -245,6 +249,8 @@ AudioRecorder::stop()
 }
 
 AudioRecorder::~AudioRecorder() {
+    JAMI_DBG("Destroying OpenSL record stream");
+
     // destroy audio recorder object, and invalidate all associated interfaces
     if (recObjectItf_) {
         (*recObjectItf_)->Destroy(recObjectItf_);
