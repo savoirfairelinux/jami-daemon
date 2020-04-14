@@ -135,6 +135,11 @@ class CoreLayer : public AudioLayer {
             UInt32 inNumberFrames,
             AudioBufferList* ioData);
 
+        static OSStatus deviceIsAliveCallback(AudioObjectID inObjectID,
+                        UInt32 inNumberAddresses,
+                        const AudioObjectPropertyAddress inAddresses[],
+                        void* inRefCon);
+
         void read(AudioUnitRenderActionFlags* ioActionFlags,
             const AudioTimeStamp* inTimeStamp,
             UInt32 inBusNumber,
@@ -170,7 +175,9 @@ class CoreLayer : public AudioLayer {
         AudioUnit ioUnit_;
 
         Float64 inSampleRate_;
+        UInt32 outChannelsPerFrame_;
         UInt32 inChannelsPerFrame_;
+        Float64 outSampleRate_;
 
         std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
