@@ -131,19 +131,19 @@ int AudioDevice::countChannels() const
                          &propSize);
     if (err) return 0;
 
-    AudioBufferList *buflist = (AudioBufferList *)malloc(propSize);
+    AudioBufferList buflist;
+    UInt32 size = sizeof(buflist);
     err = AudioObjectGetPropertyData(id_,
                      &theAddress,
                      0,
                      NULL,
-                     &propSize,
-                     buflist);
+                     &size,
+                     &buflist);
     if (!err) {
-        for (UInt32 i = 0; i < buflist->mNumberBuffers; ++i) {
-            result += buflist->mBuffers[i].mNumberChannels;
+        for (UInt32 i = 0; i < buflist.mNumberBuffers; ++i) {
+            result += buflist.mBuffers[i].mNumberChannels;
         }
     }
-    free(buflist);
     return result;
 }
 
