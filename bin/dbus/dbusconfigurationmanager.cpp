@@ -18,15 +18,9 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include "dbusconfigurationmanager.h"
 #include "configurationmanager_interface.h"
 #include "datatransfer_interface.h"
-
-#include "media/audio/audiolayer.h"
 
 DBusConfigurationManager::DBusConfigurationManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/ConfigurationManager")
@@ -403,20 +397,10 @@ DBusConfigurationManager::setAudioManager(const std::string& api) -> decltype(DR
     return DRing::setAudioManager(api);
 }
 
-std::vector<std::string>
-DBusConfigurationManager::getSupportedAudioManagers()
+auto
+DBusConfigurationManager::getSupportedAudioManagers() -> decltype(DRing::getSupportedAudioManagers())
 {
-    return {
-#if HAVE_ALSA
-        ALSA_API_STR,
-#endif
-#if HAVE_PULSE
-        PULSEAUDIO_API_STR,
-#endif
-#if HAVE_JACK
-        JACK_API_STR,
-#endif
-    };
+    return DRing::getSupportedAudioManagers();
 }
 
 auto
