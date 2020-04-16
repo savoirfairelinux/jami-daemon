@@ -95,6 +95,13 @@ CoreLayer::initAudioLayerIO()
     // 4) Initialize everything.
     // 5) Profit...
     JAMI_DBG("INIT AUDIO IO");
+    
+    //get capture divice
+    auto captureList = getDeviceList(true);
+    auto inputDeviceID = captureList[indexIn_].id_;
+    //get playback device
+    auto playbackList = getDeviceList(false);
+    auto playbackDeviceID = playbackList[indexOut_].id_;
 
     AudioUnitScope outputBus = 0;
     AudioUnitScope inputBus = 1;
@@ -114,6 +121,24 @@ CoreLayer::initAudioLayerIO()
     }
 
     checkErr(AudioComponentInstanceNew(comp, &ioUnit_));
+    
+    //set capture device
+    UInt32 size = sizeof(inputDeviceID);
+    AudioUnitSetProperty(ioUnit_,
+                         kAudioOutputUnitProperty_CurrentDevice,
+                         kAudioUnitScope_Global,
+                         inputBus,
+                         &inputDeviceID,
+                         size);
+
+    //set playback device
+    size = sizeof(playbackDeviceID);
+    AudioUnitSetProperty(ioUnit_,
+                         kAudioOutputUnitProperty_CurrentDevice,
+                         kAudioUnitScope_Global,
+                         outputBus,
+                         &playbackDeviceID,
+                         size);
 
     // Set stream format
     AudioStreamBasicDescription info;
