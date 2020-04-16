@@ -19,6 +19,7 @@
  */
 
 #include "call_factory.h"
+#include "manager.h"
 
 #include <stdexcept>
 
@@ -41,6 +42,7 @@ CallFactory::removeCall(Call& call)
     auto& map = callMaps_.at(linkType);
     map.erase(id);
     JAMI_DBG("Remaining %zu %s call(s)", map.size(), linkType);
+    Manager::instance().checkAudio();
 }
 
 void
