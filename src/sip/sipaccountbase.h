@@ -61,6 +61,8 @@ namespace Conf {
     const char *const BIND_ADDRESS_KEY = "bindAddress";
     const char *const INTERFACE_KEY = "interface";
     const char *const PORT_KEY = "port";
+    const char *const CONTACT_REWRITE_METHOD_KEY = "contactRewriteMethod";
+    const char *const ALLOW_CONTACT_REWRITE_KEY = "allowContactRewrite";
     const char *const PUBLISH_ADDR_KEY = "publishAddr";
     const char *const PUBLISH_PORT_KEY = "publishPort";
     const char *const SAME_AS_LOCAL_KEY = "sameasLocal";

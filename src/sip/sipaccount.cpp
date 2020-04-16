@@ -147,9 +147,9 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , via_addr_()
     , contactBuffer_()
     , contact_{contactBuffer_, 0}
-    , contactRewriteMethod_(2)
-    , allowViaRewrite_(true)
+    , contactRewriteMethod_(PJSUA_CONTACT_REWRITE_NO_UNREG)
     , allowContactRewrite_(1)
+    , allowViaRewrite_(true)
     , contactOverwritten_(false)
     , via_tp_(nullptr)
     , presence_(presenceEnabled ? new SIPPresence(this) : nullptr)
@@ -408,6 +408,40 @@ void SIPAccount::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::BIND_ADDRESS_KEY << YAML::Value << bindAddress_;
     out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
 
+    switch (allowContactRewrite_) {
+    case 0:
+        out << YAML::Key << Conf::ALLOW_CONTACT_REWRITE_KEY << YAML::Value << "DISABLE";
+        break;
+    case 1:
+        out << YAML::Key << Conf::ALLOW_CONTACT_REWRITE_KEY << YAML::Value << "ENABLE";
+        break;
+    case 2:
+        out << YAML::Key << Conf::ALLOW_CONTACT_REWRITE_KEY << YAML::Value << "ALWAYS";
+        break;
+    default:
+        JAMI_DBG("illegal value allowContactRewrite_=%d", allowContactRewrite_);
+        out << YAML::Key << Conf::ALLOW_CONTACT_REWRITE_KEY << YAML::Value << "ENABLE";
+        break;
+    }
+    switch (contactRewriteMethod_) {
+    case PJSUA_CONTACT_REWRITE_UNREGISTER:
+        out << YAML::Key << Conf::CONTACT_REWRITE_METHOD_KEY << YAML::Value << "UNREGISTER";
+        break;
+    case PJSUA_CONTACT_REWRITE_NO_UNREG:
+        out << YAML::Key << Conf::CONTACT_REWRITE_METHOD_KEY << YAML::Value << "UPDATE";
+        break;
+
+    case PJSUA_CONTACT_REWRITE_ALWAYS_UPDATE:
+    case PJSUA_CONTACT_REWRITE_METHOD:
+        JAMI_INFO("not implemented contactRewriteMethod_=%d", contactRewriteMethod_);
+        out << YAML::Key << Conf::CONTACT_REWRITE_METHOD_KEY << YAML::Value << "UPDATE";
+        break;
+    default:
+        JAMI_ERR("illegal value contactRewriteMethod_=%d", contactRewriteMethod_);
+        out << YAML::Key << Conf::CONTACT_REWRITE_METHOD_KEY << YAML::Value << "UPDATE";
+        break;
+    }
+
     out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
 
     // each credential is a map, and we can have multiple credentials
@@ -490,6 +524,12 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
     if (not isIP2IP()) {
         parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
+        std::string contactRewriteMethod;
+        parseValue(node, Conf::CONTACT_REWRITE_METHOD_KEY, contactRewriteMethod);
+        contactRewriteMethod_ = contactRewriteMethodFromString(contactRewriteMethod);
+        std::string allowContactRewrite;
+        parseValue(node, Conf::ALLOW_CONTACT_REWRITE_KEY, allowContactRewrite);
+        allowContactRewrite_ = allowContactRewriteFromString(allowContactRewrite);
         parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
         parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
         const auto& credsNode = node[Conf::CRED_KEY];
@@ -559,6 +599,14 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
 
     parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
+
+    std::string level;
+    parseString(details, Conf::CONFIG_ALLOW_CONTACT_REWRITE, level);
+    allowContactRewrite_ = allowContactRewriteFromString(level);
+
+    std::string method;
+    parseString(details, Conf::CONFIG_CONTACT_REWRITE_METHOD, method);
+    contactRewriteMethod_ = contactRewriteMethodFromString(method);
 
     // TLS
     parseString(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
@@ -642,7 +690,29 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_BIND_ADDRESS,                    bindAddress_);
     a.emplace(Conf::CONFIG_LOCAL_PORT,                      std::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET,                serviceRoute_);
-    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     std::to_string(registrationExpire_));
+    // a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     std::to_string(registrationExpire_));
+    switch (allowContactRewrite_) {
+    case 0:
+        a.emplace(Conf::CONFIG_ALLOW_CONTACT_REWRITE,      "DISABLE");
+        break;
+    case 2:
+        a.emplace(Conf::CONFIG_ALLOW_CONTACT_REWRITE,      "ALWAYS");
+        break;
+    case 1:
+    default:
+        a.emplace(Conf::CONFIG_ALLOW_CONTACT_REWRITE,      "ENABLE");
+        break;
+    }
+
+    switch (contactRewriteMethod_) {
+    case 0:
+        a.emplace(Conf::CONFIG_CONTACT_REWRITE_METHOD,      "UNREGISTER");
+        break;
+    case 1:
+    default:
+        a.emplace(Conf::CONFIG_CONTACT_REWRITE_METHOD,      "NO_UNREG");
+        break;
+    }
     a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED,              keepAliveEnabled_ ? TRUE_STR : FALSE_STR);
 
     a.emplace(Conf::CONFIG_PRESENCE_ENABLED,                presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR);
@@ -1132,6 +1202,30 @@ SIPAccount::sendUnregister()
                  sip_utils::sip_strerror(status).c_str());
         throw VoipLinkException("Unable to send request to unregister sip account");
     }
+}
+
+short int
+SIPAccount::allowContactRewriteFromString(const std::string& level)
+{
+    if (level == "DISABLE")
+        return 0;
+    if (level == "ALWAYS")
+        return 2;
+    if (level != "ENABLE") {
+        JAMI_ERR("allowContactRewrite: illegal value (%s)", level.c_str());
+    }
+    return 1;
+}
+
+short int
+SIPAccount::contactRewriteMethodFromString(const std::string& method)
+{
+    if (method == "UNREGISTER")
+        return PJSUA_CONTACT_REWRITE_UNREGISTER;
+    if (method != "NO_UNREG" && method != "UPDATE")
+        JAMI_ERR("contactRewriteMethod: illegal value (%s)", method.c_str());
+
+    return PJSUA_CONTACT_REWRITE_NO_UNREG;
 }
 
 pj_uint32_t
@@ -1834,15 +1928,18 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
      * might have messed up with the SIP packets. See:
      * http://trac.pjsip.org/repos/ticket/643
      *
-     * This exception can be disabled by setting allow_contact_rewrite
-     * to 2. In this case, the switch will always be done whenever there
+     * This exception can be disabled by setting allowContactRewrite_
+     * to ALWAYS. In this case, the switch will always be done whenever there
      * is difference in the IP address in the response.
      */
     if (allowContactRewrite_ != 2 and
         not contact_addr.isPrivate() and
         not srv_ip.isPrivate() and
-        recv_addr.isPrivate()) {
-        /* Don't switch */
+        recv_addr.isPrivate())
+    {
+        JAMI_INFO("Address change detected but we're NOT switching;\n"
+                  "set Allow Contact Rewrite to ALWAYS to bypass this\n"
+                  "See: http://trac.pjsip.org/repos/ticket/643 for details");
         return false;
     }
 
@@ -1850,8 +1947,13 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
      * the Via received address is private.
      * See http://trac.pjsip.org/repos/ticket/864
      */
-    if (allowContactRewrite_ != 2 and contact_addr == recv_addr and recv_addr.isPrivate()) {
-        /* Don't switch */
+    if (allowContactRewrite_ != 2 and
+        contact_addr == recv_addr and
+        recv_addr.isPrivate())
+    {
+        JAMI_INFO("Address change detected but NOT switching;\n"
+                  "set Allow Contact Rewrite to ALWAYS to bypass this\n"
+                  "See: http://trac.pjsip.org/repos/ticket/864 for details");
         return false;
     }
 
@@ -1860,21 +1962,44 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
     if (IpAddr::isIpv6(via_addrstr))
         via_addrstr = IpAddr(via_addrstr).toString(false, true);
 
+    std::string method;
+    switch (contactRewriteMethod_) {
+    case PJSUA_CONTACT_REWRITE_UNREGISTER:
+        method = "REWRITE_UNREGISTER";
+        break;
+    case PJSUA_CONTACT_REWRITE_NO_UNREG:
+        method = "REWRITE_NO_UNREG";
+        break;
+    case PJSUA_CONTACT_REWRITE_ALWAYS_UPDATE:
+        method = "REWRITE_ALWAYS_UPDATE";
+        break;
+    case PJSUA_CONTACT_REWRITE_METHOD:
+        method = "DEFAULT";
+        break;
+    default:
+        break;
+    }
     JAMI_WARN("IP address change detected for account %s "
-         "(%.*s:%d --> %s:%d). Updating registration "
-         "(using method %d)",
+         "(%.*s:%d --> %s:%d).\n"
+         "Updating registration "
+         "(using method %s)",
          accountID_.c_str(),
          (int) uri->host.slen,
          uri->host.ptr,
          uri->port,
          via_addrstr.c_str(),
          rport,
-         contactRewriteMethod_);
+         method.c_str());
 
-    pj_assert(contactRewriteMethod_ == 1 or contactRewriteMethod_ == 2);
+    pj_assert(contactRewriteMethod_ == PJSUA_CONTACT_REWRITE_UNREGISTER ||
+              contactRewriteMethod_ == PJSUA_CONTACT_REWRITE_NO_UNREG ||
+              contactRewriteMethod_ == PJSUA_CONTACT_REWRITE_ALWAYS_UPDATE ||
+              contactRewriteMethod_ == PJSUA_CONTACT_REWRITE_METHOD);
 
     std::shared_ptr<SipTransport> tmp_tp {nullptr};
-    if (contactRewriteMethod_ == 1) {
+    if (contactRewriteMethod_ == PJSUA_CONTACT_REWRITE_UNREGISTER &&
+        regc_ != nullptr)
+    {
         /* Save transport in case we're gonna reuse it */
         tmp_tp = transport_;
         /* Unregister current contact */
@@ -1911,7 +2036,9 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
         pj_strncpy_with_null(&contact_, &tmp_str, PJSIP_MAX_URL_SIZE);
     }
 
-    if (contactRewriteMethod_ == 2 && regc_ != nullptr) {
+    if (contactRewriteMethod_ == PJSUA_CONTACT_REWRITE_NO_UNREG &&
+        regc_ != nullptr)
+    {
         contactOverwritten_ = true;
         pjsip_regc_update_contact(regc_, 1, &contact_);
 
