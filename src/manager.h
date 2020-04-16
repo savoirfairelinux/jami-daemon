@@ -423,7 +423,7 @@ class DRING_TESTABLE Manager {
          * @param callID      The account identifier
          * @return std::map< std::string, std::string > The call details
          */
-        std::map<std::string, std::string> getCallDetails(const std::string& callID);
+        std::map<std::string, std::string> getCallDetails(const std::string& callID) const;
 
         /**
          * Get list of calls (internal subcalls are filter-out)
