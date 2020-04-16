@@ -1025,6 +1025,13 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
     if (param->regc != getRegistrationInfo())
         return;
 
+    JAMI_DBG("is_ureg=%d contact_cnt=%d localport=%d expire=%d status=%d",
+            param->is_unreg ? 1 : 0,
+            param->contact_cnt,
+            getLocalPort(),
+            param->expiration,
+            param->status);
+
     if (param->status != PJ_SUCCESS) {
         JAMI_ERR("SIP registration error %d", param->status);
         destroyRegistrationInfo();
@@ -1127,11 +1134,14 @@ SIPAccount::sendUnregister()
         throw VoipLinkException("Unable to unregister sip account");
 
     pj_status_t status;
-    if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        JAMI_ERR("pjsip_regc_send failed with error %d: %s", status,
-                 sip_utils::sip_strerror(status).c_str());
+    while ((status = pjsip_regc_send(regc, tdata)) == PJ_EBUSY)
+        JAMI_ERR("pjsip_regc_send got EBUSY");
+
+    if (status != PJ_SUCCESS)
         throw VoipLinkException("Unable to send request to unregister sip account");
-    }
+    else
+        JAMI_DBG("pjsip_regc_send success!");
+
 }
 
 pj_uint32_t
@@ -1842,7 +1852,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
         not contact_addr.isPrivate() and
         not srv_ip.isPrivate() and
         recv_addr.isPrivate()) {
-        /* Don't switch */
+        JAMI_DBG("Don't switch; See: http://trac.pjsip.org/repos/ticket/643");
         return false;
     }
 
@@ -1851,7 +1861,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
      * See http://trac.pjsip.org/repos/ticket/864
      */
     if (allowContactRewrite_ != 2 and contact_addr == recv_addr and recv_addr.isPrivate()) {
-        /* Don't switch */
+        JAMI_DBG("Don't switch; See: http://trac.pjsip.org/repos/ticket/864");
         return false;
     }
 
