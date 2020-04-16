@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3e31ce96_6ec55425",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 881,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-04-16T21:30:41Z",
+      "side": 1,
+      "message": "what about\n\n    for (const auto\u0026 call: callFactory.getAllCalls()) {\n        if (!call-\u003eisSubcall() \u0026\u0026 call-\u003egetStateStr() \u003d\u003d DRing::Call::StateEvent::CURRENT)\n            return true;\n    }\n    return false;\n\navoids to copy the list of call ids from the list of calls and do lookup for them just after",
+      "range": {
+        "startLine": 874,
+        "startChar": 0,
+        "endLine": 881,
+        "endChar": 17
+      },
+      "revId": "9cbe44682aa1b492d3fe07e78463df2886aea14b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
