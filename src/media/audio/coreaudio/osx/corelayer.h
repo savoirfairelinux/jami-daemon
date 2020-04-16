@@ -171,6 +171,8 @@ class CoreLayer : public AudioLayer {
 
         Float64 inSampleRate_;
         UInt32 inChannelsPerFrame_;
+        Float64 outSampleRate_;
+        UInt32 outChannelsPerFrame_;
 
         std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
