@@ -64,6 +64,7 @@ static const char *const CONFIG_BIND_ADDRESS                    = "Account.bindA
 static const char *const CONFIG_LOCAL_INTERFACE                 = "Account.localInterface";
 static const char *const CONFIG_PUBLISHED_SAMEAS_LOCAL          = "Account.publishedSameAsLocal";
 static const char *const CONFIG_LOCAL_PORT                      = "Account.localPort";
+static const char *const CONFIG_CONTACT_REWRITE_LEVEL           = "Account.contactRewriteLevel";
 static const char *const CONFIG_PUBLISHED_PORT                  = "Account.publishedPort";
 static const char *const CONFIG_PUBLISHED_ADDRESS               = "Account.publishedAddress";
 static const char *const CONFIG_UPNP_ENABLED                    = "Account.upnpEnabled";
