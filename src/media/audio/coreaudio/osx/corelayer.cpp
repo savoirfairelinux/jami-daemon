@@ -98,10 +98,10 @@ CoreLayer::initAudioLayerIO()
 
     //get capture divice
     auto captureList = getDeviceList(true);
-    auto inputDeviceID = captureList[indexIn_].id_;
+    auto inputDeviceID = indexIn_ > captureList.size() ? captureList[0].id_ : captureList[indexIn_].id_;
     //get playback device
     auto playbackList = getDeviceList(false);
-    auto playbackDeviceID = playbackList[indexOut_].id_;
+    auto playbackDeviceID = indexOut_ > captureList.size() ? playbackList[0].id_ : playbackList[indexOut_].id_;
 
     AudioUnitScope outputBus = 0;
     AudioUnitScope inputBus = 1;
@@ -139,6 +139,15 @@ CoreLayer::initAudioLayerIO()
                          outputBus,
                          &playbackDeviceID,
                          size);
+    // add listener for detecting when a devices are removed
+    const AudioObjectPropertyAddress alive_address =
+    {
+        kAudioDevicePropertyDeviceIsAlive,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMaster
+    };
+    AudioObjectAddPropertyListener(playbackDeviceID, &alive_address, &deviceIsAliveCallback, this);
+    AudioObjectAddPropertyListener(inputDeviceID, &alive_address, &deviceIsAliveCallback, this);
 
     // Set stream format
     AudioStreamBasicDescription info;
@@ -306,6 +315,19 @@ CoreLayer::stopStream()
 }
 
 //// PRIVATE /////
+
+OSStatus
+CoreLayer::deviceIsAliveCallback(AudioObjectID inObjectID,
+           UInt32 inNumberAddresses,
+           const AudioObjectPropertyAddress inAddresses[],
+           void* inRefCon)
+{
+    if (static_cast<CoreLayer*>(inRefCon)->status_ != Status::Started)
+        return kAudioServicesNoError;
+    static_cast<CoreLayer*>(inRefCon)->stopStream();
+    static_cast<CoreLayer*>(inRefCon)->startStream();
+    return kAudioServicesNoError;
+}
 
 OSStatus
 CoreLayer::outputCallback(void* inRefCon,
