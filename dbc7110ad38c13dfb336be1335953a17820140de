@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9d0b7cc0_a4729ca7",
+        "filename": "src/manager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 876,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-04-16T20:37:11Z",
+      "side": 1,
+      "message": "use getStateStr() to avoid getting the whole call detail structure",
+      "range": {
+        "startLine": 875,
+        "startChar": 8,
+        "endLine": 876,
+        "endChar": 56
+      },
+      "revId": "dbc7110ad38c13dfb336be1335953a17820140de",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
