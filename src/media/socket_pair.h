@@ -216,8 +216,8 @@ class SocketPair {
         static constexpr unsigned MAX_LIST_SIZE {10};
 
         mutable std::atomic_bool rtcpPacketLoss_ {false};
-        double lastSRTS_;
-        uint32_t lastDLSR_;
+        double lastSRTS_ {};
+        uint32_t lastDLSR_ {};
 
         std::list<double> histoLatency_;
 
