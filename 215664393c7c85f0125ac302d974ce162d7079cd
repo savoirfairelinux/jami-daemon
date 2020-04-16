@@ -22,6 +22,30 @@
       "revId": "215664393c7c85f0125ac302d974ce162d7079cd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6941e2e5_c7fe2a8a",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2121,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-16T16:26:33Z",
+      "side": 0,
+      "message": "it\u0027s resetted the line after :)",
+      "parentUuid": "75432603_3ecce157",
+      "range": {
+        "startLine": 2121,
+        "startChar": 4,
+        "endLine": 2121,
+        "endChar": 33
+      },
+      "revId": "215664393c7c85f0125ac302d974ce162d7079cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
