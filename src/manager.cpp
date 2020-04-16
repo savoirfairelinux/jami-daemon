@@ -871,7 +871,12 @@ Manager::isCurrentCall(const Call& call) const
 bool
 Manager::hasCurrentCall() const
 {
-    return not pimpl_->currentCall_.empty();
+    for (const auto& call: getCallList()) {
+        const auto details = getCallDetails(call);
+        if (details.at(DRing::Call::Details::CALL_STATE) == DRing::Call::StateEvent::CURRENT)
+            return true;
+    }
+    return false;
 }
 
 std::shared_ptr<Call>
@@ -1922,7 +1927,7 @@ Manager::peerRingingCall(Call& call)
 {
     JAMI_DBG("[call:%s] Peer ringing", call.getCallId().c_str());
 
-    if (isCurrentCall(call))
+    if (!hasCurrentCall())
         ringback();
 }
 
@@ -2792,7 +2797,7 @@ Manager::loadAccountMap(const YAML::Node& node)
 }
 
 std::map<std::string, std::string>
-Manager::getCallDetails(const std::string &callID)
+Manager::getCallDetails(const std::string &callID) const
 {
     if (auto call = getCallFromCallID(callID)) {
         return call->getDetails();
