@@ -125,6 +125,7 @@ constexpr static const char REALM                   [] = "Account.realm";
 constexpr static const char LOCAL_INTERFACE         [] = "Account.localInterface";
 constexpr static const char PUBLISHED_SAMEAS_LOCAL  [] = "Account.publishedSameAsLocal";
 constexpr static const char LOCAL_PORT              [] = "Account.localPort";
+constexpr static const char CONTACT_REWRITE_LEVEL   [] = "Account.contactRewriteLevel";
 constexpr static const char PUBLISHED_PORT          [] = "Account.publishedPort";
 constexpr static const char PUBLISHED_ADDRESS       [] = "Account.publishedAddress";
 constexpr static const char USER_AGENT              [] = "Account.useragent";

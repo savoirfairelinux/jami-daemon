@@ -148,8 +148,8 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , contactBuffer_()
     , contact_{contactBuffer_, 0}
     , contactRewriteMethod_(2)
+    , contactRewriteLevel_(2)
     , allowViaRewrite_(true)
-    , allowContactRewrite_(1)
     , contactOverwritten_(false)
     , via_tp_(nullptr)
     , presence_(presenceEnabled ? new SIPPresence(this) : nullptr)
@@ -408,6 +408,8 @@ void SIPAccount::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::BIND_ADDRESS_KEY << YAML::Value << bindAddress_;
     out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
 
+    out << YAML::Key << Conf::CONTACT_REWRITE_LEVEL_KEY << YAML::Value << contactRewriteLevel_;
+
     out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
 
     // each credential is a map, and we can have multiple credentials
@@ -490,6 +492,7 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
     if (not isIP2IP()) {
         parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
+        parseValue(node, Conf::CONTACT_REWRITE_LEVEL_KEY, contactRewriteLevel_);
         parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
         parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
         const auto& credsNode = node[Conf::CRED_KEY];
@@ -559,6 +562,10 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
 
     parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
+
+    std::string level;
+    parseString(details, Conf::CONFIG_CONTACT_REWRITE_LEVEL, level);
+    contactRewriteLevel_ = contactRewriteLevelFromString(level);
 
     // TLS
     parseString(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
@@ -643,6 +650,18 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_LOCAL_PORT,                      std::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET,                serviceRoute_);
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     std::to_string(registrationExpire_));
+    switch (contactRewriteLevel_) {
+    case 0:
+        a.emplace(Conf::CONFIG_CONTACT_REWRITE_LEVEL,       "DISABLE");
+        break;
+    case 1:
+        a.emplace(Conf::CONFIG_CONTACT_REWRITE_LEVEL,       "ENABLE");
+        break;
+    case 2:
+    default:
+        a.emplace(Conf::CONFIG_CONTACT_REWRITE_LEVEL,       "ALWAYS");
+        break;
+    }
     a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED,              keepAliveEnabled_ ? TRUE_STR : FALSE_STR);
 
     a.emplace(Conf::CONFIG_PRESENCE_ENABLED,                presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR);
@@ -1132,6 +1151,19 @@ SIPAccount::sendUnregister()
                  sip_utils::sip_strerror(status).c_str());
         throw VoipLinkException("Unable to send request to unregister sip account");
     }
+}
+
+short int
+SIPAccount::contactRewriteLevelFromString(const std::string& level)
+{
+    if (level == "DISABLE")
+        return 0;
+    if (level == "ENABLE")
+        return 1;
+    if (level == "ALWAYS")
+        return 2;
+
+    return 2;
 }
 
 pj_uint32_t
@@ -1782,7 +1814,7 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
     }
 
     /* Only update if account is configured to auto-update */
-    if (not allowContactRewrite_)
+    if (not contactRewriteLevel_)
         return false;
 
     /* Compare received and rport with the URI in our registration */
@@ -1838,11 +1870,13 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
      * to 2. In this case, the switch will always be done whenever there
      * is difference in the IP address in the response.
      */
-    if (allowContactRewrite_ != 2 and
+    if (contactRewriteLevel_ != 2 and
         not contact_addr.isPrivate() and
         not srv_ip.isPrivate() and
         recv_addr.isPrivate()) {
-        /* Don't switch */
+        JAMI_INFO("Address change detected but we're NOT switching;\n"
+                  "set Contact Rewrite Level to ALWAYS to bypass this\n"
+                  "See: http://trac.pjsip.org/repos/ticket/643 for details");
         return false;
     }
 
@@ -1850,8 +1884,10 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
      * the Via received address is private.
      * See http://trac.pjsip.org/repos/ticket/864
      */
-    if (allowContactRewrite_ != 2 and contact_addr == recv_addr and recv_addr.isPrivate()) {
-        /* Don't switch */
+    if (contactRewriteLevel_ != 2 and contact_addr == recv_addr and recv_addr.isPrivate()) {
+        JAMI_INFO("Address change detected but NOT switching;\n"
+                  "set Contact Rewrite LEVEL to ALWAYS to bypass this\n"
+                  "See: http://trac.pjsip.org/repos/ticket/864 for details");
         return false;
     }
 
