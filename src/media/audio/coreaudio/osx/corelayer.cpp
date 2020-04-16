@@ -98,10 +98,10 @@ CoreLayer::initAudioLayerIO()
 
     //get capture divice
     auto captureList = getDeviceList(true);
-    auto inputDeviceID = captureList[indexIn_].id_;
+    AudioDeviceID inputDeviceID = captureList[indexIn_].id_;
     //get playback device
     auto playbackList = getDeviceList(false);
-    auto playbackDeviceID = playbackList[indexOut_].id_;
+    AudioDeviceID playbackDeviceID = playbackList[indexOut_].id_;
 
     AudioUnitScope outputBus = 0;
     AudioUnitScope inputBus = 1;
@@ -124,21 +124,50 @@ CoreLayer::initAudioLayerIO()
 
     //set capture device
     UInt32 size = sizeof(inputDeviceID);
-    AudioUnitSetProperty(ioUnit_,
-                         kAudioOutputUnitProperty_CurrentDevice,
-                         kAudioUnitScope_Global,
-                         inputBus,
-                         &inputDeviceID,
-                         size);
+    auto error = AudioUnitSetProperty(ioUnit_,
+                                      kAudioOutputUnitProperty_CurrentDevice,
+                                      kAudioUnitScope_Global,
+                                      inputBus,
+                                      &inputDeviceID,
+                                      size);
+    //if failed get default device
+    if (error != kAudioServicesNoError) {
+        const AudioObjectPropertyAddress inputInfo =
+        {
+            kAudioHardwarePropertyDefaultInputDevice,
+            kAudioObjectPropertyScopeGlobal,
+            kAudioObjectPropertyElementMaster
+        };
+        auto status = AudioObjectGetPropertyData(kAudioObjectSystemObject, &inputInfo, 0, NULL, &size, &inputDeviceID);
+    }
 
     //set playback device
     size = sizeof(playbackDeviceID);
-    AudioUnitSetProperty(ioUnit_,
-                         kAudioOutputUnitProperty_CurrentDevice,
-                         kAudioUnitScope_Global,
-                         outputBus,
-                         &playbackDeviceID,
-                         size);
+    error = AudioUnitSetProperty(ioUnit_,
+                                 kAudioOutputUnitProperty_CurrentDevice,
+                                 kAudioUnitScope_Global,
+                                 outputBus,
+                                 &playbackDeviceID,
+                                 size);
+    //if failed get default device
+    if (error != kAudioServicesNoError) {
+        const AudioObjectPropertyAddress outputInfo =
+        {
+            kAudioHardwarePropertyDefaultOutputDevice,
+            kAudioObjectPropertyScopeGlobal,
+            kAudioObjectPropertyElementMaster
+        };
+        auto status = AudioObjectGetPropertyData(kAudioObjectSystemObject, &outputInfo, 0, NULL, &size, &playbackDeviceID);
+    }
+    // add listener for detecting when a devices are removed
+    const AudioObjectPropertyAddress aliveAddress =
+    {
+        kAudioDevicePropertyDeviceIsAlive,
+        kAudioObjectPropertyScopeGlobal,
+        kAudioObjectPropertyElementMaster
+    };
+    AudioObjectAddPropertyListener(playbackDeviceID, &aliveAddress, &deviceIsAliveCallback, this);
+    AudioObjectAddPropertyListener(inputDeviceID, &aliveAddress, &deviceIsAliveCallback, this);
 
     // Set stream format
     AudioStreamBasicDescription info;
@@ -306,6 +335,19 @@ CoreLayer::stopStream()
 }
 
 //// PRIVATE /////
+
+OSStatus
+CoreLayer::deviceIsAliveCallback(AudioObjectID inObjectID,
+           UInt32 inNumberAddresses,
+           const AudioObjectPropertyAddress inAddresses[],
+           void* inRefCon)
+{
+    if (static_cast<CoreLayer*>(inRefCon)->status_ != Status::Started)
+        return kAudioServicesNoError;
+    static_cast<CoreLayer*>(inRefCon)->stopStream();
+    static_cast<CoreLayer*>(inRefCon)->startStream();
+    return kAudioServicesNoError;
+}
 
 OSStatus
 CoreLayer::outputCallback(void* inRefCon,
