@@ -1028,7 +1028,6 @@ Manager::hangupCall(const std::string& callId)
 
     try {
         call->hangup(0);
-        checkAudio();
     } catch (const VoipLinkException &e) {
         JAMI_ERR("%s", e.what());
         return false;
@@ -1189,8 +1188,6 @@ Manager::refuseCall(const std::string& id)
     stopTone();
 
     call->refuse();
-
-    checkAudio();
 
     pimpl_->removeWaitingCall(id);
 
