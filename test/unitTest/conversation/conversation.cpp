@@ -149,7 +149,25 @@ ConversationTest::testCreateConversation()
     auto uri = aliceAccount->getAccountDetails()[DRing::Account::ConfProperties::USERNAME];
     if (uri.find("ring:") == 0)
         uri = uri.substr(std::string("ring:").size());
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == aliceId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    // Start conversation
     auto convId = aliceAccount->startConversation();
+    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; });
+    CPPUNIT_ASSERT(conversationReady);
 
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
@@ -373,9 +391,11 @@ ConversationTest::testSendMessage()
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
-        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
-            conversationReady = true;
-            cv.notify_one();
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
         }));
     DRing::registerSignalHandlers(confHandlers);
 
