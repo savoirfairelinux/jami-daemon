@@ -22,6 +22,30 @@
       "revId": "5a8973e4b5fb34abb8629ae54e5a84cf3981b367",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "898e5769_e0da68ad",
+        "filename": "README",
+        "patchSetId": 7
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2020-04-17T16:47:53Z",
+      "side": 1,
+      "message": "What do you mean? Have you tested the latest patchset?",
+      "parentUuid": "21ba8f75_356eba70",
+      "range": {
+        "startLine": 70,
+        "startChar": 12,
+        "endLine": 70,
+        "endChar": 17
+      },
+      "revId": "5a8973e4b5fb34abb8629ae54e5a84cf3981b367",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
