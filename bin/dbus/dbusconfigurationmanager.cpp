@@ -21,35 +21,39 @@
 #include "dbusconfigurationmanager.h"
 #include "configurationmanager_interface.h"
 #include "datatransfer_interface.h"
+#include "conversation_interface.h"
 
 DBusConfigurationManager::DBusConfigurationManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/ConfigurationManager")
 {}
 
 auto
-DBusConfigurationManager::getAccountDetails(const std::string& accountID) -> decltype(DRing::getAccountDetails(accountID))
+DBusConfigurationManager::getAccountDetails(const std::string& accountID)
+    -> decltype(DRing::getAccountDetails(accountID))
 {
     return DRing::getAccountDetails(accountID);
 }
 
 auto
-DBusConfigurationManager::getVolatileAccountDetails(const std::string& accountID) -> decltype(DRing::getVolatileAccountDetails(accountID))
+DBusConfigurationManager::getVolatileAccountDetails(const std::string& accountID)
+    -> decltype(DRing::getVolatileAccountDetails(accountID))
 {
     return DRing::getVolatileAccountDetails(accountID);
 }
 
 void
-DBusConfigurationManager::setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
+DBusConfigurationManager::setAccountDetails(const std::string& accountID,
+                                            const std::map<std::string, std::string>& details)
 {
     DRing::setAccountDetails(accountID, details);
 }
 
 auto
-DBusConfigurationManager::testAccountICEInitialization(const std::string& accountID) -> decltype(DRing::testAccountICEInitialization(accountID))
+DBusConfigurationManager::testAccountICEInitialization(const std::string& accountID)
+    -> decltype(DRing::testAccountICEInitialization(accountID))
 {
     return DRing::testAccountICEInitialization(accountID);
 }
-
 
 void
 DBusConfigurationManager::setAccountActive(const std::string& accountID, const bool& active)
@@ -58,67 +62,90 @@ DBusConfigurationManager::setAccountActive(const std::string& accountID, const b
 }
 
 auto
-DBusConfigurationManager::getAccountTemplate(const std::string& accountType) -> decltype(DRing::getAccountTemplate(accountType))
+DBusConfigurationManager::getAccountTemplate(const std::string& accountType)
+    -> decltype(DRing::getAccountTemplate(accountType))
 {
     return DRing::getAccountTemplate(accountType);
 }
 
 auto
-DBusConfigurationManager::addAccount(const std::map<std::string, std::string>& details) -> decltype(DRing::addAccount(details))
+DBusConfigurationManager::addAccount(const std::map<std::string, std::string>& details)
+    -> decltype(DRing::addAccount(details))
 {
     return DRing::addAccount(details);
 }
 
 auto
-DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::string& password) -> decltype(DRing::exportOnRing(accountID, password))
+DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::string& password)
+    -> decltype(DRing::exportOnRing(accountID, password))
 {
     return DRing::exportOnRing(accountID, password);
 }
 
 auto
-DBusConfigurationManager::exportToFile(const std::string& accountID, const std::string& destinationPath, const std::string& password) -> decltype(DRing::exportToFile(accountID, destinationPath, password))
+DBusConfigurationManager::exportToFile(const std::string& accountID,
+                                       const std::string& destinationPath,
+                                       const std::string& password)
+    -> decltype(DRing::exportToFile(accountID, destinationPath, password))
 {
     return DRing::exportToFile(accountID, destinationPath, password);
 }
 
 auto
-DBusConfigurationManager::revokeDevice(const std::string& accountID, const std::string& password, const std::string& device) -> decltype(DRing::revokeDevice(accountID, password, device))
+DBusConfigurationManager::revokeDevice(const std::string& accountID,
+                                       const std::string& password,
+                                       const std::string& device)
+    -> decltype(DRing::revokeDevice(accountID, password, device))
 {
     return DRing::revokeDevice(accountID, password, device);
 }
 
 auto
-DBusConfigurationManager::getKnownRingDevices(const std::string& accountID) -> decltype(DRing::getKnownRingDevices(accountID))
+DBusConfigurationManager::getKnownRingDevices(const std::string& accountID)
+    -> decltype(DRing::getKnownRingDevices(accountID))
 {
     return DRing::getKnownRingDevices(accountID);
 }
 
 auto
-DBusConfigurationManager::changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new) -> decltype(DRing::changeAccountPassword(accountID, password_old, password_new))
+DBusConfigurationManager::changeAccountPassword(const std::string& accountID,
+                                                const std::string& password_old,
+                                                const std::string& password_new)
+    -> decltype(DRing::changeAccountPassword(accountID, password_old, password_new))
 {
     return DRing::changeAccountPassword(accountID, password_old, password_new);
 }
 
 auto
-DBusConfigurationManager::lookupName(const std::string& account, const std::string& nameserver, const std::string& name) -> decltype(DRing::lookupName(account, nameserver, name))
+DBusConfigurationManager::lookupName(const std::string& account,
+                                     const std::string& nameserver,
+                                     const std::string& name)
+    -> decltype(DRing::lookupName(account, nameserver, name))
 {
     return DRing::lookupName(account, nameserver, name);
 }
 
 auto
-DBusConfigurationManager::lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address) -> decltype(DRing::lookupAddress(account, nameserver, address))
+DBusConfigurationManager::lookupAddress(const std::string& account,
+                                        const std::string& nameserver,
+                                        const std::string& address)
+    -> decltype(DRing::lookupAddress(account, nameserver, address))
 {
     return DRing::lookupAddress(account, nameserver, address);
 }
 
 auto
-DBusConfigurationManager::registerName(const std::string& account, const std::string& password, const std::string& name) -> decltype(DRing::registerName(account, password, name))
+DBusConfigurationManager::registerName(const std::string& account,
+                                       const std::string& password,
+                                       const std::string& name)
+    -> decltype(DRing::registerName(account, password, name))
 {
     return DRing::registerName(account, password, name);
 }
 
 auto
-DBusConfigurationManager::searchUser(const std::string& account, const std::string& query) -> decltype(DRing::searchUser(account, query))
+DBusConfigurationManager::searchUser(const std::string& account, const std::string& query)
+    -> decltype(DRing::searchUser(account, query))
 {
     return DRing::searchUser(account, query);
 }
@@ -148,13 +175,17 @@ DBusConfigurationManager::registerAllAccounts(void)
 }
 
 auto
-DBusConfigurationManager::sendTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads) -> decltype(DRing::sendAccountTextMessage(accountID, to, payloads))
+DBusConfigurationManager::sendTextMessage(const std::string& accountID,
+                                          const std::string& to,
+                                          const std::map<std::string, std::string>& payloads)
+    -> decltype(DRing::sendAccountTextMessage(accountID, to, payloads))
 {
     return DRing::sendAccountTextMessage(accountID, to, payloads);
 }
 
 std::vector<RingDBusMessage>
-DBusConfigurationManager::getLastMessages(const std::string& accountID, const uint64_t& base_timestamp)
+DBusConfigurationManager::getLastMessages(const std::string& accountID,
+                                          const uint64_t& base_timestamp)
 {
     auto messages = DRing::getLastMessages(accountID, base_timestamp);
     std::vector<RingDBusMessage> result;
@@ -175,13 +206,15 @@ DBusConfigurationManager::getNearbyPeers(const std::string& accountID)
 }
 
 auto
-DBusConfigurationManager::getMessageStatus(const uint64_t& id) -> decltype(DRing::getMessageStatus(id))
+DBusConfigurationManager::getMessageStatus(const uint64_t& id)
+    -> decltype(DRing::getMessageStatus(id))
 {
     return DRing::getMessageStatus(id);
 }
 
 auto
-DBusConfigurationManager::getMessageStatus(const std::string& accountID, const uint64_t& id) -> decltype(DRing::getMessageStatus(accountID, id))
+DBusConfigurationManager::getMessageStatus(const std::string& accountID, const uint64_t& id)
+    -> decltype(DRing::getMessageStatus(accountID, id))
 {
     return DRing::getMessageStatus(accountID, id);
 }
@@ -193,13 +226,18 @@ DBusConfigurationManager::cancelMessage(const std::string& accountID, const uint
 }
 
 void
-DBusConfigurationManager::setIsComposing(const std::string& accountID, const std::string& to, const bool& isWriting)
+DBusConfigurationManager::setIsComposing(const std::string& accountID,
+                                         const std::string& to,
+                                         const bool& isWriting)
 {
     DRing::setIsComposing(accountID, to, isWriting);
 }
 
 bool
-DBusConfigurationManager::setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, const int32_t& status)
+DBusConfigurationManager::setMessageDisplayed(const std::string& accountID,
+                                              const std::string& contactId,
+                                              const std::string& messageId,
+                                              const int32_t& status)
 {
     return DRing::setMessageDisplayed(accountID, contactId, messageId, status);
 }
@@ -217,32 +255,38 @@ DBusConfigurationManager::getSupportedTlsMethod() -> decltype(DRing::getSupporte
 }
 
 auto
-DBusConfigurationManager::getSupportedCiphers(const std::string& accountID) -> decltype(DRing::getSupportedCiphers(accountID))
+DBusConfigurationManager::getSupportedCiphers(const std::string& accountID)
+    -> decltype(DRing::getSupportedCiphers(accountID))
 {
     return DRing::getSupportedCiphers(accountID);
 }
 
 auto
-DBusConfigurationManager::getCodecDetails(const std::string& accountID, const unsigned& codecId) -> decltype(DRing::getCodecDetails(accountID, codecId))
+DBusConfigurationManager::getCodecDetails(const std::string& accountID, const unsigned& codecId)
+    -> decltype(DRing::getCodecDetails(accountID, codecId))
 {
     return DRing::getCodecDetails(accountID, codecId);
 }
 
 auto
-DBusConfigurationManager::setCodecDetails(const std::string& accountID, const unsigned& codecId, const std::map<std::string, std::string>& details)
--> decltype(DRing::setCodecDetails(accountID, codecId, details))
+DBusConfigurationManager::setCodecDetails(const std::string& accountID,
+                                          const unsigned& codecId,
+                                          const std::map<std::string, std::string>& details)
+    -> decltype(DRing::setCodecDetails(accountID, codecId, details))
 {
     return DRing::setCodecDetails(accountID, codecId, details);
 }
 
 auto
-DBusConfigurationManager::getActiveCodecList(const std::string& accountID) -> decltype(DRing::getActiveCodecList(accountID))
+DBusConfigurationManager::getActiveCodecList(const std::string& accountID)
+    -> decltype(DRing::getActiveCodecList(accountID))
 {
     return DRing::getActiveCodecList(accountID);
 }
 
 void
-DBusConfigurationManager::setActiveCodecList(const std::string& accountID, const std::vector<unsigned>& list)
+DBusConfigurationManager::setActiveCodecList(const std::string& accountID,
+                                             const std::vector<unsigned>& list)
 {
     DRing::setActiveCodecList(accountID, list);
 }
@@ -290,25 +334,29 @@ DBusConfigurationManager::getAudioInputDeviceList() -> decltype(DRing::getAudioI
 }
 
 auto
-DBusConfigurationManager::getCurrentAudioDevicesIndex() -> decltype(DRing::getCurrentAudioDevicesIndex())
+DBusConfigurationManager::getCurrentAudioDevicesIndex()
+    -> decltype(DRing::getCurrentAudioDevicesIndex())
 {
     return DRing::getCurrentAudioDevicesIndex();
 }
 
 auto
-DBusConfigurationManager::getAudioInputDeviceIndex(const std::string& name) -> decltype(DRing::getAudioInputDeviceIndex(name))
+DBusConfigurationManager::getAudioInputDeviceIndex(const std::string& name)
+    -> decltype(DRing::getAudioInputDeviceIndex(name))
 {
     return DRing::getAudioInputDeviceIndex(name);
 }
 
 auto
-DBusConfigurationManager::getAudioOutputDeviceIndex(const std::string& name) -> decltype(DRing::getAudioOutputDeviceIndex(name))
+DBusConfigurationManager::getAudioOutputDeviceIndex(const std::string& name)
+    -> decltype(DRing::getAudioOutputDeviceIndex(name))
 {
     return DRing::getAudioOutputDeviceIndex(name);
 }
 
 auto
-DBusConfigurationManager::getCurrentAudioOutputPlugin() -> decltype(DRing::getCurrentAudioOutputPlugin())
+DBusConfigurationManager::getCurrentAudioOutputPlugin()
+    -> decltype(DRing::getCurrentAudioOutputPlugin())
 {
     return DRing::getCurrentAudioOutputPlugin();
 }
@@ -392,13 +440,15 @@ DBusConfigurationManager::getAudioManager() -> decltype(DRing::getAudioManager()
 }
 
 auto
-DBusConfigurationManager::setAudioManager(const std::string& api) -> decltype(DRing::setAudioManager(api))
+DBusConfigurationManager::setAudioManager(const std::string& api)
+    -> decltype(DRing::setAudioManager(api))
 {
     return DRing::setAudioManager(api);
 }
 
 auto
-DBusConfigurationManager::getSupportedAudioManagers() -> decltype(DRing::getSupportedAudioManagers())
+DBusConfigurationManager::getSupportedAudioManagers()
+    -> decltype(DRing::getSupportedAudioManagers())
 {
     return DRing::getSupportedAudioManagers();
 }
@@ -484,23 +534,33 @@ DBusConfigurationManager::setAccountsOrder(const std::string& order)
 auto
 DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate) -> decltype(DRing::validateCertificate(accountId, certificate))
 {
-   return DRing::validateCertificate(accountId, certificate);
+    return DRing::validateCertificate(accountId, certificate);
 }
 
 auto
-DBusConfigurationManager::validateCertificatePath(const std::string& accountId, const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPass, const std::string& caList) -> decltype(DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList))
+DBusConfigurationManager::validateCertificatePath(const std::string& accountId,
+                                                  const std::string& certificate,
+                                                  const std::string& privateKey,
+                                                  const std::string& privateKeyPass,
+                                                  const std::string& caList)
+    -> decltype(
+        DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList))
 {
-   return DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
+    return DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
 }
 
 auto
-DBusConfigurationManager::getCertificateDetails(const std::string& certificate) -> decltype(DRing::getCertificateDetails(certificate))
+DBusConfigurationManager::getCertificateDetails(const std::string& certificate)
+    -> decltype(DRing::getCertificateDetails(certificate))
 {
     return DRing::getCertificateDetails(certificate);
 }
 
 auto
-DBusConfigurationManager::getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPass) -> decltype(DRing::getCertificateDetailsPath(certificate, privateKey, privateKeyPass))
+DBusConfigurationManager::getCertificateDetailsPath(const std::string& certificate,
+                                                    const std::string& privateKey,
+                                                    const std::string& privateKeyPass)
+    -> decltype(DRing::getCertificateDetailsPath(certificate, privateKey, privateKeyPass))
 {
     return DRing::getCertificateDetailsPath(certificate, privateKey, privateKeyPass);
 }
@@ -512,7 +572,8 @@ DBusConfigurationManager::getPinnedCertificates() -> decltype(DRing::getPinnedCe
 }
 
 auto
-DBusConfigurationManager::pinCertificate(const std::vector<uint8_t>& certificate, const bool& local) -> decltype(DRing::pinCertificate(certificate, local))
+DBusConfigurationManager::pinCertificate(const std::vector<uint8_t>& certificate, const bool& local)
+    -> decltype(DRing::pinCertificate(certificate, local))
 {
     return DRing::pinCertificate(certificate, local);
 }
@@ -524,55 +585,69 @@ DBusConfigurationManager::pinCertificatePath(const std::string& certPath)
 }
 
 auto
-DBusConfigurationManager::unpinCertificate(const std::string& certId) -> decltype(DRing::unpinCertificate(certId))
+DBusConfigurationManager::unpinCertificate(const std::string& certId)
+    -> decltype(DRing::unpinCertificate(certId))
 {
     return DRing::unpinCertificate(certId);
 }
 
 auto
-DBusConfigurationManager::unpinCertificatePath(const std::string& p) -> decltype(DRing::unpinCertificatePath(p))
+DBusConfigurationManager::unpinCertificatePath(const std::string& p)
+    -> decltype(DRing::unpinCertificatePath(p))
 {
     return DRing::unpinCertificatePath(p);
 }
 
 auto
-DBusConfigurationManager::pinRemoteCertificate(const std::string& accountId, const std::string& certId) -> decltype(DRing::pinRemoteCertificate(accountId, certId))
+DBusConfigurationManager::pinRemoteCertificate(const std::string& accountId,
+                                               const std::string& certId)
+    -> decltype(DRing::pinRemoteCertificate(accountId, certId))
 {
     return DRing::pinRemoteCertificate(accountId, certId);
 }
 
 auto
-DBusConfigurationManager::setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& status) -> decltype(DRing::setCertificateStatus(accountId, certId, status))
+DBusConfigurationManager::setCertificateStatus(const std::string& accountId,
+                                               const std::string& certId,
+                                               const std::string& status)
+    -> decltype(DRing::setCertificateStatus(accountId, certId, status))
 {
     return DRing::setCertificateStatus(accountId, certId, status);
 }
 
 auto
-DBusConfigurationManager::getCertificatesByStatus(const std::string& accountId, const std::string& status) -> decltype(DRing::getCertificatesByStatus(accountId, status))
+DBusConfigurationManager::getCertificatesByStatus(const std::string& accountId,
+                                                  const std::string& status)
+    -> decltype(DRing::getCertificatesByStatus(accountId, status))
 {
     return DRing::getCertificatesByStatus(accountId, status);
 }
 
 auto
-DBusConfigurationManager::getTrustRequests(const std::string& accountId) -> decltype(DRing::getTrustRequests(accountId))
+DBusConfigurationManager::getTrustRequests(const std::string& accountId)
+    -> decltype(DRing::getTrustRequests(accountId))
 {
     return DRing::getTrustRequests(accountId);
 }
 
 auto
-DBusConfigurationManager::acceptTrustRequest(const std::string& accountId, const std::string& from) -> decltype(DRing::acceptTrustRequest(accountId, from))
+DBusConfigurationManager::acceptTrustRequest(const std::string& accountId, const std::string& from)
+    -> decltype(DRing::acceptTrustRequest(accountId, from))
 {
     return DRing::acceptTrustRequest(accountId, from);
 }
 
 auto
-DBusConfigurationManager::discardTrustRequest(const std::string& accountId, const std::string& from) -> decltype(DRing::discardTrustRequest(accountId, from))
+DBusConfigurationManager::discardTrustRequest(const std::string& accountId, const std::string& from)
+    -> decltype(DRing::discardTrustRequest(accountId, from))
 {
     return DRing::discardTrustRequest(accountId, from);
 }
 
 void
-DBusConfigurationManager::sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload)
+DBusConfigurationManager::sendTrustRequest(const std::string& accountId,
+                                           const std::string& to,
+                                           const std::vector<uint8_t>& payload)
 {
     DRing::sendTrustRequest(accountId, to, payload);
 }
@@ -584,37 +659,44 @@ DBusConfigurationManager::addContact(const std::string& accountId, const std::st
 }
 
 void
-DBusConfigurationManager::removeContact(const std::string& accountId, const std::string& uri, const bool& ban)
+DBusConfigurationManager::removeContact(const std::string& accountId,
+                                        const std::string& uri,
+                                        const bool& ban)
 {
     DRing::removeContact(accountId, uri, ban);
 }
 
 auto
-DBusConfigurationManager::getContactDetails(const std::string& accountId, const std::string& uri) -> decltype(DRing::getContactDetails(accountId, uri))
+DBusConfigurationManager::getContactDetails(const std::string& accountId, const std::string& uri)
+    -> decltype(DRing::getContactDetails(accountId, uri))
 {
     return DRing::getContactDetails(accountId, uri);
 }
 
 auto
-DBusConfigurationManager::getContacts(const std::string& accountId) -> decltype(DRing::getContacts(accountId))
+DBusConfigurationManager::getContacts(const std::string& accountId)
+    -> decltype(DRing::getContacts(accountId))
 {
     return DRing::getContacts(accountId);
 }
 
 auto
-DBusConfigurationManager::getCredentials(const std::string& accountID) -> decltype(DRing::getCredentials(accountID))
+DBusConfigurationManager::getCredentials(const std::string& accountID)
+    -> decltype(DRing::getCredentials(accountID))
 {
     return DRing::getCredentials(accountID);
 }
 
 void
-DBusConfigurationManager::setCredentials(const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details)
+DBusConfigurationManager::setCredentials(
+    const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details)
 {
     DRing::setCredentials(accountID, details);
 }
 
 auto
-DBusConfigurationManager::getAddrFromInterfaceName(const std::string& interface) -> decltype(DRing::getAddrFromInterfaceName(interface))
+DBusConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
+    -> decltype(DRing::getAddrFromInterfaceName(interface))
 {
     return DRing::getAddrFromInterfaceName(interface);
 }
@@ -638,7 +720,7 @@ DBusConfigurationManager::getShortcuts() -> decltype(DRing::getShortcuts())
 }
 
 void
-DBusConfigurationManager::setShortcuts(const std::map<std::string, std::string> &shortcutsMap)
+DBusConfigurationManager::setShortcuts(const std::map<std::string, std::string>& shortcutsMap)
 {
     DRing::setShortcuts(shortcutsMap);
 }
@@ -656,13 +738,17 @@ DBusConfigurationManager::getVolume(const std::string& device) -> decltype(DRing
 }
 
 auto
-DBusConfigurationManager::exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password) -> decltype(DRing::exportAccounts(accountIDs, filepath, password))
+DBusConfigurationManager::exportAccounts(const std::vector<std::string>& accountIDs,
+                                         const std::string& filepath,
+                                         const std::string& password)
+    -> decltype(DRing::exportAccounts(accountIDs, filepath, password))
 {
     return DRing::exportAccounts(accountIDs, filepath, password);
 }
 
 auto
-DBusConfigurationManager::importAccounts(const std::string& archivePath, const std::string& password) -> decltype(DRing::importAccounts(archivePath, password))
+DBusConfigurationManager::importAccounts(const std::string& archivePath, const std::string& password)
+    -> decltype(DRing::importAccounts(archivePath, password))
 {
     return DRing::importAccounts(archivePath, password);
 }
@@ -719,14 +805,17 @@ DBusConfigurationManager::dataTransferInfo(const DRing::DataTransferId& id,
 }
 
 void
-DBusConfigurationManager::dataTransferBytesProgress(const uint64_t& id, uint32_t& error,
-                                                    int64_t& total, int64_t& progress)
+DBusConfigurationManager::dataTransferBytesProgress(const uint64_t& id,
+                                                    uint32_t& error,
+                                                    int64_t& total,
+                                                    int64_t& progress)
 {
     error = uint32_t(DRing::dataTransferBytesProgress(id, total, progress));
 }
 
 uint32_t
-DBusConfigurationManager::acceptFileTransfer(const uint64_t& id, const std::string& file_path,
+DBusConfigurationManager::acceptFileTransfer(const uint64_t& id,
+                                             const std::string& file_path,
                                              const int64_t& offset)
 {
     return uint32_t(DRing::acceptFileTransfer(id, file_path, offset));
@@ -736,6 +825,86 @@ uint32_t
 DBusConfigurationManager::cancelDataTransfer(const uint64_t& id)
 {
     return uint32_t(DRing::cancelDataTransfer(id));
+}
+
+std::string
+DBusConfigurationManager::startConversation(const std::string& accountId)
+{
+    return DRing::startConversation(accountId);
+}
+
+void
+DBusConfigurationManager::acceptConversationRequest(const std::string& accountId,
+                                                    const std::string& conversationId)
+{
+    DRing::acceptConversationRequest(accountId, conversationId);
+}
+
+void
+DBusConfigurationManager::declineConversationRequest(const std::string& accountId,
+                                                     const std::string& conversationId)
+{
+    DRing::declineConversationRequest(accountId, conversationId);
+}
+
+bool
+DBusConfigurationManager::removeConversation(const std::string& accountId,
+                                             const std::string& conversationId)
+{
+    return DRing::removeConversation(accountId, conversationId);
+}
+
+std::vector<std::string>
+DBusConfigurationManager::getConversations(const std::string& accountId)
+{
+    return DRing::getConversations(accountId);
+}
+
+std::vector<std::map<std::string, std::string>>
+DBusConfigurationManager::getConversationRequests(const std::string& accountId)
+{
+    return DRing::getConversationRequests(accountId);
+}
+
+bool
+DBusConfigurationManager::addConversationMember(const std::string& accountId,
+                                                const std::string& conversationId,
+                                                const std::string& contactUri)
+{
+    return DRing::addConversationMember(accountId, conversationId, contactUri);
+}
+
+bool
+DBusConfigurationManager::removeConversationMember(const std::string& accountId,
+                                                   const std::string& conversationId,
+                                                   const std::string& contactUri)
+{
+    return DRing::removeConversationMember(accountId, conversationId, contactUri);
+}
+
+std::vector<std::map<std::string, std::string>>
+DBusConfigurationManager::getConversationMembers(const std::string& accountId,
+                                                 const std::string& conversationId)
+{
+    return DRing::getConversationMembers(accountId, conversationId);
+}
+
+void
+DBusConfigurationManager::sendMessage(const std::string& accountId,
+                                      const std::string& conversationId,
+                                      const std::string& message,
+                                      const std::string& parent)
+{
+    DRing::sendMessage(accountId, conversationId, message, parent);
+}
+
+uint32_t
+DBusConfigurationManager::loadConversationMessages(const std::string& accountId,
+                                                   const std::string& conversationId,
+                                                   const std::string& fromMessage,
+                                                   const uint32_t& n)
+{
+    return DRing::loadConversationMessages(accountId, conversationId, fromMessage, n);
 }
 
 bool

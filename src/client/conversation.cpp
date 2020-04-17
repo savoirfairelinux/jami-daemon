@@ -120,14 +120,15 @@ sendMessage(const std::string& accountId,
         acc->sendMessage(conversationId, message, parent);
 }
 
-void
+uint32_t
 loadConversationMessages(const std::string& accountId,
                          const std::string& conversationId,
                          const std::string& fromMessage,
                          size_t n)
 {
     if (auto acc = jami::Manager::instance().getAccount<jami::JamiAccount>(accountId))
-        acc->loadConversationMessages(conversationId, fromMessage, n);
+        return acc->loadConversationMessages(conversationId, fromMessage, n);
+    return 0;
 }
 
 } // namespace DRing
