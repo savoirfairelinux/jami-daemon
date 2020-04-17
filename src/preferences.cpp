@@ -123,6 +123,7 @@ static constexpr const char* RECORDPATH_KEY {"recordPath"};
 static constexpr const char* ALWAYS_RECORDING_KEY {"alwaysRecording"};
 static constexpr const char* VOLUMEMIC_KEY {"volumeMic"};
 static constexpr const char* VOLUMESPKR_KEY {"volumeSpkr"};
+static constexpr const char* USE_ECHO_CANCELLER {"useEchoCanceller"};
 static constexpr const char* NOISE_REDUCE_KEY {"noiseReduce"};
 static constexpr const char* AGC_KEY {"automaticGainControl"};
 static constexpr const char* CAPTURE_MUTED_KEY {"captureMuted"};
@@ -341,6 +342,7 @@ AudioPreference::AudioPreference() :
     , alwaysRecording_(false)
     , volumemic_(1.0)
     , volumespkr_(1.0)
+    , useEchoCanceller_(true)
     , denoise_(false)
     , agcEnabled_(false)
     , captureMuted_(false)
@@ -494,6 +496,7 @@ void AudioPreference::serialize(YAML::Emitter &out) const
     out << YAML::Key << RECORDPATH_KEY << YAML::Value << recordpath_;
     out << YAML::Key << VOLUMEMIC_KEY << YAML::Value << volumemic_;
     out << YAML::Key << VOLUMESPKR_KEY << YAML::Value << volumespkr_;
+    out << YAML::Key << USE_ECHO_CANCELLER << YAML::Value << useEchoCanceller_;
 
     out << YAML::EndMap;
 }
@@ -542,6 +545,7 @@ void AudioPreference::unserialize(const YAML::Node &in)
     parseValue(node, RECORDPATH_KEY, recordpath_);
     parseValue(node, VOLUMEMIC_KEY, volumemic_);
     parseValue(node, VOLUMESPKR_KEY, volumespkr_);
+    parseValue(node, USE_ECHO_CANCELLER, useEchoCanceller_);
 }
 
 ShortcutPreferences::ShortcutPreferences() : hangup_(), pickup_(), popup_(),

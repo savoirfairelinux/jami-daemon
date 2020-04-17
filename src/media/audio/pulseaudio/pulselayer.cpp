@@ -336,7 +336,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     // Create playback stream
     if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice())) {
-        playback_.reset(new AudioStream(c, mainloop_.get(), "Playback", StreamType::Playback, audioFormat_.sample_rate, dev_infos, true, onReady));
+        playback_.reset(new AudioStream(c, mainloop_.get(), "Playback", StreamType::Playback, audioFormat_.sample_rate, dev_infos, preference_.getUseEchoCanceller(), onReady));
         pa_stream_set_write_callback(playback_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->writeToSpeaker();
         }, this);
