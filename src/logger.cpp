@@ -210,9 +210,7 @@ namespace jami {
 void
 Logger::log(int level, const char* file, int line, bool linefeed, const char* const format, ...)
 {
-#if defined(TARGET_OS_IOS) && TARGET_OS_IOS && !debugMode
-    return;
-#else
+
     if (!debugMode && level == LOG_DEBUG)
         return;
 
@@ -224,16 +222,14 @@ Logger::log(int level, const char* file, int line, bool linefeed, const char* co
     Logger::vlog(level, file, line, linefeed, format, ap);
 #endif
     va_end(ap);
-#endif
+
 }
 
 void
 Logger::vlog(const int level, const char* file, int line, bool linefeed,
              const char* format, va_list ap)
 {
-#if defined(TARGET_OS_IOS) && TARGET_OS_IOS && !debugMode
-    return;
-#else
+
     if (!debugMode && level == LOG_DEBUG)
         return;
 
@@ -298,7 +294,6 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
     } else {
         ::vsyslog(level, format, ap);
     }
-#endif
 }
 
 } // namespace jami;
