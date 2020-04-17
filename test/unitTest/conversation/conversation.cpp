@@ -167,6 +167,23 @@ ConversationTest::testAddMember()
         bobUri = bobUri.substr(std::string("ring:").size());
     auto convId = aliceAccount->startConversation();
 
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk{ mtx };
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false;
+    bool requestReceived = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
+        conversationReady = true;
+        cv.notify_one();
+    }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+    [&](const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*metadatas*/) {
+        requestReceived = true;
+        cv.notify_one();
+    }));
+    DRing::registerSignalHandlers(confHandlers);
     aliceAccount->addConversationMember(convId, bobUri);
 
     // Assert that repository exists
@@ -176,10 +193,11 @@ ConversationTest::testAddMember()
     auto bobMemberFile = repoPath + DIR_SEPARATOR_STR + "members" + DIR_SEPARATOR_STR + bobUri + ".crt";
     CPPUNIT_ASSERT(fileutils::isFile(bobMemberFile));
 
-    // TODO test received invite
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(requestReceived);
     bobAccount->acceptConversationRequest(convId);
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(conversationReady);
     auto clonedPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+bobAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(clonedPath));
 }
@@ -194,6 +212,24 @@ ConversationTest::testGetMembers()
         bobUri = bobUri.substr(std::string("ring:").size());
     auto convId = aliceAccount->startConversation();
 
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk{ mtx };
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationLoaded = false;
+    bool requestReceived = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationLoaded>(
+    [&](const std::string& /*accountId*/, const std::string& /* conversationId */, std::vector<std::map<std::string, std::string>> /*messages*/) {
+        conversationLoaded = true;
+        cv.notify_one();
+    }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+    [&](const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*metadatas*/) {
+        requestReceived = true;
+        cv.notify_one();
+    }));
+    DRing::registerSignalHandlers(confHandlers);
+
     aliceAccount->addConversationMember(convId, bobUri);
 
     // Assert that repository exists
@@ -206,9 +242,12 @@ ConversationTest::testGetMembers()
     CPPUNIT_ASSERT(members[1]["uri"] == bobUri);
     CPPUNIT_ASSERT(members[1]["role"] == "member");
 
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(requestReceived);
     aliceAccount->loadConversationMessages(convId);
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(conversationLoaded);
+    DRing::unregisterSignalHandlers();
 }
 
 void
@@ -220,42 +259,48 @@ ConversationTest::testSendMessage()
     if (bobUri.find("ring:") == 0)
         bobUri = bobUri.substr(std::string("ring:").size());
 
-    JAMI_ERR("############# START CONVERSATION");
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk{ mtx };
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool messageReceived = false;
+    bool requestReceived = false;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::MessageReceived>(
+    [&](const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*message*/) {
+        messageReceived = true;
+        cv.notify_one();
+    }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationRequestReceived>(
+    [&](const std::string& /*accountId*/, const std::string& /* conversationId */, std::map<std::string, std::string> /*metadatas*/) {
+        requestReceived = true;
+        cv.notify_one();
+    }));
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+    [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
+        conversationReady = true;
+        cv.notify_one();
+    }));
+    DRing::registerSignalHandlers(confHandlers);
+
     auto convId = aliceAccount->startConversation();
-
-    JAMI_ERR("############# ADD MEMBER");
     aliceAccount->addConversationMember(convId, bobUri);
-    // TODO catch signal (avoid uesless sleep_for)
-    JAMI_ERR("############# MEMBER ADDED");
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(requestReceived);
 
-    JAMI_ERR("############# ACCEPT REQUEST");
+    conversationReady = false;
     bobAccount->acceptConversationRequest(convId);
-    // TODO catch signal (avoid uesless sleep_for)
-    JAMI_ERR("############# REQUEST ACCEPTED");
-    std::this_thread::sleep_for(std::chrono::seconds(10));
+    cv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(conversationReady);
 
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+bobAccount->getAccountID()+DIR_SEPARATOR_STR+"conversations"+DIR_SEPARATOR_STR+convId;
     CPPUNIT_ASSERT(fileutils::isDirectory(repoPath));
 
     aliceAccount->sendMessage(convId, "hi");
-    // TODO catch signal (avoid uesless sleep_for)
-    JAMI_ERR("############# NEW MESSAGE ADDED");
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-    JAMI_ERR("############# END");
-
-    // TODO remove
-    JAMI_ERR("############# Conversation for ALICE:");
-    aliceAccount->loadConversationMessages(convId);
-    // Time to log (loadConv is async)
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-    JAMI_ERR("############# Conversation for BOB:");
-    bobAccount->loadConversationMessages(convId);
-    // Time to log (loadConv is async)
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-
-    // TODO fix segfault when shutting down gitserver
+    cv.wait_for(lk, std::chrono::seconds(10));
+    CPPUNIT_ASSERT(messageReceived);
+    DRing::unregisterSignalHandlers();
 }
 
 

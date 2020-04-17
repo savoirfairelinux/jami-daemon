@@ -177,7 +177,15 @@ class DRING_PUBLIC DBusConfigurationManager :
         void dataTransferBytesProgress(const uint64_t& id, uint32_t& error, int64_t& total, int64_t& progress);
         uint32_t acceptFileTransfer(const uint64_t& id, const std::string& file_path, const int64_t& offset);
         uint32_t cancelDataTransfer(const uint64_t& id);
-
+        std::string startConversation(const std::string& accountId);
+        void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
+        void declineConversationRequest(const std::string& accountId, const std::string& conversationId);
+        bool removeConversation(const std::string& accountId, const std::string& conversationId);
+        void addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
+        bool removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri);
+        std::vector<std::map<std::string, std::string>> getConversationMembers(const std::string& accountId, const std::string& conversationId);
+        void sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& parent);
+        void loadConversationMessages(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, const uint32_t& n);
         bool isAudioMeterActive(const std::string& id);
         void setAudioMeterState(const std::string& id, const bool& state);
 };
