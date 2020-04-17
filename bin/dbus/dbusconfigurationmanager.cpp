@@ -21,6 +21,7 @@
 #include "dbusconfigurationmanager.h"
 #include "configurationmanager_interface.h"
 #include "datatransfer_interface.h"
+#include "conversation_interface.h"
 
 DBusConfigurationManager::DBusConfigurationManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/ConfigurationManager")
@@ -748,6 +749,60 @@ uint32_t
 DBusConfigurationManager::cancelDataTransfer(const uint64_t& id)
 {
     return uint32_t(DRing::cancelDataTransfer(id));
+}
+
+std::string
+DBusConfigurationManager::startConversation(const std::string& accountId)
+{
+    return DRing::startConversation(accountId);
+}
+
+void
+DBusConfigurationManager::acceptConversationRequest(const std::string& accountId, const std::string& conversationId)
+{
+    DRing::acceptConversationRequest(accountId, conversationId);
+}
+
+void
+DBusConfigurationManager::declineConversationRequest(const std::string& accountId, const std::string& conversationId)
+{
+    DRing::declineConversationRequest(accountId, conversationId);
+}
+
+bool
+DBusConfigurationManager::removeConversation(const std::string& accountId, const std::string& conversationId)
+{
+    return DRing::removeConversation(accountId, conversationId);
+}
+
+void
+DBusConfigurationManager::addConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri)
+{
+    DRing::addConversationMember(accountId, conversationId, contactUri);
+}
+
+bool
+DBusConfigurationManager::removeConversationMember(const std::string& accountId, const std::string& conversationId, const std::string& contactUri)
+{
+    return DRing::removeConversationMember(accountId, conversationId, contactUri);
+}
+
+std::vector<std::map<std::string, std::string>>
+DBusConfigurationManager::getConversationMembers(const std::string& accountId, const std::string& conversationId)
+{
+    return DRing::getConversationMembers(accountId, conversationId);
+}
+
+void
+DBusConfigurationManager::sendMessage(const std::string& accountId, const std::string& conversationId, const std::string& message, const std::string& parent)
+{
+    DRing::sendMessage(accountId, conversationId, message, parent);
+}
+
+void
+DBusConfigurationManager::loadConversationMessages(const std::string& accountId, const std::string& conversationId, const std::string& fromMessage, const uint32_t& n)
+{
+    DRing::loadConversationMessages(accountId, conversationId, fromMessage, n);
 }
 
 bool
