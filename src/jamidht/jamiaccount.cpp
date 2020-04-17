@@ -3555,7 +3555,7 @@ JamiAccount::startConversation()
 
     // TODO
     // And send an invite to others devices to sync the conversation between device
-    // Via getMemebers
+    // Via getMembers
     return convId;
 }
 
