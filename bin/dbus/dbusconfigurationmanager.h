@@ -34,7 +34,7 @@
 
 #include "dring/datatransfer_interface.h"
 
-#if __GNUC__ >= 5 || (__GNUC__ >=4 && __GNUC_MINOR__ >= 6)
+#if __GNUC__ >= 5 || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 6)
 /* This warning option only exists for gcc 4.6.0 and greater. */
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 #endif
@@ -45,22 +45,29 @@
 #pragma GCC diagnostic warning "-Wignored-qualifiers"
 #pragma GCC diagnostic warning "-Wunused-parameter"
 
-#if __GNUC__ >= 5 || (__GNUC__ >=4 && __GNUC_MINOR__ >= 6)
+#if __GNUC__ >= 5 || (__GNUC__ >= 4 && __GNUC_MINOR__ >= 6)
 /* This warning option only exists for gcc 4.6.0 and greater. */
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
 using RingDBusMessage = DBus::Struct<std::string, std::map<std::string, std::string>, uint64_t>;
 
-class DRING_PUBLIC DBusConfigurationManager :
-    public cx::ring::Ring::ConfigurationManager_adaptor,
-    public DBus::IntrospectableAdaptor,
-    public DBus::ObjectAdaptor
+class DRING_PUBLIC DBusConfigurationManager : public cx::ring::Ring::ConfigurationManager_adaptor,
+                                              public DBus::IntrospectableAdaptor,
+                                              public DBus::ObjectAdaptor
 {
-    public:
-        using RingDBusDataTransferInfo = DBus::Struct<std::string, uint32_t, uint32_t, int64_t, int64_t, std::string, std::string, std::string, std::string>;
+public:
+    using RingDBusDataTransferInfo = DBus::Struct<std::string,
+                                                  uint32_t,
+                                                  uint32_t,
+                                                  int64_t,
+                                                  int64_t,
+                                                  std::string,
+                                                  std::string,
+                                                  std::string,
+                                                  std::string>;
 
-        DBusConfigurationManager(DBus::Connection& connection);
+    DBusConfigurationManager(DBus::Connection& connection);
 
         // Methods
         std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
@@ -183,6 +190,28 @@ class DRING_PUBLIC DBusConfigurationManager :
         bool isLocalModeratorsEnabled(const std::string& accountID);
         void setAllModerators(const std::string& accountID, const bool& allModerators);
         bool isAllModerators(const std::string& accountID);
+        std::string startConversation(const std::string& accountId);
+        void acceptConversationRequest(const std::string& accountId, const std::string& conversationId);
+        void declineConversationRequest(const std::string& accountId, const std::string& conversationId);
+        bool removeConversation(const std::string& accountId, const std::string& conversationId);
+        std::vector<std::string> getConversations(const std::string& accountId);
+        std::vector<std::map<std::string, std::string>> getConversationRequests(const std::string& accountId);
+        bool addConversationMember(const std::string& accountId,
+                                const std::string& conversationId,
+                                const std::string& contactUri);
+        bool removeConversationMember(const std::string& accountId,
+                                    const std::string& conversationId,
+                                    const std::string& contactUri);
+        std::vector<std::map<std::string, std::string>> getConversationMembers(
+            const std::string& accountId, const std::string& conversationId);
+        void sendMessage(const std::string& accountId,
+                        const std::string& conversationId,
+                        const std::string& message,
+                        const std::string& parent);
+        uint32_t loadConversationMessages(const std::string& accountId,
+                                    const std::string& conversationId,
+                                    const std::string& fromMessage,
+                                    const uint32_t& n);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
