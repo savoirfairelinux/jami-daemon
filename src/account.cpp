@@ -109,11 +109,8 @@ Account::Account(const std::string &accountID)
     , userAgent_(DEFAULT_USER_AGENT)
     , hasCustomUserAgent_(false)
     , mailBox_()
+    , rand(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
 {
-    random_device rdev;
-    std::seed_seq seed {rdev(), rdev()};
-    rand.seed(seed);
-
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
     ringtonePath_ = DEFAULT_RINGTONE_PATH;
