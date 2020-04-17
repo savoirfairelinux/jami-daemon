@@ -144,12 +144,27 @@ void
 ConversationTest::testCreateConversation()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto aliceDeviceId = aliceAccount
-                             ->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
-    auto uri = aliceAccount->getAccountDetails()[DRing::Account::ConfProperties::USERNAME];
-    if (uri.find("ring:") == 0)
-        uri = uri.substr(std::string("ring:").size());
+    auto aliceDeviceId = aliceAccount->currentDeviceId();
+    auto uri = aliceAccount->getUsername();
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk {mtx};
+    std::condition_variable cv;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool conversationReady = false;
+    confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == aliceId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
+        }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    // Start conversation
     auto convId = aliceAccount->startConversation();
+    cv.wait_for(lk, std::chrono::seconds(30), [&]() { return conversationReady; });
+    CPPUNIT_ASSERT(conversationReady);
 
     // Assert that repository exists
     auto repoPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + aliceAccount->getAccountID()
@@ -177,11 +192,8 @@ void
 ConversationTest::testGetConversation()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
-    auto aliceDeviceId = aliceAccount
-                             ->getAccountDetails()[DRing::Account::ConfProperties::RING_DEVICE_ID];
-    auto uri = aliceAccount->getAccountDetails()[DRing::Account::ConfProperties::USERNAME];
-    if (uri.find("ring:") == 0)
-        uri = uri.substr(std::string("ring:").size());
+    auto aliceDeviceId = aliceAccount->currentDeviceId();
+    auto uri = aliceAccount->getUsername();
     auto convId = aliceAccount->startConversation();
 
     auto conversations = aliceAccount->getConversations();
@@ -194,9 +206,7 @@ ConversationTest::testAddMember()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    if (bobUri.find("ring:") == 0)
-        bobUri = bobUri.substr(std::string("ring:").size());
+    auto bobUri = bobAccount->getUsername();
     auto convId = aliceAccount->startConversation();
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -253,12 +263,8 @@ ConversationTest::testGetMembers()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
-    if (bobUri.find("ring:") == 0)
-        bobUri = bobUri.substr(std::string("ring:").size());
-    if (aliceUri.find("ring:") == 0)
-        aliceUri = aliceUri.substr(std::string("ring:").size());
+    auto bobUri = bobAccount->getUsername();
+    auto aliceUri = aliceAccount->getUsername();
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
     std::condition_variable cv;
@@ -303,9 +309,7 @@ ConversationTest::testGetMembers()
 
     auto members = aliceAccount->getConversationMembers(convId);
     CPPUNIT_ASSERT(members.size() == 1);
-    CPPUNIT_ASSERT(members[0]["uri"]
-                   == aliceAccount->getAccountDetails()[ConfProperties::USERNAME].substr(
-                       std::string("ring:").size()));
+    CPPUNIT_ASSERT(members[0]["uri"] == aliceAccount->getUsername());
     CPPUNIT_ASSERT(members[0]["role"] == "admin");
 
     cv.wait_for(lk, std::chrono::seconds(30), [&]() { return requestReceived; });
@@ -327,9 +331,7 @@ ConversationTest::testSendMessage()
 {
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
-    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
-    if (bobUri.find("ring:") == 0)
-        bobUri = bobUri.substr(std::string("ring:").size());
+    auto bobUri = bobAccount->getUsername();
 
     std::mutex mtx;
     std::unique_lock<std::mutex> lk {mtx};
@@ -358,9 +360,11 @@ ConversationTest::testSendMessage()
                 cv.notify_one();
             }));
     confHandlers.insert(DRing::exportable_callback<DRing::ConversationSignal::ConversationReady>(
-        [&](const std::string& /*accountId*/, const std::string& /* conversationId */) {
-            conversationReady = true;
-            cv.notify_one();
+        [&](const std::string& accountId, const std::string& /* conversationId */) {
+            if (accountId == bobId) {
+                conversationReady = true;
+                cv.notify_one();
+            }
         }));
     DRing::registerSignalHandlers(confHandlers);
 
