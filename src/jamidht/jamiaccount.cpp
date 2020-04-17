@@ -232,6 +232,7 @@ constexpr const char* const JamiAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> JamiAccount::DHT_PORT_RANGE {4000, 8888};
 
 using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
+using LoadIdDist = std::uniform_int_distribution<uint32_t>;
 
 static std::string_view
 stripPrefix(std::string_view toUrl)
@@ -318,6 +319,15 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     }
 
     setActiveCodecs({});
+
+    JAMI_INFO("Start loading conversations…");
+    auto conversationsRepositories = fileutils::readDirectory(idPath_ + DIR_SEPARATOR_STR
+                                                              + "conversations");
+    for (const auto& repository : conversationsRepositories) {
+        JAMI_ERR("@@@ %s", repository.c_str());
+        conversations_.emplace(repository, std::make_unique<Conversation>(weak(), repository));
+    }
+    JAMI_INFO("Conversations loaded!");
 }
 
 JamiAccount::~JamiAccount()
@@ -3530,7 +3540,8 @@ JamiAccount::startConversation()
 
     // TODO
     // And send an invite to others devices to sync the conversation between device
-    // Via getMemebers
+    // Via getMembers
+    emitSignal<DRing::ConversationSignal::ConversationReady>(accountID_, convId);
     return convId;
 }
 
@@ -3647,13 +3658,19 @@ JamiAccount::removeConversation(const std::string& conversationId)
 std::vector<std::string>
 JamiAccount::getConversations()
 {
-    return {}; // TODO
+    std::vector<std::string> result;
+    result.reserve(conversations_.size());
+    for (const auto& [key, _] : conversations_) {
+        result.emplace_back(key);
+    }
+    return result;
 }
 
 std::vector<std::map<std::string, std::string>>
-getConversationRequests()
+JamiAccount::getConversationRequests()
 {
-    return {}; // TODO
+    // TODO
+    return {};
 }
 
 // Member management
@@ -3737,14 +3754,16 @@ JamiAccount::sendMessage(const std::string& conversationId,
     }
 }
 
-void
+uint32_t
 JamiAccount::loadConversationMessages(const std::string& conversationId,
                                       const std::string& fromMessage,
                                       size_t n)
 {
+    if (conversations_.find(conversationId) == conversations_.end()) return 0;
+    const uint32_t id = LoadIdDist()(rand);
     // loadMessages will perform a git log that can take quite some time, so to avoid any lock, run
     // it the threadpool
-    dht::ThreadPool::io().run([this, conversationId, fromMessage, n] {
+    dht::ThreadPool::io().run([this, conversationId, fromMessage, n, id] {
         auto conversation = conversations_.find(conversationId);
         if (conversation != conversations_.end() && conversation->second) {
             auto messages = conversation->second->loadMessages(fromMessage, n);
@@ -3757,11 +3776,13 @@ JamiAccount::loadConversationMessages(const std::string& conversationId,
                 else
                     JAMI_DBG("INITIAL COMMIT");
             }
-            emitSignal<DRing::ConversationSignal::ConversationLoaded>(accountID_,
+            emitSignal<DRing::ConversationSignal::ConversationLoaded>(id,
+                                                                      accountID_,
                                                                       conversationId,
                                                                       messages);
         }
     });
+    return id;
 }
 
 void
