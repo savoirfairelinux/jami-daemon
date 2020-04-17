@@ -234,13 +234,13 @@ std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
     return names;
 }
 
-int PulseLayer::getAudioDeviceIndex(const std::string& descr, DeviceType type) const
+int PulseLayer::getAudioDeviceIndex(const std::string& descr, AudioDeviceType type) const
 {
     switch (type) {
-    case DeviceType::PLAYBACK:
-    case DeviceType::RINGTONE:
+    case AudioDeviceType::PLAYBACK:
+    case AudioDeviceType::RINGTONE:
         return std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
-    case DeviceType::CAPTURE:
+    case AudioDeviceType::CAPTURE:
         return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
     default:
         JAMI_ERR("Unexpected device type");
@@ -248,15 +248,15 @@ int PulseLayer::getAudioDeviceIndex(const std::string& descr, DeviceType type) c
     }
 }
 
-int PulseLayer::getAudioDeviceIndexByName(const std::string& name, DeviceType type) const
+int PulseLayer::getAudioDeviceIndexByName(const std::string& name, AudioDeviceType type) const
 {
     if (name.empty())
         return 0;
     switch (type) {
-    case DeviceType::PLAYBACK:
-    case DeviceType::RINGTONE:
+    case AudioDeviceType::PLAYBACK:
+    case AudioDeviceType::RINGTONE:
         return std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::NameComparator(name)));
-    case DeviceType::CAPTURE:
+    case AudioDeviceType::CAPTURE:
         return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(name)));
     default:
         JAMI_ERR("Unexpected device type");
@@ -293,18 +293,18 @@ const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>
     return &(*dev_info);
 }
 
-std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
+std::string PulseLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 {
     switch (type) {
-        case DeviceType::PLAYBACK:
-        case DeviceType::RINGTONE:
+        case AudioDeviceType::PLAYBACK:
+        case AudioDeviceType::RINGTONE:
             if (index < 0 or static_cast<size_t>(index) >= sinkList_.size()) {
                 JAMI_ERR("Index %d out of range", index);
                 return "";
             }
             return sinkList_[index].name;
 
-        case DeviceType::CAPTURE:
+        case AudioDeviceType::CAPTURE:
             if (index < 0 or static_cast<size_t>(index) >= sourceList_.size()) {
                 JAMI_ERR("Index %d out of range", index);
                 return "";
@@ -703,22 +703,22 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
     }
 }
 
-void PulseLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
+void PulseLayer::updatePreference(AudioPreference &preference, int index, AudioDeviceType type)
 {
     const std::string devName(getAudioDeviceName(index, type));
 
     switch (type) {
-    case DeviceType::PLAYBACK:
+    case AudioDeviceType::PLAYBACK:
         JAMI_DBG("setting %s for playback", devName.c_str());
         preference.setPulseDevicePlayback(devName);
         break;
 
-    case DeviceType::CAPTURE:
+    case AudioDeviceType::CAPTURE:
         JAMI_DBG("setting %s for capture", devName.c_str());
         preference.setPulseDeviceRecord(devName);
         break;
 
-    case DeviceType::RINGTONE:
+    case AudioDeviceType::RINGTONE:
         JAMI_DBG("setting %s for ringer", devName.c_str());
         preference.setPulseDeviceRingtone(devName);
         break;
@@ -727,17 +727,17 @@ void PulseLayer::updatePreference(AudioPreference &preference, int index, Device
 
 int PulseLayer::getIndexCapture() const
 {
-    return getAudioDeviceIndexByName(preference_.getPulseDeviceRecord(), DeviceType::CAPTURE);
+    return getAudioDeviceIndexByName(preference_.getPulseDeviceRecord(), AudioDeviceType::CAPTURE);
 }
 
 int PulseLayer::getIndexPlayback() const
 {
-    return getAudioDeviceIndexByName(preference_.getPulseDevicePlayback(), DeviceType::PLAYBACK);
+    return getAudioDeviceIndexByName(preference_.getPulseDevicePlayback(), AudioDeviceType::PLAYBACK);
 }
 
 int PulseLayer::getIndexRingtone() const
 {
-    return getAudioDeviceIndexByName(preference_.getPulseDeviceRingtone(), DeviceType::RINGTONE);
+    return getAudioDeviceIndexByName(preference_.getPulseDeviceRingtone(), AudioDeviceType::RINGTONE);
 }
 
 std::string

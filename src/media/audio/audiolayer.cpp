@@ -63,9 +63,9 @@ struct AudioLayer::EchoState
     std::shared_ptr<AudioFrame> getRecorded() {
         if (playbackQueue.samples() < playbackQueue.frameSize()
            or recordQueue.samples() < recordQueue.frameSize()) {
-            /* JAMI_DBG("getRecorded underflow %d / %d, %d / %d",
+            JAMI_DBG("getRecorded underflow %d / %d, %d / %d",
                 playbackQueue.samples(), playbackQueue.frameSize(),
-                recordQueue.samples(), recordQueue.frameSize()); */
+                recordQueue.samples(), recordQueue.frameSize());
             return {};
         }
         if (recordQueue.samples() > 2 * recordQueue.frameSize() && playbackQueue.samples() == 0) {
@@ -73,11 +73,11 @@ struct AudioLayer::EchoState
             return recordQueue.dequeue();
         }
         while (playbackQueue.samples() > 10 * playbackQueue.frameSize()) {
-            JAMI_DBG("getRecorded playback underflow");
+            JAMI_DBG("getRecorded recoord underflow");
             playbackQueue.dequeue();
         }
         while (recordQueue.samples() > 4 * recordQueue.frameSize()) {
-            JAMI_DBG("getRecorded record underflow");
+            JAMI_DBG("getRecorded playback underflow");
             recordQueue.dequeue();
         }
         auto playback = playbackQueue.dequeue();
