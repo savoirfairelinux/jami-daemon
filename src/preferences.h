@@ -9,7 +9,7 @@
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be ful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
@@ -376,6 +376,14 @@ class AudioPreference : public Serializable {
             playbackMuted_= muted;
         }
 
+        std::string getEchoCanceller() const {
+            return echoCanceller_;
+        }
+
+        void setEchoCanceller(const std::string& ec) {
+            echoCanceller_ = ec;
+        }
+
     private:
         std::string audioApi_;
 
@@ -396,6 +404,7 @@ class AudioPreference : public Serializable {
         bool alwaysRecording_;
         double volumemic_;
         double volumespkr_;
+        std::string echoCanceller_;
 
         bool denoise_;
         bool agcEnabled_;
