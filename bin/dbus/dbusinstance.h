@@ -21,7 +21,7 @@
 #ifndef __RING_DBUSINSTANCE_H__
 #define __RING_DBUSINSTANCE_H__
 
-#include "jami/def.h"
+#include "def.h"
 
 #include <functional>
 

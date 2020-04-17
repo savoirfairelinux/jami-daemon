@@ -22,7 +22,7 @@
  */
 
 #include "dbusclient.h"
-#include "jami/jami.h"
+#include "jami.h"
 
 #include <signal.h>
 #include <getopt.h>

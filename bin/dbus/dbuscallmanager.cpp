@@ -19,7 +19,7 @@
  */
 
 #include "dbuscallmanager.h"
-#include "jami/callmanager_interface.h"
+#include "callmanager_interface.h"
 
 DBusCallManager::DBusCallManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/CallManager")
