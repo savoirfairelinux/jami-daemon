@@ -319,6 +319,15 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     }
 
     setActiveCodecs({});
+
+    JAMI_INFO("Start loading conversations…");
+    auto conversationsRepositories = fileutils::readDirectory(idPath_ + DIR_SEPARATOR_STR
+                                                              + "conversations");
+    for (const auto& repository : conversationsRepositories) {
+        JAMI_ERR("@@@ %s", repository.c_str());
+        conversations_.emplace(repository, std::make_unique<Conversation>(weak(), repository));
+    }
+    JAMI_INFO("Conversations loaded!");
 }
 
 JamiAccount::~JamiAccount()
@@ -3575,7 +3584,7 @@ JamiAccount::startConversation()
 
     // TODO
     // And send an invite to others devices to sync the conversation between device
-    // Via getMemebers
+    // Via getMembers
     return convId;
 }
 
@@ -3685,13 +3694,19 @@ JamiAccount::removeConversation(const std::string& conversationId)
 std::vector<std::string>
 JamiAccount::getConversations()
 {
-    return {}; // TODO
+    std::vector<std::string> result;
+    result.reserve(conversations_.size());
+    for (const auto& [key, _] : conversations_) {
+        result.emplace_back(key);
+    }
+    return result;
 }
 
 std::vector<std::map<std::string, std::string>>
-getConversationRequests()
+JamiAccount::getConversationRequests()
 {
-    return {}; // TODO
+    // TODO
+    return {};
 }
 
 // Member management
