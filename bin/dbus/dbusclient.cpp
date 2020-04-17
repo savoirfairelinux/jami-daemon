@@ -44,6 +44,7 @@
 #endif // ENABLE_PLUGIN
 
 #include "datatransfer_interface.h"
+#include "conversation_interface.h"
 
 #ifdef ENABLE_VIDEO
 #include "dbusvideomanager.h"
@@ -57,20 +58,17 @@
 
 static constexpr const char* const JAMI_DBUS_NAME = "cx.ring.Ring";
 
-class EventCallback :
-    public DBus::Callback_Base<void, DBus::DefaultTimeout&>
+class EventCallback : public DBus::Callback_Base<void, DBus::DefaultTimeout&>
 {
-    public:
-        EventCallback(const std::function<void()>&& func)
-            : callback_ {std::forward<const std::function<void()>>(func)}
-            {}
+public:
+    EventCallback(const std::function<void()>&& func)
+        : callback_ {std::forward<const std::function<void()>>(func)}
+    {}
 
-        void call(DBus::DefaultTimeout&) const {
-            callback_();
-        }
+    void call(DBus::DefaultTimeout&) const { callback_(); }
 
-    private:
-        const std::function<void()> callback_;
+private:
+    const std::function<void()> callback_;
 };
 
 DBusClient::DBusClient(int flags, bool persistent)
@@ -90,18 +88,20 @@ DBusClient::DBusClient(int flags, bool persistent)
         configurationManager_.reset(new DBusConfigurationManager {sessionConnection});
         presenceManager_.reset(new DBusPresenceManager {sessionConnection});
 #ifdef ENABLE_PLUGIN
-        pluginManagerInterface_.reset(new DBusPluginManagerInterface{sessionConnection});
+        pluginManagerInterface_.reset(new DBusPluginManagerInterface {sessionConnection});
 #endif
         DBusInstance::OnNoMoreClientFunc onNoMoreClientFunc;
         if (!persistent)
-            onNoMoreClientFunc = [this] {this->exit();};
+            onNoMoreClientFunc = [this] {
+                this->exit();
+            };
 
         instanceManager_.reset(new DBusInstance {sessionConnection, onNoMoreClientFunc});
 
 #ifdef ENABLE_VIDEO
         videoManager_.reset(new DBusVideoManager {sessionConnection});
 #endif
-    } catch (const DBus::Error &err) {
+    } catch (const DBus::Error& err) {
         throw std::runtime_error {"cannot initialize DBus stuff"};
     }
 
@@ -140,6 +140,7 @@ DBusClient::initLibrary(int flags)
     using DRing::PresenceSignal;
     using DRing::AudioSignal;
     using DRing::DataTransferSignal;
+    using DRing::ConversationSignal;
 
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
 
@@ -183,62 +184,112 @@ DBusClient::initLibrary(int flags)
 
     // Configuration event handlers
     const std::map<std::string, SharedCallback> configEvHandlers = {
-        exportable_callback<ConfigurationSignal::VolumeChanged>(bind(&DBusConfigurationManager::volumeChanged, confM, _1, _2)),
-        exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&DBusConfigurationManager::accountsChanged, confM)),
-        exportable_callback<ConfigurationSignal::AccountDetailsChanged>(bind(&DBusConfigurationManager::accountDetailsChanged, confM, _1, _2)),
-        exportable_callback<ConfigurationSignal::StunStatusFailed>(bind(&DBusConfigurationManager::stunStatusFailure, confM, _1)),
-        exportable_callback<ConfigurationSignal::RegistrationStateChanged>(bind(&DBusConfigurationManager::registrationStateChanged, confM, _1, _2, _3, _4)),
-        exportable_callback<ConfigurationSignal::VolatileDetailsChanged>(bind(&DBusConfigurationManager::volatileAccountDetailsChanged, confM, _1, _2)),
-        exportable_callback<ConfigurationSignal::Error>(bind(&DBusConfigurationManager::errorAlert, confM, _1)),
-        exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&DBusConfigurationManager::incomingAccountMessage, confM, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(bind(&DBusConfigurationManager::accountMessageStatusChanged, confM, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&DBusConfigurationManager::profileReceived, confM, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::ComposingStatusChanged>(bind(&DBusConfigurationManager::composingStatusChanged, confM, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&DBusConfigurationManager::incomingTrustRequest, confM, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::ContactAdded>(bind(&DBusConfigurationManager::contactAdded, confM, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::ContactRemoved>(bind(&DBusConfigurationManager::contactRemoved, confM, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::ExportOnRingEnded>(bind(&DBusConfigurationManager::exportOnRingEnded, confM, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::KnownDevicesChanged>(bind(&DBusConfigurationManager::knownDevicesChanged, confM, _1, _2 )),
-        exportable_callback<ConfigurationSignal::NameRegistrationEnded>(bind(&DBusConfigurationManager::nameRegistrationEnded, confM, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::UserSearchEnded>(bind(&DBusConfigurationManager::userSearchEnded, confM, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::RegisteredNameFound>(bind(&DBusConfigurationManager::registeredNameFound, confM, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::DeviceRevocationEnded>(bind(&DBusConfigurationManager::deviceRevocationEnded, confM, _1, _2, _3)),
-        exportable_callback<ConfigurationSignal::AccountProfileReceived>(bind(&DBusConfigurationManager::accountProfileReceived, confM, _1, _2, _3)),
-        exportable_callback<ConfigurationSignal::CertificatePinned>(bind(&DBusConfigurationManager::certificatePinned, confM, _1 )),
-        exportable_callback<ConfigurationSignal::CertificatePathPinned>(bind(&DBusConfigurationManager::certificatePathPinned, confM, _1, _2 )),
-        exportable_callback<ConfigurationSignal::CertificateExpired>(bind(&DBusConfigurationManager::certificateExpired, confM, _1 )),
-        exportable_callback<ConfigurationSignal::CertificateStateChanged>(bind(&DBusConfigurationManager::certificateStateChanged, confM, _1, _2, _3 )),
-        exportable_callback<ConfigurationSignal::MediaParametersChanged>(bind(&DBusConfigurationManager::mediaParametersChanged, confM, _1 )),
-        exportable_callback<ConfigurationSignal::MigrationEnded>(bind(&DBusConfigurationManager::migrationEnded, confM, _1, _2 )),
-        exportable_callback<ConfigurationSignal::HardwareDecodingChanged>(bind(&DBusConfigurationManager::hardwareDecodingChanged, confM, _1 )),
-        exportable_callback<ConfigurationSignal::HardwareEncodingChanged>(bind(&DBusConfigurationManager::hardwareEncodingChanged, confM, _1 )),
+        exportable_callback<ConfigurationSignal::VolumeChanged>(
+            bind(&DBusConfigurationManager::volumeChanged, confM, _1, _2)),
+        exportable_callback<ConfigurationSignal::AccountsChanged>(
+            bind(&DBusConfigurationManager::accountsChanged, confM)),
+        exportable_callback<ConfigurationSignal::AccountDetailsChanged>(
+            bind(&DBusConfigurationManager::accountDetailsChanged, confM, _1, _2)),
+        exportable_callback<ConfigurationSignal::StunStatusFailed>(
+            bind(&DBusConfigurationManager::stunStatusFailure, confM, _1)),
+        exportable_callback<ConfigurationSignal::RegistrationStateChanged>(
+            bind(&DBusConfigurationManager::registrationStateChanged, confM, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::VolatileDetailsChanged>(
+            bind(&DBusConfigurationManager::volatileAccountDetailsChanged, confM, _1, _2)),
+        exportable_callback<ConfigurationSignal::Error>(
+            bind(&DBusConfigurationManager::errorAlert, confM, _1)),
+        exportable_callback<ConfigurationSignal::IncomingAccountMessage>(
+            bind(&DBusConfigurationManager::incomingAccountMessage, confM, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(
+            bind(&DBusConfigurationManager::accountMessageStatusChanged, confM, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::ProfileReceived>(
+            bind(&DBusConfigurationManager::profileReceived, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::ComposingStatusChanged>(
+            bind(&DBusConfigurationManager::composingStatusChanged, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(
+            bind(&DBusConfigurationManager::incomingTrustRequest, confM, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::ContactAdded>(
+            bind(&DBusConfigurationManager::contactAdded, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::ContactRemoved>(
+            bind(&DBusConfigurationManager::contactRemoved, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::ExportOnRingEnded>(
+            bind(&DBusConfigurationManager::exportOnRingEnded, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::KnownDevicesChanged>(
+            bind(&DBusConfigurationManager::knownDevicesChanged, confM, _1, _2)),
+        exportable_callback<ConfigurationSignal::NameRegistrationEnded>(
+            bind(&DBusConfigurationManager::nameRegistrationEnded, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::UserSearchEnded>(
+            bind(&DBusConfigurationManager::userSearchEnded, confM, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::RegisteredNameFound>(
+            bind(&DBusConfigurationManager::registeredNameFound, confM, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::DeviceRevocationEnded>(
+            bind(&DBusConfigurationManager::deviceRevocationEnded, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::AccountProfileReceived>(
+            bind(&DBusConfigurationManager::accountProfileReceived, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::CertificatePinned>(
+            bind(&DBusConfigurationManager::certificatePinned, confM, _1)),
+        exportable_callback<ConfigurationSignal::CertificatePathPinned>(
+            bind(&DBusConfigurationManager::certificatePathPinned, confM, _1, _2)),
+        exportable_callback<ConfigurationSignal::CertificateExpired>(
+            bind(&DBusConfigurationManager::certificateExpired, confM, _1)),
+        exportable_callback<ConfigurationSignal::CertificateStateChanged>(
+            bind(&DBusConfigurationManager::certificateStateChanged, confM, _1, _2, _3)),
+        exportable_callback<ConfigurationSignal::MediaParametersChanged>(
+            bind(&DBusConfigurationManager::mediaParametersChanged, confM, _1)),
+        exportable_callback<ConfigurationSignal::MigrationEnded>(
+            bind(&DBusConfigurationManager::migrationEnded, confM, _1, _2)),
+        exportable_callback<ConfigurationSignal::HardwareDecodingChanged>(
+            bind(&DBusConfigurationManager::hardwareDecodingChanged, confM, _1)),
+        exportable_callback<ConfigurationSignal::HardwareEncodingChanged>(
+            bind(&DBusConfigurationManager::hardwareEncodingChanged, confM, _1)),
     };
 
     // Presence event handlers
     const std::map<std::string, SharedCallback> presEvHandlers = {
-        exportable_callback<PresenceSignal::NewServerSubscriptionRequest>(bind(&DBusPresenceManager::newServerSubscriptionRequest, presM, _1)),
-        exportable_callback<PresenceSignal::ServerError>(bind(&DBusPresenceManager::serverError, presM, _1, _2, _3)),
-        exportable_callback<PresenceSignal::NewBuddyNotification>(bind(&DBusPresenceManager::newBuddyNotification, presM, _1, _2, _3, _4)),
-        exportable_callback<PresenceSignal::NearbyPeerNotification>(bind(&DBusPresenceManager::nearbyPeerNotification, presM, _1, _2, _3, _4)),
-        exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&DBusPresenceManager::subscriptionStateChanged, presM, _1, _2, _3)),
+        exportable_callback<PresenceSignal::NewServerSubscriptionRequest>(
+            bind(&DBusPresenceManager::newServerSubscriptionRequest, presM, _1)),
+        exportable_callback<PresenceSignal::ServerError>(
+            bind(&DBusPresenceManager::serverError, presM, _1, _2, _3)),
+        exportable_callback<PresenceSignal::NewBuddyNotification>(
+            bind(&DBusPresenceManager::newBuddyNotification, presM, _1, _2, _3, _4)),
+        exportable_callback<PresenceSignal::NearbyPeerNotification>(
+            bind(&DBusPresenceManager::nearbyPeerNotification, presM, _1, _2, _3, _4)),
+        exportable_callback<PresenceSignal::SubscriptionStateChanged>(
+            bind(&DBusPresenceManager::subscriptionStateChanged, presM, _1, _2, _3)),
     };
 
     // Audio event handlers
     const std::map<std::string, SharedCallback> audioEvHandlers = {
-        exportable_callback<AudioSignal::DeviceEvent>(bind(&DBusConfigurationManager::audioDeviceEvent, confM)),
-        exportable_callback<AudioSignal::AudioMeter>(bind(&DBusConfigurationManager::audioMeter, confM, _1, _2)),
+        exportable_callback<AudioSignal::DeviceEvent>(
+            bind(&DBusConfigurationManager::audioDeviceEvent, confM)),
+        exportable_callback<AudioSignal::AudioMeter>(
+            bind(&DBusConfigurationManager::audioMeter, confM, _1, _2)),
     };
 
     const std::map<std::string, SharedCallback> dataXferEvHandlers = {
-        exportable_callback<DataTransferSignal::DataTransferEvent>(bind(&DBusConfigurationManager::dataTransferEvent, confM, _1, _2)),
+        exportable_callback<DataTransferSignal::DataTransferEvent>(
+            bind(&DBusConfigurationManager::dataTransferEvent, confM, _1, _2)),
+    };
+
+    const std::map<std::string, SharedCallback> convEvHandlers = {
+        exportable_callback<ConversationSignal::ConversationLoaded>(
+            bind(&DBusConfigurationManager::conversationLoaded, confM, _1, _2, _3, _4)),
+        exportable_callback<ConversationSignal::MessageReceived>(
+            bind(&DBusConfigurationManager::messageReceived, confM, _1, _2, _3)),
+        exportable_callback<ConversationSignal::ConversationRequestReceived>(
+            bind(&DBusConfigurationManager::conversationRequestReceived, confM, _1, _2, _3)),
+        exportable_callback<ConversationSignal::ConversationReady>(
+            bind(&DBusConfigurationManager::conversationReady, confM, _1, _2)),
     };
 
 #ifdef ENABLE_VIDEO
     // Video event handlers
     const std::map<std::string, SharedCallback> videoEvHandlers = {
         exportable_callback<VideoSignal::DeviceEvent>(bind(&DBusVideoManager::deviceEvent, videoM)),
-        exportable_callback<VideoSignal::DecodingStarted>(bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5)),
-        exportable_callback<VideoSignal::DecodingStopped>(bind(&DBusVideoManager::stoppedDecoding, videoM, _1, _2, _3)),
+        exportable_callback<VideoSignal::DecodingStarted>(
+            bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5)),
+        exportable_callback<VideoSignal::DecodingStopped>(
+            bind(&DBusVideoManager::stoppedDecoding, videoM, _1, _2, _3)),
     };
 #endif
 
@@ -250,6 +301,7 @@ DBusClient::initLibrary(int flags)
     DRing::registerSignalHandlers(presEvHandlers);
     DRing::registerSignalHandlers(audioEvHandlers);
     DRing::registerSignalHandlers(dataXferEvHandlers);
+    DRing::registerSignalHandlers(convEvHandlers);
 #ifdef ENABLE_VIDEO
     DRing::registerSignalHandlers(videoEvHandlers);
 #endif
