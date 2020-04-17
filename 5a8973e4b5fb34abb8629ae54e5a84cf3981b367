@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "21ba8f75_356eba70",
+        "filename": "README",
+        "patchSetId": 7
+      },
+      "lineNbr": 70,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-17T12:35:23Z",
+      "side": 1,
+      "message": "For now the name didn\u0027t change",
+      "range": {
+        "startLine": 70,
+        "startChar": 12,
+        "endLine": 70,
+        "endChar": 17
+      },
+      "revId": "5a8973e4b5fb34abb8629ae54e5a84cf3981b367",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
