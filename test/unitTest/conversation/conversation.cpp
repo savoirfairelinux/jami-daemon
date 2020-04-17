@@ -66,6 +66,7 @@ private:
     CPPUNIT_TEST(testAddMember);
     CPPUNIT_TEST(testGetMembers);
     CPPUNIT_TEST(testSendMessage);
+    CPPUNIT_TEST(testRetrieveCreatedConversations);
     CPPUNIT_TEST_SUITE_END();
 };
 

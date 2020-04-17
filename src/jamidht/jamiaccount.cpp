@@ -319,6 +319,15 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
     }
 
     setActiveCodecs({});
+
+    JAMI_INFO("Start loading conversations…");
+    auto conversationsRepositories = fileutils::readDirectory(idPath_ + DIR_SEPARATOR_STR
+                                                              + "conversations");
+    for (const auto& repository : conversationsRepositories) {
+        JAMI_ERR("@@@ %s", repository.c_str());
+        conversations_.emplace(repository, std::make_unique<Conversation>(weak(), repository));
+    }
+    JAMI_INFO("Conversations loaded!");
 }
 
 JamiAccount::~JamiAccount()
@@ -1185,11 +1194,10 @@ JamiAccount::loadAccount(const std::string& archive_password,
                 auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
                 ids.emplace(std::move(id), std::move(label));
             }
-            dht::ThreadPool::computation().run([id=getAccountID(), devices=std::move(ids)] {
+            dht::ThreadPool::computation().run([id = getAccountID(), devices = std::move(ids)] {
                 emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(id, devices);
             });
-        }
-    };
+        }};
 
     try {
         auto onAsync = [w = weak()](AccountManager::AsyncUser&& cb) {
@@ -3036,12 +3044,13 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
     std::set<std::string> devices;
     {
         std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
-        for (const auto& deviceConn: sipConnections_[uri]) {
+        for (const auto& deviceConn : sipConnections_[uri]) {
             devices.emplace(deviceConn.first);
         }
         sipConnections_.erase(uri);
 
-        for (auto pendingIt = pendingSipConnections_.begin(); pendingIt != pendingSipConnections_.end();) {
+        for (auto pendingIt = pendingSipConnections_.begin();
+             pendingIt != pendingSipConnections_.end();) {
             if (uri == pendingIt->first) {
                 devices.emplace(pendingIt->second);
                 pendingIt = pendingSipConnections_.erase(pendingIt);
@@ -3051,7 +3060,7 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
         }
     }
 
-    for (const auto& device: devices) {
+    for (const auto& device : devices) {
         if (connectionManager_)
             connectionManager_->closeConnectionsWith(device);
     }
@@ -3081,7 +3090,8 @@ std::vector<std::map<std::string, std::string>>
 JamiAccount::getTrustRequests() const
 {
     std::lock_guard<std::mutex> lock(configurationMutex_);
-    return accountManager_ ? accountManager_->getTrustRequests() : std::vector<std::map<std::string, std::string>>{};
+    return accountManager_ ? accountManager_->getTrustRequests()
+                           : std::vector<std::map<std::string, std::string>> {};
 }
 
 bool
@@ -3423,7 +3433,7 @@ JamiAccount::requestPeerConnection(
     const std::function<void()>& onChanneledCancelled)
 {
     if (not dhtPeerConnector_) {
-        runOnMainThread([onChanneledCancelled]{ onChanneledCancelled(); });
+        runOnMainThread([onChanneledCancelled] { onChanneledCancelled(); });
         return;
     }
     dhtPeerConnector_->requestConnection(peer_id,
@@ -3568,7 +3578,7 @@ JamiAccount::startConversation()
 
     // TODO
     // And send an invite to others devices to sync the conversation between device
-    // Via getMemebers
+    // Via getMembers
     return convId;
 }
 
@@ -3620,18 +3630,6 @@ JamiAccount::acceptConversationRequest(const std::string& conversationId)
     conversationsRequests_.erase(conversationId);
     lk.unlock();
     checkConversationsEvents();
-}
-
-std::vector<std::string>
-JamiAccount::getConversations()
-{
-    return {}; // TODO
-}
-
-std::vector<std::map<std::string, std::string>>
-getConversationRequests()
-{
-    return {}; // TODO
 }
 
 void
@@ -3690,13 +3688,19 @@ JamiAccount::removeConversation(const std::string& conversationId)
 std::vector<std::string>
 JamiAccount::getConversations()
 {
-    return {}; // TODO
+    std::vector<std::string> result;
+    result.reserve(conversations_.size());
+    for (const auto& [key, _] : conversations_) {
+        result.emplace_back(key);
+    }
+    return result;
 }
 
 std::vector<std::map<std::string, std::string>>
-getConversationRequests()
+JamiAccount::getConversationRequests()
 {
-    return {}; // TODO
+    // TODO
+    return {};
 }
 
 // Member management
@@ -3826,10 +3830,12 @@ JamiAccount::onNewGitCommit(const std::string& peer,
             // Do a diff between last message, and current new message when merged
             auto messages = conversation->second->loadMessages("", lastMessageId);
             for (const auto& message : messages) {
-                JAMI_DBG("New message received for conversation %s with id %s", conversationId.c_str(), message.at("id").c_str());
+                JAMI_DBG("New message received for conversation %s with id %s",
+                         conversationId.c_str(),
+                         message.at("id").c_str());
                 emitSignal<DRing::ConversationSignal::MessageReceived>(accountID_,
-                                                                      conversationId,
-                                                                      message);
+                                                                       conversationId,
+                                                                       message);
             }
         };
 
@@ -3849,7 +3855,11 @@ JamiAccount::onNewGitCommit(const std::string& peer,
             connectionManager().connectDevice(
                 deviceId,
                 "git://" + deviceId + "/" + conversationId,
-                [this, deviceId, conversation, conversationId, announceMessages = std::move(announceMessages)](
+                [this,
+                 deviceId,
+                 conversation,
+                 conversationId,
+                 announceMessages = std::move(announceMessages)](
                     std::shared_ptr<ChannelSocket> socket) {
                     if (socket) {
                         addGitSocket(deviceId, conversationId, socket);
