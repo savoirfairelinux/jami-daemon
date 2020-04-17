@@ -545,7 +545,7 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
         for (unsigned i=0, n=ns.size(); i<n; i++) {
             char hbuf[NI_MAXHOST];
             if (auto ret = getnameinfo((sockaddr*)&ns[i], ns[i].getLength(), hbuf, sizeof(hbuf), nullptr, 0, NI_NUMERICHOST)) {
-                JAMI_WARN("Error printing SIP nameserver: %s", strerror(ret));
+                JAMI_WARN("Error printing SIP nameserver: %s", gai_strerror(ret));
             } else {
                 JAMI_DBG("Using SIP nameserver: %s", hbuf);
                 pj_strdup2(pool_.get(), &dns_nameservers[i], hbuf);
