@@ -515,7 +515,7 @@ public:
                      const std::string& message,
                      const std::string& parent = "",
                      const std::string& type = "text/plain");
-    void loadConversationMessages(const std::string& conversationId,
+    uint32_t loadConversationMessages(const std::string& conversationId,
                                   const std::string& fromMessage = "",
                                   size_t n = 0);
 
