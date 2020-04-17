@@ -58,7 +58,7 @@ DRING_PUBLIC void sendMessage(const std::string& accountId,
                               const std::string& conversationId,
                               const std::string& message,
                               const std::string& parent);
-DRING_PUBLIC void loadConversationMessages(const std::string& accountId,
+DRING_PUBLIC uint32_t loadConversationMessages(const std::string& accountId,
                                            const std::string& conversationId,
                                            const std::string& fromMessage,
                                            size_t n);
@@ -68,7 +68,8 @@ struct DRING_PUBLIC ConversationSignal
     struct DRING_PUBLIC ConversationLoaded
     {
         constexpr static const char* name = "ConversationLoaded";
-        using cb_type = void(const std::string& /*accountId*/,
+        using cb_type = void(uint32_t /* id */,
+                             const std::string& /*accountId*/,
                              const std::string& /* conversationId */,
                              std::vector<std::map<std::string, std::string>> /*messages*/);
     };
