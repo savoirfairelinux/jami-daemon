@@ -376,6 +376,14 @@ class AudioPreference : public Serializable {
             playbackMuted_= muted;
         }
 
+        const std::string& getEchoCanceller() const {
+            return echoCanceller_;
+        }
+
+        void setEchoCanceller(const std::string& ec) {
+            echoCanceller_ = ec;
+        }
+
     private:
         std::string audioApi_;
 
@@ -396,6 +404,7 @@ class AudioPreference : public Serializable {
         bool alwaysRecording_;
         double volumemic_;
         double volumespkr_;
+        std::string echoCanceller_;
 
         bool denoise_;
         bool agcEnabled_;
