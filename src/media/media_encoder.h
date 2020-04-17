@@ -123,6 +123,11 @@ private:
     AVCodecContext* getCurrentVideoAVCtx();
     void stopEncoder();
     AVCodecContext* initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br);
+    void initH264(AVCodecContext* encoderCtx, uint64_t br);
+    void initH265(AVCodecContext* encoderCtx, uint64_t br);
+    void initVP8(AVCodecContext* encoderCtx, uint64_t br);
+    void initMPEG4(AVCodecContext* encoderCtx, uint64_t br);
+    void initH263(AVCodecContext* encoderCtx, uint64_t br);
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext *outputCtx_ = nullptr;
@@ -134,14 +139,8 @@ private:
     unsigned int currentVideoCodecID_ {0};
     AVCodec* outputCodec_ = nullptr;
     std::mutex encMutex_;
-    bool auto_quality {false};
     bool linkableHW_ {false};
-
-    void initH264(AVCodecContext* encoderCtx, uint64_t br);
-    void initH265(AVCodecContext* encoderCtx, uint64_t br);
-    void initVP8(AVCodecContext* encoderCtx, uint64_t br);
-    void initMPEG4(AVCodecContext* encoderCtx, uint64_t br);
-    void initH263(AVCodecContext* encoderCtx, uint64_t br);
+    RateMode mode_ {CRF_CONSTRAINED};
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;

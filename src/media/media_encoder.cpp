@@ -108,14 +108,14 @@ void
 MediaEncoder::setOptions(const MediaDescription& args)
 {
     int ret;
-    if ((ret = av_opt_set_int(reinterpret_cast<void*>(outputCtx_),
-        "payload_type", args.payload_type, AV_OPT_SEARCH_CHILDREN)) < 0)
+    if (args.payload_type and (ret = av_opt_set_int(reinterpret_cast<void*>(outputCtx_),
+        "payload_type", args.payload_type, AV_OPT_SEARCH_CHILDREN) < 0))
         JAMI_ERR() << "Failed to set payload type: " << libav_utils::getError(ret);
 
     if (not args.parameters.empty())
         libav_utils::setDictValue(&options_, "parameters", args.parameters);
 
-    auto_quality = args.auto_quality;
+    mode_ = args.mode;
     linkableHW_ = args.linkableHW;
 }
 
@@ -785,7 +785,6 @@ MediaEncoder::setBitrate(uint64_t br)
     if(not encoderCtx)
         return;
 
-    AVMediaType codecType = encoderCtx->codec_type;
     AVCodecID codecId = encoderCtx->codec_id;
 
     // No need to restart encoder for h264, h263 and MPEG4
@@ -811,7 +810,7 @@ void
 MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 {
     // If auto quality disabled use CRF mode
-    if(not auto_quality) {
+    if(mode_ == CRF_CONSTRAINED) {
         uint64_t maxBitrate = 1000 * br;
         uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
         uint64_t bufSize = maxBitrate * 2;
@@ -824,7 +823,7 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
         JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
     }
     // If auto quality enabled use CRB mode
-    else {
+    else if (mode_ == CBR) {
         av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
@@ -839,13 +838,12 @@ void
 MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
 {
     // If auto quality disabled use CRF mode
-    if(not auto_quality) {
+    if(mode_ == CRF_CONSTRAINED) {
         uint64_t maxBitrate = 1000 * br;
         // H265 use 50% less bitrate compared to H264 (half bitrate is equivalent to a change 6 for CRF)
         // https://slhck.info/video/2017/02/24/crf-guide.html
         uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)) - 6);     // CRF = A + B*ln(maxBitrate)
         uint64_t bufSize = maxBitrate * 2;
-
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "b", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
@@ -853,13 +851,12 @@ MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
         JAMI_DBG("H265 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
     }
-    else {
+    else if (mode_ == CBR) {
         av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", br * 500, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
-
         JAMI_DBG("H265 encoder setup cbr: bitrate=%lu kbit/s", br);
     }
 
@@ -868,32 +865,47 @@ MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
 void
 MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
 {
-    // 1- if quality is set use it
-    // bitrate need to be set. The target bitrate becomes the maximum allowed bitrate
-    // 2- otherwise set rc_max_rate and rc_buffer_size
-    // Using information given on this page:
-    // http://www.webmproject.org/docs/encoder-parameters/
-    uint64_t maxBitrate = 1000 * br;
-    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
-    uint64_t bufSize = 2 * maxBitrate;
+    if (mode_ == CRF_2PASS) {
+        av_opt_set_int(encoderCtx, "g", 120, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "lag-in-frames", 0, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set(encoderCtx, "deadline", "good", AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "cpu-used", 0, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "vprofile", 0, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "qmax", 50, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "qmin", 0, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "slices", 4, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "crf", 10, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "b", 0, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "pass", 2, AV_OPT_SEARCH_CHILDREN);
+        JAMI_DBG("VP8 encoder setup: crf=10, 2 Pass");
+    } else {
+        // 1- if quality is set use it
+        // bitrate need to be set. The target bitrate becomes the maximum allowed bitrate
+        // 2- otherwise set rc_max_rate and rc_buffer_size
+        // Using information given on this page:
+        // http://www.webmproject.org/docs/encoder-parameters/
+        uint64_t maxBitrate = 1000 * br;
+        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
+        uint64_t bufSize = 2 * maxBitrate;
 
-    av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
-    av_opt_set_int(encoderCtx, "error-resilient", 1, AV_OPT_SEARCH_CHILDREN);
-    av_opt_set_int(encoderCtx, "cpu-used", 7, AV_OPT_SEARCH_CHILDREN); // value obtained from testing
-    av_opt_set_int(encoderCtx, "lag-in-frames", 0, AV_OPT_SEARCH_CHILDREN);
-    // allow encoder to drop frames if buffers are full and
-    // to undershoot target bitrate to lessen strain on resources
-    av_opt_set_int(encoderCtx, "drop-frame", 25, AV_OPT_SEARCH_CHILDREN);
-    av_opt_set_int(encoderCtx, "undershoot-pct", 95, AV_OPT_SEARCH_CHILDREN);
-    // don't set encoderCtx->gop_size: let libvpx decide when to insert a keyframe
-    encoderCtx->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
-    encoderCtx->qmin = 4;
-    encoderCtx->qmax = 56;
-    crf = std::min(encoderCtx->qmax, std::max((int)crf, encoderCtx->qmin));
-    av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
-    encoderCtx->rc_buffer_size = bufSize;
-    encoderCtx->rc_max_rate = maxBitrate;
-    JAMI_DBG("VP8 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, maxBitrate);
+        av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "error-resilient", 1, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "cpu-used", 7, AV_OPT_SEARCH_CHILDREN); // value obtained from testing
+        av_opt_set_int(encoderCtx, "lag-in-frames", 0, AV_OPT_SEARCH_CHILDREN);
+        // allow encoder to drop frames if buffers are full and
+        // to undershoot target bitrate to lessen strain on resources
+        av_opt_set_int(encoderCtx, "drop-frame", 25, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "undershoot-pct", 95, AV_OPT_SEARCH_CHILDREN);
+        // don't set encoderCtx->gop_size: let libvpx decide when to insert a keyframe
+        encoderCtx->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
+        encoderCtx->qmin = 4;
+        encoderCtx->qmax = 56;
+        crf = std::min(encoderCtx->qmax, std::max((int)crf, encoderCtx->qmin));
+        av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+        encoderCtx->rc_buffer_size = bufSize;
+        encoderCtx->rc_max_rate = maxBitrate;
+        JAMI_DBG("VP8 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, maxBitrate);
+    }
 }
 
 void

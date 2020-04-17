@@ -51,6 +51,12 @@ enum MediaType : unsigned {
     MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO
 };
 
+enum RateMode : unsigned {
+    CRF_CONSTRAINED = 0,
+    CRF_2PASS = 1,
+    CBR = 2
+};
+
 /*
  * SystemCodecInfo
  * represent information of a codec available on the system (using libav)
@@ -278,7 +284,7 @@ struct MediaDescription {
 
     /** Video parameters */
     std::string parameters {};
-    bool auto_quality {false};
+    RateMode mode {CRF_CONSTRAINED};
     bool linkableHW {false};
 
     /** Crypto parameters */

@@ -280,7 +280,10 @@ MediaRecorder::initRecord()
             JAMI_ERR() << "Could not retrieve video recorder stream properties";
             return -1;
         }
+        MediaDescription args;
+        args.mode = CRF_2PASS;
         encoder_->setOptions(videoStream);
+        encoder_->setOptions(args);
     }
 
     audioFilter_.reset();
