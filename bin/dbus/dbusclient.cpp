@@ -44,6 +44,7 @@
 #endif // ENABLE_PLUGIN
 
 #include "datatransfer_interface.h"
+#include "conversation_interface.h"
 
 #ifdef ENABLE_VIDEO
 #include "dbusvideomanager.h"
@@ -140,6 +141,7 @@ DBusClient::initLibrary(int flags)
     using DRing::PresenceSignal;
     using DRing::AudioSignal;
     using DRing::DataTransferSignal;
+    using DRing::ConversationSignal;
 
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
 
@@ -231,6 +233,13 @@ DBusClient::initLibrary(int flags)
         exportable_callback<DataTransferSignal::DataTransferEvent>(bind(&DBusConfigurationManager::dataTransferEvent, confM, _1, _2)),
     };
 
+    const std::map<std::string, SharedCallback> convEvHandlers = {
+        exportable_callback<ConversationSignal::ConversationLoaded>(bind(&DBusConfigurationManager::conversationLoaded, confM, _1, _2, _3)),
+        exportable_callback<ConversationSignal::MessageReceived>(bind(&DBusConfigurationManager::messageReceived, confM, _1, _2, _3)),
+        exportable_callback<ConversationSignal::ConversationRequestReceived>(bind(&DBusConfigurationManager::conversationRequestReceived, confM, _1, _2, _3)),
+        exportable_callback<ConversationSignal::ConversationReady>(bind(&DBusConfigurationManager::conversationReady, confM, _1, _2)),
+    };
+
 #ifdef ENABLE_VIDEO
     // Video event handlers
     const std::map<std::string, SharedCallback> videoEvHandlers = {
@@ -248,6 +257,7 @@ DBusClient::initLibrary(int flags)
     DRing::registerSignalHandlers(presEvHandlers);
     DRing::registerSignalHandlers(audioEvHandlers);
     DRing::registerSignalHandlers(dataXferEvHandlers);
+    DRing::registerSignalHandlers(convEvHandlers);
 #ifdef ENABLE_VIDEO
     DRing::registerSignalHandlers(videoEvHandlers);
 #endif
