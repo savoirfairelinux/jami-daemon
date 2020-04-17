@@ -27,7 +27,7 @@ libexec_PROGRAMS = jamid
 
 jamid_SOURCES = main.cpp
 
-jamid_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
+jamid_CXXFLAGS= ${DBUSCPP_CFLAGS} \
                 -I$(top_srcdir)/src/jami \
                 -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
 

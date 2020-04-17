@@ -17,7 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#include "compiler_intrinsics.h"
+
 #include "dbusinstance.h"
 
 DBusInstance::DBusInstance(DBus::Connection& connection,
@@ -28,15 +28,15 @@ DBusInstance::DBusInstance(DBus::Connection& connection,
 {}
 
 void
-DBusInstance::Register(const int32_t& pid UNUSED,
-                       const std::string& name UNUSED)
+DBusInstance::Register(const int32_t& /*pid*/,
+                       const std::string& /*name*/)
 {
     ++count_;
 }
 
 
 void
-DBusInstance::Unregister(const int32_t& pid UNUSED)
+DBusInstance::Unregister(const int32_t& /*pid*/)
 {
     --count_;
 
