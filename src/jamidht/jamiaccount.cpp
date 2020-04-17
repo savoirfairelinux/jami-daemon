@@ -1795,7 +1795,13 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
         }
         if (not expired) {
             // Retry messages every time a new device announce its presence
-            messageEngine_.onPeerOnline(h.toString());
+            // NOTE: onPeerOnline will use DHT threads, so we need to run this
+            // on the main thread to avoid any lock.
+            runOnMainThread([w=weak(), h]() {
+                if (auto shared = w.lock()) {
+                    shared->messageEngine_.onPeerOnline(h.toString());
+                }
+            });
         }
         if (isConnected and not wasConnected) {
             onTrackedBuddyOnline(h);
