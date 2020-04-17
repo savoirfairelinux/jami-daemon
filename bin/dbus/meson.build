@@ -1,7 +1,5 @@
 jamid_includedirs = include_directories(
-    '../..',
-    '../../src',
-    '../../src/jami'
+    '../..'
 )
 
 jamid_sources = files(
@@ -44,10 +42,7 @@ if conf.get('ENABLE_VIDEO')
         input: 'cx.ring.Ring.VideoManager.xml',
         output: 'dbusvideomanager.adaptor.h'
     )
-
-    jamid_sources += files(
-        'dbusvideomanager.cpp'
-    )
+    jamid_sources += files('dbusvideomanager.cpp')
 endif
 
 if conf.get('ENABLE_PLUGIN')
@@ -56,10 +51,7 @@ if conf.get('ENABLE_PLUGIN')
         input: 'cx.ring.Ring.PluginManagerInterface.xml',
         output: 'dbuspluginmanagerinterface.adaptor.h'
     )
-
-    jamid_sources += files(
-        'dbuspluginmanagerinterface.cpp'
-    )
+    jamid_sources += files('dbuspluginmanagerinterface.cpp')
 endif
 
 if progpod2man.found()
@@ -76,8 +68,7 @@ jamid = executable('jamid',
     jamid_targets,
     include_directories: jamid_includedirs,
     sources: jamid_sources,
-    dependencies: depdbuscpp,
-    link_with: libjami,
+    dependencies: [depdbuscpp, depjami],
     install: true,
     install_dir: get_option('libdir')
 )
