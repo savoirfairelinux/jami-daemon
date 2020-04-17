@@ -152,7 +152,6 @@ Call::removeCall()
     setState(CallState::OVER);
     if (Recordable::isRecording())
         Recordable::stopRecording();
-    Manager::instance().checkAudio();
 }
 
 const std::string&

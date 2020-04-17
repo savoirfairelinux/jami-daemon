@@ -59,8 +59,8 @@ class CoreLayer : public AudioLayer {
         virtual std::vector<std::string> getCaptureDeviceList() const;
         virtual std::vector<std::string> getPlaybackDeviceList() const;
 
-        virtual int getAudioDeviceIndex(const std::string& name, DeviceType type) const;
-        virtual std::string getAudioDeviceName(int index, DeviceType type) const;
+        virtual int getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const;
+        virtual std::string getAudioDeviceName(int index, AudioDeviceType type) const;
 
         /**
          * Get the index of the audio card for capture
@@ -145,7 +145,7 @@ class CoreLayer : public AudioLayer {
             UInt32 inNumberFrames,
             AudioBufferList* ioData);
 
-        virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
+        virtual void updatePreference(AudioPreference &pref, int index, AudioDeviceType type);
 
         /**
          * Number of audio cards on which capture stream has been opened

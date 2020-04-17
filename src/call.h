@@ -47,6 +47,7 @@ namespace jami {
 class VoIPLink;
 class Account;
 struct AccountVideoCodecInfo;
+class AudioDeviceGuard;
 
 template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 
@@ -325,6 +326,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         void updateDetails(const std::map<std::string, std::string>& details);
 
         bool hasVideo() const { return not isAudioOnly_; }
+
+        std::unique_ptr<AudioDeviceGuard> audioGuard;
 
     protected:
         virtual void merge(Call& scall);

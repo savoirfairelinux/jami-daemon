@@ -816,7 +816,6 @@ SIPCall::onClosed()
             auto& call = *shared;
             Manager::instance().peerHungupCall(call);
             call.removeCall();
-            Manager::instance().checkAudio();
         }
     });
 }

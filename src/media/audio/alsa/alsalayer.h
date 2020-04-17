@@ -95,21 +95,21 @@ class AlsaLayer : public AudioLayer {
          * Check if the given index corresponds to an existing sound card and supports the specified streaming mode
          * @param card   An index
          * @param stream  The stream mode
-         *		  DeviceType::CAPTURE
-         *		  DeviceType::PLAYBACK
-         *		  DeviceType::RINGTONE
+         *		  AudioDeviceType::CAPTURE
+         *		  AudioDeviceType::PLAYBACK
+         *		  AudioDeviceType::RINGTONE
          * @return bool True if it exists and supports the mode
          *		    false otherwise
          */
-        static bool soundCardIndexExists(int card, DeviceType stream);
+        static bool soundCardIndexExists(int card, AudioDeviceType stream);
 
         /**
          * An index is associated with its string description
          * @param description The string description
          * @return	int	  Its index
          */
-        int getAudioDeviceIndex(const std::string &description, DeviceType type) const;
-        std::string getAudioDeviceName(int index, DeviceType type) const;
+        int getAudioDeviceIndex(const std::string &description, AudioDeviceType type) const;
+        std::string getAudioDeviceName(int index, AudioDeviceType type) const;
 
         void playback();
         void ringtone();
@@ -209,7 +209,7 @@ class AlsaLayer : public AudioLayer {
          */
         std::unique_ptr<AudioFrame> read(unsigned frames);
 
-        virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
+        virtual void updatePreference(AudioPreference &pref, int index, AudioDeviceType type);
 
         /**
          * Handles to manipulate playback stream

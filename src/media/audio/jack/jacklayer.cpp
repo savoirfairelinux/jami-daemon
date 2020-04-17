@@ -257,7 +257,7 @@ JackLayer::~JackLayer()
 }
 
 void
-JackLayer::updatePreference(AudioPreference & /*pref*/, int /*index*/, DeviceType /*type*/)
+JackLayer::updatePreference(AudioPreference & /*pref*/, int /*index*/, AudioDeviceType /*type*/)
 {}
 
 std::vector<std::string>
@@ -273,10 +273,10 @@ JackLayer::getPlaybackDeviceList() const
 }
 
 int
-JackLayer::getAudioDeviceIndex(const std::string& /*name*/, DeviceType /*type*/) const { return 0; }
+JackLayer::getAudioDeviceIndex(const std::string& /*name*/, AudioDeviceType /*type*/) const { return 0; }
 
 std::string
-JackLayer::getAudioDeviceName(int /*index*/, DeviceType /*type*/) const { return ""; }
+JackLayer::getAudioDeviceName(int /*index*/, AudioDeviceType /*type*/) const { return ""; }
 
 int
 JackLayer::getIndexCapture() const { return 0; }
