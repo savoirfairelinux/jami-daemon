@@ -44,7 +44,6 @@ MediaPlayer::MediaPlayer(const std::string& path)
 
     path_ = path;
     id_ = std::to_string(rand());
-    Manager::instance().startAudioPlayback();
     audioInput_ = jami::getAudioInput(id_);
     audioInput_->setPaused(paused_);
     videoInput_ = jami::getVideoInput(id_,
