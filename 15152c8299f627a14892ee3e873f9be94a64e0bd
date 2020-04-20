@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dc713a3a_65eb6760",
+        "filename": "README",
+        "patchSetId": 10
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-20T18:42:14Z",
+      "side": 1,
+      "message": "Why changing this --pkg_config_path is not recognized as an option. -Dpkg_config_path is ok (same for other options)",
+      "range": {
+        "startLine": 75,
+        "startChar": 0,
+        "endLine": 75,
+        "endChar": 118
+      },
+      "revId": "15152c8299f627a14892ee3e873f9be94a64e0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8cbac953_c3ad31d1",
+        "filename": "README",
+        "patchSetId": 10
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-20T18:42:14Z",
+      "side": 1,
+      "message": "Hmm logger is failing on my devices:\n\nFAILED: src/25a6634@@jami@sta/client_configurationmanager.cpp.o \nccache c++ -Isrc/25a6634@@jami@sta -Isrc -I../src -I. -I.. -I../src/dring -I../src/media -I../src/jamidht/eth -I/home/amarok/Projects/jami/daemon/contrib/x86_64-redhat-linux/include -I/usr/include/p11-kit-1 -I/home/amarok/Projects/jami/daemon/contrib/x86_64-redhat-linux/include/upnp -fdiagnostics-color\u003dalways -pipe -D_FILE_OFFSET_BITS\u003d64 -Wall -Winvalid-pch -Wnon-virtual-dtor -std\u003dgnu++14 -O2 -g -DHAVE_CONFIG_H -DRING_BUILD -DASIO_STANDALONE -fPIC -pthread -D_REENTRANT -std\u003dc++14 -fPIC -DPJ_AUTOCONF\u003d1 -DNDEBUG\u003d1 -O3 -fPIC -DPJ_IS_BIG_ENDIAN\u003d0 -DPJ_IS_LITTLE_ENDIAN\u003d1 -MD -MQ \u0027src/25a6634@@jami@sta/client_configurationmanager.cpp.o\u0027 -MF \u0027src/25a6634@@jami@sta/client_configurationmanager.cpp.o.d\u0027 -o \u0027src/25a6634@@jami@sta/client_configurationmanager.cpp.o\u0027 -c ../src/client/configurationmanager.cpp\nIn file included from ../src/call.h:30,\n                 from ../src/call_factory.h:24,\n                 from ../src/manager.h:34,\n                 from ../src/client/configurationmanager.cpp:31:\n../src/media/media_stream.h: In constructor ‘jami::MediaStream::MediaStream(const string\u0026, AVCodecContext*, int64_t)’:\n../src/logger.h:152:97: error: expected primary-expression before ‘)’ token\n  152 | #define JAMI_WARN(...) ::jami::Logger::log(LOG_WARNING, __FILE__, __LINE__, true, ## __VA_ARGS__)",
+      "range": {
+        "startLine": 77,
+        "startChar": 0,
+        "endLine": 77,
+        "endChar": 5
+      },
+      "revId": "15152c8299f627a14892ee3e873f9be94a64e0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
