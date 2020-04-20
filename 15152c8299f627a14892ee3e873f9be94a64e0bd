@@ -49,6 +49,30 @@
     },
     {
       "key": {
+        "uuid": "843871cf_96fdea2c",
+        "filename": "README",
+        "patchSetId": 10
+      },
+      "lineNbr": 75,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-20T22:13:11Z",
+      "side": 1,
+      "message": "I mean the README is incorrect. --pkg-config-path or -Dpkg_config_path is ok for me. But for now the README is incorrect :)",
+      "parentUuid": "ecc5fea1_edfb1ed4",
+      "range": {
+        "startLine": 75,
+        "startChar": 0,
+        "endLine": 75,
+        "endChar": 118
+      },
+      "revId": "15152c8299f627a14892ee3e873f9be94a64e0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "8cbac953_c3ad31d1",
         "filename": "README",
         "patchSetId": 10
@@ -84,6 +108,30 @@
       "side": 1,
       "message": "Seems you don\u0027t agree to delete EXTRA_CXXFLAGS +\u003d -std\u003dc++14 from contrib/src/main.mak.)\nI am not familiar with code of pjproject, will try to look at it later.",
       "parentUuid": "8cbac953_c3ad31d1",
+      "range": {
+        "startLine": 77,
+        "startChar": 0,
+        "endLine": 77,
+        "endChar": 5
+      },
+      "revId": "15152c8299f627a14892ee3e873f9be94a64e0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d3627baa_c3760021",
+        "filename": "README",
+        "patchSetId": 10
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-20T22:13:11Z",
+      "side": 1,
+      "message": "Your justification was ok for me. I just didn\u0027t understand the change and wanted to understand. We just need to be sure that other build methods continue to work :)",
+      "parentUuid": "096d5984_9f71f841",
       "range": {
         "startLine": 77,
         "startChar": 0,
