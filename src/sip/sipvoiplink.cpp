@@ -644,9 +644,6 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
 SIPVoIPLink::~SIPVoIPLink()
 {
     JAMI_DBG("~SIPVoIPLink@%p", this);
-
-    running_ = false;
-
     // Remaining calls should not happen as possible upper callbacks
     // may be called and another instance of SIPVoIPLink can be re-created!
 
@@ -655,15 +652,14 @@ SIPVoIPLink::~SIPVoIPLink()
                  Manager::instance().callFactory.callCount<SIPCall>());
 
     sipTransportBroker->shutdown();
-
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
-
     sipTransportBroker.reset();
 
+    running_ = false;
+    sipThread_.join();
     pjsip_endpt_destroy(endpt_);
     pool_.reset();
     pj_caching_pool_destroy(&cp_);
-    sipThread_.join();
 
     JAMI_DBG("destroying SIPVoIPLink@%p", this);
 }
