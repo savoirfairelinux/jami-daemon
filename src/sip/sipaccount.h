@@ -613,6 +613,18 @@ class SIPAccount : public SIPAccountBase {
         pjsip_transport_type_e transportType_ {PJSIP_TRANSPORT_UNSPECIFIED};
 
         /**
+         * Maps a string description of how we update Contact: header with
+         * sip registrar
+         * @param level The string representation
+         * @return
+         * 0: disable
+         * 1: enable but not for http://trac.pjsip.org/repos/ticket/643
+         *    or for http://trac.pjsip.org/repos/ticket/864
+         * 2: always
+         */
+        short int contactRewriteLevelFromString(const std::string& level);
+
+        /**
          * Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
          * @param method The string representation
@@ -793,9 +805,8 @@ class SIPAccount : public SIPAccountBase {
         char contactBuffer_[PJSIP_MAX_URL_SIZE];
         pj_str_t contact_;
         int contactRewriteMethod_;
+        short int contactRewriteLevel_;
         bool allowViaRewrite_;
-        /* Undocumented feature in pjsip, this can == 2 */
-        int allowContactRewrite_;
         bool contactOverwritten_;
         pjsip_transport *via_tp_;
 
