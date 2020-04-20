@@ -141,6 +141,30 @@
       "revId": "15152c8299f627a14892ee3e873f9be94a64e0bd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6a80b5cf_6e2d628b",
+        "filename": "README",
+        "patchSetId": 10
+      },
+      "lineNbr": 77,
+      "author": {
+        "id": 610
+      },
+      "writtenOn": "2020-04-20T23:07:05Z",
+      "side": 1,
+      "message": "pjproject generates the incorrect .pc file, which contains illegal flags like -std\u003dc++14 and -O3. These flags override compiling flags of Jami (particularly, logger requires -std\u003dgnu++14). Deletion of EXTRA_CXXFLAGS is a workaround for this.\nYou are right, it should be fixed upstream to avoid problems in the future.",
+      "parentUuid": "d3627baa_c3760021",
+      "range": {
+        "startLine": 77,
+        "startChar": 0,
+        "endLine": 77,
+        "endChar": 5
+      },
+      "revId": "15152c8299f627a14892ee3e873f9be94a64e0bd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
