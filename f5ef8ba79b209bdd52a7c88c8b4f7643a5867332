@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "eb84a554_b06af9ea",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 284,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-04-20T14:18:14Z",
+      "side": 1,
+      "message": "In fact, CRF and CQ are the same, maybe CQ is more understandable. The idea behind 2 pass was to save bits since we not constrained by real-time, but yes maybe 1 pass is more suited for the recorder.",
+      "parentUuid": "8d93b1c1_211294e1",
+      "range": {
+        "startLine": 284,
+        "startChar": 20,
+        "endLine": 284,
+        "endChar": 29
+      },
+      "revId": "f5ef8ba79b209bdd52a7c88c8b4f7643a5867332",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "981eca33_76c2eddf",
         "filename": "src/media/video/video_rtp_session.cpp",
         "patchSetId": 1
@@ -36,6 +60,30 @@
       "writtenOn": "2020-04-17T22:51:53Z",
       "side": 1,
       "message": "why ? might that prevent efficient use of the bandwidth ?",
+      "range": {
+        "startLine": 132,
+        "startChar": 21,
+        "endLine": 132,
+        "endChar": 57
+      },
+      "revId": "f5ef8ba79b209bdd52a7c88c8b4f7643a5867332",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cd684576_4305adfa",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 132,
+      "author": {
+        "id": 641
+      },
+      "writtenOn": "2020-04-20T14:18:14Z",
+      "side": 1,
+      "message": "Congestion control algorithms based on packet delays need CBR because CRF constrained mode makes the bitrate too fluctuant. CRF constrained main problem is to cause bitrate peaks (which can exceed the bandwidth limit) when rapid movements occur.\nWe have been using CBR since this patch: https://review.jami.net/c/ring-daemon/+/12902",
+      "parentUuid": "981eca33_76c2eddf",
       "range": {
         "startLine": 132,
         "startChar": 21,
