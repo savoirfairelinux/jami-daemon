@@ -346,7 +346,7 @@ JackLayer::process_playback(jack_nframes_t frames, void *arg)
  * Start the capture and playback.
  */
 void
-JackLayer::startStream(AudioStreamType stream)
+JackLayer::startStream(AudioStreamType)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);

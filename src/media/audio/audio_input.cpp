@@ -163,6 +163,11 @@ AudioInput::readFromFile()
     case MediaDemuxer::Status::ReadError:
         JAMI_ERR() << "Failed to decode frame";
         break;
+    case MediaDemuxer::Status::ReadBufferOverflow:
+        JAMI_ERR() << "Read buffer overflow detected";
+        break;
+    case MediaDemuxer::Status::FallBack:
+        break;
     }
 }
 

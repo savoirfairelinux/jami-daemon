@@ -785,7 +785,7 @@ MediaEncoder::setBitrate(uint64_t br)
     if(not encoderCtx)
         return;
 
-    AVMediaType codecType = encoderCtx->codec_type;
+    //AVMediaType codecType = encoderCtx->codec_type;
     AVCodecID codecId = encoderCtx->codec_id;
 
     // No need to restart encoder for h264, h263 and MPEG4

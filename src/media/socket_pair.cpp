@@ -498,7 +498,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     if (len <= 0)
         return len;
 
-    if (not fromRTCP && (buf_size < MINIMUM_RTP_HEADER_SIZE))
+    if (not fromRTCP && (buf_size < static_cast<int>(MINIMUM_RTP_HEADER_SIZE)))
         return len;
 
     // SRTP decrypt

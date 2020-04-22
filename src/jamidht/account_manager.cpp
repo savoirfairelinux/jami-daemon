@@ -205,7 +205,7 @@ AccountManager::startSync()
                 return true;
 
             // allowPublic always true for trust requests (only forbidden if banned)
-            onPeerMessage(v.from, true, [this, v](const std::shared_ptr<dht::crypto::Certificate>& cert, dht::InfoHash peer_account) mutable {
+            onPeerMessage(v.from, true, [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
                 JAMI_WARN("Got trust request from: %s / %s", peer_account.toString().c_str(), v.from.toString().c_str());
                 if (info_)
                     if (info_->contacts->onTrustRequest(peer_account, v.from, time(nullptr), v.confirm, std::move(v.payload))) {

@@ -94,7 +94,8 @@ constexpr const char * const DEFAULT_RINGTONE_PATH = "/usr/share/ring/ringtones/
 #endif
 
 Account::Account(const std::string &accountID)
-    : accountID_(accountID)
+    : rand(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
+    , accountID_(accountID)
     , username_()
     , hostname_()
     , alias_()
@@ -109,7 +110,6 @@ Account::Account(const std::string &accountID)
     , userAgent_(DEFAULT_USER_AGENT)
     , hasCustomUserAgent_(false)
     , mailBox_()
-    , rand(dht::crypto::getSeededRandomEngine<std::mt19937_64>())
 {
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();

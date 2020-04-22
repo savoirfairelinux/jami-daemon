@@ -102,7 +102,7 @@ Controller::requestMappingAdd(NotifyServiceCallback&& cb, uint16_t portDesired, 
                 if (map.isValid())
                     addLocalMap(map);
             },
-            [this](const Mapping& map, bool success) {
+            [this](const Mapping& map, bool) {
                 if (map.isValid())
                     removeLocalMap(map);
             },

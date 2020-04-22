@@ -783,7 +783,6 @@ closePlayer(const std::string& id)
 bool
 mutePlayerAudio(const std::string& id, bool mute)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
     auto player = getMediaPlayer(id);
     if (player) {
         player->muteAudio(mute);
@@ -795,7 +794,6 @@ mutePlayerAudio(const std::string& id, bool mute)
 bool
 playerSeekToTime(const std::string& id, int time)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
     auto player = getMediaPlayer(id);
     if (player) {
         return player->seekToTime(time);
@@ -806,7 +804,6 @@ playerSeekToTime(const std::string& id, int time)
 int64_t
 getPlayerPosition(const std::string& id)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
     auto player = getMediaPlayer(id);
     if (player) {
         return player->getPlayerPosition();

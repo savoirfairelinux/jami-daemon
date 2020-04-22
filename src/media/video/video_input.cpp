@@ -229,7 +229,7 @@ VideoInput::flushBuffers() {
 }
 
 void
-VideoInput::configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index)
+VideoInput::configureFilePlayback(const std::string&, std::shared_ptr<MediaDemuxer>& demuxer, int index)
 {
     deleteDecoder();
     clearOptions();

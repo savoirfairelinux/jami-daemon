@@ -151,7 +151,7 @@ MediaDemuxer::getDuration() const
 }
 
 bool
-MediaDemuxer::seekFrame(int stream_index, int64_t timestamp)
+MediaDemuxer::seekFrame(int, int64_t timestamp)
 {
     if (av_seek_frame(inputCtx_, -1, timestamp, AVSEEK_FLAG_BACKWARD) >= 0) {
         clearFrames();
