@@ -82,8 +82,6 @@ static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
 static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
 static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
 
-decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
-
 static void
 handleIncomingOptions(pjsip_rx_data *rdata)
 {
@@ -204,13 +202,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
 
-    auto link = getSIPVoIPLink();
-    if (not link) {
-        JAMI_ERR("no more VoIP link");
-        return PJ_FALSE;
-    }
-
-    auto account(link->guessAccount(toUsername, viaHostname, remote_hostname));
+    auto account(Manager::instance().sipVoIPLink().guessAccount(toUsername, viaHostname, remote_hostname));
     if (!account) {
         JAMI_ERR("NULL account");
         return PJ_FALSE;
@@ -314,7 +306,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
 
-    auto transport = link->sipTransportBroker->addTransport(rdata->tp_info.transport);
+    auto transport = Manager::instance().sipVoIPLink().sipTransportBroker->addTransport(rdata->tp_info.transport);
     auto call = account->newIncomingCall(remote_user, {{"AUDIO_ONLY", (hasVideo ? "false" : "true") }}, transport);
     if (!call) {
         return PJ_FALSE;
@@ -487,16 +479,10 @@ static void
 tp_state_callback(pjsip_transport* tp, pjsip_transport_state state,
                   const pjsip_transport_state_info* info)
 {
-    // There is no way (at writing) to link a user data to a PJSIP transport.
-    // So we obtain it from the global SIPVoIPLink instance that owns it.
-    // Be sure the broker's owner is not deleted during process
-    if (auto sipLink = getSIPVoIPLink()) {
-        if (auto& broker = sipLink->sipTransportBroker)
-            broker->transportStateChanged(tp, state, info);
-        else
-            JAMI_ERR("SIPVoIPLink with invalid SipTransportBroker");
-    } else
-        JAMI_ERR("no more VoIP link");
+    if (auto& broker = Manager::instance().sipVoIPLink().sipTransportBroker)
+        broker->transportStateChanged(tp, state, info);
+    else
+        JAMI_ERR("SIPVoIPLink with invalid SipTransportBroker");
 }
 
 /*************************************************************************************************/

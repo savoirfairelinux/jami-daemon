@@ -342,7 +342,7 @@ protected:
     /**
      * Voice over IP Link contains a listener thread and calls
      */
-    std::shared_ptr<SIPVoIPLink> link_;
+    SIPVoIPLink& link_;
 
     /**
      * interface name on which this account is bound

@@ -267,7 +267,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     if (tdata->msg->body == NULL)
         pjsip_tx_data_dec_ref(tdata);
     else
-        pjsip_dlg_send_request(inv->dlg, tdata, getSIPVoIPLink()->getModId(), NULL);
+        pjsip_dlg_send_request(inv->dlg, tdata, Manager::instance().sipVoIPLink().getModId(), NULL);
 }
 
 void
@@ -335,7 +335,7 @@ SIPCall::answer()
         JAMI_WARN("[call:%s] Negotiator is NULL, we've received an INVITE without an SDP",
                   getCallId().c_str());
         pjmedia_sdp_session *dummy = 0;
-        getSIPVoIPLink()->createSDPOffer(inv.get(), &dummy);
+        Manager::instance().sipVoIPLink().createSDPOffer(inv.get(), &dummy);
 
         if (account.isStunEnabled())
             updateSDPFromSTUN();
@@ -416,13 +416,7 @@ SIPCall::refuse()
 static void
 transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 {
-    auto link = getSIPVoIPLink();
-    if (not link) {
-        JAMI_ERR("no more VoIP link");
-        return;
-    }
-
-    auto mod_ua_id = link->getModId();
+    auto mod_ua_id = Manager::instance().sipVoIPLink().getModId();
 
     switch (pjsip_evsub_get_state(sub)) {
         case PJSIP_EVSUB_STATE_ACCEPTED:
@@ -513,7 +507,7 @@ SIPCall::transferCommon(const pj_str_t *dst)
      * because after this function, we can no find the cooresponding
      * voiplink from the call any more. But the voiplink is useful!
      */
-    pjsip_evsub_set_mod_data(sub, getSIPVoIPLink()->getModId(), this);
+    pjsip_evsub_set_mod_data(sub, Manager::instance().sipVoIPLink().getModId(), this);
 
     /*
      * Create REFER request.
@@ -1372,7 +1366,7 @@ SIPCall::InvSessionDeleter::operator ()(pjsip_inv_session* inv) const noexcept
     // prevent this from getting accessed in callbacks
     // JAMI_WARN: this is not thread-safe!
     if (!inv) return;
-    inv->mod_data[getSIPVoIPLink()->getModId()] = nullptr;
+    inv->mod_data[Manager::instance().sipVoIPLink().getModId()] = nullptr;
     // NOTE: the counter is incremented by sipvoiplink (transaction_request_cb)
     pjsip_inv_dec_ref(inv);
 }
@@ -1401,7 +1395,7 @@ SIPCall::merge(Call& call)
     std::lock_guard<std::recursive_mutex> lk1 {callMutex_, std::adopt_lock};
     std::lock_guard<std::recursive_mutex> lk2 {subcall.callMutex_, std::adopt_lock};
     inv = std::move(subcall.inv);
-    inv->mod_data[getSIPVoIPLink()->getModId()] = this;
+    inv->mod_data[Manager::instance().sipVoIPLink().getModId()] = this;
     setTransport(std::move(subcall.transport_));
     sdp_ = std::move(subcall.sdp_);
     peerHolding_ = subcall.peerHolding_;

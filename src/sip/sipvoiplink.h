@@ -58,13 +58,9 @@ class SipTransportBroker;
 
 typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
 
-extern decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink;
-
 /**
  * @file sipvoiplink.h
  * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).
- *          This class is based on the singleton design pattern.
- *          One SIPVoIPLink can handle multiple SIP accounts, but all the SIP accounts have all the same SIPVoIPLink
  */
 
 class SIPVoIPLink {
