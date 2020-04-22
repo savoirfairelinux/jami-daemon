@@ -769,7 +769,7 @@ JamiAccount::SIPStartCall(SIPCall& call, IpAddr target)
     if (!CreateClientDialogAndInvite(&pjFrom, &pjContact, &pjTo, &pjTarget, local_sdp, &dialog, &inv))
         return false;
 
-    inv->mod_data[link_->getModId()] = &call;
+    inv->mod_data[link_.getModId()] = &call;
     call.inv.reset(inv);
 
 /*
@@ -1594,7 +1594,7 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
 
     // Following can create a transport that need to be negotiated (TLS).
     // This is a asynchronous task. So we're going to process the SIP after this negotiation.
-    auto transport = link_->sipTransportBroker->getTlsIceTransport(best_transport,
+    auto transport = link_.sipTransportBroker->getTlsIceTransport(best_transport,
                                                                    ICE_COMP_SIP_TRANSPORT,
                                                                    tlsParams);
     if (!transport)
@@ -2785,7 +2785,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         pj_str_t pjTo = pj_str((char*) toURI.c_str());
 
         // Create request.
-        pj_status_t status = pjsip_endpt_create_request(link_->getEndpoint(), &msg_method,
+        pj_status_t status = pjsip_endpt_create_request(link_.getEndpoint(), &msg_method,
                                                         &pjTo, &pjFrom, &pjTo, nullptr, nullptr, -1,
                                                         nullptr, &tdata);
         if (status != PJ_SUCCESS) {
@@ -2850,7 +2850,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
             sip_utils::register_thread();
 
-            auto status = pjsip_endpt_send_request(shared->link_->getEndpoint(), tdata, -1, ctx.release(),
+            auto status = pjsip_endpt_send_request(shared->link_.getEndpoint(), tdata, -1, ctx.release(),
                 [](void *token, pjsip_event *event)
                 {
                     std::unique_ptr<TextMessageCtx> c{ (TextMessageCtx*)token };
@@ -3292,7 +3292,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const s
                 conn++;
         }
     };
-    auto sip_tr = link_->sipTransportBroker->getChanneledTransport(socket, std::move(onShutdown));
+    auto sip_tr = link_.sipTransportBroker->getChanneledTransport(socket, std::move(onShutdown));
     // Store the connection
     sipConnections_[peerId][deviceId].emplace_back(SipConnection {
         std::move(sip_tr),

@@ -93,7 +93,7 @@ pjsip_pres_status * SIPPresence::getStatus()
 
 int SIPPresence::getModId() const
 {
-    return getSIPVoIPLink()->getModId();
+    return Manager::instance().sipVoIPLink().getModId();
 }
 
 pj_pool_t*  SIPPresence::getPool() const
@@ -481,7 +481,7 @@ SIPPresence::publish(SIPPresence *pres)
     pj_status_t status;
     constexpr pj_str_t STR_PRESENCE = CONST_PJ_STR("presence");
     SIPAccount * acc = pres->getAccount();
-    pjsip_endpoint *endpt = getSIPVoIPLink()->getEndpoint();
+    pjsip_endpoint *endpt = Manager::instance().sipVoIPLink().getEndpoint();
 
     /* Create and init client publication session */
 
