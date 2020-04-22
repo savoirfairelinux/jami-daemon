@@ -58,7 +58,7 @@ static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chr
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID),
     messageEngine_(*this, fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()+DIR_SEPARATOR_STR "messages"),
-    link_(getSIPVoIPLink())
+    link_(Manager::instance().sipVoIPLink())
 {}
 
 SIPAccountBase::~SIPAccountBase() {}

@@ -202,7 +202,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
 
         // TODO: resolve remote host using SIPVoIPLink::resolveSrvName
         std::shared_ptr<SipTransport> t = isTlsEnabled() ?
-            link_->sipTransportBroker->getTlsTransport(tlsListener_, IpAddr(sip_utils::getHostFromUri(to))) :
+            link_.sipTransportBroker->getTlsTransport(tlsListener_, IpAddr(sip_utils::getHostFromUri(to))) :
             transport_;
         setTransport(t);
         call->setTransport(t);
@@ -362,7 +362,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     if (!CreateClientDialogAndInvite(&pjFrom, &pjContact, &pjTo, nullptr, local_sdp, &dialog, &inv))
         return false;
 
-    inv->mod_data[link_->getModId()] = call.get();
+    inv->mod_data[link_.getModId()] = call.get();
     call->inv.reset(inv);
 
     updateDialogViaSentBy(dialog);
@@ -382,7 +382,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    const pjsip_tpselector tp_sel = link_->getTransportSelector(transport->get());
+    const pjsip_tpselector tp_sel = link_.getTransportSelector(transport->get());
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         JAMI_ERR("Unable to associate transport for invite session dialog");
         return false;
@@ -747,7 +747,7 @@ void SIPAccount::doRegister1_()
         }
     }
 
-    link_->resolveSrvName(
+    link_.resolveSrvName(
         hostname_,
         tlsEnable_ ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
         [w = weak()](std::vector<IpAddr> host_ips) {
@@ -793,7 +793,7 @@ void SIPAccount::doRegister2_()
         initTlsConfiguration();
 
         if (!tlsListener_) {
-            tlsListener_ = link_->sipTransportBroker->getTlsListener(bindAddress, getTlsSetting());
+            tlsListener_ = link_.sipTransportBroker->getTlsListener(bindAddress, getTlsSetting());
             if (!tlsListener_) {
                 setRegistrationState(RegistrationState::ERROR_GENERIC);
                 JAMI_ERR("Error creating TLS listener.");
@@ -815,7 +815,7 @@ void SIPAccount::doRegister2_()
     if (isIP2IP()) {
         // If we use Tls for IP2IP, transports will be created on connection.
         if (!tlsEnable_){
-            setTransport(link_->sipTransportBroker->getUdpTransport(bindAddress));
+            setTransport(link_.sipTransportBroker->getUdpTransport(bindAddress));
         }
         setRegistrationState(RegistrationState::REGISTERED);
         return;
@@ -825,9 +825,9 @@ void SIPAccount::doRegister2_()
         JAMI_WARN("Creating transport");
         transport_.reset();
         if (isTlsEnabled()) {
-            setTransport(link_->sipTransportBroker->getTlsTransport(tlsListener_, hostIp_, tlsServerName_.empty() ? hostname_ : tlsServerName_));
+            setTransport(link_.sipTransportBroker->getTlsTransport(tlsListener_, hostIp_, tlsServerName_.empty() ? hostname_ : tlsServerName_));
         } else {
-            setTransport(link_->sipTransportBroker->getUdpTransport(bindAddress));
+            setTransport(link_.sipTransportBroker->getUdpTransport(bindAddress));
         }
         if (!transport_)
             throw VoipLinkException("Can't create transport");
@@ -914,7 +914,7 @@ void SIPAccount::startKeepAliveTimer()
 
     keepAliveTimerActive_ = true;
 
-    link_->registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
+    link_.registerKeepAliveTimer(keepAliveTimer_, keepAliveDelay_);
 }
 
 void SIPAccount::stopKeepAliveTimer()
@@ -922,7 +922,7 @@ void SIPAccount::stopKeepAliveTimer()
     if (keepAliveTimerActive_) {
         JAMI_DBG("Stop keep alive timer %d for account %s", keepAliveTimer_.id, getAccountID().c_str());
         keepAliveTimerActive_ = false;
-        link_->cancelKeepAliveTimer(keepAliveTimer_);
+        link_.cancelKeepAliveTimer(keepAliveTimer_);
     }
 }
 
@@ -938,7 +938,7 @@ SIPAccount::sendRegister()
     setRegistrationState(RegistrationState::TRYING);
 
     pjsip_regc *regc = nullptr;
-    if (pjsip_regc_create(link_->getEndpoint(), (void *) this, &registration_cb, &regc) != PJ_SUCCESS)
+    if (pjsip_regc_create(link_.getEndpoint(), (void *) this, &registration_cb, &regc) != PJ_SUCCESS)
         throw VoipLinkException("UserAgent: Unable to create regc structure.");
 
     std::string srvUri(getServerUri());
@@ -977,7 +977,7 @@ SIPAccount::sendRegister()
     }
 
     if (hasServiceRoute())
-        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(getServiceRoute(), link_->getPool()));
+        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(getServiceRoute(), link_.getPool()));
 
     pjsip_regc_set_credentials(regc, getCredentialCount(), getCredInfo());
 
@@ -987,7 +987,7 @@ SIPAccount::sendRegister()
     auto pJuseragent = CONST_PJ_STR(useragent);
     constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
 
-    pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(link_->getPool(), &STR_USER_AGENT, &pJuseragent);
+    pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(link_.getPool(), &STR_USER_AGENT, &pJuseragent);
     pj_list_push_back(&hdr_list, (pjsip_hdr*) h);
     pjsip_regc_add_headers(regc, &hdr_list);
 
@@ -1068,12 +1068,12 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
              */
             // update_rfc5626_status(acc, param->rdata);
 
-            if (checkNATAddress(param, link_->getPool()))
+            if (checkNATAddress(param, link_.getPool()))
                 JAMI_WARN("Contact overwritten");
 
             /* TODO Check and update Service-Route header */
             if (hasServiceRoute())
-                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(getServiceRoute(), link_->getPool()));
+                pjsip_regc_set_route_set(param->regc, sip_utils::createRouteSet(getServiceRoute(), link_.getPool()));
 
             // start the periodic registration request based on Expire header
             // account determines itself if a keep alive is required
@@ -1402,7 +1402,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     std::string address;
     pj_uint16_t port;
 
-    link_->findLocalAddressFromTransport(
+    link_.findLocalAddressFromTransport(
         t,
         transportType,
         hostname_,
@@ -1418,7 +1418,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         port = publishedPort_;
         JAMI_DBG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
-        auto success = link_->findLocalAddressFromSTUN(t, &stunServerName_,
+        auto success = link_.findLocalAddressFromSTUN(t, &stunServerName_,
                                                        stunPort_, address, port);
         if (not success)
             emitSignal<DRing::ConfigurationSignal::StunStatusFailed>(getAccountID());
@@ -1467,7 +1467,7 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
 {
     std::string addr;
     pj_uint16_t port;
-    auto success = link_->findLocalAddressFromSTUN(
+    auto success = link_.findLocalAddressFromSTUN(
         transport_ ? transport_->get() : nullptr, &stunServerName_, stunPort_,
         addr, port);
     if (not success)
@@ -1955,7 +1955,7 @@ SIPAccount::scheduleReregistration()
     /* Cancel any re-registration timer */
     if (auto_rereg_.timer.id) {
         auto_rereg_.timer.id = PJ_FALSE;
-        pjsip_endpt_cancel_timer(link_->getEndpoint(), &auto_rereg_.timer);
+        pjsip_endpt_cancel_timer(link_.getEndpoint(), &auto_rereg_.timer);
     }
 
     /* Update re-registration flag */
@@ -1984,7 +1984,7 @@ SIPAccount::scheduleReregistration()
 
     JAMI_WARN("Scheduling re-registration retry in %ld seconds..", delay.sec);
     auto_rereg_.timer.id = PJ_TRUE;
-    if (pjsip_endpt_schedule_timer(link_->getEndpoint(), &auto_rereg_.timer, &delay) != PJ_SUCCESS)
+    if (pjsip_endpt_schedule_timer(link_.getEndpoint(), &auto_rereg_.timer, &delay) != PJ_SUCCESS)
         auto_rereg_.timer.id = PJ_FALSE;
 }
 
@@ -2032,7 +2032,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
 
     /* Create request. */
     pjsip_tx_data *tdata;
-    pj_status_t status = pjsip_endpt_create_request(link_->getEndpoint(), &msg_method,
+    pj_status_t status = pjsip_endpt_create_request(link_.getEndpoint(), &msg_method,
                                                     &pjTo, &pjFrom, &pjTo, nullptr, nullptr, -1,
                                                     nullptr, &tdata);
     if (status != PJ_SUCCESS) {
@@ -2072,7 +2072,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
     /* Initialize Auth header. */
     auto cred = getCredInfo();
     const_cast<pjsip_cred_info*>(cred)->realm = CONST_PJ_STR(hostname_);
-    status = pjsip_auth_clt_init(t->auth_sess.get(), link_->getEndpoint(), tdata->pool, 0);
+    status = pjsip_auth_clt_init(t->auth_sess.get(), link_.getEndpoint(), tdata->pool, 0);
 
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to initialize auth session: %s", sip_utils::sip_strerror(status).c_str());
@@ -2100,7 +2100,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
     im::fillPJSIPMessageBody(*tdata, payloads);
 
     // Send message request with callback SendMessageOnComplete
-    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t.release(), &onComplete);
+    status = pjsip_endpt_send_request(link_.getEndpoint(), tdata, -1, t.release(), &onComplete);
 
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
@@ -2139,7 +2139,7 @@ SIPAccount::onComplete(void *token, pjsip_event *event)
             cseq_hdr->cseq += 1;
 
             // Resend request
-            status = pjsip_endpt_send_request(acc->link_->getEndpoint(), new_request, -1, c.release(), &onComplete);
+            status = pjsip_endpt_send_request(acc->link_.getEndpoint(), new_request, -1, c.release(), &onComplete);
 
             if (status != PJ_SUCCESS) {
                 JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());

@@ -41,6 +41,7 @@
 #include "account.h"
 #include "string_utils.h"
 #include "jamidht/jamiaccount.h"
+#include "sip/sipvoiplink.h"
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
 
@@ -412,6 +413,8 @@ struct Manager::ManagerPimpl
 #ifdef ENABLE_VIDEO
     std::unique_ptr<VideoManager> videoManager_;
 #endif
+
+    std::unique_ptr<SIPVoIPLink> sipLink_;
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -741,6 +744,8 @@ Manager::init(const std::string &config_file)
 
     setDhtLogLevel();
 
+    pimpl_->sipLink_ = std::make_unique<SIPVoIPLink>();
+
     check_rename(fileutils::get_cache_dir(PACKAGE_OLD), fileutils::get_cache_dir());
     check_rename(fileutils::get_data_dir(PACKAGE_OLD), fileutils::get_data_dir());
     check_rename(fileutils::get_config_dir(PACKAGE_OLD), fileutils::get_config_dir());
@@ -761,7 +766,6 @@ Manager::init(const std::string &config_file)
         JAMI_ERR("%s", e.what());
         no_errors = false;
     }
-
     // Some VoIP services support SIP/TLS and SRTP, but do not set the
     // correct schema in the INVITE request. For more details, see:
     // https://trac.pjsip.org/repos/ticket/1735
@@ -775,9 +779,6 @@ Manager::init(const std::string &config_file)
     } else {
         // restore previous configuration
         JAMI_WARN("Restoring last working configuration");
-
-        // keep a reference to sipvoiplink while destroying the accounts
-        const auto sipvoiplink = getSIPVoIPLink();
 
         try {
             // remove accounts from broken configuration
@@ -3073,6 +3074,13 @@ Manager::getLastMessages(const std::string& accountID, const uint64_t& base_time
         return acc->getLastMessages(base_timestamp);
     return {};
 }
+
+SIPVoIPLink&
+Manager::sipVoIPLink() const
+{
+    return *pimpl_->sipLink_;
+}
+
 
 std::map<std::string, std::string>
 Manager::getNearbyPeers(const std::string& accountID)
