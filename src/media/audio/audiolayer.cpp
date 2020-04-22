@@ -39,7 +39,7 @@ namespace jami {
 
 struct AudioLayer::EchoState
 {
-    EchoState(AudioFormat format, unsigned frameSize, unsigned tailLength)
+    EchoState(AudioFormat format, unsigned frameSize, unsigned)
         : state(speex_echo_state_init_mc(
                     frameSize, frameSize * 16,
                     format.nb_channels, format.nb_channels), &speex_echo_state_destroy)

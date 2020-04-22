@@ -308,7 +308,7 @@ ServerAccountManager::revokeDevice(const std::string& password, const std::strin
 }
 
 void
-ServerAccountManager::registerName(const std::string& password, const std::string& name, RegistrationCallback cb)
+ServerAccountManager::registerName(const std::string&, const std::string&, RegistrationCallback cb)
 {
     cb(NameDirectory::RegistrationResponse::unsupported);
 }

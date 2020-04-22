@@ -125,7 +125,7 @@ CongestionControl::createREMB(uint64_t bitrate_bps)
     insert2Byte(remb, mantissa & 0xffff);
     insert4Byte(remb, 0x2345678b);
 
-    return std::move(remb);
+    return remb;
 }
 
 

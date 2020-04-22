@@ -213,7 +213,7 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
 }
 
 void
-AlsaLayer::startStream(AudioStreamType stream)
+AlsaLayer::startStream(AudioStreamType)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);

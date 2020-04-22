@@ -157,7 +157,7 @@ ChanneledSIPTransport::~ChanneledSIPTransport()
 
     // Here, we reset callbacks in ChannelSocket to avoid to call it after destruction
     // ChanneledSIPTransport is managed by pjsip, so we don't have any weak_ptr available
-    socket_->setOnRecv([](const uint8_t* buf, size_t len){return len;});
+    socket_->setOnRecv([](const uint8_t*, size_t len){return len;});
     socket_->onShutdown([](){});
     // Stop low-level transport first
     socket_->shutdown();

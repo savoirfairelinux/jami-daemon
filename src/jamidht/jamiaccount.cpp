@@ -1643,7 +1643,7 @@ JamiAccount::registerAsyncOps()
             doRegister_();
     };
 
-    loadCachedProxyServer([onLoad](const std::string& proxy) {
+    loadCachedProxyServer([onLoad](const std::string&) {
         onLoad();
     });
 
@@ -1779,7 +1779,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
     if (not dht or not dht->isRunning()) {
         return;
     }
-    buddy.listenToken = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired){
+    buddy.listenToken = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&&, bool expired){
         bool wasConnected, isConnected;
         {
             std::lock_guard<std::mutex> lock(buddyInfoMtx);
@@ -3117,7 +3117,7 @@ void
 JamiAccount::startAccountDiscovery()
 {
     auto id = dht::InfoHash(accountManager_->getInfo()->accountId);
-    peerDiscovery_->startDiscovery<AccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE,[this,id](AccountPeerInfo&& v, dht::SockAddr&& add){
+    peerDiscovery_->startDiscovery<AccountPeerInfo>(PEER_DISCOVERY_JAMI_SERVICE,[this,id](AccountPeerInfo&& v, dht::SockAddr&&){
 
         std::lock_guard<std::mutex> lc(discoveryMapMtx_);
         //Make sure that account itself will not be recorded

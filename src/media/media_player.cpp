@@ -143,6 +143,7 @@ MediaPlayer::process()
     const auto ret = demuxer_->demuxe();
     switch (ret) {
         case MediaDemuxer::Status::Success:
+        case MediaDemuxer::Status::FallBack:
             break;
         case MediaDemuxer::Status::EndOfFile:
             demuxer_->updateCurrentState(MediaDemuxer::CurrentState::Finished);
