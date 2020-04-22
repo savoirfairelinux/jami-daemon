@@ -42,7 +42,7 @@ public:
     using OnContactRemoved = std::function<void(const std::string&, bool)>;
     using OnIncomingTrustRequest
         = std::function<void(const std::string&, const std::vector<uint8_t>&, time_t)>;
-    using OnDevicesChanged = std::function<void()>;
+    using OnDevicesChanged = std::function<void(const std::map<dht::InfoHash, KnownDevice>&)>;
 
     struct OnChangeCallback
     {
