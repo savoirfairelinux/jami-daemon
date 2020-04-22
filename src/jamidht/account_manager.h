@@ -135,7 +135,7 @@ public:
     virtual void startSync();
 
     const AccountInfo* getInfo() const {
-        return info_.get()  ;
+        return info_.get();
     }
 
     // Device management

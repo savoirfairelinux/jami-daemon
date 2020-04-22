@@ -320,6 +320,10 @@ AccountManager::addContact(const std::string& uri, bool confirmed)
         JAMI_ERR("addContact: invalid contact URI");
         return;
     }
+    if (not info_) {
+        JAMI_ERR("addContact(): account not loaded");
+        return;
+    }
     if (info_->contacts->addContact(h, confirmed)) {
         syncDevices();
     }
@@ -331,6 +335,10 @@ AccountManager::removeContact(const std::string& uri, bool banned)
     dht::InfoHash h (uri);
     if (not h) {
         JAMI_ERR("removeContact: invalid contact URI");
+        return;
+    }
+    if (not info_) {
+        JAMI_ERR("addContact(): account not loaded");
         return;
     }
     if (info_->contacts->removeContact(h, banned)) {
@@ -391,25 +399,25 @@ AccountManager::findCertificate(const dht::InfoHash& h, std::function<void(const
 bool
 AccountManager::setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status)
 {
-    return info_->contacts->setCertificateStatus(cert_id, status);
+    return info_ and info_->contacts->setCertificateStatus(cert_id, status);
 }
 
 std::vector<std::string>
 AccountManager::getCertificatesByStatus(tls::TrustStore::PermissionStatus status)
 {
-    return info_->contacts->getCertificatesByStatus(status);
+    return info_ ? info_->contacts->getCertificatesByStatus(status) : std::vector<std::string>{};
 }
 
 tls::TrustStore::PermissionStatus
 AccountManager::getCertificateStatus(const std::string& cert_id) const
 {
-    return info_->contacts->getCertificateStatus(cert_id);
+    return info_ ? info_->contacts->getCertificateStatus(cert_id) : tls::TrustStore::PermissionStatus::UNDEFINED;
 }
 
 bool
 AccountManager::isAllowed(const crypto::Certificate& crt, bool allowPublic)
 {
-    return info_->contacts->isAllowed(crt, allowPublic);
+    return info_ and info_->contacts->isAllowed(crt, allowPublic);
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -426,7 +434,7 @@ bool
 AccountManager::acceptTrustRequest(const std::string& from)
 {
     dht::InfoHash f(from);
-    if (info_->contacts->acceptTrustRequest(f)) {
+    if (info_ and info_->contacts->acceptTrustRequest(f)) {
         sendTrustRequestConfirm(f);
         syncDevices();
         return true;
@@ -438,7 +446,7 @@ bool
 AccountManager::discardTrustRequest(const std::string& from)
 {
     dht::InfoHash f(from);
-    return info_->contacts->discardTrustRequest(f);
+    return info_ and info_->contacts->discardTrustRequest(f);
 }
 
 void
@@ -448,6 +456,10 @@ AccountManager::sendTrustRequest(const std::string& to, const std::vector<uint8_
     auto toH = dht::InfoHash(to);
     if (not toH) {
         JAMI_ERR("can't send trust request to invalid hash: %s", to.c_str());
+        return;
+    }
+    if (not info_) {
+        JAMI_ERR("sendTrustRequest(): account not loaded");
         return;
     }
     if (info_->contacts->addContact(toH)) {
@@ -473,7 +485,6 @@ AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH)
         dht_->putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()), dev, answer);
     });
 }
-
 
 void
 AccountManager::forEachDevice(const dht::InfoHash& to,
