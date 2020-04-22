@@ -1167,11 +1167,17 @@ JamiAccount::loadAccount(const std::string& archive_password,
                                                                                  received);
                 });
         },
-        [this]() {
-            dht::ThreadPool::computation().run([id = getAccountID(), devices = getKnownDevices()] {
+        [this](const std::map<dht::InfoHash, KnownDevice>& devices) {
+            std::map<std::string, std::string> ids;
+            for (auto& d : devices) {
+                auto id = d.first.toString();
+                auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
+                ids.emplace(std::move(id), std::move(label));
+            }
+            dht::ThreadPool::computation().run([id=getAccountID(), devices=std::move(ids)] {
                 emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(id, devices);
             });
-        },
+        }
     };
 
     try {
@@ -1497,6 +1503,7 @@ JamiAccount::getVolatileAccountDetails() const
 void
 JamiAccount::lookupName(const std::string& name)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->lookupUri(name,
                                    nameServer_,
@@ -1510,6 +1517,7 @@ JamiAccount::lookupName(const std::string& name)
 void
 JamiAccount::lookupAddress(const std::string& addr)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     auto acc = getAccountID();
     if (accountManager_)
         accountManager_->lookupAddress(
@@ -1524,6 +1532,7 @@ JamiAccount::lookupAddress(const std::string& addr)
 void
 JamiAccount::registerName(const std::string& password, const std::string& name)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->registerName(
             password,
@@ -2695,6 +2704,7 @@ JamiAccount::isMessageTreated(const std::string& id)
 std::map<std::string, std::string>
 JamiAccount::getKnownDevices() const
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     if (not accountManager_ or not accountManager_->getInfo())
         return {};
     std::map<std::string, std::string> ids;
@@ -2935,6 +2945,7 @@ JamiAccount::getContactHeader(pjsip_transport* t)
 void
 JamiAccount::addContact(const std::string& uri, bool confirmed)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->addContact(uri, confirmed);
     else
@@ -2944,33 +2955,34 @@ JamiAccount::addContact(const std::string& uri, bool confirmed)
 void
 JamiAccount::removeContact(const std::string& uri, bool ban)
 {
-    if (accountManager_)
-        accountManager_->removeContact(uri, ban);
-    else
-        JAMI_WARN("[Account %s] removeContact: account not loaded", getAccountID().c_str());
+    {
+        std::lock_guard<std::mutex> lock(configurationMutex_);
+        if (accountManager_)
+            accountManager_->removeContact(uri, ban);
+        else
+            JAMI_WARN("[Account %s] removeContact: account not loaded", getAccountID().c_str());
+    }
 
     // Remove current connections with contact
-    dht::InfoHash peer_account(uri);
-
-    std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
     std::set<std::string> devices;
-    for (const auto& deviceConn : sipConnections_[uri]) {
-        devices.emplace(deviceConn.first);
-    }
-    sipConnections_.erase(uri);
+    {
+        std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+        for (const auto& deviceConn: sipConnections_[uri]) {
+            devices.emplace(deviceConn.first);
+        }
+        sipConnections_.erase(uri);
 
-    for (auto pendingIt = pendingSipConnections_.begin();
-         pendingIt != pendingSipConnections_.end();) {
-        if (uri == pendingIt->first) {
-            devices.emplace(pendingIt->second);
-            pendingIt = pendingSipConnections_.erase(pendingIt);
-        } else {
-            ++pendingIt;
+        for (auto pendingIt = pendingSipConnections_.begin(); pendingIt != pendingSipConnections_.end();) {
+            if (uri == pendingIt->first) {
+                devices.emplace(pendingIt->second);
+                pendingIt = pendingSipConnections_.erase(pendingIt);
+            } else {
+                ++pendingIt;
+            }
         }
     }
 
-    lk.unlock();
-    for (const auto& device : devices) {
+    for (const auto& device: devices) {
         if (connectionManager_)
             connectionManager_->closeConnectionsWith(device);
     }
@@ -2979,6 +2991,7 @@ JamiAccount::removeContact(const std::string& uri, bool ban)
 std::map<std::string, std::string>
 JamiAccount::getContactDetails(const std::string& uri) const
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     return (accountManager_ and accountManager_->getInfo())
                ? accountManager_->getContactDetails(uri)
                : std::map<std::string, std::string> {};
@@ -2987,6 +3000,7 @@ JamiAccount::getContactDetails(const std::string& uri) const
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getContacts() const
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     if (not accountManager_)
         return {};
     return accountManager_->getContacts();
@@ -2997,13 +3011,14 @@ JamiAccount::getContacts() const
 std::vector<std::map<std::string, std::string>>
 JamiAccount::getTrustRequests() const
 {
-    return accountManager_ ? accountManager_->getTrustRequests()
-                           : std::vector<std::map<std::string, std::string>> {};
+    std::lock_guard<std::mutex> lock(configurationMutex_);
+    return accountManager_ ? accountManager_->getTrustRequests() : std::vector<std::map<std::string, std::string>>{};
 }
 
 bool
 JamiAccount::acceptTrustRequest(const std::string& from)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
         return accountManager_->acceptTrustRequest(from);
     JAMI_WARN("[Account %s] acceptTrustRequest: account not loaded", getAccountID().c_str());
@@ -3013,6 +3028,7 @@ JamiAccount::acceptTrustRequest(const std::string& from)
 bool
 JamiAccount::discardTrustRequest(const std::string& from)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
         return accountManager_->discardTrustRequest(from);
     JAMI_WARN("[Account %s] discardTrustRequest: account not loaded", getAccountID().c_str());
@@ -3022,6 +3038,7 @@ JamiAccount::discardTrustRequest(const std::string& from)
 void
 JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->sendTrustRequest(to, payload);
     else
@@ -3031,6 +3048,7 @@ JamiAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
 void
 JamiAccount::sendTrustRequestConfirm(const std::string& to)
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     if (accountManager_)
         accountManager_->sendTrustRequestConfirm(dht::InfoHash(to));
     else
