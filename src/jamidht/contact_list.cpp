@@ -361,7 +361,7 @@ ContactList::foundAccountDevice(const dht::InfoHash& device, const std::string& 
         JAMI_DBG("[Contacts] Found account device: %s %s", name.c_str(),
                                                            device.toString().c_str());
         saveKnownDevices();
-        callbacks_.devicesChanged();
+        callbacks_.devicesChanged(knownDevices_);
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
@@ -369,7 +369,7 @@ ContactList::foundAccountDevice(const dht::InfoHash& device, const std::string& 
                                                                device.toString().c_str());
             it.first->second.name = name;
             saveKnownDevices();
-            callbacks_.devicesChanged();
+            callbacks_.devicesChanged(knownDevices_);
         }
     }
 }
@@ -395,7 +395,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
                                                               crt->getId().toString().c_str());
         tls::CertificateStore::instance().pinCertificate(crt);
         saveKnownDevices();
-        callbacks_.devicesChanged();
+        callbacks_.devicesChanged(knownDevices_);
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
@@ -404,7 +404,7 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
                                                                   crt->getId().toString().c_str());
             it.first->second.name = name;
             saveKnownDevices();
-            callbacks_.devicesChanged();
+            callbacks_.devicesChanged(knownDevices_);
         }
     }
     return true;
