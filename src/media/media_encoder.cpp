@@ -777,15 +777,18 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
     return encoderCtx;
 }
 
-void
+int
 MediaEncoder::setBitrate(uint64_t br)
 {
     std::lock_guard<std::mutex> lk(encMutex_);
     AVCodecContext* encoderCtx = getCurrentVideoAVCtx();
     if(not encoderCtx)
-        return;
+        return -1; // NOK
 
     AVCodecID codecId = encoderCtx->codec_id;
+
+    if (not isDynBitrateSupported(codecId))
+        return 0; //Restart needed
 
     // No need to restart encoder for h264, h263 and MPEG4
     // Change parameters on the fly
@@ -804,6 +807,7 @@ MediaEncoder::setBitrate(uint64_t br)
         // if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
         //     throw MediaEncoderException("Could not open encoder");
     }
+    return 1; // OK
 }
 
 void
@@ -956,6 +960,17 @@ MediaEncoder::stopEncoder()
     avcodec_close(encoderCtx);
     avcodec_free_context(&encoderCtx);
     av_free(encoderCtx);
+}
+
+bool 
+MediaEncoder::isDynBitrateSupported(AVCodecID codecid)
+{
+    if (accel_) {
+        return accel_->dynBitrate();
+    } else {
+        if (codecid != AV_CODEC_ID_VP8)
+            return true;
+    }
 }
 
 void

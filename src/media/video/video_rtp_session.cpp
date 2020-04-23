@@ -531,9 +531,14 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
             emitSignal<DRing::VideoSignal::SetBitrate>(input_device->getParams().name, (int)newBR);
 #endif
 
-        // If encoder no longer exist do nothing
-        if (sender_ && sender_->setBitrate(newBR) == 0) {
-            // Reset increase timer for each bitrate change
+        if (sender_) {
+            auto ret = sender_->setBitrate(newBR);
+            if (ret == -1)
+                JAMI_ERR("Fail to access the encoder");
+            else if (ret == 0)
+                restartSender();
+        } else {
+            JAMI_ERR("Fail to access the sender");
         }
     }
 }
