@@ -59,7 +59,8 @@ public:
      *
      * Made public so std::unique_ptr can access it. Should not be called.
      */
-    HardwareAccel(AVCodecID id, const std::string& name, AVHWDeviceType hwType, AVPixelFormat format, AVPixelFormat swFormat, CodecType type);
+    HardwareAccel(AVCodecID id, const std::string& name, AVHWDeviceType hwType, AVPixelFormat format,
+                    AVPixelFormat swFormat, CodecType type, bool dynBitrate);
 
     /**
      * @brief Dereferences hardware contexts.
@@ -140,6 +141,7 @@ public:
 
     static std::list<HardwareAccel> getCompatibleAccel(AVCodecID id, int width, int height, CodecType type);
     int initAPI(bool linkable, AVBufferRef* framesCtx);
+    bool dynBitrate() { return dynBitrate_; }
 
 private:
     bool initDevice(const std::string& device);
@@ -154,6 +156,7 @@ private:
     bool linked_ {false};
     int width_ {0};
     int height_ {0};
+    bool dynBitrate_ {false};
 
     AVBufferRef* deviceCtx_ {nullptr};
     AVBufferRef* framesCtx_ {nullptr};
