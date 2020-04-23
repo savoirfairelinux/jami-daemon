@@ -38,30 +38,32 @@ struct HardwareAPI
     AVPixelFormat swFormat;
     std::vector<AVCodecID> supportedCodecs;
     std::set<std::string> possible_devices;
+    bool dynBitrate;
 };
 
 static const std::list<HardwareAPI> apiListDec = {
-    { "nvdec", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG }, { "0", "1", "2" } },
-    { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG }, { "/dev/dri/renderD128", "/dev/dri/renderD129", ":0" } },
-    { "vdpau", AV_HWDEVICE_TYPE_VDPAU, AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 }, { } },
-    { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MPEG4 }, { } },
-    { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8, AV_CODEC_ID_VP9 }, { } },
+    { "nvdec", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG }, { "0", "1", "2" }, false },
+    { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_VP8, AV_CODEC_ID_MJPEG }, { "/dev/dri/renderD128", "/dev/dri/renderD129", ":0" }, false },
+    { "vdpau", AV_HWDEVICE_TYPE_VDPAU, AV_PIX_FMT_VDPAU, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4 }, { }, false },
+    { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MPEG4 }, { }, false },
+    { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8, AV_CODEC_ID_VP9 }, { }, false },
 };
 
 static const std::list<HardwareAPI> apiListEnc = {
-    { "nvenc", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC }, { "0", "1", "2" } },
-    { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 }, { "/dev/dri/renderD128", "/dev/dri/renderD129", ":0" } },
-    { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC }, { } },
-    { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 }, { } },
+    { "nvenc", AV_HWDEVICE_TYPE_CUDA, AV_PIX_FMT_CUDA, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC }, { "0", "1", "2" }, true },
+    { "vaapi", AV_HWDEVICE_TYPE_VAAPI, AV_PIX_FMT_VAAPI, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 }, { "/dev/dri/renderD128", "/dev/dri/renderD129", ":0" }, false },
+    { "videotoolbox", AV_HWDEVICE_TYPE_VIDEOTOOLBOX, AV_PIX_FMT_VIDEOTOOLBOX, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC }, { }, false },
+    { "qsv", AV_HWDEVICE_TYPE_QSV, AV_PIX_FMT_QSV, AV_PIX_FMT_NV12, { AV_CODEC_ID_H264, AV_CODEC_ID_HEVC, AV_CODEC_ID_MJPEG, AV_CODEC_ID_VP8 }, { }, false },
 };
 
-HardwareAccel::HardwareAccel(AVCodecID id, const std::string& name, AVHWDeviceType hwType, AVPixelFormat format, AVPixelFormat swFormat, CodecType type)
+HardwareAccel::HardwareAccel(AVCodecID id, const std::string& name, AVHWDeviceType hwType, AVPixelFormat format, AVPixelFormat swFormat, CodecType type, bool dynBitrate)
     : id_(id)
     , name_(name)
     , hwType_(hwType)
     , format_(format)
     , swFormat_(swFormat)
     , type_(type)
+    , dynBitrate_(dynBitrate)
 {}
 
 HardwareAccel::~HardwareAccel()
@@ -349,7 +351,7 @@ HardwareAccel::getCompatibleAccel(AVCodecID id, int width, int height, CodecType
             auto hwtype = AV_HWDEVICE_TYPE_NONE;
             while ((hwtype = av_hwdevice_iterate_types(hwtype)) != AV_HWDEVICE_TYPE_NONE) {
                 if (hwtype == api.hwType) {
-                    auto accel = HardwareAccel(id, api.name, api.hwType, api.format, api.swFormat, type);
+                    auto accel = HardwareAccel(id, api.name, api.hwType, api.format, api.swFormat, type, api.dynBitrate);
                     accel.height_ = height;
                     accel.width_ = width;
                     accel.possible_devices_= api.possible_devices;
