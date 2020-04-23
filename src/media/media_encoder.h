@@ -100,7 +100,7 @@ public:
     const std::string& getAudioCodec() const { return audioCodec_; }
     const std::string& getVideoCodec() const { return videoCodec_; }
 
-    void setBitrate(uint64_t br);
+    int setBitrate(uint64_t br);
 
 #ifdef RING_ACCEL
     void enableAccel(bool enableAccel);
@@ -128,6 +128,7 @@ private:
     void initVP8(AVCodecContext* encoderCtx, uint64_t br);
     void initMPEG4(AVCodecContext* encoderCtx, uint64_t br);
     void initH263(AVCodecContext* encoderCtx, uint64_t br);
+    bool isDynBitrateSupported(AVCodecID codecid);
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext *outputCtx_ = nullptr;
