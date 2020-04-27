@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "9f3e5b4d_a117e0be",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 188,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-27T20:58:53Z",
+      "side": 1,
+      "message": "cf other comment",
+      "parentUuid": "f2cf1819_c84c6502",
+      "range": {
+        "startLine": 188,
+        "startChar": 15,
+        "endLine": 188,
+        "endChar": 30
+      },
+      "revId": "bce559c53965357dc6f9fcda94b8edde6fc9f54d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "ab9ff096_55857cd7",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 4
@@ -36,6 +60,30 @@
       "writtenOn": "2020-04-27T20:51:41Z",
       "side": 1,
       "message": "Just:\n\nstd::unique_lock\u003cstd::mutex\u003e lk(pimpl_-\u003eiceMutex_);\npimpl_-\u003ewaitDataCv_.wait(lk, [\u0026]{\n    return pimpl_-\u003elastSentLen_ \u003e\u003d len;\n});\npimpl_-\u003elastSentLen_ \u003d 0;\n\nWould do the same as long as you only use one mutex.",
+      "range": {
+        "startLine": 1316,
+        "startChar": 8,
+        "endLine": 1326,
+        "endChar": 33
+      },
+      "revId": "bce559c53965357dc6f9fcda94b8edde6fc9f54d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7a0a2802_238cd1b4",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 1326,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-04-27T20:58:53Z",
+      "side": 1,
+      "message": "I can\u0027t use iceMutex_ there and inside \"icecb.on_data_sent\" to refresh lastSent",
+      "parentUuid": "ab9ff096_55857cd7",
       "range": {
         "startLine": 1316,
         "startChar": 8,
