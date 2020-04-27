@@ -340,8 +340,10 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
 
     icecb.on_data_sent = [](pj_ice_strans* ice_st, pj_ssize_t size) {
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
-            tr->lastReadLen_ = size;
+            tr->lastReadLen_ += size;
+              JAMI_ERR("@@@ SENT %u", size);
             tr->waitDataCv_.notify_all();
+
         } else
             JAMI_WARN("null IceTransport");
     };
@@ -1320,6 +1322,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
           pimpl_->waitDataCv_.wait(lk);
           current_size = pimpl_->lastReadLen_;
         }
+        pimpl_->lastReadLen_ = 0;
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
         if (status == PJ_EBUSY) {
             errno = EAGAIN;
