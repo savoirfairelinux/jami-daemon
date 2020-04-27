@@ -520,9 +520,9 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
                 rtpDelayCallback_(gradient, deltaT);
 
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
-        if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNum_+1)
+        if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNumIn_+1)
             packetLossCallback_();
-        lastSeqNum_ = buf[2] << 8 | buf[3];
+        lastSeqNumIn_ = buf[2] << 8 | buf[3];
         if (err < 0)
             JAMI_WARN("decrypt error %d", err);
     }
@@ -574,6 +574,9 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
 int
 SocketPair::writeCallback(uint8_t* buf, int buf_size)
 {
+    if (noWrite_)
+        return 0;
+
     int ret;
     bool isRTCP = RTP_PT_IS_RTCP(buf[1]);
     unsigned int ts_LSB, ts_MSB;
@@ -699,6 +702,15 @@ SocketPair::parse_RTP_ext(uint8_t* buf, float* abs)
 
     *abs = sec + (milli);
     return true;
+}
+
+uint16_t
+SocketPair::lastSeqValOut()
+{
+    if (srtpContext_)
+        return srtpContext_->srtp_out.seq_largest;
+    JAMI_ERR("SRTP context not found.");
+    return 0;
 }
 
 } // namespace jami

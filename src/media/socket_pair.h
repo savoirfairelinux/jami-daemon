@@ -175,6 +175,8 @@ class SocketPair {
 
         int writeData(uint8_t* buf, int buf_size);
 
+        uint16_t lastSeqValOut();
+
     private:
         NON_COPYABLE(SocketPair);
         using clock = std::chrono::steady_clock;
@@ -222,7 +224,7 @@ class SocketPair {
         std::list<double> histoLatency_;
 
         time_point lastRR_time;
-        uint16_t lastSeqNum_ {0};
+        uint16_t lastSeqNumIn_ {0};
         float lastSendTS_ {0.0f};
         time_point lastReceiveTS_ {};
         time_point arrival_TS {};

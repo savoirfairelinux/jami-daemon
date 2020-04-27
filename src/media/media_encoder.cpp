@@ -962,7 +962,7 @@ MediaEncoder::stopEncoder()
     av_free(encoderCtx);
 }
 
-bool 
+bool
 MediaEncoder::isDynBitrateSupported(AVCodecID codecid)
 {
     if (accel_) {
