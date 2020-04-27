@@ -185,7 +185,7 @@ public:
     bool handleEvents(unsigned max_msec);
 
     // Wait data on components
-    pj_ssize_t lastReadLen_;
+    pj_ssize_t lastSentLen_;
     std::condition_variable waitDataCv_ = {};
 
     onShutdownCb scb;
@@ -340,7 +340,8 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
 
     icecb.on_data_sent = [](pj_ice_strans* ice_st, pj_ssize_t size) {
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
-            tr->lastReadLen_ = size;
+            std::lock_guard<std::mutex> lk(tr->iceMutex_);
+            tr->lastSentLen_ += size;
             tr->waitDataCv_.notify_all();
         } else
             JAMI_WARN("null IceTransport");
@@ -1309,17 +1310,15 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         errno = EINVAL;
         return -1;
     }
-    pj_ssize_t sent_size = 0;
     auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength());
     if (status == PJ_EPENDING && isTCPEnabled()) {
-        auto current_size = sent_size;
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
-        while (current_size < static_cast<pj_ssize_t>(len)) {
-          std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
-          pimpl_->waitDataCv_.wait(lk);
-          current_size = pimpl_->lastReadLen_;
-        }
+        std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
+        pimpl_->waitDataCv_.wait(lk, [&]{
+            return pimpl_->lastSentLen_ >= len;
+        });
+        pimpl_->lastSentLen_ = 0;
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
         if (status == PJ_EBUSY) {
             errno = EAGAIN;
