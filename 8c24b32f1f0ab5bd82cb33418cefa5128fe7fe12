@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5de6afff_acaca0fb",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-04-27T20:26:20Z",
+      "side": 1,
+      "message": "* lastReadLen_ might be renamed to lastSentLen_ ?\n* lastReadLen_ is not threadsafe, it should be either std::atomic or mutex-protected.",
+      "range": {
+        "startLine": 343,
+        "startChar": 16,
+        "endLine": 343,
+        "endChar": 28
+      },
+      "revId": "8c24b32f1f0ab5bd82cb33418cefa5128fe7fe12",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6858d239_8b200673",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 1321,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-04-27T20:26:20Z",
+      "side": 1,
+      "message": "what about the initial value of sent_size ? if non-0 the value seems lost",
+      "range": {
+        "startLine": 1321,
+        "startChar": 10,
+        "endLine": 1321,
+        "endChar": 46
+      },
+      "revId": "8c24b32f1f0ab5bd82cb33418cefa5128fe7fe12",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
