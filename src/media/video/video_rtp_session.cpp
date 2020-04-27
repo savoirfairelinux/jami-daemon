@@ -133,13 +133,14 @@ void VideoRtpSession::startSender()
         send_.linkableHW = conference_ == nullptr;
         send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
 
-        if (sender_)
-            initSeqVal_ = sender_->getLastSeqValue() + 10; // Skip a few sequences to make nvenc happy on a sender restart
+        if (socketPair_)
+            initSeqVal_ = socketPair_->lastSeqValOut();
+
         try {
             sender_.reset();
             socketPair_->stopSendOp(false);
             sender_.reset(new VideoSender(getRemoteRtpUri(), localVideoParams_,
-                                          send_, *socketPair_, initSeqVal_, mtu_));
+                                          send_, *socketPair_, initSeqVal_+1, mtu_));
             if (changeOrientationCallback_)
                 sender_->setChangeOrientationCallback(changeOrientationCallback_);
             if (socketPair_)
