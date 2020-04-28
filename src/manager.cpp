@@ -850,6 +850,8 @@ Manager::finish() noexcept
         // Also, it must be called before pj_shutdown to avoid any problem
         pimpl_->ice_tf_.reset();
 
+        pimpl_->sipLink_.reset();
+
         pj_shutdown();
 
         if (!pimpl_->ioContext_->stopped()){
