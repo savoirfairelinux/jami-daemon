@@ -835,6 +835,11 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
     }
     if (!size)
         return;
+    printf("RECV:");
+    for (int i = 0; i < size; ++i) {
+		printf("%u,", ((uint8_t*)(pkt))[i]);
+    }
+    printf("\n");
     auto& io = compIO_[comp_id-1];
     std::unique_lock<std::mutex> lk(io.mutex);
     if (on_recv_cb_) {
