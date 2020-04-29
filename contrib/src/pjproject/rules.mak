@@ -54,6 +54,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0007-pj_ice_sess.patch
 	$(APPLY) $(SRC)/pjproject/0008-fix_ioqueue_ipv6_sendto.patch
 	$(APPLY) $(SRC)/pjproject/0009-add-config-site.patch
+	$(APPLY) $(SRC)/pjproject/debug.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif
