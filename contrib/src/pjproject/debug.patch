@@ -1,0 +1,52 @@
+ pjlib/src/pj/activesock.c     | 12 ++++++++++++
+ pjnath/src/pjnath/stun_sock.c |  6 ++++++
+ 2 files changed, 18 insertions(+)
+
+diff --git a/pjlib/src/pj/activesock.c b/pjlib/src/pj/activesock.c
+index 61aed1c88..e439e85bb 100644
+--- a/pjlib/src/pj/activesock.c
++++ b/pjlib/src/pj/activesock.c
+@@ -684,6 +684,12 @@ PJ_DEF(pj_status_t) pj_activesock_send( pj_activesock_t *asock,
+ 
+     send_key->activesock_data = NULL;
+ 
++	printf("SEND: ");
++	for (int i = 0; i < *size; ++i) {
++		printf("%u,", ((pj_uint8_t*)(data))[i]);
++	}
++	printf("\n");
++
+     if (asock->whole_data) {
+ 	pj_ssize_t whole;
+ 	pj_status_t status;
+@@ -735,6 +741,12 @@ PJ_DEF(pj_status_t) pj_activesock_sendto( pj_activesock_t *asock,
+     if (asock->shutdown & SHUT_TX)
+ 	return PJ_EINVALIDOP;
+ 
++	printf("SEND: ");
++	for (int i = 0; i < *size; ++i) {
++		printf("%u,", ((pj_uint8_t*)(data))[i]);
++	}
++	printf("\n");
++
+     return pj_ioqueue_sendto(asock->key, send_key, data, size, flags,
+ 			     addr, addr_len);
+ }
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index c4519f82e..8345a1cfd 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -582,7 +582,13 @@ static pj_bool_t parse_rx_packet(pj_activesock_t *asock,
+ 				 const pj_sockaddr_t *rx_addr,
+ 				 unsigned sock_addr_len)
+ {
++    
+ 
++	printf("RECV: ");
++	for (int i = 0; i < size; ++i) {
++		printf("%u,", ((pj_uint8_t*)(data))[i]);
++	}
++	printf("\n");
+     pj_stun_sock *stun_sock = (pj_stun_sock*) pj_activesock_get_user_data(asock);
+     if (!stun_sock)
+ 	return PJ_FALSE;
