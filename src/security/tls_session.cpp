@@ -1364,6 +1364,12 @@ TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
             pimpl_->stateCondition_.notify_all();
         } else if (gnutls_error_is_fatal(ret)) {
             if (pimpl_ && pimpl_->state_ != TlsSessionState::SHUTDOWN) {
+                printf("FOR TLS:");
+                for (int i = 0; i < std::min((int)size, 12); ++i) {
+                    printf("%u,", ((uint8_t*)(data))[i]);
+                }
+                printf("\n");
+
                 JAMI_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
                 pimpl_->newState_ = TlsSessionState::SHUTDOWN;
                 pimpl_->stateCondition_.notify_all();

@@ -835,6 +835,11 @@ IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
     }
     if (!size)
         return;
+    printf("RECV:");
+    for (int i = 0; i < size; ++i) {
+		printf("%u,", ((uint8_t*)(pkt))[i]);
+    }
+    printf("\n");
     auto& io = compIO_[comp_id-1];
     std::unique_lock<std::mutex> lk(io.mutex);
     if (on_recv_cb_) {
@@ -1268,14 +1273,13 @@ IceTransport::recv(int comp_id, unsigned char* buf, size_t len, std::error_code&
     } else {
         packet.data.erase(packet.data.begin(), packet.data.begin() + count);
     }
-
     ec.clear();
     return count;
 }
 
 ssize_t
 IceTransport::recvfrom(int comp_id, char *buf, size_t len, std::error_code& ec) {
-  return pimpl_->peerChannels_.at(comp_id).read(buf, len, ec);
+    return pimpl_->peerChannels_.at(comp_id).read(buf, len, ec);
 }
 
 void
@@ -1312,6 +1316,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
     }
     auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength());
     if (status == PJ_EPENDING && isTCPEnabled()) {
+        JAMI_WARN("@@@ WAIT");
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
         std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
@@ -1319,6 +1324,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
             return pimpl_->lastSentLen_ >= len;
         });
         pimpl_->lastSentLen_ = 0;
+        JAMI_WARN("@@@ WAIT END");
     } else if (status != PJ_SUCCESS && status != PJ_EPENDING) {
         if (status == PJ_EBUSY) {
             errno = EAGAIN;
