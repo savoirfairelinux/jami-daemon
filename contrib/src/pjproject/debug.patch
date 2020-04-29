@@ -1,0 +1,64 @@
+ pjlib/src/pj/activesock.c     | 12 ++++++++++++
+ pjnath/src/pjnath/stun_sock.c | 12 +++++++++++-
+ 2 files changed, 23 insertions(+), 1 deletion(-)
+
+diff --git a/pjlib/src/pj/activesock.c b/pjlib/src/pj/activesock.c
+index 61aed1c88..27a4d4c03 100644
+--- a/pjlib/src/pj/activesock.c
++++ b/pjlib/src/pj/activesock.c
+@@ -684,6 +684,12 @@ PJ_DEF(pj_status_t) pj_activesock_send( pj_activesock_t *asock,
+ 
+     send_key->activesock_data = NULL;
+ 
++	//printf("SEND: %u - ", ((*size) - 2));
++	//for (int i = 0; i < *size; ++i) {
++	//	printf("%u,", ((pj_uint8_t*)(data))[i]);
++	//}
++	//printf("\n");
++
+     if (asock->whole_data) {
+ 	pj_ssize_t whole;
+ 	pj_status_t status;
+@@ -735,6 +741,12 @@ PJ_DEF(pj_status_t) pj_activesock_sendto( pj_activesock_t *asock,
+     if (asock->shutdown & SHUT_TX)
+ 	return PJ_EINVALIDOP;
+ 
++	//printf("SEND: %u - ", ((*size) - 2));
++	//for (int i = 0; i < *size; ++i) {
++	//	printf("%u,", ((pj_uint8_t*)(data))[i]);
++	//}
++	//printf("\n");
++
+     return pj_ioqueue_sendto(asock->key, send_key, data, size, flags,
+ 			     addr, addr_len);
+ }
+diff --git a/pjnath/src/pjnath/stun_sock.c b/pjnath/src/pjnath/stun_sock.c
+index c4519f82e..28091fbc5 100644
+--- a/pjnath/src/pjnath/stun_sock.c
++++ b/pjnath/src/pjnath/stun_sock.c
+@@ -583,6 +583,15 @@ static pj_bool_t parse_rx_packet(pj_activesock_t *asock,
+ 				 unsigned sock_addr_len)
+ {
+ 
++	//printf("RECV: ");
++    //pj_size_t p = 12;
++    //if (size < p) {
++    //    p = size;
++    //}
++	//for (int i = 0; i < p; ++i) {
++	//	printf("%u,", ((pj_uint8_t*)(data))[i]);
++	//}
++	//printf("\n");
+     pj_stun_sock *stun_sock = (pj_stun_sock*) pj_activesock_get_user_data(asock);
+     if (!stun_sock)
+ 	return PJ_FALSE;
+@@ -628,7 +637,8 @@ static pj_bool_t parse_rx_packet(pj_activesock_t *asock,
+ 	    /* RFC6544, the packet is wrapped into a packet following the RFC4571 */
+ 	    pj_bool_t store_remaining = PJ_TRUE;
+ 	    if (buf->rx_buffer_size != 0 || buf->rx_wanted_size != 0) {
+-		if (buf->rx_buffer_size == 1) {
++		if (buf->rx_buffer_size == 1 && buf->rx_wanted_size == 0) {
++            // In this case, we want to know the header size
+ 		    leftover = GETVAL16H(buf->rx_buffer, current_packet);
+ 
+ 		    buf->rx_buffer_size = 0;
