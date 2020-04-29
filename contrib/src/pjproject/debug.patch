@@ -1,0 +1,33 @@
+ pjlib/src/pj/activesock.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
+
+diff --git a/pjlib/src/pj/activesock.c b/pjlib/src/pj/activesock.c
+index 61aed1c88..231e112eb 100644
+--- a/pjlib/src/pj/activesock.c
++++ b/pjlib/src/pj/activesock.c
+@@ -684,6 +684,12 @@ PJ_DEF(pj_status_t) pj_activesock_send( pj_activesock_t *asock,
+ 
+     send_key->activesock_data = NULL;
+ 
++	printf("SEND: ");
++	for (int i = 0; i < *size; ++i) {
++		printf("%u,", ((pj_uint8_t*)(data))[i]);
++	}
++	printf("\n");
++
+     if (asock->whole_data) {
+ 	pj_ssize_t whole;
+ 	pj_status_t status;
+@@ -735,6 +741,12 @@ PJ_DEF(pj_status_t) pj_activesock_sendto( pj_activesock_t *asock,
+     if (asock->shutdown & SHUT_TX)
+ 	return PJ_EINVALIDOP;
+ 
++	printf("SEND: ");
++	for (int i = 0; i < *size; ++i) {
++		printf("%u,", ((pj_uint8_t*)(data))[i]);
++	}
++	printf("\n");
++
+     return pj_ioqueue_sendto(asock->key, send_key, data, size, flags,
+ 			     addr, addr_len);
+ }
