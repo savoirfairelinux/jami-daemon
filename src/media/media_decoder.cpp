@@ -446,14 +446,14 @@ MediaDecoder::setupStream()
             decoderCtx_->pix_fmt = accel_->getFormat();
             if (avcodec_open2(decoderCtx_, inputDecoder_, &options_) < 0) {
                 // Failed to open codec
-                JAMI_WARN("Fail to open hardware decoder for %s with %s ", avcodec_get_name(decoderCtx_->codec_id), it.getName().c_str());
+                JAMI_WARN("Fail to open hardware decoder for %s with %s", avcodec_get_name(decoderCtx_->codec_id), it.getName().c_str());
                 avcodec_free_context(&decoderCtx_);
                 decoderCtx_ = nullptr;
                 accel_.reset();
                 continue;
             } else {
                 // Succeed to open codec
-                JAMI_WARN("Using hardware decoding for %s with %s ", avcodec_get_name(decoderCtx_->codec_id), it.getName().c_str());
+                JAMI_WARN("Using hardware decoding for %s with %s", avcodec_get_name(decoderCtx_->codec_id), it.getName().c_str());
                 break;
             }
         }

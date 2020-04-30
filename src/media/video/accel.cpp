@@ -138,7 +138,7 @@ HardwareAccel::init_device_type(std::string& dev)
         return -1;
     }
 
-    JAMI_WARN("-- Starting %s test for %s with default device.", (type_ == CODEC_ENCODER) ? "encoding" : "decoding", name);
+    JAMI_WARN("-- Starting %s init for %s with default device.", (type_ == CODEC_ENCODER) ? "encoding" : "decoding", name);
     if (name_ == "qsv")
         err = init_device(name, "auto", 0);
     else
