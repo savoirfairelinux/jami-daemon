@@ -238,6 +238,8 @@ public:
     using SocketType = GenericSocket<uint8_t>;
     PeerConnection(std::function<void()>&& done, const std::string& peer_uri,
                    std::unique_ptr<SocketType> endpoint);
+    PeerConnection(std::function<void()>&& done, const std::string& peer_uri,
+                   std::weak_ptr<SocketType> endpoint);
 
     ~PeerConnection();
 

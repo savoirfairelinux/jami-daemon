@@ -643,6 +643,7 @@ DataTransferFacade::Impl::onConnectionRequestReply(const DRing::DataTransferId& 
 {
     if (auto transfer = getTransfer(id)) {
         if (connection) {
+            JAMI_ERR("@@@ ATTACH Input stream");
             connection->attachInputStream(
                 std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->startNewOutgoing(
                     connection->getPeerUri()

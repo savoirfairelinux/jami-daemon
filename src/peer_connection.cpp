@@ -695,7 +695,19 @@ public:
                     done();
                 }
             })} {}
-
+        PeerConnectionImpl(std::function<void()>&& done,
+                       const std::string& peer_uri,
+                       std::weak_ptr<SocketType> channeled)
+        : peer_uri {peer_uri}
+        , channeled_ {std::move(channeled)}
+        , eventLoopFut_ {std::async(std::launch::async, [this, done=std::move(done)] {
+                try {
+                    eventLoop();
+                } catch (const std::exception& e) {
+                    JAMI_ERR() << "[CNX] peer connection event loop failure: " << e.what();
+                    done();
+                }
+            })} {}
     ~PeerConnectionImpl() {
         ctrlChannel << std::make_unique<StopCtrlMsg>();
         endpoint_->shutdown();
@@ -719,6 +731,16 @@ public:
 
 private:
     std::unique_ptr<SocketType> endpoint_;
+    std::weak_ptr<SocketType> channeled_;
+
+    SocketType* getEndpoint() {
+        if (!endpoint_) {
+            if (auto channel = channeled_.lock()) {
+                return channel.get();
+            }
+        }
+        return endpoint_.get();
+    }
     std::vector<std::shared_ptr<Stream>> inputs_;
     std::vector<std::shared_ptr<Stream>> outputs_;
     std::future<void> eventLoopFut_;
@@ -762,10 +784,12 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     msg = ctrlChannel.receive();
                 } else {
                     std::error_code ec;
-                    if (endpoint_->waitForData(std::chrono::milliseconds(100), ec) > 0) {
+                    auto endpoint = getEndpoint();
+                    if (!endpoint) throw std::runtime_error("Could not find endpoint");
+                    if (endpoint->waitForData(std::chrono::milliseconds(100), ec) > 0) {
                         std::vector<uint8_t> buf(IO_BUFFER_SIZE);
                         JAMI_DBG("A good buffer arrived before any input or output attachment");
-                        auto size = endpoint_->read(buf, ec);
+                        auto size = endpoint->read(buf, ec);
                         if (ec)
                             throw std::system_error(ec);
                         // If it's a good read, we should store the buffer somewhere
@@ -811,10 +835,13 @@ PeerConnection::PeerConnectionImpl::eventLoop()
         // sending loop
         handle_stream_list(inputs_, [&] (auto& stream) {
                 if (!stream) return false;
+                auto endpoint = getEndpoint();
+                if (!endpoint) return false;
                 buf.resize(IO_BUFFER_SIZE);
                 if (stream->read(buf)) {
                     if (not buf.empty()) {
-                      endpoint_->write(buf, ec);
+                    if (!endpoint) throw std::runtime_error("Could not find endpoint");
+                      endpoint->write(buf, ec);
                       if (ec)
                         throw std::system_error(ec);
                       sleep = false;
@@ -826,9 +853,9 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 if (!bufferPool_.empty()) {
                   stream->write(bufferPool_);
                   bufferPool_.clear();
-                } else if (endpoint_->waitForData(std::chrono::milliseconds(0), ec) > 0) {
+                } else if (endpoint->waitForData(std::chrono::milliseconds(0), ec) > 0) {
                   buf.resize(IO_BUFFER_SIZE);
-                  endpoint_->read(buf, ec);
+                  endpoint->read(buf, ec);
                   if (ec)
                     throw std::system_error(ec);
                   return stream->write(buf);
@@ -840,11 +867,13 @@ PeerConnection::PeerConnectionImpl::eventLoop()
         // receiving loop
         handle_stream_list(outputs_, [&] (auto& stream) {
                 if (!stream) return false;
+                auto endpoint = getEndpoint();
+                if (!endpoint) return false;
                 buf.resize(IO_BUFFER_SIZE);
                 auto eof = stream->read(buf);
                 // if eof we let a chance to send a reply before leaving
                 if (not buf.empty()) {
-                    endpoint_->write(buf, ec);
+                    endpoint->write(buf, ec);
                     if (ec)
                         throw std::system_error(ec);
                 }
@@ -854,9 +883,9 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 if (!bufferPool_.empty()) {
                     stream->write(bufferPool_);
                     bufferPool_.clear();
-                } else if (endpoint_->waitForData(std::chrono::milliseconds(0), ec) > 0) {
+                } else if (endpoint->waitForData(std::chrono::milliseconds(0), ec) > 0) {
                   buf.resize(IO_BUFFER_SIZE);
-                  endpoint_->read(buf, ec);
+                  endpoint->read(buf, ec);
                   if (ec)
                     throw std::system_error(ec);
                   sleep = false;
@@ -877,6 +906,12 @@ PeerConnection::PeerConnection(std::function<void()>&& done,
                                const std::string& peer_uri,
                                std::unique_ptr<GenericSocket<uint8_t>> endpoint)
     : pimpl_(std::make_unique<PeerConnectionImpl>(std::move(done), peer_uri, std::move(endpoint)))
+{}
+
+PeerConnection::PeerConnection(std::function<void()>&& done,
+                               const std::string& peer_uri,
+                               std::weak_ptr<GenericSocket<uint8_t>> channeled)
+    : pimpl_(std::make_unique<PeerConnectionImpl>(std::move(done), peer_uri, std::move(channeled)))
 {}
 
 PeerConnection::~PeerConnection()
