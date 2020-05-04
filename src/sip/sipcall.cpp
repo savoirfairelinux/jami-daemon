@@ -307,7 +307,8 @@ SIPCall::terminateSipSession(int status)
         auto ret = pjsip_inv_end_session(inv.get(), status, nullptr, &tdata);
         if (ret == PJ_SUCCESS) {
             if (tdata) {
-                auto contact = getSIPAccount().getContactHeader(transport_ ? transport_->get() : nullptr);
+                auto& account = getSIPAccount();
+                auto contact = account.getContactHeader(transport_ ? transport_->get() : nullptr);
                 sip_utils::addContactHeader(&contact, tdata);
                 ret = pjsip_inv_send_msg(inv.get(), tdata);
                 if (ret != PJ_SUCCESS)
