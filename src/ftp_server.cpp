@@ -39,11 +39,15 @@ FtpServer::FtpServer(const std::string& account_id,
     : Stream()
     , accountId_ {account_id}
     , peerUri_ {peer_uri}
-{}
+{
+    JAMI_WARN("@@@ GO!");
+
+}
 
 DRing::DataTransferId
 FtpServer::getId() const
 {
+    JAMI_WARN("@@@ %u", out_.id);
     // Because FtpServer is just the protocol on the top of a stream so the id
     // of the stream is the id of out_.
     return out_.id;

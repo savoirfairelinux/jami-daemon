@@ -2009,15 +2009,25 @@ JamiAccount::doRegister_()
         connectionManager_->onChannelRequest([](const std::string& /* deviceId */, const std::string& name) {
             if (name == "sip") {
                 return true;
+            } else if (name.substr(0, 7) == "file://") {
+                return true;
             }
             return false;
         });
         connectionManager_->onConnectionReady([this](const std::string& deviceId, const std::string& name, std::shared_ptr<ChannelSocket> channel) {
-            if (channel && name == "sip") {
+            if (channel) {
                 auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
                 if (!cert || !cert->issuer) return;
                 auto peerId = cert->issuer->getId().toString();
-                if (channel) cacheSIPConnection(std::move(channel), peerId, deviceId);
+                if (name == "sip") {
+                    cacheSIPConnection(std::move(channel), peerId, deviceId);
+                } else if (name.substr(0, 7) == "file://") {
+                    JAMI_WARN("@@@ Name %s", name.c_str());
+                    uint64_t tid;
+                    std::istringstream iss(name.substr(7));
+                    iss >> tid;
+                    dhtPeerConnector_->onIncomingConnection(peerId, tid, std::move(channel));
+                }
             }
         });
 
