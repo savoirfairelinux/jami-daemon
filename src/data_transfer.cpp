@@ -81,6 +81,8 @@ public:
         started_ = false;
     }
 
+    virtual void stop() {};
+
     void bytesProgress(int64_t& total, int64_t& progress) const {
         std::lock_guard<std::mutex> lk {infoMutex_};
         total = info_.totalSize;
@@ -427,6 +429,10 @@ public:
 
     void close() noexcept override;
 
+    void stop() override {
+        subtransfer_.clear();
+    };
+
 private:
     OutgoingFileTransfer() = delete;
 
@@ -545,8 +551,10 @@ IncomingFileTransfer::close() noexcept
 
     JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress
                << " on " << info_.totalSize;
-    if (info_.bytesProgress >= info_.totalSize)
+    if (info_.bytesProgress >= info_.totalSize) {
+        JAMI_ERR("FINISHED %s!!!!!", info_.accountId.c_str());
         emit(DRing::DataTransferEventCode::finished);
+    }
     else
         emit(DRing::DataTransferEventCode::closed_by_host);
 }
@@ -743,7 +751,13 @@ DataTransferFacade::cancel(const DRing::DataTransferId& id) noexcept
 void
 DataTransferFacade::close(const DRing::DataTransferId &id) noexcept
 {
-    pimpl_->map_.erase(id);
+    std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+    const auto& iter = pimpl_->map_.find(id);
+    if (iter != std::end(pimpl_->map_)) {
+        // NOTE: don't erase from map. The client can retrieve
+        // related info() to know if the file is finished.
+        iter->second->stop();
+    }
 }
 
 DRing::DataTransferError
