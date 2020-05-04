@@ -328,6 +328,8 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                 return;
             }
 
+
+
             // Build socket
             std::lock_guard<std::mutex> lknrs(sthis->nonReadySocketsMutex_);
             auto endpoint = std::make_unique<IceSocketEndpoint>(std::shared_ptr<IceTransport>(std::move(ice)), true);
@@ -564,10 +566,14 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
         }
     }
 
+    JAMI_WARN() << " @@@ INCOMING!";
+
     // Build socket
     std::lock_guard<std::mutex> lknrs(nonReadySocketsMutex_);
+    JAMI_WARN() << " @@@ INCOMING2!";
     auto endpoint = std::make_unique<IceSocketEndpoint>(std::shared_ptr<IceTransport>(std::move(ice)), false);
 
+    JAMI_WARN() << " @@@ INCOMING3!";
     // init TLS session
     auto ph = req.from;
     auto tlsSocket = std::make_unique<TlsSocketEndpoint>(
@@ -578,8 +584,10 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
         });
 
     auto& nonReadyIt = nonReadySockets_[deviceId][vid];
+    JAMI_WARN() << " @@@ INCOMING4!";
     nonReadyIt = std::move(tlsSocket);
     nonReadyIt->setOnReady([this, deviceId, vid=std::move(vid)] (bool ok) {
+        JAMI_WARN() << " @@@ INCOMING5!";
         if (multiplexedSockets_[deviceId].find(vid) != multiplexedSockets_[deviceId].end())
             return;
         if (!ok) {

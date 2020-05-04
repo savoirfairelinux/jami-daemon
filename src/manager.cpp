@@ -744,7 +744,7 @@ Manager::init(const std::string &config_file)
 
     setDhtLogLevel();
 
-    pimpl_->sipLink_ = std::make_unique<SIPVoIPLink>();
+    if (!pimpl_->sipLink_) pimpl_->sipLink_ = std::make_unique<SIPVoIPLink>();
 
     check_rename(fileutils::get_cache_dir(PACKAGE_OLD), fileutils::get_cache_dir());
     check_rename(fileutils::get_data_dir(PACKAGE_OLD), fileutils::get_data_dir());
