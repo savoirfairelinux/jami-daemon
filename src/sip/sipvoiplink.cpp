@@ -627,7 +627,10 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
     JAMI_DBG("SIPVoIPLink@%p", this);
 }
 
-SIPVoIPLink::~SIPVoIPLink()
+SIPVoIPLink::~SIPVoIPLink() {}
+
+void
+SIPVoIPLink::shutdown()
 {
     JAMI_DBG("~SIPVoIPLink@%p", this);
     // Remaining calls should not happen as possible upper callbacks
@@ -639,7 +642,10 @@ SIPVoIPLink::~SIPVoIPLink()
 
     sipTransportBroker->shutdown();
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
+        JAMI_ERR("@@@ RESETING");
+
     sipTransportBroker.reset();
+        JAMI_ERR("@@@ RESETTED");
 
     running_ = false;
     sipThread_.join();

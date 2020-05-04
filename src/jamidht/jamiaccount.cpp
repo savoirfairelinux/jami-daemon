@@ -461,8 +461,10 @@ initICE(const std::vector<uint8_t> &msg, const std::shared_ptr<IceTransport> &ic
 void
 JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
 {
+    JAMI_WARN("@@@startOutgoingCall!");
     if (not accountManager_) {
         call->onFailure(ENETDOWN);
+        JAMI_WARN("@@@startOutgoingCall!2");
         return;
     }
     // TODO: for now, we automatically trust all explicitly called peers
@@ -483,8 +485,10 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     });
 #endif
 
+    JAMI_WARN("@@@startOutgoingCall!3");
     dht::InfoHash peer_account(toUri);
     auto sendDhtRequest = [this, wCall, toUri, peer_account](const std::string& deviceId) {
+        JAMI_WARN("@@@startOutgoingCall!5");
         auto call = wCall.lock();
         if (not call) return;
         JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), deviceId.c_str());
@@ -512,6 +516,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         }
         call->addSubCall(*dev_call);
 
+        JAMI_WARN("@@@startOutgoingCall!6");
         manager.addTask([w=weak(), weak_dev_call, ice, ice_tcp, deviceId, toUri, peer_account] {
             auto sthis = w.lock();
             if (not sthis) {
@@ -520,6 +525,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             }
             auto call = weak_dev_call.lock();
 
+            JAMI_WARN("@@@startOutgoingCall!7");
             // call aborted?
             if (not call) {
                 dht::ThreadPool::io().run([ice=std::move(ice), ice_tcp=std::move(ice_tcp)](){});
@@ -664,6 +670,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         });
     }
 
+    JAMI_WARN("@@@startOutgoingCall!4");
     // Find listening devices for this account
     accountManager_->forEachDevice(peer_account, [this, toUri, devices, sendDhtRequest](const dht::InfoHash& dev)
     {
@@ -1592,6 +1599,8 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
         dht::ThreadPool::io().run([ice = std::move(pc.ice_sp)] { });
     }
 
+    JAMI_ERR("!!!After best transport");
+
     // Following can create a transport that need to be negotiated (TLS).
     // This is a asynchronous task. So we're going to process the SIP after this negotiation.
     auto transport = link_.sipTransportBroker->getTlsIceTransport(best_transport,
@@ -1603,9 +1612,12 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     call->setTransport(transport);
 
     if (incoming) {
+        JAMI_ERR("!!!Incoming");
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingSipCalls_.emplace_back(std::move(pc)); // copy of pc
     } else {
+        JAMI_ERR("!!!Outgoing");
+
         // Be acknowledged on transport connection/disconnection
         auto lid = reinterpret_cast<uintptr_t>(this);
         auto remote_id = remote_device.toString();
@@ -2103,6 +2115,7 @@ JamiAccount::onTextMessage(const std::string& id, const std::string& from,
 void
 JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from)
 {
+    JAMI_WARN("@@@ INCO");
     auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     if (!call) {
         return;
@@ -2145,6 +2158,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                    const std::shared_ptr<dht::crypto::Certificate>& from_cert,
                                    const dht::InfoHash& from_id)
 {
+    JAMI_WARN("@@@ REPLY");
     auto from = from_id.toString();
     call->setPeerUri(RING_URI_PREFIX + from);
     std::weak_ptr<SIPCall> wcall = call;
@@ -2177,7 +2191,7 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                 if (auto call = wcall.lock())
                     call->onFailure();
             } else
-                JAMI_DBG("Successfully put ICE descriptor reply on DHT");
+                JAMI_WARN("@@@ Successfully put ICE descriptor reply on DHT");
         });
 
     auto started_time = std::chrono::steady_clock::now();

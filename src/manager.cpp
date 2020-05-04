@@ -744,7 +744,8 @@ Manager::init(const std::string &config_file)
 
     setDhtLogLevel();
 
-    pimpl_->sipLink_ = std::make_unique<SIPVoIPLink>();
+    JAMI_WARN("@@@@@@@@@@@@@@@@@");
+    if (!pimpl_->sipLink_) pimpl_->sipLink_ = std::make_unique<SIPVoIPLink>();
 
     check_rename(fileutils::get_cache_dir(PACKAGE_OLD), fileutils::get_cache_dir());
     check_rename(fileutils::get_data_dir(PACKAGE_OLD), fileutils::get_data_dir());
@@ -850,9 +851,14 @@ Manager::finish() noexcept
         // Also, it must be called before pj_shutdown to avoid any problem
         pimpl_->ice_tf_.reset();
 
+        JAMI_ERR("@@@ DESTROYING");
+        // Keep reference to valid SIPBroker
+        pimpl_->sipLink_->shutdown();
         pimpl_->sipLink_.reset();
+        JAMI_ERR("@@@ DESTROYED");
 
         pj_shutdown();
+        JAMI_ERR("@@@ SHUTDOWNED");
 
         if (!pimpl_->ioContext_->stopped()){
             pimpl_->ioContext_->reset(); // allow to finish
