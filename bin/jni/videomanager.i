@@ -64,6 +64,8 @@ std::vector<uint8_t> workspace;
 int rotAngle = 0;
 AVBufferRef* rotMatrix = nullptr;
 
+constexpr const char TAG[] = "videomanager.i";
+
 extern JavaVM *gJavaVM;
 
 void setRotation(int angle)
@@ -88,7 +90,7 @@ void rotateNV21(uint8_t* yinput, uint8_t* uvinput, unsigned ystride, unsigned uv
         return;
     }
     if (rotation % 90 != 0 || rotation < 0 || rotation > 270) {
-        __android_log_print(ANDROID_LOG_ERROR, "videomanager.i", "%u %u %d", width, height, rotation);
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "%u %u %d", width, height, rotation);
         return;
     }
     bool swap      = rotation % 180 != 0;
@@ -149,29 +151,33 @@ int AndroidFormatToAVFormat(int androidformat) {
 
 JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoPacket(JNIEnv *jenv, jclass jcls, jobject buffer, jint size, jint offset, jboolean keyframe, jlong timestamp, jint rotation)
 {
-    auto frame = DRing::getNewFrame();
-    if (not frame)
-        return;
-    auto packet = std::unique_ptr<AVPacket, void(*)(AVPacket*)>(new AVPacket, [](AVPacket* pkt){
-        if (pkt) {
-            av_packet_unref(pkt);
-            delete pkt;
+    try {
+        auto frame = DRing::getNewFrame();
+        if (not frame)
+            return;
+        auto packet = std::unique_ptr<AVPacket, void(*)(AVPacket*)>(new AVPacket, [](AVPacket* pkt){
+            if (pkt) {
+                av_packet_unref(pkt);
+                delete pkt;
+            }
+        });
+        av_init_packet(packet.get());
+        if (keyframe)
+            packet->flags = AV_PKT_FLAG_KEY;
+        setRotation(rotation);
+        if (rotMatrix) {
+            auto buf = av_packet_new_side_data(packet.get(), AV_PKT_DATA_DISPLAYMATRIX, rotMatrix->size);
+            std::copy_n(rotMatrix->data, rotMatrix->size, buf);
         }
-    });
-    av_init_packet(packet.get());
-    if (keyframe)
-        packet->flags = AV_PKT_FLAG_KEY;
-    setRotation(rotation);
-    if (rotMatrix) {
-        auto buf = av_packet_new_side_data(packet.get(), AV_PKT_DATA_DISPLAYMATRIX, rotMatrix->size);
-        std::copy_n(rotMatrix->data, rotMatrix->size, buf);
+        auto data = (uint8_t*)jenv->GetDirectBufferAddress(buffer);
+        packet->data = data + offset;
+        packet->size = size;
+        packet->pts = timestamp;
+        frame->setPacket(std::move(packet));
+        DRing::publishFrame();
+    } catch (const std::exception& e) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Exception capturing video packet: %s", e.what());
     }
-    auto data = (uint8_t*)jenv->GetDirectBufferAddress(buffer);
-    packet->data = data + offset;
-    packet->size = size;
-    packet->pts = timestamp;
-    frame->setPacket(std::move(packet));
-    DRing::publishFrame();
 }
 
 JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIEnv *jenv, jclass jcls, jobject image, jint rotation)
@@ -184,93 +190,97 @@ JNIEXPORT void JNICALL Java_cx_ring_daemon_RingserviceJNI_captureVideoFrame(JNIE
     static jmethodID imageGetPlanes = jenv->GetMethodID(imageClass, "getPlanes", "()[Landroid/media/Image$Plane;");
     static jmethodID imageClose = jenv->GetMethodID(imageClass, "close", "()V");
 
-    auto frame = DRing::getNewFrame();
-    if (not frame) {
-        jenv->CallVoidMethod(image, imageClose);
-        return;
-    }
-    auto avframe = frame->pointer();
-
-    avframe->format = AndroidFormatToAVFormat(jenv->CallIntMethod(image, imageGetFormat));
-    avframe->width = jenv->CallIntMethod(image, imageGetWidth);
-    avframe->height = jenv->CallIntMethod(image, imageGetHeight);
-    jobject crop = jenv->CallObjectMethod(image, imageGetCropRect);
-    if (crop) {
-        static jclass rectClass = jenv->GetObjectClass(crop);
-        static jfieldID rectTopField = jenv->GetFieldID(rectClass, "top", "I");
-        static jfieldID rectLeftField = jenv->GetFieldID(rectClass, "left", "I");
-        static jfieldID rectBottomField = jenv->GetFieldID(rectClass, "bottom", "I");
-        static jfieldID rectRightField = jenv->GetFieldID(rectClass, "right", "I");
-        avframe->crop_top = jenv->GetIntField(crop, rectTopField);
-        avframe->crop_left = jenv->GetIntField(crop, rectLeftField);
-        avframe->crop_bottom = avframe->height - jenv->GetIntField(crop, rectBottomField);
-        avframe->crop_right = avframe->width - jenv->GetIntField(crop, rectRightField);
-    }
-
-    jobjectArray planes = (jobjectArray)jenv->CallObjectMethod(image, imageGetPlanes);
-    static jclass planeClass = jenv->GetObjectClass(jenv->GetObjectArrayElement(planes, 0));
-    static jmethodID planeGetBuffer = jenv->GetMethodID(planeClass, "getBuffer", "()Ljava/nio/ByteBuffer;");
-    static jmethodID planeGetRowStride = jenv->GetMethodID(planeClass, "getRowStride", "()I");
-    static jmethodID planeGetPixelStride = jenv->GetMethodID(planeClass, "getPixelStride", "()I");
-
-    jsize planeCount = jenv->GetArrayLength(planes);
-    if (avframe->format == AV_PIX_FMT_YUV420P) {
-        jobject yplane = jenv->GetObjectArrayElement(planes, 0);
-        jobject uplane = jenv->GetObjectArrayElement(planes, 1);
-        jobject vplane = jenv->GetObjectArrayElement(planes, 2);
-        auto ydata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(yplane, planeGetBuffer));
-        auto udata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(uplane, planeGetBuffer));
-        auto vdata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(vplane, planeGetBuffer));
-        auto ystride = jenv->CallIntMethod(yplane, planeGetRowStride);
-        auto uvstride = jenv->CallIntMethod(uplane, planeGetRowStride);
-        auto uvpixstride = jenv->CallIntMethod(uplane, planeGetPixelStride);
-
-        if (uvpixstride == 1) {
-            avframe->data[0] = ydata;
-            avframe->linesize[0] = ystride;
-            avframe->data[1] = udata;
-            avframe->linesize[1] = uvstride;
-            avframe->data[2] = vdata;
-            avframe->linesize[2] = uvstride;
-        } else if (uvpixstride == 2) {
-            // False YUV420, actually NV12 or NV21
-            auto uvdata = std::min(udata, vdata);
-            avframe->format = uvdata == udata ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NV21;
-            avframe->data[0] = ydata;
-            avframe->linesize[0] = ystride;
-            avframe->data[1] = uvdata;
-            avframe->linesize[1] = uvstride;
-        }
-    } else {
-        for (int i=0; i<planeCount; i++) {
-            jobject plane = jenv->GetObjectArrayElement(planes, i);
-            //jint pxStride = jenv->CallIntMethod(plane, planeGetPixelStride);
-            avframe->data[i] = (uint8_t *)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(plane, planeGetBuffer));
-            avframe->linesize[i] = jenv->CallIntMethod(plane, planeGetRowStride);
-        }
-    }
-
-    setRotation(rotation);
-    if (rotMatrix)
-        av_frame_new_side_data_from_buf(avframe, AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(rotMatrix));
-
-    image = jenv->NewGlobalRef(image);
-    frame->setReleaseCb([jenv, image](uint8_t *) mutable {
-        bool justAttached = false;
-        int envStat = gJavaVM->GetEnv((void**)&jenv, JNI_VERSION_1_6);
-        if (envStat == JNI_EDETACHED) {
-            justAttached = true;
-            if (gJavaVM->AttachCurrentThread(&jenv, nullptr) != 0)
-                return;
-        } else if (envStat == JNI_EVERSION) {
+    try { 
+        auto frame = DRing::getNewFrame();
+        if (not frame) {
+            jenv->CallVoidMethod(image, imageClose);
             return;
         }
-        jenv->CallVoidMethod(image, imageClose);
-        jenv->DeleteGlobalRef(image);
-        if (justAttached)
-            gJavaVM->DetachCurrentThread();
-    });
-    DRing::publishFrame();
+        auto avframe = frame->pointer();
+
+        avframe->format = AndroidFormatToAVFormat(jenv->CallIntMethod(image, imageGetFormat));
+        avframe->width = jenv->CallIntMethod(image, imageGetWidth);
+        avframe->height = jenv->CallIntMethod(image, imageGetHeight);
+        jobject crop = jenv->CallObjectMethod(image, imageGetCropRect);
+        if (crop) {
+            static jclass rectClass = jenv->GetObjectClass(crop);
+            static jfieldID rectTopField = jenv->GetFieldID(rectClass, "top", "I");
+            static jfieldID rectLeftField = jenv->GetFieldID(rectClass, "left", "I");
+            static jfieldID rectBottomField = jenv->GetFieldID(rectClass, "bottom", "I");
+            static jfieldID rectRightField = jenv->GetFieldID(rectClass, "right", "I");
+            avframe->crop_top = jenv->GetIntField(crop, rectTopField);
+            avframe->crop_left = jenv->GetIntField(crop, rectLeftField);
+            avframe->crop_bottom = avframe->height - jenv->GetIntField(crop, rectBottomField);
+            avframe->crop_right = avframe->width - jenv->GetIntField(crop, rectRightField);
+        }
+
+        jobjectArray planes = (jobjectArray)jenv->CallObjectMethod(image, imageGetPlanes);
+        static jclass planeClass = jenv->GetObjectClass(jenv->GetObjectArrayElement(planes, 0));
+        static jmethodID planeGetBuffer = jenv->GetMethodID(planeClass, "getBuffer", "()Ljava/nio/ByteBuffer;");
+        static jmethodID planeGetRowStride = jenv->GetMethodID(planeClass, "getRowStride", "()I");
+        static jmethodID planeGetPixelStride = jenv->GetMethodID(planeClass, "getPixelStride", "()I");
+
+        jsize planeCount = jenv->GetArrayLength(planes);
+        if (avframe->format == AV_PIX_FMT_YUV420P) {
+            jobject yplane = jenv->GetObjectArrayElement(planes, 0);
+            jobject uplane = jenv->GetObjectArrayElement(planes, 1);
+            jobject vplane = jenv->GetObjectArrayElement(planes, 2);
+            auto ydata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(yplane, planeGetBuffer));
+            auto udata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(uplane, planeGetBuffer));
+            auto vdata = (uint8_t*)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(vplane, planeGetBuffer));
+            auto ystride = jenv->CallIntMethod(yplane, planeGetRowStride);
+            auto uvstride = jenv->CallIntMethod(uplane, planeGetRowStride);
+            auto uvpixstride = jenv->CallIntMethod(uplane, planeGetPixelStride);
+
+            if (uvpixstride == 1) {
+                avframe->data[0] = ydata;
+                avframe->linesize[0] = ystride;
+                avframe->data[1] = udata;
+                avframe->linesize[1] = uvstride;
+                avframe->data[2] = vdata;
+                avframe->linesize[2] = uvstride;
+            } else if (uvpixstride == 2) {
+                // False YUV420, actually NV12 or NV21
+                auto uvdata = std::min(udata, vdata);
+                avframe->format = uvdata == udata ? AV_PIX_FMT_NV12 : AV_PIX_FMT_NV21;
+                avframe->data[0] = ydata;
+                avframe->linesize[0] = ystride;
+                avframe->data[1] = uvdata;
+                avframe->linesize[1] = uvstride;
+            }
+        } else {
+            for (int i=0; i<planeCount; i++) {
+                jobject plane = jenv->GetObjectArrayElement(planes, i);
+                //jint pxStride = jenv->CallIntMethod(plane, planeGetPixelStride);
+                avframe->data[i] = (uint8_t *)jenv->GetDirectBufferAddress(jenv->CallObjectMethod(plane, planeGetBuffer));
+                avframe->linesize[i] = jenv->CallIntMethod(plane, planeGetRowStride);
+            }
+        }
+
+        setRotation(rotation);
+        if (rotMatrix)
+            av_frame_new_side_data_from_buf(avframe, AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(rotMatrix));
+
+        image = jenv->NewGlobalRef(image);
+        frame->setReleaseCb([jenv, image](uint8_t *) mutable {
+            bool justAttached = false;
+            int envStat = gJavaVM->GetEnv((void**)&jenv, JNI_VERSION_1_6);
+            if (envStat == JNI_EDETACHED) {
+                justAttached = true;
+                if (gJavaVM->AttachCurrentThread(&jenv, nullptr) != 0)
+                    return;
+            } else if (envStat == JNI_EVERSION) {
+                return;
+            }
+            jenv->CallVoidMethod(image, imageClose);
+            jenv->DeleteGlobalRef(image);
+            if (justAttached)
+                gJavaVM->DetachCurrentThread();
+        });
+        DRing::publishFrame();
+    } catch (const std::exception& e) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "Exception capturing video frame: %s", e.what());
+    }
 }
 
 JNIEXPORT jlong JNICALL Java_cx_ring_daemon_RingserviceJNI_acquireNativeWindow(JNIEnv *jenv, jclass jcls, jobject javaSurface)
@@ -309,14 +319,14 @@ void AndroidDisplayCb(ANativeWindow *window, std::unique_ptr<DRing::FrameBuffer>
                 }
             }
             else
-                __android_log_print(ANDROID_LOG_WARN, "videomanager.i", "Can't copy surface");
+                __android_log_print(ANDROID_LOG_WARN, TAG, "Can't copy surface");
             ANativeWindow_unlockAndPost(window);
         } else {
-            __android_log_print(ANDROID_LOG_WARN, "videomanager.i", "Can't lock surface");
+            __android_log_print(ANDROID_LOG_WARN, TAG, "Can't lock surface");
         }
         i = std::move(frame);
     } catch (...) {
-        __android_log_print(ANDROID_LOG_WARN, "videomanager.i", "Can't copy frame: no window");
+        __android_log_print(ANDROID_LOG_WARN, TAG, "Can't copy frame: no window");
     }
 }
 
@@ -329,7 +339,7 @@ std::unique_ptr<DRing::FrameBuffer> sinkTargetPullCallback(ANativeWindow *window
             ret = std::move(windows.at(window));
         }
         if (not ret) {
-            __android_log_print(ANDROID_LOG_WARN, "videomanager.i", "Creating new video buffer of %zu kib", bytes/1024);
+            __android_log_print(ANDROID_LOG_WARN, TAG, "Creating new video buffer of %zu kib", bytes/1024);
             ret.reset(new DRing::FrameBuffer());
         }
         ret->storage.resize(bytes);
