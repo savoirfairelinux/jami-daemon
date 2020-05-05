@@ -1824,7 +1824,13 @@ Manager::incomingCall(Call &call, const std::string& accountId)
         // Test if already calling this person
         if (currentCall->getAccountId() == accountId
         && currentCall->getPeerNumber() == call.getPeerNumber()) {
-            auto device_uid = currentCall->getAccount().getUsername();
+            auto w = currentCall->getAccount();
+            auto account = w.lock();
+            if (!account) {
+                JAMI_ERR("No account detected");
+                return;
+            }
+            auto device_uid = account->getUsername();
             if (device_uid.find("ring:") == 0) {
                 // NOTE: in case of a SIP call it's already ready to compare
                 device_uid = device_uid.substr(5); // after ring:

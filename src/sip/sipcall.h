@@ -86,7 +86,7 @@ protected:
      * @param id    The call identifier
      * @param type  The type of the call. Could be Incoming or Outgoing
      */
-    SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type,
+    SIPCall(std::shared_ptr<SIPAccountBase> account, const std::string& id, Call::CallType type,
             const std::map<std::string, std::string>& details={});
 
 public: // overridden
@@ -177,7 +177,7 @@ public: // SIP related
 
     void requestKeyframe();
 
-    SIPAccountBase& getSIPAccount() const;
+    std::weak_ptr<SIPAccountBase> getSIPAccount() const;
 
     void updateSDPFromSTUN();
 

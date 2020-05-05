@@ -77,7 +77,7 @@ hangupCalls(const Call::SubcallSet& callptr_list, int errcode)
 
 //==============================================================================
 
-Call::Call(Account& account, const std::string& id, Call::CallType type,
+Call::Call(std::shared_ptr<Account> account, const std::string& id, Call::CallType type,
            const std::map<std::string, std::string>& details)
     : id_(id)
     , type_(type)
@@ -136,12 +136,14 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
     });
 
     time(&timestamp_start_);
-    account_.attachCall(id_);
+    if (auto shared = account_.lock())
+        shared->attachCall(id_);
 }
 
 Call::~Call()
 {
-    account_.detachCall(id_);
+    if (auto shared = account_.lock())
+        shared->detachCall(id_);
 }
 
 void
@@ -154,10 +156,13 @@ Call::removeCall()
         Recordable::stopRecording();
 }
 
-const std::string&
+std::string
 Call::getAccountId() const
 {
-    return account_.getAccountID();
+    if (auto shared = account_.lock())
+        return shared->getAccountID();
+    JAMI_ERR("No account detected");
+    return {};
 }
 
 Call::ConnectionState
