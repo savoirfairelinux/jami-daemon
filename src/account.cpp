@@ -132,7 +132,7 @@ Account::detachCall(const std::string& id)
 }
 
 void
-Account::freeAccount()
+Account::hangupCalls()
 {
     for (const auto& id : callIDSet_)
         Manager::instance().hangupCall(id);
