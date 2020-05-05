@@ -71,7 +71,7 @@ class CallFactory {
          * @param account account useed to create this call
          */
         template <class T, class A>
-        std::shared_ptr<T> newCall(A& account, const std::string& id, Call::CallType type,
+        std::shared_ptr<T> newCall(std::weak_ptr<A> account, const std::string& id, Call::CallType type,
                                    const std::map<std::string, std::string>& details={}) {
             if (!allowNewCall_) {
                 JAMI_WARN("newCall aborted : CallFactory in forbid state");
@@ -82,7 +82,7 @@ class CallFactory {
             // and not accessible from std::make_shared.
             // We use a concrete class to bypass this restriction.
             struct ConcreteCall : T {
-                    ConcreteCall(A& account, const std::string& id, Call::CallType type,
+                    ConcreteCall(std::weak_ptr<A> account, const std::string& id, Call::CallType type,
                                  const std::map<std::string, std::string>& details)
                         : T(account, id, type, details) {}
             };
