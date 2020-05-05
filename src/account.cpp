@@ -134,7 +134,7 @@ Account::detachCall(const std::string& id)
 }
 
 void
-Account::freeAccount()
+Account::hangupCalls()
 {
     decltype(callIDSet_) calls;
     {
