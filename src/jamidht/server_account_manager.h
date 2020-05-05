@@ -43,6 +43,8 @@ public:
         AuthFailureCallback onFailure,
         OnChangeCallback onChange) override;
 
+    bool AuthenticationIsInitializing() override;
+
     bool changePassword(const std::string& /*password_old*/, const std::string& /*password_new*/) override {
         return false;
     }
@@ -62,6 +64,7 @@ private:
         AuthFailureCallback onFailure;
     };
 
+    bool onAsyncIsRunning_ {false};
     const std::string managerHostname_;
     std::shared_ptr<dht::Logger> logger_;
     std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;

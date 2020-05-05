@@ -87,6 +87,7 @@ ServerAccountManager::initAuthentication(
     request->set_auth(ctx->credentials->username, ctx->credentials->password);
     requests_[reqid] = request;
 
+    onAsyncIsRunning_ = true;
     dht::ThreadPool::computation().run([onAsync = onAsync_, ctx, request, reqid]{
         onAsync([ctx, request, reqid, onAsync](AccountManager& accountManager){
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
@@ -198,6 +199,7 @@ ServerAccountManager::initAuthentication(
                 onAsync([reqid](AccountManager& accountManager){
                     auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
                     this_.requests_.erase(reqid);
+                    this_.onAsyncIsRunning_ = false;
                 });
             });
             request->send();
@@ -311,6 +313,12 @@ void
 ServerAccountManager::registerName(const std::string&, const std::string&, RegistrationCallback cb)
 {
     cb(NameDirectory::RegistrationResponse::unsupported);
+}
+
+bool
+ServerAccountManager::AuthenticationIsInitializing()
+{
+    return onAsyncIsRunning_;
 }
 
 }

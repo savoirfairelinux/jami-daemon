@@ -117,6 +117,8 @@ public:
         AuthFailureCallback onFailure,
         OnChangeCallback onChange) = 0;
 
+    virtual bool AuthenticationIsInitializing() { return false; }
+
     virtual bool changePassword(const std::string& password_old, const std::string& password_new) = 0;
 
     virtual void syncDevices() = 0;
