@@ -95,7 +95,7 @@ public:
      * Free all ressources related to this account.
      *   ***Current calls using this account are HANG-UP***
      */
-    void freeAccount();
+    void hangupCalls();
 
     virtual void setAccountDetails(const std::map<std::string, std::string>& details);
 
@@ -311,7 +311,7 @@ public:
 
     /**
      * Get the user-agent
-    */
+     */
     const std::string& getUserAgentName();
 
 public: // virtual methods that has to be implemented by concrete classes
