@@ -53,6 +53,8 @@ public:
 
     void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) override;
 
+    bool onAsyncIsRunning() override;
+
 private:
     struct AuthContext {
         CertRequest request;
@@ -62,6 +64,7 @@ private:
         AuthFailureCallback onFailure;
     };
 
+    bool onAsyncIsRunning_ {false};
     const std::string managerHostname_;
     std::shared_ptr<dht::Logger> logger_;
     std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;

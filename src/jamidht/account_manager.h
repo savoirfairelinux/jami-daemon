@@ -216,6 +216,8 @@ public:
     virtual void lookupAddress(const std::string& address, LookupCallback cb);
     virtual void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) = 0;
 
+    virtual bool onAsyncIsRunning() { return false; }
+
 protected:
     std::string path_;
     OnAsync onAsync_;

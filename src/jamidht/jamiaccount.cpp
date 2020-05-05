@@ -1066,18 +1066,25 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             if (auto this_ = w.lock())
                 cb(*this_->accountManager_);
         };
-        if (managerUri_.empty()) {
-            accountManager_.reset(new ArchiveAccountManager(getPath(),
-                onAsync,
-                [this]() { return getAccountDetails(); },
-                archivePath_.empty() ? "archive.gz" : archivePath_,
-                nameServer_));
-        } else {
-            accountManager_.reset(new ServerAccountManager(getPath(),
-                onAsync,
-                managerUri_,
-                nameServer_));
-        }
+
+        do
+        {
+            if (accountManager_ && !accountManager_->onAsyncIsRunning())
+                break;
+            if (managerUri_.empty()) {
+                accountManager_.reset(new ArchiveAccountManager(getPath(),
+                    onAsync,
+                    [this]() { return getAccountDetails(); },
+                    archivePath_.empty() ? "archive.gz" : archivePath_,
+                    nameServer_));
+            }
+            else {
+                accountManager_.reset(new ServerAccountManager(getPath(),
+                    onAsync,
+                    managerUri_,
+                    nameServer_));
+            }
+        } while (false);
 
         auto id = accountManager_->loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
         if (auto info = accountManager_->useIdentity(id, receipt_, receiptSignature_, managerUsername_, std::move(callbacks))) {
