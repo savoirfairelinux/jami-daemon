@@ -173,7 +173,7 @@ std::shared_ptr<SIPCall>
 SIPAccount::newIncomingCall(const std::string& from UNUSED, const std::map<std::string, std::string>& details, const std::shared_ptr<SipTransport>&)
 {
     auto& manager = Manager::instance();
-    return manager.callFactory.newCall<SIPCall, SIPAccount>(*this,
+    return manager.callFactory.newCall<SIPCall, SIPAccount>(weak(),
                                                             manager.getNewCallID(),
                                                             Call::CallType::INCOMING,
                                                             details);
@@ -190,7 +190,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
     JAMI_DBG() << *this << "Calling SIP peer " << toUrl;
 
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(),
+    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(weak(), manager.getNewCallID(),
                                                                  Call::CallType::OUTGOING,
                                                                  volatileCallDetails);
     call->setSecure(isTlsEnabled());

@@ -351,7 +351,7 @@ JamiAccount::newIncomingCall(const std::string& from, const std::map<std::string
                     // Search linked Sip Transport
                     if (it->transport != sipTr) continue;
 
-                    auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
+                    auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(weak(), Manager::instance().getNewCallID(), Call::CallType::INCOMING);
                     if (!call) return {};
 
                     std::weak_ptr<SIPCall> wcall = call;
@@ -395,7 +395,7 @@ JamiAccount::newOutgoingCall(const std::string& toUrl,
     auto suffix = stripPrefix(toUrl);
     JAMI_DBG() << *this << "Calling DHT peer " << suffix;
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
+    auto call = manager.callFactory.newCall<SIPCall, JamiAccount>(weak(), manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING,
                                                                   volatileCallDetails);
 
@@ -495,7 +495,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         JAMI_DBG("[call %s] calling device %s", call->getCallId().c_str(), deviceId.c_str());
 
         auto& manager = Manager::instance();
-        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
+        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(weak(), manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING,
                                                                           call->getDetails());
         std::weak_ptr<SIPCall> weak_dev_call = dev_call;
@@ -623,7 +623,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // NOTE: dummyCall is a call used to avoid to mark the call as failed if the
     // cached connection is failing with ICE (close event still not detected).
     auto& manager = Manager::instance();
-    auto dummyCall = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
+    auto dummyCall = manager.callFactory.newCall<SIPCall, JamiAccount>(weak(), manager.getNewCallID(),
                                                                             Call::CallType::OUTGOING,
                                                                             call->getDetails());
     dummyCall->setIPToIP(true);
@@ -640,7 +640,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         }
         if (!transport) continue;
 
-        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
+        auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(weak(), manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING,
                                                                           call->getDetails());
         dev_call->setIPToIP(true);
@@ -2117,7 +2117,7 @@ void
 JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from)
 {
     JAMI_WARN("@@@ INCO");
-    auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
+    auto call = Manager::instance().callFactory.newCall<SIPCall, JamiAccount>(weak(), Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     if (!call) {
         return;
     }
