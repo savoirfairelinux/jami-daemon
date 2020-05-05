@@ -847,7 +847,12 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     if (not call)
         return;
 
-    const auto& account = call->getSIPAccount();
+    auto w = call->getSIPAccount();
+    auto account = w.lock();
+    if (not account) {
+        JAMI_ERR("No account detected");
+        return;
+    }
     auto family = pj_AF_INET();
     // FIXME : for now, use the same address family as the SIP transport
     if (auto dlg = inv->dlg) {
@@ -859,16 +864,16 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
                 family = tr->local_addr.addr.sa_family;
         }
     }
-    auto ifaceAddr = ip_utils::getInterfaceAddr(account.getLocalInterface(), family);
+    auto ifaceAddr = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
     IpAddr address;
-    if (account.getUPnPActive()) {
+    if (account->getUPnPActive()) {
         /* use UPnP addr, or published addr if its set */
-        address = account.getPublishedSameasLocal() ?
-            account.getUPnPIpAddress() : account.getPublishedIpAddress();
+        address = account->getPublishedSameasLocal() ?
+            account->getUPnPIpAddress() : account->getPublishedIpAddress();
     } else {
-        address = account.getPublishedSameasLocal() ?
-            ifaceAddr : account.getPublishedIpAddress();
+        address = account->getPublishedSameasLocal() ?
+            ifaceAddr : account->getPublishedIpAddress();
     }
 
     /* fallback on local address */
@@ -877,9 +882,9 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     auto& localSDP = call->getSDP();
     localSDP.setPublishedIP(address);
     const bool created = localSDP.createOffer(
-        account.getActiveAccountCodecInfoList(MEDIA_AUDIO),
-        account.getActiveAccountCodecInfoList(account.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
-        account.getSrtpKeyExchange()
+        account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
+        account->getActiveAccountCodecInfoList(account->isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
+        account->getSrtpKeyExchange()
     );
 
     if (created)
