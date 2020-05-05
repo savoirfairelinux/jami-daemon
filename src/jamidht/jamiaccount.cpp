@@ -302,6 +302,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 
 JamiAccount::~JamiAccount()
 {
+    hangupCalls();
     shutdownConnections();
     if (eventHandler) {
         eventHandler->destroy();

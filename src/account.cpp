@@ -134,7 +134,7 @@ Account::detachCall(const std::string& id)
 }
 
 void
-Account::freeAccount()
+Account::hangupCalls()
 {
     std::lock_guard<std::mutex> lk {callIDSetMtx_};
     for (const auto& id : callIDSet_)
