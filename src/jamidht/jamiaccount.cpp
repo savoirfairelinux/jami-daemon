@@ -315,6 +315,7 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 
 JamiAccount::~JamiAccount()
 {
+    hangupCalls();
     shutdownConnections();
     if (peerDiscovery_) {
         peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
