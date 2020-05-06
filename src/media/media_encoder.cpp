@@ -878,9 +878,9 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "qmax", 50, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "qmin", 0, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "slices", 4, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "crf", 10, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "crf", 18, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "b", 0, AV_OPT_SEARCH_CHILDREN);
-        JAMI_DBG("VP8 encoder setup: crf=10");
+        JAMI_DBG("VP8 encoder setup: crf=18");
     } else {
         // 1- if quality is set use it
         // bitrate need to be set. The target bitrate becomes the maximum allowed bitrate
