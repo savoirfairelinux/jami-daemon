@@ -516,7 +516,7 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
     }
     else {
         last_errmsg_ = sip_utils::sip_strerror(status);
-        JAMI_ERR("[ice:%p] %s failed: %s", this, opname, last_errmsg_.c_str());
+        JAMI_ERR("[ice:%p] %s %s failed: %s", this, (config_.protocol == PJ_ICE_TP_TCP? "TCP" : "UDP"), opname, last_errmsg_.c_str());
     }
 
     {
