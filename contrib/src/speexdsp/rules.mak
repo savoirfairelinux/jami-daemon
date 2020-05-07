@@ -1,7 +1,7 @@
 # speexdsp
 
 SPEEXDSP_HASH := SpeexDSP-1.2.0
-SPEEXDSP_GITURL := https://git.xiph.org/?p=speexdsp.git;a=snapshot;h=$(SPEEXDSP_HASH);sf=tgz
+SPEEXDSP_GITURL := https://gitlab.xiph.org/xiph/speexdsp/-/archive/$(SPEEXDSP_HASH)/speexdsp-$(SPEEXDSP_HASH).tar.gz
 
 PKGS += speexdsp
 ifeq ($(call need_pkg,"speexdsp"),)
