@@ -69,6 +69,11 @@ class SIPVoIPLink {
         ~SIPVoIPLink();
 
         /**
+         * Destroy structures
+         */
+        void shutdown();
+
+        /**
          * Event listener. Each event send by the call manager is received and handled from here
          */
         void handleEvents();
