@@ -744,6 +744,8 @@ Manager::init(const std::string &config_file)
 
     setDhtLogLevel();
 
+    // Manager can restart without being recreated (Unit tests)
+    // So only create the SipLink once
     pimpl_->sipLink_ = std::make_unique<SIPVoIPLink>();
 
     check_rename(fileutils::get_cache_dir(PACKAGE_OLD), fileutils::get_cache_dir());
@@ -757,7 +759,7 @@ Manager::init(const std::string &config_file)
 
     bool no_errors = true;
 
-    // manager can restart without being recreated (android)
+    // manager can restart without being recreated (Unit tests)
     pimpl_->finished_ = false;
 
     try {
@@ -850,6 +852,10 @@ Manager::finish() noexcept
         // Also, it must be called before pj_shutdown to avoid any problem
         pimpl_->ice_tf_.reset();
 
+        // NOTE: sipLink_->shutdown() is needed because this will perform
+        // sipTransportBroker->shutdown(); which will call Manager::instance().sipVoIPLink()
+        // so the pointer MUST NOT be resetted at this point
+        pimpl_->sipLink_->shutdown();
         pimpl_->sipLink_.reset();
 
         pj_shutdown();
