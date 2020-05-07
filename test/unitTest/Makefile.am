@@ -110,12 +110,16 @@ ut_video_scaler_SOURCES = media/video/test_video_scaler.cpp
 check_PROGRAMS += ut_audio_frame_resizer
 ut_audio_frame_resizer_SOURCES = media/audio/test_audio_frame_resizer.cpp
 
+#
+# call
+#
+check_PROGRAMS += ut_call
+ut_call_SOURCES = call/call.cpp
 
 #
 # connectionManager
 #
-#check_PROGRAMS += ut_connectionManager
-check_PROGRAMS = ut_connectionManager
+check_PROGRAMS += ut_connectionManager
 ut_connectionManager_SOURCES = connectionManager/connectionManager.cpp
 
 TESTS = $(check_PROGRAMS)
