@@ -627,9 +627,12 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
     JAMI_DBG("SIPVoIPLink@%p", this);
 }
 
-SIPVoIPLink::~SIPVoIPLink()
+SIPVoIPLink::~SIPVoIPLink() {}
+
+void
+SIPVoIPLink::shutdown()
 {
-    JAMI_DBG("~SIPVoIPLink@%p", this);
+    JAMI_DBG("Shutdown SIPVoIPLink@%p...", this);
     // Remaining calls should not happen as possible upper callbacks
     // may be called and another instance of SIPVoIPLink can be re-created!
 
@@ -647,7 +650,7 @@ SIPVoIPLink::~SIPVoIPLink()
     pool_.reset();
     pj_caching_pool_destroy(&cp_);
 
-    JAMI_DBG("destroying SIPVoIPLink@%p", this);
+    JAMI_DBG("SIPVoIPLink@%p is shutdown", this);
 }
 
 std::shared_ptr<SIPAccountBase>
