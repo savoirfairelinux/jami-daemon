@@ -63,11 +63,13 @@ std::map<std::string, std::string> checkManifestJsonContentValidity(const Json::
     std::string name = root.get("name", "").asString();
     std::string description = root.get("description", "").asString();
     std::string version = root.get("version", "").asString();
+    std::string libs = root.get("libs", "").asString();
     if(!name.empty() || !version.empty()){
         return {
             {"name", name},
             {"description", description},
             {"version", version},
+            {"libs", libs}
         };
     } else {
         throw std::runtime_error("plugin manifest file: bad format");
@@ -170,6 +172,7 @@ std::map<std::string, std::string> JamiPluginManager::getPluginDetails(const std
     std::map<std::string, std::string> details = parseManifestFile(manifestPath(rootPath));
     details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
     details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
+    details["path"] = rootPath + DIR_SEPARATOR_CH;
     detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
     return detailsIt->second;
 }
@@ -240,10 +243,74 @@ int JamiPluginManager::uninstallPlugin(const std::string &rootPath)
     }
 }
 
+void getLibsList(std::vector<std::string>* libList, std::string& libsString)
+{
+    bool status = true;
+    if(libsString.length() != 0)
+    {       
+        JAMI_INFO() << "VERIFING LIB LIST from Plugin Manifest: " << libsString;
+        int len = libsString.length();
+        char libsChar[len + 1];
+        char* part = NULL;
+        JAMI_INFO() << "before strcpy";
+        std::strcpy(libsChar, libsString.c_str());
+        
+        if(libsChar != NULL)
+        {
+            JAMI_INFO() << "before strtok";
+            part = std::strtok (libsChar," ,");
+            
+            if(part != NULL)
+            {
+                JAMI_INFO() << "Parts: " << part;
+            }
+            
+            while (part != NULL)
+            {
+                (*libList).push_back(part);
+                part = std::strtok (NULL, " ,");
+                if(part != NULL)
+                {
+                    JAMI_INFO() << "Parts: " << part;
+                }
+            }
+
+            JAMI_INFO() << "Libs in plugin manifest: ";
+            for (int i = 0; i < (*libList).size(); i++)
+            {
+                JAMI_INFO() << (*libList)[i];
+            }
+        }
+    }
+    else
+    {
+        JAMI_INFO() << "No lib in plugin manifest";
+    }
+}
+
 bool JamiPluginManager::loadPlugin(const std::string &rootPath)
 {
-    try {
-        return pm_.load(getPluginDetails(rootPath).at("soPath"));
+    try 
+    {
+        std::string libsString = getPluginDetails(rootPath).at("libs");
+
+        bool status = true;
+        std::vector<std::string> libList;
+
+        getLibsList(&libList, libsString);
+
+        //load libs
+        for (int i = 0; i < libList.size(); i++)
+        {
+            JAMI_INFO() << "LOADING LIB: " << libList[i];
+            status = status && pm_.loadLib(getPluginDetails(rootPath).at("path"), libList[i]);
+            JAMI_INFO() << "lib status: " << status;
+        }
+        
+        status = status && pm_.load(getPluginDetails(rootPath).at("soPath"));
+        JAMI_INFO() << "plugin status: " << status;
+        
+        return status;
     } catch(const std::exception& e) {
         JAMI_ERR() << e.what();
         return false;
@@ -253,7 +320,27 @@ bool JamiPluginManager::loadPlugin(const std::string &rootPath)
 bool JamiPluginManager::unloadPlugin(const std::string &rootPath)
 {
     try {
-        return pm_.unload(getPluginDetails(rootPath).at("soPath"));
+        JAMI_INFO() << "UNLOAD read libs list";
+        std::string libsString = getPluginDetails(rootPath).at("libs");
+        JAMI_INFO() << "VERIFING LIB LIST from Plugin Manifest: " << libsString;
+
+        bool status = true;
+        std::vector<std::string> libList;
+
+        getLibsList(&libList, libsString);
+
+        //unload libs
+        for (int i = 0; i < libList.size(); i++)
+        {
+            JAMI_INFO() << "UNLOADING LIB: " << libList[i];
+            status = status && pm_.unloadLib(libList[i]);
+            JAMI_INFO() << "lib unload status: " << status;
+        }
+        
+        status = status && pm_.unload(getPluginDetails(rootPath).at("soPath"));
+        JAMI_INFO() << "plugin unload status: " << status;
+
+        return status;
     } catch(const std::exception& e) {
         JAMI_ERR() << e.what();
         return false;
@@ -286,6 +373,18 @@ std::vector<std::string> JamiPluginManager::listLoadedPlugins() const
         return getRootPathFromSoPath(soPath);
     });
     return loadedPlugins;
+}
+
+std::vector<std::string> JamiPluginManager::listLoadedLibs() const
+{
+    std::vector<std::string> loadedSoLibs = pm_.listLoadedLibs();
+    std::vector<std::string> loadedLibs{};
+    loadedLibs.reserve(loadedSoLibs.size());
+    std::transform(loadedSoLibs.begin(), loadedSoLibs.end(), std::back_inserter(loadedLibs),
+    [this](const std::string& soPath) {
+        return getRootPathFromSoPath(soPath);
+    });
+    return loadedLibs;
 }
 
 std::vector<std::map<std::string, std::string> > JamiPluginManager::getPluginPreferences(const std::string &rootPath)
