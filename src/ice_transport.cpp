@@ -512,7 +512,7 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
 
     const bool done = status == PJ_SUCCESS;
     if (done) {
-        JAMI_DBG("[ice:%p] %s success", this, opname);
+        JAMI_DBG("[ice:%p] %s %s success", this, (config_.protocol == PJ_ICE_TP_TCP? "TCP" : "UDP"), opname);
     }
     else {
         last_errmsg_ = sip_utils::sip_strerror(status);
@@ -552,7 +552,7 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
                     out << " [" << i << "] disabled\n";
                 }
             }
-            JAMI_DBG("[ice:%p] connection pairs (local <-> remote):\n%s", this, out.str().c_str());
+            JAMI_DBG("[ice:%p] %s connection pairs (local <-> remote):\n%s", this, (config_.protocol == PJ_ICE_TP_TCP? "TCP" : "UDP"), out.str().c_str());
         }
         if (on_negodone_cb_)
             on_negodone_cb_(done);
