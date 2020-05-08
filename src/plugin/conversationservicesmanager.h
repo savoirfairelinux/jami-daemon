@@ -63,6 +63,7 @@ public:
             for(auto it = conversationHandlers.begin(); it != conversationHandlers.end(); ++it) {
                 if(it->second.get() == data) {
                     conversationHandlers.erase(it);
+                    break;
                 }
             }
             return 0;
