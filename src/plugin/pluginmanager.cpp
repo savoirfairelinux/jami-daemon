@@ -40,6 +40,7 @@ PluginManager::~PluginManager() {
   }
 
   dynPluginMap_.clear();
+  dynLibMap_.clear();
   exactMatchMap_.clear();
   wildCardVec_.clear();
   exitFuncVec_.clear();
@@ -74,6 +75,36 @@ bool PluginManager::load(const std::string &path) {
   return true;
 }
 
+
+bool PluginManager::loadLib(const std::string &path, const std::string &name)
+{
+
+  JAMI_WARN() << "LIB: LOOKING FOR " << name;
+  // Don't load the same dynamic library twice
+
+  LibMap::iterator it = dynLibMap_.find(name);
+  if (it != dynLibMap_.end())
+  {
+    it->second.times += 1;
+    JAMI_WARN() << "Lib: already loaded ";
+    return true;
+  }
+
+  std::string error;
+  std::unique_ptr<Plugin> lib(Plugin::load(path+name, error));
+  if (!lib)
+  {
+    JAMI_ERR() << "Lib: " << error;
+    return false;
+  }
+
+  LibsInfos mLibInfos;
+  mLibInfos.lib = std::move(lib);
+
+  dynLibMap_[name] = std::move(mLibInfos);
+  return true;
+}
+
 bool PluginManager::unload(const std::string& path) {
     bool returnValue{false};
     destroyPluginComponents(path);
@@ -86,11 +117,41 @@ bool PluginManager::unload(const std::string& path) {
     return returnValue;
 }
 
+bool PluginManager::unloadLib(const std::string& name)
+{
+  bool returnValue{false};
+
+  LibMap::iterator it = dynLibMap_.find(name);
+  if ( it != dynLibMap_.end())
+  {
+    if (it->second.times <= 1)
+    {
+      dynLibMap_.erase(it);
+      returnValue = true;
+    }
+    else
+    {
+      it->second.times -= 1;
+      returnValue = true;
+    }
+  }
+  return returnValue;
+}
+
 std::vector<std::string> PluginManager::listLoadedPlugins() const
 {
     std::vector<std::string> res{};
     for(const auto& pair : dynPluginMap_) {
         res.push_back(pair.first);
+    }
+    return res;
+}
+
+std::vector<std::string> PluginManager::listLoadedLibs() const
+{
+    std::vector<std::string> res{};
+    for(const auto& pair : dynLibMap_) {
+        res.emplace_back(pair.first);
     }
     return res;
 }

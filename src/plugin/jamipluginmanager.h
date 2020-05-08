@@ -111,6 +111,12 @@ public:
      */
     std::vector<std::string> listLoadedPlugins() const;
 
+    /**
+     * @brief listLoadedLibs
+     * @return vector of rootpaths of the loaded plugins libs dependencies
+     */
+    std::vector<std::string> listLoadedLibs() const;  
+
     std::vector<std::map<std::string,std::string>> getPluginPreferences(const std::string& rootPath);
 
     bool setPluginPreference(const std::string& rootPath,
