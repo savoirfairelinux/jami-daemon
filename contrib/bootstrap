@@ -35,7 +35,7 @@ BUILD=
 HOST=
 PREFIX=
 PKGS_ENABLE=
-PKGS_DISABLE=
+PKGS_DISABLE="opencv opencv_contrib"
 
 if test ! -f "../../contrib/src/main.mak"
 then
