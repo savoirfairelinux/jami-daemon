@@ -67,7 +67,7 @@ std::map<std::string, std::string> checkManifestJsonContentValidity(const Json::
         return {
             {"name", name},
             {"description", description},
-            {"version", version},
+            {"version", version}
         };
     } else {
         throw std::runtime_error("plugin manifest file: bad format");
@@ -106,7 +106,7 @@ std::map<std::string, std::string> checkManifestValidity(const std::vector<uint8
 }
 
 static const std::regex DATA_REGEX("^data" DIR_SEPARATOR_STR_ESC ".+");
-static const std::regex SO_REGEX("([a-z0-9]+(?:[_-]?[a-z0-9]+)*)" DIR_SEPARATOR_STR_ESC "([a-z0-9_]+\\.(so|dll))");
+static const std::regex SO_REGEX("([a-zA-Z0-9]+(?:[_-]?[a-zA-Z0-9]+)*)" DIR_SEPARATOR_STR_ESC "([a-zA-Z0-9_-]+\\.(so|dll).*)");
 
 std::pair<bool,const std::string>
 uncompressJplFunction(const std::string& relativeFileName)
@@ -234,6 +234,10 @@ int JamiPluginManager::installPlugin(const std::string &jplPath, bool force)
 int JamiPluginManager::uninstallPlugin(const std::string &rootPath)
 {
     if(checkPluginValidity(rootPath)) {
+        auto detailsIt = pluginDetailsMap_.find(rootPath);
+        if (detailsIt != pluginDetailsMap_.end()) {
+            pluginDetailsMap_.erase(detailsIt);
+        }
         return fileutils::removeAll(rootPath);
     } else {
         return -1;
@@ -242,9 +246,15 @@ int JamiPluginManager::uninstallPlugin(const std::string &rootPath)
 
 bool JamiPluginManager::loadPlugin(const std::string &rootPath)
 {
-    try {
-        return pm_.load(getPluginDetails(rootPath).at("soPath"));
-    } catch(const std::exception& e) {
+    try
+    {
+        bool status = pm_.load(getPluginDetails(rootPath).at("soPath"));
+        JAMI_INFO() << "plugin status: " << status;
+
+        return status;
+
+    } catch(const std::exception& e) 
+    {
         JAMI_ERR() << e.what();
         return false;
     }
@@ -252,9 +262,14 @@ bool JamiPluginManager::loadPlugin(const std::string &rootPath)
 
 bool JamiPluginManager::unloadPlugin(const std::string &rootPath)
 {
-    try {
-        return pm_.unload(getPluginDetails(rootPath).at("soPath"));
-    } catch(const std::exception& e) {
+    try 
+    {
+        bool status = pm_.unload(getPluginDetails(rootPath).at("soPath"));
+        JAMI_INFO() << "plugin unload status: " << status;
+
+        return status;
+    } catch(const std::exception& e) 
+    {
         JAMI_ERR() << e.what();
         return false;
     }
@@ -449,4 +464,3 @@ void JamiPluginManager::registerServices()
 }
 
 }
-
