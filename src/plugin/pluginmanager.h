@@ -55,7 +55,13 @@ private:
       ComponentFunction destroyComponent;
   };
 
+  struct LibsInfos{
+    int times = 1;
+    std::shared_ptr<Plugin> lib;
+  };
+
   using PluginMap = std::map<std::string, std::shared_ptr<Plugin>>;
+  using LibMap = std::map<std::string, LibsInfos>;
   using PluginComponentsMap = std::map<std::string, ComponentTypePtrVector>;
   using ExitFuncVec = std::vector<JAMI_PluginExitFunc>;
   using ObjectFactoryVec = std::vector<ObjectFactory>;
@@ -74,6 +80,15 @@ public:
   bool load(const std::string &path);
 
   /**
+   * Load a dynamic lib for plugin by filename.
+   *
+   * @param path qualified path on a loadable lib binary
+   * @param name qualified name of a loadable lib binary
+   * @return true if success
+   */
+  bool loadLib(const std::string &path, const std::string &name);
+
+  /**
    * @brief unloads the plugin with pathname path
    * @param path
    * @return true if success
@@ -81,10 +96,23 @@ public:
   bool unload(const std::string& path);
 
   /**
+   * @brief unloads the plugin libs with libs name
+   * @param name
+   * @return true if success
+   */
+  bool unloadLib(const std::string& name);
+
+  /**
    * @brief listLoadedPlugins
    * @return vector of strings of so files of the loaded plugins
    */
   std::vector<std::string> listLoadedPlugins() const;
+
+  /**
+   * @brief listLoadedLibs
+   * @return vector of strings of so files of the loaded plugins
+   */
+  std::vector<std::string> listLoadedLibs() const;
 
   /**
    * @brief destroyPluginComponents
@@ -170,6 +198,8 @@ private:
       nullptr,
       nullptr
   };
+
+  LibMap dynLibMap_{}; // Only dynamic loaded libs
   PluginMap dynPluginMap_{}; // Only dynamic loaded plugins
   ExitFuncVec exitFuncVec_{};
   ObjectFactoryMap exactMatchMap_{};
