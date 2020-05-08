@@ -96,6 +96,7 @@ public:
             for(auto it = callMediaHandlers.begin(); it != callMediaHandlers.end(); ++it) {
                 if(it->second.get() == data) {
                     callMediaHandlers.erase(it);
+                    break;
                 }
             }
             return 0;
