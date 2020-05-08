@@ -1,0 +1,17 @@
+{
+    "name": "opencv",
+    "version": "4.1.1",
+    "url": "https://github.com/opencv/opencv/archive/__VERSION__.tar.gz",
+    "deps": [
+	"opencv_contrib"
+    ],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [],
+        "build": [],
+        "post_build": []
+    }
+}

@@ -46,8 +46,6 @@ PluginManager::~PluginManager() {
 }
 
 bool PluginManager::load(const std::string &path) {
-  // TODO: Resolve symbolic links and make path absolute
-
   // Don't load the same dynamic library twice
   if (dynPluginMap_.find(path) != dynPluginMap_.end()) {
     JAMI_WARN() << "Plugin: already loaded";
