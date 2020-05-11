@@ -1,0 +1,32 @@
+ pjnath/src/pjnath/ice_strans.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 69df9f40a..351b452a8 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -268,7 +268,7 @@ struct pj_ice_strans
+     pj_uint16_t         rx_buffer_size;
+     pj_uint16_t         rx_wanted_size;
+
+-    unsigned            last_data_len; /**< What the application is waiting. */
++    pj_ssize_t            last_data_len; /**< What the application is waiting. */
+ };
+
+
+@@ -1881,6 +1881,7 @@ static pj_status_t send_data(pj_ice_strans *ice_st,
+ on_return:
+     /* We continue later in on_data_sent() callback. */
+     if (status == PJ_EPENDING) {
++		printf("@@@ IS PENDING. Send: %u. Add header: %u - TCP? %u - %u\n", data_len, add_header, (def_cand->transport != PJ_CAND_UDP), sizeof(pj_uint16_t));
+ 		ice_st->last_data_len = data_len;
+ 		if (add_header) {
+ 			// Don't forget the header
+@@ -2460,6 +2461,7 @@ static pj_bool_t on_data_sent(pj_ice_strans *ice_st, pj_ssize_t sent)
+     if (ice_st->destroy_req || !ice_st->is_pending)
+ 	return PJ_TRUE;
+
++	printf("%u vs %u\n", sent, ice_st->last_data_len);
+     if (ice_st->call_send_cb && ice_st->cb.on_data_sent
+ 		&& sent == ice_st->last_data_len /* Only app data should be announced */) {
+ 	(*ice_st->cb.on_data_sent)(ice_st, sent);
