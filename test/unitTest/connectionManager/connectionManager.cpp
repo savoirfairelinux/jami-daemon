@@ -25,6 +25,7 @@
 #include "manager.h"
 #include "jamidht/connectionmanager.h"
 #include "jamidht/jamiaccount.h"
+#include "jamidht/multiplexed_socket.h"
 #include "../../test_runner.h"
 #include "dring.h"
 #include "account_const.h"
