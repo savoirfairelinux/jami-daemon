@@ -1,0 +1,24 @@
+ pjnath/src/pjnath/ice_strans.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 69df9f40a..3af6e00ab 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -268,7 +268,7 @@ struct pj_ice_strans
+     pj_uint16_t         rx_buffer_size;
+     pj_uint16_t         rx_wanted_size;
+
+-    unsigned            last_data_len; /**< What the application is waiting. */
++    pj_ssize_t            last_data_len; /**< What the application is waiting. */
+ };
+
+
+@@ -2460,6 +2460,7 @@ static pj_bool_t on_data_sent(pj_ice_strans *ice_st, pj_ssize_t sent)
+     if (ice_st->destroy_req || !ice_st->is_pending)
+ 	return PJ_TRUE;
+
++	printf("%u vs %u\n", sent, ice_st->last_data_len);
+     if (ice_st->call_send_cb && ice_st->cb.on_data_sent
+ 		&& sent == ice_st->last_data_len /* Only app data should be announced */) {
+ 	(*ice_st->cb.on_data_sent)(ice_st, sent);
