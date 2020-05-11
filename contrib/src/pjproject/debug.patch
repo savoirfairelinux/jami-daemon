@@ -1,0 +1,61 @@
+ pjnath/src/pjnath/ice_strans.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 69df9f40a..d128837d1 100644
+--- a/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -268,7 +268,7 @@ struct pj_ice_strans
+     pj_uint16_t         rx_buffer_size;
+     pj_uint16_t         rx_wanted_size;
+
+-    unsigned            last_data_len; /**< What the application is waiting. */
++    pj_ssize_t            last_data_len; /**< What the application is waiting. */
+ };
+
+
+@@ -1764,6 +1764,9 @@ static pj_status_t send_data(pj_ice_strans *ice_st,
+     	}
+     }
+
++    def_cand = &comp->cand_list[comp->default_cand];
++    pj_bool_t add_header = def_cand->transport != PJ_CAND_UDP;
++
+     /* If ICE is available, send data with ICE, otherwise send with the
+      * default candidate selected during initialization.
+      *
+@@ -1773,6 +1776,7 @@ static pj_status_t send_data(pj_ice_strans *ice_st,
+     if (ice_st->ice && ice_st->state == PJ_ICE_STRANS_STATE_RUNNING) {
+ 	status = pj_ice_sess_send_data(ice_st->ice, comp_id, buf, data_len);
+
++
+ 	pj_grp_lock_release(ice_st->grp_lock);
+
+ 	goto on_return;
+@@ -1780,9 +1784,6 @@ static pj_status_t send_data(pj_ice_strans *ice_st,
+
+     pj_grp_lock_release(ice_st->grp_lock);
+
+-    def_cand = &comp->cand_list[comp->default_cand];
+-
+-    pj_bool_t add_header = def_cand->transport != PJ_CAND_UDP;
+     /* TCP, add header */
+     if (add_header) {
+ 	/*
+@@ -1881,6 +1882,8 @@ static pj_status_t send_data(pj_ice_strans *ice_st,
+ on_return:
+     /* We continue later in on_data_sent() callback. */
+     if (status == PJ_EPENDING) {
++		if (def_cand) printf("@@@ IS PENDING. Send: %u. Add header: %u - TCP? %u - %u\n", data_len, add_header, (def_cand->transport != PJ_CAND_UDP), sizeof(pj_uint16_t));
++		else printf("@@@ IS PENDING. Send: %u. Add header: %u - NO DEF CAND - %u\n", data_len, add_header, sizeof(pj_uint16_t));
+ 		ice_st->last_data_len = data_len;
+ 		if (add_header) {
+ 			// Don't forget the header
+@@ -2460,6 +2463,7 @@ static pj_bool_t on_data_sent(pj_ice_strans *ice_st, pj_ssize_t sent)
+     if (ice_st->destroy_req || !ice_st->is_pending)
+ 	return PJ_TRUE;
+
++	printf("%u vs %u\n", sent, ice_st->last_data_len);
+     if (ice_st->call_send_cb && ice_st->cb.on_data_sent
+ 		&& sent == ice_st->last_data_len /* Only app data should be announced */) {
+ 	(*ice_st->cb.on_data_sent)(ice_st, sent);
