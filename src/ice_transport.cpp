@@ -339,6 +339,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     };
 
     icecb.on_data_sent = [](pj_ice_strans* ice_st, pj_ssize_t size) {
+        JAMI_WARN("@@@ On data sent %u", size);
         if (auto* tr = static_cast<Impl*>(pj_ice_strans_get_user_data(ice_st))) {
             std::lock_guard<std::mutex> lk(tr->iceMutex_);
             tr->lastSentLen_ += size;
@@ -1310,12 +1311,16 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         errno = EINVAL;
         return -1;
     }
+    if (isTCPEnabled()) JAMI_WARN("@@@ pj_ice_strans_sendto2 %u", len);
     auto status = pj_ice_strans_sendto2(pimpl_->icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength());
+    if (isTCPEnabled()) JAMI_WARN("@@@ pj_ice_strans_sendto2 is pending: %u", (status == PJ_EPENDING));
     if (status == PJ_EPENDING && isTCPEnabled()) {
         // NOTE; because we are in TCP, the sent size will count the header (2
         // bytes length).
         std::unique_lock<std::mutex> lk(pimpl_->iceMutex_);
+        if (isTCPEnabled()) JAMI_WARN("@@@ pj_ice_strans_sendto2 wait");
         pimpl_->waitDataCv_.wait(lk, [&]{
+            if (isTCPEnabled()) JAMI_WARN("@@@ pj_ice_strans_sendto2 unlocked %u", pimpl_->lastSentLen_);
             return pimpl_->lastSentLen_ >= len;
         });
         pimpl_->lastSentLen_ = 0;
