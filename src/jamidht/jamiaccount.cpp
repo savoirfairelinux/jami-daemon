@@ -304,7 +304,7 @@ JamiAccount::~JamiAccount()
 {
     shutdownConnections();
     if (eventHandler) {
-        eventHandler->cancel();
+        eventHandler->destroy();
         eventHandler.reset();
     }
     if(peerDiscovery_){
