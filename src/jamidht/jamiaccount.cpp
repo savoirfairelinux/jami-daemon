@@ -594,16 +594,18 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 }
             );
 
-            std::lock_guard<std::mutex> lock(sthis->callsMutex_);
-            sthis->pendingCalls_.emplace_back(PendingCall{
-                std::chrono::steady_clock::now(),
-                std::move(ice), std::move(ice_tcp), weak_dev_call,
-                std::move(listenKey),
-                callkey,
-                dev,
-                peer_account,
-                tls::CertificateStore::instance().getCertificate(toUri)
-            });
+            {
+                std::lock_guard<std::mutex> lock(sthis->callsMutex_);
+                sthis->pendingCalls_.emplace_back(PendingCall{
+                    std::chrono::steady_clock::now(),
+                    std::move(ice), std::move(ice_tcp), weak_dev_call,
+                    std::move(listenKey),
+                    callkey,
+                    dev,
+                    peer_account,
+                    tls::CertificateStore::instance().getCertificate(toUri)
+                });
+            }
             sthis->checkPendingCallsTask();
             return false;
         });
@@ -2206,8 +2208,8 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                         /*.from = */ peer_ice_msg.from,
                         /*.from_account = */ from_id,
                         /*.from_cert = */ from_cert});
-        checkPendingCallsTask();
     }
+    checkPendingCallsTask();
 }
 
 void
@@ -2231,8 +2233,8 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.clear();
         pendingSipCalls_.clear();
-        checkPendingCallsTask();
     }
+    checkPendingCallsTask();
 
     dht_->join();
 
@@ -3091,14 +3093,23 @@ JamiAccount::getLastMessages(const uint64_t& base_timestamp)
 void
 JamiAccount::checkPendingCallsTask()
 {
+    // NOTE: callsMutex_ MUST not be locked at this point. In fact, isCancelled()
+    // and cancel() only return if and only if the task is not running and
+    // handlePendingCallList() also uses callsMutex_. So, if we are locked and running
+    // we can trigger a deadlock.
     bool hasHandler = eventHandler and not eventHandler->isCancelled();
-    if (not pendingCalls_.empty() and not hasHandler) {
+    bool hasPendingCall = false;
+    {
+        std::lock_guard<std::mutex> lock(callsMutex_);
+        hasPendingCall = not pendingCalls_.empty();
+    }
+    if (hasPendingCall and not hasHandler) {
         eventHandler = Manager::instance().scheduler().scheduleAtFixedRate([w = weak()] {
             if (auto this_ = w.lock())
                 return this_->handlePendingCallList();
             return false;
         }, std::chrono::milliseconds(10));
-    } else if (pendingCalls_.empty() and hasHandler) {
+    } else if (not hasPendingCall and hasHandler) {
         eventHandler->cancel();
         eventHandler.reset();
     }
