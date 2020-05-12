@@ -304,7 +304,7 @@ JamiAccount::~JamiAccount()
 {
     shutdownConnections();
     if (eventHandler) {
-        eventHandler->cancel();
+        eventHandler->destroy();
         eventHandler.reset();
     }
     if(peerDiscovery_){
@@ -3091,17 +3091,17 @@ JamiAccount::getLastMessages(const uint64_t& base_timestamp)
 void
 JamiAccount::checkPendingCallsTask()
 {
-    bool hasHandler = eventHandler and not eventHandler->isCancelled();
-    if (not pendingCalls_.empty() and not hasHandler) {
-        eventHandler = Manager::instance().scheduler().scheduleAtFixedRate([w = weak()] {
+    decltype(eventHandler) handler;
+    if (not pendingCalls_.empty()) {
+        handler = Manager::instance().scheduler().scheduleAtFixedRate([w = weak()] {
             if (auto this_ = w.lock())
                 return this_->handlePendingCallList();
             return false;
         }, std::chrono::milliseconds(10));
-    } else if (pendingCalls_.empty() and hasHandler) {
-        eventHandler->cancel();
-        eventHandler.reset();
     }
+    std::swap(handler, eventHandler);
+    if (handler)
+        handler->cancel();
 }
 
 void
