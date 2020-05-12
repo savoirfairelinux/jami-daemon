@@ -68,22 +68,26 @@ public:
     RepeatedTask(RepeatedJob&& j) : job_(std::move(j)) {}
     bool run() {
         std::lock_guard<std::mutex> l(lock_);
-        if (job_ and not job_())
+        if (cancel_.load() or (job_ and not job_()))
             job_ = {};
         return (bool)job_;
     }
     void cancel() {
+        cancel_.store(true);
+    }
+    void destroy() {
+        cancel();
         std::lock_guard<std::mutex> l(lock_);
         job_ = {};
     }
     bool isCancelled() const {
-        std::lock_guard<std::mutex> l(lock_);
-        return !job_;
+        return cancel_.load();
     }
 private:
     NON_COPYABLE(RepeatedTask);
-    RepeatedJob job_;
     mutable std::mutex lock_;
+    RepeatedJob job_;
+    std::atomic_bool cancel_ {false};
 };
 
 class ScheduledExecutor {
