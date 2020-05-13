@@ -58,11 +58,17 @@
 #include <future>
 
 // Action identifiers.
+constexpr static const char* ACTION_ADD_ANY_PORT_MAPPING           {"AddAnyPortMapping"};
 constexpr static const char* ACTION_ADD_PORT_MAPPING               {"AddPortMapping"};
 constexpr static const char* ACTION_DELETE_PORT_MAPPING            {"DeletePortMapping"};
 constexpr static const char* ACTION_GET_GENERIC_PORT_MAPPING_ENTRY {"GetGenericPortMappingEntry"};
+constexpr static const char* ACTION_GET_SPECIFIC_PORT_MAPPING_ENTRY {"GetSpecificPortMappingEntry"};
 constexpr static const char* ACTION_GET_STATUS_INFO                {"GetStatusInfo"};
 constexpr static const char* ACTION_GET_EXTERNAL_IP_ADDRESS        {"GetExternalIPAddress"};
+
+// Response identifiers.
+constexpr static const char* RESPONSE_ADD_ANY_PORT_MAPPING            {"AddAnyPortMappingResponse"};
+constexpr static const char* RESPONSE_GET_SPECIFIC_PORT_MAPPING_ENTRY {"GetSpecificPortMappingEntryResponse"};
 
 namespace jami {
 class IpAddr;
@@ -88,9 +94,11 @@ public:
     };
     enum class CtrlAction {
         UNKNOWN,
+        ADD_ANY_PORT_MAPPING,
         ADD_PORT_MAPPING,
         DELETE_PORT_MAPPING,
         GET_GENERIC_PORT_MAPPING_ENTRY,
+        GET_SPECIFIC_PORT_MAPPING_ENTRY,
         GET_STATUS_INFO,
         GET_EXTERNAL_IP_ADDRESS
     };
@@ -112,6 +120,12 @@ public:
     void requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type) override;
     // Treats the reception of an add mapping action answer.
     void processAddMapAction(const std::string& ctrlURL, IXML_Document* actionRequest);
+    void processAddAnyMapAction(const std::string& ctrlURL,
+                                IXML_Document* actionRequest,
+                                IXML_Document* actionResult);
+    void processGetSpecificPortMappingEntry(const std::string& ctrlURL,
+                                            IXML_Document* actionRequest,
+                                            IXML_Document* actionResult);
 
     // Returns control point action callback based on xml node.
     CtrlAction getAction(char* xmlNode);
@@ -160,7 +174,11 @@ private:
     bool   actionDeletePortMapping(const UPnPIGD& igd, const std::string& port_external, const std::string& protocol);
     bool   actionAddPortMapping(const UPnPIGD& igd, const Mapping& mapping, UPnPProtocol::UpnpError& upnp_error);
     bool   actionAddPortMappingAsync(const UPnPIGD& igd, const Mapping& mapping);
+    bool   actionAddAnyPortMappingAsync(const UPnPIGD& igd, const Mapping& mapping);
     bool   actionDeletePortMappingAsync(const UPnPIGD& igd, const std::string& port_external, const std::string& protocol);
+
+    bool   actionGetSpecificPortMappingEntry(const UPnPIGD& igd,
+                                             const Mapping& mapping);
 
 private:
     NON_COPYABLE(PUPnP);

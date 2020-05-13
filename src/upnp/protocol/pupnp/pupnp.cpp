@@ -323,8 +323,7 @@ PUPnP::requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_interna
 {
     Mapping mapping {port_external, port_internal, type};
     if (auto pupnp_igd = dynamic_cast<const UPnPIGD*>(igd)) {
-        JAMI_DBG("PUPnP: Attempting to open port %s", mapping.toString().c_str());
-        actionAddPortMappingAsync(*pupnp_igd, mapping);
+        actionAddAnyPortMappingAsync(*pupnp_igd, mapping);
     }
 }
 
@@ -355,6 +354,105 @@ PUPnP::actionAddPortMappingAsync(const UPnPIGD& igd, const Mapping& mapping)
     return true;
 }
 
+bool
+PUPnP::actionGetSpecificPortMappingEntry(const UPnPIGD& igd,
+                                         const Mapping& mapping)
+{
+    if (not clientRegistered_) {
+        return false;
+    }
+    XMLDocument action(nullptr, ixmlDocument_free);
+    IXML_Document* action_container_ptr = nullptr;
+    // Set action sequence.
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_GET_SPECIFIC_PORT_MAPPING_ENTRY,
+                    igd.getServiceType().c_str(),
+                    "NewRemoteHost", "");
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_GET_SPECIFIC_PORT_MAPPING_ENTRY,
+                    igd.getServiceType().c_str(),
+                    "NewExternalPort", mapping.getPortExternalStr().c_str());
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_GET_SPECIFIC_PORT_MAPPING_ENTRY,
+                    igd.getServiceType().c_str(),
+                    "NewProtocol", mapping.getTypeStr().c_str());
+    action.reset(action_container_ptr);
+    int upnp_err = UpnpSendActionAsync(ctrlptHandle_,
+                                       igd.getControlURL().c_str(),
+                                       igd.getServiceType().c_str(),
+                                       nullptr, action.get(),
+                                       ctrlPtCallback, this);
+    if(upnp_err != UPNP_E_SUCCESS) {
+        JAMI_WARN("PUPnP: Failed to send async action %s from: %s, %d: %s",
+                   ACTION_GET_SPECIFIC_PORT_MAPPING_ENTRY,
+                   igd.getServiceType().c_str(), upnp_err,
+                   UpnpGetErrorMessage(upnp_err));
+        return false;
+    }
+    JAMI_DBG("PUPnP: Confirming our reservation for %s",
+              mapping.toString().c_str());
+    return true;
+}
+
+bool
+PUPnP::actionAddAnyPortMappingAsync(const UPnPIGD& igd,
+                                    const Mapping& mapping)
+{
+    if (not clientRegistered_) {
+        return false;
+    }
+    XMLDocument action(nullptr, ixmlDocument_free);    // Action pointer.
+    IXML_Document* action_container_ptr = nullptr;
+    // Set action sequence.
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_ADD_ANY_PORT_MAPPING,
+                    igd.getServiceType().c_str(),
+                    "NewRemoteHost", "");
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_ADD_ANY_PORT_MAPPING,
+                    igd.getServiceType().c_str(),
+                    "NewExternalPort", mapping.getPortExternalStr().c_str());
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_ADD_ANY_PORT_MAPPING,
+                    igd.getServiceType().c_str(),
+                    "NewProtocol", mapping.getTypeStr().c_str());
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_ADD_ANY_PORT_MAPPING,
+                    igd.getServiceType().c_str(),
+                    "NewInternalPort", mapping.getPortInternalStr().c_str());
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_ADD_ANY_PORT_MAPPING,
+                    igd.getServiceType().c_str(),
+                    "NewInternalClient", igd.localIp_.toString().c_str());
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_ADD_ANY_PORT_MAPPING,
+                    igd.getServiceType().c_str(),
+                    "NewEnabled", "1");
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_ADD_ANY_PORT_MAPPING,
+                    igd.getServiceType().c_str(),
+                    "NewPortMappingDescription", mapping.getDescription().c_str());
+    UpnpAddToAction(&action_container_ptr,
+                    ACTION_ADD_ANY_PORT_MAPPING,
+                    igd.getServiceType().c_str(),
+                    "NewLeaseDuration", "0");
+    action.reset(action_container_ptr);
+    int upnp_err = UpnpSendActionAsync(ctrlptHandle_,
+                                       igd.getControlURL().c_str(),
+                                       igd.getServiceType().c_str(), nullptr,
+                                       action.get(), ctrlPtCallback, this);
+    if(upnp_err != UPNP_E_SUCCESS) {
+        JAMI_WARN("PUPnP: Failed to send async action %s from: %s, %d: %s",
+                   ACTION_ADD_ANY_PORT_MAPPING,
+                   igd.getServiceType().c_str(),
+                   upnp_err, UpnpGetErrorMessage(upnp_err));
+        return false;
+    }
+    JAMI_DBG("PUPnP: Sent request to open any port, suggested %s",
+             mapping.toString().c_str());
+    return true;
+}
+
 void
 PUPnP::processAddMapAction(const std::string& ctrlURL, IXML_Document* actionRequest)
 {
@@ -382,6 +480,97 @@ PUPnP::processAddMapAction(const std::string& ctrlURL, IXML_Document* actionRequ
             if (igd->getControlURL() == ctrlURL) {
                 lk.unlock();
                 notifyContextPortOpenCb_(igd->publicIp_, std::move(mapToAdd), true);
+                return;
+            }
+        }
+    }
+}
+
+void
+PUPnP::processAddAnyMapAction(const std::string& ctrlURL,
+                              IXML_Document* actionRequest,
+                              IXML_Document* actionResult)
+{
+    std::string portReserved(getFirstDocItem(actionResult,
+                             "NewReservedPort"));
+    std::string protocol(getFirstDocItem(actionRequest,
+                         "NewProtocol"));
+
+    std::unique_lock<std::mutex> lk(validIgdMutex_);
+    if (portReserved.empty() or protocol.empty()) {
+        for (auto const &it : validIgdList_) {
+            if (auto igd = std::dynamic_pointer_cast<UPnPIGD>(it.second)) {
+                if (igd->getControlURL() == ctrlURL) {
+                    lk.unlock();
+                    notifyContextPortOpenCb_(igd->publicIp_,
+                                             Mapping(0, 0), false);
+                    return;
+                }
+            }
+        }
+    }
+    std::string portRequested(getFirstDocItem(actionRequest,
+                              "NewExternalPort"));
+    JAMI_DBG("PUPnP: IGD has made a reservation for %s,%s was requested",
+              portReserved.c_str(), portRequested.c_str());
+
+    auto p = std::stoi(portReserved);
+    Mapping mapToAdd(p, p, protocol == "UDP" ? upnp::PortType::UDP :
+                                               upnp::PortType::TCP);
+
+    for (auto const &it : validIgdList_) {
+        if (auto igd = std::dynamic_pointer_cast<UPnPIGD>(it.second)) {
+            if (igd->getControlURL() == ctrlURL) {
+                lk.unlock();
+                actionGetSpecificPortMappingEntry(*igd, mapToAdd);
+                return;
+            }
+        }
+    }
+}
+
+void
+PUPnP::processGetSpecificPortMappingEntry(const std::string& ctrlURL,
+                                         IXML_Document* actionRequest,
+                                         IXML_Document* actionResult)
+{
+    std::string portExternal(getFirstDocItem(actionRequest,
+                                             "NewExternalPort"));
+    std::string portInternal(getFirstDocItem(actionResult,
+                                             "NewInternalPort"));
+    std::string protocol(getFirstDocItem(actionRequest,
+                                         "NewProtocol"));
+
+    std::unique_lock<std::mutex> lk(validIgdMutex_);
+    if (portExternal.empty() or
+        portInternal.empty() or protocol.empty())
+    {
+        for (auto const &it : validIgdList_)
+            if (auto igd = std::dynamic_pointer_cast<UPnPIGD>(it.second))
+                if (igd->getControlURL() == ctrlURL) {
+                    lk.unlock();
+                    notifyContextPortOpenCb_(igd->publicIp_,
+                                             Mapping(0, 0), false);
+                    return;
+                }
+    }
+
+    Mapping mapToAdd(std::stoi(portExternal),
+                     std::stoi(portInternal),
+                     protocol == "UDP" ?
+                                 upnp::PortType::UDP :
+                                 upnp::PortType::TCP);
+
+    JAMI_DBG("PUPnP: reservation for port %s confirmed",
+             mapToAdd.toString().c_str());
+
+    for (auto const &it : validIgdList_) {
+        auto igd = std::dynamic_pointer_cast<UPnPIGD>(it.second);
+        if (igd) {
+            if (igd->getControlURL() == ctrlURL) {
+                lk.unlock();
+                notifyContextPortOpenCb_(igd->publicIp_,
+                                         std::move(mapToAdd), true);
                 return;
             }
         }
@@ -457,7 +646,11 @@ PUPnP::ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_d
 PUPnP::CtrlAction
 PUPnP::getAction(char* xmlNode)
 {
-    if (strstr(xmlNode, ACTION_ADD_PORT_MAPPING)) {
+    if (strstr(xmlNode, ACTION_GET_SPECIFIC_PORT_MAPPING_ENTRY)) {
+        return CtrlAction::GET_SPECIFIC_PORT_MAPPING_ENTRY;
+    } else if (strstr(xmlNode, ACTION_ADD_ANY_PORT_MAPPING)) {
+        return CtrlAction::ADD_ANY_PORT_MAPPING;
+    } else if (strstr(xmlNode, ACTION_ADD_PORT_MAPPING)) {
         return CtrlAction::ADD_PORT_MAPPING;
     } else if (strstr(xmlNode, ACTION_DELETE_PORT_MAPPING)) {
         return CtrlAction::DELETE_PORT_MAPPING;
@@ -481,7 +674,6 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
     case UPNP_DISCOVERY_SEARCH_RESULT:
     {
         const UpnpDiscovery* d_event = (const UpnpDiscovery*)event;
-
         // First check the error code.
         if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS)
             break;
@@ -540,7 +732,20 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
     }
     case UPNP_EVENT_RECEIVED:
     {
-        // TODO: Handle event by updating any changed state variables */
+        // TODO: Handle event by updating any changed state variables
+        UpnpEvent *e_event = (UpnpEvent *)event;
+        char *xmlbuff = NULL;
+
+        xmlbuff = ixmlPrintNode(
+                (IXML_Node *)UpnpEvent_get_ChangedVariables(e_event));
+        JAMI_DBG("\nUPNP_EVENT_RECEIVED\n"
+                 "SID         =  %s\n"
+                 "EventKey    =  %d\n"
+                 "ChangedVars =  %s\n",
+                 UpnpString_get_String(UpnpEvent_get_SID(e_event)),
+                 UpnpEvent_get_EventKey(e_event),
+                 xmlbuff);
+        ixmlFreeDOMString(xmlbuff);
         break;
     }
     case UPNP_EVENT_AUTORENEWAL_FAILED:     // Fall through. Treat failed autorenewal like an expired subscription.
@@ -562,34 +767,135 @@ PUPnP::handleCtrlPtUPnPEvents(Upnp_EventType event_type, const void* event)
         break;
     }
     case UPNP_EVENT_SUBSCRIBE_COMPLETE:
+    case UPNP_EVENT_UNSUBSCRIBE_COMPLETE:
     {
         break;
     }
-    case UPNP_EVENT_UNSUBSCRIBE_COMPLETE:
+    /* SOAP */
+    case UPNP_CONTROL_ACTION_REQUEST:
     {
+        UpnpActionRequest *a_event = (UpnpActionRequest *)event;
+        IXML_Document *actionRequestDoc = NULL;
+        IXML_Document *actionResultDoc = NULL;
+        char *xmlbuff = NULL;
+
+        JAMI_DBG("\nACTION_REQUEST\n"
+                 "ErrCode     =  %d\n"
+                 "ErrStr      =  %s\n"
+                 "ActionName  =  %s\n"
+                 "UDN         =  %s\n"
+                 "ServiceID   =  %s\n",
+                 UpnpActionRequest_get_ErrCode(a_event),
+                 UpnpString_get_String(
+                     UpnpActionRequest_get_ErrStr(a_event)),
+                 UpnpString_get_String(
+                     UpnpActionRequest_get_ActionName(a_event)),
+                 UpnpString_get_String(
+                     UpnpActionRequest_get_DevUDN(a_event)),
+                 UpnpString_get_String(
+                     UpnpActionRequest_get_ServiceID(a_event)));
+        actionRequestDoc = UpnpActionRequest_get_ActionRequest(a_event);
+        if (actionRequestDoc) {
+            xmlbuff = ixmlPrintNode((IXML_Node *)actionRequestDoc);
+            if (xmlbuff) {
+                JAMI_DBG(
+                        "ActRequest  =  %s\n", xmlbuff);
+                ixmlFreeDOMString(xmlbuff);
+                xmlbuff = NULL;
+            }
+        } else {
+            JAMI_DBG("ActRequest  =  (null)\n");
+        }
+        actionResultDoc = UpnpActionRequest_get_ActionResult(a_event);
+        if (actionResultDoc) {
+            xmlbuff = ixmlPrintNode((IXML_Node *)actionResultDoc);
+            if (xmlbuff) {
+                JAMI_DBG(
+                        "ActResult   =  %s\n", xmlbuff);
+                ixmlFreeDOMString(xmlbuff);
+            }
+            xmlbuff = NULL;
+        } else {
+            JAMI_DBG("ActResult   =  (null)\n");
+        }
         break;
     }
     case UPNP_CONTROL_ACTION_COMPLETE:
     {
         const UpnpActionComplete* a_event = (const UpnpActionComplete*)event;
-        if (UpnpActionComplete_get_ErrCode(a_event) == UPNP_E_SUCCESS) {
-            IXML_Document* actionRequest = UpnpActionComplete_get_ActionRequest(a_event);
-            if (actionRequest) {
-                std::string ctrlURL(UpnpString_get_String(UpnpActionComplete_get_CtrlUrl(a_event)));
-                char* xmlbuff = ixmlPrintNode((IXML_Node*)actionRequest);
-                if (xmlbuff) {
-                    switch(getAction(xmlbuff))
-                    {
-                    case CtrlAction::UNKNOWN: break;
-                    case CtrlAction::ADD_PORT_MAPPING: processAddMapAction(ctrlURL, actionRequest); break;
-                    case CtrlAction::DELETE_PORT_MAPPING: processRemoveMapAction(ctrlURL, actionRequest); break;
-                    case CtrlAction::GET_GENERIC_PORT_MAPPING_ENTRY: break;
-                    case CtrlAction::GET_STATUS_INFO: break;
-                    case CtrlAction::GET_EXTERNAL_IP_ADDRESS: break;
-                    default: break;
-                    }
-                }
+        int errCode = UpnpActionComplete_get_ErrCode(a_event);
+        std::string ctrlURL(UpnpString_get_String(UpnpActionComplete_get_CtrlUrl(a_event)));
+        JAMI_DBG("\nACTION_COMPLETE\n"
+                 "ErrCode     =  %d\n"
+                 "CtrlUrl     =  %s\n",
+                 errCode, ctrlURL.c_str());
+
+        IXML_Document* actionRequest =
+            UpnpActionComplete_get_ActionRequest(a_event);
+        IXML_Document *actionResult =
+            UpnpActionComplete_get_ActionResult(a_event);
+
+        char* xmlresult  = NULL;
+        char* xmlrequest = NULL;
+
+        if (actionRequest) {
+            xmlrequest = ixmlPrintNode((IXML_Node*)actionRequest);
+            JAMI_DBG("ActRequest:\n" "%s",
+                     xmlrequest ? xmlrequest : "NULL");
+        }
+        if (actionResult) {
+            xmlresult  = ixmlPrintNode((IXML_Node*)actionResult);
+            JAMI_DBG("ActResult:\n" "%s",
+                     xmlresult ? xmlresult : "NULL");
+        }
+
+        if (UpnpActionComplete_get_ErrCode(a_event) != UPNP_E_SUCCESS)
+            break;
+
+
+        enum CtrlAction action = CtrlAction::UNKNOWN;
+        if (xmlrequest) {
+            action = getAction(xmlrequest);
+            ixmlFreeDOMString(xmlrequest);
+            xmlrequest = NULL;
+        }
+
+        switch (action) {
+        case CtrlAction::GET_SPECIFIC_PORT_MAPPING_ENTRY:
+            if (xmlresult &&
+                strstr(xmlresult,
+                       RESPONSE_GET_SPECIFIC_PORT_MAPPING_ENTRY))
+            {
+                    processGetSpecificPortMappingEntry(ctrlURL,
+                                                       actionRequest,
+                                                       actionResult);
             }
+            break;
+        case CtrlAction::ADD_ANY_PORT_MAPPING:
+            if (xmlresult)
+                if (strstr(xmlresult, RESPONSE_ADD_ANY_PORT_MAPPING))
+                {
+                    processAddAnyMapAction(ctrlURL,
+                                           actionRequest,
+                                           actionResult);
+                }
+            break;
+        case CtrlAction::ADD_PORT_MAPPING:
+            processAddMapAction(ctrlURL, actionRequest);
+            break;
+        case CtrlAction::DELETE_PORT_MAPPING:
+            processRemoveMapAction(ctrlURL, actionRequest);
+            break;
+        case CtrlAction::GET_GENERIC_PORT_MAPPING_ENTRY:
+        case CtrlAction::GET_STATUS_INFO:
+        case CtrlAction::GET_EXTERNAL_IP_ADDRESS:
+        case CtrlAction::UNKNOWN:
+        default:
+            break;
+        }
+        if (xmlresult) {
+            ixmlFreeDOMString(xmlresult);
+            xmlresult = NULL;
         }
         break;
     }
