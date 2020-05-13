@@ -303,10 +303,6 @@ JamiAccount::JamiAccount(const std::string& accountID, bool /* presenceEnabled *
 JamiAccount::~JamiAccount()
 {
     shutdownConnections();
-    if (eventHandler) {
-        eventHandler->destroy();
-        eventHandler.reset();
-    }
     if(peerDiscovery_){
         peerDiscovery_->stopPublish(PEER_DISCOVERY_JAMI_SERVICE);
         peerDiscovery_->stopDiscovery(PEER_DISCOVERY_JAMI_SERVICE);
@@ -493,20 +489,29 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING,
                                                                           call->getDetails());
+
+        auto callId = dev_call->getCallId();
+        auto onNegoDone = [callId, w=weak()](bool) {
+            if (auto shared = w.lock()) {
+                shared->checkPendingCall(callId);
+            }
+        };
+
         std::weak_ptr<SIPCall> weak_dev_call = dev_call;
+        auto iceOptions = getIceOptions();
+        iceOptions.onNegoDone = onNegoDone;
         dev_call->setIPToIP(true);
         dev_call->setSecure(isTlsEnabled());
         auto ice = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
-                                             ICE_COMPONENTS, true, getIceOptions());
+                                             ICE_COMPONENTS, true, iceOptions);
         if (not ice) {
             JAMI_WARN("[call %s] Can't create ICE", call->getCallId().c_str());
             dev_call->removeCall();
             return;
         }
 
-        auto ice_config = getIceOptions();
-        ice_config.tcpEnable = true;
-        auto ice_tcp = createIceTransport(("sip:" + dev_call->getCallId()).c_str(), ICE_COMPONENTS, true, ice_config);
+        iceOptions.tcpEnable = true;
+        auto ice_tcp = createIceTransport(("sip:" + dev_call->getCallId()).c_str(), ICE_COMPONENTS, true, iceOptions);
         if (not ice_tcp) {
             JAMI_WARN("Can't create ICE over TCP, will only use UDP");
         }
@@ -595,7 +600,7 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             );
 
             std::lock_guard<std::mutex> lock(sthis->callsMutex_);
-            sthis->pendingCalls_.emplace_back(PendingCall{
+            sthis->pendingCalls_.emplace(call->getCallId(), PendingCall {
                 std::chrono::steady_clock::now(),
                 std::move(ice), std::move(ice_tcp), weak_dev_call,
                 std::move(listenKey),
@@ -604,7 +609,6 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 peer_account,
                 tls::CertificateStore::instance().getCertificate(toUri)
             });
-            sthis->checkPendingCallsTask();
             return false;
         });
     };
@@ -1392,44 +1396,39 @@ JamiAccount::registerName(const std::string& password, const std::string& name)
 }
 #endif
 
-bool
-JamiAccount::handlePendingCallList()
+void
+JamiAccount::checkPendingCall(const std::string& callId)
 {
-    // Process pending call into a local list to not block threads depending on this list,
-    // as incoming call handlers.
-    decltype(pendingCalls_) pending_calls;
+    // Note only one check at a time. In fact, the UDP and TCP negotiation
+    // can finish at the same time and we need to avoid potential race conditions.
+    std::lock_guard<std::mutex> lk(handlePendingMutex_);
+    PendingCall pc;
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
-        pending_calls = std::move(pendingCalls_);
-        pendingCalls_.clear();
+        auto it = pendingCalls_.find(callId);
+        if (it == pendingCalls_.end()) return;
+        pc = std::move(it->second);
+        pendingCalls_.erase(it);
     }
 
-    auto pc_iter = std::begin(pending_calls);
-    while (pc_iter != std::end(pending_calls)) {
-        bool incoming = !pc_iter->call_key; // do it now, handlePendingCall may invalidate pc data
-        bool handled;
-
-        try {
-            handled = handlePendingCall(*pc_iter, incoming);
-        } catch (const std::exception& e) {
-            JAMI_ERR("[DHT] exception during pending call handling: %s", e.what());
-            handled = true; // drop from pending list
-        }
-
-        if (handled) {
-            // Cancel pending listen (outgoing call)
-            if (not incoming)
-                dht_->cancelListen(pc_iter->call_key, std::move(pc_iter->listen_key));
-            pc_iter = pending_calls.erase(pc_iter);
-        } else
-            ++pc_iter;
+    bool incoming = !pc.call_key;
+    bool handled;
+    try {
+        handled = handlePendingCall(pc, incoming);
+    } catch (const std::exception& e) {
+        JAMI_ERR("[DHT] exception during pending call handling: %s", e.what());
+        handled = true; // drop from pending list
     }
 
-    // Re-integrate non-handled and valid pending calls
-    {
+    if (handled and not incoming) {
+        // Cancel pending listen (outgoing call)
+        dht_->cancelListen(pc.call_key, std::move(pc.listen_key));
+    }
+
+    if (not handled) {
+        // Re-integrate non-handled and valid pending calls
         std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.splice(std::end(pendingCalls_), pending_calls);
-        return not pendingCalls_.empty();
+        pendingCalls_.emplace(callId, std::move(pc));
     }
 }
 
@@ -2107,10 +2106,17 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
     if (!call) {
         return;
     }
-    auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
-    auto ice_config = getIceOptions();
-    ice_config.tcpEnable = true;
-    auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(), ICE_COMPONENTS, true, ice_config);
+    auto callId = call->getCallId();
+    auto onNegoDone = [callId, w=weak()](bool) {
+        if (auto shared = w.lock()) {
+            shared->checkPendingCall(callId);
+        }
+    };
+    auto iceOptions = getIceOptions();
+    iceOptions.onNegoDone = onNegoDone;
+    auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, iceOptions);
+    iceOptions.tcpEnable = true;
+    auto ice_tcp = createIceTransport(("sip:" + call->getCallId()).c_str(), ICE_COMPONENTS, true, iceOptions);
 
     std::weak_ptr<SIPCall> wcall = call;
     Manager::instance().addTask([account=shared(), wcall, ice, ice_tcp, msg, from_cert, from] {
@@ -2194,20 +2200,17 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
     call->setPeerNumber(from);
 
     // Let the call handled by the PendingCall handler loop
-    {
-        std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.emplace_back(
-            PendingCall{/*.start = */ started_time,
-                        /*.ice_sp = */ udp_failed ? nullptr : ice,
-                        /*.ice_tcp_sp = */ tcp_failed ? nullptr : ice_tcp,
-                        /*.call = */ wcall,
-                        /*.listen_key = */ {},
-                        /*.call_key = */ {},
-                        /*.from = */ peer_ice_msg.from,
-                        /*.from_account = */ from_id,
-                        /*.from_cert = */ from_cert});
-        checkPendingCallsTask();
-    }
+    std::lock_guard<std::mutex> lock(callsMutex_);
+    pendingCalls_.emplace(call->getCallId(),
+        PendingCall{/*.start = */ started_time,
+                    /*.ice_sp = */ udp_failed ? nullptr : ice,
+                    /*.ice_tcp_sp = */ tcp_failed ? nullptr : ice_tcp,
+                    /*.call = */ wcall,
+                    /*.listen_key = */ {},
+                    /*.call_key = */ {},
+                    /*.from = */ peer_ice_msg.from,
+                    /*.from_account = */ from_id,
+                    /*.from_cert = */ from_cert});
 }
 
 void
@@ -2231,7 +2234,6 @@ JamiAccount::doUnregister(std::function<void(bool)> released_cb)
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.clear();
         pendingSipCalls_.clear();
-        checkPendingCallsTask();
     }
 
     dht_->join();
@@ -3086,22 +3088,6 @@ std::vector<DRing::Message>
 JamiAccount::getLastMessages(const uint64_t& base_timestamp)
 {
     return SIPAccountBase::getLastMessages(base_timestamp);
-}
-
-void
-JamiAccount::checkPendingCallsTask()
-{
-    decltype(eventHandler) handler;
-    if (not pendingCalls_.empty()) {
-        handler = Manager::instance().scheduler().scheduleAtFixedRate([w = weak()] {
-            if (auto this_ = w.lock())
-                return this_->handlePendingCallList();
-            return false;
-        }, std::chrono::milliseconds(10));
-    }
-    std::swap(handler, eventHandler);
-    if (handler)
-        handler->cancel();
 }
 
 void
