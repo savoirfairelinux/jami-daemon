@@ -153,16 +153,18 @@ class DRING_TESTABLE Manager {
         /**
          * Functions which occur with a user's action
          * Hangup the call
-         * @param id  The call identifier
+         * @param id    The call identifier
+         * @param busy  Send busy signal
          */
-        bool hangupCall(const std::string& id);
+        bool hangupCall(const std::string& id, bool busy = false);
 
         /**
          * Functions which occur with a user's action
          * Hangup the conference (hangup every participants)
          * @param id  The call identifier
+         * @param busy  Send busy signal
          */
-        bool hangupConference(const std::string& id);
+        bool hangupConference(const std::string& id, bool busy = false);
 
         /**
          * Functions which occur with a user's action

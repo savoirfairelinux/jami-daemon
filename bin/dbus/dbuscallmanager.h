@@ -60,7 +60,7 @@ class DRING_PUBLIC DBusCallManager :
                                          const std::map<std::string, std::string>& VolatileCallDetails);
         bool refuse(const std::string& callID);
         bool accept(const std::string& callID);
-        bool hangUp(const std::string& callID);
+        bool hangUp(const std::string& callID, const bool& busy);
         bool hold(const std::string& callID);
         bool unhold(const std::string& callID);
         bool muteLocalMedia(const std::string& callid, const std::string& mediaType, const bool& mute);
@@ -77,7 +77,7 @@ class DRING_PUBLIC DBusCallManager :
         bool detachLocalParticipant();
         bool detachParticipant(const std::string& callID);
         bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
-        bool hangUpConference(const std::string& confID);
+        bool hangUpConference(const std::string& confID, const bool& busy);
         bool holdConference(const std::string& confID);
         bool unholdConference(const std::string& confID);
         std::vector<std::string> getConferenceList();

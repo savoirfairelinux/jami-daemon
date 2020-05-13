@@ -51,9 +51,9 @@ DBusCallManager::accept(const std::string& callID) -> decltype(DRing::accept(cal
 }
 
 auto
-DBusCallManager::hangUp(const std::string& callID) -> decltype(DRing::hangUp(callID))
+DBusCallManager::hangUp(const std::string& callID, const bool& busy) -> decltype(DRing::hangUp(callID, busy))
 {
-    return DRing::hangUp(callID);
+    return DRing::hangUp(callID, busy);
 }
 
 auto
@@ -154,9 +154,9 @@ DBusCallManager::joinConference(const std::string& sel_confID, const std::string
 }
 
 auto
-DBusCallManager::hangUpConference(const std::string& confID) -> decltype(DRing::hangUpConference(confID))
+DBusCallManager::hangUpConference(const std::string& confID, const bool& busy) -> decltype(DRing::hangUpConference(confID, busy))
 {
-    return DRing::hangUpConference(confID);
+    return DRing::hangUpConference(confID, busy);
 }
 
 auto

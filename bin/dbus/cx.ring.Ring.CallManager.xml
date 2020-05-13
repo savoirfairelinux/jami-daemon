@@ -90,6 +90,11 @@
                 The callID.
               </tp:docstring>
             </arg>
+            <arg type="b" name="busy" direction="in">
+              <tp:docstring>
+                If we send a busy signal
+              </tp:docstring>
+            </arg>
             <arg type="b" name="hangupSucceeded" direction="out"/>
         </method>
 
@@ -101,6 +106,11 @@
             <arg type="s" name="confID" direction="in">
               <tp:docstring>
                 The unique conference ID.
+              </tp:docstring>
+            </arg>
+            <arg type="b" name="busy" direction="in">
+              <tp:docstring>
+                If we send a busy signal
               </tp:docstring>
             </arg>
             <arg type="b" name="hangupSucceeded" direction="out"/>

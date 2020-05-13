@@ -81,15 +81,15 @@ accept(const std::string& callID)
 }
 
 bool
-hangUp(const std::string& callID)
+hangUp(const std::string& callID, bool busy)
 {
-    return jami::Manager::instance().hangupCall(callID);
+    return jami::Manager::instance().hangupCall(callID, busy);
 }
 
 bool
-hangUpConference(const std::string& confID)
+hangUpConference(const std::string& confID, bool busy)
 {
-    return jami::Manager::instance().hangupConference(confID);
+    return jami::Manager::instance().hangupConference(confID, busy);
 }
 
 bool

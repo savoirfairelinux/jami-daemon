@@ -44,7 +44,7 @@ DRING_PUBLIC std::string placeCall(const std::string& accountID, const std::stri
 
 DRING_PUBLIC bool refuse(const std::string& callID);
 DRING_PUBLIC bool accept(const std::string& callID);
-DRING_PUBLIC bool hangUp(const std::string& callID);
+DRING_PUBLIC bool hangUp(const std::string& callID, bool busy);
 DRING_PUBLIC bool hold(const std::string& callID);
 DRING_PUBLIC bool unhold(const std::string& callID);
 DRING_PUBLIC bool muteLocalMedia(const std::string& callid, const std::string& mediaType, bool mute);
@@ -63,7 +63,7 @@ DRING_PUBLIC bool addMainParticipant(const std::string& confID);
 DRING_PUBLIC bool detachLocalParticipant();
 DRING_PUBLIC bool detachParticipant(const std::string& callID);
 DRING_PUBLIC bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
-DRING_PUBLIC bool hangUpConference(const std::string& confID);
+DRING_PUBLIC bool hangUpConference(const std::string& confID, bool busy);
 DRING_PUBLIC bool holdConference(const std::string& confID);
 DRING_PUBLIC bool unholdConference(const std::string& confID);
 DRING_PUBLIC std::vector<std::string> getConferenceList();

@@ -1007,7 +1007,7 @@ Manager::checkAudio()
 
 //THREAD=Main
 bool
-Manager::hangupCall(const std::string& callId)
+Manager::hangupCall(const std::string& callId, bool busy)
 {
     // store the current call id
     const auto& currentCallId(getCurrentCallId());
@@ -1034,7 +1034,7 @@ Manager::hangupCall(const std::string& callId)
     }
 
     try {
-        call->hangup(0);
+        call->hangup(busy ? PJSIP_SC_BUSY_HERE : 0);
     } catch (const VoipLinkException &e) {
         JAMI_ERR("%s", e.what());
         return false;
@@ -1044,13 +1044,13 @@ Manager::hangupCall(const std::string& callId)
 }
 
 bool
-Manager::hangupConference(const std::string& id)
+Manager::hangupConference(const std::string& id, bool busy)
 {
     JAMI_DBG("Hangup conference %s", id.c_str());
     if (auto conf = getConferenceFromID(id)) {
         ParticipantSet participants(conf->getParticipantList());
         for (const auto &item : participants)
-            hangupCall(item);
+            hangupCall(item, busy);
         pimpl_->unsetCurrentCall();
         return true;
     }
