@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "ed6c3fe9_b95ab793",
+        "filename": "src/manager.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 749,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-13T20:26:33Z",
+      "side": 1,
+      "message": "If the manager is reused, init() should only be called after a corresponding call to destroy(), which resets sipLink_.\nAt this point sipLink_ should always be null (maybe throw std::runtime_error it\u0027s not the case)",
+      "range": {
+        "startLine": 746,
+        "startChar": 0,
+        "endLine": 749,
+        "endChar": 78
+      },
+      "revId": "367bb6cb20f7e65a3376de5561cf0dabf3017ef8",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
