@@ -505,7 +505,7 @@ private:
      */
     void onPortMappingAdded(uint16_t port_used, bool success);
 
-    bool handlePendingCallList();
+    void checkPendingCall(const std::string& callId);
     bool handlePendingCall(PendingCall& pc, bool incoming);
 
     void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {}, const std::string& archive_path = {});
@@ -561,8 +561,6 @@ private:
     template <class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
 
-    void checkPendingCallsTask();
-
 #if HAVE_RINGNS
     std::string nameServer_;
     std::string registeredName_;
@@ -578,7 +576,7 @@ private:
     /**
      * DHT calls waiting for ICE negotiation
      */
-    std::list<PendingCall> pendingCalls_;
+    std::map<std::string, PendingCall> pendingCalls_;
 
     /**
      * Incoming DHT calls that are not yet actual SIP calls.
@@ -674,8 +672,6 @@ private:
     std::map<std::string, std::string> discoveredPeerMap_;
     bool accountPeerDiscovery_ {false};
     bool accountPublish_ {false};
-
-    std::shared_ptr<RepeatedTask> eventHandler {};
 
     /**
      * Avoid to refresh the cache multiple times
