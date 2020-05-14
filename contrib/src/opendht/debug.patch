@@ -1,0 +1,303 @@
+ include/opendht/dht_proxy_server.h |  1 +
+ src/dht.cpp                        | 34 +++++++++++++++++++++++++++++++++-
+ src/dht_proxy_client.cpp           |  6 ++++--
+ src/dht_proxy_server.cpp           | 43 ++++++++++++++++++++++++++++++++++++++++---
+ src/search.h                       |  5 +++++
+ src/value_cache.h                  | 37 +++++++++++++++++++++++++++++++++++++
+ 6 files changed, 120 insertions(+), 6 deletions(-)
+
+diff --git a/include/opendht/dht_proxy_server.h b/include/opendht/dht_proxy_server.h
+index a3720d1..639fbda 100644
+--- a/include/opendht/dht_proxy_server.h
++++ b/include/opendht/dht_proxy_server.h
+@@ -379,6 +379,7 @@ private:
+     };
+     std::mutex lockPushListeners_;
+     std::map<std::string, PushListener> pushListeners_;
++    std::map<InfoHash, int> totalListeners_;
+     proxy::ListenToken tokenPushNotif_ {0};
+ #endif //OPENDHT_PUSH_NOTIFICATIONS
+ };
+diff --git a/src/dht.cpp b/src/dht.cpp
+index 49ff12e..7b90212 100644
+--- a/src/dht.cpp
++++ b/src/dht.cpp
+@@ -28,6 +28,7 @@
+ #include <algorithm>
+ #include <random>
+ #include <sstream>
++#include <ios>
+ #include <fstream>
+
+ namespace dht {
+@@ -486,6 +487,11 @@ void Dht::searchSendAnnounceValue(const Sp<Search>& sr) {
+                     next_refresh_time
+                 };
+             } else if (hasValue and a.permanent) {
++                if (sr->id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++                    std::stringstream oss;
++                    oss << std::hex << a.value->id;
++                    printf("@@@ SENDING PRESENCE REFRESH: %s\n", oss.str().c_str());
++                }
+                 if (logger_)
+                     logger_->w(sr->id, sn->node->id, "[search %s] [node %s] sending 'refresh' (vid: %d)",
+                         sr->id.toString().c_str(), sn->node->toString().c_str(), a.value->id);
+@@ -599,6 +605,10 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+             r->second.cacheExpirationJob = scheduler.add(time_point::max(), [this,ws,query,node=n.node]{
+                 if (auto sr = ws.lock()) {
+                     if (auto sn = sr->getNode(node)) {
++                        if (sn->node->getId().toString() == "1bcc64b384455b31dca5e9ba55e2752b326333e7"
++                            || sn->node->getId().toString() == "52d7f158d97563ad0e0644ae25eeceed5a92c865") {
++                                printf("@@@ Expire for %s\n", sn->node->getId().toString().c_str());
++                            }
+                         sn->expireValues(query, scheduler);
+                     }
+                 }
+@@ -632,6 +642,23 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+                     scheduler.edit(sr->nextSearchStep, scheduler.time());
+                     sr->insertNode(node, scheduler.time(), answer.ntoken);
+                     if (auto sn = sr->getNode(node)) {
++                        if (sn->node->getId().toString() == "1bcc64b384455b31dca5e9ba55e2752b326333e7"
++                            || sn->node->getId().toString() == "52d7f158d97563ad0e0644ae25eeceed5a92c865") {
++                            for (const auto& value: answer.values) {
++                                if (value->isSigned())
++                                    printf("@@@ Received Value: %s\n", value->toString().c_str());
++                            }
++                            for (const auto& vid: answer.expired_values) {
++                                std::stringstream oss;
++                                oss << std::hex << vid;
++                                printf("@@@ Received expired vid: %s\n", oss.str().c_str());
++                            }
++                            for (const auto& vid: answer.refreshed_values) {
++                                std::stringstream oss;
++                                oss << std::hex << vid;
++                                printf("@@@ Received refresh for vid: %s\n", oss.str().c_str());
++                            }
++                        }
+                         sn->onValues(query, std::move(answer), types, scheduler);
+                     }
+                 }
+@@ -717,7 +744,7 @@ Dht::searchStep(Sp<Search> sr)
+
+     while (sr->currentlySolicitedNodeCount() < MAX_REQUESTED_SEARCH_NODES and searchSendGetValues(sr));
+
+-
++
+     if (sr->getNumberOfConsecutiveBadNodes() >= std::min<size_t>(sr->nodes.size(), SEARCH_MAX_BAD_NODES))
+     {
+         if (logger_)
+@@ -825,6 +852,11 @@ Dht::announce(const InfoHash& id,
+ {
+     auto& srs = searches(af);
+     auto srp = srs.find(id);
++    if (permanent && id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++        std::stringstream oss;
++        oss << std::hex << value->id;
++        printf("@@@ ANNOUNCE PRESENCE FOR id: %s\n", oss.str().c_str());
++    }
+     if (auto sr = srp == srs.end() ? search(id, af) : srp->second) {
+         sr->put(value, callback, created, permanent);
+         scheduler.edit(sr->nextSearchStep, scheduler.time());
+diff --git a/src/dht_proxy_client.cpp b/src/dht_proxy_client.cpp
+index 3406f46..1f82503 100644
+--- a/src/dht_proxy_client.cpp
++++ b/src/dht_proxy_client.cpp
+@@ -119,6 +119,7 @@ DhtProxyClient::DhtProxyClient(
+     jsonBuilder_["commentStyle"] = "None";
+     jsonBuilder_["indentation"] = "";
+     if (logger_) {
++        logger_->e("@@@ Will use pushSessionId_ %s with %s", pushSessionId_.c_str(), proxyUrl_.c_str());
+         if (serverCertificate_)
+             logger_->d("[proxy:client] using ca certificate for ssl:\n%s",
+                        serverCertificate_->toString(false/*chain*/).c_str());
+@@ -1156,8 +1157,9 @@ DhtProxyClient::pushNotificationReceived(const std::map<std::string, std::string
+     try {
+         auto sessionId = notification.find("s");
+         if (sessionId != notification.end() and sessionId->second != pushSessionId_) {
+-            if (logger_)
+-                logger_->d("[proxy:client] [push] ignoring push for other session");
++            if (logger_) {
++                logger_->d("[proxy:client] [push] ignoring push for other session (%s vs %s)", pushSessionId_.c_str(), sessionId->second.c_str());
++            }
+             return;
+         }
+         std::lock_guard<std::mutex> lock(searchLock_);
+diff --git a/src/dht_proxy_server.cpp b/src/dht_proxy_server.cpp
+index ebc6b6f..3523a7c 100644
+--- a/src/dht_proxy_server.cpp
++++ b/src/dht_proxy_server.cpp
+@@ -145,6 +145,14 @@ DhtProxyServer::onConnectionClosed(restinio::connection_id_t id)
+     std::lock_guard<std::mutex> lock(lockListener_);
+     auto it = listeners_.find(id);
+     if (it != listeners_.end()) {
++        auto itTL = totalListeners_.find(it->second.hash);
++        if (itTL != totalListeners_.end()) {
++            if (itTL->second == 1) {
++                totalListeners_.erase(itTL);
++            } else {
++                itTL->second -= 1;
++            }
++        }
+         dht_->cancelListen(it->second.hash, std::move(it->second.token));
+         listeners_.erase(it);
+         if (logger_)
+@@ -501,7 +509,18 @@ DhtProxyServer::getStats(restinio::request_handle_t request,
+     try {
+         if (auto stats = stats_) {
+             auto response = initHttpResponse(request->create_response());
+-            response.append_body(Json::writeString(jsonBuilder_, stats->toJson()) + "\n");
++            auto json = stats->toJson();
++            Json::Value puts;
++            for (const auto& put: puts_) {
++                puts[put.first.toString()] = std::to_string(put.second.puts.size());
++            }
++            json["puts"] = puts;
++            Json::Value listeners;
++            for (const auto& l: totalListeners_) {
++                listeners[l.first.toString()] = l.second;
++            }
++            json["listeners"] = listeners;
++            response.append_body(Json::writeString(jsonBuilder_, json) + "\n");
+             return response.done();
+         } else {
+             auto response = initHttpResponse(request->create_response(restinio::status_service_unavailable()));
+@@ -561,6 +580,11 @@ DhtProxyServer::listen(restinio::request_handle_t request,
+         auto &session = listeners_[request->connection_id()];
+         session.hash = infoHash;
+         session.response = response;
++        auto it = totalListeners_.find(infoHash);
++        if (it == totalListeners_.end())
++            it->second = 0;
++        it->second += 1;
++
+         session.token = dht_->listen(infoHash, [this, response]
+                 (const std::vector<Sp<Value>>& values, bool expired){
+             for (const auto& value: values){
+@@ -666,6 +690,11 @@ DhtProxyServer::subscribe(restinio::request_handle_t request,
+         listener.sessionCtx->sessionId = sessionId;
+
+         // Add listen on dht
++        auto it = totalListeners_.find(infoHash);
++        if (it == totalListeners_.end())
++            it->second = 0;
++        it->second += 1;
++
+         listener.internalToken = dht_->listen(infoHash,
+             [this, infoHash, pushToken, isAndroid, clientId, sessionCtx = listener.sessionCtx]
+             (const std::vector<std::shared_ptr<Value>>& values, bool expired){
+@@ -804,6 +833,14 @@ DhtProxyServer::handleCancelPushListen(const asio::error_code &ec, const std::st
+
+     for (auto listener = listeners->second.begin(); listener != listeners->second.end();){
+         if (listener->clientId == clientId){
++            auto it = totalListeners_.find(key);
++            if (it != totalListeners_.end()) {
++                if (it->second == 1) {
++                    totalListeners_.erase(it);
++                } else {
++                    it->second -= 1;
++                }
++            }
+             if (dht_)
+                 dht_->cancelListen(key, std::move(listener->internalToken));
+             listener = listeners->second.erase(listener);
+@@ -946,8 +983,8 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                 auto& sPuts = puts_[infoHash];
+                 if (value->id == Value::INVALID_ID) {
+                     for (auto& pp : sPuts.puts) {
+-                        if (pp.second.pushToken == pushToken
+-                            and pp.second.clientId == clientId
++                        if (pp.second.pushToken == pushToken
++                            and pp.second.clientId == clientId
+                             and pp.second.value->contentEquals(*value))
+                         {
+                             pp.second.expireTimer->expires_at(timeout);
+diff --git a/src/search.h b/src/search.h
+index b02f2a7..6b28a2d 100644
+--- a/src/search.h
++++ b/src/search.h
+@@ -233,6 +233,11 @@ struct Dht::SearchNode {
+     }
+
+     void expireValues(const Sp<Query>& q, Scheduler& scheduler) {
++        if (node->getId().toString() == "1bcc64b384455b31dca5e9ba55e2752b326333e7"
++         || node->getId().toString() == "52d7f158d97563ad0e0644ae25eeceed5a92c865") {
++            printf("@@@ Expire values for %s\n", node->getId().toString().c_str());
++        }
++
+         auto l = listenStatus.find(q);
+         if (l != listenStatus.end()) {
+             auto next = l->second.cache.expireValues(scheduler.time());
+diff --git a/src/value_cache.h b/src/value_cache.h
+index 9e5583d..f4ef53c 100644
+--- a/src/value_cache.h
++++ b/src/value_cache.h
+@@ -80,6 +80,15 @@ public:
+         std::vector<Sp<Value>> expired_values;
+         for (auto it = values.begin(); it != values.end();) {
+             if (it->second.expiration <= now) {
++
++                std::stringstream oss;
++                oss << std::hex << it->second.data->id;
++                if (oss.str() == "c054da595f826784"
++                    or oss.str() == "d9f5baf9d36ffab5"
++                    or oss.str() == "7d8d31c0183d3028") {
++                    printf("@@@ ADD TO EXPIRED (EXPIRATION) VALUE %s (%u vs %u)\n", oss.str().c_str(), now.time_since_epoch().count(), it->second.expiration.time_since_epoch().count());
++                }
++
+                 expired_values.emplace_back(std::move(it->second.data));
+                 it = values.erase(it);
+             } else {
+@@ -97,6 +106,14 @@ public:
+                     oldest_creation = it->second.created;
+                 }
+             if (oldest_value != values.end()) {
++
++                std::stringstream oss;
++                oss << std::hex << oldest_value->second.data->id;
++                if (oss.str() == "c054da595f826784"
++                    or oss.str() == "d9f5baf9d36ffab5"
++                    or oss.str() == "7d8d31c0183d3028") {
++                    printf("@@@ ADD TO EXPIRED (OLDEST) VALUE %s\n", oss.str().c_str());
++                }
+                 expired_values.emplace_back(std::move(oldest_value->second.data));
+                 values.erase(oldest_value);
+             }
+@@ -189,6 +206,13 @@ private:
+         return ret;
+     }
+     CallbackQueue expireValue(Value::Id vid) {
++        std::stringstream oss;
++        oss << std::hex << vid;
++        if (oss.str() == "c054da595f826784"
++            or oss.str() == "d9f5baf9d36ffab5"
++            or oss.str() == "7d8d31c0183d3028") {
++            printf("@@@ EXPIRING VALUE %s\n", oss.str().c_str());
++        }
+         auto v = values.find(vid);
+         if (v == values.end())
+             return {};
+@@ -202,11 +226,24 @@ private:
+         return ret;
+     }
+     void refreshValue(Value::Id vid, const TypeStore& types, const time_point& now) {
++        std::stringstream oss;
++        oss << std::hex << vid;
++        if (oss.str() == "c054da595f826784"
++            or oss.str() == "d9f5baf9d36ffab5"
++            or oss.str() == "7d8d31c0183d3028") {
++            printf("@@@ REFRESHING VALUE %s\n", oss.str().c_str());
++        }
+         auto v = values.find(vid);
+         if (v == values.end())
+             return;
+         v->second.created = now;
+         v->second.expiration = now + types.getType(v->second.data->type).expiration;
++
++        if (oss.str() == "c054da595f826784"
++            or oss.str() == "d9f5baf9d36ffab5"
++            or oss.str() == "7d8d31c0183d3028") {
++            printf("@@@ REFRESHING VALUE %s - new expiration: %u \n", oss.str().c_str(), v->second.expiration.time_since_epoch().count());
++        }
+     }
+ };
+
