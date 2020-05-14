@@ -1785,7 +1785,7 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
     if (not dht or not dht->isRunning()) {
         return;
     }
-    buddy.listenToken = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&&, bool expired){
+    buddy.listenToken = dht->listen<DeviceAnnouncement>(h, [this, h](DeviceAnnouncement&& dev, bool expired){
         bool wasConnected, isConnected;
         {
             std::lock_guard<std::mutex> lock(buddyInfoMtx);
@@ -1798,7 +1798,22 @@ JamiAccount::trackPresence(const dht::InfoHash& h, BuddyInfo& buddy)
             else
                 ++buddy->second.devices_cnt;
             isConnected = buddy->second.devices_cnt > 0;
+            if (h.toString() == "1bacfad9b9a9952fb6203233882b9cf6f70e36c5") {
+                JAMI_WARN("For account %s - value %s", getAccountID().c_str(), static_cast<dht::Value>(dev).toString().c_str());
+                JAMI_WARN("gheller:");
+                JAMI_WARN("isConnected: %u", isConnected);
+                JAMI_WARN("wasConnected: %u", wasConnected);
+                JAMI_WARN("received: device (%s) - expire(%u) - count (%u)", dev.dev.toString().c_str(), expired, buddy->second.devices_cnt);
+            }
+            if (h.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
+                JAMI_WARN("For account %s - value %s", getAccountID().c_str(), static_cast<dht::Value>(dev).toString().c_str());
+                JAMI_WARN("cyrille:");
+                JAMI_WARN("isConnected: %u", isConnected);
+                JAMI_WARN("wasConnected: %u", wasConnected);
+                JAMI_WARN("received: device (%s) - expire(%u) - count (%u)", dev.dev.toString().c_str(), expired, buddy->second.devices_cnt);
+            }
         }
+
         if (not expired) {
             // Retry messages every time a new device announce its presence
             messageEngine_.onPeerOnline(h.toString());

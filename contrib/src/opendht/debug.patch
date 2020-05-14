@@ -1,0 +1,323 @@
+ include/opendht/dht.h    |   3 ++
+ src/dht.cpp              | 135 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++---
+ src/dht_proxy_client.cpp |   6 ++-
+ src/network_utils.cpp    |   3 ++
+ src/search.h             |   9 +++++
+ 5 files changed, 149 insertions(+), 7 deletions(-)
+
+diff --git a/include/opendht/dht.h b/include/opendht/dht.h
+index 061e221..51902e1 100644
+--- a/include/opendht/dht.h
++++ b/include/opendht/dht.h
+@@ -319,6 +319,9 @@ public:
+     void pushNotificationReceived(const std::map<std::string, std::string>&) override {}
+     void resubscribe(unsigned) {}
+
++    static void logdebug(const std::string& line);
++    static int PORT;
++
+ private:
+
+     /* When performing a search, we search for up to SEARCH_NODES closest nodes
+diff --git a/src/dht.cpp b/src/dht.cpp
+index 72ec2dd..6f5b243 100644
+--- a/src/dht.cpp
++++ b/src/dht.cpp
+@@ -28,7 +28,9 @@
+ #include <algorithm>
+ #include <random>
+ #include <sstream>
++#include <ios>
+ #include <fstream>
++#include <iostream>
+
+ namespace dht {
+
+@@ -41,6 +43,18 @@ constexpr duration Dht::LISTEN_EXPIRE_TIME_PUBLIC;
+ constexpr duration Dht::REANNOUNCE_MARGIN;
+ static constexpr size_t MAX_REQUESTS_PER_SEC {8 * 1024};
+
++void
++Dht::logdebug(const std::string& line)
++{
++    std::ofstream logFile;
++    logFile.open("log_" + std::to_string(Dht::PORT), std::ios_base::app);
++    logFile << line;
++    logFile.close();
++}
++
++int Dht::PORT {0};
++
++
+ NodeStatus
+ Dht::updateStatus(sa_family_t af)
+ {
+@@ -451,16 +465,36 @@ void Dht::searchSendAnnounceValue(const Sp<Search>& sr) {
+         const auto& now = scheduler.time();
+         sr->insertNode(req.node, scheduler.time(), answer.ntoken);
+         auto sn = sr->getNode(req.node);
+-        if (not sn) return;
++        if (not sn) {
++            if (sr->id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++                printf("@@@ onSelectDone: return\n");
++                Dht::logdebug("@@@ onSelectDone: return\n");
++            }
++            return;
++        }
+
+         if (not sn->isSynced(now)) {
+             /* Search is now unsynced. Let's call searchStep to sync again. */
+             scheduler.edit(sr->nextSearchStep, now);
++            if (sr->id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++                printf("@@@ onSelectDone: return because unsynced\n");
++                Dht::logdebug("@@@ onSelectDone: return because unsynced\n");
++            }
+             return;
+         }
+         for (auto& a : sr->announce) {
+-            if (sn->getAnnounceTime(a.value->id) > now)
++            if (sn->getAnnounceTime(a.value->id) > now) {
++                if (sr->id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++                    printf("@@@ No need to announce value: %u (expiration: %zu vs %zu)\n",
++                        a.value->id, now.time_since_epoch().count(), sn->getAnnounceTime(a.value->id).time_since_epoch().count());
++                    std::stringstream oss;
++                    oss << "@@@ No need to announce value: " << a.value->id
++                    << "(expiration: " << now.time_since_epoch().count() << " vs "
++                    << sn->getAnnounceTime(a.value->id).time_since_epoch().count() << ")\n";
++                    Dht::logdebug(oss.str());
++                }
+                 continue;
++            }
+             bool hasValue {false};
+             uint16_t seq_no = 0;
+             try {
+@@ -474,6 +508,18 @@ void Dht::searchSendAnnounceValue(const Sp<Search>& sr) {
+                 }
+             } catch (std::out_of_range&) { }
+
++
++            if (sr->id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++                std::stringstream oss;
++                oss << std::hex << a.value->id;
++                printf("@@@ For value %s - permanent(%u) - hasValue(%u)\n", oss.str().c_str(), a.permanent, hasValue);
++
++                std::stringstream oss2;
++                oss2 << "@@@ For value " << oss.str().c_str()
++                << "- permanent(" << a.permanent << ") - hasValue(" << hasValue << ")\n";
++                Dht::logdebug(oss2.str());
++            }
++
+             auto next_refresh_time = now + getType(a.value->type).expiration;
+             /* only put the value if the node doesn't already have it */
+             if (not hasValue or seq_no < a.value->seq) {
+@@ -486,6 +532,16 @@ void Dht::searchSendAnnounceValue(const Sp<Search>& sr) {
+                     next_refresh_time
+                 };
+             } else if (hasValue and a.permanent) {
++                if (sr->id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++                    std::stringstream oss;
++                    oss << std::hex << a.value->id;
++                    printf("@@@ %zu SENDING PRESENCE REFRESH: %s\n", now.time_since_epoch().count(), oss.str().c_str());
++
++                    std::stringstream oss2;
++                    oss2 << "@@@ " << now.time_since_epoch().count() << " SENDING PRESENCE REFRESH: " << oss.str().c_str()
++                    << "\n";
++                    Dht::logdebug(oss2.str());
++                }
+                 if (logger_)
+                     logger_->w(sr->id, sn->node->id, "[search %s] [node %s] sending 'refresh' (vid: %d)",
+                         sr->id.toString().c_str(), sn->node->toString().c_str(), a.value->id);
+@@ -517,10 +573,18 @@ void Dht::searchSendAnnounceValue(const Sp<Search>& sr) {
+     static const auto PROBE_QUERY = std::make_shared<Query>(Select {}.field(Value::Field::Id).field(Value::Field::SeqNum));
+
+     const auto& now = scheduler.time();
++    if (sr->id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++        printf("@@@ %zu searchSendAnnounceValue for 529e3a6708878bf57c1aa99e563f2a26f63a41e4\n", now.time_since_epoch().count());
++
++        std::stringstream oss2;
++        oss2 << "@@@ " << now.time_since_epoch().count() << " searchSendAnnounceValue for 529e3a6708878bf57c1aa99e563f2a26f63a41e4\n";
++        Dht::logdebug(oss2.str());
++    }
+     for (auto& np : sr->nodes) {
+         auto& n = *np;
+-        if (not n.isSynced(now))
++        if (not n.isSynced(now)) {
+             continue;
++        }
+
+         auto gs = n.probe_query ? n.getStatus.find(n.probe_query) : n.getStatus.end();
+         if (gs != n.getStatus.end() and gs->second and gs->second->pending()) {
+@@ -530,6 +594,15 @@ void Dht::searchSendAnnounceValue(const Sp<Search>& sr) {
+         bool sendQuery = false;
+         for (auto& a : sr->announce) {
+             if (n.getAnnounceTime(a.value->id) <= now) {
++                if (sr->id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++                    std::stringstream oss;
++                    oss << std::hex << a.value->id;
++                    printf("@@@ %zu For value %s, send: %u \n", now.time_since_epoch().count(), oss.str().c_str(), a.permanent);
++
++                    std::stringstream oss2;
++                    oss2 << "@@@ " << now.time_since_epoch().count() << " For value " << oss.str().c_str() << ", send: " << a.permanent << "\n";
++                    Dht::logdebug(oss2.str());
++                }
+                 if (a.permanent) {
+                     sendQuery = true;
+                 } else {
+@@ -541,6 +614,14 @@ void Dht::searchSendAnnounceValue(const Sp<Search>& sr) {
+                         now + getType(a.value->type).expiration
+                     };
+                 }
++            } else if (sr->id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++                std::stringstream oss;
++                oss << std::hex << a.value->id;
++                printf("@@@ %zu For value %s, getAnnounceTime: %zu \n", now.time_since_epoch().count(), oss.str().c_str(), n.getAnnounceTime(a.value->id).time_since_epoch().count());
++
++                std::stringstream oss2;
++                oss2 << "@@@ " << now.time_since_epoch().count() << " For value " << oss.str().c_str() << ", getAnnounceTime: " << n.getAnnounceTime(a.value->id).time_since_epoch().count() << "\n";
++                Dht::logdebug(oss2.str());
+             }
+         }
+
+@@ -599,6 +680,10 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+             r->second.cacheExpirationJob = scheduler.add(time_point::max(), [this,ws,query,node=n.node]{
+                 if (auto sr = ws.lock()) {
+                     if (auto sn = sr->getNode(node)) {
++                        if (sn->node->getId().toString() == "1bcc64b384455b31dca5e9ba55e2752b326333e7"
++                            || sn->node->getId().toString() == "52d7f158d97563ad0e0644ae25eeceed5a92c865") {
++                                printf("@@@ Expire for %s\n", sn->node->getId().toString().c_str());
++                            }
+                         sn->expireValues(query, scheduler);
+                     }
+                 }
+@@ -628,10 +713,42 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+             },
+             [this,ws,query](const Sp<Node>& node, net::RequestAnswer&& answer) mutable
+             { /* on new values */
++                auto now = scheduler.time();
+                 if (auto sr = ws.lock()) {
+                     scheduler.edit(sr->nextSearchStep, scheduler.time());
+                     sr->insertNode(node, scheduler.time(), answer.ntoken);
+                     if (auto sn = sr->getNode(node)) {
++                        if (sn->node->getId().toString() == "1bcc64b384455b31dca5e9ba55e2752b326333e7"
++                            || sn->node->getId().toString() == "52d7f158d97563ad0e0644ae25eeceed5a92c865") {
++                            for (const auto& value: answer.values) {
++                                if (value->isSigned()) {
++                                    printf("@@@ %zu Received Value: %s\n", now.time_since_epoch().count(), value->toString().c_str());
++
++                                    std::stringstream oss2;
++                                    oss2 << "@@@ " << now.time_since_epoch().count()
++                                    <<  "Received Value: " << value->toString().c_str() << "\n";
++                                    Dht::logdebug(oss2.str());
++                                }
++                            }
++                            for (const auto& vid: answer.expired_values) {
++                                std::stringstream oss;
++                                oss << std::hex << vid;
++                                printf("@@@ %zu Received expired vid: %s\n", now.time_since_epoch().count(), oss.str().c_str());
++                                std::stringstream oss2;
++                                oss2 << "@@@ " << now.time_since_epoch().count()
++                                <<  " Received expired vid: " << oss.str().c_str() << "\n";
++                                Dht::logdebug(oss2.str());
++                            }
++                            for (const auto& vid: answer.refreshed_values) {
++                                std::stringstream oss;
++                                oss << std::hex << vid;
++                                printf("@@@ %zu Received refresh for vid: %s\n", now.time_since_epoch().count(), oss.str().c_str());
++                                std::stringstream oss2;
++                                oss2 << "@@@ " << now.time_since_epoch().count()
++                                <<  " Received refresh for vid: " << oss.str().c_str() << "\n";
++                                Dht::logdebug(oss2.str());
++                            }
++                        }
+                         sn->onValues(query, std::move(answer), types, scheduler);
+                     }
+                 }
+@@ -717,7 +834,7 @@ Dht::searchStep(Sp<Search> sr)
+
+     while (sr->currentlySolicitedNodeCount() < MAX_REQUESTED_SEARCH_NODES and searchSendGetValues(sr));
+
+-
++
+     if (sr->getNumberOfConsecutiveBadNodes() >= std::min<size_t>(sr->nodes.size(), SEARCH_MAX_BAD_NODES))
+     {
+         if (logger_)
+@@ -825,6 +942,14 @@ Dht::announce(const InfoHash& id,
+ {
+     auto& srs = searches(af);
+     auto srp = srs.find(id);
++    if (permanent && id.toString() == "529e3a6708878bf57c1aa99e563f2a26f63a41e4") {
++        std::stringstream oss;
++        oss << std::hex << value->id;
++        printf("@@@ ANNOUNCE PRESENCE FOR id: %s\n", oss.str().c_str());
++        std::stringstream oss2;
++        oss2 << "@@@ANNOUNCE PRESENCE FOR id: " << oss.str().c_str() << "\n";
++        Dht::logdebug(oss2.str());
++    }
+     if (auto sr = srp == srs.end() ? search(id, af) : srp->second) {
+         sr->put(value, callback, created, permanent);
+         scheduler.edit(sr->nextSearchStep, scheduler.time());
+diff --git a/src/dht_proxy_client.cpp b/src/dht_proxy_client.cpp
+index 18f9c52..0399d79 100644
+--- a/src/dht_proxy_client.cpp
++++ b/src/dht_proxy_client.cpp
+@@ -119,6 +119,7 @@ DhtProxyClient::DhtProxyClient(
+     jsonBuilder_["commentStyle"] = "None";
+     jsonBuilder_["indentation"] = "";
+     if (logger_) {
++        logger_->e("@@@ Will use pushSessionId_ %s with %s", pushSessionId_.c_str(), proxyUrl_.c_str());
+         if (serverCertificate_)
+             logger_->d("[proxy:client] using ca certificate for ssl:\n%s",
+                        serverCertificate_->toString(false/*chain*/).c_str());
+@@ -1156,8 +1157,9 @@ DhtProxyClient::pushNotificationReceived(const std::map<std::string, std::string
+     try {
+         auto sessionId = notification.find("s");
+         if (sessionId != notification.end() and sessionId->second != pushSessionId_) {
+-            if (logger_)
+-                logger_->d("[proxy:client] [push] ignoring push for other session");
++            if (logger_) {
++                logger_->d("[proxy:client] [push] ignoring push for other session (%s vs %s)", pushSessionId_.c_str(), sessionId->second.c_str());
++            }
+             return;
+         }
+         std::lock_guard<std::mutex> lock(searchLock_);
+diff --git a/src/network_utils.cpp b/src/network_utils.cpp
+index b7e3588..ade6772 100644
+--- a/src/network_utils.cpp
++++ b/src/network_utils.cpp
+@@ -30,6 +30,7 @@
+ #include <fcntl.h>
+ #endif
+
++#include "dht.h"
+ #include <iostream>
+
+ namespace dht {
+@@ -227,6 +228,8 @@ UdpSocket::openSockets(const SockAddr& bind4, const SockAddr& bind6)
+     }
+ #endif
+
++    Dht::PORT = bound4.getPort();
++
+     if (s4 == -1 && s6 == -1) {
+         throw DhtException("Can't bind socket");
+     }
+diff --git a/src/search.h b/src/search.h
+index b02f2a7..7441ded 100644
+--- a/src/search.h
++++ b/src/search.h
+@@ -233,6 +233,15 @@ struct Dht::SearchNode {
+     }
+
+     void expireValues(const Sp<Query>& q, Scheduler& scheduler) {
++        if (node->getId().toString() == "1bcc64b384455b31dca5e9ba55e2752b326333e7"
++         || node->getId().toString() == "52d7f158d97563ad0e0644ae25eeceed5a92c865") {
++            printf("@@@ Expire values for %s\n", node->getId().toString().c_str());
++
++            std::stringstream oss2;
++            oss2 << "@@@ Expire values for: " << node->getId().toString().c_str() << "\n";
++            Dht::logdebug(oss2.str());
++        }
++
+         auto l = listenStatus.find(q);
+         if (l != listenStatus.end()) {
+             auto next = l->second.cache.expireValues(scheduler.time());
