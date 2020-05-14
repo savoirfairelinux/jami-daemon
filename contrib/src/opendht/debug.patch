@@ -1,0 +1,166 @@
+ include/opendht/dht_proxy_server.h |  1 +
+ src/dht.cpp                        | 19 ++++++++++++++++++-
+ src/dht_proxy_server.cpp           | 43 ++++++++++++++++++++++++++++++++++++++++---
+ src/search.h                       |  4 ++++
+ 4 files changed, 63 insertions(+), 4 deletions(-)
+
+diff --git a/include/opendht/dht_proxy_server.h b/include/opendht/dht_proxy_server.h
+index a3720d1..639fbda 100644
+--- a/include/opendht/dht_proxy_server.h
++++ b/include/opendht/dht_proxy_server.h
+@@ -379,6 +379,7 @@ private:
+     };
+     std::mutex lockPushListeners_;
+     std::map<std::string, PushListener> pushListeners_;
++    std::map<InfoHash, int> totalListeners_;
+     proxy::ListenToken tokenPushNotif_ {0};
+ #endif //OPENDHT_PUSH_NOTIFICATIONS
+ };
+diff --git a/src/dht.cpp b/src/dht.cpp
+index 49ff12e..deada49 100644
+--- a/src/dht.cpp
++++ b/src/dht.cpp
+@@ -28,6 +28,7 @@
+ #include <algorithm>
+ #include <random>
+ #include <sstream>
++#include <ios>
+ #include <fstream>
+
+ namespace dht {
+@@ -632,6 +633,22 @@ Dht::searchSynchedNodeListen(const Sp<Search>& sr, SearchNode& n)
+                     scheduler.edit(sr->nextSearchStep, scheduler.time());
+                     sr->insertNode(node, scheduler.time(), answer.ntoken);
+                     if (auto sn = sr->getNode(node)) {
++                        if (sn->node->getId().toString() == "1bcc64b384455b31dca5e9ba55e2752b326333e7") {
++                            for (const auto& value: answer.values) {
++                                if (value->isSigned())
++                                    printf("@@@ Received Value: %s\n", value->toString().c_str());
++                            }
++                            for (const auto& vid: answer.expired_values) {
++                                std::stringstream oss;
++                                oss << std::hex << vid;
++                                printf("@@@ Received expired vid: %u\n", oss.str().c_str());
++                            }
++                            for (const auto& vid: answer.refreshed_values) {
++                                std::stringstream oss;
++                                oss << std::hex << vid;
++                                printf("@@@ Received refresh for vid: %u\n", oss.str().c_str());
++                            }
++                        }
+                         sn->onValues(query, std::move(answer), types, scheduler);
+                     }
+                 }
+@@ -717,7 +734,7 @@ Dht::searchStep(Sp<Search> sr)
+
+     while (sr->currentlySolicitedNodeCount() < MAX_REQUESTED_SEARCH_NODES and searchSendGetValues(sr));
+
+-
++
+     if (sr->getNumberOfConsecutiveBadNodes() >= std::min<size_t>(sr->nodes.size(), SEARCH_MAX_BAD_NODES))
+     {
+         if (logger_)
+diff --git a/src/dht_proxy_server.cpp b/src/dht_proxy_server.cpp
+index ebc6b6f..3523a7c 100644
+--- a/src/dht_proxy_server.cpp
++++ b/src/dht_proxy_server.cpp
+@@ -145,6 +145,14 @@ DhtProxyServer::onConnectionClosed(restinio::connection_id_t id)
+     std::lock_guard<std::mutex> lock(lockListener_);
+     auto it = listeners_.find(id);
+     if (it != listeners_.end()) {
++        auto itTL = totalListeners_.find(it->second.hash);
++        if (itTL != totalListeners_.end()) {
++            if (itTL->second == 1) {
++                totalListeners_.erase(itTL);
++            } else {
++                itTL->second -= 1;
++            }
++        }
+         dht_->cancelListen(it->second.hash, std::move(it->second.token));
+         listeners_.erase(it);
+         if (logger_)
+@@ -501,7 +509,18 @@ DhtProxyServer::getStats(restinio::request_handle_t request,
+     try {
+         if (auto stats = stats_) {
+             auto response = initHttpResponse(request->create_response());
+-            response.append_body(Json::writeString(jsonBuilder_, stats->toJson()) + "\n");
++            auto json = stats->toJson();
++            Json::Value puts;
++            for (const auto& put: puts_) {
++                puts[put.first.toString()] = std::to_string(put.second.puts.size());
++            }
++            json["puts"] = puts;
++            Json::Value listeners;
++            for (const auto& l: totalListeners_) {
++                listeners[l.first.toString()] = l.second;
++            }
++            json["listeners"] = listeners;
++            response.append_body(Json::writeString(jsonBuilder_, json) + "\n");
+             return response.done();
+         } else {
+             auto response = initHttpResponse(request->create_response(restinio::status_service_unavailable()));
+@@ -561,6 +580,11 @@ DhtProxyServer::listen(restinio::request_handle_t request,
+         auto &session = listeners_[request->connection_id()];
+         session.hash = infoHash;
+         session.response = response;
++        auto it = totalListeners_.find(infoHash);
++        if (it == totalListeners_.end())
++            it->second = 0;
++        it->second += 1;
++
+         session.token = dht_->listen(infoHash, [this, response]
+                 (const std::vector<Sp<Value>>& values, bool expired){
+             for (const auto& value: values){
+@@ -666,6 +690,11 @@ DhtProxyServer::subscribe(restinio::request_handle_t request,
+         listener.sessionCtx->sessionId = sessionId;
+
+         // Add listen on dht
++        auto it = totalListeners_.find(infoHash);
++        if (it == totalListeners_.end())
++            it->second = 0;
++        it->second += 1;
++
+         listener.internalToken = dht_->listen(infoHash,
+             [this, infoHash, pushToken, isAndroid, clientId, sessionCtx = listener.sessionCtx]
+             (const std::vector<std::shared_ptr<Value>>& values, bool expired){
+@@ -804,6 +833,14 @@ DhtProxyServer::handleCancelPushListen(const asio::error_code &ec, const std::st
+
+     for (auto listener = listeners->second.begin(); listener != listeners->second.end();){
+         if (listener->clientId == clientId){
++            auto it = totalListeners_.find(key);
++            if (it != totalListeners_.end()) {
++                if (it->second == 1) {
++                    totalListeners_.erase(it);
++                } else {
++                    it->second -= 1;
++                }
++            }
+             if (dht_)
+                 dht_->cancelListen(key, std::move(listener->internalToken));
+             listener = listeners->second.erase(listener);
+@@ -946,8 +983,8 @@ DhtProxyServer::put(restinio::request_handle_t request,
+                 auto& sPuts = puts_[infoHash];
+                 if (value->id == Value::INVALID_ID) {
+                     for (auto& pp : sPuts.puts) {
+-                        if (pp.second.pushToken == pushToken
+-                            and pp.second.clientId == clientId
++                        if (pp.second.pushToken == pushToken
++                            and pp.second.clientId == clientId
+                             and pp.second.value->contentEquals(*value))
+                         {
+                             pp.second.expireTimer->expires_at(timeout);
+diff --git a/src/search.h b/src/search.h
+index b02f2a7..f46f638 100644
+--- a/src/search.h
++++ b/src/search.h
+@@ -233,6 +233,10 @@ struct Dht::SearchNode {
+     }
+
+     void expireValues(const Sp<Query>& q, Scheduler& scheduler) {
++        if (node->getId().toString() == "1bcc64b384455b31dca5e9ba55e2752b326333e7") {
++            printf("@@@ Expire values");
++        }
++
+         auto l = listenStatus.find(q);
+         if (l != listenStatus.end()) {
+             auto next = l->second.cache.expireValues(scheduler.time());
