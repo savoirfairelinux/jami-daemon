@@ -452,6 +452,8 @@ Call::subcallStateChanged(Call& subcall,
                           Call::CallState new_state,
                           Call::ConnectionState new_cstate)
 {
+    if (callState_ == CallState::OVER)
+        return;
     {
         // This condition happens when a subcall hangups/fails after removed from parent's list.
         // This is normal to keep parent_ != nullptr on the subcall, as it's the way to flag it
