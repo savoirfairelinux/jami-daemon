@@ -222,8 +222,6 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void generateMediaPorts();
 
-    void startAllMedia();
-
     void openPortsUPnP();
 
     void setPeerRegistredName(const std::string& name) {
@@ -256,6 +254,7 @@ private:
 
     void waitForIceAndStartMedia();
 
+    void startAllMedia();
     void stopAllMedia();
 
     /**

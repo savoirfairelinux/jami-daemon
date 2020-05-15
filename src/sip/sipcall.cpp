@@ -929,7 +929,6 @@ SIPCall::getAudioCodec() const
 void
 SIPCall::startAllMedia()
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
     if (!transport_) return;
     JAMI_WARN("[call:%s] startAllMedia()", getCallId().c_str());
     if (isSecure() && not transport_->isSecure()) {
@@ -1135,6 +1134,7 @@ SIPCall::onMediaUpdate()
     // to a negotiated transport.
     runOnMainThread([w = weak()] {
         if (auto this_ = w.lock()) {
+            std::lock_guard<std::recursive_mutex> lk {this_->callMutex_};
             // The call is already ended, so we don't need to restart medias
             if (!this_->inv or this_->inv->state == PJSIP_INV_STATE_DISCONNECTED) return;
             // If ICE is not used, start medias now
@@ -1185,6 +1185,7 @@ SIPCall::waitForIceAndStartMedia()
             // Negotiation waiting task
             Manager::instance().addTask([weak_call] {
                 if (auto call = weak_call.lock()) {
+                    std::lock_guard<std::recursive_mutex> lk {call->callMutex_};
                     auto ice = call->getIceMediaTransport();
 
                     if (not ice or ice->isFailed()) {
