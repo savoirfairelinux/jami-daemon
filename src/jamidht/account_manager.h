@@ -121,6 +121,8 @@ public:
 
     virtual void syncDevices() = 0;
 
+    virtual bool isPasswordValid(const std::string& password) {};
+
     dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const;
 
     const AccountInfo* useIdentity(

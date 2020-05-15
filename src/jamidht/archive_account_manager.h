@@ -60,6 +60,7 @@ public:
     void addDevice(const std::string& password, AddDeviceCallback) override;
     bool revokeDevice(const std::string& password, const std::string& device, RevokeDeviceCallback) override;
     bool exportArchive(const std::string& destinationPath, const std::string& password);
+    bool isPasswordValid(const std::string& password) override;
 
 #if HAVE_RINGNS
     /*void lookupName(const std::string& name, LookupCallback cb) override;

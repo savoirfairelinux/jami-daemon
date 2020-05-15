@@ -331,6 +331,8 @@ public:
     bool revokeDevice(const std::string& password, const std::string& device);
     std::map<std::string, std::string> getKnownDevices() const;
 
+    bool isPasswordValid(const std::string& password);
+
     bool changeArchivePassword(const std::string& password_old, const std::string& password_new);
 
     void connectivityChanged() override;
