@@ -2927,6 +2927,20 @@ Manager::sendRegister(const std::string& accountID, bool enable)
         acc->doUnregister();
 }
 
+bool
+Manager::enableBoothMode(const std::string& accountID, const std::string& password, bool enable)
+{
+    const auto acc = getAccount<JamiAccount>(accountID);
+    if (!acc)
+        return false;
+    if (!acc->enableBoothMode(password, enable))
+        return false;
+
+    acc->loadConfig();
+    saveConfig(acc);
+    return true;
+}
+
 uint64_t
 Manager::sendTextMessage(const std::string& accountID, const std::string& to,
                          const std::map<std::string, std::string>& payloads)

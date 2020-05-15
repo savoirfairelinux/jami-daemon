@@ -251,6 +251,12 @@ sendRegister(const std::string& accountID, bool enable)
     jami::Manager::instance().sendRegister(accountID, enable);
 }
 
+bool
+enableBoothMode(const std::string& accountID, const std::string& password, bool enable)
+{
+    return jami::Manager::instance().enableBoothMode(accountID, password, enable);
+}
+
 void
 registerAllAccounts()
 {

@@ -861,6 +861,7 @@ void JamiAccount::serialize(YAML::Emitter &out) const
     out << YAML::Key << DRing::Account::ConfProperties::RING_DEVICE_NAME << YAML::Value << ringDeviceName_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_URI << YAML::Value << managerUri_;
     out << YAML::Key << DRing::Account::ConfProperties::MANAGER_USERNAME << YAML::Value << managerUsername_;
+    out << YAML::Key << DRing::Account::ConfProperties::ACCOUNT_BOOTH_MODE << YAML::Value << boothMode_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -936,6 +937,7 @@ void JamiAccount::unserialize(const YAML::Node &node)
     parseValueOptional(node, DRing::Account::ConfProperties::DHT_PEER_DISCOVERY, dhtPeerDiscovery_);
     parseValueOptional(node, DRing::Account::ConfProperties::ACCOUNT_PEER_DISCOVERY, accountPeerDiscovery_);
     parseValueOptional(node, DRing::Account::ConfProperties::ACCOUNT_PUBLISH, accountPublish_);
+    parseValueOptional(node, DRing::Account::ConfProperties::ACCOUNT_BOOTH_MODE, boothMode_);
 
 #if HAVE_RINGNS
     parseValueOptional(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
@@ -969,6 +971,19 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
     if (password_old != password_new)
         emitSignal<DRing::ConfigurationSignal::AccountDetailsChanged>(getAccountID(), getAccountDetails());
     return true;
+}
+
+bool
+JamiAccount::enableBoothMode(const std::string& password, bool enable)
+{
+    if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
+        //test password
+        if (manager->isPasswordValid(password)) {
+            boothMode_ = enable;
+            return true;
+        }
+    }
+    return false;
 }
 
 void
@@ -1334,6 +1349,7 @@ JamiAccount::getAccountDetails() const
     a.emplace(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
     a.emplace(DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
     a.emplace(DRing::Account::ConfProperties::MANAGER_USERNAME, managerUsername_);
+    a.emplace(DRing::Account::ConfProperties::ACCOUNT_BOOTH_MODE, boothMode_ ? TRUE_STR : FALSE_STR);
 #if HAVE_RINGNS
     a.emplace(DRing::Account::ConfProperties::RingNS::URI,                   nameServer_);
 #endif

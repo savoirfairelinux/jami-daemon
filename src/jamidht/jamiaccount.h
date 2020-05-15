@@ -331,6 +331,8 @@ public:
     bool revokeDevice(const std::string& password, const std::string& device);
     std::map<std::string, std::string> getKnownDevices() const;
 
+    bool enableBoothMode(const std::string& password, bool enable);
+
     bool changeArchivePassword(const std::string& password_old, const std::string& password_new);
 
     void connectivityChanged() override;
@@ -598,6 +600,7 @@ private:
 
     std::string archivePath_ {};
     bool archiveHasPassword_ {true};
+    bool boothMode_ {false};
 
     std::string receipt_ {};
     std::vector<uint8_t> receiptSignature_ {};
