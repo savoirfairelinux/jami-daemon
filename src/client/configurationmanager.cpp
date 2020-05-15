@@ -251,6 +251,12 @@ sendRegister(const std::string& accountID, bool enable)
     jami::Manager::instance().sendRegister(accountID, enable);
 }
 
+bool
+isPasswordValid(const std::string& accountID, const std::string& password)
+{
+    return jami::Manager::instance().isPasswordValid(accountID, password);
+}
+
 void
 registerAllAccounts()
 {

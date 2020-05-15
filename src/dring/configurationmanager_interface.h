@@ -65,6 +65,7 @@ DRING_PUBLIC bool exportToFile(const std::string& accountID, const std::string& 
 DRING_PUBLIC bool revokeDevice(const std::string& accountID, const std::string& password, const std::string& deviceID);
 DRING_PUBLIC std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
 DRING_PUBLIC bool changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new);
+DRING_PUBLIC bool isPasswordValid(const std::string& accountID, const std::string& password);
 
 DRING_PUBLIC bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
 DRING_PUBLIC bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);

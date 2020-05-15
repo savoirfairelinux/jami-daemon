@@ -971,6 +971,15 @@ JamiAccount::changeArchivePassword(const std::string& password_old, const std::s
     return true;
 }
 
+bool
+JamiAccount::isPasswordValid(const std::string& password)
+{
+    if (auto manager = dynamic_cast<ArchiveAccountManager*>(accountManager_.get())) {
+        return manager->isPasswordValid(password);
+    }
+    return false;
+}
+
 void
 JamiAccount::addDevice(const std::string& password)
 {
