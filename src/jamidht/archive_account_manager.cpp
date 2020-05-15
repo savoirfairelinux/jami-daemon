@@ -673,6 +673,17 @@ ArchiveAccountManager::exportArchive(const std::string& destinationPath, const s
     }
 }
 
+bool
+ArchiveAccountManager::passwordValid(const std::string& password)
+{
+    try {
+        readArchive(password);
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
 
 #if HAVE_RINGNS
 void
