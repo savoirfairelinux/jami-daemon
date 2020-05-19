@@ -453,14 +453,17 @@ Call::subcallStateChanged(Call& subcall,
                           Call::ConnectionState new_cstate)
 {
     {
-        // This condition happens when a subcall hangups/fails after removed from parent's list.
-        // This is normal to keep parent_ != nullptr on the subcall, as it's the way to flag it
-        // as an subcall and not a master call.
-        // XXX: having a way to unsubscribe the state listener could be better than such test
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
-        auto sit = subcalls_.find(getPtr(subcall));
-        if (sit == subcalls_.end())
-            return;
+        if (parent_) {
+            std::lock(callMutex_, parent_->callMutex_);
+            std::lock_guard<std::recursive_mutex> lk1 {callMutex_, std::adopt_lock};
+            std::lock_guard<std::recursive_mutex> lk2 {parent_->callMutex_, std::adopt_lock};
+            if (subcalls_.find(getPtr(subcall)) == subcalls_.end())
+                return;
+        } else {
+            std::lock_guard<std::recursive_mutex> lk {callMutex_};
+            if (subcalls_.find(getPtr(subcall)) == subcalls_.end())
+                return;
+        }
     }
 
     // We found a responding device: hangup all other subcalls and merge
