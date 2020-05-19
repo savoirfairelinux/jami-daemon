@@ -258,6 +258,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
             stateChangedListeners_.emplace_back(std::forward<T>(list));
         }
 
+        void clearStateListeners() {
+            stateChangedListeners_.clear();
+        }
+
         /**
          * Attach subcall to this instance.
          * If this subcall is answered, this subcall and this instance will be merged using merge().
