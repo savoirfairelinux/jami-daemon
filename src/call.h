@@ -94,6 +94,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual ~Call();
 
+        std::weak_ptr<Call> weak() {
+            return std::static_pointer_cast<Call>(shared_from_this());
+        }
+
         /**
          * Return a reference on the call id
          * @return call id
@@ -140,7 +144,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         std::string getPeerNumber() const {
             return peerNumber_;
         }
-
         /**
          * Set the display name (caller in ingoing)
          * not protected by mutex (when created)

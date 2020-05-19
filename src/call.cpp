@@ -434,11 +434,15 @@ Call::addSubCall(Call& subcall)
     for (const auto& msg : pendingOutMessages_)
         subcall.sendTextMessage(msg.first, msg.second);
 
-    subcall.addStateListener(
-        [&subcall](Call::CallState new_state, Call::ConnectionState new_cstate, UNUSED int code) {
-            auto parent = subcall.parent_;
-            assert(parent != nullptr); // subcall cannot be "un-parented"
-            parent->subcallStateChanged(subcall, new_state, new_cstate);
+        subcall.addStateListener(
+        [sub = subcall.weak(), parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
+            runOnMainThread([sub, parent, new_state, new_cstate, code]() {
+                if (auto p = parent.lock()) {
+                    if (auto s = sub.lock()) {
+                      p->subcallStateChanged(*s, new_state, new_cstate);
+                    }
+                }
+            });
         });
 }
 
