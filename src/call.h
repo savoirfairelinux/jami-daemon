@@ -178,6 +178,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         bool setState(CallState call_state, ConnectionState cnx_state, signed code=0);
         bool setState(ConnectionState cnx_state, signed code=0);
 
+        void hangupSubCalls();
+
         /**
          * Get the call state of the call (protected by mutex)
          * @return CallState  The call state
@@ -256,6 +258,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         template<class T>
         void addStateListener(T&& list) {
             stateChangedListeners_.emplace_back(std::forward<T>(list));
+        }
+
+        void clearStateListeners() {
+            stateChangedListeners_.clear();
         }
 
         /**

@@ -57,6 +57,7 @@ hangupCallsIf(const Call::SubcallSet& callptr_list, int errcode, const std::func
                   [&](const std::shared_ptr<Call>& call_ptr) {
                       if (pred(call_ptr.get())) {
                           try {
+                              call_ptr->clearStateListeners();
                               call_ptr->hangup(errcode);
                           } catch (const std::exception& e) {
                               JAMI_ERR("[call:%s] hangup failed: %s",
@@ -152,6 +153,12 @@ Call::removeCall()
     setState(CallState::OVER);
     if (Recordable::isRecording())
         Recordable::stopRecording();
+}
+
+void
+Call::hangupSubCalls()
+{
+    hangupCalls(safePopSubcalls(), 0);
 }
 
 const std::string&
@@ -452,17 +459,6 @@ Call::subcallStateChanged(Call& subcall,
                           Call::CallState new_state,
                           Call::ConnectionState new_cstate)
 {
-    {
-        // This condition happens when a subcall hangups/fails after removed from parent's list.
-        // This is normal to keep parent_ != nullptr on the subcall, as it's the way to flag it
-        // as an subcall and not a master call.
-        // XXX: having a way to unsubscribe the state listener could be better than such test
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
-        auto sit = subcalls_.find(getPtr(subcall));
-        if (sit == subcalls_.end())
-            return;
-    }
-
     // We found a responding device: hangup all other subcalls and merge
     if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::CONNECTED) {
         JAMI_DBG("[call:%s] subcall %s answered by peer", getCallId().c_str(),

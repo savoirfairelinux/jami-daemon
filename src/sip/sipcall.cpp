@@ -763,6 +763,7 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
 void
 SIPCall::removeCall()
 {
+    Call::hangupSubCalls();
     {
         std::lock_guard<std::recursive_mutex> lk {callMutex_};
         JAMI_WARN("[call:%s] removeCall()", getCallId().c_str());
