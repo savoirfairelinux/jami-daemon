@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "f83a8912_b3e4a205",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 246,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-20T22:15:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "333a221d_873e3b2d",
+      "range": {
+        "startLine": 246,
+        "startChar": 41,
+        "endLine": 246,
+        "endChar": 44
+      },
+      "revId": "492c216c4b32b11373117a3d19238013813c1116",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "2d3d9a0c_4c969311",
         "filename": "src/plugin/jamipluginmanager.cpp",
         "patchSetId": 6
@@ -45,6 +69,30 @@
       "revId": "492c216c4b32b11373117a3d19238013813c1116",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fadfdf58_af319bc9",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 255,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-20T22:15:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "2d3d9a0c_4c969311",
+      "range": {
+        "startLine": 254,
+        "startChar": 26,
+        "endLine": 255,
+        "endChar": 39
+      },
+      "revId": "492c216c4b32b11373117a3d19238013813c1116",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "2f6bded6_89f67dd6",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 267,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-20T22:15:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "cdcb6766_e7556edd",
+      "range": {
+        "startLine": 267,
+        "startChar": 0,
+        "endLine": 267,
+        "endChar": 12
+      },
+      "revId": "492c216c4b32b11373117a3d19238013813c1116",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "75b33d16_2870b10e",
         "filename": "src/plugin/jamipluginmanager.cpp",
         "patchSetId": 6
@@ -91,6 +163,30 @@
       "revId": "492c216c4b32b11373117a3d19238013813c1116",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c95d40e7_fe83f5fa",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 268,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-20T22:15:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "75b33d16_2870b10e",
+      "range": {
+        "startLine": 268,
+        "startChar": 19,
+        "endLine": 268,
+        "endChar": 32
+      },
+      "revId": "492c216c4b32b11373117a3d19238013813c1116",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "00c71b04_621945b6",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 270,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-20T22:15:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "75e4ce50_add3d7f6",
+      "range": {
+        "startLine": 270,
+        "startChar": 27,
+        "endLine": 270,
+        "endChar": 36
+      },
+      "revId": "492c216c4b32b11373117a3d19238013813c1116",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c860c8c4_289607e3",
         "filename": "src/plugin/jamipluginmanager.cpp",
         "patchSetId": 6
@@ -137,6 +257,30 @@
       "revId": "492c216c4b32b11373117a3d19238013813c1116",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3253d68f_195d648e",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 271,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-20T22:15:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "c860c8c4_289607e3",
+      "range": {
+        "startLine": 271,
+        "startChar": 16,
+        "endLine": 271,
+        "endChar": 48
+      },
+      "revId": "492c216c4b32b11373117a3d19238013813c1116",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -163,6 +307,30 @@
     },
     {
       "key": {
+        "uuid": "c98e7f7a_bd986433",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-20T22:15:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dcbd96fb_61e94076",
+      "range": {
+        "startLine": 83,
+        "startChar": 38,
+        "endLine": 86,
+        "endChar": 35
+      },
+      "revId": "492c216c4b32b11373117a3d19238013813c1116",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "29b032fb_6f9b0eb3",
         "filename": "src/plugin/pluginmanager.cpp",
         "patchSetId": 6
@@ -186,6 +354,30 @@
     },
     {
       "key": {
+        "uuid": "bf604688_00a65919",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-20T22:15:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "29b032fb_6f9b0eb3",
+      "range": {
+        "startLine": 124,
+        "startChar": 3,
+        "endLine": 125,
+        "endChar": 39
+      },
+      "revId": "492c216c4b32b11373117a3d19238013813c1116",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "8829c5a2_5f2b0cf7",
         "filename": "src/plugin/pluginmanager.cpp",
         "patchSetId": 6
@@ -206,6 +398,30 @@
       "revId": "492c216c4b32b11373117a3d19238013813c1116",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8cc542c4_cd9777c5",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-20T22:15:15Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "8829c5a2_5f2b0cf7",
+      "range": {
+        "startLine": 154,
+        "startChar": 12,
+        "endLine": 154,
+        "endChar": 21
+      },
+      "revId": "492c216c4b32b11373117a3d19238013813c1116",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
