@@ -33,6 +33,7 @@ class DBusCallManager;
 class DBusNetworkManager;
 class DBusInstance;
 class DBusPresenceManager;
+class DBusPluginManagerInterface;
 
 #ifdef ENABLE_VIDEO
 class DBusVideoManager;
@@ -55,13 +56,14 @@ class DRING_PUBLIC DBusClient {
         int initLibrary(int flags);
         void finiLibrary() noexcept;
 
-        std::unique_ptr<DBus::BusDispatcher>  dispatcher_;
-        std::unique_ptr<DBus::DefaultTimeout> timeout_;
+        std::unique_ptr<DBus::BusDispatcher>                    dispatcher_;
+        std::unique_ptr<DBus::DefaultTimeout>                   timeout_;
 
-        std::unique_ptr<DBusCallManager>          callManager_;
-        std::unique_ptr<DBusConfigurationManager> configurationManager_;
-        std::unique_ptr<DBusPresenceManager>      presenceManager_;
-        std::unique_ptr<DBusInstance>             instanceManager_;
+        std::unique_ptr<DBusCallManager>                        callManager_;
+        std::unique_ptr<DBusConfigurationManager>               configurationManager_;
+        std::unique_ptr<DBusPresenceManager>                    presenceManager_;
+        std::unique_ptr<DBusInstance>                           instanceManager_;
+        std::unique_ptr<DBusPluginManagerInterface>             pluginManagerInterface_;
 
 #ifdef ENABLE_VIDEO
         std::unique_ptr<DBusVideoManager>         videoManager_;
