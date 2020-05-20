@@ -19,77 +19,78 @@
 #include "plugin_manager_interface.h"
 #include "manager.h"
 #include "plugin/jamipluginmanager.h"
+//#include "callservicesmanager.h"
 #include "logger.h"
 #include <iostream>
 
-namespace DRing {
-//
-bool
-loadPlugin(const std::string& path){
-    return jami::Manager::instance().getJamiPluginManager().loadPlugin(path);
-}
+namespace DRing 
+{    
+    bool
+    loadPlugin(const std::string& path){
+        return jami::Manager::instance().getJamiPluginManager().loadPlugin(path);
+    }
 
-bool
-unloadPlugin(const std::string& path){
-    return jami::Manager::instance().getJamiPluginManager().unloadPlugin(path);
-}
+    bool
+    unloadPlugin(const std::string& path){
+        return jami::Manager::instance().getJamiPluginManager().unloadPlugin(path);
+    }
 
-void
-togglePlugin(const std::string& path, bool toggle){
-    jami::Manager::instance().getJamiPluginManager().togglePlugin(path,toggle);
-}
+    void
+    togglePlugin(const std::string& path, bool toggle){
+        jami::Manager::instance().getJamiPluginManager().togglePlugin(path,toggle);
+    }
 
-std::map<std::string,std::string>
-getPluginDetails(const std::string& path){
-    return jami::Manager::instance().getJamiPluginManager().getPluginDetails(path);
-}
+    std::map<std::string,std::string>
+    getPluginDetails(const std::string& path){
+        return jami::Manager::instance().getJamiPluginManager().getPluginDetails(path);
+    }
 
-std::vector<std::map<std::string,std::string>>
-getPluginPreferences(const std::string& path){
-    return jami::Manager::instance().getJamiPluginManager().getPluginPreferences(path);
-}
+    std::vector<std::map<std::string,std::string>>
+    getPluginPreferences(const std::string& path){
+        return jami::Manager::instance().getJamiPluginManager().getPluginPreferences(path);
+    }
 
-bool
-setPluginPreference(const std::string& path, const std::string& key, const std::string& value) {
-    return jami::Manager::instance().getJamiPluginManager().setPluginPreference(path, key, value);
-}
+    bool
+    setPluginPreference(const std::string& path, const std::string& key, const std::string& value) {
+        return jami::Manager::instance().getJamiPluginManager().setPluginPreference(path, key, value);
+    }
 
-std::map<std::string,std::string>
-getPluginPreferencesValues(const std::string& path){
-    return jami::Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(path);
-}
-bool
-resetPluginPreferencesValues(const std::string& path){
-    return jami::Manager::instance().getJamiPluginManager().resetPluginPreferencesValuesMap(path);
-}
+    std::map<std::string,std::string>
+    getPluginPreferencesValues(const std::string& path){
+        return jami::Manager::instance().getJamiPluginManager().getPluginPreferencesValuesMap(path);
+    }
+    bool
+    resetPluginPreferencesValues(const std::string& path){
+        return jami::Manager::instance().getJamiPluginManager().resetPluginPreferencesValuesMap(path);
+    }
 
-std::vector<std::string>
-listAvailablePlugins() {
-    return jami::Manager::instance().getJamiPluginManager().listAvailablePlugins();
-}
+    std::vector<std::string>
+    listAvailablePlugins() {
+        return jami::Manager::instance().getJamiPluginManager().listAvailablePlugins();
+    }
 
-std::vector<std::string>
-listLoadedPlugins() {
-    return jami::Manager::instance().getJamiPluginManager().listLoadedPlugins();
-}
+    std::vector<std::string>
+    listLoadedPlugins() {
+        return jami::Manager::instance().getJamiPluginManager().listLoadedPlugins();
+    }
 
-int installPlugin(const std::string& jplPath, bool force) {
-    return jami::Manager::instance().getJamiPluginManager().installPlugin(jplPath, force);
-}
+    int installPlugin(const std::string& jplPath, bool force) {
+        return jami::Manager::instance().getJamiPluginManager().installPlugin(jplPath, force);
+    }
 
-int uninstallPlugin(const std::string& pluginRootPath) {
-    return jami::Manager::instance().getJamiPluginManager().uninstallPlugin(pluginRootPath);
-}
+    int uninstallPlugin(const std::string& pluginRootPath) {
+        return jami::Manager::instance().getJamiPluginManager().uninstallPlugin(pluginRootPath);
+    }
 
-std::vector<std::string> listCallMediaHandlers() {
-    return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().listCallMediaHandlers();
-}
+    std::vector<std::string> listCallMediaHandlers() {
+        return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().listCallMediaHandlers();
+    }
 
-void toggleCallMediaHandler(const std::string& id, const bool toggle) {
-    return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().toggleCallMediaHandler(id, toggle);
-}
+    void toggleCallMediaHandler(const std::string& id, bool toggle) {
+        return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().toggleCallMediaHandler(id, toggle);
+    }
 
-std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& id) {
-    return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerDetails(id);
-}
+    std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& id) {
+        return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerDetails(id);
+    }
 }

@@ -3093,8 +3093,8 @@ Manager::sipVoIPLink() const
     return *pimpl_->sipLink_;
 }
 
-
-JamiPluginManager& Manager::getJamiPluginManager() const
+JamiPluginManager& 
+Manager::getJamiPluginManager() const
 {
     return pimpl_->jami_plugin_manager;
 }
