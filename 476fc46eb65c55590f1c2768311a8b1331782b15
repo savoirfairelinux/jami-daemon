@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8d403316_8ecc3de0",
+        "filename": "src/dring/configurationmanager_interface.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-20T18:16:32Z",
+      "side": 1,
+      "message": "isPasswordValid",
+      "range": {
+        "startLine": 68,
+        "startChar": 18,
+        "endLine": 68,
+        "endChar": 31
+      },
+      "revId": "476fc46eb65c55590f1c2768311a8b1331782b15",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
