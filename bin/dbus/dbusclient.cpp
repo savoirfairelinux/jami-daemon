@@ -38,6 +38,9 @@
 #include "dbuspresencemanager.h"
 #include "presencemanager_interface.h"
 
+#include "dbuspluginmanagerinterface.h"
+#include "plugin_manager_interface.h"
+
 #include "datatransfer_interface.h"
 
 #ifdef ENABLE_VIDEO
@@ -84,6 +87,7 @@ DBusClient::DBusClient(int flags, bool persistent)
         callManager_.reset(new DBusCallManager {sessionConnection});
         configurationManager_.reset(new DBusConfigurationManager {sessionConnection});
         presenceManager_.reset(new DBusPresenceManager {sessionConnection});
+        pluginManagerInterface_.reset(new DBusPluginManagerInterface{sessionConnection});
 
         DBusInstance::OnNoMoreClientFunc onNoMoreClientFunc;
         if (!persistent)
@@ -116,6 +120,7 @@ DBusClient::~DBusClient()
     presenceManager_.reset();
     configurationManager_.reset();
     callManager_.reset();
+    pluginManagerInterface_.reset();
 }
 
 int
@@ -136,6 +141,7 @@ DBusClient::initLibrary(int flags)
     auto callM = callManager_.get();
     auto confM = configurationManager_.get();
     auto presM = presenceManager_.get();
+    auto plugM = pluginManagerInterface_.get();
 
 #ifdef ENABLE_VIDEO
     using DRing::VideoSignal;
