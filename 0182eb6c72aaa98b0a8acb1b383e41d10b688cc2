@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "c8582e2c_419bfe5d",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-21T20:10:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "587f40f4_06954710",
+      "range": {
+        "startLine": 55,
+        "startChar": 17,
+        "endLine": 55,
+        "endChar": 42
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "b9215719_71f601c3",
         "filename": "bin/dbus/dbuspluginmanagerinterface.cpp",
         "patchSetId": 1
@@ -45,6 +69,30 @@
       "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b85f6aed_9e75cf9c",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-21T20:10:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "b9215719_71f601c3",
+      "range": {
+        "startLine": 3,
+        "startChar": 2,
+        "endLine": 4,
+        "endChar": 66
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "1c11cd69_e5252922",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-21T20:10:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dd9960bf_884534d6",
+      "range": {
+        "startLine": 4,
+        "startChar": 12,
+        "endLine": 4,
+        "endChar": 68
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "d45ec094_6a8918c9",
         "filename": "bin/dbus/dbuspluginmanagerinterface.h",
         "patchSetId": 1
@@ -91,6 +163,30 @@
       "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a080ef7b_9d7c213a",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-21T20:10:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d45ec094_6a8918c9",
+      "range": {
+        "startLine": 20,
+        "startChar": 0,
+        "endLine": 22,
+        "endChar": 45
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "c21bf6d0_1a1cd975",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-21T20:10:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "f697ffbc_8601eb93",
+      "range": {
+        "startLine": 21,
+        "startChar": 37,
+        "endLine": 22,
+        "endChar": 34
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3f385554_0d10a39e",
         "filename": "src/dring/plugin_manager_interface.h",
         "patchSetId": 1
@@ -131,6 +251,24 @@
       "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "82ca0e0f_7c1917c1",
+        "filename": "src/dring/plugin_manager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-21T20:10:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "3f385554_0d10a39e",
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     },
     {
       "key": {
@@ -154,6 +292,30 @@
       "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f1950daf_81f7ce25",
+        "filename": "src/dring/plugin_manager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-21T20:10:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "dd5aaab8_65d8f368",
+      "range": {
+        "startLine": 19,
+        "startChar": 0,
+        "endLine": 20,
+        "endChar": 32
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
