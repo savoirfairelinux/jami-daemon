@@ -1,0 +1,159 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "587f40f4_06954710",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-05-21T13:51:57Z",
+      "side": 1,
+      "message": "Configure your editor to remove trailing spaces ;)",
+      "range": {
+        "startLine": 55,
+        "startChar": 17,
+        "endLine": 55,
+        "endChar": 42
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b9215719_71f601c3",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-05-21T13:51:57Z",
+      "side": 1,
+      "message": "Not sure you are Philippe neither",
+      "range": {
+        "startLine": 3,
+        "startChar": 2,
+        "endLine": 4,
+        "endChar": 66
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dd9960bf_884534d6",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-05-21T13:51:57Z",
+      "side": 1,
+      "message": "Not sure you are Patrick",
+      "range": {
+        "startLine": 4,
+        "startChar": 12,
+        "endLine": 4,
+        "endChar": 68
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "d45ec094_6a8918c9",
+        "filename": "bin/dbus/dbuspluginmanagerinterface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-05-21T13:51:57Z",
+      "side": 1,
+      "message": "#pragma once",
+      "range": {
+        "startLine": 20,
+        "startChar": 0,
+        "endLine": 22,
+        "endChar": 45
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f697ffbc_8601eb93",
+        "filename": "src/client/plugin_manager_interface.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-05-21T13:51:57Z",
+      "side": 1,
+      "message": "uneeded",
+      "range": {
+        "startLine": 21,
+        "startChar": 37,
+        "endLine": 22,
+        "endChar": 34
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3f385554_0d10a39e",
+        "filename": "src/dring/plugin_manager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 19,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-05-21T13:51:57Z",
+      "side": 1,
+      "message": "Because you change the daemon API, daemon version should change (in configure.ac)",
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dd5aaab8_65d8f368",
+        "filename": "src/dring/plugin_manager_interface.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 20,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-05-21T13:51:57Z",
+      "side": 1,
+      "message": "#pragma once",
+      "range": {
+        "startLine": 19,
+        "startChar": 0,
+        "endLine": 20,
+        "endChar": 32
+      },
+      "revId": "0182eb6c72aaa98b0a8acb1b383e41d10b688cc2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
