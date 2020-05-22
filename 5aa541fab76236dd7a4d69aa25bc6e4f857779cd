@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5c7443d9_83a7efff",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 977,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T14:47:37Z",
+      "side": 1,
+      "message": "Add virtual function to AccountManager, because this feature might be implemented by ServerAccountManager",
+      "range": {
+        "startLine": 977,
+        "startChar": 36,
+        "endLine": 977,
+        "endChar": 57
+      },
+      "revId": "5aa541fab76236dd7a4d69aa25bc6e4f857779cd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
