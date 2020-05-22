@@ -122,18 +122,21 @@ Account::~Account()
 void
 Account::attachCall(const std::string& id)
 {
+    std::lock_guard<std::mutex> lk {callIDSetMtx_};
     callIDSet_.insert(id);
 }
 
 void
 Account::detachCall(const std::string& id)
 {
+    std::lock_guard<std::mutex> lk {callIDSetMtx_};
     callIDSet_.erase(id);
 }
 
 void
 Account::freeAccount()
 {
+    std::lock_guard<std::mutex> lk {callIDSetMtx_};
     for (const auto& id : callIDSet_)
         Manager::instance().hangupCall(id);
 }
