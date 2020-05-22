@@ -388,13 +388,15 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
     std::stringstream ss;
     msgpack::pack(ss, val);
     auto toSend = ss.str();
-    sock->setOnChannelReady(channelSock->channel(), [channelSock, deviceId, vid, this]() {
-        std::lock_guard<std::mutex> lk(connectCbsMtx_);
+    sock->setOnChannelReady(channelSock->channel(), [channelSock, deviceId, vid, w=weak()]() {
+        auto shared = w.lock();
+        if (!shared) return;
+        std::lock_guard<std::mutex> lk(shared->connectCbsMtx_);
         std::pair<std::string, dht::Value::Id> cbId(deviceId, vid);
-        auto cbIt = pendingCbs_.find(cbId);
-        if (cbIt != pendingCbs_.end()) {
+        auto cbIt = shared->pendingCbs_.find(cbId);
+        if (cbIt != shared->pendingCbs_.end()) {
             if (cbIt->second) cbIt->second(channelSock);
-            pendingCbs_.erase(cbIt);
+            shared->pendingCbs_.erase(cbIt);
         }
     });
     std::error_code ec;
@@ -572,30 +574,34 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
     auto ph = req.from;
     auto tlsSocket = std::make_unique<TlsSocketEndpoint>(
         std::move(endpoint), account.identity(), account.dhParams(),
-        [ph, this](const dht::crypto::Certificate &cert) {
+        [ph, w=weak()](const dht::crypto::Certificate &cert) {
+            auto shared = w.lock();
+            if (!shared) return false;
             dht::InfoHash peer_h;
-            return validatePeerCertificate(cert, peer_h) && peer_h == ph;
+            return shared->validatePeerCertificate(cert, peer_h) && peer_h == ph;
         });
 
     auto& nonReadyIt = nonReadySockets_[deviceId][vid];
     nonReadyIt = std::move(tlsSocket);
-    nonReadyIt->setOnReady([this, deviceId, vid=std::move(vid)] (bool ok) {
-        if (multiplexedSockets_[deviceId].find(vid) != multiplexedSockets_[deviceId].end())
+    nonReadyIt->setOnReady([w=weak(), deviceId, vid=std::move(vid)] (bool ok) {
+        auto shared = w.lock();
+        if (!shared) return;
+        if (shared->multiplexedSockets_[deviceId].find(vid) != shared->multiplexedSockets_[deviceId].end())
             return;
         if (!ok) {
             JAMI_ERR() << "TLS connection failure for peer " << deviceId;
-            if (connReadyCb_) connReadyCb_(deviceId, "", nullptr);
+            if (shared->connReadyCb_) shared->connReadyCb_(deviceId, "", nullptr);
         } else {
             // The socket is ready, store it in multiplexedSockets_
-            std::lock_guard<std::mutex> lk(msocketsMutex_);
-            std::lock_guard<std::mutex> lknrs(nonReadySocketsMutex_);
-            auto nonReadyIt = nonReadySockets_.find(deviceId);
-            if (nonReadyIt != nonReadySockets_.end()) {
+            std::lock_guard<std::mutex> lk(shared->msocketsMutex_);
+            std::lock_guard<std::mutex> lknrs(shared->nonReadySocketsMutex_);
+            auto nonReadyIt = shared->nonReadySockets_.find(deviceId);
+            if (nonReadyIt != shared->nonReadySockets_.end()) {
                 JAMI_DBG("Connection to %s is ready", deviceId.c_str());
-                addNewMultiplexedSocket(deviceId, vid, std::move(nonReadyIt->second[vid]));
+                shared->addNewMultiplexedSocket(deviceId, vid, std::move(nonReadyIt->second[vid]));
                 nonReadyIt->second.erase(vid);
                 if (nonReadyIt->second.empty()) {
-                    nonReadySockets_.erase(nonReadyIt);
+                    shared->nonReadySockets_.erase(nonReadyIt);
                 }
             }
         }
@@ -607,13 +613,17 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
 {
     // mSocketsMutex_ MUST be locked
     auto mSock = std::make_shared<MultiplexedSocket>(deviceId, std::move(tlsSocket));
-    mSock->setOnReady([this](const std::string& deviceId, const std::shared_ptr<ChannelSocket>& socket) {
-        if (connReadyCb_)
-            connReadyCb_(deviceId, socket->name(), socket);
+    mSock->setOnReady([w=weak()](const std::string& deviceId, const std::shared_ptr<ChannelSocket>& socket) {
+        auto sthis = w.lock();
+        if (!sthis) return;
+        if (sthis->connReadyCb_)
+            sthis->connReadyCb_(deviceId, socket->name(), socket);
     });
-    mSock->setOnRequest([this](const std::string& deviceId, const uint16_t&, const std::string& name) {
-        if (channelReqCb_)
-            return channelReqCb_(deviceId, name);
+    mSock->setOnRequest([w=weak()](const std::string& deviceId, const uint16_t&, const std::string& name) {
+        auto sthis = w.lock();
+        if (!sthis) return false;
+        if (sthis->channelReqCb_)
+            return sthis->channelReqCb_(deviceId, name);
         return false;
     });
     mSock->onShutdown([w=weak(), deviceId, vid]() {
