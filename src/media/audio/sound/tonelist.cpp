@@ -26,59 +26,6 @@
 
 namespace jami {
 
-static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
-    {
-        // ZID_NORTH_AMERICA
-        "350+440",                // Tone::TONE_DIALTONE
-        "480+620/500,0/500",      // Tone::TONE_BUSY
-        "440+480/2000,0/4000",    // Tone::TONE_RINGTONE
-        "480+620/250,0/250",      // Tone::TONE_CONGESTION
-    },
-    {
-        //ZID_FRANCE
-        "440",
-        "440/500,0/500",
-        "440/1500,0/3500",
-        "440/250,0/250",
-    },
-    {
-        //ZID_AUSTRALIA
-        "413+438",
-        "425/375,0/375",
-        "413+438/400,0/200,413+438/400,0/2000",
-        "425/375,0/375,420/375,8/375",
-    },
-    {
-        //ZID_UNITED_KINGDOM
-        "350+440",
-        "400/375,0/375",
-        "400+450/400,0/200,400+450/400,0/2000",
-        "400/400,0/350,400/225,0/525",
-    },
-    {
-        //ZID_SPAIN
-        "425",
-        "425/200,0/200",
-        "425/1500,0/3000",
-        "425/200,0/200,425/200,0/200,425/200,0/600",
-    },
-    {
-        //ZID_ITALY
-        "425/600,0/1000,425/200,0/200",
-        "425/500,0/500",
-        "425/1000,0/4000",
-        "425/200,0/200",
-    },
-    {
-        //ZID_JAPAN
-        "400",
-        "400/500,0/500",
-        "400+15/1000,0/2000",
-        "400/500,0/500",
-    }
-};
-
-
 TelephoneTone::COUNTRYID
 TelephoneTone::getCountryId(const std::string& countryName)
 {
@@ -126,6 +73,58 @@ TelephoneTone::getCurrentTone()
 void
 TelephoneTone::buildTones(unsigned int sampleRate)
 {
+    return;
+    static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
+        {
+            // ZID_NORTH_AMERICA
+            "350+440",                // Tone::TONE_DIALTONE
+            "480+620/500,0/500",      // Tone::TONE_BUSY
+            "440+480/2000,0/4000",    // Tone::TONE_RINGTONE
+            "480+620/250,0/250",      // Tone::TONE_CONGESTION
+        },
+        {
+            //ZID_FRANCE
+            "440",
+            "440/500,0/500",
+            "440/1500,0/3500",
+            "440/250,0/250",
+        },
+        {
+            //ZID_AUSTRALIA
+            "413+438",
+            "425/375,0/375",
+            "413+438/400,0/200,413+438/400,0/2000",
+            "425/375,0/375,420/375,8/375",
+        },
+        {
+            //ZID_UNITED_KINGDOM
+            "350+440",
+            "400/375,0/375",
+            "400+450/400,0/200,400+450/400,0/2000",
+            "400/400,0/350,400/225,0/525",
+        },
+        {
+            //ZID_SPAIN
+            "425",
+            "425/200,0/200",
+            "425/1500,0/3000",
+            "425/200,0/200,425/200,0/200,425/200,0/600",
+        },
+        {
+            //ZID_ITALY
+            "425/600,0/1000,425/200,0/200",
+            "425/500,0/500",
+            "425/1000,0/4000",
+            "425/200,0/200",
+        },
+        {
+            //ZID_JAPAN
+            "400",
+            "400/500,0/500",
+            "400+15/1000,0/2000",
+            "400/500,0/500",
+        }
+    };
     tones_[Tone::TONE_DIALTONE] = std::make_shared<Tone>(toneZone[countryId_][Tone::TONE_DIALTONE], sampleRate);
     tones_[Tone::TONE_BUSY] = std::make_shared<Tone>(toneZone[countryId_][Tone::TONE_BUSY], sampleRate);
     tones_[Tone::TONE_RINGTONE] = std::make_shared<Tone>(toneZone[countryId_][Tone::TONE_RINGTONE], sampleRate);
