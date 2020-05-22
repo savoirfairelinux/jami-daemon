@@ -54,7 +54,7 @@ class TelephoneTone {
     private:
         NON_COPYABLE(TelephoneTone);
 
-        static COUNTRYID getCountryId(const std::string& countryName);
+        COUNTRYID getCountryId(const std::string& countryName);
 
         void buildTones(unsigned int sampleRate);
 
