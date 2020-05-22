@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aefb0935_fe405443",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 620,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T14:42:39Z",
+      "side": 1,
+      "message": "if (auto sthis \u003d w.lock())\n    if (sthis-\u003econnReadyCb_)\n        sthis-\u003econnReadyCb_(deviceId, socket-\u003ename(), socket);",
+      "range": {
+        "startLine": 617,
+        "startChar": 0,
+        "endLine": 620,
+        "endChar": 66
+      },
+      "revId": "b84a99bce5d933a098706356addbefc86e1a3f36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "416c89d8_ffe2e281",
+        "filename": "src/jamidht/connectionmanager.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 627,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T14:42:39Z",
+      "side": 1,
+      "message": "if (auto sthis \u003d w.lock())\n    if (sthis-\u003echannelReqCb_)\n        return sthis-\u003echannelReqCb_(deviceId, name);\nreturn false;",
+      "range": {
+        "startLine": 623,
+        "startChar": 8,
+        "endLine": 627,
+        "endChar": 21
+      },
+      "revId": "b84a99bce5d933a098706356addbefc86e1a3f36",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
