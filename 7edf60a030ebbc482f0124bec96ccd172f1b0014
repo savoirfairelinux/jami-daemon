@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "f931a00b_9850c7af",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 110,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T20:59:46Z",
+      "side": 1,
+      "message": "cv is never notified ? also wait_for \"may also be unblocked spuriously\"\nhttps://en.cppreference.com/w/cpp/thread/condition_variable/wait_for\n\nso the predicate version shall be used (see bellow)",
+      "range": {
+        "startLine": 109,
+        "startChar": 4,
+        "endLine": 110,
+        "endChar": 38
+      },
+      "revId": "7edf60a030ebbc482f0124bec96ccd172f1b0014",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "35ae60e1_d5a3af74",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 154,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T20:59:46Z",
+      "side": 1,
+      "message": "could use a single cv",
+      "range": {
+        "startLine": 153,
+        "startChar": 0,
+        "endLine": 154,
+        "endChar": 32
+      },
+      "revId": "7edf60a030ebbc482f0124bec96ccd172f1b0014",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "19cb762f_abccdf63",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 157,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T20:59:46Z",
+      "side": 1,
+      "message": "atomic_* or use mutex in callbacks",
+      "range": {
+        "startLine": 156,
+        "startChar": 4,
+        "endLine": 157,
+        "endChar": 24
+      },
+      "revId": "7edf60a030ebbc482f0124bec96ccd172f1b0014",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1149e93d_64288733",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 179,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T20:59:46Z",
+      "side": 1,
+      "message": "CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [\u0026]{ return callReceived; }));",
+      "range": {
+        "startLine": 178,
+        "startChar": 0,
+        "endLine": 179,
+        "endChar": 33
+      },
+      "revId": "7edf60a030ebbc482f0124bec96ccd172f1b0014",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1e8ff596_c063ef89",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 185,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T20:59:46Z",
+      "side": 1,
+      "message": "CPPUNIT_ASSERT(cv.wait_for(lk, std::chrono::seconds(30), [\u0026]{ return callStopped \u003d\u003d 2; }));",
+      "range": {
+        "startLine": 184,
+        "startChar": 0,
+        "endLine": 185,
+        "endChar": 37
+      },
+      "revId": "7edf60a030ebbc482f0124bec96ccd172f1b0014",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "91155ce9_e7be83e6",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 234,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T20:59:46Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 233,
+        "startChar": 4,
+        "endLine": 234,
+        "endChar": 42
+      },
+      "revId": "7edf60a030ebbc482f0124bec96ccd172f1b0014",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0bfd54c7_369a641f",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 239,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T20:59:46Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 238,
+        "startChar": 4,
+        "endLine": 239,
+        "endChar": 33
+      },
+      "revId": "7edf60a030ebbc482f0124bec96ccd172f1b0014",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a95ed383_83fbd7d2",
+        "filename": "test/unitTest/call/call.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-22T20:59:46Z",
+      "side": 1,
+      "message": "same",
+      "range": {
+        "startLine": 244,
+        "startChar": 4,
+        "endLine": 245,
+        "endChar": 37
+      },
+      "revId": "7edf60a030ebbc482f0124bec96ccd172f1b0014",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
