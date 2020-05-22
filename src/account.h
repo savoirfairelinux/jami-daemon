@@ -346,6 +346,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * Set of call's ID attached to the account.
          */
+        std::mutex callIDSetMtx_;
         std::set<std::string> callIDSet_;
 
         void enableUpnp(bool state);
