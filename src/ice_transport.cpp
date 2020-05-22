@@ -1041,7 +1041,7 @@ IceTransport::getLocalAttributes() const
 }
 
 std::vector<std::string>
-IceTransport::getLocalCandidates(unsigned comp_id) const
+IceTransport::getLocalCandidates(unsigned comp_id, const std::string& filter) const
 {
     std::vector<std::string> res;
     pj_ice_sess_cand cand[PJ_ARRAY_SIZE(pimpl_->cand_)];
@@ -1058,8 +1058,12 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
     }
 
     for (unsigned i=0; i<cand_cnt; ++i) {
-        std::ostringstream val;
+        if (not filter.empty() && filter != pj_ice_get_cand_type_name(cand[i].type)) continue;
         char ipaddr[PJ_INET6_ADDRSTRLEN];
+        std::string addr = pj_sockaddr_print(&cand[i].addr, ipaddr, sizeof(ipaddr), 0);
+        if (filter == "!local" && addr.find("192.168.") != std::string::npos && addr.find(".") != std::string::npos) continue;
+        if (filter == "!local" && addr.find("fe80::") != std::string::npos && addr.find(":") != std::string::npos) continue;
+        std::ostringstream val;
 
         /**   Section 4.5, RFC 6544 (https://tools.ietf.org/html/rfc6544)
          *    candidate-attribute   = "candidate" ":" foundation SP component-id
@@ -1075,7 +1079,7 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
         val << " " << std::to_string(cand[i].comp_id);
         val << (cand[i].transport == PJ_CAND_UDP ? " UDP " : " TCP ");
         val << std::to_string(cand[i].prio);
-        val << " " << pj_sockaddr_print(&cand[i].addr, ipaddr, sizeof(ipaddr), 0);
+        val << " " << addr;
         val << " " << std::to_string((unsigned)pj_sockaddr_get_port(&cand[i].addr));
         val << " typ " << pj_ice_get_cand_type_name(cand[i].type);
 
@@ -1130,7 +1134,7 @@ IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
 }
 
 std::vector<uint8_t>
-IceTransport::packIceMsg(uint8_t version) const
+IceTransport::packIceMsg(uint8_t version, const std::string& filter) const
 {
     if (not isInitialized())
         return {};
@@ -1141,13 +1145,13 @@ IceTransport::packIceMsg(uint8_t version) const
         msgpack::pack(ss, std::make_pair(pimpl_->local_ufrag_, pimpl_->local_pwd_));
         msgpack::pack(ss, static_cast<uint8_t>(pimpl_->component_count_));
         for (unsigned i=0; i<pimpl_->component_count_; i++)
-            msgpack::pack(ss, getLocalCandidates(i));
+            msgpack::pack(ss, getLocalCandidates(i, filter));
     } else {
         SDP sdp;
         sdp.ufrag = pimpl_->local_ufrag_;
         sdp.pwd = pimpl_->local_pwd_;
         for (unsigned i = 0; i < pimpl_->component_count_; i++) {
-            auto candidates = getLocalCandidates(i);
+            auto candidates = getLocalCandidates(i, filter);
             sdp.candidates.reserve(sdp.candidates.size() + candidates.size());
             sdp.candidates.insert(sdp.candidates.end(), candidates.begin(), candidates.end());
         }

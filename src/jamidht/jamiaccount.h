@@ -425,6 +425,7 @@ public:
     ConnectionManager& connectionManager() {
         return *connectionManager_;
     }
+    std::string iceFilter {};
 #endif
 
     /**

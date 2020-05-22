@@ -180,12 +180,12 @@ public:
     /**
      * Return ICE session attributes
      */
-    std::vector<std::string> getLocalCandidates(unsigned comp_id) const;
+    std::vector<std::string> getLocalCandidates(unsigned comp_id, const std::string& filter = "") const;
 
     /**
      * Returns serialized ICE attributes and candidates.
      */
-    std::vector<uint8_t> packIceMsg(uint8_t version = 1) const;
+    std::vector<uint8_t> packIceMsg(uint8_t version = 1, const std::string& filter = "") const;
 
     bool getCandidateFromSDP(const std::string& line, IceCandidate& cand) const;
 

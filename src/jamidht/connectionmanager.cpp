@@ -260,7 +260,11 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
             std::stringstream icemsg;
             icemsg << iceAttributes.ufrag << "\n";
             icemsg << iceAttributes.pwd << "\n";
+#ifdef DRING_TESTABLE
+            for (const auto &addr : ice->getLocalCandidates(0, sthis->account.iceFilter)) {
+#else
             for (const auto &addr : ice->getLocalCandidates(0)) {
+#endif
                 icemsg << addr << "\n";
             }
 
@@ -535,7 +539,11 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
     std::stringstream icemsg;
     icemsg << iceAttributes.ufrag << "\n";
     icemsg << iceAttributes.pwd << "\n";
-    for (const auto &addr : ice->getLocalCandidates(0)) {
+#ifdef DRING_TESTABLE
+            for (const auto &addr : ice->getLocalCandidates(0, sthis->account.iceFilter)) {
+#else
+            for (const auto &addr : ice->getLocalCandidates(0)) {
+#endif
         icemsg << addr << "\n";
     }
 

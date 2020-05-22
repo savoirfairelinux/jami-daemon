@@ -548,9 +548,17 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             // Next step: sent the ICE data to peer through DHT
             const dht::Value::Id callvid  = ValueIdDist()(sthis->rand);
             const auto callkey = dht::InfoHash::get("callto:" + deviceId);
+#ifdef DRING_TESTABLE
+            auto blob = ice->packIceMsg(1, sthis->iceFilter);
+#else
             auto blob = ice->packIceMsg();
+#endif
             if (ice_tcp)  {
+#ifdef DRING_TESTABLE
+                auto ice_tcp_msg = ice_tcp->packIceMsg(2, sthis->iceFilter);
+#else
                 auto ice_tcp_msg = ice_tcp->packIceMsg(2);
+#endif
                 blob.insert(blob.end(), ice_tcp_msg.begin(), ice_tcp_msg.end());
             }
             dht::Value val { dht::IceCandidates(callvid,  blob) };
@@ -2160,9 +2168,18 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
     registerDhtAddress(*ice);
     if (ice_tcp) registerDhtAddress(*ice_tcp);
 
+#ifdef DRING_TESTABLE
+    auto blob = ice->packIceMsg(1, iceFilter);
+#else
     auto blob = ice->packIceMsg();
+#endif
+
     if (ice_tcp) {
+#ifdef DRING_TESTABLE
+        auto ice_tcp_msg = ice_tcp->packIceMsg(2, iceFilter);
+#else
         auto ice_tcp_msg = ice_tcp->packIceMsg(2);
+#endif
         blob.insert(blob.end(), ice_tcp_msg.begin(), ice_tcp_msg.end());
     }
 

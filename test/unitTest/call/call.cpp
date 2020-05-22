@@ -54,11 +54,13 @@ public:
 
 private:
     void testCall();
+    void testCallRelayedIncoming();
     void testCachedCall();
 
     CPPUNIT_TEST_SUITE(CallTest);
-    CPPUNIT_TEST(testCall);
-    CPPUNIT_TEST(testCachedCall);
+    //CPPUNIT_TEST(testCall);
+    CPPUNIT_TEST(testCallRelayedIncoming);
+    //CPPUNIT_TEST(testCachedCall);
     CPPUNIT_TEST_SUITE_END();
 };
 
@@ -145,6 +147,57 @@ CallTest::testCall()
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
     auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
+    auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
+
+    std::mutex mtx;
+    std::unique_lock<std::mutex> lk{ mtx };
+    std::condition_variable cv;
+    std::condition_variable cv2;
+    std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>> confHandlers;
+    bool callReceived = false;
+    int callStopped = 0;
+    // Watch signals
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>(
+    [&](const std::string&, const std::string&, const std::string&) {
+        callReceived = true;
+        cv.notify_one();
+    }));
+    confHandlers.insert(DRing::exportable_callback<DRing::CallSignal::StateChange>(
+    [&](const std::string&, const std::string& state, signed) {
+        if (state == "OVER") {
+            callStopped += 1;
+            if (callStopped == 2) {
+                cv2.notify_one();
+            }
+        }
+    }));
+    DRing::registerSignalHandlers(confHandlers);
+
+    JAMI_INFO("Start call between alice and Bob");
+    auto call = aliceAccount->newOutgoingCall(bobUri, {});
+
+    cv.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(callReceived);
+
+    JAMI_INFO("Stop call between alice and Bob");
+    callStopped = 0;
+    Manager::instance().hangupCall(call->getCallId());
+    cv2.wait_for(lk, std::chrono::seconds(30));
+    CPPUNIT_ASSERT(callStopped == 2);
+}
+
+void
+CallTest::testCallRelayedIncoming()
+{
+    // TODO remove. This sleeps is because it take some time for the DHT to be connected
+    // and account announced
+    JAMI_INFO("Waiting....");
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    auto aliceAccount = Manager::instance().getAccount<JamiAccount>(aliceId);
+    auto bobAccount = Manager::instance().getAccount<JamiAccount>(bobId);
+    bobAccount->iceFilter = "relay";
+    aliceAccount->iceFilter = "!local";
     auto bobUri = bobAccount->getAccountDetails()[ConfProperties::USERNAME];
     auto aliceUri = aliceAccount->getAccountDetails()[ConfProperties::USERNAME];
 
