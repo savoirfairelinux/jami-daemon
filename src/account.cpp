@@ -136,8 +136,12 @@ Account::detachCall(const std::string& id)
 void
 Account::freeAccount()
 {
-    std::lock_guard<std::mutex> lk {callIDSetMtx_};
-    for (const auto& id : callIDSet_)
+    decltype(callIDSet_) calls;
+    {
+        std::lock_guard<std::mutex> lk {callIDSetMtx_};
+        calls = callIDSet_;
+    }
+    for (const auto& id : calls)
         Manager::instance().hangupCall(id);
 }
 
