@@ -23,10 +23,11 @@
 #include "tonelist.h"
 
 #include <ciso646> // fix windows compiler bug
+#include <vector>
 
 namespace jami {
 
-static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
+std::vector<std::vector<std::string>> toneZone = {
     {
         // ZID_NORTH_AMERICA
         "350+440",                // Tone::TONE_DIALTONE
