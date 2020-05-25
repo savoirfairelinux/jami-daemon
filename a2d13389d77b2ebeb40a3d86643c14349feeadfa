@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "dc0bc097_355585d0",
+        "filename": "src/call.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 80,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-25T15:17:23Z",
+      "side": 1,
+      "message": "shared_ptr",
+      "range": {
+        "startLine": 80,
+        "startChar": 16,
+        "endLine": 80,
+        "endChar": 24
+      },
+      "revId": "a2d13389d77b2ebeb40a3d86643c14349feeadfa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bff2e5d3_056bc02a",
+        "filename": "src/call_factory.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 74,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-25T15:17:23Z",
+      "side": 1,
+      "message": "shared_ptr: even if stored internally as weak_ptr, the account must exist (be owned by at least one component) when the call is created. Using a shared_ptr conveys that semantic.",
+      "range": {
+        "startLine": 74,
+        "startChar": 35,
+        "endLine": 74,
+        "endChar": 48
+      },
+      "revId": "a2d13389d77b2ebeb40a3d86643c14349feeadfa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "544a6e91_8761981c",
+        "filename": "src/call_factory.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 85,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-25T15:17:23Z",
+      "side": 1,
+      "message": "shared_ptr",
+      "range": {
+        "startLine": 85,
+        "startChar": 33,
+        "endLine": 85,
+        "endChar": 49
+      },
+      "revId": "a2d13389d77b2ebeb40a3d86643c14349feeadfa",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
