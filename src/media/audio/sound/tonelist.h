@@ -34,7 +34,7 @@ namespace jami {
 class TelephoneTone {
     public:
         /** Countries */
-        enum COUNTRYID {
+        enum class CountryId {
             ZID_NORTH_AMERICA = 0,
             ZID_FRANCE,
             ZID_AUSTRALIA,
@@ -47,20 +47,20 @@ class TelephoneTone {
 
         TelephoneTone(const std::string& countryName, unsigned int sampleRate);
 
-        void setCurrentTone(Tone::TONEID toneId);
+        void setCurrentTone(Tone::ToneId toneId);
         void setSampleRate(unsigned int sampleRate);
         std::shared_ptr<Tone> getCurrentTone();
 
     private:
         NON_COPYABLE(TelephoneTone);
 
-        static COUNTRYID getCountryId(const std::string& countryName);
+        static CountryId getCountryId(const std::string& countryName);
 
         void buildTones(unsigned int sampleRate);
 
-        COUNTRYID countryId_;
-        std::array<std::shared_ptr<Tone>, Tone::TONE_NULL> tones_;
-        Tone::TONEID currentTone_;
+        CountryId countryId_;
+        std::array<std::shared_ptr<Tone>, (size_t)Tone::ToneId::TONE_NULL> tones_;
+        Tone::ToneId currentTone_;
 };
 
 } // namespace jami
