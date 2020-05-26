@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3c4b0b2d_76148a56",
+        "filename": "contrib/src/opencv/rules.mak",
+        "patchSetId": 8
+      },
+      "lineNbr": 17,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-05-26T18:47:07Z",
+      "side": 1,
+      "message": "Note that I see some warnings such as:\ncc1plus: warning: command-line option ‘-Wmissing-prototypes’ is valid for C/ObjC but not for C++\ncc1plus: warning: command-line option ‘-Wstrict-prototypes’ is valid for C/ObjC but not for C++\ncc1plus: warning: command-line option ‘-Wmissing-prototypes’ is valid for C/ObjC but not for C++\ncc1plus: warning: command-line option ‘-Wstrict-prototypes’ is valid for C/ObjC but not for C++\nmake[3]: Leaving directory \u0027/home/amarok/Projects/jami/daemon/contrib/native/opencv/build\u0027",
+      "range": {
+        "startLine": 17,
+        "startChar": 0,
+        "endLine": 17,
+        "endChar": 16
+      },
+      "revId": "75f7f3ef345e483d9e25451d0579cfa5ac381a16",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
