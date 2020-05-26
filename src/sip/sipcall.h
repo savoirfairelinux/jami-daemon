@@ -238,9 +238,6 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
 
-    IceTransport* getIceMediaTransport() const {
-        return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
-    }
 
     void deinitRecorder();
 
@@ -252,6 +249,9 @@ private:
 
     NON_COPYABLE(SIPCall);
 
+    IceTransport* getIceMediaTransport() const {
+        return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
+    }
     void setCallMediaLocal();
 
     void waitForIceAndStartMedia();
@@ -340,7 +340,7 @@ private:
     std::shared_ptr<IceTransport> mediaTransport_;
 
     ///< Temporary transport for media. Replace mediaTransport_ when connected with success
-    std::shared_ptr<IceTransport> tmpMediaTransport_;
+    std::unique_ptr<IceTransport> tmpMediaTransport_;
 
     std::string peerUri_{};
 
