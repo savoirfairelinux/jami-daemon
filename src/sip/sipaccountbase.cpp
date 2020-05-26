@@ -481,6 +481,7 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
             JAMI_WARN("Dropping invalid message with MIME type %s", m.first.c_str());
             return;
         }
+        JAMI_WARN(m.first.c_str());
         if (m.first == MIME_TYPE_IM_COMPOSING) {
             try {
                 static const std::regex COMPOSING_REGEX("<state>\\s*(\\w+)\\s*<\\/state>");

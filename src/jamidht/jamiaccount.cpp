@@ -3270,6 +3270,144 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const std::string& 
 }
 
 void
+JamiAccount::sendVCard(const std::string& peerId, const std::string& deviceId)
+{
+    try {
+        auto vCard = fileutils::loadTextFile(idPath_ + DIR_SEPARATOR_STR + "profile.vcf");
+
+        std::random_device rdev;
+        std::uniform_int_distribution<int> dis{ 0, std::numeric_limits<int>::max() };
+        auto tokenVCard = std::to_string(dis(rdev));
+
+        int i = 0;
+        int total = vCard.size()/1000 + (vCard.size()%1000?1:0);
+        while (vCard.size()) {
+            auto sizeLimit = std::min(1000, static_cast<int>(vCard.size()));
+
+            std::map<std::string, std::string> chunk;
+            std::string key = "x-jami/jami.profile.vcard; id=";
+            key += tokenVCard + ",part=" + std::to_string(i+1) + ",of=" + std::to_string(total);
+            chunk[key] = vCard.substr(0, sizeLimit);
+            vCard = vCard.substr(sizeLimit);
+            ++i;
+
+            auto token = dis(rdev);
+            auto to = peerId;
+
+
+
+
+    std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
+    sip_utils::register_thread();
+    auto& sipConns = sipConnections_[peerId];
+    auto deviceConnIt = sipConns.find(deviceId);
+    if (deviceConnIt != sipConns.end()) {
+        auto& it = deviceConnIt->second.back();
+
+        auto transport = it.transport;
+        auto channel = it.channel;
+        if (!channel || !channel->underlyingICE()) {
+            JAMI_WARN("A SIP transport exists without Channel, this is a bug. Please report");
+            // Remove connection in incorrect state
+            deviceConnIt = sipConns.erase(deviceConnIt);
+            // TODO
+        }
+
+        // Build SIP Message
+        // "deviceID@IP"
+        auto toURI = getToUri(to + "@" + channel->underlyingICE()->getRemoteAddress(0).toString(true));
+        std::string from = getFromUri();
+        pjsip_tx_data* tdata;
+
+        // Build SIP message
+        constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, jami::sip_utils::CONST_PJ_STR("MESSAGE")};
+        pj_str_t pjFrom = pj_str((char*) from.c_str());
+        pj_str_t pjTo = pj_str((char*) toURI.c_str());
+
+        // Create request.
+        pj_status_t status = pjsip_endpt_create_request(link_.getEndpoint(), &msg_method,
+                                                        &pjTo, &pjFrom, &pjTo, nullptr, nullptr, -1,
+                                                        nullptr, &tdata);
+        if (status != PJ_SUCCESS) {
+            JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
+            // TODO
+        }
+
+        // Add Date Header.
+        pj_str_t date_str;
+        constexpr auto key = sip_utils::CONST_PJ_STR("Date");
+        pjsip_hdr *hdr;
+        auto time = std::time(nullptr);
+        auto date = std::ctime(&time);
+        // the erase-remove idiom for a cstring, removes _all_ new lines with in date
+        *std::remove(date, date+strlen(date), '\n') = '\0';
+
+        // Add Header
+        hdr = reinterpret_cast<pjsip_hdr*>(pjsip_date_hdr_create(tdata->pool, &key, pj_cstr(&date_str, date)));
+        pjsip_msg_add_hdr(tdata->msg, hdr);
+
+        // https://tools.ietf.org/html/rfc5438#section-6.3
+        auto token_str = to_hex_string(token);
+        auto pjMessageId = sip_utils::CONST_PJ_STR(token_str);
+        hdr = reinterpret_cast<pjsip_hdr*>(pjsip_generic_string_hdr_create(tdata->pool, &STR_MESSAGE_ID, &pjMessageId));
+        pjsip_msg_add_hdr(tdata->msg, hdr);
+
+        // Add user agent header.
+        pjsip_hdr *hdr_list;
+        constexpr auto pJuseragent = sip_utils::CONST_PJ_STR("Jami");
+        constexpr pj_str_t STR_USER_AGENT = jami::sip_utils::CONST_PJ_STR("User-Agent");
+
+        // Add Header
+        hdr_list = reinterpret_cast<pjsip_hdr*>(pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent));
+        pjsip_msg_add_hdr(tdata->msg, hdr_list);
+
+        // Init tdata
+        const pjsip_tpselector tp_sel = SIPVoIPLink::getTransportSelector(transport->get());
+        status = pjsip_tx_data_set_transport(tdata, &tp_sel);
+        if (status != PJ_SUCCESS) {
+            JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
+            messageEngine_.onMessageSent(to, token, false);
+            ++deviceConnIt;
+            continue;
+        }
+        im::fillPJSIPMessageBody(*tdata, chunk);
+
+        // Because pjsip_endpt_send_request can take quite some time, move it in a io thread to avoid to block
+        dht::ThreadPool::io().run([w=weak(), tdata, to, token, deviceId] {
+            auto shared = w.lock();
+            if (!shared) return;
+
+            sip_utils::register_thread();
+
+            auto status = pjsip_endpt_send_request(shared->link_.getEndpoint(), tdata, -1, nullptr,
+                [](void *token, pjsip_event *event)
+                {
+                    // TODO
+                });
+
+            if (status != PJ_SUCCESS) {
+                JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+            }
+        });
+    }
+
+
+
+
+
+
+
+        }
+    } catch (const std::exception& e) {
+        JAMI_ERR() << e.what();
+    }
+
+
+
+
+}
+
+void
 JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const std::string& peerId, const std::string& deviceId)
 {
     std::unique_lock<std::mutex> lk(sipConnectionsMtx_);
@@ -3306,6 +3444,8 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const s
     });
     JAMI_DBG("New SIP channel opened with %s", deviceId.c_str());
     lk.unlock();
+
+    sendVCard(peerId, deviceId);
 
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
