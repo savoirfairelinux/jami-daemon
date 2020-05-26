@@ -25,6 +25,7 @@
 #include <chrono>
 #include <mutex>
 #include <cstdint>
+#include <vector>
 
 namespace jami {
 
@@ -79,6 +80,11 @@ public:
      */
     void save() const;
 
+    /**
+     * Receives a vcard chunk
+     */
+    void onVCardChunk(const std::string& from, const std::string& id, const std::string& part, const std::string& total, const std::string& chunk);
+
 private:
 
     static const constexpr unsigned MAX_RETRIES = 20;
@@ -103,6 +109,8 @@ private:
     std::set<MessageToken> sentMessages_;
 
     mutable std::mutex messagesMutex_ {};
+
+    std::map<std::string, std::vector<std::string>> vcardsChunks_ {};
 };
 
 }} // namespace jami::im
