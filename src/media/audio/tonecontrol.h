@@ -49,7 +49,7 @@ class ToneControl {
         bool setAudioFile(const std::string& file);
         void stopAudioFile();
         void stop();
-        void play(Tone::TONEID toneId);
+        void play(Tone::ToneId toneId);
         void seek(double value);
 
     private:

@@ -103,7 +103,7 @@ ToneControl::stop()
     std::lock_guard<std::mutex> lk(mutex_);
 
     if (telephoneTone_)
-        telephoneTone_->setCurrentTone(Tone::TONE_NULL);
+        telephoneTone_->setCurrentTone(Tone::ToneId::TONE_NULL);
 
     if (audioFile_) {
         emitSignal<DRing::CallSignal::RecordPlaybackStopped>(audioFile_->getFilePath());
@@ -112,7 +112,7 @@ ToneControl::stop()
 }
 
 void
-ToneControl::play(Tone::TONEID toneId)
+ToneControl::play(Tone::ToneId toneId)
 {
     std::lock_guard<std::mutex> lk(mutex_);
 

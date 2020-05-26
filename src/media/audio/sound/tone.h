@@ -45,11 +45,11 @@ class Tone : public AudioLoop {
         Tone(const std::string& definition, unsigned int sampleRate);
 
         /** The different kind of tones */
-        enum TONEID {
-            TONE_DIALTONE = 0,
-            TONE_BUSY,
-            TONE_RINGTONE,
-            TONE_CONGESTION,
+        enum class ToneId {
+            DIALTONE = 0,
+            BUSY,
+            RINGTONE,
+            CONGESTION,
             TONE_NULL
         };
 
