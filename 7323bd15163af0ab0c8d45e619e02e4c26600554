@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "12cfa75d_8191a344",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 106,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-26T15:28:37Z",
+      "side": 1,
+      "message": "Avoid starting an io op and allocating a shared_ptr if there is no tmp media session:\n\nif (tmpMediaTransport_)\n    dht::ThreadPool::io()....",
+      "range": {
+        "startLine": 106,
+        "startChar": 4,
+        "endLine": 106,
+        "endChar": 119
+      },
+      "revId": "7323bd15163af0ab0c8d45e619e02e4c26600554",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
