@@ -57,6 +57,7 @@ namespace jami {
 
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
+static constexpr const char MIME_TYPE_JAMI_VCARD[] {"x-jami/jami.profile.vcard"};
 static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
@@ -529,6 +530,14 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
             } catch (const std::exception& e) {
                 JAMI_WARN("Error parsing display notification: %s", e.what());
             }
+        } else if (m.first.find(MIME_TYPE_JAMI_VCARD) == 0) {
+            static const std::regex VCARD_STATUS_REGEX("x-jami/jami.profile.vcard;id=(\\d+),part=(\\d+),of=(\\d+)");
+            std::smatch matched_pattern;
+            std::regex_search(m.first, matched_pattern, VCARD_STATUS_REGEX);
+            if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched && matched_pattern[2].matched && matched_pattern[3].matched) {
+                messageEngine_.onVCardChunk(from, matched_pattern[1], matched_pattern[2], matched_pattern[3], m.second);
+            }
+            return;
         }
     }
 
