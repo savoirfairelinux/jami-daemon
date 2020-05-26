@@ -35,7 +35,10 @@ using RecvCb = std::function<void(std::vector<uint8_t>&& buf)>;
 class FtpServer final : public Stream
 {
 public:
-    FtpServer(const std::string& account_id, const std::string& peer_uri, const DRing::DataTransferId& outId = 0);
+    FtpServer(const std::string& account_id,
+              const std::string& peer_uri,
+              const DRing::DataTransferId& outId = 0,
+              InternalCompletionCb cb = {});
 
     bool read(std::vector<uint8_t>& buffer) const override;
     bool write(const std::vector<uint8_t>& buffer) override;
@@ -60,6 +63,7 @@ private:
 
     const std::string accountId_;
     const std::string peerUri_;
+    std::atomic_bool isVCard_ {false};
     std::atomic_bool isTreatingRequest_ {false};
     DRing::DataTransferId transferId_ {0};
     IncomingFileInfo out_ {0, nullptr};
@@ -74,6 +78,7 @@ private:
     FtpState state_ {FtpState::PARSE_HEADERS};
 
     RecvCb onRecvCb_ {};
+    InternalCompletionCb cb_ {};
 };
 
 } // namespace jami
