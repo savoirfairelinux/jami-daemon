@@ -46,7 +46,7 @@ public:
 
     /// \see DRing::sendFile
     DRing::DataTransferError sendFile(const DRing::DataTransferInfo& info,
-                                      DRing::DataTransferId& id) noexcept;
+                                      DRing::DataTransferId& id, bool isVCard = false) noexcept;
 
     /// \see DRing::acceptFileTransfer
     DRing::DataTransferError acceptAsFile(const DRing::DataTransferId& id,
@@ -68,7 +68,7 @@ public:
                                            int64_t& progress) const noexcept;
 
     /// Used by p2p.cpp
-    DRing::DataTransferId createIncomingTransfer(const DRing::DataTransferInfo &info, const DRing::DataTransferId& internal_id);
+    DRing::DataTransferId createIncomingTransfer(const DRing::DataTransferInfo &info, const DRing::DataTransferId& internal_id, bool isVCard = false);
 
     /// Create an IncomingFileTransfer object.
     /// \return a shared pointer on created Stream object, or nullptr in case of error
