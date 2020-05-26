@@ -438,7 +438,7 @@ Call::addSubCall(Call& subcall)
     for (const auto& msg : pendingOutMessages_)
         subcall.sendTextMessage(msg.first, msg.second);
 
-        subcall.addStateListener(
+    subcall.addStateListener(
         [sub = subcall.weak(), parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
             runOnMainThread([sub, parent, new_state, new_cstate, code]() {
                 if (auto p = parent.lock()) {
