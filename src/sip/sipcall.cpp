@@ -103,6 +103,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 SIPCall::~SIPCall()
 {
     std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    dht::ThreadPool::io().run([ice=std::make_shared<decltype(tmpMediaTransport_)>(std::move(tmpMediaTransport_))] { });
     setTransport({});
     inv.reset(); // prevents callback usage
 }
@@ -1380,7 +1381,7 @@ SIPCall::initIceMediaTransport(bool master, unsigned channel_num)
     JAMI_DBG("[call:%s] create media ICE transport", getCallId().c_str());
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    tmpMediaTransport_ = iceTransportFactory.createTransport(getCallId().c_str(),
+    tmpMediaTransport_ = iceTransportFactory.createUTransport(getCallId().c_str(),
                                                              channel_num, master,
                                                              getAccount().getIceOptions());
     return static_cast<bool>(tmpMediaTransport_);
