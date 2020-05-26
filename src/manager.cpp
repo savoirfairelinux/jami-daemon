@@ -288,7 +288,7 @@ struct Manager::ManagerPimpl
      * Play one tone
      * @return false if the driver is uninitialize
      */
-    void playATone(Tone::TONEID toneId);
+    void playATone(Tone::ToneId toneId);
 
     int getCurrentDeviceIndex(DeviceType type);
 
@@ -467,7 +467,7 @@ Manager::ManagerPimpl::parseConfiguration()
  * Multi Thread
  */
 void
-Manager::ManagerPimpl::playATone(Tone::TONEID toneId)
+Manager::ManagerPimpl::playATone(Tone::ToneId toneId)
 {
     if (not base_.voipPreferences.getPlayTones())
         return;
@@ -2021,7 +2021,7 @@ Manager::stopTone()
 void
 Manager::playTone()
 {
-    pimpl_->playATone(Tone::TONE_DIALTONE);
+    pimpl_->playATone(Tone::ToneId::DIALTONE);
 }
 
 /**
@@ -2030,7 +2030,7 @@ Manager::playTone()
 void
 Manager::playToneWithMessage()
 {
-    pimpl_->playATone(Tone::TONE_CONGESTION);
+    pimpl_->playATone(Tone::ToneId::CONGESTION);
 }
 
 /**
@@ -2039,7 +2039,7 @@ Manager::playToneWithMessage()
 void
 Manager::congestion()
 {
-    pimpl_->playATone(Tone::TONE_CONGESTION);
+    pimpl_->playATone(Tone::ToneId::CONGESTION);
 }
 
 /**
@@ -2048,7 +2048,7 @@ Manager::congestion()
 void
 Manager::ringback()
 {
-    pimpl_->playATone(Tone::TONE_RINGTONE);
+    pimpl_->playATone(Tone::ToneId::RINGTONE);
 }
 
 /**
