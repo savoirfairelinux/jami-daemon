@@ -294,6 +294,10 @@ struct DRING_PUBLIC ConfigurationSignal {
                 constexpr static const char* name = "AccountMessageStatusChanged";
                 using cb_type = void(const std::string& /*account_id*/, uint64_t /*message_id*/, const std::string& /*to*/, int /*state*/);
         };
+        struct DRING_PUBLIC ProfileReceived {
+                constexpr static const char* name = "ProfileReceived";
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*vcard*/);
+        };
         struct DRING_PUBLIC ComposingStatusChanged {
                 constexpr static const char* name = "ComposingStatusChanged";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, int /*status*/);
