@@ -289,4 +289,36 @@ MessageEngine::save_() const
     }
 }
 
+void
+MessageEngine::onVCardChunk(const std::string& from, const std::string& id, const std::string& partStr, const std::string& totalStr, const std::string& chunk)
+{
+    uint64_t part, total;
+    try {
+        part = std::stoull(partStr);
+        total = std::stoull(totalStr);
+    } catch (const std::exception& e) {
+        JAMI_ERR("%s", e.what());
+        return;
+    }
+
+    auto it = vcardsChunks_.find(from);
+    if (it != vcardsChunks_.end()) {
+        it->second.at(part - 1) = chunk;
+
+        if ( not std::any_of(it->second.begin(), it->second.end(),
+            [](const auto& s) { return s.empty(); }) ) {
+            JAMI_INFO("Received vCard from %s", from.c_str());
+            std::string vCard;
+            for (const auto &chunk : it->second) vCard += chunk;
+            emitSignal<DRing::ConfigurationSignal::ProfileReceived>(account_.getAccountID(), from, vCard);
+            vcardsChunks_.erase(it);
+        }
+    } else {
+        std::vector<std::string> payloads(total);
+        payloads.at(part - 1) = chunk;
+        vcardsChunks_.emplace(from, payloads);
+    }
+
+}
+
 }}
