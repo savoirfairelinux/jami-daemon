@@ -910,12 +910,16 @@ DhtPeerConnector::onIncomingChannelRequest(const DRing::DataTransferId& tid)
 
 
 void
-DhtPeerConnector::onIncomingConnection(const std::string& peer_id, const DRing::DataTransferId& tid, const std::shared_ptr<ChannelSocket>& channel)
+DhtPeerConnector::onIncomingConnection(const std::string& peer_id,
+                                      const DRing::DataTransferId& tid,
+                                      const std::shared_ptr<ChannelSocket>& channel,
+                                      bool isVCard)
 {
     if (!channel) return;
     auto acc = pimpl_->account.lock();
     if (!acc) return;
-    auto incomingFile = std::make_unique<ChanneledIncomingTransfer>(channel, std::make_shared<FtpServer>(acc->getAccountID(), peer_id, tid));
+    auto incomingFile = std::make_unique<ChanneledIncomingTransfer>(channel,
+                            std::make_shared<FtpServer>(acc->getAccountID(), peer_id, tid, isVCard));
     {
         std::lock_guard<std::mutex> lk(pimpl_->channeledIncomingMtx_);
         pimpl_->channeledIncoming_.emplace(tid, std::move(incomingFile));

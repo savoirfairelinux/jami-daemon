@@ -72,7 +72,7 @@ public:
 
     /// Create an IncomingFileTransfer object.
     /// \return a shared pointer on created Stream object, or nullptr in case of error
-    IncomingFileInfo onIncomingFileRequest(const DRing::DataTransferId& id);
+    IncomingFileInfo onIncomingFileRequest(const DRing::DataTransferId& id, bool isVCard = false);
 
 private:
     class Impl;

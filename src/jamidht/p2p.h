@@ -45,7 +45,10 @@ public:
                            const std::function<void(const std::string&)>& onChanneledCancelled);
     void closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid);
     bool onIncomingChannelRequest(const DRing::DataTransferId& tid);
-    void onIncomingConnection(const std::string& peer_id, const DRing::DataTransferId& tid, const std::shared_ptr<ChannelSocket>& channel);
+    void onIncomingConnection(const std::string& peer_id,
+                              const DRing::DataTransferId& tid,
+                              const std::shared_ptr<ChannelSocket>& channel,
+                              bool isVCard);
 private:
     DhtPeerConnector() = delete;
 

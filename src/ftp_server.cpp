@@ -36,11 +36,13 @@ namespace jami {
 
 FtpServer::FtpServer(const std::string& account_id,
                      const std::string& peer_uri,
-                     const DRing::DataTransferId& outId)
+                     const DRing::DataTransferId& outId,
+                     bool isVCard)
     : Stream()
     , accountId_ {account_id}
     , peerUri_ {peer_uri}
-    , outId_ {outId}
+    , outId_ {outId},
+    , isVCard_ {isVCard}
 {}
 
 DRing::DataTransferId
@@ -73,7 +75,7 @@ FtpServer::startNewFile()
     rx_ = 0;
     transferId_ = Manager::instance().dataTransfers->createIncomingTransfer(info, outId_); // return immediately
     isTreatingRequest_ = true;
-    out_ = Manager::instance().dataTransfers->onIncomingFileRequest(transferId_); // we block here until answer from client
+    out_ = Manager::instance().dataTransfers->onIncomingFileRequest(transferId_, isVCard_); // we block here until answer from client
     isTreatingRequest_ = false;
     if (!out_.stream) {
         JAMI_DBG() << "[FTP] transfer aborted by client";

@@ -914,7 +914,7 @@ DataTransferFacade::createIncomingTransfer(const DRing::DataTransferInfo &info, 
 }
 
 IncomingFileInfo
-DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferId& id)
+DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferId& id, bool isVCard)
 {
     if (auto transfer = std::static_pointer_cast<IncomingFileTransfer>(pimpl_->getTransfer(id))) {
         auto filename = transfer->requestFilename();
