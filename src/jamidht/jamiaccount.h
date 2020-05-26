@@ -716,6 +716,12 @@ private:
      * @param deviceId  Device linked to that transport
      */
     void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const std::string& peerId, const std::string& deviceId);
+
+    /**
+     * Send VCard via cached SIP connection
+     */
+    bool needToSendVCardTo(const std::string& deviceId);
+    void sendVCard(const std::string& peerId, const std::string& deviceId);
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)

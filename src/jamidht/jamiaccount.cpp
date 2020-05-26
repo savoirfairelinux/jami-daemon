@@ -119,6 +119,12 @@ struct TextMessageCtx {
     std::shared_ptr<PendingConfirmation> confirmation;
 };
 
+struct VCardMessageCtx {
+    std::shared_ptr<std::atomic_int> success;
+    int total;
+    std::string path;
+};
+
 namespace Migration {
 
 enum class State { // Contains all the Migration states
@@ -3245,6 +3251,174 @@ JamiAccount::requestSIPConnection(const std::string& peerId, const std::string& 
     });
 }
 
+bool
+JamiAccount::needToSendVCardTo(const std::string& deviceId)
+{
+    auto vCardMd5 = fileutils::md5File(idPath_ + DIR_SEPARATOR_STR + "profile.vcf");
+    std::string currentMd5 {};
+    auto vCardPath = cachePath_ + DIR_SEPARATOR_STR + "vcard";
+    auto md5Path = vCardPath + DIR_SEPARATOR_STR + "md5";
+    fileutils::check_dir(vCardPath.c_str(), 0700);
+    try {
+        currentMd5 = fileutils::loadTextFile(md5Path);
+    } catch (...) {
+        fileutils::saveFile(md5Path, {vCardMd5.begin(), vCardMd5.end()}, 0600);
+        return true;
+    }
+    if (currentMd5 != vCardMd5) {
+        // Incorrect md5 stored. Update it
+        fileutils::removeAll(vCardPath, true);
+        fileutils::check_dir(vCardPath.c_str(), 0700);
+        fileutils::saveFile(md5Path, {vCardMd5.begin(), vCardMd5.end()}, 0600);
+        return true;
+    }
+    return not fileutils::isFile(vCardPath + DIR_SEPARATOR_STR + deviceId);
+}
+
+void
+JamiAccount::sendVCard(const std::string& peerId, const std::string& deviceId)
+{
+    if (not needToSendVCardTo(deviceId)) {
+        JAMI_INFO() << "Peer " << deviceId << " already got an up-to-date vcard";
+        return;
+    }
+
+    try {
+        auto vCard = fileutils::loadTextFile(idPath_ + DIR_SEPARATOR_STR + "profile.vcf");
+
+        std::random_device rdev;
+        std::uniform_int_distribution<int> dis{ 0, std::numeric_limits<int>::max() };
+        auto tokenVCard = std::to_string(dis(rdev));
+
+        int i = 0;
+        int total = vCard.size()/1000 + (vCard.size()%1000?1:0);
+        auto success = std::make_shared<std::atomic_int>(0);
+        sip_utils::register_thread();
+        while (vCard.size()) {
+            auto sizeLimit = std::min(1000, static_cast<int>(vCard.size()));
+
+            std::map<std::string, std::string> chunk;
+            std::string key = "x-jami/jami.profile.vcard; id=";
+            key += tokenVCard + ",part=" + std::to_string(i+1) + ",of=" + std::to_string(total);
+            chunk[key] = vCard.substr(0, sizeLimit);
+            vCard = vCard.substr(sizeLimit);
+            ++i;
+
+            auto token = dis(rdev);
+            auto to = peerId;
+
+            // TODO refactor with sendTextMessage
+            std::lock_guard<std::mutex> lk(sipConnectionsMtx_);
+            auto& sipConns = sipConnections_[peerId];
+            auto deviceConnIt = sipConns.find(deviceId);
+            if (deviceConnIt != sipConns.end()) {
+                auto& it = deviceConnIt->second.back();
+
+                auto transport = it.transport;
+                auto channel = it.channel;
+                if (!channel || !channel->underlyingICE()) {
+                    JAMI_WARN("A SIP transport exists without Channel, this is a bug. Please report");
+                    // Remove connection in incorrect state
+                    deviceConnIt = sipConns.erase(deviceConnIt);
+                    return;
+                }
+
+                // Build SIP Message
+                // "deviceID@IP"
+                auto toURI = getToUri(to + "@" + channel->underlyingICE()->getRemoteAddress(0).toString(true));
+                std::string from = getFromUri();
+                pjsip_tx_data* tdata;
+
+                // Build SIP message
+                constexpr pjsip_method msg_method = {PJSIP_OTHER_METHOD, jami::sip_utils::CONST_PJ_STR("MESSAGE")};
+                pj_str_t pjFrom = pj_str((char*) from.c_str());
+                pj_str_t pjTo = pj_str((char*) toURI.c_str());
+
+                // Create request.
+                pj_status_t status = pjsip_endpt_create_request(link_.getEndpoint(), &msg_method,
+                                                                &pjTo, &pjFrom, &pjTo, nullptr, nullptr, -1,
+                                                                nullptr, &tdata);
+                if (status != PJ_SUCCESS) {
+                    JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
+                    return;
+                }
+
+                // Add Date Header.
+                pj_str_t date_str;
+                constexpr auto key = sip_utils::CONST_PJ_STR("Date");
+                pjsip_hdr *hdr;
+                auto time = std::time(nullptr);
+                auto date = std::ctime(&time);
+                // the erase-remove idiom for a cstring, removes _all_ new lines with in date
+                *std::remove(date, date+strlen(date), '\n') = '\0';
+
+                // Add Header
+                hdr = reinterpret_cast<pjsip_hdr*>(pjsip_date_hdr_create(tdata->pool, &key, pj_cstr(&date_str, date)));
+                pjsip_msg_add_hdr(tdata->msg, hdr);
+
+                // https://tools.ietf.org/html/rfc5438#section-6.3
+                auto token_str = to_hex_string(token);
+                auto pjMessageId = sip_utils::CONST_PJ_STR(token_str);
+                hdr = reinterpret_cast<pjsip_hdr*>(pjsip_generic_string_hdr_create(tdata->pool, &STR_MESSAGE_ID, &pjMessageId));
+                pjsip_msg_add_hdr(tdata->msg, hdr);
+
+                // Add user agent header.
+                pjsip_hdr *hdr_list;
+                constexpr auto pJuseragent = sip_utils::CONST_PJ_STR("Jami");
+                constexpr pj_str_t STR_USER_AGENT = jami::sip_utils::CONST_PJ_STR("User-Agent");
+
+                // Add Header
+                hdr_list = reinterpret_cast<pjsip_hdr*>(pjsip_user_agent_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent));
+                pjsip_msg_add_hdr(tdata->msg, hdr_list);
+
+                // Init tdata
+                const pjsip_tpselector tp_sel = SIPVoIPLink::getTransportSelector(transport->get());
+                status = pjsip_tx_data_set_transport(tdata, &tp_sel);
+                if (status != PJ_SUCCESS) {
+                    JAMI_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
+                    return;
+                }
+                im::fillPJSIPMessageBody(*tdata, chunk);
+
+                // Because pjsip_endpt_send_request can take quite some time, move it in a io thread to avoid to block
+                dht::ThreadPool::io().run([w=weak(), tdata, token, deviceId, success, total] {
+                    auto shared = w.lock();
+                    if (!shared) return;
+
+                    sip_utils::register_thread();
+
+                    std::unique_ptr<VCardMessageCtx> ctx{ std::make_unique<VCardMessageCtx>() };
+                    ctx->success = success;
+                    ctx->total = total;
+                    ctx->path = shared->cachePath_ + DIR_SEPARATOR_STR + "vcard" + DIR_SEPARATOR_STR + deviceId;
+
+                    auto status = pjsip_endpt_send_request(shared->link_.getEndpoint(), tdata, -1, ctx.release(),
+                        [](void *token, pjsip_event *event)
+                        {
+                            std::unique_ptr<VCardMessageCtx> c{ (VCardMessageCtx*)token };
+                            auto code = event->body.tsx_state.tsx->status_code;
+
+                            if (code == PJSIP_SC_OK) {
+                                (*c->success) += 1;
+                                if (c->success->load() == c->total) {
+                                    fileutils::ofstream(c->path);
+                                }
+                            }
+                        });
+
+                    if (status != PJ_SUCCESS) {
+                        JAMI_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
+                        return;
+                    }
+                });
+            }
+        }
+    } catch (const std::exception& e) {
+        JAMI_ERR() << e.what();
+    }
+
+}
+
 void
 JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const std::string& peerId, const std::string& deviceId)
 {
@@ -3282,6 +3456,8 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const s
     });
     JAMI_DBG("New SIP channel opened with %s", deviceId.c_str());
     lk.unlock();
+
+    sendVCard(peerId, deviceId);
 
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
