@@ -457,7 +457,7 @@ private:
         JAMI_DBG() << parent_.account << "[CNX] start TLS session";
         tls_ep_ = std::make_unique<TlsSocketEndpoint>(
             std::move(peer_ep), parent_.account.identity(), parent_.account.dhParams(),
-            *peerCertificate_);
+            *peerCertificate_, ice->isRunning());
         tls_ep_->setOnStateChange([this, ice=std::move(ice)] (tls::TlsSessionState state) {
             if (state == tls::TlsSessionState::SHUTDOWN) {
                 if (!connected_)
@@ -474,6 +474,7 @@ private:
                     cb(connection_.get());
                 }
             }
+            return true;
         });
     }
 
@@ -627,24 +628,24 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
 
     tls_turn_ep_[peer_addr]->setOnStateChange([this, peer_addr, peer_h] (tls::TlsSessionState state)
     {
+        auto it = tls_turn_ep_.find(peer_addr);
+        if (it == tls_turn_ep_.end()) return false;
         if (state == tls::TlsSessionState::SHUTDOWN) {
             JAMI_WARN() << "[CNX] TLS connection failure from peer " << peer_addr.toString(true, true);
-            tls_turn_ep_.erase(peer_addr);
+            tls_turn_ep_.erase(it);
+            return false;
         } else if (state == tls::TlsSessionState::ESTABLISHED) {
             if (peer_h) {
-                 JAMI_DBG() << account << "[CNX] Accepted TLS-TURN connection from RingID " << *peer_h;
-                 connectedPeers_
-                .emplace(peer_addr, tls_turn_ep_[peer_addr]->peerCertificate().getId());
-                 auto connection =
-                 std::make_unique<PeerConnection>([] {},
-                                                 peer_addr.toString(),
-                                                 std::move(tls_turn_ep_[peer_addr]));
-                 connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(),
-                                                                            peer_h->toString()));
-                 servers_.emplace(std::make_pair(*peer_h, peer_addr), std::move(connection));
+                JAMI_DBG() << account << "[CNX] Accepted TLS-TURN connection from " << *peer_h;
+                connectedPeers_.emplace(peer_addr, it->second->peerCertificate().getId());
+                auto connection = std::make_unique<PeerConnection>([] {}, peer_addr.toString(), std::move(it->second));
+                connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h->toString()));
+                servers_.emplace(std::make_pair(*peer_h, peer_addr), std::move(connection));
             }
-            tls_turn_ep_.erase(peer_addr);
+            tls_turn_ep_.erase(it);
+            return false;
         }
+        return true;
     });
 }
 
@@ -855,11 +856,12 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
 
         it.first->second->setOnStateChange([this, idx=std::move(idx)] (tls::TlsSessionState state) {
             if (waitForReadyEndpoints_.find(idx) == waitForReadyEndpoints_.end()) {
-                return;
+                return false;
             }
             if (state == tls::TlsSessionState::SHUTDOWN) {
                 JAMI_WARN() << "TLS connection failure";
                 waitForReadyEndpoints_.erase(idx);
+                return false;
             } else if (state == tls::TlsSessionState::ESTABLISHED) {
                 // Connected!
                 auto peer_h = idx.first.toString();
@@ -869,7 +871,9 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                 connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h));
                 servers_.emplace(idx, std::move(connection));
                 waitForReadyEndpoints_.erase(idx);
+                return false;
             }
+            return true;
         });
     }
     // Now wait for a TURN connection from peer (see onTurnPeerConnection) if fallbacking

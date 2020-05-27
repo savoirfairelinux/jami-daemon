@@ -45,7 +45,7 @@ struct Certificate;
 
 namespace jami {
 
-using OnStateChangeCb = std::function<void(tls::TlsSessionState state)>;
+using OnStateChangeCb = std::function<bool(tls::TlsSessionState state)>;
 using OnReadyCb = std::function<void(bool ok)>;
 using onShutdownCb = std::function<void(void)>;
 
@@ -199,11 +199,13 @@ public:
     TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint>&& tr,
                       const Identity& local_identity,
                       const std::shared_future<tls::DhParams>& dh_params,
-                      const dht::crypto::Certificate& peer_cert);
+                      const dht::crypto::Certificate& peer_cert,
+                      bool isIceTransport = true);
     TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint>&& tr,
                     const Identity& local_identity,
                     const std::shared_future<tls::DhParams>& dh_params,
-                    std::function<bool(const dht::crypto::Certificate&)>&& cert_check);
+                    std::function<bool(const dht::crypto::Certificate&)>&& cert_check,
+                    bool isIceTransport = true);
     ~TlsSocketEndpoint();
 
     bool isReliable() const override { return true; }
