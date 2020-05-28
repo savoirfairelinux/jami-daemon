@@ -39,6 +39,8 @@
 #include "call_const.h"
 #include "system_codec_container.h"
 
+#include <opendht/thread_pool.h>
+
 #include <functional>
 #include <memory>
 #include <string>
@@ -413,8 +415,16 @@ applySettings(const std::string& deviceId,
 void
 startCamera()
 {
-    jami::Manager::instance().getVideoManager().videoPreview = jami::getVideoCamera();
-    jami::Manager::instance().getVideoManager().started = switchToCamera();
+    JAMI_ERR("@@@ start thread for videoInput ");
+    dht::ThreadPool::io().run([&] {
+        jami::Manager::instance().getVideoManager().videoPreview = jami::getVideoCamera();
+        if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock()) {
+            jami::Manager::instance().getVideoManager().started =
+                input->switchInput(jami::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice()).valid();
+        }
+        else
+            JAMI_WARN("Video input not initialized");
+    });
 }
 
 void
@@ -489,13 +499,6 @@ stopLocalRecorder(const std::string& filepath)
 bool
 switchInput(const std::string& resource)
 {
-    if (auto call = jami::Manager::instance().getCurrentCall()) {
-        if (call->hasVideo()) {
-            // TODO remove this part when clients are updated to use Calljami::Manager::switchInput
-            call->switchInput(resource);
-            return true;
-        }
-    }
     bool ret = true;
     if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
         ret = input->switchInput(resource).valid();
@@ -663,9 +666,12 @@ std::shared_ptr<video::VideoFrameActiveWriter>
 getVideoCamera()
 {
     auto& vmgr = Manager::instance().getVideoManager();
-    if (auto input = vmgr.videoInput.lock())
+    if (auto input = vmgr.videoInput.lock()) {
+        JAMI_ERR("@@@ input already exist");
         return input;
+    }
 
+    JAMI_ERR("@@@ create new input");
     vmgr.started = false;
     auto input = std::make_shared<video::VideoInput>();
     vmgr.videoInput = input;
