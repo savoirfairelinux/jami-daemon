@@ -784,6 +784,7 @@ SIPCall::onFailure(signed cause)
             if (auto shared = w.lock()) {
                 auto& call = *shared;
                 Manager::instance().callFailure(call);
+                call.stopAllMedia();
                 call.removeCall();
             }
         });
@@ -802,6 +803,7 @@ SIPCall::onBusyHere()
         if (auto shared = w.lock()) {
             auto& call = *shared;
             Manager::instance().callBusy(call);
+            call.stopAllMedia();
             call.removeCall();
         }
     });
@@ -814,6 +816,7 @@ SIPCall::onClosed()
         if (auto shared = w.lock()) {
             auto& call = *shared;
             Manager::instance().peerHungupCall(call);
+            call.stopAllMedia();
             call.removeCall();
             Manager::instance().checkAudio();
         }
@@ -1097,6 +1100,9 @@ SIPCall::stopAllMedia()
 #ifdef ENABLE_VIDEO
     videortp_->stop();
 #endif
+    // Stop video Input
+    Manager::instance().getVideoManager().started = false;
+    Manager::instance().getVideoManager().videoPreview.reset();
 }
 
 void
@@ -1157,7 +1163,7 @@ void
 SIPCall::waitForIceAndStartMedia()
 {
     // Initialization waiting task
-    Manager::instance().addTask([weak_call = weak()] {
+    Manager::instance().addTask([this, weak_call = weak()] {
         // TODO: polling algo, to it by event
         if (auto call = weak_call.lock()) {
             auto ice = call->getIceMediaTransport();
@@ -1185,7 +1191,7 @@ SIPCall::waitForIceAndStartMedia()
             }
 
             // Negotiation waiting task
-            Manager::instance().addTask([weak_call] {
+            Manager::instance().addTask([this, weak_call] {
                 if (auto call = weak_call.lock()) {
                     std::lock_guard<std::recursive_mutex> lk {call->callMutex_};
                     auto ice = call->getIceMediaTransport();
@@ -1200,7 +1206,14 @@ SIPCall::waitForIceAndStartMedia()
                         return true;
 
                     // Nego succeed: move to the new media transport
-                    call->stopAllMedia();
+                    if (Recordable::isRecording()) {
+                        call->deinitRecorder();
+                        call->stopRecording(); // if call stops, finish recording
+                    }
+                    call->avformatrtp_->stop();
+#ifdef ENABLE_VIDEO
+                    call->videortp_->stop();
+#endif
                     if (call->tmpMediaTransport_)
                         call->mediaTransport_ = std::move(call->tmpMediaTransport_);
                     call->startAllMedia();
