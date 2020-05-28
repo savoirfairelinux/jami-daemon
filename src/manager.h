@@ -909,8 +909,12 @@ private:
         Manager();
         ~Manager();
 
+        void initAsyncInput();
+
         struct ManagerPimpl;
         std::unique_ptr<ManagerPimpl> pimpl_;
+
+        std::thread threadInput_ {};
 };
 
 // Helper to install a callback to be called once by the main event loop

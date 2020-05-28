@@ -919,6 +919,7 @@ Manager::outgoingCall(const std::string& account_id,
                           const std::string& conf_id,
                           const std::map<std::string, std::string>& volatileCallDetails)
 {
+    initAsyncInput();
     if (not conf_id.empty() and not isConference(conf_id)) {
         JAMI_ERR("outgoingCall() failed, invalid conference id");
         return {};
@@ -948,6 +949,21 @@ Manager::outgoingCall(const std::string& account_id,
     call->setConfId(conf_id);
 
     return call_id;
+}
+
+void
+Manager::initAsyncInput()
+{
+    JAMI_ERR("@@@ start thread for videoInput ");
+    threadInput_ = std::thread([&] {
+        getVideoManager().videoPreview = jami::getVideoCamera();
+        if (auto input = getVideoManager().videoInput.lock()) {
+            getVideoManager().started =
+                input->switchInput(getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice()).valid();
+        }
+        else
+            JAMI_WARN("Video input not initialized");
+     });
 }
 
 //THREAD=Main : for outgoing Call
@@ -1022,6 +1038,13 @@ Manager::hangupCall(const std::string& callId)
 
     /* We often get here when the call was hungup before being created */
     auto call = getCallFromCallID(callId);
+
+    JAMI_ERR("@@@ destroy video input");
+    if (threadInput_.joinable())
+        threadInput_.join();
+    getVideoManager().started = false;
+    getVideoManager().videoPreview.reset();
+
     if (not call) {
         JAMI_WARN("Could not hang up non-existant call %s", callId.c_str());
         checkAudio();

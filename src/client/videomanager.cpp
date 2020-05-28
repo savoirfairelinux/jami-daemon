@@ -660,9 +660,12 @@ std::shared_ptr<video::VideoFrameActiveWriter>
 getVideoCamera()
 {
     auto& vmgr = Manager::instance().getVideoManager();
-    if (auto input = vmgr.videoInput.lock())
+    if (auto input = vmgr.videoInput.lock()) {
+        JAMI_ERR("@@@ input already exist");
         return input;
+    }
 
+    JAMI_ERR("@@@ create new input");
     vmgr.started = false;
     auto input = std::make_shared<video::VideoInput>();
     vmgr.videoInput = input;
