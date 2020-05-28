@@ -158,8 +158,15 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
             const char *path = udev_device_get_devnode(dev);
             auto unique_name = getDeviceString(udev_, path);
             JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
+            const char *devpath = udev_device_get_devnode(dev);
+            std::string pathStr {};
+            if (devpath) {
+                pathStr = devpath;
+            }
+            std::map<std::string, std::string> info = {{"devPath", pathStr}};
+            std::vector<std::map<std::string, std::string>> devInfo = {info};
             try {
-                monitor_->addDevice(unique_name);
+                monitor_->addDevice(unique_name, &devInfo);
             } catch (const std::runtime_error &e) {
                 JAMI_ERR("%s", e.what());
             }
@@ -242,8 +249,15 @@ void VideoDeviceMonitorImpl::run()
                     const char *action = udev_device_get_action(dev);
                     if (!strcmp(action, "add")) {
                         JAMI_DBG("udev: adding device with id %s", unique_name.c_str());
+                        const char *devpath = udev_device_get_devnode(dev);
+                        std::string pathStr {};
+                        if (devpath) {
+                            pathStr = devpath;
+                        }
+                        std::map<std::string, std::string> info = {{"devPath", pathStr}};
+                        std::vector<std::map<std::string, std::string>> devInfo = {info};
                         try {
-                            monitor_->addDevice(unique_name);
+                            monitor_->addDevice(unique_name, &devInfo);
                         } catch (const std::runtime_error &e) {
                             JAMI_ERR("%s", e.what());
                         }
