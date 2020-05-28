@@ -199,7 +199,16 @@ VideoDeviceMonitor::addDevice(const string& id, const std::vector<std::map<std::
         // restore its preferences if any, or store the defaults
         auto it = findPreferencesById(id);
         if (it != preferences_.end()) {
-            dev.applySettings(*it);
+            // At this point, a device can took the place of another one.
+            // For example if /dev/video0 got unplugged and replaced by another camera
+            if (it->name == dev.name) {
+                dev.applySettings(*it);
+            } else {
+                // Replace device
+                preferences_.erase(it);
+                dev.applySettings(dev.getDefaultSettings());
+                preferences_.emplace_back(dev.getSettings());
+            }
         } else {
             dev.applySettings(dev.getDefaultSettings());
             preferences_.emplace_back(dev.getSettings());
