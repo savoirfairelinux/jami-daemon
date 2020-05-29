@@ -27,6 +27,10 @@
 #include <map>
 #include <functional>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 typedef struct gzFile_s *gzFile;
 
 namespace jami {
@@ -84,6 +88,7 @@ std::vector<uint8_t> decompressGzip(const std::string& path);
  */
 gzFile openGzip(const std::string& path, const char *mode);
 
+#ifdef ENABLE_PLUGIN
 /**
  * @brief listArchiveContent
  * @param archivePath
@@ -115,6 +120,7 @@ void uncompressArchive(const std::string& path, const std::string &dir, const Fi
  */
 std::vector<uint8_t> readFileFromArchive(const std::string &path,
                                  const std::string &fileRelativePathName);
+#endif                                 
 }
 
 } // namespace jami

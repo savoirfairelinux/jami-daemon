@@ -302,7 +302,6 @@ PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject file
 
 PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],, AC_MSG_ERROR([yaml-cpp not found]))
 PKG_CHECK_MODULES([JSONCPP], [jsoncpp >= 1.6.5],, AC_MSG_ERROR([jsoncpp not found]))
-PKG_CHECK_MODULES([ARCHIVE], [libarchive >= 3.0],, AC_MSG_ERROR([libarchive not found]))
 
 if test "${HAVE_ANDROID}" = "1"; then
     dnl Check for OpenSL
@@ -460,6 +459,21 @@ PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 3.1.101,, AC_MSG_ERROR([Missing libs
 
 PKG_CHECK_MODULES(LIBSWRESAMPLE, libswresample >= 1.2.101,, AC_MSG_ERROR([Missing libswresample development files]))
 
+dnl Jami Plugin is default-enabled
+AC_ARG_ENABLE([plugin], AS_HELP_STRING([--disable-plugin], [Disable plugin]))
+AS_IF([test "x$enable_plugin" != "xno"],
+      [
+        AC_DEFINE(ENABLE_PLUGIN, [], [Jami Plugin support enabled])
+        AM_CONDITIONAL(ENABLE_PLUGIN, true)
+        AS_IF([test "$SYS" = linux],[
+            PKG_CHECK_MODULES([ARCHIVE], [libarchive >= 3.0],, AC_MSG_ERROR([libarchive not found]))
+        ],[
+        ])
+    ],
+    [
+     AM_CONDITIONAL(ENABLE_PLUGIN, false)
+     ]);
+
 dnl Video is default-enabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
 
@@ -616,6 +630,7 @@ AC_CONFIG_FILES([Makefile \
                  src/media/video/osxvideo/Makefile \
                  src/media/video/iosvideo/Makefile \
                  src/media/video/winvideo/Makefile \
+                 src/plugin/Makefile \
                  src/security/Makefile \
                  src/upnp/Makefile \
                  src/upnp/protocol/Makefile \
