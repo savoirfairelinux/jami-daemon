@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "eafee455_5a173931",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 3308,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-05-29T20:13:35Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nlocal copy \u0027to\u0027 of the variable \u0027peerId\u0027 is never modified; consider avoiding the copy\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-copy-initialization",
+      "revId": "3870b67fb2b287fff03c087ed0f5fa6e43512ba5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
