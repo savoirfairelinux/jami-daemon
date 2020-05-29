@@ -24,6 +24,7 @@ source_group("Source Files\\media" FILES ${Source_Files__media})
 source_group("Source Files\\media\\audio" FILES ${Source_Files__media__audio})
 source_group("Source Files\\media\\audio\\sound" FILES ${Source_Files__media__audio__sound})
 source_group("Source Files\\media\\video" FILES ${Source_Files__media__video})
+source_group("Source Files\\plugin" FILES ${Source_Files__plugin)
 
 if(MSVC)
    if(WINDOWS_STORE)
@@ -60,6 +61,7 @@ list (APPEND ALL_FILES
       ${Source_Files__upnp__protocol}
       ${Source_Files__upnp__protocol__natpmp}
       ${Source_Files__upnp__protocol__pupnp}
+      ${Source_Files__plugin}
 )
 
 if(MSVC)
