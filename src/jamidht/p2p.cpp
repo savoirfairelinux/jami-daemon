@@ -417,6 +417,7 @@ private:
                     JAMI_WARN() << "TLS connection failure from peer " << peer_.toString();
                 ice->cancelOperations(); // This will stop current PeerChannel operations
                 cancel();
+                return false;
             } else if (state == tls::TlsSessionState::ESTABLISHED) {
                 // Connected!
                 connected_ = true;
