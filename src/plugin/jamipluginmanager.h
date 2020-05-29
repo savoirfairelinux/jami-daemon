@@ -177,6 +177,8 @@ private:
         return getRootPathFromSoPath(pluginSoPath) + DIR_SEPARATOR_CH + "data";
     }
 
+    std::map<std::string, std::string> getPluginUserPreferencesValuesMap(const std::string &rootPath);
+
     /**
      * @brief getPreferencesConfigFilePath
      * Returns the plugin preferences config file path from the plugin root path

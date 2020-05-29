@@ -11,6 +11,7 @@
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -63,7 +64,10 @@ using random_device = dht::crypto::random_device;
 #include "audio/sound/tonelist.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
+
+#ifdef ENABLE_PLUGIN
 #include "plugin/jamipluginmanager.h"
+#endif
 
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
@@ -416,8 +420,10 @@ struct Manager::ManagerPimpl
 #endif
 
     std::unique_ptr<SIPVoIPLink> sipLink_;
+#ifdef ENABLE_PLUGIN
     /* Jami Plugin Manager */
     JamiPluginManager jami_plugin_manager;
+#endif
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -2951,6 +2957,7 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
 {
     if (const auto acc = getAccount(accountID)) {
         try {
+#ifdef ENABLE_PLUGIN
             auto& convManager = jami::Manager::instance().getJamiPluginManager()
                     .getConversationServicesManager();
             std::shared_ptr<jami::ConversationMessage> cm =
@@ -2959,6 +2966,9 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
                                                                 std::string>&>(payloads));
             convManager.sendTextMessage(cm);
             return acc->sendTextMessage(cm->to_, cm->data_);
+#else
+            return acc->sendTextMessage(to, payloads);
+#endif //ENABLE_PLUGIN
         } catch (const std::exception& e) {
             JAMI_ERR("Exception during text message sending: %s", e.what());
         }
@@ -3108,11 +3118,13 @@ Manager::sipVoIPLink() const
     return *pimpl_->sipLink_;
 }
 
-JamiPluginManager& 
+#ifdef ENABLE_PLUGIN
+JamiPluginManager&
 Manager::getJamiPluginManager() const
 {
     return pimpl_->jami_plugin_manager;
 }
+#endif
 
 std::map<std::string, std::string>
 Manager::getNearbyPeers(const std::string& accountID)
