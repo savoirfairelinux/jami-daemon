@@ -22,6 +22,30 @@
       "revId": "fb6d6a90d3d3f62de816e914fb1f61148ee6c496",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a7137758_e6271f5f",
+        "filename": "src/plugin/conversationhandler.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-05-29T22:50:51Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "324f557f_9d2188a0",
+      "range": {
+        "startLine": 28,
+        "startChar": 16,
+        "endLine": 28,
+        "endChar": 21
+      },
+      "revId": "fb6d6a90d3d3f62de816e914fb1f61148ee6c496",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
