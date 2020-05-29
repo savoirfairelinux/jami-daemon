@@ -87,6 +87,13 @@ public:
   std::vector<std::string> listLoadedPlugins() const;
 
   /**
+   * @brief checkLoadedPlugin
+   * @return bool True if plugin is loaded, false otherwise
+   */
+  bool checkLoadedPlugin(const std::string &rootPath) const;
+
+
+  /**
    * @brief destroyPluginComponents
    * @param path
    */

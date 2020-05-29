@@ -168,10 +168,14 @@ std::map<std::string, std::string> JamiPluginManager::getPluginDetails(const std
     }
 
     std::map<std::string, std::string> details = parseManifestFile(manifestPath(rootPath));
-    details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
-    details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
-    detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
-    return detailsIt->second;
+    if (!details.empty())
+    {
+        details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
+        details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
+        detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
+        return detailsIt->second;
+    }
+    return {};
 }
 
 std::vector<std::string> JamiPluginManager::listAvailablePlugins()
@@ -233,13 +237,27 @@ int JamiPluginManager::installPlugin(const std::string &jplPath, bool force)
 
 int JamiPluginManager::uninstallPlugin(const std::string &rootPath)
 {
-    if(checkPluginValidity(rootPath)) {
+    if (checkPluginValidity(rootPath))
+    {
         auto detailsIt = pluginDetailsMap_.find(rootPath);
-        if (detailsIt != pluginDetailsMap_.end()) {
+        if (detailsIt != pluginDetailsMap_.end())
+        {
+            bool loaded = pm_.checkLoadedPlugin(detailsIt->second.at("soPath"));
+            if (loaded)
+            {
+                JAMI_INFO() << "PLUGIN: unloading before uninstall.";
+                bool status = unloadPlugin(rootPath);
+                if (!status)
+                {
+                    JAMI_INFO() << "PLUGIN: could not unload, not performing uninstall.";
+                    return -1;
+                }
+            }
             pluginDetailsMap_.erase(detailsIt);
         }
         return fileutils::removeAll(rootPath);
     } else {
+        JAMI_INFO() << "PLUGIN: not installed.";
         return -1;
     }
 }
@@ -249,7 +267,7 @@ bool JamiPluginManager::loadPlugin(const std::string &rootPath)
     try
     {
         bool status = pm_.load(getPluginDetails(rootPath).at("soPath"));
-        JAMI_INFO() << "plugin status: " << status;
+        JAMI_INFO() << "PLUGIN: load status - " << status;
 
         return status;
 
@@ -262,13 +280,13 @@ bool JamiPluginManager::loadPlugin(const std::string &rootPath)
 
 bool JamiPluginManager::unloadPlugin(const std::string &rootPath)
 {
-    try 
+    try
     {
         bool status = pm_.unload(getPluginDetails(rootPath).at("soPath"));
-        JAMI_INFO() << "plugin unload status: " << status;
+        JAMI_INFO() << "PLUGIN: unload status - " << status;
 
         return status;
-    } catch(const std::exception& e) 
+    } catch(const std::exception& e)
     {
         JAMI_ERR() << e.what();
         return false;
@@ -277,14 +295,19 @@ bool JamiPluginManager::unloadPlugin(const std::string &rootPath)
 
 void JamiPluginManager::togglePlugin(const std::string &rootPath, bool toggle)
 {
-    try {
-        std::string soPath = getPluginDetails(rootPath).at("soPath");
-        // remove the previous plugin object if it was registered
-        pm_.destroyPluginComponents(soPath);
-        // If toggle, register a new instance of the plugin
-        // function
-        if(toggle){
-            pm_.callPluginInitFunction(soPath);
+    try
+    {
+        std::map<std::string, std::string> map = getPluginDetails(rootPath);
+        if (!map.empty())
+        {
+            std::string soPath = map.at("soPath");
+            // remove the previous plugin object if it was registered
+            pm_.destroyPluginComponents(soPath);
+            // If toggle, register a new instance of the plugin
+            // function
+            if(toggle){
+                pm_.callPluginInitFunction(soPath);
+            }
         }
     } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
@@ -343,12 +366,14 @@ std::vector<std::map<std::string, std::string> > JamiPluginManager::getPluginPre
 
 bool JamiPluginManager::setPluginPreference(const std::string &rootPath, const std::string &key, const std::string &value)
 {
-    bool returnValue = true;
+    bool returnValue = false;
     std::map<std::string, std::string> pluginPreferencesMap = getPluginPreferencesValuesMap(rootPath);
     // Using [] instead of insert to get insert or update effect
-    pluginPreferencesMap[key] = value;
 
+    auto find = pluginPreferencesMap.find(key);
+    if (find != pluginPreferencesMap.end())
     {
+        pluginPreferencesMap[key] = value;
         const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
         if(!fs.good()) {
@@ -361,6 +386,7 @@ bool JamiPluginManager::setPluginPreference(const std::string &rootPath, const s
             returnValue = false;
             JAMI_ERR() << e.what();
         }
+        returnValue = true;
     }
 
     return returnValue;
@@ -371,6 +397,16 @@ std::map<std::string, std::string> JamiPluginManager::getPluginPreferencesValues
     const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
     std::ifstream file(preferencesValuesFilePath, std::ios::binary);
     std::map<std::string, std::string>  rmap;
+
+    if(rmap.empty())
+    {
+        std::vector<std::map<std::string,std::string>> preferences = getPluginPreferences(rootPath);
+        for (int i =0; i < preferences.size(); i++)
+        {
+            rmap[preferences[i]["key"]]=preferences[i]["defaultValue"];
+        }
+    }
+
     // If file is accessible
     if(file.good()) {
         std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
@@ -405,19 +441,23 @@ bool JamiPluginManager::resetPluginPreferencesValuesMap(const std::string &rootP
     bool returnValue = true;
     std::map<std::string, std::string> pluginPreferencesMap{};
 
+    std::vector<std::map<std::string,std::string>> preferences = getPluginPreferences(rootPath);
+    for (int i = 0; i < preferences.size(); i++)
     {
-        const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
-        std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
-        if(!fs.good()) {
-            return false;
-        }
-        try {
-            std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
-            msgpack::pack(fs, pluginPreferencesMap);
-        } catch (const std::exception& e) {
-            returnValue = false;
-            JAMI_ERR() << e.what();
-        }
+        pluginPreferencesMap[preferences[i]["key"]]=preferences[i]["defaultValue"];
+    }
+
+    const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
+    std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
+    if(!fs.good()) {
+        return false;
+    }
+    try {
+        std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
+        msgpack::pack(fs, pluginPreferencesMap);
+    } catch (const std::exception& e) {
+        returnValue = false;
+        JAMI_ERR() << e.what();
     }
 
     return returnValue;
@@ -425,25 +465,27 @@ bool JamiPluginManager::resetPluginPreferencesValuesMap(const std::string &rootP
 
 std::map<std::string, std::string> JamiPluginManager::readPluginManifestFromArchive(const std::string &jplPath)
 {
+    std::map<std::string, std::string> map = {};
     try {
-        return checkManifestValidity(archiver::readFileFromArchive(jplPath,"manifest.json"));
+        map = checkManifestValidity(archiver::readFileFromArchive(jplPath,"manifest.json"));
     } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
     }
+    return map;
 }
 
 std::map<std::string, std::string> JamiPluginManager::parseManifestFile(const std::string &manifestFilePath)
 {
+    std::map<std::string, std::string> map = {};
     std::ifstream file(manifestFilePath);
     if(file) {
         try {
-            return checkManifestValidity(file);
+            map = checkManifestValidity(file);
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
         }
     }
-
-    return {};
+    return map;
 }
 
 void JamiPluginManager::registerServices()

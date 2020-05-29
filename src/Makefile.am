@@ -1,5 +1,11 @@
 include ../globals.mk
 
+ENABLE_PLUGIN_LIBS=
+
+if ENABLE_PLUGIN
+ENABLE_PLUGIN_LIBS+=./plugin/libplugin.la
+endif
+
 ENABLE_VIDEO_LIBS=
 
 if ENABLE_VIDEO
@@ -29,6 +35,10 @@ endif
 
 SUBDIRS = client media config hooks sip upnp security jamidht im $(ENABLE_VIDEO_SUBDIR)
 
+if ENABLE_PLUGIN
+SUBDIRS+=plugin
+endif
+
 # libring
 
 lib_LTLIBRARIES = libring.la
@@ -43,6 +53,7 @@ libring_la_LIBADD = \
 	./upnp/libupnpcontrol.la \
 	./jamidht/libringacc.la \
 	./im/libim.la \
+	$(ENABLE_PLUGIN_LIBS) \
 	$(ENABLE_VIDEO_LIBS)
 
 libring_la_LDFLAGS = \
@@ -57,7 +68,6 @@ libring_la_LDFLAGS = \
 		@GNUTLS_LIBS@ \
 		@OPENDHT_LIBS@ \
 		@SECP256K1_LIBS@ \
-		@ARCHIVE_LIBS@ \
 		@ZLIB_LIBS@ \
 		@LIBSSL_LIBS@ \
 		@LIBCRYPTO_LIBS@ \
@@ -69,6 +79,12 @@ libring_la_LDFLAGS = \
 		@LIBSWSCALE_LIBS@ \
 		@LIBAVUTIL_LIBS@ \
 		@LIBS@
+
+if ENABLE_PLUGIN
+libring_la_LDFLAGS+= \
+		@ARCHIVE_LIBS@
+endif
+
 
 if HAVE_WIN32
 libring_la_LDFLAGS += -no-undefined -avoid-version
@@ -161,15 +177,7 @@ libring_la_SOURCES = \
 		generic_io.h \
 		scheduled_executor.h \
 		scheduled_executor.cpp \
-		transport/peer_channel.h \
-		plugin/pluginloader.h \
-		plugin/pluginloaderdl.cpp \
-		plugin/pluginmanager.h \
-		plugin/pluginmanager.cpp \
-		plugin/mediahandler.h \
-		plugin/callservicemanager.h \
-		plugin/jamipluginmanager.h \
-		plugin/jamipluginmanager.cpp
+		transport/peer_channel.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \
@@ -181,7 +189,6 @@ nobase_include_HEADERS= dring/dring.h \
 		dring/security_const.h \
 		dring/callmanager_interface.h \
 		dring/configurationmanager_interface.h \
-		dring/plugin_manager_interface.h \
 		dring/presencemanager_interface.h \
 		dring/datatransfer_interface.h \
 		dring/account_const.h \
@@ -190,6 +197,10 @@ nobase_include_HEADERS= dring/dring.h \
 		dring/media_const.h \
 		dring/def.h
 
+if ENABLE_PLUGIN
+nobase_include_HEADERS+= \
+		dring/plugin_manager_interface.h
+endif
 if ENABLE_VIDEO
 nobase_include_HEADERS+= \
 		dring/videomanager_interface.h

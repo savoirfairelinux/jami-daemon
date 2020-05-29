@@ -36,8 +36,9 @@
 #include "media/video/video_receive_thread.h"
 #include "media/video/video_rtp_session.h"
 #endif
+#ifdef ENABLE_PLUGIN
 #include "plugin/streamdata.h"
-
+#endif
 #include "noncopyable.h"
 
 #include <memory>
@@ -260,6 +261,7 @@ private:
     using MediaStream = Observable<std::shared_ptr<MediaFrame>>;
     using MediaStreamSubject = PublishMapSubject<std::shared_ptr<MediaFrame>, AVFrame*>;
 
+#ifdef ENABLE_PLUGIN
     /**
      * @brief createCallAVStream
      * Creates a call AV stream like video input, video receive, audio input or audio receive
@@ -274,9 +276,9 @@ private:
      * Creates all Call AV Streams (2 if audio, 4 if audio video)
      */
     void createCallAVStreams();
+#endif //ENABLE_PLUGIN
 
     std::list<std::shared_ptr<MediaStreamSubject>> callAVStreams;
-
 
     void setCallMediaLocal();
 
