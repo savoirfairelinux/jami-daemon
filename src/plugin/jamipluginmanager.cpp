@@ -164,6 +164,32 @@ std::map<std::string, std::string> parsePreferenceConfig(const Json::Value &json
     return preferenceMap;
 }
 
+    void getLibsList(std::vector<std::string>& libList, std::string& libsString)
+    {
+        bool status = true;
+        if(libsString.length() != 0)
+        {
+
+            libsString.erase(remove(libsString.begin(), libsString.end(), ' '), libsString.end()); 
+            std::stringstream _libsString(libsString);
+            std::string _part;
+
+            while (std::getline(_libsString, _part,','))
+            {
+                libList.emplace_back(_part);
+            }
+
+            for (int i = 0; i < libList.size(); i++)
+            {
+                JAMI_INFO() << libList[i];
+            }
+        }
+        else
+        {
+            JAMI_INFO() << "No lib in plugin manifest";
+        }
+    }
+
 std::map<std::string, std::string> JamiPluginManager::getPluginDetails(const std::string &rootPath)
 {
     auto detailsIt = pluginDetailsMap_.find(rootPath);
@@ -172,11 +198,15 @@ std::map<std::string, std::string> JamiPluginManager::getPluginDetails(const std
     }
 
     std::map<std::string, std::string> details = parseManifestFile(manifestPath(rootPath));
-    details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
-    details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
-    details["path"] = rootPath + DIR_SEPARATOR_CH;
-    detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
-    return detailsIt->second;
+    if (!details.empty())
+    {
+        details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
+        details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
+        details["path"] = rootPath + DIR_SEPARATOR_CH;
+        detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
+        return detailsIt->second;
+    }
+    return {};
 }
 
 std::vector<std::string> JamiPluginManager::listAvailablePlugins()
@@ -257,32 +287,6 @@ int JamiPluginManager::uninstallPlugin(const std::string &rootPath)
     }
 }
 
-void getLibsList(std::vector<std::string>& libList, std::string& libsString)
-{
-    bool status = true;
-    if(libsString.length() != 0)
-    {
-
-        libsString.erase(remove(libsString.begin(), libsString.end(), ' '), libsString.end()); 
-        std::stringstream _libsString(libsString);
-        std::string _part;
-
-        while (std::getline(_libsString, _part,','))
-        {
-            libList.emplace_back(_part);
-        }
-
-        for (int i = 0; i < libList.size(); i++)
-        {
-            JAMI_INFO() << libList[i];
-        }
-    }
-    else
-    {
-        JAMI_INFO() << "No lib in plugin manifest";
-    }
-}
-
 bool JamiPluginManager::loadPlugin(const std::string &rootPath)
 {
     try
@@ -329,7 +333,6 @@ bool JamiPluginManager::loadPlugin(const std::string &rootPath)
                 pm_.unloadLib(libList[i]);   
             }
         }
-        
         return status;
 
     } catch(const std::exception& e) 
@@ -341,7 +344,7 @@ bool JamiPluginManager::loadPlugin(const std::string &rootPath)
 
 bool JamiPluginManager::unloadPlugin(const std::string &rootPath)
 {
-    try 
+    try
     {
         bool status = true;
 
@@ -374,14 +377,19 @@ bool JamiPluginManager::unloadPlugin(const std::string &rootPath)
 
 void JamiPluginManager::togglePlugin(const std::string &rootPath, bool toggle)
 {
-    try {
-        std::string soPath = getPluginDetails(rootPath).at("soPath");
-        // remove the previous plugin object if it was registered
-        pm_.destroyPluginComponents(soPath);
-        // If toggle, register a new instance of the plugin
-        // function
-        if(toggle){
-            pm_.callPluginInitFunction(soPath);
+    try
+    {
+        std::map<std::string, std::string> map = getPluginDetails(rootPath);
+        if (!map.empty())
+        {
+            std::string soPath = map.at("soPath");
+            // remove the previous plugin object if it was registered
+            pm_.destroyPluginComponents(soPath);
+            // If toggle, register a new instance of the plugin
+            // function
+            if(toggle){
+                pm_.callPluginInitFunction(soPath);
+            }
         }
     } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
@@ -549,25 +557,27 @@ bool JamiPluginManager::resetPluginPreferencesValuesMap(const std::string &rootP
 
 std::map<std::string, std::string> JamiPluginManager::readPluginManifestFromArchive(const std::string &jplPath)
 {
+    std::map<std::string, std::string> map = {};
     try {
-        return checkManifestValidity(archiver::readFileFromArchive(jplPath,"manifest.json"));
+        map = checkManifestValidity(archiver::readFileFromArchive(jplPath,"manifest.json"));
     } catch (const std::exception& e) {
         JAMI_ERR() << e.what();
     }
+    return map;
 }
 
 std::map<std::string, std::string> JamiPluginManager::parseManifestFile(const std::string &manifestFilePath)
 {
+    std::map<std::string, std::string> map = {};
     std::ifstream file(manifestFilePath);
     if(file) {
         try {
-            return checkManifestValidity(file);
+            map = checkManifestValidity(file);
         } catch (const std::exception& e) {
             JAMI_ERR() << e.what();
         }
     }
-
-    return {};
+    return map;
 }
 
 void JamiPluginManager::registerServices()

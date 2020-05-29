@@ -33,7 +33,10 @@ class DBusCallManager;
 class DBusNetworkManager;
 class DBusInstance;
 class DBusPresenceManager;
+
+#ifdef ENABLE_PLUGIN
 class DBusPluginManagerInterface;
+#endif
 
 #ifdef ENABLE_VIDEO
 class DBusVideoManager;
@@ -63,7 +66,10 @@ class DRING_PUBLIC DBusClient {
         std::unique_ptr<DBusConfigurationManager>               configurationManager_;
         std::unique_ptr<DBusPresenceManager>                    presenceManager_;
         std::unique_ptr<DBusInstance>                           instanceManager_;
+
+#ifdef ENABLE_PLUGIN
         std::unique_ptr<DBusPluginManagerInterface>             pluginManagerInterface_;
+#endif        
 
 #ifdef ENABLE_VIDEO
         std::unique_ptr<DBusVideoManager>         videoManager_;
