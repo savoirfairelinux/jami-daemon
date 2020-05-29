@@ -50,8 +50,9 @@
 #include <ctime>
 
 #include "manager.h"
-#include "plugin/jamipluginmanager.h"
-
+#ifdef ENABLE_PLUGIN
+    #include "plugin/jamipluginmanager.h"
+#endif
 namespace jami {
 
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
@@ -531,6 +532,7 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
         }
     }
 
+#ifdef ENABLE_PLUGIN
     auto& convManager = jami::Manager::instance().getJamiPluginManager()
             .getConversationServicesManager();
     std::shared_ptr<ConversationMessage> cm =
@@ -542,6 +544,14 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
     DRing::Message message;
     message.from = cm->from_;
     message.payloads = cm->data_;
+#else
+    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, payloads);
+
+    DRing::Message message;
+    message.from = from;
+    message.payloads = payloads;    
+#endif
+
     message.received = std::time(nullptr);
     std::lock_guard<std::mutex> lck(mutexLastMessages_);
     lastMessages_.emplace_back(std::move(message));

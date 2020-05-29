@@ -905,7 +905,9 @@ class DRING_TESTABLE Manager {
         std::vector<DRing::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
 
         SIPVoIPLink& sipVoIPLink() const;
+#ifdef ENABLE_PLUGIN        
         JamiPluginManager& getJamiPluginManager() const;
+#endif
 
 private:
         Manager();

@@ -41,8 +41,10 @@
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
 #include "ice_transport.h"
-//Plugin manager
-#include "plugin/jamipluginmanager.h"
+#ifdef ENABLE_PLUGIN
+    //Plugin manager
+    #include "plugin/jamipluginmanager.h"
+#endif
 
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
@@ -118,6 +120,7 @@ SIPCall::getSIPAccount() const
     return static_cast<SIPAccountBase&>(getAccount());
 }
 
+#ifdef ENABLE_PLUGIN
 void SIPCall::createCallAVStreams()
 {
     if(hasVideo()){
@@ -155,6 +158,7 @@ void SIPCall::createCallAVStream(const StreamData& StreamData, MediaStream& stre
     streamSource.attachPriorityObserver(inserted);
     jami::Manager::instance().getJamiPluginManager().getCallServicesManager().createAVSubject(StreamData, inserted);
 }
+#endif
 
 void
 SIPCall::setCallMediaLocal()
@@ -1115,8 +1119,11 @@ SIPCall::startAllMedia()
         remainingRequest_ = Request::NoRequest;
     }
 
+
+#ifdef ENABLE_PLUGIN
     // Create AVStreams associated with the call
     createCallAVStreams();
+#endif    
 }
 
 void
