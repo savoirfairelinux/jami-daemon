@@ -2,6 +2,29 @@
   "comments": [
     {
       "key": {
+        "uuid": "2799a48a_f886ba48",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 1
+      },
+      "lineNbr": 626,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-05-29T21:09:33Z",
+      "side": 1,
+      "message": "profileReceived",
+      "range": {
+        "startLine": 626,
+        "startChar": 21,
+        "endLine": 626,
+        "endChar": 34
+      },
+      "revId": "3870b67fb2b287fff03c087ed0f5fa6e43512ba5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "eafee455_5a173931",
         "filename": "src/jamidht/jamiaccount.cpp",
         "patchSetId": 1
