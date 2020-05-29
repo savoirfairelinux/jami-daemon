@@ -84,6 +84,11 @@ bool PluginManager::unload(const std::string& path) {
     return returnValue;
 }
 
+bool PluginManager::checkLoadedPlugin(const std::string &rootPath) const
+{
+  return dynPluginMap_.find(rootPath) != dynPluginMap_.end();
+}
+
 std::vector<std::string> PluginManager::listLoadedPlugins() const
 {
     std::vector<std::string> res{};
