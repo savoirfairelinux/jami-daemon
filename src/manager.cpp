@@ -63,7 +63,10 @@ using random_device = dht::crypto::random_device;
 #include "audio/sound/tonelist.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
-#include "plugin/jamipluginmanager.h"
+
+#ifdef ENABLE_PLUGIN
+    #include "plugin/jamipluginmanager.h"
+#endif
 
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
@@ -416,8 +419,10 @@ struct Manager::ManagerPimpl
 #endif
 
     std::unique_ptr<SIPVoIPLink> sipLink_;
+#ifdef ENABLE_PLUGIN
     /* Jami Plugin Manager */
     JamiPluginManager jami_plugin_manager;
+#endif    
 };
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
@@ -2951,6 +2956,7 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
 {
     if (const auto acc = getAccount(accountID)) {
         try {
+#ifdef ENABLE_PLUGIN            
             auto& convManager = jami::Manager::instance().getJamiPluginManager()
                     .getConversationServicesManager();
             std::shared_ptr<jami::ConversationMessage> cm =
@@ -2959,6 +2965,8 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
                                                                 std::string>&>(payloads));
             convManager.sendTextMessage(cm);
             return acc->sendTextMessage(cm->to_, cm->data_);
+#endif
+            return acc->sendTextMessage(to, payloads);
         } catch (const std::exception& e) {
             JAMI_ERR("Exception during text message sending: %s", e.what());
         }
@@ -3108,11 +3116,13 @@ Manager::sipVoIPLink() const
     return *pimpl_->sipLink_;
 }
 
+#ifdef ENABLE_PLUGIN
 JamiPluginManager& 
 Manager::getJamiPluginManager() const
 {
     return pimpl_->jami_plugin_manager;
 }
+#endif
 
 std::map<std::string, std::string>
 Manager::getNearbyPeers(const std::string& accountID)

@@ -52,6 +52,9 @@ print_title()
 #ifdef ENABLE_VIDEO
         << "[Video support enabled]" << std::endl
 #endif
+#ifdef ENABLE_PLUGIN
+        << "[Plugins support enabled]" << std::endl
+#endif
         << std::endl;
 }
 
