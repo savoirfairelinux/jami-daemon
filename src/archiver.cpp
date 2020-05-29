@@ -32,10 +32,12 @@
 #include <json/json.h>
 #include <zlib.h>
 
+#ifdef ENABLE_PLUGIN
 extern "C" {
 #include <archive.h>
 #include <archive_entry.h>
 }
+#endif
 
 #include <sys/stat.h>
 #include <fstream>
@@ -309,6 +311,7 @@ openGzip(const std::string& path, const char *mode)
 #endif
 }
 
+#ifdef ENABLE_PLUGIN
 // LIBARCHIVE DEFINITIONS
 //==========================
 using ArchivePtr = std::unique_ptr<archive, void(*)(archive*)>;
@@ -511,5 +514,6 @@ std::vector<uint8_t> readFileFromArchive(const std::string &archivePath,
     }
     throw std::runtime_error("File " + fileRelativePathName + " not found in the archive");
 }
+#endif
 
 }} // namespace jami::archiver

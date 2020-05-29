@@ -29,10 +29,12 @@ dbusconfigurationmanager.adaptor.h: cx.ring.Ring.ConfigurationManager.xml Makefi
 dbusinstance.adaptor.h: cx.ring.Ring.Instance.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
+if ENABLE_PLUGIN
 BUILT_SOURCES+=dbuspluginmanagerinterface.adaptor.h
 # Rule to generate the binding headers
 dbuspluginmanagerinterface.adaptor.h: cx.ring.Ring.PluginManagerInterface.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
+endif
 
 libclient_dbus_la_SOURCES = \
     dbuscallmanager.cpp \
@@ -46,9 +48,11 @@ libclient_dbus_la_SOURCES = \
     dbus_cpp.h \
     dbuspresencemanager.cpp \
     dbuspresencemanager.h \
-    dbuspluginmanagerinterface.cpp \
-    dbuspluginmanagerinterface.h \    
     $(BUILT_SOURCES)
+
+if ENABLE_PLUGIN
+libclient_dbus_la_SOURCES += dbuspluginmanagerinterface.cpp dbuspluginmanagerinterface.h
+endif
 
 if ENABLE_VIDEO
 libclient_dbus_la_SOURCES += dbusvideomanager.cpp dbusvideomanager.h
@@ -71,8 +75,11 @@ interfacedir = $(datadir)/dbus-1/interfaces
 interface_DATA = cx.ring.Ring.CallManager.xml \
                  cx.ring.Ring.ConfigurationManager.xml \
                  cx.ring.Ring.Instance.xml \
-                 cx.ring.Ring.PresenceManager.xml \
-                 cx.ring.Ring.PluginManagerInterface.xml
+                 cx.ring.Ring.PresenceManager.xml 
+
+if ENABLE_PLUGIN
+interface_DATA += cx.ring.Ring.PluginManagerInterface.xml
+endif
 
 if ENABLE_VIDEO
 interface_DATA += cx.ring.Ring.VideoManager.xml
