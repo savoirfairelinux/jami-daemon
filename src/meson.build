@@ -133,6 +133,7 @@ libjami_dependencies = [
     depspeex,
     depspeexdsp,
     depyamlcpp,
+    deplibarchive,
     depjsoncpp,
     depzlib
 ]

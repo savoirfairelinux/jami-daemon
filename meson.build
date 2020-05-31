@@ -29,11 +29,27 @@ depspeexdsp = dependency('speexdsp')
 depyamlcpp = dependency('yaml-cpp', version: '>= 0.5.1', required: false)
 if not depyamlcpp.found()
     depyamlcpp = modcmake.subproject('yaml-cpp', cmake_options: [
+        '-DCMAKE_BUILD_TYPE=Release',
+        '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
         '-DYAML_CPP_BUILD_TOOLS=OFF',
         '-DYAML_CPP_BUILD_TESTS=OFF',
         '-DYAML_CPP_BUILD_CONTRIB=OFF',
         '-DBUILD_SHARED_LIBS=OFF'
     ]).dependency('yaml-cpp')
+endif
+
+deplibarchive = dependency('libarchive', version: '>= 3.4.0', required: false)
+if not deplibarchive.found()
+    deplibarchive = modcmake.subproject('libarchive', cmake_options: [
+        '-DCMAKE_BUILD_TYPE=Release',
+        '-DCMAKE_INSTALL_LIBDIR=lib',
+        '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
+        '-DENABLE_TEST=OFF',
+        '-DENABLE_TAR=OFF',
+        '-DENABLE_CPIO=OFF',
+        '-DENABLE_CAT=OFF',
+        '-DENABLE_LIBXML2=OFF'
+    ]).dependency('archive_static')
 endif
 
 depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5',
