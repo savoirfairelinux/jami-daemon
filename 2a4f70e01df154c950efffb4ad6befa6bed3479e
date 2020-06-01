@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "ff357d45_3d901d40",
+        "filename": "contrib/src/opencv/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 8,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-06-01T19:09:51Z",
+      "side": 1,
+      "message": "Edited",
+      "parentUuid": "9d8e6c5f_d5ea87b6",
+      "range": {
+        "startLine": 6,
+        "startChar": 0,
+        "endLine": 8,
+        "endChar": 5
+      },
+      "revId": "2a4f70e01df154c950efffb4ad6befa6bed3479e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "d5d2f6e5_4fa6bd1e",
         "filename": "contrib/src/opencv_contrib/rules.mak",
         "patchSetId": 12
@@ -36,6 +60,30 @@
       "writtenOn": "2020-06-01T17:11:53Z",
       "side": 1,
       "message": "remove, there is no such pkg-config package",
+      "range": {
+        "startLine": 5,
+        "startChar": 0,
+        "endLine": 7,
+        "endChar": 5
+      },
+      "revId": "2a4f70e01df154c950efffb4ad6befa6bed3479e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "80412e8e_423d1517",
+        "filename": "contrib/src/opencv_contrib/rules.mak",
+        "patchSetId": 12
+      },
+      "lineNbr": 7,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-06-01T19:09:51Z",
+      "side": 1,
+      "message": "removed.",
+      "parentUuid": "d5d2f6e5_4fa6bd1e",
       "range": {
         "startLine": 5,
         "startChar": 0,
