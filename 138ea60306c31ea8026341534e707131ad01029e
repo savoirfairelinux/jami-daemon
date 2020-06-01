@@ -22,6 +22,30 @@
       "revId": "138ea60306c31ea8026341534e707131ad01029e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ff3ce5af_481d5a97",
+        "filename": "contrib/src/opencv/rules.mak",
+        "patchSetId": 11
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 738
+      },
+      "writtenOn": "2020-06-01T16:44:39Z",
+      "side": 1,
+      "message": "Done;\nbootsrap file also modified",
+      "parentUuid": "d64f1f17_0c7293b5",
+      "range": {
+        "startLine": 6,
+        "startChar": 0,
+        "endLine": 6,
+        "endChar": 14
+      },
+      "revId": "138ea60306c31ea8026341534e707131ad01029e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
