@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d64f1f17_0c7293b5",
+        "filename": "contrib/src/opencv/rules.mak",
+        "patchSetId": 11
+      },
+      "lineNbr": 6,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-01T15:51:57Z",
+      "side": 1,
+      "message": "remove to avoid building by default",
+      "range": {
+        "startLine": 6,
+        "startChar": 0,
+        "endLine": 6,
+        "endChar": 14
+      },
+      "revId": "138ea60306c31ea8026341534e707131ad01029e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
