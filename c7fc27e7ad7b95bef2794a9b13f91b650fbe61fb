@@ -1,0 +1,257 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d5302f90_a306acde",
+        "filename": "src/manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 68,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "no indentation for includes",
+      "range": {
+        "startLine": 68,
+        "startChar": 0,
+        "endLine": 68,
+        "endChar": 4
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "30e0b8c4_4a6f9d23",
+        "filename": "src/manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 425,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "trailing whitespace",
+      "range": {
+        "startLine": 425,
+        "startChar": 6,
+        "endLine": 425,
+        "endChar": 10
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "52d90bcf_a1a122d2",
+        "filename": "src/manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 2959,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "trailing whitespace",
+      "range": {
+        "startLine": 2959,
+        "startChar": 20,
+        "endLine": 2959,
+        "endChar": 32
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "574b075d_82fd706a",
+        "filename": "src/manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 3120,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "trailing whitespace",
+      "range": {
+        "startLine": 3120,
+        "startChar": 18,
+        "endLine": 3120,
+        "endChar": 19
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7dcd256c_cb3a1a07",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 279,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "very inefficient",
+      "range": {
+        "startLine": 272,
+        "startChar": 8,
+        "endLine": 279,
+        "endChar": 9
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4793a784_c9bb2dfe",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 306,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "very inefficient",
+      "range": {
+        "startLine": 304,
+        "startChar": 8,
+        "endLine": 306,
+        "endChar": 41
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "85bafbb2_c58fc058",
+        "filename": "src/sip/sipaccountbase.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 54,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "no indentation for includes",
+      "range": {
+        "startLine": 54,
+        "startChar": 0,
+        "endLine": 54,
+        "endChar": 5
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0d10c623_d97e6e8e",
+        "filename": "src/sip/sipaccountbase.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 552,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "trailing whitespace",
+      "range": {
+        "startLine": 552,
+        "startChar": 32,
+        "endLine": 552,
+        "endChar": 36
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "352d176e_09c633e0",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "no indentation for includes",
+      "range": {
+        "startLine": 46,
+        "startChar": 0,
+        "endLine": 46,
+        "endChar": 4
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "1475fad7_aad38a6b",
+        "filename": "src/sip/sipcall.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 1126,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "trailing whitespace",
+      "range": {
+        "startLine": 1126,
+        "startChar": 6,
+        "endLine": 1126,
+        "endChar": 10
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "51fe91d8_96b9a932",
+        "filename": "src/sip/sipcall.h",
+        "patchSetId": 7
+      },
+      "lineNbr": 40,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-02T15:43:23Z",
+      "side": 1,
+      "message": "no indentation for includes",
+      "range": {
+        "startLine": 40,
+        "startChar": 1,
+        "endLine": 40,
+        "endChar": 4
+      },
+      "revId": "c7fc27e7ad7b95bef2794a9b13f91b650fbe61fb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
