@@ -33,6 +33,7 @@
 
 #include <opendht/default_types.h>
 #include <opendht/rng.h>
+#include <opendht/thread_pool.h>
 
 #include <memory>
 #include <map>
@@ -119,91 +120,17 @@ public:
     }
 };
 
-//==============================================================================
-
-enum class CtrlMsgType
-{
-    STOP,
-    CANCEL,
-    TURN_PEER_CONNECT,
-    TURN_PEER_DISCONNECT,
-    DHT_REQUEST,
-    DHT_RESPONSE,
-    ADD_DEVICE,
-};
-
-struct CtrlMsgBase
-{
-    CtrlMsgBase() = delete;
-    explicit CtrlMsgBase(CtrlMsgType id) : id_ {id} {}
-    virtual ~CtrlMsgBase() = default;
-    CtrlMsgType type() const noexcept { return id_; }
-private:
-    const CtrlMsgType id_;
-};
-
-template <class... Args>
-using DataTypeSet = std::tuple<Args...>;
-
-template <CtrlMsgType id, typename DataTypeSet=void>
-struct CtrlMsg : CtrlMsgBase
-{
-    template <class... Args>
-    explicit CtrlMsg(const Args&... args) : CtrlMsgBase(id), data {args...} {}
-
-    DataTypeSet data;
-};
-
-template <CtrlMsgType id, class... Args>
-auto makeMsg(const Args&... args)
-{
-    return std::make_unique<CtrlMsg<id, DataTypeSet<Args...>>>(args...);
-}
-
-template <std::size_t N, CtrlMsgType id, typename R, typename T>
-auto msgData(const T& msg)
-{
-    using MsgType = typename std::tuple_element<std::size_t(id), R>::type;
-    auto& x = static_cast<const MsgType&>(msg);
-    return std::get<N>(x.data);
-}
-
-//==============================================================================
-
-using DhtInfoHashMsgData = DataTypeSet<dht::InfoHash, DRing::DataTransferId>;
-using TurnConnectMsgData = DataTypeSet<IpAddr>;
-using PeerCnxMsgData = DataTypeSet<PeerConnectionMsg>;
-using AddDeviceMsgData = DataTypeSet<dht::InfoHash,
-                                     DRing::DataTransferId,
-                                     std::shared_ptr<dht::crypto::Certificate>,
-                                     std::vector<std::string>,
-                                     std::function<void(PeerConnection*)>>;
-
-using AllCtrlMsg = DataTypeSet<CtrlMsg<CtrlMsgType::STOP>,
-                               CtrlMsg<CtrlMsgType::CANCEL, DhtInfoHashMsgData>,
-                               CtrlMsg<CtrlMsgType::TURN_PEER_CONNECT, TurnConnectMsgData>,
-                               CtrlMsg<CtrlMsgType::TURN_PEER_DISCONNECT, TurnConnectMsgData>,
-                               CtrlMsg<CtrlMsgType::DHT_REQUEST, PeerCnxMsgData>,
-                               CtrlMsg<CtrlMsgType::DHT_RESPONSE, PeerCnxMsgData>,
-                               CtrlMsg<CtrlMsgType::ADD_DEVICE, AddDeviceMsgData>>;
-
-template <CtrlMsgType id, std::size_t N=0, typename T>
-auto ctrlMsgData(const T& msg)
-{
-    return msgData<N, id, AllCtrlMsg>(msg);
-}
-
 } // namespace <anonymous>
 
 //==============================================================================
 
-class DhtPeerConnector::Impl {
+class DhtPeerConnector::Impl : public std::enable_shared_from_this<DhtPeerConnector::Impl> {
 public:
     class ClientConnector;
 
     explicit Impl(JamiAccount& account)
         : account {account}
-        , loopFut_ {std::async(std::launch::async, [this]{ eventLoop(); })} {}
+        {}
 
     ~Impl() {
       for (auto &thread : answer_threads_)
@@ -213,11 +140,9 @@ public:
       waitForReadyEndpoints_.clear();
       turnAuthv4_.reset();
       turnAuthv6_.reset();
-      ctrl << makeMsg<CtrlMsgType::STOP>();
     }
 
     JamiAccount& account;
-    Channel<std::unique_ptr<CtrlMsgBase>> ctrl;
 
     bool hasPublicIp(const ICESDP& sdp) {
         for (const auto& cand: sdp.rem_candidates)
@@ -226,7 +151,6 @@ public:
         return false;
     }
 
-private:
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<TlsSocketEndpoint>> waitForReadyEndpoints_;
     std::unique_ptr<TurnTransport> turnAuthv4_;
     std::unique_ptr<TurnTransport> turnAuthv6_;
@@ -236,7 +160,6 @@ private:
     std::map<dht::InfoHash, std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::InfoHash>> certMap_;
     std::map<IpAddr, dht::InfoHash> connectedPeers_;
 
-protected:
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<PeerConnection>> servers_;
     std::map<IpAddr, std::unique_ptr<TlsTurnEndpoint>> tls_turn_ep_;
 
@@ -244,7 +167,8 @@ protected:
     std::mutex clientsMutex_;
     std::mutex turnMutex_;
 
-private:
+    void cancel(const std::string& peer_id, const DRing::DataTransferId& tid);
+
     void onTurnPeerConnection(const IpAddr&);
     void onTurnPeerDisconnection(const IpAddr&);
     void onRequestMsg(PeerConnectionMsg&&);
@@ -259,12 +183,24 @@ private:
                      const std::vector<std::string>&,
                      const std::function<void(PeerConnection*)>&);
     bool turnConnect();
-    void eventLoop();
     bool validatePeerCertificate(const dht::crypto::Certificate&, dht::InfoHash&);
 
     std::future<void> loopFut_; // keep it last member
 
     std::vector<std::thread> answer_threads_;
+
+    std::shared_ptr<DhtPeerConnector::Impl> shared() {
+        return std::static_pointer_cast<DhtPeerConnector::Impl>(shared_from_this());
+    }
+    std::shared_ptr<DhtPeerConnector::Impl const> shared() const {
+        return std::static_pointer_cast<DhtPeerConnector::Impl const>(shared_from_this());
+    }
+    std::weak_ptr<DhtPeerConnector::Impl> weak() {
+        return std::static_pointer_cast<DhtPeerConnector::Impl>(shared_from_this());
+    }
+    std::weak_ptr<DhtPeerConnector::Impl const> weak() const {
+        return std::static_pointer_cast<DhtPeerConnector::Impl const>(shared_from_this());
+    }
 };
 
 //==============================================================================
@@ -326,7 +262,7 @@ public:
     }
 
     void cancel() {
-        parent_.ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_, tid_);
+        parent_.cancel(peer_.toString(), tid_);
     }
 
     void onDhtResponse(PeerConnectionMsg&& response) {
@@ -534,9 +470,9 @@ DhtPeerConnector::Impl::turnConnect()
     turn_param_v4.onPeerConnection = [this](uint32_t conn_id, const IpAddr& peer_addr, bool connected) {
         (void)conn_id;
         if (connected)
-            ctrl << makeMsg<CtrlMsgType::TURN_PEER_CONNECT>(peer_addr);
+            onTurnPeerConnection(peer_addr);
         else
-            ctrl << makeMsg<CtrlMsgType::TURN_PEER_DISCONNECT>(peer_addr);
+            onTurnPeerDisconnection(peer_addr);
     };
 
     // If a previous turn server exists, but is not ready, we should try to reconnect
@@ -915,74 +851,34 @@ DhtPeerConnector::Impl::onAddDevice(const dht::InfoHash& dev_h,
 }
 
 void
-DhtPeerConnector::Impl::eventLoop()
-{
-    // Loop until STOP msg
-    while (true) {
-        std::unique_ptr<CtrlMsgBase> msg;
-        ctrl >> msg;
-        switch (msg->type()) {
-            case CtrlMsgType::STOP:
-              return;
-
-            case CtrlMsgType::TURN_PEER_CONNECT:
-              onTurnPeerConnection(
-                  ctrlMsgData<CtrlMsgType::TURN_PEER_CONNECT>(*msg));
-              break;
-
-            case CtrlMsgType::TURN_PEER_DISCONNECT:
-              onTurnPeerDisconnection(
-                  ctrlMsgData<CtrlMsgType::TURN_PEER_DISCONNECT>(*msg));
-              break;
-
-            case CtrlMsgType::CANCEL:
-                {
-                    auto dev_h = ctrlMsgData<CtrlMsgType::CANCEL, 0>(*msg);
-                    auto id = ctrlMsgData<CtrlMsgType::CANCEL, 1>(*msg);
-                    // Cancel outgoing files
-                    {
-                        std::lock_guard<std::mutex> lock(clientsMutex_);
-                        clients_.erase(std::make_pair(dev_h, id));
-                    }
-                    // Cancel incoming files
-                    auto it = std::find_if(
-                        servers_.begin(), servers_.end(),
-                        [&dev_h, &id](const auto &element) {
-                          return (element.first.first == dev_h &&
-                                  element.second &&
-                                  element.second->hasStreamWithId(id));
-                        });
-                    if (it == servers_.end())  {
-                      Manager::instance().dataTransfers->close(id);
-                      break;
-                    }
-                    auto peer = it->first.second; // tmp copy to prevent use-after-free below
-                    servers_.erase(it);
-                    // Remove the file transfer if p2p
-                    connectedPeers_.erase(peer);
-                    Manager::instance().dataTransfers->close(id);
-                }
-                break;
-
-            case CtrlMsgType::DHT_REQUEST:
-              onRequestMsg(ctrlMsgData<CtrlMsgType::DHT_REQUEST>(*msg));
-              break;
-
-            case CtrlMsgType::DHT_RESPONSE:
-              onResponseMsg(ctrlMsgData<CtrlMsgType::DHT_RESPONSE>(*msg));
-              break;
-
-            case CtrlMsgType::ADD_DEVICE:
-              onAddDevice(ctrlMsgData<CtrlMsgType::ADD_DEVICE, 0>(*msg),
-                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 1>(*msg),
-                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 2>(*msg),
-                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 3>(*msg),
-                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 4>(*msg));
-              break;
-
-            default: JAMI_ERR("BUG: got unhandled control msg!"); break;
+DhtPeerConnector::Impl::cancel(const std::string& peer_id, const DRing::DataTransferId& tid) {
+    dht::ThreadPool::io().run([w=weak(), peer_id, tid] {
+        auto shared = w.lock();
+        if (!shared) return;
+        const auto dev_h = dht::InfoHash(peer_id);
+        // Cancel outgoing files
+        {
+            std::lock_guard<std::mutex> lock(shared->clientsMutex_);
+            shared->clients_.erase(std::make_pair(dev_h, tid));
         }
-    }
+        // Cancel incoming files
+        auto it = std::find_if(
+            shared->servers_.begin(), shared->servers_.end(),
+            [&dev_h, &tid](const auto &element) {
+                return (element.first.first == dev_h &&
+                        element.second &&
+                        element.second->hasStreamWithId(tid));
+            });
+        if (it == shared->servers_.end())  {
+            Manager::instance().dataTransfers->close(tid);
+            return;
+        }
+        auto peer = it->first.second; // tmp copy to prevent use-after-free below
+        shared->servers_.erase(it);
+        // Remove the file transfer if p2p
+        shared->connectedPeers_.erase(peer);
+        Manager::instance().dataTransfers->close(tid);
+    });
 }
 
 //==============================================================================
@@ -1005,11 +901,10 @@ DhtPeerConnector::onDhtConnected(const std::string& device_id)
             if (msg.from == pimpl_->account.dht()->getId())
                 return true;
             if (!pimpl_->account.isMessageTreated(to_hex_string(msg.id))) {
-                if (msg.isRequest()) {
-                    // TODO: filter-out request from non trusted peer
-                    pimpl_->ctrl << makeMsg<CtrlMsgType::DHT_REQUEST>(std::move(msg));
-                } else
-                    pimpl_->ctrl << makeMsg<CtrlMsgType::DHT_RESPONSE>(std::move(msg));
+                if (msg.isRequest())
+                    pimpl_->onRequestMsg(std::move(msg));
+                else
+                    pimpl_->onResponseMsg(std::move(msg));
             }
             return true;
         }, [](const dht::Value& v) {
@@ -1052,7 +947,7 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
             pimpl_->account.findCertificate(
                 dev_h,
                 [this, dev_h, addresses, connect_cb, tid] (const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                    pimpl_->ctrl << makeMsg<CtrlMsgType::ADD_DEVICE>(dev_h, tid, cert, addresses, connect_cb);
+                    pimpl_->onAddDevice(dev_h, tid, cert, addresses, connect_cb);
                 });
         },
 
@@ -1066,9 +961,7 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
 
 void
 DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid) {
-    const auto peer_h = dht::InfoHash(peer_id);
-    // The connection will be close and removed in the main loop
-    pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_h, tid);
+    pimpl_->cancel(peer_id, tid);
 }
 
 } // namespace jami
