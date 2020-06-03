@@ -45,7 +45,7 @@ private:
     DhtPeerConnector() = delete;
 
     class Impl;
-    std::unique_ptr<Impl> pimpl_;
+    std::shared_ptr<Impl> pimpl_;
 };
 
 }
