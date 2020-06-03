@@ -743,6 +743,7 @@ DataTransferFacade::cancel(const DRing::DataTransferId& id) noexcept
 void
 DataTransferFacade::close(const DRing::DataTransferId &id) noexcept
 {
+    std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     pimpl_->map_.erase(id);
 }
 
