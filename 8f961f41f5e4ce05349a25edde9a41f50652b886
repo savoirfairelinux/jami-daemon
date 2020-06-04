@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d19b800a_f34bd909",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 303,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-04T19:03:31Z",
+      "side": 1,
+      "message": "inefficient to get the whole details map just to retrieve the soPath",
+      "range": {
+        "startLine": 300,
+        "startChar": 8,
+        "endLine": 303,
+        "endChar": 50
+      },
+      "revId": "8f961f41f5e4ce05349a25edde9a41f50652b886",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f722d947_4a5bf87b",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 376,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-04T19:03:31Z",
+      "side": 1,
+      "message": "find-\u003esecond \u003d value",
+      "range": {
+        "startLine": 376,
+        "startChar": 8,
+        "endLine": 376,
+        "endChar": 33
+      },
+      "revId": "8f961f41f5e4ce05349a25edde9a41f50652b886",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "8f3bd786_050a2511",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 474,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-04T19:03:31Z",
+      "side": 1,
+      "message": "change not needed and makes code less readable",
+      "range": {
+        "startLine": 468,
+        "startChar": 0,
+        "endLine": 474,
+        "endChar": 15
+      },
+      "revId": "8f961f41f5e4ce05349a25edde9a41f50652b886",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "b2bb7987_ab680eb4",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 488,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-04T19:03:31Z",
+      "side": 1,
+      "message": "change not needed and makes code less readable",
+      "range": {
+        "startLine": 479,
+        "startChar": 0,
+        "endLine": 488,
+        "endChar": 15
+      },
+      "revId": "8f961f41f5e4ce05349a25edde9a41f50652b886",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "65d8f363_915fe6e4",
+        "filename": "src/plugin/pluginmanager.cpp",
+        "patchSetId": 8
+      },
+      "lineNbr": 96,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-04T19:03:31Z",
+      "side": 1,
+      "message": "return dynPluginMap_.find(rootPath) !\u003d dynPluginMap_.end()",
+      "range": {
+        "startLine": 90,
+        "startChar": 0,
+        "endLine": 96,
+        "endChar": 15
+      },
+      "revId": "8f961f41f5e4ce05349a25edde9a41f50652b886",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
