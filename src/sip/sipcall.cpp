@@ -1201,8 +1201,12 @@ SIPCall::waitForIceAndStartMedia()
 
                     // Nego succeed: move to the new media transport
                     call->stopAllMedia();
-                    if (call->tmpMediaTransport_)
+                    if (call->tmpMediaTransport_) {
+                        // Destroy the ICE media transport on another thread. This can take quite some time.
+                        if (call->mediaTransport_)
+                            dht::ThreadPool::io().run([ice=std::make_shared<decltype(call->mediaTransport_)>(std::move(call->mediaTransport_))] { });
                         call->mediaTransport_ = std::move(call->tmpMediaTransport_);
+                    }
                     call->startAllMedia();
                     return false;
                 }
