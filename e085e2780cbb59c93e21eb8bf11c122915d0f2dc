@@ -22,6 +22,52 @@
       "revId": "e085e2780cbb59c93e21eb8bf11c122915d0f2dc",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "27a358e2_ef6631b4",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 855,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-05T19:26:45Z",
+      "side": 1,
+      "message": "dev_h \u003d dht::InfoHash(peer_id)\nto avoid unneeded allocation/copy",
+      "range": {
+        "startLine": 855,
+        "startChar": 41,
+        "endLine": 855,
+        "endChar": 48
+      },
+      "revId": "e085e2780cbb59c93e21eb8bf11c122915d0f2dc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f903bdcb_e6577cdb",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 866,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-05T19:26:45Z",
+      "side": 1,
+      "message": "servers_ doesn\u0027t seem to be protected for concurrent access",
+      "range": {
+        "startLine": 866,
+        "startChar": 20,
+        "endLine": 866,
+        "endChar": 28
+      },
+      "revId": "e085e2780cbb59c93e21eb8bf11c122915d0f2dc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
