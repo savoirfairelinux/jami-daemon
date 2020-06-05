@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "a1e6657f_0f3eaf73",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 133,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-05T16:24:20Z",
+      "side": 1,
+      "message": "might shared_ptr make this object outlive the account ?",
+      "range": {
+        "startLine": 131,
+        "startChar": 0,
+        "endLine": 133,
+        "endChar": 10
+      },
+      "revId": "e085e2780cbb59c93e21eb8bf11c122915d0f2dc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
