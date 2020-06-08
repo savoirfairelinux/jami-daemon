@@ -492,9 +492,10 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         auto callId = dev_call->getCallId();
         auto onNegoDone = [callId, w=weak()](bool) {
-            if (auto shared = w.lock()) {
-                shared->checkPendingCall(callId);
-            }
+            runOnMainThread([callId, w]() {
+                if (auto shared = w.lock())
+                    shared->checkPendingCall(callId);
+            });
         };
 
         std::weak_ptr<SIPCall> weak_dev_call = dev_call;
@@ -2104,9 +2105,10 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
     }
     auto callId = call->getCallId();
     auto onNegoDone = [callId, w=weak()](bool) {
-        if (auto shared = w.lock()) {
-            shared->checkPendingCall(callId);
-        }
+        runOnMainThread([callId, w]() {
+            if (auto shared = w.lock())
+                shared->checkPendingCall(callId);
+        });
     };
     auto iceOptions = getIceOptions();
     iceOptions.onNegoDone = onNegoDone;
