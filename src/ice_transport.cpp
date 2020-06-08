@@ -1303,6 +1303,8 @@ IceTransport::setOnShutdown(onShutdownCb&& cb)
 ssize_t
 IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 {
+    JAMI_ERR("@@@ SEND");
+    std::lock_guard<std::mutex> lk(opMtx_);
     sip_utils::register_thread();
     auto remote = getRemoteAddress(comp_id);
     if (!remote) {
@@ -1327,9 +1329,11 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
             JAMI_ERR("[ice:%p] ice send failed: %s", this, pimpl_->last_errmsg_.c_str());
             errno = EIO;
         }
+        JAMI_ERR("@@@ RET");
         return -1;
     }
 
+    JAMI_ERR("@@@ RET");
     return len;
 }
 

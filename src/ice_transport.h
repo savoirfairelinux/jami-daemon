@@ -31,6 +31,7 @@
 #include <memory>
 #include <msgpack.hpp>
 #include <vector>
+#include <mutex>
 
 namespace jami {
 
@@ -232,6 +233,8 @@ public:
   private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
+
+    std::mutex opMtx_;
 };
 
 class IceTransportFactory {
