@@ -78,6 +78,7 @@ class AccountManager;
 struct AccountInfo;
 class ChannelSocket;
 class SipTransport;
+class ChanneledOutgoingTransfer;
 
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -353,7 +354,9 @@ public:
     /// /// \param[in] tid linked outgoing data transfer
     ///
     void requestPeerConnection(const std::string& peer, const DRing::DataTransferId& tid,
-                                const std::function<void(PeerConnection*)>& connect_cb);
+                                const std::function<void(PeerConnection*)>& connect_cb,
+                                const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>& channeledConnectedCb,
+                                const std::function<void()>& onChanneledCancelled);
 
     ///
     /// Close a E2E connection between a given peer and a given transfer id.
@@ -716,6 +719,9 @@ private:
      * @param deviceId  Device linked to that transport
      */
     void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const std::string& peerId, const std::string& deviceId);
+
+    // File transfers
+    std::set<std::string> incomingFileTransfers_ {};
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)
