@@ -67,17 +67,17 @@ public:
         stop.store(true);
         isShutdown_ = true;
         if (onShutdown_) onShutdown_();
-        endpoint->setOnStateChange({});
-        endpoint->shutdown();
-        {
-            std::lock_guard<std::mutex> lkSockets(socketsMutex);
-            for (auto& socket : sockets) {
-                // Just trigger onShutdown() to make client know
-                // No need to write the EOF for the channel, the write will fail because endpoint is already shutdown
-                if (socket.second) socket.second->stop();
-            }
-            sockets.clear();
+        if (endpoint) {
+            endpoint->setOnStateChange({});
+            endpoint->shutdown();
         }
+        std::lock_guard<std::mutex> lkSockets(socketsMutex);
+        for (auto& socket : sockets) {
+            // Just trigger onShutdown() to make client know
+            // No need to write the EOF for the channel, the write will fail because endpoint is already shutdown
+            if (socket.second) socket.second->stop();
+        }
+        sockets.clear();
     }
 
     /**
@@ -123,6 +123,8 @@ public:
     std::mutex channelCbsMtx_ {};
     std::map<uint16_t, GenericSocket<uint8_t>::RecvCb> channelCbs_ {};
     std::atomic_bool isShutdown_ {false};
+
+    std::mutex writeMtx;
 };
 
 void
@@ -143,7 +145,9 @@ MultiplexedSocket::Impl::eventLoop()
             return;
         }
         pac_.reserve_buffer(IO_BUFFER_SIZE);
+        JAMI_ERR("@@@ READ");
         int size = endpoint->read(reinterpret_cast<uint8_t*>(&pac_.buffer()[0]), IO_BUFFER_SIZE, ec);
+        JAMI_ERR("@@@ READ END");
         if (size < 0) {
             if (ec) JAMI_ERR("Read error detected: %s", ec.message().c_str());
             break;
@@ -161,9 +165,13 @@ MultiplexedSocket::Impl::eventLoop()
                 auto msg = oh.get().as<ChanneledMessage>();
 
                 if (msg.channel == 0) {
+                    JAMI_ERR("@@@ handle control");
                     handleControlPacket(std::move(msg.data));
+                    JAMI_ERR("@@@ handled control");
                 } else {
+                    JAMI_ERR("@@@ handle channel packet");
                     handleChannelPacket(msg.channel, std::move(msg.data));
+                    JAMI_ERR("@@@ handled channel packet");
                 }
             } catch (const msgpack::unpack_error &e) {
                 JAMI_WARN("Error when decoding msgpack message: %s", e.what());
@@ -273,7 +281,9 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector
             auto cb = channelCbs_.find(channel);
             if (cb != channelCbs_.end()) {
                 lk.unlock();
-                cb->second(&pkt[0], pkt.size());
+                JAMI_ERR("@@@ CALL CALLBACK");
+                if (cb->second) cb->second(&pkt[0], pkt.size());
+                JAMI_ERR("@@@ CALL CALLBACK END");
                 return;
             }
             lk.unlock();
@@ -413,11 +423,17 @@ MultiplexedSocket::write(const uint16_t& channel, const uint8_t* buf, std::size_
     pk.pack_bin(len);
     pk.pack_bin_body((const char*)buf, len);
 
+    JAMI_ERR("@@@ =WRITE");
+    std::unique_lock<std::mutex> lk(pimpl_->writeMtx);
     int res = pimpl_->endpoint->write((const unsigned char*)buffer.data(), buffer.size(), ec);
+    lk.unlock();
+    JAMI_ERR("@@@ =WRITE!");
     if (res < 0) {
         if (ec)
             JAMI_ERR("Error when writing on socket: %s", ec.message().c_str());
+        JAMI_ERR("@@@ =SHUT");
         shutdown();
+        JAMI_ERR("@@@ =SHUT!");
     }
     return res;
 }
@@ -481,7 +497,10 @@ public:
     Impl(std::weak_ptr<MultiplexedSocket> endpoint, const std::string& name, const uint16_t& channel)
     : name(name), channel(channel), endpoint(std::move(endpoint)) {}
 
-    ~Impl() {}
+    ~Impl() {
+        JAMI_ERR("DELETE");
+
+    }
 
     OnShutdownCb shutdownCb_;
     std::atomic_bool isShutdown_ {false};
@@ -496,7 +515,9 @@ ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint, const st
 
 
 ChannelSocket::~ChannelSocket()
-{ }
+{
+    JAMI_ERR("DELETE");
+}
 
 std::string
 ChannelSocket::deviceId() const
@@ -571,10 +592,13 @@ ChannelSocket::stop()
 void
 ChannelSocket::shutdown()
 {
+    if (pimpl_->isShutdown_) return;
     stop();
     if (auto ep = pimpl_->endpoint.lock()) {
         std::error_code ec;
+        JAMI_ERR("@@@ WRITE?");
         ep->write(pimpl_->channel, nullptr, 0, ec);
+        JAMI_ERR("@@@ WRITE!");
     }
 }
 
