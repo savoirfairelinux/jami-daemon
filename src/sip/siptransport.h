@@ -146,7 +146,7 @@ namespace tls {
 class SipTransportBroker
 {
 public:
-    SipTransportBroker(pjsip_endpoint *endpt, pj_caching_pool& cp, pj_pool_t& pool);
+    SipTransportBroker(pjsip_endpoint *endpt);
     ~SipTransportBroker();
 
     std::shared_ptr<SipTransport> getUdpTransport(const IpAddr&);
@@ -195,15 +195,7 @@ private:
      */
     std::map<IpAddr, pjsip_transport*> udpTransports_;
 
-    /**
-     * Storage for SIP/ICE transport instances.
-     */
-    int ice_pj_transport_type_ {PJSIP_TRANSPORT_START_OTHER};
-
-    pj_caching_pool& cp_;
-    pj_pool_t& pool_;
     pjsip_endpoint *endpt_;
-
 };
 
 } // namespace jami
