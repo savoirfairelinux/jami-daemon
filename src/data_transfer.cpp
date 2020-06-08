@@ -27,6 +27,7 @@
 #include "string_utils.h"
 #include "map_utils.h"
 #include "client/ring_signal.h"
+#include "jamidht/p2p.h"
 
 #include <thread>
 #include <stdexcept>
@@ -41,6 +42,7 @@
 #include <cstdlib> // mkstemp
 
 #include <opendht/rng.h>
+#include <opendht/thread_pool.h>
 
 namespace jami {
 
@@ -256,6 +258,27 @@ public:
     bool write(const std::vector<uint8_t>& buffer) override;
     void emit(DRing::DataTransferEventCode code) const override;
 
+    void setOnRecv(std::function<void(std::vector<uint8_t>&&)>&& cb) override
+    {
+        onRecvCb_ = std::move(cb);
+        // Send headers
+        // TODO refacto
+        std::stringstream ss;
+        ss << "Content-Length: " << info_.totalSize << '\n'
+           << "Display-Name: " << info_.displayName << '\n'
+           << "Offset: 0\n"
+           << '\n';
+        auto header = ss.str();
+        std::vector<uint8_t> buf;
+        buf.resize(header.size());
+        std::copy(std::begin(header), std::end(header), std::begin(buf));
+
+        headerSent_ = true;
+        emit(DRing::DataTransferEventCode::wait_peer_acceptance);
+        if (onRecvCb_)
+            onRecvCb_(std::move(buf));
+    }
+
 private:
     SubOutgoingFileTransfer() = delete;
 
@@ -267,6 +290,7 @@ private:
     const std::string peerUri_;
     mutable std::unique_ptr<std::thread> timeoutThread_;
     mutable std::atomic_bool stopTimeout_ {false};
+    std::function<void(std::vector<uint8_t>&&)> onRecvCb_ {};
 };
 
 SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
@@ -300,10 +324,6 @@ SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const n
 {
     started_ = false; // NOTE: replace DataTransfer::close(); which is non const
     input_.close();
-
-    // We don't need the connection anymore. Can close it.
-    auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId);
-    account->closePeerConnection(peerUri_, id);
 
     if (info_.lastEvent < DRing::DataTransferEventCode::finished)
         emit(code);
@@ -365,6 +385,28 @@ SubOutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
         if (buffer.size() == 3 and buffer[0] == 'G' and buffer[1] == 'O' and buffer[2] == '\n') {
             peerReady_ = true;
             emit(DRing::DataTransferEventCode::ongoing);
+
+            // TODO MOVE?
+            if (!onRecvCb_) return true;
+
+            dht::ThreadPool::io().run([this]() {
+                while (!input_.eof()) {
+                    std::vector<uint8_t> buf;
+                    buf.resize(65534);
+
+                    input_.read(reinterpret_cast<char*>(&buf[0]), buf.size());
+                    buf.resize(input_.gcount());
+                    if (buf.size()) {
+                        std::lock_guard<std::mutex> lk {infoMutex_};
+                        info_.bytesProgress += buf.size();
+                        metaInfo_->updateInfo(info_);
+                    }
+                    if (onRecvCb_)
+                        onRecvCb_(std::move(buf));
+                }
+                JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
+                emit(DRing::DataTransferEventCode::finished);
+            });
         } else {
             // consider any other response as a cancel msg
             JAMI_WARN() << "FTP#" << getId() << ": refused by peer";
@@ -408,12 +450,24 @@ class OutgoingFileTransfer final : public DataTransfer
 {
 public:
     OutgoingFileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info);
+    ~OutgoingFileTransfer() {
+        JAMI_ERR("DESTROY OUTGOING");
+    }
 
     std::shared_ptr<DataTransfer> startNewOutgoing(const std::string& peer_uri) {
         auto newTransfer = std::make_shared<SubOutgoingFileTransfer>(id, peer_uri, this->metaInfo_);
         subtransfer_.emplace_back(newTransfer);
         newTransfer->start();
         return newTransfer;
+    }
+
+    bool cancel(bool channeled) {
+        JAMI_ERR("Cancel: %u", channeled);
+        if (channeled)
+            cancelChanneled_ = true;
+        else
+            cancelIce_ = true;
+        return cancelChanneled_ && cancelIce_;
     }
 
     bool hasBeenStarted() const override
@@ -429,6 +483,9 @@ public:
 
 private:
     OutgoingFileTransfer() = delete;
+
+    std::atomic_bool cancelChanneled_ {false};
+    std::atomic_bool cancelIce_ {false};
 
     mutable std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo_;
     mutable std::ifstream input_;
@@ -456,8 +513,10 @@ OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid, const DRin
 void
 OutgoingFileTransfer::close() noexcept
 {
-    for (const auto& subtransfer : subtransfer_)
-        subtransfer->close();
+    // TODO: close when cancelled 2 times :)
+    if (cancelChanneled_ && cancelIce_)
+        for (const auto& subtransfer : subtransfer_)
+            subtransfer->close();
 }
 
 //==============================================================================
@@ -538,10 +597,6 @@ IncomingFileTransfer::close() noexcept
     } catch (...) {}
 
     fout_.close();
-
-    // We don't need the connection anymore. Can close it.
-    auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId);
-    account->closePeerConnection(info_.peer, id);
 
     JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress
                << " on " << info_.totalSize;
@@ -648,7 +703,8 @@ DataTransferFacade::Impl::onConnectionRequestReply(const DRing::DataTransferId& 
                     connection->getPeerUri()
                 )
             );
-        } else if (not transfer->hasBeenStarted()) {
+        } else if (std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->cancel(false)
+            and not transfer->hasBeenStarted()) {
             transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
             cancel(*transfer);
         }
@@ -705,6 +761,19 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
             info.peer, tid,
             [this, tid] (PeerConnection* connection) {
                 pimpl_->onConnectionRequestReply(tid, connection);
+            },
+            [this, tid](const std::shared_ptr<ChanneledOutgoingTransfer>& out) {
+                if (auto transfer = pimpl_->getTransfer(tid))
+                    if (out)
+                        out->linkTransfer(std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->startNewOutgoing("")); // TODO
+            },
+            [this, tid]() {
+                if (auto transfer = pimpl_->getTransfer(tid))
+                    if (std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->cancel(true)
+                    and not transfer->hasBeenStarted()) {
+                        transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
+                        pimpl_->cancel(*transfer);
+                    }
             });
         return DRing::DataTransferError::success;
     } catch (const std::exception& ex) {
@@ -744,7 +813,13 @@ void
 DataTransferFacade::close(const DRing::DataTransferId &id) noexcept
 {
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
-    pimpl_->map_.erase(id);
+    const auto& iter = pimpl_->map_.find(id);
+    if (iter != std::end(pimpl_->map_)) {
+        // NOTE: don't erase from map. The client can retrieve
+        // related info() to know if the file is finished.
+        JAMI_ERR("@@@ CLOSE %u", id);
+        iter->second->close();
+    }
 }
 
 DRing::DataTransferError
