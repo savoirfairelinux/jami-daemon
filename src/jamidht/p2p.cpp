@@ -30,6 +30,8 @@
 #include "peer_connection.h"
 #include "turn_transport.h"
 #include "account_manager.h"
+#include "multiplexed_socket.h"
+#include "connectionmanager.h"
 
 #include <opendht/default_types.h>
 #include <opendht/rng.h>
@@ -124,6 +126,50 @@ public:
 
 //==============================================================================
 
+ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel)
+: channel_(channel)
+{}
+
+void
+ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream>& file)
+{
+    if (!file) return;
+    file_ = file;
+    channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
+        JAMI_WARN("@@@ ON DATA FROM OUT CHANNEL");
+        std::vector<uint8_t> rx {buf, buf+len};
+        file_->write(rx);
+        return len;
+    });
+    file_->setOnRecv([this](std::vector<uint8_t>&& data) {
+        JAMI_WARN("@@@ SEND DATA FROM OUT TRANSFER");
+        std::error_code ec;
+        channel_->write(data.data(), data.size(), ec);
+    });
+}
+
+class ChanneledIncomingTransfer {
+public:
+    ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket>& channel, const std::shared_ptr<FtpServer>& ftp)
+    : ftp_ (ftp)
+    , channel_(channel)
+    {
+        channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
+            JAMI_WARN("@@@ ON DATA FROM CHANNEL");
+            std::vector<uint8_t> rx {buf, buf+len};
+            ftp_->write(rx);
+            return len;
+        });
+        ftp_->setOnRecv([this](std::vector<uint8_t>&& data) {
+            std::error_code ec;
+            channel_->write(data.data(), data.size(), ec);
+        });
+    }
+private:
+    std::shared_ptr<FtpServer> ftp_;
+    std::shared_ptr<ChannelSocket> channel_;
+};
+
 class DhtPeerConnector::Impl : public std::enable_shared_from_this<DhtPeerConnector::Impl> {
 public:
     class ClientConnector;
@@ -201,6 +247,13 @@ public:
     std::weak_ptr<DhtPeerConnector::Impl const> weak() const {
         return std::static_pointer_cast<DhtPeerConnector::Impl const>(shared_from_this());
     }
+
+
+    // For Channeled transports
+    std::mutex channeledIncomingMtx_;
+    std::map<DRing::DataTransferId, std::unique_ptr<ChanneledIncomingTransfer>> channeledIncoming_;
+    std::mutex channeledOutgoingMtx_;
+    std::map<DRing::DataTransferId, std::shared_ptr<ChanneledOutgoingTransfer>> channeledOutgoing_;
 };
 
 //==============================================================================
@@ -735,6 +788,7 @@ DhtPeerConnector::~DhtPeerConnector() = default;
 void
 DhtPeerConnector::onDhtConnected(const std::string& device_id)
 {
+    return;
     auto acc = pimpl_->account.lock();
     if (!acc) return;
     acc->dht()->listen<PeerConnectionMsg>(
@@ -760,7 +814,9 @@ DhtPeerConnector::onDhtConnected(const std::string& device_id)
 void
 DhtPeerConnector::requestConnection(const std::string& peer_id,
                                     const DRing::DataTransferId& tid,
-                                    const std::function<void(PeerConnection*)>& connect_cb)
+                                    const std::function<void(PeerConnection*)>& connect_cb,
+                                    const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>& channeledConnectedCb,
+                                    const std::function<void()>& onChanneledCancelled)
 {
     const auto peer_h = dht::InfoHash(peer_id);
 
@@ -775,22 +831,35 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
     if (!acc) return;
     auto addresses = acc->publicAddresses();
 
-    // Add local addresses
-    // XXX: is it really needed? use-case? a local TURN server?
-    //addresses.emplace_back(ip_utils::getLocalAddr(AF_INET));
-    //addresses.emplace_back(ip_utils::getLocalAddr(AF_INET6));
-
-    // TODO: bypass DHT devices lookup if connection already exist
-
     acc->forEachDevice(
         peer_h,
-        [this, addresses, connect_cb, tid](const dht::InfoHash& dev_h) {
+        [this, addresses, connect_cb, tid, channeledConnectedCb](const dht::InfoHash& dev_h) {
             auto acc = pimpl_->account.lock();
             if (!acc) return;
             if (dev_h == acc->dht()->getId()) {
                 JAMI_ERR() << acc->getAccountID() << "[CNX] no connection to yourself, bad person!";
                 return;
             }
+
+            JAMI_ERR("@@@ REQUEST OUTGOING CHANNELED FOR %u", tid);
+            acc->connectionManager().connectDevice(dev_h.toString(), "file://" + std::to_string(tid),
+                [this, tid, channeledConnectedCb](const std::shared_ptr<ChannelSocket>& channel) {
+                auto shared = pimpl_->account.lock();
+                if (!shared || !channel) return;
+                JAMI_ERR("@@@ OUTGOING CHANNELED FOR %u", tid);
+
+                channel->onShutdown([this, tid]() {
+                    JAMI_ERR("@@@ OUGOING CHANNELED DOWN FOR %u", tid);
+                });
+
+                auto outgoingFile = std::make_shared<ChanneledOutgoingTransfer>(channel);
+                {
+                    std::lock_guard<std::mutex> lk(pimpl_->channeledOutgoingMtx_);
+                    pimpl_->channeledOutgoing_.emplace(tid, outgoingFile);
+                }
+
+                channeledConnectedCb(outgoingFile);
+            });
 
             acc->findCertificate(
                 dev_h,
@@ -810,6 +879,27 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
 void
 DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid) {
     pimpl_->cancel(peer_id, tid);
+}
+
+void
+DhtPeerConnector::onIncomingConnection(const std::string& peer_id, const DRing::DataTransferId& tid, const std::shared_ptr<ChannelSocket>& channel)
+{
+    if (!channel) return;
+    auto acc = pimpl_->account.lock();
+    if (!acc) return;
+    JAMI_ERR("@@@ INCOMING CHANNELED REQUEST FOR %u", tid);
+    auto incomingFile = std::make_unique<ChanneledIncomingTransfer>(channel, std::make_shared<FtpServer>(acc->getAccountID(), peer_id, tid));
+    {
+        std::lock_guard<std::mutex> lk(pimpl_->channeledIncomingMtx_);
+        pimpl_->channeledIncoming_.emplace(tid, std::move(incomingFile));
+    }
+    channel->onShutdown([this, tid]() {
+        dht::ThreadPool::io().run([w=pimpl_->weak(), tid] {
+            JAMI_ERR("@@@ TODO CLOSE CHANNELED");
+            //if (auto shared = w.lock())
+            //    shared->closeChanneled(tid);
+        });
+    });
 }
 
 } // namespace jami
