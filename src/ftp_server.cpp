@@ -35,17 +35,24 @@ namespace jami {
 //==============================================================================
 
 FtpServer::FtpServer(const std::string& account_id,
-                     const std::string& peer_uri)
+                     const std::string& peer_uri,
+                     const DRing::DataTransferId& outId)
     : Stream()
     , accountId_ {account_id}
     , peerUri_ {peer_uri}
-{}
+    , outId_ {outId}
+{
+    headerStream_.clear();
+    headerStream_.str({});
+}
 
 DRing::DataTransferId
 FtpServer::getId() const
 {
     // Because FtpServer is just the protocol on the top of a stream so the id
     // of the stream is the id of out_.
+    if (isTreatingRequest_)
+        return transferId_;
     return out_.id;
 }
 
@@ -67,12 +74,27 @@ FtpServer::startNewFile()
     info.totalSize = fileSize_;
     info.bytesProgress = 0;
     rx_ = 0;
-    out_ = Manager::instance().dataTransfers->onIncomingFileRequest(info); // we block here until answer from client
+    transferId_ = Manager::instance().dataTransfers->createIncomingTransfer(info, outId_); // return immediately
+    isTreatingRequest_ = true;
+    out_ = Manager::instance().dataTransfers->onIncomingFileRequest(transferId_); // we block here until answer from client
+    isTreatingRequest_ = false;
     if (!out_.stream) {
         JAMI_DBG() << "[FTP] transfer aborted by client";
         closed_ = true; // send NOK msg at next read()
     } else {
         go_ = true;
+    }
+
+    if (onRecvCb_) {
+        std::vector<uint8_t> buffer;
+        if (go_) {
+            buffer.resize(3);
+            buffer[0] = 'G'; buffer[1] = 'O'; buffer[2] = '\n';
+        } else {
+            buffer.resize(4);
+            buffer[0] = 'N'; buffer[1] = 'G'; buffer[2] = 'O'; buffer[3] = '\n';
+        }
+        onRecvCb_(std::move(buffer));
     }
     return bool(out_.stream);
 }
@@ -172,18 +194,20 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
 bool
 FtpServer::parseStream(const std::vector<uint8_t>& buffer)
 {
-    headerStream_ << std::string(std::begin(buffer), std::end(buffer));
+    JAMI_ERR("@@@ %s %u", std::string(buffer.begin(), buffer.end()).c_str(), buffer.size());
+    std::stringstream stream;
+    stream.write((const char*)buffer.data(), buffer.size());
 
     // Simple line stream parser
-    while (headerStream_.getline(&line_[0], line_.size())) {
-        if (parseLine(std::string(&line_[0], headerStream_.gcount()-1)))
-            return true; // headers EOF, data may remain in headerStream_
+    while (stream.getline(&line_[0], line_.size())) {
+        if (parseLine(std::string(&line_[0], stream.gcount()-1)))
+            return true; // headers EOF, data may remain in stream
     }
 
-    if (headerStream_.fail())
+    if (stream.fail())
         throw std::runtime_error("[FTP] header parsing error");
 
-    headerStream_.clear();
+    stream.clear();
     return false; // need more data
 }
 
