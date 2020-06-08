@@ -481,7 +481,10 @@ public:
     Impl(std::weak_ptr<MultiplexedSocket> endpoint, const std::string& name, const uint16_t& channel)
     : name(name), channel(channel), endpoint(std::move(endpoint)) {}
 
-    ~Impl() {}
+    ~Impl() {
+        JAMI_ERR("DELETE");
+
+    }
 
     OnShutdownCb shutdownCb_;
     std::atomic_bool isShutdown_ {false};
@@ -496,7 +499,9 @@ ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint, const st
 
 
 ChannelSocket::~ChannelSocket()
-{ }
+{
+    JAMI_ERR("DELETE");
+}
 
 std::string
 ChannelSocket::deviceId() const
@@ -571,6 +576,7 @@ ChannelSocket::stop()
 void
 ChannelSocket::shutdown()
 {
+    if (pimpl_->isShutdown_) return;
     stop();
     if (auto ep = pimpl_->endpoint.lock()) {
         std::error_code ec;
