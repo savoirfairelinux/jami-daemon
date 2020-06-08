@@ -2001,18 +2001,39 @@ JamiAccount::doRegister_()
             auto result = fut.get();
             return result;
         });
-        connectionManager_->onChannelRequest([](const std::string& /* deviceId */, const std::string& name) {
+        connectionManager_->onChannelRequest([this](const std::string& /* deviceId */, const std::string& name) {
             if (name == "sip") {
                 return true;
+            } else if (name.substr(0, 7) == "file://") {
+                auto tid_str = name.substr(7);
+                uint64_t tid;
+                std::istringstream iss(tid_str);
+                iss >> tid;
+                if (dhtPeerConnector_->onIncomingChannelRequest(tid)) {
+                    incomingFileTransfers_.emplace(tid_str);
+                    return true;
+                }
             }
             return false;
         });
         connectionManager_->onConnectionReady([this](const std::string& deviceId, const std::string& name, std::shared_ptr<ChannelSocket> channel) {
-            if (channel && name == "sip") {
+            if (channel) {
                 auto cert = tls::CertificateStore::instance().getCertificate(deviceId);
                 if (!cert || !cert->issuer) return;
                 auto peerId = cert->issuer->getId().toString();
-                if (channel) cacheSIPConnection(std::move(channel), peerId, deviceId);
+                if (name == "sip") {
+                    cacheSIPConnection(std::move(channel), peerId, deviceId);
+                } else if (name.substr(0, 7) == "file://") {
+                    auto tid_str = name.substr(7);
+                    auto it = incomingFileTransfers_.find(tid_str);
+                    // Note, outgoing file transfers are ignored.
+                    if (it == incomingFileTransfers_.end()) return;
+                    incomingFileTransfers_.erase(it);
+                    uint64_t tid;
+                    std::istringstream iss(tid_str);
+                    iss >> tid;
+                    dhtPeerConnector_->onIncomingConnection(peerId, tid, std::move(channel));
+                }
             }
         });
 
@@ -3038,9 +3059,11 @@ JamiAccount::publicAddresses()
 
 void
 JamiAccount::requestPeerConnection(const std::string& peer_id, const DRing::DataTransferId& tid,
-                                   const std::function<void(PeerConnection*)>& connect_cb)
+                                    const std::function<void(PeerConnection*)>& connect_cb,
+                                    const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>& channeledConnectedCb,
+                                    const std::function<void()>& onChanneledCancelled)
 {
-    dhtPeerConnector_->requestConnection(peer_id, tid, connect_cb);
+    dhtPeerConnector_->requestConnection(peer_id, tid, connect_cb, channeledConnectedCb, onChanneledCancelled);
 }
 
 void
