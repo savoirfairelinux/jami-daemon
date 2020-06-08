@@ -145,8 +145,6 @@ public:
         }
         std::lock_guard<std::mutex> lk(waitForReadyMtx_);
         waitForReadyEndpoints_.clear();
-        turnAuthv4_.reset();
-        turnAuthv6_.reset();
     }
 
     std::weak_ptr<JamiAccount> account;
@@ -160,8 +158,6 @@ public:
 
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<TlsSocketEndpoint>> waitForReadyEndpoints_;
     std::mutex waitForReadyMtx_ {};
-    std::unique_ptr<TurnTransport> turnAuthv4_;
-    std::unique_ptr<TurnTransport> turnAuthv6_;
 
     // key: Stored certificate PublicKey id (normaly it's the DeviceId)
     // value: pair of shared_ptr<Certificate> and associated RingId
@@ -174,12 +170,9 @@ public:
 
     std::map<std::pair<dht::InfoHash, DRing::DataTransferId>, std::unique_ptr<ClientConnector>> clients_;
     std::mutex clientsMutex_;
-    std::mutex turnMutex_;
 
     void cancel(const std::string& peer_id, const DRing::DataTransferId& tid);
 
-    void onTurnPeerConnection(const IpAddr&);
-    void onTurnPeerDisconnection(const IpAddr&);
     void onRequestMsg(PeerConnectionMsg&&);
     void onTrustedRequestMsg(PeerConnectionMsg&&, const std::shared_ptr<dht::crypto::Certificate>&,
                              const dht::InfoHash&);
@@ -440,94 +433,12 @@ private:
 
     std::atomic_bool connected_ {false};
     std::mutex listenersMutex_;
-    std::mutex turnMutex_;
     std::vector<ListenerFunction> listeners_;
 
     std::future<void> processTask_;
 };
 
 //==============================================================================
-
-/// Synchronous TCP connect to a TURN server
-/// \note TCP peer connection mode is enabled for reliable data transfer.
-/// \return if connected to the turn
-bool
-DhtPeerConnector::Impl::turnConnect()
-{
-    std::lock_guard<std::mutex> lock(turnMutex_);
-    // Don't retry to reconnect to the TURN server if already connected
-    if (turnAuthv4_ && turnAuthv4_->isReady()
-        && turnAuthv6_ && turnAuthv6_->isReady())
-        return true;
-
-    auto acc = account.lock();
-    if (!acc) return false;
-    auto details = acc->getAccountDetails();
-    auto server = details[Conf::CONFIG_TURN_SERVER];
-    auto realm = details[Conf::CONFIG_TURN_SERVER_REALM];
-    auto username = details[Conf::CONFIG_TURN_SERVER_UNAME];
-    auto password = details[Conf::CONFIG_TURN_SERVER_PWD];
-
-    auto turnCache = acc->turnCache();
-
-    auto turn_param_v4 = TurnTransportParams {};
-    if (turnCache[0]) {
-        turn_param_v4.server = *turnCache[0];
-    } else {
-        turn_param_v4.server = IpAddr {server.empty() ? "turn.jami.net" : server};
-    }
-    turn_param_v4.realm = realm.empty() ? "ring" : realm;
-    turn_param_v4.username = username.empty() ? "ring" : username;
-    turn_param_v4.password = password.empty() ? "ring" : password;
-    turn_param_v4.isPeerConnection = true; // Request for TCP peer connections, not UDP
-    turn_param_v4.onPeerConnection = [this](uint32_t conn_id, const IpAddr& peer_addr, bool connected) {
-        (void)conn_id;
-        if (connected)
-            onTurnPeerConnection(peer_addr);
-        else
-            onTurnPeerDisconnection(peer_addr);
-    };
-
-    // If a previous turn server exists, but is not ready, we should try to reconnect
-    if (turnAuthv4_ && !turnAuthv4_->isReady())
-        turnAuthv4_.reset();
-    if (turnAuthv6_ && !turnAuthv6_->isReady())
-        turnAuthv6_.reset();
-
-    try {
-        if (!turnAuthv4_ || !turnAuthv4_->isReady()) {
-            turn_param_v4.authorized_family = PJ_AF_INET;
-            turnAuthv4_ = std::make_unique<TurnTransport>(turn_param_v4);
-        }
-
-        if (!turnAuthv6_ || !turnAuthv6_->isReady()) {
-            auto turn_param_v6 = turn_param_v4;
-            if (turnCache[1]) {
-                turn_param_v6.server = *turnCache[1];
-            } else {
-                turn_param_v6.server = IpAddr {server.empty() ? "turn.jami.net" : server};
-            }
-            turn_param_v6.authorized_family = PJ_AF_INET6;
-            turnAuthv6_ = std::make_unique<TurnTransport>(turn_param_v6);
-        }
-    } catch (...) {
-        JAMI_WARN("Turn allocation failed. Do not use the TURN");
-        return false;
-    }
-
-
-    // Wait until TURN server READY state (or timeout)
-    Timeout<Clock> timeout {NET_CONNECTION_TIMEOUT};
-    timeout.start();
-    while (!turnAuthv4_->isReady() && !turnAuthv6_->isReady()) {
-        if (timeout) {
-            JAMI_WARN("Turn: connection timeout, will only try p2p file transfer.");
-            return false;
-        }
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-    }
-    return true;
-}
 
 /// Find who is connected by using connection certificate
 bool
@@ -542,79 +453,6 @@ DhtPeerConnector::Impl::validatePeerCertificate(const dht::crypto::Certificate& 
         }
     }
     return false;
-}
-
-/// Negotiate a TLS session over a TURN socket this method does [yoda].
-/// At this stage both endpoints has a dedicated TCP connection on each other.
-void
-DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
-{
-    auto acc = account.lock();
-    if (!acc) return;
-    JAMI_DBG() << acc << "[CNX] TURN connection attempt from "
-               << peer_addr.toString(true, true);
-    auto turn_ep = std::unique_ptr<ConnectedTurnTransport>(nullptr);
-
-    {
-        std::lock_guard<std::mutex> lock(turnMutex_);
-        if (peer_addr.isIpv4() && turnAuthv4_)
-            turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv4_, peer_addr);
-        else if (turnAuthv6_)
-            turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv6_, peer_addr);
-        else {
-            JAMI_WARN() << "No TURN initialized";
-            return;
-        }
-    }
-
-    JAMI_DBG() << acc << "[CNX] start TLS session over TURN socket";
-    auto peer_h = std::make_shared<dht::InfoHash>();
-    tls_turn_ep_[peer_addr] =
-    std::make_unique<TlsTurnEndpoint>(std::move(turn_ep),
-                                      acc->identity(),
-                                      acc->dhParams(),
-                                      [peer_h, this] (const dht::crypto::Certificate& cert) {
-        return validatePeerCertificate(cert, *peer_h);
-    });
-
-    tls_turn_ep_[peer_addr]->setOnStateChange([this, peer_addr, peer_h, accountId=acc->getAccountID()] (tls::TlsSessionState state)
-    {
-        auto it = tls_turn_ep_.find(peer_addr);
-        if (it == tls_turn_ep_.end()) return false;
-        if (state == tls::TlsSessionState::SHUTDOWN) {
-            JAMI_WARN() << "[CNX] TLS connection failure from peer " << peer_addr.toString(true, true);
-            tls_turn_ep_.erase(it);
-            return false;
-        } else if (state == tls::TlsSessionState::ESTABLISHED) {
-            if (peer_h) {
-                JAMI_DBG() << "[CNX] Accepted TLS-TURN connection from " << *peer_h;
-                connectedPeers_.emplace(peer_addr, it->second->peerCertificate().getId());
-                auto connection = std::make_unique<PeerConnection>([] {}, peer_addr.toString(), std::move(it->second));
-                connection->attachOutputStream(std::make_shared<FtpServer>(accountId, peer_h->toString()));
-                std::lock_guard<std::mutex> lk(serversMutex_);
-                servers_.emplace(std::make_pair(*peer_h, peer_addr), std::move(connection));
-            }
-            tls_turn_ep_.erase(it);
-            return false;
-        }
-        return true;
-    });
-}
-
-void
-DhtPeerConnector::Impl::onTurnPeerDisconnection(const IpAddr& peer_addr)
-{
-    auto acc = account.lock();
-    if (!acc) return;
-    std::unique_lock<std::mutex> lk(serversMutex_);
-    auto it = std::find_if(servers_.begin(), servers_.end(),
-                [&peer_addr](const auto& element) {
-                    return element.first.second == peer_addr;});
-    if (it == servers_.end()) return;
-    JAMI_WARN() << acc << "[CNX] disconnection from peer " << peer_addr.toString(true, true);
-    servers_.erase(it);
-    lk.unlock();
-    connectedPeers_.erase(peer_addr);
 }
 
 void
@@ -654,8 +492,6 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
 {
     auto acc = account.lock();
     if (!acc) return;
-    // start a TURN client connection on first pass, next ones just add new peer cnx handlers
-    bool sendTurn = turnConnect();
 
     // Save peer certificate for later TLS session (MUST BE DONE BEFORE TURN PEER AUTHORIZATION)
     certMap_.emplace(cert->getId(), std::make_pair(cert, peer_h));
@@ -673,23 +509,8 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         try {
             if (ip.size() <= PJ_MAX_HOSTNAME) {
                 IpAddr addr(ip);
-                if (addr.isIpv4()) {
-                    if (!sendTurn) continue;
-                    std::lock_guard<std::mutex> lock(turnMutex_);
-                    if (turnAuthv4_) {
-                        sendRelayV4 = true;
-                        turnAuthv4_->permitPeer(ip);
-                    }
-                    JAMI_DBG() << acc << "[CNX] authorized peer connection from " << ip;
-                    continue;
-                } else if (addr.isIpv6()) {
-                    if (!sendTurn) continue;
-                    std::lock_guard<std::mutex> lock(turnMutex_);
-                    if (turnAuthv6_) {
-                        sendRelayV6 = true;
-                        turnAuthv6_->permitPeer(ip);
-                    }
-                    JAMI_DBG() << acc << "[CNX] authorized peer connection from " << ip;
+                if (addr.isIpv4() || addr.isIpv6()) {
+                    JAMI_WARN() << "Deprecated TURN connection. Ignore";
                     continue;
                 }
             }
@@ -753,20 +574,6 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
           icemsg << addr << "\n";
         }
         addresses = {icemsg.str()};
-    }
-
-    if (sendTurn) {
-        std::lock_guard<std::mutex> lock(turnMutex_);
-        if (turnAuthv4_) {
-            auto relayIpv4 = turnAuthv4_->peerRelayAddr();
-            if (sendRelayV4 && relayIpv4)
-                addresses.emplace_back(relayIpv4.toString(true, true));
-        }
-        if (turnAuthv6_) {
-            auto relayIpv6 = turnAuthv6_->peerRelayAddr();
-            if (sendRelayV6 && relayIpv6)
-                addresses.emplace_back(relayIpv6.toString(true, true));
-        }
     }
 
     if (addresses.empty()) {
@@ -841,8 +648,9 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
             }
             return true;
         });
+    } else {
+        JAMI_WARN() << "No connection negotiated. Abort file transfer";
     }
-    // Now wait for a TURN connection from peer (see onTurnPeerConnection) if fallbacking
 }
 
 void
