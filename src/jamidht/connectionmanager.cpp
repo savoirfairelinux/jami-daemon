@@ -400,7 +400,9 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
         }
     });
     std::error_code ec;
+    JAMI_ERR("@@@ WRTE");
     int res = sock->write(CONTROL_CHANNEL, reinterpret_cast<const uint8_t*>(&toSend[0]), toSend.size(), ec);
+    JAMI_ERR("@@@ WRTE DONE");
     if (res < 0) {
         // TODO check if we should handle errors here
         JAMI_ERR("sendChannelRequest failed - error: %s", ec.message().c_str());
