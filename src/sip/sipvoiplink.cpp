@@ -552,7 +552,7 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
         }
     }
 
-    sipTransportBroker.reset(new SipTransportBroker(endpt_, cp_, *pool_));
+    sipTransportBroker.reset(new SipTransportBroker(endpt_));
 
     auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_),
                                            tp_state_callback);
