@@ -67,9 +67,12 @@ public:
     DRing::DataTransferError bytesProgress(const DRing::DataTransferId& id, int64_t& total,
                                            int64_t& progress) const noexcept;
 
+    /// Used by p2p.cpp
+    DRing::DataTransferId createIncomingTransfer(const DRing::DataTransferInfo &info, const DRing::DataTransferId& internal_id);
+
     /// Create an IncomingFileTransfer object.
     /// \return a shared pointer on created Stream object, or nullptr in case of error
-    IncomingFileInfo onIncomingFileRequest(const DRing::DataTransferInfo &info);
+    IncomingFileInfo onIncomingFileRequest(const DRing::DataTransferId& id);
 
 private:
     class Impl;
