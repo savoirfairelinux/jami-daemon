@@ -381,6 +381,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
 void
 ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& sock, const std::string& name, const std::string& deviceId, const dht::Value::Id& vid)
 {
+    JAMI_ERR("@@@ SEND REQUEST");
     auto channelSock = sock->addChannel(name);
     ChannelRequest val;
     val.name = channelSock->name();
