@@ -30,15 +30,21 @@
 
 namespace jami {
 
+using RecvCb = std::function<void(std::vector<uint8_t>&& buf)>;
+
 class FtpServer final : public Stream
 {
 public:
-    FtpServer(const std::string& account_id, const std::string& peer_uri);
+    FtpServer(const std::string& account_id, const std::string& peer_uri, const DRing::DataTransferId& outId = 0);
 
     bool read(std::vector<uint8_t>& buffer) const override;
     bool write(const std::vector<uint8_t>& buffer) override;
     DRing::DataTransferId getId() const override;
     void close() noexcept override;
+
+    void setOnRecv(RecvCb&& cb) {
+        onRecvCb_ = cb;
+    }
 
 private:
     bool parseStream(const std::vector<uint8_t>&);
@@ -54,7 +60,10 @@ private:
 
     const std::string accountId_;
     const std::string peerUri_;
+    std::atomic_bool isTreatingRequest_ {false};
+    DRing::DataTransferId transferId_ {0};
     IncomingFileInfo out_ {0, nullptr};
+    DRing::DataTransferId outId_ {0};
     std::size_t fileSize_ {0};
     std::size_t rx_ {0};
     std::stringstream headerStream_;
@@ -63,6 +72,8 @@ private:
     mutable bool closed_ {false};
     mutable bool go_ {false};
     FtpState state_ {FtpState::PARSE_HEADERS};
+
+    RecvCb onRecvCb_ {};
 };
 
 } // namespace jami

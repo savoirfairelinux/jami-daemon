@@ -16,6 +16,7 @@ libjami_sources = files(
     'hooks/urlhook.cpp',
     'im/instant_messaging.cpp',
     'im/message_engine.cpp',
+    'jamidht/channeled_transfers.cpp',
     'jamidht/eth/libdevcore/Common.cpp',
     'jamidht/eth/libdevcore/CommonData.cpp',
     'jamidht/eth/libdevcore/FixedHash.cpp',

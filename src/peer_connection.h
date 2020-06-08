@@ -73,6 +73,9 @@ public:
         (void)length;
         return false;
     };
+    virtual void setOnRecv(std::function<void(std::vector<uint8_t>&&)>&&) {
+        // Not implemented
+    }
 };
 
 //==============================================================================
