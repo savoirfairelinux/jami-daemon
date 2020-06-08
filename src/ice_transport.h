@@ -31,6 +31,7 @@
 #include <memory>
 #include <msgpack.hpp>
 #include <vector>
+#include <mutex>
 
 namespace jami {
 
