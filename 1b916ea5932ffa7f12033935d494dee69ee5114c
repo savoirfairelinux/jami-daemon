@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5adddbf4_c33559ec",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 819,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-09T05:55:17Z",
+      "side": 1,
+      "message": "could it prevent proper cleanup on shutdown ? Maybe we can just capture the account id, or move the check to the established block ?",
+      "range": {
+        "startLine": 818,
+        "startChar": 12,
+        "endLine": 819,
+        "endChar": 35
+      },
+      "revId": "1b916ea5932ffa7f12033935d494dee69ee5114c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bf51432b_1bf01331",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 820,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-09T05:55:17Z",
+      "side": 1,
+      "message": "waitForReadyEndpoints_ threadsafe ?",
+      "range": {
+        "startLine": 820,
+        "startChar": 16,
+        "endLine": 820,
+        "endChar": 38
+      },
+      "revId": "1b916ea5932ffa7f12033935d494dee69ee5114c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
