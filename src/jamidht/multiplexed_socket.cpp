@@ -414,9 +414,9 @@ MultiplexedSocket::write(const uint16_t& channel, const uint8_t* buf, std::size_
     pk.pack_bin(len);
     pk.pack_bin_body((const char*)buf, len);
 
-    std::unique_lock<std::mutex> lk(pimpl_->writeMtx);
+    //std::unique_lock<std::mutex> lk(pimpl_->writeMtx);
     int res = pimpl_->endpoint->write((const unsigned char*)buffer.data(), buffer.size(), ec);
-    lk.unlock();
+    //lk.unlock();
     if (res < 0) {
         if (ec)
             JAMI_ERR("Error when writing on socket: %s", ec.message().c_str());

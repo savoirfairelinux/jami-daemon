@@ -189,6 +189,8 @@ public:
     std::condition_variable waitDataCv_ = {};
 
     onShutdownCb scb;
+
+    std::mutex writeMutex_;
 };
 
 //==============================================================================
@@ -1303,6 +1305,7 @@ IceTransport::setOnShutdown(onShutdownCb&& cb)
 ssize_t
 IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 {
+    std::lock_guard<std::mutex> lk(pimpl_->writeMutex_);
     sip_utils::register_thread();
     auto remote = getRemoteAddress(comp_id);
     if (!remote) {
