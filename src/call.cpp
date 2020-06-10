@@ -110,7 +110,11 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
         }
 
         checkPendingIM();
-        checkAudio();
+        std::weak_ptr<Call> callWkPtr = shared_from_this();
+        runOnMainThread([callWkPtr]{
+            if (auto call = callWkPtr.lock())
+                call->checkAudio();
+        });
 
         // if call just started ringing, schedule call timeout
         if (type_ == CallType::INCOMING and cnx_state == ConnectionState::RINGING) {
