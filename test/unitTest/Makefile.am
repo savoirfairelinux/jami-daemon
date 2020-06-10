@@ -122,4 +122,10 @@ ut_call_SOURCES = call/call.cpp
 check_PROGRAMS += ut_connectionManager
 ut_connectionManager_SOURCES = connectionManager/connectionManager.cpp
 
+#
+# fileTransfer
+#
+check_PROGRAMS += ut_fileTransfer
+ut_fileTransfer_SOURCES = fileTransfer/fileTransfer.cpp
+
 TESTS = $(check_PROGRAMS)
