@@ -263,7 +263,6 @@ public:
     void emit(DRing::DataTransferEventCode code) const override;
 
     void cancel() override {
-        isCancelled_ = true;
         if (auto account = Manager::instance().getAccount<JamiAccount>(info_.accountId))
             account->closePeerConnection(peerUri_, id);
     }
@@ -282,12 +281,6 @@ public:
     }
 
     const bool channeled;
-    bool isCancelled() const {
-        return isCancelled_;
-    }
-    std::string peer() const {
-        return peerUri_;
-    }
 
 private:
     SubOutgoingFileTransfer() = delete;
@@ -325,7 +318,11 @@ private:
                     onRecvCb_(std::move(buf));
             }
             JAMI_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
-            emit(DRing::DataTransferEventCode::finished);
+
+            if (info_.bytesProgress < info_.totalSize)
+                emit(DRing::DataTransferEventCode::closed_by_peer);
+            else
+                emit(DRing::DataTransferEventCode::finished);
         });
     }
 
@@ -334,7 +331,6 @@ private:
     std::size_t tx_ {0};
     mutable bool headerSent_ {false};
     bool peerReady_ {false};
-    bool isCancelled_ {false};
     const std::string peerUri_;
     mutable std::unique_ptr<std::thread> timeoutThread_;
     mutable std::atomic_bool stopTimeout_ {false};
@@ -485,15 +481,7 @@ public:
                     return false;
             return true;
         }
-        // Cancel linked transfer and check if there is other subtransfer to cancel
-        auto res = true;
-        for (const auto& subtransfer: subtransfer_) {
-            if (peerId == subtransfer->peer())
-                subtransfer->cancel();
-            else if (subtransfer->channeled and not subtransfer->isCancelled())
-                res = false;
-        }
-        return res;
+        return true;
     }
 
     bool hasBeenStarted() const override
