@@ -34,7 +34,7 @@ endif
 	cd $< && cd buildlib && $(MAKE) install
 ifdef HAVE_LINUX
 	cd $< && cd $(PREFIX)/lib && rm libarchive.so*
-else ifdef HAVE_MACOSX
+else ifdef HAVE_DARWIN_OS
 	cd $< && cd $(PREFIX)/lib && rm libarchive*.dylib
 endif
 	touch $@

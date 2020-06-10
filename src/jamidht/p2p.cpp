@@ -30,12 +30,9 @@
 #include "peer_connection.h"
 #include "turn_transport.h"
 #include "account_manager.h"
-#include "multiplexed_socket.h"
-#include "connectionmanager.h"
 
 #include <opendht/default_types.h>
 #include <opendht/rng.h>
-#include <opendht/thread_pool.h>
 
 #include <memory>
 #include <map>
@@ -103,106 +100,124 @@ public:
     dht::Value::Id id = dht::Value::INVALID_ID;
     uint32_t protocol {protocol_version}; ///< Protocol identification. First bit reserved to indicate a request (0) or a response (1)
     std::vector<std::string> addresses; ///< Request: public addresses for TURN permission. Response: TURN relay addresses (only 1 in current implementation)
-    uint64_t tid {0};
-    MSGPACK_DEFINE_MAP(id, protocol, addresses, tid)
+    MSGPACK_DEFINE_MAP(id, protocol, addresses)
 
     PeerConnectionMsg() = default;
-    PeerConnectionMsg(dht::Value::Id id, uint32_t aprotocol, const std::string& arelay, uint64_t transfer_id)
-        : id {id}, protocol {aprotocol}, addresses {{arelay}}, tid {transfer_id} {}
-    PeerConnectionMsg(dht::Value::Id id, uint32_t aprotocol, const std::vector<std::string>& asrelay, uint64_t transfer_id)
-        : id {id}, protocol {aprotocol}, addresses {asrelay}, tid {transfer_id} {}
+    PeerConnectionMsg(dht::Value::Id id, uint32_t aprotocol, const std::string& arelay)
+        : id {id}, protocol {aprotocol}, addresses {{arelay}} {}
+    PeerConnectionMsg(dht::Value::Id id, uint32_t aprotocol, const std::vector<std::string>& asrelay)
+        : id {id}, protocol {aprotocol}, addresses {asrelay} {}
+
     bool isRequest() const noexcept { return (protocol & 1) == 0; }
+
     PeerConnectionMsg respond(const IpAddr& relay) const {
-        return {id, protocol|1, relay.toString(true, true), tid};
+        return {id, protocol|1, relay.toString(true, true)};
     }
+
     PeerConnectionMsg respond(const std::vector<std::string>& addresses) const {
-        return {id, protocol|1, addresses, tid};
+        return {id, protocol|1, addresses};
     }
 };
 
+//==============================================================================
+
+enum class CtrlMsgType
+{
+    STOP,
+    CANCEL,
+    TURN_PEER_CONNECT,
+    TURN_PEER_DISCONNECT,
+    DHT_REQUEST,
+    DHT_RESPONSE,
+    ADD_DEVICE,
+};
+
+struct CtrlMsgBase
+{
+    CtrlMsgBase() = delete;
+    explicit CtrlMsgBase(CtrlMsgType id) : id_ {id} {}
+    virtual ~CtrlMsgBase() = default;
+    CtrlMsgType type() const noexcept { return id_; }
+private:
+    const CtrlMsgType id_;
+};
+
+template <class... Args>
+using DataTypeSet = std::tuple<Args...>;
+
+template <CtrlMsgType id, typename DataTypeSet=void>
+struct CtrlMsg : CtrlMsgBase
+{
+    template <class... Args>
+    explicit CtrlMsg(const Args&... args) : CtrlMsgBase(id), data {args...} {}
+
+    DataTypeSet data;
+};
+
+template <CtrlMsgType id, class... Args>
+auto makeMsg(const Args&... args)
+{
+    return std::make_unique<CtrlMsg<id, DataTypeSet<Args...>>>(args...);
+}
+
+template <std::size_t N, CtrlMsgType id, typename R, typename T>
+auto msgData(const T& msg)
+{
+    using MsgType = typename std::tuple_element<std::size_t(id), R>::type;
+    auto& x = static_cast<const MsgType&>(msg);
+    return std::get<N>(x.data);
+}
+
+//==============================================================================
+
+using DhtInfoHashMsgData = DataTypeSet<dht::InfoHash, DRing::DataTransferId>;
+using TurnConnectMsgData = DataTypeSet<IpAddr>;
+using PeerCnxMsgData = DataTypeSet<PeerConnectionMsg>;
+using AddDeviceMsgData = DataTypeSet<dht::InfoHash,
+                                     DRing::DataTransferId,
+                                     std::shared_ptr<dht::crypto::Certificate>,
+                                     std::vector<std::string>,
+                                     std::function<void(PeerConnection*)>>;
+
+using AllCtrlMsg = DataTypeSet<CtrlMsg<CtrlMsgType::STOP>,
+                               CtrlMsg<CtrlMsgType::CANCEL, DhtInfoHashMsgData>,
+                               CtrlMsg<CtrlMsgType::TURN_PEER_CONNECT, TurnConnectMsgData>,
+                               CtrlMsg<CtrlMsgType::TURN_PEER_DISCONNECT, TurnConnectMsgData>,
+                               CtrlMsg<CtrlMsgType::DHT_REQUEST, PeerCnxMsgData>,
+                               CtrlMsg<CtrlMsgType::DHT_RESPONSE, PeerCnxMsgData>,
+                               CtrlMsg<CtrlMsgType::ADD_DEVICE, AddDeviceMsgData>>;
+
+template <CtrlMsgType id, std::size_t N=0, typename T>
+auto ctrlMsgData(const T& msg)
+{
+    return msgData<N, id, AllCtrlMsg>(msg);
+}
 
 } // namespace <anonymous>
 
 //==============================================================================
 
-ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel)
-: channel_(channel)
-{}
-
-ChanneledOutgoingTransfer::~ChanneledOutgoingTransfer() {
-    channel_->setOnRecv({});
-    file_->setOnRecv({});
-    JAMI_ERR("CHANNEL SHUT?");
-    channel_->shutdown();
-    JAMI_ERR("CHANNEL SHUT!");
-
-}
-
-void
-ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream>& file)
-{
-    if (!file) return;
-    file_ = file;
-    channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
-        std::vector<uint8_t> rx {buf, buf+len};
-        file_->write(rx);
-        return len;
-    });
-    file_->setOnRecv([this](std::vector<uint8_t>&& data) {
-        std::error_code ec;
-        channel_->write(data.data(), data.size(), ec);
-    });
-}
-
-class ChanneledIncomingTransfer {
-public:
-    ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket>& channel, const std::shared_ptr<FtpServer>& ftp)
-    : ftp_ (ftp)
-    , channel_(channel)
-    {
-        channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
-            std::vector<uint8_t> rx {buf, buf+len};
-            ftp_->write(rx);
-            return len;
-        });
-        ftp_->setOnRecv([this](std::vector<uint8_t>&& data) {
-            std::error_code ec;
-            channel_->write(data.data(), data.size(), ec);
-        });
-    }
-
-    ~ChanneledIncomingTransfer() {
-        channel_->setOnRecv({});
-        channel_->shutdown();
-    }
-private:
-    std::shared_ptr<FtpServer> ftp_;
-    std::shared_ptr<ChannelSocket> channel_;
-};
-
-class DhtPeerConnector::Impl : public std::enable_shared_from_this<DhtPeerConnector::Impl> {
+class DhtPeerConnector::Impl {
 public:
     class ClientConnector;
 
-    explicit Impl(const std::weak_ptr<JamiAccount>& account)
+    explicit Impl(JamiAccount& account)
         : account {account}
-        {}
+        , loopFut_ {std::async(std::launch::async, [this]{ eventLoop(); })} {}
 
     ~Impl() {
-        for (auto &thread : answer_threads_)
-            thread.join();
-        {
-            std::lock_guard<std::mutex> lk(serversMutex_);
-            servers_.clear();
-        }
-        {
-            std::lock_guard<std::mutex> lk(clientsMutex_);
-            clients_.clear();
-        }
-        waitForReadyEndpoints_.clear();
+      for (auto &thread : answer_threads_)
+        thread.join();
+      servers_.clear();
+      clients_.clear();
+      waitForReadyEndpoints_.clear();
+      turnAuthv4_.reset();
+      turnAuthv6_.reset();
+      ctrl << makeMsg<CtrlMsgType::STOP>();
     }
 
-    std::weak_ptr<JamiAccount> account;
+    JamiAccount& account;
+    Channel<std::unique_ptr<CtrlMsgBase>> ctrl;
 
     bool hasPublicIp(const ICESDP& sdp) {
         for (const auto& cand: sdp.rem_candidates)
@@ -211,23 +226,27 @@ public:
         return false;
     }
 
+private:
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<TlsSocketEndpoint>> waitForReadyEndpoints_;
+    std::unique_ptr<TurnTransport> turnAuthv4_;
+    std::unique_ptr<TurnTransport> turnAuthv6_;
 
     // key: Stored certificate PublicKey id (normaly it's the DeviceId)
     // value: pair of shared_ptr<Certificate> and associated RingId
     std::map<dht::InfoHash, std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::InfoHash>> certMap_;
     std::map<IpAddr, dht::InfoHash> connectedPeers_;
 
+protected:
     std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<PeerConnection>> servers_;
-    std::mutex serversMutex_;
     std::map<IpAddr, std::unique_ptr<TlsTurnEndpoint>> tls_turn_ep_;
 
     std::map<std::pair<dht::InfoHash, DRing::DataTransferId>, std::unique_ptr<ClientConnector>> clients_;
     std::mutex clientsMutex_;
+    std::mutex turnMutex_;
 
-    void cancel(const std::string& peer_id, const DRing::DataTransferId& tid);
-    void cancelChanneled(const DRing::DataTransferId& tid);
-
+private:
+    void onTurnPeerConnection(const IpAddr&);
+    void onTurnPeerDisconnection(const IpAddr&);
     void onRequestMsg(PeerConnectionMsg&&);
     void onTrustedRequestMsg(PeerConnectionMsg&&, const std::shared_ptr<dht::crypto::Certificate>&,
                              const dht::InfoHash&);
@@ -240,33 +259,12 @@ public:
                      const std::vector<std::string>&,
                      const std::function<void(PeerConnection*)>&);
     bool turnConnect();
+    void eventLoop();
     bool validatePeerCertificate(const dht::crypto::Certificate&, dht::InfoHash&);
 
     std::future<void> loopFut_; // keep it last member
 
     std::vector<std::thread> answer_threads_;
-
-    std::shared_ptr<DhtPeerConnector::Impl> shared() {
-        return std::static_pointer_cast<DhtPeerConnector::Impl>(shared_from_this());
-    }
-    std::shared_ptr<DhtPeerConnector::Impl const> shared() const {
-        return std::static_pointer_cast<DhtPeerConnector::Impl const>(shared_from_this());
-    }
-    std::weak_ptr<DhtPeerConnector::Impl> weak() {
-        return std::static_pointer_cast<DhtPeerConnector::Impl>(shared_from_this());
-    }
-    std::weak_ptr<DhtPeerConnector::Impl const> weak() const {
-        return std::static_pointer_cast<DhtPeerConnector::Impl const>(shared_from_this());
-    }
-
-
-    // For Channeled transports
-    std::mutex channeledIncomingMtx_;
-    std::map<DRing::DataTransferId, std::unique_ptr<ChanneledIncomingTransfer>> channeledIncoming_;
-    std::mutex channeledOutgoingMtx_;
-    std::map<DRing::DataTransferId, std::shared_ptr<ChanneledOutgoingTransfer>> channeledOutgoing_;
-    std::mutex incomingTransfersMtx_;
-    std::set<DRing::DataTransferId> incomingTransfers_;
 };
 
 //==============================================================================
@@ -291,9 +289,6 @@ public:
         , peer_ {peer_h}
         , publicAddresses_ {public_addresses}
         , peerCertificate_ {peer_cert} {
-            auto shared = parent_.account.lock();
-            if (!shared) return;
-            waitId_ = ValueIdDist()(shared->rand);
             addListener(connect_cb);
             processTask_ = std::async(
                 std::launch::async,
@@ -331,7 +326,7 @@ public:
     }
 
     void cancel() {
-        parent_.cancel(peer_.toString(), tid_);
+        parent_.ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_, tid_);
     }
 
     void onDhtResponse(PeerConnectionMsg&& response) {
@@ -341,18 +336,15 @@ public:
         responseCV_.notify_all();
     }
 
-    const DRing::DataTransferId tid_;
 private:
     void process() {
         // Add ice msg into the addresses
         // TODO remove publicAddresses in the future and only use the iceMsg
         // For now it's here for compability with old version
         auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
-        auto acc = parent_.account.lock();
-        if (!acc) return;
-        auto ice_config = acc->getIceOptions();
+        auto ice_config = parent_.account.getIceOptions();
         ice_config.tcpEnable = true;
-        auto ice = iceTransportFactory.createTransport(acc->getAccountID().c_str(), 1, false, ice_config);
+        auto ice = iceTransportFactory.createTransport(parent_.account.getAccountID().c_str(), 1, false, ice_config);
 
         if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
             JAMI_ERR("Cannot initialize ICE session.");
@@ -360,7 +352,7 @@ private:
             return;
         }
 
-        acc->registerDhtAddress(*ice);
+        parent_.account.registerDhtAddress(*ice);
 
         auto iceAttributes = ice->getLocalAttributes();
         std::stringstream icemsg;
@@ -372,14 +364,14 @@ private:
 
         // Prepare connection request as a DHT message
         PeerConnectionMsg request;
-        request.id = waitId_; /* Random id for the message unicity */
+        request.id = ValueIdDist()(parent_.account.rand); /* Random id for the message unicity */
+        waitId_ = request.id;
         request.addresses = {icemsg.str()};
         request.addresses.insert(request.addresses.end(), publicAddresses_.begin(), publicAddresses_.end());
-        request.tid = tid_;
 
         // Send connection request through DHT
-        JAMI_DBG() << acc << "[CNX] request connection to " << peer_;
-        acc->dht()->putEncrypted(
+        JAMI_DBG() << parent_.account << "[CNX] request connection to " << peer_;
+        parent_.account.dht()->putEncrypted(
             dht::InfoHash::get(PeerConnectionMsg::key_prefix + peer_.toString()), peer_, request,
             [](bool ok) {
                 if (ok) JAMI_DBG("[CNX] successfully put CNX request on DHT");
@@ -416,7 +408,7 @@ private:
                 if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd},
                                             sdp.rem_candidates)) {
                   JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
-                            acc->getAccountID().c_str());
+                            parent_.account.getAccountID().c_str());
                   break;
                 }
 
@@ -424,16 +416,16 @@ private:
                 if (ice->isRunning()) {
                     peer_ep = std::make_unique<IceSocketEndpoint>(ice, true);
                     JAMI_DBG("[Account:%s] ICE negotiation succeed. Starting file transfer",
-                             acc->getAccountID().c_str());
+                             parent_.account.getAccountID().c_str());
                     if (hasPubIp) ice->setInitiatorSession();
                     break;
                 } else {
-                    JAMI_ERR("[Account:%s] ICE negotation failed", acc->getAccountID().c_str());
+                    JAMI_ERR("[Account:%s] ICE negotation failed", parent_.account.getAccountID().c_str());
                 }
             } else {
                 try {
                     // Connect to TURN peer using a raw socket
-                    JAMI_DBG() << acc << "[CNX] connecting to TURN relay "
+                    JAMI_DBG() << parent_.account << "[CNX] connecting to TURN relay "
                             << relay_addr.toString(true, true);
                     peer_ep = std::make_unique<TcpSocketEndpoint>(relay_addr);
                     try {
@@ -450,7 +442,7 @@ private:
                     }
                     break;
                 } catch (std::system_error&) {
-                    JAMI_DBG() << acc << "[CNX] Failed to connect to TURN relay "
+                    JAMI_DBG() << parent_.account << "[CNX] Failed to connect to TURN relay "
                             << relay_addr.toString(true, true);
                 }
             }
@@ -462,9 +454,9 @@ private:
         }
 
         // Negotiate a TLS session
-        JAMI_DBG() << acc << "[CNX] start TLS session";
+        JAMI_DBG() << parent_.account << "[CNX] start TLS session";
         tls_ep_ = std::make_unique<TlsSocketEndpoint>(
-            std::move(peer_ep), acc->identity(), acc->dhParams(),
+            std::move(peer_ep), parent_.account.identity(), parent_.account.dhParams(),
             *peerCertificate_, ice->isRunning());
         tls_ep_->setOnStateChange([this, ice=std::move(ice)] (tls::TlsSessionState state) {
             if (state == tls::TlsSessionState::SHUTDOWN) {
@@ -487,6 +479,7 @@ private:
     }
 
     Impl& parent_;
+    const DRing::DataTransferId tid_;
     const dht::InfoHash peer_;
 
     std::vector<std::string> publicAddresses_;
@@ -500,12 +493,92 @@ private:
 
     std::atomic_bool connected_ {false};
     std::mutex listenersMutex_;
+    std::mutex turnMutex_;
     std::vector<ListenerFunction> listeners_;
 
     std::future<void> processTask_;
 };
 
 //==============================================================================
+
+/// Synchronous TCP connect to a TURN server
+/// \note TCP peer connection mode is enabled for reliable data transfer.
+/// \return if connected to the turn
+bool
+DhtPeerConnector::Impl::turnConnect()
+{
+    std::lock_guard<std::mutex> lock(turnMutex_);
+    // Don't retry to reconnect to the TURN server if already connected
+    if (turnAuthv4_ && turnAuthv4_->isReady()
+        && turnAuthv6_ && turnAuthv6_->isReady())
+        return true;
+
+    auto details = account.getAccountDetails();
+    auto server = details[Conf::CONFIG_TURN_SERVER];
+    auto realm = details[Conf::CONFIG_TURN_SERVER_REALM];
+    auto username = details[Conf::CONFIG_TURN_SERVER_UNAME];
+    auto password = details[Conf::CONFIG_TURN_SERVER_PWD];
+
+    auto turnCache = account.turnCache();
+
+    auto turn_param_v4 = TurnTransportParams {};
+    if (turnCache[0]) {
+        turn_param_v4.server = *turnCache[0];
+    } else {
+        turn_param_v4.server = IpAddr {server.empty() ? "turn.jami.net" : server};
+    }
+    turn_param_v4.realm = realm.empty() ? "ring" : realm;
+    turn_param_v4.username = username.empty() ? "ring" : username;
+    turn_param_v4.password = password.empty() ? "ring" : password;
+    turn_param_v4.isPeerConnection = true; // Request for TCP peer connections, not UDP
+    turn_param_v4.onPeerConnection = [this](uint32_t conn_id, const IpAddr& peer_addr, bool connected) {
+        (void)conn_id;
+        if (connected)
+            ctrl << makeMsg<CtrlMsgType::TURN_PEER_CONNECT>(peer_addr);
+        else
+            ctrl << makeMsg<CtrlMsgType::TURN_PEER_DISCONNECT>(peer_addr);
+    };
+
+    // If a previous turn server exists, but is not ready, we should try to reconnect
+    if (turnAuthv4_ && !turnAuthv4_->isReady())
+        turnAuthv4_.reset();
+    if (turnAuthv6_ && !turnAuthv6_->isReady())
+        turnAuthv6_.reset();
+
+    try {
+        if (!turnAuthv4_ || !turnAuthv4_->isReady()) {
+            turn_param_v4.authorized_family = PJ_AF_INET;
+            turnAuthv4_ = std::make_unique<TurnTransport>(turn_param_v4);
+        }
+
+        if (!turnAuthv6_ || !turnAuthv6_->isReady()) {
+            auto turn_param_v6 = turn_param_v4;
+            if (turnCache[1]) {
+                turn_param_v6.server = *turnCache[1];
+            } else {
+                turn_param_v6.server = IpAddr {server.empty() ? "turn.jami.net" : server};
+            }
+            turn_param_v6.authorized_family = PJ_AF_INET6;
+            turnAuthv6_ = std::make_unique<TurnTransport>(turn_param_v6);
+        }
+    } catch (...) {
+        JAMI_WARN("Turn allocation failed. Do not use the TURN");
+        return false;
+    }
+
+
+    // Wait until TURN server READY state (or timeout)
+    Timeout<Clock> timeout {NET_CONNECTION_TIMEOUT};
+    timeout.start();
+    while (!turnAuthv4_->isReady() && !turnAuthv6_->isReady()) {
+        if (timeout) {
+            JAMI_WARN("Turn: connection timeout, will only try p2p file transfer.");
+            return false;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+    return true;
+}
 
 /// Find who is connected by using connection certificate
 bool
@@ -522,24 +595,86 @@ DhtPeerConnector::Impl::validatePeerCertificate(const dht::crypto::Certificate& 
     return false;
 }
 
+/// Negotiate a TLS session over a TURN socket this method does [yoda].
+/// At this stage both endpoints has a dedicated TCP connection on each other.
+void
+DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
+{
+    JAMI_DBG() << account << "[CNX] TURN connection attempt from "
+               << peer_addr.toString(true, true);
+    auto turn_ep = std::unique_ptr<ConnectedTurnTransport>(nullptr);
+
+    {
+        std::lock_guard<std::mutex> lock(turnMutex_);
+        if (peer_addr.isIpv4() && turnAuthv4_)
+            turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv4_, peer_addr);
+        else if (turnAuthv6_)
+            turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv6_, peer_addr);
+        else {
+            JAMI_WARN() << "No TURN initialized";
+            return;
+        }
+    }
+
+    JAMI_DBG() << account << "[CNX] start TLS session over TURN socket";
+    auto peer_h = std::make_shared<dht::InfoHash>();
+    tls_turn_ep_[peer_addr] =
+    std::make_unique<TlsTurnEndpoint>(std::move(turn_ep),
+                                      account.identity(),
+                                      account.dhParams(),
+                                      [peer_h, this] (const dht::crypto::Certificate& cert) {
+        return validatePeerCertificate(cert, *peer_h);
+    });
+
+    tls_turn_ep_[peer_addr]->setOnStateChange([this, peer_addr, peer_h] (tls::TlsSessionState state)
+    {
+        auto it = tls_turn_ep_.find(peer_addr);
+        if (it == tls_turn_ep_.end()) return false;
+        if (state == tls::TlsSessionState::SHUTDOWN) {
+            JAMI_WARN() << "[CNX] TLS connection failure from peer " << peer_addr.toString(true, true);
+            tls_turn_ep_.erase(it);
+            return false;
+        } else if (state == tls::TlsSessionState::ESTABLISHED) {
+            if (peer_h) {
+                JAMI_DBG() << account << "[CNX] Accepted TLS-TURN connection from " << *peer_h;
+                connectedPeers_.emplace(peer_addr, it->second->peerCertificate().getId());
+                auto connection = std::make_unique<PeerConnection>([] {}, peer_addr.toString(), std::move(it->second));
+                connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h->toString()));
+                servers_.emplace(std::make_pair(*peer_h, peer_addr), std::move(connection));
+            }
+            tls_turn_ep_.erase(it);
+            return false;
+        }
+        return true;
+    });
+}
+
+void
+DhtPeerConnector::Impl::onTurnPeerDisconnection(const IpAddr& peer_addr)
+{
+    auto it = std::find_if(servers_.begin(), servers_.end(),
+                [&peer_addr](const auto& element) {
+                    return element.first.second == peer_addr;});
+    if (it == servers_.end()) return;
+    JAMI_WARN() << account << "[CNX] disconnection from peer " << peer_addr.toString(true, true);
+    servers_.erase(it);
+    connectedPeers_.erase(peer_addr);
+}
+
 void
 DhtPeerConnector::Impl::onRequestMsg(PeerConnectionMsg&& request)
 {
-    auto acc = account.lock();
-    if (!acc) return;
-    JAMI_DBG() << acc << "[CNX] rx DHT request from " << request.from;
+    JAMI_DBG() << account << "[CNX] rx DHT request from " << request.from;
 
     // Asynch certificate checking -> trig onTrustedRequestMsg when trusted certificate is found
-    acc->findCertificate(
+    account.findCertificate(
         request.from,
         [this, request=std::move(request)] (const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
-            auto acc = account.lock();
-            if (!acc) return;
             dht::InfoHash peer_h;
             if (AccountManager::foundPeerDevice(cert, peer_h))
                 onTrustedRequestMsg(std::move(request), cert, peer_h);
             else
-                JAMI_WARN() << acc << "[CNX] rejected untrusted connection request from "
+                JAMI_WARN() << account << "[CNX] rejected untrusted connection request from "
                             << request.from;
     });
 }
@@ -557,17 +692,8 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                                             const std::shared_ptr<dht::crypto::Certificate>& cert,
                                             const dht::InfoHash& peer_h)
 {
-    auto acc = account.lock();
-    if (!acc) return;
-
-    if (request.tid != 0) {
-        std::lock_guard<std::mutex> lk(incomingTransfersMtx_);
-        if (incomingTransfers_.find(request.tid) != incomingTransfers_.end()) {
-            JAMI_ERR("@@@ INCOMING REQUEST FOR %u ALREADY TREATED VIA CHANNELED", request.tid);
-            return;
-        }
-        incomingTransfers_.emplace(request.tid);
-    }
+    // start a TURN client connection on first pass, next ones just add new peer cnx handlers
+    bool sendTurn = turnConnect();
 
     // Save peer certificate for later TLS session (MUST BE DONE BEFORE TURN PEER AUTHORIZATION)
     certMap_.emplace(cert->getId(), std::make_pair(cert, peer_h));
@@ -585,16 +711,31 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         try {
             if (ip.size() <= PJ_MAX_HOSTNAME) {
                 IpAddr addr(ip);
-                if (addr.isIpv4() || addr.isIpv6()) {
-                    JAMI_WARN() << "Deprecated TURN connection. Ignore";
+                if (addr.isIpv4()) {
+                    if (!sendTurn) continue;
+                    std::lock_guard<std::mutex> lock(turnMutex_);
+                    if (turnAuthv4_) {
+                        sendRelayV4 = true;
+                        turnAuthv4_->permitPeer(ip);
+                    }
+                    JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
+                    continue;
+                } else if (addr.isIpv6()) {
+                    if (!sendTurn) continue;
+                    std::lock_guard<std::mutex> lock(turnMutex_);
+                    if (turnAuthv6_) {
+                        sendRelayV6 = true;
+                        turnAuthv6_->permitPeer(ip);
+                    }
+                    JAMI_DBG() << account << "[CNX] authorized peer connection from " << ip;
                     continue;
                 }
             }
 
             // P2P File transfer. We received an ice SDP message:
-            JAMI_DBG() << acc << "[CNX] receiving ICE session request";
+            JAMI_DBG() << account << "[CNX] receiving ICE session request";
             auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
-            auto ice_config = acc->getIceOptions();
+            auto ice_config = account.getIceOptions();
             ice_config.tcpEnable = true;
             ice_config.onRecvReady = [iceReady]() {
                 auto& ir = *iceReady;
@@ -602,14 +743,14 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                 ir.ready = true;
                 ir.cv.notify_one();
             };
-            ice = iceTransportFactory.createTransport(acc->getAccountID().c_str(), 1, true, ice_config);
+            ice = iceTransportFactory.createTransport(account.getAccountID().c_str(), 1, true, ice_config);
 
             if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
                 JAMI_ERR("Cannot initialize ICE session.");
                 continue;
             }
 
-            acc->registerDhtAddress(*ice);
+            account.registerDhtAddress(*ice);
 
             auto sdp = IceTransport::parse_SDP(ip, *ice);
             // NOTE: hasPubIp is used for compability (because ICE is waiting for a certain state in old versions)
@@ -617,7 +758,7 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
             hasPubIp = hasPublicIp(sdp);
             if (not ice->start({sdp.rem_ufrag, sdp.rem_pwd}, sdp.rem_candidates)) {
                 JAMI_WARN("[Account:%s] start ICE failed - fallback to TURN",
-                            acc->getAccountID().c_str());
+                            account.getAccountID().c_str());
                 continue;
             }
 
@@ -625,15 +766,15 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                 ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
                 if (ice->isRunning()) {
                     sendIce = true;
-                    JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", acc->getAccountID().c_str());
+                    JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
                 } else {
-                    JAMI_WARN("[Account:%s] ICE negotation failed", acc->getAccountID().c_str());
+                    JAMI_WARN("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
                     ice->cancelOperations();
                 }
             } else
                 sendIce = true; // Ice started with success, we can use it.
         } catch (const std::exception& e) {
-            JAMI_WARN() << acc << "[CNX] ignored peer connection '" << ip << "', " << e.what();
+            JAMI_WARN() << account << "[CNX] ignored peer connection '" << ip << "', " << e.what();
         }
     }
 
@@ -652,13 +793,27 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         addresses = {icemsg.str()};
     }
 
+    if (sendTurn) {
+        std::lock_guard<std::mutex> lock(turnMutex_);
+        if (turnAuthv4_) {
+            auto relayIpv4 = turnAuthv4_->peerRelayAddr();
+            if (sendRelayV4 && relayIpv4)
+                addresses.emplace_back(relayIpv4.toString(true, true));
+        }
+        if (turnAuthv6_) {
+            auto relayIpv6 = turnAuthv6_->peerRelayAddr();
+            if (sendRelayV6 && relayIpv6)
+                addresses.emplace_back(relayIpv6.toString(true, true));
+        }
+    }
+
     if (addresses.empty()) {
-        JAMI_DBG() << acc << "[CNX] connection aborted, no family address found";
+        JAMI_DBG() << account << "[CNX] connection aborted, no family address found";
         return;
     }
 
-    JAMI_DBG() << acc << "[CNX] connection accepted, DHT reply to " << request.from;
-    acc->dht()->putEncrypted(
+    JAMI_DBG() << account << "[CNX] connection accepted, DHT reply to " << request.from;
+    account.dht()->putEncrypted(
         dht::InfoHash::get(PeerConnectionMsg::key_prefix + request.from.toString()),
         request.from, request.respond(addresses));
 
@@ -666,9 +821,9 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         if (hasPubIp) {
             ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT);
             if (ice->isRunning()) {
-                JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", acc->getAccountID().c_str());
+                JAMI_DBG("[Account:%s] ICE negotiation succeed. Answering with local SDP", account.getAccountID().c_str());
             } else {
-                JAMI_WARN("[Account:%s] ICE negotation failed - Fallbacking to TURN", acc->getAccountID().c_str());
+                JAMI_WARN("[Account:%s] ICE negotation failed - Fallbacking to TURN", account.getAccountID().c_str());
                 return; // wait for onTurnPeerConnection
             }
         }
@@ -684,13 +839,13 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
 
         std::unique_ptr<AbstractSocketEndpoint> peer_ep =
             std::make_unique<IceSocketEndpoint>(ice, false);
-        JAMI_DBG() << acc << "[CNX] start TLS session";
+        JAMI_DBG() << account << "[CNX] start TLS session";
         if (hasPubIp) ice->setSlaveSession();
 
         auto idx = std::make_pair(peer_h, ice->getRemoteAddress(0));
         auto it = waitForReadyEndpoints_.emplace(
             idx,
-            std::make_unique<TlsSocketEndpoint>(std::move(peer_ep), acc->identity(), acc->dhParams(),
+            std::make_unique<TlsSocketEndpoint>(std::move(peer_ep), account.identity(), account.dhParams(),
                 [peer_h, this](const dht::crypto::Certificate &cert) {
                     dht::InfoHash peer_h_found;
                     return validatePeerCertificate(cert, peer_h_found)
@@ -700,8 +855,6 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
         );
 
         it.first->second->setOnStateChange([this, idx=std::move(idx)] (tls::TlsSessionState state) {
-            auto acc = account.lock();
-            if (!acc) return false;
             if (waitForReadyEndpoints_.find(idx) == waitForReadyEndpoints_.end()) {
                 return false;
             }
@@ -715,27 +868,21 @@ DhtPeerConnector::Impl::answerToRequest(PeerConnectionMsg&& request,
                 auto connection = std::make_unique<PeerConnection>(
                     [] {}, peer_h,
                     std::move(waitForReadyEndpoints_[idx]));
-                connection->attachOutputStream(std::make_shared<FtpServer>(acc->getAccountID(), peer_h));
-                {
-                    std::lock_guard<std::mutex> lk(serversMutex_);
-                    servers_.emplace(idx, std::move(connection));
-                }
+                connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h));
+                servers_.emplace(idx, std::move(connection));
                 waitForReadyEndpoints_.erase(idx);
                 return false;
             }
             return true;
         });
-    } else {
-        JAMI_WARN() << "No connection negotiated. Abort file transfer";
     }
+    // Now wait for a TURN connection from peer (see onTurnPeerConnection) if fallbacking
 }
 
 void
 DhtPeerConnector::Impl::onResponseMsg(PeerConnectionMsg&& response)
 {
-    auto acc = account.lock();
-    if (!acc) return;
-    JAMI_DBG() << acc << "[CNX] rx DHT reply from " << response.from;
+    JAMI_DBG() << account << "[CNX] rx DHT reply from " << response.from;
     std::lock_guard<std::mutex> lock(clientsMutex_);
     for (auto& client: clients_) {
         // NOTE We can receives multiple files from one peer. So fill unanswered clients with linked id.
@@ -768,59 +915,80 @@ DhtPeerConnector::Impl::onAddDevice(const dht::InfoHash& dev_h,
 }
 
 void
-DhtPeerConnector::Impl::cancel(const std::string& peer_id, const DRing::DataTransferId& tid) {
-    dht::ThreadPool::io().run([w=weak(), dev_h = dht::InfoHash(peer_id), tid] {
-        auto shared = w.lock();
-        if (!shared) return;
-        // Cancel outgoing files
-        {
-            std::lock_guard<std::mutex> lock(shared->clientsMutex_);
-            shared->clients_.erase(std::make_pair(dev_h, tid));
-        }
-        // Cancel incoming files
-        std::unique_lock<std::mutex> lk(shared->serversMutex_);
-        auto it = std::find_if(
-            shared->servers_.begin(), shared->servers_.end(),
-            [&dev_h, &tid](const auto &element) {
-                return (element.first.first == dev_h &&
-                        element.second &&
-                        element.second->hasStreamWithId(tid));
-            });
-        if (it == shared->servers_.end())  {
-            Manager::instance().dataTransfers->close(tid);
-            return;
-        }
-        auto peer = it->first.second; // tmp copy to prevent use-after-free below
-        shared->servers_.erase(it);
-        lk.unlock();
-        // Remove the file transfer if p2p
-        shared->connectedPeers_.erase(peer);
-        Manager::instance().dataTransfers->close(tid);
-    });
-}
+DhtPeerConnector::Impl::eventLoop()
+{
+    // Loop until STOP msg
+    while (true) {
+        std::unique_ptr<CtrlMsgBase> msg;
+        ctrl >> msg;
+        switch (msg->type()) {
+            case CtrlMsgType::STOP:
+              return;
 
-void
-DhtPeerConnector::Impl::cancelChanneled(const DRing::DataTransferId& tid) {
-    dht::ThreadPool::io().run([w=weak(), tid] {
-        auto shared = w.lock();
-        if (!shared) return;
-        // Cancel outgoing files
-        {
-            std::lock_guard<std::mutex> lk(shared->channeledIncomingMtx_);
-            shared->channeledIncoming_.erase(tid);
+            case CtrlMsgType::TURN_PEER_CONNECT:
+              onTurnPeerConnection(
+                  ctrlMsgData<CtrlMsgType::TURN_PEER_CONNECT>(*msg));
+              break;
+
+            case CtrlMsgType::TURN_PEER_DISCONNECT:
+              onTurnPeerDisconnection(
+                  ctrlMsgData<CtrlMsgType::TURN_PEER_DISCONNECT>(*msg));
+              break;
+
+            case CtrlMsgType::CANCEL:
+                {
+                    auto dev_h = ctrlMsgData<CtrlMsgType::CANCEL, 0>(*msg);
+                    auto id = ctrlMsgData<CtrlMsgType::CANCEL, 1>(*msg);
+                    // Cancel outgoing files
+                    {
+                        std::lock_guard<std::mutex> lock(clientsMutex_);
+                        clients_.erase(std::make_pair(dev_h, id));
+                    }
+                    // Cancel incoming files
+                    auto it = std::find_if(
+                        servers_.begin(), servers_.end(),
+                        [&dev_h, &id](const auto &element) {
+                          return (element.first.first == dev_h &&
+                                  element.second &&
+                                  element.second->hasStreamWithId(id));
+                        });
+                    if (it == servers_.end())  {
+                      Manager::instance().dataTransfers->close(id);
+                      break;
+                    }
+                    auto peer = it->first.second; // tmp copy to prevent use-after-free below
+                    servers_.erase(it);
+                    // Remove the file transfer if p2p
+                    connectedPeers_.erase(peer);
+                    Manager::instance().dataTransfers->close(id);
+                }
+                break;
+
+            case CtrlMsgType::DHT_REQUEST:
+              onRequestMsg(ctrlMsgData<CtrlMsgType::DHT_REQUEST>(*msg));
+              break;
+
+            case CtrlMsgType::DHT_RESPONSE:
+              onResponseMsg(ctrlMsgData<CtrlMsgType::DHT_RESPONSE>(*msg));
+              break;
+
+            case CtrlMsgType::ADD_DEVICE:
+              onAddDevice(ctrlMsgData<CtrlMsgType::ADD_DEVICE, 0>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 1>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 2>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 3>(*msg),
+                          ctrlMsgData<CtrlMsgType::ADD_DEVICE, 4>(*msg));
+              break;
+
+            default: JAMI_ERR("BUG: got unhandled control msg!"); break;
         }
-        {
-            std::lock_guard<std::mutex> lk(shared->channeledOutgoingMtx_);
-            shared->channeledOutgoing_.erase(tid);
-        }
-        Manager::instance().dataTransfers->close(tid);
-    });
+    }
 }
 
 //==============================================================================
 
 DhtPeerConnector::DhtPeerConnector(JamiAccount& account)
-    : pimpl_ {std::make_shared<Impl>(account.weak())}
+    : pimpl_ {new Impl {account}}
 {}
 
 DhtPeerConnector::~DhtPeerConnector() = default;
@@ -831,21 +999,17 @@ DhtPeerConnector::~DhtPeerConnector() = default;
 void
 DhtPeerConnector::onDhtConnected(const std::string& device_id)
 {
-    return;
-    auto acc = pimpl_->account.lock();
-    if (!acc) return;
-    acc->dht()->listen<PeerConnectionMsg>(
+    pimpl_->account.dht()->listen<PeerConnectionMsg>(
         dht::InfoHash::get(PeerConnectionMsg::key_prefix + device_id),
         [this](PeerConnectionMsg&& msg) {
-            auto acc = pimpl_->account.lock();
-            if (!acc) return false;
-            if (msg.from == acc->dht()->getId())
+            if (msg.from == pimpl_->account.dht()->getId())
                 return true;
-            if (!acc->isMessageTreated(to_hex_string(msg.id))) {
-                if (msg.isRequest())
-                    pimpl_->onRequestMsg(std::move(msg));
-                else
-                    pimpl_->onResponseMsg(std::move(msg));
+            if (!pimpl_->account.isMessageTreated(to_hex_string(msg.id))) {
+                if (msg.isRequest()) {
+                    // TODO: filter-out request from non trusted peer
+                    pimpl_->ctrl << makeMsg<CtrlMsgType::DHT_REQUEST>(std::move(msg));
+                } else
+                    pimpl_->ctrl << makeMsg<CtrlMsgType::DHT_RESPONSE>(std::move(msg));
             }
             return true;
         }, [](const dht::Value& v) {
@@ -857,9 +1021,7 @@ DhtPeerConnector::onDhtConnected(const std::string& device_id)
 void
 DhtPeerConnector::requestConnection(const std::string& peer_id,
                                     const DRing::DataTransferId& tid,
-                                    const std::function<void(PeerConnection*)>& connect_cb,
-                                    const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>& channeledConnectedCb,
-                                    const std::function<void()>& onChanneledCancelled)
+                                    const std::function<void(PeerConnection*)>& connect_cb)
 {
     const auto peer_h = dht::InfoHash(peer_id);
 
@@ -870,111 +1032,43 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
     //    (here the one where dht_ loop runs).
     // 2) anyway its good to keep this processing here in case of multiple device
     //    as the result is the same for each device.
-    auto acc = pimpl_->account.lock();
-    if (!acc) return;
-    auto addresses = acc->publicAddresses();
+    auto addresses = pimpl_->account.publicAddresses();
 
-    acc->forEachDevice(
+    // Add local addresses
+    // XXX: is it really needed? use-case? a local TURN server?
+    //addresses.emplace_back(ip_utils::getLocalAddr(AF_INET));
+    //addresses.emplace_back(ip_utils::getLocalAddr(AF_INET6));
+
+    // TODO: bypass DHT devices lookup if connection already exist
+
+    pimpl_->account.forEachDevice(
         peer_h,
-        [this, addresses, connect_cb, tid, channeledConnectedCb, onChanneledCancelled, connect_cb](const dht::InfoHash& dev_h) {
-            auto acc = pimpl_->account.lock();
-            if (!acc) return;
-            if (dev_h == acc->dht()->getId()) {
-                JAMI_ERR() << acc->getAccountID() << "[CNX] no connection to yourself, bad person!";
+        [this, addresses, connect_cb, tid](const dht::InfoHash& dev_h) {
+            if (dev_h == pimpl_->account.dht()->getId()) {
+                JAMI_ERR() << pimpl_->account.getAccountID() << "[CNX] no connection to yourself, bad person!";
                 return;
             }
 
-            JAMI_ERR("@@@ REQUEST OUTGOING CHANNELED FOR %u", tid);
-            acc->connectionManager().connectDevice(dev_h.toString(), "file://" + std::to_string(tid),
-                [this, tid, channeledConnectedCb, onChanneledCancelled, connect_cb](const std::shared_ptr<ChannelSocket>& channel) {
-                auto shared = pimpl_->account.lock();
-                if (!channel) {
-                    onChanneledCancelled();
-                    return;
-                }
-                if (!shared) return;
-                JAMI_ERR("@@@ OUTGOING CHANNELED FOR %u", tid);
-
-                auto outgoingFile = std::make_shared<ChanneledOutgoingTransfer>(channel);
-                {
-                    std::lock_guard<std::mutex> lk(pimpl_->channeledOutgoingMtx_);
-                    pimpl_->channeledOutgoing_.emplace(tid, outgoingFile);
-                }
-
-                channel->onShutdown([this, tid, onChanneledCancelled]() {
-                    JAMI_ERR("@@@ OUGOING CHANNELED DOWN FOR %u", tid);
-                    onChanneledCancelled();
-                    // TODO Ok?
-                    dht::ThreadPool::io().run([w=pimpl_->weak(), tid] {
-                        auto shared = w.lock();
-                        if (!shared) return;
-                        // Cancel outgoing files
-                        {
-                            std::lock_guard<std::mutex> lk(shared->channeledOutgoingMtx_);
-                            shared->channeledOutgoing_.erase(tid);
-                            Manager::instance().dataTransfers->close(tid);
-                        }
-                    });
-                });
-                connect_cb(nullptr); // TODO check if no race cond
-                channeledConnectedCb(outgoingFile);
-            });
-
-            acc->findCertificate(
+            pimpl_->account.findCertificate(
                 dev_h,
                 [this, dev_h, addresses, connect_cb, tid] (const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                    pimpl_->onAddDevice(dev_h, tid, cert, addresses, connect_cb);
+                    pimpl_->ctrl << makeMsg<CtrlMsgType::ADD_DEVICE>(dev_h, tid, cert, addresses, connect_cb);
                 });
         },
 
-        [this, peer_h, connect_cb, onChanneledCancelled, accId = acc->getAccountID()](bool found) {
+        [this, peer_h, connect_cb](bool found) {
             if (!found) {
-                JAMI_WARN() << accId << "[CNX] aborted, no devices for " << peer_h;
+                JAMI_WARN() << pimpl_->account.getAccountID() << "[CNX] aborted, no devices for " << peer_h;
                 connect_cb(nullptr);
-                onChanneledCancelled();
             }
         });
 }
 
 void
 DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid) {
-    JAMI_ERR("@@@ DhtPeerConnector::closeConnection");
-    pimpl_->cancel(peer_id, tid);
-    pimpl_->cancelChanneled(tid);
-}
-
-void
-DhtPeerConnector::onIncomingConnection(const std::string& peer_id, const DRing::DataTransferId& tid, const std::shared_ptr<ChannelSocket>& channel)
-{
-    if (!channel) return;
-    auto acc = pimpl_->account.lock();
-    if (!acc) return;
-    JAMI_ERR("@@@ INCOMING CHANNELED REQUEST FOR %u", tid);
-    {
-        std::lock_guard<std::mutex> lk(pimpl_->incomingTransfersMtx_);
-        if (pimpl_->incomingTransfers_.find(tid) != pimpl_->incomingTransfers_.end()) {
-            JAMI_ERR("@@@ INCOMING REQUEST FOR %u ALREADY TREATED VIA DHT", tid);
-            return;
-        }
-        pimpl_->incomingTransfers_.emplace(tid);
-    }
-    auto incomingFile = std::make_unique<ChanneledIncomingTransfer>(channel, std::make_shared<FtpServer>(acc->getAccountID(), peer_id, tid));
-    {
-        std::lock_guard<std::mutex> lk(pimpl_->channeledIncomingMtx_);
-        pimpl_->channeledIncoming_.emplace(tid, std::move(incomingFile));
-    }
-    channel->onShutdown([this, tid]() {
-        dht::ThreadPool::io().run([w=pimpl_->weak(), tid] {
-            auto shared = w.lock();
-            if (!shared) return;
-            // Cancel incoming files
-            {
-                std::lock_guard<std::mutex> lk(shared->channeledIncomingMtx_);
-                shared->channeledIncoming_.erase(tid);
-                Manager::instance().dataTransfers->close(tid);
-            }
-        });
-    });
+    const auto peer_h = dht::InfoHash(peer_id);
+    // The connection will be close and removed in the main loop
+    pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_h, tid);
 }
 
 } // namespace jami

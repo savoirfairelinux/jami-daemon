@@ -176,15 +176,9 @@ SipTransport::getTlsMtu()
                   */
 }
 
-SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
-                                       pj_caching_pool& cp, pj_pool_t& pool) :
-cp_(cp), pool_(pool), endpt_(endpt)
+SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt) :
+endpt_(endpt)
 {
-/*
-    pjsip_transport_register_type(PJSIP_TRANSPORT_DATAGRAM, "ICE",
-                                  pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP),
-                                  &ice_pj_transport_type_);
-*/
     JAMI_DBG("SipTransportBroker@%p", this);
 }
 
