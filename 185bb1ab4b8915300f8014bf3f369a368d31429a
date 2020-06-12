@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "0ca7147d_9d20718c",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 563,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-06-12T15:45:24Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027uint64_t\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "185bb1ab4b8915300f8014bf3f369a368d31429a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "196fca24_47f74613",
         "filename": "src/jamidht/p2p.cpp",
         "patchSetId": 16
@@ -28,6 +45,23 @@
         "id": 5
       },
       "writtenOn": "2020-06-12T15:45:14Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027DRing::DataTransferId\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "185bb1ab4b8915300f8014bf3f369a368d31429a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "92f92ef9_0f302176",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 884,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-06-12T15:45:24Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027DRing::DataTransferId\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
       "revId": "185bb1ab4b8915300f8014bf3f369a368d31429a",
@@ -53,6 +87,23 @@
     },
     {
       "key": {
+        "uuid": "b0cf6fc9_e333633c",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 893,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-06-12T15:45:24Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027DRing::DataTransferId\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "185bb1ab4b8915300f8014bf3f369a368d31429a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "26fcda94_4c06e8e5",
         "filename": "src/jamidht/p2p.cpp",
         "patchSetId": 16
@@ -62,6 +113,23 @@
         "id": 5
       },
       "writtenOn": "2020-06-12T15:45:14Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027DRing::DataTransferId\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "185bb1ab4b8915300f8014bf3f369a368d31429a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "ffeba43d_94d55ef0",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 902,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-06-12T15:45:24Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027DRing::DataTransferId\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
       "revId": "185bb1ab4b8915300f8014bf3f369a368d31429a",
@@ -87,6 +155,23 @@
     },
     {
       "key": {
+        "uuid": "9817714f_a0f654e9",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 948,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-06-12T15:45:24Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027DRing::DataTransferId\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "185bb1ab4b8915300f8014bf3f369a368d31429a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "6e2f6528_a1571b84",
         "filename": "src/jamidht/p2p.cpp",
         "patchSetId": 16
@@ -96,6 +181,23 @@
         "id": 5
       },
       "writtenOn": "2020-06-12T15:45:14Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027DRing::DataTransferId\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "185bb1ab4b8915300f8014bf3f369a368d31429a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "f3d0e5f6_954fd00d",
+        "filename": "src/jamidht/p2p.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 952,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-06-12T15:45:24Z",
       "side": 1,
       "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027DRing::DataTransferId\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
       "revId": "185bb1ab4b8915300f8014bf3f369a368d31429a",
