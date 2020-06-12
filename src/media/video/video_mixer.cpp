@@ -62,6 +62,7 @@ VideoMixer::VideoMixer(const std::string& id)
     : VideoGenerator::VideoGenerator()
     , id_(id)
     , sink_ (Manager::instance().createSinkClient(id, true))
+    , sinkPlugin_ (Manager::instance().createSinkClient(id+"_plugin", true))
     , loop_([]{return true;},
             std::bind(&VideoMixer::process, this),
             []{})
@@ -262,6 +263,17 @@ VideoMixer::start_sink()
         return;
     }
 
+    if (not sinkPlugin_->start())
+    {
+        JAMI_ERR("MX: sink preview startup failed");
+    }
+    else
+    {
+        if (videoLocal_)
+            if (videoLocal_->attach(sinkPlugin_.get()))
+                sinkPlugin_->setFrameSize(width_, height_);
+    }
+
     if (not sink_->start()) {
         JAMI_ERR("MX: sink startup failed");
         return;
@@ -274,6 +286,10 @@ VideoMixer::start_sink()
 void
 VideoMixer::stop_sink()
 {
+    if (videoLocal_)
+        videoLocal_->detach(sinkPlugin_.get());
+        sinkPlugin_->stop();
+
     this->detach(sink_.get());
     sink_->stop();
 }

@@ -41,6 +41,7 @@ namespace jami { namespace video {
 class VideoMixer;
 class VideoSender;
 class VideoReceiveThread;
+class SinkClient;
 
 struct RTCPInfo {
     float packetLoss;
@@ -123,6 +124,7 @@ private:
 
     std::unique_ptr<VideoSender> sender_;
     std::unique_ptr<VideoReceiveThread> receiveThread_;
+    std::shared_ptr<SinkClient> sink_;
     Conference* conference_ {nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;

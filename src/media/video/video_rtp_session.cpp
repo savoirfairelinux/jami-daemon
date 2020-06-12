@@ -25,6 +25,7 @@
 #include "video_sender.h"
 #include "video_receive_thread.h"
 #include "video_mixer.h"
+#include "sinkclient.h"
 #include "ice_socket.h"
 #include "socket_pair.h"
 #include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
@@ -65,6 +66,7 @@ VideoRtpSession::VideoRtpSession(const string &callID,
     , rtcpCheckerThread_([] { return true; },
             [this]{ processRtcpChecker(); },
             []{})
+    , sink_{Manager::instance().createSinkClient(callID_+"_plugin")}
 {
     setupVideoBitrateInfo(); // reset bitrate
     cc = std::make_unique<CongestionControl>();
@@ -93,9 +95,17 @@ void VideoRtpSession::startSender()
     if (send_.enabled and not send_.holding) {
         if (sender_) {
             if (videoLocal_)
+            {
                 videoLocal_->detach(sender_.get());
+                if (sink_)
+                {
+                    videoLocal_->detach(sink_.get());
+                }
+            }
             if (videoMixer_)
+            {
                 videoMixer_->detach(sender_.get());
+            }
             JAMI_WARN("Restarting video sender");
         }
 
@@ -236,8 +246,14 @@ void VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (videoLocal_)
+    {
         videoLocal_->detach(sender_.get());
-
+        if(sink_)
+        {
+            videoLocal_->detach(sink_.get());
+            sink_->stop();
+        }
+    }
     if (videoMixer_) {
         videoMixer_->detach(sender_.get());
         if (receiveThread_)
@@ -283,7 +299,14 @@ VideoRtpSession::setupVideoPipeline()
         setupConferenceVideoPipeline(*conference_);
     else if (sender_) {
         if (videoLocal_)
+        {
             videoLocal_->attach(sender_.get());
+            if (sink_->start())
+            {
+                videoLocal_->attach(sink_.get());
+                sink_->setFrameSize(localVideoParams_.width, localVideoParams_.height);
+            }
+        }
     } else {
         videoLocal_.reset();
     }
@@ -303,6 +326,15 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
         videoMixer_->attach(sender_.get());
     } else
         JAMI_WARN("[call:%s] no sender", callID_.c_str());
+
+    if (sink_) {
+        // Swap sink_ from local video to conference video mixer
+        if(videoLocal_)
+        {
+            videoLocal_->detach(sink_.get());
+            sink_->stop();
+        }
+    }
 
     if (receiveThread_) {
         receiveThread_->enterConference();
@@ -351,8 +383,9 @@ void VideoRtpSession::exitConference()
 
     if (videoMixer_) {
         if (sender_)
+        {
             videoMixer_->detach(sender_.get());
-
+        }
         if (receiveThread_) {
             receiveThread_->detach(videoMixer_.get());
             receiveThread_->exitConference();
@@ -367,8 +400,14 @@ void VideoRtpSession::exitConference()
         videoLocal_ = getVideoCamera();
 
     if (videoLocal_)
+    {
         videoLocal_->attach(sender_.get());
-
+        if (sink_->start())
+        {
+            videoLocal_->attach(sink_.get());
+            sink_->setFrameSize(localVideoParams_.width, localVideoParams_.height);
+        }
+    }
     conference_ = nullptr;
 }
 

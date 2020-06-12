@@ -77,6 +77,7 @@ private:
     rw_mutex rwMutex_;
 
     std::shared_ptr<SinkClient> sink_;
+    std::shared_ptr<SinkClient> sinkPlugin_;
 
     std::chrono::time_point<std::chrono::system_clock> lastProcess_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
