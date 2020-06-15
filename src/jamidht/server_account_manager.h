@@ -64,10 +64,19 @@ private:
 
     const std::string managerHostname_;
     std::shared_ptr<dht::Logger> logger_;
-    std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;
+    std::set<std::shared_ptr<dht::http::Request>> requests_;
     std::unique_ptr<ServerAccountCredentials> creds_;
+    std::string deviceToken_ {};
+    std::string accountToken_ {};
 
     void setHeaderFields(dht::http::Request& request);
+
+    void authenticateDevice();
+    void authenticateAccount();
+
+    void setDeviceToken(std::string token);
+    void setAccountToken(std::string token);
+
 };
 
 }
