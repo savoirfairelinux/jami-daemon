@@ -120,6 +120,13 @@ void VideoRtpSession::startSender()
                 JAMI_WARN("Can't lock video input");
                 return;
             }
+
+#ifdef __ANDROID__
+            if (auto input1 = std::static_pointer_cast<VideoInput>(videoLocal_)) {
+                input1->setupSink();
+                input1->setFrameSize(localVideoParams_.width, localVideoParams_.height);
+            }
+#endif
         }
 
 

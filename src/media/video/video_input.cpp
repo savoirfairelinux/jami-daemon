@@ -68,9 +68,13 @@ VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
         inputMode_ = VideoInputMode::ManagedByDaemon;
 #endif
     }
+#ifdef __ANDROID__
+    sink_ = Manager::instance().createSinkClient(id_);
+#else
     if (inputMode_ == VideoInputMode::ManagedByDaemon) {
         sink_ = Manager::instance().createSinkClient(id_);
     }
+#endif
 }
 
 VideoInput::~VideoInput()
@@ -589,6 +593,23 @@ void
 VideoInput::setSink(const std::string& sinkId)
 {
     sink_ = Manager::instance().createSinkClient(sinkId);
+}
+
+void VideoInput::setFrameSize(const int width, const int height)
+{
+    /* Signal the client about readable sink */
+    sink_->setFrameSize(width, height);
+}
+
+void VideoInput::setupSink()
+{
+    setup();
+}
+
+void VideoInput::stopSink()
+{
+    detach(sink_.get());
+    sink_->stop();
 }
 
 void
