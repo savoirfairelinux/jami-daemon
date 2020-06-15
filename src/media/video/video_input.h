@@ -74,7 +74,10 @@ public:
     void setPaused(bool paused) {
         paused_ = paused;
     }
-     void setSeekTime(int64_t time);
+    void setSeekTime(int64_t time);
+    void setFrameSize(const int width, const int height);
+    void setupSink();
+    void stopSink();
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
 #if VIDEO_CLIENT_INPUT
