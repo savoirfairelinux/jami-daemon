@@ -69,6 +69,10 @@ public:
     static NameDirectory& instance(const std::string& serverUrl, std::shared_ptr<dht::Logger> l = {});
     static NameDirectory& instance() { return instance(DEFAULT_SERVER_HOST); }
 
+    void setToken(std::string token) {
+        serverToken_ = std::move(token);
+    }
+
     static void lookupUri(const std::string& uri, const std::string& default_server,
                           LookupCallback cb);
 
@@ -83,9 +87,10 @@ private:
     NON_COPYABLE(NameDirectory);
     NameDirectory(NameDirectory&&) = delete;
     NameDirectory& operator=(NameDirectory&&) = delete;
-    constexpr static const char* const DEFAULT_SERVER_HOST = "https://ns.jami.net";
+    constexpr static const char DEFAULT_SERVER_HOST[] = "https://ns.jami.net";
 
     std::string serverUrl_;
+    std::string serverToken_;
     std::string cachePath_;
 
     std::mutex cacheLock_ {};
