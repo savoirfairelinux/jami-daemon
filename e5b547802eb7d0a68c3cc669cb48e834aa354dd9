@@ -1,0 +1,21 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9275cd66_c8deff79",
+        "filename": "src/ftp_server.cpp",
+        "patchSetId": 26
+      },
+      "lineNbr": 195,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-06-16T19:20:31Z",
+      "side": 1,
+      "message": "MAJOR SonarQube violation:\n\n\nformat specifies type \u0027unsigned int\u0027 but the argument has type \u0027std::vector::size_type\u0027 (aka \u0027unsigned long\u0027)\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aclang-diagnostic-format",
+      "revId": "e5b547802eb7d0a68c3cc669cb48e834aa354dd9",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
