@@ -158,6 +158,11 @@ public:
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
     int waitForData(std::chrono::milliseconds timeout, std::error_code&) const override;
 
+    /**
+     * set a callback when receiving data
+     * @note: this callback should take a little time and not block
+     * but you can move it in a thread
+     */
     void setOnRecv(RecvCb&&) override;
 
     std::shared_ptr<IceTransport> underlyingICE() const;
