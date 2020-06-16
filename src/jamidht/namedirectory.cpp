@@ -60,6 +60,8 @@ const std::regex NAME_VALIDATOR {"^[a-zA-Z0-9-_]{3,32}$"};
 
 constexpr size_t MAX_RESPONSE_SIZE {1024 * 1024};
 
+constexpr const char NameDirectory::DEFAULT_SERVER_HOST[];
+
 using Request = dht::http::Request;
 
 void
