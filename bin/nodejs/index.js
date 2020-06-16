@@ -17,27 +17,22 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-
-
 "use strict";
-class RingDaemon{
+
+class JamiDaemon {
     constructor(callbackMap) {
         if(callbackMap){
             this.dring = require("./build/Release/dring.node");
             this.dring.init(callbackMap);
-            var that = this;
         }
     }
 
-    boolToStr(bool){
-        if(bool)
-            return "TRUE";
-        else
-            return "FALSE";
+    boolToStr(bool) {
+        return bool ? "TRUE" : "FALSE";
     }
 
     addAccount(account) {
-        var params = new this.dring.StringMap();
+        const params = new this.dring.StringMap();
         params.set("Account.type", "RING");
         if(account.archivePassword){
             params.set("Account.archivePassword", account.archivePassword);
@@ -89,7 +84,7 @@ class RingDaemon{
         this.dring.addAccount(params);
     }
     stringVectToArr(stringvect){
-        var outputArr = [];
+        const outputArr = [];
         for(var i=0; i<stringvect.size(); i++)
             outputArr.push(stringvect.get(i));
         return outputArr;
@@ -113,4 +108,4 @@ class RingDaemon{
     }
 }
 
-module.exports = RingDaemon;
+module.exports = JamiDaemon;
