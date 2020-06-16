@@ -76,7 +76,14 @@ struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFram
     void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/, const std::shared_ptr<MediaFrame>& m) override
     {
         if (info.isVideo) {
-            auto framePtr = static_cast<VideoFrame*>(m.get());
+            std::shared_ptr<VideoFrame> framePtr;
+#ifdef RING_ACCEL
+            auto desc = av_pix_fmt_desc_get((AVPixelFormat)(std::static_pointer_cast<VideoFrame>(m))->format());
+            if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
+                framePtr = jami::video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(m), AV_PIX_FMT_NV12);
+            else
+#endif
+            framePtr = std::static_pointer_cast<VideoFrame>(m);
             AVFrameSideData* sideData = av_frame_get_side_data(framePtr->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
             int angle = sideData ? -av_display_rotation_get(reinterpret_cast<int32_t*>(sideData->data)) : 0;
             if (angle != rotation_) {
