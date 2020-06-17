@@ -207,6 +207,10 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
         return;
     }
 
+    // Set the default peer addresses.
+    rtp_sock->setDefaultRemoteAddress(send_.addr);
+    rtcp_sock->setDefaultRemoteAddress(send_.rctp_addr);
+
     try {
         if (rtp_sock and rtcp_sock)
             socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));

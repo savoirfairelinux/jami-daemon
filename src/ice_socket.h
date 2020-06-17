@@ -49,6 +49,7 @@ class IceSocket
         ssize_t waitForData(std::chrono::milliseconds timeout);
         void setOnRecv(IceRecvCb cb);
         uint16_t getTransportOverhead();
+        void setDefaultRemoteAddress(IpAddr addr);
 };
 
 /// ICE transport as a GenericSocket.
