@@ -229,6 +229,8 @@ public:
 
     static ICESDP parse_SDP(const std::string& sdp_msg, const IceTransport& ice);
 
+    void setDefaultRemoteAddress(int comp_id, const IpAddr& addr);
+
   private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
