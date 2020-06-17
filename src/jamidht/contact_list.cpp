@@ -76,7 +76,6 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed)
     trust_.setCertificateStatus(hStr, tls::TrustStore::PermissionStatus::ALLOWED);
     saveContacts();
     callbacks_.contactAdded(hStr, c->second.confirmed);
-    //emitSignal<DRing::ConfigurationSignal::ContactAdded>(account_.get().getAccountID(), hStr, c->second.confirmed);
     //syncDevices();
     return true;
 }
@@ -99,7 +98,6 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
         saveTrustRequests();
     saveContacts();
     callbacks_.contactRemoved(uri, ban);
-    //emitSignal<DRing::ConfigurationSignal::ContactRemoved>(account_.get().getAccountID(), uri, ban);
     //syncDevices();
     return true;
 }
@@ -131,6 +129,9 @@ ContactList::setContacts(const std::map<dht::InfoHash, Contact>& contacts)
 {
     contacts_ = contacts;
     saveContacts();
+    // Set contacts is used when creating a new device, so just announce new contacts
+    for (auto& peer : contacts)
+        callbacks_.contactAdded(peer.first.toString(), peer.second.confirmed);
 }
 
 void
