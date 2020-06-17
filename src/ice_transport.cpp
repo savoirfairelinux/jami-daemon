@@ -174,6 +174,9 @@ public:
      */
     void selectUPnPIceCandidates();
 
+    void setDefaultRemoteAddress(int comp_id, const IpAddr& addr);
+    const IpAddr& getDefaultRemoteAddress(int comp_id) const;
+
     std::unique_ptr<upnp::Controller> upnp_;
     std::mutex upnpMutex_;
 
@@ -189,6 +192,9 @@ public:
     std::condition_variable waitDataCv_ = {};
 
     onShutdownCb scb;
+
+    // Default remote adresses
+    std::vector<IpAddr>  iceDefaultRemoteAddr_;
 };
 
 //==============================================================================
@@ -284,6 +290,7 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
     , compIO_(component_count)
     , initiatorSession_(master)
     , thread_()
+    , iceDefaultRemoteAddr_(component_count)
 {
     sip_utils::register_thread();
     if (options.upnpEnable)
@@ -396,6 +403,9 @@ IceTransport::Impl::Impl(const char* name, int component_count, bool master,
                 }
             }
         });
+
+    // Init to invalid adresses
+    iceDefaultRemoteAddr_.reserve(component_count);
 }
 
 IceTransport::Impl::~Impl()
@@ -825,6 +835,19 @@ IceTransport::Impl::selectUPnPIceCandidates()
     }
 }
 
+void
+IceTransport::Impl::setDefaultRemoteAddress(int comp_id, const IpAddr& addr)
+{
+    iceDefaultRemoteAddr_[comp_id] = addr;
+    // The port does not matter. Set it 0 to avoid confusion.
+    iceDefaultRemoteAddr_[comp_id].setPort(0);
+}
+
+const IpAddr&
+IceTransport::Impl::getDefaultRemoteAddress(int comp_id) const
+{
+    return iceDefaultRemoteAddr_[comp_id];
+}
 
 void
 IceTransport::Impl::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
@@ -1031,6 +1054,16 @@ IceTransport::getLocalAddress(unsigned comp_id) const
 IpAddr
 IceTransport::getRemoteAddress(unsigned comp_id) const
 {
+
+    // Return the default remote address if set.
+    // Note that the default remote addresses are the addresses
+    // set in the 'c=' and 'a=rtcp' lines of the received SDP.
+    // See pj_ice_strans_sendto2() for more details.
+
+    if (pimpl_->getDefaultRemoteAddress(comp_id)) {
+        return pimpl_->getDefaultRemoteAddress(comp_id);
+    }
+
     return pimpl_->getRemoteAddress(comp_id);
 }
 
@@ -1046,7 +1079,6 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
     std::vector<std::string> res;
     pj_ice_sess_cand cand[PJ_ARRAY_SIZE(pimpl_->cand_)];
     unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
-
 
     {
         std::lock_guard<std::mutex> lk {pimpl_->iceMutex_};
@@ -1305,6 +1337,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 {
     sip_utils::register_thread();
     auto remote = getRemoteAddress(comp_id);
+
     if (!remote) {
         JAMI_ERR("[ice:%p] can't find remote address for component %d", this, comp_id);
         errno = EINVAL;
@@ -1438,6 +1471,12 @@ IceTransport::parse_SDP(const std::string& sdp_msg, const IceTransport& ice)
         nr++;
     }
     return res;
+}
+
+void
+IceTransport::setDefaultRemoteAddress(int comp_id, const IpAddr& addr)
+{
+    pimpl_->setDefaultRemoteAddress(comp_id, addr);
 }
 
 //==============================================================================
@@ -1607,8 +1646,16 @@ IceSocket::setOnRecv(IceRecvCb cb)
 }
 
 uint16_t
-IceSocket::getTransportOverhead(){
+IceSocket::getTransportOverhead()
+{
     return (ice_transport_->getRemoteAddress(compId_).getFamily() == AF_INET) ? IPV4_HEADER_SIZE : IPV6_HEADER_SIZE;
+}
+
+void
+IceSocket::setDefaultRemoteAddress(const IpAddr& addr)
+{
+    if (ice_transport_)
+        ice_transport_->setDefaultRemoteAddress(compId_, addr);
 }
 
 } // namespace jami

@@ -271,6 +271,9 @@ struct MediaDescription {
 
     /** Endpoint socket address */
     IpAddr addr {};
+    
+    /** RTCP socket address */
+    IpAddr rctp_addr {};
 
     /** RTP */
     std::shared_ptr<AccountCodecInfo> codec {};

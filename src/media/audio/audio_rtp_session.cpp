@@ -149,8 +149,13 @@ AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
     }
 
     try {
-        if (rtp_sock and rtcp_sock)
+        if (rtp_sock and rtcp_sock) {
+
+            rtp_sock->setDefaultRemoteAddress(send_.addr);
+            rtcp_sock->setDefaultRemoteAddress(send_.rctp_addr);
+
             socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
+        }
         else
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
 
