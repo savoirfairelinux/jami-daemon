@@ -2,6 +2,52 @@
   "comments": [
     {
       "key": {
+        "uuid": "a4f12fda_a16438a6",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 178,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-17T17:23:39Z",
+      "side": 1,
+      "message": "* return const reference to avoid copy when possible\n* make method const",
+      "range": {
+        "startLine": 178,
+        "startChar": 4,
+        "endLine": 178,
+        "endChar": 48
+      },
+      "revId": "a8cf6cdd791248c368d25770dee5c3b5a917004b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "80efb0f0_16051a81",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 197,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-17T17:23:39Z",
+      "side": 1,
+      "message": "Is it possible for the default address to be different for each component ?",
+      "range": {
+        "startLine": 197,
+        "startChar": 4,
+        "endLine": 197,
+        "endChar": 47
+      },
+      "revId": "a8cf6cdd791248c368d25770dee5c3b5a917004b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "a5f9d098_fe645024",
         "filename": "src/ice_transport.cpp",
         "patchSetId": 1
@@ -36,6 +82,121 @@
       "writtenOn": "2020-06-17T16:47:41Z",
       "side": 1,
       "message": "Incorrect commit msg format",
+      "revId": "a8cf6cdd791248c368d25770dee5c3b5a917004b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "dbc23b44_7a6b09d2",
+        "filename": "src/ice_transport.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 1059,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-17T17:23:39Z",
+      "side": 1,
+      "message": "* Remote address is retrieved twice (everytime means allocation+free)\n* IpAddr has a bool conversion operator (there should be no need for toString() or isValid())",
+      "range": {
+        "startLine": 1059,
+        "startChar": 8,
+        "endLine": 1059,
+        "endChar": 76
+      },
+      "revId": "a8cf6cdd791248c368d25770dee5c3b5a917004b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0ee5b9ae_f8a4fa56",
+        "filename": "src/ice_transport.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 232,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-17T17:23:39Z",
+      "side": 1,
+      "message": "take const reference or rvalue reference to avoid copies",
+      "range": {
+        "startLine": 232,
+        "startChar": 46,
+        "endLine": 232,
+        "endChar": 52
+      },
+      "revId": "a8cf6cdd791248c368d25770dee5c3b5a917004b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "cff37c43_22c3ea53",
+        "filename": "src/ice_transport.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 233,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-17T17:23:39Z",
+      "side": 1,
+      "message": "not used",
+      "range": {
+        "startLine": 233,
+        "startChar": 4,
+        "endLine": 233,
+        "endChar": 59
+      },
+      "revId": "a8cf6cdd791248c368d25770dee5c3b5a917004b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a69b1c88_896fd4ea",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 153,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-17T17:23:39Z",
+      "side": 1,
+      "message": "In classic SIP calls, ICE might not be used and rtp_sock/rtcp_sock would be null, causing crash (see line 156)",
+      "range": {
+        "startLine": 151,
+        "startChar": 0,
+        "endLine": 153,
+        "endChar": 56
+      },
+      "revId": "a8cf6cdd791248c368d25770dee5c3b5a917004b",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ddca6e0b_bbded80b",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 212,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-17T17:23:39Z",
+      "side": 1,
+      "message": "In classic SIP calls, ICE might not be used and rtp_sock/rtcp_sock would be null, causing crash (see line 215)",
+      "range": {
+        "startLine": 210,
+        "startChar": 0,
+        "endLine": 212,
+        "endChar": 56
+      },
       "revId": "a8cf6cdd791248c368d25770dee5c3b5a917004b",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
