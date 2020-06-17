@@ -597,6 +597,18 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
         descr.addr = std::string(conn->addr.ptr, conn->addr.slen);
         descr.addr.setPort(media->desc.port);
 
+        // Get the "rtcp" address from the SDP if present. Otherwise,
+        // infere it from endpoint (RTP) address.
+        auto attr = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "rtcp", NULL);
+        if (attr) {
+            pjmedia_sdp_rtcp_attr rtcp;
+            auto status = pjmedia_sdp_attr_get_rtcp(attr, &rtcp);
+            if (status == PJ_SUCCESS && rtcp.addr.slen) {
+                descr.rtcp_addr = std::string(rtcp.addr.ptr, rtcp.addr.slen);
+                descr.rtcp_addr.setPort(rtcp.port);
+            }
+        }
+
         descr.holding = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "sendonly", nullptr)
                      || pjmedia_sdp_attr_find2(media->attr_count, media->attr, "inactive", nullptr);
 
