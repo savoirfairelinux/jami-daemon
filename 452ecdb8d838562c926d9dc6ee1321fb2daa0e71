@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c6fff3bb_dc936910",
+        "filename": "src/media/audio/audio_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 156,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-18T00:12:36Z",
+      "side": 1,
+      "message": "rtp_sock/rtcp_sock would always be null after being moved to the new SocketPair",
+      "range": {
+        "startLine": 154,
+        "startChar": 12,
+        "endLine": 156,
+        "endChar": 64
+      },
+      "revId": "452ecdb8d838562c926d9dc6ee1321fb2daa0e71",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "349b8901_99c78e97",
+        "filename": "src/media/video/video_rtp_session.cpp",
+        "patchSetId": 3
+      },
+      "lineNbr": 215,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-18T00:12:36Z",
+      "side": 1,
+      "message": "rtp_sock/rtcp_sock would always be null after being moved to the new SocketPair",
+      "range": {
+        "startLine": 213,
+        "startChar": 0,
+        "endLine": 215,
+        "endChar": 64
+      },
+      "revId": "452ecdb8d838562c926d9dc6ee1321fb2daa0e71",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
