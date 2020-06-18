@@ -158,8 +158,8 @@ MediaRecorder::startRecording()
         // start thread after isRecording_ is set to true
         dht::ThreadPool::computation().run([rec = shared_from_this()] {
             while (rec->isRecording()) {
-                rec->filterAndEncode(rec->videoFilter_.get(), rec->videoIdx_);
-                rec->filterAndEncode(rec->audioFilter_.get(), rec->audioIdx_);
+                rec->encodeFrame(rec->videoIdx_);
+                rec->encodeFrame(rec->audioIdx_);
             }
             rec->flush();
             rec->reset(); // allows recorder to be reused in same call
@@ -171,6 +171,8 @@ MediaRecorder::startRecording()
 void
 MediaRecorder::stopRecording()
 {
+    interrupted_ = true;
+    cv_.notify_all();
     if (isRecording_) {
         JAMI_DBG() << "Stop recording '" << getPath() << "'";
         isRecording_ = false;
@@ -240,10 +242,17 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
 #else
     clone->pointer()->pts -= ms.firstTimestamp;
 #endif
-    if (ms.isVideo)
+
+    std::lock_guard<std::mutex> lk(mutex_);
+    if (ms.isVideo) {
         videoFilter_->feedInput(clone->pointer(), name);
-    else
+        vframeBuff_.emplace_back(videoFilter_->readOutput());
+    }
+    else {
         audioFilter_->feedInput(clone->pointer(), name);
+        aframeBuff_.emplace_back(audioFilter_->readOutput());
+    }
+    cv_.notify_one();
 }
 
 int
@@ -487,14 +496,17 @@ MediaRecorder::flush()
         videoFilter_->flush();
     if (audioFilter_)
         audioFilter_->flush();
-    filterAndEncode(videoFilter_.get(), videoIdx_);
-    filterAndEncode(audioFilter_.get(), audioIdx_);
+    encodeFrame(videoIdx_);
+    encodeFrame(audioIdx_);
     encoder_->flush();
 }
 
 void
 MediaRecorder::reset()
 {
+    std::lock_guard<std::mutex> lk(mutex_);
+    vframeBuff_.clear();
+    aframeBuff_.clear();
     streams_.clear();
     videoIdx_ = audioIdx_ = -1;
     audioOnly_ = false;
@@ -504,16 +516,31 @@ MediaRecorder::reset()
 }
 
 void
-MediaRecorder::filterAndEncode(MediaFilter* filter, int streamIdx)
+MediaRecorder::encodeFrame(int streamIdx)
 {
-    if (filter && streamIdx >= 0) {
-        while (auto frame = filter->readOutput()) {
-            try {
-                std::lock_guard<std::mutex> lk(mutex_);
-                encoder_->encode(frame->pointer(), streamIdx);
-            } catch (const MediaEncoderException& e) {
-                JAMI_ERR() << "Failed to record frame: " << e.what();
+    if (streamIdx >= 0) {
+        std::unique_lock<std::mutex> lk(mutex_);
+        cv_.wait(lk, [this]{ return interrupted_ or not vframeBuff_.empty() or not aframeBuff_.empty();});
+        if (interrupted_) {
+            errno = EINTR;
+            return;
+        }
+        try {
+            if (streamIdx == audioIdx_) {
+                if (aframeBuff_.empty())
+                    return;
+                if (aframeBuff_.front() && aframeBuff_.front()->pointer())
+                    encoder_->encode(aframeBuff_.front()->pointer(), streamIdx);
+                aframeBuff_.pop_front();
+            } else if (streamIdx == videoIdx_) {
+                if (vframeBuff_.empty())
+                    return;
+                if (vframeBuff_.front() && vframeBuff_.front()->pointer())
+                    encoder_->encode(vframeBuff_.front()->pointer(), streamIdx);
+                vframeBuff_.pop_front();
             }
+        } catch (const MediaEncoderException& e) {
+            JAMI_ERR() << "Failed to record frame: " << e.what();
         }
     }
 }
