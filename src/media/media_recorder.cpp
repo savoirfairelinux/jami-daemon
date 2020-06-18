@@ -165,8 +165,26 @@ MediaRecorder::startRecording()
         // start thread after isRecording_ is set to true
         dht::ThreadPool::computation().run([rec = shared_from_this()] {
             while (rec->isRecording()) {
-                rec->filterAndEncode(rec->videoFilter_.get(), rec->videoIdx_);
-                rec->filterAndEncode(rec->audioFilter_.get(), rec->audioIdx_);
+                std::shared_ptr<MediaFrame> frame;
+                // get frame from queue
+                {
+                    std::unique_lock<std::mutex> lk(rec->mutexFrameBuff_);
+                    rec->cv_.wait(lk, [rec]{ return rec->interrupted_ or not rec->frameBuff_.empty();});
+                    if (rec->interrupted_) {
+                        break;
+                    }
+                    frame = std::move(rec->frameBuff_.front());
+                    rec->frameBuff_.pop_front();
+                }
+                try {
+                    // encode frame
+                    if (frame && frame->pointer()) {
+                        bool isVideo = (frame->pointer()->width > 0 && frame->pointer()->height > 0);
+                        rec->encoder_->encode(frame->pointer(), isVideo ? rec->videoIdx_ : rec->audioIdx_);
+                    }
+                } catch (const MediaEncoderException& e) {
+                    JAMI_ERR() << "Failed to record frame: " << e.what();
+                }
             }
             rec->flush();
             rec->reset(); // allows recorder to be reused in same call
@@ -178,6 +196,8 @@ MediaRecorder::startRecording()
 void
 MediaRecorder::stopRecording()
 {
+    interrupted_ = true;
+    cv_.notify_all();
     if (isRecording_) {
         JAMI_DBG() << "Stop recording '" << getPath() << "'";
         isRecording_ = false;
@@ -229,13 +249,15 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     std::unique_ptr<MediaFrame> clone;
     const auto& ms = streams_[name]->info;
     if (ms.isVideo) {
-#ifdef RING_ACCEL
-        clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
-            static_cast<AVPixelFormat>(ms.format));
-#else
-        clone = std::make_unique<MediaFrame>();
-        clone->copyFrom(*frame);
-#endif
+        auto desc = av_pix_fmt_desc_get((AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame))->format());
+        if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
+            clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
+                static_cast<AVPixelFormat>(ms.format));
+        }
+        else {
+            clone = std::make_unique<MediaFrame>();
+            clone->copyFrom(*frame);
+        }
     } else {
         clone = std::make_unique<MediaFrame>();
         clone->copyFrom(*frame);
@@ -247,10 +269,24 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
 #else
     clone->pointer()->pts -= ms.firstTimestamp;
 #endif
-    if (ms.isVideo)
+
+    std::unique_ptr<MediaFrame> filteredFrame;
+    if (ms.isVideo) {
+        std::lock_guard<std::mutex> lk(mutexFilterVideo_);
         videoFilter_->feedInput(clone->pointer(), name);
-    else
+        filteredFrame = videoFilter_->readOutput();
+    }
+    else {
+        std::lock_guard<std::mutex> lk(mutexFilterAudio_);
         audioFilter_->feedInput(clone->pointer(), name);
+        filteredFrame = audioFilter_->readOutput();
+    }
+
+    if (filteredFrame) {
+        std::lock_guard<std::mutex> lk(mutexFrameBuff_);
+        frameBuff_.emplace_back(std::move(filteredFrame));
+        cv_.notify_one();
+    }
 }
 
 int
@@ -489,40 +525,31 @@ MediaRecorder::buildAudioFilter(const std::vector<MediaStream>& peers, const Med
 void
 MediaRecorder::flush()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
-    if (videoFilter_)
+    if (videoFilter_) {
+        std::lock_guard<std::mutex> lk(mutexFilterVideo_);
         videoFilter_->flush();
-    if (audioFilter_)
+    }
+
+    if (audioFilter_) {
+        std::lock_guard<std::mutex> lk(mutexFilterAudio_);
         audioFilter_->flush();
-    filterAndEncode(videoFilter_.get(), videoIdx_);
-    filterAndEncode(audioFilter_.get(), audioIdx_);
+    }
     encoder_->flush();
 }
 
 void
 MediaRecorder::reset()
 {
+    {
+        std::lock_guard<std::mutex> lk(mutexFrameBuff_);
+        frameBuff_.clear();
+    }
     streams_.clear();
     videoIdx_ = audioIdx_ = -1;
     audioOnly_ = false;
     videoFilter_.reset();
     audioFilter_.reset();
     encoder_.reset();
-}
-
-void
-MediaRecorder::filterAndEncode(MediaFilter* filter, int streamIdx)
-{
-    if (filter && streamIdx >= 0) {
-        while (auto frame = filter->readOutput()) {
-            try {
-                std::lock_guard<std::mutex> lk(mutex_);
-                encoder_->encode(frame->pointer(), streamIdx);
-            } catch (const MediaEncoderException& e) {
-                JAMI_ERR() << "Failed to record frame: " << e.what();
-            }
-        }
-    }
 }
 
 } // namespace jami
