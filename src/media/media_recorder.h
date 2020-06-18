@@ -35,6 +35,8 @@
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <condition_variable>
+#include <atomic>
 
 namespace jami {
 
@@ -129,7 +131,8 @@ private:
     MediaStream setupAudioOutput();
     std::string buildAudioFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
 
-    std::mutex mutex_; // protect against concurrent file writes
+    std::mutex mutexVideo_;
+    std::mutex mutexAudio_;
 
     std::map<std::string, std::unique_ptr<StreamObserver>> streams_;
 
@@ -150,7 +153,12 @@ private:
     bool isRecording_ = false;
     bool audioOnly_ = false;
 
-    void filterAndEncode(MediaFilter* filter, int streamIdx);
+    void filterAndEncodeVideo(int streamIdx);
+    void filterAndEncodeAudio(int streamIdx);
+
+    std::condition_variable cvAudio_;
+    std::condition_variable cvVideo_;
+    std::atomic_bool interrupted_ {false};
 };
 
 }; // namespace jami
