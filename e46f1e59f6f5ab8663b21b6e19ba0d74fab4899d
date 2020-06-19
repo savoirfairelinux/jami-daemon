@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "8ae0f7e6_92534eb9",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 249,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-19T14:00:13Z",
+      "side": 1,
+      "message": "depending on the filters, not every input will generate output.\nCheck the result of readOutput before appending to queue",
+      "range": {
+        "startLine": 249,
+        "startChar": 33,
+        "endLine": 249,
+        "endChar": 59
+      },
+      "revId": "e46f1e59f6f5ab8663b21b6e19ba0d74fab4899d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9a099686_825b2927",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 253,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-19T14:00:13Z",
+      "side": 1,
+      "message": "depending on the filters, not every input will generate output.\nCheck the result of readOutput before appending to queue",
+      "range": {
+        "startLine": 252,
+        "startChar": 8,
+        "endLine": 253,
+        "endChar": 61
+      },
+      "revId": "e46f1e59f6f5ab8663b21b6e19ba0d74fab4899d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ed596271_2e58aca1",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 523,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-19T14:00:13Z",
+      "side": 1,
+      "message": "Either wait in the computation pool for any of the queues to be non-empty, or just wait for the relevant queue here (possibly passed as argument)",
+      "range": {
+        "startLine": 523,
+        "startChar": 8,
+        "endLine": 523,
+        "endChar": 106
+      },
+      "revId": "e46f1e59f6f5ab8663b21b6e19ba0d74fab4899d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "4a49b844_013051df",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 525,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-19T14:00:13Z",
+      "side": 1,
+      "message": "not used",
+      "range": {
+        "startLine": 525,
+        "startChar": 12,
+        "endLine": 525,
+        "endChar": 26
+      },
+      "revId": "e46f1e59f6f5ab8663b21b6e19ba0d74fab4899d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
