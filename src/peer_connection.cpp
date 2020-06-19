@@ -131,6 +131,7 @@ public:
     std::unique_ptr<tls::TlsSession> tls;
     std::function<bool(const dht::crypto::Certificate&)> peerCertificateCheckFunc;
     dht::crypto::Certificate peerCertificate;
+    std::mutex cbMtx_ {};
     OnStateChangeCb onStateChangeCb_;
 };
 
@@ -158,9 +159,9 @@ TlsTurnEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 void
 TlsTurnEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
 {
-    if (onStateChangeCb_)
-        if (!onStateChangeCb_(state))
-            onStateChangeCb_ = {};
+    std::lock_guard<std::mutex> lk(cbMtx_);
+    if (onStateChangeCb_ && !onStateChangeCb_(state))
+        onStateChangeCb_ = {};
 }
 
 void
@@ -235,6 +236,7 @@ TlsTurnEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_code&
 void
 TlsTurnEndpoint::setOnStateChange(std::function<bool(tls::TlsSessionState state)>&& cb)
 {
+    std::lock_guard<std::mutex> lk(pimpl_->cbMtx_);
     pimpl_->onStateChangeCb_ = std::move(cb);
 }
 
@@ -459,8 +461,11 @@ public:
     }
 
     ~Impl() {
-        onStateChangeCb_ = {};
-        onReadyCb_ = {};
+        {
+            std::lock_guard<std::mutex> lk(cbMtx_);
+            onStateChangeCb_ = {};
+            onReadyCb_ = {};
+        }
         tls.reset();
     }
 
@@ -470,6 +475,7 @@ public:
     void onTlsRxData(std::vector<uint8_t>&&);
     void onTlsCertificatesUpdate(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int);
 
+    std::mutex cbMtx_ {};
     OnStateChangeCb onStateChangeCb_;
     dht::crypto::Certificate null_cert;
     std::function<bool(const dht::crypto::Certificate &)> peerCertificateCheckFunc;
@@ -510,15 +516,15 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
 void
 TlsSocketEndpoint::Impl::onTlsStateChange(tls::TlsSessionState state)
 {
+    std::lock_guard<std::mutex> lk(cbMtx_);
     if ((state == tls::TlsSessionState::SHUTDOWN || state == tls::TlsSessionState::ESTABLISHED)
         && !isReady_) {
         isReady_ = true;
         if (onReadyCb_)
             onReadyCb_(state == tls::TlsSessionState::ESTABLISHED);
     }
-    if (onStateChangeCb_)
-        if (!onStateChangeCb_(state))
-            onStateChangeCb_ = {};
+    if (onStateChangeCb_ && !onStateChangeCb_(state))
+        onStateChangeCb_ = {};
 }
 
 void
@@ -611,12 +617,14 @@ TlsSocketEndpoint::waitForData(std::chrono::milliseconds timeout, std::error_cod
 void
 TlsSocketEndpoint::setOnStateChange(std::function<bool(tls::TlsSessionState state)>&& cb)
 {
+    std::lock_guard<std::mutex> lk(pimpl_->cbMtx_);
     pimpl_->onStateChangeCb_ = std::move(cb);
 }
 
 void
 TlsSocketEndpoint::setOnReady(std::function<void(bool ok)>&& cb)
 {
+    std::lock_guard<std::mutex> lk(pimpl_->cbMtx_);
     pimpl_->onReadyCb_ = std::move(cb);
 }
 
