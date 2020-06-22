@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "aa7334da_b46bf884",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 4
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-22T19:55:36Z",
+      "side": 1,
+      "message": "while (rec-\u003eisRecording()) {\n    std::shared_ptr\u003cMediaFrame\u003e frame;\n\n    // get frame from queue\n    {\n        std::unique_lock\u003cstd::mutex\u003e lk(rec-\u003emutex_);\n        rec-\u003ecv_.wait(lk, [rec]{ return rec-\u003einterrupted_ or not rec-\u003evframeBuff_.empty();});\n        if (rec-\u003einterrupted_) {\n            break;\n        }\n        frame \u003d std::move(frameBuff.front());\n        frameBuff.pop_front();\n    }\n\n    // encode frame\n    rec-\u003eencodeFrame(frame, frame-\u003eisAudio() ? rec-\u003eaudioIdx_ : rec-\u003evideoIdx_);\n}",
+      "range": {
+        "startLine": 168,
+        "startChar": 0,
+        "endLine": 174,
+        "endChar": 67
+      },
+      "revId": "b494b05416bfc66748deac59e3fb0c5af7e107a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "aa5e3abd_2862869d",
+        "filename": "src/media/media_recorder.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 161,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-22T19:55:36Z",
+      "side": 1,
+      "message": "single queue ?",
+      "range": {
+        "startLine": 159,
+        "startChar": 0,
+        "endLine": 161,
+        "endChar": 56
+      },
+      "revId": "b494b05416bfc66748deac59e3fb0c5af7e107a2",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
