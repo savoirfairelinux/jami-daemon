@@ -16,4 +16,4 @@ list (APPEND Source_Files__plugin
       "${CMAKE_CURRENT_SOURCE_DIR}/streamdata.h"
 )
 
-set (Source_Files__client ${Source_Files__client} PARENT_SCOPE)
+set (Source_Files__plugin ${Source_Files__plugin} PARENT_SCOPE)
