@@ -32,7 +32,6 @@ except Exception as e:
 
 from threading import Thread
 from random import shuffle
-from errors import *
 
 ALL_TEST_NAME = {
         'TestConfig': 'testConfig',
@@ -56,7 +55,7 @@ class DRingTester():
     codecAudio = ''
     codecVideo = ''
 
-    def testConfig(self, ctrl):
+    def testConfig(self, ctrl, nbIteration, delay):
         print("**[BEGIN] test config")
         allCodecs = ctrl.getAllCodecs()
         if len(allCodecs) == 0:

@@ -508,10 +508,20 @@ class DRingCtrl(Thread):
 
         return [str(x) for x in self.callmanager.getCallList()]
 
+    def getAllConferences(self):
+        """Return all conferences handled by the daemon"""
+
+        return [str(x) for x in self.callmanager.getConferenceList()]
+
     def getCallDetails(self, callid):
         """Return informations on this call if exists"""
 
         return self.callmanager.getCallDetails(callid)
+
+    def getConferenceDetails(self, confid):
+        """Return informations on this conference if exists"""
+
+        return self.callmanager.getConferenceDetails(confid)
 
     def printClientCallList(self):
         print("Client active call list:")
@@ -611,6 +621,22 @@ class DRingCtrl(Thread):
 
         self.callmanager.unhold(callid)
 
+    def SetAudioOutputDevice(self, index):
+        self.configurationmanager.setAudioOutputDevice(int (index ))
+
+
+    def SetAudioInputDevice(self, index):
+        self.configurationmanager.setAudioInputDevice(int (index ))
+
+
+    def ListAudioDevices(self):
+        outs = self.configurationmanager.getAudioOutputDeviceList()
+        ins = self.configurationmanager.getAudioInputDeviceList()
+        return {
+            "outputDevices": list(outs),
+            "inputDevices": list(ins)
+        }
+
 
     def Dtmf(self, key):
         """Send a DTMF"""
@@ -633,7 +659,7 @@ class DRingCtrl(Thread):
         """ Create a conference given the two call ids """
 
         self.callmanager.joinParticipant(call1Id, call2Id)
-
+        return self.callmanager.getConferenceId(call1Id)
 
     def hangupConference(self, confId):
         """ Hang up each call for this conference """

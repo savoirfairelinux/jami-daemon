@@ -76,6 +76,10 @@ if __name__ == "__main__":
                         metavar='<codec list>', type=str)
 
     parser.add_argument('--get-call-list', help='Get call list', action='store_true')
+    parser.add_argument('--get-call-details', help='Get call details', metavar='<call-id>')
+    parser.add_argument('--get-conference-list', help='Get conference list', action='store_true')
+    parser.add_argument('--get-conference-details', help='Get conference details', metavar='<conference-id>')
+
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--call', help='Call to number', metavar='<destination>')
     #group.add_argument('--transfer', help='Transfer active call', metavar='<destination>')
@@ -88,6 +92,12 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--hold', help='Hold the call', metavar='<call>')
     group.add_argument('--unhold', help='Unhold the call', metavar='<call>')
+
+    parser.add_argument('--list-audio-devices', help='List audio input and output devices', action='store_true')
+    parser.add_argument('--set-input', help='Set active input audio device',
+                        metavar='<device-index>', type=int)
+    parser.add_argument('--set-output', help='Set active output audio device',
+                        metavar='<device-index>', type=int)
 
     parser.add_argument('--dtmf', help='Send DTMF', metavar='<key>')
     parser.add_argument('--toggle-video', help='Launch toggle video  tests', action='store_true')
@@ -159,6 +169,24 @@ if __name__ == "__main__":
         for call in ctrl.getAllCalls():
             print(call)
 
+    if args.get_call_details:
+        details = ctrl.getCallDetails(args.get_call_details)
+        for k,detail in details.items():
+            print(k + ": " + detail)
+
+
+    if args.get_conference_list:
+        for conference in ctrl.getAllConferences():
+            print(conference)
+
+    if args.get_conference_details:
+        details = ctrl.getConferenceDetails(args.get_conference_details)
+        if details is None:
+            print("Something went wrong, is conference still active?")
+            sys.exit(1)
+        for k,detail in details.items():
+            print(k + ": " + detail)
+
     if args.call:
         ctrl.Call(args.call)
 
@@ -176,6 +204,21 @@ if __name__ == "__main__":
 
     if args.unhold:
         ctrl.UnHold(args.unhold)
+
+    if args.list_audio_devices:
+        allDevices = ctrl.ListAudioDevices()
+        print("Output Devices")
+        for index,device in enumerate(allDevices["outputDevices"]):
+            print(f"{index}: {device}")
+        print("Input Devices")
+        for index,device in enumerate(allDevices["inputDevices"]):
+            print(f"{index}: {device}")
+
+    if args.set_input is not None:
+        print(ctrl.SetAudioInputDevice(args.set_input))
+
+    if args.set_output:
+        print(ctrl.SetAudioOutputDevice(args.set_output))
 
     if args.dtmf:
         ctrl.Dtmf(args.dtmf)
