@@ -42,13 +42,6 @@ class VideoMixer;
 class VideoSender;
 class VideoReceiveThread;
 
-struct RTCPInfo {
-    float packetLoss;
-    unsigned int jitter;
-    unsigned int nb_sample;
-    float latency;
-};
-
 struct VideoBitrateInfo {
     unsigned videoBitrateCurrent;
     unsigned videoBitrateMin;
@@ -110,6 +103,11 @@ public:
         return receiveThread_;
     }
 
+    void setupVideoBitrateInfo();
+    VideoBitrateInfo getVideoBitrateInfo() { return videoBitrateInfo_; }
+    void setNewBitrate(unsigned int newBR);
+    jami::AccountVideoCodecInfo* getCodec() { return send_.codec; }
+
 private:
     void setupConferenceVideoPipeline(Conference& conference);
     void setupVideoPipeline();
@@ -130,19 +128,11 @@ private:
 
     std::function<void (void)> requestKeyFrameCallback_;
 
-    bool check_RCTP_Info_RR(RTCPInfo&);
-    bool check_RCTP_Info_REMB(uint64_t*);
     unsigned getLowerQuality();
     unsigned getLowerBitrate();
     void adaptQualityAndBitrate();
     void storeVideoBitrateInfo();
-    void setupVideoBitrateInfo();
     void checkReceiver();
-    float getPonderateLoss(float lastLoss);
-    void delayMonitor(int gradient, int deltaT);
-    void dropProcessing(RTCPInfo* rtcpi);
-    void delayProcessing(int br);
-    void setNewBitrate(unsigned int newBR);
 
     // no packet loss can be calculated as no data in input
     static constexpr float NO_INFO_CALCULATED {-1.0};
@@ -153,7 +143,6 @@ private:
     std::list<unsigned> histoBitrate_ {};
     std::list<unsigned> histoJitter_ {};
     std::list<int> histoDelay_ {};
-    std::list< std::pair<time_point, float> > histoLoss_;
     // max size of quality and bitrate historic
 
     // 5 tries in a row
@@ -162,21 +151,10 @@ private:
     // packet loss threshold
     static constexpr float PACKET_LOSS_THRESHOLD {1.0};
 
-    InterruptedThreadLoop rtcpCheckerThread_;
-    void processRtcpChecker();
-
     std::function<void(int)> changeOrientationCallback_;
 
     // interval in seconds between RTCP checkings
     std::chrono::seconds rtcp_checking_interval {4};
-
-    time_point lastMediaRestart_ {time_point::min()};
-    time_point last_REMB_inc_ {time_point::min()};
-    time_point last_REMB_dec_ {time_point::min()};
-
-    unsigned remb_dec_cnt_ {0};
-
-    std::unique_ptr<CongestionControl> cc;
 
     std::function<void(void)> cbKeyFrameRequest_;
 };

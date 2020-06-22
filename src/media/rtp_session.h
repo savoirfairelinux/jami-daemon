@@ -66,10 +66,11 @@ public:
     virtual void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
 
     std::shared_ptr<AccountCodecInfo> getCodec() const { return send_.codec; }
+    std::shared_ptr<SocketPair> getSocket() { return socketPair_; }
 
 protected:
     std::recursive_mutex mutex_;
-    std::unique_ptr<SocketPair> socketPair_;
+    std::shared_ptr<SocketPair> socketPair_;
     const std::string callID_;
 
     MediaDescription send_;

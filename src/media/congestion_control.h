@@ -23,21 +23,34 @@
 
 #include <vector>
 #include <cstdint>
+#include <memory>
 
 #include "socket_pair.h"
+#include "audio/audio_rtp_session.h"
+#include "video/video_rtp_session.h"
 
 namespace jami {
 
 enum BandwidthUsage {
-  bwNormal = 0,
-  bwUnderusing = 1,
-  bwOverusing = 2
+    bwNormal = 0,
+    bwUnderusing = 1,
+    bwOverusing = 2
+};
+
+struct RTCPInfo {
+    float packetLoss;
+    unsigned int jitter;
+    unsigned int nb_sample;
+    float latency;
 };
 
 // Receiver Estimated Max Bitrate (REMB) (draft-alvestrand-rmcat-remb).
 class CongestionControl {
+using VideoRtpSession = video::VideoRtpSession;
+
 public:
     CongestionControl();
+    CongestionControl(std::shared_ptr<AudioRtpSession> artp, std::shared_ptr<VideoRtpSession> vrtp);
     ~CongestionControl();
 
     uint64_t parseREMB(const rtcpREMBHeader &packet);
@@ -56,6 +69,13 @@ private:
     float get_sys_var_p(float k, float q);
     float get_var_n(int d_m);
     float get_residual_z(float d_m);
+    void delayMonitor(int gradient, int deltaT);
+    bool check_RCTP_Info_REMB(uint64_t*);
+    void adaptQualityAndBitrate();
+    void delayProcessing(int br);
+    bool check_RCTP_Info_RR(RTCPInfo&);
+    void dropProcessing(RTCPInfo* rtcpi);
+    float getPonderateLoss(float lastLoss);
 
     float last_estimate_m_ {0.0f};
     float last_var_p_ {0.1f};
@@ -67,6 +87,20 @@ private:
     time_point t0_overuse {time_point::min()};
 
     BandwidthUsage last_state_;
+
+    std::shared_ptr<AudioRtpSession> artp_;
+    std::shared_ptr<VideoRtpSession> vrtp_;
+
+    time_point last_REMB_inc_ {time_point::min()};
+    time_point last_REMB_dec_ {time_point::min()};
+    time_point lastMediaRestart_ {time_point::min()};
+
+    unsigned remb_dec_cnt_ {0};
+    std::list< std::pair<time_point, float> > histoLoss_;
+
+    InterruptedThreadLoop rtcpCheckerThread_;
+    void processRtcpChecker();
+
 
 };
 

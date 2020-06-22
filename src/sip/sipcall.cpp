@@ -41,6 +41,7 @@
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
 #include "ice_transport.h"
+#include "congestion_control.h"
 #ifdef ENABLE_PLUGIN
 //Plugin manager
 #include "plugin/jamipluginmanager.h"
@@ -95,6 +96,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 #ifdef ENABLE_VIDEO
     // The ID is used to associate video streams to calls
     , videortp_(new video::VideoRtpSession(id, getVideoSettings()))
+    , cc_(std::make_unique<CongestionControl>(avformatrtp_, videortp_))
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
     , sdp_(new Sdp(id))

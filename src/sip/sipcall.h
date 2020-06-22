@@ -317,13 +317,13 @@ private:
         return std::weak_ptr<SIPCall>(shared());
     }
 
-    std::unique_ptr<AudioRtpSession> avformatrtp_;
+    std::shared_ptr<AudioRtpSession> avformatrtp_;
 
 #ifdef ENABLE_VIDEO
     /**
      * Video Rtp Session factory
      */
-    std::unique_ptr<video::VideoRtpSession> videortp_;
+    std::shared_ptr<video::VideoRtpSession> videortp_;
 #endif
 
     std::string mediaInput_;
@@ -380,6 +380,8 @@ private:
 
     OnReadyCb holdCb_ {};
     OnReadyCb offHoldCb_ {};
+
+    std::unique_ptr<CongestionControl> cc_;
 };
 
 // Helpers
