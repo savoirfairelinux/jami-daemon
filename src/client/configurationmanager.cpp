@@ -1034,6 +1034,27 @@ bool lookupAddress(const std::string& account, const std::string& nameserver, co
     return false;
 }
 
+bool searchName(const std::string& account, const std::string& nameserver, const std::string& query)
+{
+#if HAVE_RINGNS
+    if (account.empty()) {
+        auto cb = [query](const jami::NameDirectory::SearchResult& result, jami::NameDirectory::Response response) {
+            jami::emitSignal<DRing::ConfigurationSignal::SearchEnded>("", (int)response, query, result);
+        };
+        if (nameserver.empty())
+            jami::NameDirectory::searchName(query, cb);
+        else
+            jami::NameDirectory::instance(nameserver).searchName(query, cb);
+        return true;
+    } else if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
+        acc->searchName(name);
+        return true;
+    }
+#endif
+    return false;
+
+}
+
 bool registerName(const std::string& account, const std::string& password, const std::string& name)
 {
 #if HAVE_RINGNS

@@ -61,6 +61,8 @@ public:
                                         };
 
     using LookupCallback = std::function<void(const std::string& result, Response response)>;
+    using SearchResult = std::vector<std::map<std::string, std::string>>;
+    using SearchCallback = std::function<void(const SearchResult& result, Response response)>;
     using RegistrationCallback = std::function<void(RegistrationResponse response)>;
 
     NameDirectory(const std::string& serverUrl, std::shared_ptr<dht::Logger> l = {});
@@ -78,6 +80,7 @@ public:
 
     void lookupAddress(const std::string& addr, LookupCallback cb);
     void lookupName(const std::string& name, LookupCallback cb);
+    void searchName(const std::string& name, SearchCallback cb);
 
     void registerName(const std::string& addr, const std::string& name,
                       const std::string& owner, RegistrationCallback cb,
