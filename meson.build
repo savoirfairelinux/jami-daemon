@@ -1,5 +1,5 @@
 project('jami-daemon', ['c', 'cpp'],
-        version: '9.1.0',
+        version: '9.2.0',
         license: 'GPL3+',
         default_options: ['cpp_std=gnu++14', 'buildtype=debugoptimized'],
         meson_version:'>= 0.54'
@@ -36,20 +36,6 @@ if not depyamlcpp.found()
         '-DYAML_CPP_BUILD_CONTRIB=OFF',
         '-DBUILD_SHARED_LIBS=OFF'
     ]).dependency('yaml-cpp')
-endif
-
-deplibarchive = dependency('libarchive', version: '>= 3.4.0', required: false)
-if not deplibarchive.found()
-    deplibarchive = modcmake.subproject('libarchive', cmake_options: [
-        '-DCMAKE_BUILD_TYPE=Release',
-        '-DCMAKE_INSTALL_LIBDIR=lib',
-        '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
-        '-DENABLE_TEST=OFF',
-        '-DENABLE_TAR=OFF',
-        '-DENABLE_CPIO=OFF',
-        '-DENABLE_CAT=OFF',
-        '-DENABLE_LIBXML2=OFF'
-    ]).dependency('archive_static')
 endif
 
 depjsoncpp = dependency('jsoncpp', version: '>= 1.6.5',
@@ -128,6 +114,24 @@ if get_option('video')
         conf.set('RING_ACCEL', true)
         conf.set('ENABLE_VIDEOTOOLBOX', host_machine.system() == 'darwin')
     endif
+endif
+
+if get_option('plugins')
+    conf.set('ENABLE_PLUGIN', true)
+    deplibarchive = dependency('libarchive', version: '>= 3.4.0', required: false)
+    if not deplibarchive.found()
+        deplibarchive = modcmake.subproject('libarchive', cmake_options: [
+            '-DCMAKE_BUILD_TYPE=Release',
+            '-DCMAKE_POSITION_INDEPENDENT_CODE=ON',
+            '-DENABLE_TEST=OFF',
+            '-DENABLE_TAR=OFF',
+            '-DENABLE_CPIO=OFF',
+            '-DENABLE_CAT=OFF',
+            '-DENABLE_LIBXML2=OFF'
+        ]).dependency('archive_static')
+    endif
+else
+    conf.set('ENABLE_PLUGIN', false)
 endif
 
 conf.set10('HAVE_COREAUDIO', host_machine.system() == 'darwin')
