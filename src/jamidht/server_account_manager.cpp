@@ -32,11 +32,11 @@ namespace jami {
 
 using Request = dht::http::Request;
 
-static const std::string PATH_AUTH = "/api/auth";
+static const std::string PATH_LOGIN = "/api/login";
+static const std::string PATH_AUTH =  "/api/auth";
 static const std::string PATH_DEVICE = PATH_AUTH + "/device";
 static const std::string PATH_DEVICES = PATH_AUTH + "/devices";
-
-constexpr const char* const HTTPS_PROTO {"https"};
+static const std::string PATH_SEARCH = PATH_AUTH + "/directory/search";
 
 ServerAccountManager::ServerAccountManager(
     const std::string& path,
@@ -54,8 +54,11 @@ ServerAccountManager::ServerAccountManager(
 void
 ServerAccountManager::setHeaderFields(Request& request){
     request.set_header_field(restinio::http_field_t::user_agent, "Jami");
-    request.set_header_field(restinio::http_field_t::accept, "application/json");
-    request.set_header_field(restinio::http_field_t::content_type, "application/json");
+}
+
+void
+ServerAccountManager::setDeviceAuthHeaderFields(Request& request) {
+    request.set_header_field(restinio::http_field_t::authorization, "Bearer " + deviceToken_);
 }
 
 void
@@ -81,27 +84,19 @@ ServerAccountManager::initAuthentication(
     onChange_ = std::move(onChange);
     const std::string url = managerHostname_ + PATH_DEVICE;
     JAMI_WARN("[Auth] authentication with: %s to %s", ctx->credentials->username.c_str(), url.c_str());
-    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
-    auto reqid = request->id();
-    request->set_method(restinio::http_method_post());
-    request->set_auth(ctx->credentials->username, ctx->credentials->password);
-    requests_[reqid] = request;
 
-    dht::ThreadPool::computation().run([onAsync = onAsync_, ctx, request, reqid]{
-        onAsync([ctx, request, reqid, onAsync](AccountManager& accountManager){
+    dht::ThreadPool::computation().run([onAsync = onAsync_, ctx, url]{
+        onAsync([&](AccountManager& accountManager){
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
+            Json::Value body;
             {
                 std::stringstream ss;
                 auto csr = ctx->request.get()->toString();
-                string_replace(csr, "\n", "\\n");
-                string_replace(csr, "\r", "\\r");
-                ss << "{\"csr\":\"" << csr  << "\", \"deviceName\":\"" << ctx->deviceName  << "\"}";
-                JAMI_WARN("[Auth] Sending request: %s", csr.c_str());
-                request->set_body(ss.str());
+                body["csr"] = csr;
+                body["deviceName"] = ctx->deviceName;
             }
-            this_.setHeaderFields(*request);
-            request->add_on_done_callback([reqid, request, ctx, onAsync]
-                                                (const dht::http::Response& response){
+            auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, body, [ctx, onAsync]
+                                                (Json::Value json, const dht::http::Response& response){
                 JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
                 if (response.status_code == 0)
                     ctx->onFailure(AuthError::SERVER_ERROR, "Can't connect to server");
@@ -112,22 +107,8 @@ ServerAccountManager::initAuthentication(
                 else {
                     do {
                         try {
-                            Json::Value json;
-                            std::string err;
-                            Json::CharReaderBuilder rbuilder;
-                            auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                            if (!reader->parse(response.body.data(), response.body.data() + response.body.size(), &json, &err)){
-                                JAMI_ERR("[Auth] Can't parse server response: %s", err.c_str());
-                                ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse server response");
-                                break;
-                            }
                             JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
-
-                            auto certStr = json["certificateChain"].asString();
-                            string_replace(certStr, "\\n", "\n");
-                            string_replace(certStr, "\\r", "\r");
-                            auto cert = std::make_shared<dht::crypto::Certificate>(certStr);
-
+                            auto cert = std::make_shared<dht::crypto::Certificate>(json["certificateChain"].asString());
                             auto accountCert = cert->issuer;
                             if (not accountCert) {
                                 JAMI_ERR("[Auth] Can't parse certificate: no issuer");
@@ -136,18 +117,14 @@ ServerAccountManager::initAuthentication(
                             }
                             auto receipt = json["deviceReceipt"].asString();
                             Json::Value receiptJson;
-                            auto receiptReader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                            std::string err;
+                            auto receiptReader = std::unique_ptr<Json::CharReader>(Json::CharReaderBuilder{}.newCharReader());
                             if (!receiptReader->parse(receipt.data(), receipt.data() + receipt.size(), &receiptJson, &err)){
                                 JAMI_ERR("[Auth] Can't parse receipt from server: %s", err.c_str());
                                 ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse receipt from server");
                                 break;
                             }
-                            onAsync([reqid, ctx,
-                                        json=std::move(json),
-                                        receiptJson=std::move(receiptJson),
-                                        cert,
-                                        accountCert,
-                                        receipt=std::move(receipt)] (AccountManager& accountManager) mutable
+                            onAsync([&] (AccountManager& accountManager) mutable
                             {
                                 auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
                                 auto receiptSignature = base64::decode(json["receiptSignature"].asString());
@@ -184,6 +161,9 @@ ServerAccountManager::initAuthentication(
                                 if (json.isMember("userPhoto")) {
                                     this_.info_->photo = json["userPhoto"].asString();
                                 }
+                                if (json.isMember("token")) {
+                                    this_.setDeviceToken(json["token"].asString());
+                                }
 
                                 ctx->onSuccess(*this_.info_, std::move(config), std::move(receipt), std::move(receiptSignature));
                                 this_.syncDevices();
@@ -195,42 +175,107 @@ ServerAccountManager::initAuthentication(
                         }
                     } while (false);
                 }
-                onAsync([reqid](AccountManager& accountManager){
+
+                onAsync([&](AccountManager& accountManager){
                     auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-                    this_.requests_.erase(reqid);
+                    if (auto req = response.request.lock())
+                        this_.requests_.erase(req);
                 });
-            });
+            }, this_.logger_);
+            request->set_auth(ctx->credentials->username, ctx->credentials->password);
+            this_.setHeaderFields(*request);
+            this_.requests_.emplace(request);
             request->send();
         });
     });
 }
 
 void
+ServerAccountManager::authenticateDevice() {
+    const std::string url = managerHostname_ + PATH_LOGIN;
+    JAMI_WARN("[Auth] getting a device token: %s", url.c_str());
+    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, Json::Value{Json::objectValue}, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
+        onAsync([&] (AccountManager& accountManager) {
+            auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
+            if (response.status_code >= 200 && response.status_code < 300) {
+                JAMI_WARN("[Auth] Got server response: %d %s", response.status_code, response.body.c_str());
+                this_.setDeviceToken(json["access_token"].asString());
+            }
+            if (auto req = response.request.lock())
+                this_.requests_.erase(req);
+        });
+    }, logger_);
+    request->set_identity(info_->identity);
+    request->set_certificate_authority(info_->identity.second->issuer->issuer);
+    setHeaderFields(*request);
+    requests_.emplace(request);
+    request->send();
+}
+
+void
+ServerAccountManager::setDeviceToken(std::string token) {
+    deviceToken_ = std::move(token);
+    nameDir_.get().setToken(deviceToken_);
+    if (not deviceToken_.empty()) {
+        JAMI_WARN("[Auth] Got device token, handling: %zu pending requests", pendingDeviceRequests_.size());
+        while (not pendingDeviceRequests_.empty()) {
+            auto req = std::move(pendingDeviceRequests_.front());
+            pendingDeviceRequests_.pop();
+            setDeviceAuthHeaderFields(*req);
+            requests_.emplace(req);
+            req->send();
+        }
+    }
+}
+
+void
+ServerAccountManager::setAccountToken(std::string token) {
+    accountToken_ = std::move(token);
+    if (not deviceToken_.empty()) {
+        while (not pendingAccountRequests_.empty()) {
+            JAMI_WARN("[Auth] Got account token, handling: %zu pending requests", pendingAccountRequests_.size());
+            auto req = std::move(pendingAccountRequests_.front());
+            pendingAccountRequests_.pop();
+            requests_.emplace(req);
+            req->send();
+        }
+    }
+}
+
+void ServerAccountManager::sendDeviceRequest(const std::shared_ptr<dht::http::Request>& req)
+{
+    if (not deviceToken_.empty()) {
+        setDeviceAuthHeaderFields(*req);
+        requests_.emplace(req);
+        req->send();
+    } else {
+        if (pendingDeviceRequests_.empty())
+            authenticateDevice();
+        pendingDeviceRequests_.emplace(req);
+    }
+}
+
+void ServerAccountManager::sendAccountRequest(const std::shared_ptr<dht::http::Request>& req)
+{
+    if (not accountToken_.empty()) {
+        requests_.emplace(req);
+        req->send();
+    } else {
+        pendingAccountRequests_.emplace(req);
+    }
+}
+
+void
 ServerAccountManager::syncDevices()
 {
-    if (not creds_)
-        return;
-    const std::string url = managerHostname_ + PATH_DEVICES + "?username=" + creds_->username;
-    JAMI_WARN("[Auth] syncDevices with: %s to %s", creds_->username.c_str(), url.c_str());
-    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
-    auto reqid = request->id();
-    request->set_method(restinio::http_method_get());
-    request->set_auth(creds_->username, creds_->password);
-    setHeaderFields(*request);
-    request->add_on_done_callback([reqid, onAsync = onAsync_] (const dht::http::Response& response){
-        onAsync([reqid, response] (AccountManager& accountManager) {
+    const std::string url = managerHostname_ + PATH_DEVICES;
+    JAMI_WARN("[Auth] syncDevices %s", url.c_str());
+    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
+        onAsync([&] (AccountManager& accountManager) {
             JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-            if (response.status_code >= 200 || response.status_code < 300) {
+            if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    Json::Value json;
-                    std::string err;
-                    Json::CharReaderBuilder rbuilder;
-                    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                    if (!reader->parse(response.body.data(), response.body.data() + response.body.size(), &json, &err)){
-                        JAMI_ERR("[Auth] Can't parse server response: %s", err.c_str());
-                        return;
-                    }
                     JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
                     if (not json.isArray()) {
                         JAMI_ERR("[Auth] Can't parse server response: not an array");
@@ -248,11 +293,12 @@ ServerAccountManager::syncDevices()
                     JAMI_ERR("Error when loading device list: %s", e.what());
                 }
             }
-            this_.requests_.erase(reqid);
+            if (auto req = response.request.lock())
+                this_.requests_.erase(req);
         });
-    });
-    request->send();
-    requests_[reqid] = std::move(request);
+    }, logger_);
+    setHeaderFields(*request);
+    sendDeviceRequest(request);
 }
 
 bool
@@ -265,27 +311,13 @@ ServerAccountManager::revokeDevice(const std::string& password, const std::strin
     }
     const std::string url = managerHostname_ + PATH_DEVICE + "?deviceId=" + device;
     JAMI_WARN("[Revoke] Removing device of %s at %s", info_->username.c_str(), url.c_str());
-    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, logger_);
-    auto reqid = request->id();
-    request->set_method(restinio::http_method_delete());
-    request->set_auth(info_->username, password);
-    setHeaderFields(*request);
-    request->add_on_done_callback([reqid, cb, onAsync = onAsync_] (const dht::http::Response& response){
-        onAsync([reqid, cb, response] (AccountManager& accountManager) {
+    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, [cb, onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
+        onAsync([&] (AccountManager& accountManager) {
             JAMI_DBG("[Revoke] Got request callback with status code=%u", response.status_code);
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-            if (response.status_code >= 200 || response.status_code < 300) {
-                if (response.body.empty())
-                    return;
+            if (response.status_code >= 200 && response.status_code < 300) {
                 try {
-                    Json::Value json;
-                    std::string err;
-                    Json::CharReaderBuilder rbuilder;
-                    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
-                    if (!reader->parse(response.body.data(), response.body.data() + response.body.size(), &json, &err)){
-                        JAMI_ERR("[Revoke] Can't parse server response: %s", err.c_str());
-                    }
-                    JAMI_WARN("[Revoke] Got server response: %s", response.body.c_str());
+                    JAMI_WARN("[Revoke] Got server response");
                     if (json["errorDetails"].empty()){
                         if (cb)
                             cb(RevokeDeviceResult::SUCCESS);
@@ -298,12 +330,16 @@ ServerAccountManager::revokeDevice(const std::string& password, const std::strin
             }
             else if (cb)
                 cb(RevokeDeviceResult::ERROR_NETWORK);
-            this_.requests_.erase(reqid);
+            if (auto req = response.request.lock())
+                this_.requests_.erase(req);
         });
-    });
+    }, logger_);
+    request->set_method(restinio::http_method_delete());
+    request->set_auth(info_->username, password);
+    setHeaderFields(*request);
     JAMI_DBG("[Revoke] Sending revoke device '%s' to JAMS", device.c_str());
+    requests_.emplace(request);
     request->send();
-    requests_[reqid] = std::move(request);
     return false;
 }
 
