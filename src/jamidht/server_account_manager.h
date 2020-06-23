@@ -53,6 +53,7 @@ public:
 
     bool revokeDevice(const std::string& password, const std::string& device, RevokeDeviceCallback cb) override;
 
+    bool searchName(const std::string& query, SearchCallback cb) override;
     void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) override;
 
 private:
