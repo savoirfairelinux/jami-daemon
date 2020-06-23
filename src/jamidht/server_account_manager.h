@@ -17,8 +17,10 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 #pragma once
-
 #include "account_manager.h"
+
+#include <queue>
+#include <set>
 
 namespace jami {
 
@@ -64,10 +66,24 @@ private:
 
     const std::string managerHostname_;
     std::shared_ptr<dht::Logger> logger_;
-    std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;
+    std::set<std::shared_ptr<dht::http::Request>> requests_;
     std::unique_ptr<ServerAccountCredentials> creds_;
+    std::string deviceToken_ {};
+    std::string accountToken_ {};
+    std::queue<std::shared_ptr<dht::http::Request>> pendingDeviceRequests_;
+    std::queue<std::shared_ptr<dht::http::Request>> pendingAccountRequests_;
 
     void setHeaderFields(dht::http::Request& request);
+    void setDeviceAuthHeaderFields(dht::http::Request& request);
+
+    void sendDeviceRequest(const std::shared_ptr<dht::http::Request>& req);
+    void sendAccountRequest(const std::shared_ptr<dht::http::Request>& req);
+
+    void authenticateDevice();
+    void authenticateAccount();
+
+    void setDeviceToken(std::string token);
+    void setAccountToken(std::string token);
 };
 
 }
