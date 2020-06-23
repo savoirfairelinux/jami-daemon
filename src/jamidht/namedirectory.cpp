@@ -50,6 +50,7 @@ namespace jami {
 constexpr const char* const QUERY_NAME {"/name/"};
 constexpr const char* const QUERY_ADDR {"/addr/"};
 constexpr const char* const CACHE_DIRECTORY {"namecache"};
+constexpr const char DEFAULT_SERVER_HOST[] = "https://ns.jami.net";
 
 const std::string  HEX_PREFIX = "0x";
 constexpr std::chrono::seconds SAVE_INTERVAL {5};
@@ -67,6 +68,9 @@ toLower(std::string& string)
 {
     std::transform(string.begin(), string.end(), string.begin(), ::tolower);
 }
+
+NameDirectory&
+NameDirectory::instance() { return instance(DEFAULT_SERVER_HOST); }
 
 void
 NameDirectory::lookupUri(const std::string& uri, const std::string& default_server,
