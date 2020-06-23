@@ -133,7 +133,6 @@ libjami_dependencies = [
     depspeex,
     depspeexdsp,
     depyamlcpp,
-    deplibarchive,
     depjsoncpp,
     depzlib
 ]
@@ -261,6 +260,16 @@ if conf.get('ENABLE_VIDEO')
     endif
 endif
 
+if conf.get('ENABLE_PLUGIN')
+    libjami_sources += files(
+        'client/plugin_manager_interface.cpp',
+        'plugin/jamipluginmanager.cpp',
+        'plugin/pluginloaderdl.cpp',
+        'plugin/pluginmanager.cpp'
+    )
+    libjami_dependencies += deplibarchive
+endif
+
 libjami = library('jami',
     version: meson.project_version(),
     include_directories: libjami_includedirs,
@@ -293,6 +302,12 @@ if get_option('interfaces').contains('library')
     if conf.get('ENABLE_VIDEO')
         install_headers(
             'dring/videomanager_interface.h',
+            subdir: 'dring'
+        )
+    endif
+    if conf.get('ENABLE_PLUGIN')
+        install_headers(
+            'dring/plugin_manager_interface.h',
             subdir: 'dring'
         )
     endif

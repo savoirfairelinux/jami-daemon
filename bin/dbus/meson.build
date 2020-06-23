@@ -50,6 +50,18 @@ if conf.get('ENABLE_VIDEO')
     )
 endif
 
+if conf.get('ENABLE_PLUGIN')
+    jamid_targets += custom_target('pluginmanagerinterface.adaptor',
+        command: [progdbusxxxml2cpp, '@INPUT@', '--adaptor=@OUTPUT@'],
+        input: 'cx.ring.Ring.PluginManagerInterface.xml',
+        output: 'dbuspluginmanagerinterface.adaptor.h'
+    )
+
+    jamid_sources += files(
+        'dbuspluginmanagerinterface.cpp'
+    )
+endif
+
 if progpod2man.found()
     jamid_targets += custom_target('jamid.man',
         command: [progpod2man, '--section=8', '--release='+meson.project_version(), '--center', '""', '@INPUT@', '@OUTPUT@'],
@@ -88,6 +100,12 @@ install_data(
 if conf.get('ENABLE_VIDEO')
     install_data(
         'cx.ring.Ring.VideoManager.xml',
+        install_dir: get_option('datadir') / 'dbus-1' / 'interfaces'
+    )
+endif
+if conf.get('ENABLE_PLUGIN')
+    install_data(
+        'cx.ring.Ring.PluginManagerInterface.xml',
         install_dir: get_option('datadir') / 'dbus-1' / 'interfaces'
     )
 endif
