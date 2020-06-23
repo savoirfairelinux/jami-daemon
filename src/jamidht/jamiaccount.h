@@ -344,6 +344,7 @@ public:
     void lookupName(const std::string& name);
     void lookupAddress(const std::string& address);
     void registerName(const std::string& password, const std::string& name);
+    bool searchName(const std::string& nameQuery);
 #endif
 
     ///
