@@ -1368,11 +1368,20 @@ JamiAccount::getVolatileAccountDetails() const
 void
 JamiAccount::lookupName(const std::string& name)
 {
-    auto acc = getAccountID();
     if (accountManager_)
-        accountManager_->lookupUri(name, nameServer_, [acc,name](const std::string& result, NameDirectory::Response response) {
+        accountManager_->lookupUri(name, nameServer_, [acc = getAccountID(),name](const std::string& result, NameDirectory::Response response) {
             emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, result, name);
         });
+}
+
+bool
+JamiAccount::searchName(const std::string& query)
+{
+    if (accountManager_)
+        return accountManager_->searchName(query, [acc = getAccountID(), query](const jami::NameDirectory::SearchResult& result, jami::NameDirectory::Response response) {
+            jami::emitSignal<DRing::ConfigurationSignal::UserSearchEnded>(acc, (int)response, query, result);
+        });
+    return false;
 }
 
 void
