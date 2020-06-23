@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "1e949dfa_37b2f28b",
+        "filename": "src/jamidht/namedirectory.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-06-23T17:33:47Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter #2 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "3d4cd9f3455e007f9a2dd49b4a794629a7556673",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "850ed57b_5a71842f",
+        "filename": "src/jamidht/namedirectory.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 83,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-06-23T17:33:47Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter #2 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "3d4cd9f3455e007f9a2dd49b4a794629a7556673",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
