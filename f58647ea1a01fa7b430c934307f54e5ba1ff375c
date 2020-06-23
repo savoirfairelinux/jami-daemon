@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "514ebd10_19c4c679",
+        "filename": "tools/dringctrl/test_dring_dbus_interface.py",
+        "patchSetId": 1
+      },
+      "lineNbr": 28,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-06-23T13:39:31Z",
+      "side": 1,
+      "message": "imho we should rename this..",
+      "range": {
+        "startLine": 28,
+        "startChar": 35,
+        "endLine": 28,
+        "endChar": 47
+      },
+      "revId": "f58647ea1a01fa7b430c934307f54e5ba1ff375c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
