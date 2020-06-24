@@ -200,7 +200,7 @@ MediaFilter::readOutput()
     std::unique_ptr<MediaFrame> frame;
     switch (av_buffersink_get_type(output_)) {
     case AVMEDIA_TYPE_VIDEO:
-        frame = std::make_unique<VideoFrame>();
+        frame = std::make_unique<DRing::VideoFrame>();
         break;
     case AVMEDIA_TYPE_AUDIO:
         frame = std::make_unique<AudioFrame>();
