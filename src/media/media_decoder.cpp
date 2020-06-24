@@ -467,10 +467,14 @@ MediaDecoder::setupStream()
         JAMI_DBG() << "Using framerate emulation";
     startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
 
+#ifdef RING_ACCEL
     if(!accel_) {
         JAMI_WARN("Not using hardware decoding for %s",  avcodec_get_name(decoderCtx_->codec_id));
         ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
     }
+#else
+    ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+#endif
     if (ret < 0) {
         JAMI_ERR() << "Could not open codec: " << libav_utils::getError(ret);
         return -1;
@@ -516,14 +520,17 @@ MediaDecoder::decode(AVPacket& packet)
 {
     int frameFinished = 0;
     auto ret = avcodec_send_packet(decoderCtx_, &packet);
-    if ( accel_ && (ret < 0 && ret != AVERROR(EAGAIN)) ) {
-        JAMI_WARN("Decoding error falling back to software");
-        fallback_ = true;
-        accel_.reset();
-        avcodec_flush_buffers(decoderCtx_);
-        setupStream();
-        return DecodeStatus::FallBack;
-    } else if (ret < 0 && ret != AVERROR(EAGAIN)) {
+    if (ret < 0 && ret != AVERROR(EAGAIN)) {
+#ifdef RING_ACCEL
+        if (accel_) {
+            JAMI_WARN("Decoding error falling back to software");
+            fallback_ = true;
+            accel_.reset();
+            avcodec_flush_buffers(decoderCtx_);
+            setupStream();
+            return DecodeStatus::FallBack;
+        } else
+#endif
         return ret == AVERROR_EOF ? DecodeStatus::Success : DecodeStatus::DecodeError;
     }
 
