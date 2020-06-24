@@ -127,7 +127,14 @@ if get_option('video')
     if get_option('hw_acceleration')
         conf.set('RING_ACCEL', true)
         conf.set('ENABLE_VIDEOTOOLBOX', host_machine.system() == 'darwin')
+    else
+        conf.set('RING_ACCEL', false)
+        conf.set('ENABLE_VIDEOTOOLBOX', false)
     endif
+else
+    conf.set('ENABLE_VIDEO', false)
+    conf.set('RING_ACCEL', false)
+    conf.set('ENABLE_VIDEOTOOLBOX', false)
 endif
 
 conf.set10('HAVE_COREAUDIO', host_machine.system() == 'darwin')

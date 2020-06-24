@@ -102,10 +102,10 @@ getSignalHandlers()
         /* DataTransfer */
         exported_callback<DRing::DataTransferSignal::DataTransferEvent>(),
 
+#ifdef ENABLE_VIDEO
         /* MediaPlayer */
         exported_callback<DRing::MediaPlayerSignal::FileOpened>(),
 
-#ifdef ENABLE_VIDEO
         /* Video */
         exported_callback<DRing::VideoSignal::DeviceEvent>(),
         exported_callback<DRing::VideoSignal::DecodingStarted>(),
