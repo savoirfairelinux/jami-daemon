@@ -20,6 +20,9 @@
 
 #include "account_manager.h"
 
+#include <queue>
+#include <set>
+
 namespace jami {
 
 class ServerAccountManager : public AccountManager {
@@ -64,10 +67,41 @@ private:
 
     const std::string managerHostname_;
     std::shared_ptr<dht::Logger> logger_;
-    std::map<unsigned int /*id*/, std::shared_ptr<dht::http::Request>> requests_;
+
+    std::mutex requestLock_;
+    std::set<std::shared_ptr<dht::http::Request>> requests_;
     std::unique_ptr<ServerAccountCredentials> creds_;
 
-    void setHeaderFields(dht::http::Request& request);
+    void sendRequest(const std::shared_ptr<dht::http::Request>& request);
+    void clearRequest(const std::weak_ptr<dht::http::Request>& request);
+
+    enum class TokenScope : unsigned {
+        None = 0,
+        Device,
+        User,
+        Admin
+    };
+    std::mutex tokenLock_;
+    TokenScope tokenScope_ {};
+    std::string token_ {};
+    using RequestQueue = std::queue<std::shared_ptr<dht::http::Request>>;
+    RequestQueue pendingDeviceRequests_;
+    RequestQueue pendingAccountRequests_;
+    RequestQueue& getRequestQueue(TokenScope scope) {
+        return scope == TokenScope::Device ? pendingDeviceRequests_ : pendingAccountRequests_;
+    }
+    bool hasAuthorization(TokenScope scope) const {
+        return not token_.empty() and tokenScope_ >= scope;
+    }
+    void setAuthHeaderFields(dht::http::Request& request) const;
+
+    void sendDeviceRequest(const std::shared_ptr<dht::http::Request>& req);
+    void sendAccountRequest(const std::shared_ptr<dht::http::Request>& req);
+
+    void authenticateDevice();
+    void authenticateAccount();
+
+    void setToken(std::string token, TokenScope scope);
 };
 
 }
