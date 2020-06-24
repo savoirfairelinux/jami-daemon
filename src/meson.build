@@ -11,7 +11,6 @@ libjami_sources = files(
     'client/datatransfer.cpp',
     'client/presencemanager.cpp',
     'client/ring_signal.cpp',
-    'client/videomanager.cpp',
     'config/yamlparser.cpp',
     'hooks/urlhook.cpp',
     'im/instant_messaging.cpp',
@@ -204,6 +203,7 @@ endif
 
 if conf.get('ENABLE_VIDEO')
     libjami_sources += files(
+        'client/videomanager.cpp',
         'media/video/filter_transpose.cpp',
         'media/video/sinkclient.cpp',
         'media/video/video_base.cpp',
