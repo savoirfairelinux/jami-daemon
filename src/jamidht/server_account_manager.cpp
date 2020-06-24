@@ -341,4 +341,32 @@ ServerAccountManager::registerName(const std::string&, const std::string&, Regis
     cb(NameDirectory::RegistrationResponse::unsupported);
 }
 
+bool
+ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
+{
+    //TODO escape url query
+    const std::string url = managerHostname_ + PATH_SEARCH + "?queryString=" + query;
+    JAMI_WARN("[Search] Searching user %s at %s", query.c_str(), url.c_str());
+    sendDeviceRequest(std::make_shared<Request>(*Manager::instance().ioContext(), url, [cb, onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
+        onAsync([&] (AccountManager& accountManager) {
+            JAMI_DBG("[Search] Got request callback with status code=%u", response.status_code);
+            auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
+            if (response.status_code >= 200  && response.status_code < 300) {
+                try {
+                    JAMI_WARN("[Search] Got server response: %s", response.body.c_str());
+                    if (cb)
+                        cb({}, SearchResponse::found);
+                }
+                catch (const std::exception& e) {
+                    JAMI_ERR("[Search] Error during search: %s", e.what());
+                }
+            }
+            else if (cb)
+                cb({}, SearchResponse::error);
+            this_.clearRequest(response.request);
+        });
+    }, logger_));
+    return true;
+}
+
 }
