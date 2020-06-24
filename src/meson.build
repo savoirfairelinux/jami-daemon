@@ -11,12 +11,10 @@ libjami_sources = files(
     'client/datatransfer.cpp',
     'client/presencemanager.cpp',
     'client/ring_signal.cpp',
-    'client/videomanager.cpp',
     'config/yamlparser.cpp',
     'hooks/urlhook.cpp',
     'im/instant_messaging.cpp',
     'im/message_engine.cpp',
-    'jamidht/channeled_transfers.cpp',
     'jamidht/eth/libdevcore/Common.cpp',
     'jamidht/eth/libdevcore/CommonData.cpp',
     'jamidht/eth/libdevcore/FixedHash.cpp',
@@ -25,6 +23,7 @@ libjami_sources = files(
     'jamidht/accountarchive.cpp',
     'jamidht/account_manager.cpp',
     'jamidht/archive_account_manager.cpp',
+    'jamidht/channeled_transfers.cpp',
     'jamidht/channeled_transport.cpp',
     'jamidht/connectionmanager.cpp',
     'jamidht/contact_list.cpp',
@@ -205,6 +204,7 @@ endif
 
 if conf.get('ENABLE_VIDEO')
     libjami_sources += files(
+        'client/videomanager.cpp',
         'media/video/filter_transpose.cpp',
         'media/video/sinkclient.cpp',
         'media/video/video_base.cpp',

@@ -62,6 +62,7 @@ class AudioFrame;
 namespace jami {
 
 using AudioFrame = DRing::AudioFrame;
+using VideoFrame = DRing::VideoFrame;
 struct AudioFormat;
 class RingBuffer;
 class Resampler;

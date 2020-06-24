@@ -602,6 +602,7 @@ MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool is_video)
 void
 MediaEncoder::forcePresetX2645(AVCodecContext* encoderCtx)
 {
+#ifdef RING_ACCEL
     if(accel_ && accel_->getName() == "nvenc") {
         if (av_opt_set(encoderCtx, "preset", "fast", AV_OPT_SEARCH_CHILDREN))
             JAMI_WARN("Failed to set preset to 'fast'");
@@ -609,8 +610,9 @@ MediaEncoder::forcePresetX2645(AVCodecContext* encoderCtx)
             JAMI_WARN("Failed to set level to 'auto'");
         if (av_opt_set_int(encoderCtx, "zerolatency", 1, AV_OPT_SEARCH_CHILDREN))
             JAMI_WARN("Failed to set zerolatency to '1'");
-    }
-    else {
+    } else
+#endif
+    {
 #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         const char *speedPreset = "ultrafast";
 #else
@@ -965,12 +967,15 @@ MediaEncoder::stopEncoder()
 bool
 MediaEncoder::isDynBitrateSupported(AVCodecID codecid)
 {
+#ifdef RING_ACCEL
     if (accel_) {
         return accel_->dynBitrate();
-    } else {
-        if (codecid != AV_CODEC_ID_VP8)
-            return true;
     }
+#endif
+    if (codecid != AV_CODEC_ID_VP8)
+        return true;
+
+    return false;
 }
 
 void
