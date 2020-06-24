@@ -22,6 +22,30 @@
       "revId": "48f2f7739b85460ba915dc3e85c4bf945745961e",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "6c7b2c4d_2990377a",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 9
+      },
+      "lineNbr": 265,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-06-24T18:29:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "63b04046_d7f65a69",
+      "range": {
+        "startLine": 260,
+        "startChar": 4,
+        "endLine": 265,
+        "endChar": 5
+      },
+      "revId": "48f2f7739b85460ba915dc3e85c4bf945745961e",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
