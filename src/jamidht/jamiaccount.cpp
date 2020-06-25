@@ -610,6 +610,11 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 peer_account,
                 tls::CertificateStore::instance().getCertificate(toUri)
             });
+
+            Manager::instance().scheduleTask([w, callId=call->getCallId()]() {
+                if (auto shared = w.lock())
+                    shared->checkPendingCall(callId);
+            }, std::chrono::steady_clock::now() + ICE_NEGOTIATION_TIMEOUT);
             return false;
         });
     };
@@ -2230,6 +2235,11 @@ JamiAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                     /*.from = */ peer_ice_msg.from,
                     /*.from_account = */ from_id,
                     /*.from_cert = */ from_cert});
+
+    Manager::instance().scheduleTask([w=weak(), callId=call->getCallId()]() {
+        if (auto shared = w.lock())
+            shared->checkPendingCall(callId);
+    }, std::chrono::steady_clock::now() + ICE_NEGOTIATION_TIMEOUT);
 }
 
 void
