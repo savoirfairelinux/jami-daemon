@@ -250,6 +250,9 @@ class DRingCtrl(Thread):
         self.onCallOver_cb()
         del self.activeCalls[callid]
 
+    def onCallStateChanged_cb(self, callid, state, code):
+        pass
+
     def onCallStateChanged(self, callid, state, code):
         """ On call state changed event, set the values for new calls,
         or delete the call from the list of active calls
@@ -286,13 +289,18 @@ class DRingCtrl(Thread):
             self.onCallInactive(callid,state)
         else:
             print("unknown state:" + str(state))
+        self.onCallStateChanged_cb(callid, state, code)
 
     def onConferenceCreated_cb(self):
+        pass
+
+    def onConferenceCreated_callback(self, confId):
         pass
 
     def onConferenceCreated(self, confId):
         self.currentConfId = confId
         self.onConferenceCreated_cb()
+        self.onConferenceCreated_callback(confId)
 
     def onDataTransferEvent(self, transferId, code):
         pass
