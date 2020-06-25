@@ -30,6 +30,7 @@ missing
 stamp-h1
 ltmain.sh
 INSTALL
+build
 
 # Binary translation files
 *.mo
