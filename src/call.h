@@ -32,6 +32,7 @@
 #include "recordable.h"
 #include "ip_utils.h"
 
+#include <atomic>
 #include <mutex>
 #include <map>
 #include <sstream>
@@ -407,6 +408,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         // If the call is blocked during the progressing state
         OnNeedFallbackCb onNeedFallback_;
+        std::atomic_bool startFallback_ {true};
 };
 
 // Helpers

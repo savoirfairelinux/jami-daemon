@@ -89,24 +89,25 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
                             Call::ConnectionState cnx_state,
                             UNUSED int code) {
 
-        if (cnx_state == ConnectionState::PROGRESSING) {
+        if (cnx_state == ConnectionState::PROGRESSING
+            && startFallback_.exchange(false)
+            && not isSubcall()) {
             // If the other peer lose the connectivity during the progressing
             // this means that the other peer had a connectivity change we didn't
             // detect for now.
             // In this case, we let two secs before sending a request via the DHT
             // just to bypass the CONNECTING status
 
-
-           std::weak_ptr<Call> callWkPtr = shared_from_this();
-           Manager::instance().scheduler().scheduleIn([callWkPtr]{
-               if (auto callShPtr = callWkPtr.lock()) {
+            std::weak_ptr<Call> callWkPtr = shared_from_this();
+            Manager::instance().scheduler().scheduleIn([callWkPtr]{
+                if (auto callShPtr = callWkPtr.lock()) {
                     if (callShPtr->getConnectionState() == Call::ConnectionState::PROGRESSING) {
-                         JAMI_WARN("Call %s is still connecting after timeout, sending fallback request",
-                             callShPtr->getCallId().c_str());
-                         if (callShPtr->onNeedFallback_) callShPtr->onNeedFallback_();
+                        JAMI_WARN("Call %s is still connecting after timeout, sending fallback request",
+                            callShPtr->getCallId().c_str());
+                        if (callShPtr->onNeedFallback_) callShPtr->onNeedFallback_();
                     }
                 }
-           }, std::chrono::seconds(2));
+            }, std::chrono::seconds(2));
         }
 
         checkPendingIM();
