@@ -17,6 +17,8 @@ list (APPEND Source_Files__jamidht
       "${CMAKE_CURRENT_SOURCE_DIR}/connectionmanager.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/channeled_transport.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/channeled_transport.h"
+      "${CMAKE_CURRENT_SOURCE_DIR}/channeled_transfers.cpp"
+      "${CMAKE_CURRENT_SOURCE_DIR}/channeled_transfers.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/contact_list.cpp"
       "${CMAKE_CURRENT_SOURCE_DIR}/contact_list.h"
       "${CMAKE_CURRENT_SOURCE_DIR}/jami_contact.h"
