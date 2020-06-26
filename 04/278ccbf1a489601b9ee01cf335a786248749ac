@@ -1,0 +1,7 @@
+Code-Review+2: Yang Wang <yang.wang@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Yang Wang <yang.wang@savoirfairelinux.com>
+Submitted-at: Fri, 26 Jun 2020 11:20:56 -0400
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/14625
+Project: ring-daemon
+Branch: refs/heads/master
