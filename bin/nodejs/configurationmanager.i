@@ -50,6 +50,7 @@ public:
 
     virtual void nameRegistrationEnded(const std::string& /*account_id*/, int state, const std::string& /*name*/){}
     virtual void registeredNameFound(const std::string& /*account_id*/, int state, const std::string& /*address*/, const std::string& /*name*/){}
+    virtual void userSearchEnded(const std::string& /*account_id*/, int state, const std::string& /*query*/, const std::vector<std::map<std::string, std::string>>& /*results*/){}
 
     virtual void migrationEnded(const std::string& /*accountId*/, const std::string& /*state*/){}
     virtual void deviceRevocationEnded(const std::string& /*accountId*/, const std::string& /*device*/, int /*status*/){}
@@ -92,6 +93,7 @@ bool setMessageDisplayed(const std::string& accountID, const std::string& contac
 bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
 bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);
 bool registerName(const std::string& account, const std::string& password, const std::string& name);
+bool searchUser(const std::string& account, const std::string& query);
 
 std::map<std::string, std::string> getTlsDefaultSettings();
 
@@ -247,6 +249,7 @@ public:
 
     virtual void nameRegistrationEnded(const std::string& /*account_id*/, int state, const std::string& /*name*/){}
     virtual void registeredNameFound(const std::string& /*account_id*/, int state, const std::string& /*address*/, const std::string& /*name*/){}
+    virtual void userSearchEnded(const std::string& /*account_id*/, int state, const std::string& /*query*/, const std::vector<std::map<std::string, std::string>>& /*results*/){}
 
     virtual void migrationEnded(const std::string& /*accountId*/, const std::string& /*state*/){}
     virtual void deviceRevocationEnded(const std::string& /*accountId*/, const std::string& /*device*/, int /*status*/){}
