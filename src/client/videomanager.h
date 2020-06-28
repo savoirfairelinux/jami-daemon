@@ -69,7 +69,7 @@ public:
     bool hasRunningPlayers();
 };
 
-std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
+std::shared_ptr<video::VideoInput> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 std::shared_ptr<AudioInput> getAudioInput(const std::string& id);
 std::shared_ptr<video::VideoInput> getVideoInput(const std::string& id, video::VideoInputMode inputMode = video::VideoInputMode::Undefined);

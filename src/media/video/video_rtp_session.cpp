@@ -101,23 +101,18 @@ void VideoRtpSession::startSender()
 
         if (not conference_) {
             videoLocal_ = getVideoCamera();
-            if (auto input = Manager::instance().getVideoManager().videoInput.lock()) {
-                auto newParams = input->switchInput(input_);
-                try {
-                    if (newParams.valid() &&
-                        newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
-                        localVideoParams_ = newParams.get();
-                    } else {
-                        JAMI_ERR("No valid new video parameters.");
-                        return;
-                    }
-                } catch (const std::exception& e) {
-                    JAMI_ERR("Exception during retrieving video parameters: %s",
-                             e.what());
+            auto newParams = videoLocal_->switchInput(input_);
+            try {
+                if (newParams.valid() &&
+                    newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+                    localVideoParams_ = newParams.get();
+                } else {
+                    JAMI_ERR("No valid new video parameters.");
                     return;
                 }
-            } else {
-                JAMI_WARN("Can't lock video input");
+            } catch (const std::exception& e) {
+                JAMI_ERR("Exception during retrieving video parameters: %s",
+                            e.what());
                 return;
             }
         }
