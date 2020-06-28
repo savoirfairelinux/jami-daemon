@@ -659,7 +659,7 @@ removeVideoDevice(const std::string &node)
 
 namespace jami {
 
-std::shared_ptr<video::VideoFrameActiveWriter>
+std::shared_ptr<video::VideoInput>
 getVideoCamera()
 {
     auto& vmgr = Manager::instance().getVideoManager();

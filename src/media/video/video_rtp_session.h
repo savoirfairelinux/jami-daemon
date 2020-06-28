@@ -40,6 +40,7 @@ namespace jami { namespace video {
 
 class VideoMixer;
 class VideoSender;
+class VideoInput;
 class VideoReceiveThread;
 
 struct RTCPInfo {
@@ -102,7 +103,7 @@ public:
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
-    std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() {
+    std::shared_ptr<VideoInput>& getVideoLocal() {
         return videoLocal_;
     }
 
@@ -125,7 +126,7 @@ private:
     std::unique_ptr<VideoReceiveThread> receiveThread_;
     Conference* conference_ {nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;
-    std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
+    std::shared_ptr<VideoInput> videoLocal_;
     uint16_t initSeqVal_ = 0;
 
     std::function<void (void)> requestKeyFrameCallback_;
