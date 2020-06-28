@@ -346,6 +346,7 @@ public:
     void lookupAddress(const std::string& address);
     void registerName(const std::string& password, const std::string& name);
 #endif
+    bool searchUser(const std::string& nameQuery);
 
     ///
     /// Send a E2E connection request to a given peer for the given transfer id

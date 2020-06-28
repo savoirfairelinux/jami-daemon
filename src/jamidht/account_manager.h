@@ -212,10 +212,14 @@ public:
 
     // Name resolver
     using LookupCallback = NameDirectory::LookupCallback;
+    using SearchResult = NameDirectory::SearchResult;
+    using SearchCallback = NameDirectory::SearchCallback;
     using RegistrationCallback = NameDirectory::RegistrationCallback;
+    using SearchResponse = NameDirectory::Response;
 
     virtual void lookupUri(const std::string& name, const std::string& defaultServer, LookupCallback cb);
     virtual void lookupAddress(const std::string& address, LookupCallback cb);
+    virtual bool searchUser(const std::string& /*query*/, SearchCallback /*cb*/) { return false; }
     virtual void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) = 0;
 
 protected:
