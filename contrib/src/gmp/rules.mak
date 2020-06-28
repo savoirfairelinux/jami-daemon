@@ -1,6 +1,6 @@
 # GNU Multiple Precision Arithmetic
 
-GMP_VERSION := 6.1.2
+GMP_VERSION := 6.2.0
 GMP_URL := $(GNU)/gmp/gmp-$(GMP_VERSION).tar.bz2
 
 $(TARBALLS)/gmp-$(GMP_VERSION).tar.bz2:
