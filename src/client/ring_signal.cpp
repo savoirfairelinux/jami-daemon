@@ -70,6 +70,7 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::KnownDevicesChanged>(),
         exported_callback<DRing::ConfigurationSignal::NameRegistrationEnded>(),
         exported_callback<DRing::ConfigurationSignal::RegisteredNameFound>(),
+        exported_callback<DRing::ConfigurationSignal::UserSearchEnded>(),
         exported_callback<DRing::ConfigurationSignal::MediaParametersChanged>(),
         exported_callback<DRing::ConfigurationSignal::MigrationEnded>(),
         exported_callback<DRing::ConfigurationSignal::DeviceRevocationEnded>(),

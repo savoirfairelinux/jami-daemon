@@ -117,6 +117,12 @@ DBusConfigurationManager::registerName(const std::string& account, const std::st
     return DRing::registerName(account, password, name);
 }
 
+auto
+DBusConfigurationManager::searchUser(const std::string& account, const std::string& query) -> decltype(DRing::searchUser(account, query))
+{
+    return DRing::searchUser(account, query);
+}
+
 void
 DBusConfigurationManager::removeAccount(const std::string& accountID)
 {
