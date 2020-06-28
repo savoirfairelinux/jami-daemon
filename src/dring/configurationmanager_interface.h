@@ -70,6 +70,7 @@ DRING_PUBLIC bool isPasswordValid(const std::string& accountID, const std::strin
 DRING_PUBLIC bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
 DRING_PUBLIC bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);
 DRING_PUBLIC bool registerName(const std::string& account, const std::string& password, const std::string& name);
+DRING_PUBLIC bool searchUser(const std::string& account, const std::string& query);
 
 DRING_PUBLIC void removeAccount(const std::string& accountID);
 DRING_PUBLIC void setAccountEnabled(const std::string& accountID, bool enable);
@@ -324,6 +325,10 @@ struct DRING_PUBLIC ConfigurationSignal {
         struct DRING_PUBLIC RegisteredNameFound {
                 constexpr static const char* name = "RegisteredNameFound";
                 using cb_type = void(const std::string& /*account_id*/, int state, const std::string& /*address*/, const std::string& /*name*/);
+        };
+        struct DRING_PUBLIC UserSearchEnded {
+                constexpr static const char* name = "UserSearchEnded";
+                using cb_type = void(const std::string& /*account_id*/, int state, const std::string& /*query*/, const std::vector<std::map<std::string, std::string>>& /*results*/);
         };
         struct DRING_PUBLIC CertificatePinned {
                 constexpr static const char* name = "CertificatePinned";

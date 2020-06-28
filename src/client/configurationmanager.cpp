@@ -1034,6 +1034,14 @@ bool lookupAddress(const std::string& account, const std::string& nameserver, co
     return false;
 }
 
+bool searchUser(const std::string& account, const std::string& query)
+{
+    if (auto acc = jami::Manager::instance().getAccount<JamiAccount>(account)) {
+        return acc->searchUser(query);
+    }
+    return false;
+}
+
 bool registerName(const std::string& account, const std::string& password, const std::string& name)
 {
 #if HAVE_RINGNS
