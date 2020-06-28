@@ -289,7 +289,7 @@
 
        <method name="changeAccountPassword" tp:name-for-bindings="changeAccountPassword">
            <tp:docstring>
-               Change the Ring account archive password.
+               Change the account archive password.
            </tp:docstring>
            <arg type="s" name="accountID" direction="in">
            </arg>
@@ -306,10 +306,10 @@
 
       <method name="lookupName" tp:name-for-bindings="lookupName">
            <tp:docstring>
-               Performs name lookup with RingNS protocol for the specified account (if any) or using the default nameserver.
+               Performs name lookup for the specified account (if any) or using the default nameserver.
            </tp:docstring>
            <arg type="s" name="accountID" direction="in">
-              The account to use. If empty, use the default RingNS server.
+              The account to use. If empty, use the default nameserver.
            </arg>
            <arg type="s" name="nameserverUri" direction="in">
               The name server URI to use, considered only if accountID is empty.
@@ -324,10 +324,10 @@
       </method>
       <method name="lookupAddress" tp:name-for-bindings="lookupAddress">
            <tp:docstring>
-               Performs address lookup with RingNS protocol for the specified account (if any) or using the default nameserver.
+               Performs address lookup for the specified account (if any) or using the default nameserver.
            </tp:docstring>
            <arg type="s" name="accountID" direction="in">
-              The account to use. If empty, use the default RingNS server.
+              The account to use. If empty, use the default nameserver.
            </arg>
            <arg type="s" name="nameserverUri" direction="in">
               The name server URI to use, considered only if accountID is empty.
@@ -412,6 +412,43 @@
            <arg type="s" name="name">
                <tp:docstring>
                    The name that was attempted to register.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+      <method name="searchUser" tp:name-for-bindings="searchUser">
+           <tp:docstring>
+               Performs name registration with RingNS protocol for the specified account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="query" direction="in">
+               <tp:docstring>
+                   Query to perform in the remote user directory. What properties are searched is server-dependant.
+               </tp:docstring>
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully and a corresponding signal will be triggered.
+               </tp:docstring>
+           </arg>
+      </method>
+       <signal name="userSearchEnded" tp:name-for-bindings="userSearchEnded">
+           <tp:docstring>
+               Notify clients when the registerName operation ended.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="i" name="status">
+           </arg>
+           <arg type="s" name="query">
+               <tp:docstring>
+                   The query which is answered by this signal
+               </tp:docstring>
+           </arg>
+           <arg type="aa{ss}" name="result" direction="out" tp:type="String_String_Map">
+               <tp:docstring>
+                   List of user results
                </tp:docstring>
            </arg>
        </signal>

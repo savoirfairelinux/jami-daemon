@@ -78,6 +78,7 @@ class DRING_PUBLIC DBusConfigurationManager :
         bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
         bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);
         bool registerName(const std::string& account, const std::string& password, const std::string& name);
+        bool searchUser(const std::string& account, const std::string& query);
         void removeAccount(const std::string& accoundID);
         std::vector<std::string> getAccountList();
         void sendRegister(const std::string& accoundID, const bool& enable);
