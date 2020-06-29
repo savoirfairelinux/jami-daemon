@@ -3,6 +3,7 @@
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -144,6 +145,12 @@ static constexpr const char* DECODING_ACCELERATED_KEY {"decodingAccelerated"};
 static constexpr const char* ENCODING_ACCELERATED_KEY {"encodingAccelerated"};
 static constexpr const char* RECORD_PREVIEW_KEY {"recordPreview"};
 static constexpr const char* RECORD_QUALITY_KEY {"recordQuality"};
+#endif
+
+#ifdef ENABLE_PLUGIN
+// plugin preferences
+constexpr const char * const PluginPreferences::CONFIG_LABEL;
+static constexpr const char* JAMI_PLUGIN_KEY {"pluginsEnabled"};
 #endif
 
 static constexpr int PULSE_LENGTH_DEFAULT {250}; /** Default DTMF length */
@@ -640,5 +647,30 @@ void VideoPreferences::unserialize(const YAML::Node &in)
     getVideoDeviceMonitor().unserialize(in);
 }
 #endif // ENABLE_VIDEO
+
+#ifdef ENABLE_PLUGIN
+PluginPreferences::PluginPreferences()
+    : pluginsEnabled_(false)
+{}
+
+void PluginPreferences::serialize(YAML::Emitter &out) const
+{
+    out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << JAMI_PLUGIN_KEY << YAML::Value << pluginsEnabled_;
+    out << YAML::EndMap;
+}
+
+void PluginPreferences::unserialize(const YAML::Node &in)
+{
+    // values may or may not be present
+    const auto &node = in[CONFIG_LABEL];
+    try {
+        parseValue(node, JAMI_PLUGIN_KEY, pluginsEnabled_);
+    } catch (...) {
+        pluginsEnabled_ = false;
+    }
+}
+#endif // ENABLE_PLUGIN
+
 
 } // namespace jami

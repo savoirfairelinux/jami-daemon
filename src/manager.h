@@ -8,6 +8,7 @@
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -98,6 +99,13 @@ class DRING_TESTABLE Manager {
          * Shortcut preferences
          */
         ShortcutPreferences shortcutPreferences;
+
+#ifdef ENABLE_PLUGIN
+        /**
+         * Plugin preferences
+         */
+        PluginPreferences pluginPreferences;
+#endif
 
 #ifdef ENABLE_VIDEO
         /**
