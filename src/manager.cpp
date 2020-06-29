@@ -699,6 +699,9 @@ Manager::Manager()
 #ifdef ENABLE_VIDEO
     , videoPreferences()
 #endif
+#ifdef ENABLE_PLUGIN
+    , pluginPreferences()
+#endif
     , callFactory()
     , accountFactory()
     , dataTransfers(std::make_unique<DataTransferFacade>())
@@ -1701,6 +1704,9 @@ Manager::saveConfig()
         audioPreference.serialize(out);
 #ifdef ENABLE_VIDEO
         videoPreferences.serialize(out);
+#endif
+#ifdef ENABLE_PLUGIN
+        pluginPreferences.serialize(out);
 #endif
         shortcutPreferences.serialize(out);
 
@@ -2755,6 +2761,15 @@ Manager::loadAccountMap(const YAML::Node& node)
         shortcutPreferences.unserialize(node);
 #ifdef ENABLE_VIDEO
         videoPreferences.unserialize(node);
+#endif
+#ifdef ENABLE_PLUGIN
+        pluginPreferences.unserialize(node);
+
+        std::vector<std::string> loadedPlugins = pluginPreferences.getLoadedPlugins();
+        for (const std::string plugin : loadedPlugins)
+        {
+            jami::Manager::instance().getJamiPluginManager().loadPlugin(plugin);
+        }
 #endif
     } catch (const YAML::Exception &e) {
         JAMI_ERR("%s: Preferences node unserialize error: ", e.what());

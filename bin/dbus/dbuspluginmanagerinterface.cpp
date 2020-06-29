@@ -97,8 +97,8 @@ DBusPluginManagerInterface::uninstallPlugin(const std::string& pluginRootPath)
     return DRing::uninstallPlugin(pluginRootPath);
 }
 
-std::vector<std::string>
-DBusPluginManagerInterface::listCallMediaHandlers( )
+auto
+DBusPluginManagerInterface::listCallMediaHandlers() -> decltype(DRing::listCallMediaHandlers())
 {
     return DRing::listCallMediaHandlers();
 }
@@ -114,3 +114,33 @@ DBusPluginManagerInterface::getCallMediaHandlerDetails(const std::string& id)
 {
     return DRing::getCallMediaHandlerDetails(id);
 }
+
+bool
+DBusPluginManagerInterface::getPluginsEnabled()
+{
+    return DRing::getPluginsEnabled();
+}
+
+void
+DBusPluginManagerInterface::setPluginsEnabled(const bool& state)
+{
+    DRing::setPluginsEnabled(state);
+}
+
+std::map<std::string,std::string>
+DBusPluginManagerInterface::isToggledMediaHandler()
+{
+    return DRing::isToggledMediaHandler();
+}
+
+void
+DBusPluginManagerInterface::saveStateLoadedPlugins(const std::string& path, const bool& loaded)
+{
+    DRing::saveStateLoadedPlugins(path, loaded);
+}
+
+// std::vector<std::string>
+// DBusPluginManagerInterface::getLoadedPlugins()
+// {
+//     return DRing::getLoadedPlugins();
+// }
