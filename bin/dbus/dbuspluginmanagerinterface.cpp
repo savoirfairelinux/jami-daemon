@@ -114,3 +114,15 @@ DBusPluginManagerInterface::getCallMediaHandlerDetails(const std::string& id)
 {
     return DRing::getCallMediaHandlerDetails(id);
 }
+
+bool
+DBusPluginManagerInterface::getPluginsEnabled()
+{
+    return DRing::getPluginsEnabled();
+}
+
+void
+DBusPluginManagerInterface::setPluginsEnabled(const bool& state)
+{
+    DRing::setPluginsEnabled(state);
+}

@@ -99,6 +99,13 @@ class DRING_TESTABLE Manager {
          */
         ShortcutPreferences shortcutPreferences;
 
+#ifdef ENABLE_PLUGIN
+        /**
+         * Plugin preferences
+         */
+        PluginPreferences pluginPreferences;
+#endif
+
 #ifdef ENABLE_VIDEO
         /**
          * Video preferences

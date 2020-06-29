@@ -47,5 +47,7 @@ namespace DRing
     DRING_PUBLIC std::vector<std::string> listCallMediaHandlers();
     DRING_PUBLIC void toggleCallMediaHandler(const std::string& id, bool toggle);
     DRING_PUBLIC std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& id);
+    DRING_PUBLIC bool getPluginsEnabled();
+    DRING_PUBLIC void setPluginsEnabled(bool state);
 }
 

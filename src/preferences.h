@@ -522,6 +522,28 @@ class VideoPreferences : public Serializable {
 };
 #endif // ENABLE_VIDEO
 
+#ifdef ENABLE_PLUGIN
+class PluginPreferences : public Serializable {
+    public:
+        PluginPreferences();
+
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
+
+        bool getPluginsEnabled() const {
+            return pluginsEnabled_;
+        }
+
+        void setPluginsEnabled(bool pluginsEnabled) {
+            pluginsEnabled_ = pluginsEnabled;
+        }
+
+    private:
+        bool pluginsEnabled_;
+        constexpr static const char* const CONFIG_LABEL = "plugins";
+};
+#endif // ENABLE_PLUGIN
+
 } // namespace jami
 
 #endif

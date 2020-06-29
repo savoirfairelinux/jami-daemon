@@ -92,4 +92,15 @@ namespace DRing
     std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& id) {
         return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerDetails(id);
     }
+
+    bool getPluginsEnabled()
+    {
+        return jami::Manager::instance().pluginPreferences.getPluginsEnabled();
+    }
+
+    void setPluginsEnabled(bool state)
+    {
+        jami::Manager::instance().pluginPreferences.setPluginsEnabled(state);
+        jami::Manager::instance().saveConfig();
+    }
 }
