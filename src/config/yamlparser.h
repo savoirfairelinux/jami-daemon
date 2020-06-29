@@ -1,7 +1,8 @@
 /*
  *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
  *
- *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Authors: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *           Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -50,5 +51,6 @@ void parsePath(const YAML::Node &node, const char *key, std::string& path, const
 
 std::vector<std::map<std::string, std::string>>
 parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys);
+std::set<std::string> parseVector(const YAML::Node &node);
 
 }} // namespace jami::yaml_utils
