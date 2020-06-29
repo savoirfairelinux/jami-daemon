@@ -214,7 +214,7 @@ add_stun_server(pj_ice_strans_cfg& cfg, int af)
     stun.af = af;
     stun.conn_type = cfg.stun.conn_type;
 
-    JAMI_DBG("[ice] added host stun server");
+    JAMI_DBG("[ice (%s)] added host stun server", (cfg.protocol == PJ_ICE_TP_TCP? "TCP" : "UDP"));
 }
 
 static void
@@ -228,7 +228,7 @@ add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& i
     // Given URI cannot be DNS resolved or not IPv4 or IPv6?
     // This prevents a crash into PJSIP when ip.toString() is called.
     if (ip.getFamily() == AF_UNSPEC) {
-        JAMI_WARN("[ice] STUN server '%s' not used, unresolvable address", info.uri.c_str());
+        JAMI_DBG("[ice (%s)] STUN server '%s' not used, unresolvable address", (cfg.protocol == PJ_ICE_TP_TCP? "TCP" : "UDP"), info.uri.c_str());
         return;
     }
 
@@ -241,7 +241,7 @@ add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& i
     stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
     stun.conn_type = cfg.stun.conn_type;
 
-    JAMI_DBG("[ice] added stun server '%s', port %u", pj_strbuf(&stun.server), stun.port);
+    JAMI_DBG("[ice (%s)] added stun server '%s', port %u", (cfg.protocol == PJ_ICE_TP_TCP? "TCP" : "UDP"), pj_strbuf(&stun.server), stun.port);
 }
 
 static void
@@ -254,7 +254,7 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
 
     // Same comment as add_stun_server()
     if (ip.getFamily() == AF_UNSPEC) {
-        JAMI_WARN("[ice] TURN server '%s' not used, unresolvable address", info.uri.c_str());
+        JAMI_DBG("[ice (%s)] TURN server '%s' not used, unresolvable address", (cfg.protocol == PJ_ICE_TP_TCP? "TCP" : "UDP"), info.uri.c_str());
         return;
     }
 
@@ -276,7 +276,7 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
         pj_strset(&turn.auth_cred.data.static_cred.data, (char*)info.password.c_str(), info.password.size());
     }
 
-    JAMI_DBG("[ice] added turn server '%s', port %d", pj_strbuf(&turn.server), turn.port);
+    JAMI_DBG("[ice (%s)] added turn server '%s', port %u", (cfg.protocol == PJ_ICE_TP_TCP? "TCP" : "UDP"), pj_strbuf(&turn.server), turn.port);
 }
 
 //==============================================================================
@@ -576,7 +576,7 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
 bool
 IceTransport::Impl::setInitiatorSession()
 {
-    JAMI_DBG("ICE as master");
+    JAMI_DBG("[ice:%p] as master", this);
     initiatorSession_ = true;
     if (_isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLING);
@@ -593,7 +593,7 @@ IceTransport::Impl::setInitiatorSession()
 bool
 IceTransport::Impl::setSlaveSession()
 {
-    JAMI_DBG("ICE as slave");
+    JAMI_DBG("[ice:%p] as slave", this);
     initiatorSession_ = false;
     if (_isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLED);
