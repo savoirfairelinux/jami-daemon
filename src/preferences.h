@@ -3,6 +3,7 @@
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +27,7 @@
 #include "client/ring_signal.h"
 #include <string>
 #include <map>
+#include <set>
 #include <vector>
 
 namespace YAML {
@@ -521,6 +523,46 @@ class VideoPreferences : public Serializable {
         constexpr static const char* const CONFIG_LABEL = "video";
 };
 #endif // ENABLE_VIDEO
+
+#ifdef ENABLE_PLUGIN
+class PluginPreferences : public Serializable {
+    public:
+        PluginPreferences();
+
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
+
+        bool getPluginsEnabled() const {
+            return pluginsEnabled_;
+        }
+
+        void setPluginsEnabled(bool pluginsEnabled) {
+            pluginsEnabled_ = pluginsEnabled;
+        }
+
+        std::vector<std::string> getLoadedPlugins() const {
+            std::vector<std::string> v(loadedPlugins_.begin(), loadedPlugins_.end());
+            return v;
+        }
+
+        void saveStateLoadedPlugins(std::string plugin, bool loaded) {
+            if (loaded) {
+                if (loadedPlugins_.find(plugin) != loadedPlugins_.end()) return;
+                loadedPlugins_.emplace(plugin);
+            }
+            else {
+                auto it = loadedPlugins_.find(plugin);
+                if (it != loadedPlugins_.end())
+                    loadedPlugins_.erase(it);
+            }
+        }
+
+    private:
+        bool pluginsEnabled_;
+        std::set<std::string> loadedPlugins_;
+        constexpr static const char* const CONFIG_LABEL = "plugins";
+};
+#endif // ENABLE_PLUGIN
 
 } // namespace jami
 

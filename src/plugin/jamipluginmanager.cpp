@@ -26,6 +26,7 @@
 
 //Manager
 #include "manager.h"
+#include "preferences.h"
 
 extern "C" {
 #include <archive.h>
@@ -268,7 +269,9 @@ bool JamiPluginManager::loadPlugin(const std::string &rootPath)
     {
         bool status = pm_.load(getPluginDetails(rootPath).at("soPath"));
         JAMI_INFO() << "PLUGIN: load status - " << status;
-
+        
+        jami::Manager::instance().pluginPreferences.saveStateLoadedPlugins(rootPath, status);
+        jami::Manager::instance().saveConfig();
         return status;
 
     } catch(const std::exception& e) 
@@ -284,6 +287,9 @@ bool JamiPluginManager::unloadPlugin(const std::string &rootPath)
     {
         bool status = pm_.unload(getPluginDetails(rootPath).at("soPath"));
         JAMI_INFO() << "PLUGIN: unload status - " << status;
+
+        jami::Manager::instance().pluginPreferences.saveStateLoadedPlugins(rootPath, false);
+        jami::Manager::instance().saveConfig();
 
         return status;
     } catch(const std::exception& e)

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
+ *  Copyright (C) 2020 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
@@ -67,4 +67,8 @@ class DRING_PUBLIC DBusPluginManagerInterface :
         std::vector<std::string> listCallMediaHandlers();
         void toggleCallMediaHandler(const std::string& id, const bool& toggle);
         std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& id);
+
+        bool getPluginsEnabled();
+        void setPluginsEnabled(const bool& state);
+        std::map<std::string,std::string> getCallMediaHandlerStatus();
 };
