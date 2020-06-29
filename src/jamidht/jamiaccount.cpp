@@ -580,21 +580,22 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 [weak_dev_call, ice, ice_tcp, callvid, deviceId] (dht::IceCandidates&& msg) {
                     if (msg.id != callvid or msg.from.toString() != deviceId)
                         return true;
+                    auto call = weak_dev_call.lock();
+                    if (!call)
+                        return false;
                     // remove unprintable characters
                     auto iceData = std::string(msg.ice_data.cbegin(), msg.ice_data.cend());
                     iceData.erase(std::remove_if(iceData.begin(), iceData.end(),
                                                  [](unsigned char c){ return !std::isprint(c) && !std::isspace(c); }
                                                 ), iceData.end());
-                    JAMI_WARN("ICE request replied from DHT peer %s\nData: %s", deviceId.c_str(), iceData.c_str());
-                    if (auto call = weak_dev_call.lock()) {
-                        call->setState(Call::ConnectionState::PROGRESSING);
+                    JAMI_WARN("ICE request for call %s replied from DHT peer %s\nData: %s", call->getCallId().c_str(), deviceId.c_str(), iceData.c_str());
+                    call->setState(Call::ConnectionState::PROGRESSING);
 
-                        auto udp_failed = true, tcp_failed = true;
-                        initICE(msg.ice_data, ice, ice_tcp, udp_failed, tcp_failed);
-                        if (udp_failed && tcp_failed) {
-                            call->onFailure();
-                            return true;
-                        }
+                    auto udp_failed = true, tcp_failed = true;
+                    initICE(msg.ice_data, ice, ice_tcp, udp_failed, tcp_failed);
+                    if (udp_failed && tcp_failed) {
+                        call->onFailure();
+                        return true;
                     }
                     return false;
                 }
@@ -643,6 +644,8 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         }
         if (!transport) continue;
 
+        JAMI_WARN("[call %s] A channeled socket is detected with this peer.", call->getCallId().c_str());
+
         auto dev_call = manager.callFactory.newCall<SIPCall, JamiAccount>(*this, manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING,
                                                                           call->getDetails());
@@ -675,11 +678,12 @@ JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     }
 
     // Find listening devices for this account
-    accountManager_->forEachDevice(peer_account, [this, toUri, devices, sendDhtRequest](const dht::InfoHash& dev)
+    accountManager_->forEachDevice(peer_account, [this, toUri, devices, sendDhtRequest, callId=call->getCallId()](const dht::InfoHash& dev)
     {
         // Test if already sent via a SIP transport
         if (devices.find(dev.toString()) != devices.end()) return;
 
+        JAMI_WARN("[call %s] No channeled socket with this peer. Send request + DHT request", callId.c_str());
         // Else, ask for a channel (for future calls/text messages) and send a DHT message
         requestSIPConnection(toUri, dev.toString());
 
@@ -1525,7 +1529,11 @@ JamiAccount::handlePendingCall(PendingCall& pc, bool incoming)
     }
 
     udp_finished = ice && ice->isRunning();
+    if (udp_finished)
+        JAMI_INFO("[call:%s] UDP negotiation is ready", call->getCallId().c_str());
     tcp_finished = ice_tcp && ice_tcp->isRunning();
+    if (tcp_finished)
+        JAMI_INFO("[call:%s] TCP negotiation is ready", call->getCallId().c_str());
     // If both transport are not running, the negotiation failed
     if (not udp_finished and not tcp_finished) {
         JAMI_ERR("[call:%s] Both ICE negotations failed", call->getCallId().c_str());
@@ -3315,7 +3323,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const s
         std::move(sip_tr),
         socket
     });
-    JAMI_DBG("New SIP channel opened with %s", deviceId.c_str());
+    JAMI_WARN("New SIP channel opened with %s", deviceId.c_str());
     lk.unlock();
 
     // Retry messages
