@@ -1,6 +1,8 @@
 /*
  *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
  *
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -47,5 +49,9 @@ namespace DRing
     DRING_PUBLIC std::vector<std::string> listCallMediaHandlers();
     DRING_PUBLIC void toggleCallMediaHandler(const std::string& id, bool toggle);
     DRING_PUBLIC std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& id);
+    DRING_PUBLIC bool getPluginsEnabled();
+    DRING_PUBLIC void setPluginsEnabled(bool state);
+    DRING_PUBLIC std::map<std::string,std::string> isToggledMediaHandler();
+    DRING_PUBLIC void saveStateLoadedPlugins(const std::string& path, bool loaded);
+    // DRING_PUBLIC std::vector<std::string> getLoadedPlugins();
 }
-

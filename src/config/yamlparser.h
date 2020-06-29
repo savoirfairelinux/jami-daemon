@@ -50,5 +50,6 @@ void parsePath(const YAML::Node &node, const char *key, std::string& path, const
 
 std::vector<std::map<std::string, std::string>>
 parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys);
+std::vector<std::string> parseVector(const YAML::Node &node);
 
 }} // namespace jami::yaml_utils

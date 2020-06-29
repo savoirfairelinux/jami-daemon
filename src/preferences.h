@@ -3,6 +3,7 @@
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -521,6 +522,58 @@ class VideoPreferences : public Serializable {
         constexpr static const char* const CONFIG_LABEL = "video";
 };
 #endif // ENABLE_VIDEO
+
+#ifdef ENABLE_PLUGIN
+class PluginPreferences : public Serializable {
+    public:
+        PluginPreferences();
+
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
+
+        bool getPluginsEnabled() const {
+            return pluginsEnabled_;
+        }
+
+        void setPluginsEnabled(bool pluginsEnabled) {
+            pluginsEnabled_ = pluginsEnabled;
+        }
+
+        std::vector<std::string> getLoadedPlugins() const {
+            return loadedPlugins_;
+        }
+
+        void saveStateLoadedPlugins(std::string plugin, bool loaded) {
+            if (loaded)
+            {
+                for (const std::string& loadedPlugin : loadedPlugins_)
+                {
+                    if(loadedPlugin == plugin)
+                    {
+                        return;
+                    }
+                }
+                loadedPlugins_.emplace_back(plugin);
+            }
+            else
+            {
+                for (int i = 0; i < loadedPlugins_.size(); i++)
+                {
+                    if(loadedPlugins_[i] == plugin)
+                    {
+                        loadedPlugins_.erase(loadedPlugins_.begin() + i);
+                        break;
+                    }
+                }
+            }
+        }
+
+    private:
+        bool pluginsEnabled_;
+        std::vector<std::string> loadedPlugins_;
+        constexpr static const char* const CONFIG_LABEL = "plugins";
+};
+#endif // ENABLE_PLUGIN
 
 } // namespace jami
 

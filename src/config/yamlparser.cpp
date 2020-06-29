@@ -47,4 +47,15 @@ parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> 
     return result;
 }
 
+std::vector<std::string>
+parseVector(const YAML::Node &node)
+{
+    std::vector<std::string> result;
+    for (const auto &n : node) {
+        std::string t;
+        t = n.as<std::string>("");
+        result.push_back(t);
+    }
+    return result;
+}
 }} // namespace jami::yaml_utils
