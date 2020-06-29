@@ -1,6 +1,6 @@
 # Nettle
 
-NETTLE_VERSION := 3.5.1
+NETTLE_VERSION := 3.6
 NETTLE_URL := $(GNU)/nettle/nettle-$(NETTLE_VERSION).tar.gz
 
 PKGS += nettle
