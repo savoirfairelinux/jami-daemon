@@ -18,9 +18,9 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
-
-LIBRESSL_VERSION := 0974145a9e62d844b5b159cddbce36552bca30df
-OPENBSD_VERSION := OPENBSD_6_3
+SSL_VERSION := 3.2.0
+LIBRESSL_VERSION := v$(SSL_VERSION)
+OPENBSD_VERSION := libressl-v$(SSL_VERSION)
 LIBRESSL_URL := https://github.com/libressl-portable/portable/archive/$(LIBRESSL_VERSION).tar.gz
 OPENBSD_URL := https://github.com/libressl-portable/openbsd/archive/$(OPENBSD_VERSION).tar.gz
 
@@ -39,7 +39,7 @@ $(TARBALLS)/openbsd-$(OPENBSD_VERSION).tar.gz:
 
 libressl: portable-$(LIBRESSL_VERSION).tar.gz openbsd-$(OPENBSD_VERSION).tar.gz
 	$(UNPACK)
-	$(APPLY) $(SRC)/libressl/getpagesize.patch
+	mv portable-$(SSL_VERSION) portable-v$(SSL_VERSION) 
 	$(APPLY) $(SRC)/libressl/0001-build-don-t-fetch-git-tag-if-openbsd-directory-exist.patch
 	mv openbsd-$(OPENBSD_VERSION) $(UNPACK_DIR)/openbsd
 	$(MOVE)
