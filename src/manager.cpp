@@ -1823,7 +1823,7 @@ Manager::incomingCall(Call &call, const std::string& accountId)
     } else if (currentCall) {
         // Test if already calling this person
         if (currentCall->getAccountId() == accountId
-        && currentCall->getPeerNumber() == call.getPeerNumber()) {
+        && currentCall->getPeerNumber() == call.getPeerNumber() ){
             auto device_uid = currentCall->getAccount().getUsername();
             if (device_uid.find("ring:") == 0) {
                 // NOTE: in case of a SIP call it's already ready to compare
