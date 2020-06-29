@@ -1,5 +1,7 @@
 ﻿/*
- *  Copyright (C) 2004-2019 Savoir-faire Linux Inc.
+ *  Copyright (C) 2020 Savoir-faire Linux Inc.
+ * 
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +32,12 @@ namespace jami {
 using MediaHandlerPtr = std::unique_ptr<MediaHandler>;
 using CallMediaHandlerPtr = std::unique_ptr<CallMediaHandler>;
 using AVSubjectSPtr = std::weak_ptr<Observable<AVFrame*>>;
+
+struct MediaHandlerToggled
+{
+    std::string name = "";
+    std::string state = "false";
+};
 
 class CallServicesManager{
 
@@ -132,9 +140,13 @@ public:
             if(pair.second && getCallHandlerId(pair.second) == id) {
                 pair.first = toggle;
                 if(pair.first) {
+                    mediaHandlerToggled_.name = id;
+                    mediaHandlerToggled_.state = "true";
                     listAvailableSubjects(pair.second);
                 } else {
                     pair.second->detach();
+                    mediaHandlerToggled_.name = "";
+                    mediaHandlerToggled_.state = "false";
                 }
             }
         }
@@ -153,6 +165,11 @@ public:
             }
         }
         return {};
+    }
+
+    std::map<std::string,std::string> getCallMediaHandlerStatus()
+    {
+        return { {"name", mediaHandlerToggled_.name}, {"state", mediaHandlerToggled_.state}};
     }
 
 private:
@@ -213,6 +230,8 @@ private:
      * It is pushed to this list list
      */
     std::list<std::pair<const StreamData, AVSubjectSPtr>> callAVsubjects;
+
+    MediaHandlerToggled mediaHandlerToggled_;
 };
 
 }

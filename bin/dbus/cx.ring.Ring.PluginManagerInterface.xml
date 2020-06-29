@@ -4,7 +4,7 @@
     <interface name="cx.ring.Ring.PluginManagerInterface">
         <!-- METHODS !-->
         <method name="loadPlugin" tp:name-for-bindings="loadPlugin">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
             <arg type="b" name="loaded" direction="out">
@@ -12,7 +12,7 @@
         </method>
 
         <method name="unloadPlugin" tp:name-for-bindings="unloadPlugin">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
             <arg type="b" name="unloaded" direction="out">
@@ -20,7 +20,7 @@
         </method>
 
         <method name="togglePlugin" tp:name-for-bindings="togglePlugin">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
             <arg type="b" name="toggle" direction="in">
@@ -28,7 +28,8 @@
         </method>
 
         <method name="getPluginDetails" tp:name-for-bindings="getPluginDetails">
-            <tp:added version="0.0.0"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
@@ -37,7 +38,8 @@
         </method>
 
         <method name="getPluginPreferences" tp:name-for-bindings="getPluginPreferences">
-            <tp:added version="0.0.0"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
@@ -46,7 +48,7 @@
         </method>
 
         <method name="setPluginPreference" tp:name-for-bindings="setPluginPreference">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
             <arg type="s" name="key" direction="in">
@@ -58,7 +60,8 @@
         </method>
 
         <method name="getPluginPreferencesValues" tp:name-for-bindings="getPluginPreferencesValues">
-            <tp:added version="0.0.0"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
@@ -67,7 +70,7 @@
         </method>
 
        <method name="resetPluginPreferencesValues" tp:name-for-bindings="resetPluginPreferencesValues">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
             <arg type="b" name="reset" direction="out">
@@ -75,19 +78,19 @@
         </method>
 
        <method name="listAvailablePlugins" tp:name-for-bindings="listAvailablePlugins">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="as" name="availablePlugins" direction="out">
             </arg>
         </method>
 
        <method name="listLoadedPlugins" tp:name-for-bindings="listLoadedPlugins">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="as" name="LoadedPlugins" direction="out">
             </arg>
         </method>
 
        <method name="installPlugin" tp:name-for-bindings="installPlugin">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="jplPath" direction="in">
             </arg>
             <arg type="b" name="force" direction="in">
@@ -97,7 +100,7 @@
         </method>
 
        <method name="uninstallPlugin" tp:name-for-bindings="uninstallPlugin">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="pluginRootPath" direction="in">
             </arg>
             <arg type="i" name="uninstaled" direction="out">
@@ -105,13 +108,13 @@
         </method>
 
        <method name="listCallMediaHandlers" tp:name-for-bindings="listCallMediaHandlers">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="as" name="listCallMediaHandlers" direction="out">
             </arg>
         </method>
 
        <method name="toggleCallMediaHandler" tp:name-for-bindings="toggleCallMediaHandler">
-            <tp:added version="0.0.0"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="id" direction="in">
             </arg>
             <arg type="b" name="toggle" direction="in">
@@ -119,11 +122,37 @@
         </method>
 
        <method name="getCallMediaHandlerDetails" tp:name-for-bindings="getCallMediaHandlerDetails">
-            <tp:added version="0.0.0"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <tp:added version="9.2.0"/>
             <arg type="s" name="id" direction="in">
             </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="CallMediaHandlerDetails" direction="out">
             </arg>
         </method>
+
+        <method name="getPluginsEnabled" tp:name-for-bindings="getPluginsEnabled">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Bool"/>
+            <tp:added version="9.3.0"/>
+            <arg type="b" name="state" direction="out">
+            <tp:docstring>Returns true if plugins are enabled, false otherwise</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="setPluginsEnabled" tp:name-for-bindings="setPluginsEnabled">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="Bool"/>
+            <tp:added version="9.3.0"/>
+            <arg type="b" name="state" direction="in">
+            </arg>
+        </method>
+
+       <method name="getCallMediaHandlerStatus" tp:name-for-bindings="getCallMediaHandlerStatus">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <tp:added version="9.3.0"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{ss}" name="getCallMediaHandlerStatus" direction="out">
+            </arg>
+        </method>
+
     </interface>
 </node>
