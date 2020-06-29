@@ -196,7 +196,7 @@ struct JamiAccount::DiscoveredPeer
 
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
-static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
+static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(10);
 static constexpr auto TLS_TIMEOUT = std::chrono::seconds(30);
 const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 
