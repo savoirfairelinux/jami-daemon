@@ -31,6 +31,12 @@ using MediaHandlerPtr = std::unique_ptr<MediaHandler>;
 using CallMediaHandlerPtr = std::unique_ptr<CallMediaHandler>;
 using AVSubjectSPtr = std::weak_ptr<Observable<AVFrame*>>;
 
+struct MediaHandlerToggled
+{
+    std::string name = "";
+    std::string state = "false";
+};
+
 class CallServicesManager{
 
 public:
@@ -132,9 +138,13 @@ public:
             if(pair.second && getCallHandlerId(pair.second) == id) {
                 pair.first = toggle;
                 if(pair.first) {
+                    mediaHandlerToggled_.name = id;
+                    mediaHandlerToggled_.state = "true";
                     listAvailableSubjects(pair.second);
                 } else {
                     pair.second->detach();
+                    mediaHandlerToggled_.name = "";
+                    mediaHandlerToggled_.state = "false";
                 }
             }
         }
@@ -153,6 +163,15 @@ public:
             }
         }
         return {};
+    }
+
+    std::map<std::string,std::string> isToggledMediaHandler()
+    {
+        std::map<std::string,std::string> mediaHandlerState = {};
+        mediaHandlerState["name"] = mediaHandlerToggled_.name;
+        mediaHandlerState["state"] = mediaHandlerToggled_.state;
+
+        return mediaHandlerState;
     }
 
 private:
@@ -213,6 +232,8 @@ private:
      * It is pushed to this list list
      */
     std::list<std::pair<const StreamData, AVSubjectSPtr>> callAVsubjects;
+
+    MediaHandlerToggled mediaHandlerToggled_;
 };
 
 }

@@ -28,6 +28,7 @@
         </method>
 
         <method name="getPluginDetails" tp:name-for-bindings="getPluginDetails">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <tp:added version="0.0.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
@@ -37,6 +38,7 @@
         </method>
 
         <method name="getPluginPreferences" tp:name-for-bindings="getPluginPreferences">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
             <tp:added version="0.0.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
@@ -58,6 +60,7 @@
         </method>
 
         <method name="getPluginPreferencesValues" tp:name-for-bindings="getPluginPreferencesValues">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <tp:added version="0.0.0"/>
             <arg type="s" name="path" direction="in">
             </arg>
@@ -119,10 +122,35 @@
         </method>
 
        <method name="getCallMediaHandlerDetails" tp:name-for-bindings="getCallMediaHandlerDetails">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <tp:added version="0.0.0"/>
             <arg type="s" name="id" direction="in">
             </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
             <arg type="a{ss}" name="CallMediaHandlerDetails" direction="out">
+            </arg>
+        </method>
+
+        <method name="getPluginsEnabled" tp:name-for-bindings="getPluginsEnabled">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Bool"/>
+            <tp:added version="0.0.0"/>
+            <arg type="b" name="state" direction="out">
+            <tp:docstring>Returns true if plugins are enabled, false otherwise</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="setPluginsEnabled" tp:name-for-bindings="setPluginsEnabled">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="Bool"/>
+            <tp:added version="0.0.0"/>
+            <arg type="b" name="state" direction="in">
+            </arg>
+        </method>
+
+       <method name="isToggledMediaHandler" tp:name-for-bindings="isToggledMediaHandler">
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <tp:added version="0.0.0"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{ss}" name="isToggledMediaHandler" direction="out">
             </arg>
         </method>
     </interface>

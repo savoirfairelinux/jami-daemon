@@ -1,6 +1,8 @@
 /*
  *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
  *
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
+ * 
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -91,5 +93,22 @@ namespace DRing
 
     std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& id) {
         return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().getCallMediaHandlerDetails(id);
+    }
+
+    bool getPluginsEnabled()
+    {
+        return jami::Manager::instance().pluginPreferences.getPluginsEnabled();
+    }
+
+    void setPluginsEnabled(bool state)
+    {
+        jami::Manager::instance().pluginPreferences.setPluginsEnabled(state);
+        jami::Manager::instance().saveConfig();
+    }
+
+
+    std::map<std::string,std::string> isToggledMediaHandler()
+    {
+        return jami::Manager::instance().getJamiPluginManager().getCallServicesManager().isToggledMediaHandler();
     }
 }

@@ -67,4 +67,8 @@ class DRING_PUBLIC DBusPluginManagerInterface :
         std::vector<std::string> listCallMediaHandlers();
         void toggleCallMediaHandler(const std::string& id, const bool& toggle);
         std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& id);
+
+        bool getPluginsEnabled();
+        void setPluginsEnabled(const bool& state);
+        std::map<std::string,std::string> isToggledMediaHandler();
 };

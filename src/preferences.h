@@ -3,6 +3,7 @@
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -521,6 +522,29 @@ class VideoPreferences : public Serializable {
         constexpr static const char* const CONFIG_LABEL = "video";
 };
 #endif // ENABLE_VIDEO
+
+#ifdef ENABLE_PLUGIN
+class PluginPreferences : public Serializable {
+    public:
+        PluginPreferences();
+
+        void serialize(YAML::Emitter &out) const override;
+        void unserialize(const YAML::Node &in) override;
+
+        bool getPluginsEnabled() const {
+            return pluginsEnabled_;
+        }
+
+        void setPluginsEnabled(bool pluginsEnabled) {
+            pluginsEnabled_ = pluginsEnabled;
+        }
+
+    private:
+        bool pluginsEnabled_;
+        std::map<std::string,std::string> loadedPlugins_;
+        constexpr static const char* const CONFIG_LABEL = "plugins";
+};
+#endif // ENABLE_PLUGIN
 
 } // namespace jami
 
