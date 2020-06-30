@@ -1,0 +1,23 @@
+ pjnath/src/pjnath/turn_session.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/pjnath/src/pjnath/turn_session.c b/pjnath/src/pjnath/turn_session.c
+index 12738c8e7..2940384c7 100644
+--- a/pjnath/src/pjnath/turn_session.c
++++ b/pjnath/src/pjnath/turn_session.c
+@@ -1247,6 +1247,7 @@ PJ_DEF(pj_status_t) pj_turn_session_on_rx_pkt2(
+     /* Packet could be ChannelData or STUN message (response or
+      * indication).
+      */
++	if (!sess) printf("@@@ No sess 1\n");
+ 
+     /* Start locking the session */
+     pj_grp_lock_acquire(sess->grp_lock);
+@@ -1254,6 +1255,7 @@ PJ_DEF(pj_status_t) pj_turn_session_on_rx_pkt2(
+     is_datagram = (sess->conn_type==PJ_TURN_TP_UDP);
+ 
+     /* Quickly check if this is STUN message */
++	if (!prm) printf("@@@ No prm\n");
+     is_stun = ((((pj_uint8_t*)prm->pkt)[0] & 0xC0) == 0);
+ 
+     if (is_stun) {
