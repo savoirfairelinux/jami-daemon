@@ -1,0 +1,18 @@
+ pjnath/src/pjnath/turn_sock.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/pjnath/src/pjnath/turn_sock.c b/pjnath/src/pjnath/turn_sock.c
+index ee9314b68..2ced21703 100644
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -1492,8 +1492,8 @@ static void turn_on_state(pj_turn_session *sess,
+     if (new_state >= PJ_TURN_STATE_DESTROYING && turn_sock->sess) {
+ 	pj_time_val delay = {0, 0};
+ 
+-	turn_sock->sess = NULL;
+-	pj_turn_session_set_user_data(sess, NULL);
++	//turn_sock->sess = NULL;
++	//pj_turn_session_set_user_data(sess, NULL);
+ 
+ 	pj_timer_heap_cancel_if_active(turn_sock->cfg.timer_heap,
+ 	                               &turn_sock->timer, 0);
