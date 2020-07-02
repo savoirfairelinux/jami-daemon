@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "03c4ab71_00ab3867",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 2
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-02T16:16:05Z",
+      "side": 1,
+      "message": "note version added should contains the daemon version :)",
+      "range": {
+        "startLine": 64,
+        "startChar": 29,
+        "endLine": 64,
+        "endChar": 39
+      },
+      "revId": "49b22b1e7e45c3914d7e409a7c0b057ff06beada",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "763e89ab_02bb5877",
+        "filename": "src/dring/plugin_manager_interface.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-02T16:16:05Z",
+      "side": 1,
+      "message": "trailing",
+      "range": {
+        "startLine": 5,
+        "startChar": 1,
+        "endLine": 5,
+        "endChar": 3
+      },
+      "revId": "49b22b1e7e45c3914d7e409a7c0b057ff06beada",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "45726770_2b3a0560",
+        "filename": "src/preferences.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 543,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-02T16:16:05Z",
+      "side": 1,
+      "message": "may be atomic",
+      "range": {
+        "startLine": 543,
+        "startChar": 8,
+        "endLine": 543,
+        "endChar": 12
+      },
+      "revId": "49b22b1e7e45c3914d7e409a7c0b057ff06beada",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
