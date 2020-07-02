@@ -137,6 +137,7 @@ if get_option('plugins')
             '-DENABLE_LIBXML2=OFF'
         ]).dependency('archive_static')
     endif
+    depdl = meson.get_compiler('cpp').find_library('dl', required: false)
 else
     conf.set('ENABLE_PLUGIN', false)
 endif

@@ -268,7 +268,7 @@ if conf.get('ENABLE_PLUGIN')
         'plugin/pluginloaderdl.cpp',
         'plugin/pluginmanager.cpp'
     )
-    libjami_dependencies += deplibarchive
+    libjami_dependencies += [deplibarchive, depdl]
 endif
 
 libjami = library('jami',
