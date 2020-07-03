@@ -530,6 +530,7 @@ IceTransport::Impl::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op, pj_st
         JAMI_ERR("[ice:%p] %s %s failed: %s", this, (config_.protocol == PJ_ICE_TP_TCP? "TCP" : "UDP"), opname, last_errmsg_.c_str());
     }
 
+
     {
         std::lock_guard<std::mutex> lk(iceMutex_);
         if (!icest_.get())
