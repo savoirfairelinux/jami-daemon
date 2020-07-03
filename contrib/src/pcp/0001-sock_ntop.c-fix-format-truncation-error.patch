@@ -1,0 +1,25 @@
+From 3651235fb772026d8acf067bf75747e0011fe284 Mon Sep 17 00:00:00 2001
+From: Sébastien Blin <sebastien.blin@savoirfairelinux.com>
+Date: Fri, 3 Jul 2020 09:32:52 -0400
+Subject: [PATCH] sock_ntop.c: fix format-truncation error
+
+Because snprintf can write 8 bytes, not 7
+---
+ libpcp/src/net/sock_ntop.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libpcp/src/net/sock_ntop.c b/libpcp/src/net/sock_ntop.c
+index 5bc489d..05e0f73 100644
+--- a/libpcp/src/net/sock_ntop.c
++++ b/libpcp/src/net/sock_ntop.c
+@@ -85,7 +85,7 @@ char *sock_ntop(const struct sockaddr *sa, socklen_t salen)
+                     sizeof(str) - 1) == NULL)
+                 return (NULL);
+             if (ntohs(sin6->sin6_port) != 0) {
+-                snprintf(portstr, sizeof(portstr) - 1, "]:%d",
++                snprintf(portstr, sizeof(portstr), "]:%d",
+                         ntohs(sin6->sin6_port));
+                 portstr[sizeof(portstr) - 1]='\0';
+                 strcat(str, portstr);
+-- 
+2.25.4

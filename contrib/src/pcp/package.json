@@ -1,0 +1,17 @@
+{
+    "name": "pcp",
+    "version": "c4d9bb40c4c62b28f57e209f55973a7cb09b6cc3",
+    "url": "http://github.com/libpcp/pcp/archive/__VERSION__.tar.gz",
+    "deps": [],
+    "patches": [],
+    "win_patches": [],
+    "project_paths": [],
+    "with_env" : "",
+    "custom_scripts": {
+        "pre_build": [
+            "rmdir /s /q msvc & mkdir msvc & cd msvc & cmake .. -G %CMAKE_GENERATOR%"
+        ],
+        "build": [],
+        "post_build": []
+    }
+}
