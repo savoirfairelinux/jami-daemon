@@ -106,12 +106,12 @@ SystemCodecContainer::initCodecConfig()
                                                CODEC_ENCODER_DECODER,
                                                0, 16000, 1, 9),
 
-        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_SPEEX & 0x20000000, AV_CODEC_ID_SPEEX,
+        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_SPEEX | 0x20000000, AV_CODEC_ID_SPEEX,
                                                "speex", "libspeex",
                                                CODEC_ENCODER_DECODER,
                                                0, 32000, 1, 112),
 
-        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_SPEEX & 0x10000000, AV_CODEC_ID_SPEEX,
+        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_SPEEX | 0x10000000, AV_CODEC_ID_SPEEX,
                                                "speex", "libspeex",
                                                CODEC_ENCODER_DECODER,
                                                0, 16000, 1, 111),

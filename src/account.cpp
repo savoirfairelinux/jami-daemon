@@ -409,8 +409,8 @@ Account::convertIdToAVId(const std::vector<unsigned>& list)
 #endif
         AV_CODEC_ID_OPUS,
         AV_CODEC_ID_ADPCM_G722,
-        AV_CODEC_ID_SPEEX & 0x20000000,
-        AV_CODEC_ID_SPEEX & 0x10000000,
+        AV_CODEC_ID_SPEEX | 0x20000000,
+        AV_CODEC_ID_SPEEX | 0x10000000,
         AV_CODEC_ID_SPEEX,
         AV_CODEC_ID_PCM_ALAW,
         AV_CODEC_ID_PCM_MULAW
