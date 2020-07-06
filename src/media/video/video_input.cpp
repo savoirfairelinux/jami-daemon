@@ -294,6 +294,9 @@ VideoInput::createDecoder()
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+    if (isStopped_)
+        return;
+
     if (restartSink && !isStopped_) {
         sink_->start();
     }
