@@ -1,0 +1,188 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "59dad4dd_d32da724",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 126,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T13:49:24Z",
+      "side": 1,
+      "message": "cf below",
+      "range": {
+        "startLine": 126,
+        "startChar": 31,
+        "endLine": 126,
+        "endChar": 36
+      },
+      "revId": "3be85914b9e199c12549508bd898c49e31834e8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3b2d1cfc_8ca3feb4",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 144,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T13:49:24Z",
+      "side": 1,
+      "message": "Should contains when the method was introduced (the daemon\u0027s version). Also daemon\u0027s version should be incremented because we change the API",
+      "range": {
+        "startLine": 144,
+        "startChar": 11,
+        "endLine": 144,
+        "endChar": 39
+      },
+      "revId": "3be85914b9e199c12549508bd898c49e31834e8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fb1e61b5_af0118a5",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 149,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T13:49:24Z",
+      "side": 1,
+      "message": "not a big fan of the name",
+      "range": {
+        "startLine": 149,
+        "startChar": 66,
+        "endLine": 149,
+        "endChar": 87
+      },
+      "revId": "3be85914b9e199c12549508bd898c49e31834e8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "bf3ace2e_f6dc37c2",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T13:49:24Z",
+      "side": 1,
+      "message": "Why not just save when the state is modified? (and internally in the daemon)",
+      "range": {
+        "startLine": 157,
+        "startChar": 4,
+        "endLine": 163,
+        "endChar": 17
+      },
+      "revId": "3be85914b9e199c12549508bd898c49e31834e8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "ec8911c0_2e934820",
+        "filename": "bin/dbus/cx.ring.Ring.PluginManagerInterface.xml",
+        "patchSetId": 5
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T13:49:24Z",
+      "side": 1,
+      "message": "to remove",
+      "range": {
+        "startLine": 164,
+        "startChar": 0,
+        "endLine": 169,
+        "endChar": 21
+      },
+      "revId": "3be85914b9e199c12549508bd898c49e31834e8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "f7673fd2_e32a39a5",
+        "filename": "src/plugin/callservicesmanager.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 174,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T13:49:24Z",
+      "side": 1,
+      "message": "Can be directly initalized:\n\nreturn {  {\"name\", ...",
+      "range": {
+        "startLine": 170,
+        "startChar": 7,
+        "endLine": 174,
+        "endChar": 33
+      },
+      "revId": "3be85914b9e199c12549508bd898c49e31834e8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "3405fe2d_b9a1e73d",
+        "filename": "src/preferences.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 548,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T13:49:24Z",
+      "side": 1,
+      "message": "incorrect coding style",
+      "range": {
+        "startLine": 547,
+        "startChar": 11,
+        "endLine": 548,
+        "endChar": 13
+      },
+      "revId": "3be85914b9e199c12549508bd898c49e31834e8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "e9f39f1f_170bfaf8",
+        "filename": "src/preferences.h",
+        "patchSetId": 5
+      },
+      "lineNbr": 573,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T13:49:24Z",
+      "side": 1,
+      "message": "We can just use a set\u003cstring\u003e, this will avoid the for loop to add/erase an element.",
+      "range": {
+        "startLine": 572,
+        "startChar": 29,
+        "endLine": 573,
+        "endChar": 48
+      },
+      "revId": "3be85914b9e199c12549508bd898c49e31834e8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
