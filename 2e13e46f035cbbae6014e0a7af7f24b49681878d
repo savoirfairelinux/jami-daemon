@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "408d44b2_a0ed9aa1",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 16
+      },
+      "lineNbr": 447,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T17:56:59Z",
+      "side": 1,
+      "message": "bump daemon version",
+      "range": {
+        "startLine": 432,
+        "startChar": 49,
+        "endLine": 447,
+        "endChar": 30
+      },
+      "revId": "2e13e46f035cbbae6014e0a7af7f24b49681878d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "0be21761_22a46495",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 16
+      },
+      "lineNbr": 365,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T17:56:59Z",
+      "side": 1,
+      "message": "not done in that patch?",
+      "range": {
+        "startLine": 365,
+        "startChar": 9,
+        "endLine": 365,
+        "endChar": 20
+      },
+      "revId": "2e13e46f035cbbae6014e0a7af7f24b49681878d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
