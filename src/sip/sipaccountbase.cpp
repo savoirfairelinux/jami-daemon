@@ -449,14 +449,14 @@ SIPAccountBase::getIceOptions() const noexcept
         cached = cacheTurnV4_ || cacheTurnV6_;
         if (cacheTurnV4_ && *cacheTurnV4_) {
             opts.turnServers.emplace_back(TurnServerInfo()
-                                .setUri(*cacheTurnV4_)
+                                .setUri(cacheTurnV4_->toString(true))
                                 .setUsername(turnServerUserName_)
                                 .setPassword(turnServerPwd_)
                                 .setRealm(turnServerRealm_));
         }
         if (cacheTurnV6_ && *cacheTurnV6_) {
             opts.turnServers.emplace_back(TurnServerInfo()
-                                .setUri(*cacheTurnV4_)
+                                .setUri(cacheTurnV4_->toString(true))
                                 .setUsername(turnServerUserName_)
                                 .setPassword(turnServerPwd_)
                                 .setRealm(turnServerRealm_));

@@ -262,7 +262,8 @@ add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& i
     pj_ice_strans_turn_cfg_default(&turn);
     pj_strdup2_with_null(&pool, &turn.server, ip.toString().c_str());
     turn.af = ip.getFamily();
-    turn.port = PJ_STUN_PORT;
+    if (!(turn.port = ip.getPort()))
+        turn.port = PJ_STUN_PORT;
     turn.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
     turn.conn_type = cfg.turn.conn_type;
 
