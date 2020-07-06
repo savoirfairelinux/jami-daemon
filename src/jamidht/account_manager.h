@@ -101,6 +101,9 @@ public:
     using AuthFailureCallback = std::function<void(AuthError error, const std::string& message)>;
     using DeviceSyncCallback = std::function<void(DeviceSync&& syncData)>;
     using CertRequest = std::future<std::unique_ptr<dht::crypto::CertificateRequest>>;
+    using PrivateKey = std::shared_future<std::shared_ptr<dht::crypto::PrivateKey>>;
+
+    CertRequest buildRequest(PrivateKey fDeviceKey);
 
     struct AccountCredentials {
         std::string scheme;
@@ -110,7 +113,7 @@ public:
     };
 
     virtual void initAuthentication(
-        CertRequest request,
+        PrivateKey request,
         std::string deviceName,
         std::unique_ptr<AccountCredentials> credentials,
         AuthSuccessCallback onSuccess,
