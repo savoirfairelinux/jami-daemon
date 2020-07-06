@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b3678a37_0077e8fb",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 198,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T18:00:59Z",
+      "side": 0,
+      "message": "Only the request is necessary",
+      "range": {
+        "startLine": 198,
+        "startChar": 25,
+        "endLine": 198,
+        "endChar": 30
+      },
+      "revId": "2f04319723941a7ccb7ceed470fba2b94f520d8a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}

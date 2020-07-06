@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "668d1f5a_911fb8af",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 122,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T18:00:59Z",
+      "side": 1,
+      "message": "will copy the json objects",
+      "range": {
+        "startLine": 122,
+        "startChar": 35,
+        "endLine": 122,
+        "endChar": 39
+      },
+      "revId": "f2c38a5697a7da09312aa736c706176e2a0be0b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "938c7db4_03e471e0",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 18
+      },
+      "lineNbr": 203,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-06T18:00:59Z",
+      "side": 1,
+      "message": "mark as todo",
+      "range": {
+        "startLine": 203,
+        "startChar": 11,
+        "endLine": 203,
+        "endChar": 26
+      },
+      "revId": "f2c38a5697a7da09312aa736c706176e2a0be0b6",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
