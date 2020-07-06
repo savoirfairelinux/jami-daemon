@@ -48,6 +48,30 @@
     },
     {
       "key": {
+        "uuid": "231f47a0_8049436f",
+        "filename": "src/dring/plugin_manager_interface.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-07-06T18:54:49Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "763e89ab_02bb5877",
+      "range": {
+        "startLine": 5,
+        "startChar": 1,
+        "endLine": 5,
+        "endChar": 3
+      },
+      "revId": "49b22b1e7e45c3914d7e409a7c0b057ff06beada",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "45726770_2b3a0560",
         "filename": "src/preferences.h",
         "patchSetId": 2
