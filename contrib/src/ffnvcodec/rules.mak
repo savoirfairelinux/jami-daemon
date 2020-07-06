@@ -1,5 +1,5 @@
 # ffnvcodec
-FFNVCODEC_VERSION := n9.0.18.1
+FFNVCODEC_VERSION := n10.0.26.0
 FFNVCODEC_GITURL := https://git.videolan.org/git/ffmpeg/nv-codec-headers.git
 
 ifeq ($(call need_pkg,"ffnvcodec >= 8"),)
