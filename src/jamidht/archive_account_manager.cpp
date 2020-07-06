@@ -36,7 +36,7 @@ const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
 
 void
 ArchiveAccountManager::initAuthentication(
-    CertRequest request,
+    PrivateKey key,
     std::string deviceName,
     std::unique_ptr<AccountCredentials> credentials,
     AuthSuccessCallback onSuccess,
@@ -44,7 +44,8 @@ ArchiveAccountManager::initAuthentication(
     OnChangeCallback onChange)
 {
     auto ctx = std::make_shared<AuthContext>();
-    ctx->request = std::move(request);
+    ctx->key = key;
+    ctx->request = buildRequest(key);
     ctx->deviceName = std::move(deviceName);
     ctx->credentials = dynamic_unique_cast<ArchiveAccountCredentials>(std::move(credentials));
     ctx->onSuccess = std::move(onSuccess);
@@ -324,6 +325,7 @@ ArchiveAccountManager::onArchiveLoaded(
     auto receiptSignature = a.id.first->sign({receipt.first.begin(), receipt.first.end()});
 
     auto info = std::make_unique<AccountInfo>();
+    info->identity.first = ctx.key.get();
     info->identity.second = deviceCertificate;
     info->accountId = a.id.second->getId().toString();
     info->deviceId = deviceCertificate->getPublicKey().getId().toString();

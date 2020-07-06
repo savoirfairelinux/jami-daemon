@@ -26,12 +26,26 @@
 #include "libdevcrypto/Common.h"
 
 #include <opendht/thread_pool.h>
+#include <opendht/crypto.h>
 
 #include <exception>
 #include <future>
 #include <fstream>
 
 namespace jami {
+
+AccountManager::CertRequest
+AccountManager::buildRequest(PrivateKey fDeviceKey)
+{
+    return dht::ThreadPool::computation().get<std::unique_ptr<dht::crypto::CertificateRequest>>([fDeviceKey]{
+        auto request = std::make_unique<dht::crypto::CertificateRequest>();
+        request->setName("Jami device");
+        auto deviceKey = fDeviceKey.get();
+        request->setUID(deviceKey->getPublicKey().getId().toString());
+        request->sign(*deviceKey);
+        return request;
+    });
+}
 
 dht::crypto::Identity
 AccountManager::loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const
