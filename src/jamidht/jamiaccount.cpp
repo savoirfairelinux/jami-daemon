@@ -3228,7 +3228,7 @@ JamiAccount::cacheTurnServers()
             if (turnV4) {
                 // Cache value to avoid a delay when starting up Jami
                 std::ofstream turnV4File(pathV4);
-                turnV4File << turnV4.toString();
+                turnV4File << turnV4.toString(true);
             } else {
                 fileutils::remove(pathV4, true);
             }
@@ -3241,7 +3241,7 @@ JamiAccount::cacheTurnServers()
             if (turnV6) {
                 // Cache value to avoid a delay when starting up Jami
                 std::ofstream turnV6File(pathV6);
-                turnV6File << turnV6.toString();
+                turnV6File << turnV6.toString(true);
             } else {
                 fileutils::remove(pathV6, true);
             }
