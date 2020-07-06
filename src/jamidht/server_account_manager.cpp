@@ -58,7 +58,7 @@ ServerAccountManager::setAuthHeaderFields(Request& request) const {
 
 void
 ServerAccountManager::initAuthentication(
-    CertRequest csrRequest,
+    PrivateKey key,
     std::string deviceName,
     std::unique_ptr<AccountCredentials> credentials,
     AuthSuccessCallback onSuccess,
@@ -66,7 +66,8 @@ ServerAccountManager::initAuthentication(
     OnChangeCallback onChange)
 {
     auto ctx = std::make_shared<AuthContext>();
-    ctx->request = std::move(csrRequest);
+    ctx->key = key;
+    ctx->request = buildRequest(key);
     ctx->deviceName = std::move(deviceName);
     ctx->credentials = dynamic_unique_cast<ServerAccountCredentials>(std::move(credentials));
     ctx->onSuccess = std::move(onSuccess);
@@ -119,12 +120,13 @@ ServerAccountManager::initAuthentication(
                                 ctx->onFailure(AuthError::SERVER_ERROR, "Can't parse receipt from server");
                                 break;
                             }
-                            onAsync([&] (AccountManager& accountManager) mutable
+                            onAsync([=] (AccountManager& accountManager) mutable
                             {
                                 auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
                                 auto receiptSignature = base64::decode(json["receiptSignature"].asString());
 
                                 auto info = std::make_unique<AccountInfo>();
+                                info->identity.first = ctx->key.get();
                                 info->identity.second = cert;
                                 info->deviceId = cert->getPublicKey().getId().toString();
                                 info->accountId = accountCert->getId().toString();

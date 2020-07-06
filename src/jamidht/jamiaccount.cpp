@@ -1118,15 +1118,6 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 return std::make_shared<dht::crypto::PrivateKey>(dht::crypto::PrivateKey::generate());
             });
 
-            auto fReq = dht::ThreadPool::computation().get<std::unique_ptr<dht::crypto::CertificateRequest>>([fDeviceKey]{
-                auto request = std::make_unique<dht::crypto::CertificateRequest>();
-                request->setName("Jami device");
-                auto deviceKey = fDeviceKey.get();
-                request->setUID(deviceKey->getPublicKey().getId().toString());
-                request->sign(*deviceKey);
-                return request;
-            });
-
             std::unique_ptr<AccountManager::AccountCredentials> creds;
             if (managerUri_.empty()) {
                 auto acreds = std::make_unique<ArchiveAccountManager::ArchiveAccountCredentials>();
@@ -1164,7 +1155,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             bool isManaged = !managerUri_.empty();
 
             accountManager_->initAuthentication(
-                std::move(fReq),
+                fDeviceKey,
                 ip_utils::getDeviceName(),
                 std::move(creds),
                 [this, fDeviceKey, migrating](const AccountInfo& info,
