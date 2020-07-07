@@ -1356,19 +1356,8 @@ Manager::ManagerPimpl::addMainParticipant(Conference& conf)
 {
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
-        for (const auto &item_p : conf.getParticipantList()) {
-            ringbufferpool_->bindCallID(item_p, RingBufferPool::DEFAULT_ID);
-            // Reset ringbuffer's readpointers
-            ringbufferpool_->flush(item_p);
-        }
-        ringbufferpool_->flush(RingBufferPool::DEFAULT_ID);
+        conf.attach();
     }
-
-    if (conf.getState() == Conference::State::ACTIVE_DETACHED)
-        conf.setState(Conference::State::ACTIVE_ATTACHED);
-    else
-        JAMI_WARN("Invalid conference state %d while adding main participant", (int)conf.getState());
-
     emitSignal<DRing::CallSignal::ConferenceChanged>(conf.getConfID(), conf.getStateStr());
     switchCall(conf.getConfID());
 }
@@ -1463,29 +1452,17 @@ Manager::createConfFromParticipantList(const std::vector< std::string > &partici
 }
 
 bool
-Manager::detachLocalParticipant()
+Manager::detachLocalParticipant(const std::string& conf_id)
 {
     JAMI_DBG("Unbind local participant from conference");
-    auto conf = getConferenceFromID(getCurrentCallId());
-    if (not conf) {
-        JAMI_ERR("Current call id (%s) is not a conference", getCurrentCallId().c_str());
-        return false;
+    if (auto conf = getConferenceFromID(conf_id.empty() ? getCurrentCallId() : conf_id)) {
+        conf->detach();
+        emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
+        pimpl_->unsetCurrentCall();
+        return true;
     }
-
-    getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
-
-    switch (conf->getState()) {
-        case Conference::State::ACTIVE_ATTACHED:
-            conf->setState(Conference::State::ACTIVE_DETACHED);
-            break;
-        default:
-            JAMI_WARN("Undefined behavior, invalid conference state in detach participant");
-    }
-
-    emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
-
-    pimpl_->unsetCurrentCall();
-    return true;
+    JAMI_ERR("Current call id (%s) is not a conference", getCurrentCallId().c_str());
+    return false;
 }
 
 bool
