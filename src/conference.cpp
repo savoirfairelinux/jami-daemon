@@ -89,6 +89,45 @@ void Conference::remove(const std::string &participant_id)
     }
 }
 
+void
+Conference::attach()
+{
+    if (getState() == State::ACTIVE_DETACHED) {
+        auto& rbPool = Manager::instance().getRingBufferPool();
+        for (const auto& participant : getParticipantList()) {
+            rbPool.bindCallID(participant, RingBufferPool::DEFAULT_ID);
+            // Reset ringbuffer's readpointers
+            rbPool.flush(participant);
+        }
+        rbPool.flush(RingBufferPool::DEFAULT_ID);
+
+#ifdef ENABLE_VIDEO
+        if (auto mixer = getVideoMixer()) {
+            mixer->switchInput(mediaInput_);
+        }
+#endif
+        setState(State::ACTIVE_ATTACHED);
+    } else {
+        JAMI_WARN("Invalid conference state in attach participant");
+    }
+}
+
+void
+Conference::detach()
+{
+    if (getState() == State::ACTIVE_ATTACHED) {
+        Manager::instance().getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
+#ifdef ENABLE_VIDEO
+        if (auto mixer = getVideoMixer()) {
+            mixer->stopInput();
+        }
+#endif
+        setState(State::ACTIVE_DETACHED);
+    } else {
+        JAMI_WARN("Invalid conference state in detach participant");
+    }
+}
+
 void Conference::bindParticipant(const std::string &participant_id)
 {
     auto &rbPool = Manager::instance().getRingBufferPool();
@@ -113,11 +152,12 @@ std::vector<std::string>
 Conference::getDisplayNames() const
 {
     std::vector<std::string> result;
+    result.reserve(participants_.size());
 
     for (const auto &p : participants_) {
         auto details = Manager::instance().getCallDetails(p);
         const auto tmp = details["DISPLAY_NAME"];
-        result.push_back(tmp.empty() ? details["PEER_NUMBER"] : tmp);
+        result.emplace_back(tmp.empty() ? details["PEER_NUMBER"] : tmp);
     }
     return result;
 }
