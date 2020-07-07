@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "582cdae4_d07e93f9",
+        "filename": "src/plugin/jamipluginmanager.cpp",
+        "patchSetId": 6
+      },
+      "lineNbr": 272,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-07-07T13:01:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "d24ed000_7777e8a5",
+      "range": {
+        "startLine": 272,
+        "startChar": 0,
+        "endLine": 272,
+        "endChar": 8
+      },
+      "revId": "c28b4ff6f8e577c5d708cd8e1d8315aa50e350eb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "79f3660c_03218fff",
         "filename": "src/plugin/jamipluginmanager.h",
         "patchSetId": 6
@@ -45,6 +69,30 @@
       "revId": "c28b4ff6f8e577c5d708cd8e1d8315aa50e350eb",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "fe9c5290_8a0970ad",
+        "filename": "src/plugin/jamipluginmanager.h",
+        "patchSetId": 6
+      },
+      "lineNbr": 5,
+      "author": {
+        "id": 859
+      },
+      "writtenOn": "2020-07-07T13:01:36Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "79f3660c_03218fff",
+      "range": {
+        "startLine": 5,
+        "startChar": 1,
+        "endLine": 5,
+        "endChar": 3
+      },
+      "revId": "c28b4ff6f8e577c5d708cd8e1d8315aa50e350eb",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
     }
   ]
 }
