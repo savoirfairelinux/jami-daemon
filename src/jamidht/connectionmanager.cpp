@@ -384,6 +384,7 @@ ConnectionManager::Impl::sendChannelRequest(std::shared_ptr<MultiplexedSocket>& 
     auto channelSock = sock->addChannel(name);
     ChannelRequest val;
     val.name = channelSock->name();
+    val.state = ChannelRequestState::REQUEST;
     val.channel = channelSock->channel();
     std::stringstream ss;
     msgpack::pack(ss, val);

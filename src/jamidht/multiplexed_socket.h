@@ -47,7 +47,7 @@ enum class ChannelRequestState {
 struct ChannelRequest {
     std::string name {};
     uint16_t channel {0};
-    ChannelRequestState state;
+    ChannelRequestState state {ChannelRequestState::REQUEST};
     MSGPACK_DEFINE(name, channel, state)
 };
 
