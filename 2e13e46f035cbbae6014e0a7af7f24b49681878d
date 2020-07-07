@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "31a185fa_35f82c80",
+        "filename": "bin/dbus/cx.ring.Ring.ConfigurationManager.xml",
+        "patchSetId": 16
+      },
+      "lineNbr": 447,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-07T13:44:35Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "408d44b2_a0ed9aa1",
+      "range": {
+        "startLine": 432,
+        "startChar": 49,
+        "endLine": 447,
+        "endChar": 30
+      },
+      "revId": "2e13e46f035cbbae6014e0a7af7f24b49681878d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "0be21761_22a46495",
         "filename": "src/jamidht/server_account_manager.cpp",
         "patchSetId": 16
