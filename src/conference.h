@@ -103,6 +103,16 @@ public:
     void remove(const std::string &participant_id);
 
     /**
+     * Attach local audio/video to the conference
+     */
+    void attach();
+
+    /**
+     * Detach local audio/video from the conference
+     */
+    void detach();
+
+    /**
      * Bind a participant to the conference
      */
     void bindParticipant(const std::string &participant_id);

@@ -296,7 +296,7 @@ class DRING_TESTABLE Manager {
          * Detach the local participant from curent conference.
          * Remote participants are placed in hold.
          */
-        bool detachLocalParticipant();
+        bool detachLocalParticipant(const std::string& conf_id = {});
 
         /**
          * Remove the conference participant from a conference
