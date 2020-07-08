@@ -879,15 +879,12 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages, con
 void
 SIPCall::removeCall()
 {
-    {
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
-        JAMI_WARN("[call:%s] removeCall()", getCallId().c_str());
-        Call::removeCall();
-        mediaTransport_.reset();
-        inv.reset();
-        setTransport({});
-    }
-    Manager::instance().checkAudio();
+    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    JAMI_WARN("[call:%s] removeCall()", getCallId().c_str());
+    Call::removeCall();
+    mediaTransport_.reset();
+    inv.reset();
+    setTransport({});
 }
 
 void
@@ -929,7 +926,6 @@ SIPCall::onClosed()
             auto& call = *shared;
             Manager::instance().peerHungupCall(call);
             call.removeCall();
-            Manager::instance().checkAudio();
         }
     });
 }
