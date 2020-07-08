@@ -68,10 +68,10 @@ CoreLayer::getPlaybackDeviceList() const
 }
 
 int
-CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
+CoreLayer::getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const
 {
     int i = 0;
-    for (const auto& device : getDeviceList(type == DeviceType::CAPTURE)) {
+    for (const auto& device : getDeviceList(type == AudioDeviceType::CAPTURE)) {
         if (device.name_ == name)
             return i;
         i++;
@@ -80,13 +80,13 @@ CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 }
 
 std::string
-CoreLayer::getAudioDeviceName(int index, DeviceType type) const
+CoreLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 {
     return "";
 }
 
 void
-CoreLayer::initAudioLayerIO()
+CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 {
     // OS X uses Audio Units for output. Steps:
     // 1) Create a description.
@@ -120,7 +120,11 @@ CoreLayer::initAudioLayerIO()
         return;
     }
 
-    checkErr(AudioComponentInstanceNew(comp, &ioUnit_));
+    auto initError = AudioComponentInstanceNew(comp, &ioUnit_);
+    if (initError) {
+        checkErr(initError);
+        return;
+    }
 
     // set capture device
     UInt32 size = sizeof(inputDeviceID);
@@ -288,7 +292,7 @@ CoreLayer::initAudioLayerIO()
 }
 
 void
-CoreLayer::startStream(AudioStreamType stream)
+CoreLayer::startStream(AudioDeviceType stream)
 {
     JAMI_DBG("START STREAM");
 
@@ -297,15 +301,18 @@ CoreLayer::startStream(AudioStreamType stream)
         if (status_ != Status::Idle)
             return;
         status_ = Status::Started;
+
+        dcblocker_.reset();
+
+        initAudioLayerIO(stream);
+
+        auto inputRes = AudioUnitInitialize(ioUnit_);
+        auto outputRes = AudioOutputUnitStart(ioUnit_);
+        if (!inputRes && !outputRes) {
+            return;
+        }
     }
-
-    dcblocker_.reset();
-
-    initAudioLayerIO();
-
-    // Run
-    checkErr(AudioUnitInitialize(ioUnit_));
-    checkErr(AudioOutputUnitStart(ioUnit_));
+    stopStream();
 }
 
 void
@@ -317,18 +324,16 @@ CoreLayer::destroyAudioLayer()
 }
 
 void
-CoreLayer::stopStream()
+CoreLayer::stopStream(AudioDeviceType stream)
 {
     JAMI_DBG("STOP STREAM");
-
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (status_ != Status::Started)
             return;
         status_ = Status::Idle;
+        destroyAudioLayer();
     }
-
-    destroyAudioLayer();
 
     /* Flush the ring buffers */
     flushUrgent();
@@ -441,18 +446,19 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
 }
 
 void
-CoreLayer::updatePreference(AudioPreference& preference, int index, DeviceType type)
+CoreLayer::updatePreference(AudioPreference& preference, int index, AudioDeviceType type)
 {
     switch (type) {
-    case DeviceType::PLAYBACK:
+    case AudioDeviceType::ALL:
+    case AudioDeviceType::PLAYBACK:
         preference.setAlsaCardout(index);
         break;
 
-    case DeviceType::CAPTURE:
+    case AudioDeviceType::CAPTURE:
         preference.setAlsaCardin(index);
         break;
 
-    case DeviceType::RINGTONE:
+    case AudioDeviceType::RINGTONE:
         preference.setAlsaCardring(index);
         break;
 
