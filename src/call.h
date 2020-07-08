@@ -49,6 +49,7 @@ namespace jami {
 class VoIPLink;
 class Account;
 struct AccountVideoCodecInfo;
+class AudioDeviceGuard;
 
 template<class T>
 using CallMap = std::map<std::string, std::shared_ptr<T>>;
@@ -330,6 +331,8 @@ public: // media management
     {
         return confInfo_.toVectorMapStringString();
     }
+
+    std::unique_ptr<AudioDeviceGuard> audioGuard;
 
 protected:
     virtual void merge(Call& scall);

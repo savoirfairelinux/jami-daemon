@@ -75,11 +75,11 @@ LocalRecorder::startRecording()
     // audio recording
     // create read offset in RingBuffer
     Manager::instance().getRingBufferPool().bindHalfDuplexOut(path_, RingBufferPool::DEFAULT_ID);
-    Manager::instance().startAudioDriverStream();
 
     audioInput_ = jami::getAudioInput(path_);
     audioInput_->setFormat(AudioFormat::STEREO());
     audioInput_->attach(recorder_->addStream(audioInput_->getInfo()));
+    audioInput_->switchInput("");
 
 #ifdef ENABLE_VIDEO
     // video recording

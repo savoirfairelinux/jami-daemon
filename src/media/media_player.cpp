@@ -44,7 +44,6 @@ MediaPlayer::MediaPlayer(const std::string& path)
 
     path_ = path;
     id_ = std::to_string(rand());
-    Manager::instance().startAudioPlayback();
     audioInput_ = jami::getAudioInput(id_);
     audioInput_->setPaused(paused_);
     videoInput_ = jami::getVideoInput(id_, video::VideoInputMode::ManagedByDaemon);
@@ -82,6 +81,7 @@ MediaPlayer::configureMediaInputs()
         if (hasAudio()) {
             audioInput_->configureFilePlayback(path_, demuxer_, audioStream_);
             audioInput_->updateStartTime(startTime_);
+            audioInput_->start();
         }
     } catch (const std::exception& e) {
         JAMI_ERR("media player: %s open audio input failed: %s", path_.c_str(), e.what());
