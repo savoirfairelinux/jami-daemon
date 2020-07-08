@@ -20,7 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "ip_utils.h" // MUST BE INCLUDED FIRST
+#include "ip_utils.h"   // MUST BE INCLUDED FIRST
 #include "libav_deps.h" // THEN THIS ONE AFTER
 
 #include "socket_pair.h"
@@ -46,8 +46,8 @@ extern "C" {
 
 #ifdef _WIN32
 #define SOCK_NONBLOCK FIONBIO
-#define poll WSAPoll
-#define close(x) closesocket(x)
+#define poll          WSAPoll
+#define close(x)      closesocket(x)
 #endif
 
 #ifdef __ANDROID__
@@ -59,23 +59,20 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
-
 // Swap 2 byte, 16 bit values:
-#define Swap2Bytes(val) \
-	 ( (((val) >> 8) & 0x00FF) | (((val) << 8) & 0xFF00) )
+#define Swap2Bytes(val) ((((val) >> 8) & 0x00FF) | (((val) << 8) & 0xFF00))
 
 // Swap 4 byte, 32 bit values:
 #define Swap4Bytes(val) \
-    ( (((val) >> 24) & 0x000000FF) | (((val) >>  8) & 0x0000FF00) | \
-    (((val) <<  8) & 0x00FF0000) | (((val) << 24) & 0xFF000000) )
+    ((((val) >> 24) & 0x000000FF) | (((val) >> 8) & 0x0000FF00) | (((val) << 8) & 0x00FF0000) \
+     | (((val) << 24) & 0xFF000000))
 
 // Swap 8 byte, 64 bit values:
 #define Swap8Bytes(val) \
-    ( (((val) >> 56) & 0x00000000000000FF) | (((val) >> 40) & 0x000000000000FF00) | \
-    (((val) >> 24) & 0x0000000000FF0000) | (((val) >>  8) & 0x00000000FF000000) | \
-    (((val) <<  8) & 0x000000FF00000000) | (((val) << 24) & 0x0000FF0000000000) | \
-    (((val) << 40) & 0x00FF000000000000) | (((val) << 56) & 0xFF00000000000000) )
-
+    ((((val) >> 56) & 0x00000000000000FF) | (((val) >> 40) & 0x000000000000FF00) \
+     | (((val) >> 24) & 0x0000000000FF0000) | (((val) >> 8) & 0x00000000FF000000) \
+     | (((val) << 8) & 0x000000FF00000000) | (((val) << 24) & 0x0000FF0000000000) \
+     | (((val) << 40) & 0x00FF000000000000) | (((val) << 56) & 0xFF00000000000000))
 
 namespace jami {
 
@@ -86,13 +83,16 @@ static constexpr auto SRTP_OVERHEAD = 10;
 static constexpr uint32_t RTCP_RR_FRACTION_MASK = 0xFF000000;
 static constexpr unsigned MINIMUM_RTP_HEADER_SIZE = 16;
 
+enum class DataType : unsigned { RTP = 1 << 0, RTCP = 1 << 1 };
 
-enum class DataType : unsigned { RTP=1<<0, RTCP=1<<1 };
-
-class SRTPProtoContext {
+class SRTPProtoContext
+{
 public:
-    SRTPProtoContext(const char* out_suite, const char* out_key,
-                     const char* in_suite, const char* in_key) {
+    SRTPProtoContext(const char* out_suite,
+                     const char* out_key,
+                     const char* in_suite,
+                     const char* in_key)
+    {
         ring_secure_memzero(&srtp_out, sizeof(srtp_out));
         ring_secure_memzero(&srtp_in, sizeof(srtp_in));
         if (out_suite && out_key) {
@@ -111,16 +111,15 @@ public:
         }
     }
 
-    ~SRTPProtoContext() {
-        srtp_close();
-    }
+    ~SRTPProtoContext() { srtp_close(); }
 
     SRTPContext srtp_out {};
     SRTPContext srtp_in {};
     uint8_t encryptbuf[RTP_MAX_PACKET_LENGTH];
 
 private:
-    void srtp_close() noexcept {
+    void srtp_close() noexcept
+    {
         ff_srtp_free(&srtp_out);
         ff_srtp_free(&srtp_in);
     }
@@ -129,7 +128,7 @@ private:
 static int
 ff_network_wait_fd(int fd)
 {
-    struct pollfd p = { fd, POLLOUT, 0 };
+    struct pollfd p = {fd, POLLOUT, 0};
     auto ret = poll(&p, 1, NET_POLL_TIMEOUT);
     return ret < 0 ? errno : p.revents & (POLLOUT | POLLERR | POLLHUP) ? 0 : -EAGAIN;
 }
@@ -181,26 +180,25 @@ udp_socket_create(int family, int port)
     return udp_fd;
 }
 
-SocketPair::SocketPair(const char *uri, int localPort)
+SocketPair::SocketPair(const char* uri, int localPort)
 {
     openSockets(uri, localPort);
 }
 
-SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
-                       std::unique_ptr<IceSocket> rtcp_sock)
+SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock)
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
 {
     auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
-        rtpDataBuff_.emplace_back(buf, buf+len);
+        rtpDataBuff_.emplace_back(buf, buf + len);
         cv_.notify_one();
         return len;
     };
 
     auto queueRtcpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
-        rtcpDataBuff_.emplace_back(buf, buf+len);
+        rtcpDataBuff_.emplace_back(buf, buf + len);
         cv_.notify_one();
         return len;
     };
@@ -219,7 +217,7 @@ bool
 SocketPair::waitForRTCP(std::chrono::seconds interval)
 {
     std::unique_lock<std::mutex> lock(rtcpInfo_mutex_);
-    return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this]{
+    return cvRtcpPacketReadyToRead_.wait_for(lock, interval, [this] {
         return interrupted_ or not listRtcpRRHeader_.empty() or not listRtcpREMBHeader_.empty();
     });
 }
@@ -231,7 +229,7 @@ SocketPair::saveRtcpRRPacket(uint8_t* buf, size_t len)
         return;
 
     auto header = reinterpret_cast<rtcpRRHeader*>(buf);
-    if(header->pt != 201) //201 = RR PT
+    if (header->pt != 201) // 201 = RR PT
         return;
 
     std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
@@ -245,7 +243,6 @@ SocketPair::saveRtcpRRPacket(uint8_t* buf, size_t len)
     cvRtcpPacketReadyToRead_.notify_one();
 }
 
-
 void
 SocketPair::saveRtcpREMBPacket(uint8_t* buf, size_t len)
 {
@@ -253,10 +250,10 @@ SocketPair::saveRtcpREMBPacket(uint8_t* buf, size_t len)
         return;
 
     auto header = reinterpret_cast<rtcpREMBHeader*>(buf);
-    if(header->pt != 206) //206 = REMB PT
+    if (header->pt != 206) // 206 = REMB PT
         return;
 
-    if(header->uid != 0x424D4552) // uid must be "REMB"
+    if (header->uid != 0x424D4552) // uid must be "REMB"
         return;
 
     std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
@@ -285,8 +282,10 @@ SocketPair::getRtcpREMB()
 }
 
 void
-SocketPair::createSRTP(const char* out_suite, const char* out_key,
-                       const char* in_suite, const char* in_key)
+SocketPair::createSRTP(const char* out_suite,
+                       const char* out_key,
+                       const char* in_suite,
+                       const char* in_key)
 {
     srtpContext_.reset(new SRTPProtoContext(out_suite, out_key, in_suite, in_key));
 }
@@ -295,8 +294,10 @@ void
 SocketPair::interrupt()
 {
     interrupted_ = true;
-    if (rtp_sock_) rtp_sock_->setOnRecv(nullptr);
-    if (rtcp_sock_) rtcp_sock_->setOnRecv(nullptr);
+    if (rtp_sock_)
+        rtp_sock_->setOnRecv(nullptr);
+    if (rtcp_sock_)
+        rtcp_sock_->setOnRecv(nullptr);
     cv_.notify_all();
     cvRtcpPacketReadyToRead_.notify_all();
 }
@@ -328,18 +329,24 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
     const int local_rtcp_port = local_rtp_port + 1;
     const int dst_rtcp_port = dst_rtp_port + 1;
 
-    rtpDestAddr_ = IpAddr {hostname}; rtpDestAddr_.setPort(dst_rtp_port);
-    rtcpDestAddr_ = IpAddr {hostname}; rtcpDestAddr_.setPort(dst_rtcp_port);
+    rtpDestAddr_ = IpAddr {hostname};
+    rtpDestAddr_.setPort(dst_rtp_port);
+    rtcpDestAddr_ = IpAddr {hostname};
+    rtcpDestAddr_.setPort(dst_rtcp_port);
 
     // Open local sockets (RTP/RTCP)
-    if ((rtpHandle_ = udp_socket_create(rtpDestAddr_.getFamily(), local_rtp_port)) == -1 or
-        (rtcpHandle_ = udp_socket_create(rtcpDestAddr_.getFamily(), local_rtcp_port)) == -1) {
+    if ((rtpHandle_ = udp_socket_create(rtpDestAddr_.getFamily(), local_rtp_port)) == -1
+        or (rtcpHandle_ = udp_socket_create(rtcpDestAddr_.getFamily(), local_rtcp_port)) == -1) {
         closeSockets();
         throw std::runtime_error("Sockets creation failed");
     }
 
     JAMI_WARN("SocketPair: local{%d,%d} / %s{%d,%d}",
-              local_rtp_port, local_rtcp_port, hostname, dst_rtp_port, dst_rtcp_port);
+              local_rtp_port,
+              local_rtcp_port,
+              hostname,
+              dst_rtp_port,
+              dst_rtcp_port);
 }
 
 MediaIOHandle*
@@ -352,11 +359,17 @@ SocketPair::createIOContext(const uint16_t mtu)
         ip_header_size = 40;
     else
         ip_header_size = 20;
-    return new MediaIOHandle( mtu - (srtpContext_ ? SRTP_OVERHEAD : 0) - UDP_HEADER_SIZE - ip_header_size,
-                              true,
-                             [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->readCallback(buf, len); },
-                             [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->writeCallback(buf, len); },
-                             0, reinterpret_cast<void*>(this));
+    return new MediaIOHandle(
+        mtu - (srtpContext_ ? SRTP_OVERHEAD : 0) - UDP_HEADER_SIZE - ip_header_size,
+        true,
+        [](void* sp, uint8_t* buf, int len) {
+            return static_cast<SocketPair*>(sp)->readCallback(buf, len);
+        },
+        [](void* sp, uint8_t* buf, int len) {
+            return static_cast<SocketPair*>(sp)->writeCallback(buf, len);
+        },
+        0,
+        reinterpret_cast<void*>(this));
 }
 
 int
@@ -372,8 +385,7 @@ SocketPair::waitForData()
             }
 
             // work with system socket
-            struct pollfd p[2] = { {rtpHandle_, POLLIN, 0},
-                                   {rtcpHandle_, POLLIN, 0} };
+            struct pollfd p[2] = {{rtpHandle_, POLLIN, 0}, {rtcpHandle_, POLLIN, 0}};
             ret = poll(p, 2, NET_POLL_TIMEOUT);
             if (ret > 0) {
                 ret = 0;
@@ -385,13 +397,14 @@ SocketPair::waitForData()
         } while (!ret or (ret < 0 and errno == EAGAIN));
 
         return ret;
-
     }
 
     // work with IceSocket
     {
         std::unique_lock<std::mutex> lk(dataBuffMutex_);
-        cv_.wait(lk, [this]{ return interrupted_ or not rtpDataBuff_.empty() or not rtcpDataBuff_.empty(); });
+        cv_.wait(lk, [this] {
+            return interrupted_ or not rtpDataBuff_.empty() or not rtcpDataBuff_.empty();
+        });
     }
 
     if (interrupted_) {
@@ -409,8 +422,12 @@ SocketPair::readRtpData(void* buf, int buf_size)
     if (rtpHandle_ >= 0) {
         struct sockaddr_storage from;
         socklen_t from_len = sizeof(from);
-        return recvfrom(rtpHandle_, static_cast<char*>(buf), buf_size, 0,
-                        reinterpret_cast<struct sockaddr*>(&from), &from_len);
+        return recvfrom(rtpHandle_,
+                        static_cast<char*>(buf),
+                        buf_size,
+                        0,
+                        reinterpret_cast<struct sockaddr*>(&from),
+                        &from_len);
     }
 
     // handle ICE
@@ -435,8 +452,12 @@ SocketPair::readRtcpData(void* buf, int buf_size)
     if (rtcpHandle_ >= 0) {
         struct sockaddr_storage from;
         socklen_t from_len = sizeof(from);
-        return recvfrom(rtcpHandle_, static_cast<char*>(buf), buf_size, 0,
-                        reinterpret_cast<struct sockaddr*>(&from), &from_len);
+        return recvfrom(rtcpHandle_,
+                        static_cast<char*>(buf),
+                        buf_size,
+                        0,
+                        reinterpret_cast<struct sockaddr*>(&from),
+                        &from_len);
     }
 
     // handle ICE
@@ -471,7 +492,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             // 201 = RR PT
             if (header->pt == 201) {
                 lastDLSR_ = Swap4Bytes(header->dlsr);
-                //JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
+                // JAMI_WARN("Read RR, lastDLSR : %d", lastDLSR_);
                 lastRR_time = std::chrono::steady_clock::now();
                 saveRtcpRRPacket(buf, len);
             }
@@ -481,8 +502,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             // 200 = SR PT
             else if (header->pt == 200) {
                 // not used yet
-            }
-            else {
+            } else {
                 JAMI_DBG("Can't read RTCP: unknown packet type %u", header->pt);
             }
             fromRTCP = true;
@@ -512,15 +532,15 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         res_parse = parse_RTP_ext(buf, &abs);
         bool marker = (buf[1] & 0x80) >> 7;
 
-        if(res_parse)
+        if (res_parse)
             res_delay = getOneWayDelayGradient(abs, marker, &gradient, &deltaT);
 
         // rtpDelayCallback_ is not set for audio
         if (rtpDelayCallback_ and res_delay)
-                rtpDelayCallback_(gradient, deltaT);
+            rtpDelayCallback_(gradient, deltaT);
 
         auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
-        if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNumIn_+1)
+        if (packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNumIn_ + 1)
             packetLossCallback_();
         lastSeqNumIn_ = buf[2] << 8 | buf[3];
         if (err < 0)
@@ -557,8 +577,12 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
 
         if (noWrite_)
             return buf_size;
-        return ::sendto(fd, reinterpret_cast<const char*>(buf), buf_size, 0,
-                        *dest_addr, dest_addr->getLength());
+        return ::sendto(fd,
+                        reinterpret_cast<const char*>(buf),
+                        buf_size,
+                        0,
+                        *dest_addr,
+                        dest_addr->getLength());
     }
 
     if (noWrite_)
@@ -584,8 +608,10 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
 
     // Encrypt?
     if (not isRTCP and srtpContext_ and srtpContext_->srtp_out.aes) {
-        buf_size = ff_srtp_encrypt(&srtpContext_->srtp_out, buf,
-                                   buf_size, srtpContext_->encryptbuf,
+        buf_size = ff_srtp_encrypt(&srtpContext_->srtp_out,
+                                   buf,
+                                   buf_size,
+                                   srtpContext_->encryptbuf,
                                    sizeof(srtpContext_->encryptbuf));
         if (buf_size < 0) {
             JAMI_WARN("encrypt error %d", buf_size);
@@ -599,7 +625,8 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     // buf_size gives length of buffer, not just header
     if (isRTCP && static_cast<unsigned>(buf_size) >= sizeof(rtcpRRHeader)) {
         auto header = reinterpret_cast<rtcpRRHeader*>(buf);
-        rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
+        rtcpPacketLoss_ = (header->pt == 201
+                           && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
     }
 
     do {
@@ -608,21 +635,20 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
         ret = writeData(buf, buf_size);
     } while (ret < 0 and errno == EAGAIN);
 
-    if(buf[1] == 200) //Sender Report
+    if (buf[1] == 200) // Sender Report
     {
         auto header = reinterpret_cast<rtcpSRHeader*>(buf);
         ts_LSB = Swap4Bytes(header->timestampLSB);
         ts_MSB = Swap4Bytes(header->timestampMSB);
 
-        currentSRTS = ts_MSB + (ts_LSB / pow(2,32));
+        currentSRTS = ts_MSB + (ts_LSB / pow(2, 32));
 
-        if(lastSRTS_ != 0 && lastDLSR_ != 0)
-        {
+        if (lastSRTS_ != 0 && lastDLSR_ != 0) {
             if (histoLatency_.size() >= MAX_LIST_SIZE)
                 histoLatency_.pop_front();
 
             currentLatency = (currentSRTS - lastSRTS_) / 2;
-            //JAMI_WARN("Current Latency : %f from sender %X", currentLatency, header->ssrc);
+            // JAMI_WARN("Current Latency : %f from sender %X", currentLatency, header->ssrc);
             histoLatency_.push_back(currentLatency);
         }
 
@@ -630,12 +656,10 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
 
         // JAMI_WARN("SENDING NEW RTCP SR !! ");
 
-    }
-    else if(buf[1] == 201) //Receiver Report
+    } else if (buf[1] == 201) // Receiver Report
     {
-        //auto header = reinterpret_cast<rtcpRRHeader*>(buf);
-        //JAMI_WARN("SENDING NEW RTCP RR !! ");
-
+        // auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+        // JAMI_WARN("SENDING NEW RTCP RR !! ");
     }
 
     return ret < 0 ? -errno : ret;
@@ -644,7 +668,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
 double
 SocketPair::getLastLatency()
 {
-    if(not histoLatency_.empty())
+    if (not histoLatency_.empty())
         return histoLatency_.back();
     else
         return -1;
@@ -671,13 +695,14 @@ SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient,
         return 0;
     }
 
-    int32_t deltaS = (sendTS - lastSendTS_) * 1000;            // milliseconds
-    if(deltaS < 0)
+    int32_t deltaS = (sendTS - lastSendTS_) * 1000; // milliseconds
+    if (deltaS < 0)
         deltaS += 64000;
     lastSendTS_ = sendTS;
 
     std::chrono::steady_clock::time_point arrival_TS = std::chrono::steady_clock::now();
-    auto deltaR = std::chrono::duration_cast<std::chrono::milliseconds>(arrival_TS - lastReceiveTS_).count();
+    auto deltaR = std::chrono::duration_cast<std::chrono::milliseconds>(arrival_TS - lastReceiveTS_)
+                      .count();
     lastReceiveTS_ = arrival_TS;
 
     *gradient = deltaR - deltaS;
@@ -689,16 +714,16 @@ SocketPair::getOneWayDelayGradient(float sendTS, bool marker, int32_t* gradient,
 bool
 SocketPair::parse_RTP_ext(uint8_t* buf, float* abs)
 {
-    if(not(buf[0] & 0x10))
+    if (not(buf[0] & 0x10))
         return false;
 
     uint16_t magic_word = (buf[12] << 8) + buf[13];
-    if(magic_word != 0xBEDE)
+    if (magic_word != 0xBEDE)
         return false;
 
     uint8_t sec = buf[17] >> 2;
     uint32_t fract = ((buf[17] & 0x3) << 16 | (buf[18] << 8) | buf[19]) << 14;
-    float milli = fract / pow(2,32);
+    float milli = fract / pow(2, 32);
 
     *abs = sec + (milli);
     return true;

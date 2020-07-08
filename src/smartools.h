@@ -54,4 +54,4 @@ private:
     std::map<std::string, std::string> information_;
     std::shared_ptr<RepeatedTask> task_;
 };
-}
+} // namespace jami

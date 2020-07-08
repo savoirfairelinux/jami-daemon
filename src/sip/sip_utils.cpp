@@ -42,10 +42,11 @@
 #include <vector>
 #include <algorithm>
 
-namespace jami { namespace sip_utils {
+namespace jami {
+namespace sip_utils {
 
 std::string
-PjsipErrorCategory::message( int condition ) const
+PjsipErrorCategory::message(int condition) const
 {
     std::string err_msg;
     err_msg.reserve(PJ_ERR_MSG_SIZE);
@@ -54,10 +55,11 @@ PjsipErrorCategory::message( int condition ) const
 }
 
 std::string
-fetchHeaderValue(pjsip_msg *msg, const std::string &field)
+fetchHeaderValue(pjsip_msg* msg, const std::string& field)
 {
     pj_str_t name = pj_str((char*) field.c_str());
-    pjsip_generic_string_hdr *hdr = static_cast<pjsip_generic_string_hdr*>(pjsip_msg_find_hdr_by_name(msg, &name, NULL));
+    pjsip_generic_string_hdr* hdr = static_cast<pjsip_generic_string_hdr*>(
+        pjsip_msg_find_hdr_by_name(msg, &name, NULL));
 
     if (!hdr)
         return "";
@@ -72,10 +74,10 @@ fetchHeaderValue(pjsip_msg *msg, const std::string &field)
         return "";
 }
 
-pjsip_route_hdr *
-createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
+pjsip_route_hdr*
+createRouteSet(const std::string& route, pj_pool_t* hdr_pool)
 {
-    pjsip_route_hdr *route_set = pjsip_route_hdr_create(hdr_pool);
+    pjsip_route_hdr* route_set = pjsip_route_hdr_create(hdr_pool);
 
     std::string host;
     int port = 0;
@@ -86,8 +88,8 @@ createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     } else
         host = route;
 
-    pjsip_route_hdr *routing = pjsip_route_hdr_create(hdr_pool);
-    pjsip_sip_uri *url = pjsip_sip_uri_create(hdr_pool, 0);
+    pjsip_route_hdr* routing = pjsip_route_hdr_create(hdr_pool);
+    pjsip_sip_uri* url = pjsip_sip_uri_create(hdr_pool, 0);
     url->lr_param = 1;
     routing->name_addr.uri = (pjsip_uri*) url;
     pj_strdup2(hdr_pool, &url->host, host.c_str());
@@ -106,7 +108,7 @@ parseDisplayName(const pjsip_name_addr* sip_name_addr)
         return {};
 
     std::string displayName {sip_name_addr->display.ptr,
-            static_cast<size_t>(sip_name_addr->display.slen)};
+                             static_cast<size_t>(sip_name_addr->display.slen)};
 
     // Filter out invalid UTF-8 characters to avoid getting kicked from D-Bus
     if (not utf8_validate(displayName))
@@ -160,7 +162,7 @@ getHostFromUri(const std::string& sipUri)
     std::string hostname(sipUri);
     size_t found = hostname.find('@');
     if (found != std::string::npos)
-        hostname.erase(0, found+1);
+        hostname.erase(0, found + 1);
 
     found = hostname.find('>');
     if (found != std::string::npos)
@@ -170,11 +172,13 @@ getHostFromUri(const std::string& sipUri)
 }
 
 void
-addContactHeader(const pj_str_t *contact_str, pjsip_tx_data *tdata)
+addContactHeader(const pj_str_t* contact_str, pjsip_tx_data* tdata)
 {
-    pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
-    contact->uri = pjsip_parse_uri(tdata->pool, contact_str->ptr,
-                                   contact_str->slen, PJSIP_PARSE_URI_AS_NAMEADDR);
+    pjsip_contact_hdr* contact = pjsip_contact_hdr_create(tdata->pool);
+    contact->uri = pjsip_parse_uri(tdata->pool,
+                                   contact_str->ptr,
+                                   contact_str->slen,
+                                   PJSIP_PARSE_URI_AS_NAMEADDR);
     // remove old contact header (if present)
     pjsip_msg_find_remove_hdr(tdata->msg, PJSIP_H_CONTACT, NULL);
     pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
@@ -185,7 +189,7 @@ sip_strerror(pj_status_t code)
 {
     char err_msg[PJ_ERR_MSG_SIZE];
     pj_strerror(code, err_msg, sizeof err_msg);
-    return std::string{err_msg};
+    return std::string {err_msg};
 }
 
 void
@@ -194,10 +198,10 @@ register_thread()
     if (!pj_thread_is_registered()) {
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined _MSC_VER
         static thread_local pj_thread_desc desc;
-        static thread_local pj_thread_t *this_thread;
+        static thread_local pj_thread_t* this_thread;
 #else
         static __thread pj_thread_desc desc;
-        static __thread pj_thread_t *this_thread;
+        static __thread pj_thread_t* this_thread;
 #endif
         pj_thread_register(NULL, desc, &this_thread);
         JAMI_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
@@ -205,14 +209,13 @@ register_thread()
 }
 
 void
-sockaddr_to_host_port(pj_pool_t* pool,
-                      pjsip_host_port* host_port,
-                      const pj_sockaddr* addr)
+sockaddr_to_host_port(pj_pool_t* pool, pjsip_host_port* host_port, const pj_sockaddr* addr)
 {
-    host_port->host.ptr = (char*) pj_pool_alloc(pool, PJ_INET6_ADDRSTRLEN+4);
-    pj_sockaddr_print(addr, host_port->host.ptr, PJ_INET6_ADDRSTRLEN+4, 0);
+    host_port->host.ptr = (char*) pj_pool_alloc(pool, PJ_INET6_ADDRSTRLEN + 4);
+    pj_sockaddr_print(addr, host_port->host.ptr, PJ_INET6_ADDRSTRLEN + 4, 0);
     host_port->host.slen = pj_ansi_strlen(host_port->host.ptr);
     host_port->port = pj_sockaddr_get_port(addr);
 }
 
-}} // namespace jami::sip_utils
+} // namespace sip_utils
+} // namespace jami

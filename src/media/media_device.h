@@ -35,7 +35,8 @@ constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
  * Parameters used by MediaDecoder and MediaEncoder
  * to open a LibAV device/stream
  */
-struct DeviceParams {
+struct DeviceParams
+{
     std::string name {};
     std::string input {}; // Device path (e.g. /dev/video0)
     std::string format {};
@@ -51,6 +52,6 @@ struct DeviceParams {
     int orientation {};
 };
 
-}
+} // namespace jami
 
 #endif // __MEDIA_DEVICE_H__

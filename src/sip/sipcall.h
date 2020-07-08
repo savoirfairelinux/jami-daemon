@@ -86,13 +86,13 @@ protected:
      * @param id    The call identifier
      * @param type  The type of the call. Could be Incoming or Outgoing
      */
-    SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type,
-            const std::map<std::string, std::string>& details={});
+    SIPCall(SIPAccountBase& account,
+            const std::string& id,
+            Call::CallType type,
+            const std::map<std::string, std::string>& details = {});
 
 public: // overridden
-    const char* getLinkType() const override {
-        return LINK_TYPE;
-    }
+    const char* getLinkType() const override { return LINK_TYPE; }
     void answer() override;
     void hangup(int reason) override;
     void refuse() override;
@@ -105,9 +105,9 @@ public: // overridden
     void carryingDTMFdigits(char code) override;
 
     /**
-      * Send device orientation through SIP INFO
-      * @param rotation Device orientation (0/90/180/270) (counterclockwise)
-      */
+     * Send device orientation through SIP INFO
+     * @param rotation Device orientation (0/90/180/270) (counterclockwise)
+     */
     void setVideoOrientation(int rotation);
 
     void sendTextMessage(const std::map<std::string, std::string>& messages,
@@ -121,15 +121,14 @@ public: // overridden
     void sendKeyframe() override;
     std::map<std::string, std::string> getDetails() const override;
 
-    virtual bool toggleRecording() override; // SIPCall needs to spread recorder to rtp sessions, so override
+    virtual bool toggleRecording()
+        override; // SIPCall needs to spread recorder to rtp sessions, so override
 
 public: // SIP related
     /**
      * Return the SDP's manager of this call
      */
-    Sdp& getSDP() {
-        return *sdp_;
-    }
+    Sdp& getSDP() { return *sdp_; }
 
     /**
      * Tell the user that the call is ringing
@@ -147,7 +146,7 @@ public: // SIP related
      * To call in case of server/internal error
      * @param cause Optionnal error code
      */
-    void onFailure(signed cause=0);
+    void onFailure(signed cause = 0);
 
     /**
      * Peer answered busy
@@ -161,19 +160,17 @@ public: // SIP related
      */
     void onClosed();
 
-    void onReceiveOffer(const pjmedia_sdp_session *offer);
+    void onReceiveOffer(const pjmedia_sdp_session* offer);
 
     void onMediaUpdate();
 
-    void setContactHeader(pj_str_t *contact);
+    void setContactHeader(pj_str_t* contact);
 
     void setTransport(const std::shared_ptr<SipTransport>& t);
 
-    SipTransport* getTransport() {
-        return transport_.get();
-    }
+    SipTransport* getTransport() { return transport_.get(); }
 
-    void sendSIPInfo(const char *const body, const char *const subtype);
+    void sendSIPInfo(const char* const body, const char* const subtype);
 
     void requestKeyframe();
 
@@ -194,7 +191,8 @@ public: // SIP related
     /**
      * The invite session to be reused in case of transfer
      */
-    struct InvSessionDeleter {
+    struct InvSessionDeleter
+    {
         void operator()(pjsip_inv_session*) const noexcept;
     };
 
@@ -204,41 +202,32 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     /**
      * Returns a pointer to the AudioRtpSession object
      */
-    AudioRtpSession& getAVFormatRTP() const {
-        return *avformatrtp_;
-    }
+    AudioRtpSession& getAVFormatRTP() const { return *avformatrtp_; }
 
 #ifdef ENABLE_VIDEO
     /**
      * Returns a pointer to the VideoRtp object
      */
-    video::VideoRtpSession& getVideoRtp () {
-        return *videortp_;
-    }
+    video::VideoRtpSession& getVideoRtp() { return *videortp_; }
 #endif
 
     void setSecure(bool sec);
 
-    bool isSecure() const {
-        return srtpEnabled_;
-    }
+    bool isSecure() const { return srtpEnabled_; }
 
     void generateMediaPorts();
 
     void openPortsUPnP();
 
-    void setPeerRegistredName(const std::string& name) {
-        peerRegistredName_ = name;
-    }
+    void setPeerRegistredName(const std::string& name) { peerRegistredName_ = name; }
 
     void setPeerUri(const std::string& peerUri) { peerUri_ = peerUri; }
 
-    bool initIceMediaTransport(bool master, unsigned channel_num=4);
+    bool initIceMediaTransport(bool master, unsigned channel_num = 4);
 
     bool isIceRunning() const;
 
     std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
-
 
     void deinitRecorder();
 
@@ -250,8 +239,8 @@ private:
 
     NON_COPYABLE(SIPCall);
 
-
-    IceTransport* getIceMediaTransport() const {
+    IceTransport* getIceMediaTransport() const
+    {
         return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
     }
 
@@ -269,14 +258,15 @@ private:
      * @param streamSource
      * @param mediaStreamSubject
      */
-    void createCallAVStream(const StreamData& StreamData, MediaStream& streamSource,
+    void createCallAVStream(const StreamData& StreamData,
+                            MediaStream& streamSource,
                             const std::shared_ptr<MediaStreamSubject>& mediaStreamSubject);
     /**
      * @brief createCallAVStreams
      * Creates all Call AV Streams (2 if audio, 4 if audio video)
      */
     void createCallAVStreams();
-#endif //ENABLE_PLUGIN
+#endif // ENABLE_PLUGIN
 
     std::list<std::shared_ptr<MediaStreamSubject>> callAVStreams;
 
@@ -290,9 +280,9 @@ private:
     /**
      * Transfer method used for both type of transfer
      */
-    bool transferCommon(const pj_str_t *dst);
+    bool transferCommon(const pj_str_t* dst);
 
-    bool internalOffHold(const std::function<void()> &SDPUpdateFunc);
+    bool internalOffHold(const std::function<void()>& SDPUpdateFunc);
 
     bool hold();
 
@@ -304,18 +294,19 @@ private:
 
     void merge(Call& call) override; // not public - only called by Call
 
-    inline std::shared_ptr<const SIPCall> shared() const {
+    inline std::shared_ptr<const SIPCall> shared() const
+    {
         return std::static_pointer_cast<const SIPCall>(shared_from_this());
     }
-    inline std::shared_ptr<SIPCall> shared() {
+    inline std::shared_ptr<SIPCall> shared()
+    {
         return std::static_pointer_cast<SIPCall>(shared_from_this());
     }
-    inline std::weak_ptr<const SIPCall> weak() const {
+    inline std::weak_ptr<const SIPCall> weak() const
+    {
         return std::weak_ptr<const SIPCall>(shared());
     }
-    inline std::weak_ptr<SIPCall> weak() {
-        return std::weak_ptr<SIPCall>(shared());
-    }
+    inline std::weak_ptr<SIPCall> weak() { return std::weak_ptr<SIPCall>(shared()); }
 
     std::unique_ptr<AudioRtpSession> avformatrtp_;
 
@@ -344,12 +335,7 @@ private:
     bool peerHolding_ {false};
 
     bool isWaitingForIceAndMedia_ {false};
-    enum class Request {
-        HoldingOn,
-        HoldingOff,
-        SwitchInput,
-        NoRequest
-    };
+    enum class Request { HoldingOn, HoldingOff, SwitchInput, NoRequest };
     Request remainingRequest_ {Request::NoRequest};
 
     std::string peerRegistredName_ {};
@@ -371,7 +357,7 @@ private:
     ///< Temporary transport for media. Replace mediaTransport_ when connected with success
     std::unique_ptr<IceTransport> tmpMediaTransport_;
 
-    std::string peerUri_{};
+    std::string peerUri_ {};
 
     bool readyToRecord_ {false};
     bool pendingRecord_ {false};
@@ -387,7 +373,8 @@ private:
 /**
  * Obtain a shared smart pointer of instance
  */
-inline std::shared_ptr<SIPCall> getPtr(SIPCall& call)
+inline std::shared_ptr<SIPCall>
+getPtr(SIPCall& call)
 {
     return std::static_pointer_cast<SIPCall>(call.shared_from_this());
 }

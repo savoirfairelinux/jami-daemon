@@ -21,24 +21,26 @@
 
 #include "mapping.h"
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
-Mapping::Mapping(uint16_t portExternal, uint16_t portInternal,
-                 PortType type, bool unique, const std::string& description):
-                 portExternal_(portExternal),
-                 portInternal_(portInternal),
-                 type_(type),
-                 description_(description),
-                 unique_(unique)
-{
-};
+Mapping::Mapping(uint16_t portExternal,
+                 uint16_t portInternal,
+                 PortType type,
+                 bool unique,
+                 const std::string& description)
+    : portExternal_(portExternal)
+    , portInternal_(portInternal)
+    , type_(type)
+    , description_(description)
+    , unique_(unique) {};
 
-Mapping::Mapping(Mapping&& other) noexcept:
-    portExternal_(other.portExternal_),
-    portInternal_(other.portInternal_),
-    type_(other.type_),
-    description_(other.description_),
-    unique_(other.unique_)
+Mapping::Mapping(Mapping&& other) noexcept
+    : portExternal_(other.portExternal_)
+    , portInternal_(other.portInternal_)
+    , type_(other.type_)
+    , description_(other.description_)
+    , unique_(other.unique_)
 {
     other.portExternal_ = 0;
     other.portInternal_ = 0;
@@ -53,7 +55,8 @@ Mapping::Mapping(const Mapping& other) noexcept
     unique_ = other.unique_;
 }
 
-Mapping& Mapping::operator=(Mapping&& other) noexcept
+Mapping&
+Mapping::operator=(Mapping&& other) noexcept
 {
     if (this != &other) {
         portExternal_ = other.portExternal_;
@@ -69,9 +72,8 @@ Mapping& Mapping::operator=(Mapping&& other) noexcept
 bool
 Mapping::operator==(const Mapping& other) const noexcept
 {
-    return (portExternal_ == other.portExternal_ &&
-            portInternal_ == other.portInternal_ &&
-            type_ == other.type_);
+    return (portExternal_ == other.portExternal_ && portInternal_ == other.portInternal_
+            && type_ == other.type_);
 }
 
 bool
@@ -90,7 +92,7 @@ bool
 Mapping::operator<(const Mapping& other) const noexcept
 {
     if (type_ != other.type_)
-        return (int)type_ < (int)other.type_;
+        return (int) type_ < (int) other.type_;
     if (portExternal_ != other.portExternal_)
         return portExternal_ < other.portExternal_;
     if (portInternal_ != other.portInternal_)
@@ -102,7 +104,7 @@ bool
 Mapping::operator>(const Mapping& other) const noexcept
 {
     if (type_ != other.type_)
-        return (int)type_ > (int)other.type_;
+        return (int) type_ > (int) other.type_;
     if (portExternal_ != other.portExternal_)
         return portExternal_ > other.portExternal_;
     if (portInternal_ != other.portInternal_)
@@ -110,10 +112,11 @@ Mapping::operator>(const Mapping& other) const noexcept
     return false;
 }
 
-bool Mapping::operator<=(const Mapping& other) const noexcept
+bool
+Mapping::operator<=(const Mapping& other) const noexcept
 {
     if (type_ != other.type_)
-        return (int)type_ <= (int)other.type_;
+        return (int) type_ <= (int) other.type_;
     if (portExternal_ != other.portExternal_)
         return portExternal_ <= other.portExternal_;
     if (portInternal_ != other.portInternal_)
@@ -125,7 +128,7 @@ bool
 Mapping::operator>=(const Mapping& other) const noexcept
 {
     if (type_ != other.type_)
-        return (int)type_ >= (int)other.type_;
+        return (int) type_ >= (int) other.type_;
     if (portExternal_ != other.portExternal_)
         return portExternal_ >= other.portExternal_;
     if (portInternal_ != other.portInternal_)
@@ -139,9 +142,11 @@ Mapping::toString() const
     return getPortExternalStr() + ":" + getPortInternalStr() + " " + getTypeStr();
 }
 
-bool Mapping::isValid() const
+bool
+Mapping::isValid() const
 {
     return portExternal_ == 0 or portInternal_ == 0 ? false : true;
 };
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

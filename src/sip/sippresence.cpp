@@ -42,7 +42,7 @@ namespace jami {
 
 using sip_utils::CONST_PJ_STR;
 
-SIPPresence::SIPPresence(SIPAccount *acc)
+SIPPresence::SIPPresence(SIPAccount* acc)
     : publish_sess_()
     , status_data_()
     , enabled_(false)
@@ -51,7 +51,7 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     , status_(false)
     , note_(" ")
     , acc_(acc)
-    , sub_server_list_()  //IP2IP context
+    , sub_server_list_() // IP2IP context
     , sub_client_list_()
     , cp_()
     , pool_()
@@ -66,13 +66,12 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     updateStatus(false, " ");
 }
 
-
 SIPPresence::~SIPPresence()
 {
     /* Flush the lists */
     // FIXME: Can't destroy/unsubscribe buddies properly.
     // Is the transport usable when the account is being destroyed?
-    //for (const auto & c : sub_client_list_)
+    // for (const auto & c : sub_client_list_)
     //    delete(c);
     sub_client_list_.clear();
     sub_server_list_.clear();
@@ -81,32 +80,38 @@ SIPPresence::~SIPPresence()
     pj_caching_pool_destroy(&cp_);
 }
 
-SIPAccount *SIPPresence::getAccount() const
+SIPAccount*
+SIPPresence::getAccount() const
 {
     return acc_;
 }
 
-pjsip_pres_status * SIPPresence::getStatus()
+pjsip_pres_status*
+SIPPresence::getStatus()
 {
     return &status_data_;
 }
 
-int SIPPresence::getModId() const
+int
+SIPPresence::getModId() const
 {
     return Manager::instance().sipVoIPLink().getModId();
 }
 
-pj_pool_t*  SIPPresence::getPool() const
+pj_pool_t*
+SIPPresence::getPool() const
 {
     return pool_;
 }
 
-void SIPPresence::enable(bool enabled)
+void
+SIPPresence::enable(bool enabled)
 {
     enabled_ = enabled;
 }
 
-void SIPPresence::support(int function, bool supported)
+void
+SIPPresence::support(int function, bool supported)
 {
     if (function == PRESENCE_FUNCTION_PUBLISH)
         publish_supported_ = supported;
@@ -114,7 +119,8 @@ void SIPPresence::support(int function, bool supported)
         subscribe_supported_ = supported;
 }
 
-bool SIPPresence::isSupported(int function)
+bool
+SIPPresence::isSupported(int function)
 {
     if (function == PRESENCE_FUNCTION_PUBLISH)
         return publish_supported_;
@@ -124,16 +130,15 @@ bool SIPPresence::isSupported(int function)
     return false;
 }
 
-void SIPPresence::updateStatus(bool status, const std::string &note)
+void
+SIPPresence::updateStatus(bool status, const std::string& note)
 {
-    //char* pj_note  = (char*) pj_pool_alloc(pool_, "50");
+    // char* pj_note  = (char*) pj_pool_alloc(pool_, "50");
 
-    pjrpid_element rpid = {
-        PJRPID_ELEMENT_TYPE_PERSON,
-        CONST_PJ_STR("0"),
-        PJRPID_ACTIVITY_UNKNOWN,
-        CONST_PJ_STR(note)
-    };
+    pjrpid_element rpid = {PJRPID_ELEMENT_TYPE_PERSON,
+                           CONST_PJ_STR("0"),
+                           PJRPID_ACTIVITY_UNKNOWN,
+                           CONST_PJ_STR(note)};
 
     /* fill activity if user not available. */
     if (note == "away")
@@ -158,11 +163,12 @@ void SIPPresence::updateStatus(bool status, const std::string &note)
     /* "contact" field is optionnal */
 }
 
-void SIPPresence::sendPresence(bool status, const std::string &note)
+void
+SIPPresence::sendPresence(bool status, const std::string& note)
 {
     updateStatus(status, note);
 
-    //if ((not publish_supported_) or (not enabled_))
+    // if ((not publish_supported_) or (not enabled_))
     //    return;
 
     if (acc_->isIP2IP())
@@ -171,14 +177,18 @@ void SIPPresence::sendPresence(bool status, const std::string &note)
         publish(this); // to the PBX server
 }
 
-
-void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_pres_status * status)
+void
+SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_pres_status* status)
 {
     /* Update our info. See pjsua_buddy_get_info() for additionnal ideas*/
     const std::string acc_ID = acc_->getAccountID();
     const std::string basic(status->info[0].basic_open ? "open" : "closed");
     const std::string note(status->info[0].rpid.note.ptr, status->info[0].rpid.note.slen);
-    JAMI_DBG(" Received status of PresSubClient  %s(acc:%s): status=%s note=%s", uri.c_str(), acc_ID.c_str(), basic.c_str(), note.c_str());
+    JAMI_DBG(" Received status of PresSubClient  %s(acc:%s): status=%s note=%s",
+             uri.c_str(),
+             acc_ID.c_str(),
+             basic.c_str(),
+             note.c_str());
 
     if (uri == acc_->getFromUri()) {
         // save the status of our own account
@@ -186,10 +196,14 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
         note_ = note;
     }
     // report status to client signal
-    emitSignal<DRing::PresenceSignal::NewBuddyNotification>(acc_ID, uri, status->info[0].basic_open, note);
+    emitSignal<DRing::PresenceSignal::NewBuddyNotification>(acc_ID,
+                                                            uri,
+                                                            status->info[0].basic_open,
+                                                            note);
 }
 
-void SIPPresence::subscribeClient(const std::string& uri, bool flag)
+void
+SIPPresence::subscribeClient(const std::string& uri, bool flag)
 {
     /* if an account has a server that doesn't support SUBSCRIBE, it's still possible
      * to subscribe to someone on another server */
@@ -202,9 +216,9 @@ void SIPPresence::subscribeClient(const std::string& uri, bool flag)
     */
 
     /* Check if the buddy was already subscribed */
-    for (const auto & c : sub_client_list_) {
+    for (const auto& c : sub_client_list_) {
         if (c->getURI() == uri) {
-            //JAMI_DBG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
+            // JAMI_DBG("-PresSubClient:%s exists in the list. Replace it.", uri.c_str());
             if (flag)
                 c->subscribe();
             else
@@ -219,7 +233,7 @@ void SIPPresence::subscribeClient(const std::string& uri, bool flag)
     }
 
     if (flag) {
-        PresSubClient *c = new PresSubClient(uri, this);
+        PresSubClient* c = new PresSubClient(uri, this);
         if (!(c->subscribe())) {
             JAMI_WARN("Failed send subscribe.");
             delete c;
@@ -228,7 +242,8 @@ void SIPPresence::subscribeClient(const std::string& uri, bool flag)
     }
 }
 
-void SIPPresence::addPresSubClient(PresSubClient *c)
+void
+SIPPresence::addPresSubClient(PresSubClient* c)
 {
     if (sub_client_list_.size() < MAX_N_SUB_CLIENT) {
         sub_client_list_.push_back(c);
@@ -239,24 +254,26 @@ void SIPPresence::addPresSubClient(PresSubClient *c)
     }
 }
 
-void SIPPresence::removePresSubClient(PresSubClient *c)
+void
+SIPPresence::removePresSubClient(PresSubClient* c)
 {
     JAMI_DBG("Remove Presence_subscription_client from the buddy list.");
     sub_client_list_.remove(c);
 }
 
-void SIPPresence::approvePresSubServer(const std::string& uri, bool flag)
+void
+SIPPresence::approvePresSubServer(const std::string& uri, bool flag)
 {
-    for (const auto & s : sub_server_list_) {
-        if (s->matches((char *) uri.c_str())) {
+    for (const auto& s : sub_server_list_) {
+        if (s->matches((char*) uri.c_str())) {
             s->approve(flag);
             // return; // 'return' would prevent multiple-time subscribers from spam
         }
     }
 }
 
-
-void SIPPresence::addPresSubServer(PresSubServer *s)
+void
+SIPPresence::addPresSubServer(PresSubServer* s)
 {
     if (sub_server_list_.size() < MAX_N_SUB_SERVER) {
         sub_server_list_.push_back(s);
@@ -266,54 +283,61 @@ void SIPPresence::addPresSubServer(PresSubServer *s)
     }
 }
 
-void SIPPresence::removePresSubServer(PresSubServer *s)
+void
+SIPPresence::removePresSubServer(PresSubServer* s)
 {
     sub_server_list_.remove(s);
     JAMI_DBG("Presence_subscription_server removed");
 }
 
-void SIPPresence::notifyPresSubServer()
+void
+SIPPresence::notifyPresSubServer()
 {
     JAMI_DBG("Iterating through IP2IP Presence_subscription_server:");
 
-    for (const auto & s : sub_server_list_)
+    for (const auto& s : sub_server_list_)
         s->notify();
 }
 
-void SIPPresence::lock()
+void
+SIPPresence::lock()
 {
     mutex_.lock();
 }
 
-bool SIPPresence::tryLock()
+bool
+SIPPresence::tryLock()
 {
     return mutex_.try_lock();
 }
 
-void SIPPresence::unlock()
+void
+SIPPresence::unlock()
 {
     mutex_.unlock();
 }
 
-void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
+void
+SIPPresence::fillDoc(pjsip_tx_data* tdata, const pres_msg_data* msg_data)
 {
-
     if (tdata->msg->type == PJSIP_REQUEST_MSG) {
         constexpr pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
         std::string useragent(acc_->getUserAgentName());
         pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
-        pjsip_hdr *h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool, &STR_USER_AGENT, &pJuseragent);
+        pjsip_hdr* h = (pjsip_hdr*) pjsip_generic_string_hdr_create(tdata->pool,
+                                                                    &STR_USER_AGENT,
+                                                                    &pJuseragent);
         pjsip_msg_add_hdr(tdata->msg, h);
     }
 
     if (msg_data == NULL)
         return;
 
-    const pjsip_hdr *hdr;
+    const pjsip_hdr* hdr;
     hdr = msg_data->hdr_list.next;
 
     while (hdr && hdr != &msg_data->hdr_list) {
-        pjsip_hdr *new_hdr;
+        pjsip_hdr* new_hdr;
         new_hdr = (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, hdr);
         JAMI_DBG("adding header %p", new_hdr->name.ptr);
         pjsip_msg_add_hdr(tdata->msg, new_hdr);
@@ -321,7 +345,7 @@ void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
     }
 
     if (msg_data->content_type.slen && msg_data->msg_body.slen) {
-        pjsip_msg_body *body;
+        pjsip_msg_body* body;
         constexpr pj_str_t type = CONST_PJ_STR("application");
         constexpr pj_str_t subtype = CONST_PJ_STR("pidf+xml");
         body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &msg_data->msg_body);
@@ -335,26 +359,25 @@ static const pjsip_publishc_opt my_publish_opt = {true}; // this is queue_reques
  * Client presence publication callback.
  */
 void
-SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
+SIPPresence::publish_cb(struct pjsip_publishc_cbparam* param)
 {
-    SIPPresence *pres = (SIPPresence*) param->token;
+    SIPPresence* pres = (SIPPresence*) param->token;
 
     if (param->code / 100 != 2 || param->status != PJ_SUCCESS) {
-
         pjsip_publishc_destroy(param->pubc);
         pres->publish_sess_ = NULL;
         std::ostringstream os;
         os << param->code;
-        const std::string error = os.str() + " / "+ std::string(param->reason.ptr, param->reason.slen);
+        const std::string error = os.str() + " / "
+                                  + std::string(param->reason.ptr, param->reason.slen);
 
         if (param->status != PJ_SUCCESS) {
             char errmsg[PJ_ERR_MSG_SIZE];
             pj_strerror(param->status, errmsg, sizeof(errmsg));
             JAMI_ERR("Client (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
-            emitSignal<DRing::PresenceSignal::ServerError>(
-                    pres->getAccount()->getAccountID(),
-                    error,
-                    errmsg);
+            emitSignal<DRing::PresenceSignal::ServerError>(pres->getAccount()->getAccountID(),
+                                                           error,
+                                                           errmsg);
 
         } else if (param->code == 412) {
             /* 412 (Conditional Request Failed)
@@ -362,13 +385,13 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
              */
             JAMI_WARN("Publish retry.");
             publish(pres);
-        } else if ((param->code == PJSIP_SC_BAD_EVENT) || (param->code == PJSIP_SC_NOT_IMPLEMENTED)){ //489 or 501
-            JAMI_WARN("Client (PUBLISH) failed (%s)",error.c_str());
+        } else if ((param->code == PJSIP_SC_BAD_EVENT)
+                   || (param->code == PJSIP_SC_NOT_IMPLEMENTED)) { // 489 or 501
+            JAMI_WARN("Client (PUBLISH) failed (%s)", error.c_str());
 
-            emitSignal<DRing::PresenceSignal::ServerError>(
-                    pres->getAccount()->getAccountID(),
-                    error,
-                    "Publish not supported.");
+            emitSignal<DRing::PresenceSignal::ServerError>(pres->getAccount()->getAccountID(),
+                                                           error,
+                                                           "Publish not supported.");
 
             pres->getAccount()->supportPresence(PRESENCE_FUNCTION_PUBLISH, false);
         }
@@ -390,23 +413,23 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
  * Send PUBLISH request.
  */
 pj_status_t
-SIPPresence::send_publish(SIPPresence * pres)
+SIPPresence::send_publish(SIPPresence* pres)
 {
-    pjsip_tx_data *tdata;
+    pjsip_tx_data* tdata;
     pj_status_t status;
 
     JAMI_DBG("Send PUBLISH (%s).", pres->getAccount()->getAccountID().c_str());
 
-    SIPAccount * acc = pres->getAccount();
-    std::string contactWithAngles =  acc->getFromUri();
+    SIPAccount* acc = pres->getAccount();
+    std::string contactWithAngles = acc->getFromUri();
     contactWithAngles.erase(contactWithAngles.find('>'));
     int semicolon = contactWithAngles.find_first_of(':');
     std::string contactWithoutAngles = contactWithAngles.substr(semicolon + 1);
-//    pj_str_t contact = pj_str(strdup(contactWithoutAngles.c_str()));
-//    pj_memcpy(&status_data.info[0].contact, &contt, sizeof(pj_str_t));;
+    //    pj_str_t contact = pj_str(strdup(contactWithoutAngles.c_str()));
+    //    pj_memcpy(&status_data.info[0].contact, &contt, sizeof(pj_str_t));;
 
     /* Create PUBLISH request */
-    char *bpos;
+    char* bpos;
     pj_str_t entity;
 
     status = pjsip_publishc_publish(pres->publish_sess_, PJ_TRUE, &tdata);
@@ -418,7 +441,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     }
 
     if ((bpos = pj_strchr(&from, '<')) != NULL) {
-        char *epos = pj_strchr(&from, '>');
+        char* epos = pj_strchr(&from, '>');
 
         if (epos - bpos < 2) {
             JAMI_ERR("Unexpected invalid URI");
@@ -433,8 +456,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     }
 
     /* Create and add PIDF message body */
-    status = pjsip_pres_create_pidf(tdata->pool, pres->getStatus(),
-                                    &entity, &tdata->msg->body);
+    status = pjsip_pres_create_pidf(tdata->pool, pres->getStatus(), &entity, &tdata->msg->body);
 
     pres_msg_data msg_data;
 
@@ -473,22 +495,19 @@ on_error:
     return status;
 }
 
-
 /* Create client publish session */
 pj_status_t
-SIPPresence::publish(SIPPresence *pres)
+SIPPresence::publish(SIPPresence* pres)
 {
     pj_status_t status;
     constexpr pj_str_t STR_PRESENCE = CONST_PJ_STR("presence");
-    SIPAccount * acc = pres->getAccount();
-    pjsip_endpoint *endpt = Manager::instance().sipVoIPLink().getEndpoint();
+    SIPAccount* acc = pres->getAccount();
+    pjsip_endpoint* endpt = Manager::instance().sipVoIPLink().getEndpoint();
 
     /* Create and init client publication session */
 
     /* Create client publication */
-    status = pjsip_publishc_create(endpt, &my_publish_opt,
-                                   pres, &publish_cb,
-                                   &pres->publish_sess_);
+    status = pjsip_publishc_create(endpt, &my_publish_opt, pres, &publish_cb, &pres->publish_sess_);
 
     if (status != PJ_SUCCESS) {
         pres->publish_sess_ = NULL;
@@ -507,16 +526,21 @@ SIPPresence::publish(SIPPresence *pres)
     }
 
     /* Add credential for authentication */
-    if (acc->hasCredentials() and pjsip_publishc_set_credentials(pres->publish_sess_, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
+    if (acc->hasCredentials()
+        and pjsip_publishc_set_credentials(pres->publish_sess_,
+                                           acc->getCredentialCount(),
+                                           acc->getCredInfo())
+                != PJ_SUCCESS) {
         JAMI_ERR("Could not initialize credentials for invite session authentication");
         return status;
     }
 
     /* Set route-set */
     // FIXME: is this really necessary?
-    pjsip_regc *regc = acc->getRegistrationInfo();
+    pjsip_regc* regc = acc->getRegistrationInfo();
     if (regc and acc->hasServiceRoute())
-        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
+        pjsip_regc_set_route_set(regc,
+                                 sip_utils::createRouteSet(acc->getServiceRoute(), pres->getPool()));
 
     /* Send initial PUBLISH request */
     status = send_publish(pres);

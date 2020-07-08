@@ -49,7 +49,8 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 static constexpr unsigned default_grab_width = 640;
 static constexpr unsigned default_grab_height = 480;
@@ -115,7 +116,8 @@ VideoInput::switchDevice()
     }
 }
 
-int VideoInput::getWidth() const
+int
+VideoInput::getWidth() const
 {
     if (videoManagedByClient()) {
         return decOpts_.width;
@@ -123,7 +125,8 @@ int VideoInput::getWidth() const
     return decoder_->getWidth();
 }
 
-int VideoInput::getHeight() const
+int
+VideoInput::getHeight() const
 {
     if (videoManagedByClient()) {
         return decOpts_.height;
@@ -131,7 +134,8 @@ int VideoInput::getHeight() const
     return decoder_->getHeight();
 }
 
-AVPixelFormat VideoInput::getPixelFormat() const
+AVPixelFormat
+VideoInput::getPixelFormat() const
 {
     if (!videoManagedByClient()) {
         return decoder_->getPixelFormat();
@@ -140,23 +144,24 @@ AVPixelFormat VideoInput::getPixelFormat() const
     std::stringstream ss;
     ss << decOpts_.format;
     ss >> format;
-    return (AVPixelFormat)format;
+    return (AVPixelFormat) format;
 }
 
 void
 VideoInput::setRotation(int angle)
 {
-    std::shared_ptr<AVBufferRef> displayMatrix {
-        av_buffer_alloc(sizeof(int32_t) * 9),
-        [](AVBufferRef* buf){ av_buffer_unref(&buf); }
-    };
+    std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9),
+                                                [](AVBufferRef* buf) {
+                                                    av_buffer_unref(&buf);
+                                                }};
     if (displayMatrix) {
         av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
         displayMatrix_ = std::move(displayMatrix);
     }
 }
 
-bool VideoInput::setup()
+bool
+VideoInput::setup()
 {
     if (not attach(sink_.get())) {
         JAMI_ERR("attach sink failed");
@@ -175,7 +180,7 @@ void
 VideoInput::process()
 {
     if (playingFile_) {
-        if(paused_) {
+        if (paused_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
             return;
         }
@@ -192,7 +197,8 @@ VideoInput::process()
 }
 
 void
-VideoInput::setSeekTime(int64_t time) {
+VideoInput::setSeekTime(int64_t time)
+{
     if (decoder_) {
         decoder_->setSeekTime(time);
     }
@@ -226,23 +232,30 @@ VideoInput::captureFrame()
     }
 }
 void
-VideoInput::flushBuffers() {
+VideoInput::flushBuffers()
+{
     if (decoder_) {
         decoder_->flushBuffers();
     }
 }
 
 void
-VideoInput::configureFilePlayback(const std::string&, std::shared_ptr<MediaDemuxer>& demuxer, int index)
+VideoInput::configureFilePlayback(const std::string&,
+                                  std::shared_ptr<MediaDemuxer>& demuxer,
+                                  int index)
 {
     deleteDecoder();
     clearOptions();
 
-    auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
-        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
-    });
-    decoder->setInterruptCallback([](void* data) -> int {
-        return not static_cast<VideoInput*>(data)->isCapturing(); },this);
+    auto decoder = std::make_unique<MediaDecoder>(demuxer,
+                                                  index,
+                                                  [this](std::shared_ptr<MediaFrame>&& frame) {
+                                                      publishFrame(
+                                                          std::static_pointer_cast<VideoFrame>(
+                                                              frame));
+                                                  });
+    decoder->setInterruptCallback(
+        [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
     decoder->emulateRate();
 
     decoder_ = std::move(decoder);
@@ -265,16 +278,16 @@ VideoInput::createDecoder()
         return;
     }
 
-    auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
-        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
-    });
+    auto decoder = std::make_unique<MediaDecoder>(
+        [this](const std::shared_ptr<MediaFrame>& frame) mutable {
+            publishFrame(std::static_pointer_cast<VideoFrame>(frame));
+        });
 
     if (emulateRate_)
         decoder->emulateRate();
 
     decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); },
-        this);
+        [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
 
     bool ready = false, restartSink = false;
     while (!ready && !isStopped_) {
@@ -322,7 +335,9 @@ VideoInput::createDecoder()
     }
 
     JAMI_DBG("created decoder with video params : size=%dX%d, fps=%lf pix=%s",
-             decOpts_.width, decOpts_.height, decOpts_.framerate.real(),
+             decOpts_.width,
+             decOpts_.height,
+             decOpts_.framerate.real(),
              decOpts_.pixel_format.c_str());
 
     decoder_ = std::move(decoder);
@@ -341,7 +356,6 @@ VideoInput::deleteDecoder()
     decoder_.reset();
 }
 
-
 void
 VideoInput::stopInput()
 {
@@ -349,7 +363,8 @@ VideoInput::stopInput()
     loop_.stop();
 }
 
-void VideoInput::clearOptions()
+void
+VideoInput::clearOptions()
 {
     decOpts_ = {};
     emulateRate_ = false;
@@ -397,7 +412,7 @@ VideoInput::initX11(std::string display)
         decOpts_.input = display.erase(space);
     } else {
         decOpts_.input = display;
-        //decOpts_.video_size = "vga";
+        // decOpts_.video_size = "vga";
         decOpts_.width = default_grab_width;
         decOpts_.height = default_grab_height;
     }
@@ -521,7 +536,7 @@ VideoInput::switchInput(const std::string& resource)
     // Switch off video input?
     if (resource.empty()) {
         clearOptions();
-        futureDecOpts_  = foundDecOpts_.get_future();
+        futureDecOpts_ = foundDecOpts_.get_future();
         startLoop();
         return futureDecOpts_;
     }
@@ -568,7 +583,9 @@ VideoInput::switchInput(const std::string& resource)
 
 const DeviceParams&
 VideoInput::getParams() const
-{ return decOpts_; }
+{
+    return decOpts_;
+}
 
 MediaStream
 VideoInput::getInfo() const
@@ -579,8 +596,13 @@ VideoInput::getInfo() const
     }
     auto opts = futureDecOpts_.get();
     rational<int> fr(opts.framerate.numerator(), opts.framerate.denominator());
-    return MediaStream("v:local", av_get_pix_fmt(opts.pixel_format.c_str()),
-        1 / fr, opts.width, opts.height, 0, fr);
+    return MediaStream("v:local",
+                       av_get_pix_fmt(opts.pixel_format.c_str()),
+                       1 / fr,
+                       opts.width,
+                       opts.height,
+                       0,
+                       fr);
 }
 
 void
@@ -598,18 +620,21 @@ VideoInput::setSink(const std::string& sinkId)
     sink_ = Manager::instance().createSinkClient(sinkId);
 }
 
-void VideoInput::setFrameSize(const int width, const int height)
+void
+VideoInput::setFrameSize(const int width, const int height)
 {
     /* Signal the client about readable sink */
     sink_->setFrameSize(width, height);
 }
 
-void VideoInput::setupSink()
+void
+VideoInput::setupSink()
 {
     setup();
 }
 
-void VideoInput::stopSink()
+void
+VideoInput::stopSink()
 {
     detach(sink_.get());
     sink_->stop();
@@ -623,4 +648,5 @@ VideoInput::updateStartTime(int64_t startTime)
     }
 }
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

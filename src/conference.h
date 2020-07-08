@@ -49,7 +49,8 @@ struct ParticipantInfo
     int w {0};
     int h {0};
 
-    void fromJson(const Json::Value& v) {
+    void fromJson(const Json::Value& v)
+    {
         uri = v["uri"].asString();
         x = v["x"].asInt();
         y = v["y"].asInt();
@@ -57,7 +58,8 @@ struct ParticipantInfo
         h = v["h"].asInt();
     }
 
-    Json::Value toJson() const {
+    Json::Value toJson() const
+    {
         Json::Value val;
         val["uri"] = uri;
         val["x"] = x;
@@ -67,14 +69,13 @@ struct ParticipantInfo
         return val;
     }
 
-    std::map<std::string, std::string> toMap() const {
-        return {
-            {"uri", uri},
-            {"x", std::to_string(x)},
-            {"y", std::to_string(y)},
-            {"w", std::to_string(w)},
-            {"h", std::to_string(h)}
-        };
+    std::map<std::string, std::string> toMap() const
+    {
+        return {{"uri", uri},
+                {"x", std::to_string(x)},
+                {"y", std::to_string(y)},
+                {"w", std::to_string(w)},
+                {"h", std::to_string(h)}};
     }
 };
 
@@ -85,16 +86,10 @@ struct ConfInfo : public std::vector<ParticipantInfo>
 
 using ParticipantSet = std::set<std::string>;
 
-class Conference
-    : public Recordable
-    , public std::enable_shared_from_this<Conference>
-    {
+class Conference : public Recordable, public std::enable_shared_from_this<Conference>
+{
 public:
-    enum class State {
-        ACTIVE_ATTACHED,
-        ACTIVE_DETACHED,
-        HOLD
-    };
+    enum class State { ACTIVE_ATTACHED, ACTIVE_DETACHED, HOLD };
 
     /**
      * Constructor for this class, increment static counter
@@ -124,7 +119,8 @@ public:
     /**
      * Return a string description of the conference state
      */
-    static constexpr const char* getStateStr(State state) {
+    static constexpr const char* getStateStr(State state)
+    {
         switch (state) {
         case State::ACTIVE_ATTACHED:
             return "ACTIVE_ATTACHED";
@@ -137,17 +133,17 @@ public:
         }
     }
 
-    const char* getStateStr() const { return getStateStr(confState_);  }
+    const char* getStateStr() const { return getStateStr(confState_); }
 
     /**
      * Add a new participant to the conference
      */
-    void add(const std::string &participant_id);
+    void add(const std::string& participant_id);
 
     /**
      * Remove a participant from the conference
      */
-    void remove(const std::string &participant_id);
+    void remove(const std::string& participant_id);
 
     /**
      * Attach local audio/video to the conference
@@ -162,7 +158,7 @@ public:
     /**
      * Bind a participant to the conference
      */
-    void bindParticipant(const std::string &participant_id);
+    void bindParticipant(const std::string& participant_id);
 
     /**
      * Get the participant list for this conference
@@ -181,8 +177,7 @@ public:
 
     void switchInput(const std::string& input);
 
-    void setActiveParticipant(const std::string &participant_id);
-
+    void setActiveParticipant(const std::string& participant_id);
 
     void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId);
     void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
@@ -192,16 +187,15 @@ public:
     std::string getVideoInput() const { return mediaInput_; }
 #endif
 
-    std::vector<std::map<std::string, std::string>>
-    getConferenceInfos() const
+    std::vector<std::map<std::string, std::string>> getConferenceInfos() const
     {
         std::lock_guard<std::mutex> lk(confInfoMutex_);
         return confInfo_.toVectorMapStringString();
     }
 
 private:
-
-    std::weak_ptr<Conference> weak() {
+    std::weak_ptr<Conference> weak()
+    {
         return std::static_pointer_cast<Conference>(shared_from_this());
     }
 

@@ -29,25 +29,26 @@ class PeerChannel
 {
 public:
     PeerChannel() {}
-    ~PeerChannel() {
-        stop();
-    }
-    PeerChannel(PeerChannel&& o) {
+    ~PeerChannel() { stop(); }
+    PeerChannel(PeerChannel&& o)
+    {
         std::lock_guard<std::mutex> lk(o.mutex_);
         stream_ = std::move(o.stream_);
         stop_ = o.stop_;
         o.cv_.notify_all();
     }
 
-    ssize_t isDataAvailable() {
-        std::lock_guard<std::mutex> lk{mutex_};
+    ssize_t isDataAvailable()
+    {
+        std::lock_guard<std::mutex> lk {mutex_};
         return stream_.size();
     }
 
-    template <typename Duration>
-    ssize_t wait(Duration timeout, std::error_code& ec) {
+    template<typename Duration>
+    ssize_t wait(Duration timeout, std::error_code& ec)
+    {
         std::unique_lock<std::mutex> lk {mutex_};
-        cv_.wait_for(lk, timeout, [this]{ return stop_ or not stream_.empty(); });
+        cv_.wait_for(lk, timeout, [this] { return stop_ or not stream_.empty(); });
         if (stop_) {
             ec = std::make_error_code(std::errc::interrupted);
             return -1;
@@ -56,15 +57,14 @@ public:
         return stream_.size();
     }
 
-    ssize_t read(char* output, std::size_t size, std::error_code& ec) {
+    ssize_t read(char* output, std::size_t size, std::error_code& ec)
+    {
         std::unique_lock<std::mutex> lk {mutex_};
-        cv_.wait(lk, [this]{
-            return stop_ or not stream_.empty();
-        });
+        cv_.wait(lk, [this] { return stop_ or not stream_.empty(); });
         if (stream_.size()) {
             auto toRead = std::min(size, stream_.size());
             if (toRead) {
-                auto endIt = stream_.begin()+toRead;
+                auto endIt = stream_.begin() + toRead;
                 std::copy(stream_.begin(), endIt, output);
                 stream_.erase(stream_.begin(), endIt);
             }
@@ -79,19 +79,21 @@ public:
         return -1;
     }
 
-    ssize_t write(const char* data, std::size_t size, std::error_code& ec) {
+    ssize_t write(const char* data, std::size_t size, std::error_code& ec)
+    {
         std::lock_guard<std::mutex> lk {mutex_};
         if (stop_) {
             ec = std::make_error_code(std::errc::broken_pipe);
             return -1;
         }
-        stream_.insert(stream_.end(), data, data+size);
+        stream_.insert(stream_.end(), data, data + size);
         cv_.notify_all();
         ec.clear();
         return size;
     }
 
-    void stop() noexcept {
+    void stop() noexcept
+    {
         std::lock_guard<std::mutex> lk {mutex_};
         if (stop_)
             return;
@@ -110,4 +112,4 @@ private:
     bool stop_ {false};
 };
 
-}
+} // namespace jami

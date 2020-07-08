@@ -43,55 +43,60 @@ extern "C" {
 #include <sys/types.h>
 }
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 using std::vector;
 using std::string;
 
-class VideoDeviceMonitorImpl {
-    public:
-        /*
-         * This is the only restriction to the pImpl design:
-         * as the Linux implementation has a thread, it needs a way to notify
-         * devices addition and deletion.
-         *
-         * This class should maybe inherit from VideoDeviceMonitor instead of
-         * being its pImpl.
-         */
-        VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
-        ~VideoDeviceMonitorImpl();
+class VideoDeviceMonitorImpl
+{
+public:
+    /*
+     * This is the only restriction to the pImpl design:
+     * as the Linux implementation has a thread, it needs a way to notify
+     * devices addition and deletion.
+     *
+     * This class should maybe inherit from VideoDeviceMonitor instead of
+     * being its pImpl.
+     */
+    VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
+    ~VideoDeviceMonitorImpl();
 
-        void start();
+    void start();
 
-    private:
-        NON_COPYABLE(VideoDeviceMonitorImpl);
+private:
+    NON_COPYABLE(VideoDeviceMonitorImpl);
 
-        VideoDeviceMonitor* monitor_;
+    VideoDeviceMonitor* monitor_;
 
-        void run();
-        std::thread thread_;
-        mutable std::mutex mutex_;
+    void run();
+    std::thread thread_;
+    mutable std::mutex mutex_;
 
-        udev *udev_;
-        udev_monitor *udev_mon_;
-        bool probing_;
+    udev* udev_;
+    udev_monitor* udev_mon_;
+    bool probing_;
 };
 
-static int is_v4l2(struct udev_device *dev)
+static int
+is_v4l2(struct udev_device* dev)
 {
-    const char *version = udev_device_get_property_value(dev, "ID_V4L_VERSION");
+    const char* version = udev_device_get_property_value(dev, "ID_V4L_VERSION");
     /* we do not support video4linux 1 */
     return version and strcmp(version, "1");
 }
 
-VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
-    monitor_(monitor),
-    thread_(), mutex_(),
-    udev_(0), udev_mon_(0),
-    probing_(false)
+VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
+    : monitor_(monitor)
+    , thread_()
+    , mutex_()
+    , udev_(0)
+    , udev_mon_(0)
+    , probing_(false)
 {
-    udev_list_entry *devlist;
-    udev_enumerate *devenum;
+    udev_list_entry* devlist;
+    udev_enumerate* devenum;
 
     udev_ = udev_new();
     if (!udev_)
@@ -118,17 +123,18 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
      * loose events if the Netlink socket receive buffer overflows. */
     udev_enumerate_scan_devices(devenum);
     devlist = udev_enumerate_get_list_entry(devenum);
-    struct udev_list_entry *deventry;
-    udev_list_entry_foreach(deventry, devlist) {
-        const char *path = udev_list_entry_get_name(deventry);
-        struct udev_device *dev = udev_device_new_from_syspath(udev_, path);
+    struct udev_list_entry* deventry;
+    udev_list_entry_foreach(deventry, devlist)
+    {
+        const char* path = udev_list_entry_get_name(deventry);
+        struct udev_device* dev = udev_device_new_from_syspath(udev_, path);
 
         if (is_v4l2(dev)) {
-            const char *devpath = udev_device_get_devnode(dev);
+            const char* devpath = udev_device_get_devnode(dev);
             if (devpath) {
                 try {
                     monitor_->addDevice(string(devpath));
-                } catch (const std::runtime_error &e) {
+                } catch (const std::runtime_error& e) {
                     JAMI_ERR("%s", e.what());
                 }
             }
@@ -156,14 +162,15 @@ udev_failed:
         ss << "/dev/video" << idx;
         try {
             monitor_->addDevice(ss.str());
-        } catch (const std::runtime_error &e) {
+        } catch (const std::runtime_error& e) {
             JAMI_ERR("%s", e.what());
             return;
         }
     }
 }
 
-void VideoDeviceMonitorImpl::start()
+void
+VideoDeviceMonitorImpl::start()
 {
     probing_ = true;
     thread_ = std::thread(&VideoDeviceMonitorImpl::run, this);
@@ -180,7 +187,8 @@ VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
         udev_unref(udev_);
 }
 
-void VideoDeviceMonitorImpl::run()
+void
+VideoDeviceMonitorImpl::run()
 {
     if (!udev_mon_) {
         probing_ = false;
@@ -196,56 +204,56 @@ void VideoDeviceMonitorImpl::run()
 
         int ret = select(udev_fd + 1, &set, NULL, NULL, &timeout);
         switch (ret) {
-            case 0:
+        case 0:
+            break;
+        case 1: {
+            udev_device* dev = udev_monitor_receive_device(udev_mon_);
+            if (!is_v4l2(dev)) {
+                udev_device_unref(dev);
                 break;
-            case 1:
-                {
-                    udev_device *dev = udev_monitor_receive_device(udev_mon_);
-                    if (!is_v4l2(dev)) {
-                        udev_device_unref(dev);
-                        break;
-                    }
+            }
 
-                    const char *node = udev_device_get_devnode(dev);
-                    const char *action = udev_device_get_action(dev);
-                    if (!strcmp(action, "add")) {
-                        JAMI_DBG("udev: adding %s", node);
-                        try {
-                            monitor_->addDevice(node);
-                        } catch (const std::runtime_error &e) {
-                            JAMI_ERR("%s", e.what());
-                        }
-                    } else if (!strcmp(action, "remove")) {
-                        JAMI_DBG("udev: removing %s", node);
-                        monitor_->removeDevice(string(node));
-                    }
-                    udev_device_unref(dev);
-                    break;
+            const char* node = udev_device_get_devnode(dev);
+            const char* action = udev_device_get_action(dev);
+            if (!strcmp(action, "add")) {
+                JAMI_DBG("udev: adding %s", node);
+                try {
+                    monitor_->addDevice(node);
+                } catch (const std::runtime_error& e) {
+                    JAMI_ERR("%s", e.what());
                 }
+            } else if (!strcmp(action, "remove")) {
+                JAMI_DBG("udev: removing %s", node);
+                monitor_->removeDevice(string(node));
+            }
+            udev_device_unref(dev);
+            break;
+        }
 
-            case -1:
-                if (errno == EAGAIN)
-                    continue;
-                JAMI_ERR("udev monitoring thread: select failed (%m)");
-                probing_ = false;
-                return;
+        case -1:
+            if (errno == EAGAIN)
+                continue;
+            JAMI_ERR("udev monitoring thread: select failed (%m)");
+            probing_ = false;
+            return;
 
-            default:
-                JAMI_ERR("select() returned %d (%m)", ret);
-                probing_ = false;
-                return;
+        default:
+            JAMI_ERR("select() returned %d (%m)", ret);
+            probing_ = false;
+            return;
         }
     }
 }
 
-VideoDeviceMonitor::VideoDeviceMonitor() :
-    preferences_(), devices_(),
-    monitorImpl_(new VideoDeviceMonitorImpl(this))
+VideoDeviceMonitor::VideoDeviceMonitor()
+    : preferences_()
+    , devices_()
+    , monitorImpl_(new VideoDeviceMonitorImpl(this))
 {
     monitorImpl_->start();
 }
 
-VideoDeviceMonitor::~VideoDeviceMonitor()
-{}
+VideoDeviceMonitor::~VideoDeviceMonitor() {}
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

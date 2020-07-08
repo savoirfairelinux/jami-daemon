@@ -29,7 +29,8 @@
 
 namespace jami {
 
-struct MediaStream {
+struct MediaStream
+{
     std::string name {};
     int format {-1};
     bool isVideo {false};
@@ -43,11 +44,15 @@ struct MediaStream {
     int nbChannels {0};
     int frameSize {0};
 
-    MediaStream()
-    {}
+    MediaStream() {}
 
-    MediaStream(const std::string& streamName, int fmt, rational<int> tb, int w, int h,
-                          int br, rational<int> fr)
+    MediaStream(const std::string& streamName,
+                int fmt,
+                rational<int> tb,
+                int w,
+                int h,
+                int br,
+                rational<int> fr)
         : name(streamName)
         , format(fmt)
         , isVideo(true)
@@ -58,7 +63,8 @@ struct MediaStream {
         , frameRate(fr)
     {}
 
-    MediaStream(const std::string& streamName, int fmt, rational<int> tb, int sr, int channels, int size)
+    MediaStream(
+        const std::string& streamName, int fmt, rational<int> tb, int sr, int channels, int size)
         : name(streamName)
         , format(fmt)
         , isVideo(false)
@@ -146,22 +152,21 @@ struct MediaStream {
     }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const MediaStream& ms)
+inline std::ostream&
+operator<<(std::ostream& os, const MediaStream& ms)
 {
     if (ms.isVideo) {
         auto formatName = av_get_pix_fmt_name(static_cast<AVPixelFormat>(ms.format));
         os << (ms.name.empty() ? "(null)" : ms.name) << ": "
-            << (formatName ? formatName : "(unknown format)") << " video, "
-            << ms.width << "x" << ms.height << ", "
-            << ms.frameRate << " fps (" << ms.timeBase << ")";
+           << (formatName ? formatName : "(unknown format)") << " video, " << ms.width << "x"
+           << ms.height << ", " << ms.frameRate << " fps (" << ms.timeBase << ")";
         if (ms.bitrate > 0)
             os << ", " << ms.bitrate << " kb/s";
     } else {
         os << (ms.name.empty() ? "(null)" : ms.name) << ": "
-            << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, "
-            << ms.nbChannels << " channel(s), "
-            << ms.sampleRate << " Hz (" << ms.timeBase << "), "
-            << ms.frameSize << " samples per frame";
+           << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, "
+           << ms.nbChannels << " channel(s), " << ms.sampleRate << " Hz (" << ms.timeBase << "), "
+           << ms.frameSize << " samples per frame";
     }
     if (ms.firstTimestamp > 0)
         os << ", start: " << ms.firstTimestamp;

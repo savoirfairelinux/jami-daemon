@@ -132,7 +132,9 @@ public:
     ///
     bool sendto(const IpAddr& peer, const char* const buffer, std::size_t size);
 
-    int waitForData(const IpAddr& peer, std::chrono::milliseconds timeout, std::error_code& ec) const;
+    int waitForData(const IpAddr& peer,
+                    std::chrono::milliseconds timeout,
+                    std::error_code& ec) const;
 
 public:
     // Move semantic only, not copiable

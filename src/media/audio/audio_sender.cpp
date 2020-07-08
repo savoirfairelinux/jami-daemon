@@ -40,13 +40,13 @@ AudioSender::AudioSender(const std::string& id,
                          SocketPair& socketPair,
                          const uint16_t seqVal,
                          bool muteState,
-                         const uint16_t mtu) :
-    id_(id),
-    dest_(dest),
-    args_(args),
-    seqVal_(seqVal),
-    muteState_(muteState),
-    mtu_(mtu)
+                         const uint16_t mtu)
+    : id_(id)
+    , dest_(dest)
+    , args_(args)
+    , seqVal_(seqVal)
+    , muteState_(muteState)
+    , mtu_(mtu)
 {
     setup(socketPair);
 }
@@ -78,7 +78,7 @@ AudioSender::setup(SocketPair& socketPair)
         audioEncoder_->addStream(args_.codec->systemCodecInfo);
         audioEncoder_->setInitSeqVal(seqVal_);
         audioEncoder_->setIOContext(muxContext_->getContext());
-    } catch (const MediaEncoderException &e) {
+    } catch (const MediaEncoderException& e) {
         JAMI_ERR("%s", e.what());
         return false;
     }
@@ -94,20 +94,16 @@ AudioSender::setup(SocketPair& socketPair)
     audioInput_ = jami::getAudioInput(id_);
     audioInput_->setFormat(codec->audioformat);
     audioInput_->attach(this);
-
     return true;
 }
 
 void
-AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/, const std::shared_ptr<jami::MediaFrame>& framePtr)
+AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/,
+                    const std::shared_ptr<jami::MediaFrame>& framePtr)
 {
     auto frame = framePtr->pointer();
-    auto ms = MediaStream("a:local", frame->format, rational<int>(1, frame->sample_rate),
-                          frame->sample_rate, frame->channels, frame->nb_samples);
     frame->pts = sent_samples;
-    ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
-
     if (audioEncoder_->encodeAudio(*std::static_pointer_cast<AudioFrame>(framePtr)) < 0)
         JAMI_ERR("encoding failed");
 }

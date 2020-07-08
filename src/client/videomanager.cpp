@@ -52,8 +52,11 @@
 namespace DRing {
 
 MediaFrame::MediaFrame()
-    : frame_ {av_frame_alloc(), [](AVFrame* frame){ av_frame_free(&frame); }},
-      packet_(nullptr, [](AVPacket* p) {
+    : frame_ {av_frame_alloc(),
+              [](AVFrame* frame) {
+                  av_frame_free(&frame);
+              }}
+    , packet_(nullptr, [](AVPacket* p) {
         if (p) {
             av_packet_unref(p);
             delete p;
@@ -88,13 +91,13 @@ MediaFrame::reset() noexcept
 }
 
 void
-MediaFrame::setPacket(std::unique_ptr<AVPacket, void(*)(AVPacket*)>&& pkt)
+MediaFrame::setPacket(std::unique_ptr<AVPacket, void (*)(AVPacket*)>&& pkt)
 {
     packet_ = std::move(pkt);
 }
 
 AudioFrame::AudioFrame(const jami::AudioFormat& format, size_t nb_samples)
- : MediaFrame()
+    : MediaFrame()
 {
     setFormat(format);
     if (nb_samples)
@@ -114,11 +117,9 @@ AudioFrame::setFormat(const jami::AudioFormat& format)
 jami::AudioFormat
 AudioFrame::getFormat() const
 {
-    return {
-        (unsigned)frame_->sample_rate,
-        (unsigned)frame_->channels,
-        (AVSampleFormat)frame_->format
-    };
+    return {(unsigned) frame_->sample_rate,
+            (unsigned) frame_->channels,
+            (AVSampleFormat) frame_->format};
 }
 
 size_t
@@ -154,30 +155,31 @@ AudioFrame::mix(const AudioFrame& frame)
     } else if (f.nb_samples != fIn.nb_samples) {
         throw std::invalid_argument("Can't mix frames with different length");
     }
-    AVSampleFormat fmt = (AVSampleFormat)f.format;
+    AVSampleFormat fmt = (AVSampleFormat) f.format;
     bool isPlanar = av_sample_fmt_is_planar(fmt);
     unsigned samplesPerChannel = isPlanar ? f.nb_samples : f.nb_samples * f.channels;
     unsigned channels = isPlanar ? f.channels : 1;
     if (fmt == AV_SAMPLE_FMT_S16 || fmt == AV_SAMPLE_FMT_S16P) {
-        for (unsigned i=0; i < channels; i++) {
-            auto c = (int16_t*)f.extended_data[i];
-            auto cIn = (int16_t*)fIn.extended_data[i];
-            for (unsigned s=0; s < samplesPerChannel; s++) {
-                c[s] = std::clamp((int32_t)c[s] + (int32_t)cIn[s],
-                        (int32_t)std::numeric_limits<int16_t>::min(),
-                        (int32_t)std::numeric_limits<int16_t>::max());
+        for (unsigned i = 0; i < channels; i++) {
+            auto c = (int16_t*) f.extended_data[i];
+            auto cIn = (int16_t*) fIn.extended_data[i];
+            for (unsigned s = 0; s < samplesPerChannel; s++) {
+                c[s] = std::clamp((int32_t) c[s] + (int32_t) cIn[s],
+                                  (int32_t) std::numeric_limits<int16_t>::min(),
+                                  (int32_t) std::numeric_limits<int16_t>::max());
             }
         }
     } else if (fmt == AV_SAMPLE_FMT_FLT || fmt == AV_SAMPLE_FMT_FLTP) {
-        for (unsigned i=0; i < channels; i++) {
-            auto c = (float*)f.extended_data[i];
-            auto cIn = (float*)fIn.extended_data[i];
-            for (unsigned s=0; s < samplesPerChannel; s++) {
+        for (unsigned i = 0; i < channels; i++) {
+            auto c = (float*) f.extended_data[i];
+            auto cIn = (float*) fIn.extended_data[i];
+            for (unsigned s = 0; s < samplesPerChannel; s++) {
                 c[s] += cIn[s];
             }
         }
     } else {
-        throw std::invalid_argument(std::string("Unsupported format for mixing: ") + av_get_sample_fmt_name(fmt));
+        throw std::invalid_argument(std::string("Unsupported format for mixing: ")
+                                    + av_get_sample_fmt_name(fmt));
     }
 }
 
@@ -206,7 +208,8 @@ AudioFrame::calcRMS() const
         }
     } else {
         // Should not happen
-        JAMI_ERR() << "Unsupported format for getting volume level: " << av_get_sample_fmt_name(fmt);
+        JAMI_ERR() << "Unsupported format for getting volume level: "
+                   << av_get_sample_fmt_name(fmt);
         return 0.0;
     }
     // divide by the number of multi-byte samples
@@ -238,7 +241,10 @@ VideoFrame::copyFrom(const VideoFrame& o)
 size_t
 VideoFrame::size() const noexcept
 {
-    return av_image_get_buffer_size((AVPixelFormat)frame_->format, frame_->width, frame_->height, 1);
+    return av_image_get_buffer_size((AVPixelFormat) frame_->format,
+                                    frame_->width,
+                                    frame_->height,
+                                    1);
 }
 
 int
@@ -274,10 +280,9 @@ VideoFrame::reserve(int format, int width, int height)
 
     if (allocated_) {
         // nothing to do if same properties
-        if (width == libav_frame->width
-            and height == libav_frame->height
+        if (width == libav_frame->width and height == libav_frame->height
             and format == libav_frame->format)
-        av_frame_unref(libav_frame);
+            av_frame_unref(libav_frame);
     }
 
     setGeometry(format, width, height);
@@ -294,12 +299,20 @@ VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height) noexc
     setGeometry(format, width, height);
     if (not ptr)
         return;
-    av_image_fill_arrays(frame_->data, frame_->linesize, (uint8_t*)ptr,
-                         (AVPixelFormat)frame_->format, width, height, 1);
+    av_image_fill_arrays(frame_->data,
+                         frame_->linesize,
+                         (uint8_t*) ptr,
+                         (AVPixelFormat) frame_->format,
+                         width,
+                         height,
+                         1);
 }
 
 void
-VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height,
+VideoFrame::setFromMemory(uint8_t* ptr,
+                          int format,
+                          int width,
+                          int height,
                           const std::function<void(uint8_t*)>& cb) noexcept
 {
     setFromMemory(ptr, format, width, height);
@@ -323,27 +336,28 @@ VideoFrame::noise()
     auto f = frame_.get();
     if (f->data[0] == nullptr)
         return;
-    for (std::size_t i=0 ; i < size(); ++i) {
+    for (std::size_t i = 0; i < size(); ++i) {
         f->data[0][i] = std::rand() & 255;
     }
 }
 
-VideoFrame* getNewFrame()
+VideoFrame*
+getNewFrame()
 {
     if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
         return &input->getNewFrame();
     return nullptr;
 }
 
-void publishFrame()
+void
+publishFrame()
 {
     if (auto input = jami::Manager::instance().getVideoManager().videoInput.lock())
         return input->publishFrame();
 }
 
 void
-registerVideoHandlers(const std::map<std::string,
-    std::shared_ptr<CallbackWrapperBase>>&handlers)
+registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>& handlers)
 {
     registerSignalHandlers(handlers);
 }
@@ -383,28 +397,29 @@ setDeviceOrientation(const std::string& deviceId, int angle)
 std::map<std::string, std::string>
 getDeviceParams(const std::string& deviceId)
 {
-    auto params = jami::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceParams(deviceId);
+    auto params = jami::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceParams(
+        deviceId);
     std::stringstream width, height, rate;
     width << params.width;
     height << params.height;
     rate << params.framerate;
-    return {
-        {"format", params.format},
-        {"width", width.str()},
-        {"height", height.str()},
-        {"rate", rate.str()}
-    };
+    return {{"format", params.format},
+            {"width", width.str()},
+            {"height", height.str()},
+            {"rate", rate.str()}};
 }
 
 std::map<std::string, std::string>
 getSettings(const std::string& deviceId)
 {
-    return jami::Manager::instance().getVideoManager().videoDeviceMonitor.getSettings(deviceId).to_map();
+    return jami::Manager::instance()
+        .getVideoManager()
+        .videoDeviceMonitor.getSettings(deviceId)
+        .to_map();
 }
 
 void
-applySettings(const std::string& deviceId,
-              const std::map<std::string, std::string>& settings)
+applySettings(const std::string& deviceId, const std::map<std::string, std::string>& settings)
 {
     jami::Manager::instance().getVideoManager().videoDeviceMonitor.applySettings(deviceId, settings);
     jami::Manager::instance().saveConfig();
@@ -428,20 +443,14 @@ stopCamera()
 void
 startAudioDevice()
 {
-    // Don't start audio layer if already done
-    auto audioLayer = jami::Manager::instance().getAudioDriver();
-    if (!audioLayer)
-        jami::Manager::instance().initAudioDriver();
-    if (!audioLayer->isStarted())
-        jami::Manager::instance().startAudioDriverStream();
-    jami::Manager::instance().getVideoManager().audioPreview = jami::getAudioInput(jami::RingBufferPool::DEFAULT_ID);
+    jami::Manager::instance().getVideoManager().audioPreview = jami::getAudioInput(
+        jami::RingBufferPool::DEFAULT_ID);
 }
 
 void
 stopAudioDevice()
 {
     jami::Manager::instance().getVideoManager().audioPreview.reset();
-    jami::Manager::instance().checkAudio(); // stops audio layer if no calls
 }
 
 std::string
@@ -476,7 +485,7 @@ startLocalRecorder(const bool& audioOnly, const std::string& filepath)
 void
 stopLocalRecorder(const std::string& filepath)
 {
-    jami::LocalRecorder *rec = jami::LocalRecorderManager::instance().getRecorderByPath(filepath);
+    jami::LocalRecorder* rec = jami::LocalRecorderManager::instance().getRecorderByPath(filepath);
     if (!rec) {
         JAMI_WARN("Can't stop non existing local recorder.");
         return;
@@ -510,7 +519,8 @@ switchInput(const std::string& resource)
 bool
 switchToCamera()
 {
-    return switchInput(jami::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
+    return switchInput(
+        jami::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
 }
 
 bool
@@ -522,38 +532,38 @@ hasCameraStarted()
 void
 registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
 {
-   if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
-       sink->registerTarget(target);
-   else
-       JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
+    if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
+        sink->registerTarget(target);
+    else
+        JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
 void
 registerAVSinkTarget(const std::string& sinkId, const AVSinkTarget& target)
 {
-   if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
-       sink->registerAVTarget(target);
-   else
-       JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
+    if (auto sink = jami::Manager::instance().getSinkClient(sinkId))
+        sink->registerAVTarget(target);
+    else
+        JAMI_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
 std::map<std::string, std::string>
 getRenderer(const std::string& callId)
 {
-   if (auto sink = jami::Manager::instance().getSinkClient(callId))
-       return {
-           {DRing::Media::Details::CALL_ID,  callId},
-           {DRing::Media::Details::SHM_PATH, sink->openedName()},
-           {DRing::Media::Details::WIDTH,    std::to_string(sink->getWidth())},
-           {DRing::Media::Details::HEIGHT,   std::to_string(sink->getHeight())},
-       };
-   else
-       return {
-           {DRing::Media::Details::CALL_ID,  callId},
-           {DRing::Media::Details::SHM_PATH, ""},
-           {DRing::Media::Details::WIDTH,    "0"},
-           {DRing::Media::Details::HEIGHT,   "0"},
-       };
+    if (auto sink = jami::Manager::instance().getSinkClient(callId))
+        return {
+            {DRing::Media::Details::CALL_ID, callId},
+            {DRing::Media::Details::SHM_PATH, sink->openedName()},
+            {DRing::Media::Details::WIDTH, std::to_string(sink->getWidth())},
+            {DRing::Media::Details::HEIGHT, std::to_string(sink->getHeight())},
+        };
+    else
+        return {
+            {DRing::Media::Details::CALL_ID, callId},
+            {DRing::Media::Details::SHM_PATH, ""},
+            {DRing::Media::Details::WIDTH, "0"},
+            {DRing::Media::Details::HEIGHT, "0"},
+        };
 }
 
 std::string
@@ -643,13 +653,14 @@ setEncodingAccelerated(bool state)
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 void
-addVideoDevice(const std::string &node, std::vector<std::map<std::string, std::string>> const * devInfo)
+addVideoDevice(const std::string& node,
+               std::vector<std::map<std::string, std::string>> const* devInfo)
 {
     jami::Manager::instance().getVideoManager().videoDeviceMonitor.addDevice(node, devInfo);
 }
 
 void
-removeVideoDevice(const std::string &node)
+removeVideoDevice(const std::string& node)
 {
     jami::Manager::instance().getVideoManager().videoDeviceMonitor.removeDevice(node);
 }
@@ -738,30 +749,28 @@ getMediaPlayer(const std::string& id)
 {
     auto& vmgr = Manager::instance().getVideoManager();
     auto it = vmgr.mediaPlayers.find(id);
-      if (it != vmgr.mediaPlayers.end()) {
-          return it->second;
-      }
+    if (it != vmgr.mediaPlayers.end()) {
+        return it->second;
+    }
     return {};
 }
 
 std::string
 createMediaPlayer(const std::string& path)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
     auto player = std::make_shared<MediaPlayer>(path);
     if (!player->isInputValid()) {
         return "";
     }
     auto playerId = player.get()->getId();
-    vmgr.mediaPlayers[playerId] = player;
+    Manager::instance().getVideoManager().mediaPlayers[playerId] = player;
     return playerId;
 }
 
 bool
 pausePlayer(const std::string& id, bool pause)
 {
-    auto player = getMediaPlayer(id);
-    if (player) {
+    if (auto player = getMediaPlayer(id)) {
         player->pause(pause);
         return true;
     }
@@ -771,24 +780,13 @@ pausePlayer(const std::string& id, bool pause)
 bool
 closePlayer(const std::string& id)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
-    auto player = getMediaPlayer(id);
-    if (player) {
-        vmgr.mediaPlayers.erase(id);
-        if (vmgr.mediaPlayers.empty()) {
-            jami::Manager::instance().checkAudio();
-        }
-        return true;
-    }
-    return false;
+    return Manager::instance().getVideoManager().mediaPlayers.erase(id) > 0;
 }
 
 bool
 mutePlayerAudio(const std::string& id, bool mute)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
-    auto player = getMediaPlayer(id);
-    if (player) {
+    if (auto player = getMediaPlayer(id)) {
         player->muteAudio(mute);
         return true;
     }
@@ -798,22 +796,16 @@ mutePlayerAudio(const std::string& id, bool mute)
 bool
 playerSeekToTime(const std::string& id, int time)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
-    auto player = getMediaPlayer(id);
-    if (player) {
+    if (auto player = getMediaPlayer(id))
         return player->seekToTime(time);
-    }
     return false;
 }
 
 int64_t
 getPlayerPosition(const std::string& id)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
-    auto player = getMediaPlayer(id);
-    if (player) {
+    if (auto player = getMediaPlayer(id))
         return player->getPlayerPosition();
-    }
     return -1;
 }
 

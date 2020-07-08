@@ -31,7 +31,7 @@
 
 namespace jami {
 
-const char * const RingBufferPool::DEFAULT_ID = "audiolayer_id";
+const char* const RingBufferPool::DEFAULT_ID = "audiolayer_id";
 
 RingBufferPool::RingBufferPool()
     : defaultRingBuffer_(createRingBuffer(DEFAULT_ID))
@@ -146,7 +146,7 @@ RingBufferPool::removeReadBindings(const std::string& call_id)
  */
 void
 RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
-                                  const std::string& call_id)
+                                      const std::string& call_id)
 {
     if (call_id != DEFAULT_ID and rbuf->getId() == call_id)
         JAMI_WARN("RingBuffer has a readoffset on itself");
@@ -158,7 +158,7 @@ RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
 
 void
 RingBufferPool::removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
-                                       const std::string& call_id)
+                                           const std::string& call_id)
 {
     if (auto bindings = getReadBindings(call_id)) {
         bindings->erase(rbuf);
@@ -170,8 +170,7 @@ RingBufferPool::removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& rb
 }
 
 void
-RingBufferPool::bindCallID(const std::string& call_id1,
-                           const std::string& call_id2)
+RingBufferPool::bindCallID(const std::string& call_id1, const std::string& call_id2)
 {
     const auto& rb_call1 = getRingBuffer(call_id1);
     if (not rb_call1) {
@@ -192,8 +191,7 @@ RingBufferPool::bindCallID(const std::string& call_id1,
 }
 
 void
-RingBufferPool::bindHalfDuplexOut(const std::string& process_id,
-                              const std::string& call_id)
+RingBufferPool::bindHalfDuplexOut(const std::string& process_id, const std::string& call_id)
 {
     /* This method is used only for active calls, if this call does not exist,
      * do nothing */
@@ -205,8 +203,7 @@ RingBufferPool::bindHalfDuplexOut(const std::string& process_id,
 }
 
 void
-RingBufferPool::unBindCallID(const std::string& call_id1,
-                         const std::string& call_id2)
+RingBufferPool::unBindCallID(const std::string& call_id1, const std::string& call_id2)
 {
     const auto& rb_call1 = getRingBuffer(call_id1);
     if (not rb_call1) {
@@ -227,8 +224,7 @@ RingBufferPool::unBindCallID(const std::string& call_id1,
 }
 
 void
-RingBufferPool::unBindHalfDuplexOut(const std::string& process_id,
-                                const std::string& call_id)
+RingBufferPool::unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id)
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
@@ -327,7 +323,7 @@ RingBufferPool::getAvailableData(const std::string& call_id)
         return {};
 
     auto buf = std::make_shared<AudioFrame>(internalAudioFormat_);
-    for (const auto &rbuf : *bindings) {
+    for (const auto& rbuf : *bindings) {
         if (auto b = rbuf->get(call_id))
             buf->mix(*b);
     }
@@ -393,7 +389,7 @@ RingBufferPool::flushAllBuffers()
 {
     std::lock_guard<std::recursive_mutex> lk(stateLock_);
 
-    for (auto item = ringBufferMap_.begin(); item != ringBufferMap_.end(); ) {
+    for (auto item = ringBufferMap_.begin(); item != ringBufferMap_.end();) {
         if (const auto rb = item->second.lock()) {
             rb->flushAll();
             ++item;

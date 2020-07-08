@@ -57,7 +57,8 @@ CallFactory::removeCall(const std::string& id)
 //==============================================================================
 // Template specializations (when T = Call)
 
-template <> bool
+template<>
+bool
 CallFactory::hasCall<Call>(const std::string& id) const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
@@ -71,14 +72,16 @@ CallFactory::hasCall<Call>(const std::string& id) const
     return false;
 }
 
-template <> void
+template<>
+void
 CallFactory::clear<Call>()
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
     callMaps_.clear();
 }
 
-template <> bool
+template<>
+bool
 CallFactory::empty<Call>() const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
@@ -92,7 +95,8 @@ CallFactory::empty<Call>() const
     return true;
 }
 
-template <> std::shared_ptr<Call>
+template<>
+std::shared_ptr<Call>
 CallFactory::getCall<Call>(const std::string& id) const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
@@ -107,11 +111,12 @@ CallFactory::getCall<Call>(const std::string& id) const
     return nullptr;
 }
 
-template <> std::vector<std::shared_ptr<Call> >
+template<>
+std::vector<std::shared_ptr<Call>>
 CallFactory::getAllCalls<Call>() const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-    std::vector<std::shared_ptr<Call> > v;
+    std::vector<std::shared_ptr<Call>> v;
 
     for (const auto& itemmap : callMaps_) {
         const auto& map = itemmap.second;
@@ -123,8 +128,10 @@ CallFactory::getAllCalls<Call>() const
     return v;
 }
 
-template <> std::vector<std::string>
-CallFactory::getCallIDs<Call>() const {
+template<>
+std::vector<std::string>
+CallFactory::getCallIDs<Call>() const
+{
     std::vector<std::string> v;
 
     for (const auto& item : callMaps_) {
@@ -137,7 +144,8 @@ CallFactory::getCallIDs<Call>() const {
     return v;
 }
 
-template <> std::size_t
+template<>
+std::size_t
 CallFactory::callCount<Call>()
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);

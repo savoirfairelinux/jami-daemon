@@ -52,7 +52,8 @@ struct Contact
     bool isBanned() const { return not isActive() and banned; }
 
     Contact() = default;
-    Contact(const Json::Value& json) {
+    Contact(const Json::Value& json)
+    {
         added = json["added"].asInt();
         removed = json["removed"].asInt();
         confirmed = json["confirmed"].asBool();
@@ -63,7 +64,8 @@ struct Contact
      * Update this contact using other known contact information,
      * return true if contact state was changed.
      */
-    bool update(const Contact& c) {
+    bool update(const Contact& c)
+    {
         const auto copy = *this;
         if (c.added > added) {
             added = c.added;
@@ -77,13 +79,14 @@ struct Contact
         }
         return hasDifferentState(copy);
     }
-    bool hasDifferentState(const Contact& other) const {
-        return other.isActive() != isActive()
-            or other.isBanned() != isBanned()
-            or other.confirmed  != confirmed;
+    bool hasDifferentState(const Contact& other) const
+    {
+        return other.isActive() != isActive() or other.isBanned() != isBanned()
+               or other.confirmed != confirmed;
     }
 
-    Json::Value toJson() const {
+    Json::Value toJson() const
+    {
         Json::Value json;
         json["added"] = Json::Int64(added);
         if (removed) {
@@ -96,14 +99,13 @@ struct Contact
         return json;
     }
 
-    std::map<std::string, std::string> toMap() const {
-        if (not (isActive() or isBanned())) {
+    std::map<std::string, std::string> toMap() const
+    {
+        if (not(isActive() or isBanned())) {
             return {};
         }
 
-        std::map<std::string, std::string> result {
-            {"added", std::to_string(added)}
-        };
+        std::map<std::string, std::string> result {{"added", std::to_string(added)}};
 
         if (isActive())
             result.emplace("confirmed", confirmed ? TRUE_STR : FALSE_STR);
@@ -116,7 +118,8 @@ struct Contact
     MSGPACK_DEFINE_MAP(added, removed, confirmed, banned)
 };
 
-struct TrustRequest {
+struct TrustRequest
+{
     dht::InfoHash device;
     time_t received;
     std::vector<uint8_t> payload;
@@ -127,6 +130,7 @@ struct DeviceAnnouncement : public dht::SignedValue<DeviceAnnouncement>
 {
 private:
     using BaseClass = dht::SignedValue<DeviceAnnouncement>;
+
 public:
     static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
     dht::InfoHash dev;
@@ -144,7 +148,8 @@ struct DeviceSync : public dht::EncryptedValue<DeviceSync>
     MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers, trust_requests)
 };
 
-struct KnownDevice {
+struct KnownDevice
+{
     using clock = std::chrono::system_clock;
     using time_point = clock::time_point;
 
@@ -160,7 +165,10 @@ struct KnownDevice {
     KnownDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
                 const std::string& n = {},
                 time_point sync = time_point::min())
-        : certificate(cert), name(n), last_sync(sync) {}
+        : certificate(cert)
+        , name(n)
+        , last_sync(sync)
+    {}
 };
 
-}
+} // namespace jami

@@ -5,7 +5,7 @@
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Андрей Лухнов <aol.nnov@gmail.com>
  *  Author: Mohamed Fenjiro <mohamed.fenjiro@savoirfairelinux.com>
- * 
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -37,9 +37,10 @@
 
 namespace jami {
 
-class AlsaThread {
+class AlsaThread
+{
 public:
-    AlsaThread(AlsaLayer *alsa);
+    AlsaThread(AlsaLayer* alsa);
     ~AlsaThread();
     void start();
     bool isRunning() const;
@@ -52,11 +53,14 @@ private:
     std::thread thread_;
 };
 
-AlsaThread::AlsaThread(AlsaLayer *alsa)
-    : alsa_(alsa), running_(false), thread_()
+AlsaThread::AlsaThread(AlsaLayer* alsa)
+    : alsa_(alsa)
+    , running_(false)
+    , thread_()
 {}
 
-bool AlsaThread::isRunning() const
+bool
+AlsaThread::isRunning() const
 {
     return running_;
 }
@@ -68,18 +72,20 @@ AlsaThread::~AlsaThread()
         thread_.join();
 }
 
-void AlsaThread::start()
+void
+AlsaThread::start()
 {
     running_ = true;
     thread_ = std::thread(&AlsaThread::run, this);
 }
 
-void AlsaThread::run()
+void
+AlsaThread::run()
 {
     alsa_->run();
 }
 
-AlsaLayer::AlsaLayer(const AudioPreference &pref)
+AlsaLayer::AlsaLayer(const AudioPreference& pref)
     : AudioLayer(pref)
     , indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
@@ -110,7 +116,8 @@ AlsaLayer::~AlsaLayer()
     closePlaybackStream();
 }
 
-void AlsaLayer::initAudioLayer()
+void
+AlsaLayer::initAudioLayer()
 {
     std::string pcmp;
     std::string pcmr;
@@ -127,14 +134,20 @@ void AlsaLayer::initAudioLayer()
     }
 
     if (not is_capture_open_) {
-        is_capture_open_ = openDevice(&captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE, audioInputFormat_);
+        is_capture_open_ = openDevice(&captureHandle_,
+                                      pcmc,
+                                      SND_PCM_STREAM_CAPTURE,
+                                      audioInputFormat_);
 
         if (not is_capture_open_)
             emitSignal<DRing::ConfigurationSignal::Error>(ALSA_CAPTURE_DEVICE);
     }
 
     if (not is_playback_open_) {
-        is_playback_open_ = openDevice(&playbackHandle_, pcmp, SND_PCM_STREAM_PLAYBACK, audioFormat_);
+        is_playback_open_ = openDevice(&playbackHandle_,
+                                       pcmp,
+                                       SND_PCM_STREAM_PLAYBACK,
+                                       audioFormat_);
 
         if (not is_playback_open_)
             emitSignal<DRing::ConfigurationSignal::Error>(ALSA_PLAYBACK_DEVICE);
@@ -160,7 +173,8 @@ void AlsaLayer::initAudioLayer()
 /**
  * Reimplementation of run()
  */
-void AlsaLayer::run()
+void
+AlsaLayer::run()
 {
     initAudioLayer();
     {
@@ -177,9 +191,13 @@ void AlsaLayer::run()
 }
 
 // Retry approach taken from pa_linux_alsa.c, part of PortAudio
-bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stream_t stream, AudioFormat& format)
+bool
+AlsaLayer::openDevice(snd_pcm_t** pcm,
+                      const std::string& dev,
+                      snd_pcm_stream_t stream,
+                      AudioFormat& format)
 {
-    JAMI_DBG("Alsa: Opening %s",  dev.c_str());
+    JAMI_DBG("Alsa: Opening %s", dev.c_str());
 
     static const int MAX_RETRIES = 20; // times of 100ms
     int err, tries = 0;
@@ -197,10 +215,11 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
 
     if (err < 0) {
         JAMI_ERR("Alsa: couldn't open %s device %s : %s",
-              (stream == SND_PCM_STREAM_CAPTURE)? "capture" :
-              (stream == SND_PCM_STREAM_PLAYBACK)? "playback" : "ringtone",
-              dev.c_str(),
-              snd_strerror(err));
+                 (stream == SND_PCM_STREAM_CAPTURE)
+                     ? "capture"
+                     : (stream == SND_PCM_STREAM_PLAYBACK) ? "playback" : "ringtone",
+                 dev.c_str(),
+                 snd_strerror(err));
         return false;
     }
 
@@ -212,8 +231,7 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
     return true;
 }
 
-void
-AlsaLayer::startStream(AudioStreamType)
+void AlsaLayer::startStream(AudioDeviceType)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -236,7 +254,7 @@ AlsaLayer::startStream(AudioStreamType)
 }
 
 void
-AlsaLayer::stopStream()
+AlsaLayer::stopStream(AudioDeviceType stream)
 {
     audioThread_.reset();
 
@@ -262,14 +280,16 @@ AlsaLayer::stopStream()
  *  display an error if the function failed
  *  return the function return value
  */
-#define ALSA_CALL(call, error) ({ \
+#define ALSA_CALL(call, error) \
+    ({ \
         int err_code = call; \
         if (err_code < 0) \
             JAMI_ERR(error ": %s", snd_strerror(err_code)); \
-            err_code; \
-        })
+        err_code; \
+    })
 
-void AlsaLayer::stopCaptureStream()
+void
+AlsaLayer::stopCaptureStream()
 {
     if (captureHandle_ && ALSA_CALL(snd_pcm_drop(captureHandle_), "couldn't stop capture") >= 0) {
         is_capture_running_ = false;
@@ -277,7 +297,8 @@ void AlsaLayer::stopCaptureStream()
     }
 }
 
-void AlsaLayer::closeCaptureStream()
+void
+AlsaLayer::closeCaptureStream()
 {
     if (is_capture_prepared_ and is_capture_running_)
         stopCaptureStream();
@@ -286,14 +307,16 @@ void AlsaLayer::closeCaptureStream()
         is_capture_open_ = false;
 }
 
-void AlsaLayer::startCaptureStream()
+void
+AlsaLayer::startCaptureStream()
 {
     if (captureHandle_ and not is_capture_running_)
         if (ALSA_CALL(snd_pcm_start(captureHandle_), "Couldn't start capture") >= 0)
             is_capture_running_ = true;
 }
 
-void AlsaLayer::stopPlaybackStream()
+void
+AlsaLayer::stopPlaybackStream()
 {
     if (ringtoneHandle_ and is_playback_running_)
         ALSA_CALL(snd_pcm_drop(ringtoneHandle_), "Couldn't stop ringtone");
@@ -306,8 +329,8 @@ void AlsaLayer::stopPlaybackStream()
     }
 }
 
-
-void AlsaLayer::closePlaybackStream()
+void
+AlsaLayer::closePlaybackStream()
 {
     if (is_playback_prepared_ and is_playback_running_)
         stopPlaybackStream();
@@ -319,34 +342,38 @@ void AlsaLayer::closePlaybackStream()
         if (ALSA_CALL(snd_pcm_close(playbackHandle_), "Coulnd't close playback") >= 0)
             is_playback_open_ = false;
     }
-
 }
 
-void AlsaLayer::startPlaybackStream()
+void
+AlsaLayer::startPlaybackStream()
 {
     is_playback_running_ = true;
 }
 
-void AlsaLayer::prepareCaptureStream()
+void
+AlsaLayer::prepareCaptureStream()
 {
     if (is_capture_open_ and not is_capture_prepared_)
         if (ALSA_CALL(snd_pcm_prepare(captureHandle_), "Couldn't prepare capture") >= 0)
             is_capture_prepared_ = true;
 }
 
-void AlsaLayer::preparePlaybackStream()
+void
+AlsaLayer::preparePlaybackStream()
 {
     is_playback_prepared_ = true;
 }
 
-bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle, AudioFormat& format)
+bool
+AlsaLayer::alsa_set_params(snd_pcm_t* pcm_handle, AudioFormat& format)
 {
-#define TRY(call, error) do { \
-    if (ALSA_CALL(call, error) < 0) \
-    return false; \
-} while(0)
+#define TRY(call, error) \
+    do { \
+        if (ALSA_CALL(call, error) < 0) \
+            return false; \
+    } while (0)
 
-    snd_pcm_hw_params_t *hwparams;
+    snd_pcm_hw_params_t* hwparams;
     snd_pcm_hw_params_alloca(&hwparams);
 
     const unsigned RING_ALSA_PERIOD_SIZE = 160;
@@ -357,10 +384,10 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle, AudioFormat& format)
     snd_pcm_uframes_t buffer_size = RING_ALSA_BUFFER_SIZE;
     unsigned int periods = RING_ALSA_NB_PERIOD;
 
-    snd_pcm_uframes_t  period_size_min = 0;
-    snd_pcm_uframes_t  period_size_max = 0;
-    snd_pcm_uframes_t  buffer_size_min = 0;
-    snd_pcm_uframes_t  buffer_size_max = 0;
+    snd_pcm_uframes_t period_size_min = 0;
+    snd_pcm_uframes_t period_size_max = 0;
+    snd_pcm_uframes_t buffer_size_min = 0;
+    snd_pcm_uframes_t buffer_size_max = 0;
 
 #define HW pcm_handle, hwparams /* hardware parameters */
     TRY(snd_pcm_hw_params_any(HW), "hwparams init");
@@ -368,7 +395,8 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle, AudioFormat& format)
     TRY(snd_pcm_hw_params_set_access(HW, SND_PCM_ACCESS_RW_INTERLEAVED), "access type");
     TRY(snd_pcm_hw_params_set_format(HW, SND_PCM_FORMAT_S16_LE), "sample format");
 
-    TRY(snd_pcm_hw_params_set_rate_resample(HW, 0), "hardware sample rate"); /* prevent software resampling */
+    TRY(snd_pcm_hw_params_set_rate_resample(HW, 0),
+        "hardware sample rate"); /* prevent software resampling */
     TRY(snd_pcm_hw_params_set_rate_near(HW, &format.sample_rate, nullptr), "sample rate");
 
     // TODO: use snd_pcm_query_chmaps or similar to get hardware channel num
@@ -387,9 +415,12 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle, AudioFormat& format)
     period_size = period_size > period_size_max ? period_size_max : period_size;
     period_size = period_size < period_size_min ? period_size_min : period_size;
 
-    TRY(snd_pcm_hw_params_set_buffer_size_near(HW, &buffer_size), "Unable to set buffer size for playback");
-    TRY(snd_pcm_hw_params_set_period_size_near(HW, &period_size, nullptr), "Unable to set period size for playback");
-    TRY(snd_pcm_hw_params_set_periods_near(HW, &periods, nullptr), "Unable to set number of periods for playback");
+    TRY(snd_pcm_hw_params_set_buffer_size_near(HW, &buffer_size),
+        "Unable to set buffer size for playback");
+    TRY(snd_pcm_hw_params_set_period_size_near(HW, &period_size, nullptr),
+        "Unable to set period size for playback");
+    TRY(snd_pcm_hw_params_set_periods_near(HW, &periods, nullptr),
+        "Unable to set number of periods for playback");
     TRY(snd_pcm_hw_params(HW), "hwparams");
 
     snd_pcm_hw_params_get_buffer_size(hwparams, &buffer_size);
@@ -407,10 +438,10 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle, AudioFormat& format)
 #undef HW
 
     JAMI_DBG("%s using format %s",
-          (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
-          format.toString().c_str() );
+             (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
+             format.toString().c_str());
 
-    snd_pcm_sw_params_t *swparams = nullptr;
+    snd_pcm_sw_params_t* swparams = nullptr;
     snd_pcm_sw_params_alloca(&swparams);
 
 #define SW pcm_handle, swparams /* software parameters */
@@ -427,9 +458,11 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle, AudioFormat& format)
 // TODO first frame causes broken pipe (underrun) because not enough data is sent
 // we should wait until the handle is ready
 void
-AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t * handle)
+AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t* handle)
 {
-    int err = snd_pcm_writei(handle, (const void*)buffer.pointer()->data[0], buffer.pointer()->nb_samples);
+    int err = snd_pcm_writei(handle,
+                             (const void*) buffer.pointer()->data[0],
+                             buffer.pointer()->nb_samples);
 
     if (err < 0)
         snd_pcm_recover(handle, err, 0);
@@ -438,48 +471,50 @@ AlsaLayer::write(const AudioFrame& buffer, snd_pcm_t * handle)
         return;
 
     switch (err) {
+    case -EPIPE:
+    case -ESTRPIPE:
+    case -EIO: {
+        snd_pcm_status_t* status;
+        snd_pcm_status_alloca(&status);
 
-        case -EPIPE:
-        case -ESTRPIPE:
-        case -EIO: {
-            snd_pcm_status_t* status;
-            snd_pcm_status_alloca(&status);
-
-            if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0)
-                if (snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN) {
-                    stopPlaybackStream();
-                    preparePlaybackStream();
-                    startPlaybackStream();
-                }
-
-            ALSA_CALL(snd_pcm_writei(handle, (const void*)buffer.pointer()->data[0], buffer.pointer()->nb_samples), "XRUN handling failed");
-            break;
-        }
-
-        case -EBADFD: {
-            snd_pcm_status_t* status;
-            snd_pcm_status_alloca(&status);
-
-            if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0) {
-                if (snd_pcm_status_get_state(status) == SND_PCM_STATE_SETUP) {
-                    JAMI_ERR("Writing in state SND_PCM_STATE_SETUP, should be "
-                          "SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
-                    int error = snd_pcm_prepare(handle);
-
-                    if (error < 0) {
-                        JAMI_ERR("Failed to prepare handle: %s", snd_strerror(error));
-                        stopPlaybackStream();
-                    }
-                }
+        if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0)
+            if (snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN) {
+                stopPlaybackStream();
+                preparePlaybackStream();
+                startPlaybackStream();
             }
 
-            break;
+        ALSA_CALL(snd_pcm_writei(handle,
+                                 (const void*) buffer.pointer()->data[0],
+                                 buffer.pointer()->nb_samples),
+                  "XRUN handling failed");
+        break;
+    }
+
+    case -EBADFD: {
+        snd_pcm_status_t* status;
+        snd_pcm_status_alloca(&status);
+
+        if (ALSA_CALL(snd_pcm_status(handle, status), "Cannot get playback handle status") >= 0) {
+            if (snd_pcm_status_get_state(status) == SND_PCM_STATE_SETUP) {
+                JAMI_ERR("Writing in state SND_PCM_STATE_SETUP, should be "
+                         "SND_PCM_STATE_PREPARED or SND_PCM_STATE_RUNNING");
+                int error = snd_pcm_prepare(handle);
+
+                if (error < 0) {
+                    JAMI_ERR("Failed to prepare handle: %s", snd_strerror(error));
+                    stopPlaybackStream();
+                }
+            }
         }
 
-        default:
-            JAMI_ERR("Unknown write error, dropping frames: %s", snd_strerror(err));
-            stopPlaybackStream();
-            break;
+        break;
+    }
+
+    default:
+        JAMI_ERR("Unknown write error, dropping frames: %s", snd_strerror(err));
+        stopPlaybackStream();
+        break;
     }
 }
 
@@ -500,35 +535,35 @@ AlsaLayer::read(unsigned frames)
     }
 
     switch (err) {
-        case -EPIPE:
-        case -ESTRPIPE:
-        case -EIO: {
-            snd_pcm_status_t* status;
-            snd_pcm_status_alloca(&status);
+    case -EPIPE:
+    case -ESTRPIPE:
+    case -EIO: {
+        snd_pcm_status_t* status;
+        snd_pcm_status_alloca(&status);
 
-            if (ALSA_CALL(snd_pcm_status(captureHandle_, status), "Get status failed") >= 0)
-                if (snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN) {
-                    stopCaptureStream();
-                    prepareCaptureStream();
-                    startCaptureStream();
-                }
+        if (ALSA_CALL(snd_pcm_status(captureHandle_, status), "Get status failed") >= 0)
+            if (snd_pcm_status_get_state(status) == SND_PCM_STATE_XRUN) {
+                stopCaptureStream();
+                prepareCaptureStream();
+                startCaptureStream();
+            }
 
-            JAMI_ERR("XRUN capture ignored (%s)", snd_strerror(err));
-            break;
-        }
+        JAMI_ERR("XRUN capture ignored (%s)", snd_strerror(err));
+        break;
+    }
 
-        case -EPERM:
-            JAMI_ERR("Can't capture, EPERM (%s)", snd_strerror(err));
-            prepareCaptureStream();
-            startCaptureStream();
-            break;
+    case -EPERM:
+        JAMI_ERR("Can't capture, EPERM (%s)", snd_strerror(err));
+        prepareCaptureStream();
+        startCaptureStream();
+        break;
     }
 
     return 0;
 }
 
 std::string
-AlsaLayer::buildDeviceTopo(const std::string &plugin, int card)
+AlsaLayer::buildDeviceTopo(const std::string& plugin, int card)
 {
     std::stringstream ss;
     std::string pcm(plugin);
@@ -542,7 +577,7 @@ AlsaLayer::buildDeviceTopo(const std::string &plugin, int card)
 }
 
 static bool
-safeUpdate(snd_pcm_t *handle, long &samples)
+safeUpdate(snd_pcm_t* handle, long& samples)
 {
     samples = snd_pcm_avail_update(handle);
 
@@ -559,12 +594,12 @@ safeUpdate(snd_pcm_t *handle, long &samples)
 }
 
 static std::vector<std::string>
-getValues(const std::vector<HwIDPair> &deviceMap)
+getValues(const std::vector<HwIDPair>& deviceMap)
 {
     std::vector<std::string> audioDeviceList;
     audioDeviceList.reserve(deviceMap.size());
 
-    for (const auto & dev : deviceMap)
+    for (const auto& dev : deviceMap)
         audioDeviceList.push_back(dev.second);
 
     return audioDeviceList;
@@ -586,7 +621,7 @@ std::vector<HwIDPair>
 AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 {
     snd_ctl_t* handle;
-    snd_ctl_card_info_t *info;
+    snd_ctl_card_info_t* info;
     snd_pcm_info_t* pcminfo;
     snd_ctl_card_info_alloca(&info);
     snd_pcm_info_alloca(&pcminfo);
@@ -606,19 +641,22 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
         if (snd_ctl_open(&handle, name.c_str(), 0) == 0) {
             if (snd_ctl_card_info(handle, info) == 0) {
                 snd_pcm_info_set_device(pcminfo, 0);
-                snd_pcm_info_set_stream(pcminfo, getCapture ? SND_PCM_STREAM_CAPTURE : SND_PCM_STREAM_PLAYBACK);
+                snd_pcm_info_set_stream(pcminfo,
+                                        getCapture ? SND_PCM_STREAM_CAPTURE
+                                                   : SND_PCM_STREAM_PLAYBACK);
 
                 int err;
 
                 if ((err = snd_ctl_pcm_info(handle, pcminfo)) < 0) {
-                    JAMI_WARN("Cannot get info for %s %s: %s", getCapture ?
-                         "capture device" : "playback device", name.c_str(),
-                         snd_strerror(err));
+                    JAMI_WARN("Cannot get info for %s %s: %s",
+                              getCapture ? "capture device" : "playback device",
+                              name.c_str(),
+                              snd_strerror(err));
                 } else {
                     JAMI_DBG("card %i : %s [%s]",
-                          numCard,
-                          snd_ctl_card_info_get_id(info),
-                          snd_ctl_card_info_get_name(info));
+                             numCard,
+                             snd_ctl_card_info_get_id(info),
+                             snd_ctl_card_info_get_name(info));
                     std::string description = snd_ctl_card_info_get_name(info);
                     description.append(" - ");
                     description.append(snd_pcm_info_get_name(pcminfo));
@@ -632,13 +670,11 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
         }
     } while (snd_card_next(&numCard) >= 0 && numCard >= 0);
 
-
     return audioDevice;
 }
 
-
 bool
-AlsaLayer::soundCardIndexExists(int card, DeviceType stream)
+AlsaLayer::soundCardIndexExists(int card, AudioDeviceType stream)
 {
     const std::string name("hw:" + std::to_string(card));
 
@@ -648,18 +684,20 @@ AlsaLayer::soundCardIndexExists(int card, DeviceType stream)
 
     snd_pcm_info_t* pcminfo;
     snd_pcm_info_alloca(&pcminfo);
-    snd_pcm_info_set_stream(pcminfo, stream == DeviceType::PLAYBACK ?  SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
+    snd_pcm_info_set_stream(pcminfo,
+                            stream == AudioDeviceType::PLAYBACK ? SND_PCM_STREAM_PLAYBACK
+                                                                : SND_PCM_STREAM_CAPTURE);
     bool ret = snd_ctl_pcm_info(handle, pcminfo) >= 0;
     snd_ctl_close(handle);
     return ret;
 }
 
 int
-AlsaLayer::getAudioDeviceIndex(const std::string &description, DeviceType type) const
+AlsaLayer::getAudioDeviceIndex(const std::string& description, AudioDeviceType type) const
 {
-    std::vector<HwIDPair> devices = getAudioDeviceIndexMap(type == DeviceType::CAPTURE);
+    std::vector<HwIDPair> devices = getAudioDeviceIndexMap(type == AudioDeviceType::CAPTURE);
 
-    for (const auto & dev : devices)
+    for (const auto& dev : devices)
         if (dev.second == description)
             return dev.first;
 
@@ -668,26 +706,27 @@ AlsaLayer::getAudioDeviceIndex(const std::string &description, DeviceType type) 
 }
 
 std::string
-AlsaLayer::getAudioDeviceName(int index, DeviceType type) const
+AlsaLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 {
     // a bit ugly and wrong.. i do not know how to implement it better in alsalayer.
-    // in addition, for now it is used in pulselayer only due to alsa and pulse layers api differences.
-    // but after some tweaking in alsalayer, it could be used in it too.
+    // in addition, for now it is used in pulselayer only due to alsa and pulse layers api
+    // differences. but after some tweaking in alsalayer, it could be used in it too.
     switch (type) {
-        case DeviceType::PLAYBACK:
-        case DeviceType::RINGTONE:
-            return getPlaybackDeviceList().at(index);
+    case AudioDeviceType::PLAYBACK:
+    case AudioDeviceType::RINGTONE:
+        return getPlaybackDeviceList().at(index);
 
-        case DeviceType::CAPTURE:
-            return getCaptureDeviceList().at(index);
-        default:
-            // Should never happen
-            JAMI_ERR("Unexpected type");
-            return "";
+    case AudioDeviceType::CAPTURE:
+        return getCaptureDeviceList().at(index);
+    default:
+        // Should never happen
+        JAMI_ERR("Unexpected type");
+        return "";
     }
 }
 
-void AlsaLayer::capture()
+void
+AlsaLayer::capture()
 {
     if (!captureHandle_ or !is_capture_running_)
         return;
@@ -706,7 +745,8 @@ void AlsaLayer::capture()
         JAMI_ERR("ALSA MIC : Couldn't read!");
 }
 
-void AlsaLayer::playback()
+void
+AlsaLayer::playback()
 {
     if (!playbackHandle_)
         return;
@@ -722,7 +762,8 @@ void AlsaLayer::playback()
     }
 }
 
-void AlsaLayer::ringtone()
+void
+AlsaLayer::ringtone()
 {
     if (!ringtoneHandle_)
         return;
@@ -736,23 +777,24 @@ void AlsaLayer::ringtone()
     }
 }
 
-void AlsaLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
+void
+AlsaLayer::updatePreference(AudioPreference& preference, int index, AudioDeviceType type)
 {
     switch (type) {
-        case DeviceType::PLAYBACK:
-            preference.setAlsaCardout(index);
-            break;
+    case AudioDeviceType::PLAYBACK:
+        preference.setAlsaCardout(index);
+        break;
 
-        case DeviceType::CAPTURE:
-            preference.setAlsaCardin(index);
-            break;
+    case AudioDeviceType::CAPTURE:
+        preference.setAlsaCardin(index);
+        break;
 
-        case DeviceType::RINGTONE:
-            preference.setAlsaCardring(index);
-            break;
+    case AudioDeviceType::RINGTONE:
+        preference.setAlsaCardring(index);
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 }
 

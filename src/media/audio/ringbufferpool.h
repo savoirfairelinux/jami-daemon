@@ -34,20 +34,17 @@ namespace jami {
 
 class RingBuffer;
 
-class RingBufferPool {
+class RingBufferPool
+{
 public:
-    static const char * const DEFAULT_ID;
+    static const char* const DEFAULT_ID;
 
     RingBufferPool();
     ~RingBufferPool();
 
-    int getInternalSamplingRate() const {
-        return internalAudioFormat_.sample_rate;
-    }
+    int getInternalSamplingRate() const { return internalAudioFormat_.sample_rate; }
 
-    AudioFormat getInternalAudioFormat() const {
-        return internalAudioFormat_;
-    }
+    AudioFormat getInternalAudioFormat() const { return internalAudioFormat_; }
 
     void setInternalSamplingRate(unsigned sr);
 
@@ -57,33 +54,29 @@ public:
      * Bind together two audio streams so that a client will be able
      * to put and get data specifying its callid only.
      */
-    void bindCallID(const std::string& call_id1,
-                    const std::string& call_id2);
+    void bindCallID(const std::string& call_id1, const std::string& call_id2);
 
     /**
      * Add a new call_id to unidirectional outgoing stream
      * \param call_id New call id to be added for this stream
      * \param process_id Process that require this stream
      */
-    void bindHalfDuplexOut(const std::string& process_id,
-                            const std::string& call_id);
+    void bindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
 
     /**
      * Unbind two calls
      */
-    void unBindCallID(const std::string& call_id1,
-                        const std::string& call_id2);
+    void unBindCallID(const std::string& call_id1, const std::string& call_id2);
 
     /**
      * Unbind a unidirectional stream
      */
-    void unBindHalfDuplexOut(const std::string& process_id,
-                                const std::string& call_id);
+    void unBindHalfDuplexOut(const std::string& process_id, const std::string& call_id);
 
     void unBindAll(const std::string& call_id);
 
     bool waitForDataAvailable(const std::string& call_id,
-                                const std::chrono::microseconds& max_wait) const;
+                              const std::chrono::microseconds& max_wait) const;
 
     std::shared_ptr<AudioFrame> getData(const std::string& call_id);
 
@@ -124,15 +117,15 @@ private:
     NON_COPYABLE(RingBufferPool);
 
     // A set of RingBuffers readable by a call
-    using ReadBindings = std::set<std::shared_ptr<RingBuffer>, std::owner_less<std::shared_ptr<RingBuffer>>>;
+    using ReadBindings
+        = std::set<std::shared_ptr<RingBuffer>, std::owner_less<std::shared_ptr<RingBuffer>>>;
 
     const ReadBindings* getReadBindings(const std::string& call_id) const;
     ReadBindings* getReadBindings(const std::string& call_id);
 
     void removeReadBindings(const std::string& call_id);
 
-    void addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
-                                const std::string& call_id);
+    void addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf, const std::string& call_id);
 
     void removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
                                     const std::string& call_id);

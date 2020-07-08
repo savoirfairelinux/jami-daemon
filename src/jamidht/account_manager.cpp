@@ -37,23 +37,29 @@ namespace jami {
 AccountManager::CertRequest
 AccountManager::buildRequest(PrivateKey fDeviceKey)
 {
-    return dht::ThreadPool::computation().get<std::unique_ptr<dht::crypto::CertificateRequest>>([fDeviceKey]{
-        auto request = std::make_unique<dht::crypto::CertificateRequest>();
-        request->setName("Jami device");
-        auto deviceKey = fDeviceKey.get();
-        request->setUID(deviceKey->getPublicKey().getId().toString());
-        request->sign(*deviceKey);
-        return request;
-    });
+    return dht::ThreadPool::computation().get<std::unique_ptr<dht::crypto::CertificateRequest>>(
+        [fDeviceKey] {
+            auto request = std::make_unique<dht::crypto::CertificateRequest>();
+            request->setName("Jami device");
+            auto deviceKey = fDeviceKey.get();
+            request->setUID(deviceKey->getPublicKey().getId().toString());
+            request->sign(*deviceKey);
+            return request;
+        });
 }
 
 dht::crypto::Identity
-AccountManager::loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const
+AccountManager::loadIdentity(const std::string& crt_path,
+                             const std::string& key_path,
+                             const std::string& key_pwd) const
 {
-    JAMI_DBG("Loading certificate from '%s' and key from '%s' at %s", crt_path.c_str(), key_path.c_str(), path_.c_str());
+    JAMI_DBG("Loading certificate from '%s' and key from '%s' at %s",
+             crt_path.c_str(),
+             key_path.c_str(),
+             path_.c_str());
     try {
         dht::crypto::Certificate dht_cert(fileutils::loadFile(crt_path, path_));
-        dht::crypto::PrivateKey  dht_key(fileutils::loadFile(key_path, path_), key_pwd);
+        dht::crypto::PrivateKey dht_key(fileutils::loadFile(key_path, path_), key_pwd);
         auto crt_id = dht_cert.getLongId();
         if (!crt_id or crt_id != dht_key.getPublicKey().getLongId()) {
             JAMI_ERR("Device certificate not matching public key!");
@@ -66,24 +72,24 @@ AccountManager::loadIdentity(const std::string& crt_path, const std::string& key
         // load revocation lists for device authority (account certificate).
         tls::CertificateStore::instance().loadRevocations(*dht_cert.issuer);
 
-        return {
-            std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
-            std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
-        };
-    }
-    catch (const std::exception& e) {
+        return {std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
+                std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))};
+    } catch (const std::exception& e) {
         JAMI_ERR("Error loading identity: %s", e.what());
     }
     return {};
 }
 
 std::shared_ptr<dht::Value>
-AccountManager::parseAnnounce(const std::string& announceBase64, const std::string& accountId, const std::string& deviceId)
+AccountManager::parseAnnounce(const std::string& announceBase64,
+                              const std::string& accountId,
+                              const std::string& deviceId)
 {
     auto announce_val = std::make_shared<dht::Value>();
     try {
         auto announce = base64::decode(announceBase64);
-        msgpack::object_handle announce_msg = msgpack::unpack((const char*)announce.data(), announce.size());
+        msgpack::object_handle announce_msg = msgpack::unpack((const char*) announce.data(),
+                                                              announce.size());
         announce_val->msgpack_unpack(announce_msg.get());
         if (not announce_val->checkSignature()) {
             JAMI_ERR("[Auth] announce signature check failed");
@@ -103,12 +109,11 @@ AccountManager::parseAnnounce(const std::string& announceBase64, const std::stri
 }
 
 const AccountInfo*
-AccountManager::useIdentity(
-    const dht::crypto::Identity& identity,
-    const std::string& receipt,
-    const std::vector<uint8_t>& receiptSignature,
-    const std::string& username,
-    OnChangeCallback&& onChange)
+AccountManager::useIdentity(const dht::crypto::Identity& identity,
+                            const std::string& receipt,
+                            const std::vector<uint8_t>& receiptSignature,
+                            const std::string& username,
+                            OnChangeCallback&& onChange)
 {
     if (receipt.empty() or receiptSignature.empty())
         return nullptr;
@@ -128,7 +133,8 @@ AccountManager::useIdentity(
     auto contactList = std::make_unique<ContactList>(accountCertificate, path_, onChange);
     auto result = contactList->isValidAccountDevice(*identity.second);
     if (not result) {
-        JAMI_ERR("[Auth] can't use identity: device certificate chain can't be verified: %s", result.toString().c_str());
+        JAMI_ERR("[Auth] can't use identity: device certificate chain can't be verified: %s",
+                 result.toString().c_str());
         return nullptr;
     }
 
@@ -176,10 +182,11 @@ AccountManager::useIdentity(
     info->username = username;
     info_ = std::move(info);
 
-    JAMI_DBG("[Auth] Device %s receipt checked successfully for account %s", info_->deviceId.c_str(), id.c_str());
+    JAMI_DBG("[Auth] Device %s receipt checked successfully for account %s",
+             info_->deviceId.c_str(),
+             id.c_str());
     return info_.get();
 }
-
 
 void
 AccountManager::startSync()
@@ -188,9 +195,9 @@ AccountManager::startSync()
     if (info_->announce) {
         auto h = dht::InfoHash(info_->accountId);
         JAMI_DBG("announcing device at %s", h.toString().c_str());
-        dht_->put(h, info_->announce, dht::DoneCallback{}, {}, true);
+        dht_->put(h, info_->announce, dht::DoneCallback {}, {}, true);
         for (const auto& crl : info_->identity.second->issuer->getRevocationLists())
-            dht_->put(h, crl, dht::DoneCallback{}, {}, true);
+            dht_->put(h, crl, dht::DoneCallback {}, {}, true);
         dht_->listen<DeviceAnnouncement>(h, [this](DeviceAnnouncement&& dev) {
             findCertificate(dev.dev, [this](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                 foundAccountDevice(crt);
@@ -200,9 +207,10 @@ AccountManager::startSync()
         dht_->listen<dht::crypto::RevocationList>(h, [this](dht::crypto::RevocationList&& crl) {
             if (crl.isSignedBy(*info_->identity.second->issuer)) {
                 JAMI_DBG("found CRL for account.");
-                tls::CertificateStore::instance().pinRevocationList(
-                    info_->accountId,
-                    std::make_shared<dht::crypto::RevocationList>(std::move(crl)));
+                tls::CertificateStore::instance()
+                    .pinRevocationList(info_->accountId,
+                                       std::make_shared<dht::crypto::RevocationList>(
+                                           std::move(crl)));
             }
             return true;
         });
@@ -211,33 +219,42 @@ AccountManager::startSync()
         JAMI_WARN("can't announce device: no annoucement...");
     }
 
-    auto inboxKey = dht::InfoHash::get("inbox:"+info_->deviceId);
-    dht_->listen<dht::TrustRequest>(
-        inboxKey,
-        [this](dht::TrustRequest&& v) {
-            if (v.service != DHT_TYPE_NS)
-                return true;
-
-            // allowPublic always true for trust requests (only forbidden if banned)
-            onPeerMessage(v.from, true, [this, v](const std::shared_ptr<dht::crypto::Certificate>&, dht::InfoHash peer_account) mutable {
-                JAMI_WARN("Got trust request from: %s / %s", peer_account.toString().c_str(), v.from.toString().c_str());
-                if (info_)
-                    if (info_->contacts->onTrustRequest(peer_account, v.from, time(nullptr), v.confirm, std::move(v.payload))) {
-                        sendTrustRequestConfirm(peer_account);
-                    }
-            });
+    auto inboxKey = dht::InfoHash::get("inbox:" + info_->deviceId);
+    dht_->listen<dht::TrustRequest>(inboxKey, [this](dht::TrustRequest&& v) {
+        if (v.service != DHT_TYPE_NS)
             return true;
-        }
-    );
+
+        // allowPublic always true for trust requests (only forbidden if banned)
+        onPeerMessage(v.from,
+                      true,
+                      [this, v](const std::shared_ptr<dht::crypto::Certificate>&,
+                                dht::InfoHash peer_account) mutable {
+                          JAMI_WARN("Got trust request from: %s / %s",
+                                    peer_account.toString().c_str(),
+                                    v.from.toString().c_str());
+                          if (info_)
+                              if (info_->contacts->onTrustRequest(peer_account,
+                                                                  v.from,
+                                                                  time(nullptr),
+                                                                  v.confirm,
+                                                                  std::move(v.payload))) {
+                                  sendTrustRequestConfirm(peer_account);
+                              }
+                      });
+        return true;
+    });
 }
 
 const std::map<dht::InfoHash, KnownDevice>&
-AccountManager::getKnownDevices() const {
+AccountManager::getKnownDevices() const
+{
     return info_->contacts->getKnownDevices();
 }
 
 bool
-AccountManager::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name, const time_point& last_sync)
+AccountManager::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                                   const std::string& name,
+                                   const time_point& last_sync)
 {
     return info_->contacts->foundAccountDevice(crt, name, last_sync);
 }
@@ -258,7 +275,8 @@ AccountManager::getAccountDeviceName() const
 }
 
 bool
-AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id)
+AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                                dht::InfoHash& account_id)
 {
     if (not crt)
         return false;
@@ -283,13 +301,18 @@ AccountManager::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>&
     }
 
     account_id = crt->issuer->getId();
-    JAMI_WARN("Found peer device: %s account:%s CA:%s", crt->getId().toString().c_str(), account_id.toString().c_str(), top_issuer->getId().toString().c_str());
+    JAMI_WARN("Found peer device: %s account:%s CA:%s",
+              crt->getId().toString().c_str(),
+              account_id.toString().c_str(),
+              top_issuer->getId().toString().c_str());
     return true;
 }
 
-
 void
-AccountManager::onPeerMessage(const dht::InfoHash& peer_device, bool allowPublic, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>&& cb)
+AccountManager::onPeerMessage(const dht::InfoHash& peer_device,
+                              bool allowPublic,
+                              std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                                                 const dht::InfoHash& peer_account)>&& cb)
 {
     // quick check in case we already explicilty banned this device
     auto trustStatus = getCertificateStatus(peer_device.toString());
@@ -299,16 +322,19 @@ AccountManager::onPeerMessage(const dht::InfoHash& peer_device, bool allowPublic
     }
 
     findCertificate(peer_device,
-        [this, peer_device, cb=std::move(cb), allowPublic](const std::shared_ptr<dht::crypto::Certificate>& cert) {
-        dht::InfoHash peer_account_id;
-        if (onPeerCertificate(cert, allowPublic, peer_account_id)) {
-            cb(cert, peer_account_id);
-        }
-    });
+                    [this, peer_device, cb = std::move(cb), allowPublic](
+                        const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                        dht::InfoHash peer_account_id;
+                        if (onPeerCertificate(cert, allowPublic, peer_account_id)) {
+                            cb(cert, peer_account_id);
+                        }
+                    });
 }
 
 bool
-AccountManager::onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate>& cert, bool allowPublic, dht::InfoHash& account_id)
+AccountManager::onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                                  bool allowPublic,
+                                  dht::InfoHash& account_id)
 {
     dht::InfoHash peer_account_id;
     if (not foundPeerDevice(cert, peer_account_id)) {
@@ -317,7 +343,8 @@ AccountManager::onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate
     }
 
     if (not isAllowed(*cert, allowPublic)) {
-        JAMI_WARN("[Auth] Discarding message from unauthorized peer %s.", peer_account_id.toString().c_str());
+        JAMI_WARN("[Auth] Discarding message from unauthorized peer %s.",
+                  peer_account_id.toString().c_str());
         return false;
     }
 
@@ -329,7 +356,7 @@ void
 AccountManager::addContact(const std::string& uri, bool confirmed)
 {
     JAMI_WARN("AccountManager::addContact %d", confirmed);
-    dht::InfoHash h (uri);
+    dht::InfoHash h(uri);
     if (not h) {
         JAMI_ERR("addContact: invalid contact URI");
         return;
@@ -346,7 +373,7 @@ AccountManager::addContact(const std::string& uri, bool confirmed)
 void
 AccountManager::removeContact(const std::string& uri, bool banned)
 {
-    dht::InfoHash h (uri);
+    dht::InfoHash h(uri);
     if (not h) {
         JAMI_ERR("removeContact: invalid contact URI");
         return;
@@ -385,7 +412,7 @@ AccountManager::getContacts() const
 std::map<std::string, std::string>
 AccountManager::getContactDetails(const std::string& uri) const
 {
-    dht::InfoHash h (uri);
+    dht::InfoHash h(uri);
     if (not h) {
         JAMI_ERR("getContactDetails: invalid contact URI");
         return {};
@@ -394,7 +421,9 @@ AccountManager::getContactDetails(const std::string& uri) const
 }
 
 bool
-AccountManager::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
+AccountManager::findCertificate(
+    const dht::InfoHash& h,
+    std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
     if (auto cert = tls::CertificateStore::instance().getCertificate(h.toString())) {
         if (cb)
@@ -411,7 +440,8 @@ AccountManager::findCertificate(const dht::InfoHash& h, std::function<void(const
 }
 
 bool
-AccountManager::setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status)
+AccountManager::setCertificateStatus(const std::string& cert_id,
+                                     tls::TrustStore::PermissionStatus status)
 {
     return info_ and info_->contacts->setCertificateStatus(cert_id, status);
 }
@@ -419,13 +449,14 @@ AccountManager::setCertificateStatus(const std::string& cert_id, tls::TrustStore
 std::vector<std::string>
 AccountManager::getCertificatesByStatus(tls::TrustStore::PermissionStatus status)
 {
-    return info_ ? info_->contacts->getCertificatesByStatus(status) : std::vector<std::string>{};
+    return info_ ? info_->contacts->getCertificatesByStatus(status) : std::vector<std::string> {};
 }
 
 tls::TrustStore::PermissionStatus
 AccountManager::getCertificateStatus(const std::string& cert_id) const
 {
-    return info_ ? info_->contacts->getCertificateStatus(cert_id) : tls::TrustStore::PermissionStatus::UNDEFINED;
+    return info_ ? info_->contacts->getCertificateStatus(cert_id)
+                 : tls::TrustStore::PermissionStatus::UNDEFINED;
 }
 
 bool
@@ -479,12 +510,13 @@ AccountManager::sendTrustRequest(const std::string& to, const std::vector<uint8_
     if (info_->contacts->addContact(toH)) {
         syncDevices();
     }
-    forEachDevice(toH, [this,toH,payload](const dht::InfoHash& dev)
-    {
-        JAMI_WARN("sending trust request to: %s / %s", toH.toString().c_str(), dev.toString().c_str());
-        dht_->putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()),
-                          dev,
-                          dht::TrustRequest(DHT_TYPE_NS, payload));
+    forEachDevice(toH, [this, toH, payload](const dht::InfoHash& dev) {
+        JAMI_WARN("sending trust request to: %s / %s",
+                  toH.toString().c_str(),
+                  dev.toString().c_str());
+        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev.toString()),
+                           dev,
+                           dht::TrustRequest(DHT_TYPE_NS, payload));
     });
 }
 
@@ -494,16 +526,18 @@ AccountManager::sendTrustRequestConfirm(const dht::InfoHash& toH)
     JAMI_WARN("AccountManager::sendTrustRequestConfirm");
     dht::TrustRequest answer {DHT_TYPE_NS};
     answer.confirm = true;
-    forEachDevice(toH, [this,toH,answer](const dht::InfoHash& dev) {
-        JAMI_WARN("sending trust request reply: %s / %s", toH.toString().c_str(), dev.toString().c_str());
-        dht_->putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()), dev, answer);
+    forEachDevice(toH, [this, toH, answer](const dht::InfoHash& dev) {
+        JAMI_WARN("sending trust request reply: %s / %s",
+                  toH.toString().c_str(),
+                  dev.toString().c_str());
+        dht_->putEncrypted(dht::InfoHash::get("inbox:" + dev.toString()), dev, answer);
     });
 }
 
 void
 AccountManager::forEachDevice(const dht::InfoHash& to,
-                           std::function<void(const dht::InfoHash&)>&& op,
-                           std::function<void(bool)>&& end)
+                              std::function<void(const dht::InfoHash&)>&& op,
+                              std::function<void(bool)>&& end)
 {
     if (not dht_) {
         JAMI_ERR("forEachDevice: no dht");
@@ -512,26 +546,31 @@ AccountManager::forEachDevice(const dht::InfoHash& to,
         return;
     }
     auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
-    dht_->get<dht::crypto::RevocationList>(to, [to](dht::crypto::RevocationList&& crl){
+    dht_->get<dht::crypto::RevocationList>(to, [to](dht::crypto::RevocationList&& crl) {
         tls::CertificateStore::instance().pinRevocationList(to.toString(), std::move(crl));
         return true;
     });
-    dht_->get<DeviceAnnouncement>(to, [this,to,treatedDevices,op=std::move(op)](DeviceAnnouncement&& dev) {
-        if (dev.from != to)
+    dht_->get<DeviceAnnouncement>(
+        to,
+        [this, to, treatedDevices, op = std::move(op)](DeviceAnnouncement&& dev) {
+            if (dev.from != to)
+                return true;
+            if (treatedDevices->emplace(dev.dev).second) {
+                op(dev.dev);
+            }
             return true;
-        if (treatedDevices->emplace(dev.dev).second) {
-            op(dev.dev);
-        }
-        return true;
-    }, [=, end=std::move(end)](bool /*ok*/){
-        JAMI_DBG("Found %lu devices for %s", treatedDevices->size(), to.to_c_str());
-        if (end)
-            end(not treatedDevices->empty());
-    });
+        },
+        [=, end = std::move(end)](bool /*ok*/) {
+            JAMI_DBG("Found %lu devices for %s", treatedDevices->size(), to.to_c_str());
+            if (end)
+                end(not treatedDevices->empty());
+        });
 }
 
 void
-AccountManager::lookupUri(const std::string& name, const std::string& defaultServer, LookupCallback cb)
+AccountManager::lookupUri(const std::string& name,
+                          const std::string& defaultServer,
+                          LookupCallback cb)
 {
     nameDir_.get().lookupUri(name, defaultServer, std::move(cb));
 }
@@ -542,4 +581,4 @@ AccountManager::lookupAddress(const std::string& addr, LookupCallback cb)
     nameDir_.get().lookupAddress(addr, cb);
 }
 
-}
+} // namespace jami

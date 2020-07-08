@@ -123,13 +123,13 @@ using ConferenceMap = std::map<std::string, std::shared_ptr<Conference>>;
 /** To store uniquely a list of Call ids */
 using CallIDSet = std::set<std::string>;
 
-static constexpr std::chrono::seconds ICE_INIT_TIMEOUT{10};
+static constexpr std::chrono::seconds ICE_INIT_TIMEOUT {10};
 static constexpr const char* PACKAGE_OLD = "ring";
 
 std::atomic_bool Manager::initialized = {false};
 
 static void
-copy_over(const std::string &srcPath, const std::string &destPath)
+copy_over(const std::string& srcPath, const std::string& destPath)
 {
     std::ifstream src = fileutils::ifstream(srcPath.c_str());
     std::ofstream dest = fileutils::ofstream(destPath.c_str());
@@ -140,7 +140,7 @@ copy_over(const std::string &srcPath, const std::string &destPath)
 
 // Creates a backup of the file at "path" with a .bak suffix appended
 static void
-make_backup(const std::string &path)
+make_backup(const std::string& path)
 {
     const std::string backup_path(path + ".bak");
     copy_over(path, backup_path);
@@ -148,7 +148,7 @@ make_backup(const std::string &path)
 
 // Restore last backup of the configuration file
 static void
-restore_backup(const std::string &path)
+restore_backup(const std::string& path)
 {
     const std::string backup_path(path + ".bak");
     copy_over(backup_path, path);
@@ -164,7 +164,7 @@ check_rename(const std::string& old_dir, const std::string& new_dir)
         JAMI_WARN() << "Migrating " << old_dir << " to " << new_dir;
         std::rename(old_dir.c_str(), new_dir.c_str());
     } else {
-        for (const auto &file : fileutils::readDirectory(old_dir)) {
+        for (const auto& file : fileutils::readDirectory(old_dir)) {
             auto old_dest = fileutils::getFullPath(old_dir, file);
             auto new_dest = fileutils::getFullPath(new_dir, file);
             if (fileutils::isDirectory(old_dest) and fileutils::isDirectory(new_dest)) {
@@ -197,7 +197,7 @@ setDhtLogLevel()
     int level = 0;
 
     if (envvar != nullptr) {
-        if (not (std::istringstream(envvar) >> level))
+        if (not(std::istringstream(envvar) >> level))
             level = 0;
 
         // From 0 (min) to 3 (max)
@@ -228,7 +228,7 @@ setSipLogLevel()
     int level = 0;
 
     if (envvar != nullptr) {
-        if (not (std::istringstream(envvar) >> level))
+        if (not(std::istringstream(envvar) >> level))
             level = 0;
 
         // From 0 (min) to 6 (max)
@@ -239,10 +239,13 @@ setSipLogLevel()
 #endif
 
     pj_log_set_level(level);
-    pj_log_set_log_func([](int level, const char *data, int /*len*/) {
-        if      (level < 2) JAMI_ERR() << data;
-        else if (level < 4) JAMI_WARN() << data;
-        else                JAMI_DBG() << data;
+    pj_log_set_log_func([](int level, const char* data, int /*len*/) {
+        if (level < 2)
+            JAMI_ERR() << data;
+        else if (level < 4)
+            JAMI_WARN() << data;
+        else
+            JAMI_DBG() << data;
     });
 }
 
@@ -297,7 +300,7 @@ struct Manager::ManagerPimpl
      */
     void playATone(Tone::ToneId toneId);
 
-    int getCurrentDeviceIndex(DeviceType type);
+    int getCurrentDeviceIndex(AudioDeviceType type);
 
     /**
      * Process remaining participant given a conference and the current call id.
@@ -305,7 +308,7 @@ struct Manager::ManagerPimpl
      * @param current call id
      * @param conference pointer
      */
-    void processRemainingParticipants(Conference &conf);
+    void processRemainingParticipants(Conference& conf);
 
     /**
      * Create config directory in home user and return configuration file path
@@ -329,7 +332,7 @@ struct Manager::ManagerPimpl
      */
     void removeWaitingCall(const std::string& id);
 
-    void loadAccount(const YAML::Node &item, int &errorCount);
+    void loadAccount(const YAML::Node& item, int& errorCount);
 
     void sendTextMessageToConference(const Conference& conf,
                                      const std::map<std::string, std::string>& messages,
@@ -339,8 +342,10 @@ struct Manager::ManagerPimpl
 
     void addMainParticipant(Conference& conf);
 
-    template <class T>
+    template<class T>
     std::shared_ptr<T> findAccount(const std::function<bool(const std::shared_ptr<T>&)>&);
+
+    void initAudioDriver();
 
     Manager& base_; // pimpl back-pointer
 
@@ -354,6 +359,7 @@ struct Manager::ManagerPimpl
 
     /** Application wide tone controller */
     ToneControl toneCtrl_;
+    std::unique_ptr<AudioDeviceGuard> toneDeviceGuard_;
 
     /** Current Call ID */
     std::string currentCall_;
@@ -362,7 +368,8 @@ struct Manager::ManagerPimpl
     std::mutex currentCallMutex_;
 
     /** Audio layer */
-    std::shared_ptr<AudioLayer> audiodriver_{nullptr};
+    std::shared_ptr<AudioLayer> audiodriver_ {nullptr};
+    std::array<std::atomic_uint, 3> audioStreamUsers_ {};
 
     // Main thread
     std::unique_ptr<DTMF> dtmfKey_;
@@ -398,8 +405,9 @@ struct Manager::ManagerPimpl
     /**
      * Instance of the RingBufferPool for the whole application
      *
-     * In order to send signal to other parts of the application, one must pass through the RingBufferMananger.
-     * Audio instances must be registered into the RingBufferMananger and bound together via the Manager.
+     * In order to send signal to other parts of the application, one must pass through the
+     * RingBufferMananger. Audio instances must be registered into the RingBufferMananger and bound
+     * together via the Manager.
      *
      */
     std::unique_ptr<RingBufferPool> ringbufferpool_;
@@ -441,7 +449,7 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
 {
     jami::libav_utils::av_init();
 
-    ioContextRunner_ = std::thread([context = ioContext_](){
+    ioContextRunner_ = std::thread([context = ioContext_]() {
         try {
             auto work = asio::make_work_guard(*context);
             context->run();
@@ -466,7 +474,7 @@ Manager::ManagerPimpl::parseConfiguration()
             JAMI_WARN("Errors while parsing %s", path_.c_str());
             result = false;
         }
-    } catch (const YAML::BadFile &e) {
+    } catch (const YAML::BadFile& e) {
         JAMI_WARN("Could not open configuration file");
         result = false;
     }
@@ -483,35 +491,32 @@ Manager::ManagerPimpl::playATone(Tone::ToneId toneId)
     if (not base_.voipPreferences.getPlayTones())
         return;
 
-    {
-        std::lock_guard<std::mutex> lock(audioLayerMutex_);
-
-        if (not audiodriver_) {
-            JAMI_ERR("Audio layer not initialized");
-            return;
-        }
-
-        audiodriver_->flushUrgent();
-        audiodriver_->startStream();
+    std::lock_guard<std::mutex> lock(audioLayerMutex_);
+    if (not audiodriver_) {
+        JAMI_ERR("Audio layer not initialized");
+        return;
     }
 
+    auto oldGuard = std::move(toneDeviceGuard_);
+    toneDeviceGuard_ = base_.startAudioStream(AudioDeviceType::PLAYBACK);
+    audiodriver_->flushUrgent();
     toneCtrl_.play(toneId);
 }
 
 int
-Manager::ManagerPimpl::getCurrentDeviceIndex(DeviceType type)
+Manager::ManagerPimpl::getCurrentDeviceIndex(AudioDeviceType type)
 {
     if (not audiodriver_)
         return -1;
     switch (type) {
-        case DeviceType::PLAYBACK:
-            return audiodriver_->getIndexPlayback();
-        case DeviceType::RINGTONE:
-            return audiodriver_->getIndexRingtone();
-        case DeviceType::CAPTURE:
-            return audiodriver_->getIndexCapture();
-        default:
-            return -1;
+    case AudioDeviceType::PLAYBACK:
+        return audiodriver_->getIndexPlayback();
+    case AudioDeviceType::RINGTONE:
+        return audiodriver_->getIndexRingtone();
+    case AudioDeviceType::CAPTURE:
+        return audiodriver_->getIndexCapture();
+    default:
+        return -1;
     }
 }
 
@@ -521,12 +526,11 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
     const std::string current_call_id(base_.getCurrentCallId());
     ParticipantSet participants(conf.getParticipantList());
     const size_t n = participants.size();
-    JAMI_DBG("Process remaining %zu participant(s) from conference %s",
-          n, conf.getConfID().c_str());
+    JAMI_DBG("Process remaining %zu participant(s) from conference %s", n, conf.getConfID().c_str());
 
     if (n > 1) {
         // Reset ringbuffer's readpointers
-        for (const auto &p : participants)
+        for (const auto& p : participants)
             base_.getRingBufferPool().flush(p);
 
         base_.getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
@@ -538,7 +542,8 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
             call->setConfId("");
             // if we are not listening to this conference and not a rendez-vous
             auto isRdv = false;
-            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(base_.getAccount(call->getAccountId())))
+            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(
+                    base_.getAccount(call->getAccountId())))
                 isRdv = acc->getAccountDetails()[Conf::CONFIG_ACCOUNT_ISRENDEZVOUS] == TRUE_STR;
 
             if (!isRdv) {
@@ -564,7 +569,7 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
 std::string
 Manager::ManagerPimpl::retrieveConfigPath() const
 {
-    static const char * const PROGNAME = "dring";
+    static const char* const PROGNAME = "dring";
     return fileutils::get_config_dir() + DIR_SEPARATOR_STR + PROGNAME + ".yml";
 }
 
@@ -603,7 +608,7 @@ Manager::ManagerPimpl::removeWaitingCall(const std::string& id)
 }
 
 void
-Manager::ManagerPimpl::loadAccount(const YAML::Node &node, int &errorCount)
+Manager::ManagerPimpl::loadAccount(const YAML::Node& node, int& errorCount)
 {
     using yaml_utils::parseValue;
 
@@ -627,14 +632,14 @@ Manager::ManagerPimpl::loadAccount(const YAML::Node &node, int &errorCount)
     }
 }
 
-//THREAD=VoIP
+// THREAD=VoIP
 void
 Manager::ManagerPimpl::sendTextMessageToConference(const Conference& conf,
-                                     const std::map<std::string, std::string>& messages,
-                                     const std::string& from) const noexcept
+                                                   const std::map<std::string, std::string>& messages,
+                                                   const std::string& from) const noexcept
 {
     ParticipantSet participants(conf.getParticipantList());
-    for (const auto& call_id: participants) {
+    for (const auto& call_id : participants) {
         try {
             auto call = base_.getCallFromCallID(call_id);
             if (not call)
@@ -642,7 +647,8 @@ Manager::ManagerPimpl::sendTextMessageToConference(const Conference& conf,
             call->sendTextMessage(messages, from);
         } catch (const std::exception& e) {
             JAMI_ERR("Failed to send message to conference participant %s: %s",
-                     call_id.c_str(), e.what());
+                     call_id.c_str(),
+                     e.what());
         }
     }
 }
@@ -659,7 +665,9 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
         base_.detachParticipant(call_id);
 
     JAMI_DBG("[call:%s] bind to conference %s (callState=%s)",
-             call_id.c_str(), conf_id.c_str(), state.c_str());
+             call_id.c_str(),
+             conf_id.c_str(),
+             state.c_str());
 
     base_.getRingBufferPool().unBindAll(call_id);
 
@@ -679,7 +687,8 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
         base_.answerCall(call_id);
     } else
         JAMI_WARN("[call:%s] call state %s not recognized for conference",
-                  call_id.c_str(), state.c_str());
+                  call_id.c_str(),
+                  state.c_str());
 }
 
 //==============================================================================
@@ -713,11 +722,10 @@ Manager::Manager()
     , callFactory()
     , accountFactory()
     , dataTransfers(std::make_unique<DataTransferFacade>())
-    , pimpl_ (new ManagerPimpl(*this))
+    , pimpl_(new ManagerPimpl(*this))
 {}
 
-Manager::~Manager()
-{}
+Manager::~Manager() {}
 
 void
 Manager::setAutoAnswer(bool enable)
@@ -726,7 +734,7 @@ Manager::setAutoAnswer(bool enable)
 }
 
 void
-Manager::init(const std::string &config_file)
+Manager::init(const std::string& config_file)
 {
     // FIXME: this is no good
     initialized = true;
@@ -742,9 +750,10 @@ Manager::init(const std::string &config_file)
     }
 #endif
 
-#define PJSIP_TRY(ret) do {                                  \
-        if ((ret) != PJ_SUCCESS)                               \
-            throw std::runtime_error(#ret " failed");        \
+#define PJSIP_TRY(ret) \
+    do { \
+        if ((ret) != PJ_SUCCESS) \
+            throw std::runtime_error(#ret " failed"); \
     } while (0)
 
     srand(time(nullptr)); // to get random number for RANDOM_PORT
@@ -784,7 +793,7 @@ Manager::init(const std::string &config_file)
 
     try {
         no_errors = pimpl_->parseConfiguration();
-    } catch (const YAML::Exception &e) {
+    } catch (const YAML::Exception& e) {
         JAMI_ERR("%s", e.what());
         no_errors = false;
     }
@@ -807,23 +816,20 @@ Manager::init(const std::string &config_file)
             removeAccounts();
             restore_backup(pimpl_->path_);
             pimpl_->parseConfiguration();
-        } catch (const YAML::Exception &e) {
+        } catch (const YAML::Exception& e) {
             JAMI_ERR("%s", e.what());
             JAMI_WARN("Restoring backup failed");
         }
     }
 
-    initAudioDriver();
-
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
+        pimpl_->initAudioDriver();
         if (pimpl_->audiodriver_) {
             pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
             pimpl_->dtmfKey_.reset(new DTMF(getRingBufferPool().getInternalSamplingRate()));
         }
     }
-
     registerAccounts();
 }
 
@@ -844,7 +850,7 @@ Manager::finish() noexcept
             hangupCall(call->getCallId());
         callFactory.clear();
 
-        for (const auto &account : getAllAccounts<JamiAccount>()) {
+        for (const auto& account : getAllAccounts<JamiAccount>()) {
             if (account->getRegistrationState() == RegistrationState::INITIALIZING)
                 removeAccount(account->getAccountID(), true);
         }
@@ -857,10 +863,8 @@ Manager::finish() noexcept
 
         {
             std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
             pimpl_->audiodriver_.reset();
         }
-
 
         // Flush remaining tasks (free lambda' with capture)
         pimpl_->scheduler_.stop();
@@ -880,13 +884,13 @@ Manager::finish() noexcept
 
         pj_shutdown();
 
-        if (!pimpl_->ioContext_->stopped()){
+        if (!pimpl_->ioContext_->stopped()) {
             pimpl_->ioContext_->reset(); // allow to finish
             pimpl_->ioContext_->stop();  // make thread stop
         }
         if (pimpl_->ioContextRunner_.joinable())
             pimpl_->ioContextRunner_.join();
-    } catch (const VoipLinkException &err) {
+    } catch (const VoipLinkException& err) {
         JAMI_ERR("%s", err.what());
     }
 }
@@ -900,7 +904,7 @@ Manager::isCurrentCall(const Call& call) const
 bool
 Manager::hasCurrentCall() const
 {
-    for (const auto& call: callFactory.getAllCalls()) {
+    for (const auto& call : callFactory.getAllCalls()) {
         if (!call->isSubcall() && call->getStateStr() == DRing::Call::StateEvent::CURRENT)
             return true;
     }
@@ -935,9 +939,9 @@ Manager::unregisterAccounts()
 
 std::string
 Manager::outgoingCall(const std::string& account_id,
-                          const std::string& to,
-                          const std::string& conf_id,
-                          const std::map<std::string, std::string>& volatileCallDetails)
+                      const std::string& to,
+                      const std::string& conf_id,
+                      const std::map<std::string, std::string>& volatileCallDetails)
 {
     if (not conf_id.empty() and not isConference(conf_id)) {
         JAMI_ERR("outgoingCall() failed, invalid conference id");
@@ -952,7 +956,7 @@ Manager::outgoingCall(const std::string& account_id,
 
     try {
         call = newOutgoingCall(to_cleaned, account_id, volatileCallDetails);
-    } catch (const std::exception &e) {
+    } catch (const std::exception& e) {
         JAMI_ERR("%s", e.what());
         return {};
     }
@@ -970,7 +974,7 @@ Manager::outgoingCall(const std::string& account_id,
     return call_id;
 }
 
-//THREAD=Main : for outgoing Call
+// THREAD=Main : for outgoing Call
 bool
 Manager::answerCall(const std::string& call_id)
 {
@@ -992,7 +996,7 @@ Manager::answerCall(const std::string& call_id)
 
     try {
         call->answer();
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error& e) {
         JAMI_ERR("%s", e.what());
         result = false;
     }
@@ -1020,23 +1024,7 @@ Manager::answerCall(const std::string& call_id)
     return result;
 }
 
-void
-Manager::checkAudio()
-{
-    // FIXME dirty, the manager should not need to be aware of local recorders
-    if (getCallList().empty()
-#ifdef ENABLE_VIDEO
-        and not getVideoManager().audioPreview
-#endif
-        and not getVideoManager().hasRunningPlayers()
-        and not jami::LocalRecorderManager::instance().hasRunningRecorders()) {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-        if (pimpl_->audiodriver_)
-            pimpl_->audiodriver_->stopStream();
-    }
-}
-
-//THREAD=Main
+// THREAD=Main
 bool
 Manager::hangupCall(const std::string& callId)
 {
@@ -1049,7 +1037,6 @@ Manager::hangupCall(const std::string& callId)
     auto call = getCallFromCallID(callId);
     if (not call) {
         JAMI_WARN("Could not hang up non-existant call %s", callId.c_str());
-        checkAudio();
         return false;
     }
 
@@ -1066,7 +1053,7 @@ Manager::hangupCall(const std::string& callId)
 
     try {
         call->hangup(0);
-    } catch (const VoipLinkException &e) {
+    } catch (const VoipLinkException& e) {
         JAMI_ERR("%s", e.what());
         return false;
     }
@@ -1080,7 +1067,7 @@ Manager::hangupConference(const std::string& id)
     JAMI_DBG("Hangup conference %s", id.c_str());
     if (auto conf = getConferenceFromID(id)) {
         ParticipantSet participants(conf->getParticipantList());
-        for (const auto &item : participants)
+        for (const auto& item : participants)
             hangupCall(item);
         pimpl_->unsetCurrentCall();
         return true;
@@ -1089,7 +1076,7 @@ Manager::hangupConference(const std::string& id)
     return false;
 }
 
-//THREAD=Main
+// THREAD=Main
 bool
 Manager::onHoldCall(const std::string& callId)
 {
@@ -1115,7 +1102,7 @@ Manager::onHoldCall(const std::string& callId)
                 if (current_call_id == callId)
                     pimpl_->unsetCurrentCall();
             });
-        } catch (const VoipLinkException &e) {
+        } catch (const VoipLinkException& e) {
             JAMI_ERR("%s", e.what());
             result = false;
         }
@@ -1127,7 +1114,7 @@ Manager::onHoldCall(const std::string& callId)
     return result;
 }
 
-//THREAD=Main
+// THREAD=Main
 bool
 Manager::offHoldCall(const std::string& callId)
 {
@@ -1153,7 +1140,7 @@ Manager::offHoldCall(const std::string& callId)
 
             addAudio(*call);
         });
-    } catch (const VoipLinkException &e) {
+    } catch (const VoipLinkException& e) {
         JAMI_ERR("%s", e.what());
         return false;
     }
@@ -1173,7 +1160,7 @@ Manager::muteMediaCall(const std::string& callId, const std::string& mediaType, 
     }
 }
 
-//THREAD=Main
+// THREAD=Main
 bool
 Manager::transferCall(const std::string& callId, const std::string& to)
 {
@@ -1206,8 +1193,7 @@ Manager::transferSucceeded()
 }
 
 bool
-Manager::attendedTransfer(const std::string& transferID,
-                              const std::string& targetID)
+Manager::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
     if (auto call = getCallFromCallID(transferID))
         return call->attendedTransfer(targetID);
@@ -1215,7 +1201,7 @@ Manager::attendedTransfer(const std::string& transferID,
     return false;
 }
 
-//THREAD=Main : Call:Incoming
+// THREAD=Main : Call:Incoming
 bool
 Manager::refuseCall(const std::string& id)
 {
@@ -1238,7 +1224,9 @@ Manager::refuseCall(const std::string& id)
 void
 Manager::removeConference(const std::string& conference_id)
 {
-    JAMI_DBG("Remove conference %s with %zu participants", conference_id.c_str(), pimpl_->conferenceMap_.size());
+    JAMI_DBG("Remove conference %s with %zu participants",
+             conference_id.c_str(),
+             pimpl_->conferenceMap_.size());
     auto iter = pimpl_->conferenceMap_.find(conference_id);
     if (iter == pimpl_->conferenceMap_.end()) {
         JAMI_ERR("Conference not found");
@@ -1295,7 +1283,7 @@ Manager::unHoldConference(const std::string& id)
         // Unhold conf only if it was in hold state otherwise...
         // all participants are restarted
         if (conf->getState() == Conference::State::HOLD) {
-            for (const auto &item : conf->getParticipantList())
+            for (const auto& item : conf->getParticipantList())
                 offHoldCall(item);
 
             pimpl_->switchCall(id);
@@ -1323,8 +1311,7 @@ Manager::isConferenceParticipant(const std::string& call_id)
 }
 
 bool
-Manager::addParticipant(const std::string& callId,
-                        const std::string& conferenceId)
+Manager::addParticipant(const std::string& callId, const std::string& conferenceId)
 {
     auto conf = getConferenceFromID(conferenceId);
     if (not conf) {
@@ -1436,7 +1423,7 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2,
 }
 
 void
-Manager::createConfFromParticipantList(const std::vector< std::string > &participantList)
+Manager::createConfFromParticipantList(const std::vector<std::string>& participantList)
 {
     // we must at least have 2 participant for a conference
     if (participantList.size() <= 1) {
@@ -1476,8 +1463,7 @@ Manager::setConferenceLayout(const std::string& confId, int layout)
 {
     if (auto conf = getConferenceFromID(confId)) {
         auto videoMixer = conf->getVideoMixer();
-        switch (layout)
-        {
+        switch (layout) {
         case 0:
             videoMixer->setVideoLayout(video::Layout::GRID);
             break;
@@ -1569,8 +1555,7 @@ Manager::removeParticipant(const std::string& call_id)
 }
 
 bool
-Manager::joinConference(const std::string& conf_id1,
-                            const std::string& conf_id2)
+Manager::joinConference(const std::string& conf_id1, const std::string& conf_id2)
 {
     auto conf = getConferenceFromID(conf_id1);
     if (not conf) {
@@ -1587,7 +1572,7 @@ Manager::joinConference(const std::string& conf_id1,
 
     // Detach and remove all participant from conf1 before add
     // ... to conf2
-    for (const auto &p : participants) {
+    for (const auto& p : participants) {
         JAMI_DBG("Detach participant %s", p.c_str());
         auto call = getCallFromCallID(p);
         if (!call) {
@@ -1607,7 +1592,7 @@ Manager::joinConference(const std::string& conf_id1,
     // Remove conf1
     pimpl_->base_.removeConference(conf_id1);
 
-    for (const auto &p : participants)
+    for (const auto& p : participants)
         addParticipant(p, conf_id2);
 
     return true;
@@ -1617,7 +1602,6 @@ void
 Manager::addAudio(Call& call)
 {
     const auto& call_id = call.getCallId();
-
     if (isConferenceParticipant(call_id)) {
         JAMI_DBG("[conf:%s] Attach local audio", call_id.c_str());
 
@@ -1632,6 +1616,8 @@ Manager::addAudio(Call& call)
 
         // bind to main
         getRingBufferPool().bindCallID(call_id, RingBufferPool::DEFAULT_ID);
+        auto oldGuard = std::move(call.audioGuard);
+        call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
 
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         if (!pimpl_->audiodriver_) {
@@ -1641,7 +1627,6 @@ Manager::addAudio(Call& call)
         pimpl_->audiodriver_->flushUrgent();
         getRingBufferPool().flushAllBuffers();
     }
-    startAudioDriverStream();
 }
 
 void
@@ -1650,6 +1635,7 @@ Manager::removeAudio(Call& call)
     const auto& call_id = call.getCallId();
     JAMI_DBG("[call:%s] Remove local audio", call_id.c_str());
     getRingBufferPool().unBindAll(call_id);
+    call.audioGuard.reset();
 }
 
 ScheduledExecutor&
@@ -1677,11 +1663,11 @@ Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::t
 }
 
 // Must be invoked periodically by a timer from the main event loop
-void Manager::pollEvents()
-{
-}
+void
+Manager::pollEvents()
+{}
 
-//THREAD=Main
+// THREAD=Main
 
 void
 Manager::saveConfig(const std::shared_ptr<Account>& acc)
@@ -1740,14 +1726,14 @@ Manager::saveConfig()
         std::lock_guard<std::mutex> lock(fileutils::getFileLock(pimpl_->path_));
         std::ofstream fout = fileutils::ofstream(pimpl_->path_);
         fout << out.c_str();
-    } catch (const YAML::Exception &e) {
+    } catch (const YAML::Exception& e) {
         JAMI_ERR("%s", e.what());
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error& e) {
         JAMI_ERR("%s", e.what());
     }
 }
 
-//THREAD=Main | VoIPLink
+// THREAD=Main | VoIPLink
 void
 Manager::playDtmf(char code)
 {
@@ -1774,7 +1760,7 @@ Manager::playDtmf(char code)
         return;
     }
 
-    pimpl_->audiodriver_->startStream();
+    std::shared_ptr<AudioDeviceGuard> audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
     if (not pimpl_->audiodriver_->waitForStart(std::chrono::seconds(1))) {
         JAMI_ERR("Failed to start audio layer...");
         return;
@@ -1784,7 +1770,7 @@ Manager::playDtmf(char code)
     // size (n sampling) = time_ms * sampling/s
     //                     ---------------------
     //                            ms/s
-    int size = (int)((pulselen * (float) pimpl_->audiodriver_->getSampleRate()) / 1000);
+    int size = (int) ((pulselen * (float) pimpl_->audiodriver_->getSampleRate()) / 1000);
     pimpl_->dtmfBuf_.resize(size);
 
     // Handle dtmf
@@ -1799,6 +1785,9 @@ Manager::playDtmf(char code)
 
         pimpl_->audiodriver_->putUrgent(pimpl_->dtmfBuf_);
     }
+
+    scheduler().scheduleIn([audioGuard] { JAMI_WARN("End of dtmf"); },
+                           std::chrono::milliseconds(pulselen));
 
     // TODO Cache the DTMF
 }
@@ -1816,7 +1805,7 @@ Manager::incomingCallsWaiting()
 ////////////////////////////////////////////////////////////////////////////////
 // SipEvent Thread
 void
-Manager::incomingCall(Call &call, const std::string& accountId)
+Manager::incomingCall(Call& call, const std::string& accountId)
 {
     stopTone();
     const std::string callID(call.getCallId());
@@ -1837,7 +1826,9 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 
     if (not hasCurrentCall()) {
         call.setState(Call::ConnectionState::RINGING);
-#ifndef RING_UWP
+#if defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+
+#else
         playRingtone(accountId);
 #endif
     }
@@ -1848,7 +1839,9 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 
     std::string from("<" + number + ">");
 
-    emitSignal<DRing::CallSignal::IncomingCall>(accountId, callID, call.getPeerDisplayName() + " " + from);
+    emitSignal<DRing::CallSignal::IncomingCall>(accountId,
+                                                callID,
+                                                call.getPeerDisplayName() + " " + from);
 
     auto currentCall = getCurrentCall();
     if (call.getAccount().isRendezVous()) {
@@ -1856,7 +1849,7 @@ Manager::incomingCall(Call &call, const std::string& accountId)
             answerCall(callID);
             auto call = getCallFromCallID(callID);
             auto accountId = call->getAccountId();
-            for (const auto& cid: getCallList()) {
+            for (const auto& cid : getCallList()) {
                 if (auto call = getCallFromCallID(cid)) {
                     if (call->getState() != Call::CallState::ACTIVE)
                         continue;
@@ -1881,16 +1874,13 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 
             pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
             emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
-
         });
     } else if (pimpl_->autoAnswer_) {
-        runOnMainThread([this, callID]{
-            answerCall(callID);
-        });
+        runOnMainThread([this, callID] { answerCall(callID); });
     } else if (currentCall) {
         // Test if already calling this person
         if (currentCall->getAccountId() == accountId
-        && currentCall->getPeerNumber() == call.getPeerNumber()) {
+            && currentCall->getPeerNumber() == call.getPeerNumber()) {
             auto device_uid = currentCall->getAccount().getUsername();
             if (device_uid.find("ring:") == 0) {
                 // NOTE: in case of a SIP call it's already ready to compare
@@ -1929,7 +1919,7 @@ Manager::incomingMessage(const std::string& callID,
         }
 
         JAMI_DBG("Is a conference, send incoming message to everyone");
-        //filter out vcards messages  as they could be resent by master as its own vcard
+        // filter out vcards messages  as they could be resent by master as its own vcard
         // TODO. Implement a protocol to handle vcard messages
         bool sendToOtherParicipants = true;
         for (auto& message : messages) {
@@ -1983,7 +1973,7 @@ Manager::sendCallTextMessage(const std::string& callID,
     }
 }
 
-//THREAD=VoIP CALL=Outgoing
+// THREAD=VoIP CALL=Outgoing
 void
 Manager::peerAnsweredCall(Call& call)
 {
@@ -2006,7 +1996,7 @@ Manager::peerAnsweredCall(Call& call)
         toggleRecordingCall(call_id);
 }
 
-//THREAD=VoIP Call=Outgoing
+// THREAD=VoIP Call=Outgoing
 void
 Manager::peerRingingCall(Call& call)
 {
@@ -2016,7 +2006,7 @@ Manager::peerRingingCall(Call& call)
         ringback();
 }
 
-//THREAD=VoIP Call=Outgoing/Ingoing
+// THREAD=VoIP Call=Outgoing/Ingoing
 void
 Manager::peerHungupCall(Call& call)
 {
@@ -2032,7 +2022,6 @@ Manager::peerHungupCall(Call& call)
 
     call.peerHungup();
 
-    checkAudio();
     pimpl_->removeWaitingCall(call_id);
     if (not incomingCallsWaiting())
         stopTone();
@@ -2040,7 +2029,7 @@ Manager::peerHungupCall(Call& call)
     removeAudio(call);
 }
 
-//THREAD=VoIP
+// THREAD=VoIP
 void
 Manager::callBusy(Call& call)
 {
@@ -2050,13 +2039,12 @@ Manager::callBusy(Call& call)
         pimpl_->unsetCurrentCall();
     }
 
-    checkAudio();
     pimpl_->removeWaitingCall(call.getCallId());
     if (not incomingCallsWaiting())
         stopTone();
 }
 
-//THREAD=VoIP
+// THREAD=VoIP
 void
 Manager::callFailure(Call& call)
 {
@@ -2073,7 +2061,6 @@ Manager::callFailure(Call& call)
         removeParticipant(call_id);
     }
 
-    checkAudio();
     pimpl_->removeWaitingCall(call_id);
     if (not incomingCallsWaiting())
         stopTone();
@@ -2090,6 +2077,7 @@ Manager::stopTone()
         return;
 
     pimpl_->toneCtrl_.stop();
+    pimpl_->toneDeviceGuard_.reset();
 }
 
 /**
@@ -2135,7 +2123,6 @@ void
 Manager::playRingtone(const std::string& accountID)
 {
     const auto account = getAccount(accountID);
-
     if (!account) {
         JAMI_WARN("Invalid account in ringtone");
         return;
@@ -2147,20 +2134,12 @@ Manager::playRingtone(const std::string& accountID)
     }
 
     std::string ringchoice = account->getRingtonePath();
-#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-    //for ios file located in main buindle
-    CFBundleRef bundle = CFBundleGetMainBundle();
-    CFURLRef bundleURL = CFBundleCopyBundleURL(bundle);
-    CFStringRef stringPath = CFURLCopyFileSystemPath(bundleURL, kCFURLPOSIXPathStyle);
-    CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
-    const char *buindlePath = CFStringGetCStringPtr(stringPath, encodingMethod);
-    ringchoice = std::string(buindlePath) + DIR_SEPARATOR_STR + ringchoice;
-#elif !defined(_WIN32)
+#if !defined(_WIN32)
     if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
         // check inside global share directory
-        static const char * const RINGDIR = "ringtones";
-        ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR
-        + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
+        static const char* const RINGDIR = "ringtones";
+        ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR + RINGDIR + DIR_SEPARATOR_STR
+                     + ringchoice;
     }
 #endif
 
@@ -2172,7 +2151,8 @@ Manager::playRingtone(const std::string& accountID)
             return;
         }
         // start audio if not started AND flush all buffers (main and urgent)
-        pimpl_->audiodriver_->startStream();
+        auto oldGuard = std::move(pimpl_->toneDeviceGuard_);
+        pimpl_->toneDeviceGuard_ = startAudioStream(AudioDeviceType::RINGTONE);
         pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
     }
 
@@ -2198,21 +2178,13 @@ Manager::getTelephoneFile()
 void
 Manager::setAudioPlugin(const std::string& audioPlugin)
 {
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
-    audioPreference.setAlsaPlugin(audioPlugin);
-
-    bool wasStarted = pimpl_->audiodriver_->isStarted();
-
+    {
+        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        audioPreference.setAlsaPlugin(audioPlugin);
+        pimpl_->audiodriver_.reset();
+        pimpl_->initAudioDriver();
+    }
     // Recreate audio driver with new settings
-    pimpl_->audiodriver_.reset();
-    pimpl_->audiodriver_.reset(audioPreference.createAudioLayer());
-
-    if (pimpl_->audiodriver_ and wasStarted)
-        pimpl_->audiodriver_->startStream();
-    else
-        JAMI_ERR("No audio layer created, possibly built without audio support");
-
     saveConfig();
 }
 
@@ -2220,28 +2192,24 @@ Manager::setAudioPlugin(const std::string& audioPlugin)
  * Set audio output device
  */
 void
-Manager::setAudioDevice(int index, DeviceType type)
+Manager::setAudioDevice(int index, AudioDeviceType type)
 {
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
     if (not pimpl_->audiodriver_) {
         JAMI_ERR("Audio driver not initialized");
-        return ;
+        return;
     }
     if (pimpl_->getCurrentDeviceIndex(type) == index) {
         JAMI_WARN("Audio device already selected ; doing nothing.");
         return;
     }
 
-    const bool wasStarted = pimpl_->audiodriver_->isStarted();
     pimpl_->audiodriver_->updatePreference(audioPreference, index, type);
 
     // Recreate audio driver with new settings
-    pimpl_->audiodriver_.reset(audioPreference.createAudioLayer());
-
-    if (pimpl_->audiodriver_ and wasStarted)
-        pimpl_->audiodriver_->startStream();
-
+    pimpl_->audiodriver_.reset();
+    pimpl_->initAudioDriver();
     saveConfig();
 }
 
@@ -2284,23 +2252,44 @@ std::vector<std::string>
 Manager::getCurrentAudioDevicesIndex()
 {
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
     if (not pimpl_->audiodriver_) {
         JAMI_ERR("Audio layer not initialized");
         return {};
     }
 
-    std::vector<std::string> v;
+    return {std::to_string(pimpl_->audiodriver_->getIndexPlayback()),
+            std::to_string(pimpl_->audiodriver_->getIndexCapture()),
+            std::to_string(pimpl_->audiodriver_->getIndexRingtone())};
+}
 
-    std::stringstream ssi, sso, ssr;
-    sso << pimpl_->audiodriver_->getIndexPlayback();
-    v.push_back(sso.str());
-    ssi << pimpl_->audiodriver_->getIndexCapture();
-    v.push_back(ssi.str());
-    ssr << pimpl_->audiodriver_->getIndexRingtone();
-    v.push_back(ssr.str());
+void
+Manager::startAudio()
+{
+    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+    pimpl_->audiodriver_.reset();
+    pimpl_->initAudioDriver();
+}
 
-    return v;
+AudioDeviceGuard::AudioDeviceGuard(Manager& manager, AudioDeviceType type)
+    : manager_(manager)
+    , type_(type)
+{
+    auto streamId = (unsigned) type;
+    if (streamId >= manager_.pimpl_->audioStreamUsers_.size())
+        throw std::invalid_argument("Invalid audio device type");
+    if (manager_.pimpl_->audioStreamUsers_[(unsigned) type]++ == 0) {
+        if (auto layer = manager_.getAudioDriver())
+            layer->startStream(type);
+    }
+}
+
+AudioDeviceGuard::~AudioDeviceGuard()
+{
+    auto streamId = (unsigned) type_;
+    if (--manager_.pimpl_->audioStreamUsers_[streamId] == 0) {
+        if (auto layer = manager_.getAudioDriver())
+            layer->stopStream(type_);
+    }
 }
 
 bool
@@ -2339,7 +2328,8 @@ Manager::ringtoneEnabled(const std::string& id)
         return;
     }
 
-    account->getRingtoneEnabled() ? account->setRingtoneEnabled(false) : account->setRingtoneEnabled(true);
+    account->getRingtoneEnabled() ? account->setRingtoneEnabled(false)
+                                  : account->setRingtoneEnabled(true);
 }
 
 bool
@@ -2395,29 +2385,13 @@ Manager::startRecordedFilePlayback(const std::string& filepath)
             return false;
         }
 
-        pimpl_->audiodriver_->startStream();
+        auto oldGuard = std::move(pimpl_->toneDeviceGuard_);
+        pimpl_->toneDeviceGuard_ = startAudioStream(AudioDeviceType::RINGTONE);
         pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
     }
 
     return pimpl_->toneCtrl_.setAudioFile(filepath);
 }
-
-bool
-Manager::startAudioPlayback()
-{
-    if (not pimpl_->audiodriver_) {
-        JAMI_ERR("No audio layer");
-        return false;
-    }
-
-    if (pimpl_->audiodriver_->isStarted()) {
-        JAMI_DBG("Audio is running");
-        return true;
-    }
-    pimpl_->audiodriver_->startStream(AudioStreamType::PLAYBACK);
-    return true;
-}
-
 
 void
 Manager::recordingPlaybackSeek(const double value)
@@ -2430,8 +2404,8 @@ Manager::stopRecordedFilePlayback()
 {
     JAMI_DBG("Stop recorded file playback");
 
-    checkAudio();
     pimpl_->toneCtrl_.stopAudioFile();
+    pimpl_->toneDeviceGuard_.reset();
 }
 
 void
@@ -2463,7 +2437,7 @@ Manager::getRingingTimeout() const
 }
 
 bool
-Manager::setAudioManager(const std::string &api)
+Manager::setAudioManager(const std::string& api)
 {
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
@@ -2479,13 +2453,9 @@ Manager::setAudioManager(const std::string &api)
 
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
-        bool wasStarted = pimpl_->audiodriver_->isStarted();
         audioPreference.setAudioApi(api);
-        pimpl_->audiodriver_.reset(audioPreference.createAudioLayer());
-
-        if (pimpl_->audiodriver_ and wasStarted)
-            pimpl_->audiodriver_->startStream();
+        pimpl_->audiodriver_.reset();
+        pimpl_->initAudioDriver();
     }
 
     saveConfig();
@@ -2501,7 +2471,7 @@ Manager::getAudioManager() const
 }
 
 int
-Manager::getAudioInputDeviceIndex(const std::string &name)
+Manager::getAudioInputDeviceIndex(const std::string& name)
 {
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
@@ -2510,11 +2480,11 @@ Manager::getAudioInputDeviceIndex(const std::string &name)
         return 0;
     }
 
-    return pimpl_->audiodriver_->getAudioDeviceIndex(name, DeviceType::CAPTURE);
+    return pimpl_->audiodriver_->getAudioDeviceIndex(name, AudioDeviceType::CAPTURE);
 }
 
 int
-Manager::getAudioOutputDeviceIndex(const std::string &name)
+Manager::getAudioOutputDeviceIndex(const std::string& name)
 {
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
@@ -2523,7 +2493,7 @@ Manager::getAudioOutputDeviceIndex(const std::string &name)
         return 0;
     }
 
-    return pimpl_->audiodriver_->getAudioDeviceIndex(name, DeviceType::PLAYBACK);
+    return pimpl_->audiodriver_->getAudioDeviceIndex(name, AudioDeviceType::PLAYBACK);
 }
 
 std::string
@@ -2560,10 +2530,15 @@ Manager::setAGCState(bool state)
  * Initialization: Main Thread
  */
 void
-Manager::initAudioDriver()
+Manager::ManagerPimpl::initAudioDriver()
 {
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-    pimpl_->audiodriver_.reset(audioPreference.createAudioLayer());
+    audiodriver_.reset(base_.audioPreference.createAudioLayer());
+    constexpr std::array<AudioDeviceType, 3> TYPES {AudioDeviceType::CAPTURE,
+                                                    AudioDeviceType::PLAYBACK,
+                                                    AudioDeviceType::RINGTONE};
+    for (const auto& type : TYPES)
+        if (audioStreamUsers_[(unsigned) type])
+            audiodriver_->startStream(type);
 }
 
 AudioFormat
@@ -2576,13 +2551,15 @@ AudioFormat
 Manager::audioFormatUsed(AudioFormat format)
 {
     AudioFormat currentFormat = pimpl_->ringbufferpool_->getInternalAudioFormat();
-    format.nb_channels = std::max(currentFormat.nb_channels, std::min(format.nb_channels, 2u)); // max 2 channels.
+    format.nb_channels = std::max(currentFormat.nb_channels,
+                                  std::min(format.nb_channels, 2u)); // max 2 channels.
     format.sample_rate = std::max(currentFormat.sample_rate, format.sample_rate);
 
     if (currentFormat == format)
         return format;
 
-    JAMI_DBG("Audio format changed: %s -> %s", currentFormat.toString().c_str(),
+    JAMI_DBG("Audio format changed: %s -> %s",
+             currentFormat.toString().c_str(),
              format.toString().c_str());
 
     pimpl_->ringbufferpool_->setInternalAudioFormat(format);
@@ -2611,7 +2588,7 @@ Manager::getAccountList() const
     // Concatenate all account pointers in a single map
     std::vector<std::string> v;
     v.reserve(accountCount());
-    for (const auto &account : getAllAccounts()) {
+    for (const auto& account : getAllAccounts()) {
         v.emplace_back(account->getAccountID());
     }
 
@@ -2640,7 +2617,8 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
     if (account) {
         return account->getVolatileAccountDetails();
     } else {
-        JAMI_ERR("Could not get volatile account details on a non-existing accountID %s", accountID.c_str());
+        JAMI_ERR("Could not get volatile account details on a non-existing accountID %s",
+                 accountID.c_str());
         return {};
     }
 }
@@ -2650,7 +2628,7 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
 
 void
 Manager::setAccountDetails(const std::string& accountID,
-                               const std::map<std::string, std::string>& details)
+                           const std::map<std::string, std::string>& details)
 {
     JAMI_DBG("Set account details for %s", accountID.c_str());
 
@@ -2687,27 +2665,25 @@ Manager::setAccountDetails(const std::string& accountID,
     });
 }
 
-std::map <std::string, std::string>
+std::map<std::string, std::string>
 Manager::testAccountICEInitialization(const std::string& accountID)
 {
     const auto account = getAccount(accountID);
     const auto transportOptions = account->getIceOptions();
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    std::shared_ptr<IceTransport> ice = iceTransportFactory.createTransport(
-        accountID.c_str(), 4, true, account->getIceOptions()
-    );
+    std::shared_ptr<IceTransport> ice
+        = iceTransportFactory.createTransport(accountID.c_str(), 4, true, account->getIceOptions());
 
     std::map<std::string, std::string> result;
 
-    if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
-    {
-        result["STATUS"] = std::to_string((int) DRing::Account::testAccountICEInitializationStatus::FAILURE);
+    if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
+        result["STATUS"] = std::to_string(
+            (int) DRing::Account::testAccountICEInitializationStatus::FAILURE);
         result["MESSAGE"] = ice->getLastErrMsg();
-    }
-    else
-    {
-        result["STATUS"] = std::to_string((int) DRing::Account::testAccountICEInitializationStatus::SUCCESS);
+    } else {
+        result["STATUS"] = std::to_string(
+            (int) DRing::Account::testAccountICEInitializationStatus::SUCCESS);
         result["MESSAGE"] = "";
     }
 
@@ -2726,8 +2702,7 @@ Manager::getNewAccountId()
         std::ostringstream accId;
         accId << std::hex << rand_acc_id(pimpl_->rand_);
         newAccountID = accId.str();
-    } while (std::find(accountList.begin(), accountList.end(), newAccountID)
-             != accountList.end());
+    } while (std::find(accountList.begin(), accountList.end(), newAccountID) != accountList.end());
 
     return newAccountID;
 }
@@ -2750,7 +2725,8 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     auto newAccount = accountFactory.createAccount(accountType, newAccountID);
     if (!newAccount) {
         JAMI_ERR("Unknown %s param when calling addAccount(): %s",
-              Conf::CONFIG_ACCOUNT_TYPE, accountType);
+                 Conf::CONFIG_ACCOUNT_TYPE,
+                 accountType);
         return "";
     }
 
@@ -2766,7 +2742,8 @@ Manager::addAccount(const std::map<std::string, std::string>& details, const std
     return newAccountID;
 }
 
-void Manager::removeAccount(const std::string& accountID, bool flush)
+void
+Manager::removeAccount(const std::string& accountID, bool flush)
 {
     // Get it down and dying
     if (const auto& remAccount = getAccount(accountID)) {
@@ -2786,7 +2763,7 @@ void Manager::removeAccount(const std::string& accountID, bool flush)
 void
 Manager::removeAccounts()
 {
-    for (const auto &acc : getAccountList())
+    for (const auto& acc : getAccountList())
         removeAccount(acc);
 }
 
@@ -2828,12 +2805,11 @@ Manager::loadAccountMap(const YAML::Node& node)
         pluginPreferences.unserialize(node);
 
         std::vector<std::string> loadedPlugins = pluginPreferences.getLoadedPlugins();
-        for (const std::string& plugin : loadedPlugins)
-        {
+        for (const std::string& plugin : loadedPlugins) {
             jami::Manager::instance().getJamiPluginManager().loadPlugin(plugin);
         }
 #endif
-    } catch (const YAML::Exception &e) {
+    } catch (const YAML::Exception& e) {
         JAMI_ERR("%s: Preferences node unserialize error: ", e.what());
         ++errorCount;
     }
@@ -2841,9 +2817,9 @@ Manager::loadAccountMap(const YAML::Node& node)
     const std::string accountOrder = preferences.getAccountOrder();
 
     // load saved preferences for IP2IP account from configuration file
-    const auto &accountList = node["accounts"];
+    const auto& accountList = node["accounts"];
 
-    for (auto &a : accountList) {
+    for (auto& a : accountList) {
         pimpl_->loadAccount(a, errorCount);
     }
 
@@ -2859,11 +2835,13 @@ Manager::loadAccountMap(const YAML::Node& node)
             continue;
         }
         remaining++;
-        dht::ThreadPool::computation().run([
-            this, dir,
-            &cv, &remaining, &lock,
-            configFile = accountBaseDir + DIR_SEPARATOR_STR + dir + DIR_SEPARATOR_STR + "config.yml"
-        ] {
+        dht::ThreadPool::computation().run([this,
+                                            dir,
+                                            &cv,
+                                            &remaining,
+                                            &lock,
+                                            configFile = accountBaseDir + DIR_SEPARATOR_STR + dir
+                                                         + DIR_SEPARATOR_STR + "config.yml"] {
             if (fileutils::isFile(configFile)) {
                 try {
                     if (auto a = accountFactory.createAccount(JamiAccount::ACCOUNT_TYPE, dir)) {
@@ -2883,15 +2861,13 @@ Manager::loadAccountMap(const YAML::Node& node)
             cv.notify_one();
         });
     }
-    cv.wait(l, [&remaining] {
-        return remaining == 0;
-    });
+    cv.wait(l, [&remaining] { return remaining == 0; });
 
     return errorCount;
 }
 
 std::map<std::string, std::string>
-Manager::getCallDetails(const std::string &callID) const
+Manager::getCallDetails(const std::string& callID) const
 {
     if (auto call = getCallFromCallID(callID)) {
         return call->getDetails();
@@ -2906,7 +2882,7 @@ std::vector<std::string>
 Manager::getCallList() const
 {
     std::vector<std::string> results;
-    for (const auto& call: callFactory.getAllCalls()) {
+    for (const auto& call : callFactory.getAllCalls()) {
         if (!call->isSubcall())
             results.push_back(call->getCallId());
     }
@@ -2927,8 +2903,8 @@ std::map<std::string, std::string>
 Manager::getConferenceDetails(const std::string& confID) const
 {
     if (auto conf = getConferenceFromID(confID))
-        return {{"ID",        confID},
-                {"STATE",     conf->getStateStr()},
+        return {{"ID", confID},
+                {"STATE", conf->getStateStr()},
                 {"VIDEO_SOURCE", conf->getVideoInput()},
                 {"RECORDING", conf->isRecording() ? TRUE_STR : FALSE_STR}};
     return {};
@@ -2971,34 +2947,11 @@ Manager::getConferenceId(const std::string& callID)
 }
 
 void
-Manager::startAudioDriverStream()
-{
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-    if (!pimpl_->audiodriver_) {
-        JAMI_ERR("Audio driver not initialized");
-        return;
-    }
-    pimpl_->audiodriver_->startStream();
-}
-
-void
-Manager::restartAudioDriverStream()
-{
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-    if (!pimpl_->audiodriver_) {
-        JAMI_ERR("Audio driver not initialized");
-        return;
-    }
-    pimpl_->audiodriver_->stopStream();
-    pimpl_->audiodriver_->startStream();
-}
-
-void
 Manager::registerAccounts()
 {
     auto allAccounts(getAccountList());
 
-    for (auto &item : allAccounts) {
+    for (auto& item : allAccounts) {
         const auto a = getAccount(item);
 
         if (!a)
@@ -3039,23 +2992,23 @@ Manager::isPasswordValid(const std::string& accountID, const std::string& passwo
 }
 
 uint64_t
-Manager::sendTextMessage(const std::string& accountID, const std::string& to,
+Manager::sendTextMessage(const std::string& accountID,
+                         const std::string& to,
                          const std::map<std::string, std::string>& payloads)
 {
     if (const auto acc = getAccount(accountID)) {
         try {
 #ifdef ENABLE_PLUGIN
-            auto& convManager = jami::Manager::instance().getJamiPluginManager()
-                    .getConversationServicesManager();
-            std::shared_ptr<jami::ConversationMessage> cm =
-                    std::make_shared<jami::ConversationMessage>(accountID, to,
-                                                                const_cast<std::map<std::string,
-                                                                std::string>&>(payloads));
+            auto& convManager
+                = jami::Manager::instance().getJamiPluginManager().getConversationServicesManager();
+            std::shared_ptr<jami::ConversationMessage> cm
+                = std::make_shared<jami::ConversationMessage>(
+                    accountID, to, const_cast<std::map<std::string, std::string>&>(payloads));
             convManager.sendTextMessage(cm);
             return acc->sendTextMessage(cm->to_, cm->data_);
 #else
             return acc->sendTextMessage(to, payloads);
-#endif //ENABLE_PLUGIN
+#endif // ENABLE_PLUGIN
         } catch (const std::exception& e) {
             JAMI_ERR("Exception during text message sending: %s", e.what());
         }
@@ -3064,7 +3017,8 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
 }
 
 int
-statusFromImStatus(im::MessageStatus status) {
+statusFromImStatus(im::MessageStatus status)
+{
     switch (status) {
     case im::MessageStatus::IDLE:
     case im::MessageStatus::SENDING:
@@ -3113,9 +3067,8 @@ Manager::setAccountActive(const std::string& accountID, bool active)
         else
             acc->doUnregister();
     }
-    emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
-        accountID,
-        acc->getVolatileAccountDetails());
+    emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID,
+                                                                   acc->getVolatileAccountDetails());
 }
 
 std::shared_ptr<AudioLayer>

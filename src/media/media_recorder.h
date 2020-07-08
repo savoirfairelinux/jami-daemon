@@ -127,9 +127,11 @@ private:
 
     int initRecord();
     MediaStream setupVideoOutput();
-    std::string buildVideoFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
+    std::string buildVideoFilter(const std::vector<MediaStream>& peers,
+                                 const MediaStream& local) const;
     MediaStream setupAudioOutput();
-    std::string buildAudioFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
+    std::string buildAudioFilter(const std::vector<MediaStream>& peers,
+                                 const MediaStream& local) const;
 
     std::mutex mutexFrameBuff_;
     std::mutex mutexFilterVideo_;
@@ -157,7 +159,7 @@ private:
     std::condition_variable cv_;
     std::atomic_bool interrupted_ {false};
 
-     std::list<std::shared_ptr<MediaFrame>> frameBuff_;
+    std::list<std::shared_ptr<MediaFrame>> frameBuff_;
 };
 
 }; // namespace jami

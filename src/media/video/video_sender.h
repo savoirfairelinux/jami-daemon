@@ -35,9 +35,10 @@ namespace jami {
 class SocketPair;
 struct DeviceParams;
 struct AccountVideoCodecInfo;
-}
+} // namespace jami
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class VideoSender : public VideoFramePassiveReader
 {
@@ -81,4 +82,5 @@ private:
     int rotation_ = 0;
     std::function<void(int)> changeOrientationCallback_;
 };
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

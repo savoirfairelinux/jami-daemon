@@ -54,7 +54,8 @@ using onICERequestCallback = std::function<bool(const std::string& /* deviceId *
 /**
  * Used to accept or decline an incoming channel request
  */
-using ChannelRequestCallback = std::function<bool(const std::string& /* deviceId */, const std::string& /* name */)>;
+using ChannelRequestCallback
+    = std::function<bool(const std::string& /* deviceId */, const std::string& /* name */)>;
 /**
  * Used by connectDevice, when the socket is ready
  */
@@ -62,13 +63,16 @@ using ConnectCallback = std::function<void(const std::shared_ptr<ChannelSocket>&
 /**
  * Used when an incoming connection is ready
  */
-using ConnectionReadyCallback = std::function<void(const std::string& /* deviceId */, const std::string& /* channel_name */, std::shared_ptr<ChannelSocket>)>;
+using ConnectionReadyCallback = std::function<void(const std::string& /* deviceId */,
+                                                   const std::string& /* channel_name */,
+                                                   std::shared_ptr<ChannelSocket>)>;
 
 /**
  * Manages connections to other devices
  * @note the account MUST be valid if ConnectionManager lives
  */
-class ConnectionManager {
+class ConnectionManager
+{
 public:
     ConnectionManager(JamiAccount& account);
     ~ConnectionManager();
@@ -121,4 +125,4 @@ private:
     std::shared_ptr<Impl> pimpl_;
 };
 
-}
+} // namespace jami

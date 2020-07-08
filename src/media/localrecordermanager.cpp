@@ -47,7 +47,8 @@ LocalRecorderManager::insertRecorder(const std::string& path, std::unique_ptr<Lo
     auto ret = recorderMap_.emplace(path, std::move(rec));
 
     if (!ret.second) {
-        throw std::invalid_argument("couldn't insert recorder (passed path is already used as key)");
+        throw std::invalid_argument(
+            "couldn't insert recorder (passed path is already used as key)");
     }
 }
 

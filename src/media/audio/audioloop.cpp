@@ -33,8 +33,9 @@
 
 namespace jami {
 
-AudioLoop::AudioLoop(unsigned int sampleRate) :
-    buffer_(new AudioBuffer(0, AudioFormat(sampleRate, 1))), pos_(0)
+AudioLoop::AudioLoop(unsigned int sampleRate)
+    : buffer_(new AudioBuffer(0, AudioFormat(sampleRate, 1)))
+    , pos_(0)
 {}
 
 AudioLoop::~AudioLoop()
@@ -82,7 +83,9 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
     onBufferFinish();
 }
 
-void AudioLoop::onBufferFinish() {}
+void
+AudioLoop::onBufferFinish()
+{}
 
 std::unique_ptr<AudioFrame>
 AudioLoop::getNext(size_t samples)

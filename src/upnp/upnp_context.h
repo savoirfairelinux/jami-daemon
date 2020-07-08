@@ -65,11 +65,13 @@ namespace jami {
 class IpAddr;
 }
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
 using MapCb = std::function<void(const Mapping&, bool)>;
 using ConnectionChangeCb = std::function<void()>;
-struct ControllerData {
+struct ControllerData
+{
     uint64_t id;
     bool keepCb;
     MapCb onMapAdded;
@@ -82,7 +84,8 @@ const constexpr auto MAP_REQUEST_TIMEOUT = std::chrono::seconds(1);
 class UPnPContext
 {
 public:
-    struct PendingMapRequest {
+    struct PendingMapRequest
+    {
         Mapping map;
         std::shared_ptr<Task> cleanupMapRequest;
     };
@@ -109,7 +112,11 @@ public:
     void incrementNbOfUsers(const unsigned int portDesired, PortType type);
 
     // Sends out a request to a protocol to add a mapping.
-    void requestMappingAdd(ControllerData&& ctrlData, uint16_t portDesired, uint16_t portLocal, PortType type, bool unique);
+    void requestMappingAdd(ControllerData&& ctrlData,
+                           uint16_t portDesired,
+                           uint16_t portLocal,
+                           PortType type,
+                           bool unique);
     // Adds mapping to corresponding IGD.
     void addMappingToIgd(IpAddr igdIp, const Mapping& map);
     // Tries to add a mapping to a specific IGD.
@@ -168,17 +175,20 @@ public:
 private:
     NON_COPYABLE(UPnPContext);
 
-    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_;	// Vector of available protocols.
-    mutable std::mutex igdListMutex_;							// Mutex used to access these lists and IGDs in a thread-safe manner.
-    std::list<std::pair<UPnPProtocol*, IGD*>> igdList_;			// List of IGDs with their corresponding public IPs.
+    std::vector<std::unique_ptr<UPnPProtocol>> protocolList_; // Vector of available protocols.
+    mutable std::mutex
+        igdListMutex_; // Mutex used to access these lists and IGDs in a thread-safe manner.
+    std::list<std::pair<UPnPProtocol*, IGD*>>
+        igdList_; // List of IGDs with their corresponding public IPs.
 
-    std::mutex pendindRequestMutex_;                            // Mutex that protects the pending map request lists.
-    std::vector<PendingMapRequest> pendingAddMapList_ {};       // Vector of pending add mapping requests.
-    std::mutex cbListMutex_;                                    // Mutex that protects the callback list.
-    std::multimap<Mapping, ControllerData> mapCbList_;          // List of mappings with their corresponding callbacks.
-
+    std::mutex pendindRequestMutex_; // Mutex that protects the pending map request lists.
+    std::vector<PendingMapRequest> pendingAddMapList_ {}; // Vector of pending add mapping requests.
+    std::mutex cbListMutex_;                              // Mutex that protects the callback list.
+    std::multimap<Mapping, ControllerData>
+        mapCbList_; // List of mappings with their corresponding callbacks.
 };
 
 std::shared_ptr<UPnPContext> getUPnPContext();
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

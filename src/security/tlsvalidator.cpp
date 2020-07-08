@@ -66,155 +66,160 @@
 #include "windirent.h"
 #endif
 
-namespace jami { namespace tls {
+namespace jami {
+namespace tls {
 
-//Map the internal ring Enum class of the exported names
+// Map the internal ring Enum class of the exported names
 
 const EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesNames = {{
     /* CheckValues                        Name                         */
-    /* PASSED      */ DRing::Certificate::CheckValuesNames::PASSED      ,
-    /* FAILED      */ DRing::Certificate::CheckValuesNames::FAILED      ,
-    /* UNSUPPORTED */ DRing::Certificate::CheckValuesNames::UNSUPPORTED ,
-    /* ISO_DATE    */ DRing::Certificate::CheckValuesNames::ISO_DATE    ,
-    /* CUSTOM      */ DRing::Certificate::CheckValuesNames::CUSTOM      ,
-    /* CUSTOM      */ DRing::Certificate::CheckValuesNames::DATE        ,
+    /* PASSED      */ DRing::Certificate::CheckValuesNames::PASSED,
+    /* FAILED      */ DRing::Certificate::CheckValuesNames::FAILED,
+    /* UNSUPPORTED */ DRing::Certificate::CheckValuesNames::UNSUPPORTED,
+    /* ISO_DATE    */ DRing::Certificate::CheckValuesNames::ISO_DATE,
+    /* CUSTOM      */ DRing::Certificate::CheckValuesNames::CUSTOM,
+    /* CUSTOM      */ DRing::Certificate::CheckValuesNames::DATE,
 }};
 
-const CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidator::CheckResult> TlsValidator::checkCallback = {{
-    /*      CertificateCheck                       Callback                            */
-    /*HAS_PRIVATE_KEY                  */ &TlsValidator::hasPrivateKey                  ,
-    /*EXPIRED                          */ &TlsValidator::notExpired                     ,
-    /*STRONG_SIGNING                   */ &TlsValidator::strongSigning                  ,
-    /*NOT_SELF_SIGNED                  */ &TlsValidator::notSelfSigned                  ,
-    /*KEY_MATCH                        */ &TlsValidator::keyMatch                       ,
-    /*PRIVATE_KEY_STORAGE_PERMISSION   */ &TlsValidator::privateKeyStoragePermissions   ,
-    /*PUBLIC_KEY_STORAGE_PERMISSION    */ &TlsValidator::publicKeyStoragePermissions    ,
-    /*PRIVATEKEY_DIRECTORY_PERMISSIONS */ &TlsValidator::privateKeyDirectoryPermissions ,
-    /*PUBLICKEY_DIRECTORY_PERMISSIONS  */ &TlsValidator::publicKeyDirectoryPermissions  ,
-    /*PRIVATE_KEY_STORAGE_LOCATION     */ &TlsValidator::privateKeyStorageLocation      ,
-    /*PUBLIC_KEY_STORAGE_LOCATION      */ &TlsValidator::publicKeyStorageLocation       ,
-    /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ &TlsValidator::privateKeySelinuxAttributes    ,
-    /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ &TlsValidator::publicKeySelinuxAttributes     ,
-    /*EXIST                            */ &TlsValidator::exist                          ,
-    /*VALID                            */ &TlsValidator::valid                          ,
-    /*VALID_AUTHORITY                  */ &TlsValidator::validAuthority                 ,
-    /*KNOWN_AUTHORITY                  */ &TlsValidator::knownAuthority                 ,
-    /*NOT_REVOKED                      */ &TlsValidator::notRevoked                     ,
-    /*AUTHORITY_MISMATCH               */ &TlsValidator::authorityMatch                 ,
-    /*UNEXPECTED_OWNER                 */ &TlsValidator::expectedOwner                  ,
-    /*NOT_ACTIVATED                    */ &TlsValidator::activated                      ,
-}};
+const CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidator::CheckResult>
+    TlsValidator::checkCallback = {{
+        /*      CertificateCheck                       Callback                            */
+        /*HAS_PRIVATE_KEY                  */ &TlsValidator::hasPrivateKey,
+        /*EXPIRED                          */ &TlsValidator::notExpired,
+        /*STRONG_SIGNING                   */ &TlsValidator::strongSigning,
+        /*NOT_SELF_SIGNED                  */ &TlsValidator::notSelfSigned,
+        /*KEY_MATCH                        */ &TlsValidator::keyMatch,
+        /*PRIVATE_KEY_STORAGE_PERMISSION   */ &TlsValidator::privateKeyStoragePermissions,
+        /*PUBLIC_KEY_STORAGE_PERMISSION    */ &TlsValidator::publicKeyStoragePermissions,
+        /*PRIVATEKEY_DIRECTORY_PERMISSIONS */ &TlsValidator::privateKeyDirectoryPermissions,
+        /*PUBLICKEY_DIRECTORY_PERMISSIONS  */ &TlsValidator::publicKeyDirectoryPermissions,
+        /*PRIVATE_KEY_STORAGE_LOCATION     */ &TlsValidator::privateKeyStorageLocation,
+        /*PUBLIC_KEY_STORAGE_LOCATION      */ &TlsValidator::publicKeyStorageLocation,
+        /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ &TlsValidator::privateKeySelinuxAttributes,
+        /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ &TlsValidator::publicKeySelinuxAttributes,
+        /*EXIST                            */ &TlsValidator::exist,
+        /*VALID                            */ &TlsValidator::valid,
+        /*VALID_AUTHORITY                  */ &TlsValidator::validAuthority,
+        /*KNOWN_AUTHORITY                  */ &TlsValidator::knownAuthority,
+        /*NOT_REVOKED                      */ &TlsValidator::notRevoked,
+        /*AUTHORITY_MISMATCH               */ &TlsValidator::authorityMatch,
+        /*UNEXPECTED_OWNER                 */ &TlsValidator::expectedOwner,
+        /*NOT_ACTIVATED                    */ &TlsValidator::activated,
+    }};
 
-const CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValidator::CheckResult> TlsValidator::getterCallback = {{
-    /* EXPIRATION_DATE              */  &TlsValidator::getExpirationDate         ,
-    /* ACTIVATION_DATE              */  &TlsValidator::getActivationDate         ,
-    /* REQUIRE_PRIVATE_KEY_PASSWORD */  &TlsValidator::requirePrivateKeyPassword ,
-    /* PUBLIC_SIGNATURE             */  &TlsValidator::getPublicSignature        ,
-    /* VERSION_NUMBER               */  &TlsValidator::getVersionNumber          ,
-    /* SERIAL_NUMBER                */  &TlsValidator::getSerialNumber           ,
-    /* ISSUER                       */  &TlsValidator::getIssuer                 ,
-    /* SUBJECT_KEY_ALGORITHM        */  &TlsValidator::getSubjectKeyAlgorithm    ,
-    /* CN                           */  &TlsValidator::getCN                     ,
-    /* N                            */  &TlsValidator::getN                      ,
-    /* O                            */  &TlsValidator::getO                      ,
-    /* SIGNATURE_ALGORITHM          */  &TlsValidator::getSignatureAlgorithm     ,
-    /* MD5_FINGERPRINT              */  &TlsValidator::getMd5Fingerprint         ,
-    /* SHA1_FINGERPRINT             */  &TlsValidator::getSha1Fingerprint        ,
-    /* PUBLIC_KEY_ID                */  &TlsValidator::getPublicKeyId            ,
-    /* ISSUER_DN                    */  &TlsValidator::getIssuerDN               ,
-    /* NEXT_EXPECTED_UPDATE_DATE    */  &TlsValidator::getIssuerDN               , // TODO
-    /* OUTGOING_SERVER              */  &TlsValidator::outgoingServer            ,
-    /* IS_CA                        */  &TlsValidator::isCA                      ,
-}};
+const CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValidator::CheckResult>
+    TlsValidator::getterCallback = {{
+        /* EXPIRATION_DATE              */ &TlsValidator::getExpirationDate,
+        /* ACTIVATION_DATE              */ &TlsValidator::getActivationDate,
+        /* REQUIRE_PRIVATE_KEY_PASSWORD */ &TlsValidator::requirePrivateKeyPassword,
+        /* PUBLIC_SIGNATURE             */ &TlsValidator::getPublicSignature,
+        /* VERSION_NUMBER               */ &TlsValidator::getVersionNumber,
+        /* SERIAL_NUMBER                */ &TlsValidator::getSerialNumber,
+        /* ISSUER                       */ &TlsValidator::getIssuer,
+        /* SUBJECT_KEY_ALGORITHM        */ &TlsValidator::getSubjectKeyAlgorithm,
+        /* CN                           */ &TlsValidator::getCN,
+        /* N                            */ &TlsValidator::getN,
+        /* O                            */ &TlsValidator::getO,
+        /* SIGNATURE_ALGORITHM          */ &TlsValidator::getSignatureAlgorithm,
+        /* MD5_FINGERPRINT              */ &TlsValidator::getMd5Fingerprint,
+        /* SHA1_FINGERPRINT             */ &TlsValidator::getSha1Fingerprint,
+        /* PUBLIC_KEY_ID                */ &TlsValidator::getPublicKeyId,
+        /* ISSUER_DN                    */ &TlsValidator::getIssuerDN,
+        /* NEXT_EXPECTED_UPDATE_DATE    */ &TlsValidator::getIssuerDN, // TODO
+        /* OUTGOING_SERVER              */ &TlsValidator::outgoingServer,
+        /* IS_CA                        */ &TlsValidator::isCA,
+    }};
 
-const Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
-    /*      CertificateCheck                    Callback        */
-    /*HAS_PRIVATE_KEY                  */ CheckValuesType::BOOLEAN ,
-    /*EXPIRED                          */ CheckValuesType::BOOLEAN ,
-    /*STRONG_SIGNING                   */ CheckValuesType::BOOLEAN ,
-    /*NOT_SELF_SIGNED                  */ CheckValuesType::BOOLEAN ,
-    /*KEY_MATCH                        */ CheckValuesType::BOOLEAN ,
-    /*PRIVATE_KEY_STORAGE_PERMISSION   */ CheckValuesType::BOOLEAN ,
-    /*PUBLIC_KEY_STORAGE_PERMISSION    */ CheckValuesType::BOOLEAN ,
-    /*PRIVATEKEY_DIRECTORY_PERMISSIONS */ CheckValuesType::BOOLEAN ,
-    /*PUBLICKEY_DIRECTORY_PERMISSIONS  */ CheckValuesType::BOOLEAN ,
-    /*PRIVATE_KEY_STORAGE_LOCATION     */ CheckValuesType::BOOLEAN ,
-    /*PUBLIC_KEY_STORAGE_LOCATION      */ CheckValuesType::BOOLEAN ,
-    /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ CheckValuesType::BOOLEAN ,
-    /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ CheckValuesType::BOOLEAN ,
-    /*EXIST                            */ CheckValuesType::BOOLEAN ,
-    /*VALID                            */ CheckValuesType::BOOLEAN ,
-    /*VALID_AUTHORITY                  */ CheckValuesType::BOOLEAN ,
-    /*KNOWN_AUTHORITY                  */ CheckValuesType::BOOLEAN ,
-    /*NOT_REVOKED                      */ CheckValuesType::BOOLEAN ,
-    /*AUTHORITY_MISMATCH               */ CheckValuesType::BOOLEAN ,
-    /*UNEXPECTED_OWNER                 */ CheckValuesType::BOOLEAN ,
-    /*NOT_ACTIVATED                    */ CheckValuesType::BOOLEAN ,
-}};
+const Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType>
+    TlsValidator::enforcedCheckType = {{
+        /*      CertificateCheck                    Callback        */
+        /*HAS_PRIVATE_KEY                  */ CheckValuesType::BOOLEAN,
+        /*EXPIRED                          */ CheckValuesType::BOOLEAN,
+        /*STRONG_SIGNING                   */ CheckValuesType::BOOLEAN,
+        /*NOT_SELF_SIGNED                  */ CheckValuesType::BOOLEAN,
+        /*KEY_MATCH                        */ CheckValuesType::BOOLEAN,
+        /*PRIVATE_KEY_STORAGE_PERMISSION   */ CheckValuesType::BOOLEAN,
+        /*PUBLIC_KEY_STORAGE_PERMISSION    */ CheckValuesType::BOOLEAN,
+        /*PRIVATEKEY_DIRECTORY_PERMISSIONS */ CheckValuesType::BOOLEAN,
+        /*PUBLICKEY_DIRECTORY_PERMISSIONS  */ CheckValuesType::BOOLEAN,
+        /*PRIVATE_KEY_STORAGE_LOCATION     */ CheckValuesType::BOOLEAN,
+        /*PUBLIC_KEY_STORAGE_LOCATION      */ CheckValuesType::BOOLEAN,
+        /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ CheckValuesType::BOOLEAN,
+        /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ CheckValuesType::BOOLEAN,
+        /*EXIST                            */ CheckValuesType::BOOLEAN,
+        /*VALID                            */ CheckValuesType::BOOLEAN,
+        /*VALID_AUTHORITY                  */ CheckValuesType::BOOLEAN,
+        /*KNOWN_AUTHORITY                  */ CheckValuesType::BOOLEAN,
+        /*NOT_REVOKED                      */ CheckValuesType::BOOLEAN,
+        /*AUTHORITY_MISMATCH               */ CheckValuesType::BOOLEAN,
+        /*UNEXPECTED_OWNER                 */ CheckValuesType::BOOLEAN,
+        /*NOT_ACTIVATED                    */ CheckValuesType::BOOLEAN,
+    }};
 
 const EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::CertificateCheckNames = {{
-    /*      CertificateCheck                                   Name                                         */
-    /*HAS_PRIVATE_KEY                  */ DRing::Certificate::ChecksNames::HAS_PRIVATE_KEY                   ,
-    /*EXPIRED                          */ DRing::Certificate::ChecksNames::EXPIRED                           ,
-    /*STRONG_SIGNING                   */ DRing::Certificate::ChecksNames::STRONG_SIGNING                    ,
-    /*NOT_SELF_SIGNED                  */ DRing::Certificate::ChecksNames::NOT_SELF_SIGNED                   ,
-    /*KEY_MATCH                        */ DRing::Certificate::ChecksNames::KEY_MATCH                         ,
-    /*PRIVATE_KEY_STORAGE_PERMISSION   */ DRing::Certificate::ChecksNames::PRIVATE_KEY_STORAGE_PERMISSION    ,
-    /*PUBLIC_KEY_STORAGE_PERMISSION    */ DRing::Certificate::ChecksNames::PUBLIC_KEY_STORAGE_PERMISSION     ,
-    /*PRIVATEKEY_DIRECTORY_PERMISSIONS */ DRing::Certificate::ChecksNames::PRIVATE_KEY_DIRECTORY_PERMISSIONS ,
-    /*PUBLICKEY_DIRECTORY_PERMISSIONS  */ DRing::Certificate::ChecksNames::PUBLIC_KEY_DIRECTORY_PERMISSIONS  ,
-    /*PRIVATE_KEY_STORAGE_LOCATION     */ DRing::Certificate::ChecksNames::PRIVATE_KEY_STORAGE_LOCATION      ,
-    /*PUBLIC_KEY_STORAGE_LOCATION      */ DRing::Certificate::ChecksNames::PUBLIC_KEY_STORAGE_LOCATION       ,
-    /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ DRing::Certificate::ChecksNames::PRIVATE_KEY_SELINUX_ATTRIBUTES    ,
-    /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ DRing::Certificate::ChecksNames::PUBLIC_KEY_SELINUX_ATTRIBUTES     ,
-    /*EXIST                            */ DRing::Certificate::ChecksNames::EXIST                             ,
-    /*VALID                            */ DRing::Certificate::ChecksNames::VALID                             ,
-    /*VALID_AUTHORITY                  */ DRing::Certificate::ChecksNames::VALID_AUTHORITY                   ,
-    /*KNOWN_AUTHORITY                  */ DRing::Certificate::ChecksNames::KNOWN_AUTHORITY                   ,
-    /*NOT_REVOKED                      */ DRing::Certificate::ChecksNames::NOT_REVOKED                       ,
-    /*AUTHORITY_MISMATCH               */ DRing::Certificate::ChecksNames::AUTHORITY_MISMATCH                ,
-    /*UNEXPECTED_OWNER                 */ DRing::Certificate::ChecksNames::UNEXPECTED_OWNER                  ,
-    /*NOT_ACTIVATED                    */ DRing::Certificate::ChecksNames::NOT_ACTIVATED                     ,
+    /*      CertificateCheck                                   Name */
+    /*HAS_PRIVATE_KEY                  */ DRing::Certificate::ChecksNames::HAS_PRIVATE_KEY,
+    /*EXPIRED                          */ DRing::Certificate::ChecksNames::EXPIRED,
+    /*STRONG_SIGNING                   */ DRing::Certificate::ChecksNames::STRONG_SIGNING,
+    /*NOT_SELF_SIGNED                  */ DRing::Certificate::ChecksNames::NOT_SELF_SIGNED,
+    /*KEY_MATCH                        */ DRing::Certificate::ChecksNames::KEY_MATCH,
+    /*PRIVATE_KEY_STORAGE_PERMISSION   */ DRing::Certificate::ChecksNames::PRIVATE_KEY_STORAGE_PERMISSION,
+    /*PUBLIC_KEY_STORAGE_PERMISSION    */ DRing::Certificate::ChecksNames::PUBLIC_KEY_STORAGE_PERMISSION,
+    /*PRIVATEKEY_DIRECTORY_PERMISSIONS */ DRing::Certificate::ChecksNames::PRIVATE_KEY_DIRECTORY_PERMISSIONS,
+    /*PUBLICKEY_DIRECTORY_PERMISSIONS  */ DRing::Certificate::ChecksNames::PUBLIC_KEY_DIRECTORY_PERMISSIONS,
+    /*PRIVATE_KEY_STORAGE_LOCATION     */ DRing::Certificate::ChecksNames::PRIVATE_KEY_STORAGE_LOCATION,
+    /*PUBLIC_KEY_STORAGE_LOCATION      */ DRing::Certificate::ChecksNames::PUBLIC_KEY_STORAGE_LOCATION,
+    /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ DRing::Certificate::ChecksNames::PRIVATE_KEY_SELINUX_ATTRIBUTES,
+    /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ DRing::Certificate::ChecksNames::PUBLIC_KEY_SELINUX_ATTRIBUTES,
+    /*EXIST                            */ DRing::Certificate::ChecksNames::EXIST,
+    /*VALID                            */ DRing::Certificate::ChecksNames::VALID,
+    /*VALID_AUTHORITY                  */ DRing::Certificate::ChecksNames::VALID_AUTHORITY,
+    /*KNOWN_AUTHORITY                  */ DRing::Certificate::ChecksNames::KNOWN_AUTHORITY,
+    /*NOT_REVOKED                      */ DRing::Certificate::ChecksNames::NOT_REVOKED,
+    /*AUTHORITY_MISMATCH               */ DRing::Certificate::ChecksNames::AUTHORITY_MISMATCH,
+    /*UNEXPECTED_OWNER                 */ DRing::Certificate::ChecksNames::UNEXPECTED_OWNER,
+    /*NOT_ACTIVATED                    */ DRing::Certificate::ChecksNames::NOT_ACTIVATED,
 }};
 
 const EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::CertificateDetailsNames = {{
-    /* EXPIRATION_DATE              */ DRing::Certificate::DetailsNames::EXPIRATION_DATE              ,
-    /* ACTIVATION_DATE              */ DRing::Certificate::DetailsNames::ACTIVATION_DATE              ,
-    /* REQUIRE_PRIVATE_KEY_PASSWORD */ DRing::Certificate::DetailsNames::REQUIRE_PRIVATE_KEY_PASSWORD ,
-    /* PUBLIC_SIGNATURE             */ DRing::Certificate::DetailsNames::PUBLIC_SIGNATURE             ,
-    /* VERSION_NUMBER               */ DRing::Certificate::DetailsNames::VERSION_NUMBER               ,
-    /* SERIAL_NUMBER                */ DRing::Certificate::DetailsNames::SERIAL_NUMBER                ,
-    /* ISSUER                       */ DRing::Certificate::DetailsNames::ISSUER                       ,
-    /* SUBJECT_KEY_ALGORITHM        */ DRing::Certificate::DetailsNames::SUBJECT_KEY_ALGORITHM        ,
-    /* CN                           */ DRing::Certificate::DetailsNames::CN                           ,
-    /* N                            */ DRing::Certificate::DetailsNames::N                            ,
-    /* O                            */ DRing::Certificate::DetailsNames::O                            ,
-    /* SIGNATURE_ALGORITHM          */ DRing::Certificate::DetailsNames::SIGNATURE_ALGORITHM          ,
-    /* MD5_FINGERPRINT              */ DRing::Certificate::DetailsNames::MD5_FINGERPRINT              ,
-    /* SHA1_FINGERPRINT             */ DRing::Certificate::DetailsNames::SHA1_FINGERPRINT             ,
-    /* PUBLIC_KEY_ID                */ DRing::Certificate::DetailsNames::PUBLIC_KEY_ID                ,
-    /* ISSUER_DN                    */ DRing::Certificate::DetailsNames::ISSUER_DN                    ,
-    /* NEXT_EXPECTED_UPDATE_DATE    */ DRing::Certificate::DetailsNames::NEXT_EXPECTED_UPDATE_DATE    ,
-    /* OUTGOING_SERVER              */ DRing::Certificate::DetailsNames::OUTGOING_SERVER              ,
-    /* IS_CA                        */ DRing::Certificate::DetailsNames::IS_CA                        ,
+    /* EXPIRATION_DATE              */ DRing::Certificate::DetailsNames::EXPIRATION_DATE,
+    /* ACTIVATION_DATE              */ DRing::Certificate::DetailsNames::ACTIVATION_DATE,
+    /* REQUIRE_PRIVATE_KEY_PASSWORD */ DRing::Certificate::DetailsNames::REQUIRE_PRIVATE_KEY_PASSWORD,
+    /* PUBLIC_SIGNATURE             */ DRing::Certificate::DetailsNames::PUBLIC_SIGNATURE,
+    /* VERSION_NUMBER               */ DRing::Certificate::DetailsNames::VERSION_NUMBER,
+    /* SERIAL_NUMBER                */ DRing::Certificate::DetailsNames::SERIAL_NUMBER,
+    /* ISSUER                       */ DRing::Certificate::DetailsNames::ISSUER,
+    /* SUBJECT_KEY_ALGORITHM        */ DRing::Certificate::DetailsNames::SUBJECT_KEY_ALGORITHM,
+    /* CN                           */ DRing::Certificate::DetailsNames::CN,
+    /* N                            */ DRing::Certificate::DetailsNames::N,
+    /* O                            */ DRing::Certificate::DetailsNames::O,
+    /* SIGNATURE_ALGORITHM          */ DRing::Certificate::DetailsNames::SIGNATURE_ALGORITHM,
+    /* MD5_FINGERPRINT              */ DRing::Certificate::DetailsNames::MD5_FINGERPRINT,
+    /* SHA1_FINGERPRINT             */ DRing::Certificate::DetailsNames::SHA1_FINGERPRINT,
+    /* PUBLIC_KEY_ID                */ DRing::Certificate::DetailsNames::PUBLIC_KEY_ID,
+    /* ISSUER_DN                    */ DRing::Certificate::DetailsNames::ISSUER_DN,
+    /* NEXT_EXPECTED_UPDATE_DATE    */ DRing::Certificate::DetailsNames::NEXT_EXPECTED_UPDATE_DATE,
+    /* OUTGOING_SERVER              */ DRing::Certificate::DetailsNames::OUTGOING_SERVER,
+    /* IS_CA                        */ DRing::Certificate::DetailsNames::IS_CA,
 
 }};
 
 const EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::CheckValuesTypeNames = {{
     /*   Type                            Name                          */
-    /* BOOLEAN  */ DRing::Certificate::ChecksValuesTypesNames::BOOLEAN  ,
-    /* ISO_DATE */ DRing::Certificate::ChecksValuesTypesNames::ISO_DATE ,
-    /* CUSTOM   */ DRing::Certificate::ChecksValuesTypesNames::CUSTOM   ,
-    /* NUMBER   */ DRing::Certificate::ChecksValuesTypesNames::NUMBER   ,
+    /* BOOLEAN  */ DRing::Certificate::ChecksValuesTypesNames::BOOLEAN,
+    /* ISO_DATE */ DRing::Certificate::ChecksValuesTypesNames::ISO_DATE,
+    /* CUSTOM   */ DRing::Certificate::ChecksValuesTypesNames::CUSTOM,
+    /* NUMBER   */ DRing::Certificate::ChecksValuesTypesNames::NUMBER,
 }};
 
-const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool> TlsValidator::acceptedCheckValuesResult = {{
-    /*   Type          PASSED    FAILED   UNSUPPORTED   ISO_DATE    CUSTOM    NUMBER */
-    /* BOOLEAN  */  {{  true   ,  true  ,    true     ,  false    ,  false   ,false }},
-    /* ISO_DATE */  {{  false  ,  false ,    true     ,  true     ,  false  , false }},
-    /* CUSTOM   */  {{  false  ,  false ,    true     ,  false    ,  true   , false }},
-    /* NUMBER   */  {{  false  ,  false ,    true     ,  false    ,  false  , true  }},
-}};
+const Matrix2D<TlsValidator::CheckValuesType, TlsValidator::CheckValues, bool>
+    TlsValidator::acceptedCheckValuesResult = {{
+        /*   Type          PASSED    FAILED   UNSUPPORTED   ISO_DATE    CUSTOM    NUMBER */
+        /* BOOLEAN  */ {{true, true, true, false, false, false}},
+        /* ISO_DATE */ {{false, false, true, true, false, false}},
+        /* CUSTOM   */ {{false, false, true, false, true, false}},
+        /* NUMBER   */ {{false, false, true, false, false, true}},
+    }};
 
 TlsValidator::TlsValidator(const std::vector<std::vector<uint8_t>>& crtChain)
     : TlsValidator(std::make_shared<dht::crypto::Certificate>(crtChain.begin(), crtChain.end()))
@@ -233,14 +238,16 @@ TlsValidator::TlsValidator(const std::string& certificate,
     try {
         certificate_raw = fileutils::loadFile(certificatePath_);
         certificateFileFound_ = true;
-    } catch (const std::exception& e) {}
+    } catch (const std::exception& e) {
+    }
 
     if (not certificate_raw.empty()) {
         try {
             x509crt_ = std::make_shared<dht::crypto::Certificate>(certificate_raw);
             certificateContent_ = x509crt_->getPacked();
             certificateFound_ = true;
-        } catch (const std::exception& e) {}
+        } catch (const std::exception& e) {
+        }
     }
 
     try {
@@ -284,35 +291,35 @@ TlsValidator::TlsValidator(const std::shared_ptr<dht::crypto::Certificate>& crt)
     }
 }
 
-TlsValidator::~TlsValidator()
-{
-}
+TlsValidator::~TlsValidator() {}
 
 /**
  * This method convert results into validated strings
  *
  * @todo The date should be validated, this is currently not an issue
  */
-std::string TlsValidator::getStringValue(const TlsValidator::CertificateCheck check, const TlsValidator::CheckResult result)
+std::string
+TlsValidator::getStringValue(const TlsValidator::CertificateCheck check,
+                             const TlsValidator::CheckResult result)
 {
     assert(acceptedCheckValuesResult[enforcedCheckType[check]][result.first]);
 
-    switch(result.first) {
-        case CheckValues::PASSED:
-        case CheckValues::FAILED:
-        case CheckValues::UNSUPPORTED:
-            return CheckValuesNames[result.first];
-        case CheckValues::ISO_DATE:
-            // TODO validate date
-            // return CheckValues::FAILED;
-            return result.second;
-        case CheckValues::NUMBER:
-            // TODO Validate numbers
-        case CheckValues::CUSTOM:
-            return result.second;
-        default:
-            // Consider any other case (such as forced int->CheckValues casting) as failed
-            return CheckValuesNames[CheckValues::FAILED];
+    switch (result.first) {
+    case CheckValues::PASSED:
+    case CheckValues::FAILED:
+    case CheckValues::UNSUPPORTED:
+        return CheckValuesNames[result.first];
+    case CheckValues::ISO_DATE:
+        // TODO validate date
+        // return CheckValues::FAILED;
+        return result.second;
+    case CheckValues::NUMBER:
+        // TODO Validate numbers
+    case CheckValues::CUSTOM:
+        return result.second;
+    default:
+        // Consider any other case (such as forced int->CheckValues casting) as failed
+        return CheckValuesNames[CheckValues::FAILED];
     };
 }
 
@@ -322,7 +329,8 @@ std::string TlsValidator::getStringValue(const TlsValidator::CertificateCheck ch
  *
  * Checks functions are not "const", so this function isn't
  */
-bool TlsValidator::isValid(bool verbose)
+bool
+TlsValidator::isValid(bool verbose)
 {
     for (const CertificateCheck check : Matrix0D<CertificateCheck>()) {
         if (enforcedCheckType[check] == CheckValuesType::BOOLEAN) {
@@ -339,17 +347,18 @@ bool TlsValidator::isValid(bool verbose)
 /**
  * Convert all checks results into a string map
  */
-std::map<std::string,std::string> TlsValidator::getSerializedChecks()
+std::map<std::string, std::string>
+TlsValidator::getSerializedChecks()
 {
-    std::map<std::string,std::string> ret;
+    std::map<std::string, std::string> ret;
     if (not certificateFound_) {
         // Instead of checking `certificateFound` everywhere, handle it once
-        ret[CertificateCheckNames[CertificateCheck::EXIST]]
-            = getStringValue(CertificateCheck::EXIST, exist());
-    }
-    else {
+        ret[CertificateCheckNames[CertificateCheck::EXIST]] = getStringValue(CertificateCheck::EXIST,
+                                                                             exist());
+    } else {
         for (const CertificateCheck check : Matrix0D<CertificateCheck>())
-            ret[CertificateCheckNames[check]] = getStringValue(check,(this->*(checkCallback[check]))());
+            ret[CertificateCheckNames[check]] = getStringValue(check,
+                                                               (this->*(checkCallback[check]))());
     }
 
     return ret;
@@ -358,28 +367,29 @@ std::map<std::string,std::string> TlsValidator::getSerializedChecks()
 /**
  * Get a map with all common certificate details
  */
-std::map<std::string,std::string> TlsValidator::getSerializedDetails()
+std::map<std::string, std::string>
+TlsValidator::getSerializedDetails()
 {
-    std::map<std::string,std::string> ret;
+    std::map<std::string, std::string> ret;
     if (certificateFound_) {
         for (const CertificateDetails det : Matrix0D<CertificateDetails>()) {
             const CheckResult r = (this->*(getterCallback[det]))();
             std::string val;
             // TODO move this to a fuction
             switch (r.first) {
-                case CheckValues::PASSED:
-                case CheckValues::FAILED:
-                case CheckValues::UNSUPPORTED:
-                    val = CheckValuesNames[r.first];
-                    break;
-                case CheckValues::ISO_DATE:
-                    // TODO validate date
-                case CheckValues::NUMBER:
-                    // TODO Validate numbers
-                case CheckValues::CUSTOM:
-                default:
-                    val = r.second;
-                    break;
+            case CheckValues::PASSED:
+            case CheckValues::FAILED:
+            case CheckValues::UNSUPPORTED:
+                val = CheckValuesNames[r.first];
+                break;
+            case CheckValues::ISO_DATE:
+                // TODO validate date
+            case CheckValues::NUMBER:
+                // TODO Validate numbers
+            case CheckValues::CUSTOM:
+            default:
+                val = r.second;
+                break;
             };
             ret[CertificateDetailsNames[det]] = val;
         }
@@ -390,14 +400,15 @@ std::map<std::string,std::string> TlsValidator::getSerializedDetails()
 /**
  * Helper method to return UNSUPPORTED when an error is detected
  */
-static TlsValidator::CheckResult checkError(int err, char* copy_buffer, size_t size)
+static TlsValidator::CheckResult
+checkError(int err, char* copy_buffer, size_t size)
 {
-    return TlsValidator::TlsValidator::CheckResult(
-        err == GNUTLS_E_SUCCESS ?
-            TlsValidator::CheckValues::CUSTOM : TlsValidator::CheckValues::UNSUPPORTED,
-        err == GNUTLS_E_SUCCESS ?
-            std::string(copy_buffer, size) : ""
-    );
+    return TlsValidator::TlsValidator::CheckResult(err == GNUTLS_E_SUCCESS
+                                                       ? TlsValidator::CheckValues::CUSTOM
+                                                       : TlsValidator::CheckValues::UNSUPPORTED,
+                                                   err == GNUTLS_E_SUCCESS
+                                                       ? std::string(copy_buffer, size)
+                                                       : "");
 }
 
 /**
@@ -405,19 +416,21 @@ static TlsValidator::CheckResult checkError(int err, char* copy_buffer, size_t s
  * ASCII-hexadecimal representation before being sent to DBus as it will cause the
  * process to assert
  */
-static std::string binaryToHex(const uint8_t* input, size_t input_sz)
+static std::string
+binaryToHex(const uint8_t* input, size_t input_sz)
 {
     std::ostringstream ret;
     ret << std::hex;
-    for (size_t i=0; i<input_sz; i++)
-        ret << std::setfill('0') << std::setw(2) << (unsigned)input[i];
+    for (size_t i = 0; i < input_sz; i++)
+        ret << std::setfill('0') << std::setw(2) << (unsigned) input[i];
     return ret.str();
 }
 
 /**
  * Convert a time_t to an ISO date string
  */
-static TlsValidator::CheckResult formatDate(const time_t time)
+static TlsValidator::CheckResult
+formatDate(const time_t time)
 {
     char buffer[12];
     struct tm* timeinfo = localtime(&time);
@@ -430,10 +443,13 @@ static TlsValidator::CheckResult formatDate(const time_t time)
  *
  * This method also convert the output to binary
  */
-static TlsValidator::CheckResult checkBinaryError(int err, char* copy_buffer, size_t resultSize)
+static TlsValidator::CheckResult
+checkBinaryError(int err, char* copy_buffer, size_t resultSize)
 {
     if (err == GNUTLS_E_SUCCESS)
-        return TlsValidator::CheckResult(TlsValidator::CheckValues::CUSTOM, binaryToHex(reinterpret_cast<uint8_t*>(copy_buffer), resultSize));
+        return TlsValidator::CheckResult(TlsValidator::CheckValues::CUSTOM,
+                                         binaryToHex(reinterpret_cast<uint8_t*>(copy_buffer),
+                                                     resultSize));
     else
         return TlsValidator::CheckResult(TlsValidator::CheckValues::UNSUPPORTED, "");
 }
@@ -441,7 +457,8 @@ static TlsValidator::CheckResult checkBinaryError(int err, char* copy_buffer, si
 /**
  * Check if a certificate has been signed with the authority
  */
-unsigned int TlsValidator::compareToCa()
+unsigned int
+TlsValidator::compareToCa()
 {
     // Don't check unless the certificate changed
     if (caChecked_)
@@ -458,19 +475,31 @@ unsigned int TlsValidator::compareToCa()
 
     if (not caListPath_.empty()) {
         if (fileutils::isDirectory(caListPath_))
-            gnutls_x509_trust_list_add_trust_dir(trust, caListPath_.c_str(), nullptr, GNUTLS_X509_FMT_PEM, 0, 0);
+            gnutls_x509_trust_list_add_trust_dir(trust,
+                                                 caListPath_.c_str(),
+                                                 nullptr,
+                                                 GNUTLS_X509_FMT_PEM,
+                                                 0,
+                                                 0);
         else
-            gnutls_x509_trust_list_add_trust_file(trust, caListPath_.c_str(), nullptr, GNUTLS_X509_FMT_PEM, 0, 0);
+            gnutls_x509_trust_list_add_trust_file(trust,
+                                                  caListPath_.c_str(),
+                                                  nullptr,
+                                                  GNUTLS_X509_FMT_PEM,
+                                                  0,
+                                                  0);
     }
 
     // build the certificate chain
     auto crts = x509crt_->getChain();
-    err = gnutls_x509_trust_list_verify_crt2(
-        trust,
-        crts.data(), crts.size(),
-        nullptr, 0,
-        GNUTLS_PROFILE_TO_VFLAGS(GNUTLS_PROFILE_MEDIUM),
-        &caValidationOutput_, nullptr);
+    err = gnutls_x509_trust_list_verify_crt2(trust,
+                                             crts.data(),
+                                             crts.size(),
+                                             nullptr,
+                                             0,
+                                             GNUTLS_PROFILE_TO_VFLAGS(GNUTLS_PROFILE_MEDIUM),
+                                             &caValidationOutput_,
+                                             nullptr);
 
     gnutls_x509_trust_list_deinit(trust, true);
 
@@ -729,7 +758,8 @@ out:
 /**
  * Check if the Validator have access to a private key
  */
-TlsValidator::CheckResult TlsValidator::hasPrivateKey()
+TlsValidator::CheckResult
+TlsValidator::hasPrivateKey()
 {
     if (privateKeyFound_)
         return TlsValidator::CheckResult(CheckValues::PASSED, "");
@@ -752,14 +782,16 @@ TlsValidator::CheckResult TlsValidator::hasPrivateKey()
  *
  * @fixme Handle both "with ca" and "without ca" case
  */
-TlsValidator::CheckResult TlsValidator::notExpired()
+TlsValidator::CheckResult
+TlsValidator::notExpired()
 {
     if (exist().first == CheckValues::FAILED)
-        TlsValidator::CheckResult(CheckValues::UNSUPPORTED,"");
+        TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     // time_t expirationTime = gnutls_x509_crt_get_expiration_time(cert);
-    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_EXPIRED
-        ? CheckValues::FAILED:CheckValues::PASSED, "");
+    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_EXPIRED ? CheckValues::FAILED
+                                                                         : CheckValues::PASSED,
+                                     "");
 }
 
 /**
@@ -767,36 +799,43 @@ TlsValidator::CheckResult TlsValidator::notExpired()
  *
  * @fixme Handle both "with ca" and "without ca" case
  */
-TlsValidator::CheckResult TlsValidator::activated()
+TlsValidator::CheckResult
+TlsValidator::activated()
 {
     if (exist().first == CheckValues::FAILED)
-        TlsValidator::CheckResult(CheckValues::UNSUPPORTED,"");
+        TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     // time_t activationTime = gnutls_x509_crt_get_activation_time(cert);
     return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_NOT_ACTIVATED
-        ? CheckValues::FAILED:CheckValues::PASSED, "");
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
+                                     "");
 }
 
 /**
  * If the algorithm used to sign the certificate is considered weak by modern
  * standard
  */
-TlsValidator::CheckResult TlsValidator::strongSigning()
+TlsValidator::CheckResult
+TlsValidator::strongSigning()
 {
     if (exist().first == CheckValues::FAILED)
-        TlsValidator::CheckResult(CheckValues::UNSUPPORTED,"");
+        TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     // Doesn't seem to have the same value as
     // certtool  --infile /home/etudiant/Téléchargements/mynsauser.pem --key-inf
     // TODO figure out why
     return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_INSECURE_ALGORITHM
-        ? CheckValues::FAILED:CheckValues::PASSED, "");
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
+                                     "");
 }
 
 /**
  * The certificate is not self signed
  */
-TlsValidator::CheckResult TlsValidator::notSelfSigned()
+TlsValidator::CheckResult
+TlsValidator::notSelfSigned()
 {
     return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 }
@@ -804,55 +843,80 @@ TlsValidator::CheckResult TlsValidator::notSelfSigned()
 /**
  * The provided key can be used along with the certificate
  */
-TlsValidator::CheckResult TlsValidator::keyMatch()
+TlsValidator::CheckResult
+TlsValidator::keyMatch()
 {
     if (exist().first == CheckValues::FAILED)
-        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED,"");
+        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     if (not privateKeyFound_)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
-    return TlsValidator::CheckResult(privateKeyMatch_ ? CheckValues::PASSED:CheckValues::FAILED, "");
+    return TlsValidator::CheckResult(privateKeyMatch_ ? CheckValues::PASSED : CheckValues::FAILED,
+                                     "");
 }
 
-TlsValidator::CheckResult TlsValidator::privateKeyStoragePermissions()
+TlsValidator::CheckResult
+TlsValidator::privateKeyStoragePermissions()
 {
     struct stat statbuf;
     int err = stat(privateKeyPath_.c_str(), &statbuf);
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    return TlsValidator::CheckResult(
-        (statbuf.st_mode & S_IFREG) && /* Regular file only */
-        /*                          READ                      WRITE                            EXECUTE          */
-        /* Owner */    ( (statbuf.st_mode & S_IRUSR) /* write is not relevant */     && !(statbuf.st_mode & S_IXUSR))
-        /* Group */ && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
-        /* Other */ && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
-        ? CheckValues::PASSED:CheckValues::FAILED, "");
+    return TlsValidator::CheckResult((statbuf.st_mode & S_IFREG)
+                                             && /* Regular file only */
+                                                /*                          READ    WRITE    EXECUTE    */
+                                             /* Owner */ ((statbuf.st_mode
+                                                           & S_IRUSR) /* write is not relevant */
+                                                          && !(statbuf.st_mode & S_IXUSR))
+                                             /* Group */
+                                             && (!(statbuf.st_mode & S_IRGRP)
+                                                 && !(statbuf.st_mode & S_IWGRP)
+                                                 && !(statbuf.st_mode & S_IXGRP))
+                                             /* Other */
+                                             && (!(statbuf.st_mode & S_IROTH)
+                                                 && !(statbuf.st_mode & S_IWOTH)
+                                                 && !(statbuf.st_mode & S_IXOTH))
+                                         ? CheckValues::PASSED
+                                         : CheckValues::FAILED,
+                                     "");
 }
 
-TlsValidator::CheckResult TlsValidator::publicKeyStoragePermissions()
+TlsValidator::CheckResult
+TlsValidator::publicKeyStoragePermissions()
 {
     struct stat statbuf;
     int err = stat(certificatePath_.c_str(), &statbuf);
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    return TlsValidator::CheckResult(
-        (statbuf.st_mode & S_IFREG) && /* Regular file only */
-        /*                          READ                      WRITE                            EXECUTE          */
-        /* Owner */    ( (statbuf.st_mode & S_IRUSR) /* write is not relevant */   && !(statbuf.st_mode & S_IXUSR))
-        /* Group */ && ( /* read is not relevant */   !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
-        /* Other */ && ( /* read is not relevant */   !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
-        ? CheckValues::PASSED:CheckValues::FAILED, "");
+    return TlsValidator::CheckResult((statbuf.st_mode & S_IFREG)
+                                             && /* Regular file only */
+                                                /*                          READ    WRITE    EXECUTE    */
+                                             /* Owner */ ((statbuf.st_mode
+                                                           & S_IRUSR) /* write is not relevant */
+                                                          && !(statbuf.st_mode & S_IXUSR))
+                                             /* Group */
+                                             && (/* read is not relevant */ !(statbuf.st_mode
+                                                                              & S_IWGRP)
+                                                 && !(statbuf.st_mode & S_IXGRP))
+                                             /* Other */
+                                             && (/* read is not relevant */ !(statbuf.st_mode
+                                                                              & S_IWOTH)
+                                                 && !(statbuf.st_mode & S_IXOTH))
+                                         ? CheckValues::PASSED
+                                         : CheckValues::FAILED,
+                                     "");
 }
 
-TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
+TlsValidator::CheckResult
+TlsValidator::privateKeyDirectoryPermissions()
 {
     if (privateKeyPath_.empty())
-       return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
+        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
 #ifndef _MSC_VER
-    auto path = std::unique_ptr<char, decltype(free)&> (strdup(privateKeyPath_.c_str()), free);
+    auto path = std::unique_ptr<char, decltype(free)&>(strdup(privateKeyPath_.c_str()), free);
     const char* dir = dirname(path.get());
 #else
     char* dir;
@@ -865,14 +929,23 @@ TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     return TlsValidator::CheckResult(
-        /*                          READ                      WRITE                            EXECUTE             */
-        /* Owner */    ( (statbuf.st_mode & S_IRUSR) /* write is not relevant */     &&  (statbuf.st_mode & S_IXUSR))
-        /* Group */ && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
-        /* Other */ && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
-        && S_ISDIR(statbuf.st_mode) ? CheckValues::PASSED:CheckValues::FAILED, "");
+        /*                          READ                      WRITE EXECUTE             */
+        /* Owner */ (
+            (statbuf.st_mode & S_IRUSR) /* write is not relevant */ && (statbuf.st_mode & S_IXUSR))
+                /* Group */
+                && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP)
+                    && !(statbuf.st_mode & S_IXGRP))
+                /* Other */
+                && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH)
+                    && !(statbuf.st_mode & S_IXOTH))
+                && S_ISDIR(statbuf.st_mode)
+            ? CheckValues::PASSED
+            : CheckValues::FAILED,
+        "");
 }
 
-TlsValidator::CheckResult TlsValidator::publicKeyDirectoryPermissions()
+TlsValidator::CheckResult
+TlsValidator::publicKeyDirectoryPermissions()
 {
 #ifndef _MSC_VER
     auto path = std::unique_ptr<char, decltype(free)&>(strdup(certificatePath_.c_str()), free);
@@ -888,17 +961,26 @@ TlsValidator::CheckResult TlsValidator::publicKeyDirectoryPermissions()
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     return TlsValidator::CheckResult(
-        /*                          READ                      WRITE                            EXECUTE             */
-        /* Owner */    ( (statbuf.st_mode & S_IRUSR) /* write is not relevant */     &&  (statbuf.st_mode & S_IXUSR))
-        /* Group */ && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
-        /* Other */ && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
-        && S_ISDIR(statbuf.st_mode) ? CheckValues::PASSED:CheckValues::FAILED, "");
+        /*                          READ                      WRITE EXECUTE             */
+        /* Owner */ (
+            (statbuf.st_mode & S_IRUSR) /* write is not relevant */ && (statbuf.st_mode & S_IXUSR))
+                /* Group */
+                && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP)
+                    && !(statbuf.st_mode & S_IXGRP))
+                /* Other */
+                && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH)
+                    && !(statbuf.st_mode & S_IXOTH))
+                && S_ISDIR(statbuf.st_mode)
+            ? CheckValues::PASSED
+            : CheckValues::FAILED,
+        "");
 }
 
 /**
  * Certificate should be located in specific path on some operating systems
  */
-TlsValidator::CheckResult TlsValidator::privateKeyStorageLocation()
+TlsValidator::CheckResult
+TlsValidator::privateKeyStorageLocation()
 {
     // TODO
     return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -907,7 +989,8 @@ TlsValidator::CheckResult TlsValidator::privateKeyStorageLocation()
 /**
  * Certificate should be located in specific path on some operating systems
  */
-TlsValidator::CheckResult TlsValidator::publicKeyStorageLocation()
+TlsValidator::CheckResult
+TlsValidator::publicKeyStorageLocation()
 {
     // TODO
     return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -916,7 +999,8 @@ TlsValidator::CheckResult TlsValidator::publicKeyStorageLocation()
 /**
  * SELinux provide additional key protection mechanism
  */
-TlsValidator::CheckResult TlsValidator::privateKeySelinuxAttributes()
+TlsValidator::CheckResult
+TlsValidator::privateKeySelinuxAttributes()
 {
     // TODO
     return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -925,7 +1009,8 @@ TlsValidator::CheckResult TlsValidator::privateKeySelinuxAttributes()
 /**
  * SELinux provide additional key protection mechanism
  */
-TlsValidator::CheckResult TlsValidator::publicKeySelinuxAttributes()
+TlsValidator::CheckResult
+TlsValidator::publicKeySelinuxAttributes()
 {
     // TODO
     return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -936,25 +1021,34 @@ TlsValidator::CheckResult TlsValidator::publicKeySelinuxAttributes()
  *
  * Double factor authentication is recommended
  */
-TlsValidator::CheckResult TlsValidator::requirePrivateKeyPassword()
+TlsValidator::CheckResult
+TlsValidator::requirePrivateKeyPassword()
 {
-    return TlsValidator::CheckResult(privateKeyPassword_ ? CheckValues::PASSED : CheckValues::FAILED, "");
+    return TlsValidator::CheckResult(privateKeyPassword_ ? CheckValues::PASSED : CheckValues::FAILED,
+                                     "");
 }
 /**
  * The CA and certificate provide conflicting ownership information
  */
-TlsValidator::CheckResult TlsValidator::expectedOwner()
+TlsValidator::CheckResult
+TlsValidator::expectedOwner()
 {
     return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_UNEXPECTED_OWNER
-        ? CheckValues::FAILED : CheckValues::PASSED, "");
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
+                                     "");
 }
 
 /**
  * The file has been found
  */
-TlsValidator::CheckResult TlsValidator::exist()
+TlsValidator::CheckResult
+TlsValidator::exist()
 {
-    return TlsValidator::CheckResult((certificateFound_ or certificateFileFound_) ? CheckValues::PASSED : CheckValues::FAILED, "");
+    return TlsValidator::CheckResult((certificateFound_ or certificateFileFound_)
+                                         ? CheckValues::PASSED
+                                         : CheckValues::FAILED,
+                                     "");
 }
 
 /**
@@ -962,28 +1056,36 @@ TlsValidator::CheckResult TlsValidator::exist()
  *
  * @todo Handle case when there is facultative authority, such as DHT
  */
-TlsValidator::CheckResult TlsValidator::valid()
+TlsValidator::CheckResult
+TlsValidator::valid()
 {
-    return TlsValidator::CheckResult(certificateFound_ ? CheckValues::PASSED : CheckValues::FAILED, "");
+    return TlsValidator::CheckResult(certificateFound_ ? CheckValues::PASSED : CheckValues::FAILED,
+                                     "");
 }
 
 /**
  * The provided authority is invalid
  */
-TlsValidator::CheckResult TlsValidator::validAuthority()
+TlsValidator::CheckResult
+TlsValidator::validAuthority()
 {
     // TODO Merge with either above or bellow
     return TlsValidator::CheckResult((compareToCa() & GNUTLS_CERT_SIGNER_NOT_FOUND)
-        ? CheckValues::FAILED:CheckValues::PASSED, "");
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
+                                     "");
 }
 
 /**
  * Check if the authority match the certificate
  */
-TlsValidator::CheckResult TlsValidator::authorityMatch()
+TlsValidator::CheckResult
+TlsValidator::authorityMatch()
 {
     return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_SIGNER_NOT_CA
-        ? CheckValues::FAILED : CheckValues::PASSED, "");
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
+                                     "");
 }
 
 /**
@@ -994,31 +1096,39 @@ TlsValidator::CheckResult TlsValidator::authorityMatch()
  * @fixme add account settings
  * @todo implement the check
  */
-TlsValidator::CheckResult TlsValidator::knownAuthority()
+TlsValidator::CheckResult
+TlsValidator::knownAuthority()
 {
-    // TODO need a new boolean account setting "require trusted authority" or something defaulting to true
-    // using GNUTLS_CERT_SIGNER_NOT_FOUND is a temporary placeholder as it is close enough
+    // TODO need a new boolean account setting "require trusted authority" or something defaulting
+    // to true using GNUTLS_CERT_SIGNER_NOT_FOUND is a temporary placeholder as it is close enough
     return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_SIGNER_NOT_FOUND
-        ? CheckValues::FAILED : CheckValues::PASSED, "");
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
+                                     "");
 }
 
 /**
  * Check if the certificate has been revoked
  */
-TlsValidator::CheckResult TlsValidator::notRevoked()
+TlsValidator::CheckResult
+TlsValidator::notRevoked()
 {
-    return TlsValidator::CheckResult(
-        (compareToCa() & GNUTLS_CERT_REVOKED) || (compareToCa() & GNUTLS_CERT_REVOCATION_DATA_ISSUED_IN_FUTURE)
-        ? CheckValues::FAILED : CheckValues::PASSED, "");
+    return TlsValidator::CheckResult((compareToCa() & GNUTLS_CERT_REVOKED)
+                                             || (compareToCa()
+                                                 & GNUTLS_CERT_REVOCATION_DATA_ISSUED_IN_FUTURE)
+                                         ? CheckValues::FAILED
+                                         : CheckValues::PASSED,
+                                     "");
 }
 
 /**
  * A certificate authority has been provided
  */
-bool TlsValidator::hasCa() const
+bool
+TlsValidator::hasCa() const
 {
-    return (x509crt_ and x509crt_->issuer);/* or
-           (caCert_ != nullptr and caCert_->certificateFound_);*/
+    return (x509crt_ and x509crt_->issuer); /* or
+            (caCert_ != nullptr and caCert_->certificateFound_);*/
 }
 
 //
@@ -1030,7 +1140,8 @@ bool TlsValidator::hasCa() const
 /**
  * An hexadecimal representation of the signature
  */
-TlsValidator::CheckResult TlsValidator::getPublicSignature()
+TlsValidator::CheckResult
+TlsValidator::getPublicSignature()
 {
     size_t resultSize = sizeof(copy_buffer);
     int err = gnutls_x509_crt_get_signature(x509crt_->cert, copy_buffer, &resultSize);
@@ -1040,7 +1151,8 @@ TlsValidator::CheckResult TlsValidator::getPublicSignature()
 /**
  * Return the certificate version
  */
-TlsValidator::CheckResult TlsValidator::getVersionNumber()
+TlsValidator::CheckResult
+TlsValidator::getVersionNumber()
 {
     int version = gnutls_x509_crt_get_version(x509crt_->cert);
     if (version < 0)
@@ -1055,10 +1167,11 @@ TlsValidator::CheckResult TlsValidator::getVersionNumber()
 /**
  * Return the certificate serial number
  */
-TlsValidator::CheckResult TlsValidator::getSerialNumber()
+TlsValidator::CheckResult
+TlsValidator::getSerialNumber()
 {
-// gnutls_x509_crl_iter_crt_serial
-// gnutls_x509_crt_get_authority_key_gn_serial
+    // gnutls_x509_crl_iter_crt_serial
+    // gnutls_x509_crt_get_authority_key_gn_serial
     size_t resultSize = sizeof(copy_buffer);
     int err = gnutls_x509_crt_get_serial(x509crt_->cert, copy_buffer, &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
@@ -1067,7 +1180,8 @@ TlsValidator::CheckResult TlsValidator::getSerialNumber()
 /**
  * If the certificate is not self signed, return the issuer
  */
-TlsValidator::CheckResult TlsValidator::getIssuer()
+TlsValidator::CheckResult
+TlsValidator::getIssuer()
 {
     if (not x509crt_->issuer) {
         auto icrt = CertificateStore::instance().findIssuer(x509crt_);
@@ -1081,10 +1195,11 @@ TlsValidator::CheckResult TlsValidator::getIssuer()
 /**
  * The algorithm used to sign the certificate details (rather than the certificate itself)
  */
-TlsValidator::CheckResult TlsValidator::getSubjectKeyAlgorithm()
+TlsValidator::CheckResult
+TlsValidator::getSubjectKeyAlgorithm()
 {
-    gnutls_pk_algorithm_t algo = (gnutls_pk_algorithm_t) gnutls_x509_crt_get_pk_algorithm(
-        x509crt_->cert, nullptr);
+    gnutls_pk_algorithm_t algo = (gnutls_pk_algorithm_t)
+        gnutls_x509_crt_get_pk_algorithm(x509crt_->cert, nullptr);
 
     if (algo < 0)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -1100,33 +1215,51 @@ TlsValidator::CheckResult TlsValidator::getSubjectKeyAlgorithm()
 /**
  * The 'CN' section of a DN (RFC4514)
  */
-TlsValidator::CheckResult TlsValidator::getCN()
+TlsValidator::CheckResult
+TlsValidator::getCN()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert, GNUTLS_OID_X520_COMMON_NAME, 0, 0, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
+                                            GNUTLS_OID_X520_COMMON_NAME,
+                                            0,
+                                            0,
+                                            copy_buffer,
+                                            &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
 /**
  * The 'N' section of a DN (RFC4514)
  */
-TlsValidator::CheckResult TlsValidator::getN()
+TlsValidator::CheckResult
+TlsValidator::getN()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert, GNUTLS_OID_X520_NAME, 0, 0, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
+                                            GNUTLS_OID_X520_NAME,
+                                            0,
+                                            0,
+                                            copy_buffer,
+                                            &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
 /**
  * The 'O' section of a DN (RFC4514)
  */
-TlsValidator::CheckResult TlsValidator::getO()
+TlsValidator::CheckResult
+TlsValidator::getO()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert, GNUTLS_OID_X520_ORGANIZATION_NAME, 0, 0, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_->cert,
+                                            GNUTLS_OID_X520_ORGANIZATION_NAME,
+                                            0,
+                                            0,
+                                            copy_buffer,
+                                            &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1135,14 +1268,16 @@ TlsValidator::CheckResult TlsValidator::getO()
  *
  * For example: RSA
  */
-TlsValidator::CheckResult TlsValidator::getSignatureAlgorithm()
+TlsValidator::CheckResult
+TlsValidator::getSignatureAlgorithm()
 {
-    gnutls_sign_algorithm_t algo = (gnutls_sign_algorithm_t) gnutls_x509_crt_get_signature_algorithm(x509crt_->cert);
+    gnutls_sign_algorithm_t algo = (gnutls_sign_algorithm_t) gnutls_x509_crt_get_signature_algorithm(
+        x509crt_->cert);
 
     if (algo < 0)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    const char* algoName =  gnutls_sign_get_name(algo);
+    const char* algoName = gnutls_sign_get_name(algo);
     return TlsValidator::CheckResult(CheckValues::CUSTOM, algoName);
 }
 
@@ -1151,10 +1286,14 @@ TlsValidator::CheckResult TlsValidator::getSignatureAlgorithm()
  *
  * This need to be used along with getSha1Fingerprint() to avoid collisions
  */
-TlsValidator::CheckResult TlsValidator::getMd5Fingerprint()
+TlsValidator::CheckResult
+TlsValidator::getMd5Fingerprint()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert, GNUTLS_DIG_MD5, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert,
+                                              GNUTLS_DIG_MD5,
+                                              copy_buffer,
+                                              &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
 }
 
@@ -1163,21 +1302,26 @@ TlsValidator::CheckResult TlsValidator::getMd5Fingerprint()
  *
  * This need to be used along with getMd5Fingerprint() to avoid collisions
  */
-TlsValidator::CheckResult TlsValidator::getSha1Fingerprint()
+TlsValidator::CheckResult
+TlsValidator::getSha1Fingerprint()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert, GNUTLS_DIG_SHA1, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert,
+                                              GNUTLS_DIG_SHA1,
+                                              copy_buffer,
+                                              &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
 }
 
 /**
  * Return an hexadecimal identifier
  */
-TlsValidator::CheckResult TlsValidator::getPublicKeyId()
+TlsValidator::CheckResult
+TlsValidator::getPublicKeyId()
 {
     static unsigned char unsigned_copy_buffer[4096];
     size_t resultSize = sizeof(unsigned_copy_buffer);
-    int err = gnutls_x509_crt_get_key_id(x509crt_->cert,0,unsigned_copy_buffer,&resultSize);
+    int err = gnutls_x509_crt_get_key_id(x509crt_->cert, 0, unsigned_copy_buffer, &resultSize);
 
     // TODO check for GNUTLS_E_SHORT_MEMORY_BUFFER and increase the buffer size
     // TODO get rid of the cast, display a HEX or something, need research
@@ -1189,7 +1333,8 @@ TlsValidator::CheckResult TlsValidator::getPublicKeyId()
 /**
  *  If the certificate is not self signed, return the issuer DN (RFC4514)
  */
-TlsValidator::CheckResult TlsValidator::getIssuerDN()
+TlsValidator::CheckResult
+TlsValidator::getIssuerDN()
 {
     size_t resultSize = sizeof(copy_buffer);
     int err = gnutls_x509_crt_get_issuer_dn(x509crt_->cert, copy_buffer, &resultSize);
@@ -1201,7 +1346,8 @@ TlsValidator::CheckResult TlsValidator::getIssuerDN()
  *
  * @todo Move to "certificateDetails()" method once completed
  */
-TlsValidator::CheckResult TlsValidator::getExpirationDate()
+TlsValidator::CheckResult
+TlsValidator::getExpirationDate()
 {
     if (not certificateFound_)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -1216,7 +1362,8 @@ TlsValidator::CheckResult TlsValidator::getExpirationDate()
  *
  * @todo Move to "certificateDetails()" method once completed
  */
-TlsValidator::CheckResult TlsValidator::getActivationDate()
+TlsValidator::CheckResult
+TlsValidator::getActivationDate()
 {
     if (not certificateFound_)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -1232,20 +1379,21 @@ TlsValidator::CheckResult TlsValidator::getActivationDate()
  * @todo Move to "certificateDetails()" method once completed
  * @todo extract information for the certificate
  */
-TlsValidator::CheckResult TlsValidator::outgoingServer()
+TlsValidator::CheckResult
+TlsValidator::outgoingServer()
 {
     // TODO
     return TlsValidator::CheckResult(CheckValues::CUSTOM, "");
 }
 
-
 /**
  * If the certificate is not self signed, return the issuer
  */
-TlsValidator::CheckResult TlsValidator::isCA()
+TlsValidator::CheckResult
+TlsValidator::isCA()
 {
     return TlsValidator::CheckResult(CheckValues::CUSTOM, x509crt_->isCA() ? TRUE_STR : FALSE_STR);
 }
 
-
-}} //namespace jami
+} // namespace tls
+} // namespace jami

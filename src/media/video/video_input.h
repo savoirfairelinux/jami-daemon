@@ -43,24 +43,24 @@
 namespace jami {
 class MediaDecoder;
 class MediaDemuxer;
-}
+} // namespace jami
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class SinkClient;
 
-enum class VideoInputMode {ManagedByClient, ManagedByDaemon, Undefined};
+enum class VideoInputMode { ManagedByClient, ManagedByDaemon, Undefined };
 
 class VideoInput : public VideoGenerator, public std::enable_shared_from_this<VideoInput>
 {
 public:
-    VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined, const std::string& id_ = "local");
+    VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined,
+               const std::string& id_ = "local");
     ~VideoInput();
 
     // as VideoGenerator
-    const std::string& getName() const {
-      return currentResource_;
-    }
+    const std::string& getName() const { return currentResource_; }
     int getWidth() const;
     int getHeight() const;
     AVPixelFormat getPixelFormat() const;
@@ -69,11 +69,11 @@ public:
 
     void setSink(const std::string& sinkId);
     void updateStartTime(int64_t startTime);
-    void configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    void configureFilePlayback(const std::string& path,
+                               std::shared_ptr<MediaDemuxer>& demuxer,
+                               int index);
     void flushBuffers();
-    void setPaused(bool paused) {
-        paused_ = paused;
-    }
+    void setPaused(bool paused) { paused_ = paused; }
     void setSeekTime(int64_t time);
     void setFrameSize(const int width, const int height);
     void setupSink();
@@ -86,7 +86,7 @@ public:
      * on the Android and UWP builds
      */
     void* obtainFrame(int length);
-    void releaseFrame(void *frame);
+    void releaseFrame(void* frame);
 #else
     void stopInput();
 #endif
@@ -97,12 +97,12 @@ private:
     std::string id_;
     std::string currentResource_;
     std::atomic<bool> switchPending_ = {false};
-    std::atomic_bool  isStopped_ = {false};
+    std::atomic_bool isStopped_ = {false};
 
     DeviceParams decOpts_;
     std::promise<DeviceParams> foundDecOpts_;
     std::shared_future<DeviceParams> futureDecOpts_;
-    bool emulateRate_       = false;
+    bool emulateRate_ = false;
 
     std::atomic_bool decOptsFound_ {false};
     void foundDecOpts(const DeviceParams& params);
@@ -138,11 +138,13 @@ private:
     std::shared_ptr<AVBufferRef> displayMatrix_;
     void setRotation(int angle);
     VideoInputMode inputMode_;
-    inline bool videoManagedByClient() const {
-         return inputMode_ == VideoInputMode::ManagedByClient;
+    inline bool videoManagedByClient() const
+    {
+        return inputMode_ == VideoInputMode::ManagedByClient;
     }
     bool playingFile_ = false;
     std::atomic_bool paused_ {true};
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

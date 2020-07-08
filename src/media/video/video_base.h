@@ -51,24 +51,27 @@ struct AVIOContext;
 namespace DRing {
 class MediaFrame;
 class VideoFrame;
-}
+} // namespace DRing
 
 namespace jami {
 using MediaFrame = DRing::MediaFrame;
 using VideoFrame = DRing::VideoFrame;
-}
+} // namespace jami
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
-struct VideoFrameActiveWriter: Observable<std::shared_ptr<MediaFrame>> {};
-struct VideoFramePassiveReader: Observer<std::shared_ptr<MediaFrame>> {};
+struct VideoFrameActiveWriter : Observable<std::shared_ptr<MediaFrame>>
+{};
+struct VideoFramePassiveReader : Observer<std::shared_ptr<MediaFrame>>
+{};
 
 /*=== VideoGenerator =========================================================*/
 
 class VideoGenerator : public VideoFrameActiveWriter
 {
 public:
-    VideoGenerator() { }
+    VideoGenerator() {}
 
     virtual int getWidth() const = 0;
     virtual int getHeight() const = 0;
@@ -103,15 +106,17 @@ struct VideoSettings
     std::string framerate {};
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami
 
 namespace YAML {
 template<>
-struct convert<jami::video::VideoSettings> {
+struct convert<jami::video::VideoSettings>
+{
     static Node encode(const jami::video::VideoSettings& rhs);
     static bool decode(const Node& node, jami::video::VideoSettings& rhs);
 };
 
-Emitter& operator << (Emitter& out, const jami::video::VideoSettings& v);
+Emitter& operator<<(Emitter& out, const jami::video::VideoSettings& v);
 
 } // namespace YAML

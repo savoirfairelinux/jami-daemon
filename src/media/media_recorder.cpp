@@ -62,32 +62,43 @@ replaceAll(const std::string& str, const std::string& from, const std::string& t
     return copy;
 }
 
-
 struct MediaRecorder::StreamObserver : public Observer<std::shared_ptr<MediaFrame>>
 {
     const MediaStream info;
 
-    StreamObserver(const MediaStream& ms, std::function<void(const std::shared_ptr<MediaFrame>&)> func)
-        : info(ms), cb_(func)
-    {};
+    StreamObserver(const MediaStream& ms,
+                   std::function<void(const std::shared_ptr<MediaFrame>&)> func)
+        : info(ms)
+        , cb_(func) {};
 
     ~StreamObserver() {};
 
-    void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/, const std::shared_ptr<MediaFrame>& m) override
+    void update(Observable<std::shared_ptr<MediaFrame>>* /*ob*/,
+                const std::shared_ptr<MediaFrame>& m) override
     {
         if (info.isVideo) {
             std::shared_ptr<VideoFrame> framePtr;
 #ifdef RING_ACCEL
-            auto desc = av_pix_fmt_desc_get((AVPixelFormat)(std::static_pointer_cast<VideoFrame>(m))->format());
+            auto desc = av_pix_fmt_desc_get(
+                (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(m))->format());
             if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
-                framePtr = jami::video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(m), AV_PIX_FMT_NV12);
+                framePtr = jami::video::HardwareAccel::transferToMainMemory(
+                    *std::static_pointer_cast<VideoFrame>(m), AV_PIX_FMT_NV12);
             else
 #endif
-            framePtr = std::static_pointer_cast<VideoFrame>(m);
-            AVFrameSideData* sideData = av_frame_get_side_data(framePtr->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
-            int angle = sideData ? -av_display_rotation_get(reinterpret_cast<int32_t*>(sideData->data)) : 0;
+                framePtr = std::static_pointer_cast<VideoFrame>(m);
+            AVFrameSideData* sideData = av_frame_get_side_data(framePtr->pointer(),
+                                                               AV_FRAME_DATA_DISPLAYMATRIX);
+            int angle = sideData
+                            ? -av_display_rotation_get(reinterpret_cast<int32_t*>(sideData->data))
+                            : 0;
             if (angle != rotation_) {
-                videoRotationFilter_ = jami::video::getTransposeFilter(angle, ROTATION_FILTER_INPUT_NAME, framePtr->width(), framePtr->height(), framePtr->format(), true);
+                videoRotationFilter_ = jami::video::getTransposeFilter(angle,
+                                                                       ROTATION_FILTER_INPUT_NAME,
+                                                                       framePtr->width(),
+                                                                       framePtr->height(),
+                                                                       framePtr->format(),
+                                                                       true);
                 rotation_ = angle;
             }
             if (videoRotationFilter_) {
@@ -109,12 +120,9 @@ private:
     int rotation_ = 0;
 };
 
+MediaRecorder::MediaRecorder() {}
 
-MediaRecorder::MediaRecorder()
-{}
-
-MediaRecorder::~MediaRecorder()
-{}
+MediaRecorder::~MediaRecorder() {}
 
 bool
 MediaRecorder::isRecording() const
@@ -169,7 +177,9 @@ MediaRecorder::startRecording()
                 // get frame from queue
                 {
                     std::unique_lock<std::mutex> lk(rec->mutexFrameBuff_);
-                    rec->cv_.wait(lk, [rec]{ return rec->interrupted_ or not rec->frameBuff_.empty();});
+                    rec->cv_.wait(lk, [rec] {
+                        return rec->interrupted_ or not rec->frameBuff_.empty();
+                    });
                     if (rec->interrupted_) {
                         break;
                     }
@@ -180,7 +190,8 @@ MediaRecorder::startRecording()
                     // encode frame
                     if (frame && frame->pointer()) {
                         bool isVideo = (frame->pointer()->width > 0 && frame->pointer()->height > 0);
-                        rec->encoder_->encode(frame->pointer(), isVideo ? rec->videoIdx_ : rec->audioIdx_);
+                        rec->encoder_->encode(frame->pointer(),
+                                              isVideo ? rec->videoIdx_ : rec->audioIdx_);
                     }
                 } catch (const MediaEncoderException& e) {
                     JAMI_ERR() << "Failed to record frame: " << e.what();
@@ -213,9 +224,11 @@ MediaRecorder::addStream(const MediaStream& ms)
         return nullptr;
     }
 
-    auto ptr = std::make_unique<StreamObserver>(ms, [this, ms](const std::shared_ptr<MediaFrame>& frame) {
-        onFrame(ms.name, frame);
-    });
+    auto ptr = std::make_unique<StreamObserver>(ms,
+                                                [this,
+                                                 ms](const std::shared_ptr<MediaFrame>& frame) {
+                                                    onFrame(ms.name, frame);
+                                                });
     auto p = streams_.insert(std::make_pair(ms.name, std::move(ptr)));
     if (p.second) {
         JAMI_DBG() << "Recorder input #" << streams_.size() << ": " << ms;
@@ -249,12 +262,14 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     std::unique_ptr<MediaFrame> clone;
     const auto& ms = streams_[name]->info;
     if (ms.isVideo) {
-        auto desc = av_pix_fmt_desc_get((AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame))->format());
+        auto desc = av_pix_fmt_desc_get(
+            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
-            clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame),
-                static_cast<AVPixelFormat>(ms.format));
-        }
-        else {
+            clone = video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
+                                                                   frame),
+                                                               static_cast<AVPixelFormat>(
+                                                                   ms.format));
+        } else {
             clone = std::make_unique<MediaFrame>();
             clone->copyFrom(*frame);
         }
@@ -264,8 +279,10 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
     }
 #if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     clone->pointer()->pts = av_rescale_q_rnd(av_gettime() - startTimeStamp_,
-                                             {1, AV_TIME_BASE}, ms.timeBase,
-                                             static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+                                             {1, AV_TIME_BASE},
+                                             ms.timeBase,
+                                             static_cast<AVRounding>(AV_ROUND_NEAR_INF
+                                                                     | AV_ROUND_PASS_MINMAX));
 #else
     clone->pointer()->pts -= ms.firstTimestamp;
 #endif
@@ -275,8 +292,7 @@ MediaRecorder::onFrame(const std::string& name, const std::shared_ptr<MediaFrame
         std::lock_guard<std::mutex> lk(mutexFilterVideo_);
         videoFilter_->feedInput(clone->pointer(), name);
         filteredFrame = videoFilter_->readOutput();
-    }
-    else {
+    } else {
         std::lock_guard<std::mutex> lk(mutexFilterAudio_);
         audioFilter_->feedInput(clone->pointer(), name);
         filteredFrame = audioFilter_->readOutput();
@@ -369,16 +385,18 @@ MediaStream
 MediaRecorder::setupVideoOutput()
 {
     MediaStream encoderStream, peer, local;
-    auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
-        return pair.second->info.isVideo && pair.second->info.name.find("remote") != std::string::npos;
+    auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
+        return pair.second->info.isVideo
+               && pair.second->info.name.find("remote") != std::string::npos;
     });
 
     if (it != streams_.end()) {
         peer = it->second->info;
     }
 
-    it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
-        return pair.second->info.isVideo && pair.second->info.name.find("local") != std::string::npos;
+    it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
+        return pair.second->info.isVideo
+               && pair.second->info.name.find("local") != std::string::npos;
     });
 
     if (it != streams_.end()) {
@@ -390,8 +408,7 @@ MediaRecorder::setupVideoOutput()
     int ret = -1;
     int streams = peer.isValid() + local.isValid();
     switch (streams) {
-    case 1:
-    {
+    case 1: {
         auto inputStream = peer.isValid() ? peer : local;
         ret = videoFilter_->initialize(buildVideoFilter({}, inputStream), {inputStream});
         break;
@@ -416,7 +433,8 @@ MediaRecorder::setupVideoOutput()
 }
 
 std::string
-MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const
+MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers,
+                                const MediaStream& local) const
 {
     std::stringstream v;
 
@@ -424,26 +442,25 @@ MediaRecorder::buildVideoFilter(const std::vector<MediaStream>& peers, const Med
     case 0:
         v << "[" << local.name << "] fps=30, format=pix_fmts=yuv420p";
         break;
-    case 1:
-        {
-            auto p = peers[0];
-            const constexpr int minHeight = 720;
-            const auto newFps = std::max(p.frameRate, local.frameRate);
-            const bool needScale = (p.height < minHeight);
-            const int newHeight = (needScale ? minHeight : p.height);
+    case 1: {
+        auto p = peers[0];
+        const constexpr int minHeight = 720;
+        const auto newFps = std::max(p.frameRate, local.frameRate);
+        const bool needScale = (p.height < minHeight);
+        const int newHeight = (needScale ? minHeight : p.height);
 
-            // NOTE -2 means preserve aspect ratio and have the new number be even
-            if (needScale)
-                v << "[" << p.name << "] fps=" << newFps << ", scale=-2:" << newHeight << " [v:m]; ";
-            else
-                v << "[" << p.name << "] fps=" << newFps << " [v:m]; ";
+        // NOTE -2 means preserve aspect ratio and have the new number be even
+        if (needScale)
+            v << "[" << p.name << "] fps=" << newFps << ", scale=-2:" << newHeight << " [v:m]; ";
+        else
+            v << "[" << p.name << "] fps=" << newFps << " [v:m]; ";
 
-            v << "[" << local.name << "] fps=" << newFps << ", scale=-2:" << newHeight / 5 << " [v:o]; ";
+        v << "[" << local.name << "] fps=" << newFps << ", scale=-2:" << newHeight / 5
+          << " [v:o]; ";
 
-            v << "[v:m] [v:o] overlay=main_w-overlay_w:main_h-overlay_h"
-                << ", format=pix_fmts=yuv420p";
-        }
-        break;
+        v << "[v:m] [v:o] overlay=main_w-overlay_w:main_h-overlay_h"
+          << ", format=pix_fmts=yuv420p";
+    } break;
     default:
         JAMI_ERR() << "Video recordings with more than 2 video streams are not supported";
         break;
@@ -456,16 +473,18 @@ MediaStream
 MediaRecorder::setupAudioOutput()
 {
     MediaStream encoderStream, peer, local;
-    auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
-        return !pair.second->info.isVideo && pair.second->info.name.find("remote") != std::string::npos;
+    auto it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
+        return !pair.second->info.isVideo
+               && pair.second->info.name.find("remote") != std::string::npos;
     });
 
     if (it != streams_.end()) {
         peer = it->second->info;
     }
 
-    it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair){
-        return !pair.second->info.isVideo && pair.second->info.name.find("local") != std::string::npos;
+    it = std::find_if(streams_.begin(), streams_.end(), [](const auto& pair) {
+        return !pair.second->info.isVideo
+               && pair.second->info.name.find("local") != std::string::npos;
     });
 
     if (it != streams_.end()) {
@@ -477,8 +496,7 @@ MediaRecorder::setupAudioOutput()
     int ret = -1;
     int streams = peer.isValid() + local.isValid();
     switch (streams) {
-    case 1:
-    {
+    case 1: {
         auto inputStream = peer.isValid() ? peer : local;
         ret = audioFilter_->initialize(buildAudioFilter({}, inputStream), {inputStream});
         break;
@@ -502,7 +520,8 @@ MediaRecorder::setupAudioOutput()
 }
 
 std::string
-MediaRecorder::buildAudioFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const
+MediaRecorder::buildAudioFilter(const std::vector<MediaStream>& peers,
+                                const MediaStream& local) const
 {
     std::string baseFilter = "aresample=osr=48000:ocl=stereo:osf=s16";
     std::stringstream a;

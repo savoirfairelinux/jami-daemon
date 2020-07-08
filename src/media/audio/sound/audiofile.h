@@ -29,31 +29,32 @@
 
 namespace jami {
 
-class AudioFileException : public std::runtime_error {
-    public:
-        AudioFileException(const std::string &str) :
-            std::runtime_error("AudioFile: AudioFileException occurred: " + str) {}
+class AudioFileException : public std::runtime_error
+{
+public:
+    AudioFileException(const std::string& str)
+        : std::runtime_error("AudioFile: AudioFileException occurred: " + str)
+    {}
 };
 
 /**
  * @brief Abstract interface for file readers
  */
-class AudioFile : public AudioLoop {
-    public:
-        AudioFile(const std::string &filepath, unsigned int sampleRate);
+class AudioFile : public AudioLoop
+{
+public:
+    AudioFile(const std::string& filepath, unsigned int sampleRate);
 
-        std::string getFilePath() const {
-            return filepath_;
-        }
+    std::string getFilePath() const { return filepath_; }
 
-    protected:
-        /** The absolute path to the sound file */
-        std::string filepath_;
+protected:
+    /** The absolute path to the sound file */
+    std::string filepath_;
 
-    private:
-        // override
-        void onBufferFinish();
-        unsigned updatePlaybackScale_;
+private:
+    // override
+    void onBufferFinish();
+    unsigned updatePlaybackScale_;
 };
 
 } // namespace jami

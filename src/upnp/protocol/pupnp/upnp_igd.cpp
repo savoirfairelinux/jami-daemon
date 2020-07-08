@@ -21,14 +21,20 @@
 
 #include "upnp_igd.h"
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
-UPnPIGD::UPnPIGD(std::string&& UDN, std::string&& baseURL, 
-                 std::string&& friendlyName, std::string&& serviceType, 
-                 std::string&& serviceId, std::string && locationURL,
-                 std::string&& controlURL, std::string&& eventSubURL,
-                 IpAddr&& localIp, IpAddr&& publicIp):
-                 IGD(std::move(localIp), std::move(publicIp))
+UPnPIGD::UPnPIGD(std::string&& UDN,
+                 std::string&& baseURL,
+                 std::string&& friendlyName,
+                 std::string&& serviceType,
+                 std::string&& serviceId,
+                 std::string&& locationURL,
+                 std::string&& controlURL,
+                 std::string&& eventSubURL,
+                 IpAddr&& localIp,
+                 IpAddr&& publicIp)
+    : IGD(std::move(localIp), std::move(publicIp))
 {
     UDN_ = std::move(UDN);
     baseURL_ = std::move(baseURL);
@@ -55,14 +61,11 @@ UPnPIGD::operator==(UPnPIGD& other) const
         }
     }
 
-    return UDN_ == other.UDN_ and
-           baseURL_ == other.baseURL_ and
-           friendlyName_ == other.friendlyName_ and
-           serviceType_ == other.serviceType_ and
-           serviceId_ == other.serviceId_ and
-           locationURL_ == other.locationURL_ and
-           controlURL_ == other.controlURL_ and
-           eventSubURL_ == other.eventSubURL_;
+    return UDN_ == other.UDN_ and baseURL_ == other.baseURL_
+           and friendlyName_ == other.friendlyName_ and serviceType_ == other.serviceType_
+           and serviceId_ == other.serviceId_ and locationURL_ == other.locationURL_
+           and controlURL_ == other.controlURL_ and eventSubURL_ == other.eventSubURL_;
 }
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

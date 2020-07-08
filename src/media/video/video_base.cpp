@@ -27,7 +27,8 @@
 
 #include <cassert>
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 /*=== VideoGenerator =========================================================*/
 
@@ -73,7 +74,8 @@ VideoGenerator::obtainLastFrame()
 /*=== VideoSettings =========================================================*/
 
 static std::string
-extractString(const std::map<std::string, std::string>& settings, const std::string& key) {
+extractString(const std::map<std::string, std::string>& settings, const std::string& key)
+{
     auto i = settings.find(key);
     if (i != settings.cend())
         return i->second;
@@ -92,21 +94,21 @@ VideoSettings::VideoSettings(const std::map<std::string, std::string>& settings)
 std::map<std::string, std::string>
 VideoSettings::to_map() const
 {
-    return {
-        {"name", name},
-        {"id", id},
-        {"size", video_size},
-        {"channel", channel},
-        {"rate", framerate}
-    };
+    return {{"name", name},
+            {"id", id},
+            {"size", video_size},
+            {"channel", channel},
+            {"rate", framerate}};
 }
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami
 
 namespace YAML {
 
 Node
-convert<jami::video::VideoSettings>::encode(const jami::video::VideoSettings& rhs) {
+convert<jami::video::VideoSettings>::encode(const jami::video::VideoSettings& rhs)
+{
     Node node;
     node["name"] = rhs.name;
     node["id"] = rhs.id;
@@ -117,7 +119,8 @@ convert<jami::video::VideoSettings>::encode(const jami::video::VideoSettings& rh
 }
 
 bool
-convert<jami::video::VideoSettings>::decode(const Node& node, jami::video::VideoSettings& rhs) {
+convert<jami::video::VideoSettings>::decode(const Node& node, jami::video::VideoSettings& rhs)
+{
     if (not node.IsMap()) {
         JAMI_WARN("Can't decode VideoSettings YAML node");
         return false;
@@ -130,7 +133,9 @@ convert<jami::video::VideoSettings>::decode(const Node& node, jami::video::Video
     return true;
 }
 
-Emitter& operator << (Emitter& out, const jami::video::VideoSettings& v) {
+Emitter&
+operator<<(Emitter& out, const jami::video::VideoSettings& v)
+{
     out << convert<jami::video::VideoSettings>::encode(v);
     return out;
 }

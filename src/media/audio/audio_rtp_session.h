@@ -37,34 +37,34 @@ class IceSocket;
 class MediaRecorder;
 class RingBuffer;
 
-class AudioRtpSession : public RtpSession {
-    public:
-        AudioRtpSession(const std::string& id);
-        virtual ~AudioRtpSession();
+class AudioRtpSession : public RtpSession
+{
+public:
+    AudioRtpSession(const std::string& id);
+    virtual ~AudioRtpSession();
 
-        void start(std::unique_ptr<IceSocket> rtp_sock,
-                   std::unique_ptr<IceSocket> rtcp_sock) override;
-        void restartSender() override;
-        void stop() override;
-        void setMuted(bool isMuted);
+    void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
+    void restartSender() override;
+    void stop() override;
+    void setMuted(bool isMuted);
 
-        void switchInput(const std::string& resource) { input_ = resource; }
+    void switchInput(const std::string& resource) { input_ = resource; }
 
-        void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
-        void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
+    void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
+    void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
-    private:
-        void startSender();
-        void startReceiver();
+private:
+    void startSender();
+    void startReceiver();
 
-        std::unique_ptr<AudioSender> sender_;
-        std::unique_ptr<AudioReceiveThread> receiveThread_;
-        std::shared_ptr<AudioInput> audioInput_;
-        std::shared_ptr<RingBuffer> ringbuffer_;
-        uint16_t initSeqVal_ = 0;
-        bool muteState_ = false;
-        DeviceParams localAudioParams_;
-        std::string input_;
+    std::unique_ptr<AudioSender> sender_;
+    std::unique_ptr<AudioReceiveThread> receiveThread_;
+    std::shared_ptr<AudioInput> audioInput_;
+    std::shared_ptr<RingBuffer> ringbuffer_;
+    uint16_t initSeqVal_ = 0;
+    bool muteState_ = false;
+    DeviceParams localAudioParams_;
+    std::string input_;
 };
 
 } // namespace jami

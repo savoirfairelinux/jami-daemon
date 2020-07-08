@@ -35,11 +35,14 @@
 typedef uint16_t in_port_t;
 #endif
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
 // Subclasses to make it easier to differentiate and cast maps of port mappings.
-class PortMapLocal : public std::map<uint16_t, Mapping> {};
-class PortMapGlobal : public std::map<uint16_t, GlobalMapping> {};
+class PortMapLocal : public std::map<uint16_t, Mapping>
+{};
+class PortMapGlobal : public std::map<uint16_t, GlobalMapping>
+{};
 
 class IGD
 {
@@ -76,16 +79,17 @@ public:
     void decrementNbOfUsers(const in_port_t externalPort, upnp::PortType type);
     void decrementNbOfUsers(const Mapping& map);
 
-    IpAddr localIp_ {};                    // Internal IP interface used to communication with IGD.
-    IpAddr publicIp_ {};                   // External IP of IGD.
+    IpAddr localIp_ {};  // Internal IP interface used to communication with IGD.
+    IpAddr publicIp_ {}; // External IP of IGD.
 
 protected:
-    std::mutex mapListMutex_;               // Mutex for protecting map lists.
-    PortMapGlobal udpMappings_ {};          // IGD UDP port mappings.
-    PortMapGlobal tcpMappings_ {};          // IGD TCP port mappings.
+    std::mutex mapListMutex_;      // Mutex for protecting map lists.
+    PortMapGlobal udpMappings_ {}; // IGD UDP port mappings.
+    PortMapGlobal tcpMappings_ {}; // IGD TCP port mappings.
 
 private:
     NON_COPYABLE(IGD);
 };
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

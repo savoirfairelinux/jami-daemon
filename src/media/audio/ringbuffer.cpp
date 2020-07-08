@@ -48,13 +48,13 @@ RingBuffer::RingBuffer(const std::string& rbuf_id, size_t /*size*/, AudioFormat 
     , lock_()
     , not_empty_()
     , readoffsets_()
-    , resizer_(format_, format_.sample_rate / 50, [this](std::shared_ptr<AudioFrame>&& frame){
+    , resizer_(format_, format_.sample_rate / 50, [this](std::shared_ptr<AudioFrame>&& frame) {
         putToBuffer(std::move(frame));
     })
 {}
 
 void
-RingBuffer::flush(const std::string &call_id)
+RingBuffer::flush(const std::string& call_id)
 {
     storeReadOffset(endPos_, call_id);
 }
@@ -76,7 +76,8 @@ RingBuffer::putLength() const
     return (endPos_ + buffer_size - startPos) % buffer_size;
 }
 
-size_t RingBuffer::getLength(const std::string &call_id) const
+size_t
+RingBuffer::getLength(const std::string& call_id) const
 {
     const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)
@@ -90,7 +91,8 @@ RingBuffer::debug()
     JAMI_DBG("Start=%zu; End=%zu; BufferSize=%zu", getSmallestReadOffset(), endPos_, buffer_.size());
 }
 
-size_t RingBuffer::getReadOffset(const std::string &call_id) const
+size_t
+RingBuffer::getReadOffset(const std::string& call_id) const
 {
     auto iter = readoffsets_.find(call_id);
     return (iter != readoffsets_.end()) ? iter->second.offset : 0;
@@ -102,13 +104,13 @@ RingBuffer::getSmallestReadOffset() const
     if (hasNoReadOffsets())
         return 0;
     size_t smallest = buffer_.size();
-    for(auto const& iter : readoffsets_)
+    for (auto const& iter : readoffsets_)
         smallest = std::min(smallest, iter.second.offset);
     return smallest;
 }
 
 void
-RingBuffer::storeReadOffset(size_t offset, const std::string &call_id)
+RingBuffer::storeReadOffset(size_t offset, const std::string& call_id)
 {
     ReadOffsetMap::iterator iter = readoffsets_.find(call_id);
 
@@ -119,16 +121,15 @@ RingBuffer::storeReadOffset(size_t offset, const std::string &call_id)
 }
 
 void
-RingBuffer::createReadOffset(const std::string &call_id)
+RingBuffer::createReadOffset(const std::string& call_id)
 {
     std::lock_guard<std::mutex> l(lock_);
     if (!hasThisReadOffset(call_id))
         readoffsets_.emplace(call_id, ReadOffset {endPos_, {}});
 }
 
-
 void
-RingBuffer::removeReadOffset(const std::string &call_id)
+RingBuffer::removeReadOffset(const std::string& call_id)
 {
     std::lock_guard<std::mutex> l(lock_);
     auto iter = readoffsets_.find(call_id);
@@ -137,13 +138,13 @@ RingBuffer::removeReadOffset(const std::string &call_id)
 }
 
 bool
-RingBuffer::hasThisReadOffset(const std::string &call_id) const
+RingBuffer::hasThisReadOffset(const std::string& call_id) const
 {
     return readoffsets_.find(call_id) != readoffsets_.end();
 }
 
-
-bool RingBuffer::hasNoReadOffsets() const
+bool
+RingBuffer::hasNoReadOffsets() const
 {
     return readoffsets_.empty();
 }
@@ -152,13 +153,15 @@ bool RingBuffer::hasNoReadOffsets() const
 // For the writer only:
 //
 
-void RingBuffer::put(std::shared_ptr<AudioFrame>&& data)
+void
+RingBuffer::put(std::shared_ptr<AudioFrame>&& data)
 {
     resizer_.enqueue(resampler_.resample(std::move(data), format_));
 }
 
 // This one puts some data inside the ring buffer.
-void RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
+void
+RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
 {
     std::lock_guard<std::mutex> l(lock_);
     const size_t buffer_size = buffer_.size();
@@ -200,7 +203,7 @@ void RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
 //
 
 size_t
-RingBuffer::availableForGet(const std::string &call_id) const
+RingBuffer::availableForGet(const std::string& call_id) const
 {
     // Used space
     return getLength(call_id);
@@ -229,12 +232,15 @@ RingBuffer::get(const std::string& call_id)
     return ret;
 }
 
-size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const time_point& deadline) const
+size_t
+RingBuffer::waitForDataAvailable(const std::string& call_id, const time_point& deadline) const
 {
     std::unique_lock<std::mutex> l(lock_);
 
-    if (buffer_.empty()) return 0;
-    if (readoffsets_.find(call_id) == readoffsets_.end()) return 0;
+    if (buffer_.empty())
+        return 0;
+    if (readoffsets_.find(call_id) == readoffsets_.end())
+        return 0;
 
     size_t getl = 0;
     auto check = [=, &getl] {

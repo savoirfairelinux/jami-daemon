@@ -62,59 +62,61 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 const constexpr char FILTER_INPUT_NAME[] = "in";
 
 #if HAVE_SHM
 // RAII class helper on sem_wait/sem_post sempahore operations
-class SemGuardLock {
-    public:
-        explicit SemGuardLock(sem_t& mutex) : m_(mutex) {
-            auto ret = ::sem_wait(&m_);
-            if (ret < 0) {
-                std::ostringstream msg;
-                msg << "SHM mutex@" << &m_
-                    << " lock failed (" << ret << ")";
-                throw std::logic_error {msg.str()};
-            }
+class SemGuardLock
+{
+public:
+    explicit SemGuardLock(sem_t& mutex)
+        : m_(mutex)
+    {
+        auto ret = ::sem_wait(&m_);
+        if (ret < 0) {
+            std::ostringstream msg;
+            msg << "SHM mutex@" << &m_ << " lock failed (" << ret << ")";
+            throw std::logic_error {msg.str()};
         }
+    }
 
-        ~SemGuardLock() {
-            ::sem_post(&m_);
-        }
+    ~SemGuardLock() { ::sem_post(&m_); }
 
-    private:
-        sem_t& m_;
+private:
+    sem_t& m_;
 };
 
 class ShmHolder
 {
-    public:
-        ShmHolder(const std::string& name = {});
-        ~ShmHolder();
+public:
+    ShmHolder(const std::string& name = {});
+    ~ShmHolder();
 
-        std::string name() const noexcept {
-            return openedName_;
+    std::string name() const noexcept { return openedName_; }
+
+    void renderFrame(const VideoFrame& src) noexcept;
+
+private:
+    bool resizeArea(std::size_t desired_length) noexcept;
+    char* getShmAreaDataPtr() noexcept;
+
+    void unMapShmArea() noexcept
+    {
+        if (area_ != MAP_FAILED and ::munmap(area_, areaSize_) < 0) {
+            JAMI_ERR("ShmHolder[%s]: munmap(%zu) failed with errno %d",
+                     openedName_.c_str(),
+                     areaSize_,
+                     errno);
         }
+    }
 
-        void renderFrame(const VideoFrame& src) noexcept;
-
-    private:
-        bool resizeArea(std::size_t desired_length) noexcept;
-        char* getShmAreaDataPtr() noexcept;
-
-        void unMapShmArea() noexcept {
-            if (area_ != MAP_FAILED and ::munmap(area_, areaSize_) < 0) {
-                JAMI_ERR("ShmHolder[%s]: munmap(%zu) failed with errno %d",
-                         openedName_.c_str(), areaSize_, errno);
-            }
-        }
-
-        SHMHeader* area_ {static_cast<SHMHeader*>(MAP_FAILED)};
-        std::size_t areaSize_ {0};
-        std::string openedName_;
-        int fd_ {-1};
+    SHMHeader* area_ {static_cast<SHMHeader*>(MAP_FAILED)};
+    std::size_t areaSize_ {0};
+    std::string openedName_;
+    int fd_ {-1};
 };
 
 ShmHolder::ShmHolder(const std::string& name)
@@ -124,8 +126,7 @@ ShmHolder::ShmHolder(const std::string& name)
 
     static auto shmFailedWithErrno = [this](const std::string& what) {
         std::ostringstream msg;
-        msg << "ShmHolder[" << openedName_ << "]: "
-        << what << " failed, errno=" << errno;
+        msg << "ShmHolder[" << openedName_ << "]: " << what << " failed, errno=" << errno;
         throw std::runtime_error {msg.str()};
     };
 
@@ -191,25 +192,27 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 
     // full area size: +15 to take care of maximum padding size
     const auto areaSize = sizeof(SHMHeader) + 2 * frameSize + 15;
-    JAMI_DBG("ShmHolder[%s]: new sizes: f=%zu, a=%zu", openedName_.c_str(),
-             frameSize, areaSize);
+    JAMI_DBG("ShmHolder[%s]: new sizes: f=%zu, a=%zu", openedName_.c_str(), frameSize, areaSize);
 
     unMapShmArea();
 
     if (::ftruncate(fd_, areaSize) < 0) {
         JAMI_ERR("ShmHolder[%s]: ftruncate(%zu) failed with errno %d",
-                 openedName_.c_str(), areaSize, errno);
+                 openedName_.c_str(),
+                 areaSize,
+                 errno);
         return false;
     }
 
-    area_ = static_cast<SHMHeader*>(::mmap(nullptr, areaSize,
-                                           PROT_READ | PROT_WRITE,
-                                           MAP_SHARED, fd_, 0));
+    area_ = static_cast<SHMHeader*>(
+        ::mmap(nullptr, areaSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0));
 
     if (area_ == MAP_FAILED) {
         areaSize_ = 0;
         JAMI_ERR("ShmHolder[%s]: mmap(%zu) failed with errno %d",
-                 openedName_.c_str(), areaSize, errno);
+                 openedName_.c_str(),
+                 areaSize,
+                 errno);
         return false;
     }
 
@@ -241,8 +244,7 @@ ShmHolder::renderFrame(const VideoFrame& src) noexcept
     const auto frameSize = videoFrameSize(format, width, height);
 
     if (!resizeArea(frameSize)) {
-        JAMI_ERR("ShmHolder[%s]: could not resize area",
-                 openedName_.c_str());
+        JAMI_ERR("ShmHolder[%s]: could not resize area", openedName_.c_str());
         return;
     }
 
@@ -357,25 +359,35 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     if (doTransfer) {
         std::shared_ptr<VideoFrame> frame;
 #ifdef RING_ACCEL
-        auto desc = av_pix_fmt_desc_get((AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
+        auto desc = av_pix_fmt_desc_get(
+            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
-            frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p), AV_PIX_FMT_NV12);
+            frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
+                                                            frame_p),
+                                                        AV_PIX_FMT_NV12);
         else
 #endif
-        frame = std::static_pointer_cast<VideoFrame>(frame_p);
-        AVFrameSideData* side_data = av_frame_get_side_data(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+            frame = std::static_pointer_cast<VideoFrame>(frame_p);
+        AVFrameSideData* side_data = av_frame_get_side_data(frame->pointer(),
+                                                            AV_FRAME_DATA_DISPLAYMATRIX);
         int angle = 0;
         if (side_data) {
             auto matrix_rotation = reinterpret_cast<int32_t*>(side_data->data);
             angle = -av_display_rotation_get(matrix_rotation);
         }
         if (angle != rotation_) {
-            filter_ = getTransposeFilter(angle, FILTER_INPUT_NAME, frame->width(), frame->height(), AV_PIX_FMT_RGB32, false);
+            filter_ = getTransposeFilter(angle,
+                                         FILTER_INPUT_NAME,
+                                         frame->width(),
+                                         frame->height(),
+                                         AV_PIX_FMT_RGB32,
+                                         false);
             rotation_ = angle;
         }
         if (filter_) {
             filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
-            frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(filter_->readOutput()));
+            frame = std::static_pointer_cast<VideoFrame>(
+                std::shared_ptr<MediaFrame>(filter_->readOutput()));
         }
         if (frame->height() != height_ || frame->width() != width_) {
             setFrameSize(0, 0);
@@ -415,15 +427,19 @@ SinkClient::setFrameSize(int width, int height)
     height_ = height;
     if (width > 0 and height > 0) {
         JAMI_WARN("Start sink <%s / %s>, size=%dx%d, mixer=%u",
-                 getId().c_str(), openedName().c_str(), width, height, mixer_);
+                  getId().c_str(),
+                  openedName().c_str(),
+                  width,
+                  height,
+                  mixer_);
         emitSignal<DRing::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
         started_ = true;
     } else if (started_) {
-        JAMI_ERR("Stop sink <%s / %s>, mixer=%u",
-                 getId().c_str(), openedName().c_str(), mixer_);
+        JAMI_ERR("Stop sink <%s / %s>, mixer=%u", getId().c_str(), openedName().c_str(), mixer_);
         emitSignal<DRing::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
         started_ = false;
     }
 }
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

@@ -32,8 +32,8 @@
 
 namespace jami {
 
-Tone::Tone(const std::string& definition, unsigned int sampleRate) :
-    AudioLoop(sampleRate)
+Tone::Tone(const std::string& definition, unsigned int sampleRate)
+    : AudioLoop(sampleRate)
 {
     genBuffer(definition); // allocate memory with definition parameter
 }
@@ -52,10 +52,10 @@ Tone::genBuffer(const std::string& definition)
 
     // Number of format sections
     std::string::size_type posStart = 0; // position of precedent comma
-    std::string::size_type posEnd = 0; // position of the next comma
+    std::string::size_type posEnd = 0;   // position of the next comma
 
     std::string s; // portion of frequency
-    size_t count; // number of int for one sequence
+    size_t count;  // number of int for one sequence
 
     std::string::size_type deflen = definition.length();
 
@@ -101,8 +101,8 @@ Tone::genBuffer(const std::string& definition)
                 count = (sampleRate * time) / 1000;
 
             // Generate SAMPLING_RATE samples of sinus, buffer is the result
-            buffer.resize(size+count);
-            genSin(&(*(buffer.begin()+bufferPos)), low, high, count);
+            buffer.resize(size + count);
+            genSin(&(*(buffer.begin() + bufferPos)), low, high, count);
 
             // To concatenate the different buffers for each section.
             size += count;
@@ -119,12 +119,12 @@ void
 Tone::genSin(AudioSample* buffer, int lowFrequency, int highFrequency, size_t nb)
 {
     static constexpr auto PI = 3.141592653589793238462643383279502884L;
-    const double sr = (double)buffer_->getSampleRate();
+    const double sr = (double) buffer_->getSampleRate();
     const double dx_h = sr ? 2.0 * PI * lowFrequency / sr : 0.0;
     const double dx_l = sr ? 2.0 * PI * highFrequency / sr : 0.0;
     static constexpr double DATA_AMPLITUDE = 2048;
-    for (size_t t = 0; t < nb; t ++) {
-        buffer[t] = DATA_AMPLITUDE * (sin(t*dx_h) + sin(t*dx_l));
+    for (size_t t = 0; t < nb; t++) {
+        buffer[t] = DATA_AMPLITUDE * (sin(t * dx_h) + sin(t * dx_l));
     }
 }
 

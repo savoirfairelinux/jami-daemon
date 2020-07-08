@@ -26,7 +26,8 @@
 #include "logger.h"
 #include "noncopyable.h"
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class VideoDeviceMonitorImpl
 {
@@ -57,9 +58,9 @@ private:
 };
 
 VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
-: monitor_(monitor)
-, mutex_()
-, thread_()
+    : monitor_(monitor)
+    , mutex_()
+    , thread_()
 {}
 
 void
@@ -78,19 +79,17 @@ VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 
 void
 VideoDeviceMonitorImpl::run()
-{
-}
+{}
 
 VideoDeviceMonitor::VideoDeviceMonitor()
-: preferences_()
-, devices_()
-, monitorImpl_(new VideoDeviceMonitorImpl(this))
+    : preferences_()
+    , devices_()
+    , monitorImpl_(new VideoDeviceMonitorImpl(this))
 {
     monitorImpl_->start();
 }
 
-VideoDeviceMonitor::~VideoDeviceMonitor()
-{}
+VideoDeviceMonitor::~VideoDeviceMonitor() {}
 
-}} // namespace jami::video
-
+} // namespace video
+} // namespace jami

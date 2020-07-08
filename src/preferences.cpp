@@ -76,9 +76,9 @@ namespace jami {
 
 using yaml_utils::parseValue;
 
-constexpr const char * const Preferences::CONFIG_LABEL;
-const char * const Preferences::DFT_ZONE = "North America";
-const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
+constexpr const char* const Preferences::CONFIG_LABEL;
+const char* const Preferences::DFT_ZONE = "North America";
+const char* const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
 
 // general preferences
 static constexpr const char* ORDER_KEY {"order"};
@@ -92,7 +92,7 @@ static constexpr const char* SEARCH_BAR_DISPLAY_KEY {"searchBarDisplay"};
 static constexpr const char* MD5_HASH_KEY {"md5Hash"};
 
 // voip preferences
-constexpr const char * const VoipPreference::CONFIG_LABEL;
+constexpr const char* const VoipPreference::CONFIG_LABEL;
 static constexpr const char* DISABLE_SECURE_DLG_CHECK_KEY {"disableSecureDlgCheck"};
 static constexpr const char* PLAY_DTMF_KEY {"playDtmf"};
 static constexpr const char* PLAY_TONES_KEY {"playTones"};
@@ -101,7 +101,7 @@ static constexpr const char* SYMMETRIC_RTP_KEY {"symmetric"};
 static constexpr const char* ZID_FILE_KEY {"zidFile"};
 
 // hooks preferences
-constexpr const char * const HookPreference::CONFIG_LABEL;
+constexpr const char* const HookPreference::CONFIG_LABEL;
 static constexpr const char* NUMBER_ADD_PREFIX_KEY {"numberAddPrefix"};
 static constexpr const char* NUMBER_ENABLED_KEY {"numberEnabled"};
 static constexpr const char* SIP_ENABLED_KEY {"sipEnabled"};
@@ -109,7 +109,7 @@ static constexpr const char* URL_COMMAND_KEY {"urlCommand"};
 static constexpr const char* URL_SIP_FIELD_KEY {"urlSipField"};
 
 // audio preferences
-constexpr const char * const AudioPreference::CONFIG_LABEL;
+constexpr const char* const AudioPreference::CONFIG_LABEL;
 static constexpr const char* ALSAMAP_KEY {"alsa"};
 static constexpr const char* PULSEMAP_KEY {"pulse"};
 static constexpr const char* CARDIN_KEY {"cardIn"};
@@ -131,7 +131,7 @@ static constexpr const char* CAPTURE_MUTED_KEY {"captureMuted"};
 static constexpr const char* PLAYBACK_MUTED_KEY {"playbackMuted"};
 
 // shortcut preferences
-constexpr const char * const ShortcutPreferences::CONFIG_LABEL;
+constexpr const char* const ShortcutPreferences::CONFIG_LABEL;
 static constexpr const char* HANGUP_SHORT_KEY {"hangUp"};
 static constexpr const char* PICKUP_SHORT_KEY {"pickUp"};
 static constexpr const char* POPUP_SHORT_KEY {"popupWindow"};
@@ -140,7 +140,7 @@ static constexpr const char* TOGGLE_PICKUP_HANGUP_SHORT_KEY {"togglePickupHangup
 
 #ifdef ENABLE_VIDEO
 // video preferences
-constexpr const char * const VideoPreferences::CONFIG_LABEL;
+constexpr const char* const VideoPreferences::CONFIG_LABEL;
 static constexpr const char* DECODING_ACCELERATED_KEY {"decodingAccelerated"};
 static constexpr const char* ENCODING_ACCELERATED_KEY {"encodingAccelerated"};
 static constexpr const char* RECORD_PREVIEW_KEY {"recordPreview"};
@@ -149,21 +149,20 @@ static constexpr const char* RECORD_QUALITY_KEY {"recordQuality"};
 
 #ifdef ENABLE_PLUGIN
 // plugin preferences
-constexpr const char * const PluginPreferences::CONFIG_LABEL;
+constexpr const char* const PluginPreferences::CONFIG_LABEL;
 static constexpr const char* JAMI_PLUGIN_KEY {"pluginsEnabled"};
 static constexpr const char* JAMI_PLUGINS_LOADED_KEY {"loadedPlugins"};
 #endif
 
 static constexpr int PULSE_LENGTH_DEFAULT {250}; /** Default DTMF length */
 #ifndef _MSC_VER
-static constexpr const char* ALSA_DFT_CARD {"0"};          /** Default sound card index */
+static constexpr const char* ALSA_DFT_CARD {"0"}; /** Default sound card index */
 #else
-static constexpr const char* ALSA_DFT_CARD {"-1"};         /** Default sound card index (Portaudio) */
+static constexpr const char* ALSA_DFT_CARD {"-1"}; /** Default sound card index (Portaudio) */
 #endif // _MSC_VER
 
-
-Preferences::Preferences() :
-    accountOrder_("")
+Preferences::Preferences()
+    : accountOrder_("")
     , historyLimit_(0)
     , historyMaxCalls_(20)
     , ringingTimeout_(30)
@@ -174,7 +173,8 @@ Preferences::Preferences() :
     , md5Hash_(false)
 {}
 
-void Preferences::verifyAccountOrder(const std::vector<std::string> &accountIDs)
+void
+Preferences::verifyAccountOrder(const std::vector<std::string>& accountIDs)
 {
     std::vector<std::string> tokens;
     std::string token;
@@ -196,12 +196,13 @@ void Preferences::verifyAccountOrder(const std::vector<std::string> &accountIDs)
 
     if (drop) {
         accountOrder_.clear();
-        for (const auto &t : tokens)
+        for (const auto& t : tokens)
             accountOrder_ += t + "/";
     }
 }
 
-void Preferences::addAccount(const std::string &newAccountID)
+void
+Preferences::addAccount(const std::string& newAccountID)
 {
     // Add the newly created account in the account order list
     if (not accountOrder_.empty())
@@ -210,7 +211,8 @@ void Preferences::addAccount(const std::string &newAccountID)
         accountOrder_ = newAccountID + "/";
 }
 
-void Preferences::removeAccount(const std::string &oldAccountID)
+void
+Preferences::removeAccount(const std::string& oldAccountID)
 {
     // include the slash since we don't want to remove a partial match
     const size_t start = accountOrder_.find(oldAccountID + "/");
@@ -218,7 +220,8 @@ void Preferences::removeAccount(const std::string &oldAccountID)
         accountOrder_.erase(start, oldAccountID.length() + 1);
 }
 
-void Preferences::serialize(YAML::Emitter &out) const
+void
+Preferences::serialize(YAML::Emitter& out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
 
@@ -234,9 +237,10 @@ void Preferences::serialize(YAML::Emitter &out) const
     out << YAML::EndMap;
 }
 
-void Preferences::unserialize(const YAML::Node &in)
+void
+Preferences::unserialize(const YAML::Node& in)
 {
-    const auto &node = in[CONFIG_LABEL];
+    const auto& node = in[CONFIG_LABEL];
 
     parseValue(node, ORDER_KEY, accountOrder_);
     parseValue(node, HISTORY_LIMIT_KEY, historyLimit_);
@@ -249,15 +253,16 @@ void Preferences::unserialize(const YAML::Node &in)
     parseValue(node, MD5_HASH_KEY, md5Hash_);
 }
 
-VoipPreference::VoipPreference() :
-    disableSecureDlgCheck_(false)
+VoipPreference::VoipPreference()
+    : disableSecureDlgCheck_(false)
     , playDtmf_(true)
     , playTones_(true)
     , pulseLength_(PULSE_LENGTH_DEFAULT)
     , symmetricRtp_(true)
 {}
 
-void VoipPreference::serialize(YAML::Emitter &out) const
+void
+VoipPreference::serialize(YAML::Emitter& out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << DISABLE_SECURE_DLG_CHECK_KEY << YAML::Value << disableSecureDlgCheck_;
@@ -269,9 +274,10 @@ void VoipPreference::serialize(YAML::Emitter &out) const
     out << YAML::EndMap;
 }
 
-void VoipPreference::unserialize(const YAML::Node &in)
+void
+VoipPreference::unserialize(const YAML::Node& in)
 {
-    const auto &node = in[CONFIG_LABEL];
+    const auto& node = in[CONFIG_LABEL];
     parseValue(node, DISABLE_SECURE_DLG_CHECK_KEY, disableSecureDlgCheck_);
     parseValue(node, PLAY_DTMF_KEY, playDtmf_);
     parseValue(node, PLAY_TONES_KEY, playTones_);
@@ -288,7 +294,7 @@ HookPreference::HookPreference()
     , urlSipField_("X-ring-url")
 {}
 
-HookPreference::HookPreference(const std::map<std::string, std::string> &settings)
+HookPreference::HookPreference(const std::map<std::string, std::string>& settings)
     : numberAddPrefix_(settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")->second)
     , numberEnabled_(settings.find("PHONE_NUMBER_HOOK_ENABLED")->second == "true")
     , sipEnabled_(settings.find("URLHOOK_SIP_ENABLED")->second == "true")
@@ -296,7 +302,8 @@ HookPreference::HookPreference(const std::map<std::string, std::string> &setting
     , urlSipField_(settings.find("URLHOOK_SIP_FIELD")->second)
 {}
 
-std::map<std::string, std::string> HookPreference::toMap() const
+std::map<std::string, std::string>
+HookPreference::toMap() const
 {
     std::map<std::string, std::string> settings;
     settings["PHONE_NUMBER_HOOK_ADD_PREFIX"] = numberAddPrefix_;
@@ -308,7 +315,8 @@ std::map<std::string, std::string> HookPreference::toMap() const
     return settings;
 }
 
-void HookPreference::serialize(YAML::Emitter &out) const
+void
+HookPreference::serialize(YAML::Emitter& out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << NUMBER_ADD_PREFIX_KEY << YAML::Value << numberAddPrefix_;
@@ -318,9 +326,10 @@ void HookPreference::serialize(YAML::Emitter &out) const
     out << YAML::EndMap;
 }
 
-void HookPreference::unserialize(const YAML::Node &in)
+void
+HookPreference::unserialize(const YAML::Node& in)
 {
-    const auto &node = in[CONFIG_LABEL];
+    const auto& node = in[CONFIG_LABEL];
 
     parseValue(node, NUMBER_ADD_PREFIX_KEY, numberAddPrefix_);
     parseValue(node, SIP_ENABLED_KEY, sipEnabled_);
@@ -328,7 +337,8 @@ void HookPreference::unserialize(const YAML::Node &in)
     parseValue(node, URL_SIP_FIELD_KEY, urlSipField_);
 }
 
-void HookPreference::runHook(pjsip_msg *msg)
+void
+HookPreference::runHook(pjsip_msg* msg)
 {
     if (sipEnabled_) {
         const std::string header(sip_utils::fetchHeaderValue(msg, urlSipField_));
@@ -336,8 +346,8 @@ void HookPreference::runHook(pjsip_msg *msg)
     }
 }
 
-AudioPreference::AudioPreference() :
-    audioApi_(PULSEAUDIO_API_STR)
+AudioPreference::AudioPreference()
+    : audioApi_(PULSEAUDIO_API_STR)
     , alsaCardin_(atoi(ALSA_DFT_CARD))
     , alsaCardout_(atoi(ALSA_DFT_CARD))
     , alsaCardring_(atoi(ALSA_DFT_CARD))
@@ -362,7 +372,7 @@ AudioPreference::AudioPreference() :
 static const int ALSA_DFT_CARD_ID = 0; // Index of the default soundcard
 
 static void
-checkSoundCard(int &card, DeviceType type)
+checkSoundCard(int& card, AudioDeviceType type)
 {
     if (not AlsaLayer::soundCardIndexExists(card, type)) {
         JAMI_WARN(" Card with index %d doesn't exist or is unusable.", card);
@@ -406,7 +416,7 @@ AudioPreference::createAudioLayer()
     if (audioApi_ == PULSEAUDIO_API_STR) {
         try {
             return new PulseLayer(*this);
-        } catch (const std::runtime_error &e) {
+        } catch (const std::runtime_error& e) {
             JAMI_WARN("Could not create pulseaudio layer, falling back to ALSA");
         }
     }
@@ -416,9 +426,9 @@ AudioPreference::createAudioLayer()
 #if HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
-    checkSoundCard(alsaCardin_, DeviceType::CAPTURE);
-    checkSoundCard(alsaCardout_, DeviceType::PLAYBACK);
-    checkSoundCard(alsaCardring_, DeviceType::RINGTONE);
+    checkSoundCard(alsaCardin_, AudioDeviceType::CAPTURE);
+    checkSoundCard(alsaCardout_, AudioDeviceType::PLAYBACK);
+    checkSoundCard(alsaCardring_, AudioDeviceType::RINGTONE);
 
     return new AlsaLayer(*this);
 #endif
@@ -427,7 +437,7 @@ AudioPreference::createAudioLayer()
     audioApi_ = COREAUDIO_API_STR;
     try {
         return new CoreLayer(*this);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error& e) {
         JAMI_WARN("Could not create coreaudio layer. There will be no sound.");
     }
     return NULL;
@@ -437,7 +447,7 @@ AudioPreference::createAudioLayer()
     audioApi_ = PORTAUDIO_API_STR;
     try {
         return new PortAudioLayer(*this);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::runtime_error& e) {
         JAMI_WARN("Could not create PortAudio layer. There will be no sound.");
     }
     return nullptr;
@@ -451,29 +461,31 @@ AudioPreference::createAudioLayer()
 std::vector<std::string>
 AudioPreference::getSupportedAudioManagers()
 {
-    return {
+    return
+    {
 #if HAVE_OPENSL
         OPENSL_API_STR,
 #endif
 #if HAVE_ALSA
-        ALSA_API_STR,
+            ALSA_API_STR,
 #endif
 #if HAVE_PULSE
-        PULSEAUDIO_API_STR,
+            PULSEAUDIO_API_STR,
 #endif
 #if HAVE_JACK
-        JACK_API_STR,
+            JACK_API_STR,
 #endif
 #if HAVE_COREAUDIO
-        COREAUDIO_API_STR,
+            COREAUDIO_API_STR,
 #endif
 #if HAVE_PORTAUDIO
-        PORTAUDIO_API_STR,
+            PORTAUDIO_API_STR,
 #endif
     };
 }
 
-void AudioPreference::serialize(YAML::Emitter &out) const
+void
+AudioPreference::serialize(YAML::Emitter& out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     // alsa submap
@@ -509,7 +521,7 @@ void AudioPreference::serialize(YAML::Emitter &out) const
 }
 
 bool
-AudioPreference::setRecordPath(const std::string &r)
+AudioPreference::setRecordPath(const std::string& r)
 {
     std::string path = fileutils::expand_path(r);
     if (fileutils::isDirectoryWritable(path)) {
@@ -521,12 +533,13 @@ AudioPreference::setRecordPath(const std::string &r)
     }
 }
 
-void AudioPreference::unserialize(const YAML::Node &in)
+void
+AudioPreference::unserialize(const YAML::Node& in)
 {
-    const auto &node = in[CONFIG_LABEL];
+    const auto& node = in[CONFIG_LABEL];
 
     // alsa submap
-    const auto &alsa = node[ALSAMAP_KEY];
+    const auto& alsa = node[ALSAMAP_KEY];
 
     parseValue(alsa, CARDIN_KEY, alsaCardin_);
     parseValue(alsa, CARDOUT_KEY, alsaCardout_);
@@ -543,7 +556,7 @@ void AudioPreference::unserialize(const YAML::Node &in)
     parseValue(node, PLAYBACK_MUTED_KEY, playbackMuted_);
 
     // pulse submap
-    const auto &pulse = node[PULSEMAP_KEY];
+    const auto& pulse = node[PULSEMAP_KEY];
     parseValue(pulse, DEVICE_PLAYBACK_KEY, pulseDevicePlayback_);
     parseValue(pulse, DEVICE_RECORD_KEY, pulseDeviceRecord_);
     parseValue(pulse, DEVICE_RINGTONE_KEY, pulseDeviceRingtone_);
@@ -555,10 +568,16 @@ void AudioPreference::unserialize(const YAML::Node &in)
     parseValue(node, ECHO_CANCELLER, echoCanceller_);
 }
 
-ShortcutPreferences::ShortcutPreferences() : hangup_(), pickup_(), popup_(),
-    toggleHold_(), togglePickupHangup_() {}
+ShortcutPreferences::ShortcutPreferences()
+    : hangup_()
+    , pickup_()
+    , popup_()
+    , toggleHold_()
+    , togglePickupHangup_()
+{}
 
-std::map<std::string, std::string> ShortcutPreferences::getShortcuts() const
+std::map<std::string, std::string>
+ShortcutPreferences::getShortcuts() const
 {
     std::map<std::string, std::string> shortcutsMap;
 
@@ -571,7 +590,8 @@ std::map<std::string, std::string> ShortcutPreferences::getShortcuts() const
     return shortcutsMap;
 }
 
-void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
+void
+ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
 {
     hangup_ = map[HANGUP_SHORT_KEY];
     pickup_ = map[PICKUP_SHORT_KEY];
@@ -580,8 +600,8 @@ void ShortcutPreferences::setShortcuts(std::map<std::string, std::string> map)
     togglePickupHangup_ = map[TOGGLE_PICKUP_HANGUP_SHORT_KEY];
 }
 
-
-void ShortcutPreferences::serialize(YAML::Emitter &out) const
+void
+ShortcutPreferences::serialize(YAML::Emitter& out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << HANGUP_SHORT_KEY << YAML::Value << hangup_;
@@ -592,9 +612,10 @@ void ShortcutPreferences::serialize(YAML::Emitter &out) const
     out << YAML::EndMap;
 }
 
-void ShortcutPreferences::unserialize(const YAML::Node &in)
+void
+ShortcutPreferences::unserialize(const YAML::Node& in)
 {
-    const auto &node = in[CONFIG_LABEL];
+    const auto& node = in[CONFIG_LABEL];
 
     parseValue(node, HANGUP_SHORT_KEY, hangup_);
     parseValue(node, PICKUP_SHORT_KEY, pickup_);
@@ -609,10 +630,10 @@ VideoPreferences::VideoPreferences()
     , encodingAccelerated_(false)
     , recordPreview_(true)
     , recordQuality_(0)
-{
-}
+{}
 
-void VideoPreferences::serialize(YAML::Emitter &out) const
+void
+VideoPreferences::serialize(YAML::Emitter& out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << RECORD_PREVIEW_KEY << YAML::Value << recordPreview_;
@@ -625,10 +646,11 @@ void VideoPreferences::serialize(YAML::Emitter &out) const
     out << YAML::EndMap;
 }
 
-void VideoPreferences::unserialize(const YAML::Node &in)
+void
+VideoPreferences::unserialize(const YAML::Node& in)
 {
     // values may or may not be present
-    const auto &node = in[CONFIG_LABEL];
+    const auto& node = in[CONFIG_LABEL];
     try {
         parseValue(node, RECORD_PREVIEW_KEY, recordPreview_);
         parseValue(node, RECORD_QUALITY_KEY, recordQuality_);
@@ -654,7 +676,8 @@ PluginPreferences::PluginPreferences()
     : pluginsEnabled_(false)
 {}
 
-void PluginPreferences::serialize(YAML::Emitter &out) const
+void
+PluginPreferences::serialize(YAML::Emitter& out) const
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << JAMI_PLUGIN_KEY << YAML::Value << pluginsEnabled_;
@@ -662,17 +685,18 @@ void PluginPreferences::serialize(YAML::Emitter &out) const
     out << YAML::EndMap;
 }
 
-void PluginPreferences::unserialize(const YAML::Node &in)
+void
+PluginPreferences::unserialize(const YAML::Node& in)
 {
     // values may or may not be present
-    const auto &node = in[CONFIG_LABEL];
+    const auto& node = in[CONFIG_LABEL];
     try {
         parseValue(node, JAMI_PLUGIN_KEY, pluginsEnabled_);
     } catch (...) {
         pluginsEnabled_ = false;
     }
 
-    const auto &loadedPluginsNode = node[JAMI_PLUGINS_LOADED_KEY];
+    const auto& loadedPluginsNode = node[JAMI_PLUGINS_LOADED_KEY];
     try {
         loadedPlugins_ = yaml_utils::parseVector(loadedPluginsNode);
     } catch (...) {

@@ -61,112 +61,115 @@ class SipTransportBroker;
  * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).
  */
 
-class SIPVoIPLink {
-    public:
-        SIPVoIPLink();
-        ~SIPVoIPLink();
+class SIPVoIPLink
+{
+public:
+    SIPVoIPLink();
+    ~SIPVoIPLink();
 
-        /**
-         * Destroy structures
-         */
-        void shutdown();
+    /**
+     * Destroy structures
+     */
+    void shutdown();
 
-        /**
-         * Event listener. Each event send by the call manager is received and handled from here
-         */
-        void handleEvents();
+    /**
+     * Event listener. Each event send by the call manager is received and handled from here
+     */
+    void handleEvents();
 
-        /**
-         * Register a new keepalive registration timer to this endpoint
-         */
-        void registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay);
+    /**
+     * Register a new keepalive registration timer to this endpoint
+     */
+    void registerKeepAliveTimer(pj_timer_entry& timer, pj_time_val& delay);
 
-        /**
-         * Abort currently registered timer
-         */
-        void cancelKeepAliveTimer(pj_timer_entry& timer);
+    /**
+     * Abort currently registered timer
+     */
+    void cancelKeepAliveTimer(pj_timer_entry& timer);
 
-        /**
-         * Get the memory pool factory since each calls has its own memory pool
-         */
-        pj_caching_pool *getMemoryPoolFactory();
+    /**
+     * Get the memory pool factory since each calls has its own memory pool
+     */
+    pj_caching_pool* getMemoryPoolFactory();
 
-        /**
-         * Create the default UDP transport according ot Ip2Ip profile settings
-         */
-        void createDefaultSipUdpTransport();
+    /**
+     * Create the default UDP transport according ot Ip2Ip profile settings
+     */
+    void createDefaultSipUdpTransport();
 
-    public:
-        static void createSDPOffer(pjsip_inv_session *inv,
-                                   pjmedia_sdp_session **p_offer);
+public:
+    static void createSDPOffer(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer);
 
-        /**
-         * Instance that maintain and manage transport (UDP, TLS)
-         */
-        std::unique_ptr<SipTransportBroker> sipTransportBroker;
+    /**
+     * Instance that maintain and manage transport (UDP, TLS)
+     */
+    std::unique_ptr<SipTransportBroker> sipTransportBroker;
 
-        typedef std::function<void(std::vector<IpAddr>)> SrvResolveCallback;
-        void resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback&& cb);
+    typedef std::function<void(std::vector<IpAddr>)> SrvResolveCallback;
+    void resolveSrvName(const std::string& name,
+                        pjsip_transport_type_e type,
+                        SrvResolveCallback&& cb);
 
-        /**
-         * Guess the account related to an incoming SIP call.
-         */
-        std::shared_ptr<SIPAccountBase>
-        guessAccount(const std::string& userName,
-                     const std::string& server,
-                     const std::string& fromUri) const;
+    /**
+     * Guess the account related to an incoming SIP call.
+     */
+    std::shared_ptr<SIPAccountBase> guessAccount(const std::string& userName,
+                                                 const std::string& server,
+                                                 const std::string& fromUri) const;
 
-        int getModId();
-        pjsip_endpoint * getEndpoint();
-        pjsip_module * getMod();
+    int getModId();
+    pjsip_endpoint* getEndpoint();
+    pjsip_module* getMod();
 
-        pj_caching_pool* getCachingPool() noexcept;
-        pj_pool_t* getPool() noexcept;
+    pj_caching_pool* getCachingPool() noexcept;
+    pj_pool_t* getPool() noexcept;
 
-        /**
-         * Get the correct address to use (ie advertised) from
-         * a uri. The corresponding transport that should be used
-         * with that uri will be discovered.
-         *
-         * @param uri The uri from which we want to discover the address to use
-         * @param transport The transport to use to discover the address
-         */
-        void findLocalAddressFromTransport(pjsip_transport* transport,
-                                           pjsip_transport_type_e transportType,
-                                           const std::string& host,
-                                           std::string& address,
-                                           pj_uint16_t& port) const;
+    /**
+     * Get the correct address to use (ie advertised) from
+     * a uri. The corresponding transport that should be used
+     * with that uri will be discovered.
+     *
+     * @param uri The uri from which we want to discover the address to use
+     * @param transport The transport to use to discover the address
+     */
+    void findLocalAddressFromTransport(pjsip_transport* transport,
+                                       pjsip_transport_type_e transportType,
+                                       const std::string& host,
+                                       std::string& address,
+                                       pj_uint16_t& port) const;
 
-        bool findLocalAddressFromSTUN(pjsip_transport* transport,
-                                      pj_str_t* stunServerName,
-                                      int stunPort, std::string& address,
-                                      pj_uint16_t& port) const;
+    bool findLocalAddressFromSTUN(pjsip_transport* transport,
+                                  pj_str_t* stunServerName,
+                                  int stunPort,
+                                  std::string& address,
+                                  pj_uint16_t& port) const;
 
-        /**
-         * Initialize the transport selector
-         * @param transport     A transport associated with an account
-         * @return          	A transport selector structure
-         */
-        static inline pjsip_tpselector getTransportSelector(pjsip_transport *transport) {
-            pjsip_tpselector tp;
-            tp.type = PJSIP_TPSELECTOR_TRANSPORT;
-            tp.u.transport = transport;
-            return tp;
-        }
+    /**
+     * Initialize the transport selector
+     * @param transport     A transport associated with an account
+     * @return          	A transport selector structure
+     */
+    static inline pjsip_tpselector getTransportSelector(pjsip_transport* transport)
+    {
+        pjsip_tpselector tp;
+        tp.type = PJSIP_TPSELECTOR_TRANSPORT;
+        tp.u.transport = transport;
+        return tp;
+    }
 
-    private:
-        NON_COPYABLE(SIPVoIPLink);
+private:
+    NON_COPYABLE(SIPVoIPLink);
 
-        mutable pj_caching_pool cp_;
-        std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
-        std::atomic_bool running_ {true};
-        std::thread sipThread_;
+    mutable pj_caching_pool cp_;
+    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
+    std::atomic_bool running_ {true};
+    std::thread sipThread_;
 
 #ifdef ENABLE_VIDEO
-        void requestKeyframe(const std::string &callID);
+    void requestKeyframe(const std::string& callID);
 #endif
 
-        friend class SIPTest;
+    friend class SIPTest;
 };
 
 } // namespace jami

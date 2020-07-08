@@ -41,7 +41,8 @@ namespace jami {
 
 struct AccountArchive;
 
-struct AccountInfo {
+struct AccountInfo
+{
     dht::crypto::Identity identity;
     std::unique_ptr<ContactList> contacts;
     std::string accountId;
@@ -52,9 +53,10 @@ struct AccountInfo {
     std::string photo;
 };
 
-template <typename To, typename From>
+template<typename To, typename From>
 std::unique_ptr<To>
-dynamic_unique_cast(std::unique_ptr<From>&& p) {
+dynamic_unique_cast(std::unique_ptr<From>&& p)
+{
     if (auto cast = dynamic_cast<To*>(p.get())) {
         std::unique_ptr<To> result(cast);
         p.release();
@@ -63,7 +65,8 @@ dynamic_unique_cast(std::unique_ptr<From>&& p) {
     return {};
 }
 
-class AccountManager {
+class AccountManager
+{
 public:
     using AsyncUser = std::function<void(AccountManager&)>;
     using OnAsync = std::function<void(AsyncUser&&)>;
@@ -71,13 +74,10 @@ public:
     using clock = std::chrono::system_clock;
     using time_point = clock::time_point;
 
-    AccountManager(
-        const std::string& path,
-        OnAsync&& onAsync,
-        const std::string& nameServer)
-    : path_(path)
-    , onAsync_(std::move(onAsync))
-    , nameDir_(NameDirectory::instance(nameServer)) {};
+    AccountManager(const std::string& path, OnAsync&& onAsync, const std::string& nameServer)
+        : path_(path)
+        , onAsync_(std::move(onAsync))
+        , nameDir_(NameDirectory::instance(nameServer)) {};
 
     virtual ~AccountManager() = default;
 
@@ -85,18 +85,12 @@ public:
 
     // Auth
 
-    enum class AuthError {
-        UNKNOWN,
-        INVALID_ARGUMENTS,
-        SERVER_ERROR,
-        NETWORK
-    };
+    enum class AuthError { UNKNOWN, INVALID_ARGUMENTS, SERVER_ERROR, NETWORK };
 
-    using AuthSuccessCallback = std::function<void(
-        const AccountInfo& info,
-        const std::map<std::string, std::string>& config,
-        std::string&& receipt,
-        std::vector<uint8_t>&& receipt_signature)>;
+    using AuthSuccessCallback = std::function<void(const AccountInfo& info,
+                                                   const std::map<std::string, std::string>& config,
+                                                   std::string&& receipt,
+                                                   std::vector<uint8_t>&& receipt_signature)>;
 
     using AuthFailureCallback = std::function<void(AuthError error, const std::string& message)>;
     using DeviceSyncCallback = std::function<void(DeviceSync&& syncData)>;
@@ -105,20 +99,21 @@ public:
 
     CertRequest buildRequest(PrivateKey fDeviceKey);
 
-    struct AccountCredentials {
+    struct AccountCredentials
+    {
         std::string scheme;
         std::string uri;
         std::string password;
         virtual ~AccountCredentials() {};
     };
 
-    virtual void initAuthentication(
-        PrivateKey request,
-        std::string deviceName,
-        std::unique_ptr<AccountCredentials> credentials,
-        AuthSuccessCallback onSuccess,
-        AuthFailureCallback onFailure,
-        OnChangeCallback onChange) = 0;
+    virtual void initAuthentication(PrivateKey request,
+                                    std::string deviceName,
+                                    std::unique_ptr<AccountCredentials> credentials,
+                                    AuthSuccessCallback onSuccess,
+                                    AuthFailureCallback onFailure,
+                                    OnChangeCallback onChange)
+        = 0;
 
     virtual bool changePassword(const std::string& password_old, const std::string& password_new) = 0;
 
@@ -126,22 +121,21 @@ public:
 
     virtual bool isPasswordValid(const std::string& /*password*/) { return false; };
 
-    dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const;
+    dht::crypto::Identity loadIdentity(const std::string& crt_path,
+                                       const std::string& key_path,
+                                       const std::string& key_pwd) const;
 
-    const AccountInfo* useIdentity(
-        const dht::crypto::Identity& id,
-        const std::string& receipt,
-        const std::vector<uint8_t>& receiptSignature,
-        const std::string& username,
-        OnChangeCallback&& onChange);
+    const AccountInfo* useIdentity(const dht::crypto::Identity& id,
+                                   const std::string& receipt,
+                                   const std::vector<uint8_t>& receiptSignature,
+                                   const std::string& username,
+                                   OnChangeCallback&& onChange);
 
     void setDht(const std::shared_ptr<dht::DhtRunner>& dht) { dht_ = dht; }
 
     virtual void startSync();
 
-    const AccountInfo* getInfo() const {
-        return info_.get();
-    }
+    const AccountInfo* getInfo() const { return info_.get(); }
 
     // Device management
 
@@ -160,28 +154,39 @@ public:
     using RevokeDeviceCallback = std::function<void(RevokeDeviceResult)>;
 
     virtual void addDevice(const std::string& /*password*/, AddDeviceCallback) {};
-    virtual bool revokeDevice(const std::string& /*password*/, const std::string& /*device*/, RevokeDeviceCallback) { return false; };
+    virtual bool revokeDevice(const std::string& /*password*/,
+                              const std::string& /*device*/,
+                              RevokeDeviceCallback)
+    {
+        return false;
+    };
 
     const std::map<dht::InfoHash, KnownDevice>& getKnownDevices() const;
-    bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name = {}, const time_point& last_sync = time_point::min());
-    //bool removeAccountDevice(const dht::InfoHash& device);
-    void setAccountDeviceName(/*const dht::InfoHash& device,  */const std::string& name);
+    bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                            const std::string& name = {},
+                            const time_point& last_sync = time_point::min());
+    // bool removeAccountDevice(const dht::InfoHash& device);
+    void setAccountDeviceName(/*const dht::InfoHash& device,  */ const std::string& name);
     std::string getAccountDeviceName() const;
 
     void forEachDevice(const dht::InfoHash& to,
-                        std::function<void(const dht::InfoHash&)>&& op,
-                        std::function<void(bool)>&& end = {});
+                       std::function<void(const dht::InfoHash&)>&& op,
+                       std::function<void(bool)>&& end = {});
 
-    using PeerCertificateCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)>;
+    using PeerCertificateCb = std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                                                 const dht::InfoHash& peer_account)>;
     void onPeerMessage(const dht::InfoHash& peer_device, bool allowPublic, PeerCertificateCb&& cb);
-    bool onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate>& crt, bool allowPublic, dht::InfoHash& account_id);
+    bool onPeerCertificate(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                           bool allowPublic,
+                           dht::InfoHash& account_id);
 
     /**
      * Inform that a potential peer device have been found.
      * Returns true only if the device certificate is a valid device certificate.
      * In that case (true is returned) the account_id parameter is set to the peer account ID.
      */
-    static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id);
+    static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                                dht::InfoHash& account_id);
 
     // Contact requests
 
@@ -205,13 +210,17 @@ public:
     /** Obtain details about one account contact in serializable form. */
     std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
 
-    virtual bool findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
+    virtual bool findCertificate(
+        const dht::InfoHash& h,
+        std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
     bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status);
     std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status);
     tls::TrustStore::PermissionStatus getCertificateStatus(const std::string& cert_id) const;
     bool isAllowed(const crypto::Certificate& crt, bool allowPublic);
 
-    static std::shared_ptr<dht::Value> parseAnnounce(const std::string& announceBase64, const std::string& accountId, const std::string& deviceId);
+    static std::shared_ptr<dht::Value> parseAnnounce(const std::string& announceBase64,
+                                                     const std::string& accountId,
+                                                     const std::string& deviceId);
 
     // Name resolver
     using LookupCallback = NameDirectory::LookupCallback;
@@ -220,10 +229,15 @@ public:
     using RegistrationCallback = NameDirectory::RegistrationCallback;
     using SearchResponse = NameDirectory::Response;
 
-    virtual void lookupUri(const std::string& name, const std::string& defaultServer, LookupCallback cb);
+    virtual void lookupUri(const std::string& name,
+                           const std::string& defaultServer,
+                           LookupCallback cb);
     virtual void lookupAddress(const std::string& address, LookupCallback cb);
     virtual bool searchUser(const std::string& /*query*/, SearchCallback /*cb*/) { return false; }
-    virtual void registerName(const std::string& password, const std::string& name, RegistrationCallback cb) = 0;
+    virtual void registerName(const std::string& password,
+                              const std::string& name,
+                              RegistrationCallback cb)
+        = 0;
 
 protected:
     std::string path_;
@@ -234,4 +248,4 @@ protected:
     std::reference_wrapper<NameDirectory> nameDir_;
 };
 
-}
+} // namespace jami

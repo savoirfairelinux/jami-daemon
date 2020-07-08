@@ -37,17 +37,19 @@
 #include "string_utils.h"
 #include "logger.h"
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 using VideoSize = std::pair<unsigned, unsigned>;
 using FrameRate = rational<double>;
 
 class VideoDeviceImpl;
 
-class VideoDevice {
+class VideoDevice
+{
 public:
-
-    VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo);
+    VideoDevice(const std::string& path,
+                const std::vector<std::map<std::string, std::string>>& devInfo);
     ~VideoDevice();
 
     /*
@@ -73,7 +75,8 @@ public:
      *                 '800x448': ['15'],
      *                 '960x540': ['10']}}
      */
-    DRing::VideoCapabilities getCapabilities() const {
+    DRing::VideoCapabilities getCapabilities() const
+    {
         DRing::VideoCapabilities cap;
 
         for (const auto& chan : getChannelList())
@@ -82,8 +85,9 @@ public:
                 sz << size.first << "x" << size.second;
                 auto rates = getRateList(chan, size);
                 std::vector<std::string> rates_str {rates.size()};
-                std::transform(rates.begin(), rates.end(), rates_str.begin(),
-                               [](FrameRate r) { return jami::to_string(r.real()); });
+                std::transform(rates.begin(), rates.end(), rates_str.begin(), [](FrameRate r) {
+                    return jami::to_string(r.real());
+                });
                 cap[chan][sz.str()] = std::move(rates_str);
             }
 
@@ -94,7 +98,8 @@ public:
      * - frame height <= 640 pixels
      * - frame rate >= 10 fps
      */
-    VideoSettings getDefaultSettings() const {
+    VideoSettings getDefaultSettings() const
+    {
         auto settings = getSettings();
         auto channels = getChannelList();
         if (channels.empty())
@@ -114,8 +119,8 @@ public:
             auto max_rate = *std::max_element(rates.begin(), rates.end());
             if (max_rate < 10)
                 continue;
-            if (s.second > max_size.second ||
-                (s.second == max_size.second && s.first > max_size.first)) {
+            if (s.second > max_size.second
+                || (s.second == max_size.second && s.first > max_size.first)) {
                 max_size = s;
                 max_size_rate = max_rate;
             }
@@ -125,7 +130,8 @@ public:
             video_size << max_size.first << "x" << max_size.second;
             settings.video_size = video_size.str();
             settings.framerate = jami::to_string(max_size_rate.real());
-            JAMI_WARN("Default video settings: %s, %s FPS", settings.video_size.c_str(),
+            JAMI_WARN("Default video settings: %s, %s FPS",
+                      settings.video_size.c_str(),
                       settings.framerate.c_str());
         }
 
@@ -135,7 +141,8 @@ public:
     /*
      * Get the settings for the device.
      */
-    VideoSettings getSettings() const {
+    VideoSettings getSettings() const
+    {
         auto params = getDeviceParams();
         VideoSettings settings;
         settings.name = name.empty() ? params.name : name;
@@ -153,7 +160,8 @@ public:
      * If a key is missing, a valid default value is choosen. Thus, calling
      * this function with an empty map will reset the device to default.
      */
-    void applySettings(VideoSettings settings) {
+    void applySettings(VideoSettings settings)
+    {
         DeviceParams params {};
         params.name = settings.name;
         params.input = settings.id;
@@ -165,9 +173,7 @@ public:
         setDeviceParams(params);
     }
 
-    void setOrientation(int orientation) {
-      orientation_ = orientation;
-    }
+    void setOrientation(int orientation) { orientation_ = orientation; }
 
     /**
      * Returns the parameters needed for actual use of the device
@@ -176,11 +182,11 @@ public:
     std::vector<std::string> getChannelList() const;
 
 private:
-
     std::vector<VideoSize> getSizeList(const std::string& channel) const;
     std::vector<FrameRate> getRateList(const std::string& channel, VideoSize size) const;
 
-    VideoSize sizeFromString(const std::string& channel, const std::string& size) const {
+    VideoSize sizeFromString(const std::string& channel, const std::string& size) const
+    {
         auto size_list = getSizeList(channel);
         for (const auto& s : size_list) {
             if (sizeToString(s.first, s.second) == size)
@@ -189,14 +195,17 @@ private:
         return {0, 0};
     }
 
-    std::string sizeToString(unsigned w, unsigned h) const {
+    std::string sizeToString(unsigned w, unsigned h) const
+    {
         std::stringstream video_size;
         video_size << w << "x" << h;
         return video_size.str();
     }
 
-    FrameRate rateFromString(const std::string& channel, VideoSize size,
-                             const std::string& rate) const {
+    FrameRate rateFromString(const std::string& channel,
+                             VideoSize size,
+                             const std::string& rate) const
+    {
         FrameRate closest {0};
         double rate_val = 0;
         try {
@@ -238,4 +247,5 @@ private:
     std::shared_ptr<VideoDeviceImpl> deviceImpl_;
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

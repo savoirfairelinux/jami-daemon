@@ -32,6 +32,7 @@
 #include <vector>
 #include <atomic>
 #include <condition_variable>
+#include <array>
 
 extern "C" {
 struct SpeexEchoState_;
@@ -44,15 +45,15 @@ typedef struct SpeexEchoState_ SpeexEchoState;
  */
 
 // Define the audio api
-#define OPENSL_API_STR              "opensl"
-#define PULSEAUDIO_API_STR          "pulseaudio"
-#define ALSA_API_STR                "alsa"
-#define JACK_API_STR                "jack"
-#define COREAUDIO_API_STR           "coreaudio"
-#define PORTAUDIO_API_STR           "portaudio"
+#define OPENSL_API_STR     "opensl"
+#define PULSEAUDIO_API_STR "pulseaudio"
+#define ALSA_API_STR       "alsa"
+#define JACK_API_STR       "jack"
+#define COREAUDIO_API_STR  "coreaudio"
+#define PORTAUDIO_API_STR  "portaudio"
 
-#define PCM_DEFAULT "default"         // Default ALSA plugin
-#define PCM_DSNOOP  "plug:dsnoop"     // Alsa plugin for microphone sharing
+#define PCM_DEFAULT     "default"     // Default ALSA plugin
+#define PCM_DSNOOP      "plug:dsnoop" // Alsa plugin for microphone sharing
 #define PCM_DMIX_DSNOOP "dmix/dsnoop" // Audio profile using Alsa dmix/dsnoop
 
 namespace jami {
@@ -60,69 +61,51 @@ namespace jami {
 class AudioPreference;
 class Resampler;
 
-enum class DeviceType {
-    PLAYBACK,      /** To open playback device only */
-    CAPTURE,       /** To open capture device only */
-    RINGTONE       /** To open the ringtone device only */
-};
+enum class AudioDeviceType { ALL = -1, PLAYBACK = 0, CAPTURE, RINGTONE };
 
-enum class AudioStreamType {
-    PLAYBACK,      /** To start playback stream only */
-    CAPTURE,       /** To start capture stream only */
-    DEFAULT        /** To start both playback and capture streams */
-};
-
-class AudioLayer {
-
+class AudioLayer
+{
 private:
     NON_COPYABLE(AudioLayer);
 
 protected:
-    enum class Status {
-        Idle,
-        Starting,
-        Started
-    };
+    enum class Status { Idle, Starting, Started };
 
 public:
-
-    AudioLayer(const AudioPreference &);
+    AudioLayer(const AudioPreference&);
     virtual ~AudioLayer();
+
+    /**
+     * Start the capture stream and prepare the playback stream.
+     * The playback starts accordingly to its threshold
+     */
+    virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL) = 0;
+
+    /**
+     * Stop the playback and capture streams.
+     * Drops the pending frames and put the capture and playback handles to PREPARED state
+     */
+    virtual void stopStream(AudioDeviceType stream = AudioDeviceType::ALL) = 0;
 
     virtual std::vector<std::string> getCaptureDeviceList() const = 0;
     virtual std::vector<std::string> getPlaybackDeviceList() const = 0;
 
-    virtual int getAudioDeviceIndex(const std::string& name, DeviceType type) const = 0;
-    virtual std::string getAudioDeviceName(int index, DeviceType type) const = 0;
+    virtual int getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const = 0;
+    virtual std::string getAudioDeviceName(int index, AudioDeviceType type) const = 0;
     virtual int getIndexCapture() const = 0;
     virtual int getIndexPlayback() const = 0;
     virtual int getIndexRingtone() const = 0;
 
     /**
-     * Start the capture stream and prepare the playback stream.
-     * The playback starts accordingly to its threshold
-     * ALSA Library API
-     */
-    virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT) = 0;
-
-    /**
-     * Stop the playback and capture streams.
-     * Drops the pending frames and put the capture and playback handles to PREPARED state
-     * ALSA Library API
-     */
-    virtual void stopStream() = 0;
-
-    /**
      * Determine wether or not the audio layer is active (i.e. stream opened)
      */
-    inline bool isStarted() const {
-        return status_ == Status::Started;
-    }
+    inline bool isStarted() const { return status_ == Status::Started; }
 
-    template< class Rep, class Period >
-    bool waitForStart(const std::chrono::duration<Rep, Period>& rel_time) const {
+    template<class Rep, class Period>
+    bool waitForStart(const std::chrono::duration<Rep, Period>& rel_time) const
+    {
         std::unique_lock<std::mutex> lk(mutex_);
-        startedCv_.wait_for(lk, rel_time, [&]{return isStarted();});
+        startedCv_.wait_for(lk, rel_time, [&] { return isStarted(); });
         return isStarted();
     }
 
@@ -143,87 +126,63 @@ public:
      */
     void flushUrgent();
 
-    bool isCaptureMuted() const {
-        return isCaptureMuted_;
-    }
+    bool isCaptureMuted() const { return isCaptureMuted_; }
 
     /**
      * Mute capture (microphone)
      */
-    void muteCapture(bool muted) {
-        isCaptureMuted_ = muted;
-    }
+    void muteCapture(bool muted) { isCaptureMuted_ = muted; }
 
-    bool isPlaybackMuted() const {
-        return isPlaybackMuted_;
-    }
+    bool isPlaybackMuted() const { return isPlaybackMuted_; }
 
     /**
      * Mute playback
      */
-    void mutePlayback(bool muted) {
-        isPlaybackMuted_ = muted;
-    }
+    void mutePlayback(bool muted) { isPlaybackMuted_ = muted; }
 
-    bool isRingtoneMuted() const {
-        return isRingtoneMuted_;
-    }
-    void muteRingtone(bool muted) {
-        isRingtoneMuted_ = muted;
-    }
+    bool isRingtoneMuted() const { return isRingtoneMuted_; }
+    void muteRingtone(bool muted) { isRingtoneMuted_ = muted; }
 
     /**
      * Set capture stream gain (microphone)
      * Range should be [-1.0, 1.0]
      */
-    void setCaptureGain(double gain) {
-        captureGain_ = gain;
-    }
+    void setCaptureGain(double gain) { captureGain_ = gain; }
 
     /**
      * Get capture stream gain (microphone)
      */
-    double getCaptureGain() const {
-        return captureGain_;
-    }
+    double getCaptureGain() const { return captureGain_; }
 
     /**
      * Set playback stream gain (speaker)
      * Range should be [-1.0, 1.0]
      */
-    void setPlaybackGain(double gain) {
-        playbackGain_ = gain;
-    }
+    void setPlaybackGain(double gain) { playbackGain_ = gain; }
 
     /**
      * Get playback stream gain (speaker)
      */
-    double getPlaybackGain() const {
-        return playbackGain_;
-    }
+    double getPlaybackGain() const { return playbackGain_; }
 
     /**
      * Get the sample rate of the audio layer
      * @return unsigned int The sample rate
      *			    default: 44100 HZ
-        */
-    unsigned int getSampleRate() const {
-        return audioFormat_.sample_rate;
-    }
+     */
+    unsigned int getSampleRate() const { return audioFormat_.sample_rate; }
 
     /**
      * Get the audio format of the layer (sample rate & channel number).
      */
-    AudioFormat getFormat() const {
-        return audioFormat_;
-    }
+    AudioFormat getFormat() const { return audioFormat_; }
 
     /**
      * Emit an audio notification on incoming calls
      */
     void notifyIncomingCall();
 
-    virtual void updatePreference(AudioPreference &pref, int index, DeviceType type) = 0;
+    virtual void updatePreference(AudioPreference& pref, int index, AudioDeviceType type) = 0;
 
 protected:
     /**
@@ -243,10 +202,9 @@ protected:
     void setHasNativeAEC(bool hasEAC);
 
     std::shared_ptr<AudioFrame> getToPlay(AudioFormat format, size_t writableSamples);
-
     std::shared_ptr<AudioFrame> getToRing(AudioFormat format, size_t writableSamples);
-
-    std::shared_ptr<AudioFrame> getPlayback(AudioFormat format, size_t samples) {
+    std::shared_ptr<AudioFrame> getPlayback(AudioFormat format, size_t samples)
+    {
         const auto& ringBuff = getToRing(format, samples);
         const auto& playBuff = getToPlay(format, samples);
         return ringBuff ? ringBuff : playBuff;

@@ -26,8 +26,8 @@
 #include "noncopyable.h"
 #include <AudioToolbox/AudioToolbox.h>
 
-#define checkErr( err) \
-    if(err) { \
+#define checkErr(err) \
+    if (err) { \
         JAMI_ERR("CoreAudio Error: %ld", static_cast<long>(err)); \
     }
 
@@ -40,131 +40,128 @@ namespace jami {
 
 class RingBuffer;
 
-class CoreLayer : public AudioLayer {
-    public:
-        CoreLayer(const AudioPreference &pref);
-        ~CoreLayer();
+class CoreLayer : public AudioLayer
+{
+public:
+    CoreLayer(const AudioPreference& pref);
+    ~CoreLayer();
 
-        /**
-         * Scan the sound card available on the system
-         * @return std::vector<std::string> The vector containing the string description of the card
-         */
-        virtual std::vector<std::string> getCaptureDeviceList() const;
-        virtual std::vector<std::string> getPlaybackDeviceList() const;
+    /**
+     * Scan the sound card available on the system
+     * @return std::vector<std::string> The vector containing the string description of the card
+     */
+    virtual std::vector<std::string> getCaptureDeviceList() const;
+    virtual std::vector<std::string> getPlaybackDeviceList() const;
 
-        virtual int getAudioDeviceIndex(const std::string& name, DeviceType type) const;
-        virtual std::string getAudioDeviceName(int index, DeviceType type) const;
+    virtual int getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const;
+    virtual std::string getAudioDeviceName(int index, AudioDeviceType type) const;
 
-        /**
-         * Get the index of the audio card for capture
-         * @return int The index of the card used for capture
-         */
-        virtual int getIndexCapture() const {
-            return indexIn_;
-        }
+    /**
+     * Get the index of the audio card for capture
+     * @return int The index of the card used for capture
+     */
+    virtual int getIndexCapture() const { return indexIn_; }
 
-        /**
-         * Get the index of the audio card for playback
-         * @return int The index of the card used for playback
-         */
-        virtual int getIndexPlayback() const {
-            return indexOut_;
-        }
+    /**
+     * Get the index of the audio card for playback
+     * @return int The index of the card used for playback
+     */
+    virtual int getIndexPlayback() const { return indexOut_; }
 
-        /**
-         * Get the index of the audio card for ringtone (could be differnet from playback)
-         * @return int The index of the card used for ringtone
-         */
-        virtual int getIndexRingtone() const {
-            return indexRing_;
-        }
+    /**
+     * Get the index of the audio card for ringtone (could be differnet from playback)
+     * @return int The index of the card used for ringtone
+     */
+    virtual int getIndexRingtone() const { return indexRing_; }
 
-        /**
-         * Configure the AudioUnit
-         */
-        void initAudioLayerIO(AudioStreamType stream);
-        void setupOutputBus();
-        void setupInputBus();
-        void bindCallbacks();
+    /**
+     * Configure the AudioUnit
+     */
+    bool initAudioLayerIO(AudioDeviceType stream);
+    void setupOutputBus();
+    void setupInputBus();
+    void bindCallbacks();
 
-        int initAudioStreams(AudioUnit *audioUnit);
+    int initAudioStreams(AudioUnit* audioUnit);
 
-        /**
-         * Start the capture stream and prepare the playback stream.
-         * The playback starts accordingly to its threshold
-         * CoreAudio Library API
-         */
+    /**
+     * Start the capture stream and prepare the playback stream.
+     * The playback starts accordingly to its threshold
+     * CoreAudio Library API
+     */
 
-        virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT);
+    virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
-        void destroyAudioLayer();
+    void destroyAudioLayer();
 
-        /**
-         * Stop the playback and capture streams.
-         * Drops the pending frames and put the capture and playback handles to PREPARED state
-         * CoreAudio Library API
-         */
-        virtual void stopStream();
+    /**
+     * Stop the playback and capture streams.
+     * Drops the pending frames and put the capture and playback handles to PREPARED state
+     * CoreAudio Library API
+     */
+    virtual void stopStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
-    private:
-        NON_COPYABLE(CoreLayer);
+private:
+    NON_COPYABLE(CoreLayer);
 
-        void initAudioFormat();
+    void initAudioFormat();
 
-        static OSStatus outputCallback(void* inRefCon,
-                                       AudioUnitRenderActionFlags* ioActionFlags,
-                                       const AudioTimeStamp* inTimeStamp,
-                                       UInt32 inBusNumber,
-                                       UInt32 inNumberFrames,
-                                       AudioBufferList* ioData);
+    static OSStatus outputCallback(void* inRefCon,
+                                   AudioUnitRenderActionFlags* ioActionFlags,
+                                   const AudioTimeStamp* inTimeStamp,
+                                   UInt32 inBusNumber,
+                                   UInt32 inNumberFrames,
+                                   AudioBufferList* ioData);
 
-        void write(AudioUnitRenderActionFlags* ioActionFlags,
-                   const AudioTimeStamp* inTimeStamp,
-                   UInt32 inBusNumber,
-                   UInt32 inNumberFrames,
-                   AudioBufferList* ioData);
+    void write(AudioUnitRenderActionFlags* ioActionFlags,
+               const AudioTimeStamp* inTimeStamp,
+               UInt32 inBusNumber,
+               UInt32 inNumberFrames,
+               AudioBufferList* ioData);
 
-        static OSStatus inputCallback(void* inRefCon,
-                                      AudioUnitRenderActionFlags* ioActionFlags,
-                                      const AudioTimeStamp* inTimeStamp,
-                                      UInt32 inBusNumber,
-                                      UInt32 inNumberFrames,
-                                      AudioBufferList* ioData);
+    static OSStatus inputCallback(void* inRefCon,
+                                  AudioUnitRenderActionFlags* ioActionFlags,
+                                  const AudioTimeStamp* inTimeStamp,
+                                  UInt32 inBusNumber,
+                                  UInt32 inNumberFrames,
+                                  AudioBufferList* ioData);
 
-        void read(AudioUnitRenderActionFlags* ioActionFlags,
-                  const AudioTimeStamp* inTimeStamp,
-                  UInt32 inBusNumber,
-                  UInt32 inNumberFrames,
-                  AudioBufferList* ioData);
+    void read(AudioUnitRenderActionFlags* ioActionFlags,
+              const AudioTimeStamp* inTimeStamp,
+              UInt32 inBusNumber,
+              UInt32 inNumberFrames,
+              AudioBufferList* ioData);
 
-        virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
+    virtual void updatePreference(AudioPreference& pref, int index, AudioDeviceType type);
 
-        /**
-         * Number of audio cards on which capture stream has been opened
-         */
-        int indexIn_;
+    /**
+     * Number of audio cards on which capture stream has been opened
+     */
+    int indexIn_;
 
-        /**
-         * Number of audio cards on which playback stream has been opened
-         */
-        int indexOut_;
+    /**
+     * Number of audio cards on which playback stream has been opened
+     */
+    int indexOut_;
 
-        /**
-         * Number of audio cards on which ringtone stream has been opened
-         */
-        int indexRing_;
+    /**
+     * Number of audio cards on which ringtone stream has been opened
+     */
+    int indexRing_;
 
-        /** Non-interleaved audio buffers */
-        AudioBuffer playbackBuff_;
-        ::AudioBufferList* captureBuff_ {nullptr}; // CoreAudio buffer (pointer is casted rawBuff_)
-        std::unique_ptr<Byte[]> rawBuff_; // raw allocation of captureBuff_
+    /** Non-interleaved audio buffers */
+    AudioBuffer playbackBuff_;
+    ::AudioBufferList* captureBuff_ {nullptr}; // CoreAudio buffer (pointer is casted rawBuff_)
+    std::unique_ptr<Byte[]> rawBuff_;          // raw allocation of captureBuff_
 
-        AudioUnit ioUnit_;
+    AudioUnit ioUnit_;
 
-        Float64 inSampleRate_;
-        UInt32 inChannelsPerFrame_;
-        Float64 outSampleRate_;
-        UInt32 outChannelsPerFrame_;
+    Float64 inSampleRate_;
+    UInt32 inChannelsPerFrame_;
+    Float64 outSampleRate_;
+    UInt32 outChannelsPerFrame_;
+
+    std::condition_variable readyCv_ {};
 };
 
 } // namespace jami

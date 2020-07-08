@@ -28,19 +28,16 @@
 
 namespace jami {
 
-enum BandwidthUsage {
-  bwNormal = 0,
-  bwUnderusing = 1,
-  bwOverusing = 2
-};
+enum BandwidthUsage { bwNormal = 0, bwUnderusing = 1, bwOverusing = 2 };
 
 // Receiver Estimated Max Bitrate (REMB) (draft-alvestrand-rmcat-remb).
-class CongestionControl {
+class CongestionControl
+{
 public:
     CongestionControl();
     ~CongestionControl();
 
-    uint64_t parseREMB(const rtcpREMBHeader &packet);
+    uint64_t parseREMB(const rtcpREMBHeader& packet);
     std::vector<uint8_t> createREMB(uint64_t bitrate_bps);
     float kalmanFilter(uint64_t gradiant_delay);
     float update_thresh(float m, int deltaT);
@@ -67,7 +64,6 @@ private:
     time_point t0_overuse {time_point::min()};
 
     BandwidthUsage last_state_;
-
 };
 
 } // namespace jami

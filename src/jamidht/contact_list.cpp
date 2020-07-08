@@ -26,8 +26,11 @@
 
 namespace jami {
 
-ContactList::ContactList(const std::shared_ptr<crypto::Certificate>& cert, const std::string& path, OnChangeCallback cb)
- : path_(path), callbacks_(std::move(cb))
+ContactList::ContactList(const std::shared_ptr<crypto::Certificate>& cert,
+                         const std::string& path,
+                         OnChangeCallback cb)
+    : path_(path)
+    , callbacks_(std::move(cb))
 {
     if (cert)
         accountTrust_.add(*cert);
@@ -52,7 +55,8 @@ ContactList::save()
 }
 
 bool
-ContactList::setCertificateStatus(const std::string& cert_id, const tls::TrustStore::PermissionStatus status)
+ContactList::setCertificateStatus(const std::string& cert_id,
+                                  const tls::TrustStore::PermissionStatus status)
 {
     if (contacts_.find(dht::InfoHash(cert_id)) != contacts_.end()) {
         JAMI_DBG("Can't set certificate status for existing contacts %s", cert_id.c_str());
@@ -67,7 +71,7 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed)
     JAMI_WARN("[Contacts] addContact: %s", h.to_c_str());
     auto c = contacts_.find(h);
     if (c == contacts_.end())
-        c = contacts_.emplace(h, Contact{}).first;
+        c = contacts_.emplace(h, Contact {}).first;
     else if (c->second.isActive() and c->second.confirmed == confirmed)
         return false;
     c->second.added = std::time(nullptr);
@@ -76,7 +80,7 @@ ContactList::addContact(const dht::InfoHash& h, bool confirmed)
     trust_.setCertificateStatus(hStr, tls::TrustStore::PermissionStatus::ALLOWED);
     saveContacts();
     callbacks_.contactAdded(hStr, c->second.confirmed);
-    //syncDevices();
+    // syncDevices();
     return true;
 }
 
@@ -86,19 +90,20 @@ ContactList::removeContact(const dht::InfoHash& h, bool ban)
     JAMI_WARN("[Contacts] removeContact: %s", h.to_c_str());
     auto c = contacts_.find(h);
     if (c == contacts_.end())
-        c = contacts_.emplace(h, Contact{}).first;
+        c = contacts_.emplace(h, Contact {}).first;
     else if (not c->second.isActive() and c->second.banned == ban)
         return false;
     c->second.removed = std::time(nullptr);
     c->second.banned = ban;
     auto uri = h.toString();
-    trust_.setCertificateStatus(uri, ban ? tls::TrustStore::PermissionStatus::BANNED
-                                         : tls::TrustStore::PermissionStatus::UNDEFINED);
+    trust_.setCertificateStatus(uri,
+                                ban ? tls::TrustStore::PermissionStatus::BANNED
+                                    : tls::TrustStore::PermissionStatus::UNDEFINED);
     if (ban and trustRequests_.erase(h) > 0)
         saveTrustRequests();
     saveContacts();
     callbacks_.contactRemoved(uri, ban);
-    //syncDevices();
+    // syncDevices();
     return true;
 }
 
@@ -157,7 +162,8 @@ ContactList::updateContact(const dht::InfoHash& id, const Contact& contact)
             callbacks_.contactAdded(id.toString(), c->second.confirmed);
         } else {
             if (c->second.banned)
-                trust_.setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::BANNED);
+                trust_.setCertificateStatus(id.toString(),
+                                            tls::TrustStore::PermissionStatus::BANNED);
             callbacks_.contactRemoved(id.toString(), c->second.banned);
         }
     }
@@ -171,7 +177,7 @@ ContactList::loadContacts()
         // read file
         auto file = fileutils::loadFile("contacts", path_);
         // load values
-        msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
+        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(contacts);
     } catch (const std::exception& e) {
         JAMI_WARN("[Contacts] error loading contacts: %s", e.what());
@@ -185,14 +191,15 @@ ContactList::loadContacts()
 void
 ContactList::saveContacts() const
 {
-    std::ofstream file(path_+DIR_SEPARATOR_STR "contacts", std::ios::trunc | std::ios::binary);
+    std::ofstream file(path_ + DIR_SEPARATOR_STR "contacts", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, contacts_);
 }
 
 void
 ContactList::saveTrustRequests() const
 {
-    std::ofstream file(path_+DIR_SEPARATOR_STR "incomingTrustRequests", std::ios::trunc | std::ios::binary);
+    std::ofstream file(path_ + DIR_SEPARATOR_STR "incomingTrustRequests",
+                       std::ios::trunc | std::ios::binary);
     msgpack::pack(file, trustRequests_);
 }
 
@@ -204,7 +211,7 @@ ContactList::loadTrustRequests()
         // read file
         auto file = fileutils::loadFile("incomingTrustRequests", path_);
         // load values
-        msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
+        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(requests);
     } catch (const std::exception& e) {
         JAMI_WARN("[Contacts] error loading trust requests: %s", e.what());
@@ -212,14 +219,22 @@ ContactList::loadTrustRequests()
     }
 
     for (auto& tr : requests)
-        onTrustRequest(tr.first, tr.second.device, tr.second.received, false, std::move(tr.second.payload));
+        onTrustRequest(tr.first,
+                       tr.second.device,
+                       tr.second.received,
+                       false,
+                       std::move(tr.second.payload));
 }
 
 bool
-ContactList::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received, bool confirm, std::vector<uint8_t>&& payload)
+ContactList::onTrustRequest(const dht::InfoHash& peer_account,
+                            const dht::InfoHash& peer_device,
+                            time_t received,
+                            bool confirm,
+                            std::vector<uint8_t>&& payload)
 {
     bool accept = false;
-     // Check existing contact
+    // Check existing contact
     auto contact = contacts_.find(peer_account);
     bool active = false;
     if (contact != contacts_.end()) {
@@ -236,7 +251,7 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
                 contact->second.confirmed = true;
                 callbacks_.contactAdded(peer_account.toString(), true);
                 saveContacts();
-                //syncDevices();
+                // syncDevices();
             }
         }
     }
@@ -244,9 +259,10 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
         auto req = trustRequests_.find(peer_account);
         if (req == trustRequests_.end()) {
             // Add trust request
-            req = trustRequests_.emplace(peer_account, TrustRequest{
-                peer_device, received, std::move(payload)
-            }).first;
+            req = trustRequests_
+                      .emplace(peer_account,
+                               TrustRequest {peer_device, received, std::move(payload)})
+                      .first;
         } else {
             // Update trust request
             if (received < req->second.received) {
@@ -254,7 +270,8 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
                 req->second.received = received;
                 req->second.payload = std::move(payload);
             } else {
-                JAMI_DBG("[Contacts] Ignoring outdated trust request from %s", peer_account.toString().c_str());
+                JAMI_DBG("[Contacts] Ignoring outdated trust request from %s",
+                         peer_account.toString().c_str());
             }
         }
         saveTrustRequests();
@@ -262,7 +279,6 @@ ContactList::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
     }
     return accept;
 }
-
 
 /* trust requests */
 
@@ -273,11 +289,11 @@ ContactList::getTrustRequests() const
     std::vector<Map> ret;
     ret.reserve(trustRequests_.size());
     for (const auto& r : trustRequests_) {
-        ret.emplace_back(Map {
-            {DRing::Account::TrustRequest::FROM, r.first.toString()},
-            {DRing::Account::TrustRequest::RECEIVED, std::to_string(r.second.received)},
-            {DRing::Account::TrustRequest::PAYLOAD, std::string(r.second.payload.begin(), r.second.payload.end())}
-        });
+        ret.emplace_back(
+            Map {{DRing::Account::TrustRequest::FROM, r.first.toString()},
+                 {DRing::Account::TrustRequest::RECEIVED, std::to_string(r.second.received)},
+                 {DRing::Account::TrustRequest::PAYLOAD,
+                  std::string(r.second.payload.begin(), r.second.payload.end())}});
     }
     return ret;
 }
@@ -298,7 +314,7 @@ ContactList::acceptTrustRequest(const dht::InfoHash& from)
     saveTrustRequests();
 
     // Send confirmation
-    //account_.get().sendTrustRequestConfirm(from);
+    // account_.get().sendTrustRequestConfirm(from);
     return true;
 }
 
@@ -320,7 +336,7 @@ ContactList::loadKnownDevices()
         // read file
         auto file = fileutils::loadFile("knownDevicesNames", path_);
         // load values
-        msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
+        msgpack::object_handle oh = msgpack::unpack((const char*) file.data(), file.size());
         oh.get().convert(knownDevices);
     } catch (const std::exception& e) {
         JAMI_WARN("[Contacts] error loading devices: %s", e.what());
@@ -329,13 +345,12 @@ ContactList::loadKnownDevices()
 
     for (const auto& d : knownDevices) {
         JAMI_DBG("[Contacts] loading known account device %s %s",
-                                                                    d.second.first.c_str(),
-                                                                    d.first.toString().c_str());
+                 d.second.first.c_str(),
+                 d.first.toString().c_str());
         if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString())) {
             if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
                 JAMI_WARN("[Contacts] can't add device %s", d.first.toString().c_str());
-        }
-        else {
+        } else {
             JAMI_WARN("[Contacts] can't find certificate for device %s", d.first.toString().c_str());
         }
     }
@@ -344,30 +359,34 @@ ContactList::loadKnownDevices()
 void
 ContactList::saveKnownDevices() const
 {
-    std::ofstream file(path_+DIR_SEPARATOR_STR "knownDevicesNames", std::ios::trunc | std::ios::binary);
+    std::ofstream file(path_ + DIR_SEPARATOR_STR "knownDevicesNames",
+                       std::ios::trunc | std::ios::binary);
 
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> devices;
     for (const auto& id : knownDevices_)
-        devices.emplace(id.first, std::make_pair(id.second.name, clock::to_time_t(id.second.last_sync)));
+        devices.emplace(id.first,
+                        std::make_pair(id.second.name, clock::to_time_t(id.second.last_sync)));
 
     msgpack::pack(file, devices);
 }
 
 void
-ContactList::foundAccountDevice(const dht::InfoHash& device, const std::string& name, const time_point& updated)
+ContactList::foundAccountDevice(const dht::InfoHash& device,
+                                const std::string& name,
+                                const time_point& updated)
 {
     // insert device
-    auto it = knownDevices_.emplace(device, KnownDevice{{}, name, updated});
+    auto it = knownDevices_.emplace(device, KnownDevice {{}, name, updated});
     if (it.second) {
-        JAMI_DBG("[Contacts] Found account device: %s %s", name.c_str(),
-                                                           device.toString().c_str());
+        JAMI_DBG("[Contacts] Found account device: %s %s", name.c_str(), device.toString().c_str());
         saveKnownDevices();
         callbacks_.devicesChanged();
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
-            JAMI_DBG("[Contacts] updating device name: %s %s", name.c_str(),
-                                                               device.toString().c_str());
+            JAMI_DBG("[Contacts] updating device name: %s %s",
+                     name.c_str(),
+                     device.toString().c_str());
             it.first->second.name = name;
             saveKnownDevices();
             callbacks_.devicesChanged();
@@ -376,7 +395,9 @@ ContactList::foundAccountDevice(const dht::InfoHash& device, const std::string& 
 }
 
 bool
-ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name, const time_point& updated)
+ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt,
+                                const std::string& name,
+                                const time_point& updated)
 {
     if (not crt)
         return false;
@@ -384,16 +405,18 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     // match certificate chain
     auto verifyResult = accountTrust_.verify(*crt);
     if (not verifyResult) {
-        JAMI_WARN("[Contacts] Found invalid account device: %s: %s", crt->getId().toString().c_str(), verifyResult.toString().c_str());
+        JAMI_WARN("[Contacts] Found invalid account device: %s: %s",
+                  crt->getId().toString().c_str(),
+                  verifyResult.toString().c_str());
         return false;
     }
 
     // insert device
-    auto it = knownDevices_.emplace(crt->getId(), KnownDevice{crt, name, updated});
+    auto it = knownDevices_.emplace(crt->getId(), KnownDevice {crt, name, updated});
     if (it.second) {
         JAMI_DBG("[Contacts] Found account device: %s %s",
-                                                              name.c_str(),
-                                                              crt->getId().toString().c_str());
+                 name.c_str(),
+                 crt->getId().toString().c_str());
         tls::CertificateStore::instance().pinCertificate(crt);
         saveKnownDevices();
         callbacks_.devicesChanged();
@@ -401,8 +424,8 @@ ContactList::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
         // update device name
         if (not name.empty() and it.first->second.name != name) {
             JAMI_DBG("[Contacts] updating device name: %s %s",
-                                                                  name.c_str(),
-                                                                  crt->getId().toString().c_str());
+                     name.c_str(),
+                     crt->getId().toString().c_str());
             it.first->second.name = name;
             saveKnownDevices();
             callbacks_.devicesChanged();
@@ -448,20 +471,22 @@ ContactList::getSyncData() const
 {
     DeviceSync sync_data;
     sync_data.date = clock::now().time_since_epoch().count();
-    //sync_data.device_name = ringDeviceName_;
+    // sync_data.device_name = ringDeviceName_;
     sync_data.peers = getContacts();
 
     static constexpr size_t MAX_TRUST_REQUESTS = 20;
     if (trustRequests_.size() <= MAX_TRUST_REQUESTS)
         for (const auto& req : trustRequests_)
-            sync_data.trust_requests.emplace(req.first, TrustRequest{req.second.device, req.second.received, {}});
+            sync_data.trust_requests
+                .emplace(req.first, TrustRequest {req.second.device, req.second.received, {}});
     else {
         size_t inserted = 0;
         auto req = trustRequests_.lower_bound(dht::InfoHash::getRandom());
         while (inserted++ < MAX_TRUST_REQUESTS) {
             if (req == trustRequests_.end())
                 req = trustRequests_.begin();
-            sync_data.trust_requests.emplace(req->first, TrustRequest{req->second.device, req->second.received, {}});
+            sync_data.trust_requests
+                .emplace(req->first, TrustRequest {req->second.device, req->second.received, {}});
             ++req;
         }
     }
@@ -504,11 +529,10 @@ ContactList::onSyncData(DeviceSync&& sync)
     }
 
     // Sync known devices
-    JAMI_DBG("[Contacts] received device sync data (%lu devices, %lu contacts)", sync.devices_known.size(), sync.peers.size());
-    for (const auto& d : sync.devices_known) {
-        account_.get().findCertificate(d.first, [this,d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
-            if (not crt)
-                return;
+    JAMI_DBG("[Contacts] received device sync data (%lu devices, %lu contacts)",
+sync.devices_known.size(), sync.peers.size()); for (const auto& d : sync.devices_known) {
+        account_.get().findCertificate(d.first, [this,d](const
+std::shared_ptr<dht::crypto::Certificate>& crt) { if (not crt) return;
             //std::lock_guard<std::mutex> lock(deviceListMutex_);
             foundAccountDevice(crt, d.second);
         });
@@ -527,4 +551,4 @@ ContactList::onSyncData(DeviceSync&& sync)
     it->second.last_sync = sync_date;
 }
 */
-}
+} // namespace jami

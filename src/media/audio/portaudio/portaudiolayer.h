@@ -29,16 +29,16 @@
 
 namespace jami {
 
-class PortAudioLayer : public AudioLayer {
-
+class PortAudioLayer : public AudioLayer
+{
 public:
     PortAudioLayer(const AudioPreference& pref);
     ~PortAudioLayer();
 
     std::vector<std::string> getCaptureDeviceList() const override;
     std::vector<std::string> getPlaybackDeviceList() const override;
-    int getAudioDeviceIndex(const std::string& name, DeviceType type) const override;
-    std::string getAudioDeviceName(int index, DeviceType type) const override;
+    int getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const override;
+    std::string getAudioDeviceName(int index, AudioDeviceType type) const override;
     int getIndexCapture() const override;
     int getIndexPlayback() const override;
     int getIndexRingtone() const override;
@@ -55,7 +55,7 @@ public:
      */
     void stopStream() override;
 
-    void updatePreference(AudioPreference& pref, int index, DeviceType type) override;
+    void updatePreference(AudioPreference& pref, int index, AudioDeviceType type) override;
 
 private:
     NON_COPYABLE(PortAudioLayer);

@@ -30,21 +30,25 @@
 // Add string operators crucially missing from standard
 // see https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/1RcShRhrmRc
 namespace std {
-inline string operator+(const string& s, const string_view& sv) {
+inline string
+operator+(const string& s, const string_view& sv)
+{
     string ret;
     ret.reserve(s.size() + sv.size());
     ret.append(s);
     ret.append(sv);
     return ret;
 }
-inline string operator+(const string_view& sv, const string& s) {
+inline string
+operator+(const string_view& sv, const string& s)
+{
     string ret;
     ret.reserve(s.size() + sv.size());
     ret.append(sv);
     ret.append(s);
     return ret;
 }
-}
+} // namespace std
 
 namespace jami {
 
@@ -79,13 +83,11 @@ stod(const std::string& str)
     return std::stod(str);
 }
 
-std::string trim(const std::string &s);
+std::string trim(const std::string& s);
 
-std::vector<std::string>
-split_string(const std::string& s, char sep);
+std::vector<std::string> split_string(const std::string& s, char sep);
 
-std::vector<unsigned>
-split_string_to_unsigned(const std::string& s, char sep);
+std::vector<unsigned> split_string_to_unsigned(const std::string& s, char sep);
 
 void string_replace(std::string& str, const std::string& from, const std::string& to);
 

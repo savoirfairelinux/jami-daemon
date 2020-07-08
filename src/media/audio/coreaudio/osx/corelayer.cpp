@@ -32,7 +32,7 @@
 namespace jami {
 
 // AudioLayer implementation.
-CoreLayer::CoreLayer(const AudioPreference &pref)
+CoreLayer::CoreLayer(const AudioPreference& pref)
     : AudioLayer(pref)
     , indexIn_(pref.getAlsaCardin())
     , indexOut_(pref.getAlsaCardout())
@@ -68,10 +68,10 @@ CoreLayer::getPlaybackDeviceList() const
 }
 
 int
-CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
+CoreLayer::getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const
 {
     int i = 0;
-    for (const auto& device : getDeviceList(type == DeviceType::CAPTURE)) {
+    for (const auto& device : getDeviceList(type == AudioDeviceType::CAPTURE)) {
         if (device.name_ == name)
             return i;
         i++;
@@ -80,13 +80,13 @@ CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 }
 
 std::string
-CoreLayer::getAudioDeviceName(int index, DeviceType type) const
+CoreLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 {
     return "";
 }
 
 void
-CoreLayer::initAudioLayerIO()
+CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 {
     // OS X uses Audio Units for output. Steps:
     // 1) Create a description.
@@ -96,10 +96,10 @@ CoreLayer::initAudioLayerIO()
     // 5) Profit...
     JAMI_DBG("INIT AUDIO IO");
 
-    //get capture divice
+    // get capture divice
     auto captureList = getDeviceList(true);
     AudioDeviceID inputDeviceID = captureList[indexIn_].id_;
-    //get playback device
+    // get playback device
     auto playbackList = getDeviceList(false);
     AudioDeviceID playbackDeviceID = playbackList[indexOut_].id_;
 
@@ -120,9 +120,13 @@ CoreLayer::initAudioLayerIO()
         return;
     }
 
-    checkErr(AudioComponentInstanceNew(comp, &ioUnit_));
+    auto initError = AudioComponentInstanceNew(comp, &ioUnit_);
+    if (initError) {
+        checkErr(initError);
+        return;
+    }
 
-    //set capture device
+    // set capture device
     UInt32 size = sizeof(inputDeviceID);
     auto error = AudioUnitSetProperty(ioUnit_,
                                       kAudioOutputUnitProperty_CurrentDevice,
@@ -130,21 +134,20 @@ CoreLayer::initAudioLayerIO()
                                       inputBus,
                                       &inputDeviceID,
                                       size);
-    //if failed get default device
+    // if failed get default device
     if (error != kAudioServicesNoError) {
-        const AudioObjectPropertyAddress inputInfo =
-        {
-            kAudioHardwarePropertyDefaultInputDevice,
-            kAudioObjectPropertyScopeGlobal,
-            kAudioObjectPropertyElementMaster
-        };
+        const AudioObjectPropertyAddress inputInfo = {kAudioHardwarePropertyDefaultInputDevice,
+                                                      kAudioObjectPropertyScopeGlobal,
+                                                      kAudioObjectPropertyElementMaster};
         auto status = AudioObjectGetPropertyData(kAudioObjectSystemObject,
                                                  &inputInfo,
-                                                 0, NULL, &size,
+                                                 0,
+                                                 NULL,
+                                                 &size,
                                                  &inputDeviceID);
     }
 
-    //set playback device
+    // set playback device
     size = sizeof(playbackDeviceID);
     error = AudioUnitSetProperty(ioUnit_,
                                  kAudioOutputUnitProperty_CurrentDevice,
@@ -152,26 +155,22 @@ CoreLayer::initAudioLayerIO()
                                  outputBus,
                                  &playbackDeviceID,
                                  size);
-    //if failed get default device
+    // if failed get default device
     if (error != kAudioServicesNoError) {
-        const AudioObjectPropertyAddress outputInfo =
-        {
-            kAudioHardwarePropertyDefaultOutputDevice,
-            kAudioObjectPropertyScopeGlobal,
-            kAudioObjectPropertyElementMaster
-        };
+        const AudioObjectPropertyAddress outputInfo = {kAudioHardwarePropertyDefaultOutputDevice,
+                                                       kAudioObjectPropertyScopeGlobal,
+                                                       kAudioObjectPropertyElementMaster};
         auto status = AudioObjectGetPropertyData(kAudioObjectSystemObject,
                                                  &outputInfo,
-                                                 0, NULL, &size,
+                                                 0,
+                                                 NULL,
+                                                 &size,
                                                  &playbackDeviceID);
     }
     // add listener for detecting when devices are removed
-    const AudioObjectPropertyAddress aliveAddress =
-    {
-        kAudioDevicePropertyDeviceIsAlive,
-        kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMaster
-    };
+    const AudioObjectPropertyAddress aliveAddress = {kAudioDevicePropertyDeviceIsAlive,
+                                                     kAudioObjectPropertyScopeGlobal,
+                                                     kAudioObjectPropertyElementMaster};
     AudioObjectAddPropertyListener(playbackDeviceID, &aliveAddress, &deviceIsAliveCallback, this);
     AudioObjectAddPropertyListener(inputDeviceID, &aliveAddress, &deviceIsAliveCallback, this);
 
@@ -179,19 +178,19 @@ CoreLayer::initAudioLayerIO()
     AudioStreamBasicDescription info;
     size = sizeof(info);
     checkErr(AudioUnitGetProperty(ioUnit_,
-            kAudioUnitProperty_StreamFormat,
-            kAudioUnitScope_Output,
-            outputBus,
-            &info,
-            &size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Output,
+                                  outputBus,
+                                  &info,
+                                  &size));
 
     outSampleRate_ = info.mSampleRate;
     checkErr(AudioUnitGetProperty(ioUnit_,
-            kAudioUnitProperty_StreamFormat,
-            kAudioUnitScope_Input,
-            outputBus,
-            &info,
-            &size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Input,
+                                  outputBus,
+                                  &info,
+                                  &size));
 
     audioFormat_ = {static_cast<unsigned int>(outSampleRate_),
                     static_cast<unsigned int>(info.mChannelsPerFrame)};
@@ -201,22 +200,22 @@ CoreLayer::initAudioLayerIO()
     info.mSampleRate = audioFormat_.sample_rate; // Only change sample rate.
 
     checkErr(AudioUnitSetProperty(ioUnit_,
-            kAudioUnitProperty_StreamFormat,
-            kAudioUnitScope_Input,
-            outputBus,
-            &info,
-            size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Input,
+                                  outputBus,
+                                  &info,
+                                  size));
 
     hardwareFormatAvailable(audioFormat_);
 
     // Setup audio formats
     size = sizeof(AudioStreamBasicDescription);
     checkErr(AudioUnitGetProperty(ioUnit_,
-                kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Input,
-                inputBus,
-                &info,
-                &size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Input,
+                                  inputBus,
+                                  &info,
+                                  &size));
 
     inSampleRate_ = info.mSampleRate;
 
@@ -237,22 +236,22 @@ CoreLayer::initAudioLayerIO()
     inChannelsPerFrame_ = info.mChannelsPerFrame;
 
     checkErr(AudioUnitSetProperty(ioUnit_,
-                   kAudioUnitProperty_StreamFormat,
-                   kAudioUnitScope_Output,
-                   inputBus,
-                   &info,
-                   size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Output,
+                                  inputBus,
+                                  &info,
+                                  size));
 
     // Input buffer setup. Note that ioData is empty and we have to store data
     // in another buffer.
     UInt32 bufferSizeFrames = 0;
     size = sizeof(UInt32);
     checkErr(AudioUnitGetProperty(ioUnit_,
-                kAudioDevicePropertyBufferFrameSize,
-                kAudioUnitScope_Global,
-                outputBus,
-                &bufferSizeFrames,
-                &size));
+                                  kAudioDevicePropertyBufferFrameSize,
+                                  kAudioUnitScope_Global,
+                                  outputBus,
+                                  &bufferSizeFrames,
+                                  &size));
 
     UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
     size = offsetof(AudioBufferList, mBuffers) + (sizeof(AudioBuffer) * info.mChannelsPerFrame);
@@ -273,11 +272,11 @@ CoreLayer::initAudioLayerIO()
     inputCall.inputProcRefCon = this;
 
     checkErr(AudioUnitSetProperty(ioUnit_,
-                kAudioOutputUnitProperty_SetInputCallback,
-                kAudioUnitScope_Global,
-                inputBus,
-                &inputCall,
-                sizeof(AURenderCallbackStruct)));
+                                  kAudioOutputUnitProperty_SetInputCallback,
+                                  kAudioUnitScope_Global,
+                                  inputBus,
+                                  &inputCall,
+                                  sizeof(AURenderCallbackStruct)));
 
     // Output callback setup.
     AURenderCallbackStruct callback;
@@ -285,15 +284,15 @@ CoreLayer::initAudioLayerIO()
     callback.inputProcRefCon = this;
 
     checkErr(AudioUnitSetProperty(ioUnit_,
-               kAudioUnitProperty_SetRenderCallback,
-               kAudioUnitScope_Global,
-               outputBus,
-               &callback,
-               sizeof(AURenderCallbackStruct)));
+                                  kAudioUnitProperty_SetRenderCallback,
+                                  kAudioUnitScope_Global,
+                                  outputBus,
+                                  &callback,
+                                  sizeof(AURenderCallbackStruct)));
 }
 
 void
-CoreLayer::startStream(AudioStreamType stream)
+CoreLayer::startStream(AudioDeviceType stream)
 {
     JAMI_DBG("START STREAM");
 
@@ -302,15 +301,18 @@ CoreLayer::startStream(AudioStreamType stream)
         if (status_ != Status::Idle)
             return;
         status_ = Status::Started;
+
+        dcblocker_.reset();
+
+        initAudioLayerIO(stream);
+
+        auto inputRes = AudioUnitInitialize(ioUnit_);
+        auto outputRes = AudioOutputUnitStart(ioUnit_);
+        if (!inputRes && !outputRes) {
+            return;
+        }
     }
-
-    dcblocker_.reset();
-
-    initAudioLayerIO();
-
-    // Run
-    checkErr(AudioUnitInitialize(ioUnit_));
-    checkErr(AudioOutputUnitStart(ioUnit_));
+    stopStream();
 }
 
 void
@@ -322,18 +324,16 @@ CoreLayer::destroyAudioLayer()
 }
 
 void
-CoreLayer::stopStream()
+CoreLayer::stopStream(AudioDeviceType stream)
 {
     JAMI_DBG("STOP STREAM");
-
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (status_ != Status::Started)
             return;
         status_ = Status::Idle;
+        destroyAudioLayer();
     }
-
-    destroyAudioLayer();
 
     /* Flush the ring buffers */
     flushUrgent();
@@ -344,9 +344,9 @@ CoreLayer::stopStream()
 
 OSStatus
 CoreLayer::deviceIsAliveCallback(AudioObjectID inObjectID,
-           UInt32 inNumberAddresses,
-           const AudioObjectPropertyAddress inAddresses[],
-           void* inRefCon)
+                                 UInt32 inNumberAddresses,
+                                 const AudioObjectPropertyAddress inAddresses[],
+                                 void* inRefCon)
 {
     if (static_cast<CoreLayer*>(inRefCon)->status_ != Status::Started)
         return kAudioServicesNoError;
@@ -357,22 +357,26 @@ CoreLayer::deviceIsAliveCallback(AudioObjectID inObjectID,
 
 OSStatus
 CoreLayer::outputCallback(void* inRefCon,
-    AudioUnitRenderActionFlags* ioActionFlags,
-    const AudioTimeStamp* inTimeStamp,
-    UInt32 inBusNumber,
-    UInt32 inNumberFrames,
-    AudioBufferList* ioData)
+                          AudioUnitRenderActionFlags* ioActionFlags,
+                          const AudioTimeStamp* inTimeStamp,
+                          UInt32 inBusNumber,
+                          UInt32 inNumberFrames,
+                          AudioBufferList* ioData)
 {
-    static_cast<CoreLayer*>(inRefCon)->write(ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
+    static_cast<CoreLayer*>(inRefCon)->write(ioActionFlags,
+                                             inTimeStamp,
+                                             inBusNumber,
+                                             inNumberFrames,
+                                             ioData);
     return kAudioServicesNoError;
 }
 
 void
 CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
-    const AudioTimeStamp* inTimeStamp,
-    UInt32 inBusNumber,
-    UInt32 inNumberFrames,
-    AudioBufferList* ioData)
+                 const AudioTimeStamp* inTimeStamp,
+                 UInt32 inBusNumber,
+                 UInt32 inNumberFrames,
+                 AudioBufferList* ioData)
 {
     auto format = audioFormat_;
     format.sample_rate = outSampleRate_;
@@ -380,7 +384,9 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
     if (auto toPlay = getPlayback(format, inNumberFrames)) {
         for (int i = 0; i < format.nb_channels; ++i) {
-            std::copy_n((Float32*)toPlay->pointer()->extended_data[i], inNumberFrames, (Float32*)ioData->mBuffers[i].mData);
+            std::copy_n((Float32*) toPlay->pointer()->extended_data[i],
+                        inNumberFrames,
+                        (Float32*) ioData->mBuffers[i].mData);
         }
     } else {
         for (int i = 0; i < format.nb_channels; ++i)
@@ -390,23 +396,26 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
 
 OSStatus
 CoreLayer::inputCallback(void* inRefCon,
-    AudioUnitRenderActionFlags* ioActionFlags,
-    const AudioTimeStamp* inTimeStamp,
-    UInt32 inBusNumber,
-    UInt32 inNumberFrames,
-    AudioBufferList* ioData)
+                         AudioUnitRenderActionFlags* ioActionFlags,
+                         const AudioTimeStamp* inTimeStamp,
+                         UInt32 inBusNumber,
+                         UInt32 inNumberFrames,
+                         AudioBufferList* ioData)
 {
-    static_cast<CoreLayer*>(inRefCon)->read(ioActionFlags, inTimeStamp, inBusNumber,
-                                            inNumberFrames, ioData);
+    static_cast<CoreLayer*>(inRefCon)->read(ioActionFlags,
+                                            inTimeStamp,
+                                            inBusNumber,
+                                            inNumberFrames,
+                                            ioData);
     return kAudioServicesNoError;
 }
 
 void
 CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
-    const AudioTimeStamp* inTimeStamp,
-    UInt32 inBusNumber,
-    UInt32 inNumberFrames,
-    AudioBufferList* ioData)
+                const AudioTimeStamp* inTimeStamp,
+                UInt32 inBusNumber,
+                UInt32 inNumberFrames,
+                AudioBufferList* ioData)
 {
     if (inNumberFrames <= 0) {
         JAMI_WARN("No frames for input.");
@@ -415,11 +424,11 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
 
     // Write the mic samples in our buffer
     checkErr(AudioUnitRender(ioUnit_,
-            ioActionFlags,
-            inTimeStamp,
-            inBusNumber,
-            inNumberFrames,
-            captureBuff_));
+                             ioActionFlags,
+                             inTimeStamp,
+                             inBusNumber,
+                             inNumberFrames,
+                             captureBuff_));
 
     auto format = audioInputFormat_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
@@ -429,28 +438,32 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     } else {
         auto& in = *inBuff->pointer();
         for (unsigned i = 0; i < inChannelsPerFrame_; ++i)
-            std::copy_n((Float32*)captureBuff_->mBuffers[i].mData, inNumberFrames, (Float32*)in.extended_data[i]);
+            std::copy_n((Float32*) captureBuff_->mBuffers[i].mData,
+                        inNumberFrames,
+                        (Float32*) in.extended_data[i]);
     }
     putRecorded(std::move(inBuff));
 }
 
-void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
+void
+CoreLayer::updatePreference(AudioPreference& preference, int index, AudioDeviceType type)
 {
     switch (type) {
-        case DeviceType::PLAYBACK:
-            preference.setAlsaCardout(index);
-            break;
+    case AudioDeviceType::ALL:
+    case AudioDeviceType::PLAYBACK:
+        preference.setAlsaCardout(index);
+        break;
 
-        case DeviceType::CAPTURE:
-            preference.setAlsaCardin(index);
-            break;
+    case AudioDeviceType::CAPTURE:
+        preference.setAlsaCardin(index);
+        break;
 
-        case DeviceType::RINGTONE:
-            preference.setAlsaCardring(index);
-            break;
+    case AudioDeviceType::RINGTONE:
+        preference.setAlsaCardring(index);
+        break;
 
-        default:
-            break;
+    default:
+        break;
     }
 }
 
@@ -460,27 +473,22 @@ CoreLayer::getDeviceList(bool getCapture) const
     std::vector<AudioDevice> ret;
     UInt32 propsize;
 
-    AudioObjectPropertyAddress theAddress = {
-        kAudioHardwarePropertyDevices,
-        kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMaster
-    };
+    AudioObjectPropertyAddress theAddress = {kAudioHardwarePropertyDevices,
+                                             kAudioObjectPropertyScopeGlobal,
+                                             kAudioObjectPropertyElementMaster};
 
-    __Verify_noErr(AudioObjectGetPropertyDataSize(kAudioObjectSystemObject,
-                                                &theAddress,
-                                                0,
-                                                nullptr,
-                                                &propsize));
+    __Verify_noErr(
+        AudioObjectGetPropertyDataSize(kAudioObjectSystemObject, &theAddress, 0, nullptr, &propsize));
 
     std::size_t nDevices = propsize / sizeof(AudioDeviceID);
     auto devids = std::vector<AudioDeviceID>(nDevices);
 
     __Verify_noErr(AudioObjectGetPropertyData(kAudioObjectSystemObject,
-                                            &theAddress,
-                                            0,
-                                            nullptr,
-                                            &propsize,
-                                            devids.data()));
+                                              &theAddress,
+                                              0,
+                                              nullptr,
+                                              &propsize,
+                                              devids.data()));
 
     for (int i = 0; i < nDevices; ++i) {
         auto dev = AudioDevice {devids[i], getCapture};

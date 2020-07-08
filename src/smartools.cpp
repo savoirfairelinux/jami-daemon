@@ -24,14 +24,16 @@
 
 namespace jami {
 
-Smartools& Smartools::getInstance()
+Smartools&
+Smartools::getInstance()
 {
     // Meyers-Singleton
     static Smartools instance_;
     return instance_;
 }
 
-Smartools::~Smartools() {
+Smartools::~Smartools()
+{
     stop();
 }
 
@@ -47,10 +49,12 @@ void
 Smartools::start(std::chrono::milliseconds refreshTimeMs)
 {
     JAMI_DBG("Start SmartInfo");
-    auto task = Manager::instance().scheduler().scheduleAtFixedRate([this]{
-        sendInfo();
-        return true;
-    }, refreshTimeMs);
+    auto task = Manager::instance().scheduler().scheduleAtFixedRate(
+        [this] {
+            sendInfo();
+            return true;
+        },
+        refreshTimeMs);
     task_.swap(task);
     if (task)
         task->cancel();
@@ -66,17 +70,16 @@ Smartools::stop()
     information_.clear();
 }
 
-
-//Set all the information in the map
+// Set all the information in the map
 
 void
 Smartools::setFrameRate(const std::string& id, const std::string& fps)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    if(id == "local"){
-        information_["local FPS"]= fps;
+    if (id == "local") {
+        information_["local FPS"] = fps;
     } else {
-        information_["remote FPS"]= fps;
+        information_["remote FPS"] = fps;
     }
 }
 
@@ -84,7 +87,7 @@ void
 Smartools::setResolution(const std::string& id, int width, int height)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    if(id == "local"){
+    if (id == "local") {
         information_["local width"] = std::to_string(width);
         information_["local height"] = std::to_string(height);
     } else {
@@ -118,17 +121,17 @@ void
 Smartools::setRemoteVideoCodec(const std::string& remoteVideoCodec, const std::string& callID)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    information_["remote video codec"]= remoteVideoCodec;
+    information_["remote video codec"] = remoteVideoCodec;
     if (auto call = Manager::instance().getCallFromCallID(callID)) {
         auto confID = call->getConfId();
         if (not confID.empty()) {
-            information_["type"]= "conference";
-            information_["callID"]= confID;
+            information_["type"] = "conference";
+            information_["callID"] = confID;
         } else {
-            information_["type"]= "no conference";
-            information_["callID"]= callID;
+            information_["type"] = "no conference";
+            information_["callID"] = callID;
         }
     }
- }
+}
 
- } // end namespace jami
+} // end namespace jami

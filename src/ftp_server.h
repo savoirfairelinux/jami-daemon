@@ -45,9 +45,7 @@ public:
     DRing::DataTransferId getId() const override;
     void close() noexcept override;
 
-    void setOnRecv(RecvCb&& cb) {
-        onRecvCb_ = cb;
-    }
+    void setOnRecv(RecvCb&& cb) { onRecvCb_ = cb; }
 
 private:
     bool parseStream(const std::vector<uint8_t>&);

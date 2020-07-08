@@ -37,9 +37,10 @@
 #include "logger.h"
 #include "video_device_monitor.h"
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
-constexpr const char * const VideoDeviceMonitor::CONFIG_LABEL;
+constexpr const char* const VideoDeviceMonitor::CONFIG_LABEL;
 
 using std::map;
 using std::string;
@@ -110,7 +111,7 @@ VideoDeviceMonitor::getMRLForDefaultDevice() const
 {
     std::lock_guard<std::mutex> l(lock_);
     const auto it = findDeviceById(defaultDevice_);
-    if(it == std::end(devices_))
+    if (it == std::end(devices_))
         return {};
     static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
     return DRing::Media::VideoProtocolPrefix::CAMERA + sep + it->getDeviceId();
@@ -158,7 +159,7 @@ VideoDeviceMonitor::getDeviceParams(const std::string& id) const
 }
 
 static void
-giveUniqueName(VideoDevice &dev, const vector<VideoDevice> &devices)
+giveUniqueName(VideoDevice& dev, const vector<VideoDevice>& devices)
 {
     std::string suffix;
     uint64_t number = 2;
@@ -167,7 +168,7 @@ giveUniqueName(VideoDevice &dev, const vector<VideoDevice> &devices)
         for (const auto& s : devices)
             unique &= static_cast<bool>(s.name.compare(dev.name + suffix));
         if (unique)
-            return (void)(dev.name += suffix);
+            return (void) (dev.name += suffix);
         suffix = " (" + std::to_string(number) + ")";
     }
 }
@@ -181,7 +182,8 @@ notify()
 }
 
 void
-VideoDeviceMonitor::addDevice(const string& id, const std::vector<std::map<std::string, std::string>>* devInfo)
+VideoDeviceMonitor::addDevice(const string& id,
+                              const std::vector<std::map<std::string, std::string>>* devInfo)
 {
     try {
         std::lock_guard<std::mutex> l(lock_);
@@ -189,7 +191,7 @@ VideoDeviceMonitor::addDevice(const string& id, const std::vector<std::map<std::
             return;
 
         // instantiate a new unique device
-        VideoDevice dev { id, *devInfo};
+        VideoDevice dev {id, *devInfo};
 
         if (dev.getChannelList().empty())
             return;
@@ -276,17 +278,17 @@ VideoDeviceMonitor::overwritePreferences(const VideoSettings& settings)
 }
 
 void
-VideoDeviceMonitor::serialize(YAML::Emitter &out) const
+VideoDeviceMonitor::serialize(YAML::Emitter& out) const
 {
     std::lock_guard<std::mutex> l(lock_);
     out << YAML::Key << "devices" << YAML::Value << preferences_;
 }
 
 void
-VideoDeviceMonitor::unserialize(const YAML::Node &in)
+VideoDeviceMonitor::unserialize(const YAML::Node& in)
 {
     std::lock_guard<std::mutex> l(lock_);
-    const auto &node = in[CONFIG_LABEL];
+    const auto& node = in[CONFIG_LABEL];
 
     /* load the device list from the "video" YAML section */
     const auto& devices = node["devices"];
@@ -311,4 +313,5 @@ VideoDeviceMonitor::unserialize(const YAML::Node &in)
     }
 }
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

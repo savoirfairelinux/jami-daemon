@@ -31,25 +31,24 @@ extern "C" {
 
 #include "client/ring_signal.h"
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 typedef struct
 {
-    std::string             name;
-    enum AVPixelFormat      pixfmt;
+    std::string name;
+    enum AVPixelFormat pixfmt;
 } ios_fmt;
 
-static const std::array<ios_fmt, 4> ios_formats
-{
-    ios_fmt { "RGBA",       AV_PIX_FMT_RGBA       },
-    ios_fmt { "BGRA",       AV_PIX_FMT_BGRA       },
-    ios_fmt { "YUV420P",    AV_PIX_FMT_YUV420P    }
-};
+static const std::array<ios_fmt, 4> ios_formats {ios_fmt {"RGBA", AV_PIX_FMT_RGBA},
+                                                 ios_fmt {"BGRA", AV_PIX_FMT_BGRA},
+                                                 ios_fmt {"YUV420P", AV_PIX_FMT_YUV420P}};
 
 class VideoDeviceImpl
 {
 public:
-    VideoDeviceImpl(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo);
+    VideoDeviceImpl(const std::string& path,
+                    const std::vector<std::map<std::string, std::string>>& devInfo);
 
     std::string name;
 
@@ -62,7 +61,6 @@ public:
     std::vector<FrameRate> getRateList() const;
 
 private:
-
     VideoSize getSize(VideoSize size) const;
     FrameRate getRate(FrameRate rate) const;
 
@@ -73,14 +71,13 @@ private:
     const ios_fmt* fmt_ {nullptr};
     VideoSize size_ {};
     FrameRate rate_ {};
-
 };
 
 void
 VideoDeviceImpl::selectFormat()
 {
     unsigned best = UINT_MAX;
-    for(auto fmt : formats_) {
+    for (auto fmt : formats_) {
         auto f = ios_formats.begin();
         for (; f != ios_formats.end(); ++f) {
             if (f->name == fmt) {
@@ -97,15 +94,15 @@ VideoDeviceImpl::selectFormat()
     if (best != UINT_MAX) {
         fmt_ = &ios_formats[best];
         JAMI_DBG("Video: picked format %s", fmt_->name.c_str());
-    }
-    else {
+    } else {
         fmt_ = &ios_formats[0];
         JAMI_ERR("Video: Could not find a known format to use");
     }
 }
 
-VideoDeviceImpl::VideoDeviceImpl(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo)
-: name(path)
+VideoDeviceImpl::VideoDeviceImpl(const std::string& path,
+                                 const std::vector<std::map<std::string, std::string>>& devInfo)
+    : name(path)
 {
     for (auto& setting : devInfo) {
         formats_.emplace_back(setting.at("format"));
@@ -118,23 +115,23 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& path, const std::vector<std:
 VideoSize
 VideoDeviceImpl::getSize(VideoSize size) const
 {
-    for (const auto &iter : sizes_) {
+    for (const auto& iter : sizes_) {
         if (iter == size)
             return iter;
     }
 
-    return sizes_.empty() ? VideoSize{0, 0} : sizes_.back();
+    return sizes_.empty() ? VideoSize {0, 0} : sizes_.back();
 }
 
 FrameRate
 VideoDeviceImpl::getRate(FrameRate rate) const
 {
-    for (const auto &iter : rates_) {
+    for (const auto& iter : rates_) {
         if (iter == rate)
             return iter;
     }
 
-    return rates_.empty() ? FrameRate{0, 0} : rates_.back();
+    return rates_.empty() ? FrameRate {0, 0} : rates_.back();
 }
 
 std::vector<VideoSize>
@@ -160,7 +157,7 @@ VideoDeviceImpl::getDeviceParams() const
 
     params.name = name;
     params.input = name;
-    params.channel =  0;
+    params.channel = 0;
     params.pixel_format = "nv12";
     params.width = size_.first;
     params.height = size_.second;
@@ -177,8 +174,9 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
     emitSignal<DRing::VideoSignal::ParametersChanged>(name);
 }
 
-VideoDevice::VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo)
-: deviceImpl_(new VideoDeviceImpl(path, devInfo))
+VideoDevice::VideoDevice(const std::string& path,
+                         const std::vector<std::map<std::string, std::string>>& devInfo)
+    : deviceImpl_(new VideoDeviceImpl(path, devInfo))
 {
     id_ = path;
     name = deviceImpl_->name;
@@ -214,8 +212,7 @@ VideoDevice::getRateList(const std::string& channel, VideoSize size) const
     return deviceImpl_->getRateList();
 }
 
-VideoDevice::~VideoDevice()
-{}
+VideoDevice::~VideoDevice() {}
 
-}} // namespace jami::video
-
+} // namespace video
+} // namespace jami

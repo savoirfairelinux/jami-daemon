@@ -35,9 +35,12 @@
 
 #define DEBUG_FPS
 
-namespace jami {class MediaFilter;}
+namespace jami {
+class MediaFilter;
+}
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 #if HAVE_SHM
 class ShmHolder;
@@ -47,66 +50,58 @@ class VideoScaler;
 
 class SinkClient : public VideoFramePassiveReader
 {
-    public:
-        SinkClient(const std::string& id="", bool mixer=false);
+public:
+    SinkClient(const std::string& id = "", bool mixer = false);
 
-        const std::string& getId() const noexcept {
-            return id_;
-        }
+    const std::string& getId() const noexcept { return id_; }
 
-        std::string openedName() const noexcept;
+    std::string openedName() const noexcept;
 
-        int getWidth() const noexcept {
-            return width_;
-        }
+    int getWidth() const noexcept { return width_; }
 
-        int getHeight() const noexcept {
-            return height_;
-        }
+    int getHeight() const noexcept { return height_; }
 
-        AVPixelFormat getPreferredFormat() const noexcept {
-            return (AVPixelFormat)avTarget_.preferredFormat;
-        }
+    AVPixelFormat getPreferredFormat() const noexcept
+    {
+        return (AVPixelFormat) avTarget_.preferredFormat;
+    }
 
-        // as VideoFramePassiveReader
-        void update(Observable<std::shared_ptr<jami::MediaFrame>>*,
-                    const std::shared_ptr<jami::MediaFrame>&) override;
+    // as VideoFramePassiveReader
+    void update(Observable<std::shared_ptr<jami::MediaFrame>>*,
+                const std::shared_ptr<jami::MediaFrame>&) override;
 
-        bool start() noexcept;
-        bool stop() noexcept;
+    bool start() noexcept;
+    bool stop() noexcept;
 
-        void setFrameSize(int width, int height);
+    void setFrameSize(int width, int height);
 
-        void registerTarget(const DRing::SinkTarget& target) noexcept {
-            target_ = target;
-        }
-        void registerAVTarget(const DRing::AVSinkTarget& target) noexcept {
-            avTarget_ = target;
-        }
+    void registerTarget(const DRing::SinkTarget& target) noexcept { target_ = target; }
+    void registerAVTarget(const DRing::AVSinkTarget& target) noexcept { avTarget_ = target; }
 
-    private:
-        const std::string id_;
-        const bool mixer_;
-        int width_ {0};
-        int height_ {0};
-        bool started_ {false}; // used to arbitrate client's stop signal.
-        int rotation_ {0};
-        DRing::SinkTarget target_;
-        DRing::AVSinkTarget avTarget_;
-        std::unique_ptr<VideoScaler> scaler_;
-        std::unique_ptr<MediaFilter> filter_;
+private:
+    const std::string id_;
+    const bool mixer_;
+    int width_ {0};
+    int height_ {0};
+    bool started_ {false}; // used to arbitrate client's stop signal.
+    int rotation_ {0};
+    DRing::SinkTarget target_;
+    DRing::AVSinkTarget avTarget_;
+    std::unique_ptr<VideoScaler> scaler_;
+    std::unique_ptr<MediaFilter> filter_;
 
-        void setRotation(int rotation);
+    void setRotation(int rotation);
 
 #ifdef DEBUG_FPS
-        unsigned frameCount_;
-        std::chrono::time_point<std::chrono::system_clock> lastFrameDebug_;
+    unsigned frameCount_;
+    std::chrono::time_point<std::chrono::system_clock> lastFrameDebug_;
 #endif
 
 #if HAVE_SHM
-        // using shared_ptr and not unique_ptr as ShmHolder is forwared only
-        std::shared_ptr<ShmHolder> shm_;
+    // using shared_ptr and not unique_ptr as ShmHolder is forwared only
+    std::shared_ptr<ShmHolder> shm_;
 #endif // HAVE_SHM
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

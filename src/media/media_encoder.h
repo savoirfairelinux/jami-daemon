@@ -57,17 +57,21 @@ class HardwareAccel;
 }
 #endif
 
-class MediaEncoderException : public std::runtime_error {
-    public:
-        MediaEncoderException(const char *msg) : std::runtime_error(msg) {}
+class MediaEncoderException : public std::runtime_error
+{
+public:
+    MediaEncoderException(const char* msg)
+        : std::runtime_error(msg)
+    {}
 };
 
-class MediaEncoder {
+class MediaEncoder
+{
 public:
     MediaEncoder();
     ~MediaEncoder();
 
-    void openOutput(const std::string& filename, const std::string& format="");
+    void openOutput(const std::string& filename, const std::string& format = "");
     void setMetadata(const std::string& title, const std::string& description);
     void setOptions(const MediaStream& opts);
     void setOptions(const MediaDescription& args);
@@ -77,7 +81,7 @@ public:
     bool send(AVPacket& packet, int streamIdx = -1);
 
 #ifdef ENABLE_VIDEO
-    int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
+    int encode(VideoFrame& input, bool is_keyframe, int64_t frame_number);
 #endif // ENABLE_VIDEO
 
     int encodeAudio(AudioFrame& frame);
@@ -115,7 +119,7 @@ private:
     NON_COPYABLE(MediaEncoder);
     AVCodecContext* prepareEncoderContext(AVCodec* outputCodec, bool is_video);
     void forcePresetX2645(AVCodecContext* encoderCtx);
-    void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
+    void extractProfileLevelID(const std::string& parameters, AVCodecContext* ctx);
     int initStream(const std::string& codecName, AVBufferRef* framesCtx);
     int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx);
     void openIOContext();
@@ -131,7 +135,7 @@ private:
     bool isDynBitrateSupported(AVCodecID codecid);
 
     std::vector<AVCodecContext*> encoders_;
-    AVFormatContext *outputCtx_ = nullptr;
+    AVFormatContext* outputCtx_ = nullptr;
     AVIOContext* ioCtx_ = nullptr;
     int currentStreamIdx_ = -1;
     unsigned sent_samples = 0;

@@ -35,8 +35,7 @@ Recordable::Recordable()
     recorder_ = std::make_shared<MediaRecorder>();
 }
 
-Recordable::~Recordable()
-{}
+Recordable::~Recordable() {}
 
 std::string
 Recordable::getPath() const

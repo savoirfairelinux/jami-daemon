@@ -58,17 +58,18 @@
 #include <future>
 
 // Action identifiers.
-constexpr static const char* ACTION_ADD_PORT_MAPPING               {"AddPortMapping"};
-constexpr static const char* ACTION_DELETE_PORT_MAPPING            {"DeletePortMapping"};
+constexpr static const char* ACTION_ADD_PORT_MAPPING {"AddPortMapping"};
+constexpr static const char* ACTION_DELETE_PORT_MAPPING {"DeletePortMapping"};
 constexpr static const char* ACTION_GET_GENERIC_PORT_MAPPING_ENTRY {"GetGenericPortMappingEntry"};
-constexpr static const char* ACTION_GET_STATUS_INFO                {"GetStatusInfo"};
-constexpr static const char* ACTION_GET_EXTERNAL_IP_ADDRESS        {"GetExternalIPAddress"};
+constexpr static const char* ACTION_GET_STATUS_INFO {"GetStatusInfo"};
+constexpr static const char* ACTION_GET_EXTERNAL_IP_ADDRESS {"GetExternalIPAddress"};
 
 namespace jami {
 class IpAddr;
 }
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
 // Error codes returned by router when trying to remove ports.
 constexpr static int ARRAY_IDX_INVALID = 713;
@@ -82,7 +83,8 @@ class PUPnP : public UPnPProtocol
 {
 public:
     using XMLDocument = std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&>;
-    struct IGDInfo {
+    struct IGDInfo
+    {
         std::string location;
         XMLDocument document;
     };
@@ -109,7 +111,10 @@ public:
     void searchForIgd() override;
 
     // Tries to add mapping. Assumes mutex is already locked.
-    void requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type) override;
+    void requestMappingAdd(IGD* igd,
+                           uint16_t port_external,
+                           uint16_t port_internal,
+                           PortType type) override;
     // Treats the reception of an add mapping action answer.
     void processAddMapAction(const std::string& ctrlURL, IXML_Document* actionRequest);
 
@@ -131,8 +136,9 @@ private:
     // Control point callback.
     static int ctrlPtCallback(Upnp_EventType event_type, const void* event, void* user_data);
 #if UPNP_VERSION < 10800
-    static inline int ctrlPtCallback(Upnp_EventType event_type, void* event, void* user_data) {
-        return ctrlPtCallback(event_type, (const void*)event, user_data);
+    static inline int ctrlPtCallback(Upnp_EventType event_type, void* event, void* user_data)
+    {
+        return ctrlPtCallback(event_type, (const void*) event, user_data);
     };
 #endif
 
@@ -142,8 +148,9 @@ private:
     // Subscription event callback.
     static int subEventCallback(Upnp_EventType event_type, const void* event, void* user_data);
 #if UPNP_VERSION < 10800
-    static inline int subEventCallback(Upnp_EventType event_type, void* event, void* user_data) {
-        return subEventCallback(event_type, (const void*)event, user_data);
+    static inline int subEventCallback(Upnp_EventType event_type, void* event, void* user_data)
+    {
+        return subEventCallback(event_type, (const void*) event, user_data);
     };
 #endif
 
@@ -153,32 +160,43 @@ private:
     // Parses the IGD candidate.
     std::unique_ptr<UPnPIGD> parseIgd(IXML_Document* doc, std::string locationUrl);
 
-    // These functions directly create UPnP actions and make synchronous UPnP control point calls. Assumes mutex is already locked.
-    bool   actionIsIgdConnected(const UPnPIGD& igd);
+    // These functions directly create UPnP actions and make synchronous UPnP control point calls.
+    // Assumes mutex is already locked.
+    bool actionIsIgdConnected(const UPnPIGD& igd);
     IpAddr actionGetExternalIP(const UPnPIGD& igd);
-    void   actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& description);
-    bool   actionDeletePortMapping(const UPnPIGD& igd, const std::string& port_external, const std::string& protocol);
-    bool   actionAddPortMapping(const UPnPIGD& igd, const Mapping& mapping, UPnPProtocol::UpnpError& upnp_error);
-    bool   actionAddPortMappingAsync(const UPnPIGD& igd, const Mapping& mapping);
-    bool   actionDeletePortMappingAsync(const UPnPIGD& igd, const std::string& port_external, const std::string& protocol);
+    void actionDeletePortMappingsByDesc(const UPnPIGD& igd, const std::string& description);
+    bool actionDeletePortMapping(const UPnPIGD& igd,
+                                 const std::string& port_external,
+                                 const std::string& protocol);
+    bool actionAddPortMapping(const UPnPIGD& igd,
+                              const Mapping& mapping,
+                              UPnPProtocol::UpnpError& upnp_error);
+    bool actionAddPortMappingAsync(const UPnPIGD& igd, const Mapping& mapping);
+    bool actionDeletePortMappingAsync(const UPnPIGD& igd,
+                                      const std::string& port_external,
+                                      const std::string& protocol);
 
 private:
     NON_COPYABLE(PUPnP);
 
-    std::condition_variable pupnpCv_ {};                        // Condition variable for thread-safe signaling.
-    std::atomic_bool pupnpRun_ { true };                        // Variable to allow the thread to run.
-    std::thread pupnpThread_ {};                                // PUPnP thread for non-blocking client registration.
+    std::condition_variable pupnpCv_ {}; // Condition variable for thread-safe signaling.
+    std::atomic_bool pupnpRun_ {true};   // Variable to allow the thread to run.
+    std::thread pupnpThread_ {};         // PUPnP thread for non-blocking client registration.
 
-    std::map<std::string, std::shared_ptr<IGD>> validIgdList_;  // Map of valid IGDs with their UDN (universal Id).
-    std::set<std::string> cpDeviceList_;                        // Control point device list containing the device ID and device subscription event url.
-    std::list<std::future<pIGDInfo>> dwnldlXmlList_;            // List of futures for blocking xml download function calls.
-    std::list<std::future<pIGDInfo>> cancelXmlList_;  // List of abandoned documents
+    std::map<std::string, std::shared_ptr<IGD>>
+        validIgdList_;                   // Map of valid IGDs with their UDN (universal Id).
+    std::set<std::string> cpDeviceList_; // Control point device list containing the device ID and
+                                         // device subscription event url.
+    std::list<std::future<pIGDInfo>>
+        dwnldlXmlList_; // List of futures for blocking xml download function calls.
+    std::list<std::future<pIGDInfo>> cancelXmlList_; // List of abandoned documents
 
-    std::mutex ctrlptMutex_;                                    // Mutex for client handle protection.
-    UpnpClient_Handle ctrlptHandle_ {-1};                       // Control point handle.
+    std::mutex ctrlptMutex_;              // Mutex for client handle protection.
+    UpnpClient_Handle ctrlptHandle_ {-1}; // Control point handle.
 
-    std::atomic_bool clientRegistered_ { false };               // Indicates of the client is registered.
-    std::atomic_bool searchForIgd_ { false };                   // Variable to signal thread for a search.
+    std::atomic_bool clientRegistered_ {false}; // Indicates of the client is registered.
+    std::atomic_bool searchForIgd_ {false};     // Variable to signal thread for a search.
 };
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

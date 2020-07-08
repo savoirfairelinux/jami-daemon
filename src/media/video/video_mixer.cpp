@@ -42,15 +42,18 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
-struct VideoMixer::VideoMixerSource {
+struct VideoMixer::VideoMixerSource
+{
     Observable<std::shared_ptr<MediaFrame>>* source {nullptr};
     int rotation {0};
     std::unique_ptr<MediaFilter> rotationFilter {nullptr};
     std::unique_ptr<VideoFrame> update_frame;
     std::unique_ptr<VideoFrame> render_frame;
-    void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
+    void atomic_swap_render(std::unique_ptr<VideoFrame>& other)
+    {
         std::lock_guard<std::mutex> lock(mutex_);
         render_frame.swap(other);
     }
@@ -60,19 +63,18 @@ struct VideoMixer::VideoMixerSource {
     int y {};
     int w {};
     int h {};
+
 private:
     std::mutex mutex_;
 };
 
-static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1/30.);
+static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1 / 30.);
 
 VideoMixer::VideoMixer(const std::string& id)
     : VideoGenerator::VideoGenerator()
     , id_(id)
-    , sink_ (Manager::instance().createSinkClient(id, true))
-    , loop_([]{return true;},
-            std::bind(&VideoMixer::process, this),
-            []{})
+    , sink_(Manager::instance().createSinkClient(id, true))
+    , loop_([] { return true; }, std::bind(&VideoMixer::process, this), [] {})
 {
     // Local video camera is the main participant
     videoLocal_ = getVideoCamera();
@@ -176,7 +178,8 @@ VideoMixer::update(Observable<std::shared_ptr<MediaFrame>>* ob,
                 x->update_frame.reset(new VideoFrame);
             else
                 x->update_frame->reset();
-            x->update_frame->copyFrom(*std::static_pointer_cast<VideoFrame>(frame_p)); // copy frame content, it will be destroyed after return
+            x->update_frame->copyFrom(*std::static_pointer_cast<VideoFrame>(
+                frame_p)); // copy frame content, it will be destroyed after return
             x->atomic_swap_render(x->update_frame);
             return;
         }
@@ -215,10 +218,9 @@ VideoMixer::process()
             if (!loop_.isRunning())
                 return;
 
-            if (currentLayout_ != Layout::ONE_BIG
-                or activeSource_ == x->source
-                or (not activeSource_ and not activeFound) /* By default ONE_BIG will show the first source */) {
-
+            if (currentLayout_ != Layout::ONE_BIG or activeSource_ == x->source
+                or (not activeSource_
+                    and not activeFound) /* By default ONE_BIG will show the first source */) {
                 // make rendered frame temporarily unavailable for update()
                 // to avoid concurrent access.
                 std::unique_ptr<VideoFrame> input;
@@ -231,7 +233,8 @@ VideoMixer::process()
                 } else if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
                     if (!activeSource_ && i == 0) {
                         activeFound = true;
-                    } if (activeSource_ == x->source) {
+                    }
+                    if (activeSource_ == x->source) {
                         wantedIndex = 0;
                         activeFound = true;
                     } else if (not activeFound) {
@@ -260,13 +263,7 @@ VideoMixer::process()
                 std::vector<SourceInfo> sourcesInfo;
                 sourcesInfo.reserve(sources_.size());
                 for (auto& x : sources_) {
-                    sourcesInfo.emplace_back(SourceInfo {
-                        x->source,
-                        x->x,
-                        x->y,
-                        x->w,
-                        x->h
-                    });
+                    sourcesInfo.emplace_back(SourceInfo {x->source, x->x, x->y, x->w, x->h});
                 }
                 if (onSourcesUpdated_)
                     (onSourcesUpdated_)(std::move(sourcesInfo));
@@ -278,14 +275,17 @@ VideoMixer::process()
 }
 
 bool
-VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
-    std::unique_ptr<VideoMixerSource>& source, int index, bool needsUpdate)
+VideoMixer::render_frame(VideoFrame& output,
+                         const VideoFrame& input,
+                         std::unique_ptr<VideoMixerSource>& source,
+                         int index,
+                         bool needsUpdate)
 {
     if (!width_ or !height_ or !input.pointer() or input.pointer()->format == -1)
         return false;
 
 #ifdef RING_ACCEL
-    std::shared_ptr<VideoFrame> frame { HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12) };
+    std::shared_ptr<VideoFrame> frame {HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12)};
 #else
     std::shared_ptr<VideoFrame> frame = input;
 #endif
@@ -297,12 +297,13 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
         xoff = source->x;
         yoff = source->y;
     } else {
-        const int n = currentLayout_ == Layout::ONE_BIG? 1 : sources_.size();
-        const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL? std::max(6,n) : ceil(sqrt(n));
+        const int n = currentLayout_ == Layout::ONE_BIG ? 1 : sources_.size();
+        const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL ? std::max(6, n)
+                                                                      : ceil(sqrt(n));
         if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
             // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
             // The rest is the active source
-            cell_width  = width_;
+            cell_width = width_;
             cell_height = height_ - height_ / zoom;
         } else {
             cell_width = width_ / zoom;
@@ -313,7 +314,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
                 xoff = 0;
                 yoff = height_ / zoom; // First line height
             } else {
-                xoff = (index-1) * cell_width;
+                xoff = (index - 1) * cell_width;
                 // Show sources in center
                 xoff += (width_ - (n - 1) * cell_width) / 2;
                 yoff = 0;
@@ -330,7 +331,8 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
         source->y = yoff;
     }
 
-    AVFrameSideData* sideData = av_frame_get_side_data(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
+    AVFrameSideData* sideData = av_frame_get_side_data(frame->pointer(),
+                                                       AV_FRAME_DATA_DISPLAYMATRIX);
     int angle = 0;
     if (sideData) {
         auto matrixRotation = reinterpret_cast<int32_t*>(sideData->data);
@@ -338,14 +340,18 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     }
     const constexpr char filterIn[] = "mixin";
     if (angle != source->rotation) {
-        source->rotationFilter = video::getTransposeFilter(angle, filterIn,
-            frame->width(), frame->height(), frame->format(), false);
+        source->rotationFilter = video::getTransposeFilter(angle,
+                                                           filterIn,
+                                                           frame->width(),
+                                                           frame->height(),
+                                                           frame->format(),
+                                                           false);
         source->rotation = angle;
     }
     if (source->rotationFilter) {
         source->rotationFilter->feedInput(frame->pointer(), filterIn);
-        frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(
-            source->rotationFilter->readOutput()));
+        frame = std::static_pointer_cast<VideoFrame>(
+            std::shared_ptr<MediaFrame>(source->rotationFilter->readOutput()));
     }
 
     scaler_.scale_and_pad(*frame, output, xoff, yoff, cell_width, cell_height, true);
@@ -398,14 +404,21 @@ VideoMixer::stop_sink()
 
 int
 VideoMixer::getWidth() const
-{ return width_; }
+{
+    return width_;
+}
 
 int
 VideoMixer::getHeight() const
-{ return height_; }
+{
+    return height_;
+}
 
 AVPixelFormat
 VideoMixer::getPixelFormat() const
-{ return format_; }
+{
+    return format_;
+}
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami
