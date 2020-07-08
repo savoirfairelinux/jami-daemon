@@ -443,12 +443,6 @@ stopCamera()
 void
 startAudioDevice()
 {
-    // Don't start audio layer if already done
-    auto audioLayer = jami::Manager::instance().getAudioDriver();
-    if (!audioLayer)
-        jami::Manager::instance().initAudioDriver();
-    if (!audioLayer->isStarted())
-        jami::Manager::instance().startAudioDriverStream();
     jami::Manager::instance().getVideoManager().audioPreview = jami::getAudioInput(
         jami::RingBufferPool::DEFAULT_ID);
 }
@@ -457,7 +451,6 @@ void
 stopAudioDevice()
 {
     jami::Manager::instance().getVideoManager().audioPreview.reset();
-    jami::Manager::instance().checkAudio(); // stops audio layer if no calls
 }
 
 std::string
@@ -765,21 +758,19 @@ getMediaPlayer(const std::string& id)
 std::string
 createMediaPlayer(const std::string& path)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
     auto player = std::make_shared<MediaPlayer>(path);
     if (!player->isInputValid()) {
         return "";
     }
     auto playerId = player.get()->getId();
-    vmgr.mediaPlayers[playerId] = player;
+    Manager::instance().getVideoManager().mediaPlayers[playerId] = player;
     return playerId;
 }
 
 bool
 pausePlayer(const std::string& id, bool pause)
 {
-    auto player = getMediaPlayer(id);
-    if (player) {
+    if (auto player = getMediaPlayer(id)) {
         player->pause(pause);
         return true;
     }
@@ -789,24 +780,13 @@ pausePlayer(const std::string& id, bool pause)
 bool
 closePlayer(const std::string& id)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
-    auto player = getMediaPlayer(id);
-    if (player) {
-        vmgr.mediaPlayers.erase(id);
-        if (vmgr.mediaPlayers.empty()) {
-            jami::Manager::instance().checkAudio();
-        }
-        return true;
-    }
-    return false;
+    return Manager::instance().getVideoManager().mediaPlayers.erase(id) > 0;
 }
 
 bool
 mutePlayerAudio(const std::string& id, bool mute)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
-    auto player = getMediaPlayer(id);
-    if (player) {
+    if (auto player = getMediaPlayer(id)) {
         player->muteAudio(mute);
         return true;
     }
@@ -816,22 +796,16 @@ mutePlayerAudio(const std::string& id, bool mute)
 bool
 playerSeekToTime(const std::string& id, int time)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
-    auto player = getMediaPlayer(id);
-    if (player) {
+    if (auto player = getMediaPlayer(id))
         return player->seekToTime(time);
-    }
     return false;
 }
 
 int64_t
 getPlayerPosition(const std::string& id)
 {
-    auto& vmgr = Manager::instance().getVideoManager();
-    auto player = getMediaPlayer(id);
-    if (player) {
+    if (auto player = getMediaPlayer(id))
         return player->getPlayerPosition();
-    }
     return -1;
 }
 
