@@ -185,7 +185,9 @@ AudioRtpSession::stop()
     receiveThread_.reset();
     sender_.reset();
     socketPair_.reset();
+    audioInput_.reset();
 }
+
 void
 AudioRtpSession::setMuted(bool isMuted)
 {

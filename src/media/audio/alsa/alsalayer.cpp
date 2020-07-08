@@ -638,7 +638,7 @@ AlsaLayer::getAudioDeviceIndexMap(bool getCapture) const
 
 
 bool
-AlsaLayer::soundCardIndexExists(int card, DeviceType stream)
+AlsaLayer::soundCardIndexExists(int card, AudioDeviceType stream)
 {
     const std::string name("hw:" + std::to_string(card));
 
@@ -648,16 +648,16 @@ AlsaLayer::soundCardIndexExists(int card, DeviceType stream)
 
     snd_pcm_info_t* pcminfo;
     snd_pcm_info_alloca(&pcminfo);
-    snd_pcm_info_set_stream(pcminfo, stream == DeviceType::PLAYBACK ?  SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
+    snd_pcm_info_set_stream(pcminfo, stream == AudioDeviceType::PLAYBACK ?  SND_PCM_STREAM_PLAYBACK : SND_PCM_STREAM_CAPTURE);
     bool ret = snd_ctl_pcm_info(handle, pcminfo) >= 0;
     snd_ctl_close(handle);
     return ret;
 }
 
 int
-AlsaLayer::getAudioDeviceIndex(const std::string &description, DeviceType type) const
+AlsaLayer::getAudioDeviceIndex(const std::string &description, AudioDeviceType type) const
 {
-    std::vector<HwIDPair> devices = getAudioDeviceIndexMap(type == DeviceType::CAPTURE);
+    std::vector<HwIDPair> devices = getAudioDeviceIndexMap(type == AudioDeviceType::CAPTURE);
 
     for (const auto & dev : devices)
         if (dev.second == description)
@@ -668,17 +668,17 @@ AlsaLayer::getAudioDeviceIndex(const std::string &description, DeviceType type) 
 }
 
 std::string
-AlsaLayer::getAudioDeviceName(int index, DeviceType type) const
+AlsaLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 {
     // a bit ugly and wrong.. i do not know how to implement it better in alsalayer.
     // in addition, for now it is used in pulselayer only due to alsa and pulse layers api differences.
     // but after some tweaking in alsalayer, it could be used in it too.
     switch (type) {
-        case DeviceType::PLAYBACK:
-        case DeviceType::RINGTONE:
+        case AudioDeviceType::PLAYBACK:
+        case AudioDeviceType::RINGTONE:
             return getPlaybackDeviceList().at(index);
 
-        case DeviceType::CAPTURE:
+        case AudioDeviceType::CAPTURE:
             return getCaptureDeviceList().at(index);
         default:
             // Should never happen
@@ -736,18 +736,18 @@ void AlsaLayer::ringtone()
     }
 }
 
-void AlsaLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
+void AlsaLayer::updatePreference(AudioPreference &preference, int index, AudioDeviceType type)
 {
     switch (type) {
-        case DeviceType::PLAYBACK:
+        case AudioDeviceType::PLAYBACK:
             preference.setAlsaCardout(index);
             break;
 
-        case DeviceType::CAPTURE:
+        case AudioDeviceType::CAPTURE:
             preference.setAlsaCardin(index);
             break;
 
-        case DeviceType::RINGTONE:
+        case AudioDeviceType::RINGTONE:
             preference.setAlsaCardring(index);
             break;
 
