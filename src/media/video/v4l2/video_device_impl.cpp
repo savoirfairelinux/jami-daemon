@@ -449,6 +449,9 @@ VideoDeviceImpl::VideoDeviceImpl(const string& path)
     if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE))
         throw std::runtime_error("not a capture device");
 
+    if (cap.capabilities & V4L2_CAP_TOUCH)
+	throw std::runtime_error("touch device, ignoring it");
+
     name = string(reinterpret_cast<const char*>(cap.card));
 
     v4l2_input input;
@@ -459,7 +462,7 @@ VideoDeviceImpl::VideoDeviceImpl(const string& path)
         if (idx != input.index)
             break;
 
-        if (input.type & V4L2_INPUT_TYPE_CAMERA) {
+        if ((input.type & V4L2_INPUT_TYPE_CAMERA) && (input.type != V4L2_INPUT_TYPE_TOUCH)) {
             VideoV4l2Channel channel(idx, (const char*) input.name);
             channel.readFormats(fd);
             if (not channel.getSizeList().empty())
