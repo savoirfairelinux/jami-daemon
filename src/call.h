@@ -49,6 +49,7 @@ namespace jami {
 class VoIPLink;
 class Account;
 struct AccountVideoCodecInfo;
+class AudioDeviceGuard;
 
 template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 
@@ -339,11 +340,11 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         void setConferenceInfo(const std::string& msg);
 
         std::vector<std::map<std::string, std::string>>
-        getConferenceInfos() const
-        {
+        getConferenceInfos() const {
             return confInfo_.toVectorMapStringString();
         }
 
+        std::unique_ptr<AudioDeviceGuard> audioGuard;
 
     protected:
         virtual void merge(Call& scall);

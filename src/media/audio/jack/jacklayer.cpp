@@ -257,7 +257,7 @@ JackLayer::~JackLayer()
 }
 
 void
-JackLayer::updatePreference(AudioPreference & /*pref*/, int /*index*/, DeviceType /*type*/)
+JackLayer::updatePreference(AudioPreference & /*pref*/, int /*index*/, AudioDeviceType /*type*/)
 {}
 
 std::vector<std::string>
@@ -273,10 +273,10 @@ JackLayer::getPlaybackDeviceList() const
 }
 
 int
-JackLayer::getAudioDeviceIndex(const std::string& /*name*/, DeviceType /*type*/) const { return 0; }
+JackLayer::getAudioDeviceIndex(const std::string& /*name*/, AudioDeviceType /*type*/) const { return 0; }
 
 std::string
-JackLayer::getAudioDeviceName(int /*index*/, DeviceType /*type*/) const { return ""; }
+JackLayer::getAudioDeviceName(int /*index*/, AudioDeviceType /*type*/) const { return ""; }
 
 int
 JackLayer::getIndexCapture() const { return 0; }
@@ -346,7 +346,7 @@ JackLayer::process_playback(jack_nframes_t frames, void *arg)
  * Start the capture and playback.
  */
 void
-JackLayer::startStream(AudioStreamType)
+JackLayer::startStream(AudioDeviceType)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -376,7 +376,7 @@ JackLayer::onShutdown(void * /* data */)
  * Stop playback and capture.
  */
 void
-JackLayer::stopStream()
+JackLayer::stopStream(AudioDeviceType)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);

@@ -32,12 +32,9 @@
 #include "threadloop.h"
 
 namespace jami {
-class MediaDecoder;
-class MediaDemuxer;
-}
-namespace jami {
-
+class AudioDeviceGuard;
 class AudioFrameResizer;
+class MediaDemuxer;
 class MediaDecoder;
 class MediaRecorder;
 struct MediaStream;
@@ -48,9 +45,11 @@ class AudioInput : public Observable<std::shared_ptr<MediaFrame>>
 {
 public:
     AudioInput(const std::string& id);
+    AudioInput(const std::string& id, const std::string& resource);
     ~AudioInput();
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
+    void start() { loop_.start(); };
 
     bool isCapturing() const { return loop_.isRunning(); }
     void setFormat(const AudioFormat& fmt);
@@ -72,7 +71,6 @@ private:
     void frameResized(std::shared_ptr<AudioFrame>&& ptr);
 
     std::string id_;
-    AudioBuffer micData_;
     bool muteState_ = false;
     uint64_t sent_samples = 0;
     mutable std::mutex fmtMutex_ {};
@@ -94,8 +92,11 @@ private:
     std::shared_future<DeviceParams> futureDevOpts_;
     std::atomic_bool devOptsFound_ {false};
     void foundDevOpts(const DeviceParams& params);
+
+    std::atomic_bool playingDevice_ {false};
     std::atomic_bool decodingFile_ {false};
     std::atomic_bool playingFile_ {false};
+    std::unique_ptr<AudioDeviceGuard> deviceGuard_;
 
     ThreadLoop loop_;
     void process();
