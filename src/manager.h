@@ -137,8 +137,10 @@ public:
      */
     std::shared_ptr<AudioLayer> getAudioDriver();
 
-    void startAudioDriverStream();
-    void restartAudioDriverStream();
+    inline std::unique_ptr<AudioDeviceGuard> startAudioStream(AudioDeviceType stream)
+    {
+        return std::make_unique<AudioDeviceGuard>(*this, stream);
+    }
 
     /**
      * Functions which occur with a user's action
@@ -546,7 +548,9 @@ public:
      * @param index The index of the soundcard
      * @param the type of stream, either PLAYBACK, CAPTURE, RINGTONE
      */
-    void setAudioDevice(int index, DeviceType streamType);
+    void setAudioDevice(int index, AudioDeviceType streamType);
+
+    void startAudio();
 
     /**
      * Get list of supported audio output device
@@ -640,11 +644,6 @@ public:
      * @param File path of the file to play
      */
     bool startRecordedFilePlayback(const std::string&);
-
-    /**
-     * Start audio playback
-     */
-    bool startAudioPlayback();
 
     void recordingPlaybackSeek(const double value);
 
@@ -782,8 +781,6 @@ public:
      */
     bool isCurrentCall(const Call& call) const;
 
-    void initAudioDriver();
-
     /**
      * Load the accounts order set by the user from the dringrc config file
      * @return std::vector<std::string> A vector containing the account ID's
@@ -875,14 +872,6 @@ public:
     void unregisterAccounts();
 
     /**
-     * Suspends audio processing if no calls remain, allowing
-     * other applications to resume audio.
-     * See:
-     * https://projects.savoirfairelinux.com/issues/7037
-     */
-    void checkAudio();
-
-    /**
      * Call periodically to poll for VoIP events */
     void pollEvents();
 
@@ -951,9 +940,21 @@ public:
 private:
     Manager();
     ~Manager();
+    friend class AudioDeviceGuard;
 
     struct ManagerPimpl;
     std::unique_ptr<ManagerPimpl> pimpl_;
+};
+
+class AudioDeviceGuard
+{
+public:
+    AudioDeviceGuard(Manager& manager, AudioDeviceType type);
+    ~AudioDeviceGuard();
+
+private:
+    Manager& manager_;
+    const AudioDeviceType type_;
 };
 
 // Helper to install a callback to be called once by the main event loop

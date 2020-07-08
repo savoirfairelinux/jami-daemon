@@ -20,11 +20,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef ALSA_LAYER_H_
-#define ALSA_LAYER_H_
+#pragma once
 
 #include "audio/audiolayer.h"
 #include "noncopyable.h"
+
 #include <alsa/asoundlib.h>
 
 #include <memory>
@@ -67,14 +67,14 @@ public:
      * The playback starts accordingly to its threshold
      * ALSA Library API
      */
-    virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT);
+    virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
     /**
      * Stop the playback and capture streams.
      * Drops the pending frames and put the capture and playback handles to PREPARED state
      * ALSA Library API
      */
-    virtual void stopStream();
+    virtual void stopStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
     /**
      * Concatenate two strings. Used to build a valid pcm device name.
@@ -96,21 +96,21 @@ public:
      *streaming mode
      * @param card   An index
      * @param stream  The stream mode
-     *		  DeviceType::CAPTURE
-     *		  DeviceType::PLAYBACK
-     *		  DeviceType::RINGTONE
+     *		  AudioDeviceType::CAPTURE
+     *		  AudioDeviceType::PLAYBACK
+     *		  AudioDeviceType::RINGTONE
      * @return bool True if it exists and supports the mode
      *		    false otherwise
      */
-    static bool soundCardIndexExists(int card, DeviceType stream);
+    static bool soundCardIndexExists(int card, AudioDeviceType stream);
 
     /**
      * An index is associated with its string description
      * @param description The string description
      * @return	int	  Its index
      */
-    int getAudioDeviceIndex(const std::string& description, DeviceType type) const;
-    std::string getAudioDeviceName(int index, DeviceType type) const;
+    int getAudioDeviceIndex(const std::string& description, AudioDeviceType type) const;
+    std::string getAudioDeviceName(int index, AudioDeviceType type) const;
 
     void playback();
     void ringtone();
@@ -206,7 +206,7 @@ private:
      */
     std::unique_ptr<AudioFrame> read(unsigned frames);
 
-    virtual void updatePreference(AudioPreference& pref, int index, DeviceType type);
+    virtual void updatePreference(AudioPreference& pref, int index, AudioDeviceType type);
 
     /**
      * Handles to manipulate playback stream
@@ -250,5 +250,3 @@ private:
 };
 
 } // namespace jami
-
-#endif // ALSA_LAYER_H_
