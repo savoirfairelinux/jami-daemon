@@ -53,8 +53,8 @@ public:
     virtual std::vector<std::string> getCaptureDeviceList() const;
     virtual std::vector<std::string> getPlaybackDeviceList() const;
 
-    virtual int getAudioDeviceIndex(const std::string& name, DeviceType type) const;
-    virtual std::string getAudioDeviceName(int index, DeviceType type) const;
+    virtual int getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const;
+    virtual std::string getAudioDeviceName(int index, AudioDeviceType type) const;
 
     /**
      * Get the index of the audio card for capture
@@ -77,7 +77,7 @@ public:
     /**
      * Configure the AudioUnit
      */
-    void initAudioLayerIO(AudioStreamType stream);
+    bool initAudioLayerIO(AudioDeviceType stream);
     void setupOutputBus();
     void setupInputBus();
     void bindCallbacks();
@@ -90,7 +90,7 @@ public:
      * CoreAudio Library API
      */
 
-    virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT);
+    virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
     void destroyAudioLayer();
 
@@ -99,7 +99,7 @@ public:
      * Drops the pending frames and put the capture and playback handles to PREPARED state
      * CoreAudio Library API
      */
-    virtual void stopStream();
+    virtual void stopStream(AudioDeviceType stream = AudioDeviceType::ALL);
 
 private:
     NON_COPYABLE(CoreLayer);
@@ -132,7 +132,7 @@ private:
               UInt32 inNumberFrames,
               AudioBufferList* ioData);
 
-    virtual void updatePreference(AudioPreference& pref, int index, DeviceType type);
+    virtual void updatePreference(AudioPreference& pref, int index, AudioDeviceType type);
 
     /**
      * Number of audio cards on which capture stream has been opened
@@ -160,6 +160,8 @@ private:
     UInt32 inChannelsPerFrame_;
     Float64 outSampleRate_;
     UInt32 outChannelsPerFrame_;
+
+    std::condition_variable readyCv_ {};
 };
 
 } // namespace jami
