@@ -136,12 +136,10 @@ public:
      * Blocks until min_data_length samples of data is available, or until deadline has passed.
      *
      * @param call_id The read offset for which data should be available.
-     * @param min_data_length Minimum number of samples that should be available for the call to
-     * return
-     * @param deadline The call is guaranteed to end after this time point. If no deadline is
-     * provided, the call blocks indefinitely.
-     * @return available data for call_id after the call returned (same as calling
-     * getLength(call_id) ).
+     * @param min_data_length Minimum number of samples that should be available for the call to return
+     * @param deadline The call is guaranteed to end after this time point. If no deadline is provided,
+     * the call blocks indefinitely.
+     * @return available data for call_id after the call returned (same as calling getLength(call_id) ).
      */
     size_t waitForDataAvailable(const std::string& call_id,
                                 const time_point& deadline = time_point::max()) const;
