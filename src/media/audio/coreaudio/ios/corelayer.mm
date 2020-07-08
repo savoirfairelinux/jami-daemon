@@ -71,7 +71,7 @@ CoreLayer::getPlaybackDeviceList() const
 }
 
 int
-CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
+CoreLayer::getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const
 {
     (void) name;
     (void) index;
@@ -80,15 +80,15 @@ CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 }
 
 std::string
-CoreLayer::getAudioDeviceName(int index, DeviceType type) const
+CoreLayer::getAudioDeviceName(int index, AudioDeviceType type) const
 {
     (void) index;
     (void) type;
     return "";
 }
 
-void
-CoreLayer::initAudioLayerIO(AudioStreamType stream)
+bool
+CoreLayer::initAudioLayerIO(AudioDeviceType stream)
 {
     JAMI_DBG("iOS CoreLayer - initializing audio session");
 
@@ -102,22 +102,25 @@ CoreLayer::initAudioLayerIO(AudioStreamType stream)
     auto comp = AudioComponentFindNext(nullptr, &outputUnitDescription);
     if (comp == nullptr) {
         JAMI_ERR("Can't find default output audio component.");
-        return;
+        return false;
     }
 
     checkErr(AudioComponentInstanceNew(comp, &ioUnit_));
-    bool setUpOutput = stream == AudioStreamType::DEFAULT || stream == AudioStreamType::PLAYBACK;
-    bool setUpInput = stream == AudioStreamType::DEFAULT || stream == AudioStreamType::CAPTURE;
+
+    bool setUpInput = stream == AudioDeviceType::ALL || stream == AudioDeviceType::CAPTURE;
     NSError* error = nil;
     AVAudioSessionCategory audioCategory = setUpInput ? AVAudioSessionCategoryPlayAndRecord : AVAudioSessionCategoryPlayback;
     AVAudioSessionMode mode = setUpInput ? AVAudioSessionModeVoiceChat : AVAudioSessionModeMoviePlayback;
-    [[AVAudioSession sharedInstance] setCategory:audioCategory mode: mode options:AVAudioSessionCategoryOptionAllowBluetooth error:&error];
+    AVAudioSessionCategoryOptions options = setUpInput ? AVAudioSessionCategoryOptionAllowBluetooth : AVAudioSessionCategoryOptionMixWithOthers;
+    [[AVAudioSession sharedInstance] setCategory:audioCategory mode: mode options:options error:&error];
     if (error) {
-        JAMI_DBG("***Initializing audio session failed");
+        NSLog(@"Initializing audio session failed, %@",[error localizedDescription]);
+        return false;
     }
     [[AVAudioSession sharedInstance] setActive: true withOptions: AVAudioSessionSetActiveOptionNotifyOthersOnDeactivation error: &error];
     if (error) {
-        JAMI_DBG("***set active audio session failed");
+        NSLog(@"Set active audio session failed, %@",[error localizedDescription]);
+        return false;
     }
     auto playBackDeviceList = getPlaybackDeviceList();
     JAMI_DBG("Setting playback device: %s", playBackDeviceList[indexOut_].c_str());
@@ -135,13 +138,12 @@ CoreLayer::initAudioLayerIO(AudioStreamType stream)
             break;
     }
 
-    if (setUpOutput) {
-        setupOutputBus();
-    }
+    setupOutputBus();
     if (setUpInput) {
         setupInputBus();
     }
     bindCallbacks();
+    return true;
 }
 
 void
@@ -309,27 +311,46 @@ CoreLayer::bindCallbacks() {
                                   inputBus,
                                   &inputCall,
                                   sizeof(AURenderCallbackStruct)));
+
 }
 
 void
-CoreLayer::startStream(AudioStreamType stream)
+CoreLayer::startStream(AudioDeviceType stream)
 {
     JAMI_DBG("iOS CoreLayer - Start Stream");
+    auto currentCategoty =  [[AVAudioSession sharedInstance] category];
 
+    bool updateStream = currentCategoty == AVAudioSessionCategoryPlayback && (stream == AudioDeviceType::CAPTURE || stream == AudioDeviceType::ALL);
+    bool audioRunning = false;
     {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Idle)
+        std::unique_lock<std::mutex> lock(mutex_);
+        readyCv_.wait(lock, [this, &updateStream] {
+            return status_ != Status::Starting || !updateStream;
+        });
+        if (status_ != Status::Idle && !updateStream) {
             return;
-        status_ = Status::Started;
+        }
+        audioRunning = status_ == Status::Started;
+        status_ = Status::Starting;
+    }
+
+    if (updateStream && audioRunning) {
+        destroyAudioLayer();
     }
 
     dcblocker_.reset();
 
-    initAudioLayerIO(stream);
+    if (!initAudioLayerIO(stream)) {
+        status_ = Status::Idle;
+        readyCv_.notify_all();
+        return;
+    }
 
     // Run
     auto inputRes = AudioUnitInitialize(ioUnit_);
     auto outputRes = AudioOutputUnitStart(ioUnit_);
+    status_ = Status::Started;
+    readyCv_.notify_all();
     if(inputRes || outputRes) {
         stopStream();
         checkErr(inputRes);
@@ -347,13 +368,16 @@ CoreLayer::destroyAudioLayer()
 }
 
 void
-CoreLayer::stopStream()
+CoreLayer::stopStream(AudioDeviceType stream)
 {
     JAMI_DBG("iOS CoreLayer - Stop Stream");
 
     {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (status_ != Status::Started)
+        std::unique_lock<std::mutex> lock(mutex_);
+        readyCv_.wait(lock, [this] {
+            return status_ != Status::Starting;
+        });
+        if (status_ == Status::Idle)
             return;
         status_ = Status::Idle;
     }
@@ -450,18 +474,19 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     putRecorded(std::move(inBuff));
 }
 
-void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
+void CoreLayer::updatePreference(AudioPreference &preference, int index, AudioDeviceType type)
 {
     switch (type) {
-        case DeviceType::PLAYBACK:
+        case AudioDeviceType::ALL:
+        case AudioDeviceType::PLAYBACK:
             preference.setAlsaCardout(index);
             break;
 
-        case DeviceType::CAPTURE:
+        case AudioDeviceType::CAPTURE:
             preference.setAlsaCardin(index);
             break;
 
-        case DeviceType::RINGTONE:
+        case AudioDeviceType::RINGTONE:
             preference.setAlsaCardring(index);
             break;
 
