@@ -863,23 +863,15 @@ TlsValidator::privateKeyStoragePermissions()
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    return TlsValidator::CheckResult((statbuf.st_mode & S_IFREG)
-                                             && /* Regular file only */
-                                             /*                          READ    WRITE    EXECUTE */
-                                             /* Owner */ ((statbuf.st_mode
-                                                           & S_IRUSR) /* write is not relevant */
-                                                          && !(statbuf.st_mode & S_IXUSR))
-                                             /* Group */
-                                             && (!(statbuf.st_mode & S_IRGRP)
-                                                 && !(statbuf.st_mode & S_IWGRP)
-                                                 && !(statbuf.st_mode & S_IXGRP))
-                                             /* Other */
-                                             && (!(statbuf.st_mode & S_IROTH)
-                                                 && !(statbuf.st_mode & S_IWOTH)
-                                                 && !(statbuf.st_mode & S_IXOTH))
-                                         ? CheckValues::PASSED
-                                         : CheckValues::FAILED,
-                                     "");
+// clang-format off
+    return TlsValidator::CheckResult(
+        (statbuf.st_mode & S_IFREG) && /* Regular file only */
+        /*                          READ                      WRITE                            EXECUTE          */
+        /* Owner */    ( (statbuf.st_mode & S_IRUSR) /* write is not relevant */     && !(statbuf.st_mode & S_IXUSR))
+        /* Group */ && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
+        /* Other */ && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
+        ? CheckValues::PASSED:CheckValues::FAILED, "");
+// clang-format on
 }
 
 TlsValidator::CheckResult
@@ -890,21 +882,15 @@ TlsValidator::publicKeyStoragePermissions()
     if (err)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
+// clang-format off
     return TlsValidator::CheckResult(
-        (statbuf.st_mode & S_IFREG)
-                && /* Regular file only */
-                   /*                          READ    WRITE    EXECUTE    */
-                /* Owner */ ((statbuf.st_mode & S_IRUSR) /* write is not relevant */
-                             && !(statbuf.st_mode & S_IXUSR))
-                /* Group */
-                && (/* read is not relevant */ !(statbuf.st_mode & S_IWGRP)
-                    && !(statbuf.st_mode & S_IXGRP))
-                /* Other */
-                && (/* read is not relevant */ !(statbuf.st_mode & S_IWOTH)
-                    && !(statbuf.st_mode & S_IXOTH))
-            ? CheckValues::PASSED
-            : CheckValues::FAILED,
-        "");
+        (statbuf.st_mode & S_IFREG) && /* Regular file only */
+        /*                          READ                      WRITE                            EXECUTE          */
+        /* Owner */    ( (statbuf.st_mode & S_IRUSR) /* write is not relevant */   && !(statbuf.st_mode & S_IXUSR))
+        /* Group */ && ( /* read is not relevant */   !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
+        /* Other */ && ( /* read is not relevant */   !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
+        ? CheckValues::PASSED:CheckValues::FAILED, "");
+// clang-format on
 }
 
 TlsValidator::CheckResult

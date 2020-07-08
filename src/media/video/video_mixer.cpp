@@ -219,7 +219,8 @@ VideoMixer::process()
                 return;
 
             if (currentLayout_ != Layout::ONE_BIG or activeSource_ == x->source
-                or not activeFound /* By default ONE_BIG will show the first source */) {
+                or (not activeSource_
+                    and not activeFound) /* By default ONE_BIG will show the first source */) {
                 // make rendered frame temporarily unavailable for update()
                 // to avoid concurrent access.
                 std::unique_ptr<VideoFrame> input;
@@ -230,6 +231,9 @@ VideoMixer::process()
                     wantedIndex = 0;
                     activeFound = true;
                 } else if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
+                    if (!activeSource_ && i == 0) {
+                        activeFound = true;
+                    }
                     if (activeSource_ == x->source) {
                         wantedIndex = 0;
                         activeFound = true;
