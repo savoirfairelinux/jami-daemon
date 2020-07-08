@@ -297,7 +297,7 @@ struct Manager::ManagerPimpl
      */
     void playATone(Tone::ToneId toneId);
 
-    int getCurrentDeviceIndex(DeviceType type);
+    int getCurrentDeviceIndex(AudioDeviceType type);
 
     /**
      * Process remaining participant given a conference and the current call id.
@@ -342,6 +342,8 @@ struct Manager::ManagerPimpl
     template <class T>
     std::shared_ptr<T> findAccount(const std::function<bool(const std::shared_ptr<T>&)>&);
 
+    void initAudioDriver();
+
     Manager& base_; // pimpl back-pointer
 
     std::shared_ptr<asio::io_context> ioContext_;
@@ -354,6 +356,7 @@ struct Manager::ManagerPimpl
 
     /** Application wide tone controller */
     ToneControl toneCtrl_;
+    std::unique_ptr<AudioDeviceGuard> toneDeviceGuard_;
 
     /** Current Call ID */
     std::string currentCall_;
@@ -363,6 +366,7 @@ struct Manager::ManagerPimpl
 
     /** Audio layer */
     std::shared_ptr<AudioLayer> audiodriver_{nullptr};
+    std::array<std::atomic_uint, 3> audioStreamUsers_ {};
 
     // Main thread
     std::unique_ptr<DTMF> dtmfKey_;
@@ -483,32 +487,29 @@ Manager::ManagerPimpl::playATone(Tone::ToneId toneId)
     if (not base_.voipPreferences.getPlayTones())
         return;
 
-    {
-        std::lock_guard<std::mutex> lock(audioLayerMutex_);
-
-        if (not audiodriver_) {
-            JAMI_ERR("Audio layer not initialized");
-            return;
-        }
-
-        audiodriver_->flushUrgent();
-        audiodriver_->startStream();
+    std::lock_guard<std::mutex> lock(audioLayerMutex_);
+    if (not audiodriver_) {
+        JAMI_ERR("Audio layer not initialized");
+        return;
     }
 
+    auto oldGuard = std::move(toneDeviceGuard_);
+    toneDeviceGuard_ = base_.startAudioStream(AudioDeviceType::PLAYBACK);
+    audiodriver_->flushUrgent();
     toneCtrl_.play(toneId);
 }
 
 int
-Manager::ManagerPimpl::getCurrentDeviceIndex(DeviceType type)
+Manager::ManagerPimpl::getCurrentDeviceIndex(AudioDeviceType type)
 {
     if (not audiodriver_)
         return -1;
     switch (type) {
-        case DeviceType::PLAYBACK:
+        case AudioDeviceType::PLAYBACK:
             return audiodriver_->getIndexPlayback();
-        case DeviceType::RINGTONE:
+        case AudioDeviceType::RINGTONE:
             return audiodriver_->getIndexRingtone();
-        case DeviceType::CAPTURE:
+        case AudioDeviceType::CAPTURE:
             return audiodriver_->getIndexCapture();
         default:
             return -1;
@@ -813,17 +814,14 @@ Manager::init(const std::string &config_file)
         }
     }
 
-    initAudioDriver();
-
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
+        pimpl_->initAudioDriver();
         if (pimpl_->audiodriver_) {
             pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
             pimpl_->dtmfKey_.reset(new DTMF(getRingBufferPool().getInternalSamplingRate()));
         }
     }
-
     registerAccounts();
 }
 
@@ -857,7 +855,6 @@ Manager::finish() noexcept
 
         {
             std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
             pimpl_->audiodriver_.reset();
         }
 
@@ -1020,22 +1017,6 @@ Manager::answerCall(const std::string& call_id)
     return result;
 }
 
-void
-Manager::checkAudio()
-{
-    // FIXME dirty, the manager should not need to be aware of local recorders
-    if (getCallList().empty()
-#ifdef ENABLE_VIDEO
-        and not getVideoManager().audioPreview
-#endif
-        and not getVideoManager().hasRunningPlayers()
-        and not jami::LocalRecorderManager::instance().hasRunningRecorders()) {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-        if (pimpl_->audiodriver_)
-            pimpl_->audiodriver_->stopStream();
-    }
-}
-
 //THREAD=Main
 bool
 Manager::hangupCall(const std::string& callId)
@@ -1049,7 +1030,6 @@ Manager::hangupCall(const std::string& callId)
     auto call = getCallFromCallID(callId);
     if (not call) {
         JAMI_WARN("Could not hang up non-existant call %s", callId.c_str());
-        checkAudio();
         return false;
     }
 
@@ -1617,7 +1597,6 @@ void
 Manager::addAudio(Call& call)
 {
     const auto& call_id = call.getCallId();
-
     if (isConferenceParticipant(call_id)) {
         JAMI_DBG("[conf:%s] Attach local audio", call_id.c_str());
 
@@ -1632,6 +1611,8 @@ Manager::addAudio(Call& call)
 
         // bind to main
         getRingBufferPool().bindCallID(call_id, RingBufferPool::DEFAULT_ID);
+        auto oldGuard = std::move(call.audioGuard);
+        call.audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
 
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         if (!pimpl_->audiodriver_) {
@@ -1641,7 +1622,6 @@ Manager::addAudio(Call& call)
         pimpl_->audiodriver_->flushUrgent();
         getRingBufferPool().flushAllBuffers();
     }
-    startAudioDriverStream();
 }
 
 void
@@ -1650,6 +1630,7 @@ Manager::removeAudio(Call& call)
     const auto& call_id = call.getCallId();
     JAMI_DBG("[call:%s] Remove local audio", call_id.c_str());
     getRingBufferPool().unBindAll(call_id);
+    call.audioGuard.reset();
 }
 
 ScheduledExecutor&
@@ -1774,7 +1755,7 @@ Manager::playDtmf(char code)
         return;
     }
 
-    pimpl_->audiodriver_->startStream();
+    std::shared_ptr<AudioDeviceGuard> audioGuard = startAudioStream(AudioDeviceType::PLAYBACK);
     if (not pimpl_->audiodriver_->waitForStart(std::chrono::seconds(1))) {
         JAMI_ERR("Failed to start audio layer...");
         return;
@@ -1799,6 +1780,10 @@ Manager::playDtmf(char code)
 
         pimpl_->audiodriver_->putUrgent(pimpl_->dtmfBuf_);
     }
+
+    scheduler().scheduleIn([audioGuard]{
+        JAMI_WARN("End of dtmf");
+    }, std::chrono::milliseconds(pulselen));
 
     // TODO Cache the DTMF
 }
@@ -1837,7 +1822,9 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 
     if (not hasCurrentCall()) {
         call.setState(Call::ConnectionState::RINGING);
-#ifndef RING_UWP
+#if defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+
+#else
         playRingtone(accountId);
 #endif
     }
@@ -2032,7 +2019,6 @@ Manager::peerHungupCall(Call& call)
 
     call.peerHungup();
 
-    checkAudio();
     pimpl_->removeWaitingCall(call_id);
     if (not incomingCallsWaiting())
         stopTone();
@@ -2050,7 +2036,6 @@ Manager::callBusy(Call& call)
         pimpl_->unsetCurrentCall();
     }
 
-    checkAudio();
     pimpl_->removeWaitingCall(call.getCallId());
     if (not incomingCallsWaiting())
         stopTone();
@@ -2073,7 +2058,6 @@ Manager::callFailure(Call& call)
         removeParticipant(call_id);
     }
 
-    checkAudio();
     pimpl_->removeWaitingCall(call_id);
     if (not incomingCallsWaiting())
         stopTone();
@@ -2090,6 +2074,7 @@ Manager::stopTone()
         return;
 
     pimpl_->toneCtrl_.stop();
+    pimpl_->toneDeviceGuard_.reset();
 }
 
 /**
@@ -2135,7 +2120,6 @@ void
 Manager::playRingtone(const std::string& accountID)
 {
     const auto account = getAccount(accountID);
-
     if (!account) {
         JAMI_WARN("Invalid account in ringtone");
         return;
@@ -2147,15 +2131,7 @@ Manager::playRingtone(const std::string& accountID)
     }
 
     std::string ringchoice = account->getRingtonePath();
-#if (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-    //for ios file located in main buindle
-    CFBundleRef bundle = CFBundleGetMainBundle();
-    CFURLRef bundleURL = CFBundleCopyBundleURL(bundle);
-    CFStringRef stringPath = CFURLCopyFileSystemPath(bundleURL, kCFURLPOSIXPathStyle);
-    CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
-    const char *buindlePath = CFStringGetCStringPtr(stringPath, encodingMethod);
-    ringchoice = std::string(buindlePath) + DIR_SEPARATOR_STR + ringchoice;
-#elif !defined(_WIN32)
+#if !defined(_WIN32)
     if (ringchoice.find(DIR_SEPARATOR_CH) == std::string::npos) {
         // check inside global share directory
         static const char * const RINGDIR = "ringtones";
@@ -2172,7 +2148,8 @@ Manager::playRingtone(const std::string& accountID)
             return;
         }
         // start audio if not started AND flush all buffers (main and urgent)
-        pimpl_->audiodriver_->startStream();
+        auto oldGuard = std::move(pimpl_->toneDeviceGuard_);
+        pimpl_->toneDeviceGuard_ = startAudioStream(AudioDeviceType::RINGTONE);
         pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
     }
 
@@ -2198,21 +2175,13 @@ Manager::getTelephoneFile()
 void
 Manager::setAudioPlugin(const std::string& audioPlugin)
 {
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
-    audioPreference.setAlsaPlugin(audioPlugin);
-
-    bool wasStarted = pimpl_->audiodriver_->isStarted();
-
+    {
+        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+        audioPreference.setAlsaPlugin(audioPlugin);
+        pimpl_->audiodriver_.reset();
+        pimpl_->initAudioDriver();
+    }
     // Recreate audio driver with new settings
-    pimpl_->audiodriver_.reset();
-    pimpl_->audiodriver_.reset(audioPreference.createAudioLayer());
-
-    if (pimpl_->audiodriver_ and wasStarted)
-        pimpl_->audiodriver_->startStream();
-    else
-        JAMI_ERR("No audio layer created, possibly built without audio support");
-
     saveConfig();
 }
 
@@ -2220,7 +2189,7 @@ Manager::setAudioPlugin(const std::string& audioPlugin)
  * Set audio output device
  */
 void
-Manager::setAudioDevice(int index, DeviceType type)
+Manager::setAudioDevice(int index, AudioDeviceType type)
 {
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
 
@@ -2233,15 +2202,11 @@ Manager::setAudioDevice(int index, DeviceType type)
         return;
     }
 
-    const bool wasStarted = pimpl_->audiodriver_->isStarted();
     pimpl_->audiodriver_->updatePreference(audioPreference, index, type);
 
     // Recreate audio driver with new settings
-    pimpl_->audiodriver_.reset(audioPreference.createAudioLayer());
-
-    if (pimpl_->audiodriver_ and wasStarted)
-        pimpl_->audiodriver_->startStream();
-
+    pimpl_->audiodriver_.reset();
+    pimpl_->initAudioDriver();
     saveConfig();
 }
 
@@ -2284,23 +2249,44 @@ std::vector<std::string>
 Manager::getCurrentAudioDevicesIndex()
 {
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
     if (not pimpl_->audiodriver_) {
         JAMI_ERR("Audio layer not initialized");
         return {};
     }
 
-    std::vector<std::string> v;
+    return {
+        std::to_string(pimpl_->audiodriver_->getIndexPlayback()),
+        std::to_string(pimpl_->audiodriver_->getIndexCapture()),
+        std::to_string(pimpl_->audiodriver_->getIndexRingtone())
+    };
+}
 
-    std::stringstream ssi, sso, ssr;
-    sso << pimpl_->audiodriver_->getIndexPlayback();
-    v.push_back(sso.str());
-    ssi << pimpl_->audiodriver_->getIndexCapture();
-    v.push_back(ssi.str());
-    ssr << pimpl_->audiodriver_->getIndexRingtone();
-    v.push_back(ssr.str());
+void
+Manager::startAudio()
+{
+    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+    pimpl_->audiodriver_.reset();
+    pimpl_->initAudioDriver();
+}
 
-    return v;
+AudioDeviceGuard::AudioDeviceGuard(Manager& manager, AudioDeviceType type)
+  : manager_(manager), type_(type)
+{
+    auto streamId = (unsigned)type;
+    if (streamId >= manager_.pimpl_->audioStreamUsers_.size())
+        throw std::invalid_argument("Invalid audio device type");
+    if (manager_.pimpl_->audioStreamUsers_[(unsigned)type]++ == 0) {
+        if (auto layer = manager_.getAudioDriver())
+            layer->startStream(type);
+    }
+}
+
+AudioDeviceGuard::~AudioDeviceGuard() {
+    auto streamId = (unsigned)type_;
+    if (--manager_.pimpl_->audioStreamUsers_[streamId] == 0) {
+        if (auto layer = manager_.getAudioDriver())
+            layer->stopStream(type_);
+    }
 }
 
 bool
@@ -2395,29 +2381,13 @@ Manager::startRecordedFilePlayback(const std::string& filepath)
             return false;
         }
 
-        pimpl_->audiodriver_->startStream();
+        auto oldGuard = std::move(pimpl_->toneDeviceGuard_);
+        pimpl_->toneDeviceGuard_ = startAudioStream(AudioDeviceType::RINGTONE);
         pimpl_->toneCtrl_.setSampleRate(pimpl_->audiodriver_->getSampleRate());
     }
 
     return pimpl_->toneCtrl_.setAudioFile(filepath);
 }
-
-bool
-Manager::startAudioPlayback()
-{
-    if (not pimpl_->audiodriver_) {
-        JAMI_ERR("No audio layer");
-        return false;
-    }
-
-    if (pimpl_->audiodriver_->isStarted()) {
-        JAMI_DBG("Audio is running");
-        return true;
-    }
-    pimpl_->audiodriver_->startStream(AudioStreamType::PLAYBACK);
-    return true;
-}
-
 
 void
 Manager::recordingPlaybackSeek(const double value)
@@ -2430,8 +2400,8 @@ Manager::stopRecordedFilePlayback()
 {
     JAMI_DBG("Stop recorded file playback");
 
-    checkAudio();
     pimpl_->toneCtrl_.stopAudioFile();
+    pimpl_->toneDeviceGuard_.reset();
 }
 
 void
@@ -2479,13 +2449,9 @@ Manager::setAudioManager(const std::string &api)
 
     {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-
-        bool wasStarted = pimpl_->audiodriver_->isStarted();
         audioPreference.setAudioApi(api);
-        pimpl_->audiodriver_.reset(audioPreference.createAudioLayer());
-
-        if (pimpl_->audiodriver_ and wasStarted)
-            pimpl_->audiodriver_->startStream();
+        pimpl_->audiodriver_.reset();
+        pimpl_->initAudioDriver();
     }
 
     saveConfig();
@@ -2510,7 +2476,7 @@ Manager::getAudioInputDeviceIndex(const std::string &name)
         return 0;
     }
 
-    return pimpl_->audiodriver_->getAudioDeviceIndex(name, DeviceType::CAPTURE);
+    return pimpl_->audiodriver_->getAudioDeviceIndex(name, AudioDeviceType::CAPTURE);
 }
 
 int
@@ -2523,7 +2489,7 @@ Manager::getAudioOutputDeviceIndex(const std::string &name)
         return 0;
     }
 
-    return pimpl_->audiodriver_->getAudioDeviceIndex(name, DeviceType::PLAYBACK);
+    return pimpl_->audiodriver_->getAudioDeviceIndex(name, AudioDeviceType::PLAYBACK);
 }
 
 std::string
@@ -2560,10 +2526,13 @@ Manager::setAGCState(bool state)
  * Initialization: Main Thread
  */
 void
-Manager::initAudioDriver()
+Manager::ManagerPimpl::initAudioDriver()
 {
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-    pimpl_->audiodriver_.reset(audioPreference.createAudioLayer());
+    audiodriver_.reset(base_.audioPreference.createAudioLayer());
+    constexpr std::array<AudioDeviceType, 3> TYPES {AudioDeviceType::CAPTURE, AudioDeviceType::PLAYBACK, AudioDeviceType::RINGTONE};
+    for (const auto& type : TYPES)
+        if (audioStreamUsers_[(unsigned)type])
+            audiodriver_->startStream(type);
 }
 
 AudioFormat
@@ -2968,29 +2937,6 @@ Manager::getConferenceId(const std::string& callID)
 
     JAMI_ERR("Call is NULL");
     return "";
-}
-
-void
-Manager::startAudioDriverStream()
-{
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-    if (!pimpl_->audiodriver_) {
-        JAMI_ERR("Audio driver not initialized");
-        return;
-    }
-    pimpl_->audiodriver_->startStream();
-}
-
-void
-Manager::restartAudioDriverStream()
-{
-    std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-    if (!pimpl_->audiodriver_) {
-        JAMI_ERR("Audio driver not initialized");
-        return;
-    }
-    pimpl_->audiodriver_->stopStream();
-    pimpl_->audiodriver_->startStream();
 }
 
 void

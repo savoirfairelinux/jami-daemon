@@ -32,6 +32,7 @@
 #include <vector>
 #include <atomic>
 #include <condition_variable>
+#include <array>
 
 extern "C" {
 struct SpeexEchoState_;
@@ -60,16 +61,11 @@ namespace jami {
 class AudioPreference;
 class Resampler;
 
-enum class DeviceType {
-    PLAYBACK,      /** To open playback device only */
-    CAPTURE,       /** To open capture device only */
-    RINGTONE       /** To open the ringtone device only */
-};
-
-enum class AudioStreamType {
-    PLAYBACK,      /** To start playback stream only */
-    CAPTURE,       /** To start capture stream only */
-    DEFAULT        /** To start both playback and capture streams */
+enum class AudioDeviceType {
+    ALL = -1,
+    PLAYBACK = 0,
+    CAPTURE,
+    RINGTONE
 };
 
 class AudioLayer {
@@ -89,28 +85,26 @@ public:
     AudioLayer(const AudioPreference &);
     virtual ~AudioLayer();
 
-    virtual std::vector<std::string> getCaptureDeviceList() const = 0;
-    virtual std::vector<std::string> getPlaybackDeviceList() const = 0;
-
-    virtual int getAudioDeviceIndex(const std::string& name, DeviceType type) const = 0;
-    virtual std::string getAudioDeviceName(int index, DeviceType type) const = 0;
-    virtual int getIndexCapture() const = 0;
-    virtual int getIndexPlayback() const = 0;
-    virtual int getIndexRingtone() const = 0;
-
     /**
      * Start the capture stream and prepare the playback stream.
      * The playback starts accordingly to its threshold
-     * ALSA Library API
      */
-    virtual void startStream(AudioStreamType stream = AudioStreamType::DEFAULT) = 0;
+    virtual void startStream(AudioDeviceType stream = AudioDeviceType::ALL) = 0;
 
     /**
      * Stop the playback and capture streams.
      * Drops the pending frames and put the capture and playback handles to PREPARED state
-     * ALSA Library API
      */
-    virtual void stopStream() = 0;
+    virtual void stopStream(AudioDeviceType stream = AudioDeviceType::ALL) = 0;
+
+    virtual std::vector<std::string> getCaptureDeviceList() const = 0;
+    virtual std::vector<std::string> getPlaybackDeviceList() const = 0;
+
+    virtual int getAudioDeviceIndex(const std::string& name, AudioDeviceType type) const = 0;
+    virtual std::string getAudioDeviceName(int index, AudioDeviceType type) const = 0;
+    virtual int getIndexCapture() const = 0;
+    virtual int getIndexPlayback() const = 0;
+    virtual int getIndexRingtone() const = 0;
 
     /**
      * Determine wether or not the audio layer is active (i.e. stream opened)
@@ -223,7 +217,7 @@ public:
      */
     void notifyIncomingCall();
 
-    virtual void updatePreference(AudioPreference &pref, int index, DeviceType type) = 0;
+    virtual void updatePreference(AudioPreference &pref, int index, AudioDeviceType type) = 0;
 
 protected:
     /**
@@ -243,9 +237,7 @@ protected:
     void setHasNativeAEC(bool hasEAC);
 
     std::shared_ptr<AudioFrame> getToPlay(AudioFormat format, size_t writableSamples);
-
     std::shared_ptr<AudioFrame> getToRing(AudioFormat format, size_t writableSamples);
-
     std::shared_ptr<AudioFrame> getPlayback(AudioFormat format, size_t samples) {
         const auto& ringBuff = getToRing(format, samples);
         const auto& playBuff = getToPlay(format, samples);
