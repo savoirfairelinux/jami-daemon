@@ -46,6 +46,7 @@ using socklen_t = int;
 #include <vector>
 #include <condition_variable>
 #include <functional>
+#include <set>
 
 namespace jami {
 
@@ -198,7 +199,6 @@ class SocketPair {
 
         std::unique_ptr<IceSocket> rtp_sock_;
         std::unique_ptr<IceSocket> rtcp_sock_;
-
         int rtpHandle_ {-1};
         int rtcpHandle_ {-1};
         IpAddr rtpDestAddr_;
@@ -230,6 +230,13 @@ class SocketPair {
         time_point arrival_TS {};
 
         TS_Frame svgTS = {};
+
+#if 1
+#define __ENABLE_RED__
+#endif
+#ifdef __ENABLE_RED__
+        std::set<uint16_t> receivedSeqNumbers_ {};
+#endif
 
 };
 

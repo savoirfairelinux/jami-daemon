@@ -468,6 +468,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         len = readRtcpData(buf, buf_size);
         if (len > 0) {
             auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+
             // 201 = RR PT
             if (header->pt == 201) {
                 lastDLSR_ = Swap4Bytes(header->dlsr);
@@ -501,8 +502,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     if (not fromRTCP && (buf_size < static_cast<int>(MINIMUM_RTP_HEADER_SIZE)))
         return len;
 
-    // SRTP decrypt
-    if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
+    if (not fromRTCP) {
         int32_t gradient = 0;
         int32_t deltaT = 0;
         float abs = 0.0f;
@@ -519,12 +519,35 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         if (rtpDelayCallback_ and res_delay)
                 rtpDelayCallback_(gradient, deltaT);
 
-        auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
+        // SRTP decrypt
+        if (srtpContext_ and srtpContext_->srtp_in.aes) {
+            auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
+            if (err < 0)
+                JAMI_WARN("decrypt error %d", err);
+        }
+
         if(packetLossCallback_ and (buf[2] << 8 | buf[3]) != lastSeqNumIn_+1)
             packetLossCallback_();
         lastSeqNumIn_ = buf[2] << 8 | buf[3];
-        if (err < 0)
-            JAMI_WARN("decrypt error %d", err);
+
+#ifdef __ENABLE_RED__
+        constexpr int maxSeqNumbersCount = 50;
+
+        // Remove the oldest.
+        if (receivedSeqNumbers_.size() > maxSeqNumbersCount) {
+            std::set<uint16_t>::iterator it = receivedSeqNumbers_.begin();
+            //JAMI_INFO("[MC] Remove seq num %u", *it);
+            receivedSeqNumbers_.erase(it);
+        }
+
+        auto ret = receivedSeqNumbers_.insert(lastSeqNumIn_);
+        if (ret.second == false) {
+            //JAMI_INFO("[MC] Already received seq num %u", lastSeqNumIn_);
+            return AVERROR(EAGAIN);
+        } else {
+            //JAMI_INFO("[MC] Inserted new seq num %u", *ret.first);
+        }
+#endif
     }
 
     if (len != 0)
@@ -602,11 +625,22 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
         rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
     }
 
+#ifdef __ENABLE_RED__
+    // Send the packet multiple times
+    for (auto i = 0; i < 3; i++) {
+        do {
+            if (interrupted_)
+                return -EINTR;
+            ret = writeData(buf, buf_size);
+        } while (ret < 0 and errno == EAGAIN);
+    }
+#else
     do {
         if (interrupted_)
             return -EINTR;
         ret = writeData(buf, buf_size);
     } while (ret < 0 and errno == EAGAIN);
+#endif
 
     if(buf[1] == 200) //Sender Report
     {
