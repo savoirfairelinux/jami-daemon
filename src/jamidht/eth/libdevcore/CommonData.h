@@ -134,10 +134,6 @@ inline bytes toCompactBigEndian(byte _val, unsigned _min = 0)
 
 // Algorithms for string and string-like collections.
 
-/// Escapes a string into the C-string representation.
-/// @p _all if true will escape all characters, not just the unprintable ones.
-std::string escaped(std::string const& _s, bool _all = true);
-
 /// Determines the length of the common prefix of the two collections given.
 /// @returns the number of elements both @a _t and @a _u share, in order, at the beginning.
 /// @example commonPrefix("Hello world!", "Hello, world!") == 5
