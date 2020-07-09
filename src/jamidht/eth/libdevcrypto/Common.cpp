@@ -57,7 +57,7 @@ Public dev::toPublic(Secret const& _secret)
 	// Creation will fail if the secret key is invalid.
 	if (!secp256k1_ec_pubkey_create(ctx, &rawPubkey, _secret.data()))
 		return {};
-	std::array<byte, 65> serializedPubkey;
+	std::array<uint8_t, 65> serializedPubkey;
 	size_t serializedPubkeySize = serializedPubkey.size();
 	secp256k1_ec_pubkey_serialize(
 			ctx, serializedPubkey.data(), &serializedPubkeySize,

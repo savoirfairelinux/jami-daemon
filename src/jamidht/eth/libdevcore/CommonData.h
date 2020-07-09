@@ -105,7 +105,7 @@ inline std::string asString(bytesConstRef _b)
 /// Converts a string to a byte array containing the string's (byte) data.
 inline bytes asBytes(std::string const& _b)
 {
-	return bytes((byte const*)_b.data(), (byte const*)(_b.data() + _b.size()));
+	return bytes((uint8_t const*)_b.data(), (uint8_t const*)(_b.data() + _b.size()));
 }
 
 /// Converts a string into the big-endian base-16 stream of integers (NOT ASCII).
@@ -123,20 +123,16 @@ inline T fromBigEndian(_In const& _bytes)
 {
 	T ret = (T)0;
 	for (auto i: _bytes)
-		ret = (T)((ret << 8) | (byte)(typename std::make_unsigned<decltype(i)>::type)i);
+		ret = (T)((ret << 8) | (uint8_t)(typename std::make_unsigned<decltype(i)>::type)i);
 	return ret;
 }
 
-inline bytes toCompactBigEndian(byte _val, unsigned _min = 0)
+inline bytes toCompactBigEndian(uint8_t _val, unsigned _min = 0)
 {
 	return (_min || _val) ? bytes{ _val } : bytes{};
 }
 
 // Algorithms for string and string-like collections.
-
-/// Escapes a string into the C-string representation.
-/// @p _all if true will escape all characters, not just the unprintable ones.
-std::string escaped(std::string const& _s, bool _all = true);
 
 /// Determines the length of the common prefix of the two collections given.
 /// @returns the number of elements both @a _t and @a _u share, in order, at the beginning.
