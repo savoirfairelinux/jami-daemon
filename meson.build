@@ -1,7 +1,7 @@
 project('jami-daemon', ['c', 'cpp'],
         version: '9.2.0',
         license: 'GPL3+',
-        default_options: ['cpp_std=gnu++14', 'buildtype=debugoptimized'],
+        default_options: ['cpp_std=gnu++17', 'buildtype=debugoptimized'],
         meson_version:'>= 0.54'
        )
 
