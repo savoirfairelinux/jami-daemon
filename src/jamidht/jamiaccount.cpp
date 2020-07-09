@@ -1156,7 +1156,6 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
             }
             creds->password = archive_password;
             archiveHasPassword_ = !archive_password.empty();
-            bool isManaged = !managerUri_.empty();
 
             accountManager_->initAuthentication(
                 fDeviceKey,
@@ -1201,7 +1200,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 setRegistrationState(RegistrationState::UNREGISTERED);
                 saveConfig();
                 doRegister();
-            }, [w = weak(), id, accountId = getAccountID(), isManaged, migrating](AccountManager::AuthError error, const std::string& message) {
+            }, [w = weak(), id, accountId = getAccountID(), migrating](AccountManager::AuthError error, const std::string& message) {
                 JAMI_WARN("[Account %s] Auth error: %d %s", accountId.c_str(), (int)error, message.c_str());
                 if ((id.first || migrating) && error == AccountManager::AuthError::INVALID_ARGUMENTS) {
                     // In cast of a migration or manager connexion failure stop the migration and block the account
@@ -2931,7 +2930,7 @@ JamiAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     lk.unlock();
 
     // Find listening devices for this account
-    accountManager_->forEachDevice(toH, [this,confirm,to,token,payloads,now,retryOnTimeout, devices](const dht::InfoHash& dev)
+    accountManager_->forEachDevice(toH, [this,confirm,to,token,payloads,now, devices{std::move(devices)}](const dht::InfoHash& dev)
     {
         // Test if already sent
         if (devices.find(dev.toString()) != devices.end()) {
