@@ -193,8 +193,10 @@ ServerAccountManager::authenticateDevice() {
                 auto scope = scopeStr == "DEVICE" ? TokenScope::Device
                           : (scopeStr == "USER"   ? TokenScope::User
                                                   : TokenScope::None);
+                auto expires_in = json["expires_in"].asLargestUInt();
+                auto expiration = std::chrono::steady_clock::now() + std::chrono::seconds(expires_in);
                 JAMI_WARN("[Auth] Got server response: %d %s", response.status_code, response.body.c_str());
-                this_.setToken(json["access_token"].asString(), scope);
+                this_.setToken(json["access_token"].asString(), scope, expiration);
             } else {
                 this_.authFailed(TokenScope::Device, response.status_code);
             }
@@ -241,11 +243,26 @@ ServerAccountManager::authFailed(TokenScope scope, int code)
 }
 
 void
-ServerAccountManager::setToken(std::string token, TokenScope scope)
+ServerAccountManager::authError(TokenScope scope) {
+    {
+        std::lock_guard<std::mutex> lock(tokenLock_);
+        if (scope >= tokenScope_) {
+            token_ = {};
+            tokenScope_ = TokenScope::None;
+        }
+    }
+    if (scope == TokenScope::Device)
+        authenticateDevice();
+}
+
+void
+ServerAccountManager::setToken(std::string token, TokenScope scope, std::chrono::steady_clock::time_point expiration)
 {
     std::lock_guard<std::mutex> lock(tokenLock_);
     token_ = std::move(token);
     tokenScope_ = scope;
+    tokenExpire_ = expiration;
+
     nameDir_.get().setToken(token_);
     if (not token_.empty()) {
         auto& reqQueue = getRequestQueue(scope);
@@ -311,7 +328,9 @@ ServerAccountManager::syncDevices()
                 catch (const std::exception& e) {
                     JAMI_ERR("Error when loading device list: %s", e.what());
                 }
-            }
+            } else if (response.status_code == 401)
+                this_.authError(TokenScope::Device);
+
             this_.clearRequest(response.request);
         });
     }, logger_));
@@ -392,9 +411,12 @@ ServerAccountManager::searchUser(const std::string& query, SearchCallback cb)
                 catch (const std::exception& e) {
                     JAMI_ERR("[Search] Error during search: %s", e.what());
                 }
+            } else {
+                if (response.status_code == 401)
+                    this_.authError(TokenScope::Device);
+                if (cb)
+                    cb({}, SearchResponse::error);
             }
-            else if (cb)
-                cb({}, SearchResponse::error);
             this_.clearRequest(response.request);
         });
     }, logger_));
