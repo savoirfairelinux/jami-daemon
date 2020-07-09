@@ -246,7 +246,7 @@ void
 ServerAccountManager::authError(TokenScope scope) {
     {
         std::lock_guard<std::mutex> lock(tokenLock_);
-        if (scope >= tokenScope_) {
+        if (scope <= tokenScope_) {
             token_ = {};
             tokenScope_ = TokenScope::None;
         }
