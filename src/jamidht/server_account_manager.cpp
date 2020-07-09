@@ -37,6 +37,7 @@ static const std::string PATH_AUTH =  "/api/auth";
 static const std::string PATH_DEVICE = PATH_AUTH + "/device";
 static const std::string PATH_DEVICES = PATH_AUTH + "/devices";
 static const std::string PATH_SEARCH = PATH_AUTH + "/directory/search";
+static const std::string PATH_CONTACTS = PATH_AUTH + "/contacts";
 
 ServerAccountManager::ServerAccountManager(
     const std::string& path,
@@ -306,6 +307,11 @@ ServerAccountManager::syncDevices()
 {
     const std::string url = managerHostname_ + PATH_DEVICES;
     JAMI_WARN("[Auth] syncDevices %s", url.c_str());
+
+    const auto& contacts = info_->contacts->getContacts();
+    Json::Value jsonContacts;
+
+
     sendDeviceRequest(std::make_shared<Request>(*Manager::instance().ioContext(), url, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
         onAsync([=] (AccountManager& accountManager) {
             JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
@@ -326,7 +332,7 @@ ServerAccountManager::syncDevices()
                     }
                 }
                 catch (const std::exception& e) {
-                    JAMI_ERR("Error when loading device list: %s", e.what());
+                    JAMI_ERR("Error when lopping device list: %s", e.what());
                 }
             } else if (response.status_code == 401)
                 this_.authError(TokenScope::Device);
