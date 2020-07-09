@@ -517,15 +517,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
 void
 VideoRtpSession::delayProcessing(int br)
 {
-    int newBitrate = videoBitrateInfo_.videoBitrateCurrent;
-    if(br == 0x6803)
-        newBitrate *= 0.85f;
-    else if(br == 0x7378)
-        newBitrate *= 1.05f;
-    else
-        return;
-
-    setNewBitrate(newBitrate);
+    setNewBitrate(br);
 }
 
 void
@@ -708,7 +700,7 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
             remb_dec_cnt_++;
             JAMI_WARN("[BandwidthAdapt] Detected reception bandwidth overuse");
             uint8_t* buf = nullptr;
-            uint64_t br = 0x6803;       // Decrease 3
+            uint64_t br = (uint64_t) socketPair_->bitrateReceived() * 0.85f;       // Decrease
             auto v = cc->createREMB(br);
             buf = &v[0];
             socketPair_->writeData(buf, v.size());
@@ -719,7 +711,7 @@ VideoRtpSession::delayMonitor(int gradient, int deltaT)
         auto remb_timer_inc = now-last_REMB_inc_;
         if(remb_timer_inc > DELAY_AFTER_REMB_INC) {
             uint8_t* buf = nullptr;
-            uint64_t br = 0x7378;   // INcrease
+            uint64_t br = (uint64_t) socketPair_->bitrateReceived() * 1.05f;   // INcrease
             auto v = cc->createREMB(br);
             buf = &v[0];
             socketPair_->writeData(buf, v.size());

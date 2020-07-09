@@ -177,6 +177,8 @@ class SocketPair {
 
         uint16_t lastSeqValOut();
 
+        unsigned int bitrateReceived() { return bitrateReceived_; }
+
     private:
         NON_COPYABLE(SocketPair);
         using clock = std::chrono::steady_clock;
@@ -190,6 +192,7 @@ class SocketPair {
         int readRtcpData(void* buf, int buf_size);
         void saveRtcpRRPacket(uint8_t* buf, size_t len);
         void saveRtcpREMBPacket(uint8_t* buf, size_t len);
+        void computeReceivedBitrate(unsigned int len);
 
         std::mutex dataBuffMutex_;
         std::condition_variable cv_;
@@ -213,6 +216,7 @@ class SocketPair {
 
         std::list<rtcpRRHeader> listRtcpRRHeader_;
         std::list<rtcpREMBHeader> listRtcpREMBHeader_;
+        std::list<std::pair<unsigned int, time_point> > listRTPDataSizeIn_;
         std::mutex rtcpInfo_mutex_;
         std::condition_variable cvRtcpPacketReadyToRead_;
         static constexpr unsigned MAX_LIST_SIZE {10};
@@ -230,6 +234,8 @@ class SocketPair {
         time_point arrival_TS {};
 
         TS_Frame svgTS = {};
+
+        unsigned int bitrateReceived_ {0};
 
 };
 

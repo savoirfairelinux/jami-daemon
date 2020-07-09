@@ -492,6 +492,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     // No RTCP... try RTP
     if (!len and (datatype & static_cast<int>(DataType::RTP))) {
         len = readRtpData(buf, buf_size);
+        computeReceivedBitrate(len);
         fromRTCP = false;
     }
 
@@ -711,6 +712,31 @@ SocketPair::lastSeqValOut()
         return srtpContext_->srtp_out.seq_largest;
     JAMI_ERR("SRTP context not found.");
     return 0;
+}
+
+void
+SocketPair::computeReceivedBitrate(unsigned int len)
+{
+    auto now = clock::now();
+    listRTPDataSizeIn_.emplace_back(len, now);
+
+    int bitrate = {0};
+
+    for (auto it = listRTPDataSizeIn_.begin(); it != listRTPDataSizeIn_.end();) {
+        auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(now - it->second);
+
+        if (delay <= std::chrono::milliseconds(500)) {
+            bitrate += it->first;
+            ++it;
+        }
+        else
+            it = listRTPDataSizeIn_.erase(it);
+    }
+
+    bitrateReceived_ = bitrate * 8 * 2;
+    float pouet = (float)bitrate * 8 * 2 / 1000000;
+
+    JAMI_ERR("last len: %d, bitrateReceived_: %d, Mbps: %f", len, bitrateReceived_, pouet);
 }
 
 } // namespace jami
