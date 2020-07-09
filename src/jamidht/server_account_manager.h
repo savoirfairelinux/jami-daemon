@@ -22,6 +22,7 @@
 
 #include <queue>
 #include <set>
+#include <chrono>
 
 namespace jami {
 
@@ -84,8 +85,11 @@ private:
         Admin
     };
     std::mutex tokenLock_;
-    TokenScope tokenScope_ {};
     std::string token_ {};
+    TokenScope tokenScope_ {};
+    std::chrono::steady_clock::time_point tokenExpire_ {std::chrono::steady_clock::time_point::min()};
+    unsigned authErrorCount {0};
+
     using RequestQueue = std::queue<std::shared_ptr<dht::http::Request>>;
     RequestQueue pendingDeviceRequests_;
     RequestQueue pendingAccountRequests_;
@@ -93,7 +97,7 @@ private:
         return scope == TokenScope::Device ? pendingDeviceRequests_ : pendingAccountRequests_;
     }
     bool hasAuthorization(TokenScope scope) const {
-        return not token_.empty() and tokenScope_ >= scope;
+        return not token_.empty() and tokenScope_ >= scope and tokenExpire_ >= std::chrono::steady_clock::now();
     }
     void setAuthHeaderFields(dht::http::Request& request) const;
 
@@ -103,8 +107,9 @@ private:
     void authenticateDevice();
     void authenticateAccount();
     void authFailed(TokenScope scope, int code);
+    void authError(TokenScope scope);
 
-    void setToken(std::string token, TokenScope scope);
+    void setToken(std::string token, TokenScope scope, std::chrono::steady_clock::time_point expiration);
 };
 
 }
