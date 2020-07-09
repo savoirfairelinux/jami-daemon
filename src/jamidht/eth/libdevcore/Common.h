@@ -47,9 +47,6 @@
 #include <chrono>
 #include "vector_ref.h"
 
-// CryptoPP defines byte in the global namespace, so must we.
-using byte = uint8_t;
-
 // Quote a given token stream to turn it into a string.
 #define DEV_QUOTED_HELPER(s) #s
 #define DEV_QUOTED(s) DEV_QUOTED_HELPER(s)
@@ -66,9 +63,9 @@ extern char const* Version;
 extern std::string const EmptyString;
 
 // Binary data types.
-using bytes = std::vector<byte>;
-using bytesRef = vector_ref<byte>;
-using bytesConstRef = vector_ref<byte const>;
+using bytes = std::vector<uint8_t>;
+using bytesRef = vector_ref<uint8_t>;
+using bytesConstRef = vector_ref<uint8_t const>;
 
 template <class T>
 class secure_vector
@@ -109,7 +106,7 @@ private:
 	std::vector<T> m_data;
 };
 
-using bytesSec = secure_vector<byte>;
+using bytesSec = secure_vector<uint8_t>;
 
 // Map types.
 using StringMap = std::map<std::string, std::string>;
@@ -146,66 +143,6 @@ public:
 private:
 	std::function<void(void)> m_f;
 };
-
-/// Inheritable for classes that have invariants.
-class HasInvariants
-{
-public:
-	/// Reimplement to specify the invariants.
-	virtual bool invariants() const = 0;
-	virtual ~HasInvariants() = 0;
-};
-
-/// Scope guard for invariant check in a class derived from HasInvariants.
-#if ETH_DEBUG
-#define DEV_INVARIANT_CHECK ::dev::InvariantChecker __dev_invariantCheck(this, BOOST_CURRENT_FUNCTION, __FILE__, __LINE__)
-#define DEV_INVARIANT_CHECK_HERE ::dev::InvariantChecker::checkInvariants(this, BOOST_CURRENT_FUNCTION, __FILE__, __LINE__, true)
-#else
-#define DEV_INVARIANT_CHECK (void)0;
-#define DEV_INVARIANT_CHECK_HERE (void)0;
-#endif
-
-/// Simple scope-based timer helper.
-class TimerHelper
-{
-public:
-	TimerHelper(std::string const& _id, unsigned _msReportWhenGreater = 0): m_t(std::chrono::high_resolution_clock::now()), m_id(_id), m_ms(_msReportWhenGreater) {}
-	~TimerHelper();
-
-private:
-	std::chrono::high_resolution_clock::time_point m_t;
-	std::string m_id;
-	unsigned m_ms;
-};
-
-class Timer
-{
-public:
-	Timer() { restart(); }
-
-	std::chrono::high_resolution_clock::duration duration() const { return std::chrono::high_resolution_clock::now() - m_t; }
-	double elapsed() const { return std::chrono::duration_cast<std::chrono::microseconds>(duration()).count() / 1000000.0; }
-	void restart() { m_t = std::chrono::high_resolution_clock::now(); }
-
-private:
-	std::chrono::high_resolution_clock::time_point m_t;
-};
-
-#define DEV_TIMED(S) for (::std::pair<::dev::TimerHelper, bool> __eth_t(S, true); __eth_t.second; __eth_t.second = false)
-#define DEV_TIMED_SCOPE(S) ::dev::TimerHelper __eth_t(S)
-#if defined(_WIN32)
-#define DEV_TIMED_FUNCTION DEV_TIMED_SCOPE(__FUNCSIG__)
-#else
-#define DEV_TIMED_FUNCTION DEV_TIMED_SCOPE(__PRETTY_FUNCTION__)
-#endif
-
-#define DEV_TIMED_ABOVE(S, MS) for (::std::pair<::dev::TimerHelper, bool> __eth_t(::dev::TimerHelper(S, MS), true); __eth_t.second; __eth_t.second = false)
-#define DEV_TIMED_SCOPE_ABOVE(S, MS) ::dev::TimerHelper __eth_t(S, MS)
-#if defined(_WIN32)
-#define DEV_TIMED_FUNCTION_ABOVE(MS) DEV_TIMED_SCOPE_ABOVE(__FUNCSIG__, MS)
-#else
-#define DEV_TIMED_FUNCTION_ABOVE(MS) DEV_TIMED_SCOPE_ABOVE(__PRETTY_FUNCTION__, MS)
-#endif
 
 #ifdef _MSC_VER
 // TODO.

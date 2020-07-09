@@ -46,7 +46,7 @@ struct SignatureStruct
 {
 	SignatureStruct() = default;
 	SignatureStruct(Signature const& _s) { *(h520*)this = _s; }
-	SignatureStruct(h256 const& _r, h256 const& _s, byte _v): r(_r), s(_s), v(_v) {}
+	SignatureStruct(h256 const& _r, h256 const& _s, uint8_t _v): r(_r), s(_s), v(_v) {}
 	operator Signature() const { return *(h520 const*)this; }
 
 	/// @returns true if r,s,v values are valid, otherwise false
@@ -54,7 +54,7 @@ struct SignatureStruct
 
 	h256 r;
 	h256 s;
-	byte v = 0;
+	uint8_t v = 0;
 };
 
 /// A vector of secrets.

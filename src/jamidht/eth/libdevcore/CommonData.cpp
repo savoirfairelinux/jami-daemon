@@ -48,34 +48,6 @@ bool dev::isHex(string const& _s) noexcept
 	return std::all_of(it, _s.end(), [](char c){ return fromHexChar(c) != -1; });
 }
 
-std::string dev::escaped(std::string const& _s, bool _all)
-{
-	static const map<char, char> prettyEscapes{{'\r', 'r'}, {'\n', 'n'}, {'\t', 't'}, {'\v', 'v'}};
-	std::string ret;
-	ret.reserve(_s.size() + 2);
-	ret.push_back('"');
-	for (auto i: _s)
-		if (i == '"' && !_all)
-			ret += "\\\"";
-		else if (i == '\\' && !_all)
-			ret += "\\\\";
-		else if (prettyEscapes.count(i) && !_all)
-		{
-			ret += '\\';
-			ret += prettyEscapes.find(i)->second;
-		}
-		else if (i < ' ' || _all)
-		{
-			ret += "\\x";
-			ret.push_back("0123456789abcdef"[(uint8_t)i / 16]);
-			ret.push_back("0123456789abcdef"[(uint8_t)i % 16]);
-		}
-		else
-			ret.push_back(i);
-	ret.push_back('"');
-	return ret;
-}
-
 bytes dev::fromHex(std::string const& _s, WhenError _throw)
 {
 	unsigned s = (_s.size() >= 2 && _s[0] == '0' && _s[1] == 'x') ? 2 : 0;
@@ -97,7 +69,7 @@ bytes dev::fromHex(std::string const& _s, WhenError _throw)
 		int h = fromHexChar(_s[i]);
 		int l = fromHexChar(_s[i + 1]);
 		if (h != -1 && l != -1)
-			ret.push_back((byte)(h * 16 + l));
+			ret.push_back((uint8_t)(h * 16 + l));
 		else if (_throw == WhenError::Throw)
 			throw std::runtime_error("BadHexCharacter");
 		else
