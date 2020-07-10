@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "d517b07c_33d95f27",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 20
+      },
+      "lineNbr": 331,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-10T22:00:14Z",
+      "side": 1,
+      "message": "The data transfer layer should not be aware of vcards.\n\nGenerally, internal daemon components should be able to send files with completion callback.",
+      "range": {
+        "startLine": 325,
+        "startChar": 12,
+        "endLine": 331,
+        "endChar": 13
+      },
+      "revId": "9b299d8379741731002678af386b30946aa90b82",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
