@@ -37,9 +37,9 @@ std::vector<std::string> listLoadedPlugins();
 int installPlugin(const std::string& jplPath, bool force);
 int uninstallPlugin(const std::string& pluginRootPath);
 std::vector<std::string> listCallMediaHandlers();
-void toggleCallMediaHandler(const std::string& id, bool toggle);
+void toggleCallMediaHandler(const std::string& callID, const std::string& id, bool toggle);
 std::map<std::string,std::string> getCallMediaHandlerDetails(const std::string& id);
 bool getPluginsEnabled();
 void setPluginsEnabled(bool state);
-std::map<std::string,std::string> getCallMediaHandlerStatus();
+std::map<std::string,std::string> getCallMediaHandlerStatus(const std::string& callID);
 }
