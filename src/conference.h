@@ -134,6 +134,8 @@ public:
 
     void switchInput(const std::string& input);
 
+    void setActiveParticipant(const std::string &participant_id);
+
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
     std::string getVideoInput() const { return mediaInput_; }

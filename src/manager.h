@@ -294,6 +294,20 @@ class DRING_TESTABLE Manager {
         void createConfFromParticipantList(const std::vector< std::string > &);
 
         /**
+         * Change the conference layout
+         * @param confId
+         * @param layout    0 = matrix, 1 = one big, others in small, 2 = one in big
+         */
+        void setConferenceLayout(const std::string& confId, int layout);
+
+        /**
+         * Change the active participant (used in layout != matrix)
+         * @param confId
+         * @param callId    If callId not found, the local video will be shown
+         */
+        void setActiveParticipant(const std::string& confId, const std::string& callId);
+
+        /**
          * Detach a participant from a conference, put the call on hold, do not hangup it
          * @param call id
          * @param the current call id
