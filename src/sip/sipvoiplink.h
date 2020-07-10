@@ -56,8 +56,6 @@ class SIPAccountBase;
 class SIPVoIPLink;
 class SipTransportBroker;
 
-typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
-
 /**
  * @file sipvoiplink.h
  * @brief Specific VoIPLink for SIP (SIP core for incoming and outgoing events).

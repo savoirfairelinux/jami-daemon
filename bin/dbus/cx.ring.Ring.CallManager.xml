@@ -228,6 +228,25 @@
             <arg type="as" name="participants" direction="in"/>
         </method>
 
+        <method name="setConferenceLayout" tp:name-for-bindings="setConferenceLayout">
+            <tp:added version="9.4.0"/>
+            <tp:docstring>
+                <p>Change displayed layout for a conference</p>
+            </tp:docstring>
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="u" name="layout" direction="in"/>
+        </method>
+
+        <method name="setActiveParticipant" tp:name-for-bindings="setActiveParticipant">
+            <tp:added version="9.4.0"/>
+            <tp:docstring>
+                <p>Change big image for a conference</p>
+            </tp:docstring>
+            <arg type="s" name="confId" direction="in"/>
+            <arg type="s" name="callId" direction="in"/>
+        </method>
+
+
         <method name="isConferenceParticipant" tp:name-for-bindings="isConferenceParticipant">
             <arg type="s" name="callID" direction="in"/>
             <arg type="b" name="isParticipant" direction="out"/>

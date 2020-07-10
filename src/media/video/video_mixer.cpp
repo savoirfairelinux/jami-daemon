@@ -108,6 +108,20 @@ VideoMixer::switchInput(const std::string& input)
 }
 
 void
+VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
+{
+    auto found = false;
+    for (const auto& source: sources_) {
+        if (source->source == ob) {
+            activeSource_ = ob;
+            found = true;
+        }
+    }
+    if (!found)
+        activeSource_ = sources_.front()? sources_.front()->source : nullptr;
+}
+
+void
 VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     auto lock(rwMutex_.write());
@@ -124,6 +138,11 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
+            // Handle the case where the current shown source leave the conference
+            if (activeSource_ == ob) {
+                currentLayout_ = Layout::MATRIX;
+                activeSource_ = nullptr;
+            }
             sources_.remove(x);
             break;
         }
@@ -177,16 +196,21 @@ VideoMixer::process()
             /* thread stop pending? */
             if (!loop_.isRunning())
                 return;
+            
+            if (currentLayout_ != Layout::ONE_BIG
+                or activeSource_ == x->source) {
 
-            // make rendered frame temporarily unavailable for update()
-            // to avoid concurrent access.
-            std::unique_ptr<VideoFrame> input;
-            x->atomic_swap_render(input);
+                // make rendered frame temporarily unavailable for update()
+                // to avoid concurrent access.
+                std::unique_ptr<VideoFrame> input;
+                x->atomic_swap_render(input);
 
-            if (input)
-                render_frame(output, *input, x, i);
+                if (input)
+                    render_frame(output, *input, x, currentLayout_ == Layout::ONE_BIG ? 0 : i);
 
-            x->atomic_swap_render(input);
+                x->atomic_swap_render(input);
+            }
+
             ++i;
         }
     }
@@ -207,7 +231,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     std::shared_ptr<VideoFrame> frame = input;
 #endif
 
-    const int n = sources_.size();
+    const int n = currentLayout_ == Layout::ONE_BIG? 1 : sources_.size();
     const int zoom = ceil(sqrt(n));
     int cell_width = width_ / zoom;
     int cell_height = height_ / zoom;
