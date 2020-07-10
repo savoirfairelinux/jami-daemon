@@ -105,6 +105,9 @@ SIPCall::SIPCall(SIPAccountBase& account,
         upnp_.reset(new upnp::Controller(false));
 
     setCallMediaLocal();
+    
+    // clean plugin list of callAVStream;
+    // clearCallAVStream();
 }
 
 SIPCall::~SIPCall()
