@@ -62,12 +62,14 @@ Conference::getState() const
     return confState_;
 }
 
-void Conference::setState(State state)
+void
+Conference::setState(State state)
 {
     confState_ = state;
 }
 
-void Conference::add(const std::string &participant_id)
+void
+Conference::add(const std::string &participant_id)
 {
     if (participants_.insert(participant_id).second) {
 #ifdef ENABLE_VIDEO
@@ -79,7 +81,23 @@ void Conference::add(const std::string &participant_id)
     }
 }
 
-void Conference::remove(const std::string &participant_id)
+void
+Conference::setActiveParticipant(const std::string &participant_id)
+{
+    for (const auto &item : participants_) {
+        if (participant_id == item) {
+            if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+                videoMixer_->setActiveParticipant(call->getVideoRtp().getVideoReceive().get());
+                return;
+            }
+        }
+    }
+    // Set local by default
+    videoMixer_->setActiveParticipant(nullptr);
+}
+
+void
+Conference::remove(const std::string &participant_id)
 {
     if (participants_.erase(participant_id)) {
 #ifdef ENABLE_VIDEO
@@ -89,7 +107,8 @@ void Conference::remove(const std::string &participant_id)
     }
 }
 
-void Conference::bindParticipant(const std::string &participant_id)
+void
+Conference::bindParticipant(const std::string &participant_id)
 {
     auto &rbPool = Manager::instance().getRingBufferPool();
 

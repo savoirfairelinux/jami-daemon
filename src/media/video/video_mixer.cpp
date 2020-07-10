@@ -108,6 +108,12 @@ VideoMixer::switchInput(const std::string& input)
 }
 
 void
+VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
+{
+    activeSource_ = ob;
+}
+
+void
 VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     auto lock(rwMutex_.write());
@@ -124,6 +130,11 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
+            // Handle the case where the current shown source leave the conference
+            if (activeSource_ == ob) {
+                currentLayout_ = Layout::MATRIX;
+                activeSource_ = nullptr;
+            }
             sources_.remove(x);
             break;
         }
@@ -173,20 +184,42 @@ VideoMixer::process()
         auto lock(rwMutex_.read());
 
         int i = 0;
+        bool activeFound = false;
         for (const auto& x : sources_) {
             /* thread stop pending? */
             if (!loop_.isRunning())
                 return;
+            
+            if (currentLayout_ != Layout::ONE_BIG
+                or activeSource_ == x->source
+                or (not activeSource_ and not activeFound) /* By default ONE_BIG will show the first source */) {
 
-            // make rendered frame temporarily unavailable for update()
-            // to avoid concurrent access.
-            std::unique_ptr<VideoFrame> input;
-            x->atomic_swap_render(input);
+                // make rendered frame temporarily unavailable for update()
+                // to avoid concurrent access.
+                std::unique_ptr<VideoFrame> input;
+                x->atomic_swap_render(input);
 
-            if (input)
-                render_frame(output, *input, x, i);
+                auto wantedIndex = i;
+                if (currentLayout_ == Layout::ONE_BIG) {
+                    wantedIndex = 0;
+                    activeFound = true;
+                } else if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
+                    if (!activeSource_ && i == 0) {
+                        activeFound = true;
+                    } if (activeSource_ == x->source) {
+                        wantedIndex = 0;
+                        activeFound = true;
+                    } else if (not activeFound) {
+                        wantedIndex += 1;
+                    }
+                }
 
-            x->atomic_swap_render(input);
+                if (input)
+                    render_frame(output, *input, x, wantedIndex);
+
+                x->atomic_swap_render(input);
+            }
+
             ++i;
         }
     }
@@ -207,12 +240,29 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     std::shared_ptr<VideoFrame> frame = input;
 #endif
 
-    const int n = sources_.size();
-    const int zoom = ceil(sqrt(n));
+    const int n = currentLayout_ == Layout::ONE_BIG? 1 : sources_.size();
+    const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL? std::max(6,n) : ceil(sqrt(n));
     int cell_width = width_ / zoom;
     int cell_height = height_ / zoom;
+    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
+        // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
+        // The rest is the active source
+        cell_width  = width_;
+        cell_height = height_ - cell_height;
+    }
     int xoff = (index % zoom) * cell_width;
     int yoff = (index / zoom) * cell_height;
+    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
+        if (index == 0) {
+            xoff = 0;
+            yoff = height_ / zoom; // First line height
+        } else {
+            xoff = (index-1) * cell_width;
+            // Show sources in center
+            xoff += (width_ - (n - 1) * cell_width) / 2;
+            yoff = 0;
+        }
+    }
 
     AVFrameSideData* sideData = av_frame_get_side_data(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
     int angle = 0;
