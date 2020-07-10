@@ -1188,6 +1188,12 @@ SIPCall::stopAllMedia()
 #ifdef ENABLE_VIDEO
     videortp_->stop();
 #endif
+#ifdef ENABLE_PLUGIN
+    jami::Manager::instance()
+        .getJamiPluginManager()
+        .getCallServicesManager()
+        .clearAVSubject(getCallId());
+#endif
 }
 
 void
