@@ -307,6 +307,9 @@ bool JamiPluginManager::unloadPlugin(const std::string &rootPath)
 
 void JamiPluginManager::togglePlugin(const std::string &rootPath, bool toggle)
 {
+    //This function should not be used as is
+    //One should modify it to perform plugin install followed by load
+    //rootPath should be the jplpath!
     try
     {
         std::string soPath = getPluginDetails(rootPath).at("soPath");

@@ -142,7 +142,7 @@ public:
    * ownership of the component and the other one to destroy it
    * @param name : name of the component manager
    * @param takeOwnership function that takes ownership on created objet in memory
-   * @param destroyComponent desotry the component
+   * @param destroyComponent destroy the component
    * @return true if success
    */
   bool registerComponentManager(const std::string& name, ComponentFunction&& takeOwnership,
