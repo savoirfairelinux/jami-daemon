@@ -21,6 +21,8 @@
 #pragma once
 // Utils
 #include "noncopyable.h"
+#include "logger.h"
+#include "manager.h"
 // Plugin Manager
 #include "pluginmanager.h"
 #include "streamdata.h"
@@ -32,12 +34,6 @@ namespace jami {
 using MediaHandlerPtr = std::unique_ptr<MediaHandler>;
 using CallMediaHandlerPtr = std::unique_ptr<CallMediaHandler>;
 using AVSubjectSPtr = std::weak_ptr<Observable<AVFrame*>>;
-
-struct MediaHandlerToggled
-{
-    std::string name = "";
-    std::string state = "false";
-};
 
 class CallServicesManager
 {
@@ -79,8 +75,30 @@ public:
     {
         // This guarantees unicity of subjects by id
         callAVsubjects.push_back(std::make_pair(data, subject));
-        auto inserted = callAVsubjects.back();
-        notifyAllAVSubject(inserted.first, inserted.second);
+        /*
+        TODO: for a plugin that should be toggled by default for every call,
+        it is possible to call notifyAllAVSubject and toggle if there is a
+        callMediaHandlers preference to always toggle;
+        There must be only one callmediahandler to be toggled by default;
+        */
+    }
+
+    void clearAVSubject(const std::string& callID)
+    {
+        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end();) {
+            if (it->first.id == callID) {
+                it = callAVsubjects.erase(it);
+            } else {
+                ++it;
+            }
+        }
+        for (auto& callMediaHandler : callMediaHandlers) {
+            if (mediaHandlerToggled_[getCallHandlerId(callMediaHandler.second)] == callID) {
+                callMediaHandler.first = false;
+                callMediaHandler.second->detach();
+                mediaHandlerToggled_[getCallHandlerId(callMediaHandler.second)] = "";
+            }
+        }
     }
 
     /**
@@ -137,17 +155,36 @@ public:
      */
     void toggleCallMediaHandler(const std::string& id, const bool toggle)
     {
-        for (auto& pair : callMediaHandlers) {
-            if (pair.second && getCallHandlerId(pair.second) == id) {
-                pair.first = toggle;
-                if (pair.first) {
-                    mediaHandlerToggled_.name = id;
-                    mediaHandlerToggled_.state = "true";
-                    listAvailableSubjects(pair.second);
-                } else {
-                    pair.second->detach();
-                    mediaHandlerToggled_.name = "";
-                    mediaHandlerToggled_.state = "false";
+        std::string callID = Manager::instance().getCurrentCallId();
+
+        if (toggle) {
+            for (auto& pair : mediaHandlerToggled_) {
+                if (pair.second == callID && pair.first != id) {
+                    toggleCallMediaHandler(pair.first, false);
+                }
+            }
+        }
+
+        if (id.empty())
+            return;
+
+        auto find = mediaHandlerToggled_.find(id);
+        if (find == mediaHandlerToggled_.end())
+            mediaHandlerToggled_[id] = "";
+
+        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
+            if (it->first.id == callID) {
+                for (auto& pair : callMediaHandlers) {
+                    if (pair.second && getCallHandlerId(pair.second) == id) {
+                        pair.first = toggle;
+                        if (pair.first) {
+                            mediaHandlerToggled_[id] = callID;
+                            listAvailableSubjects(callID, pair.second);
+                        } else {
+                            pair.second->detach();
+                            mediaHandlerToggled_[id] = "";
+                        }
+                    }
                 }
             }
         }
@@ -170,13 +207,21 @@ public:
 
     std::map<std::string, std::string> getCallMediaHandlerStatus()
     {
-        return {{"name", mediaHandlerToggled_.name}, {"state", mediaHandlerToggled_.state}};
+        for (auto& pair : mediaHandlerToggled_) {
+            if (pair.second == Manager::instance().getCurrentCallId()) {
+                return {{"name", pair.first}};
+            }
+        }
+
+        return {{"name", ""}};
     }
 
     void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr)
     {
         for (auto& pair : callMediaHandlers) {
-            if (pair.second && scopeStr.find(pair.second->getCallMediaHandlerDetails()["name"]) != std::string::npos) {
+            if (pair.second
+                && scopeStr.find(pair.second->getCallMediaHandlerDetails()["name"])
+                       != std::string::npos) {
                 pair.second->setPreferenceAttribute(key, value);
             }
         }
@@ -198,15 +243,29 @@ private:
         }
     }
 
+    void cleanCallAVSubjects()
+    {
+        // remove subjects from not available calls callAVsubjects
+        for (auto it = callAVsubjects.begin(); it != callAVsubjects.end();) {
+            std::vector<std::string> callids = jami::Manager::instance().getCallList();
+            if (std::find(callids.begin(), callids.end(), it->first.id) == callids.end()) {
+                it = callAVsubjects.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
     /**
      * @brief listAvailableSubjects
      * @param callMediaHandlerPtr
      * This functions lets the call media handler component know which subjects are available
      */
-    void listAvailableSubjects(CallMediaHandlerPtr& callMediaHandlerPtr)
+    void listAvailableSubjects(const std::string& callID, CallMediaHandlerPtr& callMediaHandlerPtr)
     {
         for (auto it = callAVsubjects.begin(); it != callAVsubjects.end(); ++it) {
-            notifyAVSubject(callMediaHandlerPtr, it->first, it->second);
+            if (it->first.id == callID)
+                notifyAVSubject(callMediaHandlerPtr, it->first, it->second);
         }
     }
 
@@ -234,6 +293,7 @@ private:
      * whenever there is a new CallAVSubject like a video receive
      */
     std::list<std::pair<bool, CallMediaHandlerPtr>> callMediaHandlers;
+
     /**
      * @brief callAVsubjects
      * When there is a SIPCall, CallAVSubjects are created there
@@ -243,7 +303,7 @@ private:
      */
     std::list<std::pair<const StreamData, AVSubjectSPtr>> callAVsubjects;
 
-    MediaHandlerToggled mediaHandlerToggled_;
+    std::map<std::string, std::string> mediaHandlerToggled_;
 };
 
 } // namespace jami
