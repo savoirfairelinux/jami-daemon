@@ -177,16 +177,20 @@ VideoMixer::process()
             /* thread stop pending? */
             if (!loop_.isRunning())
                 return;
+            
+            if (currentLayout_ != Layout::ONE_BIG
+                or bigVideoIndex_ == i) {
+                // make rendered frame temporarily unavailable for update()
+                // to avoid concurrent access.
+                std::unique_ptr<VideoFrame> input;
+                x->atomic_swap_render(input);
 
-            // make rendered frame temporarily unavailable for update()
-            // to avoid concurrent access.
-            std::unique_ptr<VideoFrame> input;
-            x->atomic_swap_render(input);
+                if (input)
+                    render_frame(output, *input, x, currentLayout_ == Layout::ONE_BIG ? 0 : i);
 
-            if (input)
-                render_frame(output, *input, x, i);
+                x->atomic_swap_render(input);
+            }
 
-            x->atomic_swap_render(input);
             ++i;
         }
     }
@@ -207,7 +211,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     std::shared_ptr<VideoFrame> frame = input;
 #endif
 
-    const int n = sources_.size();
+    const int n = currentLayout_ == Layout::ONE_BIG? 1 : sources_.size();
     const int zoom = ceil(sqrt(n));
     int cell_width = width_ / zoom;
     int cell_height = height_ / zoom;

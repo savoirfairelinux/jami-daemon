@@ -117,6 +117,12 @@ DBusCallManager::createConfFromParticipantList(const std::vector< std::string >&
     DRing::createConfFromParticipantList(participants);
 }
 
+void
+DBusCallManager::setConferenceLayout(const std::string& confId, const uint32_t& layout)
+{
+    DRing::setConferenceLayout(confId, layout);
+}
+
 auto
 DBusCallManager::isConferenceParticipant(const std::string& call_id) -> decltype(DRing::isConferenceParticipant(call_id))
 {

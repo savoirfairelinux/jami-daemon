@@ -83,6 +83,7 @@ using random_device = dht::crypto::random_device;
 
 #include "libav_utils.h"
 #include "video/sinkclient.h"
+#include "media/video/video_mixer.h"
 #include "audio/tonecontrol.h"
 
 #include "data_transfer.h"
@@ -1459,6 +1460,28 @@ Manager::createConfFromParticipantList(const std::vector< std::string > &partici
     if (successCounter >= 2) {
         pimpl_->conferenceMap_[conf->getConfID()] = conf;
         emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
+    }
+}
+
+void
+Manager::setConferenceLayout(const std::string& confId, int layout)
+{
+    if (auto conf = getConferenceFromID(confId)) {
+        auto videoMixer = conf->getVideoMixer();
+        switch (layout)
+        {
+        case 0:
+            videoMixer->setVideoLayout(video::Layout::MATRIX);
+            break;
+        case 1:
+            videoMixer->setVideoLayout(video::Layout::ONE_BIG_WITH_SMALL);
+            break;
+        case 2:
+            videoMixer->setVideoLayout(video::Layout::ONE_BIG);
+            break;
+        default:
+            break;
+        }
     }
 }
 

@@ -135,6 +135,12 @@ createConfFromParticipantList(const std::vector<std::string>& participants)
    jami::Manager::instance().createConfFromParticipantList(participants);
 }
 
+void
+setConferenceLayout(const std::string& confId, uint32_t layout)
+{
+    jami::Manager::instance().setConferenceLayout(confId, layout);
+}
+
 bool
 isConferenceParticipant(const std::string& callID)
 {
