@@ -639,6 +639,12 @@ VideoRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
     }
 }
 
+Observable<std::shared_ptr<MediaFrame>>*
+VideoRtpSession::toObservable()
+{
+    return (Observable<std::shared_ptr<MediaFrame>>*)sender_.get();
+}
+
 void
 VideoRtpSession::setChangeOrientationCallback(std::function<void(int)> cb)
 {

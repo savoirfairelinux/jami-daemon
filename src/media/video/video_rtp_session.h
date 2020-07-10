@@ -110,6 +110,8 @@ public:
         return receiveThread_;
     }
 
+    Observable<std::shared_ptr<MediaFrame>>* toObservable();
+
 private:
     void setupConferenceVideoPipeline(Conference& conference);
     void setupVideoPipeline();

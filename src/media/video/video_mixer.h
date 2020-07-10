@@ -35,6 +35,13 @@ namespace jami { namespace video {
 
 class SinkClient;
 
+
+enum class Layout {
+    MATRIX,
+    ONE_BIG_WITH_SMALL,
+    ONE_BIG
+};
+
 class VideoMixer:
         public VideoGenerator,
         public VideoFramePassiveReader
@@ -55,6 +62,11 @@ public:
     void detached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
 
     void switchInput(const std::string& input);
+    void setActiveRenderer(Observable<std::shared_ptr<MediaFrame>>* ob);
+
+    void setVideoLayout(Layout newLayout) {
+        currentLayout_ = newLayout;
+    }
 
 private:
     NON_COPYABLE(VideoMixer);
@@ -73,7 +85,6 @@ private:
     int width_ = 0;
     int height_ = 0;
     AVPixelFormat format_ = AV_PIX_FMT_YUV422P;
-    std::list<std::unique_ptr<VideoMixerSource>> sources_;
     rw_mutex rwMutex_;
 
     std::shared_ptr<SinkClient> sink_;
@@ -83,6 +94,11 @@ private:
     VideoScaler scaler_;
 
     ThreadLoop loop_; // as to be last member
+
+    // TODO
+    Layout currentLayout_ {Layout::ONE_BIG};
+    uint32_t bigVideoIndex_ {0};
+    std::list<std::unique_ptr<VideoMixerSource>> sources_;
 };
 
 }} // namespace jami::video

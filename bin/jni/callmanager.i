@@ -74,6 +74,8 @@ std::vector<std::string> getCallList();
 void removeConference(const std::string& conference_id);
 bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
 void createConfFromParticipantList(const std::vector<std::string>& participants);
+void setConferenceLayout(const std::string& confId, int layout);
+void setConferenceBigImage(const std::string& confId, const std::string& callId);
 bool isConferenceParticipant(const std::string& call_id);
 bool addParticipant(const std::string& callID, const std::string& confID);
 bool addMainParticipant(const std::string& confID);
