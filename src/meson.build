@@ -176,10 +176,18 @@ if conf.get('HAVE_PORTAUDIO') == 1
 endif
 
 if conf.get('HAVE_COREAUDIO') == 1
-    libjami_sources += files(
-        'media/audio/coreaudio/osx/audiodevice.cpp',
-        'media/audio/coreaudio/osx/corelayer.cpp'
-    )
+    if meson.get_compiler('cpp').compiles('''#import <TargetConditionals.h>
+                                             #if TARGET_OS_IPHONE == 0
+                                             #error This is not an IPHONE
+                                             #endif''')
+        libjami_sources += files(
+            'media/audio/coreaudio/ios/corelayer.mm'
+        )
+    else
+        libjami_sources += files(
+            'media/audio/coreaudio/osx/audiodevice.cpp',
+            'media/audio/coreaudio/osx/corelayer.cpp'
+        )
 endif
 
 if conf.get('HAVE_LIBUPNP') == 1
