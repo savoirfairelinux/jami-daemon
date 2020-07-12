@@ -282,7 +282,10 @@ libjami = library('jami',
 libjami_dep = declare_dependency(
     include_directories: 'dring',
     link_with: libjami,
-    variables: {'video': conf.get('ENABLE_VIDEO')? 'true' : 'false'}
+    variables: {
+        'video': conf.get('ENABLE_VIDEO')? 'true' : 'false',
+        'plugins': conf.get('ENABLE_PLUGIN')? 'true' : 'false'
+    }
 )
 
 if get_option('interfaces').contains('library')
@@ -321,6 +324,9 @@ if get_option('interfaces').contains('library')
         url: 'https://jami.net/',
         subdirs: 'dring',
         filebase: 'jami',
-        variables: 'video=' + (conf.get('ENABLE_VIDEO')? 'true' : 'false')
+        variables: [
+            'video=' + (conf.get('ENABLE_VIDEO')? 'true' : 'false'),
+            'plugins=' + (conf.get('ENABLE_PLUGIN')? 'true' : 'false')
+        ]
     )
 endif
