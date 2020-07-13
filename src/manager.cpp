@@ -1268,10 +1268,12 @@ bool
 Manager::holdConference(const std::string& id)
 {
     if (auto conf = getConferenceFromID(id)) {
-        for (const auto &item : conf->getParticipantList())
+        /*for (const auto &item : conf->getParticipantList())
             onHoldCall(item);
 
-        conf->setState(Conference::State::HOLD);
+        conf->setState(Conference::State::HOLD);*/
+        conf->detach();
+
         emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
         return true;
     }
@@ -1292,6 +1294,8 @@ Manager::unHoldConference(const std::string& id)
             conf->setState(Conference::State::ACTIVE_ATTACHED);
             emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
             return true;
+        } else if (conf->getState() == Conference::State::ACTIVE_DETACHED) {
+            pimpl_->addMainParticipant(*conf);
         }
     }
     return false;
