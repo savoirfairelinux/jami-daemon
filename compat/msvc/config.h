@@ -170,9 +170,6 @@ your system. */
 /* Video support enabled */
 #define ENABLE_VIDEO /**/
 
-/* Jami Plugin support enabled */
-#define ENABLE_PLUGIN /**/
-
 /* Name directory service support enabled */
 #define HAVE_RINGNS 1
 
