@@ -173,7 +173,6 @@ if(MSVC)
                "OPENDHT_PROXY_SERVER;"
                "OPENDHT_PUSH_NOTIFICATIONS;"
                "NATPMP_STATICLIB;"
-               "ENABLE_PLUGIN;"
                "NDEBUG;"
            ">"
            "_USE_MATH_DEFINES;"
