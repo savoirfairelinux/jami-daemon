@@ -348,12 +348,13 @@ static ArchivePtr createArchiveDiskWriter() {
                 archive_write_free(a);
             }};
 }
-
+#endif
 //==========================
 
 std::vector<std::string> listArchiveContent(const std::string &archivePath)
 {
     std::vector<std::string> fileNames;
+#ifdef ENABLE_PLUGIN
     ArchivePtr archiveReader = createArchiveReader();
     struct archive_entry* entry;
     int r;
@@ -371,12 +372,13 @@ std::vector<std::string> listArchiveContent(const std::string &archivePath)
         std::string fileEntry = archive_entry_pathname(entry) ? archive_entry_pathname(entry) : "Undefined";
         fileNames.push_back(fileEntry);
     }
-
+#endif
     return fileNames;
 }
 
 void uncompressArchive(const std::string &archivePath, const std::string &dir, const FileMatchPair& f)
 {
+#ifdef ENABLE_PLUGIN
     int r;
 
     ArchivePtr archiveReader = createArchiveReader();
@@ -452,11 +454,14 @@ void uncompressArchive(const std::string &archivePath, const std::string &dir, c
             }
         }
     }
+#endif
 }
 
 std::vector<uint8_t> readFileFromArchive(const std::string &archivePath,
                                          const std::string &fileRelativePathName)
 {
+    std::vector<uint8_t> fileContent;
+#ifdef ENABLE_PLUGIN
     long r;
     ArchivePtr archiveReader = createArchiveReader();
     struct archive_entry* entry;
@@ -489,7 +494,6 @@ std::vector<uint8_t> readFileFromArchive(const std::string &archivePath,
         if(fileEntry == fileRelativePathName){
             // Copying the data content
             DataBlock db;
-            std::vector<uint8_t> fileContent;
 
             while(true) {
                 r = readDataBlock(archiveReader,db);
@@ -513,7 +517,8 @@ std::vector<uint8_t> readFileFromArchive(const std::string &archivePath,
         }
     }
     throw std::runtime_error("File " + fileRelativePathName + " not found in the archive");
+#endif
+    return fileContent;
 }
-#endif //ENABLE_PLUGIN
 
 }} // namespace jami::archiver

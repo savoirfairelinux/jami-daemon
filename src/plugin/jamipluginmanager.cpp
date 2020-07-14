@@ -265,6 +265,7 @@ int JamiPluginManager::uninstallPlugin(const std::string &rootPath)
 
 bool JamiPluginManager::loadPlugin(const std::string &rootPath)
 {
+#ifdef ENABLE_PLUGIN
     try
     {
         bool status = pm_.load(getPluginDetails(rootPath).at("soPath"));
@@ -279,10 +280,13 @@ bool JamiPluginManager::loadPlugin(const std::string &rootPath)
         JAMI_ERR() << e.what();
         return false;
     }
+#endif
+    return false;
 }
 
 bool JamiPluginManager::unloadPlugin(const std::string &rootPath)
 {
+#ifdef ENABLE_PLUGIN
     try
     {
         bool status = pm_.unload(getPluginDetails(rootPath).at("soPath"));
@@ -297,6 +301,8 @@ bool JamiPluginManager::unloadPlugin(const std::string &rootPath)
         JAMI_ERR() << e.what();
         return false;
     }
+#endif
+    return false;
 }
 
 void JamiPluginManager::togglePlugin(const std::string &rootPath, bool toggle)
