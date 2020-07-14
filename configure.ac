@@ -461,7 +461,7 @@ PKG_CHECK_MODULES(LIBSWRESAMPLE, libswresample >= 1.2.101,, AC_MSG_ERROR([Missin
 
 dnl Jami Plugin is default-enabled
 AC_ARG_ENABLE([plugin], AS_HELP_STRING([--disable-plugin], [Disable plugin]))
-AS_IF([test "x$enable_plugin" != "xno"],
+AS_IF([test "x$enable_plugin" != "xno" && test "$SYS" = linux],
       [
         AC_DEFINE(ENABLE_PLUGIN, [], [Jami Plugin support enabled])
         AM_CONDITIONAL(ENABLE_PLUGIN, true)
