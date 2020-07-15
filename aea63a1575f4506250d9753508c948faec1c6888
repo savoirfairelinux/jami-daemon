@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "698a21a9_4e20bcac",
+        "filename": "src/data_transfer.cpp",
+        "patchSetId": 23
+      },
+      "lineNbr": 119,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-15T21:43:25Z",
+      "side": 1,
+      "message": "* never changed after creation: atomic not needed, could be const instead.\n* not even needed as we could just check for cb_",
+      "range": {
+        "startLine": 119,
+        "startChar": 4,
+        "endLine": 119,
+        "endChar": 20
+      },
+      "revId": "aea63a1575f4506250d9753508c948faec1c6888",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
