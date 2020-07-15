@@ -298,6 +298,12 @@ getCallList()
     return jami::Manager::instance().getCallList();
 }
 
+std::vector<std::map<std::string, std::string>>
+getConferenceInfos(const std::string& confId)
+{
+    return jami::Manager::instance().getConferenceInfos(confId);
+}
+
 void
 playDTMF(const std::string& key)
 {

@@ -29,6 +29,8 @@
 #include <memory>
 #include <vector>
 
+#include <json/json.h>
+
 #include "recordable.h"
 
 namespace jami {
@@ -38,6 +40,35 @@ namespace video {
 class VideoMixer;
 }
 #endif
+
+struct ParticipantInfo
+{
+    std::string uri;
+    int x {0};
+    int y {0};
+    int w {0};
+    int h {0};
+
+    void fromJson(const Json::Value& v) {
+        uri = v["uri"].asString();
+        x = v["x"].asInt();
+        y = v["y"].asInt();
+        w = v["w"].asInt();
+        h = v["h"].asInt();
+    }
+
+    Json::Value toJson() const {
+        Json::Value val;
+        val["uri"] = uri;
+        val["x"] = x;
+        val["y"] = y;
+        val["w"] = w;
+        val["h"] = h;
+        return val;
+    }
+};
+
+using ConfInfo = std::vector<ParticipantInfo>;
 
 using ParticipantSet = std::set<std::string>;
 
@@ -136,15 +167,33 @@ public:
 
     void setActiveParticipant(const std::string &participant_id);
 
+
+    void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId);
+    void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
+
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
     std::string getVideoInput() const { return mediaInput_; }
 #endif
 
+    static std::vector<std::map<std::string, std::string>> getConferenceInfos(const ConfInfo& confInfo);
+
+    std::vector<std::map<std::string, std::string>>
+    getConferenceInfos() const
+    {
+        return getConferenceInfos(confInfo_);
+    }
+
 private:
     std::string id_;
     State confState_ {State::ACTIVE_ATTACHED};
     ParticipantSet participants_;
+
+    ConfInfo confInfo_ {};
+    void sendConferenceInfos();
+    // We need to convert call to frame
+    std::mutex videoToCallMtx_;
+    std::map<Observable<std::shared_ptr<MediaFrame>>*, std::string> videoToCall_ {};
 
 #ifdef ENABLE_VIDEO
     std::string mediaInput_ {};
