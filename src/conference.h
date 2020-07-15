@@ -29,6 +29,8 @@
 #include <memory>
 #include <vector>
 
+#include <json/json.h>
+
 #include "recordable.h"
 
 namespace jami {
@@ -39,9 +41,44 @@ class VideoMixer;
 }
 #endif
 
+struct ParticipantInfo
+{
+    std::string uri;
+    int x {0};
+    int y {0};
+    int w {0};
+    int h {0};
+
+    void fromJson(const Json::Value& v) {
+        uri = v["uri"].asString();
+        x = v["x"].asInt();
+        y = v["y"].asInt();
+        w = v["w"].asInt();
+        h = v["h"].asInt();
+    }
+
+    Json::Value toJson() const {
+        Json::Value val;
+        val["uri"] = uri;
+        val["x"] = x;
+        val["y"] = y;
+        val["w"] = w;
+        val["h"] = h;
+        return val;
+    }
+};
+
+struct ConfInfo : public std::vector<ParticipantInfo>
+{
+    std::vector<std::map<std::string, std::string>> toVectorMapStringString() const;
+};
+
 using ParticipantSet = std::set<std::string>;
 
-class Conference : public Recordable {
+class Conference
+    : public Recordable
+    , public std::enable_shared_from_this<Conference>
+{
 public:
     enum class State {
         ACTIVE_ATTACHED,
@@ -136,15 +173,38 @@ public:
 
     void setActiveParticipant(const std::string &participant_id);
 
+
+    void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId);
+    void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
+
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
     std::string getVideoInput() const { return mediaInput_; }
 #endif
 
+    std::vector<std::map<std::string, std::string>>
+    getConferenceInfos() const
+    {
+        std::lock_guard<std::mutex> lk(confInfoMtx_);
+        return confInfo_.toVectorMapStringString();
+    }
+
 private:
+
+    std::weak_ptr<Conference> weak() {
+        return std::static_pointer_cast<Conference>(shared_from_this());
+    }
+
     std::string id_;
     State confState_ {State::ACTIVE_ATTACHED};
     ParticipantSet participants_;
+
+    mutable ConfInfo confInfo_ {};
+    mutable std::mutex confInfoMtx_ {};
+    void sendConferenceInfos();
+    // We need to convert call to frame
+    std::mutex videoToCallMtx_;
+    std::map<Observable<std::shared_ptr<MediaFrame>>*, std::string> videoToCall_ {};
 
 #ifdef ENABLE_VIDEO
     std::string mediaInput_ {};

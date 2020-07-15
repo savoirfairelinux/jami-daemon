@@ -514,6 +514,26 @@
             <arg type="b" name="isMixed" direction="in"/>
         </method>
 
+
+        <method name="getConferenceInfos" tp:name-for-bindings="getConferenceInfos">
+            <tp:docstring>
+                Retrieve conferences infos with the following format:
+                Layout = {
+                  {
+                    "uri": "participant", "x":"0", "y":"0", "w": "0", "h": "0"
+                  },
+                  {
+                      "uri": "participant1", "x":"0", "y":"0", "w": "0", "h": "0"
+                  }
+                    (...)
+                }
+            </tp:docstring>
+            <tp:added version="9.5.0"/>
+            <arg type="s" name="confId" direction="in" />
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+            <arg type="aa{ss}" direction="out" />
+        </method>
+
         <signal name="incomingCall" tp:name-for-bindings="incomingCall">
             <tp:docstring>
               <p>Notify an incoming call.</p>
@@ -814,6 +834,13 @@
             <tp:added version="2.1.0"/>
             <arg type="s" name="callID" />
             <arg type="b" name="videoMuted" />
+        </signal>
+
+        <signal name="onConferenceInfosUpdated" tp:name-for-bindings="onConferenceInfosUpdated">
+            <tp:added version="9.5.0"/>
+            <arg type="s" name="confId" />
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
+            <arg type="aa{ss}" name="infos" />
         </signal>
     </interface>
 </node>
