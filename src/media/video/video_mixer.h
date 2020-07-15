@@ -35,6 +35,15 @@ namespace jami { namespace video {
 
 class SinkClient;
 
+struct SourceInfo {
+    Observable<std::shared_ptr<MediaFrame>>* source;
+    int x;
+    int y;
+    int w;
+    int h;
+};
+using OnSourcesUpdatedCb = std::function<void(const std::vector<SourceInfo>&)>;
+
 
 enum class Layout {
     GRID,
@@ -44,7 +53,8 @@ enum class Layout {
 
 class VideoMixer:
         public VideoGenerator,
-        public VideoFramePassiveReader
+        public VideoFramePassiveReader,
+        public std::enable_shared_from_this<VideoMixer>
 {
 public:
     VideoMixer(const std::string& id);
@@ -68,15 +78,24 @@ public:
 
     void setVideoLayout(Layout newLayout) {
         currentLayout_ = newLayout;
+        layoutUpdated_ += 1;
+    }
+
+    void setOnSourcesUpdated(OnSourcesUpdatedCb&& cb) {
+        onSourcesUpdated_ = std::move(cb);
     }
 
 private:
     NON_COPYABLE(VideoMixer);
 
+    std::weak_ptr<VideoMixer> weak() {
+        return std::static_pointer_cast<VideoMixer>(shared_from_this());
+    }
+
     struct VideoMixerSource;
 
-    void render_frame(VideoFrame& output, const VideoFrame& input,
-        const std::unique_ptr<VideoMixerSource>& source, int index);
+    bool render_frame(VideoFrame& output, const VideoFrame& input,
+        std::unique_ptr<VideoMixerSource>& source, int index, bool needsUpdate);
 
     void start_sink();
     void stop_sink();
@@ -100,6 +119,9 @@ private:
     Layout currentLayout_ {Layout::GRID};
     Observable<std::shared_ptr<MediaFrame>>* activeSource_ {nullptr};
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
+
+    std::atomic_int layoutUpdated_ {0};
+    OnSourcesUpdatedCb onSourcesUpdated_ {};
 };
 
 }} // namespace jami::video
