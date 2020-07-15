@@ -44,7 +44,47 @@ Conference::Conference()
 #ifdef ENABLE_VIDEO
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
-{}
+{
+#ifdef ENABLE_VIDEO
+    getVideoMixer()->setOnSourcesUpdated([this](const std::vector<video::SourceInfo>&& infos) {
+        runOnMainThread([w=weak(), infos=std::move(infos)]{
+            auto shared = w.lock();
+            if (!shared)
+                return;
+            ConfInfo newInfo;
+            std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
+            for (const auto& info: infos) {
+                std::string uri = "local";
+                auto it = shared->videoToCall_.find(info.source);
+                if (it == shared->videoToCall_.end())
+                    it = shared->videoToCall_.emplace_hint(it, info.source, std::string());
+                // If not local
+                if (!it->second.empty()) {
+                    // Retrieve calls participants
+                    // TODO: this is a first version, we assume that the peer is not
+                    // a master of a conference and there is only one remote
+                    // In the future, we should retrieve confInfo from the call
+                    // To merge layouts informations
+                    if (auto call = Manager::instance().callFactory.getCall<SIPCall>(it->second)) {
+                        uri = call->getPeerNumber();
+                    }
+                }
+                newInfo.emplace_back(ParticipantInfo {
+                    std::move(uri), info.x, info.y, info.w, info.h
+                });
+            }
+            lk.unlock();
+
+            {
+                std::lock_guard<std::mutex> lk2(shared->confInfoMutex_);
+                shared->confInfo_ = std::move(newInfo);
+            }
+
+            shared->sendConferenceInfos();
+        });
+    });
+#endif
+}
 
 Conference::~Conference()
 {
@@ -95,6 +135,66 @@ Conference::setActiveParticipant(const std::string &participant_id)
     }
     // Set local by default
     videoMixer_->setActiveParticipant(nullptr);
+}
+
+std::vector<std::map<std::string, std::string>>
+ConfInfo::toVectorMapStringString() const
+{
+    std::vector<std::map<std::string, std::string>> infos;
+    infos.reserve(size());
+    auto it = cbegin();
+    while (it != cend()) {
+        infos.emplace_back(it->toMap());
+        ++it;
+    }
+    return infos;
+}
+
+void
+Conference::sendConferenceInfos()
+{
+    Json::Value jsonArray;
+    std::vector<std::map<std::string, std::string>> toSend;
+    {
+        std::lock_guard<std::mutex> lk2(confInfoMutex_);
+        for (const auto& info: confInfo_) {
+            jsonArray.append(info.toJson());
+        }
+        toSend = confInfo_.toVectorMapStringString();
+    }
+
+    Json::StreamWriterBuilder builder;
+    const auto confInfo = Json::writeString(builder, jsonArray);
+    // Inform calls that the layout has changed
+    for (const auto &participant_id : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+            call->sendTextMessage(
+                    std::map<std::string, std::string> {{"application/confInfo+json", confInfo}},
+                    call->getAccount().getFromUri());
+        }
+    }
+
+    // Inform client that layout has changed
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, std::move(toSend));
+}
+
+void
+Conference::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId)
+{
+    std::lock_guard<std::mutex> lk(videoToCallMtx_);
+    videoToCall_.emplace(frame, callId);
+    frame->attach(getVideoMixer().get());
+}
+
+void
+Conference::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
+{
+    std::lock_guard<std::mutex> lk(videoToCallMtx_);
+    auto it = videoToCall_.find(frame);
+    if (it != videoToCall_.end()) {
+        it->first->detach(getVideoMixer().get());
+        videoToCall_.erase(it);
+    }
 }
 
 void

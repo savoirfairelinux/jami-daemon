@@ -459,6 +459,13 @@ class DRING_TESTABLE Manager {
         std::vector<std::string> getCallList() const;
 
         /**
+         * Get conferences informations (participant list + rendered positions in the frame)
+         * @param confId
+         * @return {{"uri":"xxx", "x":"0", "y":"0", "w":"0", "h":"0"}...}
+         */
+        std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& confId) const;
+
+        /**
          * Retrieve details about a given call
          * @param callID      The account identifier
          * @return std::map< std::string, std::string > The call details

@@ -1943,8 +1943,9 @@ Manager::incomingMessage(const std::string& callID,
 
         // in case of a conference we must notify client using conference id
         emitSignal<DRing::CallSignal::IncomingMessage>(conf->getConfID(), from, messages);
-    } else
+    } else {
         emitSignal<DRing::CallSignal::IncomingMessage>(callID, from, messages);
+    }
 }
 
 void
@@ -2910,6 +2911,16 @@ Manager::getCallList() const
             results.push_back(call->getCallId());
     }
     return results;
+}
+
+std::vector<std::map<std::string, std::string>>
+Manager::getConferenceInfos(const std::string& confId) const
+{
+    if (auto conf = getConferenceFromID(confId))
+        return conf->getConferenceInfos();
+    else if (auto call = getCallFromCallID(confId))
+        return call->getConferenceInfos();
+    return {};
 }
 
 std::map<std::string, std::string>
