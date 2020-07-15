@@ -57,6 +57,7 @@ namespace jami {
 
 static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
 static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
+static constexpr const char MIME_TYPE_CONFERENCE_INFO[] {"application/confInfo+json"};
 static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
@@ -529,6 +530,8 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
             } catch (const std::exception& e) {
                 JAMI_WARN("Error parsing display notification: %s", e.what());
             }
+        } else if (m.first == MIME_TYPE_CONFERENCE_INFO) {
+            JAMI_ERR("@@@ RECEIVED ConferenceInfo %s", m.second.c_str());
         }
     }
 

@@ -297,6 +297,10 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     }
 
     scaler_.scale_and_pad(*frame, output, xoff, yoff, cell_width, cell_height, true);
+
+    if (onSourceRendered_) {
+        onSourceRendered_(source->source, xoff, yoff, cell_width, cell_height);
+    }
 }
 
 void

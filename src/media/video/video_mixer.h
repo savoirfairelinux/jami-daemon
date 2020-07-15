@@ -35,6 +35,8 @@ namespace jami { namespace video {
 
 class SinkClient;
 
+using OnSourceRenderedCb = std::function<void(Observable<std::shared_ptr<MediaFrame>>*, int, int, int, int)>;
+
 
 enum class Layout {
     GRID,
@@ -70,6 +72,10 @@ public:
         currentLayout_ = newLayout;
     }
 
+    void setOnSourceRendered(OnSourceRenderedCb&& cb) {
+        onSourceRendered_ = std::move(cb);
+    }
+
 private:
     NON_COPYABLE(VideoMixer);
 
@@ -100,6 +106,8 @@ private:
     Layout currentLayout_ {Layout::GRID};
     Observable<std::shared_ptr<MediaFrame>>* activeSource_ {nullptr};
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
+
+    OnSourceRenderedCb onSourceRendered_ {};
 };
 
 }} // namespace jami::video

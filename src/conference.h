@@ -39,6 +39,17 @@ class VideoMixer;
 }
 #endif
 
+// TODO move?
+struct ParticipantInfo
+{
+    int x {0};
+    int y {0};
+    int w {0};
+    int h {0};
+};
+
+using ConfInfo = std::vector<std::map<std::string, ParticipantInfo>>;
+
 using ParticipantSet = std::set<std::string>;
 
 class Conference : public Recordable {
@@ -136,6 +147,11 @@ public:
 
     void setActiveParticipant(const std::string &participant_id);
 
+    void sendConferenceInfo();
+
+    void attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId);
+    void detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame);
+
 #ifdef ENABLE_VIDEO
     std::shared_ptr<video::VideoMixer> getVideoMixer();
     std::string getVideoInput() const { return mediaInput_; }
@@ -145,6 +161,11 @@ private:
     std::string id_;
     State confState_ {State::ACTIVE_ATTACHED};
     ParticipantSet participants_;
+
+    ConfInfo confInfo_ {};
+    // We need to convert call to frame
+    std::mutex videToCallMtx_;
+    std::map<Observable<std::shared_ptr<MediaFrame>>*, std::string> videoToCall_ {};
 
 #ifdef ENABLE_VIDEO
     std::string mediaInput_ {};

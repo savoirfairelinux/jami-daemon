@@ -44,7 +44,17 @@ Conference::Conference()
 #ifdef ENABLE_VIDEO
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
-{}
+{
+    getVideoMixer()->setOnSourceRendered([this](Observable<std::shared_ptr<MediaFrame>>* frame, int, int, int, int) {
+        std::lock_guard<std::mutex> lk(videToCallMtx_);
+        auto it = videoToCall_.find(frame);
+        if (it != videoToCall_.end()) {
+            JAMI_ERR("@@@ FOUND");
+        }
+    });
+    std::lock_guard<std::mutex> lk(videToCallMtx_);
+    videoToCall_.emplace(getVideoCamera().get(), std::string());
+}
 
 Conference::~Conference()
 {
@@ -94,6 +104,34 @@ Conference::setActiveParticipant(const std::string &participant_id)
     }
     // Set local by default
     videoMixer_->setActiveParticipant(nullptr);
+}
+
+void
+Conference::sendConferenceInfo()
+{
+    for (const auto &participant_id : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+            JAMI_WARN("@@@ TODO");
+        }
+    }
+}
+
+void
+Conference::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId)
+{
+    std::lock_guard<std::mutex> lk(videToCallMtx_);
+    videoToCall_.emplace(frame, callId);
+}
+
+void
+Conference::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
+{
+    std::lock_guard<std::mutex> lk(videToCallMtx_);
+    auto it = videoToCall_.find(frame);
+    if (it != videoToCall_.end()) {
+        it->first->detach(videoMixer_.get());
+        videoToCall_.erase(it);
+    }
 }
 
 void
