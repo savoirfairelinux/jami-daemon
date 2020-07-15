@@ -31,6 +31,7 @@
 
 #include "recordable.h"
 #include "ip_utils.h"
+#include "conference.h"
 
 #include <atomic>
 #include <mutex>
@@ -330,6 +331,15 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         bool hasVideo() const { return not isAudioOnly_; }
 
+        void setConferenceInfo(const std::string& msg);
+
+        std::vector<std::map<std::string, std::string>>
+        getConferenceInfos() const
+        {
+            return Conference::getConferenceInfos(confInfo_);
+        }
+
+
     protected:
         virtual void merge(Call& scall);
 
@@ -409,6 +419,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         // If the call is blocked during the progressing state
         OnNeedFallbackCb onNeedFallback_;
         std::atomic_bool startFallback_ {true};
+
+        ConfInfo confInfo_ {};
 };
 
 // Helpers

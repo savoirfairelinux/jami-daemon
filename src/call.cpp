@@ -606,4 +606,24 @@ Call::safePopSubcalls()
     return old_value;
 }
 
+void
+Call::setConferenceInfo(const std::string& msg)
+{
+    confInfo_.clear();
+    Json::Value json;
+    std::string err;
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (!reader->parse(msg.data(), msg.data() + msg.size(), &json, &err)) {
+        for (const auto& participantInfo: json) {
+            ParticipantInfo pInfo;
+            pInfo.fromJson(participantInfo);
+            confInfo_.emplace_back(pInfo);
+        }
+    }
+
+    // Inform client that layout has changed
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, Conference::getConferenceInfos(confInfo_));
+}
+
 } // namespace jami
