@@ -394,6 +394,12 @@ Call::getNullDetails()
 void
 Call::onTextMessage(std::map<std::string, std::string>&& messages)
 {
+    auto it = messages.find("application/confInfo+json");
+    if (it != messages.end()) {
+        setConferenceInfo(it->second);
+        return;
+    }
+
     {
         std::lock_guard<std::recursive_mutex> lk {callMutex_};
         if (parent_) {
@@ -604,6 +610,34 @@ Call::safePopSubcalls()
     auto old_value = std::move(subcalls_);
     subcalls_.clear();
     return old_value;
+}
+
+void
+Call::setConferenceInfo(const std::string& msg)
+{
+    ConfInfo newInfo;
+    Json::Value json;
+    std::string err;
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (reader->parse(msg.data(), msg.data() + msg.size(), &json, &err)) {
+        for (const auto& participantInfo: json) {
+            ParticipantInfo pInfo;
+            if (!participantInfo.isMember("uri")) continue;
+            pInfo.fromJson(participantInfo);
+            newInfo.emplace_back(pInfo);
+        }
+    }
+
+    std::vector<std::map<std::string, std::string>> toSend;
+    {
+        std::lock_guard<std::mutex> lk(confInfoMutex_);
+        confInfo_ = std::move(newInfo);
+        toSend = confInfo_.toVectorMapStringString();
+    }
+
+    // Inform client that layout has changed
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, std::move(toSend));
 }
 
 } // namespace jami
