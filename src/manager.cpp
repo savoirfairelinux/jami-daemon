@@ -1872,6 +1872,13 @@ Manager::incomingMessage(const std::string& callID,
                          const std::string& from,
                          const std::map<std::string, std::string>& messages)
 {
+    if (auto call = getCallFromCallID(callID)) {
+        auto it = messages.find("application/confInfo+json");
+        if (it != messages.end()) {
+            call->setConferenceInfo(it->second);
+            return;
+        }
+    }
     if (isConferenceParticipant(callID)) {
         auto conf = getConferenceFromCallID(callID);
         if (not conf) {
@@ -1894,8 +1901,9 @@ Manager::incomingMessage(const std::string& callID,
 
         // in case of a conference we must notify client using conference id
         emitSignal<DRing::CallSignal::IncomingMessage>(conf->getConfID(), from, messages);
-    } else
+    } else {
         emitSignal<DRing::CallSignal::IncomingMessage>(callID, from, messages);
+    }
 }
 
 void
@@ -2861,6 +2869,16 @@ Manager::getCallList() const
             results.push_back(call->getCallId());
     }
     return results;
+}
+
+std::vector<std::map<std::string, std::string>>
+Manager::getConferenceInfos(const std::string& confId) const
+{
+    if (auto conf = getConferenceFromID(confId))
+        return conf->getConferenceInfos();
+    else if (auto call = getCallFromCallID(confId))
+        return call->getConferenceInfos();
+    return {};
 }
 
 std::map<std::string, std::string>

@@ -306,18 +306,18 @@ VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
     JAMI_DBG("[call:%s] Setup video pipeline on conference %s", callID_.c_str(),
              conference.getConfID().c_str());
     videoMixer_ = conference.getVideoMixer();
-
     if (sender_) {
         // Swap sender from local video to conference video mixer
         if (videoLocal_)
             videoLocal_->detach(sender_.get());
-        videoMixer_->attach(sender_.get());
+        if (videoMixer_)
+            videoMixer_->attach(sender_.get());
     } else
         JAMI_WARN("[call:%s] no sender", callID_.c_str());
 
     if (receiveThread_) {
         receiveThread_->enterConference();
-        receiveThread_->attach(videoMixer_.get());
+        conference.attachVideo(receiveThread_.get(), callID_);
     } else
         JAMI_WARN("[call:%s] no receiver", callID_.c_str());
 }
@@ -365,7 +365,7 @@ void VideoRtpSession::exitConference()
             videoMixer_->detach(sender_.get());
 
         if (receiveThread_) {
-            receiveThread_->detach(videoMixer_.get());
+            conference_->detachVideo(receiveThread_.get());
             receiveThread_->exitConference();
         }
 
