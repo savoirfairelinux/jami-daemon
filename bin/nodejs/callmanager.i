@@ -88,6 +88,7 @@ std::vector<std::string> getParticipantList(const std::string& confID);
 std::vector<std::string> getDisplayNames(const std::string& confID);
 std::string getConferenceId(const std::string& callID);
 std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
+std::vector<std::map<std::string, std::string>> getConferenceInfos(const std::string& confId);
 
 /* File Playback methods */
 bool startRecordedFilePlayback(const std::string& filepath);
@@ -131,5 +132,6 @@ public:
     virtual void recordingStateChanged(const std::string& call_id, int code){}
     virtual void recordStateChange(const std::string& call_id, int state){}
     virtual void onRtcpReportReceived(const std::string& call_id, const std::map<std::string, int>& stats){}
+    virtual void onConferenceInfosUpdated(const std::string& confId, const std::vector<std::map<std::string, std::string>>& infos) {}
     virtual void peerHold(const std::string& call_id, bool holding){}
 };

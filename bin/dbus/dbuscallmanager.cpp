@@ -99,6 +99,12 @@ DBusCallManager::getCallList() -> decltype(DRing::getCallList())
     return DRing::getCallList();
 }
 
+std::vector<std::map<std::string, std::string>>
+DBusCallManager::getConferenceInfos(const std::string& confId)
+{
+    return DRing::getConferenceInfos(confId);
+}
+
 void
 DBusCallManager::removeConference(const std::string& conference_id)
 {
