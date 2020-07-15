@@ -52,6 +52,12 @@ struct VideoMixer::VideoMixerSource {
         std::lock_guard<std::mutex> lock(mutex_);
         render_frame.swap(other);
     }
+
+    // Current render informations
+    int x {};
+    int y {};
+    int w {};
+    int h {};
 private:
     std::mutex mutex_;
 };
@@ -125,6 +131,7 @@ void
 VideoMixer::setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob)
 {
     activeSource_ = ob;
+    layoutUpdated_ += 1;
 }
 
 void
@@ -135,6 +142,7 @@ VideoMixer::attached(Observable<std::shared_ptr<MediaFrame>>* ob)
     auto src = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
     src->source = ob;
     sources_.emplace_back(std::move(src));
+    layoutUpdated_ += 1;
 }
 
 void
@@ -150,6 +158,7 @@ VideoMixer::detached(Observable<std::shared_ptr<MediaFrame>>* ob)
                 activeSource_ = nullptr;
             }
             sources_.remove(x);
+            layoutUpdated_ += 1;
             break;
         }
     }
@@ -199,7 +208,9 @@ VideoMixer::process()
 
         int i = 0;
         bool activeFound = false;
-        for (const auto& x : sources_) {
+        bool needsUpdate = layoutUpdated_ > 0;
+        bool successfullyRendered = true;
+        for (auto& x : sources_) {
             /* thread stop pending? */
             if (!loop_.isRunning())
                 return;
@@ -229,24 +240,48 @@ VideoMixer::process()
                 }
 
                 if (input)
-                    render_frame(output, *input, x, wantedIndex);
+                    successfullyRendered &= render_frame(output, *input, x, wantedIndex, needsUpdate);
+                else
+                    successfullyRendered = false;
 
                 x->atomic_swap_render(input);
+            } else if (needsUpdate) {
+                x->x = 0;
+                x->y = 0;
+                x->w = 0;
+                x->h = 0;
             }
 
             ++i;
+        }
+        if (needsUpdate and successfullyRendered) {
+            layoutUpdated_ -= 1;
+            if (layoutUpdated_ == 0) {
+                std::vector<SourceInfo> sourcesInfo;
+                sourcesInfo.resize(sources_.size());
+                for (auto& x : sources_) {
+                    sourcesInfo.emplace_back(SourceInfo {
+                        x->source,
+                        x->x,
+                        x->y,
+                        x->w,
+                        x->h
+                    });
+                }
+                onSourcesUpdated_(std::move(sourcesInfo));
+            }
         }
     }
 
     publishFrame();
 }
 
-void
+bool
 VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
-    const std::unique_ptr<VideoMixerSource>& source, int index)
+    std::unique_ptr<VideoMixerSource>& source, int index, bool needsUpdate)
 {
     if (!width_ or !height_ or !input.pointer() or input.pointer()->format == -1)
-        return;
+        return false;
 
 #ifdef RING_ACCEL
     std::shared_ptr<VideoFrame> frame { HardwareAccel::transferToMainMemory(input, AV_PIX_FMT_NV12) };
@@ -254,28 +289,44 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     std::shared_ptr<VideoFrame> frame = input;
 #endif
 
-    const int n = currentLayout_ == Layout::ONE_BIG? 1 : sources_.size();
-    const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL? std::max(6,n) : ceil(sqrt(n));
-    int cell_width = width_ / zoom;
-    int cell_height = height_ / zoom;
-    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
-        // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
-        // The rest is the active source
-        cell_width  = width_;
-        cell_height = height_ - cell_height;
-    }
-    int xoff = (index % zoom) * cell_width;
-    int yoff = (index / zoom) * cell_height;
-    if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
-        if (index == 0) {
-            xoff = 0;
-            yoff = height_ / zoom; // First line height
+    int cell_width, cell_height, xoff, yoff;
+    if (not needsUpdate) {
+        cell_width = source->w;
+        cell_height = source->h;
+        xoff = source->x;
+        yoff = source->y;
+    } else {
+        const int n = currentLayout_ == Layout::ONE_BIG? 1 : sources_.size();
+        const int zoom = currentLayout_ == Layout::ONE_BIG_WITH_SMALL? std::max(6,n) : ceil(sqrt(n));
+        if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL && index == 0) {
+            // In ONE_BIG_WITH_SMALL, the first line at the top is the previews
+            // The rest is the active source
+            cell_width  = width_;
+            cell_height = height_ - cell_height;
         } else {
-            xoff = (index-1) * cell_width;
-            // Show sources in center
-            xoff += (width_ - (n - 1) * cell_width) / 2;
-            yoff = 0;
+            cell_width = width_ / zoom;
+            cell_height = height_ / zoom;
         }
+        if (currentLayout_ == Layout::ONE_BIG_WITH_SMALL) {
+            if (index == 0) {
+                xoff = 0;
+                yoff = height_ / zoom; // First line height
+            } else {
+                xoff = (index-1) * cell_width;
+                // Show sources in center
+                xoff += (width_ - (n - 1) * cell_width) / 2;
+                yoff = 0;
+            }
+        } else {
+            xoff = (index % zoom) * cell_width;
+            yoff = (index / zoom) * cell_height;
+        }
+
+        // Update source's cache
+        source->w = cell_width;
+        source->h = cell_height;
+        source->x = xoff;
+        source->y = yoff;
     }
 
     AVFrameSideData* sideData = av_frame_get_side_data(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
@@ -297,6 +348,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
     }
 
     scaler_.scale_and_pad(*frame, output, xoff, yoff, cell_width, cell_height, true);
+    return true;
 }
 
 void
@@ -314,6 +366,7 @@ VideoMixer::setParameters(int width, int height, AVPixelFormat format)
         libav_utils::fillWithBlack(previous_p->pointer());
 
     start_sink();
+    layoutUpdated_ += 1;
 }
 
 void
