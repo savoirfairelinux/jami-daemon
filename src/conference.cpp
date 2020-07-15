@@ -44,7 +44,36 @@ Conference::Conference()
 #ifdef ENABLE_VIDEO
     , mediaInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
-{}
+{
+    getVideoMixer()->setOnSourcesUpdated([this](std::vector<video::SourceInfo>&& infos) {
+        confInfo_.clear();
+        for (const auto& info: infos) {
+            std::lock_guard<std::mutex> lk(videoToCallMtx_);
+            auto it = videoToCall_.find(info.source);
+            if (it != videoToCall_.end()) {
+                std::string uri = "local";
+                // If not local
+                if (!it->second.empty()) {
+                    // Retrieve calls participants
+                    // TODO: this is a first version, we assume that the peer is not
+                    // a master of a conference and there is only one remote
+                    // In the future, we should retrieve confInfo from the call
+                    // To merge layouts informations
+                    if (auto call = Manager::instance().callFactory.getCall<SIPCall>(it->second)) {
+                        uri = call->getDetails()["PEER_NUMBER"];
+                    }
+                }
+                confInfo_.emplace_back(ParticipantInfo {
+                    uri, info.x, info.y, info.w, info.h
+                });
+            }
+        }
+
+        sendConferenceInfos();
+    });
+    std::lock_guard<std::mutex> lk(videoToCallMtx_);
+    videoToCall_.emplace(getVideoCamera().get(), std::string());
+}
 
 Conference::~Conference()
 {
@@ -94,6 +123,57 @@ Conference::setActiveParticipant(const std::string &participant_id)
     }
     // Set local by default
     videoMixer_->setActiveParticipant(nullptr);
+}
+
+std::vector<std::map<std::string, std::string>>
+Conference::getConferenceInfos() const
+{
+    std::vector<std::map<std::string, std::string>> infos;
+    infos.resize(confInfo_.size());
+    for (const auto& info: confInfo_) {
+        infos.emplace_back(
+            std::map<std::string, std::string> {
+                {"uri", info.uri},
+                {"x", std::to_string(info.x)},
+                {"y", std::to_string(info.y)},
+                {"w", std::to_string(info.w)},
+                {"h", std::to_string(info.h)},
+            });
+    }
+    return infos;
+}
+
+void
+Conference::sendConferenceInfos()
+{
+    // Inform calls that the layout has changed
+    for (const auto &participant_id : participants_) {
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
+            JAMI_WARN("@@@ TODO");
+        }
+    }
+
+    // Inform client that layout has changed
+    jami::emitSignal<DRing::CallSignal::OnConferenceInfosUpdated>(id_, getConferenceInfos());
+}
+
+void
+Conference::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId)
+{
+    std::lock_guard<std::mutex> lk(videoToCallMtx_);
+    videoToCall_.emplace(frame, callId);
+    frame->attach(getVideoMixer().get());
+}
+
+void
+Conference::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
+{
+    std::lock_guard<std::mutex> lk(videoToCallMtx_);
+    auto it = videoToCall_.find(frame);
+    if (it != videoToCall_.end()) {
+        it->first->detach(getVideoMixer().get());
+        videoToCall_.erase(it);
+    }
 }
 
 void

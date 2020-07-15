@@ -2858,6 +2858,14 @@ Manager::getCallList() const
     return results;
 }
 
+std::vector<std::map<std::string, std::string>>
+Manager::getConferenceInfos(const std::string& confId) const
+{
+    if (auto conf = getConferenceFromID(confId))
+        return conf->getConferenceInfos();
+    return {};
+}
+
 std::map<std::string, std::string>
 Manager::getConferenceDetails(const std::string& confID) const
 {
