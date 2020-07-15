@@ -100,6 +100,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
 
+        virtual std::string getFromUri() const = 0;
+
         /**
          * Load the settings for this account.
          */
