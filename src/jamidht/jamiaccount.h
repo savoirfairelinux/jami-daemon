@@ -747,10 +747,9 @@ private:
     bool needToSendProfile(const std::string& deviceId);
     /**
      * Send Profile via cached SIP connection
-     * @param peerId        Peer related
      * @param deviceId      Device that will receive the profile
      */
-    void sendProfile(const std::string& peerId, const std::string& deviceId);
+    void sendProfile(const std::string& deviceId);
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)

@@ -122,12 +122,12 @@ protected:
 void
 DataTransfer::emit(DRing::DataTransferEventCode code) const
 {
-    if (internalCompletionCb_)
-        return; // VCard transfer is just for the daemon
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
         info_.lastEvent = code;
     }
+    if (internalCompletionCb_)
+        return; // VCard transfer is just for the daemon
     emitSignal<DRing::DataTransferSignal::DataTransferEvent>(id, uint32_t(code));
 }
 
@@ -643,11 +643,9 @@ IncomingFileTransfer::close() noexcept
     JAMI_DBG() << "[FTP] file closed, rx " << info_.bytesProgress
                << " on " << info_.totalSize;
     if (info_.bytesProgress >= info_.totalSize) {
-        if (internalCompletionCb_) {
+        if (internalCompletionCb_)
             internalCompletionCb_(info_.path);
-        } else {
-            emit(DRing::DataTransferEventCode::finished);
-        }
+        emit(DRing::DataTransferEventCode::finished);
     }
     else
         emit(DRing::DataTransferEventCode::closed_by_host);
