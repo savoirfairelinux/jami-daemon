@@ -402,7 +402,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // To avoid this, we increment the ref counter and let our unique_ptr manage
     // when the invite will be freed
     pjsip_inv_add_ref(inv);
-    call->inv.reset(inv);
+    JAMI_ERR("@@@ RESET");
+    call->setInv(inv);
 
     // Check whether Replaces header is present in the request and process accordingly.
     pjsip_dialog *replaced_dlg;
@@ -428,19 +429,19 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // Check if call has been transferred
     pjsip_tx_data *tdata = 0;
 
-    if (pjsip_inv_initial_answer(call->inv.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_initial_answer(call->inv(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not create answer TRYING");
         return PJ_FALSE;
     }
 
-    if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_send_msg(call->inv(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not send msg TRYING");
         return PJ_FALSE;
     }
 
     call->setState(Call::ConnectionState::TRYING);
 
-    if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_answer(call->inv(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not create answer RINGING");
         return PJ_FALSE;
     }
@@ -449,7 +450,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     const pj_str_t contactStr(account->getContactHeader(transport->get()));
     sip_utils::addContactHeader(&contactStr, tdata);
 
-    if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_send_msg(call->inv(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not send msg RINGING");
         return PJ_FALSE;
     }
@@ -803,6 +804,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
                     break;
                 // When the peer manually refuse the call
                 case PJSIP_SC_DECLINE:
+                //case 481:
                 case PJSIP_SC_BUSY_EVERYWHERE:
                     if (inv->role != PJSIP_ROLE_UAC)
                         break;
@@ -822,7 +824,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             }
             // Reset the invite here as it must not be used on
             // a non existing link and removeCall can take time to be called
-            call->inv.reset();
+            //call->setInv(nullptr);
             break;
 
         default:

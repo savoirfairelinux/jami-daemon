@@ -363,12 +363,12 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
 
     inv->mod_data[link_.getModId()] = call.get();
-    call->inv.reset(inv);
+    call->setInv(inv);
 
     updateDialogViaSentBy(dialog);
 
     if (hasServiceRoute())
-        pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(getServiceRoute(), call->inv->pool));
+        pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(getServiceRoute(), call->inv()->pool));
 
     if (hasCredentials() and pjsip_auth_clt_set_credentials(&dialog->auth_sess, getCredentialCount(), getCredInfo()) != PJ_SUCCESS) {
         JAMI_ERR("Could not initialize credentials for invite session authentication");
@@ -377,7 +377,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     pjsip_tx_data *tdata;
 
-    if (pjsip_inv_invite(call->inv.get(), &tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_invite(call->inv(), &tdata) != PJ_SUCCESS) {
         JAMI_ERR("Could not initialize invite messager for this call");
         return false;
     }
@@ -388,7 +388,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_send_msg(call->inv(), tdata) != PJ_SUCCESS) {
         JAMI_ERR("Unable to send invite message for this call");
         return false;
     }
