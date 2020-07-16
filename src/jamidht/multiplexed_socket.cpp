@@ -597,11 +597,8 @@ ChannelSocket::read(ValueType* buf, std::size_t len, std::error_code& ec)
 {
     if (auto ep = pimpl_->endpoint.lock()) {
         int res = ep->read(pimpl_->channel, buf, len, ec);
-        if (res < 0) {
-            if (ec)
-                JAMI_ERR("Error when reading on channel: %s", ec.message().c_str());
-            shutdown();
-        }
+        if (ec)
+            JAMI_ERR("Error when reading on channel: %s", ec.message().c_str());
         return res;
     }
     ec = std::make_error_code(std::errc::broken_pipe);
@@ -613,11 +610,8 @@ ChannelSocket::write(const ValueType* buf, std::size_t len, std::error_code& ec)
 {
     if (auto ep = pimpl_->endpoint.lock()) {
         int res = ep->write(pimpl_->channel, buf, len, ec);
-        if (res < 0) {
-            if (ec)
-                JAMI_ERR("Error when writing on channel: %s", ec.message().c_str());
-            shutdown();
-        }
+        if (ec)
+            JAMI_ERR("Error when writing on channel: %s", ec.message().c_str());
         return res;
     }
     ec = std::make_error_code(std::errc::broken_pipe);
@@ -629,10 +623,8 @@ ChannelSocket::waitForData(std::chrono::milliseconds timeout, std::error_code& e
 {
     if (auto ep = pimpl_->endpoint.lock()) {
         auto res = ep->waitForData(pimpl_->channel, timeout, ec);
-        if (res < 0) {
-            if (ec)
-                JAMI_ERR("Error when waiting on channel: %s", ec.message().c_str());
-        }
+        if (ec)
+            JAMI_ERR("Error when waiting on channel: %s", ec.message().c_str());
         return res;
     }
     ec = std::make_error_code(std::errc::broken_pipe);
