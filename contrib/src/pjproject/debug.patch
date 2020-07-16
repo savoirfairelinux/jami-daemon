@@ -1,0 +1,326 @@
+ pjsip/src/pjsip-ua/sip_inv.c      | 39 +++++++++++++++++++++++++++++++++++++--
+ pjsip/src/pjsip-ua/sip_replaces.c |  4 ++++
+ pjsip/src/pjsip/sip_ua_layer.c    |  1 +
+ 3 files changed, 42 insertions(+), 2 deletions(-)
+
+diff --git a/pjsip/src/pjsip-ua/sip_inv.c b/pjsip/src/pjsip-ua/sip_inv.c
+index 55e69afc0..87a96f230 100644
+--- a/pjsip/src/pjsip-ua/sip_inv.c
++++ b/pjsip/src/pjsip-ua/sip_inv.c
+@@ -319,8 +319,10 @@ static void inv_set_state(pjsip_inv_session *inv, pjsip_inv_state state,
+      * temporarily increase its ref counter.
+      */
+     pjsip_inv_add_ref(inv);
+-    if (mod_inv.cb.on_state_changed && inv->notify && !dont_notify)
+-	(*mod_inv.cb.on_state_changed)(inv, e);
++    if (mod_inv.cb.on_state_changed && inv->notify && !dont_notify) {
++		printf("@@@ on_state_changed\n");
++		(*mod_inv.cb.on_state_changed)(inv, e);
++	}
+     pjsip_inv_dec_ref(inv);
+ 
+     /* The above callback may change the state, so we need to be careful here
+@@ -511,6 +513,7 @@ static pj_status_t inv_send_ack(pjsip_inv_session *inv, pjsip_event *e)
+      * (this may have been a late 200/OK response.
+      */
+     if (inv->state < PJSIP_INV_STATE_CONFIRMED) {
++		printf("@@@ SET 1\n");
+ 	inv_set_state(inv, PJSIP_INV_STATE_CONFIRMED, &ack_e);
+     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED && inv->last_ack) {
+         /* Avoid possible leaked tdata when invite session is already
+@@ -627,6 +630,7 @@ static pj_bool_t mod_inv_on_rx_request(pjsip_rx_data *rdata)
+ 	    pjsip_event event;
+ 
+ 	    PJSIP_EVENT_INIT_RX_MSG(event, rdata);
++		printf("@@@ SET 2\n");
+ 	    inv_set_state(inv, PJSIP_INV_STATE_CONFIRMED, &event);
+ 
+ 	    /* Send pending BYE if any:
+@@ -1670,6 +1674,7 @@ PJ_DEF(pj_status_t) pjsip_inv_terminate( pjsip_inv_session *inv,
+ 	pjsip_event usr_event;
+ 
+ 	PJSIP_EVENT_INIT_USER(usr_event, NULL, NULL, NULL, NULL);
++		printf("@@@ SET 3\n");
+ 	inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, &usr_event);
+     }
+ 
+@@ -2928,6 +2933,7 @@ PJ_DEF(pj_status_t) pjsip_inv_process_redirect( pjsip_inv_session *inv,
+     case PJSIP_REDIRECT_STOP:
+ 	/* User doesn't want the redirection. Disconnect the session now. */
+ 	inv_set_cause(inv, cancel_code, pjsip_get_status_text(cancel_code));
++		printf("@@@ SET 4\n");
+ 	inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 
+ 	/* Caller should expect that the invite session is gone now, so
+@@ -2940,6 +2946,7 @@ PJ_DEF(pj_status_t) pjsip_inv_process_redirect( pjsip_inv_session *inv,
+ 	if (inv_uac_recurse(inv, cancel_code, NULL, NULL) == PJ_FALSE) {
+ 	    inv_set_cause(inv, cancel_code, 
+ 			  pjsip_get_status_text(cancel_code));
++		printf("@@@ SET 5\n");
+ 	    inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 
+ 	    /* Tell caller that the invite session is gone now */
+@@ -3424,6 +3431,7 @@ static void inv_respond_incoming_bye( pjsip_inv_session *inv,
+ 
+     if (inv->state != PJSIP_INV_STATE_DISCONNECTED) {
+ 	inv_set_cause(inv, PJSIP_SC_OK, NULL);
++		printf("@@@ SET 6\n");
+ 	inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+     }
+ }
+@@ -3440,6 +3448,7 @@ static void inv_handle_bye_response( pjsip_inv_session *inv,
+     
+     if (e->body.tsx_state.type != PJSIP_EVENT_RX_MSG) {
+ 	inv_set_cause(inv, PJSIP_SC_OK, NULL);
++		printf("@@@ SET 7\n");
+ 	inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 	return;
+     }
+@@ -3460,6 +3469,7 @@ static void inv_handle_bye_response( pjsip_inv_session *inv,
+ 	     * End the session anyway.
+ 	     */
+ 	    inv_set_cause(inv, PJSIP_SC_OK, NULL);
++		printf("@@@ SET 8\n");
+ 	    inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 	    
+ 	} else {
+@@ -3477,6 +3487,7 @@ static void inv_handle_bye_response( pjsip_inv_session *inv,
+ 
+ 	/* End the session. */
+ 	inv_set_cause(inv, PJSIP_SC_OK, NULL);
++		printf("@@@ SET 9\n");
+ 	inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+     }
+ 
+@@ -3936,6 +3947,7 @@ static void inv_on_state_null( pjsip_inv_session *inv, pjsip_event *e)
+ 
+ 	    switch (tsx->state) {
+ 	    case PJSIP_TSX_STATE_CALLING:
++		printf("@@@ SET 10\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_CALLING, e);
+ 		break;
+ 	    default:
+@@ -3946,9 +3958,11 @@ static void inv_on_state_null( pjsip_inv_session *inv, pjsip_event *e)
+ 	} else {
+ 	    switch (tsx->state) {
+ 	    case PJSIP_TSX_STATE_TRYING:
++		printf("@@@ SET 11\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_INCOMING, e);
+ 		break;
+ 	    case PJSIP_TSX_STATE_PROCEEDING:
++		printf("@@@ SET 12\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_INCOMING, e);
+ 		if (tsx->status_code > 100)
+ 		    inv_set_state(inv, PJSIP_INV_STATE_EARLY, e);
+@@ -3956,6 +3970,7 @@ static void inv_on_state_null( pjsip_inv_session *inv, pjsip_event *e)
+ 	    case PJSIP_TSX_STATE_TERMINATED:
+ 		/* there is a failure in sending response. */
+ 		inv_set_cause(inv, tsx->status_code, &tsx->status_text);
++		printf("@@@ SET 13\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 		break;
+ 	    default:
+@@ -4009,6 +4024,7 @@ static pj_bool_t handle_uac_tsx_response(pjsip_inv_session *inv,
+ 	pj_status_t status;
+ 
+ 	inv_set_cause(inv, tsx->status_code, &tsx->status_text);
++		printf("@@@ SET 14\n");
+ 	inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 
+ 	/* Send BYE */
+@@ -4190,6 +4206,7 @@ static void handle_uac_call_rejection(pjsip_inv_session *inv, pjsip_event *e)
+ 
+ terminate_session:
+     inv_set_cause(inv, tsx->status_code, &tsx->status_text);
++		printf("@@@ SET 15\n");
+     inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ }
+ 
+@@ -4211,6 +4228,7 @@ static void inv_on_state_calling( pjsip_inv_session *inv, pjsip_event *e)
+ 	switch (tsx->state) {
+ 
+ 	case PJSIP_TSX_STATE_CALLING:
++		printf("@@@ SET 16\n");
+ 	    inv_set_state(inv, PJSIP_INV_STATE_CALLING, e);
+ 	    break;
+ 
+@@ -4250,6 +4268,7 @@ static void inv_on_state_calling( pjsip_inv_session *inv, pjsip_event *e)
+ 		    }
+ 		}
+ 
++		printf("@@@ SET 17\n");
+ 		if (dlg->remote.info->tag.slen)
+ 		    inv_set_state(inv, PJSIP_INV_STATE_EARLY, e);
+ 
+@@ -4276,6 +4295,7 @@ static void inv_on_state_calling( pjsip_inv_session *inv, pjsip_event *e)
+ 		 */
+ 		pj_assert(0);
+ 
++		printf("@@@ SET 18\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_CONNECTING, e);
+ 
+ 		/* Check routing URI scheme for secure dialog */
+@@ -4307,6 +4327,7 @@ static void inv_on_state_calling( pjsip_inv_session *inv, pjsip_event *e)
+ 		pj_assert(e->body.tsx_state.type == PJSIP_EVENT_RX_MSG);
+ 
+ 		/* Set state to CONNECTING */
++		printf("@@@ SET 19\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_CONNECTING, e);
+ 
+ 		/* Check routing URI scheme for secure dialog */
+@@ -4327,6 +4348,7 @@ static void inv_on_state_calling( pjsip_inv_session *inv, pjsip_event *e)
+ 
+ 	    } else  {
+ 		inv_set_cause(inv, tsx->status_code, &tsx->status_text);
++		printf("@@@ SET 20\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 	    }
+ 	    break;
+@@ -4349,6 +4371,7 @@ static void inv_on_state_calling( pjsip_inv_session *inv, pjsip_event *e)
+ 	    tsx->status_code == PJSIP_SC_TSX_TIMEOUT)
+ 	{
+ 	    inv_set_cause(inv, tsx->status_code, &tsx->status_text);
++		printf("@@@ SET 21\n");
+ 	    inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 	}
+     } else if (tsx->role == PJSIP_ROLE_UAS &&
+@@ -4384,6 +4407,7 @@ static void inv_on_state_incoming( pjsip_inv_session *inv, pjsip_event *e)
+ 	switch (tsx->state) {
+ 
+ 	case PJSIP_TSX_STATE_TRYING:
++		printf("@@@ SET 22\n");
+ 	    inv_set_state(inv, PJSIP_INV_STATE_INCOMING, e);
+ 	    break;
+ 
+@@ -4391,6 +4415,7 @@ static void inv_on_state_incoming( pjsip_inv_session *inv, pjsip_event *e)
+ 	    /*
+ 	     * Transaction sent provisional response.
+ 	     */
++		printf("@@@ SET 23\n");
+ 	    if (tsx->status_code > 100)
+ 		inv_set_state(inv, PJSIP_INV_STATE_EARLY, e);
+ 	    break;
+@@ -4400,9 +4425,11 @@ static void inv_on_state_incoming( pjsip_inv_session *inv, pjsip_event *e)
+ 	     * Transaction sent final response.
+ 	     */
+ 	    if (tsx->status_code/100 == 2) {
++		printf("@@@ SET 24\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_CONNECTING, e);
+ 	    } else {
+ 		inv_set_cause(inv, tsx->status_code, &tsx->status_text);
++		printf("@@@ SET 25\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 	    }
+ 	    break;
+@@ -4413,6 +4440,7 @@ static void inv_on_state_incoming( pjsip_inv_session *inv, pjsip_event *e)
+ 	     * response)
+ 	     */
+ 	    inv_set_cause(inv, tsx->status_code, &tsx->status_text);
++		printf("@@@ SET 26\n");
+ 	    inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 	    break;
+ 
+@@ -4457,6 +4485,7 @@ static void inv_on_state_early( pjsip_inv_session *inv, pjsip_event *e)
+ 
+ 	case PJSIP_TSX_STATE_PROCEEDING:
+ 	    /* Send/received another provisional response. */
++		printf("@@@ SET 27\n");
+ 	    inv_set_state(inv, PJSIP_INV_STATE_EARLY, e);
+ 
+ 	    if (e->body.tsx_state.type == PJSIP_EVENT_RX_MSG) {
+@@ -4472,6 +4501,7 @@ static void inv_on_state_early( pjsip_inv_session *inv, pjsip_event *e)
+ 
+ 	case PJSIP_TSX_STATE_COMPLETED:
+ 	    if (tsx->status_code/100 == 2) {
++		printf("@@@ SET 28\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_CONNECTING, e);
+ 		if (e->body.tsx_state.type == PJSIP_EVENT_RX_MSG) {
+ 		    pj_status_t status;
+@@ -4497,6 +4527,7 @@ static void inv_on_state_early( pjsip_inv_session *inv, pjsip_event *e)
+ 
+ 	    } else {
+ 		inv_set_cause(inv, tsx->status_code, &tsx->status_text);
++		printf("@@@ SET 29\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 	    }
+ 	    break;
+@@ -4515,6 +4546,7 @@ static void inv_on_state_early( pjsip_inv_session *inv, pjsip_event *e)
+ 		/* This must be receipt of 2xx response */
+ 
+ 		/* Set state to CONNECTING */
++		printf("@@@ SET 30\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_CONNECTING, e);
+ 
+ 		if (e->body.tsx_state.type == PJSIP_EVENT_RX_MSG) {
+@@ -4544,6 +4576,7 @@ static void inv_on_state_early( pjsip_inv_session *inv, pjsip_event *e)
+ 
+ 	    } else  {
+ 		inv_set_cause(inv, tsx->status_code, &tsx->status_text);
++		printf("@@@ SET 31\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 	    }
+ 	    break;
+@@ -4665,6 +4698,7 @@ static void inv_on_state_connecting( pjsip_inv_session *inv, pjsip_event *e)
+ 						  e->body.tsx_state.src.rdata);
+ 		}
+ 
++		printf("@@@ SET 32\n");
+ 		inv_set_state(inv, PJSIP_INV_STATE_CONFIRMED, e);
+ 
+ 		/* Send pending BYE if any:
+@@ -4686,6 +4720,7 @@ static void inv_on_state_connecting( pjsip_inv_session *inv, pjsip_event *e)
+ 	    if (tsx->status_code/100 != 2) {
+ 		if (tsx->role == PJSIP_ROLE_UAC) {
+ 		    inv_set_cause(inv, tsx->status_code, &tsx->status_text);
++			printf("@@@ SET 33\n");
+ 		    inv_set_state(inv, PJSIP_INV_STATE_DISCONNECTED, e);
+ 		} else {
+ 		    pjsip_tx_data *bye;
+diff --git a/pjsip/src/pjsip-ua/sip_replaces.c b/pjsip/src/pjsip-ua/sip_replaces.c
+index b117dd327..ca5d7a9d1 100644
+--- a/pjsip/src/pjsip-ua/sip_replaces.c
++++ b/pjsip/src/pjsip-ua/sip_replaces.c
+@@ -260,6 +260,7 @@ PJ_DEF(pj_status_t) pjsip_replaces_verify_request( pjsip_rx_data *rdata,
+     /* Find the dialog identified by Replaces header (and always lock the
+      * dialog no matter what application wants).
+      */
++        printf("@@@ FIND FOR CALL %s\n", rep_hdr->call_id.ptr);
+     dlg = pjsip_ua_find_dialog(&rep_hdr->call_id, &rep_hdr->to_tag,
+ 			       &rep_hdr->from_tag, PJ_TRUE);
+ 
+@@ -267,6 +268,7 @@ PJ_DEF(pj_status_t) pjsip_replaces_verify_request( pjsip_rx_data *rdata,
+      * no dialog is found.
+      */
+     if (dlg == NULL) {
++        printf("@@@ PJSIP_SC_CALL_TSX_DOES_NOT_EXIST 1\n");
+ 	code = PJSIP_SC_CALL_TSX_DOES_NOT_EXIST;
+ 	warn_text = "No dialog found for Replaces request";
+ 	goto on_return;
+@@ -277,6 +279,7 @@ PJ_DEF(pj_status_t) pjsip_replaces_verify_request( pjsip_rx_data *rdata,
+ 
+     /* Return 481 if no invite session is present. */
+     if (inv == NULL) {
++        printf("@@@ PJSIP_SC_CALL_TSX_DOES_NOT_EXIST 2\n");
+ 	code = PJSIP_SC_CALL_TSX_DOES_NOT_EXIST;
+ 	warn_text = "No INVITE session found for Replaces request";
+ 	goto on_return;
+@@ -286,6 +289,7 @@ PJ_DEF(pj_status_t) pjsip_replaces_verify_request( pjsip_rx_data *rdata,
+      * terminated 
+      */
+     if (inv->state >= PJSIP_INV_STATE_DISCONNECTED) {
++        printf("@@@ PJSIP_SC_CALL_TSX_DOES_NOT_EXIST 3\n");
+ 	code = PJSIP_SC_DECLINE;
+ 	warn_text = "INVITE session already terminated";
+ 	goto on_return;
+diff --git a/pjsip/src/pjsip/sip_ua_layer.c b/pjsip/src/pjsip/sip_ua_layer.c
+index c2babfa53..143020c63 100644
+--- a/pjsip/src/pjsip/sip_ua_layer.c
++++ b/pjsip/src/pjsip/sip_ua_layer.c
+@@ -667,6 +667,7 @@ retry_on_deadlock:
+ 		          "Unable to find dialog for %s, answering with 481",
+ 		          pjsip_rx_data_get_info(rdata)));
+ 
++        printf("@@@ PJSIP_SC_CALL_TSX_DOES_NOT_EXIST 4\n");
+ 		pjsip_endpt_respond_stateless(mod_ua.endpt, rdata,
+ 					      PJSIP_SC_CALL_TSX_DOES_NOT_EXIST, 
+ 					      NULL, NULL, NULL);
