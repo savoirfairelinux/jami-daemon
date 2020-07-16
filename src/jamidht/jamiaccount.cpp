@@ -2057,9 +2057,13 @@ JamiAccount::doRegister_()
                     iss >> tid;
                     dhtPeerConnector_->onIncomingConnection(peerId, tid, std::move(channel),
                         [peerId, accountId=getAccountID()](const std::string& path) {
-                            auto vCard = fileutils::loadTextFile(path);
-                            emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId, peerId, vCard);
-                            fileutils::remove(path, true);
+                            try {
+                                auto vCard = fileutils::loadTextFile(path);
+                                emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId, peerId, vCard);
+                                fileutils::remove(path, true);
+                            } catch (const std::exception& e) {
+                                JAMI_WARN("Error when reading file: %s", e.what());
+                            }
                         });
                 }
             }
