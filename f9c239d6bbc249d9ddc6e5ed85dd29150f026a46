@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c33f9df5_a34a04e6",
+        "filename": "src/jamidht/jamiaccount.cpp",
+        "patchSetId": 1
+      },
+      "lineNbr": 2066,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-16T14:12:31Z",
+      "side": 1,
+      "message": "Blocking IO, to be done on io thread",
+      "range": {
+        "startLine": 2060,
+        "startChar": 0,
+        "endLine": 2066,
+        "endChar": 29
+      },
+      "revId": "f9c239d6bbc249d9ddc6e5ed85dd29150f026a46",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
