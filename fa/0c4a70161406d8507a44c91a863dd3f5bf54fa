@@ -1,0 +1,7 @@
+Code-Review+2: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Kateryna Kostiuk <kateryna.kostiuk@savoirfairelinux.com>
+Submitted-at: Thu, 16 Jul 2020 15:13:34 -0400
+Reviewed-on: https://review.jami.net/c/ring-daemon/+/14809
+Project: ring-daemon
+Branch: refs/heads/master
