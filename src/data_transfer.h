@@ -34,8 +34,6 @@ struct IncomingFileInfo {
   std::shared_ptr<Stream> stream;
 };
 
-typedef std::function<void(const std::string&)> InternalCompletionCb;
-
 /// Front-end to data transfer service
 class DataTransferFacade
 {
@@ -48,8 +46,7 @@ public:
 
     /// \see DRing::sendFile
     DRing::DataTransferError sendFile(const DRing::DataTransferInfo& info,
-                                      DRing::DataTransferId& id,
-                                      const InternalCompletionCb& cb = {}) noexcept;
+                                      DRing::DataTransferId& id) noexcept;
 
     /// \see DRing::acceptFileTransfer
     DRing::DataTransferError acceptAsFile(const DRing::DataTransferId& id,
@@ -71,9 +68,7 @@ public:
                                            int64_t& progress) const noexcept;
 
     /// Used by p2p.cpp
-    DRing::DataTransferId createIncomingTransfer(const DRing::DataTransferInfo &info,
-                                                 const DRing::DataTransferId& internal_id,
-                                                 const InternalCompletionCb& cb);
+    DRing::DataTransferId createIncomingTransfer(const DRing::DataTransferInfo &info, const DRing::DataTransferId& internal_id);
 
     /// Create an IncomingFileTransfer object.
     /// \return a shared pointer on created Stream object, or nullptr in case of error

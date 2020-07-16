@@ -355,10 +355,9 @@ public:
     /// /// \param[in] tid linked outgoing data transfer
     ///
     void requestPeerConnection(const std::string& peer, const DRing::DataTransferId& tid,
-                               bool isVCard,
-                               const std::function<void(PeerConnection*)>& connect_cb,
-                               const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>& channeledConnectedCb,
-                               const std::function<void()>& onChanneledCancelled);
+                                const std::function<void(PeerConnection*)>& connect_cb,
+                                const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>& channeledConnectedCb,
+                                const std::function<void()>& onChanneledCancelled);
 
     ///
     /// Close a E2E connection between a given peer and a given transfer id.
@@ -724,33 +723,6 @@ private:
 
     // File transfers
     std::set<std::string> incomingFileTransfers_ {};
-
-    /**
-     * Helper used to send SIP messages on a channeled connection
-     * @param conn      The connection used
-     * @param to        Peer URI
-     * @param ctx       Context passed to the send request
-     * @param token     Token used
-     * @param data      Message to send
-     * @param cb        Callback to trigger when message is sent
-     * @throw runtime_error if connection is invalid
-     * @return if the request will be sent
-     */
-    bool sendSIPMessage(SipConnection& conn, const std::string& to, void* ctx,
-                        int token, const std::map<std::string, std::string>& data,
-                        pjsip_endpt_send_callback cb);
-
-    /**
-     * Send Profile via cached SIP connection
-     * @param deviceId      Device that will receive the profile
-     */
-    bool needToSendProfile(const std::string& deviceId);
-    /**
-     * Send Profile via cached SIP connection
-     * @param peerId        Peer related
-     * @param deviceId      Device that will receive the profile
-     */
-    void sendProfile(const std::string& peerId, const std::string& deviceId);
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)

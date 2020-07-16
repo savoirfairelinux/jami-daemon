@@ -190,7 +190,6 @@ DBusClient::initLibrary(int flags)
         exportable_callback<ConfigurationSignal::Error>(bind(&DBusConfigurationManager::errorAlert, confM, _1)),
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&DBusConfigurationManager::incomingAccountMessage, confM, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(bind(&DBusConfigurationManager::accountMessageStatusChanged, confM, _1, _2, _3, _4 )),
-        exportable_callback<ConfigurationSignal::ProfileReceived>(bind(&DBusConfigurationManager::profileReceived, confM, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::ComposingStatusChanged>(bind(&DBusConfigurationManager::composingStatusChanged, confM, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&DBusConfigurationManager::incomingTrustRequest, confM, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::ContactAdded>(bind(&DBusConfigurationManager::contactAdded, confM, _1, _2, _3 )),

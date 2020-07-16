@@ -63,7 +63,6 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::IncomingAccountMessage>(),
         exported_callback<DRing::ConfigurationSignal::ComposingStatusChanged>(),
         exported_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(),
-        exported_callback<DRing::ConfigurationSignal::ProfileReceived>(),
         exported_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(),
         exported_callback<DRing::ConfigurationSignal::ContactAdded>(),
         exported_callback<DRing::ConfigurationSignal::ContactRemoved>(),

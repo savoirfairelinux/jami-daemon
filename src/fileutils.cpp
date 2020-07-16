@@ -86,9 +86,6 @@
 #include <cstddef>
 #include <ciso646>
 
-#include <pj/ctype.h>
-#include <pjlib-util/md5.h>
-
 namespace jami { namespace fileutils {
 
 // returns true if directory exists
@@ -974,31 +971,6 @@ ofstream(const std::string& path, std::ios_base::openmode mode)
 #else
     return std::ofstream(path, mode);
 #endif
-}
-
-std::string
-md5File(const std::string& path)
-{
-    return md5sum(loadFile(path));
-}
-
-std::string
-md5sum(const std::vector<uint8_t>& buffer)
-{
-    pj_md5_context pms;
-
-    pj_md5_init(&pms);
-    pj_md5_update(&pms, (const uint8_t*)buffer.data(), buffer.size());
-
-    unsigned char digest[16];
-    pj_md5_final(&pms, digest);
-
-    char hash[32];
-
-    for (int i = 0; i < 16; ++i)
-        pj_val_to_hex_digit(digest[i], &hash[2 * i]);
-
-    return {hash, 32};
 }
 
 int

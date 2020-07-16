@@ -661,18 +661,6 @@
            </arg>
        </signal>
 
-       <signal name="profileReceived" tp:name-for-bindings="profileReceived">
-           <tp:added version="9.2.0"/>
-           <tp:docstring>
-               Notify clients that a vcard has been received
-           </tp:docstring>
-           <arg type="s" name="accountID"/>
-           <arg type="s" name="from"/>
-           <arg type="s" name="vcard"/>
-       </signal>
-
-
-
        <method name="setIsComposing" tp:name-for-bindings="setIsComposing">
            <tp:added version="7.9.0"/>
            <tp:docstring>

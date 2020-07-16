@@ -302,20 +302,14 @@ MultiplexedSocket::~MultiplexedSocket()
 std::shared_ptr<ChannelSocket>
 MultiplexedSocket::addChannel(const std::string& name)
 {
-    // Note: because both sides can request the same channel number at the same time
-    // it's better to use a random channel number instead of just incrementing the request.
-    thread_local dht::crypto::random_device rd;
-    std::uniform_int_distribution<uint16_t> dist;
-    auto offset = dist(rd);
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (int i = 1; i < UINT16_MAX; ++i) {
-        auto c = (offset + i) % UINT16_MAX;
-        auto& socket = pimpl_->sockets[c];
+        auto& socket = pimpl_->sockets[i];
         if (!socket) {
-            auto& channel = pimpl_->channelDatas_[c];
+            auto& channel = pimpl_->channelDatas_[i];
             if (!channel)
                 channel = std::make_unique<ChannelInfo>();
-            socket = std::make_shared<ChannelSocket>(weak(), name, c);
+            socket = std::make_shared<ChannelSocket>(weak(), name, i);
             return socket;
         }
     }

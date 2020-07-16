@@ -36,13 +36,11 @@ namespace jami {
 
 FtpServer::FtpServer(const std::string& account_id,
                      const std::string& peer_uri,
-                     const DRing::DataTransferId& outId,
-                     InternalCompletionCb&& cb)
+                     const DRing::DataTransferId& outId)
     : Stream()
     , accountId_ {account_id}
     , peerUri_ {peer_uri}
     , outId_ {outId}
-    , cb_ {std::move(cb)}
 {}
 
 DRing::DataTransferId
@@ -73,7 +71,7 @@ FtpServer::startNewFile()
     info.totalSize = fileSize_;
     info.bytesProgress = 0;
     rx_ = 0;
-    transferId_ = Manager::instance().dataTransfers->createIncomingTransfer(info, outId_, cb_); // return immediately
+    transferId_ = Manager::instance().dataTransfers->createIncomingTransfer(info, outId_); // return immediately
     isTreatingRequest_ = true;
     out_ = Manager::instance().dataTransfers->onIncomingFileRequest(transferId_); // we block here until answer from client
     isTreatingRequest_ = false;
