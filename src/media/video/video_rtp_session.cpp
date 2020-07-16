@@ -543,6 +543,7 @@ VideoRtpSession::setNewBitrate(unsigned int newBR)
             emitSignal<DRing::VideoSignal::SetBitrate>(input_device->getParams().name, (int)newBR);
 #endif
 
+        socketPair_->updatePacingBitrate(newBR);
         if (sender_) {
             auto ret = sender_->setBitrate(newBR);
             if (ret == -1)
