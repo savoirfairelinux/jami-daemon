@@ -2057,9 +2057,7 @@ JamiAccount::doRegister_()
                     iss >> tid;
                     dhtPeerConnector_->onIncomingConnection(peerId, tid, std::move(channel),
                         [peerId, accountId=getAccountID()](const std::string& path) {
-                            auto vCard = fileutils::loadTextFile(path);
-                            emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId, peerId, vCard);
-                            fileutils::remove(path, true);
+                            emitSignal<DRing::ConfigurationSignal::ProfileReceived>(accountId, peerId, path);
                         });
                 }
             }
@@ -3338,7 +3336,7 @@ JamiAccount::sendSIPMessage(SipConnection& conn, const std::string& to, void* ct
 }
 
 void
-JamiAccount::sendProfile(const std::string& peerId, const std::string& deviceId)
+JamiAccount::sendProfile(const std::string& deviceId)
 {
     try {
         if (not needToSendProfile(deviceId)) {
@@ -3405,7 +3403,7 @@ JamiAccount::cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const s
     JAMI_WARN("New SIP channel opened with %s", deviceId.c_str());
     lk.unlock();
 
-    sendProfile(peerId, deviceId);
+    sendProfile(deviceId);
 
     // Retry messages
     messageEngine_.onPeerOnline(peerId);
