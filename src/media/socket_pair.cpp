@@ -29,6 +29,8 @@
 #include "logger.h"
 #include "security/memory.h"
 
+#include <opendht/thread_pool.h>
+
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -86,6 +88,10 @@ static constexpr auto SRTP_OVERHEAD = 10;
 static constexpr uint32_t RTCP_RR_FRACTION_MASK = 0xFF000000;
 static constexpr unsigned MINIMUM_RTP_HEADER_SIZE = 16;
 
+// Pacer
+const auto INTERVAL_BETWEEN_BURSTS {std::chrono::milliseconds(2)};
+const auto MAX_QUEUE_LENGTH {std::chrono::milliseconds(2000)};
+const auto BURST_SIZE {std::chrono::milliseconds(5)};
 
 enum class DataType : unsigned { RTP=1<<0, RTCP=1<<1 };
 
@@ -184,12 +190,14 @@ udp_socket_create(int family, int port)
 SocketPair::SocketPair(const char *uri, int localPort)
 {
     openSockets(uri, localPort);
+    packets_ = std::make_unique<Packet_queue_interface>();
 }
 
 SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
                        std::unique_ptr<IceSocket> rtcp_sock)
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
+    , endOfLastBurst_(std::chrono::steady_clock::now())
 {
     auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
@@ -207,6 +215,9 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
 
     rtp_sock_->setOnRecv(queueRtpPacket);
     rtcp_sock_->setOnRecv(queueRtcpPacket);
+
+    packets_ = std::make_unique<Packet_queue_interface>();
+    startToDrain();
 }
 
 SocketPair::~SocketPair()
@@ -577,7 +588,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     if (noWrite_)
         return 0;
 
-    int ret;
+    int ret {0};
     bool isRTCP = RTP_PT_IS_RTCP(buf[1]);
     unsigned int ts_LSB, ts_MSB;
     double currentSRTS, currentLatency;
@@ -602,11 +613,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
         rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
     }
 
-    do {
-        if (interrupted_)
-            return -EINTR;
-        ret = writeData(buf, buf_size);
-    } while (ret < 0 and errno == EAGAIN);
+    insertPacket(buf, buf_size);
 
     if(buf[1] == 200) //Sender Report
     {
@@ -712,5 +719,78 @@ SocketPair::lastSeqValOut()
     JAMI_ERR("SRTP context not found.");
     return 0;
 }
+
+// *************************************
+// ************** Pacer ****************
+// *************************************
+void
+SocketPair::insertPacket(uint8_t* buf, int buf_size)
+{
+    auto now = std::chrono::steady_clock::now();
+    if (packets_->queue.empty()) {
+        packets_->oldest_insert = now;
+        // JAMI_ERR() << "Queue empty";
+    }
+    if (now - packets_->oldest_insert < MAX_QUEUE_LENGTH) {
+        std::lock_guard<std::mutex> l(rtpQueue_);
+        packets_->queue.emplace_back(buf, buf+buf_size);
+        JAMI_ERR() << "Insert pkt, queue size: " << packets_->queue.size();
+    } else {
+        JAMI_ERR() << "Queue Full, oldest insert:" << std::chrono::duration_cast<std::chrono::milliseconds>(now - packets_->oldest_insert).count() << " (ms)";
+    }
+
+}
+
+void
+SocketPair::drainQueue()
+{
+    // Start to drain if it is the first time we drain or after waited interval between 2 bursts
+    // ... and if the queue is not empty
+    if ((std::chrono::steady_clock::now() - endOfLastBurst_ > INTERVAL_BETWEEN_BURSTS or packet_counter_ == 0) and not packets_->queue.empty()) {
+        // Compute the amout of bit we can send for this burst
+        unsigned int bitToSendCurrentBurst = pacing_bitrate_kbps_ * 1000 /* kbit->bit */ * BURST_SIZE.count() / 1000 /* ms->s */;
+        unsigned int current_bit_sent {0};
+        // Drain until the queue is empty or until the end of the burst
+        while (not packets_->queue.empty()) {
+            if (current_bit_sent >= bitToSendCurrentBurst) {
+                // End of the burst
+                endOfLastBurst_ = std::chrono::steady_clock::now();
+                break;
+            } else {
+                {
+                    std::lock_guard<std::mutex> l(rtpQueue_);
+                    auto pkt = packets_->queue.front();
+                    sendPacedPacket(pkt);
+                    packets_->queue.pop_front();
+                    current_bit_sent += pkt.size();
+                    packet_counter_++;
+                }
+            }
+        }
+    } else {
+        // auto now = std::chrono::steady_clock::now();
+        // JAMI_ERR("interval:%d, pkt sent:%u, queue size:%d", std::chrono::duration_cast<std::chrono::milliseconds>(now - endOfLastBurst_).count(), packet_counter_, packets_->queue.size());
+    }
+}
+
+void
+SocketPair::sendPacedPacket(std::vector<uint8_t>& pkt)
+{
+    int ret;
+    do {
+        if (interrupted_)
+            return;
+        ret = writeData(&pkt.front(), pkt.size());
+    } while (ret < 0 and errno == EAGAIN);
+}
+
+void
+SocketPair::startToDrain() {
+    dht::ThreadPool::io().run([&] {
+        while (!interrupted_)
+            drainQueue();
+    });
+}
+
 
 } // namespace jami
