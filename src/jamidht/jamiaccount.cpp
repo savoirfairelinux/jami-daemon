@@ -920,9 +920,6 @@ void JamiAccount::unserialize(const YAML::Node &node)
     } catch (const std::exception& e) {
         proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
     }
-    // TODO remove
-    if (proxyListUrl_.empty())
-        proxyListUrl_ = DHT_DEFAULT_PROXY_LIST_URL;
 
     parseValueOptional(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     parseValueOptional(node, DRing::Account::ConfProperties::MANAGER_URI, managerUri_);
