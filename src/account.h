@@ -183,8 +183,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
             return false;
         }
 
-        std::vector<std::shared_ptr<Call>> getCalls();
-
         /**
          * Tell if the account is enable or not.
          * @return true if enabled, false otherwise
@@ -386,6 +384,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         static const char * const HOSTNAME_KEY;
         static const char * const ACCOUNT_ENABLE_KEY;
         static const char * const ACCOUNT_AUTOANSWER_KEY;
+        static const char * const ACCOUNT_ISRENDEZVOUS_KEY;
         static const char * const ACCOUNT_ACTIVE_CALL_LIMIT_KEY;
         static const char * const MAILBOX_KEY;
         static const char * const USER_AGENT_KEY;
@@ -438,6 +437,9 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         /* If true, automatically answer calls to this account */
         bool autoAnswerEnabled_;
+
+        /* If true mix calls into a conference */
+        bool isRendezVous_;
 
         /**
          * The number of concurrent calls for the account
