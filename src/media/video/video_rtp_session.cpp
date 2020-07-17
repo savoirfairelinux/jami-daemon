@@ -333,15 +333,16 @@ VideoRtpSession::enterConference(Conference* conference)
     JAMI_DBG("[call:%s] enterConference (conf: %s)", callID_.c_str(),
              conference->getConfID().c_str());
 
-    if (send_.enabled or receiveThread_) {
-        videoMixer_ = conference->getVideoMixer();
+    // TODO is this correct? The video Mixer should be enabled for a detached conference even if we are not sending values
+    videoMixer_ = conference->getVideoMixer();
 #if defined(__APPLE__) && TARGET_OS_MAC
-        videoMixer_->setParameters(localVideoParams_.width,
-                                   localVideoParams_.height,
-                                   av_get_pix_fmt(localVideoParams_.pixel_format.c_str()));
+    videoMixer_->setParameters(localVideoParams_.width,
+                                localVideoParams_.height,
+                                av_get_pix_fmt(localVideoParams_.pixel_format.c_str()));
 #else
-        videoMixer_->setParameters(localVideoParams_.width, localVideoParams_.height);
+    videoMixer_->setParameters(localVideoParams_.width, localVideoParams_.height);
 #endif
+    if (send_.enabled or receiveThread_) {
         setupConferenceVideoPipeline(*conference_);
 
         // Restart encoder with conference parameter ON in order to unlink HW encoder

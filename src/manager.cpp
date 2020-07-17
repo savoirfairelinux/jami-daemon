@@ -43,6 +43,7 @@
 #include "string_utils.h"
 #include "jamidht/jamiaccount.h"
 #include "sip/sipvoiplink.h"
+#include "account.h"
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
 
@@ -1339,6 +1340,10 @@ Manager::addParticipant(const std::string& callId,
 
     pimpl_->bindCallToConference(*call, *conf);
 
+    // Don't attach current user yet
+    if (conf->getState() == Conference::State::ACTIVE_DETACHED)
+        return true;
+
     // TODO: remove this ugly hack => There should be different calls when double clicking
     // a conference to add main participant to it, or (in this case) adding a participant
     // toconference
@@ -1379,7 +1384,7 @@ Manager::getCallFromCallID(const std::string& callID) const
 }
 
 bool
-Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
+Manager::joinParticipant(const std::string& callId1, const std::string& callId2, bool attached)
 {
     if (callId1 == callId2) {
         JAMI_ERR("Cannot join participant %s to itself", callId1.c_str());
@@ -1407,8 +1412,12 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
     pimpl_->bindCallToConference(*call2, *conf);
 
     // Switch current call id to this conference
-    pimpl_->switchCall(conf->getConfID());
-    conf->setState(Conference::State::ACTIVE_ATTACHED);
+    if (attached) {
+        pimpl_->switchCall(conf->getConfID());
+        conf->setState(Conference::State::ACTIVE_ATTACHED);
+    } else {
+        conf->detach();
+    }
 
     pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
     emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
@@ -1831,8 +1840,51 @@ Manager::incomingCall(Call &call, const std::string& accountId)
     emitSignal<DRing::CallSignal::IncomingCall>(accountId, callID, call.getPeerDisplayName() + " " + from);
 
     auto currentCall = getCurrentCall();
-    if (pimpl_->autoAnswer_) {
-        runOnMainThread([this, callID]{ answerCall(callID); });
+    if (auto acc = std::dynamic_pointer_cast<JamiAccount>(getAccount(accountId))) {
+        if (acc->getAccountDetails()[Conf::CONFIG_ACCOUNT_ISRENDEZVOUS] == TRUE_STR) {
+            JAMI_ERR("@@@ RENDEZ VOUS ANSWERS");
+            runOnMainThread([this, callID] {
+                // TODO check if authorized (allowed)
+                // TODO if client side, move this in accept
+                answerCall(callID);
+                // TODO move if account is rdv
+                JAMI_ERR("@@@ JOIN?");
+                auto call = getCallFromCallID(callID);
+                auto accountId = call->getAccountId();
+                for (const auto& cid: getCallList()) {
+                    if (auto call = getCallFromCallID(cid)) {
+                        if (call->getAccountId() == accountId) {
+                            JAMI_ERR("@@@ FOUND OTHER CALL");
+                            if (cid != callID) {
+                                if (call->getConfId().empty()) {
+                                    JAMI_ERR("@@@ JOIN PARTICIPANT");
+                                    joinParticipant(callID, cid, false);
+                                } else {
+                                    JAMI_ERR("@@@ ADD PARTICIPANT");
+                                    // TODO manage detached (because no current call)
+                                    addParticipant(callID, call->getConfId());
+                                }
+                                return;
+                            }
+                        }
+                    }
+                }
+                // First call
+                auto conf = std::make_shared<Conference>();
+
+                // Bind calls according to their state
+                pimpl_->bindCallToConference(*call, *conf);
+                conf->detach();
+
+                pimpl_->conferenceMap_.emplace(conf->getConfID(), conf);
+                emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
+
+            });
+        }
+    } else if (true || pimpl_->autoAnswer_) {
+        runOnMainThread([this, callID]{
+            answerCall(callID);
+        });
     } else if (currentCall) {
         // Test if already calling this person
         if (currentCall->getAccountId() == accountId
