@@ -36,6 +36,7 @@ static const char *const CONFIG_ACCOUNT_DISPLAYNAME             = "Account.displ
 static const char *const CONFIG_ACCOUNT_MAILBOX                 = "Account.mailbox";
 static const char *const CONFIG_ACCOUNT_ENABLE                  = "Account.enable";
 static const char *const CONFIG_ACCOUNT_AUTOANSWER              = "Account.autoAnswer";
+static const char *const CONFIG_ACCOUNT_ISRENDEZVOUS            = "Account.rendezVous";
 static const char *const CONFIG_ACCOUNT_REGISTRATION_EXPIRE     = "Account.registrationExpire";
 static const char *const CONFIG_ACCOUNT_DTMF_TYPE               = "Account.dtmfType";
 static const char *const CONFIG_RINGTONE_PATH                   = "Account.ringtonePath";

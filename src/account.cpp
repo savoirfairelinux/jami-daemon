@@ -78,6 +78,7 @@ const char * const Account::PASSWORD_KEY                  = "password";
 const char * const Account::HOSTNAME_KEY                  = "hostname";
 const char * const Account::ACCOUNT_ENABLE_KEY            = "enable";
 const char * const Account::ACCOUNT_AUTOANSWER_KEY        = "autoAnswer";
+const char * const Account::ACCOUNT_ISRENDEZVOUS_KEY      = "rendezVous";
 const char * const Account::ACCOUNT_ACTIVE_CALL_LIMIT_KEY = "activeCallLimit";
 const char * const Account::MAILBOX_KEY                   = "mailbox";
 const char * const Account::DEFAULT_USER_AGENT            = PACKAGE_NAME;
@@ -101,6 +102,7 @@ Account::Account(const std::string &accountID)
     , alias_()
     , enabled_(true)
     , autoAnswerEnabled_(false)
+    , isRendezVous_(false)
     , registrationState_(RegistrationState::UNREGISTERED)
     , systemCodecContainer_(getSystemCodecContainer())
     , accountCodecInfoList_()
@@ -227,6 +229,7 @@ Account::serialize(YAML::Emitter& out) const
     out << YAML::Key << ACTIVE_CODEC_KEY << YAML::Value << activeCodecs;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
     out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
+    out << YAML::Key << ACCOUNT_ISRENDEZVOUS_KEY << YAML::Value << isRendezVous_;
     out << YAML::Key << ACCOUNT_ACTIVE_CALL_LIMIT_KEY << YAML::Value << activeCallLimit_;
     out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled_;
     out << YAML::Key << RINGTONE_PATH_KEY << YAML::Value << ringtonePath_;
@@ -246,6 +249,7 @@ Account::unserialize(const YAML::Node& node)
     parseValue(node, ALIAS_KEY, alias_);
     parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
     parseValue(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled_);
+    parseValueOptional(node, ACCOUNT_ISRENDEZVOUS_KEY, isRendezVous_);
     parseValue(node, ACCOUNT_ACTIVE_CALL_LIMIT_KEY, activeCallLimit_);
     //parseValue(node, PASSWORD_KEY, password_);
 
@@ -298,6 +302,7 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
     parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
     parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
     parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
+    parseBool(details, Conf::CONFIG_ACCOUNT_ISRENDEZVOUS, isRendezVous_);
     parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
     parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
     parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath_);
@@ -328,6 +333,7 @@ Account::getAccountDetails() const
         {Conf::CONFIG_ACCOUNT_USERAGENT,    hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
         {Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
         {Conf::CONFIG_ACCOUNT_AUTOANSWER,   autoAnswerEnabled_ ? TRUE_STR : FALSE_STR},
+        {Conf::CONFIG_ACCOUNT_ISRENDEZVOUS,   isRendezVous_ ? TRUE_STR : FALSE_STR},
         {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT,   std::to_string(activeCallLimit_)},
         {Conf::CONFIG_RINGTONE_ENABLED,     ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
         {Conf::CONFIG_RINGTONE_PATH,        ringtonePath_},

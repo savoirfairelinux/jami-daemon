@@ -285,7 +285,8 @@ class DRING_TESTABLE Manager {
          * @param the second call id
          */
         bool joinParticipant(const std::string& call_id1,
-                             const std::string& call_id2);
+                             const std::string& call_id2,
+                             bool attached = true);
 
         /**
          * Create a conference from a list of participant
