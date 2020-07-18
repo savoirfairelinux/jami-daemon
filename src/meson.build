@@ -188,6 +188,7 @@ if conf.get('HAVE_COREAUDIO') == 1
             'media/audio/coreaudio/osx/audiodevice.cpp',
             'media/audio/coreaudio/osx/corelayer.cpp'
         )
+    endif
 endif
 
 if conf.get('HAVE_LIBUPNP') == 1
