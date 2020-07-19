@@ -5,7 +5,8 @@ noinst_LTLIBRARIES = libupnpcontrol.la
 SUBDIRS = protocol
 
 libupnpcontrol_la_CXXFLAGS = \
-                @CXXFLAGS@
+                @CXXFLAGS@ \
+                @LIBUPNP_CFLAGS@
 
 libupnpcontrol_la_SOURCES = \
         upnp_control.cpp \

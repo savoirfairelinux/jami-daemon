@@ -112,7 +112,7 @@ libring_la_CFLAGS = \
 		@LIBSWRESAMPLE_CFLAGS@ \
 		@LIBSWSCALE_CFLAGS@
 
-libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
+libring_la_CXXFLAGS = @JSONCPP_CFLAGS@ @LIBUPNP_CFLAGS@
 
 if HAVE_LINUX
 #needed to compile the .so

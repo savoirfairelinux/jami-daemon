@@ -3,7 +3,8 @@ include $(top_srcdir)/globals.mk
 noinst_LTLIBRARIES = libpupnp.la
 
 libpupnp_la_CXXFLAGS = \
-                @CXXFLAGS@
+                @CXXFLAGS@ \
+                @LIBUPNP_CFLAGS@
 
 libpupnp_la_SOURCES = \
         upnp_igd.h \

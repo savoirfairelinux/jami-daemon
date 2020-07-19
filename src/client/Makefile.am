@@ -26,6 +26,7 @@ libclient_la_SOURCES = \
 	$(VIDEO_SRC)
 
 libclient_la_CXXFLAGS = \
+	@LIBUPNP_CFLAGS@ \
 	-I./ \
 	-I../ \
 	-DPREFIX=\"$(prefix)\" \
