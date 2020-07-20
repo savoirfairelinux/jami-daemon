@@ -1651,8 +1651,10 @@ void
 JamiAccount::registerAsyncOps()
 {
     auto onLoad = [this, loaded = std::make_shared<std::atomic_uint>()]{
-        if (++(*loaded) == 2u)
+        if (++(*loaded) == 2u) {
+            std::lock_guard<std::mutex> lock(configurationMutex_);
             doRegister_();
+        }
     };
 
     loadCachedProxyServer([onLoad](const std::string&) {
@@ -1684,6 +1686,7 @@ JamiAccount::registerAsyncOps()
 void
 JamiAccount::doRegister()
 {
+    std::lock_guard<std::mutex> lock(configurationMutex_);
     if (not isUsable()) {
         JAMI_WARN("Account must be enabled and active to register, ignoring");
         return;
@@ -1848,8 +1851,6 @@ JamiAccount::onTrackedBuddyOffline(const dht::InfoHash& contactId)
 void
 JamiAccount::doRegister_()
 {
-    std::lock_guard<std::mutex> lock(configurationMutex_);
-
     if (registrationState_ != RegistrationState::TRYING) {
         JAMI_ERR("[Account %s] already registered", getAccountID().c_str());
         return;
