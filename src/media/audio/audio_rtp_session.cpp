@@ -63,6 +63,8 @@ AudioRtpSession::~AudioRtpSession()
 void
 AudioRtpSession::startSender()
 {
+
+    return;
     if (not send_.enabled or send_.holding) {
         JAMI_WARN("Audio sending disabled");
         if (sender_) {
