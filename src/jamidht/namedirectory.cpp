@@ -386,7 +386,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n,
 void
 NameDirectory::scheduleCacheSave()
 {
-    JAMI_DBG("Scheduling cache save to %s", cachePath_.c_str());
+    // JAMI_DBG("Scheduling cache save to %s", cachePath_.c_str());
     std::weak_ptr<Task> task = Manager::instance().scheduler().scheduleIn([this]{
         dht::ThreadPool::io().run([this] {
             saveCache();
