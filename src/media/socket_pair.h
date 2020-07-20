@@ -120,6 +120,17 @@ typedef struct {
 } rtcpREMBHeader;
 
 
+// *************************************
+// ************** Pacer ****************
+// *************************************
+using RTP_PACKET = std::pair<uint8_t*, size_t>;
+
+struct Packet_queue_interface {
+    Packet_queue_interface() {};
+
+    std::list<std::vector<uint8_t>> queue;
+    std::chrono::steady_clock::time_point oldest_insert;
+};
 
 typedef struct {
     uint64_t last_send_ts;
@@ -176,6 +187,8 @@ class SocketPair {
         int writeData(uint8_t* buf, int buf_size);
 
         uint16_t lastSeqValOut();
+        void updatePacingBitrate(unsigned int kbps) { pacing_bitrate_kbps_ = kbps; }
+        void setUsePacer(bool use) { usePacer_ = use; }
 
     private:
         NON_COPYABLE(SocketPair);
@@ -230,6 +243,34 @@ class SocketPair {
         time_point arrival_TS {};
 
         TS_Frame svgTS = {};
+
+        // *************************************
+        // ************** Pacer ****************
+        // *************************************
+        void insertPacket(uint8_t* buf, int buf_size);
+
+        int64_t drainQueue();
+        void sendPacedPacket(std::vector<uint8_t>& pkt);
+        void startToDrain();
+
+        unsigned long packet_counter_ {0};
+        unsigned int pacing_bitrate_kbps_ {600};
+        std::unique_ptr<Packet_queue_interface> packets_;
+        std::mutex rtpQueue_;
+        std::condition_variable cvQueue_;
+        bool usePacer_ {false};
+        bool waitInterval_ {false};
+        unsigned int current_bit_sent_ {0};
+#if 200
+        int64_t BURST_WINDOW_MS_ {100};
+        double BURST_FACTOR_ {1.25};
+        std::list<std::pair<size_t, int64_t>> dataWindow_;
+        double longTermRateInKbps_ {0};
+        double shortTermRateInKbps_ {0};
+        double maxShortTermRateInKbps_ {0};
+        size_t maxDebt_ {0};
+        int64_t nextTimeTolog_ {0};
+#endif
 
 };
 
