@@ -1,0 +1,14 @@
+diff --git a/pjnath/src/pjnath/ice_strans.c.orig b/pjnath/src/pjnath/ice_strans.c
+index f9c00d9fd..996d57b60 100644
+--- a/pjnath/src/pjnath/ice_strans.c.orig
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -1612,7 +1612,7 @@ PJ_DEF(pj_status_t) pj_ice_strans_start_ice( pj_ice_strans *ice_st,
+ 
+ 	    if (count && !comp->turn[n].err_cnt && comp->turn[n].sock) {
+ 		status = pj_turn_sock_set_perm(comp->turn[n].sock, count,
+-					       addrs, 0);
++					       addrs, 1);
+ 		if (status != PJ_SUCCESS) {
+ 		    pj_ice_strans_stop_ice(ice_st);
+ 		    return status;
+
