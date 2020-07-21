@@ -22,6 +22,30 @@
       "revId": "dfbe3a930d37dffc77048b54bf9c3458d95286dd",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c2cf699e_0ad97edf",
+        "filename": "src/Makefile.am",
+        "patchSetId": 1
+      },
+      "lineNbr": 115,
+      "author": {
+        "id": 878
+      },
+      "writtenOn": "2020-07-21T04:20:31Z",
+      "side": 1,
+      "message": "I think that the flags from the above don\u0027t apply to C++ compilation, only to C. Before I added the libupnp flags here the C++ compiler wasn\u0027t applying the flags for compilation of `src/account.cpp` for example.",
+      "parentUuid": "7d779f28_6278646b",
+      "range": {
+        "startLine": 115,
+        "startChar": 0,
+        "endLine": 115,
+        "endChar": 55
+      },
+      "revId": "dfbe3a930d37dffc77048b54bf9c3458d95286dd",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
