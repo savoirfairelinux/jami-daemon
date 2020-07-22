@@ -503,7 +503,7 @@ VideoRtpSession::dropProcessing(RTCPInfo* rtcpi)
         // If ponderate drops are inferior to 10% that mean drop are not from congestion but from network...
         // ... we can increase
         if (pondLoss >= 5.0f && rtcpi->packetLoss > 0.0f) {
-            newBitrate *= 1.0f - rtcpi->packetLoss/150.0f;
+            newBitrate = newBitrate * std::max(0.8f - (rtcpi->packetLoss/100), 0.2f);
             histoLoss_.clear();
             lastMediaRestart_ = now;
             JAMI_DBG("[BandwidthAdapt] Detected transmission bandwidth overuse, decrease bitrate from %u Kbps to %d Kbps, ratio %f (ponderate loss: %f%%, packet loss rate: %f%%)",
