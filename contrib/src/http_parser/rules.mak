@@ -1,6 +1,6 @@
 # HTTP_PARSER
-HTTP_PARSER_VERSION := 2.9.3
-HTTP_PARSER_URL := https://github.com/binarytrails/http_parser/archive/v$(HTTP_PARSER_VERSION).tar.gz
+HTTP_PARSER_VERSION := 2.9.4
+HTTP_PARSER_URL := https://github.com/nodejs/http-parser/archive/v$(HTTP_PARSER_VERSION).tar.gz
 
 PKGS += http_parser
 ifeq ($(call need_pkg,'http_parser'),)
@@ -9,12 +9,12 @@ endif
 
 HTTP_PARSER_MAKECONF := PREFIX=$(PREFIX)
 
-$(TARBALLS)/http_parser-$(HTTP_PARSER_VERSION).tar.gz:
+$(TARBALLS)/http-parser-$(HTTP_PARSER_VERSION).tar.gz:
 	$(call download,$(HTTP_PARSER_URL))
 
-.sum-http_parser: http_parser-$(HTTP_PARSER_VERSION).tar.gz
+.sum-http_parser: http-parser-$(HTTP_PARSER_VERSION).tar.gz
 
-http_parser: http_parser-$(HTTP_PARSER_VERSION).tar.gz
+http_parser: http-parser-$(HTTP_PARSER_VERSION).tar.gz
 	$(UNPACK)
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
