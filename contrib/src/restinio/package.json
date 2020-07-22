@@ -5,7 +5,7 @@
     "deps": [
         "fmt",
         "asio",
-        "http_parser"
+        "http-parser"
     ],
     "patches": [],
     "win_patches": [],

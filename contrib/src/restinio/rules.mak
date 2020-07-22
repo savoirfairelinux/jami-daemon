@@ -17,7 +17,7 @@ endif
 ifneq ($(call need_pkg,"fmt >= 5.3.0"),)
 DEPS_restinio += fmt
 endif
-DEPS_restinio += http_parser
+DEPS_restinio += http-parser
 
 RESTINIO_CMAKECONF = -DRESTINIO_TEST=OFF -DRESTINIO_SAMPLE=OFF -DRESTINIO_INSTALL_SAMPLES=OFF \
 					 -DRESTINIO_BENCH=OFF -DRESTINIO_INSTALL_BENCHES=OFF -DRESTINIO_FIND_DEPS=ON \
