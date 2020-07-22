@@ -1,10 +1,10 @@
 {
-    "name": "http_parser",
-    "version": "2.9.3",
-    "url": "https://github.com/binarytrails/http_parser/archive/v__VERSION__.tar.gz",
+    "name": "http-parser",
+    "version": "2.9.4",
+    "url": "https://github.com/nodejs/http-parser/archive/v__VERSION__.tar.gz",
     "deps": [],
     "patches": [],
-    "win_patches": ["http_parser-vs.patch"],
+    "win_patches": ["http-parser-vs.patch"],
     "project_paths": ["http-parser.vcxproj"],
     "with_env" : "",
     "custom_scripts": {
