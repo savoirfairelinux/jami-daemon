@@ -80,6 +80,8 @@ if(MSVC)
    set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "daemon")
 
    use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
+   
+   set_target_properties (${PROJECT_NAME} PROPERTIES CXX_STANDARD 17)
 
    ################################################################################
    # Include necessary .cmake file (need to init use_props first)
