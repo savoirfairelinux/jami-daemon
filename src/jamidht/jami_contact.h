@@ -86,9 +86,13 @@ struct Contact
     Json::Value toJson() const {
         Json::Value json;
         json["added"] = Json::Int64(added);
-        json["removed"] = Json::Int64(removed);
-        json["confirmed"] = confirmed;
-        json["banned"] = banned;
+        if (removed) {
+            json["removed"] = Json::Int64(removed);
+        }
+        if (confirmed)
+            json["confirmed"] = confirmed;
+        if (banned)
+            json["banned"] = banned;
         return json;
     }
 
