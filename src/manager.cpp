@@ -975,6 +975,11 @@ Manager::answerCall(const std::string& call_id)
         return false;
     }
 
+    if (call->getConnectionState() != Call::ConnectionState::RINGING) {
+        // The call is already answered
+        return true;
+    }
+
     // If ringing
     stopTone();
 
