@@ -25,18 +25,22 @@
 #include <opendht/thread_pool.h>
 
 #include "manager.h"
+#include "static_string.h"
 
 #include <algorithm>
+#include <string_view>
 
 namespace jami {
 
 using Request = dht::http::Request;
+namespace sstr = ak_toolkit::static_str;
 
-static const std::string PATH_LOGIN = "/api/login";
-static const std::string PATH_AUTH =  "/api/auth";
-static const std::string PATH_DEVICE = PATH_AUTH + "/device";
-static const std::string PATH_DEVICES = PATH_AUTH + "/devices";
-static const std::string PATH_SEARCH = PATH_AUTH + "/directory/search";
+constexpr auto PATH_LOGIN = sstr::literal("/api/login");
+constexpr auto PATH_AUTH = sstr::literal("/api/auth");
+constexpr auto PATH_DEVICE = PATH_AUTH + "/device";
+constexpr auto PATH_DEVICES = PATH_AUTH + "/devices";
+constexpr auto PATH_SEARCH = PATH_AUTH + "/directory/search";
+constexpr auto PATH_CONTACTS = PATH_AUTH + "/contacts";
 
 ServerAccountManager::ServerAccountManager(
     const std::string& path,
@@ -304,9 +308,45 @@ void ServerAccountManager::sendAccountRequest(const std::shared_ptr<dht::http::R
 void
 ServerAccountManager::syncDevices()
 {
-    const std::string url = managerHostname_ + PATH_DEVICES;
-    JAMI_WARN("[Auth] syncDevices %s", url.c_str());
-    sendDeviceRequest(std::make_shared<Request>(*Manager::instance().ioContext(), url, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
+    const std::string urlDevices = managerHostname_ + PATH_DEVICES;
+    const std::string urlContacts = managerHostname_ + PATH_CONTACTS;
+
+    JAMI_WARN("[Auth] syncContacts %s", urlContacts.c_str());
+    Json::Value jsonContacts(Json::arrayValue);
+    for (const auto& contact : info_->contacts->getContacts()) {
+        auto jsonContact = contact.second.toJson();
+        jsonContact["uri"] = contact.first.toString();
+        jsonContacts.append(std::move(jsonContact));
+    }
+    sendDeviceRequest(std::make_shared<Request>(*Manager::instance().ioContext(), urlContacts, jsonContacts, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
+        onAsync([=] (AccountManager& accountManager) {
+            JAMI_DBG("[Auth] Got contact sync request callback with status code=%u", response.status_code);
+            auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
+            if (response.status_code >= 200 && response.status_code < 300) {
+                try {
+                    JAMI_WARN("[Auth] Got server response: %s", response.body.c_str());
+                    if (not json.isArray()) {
+                        JAMI_ERR("[Auth] Can't parse server response: not an array");
+                        return;
+                    }
+                    for (unsigned i=0, n=json.size(); i<n; i++) {
+                        const auto& e = json[i];
+                        Contact contact(e);
+                        this_.info_->contacts->updateContact(dht::InfoHash{e["uri"].asString()}, contact);
+                    }
+                }
+                catch (const std::exception& e) {
+                    JAMI_ERR("Error when lopping device list: %s", e.what());
+                }
+            } else if (response.status_code == 401)
+                this_.authError(TokenScope::Device);
+
+            this_.clearRequest(response.request);
+        });
+    }, logger_));
+
+    JAMI_WARN("[Auth] syncDevices %s", urlDevices.c_str());
+    sendDeviceRequest(std::make_shared<Request>(*Manager::instance().ioContext(), urlDevices, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
         onAsync([=] (AccountManager& accountManager) {
             JAMI_DBG("[Auth] Got request callback with status code=%u", response.status_code);
             auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
@@ -326,7 +366,7 @@ ServerAccountManager::syncDevices()
                     }
                 }
                 catch (const std::exception& e) {
-                    JAMI_ERR("Error when loading device list: %s", e.what());
+                    JAMI_ERR("Error when lopping device list: %s", e.what());
                 }
             } else if (response.status_code == 401)
                 this_.authError(TokenScope::Device);
