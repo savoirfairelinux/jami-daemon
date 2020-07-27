@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "68db40c5_96c500cc",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-27T22:43:46Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "9c744243_00e55758",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 47,
+        "endChar": 1
+      },
+      "revId": "d831510da184e7a7a5a7cd792f2894eda7906728",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "7a50d65a_47499b0d",
         "filename": "src/jamidht/server_account_manager.cpp",
         "patchSetId": 7
@@ -36,6 +60,30 @@
       "writtenOn": "2020-07-27T20:24:23Z",
       "side": 1,
       "message": "can be simplified response.status_code/100 \u003d\u003d 2",
+      "range": {
+        "startLine": 343,
+        "startChar": 17,
+        "endLine": 343,
+        "endChar": 73
+      },
+      "revId": "d831510da184e7a7a5a7cd792f2894eda7906728",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "23f6ca73_5071ffc7",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-27T22:43:46Z",
+      "side": 1,
+      "message": "would be done for the whole file in a different commit",
+      "parentUuid": "7a50d65a_47499b0d",
       "range": {
         "startLine": 343,
         "startChar": 17,
