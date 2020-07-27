@@ -183,6 +183,24 @@ ServerAccountManager::initAuthentication(
 }
 
 void
+ServerAccountManager::onAuthEnded(const Json::Value& json, const dht::http::Response& response)
+{
+    if (response.status_code >= 200 && response.status_code < 300) {
+        auto scopeStr = json["scope"].asString();
+        auto scope = scopeStr == "DEVICE" ? TokenScope::Device
+                    : (scopeStr == "USER"   ? TokenScope::User
+                                            : TokenScope::None);
+        auto expires_in = json["expires_in"].asLargestUInt();
+        auto expiration = std::chrono::steady_clock::now() + std::chrono::seconds(expires_in);
+        JAMI_WARN("[Auth] Got server response: %d %s", response.status_code, response.body.c_str());
+        setToken(json["access_token"].asString(), scope, expiration);
+    } else {
+        authFailed(TokenScope::Device, response.status_code);
+    }
+    clearRequest(response.request);
+}
+
+void
 ServerAccountManager::authenticateDevice() {
     if (not info_) {
         authFailed(TokenScope::Device, 0);
@@ -191,24 +209,25 @@ ServerAccountManager::authenticateDevice() {
     JAMI_WARN("[Auth] getting a device token: %s", url.c_str());
     auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, Json::Value{Json::objectValue}, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
         onAsync([=] (AccountManager& accountManager) {
-            auto& this_ = *static_cast<ServerAccountManager*>(&accountManager);
-            if (response.status_code >= 200 && response.status_code < 300) {
-                auto scopeStr = json["scope"].asString();
-                auto scope = scopeStr == "DEVICE" ? TokenScope::Device
-                          : (scopeStr == "USER"   ? TokenScope::User
-                                                  : TokenScope::None);
-                auto expires_in = json["expires_in"].asLargestUInt();
-                auto expiration = std::chrono::steady_clock::now() + std::chrono::seconds(expires_in);
-                JAMI_WARN("[Auth] Got server response: %d %s", response.status_code, response.body.c_str());
-                this_.setToken(json["access_token"].asString(), scope, expiration);
-            } else {
-                this_.authFailed(TokenScope::Device, response.status_code);
-            }
-            this_.clearRequest(response.request);
+            static_cast<ServerAccountManager*>(&accountManager)->onAuthEnded(json, response);
         });
     }, logger_);
     request->set_identity(info_->identity);
     // request->set_certificate_authority(info_->identity.second->issuer->issuer);
+    sendRequest(request);
+}
+
+void
+ServerAccountManager::authenticateAccount(const std::string& username, const std::string& password)
+{
+    const std::string url = managerHostname_ + JAMI_PATH_LOGIN;
+    JAMI_WARN("[Auth] getting a device token: %s", url.c_str());
+    auto request = std::make_shared<Request>(*Manager::instance().ioContext(), url, Json::Value{Json::objectValue}, [onAsync = onAsync_] (Json::Value json, const dht::http::Response& response){
+        onAsync([=] (AccountManager& accountManager) {
+            static_cast<ServerAccountManager*>(&accountManager)->onAuthEnded(json, response);
+        });
+    }, logger_);
+    request->set_auth(username, password);
     sendRequest(request);
 }
 
