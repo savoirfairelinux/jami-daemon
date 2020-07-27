@@ -24,6 +24,7 @@
 #include <atomic>
 #include <future>
 #include <mutex>
+#include <chrono>
 
 #include "audio/audiobuffer.h"
 #include "media_device.h"
@@ -99,6 +100,8 @@ private:
 
     ThreadLoop loop_;
     void process();
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> wakeUp_;
 };
 
 } // namespace jami
