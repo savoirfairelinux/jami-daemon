@@ -68,10 +68,8 @@ VideoMixer::VideoMixer(const std::string& id)
 {
     // Local video camera is the main participant
     videoLocal_ = getVideoCamera();
-    if (videoLocal_) {
-        DRing::switchToCamera();
+    if (videoLocal_)
         videoLocal_->attach(this);
-    }
     loop_.start();
 }
 
