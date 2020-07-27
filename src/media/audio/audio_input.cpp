@@ -31,7 +31,6 @@
 #include "smartools.h"
 
 #include <future>
-#include <chrono>
 #include <memory>
 
 namespace jami {
@@ -51,6 +50,7 @@ AudioInput::AudioInput(const std::string& id) :
           [] {})
 {
     JAMI_DBG() << "Creating audio input with id: " << id;
+    wakeUp_ = std::chrono::high_resolution_clock::now() + MS_PER_PACKET;
     loop_.start();
 }
 
@@ -120,8 +120,13 @@ AudioInput::readFromDevice()
         return;
     }
 
-    if (not mainBuffer.waitForDataAvailable(id_, MS_PER_PACKET))
-        return;
+    // Note: read for device is called in an audio thread and we don't
+    // want to have a loop which takes 100% of the CPU.
+    // Here, we basically want to mix available data without any glitch
+    // and even if one buffer doesn't have audio data (call in hold,
+    // connections issues, etc). So mix every MS_PER_PACKET
+    std::this_thread::sleep_until(wakeUp_);
+    wakeUp_ += MS_PER_PACKET;
 
     auto samples = mainBuffer.getData(id_);
     if (not samples)
