@@ -84,6 +84,7 @@ Conference::add(const std::string &participant_id)
 void
 Conference::setActiveParticipant(const std::string &participant_id)
 {
+    if (!videoMixer_) return;
     for (const auto &item : participants_) {
         if (participant_id == item) {
             if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
