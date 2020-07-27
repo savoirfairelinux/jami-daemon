@@ -292,16 +292,16 @@ RingBufferPool::waitForDataAvailable(const std::string& call_id,
 
     auto bindings = getReadBindings(call_id);
     if (not bindings)
-        return 0;
+        return false;
 
     const auto bindings_copy = *bindings; // temporary copy
     for (const auto& rbuf : bindings_copy) {
         lk.unlock();
-        if (rbuf->waitForDataAvailable(call_id, deadline) == 0)
-            return false;
+        if (rbuf->waitForDataAvailable(call_id, deadline) != 0)
+            return true;
         lk.lock();
     }
-    return true;
+    return false;
 }
 
 std::shared_ptr<AudioFrame>
