@@ -46,6 +46,7 @@ public:
         AuthSuccessCallback onSuccess,
         AuthFailureCallback onFailure,
         OnChangeCallback onChange) override;
+    void onAuthEnded(const Json::Value& json, const dht::http::Response& response);
 
     bool changePassword(const std::string& /*password_old*/, const std::string& /*password_new*/) override {
         return false;
@@ -105,7 +106,7 @@ private:
     void sendAccountRequest(const std::shared_ptr<dht::http::Request>& req);
 
     void authenticateDevice();
-    void authenticateAccount();
+    void authenticateAccount(const std::string& username, const std::string& password);
     void authFailed(TokenScope scope, int code);
     void authError(TokenScope scope);
 
