@@ -120,9 +120,6 @@ AudioInput::readFromDevice()
         return;
     }
 
-    if (not mainBuffer.waitForDataAvailable(id_, MS_PER_PACKET))
-        return;
-
     auto samples = mainBuffer.getData(id_);
     if (not samples)
         return;
