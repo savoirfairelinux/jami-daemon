@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "9c744243_00e55758",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-27T20:24:23Z",
+      "side": 1,
+      "message": "not sure this should be there, can be in a util file",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 47,
+        "endChar": 1
+      },
+      "revId": "d831510da184e7a7a5a7cd792f2894eda7906728",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "7a50d65a_47499b0d",
+        "filename": "src/jamidht/server_account_manager.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 343,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-07-27T20:24:23Z",
+      "side": 1,
+      "message": "can be simplified response.status_code/100 \u003d\u003d 2",
+      "range": {
+        "startLine": 343,
+        "startChar": 17,
+        "endLine": 343,
+        "endChar": 73
+      },
+      "revId": "d831510da184e7a7a5a7cd792f2894eda7906728",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
