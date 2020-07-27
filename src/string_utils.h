@@ -27,6 +27,25 @@
 #include <WTypes.h>
 #endif
 
+// Add string operators crucially missing from standard
+// see https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/1RcShRhrmRc
+namespace std {
+inline string operator+(const string& s, const string_view& sv) {
+    string ret;
+    ret.reserve(s.size() + sv.size());
+    ret.append(s);
+    ret.append(sv);
+    return ret;
+}
+inline string operator+(const string_view& sv, const string& s) {
+    string ret;
+    ret.reserve(s.size() + sv.size());
+    ret.append(sv);
+    ret.append(s);
+    return ret;
+}
+}
+
 namespace jami {
 
 constexpr static const char TRUE_STR[] = "true";
