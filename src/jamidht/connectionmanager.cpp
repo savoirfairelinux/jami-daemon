@@ -74,7 +74,9 @@ public:
             }
         }
         {
+            JAMI_ERR("@@@ msocketsMutex_ LOCK?");
             std::lock_guard<std::mutex> lk(msocketsMutex_);
+            JAMI_ERR("@@@ msocketsMutex_ LOCK!");
             for (auto& listSocks : multiplexedSockets_) {
                 if (!deviceId.empty() && listSocks.first != deviceId) continue;
                 for (auto& mxSock : listSocks.second) {
@@ -225,13 +227,17 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
 
             {
                 // Test if a socket already exists for this device
+                JAMI_ERR("@@@ msocketsMutex_ LOCK?");
                 std::lock_guard<std::mutex> lk(sthis->msocketsMutex_);
+                JAMI_ERR("@@@ msocketsMutex_ LOCK");
                 auto it = sthis->multiplexedSockets_.find(deviceId);
                 if (it != sthis->multiplexedSockets_.end() && !it->second.empty()) {
                     JAMI_DBG("Peer already connected. Add a new channel");
                     sthis->sendChannelRequest(it->second.rbegin()->second, name, deviceId, vid);
+                    JAMI_ERR("@@@ msocketsMutex_ UNLOCK");
                     return;
                 }
+                JAMI_ERR("@@@ msocketsMutex_ UNLOCK");
             }
             // If no socket exists, we need to initiate an ICE connection.
             auto &iceTransportFactory = Manager::instance().getIceTransportFactory();
@@ -357,7 +363,9 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                     }
                 } else {
                     // The socket is ready, store it in multiplexedSockets_
+                    JAMI_ERR("@@@ msocketsMutex_ LOCK?");
                     std::lock_guard<std::mutex> lkmSockets(sthis->msocketsMutex_);
+                    JAMI_ERR("@@@ msocketsMutex_ LOCK");
                     std::lock_guard<std::mutex> lknrs(sthis->nonReadySocketsMutex_);
                     auto nonReadyIt = sthis->nonReadySockets_.find(deviceId);
                     if (nonReadyIt != sthis->nonReadySockets_.end()) {
@@ -371,6 +379,7 @@ ConnectionManager::Impl::connectDevice(const std::string& deviceId, const std::s
                     auto mxSockIt = sthis->multiplexedSockets_.at(deviceId);
                     if (!mxSockIt.empty())
                         sthis->sendChannelRequest(mxSockIt.rbegin()->second, name, deviceId, vid);
+                    JAMI_ERR("@@@ msocketsMutex_ UNLOCK");
                 }
             });
         });
@@ -594,7 +603,9 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
             if (shared->connReadyCb_) shared->connReadyCb_(deviceId, "", nullptr);
         } else {
             // The socket is ready, store it in multiplexedSockets_
+            JAMI_ERR("@@@ msocketsMutex_ LOCK?");
             std::lock_guard<std::mutex> lk(shared->msocketsMutex_);
+            JAMI_ERR("@@@ msocketsMutex_ LOCK");
             std::lock_guard<std::mutex> lknrs(shared->nonReadySocketsMutex_);
             auto nonReadyIt = shared->nonReadySockets_.find(deviceId);
             if (nonReadyIt != shared->nonReadySockets_.end()) {
@@ -605,6 +616,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
                     shared->nonReadySockets_.erase(nonReadyIt);
                 }
             }
+            JAMI_ERR("@@@ msocketsMutex_ UNLOCK");
         }
     });
 }
@@ -647,7 +659,9 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
             auto sthis = w.lock();
             if (!sthis) return;
             // Delete the socket
+            JAMI_ERR("@@@ msocketsMutex_ LOCK?");
             std::lock_guard<std::mutex> lk(sthis->msocketsMutex_);
+            JAMI_ERR("@@@ msocketsMutex_ LOCK");
             auto mxSockIt = sthis->multiplexedSockets_.find(deviceId);
             if (mxSockIt != sthis->multiplexedSockets_.end()) {
                 auto vidIt = mxSockIt->second.find(vid);
@@ -681,6 +695,7 @@ ConnectionManager::Impl::addNewMultiplexedSocket(const std::string& deviceId, co
                 if (mxSockIt->second.empty())
                     sthis->multiplexedSockets_.erase(mxSockIt);
             }
+            JAMI_ERR("@@@ msocketsMutex_ UNLOCK");
         });
     });
     multiplexedSockets_[deviceId][vid] = std::move(mSock);
