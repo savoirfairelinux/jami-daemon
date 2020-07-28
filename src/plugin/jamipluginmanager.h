@@ -1,4 +1,4 @@
-﻿/*
+﻿/**
  *  Copyright (C) 2020 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
