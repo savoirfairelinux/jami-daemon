@@ -137,6 +137,29 @@
       "revId": "5b33254b5e6ee0ae2d31045d711c04dda98cd94c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "89b0f296_a902bd49",
+        "filename": "src/conference.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 145,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-28T18:11:58Z",
+      "side": 1,
+      "message": "should be a const member of ConfInfo",
+      "range": {
+        "startLine": 129,
+        "startChar": 0,
+        "endLine": 145,
+        "endChar": 0
+      },
+      "revId": "5b33254b5e6ee0ae2d31045d711c04dda98cd94c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
