@@ -1,4 +1,4 @@
-﻿/*
+﻿/**
  *  Copyright (C) 2020 Savoir-faire Linux Inc.
  *
  *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
@@ -171,6 +171,15 @@ public:
     std::map<std::string, std::string> getCallMediaHandlerStatus()
     {
         return {{"name", mediaHandlerToggled_.name}, {"state", mediaHandlerToggled_.state}};
+    }
+
+    void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr)
+    {
+        for (auto& pair : callMediaHandlers) {
+            if (pair.second && scopeStr.find(pair.second->getCallMediaHandlerDetails()["name"]) != std::string::npos) {
+                pair.second->setPreferenceAttribute(key, value);
+            }
+        }
     }
 
 private:
