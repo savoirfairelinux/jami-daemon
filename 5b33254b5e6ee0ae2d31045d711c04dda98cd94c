@@ -160,6 +160,52 @@
       "revId": "5b33254b5e6ee0ae2d31045d711c04dda98cd94c",
       "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
       "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "a359c844_0e0d5fa2",
+        "filename": "src/manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1881,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-28T18:39:44Z",
+      "side": 1,
+      "message": "to do in Call rather than Manager ? Would avoid the getCallFromCallID lookup",
+      "range": {
+        "startLine": 1875,
+        "startChar": 4,
+        "endLine": 1881,
+        "endChar": 5
+      },
+      "revId": "5b33254b5e6ee0ae2d31045d711c04dda98cd94c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "9292ef0c_6d8e750d",
+        "filename": "src/media/video/video_mixer.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 277,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-28T18:39:44Z",
+      "side": 1,
+      "message": "scheduling on the ThreadPool is not the responsability of the mixer IMO. The callback can reschedule stuff if needed.",
+      "range": {
+        "startLine": 273,
+        "startChar": 16,
+        "endLine": 277,
+        "endChar": 19
+      },
+      "revId": "5b33254b5e6ee0ae2d31045d711c04dda98cd94c",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
     }
   ]
 }
