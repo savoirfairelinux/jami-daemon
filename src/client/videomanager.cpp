@@ -44,6 +44,7 @@
 #include <string>
 #include <vector>
 #include <new> // std::bad_alloc
+#include <algorithm>
 #include <cstdlib>
 #include <cstring> // std::memset
 #include <ciso646> // fix windows compiler bug
@@ -162,10 +163,9 @@ AudioFrame::mix(const AudioFrame& frame)
             auto c = (int16_t*)f.extended_data[i];
             auto cIn = (int16_t*)fIn.extended_data[i];
             for (unsigned s=0; s < samplesPerChannel; s++) {
-                int32_t n = (int32_t)c[s] + (int32_t)cIn[s];
-                n = std::min<int32_t>(n, std::numeric_limits<int16_t>::max());
-                n = std::max<int32_t>(n, std::numeric_limits<int16_t>::min());
-                c[s] = n;
+                c[s] = std::clamp((int32_t)c[s] + (int32_t)cIn[s],
+                        (int32_t)std::numeric_limits<int16_t>::min(),
+                        (int32_t)std::numeric_limits<int16_t>::max());
             }
         }
     } else if (fmt == AV_SAMPLE_FMT_FLT || fmt == AV_SAMPLE_FMT_FLTP) {
