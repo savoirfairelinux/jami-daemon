@@ -173,6 +173,19 @@ public:
         return {{"name", mediaHandlerToggled_.name}, {"state", mediaHandlerToggled_.state}};
     }
 
+    void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr)
+    {
+        for (auto& pair : callMediaHandlers)
+        {
+            if (pair.second)
+            {
+                auto details = pair.second->getCallMediaHandlerDetails();
+                if (scopeStr.find(details["name"]) != std::string::npos)
+                    pair.second->setPreferenceAttribute(key, value);
+            }
+        }
+    }
+
 private:
     /**
      * @brief notifyAVSubject

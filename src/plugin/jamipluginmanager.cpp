@@ -450,6 +450,14 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
 
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end()) {
+        std::vector<std::map<std::string, std::string>> preferences = getPluginPreferences(rootPath);
+        for (auto& preference : preferences) {
+            if (!preference["key"].compare(key)) {
+                csm_.setPreference(key, value, preference["scope"]);
+                break;
+            }
+        }
+
         pluginUserPreferencesMap[key] = value;
         const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
@@ -475,8 +483,8 @@ JamiPluginManager::getPluginPreferencesValuesMap(const std::string& rootPath)
     std::map<std::string, std::string> rmap;
 
     std::vector<std::map<std::string, std::string>> preferences = getPluginPreferences(rootPath);
-    for (size_t i = 0; i < preferences.size(); i++) {
-        rmap[preferences[i]["key"]] = preferences[i]["defaultValue"];
+    for (auto& preference : preferences) {
+        rmap[preference["key"]] = preference["defaultValue"];
     }
 
     for (const auto& pair : getPluginUserPreferencesValuesMap(rootPath)) {
