@@ -415,6 +415,9 @@ bool JamiPluginManager::setPluginPreference(const std::string &rootPath, const s
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end())
     {
+        if (pluginPreferencesMap["editable"] == "true")
+            csm_.setPreference(rootPath, key, value);
+
         pluginUserPreferencesMap[key] = value;
         const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
