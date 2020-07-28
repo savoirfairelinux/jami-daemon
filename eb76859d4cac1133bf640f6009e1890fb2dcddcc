@@ -2,6 +2,75 @@
   "comments": [
     {
       "key": {
+        "uuid": "ba32b50b_94187206",
+        "filename": "src/conference.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 52,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-28T21:03:18Z",
+      "side": 1,
+      "message": "take as direct value or move-reference to avoid copy",
+      "range": {
+        "startLine": 52,
+        "startChar": 47,
+        "endLine": 52,
+        "endChar": 89
+      },
+      "revId": "eb76859d4cac1133bf640f6009e1890fb2dcddcc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "c5d65d1a_a7444249",
+        "filename": "src/conference.cpp",
+        "patchSetId": 11
+      },
+      "lineNbr": 86,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-28T21:03:18Z",
+      "side": 1,
+      "message": "we could just do\n\n    runOnMainThread([w\u003dweak()]{\n        if (auto shared \u003d w.lock())\n            shared-\u003esendConferenceInfos();\n    });\n\ninstead of using the io thread pool",
+      "range": {
+        "startLine": 86,
+        "startChar": 19,
+        "endLine": 86,
+        "endChar": 50
+      },
+      "revId": "eb76859d4cac1133bf640f6009e1890fb2dcddcc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "2716beba_533315a6",
+        "filename": "src/conference.h",
+        "patchSetId": 11
+      },
+      "lineNbr": 69,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-28T21:03:18Z",
+      "side": 1,
+      "message": "maybe add\n\n    std::map\u003cstd::string, std::string\u003e toMap() const;\n\nto be used by toVectorMapStringString ?",
+      "range": {
+        "startLine": 44,
+        "startChar": 0,
+        "endLine": 69,
+        "endChar": 2
+      },
+      "revId": "eb76859d4cac1133bf640f6009e1890fb2dcddcc",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
         "uuid": "35dba1ed_b2abcc22",
         "filename": "src/media/video/video_mixer.cpp",
         "patchSetId": 11
