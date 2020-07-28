@@ -515,6 +515,8 @@ class VideoPreferences : public Serializable {
             recordQuality_ = rec;
         }
 
+    bool prevPluginState;
+
     private:
         bool decodingAccelerated_;
         bool encodingAccelerated_;
@@ -556,7 +558,7 @@ class PluginPreferences : public Serializable {
                     loadedPlugins_.erase(it);
             }
         }
-
+    bool prevVideoAccelState;
     private:
         bool pluginsEnabled_;
         std::set<std::string> loadedPlugins_;

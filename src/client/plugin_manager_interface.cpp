@@ -103,6 +103,28 @@ namespace DRing
     void setPluginsEnabled(bool state)
     {
         jami::Manager::instance().pluginPreferences.setPluginsEnabled(state);
+        if (state)
+        {
+            bool prevVideoAccelState = jami::Manager::instance().videoPreferences.getDecodingAccelerated() &&
+                                    jami::Manager::instance().videoPreferences.getEncodingAccelerated();
+            if (prevVideoAccelState)
+            {
+                JAMI_DBG("%s hardware acceleration", "Disabling");
+                jami::Manager::instance().videoPreferences.setEncodingAccelerated(false);
+                jami::Manager::instance().videoPreferences.setDecodingAccelerated(false);
+            }
+            jami::Manager::instance().pluginPreferences.prevVideoAccelState = prevVideoAccelState;
+        }
+        else
+        {
+            jami::Manager::instance().videoPreferences.prevPluginState = false;
+            if (jami::Manager::instance().pluginPreferences.prevVideoAccelState)
+            {
+                JAMI_DBG("%s hardware acceleration", "re-Enabling");
+                jami::Manager::instance().videoPreferences.setEncodingAccelerated(true);
+                jami::Manager::instance().videoPreferences.setDecodingAccelerated(true);
+            }
+        }
         jami::Manager::instance().saveConfig();
     }
 

@@ -628,6 +628,19 @@ setEncodingAccelerated(bool state)
 #ifdef RING_ACCEL
     JAMI_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
     jami::Manager::instance().videoPreferences.setEncodingAccelerated(state);
+    if (state)
+    {
+        bool prevPluginState = jami::Manager::instance().pluginPreferences.getPluginsEnabled();
+        jami::Manager::instance().videoPreferences.prevPluginState = prevPluginState;
+        if (prevPluginState)
+            jami::Manager::instance().pluginPreferences.setPluginsEnabled(false);
+    }
+    else
+    {
+        jami::Manager::instance().pluginPreferences.prevVideoAccelState = false;
+        if(jami::Manager::instance().videoPreferences.prevPluginState)
+            jami::Manager::instance().pluginPreferences.setPluginsEnabled(true);
+    }
     jami::Manager::instance().saveConfig();
 #endif
     for (const auto& acc : jami::Manager::instance().getAllAccounts()) {
