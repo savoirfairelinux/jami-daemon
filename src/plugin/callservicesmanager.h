@@ -172,6 +172,18 @@ public:
         return { {"name", mediaHandlerToggled_.name}, {"state", mediaHandlerToggled_.state}};
     }
 
+
+    void setPreference(std::string rootPath, std::string key, std::string value)
+    {
+        for (auto& pair : callMediaHandlers)
+        {
+            if (pair.second && pair.second->id() == (rootPath + "/data")) 
+            {
+                pair.second->setPreferenceAttribute(key, value);
+            }
+        }
+    }
+
 private:
 
     /**
