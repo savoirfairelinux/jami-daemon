@@ -27,6 +27,7 @@
 #include "mediahandler.h"
 // STL
 #include <list>
+#include <boost/algorithm/string.hpp>
 
 namespace jami {
 using MediaHandlerPtr = std::unique_ptr<MediaHandler>;
@@ -171,6 +172,25 @@ public:
     std::map<std::string, std::string> getCallMediaHandlerStatus()
     {
         return {{"name", mediaHandlerToggled_.name}, {"state", mediaHandlerToggled_.state}};
+    }
+
+
+    void setPreference(const std::string& key, const std::string& value, const std::string& scopeStr)
+    {
+        std::vector<std::string> scopes;
+        boost::split(scopes,scopeStr,boost::is_any_of(","));
+        for (const auto& scope : scopes)
+        {
+            if (!scope.compare("mediahandler")) {
+                for (auto& pair : callMediaHandlers)
+                {
+                    if (pair.second && pair.second->preferenceMapHasKey(key)) 
+                    {
+                        pair.second->setPreferenceAttribute(key, value);
+                    }
+                }
+            }
+        }
     }
 
 private:
