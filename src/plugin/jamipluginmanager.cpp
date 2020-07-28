@@ -1,5 +1,7 @@
-﻿/*
- *  Copyright (C) 2004-2020 Savoir-faire Linux Inc.
+﻿/**
+ *  Copyright (C) 2020 Savoir-faire Linux Inc.
+ *
+ *  Author: Aline Gondim Santos <aline.gondimsantos@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -443,13 +445,19 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
                                        const std::string& value)
 {
     bool returnValue = false;
-    std::map<std::string, std::string> pluginUserPreferencesMap = getPluginUserPreferencesValuesMap(
-        rootPath);
-    std::map<std::string, std::string> pluginPreferencesMap = getPluginPreferencesValuesMap(
-        rootPath);
+    std::map<std::string, std::string> pluginUserPreferencesMap = getPluginUserPreferencesValuesMap(rootPath);
+    std::map<std::string, std::string> pluginPreferencesMap = getPluginPreferencesValuesMap(rootPath);
 
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end()) {
+        std::vector<std::map<std::string, std::string>> preferences = getPluginPreferences(rootPath);
+        for (auto& preference : preferences) {
+            if (!preference["key"].compare(key)) {
+                csm_.setPreference(key, value, preference["scope"]);
+                break;
+            }
+        }
+
         pluginUserPreferencesMap[key] = value;
         const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);
@@ -475,8 +483,8 @@ JamiPluginManager::getPluginPreferencesValuesMap(const std::string& rootPath)
     std::map<std::string, std::string> rmap;
 
     std::vector<std::map<std::string, std::string>> preferences = getPluginPreferences(rootPath);
-    for (size_t i = 0; i < preferences.size(); i++) {
-        rmap[preferences[i]["key"]] = preferences[i]["defaultValue"];
+    for (auto& preference : preferences) {
+        rmap[preference["key"]] = preference["defaultValue"];
     }
 
     for (const auto& pair : getPluginUserPreferencesValuesMap(rootPath)) {
