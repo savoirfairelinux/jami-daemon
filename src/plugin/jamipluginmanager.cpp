@@ -450,6 +450,8 @@ JamiPluginManager::setPluginPreference(const std::string& rootPath,
 
     auto find = pluginPreferencesMap.find(key);
     if (find != pluginPreferencesMap.end()) {
+        csm_.setPreference(key, value, pluginPreferencesMap["scope"]);
+
         pluginUserPreferencesMap[key] = value;
         const std::string preferencesValuesFilePath = pluginPreferencesValuesFilePath(rootPath);
         std::ofstream fs(preferencesValuesFilePath, std::ios::binary);

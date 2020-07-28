@@ -173,6 +173,29 @@ public:
         return {{"name", mediaHandlerToggled_.name}, {"state", mediaHandlerToggled_.state}};
     }
 
+
+    void setPreference(std::string& key, std::string& value, std::string& scopeStr)
+    {
+        std::vector<std::string> scopes;
+        boost::split(scopes,scopeStr,boost::is_any_of(","));
+        for (const auto& scope : scopes)
+        {
+            switch (scope) {
+                case ("mediahandler"):
+                    for (auto& pair : callMediaHandlers)
+                    {
+                        if (pair.second && pair.second->preferenceMapHasKey(key)) 
+                        {
+                            pair.second->setPreferenceAttribute(key, value);
+                        }
+                    }
+                    break;
+                case ("plugin");
+                    break;
+            }
+        }
+    }
+
 private:
     /**
      * @brief notifyAVSubject
