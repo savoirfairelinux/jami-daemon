@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "b02ff487_322464bc",
+        "filename": "src/manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1854,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-29T14:33:41Z",
+      "side": 1,
+      "message": "use call.getAccount() instead of a lookup",
+      "range": {
+        "startLine": 1854,
+        "startChar": 8,
+        "endLine": 1854,
+        "endChar": 80
+      },
+      "revId": "74d7ac8f57a9a1e5c58b2aa97628c5c3ff142b24",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "64ae6075_71b774b5",
+        "filename": "src/manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1855,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-29T14:33:41Z",
+      "side": 1,
+      "message": "get the information without building the whole map",
+      "range": {
+        "startLine": 1855,
+        "startChar": 12,
+        "endLine": 1855,
+        "endChar": 71
+      },
+      "revId": "74d7ac8f57a9a1e5c58b2aa97628c5c3ff142b24",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "35154ef5_214fd9c0",
+        "filename": "src/manager.cpp",
+        "patchSetId": 10
+      },
+      "lineNbr": 1856,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-07-29T14:33:41Z",
+      "side": 1,
+      "message": "runOnMainThread ?",
+      "range": {
+        "startLine": 1856,
+        "startChar": 12,
+        "endLine": 1856,
+        "endChar": 37
+      },
+      "revId": "74d7ac8f57a9a1e5c58b2aa97628c5c3ff142b24",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
