@@ -73,7 +73,7 @@ TelephoneTone::getCurrentTone()
 void
 TelephoneTone::buildTones(unsigned int sampleRate)
 {
-    static constexpr const char* toneZone[(size_t)TelephoneTone::CountryId::ZID_COUNTRIES][(size_t)Tone::ToneId::TONE_NULL] = {
+    const char* toneZone[(size_t)TelephoneTone::CountryId::ZID_COUNTRIES][(size_t)Tone::ToneId::TONE_NULL] = {
         {
             // ZID_NORTH_AMERICA
             "350+440",                // Tone::TONE_DIALTONE
