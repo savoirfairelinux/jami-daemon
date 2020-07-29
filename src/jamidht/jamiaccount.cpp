@@ -1652,8 +1652,12 @@ JamiAccount::registerAsyncOps()
 {
     auto onLoad = [this, loaded = std::make_shared<std::atomic_uint>()]{
         if (++(*loaded) == 2u) {
-            std::lock_guard<std::mutex> lock(configurationMutex_);
-            doRegister_();
+            runOnMainThread([w = weak()]{
+                if (auto s = w.lock()) {
+                    std::lock_guard<std::mutex> lock(s->configurationMutex_);
+                    s->doRegister_();
+                }
+            });
         }
     };
 
