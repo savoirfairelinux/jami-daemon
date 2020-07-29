@@ -1170,11 +1170,10 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                     std::string&& receipt,
                     std::vector<uint8_t>&& receipt_signature)
             {
+                std::lock_guard<std::mutex> lock(configurationMutex_);
                 JAMI_WARN("[Account %s] Auth success !", getAccountID().c_str());
 
                 fileutils::check_dir(idPath_.c_str(), 0700);
-
-                emitSignal<DRing::ConfigurationSignal::AccountAvatarReceived>(getAccountID(), info.photo);
 
                 // save the chain including CA
                 auto id = info.identity;
@@ -1203,7 +1202,13 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 }
                 setRegistrationState(RegistrationState::UNREGISTERED);
                 saveConfig();
-                doRegister();
+                if (not info.photo.empty())
+                    emitSignal<DRing::ConfigurationSignal::AccountAvatarReceived>(getAccountID(), info.photo);
+
+                runOnMainThread([w=weak()]{
+                    if (auto s = w.lock())
+                        s->doRegister();
+                });
             }, [w = weak(), id, accountId = getAccountID(), migrating](AccountManager::AuthError error, const std::string& message) {
                 JAMI_WARN("[Account %s] Auth error: %d %s", accountId.c_str(), (int)error, message.c_str());
                 if ((id.first || migrating) && error == AccountManager::AuthError::INVALID_ARGUMENTS) {
