@@ -2001,6 +2001,7 @@ JamiAccount::doRegister_()
             connectionManager_ = std::make_unique<ConnectionManager>(*this);
         connectionManager_->onDhtConnected(accountManager_->getInfo()->deviceId);
         connectionManager_->onICERequest([this](const std::string& deviceId) {
+            JAMI_ERR("@@@ ON ICE REQUEST");
             std::promise<bool> accept;
             std::future<bool> fut = accept.get_future();
             accountManager_->findCertificate(dht::InfoHash(deviceId),
@@ -2042,6 +2043,7 @@ JamiAccount::doRegister_()
                 auto isFile = name.substr(0, 7) == "file://";
                 auto isVCard = name.substr(0, 8) == "vcard://";
                 if (name == "sip") {
+                    JAMI_ERR("@@@ ON CO READY");
                     cacheSIPConnection(std::move(channel), peerId, deviceId);
                 } else if (isFile or isVCard) {
                     auto tid_str = isFile? name.substr(7) : name.substr(8);
@@ -2078,11 +2080,12 @@ JamiAccount::doRegister_()
                 if (!res.second)
                     return true;
 
-                JAMI_WARN("[Account %s] ICE candidate from %s.", getAccountID().c_str(), from.toString().c_str());
+                JAMI_WARN("[Account %s] @@@ ICE candidate from %s.", getAccountID().c_str(), from.toString().c_str());
 
                 accountManager_->onPeerMessage(from, dhtPublicInCalls_, [this, msg=std::move(msg)](const std::shared_ptr<dht::crypto::Certificate>& cert,
                                                                const dht::InfoHash& account) mutable
                 {
+                    JAMI_ERR("@@@ On Peer Message");
                     incomingCall(std::move(msg), cert, account);
                 });
                 return true;
@@ -2164,24 +2167,31 @@ JamiAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
 
     std::weak_ptr<SIPCall> wcall = call;
     Manager::instance().addTask([account=shared(), wcall, ice, ice_tcp, msg, from_cert, from] {
+        JAMI_ERR("@@@ REPLY TO INCOMING 1");
         auto call = wcall.lock();
 
         // call aborted?
-        if (not call)
+        if (not call) {
+            JAMI_ERR("@@@ REPLY TO INCOMING 1.0");
             return false;
+        }
 
         if (ice->isFailed()) {
             JAMI_ERR("[call:%s] ice init failed", call->getCallId().c_str());
             call->onFailure(EIO);
+            JAMI_ERR("@@@ REPLY TO INCOMING 1.1");
             return false;
         }
 
         // Loop until ICE transport is initialized.
         // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
         // and we let upper layers decide when the call shall be aborted (our first check upper).
-        if ((not ice->isInitialized()) || (ice_tcp && !ice_tcp->isInitialized()))
+        if ((not ice->isInitialized()) || (ice_tcp && !ice_tcp->isInitialized())) {
+            JAMI_ERR("@@@ REPLY TO INCOMING 1.2");
             return true;
+        }
 
+        JAMI_ERR("@@@ REPLY TO INCOMING 2");
         account->replyToIncomingIceMsg(call, ice, ice_tcp, msg, from_cert, from);
         return false;
     });
