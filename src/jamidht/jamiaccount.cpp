@@ -1203,7 +1203,7 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 setRegistrationState(RegistrationState::UNREGISTERED);
                 saveConfig();
                 if (not info.photo.empty())
-                    emitSignal<DRing::ConfigurationSignal::AccountAvatarReceived>(getAccountID(), info.photo);
+                    emitSignal<DRing::ConfigurationSignal::AccountProfileReceived>(getAccountID(), displayName_, info.photo);
 
                 runOnMainThread([w=weak()]{
                     if (auto s = w.lock())

@@ -55,7 +55,7 @@ public:
 
     virtual void migrationEnded(const std::string& /*accountId*/, const std::string& /*state*/){}
     virtual void deviceRevocationEnded(const std::string& /*accountId*/, const std::string& /*device*/, int /*status*/){}
-    virtual void accountAvatarReceived(const std::string& /*accountId*/, const std::string& /*photo*/){}
+    virtual void accountProfileReceived(const std::string& /*accountId*/, const std::string& /*names*/, const std::string& /*photo*/){}
 
     virtual void hardwareDecodingChanged(bool /*state*/){}
     virtual void hardwareEncodingChanged(bool /*state*/){}
@@ -255,7 +255,7 @@ public:
 
     virtual void migrationEnded(const std::string& /*accountId*/, const std::string& /*state*/){}
     virtual void deviceRevocationEnded(const std::string& /*accountId*/, const std::string& /*device*/, int /*status*/){}
-    virtual void accountAvatarReceived(const std::string& /*accountId*/, const std::string& /*photo*/){}
+    virtual void accountProfileReceived(const std::string& /*accountId*/, const std::string& /*names*/, const std::string& /*photo*/){}
 
     virtual void hardwareDecodingChanged(bool /*state*/){}
     virtual void hardwareEncodingChanged(bool /*state*/){}

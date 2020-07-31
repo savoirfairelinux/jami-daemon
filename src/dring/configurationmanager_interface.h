@@ -362,9 +362,9 @@ struct DRING_PUBLIC ConfigurationSignal {
                 constexpr static const char* name = "DeviceRevocationEnded";
                 using cb_type = void(const std::string& /*accountId*/, const std::string& /*device*/, int /*status*/);
         };
-        struct DRING_PUBLIC AccountAvatarReceived {
-            constexpr static const char* name = "AccountAvatarReceived";
-            using cb_type = void(const std::string& /*accountId*/, const std::string& /*userPhoto*/);
+        struct DRING_PUBLIC AccountProfileReceived {
+            constexpr static const char* name = "AccountProfileReceived";
+            using cb_type = void(const std::string& /*accountId*/, const std::string& displayName, const std::string& /*userPhoto*/);
         };
         /**
          * These are special getters for Android and UWP, so the daemon can retrieve
