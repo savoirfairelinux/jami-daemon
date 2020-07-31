@@ -201,7 +201,7 @@ DBusClient::initLibrary(int flags)
         exportable_callback<ConfigurationSignal::UserSearchEnded>(bind(&DBusConfigurationManager::userSearchEnded, confM, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::RegisteredNameFound>(bind(&DBusConfigurationManager::registeredNameFound, confM, _1, _2, _3, _4 )),
         exportable_callback<ConfigurationSignal::DeviceRevocationEnded>(bind(&DBusConfigurationManager::deviceRevocationEnded, confM, _1, _2, _3)),
-        exportable_callback<ConfigurationSignal::AccountAvatarReceived>(bind(&DBusConfigurationManager::accountAvatarReceived, confM, _1, _2)),
+        exportable_callback<ConfigurationSignal::AccountProfileReceived>(bind(&DBusConfigurationManager::accountProfileReceived, confM, _1, _2, _3)),
         exportable_callback<ConfigurationSignal::CertificatePinned>(bind(&DBusConfigurationManager::certificatePinned, confM, _1 )),
         exportable_callback<ConfigurationSignal::CertificatePathPinned>(bind(&DBusConfigurationManager::certificatePathPinned, confM, _1, _2 )),
         exportable_callback<ConfigurationSignal::CertificateExpired>(bind(&DBusConfigurationManager::certificateExpired, confM, _1 )),
