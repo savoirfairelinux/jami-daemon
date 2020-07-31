@@ -1,4 +1,9 @@
+ifdef HAVE_MACOSX
+FFMPEG_HASH := n4.2.2
+else
 FFMPEG_HASH := n4.3
+endif
+
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
