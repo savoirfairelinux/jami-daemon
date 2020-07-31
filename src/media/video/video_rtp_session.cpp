@@ -136,7 +136,6 @@ void VideoRtpSession::startSender()
         auto codecVideo = std::static_pointer_cast<jami::AccountVideoCodecInfo>(send_.codec);
         auto autoQuality = codecVideo->isAutoQualityEnabled;
 
-        send_.mode = autoQuality ? RateMode::CBR : RateMode::CRF_CONSTRAINED;
         send_.linkableHW = conference_ == nullptr;
         send_.bitrate = videoBitrateInfo_.videoBitrateCurrent;
 
