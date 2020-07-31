@@ -819,16 +819,15 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
     if(mode_ == RateMode::CRF_CONSTRAINED) {
         uint64_t maxBitrate = 1000 * br;
         uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
-        uint64_t bufSize = maxBitrate * 2;
+        // bufsize parameter impact the variation of the bitrate, reduce to half the maxrate to limit peak and congestion
+        //https://trac.ffmpeg.org/wiki/Limiting%20the%20output%20bitrate
+        uint64_t bufSize = maxBitrate / 2;
 
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "b", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "minrate", -1, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
-        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
+        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu kbit/s, bufsize=%lu kbit", crf, maxBitrate/1000, bufSize/1000);
     }
-    // If auto quality enabled use CRB mode
     else if (mode_ == RateMode::CBR) {
         av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
@@ -849,13 +848,11 @@ MediaEncoder::initH265(AVCodecContext* encoderCtx, uint64_t br)
         // H265 use 50% less bitrate compared to H264 (half bitrate is equivalent to a change 6 for CRF)
         // https://slhck.info/video/2017/02/24/crf-guide.html
         uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)) - 6);     // CRF = A + B*ln(maxBitrate)
-        uint64_t bufSize = maxBitrate * 2;
+        uint64_t bufSize = maxBitrate / 2;
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "b", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "minrate", -1, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
-        JAMI_DBG("H265 encoder setup: crf=%u, maxrate=%lu, bufsize=%lu", crf, maxBitrate, bufSize);
+        JAMI_DBG("H265 encoder setup: crf=%u, maxrate=%lu kbit/s, bufsize=%lu kbit", crf, maxBitrate/1000, bufSize/1000);
     }
     else if (mode_ == RateMode::CBR) {
         av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
@@ -891,7 +888,7 @@ MediaEncoder::initVP8(AVCodecContext* encoderCtx, uint64_t br)
         // http://www.webmproject.org/docs/encoder-parameters/
         uint64_t maxBitrate = 1000 * br;
         uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
-        uint64_t bufSize = 2 * maxBitrate;
+        uint64_t bufSize = maxBitrate / 2;
 
         av_opt_set(encoderCtx, "quality", "realtime", AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "error-resilient", 1, AV_OPT_SEARCH_CHILDREN);
@@ -917,7 +914,7 @@ void
 MediaEncoder::initMPEG4(AVCodecContext* encoderCtx, uint64_t br)
 {
     uint64_t maxBitrate = 1000 * br;
-    uint64_t bufSize = 2 * maxBitrate;
+    uint64_t bufSize = maxBitrate / 2;
 
     // Use CBR (set bitrate)
     encoderCtx->rc_buffer_size = bufSize;
@@ -929,7 +926,7 @@ void
 MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
 {
     uint64_t maxBitrate = 1000 * br;
-    uint64_t bufSize = 2 * maxBitrate;
+    uint64_t bufSize = maxBitrate / 2;
 
     // Use CBR (set bitrate)
     encoderCtx->rc_buffer_size = bufSize;
