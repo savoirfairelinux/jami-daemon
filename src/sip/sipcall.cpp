@@ -128,7 +128,15 @@ void SIPCall::createCallAVStreams()
         *   Map: maps the VideoFrame to an AVFrame
         **/
         auto map = [](const std::shared_ptr<jami::MediaFrame> m)->AVFrame* {
-            return std::static_pointer_cast<VideoFrame>(m)->pointer();
+            std::shared_ptr<VideoFrame> framePtr;
+#ifdef RING_ACCEL
+            auto desc = av_pix_fmt_desc_get((AVPixelFormat)(std::static_pointer_cast<VideoFrame>(m))->format());
+            if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
+                framePtr = jami::video::HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(m), AV_PIX_FMT_NV12);
+            else
+#endif
+            framePtr = std::static_pointer_cast<VideoFrame>(m);
+            return framePtr->pointer();
         };
 
         // Preview
