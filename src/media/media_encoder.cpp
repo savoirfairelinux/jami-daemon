@@ -818,15 +818,15 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
     // If auto quality disabled use CRF mode
     if(mode_ == RateMode::CRF_CONSTRAINED) {
         uint64_t maxBitrate = 1000 * br;
-        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
         // bufsize parameter impact the variation of the bitrate, reduce to half the maxrate to limit peak and congestion
         //https://trac.ffmpeg.org/wiki/Limiting%20the%20output%20bitrate
         uint64_t bufSize = maxBitrate / 2;
 
-        av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "crf", 20, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
-        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu kbit/s, bufsize=%lu kbit", crf, maxBitrate/1000, bufSize/1000);
+	av_opt_set(encoderCtx, "rc_mode", "QVBR", AV_OPT_SEARCH_CHILDREN); // For VAAPI HW - seems to work
+        JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu kbit/s, bufsize=%lu kbit", 20, maxBitrate/1000, bufSize/1000);
     }
     else if (mode_ == RateMode::CBR) {
         av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);

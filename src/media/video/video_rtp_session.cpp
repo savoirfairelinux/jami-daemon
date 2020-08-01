@@ -54,8 +54,8 @@ static constexpr unsigned MAX_SIZE_HISTO_DELAY {25};
 static constexpr unsigned MAX_REMB_DEC {1};
 
 constexpr auto DELAY_AFTER_RESTART = std::chrono::milliseconds(1000);
-constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(2);
-constexpr auto DELAY_AFTER_REMB_INC = std::chrono::seconds(2);
+constexpr auto EXPIRY_TIME_RTCP = std::chrono::seconds(1);
+constexpr auto DELAY_AFTER_REMB_INC = std::chrono::seconds(1);
 constexpr auto DELAY_AFTER_REMB_DEC = std::chrono::milliseconds(500);
 
 VideoRtpSession::VideoRtpSession(const string &callID,
@@ -521,7 +521,7 @@ VideoRtpSession::delayProcessing(int br)
     if(br == 0x6803)
         newBitrate *= 0.85f;
     else if(br == 0x7378)
-        newBitrate *= 1.05f;
+        newBitrate *= 1.10f;
     else
         return;
 
