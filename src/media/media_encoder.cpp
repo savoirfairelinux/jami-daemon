@@ -52,8 +52,8 @@ extern "C" {
 
 namespace jami {
 
-constexpr double LOGREG_PARAM_A {114.40432};
-constexpr double LOGREG_PARAM_B {-6.049181};
+constexpr double LOGREG_PARAM_A {50};
+constexpr double LOGREG_PARAM_B {-2.};
 
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
