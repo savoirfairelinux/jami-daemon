@@ -505,6 +505,12 @@ AccountManager::forEachDevice(const dht::InfoHash& to,
                            std::function<void(const dht::InfoHash&)>&& op,
                            std::function<void(bool)>&& end)
 {
+    if (not dht_) {
+        JAMI_ERR("forEachDevice: no dht");
+        if (end)
+            end(false);
+        return;
+    }
     auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
     dht_->get<dht::crypto::RevocationList>(to, [to](dht::crypto::RevocationList&& crl){
         tls::CertificateStore::instance().pinRevocationList(to.toString(), std::move(crl));

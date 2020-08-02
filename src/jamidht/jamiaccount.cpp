@@ -464,7 +464,7 @@ initICE(const std::vector<uint8_t> &msg, const std::shared_ptr<IceTransport> &ic
 void
 JamiAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& toUri)
 {
-    if (not accountManager_) {
+    if (not accountManager_ or not dht_) {
         call->onFailure(ENETDOWN);
         return;
     }
