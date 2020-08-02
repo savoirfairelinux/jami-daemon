@@ -379,14 +379,14 @@ std::map<std::string, std::string> JamiPluginManager::getPluginUserPreferencesVa
     std::map<std::string, std::string>  rmap;
 
     // If file is accessible
-    if(file.good()) {
+    if (file.good()) {
         std::lock_guard<std::mutex> guard(fileutils::getFileLock(preferencesValuesFilePath));
         // Get file size
         std::string str;
         file.seekg(0, std::ios::end);
         size_t fileSize = static_cast<size_t>(file.tellg());
         // If not empty
-        if(fileSize > 0) {
+        if (fileSize > 0) {
             // Read whole file content and put it in the string str
             str.reserve(static_cast<size_t>(file.tellg()));
             file.seekg(0, std::ios::beg);
@@ -439,17 +439,12 @@ std::map<std::string, std::string> JamiPluginManager::getPluginPreferencesValues
     std::map<std::string, std::string>  rmap;
 
     std::vector<std::map<std::string,std::string>> preferences = getPluginPreferences(rootPath);
-
-    for (int i = 0; i < preferences.size(); i++)
-    {
-        rmap[preferences[i]["key"]]=preferences[i]["defaultValue"];
+    for (size_t i = 0; i < preferences.size(); i++) {
+        rmap[preferences[i]["key"]] = preferences[i]["defaultValue"];
     }
 
-    std::map<std::string, std::string> pluginUserPreferencesMap = getPluginUserPreferencesValuesMap(rootPath);
-
-    for (const auto& pair : pluginUserPreferencesMap)
-    {
-        rmap[pair.first]=pair.second;
+    for (const auto& pair : getPluginUserPreferencesValuesMap(rootPath)) {
+        rmap[pair.first] = pair.second;
     }
     return rmap;
 }
