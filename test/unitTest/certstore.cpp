@@ -22,7 +22,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "test_runner.h"
+#include "../test_runner.h"
 
 #include "security/certstore.h"
 

@@ -25,7 +25,7 @@
 #include <future>
 #include <algorithm>
 
-#include "test_runner.h"
+#include "../../test_runner.h"
 
 #include "channel.h"
 

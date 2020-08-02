@@ -27,7 +27,7 @@
 #include "libav_deps.h"
 #include "audio/resampler.h"
 
-#include "../test_runner.h"
+#include "../../../test_runner.h"
 
 namespace jami { namespace test {
 
