@@ -23,7 +23,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "test_runner.h"
+#include "../../../test_runner.h"
 
 #include "media/video/video_input.h"
 #include "media_const.h"
