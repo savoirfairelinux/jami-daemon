@@ -162,7 +162,6 @@ ServerAccountManager::initAuthentication(
                                 }
 
                                 ctx->onSuccess(*this_.info_, std::move(config), std::move(receipt), std::move(receiptSignature));
-                                this_.syncDevices();
                             });
                         }
                         catch (const std::exception& e) {

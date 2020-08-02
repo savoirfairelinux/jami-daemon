@@ -1174,8 +1174,6 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
 
                 fileutils::check_dir(idPath_.c_str(), 0700);
 
-                emitSignal<DRing::ConfigurationSignal::AccountAvatarReceived>(getAccountID(), info.photo);
-
                 // save the chain including CA
                 auto id = info.identity;
                 id.first = std::move(fDeviceKey.get());
@@ -1201,6 +1199,9 @@ JamiAccount::loadAccount(const std::string& archive_password, const std::string&
                 if (migrating) {
                     Migration::setState(getAccountID(), Migration::State::SUCCESS);
                 }
+
+                if (not info.photo.empty())
+                    emitSignal<DRing::ConfigurationSignal::AccountProfileReceived>(getAccountID(), displayName_, info.photo);
                 setRegistrationState(RegistrationState::UNREGISTERED);
                 saveConfig();
                 doRegister();
