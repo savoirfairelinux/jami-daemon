@@ -826,6 +826,7 @@ MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set(encoderCtx, "rc_mode", "QVBR", AV_OPT_SEARCH_CHILDREN);
         JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu kbit/s, bufsize=%lu kbit", crf, maxBitrate/1000, bufSize/1000);
     }
     else if (mode_ == RateMode::CBR) {
