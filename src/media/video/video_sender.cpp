@@ -22,14 +22,14 @@
  */
 
 #include "video_sender.h"
-#include "video_mixer.h"
-#include "socket_pair.h"
 #include "client/videomanager.h"
 #include "logger.h"
 #include "manager.h"
 #include "media_device.h"
-#include "smartools.h"
 #include "sip/sipcall.h"
+#include "smartools.h"
+#include "socket_pair.h"
+#include "video_mixer.h"
 #ifdef RING_ACCEL
 #include "accel.h"
 #endif
@@ -40,12 +40,15 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 using std::string;
 
-VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
-                         const MediaDescription& args, SocketPair& socketPair,
+VideoSender::VideoSender(const std::string &dest,
+                         const DeviceParams &dev,
+                         const MediaDescription &args,
+                         SocketPair &socketPair,
                          const uint16_t seqVal,
                          uint16_t mtu)
     : muxContext_(socketPair.createIOContext(mtu))
@@ -53,7 +56,13 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
 {
     keyFrameFreq_ = dev.framerate.numerator() * KEY_FRAME_PERIOD;
     videoEncoder_->openOutput(dest, "rtp");
-    auto opts = MediaStream("video sender", AV_PIX_FMT_YUV420P, 1 / (rational<int>)dev.framerate, dev.width, dev.height, args.bitrate, (rational<int>)dev.framerate);
+    auto opts = MediaStream("video sender",
+                            AV_PIX_FMT_YUV420P,
+                            1 / (rational<int>) dev.framerate,
+                            dev.width,
+                            dev.height,
+                            args.bitrate,
+                            (rational<int>) dev.framerate);
     videoEncoder_->setOptions(opts);
     videoEncoder_->setOptions(args);
     videoEncoder_->addStream(args.codec->systemCodecInfo);
@@ -73,7 +82,7 @@ VideoSender::~VideoSender()
 }
 
 void
-VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
+VideoSender::encodeAndSendVideo(VideoFrame &input_frame)
 {
     if (auto packet = input_frame.packet()) {
 #if __ANDROID__
@@ -82,9 +91,11 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
             --forceKeyFrame_;
         }
 #endif
-        int size {0};
-        uint8_t* side_data = av_packet_get_side_data(packet, AV_PKT_DATA_DISPLAYMATRIX, &size);
-        auto angle = (side_data == nullptr || size == 0) ? 0 : -av_display_rotation_get(reinterpret_cast<int32_t*>(side_data));
+        int size{0};
+        uint8_t *side_data = av_packet_get_side_data(packet, AV_PKT_DATA_DISPLAYMATRIX, &size);
+        auto angle         = (side_data == nullptr || size == 0)
+                         ? 0
+                         : -av_display_rotation_get(reinterpret_cast<int32_t *>(side_data));
         if (rotation_ != angle) {
             rotation_ = angle;
             if (changeOrientationCallback_)
@@ -94,13 +105,16 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         videoEncoder_->send(*packet);
     } else {
         bool is_keyframe = forceKeyFrame_ > 0
-            or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
+                           or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
 
         if (is_keyframe)
             --forceKeyFrame_;
 
-        AVFrameSideData* side_data = av_frame_get_side_data(input_frame.pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
-        auto angle = side_data == nullptr ? 0 : -av_display_rotation_get(reinterpret_cast<int32_t*>(side_data->data));
+        AVFrameSideData *side_data = av_frame_get_side_data(input_frame.pointer(),
+                                                            AV_FRAME_DATA_DISPLAYMATRIX);
+        auto angle                 = side_data == nullptr
+                         ? 0
+                         : -av_display_rotation_get(reinterpret_cast<int32_t *>(side_data->data));
         if (rotation_ != angle) {
             rotation_ = angle;
             if (changeOrientationCallback_)
@@ -117,8 +131,8 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 }
 
 void
-VideoSender::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
-                    const std::shared_ptr<MediaFrame>& frame_p)
+VideoSender::update(Observable<std::shared_ptr<MediaFrame>> * /*obs*/,
+                    const std::shared_ptr<MediaFrame> &frame_p)
 {
     encodeAndSendVideo(*std::static_pointer_cast<VideoFrame>(frame_p));
 }
@@ -147,10 +161,11 @@ VideoSender::setBitrate(uint64_t br)
 {
     // The encoder may be destroy during a bitrate change
     // when a codec parameter like auto quality change
-    if(!videoEncoder_)
+    if (!videoEncoder_)
         return -1; // NOK
 
     return videoEncoder_->setBitrate(br);
 }
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

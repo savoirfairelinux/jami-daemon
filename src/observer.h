@@ -23,48 +23,55 @@
 
 #include "noncopyable.h"
 
-#include <cstdlib>
-#include <cstdint>
-#include <memory>
-#include <set>
-#include <list>
-#include <mutex>
-#include <functional>
-#include <ciso646> // fix windows compiler bug
 #include "logger.h"
+#include <ciso646> // fix windows compiler bug
+#include <cstdint>
+#include <cstdlib>
+#include <functional>
+#include <list>
+#include <memory>
+#include <mutex>
+#include <set>
 
 namespace jami {
 
-template <typename T> class Observer;
-template <typename T> class Observable;
+template<typename T>
+class Observer;
+template<typename T>
+class Observable;
 
 /*=== Observable =============================================================*/
 
-template <typename T>
+template<typename T>
 class Observable
 {
 public:
-    Observable() : mutex_(), observers_() {}
+    Observable()
+        : mutex_()
+        , observers_()
+    {}
 
     /**
      * @brief ~Observable
      * Detach all observers to avoid making them call this observable when
      * destroyed
      */
-    virtual ~Observable() {
+    virtual ~Observable()
+    {
         std::lock_guard<std::mutex> lk(mutex_);
 
-        for(auto& pobs: priority_observers_) {
-            if(auto so = pobs.lock()) {
+        for (auto &pobs : priority_observers_) {
+            if (auto so = pobs.lock()) {
                 so->detached(this);
             }
         }
 
-        for (auto& o : observers_)
+        for (auto &o : observers_)
             o->detached(this);
     }
 
-    bool attach(Observer<T>* o) {
+    bool attach(Observer<T> *o)
+    {
         std::lock_guard<std::mutex> lk(mutex_);
         if (o and observers_.insert(o).second) {
             o->attached(this);
@@ -73,24 +80,27 @@ public:
         return false;
     }
 
-    void attachPriorityObserver(std::shared_ptr<Observer<T>> o) {
+    void attachPriorityObserver(std::shared_ptr<Observer<T>> o)
+    {
         std::lock_guard<std::mutex> lk(mutex_);
         priority_observers_.push_back(o);
         o->attached(this);
     }
 
-    void detachPriorityObserver(Observer<T>* o){
+    void detachPriorityObserver(Observer<T> *o)
+    {
         std::lock_guard<std::mutex> lk(mutex_);
-        for(auto it=priority_observers_.begin(); it != priority_observers_.end(); ++it){
-            if(auto so = it->lock()){
-                if(so.get() == o) {
+        for (auto it = priority_observers_.begin(); it != priority_observers_.end(); ++it) {
+            if (auto so = it->lock()) {
+                if (so.get() == o) {
                     priority_observers_.erase(it);
                 }
             }
         }
     }
 
-    bool detach(Observer<T>* o) {
+    bool detach(Observer<T> *o)
+    {
         std::lock_guard<std::mutex> lk(mutex_);
         if (o and observers_.erase(o)) {
             o->detached(this);
@@ -99,25 +109,26 @@ public:
         return false;
     }
 
-    int getObserversCount() {
+    int getObserversCount()
+    {
         std::lock_guard<std::mutex> lk(mutex_);
         return observers_.size();
     }
 
 protected:
-    void notify(T data) {
+    void notify(T data)
+    {
         std::lock_guard<std::mutex> lk(mutex_);
-        for(auto it=priority_observers_.begin(); it != priority_observers_.end();) {
-            if(auto so = it->lock()) {
+        for (auto it = priority_observers_.begin(); it != priority_observers_.end();) {
+            if (auto so = it->lock()) {
                 try {
-                    so->update(this,data);
+                    so->update(this, data);
                     ++it;
-                } catch (std::exception& e) {
+                } catch (std::exception &e) {
                     JAMI_ERR() << e.what();
                 }
             } else {
                 it = priority_observers_.erase(it);
-
             }
         }
 
@@ -132,55 +143,56 @@ private:
 protected:
     std::mutex mutex_; // lock observers_
     std::list<std::weak_ptr<Observer<T>>> priority_observers_;
-    std::set<Observer<T>*> observers_;
+    std::set<Observer<T> *> observers_;
 };
 
-
-template <typename T>
-class PublishObservable : public Observable<T> {
+template<typename T>
+class PublishObservable : public Observable<T>
+{
 public:
-    void publish(T data) {
-        this->notify(data);
-    }
+    void publish(T data) { this->notify(data); }
 };
 
 /*=== Observer =============================================================*/
 
-template <typename T>
+template<typename T>
 class Observer
 {
 public:
     virtual ~Observer() {}
-    virtual void update(Observable<T>*, const T&) = 0;
-    virtual void attached(Observable<T>*) {}
-    virtual void detached(Observable<T>*) {}
+    virtual void update(Observable<T> *, const T &) = 0;
+    virtual void attached(Observable<T> *) {}
+    virtual void detached(Observable<T> *) {}
 };
 
-
-template <typename T>
+template<typename T>
 class FuncObserver : public Observer<T>
 {
 public:
-    using F = std::function<void(const T&)>;
-    FuncObserver(F f) : f_(f) {}
+    using F = std::function<void(const T &)>;
+    FuncObserver(F f)
+        : f_(f)
+    {}
     virtual ~FuncObserver() {}
-    void update(Observable<T>*, const T& t) override { f_(t); }
+    void update(Observable<T> *, const T &t) override { f_(t); }
+
 private:
     F f_;
 };
 
 /*=== PublishMapSubject ====================================================*/
 
-template <typename T1, typename T2>
-class PublishMapSubject : public Observer<T1> , public Observable<T2> {
+template<typename T1, typename T2>
+class PublishMapSubject : public Observer<T1>, public Observable<T2>
+{
 public:
-    using F = std::function<T2(const T1&)>;
+    using F = std::function<T2(const T1 &)>;
 
-    PublishMapSubject(F f) : map_{f} {}
+    PublishMapSubject(F f)
+        : map_{f}
+    {}
 
-    void update(Observable<T1>*, const T1& t) override {
-        this->notify(map_(t));
-    }
+    void update(Observable<T1> *, const T1 &t) override { this->notify(map_(t)); }
 
     /**
      * @brief attached
@@ -188,8 +200,9 @@ public:
      * Observable at a time.
      * @param srcObs
      */
-    virtual void attached(Observable<T1>* srcObs) override {
-        if(obs_!=nullptr && obs_ != srcObs) {
+    virtual void attached(Observable<T1> *srcObs) override
+    {
+        if (obs_ != nullptr && obs_ != srcObs) {
             obs_->detach(this);
             obs_ = srcObs;
         }
@@ -200,10 +213,11 @@ public:
      * Since a MapSubject is only attached to one Observable, when detached
      * We should detach all of it observers
      */
-    virtual void detached(Observable<T1>*) override {
+    virtual void detached(Observable<T1> *) override
+    {
         std::lock_guard<std::mutex> lk(this->mutex_);
         JAMI_WARN() << "PublishMapSubject: detaching observers";
-        for (auto& o : this->observers_)
+        for (auto &o : this->observers_)
             o->detached(this);
     }
 
@@ -212,14 +226,15 @@ public:
      * Detach all observers to avoid making them call this observable when
      * destroyed
     **/
-    ~PublishMapSubject() {
+    ~PublishMapSubject()
+    {
         JAMI_WARN() << "~PublishMapSubject()";
         detached(nullptr);
     }
 
 private:
     F map_;
-    Observable<T1>* obs_ = nullptr;
+    Observable<T1> *obs_ = nullptr;
 };
 
 }; // namespace jami

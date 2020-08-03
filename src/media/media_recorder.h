@@ -28,15 +28,15 @@
 #include "noncopyable.h"
 #include "observer.h"
 
+#include <atomic>
+#include <condition_variable>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <queue>
 #include <stdexcept>
 #include <string>
 #include <utility>
-#include <condition_variable>
-#include <atomic>
+#include <queue>
 
 namespace jami {
 
@@ -74,7 +74,7 @@ public:
      *
      * NOTE An empty path will put the output file in the working directory.
      */
-    void setPath(const std::string& path);
+    void setPath(const std::string &path);
 
     /**
      * @brief Sets title and description metadata for the file.
@@ -85,21 +85,21 @@ public:
      *
      * NOTE replaces %TIMESTAMP with time at start of recording
      */
-    void setMetadata(const std::string& title, const std::string& desc);
+    void setMetadata(const std::string &title, const std::string &desc);
 
     /**
      * @brief Adds a stream to the recorder.
      *
      * Caller must then attach this to the media source.
      */
-    Observer<std::shared_ptr<MediaFrame>>* addStream(const MediaStream& ms);
+    Observer<std::shared_ptr<MediaFrame>> *addStream(const MediaStream &ms);
 
     /**
      * @brief Gets the stream observer.
      *
      * This is so the caller can detach it from the media source.
      */
-    Observer<std::shared_ptr<MediaFrame>>* getStream(const std::string& name) const;
+    Observer<std::shared_ptr<MediaFrame>> *getStream(const std::string &name) const;
 
     /**
      * @brief Initializes the file.
@@ -120,16 +120,18 @@ private:
 
     struct StreamObserver;
 
-    void onFrame(const std::string& name, const std::shared_ptr<MediaFrame>& frame);
+    void onFrame(const std::string &name, const std::shared_ptr<MediaFrame> &frame);
 
     void flush();
     void reset();
 
     int initRecord();
     MediaStream setupVideoOutput();
-    std::string buildVideoFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
+    std::string buildVideoFilter(const std::vector<MediaStream> &peers,
+                                 const MediaStream &local) const;
     MediaStream setupAudioOutput();
-    std::string buildAudioFilter(const std::vector<MediaStream>& peers, const MediaStream& local) const;
+    std::string buildAudioFilter(const std::vector<MediaStream> &peers,
+                                 const MediaStream &local) const;
 
     std::mutex mutexFrameBuff_;
     std::mutex mutexFilterVideo_;
@@ -147,17 +149,17 @@ private:
     std::unique_ptr<MediaFilter> videoFilter_;
     std::unique_ptr<MediaFilter> audioFilter_;
 
-    bool hasAudio_ {false};
-    bool hasVideo_ {false};
-    int videoIdx_ = -1;
-    int audioIdx_ = -1;
+    bool hasAudio_{false};
+    bool hasVideo_{false};
+    int videoIdx_     = -1;
+    int audioIdx_     = -1;
     bool isRecording_ = false;
-    bool audioOnly_ = false;
+    bool audioOnly_   = false;
 
     std::condition_variable cv_;
-    std::atomic_bool interrupted_ {false};
+    std::atomic_bool interrupted_{false};
 
-     std::list<std::shared_ptr<MediaFrame>> frameBuff_;
+    std::list<std::shared_ptr<MediaFrame>> frameBuff_;
 };
 
 }; // namespace jami

@@ -29,10 +29,10 @@ namespace jami {
  * Attempt to find standalone AVCodec decoder using AVCodecID,
  * or fallback to the default decoder.
  */
-AVCodec*
+AVCodec *
 findDecoder(const enum AVCodecID codec_id)
 {
-    const char* codec_name;
+    const char *codec_name;
     switch (codec_id) {
 #if 0 && defined(__ANDROID__) && defined(RING_ACCEL)
     case AV_CODEC_ID_MPEG4:
@@ -49,7 +49,7 @@ findDecoder(const enum AVCodecID codec_id)
     default:
         codec_name = nullptr;
     }
-    AVCodec* codec = nullptr;
+    AVCodec *codec = nullptr;
     if (codec_name)
         codec = avcodec_find_decoder_by_name(codec_name);
     if (not codec)

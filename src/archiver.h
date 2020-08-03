@@ -22,10 +22,10 @@
 
 #include "noncopyable.h"
 
+#include <functional>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-#include <functional>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -40,7 +40,7 @@ namespace jami {
  */
 namespace archiver {
 
-using FileMatchPair = std::function<std::pair<bool,const std::string>(const std::string&)>;
+using FileMatchPair = std::function<std::pair<bool, const std::string>(const std::string &)>;
 
 /**
  * Create a protected archive containing a list of accounts
@@ -49,9 +49,9 @@ using FileMatchPair = std::function<std::pair<bool,const std::string>(const std:
  * @param password The mandatory password to set on the archive
  * @returns 0 for OK, error code otherwise
  */
-int exportAccounts(const std::vector<std::string>& accountIDs,
-                   const std::string& filepath,
-                   const std::string& password);
+int exportAccounts(const std::vector<std::string> &accountIDs,
+                   const std::string &filepath,
+                   const std::string &password);
 
 /**
  * Read a protected archive and add accounts found in it
@@ -60,40 +60,40 @@ int exportAccounts(const std::vector<std::string>& accountIDs,
  * @param password The password to read the archive
  * @returns 0 for OK, error code otherwise
  */
-int importAccounts(const std::string& archivePath, const std::string& password);
+int importAccounts(const std::string &archivePath, const std::string &password);
 
 /**
  * Compress a STL string using zlib with given compression level and return
  * the binary data.
  */
-std::vector<uint8_t> compress(const std::string& str);
+std::vector<uint8_t> compress(const std::string &str);
 
 /**
  * Decompress an STL string using zlib and return the original data.
  */
-std::vector<uint8_t> decompress(const std::vector<uint8_t>& dat);
+std::vector<uint8_t> decompress(const std::vector<uint8_t> &dat);
 
 /**
  * Compress string to a Gzip file
  */
-void compressGzip(const std::string& str, const std::string& path);
+void compressGzip(const std::string &str, const std::string &path);
 
 /**
  * Decompress Gzip file to bytes
  */
-std::vector<uint8_t> decompressGzip(const std::string& path);
+std::vector<uint8_t> decompressGzip(const std::string &path);
 
 /**
  * Open Gzip file (uses wide string version of gzopen on windows)
  */
-gzFile openGzip(const std::string& path, const char *mode);
+gzFile openGzip(const std::string &path, const char *mode);
 
 /**
  * @brief listArchiveContent
  * @param archivePath
  * @return list of relative file path names
  */
-std::vector<std::string> listArchiveContent(const std::string& archivePath);
+std::vector<std::string> listArchiveContent(const std::string &archivePath);
 
 /**
  * @brief uncompressArchive Uncompresses an archive and puts the different files
@@ -107,7 +107,7 @@ std::vector<std::string> listArchiveContent(const std::string& archivePath);
  * relative path name like mynewsubfolder/myfile
  * @return void
  */
-void uncompressArchive(const std::string& path, const std::string &dir, const FileMatchPair& f);
+void uncompressArchive(const std::string &path, const std::string &dir, const FileMatchPair &f);
 
 /**
  * @brief readFileFromArchive read a file from an archive without uncompressing
@@ -118,7 +118,7 @@ void uncompressArchive(const std::string& path, const std::string &dir, const Fi
  * @return fileContent std::vector<uint8_t> that contains the file content
  */
 std::vector<uint8_t> readFileFromArchive(const std::string &path,
-                                 const std::string &fileRelativePathName);
-}
+                                         const std::string &fileRelativePathName);
+} // namespace archiver
 
 } // namespace jami

@@ -37,10 +37,10 @@ namespace jami {
  * recording messages locally.
  */
 
-class LocalRecorder : public Recordable {
+class LocalRecorder : public Recordable
+{
 public:
-
-    LocalRecorder(const bool& audioOnly);
+    LocalRecorder(const bool &audioOnly);
     ~LocalRecorder();
 
     /**
@@ -57,7 +57,7 @@ public:
     /**
      * Set recording path
      */
-    void setPath(const std::string& path);
+    void setPath(const std::string &path);
 
 private:
     std::string path_;

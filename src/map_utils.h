@@ -20,39 +20,46 @@
 
 #pragma once
 
-#include <vector>
-#include <iterator>
 #include <algorithm>
+#include <iterator>
 #include <tuple>
+#include <vector>
 
-namespace jami { namespace map_utils {
+namespace jami {
+namespace map_utils {
 
 ///< Return the N-th type of a tuple type used as the Container compliant value type
-template <typename C, std::size_t N>
-using type_element = typename std::remove_cv<typename std::tuple_element<N, typename C::value_type>::type>::type;
+template<typename C, std::size_t N>
+using type_element =
+    typename std::remove_cv<typename std::tuple_element<N, typename C::value_type>::type>::type;
 
 ///< Extract in a std::vector object each N-th values of tuples contained in a Container compliant object \a container.
-template <std::size_t N, typename C>
+template<std::size_t N, typename C>
 inline std::vector<type_element<C, N>>
-extractElements(const C& container)
+extractElements(const C &container)
 {
     std::vector<type_element<C, N>> result;
     if (container.size() > 0) {
         result.resize(container.size());
         auto iter = std::begin(container);
-        std::generate(std::begin(result), std::end(result), [&]{ return std::get<N>(*iter++); });
+        std::generate(std::begin(result), std::end(result), [&] { return std::get<N>(*iter++); });
     }
     return result;
 }
 
-template <typename M>
+template<typename M>
 inline auto
-extractKeys(const M& map) -> decltype(extractElements<0>(map))
-{ return extractElements<0>(map); }
+extractKeys(const M &map) -> decltype(extractElements<0>(map))
+{
+    return extractElements<0>(map);
+}
 
-template <typename M>
+template<typename M>
 inline auto
-extractValues(const M& map) -> decltype(extractElements<1>(map))
-{ return extractElements<1>(map); }
+extractValues(const M &map) -> decltype(extractElements<1>(map))
+{
+    return extractElements<1>(map);
+}
 
-}} // namespace jami::map_utils
+} // namespace map_utils
+} // namespace jami

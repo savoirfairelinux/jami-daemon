@@ -23,38 +23,38 @@
 
 #pragma once
 
+#include "audio_frame_resizer.h"
 #include "audiobuffer.h"
 #include "noncopyable.h"
-#include "audio_frame_resizer.h"
 #include "resampler.h"
 
 #include <atomic>
-#include <condition_variable>
-#include <mutex>
 #include <chrono>
-#include <map>
-#include <vector>
+#include <condition_variable>
 #include <fstream>
+#include <map>
+#include <mutex>
+#include <vector>
 
 namespace jami {
 
 /**
  * A ring buffer for mutichannel audio samples
  */
-class RingBuffer {
+class RingBuffer
+{
 public:
-    using clock = std::chrono::high_resolution_clock;
-    using time_point = clock::time_point;
-    using FrameCallback = std::function<void(const std::shared_ptr<AudioFrame>&)>;
+    using clock         = std::chrono::high_resolution_clock;
+    using time_point    = clock::time_point;
+    using FrameCallback = std::function<void(const std::shared_ptr<AudioFrame> &)>;
 
     /**
      * Constructor
      * @param size  Size of the buffer to create
      */
-    RingBuffer(const std::string& id, size_t size,
-                AudioFormat format=AudioFormat::MONO());
+    RingBuffer(const std::string &id, size_t size, AudioFormat format = AudioFormat::MONO());
 
-    const std::string& getId() const { return id; }
+    const std::string &getId() const { return id; }
 
     /**
      * Reset the counters to 0 for this read offset
@@ -63,11 +63,10 @@ public:
 
     void flushAll();
 
-    inline AudioFormat getFormat() const {
-        return format_;
-    }
+    inline AudioFormat getFormat() const { return format_; }
 
-    inline void setFormat(const AudioFormat& format) {
+    inline void setFormat(const AudioFormat &format)
+    {
         format_ = format;
         resizer_.setFormat(format, format.sample_rate / 50);
     }
@@ -91,7 +90,7 @@ public:
      * @param buffer Data to copied
      * @param toCopy Number of bytes to copy
      */
-    void put(std::shared_ptr<AudioFrame>&& data);
+    void put(std::shared_ptr<AudioFrame> &&data);
 
     /**
      * To get how much samples are available in the buffer to read in
@@ -122,17 +121,11 @@ public:
 
     size_t getLength(const std::string &call_id) const;
 
-    inline bool isFull() const {
-        return putLength() == buffer_.size();
-    }
+    inline bool isFull() const { return putLength() == buffer_.size(); }
 
-    inline bool isEmpty() const {
-        return putLength() == 0;
-    }
+    inline bool isEmpty() const { return putLength() == 0; }
 
-    inline void setFrameSize(int nb_samples) {
-        resizer_.setFrameSize(nb_samples);
-    }
+    inline void setFrameSize(int nb_samples) { resizer_.setFrameSize(nb_samples); }
 
     /**
      * Blocks until min_data_length samples of data is available, or until deadline has passed.
@@ -142,7 +135,8 @@ public:
      * @param deadline The call is guaranteed to end after this time point. If no deadline is provided, the call blocks indefinitely.
      * @return available data for call_id after the call returned (same as calling getLength(call_id) ).
      */
-    size_t waitForDataAvailable(const std::string& call_id, const time_point& deadline = time_point::max()) const;
+    size_t waitForDataAvailable(const std::string &call_id,
+                                const time_point &deadline = time_point::max()) const;
 
     /**
      * Debug function print mEnd, mStart, mBufferSize
@@ -153,14 +147,15 @@ public:
     void setAudioMeterState(bool state) { rmsSignal_ = state; }
 
 private:
-    struct ReadOffset {
+    struct ReadOffset
+    {
         size_t offset;
         FrameCallback callback;
     };
     using ReadOffsetMap = std::map<std::string, ReadOffset>;
     NON_COPYABLE(RingBuffer);
 
-    void putToBuffer(std::shared_ptr<AudioFrame>&& data);
+    void putToBuffer(std::shared_ptr<AudioFrame> &&data);
 
     bool hasNoReadOffsets() const;
 
@@ -195,8 +190,8 @@ private:
     size_t endPos_;
 
     /** Data */
-    AudioFormat format_ {AudioFormat::DEFAULT()};
-    std::vector<std::shared_ptr<AudioFrame>> buffer_ {16};
+    AudioFormat format_{AudioFormat::DEFAULT()};
+    std::vector<std::shared_ptr<AudioFrame>> buffer_{16};
 
     mutable std::mutex lock_;
     mutable std::condition_variable not_empty_;
@@ -206,9 +201,9 @@ private:
     Resampler resampler_;
     AudioFrameResizer resizer_;
 
-    std::atomic_bool rmsSignal_ {false};
-    double rmsLevel_ {0};
-    int rmsFrameCount_ {0};
+    std::atomic_bool rmsSignal_{false};
+    double rmsLevel_{0};
+    int rmsFrameCount_{0};
 };
 
 } // namespace jami

@@ -21,11 +21,11 @@
 #pragma once
 
 #include "config.h"
-#include "videomanager_interface.h"
 #include "observer.h"
+#include "videomanager_interface.h"
 
-#include <memory>
 #include <functional>
+#include <memory>
 
 extern "C" {
 struct AVFrame;
@@ -37,9 +37,9 @@ struct FrameBuffer; //  from dring/videomanager_interface.h
 
 namespace jami {
 
-using MediaFrame = DRing::MediaFrame;
-using AudioFrame = DRing::AudioFrame;
-using MediaObserver = std::function<void(std::shared_ptr<MediaFrame>&&)>;
+using MediaFrame    = DRing::MediaFrame;
+using AudioFrame    = DRing::AudioFrame;
+using MediaObserver = std::function<void(std::shared_ptr<MediaFrame> &&)>;
 
 #ifdef ENABLE_VIDEO
 

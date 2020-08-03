@@ -29,8 +29,8 @@
 
 namespace jami {
 
-ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel)
-: channel_(channel)
+ChanneledOutgoingTransfer::ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket> &channel)
+    : channel_(channel)
 {}
 
 ChanneledOutgoingTransfer::~ChanneledOutgoingTransfer()
@@ -47,41 +47,42 @@ ChanneledOutgoingTransfer::peer() const
 }
 
 void
-ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream>& file)
+ChanneledOutgoingTransfer::linkTransfer(const std::shared_ptr<Stream> &file)
 {
-    if (!file) return;
+    if (!file)
+        return;
     file_ = file;
-    channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
-        dht::ThreadPool::io().run([
-            rx=std::vector<uint8_t>(buf, buf+len),
-            file=std::weak_ptr<Stream>(file_)] {
-            if (auto f = file.lock())
-                f->write(rx);
-        });
+    channel_->setOnRecv([this](const uint8_t *buf, size_t len) {
+        dht::ThreadPool::io().run(
+            [rx = std::vector<uint8_t>(buf, buf + len), file = std::weak_ptr<Stream>(file_)] {
+                if (auto f = file.lock())
+                    f->write(rx);
+            });
         return len;
     });
-    file_->setOnRecv([channel = std::weak_ptr<ChannelSocket>(channel_)](std::vector<uint8_t>&& data) {
-        if (auto c = channel.lock()) {
-            std::error_code ec;
-            c->write(data.data(), data.size(), ec);
-        }
-    });
+    file_->setOnRecv(
+        [channel = std::weak_ptr<ChannelSocket>(channel_)](std::vector<uint8_t> &&data) {
+            if (auto c = channel.lock()) {
+                std::error_code ec;
+                c->write(data.data(), data.size(), ec);
+            }
+        });
 }
 
-ChanneledIncomingTransfer::ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket>& channel, const std::shared_ptr<FtpServer>& ftp)
-: ftp_ (ftp)
-, channel_(channel)
+ChanneledIncomingTransfer::ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket> &channel,
+                                                     const std::shared_ptr<FtpServer> &ftp)
+    : ftp_(ftp)
+    , channel_(channel)
 {
-    channel_->setOnRecv([this](const uint8_t* buf, size_t len) {
-        dht::ThreadPool::io().run([
-            rx=std::vector<uint8_t>(buf, buf+len),
-            ftp=std::weak_ptr<FtpServer>(ftp_)] {
-            if (auto f = ftp.lock())
-                f->write(rx);
-        });
+    channel_->setOnRecv([this](const uint8_t *buf, size_t len) {
+        dht::ThreadPool::io().run(
+            [rx = std::vector<uint8_t>(buf, buf + len), ftp = std::weak_ptr<FtpServer>(ftp_)] {
+                if (auto f = ftp.lock())
+                    f->write(rx);
+            });
         return len;
     });
-    ftp_->setOnRecv([channel = std::weak_ptr<ChannelSocket>(channel_)](std::vector<uint8_t>&& data) {
+    ftp_->setOnRecv([channel = std::weak_ptr<ChannelSocket>(channel_)](std::vector<uint8_t> &&data) {
         if (auto c = channel.lock()) {
             std::error_code ec;
             c->write(data.data(), data.size(), ec);
@@ -103,4 +104,4 @@ ChanneledIncomingTransfer::id() const
     return 0;
 }
 
-}
+} // namespace jami

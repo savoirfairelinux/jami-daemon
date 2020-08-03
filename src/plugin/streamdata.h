@@ -20,9 +20,14 @@
 
 enum class StreamType { audio, video };
 
-struct StreamData {
-    StreamData(const std::string& i, bool d, StreamType&& t, const std::string& s) :
-        id{std::move(i)}, direction{d}, type{t}, source{std::move(s)} {}
+struct StreamData
+{
+    StreamData(const std::string &i, bool d, StreamType &&t, const std::string &s)
+        : id{std::move(i)}
+        , direction{d}
+        , type{t}
+        , source{std::move(s)}
+    {}
     const std::string id;
     const bool direction;
     const StreamType type;

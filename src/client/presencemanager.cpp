@@ -27,16 +27,16 @@
 #include "presencemanager_interface.h"
 
 #include <cerrno>
-#include <sstream>
 #include <cstring>
+#include <sstream>
 
-#include "logger.h"
-#include "manager.h"
-#include "sip/sipaccount.h"
-#include "sip/sippresence.h"
-#include "sip/pres_sub_client.h"
 #include "client/ring_signal.h"
 #include "compiler_intrinsics.h"
+#include "logger.h"
+#include "manager.h"
+#include "sip/pres_sub_client.h"
+#include "sip/sipaccount.h"
+#include "sip/sippresence.h"
 
 #include "jamidht/jamiaccount.h"
 
@@ -45,8 +45,7 @@ namespace DRing {
 using jami::SIPAccount;
 
 void
-registerPresHandlers(const std::map<std::string,
-    std::shared_ptr<CallbackWrapperBase>>&handlers)
+registerPresHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>> &handlers)
 {
     registerSignalHandlers(handlers);
 }
@@ -55,16 +54,19 @@ registerPresHandlers(const std::map<std::string,
  * Un/subscribe to buddySipUri for an accountID
  */
 void
-subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
+subscribeBuddy(const std::string &accountID, const std::string &uri, bool flag)
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         auto pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)) {
             JAMI_DBG("%subscribePresence (acc:%s, buddy:%s)",
-                     flag ? "S" : "Uns", accountID.c_str(), uri.c_str());
+                     flag ? "S" : "Uns",
+                     accountID.c_str(),
+                     uri.c_str());
             pres->subscribeClient(uri, flag);
         }
-    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID)) {
+    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(
+                   accountID)) {
         ringaccount->trackBuddyPresence(uri, flag);
     } else
         JAMI_ERR("Could not find account %s", accountID.c_str());
@@ -75,12 +77,13 @@ subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
  * Notify for IP2IP account and publish for PBX account
  */
 void
-publish(const std::string& accountID, bool status, const std::string& note)
+publish(const std::string &accountID, bool status, const std::string &note)
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         auto pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_PUBLISH)) {
-            JAMI_DBG("Send Presence (acc:%s, status %s).", accountID.c_str(),
+            JAMI_DBG("Send Presence (acc:%s, status %s).",
+                     accountID.c_str(),
                      status ? "online" : "offline");
             pres->sendPresence(status, note);
         }
@@ -92,7 +95,7 @@ publish(const std::string& accountID, bool status, const std::string& note)
  * Accept or not a PresSubServer request for IP2IP account
  */
 void
-answerServerRequest(UNUSED const std::string& uri, UNUSED bool flag)
+answerServerRequest(UNUSED const std::string &uri, UNUSED bool flag)
 {
 #if 0 // DISABLED: removed IP2IP support, tuleap: #448
     auto account = jami::Manager::instance().getIP2IPAccount();
@@ -114,32 +117,33 @@ answerServerRequest(UNUSED const std::string& uri, UNUSED bool flag)
 /**
  * Get all active subscriptions for "accountID"
  */
-std::vector<std::map<std::string, std::string> >
-getSubscriptions(const std::string& accountID)
+std::vector<std::map<std::string, std::string>>
+getSubscriptions(const std::string &accountID)
 {
     std::vector<std::map<std::string, std::string>> ret;
 
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         if (auto pres = sipaccount->getPresence()) {
-            const auto& subs = pres->getClientSubscriptions();
+            const auto &subs = pres->getClientSubscriptions();
             ret.reserve(subs.size());
-            for (const auto& s : subs) {
-                ret.push_back({
-                    {DRing::Presence::BUDDY_KEY, s->getURI()},
-                    {DRing::Presence::STATUS_KEY, s->isPresent() ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY},
-                    {DRing::Presence::LINESTATUS_KEY, s->getLineStatus()}
-                });
+            for (const auto &s : subs) {
+                ret.push_back(
+                    {{DRing::Presence::BUDDY_KEY, s->getURI()},
+                     {DRing::Presence::STATUS_KEY,
+                      s->isPresent() ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY},
+                     {DRing::Presence::LINESTATUS_KEY, s->getLineStatus()}});
             }
         } else
             JAMI_ERR("Presence not initialized");
-    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID)) {
-        const auto& trackedBuddies = ringaccount->getTrackedBuddyPresence();
+    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(
+                   accountID)) {
+        const auto &trackedBuddies = ringaccount->getTrackedBuddyPresence();
         ret.reserve(trackedBuddies.size());
-        for (const auto& tracked_id : trackedBuddies) {
-            ret.push_back({
-                {DRing::Presence::BUDDY_KEY, tracked_id.first},
-                {DRing::Presence::STATUS_KEY, tracked_id.second ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY}
-            });
+        for (const auto &tracked_id : trackedBuddies) {
+            ret.push_back(
+                {{DRing::Presence::BUDDY_KEY, tracked_id.first},
+                 {DRing::Presence::STATUS_KEY,
+                  tracked_id.second ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY}});
         }
     } else
         JAMI_ERR("Could not find account %s.", accountID.c_str());
@@ -151,7 +155,7 @@ getSubscriptions(const std::string& accountID)
  * Batch subscribing of URIs
  */
 void
-setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
+setSubscriptions(const std::string &accountID, const std::vector<std::string> &uris)
 {
     if (auto sipaccount = jami::Manager::instance().getAccount<SIPAccount>(accountID)) {
         if (auto pres = sipaccount->getPresence()) {
@@ -159,7 +163,8 @@ setSubscriptions(const std::string& accountID, const std::vector<std::string>& u
                 pres->subscribeClient(u, true);
         } else
             JAMI_ERR("Presence not initialized");
-    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(accountID)) {
+    } else if (auto ringaccount = jami::Manager::instance().getAccount<jami::JamiAccount>(
+                   accountID)) {
         for (const auto &u : uris)
             ringaccount->trackBuddyPresence(u, true);
     } else

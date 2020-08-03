@@ -22,16 +22,17 @@
 #include "igd.h"
 #include "logger.h"
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
-IGD::IGD(IpAddr&& localIp, IpAddr&& publicIp)
+IGD::IGD(IpAddr &&localIp, IpAddr &&publicIp)
 {
-    localIp_ = std::move(localIp);
+    localIp_  = std::move(localIp);
     publicIp_ = std::move(publicIp);
 }
 
 bool
-IGD::operator==(IGD& other) const
+IGD::operator==(IGD &other) const
 {
     return (localIp_ == other.localIp_ and publicIp_ == other.publicIp_);
 }
@@ -40,15 +41,15 @@ bool
 IGD::isMapInUse(const in_port_t externalPort, upnp::PortType type)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto &mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
     return mapList.find(externalPort) != mapList.end();
 }
 
 bool
-IGD::isMapInUse(const Mapping& map)
+IGD::isMapInUse(const Mapping &map)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto &mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
     for (auto it = mapList.cbegin(); it != mapList.cend(); it++) {
         if (it->second == map) {
             return true;
@@ -60,8 +61,8 @@ IGD::isMapInUse(const Mapping& map)
 Mapping
 IGD::getMapping(in_port_t externalPort, upnp::PortType type) const
 {
-    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto it = mapList.find(externalPort);
+    auto &mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto it       = mapList.find(externalPort);
     if (it != mapList.end()) {
         if (it->first == externalPort) {
             return Mapping(it->second.getPortExternal(),
@@ -77,18 +78,18 @@ unsigned int
 IGD::getNbOfUsers(const in_port_t externalPort, upnp::PortType type)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto it = mapList.find(externalPort);
+    auto &mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto it       = mapList.find(externalPort);
     if (it != mapList.end())
         return it->second.users;
     return 0;
 }
 
 unsigned int
-IGD::getNbOfUsers(const Mapping& map)
+IGD::getNbOfUsers(const Mapping &map)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto &mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
     for (auto it = mapList.cbegin(); it != mapList.cend(); it++) {
         if (it->second == map) {
             return it->second.users;
@@ -97,11 +98,11 @@ IGD::getNbOfUsers(const Mapping& map)
     return 0;
 }
 
-PortMapGlobal*
+PortMapGlobal *
 IGD::getCurrentMappingList(upnp::PortType type)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto &mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
     return &mapList;
 }
 
@@ -109,24 +110,28 @@ void
 IGD::incrementNbOfUsers(const in_port_t externalPort, upnp::PortType type)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto it = mapList.find(externalPort);
+    auto &mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto it       = mapList.find(externalPort);
     if (it != mapList.end()) {
         it->second.users++;
-        JAMI_DBG("IGD: Incrementing the number of users for %s to %u", it->second.toString().c_str(), it->second.users);
+        JAMI_DBG("IGD: Incrementing the number of users for %s to %u",
+                 it->second.toString().c_str(),
+                 it->second.users);
         return;
     }
 }
 
 void
-IGD::incrementNbOfUsers(const Mapping& map)
+IGD::incrementNbOfUsers(const Mapping &map)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto &mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
     for (auto it = mapList.begin(); it != mapList.end(); it++) {
         if (it->second == map) {
             it->second.users++;
-            JAMI_DBG("IGD: Incrementing the number of users for %s to %u", it->second.toString().c_str(), it->second.users);
+            JAMI_DBG("IGD: Incrementing the number of users for %s to %u",
+                     it->second.toString().c_str(),
+                     it->second.users);
             return;
         }
     }
@@ -139,12 +144,14 @@ void
 IGD::decrementNbOfUsers(const in_port_t externalPort, upnp::PortType type)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
-    auto it = mapList.find(externalPort);
+    auto &mapList = type == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto it       = mapList.find(externalPort);
     if (it != mapList.end()) {
         if (it->second.users > 1) {
             it->second.users--;
-            JAMI_DBG("IGD: Decrementing the number of users for %s to %u", it->second.toString().c_str(), it->second.users);
+            JAMI_DBG("IGD: Decrementing the number of users for %s to %u",
+                     it->second.toString().c_str(),
+                     it->second.users);
             return;
         } else {
             mapList.erase(it);
@@ -153,15 +160,17 @@ IGD::decrementNbOfUsers(const in_port_t externalPort, upnp::PortType type)
     }
 }
 void
-IGD::decrementNbOfUsers(const Mapping& map)
+IGD::decrementNbOfUsers(const Mapping &map)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto &mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
     for (auto it = mapList.begin(); it != mapList.end(); it++) {
         if (it->second == map) {
             if (it->second.users > 1) {
                 it->second.users--;
-                JAMI_DBG("IGD: Decrementing the number of users for %s to %u", it->second.toString().c_str(), it->second.users);
+                JAMI_DBG("IGD: Decrementing the number of users for %s to %u",
+                         it->second.toString().c_str(),
+                         it->second.users);
                 return;
             } else {
                 mapList.erase(it);
@@ -172,15 +181,17 @@ IGD::decrementNbOfUsers(const Mapping& map)
 }
 
 void
-IGD::removeMapInUse(const Mapping& map)
+IGD::removeMapInUse(const Mapping &map)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    auto& mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
+    auto &mapList = map.getType() == upnp::PortType::UDP ? udpMappings_ : tcpMappings_;
     for (auto it = mapList.begin(); it != mapList.end(); it++) {
         if (it->second == map) {
             if (it->second.users > 1) {
                 it->second.users--;
-                JAMI_DBG("IGD: Decrementing the number of users for %s to %u", it->second.toString().c_str(), it->second.users);
+                JAMI_DBG("IGD: Decrementing the number of users for %s to %u",
+                         it->second.toString().c_str(),
+                         it->second.users);
             } else {
                 mapList.erase(it->first);
             }
@@ -189,4 +200,5 @@ IGD::removeMapInUse(const Mapping& map)
     }
 }
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

@@ -22,11 +22,11 @@
 
 #include "ip_utils.h"
 
-#include <functional>
-#include <vector>
 #include <chrono>
-#include <system_error>
 #include <cstdint>
+#include <functional>
+#include <system_error>
+#include <vector>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -35,7 +35,7 @@ using ssize_t = SSIZE_T;
 
 namespace jami {
 
-template <typename T>
+template<typename T>
 class GenericSocket
 {
 public:
@@ -43,7 +43,7 @@ public:
 
     virtual ~GenericSocket() { shutdown(); }
 
-    using RecvCb = std::function<ssize_t(const ValueType* buf, std::size_t len)>;
+    using RecvCb = std::function<ssize_t(const ValueType *buf, std::size_t len)>;
 
     /// Close established connection
     /// \note Terminate outstanding blocking read operations with an empty error code, but a 0 read size.
@@ -52,7 +52,7 @@ public:
     /// Set Rx callback
     /// \warning This method is here for backward compatibility
     /// and because async IO are not implemented yet.
-    virtual void setOnRecv(RecvCb&& cb) = 0;
+    virtual void setOnRecv(RecvCb &&cb) = 0;
 
     virtual bool isReliable() const = 0;
 
@@ -73,7 +73,7 @@ public:
     /// \note error code is not set in case of timeout, but set only in case of io error
     /// (i.e. socket deconnection).
     /// \todo make a std::chrono version for the timeout
-    virtual int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const = 0;
+    virtual int waitForData(std::chrono::milliseconds timeout, std::error_code &ec) const = 0;
 
     /// Write a given amount of data.
     /// \param buf data to write.
@@ -82,7 +82,7 @@ public:
     /// \return number of bytes written, 0 is valid.
     /// \warning error checking consists in checking if \a !ec is true, not if returned size is 0
     /// as a write of 0 could be considered a valid operation.
-    virtual std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) = 0;
+    virtual std::size_t write(const ValueType *buf, std::size_t len, std::error_code &ec) = 0;
 
     /// Read a given amount of data.
     /// \param buf data to read.
@@ -91,17 +91,19 @@ public:
     /// \return number of bytes read, 0 is valid.
     /// \warning error checking consists in checking if \a !ec is true, not if returned size is 0
     /// as a read of 0 could be considered a valid operation (i.e. non-blocking IO).
-    virtual std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) = 0;
+    virtual std::size_t read(ValueType *buf, std::size_t len, std::error_code &ec) = 0;
 
     /// write() adaptor for STL containers
-    template <typename U>
-    std::size_t write(const U& obj, std::error_code& ec) {
+    template<typename U>
+    std::size_t write(const U &obj, std::error_code &ec)
+    {
         return write(obj.data(), obj.size() * sizeof(typename U::value_type), ec);
     }
 
     /// read() adaptor for STL containers
-    template <typename U>
-    std::size_t read(U& storage, std::error_code& ec) {
+    template<typename U>
+    std::size_t read(U &storage, std::error_code &ec)
+    {
         auto res = read(storage.data(), storage.size() * sizeof(typename U::value_type), ec);
         if (!ec)
             storage.resize(res);

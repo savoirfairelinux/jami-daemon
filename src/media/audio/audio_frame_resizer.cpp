@@ -30,7 +30,9 @@ extern "C" {
 
 namespace jami {
 
-AudioFrameResizer::AudioFrameResizer(const AudioFormat& format, int size, std::function<void(std::shared_ptr<AudioFrame>&&)> cb)
+AudioFrameResizer::AudioFrameResizer(const AudioFormat &format,
+                                     int size,
+                                     std::function<void(std::shared_ptr<AudioFrame> &&)> cb)
     : format_(format)
     , frameSize_(size)
     , cb_(cb)
@@ -61,7 +63,7 @@ AudioFrameResizer::format() const
 }
 
 void
-AudioFrameResizer::setFormat(const AudioFormat& format, int size)
+AudioFrameResizer::setFormat(const AudioFormat &format, int size)
 {
     if (size)
         setFrameSize(size);
@@ -70,7 +72,7 @@ AudioFrameResizer::setFormat(const AudioFormat& format, int size)
             JAMI_WARN("Discarding %d samples", discarded);
         av_audio_fifo_free(queue_);
         format_ = format;
-        queue_ = av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, frameSize_);
+        queue_  = av_audio_fifo_alloc(format.sampleFormat, format.nb_channels, frameSize_);
     }
 }
 
@@ -86,13 +88,14 @@ AudioFrameResizer::setFrameSize(int frameSize)
 }
 
 void
-AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
+AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame> &&frame)
 {
     int ret = 0;
-    auto f = frame->pointer();
-    AudioFormat format(f->sample_rate, f->channels, (AVSampleFormat)f->format);
+    auto f  = frame->pointer();
+    AudioFormat format(f->sample_rate, f->channels, (AVSampleFormat) f->format);
     if (format != format_) {
-        JAMI_ERR() << "Expected " << format_ << ", but got " << AudioFormat(f->sample_rate, f->channels, (AVSampleFormat)f->format);
+        JAMI_ERR() << "Expected " << format_ << ", but got "
+                   << AudioFormat(f->sample_rate, f->channels, (AVSampleFormat) f->format);
         setFormat(format, frameSize_);
     }
 
@@ -104,7 +107,7 @@ AudioFrameResizer::enqueue(std::shared_ptr<AudioFrame>&& frame)
     }
 
     // queue reallocates itself if need be
-    if ((ret = av_audio_fifo_write(queue_, reinterpret_cast<void**>(f->data), f->nb_samples)) < 0) {
+    if ((ret = av_audio_fifo_write(queue_, reinterpret_cast<void **>(f->data), f->nb_samples)) < 0) {
         JAMI_ERR() << "Audio resizer error: " << libav_utils::getError(ret);
         throw std::runtime_error("Failed to add audio to frame resizer");
     }
@@ -125,7 +128,10 @@ AudioFrameResizer::dequeue()
 
     auto frame = std::make_shared<AudioFrame>(format_, frameSize_);
     int ret;
-    if ((ret = av_audio_fifo_read(queue_, reinterpret_cast<void**>(frame->pointer()->data), frameSize_)) < 0) {
+    if ((ret = av_audio_fifo_read(queue_,
+                                  reinterpret_cast<void **>(frame->pointer()->data),
+                                  frameSize_))
+        < 0) {
         JAMI_ERR() << "Could not read samples from queue: " << libav_utils::getError(ret);
         return {};
     }

@@ -23,8 +23,8 @@
 
 #pragma once
 
-#include <string>
 #include "audio/audioloop.h"
+#include <string>
 
 /**
  * @file tone.h
@@ -33,42 +33,38 @@
 
 namespace jami {
 
-class Tone : public AudioLoop {
-    public:
-        Tone() : AudioLoop() {}
+class Tone : public AudioLoop
+{
+public:
+    Tone()
+        : AudioLoop()
+    {}
 
-        /**
+    /**
          * Constructor
          * @param definition String that contain frequency/time of the tone
          * @param sampleRate SampleRating of audio tone
          */
-        Tone(const std::string& definition, unsigned int sampleRate);
+    Tone(const std::string &definition, unsigned int sampleRate);
 
-        /** The different kind of tones */
-        enum class ToneId {
-            DIALTONE = 0,
-            BUSY,
-            RINGTONE,
-            CONGESTION,
-            TONE_NULL
-        };
+    /** The different kind of tones */
+    enum class ToneId { DIALTONE = 0, BUSY, RINGTONE, CONGESTION, TONE_NULL };
 
-        /**
+    /**
          * Add a simple or double sin to the buffer, it double the sin in stereo
          * @param buffer  The data
          * @param frequency1 The first frequency
          * @param frequency2	The second frequency
          * @param nb the number of samples to generate
          */
-        void genSin(AudioSample* buffer, int frequency1, int frequency2, size_t nb);
+    void genSin(AudioSample *buffer, int frequency1, int frequency2, size_t nb);
 
-    private:
-
-        /**
+private:
+    /**
          * allocate the memory with the definition
          * @param definition String that contain frequency/time of the tone.
          */
-        void genBuffer(const std::string& definition);
+    void genBuffer(const std::string &definition);
 };
 
 } // namespace jami

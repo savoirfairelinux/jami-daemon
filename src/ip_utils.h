@@ -33,198 +33,201 @@ extern "C" {
 #include <ciso646> // fix windows compiler bug
 
 #ifdef _WIN32
-    #ifdef RING_UWP
-        #define _WIN32_WINNT 0x0A00
-    #else
-        #define _WIN32_WINNT 0x0601
-    #endif
-    #include <ws2tcpip.h>
-
-    //define in mingw
-    #ifdef interface
-    #undef interface
-    #endif
+#ifdef RING_UWP
+#define _WIN32_WINNT 0x0A00
 #else
-    #include <sys/socket.h>
-    #include <netinet/in.h>
-    #include <arpa/inet.h>
-    #include <net/if.h>
-    #include <sys/ioctl.h>
-    #include <unistd.h>
+#define _WIN32_WINNT 0x0601
+#endif
+#include <ws2tcpip.h>
+
+//define in mingw
+#ifdef interface
+#undef interface
+#endif
+#else
+#include <arpa/inet.h>
+#include <net/if.h>
+#include <netinet/in.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #endif
 
 #include <string>
 #include <vector>
-
 
 /* An IPv4 equivalent to IN6_IS_ADDR_UNSPECIFIED */
 #ifndef IN_IS_ADDR_UNSPECIFIED
 #define IN_IS_ADDR_UNSPECIFIED(a) (((long int) (a)->s_addr) == 0x00000000)
 #endif /* IN_IS_ADDR_UNSPECIFIED */
 
-#define INVALID_SOCKET      (-1)
+#define INVALID_SOCKET (-1)
 
 namespace jami {
 
 /**
  * Binary representation of an IP address.
  */
-class IpAddr {
+class IpAddr
+{
 public:
-    IpAddr() : IpAddr(AF_UNSPEC) {}
-    IpAddr(const IpAddr&) = default;
-    IpAddr(IpAddr&&) = default;
-    IpAddr& operator=(const IpAddr&) = default;
-    IpAddr& operator=(IpAddr&&) = default;
+    IpAddr()
+        : IpAddr(AF_UNSPEC)
+    {}
+    IpAddr(const IpAddr &) = default;
+    IpAddr(IpAddr &&)      = default;
+    IpAddr &operator=(const IpAddr &) = default;
+    IpAddr &operator=(IpAddr &&) = default;
 
-    explicit IpAddr(uint16_t family) : addr() {
+    explicit IpAddr(uint16_t family)
+        : addr()
+    {
         addr.addr.sa_family = family;
     }
 
-    IpAddr(const pj_sockaddr& ip) : addr(ip) {}
+    IpAddr(const pj_sockaddr &ip)
+        : addr(ip)
+    {}
 
-    IpAddr(const pj_sockaddr& ip, socklen_t len) : addr() {
+    IpAddr(const pj_sockaddr &ip, socklen_t len)
+        : addr()
+    {
         if (len > sizeof(addr))
             throw std::invalid_argument("IpAddr(): length overflows internal storage type");
         memcpy(&addr, &ip, len);
     }
 
-    IpAddr(const sockaddr& ip) : addr() {
+    IpAddr(const sockaddr &ip)
+        : addr()
+    {
         memcpy(&addr, &ip, ip.sa_family == AF_INET6 ? sizeof addr.ipv6 : sizeof addr.ipv4);
     }
 
-    IpAddr(const sockaddr_in& ip) : addr() {
+    IpAddr(const sockaddr_in &ip)
+        : addr()
+    {
         static_assert(sizeof(ip) <= sizeof(addr), "sizeof(sockaddr_in) too large");
         memcpy(&addr, &ip, sizeof(sockaddr_in));
     }
 
-    IpAddr(const sockaddr_in6& ip) : addr() {
+    IpAddr(const sockaddr_in6 &ip)
+        : addr()
+    {
         static_assert(sizeof(ip) <= sizeof(addr), "sizeof(sockaddr_in6) too large");
         memcpy(&addr, &ip, sizeof(sockaddr_in6));
     }
 
-    IpAddr(const sockaddr_storage& ip) : IpAddr(*reinterpret_cast<const sockaddr*>(&ip)) {}
+    IpAddr(const sockaddr_storage &ip)
+        : IpAddr(*reinterpret_cast<const sockaddr *>(&ip))
+    {}
 
-    IpAddr(const in_addr& ip) : addr() {
+    IpAddr(const in_addr &ip)
+        : addr()
+    {
         static_assert(sizeof(ip) <= sizeof(addr), "sizeof(in_addr) too large");
         addr.addr.sa_family = AF_INET;
         memcpy(&addr.ipv4.sin_addr, &ip, sizeof(in_addr));
     }
 
-    IpAddr(const in6_addr& ip) : addr() {
+    IpAddr(const in6_addr &ip)
+        : addr()
+    {
         static_assert(sizeof(ip) <= sizeof(addr), "sizeof(in6_addr) too large");
         addr.addr.sa_family = AF_INET6;
         memcpy(&addr.ipv6.sin6_addr, &ip, sizeof(in6_addr));
     }
 
-    IpAddr(const std::string& str, pj_uint16_t family = AF_UNSPEC) : addr() {
+    IpAddr(const std::string &str, pj_uint16_t family = AF_UNSPEC)
+        : addr()
+    {
         if (str.empty()) {
             addr.addr.sa_family = AF_UNSPEC;
             return;
         }
-        const pj_str_t pjstring {(char*)str.c_str(), (pj_ssize_t)str.size()};
+        const pj_str_t pjstring{(char *) str.c_str(), (pj_ssize_t) str.size()};
         auto status = pj_sockaddr_parse(family, 0, &pjstring, &addr);
         if (status != PJ_SUCCESS)
             addr.addr.sa_family = AF_UNSPEC;
     }
 
     // Is defined
-    inline explicit operator bool() const {
-        return isIpv4() or isIpv6();
-    }
+    inline explicit operator bool() const { return isIpv4() or isIpv6(); }
 
-    inline explicit operator bool() {
-        return isIpv4() or isIpv6();
-    }
+    inline explicit operator bool() { return isIpv4() or isIpv6(); }
 
-    inline operator pj_sockaddr& () {
-        return addr;
-    }
+    inline operator pj_sockaddr &() { return addr; }
 
-    inline operator const pj_sockaddr& () const {
-        return addr;
-    }
+    inline operator const pj_sockaddr &() const { return addr; }
 
-    inline operator pj_sockaddr_in& () {
-        return addr.ipv4;
-    }
+    inline operator pj_sockaddr_in &() { return addr.ipv4; }
 
-    inline operator const pj_sockaddr_in& () const {
+    inline operator const pj_sockaddr_in &() const
+    {
         assert(addr.addr.sa_family != AF_INET6);
         return addr.ipv4;
     }
 
-    inline operator pj_sockaddr_in6& () {
-        return addr.ipv6;
-    }
+    inline operator pj_sockaddr_in6 &() { return addr.ipv6; }
 
-    inline operator const pj_sockaddr_in6& () const {
+    inline operator const pj_sockaddr_in6 &() const
+    {
         assert(addr.addr.sa_family == AF_INET6);
         return addr.ipv6;
     }
 
-    inline operator const sockaddr& () const {
-        return reinterpret_cast<const sockaddr&>(addr);
-    }
+    inline operator const sockaddr &() const { return reinterpret_cast<const sockaddr &>(addr); }
 
-    inline operator const sockaddr* () const {
-        return reinterpret_cast<const sockaddr*>(&addr);
-    }
+    inline operator const sockaddr *() const { return reinterpret_cast<const sockaddr *>(&addr); }
 
-    inline operator sockaddr_storage (){
+    inline operator sockaddr_storage()
+    {
         sockaddr_storage ss;
         memcpy(&ss, &addr, getLength());
         return ss;
     }
 
-    inline const pj_sockaddr* pjPtr() const {
-        return &addr;
-    }
+    inline const pj_sockaddr *pjPtr() const { return &addr; }
 
-    inline pj_sockaddr* pjPtr() {
-        return &addr;
-    }
+    inline pj_sockaddr *pjPtr() { return &addr; }
 
-    inline operator std::string () const {
-        return toString();
-    }
+    inline operator std::string() const { return toString(); }
 
-    std::string toString(bool include_port=false, bool force_ipv6_brackets=false) const {
-        if (addr.addr.sa_family == AF_UNSPEC) return {};
-        std::string str(PJ_INET6_ADDRSTRLEN, (char)0);
-        if (include_port) force_ipv6_brackets = true;
-        pj_sockaddr_print(&addr, &(*str.begin()), PJ_INET6_ADDRSTRLEN, (include_port?1:0)|(force_ipv6_brackets?2:0));
+    std::string toString(bool include_port = false, bool force_ipv6_brackets = false) const
+    {
+        if (addr.addr.sa_family == AF_UNSPEC)
+            return {};
+        std::string str(PJ_INET6_ADDRSTRLEN, (char) 0);
+        if (include_port)
+            force_ipv6_brackets = true;
+        pj_sockaddr_print(&addr,
+                          &(*str.begin()),
+                          PJ_INET6_ADDRSTRLEN,
+                          (include_port ? 1 : 0) | (force_ipv6_brackets ? 2 : 0));
         str.resize(std::char_traits<char>::length(str.c_str()));
         return str;
     }
 
-    void setPort(uint16_t port) {
-        pj_sockaddr_set_port(&addr, port);
-    }
+    void setPort(uint16_t port) { pj_sockaddr_set_port(&addr, port); }
 
-    inline uint16_t getPort() const {
-        if (not *this)
+    inline uint16_t getPort() const
+    {
+        if (not*this)
             return 0;
         return pj_sockaddr_get_port(&addr);
     }
 
-    inline socklen_t getLength() const {
-        if (not *this)
+    inline socklen_t getLength() const
+    {
+        if (not*this)
             return 0;
         return pj_sockaddr_get_len(&addr);
     }
 
-    inline uint16_t getFamily() const {
-        return addr.addr.sa_family;
-    }
+    inline uint16_t getFamily() const { return addr.addr.sa_family; }
 
-    inline bool isIpv4() const {
-        return addr.addr.sa_family == AF_INET;
-    }
+    inline bool isIpv4() const { return addr.addr.sa_family == AF_INET; }
 
-    inline bool isIpv6() const {
-        return addr.addr.sa_family == AF_INET6;
-    }
+    inline bool isIpv6() const { return addr.addr.sa_family == AF_INET6; }
 
     /**
      * Return true if address is a loopback IP address.
@@ -241,27 +244,49 @@ public:
     /**
      * Return true if address is a valid IPv6.
      */
-    inline static bool isIpv6(const std::string& address) {
-        return isValid(address, AF_INET6);
-    }
+    inline static bool isIpv6(const std::string &address) { return isValid(address, AF_INET6); }
 
     /**
      * Return true if address is a valid IP address of specified family (if provided) or of any kind (default).
      * Does not resolve hostnames.
      */
-    static bool isValid(const std::string& address, pj_uint16_t family = pj_AF_UNSPEC());
+    static bool isValid(const std::string &address, pj_uint16_t family = pj_AF_UNSPEC());
 
 private:
-    pj_sockaddr addr {};
+    pj_sockaddr addr{};
 };
 
 // IpAddr helpers
-inline bool operator==(const IpAddr& lhs, const IpAddr& rhs) { return !pj_sockaddr_cmp(&lhs, &rhs); }
-inline bool operator!=(const IpAddr& lhs, const IpAddr& rhs) { return !(lhs == rhs); }
-inline bool operator<(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) < 0; }
-inline bool operator>(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) > 0; }
-inline bool operator<=(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) <= 0; }
-inline bool operator>=(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) >= 0; }
+inline bool
+operator==(const IpAddr &lhs, const IpAddr &rhs)
+{
+    return !pj_sockaddr_cmp(&lhs, &rhs);
+}
+inline bool
+operator!=(const IpAddr &lhs, const IpAddr &rhs)
+{
+    return !(lhs == rhs);
+}
+inline bool
+operator<(const IpAddr &lhs, const IpAddr &rhs)
+{
+    return pj_sockaddr_cmp(&lhs, &rhs) < 0;
+}
+inline bool
+operator>(const IpAddr &lhs, const IpAddr &rhs)
+{
+    return pj_sockaddr_cmp(&lhs, &rhs) > 0;
+}
+inline bool
+operator<=(const IpAddr &lhs, const IpAddr &rhs)
+{
+    return pj_sockaddr_cmp(&lhs, &rhs) <= 0;
+}
+inline bool
+operator>=(const IpAddr &lhs, const IpAddr &rhs)
+{
+    return pj_sockaddr_cmp(&lhs, &rhs) >= 0;
+}
 
 namespace ip_utils {
 
@@ -269,17 +294,12 @@ static const char *const DEFAULT_INTERFACE = "default";
 
 static const unsigned int MAX_INTERFACE = 256;
 static const unsigned int MIN_INTERFACE = 1;
-enum class subnet_mask {
-    prefix_8bit,
-    prefix_16bit,
-    prefix_24bit,
-    prefix_32bit
-};
+enum class subnet_mask { prefix_8bit, prefix_16bit, prefix_24bit, prefix_32bit };
 
 std::string getHostname();
 
 int getHostName(char *out, size_t out_len);
-std::string getGateway(char* localHost, ip_utils::subnet_mask prefix);
+std::string getGateway(char *localHost, ip_utils::subnet_mask prefix);
 
 std::string getDeviceName();
 
@@ -287,7 +307,11 @@ std::string getDeviceName();
  * Return the generic "any host" IP address of the specified family.
  * If family is unspecified, default to pj_AF_INET6() (IPv6).
  */
-inline IpAddr getAnyHostAddr(pj_uint16_t family)  { return IpAddr(family); }
+inline IpAddr
+getAnyHostAddr(pj_uint16_t family)
+{
+    return IpAddr(family);
+}
 
 /**
  * Return the first host IP address of the specified family.
@@ -329,7 +353,7 @@ std::vector<std::string> getAllIpInterface();
 
 std::vector<IpAddr> getAddrList(const std::string &name, pj_uint16_t family = pj_AF_UNSPEC());
 
-bool haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>& b);
+bool haveCommonAddr(const std::vector<IpAddr> &a, const std::vector<IpAddr> &b);
 
 std::vector<IpAddr> getLocalNameservers();
 

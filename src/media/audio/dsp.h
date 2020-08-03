@@ -21,33 +21,34 @@
 #ifndef DSP_H_
 #define DSP_H_
 
+#include "noncopyable.h"
 #include <cstdint>
+#include <memory>
 #include <speex/speex_preprocess.h>
 #include <vector>
-#include <memory>
-#include "noncopyable.h"
 
 namespace jami {
 
 class AudioBuffer;
 
-class DSP {
-    public:
-        DSP(int smplPerFrame, int channels, int samplingRate);
-        void enableAGC();
-        void disableAGC();
-        void enableDenoise();
-        void disableDenoise();
-        void process(AudioBuffer& buf, int samples);
+class DSP
+{
+public:
+    DSP(int smplPerFrame, int channels, int samplingRate);
+    void enableAGC();
+    void disableAGC();
+    void enableDenoise();
+    void disableDenoise();
+    void process(AudioBuffer &buf, int samples);
 
-    private:
-        NON_COPYABLE(DSP);
-        static void speexStateDeleter(SpeexPreprocessState *state);
-        typedef std::unique_ptr<SpeexPreprocessState, decltype(&speexStateDeleter)> SpeexStatePtr;
+private:
+    NON_COPYABLE(DSP);
+    static void speexStateDeleter(SpeexPreprocessState *state);
+    typedef std::unique_ptr<SpeexPreprocessState, decltype(&speexStateDeleter)> SpeexStatePtr;
 
-        int smplPerFrame_;
-        // one state per channel
-        std::vector<SpeexStatePtr> dspStates_;
+    int smplPerFrame_;
+    // one state per channel
+    std::vector<SpeexStatePtr> dspStates_;
 };
 
 } // namespace jami

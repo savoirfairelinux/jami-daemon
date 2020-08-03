@@ -26,23 +26,24 @@
 
 extern "C" {
 #include <libavcodec/avcodec.h>
+#include <libavdevice/avdevice.h>
 #include <libavfilter/avfilter.h>
 #include <libavformat/avformat.h>
-#include <libavdevice/avdevice.h>
-#include <libswscale/swscale.h>
 #include <libavutil/avutil.h>
-#include <libavutil/time.h>
-#include <libavutil/pixdesc.h>
-#include <libavutil/opt.h>
 #include <libavutil/channel_layout.h>
 #include <libavutil/imgutils.h>
 #include <libavutil/intreadwrite.h>
 #include <libavutil/log.h>
+#include <libavutil/opt.h>
+#include <libavutil/pixdesc.h>
 #include <libavutil/samplefmt.h>
+#include <libavutil/time.h>
+#include <libswscale/swscale.h>
 
 #if LIBAVUTIL_VERSION_MAJOR < 56
-AVFrameSideData*
-av_frame_new_side_data_from_buf(AVFrame* frame, enum AVFrameSideDataType type, AVBufferRef* buf);
+AVFrameSideData *av_frame_new_side_data_from_buf(AVFrame *frame,
+                                                 enum AVFrameSideDataType type,
+                                                 AVBufferRef *buf);
 #endif
 }
 

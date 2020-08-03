@@ -34,27 +34,25 @@ namespace jami {
  * an error occurred with a regular expression
  * operation.
  */
-class ParseError : public std::invalid_argument {
-    public:
-        explicit ParseError(const std::string& error) :
-            std::invalid_argument(error) {}
+class ParseError : public std::invalid_argument
+{
+public:
+    explicit ParseError(const std::string &error)
+        : std::invalid_argument(error)
+    {}
 };
 
-enum CipherMode {
-    AESCounterMode,
-    AESF8Mode
-};
+enum CipherMode { AESCounterMode, AESF8Mode };
 
-enum MACMode {
-    HMACSHA1
-};
+enum MACMode { HMACSHA1 };
 
 enum KeyMethod {
     Inline
     // url, maybe at some point
 };
 
-struct CryptoSuiteDefinition {
+struct CryptoSuiteDefinition
+{
     const char *name;
     int masterKeyLength;
     int masterSaltLength;
@@ -75,17 +73,14 @@ struct CryptoSuiteDefinition {
 */
 
 static std::vector<CryptoSuiteDefinition> CryptoSuites = {
-    { "AES_CM_128_HMAC_SHA1_80",
-      128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 80, 80, 160, 160 },
+    {"AES_CM_128_HMAC_SHA1_80", 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 80, 80, 160, 160},
 
-    { "AES_CM_128_HMAC_SHA1_32",
-      128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160 },
+    {"AES_CM_128_HMAC_SHA1_32", 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160},
 
-    { "F8_128_HMAC_SHA1_80",
-      128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160 }
-};
+    {"F8_128_HMAC_SHA1_80", 128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160}};
 
-class SdesNegotiator {
+class SdesNegotiator
+{
 public:
     SdesNegotiator() {}
 
@@ -99,16 +94,14 @@ public:
      *       and a crypto context will be created
      *       from it.
      */
-    SdesNegotiator(const std::vector<CryptoSuiteDefinition>& capabilites);
+    SdesNegotiator(const std::vector<CryptoSuiteDefinition> &capabilites);
 
-    CryptoAttribute negotiate(const std::vector<std::string>& attributes) const;
+    CryptoAttribute negotiate(const std::vector<std::string> &attributes) const;
 
-    inline explicit operator bool() const {
-        return not localCapabilities_.empty();
-    }
+    inline explicit operator bool() const { return not localCapabilities_.empty(); }
 
 private:
-    static std::vector<CryptoAttribute> parse(const std::vector<std::string>& attributes);
+    static std::vector<CryptoAttribute> parse(const std::vector<std::string> &attributes);
 
     /**
      * A vector list containing the remote attributes.

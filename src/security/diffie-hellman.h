@@ -21,43 +21,39 @@
 
 #pragma once
 
-#include <gnutls/gnutls.h>
-#include <vector>
-#include <memory>
 #include <cstdint>
+#include <gnutls/gnutls.h>
+#include <memory>
+#include <vector>
 
-namespace jami { namespace tls {
+namespace jami {
+namespace tls {
 
-class DhParams {
+class DhParams
+{
 public:
-    DhParams() = default;
-    DhParams(DhParams&&) = default;
-    DhParams(const DhParams& other) {
-        *this = other;
-    }
+    DhParams()            = default;
+    DhParams(DhParams &&) = default;
+    DhParams(const DhParams &other) { *this = other; }
 
-    DhParams& operator=(DhParams&& other) = default;
-    DhParams& operator=(const DhParams& other);
+    DhParams &operator=(DhParams &&other) = default;
+    DhParams &operator                    =(const DhParams &other);
 
     /// \brief Construct by taking ownership of given gnutls DH params
     ///
     /// User should not call gnutls_dh_params_deinit on given \a raw_params.
     /// The object is stolen and its live is manager by our object.
-    explicit DhParams(gnutls_dh_params_t p) : params_ {p, gnutls_dh_params_deinit} {}
+    explicit DhParams(gnutls_dh_params_t p)
+        : params_{p, gnutls_dh_params_deinit}
+    {}
 
     /** Deserialize DER or PEM encoded DH-params */
-    DhParams(const std::vector<uint8_t>& data);
+    DhParams(const std::vector<uint8_t> &data);
 
-    gnutls_dh_params_t get() {
-        return params_.get();
-    }
-    gnutls_dh_params_t get() const {
-        return params_.get();
-    }
+    gnutls_dh_params_t get() { return params_.get(); }
+    gnutls_dh_params_t get() const { return params_.get(); }
 
-    explicit inline operator bool() const {
-        return bool(params_);
-    }
+    explicit inline operator bool() const { return bool(params_); }
 
     /** Serialize data in PEM format */
     std::vector<uint8_t> serialize() const;
@@ -65,7 +61,9 @@ public:
     static DhParams generate();
 
 private:
-    std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)*> params_ {nullptr, gnutls_dh_params_deinit};
+    std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit) *>
+        params_{nullptr, gnutls_dh_params_deinit};
 };
 
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami

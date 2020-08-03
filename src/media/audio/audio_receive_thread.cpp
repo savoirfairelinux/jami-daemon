@@ -34,15 +34,14 @@
 
 namespace jami {
 
-AudioReceiveThread::AudioReceiveThread(const std::string& id,
-                                       const AudioFormat& format,
-                                       const std::string& sdp,
+AudioReceiveThread::AudioReceiveThread(const std::string &id,
+                                       const AudioFormat &format,
+                                       const std::string &sdp,
                                        const uint16_t mtu)
     : id_(id)
     , format_(format)
     , stream_(sdp)
-    , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction,
-                                    0, 0, this))
+    , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction, 0, 0, this))
     , mtu_(mtu)
     , loop_(std::bind(&AudioReceiveThread::setup, this),
             std::bind(&AudioReceiveThread::process, this),
@@ -57,15 +56,15 @@ AudioReceiveThread::~AudioReceiveThread()
 bool
 AudioReceiveThread::setup()
 {
-    audioDecoder_.reset(new MediaDecoder([this](std::shared_ptr<MediaFrame>&& frame) mutable {
+    audioDecoder_.reset(new MediaDecoder([this](std::shared_ptr<MediaFrame> &&frame) mutable {
         notify(frame);
         ringbuffer_->put(std::static_pointer_cast<AudioFrame>(frame));
     }));
     audioDecoder_->setInterruptCallback(interruptCb, this);
 
     // custom_io so the SDP demuxer will not open any UDP connections
-    args_.input = SDP_FILENAME;
-    args_.format = "sdp";
+    args_.input     = SDP_FILENAME;
+    args_.format    = "sdp";
     args_.sdp_flags = "custom_io";
 
     if (stream_.str().empty()) {
@@ -109,10 +108,10 @@ AudioReceiveThread::cleanup()
 }
 
 int
-AudioReceiveThread::readFunction(void* opaque, uint8_t* buf, int buf_size)
+AudioReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
 {
-    std::istream& is = static_cast<AudioReceiveThread*>(opaque)->stream_;
-    is.read(reinterpret_cast<char*>(buf), buf_size);
+    std::istream &is = static_cast<AudioReceiveThread *>(opaque)->stream_;
+    is.read(reinterpret_cast<char *>(buf), buf_size);
 
     auto count = is.gcount();
     return count ? count : AVERROR_EOF;
@@ -120,14 +119,14 @@ AudioReceiveThread::readFunction(void* opaque, uint8_t* buf, int buf_size)
 
 // This callback is used by libav internally to break out of blocking calls
 int
-AudioReceiveThread::interruptCb(void* data)
+AudioReceiveThread::interruptCb(void *data)
 {
-    auto context = static_cast<AudioReceiveThread*>(data);
+    auto context = static_cast<AudioReceiveThread *>(data);
     return not context->loop_.isRunning();
 }
 
 void
-AudioReceiveThread::addIOContext(SocketPair& socketPair)
+AudioReceiveThread::addIOContext(SocketPair &socketPair)
 {
     demuxContext_.reset(socketPair.createIOContext(mtu_));
 }
@@ -139,7 +138,7 @@ AudioReceiveThread::getInfo() const
 }
 
 void
-AudioReceiveThread::startLoop(const std::function<void(MediaType)>& cb)
+AudioReceiveThread::startLoop(const std::function<void(MediaType)> &cb)
 {
     onSetupSuccess_ = cb;
     loop_.start();

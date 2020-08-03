@@ -20,27 +20,29 @@
  */
 
 #include <algorithm>
+#include <cctype>
 #include <string>
 #include <thread>
 #include <vector>
-#include <cctype>
 
 #include "../video_device_monitor.h"
 #include "logger.h"
 #include "noncopyable.h"
 
-#include <dshow.h>
-#include <dbt.h>
 #include <SetupAPI.h>
+#include <dbt.h>
+#include <dshow.h>
 
 namespace jami {
 namespace video {
 
-constexpr GUID guidCamera = { 0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44 };
+constexpr GUID guidCamera
+    = {0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44};
 
-class VideoDeviceMonitorImpl {
+class VideoDeviceMonitorImpl
+{
 public:
-    VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
+    VideoDeviceMonitorImpl(VideoDeviceMonitor *monitor);
     ~VideoDeviceMonitorImpl();
 
     void start();
@@ -48,7 +50,7 @@ public:
 private:
     NON_COPYABLE(VideoDeviceMonitorImpl);
 
-    VideoDeviceMonitor* monitor_;
+    VideoDeviceMonitor *monitor_;
 
     void run();
 
@@ -59,7 +61,7 @@ private:
     static LRESULT CALLBACK WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 };
 
-VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
+VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor *monitor)
     : monitor_(monitor)
     , thread_()
 {}
@@ -87,11 +89,11 @@ getDeviceUniqueName(PDEV_BROADCAST_DEVICEINTERFACE pbdi)
 {
     std::string unique_name = pbdi->dbcc_name;
 
-    std::transform(unique_name.begin(), unique_name.end(), unique_name.begin(),
-        [](unsigned char c) { return std::tolower(c); }
-    );
+    std::transform(unique_name.begin(), unique_name.end(), unique_name.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
 
-    auto pos = unique_name.find_last_of("#");
+    auto pos    = unique_name.find_last_of("#");
     unique_name = unique_name.substr(0, pos);
 
     return unique_name;
@@ -113,15 +115,13 @@ registerDeviceInterfaceToHwnd(HWND hWnd, HDEVNOTIFY *hDeviceNotify)
     DEV_BROADCAST_DEVICEINTERFACE NotificationFilter;
 
     ZeroMemory(&NotificationFilter, sizeof(NotificationFilter));
-    NotificationFilter.dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
+    NotificationFilter.dbcc_size       = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
     NotificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
-    NotificationFilter.dbcc_classguid = guidCamera;
+    NotificationFilter.dbcc_classguid  = guidCamera;
 
-    *hDeviceNotify = RegisterDeviceNotification(
-        hWnd,
-        &NotificationFilter,
-        DEVICE_NOTIFY_WINDOW_HANDLE
-    );
+    *hDeviceNotify = RegisterDeviceNotification(hWnd,
+                                                &NotificationFilter,
+                                                DEVICE_NOTIFY_WINDOW_HANDLE);
 
     if (nullptr == *hDeviceNotify) {
         return false;
@@ -138,11 +138,10 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
     VideoDeviceMonitorImpl *pThis;
 
     switch (message) {
-    case WM_CREATE:
-    {
+    case WM_CREATE: {
         // Store object pointer passed from CreateWindowEx.
-        auto createParams = reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams;
-        pThis = static_cast<VideoDeviceMonitorImpl*>(createParams);
+        auto createParams = reinterpret_cast<CREATESTRUCT *>(lParam)->lpCreateParams;
+        pThis             = static_cast<VideoDeviceMonitorImpl *>(createParams);
         SetLastError(0);
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
 
@@ -150,20 +149,19 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
             JAMI_ERR() << "Cannot register for device change notifications";
             SendMessage(hWnd, WM_DESTROY, 0, 0);
         }
-    }
-    break;
+    } break;
 
-    case WM_DEVICECHANGE:
-    {
+    case WM_DEVICECHANGE: {
         switch (wParam) {
         case DBT_DEVICEREMOVECOMPLETE:
-        case DBT_DEVICEARRIVAL:
-        {
-            PDEV_BROADCAST_DEVICEINTERFACE pbdi = (PDEV_BROADCAST_DEVICEINTERFACE)lParam;
-            auto unique_name = getDeviceUniqueName(pbdi);
+        case DBT_DEVICEARRIVAL: {
+            PDEV_BROADCAST_DEVICEINTERFACE pbdi = (PDEV_BROADCAST_DEVICEINTERFACE) lParam;
+            auto unique_name                    = getDeviceUniqueName(pbdi);
             if (!unique_name.empty()) {
-                JAMI_DBG() << unique_name << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
-                if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
+                JAMI_DBG() << unique_name
+                           << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
+                if (pThis = reinterpret_cast<VideoDeviceMonitorImpl *>(
+                        GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
                     if (wParam == DBT_DEVICEARRIVAL) {
                         auto captureDeviceList = pThis->enumerateVideoInputDevices();
                         for (auto id : captureDeviceList) {
@@ -175,14 +173,12 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
                     }
                 }
             }
-        }
-        break;
+        } break;
         default:
             break;
         }
         break;
-    }
-    break;
+    } break;
 
     case WM_CLOSE:
         UnregisterDeviceNotification(hDeviceNotify);
@@ -205,16 +201,16 @@ void
 VideoDeviceMonitorImpl::run()
 {
     // Create a dummy window with the sole purpose to receive device change messages.
-    static const char* className = "Message";
-    WNDCLASSEX wx = {};
-    wx.cbSize = sizeof(WNDCLASSEX);
-    wx.lpfnWndProc = WinProcCallback;
-    wx.hInstance = reinterpret_cast<HINSTANCE>(GetModuleHandle(0));
-    wx.lpszClassName = className;
+    static const char *className = "Message";
+    WNDCLASSEX wx                = {};
+    wx.cbSize                    = sizeof(WNDCLASSEX);
+    wx.lpfnWndProc               = WinProcCallback;
+    wx.hInstance                 = reinterpret_cast<HINSTANCE>(GetModuleHandle(0));
+    wx.lpszClassName             = className;
     if (RegisterClassEx(&wx)) {
         // Pass this as lpParam so WinProcCallback can access members of VideoDeviceMonitorImpl.
-        hWnd_ = CreateWindowEx(0, className, "devicenotifications", 0, 0, 0, 0, 0,
-                               HWND_MESSAGE, NULL, NULL, this);
+        hWnd_ = CreateWindowEx(
+            0, className, "devicenotifications", 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, this);
     }
 
     // Run the message loop that will finish once a WM_DESTROY message
@@ -235,8 +231,10 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
     std::vector<std::string> deviceList;
 
     ICreateDevEnum *pDevEnum;
-    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
-        CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
+    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum,
+                                  NULL,
+                                  CLSCTX_INPROC_SERVER,
+                                  IID_PPV_ARGS(&pDevEnum));
 
     if (FAILED(hr)) {
         JAMI_ERR() << "Can't enumerate webcams";
@@ -244,8 +242,7 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
     }
 
     IEnumMoniker *pEnum = nullptr;
-    hr = pDevEnum->CreateClassEnumerator(
-        CLSID_VideoInputDeviceCategory, &pEnum, 0);
+    hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &pEnum, 0);
     if (hr == S_FALSE) {
         hr = VFW_E_NOT_FOUND;
     }
@@ -265,7 +262,7 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
         }
 
         IBindCtx *bind_ctx = NULL;
-        LPOLESTR olestr = NULL;
+        LPOLESTR olestr    = NULL;
 
         hr = CreateBindCtx(0, &bind_ctx);
         if (hr != S_OK) {
@@ -297,8 +294,7 @@ VideoDeviceMonitor::VideoDeviceMonitor()
     monitorImpl_->start();
 }
 
-VideoDeviceMonitor::~VideoDeviceMonitor()
-{}
+VideoDeviceMonitor::~VideoDeviceMonitor() {}
 
-}
-} // namespace jami::video
+} // namespace video
+} // namespace jami

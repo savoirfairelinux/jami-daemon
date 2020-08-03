@@ -20,15 +20,14 @@
 
 #include "datatransfer_interface.h"
 
-#include "manager.h"
-#include "data_transfer.h"
 #include "client/ring_signal.h"
+#include "data_transfer.h"
+#include "manager.h"
 
 namespace DRing {
 
 void
-registerDataXferHandlers(const std::map<std::string,
-    std::shared_ptr<CallbackWrapperBase>>& handlers)
+registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>> &handlers)
 {
     registerSignalHandlers(handlers);
 }
@@ -40,31 +39,31 @@ dataTransferList() noexcept
 }
 
 DataTransferError
-sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept
+sendFile(const DataTransferInfo &info, DataTransferId &id) noexcept
 {
     return jami::Manager::instance().dataTransfers->sendFile(info, id);
 }
 
 DataTransferError
-acceptFileTransfer(const DataTransferId& id, const std::string& file_path, int64_t offset) noexcept
+acceptFileTransfer(const DataTransferId &id, const std::string &file_path, int64_t offset) noexcept
 {
     return jami::Manager::instance().dataTransfers->acceptAsFile(id, file_path, offset);
 }
 
 DataTransferError
-cancelDataTransfer(const DataTransferId& id) noexcept
+cancelDataTransfer(const DataTransferId &id) noexcept
 {
     return jami::Manager::instance().dataTransfers->cancel(id);
 }
 
 DataTransferError
-dataTransferBytesProgress(const DataTransferId& id, int64_t& total, int64_t& progress) noexcept
+dataTransferBytesProgress(const DataTransferId &id, int64_t &total, int64_t &progress) noexcept
 {
     return jami::Manager::instance().dataTransfers->bytesProgress(id, total, progress);
 }
 
 DataTransferError
-dataTransferInfo(const DataTransferId& id, DataTransferInfo& info) noexcept
+dataTransferInfo(const DataTransferId &id, DataTransferInfo &info) noexcept
 {
     return jami::Manager::instance().dataTransfers->info(id, info);
 }

@@ -22,7 +22,7 @@
 
 namespace jami {
 
-LocalRecorderManager&
+LocalRecorderManager &
 LocalRecorderManager::instance()
 {
     static LocalRecorderManager instance;
@@ -30,14 +30,14 @@ LocalRecorderManager::instance()
 }
 
 void
-LocalRecorderManager::removeRecorderByPath(const std::string& path)
+LocalRecorderManager::removeRecorderByPath(const std::string &path)
 {
     std::lock_guard<std::mutex> lock(recorderMapMutex_);
     recorderMap_.erase(path);
 }
 
 void
-LocalRecorderManager::insertRecorder(const std::string& path, std::unique_ptr<LocalRecorder> rec)
+LocalRecorderManager::insertRecorder(const std::string &path, std::unique_ptr<LocalRecorder> rec)
 {
     if (!rec) {
         throw std::invalid_argument("couldn't insert null recorder");
@@ -47,12 +47,13 @@ LocalRecorderManager::insertRecorder(const std::string& path, std::unique_ptr<Lo
     auto ret = recorderMap_.emplace(path, std::move(rec));
 
     if (!ret.second) {
-        throw std::invalid_argument("couldn't insert recorder (passed path is already used as key)");
+        throw std::invalid_argument(
+            "couldn't insert recorder (passed path is already used as key)");
     }
 }
 
-LocalRecorder*
-LocalRecorderManager::getRecorderByPath(const std::string& path)
+LocalRecorder *
+LocalRecorderManager::getRecorderByPath(const std::string &path)
 {
     auto rec = recorderMap_.find(path);
     return (rec == recorderMap_.end()) ? nullptr : rec->second.get();

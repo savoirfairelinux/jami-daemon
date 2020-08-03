@@ -25,8 +25,8 @@
 namespace jami {
 namespace video {
 
-std::unique_ptr<MediaFilter>
-getTransposeFilter(int rotation, std::string inputName, int width, int height, int format, bool rescale);
+std::unique_ptr<MediaFilter> getTransposeFilter(
+    int rotation, std::string inputName, int width, int height, int format, bool rescale);
 
 }
-}
+} // namespace jami

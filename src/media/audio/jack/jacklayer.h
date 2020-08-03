@@ -21,23 +21,24 @@
 
 #pragma once
 
-#include "noncopyable.h"
 #include "audio/audiolayer.h"
+#include "noncopyable.h"
 
 #include <jack/jack.h>
 #include <jack/ringbuffer.h>
 
-#include <thread>
-#include <mutex>
-#include <vector>
 #include <condition_variable>
 #include <memory>
+#include <mutex>
+#include <thread>
+#include <vector>
 
 namespace jami {
 
 class RingBuffer;
 
-class JackLayer : public AudioLayer {
+class JackLayer : public AudioLayer
+{
 private:
     NON_COPYABLE(JackLayer);
     jack_client_t *captureClient_;
@@ -58,13 +59,13 @@ private:
     void capture();
 
     std::unique_ptr<AudioFrame> read();
-    void write(const AudioFrame& buffer);
+    void write(const AudioFrame &buffer);
     size_t writeSpace();
 
     std::vector<std::string> getCaptureDeviceList() const;
     std::vector<std::string> getPlaybackDeviceList() const;
 
-    int getAudioDeviceIndex(const std::string& name, DeviceType type) const;
+    int getAudioDeviceIndex(const std::string &name, DeviceType type) const;
     std::string getAudioDeviceName(int index, DeviceType type) const;
     int getIndexCapture() const;
     int getIndexPlayback() const;
@@ -88,4 +89,4 @@ public:
     ~JackLayer();
 };
 
-}
+} // namespace jami

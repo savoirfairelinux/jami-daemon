@@ -26,12 +26,13 @@
 #include "logger.h"
 #include "noncopyable.h"
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class VideoDeviceMonitorImpl
 {
-    public:
-        /*
+public:
+    /*
         * This is the only restriction to the pImpl design:
         * as the Linux implementation has a thread, it needs a way to notify
         * devices addition and deletion.
@@ -39,24 +40,24 @@ class VideoDeviceMonitorImpl
         * This class should maybe inherit from VideoDeviceMonitor instead of
         * being its pImpl.
         */
-        VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
-        ~VideoDeviceMonitorImpl();
+    VideoDeviceMonitorImpl(VideoDeviceMonitor *monitor);
+    ~VideoDeviceMonitorImpl();
 
-        void start();
+    void start();
 
-    private:
-        NON_COPYABLE(VideoDeviceMonitorImpl);
+private:
+    NON_COPYABLE(VideoDeviceMonitorImpl);
 
-        VideoDeviceMonitor* monitor_;
+    VideoDeviceMonitor *monitor_;
 
-        void run();
+    void run();
 
-        mutable std::mutex mutex_;
-        bool probing_;
-        std::thread thread_;
+    mutable std::mutex mutex_;
+    bool probing_;
+    std::thread thread_;
 };
 
-VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
+VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor *monitor)
     : monitor_(monitor)
     , mutex_()
     , thread_()
@@ -66,7 +67,7 @@ void
 VideoDeviceMonitorImpl::start()
 {
     probing_ = true;
-    thread_ = std::thread(&VideoDeviceMonitorImpl::run, this);
+    thread_  = std::thread(&VideoDeviceMonitorImpl::run, this);
 }
 
 VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
@@ -78,8 +79,7 @@ VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 
 void
 VideoDeviceMonitorImpl::run()
-{
-}
+{}
 
 VideoDeviceMonitor::VideoDeviceMonitor()
     : preferences_()
@@ -89,7 +89,7 @@ VideoDeviceMonitor::VideoDeviceMonitor()
     monitorImpl_->start();
 }
 
-VideoDeviceMonitor::~VideoDeviceMonitor()
-{}
+VideoDeviceMonitor::~VideoDeviceMonitor() {}
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

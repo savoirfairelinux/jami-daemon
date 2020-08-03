@@ -23,21 +23,22 @@
 
 #include "noncopyable.h"
 
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 #include <vector>
 
 #ifndef AVFORMAT_AVIO_H
 struct AVIOContext;
 #endif
 
-typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
+typedef int (*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
+typedef int (*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
+typedef int64_t (*io_seekcallback)(void *opaque, int64_t offset, int whence);
 
 namespace jami {
 
-class MediaIOHandle {
+class MediaIOHandle
+{
 public:
     MediaIOHandle(std::size_t buffer_size,
                   bool writeable,
@@ -47,7 +48,7 @@ public:
                   void *opaque);
     ~MediaIOHandle();
 
-    AVIOContext* getContext() { return ctx_; }
+    AVIOContext *getContext() { return ctx_; }
 
 private:
     NON_COPYABLE(MediaIOHandle);

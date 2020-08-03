@@ -24,15 +24,15 @@
  */
 
 #include "ringbuffer.h"
-#include "logger.h"
 #include "client/ring_signal.h"
-#include "media_buffer.h"
 #include "libav_deps.h"
+#include "logger.h"
+#include "media_buffer.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
 
 namespace jami {
 
@@ -41,14 +41,14 @@ static const size_t MIN_BUFFER_SIZE = 1024;
 
 static constexpr const int RMS_SIGNAL_INTERVAL = 5;
 
-RingBuffer::RingBuffer(const std::string& rbuf_id, size_t /*size*/, AudioFormat format)
+RingBuffer::RingBuffer(const std::string &rbuf_id, size_t /*size*/, AudioFormat format)
     : id(rbuf_id)
     , endPos_(0)
     , format_(format)
     , lock_()
     , not_empty_()
     , readoffsets_()
-    , resizer_(format_, format_.sample_rate / 50, [this](std::shared_ptr<AudioFrame>&& frame){
+    , resizer_(format_, format_.sample_rate / 50, [this](std::shared_ptr<AudioFrame> &&frame) {
         putToBuffer(std::move(frame));
     })
 {}
@@ -62,7 +62,7 @@ RingBuffer::flush(const std::string &call_id)
 void
 RingBuffer::flushAll()
 {
-    for (auto& offset : readoffsets_)
+    for (auto &offset : readoffsets_)
         offset.second.offset = endPos_;
 }
 
@@ -76,7 +76,8 @@ RingBuffer::putLength() const
     return (endPos_ + buffer_size - startPos) % buffer_size;
 }
 
-size_t RingBuffer::getLength(const std::string &call_id) const
+size_t
+RingBuffer::getLength(const std::string &call_id) const
 {
     const size_t buffer_size = buffer_.size();
     if (buffer_size == 0)
@@ -90,7 +91,8 @@ RingBuffer::debug()
     JAMI_DBG("Start=%zu; End=%zu; BufferSize=%zu", getSmallestReadOffset(), endPos_, buffer_.size());
 }
 
-size_t RingBuffer::getReadOffset(const std::string &call_id) const
+size_t
+RingBuffer::getReadOffset(const std::string &call_id) const
 {
     auto iter = readoffsets_.find(call_id);
     return (iter != readoffsets_.end()) ? iter->second.offset : 0;
@@ -102,7 +104,7 @@ RingBuffer::getSmallestReadOffset() const
     if (hasNoReadOffsets())
         return 0;
     size_t smallest = buffer_.size();
-    for(auto const& iter : readoffsets_)
+    for (auto const &iter : readoffsets_)
         smallest = std::min(smallest, iter.second.offset);
     return smallest;
 }
@@ -123,9 +125,8 @@ RingBuffer::createReadOffset(const std::string &call_id)
 {
     std::lock_guard<std::mutex> l(lock_);
     if (!hasThisReadOffset(call_id))
-        readoffsets_.emplace(call_id, ReadOffset {endPos_, {}});
+        readoffsets_.emplace(call_id, ReadOffset{endPos_, {}});
 }
-
 
 void
 RingBuffer::removeReadOffset(const std::string &call_id)
@@ -142,8 +143,8 @@ RingBuffer::hasThisReadOffset(const std::string &call_id) const
     return readoffsets_.find(call_id) != readoffsets_.end();
 }
 
-
-bool RingBuffer::hasNoReadOffsets() const
+bool
+RingBuffer::hasNoReadOffsets() const
 {
     return readoffsets_.empty();
 }
@@ -152,13 +153,15 @@ bool RingBuffer::hasNoReadOffsets() const
 // For the writer only:
 //
 
-void RingBuffer::put(std::shared_ptr<AudioFrame>&& data)
+void
+RingBuffer::put(std::shared_ptr<AudioFrame> &&data)
 {
     resizer_.enqueue(resampler_.resample(std::move(data), format_));
 }
 
 // This one puts some data inside the ring buffer.
-void RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
+void
+RingBuffer::putToBuffer(std::shared_ptr<AudioFrame> &&data)
 {
     std::lock_guard<std::mutex> l(lock_);
     const size_t buffer_size = buffer_.size();
@@ -171,9 +174,9 @@ void RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
 
     size_t pos = endPos_;
 
-    buffer_[pos] = std::move(data);
-    const auto& newBuf = buffer_[pos];
-    pos = (pos + 1) % buffer_size;
+    buffer_[pos]       = std::move(data);
+    const auto &newBuf = buffer_[pos];
+    pos                = (pos + 1) % buffer_size;
 
     endPos_ = pos;
 
@@ -182,12 +185,12 @@ void RingBuffer::putToBuffer(std::shared_ptr<AudioFrame>&& data)
         rmsLevel_ += newBuf->calcRMS();
         if (rmsFrameCount_ == RMS_SIGNAL_INTERVAL) {
             emitSignal<DRing::AudioSignal::AudioMeter>(id, rmsLevel_ / RMS_SIGNAL_INTERVAL);
-            rmsLevel_ = 0;
+            rmsLevel_      = 0;
             rmsFrameCount_ = 0;
         }
     }
 
-    for (auto& offset : readoffsets_) {
+    for (auto &offset : readoffsets_) {
         if (offset.second.callback)
             offset.second.callback(newBuf);
     }
@@ -207,7 +210,7 @@ RingBuffer::availableForGet(const std::string &call_id) const
 }
 
 std::shared_ptr<AudioFrame>
-RingBuffer::get(const std::string& call_id)
+RingBuffer::get(const std::string &call_id)
 {
     std::lock_guard<std::mutex> l(lock_);
 
@@ -220,27 +223,30 @@ RingBuffer::get(const std::string& call_id)
         return {};
 
     size_t startPos = offset->second.offset;
-    size_t len = (endPos_ + buffer_size - startPos) % buffer_size;
+    size_t len      = (endPos_ + buffer_size - startPos) % buffer_size;
     if (len == 0)
         return {};
 
-    auto ret = buffer_[startPos];
+    auto ret              = buffer_[startPos];
     offset->second.offset = (startPos + 1) % buffer_size;
     return ret;
 }
 
-size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const time_point& deadline) const
+size_t
+RingBuffer::waitForDataAvailable(const std::string &call_id, const time_point &deadline) const
 {
     std::unique_lock<std::mutex> l(lock_);
 
-    if (buffer_.empty()) return 0;
-    if (readoffsets_.find(call_id) == readoffsets_.end()) return 0;
+    if (buffer_.empty())
+        return 0;
+    if (readoffsets_.find(call_id) == readoffsets_.end())
+        return 0;
 
     size_t getl = 0;
-    auto check = [=, &getl] {
+    auto check  = [=, &getl] {
         // Re-find read_ptr: it may be destroyed during the wait
         const size_t buffer_size = buffer_.size();
-        const auto read_ptr = readoffsets_.find(call_id);
+        const auto read_ptr      = readoffsets_.find(call_id);
         if (buffer_size == 0 || read_ptr == readoffsets_.end())
             return true;
         getl = (endPos_ + buffer_size - read_ptr->second.offset) % buffer_size;
@@ -258,7 +264,7 @@ size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const time_p
 }
 
 size_t
-RingBuffer::discard(size_t toDiscard, const std::string& call_id)
+RingBuffer::discard(size_t toDiscard, const std::string &call_id)
 {
     std::lock_guard<std::mutex> l(lock_);
 
@@ -271,7 +277,7 @@ RingBuffer::discard(size_t toDiscard, const std::string& call_id)
         return 0;
 
     size_t len = (endPos_ + buffer_size - offset->second.offset) % buffer_size;
-    toDiscard = std::min(toDiscard, len);
+    toDiscard  = std::min(toDiscard, len);
 
     offset->second.offset = (offset->second.offset + toDiscard) % buffer_size;
     return toDiscard;
@@ -284,7 +290,7 @@ RingBuffer::discard(size_t toDiscard)
     if (buffer_size == 0)
         return 0;
 
-    for (auto& r : readoffsets_) {
+    for (auto &r : readoffsets_) {
         size_t dst = (r.second.offset + buffer_size - endPos_) % buffer_size;
         if (dst < toDiscard)
             r.second.offset = (r.second.offset + toDiscard - dst) % buffer_size;

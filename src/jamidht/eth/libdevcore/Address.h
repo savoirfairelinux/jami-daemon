@@ -22,8 +22,7 @@
 
 #include "FixedHash.h"
 
-namespace dev
-{
+namespace dev {
 
 /// An Ethereum address: 20 bytes.
 /// @NOTE This is not endian-specific; it's just a bunch of bytes.
@@ -35,4 +34,4 @@ using Addresses = h160s;
 /// A hash set of Ethereum addresses.
 using AddressHash = std::unordered_set<h160>;
 
-}
+} // namespace dev

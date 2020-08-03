@@ -22,19 +22,19 @@
 
 #pragma once
 
-#include "noncopyable.h"
-#include "threadloop.h"
-#include "media_stream.h"
 #include "media/media_device.h" // DeviceParams
 #include "media/video/video_base.h"
+#include "media_stream.h"
+#include "noncopyable.h"
+#include "threadloop.h"
 
-#include <map>
-#include <atomic>
-#include <future>
-#include <string>
-#include <mutex>
-#include <condition_variable>
 #include <array>
+#include <atomic>
+#include <condition_variable>
+#include <future>
+#include <map>
+#include <mutex>
+#include <string>
 
 #if __APPLE__
 #import "TargetConditionals.h"
@@ -43,49 +43,49 @@
 namespace jami {
 class MediaDecoder;
 class MediaDemuxer;
-}
+} // namespace jami
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class SinkClient;
 
-enum class VideoInputMode {ManagedByClient, ManagedByDaemon, Undefined};
+enum class VideoInputMode { ManagedByClient, ManagedByDaemon, Undefined };
 
 class VideoInput : public VideoGenerator, public std::enable_shared_from_this<VideoInput>
 {
 public:
-    VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined, const std::string& id_ = "local");
+    VideoInput(VideoInputMode inputMode = VideoInputMode::Undefined,
+               const std::string &id_   = "local");
     ~VideoInput();
 
     // as VideoGenerator
-    const std::string& getName() const {
-      return currentResource_;
-    }
+    const std::string &getName() const { return currentResource_; }
     int getWidth() const;
     int getHeight() const;
     AVPixelFormat getPixelFormat() const;
-    const DeviceParams& getParams() const;
+    const DeviceParams &getParams() const;
     MediaStream getInfo() const;
 
-    void setSink(const std::string& sinkId);
+    void setSink(const std::string &sinkId);
     void updateStartTime(int64_t startTime);
-    void configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    void configureFilePlayback(const std::string &path,
+                               std::shared_ptr<MediaDemuxer> &demuxer,
+                               int index);
     void flushBuffers();
-    void setPaused(bool paused) {
-        paused_ = paused;
-    }
+    void setPaused(bool paused) { paused_ = paused; }
     void setSeekTime(int64_t time);
     void setFrameSize(const int width, const int height);
     void setupSink();
     void stopSink();
 
-    std::shared_future<DeviceParams> switchInput(const std::string& resource);
+    std::shared_future<DeviceParams> switchInput(const std::string &resource);
 #if VIDEO_CLIENT_INPUT
     /*
      * these functions are used to pass buffer from/to the daemon
      * on the Android and UWP builds
      */
-    void* obtainFrame(int length);
+    void *obtainFrame(int length);
     void releaseFrame(void *frame);
 #else
     void stopInput();
@@ -97,30 +97,30 @@ private:
     std::string id_;
     std::string currentResource_;
     std::atomic<bool> switchPending_ = {false};
-    std::atomic_bool  isStopped_ = {false};
+    std::atomic_bool isStopped_      = {false};
 
     DeviceParams decOpts_;
     std::promise<DeviceParams> foundDecOpts_;
     std::shared_future<DeviceParams> futureDecOpts_;
-    bool emulateRate_       = false;
+    bool emulateRate_ = false;
 
-    std::atomic_bool decOptsFound_ {false};
-    void foundDecOpts(const DeviceParams& params);
+    std::atomic_bool decOptsFound_{false};
+    void foundDecOpts(const DeviceParams &params);
 
     void clearOptions();
 
     // true if decOpts_ is ready to use, false if using promise/future
-    bool initCamera(const std::string& device);
+    bool initCamera(const std::string &device);
     bool initX11(std::string display);
-    bool initAVFoundation(const std::string& display);
+    bool initAVFoundation(const std::string &display);
     bool initFile(std::string path);
-    bool initGdiGrab(const std::string& params);
+    bool initGdiGrab(const std::string &params);
 
     bool isCapturing() const noexcept;
     void startLoop();
 
     void switchDevice();
-    bool capturing_ {false};
+    bool capturing_{false};
     void createDecoder();
     void deleteDecoder();
     std::unique_ptr<MediaDecoder> decoder_;
@@ -134,15 +134,17 @@ private:
 
     bool captureFrame();
 
-    int rotation_ {0};
+    int rotation_{0};
     std::shared_ptr<AVBufferRef> displayMatrix_;
     void setRotation(int angle);
     VideoInputMode inputMode_;
-    inline bool videoManagedByClient() const {
-         return inputMode_ == VideoInputMode::ManagedByClient;
+    inline bool videoManagedByClient() const
+    {
+        return inputMode_ == VideoInputMode::ManagedByClient;
     }
     bool playingFile_ = false;
-    std::atomic_bool paused_ {true};
+    std::atomic_bool paused_{true};
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

@@ -22,10 +22,11 @@
 #include "yamlparser.h"
 #include "fileutils.h"
 
-namespace jami { namespace yaml_utils {
+namespace jami {
+namespace yaml_utils {
 
 void
-parsePath(const YAML::Node &node, const char *key, std::string& path, const std::string& base)
+parsePath(const YAML::Node &node, const char *key, std::string &path, const std::string &base)
 {
     std::string val;
     parseValue(node, key, val);
@@ -59,4 +60,5 @@ parseVector(const YAML::Node &node)
     }
     return result;
 }
-}} // namespace jami::yaml_utils
+} // namespace yaml_utils
+} // namespace jami

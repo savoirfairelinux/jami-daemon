@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-#include <cstring>
-#include <cstdlib>
 #include "audio_recorder.h"
+#include <cstdlib>
+#include <cstring>
 
 namespace jami {
 namespace opensl {
@@ -26,20 +26,24 @@ namespace opensl {
  * bqRecorderCallback(): called for every buffer is full;
  *                       pass directly to handler
  */
-void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *rec) {
+void
+bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *rec)
+{
     (static_cast<AudioRecorder *>(rec))->processSLCallback(bq);
 }
 
-void AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
+void
+AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq)
+{
     try {
         assert(bq == recBufQueueItf_);
-        sample_buf *dataBuf {nullptr};
+        sample_buf *dataBuf{nullptr};
         devShadowQueue_.front(&dataBuf);
         devShadowQueue_.pop();
-        dataBuf->size_ = dataBuf->cap_;           //device only calls us when it is really full
+        dataBuf->size_ = dataBuf->cap_; //device only calls us when it is really full
         recQueue_->push(dataBuf);
 
-        sample_buf* freeBuf;
+        sample_buf *freeBuf;
         while (freeQueue_->front(&freeBuf) && devShadowQueue_.push(freeBuf)) {
             freeQueue_->pop();
             SLresult result = (*bq)->Enqueue(bq, freeBuf->buf_, freeBuf->cap_);
@@ -51,13 +55,13 @@ void AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
             (*recItf_)->SetRecordState(recItf_, SL_RECORDSTATE_STOPPED);
         }
         callback_();
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         JAMI_ERR("processSLCallback exception: %s", e.what());
     }
 }
 
-AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngine) :
-        sampleInfo_(sampleFormat)
+AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngine)
+    : sampleInfo_(sampleFormat)
 {
     JAMI_DBG("Creating OpenSL record stream");
 
@@ -65,61 +69,69 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
     SLDataLocator_IODevice loc_dev = {SL_DATALOCATOR_IODEVICE,
                                       SL_IODEVICE_AUDIOINPUT,
                                       SL_DEFAULTDEVICEID_AUDIOINPUT,
-                                      nullptr };
-    SLDataSource audioSrc = {&loc_dev, nullptr };
+                                      nullptr};
+    SLDataSource audioSrc          = {&loc_dev, nullptr};
 
     // configure audio sink
-    SLDataLocator_AndroidSimpleBufferQueue loc_bq = {
-            SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
-            DEVICE_SHADOW_BUFFER_QUEUE_LEN };
+    SLDataLocator_AndroidSimpleBufferQueue loc_bq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
+                                                     DEVICE_SHADOW_BUFFER_QUEUE_LEN};
 
-    auto format_pcm = convertToSLSampleFormat(sampleInfo_);
+    auto format_pcm     = convertToSLSampleFormat(sampleInfo_);
     SLDataSink audioSnk = {&loc_bq, &format_pcm};
 
     // create audio recorder
     // (requires the RECORD_AUDIO permission)
-    const SLInterfaceID ids[] = {
-        SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
-        SL_IID_ANDROIDCONFIGURATION,
-        SL_IID_ANDROIDACOUSTICECHOCANCELLATION,
-        SL_IID_ANDROIDAUTOMATICGAINCONTROL,
-        SL_IID_ANDROIDNOISESUPPRESSION
-    };
-    const SLboolean req[1] = {SL_BOOLEAN_TRUE};
+    const SLInterfaceID ids[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
+                                 SL_IID_ANDROIDCONFIGURATION,
+                                 SL_IID_ANDROIDACOUSTICECHOCANCELLATION,
+                                 SL_IID_ANDROIDAUTOMATICGAINCONTROL,
+                                 SL_IID_ANDROIDNOISESUPPRESSION};
+    const SLboolean req[1]    = {SL_BOOLEAN_TRUE};
     SLresult result;
     result = (*slEngine)->CreateAudioRecorder(slEngine,
                                               &recObjectItf_,
                                               &audioSrc,
                                               &audioSnk,
-                                              sizeof(ids)/sizeof(ids[0]), ids, req);
+                                              sizeof(ids) / sizeof(ids[0]),
+                                              ids,
+                                              req);
     SLASSERT(result);
 
     SLAndroidConfigurationItf recordConfig;
     SLint32 streamType = SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION;
-    result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDCONFIGURATION, &recordConfig);
-    result = (*recordConfig)->SetConfiguration(recordConfig, SL_ANDROID_KEY_RECORDING_PRESET, &streamType, sizeof(SLint32));
+    result             = (*recObjectItf_)
+                 ->GetInterface(recObjectItf_, SL_IID_ANDROIDCONFIGURATION, &recordConfig);
+    result = (*recordConfig)
+                 ->SetConfiguration(recordConfig,
+                                    SL_ANDROID_KEY_RECORDING_PRESET,
+                                    &streamType,
+                                    sizeof(SLint32));
 
     bool aec{true}, agc(true), ns(true);
-
 
     result = (*recObjectItf_)->Realize(recObjectItf_, SL_BOOLEAN_FALSE);
     SLASSERT(result);
     result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_RECORD, &recItf_);
     SLASSERT(result);
 
-
     /* Check actual performance mode granted*/
     SLuint32 modeRetrieved = SL_ANDROID_PERFORMANCE_NONE;
-    SLuint32 modeSize = sizeof(SLuint32);
-    result = (*recordConfig)->GetConfiguration(recordConfig, SL_ANDROID_KEY_PERFORMANCE_MODE,
-            &modeSize, (void*)&modeRetrieved);
+    SLuint32 modeSize      = sizeof(SLuint32);
+    result                 = (*recordConfig)
+                 ->GetConfiguration(recordConfig,
+                                    SL_ANDROID_KEY_PERFORMANCE_MODE,
+                                    &modeSize,
+                                    (void *) &modeRetrieved);
     SLASSERT(result);
     JAMI_WARN("Actual performance mode is %u\n", modeRetrieved);
 
     /* Enable AEC if requested */
     if (aec) {
         SLAndroidAcousticEchoCancellationItf aecItf;
-        result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDACOUSTICECHOCANCELLATION, (void*)&aecItf);
+        result = (*recObjectItf_)
+                     ->GetInterface(recObjectItf_,
+                                    SL_IID_ANDROIDACOUSTICECHOCANCELLATION,
+                                    (void *) &aecItf);
         JAMI_WARN("AEC is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
         if (SL_RESULT_SUCCESS == result) {
             SLboolean enabled;
@@ -140,8 +152,10 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
     /* Enable AGC if requested */
     if (agc) {
         SLAndroidAutomaticGainControlItf agcItf;
-        result = (*recObjectItf_)->GetInterface(
-                recObjectItf_, SL_IID_ANDROIDAUTOMATICGAINCONTROL, (void*)&agcItf);
+        result = (*recObjectItf_)
+                     ->GetInterface(recObjectItf_,
+                                    SL_IID_ANDROIDAUTOMATICGAINCONTROL,
+                                    (void *) &agcItf);
         JAMI_WARN("AGC is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
         if (SL_RESULT_SUCCESS == result) {
             SLboolean enabled;
@@ -160,8 +174,8 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
     /* Enable NS if requested */
     if (ns) {
         SLAndroidNoiseSuppressionItf nsItf;
-        result = (*recObjectItf_)->GetInterface(
-                recObjectItf_, SL_IID_ANDROIDNOISESUPPRESSION, (void*)&nsItf);
+        result = (*recObjectItf_)
+                     ->GetInterface(recObjectItf_, SL_IID_ANDROIDNOISESUPPRESSION, (void *) &nsItf);
         JAMI_WARN("NS is %savailable\n", SL_RESULT_SUCCESS == result ? "" : "not ");
         if (SL_RESULT_SUCCESS == result) {
             SLboolean enabled;
@@ -178,7 +192,8 @@ AudioRecorder::AudioRecorder(jami::AudioFormat sampleFormat, SLEngineItf slEngin
         }
     }
 
-    result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &recBufQueueItf_);
+    result = (*recObjectItf_)
+                 ->GetInterface(recObjectItf_, SL_IID_ANDROIDSIMPLEBUFFERQUEUE, &recBufQueueItf_);
     SLASSERT(result);
 
     result = (*recBufQueueItf_)->RegisterCallback(recBufQueueItf_, bqRecorderCallback, this);
@@ -189,7 +204,7 @@ bool
 AudioRecorder::start()
 {
     JAMI_DBG("OpenSL record start");
-    if(!freeQueue_ || !recQueue_) {
+    if (!freeQueue_ || !recQueue_) {
         JAMI_ERR("====NULL pointer to Start(%p, %p)", freeQueue_, recQueue_);
         return false;
     }
@@ -202,17 +217,16 @@ AudioRecorder::start()
     result = (*recBufQueueItf_)->Clear(recBufQueueItf_);
     SLASSERT(result);
 
-    for(int i =0; i < RECORD_DEVICE_KICKSTART_BUF_COUNT; i++ ) {
+    for (int i = 0; i < RECORD_DEVICE_KICKSTART_BUF_COUNT; i++) {
         sample_buf *buf = NULL;
-        if(!freeQueue_->front(&buf)) {
+        if (!freeQueue_->front(&buf)) {
             JAMI_ERR("=====OutOfFreeBuffers @ startingRecording @ (%d)", i);
             break;
         }
         freeQueue_->pop();
         assert(buf->buf_ && buf->cap_ && !buf->size_);
 
-        result = (*recBufQueueItf_)->Enqueue(recBufQueueItf_, buf->buf_,
-                                                 buf->cap_);
+        result = (*recBufQueueItf_)->Enqueue(recBufQueueItf_, buf->buf_, buf->cap_);
         SLASSERT(result);
         devShadowQueue_.push(buf);
     }
@@ -239,7 +253,7 @@ AudioRecorder::stop()
     result = (*recBufQueueItf_)->Clear(recBufQueueItf_);
     SLASSERT(result);
 
-    sample_buf *buf {nullptr};
+    sample_buf *buf{nullptr};
     while (devShadowQueue_.front(&buf)) {
         devShadowQueue_.pop();
         freeQueue_->push(buf);
@@ -248,7 +262,8 @@ AudioRecorder::stop()
     return true;
 }
 
-AudioRecorder::~AudioRecorder() {
+AudioRecorder::~AudioRecorder()
+{
     JAMI_DBG("Destroying OpenSL record stream");
 
     // destroy audio recorder object, and invalidate all associated interfaces
@@ -257,14 +272,19 @@ AudioRecorder::~AudioRecorder() {
     }
 }
 
-void AudioRecorder::setBufQueues(AudioQueue *freeQ, AudioQueue *recQ) {
+void
+AudioRecorder::setBufQueues(AudioQueue *freeQ, AudioQueue *recQ)
+{
     assert(freeQ && recQ);
     freeQueue_ = freeQ;
-    recQueue_ = recQ;
+    recQueue_  = recQ;
 }
 
-size_t AudioRecorder::dbgGetDevBufCount() {
-     return devShadowQueue_.size();
+size_t
+AudioRecorder::dbgGetDevBufCount()
+{
+    return devShadowQueue_.size();
 }
 
-}}
+} // namespace opensl
+} // namespace jami

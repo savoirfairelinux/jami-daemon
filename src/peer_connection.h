@@ -22,11 +22,11 @@
 #pragma once
 
 #include "dring/datatransfer_interface.h"
-#include "ip_utils.h"
 #include "generic_io.h"
-#include "security/diffie-hellman.h"
-#include "opendht/crypto.h"
 #include "ice_transport.h"
+#include "ip_utils.h"
+#include "opendht/crypto.h"
+#include "security/diffie-hellman.h"
 #include "security/tls_session.h"
 
 #include <functional>
@@ -38,16 +38,18 @@
 #include <utility>
 #include <vector>
 
-namespace dht { namespace crypto {
+namespace dht {
+namespace crypto {
 struct PrivateKey;
 struct Certificate;
-}}
+} // namespace crypto
+} // namespace dht
 
 namespace jami {
 
 using OnStateChangeCb = std::function<bool(tls::TlsSessionState state)>;
-using OnReadyCb = std::function<void(bool ok)>;
-using onShutdownCb = std::function<void(void)>;
+using OnReadyCb       = std::function<void(bool ok)>;
+using onShutdownCb    = std::function<void(void)>;
 
 class TurnTransport;
 class ConnectedTurnTransport;
@@ -58,22 +60,26 @@ class Stream
 {
 public:
     virtual ~Stream() { close(); }
-    virtual void close() noexcept { }
+    virtual void close() noexcept {}
     virtual DRing::DataTransferId getId() const = 0;
-    virtual bool read(std::vector<uint8_t>& buffer) const {
-        (void)buffer;
+    virtual bool read(std::vector<uint8_t> &buffer) const
+    {
+        (void) buffer;
         return false;
     }
-    virtual bool write(const std::vector<uint8_t>& buffer) {
-        (void)buffer;
+    virtual bool write(const std::vector<uint8_t> &buffer)
+    {
+        (void) buffer;
         return false;
     };
-    virtual bool write(const uint8_t* buffer, std::size_t length) {
-        (void)buffer;
-        (void)length;
+    virtual bool write(const uint8_t *buffer, std::size_t length)
+    {
+        (void) buffer;
+        (void) length;
         return false;
     };
-    virtual void setOnRecv(std::function<void(std::vector<uint8_t>&&)>&&) {
+    virtual void setOnRecv(std::function<void(std::vector<uint8_t> &&)> &&)
+    {
         // Not implemented
     }
 };
@@ -85,30 +91,31 @@ class TlsTurnEndpoint : public GenericSocket<uint8_t>
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
-    using Identity = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
+    using Identity   = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
                                std::shared_ptr<dht::crypto::Certificate>>;
 
-    TlsTurnEndpoint(std::unique_ptr<ConnectedTurnTransport>&& turn,
-                    const Identity& local_identity,
-                    const std::shared_future<tls::DhParams>& dh_params,
-                    std::function<bool(const dht::crypto::Certificate&)>&& cert_check);
+    TlsTurnEndpoint(std::unique_ptr<ConnectedTurnTransport> &&turn,
+                    const Identity &local_identity,
+                    const std::shared_future<tls::DhParams> &dh_params,
+                    std::function<bool(const dht::crypto::Certificate &)> &&cert_check);
     ~TlsTurnEndpoint();
 
     void shutdown() override;
     bool isReliable() const override { return true; }
     bool isInitiator() const override;
     int maxPayload() const override;
-    std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
-    std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
+    std::size_t read(ValueType *buf, std::size_t len, std::error_code &ec) override;
+    std::size_t write(const ValueType *buf, std::size_t len, std::error_code &ec) override;
 
-    void setOnRecv(RecvCb&&) override {
+    void setOnRecv(RecvCb &&) override
+    {
         throw std::logic_error("TlsTurnEndpoint::setOnRecv not implemented");
     }
-    int waitForData(std::chrono::milliseconds, std::error_code&) const override;
-    void waitForReady(const std::chrono::steady_clock::duration& timeout = {});
+    int waitForData(std::chrono::milliseconds, std::error_code &) const override;
+    void waitForReady(const std::chrono::steady_clock::duration &timeout = {});
 
-    const dht::crypto::Certificate& peerCertificate() const;
-    void setOnStateChange(OnStateChangeCb&& cb);
+    const dht::crypto::Certificate &peerCertificate() const;
+    void setOnStateChange(OnStateChangeCb &&cb);
 
 private:
     class Impl;
@@ -120,13 +127,14 @@ private:
 class AbstractSocketEndpoint : public GenericSocket<uint8_t>
 {
 public:
-    virtual void connect(const std::chrono::milliseconds& = {}) {};
+    virtual void connect(const std::chrono::milliseconds & = {}){};
 
-    void setOnRecv(RecvCb &&) override {
-      throw std::logic_error("AbstractSocketEndpoint::setOnRecv not implemented");
+    void setOnRecv(RecvCb &&) override
+    {
+        throw std::logic_error("AbstractSocketEndpoint::setOnRecv not implemented");
     }
 
-    virtual void setOnShutdown(onShutdownCb&&) {};
+    virtual void setOnShutdown(onShutdownCb &&){};
 };
 
 /// Implement system socket IO
@@ -134,25 +142,23 @@ class TcpSocketEndpoint : public AbstractSocketEndpoint
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
-    explicit TcpSocketEndpoint(const IpAddr& addr);
+    explicit TcpSocketEndpoint(const IpAddr &addr);
     ~TcpSocketEndpoint();
 
     bool isReliable() const override { return true; }
     bool isInitiator() const override { return true; }
     int maxPayload() const override { return 1280; }
-    int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const override;
-    std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
-    std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
-    void connect(const std::chrono::milliseconds& timeout = {}) override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code &ec) const override;
+    std::size_t read(ValueType *buf, std::size_t len, std::error_code &ec) override;
+    std::size_t write(const ValueType *buf, std::size_t len, std::error_code &ec) override;
+    void connect(const std::chrono::milliseconds &timeout = {}) override;
 
-    void setOnShutdown(onShutdownCb&& cb) override {
-        scb = cb;
-    }
+    void setOnShutdown(onShutdownCb &&cb) override { scb = cb; }
 
 private:
     onShutdownCb scb;
     const IpAddr addr_;
-    int sock_ {-1};
+    int sock_{-1};
 };
 
 class IceSocketEndpoint : public AbstractSocketEndpoint
@@ -165,28 +171,29 @@ public:
     void shutdown() override;
     bool isReliable() const override { return ice_ ? ice_->isRunning() : false; }
     bool isInitiator() const override { return ice_ ? ice_->isInitiator() : true; }
-    int maxPayload() const override { return 65536 /* The max for a RTP packet used to wrap data here */; }
-    int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const override;
-    std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
-    std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
-
-    std::shared_ptr<IceTransport> underlyingICE() const {
-        return ice_;
+    int maxPayload() const override
+    {
+        return 65536 /* The max for a RTP packet used to wrap data here */;
     }
+    int waitForData(std::chrono::milliseconds timeout, std::error_code &ec) const override;
+    std::size_t read(ValueType *buf, std::size_t len, std::error_code &ec) override;
+    std::size_t write(const ValueType *buf, std::size_t len, std::error_code &ec) override;
 
-    void setOnRecv(RecvCb&& cb) override {
+    std::shared_ptr<IceTransport> underlyingICE() const { return ice_; }
+
+    void setOnRecv(RecvCb &&cb) override
+    {
         if (ice_)
             ice_->setOnRecv(compId_, cb);
     }
 
-    void setOnShutdown(onShutdownCb&& cb) override {
-        ice_->setOnShutdown(std::move(cb));
-    }
+    void setOnShutdown(onShutdownCb &&cb) override { ice_->setOnShutdown(std::move(cb)); }
+
 private:
-    std::shared_ptr<IceTransport> ice_ {nullptr};
+    std::shared_ptr<IceTransport> ice_{nullptr};
     std::atomic_bool iceStopped{false};
     std::atomic_bool iceIsSender{false};
-    uint8_t compId_ {0};
+    uint8_t compId_{0};
 };
 
 //==============================================================================
@@ -196,37 +203,38 @@ class TlsSocketEndpoint : public GenericSocket<uint8_t>
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
-    using Identity = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
+    using Identity   = std::pair<std::shared_ptr<dht::crypto::PrivateKey>,
                                std::shared_ptr<dht::crypto::Certificate>>;
 
-    TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint>&& tr,
-                      const Identity& local_identity,
-                      const std::shared_future<tls::DhParams>& dh_params,
-                      const dht::crypto::Certificate& peer_cert,
+    TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint> &&tr,
+                      const Identity &local_identity,
+                      const std::shared_future<tls::DhParams> &dh_params,
+                      const dht::crypto::Certificate &peer_cert,
                       bool isIceTransport = true);
-    TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint>&& tr,
-                    const Identity& local_identity,
-                    const std::shared_future<tls::DhParams>& dh_params,
-                    std::function<bool(const dht::crypto::Certificate&)>&& cert_check,
-                    bool isIceTransport = true);
+    TlsSocketEndpoint(std::unique_ptr<AbstractSocketEndpoint> &&tr,
+                      const Identity &local_identity,
+                      const std::shared_future<tls::DhParams> &dh_params,
+                      std::function<bool(const dht::crypto::Certificate &)> &&cert_check,
+                      bool isIceTransport = true);
     ~TlsSocketEndpoint();
 
     bool isReliable() const override { return true; }
     bool isInitiator() const override;
     int maxPayload() const override;
     void shutdown() override;
-    std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
-    std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
+    std::size_t read(ValueType *buf, std::size_t len, std::error_code &ec) override;
+    std::size_t write(const ValueType *buf, std::size_t len, std::error_code &ec) override;
 
-    void setOnRecv(RecvCb&&) override {
+    void setOnRecv(RecvCb &&) override
+    {
         throw std::logic_error("TlsSocketEndpoint::setOnRecv not implemented");
     }
-    int waitForData(std::chrono::milliseconds timeout, std::error_code&) const override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code &) const override;
 
-    void waitForReady(const std::chrono::milliseconds& timeout = {});
+    void waitForReady(const std::chrono::milliseconds &timeout = {});
 
-    void setOnStateChange(OnStateChangeCb&& cb);
-    void setOnReady(OnReadyCb&& cb);
+    void setOnStateChange(OnStateChangeCb &&cb);
+    void setOnReady(OnReadyCb &&cb);
 
     std::shared_ptr<IceTransport> underlyingICE() const;
 
@@ -241,14 +249,15 @@ class PeerConnection
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
-    PeerConnection(std::function<void()>&& done, const std::string& peer_uri,
+    PeerConnection(std::function<void()> &&done,
+                   const std::string &peer_uri,
                    std::unique_ptr<SocketType> endpoint);
 
     ~PeerConnection();
 
-    void attachOutputStream(const std::shared_ptr<Stream>& stream);
+    void attachOutputStream(const std::shared_ptr<Stream> &stream);
 
-    void attachInputStream(const std::shared_ptr<Stream>& stream);
+    void attachInputStream(const std::shared_ptr<Stream> &stream);
 
     /**
      * Check if an input or output stream got the given id.
@@ -256,7 +265,7 @@ public:
      * @param id to check
      * @return if id is found
      */
-    bool hasStreamWithId(const DRing::DataTransferId& id);
+    bool hasStreamWithId(const DRing::DataTransferId &id);
 
     std::string getPeerUri() const;
 

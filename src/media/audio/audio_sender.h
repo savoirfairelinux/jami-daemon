@@ -34,12 +34,13 @@ class MediaEncoder;
 class MediaIOHandle;
 class Resampler;
 
-class AudioSender : public Observer<std::shared_ptr<MediaFrame>> {
+class AudioSender : public Observer<std::shared_ptr<MediaFrame>>
+{
 public:
-    AudioSender(const std::string& id,
-                const std::string& dest,
-                const MediaDescription& args,
-                SocketPair& socketPair,
+    AudioSender(const std::string &id,
+                const std::string &dest,
+                const MediaDescription &args,
+                SocketPair &socketPair,
                 const uint16_t seqVal,
                 bool muteState,
                 const uint16_t mtu);
@@ -48,13 +49,13 @@ public:
     void setMuted(bool isMuted);
     uint16_t getLastSeqValue();
 
-    void update(Observable<std::shared_ptr<jami::MediaFrame>>*,
-                const std::shared_ptr<jami::MediaFrame>&) override;
+    void update(Observable<std::shared_ptr<jami::MediaFrame>> *,
+                const std::shared_ptr<jami::MediaFrame> &) override;
 
 private:
     NON_COPYABLE(AudioSender);
 
-    bool setup(SocketPair& socketPair);
+    bool setup(SocketPair &socketPair);
 
     std::string id_;
     std::string dest_;

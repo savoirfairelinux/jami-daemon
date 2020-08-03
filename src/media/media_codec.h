@@ -29,33 +29,29 @@
 #include "ip_utils.h"
 
 #include <cctype>
-#include <string>
-#include <vector>
-#include <map>
 #include <iostream>
+#include <map>
+#include <string>
 #include <unistd.h>
+#include <vector>
 
 namespace jami {
 
 enum CodecType : unsigned {
-    CODEC_NONE = 0, // indicates that no codec is used or defined
-    CODEC_ENCODER = 1,
-    CODEC_DECODER = 2,
+    CODEC_NONE            = 0, // indicates that no codec is used or defined
+    CODEC_ENCODER         = 1,
+    CODEC_DECODER         = 2,
     CODEC_ENCODER_DECODER = CODEC_ENCODER | CODEC_DECODER
 };
 
 enum MediaType : unsigned {
-    MEDIA_NONE = 0, // indicates that no media is used or defined
+    MEDIA_NONE  = 0, // indicates that no media is used or defined
     MEDIA_AUDIO = 1,
     MEDIA_VIDEO = 2,
-    MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO
+    MEDIA_ALL   = MEDIA_AUDIO | MEDIA_VIDEO
 };
 
-enum class RateMode : unsigned {
-    CRF_CONSTRAINED,
-    CQ,
-    CBR
-};
+enum class RateMode : unsigned { CRF_CONSTRAINED, CQ, CBR };
 
 /*
  * SystemCodecInfo
@@ -64,33 +60,37 @@ enum class RateMode : unsigned {
  */
 struct SystemCodecInfo
 {
-    static constexpr unsigned DEFAULT_CODEC_QUALITY {30};
+    static constexpr unsigned DEFAULT_CODEC_QUALITY{30};
 #ifdef ENABLE_VIDEO
-    static constexpr unsigned DEFAULT_H264_MIN_QUALITY {40};
-    static constexpr unsigned DEFAULT_H264_MAX_QUALITY {20};
-    static constexpr unsigned DEFAULT_VP8_MIN_QUALITY {50};
-    static constexpr unsigned DEFAULT_VP8_MAX_QUALITY {20};
+    static constexpr unsigned DEFAULT_H264_MIN_QUALITY{40};
+    static constexpr unsigned DEFAULT_H264_MAX_QUALITY{20};
+    static constexpr unsigned DEFAULT_VP8_MIN_QUALITY{50};
+    static constexpr unsigned DEFAULT_VP8_MAX_QUALITY{20};
 #endif
 
     // indicates that the codec does not use quality factor
-    static constexpr unsigned DEFAULT_NO_QUALITY {0};
+    static constexpr unsigned DEFAULT_NO_QUALITY{0};
 
-    static constexpr unsigned DEFAULT_MIN_BITRATE {200};
-    static constexpr unsigned DEFAULT_MAX_BITRATE {3000};
-    static constexpr unsigned DEFAULT_VIDEO_BITRATE {600}; // in Kbits/second
+    static constexpr unsigned DEFAULT_MIN_BITRATE{200};
+    static constexpr unsigned DEFAULT_MAX_BITRATE{3000};
+    static constexpr unsigned DEFAULT_VIDEO_BITRATE{600}; // in Kbits/second
 
-    SystemCodecInfo(unsigned codecId, unsigned avcodecId, const std::string& name,
-                    const std::string& libName, MediaType mediaType,
-                    CodecType codecType = CODEC_NONE, unsigned bitrate = 0,
-                    unsigned payloadType = 0,
+    SystemCodecInfo(unsigned codecId,
+                    unsigned avcodecId,
+                    const std::string &name,
+                    const std::string &libName,
+                    MediaType mediaType,
+                    CodecType codecType   = CODEC_NONE,
+                    unsigned bitrate      = 0,
+                    unsigned payloadType  = 0,
                     unsigned m_minQuality = DEFAULT_NO_QUALITY,
                     unsigned m_maxQuality = DEFAULT_NO_QUALITY);
 
     virtual ~SystemCodecInfo();
 
     /* generic codec information */
-    unsigned id; /* id of the codec used with dbus */
-    unsigned  avcodecId;  /* read as AVCodecID libav codec identifier */
+    unsigned id;        /* id of the codec used with dbus */
+    unsigned avcodecId; /* read as AVCodecID libav codec identifier */
     std::string name;
     std::string libName;
     CodecType codecType;
@@ -112,17 +112,21 @@ struct SystemCodecInfo
  */
 struct SystemAudioCodecInfo : SystemCodecInfo
 {
-    SystemAudioCodecInfo(unsigned codecId, unsigned avcodecId, const std::string& name,
-                         const std::string& libName, CodecType type,
-                         unsigned bitrate = 0,
-                         unsigned sampleRate = 0, unsigned nbChannels = 0,
+    SystemAudioCodecInfo(unsigned codecId,
+                         unsigned avcodecId,
+                         const std::string &name,
+                         const std::string &libName,
+                         CodecType type,
+                         unsigned bitrate     = 0,
+                         unsigned sampleRate  = 0,
+                         unsigned nbChannels  = 0,
                          unsigned payloadType = 0);
 
     ~SystemAudioCodecInfo();
 
-    std::map<std::string, std::string>  getCodecSpecifications();
+    std::map<std::string, std::string> getCodecSpecifications();
 
-    AudioFormat audioformat {AudioFormat::NONE()};
+    AudioFormat audioformat{AudioFormat::NONE()};
 };
 
 /*
@@ -132,18 +136,21 @@ struct SystemAudioCodecInfo : SystemCodecInfo
  */
 struct SystemVideoCodecInfo : SystemCodecInfo
 {
-    SystemVideoCodecInfo(unsigned codecId, unsigned avcodecId, const std::string& name,
-                         const std::string& libName, CodecType type = CODEC_NONE,
-                         unsigned bitrate = 0,
+    SystemVideoCodecInfo(unsigned codecId,
+                         unsigned avcodecId,
+                         const std::string &name,
+                         const std::string &libName,
+                         CodecType type        = CODEC_NONE,
+                         unsigned bitrate      = 0,
                          unsigned m_minQuality = 0,
                          unsigned m_maxQuality = 0,
-                         unsigned payloadType = 0,
-                         unsigned frameRate = 0,
-                         unsigned profileId = 0);
+                         unsigned payloadType  = 0,
+                         unsigned frameRate    = 0,
+                         unsigned profileId    = 0);
 
     ~SystemVideoCodecInfo();
 
-    std::map<std::string, std::string>  getCodecSpecifications();
+    std::map<std::string, std::string> getCodecSpecifications();
 
     unsigned frameRate;
     unsigned profileId;
@@ -157,40 +164,40 @@ struct SystemVideoCodecInfo : SystemCodecInfo
  */
 struct AccountCodecInfo
 {
-    AccountCodecInfo(const SystemCodecInfo& sysCodecInfo) noexcept;
-    AccountCodecInfo(const AccountCodecInfo&) noexcept = default;
-    AccountCodecInfo(AccountCodecInfo&&) noexcept = delete;
-    AccountCodecInfo& operator=(const AccountCodecInfo&);
-    AccountCodecInfo& operator=(AccountCodecInfo&&) noexcept = delete;
+    AccountCodecInfo(const SystemCodecInfo &sysCodecInfo) noexcept;
+    AccountCodecInfo(const AccountCodecInfo &) noexcept = default;
+    AccountCodecInfo(AccountCodecInfo &&) noexcept      = delete;
+    AccountCodecInfo &operator                          =(const AccountCodecInfo &);
+    AccountCodecInfo &operator=(AccountCodecInfo &&) noexcept = delete;
 
-    const SystemCodecInfo& systemCodecInfo;
-    unsigned order {0}; /*used to define preferred codec list order in UI*/
-    bool isActive {false};
+    const SystemCodecInfo &systemCodecInfo;
+    unsigned order{0}; /*used to define preferred codec list order in UI*/
+    bool isActive{false};
     /* account custom values */
     unsigned payloadType;
     unsigned bitrate;
     unsigned quality;
-    std::map<std::string, std::string>  getCodecSpecifications();
+    std::map<std::string, std::string> getCodecSpecifications();
 };
 
 struct AccountAudioCodecInfo : AccountCodecInfo
 {
-    AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCodecInfo);
+    AccountAudioCodecInfo(const SystemAudioCodecInfo &sysCodecInfo);
 
-    std::map<std::string, std::string>  getCodecSpecifications();
-    void setCodecSpecifications(const std::map<std::string, std::string>& details);
+    std::map<std::string, std::string> getCodecSpecifications();
+    void setCodecSpecifications(const std::map<std::string, std::string> &details);
 
     /* account custom values */
-    AudioFormat audioformat {AudioFormat::NONE()};
+    AudioFormat audioformat{AudioFormat::NONE()};
     bool isPCMG722() const;
 };
 
 struct AccountVideoCodecInfo : AccountCodecInfo
 {
-    AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCodecInfo);
+    AccountVideoCodecInfo(const SystemVideoCodecInfo &sysCodecInfo);
 
-    void setCodecSpecifications(const std::map<std::string, std::string>& details);
-    std::map<std::string, std::string>  getCodecSpecifications();
+    void setCodecSpecifications(const std::map<std::string, std::string> &details);
+    std::map<std::string, std::string> getCodecSpecifications();
 
     /* account custom values */
     unsigned frameRate;
@@ -198,55 +205,41 @@ struct AccountVideoCodecInfo : AccountCodecInfo
     std::string parameters;
     bool isAutoQualityEnabled{true};
 };
-bool operator== (SystemCodecInfo codec1, SystemCodecInfo codec2);
+bool operator==(SystemCodecInfo codec1, SystemCodecInfo codec2);
 
-class CryptoAttribute {
+class CryptoAttribute
+{
 public:
     CryptoAttribute() {}
-    CryptoAttribute(const std::string& tag,
-                    const std::string& cryptoSuite,
-                    const std::string& srtpKeyMethod,
-                    const std::string& srtpKeyInfo,
-                    const std::string& lifetime,
-                    const std::string& mkiValue,
-                    const std::string& mkiLength) :
-        tag_(tag),
-        cryptoSuite_(cryptoSuite),
-        srtpKeyMethod_(srtpKeyMethod),
-        srtpKeyInfo_(srtpKeyInfo),
-        lifetime_(lifetime),
-        mkiValue_(mkiValue),
-        mkiLength_(mkiLength) {
-    }
+    CryptoAttribute(const std::string &tag,
+                    const std::string &cryptoSuite,
+                    const std::string &srtpKeyMethod,
+                    const std::string &srtpKeyInfo,
+                    const std::string &lifetime,
+                    const std::string &mkiValue,
+                    const std::string &mkiLength)
+        : tag_(tag)
+        , cryptoSuite_(cryptoSuite)
+        , srtpKeyMethod_(srtpKeyMethod)
+        , srtpKeyInfo_(srtpKeyInfo)
+        , lifetime_(lifetime)
+        , mkiValue_(mkiValue)
+        , mkiLength_(mkiLength)
+    {}
 
-    std::string getTag() const {
-        return tag_;
-    }
-    std::string getCryptoSuite() const {
-        return cryptoSuite_;
-    }
-    std::string getSrtpKeyMethod() const {
-        return srtpKeyMethod_;
-    }
-    std::string getSrtpKeyInfo() const {
-        return srtpKeyInfo_;
-    }
-    std::string getLifetime() const {
-        return lifetime_;
-    }
-    std::string getMkiValue() const {
-        return mkiValue_;
-    }
-    std::string getMkiLength() const {
-        return mkiLength_;
-    }
+    std::string getTag() const { return tag_; }
+    std::string getCryptoSuite() const { return cryptoSuite_; }
+    std::string getSrtpKeyMethod() const { return srtpKeyMethod_; }
+    std::string getSrtpKeyInfo() const { return srtpKeyInfo_; }
+    std::string getLifetime() const { return lifetime_; }
+    std::string getMkiValue() const { return mkiValue_; }
+    std::string getMkiLength() const { return mkiLength_; }
 
-    inline explicit operator bool() const {
-        return not tag_.empty();
-    }
+    inline explicit operator bool() const { return not tag_.empty(); }
 
-    std::string to_string() const {
-        return tag_+" "+cryptoSuite_+" "+srtpKeyMethod_+":"+srtpKeyInfo_;
+    std::string to_string() const
+    {
+        return tag_ + " " + cryptoSuite_ + " " + srtpKeyMethod_ + ":" + srtpKeyInfo_;
     }
 
 private:
@@ -263,35 +256,36 @@ private:
  * MediaDescription
  * Negotiated RTP media slot
  */
-struct MediaDescription {
+struct MediaDescription
+{
     /** Audio / video */
-    MediaType type {};
-    bool enabled {false};
-    bool holding {false};
+    MediaType type{};
+    bool enabled{false};
+    bool holding{false};
 
     /** Endpoint socket address */
-    IpAddr addr {};
+    IpAddr addr{};
 
     /** RTCP socket address */
-    IpAddr rtcp_addr {};
+    IpAddr rtcp_addr{};
 
     /** RTP */
-    std::shared_ptr<AccountCodecInfo> codec {};
-    unsigned payload_type {};
-    std::string receiving_sdp {};
-    unsigned bitrate {};
-    unsigned rtp_clockrate {8000};
+    std::shared_ptr<AccountCodecInfo> codec{};
+    unsigned payload_type{};
+    std::string receiving_sdp{};
+    unsigned bitrate{};
+    unsigned rtp_clockrate{8000};
 
     /** Audio parameters */
-    unsigned frame_size {};
+    unsigned frame_size{};
 
     /** Video parameters */
-    std::string parameters {};
-    RateMode mode {RateMode::CRF_CONSTRAINED};
-    bool linkableHW {false};
+    std::string parameters{};
+    RateMode mode{RateMode::CRF_CONSTRAINED};
+    bool linkableHW{false};
 
     /** Crypto parameters */
-    CryptoAttribute crypto {};
+    CryptoAttribute crypto{};
 };
 
-}//namespace jami
+} //namespace jami

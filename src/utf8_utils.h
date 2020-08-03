@@ -41,8 +41,7 @@ namespace jami {
  * Returns: true if the text was valid UTF-8
  */
 
-bool
-utf8_validate(const std::string & str);
+bool utf8_validate(const std::string &str);
 
 /**
  * utf8_make_valid:
@@ -54,8 +53,7 @@ utf8_validate(const std::string & str);
  *
  * Returns: a valid utf8 string.
  */
-std::string
-utf8_make_valid(const std::string & name);
+std::string utf8_make_valid(const std::string &name);
 
 } // namespace jami
 

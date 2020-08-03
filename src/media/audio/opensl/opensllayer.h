@@ -22,8 +22,8 @@
 
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
-#include <vector>
 #include <thread>
+#include <vector>
 
 #include "audio/audiolayer.h"
 #include "audio_player.h"
@@ -50,7 +50,8 @@ class RingBuffer;
  * @brief Main sound class for android. Manages the data transfers between the application and the hardware.
  */
 
-class OpenSLLayer : public AudioLayer {
+class OpenSLLayer : public AudioLayer
+{
 public:
     /**
      * Constructor
@@ -104,13 +105,9 @@ public:
 
     void stopAudioCapture();
 
-    virtual int getAudioDeviceIndex(const std::string&, DeviceType) const {
-        return 0;
-    }
+    virtual int getAudioDeviceIndex(const std::string &, DeviceType) const { return 0; }
 
-    virtual std::string getAudioDeviceName(int, DeviceType) const {
-        return "";
-    }
+    virtual std::string getAudioDeviceName(int, DeviceType) const { return ""; }
 
     void engineServicePlay();
     void engineServiceRing();
@@ -122,27 +119,21 @@ private:
      * @return int The index of the card used for capture
      *                     0 for the first available card on the system, 1 ...
      */
-    virtual int getIndexCapture() const {
-        return 0;
-    }
+    virtual int getIndexCapture() const { return 0; }
 
     /**
      * Get the index of the audio card for playback
      * @return int The index of the card used for playback
      *                     0 for the first available card on the system, 1 ...
      */
-    virtual int getIndexPlayback() const {
-        return 0;
-    }
+    virtual int getIndexPlayback() const { return 0; }
 
     /**
      * Get the index of the audio card for ringtone (could be differnet from playback)
      * @return int The index of the card used for ringtone
      *                 0 for the first available card on the system, 1 ...
      */
-    virtual int getIndexRingtone() const {
-        return 0;
-    }
+    virtual int getIndexRingtone() const { return 0; }
 
     uint32_t dbgEngineGetBufCount();
 
@@ -155,34 +146,34 @@ private:
     /**
      * OpenSL standard object interface
      */
-    SLObjectItf engineObject_ {nullptr};
+    SLObjectItf engineObject_{nullptr};
 
     /**
      * OpenSL sound engine interface
      */
-    SLEngineItf engineInterface_ {nullptr};
+    SLEngineItf engineInterface_{nullptr};
 
-    std::unique_ptr<opensl::AudioPlayer> player_ {};
-    std::unique_ptr<opensl::AudioPlayer> ringtone_ {};
-    std::unique_ptr<opensl::AudioRecorder> recorder_ {};
+    std::unique_ptr<opensl::AudioPlayer> player_{};
+    std::unique_ptr<opensl::AudioPlayer> ringtone_{};
+    std::unique_ptr<opensl::AudioRecorder> recorder_{};
 
-    AudioQueue     freePlayBufQueue_ {BUF_COUNT};
-    AudioQueue     playBufQueue_ {BUF_COUNT};
+    AudioQueue freePlayBufQueue_{BUF_COUNT};
+    AudioQueue playBufQueue_{BUF_COUNT};
 
-    AudioQueue     freeRingBufQueue_ {BUF_COUNT};
-    AudioQueue     ringBufQueue_ {BUF_COUNT};
+    AudioQueue freeRingBufQueue_{BUF_COUNT};
+    AudioQueue ringBufQueue_{BUF_COUNT};
 
-    AudioQueue     freeRecBufQueue_ {BUF_COUNT};    //Owner of the queue
-    AudioQueue     recBufQueue_ {BUF_COUNT};     //Owner of the queue
+    AudioQueue freeRecBufQueue_{BUF_COUNT}; //Owner of the queue
+    AudioQueue recBufQueue_{BUF_COUNT};     //Owner of the queue
 
-    std::mutex     recMtx {};
-    std::condition_variable recCv {};
-    std::thread    recThread {};
+    std::mutex recMtx{};
+    std::condition_variable recCv{};
+    std::thread recThread{};
 
-    std::vector<sample_buf> bufs_ {};
+    std::vector<sample_buf> bufs_{};
 
-    AudioFormat hardwareFormat_ {AudioFormat::MONO()};
-    size_t hardwareBuffSize_ {BUFFER_SIZE};
+    AudioFormat hardwareFormat_{AudioFormat::MONO()};
+    size_t hardwareBuffSize_{BUFFER_SIZE};
 };
 
-}
+} // namespace jami

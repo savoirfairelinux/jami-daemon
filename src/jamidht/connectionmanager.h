@@ -18,13 +18,13 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
+#include <opendht/default_types.h>
 #include <opendht/dhtrunner.h>
 #include <opendht/infohash.h>
 #include <opendht/value.h>
-#include <opendht/default_types.h>
 
 namespace jami {
 
@@ -39,38 +39,42 @@ class ConnectionManager;
  */
 struct PeerConnectionRequest : public dht::EncryptedValue<PeerConnectionRequest>
 {
-    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-    static constexpr const char* key_prefix = "peer:"; ///< base to compute the DHT listen key
-    dht::Value::Id id = dht::Value::INVALID_ID;
-    std::string ice_msg {};
-    bool isAnswer {false};
+    static const constexpr dht::ValueType &TYPE = dht::ValueType::USER_DATA;
+    static constexpr const char *key_prefix     = "peer:"; ///< base to compute the DHT listen key
+    dht::Value::Id id                           = dht::Value::INVALID_ID;
+    std::string ice_msg{};
+    bool isAnswer{false};
     MSGPACK_DEFINE_MAP(id, ice_msg, isAnswer)
 };
 
 /**
  * Used to accept or not an incoming ICE connection (default accept)
  */
-using onICERequestCallback = std::function<bool(const std::string& /* deviceId */)>;
+using onICERequestCallback = std::function<bool(const std::string & /* deviceId */)>;
 /**
  * Used to accept or decline an incoming channel request
  */
-using ChannelRequestCallback = std::function<bool(const std::string& /* deviceId */, const std::string& /* name */)>;
+using ChannelRequestCallback
+    = std::function<bool(const std::string & /* deviceId */, const std::string & /* name */)>;
 /**
  * Used by connectDevice, when the socket is ready
  */
-using ConnectCallback = std::function<void(const std::shared_ptr<ChannelSocket>&)>;
+using ConnectCallback = std::function<void(const std::shared_ptr<ChannelSocket> &)>;
 /**
  * Used when an incoming connection is ready
  */
-using ConnectionReadyCallback = std::function<void(const std::string& /* deviceId */, const std::string& /* channel_name */, std::shared_ptr<ChannelSocket>)>;
+using ConnectionReadyCallback = std::function<void(const std::string & /* deviceId */,
+                                                   const std::string & /* channel_name */,
+                                                   std::shared_ptr<ChannelSocket>)>;
 
 /**
  * Manages connections to other devices
  * @note the account MUST be valid if ConnectionManager lives
  */
-class ConnectionManager {
+class ConnectionManager
+{
 public:
-    ConnectionManager(JamiAccount& account);
+    ConnectionManager(JamiAccount &account);
     ~ConnectionManager();
 
     /**
@@ -81,25 +85,25 @@ public:
      * @param name          Name of the channel
      * @param cb            Callback called when socket is ready ready
      */
-    void connectDevice(const std::string& deviceId, const std::string& name, ConnectCallback cb);
+    void connectDevice(const std::string &deviceId, const std::string &name, ConnectCallback cb);
 
     /**
      * Close all connections with a current device
      * @param deviceId      Remote device
      */
-    void closeConnectionsWith(const std::string& deviceId);
+    void closeConnectionsWith(const std::string &deviceId);
 
     /**
      * Method to call to listen to incoming requests
      * @param deviceId      Account's device
      */
-    void onDhtConnected(const std::string& deviceId);
+    void onDhtConnected(const std::string &deviceId);
 
     /**
      * Add a callback to decline or accept incoming ICE connections
      * @param cb    Callback to trigger
      */
-    void onICERequest(onICERequestCallback&& cb);
+    void onICERequest(onICERequestCallback &&cb);
 
     /**
      * Trigger cb on incoming peer channel
@@ -107,13 +111,13 @@ public:
      * @note        The callback is used to validate
      * if the incoming request is accepted or not.
      */
-    void onChannelRequest(ChannelRequestCallback&& cb);
+    void onChannelRequest(ChannelRequestCallback &&cb);
 
     /**
      * Trigger cb when connection with peer is ready
      * @param cb    Callback to trigger
      */
-    void onConnectionReady(ConnectionReadyCallback&& cb);
+    void onConnectionReady(ConnectionReadyCallback &&cb);
 
 private:
     ConnectionManager() = delete;
@@ -121,4 +125,4 @@ private:
     std::shared_ptr<Impl> pimpl_;
 };
 
-}
+} // namespace jami

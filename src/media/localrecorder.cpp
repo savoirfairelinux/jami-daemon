@@ -20,17 +20,16 @@
  */
 
 #include "localrecorder.h"
-#include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
+#include "audio/ringbufferpool.h"
 #include "client/videomanager.h"
-#include "media_stream.h"
-#include "manager.h"
 #include "logger.h"
-#include "client/videomanager.h"
+#include "manager.h"
+#include "media_stream.h"
 
 namespace jami {
 
-LocalRecorder::LocalRecorder(const bool& audioOnly)
+LocalRecorder::LocalRecorder(const bool &audioOnly)
 {
     isAudioOnly_ = audioOnly;
     recorder_->audioOnly(audioOnly);
@@ -43,7 +42,7 @@ LocalRecorder::~LocalRecorder()
 }
 
 void
-LocalRecorder::setPath(const std::string& path)
+LocalRecorder::setPath(const std::string &path)
 {
     if (isRecording()) {
         JAMI_ERR("can't set path while recording");
