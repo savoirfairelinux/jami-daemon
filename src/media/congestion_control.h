@@ -21,21 +21,18 @@
 #ifndef MODULES_RTP_RTCP_SOURCE_RTCP_PACKET_REMB_H_
 #define MODULES_RTP_RTCP_SOURCE_RTCP_PACKET_REMB_H_
 
-#include <vector>
 #include <cstdint>
+#include <vector>
 
 #include "socket_pair.h"
 
 namespace jami {
 
-enum BandwidthUsage {
-  bwNormal = 0,
-  bwUnderusing = 1,
-  bwOverusing = 2
-};
+enum BandwidthUsage { bwNormal = 0, bwUnderusing = 1, bwOverusing = 2 };
 
 // Receiver Estimated Max Bitrate (REMB) (draft-alvestrand-rmcat-remb).
-class CongestionControl {
+class CongestionControl
+{
 public:
     CongestionControl();
     ~CongestionControl();
@@ -48,7 +45,7 @@ public:
     BandwidthUsage get_bw_state(float estimation, float thresh);
 
 private:
-    using clock = std::chrono::steady_clock;
+    using clock      = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
     float get_estimate_m(float k, int d_m);
@@ -57,17 +54,16 @@ private:
     float get_var_n(int d_m);
     float get_residual_z(float d_m);
 
-    float last_estimate_m_ {0.0f};
-    float last_var_p_ {0.1f};
-    float last_var_n_ {0.0f};
+    float last_estimate_m_{0.0f};
+    float last_var_p_{0.1f};
+    float last_var_n_{0.0f};
 
-    float last_thresh_y_ {2.0f};
+    float last_thresh_y_{2.0f};
 
     unsigned overuse_counter_;
-    time_point t0_overuse {time_point::min()};
+    time_point t0_overuse{time_point::min()};
 
     BandwidthUsage last_state_;
-
 };
 
 } // namespace jami

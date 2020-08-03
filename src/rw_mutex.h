@@ -23,11 +23,11 @@
 
 #include "noncopyable.h"
 
-#include <mutex>
 #include <atomic>
 #include <condition_variable>
-#include <string>
+#include <mutex>
 #include <sstream>
+#include <string>
 
 namespace jami {
 
@@ -39,75 +39,87 @@ namespace jami {
  * Multiple threads can concurrently read data while
  * a writer thread gets exclusive access when needed.
  */
-class rw_mutex {
-	public:
-		rw_mutex() : mutex(), canRead(), canWrite(), readers(0), writing(false) {}
-		void read_enter() {
-			std::unique_lock<std::mutex> lck(mutex);
-			canRead.wait(lck, [this]() { return !writing; });
-			readers++;
-		}
-		void read_exit() {
-			//std::lock_guard<std::mutex> lck(mutex);
-			readers--;
-			canWrite.notify_one();
-		}
-		void write_enter() {
-			std::unique_lock<std::mutex> lck(mutex);
-			canWrite.wait(lck, [this]() { return !writing && readers==0; });
-			writing = true;
-		}
-		void write_exit() {
-			std::lock_guard<std::mutex> lck(mutex);
-			writing = false;
-			canWrite.notify_one();
-			canRead.notify_all();
-		}
+class rw_mutex
+{
+public:
+    rw_mutex()
+        : mutex()
+        , canRead()
+        , canWrite()
+        , readers(0)
+        , writing(false)
+    {}
+    void read_enter()
+    {
+        std::unique_lock<std::mutex> lck(mutex);
+        canRead.wait(lck, [this]() { return !writing; });
+        readers++;
+    }
+    void read_exit()
+    {
+        //std::lock_guard<std::mutex> lck(mutex);
+        readers--;
+        canWrite.notify_one();
+    }
+    void write_enter()
+    {
+        std::unique_lock<std::mutex> lck(mutex);
+        canWrite.wait(lck, [this]() { return !writing && readers == 0; });
+        writing = true;
+    }
+    void write_exit()
+    {
+        std::lock_guard<std::mutex> lck(mutex);
+        writing = false;
+        canWrite.notify_one();
+        canRead.notify_all();
+    }
 
-		struct read_lock {
-			public:
-				read_lock(rw_mutex& m) : sem(m) {
-					sem.read_enter();
-				}
-				~read_lock() {
-					sem.read_exit();
-				}
-			private:
-				rw_mutex& sem;
-		};
+    struct read_lock
+    {
+    public:
+        read_lock(rw_mutex &m)
+            : sem(m)
+        {
+            sem.read_enter();
+        }
+        ~read_lock() { sem.read_exit(); }
 
-		struct write_lock {
-			public:
-				write_lock(rw_mutex& m) : sem(m) {
-					sem.write_enter();
-				}
-				~write_lock() {
-					sem.write_exit();
-				}
-			private:
-				rw_mutex& sem;
-		};
+    private:
+        rw_mutex &sem;
+    };
 
-		read_lock read() {
-			return read_lock(*this);
-		}
+    struct write_lock
+    {
+    public:
+        write_lock(rw_mutex &m)
+            : sem(m)
+        {
+            sem.write_enter();
+        }
+        ~write_lock() { sem.write_exit(); }
 
-		write_lock write() {
-			return write_lock(*this);
-		}
+    private:
+        rw_mutex &sem;
+    };
 
-		std::string toString() {
-			std::stringstream ss;
-			ss << "[rw_mutex write:" << (writing?"LOCKED":"unlocked") << " read:" << readers << "]";
-			return ss.str();
-		}
+    read_lock read() { return read_lock(*this); }
 
-	private:
-		NON_COPYABLE(rw_mutex);
-		std::mutex mutex;
-		std::condition_variable canRead, canWrite;
-		std::atomic<unsigned> readers;
-		bool writing;
+    write_lock write() { return write_lock(*this); }
+
+    std::string toString()
+    {
+        std::stringstream ss;
+        ss << "[rw_mutex write:" << (writing ? "LOCKED" : "unlocked") << " read:" << readers << "]";
+        return ss.str();
+    }
+
+private:
+    NON_COPYABLE(rw_mutex);
+    std::mutex mutex;
+    std::condition_variable canRead, canWrite;
+    std::atomic<unsigned> readers;
+    bool writing;
 };
 
 } // namespace jami

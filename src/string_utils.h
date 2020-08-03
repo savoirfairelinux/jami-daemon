@@ -30,28 +30,32 @@
 // Add string operators crucially missing from standard
 // see https://groups.google.com/a/isocpp.org/forum/#!topic/std-proposals/1RcShRhrmRc
 namespace std {
-inline string operator+(const string& s, const string_view& sv) {
+inline string
+operator+(const string &s, const string_view &sv)
+{
     string ret;
     ret.reserve(s.size() + sv.size());
     ret.append(s);
     ret.append(sv);
     return ret;
 }
-inline string operator+(const string_view& sv, const string& s) {
+inline string
+operator+(const string_view &sv, const string &s)
+{
     string ret;
     ret.reserve(s.size() + sv.size());
     ret.append(sv);
     ret.append(s);
     return ret;
 }
-}
+} // namespace std
 
 namespace jami {
 
-constexpr static const char TRUE_STR[] = "true";
+constexpr static const char TRUE_STR[]  = "true";
 constexpr static const char FALSE_STR[] = "false";
 
-constexpr static const char*
+constexpr static const char *
 bool_to_str(bool b) noexcept
 {
     return b ? TRUE_STR : FALSE_STR;
@@ -60,33 +64,31 @@ bool_to_str(bool b) noexcept
 std::string to_string(double value);
 
 #ifdef _WIN32
-std::wstring to_wstring(const std::string& str, int codePage = CP_UTF8);
-std::string to_string(const std::wstring& wstr, int codePage = CP_UTF8);
+std::wstring to_wstring(const std::string &str, int codePage = CP_UTF8);
+std::string to_string(const std::wstring &wstr, int codePage = CP_UTF8);
 #endif
 
 std::string to_hex_string(uint64_t id);
-uint64_t from_hex_string(const std::string& str);
+uint64_t from_hex_string(const std::string &str);
 
 static inline int
-stoi(const std::string& str)
+stoi(const std::string &str)
 {
     return std::stoi(str);
 }
 
 static inline double
-stod(const std::string& str)
+stod(const std::string &str)
 {
     return std::stod(str);
 }
 
 std::string trim(const std::string &s);
 
-std::vector<std::string>
-split_string(const std::string& s, char sep);
+std::vector<std::string> split_string(const std::string &s, char sep);
 
-std::vector<unsigned>
-split_string_to_unsigned(const std::string& s, char sep);
+std::vector<unsigned> split_string_to_unsigned(const std::string &s, char sep);
 
-void string_replace(std::string& str, const std::string& from, const std::string& to);
+void string_replace(std::string &str, const std::string &from, const std::string &to);
 
 } // namespace jami

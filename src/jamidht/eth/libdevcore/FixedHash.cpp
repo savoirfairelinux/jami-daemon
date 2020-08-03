@@ -17,8 +17,7 @@
 
 #include "FixedHash.h"
 
-namespace dev
-{
+namespace dev {
 
 dht::crypto::random_device s_fixedHashEngine;
 

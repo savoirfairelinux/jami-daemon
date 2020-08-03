@@ -16,23 +16,23 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 #pragma once
-#include "streamdata.h"
 #include "observer.h"
+#include "streamdata.h"
 #include <libavutil/frame.h>
-#include <string>
-#include <memory>
 #include <map>
+#include <memory>
+#include <string>
 
 namespace jami {
 
-using avSubjectPtr = std::shared_ptr<Observable<AVFrame*>>;
+using avSubjectPtr = std::shared_ptr<Observable<AVFrame *>>;
 
 /**
  * @brief The MediaHandler class
  * Is the main object of the plugin
  */
-class MediaHandler{
-
+class MediaHandler
+{
 public:
     virtual ~MediaHandler() = default;
     /**
@@ -40,16 +40,18 @@ public:
      * The id is the path of the plugin that created this MediaHandler
      * @return
      */
-    std::string id() const { return id_;}
-    virtual void setId(const std::string& id) final {id_ = id;}
+    std::string id() const { return id_; }
+    virtual void setId(const std::string &id) final { id_ = id; }
     /**
      * @brief setPreferenceAttribute
      * Sets a preference attribute to the new value
      * @param key
      * @param value
      */
-    virtual void setPreferenceAttribute(const std::string& key, const std::string& value) {
-        (void)key;(void)value;
+    virtual void setPreferenceAttribute(const std::string &key, const std::string &value)
+    {
+        (void) key;
+        (void) value;
     }
 
 private:
@@ -60,10 +62,11 @@ private:
  * @brief The CallMediaHandler class
  * It can hold multiple streams of data, and do processing on them
  */
-class CallMediaHandler: public MediaHandler {
+class CallMediaHandler : public MediaHandler
+{
 public:
-    virtual void notifyAVFrameSubject(const StreamData& data, avSubjectPtr subject) = 0;
-    virtual std::map<std::string, std::string> getCallMediaHandlerDetails() = 0;
-    virtual void detach() = 0;
+    virtual void notifyAVFrameSubject(const StreamData &data, avSubjectPtr subject) = 0;
+    virtual std::map<std::string, std::string> getCallMediaHandlerDetails()         = 0;
+    virtual void detach()                                                           = 0;
 };
-}
+} // namespace jami

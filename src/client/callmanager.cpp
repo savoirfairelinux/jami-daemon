@@ -19,16 +19,16 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#include <vector>
 #include <cstring>
+#include <vector>
 
-#include "callmanager_interface.h"
 #include "call_factory.h"
+#include "callmanager_interface.h"
 #include "client/ring_signal.h"
 
+#include "audio/audiolayer.h"
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
-#include "audio/audiolayer.h"
 
 #include "logger.h"
 #include "manager.h"
@@ -38,14 +38,13 @@
 namespace DRing {
 
 void
-registerCallHandlers(const std::map<std::string,
-    std::shared_ptr<CallbackWrapperBase>>&handlers)
+registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>> &handlers)
 {
     registerSignalHandlers(handlers);
 }
 
 std::string
-placeCall(const std::string& accountID, const std::string& to)
+placeCall(const std::string &accountID, const std::string &to)
 {
     // Check if a destination number is available
     if (to.empty()) {
@@ -57,7 +56,9 @@ placeCall(const std::string& accountID, const std::string& to)
 }
 
 std::string
-placeCall(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& volatileCallDetails)
+placeCall(const std::string &accountID,
+          const std::string &to,
+          const std::map<std::string, std::string> &volatileCallDetails)
 {
     // Check if a destination number is available
     if (to.empty()) {
@@ -69,94 +70,93 @@ placeCall(const std::string& accountID, const std::string& to, const std::map<st
 }
 
 bool
-refuse(const std::string& callID)
+refuse(const std::string &callID)
 {
     return jami::Manager::instance().refuseCall(callID);
 }
 
 bool
-accept(const std::string& callID)
+accept(const std::string &callID)
 {
     return jami::Manager::instance().answerCall(callID);
 }
 
 bool
-hangUp(const std::string& callID)
+hangUp(const std::string &callID)
 {
     return jami::Manager::instance().hangupCall(callID);
 }
 
 bool
-hangUpConference(const std::string& confID)
+hangUpConference(const std::string &confID)
 {
     return jami::Manager::instance().hangupConference(confID);
 }
 
 bool
-hold(const std::string& callID)
+hold(const std::string &callID)
 {
     return jami::Manager::instance().onHoldCall(callID);
 }
 
 bool
-unhold(const std::string& callID)
+unhold(const std::string &callID)
 {
     return jami::Manager::instance().offHoldCall(callID);
 }
 
 bool
-muteLocalMedia(const std::string& callid, const std::string& mediaType, bool mute)
+muteLocalMedia(const std::string &callid, const std::string &mediaType, bool mute)
 {
     return jami::Manager::instance().muteMediaCall(callid, mediaType, mute);
 }
 
 bool
-transfer(const std::string& callID, const std::string& to)
+transfer(const std::string &callID, const std::string &to)
 {
     return jami::Manager::instance().transferCall(callID, to);
 }
 
 bool
-attendedTransfer(const std::string& transferID, const std::string& targetID)
+attendedTransfer(const std::string &transferID, const std::string &targetID)
 {
     return jami::Manager::instance().attendedTransfer(transferID, targetID);
 }
 
 bool
-joinParticipant(const std::string& sel_callID,
-                             const std::string& drag_callID)
+joinParticipant(const std::string &sel_callID, const std::string &drag_callID)
 {
     return jami::Manager::instance().joinParticipant(sel_callID, drag_callID);
 }
 
 void
-createConfFromParticipantList(const std::vector<std::string>& participants)
+createConfFromParticipantList(const std::vector<std::string> &participants)
 {
-   jami::Manager::instance().createConfFromParticipantList(participants);
+    jami::Manager::instance().createConfFromParticipantList(participants);
 }
 
 void
-setConferenceLayout(const std::string& confId, uint32_t layout)
+setConferenceLayout(const std::string &confId, uint32_t layout)
 {
     jami::Manager::instance().setConferenceLayout(confId, layout);
 }
 
 void
-setActiveParticipant(const std::string& confId, const std::string& callId)
+setActiveParticipant(const std::string &confId, const std::string &callId)
 {
     jami::Manager::instance().setActiveParticipant(confId, callId);
 }
 
 bool
-isConferenceParticipant(const std::string& callID)
+isConferenceParticipant(const std::string &callID)
 {
     return jami::Manager::instance().isConferenceParticipant(callID);
 }
 
 void
-removeConference(const std::string& conference_id)
+removeConference(const std::string &conference_id)
 {
-   jami::Manager::instance().removeConference(conference_id);
+    jami::Manager::instance().removeConference(conference_id);
 }
 
 void
@@ -172,13 +172,13 @@ stopSmartInfo()
 }
 
 bool
-addParticipant(const std::string& callID, const std::string& confID)
+addParticipant(const std::string &callID, const std::string &confID)
 {
     return jami::Manager::instance().addParticipant(callID, confID);
 }
 
 bool
-addMainParticipant(const std::string& confID)
+addMainParticipant(const std::string &confID)
 {
     return jami::Manager::instance().addMainParticipant(confID);
 }
@@ -190,31 +190,31 @@ detachLocalParticipant()
 }
 
 bool
-detachParticipant(const std::string& callID)
+detachParticipant(const std::string &callID)
 {
     return jami::Manager::instance().detachParticipant(callID);
 }
 
 bool
-joinConference(const std::string& sel_confID, const std::string& drag_confID)
+joinConference(const std::string &sel_confID, const std::string &drag_confID)
 {
     return jami::Manager::instance().joinConference(sel_confID, drag_confID);
 }
 
 bool
-holdConference(const std::string& confID)
+holdConference(const std::string &confID)
 {
     return jami::Manager::instance().holdConference(confID);
 }
 
 bool
-unholdConference(const std::string& confID)
+unholdConference(const std::string &confID)
 {
     return jami::Manager::instance().unHoldConference(confID);
 }
 
 std::map<std::string, std::string>
-getConferenceDetails(const std::string& callID)
+getConferenceDetails(const std::string &callID)
 {
     return jami::Manager::instance().getConferenceDetails(callID);
 }
@@ -226,25 +226,25 @@ getConferenceList()
 }
 
 std::vector<std::string>
-getParticipantList(const std::string& confID)
+getParticipantList(const std::string &confID)
 {
     return jami::Manager::instance().getParticipantList(confID);
 }
 
 std::vector<std::string>
-getDisplayNames(const std::string& confID)
+getDisplayNames(const std::string &confID)
 {
     return jami::Manager::instance().getDisplayNames(confID);
 }
 
 std::string
-getConferenceId(const std::string& callID)
+getConferenceId(const std::string &callID)
 {
     return jami::Manager::instance().getConferenceId(callID);
 }
 
 bool
-startRecordedFilePlayback(const std::string& filepath)
+startRecordedFilePlayback(const std::string &filepath)
 {
     return jami::Manager::instance().startRecordedFilePlayback(filepath);
 }
@@ -252,17 +252,17 @@ startRecordedFilePlayback(const std::string& filepath)
 void
 stopRecordedFilePlayback()
 {
-   jami::Manager::instance().stopRecordedFilePlayback();
+    jami::Manager::instance().stopRecordedFilePlayback();
 }
 
 bool
-toggleRecording(const std::string& callID)
+toggleRecording(const std::string &callID)
 {
     return jami::Manager::instance().toggleRecordingCall(callID);
 }
 
 void
-setRecording(const std::string& callID)
+setRecording(const std::string &callID)
 {
     toggleRecording(callID);
 }
@@ -270,24 +270,24 @@ setRecording(const std::string& callID)
 void
 recordPlaybackSeek(double value)
 {
-   jami::Manager::instance().recordingPlaybackSeek(value);
+    jami::Manager::instance().recordingPlaybackSeek(value);
 }
 
 bool
-getIsRecording(const std::string& callID)
+getIsRecording(const std::string &callID)
 {
     return jami::Manager::instance().isRecording(callID);
 }
 
 std::string
-getCurrentAudioCodecName(const std::string&)
+getCurrentAudioCodecName(const std::string &)
 {
     JAMI_WARN("Deprecated");
     return "";
 }
 
 std::map<std::string, std::string>
-getCallDetails(const std::string& callID)
+getCallDetails(const std::string &callID)
 {
     return jami::Manager::instance().getCallDetails(callID);
 }
@@ -299,13 +299,13 @@ getCallList()
 }
 
 std::vector<std::map<std::string, std::string>>
-getConferenceInfos(const std::string& confId)
+getConferenceInfos(const std::string &confId)
 {
     return jami::Manager::instance().getConferenceInfos(confId);
 }
 
 void
-playDTMF(const std::string& key)
+playDTMF(const std::string &key)
 {
     auto code = key.data()[0];
     jami::Manager::instance().playDtmf(code);
@@ -319,23 +319,26 @@ startTone(int32_t start, int32_t type)
 {
     if (start) {
         if (type == 0)
-           jami::Manager::instance().playTone();
+            jami::Manager::instance().playTone();
         else
-           jami::Manager::instance().playToneWithMessage();
+            jami::Manager::instance().playToneWithMessage();
     } else
-       jami::Manager::instance().stopTone();
+        jami::Manager::instance().stopTone();
 }
 
 bool
-switchInput(const std::string& callID, const std::string& resource)
+switchInput(const std::string &callID, const std::string &resource)
 {
     return jami::Manager::instance().switchInput(callID, resource);
 }
 
 void
-sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed)
+sendTextMessage(const std::string &callID,
+                const std::map<std::string, std::string> &messages,
+                const std::string &from,
+                bool isMixed)
 {
-    jami::runOnMainThread([callID, messages, from, isMixed]{
+    jami::runOnMainThread([callID, messages, from, isMixed] {
         jami::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);
     });
 }

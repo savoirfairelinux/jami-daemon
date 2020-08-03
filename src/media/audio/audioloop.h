@@ -22,9 +22,9 @@
  */
 #pragma once
 
-#include "ring_types.h"
-#include "noncopyable.h"
 #include "audiobuffer.h"
+#include "noncopyable.h"
+#include "ring_types.h"
 
 /**
  * @file audioloop.h
@@ -33,13 +33,15 @@
 
 namespace jami {
 
-class AudioLoop {
+class AudioLoop
+{
 public:
     AudioLoop() {}
 
     AudioLoop(unsigned int sampleRate);
 
-    AudioLoop& operator=(AudioLoop&& o) noexcept {
+    AudioLoop &operator=(AudioLoop &&o) noexcept
+    {
         std::swap(buffer_, o.buffer_);
         std::swap(pos_, o.pos_);
         return *this;
@@ -54,7 +56,7 @@ public:
      * @param nb of int16 to send
      * @param gain The gain [-1.0, 1.0]
      */
-    void getNext(AudioBuffer& output, double gain);
+    void getNext(AudioBuffer &output, double gain);
     std::unique_ptr<AudioFrame> getNext(size_t samples = 0);
 
     void seek(double relative_position);
@@ -62,26 +64,21 @@ public:
     /**
      * Reset the pointer position
      */
-    void reset() {
-        pos_ = 0;
-    }
+    void reset() { pos_ = 0; }
 
     /**
      * Accessor to the size of the buffer
      * @return unsigned int The size
      */
-    size_t getSize() const {
-        return buffer_->frames();
-    }
-    AudioFormat getFormat() const {
-        return buffer_->getFormat();
-    }
+    size_t getSize() const { return buffer_->frames(); }
+    AudioFormat getFormat() const { return buffer_->getFormat(); }
+
 protected:
     /** The data buffer */
-    AudioBuffer * buffer_ {nullptr};
+    AudioBuffer *buffer_{nullptr};
 
     /** current position, set to 0, when initialize */
-    size_t pos_ {0};
+    size_t pos_{0};
 
 private:
     NON_COPYABLE(AudioLoop);
@@ -89,4 +86,3 @@ private:
 };
 
 } // namespace jami
-

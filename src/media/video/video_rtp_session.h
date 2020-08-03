@@ -21,14 +21,14 @@
 
 #pragma once
 
-#include "media/rtp_session.h"
 #include "media/media_device.h"
+#include "media/rtp_session.h"
 
-#include "video_base.h"
 #include "threadloop.h"
+#include "video_base.h"
 
-#include <string>
 #include <memory>
+#include <string>
 
 namespace jami {
 class CongestionControl;
@@ -36,20 +36,23 @@ class Conference;
 class MediaRecorder;
 } // namespace jami
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class VideoMixer;
 class VideoSender;
 class VideoReceiveThread;
 
-struct RTCPInfo {
+struct RTCPInfo
+{
     float packetLoss;
     unsigned int jitter;
     unsigned int nb_sample;
     float latency;
 };
 
-struct VideoBitrateInfo {
+struct VideoBitrateInfo
+{
     unsigned videoBitrateCurrent;
     unsigned videoBitrateMin;
     unsigned videoBitrateMax;
@@ -61,20 +64,19 @@ struct VideoBitrateInfo {
     float packetLostThreshold;
 };
 
-class VideoRtpSession : public RtpSession {
+class VideoRtpSession : public RtpSession
+{
 public:
     using BaseType = RtpSession;
 
-    VideoRtpSession(const std::string& callID,
-                    const DeviceParams& localVideoParams);
+    VideoRtpSession(const std::string &callID, const DeviceParams &localVideoParams);
     ~VideoRtpSession();
 
     void setRequestKeyFrameCallback(std::function<void(void)> cb);
 
-    void updateMedia(const MediaDescription& send, const MediaDescription& receive) override;
+    void updateMedia(const MediaDescription &send, const MediaDescription &receive) override;
 
-    void start(std::unique_ptr<IceSocket> rtp_sock,
-               std::unique_ptr<IceSocket> rtcp_sock) override;
+    void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
     void restartSender() override;
     void stop() override;
 
@@ -87,35 +89,27 @@ public:
       */
     void setRotation(int rotation);
     void forceKeyFrame();
-    void bindMixer(VideoMixer* mixer);
+    void bindMixer(VideoMixer *mixer);
     void unbindMixer();
-    void enterConference(Conference* conference);
+    void enterConference(Conference *conference);
     void exitConference();
-    void switchInput(const std::string& input) {
-        input_ = input;
-    }
-    const std::string& getInput() const {
-      return input_;
-    }
+    void switchInput(const std::string &input) { input_ = input; }
+    const std::string &getInput() const { return input_; }
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
-    void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
-    void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
+    void initRecorder(std::shared_ptr<MediaRecorder> &rec) override;
+    void deinitRecorder(std::shared_ptr<MediaRecorder> &rec) override;
 
-    std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() {
-        return videoLocal_;
-    }
+    std::shared_ptr<VideoFrameActiveWriter> &getVideoLocal() { return videoLocal_; }
 
-    std::unique_ptr<VideoReceiveThread>& getVideoReceive() {
-        return receiveThread_;
-    }
+    std::unique_ptr<VideoReceiveThread> &getVideoReceive() { return receiveThread_; }
 
 private:
-    void setupConferenceVideoPipeline(Conference& conference);
+    void setupConferenceVideoPipeline(Conference &conference);
     void setupVideoPipeline();
     void startSender();
     void startReceiver();
-    using clock = std::chrono::steady_clock;
+    using clock      = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
     std::string input_;
@@ -123,15 +117,15 @@ private:
 
     std::unique_ptr<VideoSender> sender_;
     std::unique_ptr<VideoReceiveThread> receiveThread_;
-    Conference* conference_ {nullptr};
+    Conference *conference_{nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
     uint16_t initSeqVal_ = 0;
 
-    std::function<void (void)> requestKeyFrameCallback_;
+    std::function<void(void)> requestKeyFrameCallback_;
 
-    bool check_RCTP_Info_RR(RTCPInfo&);
-    bool check_RCTP_Info_REMB(uint64_t*);
+    bool check_RCTP_Info_RR(RTCPInfo &);
+    bool check_RCTP_Info_REMB(uint64_t *);
     unsigned getLowerQuality();
     unsigned getLowerBitrate();
     void adaptQualityAndBitrate();
@@ -140,27 +134,27 @@ private:
     void checkReceiver();
     float getPonderateLoss(float lastLoss);
     void delayMonitor(int gradient, int deltaT);
-    void dropProcessing(RTCPInfo* rtcpi);
+    void dropProcessing(RTCPInfo *rtcpi);
     void delayProcessing(int br);
     void setNewBitrate(unsigned int newBR);
 
     // no packet loss can be calculated as no data in input
-    static constexpr float NO_INFO_CALCULATED {-1.0};
+    static constexpr float NO_INFO_CALCULATED{-1.0};
     // bitrate and quality info struct
     VideoBitrateInfo videoBitrateInfo_;
     // previous quality, bitrate, jitter and loss used if quality or bitrate need to be decreased
-    std::list<unsigned> histoQuality_ {};
-    std::list<unsigned> histoBitrate_ {};
-    std::list<unsigned> histoJitter_ {};
-    std::list<int> histoDelay_ {};
-    std::list< std::pair<time_point, float> > histoLoss_;
+    std::list<unsigned> histoQuality_{};
+    std::list<unsigned> histoBitrate_{};
+    std::list<unsigned> histoJitter_{};
+    std::list<int> histoDelay_{};
+    std::list<std::pair<time_point, float>> histoLoss_;
     // max size of quality and bitrate historic
 
     // 5 tries in a row
-    static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
-    bool hasReachMaxQuality_ {false};
+    static constexpr unsigned MAX_ADAPTATIVE_BITRATE_ITERATION{5};
+    bool hasReachMaxQuality_{false};
     // packet loss threshold
-    static constexpr float PACKET_LOSS_THRESHOLD {1.0};
+    static constexpr float PACKET_LOSS_THRESHOLD{1.0};
 
     InterruptedThreadLoop rtcpCheckerThread_;
     void processRtcpChecker();
@@ -168,17 +162,18 @@ private:
     std::function<void(int)> changeOrientationCallback_;
 
     // interval in seconds between RTCP checkings
-    std::chrono::seconds rtcp_checking_interval {4};
+    std::chrono::seconds rtcp_checking_interval{4};
 
-    time_point lastMediaRestart_ {time_point::min()};
-    time_point last_REMB_inc_ {time_point::min()};
-    time_point last_REMB_dec_ {time_point::min()};
+    time_point lastMediaRestart_{time_point::min()};
+    time_point last_REMB_inc_{time_point::min()};
+    time_point last_REMB_dec_{time_point::min()};
 
-    unsigned remb_dec_cnt_ {0};
+    unsigned remb_dec_cnt_{0};
 
     std::unique_ptr<CongestionControl> cc;
 
     std::function<void(void)> cbKeyFrameRequest_;
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

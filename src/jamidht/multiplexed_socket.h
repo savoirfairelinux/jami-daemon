@@ -27,12 +27,15 @@ class IceTransport;
 class ChannelSocket;
 class TlsSocketEndpoint;
 
-using OnConnectionRequestCb = std::function<bool(const std::string& /* device id */, const uint16_t& /* id */, const std::string& /* name */)>;
-using OnConnectionReadyCb = std::function<void(const std::string& /* device id */, const std::shared_ptr<ChannelSocket>&)>;
-using onChannelReadyCb = std::function<void(void)>;
-using OnShutdownCb = std::function<void(void)>;
+using OnConnectionRequestCb = std::function<bool(const std::string & /* device id */,
+                                                 const uint16_t & /* id */,
+                                                 const std::string & /* name */)>;
+using OnConnectionReadyCb   = std::function<void(const std::string & /* device id */,
+                                               const std::shared_ptr<ChannelSocket> &)>;
+using onChannelReadyCb      = std::function<void(void)>;
+using OnShutdownCb          = std::function<void(void)>;
 
-static constexpr uint16_t CONTROL_CHANNEL {0};
+static constexpr uint16_t CONTROL_CHANNEL{0};
 
 enum class ChannelRequestState {
     REQUEST,
@@ -44,14 +47,16 @@ enum class ChannelRequestState {
  * That msgpack structure is used to request a new channel (id, name)
  * Transmitted over the TLS socket
  */
-struct ChannelRequest {
-    std::string name {};
-    uint16_t channel {0};
-    ChannelRequestState state {ChannelRequestState::REQUEST};
+struct ChannelRequest
+{
+    std::string name{};
+    uint16_t channel{0};
+    ChannelRequestState state{ChannelRequestState::REQUEST};
     MSGPACK_DEFINE(name, channel, state)
 };
 
-struct ChanneledMessage {
+struct ChanneledMessage
+{
     uint16_t channel;
     std::vector<uint8_t> data;
     MSGPACK_DEFINE(channel, data)
@@ -60,22 +65,27 @@ struct ChanneledMessage {
 /**
  * A socket divided in channels over a TLS session
  */
-class MultiplexedSocket : public std::enable_shared_from_this<MultiplexedSocket> {
+class MultiplexedSocket : public std::enable_shared_from_this<MultiplexedSocket>
+{
 public:
-    MultiplexedSocket(const std::string& deviceId, std::unique_ptr<TlsSocketEndpoint> endpoint);
+    MultiplexedSocket(const std::string &deviceId, std::unique_ptr<TlsSocketEndpoint> endpoint);
     ~MultiplexedSocket();
-    std::shared_ptr<ChannelSocket> addChannel(const std::string& name);
+    std::shared_ptr<ChannelSocket> addChannel(const std::string &name);
 
-    std::shared_ptr<MultiplexedSocket> shared() {
+    std::shared_ptr<MultiplexedSocket> shared()
+    {
         return std::static_pointer_cast<MultiplexedSocket>(shared_from_this());
     }
-    std::shared_ptr<MultiplexedSocket const> shared() const {
+    std::shared_ptr<MultiplexedSocket const> shared() const
+    {
         return std::static_pointer_cast<MultiplexedSocket const>(shared_from_this());
     }
-    std::weak_ptr<MultiplexedSocket> weak() {
+    std::weak_ptr<MultiplexedSocket> weak()
+    {
         return std::static_pointer_cast<MultiplexedSocket>(shared_from_this());
     }
-    std::weak_ptr<MultiplexedSocket const> weak() const {
+    std::weak_ptr<MultiplexedSocket const> weak() const
+    {
         return std::static_pointer_cast<MultiplexedSocket const>(shared_from_this());
     }
 
@@ -87,21 +97,26 @@ public:
     /**
      * Will be triggered when a new channel is ready
      */
-    void setOnReady(OnConnectionReadyCb&& cb);
+    void setOnReady(OnConnectionReadyCb &&cb);
     /**
      * Will be triggered when the peer asks for a new channel
      */
-    void setOnRequest(OnConnectionRequestCb&& cb);
+    void setOnRequest(OnConnectionRequestCb &&cb);
     /**
      * Triggered when a specific channel is ready
      * Used by ConnectionManager::connectDevice()
      */
-    void setOnChannelReady(uint16_t channel, onChannelReadyCb&& cb);
+    void setOnChannelReady(uint16_t channel, onChannelReadyCb &&cb);
 
-    std::size_t read(const uint16_t& channel, uint8_t* buf, std::size_t len, std::error_code& ec);
-    std::size_t write(const uint16_t& channel, const uint8_t* buf, std::size_t len, std::error_code& ec);
-    int waitForData(const uint16_t& channel, std::chrono::milliseconds timeout, std::error_code&) const;
-    void setOnRecv(const uint16_t& channel, GenericSocket<uint8_t>::RecvCb&& cb);
+    std::size_t read(const uint16_t &channel, uint8_t *buf, std::size_t len, std::error_code &ec);
+    std::size_t write(const uint16_t &channel,
+                      const uint8_t *buf,
+                      std::size_t len,
+                      std::error_code &ec);
+    int waitForData(const uint16_t &channel,
+                    std::chrono::milliseconds timeout,
+                    std::error_code &) const;
+    void setOnRecv(const uint16_t &channel, GenericSocket<uint8_t>::RecvCb &&cb);
 
     /**
      * This will close all channels and send a TLS EOF on the main socket.
@@ -110,7 +125,7 @@ public:
     /**
      * Will trigger that callback when shutdown() is called
      */
-    void onShutdown(OnShutdownCb&& cb);
+    void onShutdown(OnShutdownCb &&cb);
 
     std::shared_ptr<IceTransport> underlyingICE() const;
 
@@ -126,7 +141,9 @@ class ChannelSocket : public GenericSocket<uint8_t>
 {
 public:
     using SocketType = GenericSocket<uint8_t>;
-    ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint, const std::string& name, const uint16_t& channel);
+    ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
+                  const std::string &name,
+                  const uint16_t &channel);
     ~ChannelSocket();
 
     std::string deviceId() const;
@@ -149,21 +166,21 @@ public:
     /**
      * Will trigger that callback when shutdown() is called
      */
-    void onShutdown(OnShutdownCb&& cb);
+    void onShutdown(OnShutdownCb &&cb);
 
-    std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
+    std::size_t read(ValueType *buf, std::size_t len, std::error_code &ec) override;
     /**
      * @note len should be < UINT8_MAX, else you will get ec = EMSGSIZE
      */
-    std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
-    int waitForData(std::chrono::milliseconds timeout, std::error_code&) const override;
+    std::size_t write(const ValueType *buf, std::size_t len, std::error_code &ec) override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code &) const override;
 
     /**
      * set a callback when receiving data
      * @note: this callback should take a little time and not block
      * but you can move it in a thread
      */
-    void setOnRecv(RecvCb&&) override;
+    void setOnRecv(RecvCb &&) override;
 
     std::shared_ptr<IceTransport> underlyingICE() const;
 
@@ -172,6 +189,6 @@ private:
     std::unique_ptr<Impl> pimpl_;
 };
 
-}
+} // namespace jami
 
 MSGPACK_ADD_ENUM(jami::ChannelRequestState);

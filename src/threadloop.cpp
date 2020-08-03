@@ -26,7 +26,7 @@
 namespace jami {
 
 void
-ThreadLoop::mainloop(std::thread::id& tid,
+ThreadLoop::mainloop(std::thread::id &tid,
                      const std::function<bool()> setup,
                      const std::function<void()> process,
                      const std::function<void()> cleanup)
@@ -40,17 +40,17 @@ ThreadLoop::mainloop(std::thread::id& tid,
         } else {
             JAMI_ERR("setup failed");
         }
-    } catch (const ThreadLoopException& e) {
+    } catch (const ThreadLoopException &e) {
         JAMI_ERR("[threadloop:%p] ThreadLoopException: %s", this, e.what());
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         JAMI_ERR("[threadloop:%p] Unwaited exception: %s", this, e.what());
     }
     stop();
 }
 
-ThreadLoop::ThreadLoop(const std::function<bool()>& setup,
-                       const std::function<void()>& process,
-                       const std::function<void()>& cleanup)
+ThreadLoop::ThreadLoop(const std::function<bool()> &setup,
+                       const std::function<void()> &process,
+                       const std::function<void()> &cleanup)
     : setup_(setup)
     , process_(process)
     , cleanup_(cleanup)
@@ -82,7 +82,8 @@ ThreadLoop::start()
     }
 
     state_ = RUNNING;
-    thread_ = std::thread(&ThreadLoop::mainloop, this, std::ref(threadId_), setup_, process_, cleanup_);
+    thread_
+        = std::thread(&ThreadLoop::mainloop, this, std::ref(threadId_), setup_, process_, cleanup_);
     threadId_ = thread_.get_id();
 }
 

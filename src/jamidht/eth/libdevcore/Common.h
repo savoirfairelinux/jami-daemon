@@ -25,7 +25,7 @@
 
 // way too many unsigned to size_t warnings in 32 bit build
 #ifdef _M_IX86
-#pragma warning(disable:4244)
+#pragma warning(disable : 4244)
 #endif
 
 #if _MSC_VER && _MSC_VER < 1900
@@ -34,84 +34,105 @@
 #endif
 
 #ifdef __INTEL_COMPILER
-#pragma warning(disable:3682) //call through incomplete class
+#pragma warning(disable : 3682) //call through incomplete class
 #endif
 
-#include <map>
-#include <unordered_map>
-#include <vector>
-#include <set>
-#include <unordered_set>
-#include <functional>
-#include <string>
-#include <chrono>
 #include "vector_ref.h"
+#include <chrono>
+#include <functional>
+#include <map>
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 // Quote a given token stream to turn it into a string.
 #define DEV_QUOTED_HELPER(s) #s
 #define DEV_QUOTED(s) DEV_QUOTED_HELPER(s)
 
-#define DEV_IGNORE_EXCEPTIONS(X) try { X; } catch (...) {}
+#define DEV_IGNORE_EXCEPTIONS(X) \
+    try { \
+        X; \
+    } catch (...) { \
+    }
 
-#define DEV_IF_THROWS(X) try{X;}catch(...)
+#define DEV_IF_THROWS(X) \
+    try { \
+        X; \
+    } catch (...)
 
-namespace dev
-{
+namespace dev {
 
-extern char const* Version;
+extern char const *Version;
 
 extern std::string const EmptyString;
 
 // Binary data types.
-using bytes = std::vector<uint8_t>;
-using bytesRef = vector_ref<uint8_t>;
+using bytes         = std::vector<uint8_t>;
+using bytesRef      = vector_ref<uint8_t>;
 using bytesConstRef = vector_ref<uint8_t const>;
 
-template <class T>
+template<class T>
 class secure_vector
 {
 public:
-	secure_vector() {}
-	secure_vector(secure_vector<T> const& /*_c*/) = default;  // See https://github.com/ethereum/libweb3core/pull/44
-	explicit secure_vector(size_t _size): m_data(_size) {}
-	explicit secure_vector(size_t _size, T _item): m_data(_size, _item) {}
-	explicit secure_vector(std::vector<T> const& _c): m_data(_c) {}
-	explicit secure_vector(vector_ref<T> _c): m_data(_c.data(), _c.data() + _c.size()) {}
-	explicit secure_vector(vector_ref<const T> _c): m_data(_c.data(), _c.data() + _c.size()) {}
-	~secure_vector() { ref().cleanse(); }
+    secure_vector() {}
+    secure_vector(secure_vector<T> const & /*_c*/)
+        = default; // See https://github.com/ethereum/libweb3core/pull/44
+    explicit secure_vector(size_t _size)
+        : m_data(_size)
+    {}
+    explicit secure_vector(size_t _size, T _item)
+        : m_data(_size, _item)
+    {}
+    explicit secure_vector(std::vector<T> const &_c)
+        : m_data(_c)
+    {}
+    explicit secure_vector(vector_ref<T> _c)
+        : m_data(_c.data(), _c.data() + _c.size())
+    {}
+    explicit secure_vector(vector_ref<const T> _c)
+        : m_data(_c.data(), _c.data() + _c.size())
+    {}
+    ~secure_vector() { ref().cleanse(); }
 
-	secure_vector<T>& operator=(secure_vector<T> const& _c)
-	{
-		if (&_c == this)
-			return *this;
+    secure_vector<T> &operator=(secure_vector<T> const &_c)
+    {
+        if (&_c == this)
+            return *this;
 
-		ref().cleanse();
-		m_data = _c.m_data;
-		return *this;
-	}
-	std::vector<T>& writable() { clear(); return m_data; }
-	std::vector<T> const& makeInsecure() const { return m_data; }
+        ref().cleanse();
+        m_data = _c.m_data;
+        return *this;
+    }
+    std::vector<T> &writable()
+    {
+        clear();
+        return m_data;
+    }
+    std::vector<T> const &makeInsecure() const { return m_data; }
 
-	void clear() { ref().cleanse(); }
+    void clear() { ref().cleanse(); }
 
-	vector_ref<T> ref() { return vector_ref<T>(&m_data); }
-	vector_ref<T const> ref() const { return vector_ref<T const>(&m_data); }
+    vector_ref<T> ref() { return vector_ref<T>(&m_data); }
+    vector_ref<T const> ref() const { return vector_ref<T const>(&m_data); }
 
-	size_t size() const { return m_data.size(); }
-	bool empty() const { return m_data.empty(); }
+    size_t size() const { return m_data.size(); }
+    bool empty() const { return m_data.empty(); }
 
-	void swap(secure_vector<T>& io_other) { m_data.swap(io_other.m_data); }
+    void swap(secure_vector<T> &io_other) { m_data.swap(io_other.m_data); }
 
 private:
-	std::vector<T> m_data;
+    std::vector<T> m_data;
 };
 
 using bytesSec = secure_vector<uint8_t>;
 
 // Map types.
 using StringMap = std::map<std::string, std::string>;
-using BytesMap = std::map<bytes, bytes>;
-using HexMap = std::map<bytes, bytes>;
+using BytesMap  = std::map<bytes, bytes>;
+using HexMap    = std::map<bytes, bytes>;
 
 // Hash types.
 using StringHashMap = std::unordered_map<std::string, std::string>;
@@ -127,21 +148,24 @@ using string32 = std::array<char, 32>;
 extern bytes const NullBytes;
 
 /// @returns the absolute distance between _a and _b.
-template <class N>
-inline N diff(N const& _a, N const& _b)
+template<class N>
+inline N
+diff(N const &_a, N const &_b)
 {
-	return std::max(_a, _b) - std::min(_a, _b);
+    return std::max(_a, _b) - std::min(_a, _b);
 }
 
 /// RAII utility class whose destructor calls a given function.
 class ScopeGuard
 {
 public:
-	ScopeGuard(std::function<void(void)> _f): m_f(_f) {}
-	~ScopeGuard() { m_f(); }
+    ScopeGuard(std::function<void(void)> _f)
+        : m_f(_f)
+    {}
+    ~ScopeGuard() { m_f(); }
 
 private:
-	std::function<void(void)> m_f;
+    std::function<void(void)> m_f;
 };
 
 #ifdef _MSC_VER
@@ -151,15 +175,9 @@ private:
 #define DEV_UNUSED __attribute__((unused))
 #endif
 
-enum class WithExisting: int
-{
-	Trust = 0,
-	Verify,
-	Rescue,
-	Kill
-};
+enum class WithExisting : int { Trust = 0, Verify, Rescue, Kill };
 
 /// Get the current time in seconds since the epoch in UTC
 uint64_t utcTime();
 
-}
+} // namespace dev

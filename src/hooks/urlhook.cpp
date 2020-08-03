@@ -23,17 +23,17 @@
 
 namespace jami {
 
-int UrlHook::runAction(const std::string &command, const std::string &args)
+int
+UrlHook::runAction(const std::string &command, const std::string &args)
 {
     //FIXME : use fork and execve, so no need to escape shell arguments
-    const std::string cmd = command + (args.empty() ? "" : " ") +
-                            "\"" + args + "\" &";
+    const std::string cmd = command + (args.empty() ? "" : " ") + "\"" + args + "\" &";
 
 #if __APPLE__
-  #include "TargetConditionals.h"
-  #if defined(TARGET_IPHONE_SIMULATOR) || defined(TARGET_OS_IPHONE)
+#include "TargetConditionals.h"
+#if defined(TARGET_IPHONE_SIMULATOR) || defined(TARGET_OS_IPHONE)
     return 0;
-  #endif
+#endif
 #elif defined(RING_UWP)
     return 0;
 #else

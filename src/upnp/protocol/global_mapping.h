@@ -29,7 +29,8 @@
 
 #include "noncopyable.h"
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
 /*
  * GlobalMapping is like a mapping, but it tracks the number of global users,
@@ -41,15 +42,18 @@ namespace jami { namespace upnp {
 class GlobalMapping : public Mapping
 {
 public:
-    GlobalMapping(const Mapping& mapping, unsigned users = 1) :
-        Mapping(mapping.getPortExternal(),
-        mapping.getPortInternal(),
-        mapping.getType(),
-        mapping.isUnique(),
-        mapping.getDescription()),
-        users(users) {}
+    GlobalMapping(const Mapping &mapping, unsigned users = 1)
+        : Mapping(mapping.getPortExternal(),
+                  mapping.getPortInternal(),
+                  mapping.getType(),
+                  mapping.isUnique(),
+                  mapping.getDescription())
+        , users(users)
+    {}
 
-    unsigned int users;            // Number of users of this mapping. Multiple accounts can use the same SIP ports.
+    unsigned int
+        users; // Number of users of this mapping. Multiple accounts can use the same SIP ports.
 };
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

@@ -22,20 +22,20 @@
 
 #include "client/ring_signal.h"
 
-#include "audio/ringbufferpool.h"
-#include "audio/ringbuffer.h"
-#include "audio/dcblocker.h"
-#include "libav_utils.h"
-#include "manager.h"
-#include "logger.h"
 #include "array_size.h"
+#include "audio/dcblocker.h"
+#include "audio/ringbuffer.h"
+#include "audio/ringbufferpool.h"
+#include "libav_utils.h"
+#include "logger.h"
+#include "manager.h"
 
 #include <SLES/OpenSLES_AndroidConfiguration.h>
 
-#include <thread>
+#include <cassert>
 #include <chrono>
 #include <cstdio>
-#include <cassert>
+#include <thread>
 #include <unistd.h>
 
 namespace jami {
@@ -94,7 +94,7 @@ OpenSLLayer::stopStream()
 
     if (engineObject_ != nullptr) {
         (*engineObject_)->Destroy(engineObject_);
-        engineObject_ = nullptr;
+        engineObject_    = nullptr;
         engineInterface_ = nullptr;
     }
 
@@ -116,8 +116,8 @@ allocateSampleBufs(unsigned count, size_t sizeInByte)
     if (!count || !sizeInByte)
         return bufs;
     bufs.reserve(count);
-    size_t allocSize = (sizeInByte + 3) & ~3;   // padding to 4 bytes aligned
-    for(unsigned i =0; i < count; i++)
+    size_t allocSize = (sizeInByte + 3) & ~3; // padding to 4 bytes aligned
+    for (unsigned i = 0; i < count; i++)
         bufs.emplace_back(allocSize, sizeInByte);
     return bufs;
 }
@@ -128,7 +128,7 @@ OpenSLLayer::initAudioEngine()
     std::vector<int32_t> hw_infos;
     hw_infos.reserve(4);
     emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
-    hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
+    hardwareFormat_   = AudioFormat(hw_infos[0], 1); // Mono on Android
     hardwareBuffSize_ = hw_infos[1];
     hardwareFormatAvailable(hardwareFormat_, hardwareBuffSize_);
 
@@ -137,12 +137,12 @@ OpenSLLayer::initAudioEngine()
     SLASSERT((*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE, &engineInterface_));
 
     uint32_t bufSize = hardwareBuffSize_ * hardwareFormat_.getBytesPerFrame();
-    bufs_ = allocateSampleBufs(BUF_COUNT*3, bufSize);
-    for(int i=0; i<BUF_COUNT; i++)
+    bufs_            = allocateSampleBufs(BUF_COUNT * 3, bufSize);
+    for (int i = 0; i < BUF_COUNT; i++)
         freePlayBufQueue_.push(&bufs_[i]);
-    for(int i=BUF_COUNT; i<2*BUF_COUNT; i++)
+    for (int i = BUF_COUNT; i < 2 * BUF_COUNT; i++)
         freeRingBufQueue_.push(&bufs_[i]);
-    for(int i=2*BUF_COUNT; i<3*BUF_COUNT; i++)
+    for (int i = 2 * BUF_COUNT; i < 3 * BUF_COUNT; i++)
         freeRecBufQueue_.push(&bufs_[i]);
 }
 
@@ -155,7 +155,8 @@ OpenSLLayer::shutdownAudioEngine()
 }
 
 uint32_t
-OpenSLLayer::dbgEngineGetBufCount() {
+OpenSLLayer::dbgEngineGetBufCount()
+{
     uint32_t count_player = player_->dbgGetDevBufCount();
     count_player += freePlayBufQueue_.size();
     count_player += playBufQueue_.size();
@@ -165,28 +166,33 @@ OpenSLLayer::dbgEngineGetBufCount() {
     count_ringtone += ringBufQueue_.size();
 
     JAMI_ERR("Buf Disrtibutions: PlayerDev=%d, PlayQ=%d, FreePlayQ=%d",
-         player_->dbgGetDevBufCount(),
-         playBufQueue_.size(),
-         freePlayBufQueue_.size());
+             player_->dbgGetDevBufCount(),
+             playBufQueue_.size(),
+             freePlayBufQueue_.size());
     JAMI_ERR("Buf Disrtibutions: RingDev=%d, RingQ=%d, FreeRingQ=%d",
-         ringtone_->dbgGetDevBufCount(),
-         ringBufQueue_.size(),
-         freeRingBufQueue_.size());
+             ringtone_->dbgGetDevBufCount(),
+             ringBufQueue_.size(),
+             freeRingBufQueue_.size());
 
-    if(count_player != BUF_COUNT) {
+    if (count_player != BUF_COUNT) {
         JAMI_ERR("====Lost Bufs among the queue(supposed = %d, found = %d)",
-             BUF_COUNT, count_player);
+                 BUF_COUNT,
+                 count_player);
     }
     return count_player;
 }
 
 void
-OpenSLLayer::engineServicePlay() {
-    sample_buf* buf;
+OpenSLLayer::engineServicePlay()
+{
+    sample_buf *buf;
     while (player_ and freePlayBufQueue_.front(&buf)) {
         if (auto dat = getToPlay(hardwareFormat_, hardwareBuffSize_)) {
-            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels * sizeof(AudioSample);
-            std::copy_n((const AudioSample*)dat->pointer()->data[0], dat->pointer()->nb_samples, (AudioSample*)buf->buf_);
+            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels
+                         * sizeof(AudioSample);
+            std::copy_n((const AudioSample *) dat->pointer()->data[0],
+                        dat->pointer()->nb_samples,
+                        (AudioSample *) buf->buf_);
             if (!playBufQueue_.push(buf)) {
                 JAMI_WARN("playThread player_ PLAY_KICKSTART_BUFFER_COUNT 1");
                 break;
@@ -199,13 +205,17 @@ OpenSLLayer::engineServicePlay() {
 }
 
 void
-OpenSLLayer::engineServiceRing() {
-    sample_buf* buf;
+OpenSLLayer::engineServiceRing()
+{
+    sample_buf *buf;
     while (ringtone_ and freeRingBufQueue_.front(&buf)) {
         freeRingBufQueue_.pop();
         if (auto dat = getToRing(hardwareFormat_, hardwareBuffSize_)) {
-            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels * sizeof(AudioSample);
-            std::copy_n((const AudioSample*)dat->pointer()->data[0], dat->pointer()->nb_samples, (AudioSample*)buf->buf_);
+            buf->size_ = dat->pointer()->nb_samples * dat->pointer()->channels
+                         * sizeof(AudioSample);
+            std::copy_n((const AudioSample *) dat->pointer()->data[0],
+                        dat->pointer()->nb_samples,
+                        (AudioSample *) buf->buf_);
             if (!ringBufQueue_.push(buf)) {
                 JAMI_WARN("playThread ringtone_ PLAY_KICKSTART_BUFFER_COUNT 1");
                 freeRingBufQueue_.push(buf);
@@ -219,7 +229,8 @@ OpenSLLayer::engineServiceRing() {
 }
 
 void
-OpenSLLayer::engineServiceRec() {
+OpenSLLayer::engineServiceRec()
+{
     recCv.notify_one();
     return;
 }
@@ -228,20 +239,26 @@ void
 OpenSLLayer::initAudioPlayback()
 {
     using namespace std::placeholders;
-    try  {
-        player_.reset(new opensl::AudioPlayer(hardwareFormat_, hardwareBuffSize_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+    try {
+        player_.reset(new opensl::AudioPlayer(hardwareFormat_,
+                                              hardwareBuffSize_,
+                                              engineInterface_,
+                                              SL_ANDROID_STREAM_VOICE));
         player_->setBufQueue(&playBufQueue_, &freePlayBufQueue_);
         player_->registerCallback(std::bind(&OpenSLLayer::engineServicePlay, this));
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         JAMI_ERR("Error initializing audio playback: %s", e.what());
         return;
     }
 
-    try  {
-        ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_, hardwareBuffSize_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+    try {
+        ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_,
+                                                hardwareBuffSize_,
+                                                engineInterface_,
+                                                SL_ANDROID_STREAM_VOICE));
         ringtone_->setBufQueue(&ringBufQueue_, &freeRingBufQueue_);
         ringtone_->registerCallback(std::bind(&OpenSLLayer::engineServiceRing, this));
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         JAMI_ERR("Error initializing ringtone playback: %s", e.what());
     }
 }
@@ -251,12 +268,12 @@ OpenSLLayer::initAudioCapture()
 {
     using namespace std::placeholders;
     std::lock_guard<std::mutex> lck(recMtx);
-    try  {
+    try {
         recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, engineInterface_));
         recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
         recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this));
         setHasNativeAEC(recorder_->hasNativeAEC());
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         JAMI_ERR("Error initializing audio capture: %s", e.what());
     }
 }
@@ -295,11 +312,13 @@ OpenSLLayer::startAudioCapture()
                 recBufQueue_.pop();
                 if (buf->size_ > 0) {
                     auto nb_samples = buf->size_ / hardwareFormat_.getBytesPerFrame();
-                    auto out = std::make_shared<AudioFrame>(hardwareFormat_, nb_samples);
+                    auto out        = std::make_shared<AudioFrame>(hardwareFormat_, nb_samples);
                     if (isCaptureMuted_)
                         libav_utils::fillWithSilence(out->pointer());
                     else
-                        std::copy_n((const AudioSample*)buf->buf_, nb_samples, (AudioSample*)out->pointer()->data[0]);
+                        std::copy_n((const AudioSample *) buf->buf_,
+                                    nb_samples,
+                                    (AudioSample *) out->pointer()->data[0]);
                     putRecorded(std::move(out));
                 }
                 buf->size_ = 0;
@@ -360,20 +379,24 @@ OpenSLLayer::getCaptureDeviceList() const
     // to obtain such an information)-> SL_FEATURE_UNSUPPORTED
 
     SLuint32 InputDeviceIDs[MAX_NUMBER_INPUT_DEVICES];
-    SLint32 numInputs = 0;
+    SLint32 numInputs       = 0;
     SLboolean mic_available = SL_BOOLEAN_FALSE;
-    SLuint32 mic_deviceID = 0;
+    SLuint32 mic_deviceID   = 0;
 
     SLresult res;
 
     // Get the Audio IO DEVICE CAPABILITIES interface, implicit
-    SLAudioIODeviceCapabilitiesItf deviceCapabilities {nullptr};
-    res = (*engineObject_)->GetInterface(engineObject_, SL_IID_AUDIOIODEVICECAPABILITIES, (void*)&deviceCapabilities);
+    SLAudioIODeviceCapabilitiesItf deviceCapabilities{nullptr};
+    res = (*engineObject_)
+              ->GetInterface(engineObject_,
+                             SL_IID_AUDIOIODEVICECAPABILITIES,
+                             (void *) &deviceCapabilities);
     if (res != SL_RESULT_SUCCESS)
         return captureDeviceList;
 
     numInputs = MAX_NUMBER_INPUT_DEVICES;
-    res = (*deviceCapabilities)->GetAvailableAudioInputs(deviceCapabilities, &numInputs, InputDeviceIDs);
+    res       = (*deviceCapabilities)
+              ->GetAvailableAudioInputs(deviceCapabilities, &numInputs, InputDeviceIDs);
     if (res != SL_RESULT_SUCCESS)
         return captureDeviceList;
 
@@ -381,24 +404,25 @@ OpenSLLayer::getCaptureDeviceList() const
     // device - with a preference for the latter
     for (int i = 0; i < numInputs; i++) {
         SLAudioInputDescriptor audioInputDescriptor_;
-        res = (*deviceCapabilities)->QueryAudioInputCapabilities(deviceCapabilities,
-                                                                           InputDeviceIDs[i],
-                                                                           &audioInputDescriptor_);
+        res = (*deviceCapabilities)
+                  ->QueryAudioInputCapabilities(deviceCapabilities,
+                                                InputDeviceIDs[i],
+                                                &audioInputDescriptor_);
         if (res != SL_RESULT_SUCCESS)
             return captureDeviceList;
 
-        if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED and
-            audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER and
-            audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HEADSET) {
-            JAMI_DBG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", InputDeviceIDs[i] );
-            mic_deviceID = InputDeviceIDs[i];
+        if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED
+            and audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER
+            and audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HEADSET) {
+            JAMI_DBG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", InputDeviceIDs[i]);
+            mic_deviceID  = InputDeviceIDs[i];
             mic_available = SL_BOOLEAN_TRUE;
             break;
-        } else if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_INTEGRATED and
-                   audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER and
-                   audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HANDSET) {
-            JAMI_DBG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", InputDeviceIDs[i] );
-            mic_deviceID = InputDeviceIDs[i];
+        } else if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_INTEGRATED
+                   and audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER
+                   and audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HANDSET) {
+            JAMI_DBG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", InputDeviceIDs[i]);
+            mic_deviceID  = InputDeviceIDs[i];
             mic_available = SL_BOOLEAN_TRUE;
             break;
         }
@@ -418,10 +442,11 @@ OpenSLLayer::getPlaybackDeviceList() const
 }
 
 void
-OpenSLLayer::updatePreference(AudioPreference& /*preference*/, int /*index*/, DeviceType /*type*/)
+OpenSLLayer::updatePreference(AudioPreference & /*preference*/, int /*index*/, DeviceType /*type*/)
 {}
 
-void dumpAvailableEngineInterfaces()
+void
+dumpAvailableEngineInterfaces()
 {
     SLresult result;
     JAMI_DBG("Engine Interfaces");
@@ -432,62 +457,111 @@ void dumpAvailableEngineInterfaces()
     assert(SL_RESULT_PARAMETER_INVALID == result);
 
     JAMI_DBG("Engine number of supported interfaces %u", numSupportedInterfaces);
-    for(SLuint32 i=0; i< numSupportedInterfaces; i++){
-        SLInterfaceID  pInterfaceId;
+    for (SLuint32 i = 0; i < numSupportedInterfaces; i++) {
+        SLInterfaceID pInterfaceId;
         slQuerySupportedEngineInterfaces(i, &pInterfaceId);
-        const char* nm = "unknown iid";
+        const char *nm = "unknown iid";
 
-        if (pInterfaceId==SL_IID_NULL) nm="null";
-        else if (pInterfaceId==SL_IID_OBJECT) nm="object";
-        else if (pInterfaceId==SL_IID_AUDIOIODEVICECAPABILITIES) nm="audiodevicecapabilities";
-        else if (pInterfaceId==SL_IID_LED) nm="led";
-        else if (pInterfaceId==SL_IID_VIBRA) nm="vibra";
-        else if (pInterfaceId==SL_IID_METADATAEXTRACTION) nm="metadataextraction";
-        else if (pInterfaceId==SL_IID_METADATATRAVERSAL) nm="metadatatraversal";
-        else if (pInterfaceId==SL_IID_DYNAMICSOURCE) nm="dynamicsource";
-        else if (pInterfaceId==SL_IID_OUTPUTMIX) nm="outputmix";
-        else if (pInterfaceId==SL_IID_PLAY) nm="play";
-        else if (pInterfaceId==SL_IID_PREFETCHSTATUS) nm="prefetchstatus";
-        else if (pInterfaceId==SL_IID_PLAYBACKRATE) nm="playbackrate";
-        else if (pInterfaceId==SL_IID_SEEK) nm="seek";
-        else if (pInterfaceId==SL_IID_RECORD) nm="record";
-        else if (pInterfaceId==SL_IID_EQUALIZER) nm="equalizer";
-        else if (pInterfaceId==SL_IID_VOLUME) nm="volume";
-        else if (pInterfaceId==SL_IID_DEVICEVOLUME) nm="devicevolume";
-        else if (pInterfaceId==SL_IID_BUFFERQUEUE) nm="bufferqueue";
-        else if (pInterfaceId==SL_IID_PRESETREVERB) nm="presetreverb";
-        else if (pInterfaceId==SL_IID_ENVIRONMENTALREVERB) nm="environmentalreverb";
-        else if (pInterfaceId==SL_IID_EFFECTSEND) nm="effectsend";
-        else if (pInterfaceId==SL_IID_3DGROUPING) nm="3dgrouping";
-        else if (pInterfaceId==SL_IID_3DCOMMIT) nm="3dcommit";
-        else if (pInterfaceId==SL_IID_3DLOCATION) nm="3dlocation";
-        else if (pInterfaceId==SL_IID_3DDOPPLER) nm="3ddoppler";
-        else if (pInterfaceId==SL_IID_3DSOURCE) nm="3dsource";
-        else if (pInterfaceId==SL_IID_3DMACROSCOPIC) nm="3dmacroscopic";
-        else if (pInterfaceId==SL_IID_MUTESOLO) nm="mutesolo";
-        else if (pInterfaceId==SL_IID_DYNAMICINTERFACEMANAGEMENT) nm="dynamicinterfacemanagement";
-        else if (pInterfaceId==SL_IID_MIDIMESSAGE) nm="midimessage";
-        else if (pInterfaceId==SL_IID_MIDIMUTESOLO) nm="midimutesolo";
-        else if (pInterfaceId==SL_IID_MIDITEMPO) nm="miditempo";
-        else if (pInterfaceId==SL_IID_MIDITIME) nm="miditime";
-        else if (pInterfaceId==SL_IID_AUDIODECODERCAPABILITIES) nm="audiodecodercapabilities";
-        else if (pInterfaceId==SL_IID_AUDIOENCODERCAPABILITIES) nm="audioencodercapabilities";
-        else if (pInterfaceId==SL_IID_AUDIOENCODER) nm="audioencoder";
-        else if (pInterfaceId==SL_IID_BASSBOOST) nm="bassboost";
-        else if (pInterfaceId==SL_IID_PITCH) nm="pitch";
-        else if (pInterfaceId==SL_IID_RATEPITCH) nm="ratepitch";
-        else if (pInterfaceId==SL_IID_VIRTUALIZER) nm="virtualizer";
-        else if (pInterfaceId==SL_IID_VISUALIZATION) nm="visualization";
-        else if (pInterfaceId==SL_IID_ENGINE) nm="engine";
-        else if (pInterfaceId==SL_IID_ENGINECAPABILITIES) nm="enginecapabilities";
-        else if (pInterfaceId==SL_IID_THREADSYNC) nm="theadsync";
-        else if (pInterfaceId==SL_IID_ANDROIDEFFECT) nm="androideffect";
-        else if (pInterfaceId==SL_IID_ANDROIDEFFECTSEND) nm="androideffectsend";
-        else if (pInterfaceId==SL_IID_ANDROIDEFFECTCAPABILITIES) nm="androideffectcapabilities";
-        else if (pInterfaceId==SL_IID_ANDROIDCONFIGURATION) nm="androidconfiguration";
-        else if (pInterfaceId==SL_IID_ANDROIDSIMPLEBUFFERQUEUE) nm="simplebuferqueue";
+        if (pInterfaceId == SL_IID_NULL)
+            nm = "null";
+        else if (pInterfaceId == SL_IID_OBJECT)
+            nm = "object";
+        else if (pInterfaceId == SL_IID_AUDIOIODEVICECAPABILITIES)
+            nm = "audiodevicecapabilities";
+        else if (pInterfaceId == SL_IID_LED)
+            nm = "led";
+        else if (pInterfaceId == SL_IID_VIBRA)
+            nm = "vibra";
+        else if (pInterfaceId == SL_IID_METADATAEXTRACTION)
+            nm = "metadataextraction";
+        else if (pInterfaceId == SL_IID_METADATATRAVERSAL)
+            nm = "metadatatraversal";
+        else if (pInterfaceId == SL_IID_DYNAMICSOURCE)
+            nm = "dynamicsource";
+        else if (pInterfaceId == SL_IID_OUTPUTMIX)
+            nm = "outputmix";
+        else if (pInterfaceId == SL_IID_PLAY)
+            nm = "play";
+        else if (pInterfaceId == SL_IID_PREFETCHSTATUS)
+            nm = "prefetchstatus";
+        else if (pInterfaceId == SL_IID_PLAYBACKRATE)
+            nm = "playbackrate";
+        else if (pInterfaceId == SL_IID_SEEK)
+            nm = "seek";
+        else if (pInterfaceId == SL_IID_RECORD)
+            nm = "record";
+        else if (pInterfaceId == SL_IID_EQUALIZER)
+            nm = "equalizer";
+        else if (pInterfaceId == SL_IID_VOLUME)
+            nm = "volume";
+        else if (pInterfaceId == SL_IID_DEVICEVOLUME)
+            nm = "devicevolume";
+        else if (pInterfaceId == SL_IID_BUFFERQUEUE)
+            nm = "bufferqueue";
+        else if (pInterfaceId == SL_IID_PRESETREVERB)
+            nm = "presetreverb";
+        else if (pInterfaceId == SL_IID_ENVIRONMENTALREVERB)
+            nm = "environmentalreverb";
+        else if (pInterfaceId == SL_IID_EFFECTSEND)
+            nm = "effectsend";
+        else if (pInterfaceId == SL_IID_3DGROUPING)
+            nm = "3dgrouping";
+        else if (pInterfaceId == SL_IID_3DCOMMIT)
+            nm = "3dcommit";
+        else if (pInterfaceId == SL_IID_3DLOCATION)
+            nm = "3dlocation";
+        else if (pInterfaceId == SL_IID_3DDOPPLER)
+            nm = "3ddoppler";
+        else if (pInterfaceId == SL_IID_3DSOURCE)
+            nm = "3dsource";
+        else if (pInterfaceId == SL_IID_3DMACROSCOPIC)
+            nm = "3dmacroscopic";
+        else if (pInterfaceId == SL_IID_MUTESOLO)
+            nm = "mutesolo";
+        else if (pInterfaceId == SL_IID_DYNAMICINTERFACEMANAGEMENT)
+            nm = "dynamicinterfacemanagement";
+        else if (pInterfaceId == SL_IID_MIDIMESSAGE)
+            nm = "midimessage";
+        else if (pInterfaceId == SL_IID_MIDIMUTESOLO)
+            nm = "midimutesolo";
+        else if (pInterfaceId == SL_IID_MIDITEMPO)
+            nm = "miditempo";
+        else if (pInterfaceId == SL_IID_MIDITIME)
+            nm = "miditime";
+        else if (pInterfaceId == SL_IID_AUDIODECODERCAPABILITIES)
+            nm = "audiodecodercapabilities";
+        else if (pInterfaceId == SL_IID_AUDIOENCODERCAPABILITIES)
+            nm = "audioencodercapabilities";
+        else if (pInterfaceId == SL_IID_AUDIOENCODER)
+            nm = "audioencoder";
+        else if (pInterfaceId == SL_IID_BASSBOOST)
+            nm = "bassboost";
+        else if (pInterfaceId == SL_IID_PITCH)
+            nm = "pitch";
+        else if (pInterfaceId == SL_IID_RATEPITCH)
+            nm = "ratepitch";
+        else if (pInterfaceId == SL_IID_VIRTUALIZER)
+            nm = "virtualizer";
+        else if (pInterfaceId == SL_IID_VISUALIZATION)
+            nm = "visualization";
+        else if (pInterfaceId == SL_IID_ENGINE)
+            nm = "engine";
+        else if (pInterfaceId == SL_IID_ENGINECAPABILITIES)
+            nm = "enginecapabilities";
+        else if (pInterfaceId == SL_IID_THREADSYNC)
+            nm = "theadsync";
+        else if (pInterfaceId == SL_IID_ANDROIDEFFECT)
+            nm = "androideffect";
+        else if (pInterfaceId == SL_IID_ANDROIDEFFECTSEND)
+            nm = "androideffectsend";
+        else if (pInterfaceId == SL_IID_ANDROIDEFFECTCAPABILITIES)
+            nm = "androideffectcapabilities";
+        else if (pInterfaceId == SL_IID_ANDROIDCONFIGURATION)
+            nm = "androidconfiguration";
+        else if (pInterfaceId == SL_IID_ANDROIDSIMPLEBUFFERQUEUE)
+            nm = "simplebuferqueue";
         //else if (pInterfaceId==//SL_IID_ANDROIDBUFFERQUEUESOURCE) nm="bufferqueuesource";
-        JAMI_DBG("%s,",nm);
+        JAMI_DBG("%s,", nm);
     }
 }
 

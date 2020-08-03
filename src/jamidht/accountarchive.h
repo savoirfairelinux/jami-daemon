@@ -17,14 +17,14 @@
  */
 #pragma once
 
-#include "jami_contact.h"
 #include "fileutils.h"
+#include "jami_contact.h"
 
-#include <opendht/crypto.h>
-#include <memory>
-#include <vector>
 #include <map>
+#include <memory>
+#include <opendht/crypto.h>
 #include <string>
+#include <vector>
 
 namespace jami {
 
@@ -53,20 +53,26 @@ struct AccountArchive
     std::map<std::string, std::string> config;
 
     AccountArchive() = default;
-    AccountArchive(const std::vector<uint8_t>& data) { deserialize(data); }
-    AccountArchive(const std::string& path, const std::string& password) { load(path, password); }
+    AccountArchive(const std::vector<uint8_t> &data) { deserialize(data); }
+    AccountArchive(const std::string &path, const std::string &password) { load(path, password); }
 
     /** Serialize structured archive data to memory. */
     std::string serialize() const;
 
     /** Deserialize archive from memory. */
-    void deserialize(const std::vector<uint8_t>& data);
+    void deserialize(const std::vector<uint8_t> &data);
 
     /** Load archive from file, optionally encrypted with provided password. */
-    void load(const std::string& path, const std::string& password = {}) { deserialize(fileutils::readArchive(path, password)); }
+    void load(const std::string &path, const std::string &password = {})
+    {
+        deserialize(fileutils::readArchive(path, password));
+    }
 
     /** Save archive to file, optionally encrypted with provided password. */
-    void save(const std::string& path, const std::string& password = {}) const { fileutils::writeArchive(serialize(), path, password); }
+    void save(const std::string &path, const std::string &password = {}) const
+    {
+        fileutils::writeArchive(serialize(), path, password);
+    }
 };
 
-}
+} // namespace jami

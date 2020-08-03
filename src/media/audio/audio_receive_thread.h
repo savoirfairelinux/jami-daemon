@@ -22,8 +22,8 @@
 
 #include "audiobuffer.h"
 #include "media_buffer.h"
-#include "media_device.h"
 #include "media_codec.h"
+#include "media_device.h"
 #include "noncopyable.h"
 #include "observer.h"
 #include "socket_pair.h"
@@ -43,15 +43,15 @@ class AudioReceiveThread : public Observable<std::shared_ptr<MediaFrame>>
 {
 public:
     AudioReceiveThread(const std::string &id,
-                       const AudioFormat& format,
-                       const std::string& sdp,
+                       const AudioFormat &format,
+                       const std::string &sdp,
                        const uint16_t mtu);
     ~AudioReceiveThread();
 
     MediaStream getInfo() const;
 
     void addIOContext(SocketPair &socketPair);
-    void startLoop(const std::function<void(MediaType)>& cb);
+    void startLoop(const std::function<void(MediaType)> &cb);
 
 private:
     NON_COPYABLE(AudioReceiveThread);
@@ -68,7 +68,7 @@ private:
     /* These variables should be used in thread (i.e. process()) only! */
     /*-----------------------------------------------------------------*/
     const std::string id_;
-    const AudioFormat& format_;
+    const AudioFormat &format_;
 
     DeviceParams args_;
 

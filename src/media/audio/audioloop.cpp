@@ -33,8 +33,9 @@
 
 namespace jami {
 
-AudioLoop::AudioLoop(unsigned int sampleRate) :
-    buffer_(new AudioBuffer(0, AudioFormat(sampleRate, 1))), pos_(0)
+AudioLoop::AudioLoop(unsigned int sampleRate)
+    : buffer_(new AudioBuffer(0, AudioFormat(sampleRate, 1)))
+    , pos_(0)
 {}
 
 AudioLoop::~AudioLoop()
@@ -49,7 +50,7 @@ AudioLoop::seek(double relative_position)
 }
 
 void
-AudioLoop::getNext(AudioBuffer& output, double gain)
+AudioLoop::getNext(AudioBuffer &output, double gain)
 {
     if (!buffer_) {
         JAMI_ERR("buffer is NULL");
@@ -57,9 +58,9 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
     }
 
     const size_t buf_samples = buffer_->frames();
-    size_t pos = pos_;
-    size_t total_samples = output.frames();
-    size_t output_pos = 0;
+    size_t pos               = pos_;
+    size_t total_samples     = output.frames();
+    size_t output_pos        = 0;
 
     if (buf_samples == 0) {
         JAMI_ERR("Audio loop size is 0");
@@ -82,7 +83,9 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
     onBufferFinish();
 }
 
-void AudioLoop::onBufferFinish() {}
+void
+AudioLoop::onBufferFinish()
+{}
 
 std::unique_ptr<AudioFrame>
 AudioLoop::getNext(size_t samples)

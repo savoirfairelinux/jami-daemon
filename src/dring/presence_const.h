@@ -26,14 +26,14 @@ namespace DRing {
 
 namespace Presence {
 
-constexpr static const char* BUDDY_KEY      = "Buddy";
-constexpr static const char* STATUS_KEY     = "Status";
-constexpr static const char* LINESTATUS_KEY = "LineStatus";
-constexpr static const char* ONLINE_KEY     = "Online";
-constexpr static const char* OFFLINE_KEY    = "Offline";
+constexpr static const char *BUDDY_KEY      = "Buddy";
+constexpr static const char *STATUS_KEY     = "Status";
+constexpr static const char *LINESTATUS_KEY = "LineStatus";
+constexpr static const char *ONLINE_KEY     = "Online";
+constexpr static const char *OFFLINE_KEY    = "Offline";
 
-}
+} // namespace Presence
 
-}
+} // namespace DRing
 
 #endif

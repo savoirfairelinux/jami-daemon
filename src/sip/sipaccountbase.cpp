@@ -18,7 +18,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
 
@@ -27,16 +26,16 @@
 #endif
 
 #include "account_schema.h"
-#include "manager.h"
 #include "ice_transport.h"
+#include "manager.h"
 
 #include "config/yamlparser.h"
 
 #include "client/ring_signal.h"
 #include "dring/account_const.h"
-#include "string_utils.h"
 #include "fileutils.h"
 #include "sip_utils.h"
+#include "string_utils.h"
 #include "utf8_utils.h"
 
 #pragma GCC diagnostic push
@@ -44,8 +43,8 @@
 #include <yaml-cpp/yaml.h>
 #pragma GCC diagnostic pop
 
-#include <type_traits>
 #include <regex>
+#include <type_traits>
 
 #include <ctime>
 
@@ -55,26 +54,28 @@
 #endif
 namespace jami {
 
-static constexpr const char MIME_TYPE_IMDN[] {"message/imdn+xml"};
-static constexpr const char MIME_TYPE_IM_COMPOSING[] {"application/im-iscomposing+xml"};
-static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT {std::chrono::seconds(12)};
+static constexpr const char MIME_TYPE_IMDN[]{"message/imdn+xml"};
+static constexpr const char MIME_TYPE_IM_COMPOSING[]{"application/im-iscomposing+xml"};
+static constexpr std::chrono::steady_clock::duration COMPOSING_TIMEOUT{std::chrono::seconds(12)};
 
-SIPAccountBase::SIPAccountBase(const std::string& accountID)
-    : Account(accountID),
-    messageEngine_(*this, fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()+DIR_SEPARATOR_STR "messages"),
-    link_(Manager::instance().sipVoIPLink())
+SIPAccountBase::SIPAccountBase(const std::string &accountID)
+    : Account(accountID)
+    , messageEngine_(*this,
+                     fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID()
+                         + DIR_SEPARATOR_STR "messages")
+    , link_(Manager::instance().sipVoIPLink())
 {}
 
 SIPAccountBase::~SIPAccountBase() {}
 
 bool
-SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
-                                            const pj_str_t* contact,
-                                            const pj_str_t* to,
-                                            const pj_str_t* target,
-                                            const pjmedia_sdp_session* local_sdp,
-                                            pjsip_dialog** dlg,
-                                            pjsip_inv_session** inv)
+SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t *from,
+                                            const pj_str_t *contact,
+                                            const pj_str_t *to,
+                                            const pj_str_t *target,
+                                            const pjmedia_sdp_session *local_sdp,
+                                            pjsip_dialog **dlg,
+                                            pjsip_inv_session **inv)
 {
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), from, contact, to, target, dlg) != PJ_SUCCESS) {
         JAMI_ERR("Unable to create SIP dialogs for user agent client when calling %s", to->ptr);
@@ -85,14 +86,16 @@ SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
 
     {
         // lock dialog until invite session creation; this one will own the dialog after
-        sip_utils::PJDialogLock dlg_lock {dialog};
+        sip_utils::PJDialogLock dlg_lock{dialog};
 
         // Append "Subject: Phone Call" header
         constexpr auto subj_hdr_name = sip_utils::CONST_PJ_STR("Subject");
-        auto subj_hdr = reinterpret_cast<pjsip_hdr*>(pjsip_parse_hdr(dialog->pool,
-                                                                     &subj_hdr_name,
-                                                                     const_cast<char *>("Phone call"),
-                                                                     10, nullptr));
+        auto subj_hdr                = reinterpret_cast<pjsip_hdr *>(
+            pjsip_parse_hdr(dialog->pool,
+                            &subj_hdr_name,
+                            const_cast<char *>("Phone call"),
+                            10,
+                            nullptr));
         pj_list_push_back(&dialog->inv_hdr, subj_hdr);
 
         if (pjsip_inv_create_uac(dialog, local_sdp, 0, inv) != PJ_SUCCESS) {
@@ -110,7 +113,8 @@ SIPAccountBase::flush()
     // Class base method
     Account::flush();
 
-    fileutils::remove(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID() + DIR_SEPARATOR_STR "messages");
+    fileutils::remove(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID()
+                      + DIR_SEPARATOR_STR "messages");
 }
 
 std::string
@@ -120,11 +124,11 @@ getIsComposing(bool isWriting)
     std::ostringstream ss;
     ss << "<?xml version=\"1.0\" encoding=\"utf-8\" ?>" << std::endl
        << "<isComposing><state>" << (isWriting ? "active" : "idle") << "</state></isComposing>";
-    return  ss.str();
+    return ss.str();
 }
 
 std::string
-getDisplayed(const std::string& messageId)
+getDisplayed(const std::string &messageId)
 {
     // implementing https://tools.ietf.org/rfc/rfc5438.txt
     std::ostringstream ss;
@@ -134,11 +138,11 @@ getDisplayed(const std::string& messageId)
        << "<display-notification><status><displayed/></status></display-notification>" << std::endl
        << "</imdn>";
 
-    return  ss.str();
+    return ss.str();
 }
 
 void
-SIPAccountBase::setIsComposing(const std::string& to, bool isWriting)
+SIPAccountBase::setIsComposing(const std::string &to, bool isWriting)
 {
     if (not isWriting and to != composingUri_)
         return;
@@ -147,10 +151,10 @@ SIPAccountBase::setIsComposing(const std::string& to, bool isWriting)
         composingTimeout_->cancel();
         composingTimeout_.reset();
     }
-    if (isWriting)  {
+    if (isWriting) {
         if (not composingUri_.empty() and composingUri_ != to) {
             sendTextMessage(composingUri_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(false)}});
-            composingTime_  = std::chrono::steady_clock::time_point::min();
+            composingTime_ = std::chrono::steady_clock::time_point::min();
         }
         composingUri_.clear();
         composingUri_.insert(composingUri_.end(), to.begin(), to.end());
@@ -159,27 +163,30 @@ SIPAccountBase::setIsComposing(const std::string& to, bool isWriting)
             sendTextMessage(composingUri_, {{MIME_TYPE_IM_COMPOSING, getIsComposing(true)}});
             composingTime_ = now;
         }
-        std::weak_ptr<SIPAccountBase> weak = std::static_pointer_cast<SIPAccountBase>(shared_from_this());
-        composingTimeout_ = Manager::instance().scheduleTask([weak, to](){
-            if (auto sthis = weak.lock())  {
-                sthis->sendTextMessage(to, {{MIME_TYPE_IM_COMPOSING, getIsComposing(false)}});
-                sthis->composingUri_.clear();
-                sthis->composingTime_  = std::chrono::steady_clock::time_point::min();
-            }
-        }, now + COMPOSING_TIMEOUT);
+        std::weak_ptr<SIPAccountBase> weak = std::static_pointer_cast<SIPAccountBase>(
+            shared_from_this());
+        composingTimeout_ = Manager::instance().scheduleTask(
+            [weak, to]() {
+                if (auto sthis = weak.lock()) {
+                    sthis->sendTextMessage(to, {{MIME_TYPE_IM_COMPOSING, getIsComposing(false)}});
+                    sthis->composingUri_.clear();
+                    sthis->composingTime_ = std::chrono::steady_clock::time_point::min();
+                }
+            },
+            now + COMPOSING_TIMEOUT);
     } else {
         sendTextMessage(to, {{MIME_TYPE_IM_COMPOSING, getIsComposing(false)}});
         composingUri_.clear();
-        composingTime_  = std::chrono::steady_clock::time_point::min();
+        composingTime_ = std::chrono::steady_clock::time_point::min();
     }
 }
 
-template <typename T>
+template<typename T>
 static void
-validate(std::string &member, const std::string &param, const T& valid)
+validate(std::string &member, const std::string &param, const T &valid)
 {
     const auto begin = std::begin(valid);
-    const auto end = std::end(valid);
+    const auto end   = std::end(valid);
     if (find(begin, end, param) != end)
         member = param;
     else
@@ -190,13 +197,16 @@ static void
 updateRange(uint16_t min, uint16_t max, std::pair<uint16_t, uint16_t> &range)
 {
     if (min > 0 and (max > min) and max <= SIPAccountBase::MAX_PORT - 2) {
-        range.first = min;
+        range.first  = min;
         range.second = max;
     }
 }
 
 static void
-unserializeRange(const YAML::Node &node, const char *minKey, const char *maxKey, std::pair<uint16_t, uint16_t> &range)
+unserializeRange(const YAML::Node &node,
+                 const char *minKey,
+                 const char *maxKey,
+                 std::pair<uint16_t, uint16_t> &range)
 {
     int tmpMin = 0;
     int tmpMax = 0;
@@ -206,7 +216,8 @@ unserializeRange(const YAML::Node &node, const char *minKey, const char *maxKey,
 }
 
 static void
-addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey,
+addRangeToDetails(std::map<std::string, std::string> &a,
+                  const char *minKey,
                   const char *maxKey,
                   const std::pair<uint16_t, uint16_t> &range)
 {
@@ -214,7 +225,8 @@ addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey,
     a.emplace(maxKey, std::to_string(range.second));
 }
 
-void SIPAccountBase::serialize(YAML::Emitter &out) const
+void
+SIPAccountBase::serialize(YAML::Emitter &out) const
 {
     Account::serialize(out);
 
@@ -239,7 +251,8 @@ void SIPAccountBase::serialize(YAML::Emitter &out) const
     out << YAML::Key << Conf::TURN_SERVER_REALM_KEY << YAML::Value << turnServerRealm_;
 }
 
-void SIPAccountBase::serializeTls(YAML::Emitter &out) const
+void
+SIPAccountBase::serializeTls(YAML::Emitter &out) const
 {
     out << YAML::Key << Conf::CALIST_KEY << YAML::Value << tlsCaListFile_;
     out << YAML::Key << Conf::CERTIFICATE_KEY << YAML::Value << tlsCertificateFile_;
@@ -247,7 +260,8 @@ void SIPAccountBase::serializeTls(YAML::Emitter &out) const
     out << YAML::Key << Conf::PRIVATE_KEY_KEY << YAML::Value << tlsPrivateKeyFile_;
 }
 
-void SIPAccountBase::unserialize(const YAML::Node &node)
+void
+SIPAccountBase::unserialize(const YAML::Node &node)
 {
     using yaml_utils::parseValue;
     using yaml_utils::parseVectorMap;
@@ -285,7 +299,8 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     }
 }
 
-void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> &details)
+void
+SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     Account::setAccountDetails(details);
 
@@ -330,16 +345,22 @@ SIPAccountBase::getAccountDetails() const
     auto a = Account::getAccountDetails();
     a.emplace(Conf::CONFIG_VIDEO_ENABLED, videoEnabled_ ? TRUE_STR : FALSE_STR);
 
-    addRangeToDetails(a, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
+    addRangeToDetails(a,
+                      Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN,
+                      Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX,
+                      audioPortRange_);
 #ifdef ENABLE_VIDEO
-    addRangeToDetails(a, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
+    addRangeToDetails(a,
+                      Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN,
+                      Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX,
+                      videoPortRange_);
 #endif
 
-    a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE,       dtmfType_);
-    a.emplace(Conf::CONFIG_LOCAL_INTERFACE,         interface_);
-    a.emplace(Conf::CONFIG_PUBLISHED_PORT,          std::to_string(publishedPort_));
-    a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL,  publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
+    a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
+    a.emplace(Conf::CONFIG_LOCAL_INTERFACE, interface_);
+    a.emplace(Conf::CONFIG_PUBLISHED_PORT, std::to_string(publishedPort_));
+    a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
     a.emplace(Conf::CONFIG_STUN_ENABLE, stunEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_STUN_SERVER, stunServer_);
     a.emplace(Conf::CONFIG_TURN_ENABLE, turnEnabled_ ? TRUE_STR : FALSE_STR);
@@ -360,18 +381,21 @@ SIPAccountBase::getVolatileAccountDetails() const
     if (isIP2IP())
         a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = "READY";
 
-    a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE,    std::to_string(transportStatus_));
-    a.emplace(Conf::CONFIG_TRANSPORT_STATE_DESC,    transportError_);
+    a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE, std::to_string(transportStatus_));
+    a.emplace(Conf::CONFIG_TRANSPORT_STATE_DESC, transportError_);
     return a;
 }
 
-
 void
-SIPAccountBase::setRegistrationState(RegistrationState state, unsigned details_code, const std::string& details_str)
+SIPAccountBase::setRegistrationState(RegistrationState state,
+                                     unsigned details_code,
+                                     const std::string &details_str)
 {
-    if (state == RegistrationState::REGISTERED && registrationState_ != RegistrationState::REGISTERED)
+    if (state == RegistrationState::REGISTERED
+        && registrationState_ != RegistrationState::REGISTERED)
         messageEngine_.load();
-    else if (state != RegistrationState::REGISTERED && registrationState_ == RegistrationState::REGISTERED)
+    else if (state != RegistrationState::REGISTERED
+             && registrationState_ == RegistrationState::REGISTERED)
         messageEngine_.save();
     Account::setRegistrationState(state, details_code, details_str);
 }
@@ -385,9 +409,9 @@ SIPAccountBase::getPortsReservation() noexcept -> decltype(getPortsReservation()
 }
 
 uint16_t
-SIPAccountBase::getRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const
+SIPAccountBase::getRandomEvenPort(const std::pair<uint16_t, uint16_t> &range) const
 {
-    std::uniform_int_distribution<uint16_t> dist(range.first/2, range.second/2);
+    std::uniform_int_distribution<uint16_t> dist(range.first / 2, range.second / 2);
     uint16_t result;
     do {
         result = 2 * dist(rand);
@@ -396,9 +420,9 @@ SIPAccountBase::getRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) co
 }
 
 uint16_t
-SIPAccountBase::acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const
+SIPAccountBase::acquireRandomEvenPort(const std::pair<uint16_t, uint16_t> &range) const
 {
-    std::uniform_int_distribution<uint16_t> dist(range.first/2, range.second/2);
+    std::uniform_int_distribution<uint16_t> dist(range.first / 2, range.second / 2);
     uint16_t result;
 
     do {
@@ -449,36 +473,37 @@ SIPAccountBase::getIceOptions() const noexcept
         cached = cacheTurnV4_ || cacheTurnV6_;
         if (cacheTurnV4_ && *cacheTurnV4_) {
             opts.turnServers.emplace_back(TurnServerInfo()
-                                .setUri(cacheTurnV4_->toString(true))
-                                .setUsername(turnServerUserName_)
-                                .setPassword(turnServerPwd_)
-                                .setRealm(turnServerRealm_));
+                                              .setUri(cacheTurnV4_->toString(true))
+                                              .setUsername(turnServerUserName_)
+                                              .setPassword(turnServerPwd_)
+                                              .setRealm(turnServerRealm_));
         }
         if (cacheTurnV6_ && *cacheTurnV6_) {
             opts.turnServers.emplace_back(TurnServerInfo()
-                                .setUri(cacheTurnV4_->toString(true))
-                                .setUsername(turnServerUserName_)
-                                .setPassword(turnServerPwd_)
-                                .setRealm(turnServerRealm_));
+                                              .setUri(cacheTurnV4_->toString(true))
+                                              .setUsername(turnServerUserName_)
+                                              .setPassword(turnServerPwd_)
+                                              .setRealm(turnServerRealm_));
         }
         // Nothing cached, so do the resolution
         if (!cached) {
             opts.turnServers.emplace_back(TurnServerInfo()
-                                        .setUri(turnServer_)
-                                        .setUsername(turnServerUserName_)
-                                        .setPassword(turnServerPwd_)
-                                        .setRealm(turnServerRealm_));
+                                              .setUri(turnServer_)
+                                              .setUsername(turnServerUserName_)
+                                              .setPassword(turnServerPwd_)
+                                              .setRealm(turnServerRealm_));
         }
     }
     return opts;
 }
 
 void
-SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
-                              const std::map<std::string, std::string>& payloads)
+SIPAccountBase::onTextMessage(const std::string &id,
+                              const std::string &from,
+                              const std::map<std::string, std::string> &payloads)
 {
     JAMI_DBG("Text message received from %s, %zu part(s)", from.c_str(), payloads.size());
-    for (const auto& m : payloads) {
+    for (const auto &m : payloads) {
         if (!utf8_validate(m.first))
             return;
         if (!utf8_validate(m.second)) {
@@ -490,25 +515,28 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
                 static const std::regex COMPOSING_REGEX("<state>\\s*(\\w+)\\s*<\\/state>");
                 std::smatch matched_pattern;
                 std::regex_search(m.second, matched_pattern, COMPOSING_REGEX);
-                bool isComposing {false};
-                if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                bool isComposing{false};
+                if (matched_pattern.ready() && !matched_pattern.empty()
+                    && matched_pattern[1].matched) {
                     isComposing = matched_pattern[1] == "active";
                 }
                 onIsComposing(from, isComposing);
                 if (payloads.size() == 1)
                     return;
-            } catch (const std::exception& e) {
+            } catch (const std::exception &e) {
                 JAMI_WARN("Error parsing composing state: %s", e.what());
             }
         } else if (m.first == MIME_TYPE_IMDN) {
             try {
-                static const std::regex IMDN_MSG_ID_REGEX("<message-id>\\s*(\\w+)\\s*<\\/message-id>");
+                static const std::regex IMDN_MSG_ID_REGEX(
+                    "<message-id>\\s*(\\w+)\\s*<\\/message-id>");
                 static const std::regex IMDN_STATUS_REGEX("<status>\\s*<(\\w+)\\/>\\s*<\\/status>");
                 std::smatch matched_pattern;
 
                 std::regex_search(m.second, matched_pattern, IMDN_MSG_ID_REGEX);
                 std::string messageId;
-                if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                if (matched_pattern.ready() && !matched_pattern.empty()
+                    && matched_pattern[1].matched) {
                     messageId = matched_pattern[1];
                 } else {
                     JAMI_WARN("Message displayed: can't parse message ID");
@@ -516,8 +544,9 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
                 }
 
                 std::regex_search(m.second, matched_pattern, IMDN_STATUS_REGEX);
-                bool isDisplayed {false};
-                if (matched_pattern.ready() && !matched_pattern.empty() && matched_pattern[1].matched) {
+                bool isDisplayed{false};
+                if (matched_pattern.ready() && !matched_pattern.empty()
+                    && matched_pattern[1].matched) {
                     isDisplayed = matched_pattern[1] == "displayed";
                 } else {
                     JAMI_WARN("Message displayed: can't parse status");
@@ -526,29 +555,28 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
                 messageEngine_.onMessageDisplayed(from, from_hex_string(messageId), isDisplayed);
                 if (payloads.size() == 1)
                     return;
-            } catch (const std::exception& e) {
+            } catch (const std::exception &e) {
                 JAMI_WARN("Error parsing display notification: %s", e.what());
             }
         }
     }
 
 #ifdef ENABLE_PLUGIN
-    auto& convManager = jami::Manager::instance().getJamiPluginManager()
-            .getConversationServicesManager();
-    std::shared_ptr<ConversationMessage> cm =
-            std::make_shared<ConversationMessage>(from, accountID_,
-                                                  const_cast<std::map<std::string, std::string>&>(payloads));
+    auto &convManager
+        = jami::Manager::instance().getJamiPluginManager().getConversationServicesManager();
+    std::shared_ptr<ConversationMessage> cm = std::make_shared<ConversationMessage>(
+        from, accountID_, const_cast<std::map<std::string, std::string> &>(payloads));
     convManager.onTextMessage(cm);
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, cm->data_);
 
     DRing::Message message;
-    message.from = cm->author_;
+    message.from     = cm->author_;
     message.payloads = cm->data_;
 #else
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, id, from, payloads);
 
     DRing::Message message;
-    message.from = from;
+    message.from     = from;
     message.payloads = payloads;
 #endif
 
@@ -561,18 +589,21 @@ SIPAccountBase::onTextMessage(const std::string& id, const std::string& from,
 }
 
 bool
-SIPAccountBase::setMessageDisplayed(const std::string& contactId, const std::string& messageId, int status)
+SIPAccountBase::setMessageDisplayed(const std::string &contactId,
+                                    const std::string &messageId,
+                                    int status)
 {
-    if (status == (int)DRing::Account::MessageStates::DISPLAYED)
+    if (status == (int) DRing::Account::MessageStates::DISPLAYED)
         sendTextMessage(contactId, {{MIME_TYPE_IMDN, getDisplayed(messageId)}});
     return true;
 }
 
 void
-SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
+SIPAccountBase::setPublishedAddress(const IpAddr &ip_addr)
 {
     publishedIp_ = ip_addr;
-    JAMI_DBG("[Account %s] Using public address %s", getAccountID().c_str(),
+    JAMI_DBG("[Account %s] Using public address %s",
+             getAccountID().c_str(),
              publishedIp_.toString().c_str());
 }
 

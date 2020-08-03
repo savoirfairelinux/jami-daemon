@@ -19,16 +19,16 @@
  */
 #pragma once
 
-#include <thread>
+#include <atomic>
+#include <chrono>
+#include <ciso646>
+#include <condition_variable>
 #include <functional>
 #include <map>
-#include <vector>
-#include <chrono>
 #include <memory>
-#include <atomic>
 #include <mutex>
-#include <condition_variable>
-#include <ciso646>
+#include <thread>
+#include <vector>
 
 #include "noncopyable.h"
 
@@ -37,25 +37,26 @@ namespace jami {
 /**
  * A runnable function
  */
-using Job = std::function<void()>;
+using Job         = std::function<void()>;
 using RepeatedJob = std::function<bool()>;
 
 /**
  * A Job that can be disposed
  */
-class Task {
+class Task
+{
 public:
-    Task(Job&& j) : job_(std::move(j)) {}
-    void run() {
+    Task(Job &&j)
+        : job_(std::move(j))
+    {}
+    void run()
+    {
         if (job_)
             job_();
     }
-    void cancel() {
-        job_ = {};
-    }
-    bool isCancelled() const {
-        return !job_;
-    }
+    void cancel() { job_ = {}; }
+    bool isCancelled() const { return !job_; }
+
 private:
     Job job_;
 };
@@ -63,40 +64,43 @@ private:
 /**
  * A RepeatedJob that can be disposed
  */
-class RepeatedTask {
+class RepeatedTask
+{
 public:
-    RepeatedTask(RepeatedJob&& j) : job_(std::move(j)) {}
-    bool run() {
+    RepeatedTask(RepeatedJob &&j)
+        : job_(std::move(j))
+    {}
+    bool run()
+    {
         std::lock_guard<std::mutex> l(lock_);
         if (cancel_.load() or (job_ and not job_())) {
             cancel_.store(true);
             job_ = {};
         }
-        return (bool)job_;
+        return (bool) job_;
     }
-    void cancel() {
-        cancel_.store(true);
-    }
-    void destroy() {
+    void cancel() { cancel_.store(true); }
+    void destroy()
+    {
         cancel();
         std::lock_guard<std::mutex> l(lock_);
         job_ = {};
     }
-    bool isCancelled() const {
-        return cancel_.load();
-    }
+    bool isCancelled() const { return cancel_.load(); }
+
 private:
     NON_COPYABLE(RepeatedTask);
     mutable std::mutex lock_;
     RepeatedJob job_;
-    std::atomic_bool cancel_ {false};
+    std::atomic_bool cancel_{false};
 };
 
-class ScheduledExecutor {
+class ScheduledExecutor
+{
 public:
-    using clock = std::chrono::steady_clock;
+    using clock      = std::chrono::steady_clock;
     using time_point = clock::time_point;
-    using duration = clock::duration;
+    using duration   = clock::duration;
 
     ScheduledExecutor();
     ~ScheduledExecutor();
@@ -104,22 +108,22 @@ public:
     /**
      * Schedule job to be run ASAP
      */
-    void run(Job&& job);
+    void run(Job &&job);
 
     /**
      * Schedule job to be run at time t
      */
-    std::shared_ptr<Task> schedule(Job&& job, time_point t);
+    std::shared_ptr<Task> schedule(Job &&job, time_point t);
 
     /**
      * Schedule job to be run after delay dt
      */
-    std::shared_ptr<Task> scheduleIn(Job&& job, duration dt);
+    std::shared_ptr<Task> scheduleIn(Job &&job, duration dt);
 
     /**
      * Schedule job to be run every dt, starting now.
      */
-    std::shared_ptr<RepeatedTask> scheduleAtFixedRate(RepeatedJob&& job, duration dt);
+    std::shared_ptr<RepeatedTask> scheduleAtFixedRate(RepeatedJob &&job, duration dt);
 
     /**
      * Stop the scheduler, can't be reversed
@@ -133,11 +137,11 @@ private:
     void schedule(std::shared_ptr<Task>, time_point t);
     void reschedule(std::shared_ptr<RepeatedTask>, time_point t, duration dt);
 
-    std::atomic_bool running_ {true};
-    std::map<time_point, std::vector<Job>> jobs_ {};
-    std::mutex jobLock_ {};
-    std::condition_variable cv_ {};
+    std::atomic_bool running_{true};
+    std::map<time_point, std::vector<Job>> jobs_{};
+    std::mutex jobLock_{};
+    std::condition_variable cv_{};
     std::thread thread_;
 };
 
-}
+} // namespace jami

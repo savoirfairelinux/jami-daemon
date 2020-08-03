@@ -24,13 +24,14 @@
 
 #include "media_recorder.h"
 
-#include <string>
 #include <memory>
 #include <mutex>
+#include <string>
 
 namespace jami {
 
-class Recordable {
+class Recordable
+{
 public:
     Recordable();
     virtual ~Recordable();
@@ -38,8 +39,9 @@ public:
     /**
      * Return recording state (true/false)
      */
-    bool isRecording() const {
-        std::lock_guard<std::mutex> lk {apiMutex_};
+    bool isRecording() const
+    {
+        std::lock_guard<std::mutex> lk{apiMutex_};
         return recording_;
     }
 
@@ -58,7 +60,7 @@ public:
     /**
      * Start recording
      */
-    bool startRecording(const std::string& path);
+    bool startRecording(const std::string &path);
 
     /**
      * Return the file path for this recording
@@ -69,7 +71,7 @@ public:
 
 protected:
     mutable std::mutex apiMutex_;
-    bool recording_ {false};
+    bool recording_{false};
     std::shared_ptr<MediaRecorder> recorder_;
     bool isAudioOnly_{false};
 };

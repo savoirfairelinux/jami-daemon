@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "logger.h"
 #include "dsp.h"
 #include "audiobuffer.h"
+#include "logger.h"
 
 namespace jami {
 
@@ -30,17 +30,17 @@ DSP::speexStateDeleter(SpeexPreprocessState *state)
     speex_preprocess_state_destroy(state);
 }
 
-DSP::DSP(int smplPerFrame, int channels, int samplingRate) :
-    smplPerFrame_(smplPerFrame),
-    dspStates_()
+DSP::DSP(int smplPerFrame, int channels, int samplingRate)
+    : smplPerFrame_(smplPerFrame)
+    , dspStates_()
 {
     for (int c = 0; c < channels; ++c)
         dspStates_.push_back(
-                {speex_preprocess_state_init(smplPerFrame_, samplingRate),
-                 speexStateDeleter});
+            {speex_preprocess_state_init(smplPerFrame_, samplingRate), speexStateDeleter});
 }
 
-void DSP::enableAGC()
+void
+DSP::enableAGC()
 {
     // automatic gain control, range [1-32768]
     for (const auto &state : dspStates_) {
@@ -51,7 +51,8 @@ void DSP::enableAGC()
     }
 }
 
-void DSP::disableAGC()
+void
+DSP::disableAGC()
 {
     for (const auto &state : dspStates_) {
         int enable = 0;
@@ -59,7 +60,8 @@ void DSP::disableAGC()
     }
 }
 
-void DSP::enableDenoise()
+void
+DSP::enableDenoise()
 {
     for (const auto &state : dspStates_) {
         int enable = 1;
@@ -67,7 +69,8 @@ void DSP::enableDenoise()
     }
 }
 
-void DSP::disableDenoise()
+void
+DSP::disableDenoise()
 {
     for (const auto &state : dspStates_) {
         int enable = 0;
@@ -75,7 +78,8 @@ void DSP::disableDenoise()
     }
 }
 
-void DSP::process(AudioBuffer& buff, int samples)
+void
+DSP::process(AudioBuffer &buff, int samples)
 {
     if (samples != smplPerFrame_) {
         JAMI_WARN("Unexpected amount of samples");
@@ -83,7 +87,7 @@ void DSP::process(AudioBuffer& buff, int samples)
     }
 
     auto &channelData = buff.getData();
-    size_t index = 0;
+    size_t index      = 0;
     for (auto &c : channelData) {
         if (index < dspStates_.size() and dspStates_[index].get())
             speex_preprocess_run(dspStates_[index].get(), c.data());

@@ -21,31 +21,35 @@
 #include "buf_manager.h"
 #include "noncopyable.h"
 
-#include <sys/types.h>
 #include <SLES/OpenSLES_Android.h>
+#include <sys/types.h>
 
 #include <mutex>
 
 namespace jami {
 namespace opensl {
 
-class AudioPlayer {
+class AudioPlayer
+{
     // buffer queue player interfaces
     SLObjectItf outputMixObjectItf_;
     SLObjectItf playerObjectItf_;
-    SLPlayItf   playItf_;
+    SLPlayItf playItf_;
     SLAndroidSimpleBufferQueueItf playBufferQueueItf_;
 
     jami::AudioFormat sampleInfo_;
-    AudioQueue *freeQueue_ {nullptr};       // user
-    AudioQueue *playQueue_ {nullptr};       // user
-    AudioQueue devShadowQueue_ {DEVICE_SHADOW_BUFFER_QUEUE_LEN};  // owner
+    AudioQueue *freeQueue_{nullptr};                            // user
+    AudioQueue *playQueue_{nullptr};                            // user
+    AudioQueue devShadowQueue_{DEVICE_SHADOW_BUFFER_QUEUE_LEN}; // owner
     sample_buf silentBuf_;
 
-    EngineCallback callback_ {};
+    EngineCallback callback_{};
 
 public:
-    explicit AudioPlayer(jami::AudioFormat sampleFormat, size_t bufSize, SLEngineItf engine, SLint32 streamType);
+    explicit AudioPlayer(jami::AudioFormat sampleFormat,
+                         size_t bufSize,
+                         SLEngineItf engine,
+                         SLint32 streamType);
     ~AudioPlayer();
     NON_COPYABLE(AudioPlayer);
 
@@ -56,10 +60,11 @@ public:
     void setBufQueue(AudioQueue *playQ, AudioQueue *freeQ);
     void processSLCallback(SLAndroidSimpleBufferQueueItf bq);
     void playAudioBuffers(unsigned count);
-    void registerCallback(EngineCallback cb) {callback_ = cb;}
+    void registerCallback(EngineCallback cb) { callback_ = cb; }
     size_t dbgGetDevBufCount();
 
     std::mutex m_;
 };
 
-}}
+} // namespace opensl
+} // namespace jami

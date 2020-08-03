@@ -31,15 +31,16 @@
  * The other region is writeable: only the producer can use it.
  */
 
-struct SHMHeader {
-    sem_t mutex;                // lock it before any operations on these fields
-    sem_t frameGenMutex;        // unlocked by producer when frameGen is modified
-    unsigned frameGen;          // monotonically incremented when a producer changes readOffset
-    unsigned frameSize;         // size in bytes of 1 frame
-    unsigned mapSize;           // size to map if you need all the data
-    unsigned readOffset;        // offset of readable frame in data
-    unsigned writeOffset;       // offset of writable frame in data
-    uint8_t data[];             // the whole shared memory
+struct SHMHeader
+{
+    sem_t mutex;          // lock it before any operations on these fields
+    sem_t frameGenMutex;  // unlocked by producer when frameGen is modified
+    unsigned frameGen;    // monotonically incremented when a producer changes readOffset
+    unsigned frameSize;   // size in bytes of 1 frame
+    unsigned mapSize;     // size to map if you need all the data
+    unsigned readOffset;  // offset of readable frame in data
+    unsigned writeOffset; // offset of writable frame in data
+    uint8_t data[];       // the whole shared memory
 };
 
 #endif

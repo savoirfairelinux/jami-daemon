@@ -36,7 +36,8 @@ namespace jami {
 /**
  * @brief Wrapper class for libswresample
  */
-class Resampler {
+class Resampler
+{
 public:
     Resampler();
     ~Resampler();
@@ -48,22 +49,22 @@ public:
      *
      * NOTE: sample_rate, channel_layout, and format should be set on @output
      */
-    int resample(const AVFrame* input, AVFrame* output);
+    int resample(const AVFrame *input, AVFrame *output);
 
     /**
      * @brief Wrapper around resample(AVFrame*, AVFrame*) for convenience.
      */
-    void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
+    void resample(const AudioBuffer &dataIn, AudioBuffer &dataOut);
 
     /**
      * @brief Wrapper around resample(AVFrame*, AVFrame*) for convenience.
      */
-    std::unique_ptr<AudioFrame> resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& out);
+    std::unique_ptr<AudioFrame> resample(std::unique_ptr<AudioFrame> &&in, const AudioFormat &out);
 
     /**
      * @brief Wrapper around resample(AVFrame*, AVFrame*) for convenience.
      */
-    std::shared_ptr<AudioFrame> resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& out);
+    std::shared_ptr<AudioFrame> resample(std::shared_ptr<AudioFrame> &&in, const AudioFormat &out);
 
 private:
     NON_COPYABLE(Resampler);
@@ -74,14 +75,14 @@ private:
      * Reinitializes the resampler when new settings are detected. As long as both input and
      * output formats don't change, this will only be called once.
      */
-    void reinit(const AVFrame* in, const AVFrame* out);
+    void reinit(const AVFrame *in, const AVFrame *out);
 
     /**
      * @brief Libswresample resampler context.
      *
      * NOTE SwrContext is an imcomplete type and cannot be stored in a smart pointer.
      */
-    SwrContext* swrCtx_;
+    SwrContext *swrCtx_;
 
     /**
      * @brief Number of times @swrCtx_ has been initialized with no successful audio resampling.

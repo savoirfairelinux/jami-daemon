@@ -19,26 +19,28 @@
  */
 
 #pragma once
-#include "noncopyable.h"
-#include "fileutils.h"
 #include "archiver.h"
+#include "fileutils.h"
+#include "noncopyable.h"
 #include "pluginmanager.h"
 
 //Services
 #include "callservicesmanager.h"
 #include "conversationservicesmanager.h"
 
-#include <vector>
+#include <algorithm>
 #include <map>
 #include <string>
-#include <algorithm>
+#include <vector>
 
 namespace jami {
 class JamiPluginManager
 {
 public:
-
-    JamiPluginManager() : csm_{pm_}, convsm_{pm_}{
+    JamiPluginManager()
+        : csm_{pm_}
+        , convsm_{pm_}
+    {
         registerServices();
     }
     // TODO : improve getPluginDetails
@@ -53,7 +55,7 @@ public:
      * @param plugin rootPath (folder of the plugin)
      * @return map where the keyset is {"name", "description", "iconPath"}
      */
-    std::map<std::string, std::string> getPluginDetails(const std::string& rootPath);
+    std::map<std::string, std::string> getPluginDetails(const std::string &rootPath);
 
     /**
      * @brief listAvailablePlugins
@@ -74,7 +76,7 @@ public:
      * 200 if already installed with newer version
      * libarchive error codes otherwise
      */
-    int installPlugin(const std::string& jplPath, bool force);
+    int installPlugin(const std::string &jplPath, bool force);
 
     /**
      * @brief uninstallPlugin
@@ -82,21 +84,21 @@ public:
      * @param rootPath
      * @return 0 if success
      */
-    int uninstallPlugin(const std::string& rootPath);
+    int uninstallPlugin(const std::string &rootPath);
 
     /**
      * @brief loadPlugin
      * @param rootPath of the plugin folder
      * @return true is success
      */
-    bool loadPlugin(const std::string& rootPath);
+    bool loadPlugin(const std::string &rootPath);
 
     /**
      * @brief unloadPlugin
      * @param rootPath of the plugin folder
      * @return true is success
      */
-    bool unloadPlugin(const std::string& rootPath);
+    bool unloadPlugin(const std::string &rootPath);
 
     /**
      * @brief togglePlugin
@@ -105,7 +107,7 @@ public:
      * else, remove the existing instance
      * N.B: before adding a new instance, remove any existing one
      */
-    void togglePlugin(const std::string& rootPath, bool toggle);
+    void togglePlugin(const std::string &rootPath, bool toggle);
 
     /**
      * @brief listLoadedPlugins
@@ -113,29 +115,22 @@ public:
      */
     std::vector<std::string> listLoadedPlugins() const;
 
-    std::vector<std::map<std::string,std::string>> getPluginPreferences(const std::string& rootPath);
+    std::vector<std::map<std::string, std::string>> getPluginPreferences(const std::string &rootPath);
 
-    bool setPluginPreference(const std::string& rootPath,
-                             const std::string& key,
-                             const std::string& value);
+    bool setPluginPreference(const std::string &rootPath,
+                             const std::string &key,
+                             const std::string &value);
 
-    std::map<std::string,std::string>
-    getPluginPreferencesValuesMap(const std::string& rootPath);
+    std::map<std::string, std::string> getPluginPreferencesValuesMap(const std::string &rootPath);
 
-    bool resetPluginPreferencesValuesMap(const std::string& rootPath);
+    bool resetPluginPreferencesValuesMap(const std::string &rootPath);
 
 public:
+    CallServicesManager &getCallServicesManager() { return csm_; }
 
-    CallServicesManager& getCallServicesManager() {
-        return csm_;
-    }
-
-    ConversationServicesManager& getConversationServicesManager() {
-        return convsm_;
-    }
+    ConversationServicesManager &getConversationServicesManager() { return convsm_; }
 
 private:
-
     NON_COPYABLE(JamiPluginManager);
 
     /**
@@ -143,7 +138,8 @@ private:
      * Checks if the plugin has a manifest file with a name and a version
      * @return true if valid
      */
-    bool checkPluginValidity(const std::string& rootPath) {
+    bool checkPluginValidity(const std::string &rootPath)
+    {
         return !parseManifestFile(manifestPath(rootPath)).empty();
     }
 
@@ -163,19 +159,23 @@ private:
      */
     std::map<std::string, std::string> parseManifestFile(const std::string &manifestFilePath);
 
-    std::string manifestPath(const std::string& rootPath) {
+    std::string manifestPath(const std::string &rootPath)
+    {
         return rootPath + DIR_SEPARATOR_CH + "manifest.json";
     }
 
-    std::string getRootPathFromSoPath(const std::string& soPath) const {
-        return soPath.substr(0,soPath.find_last_of(DIR_SEPARATOR_CH));
+    std::string getRootPathFromSoPath(const std::string &soPath) const
+    {
+        return soPath.substr(0, soPath.find_last_of(DIR_SEPARATOR_CH));
     }
 
-    std::string manifestPath(const std::string& rootPath) const {
+    std::string manifestPath(const std::string &rootPath) const
+    {
         return rootPath + DIR_SEPARATOR_CH + "manifest.json";
     }
 
-    std::string dataPath(const std::string& pluginSoPath) const {
+    std::string dataPath(const std::string &pluginSoPath) const
+    {
         return getRootPathFromSoPath(pluginSoPath) + DIR_SEPARATOR_CH + "data";
     }
 
@@ -188,7 +188,8 @@ private:
      * @param plugin rootPath
      * @return path of the preferences config
      */
-    std::string getPreferencesConfigFilePath(const std::string& rootPath) const {
+    std::string getPreferencesConfigFilePath(const std::string &rootPath) const
+    {
         return rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "preferences.json";
     }
 
@@ -199,7 +200,8 @@ private:
      * @param plugin rootPath
      * @return path of the preferences values
      */
-    std::string pluginPreferencesValuesFilePath(const std::string& rootPath) const {
+    std::string pluginPreferencesValuesFilePath(const std::string &rootPath) const
+    {
         return rootPath + DIR_SEPARATOR_CH + "preferences.msgpack";
     }
 
@@ -209,11 +211,9 @@ private:
     PluginManager pm_;
     std::map<std::string, std::map<std::string, std::string>> pluginDetailsMap_;
 
-//Services
+    //Services
 private:
     CallServicesManager csm_;
     ConversationServicesManager convsm_;
 };
-}
-
-
+} // namespace jami

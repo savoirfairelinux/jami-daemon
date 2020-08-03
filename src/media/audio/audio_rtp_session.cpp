@@ -29,17 +29,17 @@
 
 #include "audio_receive_thread.h"
 #include "audio_sender.h"
-#include "socket_pair.h"
-#include "media_recorder.h"
-#include "media_encoder.h"
 #include "media_decoder.h"
-#include "media_io_handle.h"
 #include "media_device.h"
+#include "media_encoder.h"
+#include "media_io_handle.h"
+#include "media_recorder.h"
+#include "socket_pair.h"
 
 #include "audio/audio_input.h"
 #include "audio/audiobuffer.h"
-#include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
+#include "audio/ringbufferpool.h"
 #include "client/videomanager.h"
 #include "manager.h"
 #include "observer.h"
@@ -48,7 +48,7 @@
 
 namespace jami {
 
-AudioRtpSession::AudioRtpSession(const std::string& id)
+AudioRtpSession::AudioRtpSession(const std::string &id)
     : RtpSession(id)
 {
     // don't move this into the initializer list or Cthulus will emerge
@@ -77,17 +77,17 @@ AudioRtpSession::startSender()
         JAMI_WARN("Restarting audio sender");
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
-    audioInput_ = jami::getAudioInput(callID_);
+    audioInput_    = jami::getAudioInput(callID_);
     auto newParams = audioInput_->switchInput(input_);
     try {
-        if (newParams.valid() &&
-            newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+        if (newParams.valid()
+            && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
             localAudioParams_ = newParams.get();
         } else {
             JAMI_ERR() << "No valid new audio parameters";
             return;
         }
-    } catch (const std::exception& e) {
+    } catch (const std::exception &e) {
         JAMI_ERR() << "Exception while retrieving audio parameters: " << e.what();
         return;
     }
@@ -99,8 +99,8 @@ AudioRtpSession::startSender()
     try {
         sender_.reset();
         socketPair_->stopSendOp(false);
-        sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
-                                      *socketPair_, initSeqVal_, muteState_, mtu_));
+        sender_.reset(new AudioSender(
+            callID_, getRemoteRtpUri(), send_, *socketPair_, initSeqVal_, muteState_, mtu_));
     } catch (const MediaEncoderException &e) {
         JAMI_ERR("%s", e.what());
         send_.enabled = false;
@@ -131,7 +131,8 @@ AudioRtpSession::startReceiver()
         JAMI_WARN("Restarting audio receiver");
 
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(receive_.codec);
-    receiveThread_.reset(new AudioReceiveThread(callID_, accountAudioCodec->audioformat,
+    receiveThread_.reset(new AudioReceiveThread(callID_,
+                                                accountAudioCodec->audioformat,
                                                 receive_.receiving_sdp,
                                                 mtu_));
     receiveThread_->addIOContext(*socketPair_);
@@ -150,13 +151,11 @@ AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
 
     try {
         if (rtp_sock and rtcp_sock) {
-
             rtp_sock->setDefaultRemoteAddress(send_.addr);
             rtcp_sock->setDefaultRemoteAddress(send_.rtcp_addr);
 
             socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
-        }
-        else
+        } else
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
 
         if (send_.crypto and receive_.crypto) {
@@ -165,7 +164,7 @@ AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
                                     send_.crypto.getCryptoSuite().c_str(),
                                     send_.crypto.getSrtpKeyInfo().c_str());
         }
-    } catch (const std::runtime_error& e) {
+    } catch (const std::runtime_error &e) {
         JAMI_ERR("Socket creation failed: %s", e.what());
         return;
     }
@@ -197,7 +196,7 @@ AudioRtpSession::setMuted(bool isMuted)
 }
 
 void
-AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
+AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder> &rec)
 {
     if (receiveThread_)
         receiveThread_->attach(rec->addStream(receiveThread_->getInfo()));
@@ -206,7 +205,7 @@ AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 }
 
 void
-AudioRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder>& rec)
+AudioRtpSession::deinitRecorder(std::shared_ptr<MediaRecorder> &rec)
 {
     if (receiveThread_) {
         if (auto ob = rec->getStream(receiveThread_->getInfo().name)) {

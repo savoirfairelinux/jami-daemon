@@ -21,33 +21,34 @@
 
 #pragma once
 
-#include "security/tls_session.h"
+#include "jamidht/abstract_sip_transport.h"
 #include "noncopyable.h"
 #include "scheduled_executor.h"
-#include "jamidht/abstract_sip_transport.h"
+#include "security/tls_session.h"
 
-#include <pjsip.h>
 #include <pj/pool.h>
+#include <pjsip.h>
 
-#include <gnutls/gnutls.h>
-#include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
+#include <gnutls/dtls.h>
+#include <gnutls/gnutls.h>
 
-#include <list>
+#include <chrono>
 #include <functional>
+#include <list>
 #include <memory>
 #include <mutex>
-#include <chrono>
-#include <queue>
 #include <utility>
 #include <vector>
+#include <queue>
 
 namespace jami {
 class IceTransport;
 class IceSocketTransport;
 } // namespace jami
 
-namespace jami { namespace tls {
+namespace jami {
+namespace tls {
 
 /**
  * SipsIceTransport
@@ -57,14 +58,17 @@ namespace jami { namespace tls {
 class SipsIceTransport : public AbstractSIPTransport
 {
 public:
-    SipsIceTransport(pjsip_endpoint* endpt, int tp_type, const TlsParams& param,
-                    const std::shared_ptr<IceTransport>& ice, int comp_id);
+    SipsIceTransport(pjsip_endpoint *endpt,
+                     int tp_type,
+                     const TlsParams &param,
+                     const std::shared_ptr<IceTransport> &ice,
+                     int comp_id);
     ~SipsIceTransport();
 
     void shutdown();
 
     std::shared_ptr<IceTransport> getIceTransport() const { return ice_; }
-    pjsip_transport* getTransportBase() override { return &trData_.base; }
+    pjsip_transport *getTransportBase() override { return &trData_.base; }
 
     IpAddr getLocalAddress() const override { return local_; }
     IpAddr getRemoteAddress() const { return remote_; }
@@ -77,27 +81,28 @@ private:
 
     std::shared_ptr<IceTransport> ice_;
     const int comp_id_;
-    const std::function<int(unsigned, const gnutls_datum_t*, unsigned)> certCheck_;
-    IpAddr local_ {};
-    IpAddr remote_ {};
+    const std::function<int(unsigned, const gnutls_datum_t *, unsigned)> certCheck_;
+    IpAddr local_{};
+    IpAddr remote_{};
 
     // PJSIP transport backend
 
     TransportData trData_; // uplink to "this" (used by PJSIP called C-callbacks)
 
-    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)*> pool_;
-    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)*> rxPool_;
+    std::unique_ptr<pj_pool_t, decltype(pj_pool_release) *> pool_;
+    std::unique_ptr<pj_pool_t, decltype(pj_pool_release) *> rxPool_;
 
     pjsip_rx_data rdata_;
 
     pj_ssl_cert_info localCertInfo_;
     pj_ssl_cert_info remoteCertInfo_;
 
-    pj_status_t verifyStatus_ {PJ_EUNKNOWN};
+    pj_status_t verifyStatus_{PJ_EUNKNOWN};
 
     // TlsSession backend
 
-    struct ChangeStateEventData {
+    struct ChangeStateEventData
+    {
         pj_ssl_sock_info ssl_info;
         pjsip_tls_state_info tls_info;
         pjsip_transport_state_info state_info;
@@ -106,34 +111,35 @@ private:
 
     std::unique_ptr<TlsSession> tls_;
 
-    std::mutex txMutex_ {};
-    std::condition_variable txCv_ {};
-    std::list<pjsip_tx_data*> txQueue_ {};
-    bool syncTx_ {false}; // true if we can send data synchronously (cnx established)
+    std::mutex txMutex_{};
+    std::condition_variable txCv_{};
+    std::list<pjsip_tx_data *> txQueue_{};
+    bool syncTx_{false}; // true if we can send data synchronously (cnx established)
 
-    std::mutex stateChangeEventsMutex_ {};
-    std::list<ChangeStateEventData> stateChangeEvents_ {};
+    std::mutex stateChangeEventsMutex_{};
+    std::list<ChangeStateEventData> stateChangeEvents_{};
 
     std::mutex rxMtx_;
     std::list<std::vector<uint8_t>> rxPending_;
 
     ScheduledExecutor scheduler_;
 
-    pj_status_t send(pjsip_tx_data*, const pj_sockaddr_t*, int, void*, pjsip_transport_callback);
+    pj_status_t send(pjsip_tx_data *, const pj_sockaddr_t *, int, void *, pjsip_transport_callback);
     void handleEvents();
-    void pushChangeStateEvent(ChangeStateEventData&&);
+    void pushChangeStateEvent(ChangeStateEventData &&);
     void updateTransportState(pjsip_transport_state);
-    void certGetInfo(pj_pool_t*, pj_ssl_cert_info*, const gnutls_datum_t*, size_t);
-    void certGetCn(const pj_str_t*, pj_str_t*);
-    void getInfo(pj_ssl_sock_info*, bool);
+    void certGetInfo(pj_pool_t *, pj_ssl_cert_info *, const gnutls_datum_t *, size_t);
+    void certGetCn(const pj_str_t *, pj_str_t *);
+    void getInfo(pj_ssl_sock_info *, bool);
     void onTlsStateChange(TlsSessionState);
-    void onRxData(std::vector<uint8_t>&&);
-    void onCertificatesUpdate(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int);
+    void onRxData(std::vector<uint8_t> &&);
+    void onCertificatesUpdate(const gnutls_datum_t *, const gnutls_datum_t *, unsigned int);
     int verifyCertificate(gnutls_session_t);
 
     std::thread eventLoop_;
     void eventLoop();
-    std::atomic_bool stopLoop_ {false};
+    std::atomic_bool stopLoop_{false};
 };
 
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami

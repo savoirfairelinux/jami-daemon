@@ -29,10 +29,10 @@
 #include "video/video_scaler.h"
 #endif
 
-#include "noncopyable.h"
 #include "media_buffer.h"
 #include "media_codec.h"
 #include "media_stream.h"
+#include "noncopyable.h"
 
 #include <map>
 #include <memory>
@@ -57,33 +57,37 @@ class HardwareAccel;
 }
 #endif
 
-class MediaEncoderException : public std::runtime_error {
-    public:
-        MediaEncoderException(const char *msg) : std::runtime_error(msg) {}
+class MediaEncoderException : public std::runtime_error
+{
+public:
+    MediaEncoderException(const char *msg)
+        : std::runtime_error(msg)
+    {}
 };
 
-class MediaEncoder {
+class MediaEncoder
+{
 public:
     MediaEncoder();
     ~MediaEncoder();
 
-    void openOutput(const std::string& filename, const std::string& format="");
-    void setMetadata(const std::string& title, const std::string& description);
-    void setOptions(const MediaStream& opts);
-    void setOptions(const MediaDescription& args);
-    int addStream(const SystemCodecInfo& codec);
-    void setIOContext(AVIOContext* ioctx) { ioCtx_ = ioctx; }
+    void openOutput(const std::string &filename, const std::string &format = "");
+    void setMetadata(const std::string &title, const std::string &description);
+    void setOptions(const MediaStream &opts);
+    void setOptions(const MediaDescription &args);
+    int addStream(const SystemCodecInfo &codec);
+    void setIOContext(AVIOContext *ioctx) { ioCtx_ = ioctx; }
 
-    bool send(AVPacket& packet, int streamIdx = -1);
+    bool send(AVPacket &packet, int streamIdx = -1);
 
 #ifdef ENABLE_VIDEO
     int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
 #endif // ENABLE_VIDEO
 
-    int encodeAudio(AudioFrame& frame);
+    int encodeAudio(AudioFrame &frame);
 
     // frame should be ready to be sent to the encoder at this point
-    int encode(AVFrame* frame, int streamIdx);
+    int encode(AVFrame *frame, int streamIdx);
 
     int flush();
     std::string print_sdp();
@@ -97,8 +101,8 @@ public:
     void setInitSeqVal(uint16_t seqVal);
     uint16_t getLastSeqValue();
 
-    const std::string& getAudioCodec() const { return audioCodec_; }
-    const std::string& getVideoCodec() const { return videoCodec_; }
+    const std::string &getAudioCodec() const { return audioCodec_; }
+    const std::string &getVideoCodec() const { return videoCodec_; }
 
     int setBitrate(uint64_t br);
 
@@ -109,39 +113,39 @@ public:
     static std::string testH265Accel();
 
     unsigned getStreamCount() const;
-    MediaStream getStream(const std::string& name, int streamIdx = -1) const;
+    MediaStream getStream(const std::string &name, int streamIdx = -1) const;
 
 private:
     NON_COPYABLE(MediaEncoder);
-    AVCodecContext* prepareEncoderContext(AVCodec* outputCodec, bool is_video);
-    void forcePresetX2645(AVCodecContext* encoderCtx);
+    AVCodecContext *prepareEncoderContext(AVCodec *outputCodec, bool is_video);
+    void forcePresetX2645(AVCodecContext *encoderCtx);
     void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
-    int initStream(const std::string& codecName, AVBufferRef* framesCtx);
-    int initStream(const SystemCodecInfo& systemCodecInfo, AVBufferRef* framesCtx);
+    int initStream(const std::string &codecName, AVBufferRef *framesCtx);
+    int initStream(const SystemCodecInfo &systemCodecInfo, AVBufferRef *framesCtx);
     void openIOContext();
     void startIO();
-    AVCodecContext* getCurrentVideoAVCtx();
+    AVCodecContext *getCurrentVideoAVCtx();
     void stopEncoder();
-    AVCodecContext* initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br);
-    void initH264(AVCodecContext* encoderCtx, uint64_t br);
-    void initH265(AVCodecContext* encoderCtx, uint64_t br);
-    void initVP8(AVCodecContext* encoderCtx, uint64_t br);
-    void initMPEG4(AVCodecContext* encoderCtx, uint64_t br);
-    void initH263(AVCodecContext* encoderCtx, uint64_t br);
+    AVCodecContext *initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br);
+    void initH264(AVCodecContext *encoderCtx, uint64_t br);
+    void initH265(AVCodecContext *encoderCtx, uint64_t br);
+    void initVP8(AVCodecContext *encoderCtx, uint64_t br);
+    void initMPEG4(AVCodecContext *encoderCtx, uint64_t br);
+    void initH263(AVCodecContext *encoderCtx, uint64_t br);
     bool isDynBitrateSupported(AVCodecID codecid);
 
-    std::vector<AVCodecContext*> encoders_;
+    std::vector<AVCodecContext *> encoders_;
     AVFormatContext *outputCtx_ = nullptr;
-    AVIOContext* ioCtx_ = nullptr;
-    int currentStreamIdx_ = -1;
-    unsigned sent_samples = 0;
-    bool initialized_ {false};
-    bool fileIO_ {false};
-    unsigned int currentVideoCodecID_ {0};
-    AVCodec* outputCodec_ = nullptr;
+    AVIOContext *ioCtx_         = nullptr;
+    int currentStreamIdx_       = -1;
+    unsigned sent_samples       = 0;
+    bool initialized_{false};
+    bool fileIO_{false};
+    unsigned int currentVideoCodecID_{0};
+    AVCodec *outputCodec_ = nullptr;
     std::mutex encMutex_;
-    bool linkableHW_ {false};
-    RateMode mode_ {RateMode::CRF_CONSTRAINED};
+    bool linkableHW_{false};
+    RateMode mode_{RateMode::CRF_CONSTRAINED};
 
 #ifdef ENABLE_VIDEO
     video::VideoScaler scaler_;
@@ -157,8 +161,8 @@ private:
 #endif
 
 protected:
-    void readConfig(AVCodecContext* encoderCtx);
-    AVDictionary* options_ = nullptr;
+    void readConfig(AVCodecContext *encoderCtx);
+    AVDictionary *options_ = nullptr;
     MediaStream videoOpts_;
     MediaStream audioOpts_;
     std::string videoCodec_;

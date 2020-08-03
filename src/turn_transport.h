@@ -20,14 +20,14 @@
 
 #pragma once
 
-#include "ip_utils.h"
 #include "generic_io.h"
+#include "ip_utils.h"
 
-#include <string>
-#include <memory>
 #include <functional>
 #include <map>
+#include <memory>
 #include <stdexcept>
+#include <string>
 
 namespace jami {
 
@@ -42,13 +42,13 @@ struct TurnTransportParams
     std::string username;
     std::string password;
 
-    pj_uint16_t authorized_family {0};
+    pj_uint16_t authorized_family{0};
 
-    bool isPeerConnection {false};
-    uint32_t connectionId {0};
-    std::function<void(uint32_t conn_id, const IpAddr& peer_addr, bool success)> onPeerConnection;
+    bool isPeerConnection{false};
+    uint32_t connectionId{0};
+    std::function<void(uint32_t conn_id, const IpAddr &peer_addr, bool success)> onPeerConnection;
 
-    std::size_t maxPacketSize {4096}; ///< size of one "logical" packet
+    std::size_t maxPacketSize{4096}; ///< size of one "logical" packet
 };
 
 class TurnTransport
@@ -62,11 +62,11 @@ public:
     ///
     /// \note If TURN server port is not set, the default TURN port 3478 (RFC5766) is used.
     ///
-    TurnTransport(const TurnTransportParams& param);
+    TurnTransport(const TurnTransportParams &param);
 
     ~TurnTransport();
 
-    void shutdown(const IpAddr& addr);
+    void shutdown(const IpAddr &addr);
 
     bool isInitiator() const;
 
@@ -81,10 +81,10 @@ public:
     bool isReady() const;
 
     /// \return socket address (IP/port) where peers should connect to before doing IO with this client.
-    const IpAddr& peerRelayAddr() const;
+    const IpAddr &peerRelayAddr() const;
 
     /// \return public address of this client as seen by the TURN server.
-    const IpAddr& mappedAddr() const;
+    const IpAddr &mappedAddr() const;
 
     /// \return a vector of connected peer addresses
     std::vector<IpAddr> peerAddresses() const;
@@ -100,7 +100,7 @@ public:
     /// \note Must be called only if server is ready.
     /// \see waitServerReady
     ///
-    void permitPeer(const IpAddr& addr);
+    void permitPeer(const IpAddr &addr);
 
     /// Collect pending data from a given peer.
     ///
@@ -115,7 +115,7 @@ public:
     ///
     /// Works as recvfrom() vector version but accept a simple char array.
     ///
-    ssize_t recvfrom(const IpAddr& peer, char* buffer, std::size_t size, std::error_code& ec);
+    ssize_t recvfrom(const IpAddr &peer, char *buffer, std::size_t size, std::error_code &ec);
 
     /// Send data to given peer through the TURN tunnel.
     ///
@@ -126,18 +126,20 @@ public:
     /// \param [in,out] pre-dimensionned character vector to write incoming data
     /// \exception std::out_of_range \a peer is not connected yet
     ///
-    bool sendto(const IpAddr& peer, const std::vector<char>& data);
+    bool sendto(const IpAddr &peer, const std::vector<char> &data);
 
     /// Works as sendto() vector version but accept a simple char array.
     ///
-    bool sendto(const IpAddr& peer, const char* const buffer, std::size_t size);
+    bool sendto(const IpAddr &peer, const char *const buffer, std::size_t size);
 
-    int waitForData(const IpAddr& peer, std::chrono::milliseconds timeout, std::error_code& ec) const;
+    int waitForData(const IpAddr &peer,
+                    std::chrono::milliseconds timeout,
+                    std::error_code &ec) const;
 
 public:
     // Move semantic only, not copiable
-    TurnTransport(TurnTransport&&) = default;
-    TurnTransport& operator=(TurnTransport&&) = default;
+    TurnTransport(TurnTransport &&) = default;
+    TurnTransport &operator=(TurnTransport &&) = default;
 
 private:
     TurnTransport() = delete;
@@ -149,21 +151,24 @@ class ConnectedTurnTransport final : public GenericSocket<uint8_t>
 public:
     using SocketType = GenericSocket<uint8_t>;
 
-    ConnectedTurnTransport(TurnTransport& turn, const IpAddr& peer);
+    ConnectedTurnTransport(TurnTransport &turn, const IpAddr &peer);
 
     void shutdown() override;
     bool isReliable() const override { return true; }
     bool isInitiator() const override { return turn_.isInitiator(); }
     int maxPayload() const override { return 3000; }
 
-    int waitForData(std::chrono::milliseconds timeout, std::error_code& ec) const override;
-    std::size_t read(ValueType* buf, std::size_t length, std::error_code& ec) override;
-    std::size_t write(const ValueType* buf, std::size_t length, std::error_code& ec) override;
+    int waitForData(std::chrono::milliseconds timeout, std::error_code &ec) const override;
+    std::size_t read(ValueType *buf, std::size_t length, std::error_code &ec) override;
+    std::size_t write(const ValueType *buf, std::size_t length, std::error_code &ec) override;
 
-    void setOnRecv(RecvCb&&) override { throw std::logic_error("ConnectedTurnTransport bad call"); }
+    void setOnRecv(RecvCb &&) override
+    {
+        throw std::logic_error("ConnectedTurnTransport bad call");
+    }
 
 private:
-    TurnTransport& turn_;
+    TurnTransport &turn_;
     const IpAddr peer_;
 };
 

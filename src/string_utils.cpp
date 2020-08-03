@@ -21,16 +21,16 @@
 
 #include "string_utils.h"
 
-#include <sstream>
-#include <cctype>
 #include <algorithm>
-#include <ostream>
+#include <cctype>
 #include <iomanip>
-#include <stdexcept>
 #include <ios>
+#include <ostream>
+#include <sstream>
+#include <stdexcept>
 #ifdef _WIN32
-#include <windows.h>
 #include <oleauto.h>
+#include <windows.h>
 #endif
 
 #include <ciso646> // fix windows compiler bug
@@ -39,14 +39,14 @@ namespace jami {
 
 #ifdef _WIN32
 std::wstring
-to_wstring(const std::string& str, int codePage)
+to_wstring(const std::string &str, int codePage)
 {
-    int srcLength = (int)str.length();
+    int srcLength    = (int) str.length();
     int requiredSize = MultiByteToWideChar(codePage, 0, str.c_str(), srcLength, nullptr, 0);
     if (!requiredSize) {
         throw std::runtime_error("Can't convert string to wstring");
     }
-    std::wstring result((size_t)requiredSize, 0);
+    std::wstring result((size_t) requiredSize, 0);
     if (!MultiByteToWideChar(codePage, 0, str.c_str(), srcLength, &(*result.begin()), requiredSize)) {
         throw std::runtime_error("Can't convert string to wstring");
     }
@@ -54,15 +54,16 @@ to_wstring(const std::string& str, int codePage)
 }
 
 std::string
-to_string(const std::wstring& wstr, int codePage)
+to_string(const std::wstring &wstr, int codePage)
 {
-    int srcLength = (int)wstr.length();
+    int srcLength    = (int) wstr.length();
     int requiredSize = WideCharToMultiByte(codePage, 0, wstr.c_str(), srcLength, nullptr, 0, 0, 0);
     if (!requiredSize) {
         throw std::runtime_error("Can't convert wstring to string");
     }
-    std::string result((size_t)requiredSize, 0);
-    if (!WideCharToMultiByte(codePage, 0, wstr.c_str(), srcLength, &(*result.begin()), requiredSize, 0, 0)) {
+    std::string result((size_t) requiredSize, 0);
+    if (!WideCharToMultiByte(
+            codePage, 0, wstr.c_str(), srcLength, &(*result.begin()), requiredSize, 0, 0)) {
         throw std::runtime_error("Can't convert wstring to string");
     }
     return result;
@@ -76,18 +77,20 @@ to_string(double value)
     int len = snprintf(buf, sizeof(buf), "%-.*G", 16, value);
     if (len <= 0)
         throw std::invalid_argument{"can't parse double"};
-    return {buf, (size_t)len};
+    return {buf, (size_t) len};
 }
 
 std::string
-to_hex_string(uint64_t id) {
+to_hex_string(uint64_t id)
+{
     std::ostringstream ss;
     ss << std::hex << std::setfill('0') << std::setw(16) << id;
     return ss.str();
 }
 
 uint64_t
-from_hex_string(const std::string& str) {
+from_hex_string(const std::string &str)
+{
     std::istringstream ss(str);
     ss >> std::hex;
     uint64_t id;
@@ -99,8 +102,12 @@ from_hex_string(const std::string& str) {
 std::string
 trim(const std::string &s)
 {
-   auto wsfront = std::find_if_not(s.cbegin(),s.cend(), [](int c){return std::isspace(c);});
-   return std::string(wsfront, std::find_if_not(s.rbegin(),std::string::const_reverse_iterator(wsfront), [](int c){return std::isspace(c);}).base());
+    auto wsfront = std::find_if_not(s.cbegin(), s.cend(), [](int c) { return std::isspace(c); });
+    return std::string(wsfront,
+                       std::find_if_not(s.rbegin(),
+                                        std::string::const_reverse_iterator(wsfront),
+                                        [](int c) { return std::isspace(c); })
+                           .base());
 }
 
 std::vector<std::string>
@@ -129,7 +136,8 @@ split_string_to_unsigned(const std::string &s, char delim)
     return result;
 }
 
-void string_replace(std::string& str, const std::string& from, const std::string& to)
+void
+string_replace(std::string &str, const std::string &from, const std::string &to)
 {
     size_t start_pos = 0;
     while ((start_pos = str.find(from, start_pos)) != std::string::npos) {

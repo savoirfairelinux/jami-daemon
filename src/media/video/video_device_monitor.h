@@ -27,78 +27,81 @@
 #include "noncopyable.h"
 
 #include <map>
-#include <string>
 #include <memory>
+#include <string>
 
 #include "video_device.h"
 
 namespace YAML {
 class Emitter;
 class Node;
-}
+} // namespace YAML
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class VideoDeviceMonitorImpl;
 
 class VideoDeviceMonitor : public Serializable
 {
-    public:
-        VideoDeviceMonitor();
-        ~VideoDeviceMonitor();
+public:
+    VideoDeviceMonitor();
+    ~VideoDeviceMonitor();
 
-        std::vector<std::string> getDeviceList() const;
+    std::vector<std::string> getDeviceList() const;
 
-        DRing::VideoCapabilities getCapabilities(const std::string& name) const;
-        VideoSettings getSettings(const std::string& name);
-        void applySettings(const std::string& name, const VideoSettings& settings);
+    DRing::VideoCapabilities getCapabilities(const std::string &name) const;
+    VideoSettings getSettings(const std::string &name);
+    void applySettings(const std::string &name, const VideoSettings &settings);
 
-        std::string getDefaultDevice() const;
-        std::string getMRLForDefaultDevice() const;
-        void setDefaultDevice(const std::string& name);
-        void setDeviceOrientation(const std::string& id, int angle);
+    std::string getDefaultDevice() const;
+    std::string getMRLForDefaultDevice() const;
+    void setDefaultDevice(const std::string &name);
+    void setDeviceOrientation(const std::string &id, int angle);
 
-        void addDevice(const std::string &node, const std::vector<std::map<std::string, std::string>>* devInfo=nullptr);
-        void removeDevice(const std::string &node);
+    void addDevice(const std::string &node,
+                   const std::vector<std::map<std::string, std::string>> *devInfo = nullptr);
+    void removeDevice(const std::string &node);
 
-        /**
+    /**
          * Params for libav
          */
-        DeviceParams getDeviceParams(const std::string& name) const;
+    DeviceParams getDeviceParams(const std::string &name) const;
 
-        /*
+    /*
          * Interface to load from/store to the (YAML) configuration file.
          */
-        void serialize(YAML::Emitter &out) const override;
-        virtual void unserialize(const YAML::Node &in) override;
+    void serialize(YAML::Emitter &out) const override;
+    virtual void unserialize(const YAML::Node &in) override;
 
-    private:
-        NON_COPYABLE(VideoDeviceMonitor);
+private:
+    NON_COPYABLE(VideoDeviceMonitor);
 
-        mutable std::mutex lock_;
-        /*
+    mutable std::mutex lock_;
+    /*
          * User preferred settings for a device,
          * as loaded from (and stored to) the configuration file.
          */
-        std::vector<VideoSettings> preferences_;
+    std::vector<VideoSettings> preferences_;
 
-        void overwritePreferences(const VideoSettings& settings);
-        std::vector<VideoSettings>::iterator findPreferencesById(const std::string& id);
+    void overwritePreferences(const VideoSettings &settings);
+    std::vector<VideoSettings>::iterator findPreferencesById(const std::string &id);
 
-        /*
+    /*
          * Vector containing the video devices.
          */
-        std::vector<VideoDevice> devices_;
-        std::string defaultDevice_ = "";
+    std::vector<VideoDevice> devices_;
+    std::string defaultDevice_ = "";
 
-        std::vector<VideoDevice>::iterator findDeviceById(const std::string& id);
-        std::vector<VideoDevice>::const_iterator findDeviceById(const std::string& id) const;
+    std::vector<VideoDevice>::iterator findDeviceById(const std::string &id);
+    std::vector<VideoDevice>::const_iterator findDeviceById(const std::string &id) const;
 
-        std::unique_ptr<VideoDeviceMonitorImpl> monitorImpl_;
+    std::unique_ptr<VideoDeviceMonitorImpl> monitorImpl_;
 
-        constexpr static const char *CONFIG_LABEL = "video";
+    constexpr static const char *CONFIG_LABEL = "video";
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami
 
 #endif /* VIDEO_DEVICE_MONITOR_H__ */

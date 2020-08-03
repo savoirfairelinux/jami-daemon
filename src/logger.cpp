@@ -19,34 +19,34 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include <cerrno>
+#include <ciso646> // fix windows compiler bug
 #include <cstdio>
 #include <cstring>
-#include <cerrno>
 #include <ctime>
-#include <ciso646> // fix windows compiler bug
 
 #include "client/ring_signal.h"
 
 #ifdef _MSC_VER
-# include <sys_time.h>
+#include <sys_time.h>
 #else
-# include <sys/time.h>
+#include <sys/time.h>
 #endif
 
-#include <string>
-#include <sstream>
+#include <array>
 #include <iomanip>
 #include <ios>
 #include <mutex>
+#include <sstream>
+#include <string>
 #include <thread>
-#include <array>
 
 #include "logger.h"
 
 #ifdef __linux__
+#include <sys/syscall.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <sys/syscall.h>
 #endif // __linux__
 
 #ifdef __ANDROID__
@@ -95,8 +95,8 @@ static int debugMode;
 static std::mutex logMutex;
 
 // extract the last component of a pathname (extract a filename from its dirname)
-static const char*
-stripDirName(const char* path)
+static const char *
+stripDirName(const char *path)
 {
 #ifdef _MSC_VER
     return strrchr(path, '\\') ? strrchr(path, '\\') + 1 : path;
@@ -106,7 +106,7 @@ stripDirName(const char* path)
 }
 
 static std::string
-contextHeader(const char* const file, int line)
+contextHeader(const char *const file, int line)
 {
 #ifdef __linux__
     auto tid = syscall(__NR_gettid) & 0xffff;
@@ -118,18 +118,17 @@ contextHeader(const char* const file, int line)
     struct timeval tv;
 
     if (!gettimeofday(&tv, NULL)) {
-        secs = tv.tv_sec;
+        secs  = tv.tv_sec;
         milli = tv.tv_usec / 1000; // suppose that milli < 1000
     } else {
-        secs = time(NULL);
+        secs  = time(NULL);
         milli = 0;
     }
 
     std::ostringstream out;
     const auto prev_fill = out.fill();
-    out << '[' << secs
-        << '.' << std::right << std::setw(3) << std::setfill('0') << milli << std::left
-        << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
+    out << '[' << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli
+        << std::left << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
     out.fill(prev_fill);
 
     // Context
@@ -139,10 +138,8 @@ contextHeader(const char* const file, int line)
 #else
         constexpr auto width = 18;
 #endif
-        out << "|"
-            << std::setw(width) << stripDirName(file)
-            << ":"
-            << std::setw(5) << std::setfill(' ') << line;
+        out << "|" << std::setw(width) << stripDirName(file) << ":" << std::setw(5)
+            << std::setfill(' ') << line;
     }
 
     out << "] ";
@@ -177,20 +174,24 @@ getDebugMode(void)
     return debugMode;
 }
 
-static const char* check_error(int result, char* buffer) {
+static const char *
+check_error(int result, char *buffer)
+{
     switch (result) {
-        case 0:
-            return buffer;
+    case 0:
+        return buffer;
 
-        case ERANGE: /* should never happen */
-            return "unknown (too big to display)";
+    case ERANGE: /* should never happen */
+        return "unknown (too big to display)";
 
-        default:
-            return "unknown (invalid error number)";
+    default:
+        return "unknown (invalid error number)";
     }
 }
 
-static const char* check_error(char* result, char*) {
+static const char *
+check_error(char *result, char *)
+{
     return result;
 }
 
@@ -208,10 +209,10 @@ strErr(void)
 namespace jami {
 
 void
-Logger::log(int level, const char* file, int line, bool linefeed, const char* const format, ...)
+Logger::log(int level, const char *file, int line, bool linefeed, const char *const format, ...)
 {
 #if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if(!debugMode)
+    if (!debugMode)
         return;
 #endif
     if (!debugMode && level == LOG_DEBUG)
@@ -228,11 +229,11 @@ Logger::log(int level, const char* file, int line, bool linefeed, const char* co
 }
 
 void
-Logger::vlog(const int level, const char* file, int line, bool linefeed,
-             const char* format, va_list ap)
+Logger::vlog(
+    const int level, const char *file, int line, bool linefeed, const char *format, va_list ap)
 {
 #if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if(!debugMode)
+    if (!debugMode)
         return;
 #endif
     if (!debugMode && level == LOG_DEBUG)
@@ -240,12 +241,12 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
 
     // syslog is supposed to thread-safe, but not all implementations (Android?)
     // follow strictly POSIX rules... so we lock our mutex in any cases.
-    std::lock_guard<std::mutex> lk {logMutex};
+    std::lock_guard<std::mutex> lk{logMutex};
 
     if (consoleLog) {
 #ifndef _WIN32
-        const char* color_header = CYAN;
-        const char* color_prefix = "";
+        const char *color_header = CYAN;
+        const char *color_prefix = "";
 #else
         WORD color_prefix = LIGHT_GREEN;
         WORD color_header = CYAN;
@@ -257,13 +258,13 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
 #endif
 
         switch (level) {
-            case LOG_ERR:
-                color_prefix = RED;
-                break;
+        case LOG_ERR:
+            color_prefix = RED;
+            break;
 
-            case LOG_WARNING:
-                color_prefix = YELLOW;
-                break;
+        case LOG_WARNING:
+            color_prefix = YELLOW;
+            break;
         }
 
 #ifndef _WIN32
@@ -301,4 +302,4 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
     }
 }
 
-} // namespace jami;
+} // namespace jami

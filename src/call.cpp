@@ -22,24 +22,24 @@
 
 #include "call.h"
 #include "account.h"
-#include "manager.h"
-#include "audio/ringbufferpool.h"
-#include "dring/call_const.h"
-#include "client/ring_signal.h"
-#include "sip/sip_utils.h"
-#include "ip_utils.h"
 #include "array_size.h"
-#include "map_utils.h"
+#include "audio/ringbufferpool.h"
 #include "call_factory.h"
-#include "string_utils.h"
+#include "client/ring_signal.h"
+#include "dring/call_const.h"
 #include "enumclass_utils.h"
+#include "ip_utils.h"
+#include "manager.h"
+#include "map_utils.h"
+#include "sip/sip_utils.h"
+#include "string_utils.h"
 
 #include "errno.h"
 
-#include <stdexcept>
-#include <system_error>
 #include <algorithm>
 #include <functional>
+#include <stdexcept>
+#include <system_error>
 #include <utility>
 
 namespace jami {
@@ -51,16 +51,20 @@ namespace jami {
 /// code \a errcode when the predicate return true.
 /// The predicate should have <code>bool(Call*) signature</code>.
 inline void
-hangupCallsIf(const Call::SubcallSet& callptr_list, int errcode, const std::function<bool(Call*)>& pred)
+hangupCallsIf(const Call::SubcallSet &callptr_list,
+              int errcode,
+              const std::function<bool(Call *)> &pred)
 {
-    std::for_each(std::begin(callptr_list), std::end(callptr_list),
-                  [&](const std::shared_ptr<Call>& call_ptr) {
+    std::for_each(std::begin(callptr_list),
+                  std::end(callptr_list),
+                  [&](const std::shared_ptr<Call> &call_ptr) {
                       if (pred(call_ptr.get())) {
                           try {
                               call_ptr->hangup(errcode);
-                          } catch (const std::exception& e) {
+                          } catch (const std::exception &e) {
                               JAMI_ERR("[call:%s] hangup failed: %s",
-                                       call_ptr->getCallId().c_str(), e.what());
+                                       call_ptr->getCallId().c_str(),
+                                       e.what());
                           }
                       }
                   });
@@ -70,15 +74,17 @@ hangupCallsIf(const Call::SubcallSet& callptr_list, int errcode, const std::func
 ///
 /// Works as hangupCallsIf() with a predicate that always return true.
 inline void
-hangupCalls(const Call::SubcallSet& callptr_list, int errcode)
+hangupCalls(const Call::SubcallSet &callptr_list, int errcode)
 {
-    hangupCallsIf(callptr_list, errcode, [](Call*){ return true; });
+    hangupCallsIf(callptr_list, errcode, [](Call *) { return true; });
 }
 
 //==============================================================================
 
-Call::Call(Account& account, const std::string& id, Call::CallType type,
-           const std::map<std::string, std::string>& details)
+Call::Call(Account &account,
+           const std::string &id,
+           Call::CallType type,
+           const std::map<std::string, std::string> &details)
     : id_(id)
     , type_(type)
     , account_(account)
@@ -88,9 +94,7 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
     addStateListener([this](Call::CallState call_state,
                             Call::ConnectionState cnx_state,
                             UNUSED int code) {
-
-        if (cnx_state == ConnectionState::PROGRESSING
-            && startFallback_.exchange(false)
+        if (cnx_state == ConnectionState::PROGRESSING && startFallback_.exchange(false)
             && not isSubcall()) {
             // If the other peer lose the connectivity during the progressing
             // this means that the other peer had a connectivity change we didn't
@@ -99,20 +103,24 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
             // just to bypass the CONNECTING status
 
             std::weak_ptr<Call> callWkPtr = shared_from_this();
-            Manager::instance().scheduler().scheduleIn([callWkPtr]{
-                if (auto callShPtr = callWkPtr.lock()) {
-                    if (callShPtr->getConnectionState() == Call::ConnectionState::PROGRESSING) {
-                        JAMI_WARN("Call %s is still connecting after timeout, sending fallback request",
-                            callShPtr->getCallId().c_str());
-                        if (callShPtr->onNeedFallback_) callShPtr->onNeedFallback_();
+            Manager::instance().scheduler().scheduleIn(
+                [callWkPtr] {
+                    if (auto callShPtr = callWkPtr.lock()) {
+                        if (callShPtr->getConnectionState() == Call::ConnectionState::PROGRESSING) {
+                            JAMI_WARN("Call %s is still connecting after timeout, sending fallback "
+                                      "request",
+                                      callShPtr->getCallId().c_str());
+                            if (callShPtr->onNeedFallback_)
+                                callShPtr->onNeedFallback_();
+                        }
                     }
-                }
-            }, std::chrono::seconds(2));
+                },
+                std::chrono::seconds(2));
         }
 
         checkPendingIM();
         std::weak_ptr<Call> callWkPtr = shared_from_this();
-        runOnMainThread([callWkPtr]{
+        runOnMainThread([callWkPtr] {
             if (auto call = callWkPtr.lock())
                 call->checkAudio();
         });
@@ -122,17 +130,20 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
             auto timeout = Manager::instance().getRingingTimeout();
             JAMI_DBG("Scheduling call timeout in %d seconds", timeout);
 
-           std::weak_ptr<Call> callWkPtr = shared_from_this();
-           Manager::instance().scheduler().scheduleIn([callWkPtr]{
-               if (auto callShPtr = callWkPtr.lock()) {
-                    if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
-                         JAMI_DBG("Call %s is still ringing after timeout, setting state to BUSY",
-                             callShPtr->getCallId().c_str());
-                         callShPtr->hangup(PJSIP_SC_BUSY_HERE);
-                         Manager::instance().callFailure(*callShPtr);
+            std::weak_ptr<Call> callWkPtr = shared_from_this();
+            Manager::instance().scheduler().scheduleIn(
+                [callWkPtr] {
+                    if (auto callShPtr = callWkPtr.lock()) {
+                        if (callShPtr->getConnectionState() == Call::ConnectionState::RINGING) {
+                            JAMI_DBG(
+                                "Call %s is still ringing after timeout, setting state to BUSY",
+                                callShPtr->getCallId().c_str());
+                            callShPtr->hangup(PJSIP_SC_BUSY_HERE);
+                            Manager::instance().callFailure(*callShPtr);
+                        }
                     }
-                }
-           }, std::chrono::seconds(timeout));
+                },
+                std::chrono::seconds(timeout));
         }
 
         // kill pending subcalls at disconnect
@@ -159,7 +170,7 @@ Call::removeCall()
         Recordable::stopRecording();
 }
 
-const std::string&
+const std::string &
 Call::getAccountId() const
 {
     return account_.getAccountID();
@@ -191,47 +202,47 @@ Call::validStateTransition(CallState newState)
         return true;
 
     switch (callState_) {
-        case CallState::INACTIVE:
-            switch (newState) {
-                case CallState::ACTIVE:
-                case CallState::BUSY:
-                case CallState::PEER_BUSY:
-                case CallState::MERROR:
-                    return true;
-                default: // INACTIVE, HOLD
-                    return false;
-            }
-
+    case CallState::INACTIVE:
+        switch (newState) {
         case CallState::ACTIVE:
-            switch (newState) {
-                case CallState::BUSY:
-                case CallState::PEER_BUSY:
-                case CallState::HOLD:
-                case CallState::MERROR:
-                    return true;
-                default: // INACTIVE, ACTIVE
-                    return false;
-            }
-
-        case CallState::HOLD:
-            switch (newState) {
-                case CallState::ACTIVE:
-                case CallState::MERROR:
-                    return true;
-                default: // INACTIVE, HOLD, BUSY, PEER_BUSY, MERROR
-                    return false;
-            }
-
         case CallState::BUSY:
-            switch (newState) {
-                case CallState::MERROR:
-                    return true;
-                default: // INACTIVE, ACTIVE, HOLD, BUSY, PEER_BUSY
-                    return false;
-            }
-
-        default: // MERROR
+        case CallState::PEER_BUSY:
+        case CallState::MERROR:
+            return true;
+        default: // INACTIVE, HOLD
             return false;
+        }
+
+    case CallState::ACTIVE:
+        switch (newState) {
+        case CallState::BUSY:
+        case CallState::PEER_BUSY:
+        case CallState::HOLD:
+        case CallState::MERROR:
+            return true;
+        default: // INACTIVE, ACTIVE
+            return false;
+        }
+
+    case CallState::HOLD:
+        switch (newState) {
+        case CallState::ACTIVE:
+        case CallState::MERROR:
+            return true;
+        default: // INACTIVE, HOLD, BUSY, PEER_BUSY, MERROR
+            return false;
+        }
+
+    case CallState::BUSY:
+        switch (newState) {
+        case CallState::MERROR:
+            return true;
+        default: // INACTIVE, ACTIVE, HOLD, BUSY, PEER_BUSY
+            return false;
+        }
+
+    default: // MERROR
+        return false;
     }
 }
 
@@ -239,14 +250,20 @@ bool
 Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
     std::lock_guard<std::recursive_mutex> lock(callMutex_);
-    JAMI_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d", id_.c_str(),
-             (unsigned)callState_, (unsigned)call_state, (unsigned)connectionState_,
-             (unsigned)cnx_state, code);
+    JAMI_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d",
+             id_.c_str(),
+             (unsigned) callState_,
+             (unsigned) call_state,
+             (unsigned) connectionState_,
+             (unsigned) cnx_state,
+             code);
 
     if (callState_ != call_state) {
         if (not validStateTransition(call_state)) {
             JAMI_ERR("[call:%s] invalid call state transition from %u to %u",
-                     id_.c_str(), (unsigned)callState_, (unsigned)call_state);
+                     id_.c_str(),
+                     (unsigned) callState_,
+                     (unsigned) call_state);
             return false;
         }
     } else if (connectionState_ == cnx_state)
@@ -254,17 +271,19 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 
     // Emit client state only if changed
     auto old_client_state = getStateStr();
-    callState_ = call_state;
-    connectionState_ = cnx_state;
+    callState_            = call_state;
+    connectionState_      = cnx_state;
     auto new_client_state = getStateStr();
 
-    for (auto& l : stateChangedListeners_)
+    for (auto &l : stateChangedListeners_)
         l(callState_, connectionState_, code);
 
     if (old_client_state != new_client_state) {
         if (not parent_) {
             JAMI_DBG("[call:%s] emit client call state change %s, code %d",
-                     id_.c_str(), new_client_state.c_str(), code);
+                     id_.c_str(),
+                     new_client_state.c_str(),
+                     code);
             emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
         }
     }
@@ -292,54 +311,54 @@ Call::getStateStr() const
     using namespace DRing::Call;
 
     switch (getState()) {
-        case CallState::ACTIVE:
-            switch (getConnectionState()) {
-                case ConnectionState::PROGRESSING:
-                    return StateEvent::CONNECTING;
+    case CallState::ACTIVE:
+        switch (getConnectionState()) {
+        case ConnectionState::PROGRESSING:
+            return StateEvent::CONNECTING;
 
-                case ConnectionState::RINGING:
-                    return isIncoming() ? StateEvent::INCOMING : StateEvent::RINGING;
+        case ConnectionState::RINGING:
+            return isIncoming() ? StateEvent::INCOMING : StateEvent::RINGING;
 
-                case ConnectionState::DISCONNECTED:
-                    return StateEvent::HUNGUP;
+        case ConnectionState::DISCONNECTED:
+            return StateEvent::HUNGUP;
 
-                case ConnectionState::CONNECTED:
-                default:
-                    return StateEvent::CURRENT;
-            }
-
-        case CallState::HOLD:
-            if(getConnectionState() == ConnectionState::DISCONNECTED)
-                return StateEvent::HUNGUP;
-            return StateEvent::HOLD;
-
-        case CallState::BUSY:
-            return StateEvent::BUSY;
-
-        case CallState::PEER_BUSY:
-            return StateEvent::PEER_BUSY;
-
-        case CallState::INACTIVE:
-            switch (getConnectionState()) {
-                case ConnectionState::PROGRESSING:
-                    return StateEvent::CONNECTING;
-
-                case ConnectionState::RINGING:
-                    return isIncoming() ? StateEvent::INCOMING : StateEvent::RINGING;
-
-                case ConnectionState::CONNECTED:
-                    return StateEvent::CURRENT;
-
-                default:
-                    return StateEvent::INACTIVE;
-            }
-
-        case CallState::OVER:
-            return StateEvent::OVER;
-
-        case CallState::MERROR:
+        case ConnectionState::CONNECTED:
         default:
-            return StateEvent::FAILURE;
+            return StateEvent::CURRENT;
+        }
+
+    case CallState::HOLD:
+        if (getConnectionState() == ConnectionState::DISCONNECTED)
+            return StateEvent::HUNGUP;
+        return StateEvent::HOLD;
+
+    case CallState::BUSY:
+        return StateEvent::BUSY;
+
+    case CallState::PEER_BUSY:
+        return StateEvent::PEER_BUSY;
+
+    case CallState::INACTIVE:
+        switch (getConnectionState()) {
+        case ConnectionState::PROGRESSING:
+            return StateEvent::CONNECTING;
+
+        case ConnectionState::RINGING:
+            return isIncoming() ? StateEvent::INCOMING : StateEvent::RINGING;
+
+        case ConnectionState::CONNECTED:
+            return StateEvent::CURRENT;
+
+        default:
+            return StateEvent::INACTIVE;
+        }
+
+    case CallState::OVER:
+        return StateEvent::OVER;
+
+    case CallState::MERROR:
+    default:
+        return StateEvent::FAILURE;
     }
 }
 
@@ -351,9 +370,9 @@ Call::toggleRecording()
 }
 
 void
-Call::updateDetails(const std::map<std::string, std::string>& details)
+Call::updateDetails(const std::map<std::string, std::string> &details)
 {
-    const auto& iter = details.find(DRing::Call::Details::AUDIO_ONLY);
+    const auto &iter = details.find(DRing::Call::Details::AUDIO_ONLY);
     if (iter != std::end(details))
         isAudioOnly_ = iter->second == TRUE_STR;
 }
@@ -362,16 +381,16 @@ std::map<std::string, std::string>
 Call::getDetails() const
 {
     return {
-        {DRing::Call::Details::CALL_TYPE,        std::to_string((unsigned)type_)},
-        {DRing::Call::Details::PEER_NUMBER,      peerNumber_},
-        {DRing::Call::Details::DISPLAY_NAME,     peerDisplayName_},
-        {DRing::Call::Details::CALL_STATE,       getStateStr()},
-        {DRing::Call::Details::CONF_ID,          confID_},
-        {DRing::Call::Details::TIMESTAMP_START,  std::to_string(timestamp_start_)},
-        {DRing::Call::Details::ACCOUNTID,        getAccountId()},
-        {DRing::Call::Details::AUDIO_MUTED,      std::string(bool_to_str(isAudioMuted_))},
-        {DRing::Call::Details::VIDEO_MUTED,      std::string(bool_to_str(isVideoMuted_))},
-        {DRing::Call::Details::AUDIO_ONLY,       std::string(bool_to_str(isAudioOnly_))},
+        {DRing::Call::Details::CALL_TYPE, std::to_string((unsigned) type_)},
+        {DRing::Call::Details::PEER_NUMBER, peerNumber_},
+        {DRing::Call::Details::DISPLAY_NAME, peerDisplayName_},
+        {DRing::Call::Details::CALL_STATE, getStateStr()},
+        {DRing::Call::Details::CONF_ID, confID_},
+        {DRing::Call::Details::TIMESTAMP_START, std::to_string(timestamp_start_)},
+        {DRing::Call::Details::ACCOUNTID, getAccountId()},
+        {DRing::Call::Details::AUDIO_MUTED, std::string(bool_to_str(isAudioMuted_))},
+        {DRing::Call::Details::VIDEO_MUTED, std::string(bool_to_str(isVideoMuted_))},
+        {DRing::Call::Details::AUDIO_ONLY, std::string(bool_to_str(isAudioOnly_))},
     };
 }
 
@@ -379,20 +398,20 @@ std::map<std::string, std::string>
 Call::getNullDetails()
 {
     return {
-        {DRing::Call::Details::CALL_TYPE,        "0"},
-        {DRing::Call::Details::PEER_NUMBER,      ""},
-        {DRing::Call::Details::DISPLAY_NAME,     ""},
-        {DRing::Call::Details::CALL_STATE,       "UNKNOWN"},
-        {DRing::Call::Details::CONF_ID,          ""},
-        {DRing::Call::Details::TIMESTAMP_START,  ""},
-        {DRing::Call::Details::ACCOUNTID,        ""},
-        {DRing::Call::Details::VIDEO_SOURCE,     "UNKNOWN"},
-        {DRing::Call::Details::AUDIO_ONLY,       ""},
+        {DRing::Call::Details::CALL_TYPE, "0"},
+        {DRing::Call::Details::PEER_NUMBER, ""},
+        {DRing::Call::Details::DISPLAY_NAME, ""},
+        {DRing::Call::Details::CALL_STATE, "UNKNOWN"},
+        {DRing::Call::Details::CONF_ID, ""},
+        {DRing::Call::Details::TIMESTAMP_START, ""},
+        {DRing::Call::Details::ACCOUNTID, ""},
+        {DRing::Call::Details::VIDEO_SOURCE, "UNKNOWN"},
+        {DRing::Call::Details::AUDIO_ONLY, ""},
     };
 }
 
 void
-Call::onTextMessage(std::map<std::string, std::string>&& messages)
+Call::onTextMessage(std::map<std::string, std::string> &&messages)
 {
     auto it = messages.find("application/confInfo+json");
     if (it != messages.end()) {
@@ -401,7 +420,7 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
     }
 
     {
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        std::lock_guard<std::recursive_mutex> lk{callMutex_};
         if (parent_) {
             pendingInMessages_.emplace_back(std::move(messages), "");
             return;
@@ -413,23 +432,21 @@ Call::onTextMessage(std::map<std::string, std::string>&& messages)
 void
 Call::peerHungup()
 {
-    const auto state = getState();
+    const auto state   = getState();
     const auto aborted = state == CallState::ACTIVE or state == CallState::HOLD;
-    setState(ConnectionState::DISCONNECTED,
-             aborted ? ECONNABORTED : ECONNREFUSED);
+    setState(ConnectionState::DISCONNECTED, aborted ? ECONNABORTED : ECONNREFUSED);
 }
 
 void
-Call::addSubCall(Call& subcall)
+Call::addSubCall(Call &subcall)
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard<std::recursive_mutex> lk{callMutex_};
 
     // Add subCall only if call is not connected or terminated
     // Because we only want to addSubCall if the peer didn't answer
     // So till it's <= RINGING
     if (connectionState_ == ConnectionState::CONNECTED
-        || connectionState_ == ConnectionState::DISCONNECTED
-        || callState_ == CallState::OVER) {
+        || connectionState_ == ConnectionState::DISCONNECTED || callState_ == CallState::OVER) {
         subcall.removeCall();
         return;
     }
@@ -442,15 +459,16 @@ Call::addSubCall(Call& subcall)
     JAMI_DBG("[call:%s] add subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
     subcall.parent_ = getPtr(*this);
 
-    for (const auto& msg : pendingOutMessages_)
+    for (const auto &msg : pendingOutMessages_)
         subcall.sendTextMessage(msg.first, msg.second);
 
     subcall.addStateListener(
-        [sub = subcall.weak(), parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
+        [sub    = subcall.weak(),
+         parent = weak()](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
             runOnMainThread([sub, parent, new_state, new_cstate, code]() {
                 if (auto p = parent.lock()) {
                     if (auto s = sub.lock()) {
-                      p->subcallStateChanged(*s, new_state, new_cstate);
+                        p->subcallStateChanged(*s, new_state, new_cstate);
                     }
                 }
             });
@@ -463,16 +481,14 @@ Call::addSubCall(Call& subcall)
 /// Parent call states are managed by these subcalls.
 /// \note this method may decrease the given \a subcall ref count.
 void
-Call::subcallStateChanged(Call& subcall,
-                          Call::CallState new_state,
-                          Call::ConnectionState new_cstate)
+Call::subcallStateChanged(Call &subcall, Call::CallState new_state, Call::ConnectionState new_cstate)
 {
     {
         // This condition happens when a subcall hangups/fails after removed from parent's list.
         // This is normal to keep parent_ != nullptr on the subcall, as it's the way to flag it
         // as an subcall and not a master call.
         // XXX: having a way to unsubscribe the state listener could be better than such test
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        std::lock_guard<std::recursive_mutex> lk{callMutex_};
         auto sit = subcalls_.find(getPtr(subcall));
         if (sit == subcalls_.end())
             return;
@@ -480,10 +496,11 @@ Call::subcallStateChanged(Call& subcall,
 
     // We found a responding device: hangup all other subcalls and merge
     if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::CONNECTED) {
-        JAMI_DBG("[call:%s] subcall %s answered by peer", getCallId().c_str(),
+        JAMI_DBG("[call:%s] subcall %s answered by peer",
+                 getCallId().c_str(),
                  subcall.getCallId().c_str());
 
-        hangupCallsIf(safePopSubcalls(), 0, [&](const Call* call){ return call != &subcall; });
+        hangupCallsIf(safePopSubcalls(), 0, [&](const Call *call) { return call != &subcall; });
         merge(subcall);
         Manager::instance().peerAnsweredCall(*this);
         return;
@@ -492,7 +509,8 @@ Call::subcallStateChanged(Call& subcall,
     // Hangup the call if any device hangup
     // XXX: not sure it's what we really want
     if (new_state == CallState::ACTIVE and new_cstate == ConnectionState::DISCONNECTED) {
-        JAMI_WARN("[call:%s] subcall %s hangup by peer", getCallId().c_str(),
+        JAMI_WARN("[call:%s] subcall %s hangup by peer",
+                  getCallId().c_str(),
                   subcall.getCallId().c_str());
 
         hangupCalls(safePopSubcalls(), 0);
@@ -506,20 +524,28 @@ Call::subcallStateChanged(Call& subcall,
         if (new_state == CallState::BUSY || new_state == CallState::PEER_BUSY)
             JAMI_WARN("[call:%s] subcall %s busy", getCallId().c_str(), subcall.getCallId().c_str());
         else
-            JAMI_WARN("[call:%s] subcall %s failed", getCallId().c_str(), subcall.getCallId().c_str());
-        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+            JAMI_WARN("[call:%s] subcall %s failed",
+                      getCallId().c_str(),
+                      subcall.getCallId().c_str());
+        std::lock_guard<std::recursive_mutex> lk{callMutex_};
         subcalls_.erase(getPtr(subcall));
 
         // Parent call fails if last subcall is busy or failed
         if (subcalls_.empty()) {
             if (new_state == CallState::BUSY) {
-                setState(CallState::BUSY, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::device_or_resource_busy));
+                setState(CallState::BUSY,
+                         ConnectionState::DISCONNECTED,
+                         static_cast<int>(std::errc::device_or_resource_busy));
             } else if (new_state == CallState::PEER_BUSY) {
-                setState(CallState::PEER_BUSY, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::device_or_resource_busy));
+                setState(CallState::PEER_BUSY,
+                         ConnectionState::DISCONNECTED,
+                         static_cast<int>(std::errc::device_or_resource_busy));
             } else {
                 // XXX: first idea was to use std::errc::host_unreachable, but it's not available on some platforms
                 // like mingw.
-                setState(CallState::MERROR, ConnectionState::DISCONNECTED, static_cast<int>(std::errc::io_error));
+                setState(CallState::MERROR,
+                         ConnectionState::DISCONNECTED,
+                         static_cast<int>(std::errc::io_error));
             }
             removeCall();
         } else {
@@ -542,7 +568,7 @@ Call::subcallStateChanged(Call& subcall,
 /// Replace current call data with ones from the given \a subcall.
 /// Must be called while locked by subclass
 void
-Call::merge(Call& subcall)
+Call::merge(Call &subcall)
 {
     JAMI_DBG("[call:%s] merge subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
 
@@ -566,20 +592,20 @@ Call::merge(Call& subcall)
 void
 Call::checkPendingIM()
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard<std::recursive_mutex> lk{callMutex_};
 
     auto state = getStateStr();
     // Let parent call handles IM after the merge
     if (not parent_) {
         if (state == DRing::Call::StateEvent::CURRENT) {
-            for (const auto& msg : pendingInMessages_)
+            for (const auto &msg : pendingInMessages_)
                 Manager::instance().incomingMessage(getCallId(), getPeerNumber(), msg.first);
             pendingInMessages_.clear();
 
             std::weak_ptr<Call> callWkPtr = shared_from_this();
-            runOnMainThread([callWkPtr, pending = std::move(pendingOutMessages_)]{
+            runOnMainThread([callWkPtr, pending = std::move(pendingOutMessages_)] {
                 if (auto call = callWkPtr.lock())
-                    for (const auto& msg : pending)
+                    for (const auto &msg : pending)
                         call->sendTextMessage(msg.first, msg.second);
             });
         }
@@ -605,7 +631,7 @@ Call::checkAudio()
 Call::SubcallSet
 Call::safePopSubcalls()
 {
-    std::lock_guard<std::recursive_mutex> lk {callMutex_};
+    std::lock_guard<std::recursive_mutex> lk{callMutex_};
     // std::exchange is C++14
     auto old_value = std::move(subcalls_);
     subcalls_.clear();
@@ -613,7 +639,7 @@ Call::safePopSubcalls()
 }
 
 void
-Call::setConferenceInfo(const std::string& msg)
+Call::setConferenceInfo(const std::string &msg)
 {
     ConfInfo newInfo;
     Json::Value json;
@@ -621,9 +647,10 @@ Call::setConferenceInfo(const std::string& msg)
     Json::CharReaderBuilder rbuilder;
     auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
     if (reader->parse(msg.data(), msg.data() + msg.size(), &json, &err)) {
-        for (const auto& participantInfo: json) {
+        for (const auto &participantInfo : json) {
             ParticipantInfo pInfo;
-            if (!participantInfo.isMember("uri")) continue;
+            if (!participantInfo.isMember("uri"))
+                continue;
             pInfo.fromJson(participantInfo);
             newInfo.emplace_back(pInfo);
         }
@@ -633,7 +660,7 @@ Call::setConferenceInfo(const std::string& msg)
     {
         std::lock_guard<std::mutex> lk(confInfoMutex_);
         confInfo_ = std::move(newInfo);
-        toSend = confInfo_.toVectorMapStringString();
+        toSend    = confInfo_.toVectorMapStringString();
     }
 
     // Inform client that layout has changed

@@ -23,22 +23,20 @@
 #endif
 
 #include "audio/tonecontrol.h"
-#include "sound/tonelist.h"
 #include "client/ring_signal.h"
 #include "dring/callmanager_interface.h" // for CallSignal
+#include "sound/tonelist.h"
 
 namespace jami {
 
 static constexpr unsigned DEFAULT_SAMPLE_RATE = 8000;
 
-ToneControl::ToneControl(const Preferences& preferences)
-    : prefs_ (preferences)
-    , sampleRate_ (DEFAULT_SAMPLE_RATE)
-{
-}
-
-ToneControl::~ToneControl()
+ToneControl::ToneControl(const Preferences &preferences)
+    : prefs_(preferences)
+    , sampleRate_(DEFAULT_SAMPLE_RATE)
 {}
+
+ToneControl::~ToneControl() {}
 
 void
 ToneControl::setSampleRate(unsigned rate)
@@ -68,7 +66,7 @@ ToneControl::getTelephoneFile(void)
 }
 
 bool
-ToneControl::setAudioFile(const std::string& file)
+ToneControl::setAudioFile(const std::string &file)
 {
     std::lock_guard<std::mutex> lk(mutex_);
 
@@ -79,7 +77,7 @@ ToneControl::setAudioFile(const std::string& file)
 
     try {
         audioFile_.reset(new AudioFile(file, sampleRate_));
-    } catch (const AudioFileException& e) {
+    } catch (const AudioFileException &e) {
         JAMI_WARN("Audio file error: %s", e.what());
     }
 

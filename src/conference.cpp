@@ -21,14 +21,14 @@
 
 #include <sstream>
 
-#include "conference.h"
-#include "manager.h"
 #include "audio/audiolayer.h"
 #include "audio/ringbufferpool.h"
+#include "conference.h"
+#include "manager.h"
 
 #ifdef ENABLE_VIDEO
-#include "sip/sipcall.h"
 #include "client/videomanager.h"
+#include "sip/sipcall.h"
 #include "video/video_input.h"
 #include "video/video_mixer.h"
 #endif
@@ -46,16 +46,16 @@ Conference::Conference()
 #endif
 {
 #ifdef ENABLE_VIDEO
-    getVideoMixer()->setOnSourcesUpdated([this](const std::vector<video::SourceInfo>&& infos) {
-        runOnMainThread([w=weak(), infos=std::move(infos)]{
+    getVideoMixer()->setOnSourcesUpdated([this](const std::vector<video::SourceInfo> &&infos) {
+        runOnMainThread([w = weak(), infos = std::move(infos)] {
             auto shared = w.lock();
             if (!shared)
                 return;
             ConfInfo newInfo;
             std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
-            for (const auto& info: infos) {
+            for (const auto &info : infos) {
                 std::string uri = "local";
-                auto it = shared->videoToCall_.find(info.source);
+                auto it         = shared->videoToCall_.find(info.source);
                 if (it == shared->videoToCall_.end())
                     it = shared->videoToCall_.emplace_hint(it, info.source, std::string());
                 // If not local
@@ -69,9 +69,8 @@ Conference::Conference()
                         uri = call->getPeerNumber();
                     }
                 }
-                newInfo.emplace_back(ParticipantInfo {
-                    std::move(uri), info.x, info.y, info.w, info.h
-                });
+                newInfo.emplace_back(
+                    ParticipantInfo{std::move(uri), info.x, info.y, info.w, info.h});
             }
             lk.unlock();
 
@@ -124,7 +123,8 @@ Conference::add(const std::string &participant_id)
 void
 Conference::setActiveParticipant(const std::string &participant_id)
 {
-    if (!videoMixer_) return;
+    if (!videoMixer_)
+        return;
     for (const auto &item : participants_) {
         if (participant_id == item) {
             if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
@@ -157,7 +157,7 @@ Conference::sendConferenceInfos()
     std::vector<std::map<std::string, std::string>> toSend;
     {
         std::lock_guard<std::mutex> lk2(confInfoMutex_);
-        for (const auto& info: confInfo_) {
+        for (const auto &info : confInfo_) {
             jsonArray.append(info.toJson());
         }
         toSend = confInfo_.toVectorMapStringString();
@@ -168,9 +168,9 @@ Conference::sendConferenceInfos()
     // Inform calls that the layout has changed
     for (const auto &participant_id : participants_) {
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
-            call->sendTextMessage(
-                    std::map<std::string, std::string> {{"application/confInfo+json", confInfo}},
-                    call->getAccount().getFromUri());
+            call->sendTextMessage(std::map<std::string, std::string>{{"application/confInfo+json",
+                                                                      confInfo}},
+                                  call->getAccount().getFromUri());
         }
     }
 
@@ -179,7 +179,7 @@ Conference::sendConferenceInfos()
 }
 
 void
-Conference::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const std::string& callId)
+Conference::attachVideo(Observable<std::shared_ptr<MediaFrame>> *frame, const std::string &callId)
 {
     std::lock_guard<std::mutex> lk(videoToCallMtx_);
     videoToCall_.emplace(frame, callId);
@@ -187,7 +187,7 @@ Conference::attachVideo(Observable<std::shared_ptr<MediaFrame>>* frame, const st
 }
 
 void
-Conference::detachVideo(Observable<std::shared_ptr<MediaFrame>>* frame)
+Conference::detachVideo(Observable<std::shared_ptr<MediaFrame>> *frame)
 {
     std::lock_guard<std::mutex> lk(videoToCallMtx_);
     auto it = videoToCall_.find(frame);
@@ -212,8 +212,8 @@ void
 Conference::attach()
 {
     if (getState() == State::ACTIVE_DETACHED) {
-        auto& rbPool = Manager::instance().getRingBufferPool();
-        for (const auto& participant : getParticipantList()) {
+        auto &rbPool = Manager::instance().getRingBufferPool();
+        for (const auto &participant : getParticipantList()) {
             rbPool.bindCallID(participant, RingBufferPool::DEFAULT_ID);
             // Reset ringbuffer's readpointers
             rbPool.flush(participant);
@@ -262,7 +262,7 @@ Conference::bindParticipant(const std::string &participant_id)
     rbPool.flush(RingBufferPool::DEFAULT_ID);
 }
 
-const ParticipantSet&
+const ParticipantSet &
 Conference::getParticipantList() const
 {
     return participants_;
@@ -275,26 +275,28 @@ Conference::getDisplayNames() const
     result.reserve(participants_.size());
 
     for (const auto &p : participants_) {
-        auto details = Manager::instance().getCallDetails(p);
+        auto details   = Manager::instance().getCallDetails(p);
         const auto tmp = details["DISPLAY_NAME"];
         result.emplace_back(tmp.empty() ? details["PEER_NUMBER"] : tmp);
     }
     return result;
 }
 
-bool Conference::toggleRecording()
+bool
+Conference::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
     return startRecording;
 }
 
-const std::string&
-Conference::getConfID() const {
+const std::string &
+Conference::getConfID() const
+{
     return id_;
 }
 
 void
-Conference::switchInput(const std::string& input)
+Conference::switchInput(const std::string &input)
 {
 #ifdef ENABLE_VIDEO
     mediaInput_ = input;
@@ -303,7 +305,8 @@ Conference::switchInput(const std::string& input)
 }
 
 #ifdef ENABLE_VIDEO
-std::shared_ptr<video::VideoMixer> Conference::getVideoMixer()
+std::shared_ptr<video::VideoMixer>
+Conference::getVideoMixer()
 {
     if (!videoMixer_)
         videoMixer_.reset(new video::VideoMixer(id_));

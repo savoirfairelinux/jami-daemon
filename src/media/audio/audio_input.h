@@ -26,15 +26,15 @@
 #include <mutex>
 
 #include "audio/audiobuffer.h"
-#include "media_device.h"
 #include "media_buffer.h"
+#include "media_device.h"
 #include "observer.h"
 #include "threadloop.h"
 
 namespace jami {
 class MediaDecoder;
 class MediaDemuxer;
-}
+} // namespace jami
 namespace jami {
 
 class AudioFrameResizer;
@@ -47,18 +47,20 @@ class RingBuffer;
 class AudioInput : public Observable<std::shared_ptr<MediaFrame>>
 {
 public:
-    AudioInput(const std::string& id);
+    AudioInput(const std::string &id);
     ~AudioInput();
 
-    std::shared_future<DeviceParams> switchInput(const std::string& resource);
+    std::shared_future<DeviceParams> switchInput(const std::string &resource);
 
     bool isCapturing() const { return loop_.isRunning(); }
-    void setFormat(const AudioFormat& fmt);
+    void setFormat(const AudioFormat &fmt);
     void setMuted(bool isMuted);
     MediaStream getInfo() const;
     void updateStartTime(int64_t start);
     void setPaused(bool paused);
-    void configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    void configureFilePlayback(const std::string &path,
+                               std::shared_ptr<MediaDemuxer> &demuxer,
+                               int index);
     void flushBuffers();
     void setSeekTime(int64_t time);
 
@@ -66,19 +68,19 @@ private:
     void readFromDevice();
     void readFromFile();
     void readFromQueue();
-    bool initDevice(const std::string& device);
-    bool initFile(const std::string& path);
+    bool initDevice(const std::string &device);
+    bool initFile(const std::string &path);
     bool createDecoder();
-    void frameResized(std::shared_ptr<AudioFrame>&& ptr);
+    void frameResized(std::shared_ptr<AudioFrame> &&ptr);
 
     std::string id_;
     AudioBuffer micData_;
-    bool muteState_ = false;
+    bool muteState_       = false;
     uint64_t sent_samples = 0;
-    mutable std::mutex fmtMutex_ {};
+    mutable std::mutex fmtMutex_{};
     AudioFormat format_;
     int frameSize_;
-    std::atomic_bool paused_ {true};
+    std::atomic_bool paused_{true};
 
     std::unique_ptr<Resampler> resampler_;
     std::unique_ptr<AudioFrameResizer> resizer_;
@@ -88,14 +90,14 @@ private:
     std::shared_ptr<RingBuffer> fileBuf_;
 
     std::string currentResource_;
-    std::atomic_bool switchPending_ {false};
+    std::atomic_bool switchPending_{false};
     DeviceParams devOpts_;
     std::promise<DeviceParams> foundDevOpts_;
     std::shared_future<DeviceParams> futureDevOpts_;
-    std::atomic_bool devOptsFound_ {false};
-    void foundDevOpts(const DeviceParams& params);
-    std::atomic_bool decodingFile_ {false};
-    std::atomic_bool playingFile_ {false};
+    std::atomic_bool devOptsFound_{false};
+    void foundDevOpts(const DeviceParams &params);
+    std::atomic_bool decodingFile_{false};
+    std::atomic_bool playingFile_{false};
 
     ThreadLoop loop_;
     void process();
