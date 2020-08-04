@@ -1,4 +1,4 @@
-ifdef HAVE_MACOSX
+ifdef __APPLE__
 FFMPEG_HASH := n4.2.2
 else
 FFMPEG_HASH := n4.3
