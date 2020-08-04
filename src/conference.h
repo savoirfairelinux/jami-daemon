@@ -44,6 +44,7 @@ class VideoMixer;
 struct ParticipantInfo
 {
     std::string uri;
+    bool active {false};
     int x {0};
     int y {0};
     int w {0};
@@ -52,6 +53,7 @@ struct ParticipantInfo
     void fromJson(const Json::Value& v)
     {
         uri = v["uri"].asString();
+        active = v["active"].asBool();
         x = v["x"].asInt();
         y = v["y"].asInt();
         w = v["w"].asInt();
@@ -62,6 +64,7 @@ struct ParticipantInfo
     {
         Json::Value val;
         val["uri"] = uri;
+        val["active"] = active;
         val["x"] = x;
         val["y"] = y;
         val["w"] = w;
@@ -72,6 +75,7 @@ struct ParticipantInfo
     std::map<std::string, std::string> toMap() const
     {
         return {{"uri", uri},
+                {"active", active ? "true" : "false"},
                 {"x", std::to_string(x)},
                 {"y", std::to_string(y)},
                 {"w", std::to_string(w)},

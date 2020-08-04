@@ -54,7 +54,7 @@ Conference::Conference()
             ConfInfo newInfo;
             std::unique_lock<std::mutex> lk(shared->videoToCallMtx_);
             for (const auto& info : infos) {
-                std::string uri = "local";
+                std::string uri = "";
                 auto it = shared->videoToCall_.find(info.source);
                 if (it == shared->videoToCall_.end())
                     it = shared->videoToCall_.emplace_hint(it, info.source, std::string());
@@ -69,8 +69,14 @@ Conference::Conference()
                         uri = call->getPeerNumber();
                     }
                 }
+                auto active = false;
+                if (auto videoMixer = shared->getVideoMixer())
+                    active = info.source == videoMixer->getActiveParticipant()
+                             or (uri.empty()
+                                 and not videoMixer->getActiveParticipant()); // by default, local
+                                                                              // is shown as active
                 newInfo.emplace_back(
-                    ParticipantInfo {std::move(uri), info.x, info.y, info.w, info.h});
+                    ParticipantInfo {std::move(uri), active, info.x, info.y, info.w, info.h});
             }
             lk.unlock();
 
@@ -89,8 +95,13 @@ Conference::~Conference()
 {
 #ifdef ENABLE_VIDEO
     for (const auto& participant_id : participants_) {
-        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
+        if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id)) {
             call->getVideoRtp().exitConference();
+            // Reset distant callInfo
+            call->sendTextMessage(std::map<std::string, std::string> {{"application/confInfo+json",
+                                                                       "[]"}},
+                                  call->getAccount().getFromUri());
+        }
     }
 #endif // ENABLE_VIDEO
 }
