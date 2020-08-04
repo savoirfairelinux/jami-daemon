@@ -75,6 +75,10 @@ public:
 
     void setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob);
 
+    Observable<std::shared_ptr<MediaFrame>>* getActiveParticipant() {
+        return activeSource_;
+    }
+
     void setVideoLayout(Layout newLayout) {
         currentLayout_ = newLayout;
         layoutUpdated_ += 1;
