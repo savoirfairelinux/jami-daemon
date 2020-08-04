@@ -26,18 +26,19 @@
 #include "media_io_handle.h"
 #include "system_codec_container.h"
 
+#include "logger.h"
 #include <chrono>
 #include <cstdio>
 #include <fstream>
 #include <ios>
 #include <ratio>
-#include "logger.h"
 
 #warning Debug utilities included in build
 
 using Clock = std::chrono::steady_clock;
 
-namespace jami { namespace debug {
+namespace jami {
+namespace debug {
 
 /**
  * Ex:
@@ -67,37 +68,40 @@ private:
 class WavWriter
 {
 public:
-    WavWriter(std::string filename, AVFrame* frame)
+    WavWriter(std::string filename, AVFrame *frame)
         : format_(static_cast<AVSampleFormat>(frame->format))
         , channels_(frame->channels)
         , planar_(av_sample_fmt_is_planar(format_))
         , depth_(av_get_bytes_per_sample(format_))
         , stepPerSample_(planar_ ? depth_ : depth_ * channels_)
     {
-        std::vector<AVSampleFormat> v{AV_SAMPLE_FMT_FLT, AV_SAMPLE_FMT_FLTP, AV_SAMPLE_FMT_DBL, AV_SAMPLE_FMT_DBLP};
+        std::vector<AVSampleFormat> v{AV_SAMPLE_FMT_FLT,
+                                      AV_SAMPLE_FMT_FLTP,
+                                      AV_SAMPLE_FMT_DBL,
+                                      AV_SAMPLE_FMT_DBLP};
         f_ = std::ofstream(filename, std::ios_base::out | std::ios_base::binary);
         f_.imbue(std::locale::classic());
         f_ << "RIFF----WAVEfmt ";
         if (std::find(v.begin(), v.end(), format_) == v.end()) {
             write(16, 4); // Chunk size
-            write(1, 2); // WAVE_FORMAT_PCM
+            write(1, 2);  // WAVE_FORMAT_PCM
             write(frame->channels, 2);
             write(frame->sample_rate, 4);
             write(frame->sample_rate * depth_ * frame->channels, 4); // Bytes per second
-            write(depth_ * frame->channels, 2); // Multi-channel sample size
-            write(8 * depth_, 2); // Bits per sample
+            write(depth_ * frame->channels, 2);                      // Multi-channel sample size
+            write(8 * depth_, 2);                                    // Bits per sample
             f_ << "data";
             dataChunk_ = f_.tellp();
             f_ << "----";
         } else {
             write(18, 4); // Chunk size
-            write(3, 2); // Non PCM data
+            write(3, 2);  // Non PCM data
             write(frame->channels, 2);
             write(frame->sample_rate, 4);
             write(frame->sample_rate * depth_ * frame->channels, 4); // Bytes per second
-            write(depth_ * frame->channels, 2); // Multi-channel sample size
-            write(8 * depth_, 2); // Bits per sample
-            write(0, 2); // Extension size
+            write(depth_ * frame->channels, 2);                      // Multi-channel sample size
+            write(8 * depth_, 2);                                    // Bits per sample
+            write(0, 2);                                             // Extension size
             f_ << "fact";
             write(4, 4); // Chunk size
             factChunk_ = f_.tellp();
@@ -139,27 +143,27 @@ public:
                 switch (format_) {
                 case AV_SAMPLE_FMT_U8:
                 case AV_SAMPLE_FMT_U8P:
-                    write<uint8_t>(*(uint8_t*)p);
+                    write<uint8_t>(*(uint8_t *) p);
                     break;
                 case AV_SAMPLE_FMT_S16:
                 case AV_SAMPLE_FMT_S16P:
-                    write<int16_t>(*(int16_t*)p);
+                    write<int16_t>(*(int16_t *) p);
                     break;
                 case AV_SAMPLE_FMT_S32:
                 case AV_SAMPLE_FMT_S32P:
-                    write<int32_t>(*(int32_t*)p);
+                    write<int32_t>(*(int32_t *) p);
                     break;
                 case AV_SAMPLE_FMT_S64:
                 case AV_SAMPLE_FMT_S64P:
-                    write<int64_t>(*(int64_t*)p);
+                    write<int64_t>(*(int64_t *) p);
                     break;
                 case AV_SAMPLE_FMT_FLT:
                 case AV_SAMPLE_FMT_FLTP:
-                    write<float>(*(float*)p);
+                    write<float>(*(float *) p);
                     break;
                 case AV_SAMPLE_FMT_DBL:
                 case AV_SAMPLE_FMT_DBLP:
-                    write<double>(*(double*)p);
+                    write<double>(*(double *) p);
                     break;
                 default:
                     break;
@@ -171,22 +175,23 @@ public:
 
 private:
     std::ofstream f_;
-    size_t dataChunk_ {0};
-    size_t factChunk_ {0};
-    size_t length_ {0};
-    AVSampleFormat format_ {AV_SAMPLE_FMT_NONE};
-    size_t channels_ {0};
-    bool planar_ {false};
-    int depth_ {0};
-    int stepPerSample_ {0};
+    size_t dataChunk_{0};
+    size_t factChunk_{0};
+    size_t length_{0};
+    AVSampleFormat format_{AV_SAMPLE_FMT_NONE};
+    size_t channels_{0};
+    bool planar_{false};
+    int depth_{0};
+    int stepPerSample_{0};
 };
 
 /**
  * Minimally invasive video writer. Writes raw frames. Helps debug what goes wrong with video.
  */
-class VideoWriter {
+class VideoWriter
+{
 public:
-    VideoWriter(const std::string& filename, AVPixelFormat format, int width, int height)
+    VideoWriter(const std::string &filename, AVPixelFormat format, int width, int height)
         : filename_(filename)
         , format_(format)
         , width_(width)
@@ -196,7 +201,7 @@ public:
     }
 
     // so an int (VideoFrame.format()) can be passed without casting
-    VideoWriter(const std::string& filename, int format, int width, int height)
+    VideoWriter(const std::string &filename, int format, int width, int height)
         : VideoWriter(filename, static_cast<AVPixelFormat>(format), width, height)
     {}
 
@@ -204,27 +209,35 @@ public:
     {
         fclose(f_);
         JAMI_DBG("Play video file with: ffplay -f rawvideo -pixel_format %s -video_size %dx%d %s",
-            av_get_pix_fmt_name(format_), width_, height_, filename_.c_str());
+                 av_get_pix_fmt_name(format_),
+                 width_,
+                 height_,
+                 filename_.c_str());
     }
 
-    void write(VideoFrame& frame)
+    void write(VideoFrame &frame)
     {
-        int ret = 0;
-        uint8_t* buffer = nullptr;
-        auto f = frame.pointer();
+        int ret         = 0;
+        uint8_t *buffer = nullptr;
+        auto f          = frame.pointer();
 
         if (format_ != f->format || width_ != f->width || height_ != f->height)
             return;
 
         int size = av_image_get_buffer_size(format_, width_, height_, 1);
-        buffer = reinterpret_cast<uint8_t*>(av_malloc(size));
+        buffer   = reinterpret_cast<uint8_t *>(av_malloc(size));
         if (!buffer) {
             return;
         }
-        if ((ret = av_image_copy_to_buffer(buffer, size,
-            reinterpret_cast<const uint8_t* const*>(f->data),
-            reinterpret_cast<const int*>(f->linesize),
-            format_, width_, height_, 1)) < 0) {
+        if ((ret = av_image_copy_to_buffer(buffer,
+                                           size,
+                                           reinterpret_cast<const uint8_t *const *>(f->data),
+                                           reinterpret_cast<const int *>(f->linesize),
+                                           format_,
+                                           width_,
+                                           height_,
+                                           1))
+            < 0) {
             av_freep(&buffer);
             return;
         }
@@ -234,10 +247,11 @@ public:
     }
 
 private:
-    FILE* f_;
+    FILE *f_;
     std::string filename_;
     AVPixelFormat format_;
     int width_, height_;
 };
 
-}} // namespace jami::debug
+} // namespace debug
+} // namespace jami

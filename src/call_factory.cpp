@@ -31,20 +31,20 @@ CallFactory::forbid()
 }
 
 void
-CallFactory::removeCall(Call& call)
+CallFactory::removeCall(Call &call)
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
-    const auto& id = call.getCallId();
+    const auto &id = call.getCallId();
     JAMI_DBG("Removing call %s", id.c_str());
-    const auto& linkType = call.getLinkType();
-    auto& map = callMaps_.at(linkType);
+    const auto &linkType = call.getLinkType();
+    auto &map            = callMaps_.at(linkType);
     map.erase(id);
     JAMI_DBG("Remaining %zu %s call(s)", map.size(), linkType);
 }
 
 void
-CallFactory::removeCall(const std::string& id)
+CallFactory::removeCall(const std::string &id)
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
@@ -57,13 +57,14 @@ CallFactory::removeCall(const std::string& id)
 //==============================================================================
 // Template specializations (when T = Call)
 
-template <> bool
-CallFactory::hasCall<Call>(const std::string& id) const
+template<>
+bool
+CallFactory::hasCall<Call>(const std::string &id) const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
-    for (const auto& item : callMaps_) {
-        const auto& map = item.second;
+    for (const auto &item : callMaps_) {
+        const auto &map = item.second;
         if (map.find(id) != map.cend())
             return true;
     }
@@ -71,20 +72,22 @@ CallFactory::hasCall<Call>(const std::string& id) const
     return false;
 }
 
-template <> void
+template<>
+void
 CallFactory::clear<Call>()
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
     callMaps_.clear();
 }
 
-template <> bool
+template<>
+bool
 CallFactory::empty<Call>() const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
-    for (const auto& item : callMaps_) {
-        const auto& map = item.second;
+    for (const auto &item : callMaps_) {
+        const auto &map = item.second;
         if (!map.empty())
             return false;
     }
@@ -92,14 +95,15 @@ CallFactory::empty<Call>() const
     return true;
 }
 
-template <> std::shared_ptr<Call>
-CallFactory::getCall<Call>(const std::string& id) const
+template<>
+std::shared_ptr<Call>
+CallFactory::getCall<Call>(const std::string &id) const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
-    for (const auto& item : callMaps_) {
-        const auto& map = item.second;
-        const auto& iter = map.find(id);
+    for (const auto &item : callMaps_) {
+        const auto &map  = item.second;
+        const auto &iter = map.find(id);
         if (iter != map.cend())
             return iter->second;
     }
@@ -107,29 +111,32 @@ CallFactory::getCall<Call>(const std::string& id) const
     return nullptr;
 }
 
-template <> std::vector<std::shared_ptr<Call> >
+template<>
+std::vector<std::shared_ptr<Call>>
 CallFactory::getAllCalls<Call>() const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-    std::vector<std::shared_ptr<Call> > v;
+    std::vector<std::shared_ptr<Call>> v;
 
-    for (const auto& itemmap : callMaps_) {
-        const auto& map = itemmap.second;
+    for (const auto &itemmap : callMaps_) {
+        const auto &map = itemmap.second;
         v.reserve(v.size() + map.size());
-        for (const auto& item : map)
+        for (const auto &item : map)
             v.push_back(item.second);
     }
 
     return v;
 }
 
-template <> std::vector<std::string>
-CallFactory::getCallIDs<Call>() const {
+template<>
+std::vector<std::string>
+CallFactory::getCallIDs<Call>() const
+{
     std::vector<std::string> v;
 
-    for (const auto& item : callMaps_) {
-        const auto& map = item.second;
-        for (const auto& it : map)
+    for (const auto &item : callMaps_) {
+        const auto &map = item.second;
+        for (const auto &it : map)
             v.push_back(it.first);
     }
 
@@ -137,13 +144,14 @@ CallFactory::getCallIDs<Call>() const {
     return v;
 }
 
-template <> std::size_t
+template<>
+std::size_t
 CallFactory::callCount<Call>()
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
     std::size_t count = 0;
 
-    for (const auto& itemmap : callMaps_)
+    for (const auto &itemmap : callMaps_)
         count += itemmap.second.size();
 
     return count;

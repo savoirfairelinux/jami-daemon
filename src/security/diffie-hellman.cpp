@@ -24,30 +24,34 @@
 #include <chrono>
 #include <ciso646>
 
-namespace jami { namespace tls {
+namespace jami {
+namespace tls {
 
-DhParams::DhParams(const std::vector<uint8_t>& data)
+DhParams::DhParams(const std::vector<uint8_t> &data)
 {
     gnutls_dh_params_t new_params_;
     int ret = gnutls_dh_params_init(&new_params_);
     if (ret)
-        throw std::runtime_error(std::string("Error initializing DH params: ") + gnutls_strerror(ret));
+        throw std::runtime_error(std::string("Error initializing DH params: ")
+                                 + gnutls_strerror(ret));
     params_.reset(new_params_);
-    const gnutls_datum_t dat {(uint8_t*)data.data(), (unsigned)data.size()};
+    const gnutls_datum_t dat{(uint8_t *) data.data(), (unsigned) data.size()};
     if (int ret_pem = gnutls_dh_params_import_pkcs3(params_.get(), &dat, GNUTLS_X509_FMT_PEM))
         if (int ret_der = gnutls_dh_params_import_pkcs3(params_.get(), &dat, GNUTLS_X509_FMT_DER))
-            throw std::runtime_error(std::string("Error importing DH params: ") + gnutls_strerror(ret_pem) + " " + gnutls_strerror(ret_der));
+            throw std::runtime_error(std::string("Error importing DH params: ")
+                                     + gnutls_strerror(ret_pem) + " " + gnutls_strerror(ret_der));
 }
 
-DhParams&
-DhParams::operator=(const DhParams& other)
+DhParams &
+DhParams::operator=(const DhParams &other)
 {
     if (not params_) {
         // We need a valid DH params pointer for the copy
         gnutls_dh_params_t new_params_;
         auto err = gnutls_dh_params_init(&new_params_);
         if (err != GNUTLS_E_SUCCESS)
-            throw std::runtime_error(std::string("Error initializing DH params: ") + gnutls_strerror(err));
+            throw std::runtime_error(std::string("Error initializing DH params: ")
+                                     + gnutls_strerror(err));
         params_.reset(new_params_);
     }
 
@@ -68,7 +72,7 @@ DhParams::serialize() const
     gnutls_datum_t out;
     if (gnutls_dh_params_export2_pkcs3(params_.get(), GNUTLS_X509_FMT_PEM, &out))
         return {};
-    std::vector<uint8_t> ret {out.data, out.data+out.size};
+    std::vector<uint8_t> ret{out.data, out.data + out.size};
     gnutls_free(out.data);
     return ret;
 }
@@ -78,7 +82,8 @@ DhParams::generate()
 {
     using clock = std::chrono::high_resolution_clock;
 
-    auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, /* GNUTLS_SEC_PARAM_HIGH */ GNUTLS_SEC_PARAM_HIGH);
+    auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH,
+                                            /* GNUTLS_SEC_PARAM_HIGH */ GNUTLS_SEC_PARAM_HIGH);
     JAMI_DBG("Generating DH params with %u bits", bits);
     auto start = clock::now();
 
@@ -88,7 +93,7 @@ DhParams::generate()
         JAMI_ERR("Error initializing DH params: %s", gnutls_strerror(ret));
         return {};
     }
-    DhParams params {new_params_};
+    DhParams params{new_params_};
 
     ret = gnutls_dh_params_generate2(params.get(), bits);
     if (ret != GNUTLS_E_SUCCESS) {
@@ -101,4 +106,5 @@ DhParams::generate()
     return params;
 }
 
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami

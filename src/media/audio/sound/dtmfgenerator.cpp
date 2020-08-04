@@ -21,9 +21,9 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include <cmath>
 #include <cassert>
 #include <ciso646> // fix windows compiler bug
+#include <cmath>
 
 #include "dtmfgenerator.h"
 
@@ -32,30 +32,30 @@ namespace jami {
 /*
  * Tone frequencies
  */
-const DTMFGenerator::DTMFTone DTMFGenerator::tones_[] = {
-    {'0', 941, 1336},
-    {'1', 697, 1209},
-    {'2', 697, 1336},
-    {'3', 697, 1477},
-    {'4', 770, 1209},
-    {'5', 770, 1336},
-    {'6', 770, 1477},
-    {'7', 852, 1209},
-    {'8', 852, 1336},
-    {'9', 852, 1477},
-    {'A', 697, 1633},
-    {'B', 770, 1633},
-    {'C', 852, 1633},
-    {'D', 941, 1633},
-    {'*', 941, 1209},
-    {'#', 941, 1477}
-};
-
+const DTMFGenerator::DTMFTone DTMFGenerator::tones_[] = {{'0', 941, 1336},
+                                                         {'1', 697, 1209},
+                                                         {'2', 697, 1336},
+                                                         {'3', 697, 1477},
+                                                         {'4', 770, 1209},
+                                                         {'5', 770, 1336},
+                                                         {'6', 770, 1477},
+                                                         {'7', 852, 1209},
+                                                         {'8', 852, 1336},
+                                                         {'9', 852, 1477},
+                                                         {'A', 697, 1633},
+                                                         {'B', 770, 1633},
+                                                         {'C', 852, 1633},
+                                                         {'D', 941, 1633},
+                                                         {'*', 941, 1209},
+                                                         {'#', 941, 1477}};
 
 /*
  * Initialize the generator
  */
-DTMFGenerator::DTMFGenerator(unsigned int sampleRate) : state(), sampleRate_(sampleRate), tone_("", sampleRate)
+DTMFGenerator::DTMFGenerator(unsigned int sampleRate)
+    : state()
+    , sampleRate_(sampleRate)
+    , tone_("", sampleRate)
 {
     state.offset = 0;
     state.sample = 0;
@@ -64,11 +64,10 @@ DTMFGenerator::DTMFGenerator(unsigned int sampleRate) : state(), sampleRate_(sam
         toneBuffers_[i] = fillToneBuffer(i);
 }
 
-
 DTMFGenerator::~DTMFGenerator()
 {
     for (int i = 0; i < NUM_TONES; i++)
-        delete [] toneBuffers_[i];
+        delete[] toneBuffers_[i];
 }
 
 using std::vector;
@@ -76,7 +75,8 @@ using std::vector;
 /*
  * Get n samples of the signal of code code
  */
-void DTMFGenerator::getSamples(vector<AudioSample> &buffer, unsigned char code)
+void
+DTMFGenerator::getSamples(vector<AudioSample> &buffer, unsigned char code)
 {
     code = toupper(code);
 
@@ -86,17 +86,17 @@ void DTMFGenerator::getSamples(vector<AudioSample> &buffer, unsigned char code)
         state.sample = toneBuffers_[code - 'A' + 10];
     else {
         switch (code) {
-            case '*':
-                state.sample = toneBuffers_[NUM_TONES - 2];
-                break;
+        case '*':
+            state.sample = toneBuffers_[NUM_TONES - 2];
+            break;
 
-            case '#':
-                state.sample = toneBuffers_[NUM_TONES - 1];
-                break;
+        case '#':
+            state.sample = toneBuffers_[NUM_TONES - 1];
+            break;
 
-            default:
-                throw DTMFException("Invalid code");
-                break;
+        default:
+            throw DTMFException("Invalid code");
+            break;
         }
     }
 
@@ -113,7 +113,8 @@ void DTMFGenerator::getSamples(vector<AudioSample> &buffer, unsigned char code)
  * Get next n samples (continues where previous call to
  * genSample or genNextSamples stopped
  */
-void DTMFGenerator::getNextSamples(vector<AudioSample> &buffer)
+void
+DTMFGenerator::getNextSamples(vector<AudioSample> &buffer)
 {
     if (state.sample == 0)
         throw DTMFException("DTMF generator not initialized");
@@ -127,10 +128,11 @@ void DTMFGenerator::getNextSamples(vector<AudioSample> &buffer)
     state.offset = (state.offset + i) % sampleRate_;
 }
 
-AudioSample* DTMFGenerator::fillToneBuffer(int index)
+AudioSample *
+DTMFGenerator::fillToneBuffer(int index)
 {
     assert(index >= 0 and index < NUM_TONES);
-    AudioSample* ptr = new AudioSample[sampleRate_];
+    AudioSample *ptr = new AudioSample[sampleRate_];
     tone_.genSin(ptr, tones_[index].higher, tones_[index].lower, sampleRate_);
     return ptr;
 }

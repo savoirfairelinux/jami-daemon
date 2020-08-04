@@ -20,34 +20,39 @@
 
 #pragma once
 
+#include "audio/audiobuffer.h"
 #include "libav_deps.h"
 #include "logger.h"
 #include "rational.h"
-#include "audio/audiobuffer.h"
 
 #include <string>
 
 namespace jami {
 
-struct MediaStream {
-    std::string name {};
-    int format {-1};
-    bool isVideo {false};
+struct MediaStream
+{
+    std::string name{};
+    int format{-1};
+    bool isVideo{false};
     rational<int> timeBase;
-    int64_t firstTimestamp {0};
-    int width {0};
-    int height {0};
+    int64_t firstTimestamp{0};
+    int width{0};
+    int height{0};
     int bitrate;
     rational<int> frameRate;
-    int sampleRate {0};
-    int nbChannels {0};
-    int frameSize {0};
+    int sampleRate{0};
+    int nbChannels{0};
+    int frameSize{0};
 
-    MediaStream()
-    {}
+    MediaStream() {}
 
-    MediaStream(const std::string& streamName, int fmt, rational<int> tb, int w, int h,
-                          int br, rational<int> fr)
+    MediaStream(const std::string &streamName,
+                int fmt,
+                rational<int> tb,
+                int w,
+                int h,
+                int br,
+                rational<int> fr)
         : name(streamName)
         , format(fmt)
         , isVideo(true)
@@ -58,7 +63,8 @@ struct MediaStream {
         , frameRate(fr)
     {}
 
-    MediaStream(const std::string& streamName, int fmt, rational<int> tb, int sr, int channels, int size)
+    MediaStream(
+        const std::string &streamName, int fmt, rational<int> tb, int sr, int channels, int size)
         : name(streamName)
         , format(fmt)
         , isVideo(false)
@@ -68,11 +74,11 @@ struct MediaStream {
         , frameSize(size)
     {}
 
-    MediaStream(const std::string& streamName, AudioFormat fmt)
+    MediaStream(const std::string &streamName, AudioFormat fmt)
         : MediaStream(streamName, fmt, 0)
     {}
 
-    MediaStream(const std::string& streamName, AudioFormat fmt, int64_t startTimestamp)
+    MediaStream(const std::string &streamName, AudioFormat fmt, int64_t startTimestamp)
         : name(streamName)
         , format(fmt.sampleFormat)
         , isVideo(false)
@@ -83,11 +89,11 @@ struct MediaStream {
         , frameSize(fmt.sample_rate / 50) // standard frame size for our encoder is 20 ms
     {}
 
-    MediaStream(const std::string& streamName, AVCodecContext* c)
+    MediaStream(const std::string &streamName, AVCodecContext *c)
         : MediaStream(streamName, c, 0)
     {}
 
-    MediaStream(const std::string& streamName, AVCodecContext* c, int64_t startTimestamp)
+    MediaStream(const std::string &streamName, AVCodecContext *c, int64_t startTimestamp)
         : name(streamName)
         , firstTimestamp(startTimestamp)
     {
@@ -95,19 +101,19 @@ struct MediaStream {
             timeBase = c->time_base;
             switch (c->codec_type) {
             case AVMEDIA_TYPE_VIDEO:
-                format = c->pix_fmt;
-                isVideo = true;
-                width = c->width;
-                height = c->height;
-                bitrate = c->bit_rate;
+                format    = c->pix_fmt;
+                isVideo   = true;
+                width     = c->width;
+                height    = c->height;
+                bitrate   = c->bit_rate;
                 frameRate = c->framerate;
                 break;
             case AVMEDIA_TYPE_AUDIO:
-                format = c->sample_fmt;
-                isVideo = false;
+                format     = c->sample_fmt;
+                isVideo    = false;
                 sampleRate = c->sample_rate;
                 nbChannels = c->channels;
-                frameSize = c->frame_size;
+                frameSize  = c->frame_size;
                 break;
             default:
                 break;
@@ -117,7 +123,7 @@ struct MediaStream {
         }
     }
 
-    MediaStream(const MediaStream& other) = default;
+    MediaStream(const MediaStream &other) = default;
 
     bool isValid() const
     {
@@ -129,39 +135,38 @@ struct MediaStream {
             return sampleRate > 0 && nbChannels > 0;
     }
 
-    void update(AVFrame* f)
+    void update(AVFrame *f)
     {
         // update all info possible (AVFrame has no fps or bitrate data)
         format = f->format;
         if (isVideo) {
-            width = f->width;
+            width  = f->width;
             height = f->height;
         } else {
             sampleRate = f->sample_rate;
             nbChannels = f->channels;
-            timeBase = rational<int>(1, f->sample_rate);
+            timeBase   = rational<int>(1, f->sample_rate);
             if (!frameSize)
                 frameSize = f->nb_samples;
         }
     }
 };
 
-inline std::ostream& operator<<(std::ostream& os, const MediaStream& ms)
+inline std::ostream &
+operator<<(std::ostream &os, const MediaStream &ms)
 {
     if (ms.isVideo) {
         auto formatName = av_get_pix_fmt_name(static_cast<AVPixelFormat>(ms.format));
         os << (ms.name.empty() ? "(null)" : ms.name) << ": "
-            << (formatName ? formatName : "(unknown format)") << " video, "
-            << ms.width << "x" << ms.height << ", "
-            << ms.frameRate << " fps (" << ms.timeBase << ")";
+           << (formatName ? formatName : "(unknown format)") << " video, " << ms.width << "x"
+           << ms.height << ", " << ms.frameRate << " fps (" << ms.timeBase << ")";
         if (ms.bitrate > 0)
             os << ", " << ms.bitrate << " kb/s";
     } else {
         os << (ms.name.empty() ? "(null)" : ms.name) << ": "
-            << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, "
-            << ms.nbChannels << " channel(s), "
-            << ms.sampleRate << " Hz (" << ms.timeBase << "), "
-            << ms.frameSize << " samples per frame";
+           << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, "
+           << ms.nbChannels << " channel(s), " << ms.sampleRate << " Hz (" << ms.timeBase << "), "
+           << ms.frameSize << " samples per frame";
     }
     if (ms.firstTimestamp > 0)
         os << ", start: " << ms.firstTimestamp;

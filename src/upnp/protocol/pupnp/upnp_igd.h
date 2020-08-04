@@ -25,55 +25,57 @@
 #include "config.h"
 #endif
 
-#include "../igd.h"
 #include "../global_mapping.h"
+#include "../igd.h"
 
-#include "noncopyable.h"
 #include "ip_utils.h"
+#include "noncopyable.h"
 #include "string_utils.h"
 
-#include <map>
-#include <string>
 #include <chrono>
 #include <functional>
+#include <map>
+#include <string>
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
 class UPnPIGD : public IGD
 {
 public:
-    UPnPIGD(std::string&& UDN,
-            std::string&& baseURL,
-            std::string&& friendlyName,
-            std::string&& serviceType,
-            std::string&& serviceId,
-            std::string&& locationURL,
-            std::string&& controlURL,
-            std::string&& eventSubURL,
-            IpAddr&& localIp = {},
-            IpAddr&& publicIp = {});
-    ~UPnPIGD(){}
-    const std::string& getUDN() const          { return UDN_;          }
-    const std::string& getBaseURL() const      { return baseURL_;      }
-    const std::string& getFriendlyName() const { return friendlyName_; }
-    const std::string& getServiceType() const  { return serviceType_;  }
-    const std::string& getServiceId() const    { return serviceId_;    }
-    const std::string& getLocationURL() const  { return locationURL_;  }
-    const std::string& getControlURL() const   { return controlURL_;   }
-    const std::string& getEventSubURL() const  { return eventSubURL_;  }
+    UPnPIGD(std::string &&UDN,
+            std::string &&baseURL,
+            std::string &&friendlyName,
+            std::string &&serviceType,
+            std::string &&serviceId,
+            std::string &&locationURL,
+            std::string &&controlURL,
+            std::string &&eventSubURL,
+            IpAddr &&localIp  = {},
+            IpAddr &&publicIp = {});
+    ~UPnPIGD() {}
+    const std::string &getUDN() const { return UDN_; }
+    const std::string &getBaseURL() const { return baseURL_; }
+    const std::string &getFriendlyName() const { return friendlyName_; }
+    const std::string &getServiceType() const { return serviceType_; }
+    const std::string &getServiceId() const { return serviceId_; }
+    const std::string &getLocationURL() const { return locationURL_; }
+    const std::string &getControlURL() const { return controlURL_; }
+    const std::string &getEventSubURL() const { return eventSubURL_; }
 
-    bool operator==(IGD& other) const;
-    bool operator==(UPnPIGD& other) const;
+    bool operator==(IGD &other) const;
+    bool operator==(UPnPIGD &other) const;
 
 private:
-    std::string UDN_ {};
-    std::string baseURL_ {};
-    std::string friendlyName_ {};
-    std::string serviceType_ {};
-    std::string serviceId_ {};
-    std::string locationURL_ {};
-    std::string controlURL_ {};
-    std::string eventSubURL_ {};
+    std::string UDN_{};
+    std::string baseURL_{};
+    std::string friendlyName_{};
+    std::string serviceType_{};
+    std::string serviceId_{};
+    std::string locationURL_{};
+    std::string controlURL_{};
+    std::string eventSubURL_{};
 };
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

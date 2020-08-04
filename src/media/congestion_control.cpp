@@ -18,28 +18,26 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "logger.h"
 #include "media/congestion_control.h"
+#include "logger.h"
 
+#include <cmath>
 #include <cstdint>
 #include <utility>
-#include <cmath>
 
 namespace jami {
-static constexpr uint8_t packetVersion = 2;
-static constexpr uint8_t packetFMT = 15;
-static constexpr uint8_t packetType = 206;
-static constexpr uint32_t uniqueIdentifier = 0x52454D42;  // 'R' 'E' 'M' 'B'.
+static constexpr uint8_t packetVersion     = 2;
+static constexpr uint8_t packetFMT         = 15;
+static constexpr uint8_t packetType        = 206;
+static constexpr uint32_t uniqueIdentifier = 0x52454D42; // 'R' 'E' 'M' 'B'.
 
-
-static constexpr float Q = 0.5f;
+static constexpr float Q    = 0.5f;
 static constexpr float beta = 0.95f;
 
 static constexpr float ku = 0.004f;
 static constexpr float kd = 0.002f;
 
 constexpr auto OVERUSE_THRESH = std::chrono::milliseconds(100);
-
 
 // Receiver Estimated Max Bitrate (REMB) (draft-alvestrand-rmcat-remb).
 //
@@ -60,11 +58,9 @@ constexpr auto OVERUSE_THRESH = std::chrono::milliseconds(100);
 //    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 //    :  ...                                                          :
 
-CongestionControl::CongestionControl()
-{}
+CongestionControl::CongestionControl() {}
 
-CongestionControl::~CongestionControl()
-{}
+CongestionControl::~CongestionControl() {}
 
 static void
 insert2Byte(std::vector<uint8_t> &v, uint16_t val)
@@ -82,16 +78,15 @@ insert4Byte(std::vector<uint8_t> &v, uint32_t val)
     v.insert(v.end(), val & 0xff);
 }
 
-
 uint64_t
 CongestionControl::parseREMB(const rtcpREMBHeader &packet)
 {
-    if(packet.fmt != 15 || packet.pt != 206) {
+    if (packet.fmt != 15 || packet.pt != 206) {
         JAMI_ERR("Unable to parse REMB packet.");
         return 0;
     }
     uint64_t bitrate_bps = (packet.br_mantis << packet.br_exp);
-    bool shift_overflow = (bitrate_bps >> packet.br_exp) != packet.br_mantis;
+    bool shift_overflow  = (bitrate_bps >> packet.br_exp) != packet.br_mantis;
     if (shift_overflow) {
         JAMI_ERR("Invalid remb bitrate value : %u*2^%u", packet.br_mantis, packet.br_exp);
         return false;
@@ -107,15 +102,15 @@ CongestionControl::createREMB(uint64_t bitrate_bps)
 
     remb.insert(remb.end(), packetVersion << 6 | packetFMT);
     remb.insert(remb.end(), packetType);
-    insert2Byte(remb, 5); // (sizeof(rtcpREMBHeader)/4)-1 -> not safe
-    insert4Byte(remb, 0x12345678);     //ssrc
-    insert4Byte(remb, 0x0);     //ssrc source
-    insert4Byte(remb, uniqueIdentifier);     //uid
-    remb.insert(remb.end(), 1);                     //n_ssrc
+    insert2Byte(remb, 5);                // (sizeof(rtcpREMBHeader)/4)-1 -> not safe
+    insert4Byte(remb, 0x12345678);       //ssrc
+    insert4Byte(remb, 0x0);              //ssrc source
+    insert4Byte(remb, uniqueIdentifier); //uid
+    remb.insert(remb.end(), 1);          //n_ssrc
 
-    const uint32_t maxMantissa = 0x3ffff;  // 18 bits.
-    uint64_t mantissa = bitrate_bps;
-    uint8_t exponenta = 0;
+    const uint32_t maxMantissa = 0x3ffff; // 18 bits.
+    uint64_t mantissa          = bitrate_bps;
+    uint8_t exponenta          = 0;
     while (mantissa > maxMantissa) {
         mantissa >>= 1;
         ++exponenta;
@@ -128,16 +123,15 @@ CongestionControl::createREMB(uint64_t bitrate_bps)
     return remb;
 }
 
-
 float
 CongestionControl::kalmanFilter(uint64_t gradiant_delay)
 {
-    float var_n = get_var_n(gradiant_delay);
-    float k = get_gain_k(Q, var_n);
-    float m = get_estimate_m(k, gradiant_delay);
-    last_var_p_ = get_sys_var_p(k, Q);
+    float var_n      = get_var_n(gradiant_delay);
+    float k          = get_gain_k(Q, var_n);
+    float m          = get_estimate_m(k, gradiant_delay);
+    last_var_p_      = get_sys_var_p(k, Q);
     last_estimate_m_ = m;
-    last_var_n_ = var_n;
+    last_var_n_      = var_n;
 
     return m;
 }
@@ -147,7 +141,7 @@ CongestionControl::get_estimate_m(float k, int d_m)
 {
     // JAMI_WARN("[get_estimate_m]k:%f, last_estimate_m_:%f, d_m:%f", k, last_estimate_m_, d_m);
     // JAMI_WARN("m: %f", ((1-k) * last_estimate_m_) + (k * d_m));
-    return ((1-k) * last_estimate_m_) + (k * d_m);
+    return ((1 - k) * last_estimate_m_) + (k * d_m);
 }
 
 float
@@ -161,7 +155,7 @@ float
 CongestionControl::get_sys_var_p(float k, float q)
 {
     // JAMI_WARN("var_p: %f", ((1-k) * (last_var_p_ + q)));
-    return ((1-k) * (last_var_p_ + q));
+    return ((1 - k) * (last_var_p_ + q));
 }
 
 float
@@ -187,7 +181,7 @@ CongestionControl::update_thresh(float m, int deltaT)
         ky = kd;
     else
         ky = ku;
-    float res = last_thresh_y_ + ((deltaT * ky) * (std::fabs(m) - last_thresh_y_));
+    float res      = last_thresh_y_ + ((deltaT * ky) * (std::fabs(m) - last_thresh_y_));
     last_thresh_y_ = res;
     return res;
 }
@@ -201,29 +195,27 @@ CongestionControl::get_thresh()
 BandwidthUsage
 CongestionControl::get_bw_state(float estimation, float thresh)
 {
-    if(estimation > thresh) {
+    if (estimation > thresh) {
         // JAMI_WARN("Enter overuse state");
-        if(not overuse_counter_) {
+        if (not overuse_counter_) {
             t0_overuse = clock::now();
             overuse_counter_++;
             return bwNormal;
         }
         overuse_counter_++;
-        time_point now = clock::now();
+        time_point now     = clock::now();
         auto overuse_timer = now - t0_overuse;
-        if((overuse_timer >= OVERUSE_THRESH) and (overuse_counter_ > 1) ) {
+        if ((overuse_timer >= OVERUSE_THRESH) and (overuse_counter_ > 1)) {
             overuse_counter_ = 0;
-            last_state_ = bwOverusing;
+            last_state_      = bwOverusing;
         }
-    }
-    else if(estimation < -thresh) {
+    } else if (estimation < -thresh) {
         // JAMI_WARN("Enter underuse state");
         overuse_counter_ = 0;
-        last_state_ = bwUnderusing;
-    }
-    else {
+        last_state_      = bwUnderusing;
+    } else {
         overuse_counter_ = 0;
-        last_state_ = bwNormal;
+        last_state_      = bwNormal;
     }
     return last_state_;
 }

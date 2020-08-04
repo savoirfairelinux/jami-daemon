@@ -20,18 +20,18 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#include <fstream>
+#include <climits>
 #include <cmath>
 #include <cstring>
+#include <fstream>
 #include <vector>
-#include <climits>
 
-#include "libav_deps.h"
-#include "audiofile.h"
 #include "audio/resampler.h"
+#include "audiofile.h"
+#include "client/ring_signal.h"
+#include "libav_deps.h"
 #include "manager.h"
 #include "media_decoder.h"
-#include "client/ring_signal.h"
 
 #include "logger.h"
 
@@ -50,24 +50,27 @@ AudioFile::onBufferFinish()
 
     if ((updatePlaybackScale_ % 5) == 0)
         emitSignal<DRing::CallSignal::UpdatePlaybackScale>(filepath_,
-                                                           (unsigned)(pos_ / divisor),
-                                                           (unsigned)(buffer_->frames() / divisor));
+                                                           (unsigned) (pos_ / divisor),
+                                                           (unsigned) (buffer_->frames() / divisor));
 
     updatePlaybackScale_++;
 }
 
-AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
-    AudioLoop(sampleRate), filepath_(fileName), updatePlaybackScale_(0)
+AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate)
+    : AudioLoop(sampleRate)
+    , filepath_(fileName)
+    , updatePlaybackScale_(0)
 {
-    const auto& format = getFormat();
-    auto buf = std::make_unique<AudioBuffer>(0, format);
-    Resampler r {};
-    auto decoder = std::make_unique<MediaDecoder>([this, &r, &format, &buf](const std::shared_ptr<MediaFrame>& frame) mutable {
-        buf->append(*r.resample(std::static_pointer_cast<AudioFrame>(frame), format));
-    });
+    const auto &format = getFormat();
+    auto buf           = std::make_unique<AudioBuffer>(0, format);
+    Resampler r{};
+    auto decoder = std::make_unique<MediaDecoder>(
+        [this, &r, &format, &buf](const std::shared_ptr<MediaFrame> &frame) mutable {
+            buf->append(*r.resample(std::static_pointer_cast<AudioFrame>(frame), format));
+        });
     DeviceParams dev;
     dev.input = fileName;
-    dev.name = fileName;
+    dev.name  = fileName;
 
     if (decoder->openInput(dev) < 0)
         throw AudioFileException("File could not be opened: " + fileName);
@@ -75,7 +78,8 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     if (decoder->setupAudio() < 0)
         throw AudioFileException("Decoder setup failed: " + fileName);
 
-    while (decoder->decode() != MediaDemuxer::Status::EndOfFile);
+    while (decoder->decode() != MediaDemuxer::Status::EndOfFile)
+        ;
 
     delete buffer_;
     buffer_ = buf.release();

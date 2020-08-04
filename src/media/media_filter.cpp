@@ -18,9 +18,9 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "media_filter.h"
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "logger.h"
-#include "media_filter.h"
 
 extern "C" {
 #include <libavfilter/buffersink.h>
@@ -35,8 +35,7 @@ extern "C" {
 
 namespace jami {
 
-MediaFilter::MediaFilter()
-{}
+MediaFilter::MediaFilter() {}
 
 MediaFilter::~MediaFilter()
 {
@@ -50,25 +49,25 @@ MediaFilter::getFilterDesc() const
 }
 
 int
-MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> msps)
+MediaFilter::initialize(const std::string &filterDesc, std::vector<MediaStream> msps)
 {
     int ret = 0;
-    desc_ = filterDesc;
-    graph_ = avfilter_graph_alloc();
+    desc_   = filterDesc;
+    graph_  = avfilter_graph_alloc();
 
     if (!graph_)
         return fail("Failed to allocate filter graph", AVERROR(ENOMEM));
 
-    graph_->nb_threads = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
+    graph_->nb_threads = std::max(1u, std::min(8u, std::thread::hardware_concurrency() / 2));
 
-    AVFilterInOut* in;
-    AVFilterInOut* out;
+    AVFilterInOut *in;
+    AVFilterInOut *out;
     if ((ret = avfilter_graph_parse2(graph_, desc_.c_str(), &in, &out)) < 0)
         return fail("Failed to parse filter graph", ret);
 
-    using AVFilterInOutPtr = std::unique_ptr<AVFilterInOut, std::function<void(AVFilterInOut*)>>;
-    AVFilterInOutPtr outputs(out, [](AVFilterInOut* f){ avfilter_inout_free(&f); });
-    AVFilterInOutPtr inputs(in, [](AVFilterInOut* f){ avfilter_inout_free(&f); });
+    using AVFilterInOutPtr = std::unique_ptr<AVFilterInOut, std::function<void(AVFilterInOut *)>>;
+    AVFilterInOutPtr outputs(out, [](AVFilterInOut *f) { avfilter_inout_free(&f); });
+    AVFilterInOutPtr inputs(in, [](AVFilterInOut *f) { avfilter_inout_free(&f); });
 
     if (outputs && outputs->next)
         return fail("Filters with multiple outputs are not supported", AVERROR(ENOTSUP));
@@ -77,20 +76,22 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
         return fail("Failed to create output for filter graph", ret);
 
     // make sure inputs linked list is the same size as msps
-    size_t count = 0;
-    AVFilterInOut* dummyInput = inputs.get();
+    size_t count              = 0;
+    AVFilterInOut *dummyInput = inputs.get();
     while (dummyInput && ++count) // increment count before evaluating its value
         dummyInput = dummyInput->next;
     if (count != msps.size())
-        return fail("Size mismatch between number of inputs in filter graph and input parameter array",
-                    AVERROR(EINVAL));
+        return fail(
+            "Size mismatch between number of inputs in filter graph and input parameter array",
+            AVERROR(EINVAL));
 
-    for (AVFilterInOut* current = inputs.get(); current; current = current->next) {
+    for (AVFilterInOut *current = inputs.get(); current; current = current->next) {
         if (!current->name)
             return fail("Filters require non empty names", AVERROR(EINVAL));
         std::string name = current->name;
-        const auto& it = std::find_if(msps.begin(), msps.end(), [name](const MediaStream& msp)
-                { return msp.name == name; });
+        const auto &it   = std::find_if(msps.begin(), msps.end(), [name](const MediaStream &msp) {
+            return msp.name == name;
+        });
         if (it != msps.end()) {
             if ((ret = initInputFilter(current, *it)) < 0) {
                 std::string msg = "Failed to initialize input: " + name;
@@ -111,7 +112,7 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
 }
 
 MediaStream
-MediaFilter::getInputParams(const std::string& inputName) const
+MediaFilter::getInputParams(const std::string &inputName) const
 {
     for (auto ms : inputParams_)
         if (ms.name == inputName)
@@ -130,20 +131,20 @@ MediaFilter::getOutputParams() const
 
     switch (av_buffersink_get_type(output_)) {
     case AVMEDIA_TYPE_VIDEO:
-        output.name = "videoOutput";
-        output.format = av_buffersink_get_format(output_);
-        output.isVideo = true;
-        output.timeBase = av_buffersink_get_time_base(output_);
-        output.width = av_buffersink_get_w(output_);
-        output.height = av_buffersink_get_h(output_);
-        output.bitrate = 0;
+        output.name      = "videoOutput";
+        output.format    = av_buffersink_get_format(output_);
+        output.isVideo   = true;
+        output.timeBase  = av_buffersink_get_time_base(output_);
+        output.width     = av_buffersink_get_w(output_);
+        output.height    = av_buffersink_get_h(output_);
+        output.bitrate   = 0;
         output.frameRate = av_buffersink_get_frame_rate(output_);
         break;
     case AVMEDIA_TYPE_AUDIO:
-        output.name = "audioOutput";
-        output.format = av_buffersink_get_format(output_);
-        output.isVideo = false;
-        output.timeBase = av_buffersink_get_time_base(output_);
+        output.name       = "audioOutput";
+        output.format     = av_buffersink_get_format(output_);
+        output.isVideo    = false;
+        output.timeBase   = av_buffersink_get_time_base(output_);
         output.sampleRate = av_buffersink_get_sample_rate(output_);
         output.nbChannels = av_buffersink_get_channels(output_);
         break;
@@ -155,7 +156,7 @@ MediaFilter::getOutputParams() const
 }
 
 int
-MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
+MediaFilter::feedInput(AVFrame *frame, const std::string &inputName)
 {
     int ret = 0;
     if (!initialized_)
@@ -165,13 +166,14 @@ MediaFilter::feedInput(AVFrame* frame, const std::string& inputName)
         return 0;
 
     for (size_t i = 0; i < inputs_.size(); ++i) {
-        auto& ms = inputParams_[i];
+        auto &ms = inputParams_[i];
         if (ms.name != inputName)
             continue;
 
         if (ms.format != frame->format
             || (ms.isVideo && (ms.width != frame->width || ms.height != frame->height))
-            || (!ms.isVideo && (ms.sampleRate != frame->sample_rate || ms.nbChannels != frame->channels))) {
+            || (!ms.isVideo
+                && (ms.sampleRate != frame->sample_rate || ms.nbChannels != frame->channels))) {
             ms.update(frame);
             if ((ret = reinitialize()) < 0)
                 return fail("Failed to reinitialize filter with new input parameters", ret);
@@ -227,17 +229,18 @@ MediaFilter::flush()
     for (size_t i = 0; i < inputs_.size(); ++i) {
         int ret = av_buffersrc_add_frame_flags(inputs_[i], nullptr, 0);
         if (ret < 0) {
-            JAMI_ERR() << "Failed to flush filter '" << inputParams_[i].name << "': " << libav_utils::getError(ret);
+            JAMI_ERR() << "Failed to flush filter '" << inputParams_[i].name
+                       << "': " << libav_utils::getError(ret);
         }
     }
 }
 
 int
-MediaFilter::initOutputFilter(AVFilterInOut* out)
+MediaFilter::initOutputFilter(AVFilterInOut *out)
 {
     int ret = 0;
-    const AVFilter* buffersink;
-    AVFilterContext* buffersinkCtx = nullptr;
+    const AVFilter *buffersink;
+    AVFilterContext *buffersinkCtx = nullptr;
     AVMediaType mediaType = avfilter_pad_get_type(out->filter_ctx->input_pads, out->pad_idx);
 
     if (mediaType == AVMEDIA_TYPE_VIDEO)
@@ -245,8 +248,9 @@ MediaFilter::initOutputFilter(AVFilterInOut* out)
     else
         buffersink = avfilter_get_by_name("abuffersink");
 
-    if ((ret = avfilter_graph_create_filter(&buffersinkCtx, buffersink, "out",
-                                            nullptr, nullptr, graph_)) < 0) {
+    if ((ret
+         = avfilter_graph_create_filter(&buffersinkCtx, buffersink, "out", nullptr, nullptr, graph_))
+        < 0) {
         avfilter_free(buffersinkCtx);
         return fail("Failed to create buffer sink", ret);
     }
@@ -261,29 +265,29 @@ MediaFilter::initOutputFilter(AVFilterInOut* out)
 }
 
 int
-MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp)
+MediaFilter::initInputFilter(AVFilterInOut *in, MediaStream msp)
 {
-    int ret = 0;
-    AVBufferSrcParameters* params = av_buffersrc_parameters_alloc();
+    int ret                       = 0;
+    AVBufferSrcParameters *params = av_buffersrc_parameters_alloc();
     if (!params)
         return -1;
 
-    const AVFilter* buffersrc;
+    const AVFilter *buffersrc;
     AVMediaType mediaType = avfilter_pad_get_type(in->filter_ctx->input_pads, in->pad_idx);
-    params->format = msp.format;
-    params->time_base = msp.timeBase;
+    params->format        = msp.format;
+    params->time_base     = msp.timeBase;
     if (mediaType == AVMEDIA_TYPE_VIDEO) {
-        params->width = msp.width;
-        params->height = msp.height;
+        params->width      = msp.width;
+        params->height     = msp.height;
         params->frame_rate = msp.frameRate;
-        buffersrc = avfilter_get_by_name("buffer");
+        buffersrc          = avfilter_get_by_name("buffer");
     } else {
-        params->sample_rate = msp.sampleRate;
+        params->sample_rate    = msp.sampleRate;
         params->channel_layout = av_get_default_channel_layout(msp.nbChannels);
-        buffersrc = avfilter_get_by_name("abuffer");
+        buffersrc              = avfilter_get_by_name("abuffer");
     }
 
-    AVFilterContext* buffersrcCtx = nullptr;
+    AVFilterContext *buffersrcCtx = nullptr;
     if (buffersrc) {
         char name[128];
         snprintf(name, sizeof(name), "buffersrc_%s_%d", in->name, in->pad_idx);
@@ -315,7 +319,7 @@ MediaFilter::reinitialize()
 {
     // keep parameters needed for initialization before clearing filter
     auto params = std::move(inputParams_);
-    auto desc = std::move(desc_);
+    auto desc   = std::move(desc_);
     clean();
     auto ret = initialize(desc, params);
     if (ret >= 0)
@@ -337,7 +341,7 @@ MediaFilter::clean()
     initialized_ = false;
     avfilter_graph_free(&graph_); // frees inputs_ and output_
     desc_.clear();
-    inputs_.clear(); // don't point to freed memory
+    inputs_.clear();   // don't point to freed memory
     output_ = nullptr; // don't point to freed memory
     inputParams_.clear();
 }

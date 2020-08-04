@@ -22,33 +22,35 @@
 
 #pragma once
 
-#include "socket_pair.h"
-#include "sip/sip_utils.h"
 #include "media/media_codec.h"
+#include "sip/sip_utils.h"
+#include "socket_pair.h"
 
 #include <functional>
-#include <string>
 #include <memory>
 #include <mutex>
+#include <string>
 
 namespace jami {
 
 class IceSocket;
 class MediaRecorder;
 
-class RtpSession {
+class RtpSession
+{
 public:
-    RtpSession(const std::string &callID) : callID_(callID) {}
-    virtual ~RtpSession() {};
+    RtpSession(const std::string &callID)
+        : callID_(callID)
+    {}
+    virtual ~RtpSession(){};
 
-    virtual void start(std::unique_ptr<IceSocket> rtp_sock,
-                       std::unique_ptr<IceSocket> rtcp_sock) = 0;
+    virtual void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) = 0;
     virtual void restartSender() = 0;
-    virtual void stop() = 0;
+    virtual void stop()          = 0;
 
-    virtual void updateMedia(const MediaDescription& send,
-                             const MediaDescription& receive) {
-        send_ = send;
+    virtual void updateMedia(const MediaDescription &send, const MediaDescription &receive)
+    {
+        send_    = send;
         receive_ = receive;
     }
 
@@ -57,13 +59,10 @@ public:
 
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
 
-    void setSuccessfulSetupCb(const std::function<void(MediaType)>& cb)
-    {
-        onSuccessfulSetup_ = cb;
-    }
+    void setSuccessfulSetupCb(const std::function<void(MediaType)> &cb) { onSuccessfulSetup_ = cb; }
 
-    virtual void initRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
-    virtual void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
+    virtual void initRecorder(std::shared_ptr<MediaRecorder> &rec)   = 0;
+    virtual void deinitRecorder(std::shared_ptr<MediaRecorder> &rec) = 0;
 
     std::shared_ptr<AccountCodecInfo> getCodec() const { return send_.codec; }
 
@@ -79,9 +78,7 @@ protected:
 
     std::function<void(MediaType)> onSuccessfulSetup_;
 
-    std::string getRemoteRtpUri() const {
-        return "rtp://" + send_.addr.toString(true);
-    }
+    std::string getRemoteRtpUri() const { return "rtp://" + send_.addr.toString(true); }
 };
 
 } // namespace jami

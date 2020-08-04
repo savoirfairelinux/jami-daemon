@@ -24,13 +24,12 @@
 
 #pragma once
 
-#include <mutex>
 #include <libdevcore/Address.h>
 #include <libdevcore/Common.h>
 #include <libdevcore/FixedHash.h>
+#include <mutex>
 
-namespace dev
-{
+namespace dev {
 
 using Secret = SecureFixedHash<32>;
 
@@ -44,31 +43,35 @@ using Signature = h520;
 
 struct SignatureStruct
 {
-	SignatureStruct() = default;
-	SignatureStruct(Signature const& _s) { *(h520*)this = _s; }
-	SignatureStruct(h256 const& _r, h256 const& _s, uint8_t _v): r(_r), s(_s), v(_v) {}
-	operator Signature() const { return *(h520 const*)this; }
+    SignatureStruct() = default;
+    SignatureStruct(Signature const &_s) { *(h520 *) this = _s; }
+    SignatureStruct(h256 const &_r, h256 const &_s, uint8_t _v)
+        : r(_r)
+        , s(_s)
+        , v(_v)
+    {}
+    operator Signature() const { return *(h520 const *) this; }
 
-	/// @returns true if r,s,v values are valid, otherwise false
-	bool isValid() const noexcept;
+    /// @returns true if r,s,v values are valid, otherwise false
+    bool isValid() const noexcept;
 
-	h256 r;
-	h256 s;
-	uint8_t v = 0;
+    h256 r;
+    h256 s;
+    uint8_t v = 0;
 };
 
 /// A vector of secrets.
 using Secrets = std::vector<Secret>;
 
 /// Convert a secret key into the public key equivalent.
-Public toPublic(Secret const& _secret);
+Public toPublic(Secret const &_secret);
 
 /// Convert a public key to address.
-Address toAddress(Public const& _public);
+Address toAddress(Public const &_public);
 
 /// Convert a secret key into address of public key equivalent.
 /// @returns 0 if it's not a valid secret key.
-Address toAddress(Secret const& _secret);
+Address toAddress(Secret const &_secret);
 
 /// Simple class that represents a "key pair".
 /// All of the data of the class can be regenerated from the secret key (m_secret) alone.
@@ -77,48 +80,51 @@ class KeyPair
 {
 public:
     KeyPair() = default;
-	/// Normal constructor - populates object from the given secret key.
-	/// If the secret key is invalid the constructor succeeds, but public key
-	/// and address stay "null".
-	KeyPair(Secret const& _sec);
+    /// Normal constructor - populates object from the given secret key.
+    /// If the secret key is invalid the constructor succeeds, but public key
+    /// and address stay "null".
+    KeyPair(Secret const &_sec);
 
-	/// Create a new, randomly generated object.
-	static KeyPair create();
+    /// Create a new, randomly generated object.
+    static KeyPair create();
 
-	/// Create from an encrypted seed.
-	//static KeyPair fromEncryptedSeed(bytesConstRef _seed, std::string const& _password);
+    /// Create from an encrypted seed.
+    //static KeyPair fromEncryptedSeed(bytesConstRef _seed, std::string const& _password);
 
-	Secret const& secret() const { return m_secret; }
+    Secret const &secret() const { return m_secret; }
 
-	/// Retrieve the public key.
-	Public const& pub() const { return m_public; }
+    /// Retrieve the public key.
+    Public const &pub() const { return m_public; }
 
-	/// Retrieve the associated address of the public key.
-	Address const& address() const { return m_address; }
+    /// Retrieve the associated address of the public key.
+    Address const &address() const { return m_address; }
 
-	bool operator==(KeyPair const& _c) const { return m_public == _c.m_public; }
-	bool operator!=(KeyPair const& _c) const { return m_public != _c.m_public; }
+    bool operator==(KeyPair const &_c) const { return m_public == _c.m_public; }
+    bool operator!=(KeyPair const &_c) const { return m_public != _c.m_public; }
 
 private:
-	Secret m_secret;
-	Public m_public;
-	Address m_address;
+    Secret m_secret;
+    Public m_public;
+    Address m_address;
 };
 
-namespace crypto
+namespace crypto {
+
+class InvalidState : public std::runtime_error
 {
-
-class InvalidState : public std::runtime_error {
 public:
-	InvalidState() : runtime_error("invalid state") {};
+    InvalidState()
+        : runtime_error("invalid state"){};
 };
-class CryptoException : public std::runtime_error {
+class CryptoException : public std::runtime_error
+{
 public:
-	CryptoException(const char* err) : runtime_error(err) {};
+    CryptoException(const char *err)
+        : runtime_error(err){};
 };
 
 /// Key derivation
-h256 kdf(Secret const& _priv, h256 const& _hash);
+h256 kdf(Secret const &_priv, h256 const &_hash);
 
 /**
  * @brief Generator for non-repeating nonce material.
@@ -132,19 +138,23 @@ h256 kdf(Secret const& _priv, h256 const& _hash);
 class Nonce
 {
 public:
-	/// Returns the next nonce (might be read from a file).
-	static Secret get() { static Nonce s; return s.next(); }
+    /// Returns the next nonce (might be read from a file).
+    static Secret get()
+    {
+        static Nonce s;
+        return s.next();
+    }
 
 private:
-	Nonce() = default;
+    Nonce() = default;
 
-	/// @returns the next nonce.
-	Secret next();
+    /// @returns the next nonce.
+    Secret next();
 
-	std::mutex x_value;
-	Secret m_value;
+    std::mutex x_value;
+    Secret m_value;
 };
 
-}
+} // namespace crypto
 
-}
+} // namespace dev

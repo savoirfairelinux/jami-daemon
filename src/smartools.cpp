@@ -18,20 +18,22 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 #include "smartools.h"
-#include "manager.h"
-#include "dring/callmanager_interface.h"
 #include "client/ring_signal.h"
+#include "dring/callmanager_interface.h"
+#include "manager.h"
 
 namespace jami {
 
-Smartools& Smartools::getInstance()
+Smartools &
+Smartools::getInstance()
 {
     // Meyers-Singleton
     static Smartools instance_;
     return instance_;
 }
 
-Smartools::~Smartools() {
+Smartools::~Smartools()
+{
     stop();
 }
 
@@ -47,10 +49,12 @@ void
 Smartools::start(std::chrono::milliseconds refreshTimeMs)
 {
     JAMI_DBG("Start SmartInfo");
-    auto task = Manager::instance().scheduler().scheduleAtFixedRate([this]{
-        sendInfo();
-        return true;
-    }, refreshTimeMs);
+    auto task = Manager::instance().scheduler().scheduleAtFixedRate(
+        [this] {
+            sendInfo();
+            return true;
+        },
+        refreshTimeMs);
     task_.swap(task);
     if (task)
         task->cancel();
@@ -66,69 +70,68 @@ Smartools::stop()
     information_.clear();
 }
 
-
 //Set all the information in the map
 
 void
-Smartools::setFrameRate(const std::string& id, const std::string& fps)
+Smartools::setFrameRate(const std::string &id, const std::string &fps)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    if(id == "local"){
-        information_["local FPS"]= fps;
+    if (id == "local") {
+        information_["local FPS"] = fps;
     } else {
-        information_["remote FPS"]= fps;
+        information_["remote FPS"] = fps;
     }
 }
 
 void
-Smartools::setResolution(const std::string& id, int width, int height)
+Smartools::setResolution(const std::string &id, int width, int height)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    if(id == "local"){
-        information_["local width"] = std::to_string(width);
+    if (id == "local") {
+        information_["local width"]  = std::to_string(width);
         information_["local height"] = std::to_string(height);
     } else {
-        information_["remote width"] = std::to_string(width);
+        information_["remote width"]  = std::to_string(width);
         information_["remote height"] = std::to_string(height);
     }
 }
 
 void
-Smartools::setRemoteAudioCodec(const std::string& remoteAudioCodec)
+Smartools::setRemoteAudioCodec(const std::string &remoteAudioCodec)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
     information_["remote audio codec"] = remoteAudioCodec;
 }
 
 void
-Smartools::setLocalAudioCodec(const std::string& localAudioCodec)
+Smartools::setLocalAudioCodec(const std::string &localAudioCodec)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
     information_["local audio codec"] = localAudioCodec;
 }
 
 void
-Smartools::setLocalVideoCodec(const std::string& localVideoCodec)
+Smartools::setLocalVideoCodec(const std::string &localVideoCodec)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
     information_["local video codec"] = localVideoCodec;
 }
 
 void
-Smartools::setRemoteVideoCodec(const std::string& remoteVideoCodec, const std::string& callID)
+Smartools::setRemoteVideoCodec(const std::string &remoteVideoCodec, const std::string &callID)
 {
     std::lock_guard<std::mutex> lk(mutexInfo_);
-    information_["remote video codec"]= remoteVideoCodec;
+    information_["remote video codec"] = remoteVideoCodec;
     if (auto call = Manager::instance().getCallFromCallID(callID)) {
         auto confID = call->getConfId();
         if (not confID.empty()) {
-            information_["type"]= "conference";
-            information_["callID"]= confID;
+            information_["type"]   = "conference";
+            information_["callID"] = confID;
         } else {
-            information_["type"]= "no conference";
-            information_["callID"]= callID;
+            information_["type"]   = "no conference";
+            information_["callID"] = callID;
         }
     }
- }
+}
 
- } // end namespace jami
+} // end namespace jami

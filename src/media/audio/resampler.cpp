@@ -20,9 +20,9 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "resampler.h"
 #include "libav_deps.h"
 #include "logger.h"
-#include "resampler.h"
 
 extern "C" {
 #include <libswresample/swresample.h>
@@ -41,7 +41,7 @@ Resampler::~Resampler()
 }
 
 void
-Resampler::reinit(const AVFrame* in, const AVFrame* out)
+Resampler::reinit(const AVFrame *in, const AVFrame *out)
 {
     // NOTE swr_set_matrix should be called on an uninitialized context
     auto swrCtx = swr_alloc();
@@ -71,7 +71,8 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
      * LFE downmixing is optional, so any coefficient can be used, we use +6dB for mono and
      * +0dB in each channel for stereo.
      */
-    if (in->channel_layout == AV_CH_LAYOUT_5POINT1 || in->channel_layout == AV_CH_LAYOUT_5POINT1_BACK) {
+    if (in->channel_layout == AV_CH_LAYOUT_5POINT1
+        || in->channel_layout == AV_CH_LAYOUT_5POINT1_BACK) {
         // NOTE MSVC can't allocate dynamic size arrays on the stack
         if (out->channels == 2) {
             double matrix[2][6];
@@ -115,7 +116,7 @@ Resampler::reinit(const AVFrame* in, const AVFrame* out)
 }
 
 int
-Resampler::resample(const AVFrame* input, AVFrame* output)
+Resampler::resample(const AVFrame *input, AVFrame *output)
 {
     if (!initCount_)
         reinit(input, output);
@@ -126,7 +127,8 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
         // indicative of an underlying problem in the code. This check is so the backtrace
         // doesn't get mangled with a bunch of calls to Resampler::resample
         if (initCount_ > 1) {
-            std::string msg = "Infinite loop detected in audio resampler, please open an issue on https://git.jami.net";
+            std::string msg = "Infinite loop detected in audio resampler, please open an issue on "
+                              "https://git.jami.net";
             JAMI_ERR() << msg;
             throw std::runtime_error(msg);
         }
@@ -143,32 +145,32 @@ Resampler::resample(const AVFrame* input, AVFrame* output)
 }
 
 void
-Resampler::resample(const AudioBuffer& dataIn, AudioBuffer& dataOut)
+Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
 {
     auto inputFrame = dataIn.toAVFrame();
-    auto input = inputFrame->pointer();
+    auto input      = inputFrame->pointer();
     AudioFrame resampled;
-    auto output = resampled.pointer();
-    output->sample_rate = dataOut.getSampleRate();
+    auto output            = resampled.pointer();
+    output->sample_rate    = dataOut.getSampleRate();
     output->channel_layout = av_get_default_channel_layout(dataOut.channels());
-    output->channels = dataOut.channels();
-    output->format = AV_SAMPLE_FMT_S16;
+    output->channels       = dataOut.channels();
+    output->format         = AV_SAMPLE_FMT_S16;
 
     if (resample(input, output) < 0)
         return;
 
     dataOut.resize(output->nb_samples);
-    dataOut.deinterleave(reinterpret_cast<const AudioSample*>(output->extended_data[0]),
-        output->nb_samples, output->channels);
+    dataOut.deinterleave(reinterpret_cast<const AudioSample *>(output->extended_data[0]),
+                         output->nb_samples,
+                         output->channels);
 }
 
 std::unique_ptr<AudioFrame>
-Resampler::resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& format)
+Resampler::resample(std::unique_ptr<AudioFrame> &&in, const AudioFormat &format)
 {
-    if (in->pointer()->sample_rate == (int)format.sample_rate &&
-        in->pointer()->channels == (int)format.nb_channels &&
-        (AVSampleFormat)in->pointer()->format == format.sampleFormat)
-    {
+    if (in->pointer()->sample_rate == (int) format.sample_rate
+        && in->pointer()->channels == (int) format.nb_channels
+        && (AVSampleFormat) in->pointer()->format == format.sampleFormat) {
         return std::move(in);
     }
     auto output = std::make_unique<AudioFrame>(format);
@@ -177,12 +179,11 @@ Resampler::resample(std::unique_ptr<AudioFrame>&& in, const AudioFormat& format)
 }
 
 std::shared_ptr<AudioFrame>
-Resampler::resample(std::shared_ptr<AudioFrame>&& in, const AudioFormat& format)
+Resampler::resample(std::shared_ptr<AudioFrame> &&in, const AudioFormat &format)
 {
-    if (in->pointer()->sample_rate == (int)format.sample_rate &&
-        in->pointer()->channels == (int)format.nb_channels &&
-        (AVSampleFormat)in->pointer()->format == format.sampleFormat)
-    {
+    if (in->pointer()->sample_rate == (int) format.sample_rate
+        && in->pointer()->channels == (int) format.nb_channels
+        && (AVSampleFormat) in->pointer()->format == format.sampleFormat) {
         return std::move(in);
     }
     auto output = std::make_shared<AudioFrame>(format);

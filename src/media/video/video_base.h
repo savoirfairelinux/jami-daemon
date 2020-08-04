@@ -30,12 +30,12 @@
 #include <yaml-cpp/yaml.h>
 #pragma GCC diagnostic pop
 
-#include <cstdlib>
-#include <cstdint>
-#include <memory>
-#include <set>
-#include <mutex>
 #include <ciso646> // fix windows compiler bug
+#include <cstdint>
+#include <cstdlib>
+#include <memory>
+#include <mutex>
+#include <set>
 
 extern "C" {
 #include <libavutil/pixfmt.h>
@@ -51,67 +51,72 @@ struct AVIOContext;
 namespace DRing {
 class MediaFrame;
 class VideoFrame;
-}
+} // namespace DRing
 
 namespace jami {
 using MediaFrame = DRing::MediaFrame;
 using VideoFrame = DRing::VideoFrame;
-}
+} // namespace jami
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
-struct VideoFrameActiveWriter: Observable<std::shared_ptr<MediaFrame>> {};
-struct VideoFramePassiveReader: Observer<std::shared_ptr<MediaFrame>> {};
+struct VideoFrameActiveWriter : Observable<std::shared_ptr<MediaFrame>>
+{};
+struct VideoFramePassiveReader : Observer<std::shared_ptr<MediaFrame>>
+{};
 
 /*=== VideoGenerator =========================================================*/
 
 class VideoGenerator : public VideoFrameActiveWriter
 {
 public:
-    VideoGenerator() { }
+    VideoGenerator() {}
 
-    virtual int getWidth() const = 0;
-    virtual int getHeight() const = 0;
+    virtual int getWidth() const                 = 0;
+    virtual int getHeight() const                = 0;
     virtual AVPixelFormat getPixelFormat() const = 0;
 
     std::shared_ptr<VideoFrame> obtainLastFrame();
 
 public:
     // getNewFrame and publishFrame must be called by the same thread only
-    VideoFrame& getNewFrame();
+    VideoFrame &getNewFrame();
     void publishFrame();
     void publishFrame(std::shared_ptr<VideoFrame>);
     void flushFrames();
 
 private:
     std::shared_ptr<VideoFrame> writableFrame_ = nullptr;
-    std::shared_ptr<VideoFrame> lastFrame_ = nullptr;
-    std::mutex mutex_ {}; // lock writableFrame_/lastFrame_ access
+    std::shared_ptr<VideoFrame> lastFrame_     = nullptr;
+    std::mutex mutex_{}; // lock writableFrame_/lastFrame_ access
 };
 
 struct VideoSettings
 {
     VideoSettings() {}
-    VideoSettings(const std::map<std::string, std::string>& settings);
+    VideoSettings(const std::map<std::string, std::string> &settings);
 
     std::map<std::string, std::string> to_map() const;
 
-    std::string id {};
-    std::string name {};
-    std::string channel {};
-    std::string video_size {};
-    std::string framerate {};
+    std::string id{};
+    std::string name{};
+    std::string channel{};
+    std::string video_size{};
+    std::string framerate{};
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami
 
 namespace YAML {
 template<>
-struct convert<jami::video::VideoSettings> {
-    static Node encode(const jami::video::VideoSettings& rhs);
-    static bool decode(const Node& node, jami::video::VideoSettings& rhs);
+struct convert<jami::video::VideoSettings>
+{
+    static Node encode(const jami::video::VideoSettings &rhs);
+    static bool decode(const Node &node, jami::video::VideoSettings &rhs);
 };
 
-Emitter& operator << (Emitter& out, const jami::video::VideoSettings& v);
+Emitter &operator<<(Emitter &out, const jami::video::VideoSettings &v);
 
 } // namespace YAML

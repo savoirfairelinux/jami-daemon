@@ -24,21 +24,23 @@
 #include "libav_deps.h"
 #include "media_codec.h"
 
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
-#include <list>
 
 extern "C" {
 #include <libavutil/hwcontext.h>
 }
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 /**
  * @brief Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
  */
-class HardwareAccel {
+class HardwareAccel
+{
 public:
     /**
      * @brief Transfers hardware frame to main memory.
@@ -52,15 +54,21 @@ public:
      * @param desiredFormat Software pixel format that the hardware outputs.
      * @returns Software frame.
      */
-    static std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat);
+    static std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame &frame,
+                                                            AVPixelFormat desiredFormat);
 
     /**
      * @brief Constructs a HardwareAccel object
      *
      * Made public so std::unique_ptr can access it. Should not be called.
      */
-    HardwareAccel(AVCodecID id, const std::string& name, AVHWDeviceType hwType, AVPixelFormat format,
-                    AVPixelFormat swFormat, CodecType type, bool dynBitrate);
+    HardwareAccel(AVCodecID id,
+                  const std::string &name,
+                  AVHWDeviceType hwType,
+                  AVPixelFormat format,
+                  AVPixelFormat swFormat,
+                  CodecType type,
+                  bool dynBitrate);
 
     /**
      * @brief Dereferences hardware contexts.
@@ -117,7 +125,7 @@ public:
      * For encoding, sets hw_device_ctx and hw_frames_ctx, and may set some hardware
      * codec options.
      */
-    void setDetails(AVCodecContext* codecCtx);
+    void setDetails(AVCodecContext *codecCtx);
 
     /**
      * @brief Transfers a frame to/from the GPU memory.
@@ -129,42 +137,45 @@ public:
      * @param frame Hardware frame when decoding, software frame when encoding.
      * @returns Software frame when decoding, hardware frame when encoding.
      */
-    std::unique_ptr<VideoFrame> transfer(const VideoFrame& frame);
+    std::unique_ptr<VideoFrame> transfer(const VideoFrame &frame);
 
     /**
      * @brief Links this HardwareAccel's frames context with the passed in context.
      *
      * This serves to skip transferring a decoded frame back to main memory before encoding.
      */
-    bool linkHardware(AVBufferRef* framesCtx);
+    bool linkHardware(AVBufferRef *framesCtx);
 
-
-    static std::list<HardwareAccel> getCompatibleAccel(AVCodecID id, int width, int height, CodecType type);
-    int initAPI(bool linkable, AVBufferRef* framesCtx);
+    static std::list<HardwareAccel> getCompatibleAccel(AVCodecID id,
+                                                       int width,
+                                                       int height,
+                                                       CodecType type);
+    int initAPI(bool linkable, AVBufferRef *framesCtx);
     bool dynBitrate() { return dynBitrate_; }
 
 private:
-    bool initDevice(const std::string& device);
+    bool initDevice(const std::string &device);
     bool initFrame();
 
-    AVCodecID id_ {AV_CODEC_ID_NONE};
+    AVCodecID id_{AV_CODEC_ID_NONE};
     std::string name_;
-    AVHWDeviceType hwType_ {AV_HWDEVICE_TYPE_NONE};
-    AVPixelFormat format_ {AV_PIX_FMT_NONE};
-    AVPixelFormat swFormat_ {AV_PIX_FMT_NONE};
-    CodecType type_ {CODEC_NONE};
-    bool linked_ {false};
-    int width_ {0};
-    int height_ {0};
-    bool dynBitrate_ {false};
+    AVHWDeviceType hwType_{AV_HWDEVICE_TYPE_NONE};
+    AVPixelFormat format_{AV_PIX_FMT_NONE};
+    AVPixelFormat swFormat_{AV_PIX_FMT_NONE};
+    CodecType type_{CODEC_NONE};
+    bool linked_{false};
+    int width_{0};
+    int height_{0};
+    bool dynBitrate_{false};
 
-    AVBufferRef* deviceCtx_ {nullptr};
-    AVBufferRef* framesCtx_ {nullptr};
+    AVBufferRef *deviceCtx_{nullptr};
+    AVBufferRef *framesCtx_{nullptr};
 
-    int init_device(const char* name, const char* device, int flags);
-    int init_device_type(std::string& dev);
+    int init_device(const char *name, const char *device, int flags);
+    int init_device_type(std::string &dev);
 
     std::set<std::string> possible_devices_;
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

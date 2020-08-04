@@ -19,8 +19,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "audio_input.h"
 #include "audio_sender.h"
+#include "audio_input.h"
 #include "client/videomanager.h"
 #include "libav_deps.h"
 #include "logger.h"
@@ -34,19 +34,19 @@
 
 namespace jami {
 
-AudioSender::AudioSender(const std::string& id,
-                         const std::string& dest,
-                         const MediaDescription& args,
-                         SocketPair& socketPair,
+AudioSender::AudioSender(const std::string &id,
+                         const std::string &dest,
+                         const MediaDescription &args,
+                         SocketPair &socketPair,
                          const uint16_t seqVal,
                          bool muteState,
-                         const uint16_t mtu) :
-    id_(id),
-    dest_(dest),
-    args_(args),
-    seqVal_(seqVal),
-    muteState_(muteState),
-    mtu_(mtu)
+                         const uint16_t mtu)
+    : id_(id)
+    , dest_(dest)
+    , args_(args)
+    , seqVal_(seqVal)
+    , muteState_(muteState)
+    , mtu_(mtu)
 {
     setup(socketPair);
 }
@@ -62,7 +62,7 @@ AudioSender::~AudioSender()
 }
 
 bool
-AudioSender::setup(SocketPair& socketPair)
+AudioSender::setup(SocketPair &socketPair)
 {
     audioEncoder_.reset(new MediaEncoder);
     muxContext_.reset(socketPair.createIOContext(mtu_));
@@ -73,7 +73,7 @@ AudioSender::setup(SocketPair& socketPair)
         audioEncoder_->openOutput(dest_, "rtp");
         audioEncoder_->setOptions(args_);
         auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
-        auto ms = MediaStream("audio sender", codec->audioformat);
+        auto ms    = MediaStream("audio sender", codec->audioformat);
         audioEncoder_->setOptions(ms);
         audioEncoder_->addStream(args_.codec->systemCodecInfo);
         audioEncoder_->setInitSeqVal(seqVal_);
@@ -90,7 +90,7 @@ AudioSender::setup(SocketPair& socketPair)
 #endif
 
     // NOTE do after encoder is ready to encode
-    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
+    auto codec  = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
     audioInput_ = jami::getAudioInput(id_);
     audioInput_->setFormat(codec->audioformat);
     audioInput_->attach(this);
@@ -99,12 +99,17 @@ AudioSender::setup(SocketPair& socketPair)
 }
 
 void
-AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>>* /*obs*/, const std::shared_ptr<jami::MediaFrame>& framePtr)
+AudioSender::update(Observable<std::shared_ptr<jami::MediaFrame>> * /*obs*/,
+                    const std::shared_ptr<jami::MediaFrame> &framePtr)
 {
-    auto frame = framePtr->pointer();
-    auto ms = MediaStream("a:local", frame->format, rational<int>(1, frame->sample_rate),
-                          frame->sample_rate, frame->channels, frame->nb_samples);
-    frame->pts = sent_samples;
+    auto frame        = framePtr->pointer();
+    auto ms           = MediaStream("a:local",
+                          frame->format,
+                          rational<int>(1, frame->sample_rate),
+                          frame->sample_rate,
+                          frame->channels,
+                          frame->nb_samples);
+    frame->pts        = sent_samples;
     ms.firstTimestamp = frame->pts;
     sent_samples += frame->nb_samples;
 

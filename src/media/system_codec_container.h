@@ -24,46 +24,45 @@
 #include "media_codec.h"
 #include "ring_types.h"
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 namespace jami {
 
 class SystemCodecContainer;
 
-extern decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer;
+extern decltype(getGlobalInstance<SystemCodecContainer>) &getSystemCodecContainer;
 
 class SystemCodecContainer
 {
-    public:
-        SystemCodecContainer();
-        ~SystemCodecContainer();
+public:
+    SystemCodecContainer();
+    ~SystemCodecContainer();
 
-        std::vector<std::shared_ptr<SystemCodecInfo>>
-        getSystemCodecInfoList(MediaType mediaType = MEDIA_ALL);
+    std::vector<std::shared_ptr<SystemCodecInfo>> getSystemCodecInfoList(
+        MediaType mediaType = MEDIA_ALL);
 
-        std::vector<unsigned>
-        getSystemCodecInfoIdList(MediaType type = MEDIA_ALL);
+    std::vector<unsigned> getSystemCodecInfoIdList(MediaType type = MEDIA_ALL);
 
-        std::shared_ptr<SystemCodecInfo>
-        searchCodecById(unsigned codecId, MediaType type = MEDIA_ALL);
+    std::shared_ptr<SystemCodecInfo> searchCodecById(unsigned codecId, MediaType type = MEDIA_ALL);
 
-        std::shared_ptr<SystemCodecInfo>
-        searchCodecByName(const std::string& name, MediaType type = MEDIA_ALL);
+    std::shared_ptr<SystemCodecInfo> searchCodecByName(const std::string &name,
+                                                       MediaType type = MEDIA_ALL);
 
-        std::shared_ptr<SystemCodecInfo>
-        searchCodecByPayload(unsigned payload, MediaType type = MEDIA_ALL);
+    std::shared_ptr<SystemCodecInfo> searchCodecByPayload(unsigned payload,
+                                                          MediaType type = MEDIA_ALL);
 
-        void removeCodecByName(const std::string& name, MediaType type = MEDIA_ALL);
+    void removeCodecByName(const std::string &name, MediaType type = MEDIA_ALL);
 
-        void initCodecConfig();
-    private:
-        /* available audio & video codec  */
-        std::vector<std::shared_ptr<SystemCodecInfo>> availableCodecList_;
+    void initCodecConfig();
 
-        bool setActiveH265();
-        void checkInstalledCodecs();
+private:
+    /* available audio & video codec  */
+    std::vector<std::shared_ptr<SystemCodecInfo>> availableCodecList_;
+
+    bool setActiveH265();
+    void checkInstalledCodecs();
 };
 
 } // namespace jami

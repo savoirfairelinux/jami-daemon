@@ -21,31 +21,32 @@
 
 #pragma once
 
-#include "noncopyable.h"
 #include "media_encoder.h"
 #include "media_io_handle.h"
+#include "noncopyable.h"
 
-#include <map>
-#include <string>
-#include <memory>
 #include <atomic>
+#include <map>
+#include <memory>
+#include <string>
 
 // Forward declarations
 namespace jami {
 class SocketPair;
 struct DeviceParams;
 struct AccountVideoCodecInfo;
-}
+} // namespace jami
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class VideoSender : public VideoFramePassiveReader
 {
 public:
-    VideoSender(const std::string& dest,
-                const DeviceParams& dev,
-                const MediaDescription& args,
-                SocketPair& socketPair,
+    VideoSender(const std::string &dest,
+                const DeviceParams &dev,
+                const MediaDescription &args,
+                SocketPair &socketPair,
                 const uint16_t seqVal,
                 uint16_t mtu);
 
@@ -54,8 +55,8 @@ public:
     void forceKeyFrame();
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<MediaFrame>>* obs,
-                const std::shared_ptr<MediaFrame>& frame_p) override;
+    void update(Observable<std::shared_ptr<MediaFrame>> *obs,
+                const std::shared_ptr<MediaFrame> &frame_p) override;
 
     uint16_t getLastSeqValue();
 
@@ -63,22 +64,23 @@ public:
     int setBitrate(uint64_t br);
 
 private:
-    static constexpr int KEYFRAMES_AT_START {1}; // Number of keyframes to enforce at stream startup
-    static constexpr unsigned KEY_FRAME_PERIOD {0}; // seconds before forcing a keyframe
+    static constexpr int KEYFRAMES_AT_START{1}; // Number of keyframes to enforce at stream startup
+    static constexpr unsigned KEY_FRAME_PERIOD{0}; // seconds before forcing a keyframe
 
     NON_COPYABLE(VideoSender);
 
-    void encodeAndSendVideo(VideoFrame&);
+    void encodeAndSendVideo(VideoFrame &);
 
     // encoder MUST be deleted before muxContext
-    std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
+    std::unique_ptr<MediaIOHandle> muxContext_  = nullptr;
     std::unique_ptr<MediaEncoder> videoEncoder_ = nullptr;
 
-    std::atomic<int> forceKeyFrame_ {KEYFRAMES_AT_START};
-    int keyFrameFreq_ {0}; // Set keyframe rate, 0 to disable auto-keyframe. Computed in constructor
+    std::atomic<int> forceKeyFrame_{KEYFRAMES_AT_START};
+    int keyFrameFreq_{0}; // Set keyframe rate, 0 to disable auto-keyframe. Computed in constructor
     int64_t frameNumber_ = 0;
 
     int rotation_ = 0;
     std::function<void(int)> changeOrientationCallback_;
 };
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

@@ -23,8 +23,8 @@
 
 #include "rational.h"
 
-#include <string>
 #include <chrono>
+#include <string>
 
 namespace jami {
 
@@ -35,22 +35,23 @@ constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
  * Parameters used by MediaDecoder and MediaEncoder
  * to open a LibAV device/stream
  */
-struct DeviceParams {
-    std::string name {};
-    std::string input {}; // Device path (e.g. /dev/video0)
-    std::string format {};
-    unsigned width {}, height {};
-    rational<double> framerate {};
-    std::string pixel_format {};
-    std::string channel_name {};
-    unsigned channel {}; // Channel number
-    std::string loop {};
-    std::string sdp_flags {};
-    int offset_x {};
-    int offset_y {};
-    int orientation {};
+struct DeviceParams
+{
+    std::string name{};
+    std::string input{}; // Device path (e.g. /dev/video0)
+    std::string format{};
+    unsigned width{}, height{};
+    rational<double> framerate{};
+    std::string pixel_format{};
+    std::string channel_name{};
+    unsigned channel{}; // Channel number
+    std::string loop{};
+    std::string sdp_flags{};
+    int offset_x{};
+    int offset_y{};
+    int orientation{};
 };
 
-}
+} // namespace jami
 
 #endif // __MEDIA_DEVICE_H__

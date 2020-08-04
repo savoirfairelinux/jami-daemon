@@ -22,7 +22,8 @@
 
 namespace jami {
 
-ScheduledExecutor::ScheduledExecutor() : thread_([this]{
+ScheduledExecutor::ScheduledExecutor()
+    : thread_([this] {
         while (running_.load())
             loop();
     })
@@ -47,7 +48,7 @@ ScheduledExecutor::stop()
 }
 
 void
-ScheduledExecutor::run(Job&& job)
+ScheduledExecutor::run(Job &&job)
 {
     {
         std::lock_guard<std::mutex> lock(jobLock_);
@@ -58,7 +59,7 @@ ScheduledExecutor::run(Job&& job)
 }
 
 std::shared_ptr<Task>
-ScheduledExecutor::schedule(Job&& job, time_point t)
+ScheduledExecutor::schedule(Job &&job, time_point t)
 {
     auto ret = std::make_shared<Task>(std::move(job));
     schedule(ret, t);
@@ -66,13 +67,13 @@ ScheduledExecutor::schedule(Job&& job, time_point t)
 }
 
 std::shared_ptr<Task>
-ScheduledExecutor::scheduleIn(Job&& job, duration dt)
+ScheduledExecutor::scheduleIn(Job &&job, duration dt)
 {
     return schedule(std::move(job), clock::now() + dt);
 }
 
 std::shared_ptr<RepeatedTask>
-ScheduledExecutor::scheduleAtFixedRate(RepeatedJob&& job, duration dt)
+ScheduledExecutor::scheduleAtFixedRate(RepeatedJob &&job, duration dt)
 {
     auto ret = std::make_shared<RepeatedTask>(std::move(job));
     reschedule(ret, clock::now(), dt);
@@ -83,9 +84,10 @@ void
 ScheduledExecutor::reschedule(std::shared_ptr<RepeatedTask> task, time_point t, duration dt)
 {
     schedule(std::make_shared<Task>([this, task = std::move(task), t, dt]() mutable {
-        if (task->run())
-            reschedule(std::move(task), t + dt, dt);
-    }), t);
+                 if (task->run())
+                     reschedule(std::move(task), t + dt, dt);
+             }),
+             t);
 }
 
 void
@@ -93,9 +95,7 @@ ScheduledExecutor::schedule(std::shared_ptr<Task> task, time_point t)
 {
     {
         std::lock_guard<std::mutex> lock(jobLock_);
-        jobs_[t].emplace_back([task = std::move(task)]{
-            task->run();
-        });
+        jobs_[t].emplace_back([task = std::move(task)] { task->run(); });
     }
     cv_.notify_all();
 }
@@ -117,13 +117,13 @@ ScheduledExecutor::loop()
         jobs = std::move(jobs_.begin()->second);
         jobs_.erase(jobs_.begin());
     }
-    for (auto& job : jobs) {
+    for (auto &job : jobs) {
         try {
             job();
-        } catch (const std::exception& e) {
+        } catch (const std::exception &e) {
             JAMI_ERR("Exception running job: %s", e.what());
         }
     }
 }
 
-}
+} // namespace jami

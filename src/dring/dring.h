@@ -23,26 +23,26 @@
 
 #include "def.h"
 
-#include <vector>
 #include <functional>
-#include <string>
 #include <map>
 #include <memory>
+#include <string>
 #include <type_traits>
+#include <vector>
 
 namespace DRing {
 
 /* flags for initialization */
 enum InitFlag {
-    DRING_FLAG_DEBUG       = 1<<0,
-    DRING_FLAG_CONSOLE_LOG = 1<<1,
-    DRING_FLAG_AUTOANSWER  = 1<<2,
+    DRING_FLAG_DEBUG       = 1 << 0,
+    DRING_FLAG_CONSOLE_LOG = 1 << 1,
+    DRING_FLAG_AUTOANSWER  = 1 << 2,
 };
 
 /**
  * Return the library version as string.
  */
-DRING_PUBLIC const char* version() noexcept;
+DRING_PUBLIC const char *version() noexcept;
 
 /**
  * Initialize globals, create underlaying daemon.
@@ -56,7 +56,7 @@ DRING_PUBLIC bool init(enum InitFlag flags) noexcept;
  * Start asynchronously daemon created by init().
  * @returns true if daemon started successfully
  */
-DRING_PUBLIC bool start(const std::string& config_file={}) noexcept;
+DRING_PUBLIC bool start(const std::string &config_file = {}) noexcept;
 
 /**
  * Stop and freeing any resource allocated by daemon
@@ -84,7 +84,8 @@ DRING_PUBLIC void fini() noexcept;
  * Used conjointly with std::shared_ptr to hide the concrete class.
  * See CallbackWrapper template for details.
  */
-class DRING_PUBLIC CallbackWrapperBase {};
+class DRING_PUBLIC CallbackWrapperBase
+{};
 
 /* Concrete class of CallbackWrapperBase.
  * This class wraps callbacks of a specific signature.
@@ -93,41 +94,37 @@ class DRING_PUBLIC CallbackWrapperBase {};
  * This class is CopyConstructible, CopyAssignable, MoveConstructible
  * and MoveAssignable.
  */
-template <typename TProto>
-class CallbackWrapper : public CallbackWrapperBase {
-    private:
-        using TFunc = std::function<TProto>;
-        TFunc cb_; // The user-callback
+template<typename TProto>
+class CallbackWrapper : public CallbackWrapperBase
+{
+private:
+    using TFunc = std::function<TProto>;
+    TFunc cb_; // The user-callback
 
-    public:
-        // Empty wrapper: no callback associated.
-        // Used to initialize internal callback arrays.
-        CallbackWrapper() noexcept {}
+public:
+    // Empty wrapper: no callback associated.
+    // Used to initialize internal callback arrays.
+    CallbackWrapper() noexcept {}
 
-        // Create and initialize a wrapper to given callback.
-        CallbackWrapper(TFunc&& func) noexcept {
-            cb_ = std::forward<TFunc>(func);
-        }
+    // Create and initialize a wrapper to given callback.
+    CallbackWrapper(TFunc &&func) noexcept { cb_ = std::forward<TFunc>(func); }
 
-        // Create and initialize a wrapper from a generic CallbackWrapperBase
-        // shared pointer.
-        // Note: the given callback is copied into internal storage.
-        CallbackWrapper(const std::shared_ptr<CallbackWrapperBase>& p) noexcept {
-            if (p)
-                cb_ = ((CallbackWrapper<TProto>*)p.get())->cb_;
-        }
+    // Create and initialize a wrapper from a generic CallbackWrapperBase
+    // shared pointer.
+    // Note: the given callback is copied into internal storage.
+    CallbackWrapper(const std::shared_ptr<CallbackWrapperBase> &p) noexcept
+    {
+        if (p)
+            cb_ = ((CallbackWrapper<TProto> *) p.get())->cb_;
+    }
 
-        // Return user-callback reference.
-        // The returned std::function can be null-initialized if no callback
-        // has been set.
-        constexpr const TFunc& operator *() const noexcept {
-            return cb_;
-        }
+    // Return user-callback reference.
+    // The returned std::function can be null-initialized if no callback
+    // has been set.
+    constexpr const TFunc &operator*() const noexcept { return cb_; }
 
-        // Return boolean true value if a non-null callback has been set
-        constexpr explicit operator bool() const noexcept {
-            return static_cast<bool>(cb_);
-        }
+    // Return boolean true value if a non-null callback has been set
+    constexpr explicit operator bool() const noexcept { return static_cast<bool>(cb_); }
 };
 
 /**
@@ -136,15 +133,17 @@ class CallbackWrapper : public CallbackWrapperBase {
  * This last wraps given callback in a ABI-compatible way.
  * Note: this version accepts callbacks as rvalue only.
  */
-template <typename Ts>
+template<typename Ts>
 std::pair<std::string, std::shared_ptr<CallbackWrapperBase>>
-exportable_callback(std::function<typename Ts::cb_type>&& func) {
-    return std::make_pair((const std::string&)Ts::name,
-                          std::make_shared<CallbackWrapper<typename Ts::cb_type>>
-                          (std::forward<std::function<typename Ts::cb_type>>(func)));
+exportable_callback(std::function<typename Ts::cb_type> &&func)
+{
+    return std::make_pair((const std::string &) Ts::name,
+                          std::make_shared<CallbackWrapper<typename Ts::cb_type>>(
+                              std::forward<std::function<typename Ts::cb_type>>(func)));
 }
 
-DRING_PUBLIC void registerSignalHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+DRING_PUBLIC void registerSignalHandlers(
+    const std::map<std::string, std::shared_ptr<CallbackWrapperBase>> &);
 DRING_PUBLIC void unregisterSignalHandlers();
 
 } // namespace DRing

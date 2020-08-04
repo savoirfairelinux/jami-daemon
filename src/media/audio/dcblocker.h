@@ -22,31 +22,33 @@
 #ifndef DCBLOCKER_H
 #define DCBLOCKER_H
 
-#include "ring_types.h"
 #include "audiobuffer.h"
+#include "ring_types.h"
 
 namespace jami {
 
-class DcBlocker {
-    public:
-        DcBlocker(unsigned channels = 1);
-        void reset();
+class DcBlocker
+{
+public:
+    DcBlocker(unsigned channels = 1);
+    void reset();
 
-        void process(AudioSample *out, AudioSample *in, int samples);
+    void process(AudioSample *out, AudioSample *in, int samples);
 
-        /**
+    /**
          * In-place processing of all samples in buf (each channel treated independently)
          */
-        void process(AudioBuffer& buf);
+    void process(AudioBuffer &buf);
 
-    private:
-        struct StreamState {
-            AudioSample y_, x_, xm1_, ym1_;
-        };
+private:
+    struct StreamState
+    {
+        AudioSample y_, x_, xm1_, ym1_;
+    };
 
-        void doProcess(AudioSample *out, AudioSample *in, unsigned samples, struct StreamState * state);
+    void doProcess(AudioSample *out, AudioSample *in, unsigned samples, struct StreamState *state);
 
-        std::vector<StreamState> states;
+    std::vector<StreamState> states;
 };
 
 } // namespace jami

@@ -23,8 +23,8 @@
 #include "ip_utils.h"
 #include "sip/sip_utils.h"
 
-#include <pjsip.h>
 #include <pj/pool.h>
+#include <pjsip.h>
 
 namespace jami {
 
@@ -38,18 +38,20 @@ namespace tls {
 class AbstractSIPTransport
 {
 public:
-    using TransportData = struct {
+    using TransportData = struct
+    {
         pjsip_transport base; // do not move, SHOULD be the fist member
-        AbstractSIPTransport* self {nullptr};
+        AbstractSIPTransport *self{nullptr};
     };
     static_assert(std::is_standard_layout<TransportData>::value,
                   "TranportData requires standard-layout");
 
-    virtual ~AbstractSIPTransport() {};
+    virtual ~AbstractSIPTransport(){};
 
-    virtual pjsip_transport* getTransportBase() = 0;
+    virtual pjsip_transport *getTransportBase() = 0;
 
     virtual IpAddr getLocalAddress() const = 0;
 };
 
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami

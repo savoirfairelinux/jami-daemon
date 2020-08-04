@@ -22,11 +22,11 @@
 
 #pragma once
 
+#include <list>
+#include <map>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <map>
-#include <list>
-#include <stdexcept>
 
 #include "config.h"
 
@@ -37,12 +37,14 @@ struct pjsip_msg;
 struct pjsip_tx_data;
 }
 
-namespace jami { namespace im {
+namespace jami {
+namespace im {
 
 struct InstantMessageException : std::runtime_error
 {
-    InstantMessageException(const std::string& str="") :
-        std::runtime_error("InstantMessageException occurred: " + str) {}
+    InstantMessageException(const std::string &str = "")
+        : std::runtime_error("InstantMessageException occurred: " + str)
+    {}
 };
 
 /**
@@ -63,7 +65,7 @@ struct InstantMessageException : std::runtime_error
  *
  * Exception: throw InstantMessageException if no message sent
  */
-void sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::string>& payloads);
+void sendSipMessage(pjsip_inv_session *session, const std::map<std::string, std::string> &payloads);
 
 /**
  * Parses given SIP message into a map where the key is the contents of the Content-Type header
@@ -73,8 +75,9 @@ void sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std:
  *
  * @return map of content types and message payloads
  */
-std::map<std::string, std::string> parseSipMessage(const pjsip_msg* msg);
+std::map<std::string, std::string> parseSipMessage(const pjsip_msg *msg);
 
-void fillPJSIPMessageBody(pjsip_tx_data& tdata, const std::map<std::string, std::string>& payloads);
+void fillPJSIPMessageBody(pjsip_tx_data &tdata, const std::map<std::string, std::string> &payloads);
 
-}} // namespace jami::im
+} // namespace im
+} // namespace jami

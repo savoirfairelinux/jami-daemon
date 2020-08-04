@@ -18,18 +18,17 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-
 #include "pjsip/sip_multipart.h"
 
-#include "sipaccount.h"
-#include "sipvoiplink.h"
-#include "manager.h"
-#include "sippresence.h"
-#include "logger.h"
-#include "pres_sub_server.h"
 #include "client/ring_signal.h"
-#include "sip_utils.h"
 #include "compiler_intrinsics.h"
+#include "logger.h"
+#include "manager.h"
+#include "pres_sub_server.h"
+#include "sip_utils.h"
+#include "sipaccount.h"
+#include "sippresence.h"
+#include "sipvoiplink.h"
 
 namespace jami {
 
@@ -89,9 +88,8 @@ PresSubServer::pres_evsub_on_srv_state(UNUSED pjsip_evsub *sub, UNUSED pjsip_eve
 pj_bool_t
 PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
 {
-
     pjsip_method *method = &rdata->msg_info.msg->line.req.method;
-    pj_str_t *str = &method->name;
+    pj_str_t *str        = &method->name;
     std::string request(str->ptr, str->slen);
 //    pj_str_t contact;
 #if 0 // DISABLED: removed IP2IP support, tuleap: #448
@@ -269,25 +267,27 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
 }
 
 pjsip_module PresSubServer::mod_presence_server = {
-    NULL, NULL, /* prev, next.        */
+    NULL,
+    NULL,                                /* prev, next.        */
     CONST_PJ_STR("mod-presence-server"), /* Name.        */
-    -1, /* Id            */
+    -1,                                  /* Id            */
     PJSIP_MOD_PRIORITY_DIALOG_USAGE,
-    NULL, /* load()        */
-    NULL, /* start()        */
-    NULL, /* stop()        */
-    NULL, /* unload()        */
+    NULL,                          /* load()        */
+    NULL,                          /* start()        */
+    NULL,                          /* stop()        */
+    NULL,                          /* unload()        */
     &pres_on_rx_subscribe_request, /* on_rx_request()    */
-    NULL, /* on_rx_response()    */
-    NULL, /* on_tx_request.    */
-    NULL, /* on_tx_response()    */
-    NULL, /* on_tsx_state()    */
+    NULL,                          /* on_rx_response()    */
+    NULL,                          /* on_tx_request.    */
+    NULL,                          /* on_tx_response()    */
+    NULL,                          /* on_tsx_state()    */
 
 };
 
-
-
-PresSubServer::PresSubServer(SIPPresence * pres, pjsip_evsub *evsub, const char *remote, pjsip_dialog *d)
+PresSubServer::PresSubServer(SIPPresence *pres,
+                             pjsip_evsub *evsub,
+                             const char *remote,
+                             pjsip_dialog *d)
     : remote_(remote)
     , pres_(pres)
     , sub_(evsub)
@@ -301,23 +301,27 @@ PresSubServer::~PresSubServer()
     //TODO: check if evsub needs to be forced TERMINATED.
 }
 
-void PresSubServer::setExpires(int ms)
+void
+PresSubServer::setExpires(int ms)
 {
     expires_ = ms;
 }
 
-int PresSubServer::getExpires() const
+int
+PresSubServer::getExpires() const
 {
     return expires_;
 }
 
-bool PresSubServer::matches(const char *s) const
+bool
+PresSubServer::matches(const char *s) const
 {
     // servers match if they have the same remote uri and the account ID.
-    return (!(strcmp(remote_, s))) ;
+    return (!(strcmp(remote_, s)));
 }
 
-void PresSubServer::approve(bool flag)
+void
+PresSubServer::approve(bool flag)
 {
     approved_ = flag;
     JAMI_DBG("Approve Presence_subscription_server for %s: %s.", remote_, flag ? "true" : "false");
@@ -325,8 +329,8 @@ void PresSubServer::approve(bool flag)
     pjsip_pres_set_status(sub_, pres_->getStatus());
 }
 
-
-void PresSubServer::notify()
+void
+PresSubServer::notify()
 {
     /* Only send NOTIFY once subscription is active. Some subscriptions
     * may still be in NULL (when app is adding a new buddy while in the

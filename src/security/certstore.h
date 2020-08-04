@@ -25,65 +25,72 @@
 
 #include <opendht/crypto.h>
 
+#include <future>
+#include <map>
+#include <mutex>
+#include <set>
 #include <string>
 #include <vector>
-#include <map>
-#include <set>
-#include <future>
-#include <mutex>
 
 namespace crypto = ::dht::crypto;
 
-namespace jami { namespace tls {
+namespace jami {
+namespace tls {
 
-enum class TrustStatus {
-    UNTRUSTED = 0,
-    TRUSTED
-};
-TrustStatus trustStatusFromStr(const char* str);
-const char* statusToStr(TrustStatus s);
-
+enum class TrustStatus { UNTRUSTED = 0, TRUSTED };
+TrustStatus trustStatusFromStr(const char *str);
+const char *statusToStr(TrustStatus s);
 
 /**
  * Global certificate store.
  * Stores system root CAs and any other encountred certificate
  */
-class CertificateStore {
+class CertificateStore
+{
 public:
-    static CertificateStore& instance();
+    static CertificateStore &instance();
 
     CertificateStore();
 
     std::vector<std::string> getPinnedCertificates() const;
-    std::shared_ptr<crypto::Certificate> getCertificate(const std::string& cert_id) const;
+    std::shared_ptr<crypto::Certificate> getCertificate(const std::string &cert_id) const;
 
-    std::shared_ptr<crypto::Certificate> findCertificateByName(const std::string& name, crypto::NameType type = crypto::NameType::UNKNOWN) const;
-    std::shared_ptr<crypto::Certificate> findCertificateByUID(const std::string& uid) const;
-    std::shared_ptr<crypto::Certificate> findIssuer(const std::shared_ptr<crypto::Certificate>& crt) const;
+    std::shared_ptr<crypto::Certificate> findCertificateByName(
+        const std::string &name, crypto::NameType type = crypto::NameType::UNKNOWN) const;
+    std::shared_ptr<crypto::Certificate> findCertificateByUID(const std::string &uid) const;
+    std::shared_ptr<crypto::Certificate> findIssuer(
+        const std::shared_ptr<crypto::Certificate> &crt) const;
 
-    std::vector<std::string> pinCertificate(const std::vector<uint8_t>& crt, bool local = true) noexcept;
-    std::vector<std::string> pinCertificate(crypto::Certificate&& crt, bool local = true);
-    std::vector<std::string> pinCertificate(const std::shared_ptr<crypto::Certificate>& crt, bool local = true);
-    bool unpinCertificate(const std::string&);
+    std::vector<std::string> pinCertificate(const std::vector<uint8_t> &crt,
+                                            bool local = true) noexcept;
+    std::vector<std::string> pinCertificate(crypto::Certificate &&crt, bool local = true);
+    std::vector<std::string> pinCertificate(const std::shared_ptr<crypto::Certificate> &crt,
+                                            bool local = true);
+    bool unpinCertificate(const std::string &);
 
-    void pinCertificatePath(const std::string& path, std::function<void(const std::vector<std::string>&)> cb = {});
-    unsigned unpinCertificatePath(const std::string&);
+    void pinCertificatePath(const std::string &path,
+                            std::function<void(const std::vector<std::string> &)> cb = {});
+    unsigned unpinCertificatePath(const std::string &);
 
-    bool setTrustedCertificate(const std::string& id, TrustStatus status);
+    bool setTrustedCertificate(const std::string &id, TrustStatus status);
     std::vector<gnutls_x509_crt_t> getTrustedCertificates() const;
 
-    void pinRevocationList(const std::string& id, const std::shared_ptr<dht::crypto::RevocationList>& crl);
-    void pinRevocationList(const std::string& id, dht::crypto::RevocationList&& crl) {
-        pinRevocationList(id, std::make_shared<dht::crypto::RevocationList>(std::forward<dht::crypto::RevocationList>(crl)));
+    void pinRevocationList(const std::string &id,
+                           const std::shared_ptr<dht::crypto::RevocationList> &crl);
+    void pinRevocationList(const std::string &id, dht::crypto::RevocationList &&crl)
+    {
+        pinRevocationList(id,
+                          std::make_shared<dht::crypto::RevocationList>(
+                              std::forward<dht::crypto::RevocationList>(crl)));
     }
 
-    void loadRevocations(crypto::Certificate& crt) const;
+    void loadRevocations(crypto::Certificate &crt) const;
 
 private:
     NON_COPYABLE(CertificateStore);
 
     unsigned loadLocalCertificates();
-    void pinRevocationList(const std::string& id, const dht::crypto::RevocationList& crl);
+    void pinRevocationList(const std::string &id, const dht::crypto::RevocationList &crl);
 
     const std::string certPath_;
     const std::string crlPath_;
@@ -104,27 +111,26 @@ private:
  * Allowed is the status of certificates we accept for incoming
  * connections.
  */
-class TrustStore {
+class TrustStore
+{
 public:
-    TrustStore() = default;
-    TrustStore(TrustStore&& o) = default;
-    TrustStore& operator=(TrustStore&& o) = default;
+    TrustStore()               = default;
+    TrustStore(TrustStore &&o) = default;
+    TrustStore &operator=(TrustStore &&o) = default;
 
-    enum class PermissionStatus {
-        UNDEFINED = 0,
-        ALLOWED,
-        BANNED
-    };
+    enum class PermissionStatus { UNDEFINED = 0, ALLOWED, BANNED };
 
-    static PermissionStatus statusFromStr(const char* str);
-    static const char* statusToStr(PermissionStatus s);
+    static PermissionStatus statusFromStr(const char *str);
+    static const char *statusToStr(PermissionStatus s);
 
-    bool addRevocationList(dht::crypto::RevocationList&& crl);
+    bool addRevocationList(dht::crypto::RevocationList &&crl);
 
-    bool setCertificateStatus(const std::string& cert_id, const PermissionStatus status);
-    bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert, PermissionStatus status, bool local = true);
+    bool setCertificateStatus(const std::string &cert_id, const PermissionStatus status);
+    bool setCertificateStatus(const std::shared_ptr<crypto::Certificate> &cert,
+                              PermissionStatus status,
+                              bool local = true);
 
-    PermissionStatus getCertificateStatus(const std::string& cert_id) const;
+    PermissionStatus getCertificateStatus(const std::string &cert_id) const;
 
     std::vector<std::string> getCertificatesByStatus(PermissionStatus status) const;
 
@@ -141,19 +147,21 @@ public:
      *                    certificate means permission refusal.
      * @return true if the certificate is valid and permitted.
      */
-    bool isAllowed(const crypto::Certificate& crt, bool allowPublic = false);
+    bool isAllowed(const crypto::Certificate &crt, bool allowPublic = false);
 
 private:
     NON_COPYABLE(TrustStore);
 
     void updateKnownCerts();
     bool setCertificateStatus(std::shared_ptr<crypto::Certificate> cert,
-                              const std::string& cert_id,
-                              const TrustStore::PermissionStatus status, bool local);
-    void setStoreCertStatus(const crypto::Certificate& crt, bool status);
+                              const std::string &cert_id,
+                              const TrustStore::PermissionStatus status,
+                              bool local);
+    void setStoreCertStatus(const crypto::Certificate &crt, bool status);
     void rebuildTrust();
 
-    struct Status {
+    struct Status
+    {
         bool allowed;
     };
 
@@ -163,4 +171,5 @@ private:
     dht::crypto::TrustList allowed_;
 };
 
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami

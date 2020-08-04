@@ -23,9 +23,9 @@
 #include "ice_socket.h"
 #include "ip_utils.h"
 
-#include <pjnath.h>
-#include <pjlib.h>
 #include <pjlib-util.h>
+#include <pjlib.h>
+#include <pjnath.h>
 
 #include <functional>
 #include <memory>
@@ -41,28 +41,51 @@ class Controller;
 class IceTransport;
 
 using IceTransportCompleteCb = std::function<void(bool)>;
-using IceRecvInfo = std::function<void(void)>;
-using IceRecvCb = std::function<ssize_t(unsigned char *buf, size_t len)>;
-using IceCandidate = pj_ice_sess_cand;
-using onShutdownCb = std::function<void(void)>;
+using IceRecvInfo            = std::function<void(void)>;
+using IceRecvCb              = std::function<ssize_t(unsigned char *buf, size_t len)>;
+using IceCandidate           = pj_ice_sess_cand;
+using onShutdownCb           = std::function<void(void)>;
 
-struct ICESDP {
-  std::vector<IceCandidate> rem_candidates;
-  std::string rem_ufrag;
-  std::string rem_pwd;
+struct ICESDP
+{
+    std::vector<IceCandidate> rem_candidates;
+    std::string rem_ufrag;
+    std::string rem_pwd;
 };
 
-struct StunServerInfo {
-    StunServerInfo& setUri(const std::string& args) { uri = args; return *this; }
+struct StunServerInfo
+{
+    StunServerInfo &setUri(const std::string &args)
+    {
+        uri = args;
+        return *this;
+    }
 
-    std::string uri;      // server URI, mandatory
+    std::string uri; // server URI, mandatory
 };
 
-struct TurnServerInfo {
-    TurnServerInfo& setUri(const std::string& args) { uri = args; return *this; }
-    TurnServerInfo& setUsername(const std::string& args) { username = args; return *this; }
-    TurnServerInfo& setPassword(const std::string& args) { password = args; return *this; }
-    TurnServerInfo& setRealm(const std::string& args) { realm = args; return *this; }
+struct TurnServerInfo
+{
+    TurnServerInfo &setUri(const std::string &args)
+    {
+        uri = args;
+        return *this;
+    }
+    TurnServerInfo &setUsername(const std::string &args)
+    {
+        username = args;
+        return *this;
+    }
+    TurnServerInfo &setPassword(const std::string &args)
+    {
+        password = args;
+        return *this;
+    }
+    TurnServerInfo &setRealm(const std::string &args)
+    {
+        realm = args;
+        return *this;
+    }
 
     std::string uri;      // server URI, mandatory
     std::string username; // credentials username (optional, empty if not used)
@@ -70,20 +93,22 @@ struct TurnServerInfo {
     std::string realm;    // credentials realm (optional, empty if not used)
 };
 
-struct IceTransportOptions {
-    bool upnpEnable {false};
-    IceTransportCompleteCb onInitDone {};
-    IceTransportCompleteCb onNegoDone {};
+struct IceTransportOptions
+{
+    bool upnpEnable{false};
+    IceTransportCompleteCb onInitDone{};
+    IceTransportCompleteCb onNegoDone{};
     IceRecvInfo onRecvReady{}; // Detect that we have data to read but without destroying the buffer
     std::vector<StunServerInfo> stunServers;
     std::vector<TurnServerInfo> turnServers;
-    bool tcpEnable {false}; // If we want to use TCP
+    bool tcpEnable{false}; // If we want to use TCP
     // See https://tools.ietf.org/html/rfc5245#section-8.1.1.2
     // Make negotiation aggressive by default to avoid latencies.
-    bool aggressive {true};
+    bool aggressive{true};
 };
 
-struct SDP {
+struct SDP
+{
     std::string ufrag;
     std::string pwd;
 
@@ -91,9 +116,11 @@ struct SDP {
     MSGPACK_DEFINE(ufrag, pwd, candidates)
 };
 
-class IceTransport {
+class IceTransport
+{
 public:
-    using Attribute = struct {
+    using Attribute = struct
+    {
         std::string ufrag;
         std::string pwd;
     };
@@ -101,8 +128,10 @@ public:
     /**
      * Constructor
      */
-    IceTransport(const char* name, int component_count, bool master,
-                 const IceTransportOptions& options = {});
+    IceTransport(const char *name,
+                 int component_count,
+                 bool master,
+                 const IceTransportOptions &options = {});
     ~IceTransport();
     /**
      * Get current state
@@ -116,9 +145,8 @@ public:
      * with the negotiation result when operation is really done.
      * Return false if negotiation cannot be started else true.
      */
-    bool start(const Attribute& rem_attrs,
-               const std::vector<IceCandidate>& rem_candidates);
-    bool start(const SDP& sdp);
+    bool start(const Attribute &rem_attrs, const std::vector<IceCandidate> &rem_candidates);
+    bool start(const SDP &sdp);
 
     /**
      * Stop a started or completed transport.
@@ -166,11 +194,9 @@ public:
 
     std::string getLastErrMsg() const;
 
-    IpAddr getDefaultLocalAddress() const {
-        return getLocalAddress(0);
-    }
+    IpAddr getDefaultLocalAddress() const { return getLocalAddress(0); }
 
-    bool registerPublicIP(unsigned compId, const IpAddr& publicIP);
+    bool registerPublicIP(unsigned compId, const IpAddr &publicIP);
 
     /**
      * Return ICE session attributes
@@ -187,23 +213,23 @@ public:
      */
     std::vector<uint8_t> packIceMsg(uint8_t version = 1) const;
 
-    bool getCandidateFromSDP(const std::string& line, IceCandidate& cand) const;
+    bool getCandidateFromSDP(const std::string &line, IceCandidate &cand) const;
 
     // I/O methods
 
     void setOnRecv(unsigned comp_id, IceRecvCb cb);
-    void setOnShutdown(onShutdownCb&& cb);
+    void setOnShutdown(onShutdownCb &&cb);
 
-    ssize_t recv(int comp_id, unsigned char* buf, size_t len, std::error_code& ec);
-    ssize_t recvfrom(int comp_id, char *buf, size_t len, std::error_code& ec);
+    ssize_t recv(int comp_id, unsigned char *buf, size_t len, std::error_code &ec);
+    ssize_t recvfrom(int comp_id, char *buf, size_t len, std::error_code &ec);
 
-    ssize_t send(int comp_id, const unsigned char* buf, size_t len);
+    ssize_t send(int comp_id, const unsigned char *buf, size_t len);
 
     int waitForInitialization(std::chrono::milliseconds timeout);
 
     int waitForNegotiation(std::chrono::milliseconds timeout);
 
-    ssize_t waitForData(int comp_id, std::chrono::milliseconds timeout, std::error_code& ec);
+    ssize_t waitForData(int comp_id, std::chrono::milliseconds timeout, std::error_code &ec);
 
     /**
      * Return without waiting how many bytes are ready to read
@@ -223,45 +249,45 @@ public:
      * @param msg     The payload to parse
      * @return the list of SDP messages
      */
-    static std::vector<SDP> parseSDPList(const std::vector<uint8_t>& msg);
+    static std::vector<SDP> parseSDPList(const std::vector<uint8_t> &msg);
 
     bool isTCPEnabled();
 
-    static ICESDP parse_SDP(const std::string& sdp_msg, const IceTransport& ice);
+    static ICESDP parse_SDP(const std::string &sdp_msg, const IceTransport &ice);
 
-    void setDefaultRemoteAddress(int comp_id, const IpAddr& addr);
+    void setDefaultRemoteAddress(int comp_id, const IpAddr &addr);
 
-  private:
+private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };
 
-class IceTransportFactory {
+class IceTransportFactory
+{
 public:
     IceTransportFactory();
     ~IceTransportFactory();
 
-    std::shared_ptr<IceTransport> createTransport(const char* name,
+    std::shared_ptr<IceTransport> createTransport(const char *name,
                                                   int component_count,
                                                   bool master,
-                                                  const IceTransportOptions& options = {});
+                                                  const IceTransportOptions &options = {});
 
-    std::unique_ptr<IceTransport> createUTransport(const char* name,
-                                                  int component_count,
-                                                  bool master,
-                                                  const IceTransportOptions& options = {});
-
+    std::unique_ptr<IceTransport> createUTransport(const char *name,
+                                                   int component_count,
+                                                   bool master,
+                                                   const IceTransportOptions &options = {});
 
     /**
      * PJSIP specifics
      */
     pj_ice_strans_cfg getIceCfg() const { return ice_cfg_; }
-    pj_pool_factory* getPoolFactory() { return &cp_.factory; }
+    pj_pool_factory *getPoolFactory() { return &cp_.factory; }
 
 private:
     pj_caching_pool cp_;
-    std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t*)>> pool_;
+    std::unique_ptr<pj_pool_t, std::function<void(pj_pool_t *)>> pool_;
     pj_ice_strans_cfg ice_cfg_;
 };
 
-};
+}; // namespace jami

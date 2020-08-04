@@ -39,9 +39,12 @@ namespace jami {
  *
  * Works at frame-level instead of sample- or byte-level like FFmpeg's FIFO buffers.
  */
-class AudioFrameResizer {
+class AudioFrameResizer
+{
 public:
-    AudioFrameResizer(const AudioFormat& format, int frameSize, std::function<void(std::shared_ptr<AudioFrame>&&)> cb = {});
+    AudioFrameResizer(const AudioFormat &format,
+                      int frameSize,
+                      std::function<void(std::shared_ptr<AudioFrame> &&)> cb = {});
     ~AudioFrameResizer();
 
     /**
@@ -55,7 +58,7 @@ public:
      */
     AudioFormat format() const;
 
-    void setFormat(const AudioFormat& format, int frameSize);
+    void setFormat(const AudioFormat &format, int frameSize);
     void setFrameSize(int frameSize);
 
     /**
@@ -71,7 +74,7 @@ public:
      *
      * NOTE @frame's format must match @format_, or this will fail.
      */
-    void enqueue(std::shared_ptr<AudioFrame>&& frame);
+    void enqueue(std::shared_ptr<AudioFrame> &&frame);
 
     /**
      * Notifies owner of a new frame.
@@ -94,13 +97,13 @@ private:
     /**
      * Function to call once @queue_ contains enough samples to produce a frame.
      */
-    std::function<void(std::shared_ptr<AudioFrame>&&)> cb_;
+    std::function<void(std::shared_ptr<AudioFrame> &&)> cb_;
 
     /**
      * Audio queue operating on the sample level instead of byte level.
      */
-    AVAudioFifo* queue_;
-    int64_t nextOutputPts_ {0};
+    AVAudioFifo *queue_;
+    int64_t nextOutputPts_{0};
 };
 
 } // namespace jami

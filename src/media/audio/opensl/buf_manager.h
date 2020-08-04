@@ -26,8 +26,8 @@
 
 #include <atomic>
 #include <cassert>
-#include <memory>
 #include <limits>
+#include <memory>
 #include <vector>
 
 #ifndef CACHE_ALIGN
@@ -37,32 +37,40 @@
 /*
  * ProducerConsumerQueue, borrowed from Ian NiLewis
  */
-template <typename T>
-class ProducerConsumerQueue {
+template<typename T>
+class ProducerConsumerQueue
+{
 public:
-    explicit ProducerConsumerQueue(size_t size) : buffer_(size) {
+    explicit ProducerConsumerQueue(size_t size)
+        : buffer_(size)
+    {
         // This is necessary because we depend on twos-complement wraparound
         // to take care of overflow conditions.
         assert(size < std::numeric_limits<int>::max());
     }
 
-    void clear() {
+    void clear()
+    {
         read_.store(0);
         write_.store(0);
     }
 
-    bool push(const T& item) {
-        return push([&](T* ptr) -> bool {*ptr = item; return true; });
+    bool push(const T &item)
+    {
+        return push([&](T *ptr) -> bool {
+            *ptr = item;
+            return true;
+        });
     }
 
     // get() is idempotent between calls to commit().
-    T* getWriteablePtr() {
-        T* result = nullptr;
+    T *getWriteablePtr()
+    {
+        T *result = nullptr;
 
+        bool check __attribute__((unused)); //= false;
 
-        bool check  __attribute__((unused));//= false;
-
-        check = push([&](T* head)-> bool {
+        check = push([&](T *head) -> bool {
             result = head;
             return false; // don't increment
         });
@@ -73,8 +81,9 @@ public:
         return result;
     }
 
-    bool commitWriteablePtr(T *ptr) {
-        bool result = push([&](T* head)-> bool {
+    bool commitWriteablePtr(T *ptr)
+    {
+        bool result = push([&](T *head) -> bool {
             // this writer func does nothing, because we assume that the caller
             // has already written to *ptr after acquiring it from a call to get().
             // So just double-check that ptr is actually at the write head, and
@@ -92,15 +101,16 @@ public:
     // writer() can return false, which indicates that the caller
     // of push() changed its mind while writing (e.g. ran out of bytes)
     template<typename F>
-    bool push(const F& writer) {
-        bool result = false;
-        int readptr = read_.load(std::memory_order_acquire);
+    bool push(const F &writer)
+    {
+        bool result  = false;
+        int readptr  = read_.load(std::memory_order_acquire);
         int writeptr = write_.load(std::memory_order_relaxed);
 
         // note that while readptr and writeptr will eventually
         // wrap around, taking their difference is still valid as
         // long as size_ < MAXINT.
-        int space = buffer_.size() - (int)(writeptr - readptr);
+        int space = buffer_.size() - (int) (writeptr - readptr);
         if (space >= 1) {
             result = true;
 
@@ -113,25 +123,31 @@ public:
         return result;
     }
     // front out the queue, but not pop-out
-    bool front(T* out_item) {
-        return front([&](T* ptr)-> bool {*out_item = *ptr; return true;});
+    bool front(T *out_item)
+    {
+        return front([&](T *ptr) -> bool {
+            *out_item = *ptr;
+            return true;
+        });
     }
 
-    void pop(void) {
+    void pop(void)
+    {
         int readptr = read_.load(std::memory_order_relaxed);
         ++readptr;
         read_.store(readptr, std::memory_order_release);
     }
 
     template<typename F>
-    bool front(const F& reader) {
+    bool front(const F &reader)
+    {
         bool result = false;
 
         int writeptr = write_.load(std::memory_order_acquire);
-        int readptr = read_.load(std::memory_order_relaxed);
+        int readptr  = read_.load(std::memory_order_relaxed);
 
         // As above, wraparound is ok
-        int available = (int)(writeptr - readptr);
+        int available = (int) (writeptr - readptr);
         if (available >= 1) {
             result = true;
             reader(buffer_.data() + (readptr % buffer_.size()));
@@ -139,9 +155,10 @@ public:
 
         return result;
     }
-    uint32_t size(void) {
+    uint32_t size(void)
+    {
         int writeptr = write_.load(std::memory_order_acquire);
-        int readptr = read_.load(std::memory_order_relaxed);
+        int readptr  = read_.load(std::memory_order_relaxed);
 
         return (uint32_t)(writeptr - readptr);
     }
@@ -149,35 +166,46 @@ public:
 private:
     NON_COPYABLE(ProducerConsumerQueue);
     std::vector<T> buffer_;
-    std::atomic<int> read_ { 0 };
-    std::atomic<int> write_ { 0 };
+    std::atomic<int> read_{0};
+    std::atomic<int> write_{0};
 };
 
-struct sample_buf {
-    uint8_t* buf_ {nullptr};       // audio sample container
-    size_t   cap_ {0};       // buffer capacity in byte
-    size_t   size_ {0};      // audio sample size (n buf) in byte
+struct sample_buf
+{
+    uint8_t *buf_{nullptr}; // audio sample container
+    size_t cap_{0};         // buffer capacity in byte
+    size_t size_{0};        // audio sample size (n buf) in byte
     sample_buf() {}
-    sample_buf(size_t alloc, size_t size) : buf_(new uint8_t[alloc]), cap_(size) {}
-    sample_buf(sample_buf&& o) : buf_(o.buf_), cap_(o.cap_), size_(o.size_) {
-        o.buf_ = nullptr;
-        o.cap_ = 0;
+    sample_buf(size_t alloc, size_t size)
+        : buf_(new uint8_t[alloc])
+        , cap_(size)
+    {}
+    sample_buf(sample_buf &&o)
+        : buf_(o.buf_)
+        , cap_(o.cap_)
+        , size_(o.size_)
+    {
+        o.buf_  = nullptr;
+        o.cap_  = 0;
         o.size_ = 0;
     }
-    sample_buf& operator=(sample_buf&& o) {
-        buf_ = o.buf_;
-        cap_ = o.cap_;
-        size_ = o.size_;
-        o.buf_ = nullptr;
-        o.cap_ = 0;
+    sample_buf &operator=(sample_buf &&o)
+    {
+        buf_    = o.buf_;
+        cap_    = o.cap_;
+        size_   = o.size_;
+        o.buf_  = nullptr;
+        o.cap_  = 0;
         o.size_ = 0;
         return *this;
     }
 
-    ~sample_buf() {
-        if (buf_) delete[] buf_;
+    ~sample_buf()
+    {
+        if (buf_)
+            delete[] buf_;
     }
     NON_COPYABLE(sample_buf);
 };
 
-using AudioQueue = ProducerConsumerQueue<sample_buf*>;
+using AudioQueue = ProducerConsumerQueue<sample_buf *>;

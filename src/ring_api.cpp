@@ -18,22 +18,22 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
+#include <cstdlib>
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
-#include <cstdlib>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "manager.h"
-#include "logger.h"
-#include "dring.h"
 #include "callmanager_interface.h"
-#include "configurationmanager_interface.h"
-#include "presencemanager_interface.h"
 #include "client/ring_signal.h"
+#include "configurationmanager_interface.h"
+#include "dring.h"
+#include "logger.h"
+#include "manager.h"
+#include "presencemanager_interface.h"
 
 #ifdef ENABLE_VIDEO
 #include "client/videomanager.h"
@@ -54,7 +54,7 @@ init(enum InitFlag flags) noexcept
 
     try {
         // current implementation use static variable
-        auto& manager = jami::Manager::instance();
+        auto &manager = jami::Manager::instance();
         manager.setAutoAnswer(flags & DRING_FLAG_AUTOANSWER);
         return true;
     } catch (...) {
@@ -63,7 +63,7 @@ init(enum InitFlag flags) noexcept
 }
 
 bool
-start(const std::string& config_file) noexcept
+start(const std::string &config_file) noexcept
 {
     try {
         jami::Manager::instance().init(config_file);

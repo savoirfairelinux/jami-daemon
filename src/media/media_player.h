@@ -21,20 +21,20 @@
 #pragma once
 
 #include "audio/audio_input.h"
-#include "video/video_input.h"
 #include "media_decoder.h"
+#include "video/video_input.h"
 #include <atomic>
 
 namespace jami {
-class MediaPlayer {
-
+class MediaPlayer
+{
 public:
-    MediaPlayer(const std::string& path);
+    MediaPlayer(const std::string &path);
     ~MediaPlayer();
 
     void pause(bool pause);
     bool isInputValid();
-    const std::string& getId() const;
+    const std::string &getId() const;
     void muteAudio(bool mute);
     bool seekToTime(int64_t time);
     int64_t getPlayerPosition() const;
@@ -54,23 +54,19 @@ private:
     int64_t lastPausedTime_;
     int64_t pauseInterval_;
 
-    inline bool hasAudio() const {
-         return audioStream_ >= 0 ;
-    }
+    inline bool hasAudio() const { return audioStream_ >= 0; }
 
-    inline bool hasVideo() const {
-         return videoStream_ >= 0 ;
-    }
+    inline bool hasVideo() const { return videoStream_ >= 0; }
 
-    int audioStream_ = -1;
-    int videoStream_ = -1;
+    int audioStream_      = -1;
+    int videoStream_      = -1;
     int64_t fileDuration_ = 0;
 
     void playFileFromBeginning();
-    std::atomic_bool paused_ {true};
+    std::atomic_bool paused_{true};
     bool readBufferOverflow_ = false;
-    bool audioStreamEnded_ {false};
-    bool videoStreamEnded_ {false};
+    bool audioStreamEnded_{false};
+    bool videoStreamEnded_{false};
 
     bool configureMediaInputs();
     void process();
@@ -79,7 +75,5 @@ private:
     void flushMediaBuffers();
 
     bool streamsFinished();
-
 };
 } // namespace jami
-

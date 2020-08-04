@@ -19,11 +19,11 @@
  */
 #pragma once
 
-#include <string>
 #include <chrono>
-#include <mutex>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <string>
 
 namespace jami {
 class RepeatedTask;
@@ -36,22 +36,22 @@ class Smartools
 #endif
 
 public:
-    static Smartools& getInstance();
+    static Smartools &getInstance();
     void start(std::chrono::milliseconds refreshTimeMs);
     void stop();
-    void setFrameRate(const std::string& id, const std::string& fps);
-    void setResolution(const std::string& id, int width, int height);
-    void setLocalVideoCodec(const std::string& localVideoCodec);
-    void setRemoteVideoCodec(const std::string& remoteVideoCodec, const std::string& callID);
-    void setRemoteAudioCodec(const std::string& remoteAudioCodec);
-    void setLocalAudioCodec(const std::string& remoteAudioCodec);
+    void setFrameRate(const std::string &id, const std::string &fps);
+    void setResolution(const std::string &id, int width, int height);
+    void setLocalVideoCodec(const std::string &localVideoCodec);
+    void setRemoteVideoCodec(const std::string &remoteVideoCodec, const std::string &callID);
+    void setRemoteAudioCodec(const std::string &remoteAudioCodec);
+    void setLocalAudioCodec(const std::string &remoteAudioCodec);
     void sendInfo();
 
 private:
-    Smartools() {};
+    Smartools(){};
     ~Smartools();
     std::mutex mutexInfo_; // Protect information_ from multithreading
     std::map<std::string, std::string> information_;
     std::shared_ptr<RepeatedTask> task_;
 };
-}
+} // namespace jami

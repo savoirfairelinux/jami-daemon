@@ -20,13 +20,13 @@
 
 #pragma once
 
+#include "jamidht/abstract_sip_transport.h"
 #include "noncopyable.h"
 #include "scheduled_executor.h"
-#include "jamidht/abstract_sip_transport.h"
 
 #include <atomic>
-#include <condition_variable>
 #include <chrono>
+#include <condition_variable>
 #include <list>
 #include <memory>
 #include <thread>
@@ -48,17 +48,17 @@ namespace tls {
 class ChanneledSIPTransport : public AbstractSIPTransport
 {
 public:
-    ChanneledSIPTransport(pjsip_endpoint* endpt, int tp_type,
-                    const std::shared_ptr<ChannelSocket>& socket,
-                    const IpAddr& local, const IpAddr& remote,
-                    onShutdownCb&& cb);
+    ChanneledSIPTransport(pjsip_endpoint *endpt,
+                          int tp_type,
+                          const std::shared_ptr<ChannelSocket> &socket,
+                          const IpAddr &local,
+                          const IpAddr &remote,
+                          onShutdownCb &&cb);
     ~ChanneledSIPTransport();
 
-    pjsip_transport* getTransportBase() override { return &trData_.base; }
+    pjsip_transport *getTransportBase() override { return &trData_.base; }
 
-    IpAddr getLocalAddress() const override {
-        return local_;
-    }
+    IpAddr getLocalAddress() const override { return local_; }
 
 private:
     NON_COPYABLE(ChanneledSIPTransport);
@@ -71,24 +71,25 @@ private:
     // PJSIP transport backend
     TransportData trData_; // uplink to "this" (used by PJSIP called C-callbacks)
 
-    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)*> pool_;
-    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)*> rxPool_;
+    std::unique_ptr<pj_pool_t, decltype(pj_pool_release) *> pool_;
+    std::unique_ptr<pj_pool_t, decltype(pj_pool_release) *> rxPool_;
 
     std::mutex rxMtx_;
     std::list<std::vector<uint8_t>> rxPending_;
     pjsip_rx_data rdata_;
 
-    std::mutex txMutex_ {};
-    std::condition_variable txCv_ {};
-    std::list<pjsip_tx_data*> txQueue_ {};
+    std::mutex txMutex_{};
+    std::condition_variable txCv_{};
+    std::list<pjsip_tx_data *> txQueue_{};
 
     ScheduledExecutor scheduler_;
 
-    pj_status_t send(pjsip_tx_data*, const pj_sockaddr_t*, int, void*, pjsip_transport_callback);
+    pj_status_t send(pjsip_tx_data *, const pj_sockaddr_t *, int, void *, pjsip_transport_callback);
     void handleEvents();
 
     // Handle disconnected event
-    std::atomic_bool disconnected_ {false};
+    std::atomic_bool disconnected_{false};
 };
 
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami

@@ -20,9 +20,9 @@
 
 #pragma once
 
-#include "preferences.h"
-#include "audio/sound/tone.h"  // for Tone::TONEID declaration
 #include "audio/sound/audiofile.h"
+#include "audio/sound/tone.h" // for Tone::TONEID declaration
+#include "preferences.h"
 
 #include <mutex>
 
@@ -37,28 +37,29 @@ namespace jami {
 
 class TelephoneTone;
 
-class ToneControl {
-    public:
-        ToneControl() = delete;
-        ToneControl(const Preferences& preferences);
-        ~ToneControl();
+class ToneControl
+{
+public:
+    ToneControl() = delete;
+    ToneControl(const Preferences &preferences);
+    ~ToneControl();
 
-        void setSampleRate(unsigned rate);
-        std::shared_ptr<AudioLoop> getTelephoneTone();
-        std::shared_ptr<AudioLoop> getTelephoneFile(void);
-        bool setAudioFile(const std::string& file);
-        void stopAudioFile();
-        void stop();
-        void play(Tone::ToneId toneId);
-        void seek(double value);
+    void setSampleRate(unsigned rate);
+    std::shared_ptr<AudioLoop> getTelephoneTone();
+    std::shared_ptr<AudioLoop> getTelephoneFile(void);
+    bool setAudioFile(const std::string &file);
+    void stopAudioFile();
+    void stop();
+    void play(Tone::ToneId toneId);
+    void seek(double value);
 
-    private:
-        const Preferences& prefs_;
+private:
+    const Preferences &prefs_;
 
-        std::mutex mutex_; // protect access to following members
-        unsigned sampleRate_;
-        std::unique_ptr<TelephoneTone> telephoneTone_;
-        std::shared_ptr<AudioFile> audioFile_;
+    std::mutex mutex_; // protect access to following members
+    unsigned sampleRate_;
+    std::unique_ptr<TelephoneTone> telephoneTone_;
+    std::shared_ptr<AudioFile> audioFile_;
 };
 
 } // namespace jami

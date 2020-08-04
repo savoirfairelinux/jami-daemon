@@ -18,15 +18,15 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "libav_utils.h"
 #include "media_buffer.h"
 #include "dring/videomanager_interface.h"
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
+#include "libav_utils.h"
 
-#include <new> // std::bad_alloc
+#include <ciso646> // fix windows compiler bug
 #include <cstdlib>
 #include <cstring> // std::memset
-#include <ciso646> // fix windows compiler bug
+#include <new>     // std::bad_alloc
 
 namespace jami {
 
@@ -37,7 +37,7 @@ namespace jami {
 int
 videoFrameSize(int format, int width, int height)
 {
-    return av_image_get_buffer_size((AVPixelFormat)format, width, height, 1);
+    return av_image_get_buffer_size((AVPixelFormat) format, width, height, 1);
 }
 
 #endif // ENABLE_VIDEO

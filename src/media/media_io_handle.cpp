@@ -18,8 +18,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_io_handle.h"
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
 
 namespace jami {
 
@@ -28,16 +28,16 @@ MediaIOHandle::MediaIOHandle(std::size_t buffer_size,
                              io_readcallback read_cb,
                              io_writecallback write_cb,
                              io_seekcallback seek_cb,
-                             void *opaque) : ctx_(0)
+                             void *opaque)
+    : ctx_(0)
 
 {
     /* FFmpeg doesn't alloc the buffer for the first time, but it does free and
      * alloc it afterwards.
      * Don't directly use malloc because av_malloc is optimized for memory alignment.
      */
-    auto buf = static_cast<uint8_t*>(av_malloc(buffer_size));
-    ctx_ = avio_alloc_context(buf, buffer_size, writeable, opaque, read_cb,
-                              write_cb, seek_cb);
+    auto buf = static_cast<uint8_t *>(av_malloc(buffer_size));
+    ctx_     = avio_alloc_context(buf, buffer_size, writeable, opaque, read_cb, write_cb, seek_cb);
     ctx_->max_packet_size = buffer_size;
 }
 

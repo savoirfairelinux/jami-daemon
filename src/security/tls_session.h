@@ -22,30 +22,32 @@
 
 #pragma once
 
-#include "noncopyable.h"
 #include "generic_io.h"
+#include "noncopyable.h"
 
 #include <gnutls/gnutls.h>
 
-#include <string>
-#include <functional>
-#include <memory>
-#include <future>
-#include <chrono>
-#include <vector>
 #include <array>
+#include <chrono>
+#include <functional>
+#include <future>
+#include <memory>
+#include <string>
+#include <vector>
 
-namespace dht { namespace crypto {
+namespace dht {
+namespace crypto {
 struct Certificate;
 struct PrivateKey;
-}} // namespace dht::crypto
+} // namespace crypto
+} // namespace dht
 
-namespace jami { namespace tls {
+namespace jami {
+namespace tls {
 
 class DhParams;
 
-enum class TlsSessionState
-{
+enum class TlsSessionState {
     NONE,
     SETUP,
     COOKIE, // only used with non-initiator and non-reliable transport
@@ -55,7 +57,7 @@ enum class TlsSessionState
     SHUTDOWN
 };
 
-using clock = std::chrono::steady_clock;
+using clock    = std::chrono::steady_clock;
 using duration = clock::duration;
 
 struct TlsParams
@@ -76,9 +78,8 @@ struct TlsParams
     duration timeout;
 
     // Callback for certificate checkings
-    std::function<int(unsigned status,
-                      const gnutls_datum_t* cert_list,
-                      unsigned cert_list_size)> cert_check;
+    std::function<int(unsigned status, const gnutls_datum_t *cert_list, unsigned cert_list_size)>
+        cert_check;
 };
 
 /// TlsSession
@@ -90,39 +91,42 @@ struct TlsParams
 class TlsSession : public GenericSocket<uint8_t>
 {
 public:
-    using SocketType = GenericSocket<uint8_t>;
+    using SocketType        = GenericSocket<uint8_t>;
     using OnStateChangeFunc = std::function<void(TlsSessionState)>;
-    using OnRxDataFunc = std::function<void(std::vector<uint8_t>&&)>;
-    using OnCertificatesUpdate = std::function<void(const gnutls_datum_t*,
-                                                    const gnutls_datum_t*,
-                                                    unsigned int)>;
+    using OnRxDataFunc      = std::function<void(std::vector<uint8_t> &&)>;
+    using OnCertificatesUpdate
+        = std::function<void(const gnutls_datum_t *, const gnutls_datum_t *, unsigned int)>;
     using VerifyCertificate = std::function<int(gnutls_session_t)>;
 
     // ===> WARNINGS <===
     // Following callbacks are called into the FSM thread context
     // Do not call blocking routines inside them.
-    using TlsSessionCallbacks = struct {
+    using TlsSessionCallbacks = struct
+    {
         OnStateChangeFunc onStateChange;
         OnRxDataFunc onRxData;
         OnCertificatesUpdate onCertificatesUpdate;
         VerifyCertificate verifyCertificate;
     };
 
-    TlsSession(std::unique_ptr<SocketType>&& transport, const TlsParams& params, const TlsSessionCallbacks& cbs,
-               bool anonymous=true);
+    TlsSession(std::unique_ptr<SocketType> &&transport,
+               const TlsParams &params,
+               const TlsSessionCallbacks &cbs,
+               bool anonymous = true);
     ~TlsSession();
 
     /// Return the name of current cipher.
     /// Can be called by onStateChange callback when state == ESTABLISHED
     /// to obtain the used cypher suite id.
-    const char* currentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const;
+    const char *currentCipherSuiteId(std::array<uint8_t, 2> &cs_id) const;
 
     /// Request TLS thread to stop and quit.
     /// \note IO operations return error after this call.
     void shutdown() override;
 
-    void setOnRecv(RecvCb&& cb) override {
-        (void)cb;
+    void setOnRecv(RecvCb &&cb) override
+    {
+        (void) cb;
         throw std::logic_error("TlsSession::setOnRecv not implemented");
     }
 
@@ -133,21 +137,22 @@ public:
 
     int maxPayload() const override;
 
-    void waitForReady(const duration& timeout = {});
+    void waitForReady(const duration &timeout = {});
 
     /// Synchronous writing.
     /// Return a positive number for number of bytes write, or 0 and \a ec set in case of error.
-    std::size_t write(const ValueType* data, std::size_t size, std::error_code& ec) override;
+    std::size_t write(const ValueType *data, std::size_t size, std::error_code &ec) override;
 
     /// Synchronous reading.
     /// Return a positive number for number of bytes read, or 0 and \a ec set in case of error.
-    std::size_t read(ValueType* data, std::size_t size, std::error_code& ec) override;
+    std::size_t read(ValueType *data, std::size_t size, std::error_code &ec) override;
 
-    int waitForData(std::chrono::milliseconds, std::error_code&) const override;
+    int waitForData(std::chrono::milliseconds, std::error_code &) const override;
 
 private:
     class TlsSessionImpl;
     std::unique_ptr<TlsSessionImpl> pimpl_;
 };
 
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami

@@ -19,7 +19,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 #include "pmp_igd.h"
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 PMPIGD::~PMPIGD()
 {
     tcpMappings_.clear();
@@ -29,17 +30,17 @@ PMPIGD::~PMPIGD()
     toAdd_.clear();
 }
 bool
-PMPIGD::operator==(IGD& other) const
+PMPIGD::operator==(IGD &other) const
 {
     return publicIp_ == other.publicIp_ and localIp_ == other.localIp_;
 }
 bool
-PMPIGD::operator==(PMPIGD& other) const
+PMPIGD::operator==(PMPIGD &other) const
 {
     return publicIp_ == other.publicIp_ and localIp_ == other.localIp_;
 }
 bool
-PMPIGD::isMapAdded(const Mapping& map)
+PMPIGD::isMapAdded(const Mapping &map)
 {
     return isMapInUse(map);
 }
@@ -50,7 +51,7 @@ PMPIGD::addMapToAdd(Mapping map)
     toAdd_.push_back(std::move(map));
 }
 void
-PMPIGD::removeMapToAdd(const Mapping& map)
+PMPIGD::removeMapToAdd(const Mapping &map)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
     for (auto it = toAdd_.cbegin(); it != toAdd_.cend(); it++) {
@@ -72,7 +73,7 @@ PMPIGD::addMapToRenew(Mapping map)
     toRenew_.push_back(std::move(map));
 }
 void
-PMPIGD::removeMapToRenew(const Mapping& map)
+PMPIGD::removeMapToRenew(const Mapping &map)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
     for (auto it = toRenew_.cbegin(); it != toRenew_.cend(); it++) {
@@ -94,7 +95,7 @@ PMPIGD::addMapToRemove(Mapping map)
     toRemove_.push_back(std::move(map));
 }
 void
-PMPIGD::removeMapToRemove(const Mapping& map)
+PMPIGD::removeMapToRemove(const Mapping &map)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
     for (auto it = toRemove_.cbegin(); it != toRemove_.cend(); it++) {
@@ -114,12 +115,12 @@ PMPIGD::clearMappings()
     tcpMappings_.clear();
 }
 bool
-PMPIGD::isMapUpForRenewal(const Mapping& map, time_point now)
+PMPIGD::isMapUpForRenewal(const Mapping &map, time_point now)
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
     for (auto it = toRenew_.cbegin(); it != toRenew_.cend(); it++) {
         if (*it == map) {
-            auto& element = (*it);
+            auto &element = (*it);
             if (element.renewal_ < now)
                 return true;
             else
@@ -129,24 +130,24 @@ PMPIGD::isMapUpForRenewal(const Mapping& map, time_point now)
     return false;
 }
 
-Mapping*
+Mapping *
 PMPIGD::getNextMappingToRenew()
 {
     std::lock_guard<std::mutex> lk(mapListMutex_);
-    Mapping* mapping {nullptr};
+    Mapping *mapping{nullptr};
     if (not toAdd_.empty()) {
-        return (Mapping*)&toAdd_.front();
+        return (Mapping *) &toAdd_.front();
     } else {
         if (not toRenew_.empty()) {
             for (auto it = toRenew_.begin(); it != toRenew_.end(); it++) {
-                auto& element = (*it);
+                auto &element = (*it);
                 if (!mapping or element.renewal_ < mapping->renewal_) {
                     mapping = &element;
                 }
             }
         }
     }
-    return (Mapping*)mapping;
+    return (Mapping *) mapping;
 }
 time_point
 PMPIGD::getRenewalTime()
@@ -158,4 +159,5 @@ PMPIGD::getRenewalTime()
     auto nextTime = std::min(renewal_, next ? next->renewal_ : time_point::max());
     return toRenew_.empty() ? nextTime : std::min(nextTime, time_point::min());
 }
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

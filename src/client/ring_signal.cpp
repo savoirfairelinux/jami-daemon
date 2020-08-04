@@ -22,7 +22,7 @@
 
 namespace jami {
 
-SignalHandlerMap&
+SignalHandlerMap &
 getSignalHandlers()
 {
     static SignalHandlerMap handlers = {
@@ -134,11 +134,10 @@ getSignalHandlers()
 namespace DRing {
 
 void
-registerSignalHandlers(const std::map<std::string,
-                       std::shared_ptr<CallbackWrapperBase>>&handlers)
+registerSignalHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>> &handlers)
 {
-    auto& handlers_ = jami::getSignalHandlers();
-    for (auto& item : handlers) {
+    auto &handlers_ = jami::getSignalHandlers();
+    for (auto &item : handlers) {
         auto iter = handlers_.find(item.first);
         if (iter == handlers_.end()) {
             JAMI_ERR("Signal %s not supported", item.first.c_str());
@@ -151,10 +150,10 @@ registerSignalHandlers(const std::map<std::string,
 void
 unregisterSignalHandlers()
 {
-    auto& handlers_ = jami::getSignalHandlers();
-    for (auto& item : handlers_) {
+    auto &handlers_ = jami::getSignalHandlers();
+    for (auto &item : handlers_) {
         item.second = {};
     }
 }
 
-}
+} // namespace DRing

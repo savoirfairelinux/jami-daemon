@@ -19,19 +19,20 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "video_base.h"
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
+#include "logger.h"
 #include "media_buffer.h"
 #include "string_utils.h"
-#include "logger.h"
 
 #include <cassert>
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 /*=== VideoGenerator =========================================================*/
 
-VideoFrame&
+VideoFrame &
 VideoGenerator::getNewFrame()
 {
     std::lock_guard<std::mutex> lk(mutex_);
@@ -73,64 +74,68 @@ VideoGenerator::obtainLastFrame()
 /*=== VideoSettings =========================================================*/
 
 static std::string
-extractString(const std::map<std::string, std::string>& settings, const std::string& key) {
+extractString(const std::map<std::string, std::string> &settings, const std::string &key)
+{
     auto i = settings.find(key);
     if (i != settings.cend())
         return i->second;
     return {};
 }
 
-VideoSettings::VideoSettings(const std::map<std::string, std::string>& settings)
+VideoSettings::VideoSettings(const std::map<std::string, std::string> &settings)
 {
-    name = extractString(settings, "name");
-    id = extractString(settings, "id");
-    channel = extractString(settings, "channel");
+    name       = extractString(settings, "name");
+    id         = extractString(settings, "id");
+    channel    = extractString(settings, "channel");
     video_size = extractString(settings, "size");
-    framerate = extractString(settings, "rate");
+    framerate  = extractString(settings, "rate");
 }
 
 std::map<std::string, std::string>
 VideoSettings::to_map() const
 {
-    return {
-        {"name", name},
-        {"id", id},
-        {"size", video_size},
-        {"channel", channel},
-        {"rate", framerate}
-    };
+    return {{"name", name},
+            {"id", id},
+            {"size", video_size},
+            {"channel", channel},
+            {"rate", framerate}};
 }
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami
 
 namespace YAML {
 
 Node
-convert<jami::video::VideoSettings>::encode(const jami::video::VideoSettings& rhs) {
+convert<jami::video::VideoSettings>::encode(const jami::video::VideoSettings &rhs)
+{
     Node node;
-    node["name"] = rhs.name;
-    node["id"] = rhs.id;
+    node["name"]       = rhs.name;
+    node["id"]         = rhs.id;
     node["video_size"] = rhs.video_size;
-    node["channel"] = rhs.channel;
-    node["framerate"] = rhs.framerate;
+    node["channel"]    = rhs.channel;
+    node["framerate"]  = rhs.framerate;
     return node;
 }
 
 bool
-convert<jami::video::VideoSettings>::decode(const Node& node, jami::video::VideoSettings& rhs) {
+convert<jami::video::VideoSettings>::decode(const Node &node, jami::video::VideoSettings &rhs)
+{
     if (not node.IsMap()) {
         JAMI_WARN("Can't decode VideoSettings YAML node");
         return false;
     }
-    rhs.name = node["name"].as<std::string>();
-    rhs.id = node["id"].as<std::string>();
+    rhs.name       = node["name"].as<std::string>();
+    rhs.id         = node["id"].as<std::string>();
     rhs.video_size = node["video_size"].as<std::string>();
-    rhs.channel = node["channel"].as<std::string>();
-    rhs.framerate = node["framerate"].as<std::string>();
+    rhs.channel    = node["channel"].as<std::string>();
+    rhs.framerate  = node["framerate"].as<std::string>();
     return true;
 }
 
-Emitter& operator << (Emitter& out, const jami::video::VideoSettings& v) {
+Emitter &
+operator<<(Emitter &out, const jami::video::VideoSettings &v)
+{
     out << convert<jami::video::VideoSettings>::encode(v);
     return out;
 }

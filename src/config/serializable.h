@@ -22,18 +22,18 @@
 #define SERIALIZABLE_H__
 
 namespace YAML {
-    class Emitter;
-    class Node;
-}
+class Emitter;
+class Node;
+} // namespace YAML
 
 namespace jami {
 
-class Serializable {
-
-    public:
-        virtual ~Serializable() {};
-        virtual void serialize(YAML::Emitter &out) const = 0;
-        virtual void unserialize(const YAML::Node &node) = 0;
+class Serializable
+{
+public:
+    virtual ~Serializable(){};
+    virtual void serialize(YAML::Emitter &out) const = 0;
+    virtual void unserialize(const YAML::Node &node) = 0;
 };
 
 } // namespace jami

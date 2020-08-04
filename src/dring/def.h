@@ -23,13 +23,13 @@
 
 // Generic helper definitions for shared library support
 #if defined _WIN32 || defined __CYGWIN__
-  #define DRING_IMPORT __declspec(dllimport)
-  #define DRING_EXPORT __declspec(dllexport)
-  #define DRING_HIDDEN
+#define DRING_IMPORT __declspec(dllimport)
+#define DRING_EXPORT __declspec(dllexport)
+#define DRING_HIDDEN
 #else
-  #define DRING_IMPORT __attribute__ ((visibility ("default")))
-  #define DRING_EXPORT __attribute__ ((visibility ("default")))
-  #define DRING_HIDDEN __attribute__ ((visibility ("hidden")))
+#define DRING_IMPORT __attribute__((visibility("default")))
+#define DRING_EXPORT __attribute__((visibility("default")))
+#define DRING_HIDDEN __attribute__((visibility("hidden")))
 #endif
 
 // Now we use the generic helper definitions above to define DRING_PUBLIC and DRING_LOCAL.
@@ -37,19 +37,19 @@
 // DRING_LOCAL is used for non-api symbols.
 
 #ifdef dring_EXPORTS // defined if DRing is compiled as a shared library
-  #ifdef DRING_BUILD // defined if we are building the DRing shared library (instead of using it)
-    #define DRING_PUBLIC DRING_EXPORT
-  #else
-    #define DRING_PUBLIC DRING_IMPORT
-  #endif // DRING_BUILD
-  #define DRING_LOCAL DRING_HIDDEN
+#ifdef DRING_BUILD   // defined if we are building the DRing shared library (instead of using it)
+#define DRING_PUBLIC DRING_EXPORT
+#else
+#define DRING_PUBLIC DRING_IMPORT
+#endif // DRING_BUILD
+#define DRING_LOCAL DRING_HIDDEN
 #else // dring_EXPORTS is not defined: this means DRing is a static lib.
-  #define DRING_PUBLIC
-  #define DRING_LOCAL
+#define DRING_PUBLIC
+#define DRING_LOCAL
 #endif // dring_EXPORTS
 
 #ifdef DEBUG
-  #define DRING_TESTABLE DRING_EXPORT
+#define DRING_TESTABLE DRING_EXPORT
 #else
-  #define DRING_TESTABLE
+#define DRING_TESTABLE
 #endif

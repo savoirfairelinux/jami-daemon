@@ -20,10 +20,9 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-
-#include <cstring>
-#include <cassert>
 #include "utf8_utils.h"
+#include <cassert>
+#include <cstring>
 
 #if defined(_MSC_VER)
 #include <BaseTsd.h>
@@ -36,13 +35,12 @@ using ssize_t = SSIZE_T;
  * can use this information for optimizations.
  */
 #if defined(__GNUC__) && (__GNUC__ > 2) && defined(__OPTIMIZE__)
-#define LIKELY(expr) (__builtin_expect (expr, 1))
-#define UNLIKELY(expr) (__builtin_expect (expr, 0))
+#define LIKELY(expr) (__builtin_expect(expr, 1))
+#define UNLIKELY(expr) (__builtin_expect(expr, 0))
 #else
 #define LIKELY(expr) (expr)
 #define UNLIKELY(expr) (expr)
 #endif
-
 
 /*
  * Check whether a Unicode (5.2) char is in a valid range.
@@ -54,20 +52,17 @@ using ssize_t = SSIZE_T;
  *
  * @param Char the character
  */
-#define UNICODE_VALID(Char)                   \
-    ((Char) < 0x110000 &&                     \
-     (((Char) & 0xFFFFF800) != 0xD800))
+#define UNICODE_VALID(Char) ((Char) < 0x110000 && (((Char) &0xFFFFF800) != 0xD800))
 
-#define CONTINUATION_CHAR                           \
-  if ((*(unsigned char *)p & 0xc0) != 0x80) /* 10xxxxxx */ \
-    goto error;                                     \
-  val <<= 6;                                        \
-  val |= (*(unsigned char *)p) & 0x3f;
+#define CONTINUATION_CHAR \
+    if ((*(unsigned char *) p & 0xc0) != 0x80) /* 10xxxxxx */ \
+        goto error; \
+    val <<= 6; \
+    val |= (*(unsigned char *) p) & 0x3f;
 
 namespace jami {
 
-bool
-utf8_validate_c_str(const char *str, ssize_t max_len, const char **end);
+bool utf8_validate_c_str(const char *str, ssize_t max_len, const char **end);
 
 static const char *
 fast_validate(const char *str)
@@ -77,35 +72,35 @@ fast_validate(const char *str)
     const char *p;
 
     for (p = str; *p; p++) {
-        if (*(unsigned char *)p < 128)
+        if (*(unsigned char *) p < 128)
             /* done */;
         else {
             const char *last;
 
             last = p;
 
-            if ((*(unsigned char *)p & 0xe0) == 0xc0) { /* 110xxxxx */
-                if (UNLIKELY((*(unsigned char *)p & 0x1e) == 0))
+            if ((*(unsigned char *) p & 0xe0) == 0xc0) { /* 110xxxxx */
+                if (UNLIKELY((*(unsigned char *) p & 0x1e) == 0))
                     goto error;
 
                 p++;
 
-                if (UNLIKELY((*(unsigned char *)p & 0xc0) != 0x80))  /* 10xxxxxx */
+                if (UNLIKELY((*(unsigned char *) p & 0xc0) != 0x80)) /* 10xxxxxx */
                     goto error;
             } else {
-                if ((*(unsigned char *)p & 0xf0) == 0xe0) { /* 1110xxxx */
+                if ((*(unsigned char *) p & 0xf0) == 0xe0) { /* 1110xxxx */
                     min = (1 << 11);
-                    val = *(unsigned char *)p & 0x0f;
+                    val = *(unsigned char *) p & 0x0f;
                     goto TWO_REMAINING;
-                } else if ((*(unsigned char *)p & 0xf8) == 0xf0) { /* 11110xxx */
+                } else if ((*(unsigned char *) p & 0xf8) == 0xf0) { /* 11110xxx */
                     min = (1 << 16);
-                    val = *(unsigned char *)p & 0x07;
+                    val = *(unsigned char *) p & 0x07;
                 } else
                     goto error;
 
                 p++;
                 CONTINUATION_CHAR;
-TWO_REMAINING:
+            TWO_REMAINING:
                 p++;
                 CONTINUATION_CHAR;
                 p++;
@@ -120,7 +115,7 @@ TWO_REMAINING:
 
             continue;
 
-error:
+        error:
             return last;
         }
     }
@@ -138,44 +133,44 @@ fast_validate_len(const char *str, ssize_t max_len)
     assert(max_len >= 0);
 
     for (p = str; ((p - str) < max_len) && *p; p++) {
-        if (*(unsigned char *)p < 128)
+        if (*(unsigned char *) p < 128)
             /* done */;
         else {
             const char *last;
 
             last = p;
 
-            if ((*(unsigned char *)p & 0xe0) == 0xc0) { /* 110xxxxx */
+            if ((*(unsigned char *) p & 0xe0) == 0xc0) { /* 110xxxxx */
                 if (UNLIKELY(max_len - (p - str) < 2))
                     goto error;
 
-                if (UNLIKELY((*(unsigned char *)p & 0x1e) == 0))
+                if (UNLIKELY((*(unsigned char *) p & 0x1e) == 0))
                     goto error;
 
                 p++;
 
-                if (UNLIKELY((*(unsigned char *)p & 0xc0) != 0x80))  /* 10xxxxxx */
+                if (UNLIKELY((*(unsigned char *) p & 0xc0) != 0x80)) /* 10xxxxxx */
                     goto error;
             } else {
-                if ((*(unsigned char *)p & 0xf0) == 0xe0) { /* 1110xxxx */
+                if ((*(unsigned char *) p & 0xf0) == 0xe0) { /* 1110xxxx */
                     if (UNLIKELY(max_len - (p - str) < 3))
                         goto error;
 
                     min = (1 << 11);
-                    val = *(unsigned char *)p & 0x0f;
+                    val = *(unsigned char *) p & 0x0f;
                     goto TWO_REMAINING;
-                } else if ((*(unsigned char *)p & 0xf8) == 0xf0) { /* 11110xxx */
+                } else if ((*(unsigned char *) p & 0xf8) == 0xf0) { /* 11110xxx */
                     if (UNLIKELY(max_len - (p - str) < 4))
                         goto error;
 
                     min = (1 << 16);
-                    val = *(unsigned char *)p & 0x07;
+                    val = *(unsigned char *) p & 0x07;
                 } else
                     goto error;
 
                 p++;
                 CONTINUATION_CHAR;
-TWO_REMAINING:
+            TWO_REMAINING:
                 p++;
                 CONTINUATION_CHAR;
                 p++;
@@ -190,7 +185,7 @@ TWO_REMAINING:
 
             continue;
 
-error:
+        error:
             return last;
         }
     }
@@ -235,15 +230,14 @@ utf8_validate_c_str(const char *str, ssize_t max_len, const char **end)
     if (end)
         *end = p;
 
-    if ((max_len >= 0 && p != str + max_len) ||
-            (max_len < 0 && *p != '\0'))
+    if ((max_len >= 0 && p != str + max_len) || (max_len < 0 && *p != '\0'))
         return false;
     else
         return true;
 }
 
 bool
-utf8_validate(const std::string & str)
+utf8_validate(const std::string &str)
 {
     const char *p;
 
@@ -253,7 +247,7 @@ utf8_validate(const std::string & str)
 }
 
 std::string
-utf8_make_valid(const std::string & name)
+utf8_make_valid(const std::string &name)
 {
     ssize_t remaining_bytes = name.size();
     ssize_t valid_bytes;

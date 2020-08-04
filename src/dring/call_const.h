@@ -28,43 +28,42 @@ namespace Call {
 
 namespace StateEvent {
 
-constexpr static char INCOMING                 [] = "INCOMING"           ;
-constexpr static char CONNECTING               [] = "CONNECTING"         ;
-constexpr static char RINGING                  [] = "RINGING"            ;
-constexpr static char CURRENT                  [] = "CURRENT"            ;
-constexpr static char HUNGUP                   [] = "HUNGUP"             ;
-constexpr static char BUSY                     [] = "BUSY"               ;
-constexpr static char PEER_BUSY                [] = "PEER_BUSY"          ;
-constexpr static char FAILURE                  [] = "FAILURE"            ;
-constexpr static char HOLD                     [] = "HOLD"               ;
-constexpr static char UNHOLD                   [] = "UNHOLD"             ;
-constexpr static char INACTIVE                 [] = "INACTIVE"           ;
-constexpr static char OVER                     [] = "OVER"               ;
+constexpr static char INCOMING[]   = "INCOMING";
+constexpr static char CONNECTING[] = "CONNECTING";
+constexpr static char RINGING[]    = "RINGING";
+constexpr static char CURRENT[]    = "CURRENT";
+constexpr static char HUNGUP[]     = "HUNGUP";
+constexpr static char BUSY[]       = "BUSY";
+constexpr static char PEER_BUSY[]  = "PEER_BUSY";
+constexpr static char FAILURE[]    = "FAILURE";
+constexpr static char HOLD[]       = "HOLD";
+constexpr static char UNHOLD[]     = "UNHOLD";
+constexpr static char INACTIVE[]   = "INACTIVE";
+constexpr static char OVER[]       = "OVER";
 
-}
+} // namespace StateEvent
 
 namespace Details {
 
-constexpr static char CALL_TYPE                [] = "CALL_TYPE"           ;
-constexpr static char PEER_NUMBER              [] = "PEER_NUMBER"         ;
-constexpr static char REGISTERED_NAME          [] = "REGISTERED_NAME"     ;
-constexpr static char DISPLAY_NAME             [] = "DISPLAY_NAME"        ;
-constexpr static char CALL_STATE               [] = "CALL_STATE"          ;
-constexpr static char CONF_ID                  [] = "CONF_ID"             ;
-constexpr static char TIMESTAMP_START          [] = "TIMESTAMP_START"     ;
-constexpr static char ACCOUNTID                [] = "ACCOUNTID"           ;
-constexpr static char PEER_HOLDING             [] = "PEER_HOLDING"        ;
-constexpr static char AUDIO_MUTED              [] = "AUDIO_MUTED"         ;
-constexpr static char VIDEO_MUTED              [] = "VIDEO_MUTED"         ;
-constexpr static char VIDEO_SOURCE             [] = "VIDEO_SOURCE"        ;
-constexpr static char AUDIO_ONLY               [] = "AUDIO_ONLY"          ;
-constexpr static char AUDIO_CODEC              [] = "AUDIO_CODEC"         ;
-constexpr static char VIDEO_CODEC              [] = "VIDEO_CODEC"         ;
+constexpr static char CALL_TYPE[]       = "CALL_TYPE";
+constexpr static char PEER_NUMBER[]     = "PEER_NUMBER";
+constexpr static char REGISTERED_NAME[] = "REGISTERED_NAME";
+constexpr static char DISPLAY_NAME[]    = "DISPLAY_NAME";
+constexpr static char CALL_STATE[]      = "CALL_STATE";
+constexpr static char CONF_ID[]         = "CONF_ID";
+constexpr static char TIMESTAMP_START[] = "TIMESTAMP_START";
+constexpr static char ACCOUNTID[]       = "ACCOUNTID";
+constexpr static char PEER_HOLDING[]    = "PEER_HOLDING";
+constexpr static char AUDIO_MUTED[]     = "AUDIO_MUTED";
+constexpr static char VIDEO_MUTED[]     = "VIDEO_MUTED";
+constexpr static char VIDEO_SOURCE[]    = "VIDEO_SOURCE";
+constexpr static char AUDIO_ONLY[]      = "AUDIO_ONLY";
+constexpr static char AUDIO_CODEC[]     = "AUDIO_CODEC";
+constexpr static char VIDEO_CODEC[]     = "VIDEO_CODEC";
 
-}
+} // namespace Details
 
-
-} //namespace DRing::Call
+} // namespace Call
 
 } //namespace DRing
 

@@ -25,42 +25,43 @@
 
 #include "tone.h"
 
-#include <string>
 #include <array>
 #include <memory>
+#include <string>
 
 namespace jami {
 
-class TelephoneTone {
-    public:
-        /** Countries */
-        enum class CountryId {
-            ZID_NORTH_AMERICA = 0,
-            ZID_FRANCE,
-            ZID_AUSTRALIA,
-            ZID_UNITED_KINGDOM,
-            ZID_SPAIN,
-            ZID_ITALY,
-            ZID_JAPAN,
-            ZID_COUNTRIES,
-        };
+class TelephoneTone
+{
+public:
+    /** Countries */
+    enum class CountryId {
+        ZID_NORTH_AMERICA = 0,
+        ZID_FRANCE,
+        ZID_AUSTRALIA,
+        ZID_UNITED_KINGDOM,
+        ZID_SPAIN,
+        ZID_ITALY,
+        ZID_JAPAN,
+        ZID_COUNTRIES,
+    };
 
-        TelephoneTone(const std::string& countryName, unsigned int sampleRate);
+    TelephoneTone(const std::string &countryName, unsigned int sampleRate);
 
-        void setCurrentTone(Tone::ToneId toneId);
-        void setSampleRate(unsigned int sampleRate);
-        std::shared_ptr<Tone> getCurrentTone();
+    void setCurrentTone(Tone::ToneId toneId);
+    void setSampleRate(unsigned int sampleRate);
+    std::shared_ptr<Tone> getCurrentTone();
 
-    private:
-        NON_COPYABLE(TelephoneTone);
+private:
+    NON_COPYABLE(TelephoneTone);
 
-        static CountryId getCountryId(const std::string& countryName);
+    static CountryId getCountryId(const std::string &countryName);
 
-        void buildTones(unsigned int sampleRate);
+    void buildTones(unsigned int sampleRate);
 
-        CountryId countryId_;
-        std::array<std::shared_ptr<Tone>, (size_t)Tone::ToneId::TONE_NULL> tones_;
-        Tone::ToneId currentTone_;
+    CountryId countryId_;
+    std::array<std::shared_ptr<Tone>, (size_t) Tone::ToneId::TONE_NULL> tones_;
+    Tone::ToneId currentTone_;
 };
 
 } // namespace jami
