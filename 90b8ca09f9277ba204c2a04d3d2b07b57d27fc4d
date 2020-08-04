@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "bf6604a6_c65b2f17",
+        "filename": ".clang-format",
+        "patchSetId": 1
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 6
+      },
+      "writtenOn": "2020-08-04T16:03:35Z",
+      "side": 1,
+      "message": "c++17 or Latest (for clarity)\n\ncf https://clang.llvm.org/docs/ClangFormatStyleOptions.html",
+      "range": {
+        "startLine": 107,
+        "startChar": 17,
+        "endLine": 107,
+        "endChar": 22
+      },
+      "revId": "90b8ca09f9277ba204c2a04d3d2b07b57d27fc4d",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
