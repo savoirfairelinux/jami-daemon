@@ -776,6 +776,8 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
     } else if (avcodecId == AV_CODEC_ID_H263) {
         initH263(encoderCtx, br);
     }
+    if (accel_)
+        initAccel(encoderCtx, br);
     return encoderCtx;
 }
 
@@ -809,30 +811,31 @@ MediaEncoder::setBitrate(uint64_t br)
         // if (avcodec_open2(encoderCtx, outputCodec_, &options_) < 0)
         //     throw MediaEncoderException("Could not open encoder");
     }
+    initAccel(encoderCtx, br);
     return 1; // OK
 }
 
 void
 MediaEncoder::initH264(AVCodecContext* encoderCtx, uint64_t br)
 {
+    uint64_t maxBitrate = 1000 * br;
+    uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
+    // bufsize parameter impact the variation of the bitrate, reduce to half the maxrate to limit peak and congestion
+    //https://trac.ffmpeg.org/wiki/Limiting%20the%20output%20bitrate
+    uint64_t bufSize = maxBitrate / 2;
+
     // If auto quality disabled use CRF mode
     if(mode_ == RateMode::CRF_CONSTRAINED) {
-        uint64_t maxBitrate = 1000 * br;
-        uint8_t crf = (uint8_t) std::round(LOGREG_PARAM_A + log(pow(maxBitrate, LOGREG_PARAM_B)));     // CRF = A + B*ln(maxBitrate)
-        // bufsize parameter impact the variation of the bitrate, reduce to half the maxrate to limit peak and congestion
-        //https://trac.ffmpeg.org/wiki/Limiting%20the%20output%20bitrate
-        uint64_t bufSize = maxBitrate / 2;
-
         av_opt_set_int(encoderCtx, "crf", crf, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
         JAMI_DBG("H264 encoder setup: crf=%u, maxrate=%lu kbit/s, bufsize=%lu kbit", crf, maxBitrate/1000, bufSize/1000);
     }
     else if (mode_ == RateMode::CBR) {
-        av_opt_set_int(encoderCtx, "b", br * 1000, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "maxrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "minrate", br * 1000, AV_OPT_SEARCH_CHILDREN);
-        av_opt_set_int(encoderCtx, "bufsize", br * 500, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "b", maxBitrate, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "maxrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "minrate", maxBitrate, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "bufsize", bufSize, AV_OPT_SEARCH_CHILDREN);
         av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
 
         JAMI_DBG("H264 encoder setup cbr: bitrate=%lu kbit/s", br);
@@ -932,6 +935,24 @@ MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
     encoderCtx->rc_buffer_size = bufSize;
     encoderCtx->bit_rate = encoderCtx->rc_min_rate = encoderCtx->rc_max_rate = maxBitrate;
     JAMI_DBG("H263 encoder setup: maxrate=%lu, bufsize=%lu", maxBitrate, bufSize);
+}
+
+void
+MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
+{
+    if (accel_->getName() == "nvenc") {
+        //Use same parameters as software
+    } else if (accel_->getName() == "vaapi") {
+        // Use VBR encoding with bitrate target set to 80% of the maxrate
+        av_opt_set_int(encoderCtx, "crf", -1, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
+    } else if (accel_->getName() == "videotoolbox") {
+        //Use same parameters as software
+    } else if (accel_->getName() == "qsv") {
+        // Use Video Conferencing Mode
+        av_opt_set_int(encoderCtx, "vcm", 1, AV_OPT_SEARCH_CHILDREN);
+        av_opt_set_int(encoderCtx, "b", br * 1000 * 0.8f, AV_OPT_SEARCH_CHILDREN);
+    }
 }
 
 AVCodecContext*
