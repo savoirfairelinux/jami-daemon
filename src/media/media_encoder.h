@@ -129,6 +129,7 @@ private:
     void initMPEG4(AVCodecContext* encoderCtx, uint64_t br);
     void initH263(AVCodecContext* encoderCtx, uint64_t br);
     bool isDynBitrateSupported(AVCodecID codecid);
+    void initAccel(AVCodecContext* encoderCtx, uint64_t br);
 
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext *outputCtx_ = nullptr;
