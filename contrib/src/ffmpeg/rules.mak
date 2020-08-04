@@ -1,4 +1,4 @@
-ifdef HAVE_MACOSX
+ifdef HAVE_DARWIN_OS
 FFMPEG_HASH := n4.2.2
 else
 FFMPEG_HASH := n4.3
