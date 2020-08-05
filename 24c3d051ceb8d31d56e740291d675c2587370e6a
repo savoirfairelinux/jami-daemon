@@ -1,0 +1,38 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "c0814ab1_6c9dbd4f",
+        "filename": "format.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 1,
+      "author": {
+        "id": 567
+      },
+      "writtenOn": "2020-08-05T15:33:06Z",
+      "side": 1,
+      "message": "Could use the more generic: #!/usr/bin/env bash",
+      "revId": "24c3d051ceb8d31d56e740291d675c2587370e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    },
+    {
+      "key": {
+        "uuid": "27f0d81c_e4bdc408",
+        "filename": "format.sh",
+        "patchSetId": 2
+      },
+      "lineNbr": 2,
+      "author": {
+        "id": 567
+      },
+      "writtenOn": "2020-08-05T15:33:06Z",
+      "side": 1,
+      "message": "adding set -e would help debugging",
+      "revId": "24c3d051ceb8d31d56e740291d675c2587370e6a",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
