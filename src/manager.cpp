@@ -535,18 +535,15 @@ Manager::ManagerPimpl::processRemainingParticipants(Conference& conf)
         // the conference is over
         auto p = participants.begin();
         if (auto call = base_.getCallFromCallID(*p)) {
-            call->setConfId("");
             // if we are not listening to this conference and not a rendez-vous
-            auto isRdv = false;
-            if (auto acc = std::dynamic_pointer_cast<JamiAccount>(base_.getAccount(call->getAccountId())))
-                isRdv = acc->getAccountDetails()[Conf::CONFIG_ACCOUNT_ISRENDEZVOUS] == TRUE_STR;
+            if(call->getAccount().isRendezVous())
+                return;
 
-            if (!isRdv) {
-                if (current_call_id != conf.getConfID())
-                    base_.onHoldCall(call->getCallId());
-                else
-                    switchCall(call);
-            }
+            call->setConfId("");
+            if (current_call_id != conf.getConfID())
+                base_.onHoldCall(call->getCallId());
+            else
+                switchCall(call);
         }
 
         JAMI_DBG("No remaining participants, remove conference");
