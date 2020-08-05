@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7ab0a8e1_f07baf12",
+        "filename": "src/upnp/protocol/natpmp/nat_pmp.cpp",
+        "patchSetId": 7
+      },
+      "lineNbr": 411,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-05T17:47:21Z",
+      "side": 1,
+      "message": "bzero is marked as deprecated https://man7.org/linux/man-pages/man3/bzero.3.html#CONFORMING_TO\n\nmemset prefered (and also don\u0027.t build on windows)",
+      "range": {
+        "startLine": 411,
+        "startChar": 4,
+        "endLine": 411,
+        "endChar": 29
+      },
+      "revId": "374d16c8d71597cdaa679986560e5fe5820124f5",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
