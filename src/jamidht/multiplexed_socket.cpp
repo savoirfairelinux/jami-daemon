@@ -52,6 +52,7 @@ public:
 
     ~Impl() {
         if (!isShutdown_) {
+            if (endpoint) endpoint->setOnStateChange({});
             shutdown();
         } else {
             std::lock_guard<std::mutex> lkSockets(socketsMutex);
@@ -68,7 +69,6 @@ public:
         isShutdown_ = true;
         if (onShutdown_) onShutdown_();
         if (endpoint) {
-            endpoint->setOnStateChange({});
             std::unique_lock<std::mutex> lk(writeMtx);
             endpoint->shutdown();
         }
