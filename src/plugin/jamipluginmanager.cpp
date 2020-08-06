@@ -42,21 +42,39 @@ extern "C" {
 #define ABI "armeabi"
 #endif
 #elif defined(__i386__)
+#if __ANDROID__
 #define ABI "x86"
+#else
+#define ABI "x86-linux-gnu"
+#endif
 #elif defined(__x86_64__)
+#if __ANDROID__
 #define ABI "x86_64"
+#else
+#define ABI "x86_64-linux-gnu"
+#endif
 #elif defined(__mips64) /* mips64el-* toolchain defines __mips__ too */
 #define ABI "mips64"
 #elif defined(__mips__)
 #define ABI "mips"
 #elif defined(__aarch64__)
 #define ABI "arm64-v8a"
+#elif defined(WIN32)
+#define ABI "x64-windows"
 #else
 #define ABI "unknown"
 #endif
 
 #define PLUGIN_ALREADY_INSTALLED 100 /* Plugin already installed with the same version */
 #define PLUGIN_OLD_VERSION       200 /* Plugin already installed with a newer version */
+
+#ifdef WIN32
+#define LIB_TYPE ".dll"
+#define LIB_PREFIX ""
+#else
+#define LIB_TYPE ".so"
+#define LIB_PREFIX "lib"
+#endif
 
 namespace jami {
 
@@ -111,7 +129,7 @@ checkManifestValidity(const std::vector<uint8_t>& vec)
 
 static const std::regex DATA_REGEX("^data" DIR_SEPARATOR_STR_ESC ".+");
 static const std::regex SO_REGEX("([a-zA-Z0-9]+(?:[_-]?[a-zA-Z0-9]+)*)" DIR_SEPARATOR_STR_ESC
-                                 "([a-zA-Z0-9_-]+\\.(so|dll).*)");
+                                 "([a-zA-Z0-9_-]+\\.(so|dll|lib).*)");
 
 std::pair<bool, const std::string>
 uncompressJplFunction(const std::string& relativeFileName)
@@ -178,7 +196,7 @@ JamiPluginManager::getPluginDetails(const std::string& rootPath)
     std::map<std::string, std::string> details = parseManifestFile(manifestPath(rootPath));
     if (!details.empty()) {
         details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
-        details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
+        details["soPath"] = rootPath + DIR_SEPARATOR_CH + LIB_PREFIX + details["name"] + LIB_TYPE;
         detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
         return detailsIt->second;
     }
@@ -209,6 +227,8 @@ JamiPluginManager::installPlugin(const std::string& jplPath, bool force)
         try {
             auto manifestMap = readPluginManifestFromArchive(jplPath);
             std::string name = manifestMap["name"];
+            if (name.empty())
+                return 0;
             std::string version = manifestMap["version"];
             const std::string destinationDir {fileutils::get_data_dir() + DIR_SEPARATOR_CH
                                               + "plugins" + DIR_SEPARATOR_CH + name};
