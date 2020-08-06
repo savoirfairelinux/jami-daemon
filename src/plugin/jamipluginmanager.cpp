@@ -58,6 +58,14 @@ extern "C" {
 #define	PLUGIN_ALREADY_INSTALLED	  100	/* Plugin already installed with the same version */
 #define	PLUGIN_OLD_VERSION	  200	/* Plugin already installed with a newer version */
 
+#ifdef WIN32
+#define LIB_TYPE ".dll"
+#define LIB_PREFIX "lib/"
+#else
+#define LIB_TYPE ".so"
+#define LIB_PREFIX "lib"
+#endif
+
 namespace jami {
 
 std::map<std::string, std::string> checkManifestJsonContentValidity(const Json::Value& root) {
@@ -172,7 +180,7 @@ std::map<std::string, std::string> JamiPluginManager::getPluginDetails(const std
     if (!details.empty())
     {
         details["iconPath"] = rootPath + DIR_SEPARATOR_CH + "data" + DIR_SEPARATOR_CH + "icon.png";
-        details["soPath"] = rootPath + DIR_SEPARATOR_CH + "lib" + details["name"] + ".so";
+        details["soPath"] = rootPath + DIR_SEPARATOR_CH + LIB_PREFIX + details["name"] + LIB_TYPE;
         detailsIt = pluginDetailsMap_.emplace(rootPath, std::move(details)).first;
         return detailsIt->second;
     }

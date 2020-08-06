@@ -416,9 +416,9 @@ void uncompressArchive(const std::string &archivePath, const std::string &dir, c
         }
 
         // File is ok, copy its header to the ext writer
-        const auto& fileMatchPair = f(fileEntry);
-        if(fileMatchPair.first) {
-            std::string entryDestinationPath = dir + DIR_SEPARATOR_CH + fileMatchPair.second;
+        //const auto& fileMatchPair = f(fileEntry);
+        if(!fileEntry.empty()) {
+            std::string entryDestinationPath = dir + DIR_SEPARATOR_CH + fileEntry;
             archive_entry_set_pathname(entry, entryDestinationPath.c_str());
             r = archive_write_header(archiveDiskWriter.get(), entry);
             if (r != ARCHIVE_OK) {
