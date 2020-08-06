@@ -501,10 +501,11 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
     auto& connectionInfo = connectionsInfos_[deviceId][req.id];
     connectionInfo.ice_  = iceTransportFactory.createUTransport(account.getAccountID().c_str(), 1, true, ice_config);
     auto& ice = connectionInfo.ice_;
-
-    if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
+    std::unique_lock<std::mutex> lk{ connectionInfo.mutex_ };
+    if (not ice or ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
         JAMI_ERR("Cannot initialize ICE session.");
         ice = nullptr;
+        lk.unlock();
         if (connReadyCb_) connReadyCb_(deviceId, "", nullptr);
         return;
     }
@@ -517,6 +518,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
         JAMI_ERR("[Account:%s] start ICE failed - fallback to TURN",
                     account.getAccountID().c_str());
         ice = nullptr;
+        lk.unlock();
         if (connReadyCb_) connReadyCb_(deviceId, "", nullptr);
         return;
     }
@@ -528,6 +530,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
         } else {
             JAMI_ERR("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
             ice = nullptr;
+            lk.unlock();
             if (connReadyCb_) connReadyCb_(deviceId, "", nullptr);
             return;
         }
@@ -562,6 +565,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
         } else {
             JAMI_ERR("[Account:%s] ICE negotation failed", account.getAccountID().c_str());
             ice = nullptr;
+            lk.unlock();
             if (connReadyCb_) connReadyCb_(deviceId, "", nullptr);
             return;
         }
@@ -570,6 +574,7 @@ ConnectionManager::Impl::onDhtPeerRequest(const PeerConnectionRequest& req, cons
     // Build socket
     std::lock_guard<std::mutex> lknrs(nonReadySocketsMutex_);
     auto endpoint = std::make_unique<IceSocketEndpoint>(std::shared_ptr<IceTransport>(std::move(ice)), false);
+    lk.unlock();
 
     // init TLS session
     auto ph = req.from;
@@ -733,12 +738,13 @@ ConnectionManager::closeConnectionsWith(const std::string& deviceId)
     if (it != pimpl_->connectionsInfos_.end()) {
         for (auto& info: it->second) {
             if (info.second.ice_) {
+                std::lock_guard<std::mutex> lk{ info.second.mutex_ };
                 info.second.ice_->cancelOperations();
                 info.second.ice_->stop();
             }
             info.second.responseCv_.notify_all();
             if (info.second.ice_) {
-                std::unique_lock<std::mutex> lk{ info.second.mutex_ };
+                std::lock_guard<std::mutex> lk{ info.second.mutex_ };
                 info.second.ice_.reset();
             }
         }
