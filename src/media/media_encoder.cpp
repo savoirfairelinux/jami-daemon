@@ -776,8 +776,7 @@ MediaEncoder::initCodec(AVMediaType mediaType, AVCodecID avcodecId, uint64_t br)
     } else if (avcodecId == AV_CODEC_ID_H263) {
         initH263(encoderCtx, br);
     }
-    if (accel_)
-        initAccel(encoderCtx, br);
+    initAccel(encoderCtx, br);
     return encoderCtx;
 }
 
@@ -940,6 +939,8 @@ MediaEncoder::initH263(AVCodecContext* encoderCtx, uint64_t br)
 void
 MediaEncoder::initAccel(AVCodecContext* encoderCtx, uint64_t br)
 {
+    if (!accel_)
+        return;
     if (accel_->getName() == "nvenc") {
         //Use same parameters as software
     } else if (accel_->getName() == "vaapi") {
