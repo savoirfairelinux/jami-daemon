@@ -1289,6 +1289,9 @@ JamiAccount::setAccountDetails(const std::map<std::string, std::string>& details
         std::remove(proxyCachePath.c_str());
         std::remove(proxyListCachePath.c_str());
     }
+    if (managerUri_.rfind("http", 0) != 0) {
+        managerUri_ = "https://" + managerUri_;
+    }
 
 #if HAVE_RINGNS
     parseString(details, DRing::Account::ConfProperties::RingNS::URI,     nameServer_);
