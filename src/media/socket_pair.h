@@ -230,7 +230,8 @@ class SocketPair {
         time_point arrival_TS {};
 
         TS_Frame svgTS = {};
-
+		time_point firstPktTs_ {};
+		bool usePacer_ {false};
 };
 
 

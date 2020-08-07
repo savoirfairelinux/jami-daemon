@@ -43,6 +43,8 @@ extern "C" {
 #include <unistd.h>
 #include <sys/types.h>
 #include <ciso646> // fix windows compiler bug
+#include <iostream>
+#include <cstdio>
 
 #ifdef _WIN32
 #define SOCK_NONBLOCK FIONBIO
@@ -207,12 +209,17 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
 
     rtp_sock_->setOnRecv(queueRtpPacket);
     rtcp_sock_->setOnRecv(queueRtcpPacket);
+    freopen( "sender.csv", "w+", stdout );
+
+    std::cout << "RTP Sequence Number, Real Timestamp, Packet size" << std::endl;
+
 }
 
 SocketPair::~SocketPair()
 {
     interrupt();
     closeSockets();
+    fclose (stdout);
 }
 
 bool
@@ -607,6 +614,17 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
             return -EINTR;
         ret = writeData(buf, buf_size);
     } while (ret < 0 and errno == EAGAIN);
+    if (usePacer_ and not isRTCP) {
+        // RTP Sequence Number, RTP Timestamp, Real Timestamp, Packet size
+        unsigned int seqNumber = buf[2] << 8 | buf[3];
+        static bool initialized;
+        if (!initialized) {
+            initialized = true;
+            firstPktTs_ = std::chrono::steady_clock::now();
+        }
+        int valueRealTs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - firstPktTs_).count();
+        std::cout << seqNumber << "," << valueRealTs << "," << buf_size << std::endl;
+	}
 
     if(buf[1] == 200) //Sender Report
     {
