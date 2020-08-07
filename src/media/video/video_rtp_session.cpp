@@ -224,7 +224,7 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
 
         socketPair_->setRtpDelayCallback([&](int gradient, int deltaT) {delayMonitor(gradient, deltaT);});
-
+        socketPair_->setUsePacer(true);
         if (send_.crypto and receive_.crypto) {
             socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
                                     receive_.crypto.getSrtpKeyInfo().c_str(),

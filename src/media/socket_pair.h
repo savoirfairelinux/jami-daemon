@@ -176,6 +176,7 @@ class SocketPair {
         int writeData(uint8_t* buf, int buf_size);
 
         uint16_t lastSeqValOut();
+        void setUsePacer(bool use) { usePacer_ = use; }
 
     private:
         NON_COPYABLE(SocketPair);
@@ -230,7 +231,8 @@ class SocketPair {
         time_point arrival_TS {};
 
         TS_Frame svgTS = {};
-
+		time_point firstPktTs_ {};
+		bool usePacer_ {false};
 };
 
 
