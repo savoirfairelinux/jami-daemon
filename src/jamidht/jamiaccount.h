@@ -634,7 +634,7 @@ private:
      */
     in_port_t dhtPort_ {};
 
-    bool dhtPeerDiscovery_ {false};
+    bool dhtPeerDiscovery_ {true};
 
     /**
      * DHT port actually used,
