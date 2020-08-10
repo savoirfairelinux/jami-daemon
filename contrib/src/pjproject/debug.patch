@@ -1,0 +1,39 @@
+ pjnath/src/pjnath/ice_session.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index c3464d673..41120b337 100644
+--- a/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -1359,6 +1359,7 @@ static pj_bool_t on_check_complete(pj_ice_sess *ice,
+ 	/* On the first valid pair, we call the callback, if present */
+ 	if (ice->valid_pair_found == PJ_FALSE) {
+ 	    ice->valid_pair_found = PJ_TRUE;
++		printf("@@@@ ON VALID PAIR1\n");
+ 
+ 	    if (ice->cb.on_valid_pair) {
+ 		(*ice->cb.on_valid_pair)(ice);
+@@ -2728,6 +2729,7 @@ static pj_status_t on_stun_rx_request(pj_stun_session *sess,
+ static void handle_incoming_check(pj_ice_sess *ice,
+ 				  const pj_ice_rx_check *rcheck)
+ {
++	printf("@@@ handle incoming %p\n", ice);
+     pj_ice_sess_comp *comp;
+     pj_ice_sess_cand *lcand = NULL;
+     pj_ice_sess_cand *rcand;
+@@ -2870,6 +2872,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
+ 	} else if (c->state == PJ_ICE_SESS_CHECK_STATE_IN_PROGRESS) {
+ 	    /* Should retransmit immediately
+ 	     */
++		printf("@@@@@!!! Triggered check for check not performed -  in progress %p\n", ice);
+ 	    LOG5((ice->obj_name, "Triggered check for check %d not performed "
+ 		  "because it's in progress. Retransmitting", i));
+ 	    pj_log_push_indent();
+@@ -2906,6 +2909,7 @@ static void handle_incoming_check(pj_ice_sess *ice,
+ 		}
+ 	    }
+ 
++		printf("@@@@@!!! Triggered check for check not performed -  completed %p\n", ice);
+ 	    LOG5((ice->obj_name, "Triggered check for check %d not performed "
+ 				"because it's completed", i));
+ 	    pj_log_push_indent();
