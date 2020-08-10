@@ -813,8 +813,10 @@ IceTransport::Impl::selectUPnPIceCandidates()
                 upnpIceCntr++;
                 JAMI_DBG("[ice:%p] UPnP: Trying to open port %d for ICE comp %d/%d and adding candidate with public IP",
                         this, port, upnpIceCntr, component_count_);
+                JAMI_ERR("@@@@@@@@@@@@@@@@@2");
                 upnp_->requestMappingAdd([this, candidate, comp_id](uint16_t port_used, bool success) {
                     if (upnp_) {
+                        JAMI_ERR("@@@@@@@@@@@@@@@@@2");
                         std::lock_guard<std::mutex> lk(upnpMutex_);
                         auto publicIp = upnp_->getExternalIP();
                         if (not publicIp) {
@@ -1163,7 +1165,7 @@ IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
         if (cand.addr != localIP)
             continue;
         pubIP.setPort(port);
-        pimpl_->addReflectiveCandidate(compId, cand.addr, pubIP, cand.transport);
+        //pimpl_->addReflectiveCandidate(compId, cand.addr, pubIP, cand.transport);
         return true;
     }
     return false;
