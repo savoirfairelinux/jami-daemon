@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "71aeb0df_b30e7df1",
+        "filename": "format.sh",
+        "patchSetId": 4
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 220
+      },
+      "writtenOn": "2020-08-10T17:31:13Z",
+      "side": 1,
+      "message": "Can\u0027t detect clang-format sometimes",
+      "range": {
+        "startLine": 4,
+        "startChar": 0,
+        "endLine": 4,
+        "endChar": 27
+      },
+      "revId": "c32d415decc29832bc7b46b79ba6df8216e88486",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": true
+    }
+  ]
+}
