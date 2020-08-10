@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-CLANGFORMAT=clang-format-10
+CLANGFORMAT=clang-format
 
 if ! command -v $CLANGFORMAT &> /dev/null; then
     echo "$CLANGFORMAT not found"

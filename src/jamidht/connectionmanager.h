@@ -18,13 +18,13 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
+#include <opendht/default_types.h>
 #include <opendht/dhtrunner.h>
 #include <opendht/infohash.h>
 #include <opendht/value.h>
-#include <opendht/default_types.h>
 
 namespace jami {
 
@@ -40,8 +40,8 @@ class ConnectionManager;
 struct PeerConnectionRequest : public dht::EncryptedValue<PeerConnectionRequest>
 {
     static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-    static constexpr const char* key_prefix = "peer:"; ///< base to compute the DHT listen key
-    dht::Value::Id id = dht::Value::INVALID_ID;
+    static constexpr const char* key_prefix     = "peer:"; ///< base to compute the DHT listen key
+    dht::Value::Id id                           = dht::Value::INVALID_ID;
     std::string ice_msg {};
     bool isAnswer {false};
     MSGPACK_DEFINE_MAP(id, ice_msg, isAnswer)
@@ -54,7 +54,8 @@ using onICERequestCallback = std::function<bool(const std::string& /* deviceId *
 /**
  * Used to accept or decline an incoming channel request
  */
-using ChannelRequestCallback = std::function<bool(const std::string& /* deviceId */, const std::string& /* name */)>;
+using ChannelRequestCallback
+    = std::function<bool(const std::string& /* deviceId */, const std::string& /* name */)>;
 /**
  * Used by connectDevice, when the socket is ready
  */
@@ -62,13 +63,16 @@ using ConnectCallback = std::function<void(const std::shared_ptr<ChannelSocket>&
 /**
  * Used when an incoming connection is ready
  */
-using ConnectionReadyCallback = std::function<void(const std::string& /* deviceId */, const std::string& /* channel_name */, std::shared_ptr<ChannelSocket>)>;
+using ConnectionReadyCallback = std::function<void(const std::string& /* deviceId */,
+                                                   const std::string& /* channel_name */,
+                                                   std::shared_ptr<ChannelSocket>)>;
 
 /**
  * Manages connections to other devices
  * @note the account MUST be valid if ConnectionManager lives
  */
-class ConnectionManager {
+class ConnectionManager
+{
 public:
     ConnectionManager(JamiAccount& account);
     ~ConnectionManager();
@@ -121,4 +125,4 @@ private:
     std::shared_ptr<Impl> pimpl_;
 };
 
-}
+} // namespace jami

@@ -21,13 +21,14 @@
 #include "memory.h"
 
 #ifdef _WIN32
-#include <windows.h>
 #include <wincrypt.h>
+#include <windows.h>
 #endif
 
 #include <algorithm>
 
-namespace jami { namespace secure {
+namespace jami {
+namespace secure {
 
 void
 memzero(void* ptr, std::size_t length)
@@ -40,7 +41,8 @@ memzero(void* ptr, std::size_t length)
 #endif
 }
 
-}}
+} // namespace secure
+} // namespace jami
 
 extern "C" void
 ring_secure_memzero(void* ptr, size_t length)

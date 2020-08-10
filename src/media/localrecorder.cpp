@@ -20,13 +20,12 @@
  */
 
 #include "localrecorder.h"
-#include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
+#include "audio/ringbufferpool.h"
 #include "client/videomanager.h"
-#include "media_stream.h"
-#include "manager.h"
 #include "logger.h"
-#include "client/videomanager.h"
+#include "manager.h"
+#include "media_stream.h"
 
 namespace jami {
 

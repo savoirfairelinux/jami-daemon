@@ -16,21 +16,21 @@
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "multiplexed_socket.h"
+#include "ice_transport.h"
 #include "logger.h"
 #include "manager.h"
-#include "multiplexed_socket.h"
 #include "peer_connection.h"
-#include "ice_transport.h"
 
 #include <deque>
 #include <opendht/thread_pool.h>
 
-namespace jami
-{
+namespace jami {
 
 static constexpr std::size_t IO_BUFFER_SIZE {8192}; ///< Size of char buffer used by IO operations
 
-struct ChannelInfo {
+struct ChannelInfo
+{
     std::deque<uint8_t> buf {};
     std::mutex mutex {};
     std::condition_variable cv {};
@@ -39,34 +39,44 @@ struct ChannelInfo {
 class MultiplexedSocket::Impl
 {
 public:
-    Impl(MultiplexedSocket& parent, const std::string& deviceId, std::unique_ptr<TlsSocketEndpoint> endpoint)
-    : parent_(parent), deviceId(deviceId), endpoint(std::move(endpoint))
-    , eventLoopFut_ { std::async(std::launch::async, [this] {
-        try {
-            stop.store(false);
-            eventLoop();
-        } catch (const std::exception& e) {
-            JAMI_ERR() << "[CNX] peer connection event loop failure: " << e.what();
-        }
-    }) } { }
+    Impl(MultiplexedSocket& parent,
+         const std::string& deviceId,
+         std::unique_ptr<TlsSocketEndpoint> endpoint)
+        : parent_(parent)
+        , deviceId(deviceId)
+        , endpoint(std::move(endpoint))
+        , eventLoopFut_ {std::async(std::launch::async, [this] {
+            try {
+                stop.store(false);
+                eventLoop();
+            } catch (const std::exception& e) {
+                JAMI_ERR() << "[CNX] peer connection event loop failure: " << e.what();
+            }
+        })}
+    {}
 
-    ~Impl() {
+    ~Impl()
+    {
         if (!isShutdown_) {
             shutdown();
         } else {
             std::lock_guard<std::mutex> lkSockets(socketsMutex);
             for (auto& socket : sockets) {
-                if (socket.second) socket.second->stop();
+                if (socket.second)
+                    socket.second->stop();
             }
             sockets.clear();
         }
     }
 
-    void shutdown() {
-        if (isShutdown_) return;
+    void shutdown()
+    {
+        if (isShutdown_)
+            return;
         stop.store(true);
         isShutdown_ = true;
-        if (onShutdown_) onShutdown_();
+        if (onShutdown_)
+            onShutdown_();
         if (endpoint) {
             endpoint->setOnStateChange({});
             std::unique_lock<std::mutex> lk(writeMtx);
@@ -75,8 +85,10 @@ public:
         std::lock_guard<std::mutex> lkSockets(socketsMutex);
         for (auto& socket : sockets) {
             // Just trigger onShutdown() to make client know
-            // No need to write the EOF for the channel, the write will fail because endpoint is already shutdown
-            if (socket.second) socket.second->stop();
+            // No need to write the EOF for the channel, the write will fail because endpoint is
+            // already shutdown
+            if (socket.second)
+                socket.second->stop();
         }
         sockets.clear();
     }
@@ -148,7 +160,8 @@ MultiplexedSocket::Impl::eventLoop()
         pac_.reserve_buffer(IO_BUFFER_SIZE);
         int size = endpoint->read(reinterpret_cast<uint8_t*>(&pac_.buffer()[0]), IO_BUFFER_SIZE, ec);
         if (size < 0) {
-            if (ec) JAMI_ERR("Read error detected: %s", ec.message().c_str());
+            if (ec)
+                JAMI_ERR("Read error detected: %s", ec.message().c_str());
             break;
         }
         if (size == 0) {
@@ -167,13 +180,12 @@ MultiplexedSocket::Impl::eventLoop()
                     handleControlPacket(std::move(msg.data));
                 else
                     handleChannelPacket(msg.channel, std::move(msg.data));
-            } catch (const msgpack::unpack_error &e) {
+            } catch (const msgpack::unpack_error& e) {
                 JAMI_WARN("Error when decoding msgpack message: %s", e.what());
             }
         }
     }
 }
-
 
 void
 MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>&& pkt)
@@ -196,7 +208,9 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>&& pkt)
                         channel = std::make_unique<ChannelInfo>();
                     auto& channelSocket = sockets[req.channel];
                     if (not channelSocket)
-                        channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), req.name, req.channel);
+                        channelSocket = std::make_shared<ChannelSocket>(parent_.weak(),
+                                                                        req.name,
+                                                                        req.channel);
                     onChannelReady_(deviceId, channelSocket);
                     std::lock_guard<std::mutex> lk(channelCbsMutex);
                     auto channelCbsIt = channelCbs.find(req.channel);
@@ -211,12 +225,15 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>&& pkt)
                     auto accept = onRequest_(deviceId, req.channel, req.name);
                     std::shared_ptr<ChannelSocket> channelSocket;
                     if (accept) {
-                        channelSocket = std::make_shared<ChannelSocket>(parent_.weak(), req.name, req.channel);
+                        channelSocket = std::make_shared<ChannelSocket>(parent_.weak(),
+                                                                        req.name,
+                                                                        req.channel);
                         {
                             std::lock_guard<std::mutex> lkSockets(socketsMutex);
                             auto sockIt = sockets.find(req.channel);
                             if (sockIt != sockets.end()) {
-                                JAMI_WARN("A channel is already present on that socket, accepting the request will close the previous one");
+                                JAMI_WARN("A channel is already present on that socket, accepting "
+                                          "the request will close the previous one");
                                 sockets.erase(sockIt);
                             }
                             channelDatas_.emplace(req.channel, std::make_unique<ChannelInfo>());
@@ -227,16 +244,20 @@ MultiplexedSocket::Impl::handleControlPacket(const std::vector<uint8_t>&& pkt)
                     // Answer to ChannelRequest if accepted
                     ChannelRequest val;
                     val.channel = req.channel;
-                    val.name = req.name;
+                    val.name    = req.name;
                     val.state = accept ? ChannelRequestState::ACCEPT : ChannelRequestState::DECLINE;
                     std::stringstream ss;
                     msgpack::pack(ss, val);
                     std::error_code ec;
                     auto toSend = ss.str();
-                    int wr = parent_.write(CONTROL_CHANNEL, reinterpret_cast<const uint8_t*>(&toSend[0]), toSend.size(), ec);
+                    int wr      = parent_.write(CONTROL_CHANNEL,
+                                           reinterpret_cast<const uint8_t*>(&toSend[0]),
+                                           toSend.size(),
+                                           ec);
                     if (wr < 0) {
                         if (ec)
-                            JAMI_ERR("The write operation failed with error: %s", ec.message().c_str());
+                            JAMI_ERR("The write operation failed with error: %s",
+                                     ec.message().c_str());
                         stop.store(true);
                         return;
                     }
@@ -275,14 +296,14 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector
             auto cb = channelCbs_.find(channel);
             if (cb != channelCbs_.end()) {
                 lk.unlock();
-                if (cb->second) cb->second(&pkt[0], pkt.size());
+                if (cb->second)
+                    cb->second(&pkt[0], pkt.size());
                 return;
             }
             lk.unlock();
-            dataIt->second->buf.insert(
-                dataIt->second->buf.end(),
-                std::make_move_iterator(pkt.begin()),
-                std::make_move_iterator(pkt.end()));
+            dataIt->second->buf.insert(dataIt->second->buf.end(),
+                                       std::make_move_iterator(pkt.begin()),
+                                       std::make_move_iterator(pkt.end()));
             dataIt->second->cv.notify_all();
         }
     } else {
@@ -290,14 +311,12 @@ MultiplexedSocket::Impl::handleChannelPacket(uint16_t channel, const std::vector
     }
 }
 
+MultiplexedSocket::MultiplexedSocket(const std::string& deviceId,
+                                     std::unique_ptr<TlsSocketEndpoint> endpoint)
+    : pimpl_(std::make_unique<Impl>(*this, deviceId, std::move(endpoint)))
+{}
 
-MultiplexedSocket::MultiplexedSocket(const std::string& deviceId, std::unique_ptr<TlsSocketEndpoint> endpoint)
-: pimpl_(std::make_unique<Impl>(*this, deviceId, std::move(endpoint)))
-{
-}
-
-MultiplexedSocket::~MultiplexedSocket()
-{ }
+MultiplexedSocket::~MultiplexedSocket() {}
 
 std::shared_ptr<ChannelSocket>
 MultiplexedSocket::addChannel(const std::string& name)
@@ -309,7 +328,7 @@ MultiplexedSocket::addChannel(const std::string& name)
     auto offset = dist(rd);
     std::lock_guard<std::mutex> lk(pimpl_->socketsMutex);
     for (int i = 1; i < UINT16_MAX; ++i) {
-        auto c = (offset + i) % UINT16_MAX;
+        auto c       = (offset + i) % UINT16_MAX;
         auto& socket = pimpl_->sockets[c];
         if (!socket) {
             auto& channel = pimpl_->channelDatas_[c];
@@ -346,7 +365,6 @@ MultiplexedSocket::setOnChannelReady(uint16_t channel, onChannelReadyCb&& cb)
     pimpl_->channelCbs[channel] = std::move(cb);
 }
 
-
 bool
 MultiplexedSocket::isReliable() const
 {
@@ -381,13 +399,12 @@ MultiplexedSocket::read(const uint16_t& channel, uint8_t* buf, std::size_t len, 
         return -1;
     }
     auto dataIt = pimpl_->channelDatas_.find(channel);
-    if (dataIt == pimpl_->channelDatas_.end()
-        || !dataIt->second) {
+    if (dataIt == pimpl_->channelDatas_.end() || !dataIt->second) {
         ec = std::make_error_code(std::errc::broken_pipe);
         return -1;
     }
     auto& chanBuf = dataIt->second->buf;
-    auto size = std::min(len, chanBuf.size());
+    auto size     = std::min(len, chanBuf.size());
 
     for (std::size_t i = 0; i < size; ++i) {
         buf[i] = chanBuf[i];
@@ -399,7 +416,10 @@ MultiplexedSocket::read(const uint16_t& channel, uint8_t* buf, std::size_t len, 
 }
 
 std::size_t
-MultiplexedSocket::write(const uint16_t& channel, const uint8_t* buf, std::size_t len, std::error_code& ec)
+MultiplexedSocket::write(const uint16_t& channel,
+                         const uint8_t* buf,
+                         std::size_t len,
+                         std::error_code& ec)
 {
     if (pimpl_->isShutdown_) {
         ec = std::make_error_code(std::errc::broken_pipe);
@@ -419,10 +439,10 @@ MultiplexedSocket::write(const uint16_t& channel, const uint8_t* buf, std::size_
     pk.pack_array(2);
     pk.pack(channel);
     pk.pack_bin(len);
-    pk.pack_bin_body((const char*)buf, len);
+    pk.pack_bin_body((const char*) buf, len);
 
     std::unique_lock<std::mutex> lk(pimpl_->writeMtx);
-    int res = pimpl_->endpoint->write((const unsigned char*)buffer.data(), buffer.size(), ec);
+    int res = pimpl_->endpoint->write((const unsigned char*) buffer.data(), buffer.size(), ec);
     lk.unlock();
     if (res < 0) {
         if (ec)
@@ -433,7 +453,9 @@ MultiplexedSocket::write(const uint16_t& channel, const uint8_t* buf, std::size_
 }
 
 int
-MultiplexedSocket::waitForData(const uint16_t& channel, std::chrono::milliseconds timeout, std::error_code& ec) const
+MultiplexedSocket::waitForData(const uint16_t& channel,
+                               std::chrono::milliseconds timeout,
+                               std::error_code& ec) const
 {
     if (pimpl_->isShutdown_) {
         ec = std::make_error_code(std::errc::broken_pipe);
@@ -449,9 +471,7 @@ MultiplexedSocket::waitForData(const uint16_t& channel, std::chrono::millisecond
         return -1;
     }
     std::unique_lock<std::mutex> lk {channelData->mutex};
-    channelData->cv.wait_for(lk, timeout, [&]{
-        return !channelData->buf.empty();
-    });
+    channelData->cv.wait_for(lk, timeout, [&] { return !channelData->buf.empty(); });
     return channelData->buf.size();
 }
 
@@ -489,9 +509,12 @@ class ChannelSocket::Impl
 {
 public:
     Impl(std::weak_ptr<MultiplexedSocket> endpoint, const std::string& name, const uint16_t& channel)
-    : name(name), channel(channel), endpoint(std::move(endpoint)) {}
+        : name(name)
+        , channel(channel)
+        , endpoint(std::move(endpoint))
+    {}
 
-    ~Impl() { }
+    ~Impl() {}
 
     OnShutdownCb shutdownCb_;
     std::atomic_bool isShutdown_ {false};
@@ -500,13 +523,13 @@ public:
     std::weak_ptr<MultiplexedSocket> endpoint;
 };
 
-ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint, const std::string& name, const uint16_t& channel)
-: pimpl_ { std::make_unique<Impl>(endpoint, name, channel) }
-{ }
+ChannelSocket::ChannelSocket(std::weak_ptr<MultiplexedSocket> endpoint,
+                             const std::string& name,
+                             const uint16_t& channel)
+    : pimpl_ {std::make_unique<Impl>(endpoint, name, channel)}
+{}
 
-
-ChannelSocket::~ChannelSocket()
-{ }
+ChannelSocket::~ChannelSocket() {}
 
 std::string
 ChannelSocket::deviceId() const
@@ -574,7 +597,8 @@ ChannelSocket::underlyingICE() const
 void
 ChannelSocket::stop()
 {
-    if (pimpl_->isShutdown_) return;
+    if (pimpl_->isShutdown_)
+        return;
     pimpl_->isShutdown_ = true;
     if (pimpl_->shutdownCb_)
         pimpl_->shutdownCb_();
@@ -583,14 +607,14 @@ ChannelSocket::stop()
 void
 ChannelSocket::shutdown()
 {
-    if (pimpl_->isShutdown_) return;
+    if (pimpl_->isShutdown_)
+        return;
     stop();
     if (auto ep = pimpl_->endpoint.lock()) {
         std::error_code ec;
         ep->write(pimpl_->channel, nullptr, 0, ec);
     }
 }
-
 
 std::size_t
 ChannelSocket::read(ValueType* buf, std::size_t len, std::error_code& ec)
@@ -640,5 +664,4 @@ ChannelSocket::onShutdown(OnShutdownCb&& cb)
     }
 }
 
-
-}
+} // namespace jami

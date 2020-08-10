@@ -19,11 +19,11 @@
 #include "base64.h"
 #include "sip/sip_utils.h"
 
+#include <iostream>
+#include <pjlib-util/base64.h>
+#include <pjlib.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <iostream>
-#include <pjlib.h>
-#include <pjlib-util/base64.h>
 
 namespace jami {
 namespace base64 {
@@ -40,7 +40,7 @@ encode(const std::vector<uint8_t>::const_iterator begin,
     std::string out;
     out.resize(output_length);
 
-    if(pj_base64_encode( &(*begin), input_length, &(*out.begin()), &output_length) != PJ_SUCCESS) {
+    if (pj_base64_encode(&(*begin), input_length, &(*out.begin()), &output_length) != PJ_SUCCESS) {
         throw base64_exception();
     }
 
@@ -66,7 +66,7 @@ decode(const std::string& str)
     std::vector<uint8_t> out;
     out.resize(output_length);
 
-    if(pj_base64_decode(&input, &(*out.begin()), &output_length) != PJ_SUCCESS) {
+    if (pj_base64_decode(&input, &(*out.begin()), &output_length) != PJ_SUCCESS) {
         throw base64_exception();
     }
 
@@ -74,4 +74,5 @@ decode(const std::string& str)
     return out;
 }
 
-}} // namespace jami::base64
+} // namespace base64
+} // namespace jami

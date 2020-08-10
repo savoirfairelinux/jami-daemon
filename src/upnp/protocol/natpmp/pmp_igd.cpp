@@ -19,7 +19,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 #include "pmp_igd.h"
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 PMPIGD::~PMPIGD()
 {
     tcpMappings_.clear();
@@ -135,7 +136,7 @@ PMPIGD::getNextMappingToRenew()
     std::lock_guard<std::mutex> lk(mapListMutex_);
     Mapping* mapping {nullptr};
     if (not toAdd_.empty()) {
-        return (Mapping*)&toAdd_.front();
+        return (Mapping*) &toAdd_.front();
     } else {
         if (not toRenew_.empty()) {
             for (auto it = toRenew_.begin(); it != toRenew_.end(); it++) {
@@ -146,7 +147,7 @@ PMPIGD::getNextMappingToRenew()
             }
         }
     }
-    return (Mapping*)mapping;
+    return (Mapping*) mapping;
 }
 time_point
 PMPIGD::getRenewalTime()
@@ -158,4 +159,5 @@ PMPIGD::getRenewalTime()
     auto nextTime = std::min(renewal_, next ? next->renewal_ : time_point::max());
     return toRenew_.empty() ? nextTime : std::min(nextTime, time_point::min());
 }
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

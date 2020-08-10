@@ -24,21 +24,23 @@
 #include "libav_deps.h"
 #include "media_codec.h"
 
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
-#include <list>
 
 extern "C" {
 #include <libavutil/hwcontext.h>
 }
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 /**
  * @brief Provides an abstraction layer to the hardware acceleration APIs in FFmpeg.
  */
-class HardwareAccel {
+class HardwareAccel
+{
 public:
     /**
      * @brief Transfers hardware frame to main memory.
@@ -52,15 +54,21 @@ public:
      * @param desiredFormat Software pixel format that the hardware outputs.
      * @returns Software frame.
      */
-    static std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame, AVPixelFormat desiredFormat);
+    static std::unique_ptr<VideoFrame> transferToMainMemory(const VideoFrame& frame,
+                                                            AVPixelFormat desiredFormat);
 
     /**
      * @brief Constructs a HardwareAccel object
      *
      * Made public so std::unique_ptr can access it. Should not be called.
      */
-    HardwareAccel(AVCodecID id, const std::string& name, AVHWDeviceType hwType, AVPixelFormat format,
-                    AVPixelFormat swFormat, CodecType type, bool dynBitrate);
+    HardwareAccel(AVCodecID id,
+                  const std::string& name,
+                  AVHWDeviceType hwType,
+                  AVPixelFormat format,
+                  AVPixelFormat swFormat,
+                  CodecType type,
+                  bool dynBitrate);
 
     /**
      * @brief Dereferences hardware contexts.
@@ -138,8 +146,10 @@ public:
      */
     bool linkHardware(AVBufferRef* framesCtx);
 
-
-    static std::list<HardwareAccel> getCompatibleAccel(AVCodecID id, int width, int height, CodecType type);
+    static std::list<HardwareAccel> getCompatibleAccel(AVCodecID id,
+                                                       int width,
+                                                       int height,
+                                                       CodecType type);
     int initAPI(bool linkable, AVBufferRef* framesCtx);
     bool dynBitrate() { return dynBitrate_; }
 
@@ -167,4 +177,5 @@ private:
     std::set<std::string> possible_devices_;
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

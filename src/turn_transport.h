@@ -20,14 +20,14 @@
 
 #pragma once
 
-#include "ip_utils.h"
 #include "generic_io.h"
+#include "ip_utils.h"
 
-#include <string>
-#include <memory>
 #include <functional>
 #include <map>
+#include <memory>
 #include <stdexcept>
+#include <string>
 
 namespace jami {
 
@@ -132,7 +132,9 @@ public:
     ///
     bool sendto(const IpAddr& peer, const char* const buffer, std::size_t size);
 
-    int waitForData(const IpAddr& peer, std::chrono::milliseconds timeout, std::error_code& ec) const;
+    int waitForData(const IpAddr& peer,
+                    std::chrono::milliseconds timeout,
+                    std::error_code& ec) const;
 
 public:
     // Move semantic only, not copiable
