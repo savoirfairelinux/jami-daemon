@@ -19,6 +19,23 @@
     },
     {
       "key": {
+        "uuid": "ee1eeb2b_fbcb5577",
+        "filename": "src/jamidht/eth/libdevcore/Common.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 163,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T14:55:36Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027_f\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "3bfae9531d35d411162a574c50e8a4f419570a18",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "23a847bc_96d7fb43",
         "filename": "src/jamidht/eth/libdevcore/CommonData.h",
         "patchSetId": 2
@@ -28,6 +45,23 @@
         "id": 5
       },
       "writtenOn": "2020-08-11T14:55:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027_prefix\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "3bfae9531d35d411162a574c50e8a4f419570a18",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "15ed44b7_bc54141f",
+        "filename": "src/jamidht/eth/libdevcore/CommonData.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 45,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T14:55:36Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027_prefix\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
       "revId": "3bfae9531d35d411162a574c50e8a4f419570a18",
@@ -53,6 +87,23 @@
     },
     {
       "key": {
+        "uuid": "0bf7dca1_bd7986d9",
+        "filename": "src/jamidht/eth/libdevcore/SHA3.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T14:55:36Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nmacro argument should be enclosed in parentheses\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Abugprone-macro-parentheses",
+      "revId": "3bfae9531d35d411162a574c50e8a4f419570a18",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "92518bef_a9f6de33",
         "filename": "src/manager.cpp",
         "patchSetId": 2
@@ -70,6 +121,23 @@
     },
     {
       "key": {
+        "uuid": "cb94deee_d30780c3",
+        "filename": "src/manager.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 2867,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T14:55:36Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nstring concatenation results in allocation of unnecessary temporary strings; consider using \u0027operator+\u003d\u0027 or \u0027string::append()\u0027 instead\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-inefficient-string-concatenation",
+      "revId": "3bfae9531d35d411162a574c50e8a4f419570a18",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "c0f3f9df_57528997",
         "filename": "src/media/media_recorder.cpp",
         "patchSetId": 2
@@ -79,6 +147,23 @@
         "id": 5
       },
       "writtenOn": "2020-08-11T14:55:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nparameter \u0027func\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "3bfae9531d35d411162a574c50e8a4f419570a18",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "30009500_be5c6395",
+        "filename": "src/media/media_recorder.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T14:55:36Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nparameter \u0027func\u0027 is passed by value and only copied once; consider moving it to avoid unnecessary copies\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
       "revId": "3bfae9531d35d411162a574c50e8a4f419570a18",
@@ -113,6 +198,23 @@
         "id": 5
       },
       "writtenOn": "2020-08-11T14:55:30Z",
+      "side": 1,
+      "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
+      "revId": "3bfae9531d35d411162a574c50e8a4f419570a18",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "2c9369a4_e294f186",
+        "filename": "src/security/certstore.cpp",
+        "patchSetId": 2
+      },
+      "lineNbr": 208,
+      "author": {
+        "id": 5
+      },
+      "writtenOn": "2020-08-11T14:55:36Z",
       "side": 1,
       "message": "MINOR SonarQube violation:\n\n\nthe parameter \u0027cb\u0027 is copied for each invocation but only used as a const reference; consider making it a const reference\n\n\nRead more: https://sonar-jami.savoirfairelinux.net/coding_rules#rule_key\u003dClangTidy%3Aperformance-unnecessary-value-param",
       "revId": "3bfae9531d35d411162a574c50e8a4f419570a18",
