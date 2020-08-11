@@ -31,7 +31,7 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
-typedef struct gzFile_s *gzFile;
+typedef struct gzFile_s* gzFile;
 
 namespace jami {
 
@@ -40,7 +40,7 @@ namespace jami {
  */
 namespace archiver {
 
-using FileMatchPair = std::function<std::pair<bool,const std::string>(const std::string&)>;
+using FileMatchPair = std::function<std::pair<bool, const std::string>(const std::string&)>;
 
 /**
  * Create a protected archive containing a list of accounts
@@ -86,7 +86,7 @@ std::vector<uint8_t> decompressGzip(const std::string& path);
 /**
  * Open Gzip file (uses wide string version of gzopen on windows)
  */
-gzFile openGzip(const std::string& path, const char *mode);
+gzFile openGzip(const std::string& path, const char* mode);
 
 /**
  * @brief listArchiveContent
@@ -107,7 +107,7 @@ std::vector<std::string> listArchiveContent(const std::string& archivePath);
  * relative path name like mynewsubfolder/myfile
  * @return void
  */
-void uncompressArchive(const std::string& path, const std::string &dir, const FileMatchPair& f);
+void uncompressArchive(const std::string& path, const std::string& dir, const FileMatchPair& f);
 
 /**
  * @brief readFileFromArchive read a file from an archive without uncompressing
@@ -117,8 +117,8 @@ void uncompressArchive(const std::string& path, const std::string &dir, const Fi
  * E.g: data/myfile.txt inside the archive
  * @return fileContent std::vector<uint8_t> that contains the file content
  */
-std::vector<uint8_t> readFileFromArchive(const std::string &path,
-                                 const std::string &fileRelativePathName);
-}
+std::vector<uint8_t> readFileFromArchive(const std::string& path,
+                                         const std::string& fileRelativePathName);
+} // namespace archiver
 
 } // namespace jami

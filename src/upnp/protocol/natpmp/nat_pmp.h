@@ -45,7 +45,8 @@ namespace jami {
 class IpAddr;
 }
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
 class NatPmp : public UPnPProtocol
 {
@@ -63,7 +64,10 @@ public:
     void searchForIgd() override;
 
     // Tries to add mapping.
-    void requestMappingAdd(IGD* igd, uint16_t port_external, uint16_t port_internal, PortType type) override;
+    void requestMappingAdd(IGD* igd,
+                           uint16_t port_external,
+                           uint16_t port_internal,
+                           PortType type) override;
 
     // Removes a mapping.
     void requestMappingRemove(const Mapping& igdMapping) override;
@@ -78,7 +82,8 @@ private:
     void addPortMapping(Mapping& mapping, bool renew);
     // Removes a port mapping.
     void removePortMapping(Mapping& mapping);
-    //void addPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool remove=false) const;
+    // void addPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool
+    // remove=false) const;
 
     // Deletes all port mappings.
     void deleteAllPortMappings(int proto);
@@ -86,21 +91,24 @@ private:
 private:
     NON_COPYABLE(NatPmp);
 
-    std::mutex pmpMutex_ {};                            // NatPmp mutex.
-    std::condition_variable pmpCv_ {};                  // Condition variable for thread-safe signaling.
-    std::atomic_bool pmpRun_ { true };                  // Variable to allow the thread to run.
-    std::thread pmpThread_ {};                          // NatPmp thread.
+    std::mutex pmpMutex_ {};           // NatPmp mutex.
+    std::condition_variable pmpCv_ {}; // Condition variable for thread-safe signaling.
+    std::atomic_bool pmpRun_ {true};   // Variable to allow the thread to run.
+    std::thread pmpThread_ {};         // NatPmp thread.
 
-    std::atomic_bool restart_ {false};          // Variable to indicate we need to restart natpmp after a connectivity change.
-    unsigned int restartSearchRetry_ {0};       // Keeps track of number of times we try to find an IGD after a connectivity change.
+    std::atomic_bool restart_ {
+        false}; // Variable to indicate we need to restart natpmp after a connectivity change.
+    unsigned int restartSearchRetry_ {
+        0}; // Keeps track of number of times we try to find an IGD after a connectivity change.
 
-    std::shared_ptr<PMPIGD> pmpIGD_ {};                 // IGD discovered by NatPmp.
+    std::shared_ptr<PMPIGD> pmpIGD_ {}; // IGD discovered by NatPmp.
     std::mutex natpmpMutex_;
-    natpmp_t natpmpHdl_;                                // NatPmp handle.
+    natpmp_t natpmpHdl_; // NatPmp handle.
     // Clears the natpmp struct.
     void clearNatPmpHdl(natpmp_t& hdl);
     // Gets NAT-PMP error code string.
     const char* getNatPmpErrorStr(int errorCode);
 };
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

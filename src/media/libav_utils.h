@@ -31,23 +31,25 @@ struct AVFrame;
 struct AVPixFmtDescriptor;
 }
 
-namespace jami { namespace libav_utils {
+namespace jami {
+namespace libav_utils {
 
-    void av_init();
+void av_init();
 
-    const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428029";
-    const char *const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
+const char* const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428029";
+const char* const MAX_H264_PROFILE_LEVEL_ID     = "profile-level-id=640034";
 
-    bool is_yuv_planar(const AVPixFmtDescriptor& desc);
+bool is_yuv_planar(const AVPixFmtDescriptor& desc);
 
-    std::string getError(int err);
+std::string getError(int err);
 
-    const char* getDictValue(const AVDictionary* d, const std::string& key, int flags=0);
+const char* getDictValue(const AVDictionary* d, const std::string& key, int flags = 0);
 
-    void setDictValue(AVDictionary** d, const std::string& key, const std::string& value, int flags=0);
+void setDictValue(AVDictionary** d, const std::string& key, const std::string& value, int flags = 0);
 
-    void fillWithBlack(AVFrame* frame);
+void fillWithBlack(AVFrame* frame);
 
-    void fillWithSilence(AVFrame* frame);
+void fillWithSilence(AVFrame* frame);
 
-}} // namespace jami::libav_utils
+} // namespace libav_utils
+} // namespace jami

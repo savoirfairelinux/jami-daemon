@@ -28,16 +28,17 @@
 namespace jami {
 namespace opensl {
 
-class AudioRecorder {
+class AudioRecorder
+{
     SLObjectItf recObjectItf_;
     SLRecordItf recItf_;
     SLAndroidSimpleBufferQueueItf recBufQueueItf_;
 
-    jami::AudioFormat  sampleInfo_;
-    AudioQueue *freeQueue_ {nullptr};         // user
-    AudioQueue *recQueue_ {nullptr};          // user
-    AudioQueue  devShadowQueue_ {DEVICE_SHADOW_BUFFER_QUEUE_LEN};    // owner
-    uint32_t    audioBufCount;
+    jami::AudioFormat sampleInfo_;
+    AudioQueue* freeQueue_ {nullptr};                            // user
+    AudioQueue* recQueue_ {nullptr};                             // user
+    AudioQueue devShadowQueue_ {DEVICE_SHADOW_BUFFER_QUEUE_LEN}; // owner
+    uint32_t audioBufCount;
 
     EngineCallback callback_ {};
     bool hasNativeAEC_ {false};
@@ -49,13 +50,13 @@ public:
 
     bool start();
     bool stop();
-    void setBufQueues(AudioQueue *freeQ, AudioQueue *recQ);
+    void setBufQueues(AudioQueue* freeQ, AudioQueue* recQ);
     void processSLCallback(SLAndroidSimpleBufferQueueItf bq);
-    void registerCallback(EngineCallback cb) {callback_ = cb;}
+    void registerCallback(EngineCallback cb) { callback_ = cb; }
     size_t dbgGetDevBufCount();
 
     bool hasNativeAEC() const { return hasNativeAEC_; }
 };
 
-}
-}
+} // namespace opensl
+} // namespace jami

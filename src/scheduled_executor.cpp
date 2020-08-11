@@ -22,7 +22,8 @@
 
 namespace jami {
 
-ScheduledExecutor::ScheduledExecutor() : thread_([this]{
+ScheduledExecutor::ScheduledExecutor()
+    : thread_([this] {
         while (running_.load())
             loop();
     })
@@ -83,9 +84,10 @@ void
 ScheduledExecutor::reschedule(std::shared_ptr<RepeatedTask> task, time_point t, duration dt)
 {
     schedule(std::make_shared<Task>([this, task = std::move(task), t, dt]() mutable {
-        if (task->run())
-            reschedule(std::move(task), t + dt, dt);
-    }), t);
+                 if (task->run())
+                     reschedule(std::move(task), t + dt, dt);
+             }),
+             t);
 }
 
 void
@@ -93,9 +95,7 @@ ScheduledExecutor::schedule(std::shared_ptr<Task> task, time_point t)
 {
     {
         std::lock_guard<std::mutex> lock(jobLock_);
-        jobs_[t].emplace_back([task = std::move(task)]{
-            task->run();
-        });
+        jobs_[t].emplace_back([task = std::move(task)] { task->run(); });
     }
     cv_.notify_all();
 }
@@ -126,4 +126,4 @@ ScheduledExecutor::loop()
     }
 }
 
-}
+} // namespace jami

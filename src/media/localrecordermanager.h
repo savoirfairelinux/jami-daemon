@@ -25,34 +25,35 @@
 
 namespace jami {
 
-class LocalRecorderManager {
-    public:
-        static LocalRecorderManager &instance();
+class LocalRecorderManager
+{
+public:
+    static LocalRecorderManager& instance();
 
-        /**
-         * Remove given local recorder instance from the map.
-         */
-        void removeRecorderByPath(const std::string& path);
+    /**
+     * Remove given local recorder instance from the map.
+     */
+    void removeRecorderByPath(const std::string& path);
 
-        /**
-         * Insert passed local recorder into the map. Path is used as key.
-         */
-        void insertRecorder(const std::string& path, std::unique_ptr<LocalRecorder> rec);
+    /**
+     * Insert passed local recorder into the map. Path is used as key.
+     */
+    void insertRecorder(const std::string& path, std::unique_ptr<LocalRecorder> rec);
 
-        /**
-         * Get local recorder instance with passed path as key.
-         */
-        LocalRecorder *getRecorderByPath(const std::string& path);
+    /**
+     * Get local recorder instance with passed path as key.
+     */
+    LocalRecorder* getRecorderByPath(const std::string& path);
 
-        /**
-         * Return true if the manager owns at least one currently running
-         * local recorder.
-         */
-        bool hasRunningRecorders();
+    /**
+     * Return true if the manager owns at least one currently running
+     * local recorder.
+     */
+    bool hasRunningRecorders();
 
-    private:
-        std::map<std::string, std::unique_ptr<LocalRecorder>> recorderMap_;
-        std::mutex recorderMapMutex_;
+private:
+    std::map<std::string, std::unique_ptr<LocalRecorder>> recorderMap_;
+    std::mutex recorderMapMutex_;
 };
 
 } // namespace jami

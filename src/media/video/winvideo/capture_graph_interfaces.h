@@ -23,9 +23,11 @@
 
 #include <dshow.h>
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
-class CaptureGraphInterfaces {
+class CaptureGraphInterfaces
+{
 public:
     CaptureGraphInterfaces()
         : captureGraph_(nullptr)
@@ -40,6 +42,7 @@ public:
     IAMStreamConfig* streamConf_;
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami
 
 #endif

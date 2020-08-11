@@ -21,23 +21,28 @@
 #include <map>
 
 namespace jami {
-struct ConversationMessage{
-    ConversationMessage(const std::string& author, const std::string& to,
-                        std::map<std::string,std::string>& dataMap) :
-        author_{author}, to_{to}, data_{dataMap} {}
+struct ConversationMessage
+{
+    ConversationMessage(const std::string& author,
+                        const std::string& to,
+                        std::map<std::string, std::string>& dataMap)
+        : author_ {author}
+        , to_ {to}
+        , data_ {dataMap}
+    {}
     std::string author_;
     std::string to_;
-    std::map<std::string,std::string> data_;
+    std::map<std::string, std::string> data_;
 };
 
 using ConvMsgPtr = std::shared_ptr<ConversationMessage>;
 
 using strMapSubjectPtr = std::shared_ptr<PublishObservable<ConvMsgPtr>>;
 
-class ConversationHandler {
-
+class ConversationHandler
+{
 public:
-    virtual ~ConversationHandler() = default;
-    virtual void notifyStrMapSubject(const bool direction , strMapSubjectPtr subject) = 0;
+    virtual ~ConversationHandler()                                                   = default;
+    virtual void notifyStrMapSubject(const bool direction, strMapSubjectPtr subject) = 0;
 };
-}
+} // namespace jami

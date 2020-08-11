@@ -34,7 +34,8 @@ class MediaEncoder;
 class MediaIOHandle;
 class Resampler;
 
-class AudioSender : public Observer<std::shared_ptr<MediaFrame>> {
+class AudioSender : public Observer<std::shared_ptr<MediaFrame>>
+{
 public:
     AudioSender(const std::string& id,
                 const std::string& dest,

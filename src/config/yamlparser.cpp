@@ -22,10 +22,11 @@
 #include "yamlparser.h"
 #include "fileutils.h"
 
-namespace jami { namespace yaml_utils {
+namespace jami {
+namespace yaml_utils {
 
 void
-parsePath(const YAML::Node &node, const char *key, std::string& path, const std::string& base)
+parsePath(const YAML::Node& node, const char* key, std::string& path, const std::string& base)
 {
     std::string val;
     parseValue(node, key, val);
@@ -35,12 +36,12 @@ parsePath(const YAML::Node &node, const char *key, std::string& path, const std:
 // FIXME: Maybe think of something more clever, this is due to yaml-cpp's poor
 // handling of empty values for nested collections.
 std::vector<std::map<std::string, std::string>>
-parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys)
+parseVectorMap(const YAML::Node& node, const std::initializer_list<std::string>& keys)
 {
     std::vector<std::map<std::string, std::string>> result;
-    for (const auto &n : node) {
+    for (const auto& n : node) {
         std::map<std::string, std::string> t;
-        for (const auto &k : keys) {
+        for (const auto& k : keys) {
             t[k] = n[k].as<std::string>("");
         }
         result.push_back(t);
@@ -49,14 +50,15 @@ parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> 
 }
 
 std::set<std::string>
-parseVector(const YAML::Node &node)
+parseVector(const YAML::Node& node)
 {
     std::set<std::string> result;
-    for (const auto &n : node) {
+    for (const auto& n : node) {
         std::string t;
         t = n.as<std::string>("");
         result.emplace(t);
     }
     return result;
 }
-}} // namespace jami::yaml_utils
+} // namespace yaml_utils
+} // namespace jami

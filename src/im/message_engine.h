@@ -34,31 +34,21 @@ namespace im {
 
 using MessageToken = uint64_t;
 
-enum class MessageStatus {
-    UNKNOWN = 0,
-    IDLE,
-    SENDING,
-    SENT,
-    DISPLAYED,
-    FAILURE,
-    CANCELLED
-};
+enum class MessageStatus { UNKNOWN = 0, IDLE, SENDING, SENT, DISPLAYED, FAILURE, CANCELLED };
 
 class MessageEngine
 {
 public:
-
     MessageEngine(SIPAccountBase&, const std::string& path);
 
-    MessageToken sendMessage(const std::string& to, const std::map<std::string, std::string>& payloads);
+    MessageToken sendMessage(const std::string& to,
+                             const std::map<std::string, std::string>& payloads);
 
     MessageStatus getStatus(MessageToken t) const;
 
     bool cancel(MessageToken t);
 
-    bool isSent(MessageToken t) const {
-        return getStatus(t) == MessageStatus::SENT;
-    }
+    bool isSent(MessageToken t) const { return getStatus(t) == MessageStatus::SENT; }
 
     void onMessageSent(const std::string& peer, MessageToken t, bool success);
     void onMessageDisplayed(const std::string& peer, MessageToken t, bool displayed);
@@ -67,7 +57,7 @@ public:
      * @TODO change MessageEngine by a queue,
      * @NOTE retryOnTimeout is used for failing SIP messages (jamiAccount::sendTextMessage)
      */
-    void onPeerOnline(const std::string& peer, bool retryOnTimeout=true);
+    void onPeerOnline(const std::string& peer, bool retryOnTimeout = true);
 
     /**
      * Load persisted messages
@@ -80,15 +70,15 @@ public:
     void save() const;
 
 private:
-
     static const constexpr unsigned MAX_RETRIES = 20;
     static const std::chrono::minutes RETRY_PERIOD;
     using clock = std::chrono::steady_clock;
 
-    void retrySend(const std::string& peer, bool retryOnTimeout=true);
+    void retrySend(const std::string& peer, bool retryOnTimeout = true);
     void save_() const;
 
-    struct Message {
+    struct Message
+    {
         std::string to;
         std::map<std::string, std::string> payloads;
         MessageStatus status {MessageStatus::UNKNOWN};
@@ -105,4 +95,5 @@ private:
     mutable std::mutex messagesMutex_ {};
 };
 
-}} // namespace jami::im
+} // namespace im
+} // namespace jami

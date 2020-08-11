@@ -29,13 +29,13 @@ namespace jami {
 static constexpr auto MS_PER_PACKET = std::chrono::milliseconds(20);
 
 MediaPlayer::MediaPlayer(const std::string& path)
-:loop_(std::bind(&MediaPlayer::configureMediaInputs, this),
-       std::bind(&MediaPlayer::process, this),
-       [] {})
+    : loop_(std::bind(&MediaPlayer::configureMediaInputs, this),
+            std::bind(&MediaPlayer::process, this),
+            [] {})
 {
     static const std::string& sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
-    const auto pos = path.find(sep);
-    const auto suffix = path.substr(pos + sep.size());
+    const auto pos                = path.find(sep);
+    const auto suffix             = path.substr(pos + sep.size());
 
     if (access(suffix.c_str(), R_OK) != 0) {
         JAMI_ERR() << "File '" << path << "' not available";
@@ -43,12 +43,11 @@ MediaPlayer::MediaPlayer(const std::string& path)
     }
 
     path_ = path;
-    id_ = std::to_string(rand());
+    id_   = std::to_string(rand());
     Manager::instance().startAudioPlayback();
     audioInput_ = jami::getAudioInput(id_);
     audioInput_->setPaused(paused_);
-    videoInput_ = jami::getVideoInput(id_,
-                                      video::VideoInputMode::ManagedByDaemon);
+    videoInput_ = jami::getVideoInput(id_, video::VideoInputMode::ManagedByDaemon);
     videoInput_->setPaused(paused_);
 
     demuxer_ = std::make_shared<MediaDemuxer>();
@@ -64,9 +63,9 @@ bool
 MediaPlayer::configureMediaInputs()
 {
     DeviceParams devOpts = {};
-    devOpts.input = path_;
-    devOpts.name = path_;
-    devOpts.loop = "1";
+    devOpts.input        = path_;
+    devOpts.name         = path_;
+    devOpts.loop         = "1";
 
     if (demuxer_->openInput(devOpts) < 0) {
         emitInfo();
@@ -74,8 +73,8 @@ MediaPlayer::configureMediaInputs()
     }
     demuxer_->findStreamInfo();
 
-    pauseInterval_ = 0;
-    startTime_ = av_gettime();
+    pauseInterval_  = 0;
+    startTime_      = av_gettime();
     lastPausedTime_ = startTime_;
 
     try {
@@ -85,8 +84,7 @@ MediaPlayer::configureMediaInputs()
             audioInput_->updateStartTime(startTime_);
         }
     } catch (const std::exception& e) {
-        JAMI_ERR("media player: %s open audio input failed: %s",
-                 path_.c_str(), e.what());
+        JAMI_ERR("media player: %s open audio input failed: %s", path_.c_str(), e.what());
     }
     try {
         videoStream_ = demuxer_->selectStream(AVMEDIA_TYPE_VIDEO);
@@ -98,13 +96,10 @@ MediaPlayer::configureMediaInputs()
         }
     } catch (const std::exception& e) {
         videoInput_ = nullptr;
-        JAMI_ERR("media player: %s open video input failed: %s",
-                 path_.c_str(), e.what());
+        JAMI_ERR("media player: %s open video input failed: %s", path_.c_str(), e.what());
     }
 
-    demuxer_->setNeedFrameCb([this]() -> void {
-        readBufferOverflow_ = false;
-    });
+    demuxer_->setNeedFrameCb([this]() -> void { readBufferOverflow_ = false; });
 
     demuxer_->setFileFinishedCb([this](bool isAudio) -> void {
         if (isAudio) {
@@ -142,34 +137,33 @@ MediaPlayer::process()
 
     const auto ret = demuxer_->demuxe();
     switch (ret) {
-        case MediaDemuxer::Status::Success:
-        case MediaDemuxer::Status::FallBack:
-            break;
-        case MediaDemuxer::Status::EndOfFile:
-            demuxer_->updateCurrentState(MediaDemuxer::CurrentState::Finished);
-            break;
-        case MediaDemuxer::Status::ReadError:
-            JAMI_ERR() << "Failed to decode frame";
-            break;
-        case MediaDemuxer::Status::ReadBufferOverflow:
-            readBufferOverflow_ = true;
-            break;
+    case MediaDemuxer::Status::Success:
+    case MediaDemuxer::Status::FallBack:
+        break;
+    case MediaDemuxer::Status::EndOfFile:
+        demuxer_->updateCurrentState(MediaDemuxer::CurrentState::Finished);
+        break;
+    case MediaDemuxer::Status::ReadError:
+        JAMI_ERR() << "Failed to decode frame";
+        break;
+    case MediaDemuxer::Status::ReadBufferOverflow:
+        readBufferOverflow_ = true;
+        break;
     }
 }
 
 void
 MediaPlayer::emitInfo()
 {
-    std::map<std::string, std::string> info {
-        {"duration", std::to_string(fileDuration_)},
-        {"audio_stream", std::to_string(audioStream_)},
-        {"video_stream", std::to_string(videoStream_)}
-    };
+    std::map<std::string, std::string> info {{"duration", std::to_string(fileDuration_)},
+                                             {"audio_stream", std::to_string(audioStream_)},
+                                             {"video_stream", std::to_string(videoStream_)}};
     emitSignal<DRing::MediaPlayerSignal::FileOpened>(id_, info);
 }
 
 bool
-MediaPlayer::isInputValid() {
+MediaPlayer::isInputValid()
+{
     return !id_.empty();
 }
 
@@ -205,7 +199,8 @@ MediaPlayer::pause(bool pause)
 }
 
 bool
-MediaPlayer::seekToTime(int64_t time) {
+MediaPlayer::seekToTime(int64_t time)
+{
     if (time < 0 || time > fileDuration_) {
         return false;
     }
@@ -238,9 +233,9 @@ MediaPlayer::playFileFromBeginning()
         return;
     }
     flushMediaBuffers();
-    startTime_ = av_gettime();
+    startTime_      = av_gettime();
     lastPausedTime_ = startTime_;
-    pauseInterval_ = 0;
+    pauseInterval_  = 0;
     if (hasAudio()) {
         audioInput_->updateStartTime(startTime_);
     }
@@ -270,7 +265,7 @@ MediaPlayer::getId() const
 int64_t
 MediaPlayer::getPlayerPosition() const
 {
-    if (paused_ ) {
+    if (paused_) {
         return lastPausedTime_ - startTime_ - pauseInterval_;
     }
     return av_gettime() - startTime_ - pauseInterval_;
@@ -290,5 +285,4 @@ MediaPlayer::streamsFinished()
     return audioFinished && videoFinished;
 }
 
-}// namespace jami
-
+} // namespace jami

@@ -44,15 +44,15 @@
 
 namespace jami {
 
-namespace
+namespace {
+void
+connectPorts(jack_client_t* client, int portType, const std::vector<jack_port_t*>& ports)
 {
-void connectPorts(jack_client_t *client, int portType, const std::vector<jack_port_t *> &ports)
-{
-    const char **physical_ports = jack_get_ports(client, NULL, NULL, portType | JackPortIsPhysical);
+    const char** physical_ports = jack_get_ports(client, NULL, NULL, portType | JackPortIsPhysical);
     for (unsigned i = 0; physical_ports[i]; ++i) {
         if (i >= ports.size())
             break;
-        const char *port = jack_port_name(ports[i]);
+        const char* port = jack_port_name(ports[i]);
         if (portType & JackPortIsInput) {
             if (jack_connect(client, port, physical_ports[i])) {
                 JAMI_ERR("Can't connect %s to %s", port, physical_ports[i]);
@@ -68,18 +68,19 @@ void connectPorts(jack_client_t *client, int portType, const std::vector<jack_po
     jack_free(physical_ports);
 }
 
-bool ringbuffer_ready_for_read(const jack_ringbuffer_t *rb)
+bool
+ringbuffer_ready_for_read(const jack_ringbuffer_t* rb)
 {
     // XXX 512 is arbitrary
     return jack_ringbuffer_read_space(rb) > 512;
 }
-}
+} // namespace
 
 void
 JackLayer::playback()
 {
     notifyIncomingCall();
-    auto format = audioFormat_;
+    auto format         = audioFormat_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
     if (auto toPlay = getPlayback(format, writeSpace())) {
         write(*toPlay);
@@ -109,10 +110,12 @@ void
 JackLayer::write(const AudioFrame& buffer)
 {
     auto num_samples = buffer.pointer()->nb_samples;
-    auto num_bytes = num_samples * sizeof(float);
-    auto channels = std::min<size_t>(out_ringbuffers_.size(), buffer.pointer()->channels);
+    auto num_bytes   = num_samples * sizeof(float);
+    auto channels    = std::min<size_t>(out_ringbuffers_.size(), buffer.pointer()->channels);
     for (size_t i = 0; i < channels; ++i) {
-        jack_ringbuffer_write(out_ringbuffers_[i], (const char*)buffer.pointer()->extended_data[i], num_bytes);
+        jack_ringbuffer_write(out_ringbuffers_[i],
+                              (const char*) buffer.pointer()->extended_data[i],
+                              num_bytes);
     }
 }
 
@@ -129,12 +132,14 @@ JackLayer::read()
     if (not toRead)
         return {};
 
-    auto format = audioInputFormat_;
+    auto format         = audioInputFormat_;
     format.sampleFormat = AV_SAMPLE_FMT_FLTP;
     auto buffer = std::make_unique<AudioFrame>(format, toRead / sizeof(jack_default_audio_sample_t));
 
     for (unsigned i = 0; i < in_ringbuffers_.size(); ++i) {
-        jack_ringbuffer_read(in_ringbuffers_[i], (char *) buffer->pointer()->extended_data[i], toRead);
+        jack_ringbuffer_read(in_ringbuffers_[i],
+                             (char*) buffer->pointer()->extended_data[i],
+                             toRead);
     }
     return buffer;
 }
@@ -149,7 +154,6 @@ JackLayer::ringbuffer_worker()
     flushUrgent();
 
     while (true) {
-
         std::unique_lock<std::mutex> lock(ringbuffer_thread_mutex_);
 
         // may have changed, we don't want to wait for a notification we won't get
@@ -167,18 +171,22 @@ JackLayer::ringbuffer_worker()
         // is rather arbitrary. We should wait until ring has/needs data
         // and jack has/needs data.
         data_ready_.wait(lock, [&] {
-            return status_ != Status::Started
-            or ringbuffer_ready_for_read(in_ringbuffers_[0]);
+            return status_ != Status::Started or ringbuffer_ready_for_read(in_ringbuffers_[0]);
         });
     }
 }
 
 void
-createPorts(jack_client_t *client, std::vector<jack_port_t *> &ports,
-            bool playback, std::vector<jack_ringbuffer_t *> &ringbuffers)
+createPorts(jack_client_t* client,
+            std::vector<jack_port_t*>& ports,
+            bool playback,
+            std::vector<jack_ringbuffer_t*>& ringbuffers)
 {
-    const char **physical_ports = jack_get_ports(client, NULL, NULL,
-            playback ? JackPortIsInput : JackPortIsOutput | JackPortIsPhysical);
+    const char** physical_ports = jack_get_ports(client,
+                                                 NULL,
+                                                 NULL,
+                                                 playback ? JackPortIsInput
+                                                          : JackPortIsOutput | JackPortIsPhysical);
     for (unsigned i = 0; physical_ports[i]; ++i) {
         if (i == 2)
             break;
@@ -188,14 +196,17 @@ createPorts(jack_client_t *client, std::vector<jack_port_t *> &ports,
         else
             snprintf(port_name, sizeof(port_name), "in_%d", i + 1);
         port_name[sizeof(port_name) - 1] = '\0';
-        jack_port_t *port = jack_port_register(client,
-                port_name, JACK_DEFAULT_AUDIO_TYPE, playback ? JackPortIsOutput : JackPortIsInput, 0);
+        jack_port_t* port                = jack_port_register(client,
+                                               port_name,
+                                               JACK_DEFAULT_AUDIO_TYPE,
+                                               playback ? JackPortIsOutput : JackPortIsInput,
+                                               0);
         if (port == nullptr)
             throw std::runtime_error("Could not register JACK output port");
         ports.push_back(port);
 
         static const unsigned RB_SIZE = 16384;
-        jack_ringbuffer_t *rb = jack_ringbuffer_create(RB_SIZE);
+        jack_ringbuffer_t* rb         = jack_ringbuffer_create(RB_SIZE);
         if (rb == nullptr)
             throw std::runtime_error("Could not create JACK ringbuffer");
         if (jack_ringbuffer_mlock(rb))
@@ -205,19 +216,20 @@ createPorts(jack_client_t *client, std::vector<jack_port_t *> &ports,
     jack_free(physical_ports);
 }
 
-
-JackLayer::JackLayer(const AudioPreference &p) :
-    AudioLayer(p),
-    captureClient_(nullptr),
-    playbackClient_(nullptr)
+JackLayer::JackLayer(const AudioPreference& p)
+    : AudioLayer(p)
+    , captureClient_(nullptr)
+    , playbackClient_(nullptr)
 {
     playbackClient_ = jack_client_open(PACKAGE_NAME,
-            (jack_options_t) (JackNullOption | JackNoStartServer), NULL);
+                                       (jack_options_t)(JackNullOption | JackNoStartServer),
+                                       NULL);
     if (!playbackClient_)
         throw std::runtime_error("Could not open JACK client");
 
     captureClient_ = jack_client_open(PACKAGE_NAME,
-            (jack_options_t) (JackNullOption | JackNoStartServer), NULL);
+                                      (jack_options_t)(JackNullOption | JackNoStartServer),
+                                      NULL);
     if (!captureClient_)
         throw std::runtime_error("Could not open JACK client");
 
@@ -227,10 +239,10 @@ JackLayer::JackLayer(const AudioPreference &p) :
     createPorts(playbackClient_, out_ports_, true, out_ringbuffers_);
     createPorts(captureClient_, in_ports_, false, in_ringbuffers_);
 
-    const auto playRate = jack_get_sample_rate(playbackClient_);
+    const auto playRate    = jack_get_sample_rate(playbackClient_);
     const auto captureRate = jack_get_sample_rate(captureClient_);
 
-    audioInputFormat_ = {captureRate, (unsigned)in_ringbuffers_.size()};
+    audioInputFormat_ = {captureRate, (unsigned) in_ringbuffers_.size()};
     hardwareFormatAvailable(AudioFormat(playRate, out_ringbuffers_.size()));
     hardwareInputFormatAvailable(audioInputFormat_);
     jack_on_shutdown(playbackClient_, onShutdown, this);
@@ -257,7 +269,7 @@ JackLayer::~JackLayer()
 }
 
 void
-JackLayer::updatePreference(AudioPreference & /*pref*/, int /*index*/, DeviceType /*type*/)
+JackLayer::updatePreference(AudioPreference& /*pref*/, int /*index*/, DeviceType /*type*/)
 {}
 
 std::vector<std::string>
@@ -273,32 +285,49 @@ JackLayer::getPlaybackDeviceList() const
 }
 
 int
-JackLayer::getAudioDeviceIndex(const std::string& /*name*/, DeviceType /*type*/) const { return 0; }
+JackLayer::getAudioDeviceIndex(const std::string& /*name*/, DeviceType /*type*/) const
+{
+    return 0;
+}
 
 std::string
-JackLayer::getAudioDeviceName(int /*index*/, DeviceType /*type*/) const { return ""; }
-
-int
-JackLayer::getIndexCapture() const { return 0; }
-
-int
-JackLayer::getIndexPlayback() const { return 0; }
-
-int
-JackLayer::getIndexRingtone() const { return 0; }
-
-int
-JackLayer::process_capture(jack_nframes_t frames, void *arg)
+JackLayer::getAudioDeviceName(int /*index*/, DeviceType /*type*/) const
 {
-    JackLayer *context = static_cast<JackLayer*>(arg);
+    return "";
+}
+
+int
+JackLayer::getIndexCapture() const
+{
+    return 0;
+}
+
+int
+JackLayer::getIndexPlayback() const
+{
+    return 0;
+}
+
+int
+JackLayer::getIndexRingtone() const
+{
+    return 0;
+}
+
+int
+JackLayer::process_capture(jack_nframes_t frames, void* arg)
+{
+    JackLayer* context = static_cast<JackLayer*>(arg);
 
     for (unsigned i = 0; i < context->in_ringbuffers_.size(); ++i) {
-
         // read from input
-        jack_default_audio_sample_t *in_buffers = static_cast<jack_default_audio_sample_t*>(jack_port_get_buffer(context->in_ports_[i], frames));
+        jack_default_audio_sample_t* in_buffers = static_cast<jack_default_audio_sample_t*>(
+            jack_port_get_buffer(context->in_ports_[i], frames));
 
         const size_t bytes_to_read = frames * sizeof(*in_buffers);
-        size_t bytes_to_rb = jack_ringbuffer_write(context->in_ringbuffers_[i], (char *) in_buffers, bytes_to_read);
+        size_t bytes_to_rb         = jack_ringbuffer_write(context->in_ringbuffers_[i],
+                                                   (char*) in_buffers,
+                                                   bytes_to_read);
 
         // fill the rest with silence
         if (bytes_to_rb < bytes_to_read) {
@@ -321,16 +350,19 @@ JackLayer::process_capture(jack_nframes_t frames, void *arg)
 }
 
 int
-JackLayer::process_playback(jack_nframes_t frames, void *arg)
+JackLayer::process_playback(jack_nframes_t frames, void* arg)
 {
-    JackLayer *context = static_cast<JackLayer*>(arg);
+    JackLayer* context = static_cast<JackLayer*>(arg);
 
     for (unsigned i = 0; i < context->out_ringbuffers_.size(); ++i) {
         // write to output
-        jack_default_audio_sample_t *out_buffers = static_cast<jack_default_audio_sample_t*>(jack_port_get_buffer(context->out_ports_[i], frames));
+        jack_default_audio_sample_t* out_buffers = static_cast<jack_default_audio_sample_t*>(
+            jack_port_get_buffer(context->out_ports_[i], frames));
 
         const size_t bytes_to_write = frames * sizeof(*out_buffers);
-        size_t bytes_from_rb = jack_ringbuffer_read(context->out_ringbuffers_[i], (char *) out_buffers, bytes_to_write);
+        size_t bytes_from_rb        = jack_ringbuffer_read(context->out_ringbuffers_[i],
+                                                    (char*) out_buffers,
+                                                    bytes_to_write);
 
         // fill the rest with silence
         if (bytes_from_rb < bytes_to_write) {
@@ -345,8 +377,7 @@ JackLayer::process_playback(jack_nframes_t frames, void *arg)
 /**
  * Start the capture and playback.
  */
-void
-JackLayer::startStream(AudioStreamType)
+void JackLayer::startStream(AudioStreamType)
 {
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -366,7 +397,7 @@ JackLayer::startStream(AudioStreamType)
 }
 
 void
-JackLayer::onShutdown(void * /* data */)
+JackLayer::onShutdown(void* /* data */)
 {
     JAMI_WARN("JACK server shutdown");
     // FIXME: handle this safely

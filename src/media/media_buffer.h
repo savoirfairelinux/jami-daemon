@@ -37,8 +37,8 @@ struct FrameBuffer; //  from dring/videomanager_interface.h
 
 namespace jami {
 
-using MediaFrame = DRing::MediaFrame;
-using AudioFrame = DRing::AudioFrame;
+using MediaFrame    = DRing::MediaFrame;
+using AudioFrame    = DRing::AudioFrame;
 using MediaObserver = std::function<void(std::shared_ptr<MediaFrame>&&)>;
 
 #ifdef ENABLE_VIDEO

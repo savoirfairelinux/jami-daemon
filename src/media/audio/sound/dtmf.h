@@ -34,31 +34,32 @@
 
 namespace jami {
 
-class DTMF {
-    public:
-        /**
-         * Create a new DTMF.
-         * @param sampleRate frequency of the sample (ex: 8000 hz)
-         */
-        DTMF(unsigned int sampleRate);
+class DTMF
+{
+public:
+    /**
+     * Create a new DTMF.
+     * @param sampleRate frequency of the sample (ex: 8000 hz)
+     */
+    DTMF(unsigned int sampleRate);
 
-        /**
-         * Start the done for th given dtmf
-         * @param code  The DTMF code
-         */
-        void startTone(char code);
+    /**
+     * Start the done for th given dtmf
+     * @param code  The DTMF code
+     */
+    void startTone(char code);
 
-        /**
-         * Copy the sound inside the sampling* buffer
-         * @param buffer : a vector of AudioSample
-         */
-        bool generateDTMF(std::vector<AudioSample> &buffer);
+    /**
+     * Copy the sound inside the sampling* buffer
+     * @param buffer : a vector of AudioSample
+     */
+    bool generateDTMF(std::vector<AudioSample>& buffer);
 
-    private:
-        char currentTone_;
-        char newTone_;
+private:
+    char currentTone_;
+    char newTone_;
 
-        DTMFGenerator dtmfgenerator_;
+    DTMFGenerator dtmfgenerator_;
 };
 
 } // namespace jami

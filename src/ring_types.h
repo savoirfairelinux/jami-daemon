@@ -39,7 +39,7 @@ static constexpr size_t SIZEBUF = 16000; /** About 62.5ms of buffering at 48kHz 
  * This meta-function is used to enable a template overload
  * only if given class T is a base of class U
  */
-template <class T, class U>
+template<class T, class U>
 using enable_if_base_of = typename std::enable_if<std::is_base_of<T, U>::value, T>::type;
 
 /**
@@ -53,7 +53,7 @@ using enable_if_base_of = typename std::enable_if<std::is_base_of<T, U>::value, 
  * Any negative values (default) block this effect (unlimited respawn).
  * This function is thread-safe.
  */
-template <class T, signed MaxRespawn=-1>
+template<class T, signed MaxRespawn = -1>
 std::shared_ptr<T>
 getGlobalInstance()
 {
@@ -67,7 +67,7 @@ getGlobalInstance()
         if (not counter)
             return nullptr;
         auto link = std::make_shared<T>();
-        wlink = link;
+        wlink     = link;
         if (counter > 0)
             --counter;
         return link;

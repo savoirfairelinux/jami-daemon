@@ -24,31 +24,36 @@
 #include "video_base.h"
 #include "noncopyable.h"
 
-
 struct SwsContext;
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
-class VideoScaler {
+class VideoScaler
+{
 public:
     VideoScaler();
     ~VideoScaler();
     void reset();
-    void scale(const VideoFrame &input, VideoFrame &output);
-    void scale_with_aspect(const VideoFrame &input, VideoFrame &output);
-    void scale_and_pad(const VideoFrame &input, VideoFrame &output,
-                       unsigned xoff, unsigned yoff,
-                       unsigned dest_width, unsigned dest_height,
+    void scale(const VideoFrame& input, VideoFrame& output);
+    void scale_with_aspect(const VideoFrame& input, VideoFrame& output);
+    void scale_and_pad(const VideoFrame& input,
+                       VideoFrame& output,
+                       unsigned xoff,
+                       unsigned yoff,
+                       unsigned dest_width,
+                       unsigned dest_height,
                        bool keep_aspect);
     std::unique_ptr<VideoFrame> convertFormat(const VideoFrame& input, AVPixelFormat pix);
 
 private:
     NON_COPYABLE(VideoScaler);
-    SwsContext *ctx_;
+    SwsContext* ctx_;
     int mode_;
-    uint8_t *tmp_data_[4]; // used by scale_and_pad
+    uint8_t* tmp_data_[4]; // used by scale_and_pad
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami
 
 #endif // __VIDEO_SCALER_H__

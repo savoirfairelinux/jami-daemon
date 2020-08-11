@@ -36,20 +36,22 @@ using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
 
 class IceSocket
 {
-    private:
-        std::shared_ptr<IceTransport> ice_transport_ {};
-        int compId_ = -1;
+private:
+    std::shared_ptr<IceTransport> ice_transport_ {};
+    int compId_ = -1;
 
-    public:
-        IceSocket(std::shared_ptr<IceTransport> iceTransport, int compId)
-            : ice_transport_(std::move(iceTransport)), compId_(compId) {}
+public:
+    IceSocket(std::shared_ptr<IceTransport> iceTransport, int compId)
+        : ice_transport_(std::move(iceTransport))
+        , compId_(compId)
+    {}
 
-        void close();
-        ssize_t send(const unsigned char* buf, size_t len);
-        ssize_t waitForData(std::chrono::milliseconds timeout);
-        void setOnRecv(IceRecvCb cb);
-        uint16_t getTransportOverhead();
-        void setDefaultRemoteAddress(const IpAddr& addr);
+    void close();
+    ssize_t send(const unsigned char* buf, size_t len);
+    ssize_t waitForData(std::chrono::milliseconds timeout);
+    void setOnRecv(IceRecvCb cb);
+    uint16_t getTransportOverhead();
+    void setDefaultRemoteAddress(const IpAddr& addr);
 };
 
 /// ICE transport as a GenericSocket.
@@ -62,19 +64,19 @@ class IceSocketTransport final : public GenericSocket<uint8_t>
 public:
     using SocketType = GenericSocket<uint8_t>;
 
-    static constexpr uint16_t STANDARD_MTU_SIZE = 1280; // Size in bytes of MTU for IPv6 capable networks
+    static constexpr uint16_t STANDARD_MTU_SIZE
+        = 1280; // Size in bytes of MTU for IPv6 capable networks
     static constexpr uint16_t IPV6_HEADER_SIZE = 40; // Size in bytes of IPv6 packet header
     static constexpr uint16_t IPV4_HEADER_SIZE = 20; // Size in bytes of IPv4 packet header
-    static constexpr uint16_t UDP_HEADER_SIZE = 8; // Size in bytes of UDP header
+    static constexpr uint16_t UDP_HEADER_SIZE  = 8;  // Size in bytes of UDP header
 
     IceSocketTransport(std::shared_ptr<IceTransport>& ice, int comp_id, bool reliable = false)
         : compId_ {comp_id}
         , ice_ {ice}
-        , reliable_ {reliable} {}
+        , reliable_ {reliable}
+    {}
 
-    bool isReliable() const override {
-        return reliable_;
-    }
+    bool isReliable() const override { return reliable_; }
 
     void shutdown() override;
 
@@ -100,4 +102,4 @@ private:
     bool reliable_;
 };
 
-};
+}; // namespace jami

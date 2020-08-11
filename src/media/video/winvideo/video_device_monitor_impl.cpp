@@ -36,9 +36,11 @@
 namespace jami {
 namespace video {
 
-constexpr GUID guidCamera = { 0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44 };
+constexpr GUID guidCamera
+    = {0xe5323777, 0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44};
 
-class VideoDeviceMonitorImpl {
+class VideoDeviceMonitorImpl
+{
 public:
     VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
     ~VideoDeviceMonitorImpl();
@@ -87,41 +89,40 @@ getDeviceUniqueName(PDEV_BROADCAST_DEVICEINTERFACE pbdi)
 {
     std::string unique_name = pbdi->dbcc_name;
 
-    std::transform(unique_name.begin(), unique_name.end(), unique_name.begin(),
-        [](unsigned char c) { return std::tolower(c); }
-    );
+    std::transform(unique_name.begin(), unique_name.end(), unique_name.begin(), [](unsigned char c) {
+        return std::tolower(c);
+    });
 
-    auto pos = unique_name.find_last_of("#");
+    auto pos    = unique_name.find_last_of("#");
     unique_name = unique_name.substr(0, pos);
 
     return unique_name;
 }
 
 bool
-registerDeviceInterfaceToHwnd(HWND hWnd, HDEVNOTIFY *hDeviceNotify)
+registerDeviceInterfaceToHwnd(HWND hWnd, HDEVNOTIFY* hDeviceNotify)
 {
     // Use a guid for cameras specifically in order to not get spammed
     // with device messages.
     // These are pertinent GUIDs for media devices:
     //
-    // usb interfaces   { 0xa5dcbf10l, 0x6530, 0x11d2, 0x90, 0x1f, 0x00, 0xc0, 0x4f, 0xb9, 0x51, 0xed };
-    // image devices    { 0x6bdd1fc6,  0x810f, 0x11d0, 0xbe, 0xc7, 0x08, 0x00, 0x2b, 0xe2, 0x09, 0x2f };
-    // capture devices  { 0x65e8773d,  0x8f56, 0x11d0, 0xa3, 0xb9, 0x00, 0xa0, 0xc9, 0x22, 0x31, 0x96 };
-    // camera devices   { 0xe5323777,  0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46, 0x99, 0xc4, 0x6e, 0x44 };
-    // audio devices    { 0x6994ad04,  0x93ef, 0x11d0, 0xa3, 0xcc, 0x00, 0xa0, 0xc9, 0x22, 0x31, 0x96 };
+    // usb interfaces   { 0xa5dcbf10l, 0x6530, 0x11d2, 0x90, 0x1f, 0x00, 0xc0, 0x4f, 0xb9, 0x51,
+    // 0xed }; image devices    { 0x6bdd1fc6,  0x810f, 0x11d0, 0xbe, 0xc7, 0x08, 0x00, 0x2b, 0xe2,
+    // 0x09, 0x2f }; capture devices  { 0x65e8773d,  0x8f56, 0x11d0, 0xa3, 0xb9, 0x00, 0xa0, 0xc9,
+    // 0x22, 0x31, 0x96 }; camera devices   { 0xe5323777,  0xf976, 0x4f5b, 0x9b, 0x55, 0xb9, 0x46,
+    // 0x99, 0xc4, 0x6e, 0x44 }; audio devices    { 0x6994ad04,  0x93ef, 0x11d0, 0xa3, 0xcc, 0x00,
+    // 0xa0, 0xc9, 0x22, 0x31, 0x96 };
 
     DEV_BROADCAST_DEVICEINTERFACE NotificationFilter;
 
     ZeroMemory(&NotificationFilter, sizeof(NotificationFilter));
-    NotificationFilter.dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
+    NotificationFilter.dbcc_size       = sizeof(DEV_BROADCAST_DEVICEINTERFACE);
     NotificationFilter.dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
-    NotificationFilter.dbcc_classguid = guidCamera;
+    NotificationFilter.dbcc_classguid  = guidCamera;
 
-    *hDeviceNotify = RegisterDeviceNotification(
-        hWnd,
-        &NotificationFilter,
-        DEVICE_NOTIFY_WINDOW_HANDLE
-    );
+    *hDeviceNotify = RegisterDeviceNotification(hWnd,
+                                                &NotificationFilter,
+                                                DEVICE_NOTIFY_WINDOW_HANDLE);
 
     if (nullptr == *hDeviceNotify) {
         return false;
@@ -135,14 +136,13 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
 {
     LRESULT lRet = 1;
     static HDEVNOTIFY hDeviceNotify;
-    VideoDeviceMonitorImpl *pThis;
+    VideoDeviceMonitorImpl* pThis;
 
     switch (message) {
-    case WM_CREATE:
-    {
+    case WM_CREATE: {
         // Store object pointer passed from CreateWindowEx.
         auto createParams = reinterpret_cast<CREATESTRUCT*>(lParam)->lpCreateParams;
-        pThis = static_cast<VideoDeviceMonitorImpl*>(createParams);
+        pThis             = static_cast<VideoDeviceMonitorImpl*>(createParams);
         SetLastError(0);
         SetWindowLongPtr(hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pThis));
 
@@ -150,20 +150,19 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
             JAMI_ERR() << "Cannot register for device change notifications";
             SendMessage(hWnd, WM_DESTROY, 0, 0);
         }
-    }
-    break;
+    } break;
 
-    case WM_DEVICECHANGE:
-    {
+    case WM_DEVICECHANGE: {
         switch (wParam) {
         case DBT_DEVICEREMOVECOMPLETE:
-        case DBT_DEVICEARRIVAL:
-        {
-            PDEV_BROADCAST_DEVICEINTERFACE pbdi = (PDEV_BROADCAST_DEVICEINTERFACE)lParam;
-            auto unique_name = getDeviceUniqueName(pbdi);
+        case DBT_DEVICEARRIVAL: {
+            PDEV_BROADCAST_DEVICEINTERFACE pbdi = (PDEV_BROADCAST_DEVICEINTERFACE) lParam;
+            auto unique_name                    = getDeviceUniqueName(pbdi);
             if (!unique_name.empty()) {
-                JAMI_DBG() << unique_name << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
-                if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
+                JAMI_DBG() << unique_name
+                           << ((wParam == DBT_DEVICEARRIVAL) ? " plugged" : " unplugged");
+                if (pThis = reinterpret_cast<VideoDeviceMonitorImpl*>(
+                        GetWindowLongPtr(hWnd, GWLP_USERDATA))) {
                     if (wParam == DBT_DEVICEARRIVAL) {
                         auto captureDeviceList = pThis->enumerateVideoInputDevices();
                         for (auto id : captureDeviceList) {
@@ -175,14 +174,12 @@ VideoDeviceMonitorImpl::WinProcCallback(HWND hWnd, UINT message, WPARAM wParam, 
                     }
                 }
             }
-        }
-        break;
+        } break;
         default:
             break;
         }
         break;
-    }
-    break;
+    } break;
 
     case WM_CLOSE:
         UnregisterDeviceNotification(hDeviceNotify);
@@ -206,15 +203,15 @@ VideoDeviceMonitorImpl::run()
 {
     // Create a dummy window with the sole purpose to receive device change messages.
     static const char* className = "Message";
-    WNDCLASSEX wx = {};
-    wx.cbSize = sizeof(WNDCLASSEX);
-    wx.lpfnWndProc = WinProcCallback;
-    wx.hInstance = reinterpret_cast<HINSTANCE>(GetModuleHandle(0));
-    wx.lpszClassName = className;
+    WNDCLASSEX wx                = {};
+    wx.cbSize                    = sizeof(WNDCLASSEX);
+    wx.lpfnWndProc               = WinProcCallback;
+    wx.hInstance                 = reinterpret_cast<HINSTANCE>(GetModuleHandle(0));
+    wx.lpszClassName             = className;
     if (RegisterClassEx(&wx)) {
         // Pass this as lpParam so WinProcCallback can access members of VideoDeviceMonitorImpl.
-        hWnd_ = CreateWindowEx(0, className, "devicenotifications", 0, 0, 0, 0, 0,
-                               HWND_MESSAGE, NULL, NULL, this);
+        hWnd_ = CreateWindowEx(
+            0, className, "devicenotifications", 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, this);
     }
 
     // Run the message loop that will finish once a WM_DESTROY message
@@ -234,18 +231,19 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
 {
     std::vector<std::string> deviceList;
 
-    ICreateDevEnum *pDevEnum;
-    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
-        CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
+    ICreateDevEnum* pDevEnum;
+    HRESULT hr = CoCreateInstance(CLSID_SystemDeviceEnum,
+                                  NULL,
+                                  CLSCTX_INPROC_SERVER,
+                                  IID_PPV_ARGS(&pDevEnum));
 
     if (FAILED(hr)) {
         JAMI_ERR() << "Can't enumerate webcams";
         return {};
     }
 
-    IEnumMoniker *pEnum = nullptr;
-    hr = pDevEnum->CreateClassEnumerator(
-        CLSID_VideoInputDeviceCategory, &pEnum, 0);
+    IEnumMoniker* pEnum = nullptr;
+    hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &pEnum, 0);
     if (hr == S_FALSE) {
         hr = VFW_E_NOT_FOUND;
     }
@@ -255,17 +253,17 @@ VideoDeviceMonitorImpl::enumerateVideoInputDevices()
         return {};
     }
 
-    IMoniker *pMoniker = NULL;
+    IMoniker* pMoniker = NULL;
     while (pEnum->Next(1, &pMoniker, NULL) == S_OK) {
-        IPropertyBag *pPropBag;
+        IPropertyBag* pPropBag;
         HRESULT hr = pMoniker->BindToStorage(0, 0, IID_PPV_ARGS(&pPropBag));
         if (FAILED(hr)) {
             pMoniker->Release();
             continue;
         }
 
-        IBindCtx *bind_ctx = NULL;
-        LPOLESTR olestr = NULL;
+        IBindCtx* bind_ctx = NULL;
+        LPOLESTR olestr    = NULL;
 
         hr = CreateBindCtx(0, &bind_ctx);
         if (hr != S_OK) {
@@ -297,8 +295,7 @@ VideoDeviceMonitor::VideoDeviceMonitor()
     monitorImpl_->start();
 }
 
-VideoDeviceMonitor::~VideoDeviceMonitor()
-{}
+VideoDeviceMonitor::~VideoDeviceMonitor() {}
 
-}
-} // namespace jami::video
+} // namespace video
+} // namespace jami

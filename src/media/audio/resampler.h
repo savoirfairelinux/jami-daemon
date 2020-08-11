@@ -36,7 +36,8 @@ namespace jami {
 /**
  * @brief Wrapper class for libswresample
  */
-class Resampler {
+class Resampler
+{
 public:
     Resampler();
     ~Resampler();

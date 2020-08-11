@@ -49,9 +49,10 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
-static constexpr unsigned default_grab_width = 640;
+static constexpr unsigned default_grab_width  = 640;
 static constexpr unsigned default_grab_height = 480;
 
 VideoInput::VideoInput(VideoInputMode inputMode, const std::string& id_)
@@ -115,7 +116,8 @@ VideoInput::switchDevice()
     }
 }
 
-int VideoInput::getWidth() const
+int
+VideoInput::getWidth() const
 {
     if (videoManagedByClient()) {
         return decOpts_.width;
@@ -123,7 +125,8 @@ int VideoInput::getWidth() const
     return decoder_->getWidth();
 }
 
-int VideoInput::getHeight() const
+int
+VideoInput::getHeight() const
 {
     if (videoManagedByClient()) {
         return decOpts_.height;
@@ -131,7 +134,8 @@ int VideoInput::getHeight() const
     return decoder_->getHeight();
 }
 
-AVPixelFormat VideoInput::getPixelFormat() const
+AVPixelFormat
+VideoInput::getPixelFormat() const
 {
     if (!videoManagedByClient()) {
         return decoder_->getPixelFormat();
@@ -140,23 +144,24 @@ AVPixelFormat VideoInput::getPixelFormat() const
     std::stringstream ss;
     ss << decOpts_.format;
     ss >> format;
-    return (AVPixelFormat)format;
+    return (AVPixelFormat) format;
 }
 
 void
 VideoInput::setRotation(int angle)
 {
-    std::shared_ptr<AVBufferRef> displayMatrix {
-        av_buffer_alloc(sizeof(int32_t) * 9),
-        [](AVBufferRef* buf){ av_buffer_unref(&buf); }
-    };
+    std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9),
+                                                [](AVBufferRef* buf) {
+                                                    av_buffer_unref(&buf);
+                                                }};
     if (displayMatrix) {
         av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
         displayMatrix_ = std::move(displayMatrix);
     }
 }
 
-bool VideoInput::setup()
+bool
+VideoInput::setup()
 {
     if (not attach(sink_.get())) {
         JAMI_ERR("attach sink failed");
@@ -175,7 +180,7 @@ void
 VideoInput::process()
 {
     if (playingFile_) {
-        if(paused_) {
+        if (paused_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
             return;
         }
@@ -192,7 +197,8 @@ VideoInput::process()
 }
 
 void
-VideoInput::setSeekTime(int64_t time) {
+VideoInput::setSeekTime(int64_t time)
+{
     if (decoder_) {
         decoder_->setSeekTime(time);
     }
@@ -226,26 +232,33 @@ VideoInput::captureFrame()
     }
 }
 void
-VideoInput::flushBuffers() {
+VideoInput::flushBuffers()
+{
     if (decoder_) {
         decoder_->flushBuffers();
     }
 }
 
 void
-VideoInput::configureFilePlayback(const std::string&, std::shared_ptr<MediaDemuxer>& demuxer, int index)
+VideoInput::configureFilePlayback(const std::string&,
+                                  std::shared_ptr<MediaDemuxer>& demuxer,
+                                  int index)
 {
     deleteDecoder();
     clearOptions();
 
-    auto decoder = std::make_unique<MediaDecoder>(demuxer, index, [this](std::shared_ptr<MediaFrame>&& frame) {
-        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
-    });
-    decoder->setInterruptCallback([](void* data) -> int {
-        return not static_cast<VideoInput*>(data)->isCapturing(); },this);
+    auto decoder = std::make_unique<MediaDecoder>(demuxer,
+                                                  index,
+                                                  [this](std::shared_ptr<MediaFrame>&& frame) {
+                                                      publishFrame(
+                                                          std::static_pointer_cast<VideoFrame>(
+                                                              frame));
+                                                  });
+    decoder->setInterruptCallback(
+        [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
     decoder->emulateRate();
 
-    decoder_ = std::move(decoder);
+    decoder_     = std::move(decoder);
     playingFile_ = true;
     loop_.start();
 
@@ -265,22 +278,22 @@ VideoInput::createDecoder()
         return;
     }
 
-    auto decoder = std::make_unique<MediaDecoder>([this](const std::shared_ptr<MediaFrame>& frame) mutable {
-        publishFrame(std::static_pointer_cast<VideoFrame>(frame));
-    });
+    auto decoder = std::make_unique<MediaDecoder>(
+        [this](const std::shared_ptr<MediaFrame>& frame) mutable {
+            publishFrame(std::static_pointer_cast<VideoFrame>(frame));
+        });
 
     if (emulateRate_)
         decoder->emulateRate();
 
     decoder->setInterruptCallback(
-        [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); },
-        this);
+        [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); }, this);
 
     bool ready = false, restartSink = false;
     while (!ready && !isStopped_) {
         // Retry to open the video till the input is opened
         auto ret = decoder->openInput(decOpts_);
-        ready = ret >= 0;
+        ready    = ret >= 0;
         if (ret < 0 && -ret != EBUSY) {
             JAMI_ERR("Could not open input \"%s\" with status %i", decOpts_.input.c_str(), ret);
             foundDecOpts(decOpts_);
@@ -310,10 +323,10 @@ VideoInput::createDecoder()
 
     decoder->decode(); // Populate AVCodecContext fields
 
-    decOpts_.width = decoder->getWidth();
-    decOpts_.height = decoder->getHeight();
+    decOpts_.width     = decoder->getWidth();
+    decOpts_.height    = decoder->getHeight();
     decOpts_.framerate = decoder->getFps();
-    AVPixelFormat fmt = decoder->getPixelFormat();
+    AVPixelFormat fmt  = decoder->getPixelFormat();
     if (fmt != AV_PIX_FMT_NONE) {
         decOpts_.pixel_format = av_get_pix_fmt_name(fmt);
     } else {
@@ -322,7 +335,9 @@ VideoInput::createDecoder()
     }
 
     JAMI_DBG("created decoder with video params : size=%dX%d, fps=%lf pix=%s",
-             decOpts_.width, decOpts_.height, decOpts_.framerate.real(),
+             decOpts_.width,
+             decOpts_.height,
+             decOpts_.framerate.real(),
              decOpts_.pixel_format.c_str());
 
     decoder_ = std::move(decoder);
@@ -341,7 +356,6 @@ VideoInput::deleteDecoder()
     decoder_.reset();
 }
 
-
 void
 VideoInput::stopInput()
 {
@@ -349,9 +363,10 @@ VideoInput::stopInput()
     loop_.stop();
 }
 
-void VideoInput::clearOptions()
+void
+VideoInput::clearOptions()
 {
-    decOpts_ = {};
+    decOpts_     = {};
     emulateRate_ = false;
 }
 
@@ -383,7 +398,7 @@ VideoInput::initX11(std::string display)
     size_t space = display.find(' ');
 
     clearOptions();
-    decOpts_.format = "x11grab";
+    decOpts_.format    = "x11grab";
     decOpts_.framerate = 25;
 
     if (space != std::string::npos) {
@@ -392,13 +407,13 @@ VideoInput::initX11(std::string display)
         unsigned w, h;
         iss >> w >> sep >> h;
         // round to 8 pixel block
-        decOpts_.width = round2pow(w, 3);
+        decOpts_.width  = round2pow(w, 3);
         decOpts_.height = round2pow(h, 3);
-        decOpts_.input = display.erase(space);
+        decOpts_.input  = display.erase(space);
     } else {
         decOpts_.input = display;
-        //decOpts_.video_size = "vga";
-        decOpts_.width = default_grab_width;
+        // decOpts_.video_size = "vga";
+        decOpts_.width  = default_grab_width;
         decOpts_.height = default_grab_height;
     }
 
@@ -411,21 +426,21 @@ VideoInput::initAVFoundation(const std::string& display)
     size_t space = display.find(' ');
 
     clearOptions();
-    decOpts_.format = "avfoundation";
+    decOpts_.format       = "avfoundation";
     decOpts_.pixel_format = "nv12";
-    decOpts_.name = "Capture screen 0";
-    decOpts_.input = "Capture screen 0";
-    decOpts_.framerate = 30;
+    decOpts_.name         = "Capture screen 0";
+    decOpts_.input        = "Capture screen 0";
+    decOpts_.framerate    = 30;
 
     if (space != std::string::npos) {
         std::istringstream iss(display.substr(space + 1));
         char sep;
         unsigned w, h;
         iss >> w >> sep >> h;
-        decOpts_.width = round2pow(w, 3);
+        decOpts_.width  = round2pow(w, 3);
         decOpts_.height = round2pow(h, 3);
     } else {
-        decOpts_.width = default_grab_width;
+        decOpts_.width  = default_grab_width;
         decOpts_.height = default_grab_height;
     }
     return true;
@@ -436,8 +451,8 @@ VideoInput::initGdiGrab(const std::string& params)
 {
     size_t space = params.find(' ');
     clearOptions();
-    decOpts_.format = "gdigrab";
-    decOpts_.input = "desktop";
+    decOpts_.format    = "gdigrab";
+    decOpts_.input     = "desktop";
     decOpts_.framerate = 30;
 
     if (space != std::string::npos) {
@@ -445,14 +460,14 @@ VideoInput::initGdiGrab(const std::string& params)
         char sep;
         unsigned w, h;
         iss >> w >> sep >> h;
-        decOpts_.width = round2pow(w, 3);
+        decOpts_.width  = round2pow(w, 3);
         decOpts_.height = round2pow(h, 3);
 
         size_t plus = params.find('+');
         std::istringstream dss(params.substr(plus + 1, space - plus));
         dss >> decOpts_.offset_x >> sep >> decOpts_.offset_y;
     } else {
-        decOpts_.width = default_grab_width;
+        decOpts_.width  = default_grab_width;
         decOpts_.height = default_grab_height;
     }
 
@@ -462,7 +477,7 @@ VideoInput::initGdiGrab(const std::string& params)
 bool
 VideoInput::initFile(std::string path)
 {
-    size_t dot = path.find_last_of('.');
+    size_t dot      = path.find_last_of('.');
     std::string ext = dot == std::string::npos ? "" : path.substr(dot + 1);
 
     /* File exists? */
@@ -475,22 +490,22 @@ VideoInput::initFile(std::string path)
     // FIXME the way this is done is hackish, but it can't be done in createDecoder because that
     // would break the promise returned in switchInput
     DeviceParams p;
-    p.input = path;
-    p.name = path;
+    p.input  = path;
+    p.name   = path;
     auto dec = std::make_unique<MediaDecoder>();
     if (dec->openInput(p) < 0 || dec->setupVideo() < 0) {
         return initCamera(jami::getVideoDeviceMonitor().getDefaultDevice());
     }
 
     clearOptions();
-    emulateRate_ = true;
+    emulateRate_   = true;
     decOpts_.input = path;
-    decOpts_.name = path;
-    decOpts_.loop = "1";
+    decOpts_.name  = path;
+    decOpts_.loop  = "1";
 
     // Force 1fps for static image
     if (ext == "jpeg" || ext == "jpg" || ext == "png") {
-        decOpts_.format = "image2";
+        decOpts_.format    = "image2";
         decOpts_.framerate = 1;
     } else {
         JAMI_WARN("Guessing file type for %s", path.c_str());
@@ -513,7 +528,7 @@ VideoInput::switchInput(const std::string& resource)
     }
 
     currentResource_ = resource;
-    decOptsFound_ = false;
+    decOptsFound_    = false;
 
     std::promise<DeviceParams> p;
     foundDecOpts_.swap(p);
@@ -521,7 +536,7 @@ VideoInput::switchInput(const std::string& resource)
     // Switch off video input?
     if (resource.empty()) {
         clearOptions();
-        futureDecOpts_  = foundDecOpts_.get_future();
+        futureDecOpts_ = foundDecOpts_.get_future();
         startLoop();
         return futureDecOpts_;
     }
@@ -568,7 +583,9 @@ VideoInput::switchInput(const std::string& resource)
 
 const DeviceParams&
 VideoInput::getParams() const
-{ return decOpts_; }
+{
+    return decOpts_;
+}
 
 MediaStream
 VideoInput::getInfo() const
@@ -579,8 +596,13 @@ VideoInput::getInfo() const
     }
     auto opts = futureDecOpts_.get();
     rational<int> fr(opts.framerate.numerator(), opts.framerate.denominator());
-    return MediaStream("v:local", av_get_pix_fmt(opts.pixel_format.c_str()),
-        1 / fr, opts.width, opts.height, 0, fr);
+    return MediaStream("v:local",
+                       av_get_pix_fmt(opts.pixel_format.c_str()),
+                       1 / fr,
+                       opts.width,
+                       opts.height,
+                       0,
+                       fr);
 }
 
 void
@@ -598,18 +620,21 @@ VideoInput::setSink(const std::string& sinkId)
     sink_ = Manager::instance().createSinkClient(sinkId);
 }
 
-void VideoInput::setFrameSize(const int width, const int height)
+void
+VideoInput::setFrameSize(const int width, const int height)
 {
     /* Signal the client about readable sink */
     sink_->setFrameSize(width, height);
 }
 
-void VideoInput::setupSink()
+void
+VideoInput::setupSink()
 {
     setup();
 }
 
-void VideoInput::stopSink()
+void
+VideoInput::stopSink()
 {
     detach(sink_.get());
     sink_->stop();
@@ -623,4 +648,5 @@ VideoInput::updateStartTime(int64_t startTime)
     }
 }
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

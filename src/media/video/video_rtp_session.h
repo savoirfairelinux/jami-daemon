@@ -36,20 +36,23 @@ class Conference;
 class MediaRecorder;
 } // namespace jami
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class VideoMixer;
 class VideoSender;
 class VideoReceiveThread;
 
-struct RTCPInfo {
+struct RTCPInfo
+{
     float packetLoss;
     unsigned int jitter;
     unsigned int nb_sample;
     float latency;
 };
 
-struct VideoBitrateInfo {
+struct VideoBitrateInfo
+{
     unsigned videoBitrateCurrent;
     unsigned videoBitrateMin;
     unsigned videoBitrateMax;
@@ -61,61 +64,52 @@ struct VideoBitrateInfo {
     float packetLostThreshold;
 };
 
-class VideoRtpSession : public RtpSession {
+class VideoRtpSession : public RtpSession
+{
 public:
     using BaseType = RtpSession;
 
-    VideoRtpSession(const std::string& callID,
-                    const DeviceParams& localVideoParams);
+    VideoRtpSession(const std::string& callID, const DeviceParams& localVideoParams);
     ~VideoRtpSession();
 
     void setRequestKeyFrameCallback(std::function<void(void)> cb);
 
     void updateMedia(const MediaDescription& send, const MediaDescription& receive) override;
 
-    void start(std::unique_ptr<IceSocket> rtp_sock,
-               std::unique_ptr<IceSocket> rtcp_sock) override;
+    void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) override;
     void restartSender() override;
     void stop() override;
 
     /**
-      * Set video orientation
-      *
-      * Send to the receive thread rotation to apply to the video (counterclockwise)
-      *
-      * @param rotation Rotation in degrees (counterclockwise)
-      */
+     * Set video orientation
+     *
+     * Send to the receive thread rotation to apply to the video (counterclockwise)
+     *
+     * @param rotation Rotation in degrees (counterclockwise)
+     */
     void setRotation(int rotation);
     void forceKeyFrame();
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
     void enterConference(Conference* conference);
     void exitConference();
-    void switchInput(const std::string& input) {
-        input_ = input;
-    }
-    const std::string& getInput() const {
-      return input_;
-    }
+    void switchInput(const std::string& input) { input_ = input; }
+    const std::string& getInput() const { return input_; }
 
     void setChangeOrientationCallback(std::function<void(int)> cb);
     void initRecorder(std::shared_ptr<MediaRecorder>& rec) override;
     void deinitRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
-    std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() {
-        return videoLocal_;
-    }
+    std::shared_ptr<VideoFrameActiveWriter>& getVideoLocal() { return videoLocal_; }
 
-    std::unique_ptr<VideoReceiveThread>& getVideoReceive() {
-        return receiveThread_;
-    }
+    std::unique_ptr<VideoReceiveThread>& getVideoReceive() { return receiveThread_; }
 
 private:
     void setupConferenceVideoPipeline(Conference& conference);
     void setupVideoPipeline();
     void startSender();
     void startReceiver();
-    using clock = std::chrono::steady_clock;
+    using clock      = std::chrono::steady_clock;
     using time_point = clock::time_point;
 
     std::string input_;
@@ -128,7 +122,7 @@ private:
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
     uint16_t initSeqVal_ = 0;
 
-    std::function<void (void)> requestKeyFrameCallback_;
+    std::function<void(void)> requestKeyFrameCallback_;
 
     bool check_RCTP_Info_RR(RTCPInfo&);
     bool check_RCTP_Info_REMB(uint64_t*);
@@ -153,11 +147,11 @@ private:
     std::list<unsigned> histoBitrate_ {};
     std::list<unsigned> histoJitter_ {};
     std::list<int> histoDelay_ {};
-    std::list< std::pair<time_point, float> > histoLoss_;
+    std::list<std::pair<time_point, float>> histoLoss_;
     // max size of quality and bitrate historic
 
     // 5 tries in a row
-    static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
+    static constexpr unsigned MAX_ADAPTATIVE_BITRATE_ITERATION {5};
     bool hasReachMaxQuality_ {false};
     // packet loss threshold
     static constexpr float PACKET_LOSS_THRESHOLD {1.0};
@@ -181,4 +175,5 @@ private:
     std::function<void(void)> cbKeyFrameRequest_;
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

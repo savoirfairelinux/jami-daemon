@@ -48,17 +48,17 @@ namespace tls {
 class ChanneledSIPTransport : public AbstractSIPTransport
 {
 public:
-    ChanneledSIPTransport(pjsip_endpoint* endpt, int tp_type,
-                    const std::shared_ptr<ChannelSocket>& socket,
-                    const IpAddr& local, const IpAddr& remote,
-                    onShutdownCb&& cb);
+    ChanneledSIPTransport(pjsip_endpoint* endpt,
+                          int tp_type,
+                          const std::shared_ptr<ChannelSocket>& socket,
+                          const IpAddr& local,
+                          const IpAddr& remote,
+                          onShutdownCb&& cb);
     ~ChanneledSIPTransport();
 
     pjsip_transport* getTransportBase() override { return &trData_.base; }
 
-    IpAddr getLocalAddress() const override {
-        return local_;
-    }
+    IpAddr getLocalAddress() const override { return local_; }
 
 private:
     NON_COPYABLE(ChanneledSIPTransport);
@@ -91,4 +91,5 @@ private:
     std::atomic_bool disconnected_ {false};
 };
 
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami

@@ -63,10 +63,16 @@ struct AccountArchive
     void deserialize(const std::vector<uint8_t>& data);
 
     /** Load archive from file, optionally encrypted with provided password. */
-    void load(const std::string& path, const std::string& password = {}) { deserialize(fileutils::readArchive(path, password)); }
+    void load(const std::string& path, const std::string& password = {})
+    {
+        deserialize(fileutils::readArchive(path, password));
+    }
 
     /** Save archive to file, optionally encrypted with provided password. */
-    void save(const std::string& path, const std::string& password = {}) const { fileutils::writeArchive(serialize(), path, password); }
+    void save(const std::string& path, const std::string& password = {}) const
+    {
+        fileutils::writeArchive(serialize(), path, password);
+    }
 };
 
-}
+} // namespace jami

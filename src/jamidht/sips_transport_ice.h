@@ -47,7 +47,8 @@ class IceTransport;
 class IceSocketTransport;
 } // namespace jami
 
-namespace jami { namespace tls {
+namespace jami {
+namespace tls {
 
 /**
  * SipsIceTransport
@@ -57,8 +58,11 @@ namespace jami { namespace tls {
 class SipsIceTransport : public AbstractSIPTransport
 {
 public:
-    SipsIceTransport(pjsip_endpoint* endpt, int tp_type, const TlsParams& param,
-                    const std::shared_ptr<IceTransport>& ice, int comp_id);
+    SipsIceTransport(pjsip_endpoint* endpt,
+                     int tp_type,
+                     const TlsParams& param,
+                     const std::shared_ptr<IceTransport>& ice,
+                     int comp_id);
     ~SipsIceTransport();
 
     void shutdown();
@@ -97,7 +101,8 @@ private:
 
     // TlsSession backend
 
-    struct ChangeStateEventData {
+    struct ChangeStateEventData
+    {
         pj_ssl_sock_info ssl_info;
         pjsip_tls_state_info tls_info;
         pjsip_transport_state_info state_info;
@@ -136,4 +141,5 @@ private:
     std::atomic_bool stopLoop_ {false};
 };
 
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami

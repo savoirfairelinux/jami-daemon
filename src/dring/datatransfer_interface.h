@@ -33,14 +33,13 @@
 
 namespace DRing {
 
-[[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC
-void registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+[[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC void registerDataXferHandlers(
+    const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 using DataTransferId = uint64_t;
 
-enum class DRING_PUBLIC DataTransferEventCode : uint32_t
-{
-    invalid=0,
+enum class DRING_PUBLIC DataTransferEventCode : uint32_t {
+    invalid = 0,
     created,
     unsupported,
     wait_peer_acceptance,
@@ -54,31 +53,31 @@ enum class DRING_PUBLIC DataTransferEventCode : uint32_t
     timeout_expired,
 };
 
-enum class DRING_PUBLIC DataTransferError : uint32_t
-{
-    success=0,
+enum class DRING_PUBLIC DataTransferError : uint32_t {
+    success = 0,
     unknown,
     io,
     invalid_argument,
 };
 
 /// Bit definition for DataTransferInfo.flags field
-enum class DRING_PUBLIC DataTransferFlags
-{
-    direction=0, ///< 0: outgoing, 1: incoming
+enum class DRING_PUBLIC DataTransferFlags {
+    direction = 0, ///< 0: outgoing, 1: incoming
 };
 
 struct DRING_PUBLIC DataTransferInfo
 {
     std::string accountId; ///< Identifier of the emiter/receiver account
-    DataTransferEventCode lastEvent { DataTransferEventCode::invalid }; ///< Latest event code sent to the user
-    uint32_t flags {0}; ///< Transfer global information.
-    int64_t totalSize {0} ; ///< Total number of bytes to sent/receive, 0 if not known
-    int64_t bytesProgress {0}; ///< Number of bytes sent/received
+    DataTransferEventCode lastEvent {
+        DataTransferEventCode::invalid}; ///< Latest event code sent to the user
+    uint32_t flags {0};                  ///< Transfer global information.
+    int64_t totalSize {0};               ///< Total number of bytes to sent/receive, 0 if not known
+    int64_t bytesProgress {0};           ///< Number of bytes sent/received
     std::string peer; ///< Identifier of the remote peer (in the semantic of the associated account)
     std::string displayName; ///< Human oriented transfer name
-    std::string path; ///< associated local file path if supported (empty, if not)
-    std::string mimetype; ///< MimeType of transferred data (https://www.iana.org/assignments/media-types/media-types.xhtml)
+    std::string path;        ///< associated local file path if supported (empty, if not)
+    std::string mimetype;    ///< MimeType of transferred data
+                             ///< (https://www.iana.org/assignments/media-types/media-types.xhtml)
 };
 
 DRING_PUBLIC std::vector<DataTransferId> dataTransferList() noexcept;
@@ -99,13 +98,15 @@ DRING_PUBLIC std::vector<DataTransferId> dataTransferList() noexcept;
 /// Other fields are not used, but you must keep the default assigned value for compatibility.
 ///
 /// \param info a DataTransferInfo structure filled with information useful for a file transfer.
-/// \param[out] id data transfer identifiant if function succeed, usable with other APIs. Undefined value in case of error.
+/// \param[out] id data transfer identifiant if function succeed, usable with other APIs. Undefined
+/// value in case of error.
 ///
-/// \return DataTransferError::success if file is accepted for transfer, any other value in case of errors
-/// \note If the account is valid but doesn't support file transfer, or if the peer is unjoignable,
-/// or at any further events during the transfer, the function returns a valid DataTransferId as
-/// the processing is asynchronous. Application will be signaled throught DataTransferEvent signal
-/// for such event. There is no reserved or special values on DataTransferId type.
+/// \return DataTransferError::success if file is accepted for transfer, any other value in case of
+/// errors \note If the account is valid but doesn't support file transfer, or if the peer is
+/// unjoignable, or at any further events during the transfer, the function returns a valid
+/// DataTransferId as the processing is asynchronous. Application will be signaled throught
+/// DataTransferEvent signal for such event. There is no reserved or special values on
+/// DataTransferId type.
 ///
 DRING_PUBLIC DataTransferError sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept;
 
@@ -124,8 +125,9 @@ DRING_PUBLIC DataTransferError sendFile(const DataTransferInfo& info, DataTransf
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note unknown \a id results to a no-op call.
 ///
-DRING_PUBLIC DataTransferError acceptFileTransfer(const DataTransferId& id, const std::string& file_path,
-                                     int64_t offset) noexcept;
+DRING_PUBLIC DataTransferError acceptFileTransfer(const DataTransferId& id,
+                                                  const std::string& file_path,
+                                                  int64_t offset) noexcept;
 
 /// Refuse or abort an outgoing or an incoming file transfer.
 ///
@@ -149,7 +151,8 @@ DataTransferError cancelDataTransfer(const DataTransferId& id) noexcept DRING_PU
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note \a info structure is in undefined state in case of error.
 ///
-DRING_PUBLIC DataTransferError dataTransferInfo(const DataTransferId& id, DataTransferInfo& info) noexcept;
+DRING_PUBLIC DataTransferError dataTransferInfo(const DataTransferId& id,
+                                                DataTransferInfo& info) noexcept;
 
 /// Return the amount of sent/received bytes of an existing data transfer.
 ///
@@ -160,8 +163,9 @@ DRING_PUBLIC DataTransferError dataTransferInfo(const DataTransferId& id, DataTr
 /// \return DataTransferError::success if \a total and \a progress is set with valid values.
 /// DataTransferError::invalid_argument if the id is unknown.
 ///
-DRING_PUBLIC DataTransferError dataTransferBytesProgress(const DataTransferId& id, int64_t& total,
-                                            int64_t& progress) noexcept;
+DRING_PUBLIC DataTransferError dataTransferBytesProgress(const DataTransferId& id,
+                                                         int64_t& total,
+                                                         int64_t& progress) noexcept;
 
 // Signals
 struct DRING_PUBLIC DataTransferSignal
@@ -169,7 +173,7 @@ struct DRING_PUBLIC DataTransferSignal
     struct DRING_PUBLIC DataTransferEvent
     {
         constexpr static const char* name = "DataTransferEvent";
-        using cb_type = void(const DataTransferId& transferId, int eventCode);
+        using cb_type                     = void(const DataTransferId& transferId, int eventCode);
     };
 };
 

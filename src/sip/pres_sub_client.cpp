@@ -53,19 +53,19 @@ using sip_utils::CONST_PJ_STR;
 int PresSubClient::modId_ = 0; // used to extract data structure from event_subscription
 
 void
-PresSubClient::pres_client_timer_cb(pj_timer_heap_t * /*th*/, pj_timer_entry *entry)
+PresSubClient::pres_client_timer_cb(pj_timer_heap_t* /*th*/, pj_timer_entry* entry)
 {
-    PresSubClient *c = (PresSubClient *) entry->user_data;
+    PresSubClient* c = (PresSubClient*) entry->user_data;
     JAMI_DBG("timeout for %s", c->getURI().c_str());
 }
 
 /* Callback called when *client* subscription state has changed. */
 void
-PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
+PresSubClient::pres_client_evsub_on_state(pjsip_evsub* sub, pjsip_event* event)
 {
     PJ_UNUSED_ARG(event);
 
-    PresSubClient *pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId_);
+    PresSubClient* pres_client = (PresSubClient*) pjsip_evsub_get_mod_data(sub, modId_);
     /* No need to pres->lock() here since the client has a locked dialog*/
 
     if (!pres_client) {
@@ -73,78 +73,81 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
         return;
     }
 
-    JAMI_DBG("Subscription for pres_client '%s' is '%s'", pres_client->getURI().c_str(),
-            pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
+    JAMI_DBG("Subscription for pres_client '%s' is '%s'",
+             pres_client->getURI().c_str(),
+             pjsip_evsub_get_state_name(sub) ? pjsip_evsub_get_state_name(sub) : "null");
 
     pjsip_evsub_state state = pjsip_evsub_get_state(sub);
 
-    SIPPresence * pres = pres_client->getPresence();
+    SIPPresence* pres = pres_client->getPresence();
 
     if (state == PJSIP_EVSUB_STATE_ACCEPTED) {
         pres_client->enable(true);
-        emitSignal<DRing::PresenceSignal::SubscriptionStateChanged>(
-                pres->getAccount()->getAccountID(),
-                pres_client->getURI().c_str(),
-                PJ_TRUE);
+        emitSignal<DRing::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()
+                                                                        ->getAccountID(),
+                                                                    pres_client->getURI().c_str(),
+                                                                    PJ_TRUE);
 
         pres->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, true);
 
     } else if (state == PJSIP_EVSUB_STATE_TERMINATED) {
         int resub_delay = -1;
-        pj_strdup_with_null(pres_client->pool_, &pres_client->term_reason_, pjsip_evsub_get_termination_reason(sub));
+        pj_strdup_with_null(pres_client->pool_,
+                            &pres_client->term_reason_,
+                            pjsip_evsub_get_termination_reason(sub));
 
-        emitSignal<DRing::PresenceSignal::SubscriptionStateChanged>(
-                pres->getAccount()->getAccountID(),
-                pres_client->getURI().c_str(),
-                PJ_FALSE);
+        emitSignal<DRing::PresenceSignal::SubscriptionStateChanged>(pres->getAccount()
+                                                                        ->getAccountID(),
+                                                                    pres_client->getURI().c_str(),
+                                                                    PJ_FALSE);
 
         pres_client->term_code_ = 200;
 
         /* Determine whether to resubscribe automatically */
         if (event && event->type == PJSIP_EVENT_TSX_STATE) {
-            const pjsip_transaction *tsx = event->body.tsx_state.tsx;
+            const pjsip_transaction* tsx = event->body.tsx_state.tsx;
 
             if (pjsip_method_cmp(&tsx->method, &pjsip_subscribe_method) == 0) {
                 pres_client->term_code_ = tsx->status_code;
                 std::ostringstream os;
                 os << pres_client->term_code_;
-                const std::string error = os.str() + "/" +
-                    std::string(pres_client->term_reason_.ptr,
-                            pres_client->term_reason_.slen);
+                const std::string error = os.str() + "/"
+                                          + std::string(pres_client->term_reason_.ptr,
+                                                        pres_client->term_reason_.slen);
 
                 std::string msg;
                 bool subscribe_allowed = PJ_FALSE;
 
                 switch (tsx->status_code) {
-                    case PJSIP_SC_CALL_TSX_DOES_NOT_EXIST:
-                        /* 481: we refreshed too late? resubscribe
-                         * immediately.
-                         */
-                        /* But this must only happen when the 481 is received
-                         * on subscription refresh request. We MUST NOT try to
-                         * resubscribe automatically if the 481 is received
-                         * on the initial SUBSCRIBE (if server returns this
-                         * response for some reason).
-                         */
-                        if (pres_client->dlg_->remote.contact)
-                            resub_delay = 500;
-                        msg = "Bad subscribe refresh.";
-                        subscribe_allowed = PJ_TRUE;
-                        break;
+                case PJSIP_SC_CALL_TSX_DOES_NOT_EXIST:
+                    /* 481: we refreshed too late? resubscribe
+                     * immediately.
+                     */
+                    /* But this must only happen when the 481 is received
+                     * on subscription refresh request. We MUST NOT try to
+                     * resubscribe automatically if the 481 is received
+                     * on the initial SUBSCRIBE (if server returns this
+                     * response for some reason).
+                     */
+                    if (pres_client->dlg_->remote.contact)
+                        resub_delay = 500;
+                    msg               = "Bad subscribe refresh.";
+                    subscribe_allowed = PJ_TRUE;
+                    break;
 
-                    case PJSIP_SC_NOT_FOUND:
-                        msg = "Subscribe context not set for this buddy.";
-                        subscribe_allowed = PJ_TRUE;
-                        break;
+                case PJSIP_SC_NOT_FOUND:
+                    msg               = "Subscribe context not set for this buddy.";
+                    subscribe_allowed = PJ_TRUE;
+                    break;
 
-                    case PJSIP_SC_FORBIDDEN:
-                        msg = "Subscribe not allowed for this buddy.";
-                        subscribe_allowed = PJ_TRUE;
-                        break;
+                case PJSIP_SC_FORBIDDEN:
+                    msg               = "Subscribe not allowed for this buddy.";
+                    subscribe_allowed = PJ_TRUE;
+                    break;
 
-                    case PJSIP_SC_PRECONDITION_FAILURE:
-                        msg = "Wrong server.";
-                        break;
+                case PJSIP_SC_PRECONDITION_FAILURE:
+                    msg = "Wrong server.";
+                    break;
                 }
 
                 /*  report error:
@@ -153,18 +156,20 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                  *  is the same as the account's server
                  */
                 emitSignal<DRing::PresenceSignal::ServerError>(
-                        pres_client->getPresence()->getAccount()->getAccountID(),
-                        error,
-                        msg);
+                    pres_client->getPresence()->getAccount()->getAccountID(), error, msg);
 
-                std::string account_host = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
-                std::string sub_host = sip_utils::getHostFromUri(pres_client->getURI());
+                std::string account_host = std::string(pj_gethostname()->ptr,
+                                                       pj_gethostname()->slen);
+                std::string sub_host     = sip_utils::getHostFromUri(pres_client->getURI());
 
                 if (not subscribe_allowed and account_host == sub_host)
-                    pres_client->getPresence()->getAccount()->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, false);
+                    pres_client->getPresence()
+                        ->getAccount()
+                        ->supportPresence(PRESENCE_FUNCTION_SUBSCRIBE, false);
 
             } else if (pjsip_method_cmp(&tsx->method, &pjsip_notify_method) == 0) {
-                if (pres_client->isTermReason("deactivated") || pres_client->isTermReason("timeout")) {
+                if (pres_client->isTermReason("deactivated")
+                    || pres_client->isTermReason("timeout")) {
                     /* deactivated: The subscription has been terminated,
                      * but the subscriber SHOULD retry immediately with
                      * a new subscription.
@@ -176,7 +181,8 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                      * "timeout".
                      */
                     resub_delay = 500;
-                } else if (pres_client->isTermReason("probation") || pres_client->isTermReason("giveup")) {
+                } else if (pres_client->isTermReason("probation")
+                           || pres_client->isTermReason("giveup")) {
                     /* probation: The subscription has been terminated,
                      * but the client SHOULD retry at some later time.
                      * If a "retry-after" parameter is also present, the
@@ -193,17 +199,18 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                      * MAY retry immediately, but will likely get put back
                      * into pending state.
                      */
-                    const pjsip_sub_state_hdr *sub_hdr;
+                    const pjsip_sub_state_hdr* sub_hdr;
                     constexpr pj_str_t sub_state = CONST_PJ_STR("Subscription-State");
-                    const pjsip_msg *msg;
+                    const pjsip_msg* msg;
 
-                    msg = event->body.tsx_state.src.rdata->msg_info.msg;
-                    sub_hdr = (const pjsip_sub_state_hdr*) pjsip_msg_find_hdr_by_name(msg, &sub_state, NULL);
+                    msg     = event->body.tsx_state.src.rdata->msg_info.msg;
+                    sub_hdr = (const pjsip_sub_state_hdr*) pjsip_msg_find_hdr_by_name(msg,
+                                                                                      &sub_state,
+                                                                                      NULL);
 
                     if (sub_hdr && sub_hdr->retry_after > 0)
                         resub_delay = sub_hdr->retry_after * 1000;
                 }
-
             }
         }
 
@@ -218,9 +225,9 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
         pres_client->sub_ = sub;
         pres_client->rescheduleTimer(PJ_TRUE, resub_delay);
 
-    } else { //state==ACTIVE ......
-        //This will clear the last termination code/reason
-        pres_client->term_code_ = 0;
+    } else { // state==ACTIVE ......
+        // This will clear the last termination code/reason
+        pres_client->term_code_       = 0;
         pres_client->term_reason_.ptr = NULL;
     }
 
@@ -228,7 +235,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
     if (pjsip_evsub_get_state(sub) == PJSIP_EVSUB_STATE_TERMINATED) {
         pjsip_evsub_terminate(pres_client->sub_, PJ_FALSE); // = NULL;
         pres_client->status_.info_cnt = 0;
-        pres_client->dlg_ = NULL;
+        pres_client->dlg_             = NULL;
         pres_client->rescheduleTimer(PJ_FALSE, 0);
         pjsip_evsub_set_mod_data(sub, modId_, NULL);
 
@@ -237,14 +244,15 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 }
 
 /* Callback when transaction state has changed. */
-    void
-PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transaction *tsx, pjsip_event *event)
+void
+PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub* sub,
+                                              pjsip_transaction* tsx,
+                                              pjsip_event* event)
 {
+    PresSubClient* pres_client;
+    pjsip_contact_hdr* contact_hdr;
 
-    PresSubClient *pres_client;
-    pjsip_contact_hdr *contact_hdr;
-
-    pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId_);
+    pres_client = (PresSubClient*) pjsip_evsub_get_mod_data(sub, modId_);
     /* No need to pres->lock() here since the client has a locked dialog*/
 
     if (!pres_client) {
@@ -261,34 +269,41 @@ PresSubClient::pres_client_evsub_on_tsx_state(pjsip_evsub *sub, pjsip_transactio
     }
 
     /* Only care about 2xx response to outgoing SUBSCRIBE */
-    if (tsx->status_code / 100 != 2 || tsx->role != PJSIP_UAC_ROLE || event->type != PJSIP_EVENT_RX_MSG
-            || pjsip_method_cmp(&tsx->method, pjsip_get_subscribe_method()) != 0) {
+    if (tsx->status_code / 100 != 2 || tsx->role != PJSIP_UAC_ROLE
+        || event->type != PJSIP_EVENT_RX_MSG
+        || pjsip_method_cmp(&tsx->method, pjsip_get_subscribe_method()) != 0) {
         return;
     }
 
     /* Find contact header. */
-    contact_hdr = (pjsip_contact_hdr*) pjsip_msg_find_hdr(event->body.rx_msg.rdata->msg_info.msg, PJSIP_H_CONTACT,
-                  NULL);
+    contact_hdr = (pjsip_contact_hdr*) pjsip_msg_find_hdr(event->body.rx_msg.rdata->msg_info.msg,
+                                                          PJSIP_H_CONTACT,
+                                                          NULL);
 
     if (!contact_hdr || !contact_hdr->uri) {
         return;
     }
 
-    pres_client->contact_.ptr = (char*) pj_pool_alloc(pres_client->pool_, PJSIP_MAX_URL_SIZE);
-    pres_client->contact_.slen = pjsip_uri_print(PJSIP_URI_IN_CONTACT_HDR, contact_hdr->uri, pres_client->contact_.ptr,
-                                PJSIP_MAX_URL_SIZE);
+    pres_client->contact_.ptr  = (char*) pj_pool_alloc(pres_client->pool_, PJSIP_MAX_URL_SIZE);
+    pres_client->contact_.slen = pjsip_uri_print(PJSIP_URI_IN_CONTACT_HDR,
+                                                 contact_hdr->uri,
+                                                 pres_client->contact_.ptr,
+                                                 PJSIP_MAX_URL_SIZE);
 
     if (pres_client->contact_.slen < 0)
         pres_client->contact_.slen = 0;
-
 }
 
 /* Callback called when we receive NOTIFY */
 void
-PresSubClient::pres_client_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *rdata, int *p_st_code, pj_str_t **p_st_text, pjsip_hdr *res_hdr, pjsip_msg_body **p_body)
+PresSubClient::pres_client_evsub_on_rx_notify(pjsip_evsub* sub,
+                                              pjsip_rx_data* rdata,
+                                              int* p_st_code,
+                                              pj_str_t** p_st_text,
+                                              pjsip_hdr* res_hdr,
+                                              pjsip_msg_body** p_body)
 {
-
-    PresSubClient *pres_client = (PresSubClient *) pjsip_evsub_get_mod_data(sub, modId_);
+    PresSubClient* pres_client = (PresSubClient*) pjsip_evsub_get_mod_data(sub, modId_);
 
     if (!pres_client) {
         JAMI_WARN("Couldn't find pres_client from ev_sub.");
@@ -309,72 +324,79 @@ PresSubClient::pres_client_evsub_on_rx_notify(pjsip_evsub *sub, pjsip_rx_data *r
     PJ_UNUSED_ARG(p_body);
 }
 
-PresSubClient::PresSubClient(const std::string& uri, SIPPresence *pres) :
-    pres_(pres),
-    uri_{0, 0},
-    contact_{0, 0},
-    display_(),
-    dlg_(NULL),
-    monitored_(false),
-    name_(),
-    cp_(),
-    pool_(0),
-    status_(),
-    sub_(NULL),
-    term_code_(0),
-    term_reason_(),
-    timer_(),
-    user_data_(NULL),
-    lock_count_(0),
-    lock_flag_(0)
+PresSubClient::PresSubClient(const std::string& uri, SIPPresence* pres)
+    : pres_(pres)
+    , uri_ {0, 0}
+    , contact_ {0, 0}
+    , display_()
+    , dlg_(NULL)
+    , monitored_(false)
+    , name_()
+    , cp_()
+    , pool_(0)
+    , status_()
+    , sub_(NULL)
+    , term_code_(0)
+    , term_reason_()
+    , timer_()
+    , user_data_(NULL)
+    , lock_count_(0)
+    , lock_flag_(0)
 {
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
-    pool_ = pj_pool_create(&cp_.factory, "Pres_sub_client", 512, 512, NULL);
-    uri_ = pj_strdup3(pool_, uri.c_str());
+    pool_    = pj_pool_create(&cp_.factory, "Pres_sub_client", 512, 512, NULL);
+    uri_     = pj_strdup3(pool_, uri.c_str());
     contact_ = pj_strdup3(pool_, pres_->getAccount()->getFromUri().c_str());
 }
 
 PresSubClient::~PresSubClient()
 {
-    JAMI_DBG("Destroying pres_client object with uri %.*s", (int)uri_.slen, uri_.ptr);
+    JAMI_DBG("Destroying pres_client object with uri %.*s", (int) uri_.slen, uri_.ptr);
     rescheduleTimer(PJ_FALSE, 0);
     unsubscribe();
     pj_pool_release(pool_);
 }
 
-bool PresSubClient::isSubscribed()
+bool
+PresSubClient::isSubscribed()
 {
     return monitored_;
 }
 
-std::string PresSubClient::getURI()
+std::string
+PresSubClient::getURI()
 {
     std::string res(uri_.ptr, uri_.slen);
     return res;
 }
 
-SIPPresence * PresSubClient::getPresence()
+SIPPresence*
+PresSubClient::getPresence()
 {
     return pres_;
 }
 
-bool PresSubClient::isPresent()
+bool
+PresSubClient::isPresent()
 {
     return status_.info[0].basic_open;
 }
 
-std::string PresSubClient::getLineStatus()
+std::string
+PresSubClient::getLineStatus()
 {
     return std::string(status_.info[0].rpid.note.ptr, status_.info[0].rpid.note.slen);
 }
 
-bool PresSubClient::isTermReason(const std::string &reason)
+bool
+PresSubClient::isTermReason(const std::string& reason)
 {
     const std::string myReason(term_reason_.ptr, term_reason_.slen);
     return not myReason.compare(reason);
 }
 
-void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
+void
+PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
 {
     if (timer_.id) {
         pjsip_endpt_cancel_timer(Manager::instance().sipVoIPLink().getEndpoint(), &timer_);
@@ -385,41 +407,50 @@ void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
         pj_time_val delay;
 
         JAMI_WARN("pres_client  %.*s will resubscribe in %u ms (reason: %.*s)",
-                  (int)uri_.slen, uri_.ptr, msec, (int)term_reason_.slen, term_reason_.ptr);
+                  (int) uri_.slen,
+                  uri_.ptr,
+                  msec,
+                  (int) term_reason_.slen,
+                  term_reason_.ptr);
         pj_timer_entry_init(&timer_, 0, this, &pres_client_timer_cb);
-        delay.sec = 0;
+        delay.sec  = 0;
         delay.msec = msec;
         pj_time_val_normalize(&delay);
 
-        if (pjsip_endpt_schedule_timer(Manager::instance().sipVoIPLink().getEndpoint(), &timer_, &delay) == PJ_SUCCESS) {
+        if (pjsip_endpt_schedule_timer(Manager::instance().sipVoIPLink().getEndpoint(),
+                                       &timer_,
+                                       &delay)
+            == PJ_SUCCESS) {
             timer_.id = PJ_TRUE;
         }
     }
 }
 
-void PresSubClient::enable(bool flag)
+void
+PresSubClient::enable(bool flag)
 {
-    JAMI_DBG("pres_client %s is %s monitored.",getURI().c_str(), flag? "":"NOT");
+    JAMI_DBG("pres_client %s is %s monitored.", getURI().c_str(), flag ? "" : "NOT");
     if (flag and not monitored_)
         pres_->addPresSubClient(this);
     monitored_ = flag;
 }
 
-void PresSubClient::reportPresence()
+void
+PresSubClient::reportPresence()
 {
     /* callback*/
     pres_->reportPresSubClientNotification(getURI(), &status_);
 }
 
-bool PresSubClient::lock()
+bool
+PresSubClient::lock()
 {
     unsigned i;
 
-    for(i=0; i<50; i++)
-    {
-        if (not pres_->tryLock()){
+    for (i = 0; i < 50; i++) {
+        if (not pres_->tryLock()) {
             // FIXME: i/10 in ms, sure!?
-            std::this_thread::sleep_for(std::chrono::milliseconds(i/10));
+            std::this_thread::sleep_for(std::chrono::milliseconds(i / 10));
             continue;
         }
         lock_flag_ = PRESENCE_LOCK_FLAG;
@@ -433,7 +464,7 @@ bool PresSubClient::lock()
             lock_flag_ = 0;
             pres_->unlock();
             // FIXME: i/10 in ms, sure!?
-            std::this_thread::sleep_for(std::chrono::milliseconds(i/10));
+            std::this_thread::sleep_for(std::chrono::milliseconds(i / 10));
             continue;
         }
 
@@ -441,15 +472,15 @@ bool PresSubClient::lock()
         pres_->unlock();
     }
 
-    if (lock_flag_ == 0)
-    {
+    if (lock_flag_ == 0) {
         JAMI_DBG("pres_client failed to lock : timeout");
         return false;
     }
     return true;
 }
 
-void PresSubClient::unlock()
+void
+PresSubClient::unlock()
 {
     if (lock_flag_ & PRESENCE_CLIENT_LOCK_FLAG)
         pjsip_dlg_dec_lock(dlg_);
@@ -458,14 +489,15 @@ void PresSubClient::unlock()
         pres_->unlock();
 }
 
-bool PresSubClient::unsubscribe()
+bool
+PresSubClient::unsubscribe()
 {
     if (not lock())
         return false;
 
     monitored_ = false;
 
-    pjsip_tx_data *tdata;
+    pjsip_tx_data* tdata;
     pj_status_t retStatus;
 
     if (sub_ == NULL or dlg_ == NULL) {
@@ -482,7 +514,7 @@ bool PresSubClient::unsubscribe()
     }
 
     /* Unsubscribe means send a subscribe with timeout=0s*/
-    JAMI_WARN("pres_client %.*s: unsubscribing..", (int)uri_.slen, uri_.ptr);
+    JAMI_WARN("pres_client %.*s: unsubscribing..", (int) uri_.slen, uri_.ptr);
     retStatus = pjsip_pres_initiate(sub_, 0, &tdata);
 
     if (retStatus == PJ_SUCCESS) {
@@ -498,39 +530,37 @@ bool PresSubClient::unsubscribe()
         return false;
     }
 
-    //pjsip_evsub_set_mod_data(sub_, modId_, NULL);   // Not interested with further events
+    // pjsip_evsub_set_mod_data(sub_, modId_, NULL);   // Not interested with further events
 
     unlock();
     return true;
 }
 
-
-bool PresSubClient::subscribe()
+bool
+PresSubClient::subscribe()
 {
-
-    if (sub_ and dlg_) { //do not bother if already subscribed
+    if (sub_ and dlg_) { // do not bother if already subscribed
         pjsip_evsub_terminate(sub_, PJ_FALSE);
-        JAMI_DBG("PreseSubClient %.*s: already subscribed. Refresh it.", (int)uri_.slen, uri_.ptr);
+        JAMI_DBG("PreseSubClient %.*s: already subscribed. Refresh it.", (int) uri_.slen, uri_.ptr);
     }
 
-    //subscribe
+    // subscribe
     pjsip_evsub_user pres_callback;
-    pjsip_tx_data *tdata;
+    pjsip_tx_data* tdata;
     pj_status_t status;
 
     /* Event subscription callback. */
     pj_bzero(&pres_callback, sizeof(pres_callback));
     pres_callback.on_evsub_state = &pres_client_evsub_on_state;
-    pres_callback.on_tsx_state = &pres_client_evsub_on_tsx_state;
-    pres_callback.on_rx_notify = &pres_client_evsub_on_rx_notify;
+    pres_callback.on_tsx_state   = &pres_client_evsub_on_tsx_state;
+    pres_callback.on_rx_notify   = &pres_client_evsub_on_rx_notify;
 
-    SIPAccount * acc = pres_->getAccount();
-    JAMI_DBG("PresSubClient %.*s: subscribing ", (int)uri_.slen, uri_.ptr);
-
+    SIPAccount* acc = pres_->getAccount();
+    JAMI_DBG("PresSubClient %.*s: subscribing ", (int) uri_.slen, uri_.ptr);
 
     /* Create UAC dialog */
     pj_str_t from = pj_strdup3(pool_, acc->getFromUri().c_str());
-    status = pjsip_dlg_create_uac(pjsip_ua_instance(), &from, &contact_, &uri_, NULL, &dlg_);
+    status        = pjsip_dlg_create_uac(pjsip_ua_instance(), &from, &contact_, &uri_, NULL, &dlg_);
 
     if (status != PJ_SUCCESS) {
         JAMI_ERR("Unable to create dialog \n");
@@ -538,7 +568,11 @@ bool PresSubClient::subscribe()
     }
 
     /* Add credential for auth. */
-    if (acc->hasCredentials() and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
+    if (acc->hasCredentials()
+        and pjsip_auth_clt_set_credentials(&dlg_->auth_sess,
+                                           acc->getCredentialCount(),
+                                           acc->getCredInfo())
+                != PJ_SUCCESS) {
         JAMI_ERR("Could not initialize credentials for subscribe session authentication");
     }
 
@@ -564,15 +598,21 @@ bool PresSubClient::subscribe()
     }
 
     /* Add credential for authentication */
-    if (acc->hasCredentials() and pjsip_auth_clt_set_credentials(&dlg_->auth_sess, acc->getCredentialCount(), acc->getCredInfo()) != PJ_SUCCESS) {
+    if (acc->hasCredentials()
+        and pjsip_auth_clt_set_credentials(&dlg_->auth_sess,
+                                           acc->getCredentialCount(),
+                                           acc->getCredInfo())
+                != PJ_SUCCESS) {
         JAMI_ERR("Could not initialize credentials for invite session authentication");
         return false;
     }
 
     /* Set route-set */
-    pjsip_regc *regc = acc->getRegistrationInfo();
+    pjsip_regc* regc = acc->getRegistrationInfo();
     if (regc and acc->hasServiceRoute())
-        pjsip_regc_set_route_set(regc, sip_utils::createRouteSet(acc->getServiceRoute(), pres_->getPool()));
+        pjsip_regc_set_route_set(regc,
+                                 sip_utils::createRouteSet(acc->getServiceRoute(),
+                                                           pres_->getPool()));
 
     // attach the client data to the sub
     pjsip_evsub_set_mod_data(sub_, modId_, this);
@@ -588,7 +628,7 @@ bool PresSubClient::subscribe()
         return false;
     }
 
-//    pjsua_process_msg_data(tdata, NULL);
+    //    pjsua_process_msg_data(tdata, NULL);
 
     status = pjsip_pres_send_request(sub_, tdata);
 
@@ -606,7 +646,8 @@ bool PresSubClient::subscribe()
     return true;
 }
 
-bool PresSubClient::match(PresSubClient *b)
+bool
+PresSubClient::match(PresSubClient* b)
 {
     return (b->getURI() == getURI());
 }

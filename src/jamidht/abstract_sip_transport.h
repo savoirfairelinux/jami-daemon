@@ -38,7 +38,8 @@ namespace tls {
 class AbstractSIPTransport
 {
 public:
-    using TransportData = struct {
+    using TransportData = struct
+    {
         pjsip_transport base; // do not move, SHOULD be the fist member
         AbstractSIPTransport* self {nullptr};
     };
@@ -52,4 +53,5 @@ public:
     virtual IpAddr getLocalAddress() const = 0;
 };
 
-}} // namespace jami::tls
+} // namespace tls
+} // namespace jami

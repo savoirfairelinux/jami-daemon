@@ -32,13 +32,11 @@ namespace jami {
 static constexpr unsigned DEFAULT_SAMPLE_RATE = 8000;
 
 ToneControl::ToneControl(const Preferences& preferences)
-    : prefs_ (preferences)
-    , sampleRate_ (DEFAULT_SAMPLE_RATE)
-{
-}
-
-ToneControl::~ToneControl()
+    : prefs_(preferences)
+    , sampleRate_(DEFAULT_SAMPLE_RATE)
 {}
+
+ToneControl::~ToneControl() {}
 
 void
 ToneControl::setSampleRate(unsigned rate)

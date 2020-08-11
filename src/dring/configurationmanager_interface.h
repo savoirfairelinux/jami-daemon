@@ -43,8 +43,8 @@
 
 namespace DRing {
 
-[[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC
-void registerConfHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+[[deprecated("Replaced by registerSignalHandlers")]] DRING_PUBLIC void registerConfHandlers(
+    const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 struct DRING_PUBLIC Message
 {
@@ -54,22 +54,37 @@ struct DRING_PUBLIC Message
 };
 
 DRING_PUBLIC std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
-DRING_PUBLIC std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID);
-DRING_PUBLIC void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);
-DRING_PUBLIC std::map<std::string, std::string> testAccountICEInitialization(const std::string& accountID);
+DRING_PUBLIC std::map<std::string, std::string> getVolatileAccountDetails(
+    const std::string& accountID);
+DRING_PUBLIC void setAccountDetails(const std::string& accountID,
+                                    const std::map<std::string, std::string>& details);
+DRING_PUBLIC std::map<std::string, std::string> testAccountICEInitialization(
+    const std::string& accountID);
 DRING_PUBLIC void setAccountActive(const std::string& accountID, bool active);
 DRING_PUBLIC std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 DRING_PUBLIC std::string addAccount(const std::map<std::string, std::string>& details);
 DRING_PUBLIC bool exportOnRing(const std::string& accountID, const std::string& password);
-DRING_PUBLIC bool exportToFile(const std::string& accountID, const std::string& destinationPath, const std::string& password = {});
-DRING_PUBLIC bool revokeDevice(const std::string& accountID, const std::string& password, const std::string& deviceID);
+DRING_PUBLIC bool exportToFile(const std::string& accountID,
+                               const std::string& destinationPath,
+                               const std::string& password = {});
+DRING_PUBLIC bool revokeDevice(const std::string& accountID,
+                               const std::string& password,
+                               const std::string& deviceID);
 DRING_PUBLIC std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
-DRING_PUBLIC bool changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new);
+DRING_PUBLIC bool changeAccountPassword(const std::string& accountID,
+                                        const std::string& password_old,
+                                        const std::string& password_new);
 DRING_PUBLIC bool isPasswordValid(const std::string& accountID, const std::string& password);
 
-DRING_PUBLIC bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
-DRING_PUBLIC bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);
-DRING_PUBLIC bool registerName(const std::string& account, const std::string& password, const std::string& name);
+DRING_PUBLIC bool lookupName(const std::string& account,
+                             const std::string& nameserver,
+                             const std::string& name);
+DRING_PUBLIC bool lookupAddress(const std::string& account,
+                                const std::string& nameserver,
+                                const std::string& address);
+DRING_PUBLIC bool registerName(const std::string& account,
+                               const std::string& password,
+                               const std::string& name);
 DRING_PUBLIC bool searchUser(const std::string& account, const std::string& query);
 
 DRING_PUBLIC void removeAccount(const std::string& accountID);
@@ -77,25 +92,37 @@ DRING_PUBLIC void setAccountEnabled(const std::string& accountID, bool enable);
 DRING_PUBLIC std::vector<std::string> getAccountList();
 DRING_PUBLIC void sendRegister(const std::string& accountID, bool enable);
 DRING_PUBLIC void registerAllAccounts(void);
-DRING_PUBLIC uint64_t sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads);
+DRING_PUBLIC uint64_t sendAccountTextMessage(const std::string& accountID,
+                                             const std::string& to,
+                                             const std::map<std::string, std::string>& payloads);
 DRING_PUBLIC bool cancelMessage(const std::string& accountID, uint64_t message);
-DRING_PUBLIC std::vector<Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
+DRING_PUBLIC std::vector<Message> getLastMessages(const std::string& accountID,
+                                                  const uint64_t& base_timestamp);
 DRING_PUBLIC std::map<std::string, std::string> getNearbyPeers(const std::string& accountID);
 DRING_PUBLIC int getMessageStatus(uint64_t id);
 DRING_PUBLIC int getMessageStatus(const std::string& accountID, uint64_t id);
-DRING_PUBLIC void setIsComposing(const std::string& accountID, const std::string& to, bool isWriting);
-DRING_PUBLIC bool setMessageDisplayed(const std::string& accountID, const std::string& contactId, const std::string& messageId, int status);
+DRING_PUBLIC void setIsComposing(const std::string& accountID,
+                                 const std::string& to,
+                                 bool isWriting);
+DRING_PUBLIC bool setMessageDisplayed(const std::string& accountID,
+                                      const std::string& contactId,
+                                      const std::string& messageId,
+                                      int status);
 
 DRING_PUBLIC std::map<std::string, std::string> getTlsDefaultSettings();
 
 DRING_PUBLIC std::vector<unsigned> getCodecList();
 DRING_PUBLIC std::vector<std::string> getSupportedTlsMethod();
 DRING_PUBLIC std::vector<std::string> getSupportedCiphers(const std::string& accountID);
-DRING_PUBLIC std::map<std::string, std::string> getCodecDetails(const std::string& accountID, const unsigned& codecId);
-DRING_PUBLIC bool setCodecDetails(const std::string& accountID, const unsigned& codecId, const std::map<std::string, std::string>& details);
+DRING_PUBLIC std::map<std::string, std::string> getCodecDetails(const std::string& accountID,
+                                                                const unsigned& codecId);
+DRING_PUBLIC bool setCodecDetails(const std::string& accountID,
+                                  const unsigned& codecId,
+                                  const std::map<std::string, std::string>& details);
 DRING_PUBLIC std::vector<unsigned> getActiveCodecList(const std::string& accountID);
 
-DRING_PUBLIC void setActiveCodecList(const std::string& accountID, const std::vector<unsigned>& list);
+DRING_PUBLIC void setActiveCodecList(const std::string& accountID,
+                                     const std::vector<unsigned>& list);
 
 DRING_PUBLIC std::vector<std::string> getAudioPluginList();
 DRING_PUBLIC void setAudioPlugin(const std::string& audioPlugin);
@@ -149,8 +176,10 @@ DRING_PUBLIC void setAccountsOrder(const std::string& order);
 DRING_PUBLIC std::map<std::string, std::string> getHookSettings();
 DRING_PUBLIC void setHookSettings(const std::map<std::string, std::string>& settings);
 
-DRING_PUBLIC std::vector<std::map<std::string, std::string>> getCredentials(const std::string& accountID);
-DRING_PUBLIC void setCredentials(const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details);
+DRING_PUBLIC std::vector<std::map<std::string, std::string>> getCredentials(
+    const std::string& accountID);
+DRING_PUBLIC void setCredentials(const std::string& accountID,
+                                 const std::vector<std::map<std::string, std::string>>& details);
 
 DRING_PUBLIC std::string getAddrFromInterfaceName(const std::string& iface);
 
@@ -158,7 +187,7 @@ DRING_PUBLIC std::vector<std::string> getAllIpInterface();
 DRING_PUBLIC std::vector<std::string> getAllIpInterfaceByName();
 
 DRING_PUBLIC std::map<std::string, std::string> getShortcuts();
-DRING_PUBLIC void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
+DRING_PUBLIC void setShortcuts(const std::map<std::string, std::string>& shortcutsMap);
 
 DRING_PUBLIC void setVolume(const std::string& device, double value);
 DRING_PUBLIC double getVolume(const std::string& device);
@@ -166,42 +195,61 @@ DRING_PUBLIC double getVolume(const std::string& device);
 /*
  * Security
  */
-DRING_PUBLIC std::map<std::string, std::string> validateCertificate(const std::string& accountId, const std::string& certificate);
-DRING_PUBLIC std::map<std::string, std::string> validateCertificatePath(const std::string& accountId,
-    const std::string& certificatePath, const std::string& privateKey, const std::string& privateKeyPassword, const std::string& caList);
+DRING_PUBLIC std::map<std::string, std::string> validateCertificate(const std::string& accountId,
+                                                                    const std::string& certificate);
+DRING_PUBLIC std::map<std::string, std::string> validateCertificatePath(
+    const std::string& accountId,
+    const std::string& certificatePath,
+    const std::string& privateKey,
+    const std::string& privateKeyPassword,
+    const std::string& caList);
 
 DRING_PUBLIC std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-DRING_PUBLIC std::map<std::string, std::string> getCertificateDetailsPath(const std::string& certificatePath, const std::string& privateKey, const std::string& privateKeyPassword);
+DRING_PUBLIC std::map<std::string, std::string> getCertificateDetailsPath(
+    const std::string& certificatePath,
+    const std::string& privateKey,
+    const std::string& privateKeyPassword);
 
 DRING_PUBLIC std::vector<std::string> getPinnedCertificates();
 
-DRING_PUBLIC std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate, bool local);
+DRING_PUBLIC std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate,
+                                                     bool local);
 DRING_PUBLIC bool unpinCertificate(const std::string& certId);
 
 DRING_PUBLIC void pinCertificatePath(const std::string& path);
 DRING_PUBLIC unsigned unpinCertificatePath(const std::string& path);
 
 DRING_PUBLIC bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
-DRING_PUBLIC bool setCertificateStatus(const std::string& account, const std::string& certId, const std::string& status);
-DRING_PUBLIC std::vector<std::string> getCertificatesByStatus(const std::string& account, const std::string& status);
+DRING_PUBLIC bool setCertificateStatus(const std::string& account,
+                                       const std::string& certId,
+                                       const std::string& status);
+DRING_PUBLIC std::vector<std::string> getCertificatesByStatus(const std::string& account,
+                                                              const std::string& status);
 
 /* contact requests */
-DRING_PUBLIC std::vector<std::map<std::string, std::string>> getTrustRequests(const std::string& accountId);
+DRING_PUBLIC std::vector<std::map<std::string, std::string>> getTrustRequests(
+    const std::string& accountId);
 DRING_PUBLIC bool acceptTrustRequest(const std::string& accountId, const std::string& from);
 DRING_PUBLIC bool discardTrustRequest(const std::string& accountId, const std::string& from);
-DRING_PUBLIC void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload = {});
+DRING_PUBLIC void sendTrustRequest(const std::string& accountId,
+                                   const std::string& to,
+                                   const std::vector<uint8_t>& payload = {});
 
 /* Contacts */
 
 DRING_PUBLIC void addContact(const std::string& accountId, const std::string& uri);
 DRING_PUBLIC void removeContact(const std::string& accountId, const std::string& uri, bool ban);
-DRING_PUBLIC std::map<std::string, std::string> getContactDetails(const std::string& accountId, const std::string& uri);
-DRING_PUBLIC std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
+DRING_PUBLIC std::map<std::string, std::string> getContactDetails(const std::string& accountId,
+                                                                  const std::string& uri);
+DRING_PUBLIC std::vector<std::map<std::string, std::string>> getContacts(
+    const std::string& accountId);
 
 /*
  * Import/Export accounts
  */
-DRING_PUBLIC int exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password);
+DRING_PUBLIC int exportAccounts(const std::vector<std::string>& accountIDs,
+                                const std::string& filepath,
+                                const std::string& password);
 DRING_PUBLIC int importAccounts(const std::string& archivePath, const std::string& password);
 
 /*
@@ -226,7 +274,8 @@ DRING_PUBLIC void setPushNotificationToken(const std::string& pushDeviceToken);
 /**
  * To be called by clients with relevant data when a push notification is received.
  */
-DRING_PUBLIC void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
+DRING_PUBLIC void pushNotificationReceived(const std::string& from,
+                                           const std::map<std::string, std::string>& data);
 
 /**
  * Returns whether or not the audio meter is enabled for ring buffer @id.
@@ -242,165 +291,239 @@ DRING_PUBLIC bool isAudioMeterActive(const std::string& id);
  */
 DRING_PUBLIC void setAudioMeterState(const std::string& id, bool state);
 
-struct DRING_PUBLIC AudioSignal {
-        struct DRING_PUBLIC DeviceEvent {
-                constexpr static const char* name = "audioDeviceEvent";
-                using cb_type = void(void);
-        };
-        // Linear audio level (between 0 and 1). To get level in dB: dB=20*log10(level)
-        struct DRING_PUBLIC AudioMeter {
-                constexpr static const char* name = "AudioMeter";
-                using cb_type = void(const std::string& id, float level);
-        };
+struct DRING_PUBLIC AudioSignal
+{
+    struct DRING_PUBLIC DeviceEvent
+    {
+        constexpr static const char* name = "audioDeviceEvent";
+        using cb_type                     = void(void);
+    };
+    // Linear audio level (between 0 and 1). To get level in dB: dB=20*log10(level)
+    struct DRING_PUBLIC AudioMeter
+    {
+        constexpr static const char* name = "AudioMeter";
+        using cb_type                     = void(const std::string& id, float level);
+    };
 };
 
 // Configuration signal type definitions
-struct DRING_PUBLIC ConfigurationSignal {
-        struct DRING_PUBLIC VolumeChanged {
-                constexpr static const char* name = "VolumeChanged";
-                using cb_type = void(const std::string& /*device*/, double /*value*/);
-        };
-        struct DRING_PUBLIC AccountsChanged {
-                constexpr static const char* name = "AccountsChanged";
-                using cb_type = void(void);
-        };
-        struct DRING_PUBLIC Error {
-                constexpr static const char* name = "Error";
-                using cb_type = void(int /*alert*/);
-        };
+struct DRING_PUBLIC ConfigurationSignal
+{
+    struct DRING_PUBLIC VolumeChanged
+    {
+        constexpr static const char* name = "VolumeChanged";
+        using cb_type                     = void(const std::string& /*device*/, double /*value*/);
+    };
+    struct DRING_PUBLIC AccountsChanged
+    {
+        constexpr static const char* name = "AccountsChanged";
+        using cb_type                     = void(void);
+    };
+    struct DRING_PUBLIC Error
+    {
+        constexpr static const char* name = "Error";
+        using cb_type                     = void(int /*alert*/);
+    };
 
-        // TODO: move those to AccountSignal in next API breakage
-        struct DRING_PUBLIC AccountDetailsChanged {
-                constexpr static const char* name = "AccountDetailsChanged";
-                using cb_type = void(const std::string& /*account_id*/, const std::map<std::string, std::string>& /* details */);
-        };
-        struct DRING_PUBLIC StunStatusFailed {
-                constexpr static const char* name = "StunStatusFailed";
-                using cb_type = void(const std::string& /*account_id*/);
-        };
-        struct DRING_PUBLIC RegistrationStateChanged {
-                constexpr static const char* name = "RegistrationStateChanged";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*state*/, int /*detailsCode*/, const std::string& /*detailsStr*/);
-        };
-        struct DRING_PUBLIC VolatileDetailsChanged {
-                constexpr static const char* name = "VolatileDetailsChanged";
-                using cb_type = void(const std::string& /*account_id*/, const std::map<std::string, std::string>& /* details */);
-        };
-        struct DRING_PUBLIC IncomingAccountMessage {
-                constexpr static const char* name = "IncomingAccountMessage";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*message_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payloads*/);
-        };
-        struct DRING_PUBLIC AccountMessageStatusChanged {
-                constexpr static const char* name = "AccountMessageStatusChanged";
-                using cb_type = void(const std::string& /*account_id*/, uint64_t /*message_id*/, const std::string& /*to*/, int /*state*/);
-        };
-        struct DRING_PUBLIC ProfileReceived {
-                constexpr static const char* name = "ProfileReceived";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*vcard*/);
-        };
-        struct DRING_PUBLIC ComposingStatusChanged {
-                constexpr static const char* name = "ComposingStatusChanged";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, int /*status*/);
-        };
-        struct DRING_PUBLIC IncomingTrustRequest {
-                constexpr static const char* name = "IncomingTrustRequest";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& payload, time_t received);
-        };
-        struct DRING_PUBLIC ContactAdded {
-                constexpr static const char* name = "ContactAdded";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed);
-        };
-        struct DRING_PUBLIC ContactRemoved {
-                constexpr static const char* name = "ContactRemoved";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*uri*/, bool banned);
-        };
-        struct DRING_PUBLIC ExportOnRingEnded {
-                constexpr static const char* name = "ExportOnRingEnded";
-                using cb_type = void(const std::string& /*account_id*/, int state, const std::string& pin);
-        };
-        struct DRING_PUBLIC NameRegistrationEnded {
-                constexpr static const char* name = "NameRegistrationEnded";
-                using cb_type = void(const std::string& /*account_id*/, int state, const std::string& name);
-        };
-        struct DRING_PUBLIC KnownDevicesChanged {
-                constexpr static const char* name = "KnownDevicesChanged";
-                using cb_type = void(const std::string& /*account_id*/, const std::map<std::string, std::string>& devices);
-        };
-        struct DRING_PUBLIC RegisteredNameFound {
-                constexpr static const char* name = "RegisteredNameFound";
-                using cb_type = void(const std::string& /*account_id*/, int state, const std::string& /*address*/, const std::string& /*name*/);
-        };
-        struct DRING_PUBLIC UserSearchEnded {
-                constexpr static const char* name = "UserSearchEnded";
-                using cb_type = void(const std::string& /*account_id*/, int state, const std::string& /*query*/, const std::vector<std::map<std::string, std::string>>& /*results*/);
-        };
-        struct DRING_PUBLIC CertificatePinned {
-                constexpr static const char* name = "CertificatePinned";
-                using cb_type = void(const std::string& /*certId*/);
-        };
-        struct DRING_PUBLIC CertificatePathPinned {
-                constexpr static const char* name = "CertificatePathPinned";
-                using cb_type = void(const std::string& /*path*/, const std::vector<std::string>& /*certId*/);
-        };
-        struct DRING_PUBLIC CertificateExpired {
-                constexpr static const char* name = "CertificateExpired";
-                using cb_type = void(const std::string& /*certId*/);
-        };
-        struct DRING_PUBLIC CertificateStateChanged {
-                constexpr static const char* name = "CertificateStateChanged";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*certId*/, const std::string& /*state*/);
-        };
-        struct DRING_PUBLIC MediaParametersChanged {
-                constexpr static const char* name = "MediaParametersChanged";
-                using cb_type = void(const std::string& /*accountId*/);
-        };
-        struct DRING_PUBLIC MigrationEnded {
-                constexpr static const char* name = "MigrationEnded";
-                using cb_type = void(const std::string& /*accountId*/, const std::string& /*state*/);
-        };
-        struct DRING_PUBLIC DeviceRevocationEnded {
-                constexpr static const char* name = "DeviceRevocationEnded";
-                using cb_type = void(const std::string& /*accountId*/, const std::string& /*device*/, int /*status*/);
-        };
-        struct DRING_PUBLIC AccountProfileReceived {
-            constexpr static const char* name = "AccountProfileReceived";
-            using cb_type = void(const std::string& /*accountId*/, const std::string& displayName, const std::string& /*userPhoto*/);
-        };
-        /**
-         * These are special getters for Android and UWP, so the daemon can retrieve
-         * information only accessible through their respective platform APIs
-         */
+    // TODO: move those to AccountSignal in next API breakage
+    struct DRING_PUBLIC AccountDetailsChanged
+    {
+        constexpr static const char* name = "AccountDetailsChanged";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::map<std::string, std::string>& /* details */);
+    };
+    struct DRING_PUBLIC StunStatusFailed
+    {
+        constexpr static const char* name = "StunStatusFailed";
+        using cb_type                     = void(const std::string& /*account_id*/);
+    };
+    struct DRING_PUBLIC RegistrationStateChanged
+    {
+        constexpr static const char* name = "RegistrationStateChanged";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::string& /*state*/,
+                             int /*detailsCode*/,
+                             const std::string& /*detailsStr*/);
+    };
+    struct DRING_PUBLIC VolatileDetailsChanged
+    {
+        constexpr static const char* name = "VolatileDetailsChanged";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::map<std::string, std::string>& /* details */);
+    };
+    struct DRING_PUBLIC IncomingAccountMessage
+    {
+        constexpr static const char* name = "IncomingAccountMessage";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::string& /*message_id*/,
+                             const std::string& /*from*/,
+                             const std::map<std::string, std::string>& /*payloads*/);
+    };
+    struct DRING_PUBLIC AccountMessageStatusChanged
+    {
+        constexpr static const char* name = "AccountMessageStatusChanged";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             uint64_t /*message_id*/,
+                             const std::string& /*to*/,
+                             int /*state*/);
+    };
+    struct DRING_PUBLIC ProfileReceived
+    {
+        constexpr static const char* name = "ProfileReceived";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::string& /*from*/,
+                             const std::string& /*vcard*/);
+    };
+    struct DRING_PUBLIC ComposingStatusChanged
+    {
+        constexpr static const char* name = "ComposingStatusChanged";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::string& /*from*/,
+                             int /*status*/);
+    };
+    struct DRING_PUBLIC IncomingTrustRequest
+    {
+        constexpr static const char* name = "IncomingTrustRequest";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::string& /*from*/,
+                             const std::vector<uint8_t>& payload,
+                             time_t received);
+    };
+    struct DRING_PUBLIC ContactAdded
+    {
+        constexpr static const char* name = "ContactAdded";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::string& /*uri*/,
+                             bool confirmed);
+    };
+    struct DRING_PUBLIC ContactRemoved
+    {
+        constexpr static const char* name = "ContactRemoved";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::string& /*uri*/,
+                             bool banned);
+    };
+    struct DRING_PUBLIC ExportOnRingEnded
+    {
+        constexpr static const char* name = "ExportOnRingEnded";
+        using cb_type = void(const std::string& /*account_id*/, int state, const std::string& pin);
+    };
+    struct DRING_PUBLIC NameRegistrationEnded
+    {
+        constexpr static const char* name = "NameRegistrationEnded";
+        using cb_type = void(const std::string& /*account_id*/, int state, const std::string& name);
+    };
+    struct DRING_PUBLIC KnownDevicesChanged
+    {
+        constexpr static const char* name = "KnownDevicesChanged";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::map<std::string, std::string>& devices);
+    };
+    struct DRING_PUBLIC RegisteredNameFound
+    {
+        constexpr static const char* name = "RegisteredNameFound";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             int state,
+                             const std::string& /*address*/,
+                             const std::string& /*name*/);
+    };
+    struct DRING_PUBLIC UserSearchEnded
+    {
+        constexpr static const char* name = "UserSearchEnded";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             int state,
+                             const std::string& /*query*/,
+                             const std::vector<std::map<std::string, std::string>>& /*results*/);
+    };
+    struct DRING_PUBLIC CertificatePinned
+    {
+        constexpr static const char* name = "CertificatePinned";
+        using cb_type                     = void(const std::string& /*certId*/);
+    };
+    struct DRING_PUBLIC CertificatePathPinned
+    {
+        constexpr static const char* name = "CertificatePathPinned";
+        using cb_type                     = void(const std::string& /*path*/,
+                             const std::vector<std::string>& /*certId*/);
+    };
+    struct DRING_PUBLIC CertificateExpired
+    {
+        constexpr static const char* name = "CertificateExpired";
+        using cb_type                     = void(const std::string& /*certId*/);
+    };
+    struct DRING_PUBLIC CertificateStateChanged
+    {
+        constexpr static const char* name = "CertificateStateChanged";
+        using cb_type                     = void(const std::string& /*account_id*/,
+                             const std::string& /*certId*/,
+                             const std::string& /*state*/);
+    };
+    struct DRING_PUBLIC MediaParametersChanged
+    {
+        constexpr static const char* name = "MediaParametersChanged";
+        using cb_type                     = void(const std::string& /*accountId*/);
+    };
+    struct DRING_PUBLIC MigrationEnded
+    {
+        constexpr static const char* name = "MigrationEnded";
+        using cb_type = void(const std::string& /*accountId*/, const std::string& /*state*/);
+    };
+    struct DRING_PUBLIC DeviceRevocationEnded
+    {
+        constexpr static const char* name = "DeviceRevocationEnded";
+        using cb_type                     = void(const std::string& /*accountId*/,
+                             const std::string& /*device*/,
+                             int /*status*/);
+    };
+    struct DRING_PUBLIC AccountProfileReceived
+    {
+        constexpr static const char* name = "AccountProfileReceived";
+        using cb_type                     = void(const std::string& /*accountId*/,
+                             const std::string& displayName,
+                             const std::string& /*userPhoto*/);
+    };
+    /**
+     * These are special getters for Android and UWP, so the daemon can retrieve
+     * information only accessible through their respective platform APIs
+     */
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-        struct DRING_PUBLIC GetHardwareAudioFormat {
-                constexpr static const char* name = "GetHardwareAudioFormat";
-                using cb_type = void(std::vector<int32_t>* /* params_ret */);
-        };
+    struct DRING_PUBLIC GetHardwareAudioFormat
+    {
+        constexpr static const char* name = "GetHardwareAudioFormat";
+        using cb_type                     = void(std::vector<int32_t>* /* params_ret */);
+    };
 #endif
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-        struct DRING_PUBLIC GetAppDataPath {
-                constexpr static const char* name = "GetAppDataPath";
-                using cb_type = void(const std::string& name, std::vector<std::string>* /* path_ret */);
-        };
-        struct DRING_PUBLIC GetDeviceName {
-            constexpr static const char* name = "GetDeviceName";
-            using cb_type = void(std::vector<std::string>* /* path_ret */);
-        };
+    struct DRING_PUBLIC GetAppDataPath
+    {
+        constexpr static const char* name = "GetAppDataPath";
+        using cb_type = void(const std::string& name, std::vector<std::string>* /* path_ret */);
+    };
+    struct DRING_PUBLIC GetDeviceName
+    {
+        constexpr static const char* name = "GetDeviceName";
+        using cb_type                     = void(std::vector<std::string>* /* path_ret */);
+    };
 #endif
-        struct DRING_PUBLIC HardwareDecodingChanged {
-            constexpr static const char* name = "HardwareDecodingChanged";
-            using cb_type = void(bool /* state */);
-        };
-        struct DRING_PUBLIC HardwareEncodingChanged {
-            constexpr static const char* name = "HardwareEncodingChanged";
-            using cb_type = void(bool /* state */);
-        };
+    struct DRING_PUBLIC HardwareDecodingChanged
+    {
+        constexpr static const char* name = "HardwareDecodingChanged";
+        using cb_type                     = void(bool /* state */);
+    };
+    struct DRING_PUBLIC HardwareEncodingChanged
+    {
+        constexpr static const char* name = "HardwareEncodingChanged";
+        using cb_type                     = void(bool /* state */);
+    };
 };
 
 // Can be used when a client's stdout is not available
-struct DRING_PUBLIC DebugSignal {
-    struct DRING_PUBLIC MessageSend {
+struct DRING_PUBLIC DebugSignal
+{
+    struct DRING_PUBLIC MessageSend
+    {
         constexpr static const char* name = "MessageSend";
-        using cb_type = void(const std::string&);
+        using cb_type                     = void(const std::string&);
     };
 };
 

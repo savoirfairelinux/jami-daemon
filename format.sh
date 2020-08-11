@@ -9,12 +9,12 @@ command_exists ()
 
 CFVERSION="9"
 CLANGFORMAT=""
-if command_exists clang-format; then
-    CLANGFORMAT=clang-format
+if command_exists clang-format-${CFVERSION}; then
+    CLANGFORMAT=clang-format-${CFVERSION}
 else
-   if command_exists clang-format-${CFVERSION}; then
-      CLANGFORMAT=clang-format-${CFVERSION}
-   fi
+    if command_exists clang-format; then
+        CLANGFORMAT=clang-format
+    fi
 fi
 
 if ! command -v $CLANGFORMAT &> /dev/null; then
@@ -25,7 +25,7 @@ fi
 format_file()
 {
     if [ -f "${1}" ]; then
-        $CLANGFORMAT -i -style=file "${1}"
+        $CLANGFORMAT -i -style=file "${1}" || true
     fi
 }
 
@@ -76,7 +76,7 @@ fi
 
 case "${1}" in
   --all )
-    files=$(find src -regex '.*\.\(cpp\|hpp\|cc\|cxx\|h\|mm\)') || true
+    files=$(find src -regex '.*\.\(cpp\|hpp\|cc\|cxx\|h\)') || true
     echo Formatting all source files...
     format_files "$files"
     ;;
@@ -84,7 +84,7 @@ case "${1}" in
     install_hook
     ;;
   * )
-    files=$(git diff-index --cached --name-only HEAD | grep -iE '\.(cpp|cxx|cc|h|hpp|mm)') || exit_if_no_files
+    files=$(git diff-index --cached --name-only HEAD | grep -iE '\.(cpp|cxx|cc|h|hpp)') || exit_if_no_files
     echo Formatting committed source files...
     format_files "$files"
     ;;

@@ -23,7 +23,8 @@
 
 #include <algorithm>
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
 bool
 PMPIGD::operator==(IGD& other) const
@@ -126,4 +127,5 @@ PMPIGD::getRenewalTime()
         nextTime = std::min(nextTime, m.renewal_);
     return nextTime;
 }
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

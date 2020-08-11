@@ -26,8 +26,8 @@
 #include <atomic>
 
 namespace jami {
-class MediaPlayer {
-
+class MediaPlayer
+{
 public:
     MediaPlayer(const std::string& path);
     ~MediaPlayer();
@@ -54,16 +54,12 @@ private:
     int64_t lastPausedTime_;
     int64_t pauseInterval_;
 
-    inline bool hasAudio() const {
-         return audioStream_ >= 0 ;
-    }
+    inline bool hasAudio() const { return audioStream_ >= 0; }
 
-    inline bool hasVideo() const {
-         return videoStream_ >= 0 ;
-    }
+    inline bool hasVideo() const { return videoStream_ >= 0; }
 
-    int audioStream_ = -1;
-    int videoStream_ = -1;
+    int audioStream_      = -1;
+    int videoStream_      = -1;
     int64_t fileDuration_ = 0;
 
     void playFileFromBeginning();
@@ -79,7 +75,5 @@ private:
     void flushMediaBuffers();
 
     bool streamsFinished();
-
 };
 } // namespace jami
-
