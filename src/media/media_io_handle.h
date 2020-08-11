@@ -31,27 +31,28 @@
 struct AVIOContext;
 #endif
 
-typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
+typedef int (*io_readcallback)(void* opaque, uint8_t* buf, int buf_size);
+typedef int (*io_writecallback)(void* opaque, uint8_t* buf, int buf_size);
+typedef int64_t (*io_seekcallback)(void* opaque, int64_t offset, int whence);
 
 namespace jami {
 
-class MediaIOHandle {
+class MediaIOHandle
+{
 public:
     MediaIOHandle(std::size_t buffer_size,
                   bool writeable,
                   io_readcallback read_cb,
                   io_writecallback write_cb,
                   io_seekcallback seek_cb,
-                  void *opaque);
+                  void* opaque);
     ~MediaIOHandle();
 
     AVIOContext* getContext() { return ctx_; }
 
 private:
     NON_COPYABLE(MediaIOHandle);
-    AVIOContext *ctx_;
+    AVIOContext* ctx_;
 };
 
 } // namespace jami

@@ -39,9 +39,12 @@ namespace jami {
  *
  * Works at frame-level instead of sample- or byte-level like FFmpeg's FIFO buffers.
  */
-class AudioFrameResizer {
+class AudioFrameResizer
+{
 public:
-    AudioFrameResizer(const AudioFormat& format, int frameSize, std::function<void(std::shared_ptr<AudioFrame>&&)> cb = {});
+    AudioFrameResizer(const AudioFormat& format,
+                      int frameSize,
+                      std::function<void(std::shared_ptr<AudioFrame>&&)> cb = {});
     ~AudioFrameResizer();
 
     /**

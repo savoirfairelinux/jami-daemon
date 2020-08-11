@@ -24,18 +24,21 @@
 #include "logger.h"
 #include <yaml-cpp/yaml.h>
 
-namespace jami { namespace yaml_utils {
+namespace jami {
+namespace yaml_utils {
 
 // set T to the value stored at key, or leaves T unchanged
 // if no value is stored.
-template <typename T>
-void parseValue(const YAML::Node &node, const char *key, T &value)
+template<typename T>
+void
+parseValue(const YAML::Node& node, const char* key, T& value)
 {
     value = node[key].as<T>();
 }
 
-template <typename T>
-bool parseValueOptional(const YAML::Node &node, const char *key, T &value)
+template<typename T>
+bool
+parseValueOptional(const YAML::Node& node, const char* key, T& value)
 {
     try {
         parseValue(node, key, value);
@@ -46,11 +49,11 @@ bool parseValueOptional(const YAML::Node &node, const char *key, T &value)
     return false;
 }
 
+void parsePath(const YAML::Node& node, const char* key, std::string& path, const std::string& base);
 
-void parsePath(const YAML::Node &node, const char *key, std::string& path, const std::string& base);
+std::vector<std::map<std::string, std::string>> parseVectorMap(
+    const YAML::Node& node, const std::initializer_list<std::string>& keys);
+std::set<std::string> parseVector(const YAML::Node& node);
 
-std::vector<std::map<std::string, std::string>>
-parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys);
-std::set<std::string> parseVector(const YAML::Node &node);
-
-}} // namespace jami::yaml_utils
+} // namespace yaml_utils
+} // namespace jami

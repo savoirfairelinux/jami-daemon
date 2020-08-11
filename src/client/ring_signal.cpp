@@ -134,8 +134,7 @@ getSignalHandlers()
 namespace DRing {
 
 void
-registerSignalHandlers(const std::map<std::string,
-                       std::shared_ptr<CallbackWrapperBase>>&handlers)
+registerSignalHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>& handlers)
 {
     auto& handlers_ = jami::getSignalHandlers();
     for (auto& item : handlers) {
@@ -157,4 +156,4 @@ unregisterSignalHandlers()
     }
 }
 
-}
+} // namespace DRing

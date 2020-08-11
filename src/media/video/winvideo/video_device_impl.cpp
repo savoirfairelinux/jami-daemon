@@ -36,34 +36,36 @@
 
 #include <dshow.h>
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
-class VideoDeviceImpl {
-    public:
-        /**
-        * @throw std::runtime_error
-        */
-        VideoDeviceImpl(const std::string& id);
-        std::string id;
-        std::string name;
+class VideoDeviceImpl
+{
+public:
+    /**
+     * @throw std::runtime_error
+     */
+    VideoDeviceImpl(const std::string& id);
+    std::string id;
+    std::string name;
 
-        std::vector<std::string> getChannelList() const;
-        std::vector<VideoSize> getSizeList(const std::string& channel) const;
-        std::vector<VideoSize> getSizeList() const;
-        std::vector<FrameRate> getRateList(const std::string& channel, VideoSize size) const;
+    std::vector<std::string> getChannelList() const;
+    std::vector<VideoSize> getSizeList(const std::string& channel) const;
+    std::vector<VideoSize> getSizeList() const;
+    std::vector<FrameRate> getRateList(const std::string& channel, VideoSize size) const;
 
-        DeviceParams getDeviceParams() const;
-        void setDeviceParams(const DeviceParams&);
+    DeviceParams getDeviceParams() const;
+    void setDeviceParams(const DeviceParams&);
 
-    private:
-        std::unique_ptr<CaptureGraphInterfaces> cInterface;
+private:
+    std::unique_ptr<CaptureGraphInterfaces> cInterface;
 
-        void setup();
-        std::vector<VideoSize> sizeList_;
-        std::map<VideoSize, std::vector<FrameRate> > rateList_;
-        std::map<VideoSize, AM_MEDIA_TYPE*> capMap_;
+    void setup();
+    std::vector<VideoSize> sizeList_;
+    std::map<VideoSize, std::vector<FrameRate>> rateList_;
+    std::map<VideoSize, AM_MEDIA_TYPE*> capMap_;
 
-        void fail(const std::string& error);
+    void fail(const std::string& error);
 };
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& id)
@@ -77,19 +79,19 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& id)
 void
 VideoDeviceImpl::setup()
 {
-    HRESULT hr = CoCreateInstance(
-        CLSID_CaptureGraphBuilder2,
-        nullptr,
-        CLSCTX_INPROC_SERVER,
-        IID_ICaptureGraphBuilder2,
-        (void**)&cInterface->captureGraph_);
+    HRESULT hr = CoCreateInstance(CLSID_CaptureGraphBuilder2,
+                                  nullptr,
+                                  CLSCTX_INPROC_SERVER,
+                                  IID_ICaptureGraphBuilder2,
+                                  (void**) &cInterface->captureGraph_);
     if (FAILED(hr))
         return fail("Could not create the Filter Graph Manager");
 
     hr = CoCreateInstance(CLSID_FilterGraph,
-        nullptr,
-        CLSCTX_INPROC_SERVER, IID_IGraphBuilder,
-        (void**)&cInterface->graph_);
+                          nullptr,
+                          CLSCTX_INPROC_SERVER,
+                          IID_IGraphBuilder,
+                          (void**) &cInterface->graph_);
     if (FAILED(hr))
         return fail("Could not add the graph builder!");
 
@@ -97,13 +99,14 @@ VideoDeviceImpl::setup()
     if (FAILED(hr))
         return fail("Could not set filtergraph.");
 
-    ICreateDevEnum *pDevEnum;
-    hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
-        CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
+    ICreateDevEnum* pDevEnum;
+    hr = CoCreateInstance(CLSID_SystemDeviceEnum,
+                          NULL,
+                          CLSCTX_INPROC_SERVER,
+                          IID_PPV_ARGS(&pDevEnum));
 
     IEnumMoniker* pEnum = NULL;
-    hr = pDevEnum->CreateClassEnumerator(
-        CLSID_VideoInputDeviceCategory, &pEnum, 0);
+    hr = pDevEnum->CreateClassEnumerator(CLSID_VideoInputDeviceCategory, &pEnum, 0);
     if (hr == S_FALSE) {
         hr = VFW_E_NOT_FOUND;
     }
@@ -114,20 +117,23 @@ VideoDeviceImpl::setup()
     }
 
     // Auto-deletion at exception
-    auto IEnumMonikerDeleter = [](IEnumMoniker* p) { p->Release(); };
-    std::unique_ptr<IEnumMoniker, decltype(IEnumMonikerDeleter)&> pEnumGuard{ pEnum, IEnumMonikerDeleter };
+    auto IEnumMonikerDeleter = [](IEnumMoniker* p) {
+        p->Release();
+    };
+    std::unique_ptr<IEnumMoniker, decltype(IEnumMonikerDeleter)&> pEnumGuard {pEnum,
+                                                                              IEnumMonikerDeleter};
 
-    IMoniker *pMoniker = NULL;
+    IMoniker* pMoniker = NULL;
     while ((pEnumGuard->Next(1, &pMoniker, NULL) == S_OK)) {
-        IPropertyBag *pPropBag;
-        hr = pMoniker->BindToStorage(0, 0, IID_IPropertyBag, (void **)&pPropBag);
+        IPropertyBag* pPropBag;
+        hr = pMoniker->BindToStorage(0, 0, IID_IPropertyBag, (void**) &pPropBag);
         if (FAILED(hr)) {
             pMoniker->Release();
             continue;
         }
 
-        IBindCtx *bind_ctx = NULL;
-        LPOLESTR olestr = NULL;
+        IBindCtx* bind_ctx = NULL;
+        LPOLESTR olestr    = NULL;
 
         hr = CreateBindCtx(0, &bind_ctx);
         if (hr != S_OK) {
@@ -166,30 +172,26 @@ VideoDeviceImpl::setup()
         }
         pPropBag->Write(L"FriendlyName", &var);
 
-        hr = pMoniker->BindToObject(
-            nullptr, nullptr,
-            IID_IBaseFilter,
-            (void**)&cInterface->videoInputFilter_);
+        hr = pMoniker->BindToObject(nullptr,
+                                    nullptr,
+                                    IID_IBaseFilter,
+                                    (void**) &cInterface->videoInputFilter_);
         if (SUCCEEDED(hr))
-            hr = cInterface->graph_->AddFilter(
-                cInterface->videoInputFilter_,
-                var.bstrVal);
+            hr = cInterface->graph_->AddFilter(cInterface->videoInputFilter_, var.bstrVal);
         else {
             fail("Could not add filter to video device.");
         }
-        hr = cInterface->captureGraph_->FindInterface(
-            &PIN_CATEGORY_PREVIEW,
-            &MEDIATYPE_Video,
-            cInterface->videoInputFilter_,
-            IID_IAMStreamConfig,
-            (void **)&cInterface->streamConf_);
+        hr = cInterface->captureGraph_->FindInterface(&PIN_CATEGORY_PREVIEW,
+                                                      &MEDIATYPE_Video,
+                                                      cInterface->videoInputFilter_,
+                                                      IID_IAMStreamConfig,
+                                                      (void**) &cInterface->streamConf_);
         if (FAILED(hr)) {
-            hr = cInterface->captureGraph_->FindInterface(
-                &PIN_CATEGORY_CAPTURE,
-                &MEDIATYPE_Video,
-                cInterface->videoInputFilter_,
-                IID_IAMStreamConfig,
-                (void **)&cInterface->streamConf_);
+            hr = cInterface->captureGraph_->FindInterface(&PIN_CATEGORY_CAPTURE,
+                                                          &MEDIATYPE_Video,
+                                                          cInterface->videoInputFilter_,
+                                                          IID_IAMStreamConfig,
+                                                          (void**) &cInterface->streamConf_);
             if (FAILED(hr)) {
                 fail("Couldn't config the stream!");
             }
@@ -210,31 +212,33 @@ VideoDeviceImpl::setup()
     int piCount;
     int piSize;
     cInterface->streamConf_->GetNumberOfCapabilities(&piCount, &piSize);
-    AM_MEDIA_TYPE *pmt;
+    AM_MEDIA_TYPE* pmt;
     VIDEO_STREAM_CONFIG_CAPS pSCC;
     std::map<std::pair<jami::video::VideoSize, jami::video::FrameRate>, LONG> bitrateList;
     for (int i = 0; i < piCount; i++) {
-        cInterface->streamConf_->GetStreamCaps(i, &pmt, (BYTE*)&pSCC);
+        cInterface->streamConf_->GetStreamCaps(i, &pmt, (BYTE*) &pSCC);
         if (pmt->formattype != FORMAT_VideoInfo) {
             continue;
         }
-        auto videoInfo = (VIDEOINFOHEADER*)pmt->pbFormat;
-        auto size = jami::video::VideoSize(videoInfo->bmiHeader.biWidth, videoInfo->bmiHeader.biHeight);
+        auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
+        auto size      = jami::video::VideoSize(videoInfo->bmiHeader.biWidth,
+                                           videoInfo->bmiHeader.biHeight);
         // use 1e7 / MinFrameInterval to get maximum fps
-        auto rate = jami::video::FrameRate(1e7, pSCC.MinFrameInterval);
+        auto rate    = jami::video::FrameRate(1e7, pSCC.MinFrameInterval);
         auto bitrate = videoInfo->dwBitRate;
         // Only add configurations with positive bitrates.
         if (bitrate == 0)
             continue;
         // Avoid adding multiple rates with different bitrates.
         auto ratesIt = rateList_.find(size);
-        if (ratesIt != rateList_.end() &&
-            std::find(ratesIt->second.begin(), ratesIt->second.end(), rate) != ratesIt->second.end()) {
+        if (ratesIt != rateList_.end()
+            && std::find(ratesIt->second.begin(), ratesIt->second.end(), rate)
+                   != ratesIt->second.end()) {
             // Update bitrate and cap map if the bitrate is greater.
             auto key = std::make_pair(size, rate);
             if (bitrate > bitrateList[key]) {
                 bitrateList[key] = bitrate;
-                capMap_[size] = pmt;
+                capMap_[size]    = pmt;
             }
             continue;
         }
@@ -242,7 +246,7 @@ VideoDeviceImpl::setup()
         sizeList_.emplace_back(size);
         rateList_[size].emplace_back(rate);
         bitrateList[std::make_pair(size, rate)] = bitrate;
-        capMap_[size] = pmt;
+        capMap_[size]                           = pmt;
     }
 }
 
@@ -257,17 +261,17 @@ VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
 
-    params.name = name;
-    params.input = id;
+    params.name   = name;
+    params.input  = id;
     params.format = "dshow";
 
-    AM_MEDIA_TYPE *pmt;
+    AM_MEDIA_TYPE* pmt;
     HRESULT hr = cInterface->streamConf_->GetFormat(&pmt);
     if (SUCCEEDED(hr)) {
         if (pmt->formattype == FORMAT_VideoInfo) {
-            auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
-            params.width = videoInfo->bmiHeader.biWidth;
-            params.height = videoInfo->bmiHeader.biHeight;
+            auto videoInfo   = (VIDEOINFOHEADER*) pmt->pbFormat;
+            params.width     = videoInfo->bmiHeader.biWidth;
+            params.height    = videoInfo->bmiHeader.biHeight;
             params.framerate = {1e7, static_cast<double>(videoInfo->AvgTimePerFrame)};
         }
     }
@@ -280,7 +284,8 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
     if (params.width and params.height) {
         auto pmt = capMap_.at(std::make_pair(params.width, params.height));
         if (pmt != nullptr) {
-            ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame = (FrameRate(1e7) / params.framerate).real();
+            ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame
+                = (FrameRate(1e7) / params.framerate).real();
             if (FAILED(cInterface->streamConf_->SetFormat(pmt))) {
                 JAMI_ERR("Could not set settings.");
             }
@@ -314,10 +319,11 @@ VideoDeviceImpl::getChannelList() const
     return {"default"};
 }
 
-VideoDevice::VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>&)
+VideoDevice::VideoDevice(const std::string& path,
+                         const std::vector<std::map<std::string, std::string>>&)
     : deviceImpl_(new VideoDeviceImpl(path))
 {
-    id_ = path;
+    id_  = path;
     name = deviceImpl_->name;
 }
 
@@ -351,7 +357,7 @@ VideoDevice::getRateList(const std::string& channel, VideoSize size) const
     return deviceImpl_->getRateList(channel, size);
 }
 
-VideoDevice::~VideoDevice()
-{}
+VideoDevice::~VideoDevice() {}
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

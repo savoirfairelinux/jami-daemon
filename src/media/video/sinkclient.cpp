@@ -62,59 +62,61 @@ extern "C" {
 #include <libavutil/display.h>
 }
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 const constexpr char FILTER_INPUT_NAME[] = "in";
 
 #if HAVE_SHM
 // RAII class helper on sem_wait/sem_post sempahore operations
-class SemGuardLock {
-    public:
-        explicit SemGuardLock(sem_t& mutex) : m_(mutex) {
-            auto ret = ::sem_wait(&m_);
-            if (ret < 0) {
-                std::ostringstream msg;
-                msg << "SHM mutex@" << &m_
-                    << " lock failed (" << ret << ")";
-                throw std::logic_error {msg.str()};
-            }
+class SemGuardLock
+{
+public:
+    explicit SemGuardLock(sem_t& mutex)
+        : m_(mutex)
+    {
+        auto ret = ::sem_wait(&m_);
+        if (ret < 0) {
+            std::ostringstream msg;
+            msg << "SHM mutex@" << &m_ << " lock failed (" << ret << ")";
+            throw std::logic_error {msg.str()};
         }
+    }
 
-        ~SemGuardLock() {
-            ::sem_post(&m_);
-        }
+    ~SemGuardLock() { ::sem_post(&m_); }
 
-    private:
-        sem_t& m_;
+private:
+    sem_t& m_;
 };
 
 class ShmHolder
 {
-    public:
-        ShmHolder(const std::string& name = {});
-        ~ShmHolder();
+public:
+    ShmHolder(const std::string& name = {});
+    ~ShmHolder();
 
-        std::string name() const noexcept {
-            return openedName_;
+    std::string name() const noexcept { return openedName_; }
+
+    void renderFrame(const VideoFrame& src) noexcept;
+
+private:
+    bool resizeArea(std::size_t desired_length) noexcept;
+    char* getShmAreaDataPtr() noexcept;
+
+    void unMapShmArea() noexcept
+    {
+        if (area_ != MAP_FAILED and ::munmap(area_, areaSize_) < 0) {
+            JAMI_ERR("ShmHolder[%s]: munmap(%zu) failed with errno %d",
+                     openedName_.c_str(),
+                     areaSize_,
+                     errno);
         }
+    }
 
-        void renderFrame(const VideoFrame& src) noexcept;
-
-    private:
-        bool resizeArea(std::size_t desired_length) noexcept;
-        char* getShmAreaDataPtr() noexcept;
-
-        void unMapShmArea() noexcept {
-            if (area_ != MAP_FAILED and ::munmap(area_, areaSize_) < 0) {
-                JAMI_ERR("ShmHolder[%s]: munmap(%zu) failed with errno %d",
-                         openedName_.c_str(), areaSize_, errno);
-            }
-        }
-
-        SHMHeader* area_ {static_cast<SHMHeader*>(MAP_FAILED)};
-        std::size_t areaSize_ {0};
-        std::string openedName_;
-        int fd_ {-1};
+    SHMHeader* area_ {static_cast<SHMHeader*>(MAP_FAILED)};
+    std::size_t areaSize_ {0};
+    std::string openedName_;
+    int fd_ {-1};
 };
 
 ShmHolder::ShmHolder(const std::string& name)
@@ -124,14 +126,13 @@ ShmHolder::ShmHolder(const std::string& name)
 
     static auto shmFailedWithErrno = [this](const std::string& what) {
         std::ostringstream msg;
-        msg << "ShmHolder[" << openedName_ << "]: "
-        << what << " failed, errno=" << errno;
+        msg << "ShmHolder[" << openedName_ << "]: " << what << " failed, errno=" << errno;
         throw std::runtime_error {msg.str()};
     };
 
     if (not name.empty()) {
         openedName_ = name;
-        fd_ = ::shm_open(openedName_.c_str(), flags, perms);
+        fd_         = ::shm_open(openedName_.c_str(), flags, perms);
         if (fd_ < 0)
             shmFailedWithErrno("shm_open");
     } else {
@@ -139,7 +140,7 @@ ShmHolder::ShmHolder(const std::string& name)
             std::ostringstream tmpName;
             tmpName << PACKAGE_NAME << "_shm_" << getpid() << "_" << i;
             openedName_ = tmpName.str();
-            fd_ = ::shm_open(openedName_.c_str(), flags, perms);
+            fd_         = ::shm_open(openedName_.c_str(), flags, perms);
             if (fd_ < 0 and errno != EEXIST)
                 shmFailedWithErrno("shm_open");
         }
@@ -191,25 +192,27 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 
     // full area size: +15 to take care of maximum padding size
     const auto areaSize = sizeof(SHMHeader) + 2 * frameSize + 15;
-    JAMI_DBG("ShmHolder[%s]: new sizes: f=%zu, a=%zu", openedName_.c_str(),
-             frameSize, areaSize);
+    JAMI_DBG("ShmHolder[%s]: new sizes: f=%zu, a=%zu", openedName_.c_str(), frameSize, areaSize);
 
     unMapShmArea();
 
     if (::ftruncate(fd_, areaSize) < 0) {
         JAMI_ERR("ShmHolder[%s]: ftruncate(%zu) failed with errno %d",
-                 openedName_.c_str(), areaSize, errno);
+                 openedName_.c_str(),
+                 areaSize,
+                 errno);
         return false;
     }
 
-    area_ = static_cast<SHMHeader*>(::mmap(nullptr, areaSize,
-                                           PROT_READ | PROT_WRITE,
-                                           MAP_SHARED, fd_, 0));
+    area_ = static_cast<SHMHeader*>(
+        ::mmap(nullptr, areaSize, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0));
 
     if (area_ == MAP_FAILED) {
         areaSize_ = 0;
         JAMI_ERR("ShmHolder[%s]: mmap(%zu) failed with errno %d",
-                 openedName_.c_str(), areaSize, errno);
+                 openedName_.c_str(),
+                 areaSize,
+                 errno);
         return false;
     }
 
@@ -219,14 +222,14 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
         SemGuardLock lk {area_->mutex};
 
         area_->frameSize = frameSize;
-        area_->mapSize = areaSize;
+        area_->mapSize   = areaSize;
 
         // Compute aligned IO pointers
         // Note: we not using std::align as not implemented in 4.9
         // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=57350
-        auto p = reinterpret_cast<std::uintptr_t>(area_->data);
+        auto p             = reinterpret_cast<std::uintptr_t>(area_->data);
         area_->writeOffset = ((p + 15) & ~15) - p;
-        area_->readOffset = area_->writeOffset + frameSize;
+        area_->readOffset  = area_->writeOffset + frameSize;
     }
 
     return true;
@@ -235,14 +238,13 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 void
 ShmHolder::renderFrame(const VideoFrame& src) noexcept
 {
-    const auto width = src.width();
-    const auto height = src.height();
-    const auto format = AV_PIX_FMT_BGRA;
+    const auto width     = src.width();
+    const auto height    = src.height();
+    const auto format    = AV_PIX_FMT_BGRA;
     const auto frameSize = videoFrameSize(format, width, height);
 
     if (!resizeArea(frameSize)) {
-        JAMI_ERR("ShmHolder[%s]: could not resize area",
-                 openedName_.c_str());
+        JAMI_ERR("ShmHolder[%s]: could not resize area", openedName_.c_str());
         return;
     }
 
@@ -330,7 +332,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
                    const std::shared_ptr<MediaFrame>& frame_p)
 {
 #ifdef DEBUG_FPS
-    auto currentTime = std::chrono::system_clock::now();
+    auto currentTime                            = std::chrono::system_clock::now();
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
     ++frameCount_;
     if (seconds.count() > 1) {
@@ -338,7 +340,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
         fps << frameCount_ / seconds.count();
         // Send the framerate in smartInfo
         Smartools::getInstance().setFrameRate(id_, fps.str());
-        frameCount_ = 0;
+        frameCount_     = 0;
         lastFrameDebug_ = currentTime;
     }
 #endif
@@ -357,25 +359,35 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
     if (doTransfer) {
         std::shared_ptr<VideoFrame> frame;
 #ifdef RING_ACCEL
-        auto desc = av_pix_fmt_desc_get((AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
+        auto desc = av_pix_fmt_desc_get(
+            (AVPixelFormat)(std::static_pointer_cast<VideoFrame>(frame_p))->format());
         if (desc && (desc->flags & AV_PIX_FMT_FLAG_HWACCEL))
-            frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(frame_p), AV_PIX_FMT_NV12);
+            frame = HardwareAccel::transferToMainMemory(*std::static_pointer_cast<VideoFrame>(
+                                                            frame_p),
+                                                        AV_PIX_FMT_NV12);
         else
 #endif
-        frame = std::static_pointer_cast<VideoFrame>(frame_p);
-        AVFrameSideData* side_data = av_frame_get_side_data(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX);
-        int angle = 0;
+            frame = std::static_pointer_cast<VideoFrame>(frame_p);
+        AVFrameSideData* side_data = av_frame_get_side_data(frame->pointer(),
+                                                            AV_FRAME_DATA_DISPLAYMATRIX);
+        int angle                  = 0;
         if (side_data) {
             auto matrix_rotation = reinterpret_cast<int32_t*>(side_data->data);
-            angle = -av_display_rotation_get(matrix_rotation);
+            angle                = -av_display_rotation_get(matrix_rotation);
         }
         if (angle != rotation_) {
-            filter_ = getTransposeFilter(angle, FILTER_INPUT_NAME, frame->width(), frame->height(), AV_PIX_FMT_RGB32, false);
+            filter_   = getTransposeFilter(angle,
+                                         FILTER_INPUT_NAME,
+                                         frame->width(),
+                                         frame->height(),
+                                         AV_PIX_FMT_RGB32,
+                                         false);
             rotation_ = angle;
         }
         if (filter_) {
             filter_->feedInput(frame->pointer(), FILTER_INPUT_NAME);
-            frame = std::static_pointer_cast<VideoFrame>(std::shared_ptr<MediaFrame>(filter_->readOutput()));
+            frame = std::static_pointer_cast<VideoFrame>(
+                std::shared_ptr<MediaFrame>(filter_->readOutput()));
         }
         if (frame->height() != height_ || frame->width() != width_) {
             setFrameSize(0, 0);
@@ -386,7 +398,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 #endif
         if (target_.pull) {
             VideoFrame dst;
-            const int width = frame->width();
+            const int width  = frame->width();
             const int height = frame->height();
 #if defined(__ANDROID__) || (defined(__APPLE__) && !TARGET_OS_IPHONE)
             const int format = AV_PIX_FMT_RGBA;
@@ -397,7 +409,7 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
             if (bytes > 0) {
                 if (auto buffer_ptr = target_.pull(bytes)) {
                     buffer_ptr->format = format;
-                    buffer_ptr->width = width;
+                    buffer_ptr->width  = width;
                     buffer_ptr->height = height;
                     dst.setFromMemory(buffer_ptr->ptr, format, width, height);
                     scaler_->scale(*frame, dst);
@@ -411,19 +423,23 @@ SinkClient::update(Observable<std::shared_ptr<MediaFrame>>* /*obs*/,
 void
 SinkClient::setFrameSize(int width, int height)
 {
-    width_ = width;
+    width_  = width;
     height_ = height;
     if (width > 0 and height > 0) {
         JAMI_WARN("Start sink <%s / %s>, size=%dx%d, mixer=%u",
-                 getId().c_str(), openedName().c_str(), width, height, mixer_);
+                  getId().c_str(),
+                  openedName().c_str(),
+                  width,
+                  height,
+                  mixer_);
         emitSignal<DRing::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
         started_ = true;
     } else if (started_) {
-        JAMI_ERR("Stop sink <%s / %s>, mixer=%u",
-                 getId().c_str(), openedName().c_str(), mixer_);
+        JAMI_ERR("Stop sink <%s / %s>, mixer=%u", getId().c_str(), openedName().c_str(), mixer_);
         emitSignal<DRing::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
         started_ = false;
     }
 }
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

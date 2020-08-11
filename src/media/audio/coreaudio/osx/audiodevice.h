@@ -32,30 +32,33 @@
 
 namespace jami {
 
-class AudioDevice {
+class AudioDevice
+{
 #if !TARGET_OS_IPHONE
 public:
-    AudioDevice() : id_(kAudioDeviceUnknown) { }
+    AudioDevice()
+        : id_(kAudioDeviceUnknown)
+    {}
     AudioDevice(AudioDeviceID devid, bool isInput);
     void init(AudioDeviceID devid, bool isInput);
     bool valid() const;
     void setBufferSize(UInt32 size);
 
 public:
-    AudioDeviceID                   id_;
-    std::string                     name_;
-    bool                            isInput_;
-    int                             channels_;
-    UInt32                          safetyOffset_;
-    UInt32                          bufferSizeFrames_;
-    AudioStreamBasicDescription     format_;
+    AudioDeviceID id_;
+    std::string name_;
+    bool isInput_;
+    int channels_;
+    UInt32 safetyOffset_;
+    UInt32 bufferSizeFrames_;
+    AudioStreamBasicDescription format_;
 
 private:
-    int     countChannels() const;
-    std::string  getName() const;
+    int countChannels() const;
+    std::string getName() const;
 #endif
 };
 
-}
+} // namespace jami
 
 #endif /* defined(AUDIO_DEVICE_H) */

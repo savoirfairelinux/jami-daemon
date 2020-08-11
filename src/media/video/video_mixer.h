@@ -31,11 +31,13 @@
 #include <chrono>
 #include <memory>
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class SinkClient;
 
-struct SourceInfo {
+struct SourceInfo
+{
     Observable<std::shared_ptr<MediaFrame>>* source;
     int x;
     int y;
@@ -44,16 +46,9 @@ struct SourceInfo {
 };
 using OnSourcesUpdatedCb = std::function<void(const std::vector<SourceInfo>&&)>;
 
+enum class Layout { GRID, ONE_BIG_WITH_SMALL, ONE_BIG };
 
-enum class Layout {
-    GRID,
-    ONE_BIG_WITH_SMALL,
-    ONE_BIG
-};
-
-class VideoMixer:
-        public VideoGenerator,
-        public VideoFramePassiveReader
+class VideoMixer : public VideoGenerator, public VideoFramePassiveReader
 {
 public:
     VideoMixer(const std::string& id);
@@ -66,7 +61,8 @@ public:
     AVPixelFormat getPixelFormat() const override;
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<MediaFrame>>* ob, const std::shared_ptr<MediaFrame>& v) override;
+    void update(Observable<std::shared_ptr<MediaFrame>>* ob,
+                const std::shared_ptr<MediaFrame>& v) override;
     void attached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
     void detached(Observable<std::shared_ptr<MediaFrame>>* ob) override;
 
@@ -75,21 +71,23 @@ public:
 
     void setActiveParticipant(Observable<std::shared_ptr<MediaFrame>>* ob);
 
-    void setVideoLayout(Layout newLayout) {
+    void setVideoLayout(Layout newLayout)
+    {
         currentLayout_ = newLayout;
         layoutUpdated_ += 1;
     }
 
-    void setOnSourcesUpdated(OnSourcesUpdatedCb&& cb) {
-        onSourcesUpdated_ = std::move(cb);
-    }
+    void setOnSourcesUpdated(OnSourcesUpdatedCb&& cb) { onSourcesUpdated_ = std::move(cb); }
 
 private:
     NON_COPYABLE(VideoMixer);
     struct VideoMixerSource;
 
-    bool render_frame(VideoFrame& output, const VideoFrame& input,
-        std::unique_ptr<VideoMixerSource>& source, int index, bool needsUpdate);
+    bool render_frame(VideoFrame& output,
+                      const VideoFrame& input,
+                      std::unique_ptr<VideoMixerSource>& source,
+                      int index,
+                      bool needsUpdate);
 
     void start_sink();
     void stop_sink();
@@ -97,8 +95,8 @@ private:
     void process();
 
     const std::string id_;
-    int width_ = 0;
-    int height_ = 0;
+    int width_            = 0;
+    int height_           = 0;
     AVPixelFormat format_ = AV_PIX_FMT_YUV422P;
     rw_mutex rwMutex_;
 
@@ -118,4 +116,5 @@ private:
     OnSourcesUpdatedCb onSourcesUpdated_ {};
 };
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

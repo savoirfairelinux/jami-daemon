@@ -37,14 +37,13 @@ extern "C" {
 #include <unistd.h>
 #include <map>
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 using std::string;
 
-VideoReceiveThread::VideoReceiveThread(const std::string& id,
-                                       const std::string &sdp,
-                                       uint16_t mtu) :
-    VideoGenerator::VideoGenerator()
+VideoReceiveThread::VideoReceiveThread(const std::string& id, const std::string& sdp, uint16_t mtu)
+    : VideoGenerator::VideoGenerator()
     , args_()
     , dstWidth_(0)
     , dstHeight_(0)
@@ -74,21 +73,24 @@ VideoReceiveThread::startLoop(const std::function<void(MediaType)>& cb)
 
 // We do this setup here instead of the constructor because we don't want the
 // main thread to block while this executes, so it happens in the video thread.
-bool VideoReceiveThread::setup()
+bool
+VideoReceiveThread::setup()
 {
     videoDecoder_.reset(new MediaDecoder([this](const std::shared_ptr<MediaFrame>& frame) mutable {
         if (auto displayMatrix = displayMatrix_)
-            av_frame_new_side_data_from_buf(frame->pointer(), AV_FRAME_DATA_DISPLAYMATRIX, av_buffer_ref(displayMatrix.get()));
+            av_frame_new_side_data_from_buf(frame->pointer(),
+                                            AV_FRAME_DATA_DISPLAYMATRIX,
+                                            av_buffer_ref(displayMatrix.get()));
         publishFrame(std::static_pointer_cast<VideoFrame>(frame));
     }));
 
-    dstWidth_ = args_.width;
+    dstWidth_  = args_.width;
     dstHeight_ = args_.height;
 
     static const std::string SDP_FILENAME = "dummyFilename";
     if (args_.input.empty()) {
         args_.format = "sdp";
-        args_.input = SDP_FILENAME;
+        args_.input  = SDP_FILENAME;
     } else if (args_.input.substr(0, strlen("/dev/video")) == "/dev/video") {
         // it's a v4l device if starting with /dev/video
         // FIXME: This is not a robust way of checking if we mean to use a
@@ -123,7 +125,8 @@ bool VideoReceiveThread::setup()
     return true;
 }
 
-void VideoReceiveThread::cleanup()
+void
+VideoReceiveThread::cleanup()
 {
     detach(sink_.get());
     sink_->stop();
@@ -133,15 +136,17 @@ void VideoReceiveThread::cleanup()
 }
 
 // This callback is used by libav internally to break out of blocking calls
-int VideoReceiveThread::interruptCb(void *data)
+int
+VideoReceiveThread::interruptCb(void* data)
 {
     const auto context = static_cast<VideoReceiveThread*>(data);
     return not context->loop_.isRunning();
 }
 
-int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
+int
+VideoReceiveThread::readFunction(void* opaque, uint8_t* buf, int buf_size)
 {
-    std::istream &is = static_cast<VideoReceiveThread*>(opaque)->stream_;
+    std::istream& is = static_cast<VideoReceiveThread*>(opaque)->stream_;
     is.read(reinterpret_cast<char*>(buf), buf_size);
 
     auto count = is.gcount();
@@ -151,19 +156,20 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
         return AVERROR_EOF;
 }
 
-void VideoReceiveThread::addIOContext(SocketPair& socketPair)
+void
+VideoReceiveThread::addIOContext(SocketPair& socketPair)
 {
     demuxContext_.reset(socketPair.createIOContext(mtu_));
 }
 
-void VideoReceiveThread::decodeFrame()
+void
+VideoReceiveThread::decodeFrame()
 {
     if (!configureVideoOutput()) {
         return;
     }
     auto status = videoDecoder_->decode();
-    if (status == MediaDemuxer::Status::EndOfFile ||
-        status == MediaDemuxer::Status::ReadError) {
+    if (status == MediaDemuxer::Status::EndOfFile || status == MediaDemuxer::Status::ReadError) {
         loop_.stop();
     }
     if (status == MediaDemuxer::Status::FallBack) {
@@ -172,7 +178,8 @@ void VideoReceiveThread::decodeFrame()
     }
 }
 
-bool VideoReceiveThread::configureVideoOutput()
+bool
+VideoReceiveThread::configureVideoOutput()
 {
     if (isVideoConfigured_) {
         return true;
@@ -180,7 +187,7 @@ bool VideoReceiveThread::configureVideoOutput()
     if (!loop_.isRunning()) {
         return false;
     }
-   if (videoDecoder_->setupVideo()) {
+    if (videoDecoder_->setupVideo()) {
         JAMI_ERR("decoder IO startup failed");
         loop_.stop();
         return false;
@@ -188,7 +195,7 @@ bool VideoReceiveThread::configureVideoOutput()
 
     // Default size from input video
     if (dstWidth_ == 0 and dstHeight_ == 0) {
-        dstWidth_ = videoDecoder_->getWidth();
+        dstWidth_  = videoDecoder_->getWidth();
         dstHeight_ = videoDecoder_->getHeight();
     }
 
@@ -214,7 +221,8 @@ bool VideoReceiveThread::configureVideoOutput()
     return true;
 }
 
-void VideoReceiveThread::enterConference()
+void
+VideoReceiveThread::enterConference()
 {
     if (!loop_.isRunning())
         return;
@@ -223,7 +231,8 @@ void VideoReceiveThread::enterConference()
     sink_->setFrameSize(0, 0);
 }
 
-void VideoReceiveThread::exitConference()
+void
+VideoReceiveThread::exitConference()
 {
     if (!loop_.isRunning())
         return;
@@ -232,14 +241,23 @@ void VideoReceiveThread::exitConference()
         sink_->setFrameSize(dstWidth_, dstHeight_);
 }
 
-int VideoReceiveThread::getWidth() const
-{ return dstWidth_; }
+int
+VideoReceiveThread::getWidth() const
+{
+    return dstWidth_;
+}
 
-int VideoReceiveThread::getHeight() const
-{ return dstHeight_; }
+int
+VideoReceiveThread::getHeight() const
+{
+    return dstHeight_;
+}
 
-AVPixelFormat VideoReceiveThread::getPixelFormat() const
-{ return videoDecoder_->getPixelFormat(); }
+AVPixelFormat
+VideoReceiveThread::getPixelFormat() const
+{
+    return videoDecoder_->getPixelFormat();
+}
 
 MediaStream
 VideoReceiveThread::getInfo() const
@@ -250,14 +268,15 @@ VideoReceiveThread::getInfo() const
 void
 VideoReceiveThread::setRotation(int angle)
 {
-    std::shared_ptr<AVBufferRef> displayMatrix {
-        av_buffer_alloc(sizeof(int32_t) * 9),
-        [](AVBufferRef* buf){ av_buffer_unref(&buf); }
-    };
+    std::shared_ptr<AVBufferRef> displayMatrix {av_buffer_alloc(sizeof(int32_t) * 9),
+                                                [](AVBufferRef* buf) {
+                                                    av_buffer_unref(&buf);
+                                                }};
     if (displayMatrix) {
         av_display_rotation_set(reinterpret_cast<int32_t*>(displayMatrix->data), angle);
         displayMatrix_ = std::move(displayMatrix);
     }
 }
 
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

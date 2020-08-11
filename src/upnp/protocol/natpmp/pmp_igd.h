@@ -35,16 +35,18 @@
 #include <chrono>
 #include <functional>
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
-using clock = std::chrono::system_clock;
+using clock      = std::chrono::system_clock;
 using time_point = clock::time_point;
 
 class PMPIGD : public IGD
 {
 public:
-    PMPIGD(IpAddr&& localIp = {}, IpAddr&& publicIp = {}):
-           IGD(std::move(localIp), std::move(publicIp)){}
+    PMPIGD(IpAddr&& localIp = {}, IpAddr&& publicIp = {})
+        : IGD(std::move(localIp), std::move(publicIp))
+    {}
     ~PMPIGD() = default;
 
     bool operator==(IGD& other) const;
@@ -75,14 +77,15 @@ public:
     // Gets the next renewal time.
     time_point getRenewalTime();
 
-    std::mutex mapListMutex_;                     // Mutex for protecting map lists.
-    std::vector<Mapping> toAdd_ {};        // List of maps to add.
-    std::vector<Mapping> toRenew_ {};      // List of maps to renew.
-    std::vector<Mapping> toRemove_ {};     // List of maps to remove.
-    time_point renewal_ {time_point::min()};      // Renewal time of 1 minute.
+    std::mutex mapListMutex_;                // Mutex for protecting map lists.
+    std::vector<Mapping> toAdd_ {};          // List of maps to add.
+    std::vector<Mapping> toRenew_ {};        // List of maps to renew.
+    std::vector<Mapping> toRemove_ {};       // List of maps to remove.
+    time_point renewal_ {time_point::min()}; // Renewal time of 1 minute.
     // Upon creation, the thread will clear all the previously opened
     // mappings (if there are any). The NatPmp class will then set the
     // clearAll variable to false.
     std::atomic_bool clearAll_ {true};
 };
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

@@ -27,8 +27,7 @@
 namespace DRing {
 
 void
-registerDataXferHandlers(const std::map<std::string,
-    std::shared_ptr<CallbackWrapperBase>>& handlers)
+registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>& handlers)
 {
     registerSignalHandlers(handlers);
 }

@@ -20,7 +20,7 @@
 
 #include "ip_utils.h"
 #ifdef s_addr
-    #undef s_addr
+#undef s_addr
 #endif
 #include "logger.h"
 
@@ -69,10 +69,10 @@ ip_utils::getHostname()
 }
 
 int
-ip_utils::getHostName(char *out, size_t out_len)
+ip_utils::getHostName(char* out, size_t out_len)
 {
     char tempstr[INET_ADDRSTRLEN];
-    const char *p = NULL;
+    const char* p = NULL;
 #ifdef _WIN32
     struct hostent* h = NULL;
     struct sockaddr_in localAddr;
@@ -100,14 +100,17 @@ ip_utils::getHostName(char *out, size_t out_len)
         // Skip loopback, point-to-point and down interfaces.
         // except don't skip down interfaces if we're trying to get
         // a list of configurable interfaces.
-        if ((ifa->ifa_flags & IFF_LOOPBACK) || (!( ifa->ifa_flags & IFF_UP)))
+        if ((ifa->ifa_flags & IFF_LOOPBACK) || (!(ifa->ifa_flags & IFF_UP)))
             continue;
         if (ifa->ifa_addr->sa_family == AF_INET) {
-            if (((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr.s_addr == htonl(INADDR_LOOPBACK)) {
+            if (((struct sockaddr_in*) (ifa->ifa_addr))->sin_addr.s_addr == htonl(INADDR_LOOPBACK)) {
                 // We don't want the loopback interface. Go to next one.
                 continue;
             }
-            p = inet_ntop(AF_INET, &((struct sockaddr_in *)(ifa->ifa_addr))->sin_addr, tempstr, sizeof(tempstr));
+            p = inet_ntop(AF_INET,
+                          &((struct sockaddr_in*) (ifa->ifa_addr))->sin_addr,
+                          tempstr,
+                          sizeof(tempstr));
             if (p)
                 strncpy(out, p, out_len);
             else
@@ -122,11 +125,11 @@ ip_utils::getHostName(char *out, size_t out_len)
     struct ifconf ifConf;
     struct ifreq ifReq;
     struct sockaddr_in localAddr;
-    char szBuffer[MAX_INTERFACE * sizeof (struct ifreq)];
+    char szBuffer[MAX_INTERFACE * sizeof(struct ifreq)];
     int nResult;
     int localSock;
-    memset(&ifConf,  0, sizeof(ifConf));
-    memset(&ifReq,   0, sizeof(ifReq));
+    memset(&ifConf, 0, sizeof(ifConf));
+    memset(&ifReq, 0, sizeof(ifReq));
     memset(szBuffer, 0, sizeof(szBuffer));
     memset(&localAddr, 0, sizeof(localAddr));
     // Create an unbound datagram socket to do the SIOCGIFADDR ioctl on.
@@ -134,9 +137,9 @@ ip_utils::getHostName(char *out, size_t out_len)
     if (localSock == INVALID_SOCKET)
         return -1;
     /* Get the interface configuration information... */
-    ifConf.ifc_len = (int)sizeof szBuffer;
+    ifConf.ifc_len           = (int) sizeof szBuffer;
     ifConf.ifc_ifcu.ifcu_buf = (caddr_t) szBuffer;
-    nResult = ioctl(localSock, SIOCGIFCONF, &ifConf);
+    nResult                  = ioctl(localSock, SIOCGIFCONF, &ifConf);
     if (nResult < 0) {
         close(localSock);
         return -1;
@@ -144,8 +147,8 @@ ip_utils::getHostName(char *out, size_t out_len)
     unsigned int i;
     unsigned int j = 0;
     // Cycle through the list of interfaces looking for IP addresses.
-    for (i = 0u; i < (unsigned int)ifConf.ifc_len && j < MIN_INTERFACE; ) {
-        struct ifreq *pifReq = (struct ifreq *)((caddr_t)ifConf.ifc_req + i);
+    for (i = 0u; i < (unsigned int) ifConf.ifc_len && j < MIN_INTERFACE;) {
+        struct ifreq* pifReq = (struct ifreq*) ((caddr_t) ifConf.ifc_req + i);
         i += sizeof *pifReq;
         // See if this is the sort of interface we want to deal with.
         memset(ifReq.ifr_name, 0, sizeof(ifReq.ifr_name));
@@ -163,7 +166,7 @@ ip_utils::getHostName(char *out, size_t out_len)
                 continue;
             }
         }
-        j++;    // Increment j if we found an address which is not loopback and is up.
+        j++; // Increment j if we found an address which is not loopback and is up.
     }
     close(localSock);
     p = inet_ntop(AF_INET, &localAddr.sin_addr, tempstr, sizeof(tempstr));
@@ -190,9 +193,11 @@ ip_utils::getGateway(char* localHost, ip_utils::subnet_mask prefix)
             tokens.push_back(token);
     }
     // Build a gateway address from the individual ip components.
-    for (unsigned int i = 0; i <=(unsigned int)prefix; i++)
+    for (unsigned int i = 0; i <= (unsigned int) prefix; i++)
         defaultGw += tokens[i] + ".";
-    for (unsigned int i = (unsigned int)ip_utils::subnet_mask::prefix_32bit; i > (unsigned int)prefix+1; i--)
+    for (unsigned int i = (unsigned int) ip_utils::subnet_mask::prefix_32bit;
+         i > (unsigned int) prefix + 1;
+         i--)
         defaultGw += "0.";
     defaultGw += "1";
     return defaultGw;
@@ -212,7 +217,7 @@ ip_utils::getDeviceName()
 }
 
 std::vector<IpAddr>
-ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
+ip_utils::getAddrList(const std::string& name, pj_uint16_t family)
 {
     std::vector<IpAddr> ipList;
     if (name.empty())
@@ -228,12 +233,14 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
     const pj_str_t pjname(sip_utils::CONST_PJ_STR(name));
     auto status = pj_getaddrinfo(family, &pjname, &addr_num, res);
     if (status != PJ_SUCCESS) {
-        JAMI_ERR("Error resolving %.*s : %s", (int)name.size(), name.c_str(),
+        JAMI_ERR("Error resolving %.*s : %s",
+                 (int) name.size(),
+                 name.c_str(),
                  sip_utils::sip_strerror(status).c_str());
         return ipList;
     }
 
-    for (unsigned i=0; i<addr_num; i++) {
+    for (unsigned i = 0; i < addr_num; i++) {
         bool found = false;
         for (const auto& ip : ipList)
             if (!pj_sockaddr_cmp(&ip, &res[i].ai_addr)) {
@@ -250,9 +257,10 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
 bool
 ip_utils::haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>& b)
 {
-    for (const auto &i : a) {
-        for (const auto &j : b) {
-            if (i == j) return true;
+    for (const auto& i : a) {
+        for (const auto& j : b) {
+            if (i == j)
+                return true;
         }
     }
     return false;
@@ -266,7 +274,8 @@ ip_utils::getLocalAddr(pj_uint16_t family)
     if (status == PJ_SUCCESS) {
         return ip_addr;
     }
-    JAMI_WARN("Could not get preferred address familly (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
+    JAMI_WARN("Could not get preferred address familly (%s)",
+              (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
     family = (family == pj_AF_INET()) ? pj_AF_INET6() : pj_AF_INET();
     status = pj_gethostip(family, ip_addr.pjPtr());
     if (status == PJ_SUCCESS) {
@@ -277,7 +286,7 @@ ip_utils::getLocalAddr(pj_uint16_t family)
 }
 
 IpAddr
-ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
+ip_utils::getInterfaceAddr(const std::string& interface, pj_uint16_t family)
 {
     if (interface == DEFAULT_INTERFACE)
         return getLocalAddr(family);
@@ -295,7 +304,7 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 
     if (unix_family == AF_INET6) {
         int val = family != pj_AF_UNSPEC();
-        if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void *) &val, sizeof(val)) < 0) {
+        if (setsockopt(fd, IPPROTO_IPV6, IPV6_V6ONLY, (void*) &val, sizeof(val)) < 0) {
             JAMI_ERR("Could not setsockopt: %m");
             close(fd);
             return addr;
@@ -316,11 +325,11 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     addr = ifr.ifr_addr;
     if (addr.isUnspecified())
         return getLocalAddr(addr.getFamily());
-#else // _WIN32
+#else  // _WIN32
     struct addrinfo hints;
-    struct addrinfo *result = NULL;
-    struct sockaddr_in  *sockaddr_ipv4;
-    struct sockaddr_in6 *sockaddr_ipv6;
+    struct addrinfo* result = NULL;
+    struct sockaddr_in* sockaddr_ipv4;
+    struct sockaddr_in6* sockaddr_ipv6;
 
     ZeroMemory(&hints, sizeof(hints));
 
@@ -331,19 +340,19 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     }
 
     switch (result->ai_family) {
-        sockaddr_ipv4 = (struct sockaddr_in *) result->ai_addr;
-        addr = sockaddr_ipv4->sin_addr;
+        sockaddr_ipv4 = (struct sockaddr_in*) result->ai_addr;
+        addr          = sockaddr_ipv4->sin_addr;
         break;
-        case AF_INET6:
-        sockaddr_ipv6 = (struct sockaddr_in6 *) result->ai_addr;
-        addr = sockaddr_ipv6->sin6_addr;
+    case AF_INET6:
+        sockaddr_ipv6 = (struct sockaddr_in6*) result->ai_addr;
+        addr          = sockaddr_ipv6->sin6_addr;
         break;
-        default:
+    default:
         break;
     }
 
     if (addr.isUnspecified())
-            return getLocalAddr(addr.getFamily());
+        return getLocalAddr(addr.getFamily());
 #endif // !_WIN32
 
     return addr;
@@ -372,7 +381,7 @@ ip_utils::getAllIpInterfaceByName()
     }
 
 #else
-        JAMI_ERR("Not implemented yet. (iphlpapi.h problem)");
+    JAMI_ERR("Not implemented yet. (iphlpapi.h problem)");
 #endif
     return ifaceList;
 }
@@ -402,12 +411,13 @@ ip_utils::getLocalNameservers()
     std::vector<IpAddr> res;
 #if defined __ANDROID__ || defined _WIN32 || TARGET_OS_IPHONE
 #ifdef _MSC_VER
-#pragma message (__FILE__ "(" STR2(__LINE__) ") : -NOTE- " "Not implemented")
+#pragma message(__FILE__ "(" STR2(__LINE__) ") : -NOTE- " \
+                                            "Not implemented")
 #else
 #warning "Not implemented"
 #endif
 #else
-    if (not (_res.options & RES_INIT))
+    if (not(_res.options & RES_INIT))
         res_init();
     res.insert(res.end(), _res.nsaddr_list, _res.nsaddr_list + _res.nscount);
 #endif
@@ -415,7 +425,7 @@ ip_utils::getLocalNameservers()
 }
 
 bool
-IpAddr::isValid(const std::string &address, pj_uint16_t family)
+IpAddr::isValid(const std::string& address, pj_uint16_t family)
 {
     const pj_str_t pjstring(sip_utils::CONST_PJ_STR(address));
     pj_str_t ret_str;
@@ -429,7 +439,7 @@ IpAddr::isValid(const std::string &address, pj_uint16_t family)
     pj_str_t addr_with_null = {buf, 0};
     pj_strncpy_with_null(&addr_with_null, &ret_str, sizeof(buf));
     struct sockaddr sa;
-    return inet_pton(ret_family==pj_AF_INET6()?AF_INET6:AF_INET, buf, &(sa.sa_data)) == 1;
+    return inet_pton(ret_family == pj_AF_INET6() ? AF_INET6 : AF_INET, buf, &(sa.sa_data)) == 1;
 }
 
 bool
@@ -451,7 +461,7 @@ IpAddr::isLoopback() const
     switch (addr.addr.sa_family) {
     case AF_INET: {
         auto addr_host = ntohl(addr.ipv4.sin_addr.s_addr);
-        uint8_t b1 = (uint8_t)(addr_host >> 24);
+        uint8_t b1     = (uint8_t)(addr_host >> 24);
         return b1 == 127;
     }
     case AF_INET6:

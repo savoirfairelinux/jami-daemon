@@ -23,26 +23,28 @@
 
 namespace jami {
 
-Plugin *Plugin::load(const std::string &path, std::string &error) {
-  if (path.empty()) {
-    error = "Empty path";
-    return nullptr;
-  }
+Plugin*
+Plugin::load(const std::string& path, std::string& error)
+{
+    if (path.empty()) {
+        error = "Empty path";
+        return nullptr;
+    }
 
-  // Clear any existing error
-  ::dlerror();
+    // Clear any existing error
+    ::dlerror();
 
-  void *handle = ::dlopen(path.c_str(), RTLD_NOW);
-  if (!handle) {
-    error += "Failed to load \"" + path + '"';
+    void* handle = ::dlopen(path.c_str(), RTLD_NOW);
+    if (!handle) {
+        error += "Failed to load \"" + path + '"';
 
-    std::string dlError = ::dlerror();
-    if (dlError.size())
-      error += " (" + dlError + ")";
-    return nullptr;
-  }
+        std::string dlError = ::dlerror();
+        if (dlError.size())
+            error += " (" + dlError + ")";
+        return nullptr;
+    }
 
-  return new DLPlugin(handle, path);
+    return new DLPlugin(handle, path);
 }
 
 } // namespace jami

@@ -65,13 +65,13 @@
 #include <unistd.h>
 #include <fcntl.h>
 #ifndef _WIN32
-    #include <pwd.h>
+#include <pwd.h>
 #else
-    #include <shlobj.h>
-    #define NAME_MAX 255
+#include <shlobj.h>
+#define NAME_MAX 255
 #endif
 #if !defined __ANDROID__ && !defined _WIN32
-#   include <wordexp.h>
+#include <wordexp.h>
 #endif
 
 #include <sstream>
@@ -89,14 +89,14 @@
 #include <pj/ctype.h>
 #include <pjlib-util/md5.h>
 
-namespace jami { namespace fileutils {
+namespace jami {
+namespace fileutils {
 
 // returns true if directory exists
-bool check_dir(const char *path,
-            mode_t UNUSED dirmode,
-            mode_t parentmode)
+bool
+check_dir(const char* path, mode_t UNUSED dirmode, mode_t parentmode)
 {
-    DIR *dir = opendir(path);
+    DIR* dir = opendir(path);
 
     if (!dir) { // doesn't exist
         if (not recursive_mkdir(path, parentmode)) {
@@ -121,10 +121,10 @@ lockReg(int fd, int cmd, int type, int whence, int start, off_t len)
 {
     struct flock fl;
 
-    fl.l_type = type;
+    fl.l_type   = type;
     fl.l_whence = whence;
-    fl.l_start = start;
-    fl.l_len = len;
+    fl.l_start  = start;
+    fl.l_len    = len;
 
     return fcntl(fd, cmd, &fl);
 }
@@ -148,9 +148,11 @@ create_pidfile()
     }
 
     if (lockRegion(f.fd, F_WRLCK, SEEK_SET, 0, 0) == -1) {
-        if (errno  == EAGAIN or errno == EACCES)
+        if (errno == EAGAIN or errno == EACCES)
             JAMI_ERR("PID file '%s' is locked; probably "
-                    "'%s' is already running", f.name.c_str(), PACKAGE_NAME);
+                     "'%s' is already running",
+                     f.name.c_str(),
+                     PACKAGE_NAME);
         else
             JAMI_ERR("Unable to lock PID file '%s'", f.name.c_str());
         close(f.fd);
@@ -180,7 +182,7 @@ create_pidfile()
 #endif // !_WIN32
 
 std::string
-expand_path(const std::string &path)
+expand_path(const std::string& path)
 {
 #if defined __ANDROID__ || defined _MSC_VER || defined WIN32 || defined __APPLE__
     JAMI_ERR("Path expansion not implemented, returning original");
@@ -193,27 +195,27 @@ expand_path(const std::string &path)
     int ret = wordexp(path.c_str(), &p, 0);
 
     switch (ret) {
-        case WRDE_BADCHAR:
-            JAMI_ERR("Illegal occurrence of newline or one of |, &, ;, <, >, "
-                  "(, ), {, }.");
-            return result;
-        case WRDE_BADVAL:
-            JAMI_ERR("An undefined shell variable was referenced");
-            return result;
-        case WRDE_CMDSUB:
-            JAMI_ERR("Command substitution occurred");
-            return result;
-        case WRDE_SYNTAX:
-            JAMI_ERR("Shell syntax error");
-            return result;
-        case WRDE_NOSPACE:
-            JAMI_ERR("Out of memory.");
-            // This is the only error where we must call wordfree
-            break;
-        default:
-            if (p.we_wordc > 0)
-                result = std::string(p.we_wordv[0]);
-            break;
+    case WRDE_BADCHAR:
+        JAMI_ERR("Illegal occurrence of newline or one of |, &, ;, <, >, "
+                 "(, ), {, }.");
+        return result;
+    case WRDE_BADVAL:
+        JAMI_ERR("An undefined shell variable was referenced");
+        return result;
+    case WRDE_CMDSUB:
+        JAMI_ERR("Command substitution occurred");
+        return result;
+    case WRDE_SYNTAX:
+        JAMI_ERR("Shell syntax error");
+        return result;
+    case WRDE_NOSPACE:
+        JAMI_ERR("Out of memory.");
+        // This is the only error where we must call wordfree
+        break;
+    default:
+        if (p.we_wordc > 0)
+            result = std::string(p.we_wordv[0]);
+        break;
     }
 
     wordfree(&p);
@@ -232,7 +234,8 @@ getFileLock(const std::string& path)
     return fileLocks[path];
 }
 
-bool isFile(const std::string& path, bool resolveSymlink)
+bool
+isFile(const std::string& path, bool resolveSymlink)
 {
     if (path.empty())
         return false;
@@ -243,9 +246,8 @@ bool isFile(const std::string& path, bool resolveSymlink)
             return S_ISREG(s.st_mode);
     } else {
         DWORD attr = GetFileAttributes(jami::to_wstring(path).c_str());
-        if ((attr != INVALID_FILE_ATTRIBUTES) &&
-            !(attr & FILE_ATTRIBUTE_DIRECTORY) &&
-            !(attr & FILE_ATTRIBUTE_REPARSE_POINT))
+        if ((attr != INVALID_FILE_ATTRIBUTES) && !(attr & FILE_ATTRIBUTE_DIRECTORY)
+            && !(attr & FILE_ATTRIBUTE_REPARSE_POINT))
             return true;
     }
 #else
@@ -263,7 +265,8 @@ bool isFile(const std::string& path, bool resolveSymlink)
     return false;
 }
 
-bool isDirectory(const std::string& path)
+bool
+isDirectory(const std::string& path)
 {
     struct stat s;
     if (stat(path.c_str(), &s) == 0)
@@ -271,12 +274,14 @@ bool isDirectory(const std::string& path)
     return false;
 }
 
-bool isDirectoryWritable(const std::string &directory)
+bool
+isDirectoryWritable(const std::string& directory)
 {
     return accessFile(directory, W_OK) == 0;
 }
 
-bool isSymLink(const std::string& path)
+bool
+isSymLink(const std::string& path)
 {
 #ifndef _WIN32
     struct stat s;
@@ -301,16 +306,26 @@ writeTime(const std::string& path)
     return std::chrono::system_clock::from_time_t(s.st_mtime);
 #else
 #if RING_UWP
-    _CREATEFILE2_EXTENDED_PARAMETERS ext_params = { 0 };
-    ext_params.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
-    ext_params.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
-    ext_params.dwFileFlags = FILE_FLAG_NO_BUFFERING;
-    ext_params.dwSecurityQosFlags = SECURITY_ANONYMOUS;
-    ext_params.lpSecurityAttributes = nullptr;
-    ext_params.hTemplateFile = nullptr;
-    HANDLE h = CreateFile2(jami::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &ext_params);
+    _CREATEFILE2_EXTENDED_PARAMETERS ext_params = {0};
+    ext_params.dwSize                           = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+    ext_params.dwFileAttributes                 = FILE_ATTRIBUTE_NORMAL;
+    ext_params.dwFileFlags                      = FILE_FLAG_NO_BUFFERING;
+    ext_params.dwSecurityQosFlags               = SECURITY_ANONYMOUS;
+    ext_params.lpSecurityAttributes             = nullptr;
+    ext_params.hTemplateFile                    = nullptr;
+    HANDLE h                                    = CreateFile2(jami::to_wstring(path).c_str(),
+                           GENERIC_READ,
+                           FILE_SHARE_READ,
+                           OPEN_EXISTING,
+                           &ext_params);
 #elif _WIN32
-    HANDLE h = CreateFileW(jami::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    HANDLE h    = CreateFileW(jami::to_wstring(path).c_str(),
+                           GENERIC_READ,
+                           FILE_SHARE_READ,
+                           nullptr,
+                           OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL,
+                           nullptr);
 #endif
     if (h == INVALID_HANDLE_VALUE)
         throw std::runtime_error("Can't open: " + path);
@@ -321,22 +336,24 @@ writeTime(const std::string& path)
     SYSTEMTIME sTime;
     if (!FileTimeToSystemTime(&lastWriteTime, &sTime))
         throw std::runtime_error("Can't check write time for: " + path);
-    struct tm tm {};
-    tm.tm_year = sTime.wYear - 1900;
-    tm.tm_mon = sTime.wMonth - 1;
-    tm.tm_mday = sTime.wDay;
-    tm.tm_hour = sTime.wHour;
-    tm.tm_min = sTime.wMinute;
-    tm.tm_sec = sTime.wSecond;
+    struct tm tm
+    {};
+    tm.tm_year  = sTime.wYear - 1900;
+    tm.tm_mon   = sTime.wMonth - 1;
+    tm.tm_mday  = sTime.wDay;
+    tm.tm_hour  = sTime.wHour;
+    tm.tm_min   = sTime.wMinute;
+    tm.tm_sec   = sTime.wSecond;
     tm.tm_isdst = -1;
     return std::chrono::system_clock::from_time_t(mktime(&tm));
 #endif
 }
 
-bool isPathRelative(const std::string& path)
+bool
+isPathRelative(const std::string& path)
 {
 #ifndef _WIN32
-    return not path.empty() and not (path[0] == '/');
+    return not path.empty() and not(path[0] == '/');
 #else
     return not path.empty() and path.find(":") == std::string::npos;
 #endif
@@ -367,15 +384,15 @@ loadFile(const std::string& path, const std::string& default_dir)
     std::vector<uint8_t> buffer;
     std::ifstream file = ifstream(getFullPath(default_dir, path), std::ios::binary);
     if (!file)
-        throw std::runtime_error("Can't read file: "+path);
+        throw std::runtime_error("Can't read file: " + path);
     file.seekg(0, std::ios::end);
     auto size = file.tellg();
     if (size > std::numeric_limits<unsigned>::max())
-        throw std::runtime_error("File is too big: "+path);
+        throw std::runtime_error("File is too big: " + path);
     buffer.resize(size);
     file.seekg(0, std::ios::beg);
-    if (!file.read((char*)buffer.data(), size))
-        throw std::runtime_error("Can't load file: "+path);
+    if (!file.read((char*) buffer.data(), size))
+        throw std::runtime_error("Can't load file: " + path);
     return buffer;
 }
 
@@ -385,32 +402,32 @@ loadTextFile(const std::string& path, const std::string& default_dir)
     std::string buffer;
     std::ifstream file = ifstream(getFullPath(default_dir, path));
     if (!file)
-        throw std::runtime_error("Can't read file: "+path);
+        throw std::runtime_error("Can't read file: " + path);
     file.seekg(0, std::ios::end);
     auto size = file.tellg();
     if (size > std::numeric_limits<unsigned>::max())
-        throw std::runtime_error("File is too big: "+path);
+        throw std::runtime_error("File is too big: " + path);
     buffer.resize(size);
     file.seekg(0, std::ios::beg);
-    if (!file.read((char*)buffer.data(), size))
-        throw std::runtime_error("Can't load file: "+path);
+    if (!file.read((char*) buffer.data(), size))
+        throw std::runtime_error("Can't load file: " + path);
     return buffer;
 }
 
 void
-saveFile(const std::string& path,
-        const uint8_t* data, size_t data_size,
-        mode_t UNUSED mode)
+saveFile(const std::string& path, const uint8_t* data, size_t data_size, mode_t UNUSED mode)
 {
     std::ofstream file = fileutils::ofstream(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         JAMI_ERR("Could not write data to %s", path.c_str());
         return;
     }
-    file.write((char*)data, data_size);
+    file.write((char*) data, data_size);
 #ifndef _WIN32
     if (chmod(path.c_str(), mode) < 0)
-        JAMI_WARN("fileutils::saveFile(): chmod() failed on '%s', %s", path.c_str(), strerror(errno));
+        JAMI_WARN("fileutils::saveFile(): chmod() failed on '%s', %s",
+                  path.c_str(),
+                  strerror(errno));
 #endif
 }
 
@@ -422,7 +439,7 @@ loadCacheFile(const std::string& path, std::chrono::system_clock::duration maxAg
     if (duration > maxAge)
         throw std::runtime_error("file too old");
 
-    JAMI_DBG("Loading cache file '%.*s'", (int)path.size(), path.c_str());
+    JAMI_DBG("Loading cache file '%.*s'", (int) path.size(), path.c_str());
     return loadFile(path);
 }
 
@@ -434,7 +451,7 @@ loadCacheTextFile(const std::string& path, std::chrono::system_clock::duration m
     if (duration > maxAge)
         throw std::runtime_error("file too old");
 
-    JAMI_DBG("Loading cache file '%.*s'", (int)path.size(), path.c_str());
+    JAMI_DBG("Loading cache file '%.*s'", (int) path.size(), path.c_str());
     return loadTextFile(path);
 }
 
@@ -464,7 +481,7 @@ dirent_buf_size(UNUSED DIR* dirp)
 std::vector<std::string>
 readDirectory(const std::string& dir)
 {
-    DIR *dp = opendir(dir.c_str());
+    DIR* dp = opendir(dir.c_str());
     if (!dp)
         return {};
 
@@ -487,7 +504,7 @@ readDirectory(const std::string& dir)
     }
     closedir(dp);
     return files;
-}
+} // namespace fileutils
 
 std::vector<uint8_t>
 readArchive(const std::string& path, const std::string& pwd)
@@ -523,7 +540,8 @@ writeArchive(const std::string& archive_str, const std::string& path, const std:
 
     if (not password.empty()) {
         // Encrypt using provided password
-        std::vector<uint8_t> data = dht::crypto::aesEncrypt(archiver::compress(archive_str), password);
+        std::vector<uint8_t> data = dht::crypto::aesEncrypt(archiver::compress(archive_str),
+                                                            password);
         // Write
         try {
             saveFile(path, data);
@@ -537,7 +555,9 @@ writeArchive(const std::string& archive_str, const std::string& path, const std:
     }
 }
 
-FileHandle::FileHandle(const std::string &n) : fd(-1), name(n)
+FileHandle::FileHandle(const std::string& n)
+    : fd(-1)
+    , name(n)
 {}
 
 FileHandle::~FileHandle()
@@ -555,8 +575,9 @@ static std::string files_path;
 static std::string cache_path;
 static std::string config_path;
 #else
-static char *program_dir = NULL;
-void set_program_dir(char *program_path)
+static char* program_dir = NULL;
+void
+set_program_dir(char* program_path)
 {
 #ifdef _MSC_VER
     _splitpath(program_path, nullptr, program_dir, nullptr, nullptr);
@@ -589,23 +610,21 @@ get_cache_dir(const char* pkg)
     } else {
 #endif
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
-        std::vector<std::string> paths;
-        emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("cache", &paths);
-        if (not paths.empty())
-            cache_path = paths[0];
-        return cache_path;
+    std::vector<std::string> paths;
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("cache", &paths);
+    if (not paths.empty())
+        cache_path = paths[0];
+    return cache_path;
 #elif defined(__APPLE__)
-        return get_home_dir() + DIR_SEPARATOR_STR
-            + "Library" + DIR_SEPARATOR_STR + "Caches"
-            + DIR_SEPARATOR_STR + pkg;
+        return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR + "Caches"
+               + DIR_SEPARATOR_STR + pkg;
 #else
-        return get_home_dir() + DIR_SEPARATOR_STR +
-            ".cache" + DIR_SEPARATOR_STR + pkg;
+    return get_home_dir() + DIR_SEPARATOR_STR + ".cache" + DIR_SEPARATOR_STR + pkg;
 #endif
 #ifndef RING_UWP
-    }
-#endif
 }
+#endif
+} // namespace fileutils
 
 std::string
 get_cache_dir()
@@ -623,11 +642,11 @@ get_home_dir()
         files_path = paths[0];
     return files_path;
 #elif defined RING_UWP
-    std::vector<std::string> paths;
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
-    if (not paths.empty())
-        files_path = paths[0];
-    return files_path;
+        std::vector<std::string> paths;
+        emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+        if (not paths.empty())
+            files_path = paths[0];
+        return files_path;
 #elif defined _WIN32
     TCHAR path[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPath(nullptr, CSIDL_PROFILE, nullptr, 0, path))) {
@@ -664,20 +683,17 @@ get_data_dir(const char* pkg)
         files_path = paths[0];
     return files_path;
 #elif defined(__APPLE__)
-    return get_home_dir() + DIR_SEPARATOR_STR
-            + "Library" + DIR_SEPARATOR_STR + "Application Support"
-            + DIR_SEPARATOR_STR + pkg;
+        return get_home_dir() + DIR_SEPARATOR_STR + "Library" + DIR_SEPARATOR_STR
+               + "Application Support" + DIR_SEPARATOR_STR + pkg;
 #elif defined(_WIN32)
     if (!strcmp(pkg, "ring")) {
-        return get_home_dir() + DIR_SEPARATOR_STR
-            + ".local" + DIR_SEPARATOR_STR
-            + "share" DIR_SEPARATOR_STR + pkg;
-    } else{
-        return get_home_dir() + DIR_SEPARATOR_STR
-            + "AppData" + DIR_SEPARATOR_STR + "Local"
-            + DIR_SEPARATOR_STR + pkg;
+        return get_home_dir() + DIR_SEPARATOR_STR + ".local" + DIR_SEPARATOR_STR
+               + "share" DIR_SEPARATOR_STR + pkg;
+    } else {
+        return get_home_dir() + DIR_SEPARATOR_STR + "AppData" + DIR_SEPARATOR_STR + "Local"
+               + DIR_SEPARATOR_STR + pkg;
     }
-#elif defined (RING_UWP)
+#elif defined(RING_UWP)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty())
@@ -695,8 +711,8 @@ get_data_dir(const char* pkg)
         return data_home + DIR_SEPARATOR_STR + pkg;
     // "If $XDG_DATA_HOME is either not set or empty, a default equal to
     // $HOME/.local/share should be used."
-    return get_home_dir() + DIR_SEPARATOR_STR ".local" DIR_SEPARATOR_STR
-        "share" DIR_SEPARATOR_STR + pkg;
+    return get_home_dir() + DIR_SEPARATOR_STR ".local" DIR_SEPARATOR_STR "share" DIR_SEPARATOR_STR
+           + pkg;
 #endif
 }
 
@@ -717,35 +733,33 @@ get_config_dir(const char* pkg)
     return config_path;
 
 #elif defined(RING_UWP)
-    std::vector<std::string> paths;
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
-    if (not paths.empty())
-        config_path = paths[0] + DIR_SEPARATOR_STR + std::string(".config");
+        std::vector<std::string> paths;
+        emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+        if (not paths.empty())
+            config_path = paths[0] + DIR_SEPARATOR_STR + std::string(".config");
 
-    if (fileutils::recursive_mkdir(config_path.data(), 0700) != true) {
-        // If directory creation failed
-        if (errno != EEXIST)
-            JAMI_DBG("Cannot create directory: %s!", config_path.c_str());
-    }
-    return config_path;
+        if (fileutils::recursive_mkdir(config_path.data(), 0700) != true) {
+            // If directory creation failed
+            if (errno != EEXIST)
+                JAMI_DBG("Cannot create directory: %s!", config_path.c_str());
+        }
+        return config_path;
 #else
 #if defined(__APPLE__)
-    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR
-        + "Library" + DIR_SEPARATOR_STR + "Application Support"
-        + DIR_SEPARATOR_STR + pkg;
+    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + "Library"
+                            + DIR_SEPARATOR_STR + "Application Support" + DIR_SEPARATOR_STR + pkg;
 #elif defined(_WIN32)
     std::string configdir;
     if (!strcmp(pkg, "ring")) {
-        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
-                    ".config" + DIR_SEPARATOR_STR + pkg;
+        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + ".config" + DIR_SEPARATOR_STR
+                    + pkg;
     } else {
-        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
-                    "AppData" + DIR_SEPARATOR_STR +
-                    "Local" + DIR_SEPARATOR_STR + pkg;
+        configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + "AppData" + DIR_SEPARATOR_STR
+                    + "Local" + DIR_SEPARATOR_STR + pkg;
     }
 #else
-    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
-                            ".config" + DIR_SEPARATOR_STR + pkg;
+    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR + ".config"
+                            + DIR_SEPARATOR_STR + pkg;
 #endif
     const std::string xdg_env(XDG_CONFIG_HOME);
     if (not xdg_env.empty())
@@ -772,20 +786,20 @@ recursive_mkdir(const std::string& path, mode_t mode)
 #ifndef _WIN32
     if (mkdir(path.data(), mode) != 0) {
 #else
-    if (_wmkdir(jami::to_wstring(path.data()).c_str()) != 0) {
+        if (_wmkdir(jami::to_wstring(path.data()).c_str()) != 0) {
 #endif
         if (errno == ENOENT) {
             recursive_mkdir(path.substr(0, path.find_last_of(DIR_SEPARATOR_CH)), mode);
 #ifndef _WIN32
             if (mkdir(path.data(), mode) != 0) {
 #else
-            if (_wmkdir(jami::to_wstring(path.data()).c_str()) != 0) {
+                if (_wmkdir(jami::to_wstring(path.data()).c_str()) != 0) {
 #endif
                 JAMI_ERR("Could not create directory.");
                 return false;
             }
         }
-    }
+    } // namespace jami
     return true;
 }
 
@@ -793,7 +807,8 @@ recursive_mkdir(const std::string& path, mode_t mode)
 bool
 eraseFile_win32(const std::string& path, bool dosync)
 {
-    HANDLE h = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    HANDLE h
+        = CreateFileA(path.c_str(), GENERIC_WRITE, 0, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (h == INVALID_HANDLE_VALUE) {
         JAMI_WARN("Can not open file %s for erasing.", path.c_str());
         return false;
@@ -817,8 +832,7 @@ eraseFile_win32(const std::string& path, bool dosync)
     char* buffer;
     try {
         buffer = new char[ERASE_BLOCK];
-    }
-    catch (std::bad_alloc& ba) {
+    } catch (std::bad_alloc& ba) {
         JAMI_WARN("Can not allocate buffer for erasing %s.", path.c_str());
         CloseHandle(h);
         return false;
@@ -826,15 +840,15 @@ eraseFile_win32(const std::string& path, bool dosync)
     memset(buffer, 0x00, ERASE_BLOCK);
 
     OVERLAPPED ovlp;
-    if (size.QuadPart < (1024-42)) { // a small file can be stored in the MFT record
-        ovlp.Offset = 0;
+    if (size.QuadPart < (1024 - 42)) { // a small file can be stored in the MFT record
+        ovlp.Offset     = 0;
         ovlp.OffsetHigh = 0;
-        WriteFile(h, buffer, (DWORD)size.QuadPart, 0, &ovlp);
+        WriteFile(h, buffer, (DWORD) size.QuadPart, 0, &ovlp);
         FlushFileBuffers(h);
     }
     for (uint64_t i = 0; i < size_blocks; i++) {
         uint64_t offset = i * ERASE_BLOCK;
-        ovlp.Offset = offset & 0x00000000FFFFFFFF;
+        ovlp.Offset     = offset & 0x00000000FFFFFFFF;
         ovlp.OffsetHigh = offset >> 32;
         WriteFile(h, buffer, ERASE_BLOCK, 0, &ovlp);
     }
@@ -850,55 +864,53 @@ eraseFile_win32(const std::string& path, bool dosync)
 
 #else
 
-bool
-eraseFile_posix(const std::string& path, bool dosync)
-{
-    int fd = open(path.c_str(), O_WRONLY);
-    if (fd == -1) {
-        JAMI_WARN("Can not open file %s for erasing.", path.c_str());
-        return false;
-    }
+    bool eraseFile_posix(const std::string& path, bool dosync)
+    {
+        int fd = open(path.c_str(), O_WRONLY);
+        if (fd == -1) {
+            JAMI_WARN("Can not open file %s for erasing.", path.c_str());
+            return false;
+        }
 
-    struct stat st;
-    if (fstat(fd, &st) == -1) {
-        JAMI_WARN("Can not erase file %s: fstat() failed.", path.c_str());
+        struct stat st;
+        if (fstat(fd, &st) == -1) {
+            JAMI_WARN("Can not erase file %s: fstat() failed.", path.c_str());
+            close(fd);
+            return false;
+        }
+
+        if (st.st_size == 0) {
+            close(fd);
+            return false;
+        }
+
+        uintmax_t size_blocks = st.st_size / ERASE_BLOCK;
+        if (st.st_size % ERASE_BLOCK)
+            size_blocks++;
+
+        char* buffer;
+        try {
+            buffer = new char[ERASE_BLOCK];
+        } catch (std::bad_alloc& ba) {
+            JAMI_WARN("Can not allocate buffer for erasing %s.", path.c_str());
+            close(fd);
+            return false;
+        }
+        memset(buffer, 0x00, ERASE_BLOCK);
+
+        for (uintmax_t i = 0; i < size_blocks; i++) {
+            lseek(fd, i * ERASE_BLOCK, SEEK_SET);
+            write(fd, buffer, ERASE_BLOCK);
+        }
+
+        delete[] buffer;
+
+        if (dosync)
+            fsync(fd);
+
         close(fd);
-        return false;
+        return true;
     }
-
-    if (st.st_size == 0) {
-        close(fd);
-        return false;
-    }
-
-    uintmax_t size_blocks = st.st_size / ERASE_BLOCK;
-    if (st.st_size % ERASE_BLOCK)
-        size_blocks++;
-
-    char* buffer;
-    try {
-        buffer = new char[ERASE_BLOCK];
-    }
-    catch (std::bad_alloc& ba) {
-        JAMI_WARN("Can not allocate buffer for erasing %s.", path.c_str());
-        close(fd);
-        return false;
-    }
-    memset(buffer, 0x00, ERASE_BLOCK);
-
-    for (uintmax_t i = 0; i < size_blocks; i++) {
-        lseek(fd, i * ERASE_BLOCK, SEEK_SET);
-        write(fd, buffer, ERASE_BLOCK);
-    }
-
-    delete[] buffer;
-
-    if (dosync)
-        fsync(fd);
-
-    close(fd);
-    return true;
-}
 #endif
 
 bool
@@ -907,7 +919,7 @@ eraseFile(const std::string& path, bool dosync)
 #ifdef _WIN32
     return eraseFile_win32(path, dosync);
 #else
-    return eraseFile_posix(path, dosync);
+        return eraseFile_posix(path, dosync);
 #endif
 }
 
@@ -942,7 +954,7 @@ openStream(std::ifstream& file, const std::string& path, std::ios_base::openmode
 #ifdef _WIN32
     file.open(jami::to_wstring(path), mode);
 #else
-    file.open(path, mode);
+        file.open(path, mode);
 #endif
 }
 
@@ -952,7 +964,7 @@ openStream(std::ofstream& file, const std::string& path, std::ios_base::openmode
 #ifdef _WIN32
     file.open(jami::to_wstring(path), mode);
 #else
-    file.open(path, mode);
+        file.open(path, mode);
 #endif
 }
 
@@ -962,7 +974,7 @@ ifstream(const std::string& path, std::ios_base::openmode mode)
 #ifdef _WIN32
     return std::ifstream(jami::to_wstring(path), mode);
 #else
-    return std::ifstream(path, mode);
+        return std::ifstream(path, mode);
 #endif
 }
 
@@ -972,7 +984,7 @@ ofstream(const std::string& path, std::ios_base::openmode mode)
 #ifdef _WIN32
     return std::ofstream(jami::to_wstring(path), mode);
 #else
-    return std::ofstream(path, mode);
+        return std::ofstream(path, mode);
 #endif
 }
 
@@ -988,7 +1000,7 @@ md5sum(const std::vector<uint8_t>& buffer)
     pj_md5_context pms;
 
     pj_md5_init(&pms);
-    pj_md5_update(&pms, (const uint8_t*)buffer.data(), buffer.size());
+    pj_md5_update(&pms, (const uint8_t*) buffer.data(), buffer.size());
 
     unsigned char digest[16];
     pj_md5_final(&pms, digest);
@@ -1007,8 +1019,9 @@ accessFile(const std::string& file, int mode)
 #ifdef _WIN32
     return _waccess(jami::to_wstring(file).c_str(), mode);
 #else
-    return access(file.c_str(), mode);
+        return access(file.c_str(), mode);
 #endif
 }
 
-}} // namespace jami::fileutils
+} // namespace jami
+} // namespace fileutils

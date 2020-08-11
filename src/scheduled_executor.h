@@ -37,25 +37,26 @@ namespace jami {
 /**
  * A runnable function
  */
-using Job = std::function<void()>;
+using Job         = std::function<void()>;
 using RepeatedJob = std::function<bool()>;
 
 /**
  * A Job that can be disposed
  */
-class Task {
+class Task
+{
 public:
-    Task(Job&& j) : job_(std::move(j)) {}
-    void run() {
+    Task(Job&& j)
+        : job_(std::move(j))
+    {}
+    void run()
+    {
         if (job_)
             job_();
     }
-    void cancel() {
-        job_ = {};
-    }
-    bool isCancelled() const {
-        return !job_;
-    }
+    void cancel() { job_ = {}; }
+    bool isCancelled() const { return !job_; }
+
 private:
     Job job_;
 };
@@ -63,28 +64,30 @@ private:
 /**
  * A RepeatedJob that can be disposed
  */
-class RepeatedTask {
+class RepeatedTask
+{
 public:
-    RepeatedTask(RepeatedJob&& j) : job_(std::move(j)) {}
-    bool run() {
+    RepeatedTask(RepeatedJob&& j)
+        : job_(std::move(j))
+    {}
+    bool run()
+    {
         std::lock_guard<std::mutex> l(lock_);
         if (cancel_.load() or (job_ and not job_())) {
             cancel_.store(true);
             job_ = {};
         }
-        return (bool)job_;
+        return (bool) job_;
     }
-    void cancel() {
-        cancel_.store(true);
-    }
-    void destroy() {
+    void cancel() { cancel_.store(true); }
+    void destroy()
+    {
         cancel();
         std::lock_guard<std::mutex> l(lock_);
         job_ = {};
     }
-    bool isCancelled() const {
-        return cancel_.load();
-    }
+    bool isCancelled() const { return cancel_.load(); }
+
 private:
     NON_COPYABLE(RepeatedTask);
     mutable std::mutex lock_;
@@ -92,11 +95,12 @@ private:
     std::atomic_bool cancel_ {false};
 };
 
-class ScheduledExecutor {
+class ScheduledExecutor
+{
 public:
-    using clock = std::chrono::steady_clock;
+    using clock      = std::chrono::steady_clock;
     using time_point = clock::time_point;
-    using duration = clock::duration;
+    using duration   = clock::duration;
 
     ScheduledExecutor();
     ~ScheduledExecutor();
@@ -140,4 +144,4 @@ private:
     std::thread thread_;
 };
 
-}
+} // namespace jami

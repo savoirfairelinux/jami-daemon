@@ -37,7 +37,8 @@
 #include <chrono>
 #include <functional>
 
-namespace jami { namespace upnp {
+namespace jami {
+namespace upnp {
 
 class UPnPIGD : public IGD
 {
@@ -50,17 +51,17 @@ public:
             std::string&& locationURL,
             std::string&& controlURL,
             std::string&& eventSubURL,
-            IpAddr&& localIp = {},
+            IpAddr&& localIp  = {},
             IpAddr&& publicIp = {});
-    ~UPnPIGD(){}
-    const std::string& getUDN() const          { return UDN_;          }
-    const std::string& getBaseURL() const      { return baseURL_;      }
+    ~UPnPIGD() {}
+    const std::string& getUDN() const { return UDN_; }
+    const std::string& getBaseURL() const { return baseURL_; }
     const std::string& getFriendlyName() const { return friendlyName_; }
-    const std::string& getServiceType() const  { return serviceType_;  }
-    const std::string& getServiceId() const    { return serviceId_;    }
-    const std::string& getLocationURL() const  { return locationURL_;  }
-    const std::string& getControlURL() const   { return controlURL_;   }
-    const std::string& getEventSubURL() const  { return eventSubURL_;  }
+    const std::string& getServiceType() const { return serviceType_; }
+    const std::string& getServiceId() const { return serviceId_; }
+    const std::string& getLocationURL() const { return locationURL_; }
+    const std::string& getControlURL() const { return controlURL_; }
+    const std::string& getEventSubURL() const { return eventSubURL_; }
 
     bool operator==(IGD& other) const;
     bool operator==(UPnPIGD& other) const;
@@ -76,4 +77,5 @@ private:
     std::string eventSubURL_ {};
 };
 
-}} // namespace jami::upnp
+} // namespace upnp
+} // namespace jami

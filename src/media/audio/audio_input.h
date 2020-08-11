@@ -35,7 +35,7 @@
 namespace jami {
 class MediaDecoder;
 class MediaDemuxer;
-}
+} // namespace jami
 namespace jami {
 
 class AudioFrameResizer;
@@ -59,7 +59,9 @@ public:
     MediaStream getInfo() const;
     void updateStartTime(int64_t start);
     void setPaused(bool paused);
-    void configureFilePlayback(const std::string& path, std::shared_ptr<MediaDemuxer>& demuxer, int index);
+    void configureFilePlayback(const std::string& path,
+                               std::shared_ptr<MediaDemuxer>& demuxer,
+                               int index);
     void flushBuffers();
     void setSeekTime(int64_t time);
 
@@ -74,7 +76,7 @@ private:
 
     std::string id_;
     AudioBuffer micData_;
-    bool muteState_ = false;
+    bool muteState_       = false;
     uint64_t sent_samples = 0;
     mutable std::mutex fmtMutex_ {};
     AudioFormat format_;

@@ -42,7 +42,7 @@ class RingBuffer;
 class AudioReceiveThread : public Observable<std::shared_ptr<MediaFrame>>
 {
 public:
-    AudioReceiveThread(const std::string &id,
+    AudioReceiveThread(const std::string& id,
                        const AudioFormat& format,
                        const std::string& sdp,
                        const uint16_t mtu);
@@ -50,7 +50,7 @@ public:
 
     MediaStream getInfo() const;
 
-    void addIOContext(SocketPair &socketPair);
+    void addIOContext(SocketPair& socketPair);
     void startLoop(const std::function<void(MediaType)>& cb);
 
 private:
@@ -58,8 +58,8 @@ private:
 
     static constexpr auto SDP_FILENAME = "dummyFilename";
 
-    static int interruptCb(void *ctx);
-    static int readFunction(void *opaque, uint8_t *buf, int buf_size);
+    static int interruptCb(void* ctx);
+    static int readFunction(void* opaque, uint8_t* buf, int buf_size);
 
     void openDecoder();
     bool decodeFrame();

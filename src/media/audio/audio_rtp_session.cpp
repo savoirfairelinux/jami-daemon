@@ -77,11 +77,11 @@ AudioRtpSession::startSender()
         JAMI_WARN("Restarting audio sender");
 
     // sender sets up input correctly, we just keep a reference in case startSender is called
-    audioInput_ = jami::getAudioInput(callID_);
+    audioInput_    = jami::getAudioInput(callID_);
     auto newParams = audioInput_->switchInput(input_);
     try {
-        if (newParams.valid() &&
-            newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
+        if (newParams.valid()
+            && newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready) {
             localAudioParams_ = newParams.get();
         } else {
             JAMI_ERR() << "No valid new audio parameters";
@@ -99,9 +99,9 @@ AudioRtpSession::startSender()
     try {
         sender_.reset();
         socketPair_->stopSendOp(false);
-        sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
-                                      *socketPair_, initSeqVal_, muteState_, mtu_));
-    } catch (const MediaEncoderException &e) {
+        sender_.reset(new AudioSender(
+            callID_, getRemoteRtpUri(), send_, *socketPair_, initSeqVal_, muteState_, mtu_));
+    } catch (const MediaEncoderException& e) {
         JAMI_ERR("%s", e.what());
         send_.enabled = false;
     }
@@ -131,7 +131,8 @@ AudioRtpSession::startReceiver()
         JAMI_WARN("Restarting audio receiver");
 
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(receive_.codec);
-    receiveThread_.reset(new AudioReceiveThread(callID_, accountAudioCodec->audioformat,
+    receiveThread_.reset(new AudioReceiveThread(callID_,
+                                                accountAudioCodec->audioformat,
                                                 receive_.receiving_sdp,
                                                 mtu_));
     receiveThread_->addIOContext(*socketPair_);
@@ -150,13 +151,11 @@ AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceS
 
     try {
         if (rtp_sock and rtcp_sock) {
-
             rtp_sock->setDefaultRemoteAddress(send_.addr);
             rtcp_sock->setDefaultRemoteAddress(send_.rtcp_addr);
 
             socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
-        }
-        else
+        } else
             socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
 
         if (send_.crypto and receive_.crypto) {

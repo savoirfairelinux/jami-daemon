@@ -44,13 +44,11 @@
 namespace jami {
 
 using MutexGuard = std::lock_guard<std::mutex>;
-using MutexLock = std::unique_lock<std::mutex>;
+using MutexLock  = std::unique_lock<std::mutex>;
 
-inline
-namespace {
+inline namespace {
 
-enum class RelayState
-{
+enum class RelayState {
     NONE,
     READY,
     DOWN,
@@ -60,7 +58,7 @@ enum class RelayState
 
 //==============================================================================
 
-template <class Callable, class... Args>
+template<class Callable, class... Args>
 inline void
 PjsipCall(Callable& func, Args... args)
 {
@@ -69,7 +67,7 @@ PjsipCall(Callable& func, Args... args)
         throw sip_utils::PjsipFailure(status);
 }
 
-template <class Callable, class... Args>
+template<class Callable, class... Args>
 inline auto
 PjsipCallReturn(const Callable& func, Args... args) -> decltype(func(args...))
 {
@@ -88,8 +86,14 @@ public:
     ~TurnTransportPimpl();
 
     void onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_state);
-    void onRxData(const uint8_t* pkt, unsigned pkt_len, const pj_sockaddr_t* peer_addr, unsigned addr_len);
-    void onPeerConnection(pj_uint32_t conn_id, const pj_sockaddr_t* peer_addr, unsigned addr_len, pj_status_t status);
+    void onRxData(const uint8_t* pkt,
+                  unsigned pkt_len,
+                  const pj_sockaddr_t* peer_addr,
+                  unsigned addr_len);
+    void onPeerConnection(pj_uint32_t conn_id,
+                          const pj_sockaddr_t* peer_addr,
+                          unsigned addr_len,
+                          pj_status_t status);
     void ioJob();
 
     std::mutex apiMutex_;
@@ -136,8 +140,9 @@ TurnTransportPimpl::onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_s
         pj_turn_session_info info;
         pj_turn_sock_get_info(relay, &info);
         peerRelayAddr = IpAddr {info.relay_addr};
-        mappedAddr = IpAddr {info.mapped_addr};
-        JAMI_DBG("TURN server ready, peer relay address: %s", peerRelayAddr.toString(true, true).c_str());
+        mappedAddr    = IpAddr {info.mapped_addr};
+        JAMI_DBG("TURN server ready, peer relay address: %s",
+                 peerRelayAddr.toString(true, true).c_str());
         state = RelayState::READY;
     } else if (old_state <= PJ_TURN_STATE_READY and new_state > PJ_TURN_STATE_READY) {
         JAMI_WARN("TURN server disconnected (%s)", pj_turn_state_name(new_state));
@@ -148,17 +153,19 @@ TurnTransportPimpl::onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_s
 }
 
 void
-TurnTransportPimpl::onRxData(const uint8_t* pkt, unsigned pkt_len,
-                             const pj_sockaddr_t* addr, unsigned addr_len)
+TurnTransportPimpl::onRxData(const uint8_t* pkt,
+                             unsigned pkt_len,
+                             const pj_sockaddr_t* addr,
+                             unsigned addr_len)
 {
-    IpAddr peer_addr (*static_cast<const pj_sockaddr*>(addr), addr_len);
+    IpAddr peer_addr(*static_cast<const pj_sockaddr*>(addr), addr_len);
     {
         MutexGuard lk {apiMutex_};
         auto channel_it = peerChannels_.find(peer_addr);
         if (channel_it == std::end(peerChannels_))
             return;
         std::error_code ec;
-        auto ret = channel_it->second.write((const char*)pkt, pkt_len, ec);
+        auto ret = channel_it->second.write((const char*) pkt, pkt_len, ec);
         if (ret < 0) {
             JAMI_ERR("TURN rx: channel is closed");
         }
@@ -167,14 +174,14 @@ TurnTransportPimpl::onRxData(const uint8_t* pkt, unsigned pkt_len,
 
 void
 TurnTransportPimpl::onPeerConnection(pj_uint32_t conn_id,
-                                     const pj_sockaddr_t* addr, unsigned addr_len,
+                                     const pj_sockaddr_t* addr,
+                                     unsigned addr_len,
                                      pj_status_t status)
 {
-    IpAddr peer_addr (*static_cast<const pj_sockaddr*>(addr), addr_len);
+    IpAddr peer_addr(*static_cast<const pj_sockaddr*>(addr), addr_len);
     if (status == PJ_SUCCESS) {
-        JAMI_DBG() << "Received connection attempt from "
-                    << peer_addr.toString(true, true) << ", id=" << std::hex
-                    << conn_id;
+        JAMI_DBG() << "Received connection attempt from " << peer_addr.toString(true, true)
+                   << ", id=" << std::hex << conn_id;
         {
             MutexGuard lk {apiMutex_};
             peerChannels_[peer_addr];
@@ -210,13 +217,17 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     if (server.isUnspecified())
         throw std::invalid_argument("invalid turn server address");
 
-    pimpl_ = std::unique_ptr<TurnTransportPimpl>(new TurnTransportPimpl);
+    pimpl_           = std::unique_ptr<TurnTransportPimpl>(new TurnTransportPimpl);
     pimpl_->settings = params;
 
     // PJSIP memory pool
     pj_caching_pool_init(&pimpl_->poolCache, &pj_pool_factory_default_policy, 0);
-    pimpl_->pool = PjsipCallReturn(pj_pool_create, &pimpl_->poolCache.factory,
-                                   "RgTurnTr", 512, 512, nullptr);
+    pimpl_->pool = PjsipCallReturn(pj_pool_create,
+                                   &pimpl_->poolCache.factory,
+                                   "RgTurnTr",
+                                   512,
+                                   512,
+                                   nullptr);
 
     // STUN config
     pj_stun_config_init(&pimpl_->stunConfig, &pimpl_->poolCache.factory, 0, nullptr, nullptr);
@@ -228,28 +239,31 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     PjsipCall(pj_ioqueue_create, pimpl_->pool, 16, &pimpl_->stunConfig.ioqueue);
 
     // run a thread to handles timer/ioqueue events
-    pimpl_->ioWorker = std::thread([this]{ pimpl_->ioJob(); });
+    pimpl_->ioWorker = std::thread([this] { pimpl_->ioJob(); });
 
     // TURN callbacks
     pj_turn_sock_cb relay_cb;
     pj_bzero(&relay_cb, sizeof(relay_cb));
-    relay_cb.on_rx_data = [](pj_turn_sock* relay, void* pkt, unsigned pkt_len,
-                             const pj_sockaddr_t* peer_addr, unsigned addr_len) {
+    relay_cb.on_rx_data = [](pj_turn_sock* relay,
+                             void* pkt,
+                             unsigned pkt_len,
+                             const pj_sockaddr_t* peer_addr,
+                             unsigned addr_len) {
         auto pimpl = static_cast<TurnTransportPimpl*>(pj_turn_sock_get_user_data(relay));
         pimpl->onRxData(reinterpret_cast<uint8_t*>(pkt), pkt_len, peer_addr, addr_len);
     };
-    relay_cb.on_state = [](pj_turn_sock* relay, pj_turn_state_t old_state,
-                           pj_turn_state_t new_state) {
+    relay_cb.on_state =
+        [](pj_turn_sock* relay, pj_turn_state_t old_state, pj_turn_state_t new_state) {
+            auto pimpl = static_cast<TurnTransportPimpl*>(pj_turn_sock_get_user_data(relay));
+            pimpl->onTurnState(old_state, new_state);
+        };
+    relay_cb.on_connection_status = [](pj_turn_sock* relay,
+                                       pj_status_t status,
+                                       pj_uint32_t conn_id,
+                                       const pj_sockaddr_t* peer_addr,
+                                       unsigned addr_len) {
         auto pimpl = static_cast<TurnTransportPimpl*>(pj_turn_sock_get_user_data(relay));
-        pimpl->onTurnState(old_state, new_state);
-    };
-    relay_cb.on_connection_status = [](pj_turn_sock *relay,
-                                        pj_status_t status,
-                                        pj_uint32_t conn_id,
-                                        const pj_sockaddr_t *peer_addr,
-                                        unsigned addr_len) {
-      auto pimpl = static_cast<TurnTransportPimpl *>(pj_turn_sock_get_user_data(relay));
-      pimpl->onPeerConnection(conn_id, peer_addr, addr_len, status);
+        pimpl->onPeerConnection(conn_id, peer_addr, addr_len, status);
     };
 
     // TURN socket config
@@ -259,8 +273,13 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
 
     // TURN socket creation
     PjsipCall(pj_turn_sock_create,
-              &pimpl_->stunConfig, server.getFamily(), PJ_TURN_TP_TCP,
-              &relay_cb, &turn_sock_cfg, &*this->pimpl_, &pimpl_->relay);
+              &pimpl_->stunConfig,
+              server.getFamily(),
+              PJ_TURN_TP_TCP,
+              &relay_cb,
+              &turn_sock_cfg,
+              &*this->pimpl_,
+              &pimpl_->relay);
 
     // TURN allocation setup
     pj_turn_alloc_param turn_alloc_param;
@@ -274,10 +293,16 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     pj_stun_auth_cred cred;
     pj_bzero(&cred, sizeof(cred));
     cred.type = PJ_STUN_AUTH_CRED_STATIC;
-    pj_strset(&cred.data.static_cred.realm, (char*)pimpl_->settings.realm.c_str(), pimpl_->settings.realm.size());
-    pj_strset(&cred.data.static_cred.username, (char*)pimpl_->settings.username.c_str(), pimpl_->settings.username.size());
+    pj_strset(&cred.data.static_cred.realm,
+              (char*) pimpl_->settings.realm.c_str(),
+              pimpl_->settings.realm.size());
+    pj_strset(&cred.data.static_cred.username,
+              (char*) pimpl_->settings.username.c_str(),
+              pimpl_->settings.username.size());
     cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
-    pj_strset(&cred.data.static_cred.data, (char*)pimpl_->settings.password.c_str(), pimpl_->settings.password.size());
+    pj_strset(&cred.data.static_cred.data,
+              (char*) pimpl_->settings.password.c_str(),
+              pimpl_->settings.password.size());
 
     pimpl_->relayAddr = pj_strdup3(pimpl_->pool, server.toString().c_str());
 
@@ -285,8 +310,12 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     JAMI_DBG() << "Connecting to TURN " << server.toString(true, true);
     try {
         PjsipCall(pj_turn_sock_alloc,
-                pimpl_->relay, &pimpl_->relayAddr, server.getPort(),
-                nullptr, &cred, &turn_alloc_param);
+                  pimpl_->relay,
+                  &pimpl_->relayAddr,
+                  server.getPort(),
+                  nullptr,
+                  &cred,
+                  &turn_alloc_param);
     } catch (const sip_utils::PjsipFailure& e) {
         JAMI_ERR("pj_turn_sock_alloc failed: %s", e.what());
     }
@@ -352,8 +381,10 @@ TurnTransport::sendto(const IpAddr& peer, const char* const buffer, std::size_t 
 {
     sip_utils::register_thread();
     auto status = pj_turn_sock_sendto(pimpl_->relay,
-                                      reinterpret_cast<const pj_uint8_t*>(buffer), length,
-                                      peer.pjPtr(), peer.getLength());
+                                      reinterpret_cast<const pj_uint8_t*>(buffer),
+                                      length,
+                                      peer.pjPtr(),
+                                      peer.getLength());
     if (status != PJ_SUCCESS && status != PJ_EPENDING && status != PJ_EBUSY)
         throw sip_utils::PjsipFailure(PJ_STATUS_TO_OS(status));
 
@@ -383,9 +414,11 @@ TurnTransport::peerAddresses() const
 }
 
 int
-TurnTransport::waitForData(const IpAddr& peer, std::chrono::milliseconds timeout, std::error_code& ec) const
+TurnTransport::waitForData(const IpAddr& peer,
+                           std::chrono::milliseconds timeout,
+                           std::error_code& ec) const
 {
-    (void)ec; ///< \todo handle errors
+    (void) ec; ///< \todo handle errors
     MutexLock lk {pimpl_->apiMutex_};
     auto& channel = pimpl_->peerChannels_.at(peer);
     lk.unlock();

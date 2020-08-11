@@ -29,8 +29,8 @@
 
 namespace jami {
 
-class PortAudioLayer : public AudioLayer {
-
+class PortAudioLayer : public AudioLayer
+{
 public:
     PortAudioLayer(const AudioPreference& pref);
     ~PortAudioLayer();

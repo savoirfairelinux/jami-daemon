@@ -33,13 +33,15 @@
 
 namespace jami {
 
-class AudioLoop {
+class AudioLoop
+{
 public:
     AudioLoop() {}
 
     AudioLoop(unsigned int sampleRate);
 
-    AudioLoop& operator=(AudioLoop&& o) noexcept {
+    AudioLoop& operator=(AudioLoop&& o) noexcept
+    {
         std::swap(buffer_, o.buffer_);
         std::swap(pos_, o.pos_);
         return *this;
@@ -62,23 +64,18 @@ public:
     /**
      * Reset the pointer position
      */
-    void reset() {
-        pos_ = 0;
-    }
+    void reset() { pos_ = 0; }
 
     /**
      * Accessor to the size of the buffer
      * @return unsigned int The size
      */
-    size_t getSize() const {
-        return buffer_->frames();
-    }
-    AudioFormat getFormat() const {
-        return buffer_->getFormat();
-    }
+    size_t getSize() const { return buffer_->frames(); }
+    AudioFormat getFormat() const { return buffer_->getFormat(); }
+
 protected:
     /** The data buffer */
-    AudioBuffer * buffer_ {nullptr};
+    AudioBuffer* buffer_ {nullptr};
 
     /** current position, set to 0, when initialize */
     size_t pos_ {0};
@@ -89,4 +86,3 @@ private:
 };
 
 } // namespace jami
-

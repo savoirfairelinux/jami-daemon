@@ -31,25 +31,30 @@ class ChannelSocket;
 class Stream;
 class FtpServer;
 
-class ChanneledOutgoingTransfer {
+class ChanneledOutgoingTransfer
+{
 public:
     ChanneledOutgoingTransfer(const std::shared_ptr<ChannelSocket>& channel);
     ~ChanneledOutgoingTransfer();
     void linkTransfer(const std::shared_ptr<Stream>& file);
     std::string peer() const;
+
 private:
     std::shared_ptr<ChannelSocket> channel_ {};
     std::shared_ptr<Stream> file_;
 };
 
-class ChanneledIncomingTransfer {
+class ChanneledIncomingTransfer
+{
 public:
-    ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket>& channel, const std::shared_ptr<FtpServer>& ftp);
+    ChanneledIncomingTransfer(const std::shared_ptr<ChannelSocket>& channel,
+                              const std::shared_ptr<FtpServer>& ftp);
     ~ChanneledIncomingTransfer();
     DRing::DataTransferId id() const;
+
 private:
     std::shared_ptr<FtpServer> ftp_;
     std::shared_ptr<ChannelSocket> channel_;
 };
 
-}
+} // namespace jami

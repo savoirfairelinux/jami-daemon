@@ -38,16 +38,14 @@ public:
     FtpServer(const std::string& account_id,
               const std::string& peer_uri,
               const DRing::DataTransferId& outId = 0,
-              InternalCompletionCb&& cb = {});
+              InternalCompletionCb&& cb          = {});
 
     bool read(std::vector<uint8_t>& buffer) const override;
     bool write(const std::vector<uint8_t>& buffer) override;
     DRing::DataTransferId getId() const override;
     void close() noexcept override;
 
-    void setOnRecv(RecvCb&& cb) {
-        onRecvCb_ = cb;
-    }
+    void setOnRecv(RecvCb&& cb) { onRecvCb_ = cb; }
 
 private:
     bool parseStream(const std::vector<uint8_t>&);

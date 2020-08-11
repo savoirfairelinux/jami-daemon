@@ -48,7 +48,8 @@ namespace jami {
 
 static const std::regex PA_EC_SUFFIX {"\\.echo-cancel(?:\\..+)?$"};
 
-PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop)
+PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop* loop)
+    : loop_(loop)
 {
     pa_threaded_mainloop_lock(loop_);
 }
@@ -58,7 +59,7 @@ PulseMainLoopLock::~PulseMainLoopLock()
     pa_threaded_mainloop_unlock(loop_);
 }
 
-PulseLayer::PulseLayer(AudioPreference &pref)
+PulseLayer::PulseLayer(AudioPreference& pref)
     : AudioLayer(pref)
     , playback_()
     , record_()
@@ -74,16 +75,19 @@ PulseLayer::PulseLayer(AudioPreference &pref)
 
     PulseMainLoopLock lock(mainloop_.get());
 
-    std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl (pa_proplist_new(), pa_proplist_free);
+    std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl(pa_proplist_new(),
+                                                                 pa_proplist_free);
     pa_proplist_sets(pl.get(), PA_PROP_MEDIA_ROLE, "phone");
 
-    context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_.get()), PACKAGE_NAME, pl.get());
+    context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_.get()),
+                                            PACKAGE_NAME,
+                                            pl.get());
     if (!context_)
         throw std::runtime_error("Couldn't create pulseaudio context");
 
     pa_context_set_state_callback(context_, context_state_callback, this);
 
-    if (pa_context_connect(context_, nullptr , PA_CONTEXT_NOAUTOSPAWN , nullptr) < 0)
+    if (pa_context_connect(context_, nullptr, PA_CONTEXT_NOAUTOSPAWN, nullptr) < 0)
         throw std::runtime_error("Could not connect pulseaudio context to the server");
 
     // wait until context is ready
@@ -116,52 +120,55 @@ PulseLayer::~PulseLayer()
         pa_operation_unref(subscribeOp_);
 }
 
-void PulseLayer::context_state_callback(pa_context* c, void *user_data)
+void
+PulseLayer::context_state_callback(pa_context* c, void* user_data)
 {
     PulseLayer* pulse = static_cast<PulseLayer*>(user_data);
     if (c and pulse)
         pulse->contextStateChanged(c);
 }
 
-void PulseLayer::contextStateChanged(pa_context* c)
+void
+PulseLayer::contextStateChanged(pa_context* c)
 {
-    const pa_subscription_mask_t mask = (pa_subscription_mask_t)
-                                        (PA_SUBSCRIPTION_MASK_SINK | PA_SUBSCRIPTION_MASK_SOURCE);
+    const pa_subscription_mask_t mask = (pa_subscription_mask_t)(PA_SUBSCRIPTION_MASK_SINK
+                                                                 | PA_SUBSCRIPTION_MASK_SOURCE);
 
     switch (pa_context_get_state(c)) {
-        case PA_CONTEXT_CONNECTING:
-        case PA_CONTEXT_AUTHORIZING:
-        case PA_CONTEXT_SETTING_NAME:
-            JAMI_DBG("Waiting....");
-            break;
+    case PA_CONTEXT_CONNECTING:
+    case PA_CONTEXT_AUTHORIZING:
+    case PA_CONTEXT_SETTING_NAME:
+        JAMI_DBG("Waiting....");
+        break;
 
-        case PA_CONTEXT_READY:
-            JAMI_DBG("Connection to PulseAudio server established");
-            pa_threaded_mainloop_signal(mainloop_.get(), 0);
-            subscribeOp_ = pa_context_subscribe(c, mask, nullptr, this);
-            pa_context_set_subscribe_callback(c, context_changed_callback, this);
-            updateSinkList();
-            updateSourceList();
-            updateServerInfo();
-            waitForDeviceList();
-            break;
+    case PA_CONTEXT_READY:
+        JAMI_DBG("Connection to PulseAudio server established");
+        pa_threaded_mainloop_signal(mainloop_.get(), 0);
+        subscribeOp_ = pa_context_subscribe(c, mask, nullptr, this);
+        pa_context_set_subscribe_callback(c, context_changed_callback, this);
+        updateSinkList();
+        updateSourceList();
+        updateServerInfo();
+        waitForDeviceList();
+        break;
 
-        case PA_CONTEXT_TERMINATED:
-            if (subscribeOp_) {
-                pa_operation_unref(subscribeOp_);
-                subscribeOp_ = nullptr;
-            }
-            break;
+    case PA_CONTEXT_TERMINATED:
+        if (subscribeOp_) {
+            pa_operation_unref(subscribeOp_);
+            subscribeOp_ = nullptr;
+        }
+        break;
 
-        case PA_CONTEXT_FAILED:
-        default:
-            JAMI_ERR("%s" , pa_strerror(pa_context_errno(c)));
-            pa_threaded_mainloop_signal(mainloop_.get(), 0);
-            break;
+    case PA_CONTEXT_FAILED:
+    default:
+        JAMI_ERR("%s", pa_strerror(pa_context_errno(c)));
+        pa_threaded_mainloop_signal(mainloop_.get(), 0);
+        break;
     }
 }
 
-void PulseLayer::updateSinkList()
+void
+PulseLayer::updateSinkList()
 {
     std::unique_lock<std::mutex> lk(readyMtx_);
     if (not enumeratingSinks_) {
@@ -177,7 +184,8 @@ void PulseLayer::updateSinkList()
     }
 }
 
-void PulseLayer::updateSourceList()
+void
+PulseLayer::updateSourceList()
 {
     std::unique_lock<std::mutex> lk(readyMtx_);
     if (not enumeratingSources_) {
@@ -193,7 +201,8 @@ void PulseLayer::updateSourceList()
     }
 }
 
-void PulseLayer::updateServerInfo()
+void
+PulseLayer::updateServerInfo()
 {
     std::unique_lock<std::mutex> lk(readyMtx_);
     if (not gettingServerInfo_) {
@@ -206,17 +215,26 @@ void PulseLayer::updateServerInfo()
     }
 }
 
-bool PulseLayer::inSinkList(const std::string &deviceName)
+bool
+PulseLayer::inSinkList(const std::string& deviceName)
 {
-    return std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::NameComparator(deviceName)) != sinkList_.end();
+    return std::find_if(sinkList_.begin(),
+                        sinkList_.end(),
+                        PaDeviceInfos::NameComparator(deviceName))
+           != sinkList_.end();
 }
 
-bool PulseLayer::inSourceList(const std::string &deviceName)
+bool
+PulseLayer::inSourceList(const std::string& deviceName)
 {
-    return std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(deviceName)) != sourceList_.end();
+    return std::find_if(sourceList_.begin(),
+                        sourceList_.end(),
+                        PaDeviceInfos::NameComparator(deviceName))
+           != sourceList_.end();
 }
 
-std::vector<std::string> PulseLayer::getCaptureDeviceList() const
+std::vector<std::string>
+PulseLayer::getCaptureDeviceList() const
 {
     std::vector<std::string> names;
     names.reserve(sourceList_.size());
@@ -225,7 +243,8 @@ std::vector<std::string> PulseLayer::getCaptureDeviceList() const
     return names;
 }
 
-std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
+std::vector<std::string>
+PulseLayer::getPlaybackDeviceList() const
 {
     std::vector<std::string> names;
     names.reserve(sinkList_.size());
@@ -234,37 +253,52 @@ std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
     return names;
 }
 
-int PulseLayer::getAudioDeviceIndex(const std::string& descr, DeviceType type) const
+int
+PulseLayer::getAudioDeviceIndex(const std::string& descr, DeviceType type) const
 {
     switch (type) {
     case DeviceType::PLAYBACK:
     case DeviceType::RINGTONE:
-        return std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
+        return std::distance(sinkList_.begin(),
+                             std::find_if(sinkList_.begin(),
+                                          sinkList_.end(),
+                                          PaDeviceInfos::DescriptionComparator(descr)));
     case DeviceType::CAPTURE:
-        return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
+        return std::distance(sourceList_.begin(),
+                             std::find_if(sourceList_.begin(),
+                                          sourceList_.end(),
+                                          PaDeviceInfos::DescriptionComparator(descr)));
     default:
         JAMI_ERR("Unexpected device type");
         return 0;
     }
 }
 
-int PulseLayer::getAudioDeviceIndexByName(const std::string& name, DeviceType type) const
+int
+PulseLayer::getAudioDeviceIndexByName(const std::string& name, DeviceType type) const
 {
     if (name.empty())
         return 0;
     switch (type) {
     case DeviceType::PLAYBACK:
     case DeviceType::RINGTONE:
-        return std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::NameComparator(name)));
+        return std::distance(sinkList_.begin(),
+                             std::find_if(sinkList_.begin(),
+                                          sinkList_.end(),
+                                          PaDeviceInfos::NameComparator(name)));
     case DeviceType::CAPTURE:
-        return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(name)));
+        return std::distance(sourceList_.begin(),
+                             std::find_if(sourceList_.begin(),
+                                          sourceList_.end(),
+                                          PaDeviceInfos::NameComparator(name)));
     default:
         JAMI_ERR("Unexpected device type");
         return 0;
     }
 }
 
-bool endsWith(const std::string& str, const std::string& ending)
+bool
+endsWith(const std::string& str, const std::string& ending)
 {
     if (ending.size() >= str.size())
         return false;
@@ -274,90 +308,131 @@ bool endsWith(const std::string& str, const std::string& ending)
 /**
  * Find default device for PulseAudio to open, filter monitors and EC.
  */
-const PaDeviceInfos* findBest(const std::vector<PaDeviceInfos>& list) {
-    if (list.empty()) return nullptr;
+const PaDeviceInfos*
+findBest(const std::vector<PaDeviceInfos>& list)
+{
+    if (list.empty())
+        return nullptr;
     for (const auto& info : list)
         if (info.monitor_of == PA_INVALID_INDEX)
             return &info;
     return &list[0];
 }
 
-const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>& list, const std::string& name) const
+const PaDeviceInfos*
+PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>& list, const std::string& name) const
 {
     auto dev_info = std::find_if(list.begin(), list.end(), PaDeviceInfos::NameComparator(name));
     if (dev_info == list.end()) {
         JAMI_WARN("Preferred device %s not found in device list, selecting default %s instead.",
-                        name.c_str(), list.front().name.c_str());
+                  name.c_str(),
+                  list.front().name.c_str());
         return &list.front();
     }
     return &(*dev_info);
 }
 
-std::string PulseLayer::getAudioDeviceName(int index, DeviceType type) const
+std::string
+PulseLayer::getAudioDeviceName(int index, DeviceType type) const
 {
     switch (type) {
-        case DeviceType::PLAYBACK:
-        case DeviceType::RINGTONE:
-            if (index < 0 or static_cast<size_t>(index) >= sinkList_.size()) {
-                JAMI_ERR("Index %d out of range", index);
-                return "";
-            }
-            return sinkList_[index].name;
-
-        case DeviceType::CAPTURE:
-            if (index < 0 or static_cast<size_t>(index) >= sourceList_.size()) {
-                JAMI_ERR("Index %d out of range", index);
-                return "";
-            }
-            return sourceList_[index].name;
-
-        default:
-            // Should never happen
-            JAMI_ERR("Unexpected type");
+    case DeviceType::PLAYBACK:
+    case DeviceType::RINGTONE:
+        if (index < 0 or static_cast<size_t>(index) >= sinkList_.size()) {
+            JAMI_ERR("Index %d out of range", index);
             return "";
+        }
+        return sinkList_[index].name;
+
+    case DeviceType::CAPTURE:
+        if (index < 0 or static_cast<size_t>(index) >= sourceList_.size()) {
+            JAMI_ERR("Index %d out of range", index);
+            return "";
+        }
+        return sourceList_[index].name;
+
+    default:
+        // Should never happen
+        JAMI_ERR("Unexpected type");
+        return "";
     }
 }
 
-void PulseLayer::createStreams(pa_context* c)
+void
+PulseLayer::createStreams(pa_context* c)
 {
     hardwareFormatAvailable(defaultAudioFormat_);
 
     auto onReady = [this] {
         bool playbackReady = not playback_ or playback_->isReady();
         bool ringtoneReady = not ringtone_ or ringtone_->isReady();
-        bool recordReady = not record_ or record_->isReady();
+        bool recordReady   = not record_ or record_->isReady();
         if (playbackReady and recordReady and ringtoneReady) {
             JAMI_DBG("All streams ready, starting !");
-            if (playback_) playback_->start();
-            if (ringtone_) ringtone_->start();
-            if (record_) record_->start();
+            if (playback_)
+                playback_->start();
+            if (ringtone_)
+                ringtone_->start();
+            if (record_)
+                record_->start();
         }
     };
 
     // Create playback stream
     if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice())) {
         bool ec = preference_.getEchoCanceller() == "system";
-        playback_.reset(new AudioStream(c, mainloop_.get(), "Playback", StreamType::Playback, audioFormat_.sample_rate, dev_infos, ec, onReady));
-        pa_stream_set_write_callback(playback_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
-            static_cast<PulseLayer*>(userdata)->writeToSpeaker();
-        }, this);
+        playback_.reset(new AudioStream(c,
+                                        mainloop_.get(),
+                                        "Playback",
+                                        StreamType::Playback,
+                                        audioFormat_.sample_rate,
+                                        dev_infos,
+                                        ec,
+                                        onReady));
+        pa_stream_set_write_callback(
+            playback_->stream(),
+            [](pa_stream* /*s*/, size_t /*bytes*/, void* userdata) {
+                static_cast<PulseLayer*>(userdata)->writeToSpeaker();
+            },
+            this);
     }
 
     // Create ringtone stream
-    // Echo canceling is not enabled for ringtone, because PA can only cancel a single output source with an input source
+    // Echo canceling is not enabled for ringtone, because PA can only cancel a single output source
+    // with an input source
     if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredRingtoneDevice())) {
-        ringtone_.reset(new AudioStream(c, mainloop_.get(), "Ringtone", StreamType::Ringtone, audioFormat_.sample_rate, dev_infos, false, onReady));
-        pa_stream_set_write_callback(ringtone_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
-            static_cast<PulseLayer*>(userdata)->ringtoneToSpeaker();
-        }, this);
+        ringtone_.reset(new AudioStream(c,
+                                        mainloop_.get(),
+                                        "Ringtone",
+                                        StreamType::Ringtone,
+                                        audioFormat_.sample_rate,
+                                        dev_infos,
+                                        false,
+                                        onReady));
+        pa_stream_set_write_callback(
+            ringtone_->stream(),
+            [](pa_stream* /*s*/, size_t /*bytes*/, void* userdata) {
+                static_cast<PulseLayer*>(userdata)->ringtoneToSpeaker();
+            },
+            this);
     }
 
     // Create capture stream
     if (auto dev_infos = getDeviceInfos(sourceList_, getPreferredCaptureDevice())) {
-        record_.reset(new AudioStream(c, mainloop_.get(), "Capture", StreamType::Capture, audioFormat_.sample_rate, dev_infos, true, onReady));
-        pa_stream_set_read_callback(record_->stream() , [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
-            static_cast<PulseLayer*>(userdata)->readFromMic();
-        }, this);
+        record_.reset(new AudioStream(c,
+                                      mainloop_.get(),
+                                      "Capture",
+                                      StreamType::Capture,
+                                      audioFormat_.sample_rate,
+                                      dev_infos,
+                                      true,
+                                      onReady));
+        pa_stream_set_read_callback(
+            record_->stream(),
+            [](pa_stream* /*s*/, size_t /*bytes*/, void* userdata) {
+                static_cast<PulseLayer*>(userdata)->readFromMic();
+            },
+            this);
     }
 
     pa_threaded_mainloop_signal(mainloop_.get(), 0);
@@ -366,7 +441,8 @@ void PulseLayer::createStreams(pa_context* c)
     flushUrgent();
 }
 
-void PulseLayer::disconnectAudioStream()
+void
+PulseLayer::disconnectAudioStream()
 {
     playback_.reset();
     ringtone_.reset();
@@ -420,40 +496,44 @@ PulseLayer::stopStream()
     startedCv_.notify_all();
 }
 
-void PulseLayer::writeToSpeaker()
+void
+PulseLayer::writeToSpeaker()
 {
     if (!playback_ or !playback_->isReady())
         return;
 
     // available bytes to be written in pulseaudio internal buffer
-    AudioSample* data = nullptr;
+    AudioSample* data    = nullptr;
     size_t writableBytes = (size_t) -1;
-    int ret = pa_stream_begin_write(playback_->stream(), (void**)&data, &writableBytes);
+    int ret = pa_stream_begin_write(playback_->stream(), (void**) &data, &writableBytes);
     if (ret == 0 and data and writableBytes != 0) {
-        writableBytes = std::min(pa_stream_writable_size(playback_->stream()), writableBytes);
+        writableBytes    = std::min(pa_stream_writable_size(playback_->stream()), writableBytes);
         const auto& buff = getToPlay(playback_->format(), writableBytes / playback_->frameSize());
         if (not buff or isPlaybackMuted_)
             memset(data, 0, writableBytes);
         else
-            std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * playback_->frameSize());
+            std::memcpy(data,
+                        buff->pointer()->data[0],
+                        buff->pointer()->nb_samples * playback_->frameSize());
         pa_stream_write(playback_->stream(), data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
     }
 }
 
-void PulseLayer::readFromMic()
+void
+PulseLayer::readFromMic()
 {
     if (!record_ or !record_->isReady())
         return;
 
-    const char *data = nullptr;
+    const char* data = nullptr;
     size_t bytes;
-    if (pa_stream_peek(record_->stream() , (const void**) &data , &bytes) < 0 or !data)
+    if (pa_stream_peek(record_->stream(), (const void**) &data, &bytes) < 0 or !data)
         return;
 
     if (bytes == 0)
         return;
 
-    size_t sample_size = record_->frameSize();
+    size_t sample_size   = record_->frameSize();
     const size_t samples = bytes / sample_size;
 
     auto out = std::make_shared<AudioFrame>(record_->format(), samples);
@@ -463,77 +543,83 @@ void PulseLayer::readFromMic()
         std::memcpy(out->pointer()->data[0], data, bytes);
 
     if (pa_stream_drop(record_->stream()) < 0)
-        JAMI_ERR("Capture stream drop failed: %s" , pa_strerror(pa_context_errno(context_)));
+        JAMI_ERR("Capture stream drop failed: %s", pa_strerror(pa_context_errno(context_)));
 
     putRecorded(std::move(out));
 }
 
-void PulseLayer::ringtoneToSpeaker()
+void
+PulseLayer::ringtoneToSpeaker()
 {
     if (!ringtone_ or !ringtone_->isReady())
         return;
 
-    AudioSample* data = nullptr;
+    AudioSample* data    = nullptr;
     size_t writableBytes = (size_t) -1;
-    int ret = pa_stream_begin_write(ringtone_->stream(), (void**)&data, &writableBytes);
+    int ret = pa_stream_begin_write(ringtone_->stream(), (void**) &data, &writableBytes);
     if (ret == 0 and data and writableBytes != 0) {
-        writableBytes = std::min(pa_stream_writable_size(ringtone_->stream()), writableBytes);
+        writableBytes    = std::min(pa_stream_writable_size(ringtone_->stream()), writableBytes);
         const auto& buff = getToRing(ringtone_->format(), writableBytes / ringtone_->frameSize());
         if (not buff or isRingtoneMuted_)
             memset(data, 0, writableBytes);
         else
-            std::memcpy(data, buff->pointer()->data[0], buff->pointer()->nb_samples * ringtone_->frameSize());
+            std::memcpy(data,
+                        buff->pointer()->data[0],
+                        buff->pointer()->nb_samples * ringtone_->frameSize());
         pa_stream_write(ringtone_->stream(), data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
     }
 }
 
-
-std::string stripEchoSufix(const std::string& deviceName) {
+std::string
+stripEchoSufix(const std::string& deviceName)
+{
     return std::regex_replace(deviceName, PA_EC_SUFFIX, "");
 }
 
 void
 PulseLayer::context_changed_callback(pa_context* c,
                                      pa_subscription_event_type_t type,
-                                     uint32_t idx, void *userdata)
+                                     uint32_t idx,
+                                     void* userdata)
 {
     static_cast<PulseLayer*>(userdata)->contextChanged(c, type, idx);
 }
 
 void
-PulseLayer::contextChanged(pa_context* c UNUSED, pa_subscription_event_type_t type,
+PulseLayer::contextChanged(pa_context* c UNUSED,
+                           pa_subscription_event_type_t type,
                            uint32_t idx UNUSED)
 {
     bool reset = false;
 
     switch (type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK) {
-        case PA_SUBSCRIPTION_EVENT_SINK:
-            switch (type & PA_SUBSCRIPTION_EVENT_TYPE_MASK) {
-                case PA_SUBSCRIPTION_EVENT_NEW:
-                case PA_SUBSCRIPTION_EVENT_REMOVE:
-                    updateSinkList();
-                    reset = true;
-                default:
-                    break;
-            }
-
-            break;
-
-        case PA_SUBSCRIPTION_EVENT_SOURCE:
-            switch (type & PA_SUBSCRIPTION_EVENT_TYPE_MASK) {
-                case PA_SUBSCRIPTION_EVENT_NEW:
-                case PA_SUBSCRIPTION_EVENT_REMOVE:
-                    updateSourceList();
-                    reset = true;
-                default:
-                    break;
-            }
-
-            break;
-
+    case PA_SUBSCRIPTION_EVENT_SINK:
+        switch (type & PA_SUBSCRIPTION_EVENT_TYPE_MASK) {
+        case PA_SUBSCRIPTION_EVENT_NEW:
+        case PA_SUBSCRIPTION_EVENT_REMOVE:
+            updateSinkList();
+            reset = true;
         default:
-            JAMI_DBG("Unhandled event type 0x%x", type);
             break;
+        }
+
+        break;
+
+    case PA_SUBSCRIPTION_EVENT_SOURCE:
+        switch (type & PA_SUBSCRIPTION_EVENT_TYPE_MASK) {
+        case PA_SUBSCRIPTION_EVENT_NEW:
+        case PA_SUBSCRIPTION_EVENT_REMOVE:
+            updateSourceList();
+            reset = true;
+        default:
+            break;
+        }
+
+        break;
+
+    default:
+        JAMI_DBG("Unhandled event type 0x%x", type);
+        break;
     }
 
     if (reset) {
@@ -542,7 +628,8 @@ PulseLayer::contextChanged(pa_context* c UNUSED, pa_subscription_event_type_t ty
     }
 }
 
-void PulseLayer::waitForDeviceList()
+void
+PulseLayer::waitForDeviceList()
 {
     std::unique_lock<std::mutex> lock(readyMtx_);
     if (waitingDeviceList_)
@@ -563,52 +650,62 @@ void PulseLayer::waitForDeviceList()
             return;
 
         // If a current device changed, restart streams
-        auto playbackInfo = getDeviceInfos(sinkList_, getPreferredPlaybackDevice());
-        bool playbackDeviceChanged = !playback_ or (!playbackInfo->name.empty() and
-                                                     playbackInfo->name != stripEchoSufix(playback_->getDeviceName()));
+        auto playbackInfo          = getDeviceInfos(sinkList_, getPreferredPlaybackDevice());
+        bool playbackDeviceChanged = !playback_
+                                     or (!playbackInfo->name.empty()
+                                         and playbackInfo->name
+                                                 != stripEchoSufix(playback_->getDeviceName()));
 
-        auto recordInfo = getDeviceInfos(sourceList_, getPreferredCaptureDevice());
-        bool recordDeviceChanged = !record_ or (!recordInfo->name.empty() and
-                                                 recordInfo->name != stripEchoSufix(record_->getDeviceName()));
+        auto recordInfo          = getDeviceInfos(sourceList_, getPreferredCaptureDevice());
+        bool recordDeviceChanged = !record_
+                                   or (!recordInfo->name.empty()
+                                       and recordInfo->name
+                                               != stripEchoSufix(record_->getDeviceName()));
 
         if (playbackDeviceChanged or recordDeviceChanged) {
             JAMI_WARN("Audio devices changed, restarting streams.");
             stopStream();
             startStream();
         } else {
-            JAMI_WARN("Staying on \n %s \n %s", playback_->getDeviceName().c_str(), record_->getDeviceName().c_str());
+            JAMI_WARN("Staying on \n %s \n %s",
+                      playback_->getDeviceName().c_str(),
+                      record_->getDeviceName().c_str());
             status_ = Status::Started;
             startedCv_.notify_all();
         }
     });
 }
 
-void PulseLayer::server_info_callback(pa_context*, const pa_server_info *i, void *userdata)
+void
+PulseLayer::server_info_callback(pa_context*, const pa_server_info* i, void* userdata)
 {
-    if (!i) return;
+    if (!i)
+        return;
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
     JAMI_DBG("PulseAudio server info:\n"
-          "    Server name: %s\n"
-          "    Server version: %s\n"
-          "    Default Sink %s\n"
-          "    Default Source %s\n"
-          "    Default Sample Specification: %s\n"
-          "    Default Channel Map: %s\n",
-          i->server_name,
-          i->server_version,
-          i->default_sink_name,
-          i->default_source_name,
-          pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
-          pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map));
+             "    Server name: %s\n"
+             "    Server version: %s\n"
+             "    Default Sink %s\n"
+             "    Default Source %s\n"
+             "    Default Sample Specification: %s\n"
+             "    Default Channel Map: %s\n",
+             i->server_name,
+             i->server_version,
+             i->default_sink_name,
+             i->default_source_name,
+             pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+             pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map));
 
-    PulseLayer *context = static_cast<PulseLayer*>(userdata);
-    context->defaultSink_ = {};
-    context->defaultSource_ = {};
+    PulseLayer* context          = static_cast<PulseLayer*>(userdata);
+    context->defaultSink_        = {};
+    context->defaultSource_      = {};
     context->defaultAudioFormat_ = {i->sample_spec.rate, i->sample_spec.channels};
     if (not context->sinkList_.empty())
-        context->sinkList_.front().channel_map.channels = std::min(i->sample_spec.channels, (uint8_t)2);
+        context->sinkList_.front().channel_map.channels = std::min(i->sample_spec.channels,
+                                                                   (uint8_t) 2);
     if (not context->sourceList_.empty())
-        context->sourceList_.front().channel_map.channels = std::min(i->sample_spec.channels, (uint8_t)2);
+        context->sourceList_.front().channel_map.channels = std::min(i->sample_spec.channels,
+                                                                     (uint8_t) 2);
     {
         std::lock_guard<std::mutex> lk(context->readyMtx_);
         context->gettingServerInfo_ = false;
@@ -616,9 +713,13 @@ void PulseLayer::server_info_callback(pa_context*, const pa_server_info *i, void
     context->readyCv_.notify_all();
 }
 
-void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_source_info *i, int eol, void *userdata)
+void
+PulseLayer::source_input_info_callback(pa_context* c UNUSED,
+                                       const pa_source_info* i,
+                                       int eol,
+                                       void* userdata)
 {
-    PulseLayer *context = static_cast<PulseLayer*>(userdata);
+    PulseLayer* context = static_cast<PulseLayer*>(userdata);
 
     if (eol) {
         {
@@ -631,38 +732,42 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
 #ifdef PA_LOG_SINK_SOURCES
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
     JAMI_DBG("Source %u\n"
-          "    Name: %s\n"
-          "    Driver: %s\n"
-          "    Description: %s\n"
-          "    Sample Specification: %s\n"
-          "    Channel Map: %s\n"
-          "    Owner Module: %u\n"
-          "    Volume: %s\n"
-          "    Monitor if Sink: %u\n"
-          "    Latency: %0.0f usec\n"
-          "    Flags: %s%s%s\n",
-          i->index,
-          i->name,
-          i->driver,
-          i->description,
-          pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
-          pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
-          i->owner_module,
-          i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
-          i->monitor_of_sink,
-          (double) i->latency,
-          i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
-          i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
-          i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
+             "    Name: %s\n"
+             "    Driver: %s\n"
+             "    Description: %s\n"
+             "    Sample Specification: %s\n"
+             "    Channel Map: %s\n"
+             "    Owner Module: %u\n"
+             "    Volume: %s\n"
+             "    Monitor if Sink: %u\n"
+             "    Latency: %0.0f usec\n"
+             "    Flags: %s%s%s\n",
+             i->index,
+             i->name,
+             i->driver,
+             i->description,
+             pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+             pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
+             i->owner_module,
+             i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
+             i->monitor_of_sink,
+             (double) i->latency,
+             i->flags & PA_SOURCE_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+             i->flags & PA_SOURCE_LATENCY ? "LATENCY " : "",
+             i->flags & PA_SOURCE_HARDWARE ? "HARDWARE" : "");
 #endif
     if (not context->inSourceList(i->name)) {
         context->sourceList_.push_back(*i);
     }
 }
 
-void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_info *i, int eol, void *userdata)
+void
+PulseLayer::sink_input_info_callback(pa_context* c UNUSED,
+                                     const pa_sink_info* i,
+                                     int eol,
+                                     void* userdata)
 {
-    PulseLayer *context = static_cast<PulseLayer*>(userdata);
+    PulseLayer* context = static_cast<PulseLayer*>(userdata);
 
     if (eol) {
         {
@@ -675,36 +780,37 @@ void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_in
 #ifdef PA_LOG_SINK_SOURCES
     char s[PA_SAMPLE_SPEC_SNPRINT_MAX], cv[PA_CVOLUME_SNPRINT_MAX], cm[PA_CHANNEL_MAP_SNPRINT_MAX];
     JAMI_DBG("Sink %u\n"
-          "    Name: %s\n"
-          "    Driver: %s\n"
-          "    Description: %s\n"
-          "    Sample Specification: %s\n"
-          "    Channel Map: %s\n"
-          "    Owner Module: %u\n"
-          "    Volume: %s\n"
-          "    Monitor Source: %u\n"
-          "    Latency: %0.0f usec\n"
-          "    Flags: %s%s%s\n",
-          i->index,
-          i->name,
-          i->driver,
-          i->description,
-          pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
-          pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
-          i->owner_module,
-          i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
-          i->monitor_source,
-          static_cast<double>(i->latency),
-          i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
-          i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
-          i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
+             "    Name: %s\n"
+             "    Driver: %s\n"
+             "    Description: %s\n"
+             "    Sample Specification: %s\n"
+             "    Channel Map: %s\n"
+             "    Owner Module: %u\n"
+             "    Volume: %s\n"
+             "    Monitor Source: %u\n"
+             "    Latency: %0.0f usec\n"
+             "    Flags: %s%s%s\n",
+             i->index,
+             i->name,
+             i->driver,
+             i->description,
+             pa_sample_spec_snprint(s, sizeof(s), &i->sample_spec),
+             pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map),
+             i->owner_module,
+             i->mute ? "muted" : pa_cvolume_snprint(cv, sizeof(cv), &i->volume),
+             i->monitor_source,
+             static_cast<double>(i->latency),
+             i->flags & PA_SINK_HW_VOLUME_CTRL ? "HW_VOLUME_CTRL " : "",
+             i->flags & PA_SINK_LATENCY ? "LATENCY " : "",
+             i->flags & PA_SINK_HARDWARE ? "HARDWARE" : "");
 #endif
     if (not context->inSinkList(i->name)) {
         context->sinkList_.push_back(*i);
     }
 }
 
-void PulseLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
+void
+PulseLayer::updatePreference(AudioPreference& preference, int index, DeviceType type)
 {
     const std::string devName(getAudioDeviceName(index, type));
 
@@ -726,23 +832,27 @@ void PulseLayer::updatePreference(AudioPreference &preference, int index, Device
     }
 }
 
-int PulseLayer::getIndexCapture() const
+int
+PulseLayer::getIndexCapture() const
 {
     return getAudioDeviceIndexByName(preference_.getPulseDeviceRecord(), DeviceType::CAPTURE);
 }
 
-int PulseLayer::getIndexPlayback() const
+int
+PulseLayer::getIndexPlayback() const
 {
     return getAudioDeviceIndexByName(preference_.getPulseDevicePlayback(), DeviceType::PLAYBACK);
 }
 
-int PulseLayer::getIndexRingtone() const
+int
+PulseLayer::getIndexRingtone() const
 {
     return getAudioDeviceIndexByName(preference_.getPulseDeviceRingtone(), DeviceType::RINGTONE);
 }
 
 std::string
-PulseLayer::getPreferredPlaybackDevice() const {
+PulseLayer::getPreferredPlaybackDevice() const
+{
     std::string playbackDevice(preference_.getPulseDevicePlayback());
     if (playbackDevice.empty())
         playbackDevice = defaultSink_;
@@ -750,7 +860,8 @@ PulseLayer::getPreferredPlaybackDevice() const {
 }
 
 std::string
-PulseLayer::getPreferredRingtoneDevice() const {
+PulseLayer::getPreferredRingtoneDevice() const
+{
     std::string ringtoneDevice(preference_.getPulseDeviceRingtone());
     if (ringtoneDevice.empty())
         ringtoneDevice = defaultSink_;
@@ -758,12 +869,12 @@ PulseLayer::getPreferredRingtoneDevice() const {
 }
 
 std::string
-PulseLayer::getPreferredCaptureDevice() const {
+PulseLayer::getPreferredCaptureDevice() const
+{
     std::string captureDevice(preference_.getPulseDeviceRecord());
     if (captureDevice.empty())
         captureDevice = defaultSource_;
     return stripEchoSufix(captureDevice);
 }
-
 
 } // namespace jami

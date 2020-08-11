@@ -41,8 +41,7 @@ AudioReceiveThread::AudioReceiveThread(const std::string& id,
     : id_(id)
     , format_(format)
     , stream_(sdp)
-    , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction,
-                                    0, 0, this))
+    , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction, 0, 0, this))
     , mtu_(mtu)
     , loop_(std::bind(&AudioReceiveThread::setup, this),
             std::bind(&AudioReceiveThread::process, this),
@@ -64,8 +63,8 @@ AudioReceiveThread::setup()
     audioDecoder_->setInterruptCallback(interruptCb, this);
 
     // custom_io so the SDP demuxer will not open any UDP connections
-    args_.input = SDP_FILENAME;
-    args_.format = "sdp";
+    args_.input     = SDP_FILENAME;
+    args_.format    = "sdp";
     args_.sdp_flags = "custom_io";
 
     if (stream_.str().empty()) {

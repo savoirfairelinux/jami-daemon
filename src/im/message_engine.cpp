@@ -33,7 +33,9 @@
 namespace jami {
 namespace im {
 
-MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path) : account_(acc), savePath_(path)
+MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path)
+    : account_(acc)
+    , savePath_(path)
 {}
 
 MessageToken
@@ -46,16 +48,14 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
         std::lock_guard<std::mutex> lock(messagesMutex_);
         auto& peerMessages = messages_[to];
         do {
-            token = std::uniform_int_distribution<MessageToken>{1, DRING_ID_MAX_VAL}(account_.rand);
+            token = std::uniform_int_distribution<MessageToken> {1, DRING_ID_MAX_VAL}(account_.rand);
         } while (peerMessages.find(token) != peerMessages.end());
-        auto m = peerMessages.emplace(token, Message{});
-        m.first->second.to = to;
+        auto m                   = peerMessages.emplace(token, Message {});
+        m.first->second.to       = to;
         m.first->second.payloads = payloads;
         save_();
     }
-    runOnMainThread([this, to]() {
-        retrySend(to);
-    });
+    runOnMainThread([this, to]() { retrySend(to); });
     return token;
 }
 
@@ -71,7 +71,8 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
     if (account_.getRegistrationState() != RegistrationState::REGISTERED) {
         return;
     }
-    struct PendingMsg {
+    struct PendingMsg
+    {
         MessageToken token;
         std::string to;
         std::map<std::string, std::string> payloads;
@@ -84,7 +85,8 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
             return;
         auto& messages = p->second;
         for (auto m = messages.begin(); m != messages.end(); ++m) {
-            if (m->second.status == MessageStatus::UNKNOWN || m->second.status == MessageStatus::IDLE) {
+            if (m->second.status == MessageStatus::UNKNOWN
+                || m->second.status == MessageStatus::IDLE) {
                 m->second.status = MessageStatus::SENDING;
                 m->second.retried++;
                 m->second.last_op = clock::now();
@@ -96,10 +98,7 @@ MessageEngine::retrySend(const std::string& peer, bool retryOnTimeout)
     for (const auto& p : pending) {
         JAMI_DBG() << "[message " << p.token << "] Retry sending";
         emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
-            account_.getAccountID(),
-            p.token,
-            p.to,
-            (int)DRing::Account::MessageStates::SENDING);
+            account_.getAccountID(), p.token, p.to, (int) DRing::Account::MessageStates::SENDING);
         account_.sendTextMessage(p.to, p.payloads, p.token, retryOnTimeout);
     }
 }
@@ -124,10 +123,11 @@ MessageEngine::cancel(MessageToken t)
         auto m = p.second.find(t);
         if (m != p.second.end()) {
             m->second.status = MessageStatus::CANCELLED;
-            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
-                                                                            t,
-                                                                            m->second.to,
-                                                                            static_cast<int>(DRing::Account::MessageStates::CANCELLED));
+            emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                account_.getAccountID(),
+                t,
+                m->second.to,
+                static_cast<int>(DRing::Account::MessageStates::CANCELLED));
             save_();
             return true;
         }
@@ -151,25 +151,27 @@ MessageEngine::onMessageSent(const std::string& peer, MessageToken token, bool o
             if (ok) {
                 f->second.status = MessageStatus::SENT;
                 JAMI_DBG() << "[message " << token << "] Status changed to SENT";
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
-                                                                             token,
-                                                                             f->second.to,
-                                                                             static_cast<int>(DRing::Account::MessageStates::SENT));
+                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                    account_.getAccountID(),
+                    token,
+                    f->second.to,
+                    static_cast<int>(DRing::Account::MessageStates::SENT));
                 save_();
             } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
                 JAMI_DBG() << "[message " << token << "] Status changed to FAILURE";
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
-                                                                             token,
-                                                                             f->second.to,
-                                                                             static_cast<int>(DRing::Account::MessageStates::FAILURE));
+                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+                    account_.getAccountID(),
+                    token,
+                    f->second.to,
+                    static_cast<int>(DRing::Account::MessageStates::FAILURE));
                 save_();
             } else {
                 f->second.status = MessageStatus::IDLE;
                 JAMI_DBG() << "[message " << token << "] Status changed to IDLE";
             }
         } else {
-           JAMI_DBG() << "[message " << token << "] State is not SENDING";
+            JAMI_DBG() << "[message " << token << "] State is not SENDING";
         }
     } else {
         JAMI_DBG() << "[message " << token << "] Can't find message";
@@ -182,10 +184,11 @@ MessageEngine::onMessageDisplayed(const std::string& peer, MessageToken token, b
     if (not displayed)
         return;
     JAMI_DBG() << "[message " << token << "] Displayed by peer";
-    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
-                                                                    token,
-                                                                    peer,
-                                                                    static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
+    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+        account_.getAccountID(),
+        token,
+        peer,
+        static_cast<int>(DRing::Account::MessageStates::DISPLAYED));
 }
 
 void
@@ -203,20 +206,20 @@ MessageEngine::load()
         std::lock_guard<std::mutex> lock(messagesMutex_);
         long unsigned loaded {0};
         for (auto i = root.begin(); i != root.end(); ++i) {
-            auto to = i.key().asString();
+            auto to         = i.key().asString();
             auto& pmessages = *i;
-            auto& p = messages_[to];
+            auto& p         = messages_[to];
             for (auto m = pmessages.begin(); m != pmessages.end(); ++m) {
                 const auto& jmsg = *m;
                 MessageToken token;
                 std::istringstream iss(m.key().asString());
                 iss >> std::hex >> token;
                 Message msg;
-                msg.status = (MessageStatus)jmsg["status"].asInt();
-                msg.to = jmsg["to"].asString();
+                msg.status     = (MessageStatus) jmsg["status"].asInt();
+                msg.to         = jmsg["to"].asString();
                 auto wall_time = std::chrono::system_clock::from_time_t(jmsg["last_op"].asInt64());
-                msg.last_op = clock::now() + (wall_time - std::chrono::system_clock::now());
-                msg.retried = jmsg.get("retried", 0).asUInt();
+                msg.last_op    = clock::now() + (wall_time - std::chrono::system_clock::now());
+                msg.retried    = jmsg.get("retried", 0).asUInt();
                 const auto& pl = jmsg["payload"];
                 for (auto p = pl.begin(); p != pl.end(); ++p)
                     msg.payloads[p.key().asString()] = p->asString();
@@ -224,9 +227,15 @@ MessageEngine::load()
                 loaded++;
             }
         }
-        JAMI_DBG("[Account %s] loaded %lu messages from %s", account_.getAccountID().c_str(), loaded, savePath_.c_str());
+        JAMI_DBG("[Account %s] loaded %lu messages from %s",
+                 account_.getAccountID().c_str(),
+                 loaded,
+                 savePath_.c_str());
     } catch (const std::exception& e) {
-        JAMI_DBG("[Account %s] couldn't load messages from %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
+        JAMI_DBG("[Account %s] couldn't load messages from %s: %s",
+                 account_.getAccountID().c_str(),
+                 savePath_.c_str(),
+                 e.what());
     }
 }
 
@@ -246,15 +255,20 @@ MessageEngine::save_() const
             Json::Value peerRoot(Json::objectValue);
             for (auto& m : c.second) {
                 auto& v = m.second;
-                if (v.status == MessageStatus::FAILURE || v.status == MessageStatus::SENT || v.status == MessageStatus::CANCELLED)
+                if (v.status == MessageStatus::FAILURE || v.status == MessageStatus::SENT
+                    || v.status == MessageStatus::CANCELLED)
                     continue;
                 Json::Value msg;
                 std::ostringstream msgsId;
                 msgsId << std::hex << m.first;
-                msg["status"] = (int)(v.status == MessageStatus::SENDING ? MessageStatus::IDLE : v.status);
-                msg["to"] = v.to;
-                auto wall_time = std::chrono::system_clock::now() + std::chrono::duration_cast<std::chrono::system_clock::duration>(v.last_op - clock::now());
-                msg["last_op"] = (Json::Value::Int64) std::chrono::system_clock::to_time_t(wall_time);
+                msg["status"]  = (int) (v.status == MessageStatus::SENDING ? MessageStatus::IDLE
+                                                                          : v.status);
+                msg["to"]      = v.to;
+                auto wall_time = std::chrono::system_clock::now()
+                                 + std::chrono::duration_cast<std::chrono::system_clock::duration>(
+                                     v.last_op - clock::now());
+                msg["last_op"] = (Json::Value::Int64) std::chrono::system_clock::to_time_t(
+                    wall_time);
                 msg["retried"] = v.retried;
                 auto& payloads = msg["payload"];
                 for (const auto& p : v.payloads)
@@ -264,29 +278,38 @@ MessageEngine::save_() const
             root[c.first] = std::move(peerRoot);
         }
         // Save asynchronously
-        dht::ThreadPool::computation().run([path = savePath_,
-                                    root = std::move(root),
-                                    accountID = account_.getAccountID(),
-                                    messageNum = messages_.size()]
-        {
+        dht::ThreadPool::computation().run([path       = savePath_,
+                                            root       = std::move(root),
+                                            accountID  = account_.getAccountID(),
+                                            messageNum = messages_.size()] {
             std::lock_guard<std::mutex> lock(fileutils::getFileLock(path));
             try {
                 Json::StreamWriterBuilder wbuilder;
                 wbuilder["commentStyle"] = "None";
-                wbuilder["indentation"] = "";
+                wbuilder["indentation"]  = "";
                 const std::unique_ptr<Json::StreamWriter> writer(wbuilder.newStreamWriter());
                 std::ofstream file;
                 file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
                 fileutils::openStream(file, path, std::ios::trunc);
                 writer->write(root, &file);
             } catch (const std::exception& e) {
-                JAMI_ERR("[Account %s] Couldn't save messages to %s: %s", accountID.c_str(), path.c_str(), e.what());
+                JAMI_ERR("[Account %s] Couldn't save messages to %s: %s",
+                         accountID.c_str(),
+                         path.c_str(),
+                         e.what());
             }
-            JAMI_DBG("[Account %s] saved %zu messages to %s", accountID.c_str(), messageNum, path.c_str());
+            JAMI_DBG("[Account %s] saved %zu messages to %s",
+                     accountID.c_str(),
+                     messageNum,
+                     path.c_str());
         });
     } catch (const std::exception& e) {
-        JAMI_ERR("[Account %s] couldn't save messages to %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
+        JAMI_ERR("[Account %s] couldn't save messages to %s: %s",
+                 account_.getAccountID().c_str(),
+                 savePath_.c_str(),
+                 e.what());
     }
 }
 
-}}
+} // namespace im
+} // namespace jami

@@ -33,7 +33,8 @@ namespace jami {
  */
 enum class StreamType { Playback, Capture, Ringtone };
 
-class AudioStream {
+class AudioStream
+{
 public:
     using OnReady = std::function<void()>;
 
@@ -48,7 +49,14 @@ public:
      * @param pointer to pa_source_info or pa_sink_info (depending on type).
      * @param true if echo cancelling should be used with this stream
      */
-    AudioStream(pa_context *, pa_threaded_mainloop *, const char *, StreamType, unsigned, const PaDeviceInfos*, bool, OnReady onReady);
+    AudioStream(pa_context*,
+                pa_threaded_mainloop*,
+                const char*,
+                StreamType,
+                unsigned,
+                const PaDeviceInfos*,
+                bool,
+                OnReady onReady);
 
     ~AudioStream();
 
@@ -58,31 +66,23 @@ public:
      * Accessor: Get the pulseaudio stream object
      * @return pa_stream* The stream
      */
-    pa_stream* stream() {
-        return audiostream_;
-    }
+    pa_stream* stream() { return audiostream_; }
 
-    const pa_sample_spec * sampleSpec() const {
-        return pa_stream_get_sample_spec(audiostream_);
-    }
+    const pa_sample_spec* sampleSpec() const { return pa_stream_get_sample_spec(audiostream_); }
 
-    inline size_t sampleSize() const {
-        return pa_sample_size(sampleSpec());
-    }
-    inline size_t frameSize() const {
-        return pa_frame_size(sampleSpec());
-    }
+    inline size_t sampleSize() const { return pa_sample_size(sampleSpec()); }
+    inline size_t frameSize() const { return pa_frame_size(sampleSpec()); }
 
-    inline uint8_t channels() const {
-        return sampleSpec()->channels;
-    }
+    inline uint8_t channels() const { return sampleSpec()->channels; }
 
-    inline AudioFormat format() const {
+    inline AudioFormat format() const
+    {
         auto s = sampleSpec();
         return AudioFormat(s->rate, s->channels);
     }
 
-    inline std::string getDeviceName() const {
+    inline std::string getDeviceName() const
+    {
         auto res = pa_stream_get_device_name(audiostream_);
         if (res == reinterpret_cast<decltype(res)>(-PA_ERR_NOTSUPPORTED) or !res)
             return {};
@@ -110,7 +110,7 @@ private:
     /**
      * A pointer to the opaque threaded main loop object
      */
-    pa_threaded_mainloop * mainloop_;
+    pa_threaded_mainloop* mainloop_;
 };
 
-}
+} // namespace jami

@@ -32,45 +32,50 @@
 /// This is a C++11-ish class that mimic Python "queue" module and/or Go "Channel" type.
 ///
 
-namespace jami
-{
+namespace jami {
 
-class ChannelEmpty : public std::exception{
+class ChannelEmpty : public std::exception
+{
 public:
     const char* what() const noexcept { return "channel empty"; }
 };
 
-class ChannelFull : public std::exception {
+class ChannelFull : public std::exception
+{
 public:
     const char* what() const noexcept { return "channel full"; }
 };
 
 namespace detail {
 
-template <typename T, std::size_t N=0>
-class _ChannelBase {
+template<typename T, std::size_t N = 0>
+class _ChannelBase
+{
 public:
-    using value_type = T;
+    using value_type           = T;
     const std::size_t max_size = N; ///< maximal size of the Channel, 0 means no size limits
 
     // Pop operations
 
-    template <typename Duration>
-    T receive(Duration timeout) {
+    template<typename Duration>
+    T receive(Duration timeout)
+    {
         std::unique_lock<std::mutex> lk {mutex_};
-        if (!cv_.wait_for(lk, timeout, [this]{ return !queue_.empty(); }))
+        if (!cv_.wait_for(lk, timeout, [this] { return !queue_.empty(); }))
             throw ChannelEmpty();
         auto value = std::move(queue_.front());
         queue_.pop();
         return value;
     }
 
-    template <typename Duration>
-    void receive(T& value, Duration timeout) {
+    template<typename Duration>
+    void receive(T& value, Duration timeout)
+    {
         value = receive(timeout);
     }
 
-    T receive() {
+    T receive()
+    {
         std::unique_lock<std::mutex> lk {mutex_};
         if (queue_.empty())
             throw ChannelEmpty();
@@ -79,28 +84,27 @@ public:
         return value;
     }
 
-    T receive_wait() {
+    T receive_wait()
+    {
         std::unique_lock<std::mutex> lk {mutex_};
-        cv_.wait(lk, [this]{ return !queue_.empty(); });
+        cv_.wait(lk, [this] { return !queue_.empty(); });
         auto value = std::move(queue_.front());
         queue_.pop();
         return value;
     }
 
-    void receive_wait(T& value) {
-        value = receive_wait();
-    }
+    void receive_wait(T& value) { value = receive_wait(); }
 
-    void wait() {
+    void wait()
+    {
         std::unique_lock<std::mutex> lk {mutex_};
-        cv_.wait(lk, [this]{ return !queue_.empty(); });
+        cv_.wait(lk, [this] { return !queue_.empty(); });
     }
 
-    void operator >>(T& value) {
-        receive_wait(value);
-    }
+    void operator>>(T& value) { receive_wait(value); }
 
-    std::queue<T> flush() {
+    std::queue<T> flush()
+    {
         std::unique_lock<std::mutex> lk {mutex_};
         std::queue<T> result;
         std::swap(queue_, result);
@@ -109,12 +113,14 @@ public:
 
     // Capacity operation
 
-    std::size_t size() const {
+    std::size_t size() const
+    {
         std::lock_guard<std::mutex> lk {mutex_};
         return queue_.size();
     }
 
-    bool empty() const {
+    bool empty() const
+    {
         std::lock_guard<std::mutex> lk {mutex_};
         return queue_.empty();
     }
@@ -130,16 +136,18 @@ protected:
 ///
 /// Generic implementation
 ///
-template <typename T, std::size_t N=0>
-class Channel : public detail::_ChannelBase<T, N> {
+template<typename T, std::size_t N = 0>
+class Channel : public detail::_ChannelBase<T, N>
+{
 public:
     using base = detail::_ChannelBase<T, N>;
     using base::mutex_;
     using base::cv_;
     using base::queue_;
 
-    template <typename U>
-    void send(U&& value) {
+    template<typename U>
+    void send(U&& value)
+    {
         std::lock_guard<std::mutex> lk {mutex_};
         if (queue_.size() < N) {
             queue_.push(std::forward<U>(value));
@@ -149,8 +157,9 @@ public:
         throw ChannelFull();
     }
 
-    template <typename... Args>
-    void send_emplace(Args&&... args) {
+    template<typename... Args>
+    void send_emplace(Args&&... args)
+    {
         std::lock_guard<std::mutex> lk {mutex_};
         if (queue_.size() < N) {
             queue_.emplace(std::forward<Args>(args)...);
@@ -160,8 +169,9 @@ public:
         throw ChannelFull();
     }
 
-    template <typename U>
-    void operator <<(U&& value) {
+    template<typename U>
+    void operator<<(U&& value)
+    {
         send(std::forward<U>(value));
     }
 };
@@ -169,30 +179,34 @@ public:
 ///
 /// Optimized implementations for unlimited channel (N=0)
 ///
-template <typename T>
-class Channel<T> : public detail::_ChannelBase<T> {
+template<typename T>
+class Channel<T> : public detail::_ChannelBase<T>
+{
 public:
     using base = detail::_ChannelBase<T>;
     using base::mutex_;
     using base::cv_;
     using base::queue_;
 
-    template <typename U>
-    void send(U&& value) {
+    template<typename U>
+    void send(U&& value)
+    {
         std::lock_guard<std::mutex> lk {mutex_};
         queue_.push(std::forward<U>(value));
         cv_.notify_one();
     }
 
-    template <typename... Args>
-    void send_emplace(Args&&... args) {
+    template<typename... Args>
+    void send_emplace(Args&&... args)
+    {
         std::lock_guard<std::mutex> lk {mutex_};
         queue_.emplace(std::forward<Args>(args)...);
         cv_.notify_one();
     }
 
     /// \note This method exists only for unlimited channel
-    void send(const T* data, std::size_t len) {
+    void send(const T* data, std::size_t len)
+    {
         std::lock_guard<std::mutex> lk {mutex_};
         while (len > 0) {
             queue_.push(*(data++));
@@ -201,8 +215,9 @@ public:
         cv_.notify_one();
     }
 
-    template <typename U>
-    void operator <<(U&& value) {
+    template<typename U>
+    void operator<<(U&& value)
+    {
         send(std::forward<U>(value));
     }
 };

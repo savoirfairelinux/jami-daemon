@@ -25,21 +25,23 @@
 namespace jami {
 
 DcBlocker::DcBlocker(unsigned channels /* = 1 */)
-    : states(channels, StreamState{0, 0, 0, 0})
+    : states(channels, StreamState {0, 0, 0, 0})
 {}
 
-void DcBlocker::reset()
+void
+DcBlocker::reset()
 {
-    states.assign(states.size(), StreamState{0, 0, 0, 0});
+    states.assign(states.size(), StreamState {0, 0, 0, 0});
 }
 
-void DcBlocker::doProcess(AudioSample *out, AudioSample *in, unsigned samples, struct StreamState * state)
+void
+DcBlocker::doProcess(AudioSample* out, AudioSample* in, unsigned samples, struct StreamState* state)
 {
     for (unsigned i = 0; i < samples; ++i) {
         state->x_ = in[i];
 
-
-        state->y_ = (AudioSample) ((float) state->x_ - (float) state->xm1_ + 0.9999 * (float) state->y_);
+        state->y_   = (AudioSample)((float) state->x_ - (float) state->xm1_
+                                  + 0.9999 * (float) state->y_);
         state->xm1_ = state->x_;
         state->ym1_ = state->y_;
 
@@ -47,22 +49,25 @@ void DcBlocker::doProcess(AudioSample *out, AudioSample *in, unsigned samples, s
     }
 }
 
-void DcBlocker::process(AudioSample *out, AudioSample *in, int samples)
+void
+DcBlocker::process(AudioSample* out, AudioSample* in, int samples)
 {
-    if (out == NULL or in == NULL or samples == 0) return;
+    if (out == NULL or in == NULL or samples == 0)
+        return;
     doProcess(out, in, samples, &states[0]);
 }
 
-void DcBlocker::process(AudioBuffer& buf)
+void
+DcBlocker::process(AudioBuffer& buf)
 {
-    const size_t chans = buf.channels();
+    const size_t chans   = buf.channels();
     const size_t samples = buf.frames();
     if (chans > states.size())
-        states.resize(buf.channels(), StreamState{0, 0, 0, 0});
+        states.resize(buf.channels(), StreamState {0, 0, 0, 0});
 
     unsigned i;
-    for(i=0; i<chans; i++) {
-        AudioSample *chan = buf.getChannel(i)->data();
+    for (i = 0; i < chans; i++) {
+        AudioSample* chan = buf.getChannel(i)->data();
         doProcess(chan, chan, samples, &states[i]);
     }
 }
