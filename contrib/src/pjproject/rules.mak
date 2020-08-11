@@ -57,6 +57,7 @@ pjproject: pjproject-$(PJPROJECT_VERSION).tar.gz .sum-pjproject
 	$(APPLY) $(SRC)/pjproject/0010-fix-pkgconfig.patch
 	$(APPLY) $(SRC)/pjproject/0011-fix-tcp-death-detection.patch
 	$(APPLY) $(SRC)/pjproject/0012-fix-turn-shutdown-crash.patch
+	$(APPLY) $(SRC)/pjproject/0013-fix-media-loss-after-5mn.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/0001-android.patch
 endif

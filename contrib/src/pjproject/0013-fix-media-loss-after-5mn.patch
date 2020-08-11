@@ -1,0 +1,297 @@
+diff --git a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/include/pjnath/config.h b/pjnath/include/pjnath/config.h
+index fc1e27550..bc2f4b158 100644
+--- a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/include/pjnath/config.h
++++ b/pjnath/include/pjnath/config.h
+@@ -457,6 +457,17 @@
+ #endif
+ 
+ 
++/**
++ * This constant specifies whether ICE stream transport should allow TURN
++ * client session to automatically renew permission for all remote candidates.
++ *
++ * Default: PJ_FALSE
++ */
++#ifndef PJ_ICE_ST_USE_TURN_PERMANENT_PERM
++#   define PJ_ICE_ST_USE_TURN_PERMANENT_PERM	    PJ_FALSE
++#endif
++
++
+ /** ICE session pool initial size. */
+ #ifndef PJNATH_POOL_LEN_ICE_SESS
+ #   define PJNATH_POOL_LEN_ICE_SESS		    512
+diff --git a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/include/pjnath/ice_session.h b/pjnath/include/pjnath/ice_session.h
+index 9f29b828e..5138fbc3f 100644
+--- a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/include/pjnath/ice_session.h
++++ b/pjnath/include/pjnath/ice_session.h
+@@ -283,6 +283,11 @@ typedef struct pj_ice_msg_data
+  */
+ typedef struct pj_ice_sess_cand
+ {
++    /**
++     * The candidate ID.
++     */
++    unsigned		 id;
++
+     /**
+      * The candidate type, as described in #pj_ice_cand_type enumeration.
+      */
+diff --git a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/include/pjnath/ice_session.h.orig b/pjnath/include/pjnath/ice_session.h.orig
+index 4cccd7c64..9f29b828e 100644
+--- a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/include/pjnath/ice_session.h.orig
++++ b/pjnath/include/pjnath/ice_session.h.orig
+@@ -628,6 +628,11 @@ typedef struct pj_ice_sess_cb
+                                         pj_ice_sess_checklist *clist,
+                                         unsigned check_id);
+ 
++    /**
++     * If an internal TCP keep alive, this mount the error to the application
++     */
++    void	(*on_ice_destroy)(pj_ice_sess *ice);
++
+ } pj_ice_sess_cb;
+ 
+ 
+diff --git a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/src/pjnath/ice_session.c b/pjnath/src/pjnath/ice_session.c
+index ef39884f2..78f328904 100644
+--- a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/src/pjnath/ice_session.c
++++ b/pjnath/src/pjnath/ice_session.c
+@@ -711,9 +711,9 @@ static pj_uint32_t CALC_CAND_PRIO(pj_ice_sess *ice,
+ 	   (((256 - comp_id) & 0xFF) << 0);
+ #else
+     enum {
+-	type_mask   = ((2 << PJ_ICE_CAND_TYPE_PREF_BITS) - 1),
+-	local_mask  = ((2 << PJ_ICE_LOCAL_PREF_BITS) - 1),
+-	comp_mask   = ((2 << PJ_ICE_COMP_BITS) - 1),
++	type_mask   = ((1 << PJ_ICE_CAND_TYPE_PREF_BITS) - 1),
++	local_mask  = ((1 << PJ_ICE_LOCAL_PREF_BITS) - 1),
++	comp_mask   = ((1 << PJ_ICE_COMP_BITS) - 1),
+ 
+ 	comp_shift  = 0,
+ 	local_shift = (PJ_ICE_COMP_BITS),
+@@ -918,11 +918,13 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+     }
+ 
+     lcand = &ice->lcand[ice->lcand_cnt];
++    lcand->id = ice->lcand_cnt;
+     lcand->comp_id = (pj_uint8_t)comp_id;
+     lcand->transport_id = (pj_uint8_t)transport_id;
+     lcand->type = type;
+     lcand->transport = transport;
+     pj_strdup(ice->pool, &lcand->foundation, foundation);
++    lcand->local_pref = local_pref;
+     lcand->prio = CALC_CAND_PRIO(ice, type, local_pref, lcand->comp_id);
+     pj_sockaddr_cp(&lcand->addr, addr);
+     pj_sockaddr_cp(&lcand->base_addr, base_addr);
+@@ -950,7 +952,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+     LOG4((ice->obj_name,
+ 	 "Candidate %d added: comp_id=%d, type=%s, foundation=%.*s, "
+ 	 "addr=%s:%d, base=%s:%d, prio=0x%x (%u)",
+-	 ice->lcand_cnt, 
++	 lcand->id,
+ 	 lcand->comp_id,
+ 	 cand_type_names[lcand->type],
+ 	 (int)lcand->foundation.slen,
+@@ -962,7 +964,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
+ 	 lcand->prio, lcand->prio));
+ 
+     if (p_cand_id)
+-	*p_cand_id = ice->lcand_cnt;
++	*p_cand_id = lcand->id;
+ 
+     ++ice->lcand_cnt;
+ 
+@@ -1500,7 +1502,23 @@ static void update_comp_check(pj_ice_sess *ice, unsigned comp_id,
+     if (comp->valid_check == NULL) {
+ 	comp->valid_check = check;
+     } else {
+-	if (CMP_CHECK_PRIO(comp->valid_check, check) < 0)
++	pj_bool_t update = PJ_FALSE;
++
++	/* Update component's valid check with conditions:
++	 * - it is the first nominated check, or
++	 * - it has higher prio, as long as nomination status is NOT degraded
++	 *   (existing is nominated -> new is not-nominated).
++	 */
++	if (!comp->nominated_check && check->nominated)
++	{
++	    update = PJ_TRUE;
++	} else if (CMP_CHECK_PRIO(comp->valid_check, check) < 0 &&
++		   (!comp->nominated_check || check->nominated))
++	{
++	    update = PJ_TRUE;
++	}
++
++	if (update)
+ 	    comp->valid_check = check;
+     }
+ 
+@@ -1916,7 +1934,7 @@ PJ_DEF(pj_status_t) pj_ice_sess_create_check_list(
+ 
+ 	pj_memcpy(cn, &rem_cand[i], sizeof(pj_ice_sess_cand));
+ 	pj_strdup(ice->pool, &cn->foundation, &rem_cand[i].foundation);
+-	ice->rcand_cnt++;
++	cn->id = ice->rcand_cnt++;
+     }
+ 
+     /* Generate checklist */
+@@ -2100,10 +2118,11 @@ static pj_status_t perform_check(pj_ice_sess *ice,
+ 
+     /* Add PRIORITY */
+ #if PJNATH_ICE_PRIO_STD
+-    prio = CALC_CAND_PRIO(ice, PJ_ICE_CAND_TYPE_PRFLX, 65535, 
++    prio = CALC_CAND_PRIO(ice, PJ_ICE_CAND_TYPE_PRFLX, 65535 - lcand->id,
+ 			  lcand->comp_id);
+ #else
+-    prio = CALC_CAND_PRIO(ice, PJ_ICE_CAND_TYPE_PRFLX, 0, 
++    prio = CALC_CAND_PRIO(ice, PJ_ICE_CAND_TYPE_PRFLX,
++			  ((1 << PJ_ICE_LOCAL_PREF_BITS) - 1) - lcand->id,
+ 			  lcand->comp_id);
+ #endif
+     pj_stun_msg_add_uint_attr(check->tdata->pool, check->tdata->msg,
+@@ -2967,7 +2986,13 @@ static void on_stun_request_complete(pj_stun_session *stun_sess,
+ 	status = pj_ice_sess_add_cand(ice, check->lcand->comp_id,
+ 				      msg_data->transport_id,
+ 				      PJ_ICE_CAND_TYPE_PRFLX,
+-				      65535, &foundation,
++#if PJNATH_ICE_PRIO_STD
++				      65535 - ice->lcand_cnt,
++#else
++				      ((1 << PJ_ICE_LOCAL_PREF_BITS) - 1) -
++				      ice->lcand_cnt,
++#endif
++				      &foundation,
+ 				      &xaddr->sockaddr,
+ 				      &check->lcand->base_addr,
+ 				      &check->lcand->base_addr,
+diff --git a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/src/pjnath/ice_session.c.orig b/pjnath/src/pjnath/ice_session.c.orig
+index 273545973..ef39884f2 100644
+--- a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/src/pjnath/ice_session.c.orig
++++ b/pjnath/src/pjnath/ice_session.c.orig
+@@ -1429,6 +1429,12 @@ static void ice_keep_alive(pj_ice_sess *ice, pj_bool_t send_now)
+ 					  PJ_FALSE, PJ_FALSE, 
+ 					  &the_check->rcand->addr, 
+ 					  addr_len, tdata);
++	if (status == 120032) {
++	    if (ice->cb.on_ice_destroy) {
++		ice->cb.on_ice_destroy(ice);
++	    }
++	    return;
++	}
+ 
+ 	/* Restore FINGERPRINT usage */
+ 	pj_stun_session_use_fingerprint(comp->stun_sess, saved);
+diff --git a/pjnath/src/pjnath/ice_session.c.rej b/pjnath/src/pjnath/ice_session.c.rej
+new file mode 100644
+index 000000000..48f253dba
+--- /dev/null
++++ b/pjnath/src/pjnath/ice_session.c.rej
+@@ -0,0 +1,15 @@
++--- pjnath/src/pjnath/ice_session.c
+++++ pjnath/src/pjnath/ice_session.c
++@@ -918,10 +918,12 @@ PJ_DEF(pj_status_t) pj_ice_sess_add_cand(pj_ice_sess *ice,
++     }
++ 
++     lcand = &ice->lcand[ice->lcand_cnt];
+++    lcand->id = ice->lcand_cnt;
++     lcand->comp_id = (pj_uint8_t)comp_id;
++     lcand->transport_id = (pj_uint8_t)transport_id;
++     lcand->type = type;
++     pj_strdup(ice->pool, &lcand->foundation, foundation);
+++    lcand->local_pref = local_pref;
++     lcand->prio = CALC_CAND_PRIO(ice, type, local_pref, lcand->comp_id);
++     pj_sockaddr_cp(&lcand->addr, addr);
++     pj_sockaddr_cp(&lcand->base_addr, base_addr);
+diff --git a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/src/pjnath/ice_strans.c b/pjnath/src/pjnath/ice_strans.c
+index 6f1447c02..a1e9fde9e 100644
+--- a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/src/pjnath/ice_strans.c
++++ b/pjnath/src/pjnath/ice_strans.c
+@@ -64,9 +64,9 @@ enum tp_type
+ #   define HOST_PREF   65535
+ #   define RELAY_PREF  65535
+ #else
+-#   define SRFLX_PREF  0
+-#   define HOST_PREF   0
+-#   define RELAY_PREF  0
++#   define SRFLX_PREF  ((1 << PJ_ICE_LOCAL_PREF_BITS) - 1)
++#   define HOST_PREF   ((1 << PJ_ICE_LOCAL_PREF_BITS) - 1)
++#   define RELAY_PREF  ((1 << PJ_ICE_LOCAL_PREF_BITS) - 1)
+ #endif
+ 
+ #define MAX_RTP_SIZE 65536
+@@ -460,7 +460,7 @@ static pj_status_t add_update_turn(pj_ice_strans *ice_st,
+ 	cand = &comp->cand_list[comp->cand_cnt];
+ 	cand->type = PJ_ICE_CAND_TYPE_RELAYED;
+ 	cand->status = PJ_EPENDING;
+-	cand->local_pref = RELAY_PREF;
++	cand->local_pref = (pj_uint16_t)(RELAY_PREF - idx);
+ 	cand->transport_id = tp_id;
+ 	cand->comp_id = (pj_uint8_t) comp->comp_id;
+ 	new_cand = PJ_TRUE;
+@@ -529,7 +529,8 @@ static pj_bool_t ice_cand_equals(pj_ice_sess_cand *lcand,
+         || lcand->status != rcand->status
+         || lcand->comp_id != rcand->comp_id
+         || lcand->transport_id != rcand->transport_id
+-        || lcand->local_pref != rcand->local_pref
++	// local pref is no longer a constant, so it may be different
++        //|| lcand->local_pref != rcand->local_pref
+         || lcand->prio != rcand->prio
+         || lcand->transport != rcand->transport
+         || pj_sockaddr_cmp(&lcand->addr, &rcand->addr) != 0
+@@ -588,7 +589,7 @@ static pj_status_t add_stun_and_host(pj_ice_strans *ice_st,
+     cand = &comp->cand_list[comp->cand_cnt];
+     cand->type = PJ_ICE_CAND_TYPE_SRFLX;
+     cand->status = PJ_EPENDING;
+-    cand->local_pref = SRFLX_PREF;
++    cand->local_pref = (pj_uint16_t)(SRFLX_PREF - idx);
+     cand->transport_id = CREATE_TP_ID(TP_STUN, idx);
+     cand->comp_id = (pj_uint8_t) comp->comp_id;
+     cand->transport = stun_cfg->conn_type == PJ_STUN_TP_UDP ?
+@@ -776,7 +777,7 @@ static pj_bool_t add_local_candidate(pj_ice_sess_cand *cand,
+ 
+     cand->type         = PJ_ICE_CAND_TYPE_HOST;
+     cand->status       = PJ_SUCCESS;
+-    cand->local_pref   = HOST_PREF;
++	    cand->local_pref = (pj_uint16_t)(HOST_PREF - *cand_cnt);
+     cand->transport_id = CREATE_TP_ID(TP_STUN, idx);
+     cand->comp_id      = (pj_uint8_t) comp->comp_id;
+     cand->transport    = transport;
+@@ -1611,8 +1612,9 @@ PJ_DEF(pj_status_t) pj_ice_strans_start_ice( pj_ice_strans *ice_st,
+ 	    }
+ 
+ 	    if (count && !comp->turn[n].err_cnt && comp->turn[n].sock) {
+-		status = pj_turn_sock_set_perm(comp->turn[n].sock, count,
+-					       addrs, 0);
++		status = pj_turn_sock_set_perm(
++				    comp->turn[n].sock, count,
++				    addrs, PJ_ICE_ST_USE_TURN_PERMANENT_PERM);
+ 		if (status != PJ_SUCCESS) {
+ 		    pj_ice_strans_stop_ice(ice_st);
+ 		    return status;
+diff --git a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/src/pjnath/ice_strans.c.orig b/pjnath/src/pjnath/ice_strans.c.orig
+index f9c00d9fd..6f1447c02 100644
+--- a/home/mchibani/workdir/ring-linux-master/daemon/contrib/native/pjproject/pjnath/src/pjnath/ice_strans.c.orig
++++ b/pjnath/src/pjnath/ice_strans.c.orig
+@@ -1946,6 +1946,11 @@ static void on_ice_destroy(pj_ice_sess *ice)
+     }
+ }
+ 
++PJ_DECL(pj_ice_sess *) pj_ice_strans_get_ice_sess( pj_ice_strans *ice_st )
++{
++    return ice_st->ice;
++}
++
+ /*
+  * Callback called by ICE session when ICE processing is complete, either
+  * successfully or with failure.
+diff --git a/pjlib/include/pj/config_site.h.orig b/pjlib/include/pj/config_site.h
+index 47dd40ad5..81cbcb5fa 100644
+--- a/pjlib/include/pj/config_site.h.orig
++++ b/pjlib/include/pj/config_site.h
+@@ -21,3 +21,6 @@
+ #define PJ_ICE_MAX_TURN                         4
+ #define PJ_ICE_COMP_BITS                        2
+ #define PJ_ICE_MAX_CHECKS                       1024
++/* Set permanent permissions on the TURN
++server for all peer candidates */
++#define PJ_ICE_ST_USE_TURN_PERMANENT_PERM       1
