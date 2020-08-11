@@ -21,23 +21,24 @@
 
 #pragma once
 
-#include "noncopyable.h"
 #include "media_encoder.h"
 #include "media_io_handle.h"
+#include "noncopyable.h"
 
-#include <map>
-#include <string>
-#include <memory>
 #include <atomic>
+#include <map>
+#include <memory>
+#include <string>
 
 // Forward declarations
 namespace jami {
 class SocketPair;
 struct DeviceParams;
 struct AccountVideoCodecInfo;
-}
+} // namespace jami
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
 class VideoSender : public VideoFramePassiveReader
 {
@@ -71,7 +72,7 @@ private:
     void encodeAndSendVideo(VideoFrame&);
 
     // encoder MUST be deleted before muxContext
-    std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
+    std::unique_ptr<MediaIOHandle> muxContext_  = nullptr;
     std::unique_ptr<MediaEncoder> videoEncoder_ = nullptr;
 
     std::atomic<int> forceKeyFrame_ {KEYFRAMES_AT_START};
@@ -81,4 +82,5 @@ private:
     int rotation_ = 0;
     std::function<void(int)> changeOrientationCallback_;
 };
-}} // namespace jami::video
+} // namespace video
+} // namespace jami

@@ -20,15 +20,14 @@
 
 #include "datatransfer_interface.h"
 
-#include "manager.h"
-#include "data_transfer.h"
 #include "client/ring_signal.h"
+#include "data_transfer.h"
+#include "manager.h"
 
 namespace DRing {
 
 void
-registerDataXferHandlers(const std::map<std::string,
-    std::shared_ptr<CallbackWrapperBase>>& handlers)
+registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>& handlers)
 {
     registerSignalHandlers(handlers);
 }

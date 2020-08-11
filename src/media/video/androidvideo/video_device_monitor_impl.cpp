@@ -34,12 +34,14 @@
 #include <thread>
 #include <vector>
 
-namespace jami { namespace video {
+namespace jami {
+namespace video {
 
-using std::vector;
 using std::string;
+using std::vector;
 
-class VideoDeviceMonitorImpl {
+class VideoDeviceMonitorImpl
+{
     /*
      * This class is instantiated in VideoDeviceMonitor's constructor. The
      * daemon has a global VideoManager, and it contains a VideoDeviceMonitor.
@@ -51,34 +53,31 @@ class VideoDeviceMonitorImpl {
      * manager interface to allow to add/remove devices from Java code.
      * To conclude, this class is just an empty stub.
      */
-    public:
-        VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
-        ~VideoDeviceMonitorImpl();
+public:
+    VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
+    ~VideoDeviceMonitorImpl();
 
-        void start();
+    void start();
 
-    private:
-        NON_COPYABLE(VideoDeviceMonitorImpl);
+private:
+    NON_COPYABLE(VideoDeviceMonitorImpl);
 };
 
-VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
+VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) {}
+
+void
+VideoDeviceMonitorImpl::start()
 {}
 
-void VideoDeviceMonitorImpl::start()
-{
-}
+VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl() {}
 
-VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
-{
-}
-
-VideoDeviceMonitor::VideoDeviceMonitor() :
-    preferences_(), devices_(),
-    monitorImpl_(new VideoDeviceMonitorImpl(this))
-{
-}
-
-VideoDeviceMonitor::~VideoDeviceMonitor()
+VideoDeviceMonitor::VideoDeviceMonitor()
+    : preferences_()
+    , devices_()
+    , monitorImpl_(new VideoDeviceMonitorImpl(this))
 {}
 
-}} // namespace jami::video
+VideoDeviceMonitor::~VideoDeviceMonitor() {}
+
+} // namespace video
+} // namespace jami

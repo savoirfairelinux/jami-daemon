@@ -19,34 +19,34 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include <cerrno>
+#include <ciso646> // fix windows compiler bug
 #include <cstdio>
 #include <cstring>
-#include <cerrno>
 #include <ctime>
-#include <ciso646> // fix windows compiler bug
 
 #include "client/ring_signal.h"
 
 #ifdef _MSC_VER
-# include <sys_time.h>
+#include <sys_time.h>
 #else
-# include <sys/time.h>
+#include <sys/time.h>
 #endif
 
-#include <string>
-#include <sstream>
+#include <array>
 #include <iomanip>
 #include <ios>
 #include <mutex>
+#include <sstream>
+#include <string>
 #include <thread>
-#include <array>
 
 #include "logger.h"
 
 #ifdef __linux__
+#include <sys/syscall.h>
 #include <syslog.h>
 #include <unistd.h>
-#include <sys/syscall.h>
 #endif // __linux__
 
 #ifdef __ANDROID__
@@ -55,31 +55,31 @@
 #endif /* APP_NAME */
 #endif
 
-#define BLACK "\033[22;30m"
-#define GREEN "\033[22;32m"
-#define BROWN "\033[22;33m"
-#define BLUE "\033[22;34m"
-#define MAGENTA "\033[22;35m"
-#define GREY "\033[22;37m"
-#define DARK_GREY "\033[01;30m"
-#define LIGHT_RED "\033[01;31m"
-#define LIGHT_SCREEN "\033[01;32m"
-#define LIGHT_BLUE "\033[01;34m"
+#define BLACK         "\033[22;30m"
+#define GREEN         "\033[22;32m"
+#define BROWN         "\033[22;33m"
+#define BLUE          "\033[22;34m"
+#define MAGENTA       "\033[22;35m"
+#define GREY          "\033[22;37m"
+#define DARK_GREY     "\033[01;30m"
+#define LIGHT_RED     "\033[01;31m"
+#define LIGHT_SCREEN  "\033[01;32m"
+#define LIGHT_BLUE    "\033[01;34m"
 #define LIGHT_MAGENTA "\033[01;35m"
-#define LIGHT_CYAN "\033[01;36m"
-#define WHITE "\033[01;37m"
-#define END_COLOR "\033[0m"
+#define LIGHT_CYAN    "\033[01;36m"
+#define WHITE         "\033[01;37m"
+#define END_COLOR     "\033[0m"
 
 #ifndef _WIN32
-#define RED "\033[22;31m"
+#define RED    "\033[22;31m"
 #define YELLOW "\033[01;33m"
-#define CYAN "\033[22;36m"
+#define CYAN   "\033[22;36m"
 #else
 #define FOREGROUND_WHITE 0x000f
-#define RED FOREGROUND_RED + 0x0008
-#define YELLOW FOREGROUND_RED + FOREGROUND_GREEN + 0x0008
-#define CYAN FOREGROUND_BLUE + FOREGROUND_GREEN + 0x0008
-#define LIGHT_GREEN FOREGROUND_GREEN + 0x0008
+#define RED              FOREGROUND_RED + 0x0008
+#define YELLOW           FOREGROUND_RED + FOREGROUND_GREEN + 0x0008
+#define CYAN             FOREGROUND_BLUE + FOREGROUND_GREEN + 0x0008
+#define LIGHT_GREEN      FOREGROUND_GREEN + 0x0008
 #endif // _WIN32
 
 #define LOGFILE "dring"
@@ -118,18 +118,17 @@ contextHeader(const char* const file, int line)
     struct timeval tv;
 
     if (!gettimeofday(&tv, NULL)) {
-        secs = tv.tv_sec;
+        secs  = tv.tv_sec;
         milli = tv.tv_usec / 1000; // suppose that milli < 1000
     } else {
-        secs = time(NULL);
+        secs  = time(NULL);
         milli = 0;
     }
 
     std::ostringstream out;
     const auto prev_fill = out.fill();
-    out << '[' << secs
-        << '.' << std::right << std::setw(3) << std::setfill('0') << milli << std::left
-        << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
+    out << '[' << secs << '.' << std::right << std::setw(3) << std::setfill('0') << milli
+        << std::left << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
     out.fill(prev_fill);
 
     // Context
@@ -139,10 +138,8 @@ contextHeader(const char* const file, int line)
 #else
         constexpr auto width = 18;
 #endif
-        out << "|"
-            << std::setw(width) << stripDirName(file)
-            << ":"
-            << std::setw(5) << std::setfill(' ') << line;
+        out << "|" << std::setw(width) << stripDirName(file) << ":" << std::setw(5)
+            << std::setfill(' ') << line;
     }
 
     out << "] ";
@@ -177,20 +174,24 @@ getDebugMode(void)
     return debugMode;
 }
 
-static const char* check_error(int result, char* buffer) {
+static const char*
+check_error(int result, char* buffer)
+{
     switch (result) {
-        case 0:
-            return buffer;
+    case 0:
+        return buffer;
 
-        case ERANGE: /* should never happen */
-            return "unknown (too big to display)";
+    case ERANGE: /* should never happen */
+        return "unknown (too big to display)";
 
-        default:
-            return "unknown (invalid error number)";
+    default:
+        return "unknown (invalid error number)";
     }
 }
 
-static const char* check_error(char* result, char*) {
+static const char*
+check_error(char* result, char*)
+{
     return result;
 }
 
@@ -211,7 +212,7 @@ void
 Logger::log(int level, const char* file, int line, bool linefeed, const char* const format, ...)
 {
 #if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if(!debugMode)
+    if (!debugMode)
         return;
 #endif
     if (!debugMode && level == LOG_DEBUG)
@@ -228,11 +229,11 @@ Logger::log(int level, const char* file, int line, bool linefeed, const char* co
 }
 
 void
-Logger::vlog(const int level, const char* file, int line, bool linefeed,
-             const char* format, va_list ap)
+Logger::vlog(
+    const int level, const char* file, int line, bool linefeed, const char* format, va_list ap)
 {
 #if defined(TARGET_OS_IOS) && TARGET_OS_IOS
-    if(!debugMode)
+    if (!debugMode)
         return;
 #endif
     if (!debugMode && level == LOG_DEBUG)
@@ -257,13 +258,13 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
 #endif
 
         switch (level) {
-            case LOG_ERR:
-                color_prefix = RED;
-                break;
+        case LOG_ERR:
+            color_prefix = RED;
+            break;
 
-            case LOG_WARNING:
-                color_prefix = YELLOW;
-                break;
+        case LOG_WARNING:
+            color_prefix = YELLOW;
+            break;
         }
 
 #ifndef _WIN32
@@ -301,4 +302,4 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
     }
 }
 
-} // namespace jami;
+} // namespace jami

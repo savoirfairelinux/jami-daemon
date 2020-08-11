@@ -26,27 +26,27 @@
 #include "config.h"
 #endif
 
-#include "security/tls_session.h"
-#include "security/diffie-hellman.h"
-#include "sip/sipaccountbase.h"
 #include "dring/datatransfer_interface.h"
+#include "security/diffie-hellman.h"
+#include "security/tls_session.h"
+#include "sip/sipaccountbase.h"
 
-#include "noncopyable.h"
 #include "ip_utils.h"
+#include "noncopyable.h"
 #include "ring_types.h" // enable_if_base_of
-#include "security/certstore.h"
 #include "scheduled_executor.h"
+#include "security/certstore.h"
 
-#include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
+#include <opendht/dhtrunner.h>
 
 #include <pjsip/sip_types.h>
 
-#include <vector>
-#include <map>
 #include <chrono>
-#include <list>
 #include <future>
+#include <list>
+#include <map>
+#include <vector>
 
 #if HAVE_RINGNS
 #include "namedirectory.h"
@@ -55,14 +55,14 @@
 namespace YAML {
 class Node;
 class Emitter;
-}
+} // namespace YAML
 
-namespace dev
-{
-template <unsigned N> class FixedHash;
-using h160 = FixedHash<20>;
+namespace dev {
+template<unsigned N>
+class FixedHash;
+using h160    = FixedHash<20>;
 using Address = h160;
-}
+} // namespace dev
 
 namespace jami {
 
@@ -83,37 +83,40 @@ class ChanneledOutgoingTransfer;
 /**
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
  */
-class JamiAccount : public SIPAccountBase {
+class JamiAccount : public SIPAccountBase
+{
 public:
-    constexpr static const char* const ACCOUNT_TYPE = "RING";
-    constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
+    constexpr static const char* const ACCOUNT_TYPE          = "RING";
+    constexpr static const in_port_t DHT_DEFAULT_PORT        = 4222;
     constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.jami.net";
-    constexpr static const char* const DHT_DEFAULT_PROXY = "dhtproxy.jami.net:[80-100]";
-    constexpr static const char* const DHT_DEFAULT_BOOTSTRAP_LIST_URL = "https://config.jami.net/boostrapList";
-    constexpr static const char* const DHT_DEFAULT_PROXY_LIST_URL = "https://config.jami.net/proxyList";
+    constexpr static const char* const DHT_DEFAULT_PROXY     = "dhtproxy.jami.net:[80-100]";
+    constexpr static const char* const DHT_DEFAULT_BOOTSTRAP_LIST_URL
+        = "https://config.jami.net/boostrapList";
+    constexpr static const char* const DHT_DEFAULT_PROXY_LIST_URL
+        = "https://config.jami.net/proxyList";
 
     /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
 
-    const char* getAccountType() const override {
-        return ACCOUNT_TYPE;
-    }
+    const char* getAccountType() const override { return ACCOUNT_TYPE; }
 
-    std::shared_ptr<JamiAccount> shared() {
+    std::shared_ptr<JamiAccount> shared()
+    {
         return std::static_pointer_cast<JamiAccount>(shared_from_this());
     }
-    std::shared_ptr<JamiAccount const> shared() const {
+    std::shared_ptr<JamiAccount const> shared() const
+    {
         return std::static_pointer_cast<JamiAccount const>(shared_from_this());
     }
-    std::weak_ptr<JamiAccount> weak() {
+    std::weak_ptr<JamiAccount> weak()
+    {
         return std::static_pointer_cast<JamiAccount>(shared_from_this());
     }
-    std::weak_ptr<JamiAccount const> weak() const {
+    std::weak_ptr<JamiAccount const> weak() const
+    {
         return std::static_pointer_cast<JamiAccount const>(shared_from_this());
     }
 
-    const std::string& getPath() const {
-        return idPath_;
-    }
+    const std::string& getPath() const { return idPath_; }
 
     /**
      * Constructor
@@ -127,17 +130,17 @@ public:
      * Serialize internal state of this account for configuration
      * @param YamlEmitter the configuration engine which generate the configuration file
      */
-    virtual void serialize(YAML::Emitter &out) const override;
+    virtual void serialize(YAML::Emitter& out) const override;
 
     /**
      * Populate the internal state for this account based on info stored in the configuration file
      * @param The configuration node for this account
      */
-    virtual void unserialize(const YAML::Node &node) override;
+    virtual void unserialize(const YAML::Node& node) override;
 
     /**
-     * Return an map containing the internal state of this account. Client application can use this method to manage
-     * account info.
+     * Return an map containing the internal state of this account. Client application can use this
+     * method to manage account info.
      * @return A map containing the account information.
      */
     virtual std::map<std::string, std::string> getAccountDetails() const override;
@@ -218,30 +221,27 @@ public:
      */
     pj_str_t getContactHeader(pjsip_transport* = nullptr) override;
 
-    void setReceivedParameter(const std::string &received) {
-        receivedParameter_ = received;
-        via_addr_.host.ptr = (char *) receivedParameter_.c_str();
+    void setReceivedParameter(const std::string& received)
+    {
+        receivedParameter_  = received;
+        via_addr_.host.ptr  = (char*) receivedParameter_.c_str();
         via_addr_.host.slen = receivedParameter_.size();
     }
 
-    std::string getReceivedParameter() const {
-        return receivedParameter_;
-    }
+    std::string getReceivedParameter() const { return receivedParameter_; }
 
-    pjsip_host_port *
-    getViaAddr() {
-        return &via_addr_;
-    }
+    pjsip_host_port* getViaAddr() { return &via_addr_; }
 
     /* Returns true if the username and/or hostname match this account */
-    MatchRank matches(const std::string &username, const std::string &hostname) const override;
+    MatchRank matches(const std::string& username, const std::string& hostname) const override;
 
     /**
      * Implementation of Account::newOutgoingCall()
      * Note: keep declaration before newOutgoingCall template.
      */
-    std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl,
-                                            const std::map<std::string, std::string>& volatileCallDetails = {}) override;
+    std::shared_ptr<Call> newOutgoingCall(
+        const std::string& toUrl,
+        const std::map<std::string, std::string>& volatileCallDetails = {}) override;
 
     /**
      * Create outgoing SIPCall.
@@ -251,13 +251,15 @@ public:
      *      This type can be any base class of SIPCall class (included).
      */
 #ifndef _MSC_VER
-    template <class T=SIPCall>
-    std::shared_ptr<enable_if_base_of<T, SIPCall> >
-    newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
+    template<class T = SIPCall>
+    std::shared_ptr<enable_if_base_of<T, SIPCall>> newOutgoingCall(
+        const std::string& toUrl,
+        const std::map<std::string, std::string>& volatileCallDetails = {});
 #else
-    template <class T>
-    std::shared_ptr<T>
-    newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
+    template<class T>
+    std::shared_ptr<T> newOutgoingCall(
+        const std::string& toUrl,
+        const std::map<std::string, std::string>& volatileCallDetails = {});
 #endif
 
     /**
@@ -269,32 +271,33 @@ public:
      *      The type of this instance is given in template argument.
      *      This type can be any base class of SIPCall class (included).
      */
-    std::shared_ptr<SIPCall>
-    newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}, const std::shared_ptr<SipTransport>& sipTr = nullptr) override;
+    std::shared_ptr<SIPCall> newIncomingCall(
+        const std::string& from,
+        const std::map<std::string, std::string>& details = {},
+        const std::shared_ptr<SipTransport>& sipTr        = nullptr) override;
 
-    void onTextMessage(const std::string& id, const std::string& from, const std::map<std::string, std::string>& payloads) override;
+    void onTextMessage(const std::string& id,
+                       const std::string& from,
+                       const std::map<std::string, std::string>& payloads) override;
 
-    virtual bool isTlsEnabled() const override {
-        return true;
-    }
+    virtual bool isTlsEnabled() const override { return true; }
 
-    virtual bool isSrtpEnabled() const {
-        return true;
-    }
+    virtual bool isSrtpEnabled() const { return true; }
 
-    virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const override {
+    virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const override
+    {
         return sip_utils::KeyExchangeProtocol::SDES;
     }
 
-    virtual bool getSrtpFallback() const override {
-        return false;
-    }
+    virtual bool getSrtpFallback() const override { return false; }
 
     bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status);
     std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status);
 
     bool findCertificate(const std::string& id);
-    bool findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
+    bool findCertificate(
+        const dht::InfoHash& h,
+        std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
     /* contact requests */
     std::vector<std::map<std::string, std::string>> getTrustRequests() const;
@@ -316,8 +319,12 @@ public:
 
     void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
     void sendTrustRequestConfirm(const std::string& to);
-    void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id, bool retryOnTimeout=true) override;
-    uint64_t sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads) override;
+    void sendTextMessage(const std::string& to,
+                         const std::map<std::string, std::string>& payloads,
+                         uint64_t id,
+                         bool retryOnTimeout = true) override;
+    uint64_t sendTextMessage(const std::string& to,
+                             const std::map<std::string, std::string>& payloads) override;
     void onIsComposing(const std::string& peer, bool isWriting) override;
 
     /* Devices */
@@ -325,7 +332,8 @@ public:
     /**
      * Export the archive to a file
      * @param destinationPath
-     * @param (optional) password, if not provided, will update the contacts only if the archive doesn't have a password
+     * @param (optional) password, if not provided, will update the contacts only if the archive
+     * doesn't have a password
      * @return if the archive was exported
      */
     bool exportArchive(const std::string& destinationPath, const std::string& password = {});
@@ -354,11 +362,14 @@ public:
     /// /// \param[in] peer RingID on request's recipient
     /// /// \param[in] tid linked outgoing data transfer
     ///
-    void requestPeerConnection(const std::string& peer, const DRing::DataTransferId& tid,
-                               bool isVCard,
-                               const std::function<void(PeerConnection*)>& connect_cb,
-                               const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>& channeledConnectedCb,
-                               const std::function<void()>& onChanneledCancelled);
+    void requestPeerConnection(
+        const std::string& peer,
+        const DRing::DataTransferId& tid,
+        bool isVCard,
+        const std::function<void(PeerConnection*)>& connect_cb,
+        const std::function<void(const std::shared_ptr<ChanneledOutgoingTransfer>&)>&
+            channeledConnectedCb,
+        const std::function<void()>& onChanneledCancelled);
 
     ///
     /// Close a E2E connection between a given peer and a given transfer id.
@@ -371,7 +382,8 @@ public:
     std::vector<std::string> publicAddresses();
 
     /// \return true if the given DHT message identifier has been treated
-    /// \note if message has not been treated yet this method store this id and returns true at further calls
+    /// \note if message has not been treated yet this method store this id and returns true at
+    /// further calls
     bool isMessageTreated(const std::string& id);
 
     std::shared_ptr<dht::DhtRunner> dht() { return dht_; }
@@ -381,8 +393,8 @@ public:
     const std::shared_future<tls::DhParams> dhParams() const { return dhParams_; }
 
     void forEachDevice(const dht::InfoHash& to,
-                        std::function<void(const dht::InfoHash&)>&& op,
-                        std::function<void(bool)>&& end = {});
+                       std::function<void(const dht::InfoHash&)>&& op,
+                       std::function<void(bool)>&& end = {});
 
     /**
      * Start or stop to use the proxy client
@@ -396,7 +408,8 @@ public:
     /**
      * To be called by clients with relevant data when a push notification is received.
      */
-    void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
+    void pushNotificationReceived(const std::string& from,
+                                  const std::map<std::string, std::string>& data);
 
     std::string getUserUri() const override;
 
@@ -429,9 +442,7 @@ public:
     void registerDhtAddress(IceTransport&);
 
 #ifdef DRING_TESTABLE
-    ConnectionManager& connectionManager() {
-        return *connectionManager_;
-    }
+    ConnectionManager& connectionManager() { return *connectionManager_; }
 #endif
 
     /**
@@ -443,7 +454,7 @@ public:
 private:
     NON_COPYABLE(JamiAccount);
 
-    using clock = std::chrono::system_clock;
+    using clock      = std::chrono::system_clock;
     using time_point = clock::time_point;
 
     /**
@@ -457,12 +468,16 @@ private:
     /**
      * Compute archive encryption key and DHT storage location from password and PIN.
      */
-    static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password, const std::string& pin, bool previous=false);
+    static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password,
+                                                                      const std::string& pin,
+                                                                      bool previous = false);
 
     void trackPresence(const dht::InfoHash& h, BuddyInfo& buddy);
 
     void doRegister_();
-    void incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from);
+    void incomingCall(dht::IceCandidates&& msg,
+                      const std::shared_ptr<dht::crypto::Certificate>& from_cert,
+                      const dht::InfoHash& from);
 
     const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
@@ -471,10 +486,11 @@ private:
     void onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, IpAddr target);
 
     /**
-     * Set the internal state for this account, mainly used to manage account details from the client application.
+     * Set the internal state for this account, mainly used to manage account details from the
+     * client application.
      * @param The map containing the account information.
      */
-    virtual void setAccountDetails(const std::map<std::string, std::string> &details) override;
+    virtual void setAccountDetails(const std::map<std::string, std::string>& details) override;
 
     /**
      * Start a SIP Call
@@ -484,14 +500,15 @@ private:
     bool SIPStartCall(SIPCall& call, IpAddr target);
 
     /**
-     * For a call with (from_device, from_account), check the peer certificate chain (cert_list, cert_num)
-     * with session check status.
-     * Put deserialized certificate to cert_out;
+     * For a call with (from_device, from_account), check the peer certificate chain (cert_list,
+     * cert_num) with session check status. Put deserialized certificate to cert_out;
      */
-    pj_status_t checkPeerTlsCertificate(dht::InfoHash from_device, dht::InfoHash from_account,
-                            unsigned status,
-                            const gnutls_datum_t* cert_list, unsigned cert_num,
-                            std::shared_ptr<dht::crypto::Certificate>& cert_out);
+    pj_status_t checkPeerTlsCertificate(dht::InfoHash from_device,
+                                        dht::InfoHash from_account,
+                                        unsigned status,
+                                        const gnutls_datum_t* cert_list,
+                                        unsigned cert_num,
+                                        std::shared_ptr<dht::crypto::Certificate>& cert_out);
 
     /**
      * Update tracking info when buddy appears offline.
@@ -515,7 +532,9 @@ private:
     void checkPendingCall(const std::string& callId);
     bool handlePendingCall(PendingCall& pc, bool incoming);
 
-    void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {}, const std::string& archive_path = {});
+    void loadAccount(const std::string& archive_password = {},
+                     const std::string& archive_pin      = {},
+                     const std::string& archive_path     = {});
     void loadAccountFromFile(const std::string& archive_path, const std::string& archive_password);
     void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
     void loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password);
@@ -535,7 +554,9 @@ private:
     AccountArchive readArchive(const std::string& pwd) const;
     std::vector<std::string> loadBootstrap() const;
 
-    static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name);
+    static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id,
+                                                            const std::string& path,
+                                                            const std::string& name);
 
     void loadTreatedCalls();
     void saveTreatedCalls() const;
@@ -544,18 +565,18 @@ private:
     void saveTreatedMessages() const;
 
     void replyToIncomingIceMsg(const std::shared_ptr<SIPCall>&,
-                                const std::shared_ptr<IceTransport>&,
-                                const std::shared_ptr<IceTransport>&,
-                                const dht::IceCandidates&,
-                                const std::shared_ptr<dht::crypto::Certificate>& from_cert,
-                                const dht::InfoHash& from);
+                               const std::shared_ptr<IceTransport>&,
+                               const std::shared_ptr<IceTransport>&,
+                               const dht::IceCandidates&,
+                               const std::shared_ptr<dht::crypto::Certificate>& from_cert,
+                               const dht::InfoHash& from);
 
     static tls::DhParams loadDhParams(std::string path);
 
     void loadCachedUrl(const std::string& url,
-                    const std::string& cachePath,
-                    const std::chrono::seconds& cacheDuration,
-                    std::function<void(const dht::http::Response& response)>);
+                       const std::string& cachePath,
+                       const std::chrono::seconds& cacheDuration,
+                       std::function<void(const dht::http::Response& response)>);
 
     std::string getDhtProxyServer(const std::string& serverList);
     void loadCachedProxyServer(std::function<void(const std::string&)> cb);
@@ -565,7 +586,7 @@ private:
      */
     void generateDhParams();
 
-    template <class... Args>
+    template<class... Args>
     std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
 
 #if HAVE_RINGNS
@@ -693,7 +714,8 @@ private:
     std::set<std::shared_ptr<dht::http::Request>> requests_;
 
     std::mutex sipConnectionsMtx_ {};
-    struct SipConnection {
+    struct SipConnection
+    {
         std::shared_ptr<SipTransport> transport;
         // Needs to keep track of that channel to access underlying ICE
         // informations, as the SipTransport use a generic transport
@@ -703,9 +725,11 @@ private:
     // can ask for a SIP channel when we are creating a new SIP Channel with this
     // peer too.
     std::map<std::string /* accountId */,
-        std::map<std::string /* deviceId */, std::vector<SipConnection>>> sipConnections_ {};
+             std::map<std::string /* deviceId */, std::vector<SipConnection>>>
+        sipConnections_ {};
     // However, we only negotiate one socket from our side
-    std::set<std::pair<std::string /* accountId */, std::string /* deviceId */>> pendingSipConnections_ {};
+    std::set<std::pair<std::string /* accountId */, std::string /* deviceId */>>
+        pendingSipConnections_ {};
 
     /**
      * Ask a device to open a channeled SIP socket
@@ -720,7 +744,9 @@ private:
      * @param peerId    The contact who owns the device
      * @param deviceId  Device linked to that transport
      */
-    void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket, const std::string& peerId, const std::string& deviceId);
+    void cacheSIPConnection(std::shared_ptr<ChannelSocket>&& socket,
+                            const std::string& peerId,
+                            const std::string& deviceId);
 
     // File transfers
     std::set<std::string> incomingFileTransfers_ {};
@@ -736,8 +762,11 @@ private:
      * @throw runtime_error if connection is invalid
      * @return if the request will be sent
      */
-    bool sendSIPMessage(SipConnection& conn, const std::string& to, void* ctx,
-                        int token, const std::map<std::string, std::string>& data,
+    bool sendSIPMessage(SipConnection& conn,
+                        const std::string& to,
+                        void* ctx,
+                        int token,
+                        const std::map<std::string, std::string>& data,
                         pjsip_endpt_send_callback cb);
 
     /**
@@ -752,7 +781,8 @@ private:
     void sendProfile(const std::string& deviceId);
 };
 
-static inline std::ostream& operator<< (std::ostream& os, const JamiAccount& acc)
+static inline std::ostream&
+operator<<(std::ostream& os, const JamiAccount& acc)
 {
     os << "[Account " << acc.getAccountID() << "] ";
     return os;
